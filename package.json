@@ -1,0 +1,16 @@
+{
+  "name": "<name>",
+  "version": "1.0.0",
+  "description": "",
+  "author": "Massachusetts Institute of Technology",
+  "license": "BSD-3-Clause",
+  "homepage": "https://github.com/LLK/<name>#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+ssh://git@github.com/LLK/<name>.git"
+  },
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  }
+}
