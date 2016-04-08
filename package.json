@@ -1,16 +1,21 @@
 {
-  "name": "<name>",
+  "name": "scratch-vm",
   "version": "1.0.0",
   "description": "",
   "author": "Massachusetts Institute of Technology",
   "license": "BSD-3-Clause",
-  "homepage": "https://github.com/LLK/<name>#readme",
+  "homepage": "https://github.com/LLK/scratch-vm#readme",
   "repository": {
     "type": "git",
-    "url": "git+ssh://git@github.com/LLK/<name>.git"
+    "url": "git+ssh://git@github.com/LLK/scratch-vm.git"
   },
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "make test"
+  },
+  "devDependencies": {
+    "benchmark": "2.1.0",
+    "eslint": "2.7.0",
+    "tap": "5.7.1"
   }
 }
