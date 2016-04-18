@@ -1,3 +1,6 @@
+var EventEmitter = require('events');
+var util = require('util');
+
 var Primitives = require('./primatives');
 var Sequencer = require('./sequencer');
 var Thread = require('./thread');
@@ -8,6 +11,10 @@ var STEP_THREADS_INTERVAL = 1000 / 30;
  * A simple runtime for blocks.
  */
 function Runtime () {
+    // Bind event emitter
+    EventEmitter.call(instance);
+
+    // Instantiate sequencer and primitives
     this.sequencer = new Sequencer(this);
     this.primitives = new Primitives();
 
@@ -15,6 +22,11 @@ function Runtime () {
     this.blocks = {};
     this.stacks = [];
 }
+
+/**
+ * Inherit from EventEmitter
+ */
+util.inherits(Runtime, EventEmitter);
 
 Runtime.prototype.createBlock = function (e) {
     // Create new block
@@ -90,8 +102,9 @@ Runtime.prototype.runAllStacks = function () {
     // @todo
 };
 
-Runtime.prototype.runStack = function () {
+Runtime.prototype.runStack = function (e) {
     // @todo
+    console.dir(e);
 };
 
 Runtime.prototype.stopAllStacks = function () {

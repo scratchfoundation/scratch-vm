@@ -58,11 +58,12 @@
 	    var instance = this;
 
 	    // Bind event emitter and runtime to VM instance
+	    // @todo Post message (Web Worker) polyfill
 	    EventEmitter.call(instance);
 	    instance.runtime = new Runtime();
 
 	    /**
-	     * Event listener for blockly. Handles validation and serves as a generic
+	     * Event listener for blocks. Handles validation and serves as a generic
 	     * adapter between the blocks and the runtime interface.
 	     *
 	     * @param {Object} Blockly "block" event
@@ -100,42 +101,19 @@
 	            });
 	            break;
 	        }
+
+	        // UI
+	        if (typeof e.element === 'undefined') return;
+	        switch (e.element) {
+	        case 'click':
+	            instance.runtime.runStack({
+	                id: e.blockId
+	            });
+	            break;
+	        }
 	    };
 
-	    // @todo UI listener
-
 	    // @todo Forward runtime events
-
-	    // Event dispatcher
-	    // this.types = keymirror({
-	    //     // Messages to runtime
-	    //     CREATE_BLOCK: null,
-	    //     MOVE_BLOCK: null,
-	    //     CHANGE_BLOCK: null,
-	    //     DELETE_BLOCK: null,
-	    //
-	    //     ADD_DEVICE: null,
-	    //     REMOVE_DEVICE: null,
-	    //
-	    //     RUN_STRIP: null,
-	    //     RUN_ALL_STRIPS: null,
-	    //     STOP_ALL_STRIPS: null,
-	    //     RUN_PALETTE_BLOCK: null,
-	    //
-	    //     // Messages from runtime - subscribe to these
-	    //     FEEDBACK_EXECUTING_BLOCK: null,
-	    //     FEEDBACK_STOPPED_EXECUTING_BLOCK: null,
-	    //     DEVICE_RUN_OP: null,
-	    //     DEVICE_STOP_OP: null,
-	    //
-	    //     // Tell back the interpreter device has finished an op
-	    //     DEVICE_FINISHED_OP: null
-	    // });
-
-	    // Bind block event stream
-	    // setTimeout(function () {
-	    //     _this.emit('foo', 'bar');
-	    // }, 1000);
 	}
 
 	/**
@@ -143,40 +121,12 @@
 	 */
 	util.inherits(VirtualMachine, EventEmitter);
 
-	// VirtualMachine.prototype.changeListener = function (e) {
-	//     var _this = this;
-	//     console.dir(this);
-	//
-	//     switch (e.type) {
-	//     case 'create':
-	//         console.dir(e);
-	//         _this.runtime.createBlock(
-	//             e.blockId,
-	//             event.xml.attributes.type.value
-	//         );
-	//         break;
-	//     case 'change':
-	//         // @todo
-	//         break;
-	//     case 'move':
-	//         // @todo
-	//         break;
-	//     case 'delete':
-	//         // @todo
-	//         break;
-	//     }
-	// };
-	//
-	// VirtualMachine.prototype.tapListener = function (e) {
-	//     // @todo
-	// };
-
 	VirtualMachine.prototype.start = function () {
-	    this.runtime.runAllGreenFlags();
+	    // @todo Run all green flags
 	};
 
 	VirtualMachine.prototype.stop = function () {
-	    this.runtime.stop();
+	    // @todo Stop all threads
 	};
 
 	VirtualMachine.prototype.save = function () {
@@ -1232,9 +1182,12 @@
 /* 6 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var Primitives = __webpack_require__(10);
-	var Sequencer = __webpack_require__(7);
-	var Thread = __webpack_require__(9);
+	var EventEmitter = __webpack_require__(1);
+	var util = __webpack_require__(2);
+
+	var Primitives = __webpack_require__(7);
+	var Sequencer = __webpack_require__(8);
+	var Thread = __webpack_require__(10);
 
 	var STEP_THREADS_INTERVAL = 1000 / 30;
 
@@ -1242,6 +1195,10 @@
 	 * A simple runtime for blocks.
 	 */
 	function Runtime () {
+	    // Bind event emitter
+	    EventEmitter.call(instance);
+
+	    // Instantiate sequencer and primitives
 	    this.sequencer = new Sequencer(this);
 	    this.primitives = new Primitives();
 
@@ -1249,6 +1206,11 @@
 	    this.blocks = {};
 	    this.stacks = [];
 	}
+
+	/**
+	 * Inherit from EventEmitter
+	 */
+	util.inherits(Runtime, EventEmitter);
 
 	Runtime.prototype.createBlock = function (e) {
 	    // Create new block
@@ -1324,8 +1286,9 @@
 	    // @todo
 	};
 
-	Runtime.prototype.runStack = function () {
+	Runtime.prototype.runStack = function (e) {
 	    // @todo
+	    console.dir(e);
 	};
 
 	Runtime.prototype.stopAllStacks = function () {
@@ -1355,93 +1318,6 @@
 
 /***/ },
 /* 7 */
-/***/ function(module, exports, __webpack_require__) {
-
-	var Timer = __webpack_require__(8);
-
-	/**
-	 * Constructor
-	 */
-	function Sequencer (runtime) {
-	    // Bi-directional binding for runtime
-	    this.runtime = runtime;
-
-	    // State
-	    this.runningThreads = [];
-	    this.workTime = 30;
-	    this.timer = new Timer();
-	    this.currentTime = 0;
-	}
-
-	Sequencer.prototype.stepAllThreads = function () {
-
-	};
-
-	Sequencer.prototype.stepThread = function (thread) {
-
-	};
-
-	Sequencer.prototype.startSubstack = function (thread) {
-
-	};
-
-	module.exports = Sequencer;
-
-
-/***/ },
-/* 8 */
-/***/ function(module, exports) {
-
-	/**
-	 * Constructor
-	 * @todo Swap out Date.now() with microtime module that works in node & browsers
-	 */
-	function Timer () {
-	    this.startTime = 0;
-	}
-
-	Timer.prototype.time = function () {
-	    return Date.now();
-	};
-
-	Timer.prototype.start = function () {
-	    this.startTime = this.time();
-	};
-
-	Timer.prototype.stop = function () {
-	    return this.startTime - this.time();
-	};
-
-	module.exports = Timer;
-
-
-/***/ },
-/* 9 */
-/***/ function(module, exports) {
-
-	/**
-	 * Thread is an internal data structure used by the interpreter. It holds the
-	 * state of a thread so it can continue from where it left off, and it has
-	 * a stack to support nested control structures and procedure calls.
-	 *
-	 * @param {String} Unique block identifier
-	 */
-	function Thread (id) {
-	    this.topBlockId = id;
-	    this.blockPointer = id;
-	    this.blockFirstTime = -1;
-	    this.nextBlock = null;
-	    this.waiting = null;
-	    this.runningDeviceBlock = false;
-	    this.stack = [];
-	    this.repeatCounter = -1;
-	}
-
-	module.exports = Thread;
-
-
-/***/ },
-/* 10 */
 /***/ function(module, exports) {
 
 	function Primitives () {
@@ -1485,6 +1361,93 @@
 	};
 
 	module.exports = Primitives;
+
+
+/***/ },
+/* 8 */
+/***/ function(module, exports, __webpack_require__) {
+
+	var Timer = __webpack_require__(9);
+
+	/**
+	 * Constructor
+	 */
+	function Sequencer (runtime) {
+	    // Bi-directional binding for runtime
+	    this.runtime = runtime;
+
+	    // State
+	    this.runningThreads = [];
+	    this.workTime = 30;
+	    this.timer = new Timer();
+	    this.currentTime = 0;
+	}
+
+	Sequencer.prototype.stepAllThreads = function () {
+
+	};
+
+	Sequencer.prototype.stepThread = function (thread) {
+
+	};
+
+	Sequencer.prototype.startSubstack = function (thread) {
+
+	};
+
+	module.exports = Sequencer;
+
+
+/***/ },
+/* 9 */
+/***/ function(module, exports) {
+
+	/**
+	 * Constructor
+	 * @todo Swap out Date.now() with microtime module that works in node & browsers
+	 */
+	function Timer () {
+	    this.startTime = 0;
+	}
+
+	Timer.prototype.time = function () {
+	    return Date.now();
+	};
+
+	Timer.prototype.start = function () {
+	    this.startTime = this.time();
+	};
+
+	Timer.prototype.stop = function () {
+	    return this.startTime - this.time();
+	};
+
+	module.exports = Timer;
+
+
+/***/ },
+/* 10 */
+/***/ function(module, exports) {
+
+	/**
+	 * Thread is an internal data structure used by the interpreter. It holds the
+	 * state of a thread so it can continue from where it left off, and it has
+	 * a stack to support nested control structures and procedure calls.
+	 *
+	 * @param {String} Unique block identifier
+	 */
+	function Thread (id) {
+	    this.topBlockId = id;
+	    this.blockPointer = id;
+	    this.blockFirstTime = -1;
+	    this.nextBlock = null;
+	    this.waiting = null;
+	    this.runningDeviceBlock = false;
+	    this.stack = [];
+	    this.repeatCounter = -1;
+	}
+
+	module.exports = Thread;
 
 
 /***/ }

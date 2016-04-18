@@ -12,11 +12,12 @@ function VirtualMachine () {
     var instance = this;
 
     // Bind event emitter and runtime to VM instance
+    // @todo Post message (Web Worker) polyfill
     EventEmitter.call(instance);
     instance.runtime = new Runtime();
 
     /**
-     * Event listener for blockly. Handles validation and serves as a generic
+     * Event listener for blocks. Handles validation and serves as a generic
      * adapter between the blocks and the runtime interface.
      *
      * @param {Object} Blockly "block" event
@@ -54,42 +55,19 @@ function VirtualMachine () {
             });
             break;
         }
+
+        // UI
+        if (typeof e.element === 'undefined') return;
+        switch (e.element) {
+        case 'click':
+            instance.runtime.runStack({
+                id: e.blockId
+            });
+            break;
+        }
     };
 
-    // @todo UI listener
-
     // @todo Forward runtime events
-
-    // Event dispatcher
-    // this.types = keymirror({
-    //     // Messages to runtime
-    //     CREATE_BLOCK: null,
-    //     MOVE_BLOCK: null,
-    //     CHANGE_BLOCK: null,
-    //     DELETE_BLOCK: null,
-    //
-    //     ADD_DEVICE: null,
-    //     REMOVE_DEVICE: null,
-    //
-    //     RUN_STRIP: null,
-    //     RUN_ALL_STRIPS: null,
-    //     STOP_ALL_STRIPS: null,
-    //     RUN_PALETTE_BLOCK: null,
-    //
-    //     // Messages from runtime - subscribe to these
-    //     FEEDBACK_EXECUTING_BLOCK: null,
-    //     FEEDBACK_STOPPED_EXECUTING_BLOCK: null,
-    //     DEVICE_RUN_OP: null,
-    //     DEVICE_STOP_OP: null,
-    //
-    //     // Tell back the interpreter device has finished an op
-    //     DEVICE_FINISHED_OP: null
-    // });
-
-    // Bind block event stream
-    // setTimeout(function () {
-    //     _this.emit('foo', 'bar');
-    // }, 1000);
 }
 
 /**
@@ -97,40 +75,12 @@ function VirtualMachine () {
  */
 util.inherits(VirtualMachine, EventEmitter);
 
-// VirtualMachine.prototype.changeListener = function (e) {
-//     var _this = this;
-//     console.dir(this);
-//
-//     switch (e.type) {
-//     case 'create':
-//         console.dir(e);
-//         _this.runtime.createBlock(
-//             e.blockId,
-//             event.xml.attributes.type.value
-//         );
-//         break;
-//     case 'change':
-//         // @todo
-//         break;
-//     case 'move':
-//         // @todo
-//         break;
-//     case 'delete':
-//         // @todo
-//         break;
-//     }
-// };
-//
-// VirtualMachine.prototype.tapListener = function (e) {
-//     // @todo
-// };
-
 VirtualMachine.prototype.start = function () {
-    this.runtime.runAllGreenFlags();
+    // @todo Run all green flags
 };
 
 VirtualMachine.prototype.stop = function () {
-    this.runtime.stop();
+    // @todo Stop all threads
 };
 
 VirtualMachine.prototype.save = function () {
