@@ -1,12 +1,21 @@
 ESLINT=./node_modules/.bin/eslint
 NODE=node
 TAP=./node_modules/.bin/tap
+WEBPACK=./node_modules/.bin/webpack --progress --colors
+
+# ------------------------------------------------------------------------------
+
+build:
+	$(WEBPACK)
+
+watch:
+	$(WEBPACK) --watch
 
 # ------------------------------------------------------------------------------
 
 lint:
-	$(ESLINT) ./*.js
-	$(ESLINT) ./lib/*.js
+	$(ESLINT) ./src/*.js
+	$(ESLINT) ./src/**/*.js
 	$(ESLINT) ./test/**/*.js
 
 test:
@@ -21,4 +30,4 @@ benchmark:
 
 # ------------------------------------------------------------------------------
 
-.PHONY: lint test coverage benchmark
+.PHONY: build lint test coverage benchmark
