@@ -1,5 +1,7 @@
 ## scratch-vm
 
+[![Build Status](https://travis-ci.com/LLK/scratch-vm.svg?token=xzzHj4ct3SyBTpeqxnx1&branch=develop)](https://travis-ci.com/LLK/scratch-vm)
+
 ## Installation
 ```bash
 npm install scratch-vm
