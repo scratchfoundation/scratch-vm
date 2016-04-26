@@ -24,7 +24,9 @@ test('create', function (t) {
     var r = new Runtime();
     r.createBlock({
         id: 'foo',
-        opcode: 'TEST_BLOCK'
+        opcode: 'TEST_BLOCK',
+        next: null,
+        fields: {}
     });
 
     t.type(r.blocks['foo'], 'object');
@@ -37,11 +39,15 @@ test('move', function (t) {
     var r = new Runtime();
     r.createBlock({
         id: 'foo',
-        opcode: 'TEST_BLOCK'
+        opcode: 'TEST_BLOCK',
+        next: null,
+        fields: {}
     });
     r.createBlock({
         id: 'bar',
-        opcode: 'TEST_BLOCK'
+        opcode: 'TEST_BLOCK',
+        next: null,
+        fields: {}
     });
 
     // Attach 'bar' to the end of 'foo'
@@ -69,7 +75,9 @@ test('delete', function (t) {
     var r = new Runtime();
     r.createBlock({
         id: 'foo',
-        opcode: 'TEST_BLOCK'
+        opcode: 'TEST_BLOCK',
+        next: null,
+        fields: {}
     });
     r.deleteBlock({
         id: 'foo'

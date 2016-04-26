@@ -32,6 +32,44 @@ make build
 </script>
 ```
 
+## Abstract Syntax Tree
+
+#### Overview
+
+#### Anatomy of a Block
+```json
+{
+    "id": "^1r~63Gdl7;Dh?I*OP3_",
+    "opcode": "wedo_motorclockwise",
+    "next": null,
+    "fields": {
+        "DURATION": {
+            "name": "DURATION",
+            "value": null,
+            "blocks": {
+                "1?P=eV(OiDY3vMk!24Ip": {
+                    "id": "1?P=eV(OiDY3vMk!24Ip",
+                    "opcode": "math_number",
+                    "next": null,
+                    "fields": {
+                        "NUM": {
+                            "name": "NUM",
+                            "value": "10",
+                            "blocks": null
+                        }
+                    }
+                }
+            }
+        },
+        "SUBSTACK": {
+            "name": "SUBSTACK",
+            "value": "@1ln(HsUO4!]*2*%BrE|",
+            "blocks": null
+        }
+    }
+}
+```
+
 ## Testing
 ```bash
 make test

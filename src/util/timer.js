@@ -1,6 +1,5 @@
 /**
  * Constructor
- * @todo Swap out Date.now() with microtime module that works in node & browsers
  */
 function Timer () {
     this.startTime = 0;

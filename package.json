@@ -13,10 +13,14 @@
   "scripts": {
     "test": "make test"
   },
-  "dependencies": {},
+  "dependencies": {
+    "htmlparser2": "3.9.0",
+    "memoizee": "0.3.10"
+  },
   "devDependencies": {
     "benchmark": "2.1.0",
     "eslint": "2.7.0",
+    "json-loader": "0.5.4",
     "tap": "5.7.1",
     "webpack": "1.13.0"
   }

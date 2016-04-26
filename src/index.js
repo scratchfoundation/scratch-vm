@@ -2,6 +2,7 @@ var EventEmitter = require('events');
 var util = require('util');
 
 var Runtime = require('./engine/runtime');
+var adapter = require('./engine/adapter');
 
 /**
  * Handles connections between blocks, stage, and extensions.
@@ -30,23 +31,23 @@ function VirtualMachine () {
         // Blocks
         switch (e.type) {
         case 'create':
-            instance.runtime.createBlock({
+            instance.runtime.createBlock(adapter(e));
+            break;
+        case 'change':
+            instance.runtime.changeBlock({
                 id: e.blockId,
-                opcode: e.xml.attributes.type.value
+                element: e.element,
+                name: e.name,
+                value: e.newValue
             });
             break;
         case 'move':
             instance.runtime.moveBlock({
                 id: e.blockId,
                 oldParent: e.oldParentId,
-                oldInput: e.oldInputName,
+                oldField: e.oldInputName,
                 newParent: e.newParentId,
-                newInput: e.newInputName
-            });
-            break;
-        case 'change':
-            instance.runtime.changeBlock({
-                id: e.blockId
+                newField: e.newInputName
             });
             break;
         case 'delete':
@@ -55,41 +56,13 @@ function VirtualMachine () {
             });
             break;
         }
-
-        // UI
-        if (typeof e.element === 'undefined') return;
-        switch (e.element) {
-        case 'click':
-            instance.runtime.runStack({
-                id: e.blockId
-            });
-            break;
-        }
     };
-
-    // @todo Forward runtime events
 }
 
 /**
  * Inherit from EventEmitter
  */
 util.inherits(VirtualMachine, EventEmitter);
-
-VirtualMachine.prototype.start = function () {
-    // @todo Run all green flags
-};
-
-VirtualMachine.prototype.stop = function () {
-    // @todo Stop all threads
-};
-
-VirtualMachine.prototype.save = function () {
-    // @todo Serialize runtime state
-};
-
-VirtualMachine.prototype.load = function () {
-    // @todo Deserialize and apply runtime state
-};
 
 /**
  * Export and bind to `window`

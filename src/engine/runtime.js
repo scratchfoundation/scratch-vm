@@ -1,26 +1,19 @@
 var EventEmitter = require('events');
 var util = require('util');
 
-var Primitives = require('./primatives');
-var Sequencer = require('./sequencer');
-var Thread = require('./thread');
-
-var STEP_THREADS_INTERVAL = 1000 / 30;
-
 /**
  * A simple runtime for blocks.
  */
 function Runtime () {
     // Bind event emitter
-    EventEmitter.call(instance);
-
-    // Instantiate sequencer and primitives
-    this.sequencer = new Sequencer(this);
-    this.primitives = new Primitives();
+    EventEmitter.call(this);
 
     // State
     this.blocks = {};
     this.stacks = [];
+
+    window._BLOCKS = this.blocks;
+    window._STACKS = this.stacks;
 }
 
 /**
@@ -28,19 +21,34 @@ function Runtime () {
  */
 util.inherits(Runtime, EventEmitter);
 
-Runtime.prototype.createBlock = function (e) {
+Runtime.prototype.createBlock = function (block) {
     // Create new block
-    this.blocks[e.id] = {
-        id: e.id,
-        opcode: e.opcode,
-        next: null,
-        inputs: {}
-    };
+    this.blocks[block.id] = block;
+
+    // Walk each field and add any shadow blocks
+    // @todo Expand this to cover vertical / nested blocks
+    for (var i in block.fields) {
+        var shadows = block.fields[i].blocks;
+        for (var y in shadows) {
+            var shadow = shadows[y];
+            this.blocks[shadow.id] = shadow;
+        };
+    }
 
     // Push block id to stacks array. New blocks are always a stack even if only
     // momentary. If the new block is added to an existing stack this stack will
     // be removed by the `moveBlock` method below.
-    this.stacks.push(e.id);
+    this.stacks.push(block.id);
+};
+
+Runtime.prototype.changeBlock = function (args) {
+    // Validate
+    if (args.element !== 'field') return;
+    if (typeof this.blocks[args.id] === 'undefined') return;
+    if (typeof this.blocks[args.id].fields[args.name] === 'undefined') return;
+
+    // Update block value
+    this.blocks[args.id].fields[args.name].value = args.value;
 };
 
 Runtime.prototype.moveBlock = function (e) {
@@ -52,10 +60,14 @@ Runtime.prototype.moveBlock = function (e) {
         _this._deleteStack(e.id);
 
         // Update new parent
-        if (e.newInput === undefined) {
+        if (e.newField === undefined) {
             _this.blocks[e.newParent].next = e.id;
         } else {
-            _this.blocks[e.newParent].inputs[e.newInput] = e.id;
+            _this.blocks[e.newParent].fields[e.newField] = {
+                name: e.newField,
+                value: e.id,
+                blocks: {}
+            };
         }
     }
 
@@ -65,30 +77,34 @@ Runtime.prototype.moveBlock = function (e) {
         _this.stacks.push(e.id);
 
         // Update old parent
-        if (e.oldInput === undefined) {
+        if (e.oldField === undefined) {
             _this.blocks[e.oldParent].next = null;
         } else {
-            delete _this.blocks[e.oldParent].inputs[e.oldInput];
+            delete _this.blocks[e.oldParent].fields[e.oldField];
         }
     }
-};
-
-Runtime.prototype.changeBlock = function (e) {
-    // @todo
 };
 
 Runtime.prototype.deleteBlock = function (e) {
     // @todo Stop threads running on this stack
 
-    // Delete children
+    // Get block
     var block = this.blocks[e.id];
+
+    // Delete children
     if (block.next !== null) {
         this.deleteBlock({id: block.next});
     }
 
-    // Delete inputs
-    for (var i in block.inputs) {
-        this.deleteBlock({id: block.inputs[i]});
+    // Delete substacks and fields
+    for (var field in block.fields) {
+        if (field === 'SUBSTACK') {
+            this.deleteBlock({id: block.fields[field].value});
+        } else {
+            for (var shadow in block.fields[field].blocks) {
+                this.deleteBlock({id: shadow});
+            }
+        }
     }
 
     // Delete stack
@@ -96,19 +112,6 @@ Runtime.prototype.deleteBlock = function (e) {
 
     // Delete block
     delete this.blocks[e.id];
-};
-
-Runtime.prototype.runAllStacks = function () {
-    // @todo
-};
-
-Runtime.prototype.runStack = function (e) {
-    // @todo
-    console.dir(e);
-};
-
-Runtime.prototype.stopAllStacks = function () {
-    // @todo
 };
 
 // -----------------------------------------------------------------------------
@@ -126,7 +129,7 @@ Runtime.prototype._getNextBlock = function (id) {
 
 Runtime.prototype._getSubstack = function (id) {
     if (typeof this.blocks[id] === 'undefined') return null;
-    return this.blocks[id].inputs['SUBSTACK'];
+    return this.blocks[id].fields['SUBSTACK'];
 };
 
 module.exports = Runtime;
