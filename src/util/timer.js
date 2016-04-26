@@ -13,8 +13,8 @@ Timer.prototype.start = function () {
     this.startTime = this.time();
 };
 
-Timer.prototype.stop = function () {
-    return this.startTime - this.time();
+Timer.prototype.timeElapsed = function () {
+    return this.time() - this.startTime;
 };
 
 module.exports = Timer;

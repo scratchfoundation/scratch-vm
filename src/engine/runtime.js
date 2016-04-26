@@ -3,7 +3,7 @@ var Sequencer = require('./sequencer');
 var util = require('util');
 
 /**
- * Manages blocks, stacks, threads, and the sequencer.
+ * Manages blocks, stacks, and the sequencer.
  */
 function Runtime () {
     // Bind event emitter
@@ -14,8 +14,6 @@ function Runtime () {
     this.blocks = {};
     /** @type {Array.<String>} */
     this.stacks = [];
-    /** @type {Array.<Thread>} */
-    this.threads = [];
 
     /** @type {!Sequencer} */
     this.sequencer = new Sequencer();
