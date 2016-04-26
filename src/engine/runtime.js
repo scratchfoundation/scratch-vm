@@ -69,7 +69,7 @@ Runtime.prototype.moveBlock = function (e) {
     }
 
     // Block was removed from parent
-    if (e.newParentId === undefined && e.oldParent !== undefined) {
+    if (e.newParent === undefined && e.oldParent !== undefined) {
         // Add stack
         _this.stacks.push(e.id);
 
