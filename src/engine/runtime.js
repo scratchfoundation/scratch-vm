@@ -1,16 +1,24 @@
 var EventEmitter = require('events');
+var Sequencer = require('./sequencer');
 var util = require('util');
 
 /**
- * A simple runtime for blocks.
+ * Manages blocks, stacks, threads, and the sequencer.
  */
 function Runtime () {
     // Bind event emitter
     EventEmitter.call(this);
 
-    // State
+    // State for the runtime
+    /** @type {Object.<string, Object>} */
     this.blocks = {};
+    /** @type {Array.<String>} */
     this.stacks = [];
+    /** @type {Array.<Thread>} */
+    this.threads = [];
+
+    /** @type {!Sequencer} */
+    this.sequencer = new Sequencer();
 }
 
 /**
@@ -18,6 +26,10 @@ function Runtime () {
  */
 util.inherits(Runtime, EventEmitter);
 
+/**
+ * Block management: create blocks and stacks from a `create` event
+ * @param {!Object} block Blockly create event to be processed
+ */
 Runtime.prototype.createBlock = function (block) {
     // Create new block
     this.blocks[block.id] = block;
@@ -38,6 +50,10 @@ Runtime.prototype.createBlock = function (block) {
     this.stacks.push(block.id);
 };
 
+/**
+ * Block management: change block field values
+ * @param {!Object} args Blockly change event to be processed
+ */
 Runtime.prototype.changeBlock = function (args) {
     // Validate
     if (args.element !== 'field') return;
@@ -48,6 +64,10 @@ Runtime.prototype.changeBlock = function (args) {
     this.blocks[args.id].fields[args.name].value = args.value;
 };
 
+/**
+ * Block management: move blocks from parent to parent
+ * @param {!Object} e Blockly move event to be processed
+ */
 Runtime.prototype.moveBlock = function (e) {
     var _this = this;
 
@@ -69,7 +89,7 @@ Runtime.prototype.moveBlock = function (e) {
     }
 
     // Block was removed from parent
-    if (e.newParentId === undefined && e.oldParent !== undefined) {
+    if (e.newParent === undefined && e.oldParent !== undefined) {
         // Add stack
         _this.stacks.push(e.id);
 
@@ -82,6 +102,10 @@ Runtime.prototype.moveBlock = function (e) {
     }
 };
 
+/**
+ * Block management: delete blocks and their associated stacks
+ * @param {!Object} e Blockly delete event to be processed
+ */
 Runtime.prototype.deleteBlock = function (e) {
     // @todo Stop threads running on this stack
 
@@ -114,16 +138,30 @@ Runtime.prototype.deleteBlock = function (e) {
 // -----------------------------------------------------------------------------
 // -----------------------------------------------------------------------------
 
+/**
+ * Helper to remove a stack from `this.stacks`
+ * @param {?string} id ID of block that starts the stack
+ */
 Runtime.prototype._deleteStack = function (id) {
     var i = this.stacks.indexOf(id);
     if (i > -1) this.stacks.splice(i, 1);
 };
 
+/**
+ * Helper to get the next block for a particular block
+ * @param {?string} id ID of block to get the next block for
+ * @return {?string} ID of next block in the sequence
+ */
 Runtime.prototype._getNextBlock = function (id) {
     if (typeof this.blocks[id] === 'undefined') return null;
     return this.blocks[id].next;
 };
 
+/**
+ * Helper to get the substack for a particular C-shaped block
+ * @param {?string} id ID for block to get the substack for
+ * @return {?string} ID of block in the substack
+ */
 Runtime.prototype._getSubstack = function (id) {
     if (typeof this.blocks[id] === 'undefined') return null;
     return this.blocks[id].fields['SUBSTACK'];
