@@ -10,7 +10,7 @@ test('spec', function (t) {
     t.type(timer.startTime, 'number');
     t.type(timer.time, 'function');
     t.type(timer.start, 'function');
-    t.type(timer.stop, 'function');
+    t.type(timer.timeElapsed, 'function');
 
     t.end();
 });
@@ -23,7 +23,7 @@ test('time', function (t) {
     t.end();
 });
 
-test('start / stop', function (t) {
+test('start / timeElapsed', function (t) {
     var timer = new Timer();
     var delay = 100;
     var threshold = 1000 / 60;  // 60 hz
@@ -31,10 +31,12 @@ test('start / stop', function (t) {
     // Start timer
     timer.start();
 
-    // Wait and stop timer
+    // Wait and measure timer
     setTimeout(function () {
-        var stop = timer.stop();
-        t.ok(stop >= -(delay + threshold) && stop <= -(delay - threshold));
+        var timeElapsed = timer.timeElapsed();
+        t.ok(timeElapsed >= 0);
+        t.ok(timeElapsed >= (delay - threshold) &&
+             timeElapsed <= (delay + threshold));
         t.end();
     }, delay);
 });
