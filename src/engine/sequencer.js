@@ -1,4 +1,4 @@
-var Timer = require('../util/Timer');
+var Timer = require('../util/timer');
 
 function Sequencer (runtime) {
     /**
