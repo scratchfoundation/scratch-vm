@@ -10,10 +10,26 @@ function Runtime () {
     EventEmitter.call(this);
 
     // State for the runtime
-    /** @type {Object.<string, Object>} */
+    /**
+     * All blocks in the workspace.
+     * Keys are block IDs, values are metadata about the block.
+     * @type {Object.<string, Object>}
+     */
     this.blocks = {};
-    /** @type {Array.<String>} */
+
+    /**
+     * All stacks in the workspace.
+     * A list of block IDs that represent stacks (first block in stack).
+     * @type {Array.<String>}
+     */
     this.stacks = [];
+
+    /**
+     * A list of threads that are currently running in the VM.
+     * Threads are added when execution starts and pruned when execution ends.
+     * @type {Array.<Thread>}
+     */
+    this.threads = [];
 
     /** @type {!Sequencer} */
     this.sequencer = new Sequencer();
