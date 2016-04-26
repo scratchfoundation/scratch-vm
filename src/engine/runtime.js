@@ -1,5 +1,6 @@
 var EventEmitter = require('events');
 var Sequencer = require('./sequencer');
+var Thread = require('./thread');
 var util = require('util');
 
 /**
@@ -32,13 +33,18 @@ function Runtime () {
     this.threads = [];
 
     /** @type {!Sequencer} */
-    this.sequencer = new Sequencer();
+    this.sequencer = new Sequencer(this);
 }
 
 /**
  * Inherit from EventEmitter
  */
 util.inherits(Runtime, EventEmitter);
+
+/**
+ * How rapidly we try to step threads, in ms.
+ */
+Runtime.THREAD_STEP_INTERVAL = 1000 / 60;
 
 /**
  * Block management: create blocks and stacks from a `create` event
@@ -147,6 +153,49 @@ Runtime.prototype.deleteBlock = function (e) {
 
     // Delete block
     delete this.blocks[e.id];
+};
+
+// -----------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
+
+/**
+ * Create a thread and push it to the list of threads.
+ * @param {!string} id ID of block that starts the stack
+ */
+Runtime.prototype._pushThread = function (id) {
+    if (this.stacks.indexOf(id) < -1) return;
+    var thread = new Thread(id);
+    this.threads.push(thread);
+};
+
+/**
+ * Remove a thread from the list of threads.
+ * @param {!string} id ID of block that starts the stack
+ */
+Runtime.prototype._removeThread = function (id) {
+    var i = this.threads.indexOf(id);
+    if (i > -1) this.threads.splice(i, 1);
+};
+
+/**
+ * Repeatedly run `sequencer.stepThreads` and filter out
+ * inactive threads after each iteration.
+ */
+Runtime.prototype._step = function () {
+    var inactiveThreads = this.sequencer.stepThreads(this.threads);
+    for (var i = 0; i < inactiveThreads.length; i++) {
+        this._removeThread(inactiveThreads[i]);
+    }
+};
+
+/**
+ * Set up timers to repeatedly step in a browser
+ */
+Runtime.prototype.start = function () {
+    if (!window.setInterval) return;
+    window.setInterval(function() {
+        this._step();
+    }.bind(this), Runtime.THREAD_STEP_INTERVAL);
 };
 
 // -----------------------------------------------------------------------------
