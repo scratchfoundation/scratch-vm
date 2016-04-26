@@ -11,9 +11,6 @@ function Runtime () {
     // State
     this.blocks = {};
     this.stacks = [];
-
-    window._BLOCKS = this.blocks;
-    window._STACKS = this.stacks;
 }
 
 /**
@@ -32,7 +29,7 @@ Runtime.prototype.createBlock = function (block) {
         for (var y in shadows) {
             var shadow = shadows[y];
             this.blocks[shadow.id] = shadow;
-        };
+        }
     }
 
     // Push block id to stacks array. New blocks are always a stack even if only

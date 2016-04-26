@@ -25,9 +25,6 @@ test:
 coverage:
 	$(TAP) ./test/{unit,integration}/*.js --coverage --coverage-report=lcov
 
-benchmark:
-	$(NODE) ./test/benchmark/performance.js
-
 # ------------------------------------------------------------------------------
 
 .PHONY: build lint test coverage benchmark

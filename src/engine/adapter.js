@@ -39,7 +39,7 @@ module.exports = function (e) {
     obj.fields = extract(parseDOM(e.xml.innerHTML));
 
     return obj;
-}
+};
 
 /**
  * Extracts fields from a block's innerHTML.

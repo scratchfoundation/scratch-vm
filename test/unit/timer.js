@@ -25,7 +25,6 @@ test('time', function (t) {
 
 test('start / stop', function (t) {
     var timer = new Timer();
-    var start = timer.time();
     var delay = 100;
     var threshold = 1000 / 60;  // 60 hz
 

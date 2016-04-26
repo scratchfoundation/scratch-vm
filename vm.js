@@ -1168,9 +1168,6 @@
 	    // State
 	    this.blocks = {};
 	    this.stacks = [];
-
-	    window._BLOCKS = this.blocks;
-	    window._STACKS = this.stacks;
 	}
 
 	/**
@@ -1189,7 +1186,7 @@
 	        for (var y in shadows) {
 	            var shadow = shadows[y];
 	            this.blocks[shadow.id] = shadow;
-	        };
+	        }
 	    }
 
 	    // Push block id to stacks array. New blocks are always a stack even if only
@@ -1337,7 +1334,7 @@
 	    obj.fields = extract(parseDOM(e.xml.innerHTML));
 
 	    return obj;
-	}
+	};
 
 	/**
 	 * Extracts fields from a block's innerHTML.
