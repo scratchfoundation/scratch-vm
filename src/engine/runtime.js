@@ -50,7 +50,6 @@ Runtime.THREAD_STEP_INTERVAL = 1000 / 60;
  * Block management: create blocks and stacks from a `create` event
  * @param {!Object} block Blockly create event to be processed
  */
-Runtime.prototype.createBlock = function (block) {
 Runtime.prototype.createBlock = function (block, opt_isFlyoutBlock) {
     // Create new block
     this.blocks[block.id] = block;
