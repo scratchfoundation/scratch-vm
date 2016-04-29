@@ -1374,6 +1374,34 @@
 	};
 
 	/**
+	 * Green flag, which stops currently running threads
+	 * and adds all top-level stacks that start with the green flag
+	 */
+	Runtime.prototype.greenFlag = function () {
+	    // Remove all existing threads
+	    for (var i = 0; i < this.threads.length; i++) {
+	        this._removeThread(this.threads[i]);
+	    }
+	    // Add all top stacks with green flag
+	    for (var j = 0; j < this.stacks.length; j++) {
+	        var topBlock = this.stacks[j];
+	        if (this.blocks[topBlock].opcode === 'event_whenflagclicked') {
+	            this._pushThread(this.stacks[j]);
+	        }
+	    }
+	};
+
+	/**
+	 * Stop "everything"
+	 */
+	Runtime.prototype.stopAll = function () {
+	    for (var i = 0; i < this.threads.length; i++) {
+	        this._removeThread(this.threads[i]);
+	    }
+	    // @todo call stop function in all extensions/packages/WeDo stub
+	};
+
+	/**
 	 * Repeatedly run `sequencer.stepThreads` and filter out
 	 * inactive threads after each iteration.
 	 */
