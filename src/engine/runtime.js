@@ -50,7 +50,7 @@ Runtime.THREAD_STEP_INTERVAL = 1000 / 60;
  * Block management: create blocks and stacks from a `create` event
  * @param {!Object} block Blockly create event to be processed
  */
-Runtime.prototype.createBlock = function (block) {
+Runtime.prototype.createBlock = function (block, opt_isFlyoutBlock) {
     // Create new block
     this.blocks[block.id] = block;
 
@@ -67,7 +67,9 @@ Runtime.prototype.createBlock = function (block) {
     // Push block id to stacks array. New blocks are always a stack even if only
     // momentary. If the new block is added to an existing stack this stack will
     // be removed by the `moveBlock` method below.
-    this.stacks.push(block.id);
+    if (!opt_isFlyoutBlock) {
+        this.stacks.push(block.id);
+    }
 };
 
 /**
