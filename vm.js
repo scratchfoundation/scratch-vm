@@ -1350,10 +1350,10 @@
 
 	/**
 	 * Remove a thread from the list of threads.
-	 * @param {!Thread} thread Thread object to remove from actives
+	 * @param {?Thread} thread Thread object to remove from actives
 	 */
-	Runtime.prototype._removeThread = function (id) {
-	    var i = this.threads.indexOf(id);
+	Runtime.prototype._removeThread = function (thread) {
+	    var i = this.threads.indexOf(thread);
 	    if (i > -1) this.threads.splice(i, 1);
 	};
 
@@ -1366,8 +1366,10 @@
 	    for (var i = 0; i < this.threads.length; i++) {
 	        if (this.threads[i].topBlock == stackId) {
 	            this._removeThread(this.threads[i]);
+	            return;
 	        }
 	    }
+	    // Otherwise add it
 	    this._pushThread(stackId);
 	};
 
