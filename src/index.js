@@ -31,7 +31,7 @@ function VirtualMachine () {
         // Blocks
         switch (e.type) {
         case 'create':
-            instance.runtime.createBlock(adapter(e));
+            instance.runtime.createBlock(adapter(e), false);
             break;
         case 'change':
             instance.runtime.changeBlock({
@@ -48,6 +48,27 @@ function VirtualMachine () {
                 oldField: e.oldInputName,
                 newParent: e.newParentId,
                 newField: e.newInputName
+            });
+            break;
+        case 'delete':
+            instance.runtime.deleteBlock({
+                id: e.blockId
+            });
+            break;
+        }
+    };
+
+    instance.flyoutBlockListener = function (e) {
+        switch (e.type) {
+        case 'create':
+            instance.runtime.createBlock(adapter(e), true);
+            break;
+        case 'change':
+            instance.runtime.changeBlock({
+                id: e.blockId,
+                element: e.element,
+                name: e.name,
+                value: e.newValue
             });
             break;
         case 'delete':
