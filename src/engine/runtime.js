@@ -1,16 +1,39 @@
 var EventEmitter = require('events');
+var Sequencer = require('./sequencer');
+var Thread = require('./thread');
 var util = require('util');
 
 /**
- * A simple runtime for blocks.
+ * Manages blocks, stacks, and the sequencer.
  */
 function Runtime () {
     // Bind event emitter
     EventEmitter.call(this);
 
-    // State
+    // State for the runtime
+    /**
+     * All blocks in the workspace.
+     * Keys are block IDs, values are metadata about the block.
+     * @type {Object.<string, Object>}
+     */
     this.blocks = {};
+
+    /**
+     * All stacks in the workspace.
+     * A list of block IDs that represent stacks (first block in stack).
+     * @type {Array.<String>}
+     */
     this.stacks = [];
+
+    /**
+     * A list of threads that are currently running in the VM.
+     * Threads are added when execution starts and pruned when execution ends.
+     * @type {Array.<Thread>}
+     */
+    this.threads = [];
+
+    /** @type {!Sequencer} */
+    this.sequencer = new Sequencer(this);
 }
 
 /**
@@ -18,6 +41,15 @@ function Runtime () {
  */
 util.inherits(Runtime, EventEmitter);
 
+/**
+ * How rapidly we try to step threads, in ms.
+ */
+Runtime.THREAD_STEP_INTERVAL = 1000 / 60;
+
+/**
+ * Block management: create blocks and stacks from a `create` event
+ * @param {!Object} block Blockly create event to be processed
+ */
 Runtime.prototype.createBlock = function (block) {
     // Create new block
     this.blocks[block.id] = block;
@@ -38,6 +70,10 @@ Runtime.prototype.createBlock = function (block) {
     this.stacks.push(block.id);
 };
 
+/**
+ * Block management: change block field values
+ * @param {!Object} args Blockly change event to be processed
+ */
 Runtime.prototype.changeBlock = function (args) {
     // Validate
     if (args.element !== 'field') return;
@@ -48,6 +84,10 @@ Runtime.prototype.changeBlock = function (args) {
     this.blocks[args.id].fields[args.name].value = args.value;
 };
 
+/**
+ * Block management: move blocks from parent to parent
+ * @param {!Object} e Blockly move event to be processed
+ */
 Runtime.prototype.moveBlock = function (e) {
     var _this = this;
 
@@ -82,6 +122,10 @@ Runtime.prototype.moveBlock = function (e) {
     }
 };
 
+/**
+ * Block management: delete blocks and their associated stacks
+ * @param {!Object} e Blockly delete event to be processed
+ */
 Runtime.prototype.deleteBlock = function (e) {
     // @todo Stop threads running on this stack
 
@@ -114,16 +158,73 @@ Runtime.prototype.deleteBlock = function (e) {
 // -----------------------------------------------------------------------------
 // -----------------------------------------------------------------------------
 
+/**
+ * Create a thread and push it to the list of threads.
+ * @param {!string} id ID of block that starts the stack
+ */
+Runtime.prototype._pushThread = function (id) {
+    if (this.stacks.indexOf(id) < -1) return;
+    var thread = new Thread(id);
+    this.threads.push(thread);
+};
+
+/**
+ * Remove a thread from the list of threads.
+ * @param {!string} id ID of block that starts the stack
+ */
+Runtime.prototype._removeThread = function (id) {
+    var i = this.threads.indexOf(id);
+    if (i > -1) this.threads.splice(i, 1);
+};
+
+/**
+ * Repeatedly run `sequencer.stepThreads` and filter out
+ * inactive threads after each iteration.
+ */
+Runtime.prototype._step = function () {
+    var inactiveThreads = this.sequencer.stepThreads(this.threads);
+    for (var i = 0; i < inactiveThreads.length; i++) {
+        this._removeThread(inactiveThreads[i]);
+    }
+};
+
+/**
+ * Set up timers to repeatedly step in a browser
+ */
+Runtime.prototype.start = function () {
+    if (!window.setInterval) return;
+    window.setInterval(function() {
+        this._step();
+    }.bind(this), Runtime.THREAD_STEP_INTERVAL);
+};
+
+// -----------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
+
+/**
+ * Helper to remove a stack from `this.stacks`
+ * @param {?string} id ID of block that starts the stack
+ */
 Runtime.prototype._deleteStack = function (id) {
     var i = this.stacks.indexOf(id);
     if (i > -1) this.stacks.splice(i, 1);
 };
 
+/**
+ * Helper to get the next block for a particular block
+ * @param {?string} id ID of block to get the next block for
+ * @return {?string} ID of next block in the sequence
+ */
 Runtime.prototype._getNextBlock = function (id) {
     if (typeof this.blocks[id] === 'undefined') return null;
     return this.blocks[id].next;
 };
 
+/**
+ * Helper to get the substack for a particular C-shaped block
+ * @param {?string} id ID for block to get the substack for
+ * @return {?string} ID of block in the substack
+ */
 Runtime.prototype._getSubstack = function (id) {
     if (typeof this.blocks[id] === 'undefined') return null;
     return this.blocks[id].fields['SUBSTACK'];
