@@ -172,11 +172,25 @@ Runtime.prototype._pushThread = function (id) {
 
 /**
  * Remove a thread from the list of threads.
- * @param {!string} id ID of block that starts the stack
+ * @param {!Thread} thread Thread object to remove from actives
  */
 Runtime.prototype._removeThread = function (id) {
     var i = this.threads.indexOf(id);
     if (i > -1) this.threads.splice(i, 1);
+};
+
+/**
+ * Toggle a stack
+ * @param {!string} stackId ID of block that starts the stack
+ */
+Runtime.prototype.toggleStack = function (stackId) {
+    // Remove any existing thread
+    for (var i = 0; i < this.threads.length; i++) {
+        if (this.threads[i].topBlock == stackId) {
+            this._removeThread(this.threads[i]);
+        }
+    }
+    this._pushThread(stackId);
 };
 
 /**

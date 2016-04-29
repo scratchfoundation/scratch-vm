@@ -77,7 +77,7 @@
 	        // Blocks
 	        switch (e.type) {
 	        case 'create':
-	            instance.runtime.createBlock(adapter(e));
+	            instance.runtime.createBlock(adapter(e), false);
 	            break;
 	        case 'change':
 	            instance.runtime.changeBlock({
@@ -94,6 +94,27 @@
 	                oldField: e.oldInputName,
 	                newParent: e.newParentId,
 	                newField: e.newInputName
+	            });
+	            break;
+	        case 'delete':
+	            instance.runtime.deleteBlock({
+	                id: e.blockId
+	            });
+	            break;
+	        }
+	    };
+
+	    instance.flyoutBlockListener = function (e) {
+	        switch (e.type) {
+	        case 'create':
+	            instance.runtime.createBlock(adapter(e), true);
+	            break;
+	        case 'change':
+	            instance.runtime.changeBlock({
+	                id: e.blockId,
+	                element: e.element,
+	                name: e.name,
+	                value: e.newValue
 	            });
 	            break;
 	        case 'delete':
@@ -1207,7 +1228,7 @@
 	 * Block management: create blocks and stacks from a `create` event
 	 * @param {!Object} block Blockly create event to be processed
 	 */
-	Runtime.prototype.createBlock = function (block) {
+	Runtime.prototype.createBlock = function (block, opt_isFlyoutBlock) {
 	    // Create new block
 	    this.blocks[block.id] = block;
 
@@ -1224,7 +1245,9 @@
 	    // Push block id to stacks array. New blocks are always a stack even if only
 	    // momentary. If the new block is added to an existing stack this stack will
 	    // be removed by the `moveBlock` method below.
-	    this.stacks.push(block.id);
+	    if (!opt_isFlyoutBlock) {
+	        this.stacks.push(block.id);
+	    }
 	};
 
 	/**
@@ -1327,11 +1350,25 @@
 
 	/**
 	 * Remove a thread from the list of threads.
-	 * @param {!string} id ID of block that starts the stack
+	 * @param {!Thread} thread Thread object to remove from actives
 	 */
 	Runtime.prototype._removeThread = function (id) {
 	    var i = this.threads.indexOf(id);
 	    if (i > -1) this.threads.splice(i, 1);
+	};
+
+	/**
+	 * Toggle a stack
+	 * @param {!string} stackId ID of block that starts the stack
+	 */
+	Runtime.prototype.toggleStack = function (stackId) {
+	    // Remove any existing thread
+	    for (var i = 0; i < this.threads.length; i++) {
+	        if (this.threads[i].topBlock == stackId) {
+	            this._removeThread(this.threads[i]);
+	        }
+	    }
+	    this._pushThread(stackId);
 	};
 
 	/**
@@ -1499,6 +1536,10 @@
 	 * @constructor
 	 */
 	function Thread (firstBlock) {
+	    /**
+	     * Top block of the thread
+	     */
+	    this.topBlock = firstBlock;
 	    /**
 	     * Next block that the thread will execute.
 	     * @type {string}
