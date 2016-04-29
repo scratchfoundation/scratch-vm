@@ -188,8 +188,10 @@ Runtime.prototype.toggleStack = function (stackId) {
     for (var i = 0; i < this.threads.length; i++) {
         if (this.threads[i].topBlock == stackId) {
             this._removeThread(this.threads[i]);
+            return;
         }
     }
+    // Otherwise add it
     this._pushThread(stackId);
 };
 
