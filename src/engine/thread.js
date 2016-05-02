@@ -5,6 +5,10 @@
  */
 function Thread (firstBlock) {
     /**
+     * Top block of the thread
+     */
+    this.topBlock = firstBlock;
+    /**
      * Next block that the thread will execute.
      * @type {string}
      */
