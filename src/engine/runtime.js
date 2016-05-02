@@ -3,6 +3,11 @@ var Sequencer = require('./sequencer');
 var Thread = require('./thread');
 var util = require('util');
 
+var defaultBlockPackages = {
+    'scratch3': require('../blocks/scratch3'),
+    'wedo2': require('../blocks/wedo2')
+};
+
 /**
  * Manages blocks, stacks, and the sequencer.
  */
@@ -34,6 +39,14 @@ function Runtime () {
 
     /** @type {!Sequencer} */
     this.sequencer = new Sequencer(this);
+
+    /**
+     * Map to look up a block primitive's implementation function by its opcode.
+     * This is a two-step lookup: package name first, then primitive name.
+     * @type {Object.<string, Function>}
+     */
+    this._primitives = {};
+    this._registerBlockPackages();
 }
 
 /**
@@ -185,6 +198,37 @@ Runtime.prototype.deleteBlock = function (e) {
 // -----------------------------------------------------------------------------
 
 /**
+ * Register default block packages with this runtime.
+ * @todo Prefix opcodes with package name.
+ * @private
+ */
+Runtime.prototype._registerBlockPackages = function () {
+    for (var packageName in defaultBlockPackages) {
+        if (defaultBlockPackages.hasOwnProperty(packageName)) {
+            var packageObject = new (defaultBlockPackages[packageName])();
+            var packageContents = packageObject.getPrimitives();
+            for (var op in packageContents) {
+                if (packageContents.hasOwnProperty(op)) {
+                    this._primitives[op] = packageContents[op];
+                }
+            }
+        }
+    }
+};
+
+/**
+ * Retrieve the function associated with the given opcode.
+ * @param {!string} opcode The opcode to look up.
+ * @return {Function} The function which implements the opcode.
+ */
+Runtime.prototype.getOpcodeFunction = function (opcode) {
+    return this._primitives[opcode];
+};
+
+// -----------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
+
+/**
  * Create a thread and push it to the list of threads.
  * @param {!string} id ID of block that starts the stack
  */
@@ -304,6 +348,16 @@ Runtime.prototype._getNextBlock = function (id) {
 Runtime.prototype._getSubstack = function (id) {
     if (typeof this.blocks[id] === 'undefined') return null;
     return this.blocks[id].fields['SUBSTACK'];
+};
+
+/**
+ * Helper to get the opcode for a particular block
+ * @param {?string} id ID of block to query
+ * @return {?string} the opcode corresponding to that block
+ */
+Runtime.prototype._getOpcode = function (id) {
+    if (typeof this.blocks[id] === 'undefined') return null;
+    return this.blocks[id].opcode;
 };
 
 module.exports = Runtime;
