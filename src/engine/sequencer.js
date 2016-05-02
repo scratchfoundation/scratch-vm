@@ -58,10 +58,28 @@ Sequencer.prototype.stepThreads = function (threads) {
  * @param {!Thread} thread Thread object to step
  */
 Sequencer.prototype.stepThread = function (thread) {
-    // @todo Actually run the blocks
-    // Currently goes to the next block in the sequence.
-    var nextBlock = this.runtime._getNextBlock(thread.nextBlock);
-    thread.nextBlock = nextBlock;
+    var opcode = this.runtime._getOpcode(thread.nextBlock);
+
+    if (!opcode) {
+        console.warn('Could not get opcode for block: ' + thread.nextBlock);
+    }
+    else {
+        var blockFunction = this.runtime.getOpcodeFunction(opcode);
+        if (!blockFunction) {
+            console.warn('Could not get implementation for opcode: ' + opcode);
+        }
+        else {
+            try {
+                blockFunction();
+            }
+            catch(e) {
+                console.error('Exception calling block function',
+                    {opcode: opcode, exception: e});
+            }
+        }
+    }
+
+    thread.nextBlock = this.runtime._getNextBlock(thread.nextBlock);
 };
 
 module.exports = Sequencer;

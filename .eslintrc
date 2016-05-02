@@ -7,7 +7,8 @@
         "linebreak-style": [2, "unix"],
         "max-len": [2, 80, 4],
         "semi": [2, "always"],
-        "strict": [2, "never"]
+        "strict": [2, "never"],
+        "no-console": [2, {"allow": ["log", "warn", "error"]}]
     },
     "env": {
         "node": true,
