@@ -115,7 +115,7 @@ WeDo2Blocks.prototype._motorOnFor = function(direction, durationSeconds, util) {
     }
 
     var instance = this;
-    var myTimeout = setTimeout(function() {
+    var myTimeout = this._motorTimeout = setTimeout(function() {
         if (instance._motorTimeout == myTimeout) {
             instance._motorTimeout = null;
         }
