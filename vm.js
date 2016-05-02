@@ -1215,6 +1215,30 @@
 	}
 
 	/**
+	 * Event name for glowing a stack
+	 * @const {string}
+	 */
+	Runtime.STACK_GLOW_ON = 'STACK_GLOW_ON';
+
+	/**
+	 * Event name for unglowing a stack
+	 * @const {string}
+	 */
+	Runtime.STACK_GLOW_OFF = 'STACK_GLOW_OFF';
+
+	/**
+	 * Event name for glowing a block
+	 * @const {string}
+	 */
+	Runtime.BLOCK_GLOW_ON = 'BLOCK_GLOW_ON';
+
+	/**
+	 * Event name for unglowing a block
+	 * @const {string}
+	 */
+	Runtime.BLOCK_GLOW_OFF = 'BLOCK_GLOW_OFF';
+
+	/**
 	 * Inherit from EventEmitter
 	 */
 	util.inherits(Runtime, EventEmitter);
@@ -1343,7 +1367,10 @@
 	 * @param {!string} id ID of block that starts the stack
 	 */
 	Runtime.prototype._pushThread = function (id) {
-	    if (this.stacks.indexOf(id) < -1) return;
+	    if (this.stacks.indexOf(id) < -1) {
+	        return;
+	    }
+	    this.emit(Runtime.STACK_GLOW_ON, id);
 	    var thread = new Thread(id);
 	    this.threads.push(thread);
 	};
@@ -1354,7 +1381,10 @@
 	 */
 	Runtime.prototype._removeThread = function (thread) {
 	    var i = this.threads.indexOf(thread);
-	    if (i > -1) this.threads.splice(i, 1);
+	    if (i > -1) {
+	        this.emit(Runtime.STACK_GLOW_OFF, thread.topBlock);
+	        this.threads.splice(i, 1);
+	    }
 	};
 
 	/**
@@ -1567,12 +1597,13 @@
 	 */
 	function Thread (firstBlock) {
 	    /**
-	     * Top block of the thread
+	     * ID of top block of the thread
+	     * @type {!string}
 	     */
 	    this.topBlock = firstBlock;
 	    /**
-	     * Next block that the thread will execute.
-	     * @type {string}
+	     * ID of next block that the thread will execute, or null if none.
+	     * @type {?string}
 	     */
 	    this.nextBlock = firstBlock;
 	    /**

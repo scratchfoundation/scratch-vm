@@ -5,12 +5,13 @@
  */
 function Thread (firstBlock) {
     /**
-     * Top block of the thread
+     * ID of top block of the thread
+     * @type {!string}
      */
     this.topBlock = firstBlock;
     /**
-     * Next block that the thread will execute.
-     * @type {string}
+     * ID of next block that the thread will execute, or null if none.
+     * @type {?string}
      */
     this.nextBlock = firstBlock;
     /**
