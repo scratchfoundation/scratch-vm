@@ -313,6 +313,19 @@ Runtime.prototype._step = function () {
 };
 
 /**
+ * Emit feedback for block glowing (used in the sequencer).
+ * @param {?string} blockId ID for the block to update glow
+ * @param {boolean} isGlowing True to turn on glow; false to turn off.
+ */
+Runtime.prototype.glowBlock = function (blockId, isGlowing) {
+    if (isGlowing) {
+        this.emit(Runtime.BLOCK_GLOW_ON, blockId);
+    } else {
+        this.emit(Runtime.BLOCK_GLOW_OFF, blockId);
+    }
+};
+
+/**
  * Set up timers to repeatedly step in a browser
  */
 Runtime.prototype.start = function () {

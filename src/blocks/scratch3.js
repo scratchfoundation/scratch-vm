@@ -1,4 +1,3 @@
-
 function Scratch3Blocks(runtime) {
     /**
      * The runtime instantiating this block package.
@@ -31,8 +30,12 @@ Scratch3Blocks.prototype.forever = function() {
     console.log('Running: control_forever');
 };
 
-Scratch3Blocks.prototype.wait = function() {
+Scratch3Blocks.prototype.wait = function(argValues, util) {
     console.log('Running: control_wait');
+    util.yield();
+    util.timeout(function() {
+        util.done();
+    }, 500);
 };
 
 Scratch3Blocks.prototype.stop = function() {
