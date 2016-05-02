@@ -58,10 +58,16 @@ Sequencer.prototype.stepThreads = function (threads) {
  * @param {!Thread} thread Thread object to step
  */
 Sequencer.prototype.stepThread = function (thread) {
-    var opcode = this.runtime._getOpcode(thread.nextBlock);
+    // Save the current block and set the nextBlock.
+    // If the primitive would like to do control flow,
+    // it can overwrite nextBlock.
+    var currentBlock = thread.nextBlock;
+    thread.nextBlock = this.runtime._getNextBlock(thread.nextBlock);
+
+    var opcode = this.runtime._getOpcode(currentBlock);
 
     if (!opcode) {
-        console.warn('Could not get opcode for block: ' + thread.nextBlock);
+        console.warn('Could not get opcode for block: ' + currentBlock);
     }
     else {
         var blockFunction = this.runtime.getOpcodeFunction(opcode);
@@ -79,7 +85,6 @@ Sequencer.prototype.stepThread = function (thread) {
         }
     }
 
-    thread.nextBlock = this.runtime._getNextBlock(thread.nextBlock);
 };
 
 module.exports = Sequencer;
