@@ -205,11 +205,12 @@ Runtime.prototype.deleteBlock = function (e) {
 Runtime.prototype._registerBlockPackages = function () {
     for (var packageName in defaultBlockPackages) {
         if (defaultBlockPackages.hasOwnProperty(packageName)) {
-            var packageObject = new (defaultBlockPackages[packageName])();
+            // @todo maybe we pass a different runtime depending on package privilege level?
+            var packageObject = new (defaultBlockPackages[packageName])(this);
             var packageContents = packageObject.getPrimitives();
             for (var op in packageContents) {
                 if (packageContents.hasOwnProperty(op)) {
-                    this._primitives[op] = packageContents[op];
+                    this._primitives[op] = packageContents[op].bind(packageObject);
                 }
             }
         }

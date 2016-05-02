@@ -60,18 +60,23 @@ Sequencer.prototype.stepThreads = function (threads) {
 Sequencer.prototype.stepThread = function (thread) {
     var opcode = this.runtime._getOpcode(thread.nextBlock);
 
-    if (!opcode) {
-        console.log('Could not get opcode for block: ' + thread.nextBlock);
-    }
-    else {
-        var blockFunction = this.runtime.getOpcodeFunction(opcode);
-        if (!blockFunction) {
-            console.log('Could not get implementation for opcode: ' + opcode);
+        if (!opcode) {
+            console.warn('Could not get opcode for block: ' + thread.nextBlock);
         }
         else {
-            blockFunction();
+            var blockFunction = this.runtime.getOpcodeFunction(opcode);
+            if (!blockFunction) {
+                console.warn('Could not get implementation for opcode: ' + opcode);
+            }
+            else {
+                try {
+                    blockFunction();
+                }
+                catch(e) {
+                    console.error('Exception calling block function', {opcode: opcode, exception: e});
+                }
+            }
         }
-    }
 
     thread.nextBlock = this.runtime._getNextBlock(thread.nextBlock);
 };
