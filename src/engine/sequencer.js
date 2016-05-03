@@ -132,8 +132,9 @@ Sequencer.prototype.stepThread = function (thread) {
                 });
             }
             catch(e) {
-                console.error('Exception calling block function',
-                    {opcode: opcode, exception: e});
+                console.error(
+                    'Exception calling block function for opcode: ' +
+                    opcode + '\n' + e);
             } finally {
                 // Update if the thread has set a yield timer ID
                 // @todo hack
