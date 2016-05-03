@@ -1662,7 +1662,7 @@
 	    // If the primitive would like to do control flow,
 	    // it can overwrite nextBlock.
 	    var currentBlock = thread.nextBlock;
-	    if (!currentBlock) {
+	    if (!currentBlock || !this.runtime.blocks[currentBlock]) {
 	        thread.status = Thread.STATUS_DONE;
 	        return;
 	    }
