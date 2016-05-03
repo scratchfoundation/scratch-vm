@@ -51,6 +51,8 @@ Scratch3Blocks.prototype.wait = function(argValues, util) {
 
 Scratch3Blocks.prototype.stop = function() {
     console.log('Running: control_stop');
+    // @todo - don't use this.runtime
+    this.runtime.stopAll();
 };
 
 Scratch3Blocks.prototype.whenFlagClicked = function() {
