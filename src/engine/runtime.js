@@ -297,6 +297,9 @@ Runtime.prototype.stopAll = function () {
         this._removeThread(threadsCopy.pop());
     }
     // @todo call stop function in all extensions/packages/WeDo stub
+    if (window.native) {
+        window.native.motorStop();
+    }
 };
 
 /**
