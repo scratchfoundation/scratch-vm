@@ -1415,9 +1415,6 @@
 	 * @param {!string} id ID of block that starts the stack
 	 */
 	Runtime.prototype._pushThread = function (id) {
-	    if (this.stacks.indexOf(id) < -1) {
-	        return;
-	    }
 	    this.emit(Runtime.STACK_GLOW_ON, id);
 	    var thread = new Thread(id);
 	    this.threads.push(thread);
