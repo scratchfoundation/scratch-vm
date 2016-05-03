@@ -132,15 +132,26 @@ WeDo2Blocks.prototype._motorOnFor = function(direction, durationSeconds, util) {
 };
 
 WeDo2Blocks.prototype.motorClockwise = function(argValues, util) {
-    this._motorOnFor('right', argValues[0], util);
+    this._motorOnFor('right', parseFloat(argValues[0]), util);
 };
 
 WeDo2Blocks.prototype.motorCounterClockwise = function(argValues, util) {
-    this._motorOnFor('left', argValues[0], util);
+    this._motorOnFor('left', parseFloat(argValues[0]), util);
 };
 
 WeDo2Blocks.prototype.motorSpeed = function(argValues) {
-    this._motorSpeed = this._clamp(argValues[0], 1, 100);
+    var speed = argValues[0];
+    switch (speed) {
+    case 'slow':
+        this._motorSpeed = 20;
+        break;
+    case 'medium':
+        this._motorSpeed = 50;
+        break;
+    case 'fast':
+        this._motorSpeed = 100;
+        break;
+    }
 };
 
 /**
