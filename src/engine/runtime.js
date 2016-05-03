@@ -24,12 +24,6 @@ function Runtime () {
     this.blocks = {};
 
     /**
-     * Primitive-accessible execution metadata for each block.
-     * @type {Object.<string, Object>}
-     */
-    this.blockExecutionData = {};
-
-    /**
      * All stacks in the workspace.
      * A list of block IDs that represent stacks (first block in stack).
      * @type {Array.<String>}
@@ -96,7 +90,6 @@ Runtime.THREAD_STEP_INTERVAL = 1000 / 60;
 Runtime.prototype.createBlock = function (block, opt_isFlyoutBlock) {
     // Create new block
     this.blocks[block.id] = block;
-    this.blockExecutionData[block.id] = {};
 
     // Walk each field and add any shadow blocks
     // @todo Expand this to cover vertical / nested blocks
@@ -105,7 +98,6 @@ Runtime.prototype.createBlock = function (block, opt_isFlyoutBlock) {
         for (var y in shadows) {
             var shadow = shadows[y];
             this.blocks[shadow.id] = shadow;
-            this.blockExecutionData[shadow.id] = {};
         }
     }
 
@@ -202,7 +194,6 @@ Runtime.prototype.deleteBlock = function (e) {
 
     // Delete block
     delete this.blocks[e.id];
-    delete this.blockExecutionData[e.id];
 };
 
 // -----------------------------------------------------------------------------
