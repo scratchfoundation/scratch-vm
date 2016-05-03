@@ -23,6 +23,7 @@ Scratch3Blocks.prototype.getPrimitives = function() {
 };
 
 Scratch3Blocks.prototype.repeat = function(argValues, util) {
+    console.log('Running: control_repeat');
     // Initialize loop
     if (util.stackFrame.loopCounter === undefined) {
         util.stackFrame.loopCounter = 4; // @todo arg
