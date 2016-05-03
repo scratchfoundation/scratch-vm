@@ -159,8 +159,20 @@ Sequencer.prototype.stepThread = function (thread) {
         switchedStack = true;
     };
 
-    // @todo
+    // @todo extreme hack to get the single argument value for prototype
     var argValues = [];
+    var blockInputs = this.runtime.blocks[currentBlock].fields;
+    for (var bi in blockInputs) {
+        var outer = blockInputs[bi];
+        for (var b in outer.blocks) {
+            var block = outer.blocks[b];
+            var fields = block.fields;
+            for (var f in fields) {
+                var field = fields[f];
+                argValues.push(field.value);
+            }
+        }
+    }
 
     if (!opcode) {
         console.warn('Could not get opcode for block: ' + currentBlock);
