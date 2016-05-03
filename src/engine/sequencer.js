@@ -110,6 +110,22 @@ Sequencer.prototype.stepThread = function (thread) {
         instance.runtime.glowBlock(currentBlock, false);
     };
 
+    /**
+     * A callback for the primitive to set data on the block level.
+     * @type {Function}
+     */
+    var blockDataSetCallback = function (key, value) {
+        instance.runtime.setBlockExecutionData(currentBlock, key, value);
+    };
+
+    /**
+     * A callback for the primitive to get data on the block level.
+     * @type {Function}
+     */
+    var blockDataGetCallback = function (key) {
+        return instance.runtime.getBlockExecutionData(currentBlock, key);
+    };
+
     // @todo
     var argValues = [];
 
@@ -128,7 +144,9 @@ Sequencer.prototype.stepThread = function (thread) {
                 blockFunction(argValues, {
                     yield: threadYieldCallback,
                     done: threadDoneCallback,
-                    timeout: YieldTimers.timeout
+                    timeout: YieldTimers.timeout,
+                    setData: blockDataSetCallback,
+                    getData: blockDataGetCallback
                 });
             }
             catch(e) {
