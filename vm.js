@@ -1703,6 +1703,32 @@
 	    };
 
 	    /**
+	     * A callback for the primitive to start hats.
+	     * @todo very hacked...
+	     */
+	    var startHats = function(callback) {
+	        for (var i = 0; i < instance.runtime.stacks.length; i++) {
+	            var stack = instance.runtime.stacks[i];
+	            var stackBlock = instance.runtime.blocks[stack];
+	            var result = callback(stackBlock);
+	            if (result) {
+	                // Check if the stack is already running
+	                var stackRunning = false;
+
+	                for (var j = 0; j < instance.runtime.threads.length; j++) {
+	                    if (instance.runtime.threads[j].topBlock == stack) {
+	                        stackRunning = true;
+	                        break;
+	                    }
+	                }
+	                if (!stackRunning) {
+	                    instance.runtime._pushThread(stack);
+	                }
+	            }
+	        }
+	    };
+
+	    /**
 	     * Record whether we have switched stack,
 	     * to avoid proceeding the thread automatically.
 	     * @type {boolean}
@@ -1756,7 +1782,8 @@
 	                    done: threadDoneCallback,
 	                    timeout: YieldTimers.timeout,
 	                    stackFrame: currentStackFrame,
-	                    startSubstack: threadStartSubstack
+	                    startSubstack: threadStartSubstack,
+	                    startHats: startHats
 	                });
 	            }
 	            catch(e) {
@@ -2038,14 +2065,26 @@
 
 	Scratch3Blocks.prototype.whenFlagClicked = function() {
 	    console.log('Running: event_whenflagclicked');
+	    // No-op
 	};
 
 	Scratch3Blocks.prototype.whenBroadcastReceived = function() {
 	    console.log('Running: event_whenbroadcastreceived');
+	    // No-op
 	};
 
-	Scratch3Blocks.prototype.broadcast = function() {
+	Scratch3Blocks.prototype.broadcast = function(argValues, util) {
 	    console.log('Running: event_broadcast');
+	    util.startHats(function(hat) {
+	        if (hat.opcode === 'event_whenbroadcastreceived') {
+	            var shadows = hat.fields.CHOICE.blocks;
+	            for (var sb in shadows) {
+	                var shadowblock = shadows[sb];
+	                return shadowblock.fields.CHOICE.value === argValues[0];
+	            }
+	        }
+	        return false;
+	    });
 	};
 
 	module.exports = Scratch3Blocks;
