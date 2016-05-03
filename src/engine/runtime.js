@@ -289,6 +289,27 @@ Runtime.prototype.greenFlag = function () {
 };
 
 /**
+ * Distance sensor hack
+ */
+Runtime.prototype.startDistanceSensors = function () {
+    // Add all top stacks with distance sensor
+    for (var j = 0; j < this.stacks.length; j++) {
+        var topBlock = this.stacks[j];
+        if (this.blocks[topBlock].opcode === 'wedo_whendistanceclose') {
+            var alreadyRunning = false;
+            for (var k = 0; k < this.threads.length; k++) {
+                if (this.threads[k].topBlock === topBlock) {
+                    alreadyRunning = true;
+                }
+            }
+            if (!alreadyRunning) {
+                this._pushThread(this.stacks[j]);
+            }
+        }
+    }
+};
+
+/**
  * Stop "everything"
  */
 Runtime.prototype.stopAll = function () {
