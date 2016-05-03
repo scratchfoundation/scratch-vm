@@ -295,8 +295,9 @@ Runtime.prototype.greenFlag = function () {
  * Stop "everything"
  */
 Runtime.prototype.stopAll = function () {
-    for (var i = 0; i < this.threads.length; i++) {
-        this._removeThread(this.threads[i]);
+    var threadsCopy = this.threads.slice();
+    while (threadsCopy.length > 0) {
+        this._removeThread(threadsCopy.pop());
     }
     // @todo call stop function in all extensions/packages/WeDo stub
 };
