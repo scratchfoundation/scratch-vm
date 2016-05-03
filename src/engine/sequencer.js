@@ -64,7 +64,7 @@ Sequencer.prototype.stepThreads = function (threads) {
                        && activeThread.nextBlock === null) {
                     activeThread.nextBlock = activeThread.stack.pop();
                     // Don't pop stack frame - we need the data.
-                    // A new one won't be created when we execute. 
+                    // A new one won't be created when we execute.
                 }
                 if (activeThread.nextBlock === null) {
                     // No more on the stack
@@ -96,6 +96,10 @@ Sequencer.prototype.stepThread = function (thread) {
     // If the primitive would like to do control flow,
     // it can overwrite nextBlock.
     var currentBlock = thread.nextBlock;
+    if (!currentBlock) {
+        thread.status = Thread.STATUS_DONE;
+        return;
+    }
     thread.nextBlock = this.runtime._getNextBlock(currentBlock);
 
     var opcode = this.runtime._getOpcode(currentBlock);
@@ -144,7 +148,12 @@ Sequencer.prototype.stepThread = function (thread) {
      */
     var threadStartSubstack = function () {
         // Set nextBlock to the start of the substack
-        thread.nextBlock = instance.runtime._getSubstack(currentBlock).value;
+        var substack = instance.runtime._getSubstack(currentBlock);
+        if (substack && substack.value) {
+            thread.nextBlock = substack.value;
+        } else {
+            thread.nextBlock = null;
+        }
         instance.runtime.glowBlock(currentBlock, false);
         switchedStack = true;
     };
