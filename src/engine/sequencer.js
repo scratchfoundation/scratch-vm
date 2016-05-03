@@ -131,7 +131,6 @@ Sequencer.prototype.stepThread = function (thread) {
         thread.status = Thread.STATUS_DONE;
         // Refresh nextBlock in case it has changed during a yield.
         thread.nextBlock = instance.runtime._getNextBlock(currentBlock);
-        instance.runtime.glowBlock(currentBlock, false);
         // Pop the stack and stack frame
         thread.stack.pop();
         thread.stackFrames.pop();
@@ -181,7 +180,6 @@ Sequencer.prototype.stepThread = function (thread) {
         } else {
             thread.nextBlock = null;
         }
-        instance.runtime.glowBlock(currentBlock, false);
         switchedStack = true;
     };
 
@@ -210,7 +208,6 @@ Sequencer.prototype.stepThread = function (thread) {
         }
         else {
             try {
-                this.runtime.glowBlock(currentBlock, true);
                 // @todo deal with the return value
                 blockFunction(argValues, {
                     yield: threadYieldCallback,
