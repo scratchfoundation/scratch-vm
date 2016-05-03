@@ -1,4 +1,6 @@
 var Timer = require('../util/timer');
+var Thread = require('./thread');
+var YieldTimers = require('../util/yieldtimers.js');
 
 function Sequencer (runtime) {
     /**
@@ -31,20 +33,37 @@ Sequencer.prototype.stepThreads = function (threads) {
     this.timer.start();
     // List of threads which have been killed by this step.
     var inactiveThreads = [];
+    // If all of the threads are yielding, we should yield.
+    var numYieldingThreads = 0;
     // While there are still threads to run and we are within WORK_TIME,
     // continue executing threads.
     while (threads.length > 0 &&
+           threads.length > numYieldingThreads &&
            this.timer.timeElapsed() < Sequencer.WORK_TIME) {
         // New threads at the end of the iteration.
         var newThreads = [];
         // Attempt to run each thread one time
         for (var i = 0; i < threads.length; i++) {
             var activeThread = threads[i];
-            this.stepThread(activeThread);
-            if (activeThread.nextBlock !== null) {
-                newThreads.push(activeThread);
-            } else {
+            if (activeThread.status === Thread.STATUS_RUNNING) {
+                // Normal-mode thread: step.
+                this.stepThread(activeThread);
+            } else if (activeThread.status === Thread.STATUS_YIELD) {
+                // Yield-mode thread: check if the time has passed.
+                YieldTimers.resolve(activeThread.yieldTimerId);
+                numYieldingThreads++;
+            } else if (activeThread.status === Thread.STATUS_DONE) {
+                // Moved to a done state - finish up
+                activeThread.status = Thread.STATUS_RUNNING;
+                // @todo Deal with the return value
+            }
+            if (activeThread.nextBlock === null &&
+                activeThread.status === Thread.STATUS_DONE) {
+                // Finished with this thread - tell the runtime to clean it up.
                 inactiveThreads.push(activeThread);
+            } else {
+                // Keep this thead in the loop.
+                newThreads.push(activeThread);
             }
         }
         // Effectively filters out threads that have stopped.
@@ -58,10 +77,44 @@ Sequencer.prototype.stepThreads = function (threads) {
  * @param {!Thread} thread Thread object to step
  */
 Sequencer.prototype.stepThread = function (thread) {
-    var opcode = this.runtime._getOpcode(thread.nextBlock);
+    // Save the yield timer ID, in case a primitive makes a new one
+    // @todo hack - perhaps patch this to allow more than one timer per
+    // primitive, for example...
+    var oldYieldTimerId = YieldTimers.timerId;
+
+    // Save the current block and set the nextBlock.
+    // If the primitive would like to do control flow,
+    // it can overwrite nextBlock.
+    var currentBlock = thread.nextBlock;
+    thread.nextBlock = this.runtime._getNextBlock(currentBlock);
+
+    var opcode = this.runtime._getOpcode(currentBlock);
+
+    /**
+     * A callback for the primitive to indicate its thread should yield.
+     * @type {Function}
+     */
+    var threadYieldCallback = function () {
+        thread.status = Thread.STATUS_YIELD;
+    };
+
+    /**
+     * A callback for the primitive to indicate its thread is finished
+     * @type {Function}
+     */
+    var instance = this;
+    var threadDoneCallback = function () {
+        thread.status = Thread.STATUS_DONE;
+        // Refresh nextBlock in case it has changed during the yield.
+        thread.nextBlock = instance.runtime._getNextBlock(currentBlock);
+        instance.runtime.glowBlock(currentBlock, false);
+    };
+
+    // @todo
+    var argValues = [];
 
     if (!opcode) {
-        console.warn('Could not get opcode for block: ' + thread.nextBlock);
+        console.warn('Could not get opcode for block: ' + currentBlock);
     }
     else {
         var blockFunction = this.runtime.getOpcodeFunction(opcode);
@@ -70,16 +123,32 @@ Sequencer.prototype.stepThread = function (thread) {
         }
         else {
             try {
-                blockFunction();
+                this.runtime.glowBlock(currentBlock, true);
+                // @todo deal with the return value
+                blockFunction(argValues, {
+                    yield: threadYieldCallback,
+                    done: threadDoneCallback,
+                    timeout: YieldTimers.timeout
+                });
             }
             catch(e) {
                 console.error('Exception calling block function',
                     {opcode: opcode, exception: e});
+            } finally {
+                // Update if the thread has set a yield timer ID
+                // @todo hack
+                if (YieldTimers.timerId > oldYieldTimerId) {
+                    thread.yieldTimerId = YieldTimers.timerId;
+                }
+                if (thread.status === Thread.STATUS_RUNNING) {
+                    // Thread executed without yielding - move to done
+                    thread.status = Thread.STATUS_DONE;
+                    this.runtime.glowBlock(currentBlock, false);
+                }
             }
         }
     }
 
-    thread.nextBlock = this.runtime._getNextBlock(thread.nextBlock);
 };
 
 module.exports = Sequencer;
