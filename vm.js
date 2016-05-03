@@ -1202,12 +1202,6 @@
 	    this.blocks = {};
 
 	    /**
-	     * Primitive-accessible execution metadata for each block.
-	     * @type {Object.<string, Object>}
-	     */
-	    this.blockExecutionData = {};
-
-	    /**
 	     * All stacks in the workspace.
 	     * A list of block IDs that represent stacks (first block in stack).
 	     * @type {Array.<String>}
@@ -1274,7 +1268,6 @@
 	Runtime.prototype.createBlock = function (block, opt_isFlyoutBlock) {
 	    // Create new block
 	    this.blocks[block.id] = block;
-	    this.blockExecutionData[block.id] = {};
 
 	    // Walk each field and add any shadow blocks
 	    // @todo Expand this to cover vertical / nested blocks
@@ -1283,7 +1276,6 @@
 	        for (var y in shadows) {
 	            var shadow = shadows[y];
 	            this.blocks[shadow.id] = shadow;
-	            this.blockExecutionData[shadow.id] = {};
 	        }
 	    }
 
@@ -1380,7 +1372,6 @@
 
 	    // Delete block
 	    delete this.blocks[e.id];
-	    delete this.blockExecutionData[e.id];
 	};
 
 	// -----------------------------------------------------------------------------
@@ -1636,6 +1627,8 @@
 	                if (activeThread.stack.length > 0
 	                       && activeThread.nextBlock === null) {
 	                    activeThread.nextBlock = activeThread.stack.pop();
+	                    // Don't pop stack frame - we need the data.
+	                    // A new one won't be created when we execute. 
 	                }
 	                if (activeThread.nextBlock === null) {
 	                    // No more on the stack
@@ -1673,10 +1666,12 @@
 
 	    // Push the current block to the stack
 	    thread.stack.push(currentBlock);
-	    // Push an empty stack frame, if we need one
+	    // Push an empty stack frame, if we need one.
+	    // Might not, if we just popped the stack.
 	    if (thread.stack.length > thread.stackFrames.length) {
 	        thread.stackFrames.push({});
 	    }
+	    var currentStackFrame = thread.stackFrames[thread.stackFrames.length - 1];
 
 	    /**
 	     * A callback for the primitive to indicate its thread should yield.
@@ -1720,7 +1715,6 @@
 
 	    // @todo
 	    var argValues = [];
-	    var currentStackFrame = thread.stackFrames[thread.stackFrames.length - 1];
 
 	    if (!opcode) {
 	        console.warn('Could not get opcode for block: ' + currentBlock);
