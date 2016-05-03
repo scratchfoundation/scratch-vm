@@ -57,14 +57,26 @@ Scratch3Blocks.prototype.stop = function() {
 
 Scratch3Blocks.prototype.whenFlagClicked = function() {
     console.log('Running: event_whenflagclicked');
+    // No-op
 };
 
 Scratch3Blocks.prototype.whenBroadcastReceived = function() {
     console.log('Running: event_whenbroadcastreceived');
+    // No-op
 };
 
-Scratch3Blocks.prototype.broadcast = function() {
+Scratch3Blocks.prototype.broadcast = function(argValues, util) {
     console.log('Running: event_broadcast');
+    util.startHats(function(hat) {
+        if (hat.opcode === 'event_whenbroadcastreceived') {
+            var shadows = hat.fields.CHOICE.blocks;
+            for (var sb in shadows) {
+                var shadowblock = shadows[sb];
+                return shadowblock.fields.CHOICE.value === argValues[0];
+            }
+        }
+        return false;
+    });
 };
 
 module.exports = Scratch3Blocks;
