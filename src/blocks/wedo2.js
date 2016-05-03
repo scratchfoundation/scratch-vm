@@ -177,11 +177,16 @@ WeDo2Blocks.prototype._getColor = function(colorName) {
     }[colorName];
 };
 
-WeDo2Blocks.prototype.setColor = function(argValues) {
+WeDo2Blocks.prototype.setColor = function(argValues, util) {
     if (window.native) {
         var rgbColor = this._getColor(argValues[0]);
         window.native.setLedColor(rgbColor[0], rgbColor[1], rgbColor[2]);
     }
+    // Pause for quarter second
+    util.yield();
+    util.timeout(function() {
+        util.done();
+    }, 250);
 };
 
 WeDo2Blocks.prototype.whenDistanceClose = function() {

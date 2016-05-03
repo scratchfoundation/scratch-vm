@@ -1475,6 +1475,9 @@
 	        this._removeThread(threadsCopy.pop());
 	    }
 	    // @todo call stop function in all extensions/packages/WeDo stub
+	    if (window.native) {
+	        window.native.motorStop();
+	    }
 	};
 
 	/**
@@ -1693,7 +1696,6 @@
 	        thread.status = Thread.STATUS_DONE;
 	        // Refresh nextBlock in case it has changed during a yield.
 	        thread.nextBlock = instance.runtime._getNextBlock(currentBlock);
-	        instance.runtime.glowBlock(currentBlock, false);
 	        // Pop the stack and stack frame
 	        thread.stack.pop();
 	        thread.stackFrames.pop();
@@ -1743,7 +1745,6 @@
 	        } else {
 	            thread.nextBlock = null;
 	        }
-	        instance.runtime.glowBlock(currentBlock, false);
 	        switchedStack = true;
 	    };
 
@@ -1772,7 +1773,6 @@
 	        }
 	        else {
 	            try {
-	                this.runtime.glowBlock(currentBlock, true);
 	                // @todo deal with the return value
 	                blockFunction(argValues, {
 	                    yield: threadYieldCallback,
@@ -2270,11 +2270,16 @@
 	    }[colorName];
 	};
 
-	WeDo2Blocks.prototype.setColor = function(argValues) {
+	WeDo2Blocks.prototype.setColor = function(argValues, util) {
 	    if (window.native) {
 	        var rgbColor = this._getColor(argValues[0]);
 	        window.native.setLedColor(rgbColor[0], rgbColor[1], rgbColor[2]);
 	    }
+	    // Pause for quarter second
+	    util.yield();
+	    util.timeout(function() {
+	        util.done();
+	    }, 250);
 	};
 
 	WeDo2Blocks.prototype.whenDistanceClose = function() {
