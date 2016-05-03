@@ -1662,7 +1662,7 @@
 	    // If the primitive would like to do control flow,
 	    // it can overwrite nextBlock.
 	    var currentBlock = thread.nextBlock;
-	    if (!currentBlock) {
+	    if (!currentBlock || !this.runtime.blocks[currentBlock]) {
 	        thread.status = Thread.STATUS_DONE;
 	        return;
 	    }
@@ -1724,8 +1724,20 @@
 	        switchedStack = true;
 	    };
 
-	    // @todo
+	    // @todo extreme hack to get the single argument value for prototype
 	    var argValues = [];
+	    var blockInputs = this.runtime.blocks[currentBlock].fields;
+	    for (var bi in blockInputs) {
+	        var outer = blockInputs[bi];
+	        for (var b in outer.blocks) {
+	            var block = outer.blocks[b];
+	            var fields = block.fields;
+	            for (var f in fields) {
+	                var field = fields[f];
+	                argValues.push(field.value);
+	            }
+	        }
+	    }
 
 	    if (!opcode) {
 	        console.warn('Could not get opcode for block: ' + currentBlock);
@@ -1995,7 +2007,7 @@
 	    console.log('Running: control_repeat');
 	    // Initialize loop
 	    if (util.stackFrame.loopCounter === undefined) {
-	        util.stackFrame.loopCounter = 4; // @todo arg
+	        util.stackFrame.loopCounter = parseInt(argValues[0]); // @todo arg
 	    }
 	    // Decrease counter
 	    util.stackFrame.loopCounter--;
@@ -2015,7 +2027,7 @@
 	    util.yield();
 	    util.timeout(function() {
 	        util.done();
-	    }, 500);
+	    }, 1000 * parseFloat(argValues[0]));
 	};
 
 	Scratch3Blocks.prototype.stop = function() {
@@ -2175,15 +2187,26 @@
 	};
 
 	WeDo2Blocks.prototype.motorClockwise = function(argValues, util) {
-	    this._motorOnFor('right', argValues[0], util);
+	    this._motorOnFor('right', parseFloat(argValues[0]), util);
 	};
 
 	WeDo2Blocks.prototype.motorCounterClockwise = function(argValues, util) {
-	    this._motorOnFor('left', argValues[0], util);
+	    this._motorOnFor('left', parseFloat(argValues[0]), util);
 	};
 
 	WeDo2Blocks.prototype.motorSpeed = function(argValues) {
-	    this._motorSpeed = this._clamp(argValues[0], 1, 100);
+	    var speed = argValues[0];
+	    switch (speed) {
+	    case 'slow':
+	        this._motorSpeed = 20;
+	        break;
+	    case 'medium':
+	        this._motorSpeed = 50;
+	        break;
+	    case 'fast':
+	        this._motorSpeed = 100;
+	        break;
+	    }
 	};
 
 	/**
