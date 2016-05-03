@@ -130,8 +130,23 @@ Runtime.prototype.changeBlock = function (args) {
 Runtime.prototype.moveBlock = function (e) {
     var _this = this;
 
-    // Block has a new parent
-    if (e.oldParent === undefined && e.newParent !== undefined) {
+    // Block was removed from parent
+    if (e.newParent === undefined && e.oldParent !== undefined) {
+        // Add stack
+        _this.stacks.push(e.id);
+
+        // Update old parent
+        if (e.oldField === undefined) {
+            _this.blocks[e.oldParent].next = null;
+        } else {
+            delete _this.blocks[e.oldParent].fields[e.oldField];
+        }
+    } else if (e.newParent !== undefined) {
+        // Block was moved to a new parent
+        // Either happens because it was previously parentless
+        // (e.oldParent === undefined)
+        // or because a block was moved in front of it.
+
         // Remove stack
         _this._deleteStack(e.id);
 
@@ -144,19 +159,6 @@ Runtime.prototype.moveBlock = function (e) {
                 value: e.id,
                 blocks: {}
             };
-        }
-    }
-
-    // Block was removed from parent
-    if (e.newParent === undefined && e.oldParent !== undefined) {
-        // Add stack
-        _this.stacks.push(e.id);
-
-        // Update old parent
-        if (e.oldField === undefined) {
-            _this.blocks[e.oldParent].next = null;
-        } else {
-            delete _this.blocks[e.oldParent].fields[e.oldField];
         }
     }
 };
