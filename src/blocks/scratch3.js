@@ -26,7 +26,7 @@ Scratch3Blocks.prototype.repeat = function(argValues, util) {
     console.log('Running: control_repeat');
     // Initialize loop
     if (util.stackFrame.loopCounter === undefined) {
-        util.stackFrame.loopCounter = 4; // @todo arg
+        util.stackFrame.loopCounter = parseInt(argValues[0]); // @todo arg
     }
     // Decrease counter
     util.stackFrame.loopCounter--;
@@ -46,7 +46,7 @@ Scratch3Blocks.prototype.wait = function(argValues, util) {
     util.yield();
     util.timeout(function() {
         util.done();
-    }, 500);
+    }, 1000 * parseFloat(argValues[0]));
 };
 
 Scratch3Blocks.prototype.stop = function() {
