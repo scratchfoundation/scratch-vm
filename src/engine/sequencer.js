@@ -57,20 +57,21 @@ Sequencer.prototype.stepThreads = function (threads) {
                 activeThread.status = Thread.STATUS_RUNNING;
                 // @todo Deal with the return value
             }
+            // First attempt to pop from the stack
+            if (activeThread.stack.length > 0 &&
+                activeThread.nextBlock === null &&
+                activeThread.status === Thread.STATUS_DONE) {
+                activeThread.nextBlock = activeThread.stack.pop();
+                // Don't pop stack frame - we need the data.
+                // A new one won't be created when we execute.
+                if (activeThread.nextBlock !== null) {
+                    activeThread.status === Thread.STATUS_RUNNING;
+                }
+            }
             if (activeThread.nextBlock === null &&
                 activeThread.status === Thread.STATUS_DONE) {
-                // First attempt to pop from the stack
-                if (activeThread.stack.length > 0
-                       && activeThread.nextBlock === null) {
-                    activeThread.nextBlock = activeThread.stack.pop();
-                    // Don't pop stack frame - we need the data.
-                    // A new one won't be created when we execute.
-                }
-                if (activeThread.nextBlock === null) {
-                    // No more on the stack
-                    // Finished with this thread - tell runtime to clean it up.
-                    inactiveThreads.push(activeThread);
-                }
+                // Finished with this thread - tell runtime to clean it up.
+                inactiveThreads.push(activeThread);
             } else {
                 // Keep this thead in the loop.
                 newThreads.push(activeThread);
