@@ -1902,7 +1902,6 @@
 	    YieldTimers.timerId = 0;
 	};
 
-	window.YieldTimers = YieldTimers;
 	module.exports = YieldTimers;
 
 
