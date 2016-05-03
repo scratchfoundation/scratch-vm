@@ -22,12 +22,23 @@ Scratch3Blocks.prototype.getPrimitives = function() {
     };
 };
 
-Scratch3Blocks.prototype.repeat = function() {
+Scratch3Blocks.prototype.repeat = function(argValues, util) {
     console.log('Running: control_repeat');
+    // Initialize loop
+    if (util.stackFrame.loopCounter === undefined) {
+        util.stackFrame.loopCounter = 4; // @todo arg
+    }
+    // Decrease counter
+    util.stackFrame.loopCounter--;
+    // If we still have some left, start the substack
+    if (util.stackFrame.loopCounter >= 0) {
+        util.startSubstack();
+    }
 };
 
-Scratch3Blocks.prototype.forever = function() {
+Scratch3Blocks.prototype.forever = function(argValues, util) {
     console.log('Running: control_forever');
+    util.startSubstack();
 };
 
 Scratch3Blocks.prototype.wait = function(argValues, util) {

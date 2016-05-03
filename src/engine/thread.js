@@ -22,6 +22,12 @@ function Thread (firstBlock) {
     this.stack = [];
 
     /**
+     * Stack frames for the thread. Store metadata for the executing blocks.
+     * @type {Array.<Object>}
+     */
+    this.stackFrames = [];
+
+    /**
      * Status of the thread, one of three states (below)
      * @type {number}
      */
