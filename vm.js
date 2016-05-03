@@ -1202,6 +1202,12 @@
 	    this.blocks = {};
 
 	    /**
+	     * Primitive-accessible execution metadata for each block.
+	     * @type {Object.<string, Object>}
+	     */
+	    this.blockExecutionData = {};
+
+	    /**
 	     * All stacks in the workspace.
 	     * A list of block IDs that represent stacks (first block in stack).
 	     * @type {Array.<String>}
@@ -1268,6 +1274,7 @@
 	Runtime.prototype.createBlock = function (block, opt_isFlyoutBlock) {
 	    // Create new block
 	    this.blocks[block.id] = block;
+	    this.blockExecutionData[block.id] = {};
 
 	    // Walk each field and add any shadow blocks
 	    // @todo Expand this to cover vertical / nested blocks
@@ -1276,6 +1283,7 @@
 	        for (var y in shadows) {
 	            var shadow = shadows[y];
 	            this.blocks[shadow.id] = shadow;
+	            this.blockExecutionData[shadow.id] = {};
 	        }
 	    }
 
@@ -1372,6 +1380,7 @@
 
 	    // Delete block
 	    delete this.blocks[e.id];
+	    delete this.blockExecutionData[e.id];
 	};
 
 	// -----------------------------------------------------------------------------
@@ -1623,8 +1632,16 @@
 	            }
 	            if (activeThread.nextBlock === null &&
 	                activeThread.status === Thread.STATUS_DONE) {
-	                // Finished with this thread - tell the runtime to clean it up.
-	                inactiveThreads.push(activeThread);
+	                // First attempt to pop from the stack
+	                if (activeThread.stack.length > 0
+	                       && activeThread.nextBlock === null) {
+	                    activeThread.nextBlock = activeThread.stack.pop();
+	                }
+	                if (activeThread.nextBlock === null) {
+	                    // No more on the stack
+	                    // Finished with this thread - tell runtime to clean it up.
+	                    inactiveThreads.push(activeThread);
+	                }
 	            } else {
 	                // Keep this thead in the loop.
 	                newThreads.push(activeThread);
@@ -1654,6 +1671,13 @@
 
 	    var opcode = this.runtime._getOpcode(currentBlock);
 
+	    // Push the current block to the stack
+	    thread.stack.push(currentBlock);
+	    // Push an empty stack frame, if we need one
+	    if (thread.stack.length > thread.stackFrames.length) {
+	        thread.stackFrames.push({});
+	    }
+
 	    /**
 	     * A callback for the primitive to indicate its thread should yield.
 	     * @type {Function}
@@ -1669,13 +1693,34 @@
 	    var instance = this;
 	    var threadDoneCallback = function () {
 	        thread.status = Thread.STATUS_DONE;
-	        // Refresh nextBlock in case it has changed during the yield.
+	        // Refresh nextBlock in case it has changed during a yield.
 	        thread.nextBlock = instance.runtime._getNextBlock(currentBlock);
 	        instance.runtime.glowBlock(currentBlock, false);
+	        // Pop the stack and stack frame
+	        thread.stack.pop();
+	        thread.stackFrames.pop();
+	    };
+
+	    /**
+	     * Record whether we have switched stack,
+	     * to avoid proceeding the thread automatically.
+	     * @type {boolean}
+	     */
+	    var switchedStack = false;
+	    /**
+	     * A callback for a primitive to start a substack.
+	     * @type {Function}
+	     */
+	    var threadStartSubstack = function () {
+	        // Set nextBlock to the start of the substack
+	        thread.nextBlock = instance.runtime._getSubstack(currentBlock).value;
+	        instance.runtime.glowBlock(currentBlock, false);
+	        switchedStack = true;
 	    };
 
 	    // @todo
 	    var argValues = [];
+	    var currentStackFrame = thread.stackFrames[thread.stackFrames.length - 1];
 
 	    if (!opcode) {
 	        console.warn('Could not get opcode for block: ' + currentBlock);
@@ -1692,7 +1737,9 @@
 	                blockFunction(argValues, {
 	                    yield: threadYieldCallback,
 	                    done: threadDoneCallback,
-	                    timeout: YieldTimers.timeout
+	                    timeout: YieldTimers.timeout,
+	                    stackFrame: currentStackFrame,
+	                    startSubstack: threadStartSubstack
 	                });
 	            }
 	            catch(e) {
@@ -1704,10 +1751,9 @@
 	                if (YieldTimers.timerId > oldYieldTimerId) {
 	                    thread.yieldTimerId = YieldTimers.timerId;
 	                }
-	                if (thread.status === Thread.STATUS_RUNNING) {
+	                if (thread.status === Thread.STATUS_RUNNING && !switchedStack) {
 	                    // Thread executed without yielding - move to done
-	                    thread.status = Thread.STATUS_DONE;
-	                    this.runtime.glowBlock(currentBlock, false);
+	                    threadDoneCallback();
 	                }
 	            }
 	        }
@@ -1770,6 +1816,12 @@
 	     * @type {Array.<string>}
 	     */
 	    this.stack = [];
+
+	    /**
+	     * Stack frames for the thread. Store metadata for the executing blocks.
+	     * @type {Array.<Object>}
+	     */
+	    this.stackFrames = [];
 
 	    /**
 	     * Status of the thread, one of three states (below)
@@ -1933,12 +1985,22 @@
 	    };
 	};
 
-	Scratch3Blocks.prototype.repeat = function() {
-	    console.log('Running: control_repeat');
+	Scratch3Blocks.prototype.repeat = function(argValues, util) {
+	    // Initialize loop
+	    if (util.stackFrame.loopCounter === undefined) {
+	        util.stackFrame.loopCounter = 4; // @todo arg
+	    }
+	    // Decrease counter
+	    util.stackFrame.loopCounter--;
+	    // If we still have some left, start the substack
+	    if (util.stackFrame.loopCounter >= 0) {
+	        util.startSubstack();
+	    }
 	};
 
-	Scratch3Blocks.prototype.forever = function() {
+	Scratch3Blocks.prototype.forever = function(argValues, util) {
 	    console.log('Running: control_forever');
+	    util.startSubstack();
 	};
 
 	Scratch3Blocks.prototype.wait = function(argValues, util) {

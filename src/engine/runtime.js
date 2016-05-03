@@ -386,24 +386,4 @@ Runtime.prototype._getOpcode = function (id) {
     return this.blocks[id].opcode;
 };
 
-/**
- * Set block execution data
- * @param {!string} id Block ID
- * @param {!Any} key Data key
- * @param {?Any} value Data value
- */
-Runtime.prototype.setBlockExecutionData = function (id, key, value) {
-    this.blockExecutionData[id][key] = value;
-};
-
-/**
- * Get block execution data
- * @param {!string} id Block ID
- * @param {!Any} key Data key
- * @return {?Any} Data value
- */
-Runtime.prototype.getBlockExecutionData = function (id, key) {
-    return this.blockExecutionData[id][key];
-};
-
 module.exports = Runtime;

@@ -59,8 +59,18 @@ Sequencer.prototype.stepThreads = function (threads) {
             }
             if (activeThread.nextBlock === null &&
                 activeThread.status === Thread.STATUS_DONE) {
-                // Finished with this thread - tell the runtime to clean it up.
-                inactiveThreads.push(activeThread);
+                // First attempt to pop from the stack
+                if (activeThread.stack.length > 0
+                       && activeThread.nextBlock === null) {
+                    activeThread.nextBlock = activeThread.stack.pop();
+                    // Don't pop stack frame - we need the data.
+                    // A new one won't be created when we execute. 
+                }
+                if (activeThread.nextBlock === null) {
+                    // No more on the stack
+                    // Finished with this thread - tell runtime to clean it up.
+                    inactiveThreads.push(activeThread);
+                }
             } else {
                 // Keep this thead in the loop.
                 newThreads.push(activeThread);
@@ -90,6 +100,15 @@ Sequencer.prototype.stepThread = function (thread) {
 
     var opcode = this.runtime._getOpcode(currentBlock);
 
+    // Push the current block to the stack
+    thread.stack.push(currentBlock);
+    // Push an empty stack frame, if we need one.
+    // Might not, if we just popped the stack.
+    if (thread.stack.length > thread.stackFrames.length) {
+        thread.stackFrames.push({});
+    }
+    var currentStackFrame = thread.stackFrames[thread.stackFrames.length - 1];
+
     /**
      * A callback for the primitive to indicate its thread should yield.
      * @type {Function}
@@ -105,25 +124,29 @@ Sequencer.prototype.stepThread = function (thread) {
     var instance = this;
     var threadDoneCallback = function () {
         thread.status = Thread.STATUS_DONE;
-        // Refresh nextBlock in case it has changed during the yield.
+        // Refresh nextBlock in case it has changed during a yield.
         thread.nextBlock = instance.runtime._getNextBlock(currentBlock);
         instance.runtime.glowBlock(currentBlock, false);
+        // Pop the stack and stack frame
+        thread.stack.pop();
+        thread.stackFrames.pop();
     };
 
     /**
-     * A callback for the primitive to set data on the block level.
-     * @type {Function}
+     * Record whether we have switched stack,
+     * to avoid proceeding the thread automatically.
+     * @type {boolean}
      */
-    var blockDataSetCallback = function (key, value) {
-        instance.runtime.setBlockExecutionData(currentBlock, key, value);
-    };
-
+    var switchedStack = false;
     /**
-     * A callback for the primitive to get data on the block level.
+     * A callback for a primitive to start a substack.
      * @type {Function}
      */
-    var blockDataGetCallback = function (key) {
-        return instance.runtime.getBlockExecutionData(currentBlock, key);
+    var threadStartSubstack = function () {
+        // Set nextBlock to the start of the substack
+        thread.nextBlock = instance.runtime._getSubstack(currentBlock).value;
+        instance.runtime.glowBlock(currentBlock, false);
+        switchedStack = true;
     };
 
     // @todo
@@ -145,8 +168,8 @@ Sequencer.prototype.stepThread = function (thread) {
                     yield: threadYieldCallback,
                     done: threadDoneCallback,
                     timeout: YieldTimers.timeout,
-                    setData: blockDataSetCallback,
-                    getData: blockDataGetCallback
+                    stackFrame: currentStackFrame,
+                    startSubstack: threadStartSubstack
                 });
             }
             catch(e) {
@@ -158,10 +181,9 @@ Sequencer.prototype.stepThread = function (thread) {
                 if (YieldTimers.timerId > oldYieldTimerId) {
                     thread.yieldTimerId = YieldTimers.timerId;
                 }
-                if (thread.status === Thread.STATUS_RUNNING) {
+                if (thread.status === Thread.STATUS_RUNNING && !switchedStack) {
                     // Thread executed without yielding - move to done
-                    thread.status = Thread.STATUS_DONE;
-                    this.runtime.glowBlock(currentBlock, false);
+                    threadDoneCallback();
                 }
             }
         }
