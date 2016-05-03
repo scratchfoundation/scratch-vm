@@ -1,4 +1,6 @@
 
+var YieldTimers = require('../util/yieldtimers.js');
+
 function WeDo2Blocks(runtime) {
     /**
      * The runtime instantiating this block package.
@@ -107,7 +109,8 @@ WeDo2Blocks.prototype._HSVToRGB = function(hueDegrees, saturation, value) {
  */
 WeDo2Blocks.prototype._motorOnFor = function(direction, durationSeconds, util) {
     if (this._motorTimeout > 0) {
-        clearTimeout(this._motorTimeout);
+        // @todo maybe this should go through util
+        YieldTimers.reject(this._motorTimeout);
         this._motorTimeout = null;
     }
     if (window.native) {
@@ -115,7 +118,7 @@ WeDo2Blocks.prototype._motorOnFor = function(direction, durationSeconds, util) {
     }
 
     var instance = this;
-    var myTimeout = this._motorTimeout = setTimeout(function() {
+    var myTimeout = this._motorTimeout = util.timeout(function() {
         if (instance._motorTimeout == myTimeout) {
             instance._motorTimeout = null;
         }
