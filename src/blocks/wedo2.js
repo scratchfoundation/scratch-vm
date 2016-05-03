@@ -58,7 +58,7 @@ WeDo2Blocks.prototype._clamp = function(val, min, max) {
  * @param hueDegrees Hue, in degrees.
  * @param saturation Saturation in the range [0,1].
  * @param value Value in the range [0,1].
- * @returns {number[]} An array of [r,g,b], each in the range [0,1].
+ * @returns {number[]} An array of [r,g,b], each in the range [0,255].
  * @private
  */
 WeDo2Blocks.prototype._HSVToRGB = function(hueDegrees, saturation, value) {
@@ -93,9 +93,9 @@ WeDo2Blocks.prototype._HSVToRGB = function(hueDegrees, saturation, value) {
     }
 
     var m = value - chroma;
-    rgb[0] += m;
-    rgb[1] += m;
-    rgb[2] += m;
+    rgb[0] = (rgb[0] + m) * 255;
+    rgb[1] = (rgb[1] + m) * 255;
+    rgb[2] = (rgb[2] + m) * 255;
 
     return rgb;
 };
@@ -169,8 +169,7 @@ WeDo2Blocks.prototype._getColor = function(colorName) {
 WeDo2Blocks.prototype.setColor = function(argValues) {
     if (window.native) {
         var rgbColor = this._getColor(argValues[0]);
-        window.native.setLedColor(
-            255 * rgbColor[0], 255 * rgbColor[1], 255 * rgbColor[2]);
+        window.native.setLedColor(rgbColor[0], rgbColor[1], rgbColor[2]);
     }
 };
 
