@@ -22,7 +22,7 @@ function Sequencer (runtime) {
  * In Scratch 2.0, this is set to 75% of the target stage frame-rate (30fps).
  * @const {!number}
  */
-Sequencer.WORK_TIME = 1000 / 60;
+Sequencer.WORK_TIME = 10;
 
 /**
  * Step through all threads in `this.threads`, running them in order.
