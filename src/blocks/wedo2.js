@@ -52,55 +52,6 @@ WeDo2Blocks.prototype._clamp = function(val, min, max) {
 };
 
 /**
- * Convert HSV to RGB.
- * See https://en.wikipedia.org/wiki/HSL_and_HSV#From_HSV
- * @todo move this to a common utility class.
- * @param hueDegrees Hue, in degrees.
- * @param saturation Saturation in the range [0,1].
- * @param value Value in the range [0,1].
- * @returns {number[]} An array of [r,g,b], each in the range [0,255].
- * @private
- */
-WeDo2Blocks.prototype._HSVToRGB = function(hueDegrees, saturation, value) {
-    hueDegrees %= 360;
-    if (hueDegrees < 0) hueDegrees += 360;
-    saturation = this._clamp(saturation, 0, 1);
-    value = this._clamp(value, 0, 1);
-
-    var chroma = value * saturation;
-    var huePrime = hueDegrees / 60;
-    var x = chroma * (1 - Math.abs(huePrime % 2 - 1));
-    var rgb;
-    switch (Math.floor(huePrime)) {
-    case 0:
-        rgb = [chroma, x, 0];
-        break;
-    case 1:
-        rgb = [x, chroma, 0];
-        break;
-    case 2:
-        rgb = [0, chroma, x];
-        break;
-    case 3:
-        rgb = [0, x, chroma];
-        break;
-    case 4:
-        rgb = [x, 0, chroma];
-        break;
-    case 5:
-        rgb = [chroma, 0, x];
-        break;
-    }
-
-    var m = value - chroma;
-    rgb[0] = (rgb[0] + m) * 255;
-    rgb[1] = (rgb[1] + m) * 255;
-    rgb[2] = (rgb[2] + m) * 255;
-
-    return rgb;
-};
-
-/**
  * Common implementation for motor blocks.
  * @param direction The direction to turn ('left' or 'right').
  * @param durationSeconds The number of seconds to run.
@@ -155,32 +106,35 @@ WeDo2Blocks.prototype.motorSpeed = function(argValues) {
 };
 
 /**
- * Convert a color name to an [r,b,g] array.
+ * Convert a color name to a WeDo color index.
  * Supports 'mystery' for a random hue.
  * @param colorName The color to retrieve.
- * @returns {number[]} The [r,g,b] values for the color in [0,255] range.
+ * @returns {number} The WeDo color index.
  * @private
  */
 WeDo2Blocks.prototype._getColor = function(colorName) {
+    var colors = {
+        'yellow': 7,
+        'orange': 8,
+        'coral': 9,
+        'magenta': 1,
+        'purple': 2,
+        'blue': 3,
+        'green': 6,
+        'white': 10
+    };
+
     if (colorName == 'mystery') {
-        return this._HSVToRGB(Math.random() * 360, 1, 1);
+        return Math.floor((Math.random() * 10) + 1);
     }
-    return {
-        'yellow': [255, 255, 0],
-        'orange': [255, 165, 0],
-        'coral': [255, 127, 80],
-        'magenta': [255, 0, 255],
-        'purple': [128, 0, 128],
-        'blue': [0, 0, 255],
-        'green': [0, 255, 0],
-        'white': [255, 255, 255]
-    }[colorName];
+
+    return colors[colorName];
 };
 
 WeDo2Blocks.prototype.setColor = function(argValues, util) {
     if (window.native) {
-        var rgbColor = this._getColor(argValues[0]);
-        window.native.setLedColor(rgbColor[0], rgbColor[1], rgbColor[2]);
+        var colorIndex = this._getColor(argValues[0]);
+        window.native.setLedColor(colorIndex);
     }
     // Pause for quarter second
     util.yield();
