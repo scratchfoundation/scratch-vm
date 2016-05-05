@@ -81,7 +81,7 @@ util.inherits(Runtime, EventEmitter);
 /**
  * How rapidly we try to step threads, in ms.
  */
-Runtime.THREAD_STEP_INTERVAL = 1000 / 60;
+Runtime.THREAD_STEP_INTERVAL = 1000 / 30;
 
 /**
  * Block management: create blocks and stacks from a `create` event
