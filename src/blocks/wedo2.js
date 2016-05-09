@@ -61,7 +61,7 @@ WeDo2Blocks.prototype._clamp = function(val, min, max) {
 WeDo2Blocks.prototype._motorOnFor = function(direction, durationSeconds, util) {
     if (this._motorTimeout > 0) {
         // @todo maybe this should go through util
-        YieldTimers.reject(this._motorTimeout);
+        YieldTimers.resolve(this._motorTimeout);
         this._motorTimeout = null;
     }
     if (window.native) {
