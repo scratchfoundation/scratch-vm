@@ -1,4 +1,5 @@
 ## scratch-vm
+#### Scratch VM is a library for representing, running, and maintaining the state of computer programs written using [Scratch Blocks](https://github.com/LLK/scratch-blocks).
 
 [![Build Status](https://travis-ci.com/LLK/scratch-vm.svg?token=xzzHj4ct3SyBTpeqxnx1&branch=develop)](https://travis-ci.com/LLK/scratch-vm)
 
