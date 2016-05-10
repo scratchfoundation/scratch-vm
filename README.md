@@ -13,10 +13,19 @@ var VirtualMachine = require('scratch-vm');
 var vm = new VirtualMachine();
 
 // Block events
+workspace.addChangeListener(function(e) {
+    // Handle "tapping" a block
+    if (e instanceof Blockly.Events.Ui && e.element === 'click') {
+        var stackBlock = workspace.getBlockById(e.blockId).getRootBlock().id;
+        vm.runtime.toggleStack(stackBlock);
+    // Otherwise, pass along to the block listener
+    } else {
+        vm.blockListener(e);
+    }
+});
 
-// UI events
-
-// Listen for events
+// Run threads
+vm.runtime.start();
 ```
 
 ## Standalone Build
@@ -35,6 +44,7 @@ make build
 ## Abstract Syntax Tree
 
 #### Overview
+The Virtual Machine constructs and maintains the state of an [Abstract Syntax Tree](https://en.wikipedia.org/wiki/Abstract_syntax_tree) (AST) by listening to events emitted by the [scratch-blocks](https://github.com/LLK/scratch-blocks) workspace via the `blockListener`. At any time, the current state of the AST can be viewed by inspecting the `vm.runtime.blocks` object.
 
 #### Anatomy of a Block
 ```json
@@ -77,8 +87,4 @@ make test
 
 ```bash
 make coverage
-```
-
-```bash
-make benchmark
 ```
