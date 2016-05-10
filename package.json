@@ -1,7 +1,7 @@
 {
   "name": "scratch-vm",
-  "version": "1.0.0",
-  "description": "",
+  "version": "0.1.0",
+  "description": "Virtual Machine for Scratch 3.0",
   "author": "Massachusetts Institute of Technology",
   "license": "BSD-3-Clause",
   "homepage": "https://github.com/LLK/scratch-vm#readme",
@@ -9,13 +9,18 @@
     "type": "git",
     "url": "git+ssh://git@github.com/LLK/scratch-vm.git"
   },
-  "main": "index.js",
+  "main": "./src/index.js",
   "scripts": {
     "test": "make test"
   },
+  "dependencies": {
+    "htmlparser2": "3.9.0",
+    "memoizee": "0.3.10"
+  },
   "devDependencies": {
-    "benchmark": "2.1.0",
     "eslint": "2.7.0",
-    "tap": "5.7.1"
+    "json-loader": "0.5.4",
+    "tap": "5.7.1",
+    "webpack": "1.13.0"
   }
 }
