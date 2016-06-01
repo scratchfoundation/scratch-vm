@@ -6,7 +6,17 @@ window.onload = function() {
     var toolbox = document.getElementById('toolbox');
     var workspace = window.Blockly.inject('blocks', {
         toolbox: toolbox,
-        media: '../node_modules/scratch-blocks/media/'
+        media: '../node_modules/scratch-blocks/media/',
+        colours: {
+            workspace: '#334771',
+            flyout: '#283856',
+            scrollbar: '#24324D',
+            scrollbarHover: '#0C111A',
+            insertionMarker: '#FFFFFF',
+            insertionMarkerOpacity: 0.3,
+            fieldShadow: 'rgba(255, 255, 255, 0.3)',
+            dragShadowOpacity: 0.6
+        }
     });
     window.workspace = workspace;
 
