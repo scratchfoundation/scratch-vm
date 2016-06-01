@@ -41,4 +41,12 @@ window.onload = function() {
 
     // Run threads
     vm.runtime.start();
+
+    // Handlers for green flag and stop all.
+    document.getElementById('greenflag').addEventListener('click', function() {
+        vm.runtime.greenFlag();
+    });
+    document.getElementById('stopall').addEventListener('click', function() {
+        vm.runtime.stopAll();
+    });
 };
