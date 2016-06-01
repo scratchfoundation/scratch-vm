@@ -1,0 +1,10 @@
+body {
+    background: rgb(36,36,36);
+}
+#blocks {
+    position: absolute;
+    left: 40%;
+    right: 0;
+    top: 0;
+    bottom: 0;
+}
