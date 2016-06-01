@@ -55,6 +55,9 @@ function VirtualMachine () {
                 id: e.blockId
             });
             break;
+        case 'stackclick':
+            instance.runtime.toggleStack(e.blockId);
+            break;
         }
     };
 
@@ -75,6 +78,9 @@ function VirtualMachine () {
             instance.runtime.deleteBlock({
                 id: e.blockId
             });
+            break;
+        case 'stackclick':
+            instance.runtime.toggleStack(e.blockId);
             break;
         }
     };
