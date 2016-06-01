@@ -10,7 +10,7 @@ window.onload = function() {
     });
     window.workspace = workspace;
 
-    // @todo: Also bind to flyout events, block running feedback.
+    // @todo: Also bind to flyout events.
     // Block events.
     workspace.addChangeListener(vm.blockListener);
 
@@ -19,6 +19,14 @@ window.onload = function() {
         // On a change, update the block explorer.
         explorer.innerHTML = JSON.stringify(vm.runtime.blocks, null, 2);
         window.hljs.highlightBlock(explorer);
+    });
+
+    // Feedback for stacks running.
+    vm.runtime.on('STACK_GLOW_ON', function(blockId) {
+        workspace.glowStack(blockId, true);
+    });
+    vm.runtime.on('STACK_GLOW_OFF', function(blockId) {
+        workspace.glowStack(blockId, false);
     });
 
     // Run threads
