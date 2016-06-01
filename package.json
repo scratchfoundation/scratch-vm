@@ -19,7 +19,7 @@
   },
   "devDependencies": {
     "eslint": "2.7.0",
-    "highlightjs": "^8.7.0",
+    "highlightjs": "8.7.0",
     "json-loader": "0.5.4",
     "scratch-blocks": "git+https://git@github.com/LLK/scratch-blocks.git",
     "tap": "5.7.1",
