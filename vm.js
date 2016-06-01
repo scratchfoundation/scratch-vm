@@ -74,7 +74,13 @@
 	        if (typeof e !== 'object') return;
 	        if (typeof e.blockId !== 'string') return;
 
-	        // Blocks
+	        // UI event: clicked stacks toggle in the runtime.
+	        if (e.element === 'stackclick') {
+	            instance.runtime.toggleStack(e.blockId);
+	            return;
+	        }
+
+	        // Block create/update/destroy
 	        switch (e.type) {
 	        case 'create':
 	            instance.runtime.createBlock(adapter(e), false);
@@ -100,9 +106,6 @@
 	            instance.runtime.deleteBlock({
 	                id: e.blockId
 	            });
-	            break;
-	        case 'stackclick':
-	            instance.runtime.toggleStack(e.blockId);
 	            break;
 	        }
 	    };
