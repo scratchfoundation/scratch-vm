@@ -14,6 +14,12 @@ window.onload = function() {
     // Block events.
     workspace.addChangeListener(vm.blockListener);
 
+    var explorer = document.getElementById('blockexplorer');
+    workspace.addChangeListener(function() {
+        // On a change, update the block explorer.
+        explorer.innerHTML = JSON.stringify(vm.runtime.blocks, null, 2);
+    });
+
     // Run threads
     vm.runtime.start();
 };
