@@ -5,12 +5,13 @@
     <meta charset="utf-8">
     <title>Scratch VM Playground</title>
     <link rel="stylesheet" href="playground.css">
+    <link rel="stylesheet" href="../node_modules/highlightjs/styles/zenburn.css">
 </head>
 <body>
     <div id="vm-devtools">
         <div id="tab-blockexplorer">
             <h2>VM Block Representation</h2>
-            <textarea id="blockexplorer" spellcheck="false"></textarea>
+            <pre id="blockexplorer"></pre>
         </div>
     </div>
     <div id="blocks"></div>
@@ -75,6 +76,8 @@
       </category>
     </xml>
 
+    <!-- Syntax highlighter -->
+    <script src="../node_modules/highlightjs/highlight.pack.min.js"></script>
     <!-- Scratch Blocks -->
     <!-- For easier development between the two, use `npm link` -->
     <script src="../node_modules/scratch-blocks/blockly_compressed_vertical.js"></script>

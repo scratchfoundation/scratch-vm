@@ -20,7 +20,8 @@ body {
 #blockexplorer {
     position: absolute;
     width: 100%;
-    height: 90%;
+    height: 80%;
+    overflow: scroll;
     border: 1px solid #fff;
     background: rgb(36,36,36);
     color: rgb(217,217,217);

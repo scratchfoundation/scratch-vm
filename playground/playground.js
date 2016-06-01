@@ -18,6 +18,7 @@ window.onload = function() {
     workspace.addChangeListener(function() {
         // On a change, update the block explorer.
         explorer.innerHTML = JSON.stringify(vm.runtime.blocks, null, 2);
+        window.hljs.highlightBlock(explorer);
     });
 
     // Run threads
