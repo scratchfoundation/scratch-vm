@@ -121,34 +121,35 @@ Runtime.prototype.changeBlock = function (args) {
 Runtime.prototype.moveBlock = function (e) {
     var _this = this;
 
-    // Block was removed from parent
-    if (e.newParent === undefined && e.oldParent !== undefined) {
-        _this.addStack(e.id);
-
-        // Update old parent
-        if (e.oldField === undefined) {
-            _this.blocks[e.oldParent].next = null;
-        } else {
-            delete _this.blocks[e.oldParent].fields[e.oldField];
+    // Remove from any old parent.
+    if (e.oldParent !== undefined) {
+        var oldParent = _this.blocks[e.oldParent];
+        if (e.oldInput !== undefined &&
+            oldParent.inputs[e.oldInput].block === e.id) {
+            // This block was connected to the old parent's input.
+            oldParent.inputs[e.oldInput].block = null;
+        } else if (oldParent.next === e.id) {
+            // This block was connected to the old parent's next connection.
+            oldParent.next = null;
         }
-    } else if (e.newParent !== undefined) {
-        // Block was moved to a new parent
-        // Either happens because it was previously parentless
-        // (e.oldParent === undefined)
-        // or because a block was moved in front of it.
+    }
 
-        // Remove stack
+    // Has the block become a top-level block?
+    if (e.newParent === undefined) {
+        _this._addStack(e.id);
+    } else {
+        // Remove stack, if one exists.
         _this._deleteStack(e.id);
-
-        // Update new parent
-        if (e.newField === undefined) {
-            _this.blocks[e.newParent].next = e.id;
-        } else {
-            _this.blocks[e.newParent].fields[e.newField] = {
-                name: e.newField,
-                value: e.id,
-                blocks: {}
+        // Otherwise, try to connect it in its new place.
+        if (e.newInput !== undefined) {
+            // Moved to the new parent's input.
+            _this.blocks[e.newParent].inputs[e.newInput] = {
+                name: e.newInput,
+                block: e.id
             };
+        } else {
+            // Moved to the new parent's next connection.
+            _this.blocks[e.newParent].next = e.id;
         }
     }
 };
