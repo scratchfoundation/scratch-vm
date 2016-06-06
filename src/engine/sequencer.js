@@ -97,13 +97,13 @@ Sequencer.prototype.stepThread = function (thread) {
     // If the primitive would like to do control flow,
     // it can overwrite nextBlock.
     var currentBlock = thread.nextBlock;
-    if (!currentBlock || !this.runtime.blocks[currentBlock]) {
+    if (!currentBlock || !this.runtime.blocks.getBlock(currentBlock)) {
         thread.status = Thread.STATUS_DONE;
         return;
     }
-    thread.nextBlock = this.runtime._getNextBlock(currentBlock);
+    thread.nextBlock = this.runtime.blocks.getNextBlock(currentBlock);
 
-    var opcode = this.runtime._getOpcode(currentBlock);
+    var opcode = this.runtime.blocks.getOpcode(currentBlock);
 
     // Push the current block to the stack
     thread.stack.push(currentBlock);
@@ -130,7 +130,7 @@ Sequencer.prototype.stepThread = function (thread) {
     var threadDoneCallback = function () {
         thread.status = Thread.STATUS_DONE;
         // Refresh nextBlock in case it has changed during a yield.
-        thread.nextBlock = instance.runtime._getNextBlock(currentBlock);
+        thread.nextBlock = instance.runtime.blocks.getNextBlock(currentBlock);
         // Pop the stack and stack frame
         thread.stack.pop();
         thread.stackFrames.pop();
@@ -141,9 +141,10 @@ Sequencer.prototype.stepThread = function (thread) {
      * @todo very hacked...
      */
     var startHats = function(callback) {
-        for (var i = 0; i < instance.runtime.stacks.length; i++) {
-            var stack = instance.runtime.stacks[i];
-            var stackBlock = instance.runtime.blocks[stack];
+        var stacks = instance.runtime.blocks.getStacks();
+        for (var i = 0; i < stacks.length; i++) {
+            var stack = stacks[i];
+            var stackBlock = instance.runtime.blocks.getBlock(stack);
             var result = callback(stackBlock);
             if (result) {
                 // Check if the stack is already running
@@ -174,7 +175,7 @@ Sequencer.prototype.stepThread = function (thread) {
      */
     var threadStartSubstack = function () {
         // Set nextBlock to the start of the substack
-        var substack = instance.runtime._getSubstack(currentBlock);
+        var substack = instance.runtime.blocks.getSubstack(currentBlock);
         if (substack && substack.value) {
             thread.nextBlock = substack.value;
         } else {
@@ -185,7 +186,7 @@ Sequencer.prototype.stepThread = function (thread) {
 
     // @todo extreme hack to get the single argument value for prototype
     var argValues = [];
-    var blockInputs = this.runtime.blocks[currentBlock].fields;
+    var blockInputs = this.runtime.blocks.getBlock(currentBlock).fields;
     for (var bi in blockInputs) {
         var outer = blockInputs[bi];
         for (var b in outer.blocks) {

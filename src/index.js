@@ -1,6 +1,7 @@
 var EventEmitter = require('events');
 var util = require('util');
 
+var Blocks = require('./engine/Blocks');
 var Runtime = require('./engine/runtime');
 var adapter = require('./engine/adapter');
 
@@ -15,7 +16,8 @@ function VirtualMachine () {
     // Bind event emitter and runtime to VM instance
     // @todo Post message (Web Worker) polyfill
     EventEmitter.call(instance);
-    instance.runtime = new Runtime();
+    instance.blocks = new Blocks();
+    instance.runtime = new Runtime(instance.blocks);
 
     /**
      * Event listener for blocks. Handles validation and serves as a generic
@@ -34,11 +36,11 @@ function VirtualMachine () {
             var newBlocks = adapter(e);
             // A create event can create many blocks. Add them all.
             for (var i = 0; i < newBlocks.length; i++) {
-                instance.runtime.createBlock(newBlocks[i], false);
+                instance.blocks.createBlock(newBlocks[i], false);
             }
             break;
         case 'change':
-            instance.runtime.changeBlock({
+            instance.blocks.changeBlock({
                 id: e.blockId,
                 element: e.element,
                 name: e.name,
@@ -46,7 +48,7 @@ function VirtualMachine () {
             });
             break;
         case 'move':
-            instance.runtime.moveBlock({
+            instance.blocks.moveBlock({
                 id: e.blockId,
                 oldParent: e.oldParentId,
                 oldInput: e.oldInputName,
@@ -55,7 +57,7 @@ function VirtualMachine () {
             });
             break;
         case 'delete':
-            instance.runtime.deleteBlock({
+            instance.blocks.deleteBlock({
                 id: e.blockId
             });
             break;
