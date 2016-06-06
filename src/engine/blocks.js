@@ -50,14 +50,21 @@
  /**
   * Get the substack for a particular C-shaped block
   * @param {?string} id ID for block to get the substack for
+  * @param {?number} substackNum Which substack to select (e.g. for if-else)
   * @return {?string} ID of block in the substack
   */
- Blocks.prototype.getSubstack = function (id) {
+ Blocks.prototype.getSubstack = function (id, substackNum) {
      var block = this._blocks[id];
      if (typeof block === 'undefined') return null;
+
+     var inputName = 'SUBSTACK';
+     if (substackNum > 0) {
+         inputName += substackNum;
+     }
+
      // Empty C-block?
-     if (!('SUBSTACK' in block.inputs)) return null;
-     return block.inputs['SUBSTACK'].block;
+     if (!(inputName in block.inputs)) return null;
+     return block.inputs[inputName].block;
  };
 
  /**
