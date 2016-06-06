@@ -1,5 +1,5 @@
 var test = require('tap').test;
-var Blocks = require('../../src/engine/Blocks');
+var Blocks = require('../../src/engine/blocks');
 
 test('spec', function (t) {
     var b = new Blocks();
