@@ -49,9 +49,9 @@ function VirtualMachine () {
             instance.runtime.moveBlock({
                 id: e.blockId,
                 oldParent: e.oldParentId,
-                oldField: e.oldInputName,
+                oldInput: e.oldInputName,
                 newParent: e.newParentId,
-                newField: e.newInputName
+                newInput: e.newInputName
             });
             break;
         case 'delete':
