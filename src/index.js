@@ -73,11 +73,11 @@ function VirtualMachine () {
             var newBlocks = adapter(e);
             // A create event can create many blocks. Add them all.
             for (var i = 0; i < newBlocks.length; i++) {
-                instance.runtime.createBlock(newBlocks[i], true);
+                instance.blocks.createBlock(newBlocks[i], true);
             }
             break;
         case 'change':
-            instance.runtime.changeBlock({
+            instance.blocks.changeBlock({
                 id: e.blockId,
                 element: e.element,
                 name: e.name,
@@ -85,7 +85,7 @@ function VirtualMachine () {
             });
             break;
         case 'delete':
-            instance.runtime.deleteBlock({
+            instance.blocks.deleteBlock({
                 id: e.blockId
             });
             break;
