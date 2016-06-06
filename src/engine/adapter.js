@@ -15,7 +15,6 @@ var parseDOM = memoize(html.parseDOM, {
 module.exports = function (e) {
     // Validate input
     if (typeof e !== 'object') return;
-    if (typeof e.blockId !== 'string') return;
     if (typeof e.xml !== 'object') return;
 
     return domToBlocks(parseDOM(e.xml.outerHTML));
