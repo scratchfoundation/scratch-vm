@@ -365,11 +365,9 @@ Runtime.prototype._addStack = function (id) {
  */
 Runtime.prototype._deleteStack = function (id) {
     var i = this.stacks.indexOf(id);
-    if (i > -1) {
-        this.stacks.splice(i, 1);
-        // Update `topLevel` property on the top block.
-        this.blocks[id].topLevel = false;
-    }
+    if (i > -1) this.stacks.splice(i, 1);
+    // Update `topLevel` property on the top block.
+    if (this.blocks[id]) this.blocks[id].topLevel = false;
 };
 
 /**
