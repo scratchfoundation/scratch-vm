@@ -91,21 +91,11 @@ Runtime.prototype.createBlock = function (block, opt_isFlyoutBlock) {
     // Create new block
     this.blocks[block.id] = block;
 
-    // Walk each field and add any shadow blocks
-    // @todo Expand this to cover vertical / nested blocks
-    for (var i in block.fields) {
-        var shadows = block.fields[i].blocks;
-        for (var y in shadows) {
-            var shadow = shadows[y];
-            this.blocks[shadow.id] = shadow;
-        }
-    }
-
     // Push block id to stacks array. New blocks are always a stack even if only
     // momentary. If the new block is added to an existing stack this stack will
     // be removed by the `moveBlock` method below.
     if (!opt_isFlyoutBlock) {
-        this.stacks.push(block.id);
+        this._addStack(block.id);
     }
 };
 
@@ -132,8 +122,7 @@ Runtime.prototype.moveBlock = function (e) {
 
     // Block was removed from parent
     if (e.newParent === undefined && e.oldParent !== undefined) {
-        // Add stack
-        _this.stacks.push(e.id);
+        _this.addStack(e.id);
 
         // Update old parent
         if (e.oldField === undefined) {
@@ -361,12 +350,28 @@ Runtime.prototype.start = function () {
 // -----------------------------------------------------------------------------
 
 /**
+ * Helper to add a stack to `this.stacks`
+ * @param {?string} id ID of block that starts the stack
+ */
+Runtime.prototype._addStack = function (id) {
+    var i = this.stacks.indexOf(id);
+    if (i > -1) return; // Already in stacks.
+    this.stacks.push(id);
+    // Update `topLevel` property on the top block.
+    this.blocks[id].topLevel = true;
+};
+
+/**
  * Helper to remove a stack from `this.stacks`
  * @param {?string} id ID of block that starts the stack
  */
 Runtime.prototype._deleteStack = function (id) {
     var i = this.stacks.indexOf(id);
-    if (i > -1) this.stacks.splice(i, 1);
+    if (i > -1) {
+        this.stacks.splice(i, 1);
+        // Update `topLevel` property on the top block.
+        this.blocks[id].topLevel = false;
+    }
 };
 
 /**
