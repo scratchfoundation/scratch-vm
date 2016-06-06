@@ -35,7 +35,7 @@ function domToBlocks (blocksDOM) {
         var block = blocksDOM[i];
         var tagName = block.name.toLowerCase();
         if (tagName === 'block') {
-            domToBlock(block, blocks, 0);
+            domToBlock(block, blocks, true);
         }
     }
     // Flatten blocks object into a list.
@@ -50,23 +50,19 @@ function domToBlocks (blocksDOM) {
  * Convert and an individual block DOM to the representation tree.
  * Based on Blockly's `domToBlockHeadless_`.
  * @param {Element} blockDOM DOM tree for an individual block.
- * @param {Number} treeDepth How far down the tree we have recursed.
+ * @param {Boolean} isTopBlock Whether blocks at this level are "top blocks."
  * @param {Object} blocks Collection of blocks to add to.
  */
-function domToBlock (blockDOM, blocks, treeDepth) {
+function domToBlock (blockDOM, blocks, isTopBlock) {
     // Block skeleton.
     var block = {
-        id: null, // Block ID
-        opcode: null, // Execution opcode, e.g., "event_whengreenflag".
+        id: blockDOM.attribs.id, // Block ID
+        opcode: blockDOM.attribs.type, // For execution, "event_whengreenflag".
         inputs: {}, // Inputs to this block and the blocks they point to.
         fields: {}, // Fields on this block and their values.
         next: null, // Next block in the stack, if one exists.
-        topLevel: treeDepth == 0 // If this block starts a stack.
+        topLevel: isTopBlock // If this block starts a stack.
     };
-
-    // Basic properties of the block from XML.
-    block.id = blockDOM.attribs.id;
-    block.opcode = blockDOM.attribs.type;
 
     // Add the block to the representation tree.
     blocks[block.id] = block;
@@ -110,7 +106,7 @@ function domToBlock (blockDOM, blocks, treeDepth) {
         case 'value':
         case 'statement':
             // Recursively generate block structure for input block.
-            domToBlock(childBlockNode, blocks, treeDepth + 1);
+            domToBlock(childBlockNode, blocks, false);
             // Link this block's input to the child block.
             var inputName = xmlChild.attribs.name;
             block.inputs[inputName] = {
@@ -120,7 +116,7 @@ function domToBlock (blockDOM, blocks, treeDepth) {
             break;
         case 'next':
             // Recursively generate block structure for next block.
-            domToBlock(childBlockNode, blocks, treeDepth + 1);
+            domToBlock(childBlockNode, blocks, false);
             // Link next block to this block.
             block.next = childBlockNode.attribs.id;
             break;
