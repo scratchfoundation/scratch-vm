@@ -31,7 +31,11 @@ function VirtualMachine () {
         // Blocks
         switch (e.type) {
         case 'create':
-            instance.runtime.createBlock(adapter(e), false);
+            var newBlocks = adapter(e);
+            // A create event can create many blocks. Add them all.
+            for (var i = 0; i < newBlocks.length; i++) {
+                instance.runtime.createBlock(newBlocks[i], false);
+            }
             break;
         case 'change':
             instance.runtime.changeBlock({
@@ -64,7 +68,11 @@ function VirtualMachine () {
     instance.flyoutBlockListener = function (e) {
         switch (e.type) {
         case 'create':
-            instance.runtime.createBlock(adapter(e), true);
+            var newBlocks = adapter(e);
+            // A create event can create many blocks. Add them all.
+            for (var i = 0; i < newBlocks.length; i++) {
+                instance.runtime.createBlock(newBlocks[i], true);
+            }
             break;
         case 'change':
             instance.runtime.changeBlock({

@@ -9,10 +9,8 @@ var parseDOM = memoize(html.parseDOM, {
 /**
  * Adapter between block creation events and block representation which can be
  * used by the Scratch runtime.
- *
- * @param {Object} `Blockly.events.create`
- *
- * @return {Object}
+ * @param {Object} e `Blockly.events.create`
+ * @return {Array.<Object>} List of blocks from this CREATE event.
  */
 module.exports = function (e) {
     // Validate input
@@ -20,68 +18,112 @@ module.exports = function (e) {
     if (typeof e.blockId !== 'string') return;
     if (typeof e.xml !== 'object') return;
 
-    // Storage object
-    var obj = {
-        id: e.blockId,
-        opcode: null,
-        next: null,
-        fields: {}
-    };
-
-    // Set opcode
-    if (typeof e.xml.attributes === 'object') {
-        obj.opcode = e.xml.attributes.type.value;
-    }
-
-    // Extract fields from event's `innerHTML`
-    if (typeof e.xml.innerHTML !== 'string') return obj;
-    if (e.xml.innerHTML === '') return obj;
-    obj.fields = extract(parseDOM(e.xml.innerHTML));
-
-    return obj;
+    return domToBlocks(parseDOM(e.xml.outerHTML));
 };
 
 /**
- * Extracts fields from a block's innerHTML.
- * @todo Extend this to support vertical grammar / nested blocks.
- *
- * @param {Object} DOM representation of block's innerHTML
- *
- * @return {Object}
+ * Convert outer blocks DOM from a Blockly CREATE event
+ * to a usable form for the Scratch runtime.
+ * This structure is based on Blockly xml.js:`domToWorkspace` and `domToBlock`.
+ * @param {Element} blocksDOM DOM tree for this event.
+ * @return {Array.<Object>} Usable list of blocks from this CREATE event.
  */
-function extract (dom) {
-    // Storage object
-    var fields = {};
+function domToBlocks (blocksDOM) {
+    // At this level, there could be multiple blocks adjacent in the DOM tree.
+    var blocks = {};
+    for (var i = 0; i < blocksDOM.length; i++) {
+        var block = blocksDOM[i];
+        var tagName = block.name.toLowerCase();
+        if (tagName === 'block') {
+            domToBlock(block, blocks, 0);
+        }
+    }
+    // Flatten blocks object into a list.
+    var blocksList = [];
+    for (var b in blocks) {
+        blocksList.push(blocks[b]);
+    }
+    return blocksList;
+}
 
-    // Field
-    var field = dom[0];
-    var fieldName = field.attribs.name;
-    fields[fieldName] = {
-        name: fieldName,
-        value: null,
-        blocks: {}
+/**
+ * Convert and an individual block DOM to the representation tree.
+ * Based on Blockly's `domToBlockHeadless_`.
+ * @param {Element} blockDOM DOM tree for an individual block.
+ * @param {Number} treeDepth How far down the tree we have recursed.
+ * @param {Object} blocks Collection of blocks to add to.
+ */
+function domToBlock (blockDOM, blocks, treeDepth) {
+    // Block skeleton.
+    var block = {
+        id: null, // Block ID
+        opcode: null, // Execution opcode, e.g., "event_whengreenflag".
+        inputs: {}, // Inputs to this block and the blocks they point to.
+        fields: {}, // Fields on this block and their values.
+        next: null, // Next block in the stack, if one exists.
+        topLevel: treeDepth == 0 // If this block starts a stack.
     };
 
-    // Shadow block
-    var shadow = field.children[0];
-    var shadowId = shadow.attribs.id;
-    var shadowOpcode = shadow.attribs.type;
-    fields[fieldName].blocks[shadowId] = {
-        id: shadowId,
-        opcode: shadowOpcode,
-        next: null,
-        fields: {}
-    };
+    // Basic properties of the block from XML.
+    block.id = blockDOM.attribs.id;
+    block.opcode = blockDOM.attribs.type;
 
-    // Primitive
-    var primitive = shadow.children[0];
-    var primitiveName = primitive.attribs.name;
-    var primitiveValue = primitive.children[0].data;
-    fields[fieldName].blocks[shadowId].fields[primitiveName] = {
-        name: primitiveName,
-        value: primitiveValue,
-        blocks: null
-    };
+    // Add the block to the representation tree.
+    blocks[block.id] = block;
 
-    return fields;
+    // Process XML children and find enclosed blocks, fields, etc.
+    for (var i = 0; i < blockDOM.children.length; i++) {
+        var xmlChild = blockDOM.children[i];
+        // Enclosed blocks and shadows
+        var childBlockNode = null;
+        var childShadowNode = null;
+        for (var j = 0; j < xmlChild.children.length; j++) {
+            var grandChildNode = xmlChild.children[j];
+            if (!grandChildNode.name) {
+                // Non-XML tag node.
+                continue;
+            }
+            var grandChildNodeName = grandChildNode.name.toLowerCase();
+            if (grandChildNodeName == 'block') {
+                childBlockNode = grandChildNode;
+            } else if (grandChildNodeName == 'shadow') {
+                childShadowNode = grandChildNode;
+            }
+        }
+
+        // Use shadow block only if there's no real block node.
+        if (!childBlockNode && childShadowNode) {
+            childBlockNode = childShadowNode;
+        }
+
+        // Not all Blockly-type blocks are handled here,
+        // as we won't be using all of them for Scratch.
+        switch (xmlChild.name.toLowerCase()) {
+        case 'field':
+            // Add the field to this block.
+            var fieldName = xmlChild.attribs.name;
+            block.fields[fieldName] = {
+                name: fieldName,
+                value: xmlChild.children[0].data
+            };
+            break;
+        case 'value':
+        case 'statement':
+            // Recursively generate block structure for input block.
+            domToBlock(childBlockNode, blocks, treeDepth + 1);
+            // Link this block's input to the child block.
+            var inputName = xmlChild.attribs.name;
+            block.inputs[inputName] = {
+                name: inputName,
+                block: childBlockNode.attribs.id
+            };
+            break;
+        case 'next':
+            // Recursively generate block structure for next block.
+            domToBlock(childBlockNode, blocks, treeDepth + 1);
+            // Link next block to this block.
+            block.next = childBlockNode.attribs.id;
+            break;
+        }
+    }
 }
