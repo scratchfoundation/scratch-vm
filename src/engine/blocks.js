@@ -88,10 +88,10 @@
      this._blocks[block.id] = block;
 
      // Push block id to stacks array.
-     // Blocks are added as a top-level stack if they are marked as a topBlock
+     // Blocks are added as a top-level stack if they are marked as a top-block
      // (if they were top-level XML in the event) and if they are not
      // flyout blocks.
-     if (!opt_isFlyoutBlock && block.topBlock) {
+     if (!opt_isFlyoutBlock && block.topLevel) {
          this._addStack(block.id);
      }
  };
