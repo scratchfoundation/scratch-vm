@@ -168,14 +168,11 @@ Runtime.prototype.deleteBlock = function (e) {
         this.deleteBlock({id: block.next});
     }
 
-    // Delete substacks and fields
-    for (var field in block.fields) {
-        if (field === 'SUBSTACK') {
-            this.deleteBlock({id: block.fields[field].value});
-        } else {
-            for (var shadow in block.fields[field].blocks) {
-                this.deleteBlock({id: shadow});
-            }
+    // Delete inputs (including substacks)
+    for (var input in block.inputs) {
+        // If it's null, the block in this input moved away.
+        if (block.inputs[input].block !== null) {
+            this.deleteBlock({id: block.inputs[input].block});
         }
     }
 
