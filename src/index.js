@@ -1,7 +1,7 @@
 var EventEmitter = require('events');
 var util = require('util');
 
-var Blocks = require('./engine/Blocks');
+var Blocks = require('./engine/blocks');
 var Runtime = require('./engine/runtime');
 var adapter = require('./engine/adapter');
 
