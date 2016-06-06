@@ -34,7 +34,7 @@ function domToBlocks (blocksDOM) {
     for (var i = 0; i < blocksDOM.length; i++) {
         var block = blocksDOM[i];
         var tagName = block.name.toLowerCase();
-        if (tagName === 'block') {
+        if (tagName == 'block' || tagName == 'shadow') {
             domToBlock(block, blocks, true);
         }
     }
