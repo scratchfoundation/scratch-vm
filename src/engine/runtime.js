@@ -91,10 +91,11 @@ Runtime.prototype.createBlock = function (block, opt_isFlyoutBlock) {
     // Create new block
     this.blocks[block.id] = block;
 
-    // Push block id to stacks array. New blocks are always a stack even if only
-    // momentary. If the new block is added to an existing stack this stack will
-    // be removed by the `moveBlock` method below.
-    if (!opt_isFlyoutBlock) {
+    // Push block id to stacks array.
+    // Blocks are added as a top-level stack if they are marked as a topBlock
+    // (if they were top-level XML in the event) and if they are not
+    // flyout blocks.
+    if (!opt_isFlyoutBlock && block.topBlock) {
         this._addStack(block.id);
     }
 };
