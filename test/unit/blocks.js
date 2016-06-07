@@ -135,3 +135,66 @@ test('delete chain', function (t) {
     t.equal(b._stacks.length, 0);
     t.end();
 });
+
+test('delete inputs', function (t) {
+    // Create a block with two inputs, one of which has its own input.
+    // Delete the block - all of them should be deleted.
+    var b = new Blocks();
+    b.createBlock({
+        id: 'foo',
+        opcode: 'TEST_BLOCK',
+        next: null,
+        fields: {},
+        inputs: {
+            input1: {
+                name: 'input1',
+                block: 'foo2'
+            },
+            SUBSTACK: {
+                name: 'SUBSTACK',
+                block: 'foo3'
+            }
+        },
+        topLevel: true
+    });
+    b.createBlock({
+        id: 'foo2',
+        opcode: 'TEST_BLOCK',
+        next: null,
+        fields: {},
+        inputs: {},
+        topLevel: false
+    });
+    b.createBlock({
+        id: 'foo3',
+        opcode: 'TEST_BLOCK',
+        next: null,
+        fields: {},
+        inputs: {
+            subinput: {
+                name: 'subinput',
+                block: 'foo4'
+            }
+        },
+        topLevel: false
+    });
+    b.createBlock({
+        id: 'foo4',
+        opcode: 'TEST_BLOCK',
+        next: null,
+        fields: {},
+        inputs: {},
+        topLevel: false
+    });
+    b.deleteBlock({
+        id: 'foo'
+    });
+    t.type(b._blocks['foo'], 'undefined');
+    t.type(b._blocks['foo2'], 'undefined');
+    t.type(b._blocks['foo3'], 'undefined');
+    t.type(b._blocks['foo4'], 'undefined');
+    t.equal(b._stacks.indexOf('foo'), -1);
+    t.equal(Object.keys(b._blocks).length, 0);
+    t.equal(b._stacks.length, 0);
+    t.end();
+});
