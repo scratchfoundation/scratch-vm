@@ -52,35 +52,33 @@ The Virtual Machine constructs and maintains the state of an [Abstract Syntax Tr
 #### Anatomy of a Block
 ```json
 {
-    "id": "^1r~63Gdl7;Dh?I*OP3_",
-    "opcode": "wedo_motorclockwise",
-    "next": null,
-    "fields": {
+    "7AJZR#NA;m*b}R]pdq63": {
+      "id": "7AJZR#NA;m*b}R]pdq63",
+      "opcode": "control_wait",
+      "inputs": {
         "DURATION": {
-            "name": "DURATION",
-            "value": null,
-            "blocks": {
-                "1?P=eV(OiDY3vMk!24Ip": {
-                    "id": "1?P=eV(OiDY3vMk!24Ip",
-                    "opcode": "math_number",
-                    "next": null,
-                    "fields": {
-                        "NUM": {
-                            "name": "NUM",
-                            "value": "10",
-                            "blocks": null
-                        }
-                    }
-                }
-            }
-        },
-        "SUBSTACK": {
-            "name": "SUBSTACK",
-            "value": "@1ln(HsUO4!]*2*%BrE|",
-            "blocks": null
+          "name": "DURATION",
+          "block": ",xA8/S!Z6+kR,9dph.rO"
         }
+      },
+      "fields": {},
+      "next": null,
+      "topLevel": true
+    },
+    ",xA8/S!Z6+kR,9dph.rO": {
+      "id": ",xA8/S!Z6+kR,9dph.rO",
+      "opcode": "math_number",
+      "inputs": {},
+      "fields": {
+        "NUM": {
+          "name": "NUM",
+          "value": "1"
+        }
+      },
+      "next": null,
+      "topLevel": false
     }
-}
+  }
 ```
 
 ## Testing

@@ -1,20 +1,57 @@
 {
     "create": {
-        "blockId": "z!+#Nqr,_(V=xz0y7a@d",
         "workspaceId": "7Luws3lyb*Z98~Kk+IG|",
         "group": ";OswyM#@%`%,xOrhOXC=",
         "recordUndo": true,
+        "name": "block",
         "xml": {
-            "attributes": {
-                "type": {
-                    "value": "wedo_motorclockwise"
-                }
-            },
-            "innerHTML": "<value name=\"DURATION\"><shadow type=\"math_number\" id=\"!6Ahqg4f}Ljl}X5Hws?Z\"><field name=\"NUM\">10</field></shadow></value>"
+            "outerHTML": "<block type=\"wedo_motorclockwise\" id=\"z!+#Nqr,_(V=xz0y7a@d\"><value name=\"DURATION\"><shadow type=\"math_number\" id=\"!6Ahqg4f}Ljl}X5Hws?Z\"><field name=\"NUM\">10</field></shadow></value></block>"
         },
         "ids": [
             "z!+#Nqr,_(V=xz0y7a@d",
             "!6Ahqg4f}Ljl}X5Hws?Z"
         ]
+    },
+    "createsubstack": {
+        "name": "block",
+        "xml": {
+            "outerHTML": "<block type=\"control_forever\" id=\"r9`RpL74T6*SXPKv7}Dq\" x=\"61\" y=\"90\"><statement name=\"SUBSTACK\"><block type=\"control_wait\" id=\"{Rwt[LFtD1-JPAi-qf:.\"><value name=\"DURATION\"><shadow type=\"math_number\" id=\"VMDxt_9SYe5{*eNRe5dZ\"><field name=\"NUM\">1</field></shadow></value></block></statement></block>"
+        }
+    },
+    "createtwosubstacks": {
+        "name": "block",
+        "xml": {
+            "outerHTML": "<block type=\"control_if_else\" id=\"8W?lmIY!Tgnh)~0!G#9-\" x=\"87\" y=\"159\"><statement name=\"SUBSTACK\"><block type=\"event_broadcast\" id=\"lgU2GGtwlREuasCB02Vr\"></block></statement><statement name=\"SUBSTACK2\"><block type=\"event_broadcast\" id=\"Gb]N,2P;|J%F?pxSwz(2\"></block></statement></block>"
+        }
+    },
+    "createtoplevelshadow": {
+        "name": "shadow",
+        "xml": {
+            "outerHTML": "<shadow type=\"math_number\" id=\"z9d57=IUI5se;DBbyug)\"><field name=\"NUM\">4</field></shadow>"
+        }
+    },
+    "createwithnext": {
+        "name": "block",
+        "xml": {
+            "outerHTML": "<block type=\"wedo_setcolor\" id=\"*CT)7+UKjQIEtUw.OGT6\" x=\"89\" y=\"48\"><next><block type=\"wedo_motorspeed\" id=\"Er*:^o7yYL#dX+5)R^xq\"></block></next></block>"
+        }
+    },
+    "createinvalid": {
+        "name": "whatever",
+        "xml": {
+            "outerHTML": "<xml></xml>"
+        }
+    },
+    "createinvalidgrandchild": {
+        "name": "block",
+        "xml": {
+            "outerHTML": "<block type=\"control_forever\" id=\"r9`RpL74T6*SXPKv7}Dq\" x=\"61\" y=\"90\"><next><invalidgrandchild>xxx</invalidgrandchild></next></block>"
+        }
+    },
+    "createbadxml": {
+        "name": "whatever",
+        "xml": {
+            "outerHTML": "></xml>"
+        }
     }
 }

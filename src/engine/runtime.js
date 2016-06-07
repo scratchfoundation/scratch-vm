@@ -10,25 +10,18 @@ var defaultBlockPackages = {
 
 /**
  * Manages blocks, stacks, and the sequencer.
+ * @param blocks Blocks instance for this runtime.
  */
-function Runtime () {
+function Runtime (blocks) {
     // Bind event emitter
     EventEmitter.call(this);
 
     // State for the runtime
-    /**
-     * All blocks in the workspace.
-     * Keys are block IDs, values are metadata about the block.
-     * @type {Object.<string, Object>}
-     */
-    this.blocks = {};
 
     /**
-     * All stacks in the workspace.
-     * A list of block IDs that represent stacks (first block in stack).
-     * @type {Array.<String>}
+     * Block management and storage
      */
-    this.stacks = [];
+    this.blocks = blocks;
 
     /**
      * A list of threads that are currently running in the VM.
@@ -83,118 +76,6 @@ util.inherits(Runtime, EventEmitter);
  */
 Runtime.THREAD_STEP_INTERVAL = 1000 / 30;
 
-/**
- * Block management: create blocks and stacks from a `create` event
- * @param {!Object} block Blockly create event to be processed
- */
-Runtime.prototype.createBlock = function (block, opt_isFlyoutBlock) {
-    // Create new block
-    this.blocks[block.id] = block;
-
-    // Walk each field and add any shadow blocks
-    // @todo Expand this to cover vertical / nested blocks
-    for (var i in block.fields) {
-        var shadows = block.fields[i].blocks;
-        for (var y in shadows) {
-            var shadow = shadows[y];
-            this.blocks[shadow.id] = shadow;
-        }
-    }
-
-    // Push block id to stacks array. New blocks are always a stack even if only
-    // momentary. If the new block is added to an existing stack this stack will
-    // be removed by the `moveBlock` method below.
-    if (!opt_isFlyoutBlock) {
-        this.stacks.push(block.id);
-    }
-};
-
-/**
- * Block management: change block field values
- * @param {!Object} args Blockly change event to be processed
- */
-Runtime.prototype.changeBlock = function (args) {
-    // Validate
-    if (args.element !== 'field') return;
-    if (typeof this.blocks[args.id] === 'undefined') return;
-    if (typeof this.blocks[args.id].fields[args.name] === 'undefined') return;
-
-    // Update block value
-    this.blocks[args.id].fields[args.name].value = args.value;
-};
-
-/**
- * Block management: move blocks from parent to parent
- * @param {!Object} e Blockly move event to be processed
- */
-Runtime.prototype.moveBlock = function (e) {
-    var _this = this;
-
-    // Block was removed from parent
-    if (e.newParent === undefined && e.oldParent !== undefined) {
-        // Add stack
-        _this.stacks.push(e.id);
-
-        // Update old parent
-        if (e.oldField === undefined) {
-            _this.blocks[e.oldParent].next = null;
-        } else {
-            delete _this.blocks[e.oldParent].fields[e.oldField];
-        }
-    } else if (e.newParent !== undefined) {
-        // Block was moved to a new parent
-        // Either happens because it was previously parentless
-        // (e.oldParent === undefined)
-        // or because a block was moved in front of it.
-
-        // Remove stack
-        _this._deleteStack(e.id);
-
-        // Update new parent
-        if (e.newField === undefined) {
-            _this.blocks[e.newParent].next = e.id;
-        } else {
-            _this.blocks[e.newParent].fields[e.newField] = {
-                name: e.newField,
-                value: e.id,
-                blocks: {}
-            };
-        }
-    }
-};
-
-/**
- * Block management: delete blocks and their associated stacks
- * @param {!Object} e Blockly delete event to be processed
- */
-Runtime.prototype.deleteBlock = function (e) {
-    // @todo Stop threads running on this stack
-
-    // Get block
-    var block = this.blocks[e.id];
-
-    // Delete children
-    if (block.next !== null) {
-        this.deleteBlock({id: block.next});
-    }
-
-    // Delete substacks and fields
-    for (var field in block.fields) {
-        if (field === 'SUBSTACK') {
-            this.deleteBlock({id: block.fields[field].value});
-        } else {
-            for (var shadow in block.fields[field].blocks) {
-                this.deleteBlock({id: shadow});
-            }
-        }
-    }
-
-    // Delete stack
-    this._deleteStack(e.id);
-
-    // Delete block
-    delete this.blocks[e.id];
-};
 
 // -----------------------------------------------------------------------------
 // -----------------------------------------------------------------------------
@@ -280,10 +161,11 @@ Runtime.prototype.greenFlag = function () {
         this._removeThread(this.threads[i]);
     }
     // Add all top stacks with green flag
-    for (var j = 0; j < this.stacks.length; j++) {
-        var topBlock = this.stacks[j];
-        if (this.blocks[topBlock].opcode === 'event_whenflagclicked') {
-            this._pushThread(this.stacks[j]);
+    var stacks = this.blocks.getStacks();
+    for (var j = 0; j < stacks.length; j++) {
+        var topBlock = stacks[j];
+        if (this.blocks.getBlock(topBlock).opcode === 'event_whenflagclicked') {
+            this._pushThread(stacks[j]);
         }
     }
 };
@@ -293,9 +175,11 @@ Runtime.prototype.greenFlag = function () {
  */
 Runtime.prototype.startDistanceSensors = function () {
     // Add all top stacks with distance sensor
-    for (var j = 0; j < this.stacks.length; j++) {
-        var topBlock = this.stacks[j];
-        if (this.blocks[topBlock].opcode === 'wedo_whendistanceclose') {
+    var stacks = this.blocks.getStacks();
+    for (var j = 0; j < stacks.length; j++) {
+        var topBlock = stacks[j];
+        if (this.blocks.getBlock(topBlock).opcode ===
+            'wedo_whendistanceclose') {
             var alreadyRunning = false;
             for (var k = 0; k < this.threads.length; k++) {
                 if (this.threads[k].topBlock === topBlock) {
@@ -303,7 +187,7 @@ Runtime.prototype.startDistanceSensors = function () {
                 }
             }
             if (!alreadyRunning) {
-                this._pushThread(this.stacks[j]);
+                this._pushThread(stacks[j]);
             }
         }
     }
@@ -355,48 +239,6 @@ Runtime.prototype.start = function () {
     window.setInterval(function() {
         this._step();
     }.bind(this), Runtime.THREAD_STEP_INTERVAL);
-};
-
-// -----------------------------------------------------------------------------
-// -----------------------------------------------------------------------------
-
-/**
- * Helper to remove a stack from `this.stacks`
- * @param {?string} id ID of block that starts the stack
- */
-Runtime.prototype._deleteStack = function (id) {
-    var i = this.stacks.indexOf(id);
-    if (i > -1) this.stacks.splice(i, 1);
-};
-
-/**
- * Helper to get the next block for a particular block
- * @param {?string} id ID of block to get the next block for
- * @return {?string} ID of next block in the sequence
- */
-Runtime.prototype._getNextBlock = function (id) {
-    if (typeof this.blocks[id] === 'undefined') return null;
-    return this.blocks[id].next;
-};
-
-/**
- * Helper to get the substack for a particular C-shaped block
- * @param {?string} id ID for block to get the substack for
- * @return {?string} ID of block in the substack
- */
-Runtime.prototype._getSubstack = function (id) {
-    if (typeof this.blocks[id] === 'undefined') return null;
-    return this.blocks[id].fields['SUBSTACK'];
-};
-
-/**
- * Helper to get the opcode for a particular block
- * @param {?string} id ID of block to query
- * @return {?string} the opcode corresponding to that block
- */
-Runtime.prototype._getOpcode = function (id) {
-    if (typeof this.blocks[id] === 'undefined') return null;
-    return this.blocks[id].opcode;
 };
 
 module.exports = Runtime;

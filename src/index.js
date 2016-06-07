@@ -1,6 +1,7 @@
 var EventEmitter = require('events');
 var util = require('util');
 
+var Blocks = require('./engine/blocks');
 var Runtime = require('./engine/runtime');
 var adapter = require('./engine/adapter');
 
@@ -15,7 +16,8 @@ function VirtualMachine () {
     // Bind event emitter and runtime to VM instance
     // @todo Post message (Web Worker) polyfill
     EventEmitter.call(instance);
-    instance.runtime = new Runtime();
+    instance.blocks = new Blocks();
+    instance.runtime = new Runtime(instance.blocks);
 
     /**
      * Event listener for blocks. Handles validation and serves as a generic
@@ -37,10 +39,14 @@ function VirtualMachine () {
         // Block create/update/destroy
         switch (e.type) {
         case 'create':
-            instance.runtime.createBlock(adapter(e), false);
+            var newBlocks = adapter(e);
+            // A create event can create many blocks. Add them all.
+            for (var i = 0; i < newBlocks.length; i++) {
+                instance.blocks.createBlock(newBlocks[i], false);
+            }
             break;
         case 'change':
-            instance.runtime.changeBlock({
+            instance.blocks.changeBlock({
                 id: e.blockId,
                 element: e.element,
                 name: e.name,
@@ -48,16 +54,16 @@ function VirtualMachine () {
             });
             break;
         case 'move':
-            instance.runtime.moveBlock({
+            instance.blocks.moveBlock({
                 id: e.blockId,
                 oldParent: e.oldParentId,
-                oldField: e.oldInputName,
+                oldInput: e.oldInputName,
                 newParent: e.newParentId,
-                newField: e.newInputName
+                newInput: e.newInputName
             });
             break;
         case 'delete':
-            instance.runtime.deleteBlock({
+            instance.blocks.deleteBlock({
                 id: e.blockId
             });
             break;
@@ -67,10 +73,14 @@ function VirtualMachine () {
     instance.flyoutBlockListener = function (e) {
         switch (e.type) {
         case 'create':
-            instance.runtime.createBlock(adapter(e), true);
+            var newBlocks = adapter(e);
+            // A create event can create many blocks. Add them all.
+            for (var i = 0; i < newBlocks.length; i++) {
+                instance.blocks.createBlock(newBlocks[i], true);
+            }
             break;
         case 'change':
-            instance.runtime.changeBlock({
+            instance.blocks.changeBlock({
                 id: e.blockId,
                 element: e.element,
                 name: e.name,
@@ -78,7 +88,7 @@ function VirtualMachine () {
             });
             break;
         case 'delete':
-            instance.runtime.deleteBlock({
+            instance.blocks.deleteBlock({
                 id: e.blockId
             });
             break;
