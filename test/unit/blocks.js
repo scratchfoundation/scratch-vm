@@ -95,3 +95,43 @@ test('delete', function (t) {
     t.equal(b._stacks.indexOf('foo'), -1);
     t.end();
 });
+
+test('delete chain', function (t) {
+    // Create a chain of connected blocks and delete the top one.
+    // All of them should be deleted.
+    var b = new Blocks();
+    b.createBlock({
+        id: 'foo',
+        opcode: 'TEST_BLOCK',
+        next: 'foo2',
+        fields: {},
+        inputs: {},
+        topLevel: true
+    });
+    b.createBlock({
+        id: 'foo2',
+        opcode: 'TEST_BLOCK',
+        next: 'foo3',
+        fields: {},
+        inputs: {},
+        topLevel: false
+    });
+    b.createBlock({
+        id: 'foo3',
+        opcode: 'TEST_BLOCK',
+        next: null,
+        fields: {},
+        inputs: {},
+        topLevel: false
+    });
+    b.deleteBlock({
+        id: 'foo'
+    });
+    t.type(b._blocks['foo'], 'undefined');
+    t.type(b._blocks['foo2'], 'undefined');
+    t.type(b._blocks['foo3'], 'undefined');
+    t.equal(b._stacks.indexOf('foo'), -1);
+    t.equal(Object.keys(b._blocks).length, 0);
+    t.equal(b._stacks.length, 0);
+    t.end();
+});
