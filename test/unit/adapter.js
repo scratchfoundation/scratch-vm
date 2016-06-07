@@ -34,3 +34,27 @@ test('create event', function (t) {
 
     t.end();
 });
+
+test('create with substack', function (t) {
+    var result = adapter(events.createsubstack);
+    // Outer block
+    t.type(result[0].id, 'string');
+    t.type(result[0].opcode, 'string');
+    t.type(result[0].fields, 'object');
+    t.type(result[0].inputs, 'object');
+    t.type(result[0].inputs['SUBSTACK'], 'object');
+    t.type(result[0].topLevel, 'boolean');
+    t.equal(result[0].topLevel, true);
+    // In substack
+    var substackBlockId = result[0].inputs['SUBSTACK']['block'];
+    t.type(substackBlockId, 'string');
+    // Find actual substack block
+    var substackBlock = null;
+    for (var i = 0; i < result.length; i++) {
+        if (result[i].id == substackBlockId) {
+            substackBlock = result[i];
+        }
+    }
+    t.type(substackBlock, 'object');
+    t.end();
+});

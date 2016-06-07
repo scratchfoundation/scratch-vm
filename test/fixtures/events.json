@@ -11,5 +11,16 @@
             "z!+#Nqr,_(V=xz0y7a@d",
             "!6Ahqg4f}Ljl}X5Hws?Z"
         ]
+    },
+    "createsubstack": {
+        "name": "block",
+        "xml": {
+            "outerHTML": "<block type=\"control_forever\" id=\"r9`RpL74T6*SXPKv7}Dq\" x=\"61\" y=\"90\"><statement name=\"SUBSTACK\"><block type=\"control_wait\" id=\"{Rwt[LFtD1-JPAi-qf:.\"><value name=\"DURATION\"><shadow type=\"math_number\" id=\"VMDxt_9SYe5{*eNRe5dZ\"><field name=\"NUM\">1</field></shadow></value></block></statement></block>"
+        },
+        "ids": [
+            "r9`RpL74T6*SXPKv7}Dq",
+            "{Rwt[LFtD1-JPAi-qf:.",
+            "VMDxt_9SYe5{*eNRe5dZ"
+        ]
     }
 }
