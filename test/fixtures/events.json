@@ -16,11 +16,24 @@
         "name": "block",
         "xml": {
             "outerHTML": "<block type=\"control_forever\" id=\"r9`RpL74T6*SXPKv7}Dq\" x=\"61\" y=\"90\"><statement name=\"SUBSTACK\"><block type=\"control_wait\" id=\"{Rwt[LFtD1-JPAi-qf:.\"><value name=\"DURATION\"><shadow type=\"math_number\" id=\"VMDxt_9SYe5{*eNRe5dZ\"><field name=\"NUM\">1</field></shadow></value></block></statement></block>"
-        },
-        "ids": [
-            "r9`RpL74T6*SXPKv7}Dq",
-            "{Rwt[LFtD1-JPAi-qf:.",
-            "VMDxt_9SYe5{*eNRe5dZ"
-        ]
+        }
+    },
+    "createtwosubstacks": {
+        "name": "block",
+        "xml": {
+            "outerHTML": "<block type=\"control_if_else\" id=\"8W?lmIY!Tgnh)~0!G#9-\" x=\"87\" y=\"159\"><statement name=\"SUBSTACK\"><block type=\"event_broadcast\" id=\"lgU2GGtwlREuasCB02Vr\"></block></statement><statement name=\"SUBSTACK2\"><block type=\"event_broadcast\" id=\"Gb]N,2P;|J%F?pxSwz(2\"></block></statement></block>"
+        }
+    },
+    "createtoplevelshadow": {
+        "name": "shadow",
+        "xml": {
+            "outerHTML": "<shadow type=\"math_number\" id=\"z9d57=IUI5se;DBbyug)\"><field name=\"NUM\">4</field></shadow>"
+        }
+    },
+    "createwithnext": {
+        "name": "block",
+        "xml": {
+            "outerHTML": "<block type=\"wedo_setcolor\" id=\"*CT)7+UKjQIEtUw.OGT6\" x=\"89\" y=\"48\"><next><block type=\"wedo_motorspeed\" id=\"Er*:^o7yYL#dX+5)R^xq\"></block></next></block>"
+        }
     }
 }

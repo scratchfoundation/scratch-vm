@@ -7,6 +7,14 @@ test('spec', function (t) {
     t.end();
 });
 
+test('invalid inputs', function(t) {
+    var nothing = adapter('not an object');
+    t.type(nothing, 'undefined');
+    nothing = adapter({noxmlproperty:true});
+    t.type(nothing, 'undefined');
+    t.end();
+});
+
 test('create event', function (t) {
     var result = adapter(events.create);
 
@@ -56,5 +64,80 @@ test('create with substack', function (t) {
         }
     }
     t.type(substackBlock, 'object');
+    t.end();
+});
+
+test('create with two substacks', function (t) {
+    var result = adapter(events.createtwosubstacks);
+    // Outer block
+    t.type(result[0].id, 'string');
+    t.type(result[0].opcode, 'string');
+    t.type(result[0].fields, 'object');
+    t.type(result[0].inputs, 'object');
+    t.type(result[0].inputs['SUBSTACK'], 'object');
+    t.type(result[0].inputs['SUBSTACK2'], 'object');
+    t.type(result[0].topLevel, 'boolean');
+    t.equal(result[0].topLevel, true);
+    // In substacks
+    var firstSubstackBlockId = result[0].inputs['SUBSTACK']['block'];
+    var secondSubstackBlockId = result[0].inputs['SUBSTACK2']['block'];
+    t.type(firstSubstackBlockId, 'string');
+    t.type(secondSubstackBlockId, 'string');
+    // Find actual substack blocks
+    var firstSubstackBlock = null;
+    var secondSubstackBlock = null;
+    for (var i = 0; i < result.length; i++) {
+        if (result[i].id == firstSubstackBlockId) {
+            firstSubstackBlock = result[i];
+        }
+        if (result[i].id == secondSubstackBlockId) {
+            secondSubstackBlock = result[i];
+        }
+    }
+    t.type(firstSubstackBlock, 'object');
+    t.type(secondSubstackBlock, 'object');
+    t.end();
+});
+
+test('create with top-level shadow', function (t) {
+    var result = adapter(events.createtoplevelshadow);
+    t.ok(Array.isArray(result));
+    t.equal(result.length, 1);
+
+    // Outer block
+    t.type(result[0].id, 'string');
+    t.type(result[0].opcode, 'string');
+    t.type(result[0].fields, 'object');
+    t.type(result[0].inputs, 'object');
+    t.type(result[0].topLevel, 'boolean');
+    t.equal(result[0].topLevel, true);
+    t.end();
+});
+
+test('create with next connection', function (t) {
+    var result = adapter(events.createwithnext);
+
+    t.ok(Array.isArray(result));
+    t.equal(result.length, 2);
+
+    // First block
+    t.type(result[0].id, 'string');
+    t.type(result[0].opcode, 'string');
+    t.type(result[0].fields, 'object');
+    t.type(result[0].inputs, 'object');
+    t.type(result[0].topLevel, 'boolean');
+    t.equal(result[0].topLevel, true);
+    t.type(result[0].next, 'string');
+    t.equal(result[0].next, result[1].id);
+
+    // Second block
+    t.type(result[1].id, 'string');
+    t.type(result[1].opcode, 'string');
+    t.type(result[1].fields, 'object');
+    t.type(result[1].inputs, 'object');
+    t.type(result[1].topLevel, 'boolean');
+    t.equal(result[1].topLevel, false);
+    t.equal(result[1].next, null);
+
     t.end();
 });
