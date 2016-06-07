@@ -56,9 +56,10 @@
  Blocks.prototype.getSubstack = function (id, substackNum) {
      var block = this._blocks[id];
      if (typeof block === 'undefined') return null;
+     if (!substackNum) substackNum = 1;
 
      var inputName = 'SUBSTACK';
-     if (substackNum > 0) {
+     if (substackNum > 1) {
          inputName += substackNum;
      }
 
