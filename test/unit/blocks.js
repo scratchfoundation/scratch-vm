@@ -288,6 +288,63 @@ test('move', function (t) {
     t.end();
 });
 
+test('change', function (t) {
+    var b = new Blocks();
+    b.createBlock({
+        id: 'foo',
+        opcode: 'TEST_BLOCK',
+        next: null,
+        fields: {
+            someField: {
+                name: 'someField',
+                value: 'initial-value'
+            }
+        },
+        inputs: {},
+        topLevel: true
+    });
+
+    // Test that the field is updated
+    t.equal(b._blocks['foo'].fields.someField.value, 'initial-value');
+
+    b.changeBlock({
+        element: 'field',
+        id: 'foo',
+        name: 'someField',
+        value: 'final-value'
+    });
+
+    t.equal(b._blocks['foo'].fields.someField.value, 'final-value');
+
+    // Invalid cases
+    // No `element`
+    b.changeBlock({
+        id: 'foo',
+        name: 'someField',
+        value: 'invalid-value'
+    });
+    t.equal(b._blocks['foo'].fields.someField.value, 'final-value');
+
+    // No block ID
+    b.changeBlock({
+        element: 'field',
+        name: 'someField',
+        value: 'invalid-value'
+    });
+    t.equal(b._blocks['foo'].fields.someField.value, 'final-value');
+
+    // No such field
+    b.changeBlock({
+        element: 'field',
+        id: 'foo',
+        name: 'someWrongField',
+        value: 'final-value'
+    });
+    t.equal(b._blocks['foo'].fields.someField.value, 'final-value');
+
+    t.end();
+});
+
 test('delete', function (t) {
     var b = new Blocks();
     b.createBlock({
