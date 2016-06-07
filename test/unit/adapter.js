@@ -141,3 +141,27 @@ test('create with next connection', function (t) {
 
     t.end();
 });
+
+test('create with invalid block xml', function (t) {
+    // Entirely invalid block XML
+    var result = adapter(events.createinvalid);
+    t.ok(Array.isArray(result));
+    t.equal(result.length, 0);
+
+    // Invalid grandchild tag
+    var result2 = adapter(events.createinvalidgrandchild);
+    t.ok(Array.isArray(result2));
+    t.equal(result2.length, 1);
+    t.type(result2[0].id, 'string');
+    t.equal(Object.keys(result2[0].inputs).length, 0);
+    t.equal(Object.keys(result2[0].fields).length, 0);
+
+    t.end();
+});
+
+test('create with invalid xml', function (t) {
+    var result = adapter(events.createbadxml);
+    t.ok(Array.isArray(result));
+    t.equal(result.length, 0);
+    t.end();
+});

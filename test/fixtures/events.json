@@ -35,5 +35,23 @@
         "xml": {
             "outerHTML": "<block type=\"wedo_setcolor\" id=\"*CT)7+UKjQIEtUw.OGT6\" x=\"89\" y=\"48\"><next><block type=\"wedo_motorspeed\" id=\"Er*:^o7yYL#dX+5)R^xq\"></block></next></block>"
         }
+    },
+    "createinvalid": {
+        "name": "whatever",
+        "xml": {
+            "outerHTML": "<xml></xml>"
+        }
+    },
+    "createinvalidgrandchild": {
+        "name": "block",
+        "xml": {
+            "outerHTML": "<block type=\"control_forever\" id=\"r9`RpL74T6*SXPKv7}Dq\" x=\"61\" y=\"90\"><next><invalidgrandchild>xxx</invalidgrandchild></next></block>"
+        }
+    },
+    "createbadxml": {
+        "name": "whatever",
+        "xml": {
+            "outerHTML": "></xml>"
+        }
     }
 }

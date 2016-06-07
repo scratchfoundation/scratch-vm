@@ -32,6 +32,9 @@ function domToBlocks (blocksDOM) {
     var blocks = {};
     for (var i = 0; i < blocksDOM.length; i++) {
         var block = blocksDOM[i];
+        if (!block.name || !block.attribs) {
+            continue;
+        }
         var tagName = block.name.toLowerCase();
         if (tagName == 'block' || tagName == 'shadow') {
             domToBlock(block, blocks, true);
@@ -114,6 +117,10 @@ function domToBlock (blockDOM, blocks, isTopBlock) {
             };
             break;
         case 'next':
+            if (!childBlockNode || !childBlockNode.attribs) {
+                // Invalid child block.
+                continue;
+            }
             // Recursively generate block structure for next block.
             domToBlock(childBlockNode, blocks, false);
             // Link next block to this block.
