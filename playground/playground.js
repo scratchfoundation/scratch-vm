@@ -20,9 +20,10 @@ window.onload = function() {
     });
     window.workspace = workspace;
 
-    // @todo: Also bind to flyout events.
     // Block events.
     workspace.addChangeListener(vm.blockListener);
+    var flyoutWorkspace = workspace.toolbox_.flyout_.workspace_;
+    flyoutWorkspace.addChangeListener(vm.flyoutBlockListener);
 
     var explorer = document.getElementById('blockexplorer');
     workspace.addChangeListener(function() {
