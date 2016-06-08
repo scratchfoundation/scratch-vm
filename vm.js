@@ -48,8 +48,7 @@
 	var util = __webpack_require__(2);
 
 	var Blocks = __webpack_require__(6);
-	var Runtime = __webpack_require__(7);
-	var adapter = __webpack_require__(14);
+	var Runtime = __webpack_require__(118);
 
 	/**
 	 * Handles connections between blocks, stage, and extensions.
@@ -66,83 +65,15 @@
 	    instance.runtime = new Runtime(instance.blocks);
 
 	    /**
-	     * Event listener for blocks. Handles validation and serves as a generic
-	     * adapter between the blocks and the runtime interface.
-	     *
-	     * @param {Object} Blockly "block" event
+	     * Event listeners for scratch-blocks.
 	     */
-	    instance.blockListener = function (e) {
-	        // Validate event
-	        if (typeof e !== 'object') return;
-	        if (typeof e.blockId !== 'string') return;
+	    instance.blockListener = (
+	        instance.blocks.generateBlockListener(false, instance.runtime)
+	    );
 
-	        // UI event: clicked stacks toggle in the runtime.
-	        if (e.element === 'stackclick') {
-	            instance.runtime.toggleStack(e.blockId);
-	            return;
-	        }
-
-	        // Block create/update/destroy
-	        switch (e.type) {
-	        case 'create':
-	            var newBlocks = adapter(e);
-	            // A create event can create many blocks. Add them all.
-	            for (var i = 0; i < newBlocks.length; i++) {
-	                instance.blocks.createBlock(newBlocks[i], false);
-	            }
-	            break;
-	        case 'change':
-	            instance.blocks.changeBlock({
-	                id: e.blockId,
-	                element: e.element,
-	                name: e.name,
-	                value: e.newValue
-	            });
-	            break;
-	        case 'move':
-	            instance.blocks.moveBlock({
-	                id: e.blockId,
-	                oldParent: e.oldParentId,
-	                oldInput: e.oldInputName,
-	                newParent: e.newParentId,
-	                newInput: e.newInputName
-	            });
-	            break;
-	        case 'delete':
-	            instance.blocks.deleteBlock({
-	                id: e.blockId
-	            });
-	            break;
-	        }
-	    };
-
-	    instance.flyoutBlockListener = function (e) {
-	        switch (e.type) {
-	        case 'create':
-	            var newBlocks = adapter(e);
-	            // A create event can create many blocks. Add them all.
-	            for (var i = 0; i < newBlocks.length; i++) {
-	                instance.blocks.createBlock(newBlocks[i], true);
-	            }
-	            break;
-	        case 'change':
-	            instance.blocks.changeBlock({
-	                id: e.blockId,
-	                element: e.element,
-	                name: e.name,
-	                value: e.newValue
-	            });
-	            break;
-	        case 'delete':
-	            instance.blocks.deleteBlock({
-	                id: e.blockId
-	            });
-	            break;
-	        case 'stackclick':
-	            instance.runtime.toggleStack(e.blockId);
-	            break;
-	        }
-	    };
+	    instance.flyoutBlockListener = (
+	        instance.blocks.generateBlockListener(true, instance.runtime)
+	    );
 	}
 
 	/**
@@ -1196,1162 +1127,290 @@
 
 /***/ },
 /* 6 */
-/***/ function(module, exports) {
+/***/ function(module, exports, __webpack_require__) {
+
+	var adapter = __webpack_require__(7);
 
 	/**
-	* @fileoverview
+	 * @fileoverview
 	 * Store and mutate the VM block representation,
 	 * and handle updates from Scratch Blocks events.
 	 */
 
-	 function Blocks () {
-	     /**
-	      * All blocks in the workspace.
-	      * Keys are block IDs, values are metadata about the block.
-	      * @type {Object.<string, Object>}
-	      */
-	     this._blocks = {};
+	function Blocks () {
+	    /**
+	     * All blocks in the workspace.
+	     * Keys are block IDs, values are metadata about the block.
+	     * @type {Object.<string, Object>}
+	     */
+	    this._blocks = {};
 
-	     /**
-	      * All stacks in the workspace.
-	      * A list of block IDs that represent stacks (first block in stack).
-	      * @type {Array.<String>}
-	      */
-	     this._stacks = [];
-	 }
+	    /**
+	     * All stacks in the workspace.
+	     * A list of block IDs that represent stacks (first block in stack).
+	     * @type {Array.<String>}
+	     */
+	    this._stacks = [];
+	}
 
 	/**
 	 * Provide an object with metadata for the requested block ID.
 	 * @param {!string} blockId ID of block we have stored.
 	 * @return {?Object} Metadata about the block, if it exists.
 	 */
-	 Blocks.prototype.getBlock = function (blockId) {
-	     return this._blocks[blockId];
-	 };
+	Blocks.prototype.getBlock = function (blockId) {
+	    return this._blocks[blockId];
+	};
 
 	/**
 	 * Get all known top-level blocks that start stacks.
 	 * @return {Array.<string>} List of block IDs.
 	 */
-	 Blocks.prototype.getStacks = function () {
-	     return this._stacks;
-	 };
+	Blocks.prototype.getStacks = function () {
+	    return this._stacks;
+	};
 
 	 /**
 	  * Get the next block for a particular block
 	  * @param {?string} id ID of block to get the next block for
 	  * @return {?string} ID of next block in the sequence
 	  */
-	 Blocks.prototype.getNextBlock = function (id) {
-	     if (typeof this._blocks[id] === 'undefined') return null;
-	     return this._blocks[id].next;
-	 };
+	Blocks.prototype.getNextBlock = function (id) {
+	    if (typeof this._blocks[id] === 'undefined') return null;
+	    return this._blocks[id].next;
+	};
 
-	 /**
-	  * Get the substack for a particular C-shaped block
-	  * @param {?string} id ID for block to get the substack for
-	  * @param {?number} substackNum Which substack to select (e.g. for if-else)
-	  * @return {?string} ID of block in the substack
-	  */
-	 Blocks.prototype.getSubstack = function (id, substackNum) {
-	     var block = this._blocks[id];
-	     if (typeof block === 'undefined') return null;
-	     if (!substackNum) substackNum = 1;
+	/**
+	 * Get the substack for a particular C-shaped block
+	 * @param {?string} id ID for block to get the substack for
+	 * @param {?number} substackNum Which substack to select (e.g. for if-else)
+	 * @return {?string} ID of block in the substack
+	 */
+	Blocks.prototype.getSubstack = function (id, substackNum) {
+	    var block = this._blocks[id];
+	    if (typeof block === 'undefined') return null;
+	    if (!substackNum) substackNum = 1;
 
-	     var inputName = 'SUBSTACK';
-	     if (substackNum > 1) {
-	         inputName += substackNum;
-	     }
+	    var inputName = 'SUBSTACK';
+	    if (substackNum > 1) {
+	        inputName += substackNum;
+	    }
 
-	     // Empty C-block?
-	     if (!(inputName in block.inputs)) return null;
-	     return block.inputs[inputName].block;
-	 };
+	    // Empty C-block?
+	    if (!(inputName in block.inputs)) return null;
+	    return block.inputs[inputName].block;
+	};
 
-	 /**
-	  * Get the opcode for a particular block
-	  * @param {?string} id ID of block to query
-	  * @return {?string} the opcode corresponding to that block
-	  */
-	 Blocks.prototype.getOpcode = function (id) {
-	     if (typeof this._blocks[id] === 'undefined') return null;
-	     return this._blocks[id].opcode;
-	 };
+	/**
+	 * Get the opcode for a particular block
+	 * @param {?string} id ID of block to query
+	 * @return {?string} the opcode corresponding to that block
+	 */
+	Blocks.prototype.getOpcode = function (id) {
+	    if (typeof this._blocks[id] === 'undefined') return null;
+	    return this._blocks[id].opcode;
+	};
 
-	 // ---------------------------------------------------------------------
+	// ---------------------------------------------------------------------
 
-	 /**
-	  * Block management: create blocks and stacks from a `create` event
-	  * @param {!Object} block Blockly create event to be processed
-	  */
-	 Blocks.prototype.createBlock = function (block, opt_isFlyoutBlock) {
-	     // Create new block
-	     this._blocks[block.id] = block;
+	/**
+	 * Create event listener for blocks. Handles validation and serves as a generic
+	 * adapter between the blocks and the runtime interface.
+	 * @param {boolean} isFlyout If true, create a listener for flyout events.
+	 * @param {?Runtime} opt_runtime Optional runtime to forward click events to.
+	 * @return {Function} A generated listener to attach to Blockly instance.
+	 */
 
-	     // Push block id to stacks array.
-	     // Blocks are added as a top-level stack if they are marked as a top-block
-	     // (if they were top-level XML in the event) and if they are not
-	     // flyout blocks.
-	     if (!opt_isFlyoutBlock && block.topLevel) {
-	         this._addStack(block.id);
-	     }
-	 };
+	Blocks.prototype.generateBlockListener = function (isFlyout, opt_runtime) {
+	    var instance = this;
+	    /**
+	     * The actual generated block listener.
+	     * @param {Object} e Blockly "block" event
+	     */
+	    return function (e) {
+	        // Validate event
+	        if (typeof e !== 'object') return;
+	        if (typeof e.blockId !== 'string') return;
 
-	 /**
-	  * Block management: change block field values
-	  * @param {!Object} args Blockly change event to be processed
-	  */
-	 Blocks.prototype.changeBlock = function (args) {
-	     // Validate
-	     if (args.element !== 'field') return;
-	     if (typeof this._blocks[args.id] === 'undefined') return;
-	     if (typeof this._blocks[args.id].fields[args.name] === 'undefined') return;
+	        // UI event: clicked stacks toggle in the runtime.
+	        if (e.element === 'stackclick') {
+	            if (opt_runtime) {
+	                opt_runtime.toggleStack(e.blockId);
+	            }
+	            return;
+	        }
 
-	     // Update block value
-	     this._blocks[args.id].fields[args.name].value = args.value;
-	 };
+	        // Block create/update/destroy
+	        switch (e.type) {
+	        case 'create':
+	            var newBlocks = adapter(e);
+	            // A create event can create many blocks. Add them all.
+	            for (var i = 0; i < newBlocks.length; i++) {
+	                instance.createBlock(newBlocks[i], isFlyout);
+	            }
+	            break;
+	        case 'change':
+	            instance.changeBlock({
+	                id: e.blockId,
+	                element: e.element,
+	                name: e.name,
+	                value: e.newValue
+	            });
+	            break;
+	        case 'move':
+	            instance.moveBlock({
+	                id: e.blockId,
+	                oldParent: e.oldParentId,
+	                oldInput: e.oldInputName,
+	                newParent: e.newParentId,
+	                newInput: e.newInputName
+	            });
+	            break;
+	        case 'delete':
+	            instance.deleteBlock({
+	                id: e.blockId
+	            });
+	            break;
+	        }
+	    };
+	};
 
-	 /**
-	  * Block management: move blocks from parent to parent
-	  * @param {!Object} e Blockly move event to be processed
-	  */
-	 Blocks.prototype.moveBlock = function (e) {
-	     // Remove from any old parent.
-	     if (e.oldParent !== undefined) {
-	         var oldParent = this._blocks[e.oldParent];
-	         if (e.oldInput !== undefined &&
-	             oldParent.inputs[e.oldInput].block === e.id) {
-	             // This block was connected to the old parent's input.
-	             oldParent.inputs[e.oldInput].block = null;
-	         } else if (oldParent.next === e.id) {
-	             // This block was connected to the old parent's next connection.
-	             oldParent.next = null;
-	         }
-	     }
+	// ---------------------------------------------------------------------
 
-	     // Has the block become a top-level block?
-	     if (e.newParent === undefined) {
-	         this._addStack(e.id);
-	     } else {
-	         // Remove stack, if one exists.
-	         this._deleteStack(e.id);
-	         // Otherwise, try to connect it in its new place.
-	         if (e.newInput !== undefined) {
+	/**
+	 * Block management: create blocks and stacks from a `create` event
+	 * @param {!Object} block Blockly create event to be processed
+	 * @param {boolean} opt_isFlyoutBlock Whether the block is in the flyout.
+	 */
+	Blocks.prototype.createBlock = function (block, opt_isFlyoutBlock) {
+	    // Create new block
+	    this._blocks[block.id] = block;
+
+	    // Push block id to stacks array.
+	    // Blocks are added as a top-level stack if they are marked as a top-block
+	    // (if they were top-level XML in the event) and if they are not
+	    // flyout blocks.
+	    if (!opt_isFlyoutBlock && block.topLevel) {
+	        this._addStack(block.id);
+	    }
+	};
+
+	/**
+	 * Block management: change block field values
+	 * @param {!Object} args Blockly change event to be processed
+	 */
+	Blocks.prototype.changeBlock = function (args) {
+	    // Validate
+	    if (args.element !== 'field') return;
+	    if (typeof this._blocks[args.id] === 'undefined') return;
+	    if (typeof this._blocks[args.id].fields[args.name] === 'undefined') return;
+
+	    // Update block value
+	    this._blocks[args.id].fields[args.name].value = args.value;
+	};
+
+	/**
+	 * Block management: move blocks from parent to parent
+	 * @param {!Object} e Blockly move event to be processed
+	 */
+	Blocks.prototype.moveBlock = function (e) {
+	    // Remove from any old parent.
+	    if (e.oldParent !== undefined) {
+	        var oldParent = this._blocks[e.oldParent];
+	        if (e.oldInput !== undefined &&
+	            oldParent.inputs[e.oldInput].block === e.id) {
+	            // This block was connected to the old parent's input.
+	            oldParent.inputs[e.oldInput].block = null;
+	        } else if (oldParent.next === e.id) {
+	            // This block was connected to the old parent's next connection.
+	            oldParent.next = null;
+	        }
+	    }
+
+	    // Has the block become a top-level block?
+	    if (e.newParent === undefined) {
+	        this._addStack(e.id);
+	    } else {
+	        // Remove stack, if one exists.
+	        this._deleteStack(e.id);
+	        // Otherwise, try to connect it in its new place.
+	        if (e.newInput !== undefined) {
 	             // Moved to the new parent's input.
-	             this._blocks[e.newParent].inputs[e.newInput] = {
-	                 name: e.newInput,
-	                 block: e.id
-	             };
-	         } else {
-	             // Moved to the new parent's next connection.
-	             this._blocks[e.newParent].next = e.id;
-	         }
-	     }
-	 };
+	            this._blocks[e.newParent].inputs[e.newInput] = {
+	                name: e.newInput,
+	                block: e.id
+	            };
+	        } else {
+	            // Moved to the new parent's next connection.
+	            this._blocks[e.newParent].next = e.id;
+	        }
+	    }
+	};
 
-	 /**
-	  * Block management: delete blocks and their associated stacks
-	  * @param {!Object} e Blockly delete event to be processed
-	  */
-	 Blocks.prototype.deleteBlock = function (e) {
-	     // @todo In runtime, stop threads running on this stack
+	/**
+	 * Block management: delete blocks and their associated stacks
+	 * @param {!Object} e Blockly delete event to be processed
+	 */
+	Blocks.prototype.deleteBlock = function (e) {
+	    // @todo In runtime, stop threads running on this stack
 
-	     // Get block
-	     var block = this._blocks[e.id];
+	    // Get block
+	    var block = this._blocks[e.id];
 
-	     // Delete children
-	     if (block.next !== null) {
-	         this.deleteBlock({id: block.next});
-	     }
+	    // Delete children
+	    if (block.next !== null) {
+	        this.deleteBlock({id: block.next});
+	    }
 
-	     // Delete inputs (including substacks)
-	     for (var input in block.inputs) {
-	         // If it's null, the block in this input moved away.
-	         if (block.inputs[input].block !== null) {
-	             this.deleteBlock({id: block.inputs[input].block});
-	         }
-	     }
+	    // Delete inputs (including substacks)
+	    for (var input in block.inputs) {
+	        // If it's null, the block in this input moved away.
+	        if (block.inputs[input].block !== null) {
+	            this.deleteBlock({id: block.inputs[input].block});
+	        }
+	    }
 
-	     // Delete stack
-	     this._deleteStack(e.id);
+	    // Delete stack
+	    this._deleteStack(e.id);
 
-	     // Delete block
-	     delete this._blocks[e.id];
-	 };
+	    // Delete block
+	    delete this._blocks[e.id];
+	};
 
-	 // ---------------------------------------------------------------------
+	// ---------------------------------------------------------------------
 
-	 /**
-	  * Helper to add a stack to `this._stacks`
-	  * @param {?string} id ID of block that starts the stack
-	  */
-	 Blocks.prototype._addStack = function (id) {
-	     var i = this._stacks.indexOf(id);
-	     if (i > -1) return; // Already in stacks.
-	     this._stacks.push(id);
-	     // Update `topLevel` property on the top block.
-	     this._blocks[id].topLevel = true;
-	 };
+	/**
+	 * Helper to add a stack to `this._stacks`
+	 * @param {?string} id ID of block that starts the stack
+	 */
+	Blocks.prototype._addStack = function (id) {
+	    var i = this._stacks.indexOf(id);
+	    if (i > -1) return; // Already in stacks.
+	    this._stacks.push(id);
+	    // Update `topLevel` property on the top block.
+	    this._blocks[id].topLevel = true;
+	};
 
-	 /**
-	  * Helper to remove a stack from `this._stacks`
-	  * @param {?string} id ID of block that starts the stack
-	  */
-	 Blocks.prototype._deleteStack = function (id) {
-	     var i = this._stacks.indexOf(id);
-	     if (i > -1) this._stacks.splice(i, 1);
-	     // Update `topLevel` property on the top block.
-	     if (this._blocks[id]) this._blocks[id].topLevel = false;
-	 };
+	/**
+	 * Helper to remove a stack from `this._stacks`
+	 * @param {?string} id ID of block that starts the stack
+	 */
+	Blocks.prototype._deleteStack = function (id) {
+	    var i = this._stacks.indexOf(id);
+	    if (i > -1) this._stacks.splice(i, 1);
+	    // Update `topLevel` property on the top block.
+	    if (this._blocks[id]) this._blocks[id].topLevel = false;
+	};
 
-	 module.exports = Blocks;
+	module.exports = Blocks;
 
 
 /***/ },
 /* 7 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var EventEmitter = __webpack_require__(1);
-	var Sequencer = __webpack_require__(8);
-	var Thread = __webpack_require__(10);
-	var util = __webpack_require__(2);
-
-	var defaultBlockPackages = {
-	    'scratch3': __webpack_require__(12),
-	    'wedo2': __webpack_require__(13)
-	};
-
-	/**
-	 * Manages blocks, stacks, and the sequencer.
-	 * @param blocks Blocks instance for this runtime.
-	 */
-	function Runtime (blocks) {
-	    // Bind event emitter
-	    EventEmitter.call(this);
-
-	    // State for the runtime
-
-	    /**
-	     * Block management and storage
-	     */
-	    this.blocks = blocks;
-
-	    /**
-	     * A list of threads that are currently running in the VM.
-	     * Threads are added when execution starts and pruned when execution ends.
-	     * @type {Array.<Thread>}
-	     */
-	    this.threads = [];
-
-	    /** @type {!Sequencer} */
-	    this.sequencer = new Sequencer(this);
-
-	    /**
-	     * Map to look up a block primitive's implementation function by its opcode.
-	     * This is a two-step lookup: package name first, then primitive name.
-	     * @type {Object.<string, Function>}
-	     */
-	    this._primitives = {};
-	    this._registerBlockPackages();
-	}
-
-	/**
-	 * Event name for glowing a stack
-	 * @const {string}
-	 */
-	Runtime.STACK_GLOW_ON = 'STACK_GLOW_ON';
-
-	/**
-	 * Event name for unglowing a stack
-	 * @const {string}
-	 */
-	Runtime.STACK_GLOW_OFF = 'STACK_GLOW_OFF';
-
-	/**
-	 * Event name for glowing a block
-	 * @const {string}
-	 */
-	Runtime.BLOCK_GLOW_ON = 'BLOCK_GLOW_ON';
-
-	/**
-	 * Event name for unglowing a block
-	 * @const {string}
-	 */
-	Runtime.BLOCK_GLOW_OFF = 'BLOCK_GLOW_OFF';
-
-	/**
-	 * Inherit from EventEmitter
-	 */
-	util.inherits(Runtime, EventEmitter);
-
-	/**
-	 * How rapidly we try to step threads, in ms.
-	 */
-	Runtime.THREAD_STEP_INTERVAL = 1000 / 30;
-
-
-	// -----------------------------------------------------------------------------
-	// -----------------------------------------------------------------------------
-
-	/**
-	 * Register default block packages with this runtime.
-	 * @todo Prefix opcodes with package name.
-	 * @private
-	 */
-	Runtime.prototype._registerBlockPackages = function () {
-	    for (var packageName in defaultBlockPackages) {
-	        if (defaultBlockPackages.hasOwnProperty(packageName)) {
-	            // @todo pass a different runtime depending on package privilege?
-	            var packageObject = new (defaultBlockPackages[packageName])(this);
-	            var packageContents = packageObject.getPrimitives();
-	            for (var op in packageContents) {
-	                if (packageContents.hasOwnProperty(op)) {
-	                    this._primitives[op] =
-	                        packageContents[op].bind(packageObject);
-	                }
-	            }
-	        }
-	    }
-	};
-
-	/**
-	 * Retrieve the function associated with the given opcode.
-	 * @param {!string} opcode The opcode to look up.
-	 * @return {Function} The function which implements the opcode.
-	 */
-	Runtime.prototype.getOpcodeFunction = function (opcode) {
-	    return this._primitives[opcode];
-	};
-
-	// -----------------------------------------------------------------------------
-	// -----------------------------------------------------------------------------
-
-	/**
-	 * Create a thread and push it to the list of threads.
-	 * @param {!string} id ID of block that starts the stack
-	 */
-	Runtime.prototype._pushThread = function (id) {
-	    this.emit(Runtime.STACK_GLOW_ON, id);
-	    var thread = new Thread(id);
-	    this.threads.push(thread);
-	};
-
-	/**
-	 * Remove a thread from the list of threads.
-	 * @param {?Thread} thread Thread object to remove from actives
-	 */
-	Runtime.prototype._removeThread = function (thread) {
-	    var i = this.threads.indexOf(thread);
-	    if (i > -1) {
-	        this.emit(Runtime.STACK_GLOW_OFF, thread.topBlock);
-	        this.threads.splice(i, 1);
-	    }
-	};
-
-	/**
-	 * Toggle a stack
-	 * @param {!string} stackId ID of block that starts the stack
-	 */
-	Runtime.prototype.toggleStack = function (stackId) {
-	    // Remove any existing thread
-	    for (var i = 0; i < this.threads.length; i++) {
-	        if (this.threads[i].topBlock == stackId) {
-	            this._removeThread(this.threads[i]);
-	            return;
-	        }
-	    }
-	    // Otherwise add it
-	    this._pushThread(stackId);
-	};
-
-	/**
-	 * Green flag, which stops currently running threads
-	 * and adds all top-level stacks that start with the green flag
-	 */
-	Runtime.prototype.greenFlag = function () {
-	    // Remove all existing threads
-	    for (var i = 0; i < this.threads.length; i++) {
-	        this._removeThread(this.threads[i]);
-	    }
-	    // Add all top stacks with green flag
-	    var stacks = this.blocks.getStacks();
-	    for (var j = 0; j < stacks.length; j++) {
-	        var topBlock = stacks[j];
-	        if (this.blocks.getBlock(topBlock).opcode === 'event_whenflagclicked') {
-	            this._pushThread(stacks[j]);
-	        }
-	    }
-	};
-
-	/**
-	 * Distance sensor hack
-	 */
-	Runtime.prototype.startDistanceSensors = function () {
-	    // Add all top stacks with distance sensor
-	    var stacks = this.blocks.getStacks();
-	    for (var j = 0; j < stacks.length; j++) {
-	        var topBlock = stacks[j];
-	        if (this.blocks.getBlock(topBlock).opcode ===
-	            'wedo_whendistanceclose') {
-	            var alreadyRunning = false;
-	            for (var k = 0; k < this.threads.length; k++) {
-	                if (this.threads[k].topBlock === topBlock) {
-	                    alreadyRunning = true;
-	                }
-	            }
-	            if (!alreadyRunning) {
-	                this._pushThread(stacks[j]);
-	            }
-	        }
-	    }
-	};
-
-	/**
-	 * Stop "everything"
-	 */
-	Runtime.prototype.stopAll = function () {
-	    var threadsCopy = this.threads.slice();
-	    while (threadsCopy.length > 0) {
-	        this._removeThread(threadsCopy.pop());
-	    }
-	    // @todo call stop function in all extensions/packages/WeDo stub
-	    if (window.native) {
-	        window.native.motorStop();
-	    }
-	};
-
-	/**
-	 * Repeatedly run `sequencer.stepThreads` and filter out
-	 * inactive threads after each iteration.
-	 */
-	Runtime.prototype._step = function () {
-	    var inactiveThreads = this.sequencer.stepThreads(this.threads);
-	    for (var i = 0; i < inactiveThreads.length; i++) {
-	        this._removeThread(inactiveThreads[i]);
-	    }
-	};
-
-	/**
-	 * Emit feedback for block glowing (used in the sequencer).
-	 * @param {?string} blockId ID for the block to update glow
-	 * @param {boolean} isGlowing True to turn on glow; false to turn off.
-	 */
-	Runtime.prototype.glowBlock = function (blockId, isGlowing) {
-	    if (isGlowing) {
-	        this.emit(Runtime.BLOCK_GLOW_ON, blockId);
-	    } else {
-	        this.emit(Runtime.BLOCK_GLOW_OFF, blockId);
-	    }
-	};
-
-	/**
-	 * Set up timers to repeatedly step in a browser
-	 */
-	Runtime.prototype.start = function () {
-	    if (!window.setInterval) return;
-	    window.setInterval(function() {
-	        this._step();
-	    }.bind(this), Runtime.THREAD_STEP_INTERVAL);
-	};
-
-	module.exports = Runtime;
-
-
-/***/ },
-/* 8 */
-/***/ function(module, exports, __webpack_require__) {
-
-	var Timer = __webpack_require__(9);
-	var Thread = __webpack_require__(10);
-	var YieldTimers = __webpack_require__(11);
-
-	function Sequencer (runtime) {
-	    /**
-	     * A utility timer for timing thread sequencing.
-	     * @type {!Timer}
-	     */
-	    this.timer = new Timer();
-
-	    /**
-	     * Reference to the runtime owning this sequencer.
-	     * @type {!Runtime}
-	     */
-	    this.runtime = runtime;
-	}
-
-	/**
-	 * The sequencer does as much work as it can within WORK_TIME milliseconds,
-	 * then yields. This is essentially a rate-limiter for blocks.
-	 * In Scratch 2.0, this is set to 75% of the target stage frame-rate (30fps).
-	 * @const {!number}
-	 */
-	Sequencer.WORK_TIME = 10;
-
-	/**
-	 * Step through all threads in `this.threads`, running them in order.
-	 * @return {Array.<Thread>} All threads which have finished in this iteration.
-	 */
-	Sequencer.prototype.stepThreads = function (threads) {
-	    // Start counting toward WORK_TIME
-	    this.timer.start();
-	    // List of threads which have been killed by this step.
-	    var inactiveThreads = [];
-	    // If all of the threads are yielding, we should yield.
-	    var numYieldingThreads = 0;
-	    // While there are still threads to run and we are within WORK_TIME,
-	    // continue executing threads.
-	    while (threads.length > 0 &&
-	           threads.length > numYieldingThreads &&
-	           this.timer.timeElapsed() < Sequencer.WORK_TIME) {
-	        // New threads at the end of the iteration.
-	        var newThreads = [];
-	        // Attempt to run each thread one time
-	        for (var i = 0; i < threads.length; i++) {
-	            var activeThread = threads[i];
-	            if (activeThread.status === Thread.STATUS_RUNNING) {
-	                // Normal-mode thread: step.
-	                this.stepThread(activeThread);
-	            } else if (activeThread.status === Thread.STATUS_YIELD) {
-	                // Yield-mode thread: check if the time has passed.
-	                YieldTimers.resolve(activeThread.yieldTimerId);
-	                numYieldingThreads++;
-	            } else if (activeThread.status === Thread.STATUS_DONE) {
-	                // Moved to a done state - finish up
-	                activeThread.status = Thread.STATUS_RUNNING;
-	                // @todo Deal with the return value
-	            }
-	            // First attempt to pop from the stack
-	            if (activeThread.stack.length > 0 &&
-	                activeThread.nextBlock === null &&
-	                activeThread.status === Thread.STATUS_DONE) {
-	                activeThread.nextBlock = activeThread.stack.pop();
-	                // Don't pop stack frame - we need the data.
-	                // A new one won't be created when we execute.
-	                if (activeThread.nextBlock !== null) {
-	                    activeThread.status === Thread.STATUS_RUNNING;
-	                }
-	            }
-	            if (activeThread.nextBlock === null &&
-	                activeThread.status === Thread.STATUS_DONE) {
-	                // Finished with this thread - tell runtime to clean it up.
-	                inactiveThreads.push(activeThread);
-	            } else {
-	                // Keep this thead in the loop.
-	                newThreads.push(activeThread);
-	            }
-	        }
-	        // Effectively filters out threads that have stopped.
-	        threads = newThreads;
-	    }
-	    return inactiveThreads;
-	};
-
-	/**
-	 * Step the requested thread
-	 * @param {!Thread} thread Thread object to step
-	 */
-	Sequencer.prototype.stepThread = function (thread) {
-	    // Save the yield timer ID, in case a primitive makes a new one
-	    // @todo hack - perhaps patch this to allow more than one timer per
-	    // primitive, for example...
-	    var oldYieldTimerId = YieldTimers.timerId;
-
-	    // Save the current block and set the nextBlock.
-	    // If the primitive would like to do control flow,
-	    // it can overwrite nextBlock.
-	    var currentBlock = thread.nextBlock;
-	    if (!currentBlock || !this.runtime.blocks.getBlock(currentBlock)) {
-	        thread.status = Thread.STATUS_DONE;
-	        return;
-	    }
-	    thread.nextBlock = this.runtime.blocks.getNextBlock(currentBlock);
-
-	    var opcode = this.runtime.blocks.getOpcode(currentBlock);
-
-	    // Push the current block to the stack
-	    thread.stack.push(currentBlock);
-	    // Push an empty stack frame, if we need one.
-	    // Might not, if we just popped the stack.
-	    if (thread.stack.length > thread.stackFrames.length) {
-	        thread.stackFrames.push({});
-	    }
-	    var currentStackFrame = thread.stackFrames[thread.stackFrames.length - 1];
-
-	    /**
-	     * A callback for the primitive to indicate its thread should yield.
-	     * @type {Function}
-	     */
-	    var threadYieldCallback = function () {
-	        thread.status = Thread.STATUS_YIELD;
-	    };
-
-	    /**
-	     * A callback for the primitive to indicate its thread is finished
-	     * @type {Function}
-	     */
-	    var instance = this;
-	    var threadDoneCallback = function () {
-	        thread.status = Thread.STATUS_DONE;
-	        // Refresh nextBlock in case it has changed during a yield.
-	        thread.nextBlock = instance.runtime.blocks.getNextBlock(currentBlock);
-	        // Pop the stack and stack frame
-	        thread.stack.pop();
-	        thread.stackFrames.pop();
-	    };
-
-	    /**
-	     * A callback for the primitive to start hats.
-	     * @todo very hacked...
-	     */
-	    var startHats = function(callback) {
-	        var stacks = instance.runtime.blocks.getStacks();
-	        for (var i = 0; i < stacks.length; i++) {
-	            var stack = stacks[i];
-	            var stackBlock = instance.runtime.blocks.getBlock(stack);
-	            var result = callback(stackBlock);
-	            if (result) {
-	                // Check if the stack is already running
-	                var stackRunning = false;
-
-	                for (var j = 0; j < instance.runtime.threads.length; j++) {
-	                    if (instance.runtime.threads[j].topBlock == stack) {
-	                        stackRunning = true;
-	                        break;
-	                    }
-	                }
-	                if (!stackRunning) {
-	                    instance.runtime._pushThread(stack);
-	                }
-	            }
-	        }
-	    };
-
-	    /**
-	     * Record whether we have switched stack,
-	     * to avoid proceeding the thread automatically.
-	     * @type {boolean}
-	     */
-	    var switchedStack = false;
-	    /**
-	     * A callback for a primitive to start a substack.
-	     * @type {Function}
-	     */
-	    var threadStartSubstack = function () {
-	        // Set nextBlock to the start of the substack
-	        var substack = instance.runtime.blocks.getSubstack(currentBlock);
-	        if (substack && substack.value) {
-	            thread.nextBlock = substack.value;
-	        } else {
-	            thread.nextBlock = null;
-	        }
-	        switchedStack = true;
-	    };
-
-	    // @todo extreme hack to get the single argument value for prototype
-	    var argValues = [];
-	    var blockInputs = this.runtime.blocks.getBlock(currentBlock).fields;
-	    for (var bi in blockInputs) {
-	        var outer = blockInputs[bi];
-	        for (var b in outer.blocks) {
-	            var block = outer.blocks[b];
-	            var fields = block.fields;
-	            for (var f in fields) {
-	                var field = fields[f];
-	                argValues.push(field.value);
-	            }
-	        }
-	    }
-
-	    if (!opcode) {
-	        console.warn('Could not get opcode for block: ' + currentBlock);
-	    }
-	    else {
-	        var blockFunction = this.runtime.getOpcodeFunction(opcode);
-	        if (!blockFunction) {
-	            console.warn('Could not get implementation for opcode: ' + opcode);
-	        }
-	        else {
-	            try {
-	                // @todo deal with the return value
-	                blockFunction(argValues, {
-	                    yield: threadYieldCallback,
-	                    done: threadDoneCallback,
-	                    timeout: YieldTimers.timeout,
-	                    stackFrame: currentStackFrame,
-	                    startSubstack: threadStartSubstack,
-	                    startHats: startHats
-	                });
-	            }
-	            catch(e) {
-	                console.error(
-	                    'Exception calling block function for opcode: ' +
-	                    opcode + '\n' + e);
-	            } finally {
-	                // Update if the thread has set a yield timer ID
-	                // @todo hack
-	                if (YieldTimers.timerId > oldYieldTimerId) {
-	                    thread.yieldTimerId = YieldTimers.timerId;
-	                }
-	                if (thread.status === Thread.STATUS_RUNNING && !switchedStack) {
-	                    // Thread executed without yielding - move to done
-	                    threadDoneCallback();
-	                }
-	            }
-	        }
-	    }
-
-	};
-
-	module.exports = Sequencer;
-
-
-/***/ },
-/* 9 */
-/***/ function(module, exports) {
-
-	/**
-	 * Constructor
-	 */
-	function Timer () {
-	    this.startTime = 0;
-	}
-
-	Timer.prototype.time = function () {
-	    return Date.now();
-	};
-
-	Timer.prototype.start = function () {
-	    this.startTime = this.time();
-	};
-
-	Timer.prototype.timeElapsed = function () {
-	    return this.time() - this.startTime;
-	};
-
-	module.exports = Timer;
-
-
-/***/ },
-/* 10 */
-/***/ function(module, exports) {
-
-	/**
-	 * A thread is a running stack context and all the metadata needed.
-	 * @param {?string} firstBlock First block to execute in the thread.
-	 * @constructor
-	 */
-	function Thread (firstBlock) {
-	    /**
-	     * ID of top block of the thread
-	     * @type {!string}
-	     */
-	    this.topBlock = firstBlock;
-	    /**
-	     * ID of next block that the thread will execute, or null if none.
-	     * @type {?string}
-	     */
-	    this.nextBlock = firstBlock;
-	    /**
-	     * Stack for the thread. When the sequencer enters a control structure,
-	     * the block is pushed onto the stack so we know where to exit.
-	     * @type {Array.<string>}
-	     */
-	    this.stack = [];
-
-	    /**
-	     * Stack frames for the thread. Store metadata for the executing blocks.
-	     * @type {Array.<Object>}
-	     */
-	    this.stackFrames = [];
-
-	    /**
-	     * Status of the thread, one of three states (below)
-	     * @type {number}
-	     */
-	    this.status = 0; /* Thread.STATUS_RUNNING */
-
-	    /**
-	     * Yield timer ID (for checking when the thread should unyield).
-	     * @type {number}
-	     */
-	    this.yieldTimerId = -1;
-	}
-
-	/**
-	 * Thread status for initialized or running thread.
-	 * Threads are in this state when the primitive is called for the first time.
-	 * @const
-	 */
-	Thread.STATUS_RUNNING = 0;
-
-	/**
-	 * Thread status for a yielded thread.
-	 * Threads are in this state when a primitive has yielded.
-	 * @const
-	 */
-	Thread.STATUS_YIELD = 1;
-
-	/**
-	 * Thread status for a finished/done thread.
-	 * Thread is moved to this state when the interpreter
-	 * can proceed with execution.
-	 * @const
-	 */
-	Thread.STATUS_DONE = 2;
-
-	module.exports = Thread;
-
-
-/***/ },
-/* 11 */
-/***/ function(module, exports, __webpack_require__) {
-
-	/**
-	 * @fileoverview Timers that are synchronized with the Scratch sequencer.
-	 */
-	var Timer = __webpack_require__(9);
-
-	function YieldTimers () {}
-
-	/**
-	 * Shared collection of timers.
-	 * Each timer is a [Function, number] with the callback
-	 * and absolute time for it to run.
-	 * @type {Object.<number,Array>}
-	 */
-	YieldTimers.timers = {};
-
-	/**
-	 * Monotonically increasing timer ID.
-	 * @type {number}
-	 */
-	YieldTimers.timerId = 0;
-
-	/**
-	 * Utility for measuring time.
-	 * @type {!Timer}
-	 */
-	YieldTimers.globalTimer = new Timer();
-
-	/**
-	 * The timeout function is passed to primitives and is intended
-	 * as a convenient replacement for window.setTimeout.
-	 * The sequencer will attempt to resolve the timer every time
-	 * the yielded thread would have been stepped.
-	 * @param {!Function} callback To be called when the timer is done.
-	 * @param {number} timeDelta Time to wait, in ms.
-	 * @return {number} Timer ID to be used with other methods.
-	 */
-	YieldTimers.timeout = function (callback, timeDelta) {
-	    var id = ++YieldTimers.timerId;
-	    YieldTimers.timers[id] = [
-	        callback,
-	        YieldTimers.globalTimer.time() + timeDelta
-	    ];
-	    return id;
-	};
-
-	/**
-	 * Attempt to resolve a timeout.
-	 * If the time has passed, call the callback.
-	 * Otherwise, do nothing.
-	 * @param {number} id Timer ID to resolve.
-	 * @return {boolean} True if the timer has resolved.
-	 */
-	YieldTimers.resolve = function (id) {
-	    var timer = YieldTimers.timers[id];
-	    if (!timer) {
-	        // No such timer.
-	        return false;
-	    }
-	    var callback = timer[0];
-	    var time = timer[1];
-	    if (YieldTimers.globalTimer.time() < time) {
-	        // Not done yet.
-	        return false;
-	    }
-	    // Execute the callback and remove the timer.
-	    callback();
-	    delete YieldTimers.timers[id];
-	    return true;
-	};
-
-	/**
-	 * Reject a timer so the callback never executes.
-	 * @param {number} id Timer ID to reject.
-	 */
-	YieldTimers.reject = function (id) {
-	    if (YieldTimers.timers[id]) {
-	        delete YieldTimers.timers[id];
-	    }
-	};
-
-	/**
-	 * Reject all timers currently stored.
-	 * Especially useful for a Scratch "stop."
-	 */
-	YieldTimers.rejectAll = function () {
-	    YieldTimers.timers = {};
-	    YieldTimers.timerId = 0;
-	};
-
-	module.exports = YieldTimers;
-
-
-/***/ },
-/* 12 */
-/***/ function(module, exports) {
-
-	function Scratch3Blocks(runtime) {
-	    /**
-	     * The runtime instantiating this block package.
-	     * @type {Runtime}
-	     */
-	    this.runtime = runtime;
-	}
-
-	/**
-	 * Retrieve the block primitives implemented by this package.
-	 * @return {Object.<string, Function>} Mapping of opcode to Function.
-	 */
-	Scratch3Blocks.prototype.getPrimitives = function() {
-	    return {
-	        'control_repeat': this.repeat,
-	        'control_forever': this.forever,
-	        'control_wait': this.wait,
-	        'control_stop': this.stop,
-	        'event_whenflagclicked': this.whenFlagClicked,
-	        'event_whenbroadcastreceived': this.whenBroadcastReceived,
-	        'event_broadcast': this.broadcast
-	    };
-	};
-
-	Scratch3Blocks.prototype.repeat = function(argValues, util) {
-	    console.log('Running: control_repeat');
-	    // Initialize loop
-	    if (util.stackFrame.loopCounter === undefined) {
-	        util.stackFrame.loopCounter = parseInt(argValues[0]); // @todo arg
-	    }
-	    // Decrease counter
-	    util.stackFrame.loopCounter--;
-	    // If we still have some left, start the substack
-	    if (util.stackFrame.loopCounter >= 0) {
-	        util.startSubstack();
-	    }
-	};
-
-	Scratch3Blocks.prototype.forever = function(argValues, util) {
-	    console.log('Running: control_forever');
-	    util.startSubstack();
-	};
-
-	Scratch3Blocks.prototype.wait = function(argValues, util) {
-	    console.log('Running: control_wait');
-	    util.yield();
-	    util.timeout(function() {
-	        util.done();
-	    }, 1000 * parseFloat(argValues[0]));
-	};
-
-	Scratch3Blocks.prototype.stop = function() {
-	    console.log('Running: control_stop');
-	    // @todo - don't use this.runtime
-	    this.runtime.stopAll();
-	};
-
-	Scratch3Blocks.prototype.whenFlagClicked = function() {
-	    console.log('Running: event_whenflagclicked');
-	    // No-op
-	};
-
-	Scratch3Blocks.prototype.whenBroadcastReceived = function() {
-	    console.log('Running: event_whenbroadcastreceived');
-	    // No-op
-	};
-
-	Scratch3Blocks.prototype.broadcast = function(argValues, util) {
-	    console.log('Running: event_broadcast');
-	    util.startHats(function(hat) {
-	        if (hat.opcode === 'event_whenbroadcastreceived') {
-	            var shadows = hat.fields.CHOICE.blocks;
-	            for (var sb in shadows) {
-	                var shadowblock = shadows[sb];
-	                return shadowblock.fields.CHOICE.value === argValues[0];
-	            }
-	        }
-	        return false;
-	    });
-	};
-
-	module.exports = Scratch3Blocks;
-
-
-/***/ },
-/* 13 */
-/***/ function(module, exports, __webpack_require__) {
-
-	
-	var YieldTimers = __webpack_require__(11);
-
-	function WeDo2Blocks(runtime) {
-	    /**
-	     * The runtime instantiating this block package.
-	     * @type {Runtime}
-	     */
-	    this.runtime = runtime;
-
-	    /**
-	     * Current motor speed, as a percentage (100 = full speed).
-	     * @type {number}
-	     * @private
-	     */
-	    this._motorSpeed = 100;
-
-	    /**
-	     * The timeout ID for a pending motor action.
-	     * @type {?int}
-	     * @private
-	     */
-	    this._motorTimeout = null;
-	}
-
-	/**
-	 * Retrieve the block primitives implemented by this package.
-	 * @return {Object.<string, Function>} Mapping of opcode to Function.
-	 */
-	WeDo2Blocks.prototype.getPrimitives = function() {
-	    return {
-	        'wedo_motorclockwise': this.motorClockwise,
-	        'wedo_motorcounterclockwise': this.motorCounterClockwise,
-	        'wedo_motorspeed': this.motorSpeed,
-	        'wedo_setcolor': this.setColor,
-	        'wedo_whendistanceclose': this.whenDistanceClose,
-	        'wedo_whentilt': this.whenTilt
-	    };
-	};
-
-	/**
-	 * Clamp a value between a minimum and maximum value.
-	 * @todo move this to a common utility class.
-	 * @param val The value to clamp.
-	 * @param min The minimum return value.
-	 * @param max The maximum return value.
-	 * @returns {number} The clamped value.
-	 * @private
-	 */
-	WeDo2Blocks.prototype._clamp = function(val, min, max) {
-	    return Math.max(min, Math.min(val, max));
-	};
-
-	/**
-	 * Common implementation for motor blocks.
-	 * @param direction The direction to turn ('left' or 'right').
-	 * @param durationSeconds The number of seconds to run.
-	 * @param util The util instance to use for yielding and finishing.
-	 * @private
-	 */
-	WeDo2Blocks.prototype._motorOnFor = function(direction, durationSeconds, util) {
-	    if (this._motorTimeout > 0) {
-	        // @todo maybe this should go through util
-	        YieldTimers.resolve(this._motorTimeout);
-	        this._motorTimeout = null;
-	    }
-	    if (window.native) {
-	        window.native.motorRun(direction, this._motorSpeed);
-	    }
-
-	    var instance = this;
-	    var myTimeout = this._motorTimeout = util.timeout(function() {
-	        if (instance._motorTimeout == myTimeout) {
-	            instance._motorTimeout = null;
-	        }
-	        if (window.native) {
-	            window.native.motorStop();
-	        }
-	        util.done();
-	    }, 1000 * durationSeconds);
-
-	    util.yield();
-	};
-
-	WeDo2Blocks.prototype.motorClockwise = function(argValues, util) {
-	    this._motorOnFor('right', parseFloat(argValues[0]), util);
-	};
-
-	WeDo2Blocks.prototype.motorCounterClockwise = function(argValues, util) {
-	    this._motorOnFor('left', parseFloat(argValues[0]), util);
-	};
-
-	WeDo2Blocks.prototype.motorSpeed = function(argValues) {
-	    var speed = argValues[0];
-	    switch (speed) {
-	    case 'slow':
-	        this._motorSpeed = 20;
-	        break;
-	    case 'medium':
-	        this._motorSpeed = 50;
-	        break;
-	    case 'fast':
-	        this._motorSpeed = 100;
-	        break;
-	    }
-	};
-
-	/**
-	 * Convert a color name to a WeDo color index.
-	 * Supports 'mystery' for a random hue.
-	 * @param colorName The color to retrieve.
-	 * @returns {number} The WeDo color index.
-	 * @private
-	 */
-	WeDo2Blocks.prototype._getColor = function(colorName) {
-	    var colors = {
-	        'yellow': 7,
-	        'orange': 8,
-	        'coral': 9,
-	        'magenta': 1,
-	        'purple': 2,
-	        'blue': 3,
-	        'green': 6,
-	        'white': 10
-	    };
-
-	    if (colorName == 'mystery') {
-	        return Math.floor((Math.random() * 10) + 1);
-	    }
-
-	    return colors[colorName];
-	};
-
-	WeDo2Blocks.prototype.setColor = function(argValues, util) {
-	    if (window.native) {
-	        var colorIndex = this._getColor(argValues[0]);
-	        window.native.setLedColor(colorIndex);
-	    }
-	    // Pause for quarter second
-	    util.yield();
-	    util.timeout(function() {
-	        util.done();
-	    }, 250);
-	};
-
-	WeDo2Blocks.prototype.whenDistanceClose = function() {
-	    console.log('Running: wedo_whendistanceclose');
-	};
-
-	WeDo2Blocks.prototype.whenTilt = function() {
-	    console.log('Running: wedo_whentilt');
-	};
-
-	module.exports = WeDo2Blocks;
-
-
-/***/ },
-/* 14 */
-/***/ function(module, exports, __webpack_require__) {
-
-	var html = __webpack_require__(15);
-	var memoize = __webpack_require__(64);
+	var html = __webpack_require__(8);
+	var memoize = __webpack_require__(57);
 	var parseDOM = memoize(html.parseDOM, {
 	    length: 1,
 	    resolvers: [String],
@@ -2404,8 +1463,8 @@
 	 * Convert and an individual block DOM to the representation tree.
 	 * Based on Blockly's `domToBlockHeadless_`.
 	 * @param {Element} blockDOM DOM tree for an individual block.
-	 * @param {Boolean} isTopBlock Whether blocks at this level are "top blocks."
 	 * @param {Object} blocks Collection of blocks to add to.
+	 * @param {Boolean} isTopBlock Whether blocks at this level are "top blocks."
 	 */
 	function domToBlock (blockDOM, blocks, isTopBlock) {
 	    // Block skeleton.
@@ -2484,11 +1543,11 @@
 
 
 /***/ },
-/* 15 */
+/* 8 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var Parser = __webpack_require__(16),
-	    DomHandler = __webpack_require__(23);
+	var Parser = __webpack_require__(9),
+	    DomHandler = __webpack_require__(16);
 
 	function defineProp(name, value){
 		delete module.exports[name];
@@ -2498,26 +1557,26 @@
 
 	module.exports = {
 		Parser: Parser,
-		Tokenizer: __webpack_require__(17),
-		ElementType: __webpack_require__(24),
+		Tokenizer: __webpack_require__(10),
+		ElementType: __webpack_require__(17),
 		DomHandler: DomHandler,
 		get FeedHandler(){
-			return defineProp("FeedHandler", __webpack_require__(27));
+			return defineProp("FeedHandler", __webpack_require__(20));
 		},
 		get Stream(){
-			return defineProp("Stream", __webpack_require__(28));
+			return defineProp("Stream", __webpack_require__(21));
 		},
 		get WritableStream(){
-			return defineProp("WritableStream", __webpack_require__(29));
+			return defineProp("WritableStream", __webpack_require__(22));
 		},
 		get ProxyHandler(){
-			return defineProp("ProxyHandler", __webpack_require__(50));
+			return defineProp("ProxyHandler", __webpack_require__(43));
 		},
 		get DomUtils(){
-			return defineProp("DomUtils", __webpack_require__(51));
+			return defineProp("DomUtils", __webpack_require__(44));
 		},
 		get CollectingHandler(){
-			return defineProp("CollectingHandler", __webpack_require__(63));
+			return defineProp("CollectingHandler", __webpack_require__(56));
 		},
 		// For legacy support
 		DefaultHandler: DomHandler,
@@ -2558,10 +1617,10 @@
 
 
 /***/ },
-/* 16 */
+/* 9 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var Tokenizer = __webpack_require__(17);
+	var Tokenizer = __webpack_require__(10);
 
 	/*
 		Options:
@@ -2916,15 +1975,15 @@
 
 
 /***/ },
-/* 17 */
+/* 10 */
 /***/ function(module, exports, __webpack_require__) {
 
 	module.exports = Tokenizer;
 
-	var decodeCodePoint = __webpack_require__(18),
-	    entityMap = __webpack_require__(20),
-	    legacyMap = __webpack_require__(21),
-	    xmlMap    = __webpack_require__(22),
+	var decodeCodePoint = __webpack_require__(11),
+	    entityMap = __webpack_require__(13),
+	    legacyMap = __webpack_require__(14),
+	    xmlMap    = __webpack_require__(15),
 
 	    i = 0,
 
@@ -3828,10 +2887,10 @@
 
 
 /***/ },
-/* 18 */
+/* 11 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var decodeMap = __webpack_require__(19);
+	var decodeMap = __webpack_require__(12);
 
 	module.exports = decodeCodePoint;
 
@@ -3860,7 +2919,7 @@
 
 
 /***/ },
-/* 19 */
+/* 12 */
 /***/ function(module, exports) {
 
 	module.exports = {
@@ -3895,7 +2954,7 @@
 	};
 
 /***/ },
-/* 20 */
+/* 13 */
 /***/ function(module, exports) {
 
 	module.exports = {
@@ -6027,7 +5086,7 @@
 	};
 
 /***/ },
-/* 21 */
+/* 14 */
 /***/ function(module, exports) {
 
 	module.exports = {
@@ -6140,7 +5199,7 @@
 	};
 
 /***/ },
-/* 22 */
+/* 15 */
 /***/ function(module, exports) {
 
 	module.exports = {
@@ -6152,14 +5211,14 @@
 	};
 
 /***/ },
-/* 23 */
+/* 16 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var ElementType = __webpack_require__(24);
+	var ElementType = __webpack_require__(17);
 
 	var re_whitespace = /\s+/g;
-	var NodePrototype = __webpack_require__(25);
-	var ElementPrototype = __webpack_require__(26);
+	var NodePrototype = __webpack_require__(18);
+	var ElementPrototype = __webpack_require__(19);
 
 	function DomHandler(callback, options, elementCB){
 		if(typeof callback === "object"){
@@ -6340,7 +5399,7 @@
 
 
 /***/ },
-/* 24 */
+/* 17 */
 /***/ function(module, exports) {
 
 	//Types of elements found in the DOM
@@ -6361,7 +5420,7 @@
 
 
 /***/ },
-/* 25 */
+/* 18 */
 /***/ function(module, exports) {
 
 	// This object will be used as the prototype for Nodes when creating a
@@ -6411,11 +5470,11 @@
 
 
 /***/ },
-/* 26 */
+/* 19 */
 /***/ function(module, exports, __webpack_require__) {
 
 	// DOM-Level-1-compliant structure
-	var NodePrototype = __webpack_require__(25);
+	var NodePrototype = __webpack_require__(18);
 	var ElementPrototype = module.exports = Object.create(NodePrototype);
 
 	var domLvl1 = {
@@ -6437,10 +5496,10 @@
 
 
 /***/ },
-/* 27 */
+/* 20 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var index = __webpack_require__(15),
+	var index = __webpack_require__(8),
 	    DomHandler = index.DomHandler,
 		DomUtils = index.DomUtils;
 
@@ -6538,12 +5597,12 @@
 
 
 /***/ },
-/* 28 */
+/* 21 */
 /***/ function(module, exports, __webpack_require__) {
 
 	module.exports = Stream;
 
-	var Parser = __webpack_require__(29);
+	var Parser = __webpack_require__(22);
 
 	function Stream(options){
 		Parser.call(this, new Cbs(this), options);
@@ -6557,7 +5616,7 @@
 		this.scope = scope;
 	}
 
-	var EVENTS = __webpack_require__(15).EVENTS;
+	var EVENTS = __webpack_require__(8).EVENTS;
 
 	Object.keys(EVENTS).forEach(function(name){
 		if(EVENTS[name] === 0){
@@ -6578,13 +5637,13 @@
 	});
 
 /***/ },
-/* 29 */
+/* 22 */
 /***/ function(module, exports, __webpack_require__) {
 
 	module.exports = Stream;
 
-	var Parser = __webpack_require__(16),
-	    WritableStream = __webpack_require__(30).Writable || __webpack_require__(49).Writable;
+	var Parser = __webpack_require__(9),
+	    WritableStream = __webpack_require__(23).Writable || __webpack_require__(42).Writable;
 
 	function Stream(cbs, options){
 		var parser = this._parser = new Parser(cbs, options);
@@ -6604,7 +5663,7 @@
 	};
 
 /***/ },
-/* 30 */
+/* 23 */
 /***/ function(module, exports, __webpack_require__) {
 
 	// Copyright Joyent, Inc. and other Node contributors.
@@ -6634,11 +5693,11 @@
 	var inherits = __webpack_require__(5);
 
 	inherits(Stream, EE);
-	Stream.Readable = __webpack_require__(31);
-	Stream.Writable = __webpack_require__(45);
-	Stream.Duplex = __webpack_require__(46);
-	Stream.Transform = __webpack_require__(47);
-	Stream.PassThrough = __webpack_require__(48);
+	Stream.Readable = __webpack_require__(24);
+	Stream.Writable = __webpack_require__(38);
+	Stream.Duplex = __webpack_require__(39);
+	Stream.Transform = __webpack_require__(40);
+	Stream.PassThrough = __webpack_require__(41);
 
 	// Backwards-compat with node 0.4.x
 	Stream.Stream = Stream;
@@ -6737,24 +5796,24 @@
 
 
 /***/ },
-/* 31 */
+/* 24 */
 /***/ function(module, exports, __webpack_require__) {
 
-	/* WEBPACK VAR INJECTION */(function(process) {exports = module.exports = __webpack_require__(32);
-	exports.Stream = __webpack_require__(30);
+	/* WEBPACK VAR INJECTION */(function(process) {exports = module.exports = __webpack_require__(25);
+	exports.Stream = __webpack_require__(23);
 	exports.Readable = exports;
-	exports.Writable = __webpack_require__(41);
-	exports.Duplex = __webpack_require__(40);
-	exports.Transform = __webpack_require__(43);
-	exports.PassThrough = __webpack_require__(44);
+	exports.Writable = __webpack_require__(34);
+	exports.Duplex = __webpack_require__(33);
+	exports.Transform = __webpack_require__(36);
+	exports.PassThrough = __webpack_require__(37);
 	if (!process.browser && process.env.READABLE_STREAM === 'disable') {
-	  module.exports = __webpack_require__(30);
+	  module.exports = __webpack_require__(23);
 	}
 
 	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(3)))
 
 /***/ },
-/* 32 */
+/* 25 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/* WEBPACK VAR INJECTION */(function(process) {// Copyright Joyent, Inc. and other Node contributors.
@@ -6781,12 +5840,12 @@
 	module.exports = Readable;
 
 	/*<replacement>*/
-	var isArray = __webpack_require__(33);
+	var isArray = __webpack_require__(26);
 	/*</replacement>*/
 
 
 	/*<replacement>*/
-	var Buffer = __webpack_require__(34).Buffer;
+	var Buffer = __webpack_require__(27).Buffer;
 	/*</replacement>*/
 
 	Readable.ReadableState = ReadableState;
@@ -6799,10 +5858,10 @@
 	};
 	/*</replacement>*/
 
-	var Stream = __webpack_require__(30);
+	var Stream = __webpack_require__(23);
 
 	/*<replacement>*/
-	var util = __webpack_require__(38);
+	var util = __webpack_require__(31);
 	util.inherits = __webpack_require__(5);
 	/*</replacement>*/
 
@@ -6810,7 +5869,7 @@
 
 
 	/*<replacement>*/
-	var debug = __webpack_require__(39);
+	var debug = __webpack_require__(32);
 	if (debug && debug.debuglog) {
 	  debug = debug.debuglog('stream');
 	} else {
@@ -6822,7 +5881,7 @@
 	util.inherits(Readable, Stream);
 
 	function ReadableState(options, stream) {
-	  var Duplex = __webpack_require__(40);
+	  var Duplex = __webpack_require__(33);
 
 	  options = options || {};
 
@@ -6883,14 +5942,14 @@
 	  this.encoding = null;
 	  if (options.encoding) {
 	    if (!StringDecoder)
-	      StringDecoder = __webpack_require__(42).StringDecoder;
+	      StringDecoder = __webpack_require__(35).StringDecoder;
 	    this.decoder = new StringDecoder(options.encoding);
 	    this.encoding = options.encoding;
 	  }
 	}
 
 	function Readable(options) {
-	  var Duplex = __webpack_require__(40);
+	  var Duplex = __webpack_require__(33);
 
 	  if (!(this instanceof Readable))
 	    return new Readable(options);
@@ -6993,7 +6052,7 @@
 	// backwards compatibility.
 	Readable.prototype.setEncoding = function(enc) {
 	  if (!StringDecoder)
-	    StringDecoder = __webpack_require__(42).StringDecoder;
+	    StringDecoder = __webpack_require__(35).StringDecoder;
 	  this._readableState.decoder = new StringDecoder(enc);
 	  this._readableState.encoding = enc;
 	  return this;
@@ -7712,7 +6771,7 @@
 	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(3)))
 
 /***/ },
-/* 33 */
+/* 26 */
 /***/ function(module, exports) {
 
 	module.exports = Array.isArray || function (arr) {
@@ -7721,7 +6780,7 @@
 
 
 /***/ },
-/* 34 */
+/* 27 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/* WEBPACK VAR INJECTION */(function(Buffer, global) {/*!
@@ -7734,9 +6793,9 @@
 
 	'use strict'
 
-	var base64 = __webpack_require__(35)
-	var ieee754 = __webpack_require__(36)
-	var isArray = __webpack_require__(37)
+	var base64 = __webpack_require__(28)
+	var ieee754 = __webpack_require__(29)
+	var isArray = __webpack_require__(30)
 
 	exports.Buffer = Buffer
 	exports.SlowBuffer = SlowBuffer
@@ -9273,10 +8332,10 @@
 	  return i
 	}
 
-	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(34).Buffer, (function() { return this; }())))
+	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(27).Buffer, (function() { return this; }())))
 
 /***/ },
-/* 35 */
+/* 28 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var lookup = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
@@ -9406,7 +8465,7 @@
 
 
 /***/ },
-/* 36 */
+/* 29 */
 /***/ function(module, exports) {
 
 	exports.read = function (buffer, offset, isLE, mLen, nBytes) {
@@ -9496,7 +8555,7 @@
 
 
 /***/ },
-/* 37 */
+/* 30 */
 /***/ function(module, exports) {
 
 	var toString = {}.toString;
@@ -9507,7 +8566,7 @@
 
 
 /***/ },
-/* 38 */
+/* 31 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/* WEBPACK VAR INJECTION */(function(Buffer) {// Copyright Joyent, Inc. and other Node contributors.
@@ -9618,16 +8677,16 @@
 	  return Object.prototype.toString.call(o);
 	}
 
-	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(34).Buffer))
+	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(27).Buffer))
 
 /***/ },
-/* 39 */
+/* 32 */
 /***/ function(module, exports) {
 
 	/* (ignored) */
 
 /***/ },
-/* 40 */
+/* 33 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/* WEBPACK VAR INJECTION */(function(process) {// Copyright Joyent, Inc. and other Node contributors.
@@ -9668,12 +8727,12 @@
 
 
 	/*<replacement>*/
-	var util = __webpack_require__(38);
+	var util = __webpack_require__(31);
 	util.inherits = __webpack_require__(5);
 	/*</replacement>*/
 
-	var Readable = __webpack_require__(32);
-	var Writable = __webpack_require__(41);
+	var Readable = __webpack_require__(25);
+	var Writable = __webpack_require__(34);
 
 	util.inherits(Duplex, Readable);
 
@@ -9723,7 +8782,7 @@
 	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(3)))
 
 /***/ },
-/* 41 */
+/* 34 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/* WEBPACK VAR INJECTION */(function(process) {// Copyright Joyent, Inc. and other Node contributors.
@@ -9754,18 +8813,18 @@
 	module.exports = Writable;
 
 	/*<replacement>*/
-	var Buffer = __webpack_require__(34).Buffer;
+	var Buffer = __webpack_require__(27).Buffer;
 	/*</replacement>*/
 
 	Writable.WritableState = WritableState;
 
 
 	/*<replacement>*/
-	var util = __webpack_require__(38);
+	var util = __webpack_require__(31);
 	util.inherits = __webpack_require__(5);
 	/*</replacement>*/
 
-	var Stream = __webpack_require__(30);
+	var Stream = __webpack_require__(23);
 
 	util.inherits(Writable, Stream);
 
@@ -9776,7 +8835,7 @@
 	}
 
 	function WritableState(options, stream) {
-	  var Duplex = __webpack_require__(40);
+	  var Duplex = __webpack_require__(33);
 
 	  options = options || {};
 
@@ -9864,7 +8923,7 @@
 	}
 
 	function Writable(options) {
-	  var Duplex = __webpack_require__(40);
+	  var Duplex = __webpack_require__(33);
 
 	  // Writable ctor is applied to Duplexes, though they're not
 	  // instanceof Writable, they're instanceof Readable.
@@ -10207,7 +9266,7 @@
 	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(3)))
 
 /***/ },
-/* 42 */
+/* 35 */
 /***/ function(module, exports, __webpack_require__) {
 
 	// Copyright Joyent, Inc. and other Node contributors.
@@ -10231,7 +9290,7 @@
 	// OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
 	// USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-	var Buffer = __webpack_require__(34).Buffer;
+	var Buffer = __webpack_require__(27).Buffer;
 
 	var isBufferEncoding = Buffer.isEncoding
 	  || function(encoding) {
@@ -10434,7 +9493,7 @@
 
 
 /***/ },
-/* 43 */
+/* 36 */
 /***/ function(module, exports, __webpack_require__) {
 
 	// Copyright Joyent, Inc. and other Node contributors.
@@ -10503,10 +9562,10 @@
 
 	module.exports = Transform;
 
-	var Duplex = __webpack_require__(40);
+	var Duplex = __webpack_require__(33);
 
 	/*<replacement>*/
-	var util = __webpack_require__(38);
+	var util = __webpack_require__(31);
 	util.inherits = __webpack_require__(5);
 	/*</replacement>*/
 
@@ -10649,7 +9708,7 @@
 
 
 /***/ },
-/* 44 */
+/* 37 */
 /***/ function(module, exports, __webpack_require__) {
 
 	// Copyright Joyent, Inc. and other Node contributors.
@@ -10679,10 +9738,10 @@
 
 	module.exports = PassThrough;
 
-	var Transform = __webpack_require__(43);
+	var Transform = __webpack_require__(36);
 
 	/*<replacement>*/
-	var util = __webpack_require__(38);
+	var util = __webpack_require__(31);
 	util.inherits = __webpack_require__(5);
 	/*</replacement>*/
 
@@ -10701,41 +9760,41 @@
 
 
 /***/ },
-/* 45 */
+/* 38 */
 /***/ function(module, exports, __webpack_require__) {
 
-	module.exports = __webpack_require__(41)
+	module.exports = __webpack_require__(34)
 
 
 /***/ },
-/* 46 */
+/* 39 */
 /***/ function(module, exports, __webpack_require__) {
 
-	module.exports = __webpack_require__(40)
+	module.exports = __webpack_require__(33)
 
 
 /***/ },
-/* 47 */
+/* 40 */
 /***/ function(module, exports, __webpack_require__) {
 
-	module.exports = __webpack_require__(43)
+	module.exports = __webpack_require__(36)
 
 
 /***/ },
-/* 48 */
+/* 41 */
 /***/ function(module, exports, __webpack_require__) {
 
-	module.exports = __webpack_require__(44)
+	module.exports = __webpack_require__(37)
 
 
 /***/ },
-/* 49 */
+/* 42 */
 /***/ function(module, exports) {
 
 	/* (ignored) */
 
 /***/ },
-/* 50 */
+/* 43 */
 /***/ function(module, exports, __webpack_require__) {
 
 	module.exports = ProxyHandler;
@@ -10744,7 +9803,7 @@
 		this._cbs = cbs || {};
 	}
 
-	var EVENTS = __webpack_require__(15).EVENTS;
+	var EVENTS = __webpack_require__(8).EVENTS;
 	Object.keys(EVENTS).forEach(function(name){
 		if(EVENTS[name] === 0){
 			name = "on" + name;
@@ -10767,18 +9826,18 @@
 	});
 
 /***/ },
-/* 51 */
+/* 44 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var DomUtils = module.exports;
 
 	[
+		__webpack_require__(45),
+		__webpack_require__(51),
 		__webpack_require__(52),
-		__webpack_require__(58),
-		__webpack_require__(59),
-		__webpack_require__(60),
-		__webpack_require__(61),
-		__webpack_require__(62)
+		__webpack_require__(53),
+		__webpack_require__(54),
+		__webpack_require__(55)
 	].forEach(function(ext){
 		Object.keys(ext).forEach(function(key){
 			DomUtils[key] = ext[key].bind(DomUtils);
@@ -10787,11 +9846,11 @@
 
 
 /***/ },
-/* 52 */
+/* 45 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var ElementType = __webpack_require__(24),
-	    getOuterHTML = __webpack_require__(53),
+	var ElementType = __webpack_require__(17),
+	    getOuterHTML = __webpack_require__(46),
 	    isTag = ElementType.isTag;
 
 	module.exports = {
@@ -10815,14 +9874,14 @@
 
 
 /***/ },
-/* 53 */
+/* 46 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/*
 	  Module dependencies
 	*/
-	var ElementType = __webpack_require__(54);
-	var entities = __webpack_require__(55);
+	var ElementType = __webpack_require__(47);
+	var entities = __webpack_require__(48);
 
 	/*
 	  Boolean Attributes
@@ -10999,7 +10058,7 @@
 
 
 /***/ },
-/* 54 */
+/* 47 */
 /***/ function(module, exports) {
 
 	//Types of elements found in the DOM
@@ -11018,11 +10077,11 @@
 	};
 
 /***/ },
-/* 55 */
+/* 48 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var encode = __webpack_require__(56),
-	    decode = __webpack_require__(57);
+	var encode = __webpack_require__(49),
+	    decode = __webpack_require__(50);
 
 	exports.decode = function(data, level){
 		return (!level || level <= 0 ? decode.XML : decode.HTML)(data);
@@ -11057,15 +10116,15 @@
 
 
 /***/ },
-/* 56 */
+/* 49 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var inverseXML = getInverseObj(__webpack_require__(22)),
+	var inverseXML = getInverseObj(__webpack_require__(15)),
 	    xmlReplacer = getInverseReplacer(inverseXML);
 
 	exports.XML = getInverse(inverseXML, xmlReplacer);
 
-	var inverseHTML = getInverseObj(__webpack_require__(20)),
+	var inverseHTML = getInverseObj(__webpack_require__(13)),
 	    htmlReplacer = getInverseReplacer(inverseHTML);
 
 	exports.HTML = getInverse(inverseHTML, htmlReplacer);
@@ -11136,13 +10195,13 @@
 
 
 /***/ },
-/* 57 */
+/* 50 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var entityMap = __webpack_require__(20),
-	    legacyMap = __webpack_require__(21),
-	    xmlMap    = __webpack_require__(22),
-	    decodeCodePoint = __webpack_require__(18);
+	var entityMap = __webpack_require__(13),
+	    legacyMap = __webpack_require__(14),
+	    xmlMap    = __webpack_require__(15),
+	    decodeCodePoint = __webpack_require__(11);
 
 	var decodeXMLStrict  = getStrictDecoder(xmlMap),
 	    decodeHTMLStrict = getStrictDecoder(entityMap);
@@ -11213,7 +10272,7 @@
 	};
 
 /***/ },
-/* 58 */
+/* 51 */
 /***/ function(module, exports) {
 
 	var getChildren = exports.getChildren = function(elem){
@@ -11243,7 +10302,7 @@
 
 
 /***/ },
-/* 59 */
+/* 52 */
 /***/ function(module, exports) {
 
 	exports.removeElement = function(elem){
@@ -11326,10 +10385,10 @@
 
 
 /***/ },
-/* 60 */
+/* 53 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var isTag = __webpack_require__(24).isTag;
+	var isTag = __webpack_require__(17).isTag;
 
 	module.exports = {
 		filter: filter,
@@ -11426,10 +10485,10 @@
 
 
 /***/ },
-/* 61 */
+/* 54 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var ElementType = __webpack_require__(24);
+	var ElementType = __webpack_require__(17);
 	var isTag = exports.isTag = ElementType.isTag;
 
 	exports.testElement = function(options, element){
@@ -11519,7 +10578,7 @@
 
 
 /***/ },
-/* 62 */
+/* 55 */
 /***/ function(module, exports) {
 
 	// removeSubsets
@@ -11666,7 +10725,7 @@
 
 
 /***/ },
-/* 63 */
+/* 56 */
 /***/ function(module, exports, __webpack_require__) {
 
 	module.exports = CollectingHandler;
@@ -11676,7 +10735,7 @@
 		this.events = [];
 	}
 
-	var EVENTS = __webpack_require__(15).EVENTS;
+	var EVENTS = __webpack_require__(8).EVENTS;
 	Object.keys(EVENTS).forEach(function(name){
 		if(EVENTS[name] === 0){
 			name = "on" + name;
@@ -11727,14 +10786,14 @@
 
 
 /***/ },
-/* 64 */
+/* 57 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 
-	var normalizeOpts = __webpack_require__(65)
-	  , resolveLength = __webpack_require__(66)
-	  , plain         = __webpack_require__(72);
+	var normalizeOpts = __webpack_require__(58)
+	  , resolveLength = __webpack_require__(59)
+	  , plain         = __webpack_require__(65);
 
 	module.exports = function (fn/*, options*/) {
 		var options = normalizeOpts(arguments[1]), length;
@@ -11744,31 +10803,31 @@
 			if (length !== 0) {
 				if (options.primitive) {
 					if (length === false) {
-						options.normalizer = __webpack_require__(109);
+						options.normalizer = __webpack_require__(102);
 					} else if (length > 1) {
-						options.normalizer = __webpack_require__(110)(length);
+						options.normalizer = __webpack_require__(103)(length);
 					}
 				} else {
-					if (length === false) options.normalizer = __webpack_require__(111)();
-					else if (length === 1) options.normalizer = __webpack_require__(113)();
-					else options.normalizer = __webpack_require__(114)(length);
+					if (length === false) options.normalizer = __webpack_require__(104)();
+					else if (length === 1) options.normalizer = __webpack_require__(106)();
+					else options.normalizer = __webpack_require__(107)(length);
 				}
 			}
 		}
 
 		// Assure extensions
-		if (options.async) __webpack_require__(115);
-		if (options.dispose) __webpack_require__(118);
-		if (options.maxAge) __webpack_require__(119);
-		if (options.max) __webpack_require__(122);
-		if (options.refCounter) __webpack_require__(124);
+		if (options.async) __webpack_require__(108);
+		if (options.dispose) __webpack_require__(111);
+		if (options.maxAge) __webpack_require__(112);
+		if (options.max) __webpack_require__(115);
+		if (options.refCounter) __webpack_require__(117);
 
 		return plain(fn, options);
 	};
 
 
 /***/ },
-/* 65 */
+/* 58 */
 /***/ function(module, exports) {
 
 	'use strict';
@@ -11791,12 +10850,12 @@
 
 
 /***/ },
-/* 66 */
+/* 59 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 
-	var toPosInt = __webpack_require__(67);
+	var toPosInt = __webpack_require__(60);
 
 	module.exports = function (optsLength, fnLength, isAsync) {
 		var length;
@@ -11812,12 +10871,12 @@
 
 
 /***/ },
-/* 67 */
+/* 60 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 
-	var toInteger = __webpack_require__(68)
+	var toInteger = __webpack_require__(61)
 
 	  , max = Math.max;
 
@@ -11825,12 +10884,12 @@
 
 
 /***/ },
-/* 68 */
+/* 61 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 
-	var sign = __webpack_require__(69)
+	var sign = __webpack_require__(62)
 
 	  , abs = Math.abs, floor = Math.floor;
 
@@ -11843,18 +10902,18 @@
 
 
 /***/ },
-/* 69 */
+/* 62 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 
-	module.exports = __webpack_require__(70)()
+	module.exports = __webpack_require__(63)()
 		? Math.sign
-		: __webpack_require__(71);
+		: __webpack_require__(64);
 
 
 /***/ },
-/* 70 */
+/* 63 */
 /***/ function(module, exports) {
 
 	'use strict';
@@ -11867,7 +10926,7 @@
 
 
 /***/ },
-/* 71 */
+/* 64 */
 /***/ function(module, exports) {
 
 	'use strict';
@@ -11880,16 +10939,16 @@
 
 
 /***/ },
-/* 72 */
+/* 65 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 
-	var callable      = __webpack_require__(73)
-	  , forEach       = __webpack_require__(74)
-	  , extensions    = __webpack_require__(77)
-	  , configure     = __webpack_require__(78)
-	  , resolveLength = __webpack_require__(66)
+	var callable      = __webpack_require__(66)
+	  , forEach       = __webpack_require__(67)
+	  , extensions    = __webpack_require__(70)
+	  , configure     = __webpack_require__(71)
+	  , resolveLength = __webpack_require__(59)
 
 	  , hasOwnProperty = Object.prototype.hasOwnProperty;
 
@@ -11921,7 +10980,7 @@
 
 
 /***/ },
-/* 73 */
+/* 66 */
 /***/ function(module, exports) {
 
 	'use strict';
@@ -11933,16 +10992,16 @@
 
 
 /***/ },
-/* 74 */
+/* 67 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 
-	module.exports = __webpack_require__(75)('forEach');
+	module.exports = __webpack_require__(68)('forEach');
 
 
 /***/ },
-/* 75 */
+/* 68 */
 /***/ function(module, exports, __webpack_require__) {
 
 	// Internal method, used by iteration functions.
@@ -11951,8 +11010,8 @@
 
 	'use strict';
 
-	var callable = __webpack_require__(73)
-	  , value    = __webpack_require__(76)
+	var callable = __webpack_require__(66)
+	  , value    = __webpack_require__(69)
 
 	  , bind = Function.prototype.bind, call = Function.prototype.call, keys = Object.keys
 	  , propertyIsEnumerable = Object.prototype.propertyIsEnumerable;
@@ -11977,7 +11036,7 @@
 
 
 /***/ },
-/* 76 */
+/* 69 */
 /***/ function(module, exports) {
 
 	'use strict';
@@ -11989,24 +11048,24 @@
 
 
 /***/ },
-/* 77 */
+/* 70 */
 /***/ function(module, exports) {
 
 	'use strict';
 
 
 /***/ },
-/* 78 */
+/* 71 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 
-	var customError      = __webpack_require__(79)
-	  , defineLength     = __webpack_require__(86)
-	  , d                = __webpack_require__(88)
-	  , ee               = __webpack_require__(93).methods
-	  , resolveResolve   = __webpack_require__(94)
-	  , resolveNormalize = __webpack_require__(108)
+	var customError      = __webpack_require__(72)
+	  , defineLength     = __webpack_require__(79)
+	  , d                = __webpack_require__(81)
+	  , ee               = __webpack_require__(86).methods
+	  , resolveResolve   = __webpack_require__(87)
+	  , resolveNormalize = __webpack_require__(101)
 
 	  , apply = Function.prototype.apply, call = Function.prototype.call
 	  , create = Object.create, hasOwnProperty = Object.prototype.hasOwnProperty
@@ -12146,12 +11205,12 @@
 
 
 /***/ },
-/* 79 */
+/* 72 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 
-	var assign = __webpack_require__(80)
+	var assign = __webpack_require__(73)
 
 	  , captureStackTrace = Error.captureStackTrace;
 
@@ -12172,18 +11231,18 @@
 
 
 /***/ },
-/* 80 */
+/* 73 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 
-	module.exports = __webpack_require__(81)()
+	module.exports = __webpack_require__(74)()
 		? Object.assign
-		: __webpack_require__(82);
+		: __webpack_require__(75);
 
 
 /***/ },
-/* 81 */
+/* 74 */
 /***/ function(module, exports) {
 
 	'use strict';
@@ -12198,13 +11257,13 @@
 
 
 /***/ },
-/* 82 */
+/* 75 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 
-	var keys  = __webpack_require__(83)
-	  , value = __webpack_require__(76)
+	var keys  = __webpack_require__(76)
+	  , value = __webpack_require__(69)
 
 	  , max = Math.max;
 
@@ -12226,18 +11285,18 @@
 
 
 /***/ },
-/* 83 */
+/* 76 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 
-	module.exports = __webpack_require__(84)()
+	module.exports = __webpack_require__(77)()
 		? Object.keys
-		: __webpack_require__(85);
+		: __webpack_require__(78);
 
 
 /***/ },
-/* 84 */
+/* 77 */
 /***/ function(module, exports) {
 
 	'use strict';
@@ -12251,7 +11310,7 @@
 
 
 /***/ },
-/* 85 */
+/* 78 */
 /***/ function(module, exports) {
 
 	'use strict';
@@ -12264,12 +11323,12 @@
 
 
 /***/ },
-/* 86 */
+/* 79 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 
-	var toPosInt = __webpack_require__(67)
+	var toPosInt = __webpack_require__(60)
 
 	  , test = function (a, b) {}, desc, defineProperty
 	  , generate, mixin;
@@ -12290,7 +11349,7 @@
 			return defineProperty(fn, 'length', desc);
 		};
 	} else {
-		mixin = __webpack_require__(87);
+		mixin = __webpack_require__(80);
 		generate = (function () {
 			var cache = [];
 			return function (l) {
@@ -12314,12 +11373,12 @@
 
 
 /***/ },
-/* 87 */
+/* 80 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 
-	var value = __webpack_require__(76)
+	var value = __webpack_require__(69)
 
 	  , defineProperty = Object.defineProperty
 	  , getOwnPropertyDescriptor = Object.getOwnPropertyDescriptor
@@ -12339,15 +11398,15 @@
 
 
 /***/ },
-/* 88 */
+/* 81 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 
-	var assign        = __webpack_require__(80)
-	  , normalizeOpts = __webpack_require__(65)
-	  , isCallable    = __webpack_require__(89)
-	  , contains      = __webpack_require__(90)
+	var assign        = __webpack_require__(73)
+	  , normalizeOpts = __webpack_require__(58)
+	  , isCallable    = __webpack_require__(82)
+	  , contains      = __webpack_require__(83)
 
 	  , d;
 
@@ -12408,7 +11467,7 @@
 
 
 /***/ },
-/* 89 */
+/* 82 */
 /***/ function(module, exports) {
 
 	// Deprecated
@@ -12419,18 +11478,18 @@
 
 
 /***/ },
-/* 90 */
+/* 83 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 
-	module.exports = __webpack_require__(91)()
+	module.exports = __webpack_require__(84)()
 		? String.prototype.contains
-		: __webpack_require__(92);
+		: __webpack_require__(85);
 
 
 /***/ },
-/* 91 */
+/* 84 */
 /***/ function(module, exports) {
 
 	'use strict';
@@ -12444,7 +11503,7 @@
 
 
 /***/ },
-/* 92 */
+/* 85 */
 /***/ function(module, exports) {
 
 	'use strict';
@@ -12457,13 +11516,13 @@
 
 
 /***/ },
-/* 93 */
+/* 86 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 
-	var d        = __webpack_require__(88)
-	  , callable = __webpack_require__(73)
+	var d        = __webpack_require__(81)
+	  , callable = __webpack_require__(66)
 
 	  , apply = Function.prototype.apply, call = Function.prototype.call
 	  , create = Object.create, defineProperty = Object.defineProperty
@@ -12595,13 +11654,13 @@
 
 
 /***/ },
-/* 94 */
+/* 87 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 
-	var toArray  = __webpack_require__(95)
-	  , callable = __webpack_require__(73)
+	var toArray  = __webpack_require__(88)
+	  , callable = __webpack_require__(66)
 
 	  , slice = Array.prototype.slice
 	  , resolveArgs;
@@ -12622,12 +11681,12 @@
 
 
 /***/ },
-/* 95 */
+/* 88 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 
-	var from = __webpack_require__(96)
+	var from = __webpack_require__(89)
 
 	  , isArray = Array.isArray;
 
@@ -12637,18 +11696,18 @@
 
 
 /***/ },
-/* 96 */
+/* 89 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 
-	module.exports = __webpack_require__(97)()
+	module.exports = __webpack_require__(90)()
 		? Array.from
-		: __webpack_require__(98);
+		: __webpack_require__(91);
 
 
 /***/ },
-/* 97 */
+/* 90 */
 /***/ function(module, exports) {
 
 	'use strict';
@@ -12663,18 +11722,18 @@
 
 
 /***/ },
-/* 98 */
+/* 91 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 
-	var iteratorSymbol = __webpack_require__(99).iterator
-	  , isArguments    = __webpack_require__(104)
-	  , isFunction     = __webpack_require__(105)
-	  , toPosInt       = __webpack_require__(67)
-	  , callable       = __webpack_require__(73)
-	  , validValue     = __webpack_require__(76)
-	  , isString       = __webpack_require__(107)
+	var iteratorSymbol = __webpack_require__(92).iterator
+	  , isArguments    = __webpack_require__(97)
+	  , isFunction     = __webpack_require__(98)
+	  , toPosInt       = __webpack_require__(60)
+	  , callable       = __webpack_require__(66)
+	  , validValue     = __webpack_require__(69)
+	  , isString       = __webpack_require__(100)
 
 	  , isArray = Array.isArray, call = Function.prototype.call
 	  , desc = { configurable: true, enumerable: true, writable: true, value: null }
@@ -12775,16 +11834,16 @@
 
 
 /***/ },
-/* 99 */
+/* 92 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 
-	module.exports = __webpack_require__(100)() ? Symbol : __webpack_require__(101);
+	module.exports = __webpack_require__(93)() ? Symbol : __webpack_require__(94);
 
 
 /***/ },
-/* 100 */
+/* 93 */
 /***/ function(module, exports) {
 
 	'use strict';
@@ -12808,15 +11867,15 @@
 
 
 /***/ },
-/* 101 */
+/* 94 */
 /***/ function(module, exports, __webpack_require__) {
 
 	// ES2015 Symbol polyfill for environments that do not support it (or partially support it_
 
 	'use strict';
 
-	var d              = __webpack_require__(88)
-	  , validateSymbol = __webpack_require__(102)
+	var d              = __webpack_require__(81)
+	  , validateSymbol = __webpack_require__(95)
 
 	  , create = Object.create, defineProperties = Object.defineProperties
 	  , defineProperty = Object.defineProperty, objPrototype = Object.prototype
@@ -12921,12 +11980,12 @@
 
 
 /***/ },
-/* 102 */
+/* 95 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 
-	var isSymbol = __webpack_require__(103);
+	var isSymbol = __webpack_require__(96);
 
 	module.exports = function (value) {
 		if (!isSymbol(value)) throw new TypeError(value + " is not a symbol");
@@ -12935,7 +11994,7 @@
 
 
 /***/ },
-/* 103 */
+/* 96 */
 /***/ function(module, exports) {
 
 	'use strict';
@@ -12946,7 +12005,7 @@
 
 
 /***/ },
-/* 104 */
+/* 97 */
 /***/ function(module, exports) {
 
 	'use strict';
@@ -12959,14 +12018,14 @@
 
 
 /***/ },
-/* 105 */
+/* 98 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 
 	var toString = Object.prototype.toString
 
-	  , id = toString.call(__webpack_require__(106));
+	  , id = toString.call(__webpack_require__(99));
 
 	module.exports = function (f) {
 		return (typeof f === "function") && (toString.call(f) === id);
@@ -12974,7 +12033,7 @@
 
 
 /***/ },
-/* 106 */
+/* 99 */
 /***/ function(module, exports) {
 
 	'use strict';
@@ -12983,7 +12042,7 @@
 
 
 /***/ },
-/* 107 */
+/* 100 */
 /***/ function(module, exports) {
 
 	'use strict';
@@ -12999,12 +12058,12 @@
 
 
 /***/ },
-/* 108 */
+/* 101 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 
-	var callable = __webpack_require__(73);
+	var callable = __webpack_require__(66);
 
 	module.exports = function (userNormalizer) {
 		var normalizer;
@@ -13022,7 +12081,7 @@
 
 
 /***/ },
-/* 109 */
+/* 102 */
 /***/ function(module, exports) {
 
 	'use strict';
@@ -13037,7 +12096,7 @@
 
 
 /***/ },
-/* 110 */
+/* 103 */
 /***/ function(module, exports) {
 
 	'use strict';
@@ -13055,12 +12114,12 @@
 
 
 /***/ },
-/* 111 */
+/* 104 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 
-	var indexOf = __webpack_require__(112)
+	var indexOf = __webpack_require__(105)
 	  , create = Object.create;
 
 	module.exports = function () {
@@ -13149,13 +12208,13 @@
 
 
 /***/ },
-/* 112 */
+/* 105 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 
-	var toPosInt = __webpack_require__(67)
-	  , value    = __webpack_require__(76)
+	var toPosInt = __webpack_require__(60)
+	  , value    = __webpack_require__(69)
 
 	  , indexOf = Array.prototype.indexOf
 	  , hasOwnProperty = Object.prototype.hasOwnProperty
@@ -13184,12 +12243,12 @@
 
 
 /***/ },
-/* 113 */
+/* 106 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 
-	var indexOf = __webpack_require__(112);
+	var indexOf = __webpack_require__(105);
 
 	module.exports = function () {
 		var lastId = 0, argsMap = [], cache = [];
@@ -13219,12 +12278,12 @@
 
 
 /***/ },
-/* 114 */
+/* 107 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 
-	var indexOf = __webpack_require__(112)
+	var indexOf = __webpack_require__(105)
 	  , create = Object.create;
 
 	module.exports = function (length) {
@@ -13296,23 +12355,23 @@
 
 
 /***/ },
-/* 115 */
+/* 108 */
 /***/ function(module, exports, __webpack_require__) {
 
 	// Support for asynchronous functions
 
 	'use strict';
 
-	var aFrom        = __webpack_require__(96)
-	  , mixin        = __webpack_require__(87)
-	  , defineLength = __webpack_require__(86)
-	  , nextTick     = __webpack_require__(116)
+	var aFrom        = __webpack_require__(89)
+	  , mixin        = __webpack_require__(80)
+	  , defineLength = __webpack_require__(79)
+	  , nextTick     = __webpack_require__(109)
 
 	  , slice = Array.prototype.slice
 	  , apply = Function.prototype.apply, create = Object.create
 	  , hasOwnProperty = Object.prototype.hasOwnProperty;
 
-	__webpack_require__(77).async = function (tbi, conf) {
+	__webpack_require__(70).async = function (tbi, conf) {
 		var waiting = create(null), cache = create(null)
 		  , base = conf.memoized, original = conf.original
 		  , currentCallback, currentContext, currentArgs;
@@ -13448,7 +12507,7 @@
 
 
 /***/ },
-/* 116 */
+/* 109 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/* WEBPACK VAR INJECTION */(function(process, setImmediate) {'use strict';
@@ -13516,10 +12575,10 @@
 		return null;
 	}());
 
-	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(3), __webpack_require__(117).setImmediate))
+	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(3), __webpack_require__(110).setImmediate))
 
 /***/ },
-/* 117 */
+/* 110 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/* WEBPACK VAR INJECTION */(function(setImmediate, clearImmediate) {var nextTick = __webpack_require__(3).nextTick;
@@ -13598,19 +12657,19 @@
 	exports.clearImmediate = typeof clearImmediate === "function" ? clearImmediate : function(id) {
 	  delete immediateIds[id];
 	};
-	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(117).setImmediate, __webpack_require__(117).clearImmediate))
+	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(110).setImmediate, __webpack_require__(110).clearImmediate))
 
 /***/ },
-/* 118 */
+/* 111 */
 /***/ function(module, exports, __webpack_require__) {
 
 	// Call dispose callback on each cache purge
 
 	'use strict';
 
-	var callable   = __webpack_require__(73)
-	  , forEach    = __webpack_require__(74)
-	  , extensions = __webpack_require__(77)
+	var callable   = __webpack_require__(66)
+	  , forEach    = __webpack_require__(67)
+	  , extensions = __webpack_require__(70)
 
 	  , slice = Array.prototype.slice, apply = Function.prototype.apply;
 
@@ -13634,18 +12693,18 @@
 
 
 /***/ },
-/* 119 */
+/* 112 */
 /***/ function(module, exports, __webpack_require__) {
 
 	// Timeout cached values
 
 	'use strict';
 
-	var aFrom      = __webpack_require__(96)
-	  , noop       = __webpack_require__(106)
-	  , forEach    = __webpack_require__(74)
-	  , timeout    = __webpack_require__(120)
-	  , extensions = __webpack_require__(77)
+	var aFrom      = __webpack_require__(89)
+	  , noop       = __webpack_require__(99)
+	  , forEach    = __webpack_require__(67)
+	  , timeout    = __webpack_require__(113)
+	  , extensions = __webpack_require__(70)
 
 	  , max = Math.max, min = Math.min, create = Object.create;
 
@@ -13710,13 +12769,13 @@
 
 
 /***/ },
-/* 120 */
+/* 113 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 
-	var toPosInt   = __webpack_require__(67)
-	  , maxTimeout = __webpack_require__(121);
+	var toPosInt   = __webpack_require__(60)
+	  , maxTimeout = __webpack_require__(114);
 
 	module.exports = function (value) {
 		value = toPosInt(value);
@@ -13726,7 +12785,7 @@
 
 
 /***/ },
-/* 121 */
+/* 114 */
 /***/ function(module, exports) {
 
 	'use strict';
@@ -13735,16 +12794,16 @@
 
 
 /***/ },
-/* 122 */
+/* 115 */
 /***/ function(module, exports, __webpack_require__) {
 
 	// Limit cache size, LRU (least recently used) algorithm.
 
 	'use strict';
 
-	var toPosInteger = __webpack_require__(67)
-	  , lruQueue     = __webpack_require__(123)
-	  , extensions   = __webpack_require__(77);
+	var toPosInteger = __webpack_require__(60)
+	  , lruQueue     = __webpack_require__(116)
+	  , extensions   = __webpack_require__(70);
 
 	extensions.max = function (max, conf, options) {
 		var postfix, queue, hit;
@@ -13767,12 +12826,12 @@
 
 
 /***/ },
-/* 123 */
+/* 116 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 
-	var toPosInt = __webpack_require__(67)
+	var toPosInt = __webpack_require__(60)
 
 	  , create = Object.create, hasOwnProperty = Object.prototype.hasOwnProperty;
 
@@ -13821,15 +12880,15 @@
 
 
 /***/ },
-/* 124 */
+/* 117 */
 /***/ function(module, exports, __webpack_require__) {
 
 	// Reference counter, useful for garbage collector like functionality
 
 	'use strict';
 
-	var d          = __webpack_require__(88)
-	  , extensions = __webpack_require__(77)
+	var d          = __webpack_require__(81)
+	  , extensions = __webpack_require__(70)
 
 	  , create = Object.create, defineProperties = Object.defineProperties;
 
@@ -13863,6 +12922,968 @@
 			})
 		});
 	};
+
+
+/***/ },
+/* 118 */
+/***/ function(module, exports, __webpack_require__) {
+
+	var EventEmitter = __webpack_require__(1);
+	var Sequencer = __webpack_require__(119);
+	var Thread = __webpack_require__(121);
+	var util = __webpack_require__(2);
+
+	var defaultBlockPackages = {
+	    'scratch3': __webpack_require__(123),
+	    'wedo2': __webpack_require__(124)
+	};
+
+	/**
+	 * Manages blocks, stacks, and the sequencer.
+	 * @param {!Blocks} blocks Blocks instance for this runtime.
+	 */
+	function Runtime (blocks) {
+	    // Bind event emitter
+	    EventEmitter.call(this);
+
+	    // State for the runtime
+
+	    /**
+	     * Block management and storage
+	     */
+	    this.blocks = blocks;
+
+	    /**
+	     * A list of threads that are currently running in the VM.
+	     * Threads are added when execution starts and pruned when execution ends.
+	     * @type {Array.<Thread>}
+	     */
+	    this.threads = [];
+
+	    /** @type {!Sequencer} */
+	    this.sequencer = new Sequencer(this);
+
+	    /**
+	     * Map to look up a block primitive's implementation function by its opcode.
+	     * This is a two-step lookup: package name first, then primitive name.
+	     * @type {Object.<string, Function>}
+	     */
+	    this._primitives = {};
+	    this._registerBlockPackages();
+	}
+
+	/**
+	 * Event name for glowing a stack
+	 * @const {string}
+	 */
+	Runtime.STACK_GLOW_ON = 'STACK_GLOW_ON';
+
+	/**
+	 * Event name for unglowing a stack
+	 * @const {string}
+	 */
+	Runtime.STACK_GLOW_OFF = 'STACK_GLOW_OFF';
+
+	/**
+	 * Event name for glowing a block
+	 * @const {string}
+	 */
+	Runtime.BLOCK_GLOW_ON = 'BLOCK_GLOW_ON';
+
+	/**
+	 * Event name for unglowing a block
+	 * @const {string}
+	 */
+	Runtime.BLOCK_GLOW_OFF = 'BLOCK_GLOW_OFF';
+
+	/**
+	 * Inherit from EventEmitter
+	 */
+	util.inherits(Runtime, EventEmitter);
+
+	/**
+	 * How rapidly we try to step threads, in ms.
+	 */
+	Runtime.THREAD_STEP_INTERVAL = 1000 / 30;
+
+
+	// -----------------------------------------------------------------------------
+	// -----------------------------------------------------------------------------
+
+	/**
+	 * Register default block packages with this runtime.
+	 * @todo Prefix opcodes with package name.
+	 * @private
+	 */
+	Runtime.prototype._registerBlockPackages = function () {
+	    for (var packageName in defaultBlockPackages) {
+	        if (defaultBlockPackages.hasOwnProperty(packageName)) {
+	            // @todo pass a different runtime depending on package privilege?
+	            var packageObject = new (defaultBlockPackages[packageName])(this);
+	            var packageContents = packageObject.getPrimitives();
+	            for (var op in packageContents) {
+	                if (packageContents.hasOwnProperty(op)) {
+	                    this._primitives[op] =
+	                        packageContents[op].bind(packageObject);
+	                }
+	            }
+	        }
+	    }
+	};
+
+	/**
+	 * Retrieve the function associated with the given opcode.
+	 * @param {!string} opcode The opcode to look up.
+	 * @return {Function} The function which implements the opcode.
+	 */
+	Runtime.prototype.getOpcodeFunction = function (opcode) {
+	    return this._primitives[opcode];
+	};
+
+	// -----------------------------------------------------------------------------
+	// -----------------------------------------------------------------------------
+
+	/**
+	 * Create a thread and push it to the list of threads.
+	 * @param {!string} id ID of block that starts the stack
+	 */
+	Runtime.prototype._pushThread = function (id) {
+	    this.emit(Runtime.STACK_GLOW_ON, id);
+	    var thread = new Thread(id);
+	    this.threads.push(thread);
+	};
+
+	/**
+	 * Remove a thread from the list of threads.
+	 * @param {?Thread} thread Thread object to remove from actives
+	 */
+	Runtime.prototype._removeThread = function (thread) {
+	    var i = this.threads.indexOf(thread);
+	    if (i > -1) {
+	        this.emit(Runtime.STACK_GLOW_OFF, thread.topBlock);
+	        this.threads.splice(i, 1);
+	    }
+	};
+
+	/**
+	 * Toggle a stack
+	 * @param {!string} stackId ID of block that starts the stack
+	 */
+	Runtime.prototype.toggleStack = function (stackId) {
+	    // Remove any existing thread
+	    for (var i = 0; i < this.threads.length; i++) {
+	        if (this.threads[i].topBlock == stackId) {
+	            this._removeThread(this.threads[i]);
+	            return;
+	        }
+	    }
+	    // Otherwise add it
+	    this._pushThread(stackId);
+	};
+
+	/**
+	 * Green flag, which stops currently running threads
+	 * and adds all top-level stacks that start with the green flag
+	 */
+	Runtime.prototype.greenFlag = function () {
+	    // Remove all existing threads
+	    for (var i = 0; i < this.threads.length; i++) {
+	        this._removeThread(this.threads[i]);
+	    }
+	    // Add all top stacks with green flag
+	    var stacks = this.blocks.getStacks();
+	    for (var j = 0; j < stacks.length; j++) {
+	        var topBlock = stacks[j];
+	        if (this.blocks.getBlock(topBlock).opcode === 'event_whenflagclicked') {
+	            this._pushThread(stacks[j]);
+	        }
+	    }
+	};
+
+	/**
+	 * Distance sensor hack
+	 */
+	Runtime.prototype.startDistanceSensors = function () {
+	    // Add all top stacks with distance sensor
+	    var stacks = this.blocks.getStacks();
+	    for (var j = 0; j < stacks.length; j++) {
+	        var topBlock = stacks[j];
+	        if (this.blocks.getBlock(topBlock).opcode ===
+	            'wedo_whendistanceclose') {
+	            var alreadyRunning = false;
+	            for (var k = 0; k < this.threads.length; k++) {
+	                if (this.threads[k].topBlock === topBlock) {
+	                    alreadyRunning = true;
+	                }
+	            }
+	            if (!alreadyRunning) {
+	                this._pushThread(stacks[j]);
+	            }
+	        }
+	    }
+	};
+
+	/**
+	 * Stop "everything"
+	 */
+	Runtime.prototype.stopAll = function () {
+	    var threadsCopy = this.threads.slice();
+	    while (threadsCopy.length > 0) {
+	        var poppedThread = threadsCopy.pop();
+	        // Unglow any blocks on this thread's stack.
+	        for (var i = 0; i < poppedThread.stack.length; i++) {
+	            this.glowBlock(poppedThread.stack[i], false);
+	        }
+	        // Actually remove the thread.
+	        this._removeThread(poppedThread);
+	    }
+	    // @todo call stop function in all extensions/packages/WeDo stub
+	    if (window.native) {
+	        window.native.motorStop();
+	    }
+	};
+
+	/**
+	 * Repeatedly run `sequencer.stepThreads` and filter out
+	 * inactive threads after each iteration.
+	 */
+	Runtime.prototype._step = function () {
+	    var inactiveThreads = this.sequencer.stepThreads(this.threads);
+	    for (var i = 0; i < inactiveThreads.length; i++) {
+	        this._removeThread(inactiveThreads[i]);
+	    }
+	};
+
+	/**
+	 * Emit feedback for block glowing (used in the sequencer).
+	 * @param {?string} blockId ID for the block to update glow
+	 * @param {boolean} isGlowing True to turn on glow; false to turn off.
+	 */
+	Runtime.prototype.glowBlock = function (blockId, isGlowing) {
+	    if (isGlowing) {
+	        this.emit(Runtime.BLOCK_GLOW_ON, blockId);
+	    } else {
+	        this.emit(Runtime.BLOCK_GLOW_OFF, blockId);
+	    }
+	};
+
+	/**
+	 * Set up timers to repeatedly step in a browser
+	 */
+	Runtime.prototype.start = function () {
+	    if (!window.setInterval) return;
+	    window.setInterval(function() {
+	        this._step();
+	    }.bind(this), Runtime.THREAD_STEP_INTERVAL);
+	};
+
+	module.exports = Runtime;
+
+
+/***/ },
+/* 119 */
+/***/ function(module, exports, __webpack_require__) {
+
+	var Timer = __webpack_require__(120);
+	var Thread = __webpack_require__(121);
+	var YieldTimers = __webpack_require__(122);
+
+	function Sequencer (runtime) {
+	    /**
+	     * A utility timer for timing thread sequencing.
+	     * @type {!Timer}
+	     */
+	    this.timer = new Timer();
+
+	    /**
+	     * Reference to the runtime owning this sequencer.
+	     * @type {!Runtime}
+	     */
+	    this.runtime = runtime;
+	}
+
+	/**
+	 * The sequencer does as much work as it can within WORK_TIME milliseconds,
+	 * then yields. This is essentially a rate-limiter for blocks.
+	 * In Scratch 2.0, this is set to 75% of the target stage frame-rate (30fps).
+	 * @const {!number}
+	 */
+	Sequencer.WORK_TIME = 10;
+
+	/**
+	 * If set, block calls, args, and return values will be logged to the console.
+	 * @const {boolean}
+	 */
+	Sequencer.DEBUG_BLOCK_CALLS = true;
+
+	/**
+	 * Step through all threads in `this.threads`, running them in order.
+	 * @param {Array.<Thread>} threads List of which threads to step.
+	 * @return {Array.<Thread>} All threads which have finished in this iteration.
+	 */
+	Sequencer.prototype.stepThreads = function (threads) {
+	    // Start counting toward WORK_TIME
+	    this.timer.start();
+	    // List of threads which have been killed by this step.
+	    var inactiveThreads = [];
+	    // If all of the threads are yielding, we should yield.
+	    var numYieldingThreads = 0;
+	    // While there are still threads to run and we are within WORK_TIME,
+	    // continue executing threads.
+	    while (threads.length > 0 &&
+	           threads.length > numYieldingThreads &&
+	           this.timer.timeElapsed() < Sequencer.WORK_TIME) {
+	        // New threads at the end of the iteration.
+	        var newThreads = [];
+	        // Attempt to run each thread one time
+	        for (var i = 0; i < threads.length; i++) {
+	            var activeThread = threads[i];
+	            if (activeThread.status === Thread.STATUS_RUNNING) {
+	                // Normal-mode thread: step.
+	                this.stepThread(activeThread);
+	            } else if (activeThread.status === Thread.STATUS_YIELD) {
+	                // Yield-mode thread: check if the time has passed.
+	                YieldTimers.resolve(activeThread.yieldTimerId);
+	                numYieldingThreads++;
+	            } else if (activeThread.status === Thread.STATUS_DONE) {
+	                // Moved to a done state - finish up
+	                activeThread.status = Thread.STATUS_RUNNING;
+	                // @todo Deal with the return value
+	            }
+	            // First attempt to pop from the stack
+	            if (activeThread.stack.length > 0 &&
+	                activeThread.nextBlock === null &&
+	                activeThread.status === Thread.STATUS_DONE) {
+	                activeThread.nextBlock = activeThread.stack.pop();
+	                // Don't pop stack frame - we need the data.
+	                // A new one won't be created when we execute.
+	                if (activeThread.nextBlock !== null) {
+	                    activeThread.status === Thread.STATUS_RUNNING;
+	                }
+	            }
+	            if (activeThread.nextBlock === null &&
+	                activeThread.status === Thread.STATUS_DONE) {
+	                // Finished with this thread - tell runtime to clean it up.
+	                inactiveThreads.push(activeThread);
+	            } else {
+	                // Keep this thead in the loop.
+	                newThreads.push(activeThread);
+	            }
+	        }
+	        // Effectively filters out threads that have stopped.
+	        threads = newThreads;
+	    }
+	    return inactiveThreads;
+	};
+
+	/**
+	 * Step the requested thread
+	 * @param {!Thread} thread Thread object to step
+	 */
+	Sequencer.prototype.stepThread = function (thread) {
+	    // Save the yield timer ID, in case a primitive makes a new one
+	    // @todo hack - perhaps patch this to allow more than one timer per
+	    // primitive, for example...
+	    var oldYieldTimerId = YieldTimers.timerId;
+
+	    // Save the current block and set the nextBlock.
+	    // If the primitive would like to do control flow,
+	    // it can overwrite nextBlock.
+	    var currentBlock = thread.nextBlock;
+	    if (!currentBlock || !this.runtime.blocks.getBlock(currentBlock)) {
+	        thread.status = Thread.STATUS_DONE;
+	        return;
+	    }
+	    thread.nextBlock = this.runtime.blocks.getNextBlock(currentBlock);
+
+	    var opcode = this.runtime.blocks.getOpcode(currentBlock);
+
+	    // Push the current block to the stack
+	    thread.stack.push(currentBlock);
+	    // Push an empty stack frame, if we need one.
+	    // Might not, if we just popped the stack.
+	    if (thread.stack.length > thread.stackFrames.length) {
+	        thread.stackFrames.push({});
+	    }
+	    var currentStackFrame = thread.stackFrames[thread.stackFrames.length - 1];
+
+	    /**
+	     * A callback for the primitive to indicate its thread should yield.
+	     * @type {Function}
+	     */
+	    var threadYieldCallback = function () {
+	        thread.status = Thread.STATUS_YIELD;
+	    };
+
+	    /**
+	     * A callback for the primitive to indicate its thread is finished
+	     * @type {Function}
+	     */
+	    var instance = this;
+	    var threadDoneCallback = function () {
+	        thread.status = Thread.STATUS_DONE;
+	        // Refresh nextBlock in case it has changed during a yield.
+	        thread.nextBlock = instance.runtime.blocks.getNextBlock(currentBlock);
+	        // Pop the stack and stack frame
+	        thread.stack.pop();
+	        thread.stackFrames.pop();
+	        // Stop showing run feedback in the editor.
+	        instance.runtime.glowBlock(currentBlock, false);
+	    };
+
+	    /**
+	     * A callback for the primitive to start hats.
+	     * @todo very hacked...
+	     * Provide a callback that is passed in a block and returns true
+	     * if it is a hat that should be triggered.
+	     * @param {Function} callback Provided callback.
+	     */
+	    var startHats = function(callback) {
+	        var stacks = instance.runtime.blocks.getStacks();
+	        for (var i = 0; i < stacks.length; i++) {
+	            var stack = stacks[i];
+	            var stackBlock = instance.runtime.blocks.getBlock(stack);
+	            var result = callback(stackBlock);
+	            if (result) {
+	                // Check if the stack is already running
+	                var stackRunning = false;
+
+	                for (var j = 0; j < instance.runtime.threads.length; j++) {
+	                    if (instance.runtime.threads[j].topBlock == stack) {
+	                        stackRunning = true;
+	                        break;
+	                    }
+	                }
+	                if (!stackRunning) {
+	                    instance.runtime._pushThread(stack);
+	                }
+	            }
+	        }
+	    };
+
+	    /**
+	     * Record whether we have switched stack,
+	     * to avoid proceeding the thread automatically.
+	     * @type {boolean}
+	     */
+	    var switchedStack = false;
+	    /**
+	     * A callback for a primitive to start a substack.
+	     * @type {Function}
+	     */
+	    var threadStartSubstack = function () {
+	        // Set nextBlock to the start of the substack
+	        var substack = instance.runtime.blocks.getSubstack(currentBlock);
+	        if (substack && substack.value) {
+	            thread.nextBlock = substack.value;
+	        } else {
+	            thread.nextBlock = null;
+	        }
+	        switchedStack = true;
+	    };
+
+	    // @todo extreme hack to get the single argument value for prototype
+	    var argValues = [];
+	    var blockInputs = this.runtime.blocks.getBlock(currentBlock).fields;
+	    for (var bi in blockInputs) {
+	        var outer = blockInputs[bi];
+	        for (var b in outer.blocks) {
+	            var block = outer.blocks[b];
+	            var fields = block.fields;
+	            for (var f in fields) {
+	                var field = fields[f];
+	                argValues.push(field.value);
+	            }
+	        }
+	    }
+
+	    // Start showing run feedback in the editor.
+	    this.runtime.glowBlock(currentBlock, true);
+
+	    if (!opcode) {
+	        console.warn('Could not get opcode for block: ' + currentBlock);
+	    }
+	    else {
+	        var blockFunction = this.runtime.getOpcodeFunction(opcode);
+	        if (!blockFunction) {
+	            console.warn('Could not get implementation for opcode: ' + opcode);
+	        }
+	        else {
+	            if (Sequencer.DEBUG_BLOCK_CALLS) {
+	                console.groupCollapsed('Executing: ' + opcode);
+	                console.log('with arguments: ', argValues);
+	                console.log('and stack frame: ', currentStackFrame);
+	            }
+	            var blockFunctionReturnValue = null;
+	            try {
+	                // @todo deal with the return value
+	                blockFunctionReturnValue = blockFunction(argValues, {
+	                    yield: threadYieldCallback,
+	                    done: threadDoneCallback,
+	                    timeout: YieldTimers.timeout,
+	                    stackFrame: currentStackFrame,
+	                    startSubstack: threadStartSubstack,
+	                    startHats: startHats
+	                });
+	            }
+	            catch(e) {
+	                console.error(
+	                    'Exception calling block function for opcode: ' +
+	                    opcode + '\n' + e);
+	            } finally {
+	                // Update if the thread has set a yield timer ID
+	                // @todo hack
+	                if (YieldTimers.timerId > oldYieldTimerId) {
+	                    thread.yieldTimerId = YieldTimers.timerId;
+	                }
+	                if (thread.status === Thread.STATUS_RUNNING && !switchedStack) {
+	                    // Thread executed without yielding - move to done
+	                    threadDoneCallback();
+	                }
+	                if (Sequencer.DEBUG_BLOCK_CALLS) {
+	                    console.log('ending stack frame: ', currentStackFrame);
+	                    console.log('returned: ', blockFunctionReturnValue);
+	                    console.groupEnd();
+	                }
+	            }
+	        }
+	    }
+
+	};
+
+	module.exports = Sequencer;
+
+
+/***/ },
+/* 120 */
+/***/ function(module, exports) {
+
+	/**
+	 * Constructor
+	 */
+	function Timer () {
+	    this.startTime = 0;
+	}
+
+	Timer.prototype.time = function () {
+	    return Date.now();
+	};
+
+	Timer.prototype.start = function () {
+	    this.startTime = this.time();
+	};
+
+	Timer.prototype.timeElapsed = function () {
+	    return this.time() - this.startTime;
+	};
+
+	module.exports = Timer;
+
+
+/***/ },
+/* 121 */
+/***/ function(module, exports) {
+
+	/**
+	 * A thread is a running stack context and all the metadata needed.
+	 * @param {?string} firstBlock First block to execute in the thread.
+	 * @constructor
+	 */
+	function Thread (firstBlock) {
+	    /**
+	     * ID of top block of the thread
+	     * @type {!string}
+	     */
+	    this.topBlock = firstBlock;
+	    /**
+	     * ID of next block that the thread will execute, or null if none.
+	     * @type {?string}
+	     */
+	    this.nextBlock = firstBlock;
+	    /**
+	     * Stack for the thread. When the sequencer enters a control structure,
+	     * the block is pushed onto the stack so we know where to exit.
+	     * @type {Array.<string>}
+	     */
+	    this.stack = [];
+
+	    /**
+	     * Stack frames for the thread. Store metadata for the executing blocks.
+	     * @type {Array.<Object>}
+	     */
+	    this.stackFrames = [];
+
+	    /**
+	     * Status of the thread, one of three states (below)
+	     * @type {number}
+	     */
+	    this.status = 0; /* Thread.STATUS_RUNNING */
+
+	    /**
+	     * Yield timer ID (for checking when the thread should unyield).
+	     * @type {number}
+	     */
+	    this.yieldTimerId = -1;
+	}
+
+	/**
+	 * Thread status for initialized or running thread.
+	 * Threads are in this state when the primitive is called for the first time.
+	 * @const
+	 */
+	Thread.STATUS_RUNNING = 0;
+
+	/**
+	 * Thread status for a yielded thread.
+	 * Threads are in this state when a primitive has yielded.
+	 * @const
+	 */
+	Thread.STATUS_YIELD = 1;
+
+	/**
+	 * Thread status for a finished/done thread.
+	 * Thread is moved to this state when the interpreter
+	 * can proceed with execution.
+	 * @const
+	 */
+	Thread.STATUS_DONE = 2;
+
+	module.exports = Thread;
+
+
+/***/ },
+/* 122 */
+/***/ function(module, exports, __webpack_require__) {
+
+	/**
+	 * @fileoverview Timers that are synchronized with the Scratch sequencer.
+	 */
+	var Timer = __webpack_require__(120);
+
+	function YieldTimers () {}
+
+	/**
+	 * Shared collection of timers.
+	 * Each timer is a [Function, number] with the callback
+	 * and absolute time for it to run.
+	 * @type {Object.<number,Array>}
+	 */
+	YieldTimers.timers = {};
+
+	/**
+	 * Monotonically increasing timer ID.
+	 * @type {number}
+	 */
+	YieldTimers.timerId = 0;
+
+	/**
+	 * Utility for measuring time.
+	 * @type {!Timer}
+	 */
+	YieldTimers.globalTimer = new Timer();
+
+	/**
+	 * The timeout function is passed to primitives and is intended
+	 * as a convenient replacement for window.setTimeout.
+	 * The sequencer will attempt to resolve the timer every time
+	 * the yielded thread would have been stepped.
+	 * @param {!Function} callback To be called when the timer is done.
+	 * @param {number} timeDelta Time to wait, in ms.
+	 * @return {number} Timer ID to be used with other methods.
+	 */
+	YieldTimers.timeout = function (callback, timeDelta) {
+	    var id = ++YieldTimers.timerId;
+	    YieldTimers.timers[id] = [
+	        callback,
+	        YieldTimers.globalTimer.time() + timeDelta
+	    ];
+	    return id;
+	};
+
+	/**
+	 * Attempt to resolve a timeout.
+	 * If the time has passed, call the callback.
+	 * Otherwise, do nothing.
+	 * @param {number} id Timer ID to resolve.
+	 * @return {boolean} True if the timer has resolved.
+	 */
+	YieldTimers.resolve = function (id) {
+	    var timer = YieldTimers.timers[id];
+	    if (!timer) {
+	        // No such timer.
+	        return false;
+	    }
+	    var callback = timer[0];
+	    var time = timer[1];
+	    if (YieldTimers.globalTimer.time() < time) {
+	        // Not done yet.
+	        return false;
+	    }
+	    // Execute the callback and remove the timer.
+	    callback();
+	    delete YieldTimers.timers[id];
+	    return true;
+	};
+
+	/**
+	 * Reject a timer so the callback never executes.
+	 * @param {number} id Timer ID to reject.
+	 */
+	YieldTimers.reject = function (id) {
+	    if (YieldTimers.timers[id]) {
+	        delete YieldTimers.timers[id];
+	    }
+	};
+
+	/**
+	 * Reject all timers currently stored.
+	 * Especially useful for a Scratch "stop."
+	 */
+	YieldTimers.rejectAll = function () {
+	    YieldTimers.timers = {};
+	    YieldTimers.timerId = 0;
+	};
+
+	module.exports = YieldTimers;
+
+
+/***/ },
+/* 123 */
+/***/ function(module, exports) {
+
+	function Scratch3Blocks(runtime) {
+	    /**
+	     * The runtime instantiating this block package.
+	     * @type {Runtime}
+	     */
+	    this.runtime = runtime;
+	}
+
+	/**
+	 * Retrieve the block primitives implemented by this package.
+	 * @return {Object.<string, Function>} Mapping of opcode to Function.
+	 */
+	Scratch3Blocks.prototype.getPrimitives = function() {
+	    return {
+	        'control_repeat': this.repeat,
+	        'control_forever': this.forever,
+	        'control_wait': this.wait,
+	        'control_stop': this.stop,
+	        'event_whenflagclicked': this.whenFlagClicked,
+	        'event_whenbroadcastreceived': this.whenBroadcastReceived,
+	        'event_broadcast': this.broadcast
+	    };
+	};
+
+	Scratch3Blocks.prototype.repeat = function(argValues, util) {
+	    // Initialize loop
+	    if (util.stackFrame.loopCounter === undefined) {
+	        util.stackFrame.loopCounter = parseInt(argValues[0]); // @todo arg
+	    }
+	    // Decrease counter
+	    util.stackFrame.loopCounter--;
+	    // If we still have some left, start the substack
+	    if (util.stackFrame.loopCounter >= 0) {
+	        util.startSubstack();
+	    }
+	};
+
+	Scratch3Blocks.prototype.forever = function(argValues, util) {
+	    util.startSubstack();
+	};
+
+	Scratch3Blocks.prototype.wait = function(argValues, util) {
+	    util.yield();
+	    util.timeout(function() {
+	        util.done();
+	    }, 1000 * parseFloat(argValues[0]));
+	};
+
+	Scratch3Blocks.prototype.stop = function() {
+	    // @todo - don't use this.runtime
+	    this.runtime.stopAll();
+	};
+
+	Scratch3Blocks.prototype.whenFlagClicked = function() {
+	    // No-op
+	};
+
+	Scratch3Blocks.prototype.whenBroadcastReceived = function() {
+	    // No-op
+	};
+
+	Scratch3Blocks.prototype.broadcast = function(argValues, util) {
+	    util.startHats(function(hat) {
+	        if (hat.opcode === 'event_whenbroadcastreceived') {
+	            var shadows = hat.fields.CHOICE.blocks;
+	            for (var sb in shadows) {
+	                var shadowblock = shadows[sb];
+	                return shadowblock.fields.CHOICE.value === argValues[0];
+	            }
+	        }
+	        return false;
+	    });
+	};
+
+	module.exports = Scratch3Blocks;
+
+
+/***/ },
+/* 124 */
+/***/ function(module, exports, __webpack_require__) {
+
+	
+	var YieldTimers = __webpack_require__(122);
+
+	function WeDo2Blocks(runtime) {
+	    /**
+	     * The runtime instantiating this block package.
+	     * @type {Runtime}
+	     */
+	    this.runtime = runtime;
+
+	    /**
+	     * Current motor speed, as a percentage (100 = full speed).
+	     * @type {number}
+	     * @private
+	     */
+	    this._motorSpeed = 100;
+
+	    /**
+	     * The timeout ID for a pending motor action.
+	     * @type {?int}
+	     * @private
+	     */
+	    this._motorTimeout = null;
+	}
+
+	/**
+	 * Retrieve the block primitives implemented by this package.
+	 * @return {Object.<string, Function>} Mapping of opcode to Function.
+	 */
+	WeDo2Blocks.prototype.getPrimitives = function() {
+	    return {
+	        'wedo_motorclockwise': this.motorClockwise,
+	        'wedo_motorcounterclockwise': this.motorCounterClockwise,
+	        'wedo_motorspeed': this.motorSpeed,
+	        'wedo_setcolor': this.setColor,
+	        'wedo_whendistanceclose': this.whenDistanceClose,
+	        'wedo_whentilt': this.whenTilt
+	    };
+	};
+
+	/**
+	 * Clamp a value between a minimum and maximum value.
+	 * @todo move this to a common utility class.
+	 * @param {number} val The value to clamp.
+	 * @param {number} min The minimum return value.
+	 * @param {number} max The maximum return value.
+	 * @returns {number} The clamped value.
+	 * @private
+	 */
+	WeDo2Blocks.prototype._clamp = function(val, min, max) {
+	    return Math.max(min, Math.min(val, max));
+	};
+
+	/**
+	 * Common implementation for motor blocks.
+	 * @param {string} direction The direction to turn ('left' or 'right').
+	 * @param {number} durationSeconds The number of seconds to run.
+	 * @param {Object} util The util instance to use for yielding and finishing.
+	 * @private
+	 */
+	WeDo2Blocks.prototype._motorOnFor = function(direction, durationSeconds, util) {
+	    if (this._motorTimeout > 0) {
+	        // @todo maybe this should go through util
+	        YieldTimers.resolve(this._motorTimeout);
+	        this._motorTimeout = null;
+	    }
+	    if (window.native) {
+	        window.native.motorRun(direction, this._motorSpeed);
+	    }
+
+	    var instance = this;
+	    var myTimeout = this._motorTimeout = util.timeout(function() {
+	        if (instance._motorTimeout == myTimeout) {
+	            instance._motorTimeout = null;
+	        }
+	        if (window.native) {
+	            window.native.motorStop();
+	        }
+	        util.done();
+	    }, 1000 * durationSeconds);
+
+	    util.yield();
+	};
+
+	WeDo2Blocks.prototype.motorClockwise = function(argValues, util) {
+	    this._motorOnFor('right', parseFloat(argValues[0]), util);
+	};
+
+	WeDo2Blocks.prototype.motorCounterClockwise = function(argValues, util) {
+	    this._motorOnFor('left', parseFloat(argValues[0]), util);
+	};
+
+	WeDo2Blocks.prototype.motorSpeed = function(argValues) {
+	    var speed = argValues[0];
+	    switch (speed) {
+	    case 'slow':
+	        this._motorSpeed = 20;
+	        break;
+	    case 'medium':
+	        this._motorSpeed = 50;
+	        break;
+	    case 'fast':
+	        this._motorSpeed = 100;
+	        break;
+	    }
+	};
+
+	/**
+	 * Convert a color name to a WeDo color index.
+	 * Supports 'mystery' for a random hue.
+	 * @param {string} colorName The color to retrieve.
+	 * @returns {number} The WeDo color index.
+	 * @private
+	 */
+	WeDo2Blocks.prototype._getColor = function(colorName) {
+	    var colors = {
+	        'yellow': 7,
+	        'orange': 8,
+	        'coral': 9,
+	        'magenta': 1,
+	        'purple': 2,
+	        'blue': 3,
+	        'green': 6,
+	        'white': 10
+	    };
+
+	    if (colorName == 'mystery') {
+	        return Math.floor((Math.random() * 10) + 1);
+	    }
+
+	    return colors[colorName];
+	};
+
+	WeDo2Blocks.prototype.setColor = function(argValues, util) {
+	    if (window.native) {
+	        var colorIndex = this._getColor(argValues[0]);
+	        window.native.setLedColor(colorIndex);
+	    }
+	    // Pause for quarter second
+	    util.yield();
+	    util.timeout(function() {
+	        util.done();
+	    }, 250);
+	};
+
+	WeDo2Blocks.prototype.whenDistanceClose = function() {
+	};
+
+	WeDo2Blocks.prototype.whenTilt = function() {
+	};
+
+	module.exports = WeDo2Blocks;
 
 
 /***/ }
