@@ -1,3 +1,5 @@
+var adapter = require('./adapter');
+
 /**
  * @fileoverview
  * Store and mutate the VM block representation,
@@ -76,6 +78,70 @@ Blocks.prototype.getSubstack = function (id, substackNum) {
 Blocks.prototype.getOpcode = function (id) {
     if (typeof this._blocks[id] === 'undefined') return null;
     return this._blocks[id].opcode;
+};
+
+// ---------------------------------------------------------------------
+
+/**
+ * Create event listener for blocks. Handles validation and serves as a generic
+ * adapter between the blocks and the runtime interface.
+ * @param {boolean} isFlyout If true, create a listener for flyout events.
+ * @param {?Runtime} opt_runtime Optional runtime to forward click events to.
+ * @return {Function} A generated listener to attach to Blockly instance.
+ */
+
+Blocks.prototype.generateBlockListener = function (isFlyout, opt_runtime) {
+    /**
+     * The actual generated block listener.
+     * @param {Object} Blockly "block" event
+     */
+    var instance = this;
+    return function (e) {
+        // Validate event
+        if (typeof e !== 'object') return;
+        if (typeof e.blockId !== 'string') return;
+
+        // UI event: clicked stacks toggle in the runtime.
+        if (e.element === 'stackclick') {
+            if (opt_runtime) {
+                opt_runtime.toggleStack(e.blockId);
+            }
+            return;
+        }
+
+        // Block create/update/destroy
+        switch (e.type) {
+        case 'create':
+            var newBlocks = adapter(e);
+            // A create event can create many blocks. Add them all.
+            for (var i = 0; i < newBlocks.length; i++) {
+                instance.createBlock(newBlocks[i], isFlyout);
+            }
+            break;
+        case 'change':
+            instance.changeBlock({
+                id: e.blockId,
+                element: e.element,
+                name: e.name,
+                value: e.newValue
+            });
+            break;
+        case 'move':
+            instance.moveBlock({
+                id: e.blockId,
+                oldParent: e.oldParentId,
+                oldInput: e.oldInputName,
+                newParent: e.newParentId,
+                newInput: e.newInputName
+            });
+            break;
+        case 'delete':
+            instance.deleteBlock({
+                id: e.blockId
+            });
+            break;
+        }
+    };
 };
 
 // ---------------------------------------------------------------------
