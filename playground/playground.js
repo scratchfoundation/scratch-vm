@@ -7,6 +7,11 @@ window.onload = function() {
     var workspace = window.Blockly.inject('blocks', {
         toolbox: toolbox,
         media: '../node_modules/scratch-blocks/media/',
+        zoom: {
+            controls: true,
+            wheel: true,
+            startScale: 0.75
+        },
         colours: {
             workspace: '#334771',
             flyout: '#283856',
