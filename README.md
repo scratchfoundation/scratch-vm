@@ -16,16 +16,9 @@ var VirtualMachine = require('scratch-vm');
 var vm = new VirtualMachine();
 
 // Block events
-workspace.addChangeListener(function(e) {
-    // Handle "tapping" a block
-    if (e instanceof Blockly.Events.Ui && e.element === 'click') {
-        var stackBlock = workspace.getBlockById(e.blockId).getRootBlock().id;
-        vm.runtime.toggleStack(stackBlock);
-    // Otherwise, pass along to the block listener
-    } else {
-        vm.blockListener(e);
-    }
-});
+workspace.addChangeListener(vm.blockListener);
+var flyoutWorkspace = workspace.toolbox_.flyout_.workspace_;
+flyoutWorkspace.addChangeListener(vm.flyoutBlockListener);
 
 // Run threads
 vm.runtime.start();
