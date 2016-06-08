@@ -91,11 +91,11 @@ Blocks.prototype.getOpcode = function (id) {
  */
 
 Blocks.prototype.generateBlockListener = function (isFlyout, opt_runtime) {
+    var instance = this;
     /**
      * The actual generated block listener.
-     * @param {Object} Blockly "block" event
+     * @param {Object} e Blockly "block" event
      */
-    var instance = this;
     return function (e) {
         // Validate event
         if (typeof e !== 'object') return;
@@ -149,6 +149,7 @@ Blocks.prototype.generateBlockListener = function (isFlyout, opt_runtime) {
 /**
  * Block management: create blocks and stacks from a `create` event
  * @param {!Object} block Blockly create event to be processed
+ * @param {boolean} opt_isFlyoutBlock Whether the block is in the flyout.
  */
 Blocks.prototype.createBlock = function (block, opt_isFlyoutBlock) {
     // Create new block

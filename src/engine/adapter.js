@@ -52,8 +52,8 @@ function domToBlocks (blocksDOM) {
  * Convert and an individual block DOM to the representation tree.
  * Based on Blockly's `domToBlockHeadless_`.
  * @param {Element} blockDOM DOM tree for an individual block.
- * @param {Boolean} isTopBlock Whether blocks at this level are "top blocks."
  * @param {Object} blocks Collection of blocks to add to.
+ * @param {Boolean} isTopBlock Whether blocks at this level are "top blocks."
  */
 function domToBlock (blockDOM, blocks, isTopBlock) {
     // Block skeleton.

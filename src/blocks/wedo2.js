@@ -41,9 +41,9 @@ WeDo2Blocks.prototype.getPrimitives = function() {
 /**
  * Clamp a value between a minimum and maximum value.
  * @todo move this to a common utility class.
- * @param val The value to clamp.
- * @param min The minimum return value.
- * @param max The maximum return value.
+ * @param {number} val The value to clamp.
+ * @param {number} min The minimum return value.
+ * @param {number} max The maximum return value.
  * @returns {number} The clamped value.
  * @private
  */
@@ -53,9 +53,9 @@ WeDo2Blocks.prototype._clamp = function(val, min, max) {
 
 /**
  * Common implementation for motor blocks.
- * @param direction The direction to turn ('left' or 'right').
- * @param durationSeconds The number of seconds to run.
- * @param util The util instance to use for yielding and finishing.
+ * @param {string} direction The direction to turn ('left' or 'right').
+ * @param {number} durationSeconds The number of seconds to run.
+ * @param {Object} util The util instance to use for yielding and finishing.
  * @private
  */
 WeDo2Blocks.prototype._motorOnFor = function(direction, durationSeconds, util) {
@@ -108,7 +108,7 @@ WeDo2Blocks.prototype.motorSpeed = function(argValues) {
 /**
  * Convert a color name to a WeDo color index.
  * Supports 'mystery' for a random hue.
- * @param colorName The color to retrieve.
+ * @param {string} colorName The color to retrieve.
  * @returns {number} The WeDo color index.
  * @private
  */

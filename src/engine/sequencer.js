@@ -32,6 +32,7 @@ Sequencer.DEBUG_BLOCK_CALLS = true;
 
 /**
  * Step through all threads in `this.threads`, running them in order.
+ * @param {Array.<Thread>} threads List of which threads to step.
  * @return {Array.<Thread>} All threads which have finished in this iteration.
  */
 Sequencer.prototype.stepThreads = function (threads) {
@@ -147,6 +148,9 @@ Sequencer.prototype.stepThread = function (thread) {
     /**
      * A callback for the primitive to start hats.
      * @todo very hacked...
+     * Provide a callback that is passed in a block and returns true
+     * if it is a hat that should be triggered.
+     * @param {Function} callback Provided callback.
      */
     var startHats = function(callback) {
         var stacks = instance.runtime.blocks.getStacks();
