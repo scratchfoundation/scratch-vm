@@ -23,7 +23,7 @@ function VirtualMachine () {
      * Event listener for blocks. Handles validation and serves as a generic
      * adapter between the blocks and the runtime interface.
      *
-     * @param {Object} Blockly "block" event
+     * @param {Object} e Blockly "block" event
      */
     instance.blockListener = function (e) {
         // Validate event

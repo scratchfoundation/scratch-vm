@@ -8,7 +8,8 @@
         "max-len": [2, 80, 4],
         "semi": [2, "always"],
         "strict": [2, "never"],
-        "no-console": [2, {"allow": ["log", "warn", "error"]}]
+        "no-console": [2, {"allow": ["log", "warn", "error"]}],
+        "valid-jsdoc": ["error", {"requireReturn": false}]
     },
     "env": {
         "node": true,

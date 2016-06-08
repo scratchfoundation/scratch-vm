@@ -10,7 +10,7 @@ var defaultBlockPackages = {
 
 /**
  * Manages blocks, stacks, and the sequencer.
- * @param blocks Blocks instance for this runtime.
+ * @param {!Blocks} blocks Blocks instance for this runtime.
  */
 function Runtime (blocks) {
     // Bind event emitter

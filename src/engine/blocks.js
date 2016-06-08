@@ -83,6 +83,7 @@ Blocks.prototype.getOpcode = function (id) {
 /**
  * Block management: create blocks and stacks from a `create` event
  * @param {!Object} block Blockly create event to be processed
+ * @param {boolean} opt_isFlyoutBlock Whether the block is in the flyout.
  */
 Blocks.prototype.createBlock = function (block, opt_isFlyoutBlock) {
     // Create new block
