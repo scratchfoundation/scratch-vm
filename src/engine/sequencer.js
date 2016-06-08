@@ -25,6 +25,12 @@ function Sequencer (runtime) {
 Sequencer.WORK_TIME = 10;
 
 /**
+ * If set, block calls, args, and return values will be logged to the console.
+ * @const {boolean}
+ */
+Sequencer.DEBUG_BLOCK_CALLS = true;
+
+/**
  * Step through all threads in `this.threads`, running them in order.
  * @param {Array.<Thread>} threads List of which threads to step.
  * @return {Array.<Thread>} All threads which have finished in this iteration.
@@ -135,6 +141,8 @@ Sequencer.prototype.stepThread = function (thread) {
         // Pop the stack and stack frame
         thread.stack.pop();
         thread.stackFrames.pop();
+        // Stop showing run feedback in the editor.
+        instance.runtime.glowBlock(currentBlock, false);
     };
 
     /**
@@ -203,6 +211,9 @@ Sequencer.prototype.stepThread = function (thread) {
         }
     }
 
+    // Start showing run feedback in the editor.
+    this.runtime.glowBlock(currentBlock, true);
+
     if (!opcode) {
         console.warn('Could not get opcode for block: ' + currentBlock);
     }
@@ -212,9 +223,15 @@ Sequencer.prototype.stepThread = function (thread) {
             console.warn('Could not get implementation for opcode: ' + opcode);
         }
         else {
+            if (Sequencer.DEBUG_BLOCK_CALLS) {
+                console.groupCollapsed('Executing: ' + opcode);
+                console.log('with arguments: ', argValues);
+                console.log('and stack frame: ', currentStackFrame);
+            }
+            var blockFunctionReturnValue = null;
             try {
                 // @todo deal with the return value
-                blockFunction(argValues, {
+                blockFunctionReturnValue = blockFunction(argValues, {
                     yield: threadYieldCallback,
                     done: threadDoneCallback,
                     timeout: YieldTimers.timeout,
@@ -236,6 +253,11 @@ Sequencer.prototype.stepThread = function (thread) {
                 if (thread.status === Thread.STATUS_RUNNING && !switchedStack) {
                     // Thread executed without yielding - move to done
                     threadDoneCallback();
+                }
+                if (Sequencer.DEBUG_BLOCK_CALLS) {
+                    console.log('ending stack frame: ', currentStackFrame);
+                    console.log('returned: ', blockFunctionReturnValue);
+                    console.groupEnd();
                 }
             }
         }

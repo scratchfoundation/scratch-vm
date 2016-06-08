@@ -1,6 +1,9 @@
 body {
     background: rgb(36,36,36);
 }
+a {
+    color: rgb(217,217,217);
+}
 #blocks {
     position: absolute;
     left: 40%;
@@ -17,7 +20,7 @@ body {
     bottom: 0;
     width: 35%;
 }
-#blockexplorer {
+#blockexplorer, #threadexplorer {
     position: absolute;
     width: 100%;
     height: 75%;
@@ -27,4 +30,8 @@ body {
     color: rgb(217,217,217);
     font-family: monospace;
     font-size: 10pt;
+}
+
+#tab-blockexplorer {
+    display: none;
 }

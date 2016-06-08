@@ -23,7 +23,6 @@ Scratch3Blocks.prototype.getPrimitives = function() {
 };
 
 Scratch3Blocks.prototype.repeat = function(argValues, util) {
-    console.log('Running: control_repeat');
     // Initialize loop
     if (util.stackFrame.loopCounter === undefined) {
         util.stackFrame.loopCounter = parseInt(argValues[0]); // @todo arg
@@ -37,12 +36,10 @@ Scratch3Blocks.prototype.repeat = function(argValues, util) {
 };
 
 Scratch3Blocks.prototype.forever = function(argValues, util) {
-    console.log('Running: control_forever');
     util.startSubstack();
 };
 
 Scratch3Blocks.prototype.wait = function(argValues, util) {
-    console.log('Running: control_wait');
     util.yield();
     util.timeout(function() {
         util.done();
@@ -50,23 +47,19 @@ Scratch3Blocks.prototype.wait = function(argValues, util) {
 };
 
 Scratch3Blocks.prototype.stop = function() {
-    console.log('Running: control_stop');
     // @todo - don't use this.runtime
     this.runtime.stopAll();
 };
 
 Scratch3Blocks.prototype.whenFlagClicked = function() {
-    console.log('Running: event_whenflagclicked');
     // No-op
 };
 
 Scratch3Blocks.prototype.whenBroadcastReceived = function() {
-    console.log('Running: event_whenbroadcastreceived');
     // No-op
 };
 
 Scratch3Blocks.prototype.broadcast = function(argValues, util) {
-    console.log('Running: event_broadcast');
     util.startHats(function(hat) {
         if (hat.opcode === 'event_whenbroadcastreceived') {
             var shadows = hat.fields.CHOICE.blocks;

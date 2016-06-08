@@ -144,11 +144,9 @@ WeDo2Blocks.prototype.setColor = function(argValues, util) {
 };
 
 WeDo2Blocks.prototype.whenDistanceClose = function() {
-    console.log('Running: wedo_whendistanceclose');
 };
 
 WeDo2Blocks.prototype.whenTilt = function() {
-    console.log('Running: wedo_whentilt');
 };
 
 module.exports = WeDo2Blocks;
