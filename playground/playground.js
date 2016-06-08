@@ -29,12 +29,25 @@ window.onload = function() {
     // Block events.
     workspace.addChangeListener(vm.blockListener);
 
-    var explorer = document.getElementById('blockexplorer');
+    var blockexplorer = document.getElementById('blockexplorer');
     workspace.addChangeListener(function() {
         // On a change, update the block explorer.
-        explorer.innerHTML = JSON.stringify(vm.runtime.blocks, null, 2);
-        window.hljs.highlightBlock(explorer);
+        blockexplorer.innerHTML = JSON.stringify(vm.runtime.blocks, null, 2);
+        window.hljs.highlightBlock(blockexplorer);
     });
+
+    var threadexplorer = document.getElementById('threadexplorer');
+    var cachedThreadJSON = '';
+    var updateThreadExplorer = function () {
+        var newJSON = JSON.stringify(vm.runtime.threads, null, 2);
+        if (newJSON != cachedThreadJSON) {
+            cachedThreadJSON = newJSON;
+            threadexplorer.innerHTML = cachedThreadJSON;
+            window.hljs.highlightBlock(threadexplorer);
+        }
+        window.requestAnimationFrame(updateThreadExplorer);
+    };
+    updateThreadExplorer();
 
     // Feedback for stacks running.
     vm.runtime.on('STACK_GLOW_ON', function(blockId) {
@@ -54,4 +67,19 @@ window.onload = function() {
     document.getElementById('stopall').addEventListener('click', function() {
         vm.runtime.stopAll();
     });
+
+    var tabBlockExplorer = document.getElementById('tab-blockexplorer');
+    var tabThreadExplorer = document.getElementById('tab-threadexplorer');
+
+    // Handlers to show different explorers.
+    document.getElementById('threadexplorer-link').addEventListener('click',
+        function () {
+            tabBlockExplorer.style.display = 'none';
+            tabThreadExplorer.style.display = 'block';
+        });
+    document.getElementById('blockexplorer-link').addEventListener('click',
+        function () {
+            tabBlockExplorer.style.display = 'block';
+            tabThreadExplorer.style.display = 'none';
+        });
 };
