@@ -49,13 +49,20 @@ window.onload = function() {
     };
     updateThreadExplorer();
 
-    // Feedback for stacks running.
+    // Feedback for stacks and blocks running.
     vm.runtime.on('STACK_GLOW_ON', function(blockId) {
         workspace.glowStack(blockId, true);
     });
     vm.runtime.on('STACK_GLOW_OFF', function(blockId) {
         workspace.glowStack(blockId, false);
     });
+    vm.runtime.on('BLOCK_GLOW_ON', function(blockId) {
+        workspace.glowBlock(blockId, true);
+    });
+    vm.runtime.on('BLOCK_GLOW_OFF', function(blockId) {
+        workspace.glowBlock(blockId, false);
+    });
+
 
     // Run threads
     vm.runtime.start();

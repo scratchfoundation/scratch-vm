@@ -199,7 +199,13 @@ Runtime.prototype.startDistanceSensors = function () {
 Runtime.prototype.stopAll = function () {
     var threadsCopy = this.threads.slice();
     while (threadsCopy.length > 0) {
-        this._removeThread(threadsCopy.pop());
+        var poppedThread = threadsCopy.pop();
+        // Unglow any blocks on this thread's stack.
+        for (var i = 0; i < poppedThread.stack.length; i++) {
+            this.glowBlock(poppedThread.stack[i], false);
+        }
+        // Actually remove the thread.
+        this._removeThread(poppedThread);
     }
     // @todo call stop function in all extensions/packages/WeDo stub
     if (window.native) {

@@ -134,6 +134,8 @@ Sequencer.prototype.stepThread = function (thread) {
         // Pop the stack and stack frame
         thread.stack.pop();
         thread.stackFrames.pop();
+        // Stop showing run feedback in the editor.
+        instance.runtime.glowBlock(currentBlock, false);
     };
 
     /**
@@ -198,6 +200,9 @@ Sequencer.prototype.stepThread = function (thread) {
             }
         }
     }
+
+    // Start showing run feedback in the editor.
+    this.runtime.glowBlock(currentBlock, true);
 
     if (!opcode) {
         console.warn('Could not get opcode for block: ' + currentBlock);
