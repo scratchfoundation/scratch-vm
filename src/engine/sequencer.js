@@ -49,17 +49,18 @@ Sequencer.prototype.stepThreads = function (threads) {
             var activeThread = threads[i];
             if (activeThread.status === Thread.STATUS_RUNNING) {
                 // Normal-mode thread: step.
-                this.stepThread(activeThread);
+                this.startThread(activeThread);
             } else if (activeThread.status === Thread.STATUS_YIELD) {
                 // Yield-mode thread: check if the time has passed.
-                YieldTimers.resolve(activeThread.yieldTimerId);
-                numYieldingThreads++;
+                if (!YieldTimers.resolve(activeThread.yieldTimerId)) {
+                    numYieldingThreads++;
+                }
             } else if (activeThread.status === Thread.STATUS_DONE) {
                 // Moved to a done state - finish up
                 activeThread.status = Thread.STATUS_RUNNING;
                 // @todo Deal with the return value
             }
-            if (activeThread.nextBlock === null &&
+            if (activeThread.stack.length === 0 &&
                 activeThread.status === Thread.STATUS_DONE) {
                 // Finished with this thread - tell runtime to clean it up.
                 inactiveThreads.push(activeThread);
@@ -78,21 +79,27 @@ Sequencer.prototype.stepThreads = function (threads) {
  * Step the requested thread
  * @param {!Thread} thread Thread object to step
  */
-Sequencer.prototype.stepThread = function (thread) {
-    // Save the current block and set the nextBlock.
-    // If the primitive would like to do control flow,
-    // it can overwrite nextBlock.
-    var currentBlockId = thread.nextBlock;
+Sequencer.prototype.startThread = function (thread) {
+    var currentBlockId = thread.peekStack();
     if (!currentBlockId || !this.runtime.blocks.getBlock(currentBlockId)) {
         thread.status = Thread.STATUS_DONE;
         return;
     }
     // Start showing run feedback in the editor.
     this.runtime.glowBlock(currentBlockId, true);
-    // Execute the block
-    execute(this, thread, currentBlockId, false);
-    // If the block executed without yielding, move to done.
-    if (thread.status === Thread.STATUS_RUNNING && !thread.switchedStack) {
+
+    // Push the current block to the stack, if executing for the first time.
+    if (thread.peekStack() != currentBlockId) {
+        thread.pushStack(currentBlockId);
+    }
+
+    // Execute the current block
+    execute(this, thread);
+
+    // If the block executed without yielding and without doing control flow,
+    // move to done.
+    if (thread.status === Thread.STATUS_RUNNING &&
+        thread.peekStack() === currentBlockId) {
         this.proceedThread(thread, currentBlockId);
     }
 };
@@ -102,15 +109,16 @@ Sequencer.prototype.stepThread = function (thread) {
  * @param {!Thread} thread Thread object to step to substack.
  * @param {string} currentBlockId Block which owns a substack to step to.
  */
-Sequencer.prototype.stepToSubstack = function (thread, currentBlockId) {
-    // Set nextBlock to the start of the substack
-    var substack = this.runtime.blocks.getSubstack(currentBlockId);
-    if (substack && substack.value) {
-        thread.nextBlock = substack.value;
+Sequencer.prototype.stepToSubstack = function (thread) {
+    var currentBlockId = thread.peekStack();
+    var substackId = this.runtime.blocks.getSubstack(currentBlockId);
+    if (substackId) {
+        // Push substack ID to the thread's stack.
+        thread.pushStack(substackId);
     } else {
-        thread.nextBlock = null;
+        // Push null, so we come back to the current block.
+        thread.pushStack(null);
     }
-    thread.switchedStack = true;
 };
 
 /**
@@ -118,17 +126,21 @@ Sequencer.prototype.stepToSubstack = function (thread, currentBlockId) {
  * @param {!Thread} thread Thread object to proceed.
  * @param {string} currentBlockId Block we are finished with.
  */
-Sequencer.prototype.proceedThread = function (thread, currentBlockId) {
-    // Stop showing run feedback in the editor.
+Sequencer.prototype.proceedThread = function (thread) {
+    var currentBlockId = thread.peekStack();
+    // Mark the status as done and proceed to the next block.
     this.runtime.glowBlock(currentBlockId, false);
-    // Mark the thread as done and proceed to the next block.
     thread.status = Thread.STATUS_DONE;
-    // Refresh nextBlock in case it has changed during a yield.
-    thread.nextBlock = this.runtime.blocks.getNextBlock(currentBlockId);
-    // If none is available, attempt to pop from the stack.
-    // First attempt to pop from the stack
-    if (!thread.nextBlock && thread.stack.length > 0) {
-        thread.nextBlock = thread.popStack();
+    // Pop from the stack - finished this level of execution.
+    thread.popStack();
+    // Push next connected block, if there is one.
+    var nextBlockId = this.runtime.blocks.getNextBlock(currentBlockId);
+    if (nextBlockId) {
+        thread.pushStack(nextBlockId);
+    }
+    // Pop from the stack until we have a next block.
+    while (thread.peekStack() === null && thread.stack.length > 0) {
+        thread.popStack();
     }
 };
 

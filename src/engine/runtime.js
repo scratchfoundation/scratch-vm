@@ -122,6 +122,7 @@ Runtime.prototype.getOpcodeFunction = function (opcode) {
 Runtime.prototype._pushThread = function (id) {
     this.emit(Runtime.STACK_GLOW_ON, id);
     var thread = new Thread(id);
+    thread.pushStack(id);
     this.threads.push(thread);
 };
 

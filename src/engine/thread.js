@@ -9,11 +9,7 @@ function Thread (firstBlock) {
      * @type {!string}
      */
     this.topBlock = firstBlock;
-    /**
-     * ID of next block that the thread will execute, or null if none.
-     * @type {?string}
-     */
-    this.nextBlock = firstBlock;
+
     /**
      * Stack for the thread. When the sequencer enters a control structure,
      * the block is pushed onto the stack so we know where to exit.
@@ -38,12 +34,6 @@ function Thread (firstBlock) {
      * @type {number}
      */
     this.yieldTimerId = -1;
-
-    /**
-     * Whether the thread has switched stack in the course of execution.
-     * @type {boolean}
-     */
-    this.switchedStack = false;
 }
 
 /**
@@ -83,7 +73,7 @@ Thread.prototype.pushStack = function (blockId) {
 
 /**
  * Pop last block on the stack and its stack frame.
- * @returns {string} Block ID popped from the stack.
+ * @return {string} Block ID popped from the stack.
  */
 Thread.prototype.popStack = function () {
     this.stackFrames.pop();
@@ -91,10 +81,19 @@ Thread.prototype.popStack = function () {
 };
 
 /**
- * Get last stack frame.
+ * Get top stack item.
+ * @return {?string} Block ID on top of stack.
+ */
+Thread.prototype.peekStack = function () {
+    return this.stack[this.stack.length - 1];
+};
+
+
+/**
+ * Get top stack frame.
  * @return {?Object} Last stack frame stored on this thread.
  */
-Thread.prototype.getLastStackFrame = function () {
+Thread.prototype.peekStackFrame = function () {
     return this.stackFrames[this.stackFrames.length - 1];
 };
 

@@ -6,40 +6,43 @@ var YieldTimers = require('../util/yieldtimers.js');
  */
 var DEBUG_BLOCK_CALLS = true;
 
-var execute = function (sequencer, thread, blockId) {
+var execute = function (sequencer, thread) {
     var runtime = sequencer.runtime;
+
+    // Current block to execute is the one on the top of the stack.
+    var currentBlockId = thread.peekStack();
+    var currentStackFrame = thread.peekStackFrame();
 
     // Save the yield timer ID, in case a primitive makes a new one
     // @todo hack - perhaps patch this to allow more than one timer per
     // primitive, for example...
     var oldYieldTimerId = YieldTimers.timerId;
 
-    var opcode = runtime.blocks.getOpcode(blockId);
-
-    // Push the current block to the stack
-    thread.pushStack(blockId);
-    var currentStackFrame = thread.getLastStackFrame();
+    var opcode = runtime.blocks.getOpcode(currentBlockId);
 
     // Generate values for arguments (inputs).
     var argValues = {};
 
     // Add all fields on this block to the argValues.
-    var fields = runtime.blocks.getFields(blockId);
+    var fields = runtime.blocks.getFields(currentBlockId);
     for (var fieldName in fields) {
         argValues[fieldName] = fields[fieldName].value;
     }
 
     // Recursively evaluate input blocks.
-    var inputs = runtime.blocks.getInputs(blockId);
+    var inputs = runtime.blocks.getInputs(currentBlockId);
     for (var inputName in inputs) {
         var input = inputs[inputName];
         var inputBlockId = input.block;
-        var result = execute(sequencer, thread, inputBlockId);
+        // Push to the stack to evaluate this input.
+        thread.pushStack(inputBlockId);
+        var result = execute(sequencer, thread);
+        thread.popStack();
         argValues[input.name] = result;
     }
 
     if (!opcode) {
-        console.warn('Could not get opcode for block: ' + blockId);
+        console.warn('Could not get opcode for block: ' + currentBlockId);
         console.groupEnd();
         return;
     }
@@ -62,12 +65,12 @@ var execute = function (sequencer, thread, blockId) {
         primitiveReturnValue = blockFunction(argValues, {
             yield: thread.yield.bind(thread),
             done: function() {
-                sequencer.proceedThread(thread, blockId);
+                sequencer.proceedThread(thread);
             },
             timeout: YieldTimers.timeout,
             stackFrame: currentStackFrame,
             startSubstack: function () {
-                sequencer.stepToSubstack(thread, blockId);
+                sequencer.stepToSubstack(thread);
             }
         });
     }
@@ -86,8 +89,6 @@ var execute = function (sequencer, thread, blockId) {
             console.log('returned: ', primitiveReturnValue);
             console.groupEnd();
         }
-        // Pop the stack and stack frame
-        thread.popStack();
         return primitiveReturnValue;
     }
 };
