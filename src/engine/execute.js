@@ -60,7 +60,7 @@ var execute = function (sequencer, thread, blockId) {
     try {
         // @todo deal with the return value
         primitiveReturnValue = blockFunction(argValues, {
-            yield: thread.yield,
+            yield: thread.yield.bind(thread),
             done: function() {
                 sequencer.proceedThread(thread, blockId);
             },
