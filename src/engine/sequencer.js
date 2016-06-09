@@ -26,12 +26,6 @@ function Sequencer (runtime) {
 Sequencer.WORK_TIME = 10;
 
 /**
- * If set, block calls, args, and return values will be logged to the console.
- * @const {boolean}
- */
-Sequencer.DEBUG_BLOCK_CALLS = true;
-
-/**
  * Step through all threads in `this.threads`, running them in order.
  * @param {Array.<Thread>} threads List of which threads to step.
  * @return {Array.<Thread>} All threads which have finished in this iteration.
@@ -65,17 +59,6 @@ Sequencer.prototype.stepThreads = function (threads) {
                 activeThread.status = Thread.STATUS_RUNNING;
                 // @todo Deal with the return value
             }
-            // First attempt to pop from the stack
-            if (activeThread.stack.length > 0 &&
-                activeThread.nextBlock === null &&
-                activeThread.status === Thread.STATUS_DONE) {
-                activeThread.nextBlock = activeThread.stack.pop();
-                // Don't pop stack frame - we need the data.
-                // A new one won't be created when we execute.
-                if (activeThread.nextBlock !== null) {
-                    activeThread.status === Thread.STATUS_RUNNING;
-                }
-            }
             if (activeThread.nextBlock === null &&
                 activeThread.status === Thread.STATUS_DONE) {
                 // Finished with this thread - tell runtime to clean it up.
@@ -99,14 +82,56 @@ Sequencer.prototype.stepThread = function (thread) {
     // Save the current block and set the nextBlock.
     // If the primitive would like to do control flow,
     // it can overwrite nextBlock.
-    var currentBlock = thread.nextBlock;
-    if (!currentBlock || !this.runtime.blocks.getBlock(currentBlock)) {
+    var currentBlockId = thread.nextBlock;
+    if (!currentBlockId || !this.runtime.blocks.getBlock(currentBlockId)) {
         thread.status = Thread.STATUS_DONE;
         return;
     }
-    thread.nextBlock = this.runtime.blocks.getNextBlock(currentBlock);
+    // Start showing run feedback in the editor.
+    this.runtime.glowBlock(currentBlockId, true);
+    // Execute the block
+    execute(this, thread, currentBlockId, false);
+    // If the block executed without yielding, move to done.
+    if (thread.status === Thread.STATUS_RUNNING && !thread.switchedStack) {
+        this.proceedThread(thread, currentBlockId);
+    }
+};
 
-    execute(this, thread, currentBlock, false);
+/**
+ * Step a thread into a block's substack.
+ * @param {!Thread} thread Thread object to step to substack.
+ * @param {string} currentBlockId Block which owns a substack to step to.
+ */
+Sequencer.prototype.stepToSubstack = function (thread, currentBlockId) {
+    // Set nextBlock to the start of the substack
+    var substack = this.runtime.blocks.getSubstack(currentBlockId);
+    if (substack && substack.value) {
+        thread.nextBlock = substack.value;
+    } else {
+        thread.nextBlock = null;
+    }
+    thread.switchedStack = true;
+};
+
+/**
+ * Finish stepping a thread and proceed it to the next block.
+ * @param {!Thread} thread Thread object to proceed.
+ * @param {string} currentBlockId Block we are finished with.
+ */
+Sequencer.prototype.proceedThread = function (thread, currentBlockId) {
+    // Stop showing run feedback in the editor.
+    this.runtime.glowBlock(currentBlockId, false);
+    // Pop the stack and stack frame
+    thread.popStack();
+    // Mark the thread as done and proceed to the next block.
+    thread.status = Thread.STATUS_DONE;
+    // Refresh nextBlock in case it has changed during a yield.
+    thread.nextBlock = this.runtime.blocks.getNextBlock(currentBlockId);
+    // If none is available, attempt to pop from the stack.
+    // First attempt to pop from the stack
+    if (!thread.nextBlock && thread.stack.length > 0) {
+        thread.nextBlock = thread.popStack();
+    }
 };
 
 module.exports = Sequencer;
