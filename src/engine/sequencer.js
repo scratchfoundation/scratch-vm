@@ -121,8 +121,6 @@ Sequencer.prototype.stepToSubstack = function (thread, currentBlockId) {
 Sequencer.prototype.proceedThread = function (thread, currentBlockId) {
     // Stop showing run feedback in the editor.
     this.runtime.glowBlock(currentBlockId, false);
-    // Pop the stack and stack frame
-    thread.popStack();
     // Mark the thread as done and proceed to the next block.
     thread.status = Thread.STATUS_DONE;
     // Refresh nextBlock in case it has changed during a yield.

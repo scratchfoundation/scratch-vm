@@ -86,6 +86,8 @@ var execute = function (sequencer, thread, blockId) {
             console.log('returned: ', primitiveReturnValue);
             console.groupEnd();
         }
+        // Pop the stack and stack frame
+        thread.popStack();
         return primitiveReturnValue;
     }
 };
