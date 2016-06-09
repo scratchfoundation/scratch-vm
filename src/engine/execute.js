@@ -26,7 +26,7 @@ var execute = function (sequencer, thread, blockId) {
     // Add all fields on this block to the argValues.
     var fields = runtime.blocks.getFields(blockId);
     for (var fieldName in fields) {
-        argValues[fieldName] = fields[fieldName];
+        argValues[fieldName] = fields[fieldName].value;
     }
 
     // Recursively evaluate input blocks.
