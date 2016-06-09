@@ -27,8 +27,9 @@ window.onload = function() {
 
     // Block events.
     workspace.addChangeListener(vm.blockListener);
-    var flyoutWorkspace = workspace.toolbox_.flyout_.workspace_;
-    flyoutWorkspace.addChangeListener(vm.flyoutBlockListener);
+    // @todo: Re-enable flyout listening after fixing GH-69.
+    //var flyoutWorkspace = workspace.toolbox_.flyout_.workspace_;
+    //flyoutWorkspace.addChangeListener(vm.flyoutBlockListener);
 
     var blockexplorer = document.getElementById('blockexplorer');
     workspace.addChangeListener(function() {
