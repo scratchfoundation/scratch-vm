@@ -4,7 +4,8 @@ var Thread = require('./thread');
 var util = require('util');
 
 var defaultBlockPackages = {
-    'scratch3': require('../blocks/scratch3'),
+    'scratch3_control': require('../blocks/scratch3_control'),
+    'scratch3_event': require('../blocks/scratch3_event'),
     'wedo2': require('../blocks/wedo2')
 };
 
