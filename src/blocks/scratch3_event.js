@@ -27,17 +27,8 @@ Scratch3EventBlocks.prototype.whenBroadcastReceived = function() {
     // No-op
 };
 
-Scratch3EventBlocks.prototype.broadcast = function(argValues, util) {
-    util.startHats(function(hat) {
-        if (hat.opcode === 'event_whenbroadcastreceived') {
-            var shadows = hat.fields.CHOICE.blocks;
-            for (var sb in shadows) {
-                var shadowblock = shadows[sb];
-                return shadowblock.fields.CHOICE.value === argValues[0];
-            }
-        }
-        return false;
-    });
+Scratch3EventBlocks.prototype.broadcast = function() {
+    // @todo
 };
 
 module.exports = Scratch3EventBlocks;
