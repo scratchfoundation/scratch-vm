@@ -6,6 +6,7 @@ var util = require('util');
 var defaultBlockPackages = {
     'scratch3_control': require('../blocks/scratch3_control'),
     'scratch3_event': require('../blocks/scratch3_event'),
+    'scratch3_operators': require('../blocks/scratch3_operators'),
     'wedo2': require('../blocks/wedo2')
 };
 
