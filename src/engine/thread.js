@@ -38,6 +38,12 @@ function Thread (firstBlock) {
      * @type {number}
      */
     this.yieldTimerId = -1;
+
+    /**
+     * Whether the thread has switched stack in the course of execution.
+     * @type {boolean}
+     */
+    this.switchedStack = false;
 }
 
 /**
@@ -61,5 +67,42 @@ Thread.STATUS_YIELD = 1;
  * @const
  */
 Thread.STATUS_DONE = 2;
+
+/**
+ * Push stack and update stack frames appropriately.
+ * @param {string} blockId Block ID to push to stack.
+ */
+Thread.prototype.pushStack = function (blockId) {
+    this.stack.push(blockId);
+    // Push an empty stack frame, if we need one.
+    // Might not, if we just popped the stack.
+    if (this.stack.length > this.stackFrames.length) {
+        this.stackFrames.push({});
+    }
+};
+
+/**
+ * Pop last block on the stack and its stack frame.
+ * @returns {string} Block ID popped from the stack.
+ */
+Thread.prototype.popStack = function () {
+    this.stackFrames.pop();
+    return this.stack.pop();
+};
+
+/**
+ * Get last stack frame.
+ * @return {?Object} Last stack frame stored on this thread.
+ */
+Thread.prototype.getLastStackFrame = function () {
+    return this.stackFrames[this.stackFrames.length - 1];
+};
+
+/**
+ * Yields the thread.
+ */
+Thread.prototype.yield = function () {
+    this.status = Thread.STATUS_YIELD;
+};
 
 module.exports = Thread;
