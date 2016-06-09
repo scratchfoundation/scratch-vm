@@ -40,7 +40,7 @@ Scratch3ControlBlocks.prototype.wait = function(argValues, util) {
     util.yield();
     util.timeout(function() {
         util.done();
-    }, 1000 * parseFloat(argValues[0]));
+    }, 1000 * argValues.DURATION);
 };
 
 Scratch3ControlBlocks.prototype.stop = function() {
