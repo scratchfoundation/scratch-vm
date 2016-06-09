@@ -98,7 +98,23 @@ var execute = function (sequencer, thread, blockId, isInput) {
         switchedStack = true;
     };
 
+    // Generate values for arguments (inputs).
     var argValues = {};
+
+    // Add all fields on this block to the argValues.
+    var fields = runtime.blocks.getFields(blockId);
+    for (var fieldName in fields) {
+        argValues[fieldName] = fields[fieldName];
+    }
+
+    // Recursively evaluate input blocks.
+    var inputs = runtime.blocks.getInputs(blockId);
+    for (var inputName in inputs) {
+        var input = inputs[inputName];
+        var inputBlockId = input.block;
+        var result = execute(sequencer, thread, inputBlockId, true);
+        argValues[input.name] = result;
+    }
 
     // Start showing run feedback in the editor.
     runtime.glowBlock(blockId, true);
