@@ -1,7 +1,7 @@
 var Thread = require('./thread');
 var YieldTimers = require('../util/yieldtimers.js');
 
-var execute = function (sequencer, thread, blockId) {
+var execute = function (sequencer, thread, blockId, isInput) {
     var runtime = sequencer.runtime;
 
     // Save the yield timer ID, in case a primitive makes a new one
@@ -33,12 +33,16 @@ var execute = function (sequencer, thread, blockId) {
      * @type {Function}
      */
     var threadDoneCallback = function () {
-        thread.status = Thread.STATUS_DONE;
-        // Refresh nextBlock in case it has changed during a yield.
-        thread.nextBlock = runtime.blocks.getNextBlock(blockId);
         // Pop the stack and stack frame
         thread.stack.pop();
         thread.stackFrames.pop();
+        // If we're not executing an input sub-block,
+        // mark the thread as done and proceed to the next block.
+        if (!isInput) {
+            thread.status = Thread.STATUS_DONE;
+            // Refresh nextBlock in case it has changed during a yield.
+            thread.nextBlock = runtime.blocks.getNextBlock(blockId);
+        }
         // Stop showing run feedback in the editor.
         runtime.glowBlock(blockId, false);
     };
