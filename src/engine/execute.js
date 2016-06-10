@@ -69,8 +69,8 @@ var execute = function (sequencer, thread) {
             },
             timeout: YieldTimers.timeout,
             stackFrame: currentStackFrame,
-            startSubstack: function () {
-                sequencer.stepToSubstack(thread);
+            startSubstack: function (substackNum) {
+                sequencer.stepToSubstack(thread, substackNum);
             }
         });
     }

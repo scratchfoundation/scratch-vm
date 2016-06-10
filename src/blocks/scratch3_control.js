@@ -16,6 +16,7 @@ Scratch3ControlBlocks.prototype.getPrimitives = function() {
         'control_forever': this.forever,
         'control_wait': this.wait,
         'control_if': this.if,
+        'control_if_else': this.ifElse,
         'control_stop': this.stop
     };
 };
@@ -51,6 +52,19 @@ Scratch3ControlBlocks.prototype.if = function(args, util) {
         util.stackFrame.executed = true;
         if (args.CONDITION) {
             util.startSubstack();
+        }
+    }
+};
+
+Scratch3ControlBlocks.prototype.ifElse = function(args, util) {
+    // Only execute one time. `ifElse` will be returned to
+    // when the substack finishes, but it shouldn't execute again.
+    if (util.stackFrame.executed === undefined) {
+        util.stackFrame.executed = true;
+        if (args.CONDITION) {
+            util.startSubstack(1);
+        } else {
+            util.startSubstack(2);
         }
     }
 };

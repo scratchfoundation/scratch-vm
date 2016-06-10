@@ -104,11 +104,17 @@ Sequencer.prototype.startThread = function (thread) {
 /**
  * Step a thread into a block's substack.
  * @param {!Thread} thread Thread object to step to substack.
- * @param {string} currentBlockId Block which owns a substack to step to.
+ * @param {Number} substackNum Which substack to step to (i.e., 1, 2).
  */
-Sequencer.prototype.stepToSubstack = function (thread) {
+Sequencer.prototype.stepToSubstack = function (thread, substackNum) {
+    if (!substackNum) {
+        substackNum = 1;
+    }
     var currentBlockId = thread.peekStack();
-    var substackId = this.runtime.blocks.getSubstack(currentBlockId);
+    var substackId = this.runtime.blocks.getSubstack(
+        currentBlockId,
+        substackNum
+    );
     if (substackId) {
         // Push substack ID to the thread's stack.
         thread.pushStack(substackId);
@@ -121,7 +127,6 @@ Sequencer.prototype.stepToSubstack = function (thread) {
 /**
  * Finish stepping a thread and proceed it to the next block.
  * @param {!Thread} thread Thread object to proceed.
- * @param {string} currentBlockId Block we are finished with.
  */
 Sequencer.prototype.proceedThread = function (thread) {
     var currentBlockId = thread.peekStack();
