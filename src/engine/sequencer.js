@@ -44,6 +44,8 @@ Sequencer.prototype.stepThreads = function (threads) {
            this.timer.timeElapsed() < Sequencer.WORK_TIME) {
         // New threads at the end of the iteration.
         var newThreads = [];
+        // Reset yielding thread count.
+        numYieldingThreads = 0;
         // Attempt to run each thread one time
         for (var i = 0; i < threads.length; i++) {
             var activeThread = threads[i];
@@ -53,6 +55,8 @@ Sequencer.prototype.stepThreads = function (threads) {
             } else if (activeThread.status === Thread.STATUS_YIELD) {
                 // Yield-mode thread: check if the time has passed.
                 if (!YieldTimers.resolve(activeThread.yieldTimerId)) {
+                    // Thread is still yielding
+                    // if YieldTimers.resolve returns false.
                     numYieldingThreads++;
                 }
             } else if (activeThread.status === Thread.STATUS_DONE) {
