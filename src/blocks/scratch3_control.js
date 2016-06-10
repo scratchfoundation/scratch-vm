@@ -15,14 +15,15 @@ Scratch3ControlBlocks.prototype.getPrimitives = function() {
         'control_repeat': this.repeat,
         'control_forever': this.forever,
         'control_wait': this.wait,
+        'control_if': this.if,
         'control_stop': this.stop
     };
 };
 
-Scratch3ControlBlocks.prototype.repeat = function(argValues, util) {
+Scratch3ControlBlocks.prototype.repeat = function(args, util) {
     // Initialize loop
     if (util.stackFrame.loopCounter === undefined) {
-        util.stackFrame.loopCounter = parseInt(argValues.TIMES);
+        util.stackFrame.loopCounter = parseInt(args.TIMES);
     }
     // Decrease counter
     util.stackFrame.loopCounter--;
@@ -32,15 +33,26 @@ Scratch3ControlBlocks.prototype.repeat = function(argValues, util) {
     }
 };
 
-Scratch3ControlBlocks.prototype.forever = function(argValues, util) {
+Scratch3ControlBlocks.prototype.forever = function(args, util) {
     util.startSubstack();
 };
 
-Scratch3ControlBlocks.prototype.wait = function(argValues, util) {
+Scratch3ControlBlocks.prototype.wait = function(args, util) {
     util.yield();
     util.timeout(function() {
         util.done();
-    }, 1000 * argValues.DURATION);
+    }, 1000 * args.DURATION);
+};
+
+Scratch3ControlBlocks.prototype.if = function(args, util) {
+    // Only execute one time. `if` will be returned to
+    // when the substack finishes, but it shouldn't execute again.
+    if (util.stackFrame.executed === undefined) {
+        util.stackFrame.executed = true;
+        if (args.CONDITION) {
+            util.startSubstack();
+        }
+    }
 };
 
 Scratch3ControlBlocks.prototype.stop = function() {
