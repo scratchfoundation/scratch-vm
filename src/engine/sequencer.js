@@ -88,11 +88,6 @@ Sequencer.prototype.startThread = function (thread) {
     // Start showing run feedback in the editor.
     this.runtime.glowBlock(currentBlockId, true);
 
-    // Push the current block to the stack, if executing for the first time.
-    if (thread.peekStack() != currentBlockId) {
-        thread.pushStack(currentBlockId);
-    }
-
     // Execute the current block
     execute(this, thread);
 
