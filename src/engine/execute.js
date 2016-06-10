@@ -43,14 +43,12 @@ var execute = function (sequencer, thread) {
 
     if (!opcode) {
         console.warn('Could not get opcode for block: ' + currentBlockId);
-        console.groupEnd();
         return;
     }
 
     var blockFunction = runtime.getOpcodeFunction(opcode);
     if (!blockFunction) {
         console.warn('Could not get implementation for opcode: ' + opcode);
-        console.groupEnd();
         return;
     }
 
