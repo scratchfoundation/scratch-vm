@@ -81,7 +81,9 @@ Sequencer.prototype.stepThreads = function (threads) {
  */
 Sequencer.prototype.startThread = function (thread) {
     var currentBlockId = thread.peekStack();
-    if (!currentBlockId || !this.runtime.blocks.getBlock(currentBlockId)) {
+    if (!currentBlockId) {
+        // A "null block" - empty substack. Pop the stack.
+        thread.popStack();
         thread.status = Thread.STATUS_DONE;
         return;
     }
