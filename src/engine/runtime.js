@@ -233,6 +233,9 @@ Runtime.prototype._step = function () {
  * @param {boolean} isGlowing True to turn on glow; false to turn off.
  */
 Runtime.prototype.glowBlock = function (blockId, isGlowing) {
+    if (!this.blocks.getBlock(blockId)) {
+        return;
+    }
     if (isGlowing) {
         this.emit(Runtime.BLOCK_GLOW_ON, blockId);
     } else {
