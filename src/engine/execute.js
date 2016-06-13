@@ -58,37 +58,29 @@ var execute = function (sequencer, thread) {
         console.log('and stack frame: ', currentStackFrame);
     }
     var primitiveReturnValue = null;
-    try {
-        // @todo deal with the return value
-        primitiveReturnValue = blockFunction(argValues, {
-            yield: thread.yield.bind(thread),
-            done: function() {
-                sequencer.proceedThread(thread);
-            },
-            timeout: YieldTimers.timeout,
-            stackFrame: currentStackFrame,
-            startSubstack: function (substackNum) {
-                sequencer.stepToSubstack(thread, substackNum);
-            }
-        });
-    }
-    catch(e) {
-        console.error(
-            'Exception calling block function for opcode: ' +
-            opcode + '\n' + e);
-    } finally {
-        // Update if the thread has set a yield timer ID
-        // @todo hack
-        if (YieldTimers.timerId > oldYieldTimerId) {
-            thread.yieldTimerId = YieldTimers.timerId;
+    // @todo deal with the return value
+    primitiveReturnValue = blockFunction(argValues, {
+        yield: thread.yield.bind(thread),
+        done: function() {
+            sequencer.proceedThread(thread);
+        },
+        timeout: YieldTimers.timeout,
+        stackFrame: currentStackFrame,
+        startSubstack: function (substackNum) {
+            sequencer.stepToSubstack(thread, substackNum);
         }
-        if (DEBUG_BLOCK_CALLS) {
-            console.log('ending stack frame: ', currentStackFrame);
-            console.log('returned: ', primitiveReturnValue);
-            console.groupEnd();
-        }
-        return primitiveReturnValue;
+    });
+    // Update if the thread has set a yield timer ID
+    // @todo hack
+    if (YieldTimers.timerId > oldYieldTimerId) {
+        thread.yieldTimerId = YieldTimers.timerId;
     }
+    if (DEBUG_BLOCK_CALLS) {
+        console.log('ending stack frame: ', currentStackFrame);
+        console.log('returned: ', primitiveReturnValue);
+        console.groupEnd();
+    }
+    return primitiveReturnValue;
 };
 
 module.exports = execute;
