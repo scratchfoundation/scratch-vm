@@ -6,6 +6,7 @@ var util = require('util');
 var defaultBlockPackages = {
     'scratch3_control': require('../blocks/scratch3_control'),
     'scratch3_event': require('../blocks/scratch3_event'),
+    'scratch3_operators': require('../blocks/scratch3_operators'),
     'wedo2': require('../blocks/wedo2')
 };
 
@@ -121,6 +122,7 @@ Runtime.prototype.getOpcodeFunction = function (opcode) {
 Runtime.prototype._pushThread = function (id) {
     this.emit(Runtime.STACK_GLOW_ON, id);
     var thread = new Thread(id);
+    thread.pushStack(id);
     this.threads.push(thread);
 };
 
@@ -231,6 +233,9 @@ Runtime.prototype._step = function () {
  * @param {boolean} isGlowing True to turn on glow; false to turn off.
  */
 Runtime.prototype.glowBlock = function (blockId, isGlowing) {
+    if (!this.blocks.getBlock(blockId)) {
+        return;
+    }
     if (isGlowing) {
         this.emit(Runtime.BLOCK_GLOW_ON, blockId);
     } else {

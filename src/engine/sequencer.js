@@ -1,6 +1,7 @@
 var Timer = require('../util/timer');
 var Thread = require('./thread');
 var YieldTimers = require('../util/yieldtimers.js');
+var execute = require('./execute.js');
 
 function Sequencer (runtime) {
     /**
@@ -25,12 +26,6 @@ function Sequencer (runtime) {
 Sequencer.WORK_TIME = 10;
 
 /**
- * If set, block calls, args, and return values will be logged to the console.
- * @const {boolean}
- */
-Sequencer.DEBUG_BLOCK_CALLS = true;
-
-/**
  * Step through all threads in `this.threads`, running them in order.
  * @param {Array.<Thread>} threads List of which threads to step.
  * @return {Array.<Thread>} All threads which have finished in this iteration.
@@ -49,33 +44,27 @@ Sequencer.prototype.stepThreads = function (threads) {
            this.timer.timeElapsed() < Sequencer.WORK_TIME) {
         // New threads at the end of the iteration.
         var newThreads = [];
+        // Reset yielding thread count.
+        numYieldingThreads = 0;
         // Attempt to run each thread one time
         for (var i = 0; i < threads.length; i++) {
             var activeThread = threads[i];
             if (activeThread.status === Thread.STATUS_RUNNING) {
                 // Normal-mode thread: step.
-                this.stepThread(activeThread);
+                this.startThread(activeThread);
             } else if (activeThread.status === Thread.STATUS_YIELD) {
                 // Yield-mode thread: check if the time has passed.
-                YieldTimers.resolve(activeThread.yieldTimerId);
-                numYieldingThreads++;
+                if (!YieldTimers.resolve(activeThread.yieldTimerId)) {
+                    // Thread is still yielding
+                    // if YieldTimers.resolve returns false.
+                    numYieldingThreads++;
+                }
             } else if (activeThread.status === Thread.STATUS_DONE) {
                 // Moved to a done state - finish up
                 activeThread.status = Thread.STATUS_RUNNING;
                 // @todo Deal with the return value
             }
-            // First attempt to pop from the stack
-            if (activeThread.stack.length > 0 &&
-                activeThread.nextBlock === null &&
-                activeThread.status === Thread.STATUS_DONE) {
-                activeThread.nextBlock = activeThread.stack.pop();
-                // Don't pop stack frame - we need the data.
-                // A new one won't be created when we execute.
-                if (activeThread.nextBlock !== null) {
-                    activeThread.status === Thread.STATUS_RUNNING;
-                }
-            }
-            if (activeThread.nextBlock === null &&
+            if (activeThread.stack.length === 0 &&
                 activeThread.status === Thread.STATUS_DONE) {
                 // Finished with this thread - tell runtime to clean it up.
                 inactiveThreads.push(activeThread);
@@ -94,175 +83,71 @@ Sequencer.prototype.stepThreads = function (threads) {
  * Step the requested thread
  * @param {!Thread} thread Thread object to step
  */
-Sequencer.prototype.stepThread = function (thread) {
-    // Save the yield timer ID, in case a primitive makes a new one
-    // @todo hack - perhaps patch this to allow more than one timer per
-    // primitive, for example...
-    var oldYieldTimerId = YieldTimers.timerId;
-
-    // Save the current block and set the nextBlock.
-    // If the primitive would like to do control flow,
-    // it can overwrite nextBlock.
-    var currentBlock = thread.nextBlock;
-    if (!currentBlock || !this.runtime.blocks.getBlock(currentBlock)) {
+Sequencer.prototype.startThread = function (thread) {
+    var currentBlockId = thread.peekStack();
+    if (!currentBlockId) {
+        // A "null block" - empty substack. Pop the stack.
+        thread.popStack();
         thread.status = Thread.STATUS_DONE;
         return;
     }
-    thread.nextBlock = this.runtime.blocks.getNextBlock(currentBlock);
-
-    var opcode = this.runtime.blocks.getOpcode(currentBlock);
-
-    // Push the current block to the stack
-    thread.stack.push(currentBlock);
-    // Push an empty stack frame, if we need one.
-    // Might not, if we just popped the stack.
-    if (thread.stack.length > thread.stackFrames.length) {
-        thread.stackFrames.push({});
-    }
-    var currentStackFrame = thread.stackFrames[thread.stackFrames.length - 1];
-
-    /**
-     * A callback for the primitive to indicate its thread should yield.
-     * @type {Function}
-     */
-    var threadYieldCallback = function () {
-        thread.status = Thread.STATUS_YIELD;
-    };
-
-    /**
-     * A callback for the primitive to indicate its thread is finished
-     * @type {Function}
-     */
-    var instance = this;
-    var threadDoneCallback = function () {
-        thread.status = Thread.STATUS_DONE;
-        // Refresh nextBlock in case it has changed during a yield.
-        thread.nextBlock = instance.runtime.blocks.getNextBlock(currentBlock);
-        // Pop the stack and stack frame
-        thread.stack.pop();
-        thread.stackFrames.pop();
-        // Stop showing run feedback in the editor.
-        instance.runtime.glowBlock(currentBlock, false);
-    };
-
-    /**
-     * A callback for the primitive to start hats.
-     * @todo very hacked...
-     * Provide a callback that is passed in a block and returns true
-     * if it is a hat that should be triggered.
-     * @param {Function} callback Provided callback.
-     */
-    var startHats = function(callback) {
-        var stacks = instance.runtime.blocks.getStacks();
-        for (var i = 0; i < stacks.length; i++) {
-            var stack = stacks[i];
-            var stackBlock = instance.runtime.blocks.getBlock(stack);
-            var result = callback(stackBlock);
-            if (result) {
-                // Check if the stack is already running
-                var stackRunning = false;
-
-                for (var j = 0; j < instance.runtime.threads.length; j++) {
-                    if (instance.runtime.threads[j].topBlock == stack) {
-                        stackRunning = true;
-                        break;
-                    }
-                }
-                if (!stackRunning) {
-                    instance.runtime._pushThread(stack);
-                }
-            }
-        }
-    };
-
-    /**
-     * Record whether we have switched stack,
-     * to avoid proceeding the thread automatically.
-     * @type {boolean}
-     */
-    var switchedStack = false;
-    /**
-     * A callback for a primitive to start a substack.
-     * @type {Function}
-     */
-    var threadStartSubstack = function () {
-        // Set nextBlock to the start of the substack
-        var substack = instance.runtime.blocks.getSubstack(currentBlock);
-        if (substack && substack.value) {
-            thread.nextBlock = substack.value;
-        } else {
-            thread.nextBlock = null;
-        }
-        switchedStack = true;
-    };
-
-    // @todo extreme hack to get the single argument value for prototype
-    var argValues = [];
-    var blockInputs = this.runtime.blocks.getBlock(currentBlock).fields;
-    for (var bi in blockInputs) {
-        var outer = blockInputs[bi];
-        for (var b in outer.blocks) {
-            var block = outer.blocks[b];
-            var fields = block.fields;
-            for (var f in fields) {
-                var field = fields[f];
-                argValues.push(field.value);
-            }
-        }
-    }
-
     // Start showing run feedback in the editor.
-    this.runtime.glowBlock(currentBlock, true);
+    this.runtime.glowBlock(currentBlockId, true);
 
-    if (!opcode) {
-        console.warn('Could not get opcode for block: ' + currentBlock);
-    }
-    else {
-        var blockFunction = this.runtime.getOpcodeFunction(opcode);
-        if (!blockFunction) {
-            console.warn('Could not get implementation for opcode: ' + opcode);
-        }
-        else {
-            if (Sequencer.DEBUG_BLOCK_CALLS) {
-                console.groupCollapsed('Executing: ' + opcode);
-                console.log('with arguments: ', argValues);
-                console.log('and stack frame: ', currentStackFrame);
-            }
-            var blockFunctionReturnValue = null;
-            try {
-                // @todo deal with the return value
-                blockFunctionReturnValue = blockFunction(argValues, {
-                    yield: threadYieldCallback,
-                    done: threadDoneCallback,
-                    timeout: YieldTimers.timeout,
-                    stackFrame: currentStackFrame,
-                    startSubstack: threadStartSubstack,
-                    startHats: startHats
-                });
-            }
-            catch(e) {
-                console.error(
-                    'Exception calling block function for opcode: ' +
-                    opcode + '\n' + e);
-            } finally {
-                // Update if the thread has set a yield timer ID
-                // @todo hack
-                if (YieldTimers.timerId > oldYieldTimerId) {
-                    thread.yieldTimerId = YieldTimers.timerId;
-                }
-                if (thread.status === Thread.STATUS_RUNNING && !switchedStack) {
-                    // Thread executed without yielding - move to done
-                    threadDoneCallback();
-                }
-                if (Sequencer.DEBUG_BLOCK_CALLS) {
-                    console.log('ending stack frame: ', currentStackFrame);
-                    console.log('returned: ', blockFunctionReturnValue);
-                    console.groupEnd();
-                }
-            }
-        }
-    }
+    // Execute the current block
+    execute(this, thread);
 
+    // If the block executed without yielding and without doing control flow,
+    // move to done.
+    if (thread.status === Thread.STATUS_RUNNING &&
+        thread.peekStack() === currentBlockId) {
+        this.proceedThread(thread, currentBlockId);
+    }
+};
+
+/**
+ * Step a thread into a block's substack.
+ * @param {!Thread} thread Thread object to step to substack.
+ * @param {Number} substackNum Which substack to step to (i.e., 1, 2).
+ */
+Sequencer.prototype.stepToSubstack = function (thread, substackNum) {
+    if (!substackNum) {
+        substackNum = 1;
+    }
+    var currentBlockId = thread.peekStack();
+    var substackId = this.runtime.blocks.getSubstack(
+        currentBlockId,
+        substackNum
+    );
+    if (substackId) {
+        // Push substack ID to the thread's stack.
+        thread.pushStack(substackId);
+    } else {
+        // Push null, so we come back to the current block.
+        thread.pushStack(null);
+    }
+};
+
+/**
+ * Finish stepping a thread and proceed it to the next block.
+ * @param {!Thread} thread Thread object to proceed.
+ */
+Sequencer.prototype.proceedThread = function (thread) {
+    var currentBlockId = thread.peekStack();
+    // Mark the status as done and proceed to the next block.
+    this.runtime.glowBlock(currentBlockId, false);
+    thread.status = Thread.STATUS_DONE;
+    // Pop from the stack - finished this level of execution.
+    thread.popStack();
+    // Push next connected block, if there is one.
+    var nextBlockId = this.runtime.blocks.getNextBlock(currentBlockId);
+    if (nextBlockId) {
+        thread.pushStack(nextBlockId);
+    }
+    // Pop from the stack until we have a next block.
+    while (thread.peekStack() === null && thread.stack.length > 0) {
+        thread.popStack();
+    }
 };
 
 module.exports = Sequencer;

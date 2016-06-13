@@ -23,6 +23,13 @@ function Blocks () {
 }
 
 /**
+ * Blockly inputs that represent statements/substacks
+ * are prefixed with this string.
+ * @const{string}
+ */
+Blocks.SUBSTACK_INPUT_PREFIX = 'SUBSTACK';
+
+/**
  * Provide an object with metadata for the requested block ID.
  * @param {!string} blockId ID of block we have stored.
  * @return {?Object} Metadata about the block, if it exists.
@@ -60,7 +67,7 @@ Blocks.prototype.getSubstack = function (id, substackNum) {
     if (typeof block === 'undefined') return null;
     if (!substackNum) substackNum = 1;
 
-    var inputName = 'SUBSTACK';
+    var inputName = Blocks.SUBSTACK_INPUT_PREFIX;
     if (substackNum > 1) {
         inputName += substackNum;
     }
@@ -78,6 +85,34 @@ Blocks.prototype.getSubstack = function (id, substackNum) {
 Blocks.prototype.getOpcode = function (id) {
     if (typeof this._blocks[id] === 'undefined') return null;
     return this._blocks[id].opcode;
+};
+
+/**
+ * Get all fields and their values for a block.
+ * @param {?string} id ID of block to query.
+ * @return {!Object} All fields and their values.
+ */
+Blocks.prototype.getFields = function (id) {
+    if (typeof this._blocks[id] === 'undefined') return null;
+    return this._blocks[id].fields;
+};
+
+/**
+ * Get all non-substack inputs for a block.
+ * @param {?string} id ID of block to query.
+ * @return {!Object} All non-substack inputs and their associated blocks.
+ */
+Blocks.prototype.getInputs = function (id) {
+    if (typeof this._blocks[id] === 'undefined') return null;
+    var inputs = {};
+    for (var input in this._blocks[id].inputs) {
+        // Ignore blocks prefixed with substack prefix.
+        if (input.substring(0, Blocks.SUBSTACK_INPUT_PREFIX.length)
+            != Blocks.SUBSTACK_INPUT_PREFIX) {
+            inputs[input] = this._blocks[id].inputs[input];
+        }
+    }
+    return inputs;
 };
 
 // ---------------------------------------------------------------------
