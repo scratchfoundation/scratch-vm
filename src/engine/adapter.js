@@ -100,9 +100,17 @@ function domToBlock (blockDOM, blocks, isTopBlock) {
         case 'field':
             // Add the field to this block.
             var fieldName = xmlChild.attribs.name;
+            var fieldData = '';
+            if (xmlChild.children.length > 0 && xmlChild.children[0].data) {
+                fieldData = xmlChild.children[0].data;
+            } else {
+                // If the child of the field with a data property
+                // doesn't exist, set the data to an empty string.
+                fieldData = '';
+            }
             block.fields[fieldName] = {
                 name: fieldName,
-                value: xmlChild.children[0].data
+                value: fieldData
             };
             break;
         case 'value':
