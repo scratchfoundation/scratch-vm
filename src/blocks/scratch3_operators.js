@@ -14,8 +14,8 @@ Scratch3OperatorsBlocks.prototype.getPrimitives = function() {
     return {
         'math_number': this.number,
         'text': this.text,
-        'math_add': this.add,
-        'logic_equals': this.equals
+        'operator_add': this.add,
+        'operator_equals': this.equals
     };
 };
 
@@ -32,7 +32,7 @@ Scratch3OperatorsBlocks.prototype.add = function (args) {
 };
 
 Scratch3OperatorsBlocks.prototype.equals = function (args) {
-    return args.VALUE1 == args.VALUE2;
+    return args.OPERAND1 == args.OPERAND2;
 };
 
 module.exports = Scratch3OperatorsBlocks;
