@@ -53,10 +53,10 @@ Sequencer.prototype.stepThreads = function (threads) {
                 // Normal-mode thread: step.
                 this.startThread(activeThread);
             } else if (activeThread.status === Thread.STATUS_YIELD) {
-                // Yield-mode thread: check if the time has passed.
-                if (!YieldTimers.resolve(activeThread.yieldTimerId)) {
-                    // Thread is still yielding
-                    // if YieldTimers.resolve returns false.
+                // Yield-mode thread: resolve timers.
+                activeThread.resolveTimeouts();
+                if (activeThread.status === Thread.STATUS_YIELD) {
+                    // Still yielding.
                     numYieldingThreads++;
                 }
             } else if (activeThread.status === Thread.STATUS_DONE) {

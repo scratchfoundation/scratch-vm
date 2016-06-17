@@ -1,3 +1,5 @@
+var YieldTimers = require('../util/yieldtimers.js');
+
 /**
  * A thread is a running stack context and all the metadata needed.
  * @param {?string} firstBlock First block to execute in the thread.
@@ -30,10 +32,10 @@ function Thread (firstBlock) {
     this.status = 0; /* Thread.STATUS_RUNNING */
 
     /**
-     * Yield timer ID (for checking when the thread should unyield).
+     * Execution-synced timeouts.
      * @type {number}
      */
-    this.yieldTimerId = -1;
+    this.timeoutIds = [];
 }
 
 /**
@@ -102,6 +104,31 @@ Thread.prototype.peekStackFrame = function () {
  */
 Thread.prototype.yield = function () {
     this.status = Thread.STATUS_YIELD;
+};
+
+/**
+ * Add an execution-synced timeouts for this thread.
+ * See also: util/yieldtimers.js:timeout
+ * @param {!Function} callback To be called when the timer is done.
+ * @param {number} timeDelta Time to wait, in ms.
+ */
+Thread.prototype.addTimeout = function (callback, timeDelta) {
+    var timeoutId = YieldTimers.timeout(callback, timeDelta);
+    this.timeoutIds.push(timeoutId);
+};
+
+/**
+ * Attempt to resolve all execution-synced timeouts on this thread.
+ */
+Thread.prototype.resolveTimeouts = function () {
+    var newTimeouts = [];
+    for (var i = 0; i < this.timeoutIds.length; i++) {
+        var resolved = YieldTimers.resolve(this.timeoutIds[i]);
+        if (!resolved) {
+            newTimeouts.push(this.timeoutIds[i]);
+        }
+    }
+    this.timeoutIds = newTimeouts;
 };
 
 module.exports = Thread;

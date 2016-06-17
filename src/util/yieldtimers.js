@@ -68,23 +68,4 @@ YieldTimers.resolve = function (id) {
     return true;
 };
 
-/**
- * Reject a timer so the callback never executes.
- * @param {number} id Timer ID to reject.
- */
-YieldTimers.reject = function (id) {
-    if (YieldTimers.timers[id]) {
-        delete YieldTimers.timers[id];
-    }
-};
-
-/**
- * Reject all timers currently stored.
- * Especially useful for a Scratch "stop."
- */
-YieldTimers.rejectAll = function () {
-    YieldTimers.timers = {};
-    YieldTimers.timerId = 0;
-};
-
 module.exports = YieldTimers;

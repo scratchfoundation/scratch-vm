@@ -1,5 +1,3 @@
-var YieldTimers = require('../util/yieldtimers.js');
-
 /**
  * If set, block calls, args, and return values will be logged to the console.
  * @const {boolean}
@@ -12,11 +10,6 @@ var execute = function (sequencer, thread) {
     // Current block to execute is the one on the top of the stack.
     var currentBlockId = thread.peekStack();
     var currentStackFrame = thread.peekStackFrame();
-
-    // Save the yield timer ID, in case a primitive makes a new one
-    // @todo hack - perhaps patch this to allow more than one timer per
-    // primitive, for example...
-    var oldYieldTimerId = YieldTimers.timerId;
 
     var opcode = runtime.blocks.getOpcode(currentBlockId);
 
@@ -64,17 +57,12 @@ var execute = function (sequencer, thread) {
         done: function() {
             sequencer.proceedThread(thread);
         },
-        timeout: YieldTimers.timeout,
+        timeout: thread.addTimeout.bind(thread),
         stackFrame: currentStackFrame,
         startSubstack: function (substackNum) {
             sequencer.stepToSubstack(thread, substackNum);
         }
     });
-    // Update if the thread has set a yield timer ID
-    // @todo hack
-    if (YieldTimers.timerId > oldYieldTimerId) {
-        thread.yieldTimerId = YieldTimers.timerId;
-    }
     if (DEBUG_BLOCK_CALLS) {
         console.log('ending stack frame: ', currentStackFrame);
         console.log('returned: ', primitiveReturnValue);
