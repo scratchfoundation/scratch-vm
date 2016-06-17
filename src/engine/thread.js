@@ -69,7 +69,10 @@ Thread.prototype.pushStack = function (blockId) {
     // Push an empty stack frame, if we need one.
     // Might not, if we just popped the stack.
     if (this.stack.length > this.stackFrames.length) {
-        this.stackFrames.push({});
+        this.stackFrames.push({
+            reported: {}, // Collects reported input values.
+            executionContext: {} // A context passed to block implementations.
+        });
     }
 };
 
@@ -97,6 +100,18 @@ Thread.prototype.peekStack = function () {
  */
 Thread.prototype.peekStackFrame = function () {
     return this.stackFrames[this.stackFrames.length - 1];
+};
+
+/**
+ * Push a reported value to the parent of the current stack frame.
+ * @param {!string} inputName Name of input reported.
+ * @param {!Any} value Reported value to push.
+ */
+Thread.prototype.pushReportedValue = function (inputName, value) {
+    var parentStackFrame = this.stackFrames[this.stackFrames.length - 2];
+    if (parentStackFrame) {
+        parentStackFrame.reported[inputName] = value;
+    }
 };
 
 /**

@@ -1,6 +1,5 @@
 var Timer = require('../util/timer');
 var Thread = require('./thread');
-var YieldTimers = require('../util/yieldtimers.js');
 var execute = require('./execute.js');
 
 function Sequencer (runtime) {
@@ -101,7 +100,7 @@ Sequencer.prototype.startThread = function (thread) {
     // move to done.
     if (thread.status === Thread.STATUS_RUNNING &&
         thread.peekStack() === currentBlockId) {
-        this.proceedThread(thread, currentBlockId);
+        this.proceedThread(thread);
     }
 };
 
