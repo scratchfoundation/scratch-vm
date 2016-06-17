@@ -165,3 +165,10 @@ test('create with invalid xml', function (t) {
     t.equal(result.length, 0);
     t.end();
 });
+
+test('create with empty field', function (t) {
+    var result = adapter(events.createemptyfield);
+    t.ok(Array.isArray(result));
+    t.equal(result.length, 3);
+    t.end();
+});

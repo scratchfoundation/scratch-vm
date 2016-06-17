@@ -53,5 +53,11 @@
         "xml": {
             "outerHTML": "></xml>"
         }
+    },
+    "createemptyfield": {
+        "name": "block",
+        "xml": {
+            "outerHTML":  "<block type='operator_equals' id='l^H_{8[DDyDW?m)HIt@b' x='100' y='362'><value name='OPERAND1'><shadow type='text' id='Ud@4y]bc./]uv~te?brb'><field name='TEXT'></field></shadow></value><value name='OPERAND2'><shadow type='text' id='p8[y..,[K;~G,k7]N;08'><field name='TEXT'></field></shadow></value></block>"
+        }
     }
 }
