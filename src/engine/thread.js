@@ -71,6 +71,7 @@ Thread.prototype.pushStack = function (blockId) {
     if (this.stack.length > this.stackFrames.length) {
         this.stackFrames.push({
             reported: {}, // Collects reported input values.
+            waitingReporter: null, // Name of waiting reporter.
             executionContext: {} // A context passed to block implementations.
         });
     }
@@ -104,13 +105,14 @@ Thread.prototype.peekStackFrame = function () {
 
 /**
  * Push a reported value to the parent of the current stack frame.
- * @param {!string} inputName Name of input reported.
  * @param {!Any} value Reported value to push.
  */
-Thread.prototype.pushReportedValue = function (inputName, value) {
+Thread.prototype.pushReportedValue = function (value) {
     var parentStackFrame = this.stackFrames[this.stackFrames.length - 2];
     if (parentStackFrame) {
-        parentStackFrame.reported[inputName] = value;
+        var waitingReporter = parentStackFrame.waitingReporter;
+        parentStackFrame.reported[waitingReporter] = value;
+        parentStackFrame.waitingReporter = null;
     }
 };
 

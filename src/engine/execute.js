@@ -10,10 +10,9 @@ var DEBUG_BLOCK_CALLS = true;
  * Execute a block.
  * @param {!Sequencer} sequencer Which sequencer is executing.
  * @param {!Thread} thread Thread which to read and execute.
- * @param {string=} opt_waitingInputName If evaluating an input, its name.
  * @return {?Any} Reported value, if available immediately.
  */
-var execute = function (sequencer, thread, opt_waitingInputName) {
+var execute = function (sequencer, thread) {
     var runtime = sequencer.runtime;
 
     // Current block to execute is the one on the top of the stack.
@@ -48,14 +47,18 @@ var execute = function (sequencer, thread, opt_waitingInputName) {
             if (DEBUG_BLOCK_CALLS) {
                 console.time('Yielding reporter evaluation');
             }
-            var result = execute(sequencer, thread, inputName);
+            runtime.glowBlock(inputBlockId, true);
+            var result = execute(sequencer, thread);
             // Did the reporter yield?
             if (thread.status === Thread.STATUS_YIELD) {
                 // Reporter yielded; don't pop stack and wait for it to unyield.
                 // The value will be populated once the reporter unyields,
                 // and passed up to the currentStackFrame on next execution.
+                // Save name of this input to be filled by child `util.report`.
+                currentStackFrame.waitingReporter = inputName;
                 return;
             }
+            runtime.glowBlock(inputBlockId, false);
             thread.popStack();
             argValues[inputName] = result;
         }
@@ -84,12 +87,11 @@ var execute = function (sequencer, thread, opt_waitingInputName) {
             sequencer.proceedThread(thread);
         },
         report: function(reportedValue) {
-            thread.pushReportedValue(opt_waitingInputName, reportedValue);
             if (DEBUG_BLOCK_CALLS) {
-                console.log('Reported: ', reportedValue,
-                    ' for ', opt_waitingInputName);
+                console.log('Reported: ', reportedValue);
                 console.timeEnd('Yielding reporter evaluation');
             }
+            thread.pushReportedValue(reportedValue);
             sequencer.proceedThread(thread);
         },
         timeout: thread.addTimeout.bind(thread),
