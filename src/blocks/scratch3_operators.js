@@ -15,7 +15,8 @@ Scratch3OperatorsBlocks.prototype.getPrimitives = function() {
         'math_number': this.number,
         'text': this.text,
         'operator_add': this.add,
-        'operator_equals': this.equals
+        'operator_equals': this.equals,
+        'operator_random': this.random
     };
 };
 
@@ -33,6 +34,17 @@ Scratch3OperatorsBlocks.prototype.add = function (args) {
 
 Scratch3OperatorsBlocks.prototype.equals = function (args) {
     return args.OPERAND1 == args.OPERAND2;
+};
+
+Scratch3OperatorsBlocks.prototype.random = function (args, util) {
+    // As a demo, this implementation of random returns after 1 second of yield.
+    // @todo Match Scratch 2.0 implementation with int-truncation.
+    // See: http://bit.ly/1Qc0GzC
+    util.yield();
+    setTimeout(function() {
+        var randomValue = (Math.random() * (args.TO - args.FROM)) + args.FROM;
+        util.report(randomValue);
+    }, 1000);
 };
 
 module.exports = Scratch3OperatorsBlocks;
