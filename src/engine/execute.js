@@ -45,22 +45,22 @@ var execute = function (sequencer, thread) {
     for (var inputName in inputs) {
         var input = inputs[inputName];
         var inputBlockId = input.block;
-        // Is there a value for this input waiting in the stack frame?
+        // Is there no value for this input waiting in the stack frame?
         if (typeof currentStackFrame.reported[inputName] === 'undefined') {
-            // Otherwise, we need to evaluate the block.
+            // If there's not, we need to evaluate the block.
             // Push to the stack to evaluate this input.
             thread.pushStack(inputBlockId);
             if (DEBUG_BLOCK_CALLS) {
-                console.time('Yielding reporter evaluation');
+                console.time('Reporter evaluation');
             }
             runtime.glowBlock(inputBlockId, true);
+            // Save name of input for `Thread.pushReportedValue`.
             currentStackFrame.waitingReporter = inputName;
             execute(sequencer, thread);
             if (thread.status === Thread.STATUS_YIELD) {
                 // Reporter yielded; don't pop stack and wait for it to unyield.
                 // The value will be populated once the reporter unyields,
                 // and passed up to the currentStackFrame on next execution.
-                // Save name of this input to be filled by child `util.report`.
                 return;
             }
             runtime.glowBlock(inputBlockId, false);
