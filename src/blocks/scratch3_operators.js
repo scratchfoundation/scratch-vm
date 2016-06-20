@@ -23,6 +23,7 @@ Scratch3OperatorsBlocks.prototype.getPrimitives = function() {
         'operator_gt': this.gt,
         'operator_and': this.and,
         'operator_or': this.or,
+        'operator_not': this.not,
         'operator_random': this.random
     };
 };
