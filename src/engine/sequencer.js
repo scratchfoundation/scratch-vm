@@ -91,7 +91,6 @@ Sequencer.prototype.stepThreads = function (threads) {
 
 /**
  * Return the thread blocking all other threads, if one exists.
- * If not, return false.
  * @param {Array.<Thread>} threads List of which threads to check.
  * @return {?Thread} The blocking thread if one exists.
  */
@@ -101,7 +100,7 @@ Sequencer.prototype.getBlockingThread_ = function (threads) {
             return threads[i];
         }
     }
-    return false;
+    return null;
 };
 
 /**
