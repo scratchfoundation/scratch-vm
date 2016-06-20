@@ -10,7 +10,6 @@ var DEBUG_BLOCK_CALLS = true;
  * Execute a block.
  * @param {!Sequencer} sequencer Which sequencer is executing.
  * @param {!Thread} thread Thread which to read and execute.
- * @return {?Any} Reported value, if available immediately.
  */
 var execute = function (sequencer, thread) {
     var runtime = sequencer.runtime;
@@ -47,7 +46,7 @@ var execute = function (sequencer, thread) {
         var input = inputs[inputName];
         var inputBlockId = input.block;
         // Is there a value for this input waiting in the stack frame?
-        if (!currentStackFrame.reported[inputName]) {
+        if (typeof currentStackFrame.reported[inputName] === 'undefined') {
             // Otherwise, we need to evaluate the block.
             // Push to the stack to evaluate this input.
             thread.pushStack(inputBlockId);
@@ -55,9 +54,8 @@ var execute = function (sequencer, thread) {
                 console.time('Yielding reporter evaluation');
             }
             runtime.glowBlock(inputBlockId, true);
-            var result = execute(sequencer, thread);
-            // Did the reporter yield?
             currentStackFrame.waitingReporter = inputName;
+            execute(sequencer, thread);
             if (thread.status === Thread.STATUS_YIELD) {
                 // Reporter yielded; don't pop stack and wait for it to unyield.
                 // The value will be populated once the reporter unyields,
@@ -66,8 +64,6 @@ var execute = function (sequencer, thread) {
                 return;
             }
             runtime.glowBlock(inputBlockId, false);
-            thread.pushReportedValue(result);
-            argValues[inputName] = result;
             thread.popStack();
         }
         argValues[inputName] = currentStackFrame.reported[inputName];
@@ -98,12 +94,16 @@ var execute = function (sequencer, thread) {
             sequencer.stepToSubstack(thread, substackNum);
         }
     });
+    if (thread.status === Thread.STATUS_RUNNING) {
+        if (DEBUG_BLOCK_CALLS) {
+            console.log('reporting value: ', primitiveReturnValue);
+        }
+        thread.pushReportedValue(primitiveReturnValue);
+    }
     if (DEBUG_BLOCK_CALLS) {
         console.log('ending stack frame: ', currentStackFrame);
-        console.log('returned immediately: ', primitiveReturnValue);
         console.groupEnd();
     }
-    return primitiveReturnValue;
 };
 
 module.exports = execute;
