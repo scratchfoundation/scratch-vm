@@ -104,11 +104,19 @@ Thread.prototype.peekStackFrame = function () {
 };
 
 /**
+ * Get stack frame above the current top.
+ * @return {?Object} Second to last stack frame stored on this thread.
+ */
+Thread.prototype.peekParentStackFrame = function () {
+    return this.stackFrames[this.stackFrames.length - 2];
+};
+
+/**
  * Push a reported value to the parent of the current stack frame.
  * @param {!Any} value Reported value to push.
  */
 Thread.prototype.pushReportedValue = function (value) {
-    var parentStackFrame = this.stackFrames[this.stackFrames.length - 2];
+    var parentStackFrame = this.peekParentStackFrame();
     if (parentStackFrame) {
         var waitingReporter = parentStackFrame.waitingReporter;
         parentStackFrame.reported[waitingReporter] = value;
