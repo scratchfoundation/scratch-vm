@@ -15,7 +15,14 @@ Scratch3OperatorsBlocks.prototype.getPrimitives = function() {
         'math_number': this.number,
         'text': this.text,
         'operator_add': this.add,
+        'operator_subtract': this.subtract,
+        'operator_multiply': this.multiply,
+        'operator_divide': this.divide,
+        'operator_lt': this.lt,
         'operator_equals': this.equals,
+        'operator_gt': this.gt,
+        'operator_and': this.and,
+        'operator_or': this.or,
         'operator_random': this.random
     };
 };
@@ -32,8 +39,43 @@ Scratch3OperatorsBlocks.prototype.add = function (args) {
     return args.NUM1 + args.NUM2;
 };
 
+Scratch3OperatorsBlocks.prototype.subtract = function (args) {
+    return args.NUM1 - args.NUM2;
+};
+
+Scratch3OperatorsBlocks.prototype.multiply = function (args) {
+    return args.NUM1 * args.NUM2;
+};
+
+Scratch3OperatorsBlocks.prototype.divide = function (args) {
+    return args.NUM1 / args.NUM2;
+};
+
+Scratch3OperatorsBlocks.prototype.lt = function (args) {
+    return args.OPERAND1 < args.OPERAND2;
+};
+
 Scratch3OperatorsBlocks.prototype.equals = function (args) {
     return args.OPERAND1 == args.OPERAND2;
+};
+
+Scratch3OperatorsBlocks.prototype.gt = function (args) {
+    return args.OPERAND1 > args.OPERAND2;
+};
+
+Scratch3OperatorsBlocks.prototype.and = function (args) {
+    if (!args.OPERAND1 || !args.OPERAND2) {
+        return false;
+    }
+    return true;
+};
+
+Scratch3OperatorsBlocks.prototype.or = function (args) {
+    return args.OPERAND1 || args.OPERAND2;
+};
+
+Scratch3OperatorsBlocks.prototype.not = function (args) {
+    return !args.OPERAND;
 };
 
 Scratch3OperatorsBlocks.prototype.random = function (args, util) {
