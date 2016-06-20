@@ -62,9 +62,11 @@ var execute = function (sequencer, thread) {
                 // The value will be populated once the reporter unyields,
                 // and passed up to the currentStackFrame on next execution.
                 return;
+            } else {
+                // Reporter finished right away; pop the stack.
+                runtime.glowBlock(inputBlockId, false);
+                thread.popStack();
             }
-            runtime.glowBlock(inputBlockId, false);
-            thread.popStack();
         }
         argValues[inputName] = currentStackFrame.reported[inputName];
     }
