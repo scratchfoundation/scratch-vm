@@ -128,6 +128,33 @@ Sequencer.prototype.stepToSubstack = function (thread, substackNum) {
 };
 
 /**
+ * Step a thread into an input reporter, and manage its status appropriately.
+ * @param {!Thread} thread Thread object to step to reporter.
+ * @param {!string} blockId ID of reporter block.
+ * @param {!string} inputName Name of input on parent block.
+ * @return {boolean} True if yielded, false if it finished immediately.
+ */
+Sequencer.prototype.stepToReporter = function (thread, blockId, inputName) {
+    var currentStackFrame = thread.peekStackFrame();
+    // Push to the stack to evaluate the reporter block.
+    thread.pushStack(blockId);
+    // Save name of input for `Thread.pushReportedValue`.
+    currentStackFrame.waitingReporter = inputName;
+    // Actually execute the block.
+    this.startThread(thread);
+    if (thread.status === Thread.STATUS_YIELD) {
+        // Reporter yielded; caller must wait for it to unyield.
+        // The value will be populated once the reporter unyields,
+        // and passed up to the currentStackFrame on next execution.
+        return true;
+    } else if (thread.status === Thread.STATUS_DONE) {
+        // Reporter finished, mark the thread as running.
+        thread.status = Thread.STATUS_RUNNING;
+        return false;
+    }
+};
+
+/**
  * Finish stepping a thread and proceed it to the next block.
  * @param {!Thread} thread Thread object to proceed.
  */
