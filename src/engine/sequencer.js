@@ -167,7 +167,8 @@ Sequencer.prototype.stepToReporter = function (thread, blockId, inputName) {
     currentStackFrame.waitingReporter = inputName;
     // Actually execute the block.
     this.startThread(thread);
-    if (thread.status === Thread.STATUS_YIELD) {
+    if (thread.status === Thread.STATUS_YIELD ||
+        thread.status === Thread.STATUS_YIELD_BLOCK) {
         // Reporter yielded; caller must wait for it to unyield.
         // The value will be populated once the reporter unyields,
         // and passed up to the currentStackFrame on next execution.
