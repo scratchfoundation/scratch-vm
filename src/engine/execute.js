@@ -82,8 +82,8 @@ var execute = function (sequencer, thread) {
         console.log('with arguments: ', argValues);
         console.log('and stack frame: ', currentStackFrame);
     }
-    var primitiveReturnValue = null;
-    primitiveReturnValue = blockFunction(argValues, {
+    var primitiveReportedValue = null;
+    primitiveReportedValue = blockFunction(argValues, {
         yield: thread.yield.bind(thread),
         done: function() {
             sequencer.proceedThread(thread);
@@ -104,9 +104,9 @@ var execute = function (sequencer, thread) {
     });
     if (thread.status === Thread.STATUS_RUNNING) {
         if (DEBUG_BLOCK_CALLS) {
-            console.log('reporting value: ', primitiveReturnValue);
+            console.log('reporting value: ', primitiveReportedValue);
         }
-        thread.pushReportedValue(primitiveReturnValue);
+        thread.pushReportedValue(primitiveReportedValue);
     }
     if (DEBUG_BLOCK_CALLS) {
         console.log('ending stack frame: ', currentStackFrame);
