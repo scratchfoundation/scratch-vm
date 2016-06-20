@@ -83,7 +83,7 @@ Scratch3OperatorsBlocks.prototype.random = function (args, util) {
     // As a demo, this implementation of random returns after 1 second of yield.
     // @todo Match Scratch 2.0 implementation with int-truncation.
     // See: http://bit.ly/1Qc0GzC
-    util.yield();
+    util.yieldAndBlock();
     setTimeout(function() {
         var randomValue = (Math.random() * (args.TO - args.FROM)) + args.FROM;
         util.report(randomValue);

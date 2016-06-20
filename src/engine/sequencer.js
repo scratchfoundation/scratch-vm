@@ -32,6 +32,13 @@ Sequencer.WORK_TIME = 10;
 Sequencer.prototype.stepThreads = function (threads) {
     // Start counting toward WORK_TIME
     this.timer.start();
+    // Check for a blocking thread.
+    var blockingThread = this.getBlockingThread_(threads);
+    if (blockingThread) {
+        // Attempt to resolve any timeouts, but otherwise stop stepping.
+        blockingThread.resolveTimeouts();
+        return [];
+    }
     // List of threads which have been killed by this step.
     var inactiveThreads = [];
     // If all of the threads are yielding, we should yield.
@@ -63,6 +70,10 @@ Sequencer.prototype.stepThreads = function (threads) {
                 activeThread.status = Thread.STATUS_RUNNING;
                 // @todo Deal with the return value
             }
+            // Has the thread gone into "blocking" mode? If so, stop stepping.
+            if (activeThread.status === Thread.STATUS_YIELD_BLOCK) {
+                return inactiveThreads;
+            }
             if (activeThread.stack.length === 0 &&
                 activeThread.status === Thread.STATUS_DONE) {
                 // Finished with this thread - tell runtime to clean it up.
@@ -76,6 +87,21 @@ Sequencer.prototype.stepThreads = function (threads) {
         threads = newThreads;
     }
     return inactiveThreads;
+};
+
+/**
+ * Return the thread blocking all other threads, if one exists.
+ * If not, return false.
+ * @param {Array.<Thread>} threads List of which threads to check.
+ * @return {?Thread} The blocking thread if one exists.
+ */
+Sequencer.prototype.getBlockingThread_ = function (threads) {
+    for (var i = 0; i < threads.length; i++) {
+        if (threads[i].status === Thread.STATUS_YIELD_BLOCK) {
+            return threads[i];
+        }
+    }
+    return false;
 };
 
 /**

@@ -53,12 +53,20 @@ Thread.STATUS_RUNNING = 0;
 Thread.STATUS_YIELD = 1;
 
 /**
+ * Thread status for a yielded thread that should block all other threads.
+ * This is desirable when an asynchronous capability should appear to take
+ * a synchronous amount of time (e.g., color touching color).
+ * @const
+ */
+Thread.STATUS_YIELD_BLOCK = 2;
+
+/**
  * Thread status for a finished/done thread.
  * Thread is moved to this state when the interpreter
  * can proceed with execution.
  * @const
  */
-Thread.STATUS_DONE = 2;
+Thread.STATUS_DONE = 3;
 
 /**
  * Push stack and update stack frames appropriately.
@@ -129,6 +137,13 @@ Thread.prototype.pushReportedValue = function (value) {
  */
 Thread.prototype.yield = function () {
     this.status = Thread.STATUS_YIELD;
+};
+
+/**
+ * Yields the thread and blocks other threads until unyielded.
+ */
+Thread.prototype.yieldAndBlock = function () {
+    this.status = Thread.STATUS_YIELD_BLOCK;
 };
 
 /**
