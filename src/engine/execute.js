@@ -71,6 +71,12 @@ var execute = function (sequencer, thread) {
         argValues[inputName] = currentStackFrame.reported[inputName];
     }
 
+    // If we've gotten this far, all of the input blocks are evaluated,
+    // and `argValues` is fully populated. So, execute the block primitive.
+    // First, clear `currentStackFrame.reported`, so any subsequent execution
+    // (e.g., on return from a substack) gets fresh inputs.
+    currentStackFrame.reported = {};
+
     if (DEBUG_BLOCK_CALLS) {
         console.groupCollapsed('Executing: ' + opcode);
         console.log('with arguments: ', argValues);
