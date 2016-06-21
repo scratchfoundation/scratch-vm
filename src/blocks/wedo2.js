@@ -64,7 +64,7 @@ WeDo2Blocks.prototype._motorOnFor = function(direction, durationSeconds, util) {
         YieldTimers.resolve(this._motorTimeout);
         this._motorTimeout = null;
     }
-    if (window.native) {
+    if (typeof window !== 'undefined' && window.native) {
         window.native.motorRun(direction, this._motorSpeed);
     }
 
@@ -73,7 +73,7 @@ WeDo2Blocks.prototype._motorOnFor = function(direction, durationSeconds, util) {
         if (instance._motorTimeout == myTimeout) {
             instance._motorTimeout = null;
         }
-        if (window.native) {
+        if (typeof window !== 'undefined' && window.native) {
             window.native.motorStop();
         }
         util.done();
@@ -132,7 +132,7 @@ WeDo2Blocks.prototype._getColor = function(colorName) {
 };
 
 WeDo2Blocks.prototype.setColor = function(argValues, util) {
-    if (window.native) {
+    if (typeof window !== 'undefined' && window.native) {
         var colorIndex = this._getColor(argValues[0]);
         window.native.setLedColor(colorIndex);
     }

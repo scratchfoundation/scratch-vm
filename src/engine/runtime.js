@@ -210,10 +210,6 @@ Runtime.prototype.stopAll = function () {
         // Actually remove the thread.
         this._removeThread(poppedThread);
     }
-    // @todo call stop function in all extensions/packages/WeDo stub
-    if (window.native) {
-        window.native.motorStop();
-    }
 };
 
 /**
@@ -244,11 +240,28 @@ Runtime.prototype.glowBlock = function (blockId, isGlowing) {
 };
 
 /**
+ * setInterval implementation that works in a WebWorker or not.
+ * @param {?Function} fcn Function to call.
+ * @param {number} interval Interval at which to call it.
+ * @return {number} Value returned by setInterval.
+ */
+Runtime.prototype._setInterval = function(fcn, interval) {
+    var setInterval = null;
+    if (typeof window !== 'undefined' && window.setInterval) {
+        setInterval = window.setInterval;
+    } else if (typeof self !== 'undefined' && self.setInterval) {
+        setInterval = self.setInterval;
+    } else {
+        return;
+    }
+    return setInterval(fcn, interval);
+};
+
+/**
  * Set up timers to repeatedly step in a browser
  */
 Runtime.prototype.start = function () {
-    if (!window.setInterval) return;
-    window.setInterval(function() {
+    this._setInterval(function() {
         this._step();
     }.bind(this), Runtime.THREAD_STEP_INTERVAL);
 };
