@@ -3,7 +3,8 @@ var webpack = require('webpack');
 module.exports = {
     entry: {
         'vm': './src/index.js',
-        'vm.min': './src/index.js'
+        'vm.min': './src/index.js',
+        'vm.worker': './src/worker.js'
     },
     output: {
         path: __dirname,

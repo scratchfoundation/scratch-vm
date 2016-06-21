@@ -34,10 +34,62 @@ function VirtualMachine () {
     instance.flyoutBlockListener = (
         instance.blocks.generateBlockListener(true, instance.runtime)
     );
+
+    // Runtime emits are passed along as VM emits.
+    instance.runtime.on(Runtime.STACK_GLOW_ON, function (id) {
+        instance.emit(Runtime.STACK_GLOW_ON, {id: id});
+    });
+    instance.runtime.on(Runtime.STACK_GLOW_OFF, function (id) {
+        instance.emit(Runtime.STACK_GLOW_OFF, {id: id});
+    });
+    instance.runtime.on(Runtime.BLOCK_GLOW_ON, function (id) {
+        instance.emit(Runtime.BLOCK_GLOW_ON, {id: id});
+    });
+    instance.runtime.on(Runtime.BLOCK_GLOW_OFF, function (id) {
+        instance.emit(Runtime.BLOCK_GLOW_OFF, {id: id});
+    });
 }
 
+/**
+ * Inherit from EventEmitter
+ */
+util.inherits(VirtualMachine, EventEmitter);
+
+/**
+ * Start running the VM - do this before anything else.
+ */
+VirtualMachine.prototype.start = function () {
+    this.runtime.start();
+};
+
+/**
+ * "Green flag" handler - start all threads starting with a green flag.
+ */
+VirtualMachine.prototype.greenFlag = function () {
+    this.runtime.greenFlag();
+};
+
+/**
+ * Stop all threads and running activities.
+ */
+VirtualMachine.prototype.stopAll = function () {
+    this.runtime.stopAll();
+};
+
+/**
+ * Get data for playground. Data comes back in an emitted event.
+ */
+VirtualMachine.prototype.getPlaygroundData = function () {
+    this.emit('playgroundData', {
+        blocks: this.blocks,
+        threads: this.runtime.threads
+    });
+};
+
 /*
- * Worker Handlers
+ * Worker handlers: for all public methods available above,
+ * we must also provide a message handler in case the VM is run
+ * from a worker environment.
  */
 if (ENV_WORKER) {
     self.vmInstance = new VirtualMachine();
@@ -84,11 +136,6 @@ if (ENV_WORKER) {
         self.postMessage({method: Runtime.BLOCK_GLOW_OFF, id: id});
     });
 }
-
-/**
- * Inherit from EventEmitter
- */
-util.inherits(VirtualMachine, EventEmitter);
 
 /**
  * Export and bind to `window`
