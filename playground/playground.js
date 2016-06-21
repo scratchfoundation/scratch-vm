@@ -26,55 +26,61 @@ window.onload = function() {
     window.workspace = workspace;
 
     // Block events.
-    workspace.addChangeListener(vm.blockListener);
     // @todo: Re-enable flyout listening after fixing GH-69.
-    //var flyoutWorkspace = workspace.toolbox_.flyout_.workspace_;
-    //flyoutWorkspace.addChangeListener(vm.flyoutBlockListener);
+    workspace.addChangeListener(vm.blockListener);
 
+    // Playground data
     var blockexplorer = document.getElementById('blockexplorer');
-    workspace.addChangeListener(function() {
-        // On a change, update the block explorer.
-        blockexplorer.innerHTML = JSON.stringify(vm.runtime.blocks, null, 2);
+    var updateBlockExplorer = function(blocks) {
+        blockexplorer.innerHTML = JSON.stringify(blocks, null, 2);
         window.hljs.highlightBlock(blockexplorer);
-    });
+    };
 
     var threadexplorer = document.getElementById('threadexplorer');
     var cachedThreadJSON = '';
-    var updateThreadExplorer = function () {
-        var newJSON = JSON.stringify(vm.runtime.threads, null, 2);
+    var updateThreadExplorer = function (threads) {
+        var newJSON = JSON.stringify(threads, null, 2);
         if (newJSON != cachedThreadJSON) {
             cachedThreadJSON = newJSON;
             threadexplorer.innerHTML = cachedThreadJSON;
             window.hljs.highlightBlock(threadexplorer);
         }
-        window.requestAnimationFrame(updateThreadExplorer);
     };
-    updateThreadExplorer();
+
+    var getPlaygroundData = function () {
+        vm.getPlaygroundData();
+        window.requestAnimationFrame(getPlaygroundData);
+    };
+    getPlaygroundData();
+
+    vm.on('playgroundData', function(data) {
+        updateThreadExplorer(data.threads);
+        updateBlockExplorer(data.blocks);
+    });
 
     // Feedback for stacks and blocks running.
-    vm.runtime.on('STACK_GLOW_ON', function(blockId) {
-        workspace.glowStack(blockId, true);
+    vm.on('STACK_GLOW_ON', function(data) {
+        workspace.glowStack(data.id, true);
     });
-    vm.runtime.on('STACK_GLOW_OFF', function(blockId) {
-        workspace.glowStack(blockId, false);
+    vm.on('STACK_GLOW_OFF', function(data) {
+        workspace.glowStack(data.id, false);
     });
-    vm.runtime.on('BLOCK_GLOW_ON', function(blockId) {
-        workspace.glowBlock(blockId, true);
+    vm.on('BLOCK_GLOW_ON', function(data) {
+        workspace.glowBlock(data.id, true);
     });
-    vm.runtime.on('BLOCK_GLOW_OFF', function(blockId) {
-        workspace.glowBlock(blockId, false);
+    vm.on('BLOCK_GLOW_OFF', function(data) {
+        workspace.glowBlock(data.id, false);
     });
-
 
     // Run threads
-    vm.runtime.start();
+    vm.start();
 
     // Handlers for green flag and stop all.
     document.getElementById('greenflag').addEventListener('click', function() {
-        vm.runtime.greenFlag();
+        vm.greenFlag();
     });
     document.getElementById('stopall').addEventListener('click', function() {
-        vm.runtime.stopAll();
+        vm.stopAll();
     });
 
     var tabBlockExplorer = document.getElementById('tab-blockexplorer');
