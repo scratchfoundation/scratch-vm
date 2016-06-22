@@ -2,6 +2,7 @@ ESLINT=./node_modules/.bin/eslint
 NODE=node
 TAP=./node_modules/.bin/tap
 WEBPACK=./node_modules/.bin/webpack --progress --colors
+WEBPACK_DEV_SERVER=./node_modules/.bin/webpack-dev-server
 
 # ------------------------------------------------------------------------------
 
@@ -10,6 +11,9 @@ build:
 
 watch:
 	$(WEBPACK) --watch
+
+serve:
+	$(WEBPACK_DEV_SERVER) --content-base ./
 
 # ------------------------------------------------------------------------------
 

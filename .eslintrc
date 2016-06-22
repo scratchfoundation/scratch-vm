@@ -13,7 +13,8 @@
     },
     "env": {
         "node": true,
-        "browser": true
+        "browser": true,
+        "worker": true
     },
     "extends": "eslint:recommended"
 }
