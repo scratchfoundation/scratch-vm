@@ -1,4 +1,3 @@
-var Promise = require('promise');
 var Thread = require('./thread');
 
 /**
