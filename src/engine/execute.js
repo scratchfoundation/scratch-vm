@@ -1,3 +1,4 @@
+var Promise = require('promise');
 var Thread = require('./thread');
 
 /**
@@ -78,21 +79,29 @@ var execute = function (sequencer, thread) {
         done: function() {
             sequencer.proceedThread(thread);
         },
-        report: function(reportedValue) {
-            if (DEBUG_BLOCK_CALLS) {
-                console.log('Reported: ', reportedValue);
-                console.timeEnd('Yielding reporter evaluation');
-            }
-            thread.pushReportedValue(reportedValue);
-            sequencer.proceedThread(thread);
-        },
         timeout: thread.addTimeout.bind(thread),
         stackFrame: currentStackFrame.executionContext,
         startSubstack: function (substackNum) {
             sequencer.stepToSubstack(thread, substackNum);
         }
     });
-    if (thread.status === Thread.STATUS_RUNNING) {
+
+    // Deal with any reported value.
+    // If it's a promise, wait until promise resolves.
+    var isPromise = (
+        primitiveReportedValue &&
+        primitiveReportedValue.then &&
+        typeof primitiveReportedValue.then === 'function'
+    );
+    if (isPromise) {
+        primitiveReportedValue.then(function(resolvedValue) {
+            if (DEBUG_BLOCK_CALLS) {
+                console.log('reporting value: ', resolvedValue);
+            }
+            thread.pushReportedValue(resolvedValue);
+            sequencer.proceedThread(thread);
+        });
+    } else if (thread.status === Thread.STATUS_RUNNING) {
         if (DEBUG_BLOCK_CALLS) {
             console.log('reporting value: ', primitiveReportedValue);
         }

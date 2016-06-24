@@ -1,3 +1,5 @@
+var Promise = require('promise');
+
 function Scratch3OperatorsBlocks(runtime) {
     /**
      * The runtime instantiating this block package.
@@ -81,10 +83,13 @@ Scratch3OperatorsBlocks.prototype.random = function (args, util) {
     // @todo Match Scratch 2.0 implementation with int-truncation.
     // See: http://bit.ly/1Qc0GzC
     util.yieldAndBlock();
-    setTimeout(function() {
-        var randomValue = (Math.random() * (args.TO - args.FROM)) + args.FROM;
-        util.report(randomValue);
-    }, 1000);
+    var examplePromise = new Promise(function(resolve) {
+        setTimeout(function() {
+            var res = (Math.random() * (args.TO - args.FROM)) + args.FROM;
+            resolve(res);
+        }, 1000);
+    });
+    return examplePromise;
 };
 
 module.exports = Scratch3OperatorsBlocks;
