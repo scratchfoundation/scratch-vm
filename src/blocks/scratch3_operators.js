@@ -53,30 +53,27 @@ Scratch3OperatorsBlocks.prototype.divide = function (args) {
 };
 
 Scratch3OperatorsBlocks.prototype.lt = function (args) {
-    return args.OPERAND1 < args.OPERAND2;
+    return Boolean(args.OPERAND1 < args.OPERAND2);
 };
 
 Scratch3OperatorsBlocks.prototype.equals = function (args) {
-    return args.OPERAND1 == args.OPERAND2;
+    return Boolean(args.OPERAND1 == args.OPERAND2);
 };
 
 Scratch3OperatorsBlocks.prototype.gt = function (args) {
-    return args.OPERAND1 > args.OPERAND2;
+    return Boolean(args.OPERAND1 > args.OPERAND2);
 };
 
 Scratch3OperatorsBlocks.prototype.and = function (args) {
-    if (!args.OPERAND1 || !args.OPERAND2) {
-        return false;
-    }
-    return true;
+    return Boolean(args.OPERAND1 && args.OPERAND2);
 };
 
 Scratch3OperatorsBlocks.prototype.or = function (args) {
-    return args.OPERAND1 || args.OPERAND2;
+    return Boolean(args.OPERAND1 || args.OPERAND2);
 };
 
 Scratch3OperatorsBlocks.prototype.not = function (args) {
-    return !args.OPERAND;
+    return Boolean(!args.OPERAND);
 };
 
 Scratch3OperatorsBlocks.prototype.random = function (args, util) {
