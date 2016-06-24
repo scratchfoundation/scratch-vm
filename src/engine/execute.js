@@ -94,12 +94,21 @@ var execute = function (sequencer, thread) {
     );
     if (isPromise) {
         primitiveReportedValue.then(function(resolvedValue) {
+            // Promise resolved: the primitive reported a value.
             if (DEBUG_BLOCK_CALLS) {
                 console.log('reporting value: ', resolvedValue);
             }
             thread.pushReportedValue(resolvedValue);
             sequencer.proceedThread(thread);
-        });
+        }, function(rejectionReason) {
+            // Promise rejected: the primitive had some error.
+            // Log it and proceed.
+            if (DEBUG_BLOCK_CALLS) {
+                console.warn('primitive rejected promise: ', rejectionReason);
+            }
+            sequencer.proceedThread(thread);
+        }
+    );
     } else if (thread.status === Thread.STATUS_RUNNING) {
         if (DEBUG_BLOCK_CALLS) {
             console.log('reporting value: ', primitiveReportedValue);
