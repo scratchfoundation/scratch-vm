@@ -93,6 +93,11 @@ var execute = function (sequencer, thread) {
         typeof primitiveReportedValue.then === 'function'
     );
     if (isPromise) {
+        if (thread.status === Thread.STATUS_RUNNING) {
+            // Primitive returned a promise; automatically yield thread.
+            thread.status = Thread.STATUS_YIELD;
+        }
+        // Promise handlers
         primitiveReportedValue.then(function(resolvedValue) {
             // Promise resolved: the primitive reported a value.
             if (DEBUG_BLOCK_CALLS) {
@@ -107,8 +112,7 @@ var execute = function (sequencer, thread) {
                 console.warn('primitive rejected promise: ', rejectionReason);
             }
             sequencer.proceedThread(thread);
-        }
-    );
+        });
     } else if (thread.status === Thread.STATUS_RUNNING) {
         if (DEBUG_BLOCK_CALLS) {
             console.log('reporting value: ', primitiveReportedValue);
