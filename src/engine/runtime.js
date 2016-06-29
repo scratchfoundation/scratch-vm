@@ -10,19 +10,19 @@ var defaultBlockPackages = {
 };
 
 /**
- * Manages blocks, stacks, and the sequencer.
- * @param {!Blocks} blocks Blocks instance for this runtime.
+ * Manages targets, stacks, and the sequencer.
+ * @param {!Array.<Target>} targets List of targets for this runtime.
  */
-function Runtime (blocks) {
+function Runtime (targets) {
     // Bind event emitter
     EventEmitter.call(this);
 
     // State for the runtime
 
     /**
-     * Block management and storage
+     * Target management and storage.
      */
-    this.blocks = blocks;
+    this.targets = targets;
 
     /**
      * A list of threads that are currently running in the VM.
@@ -163,32 +163,13 @@ Runtime.prototype.greenFlag = function () {
         this._removeThread(this.threads[i]);
     }
     // Add all top stacks with green flag
-    var stacks = this.blocks.getStacks();
-    for (var j = 0; j < stacks.length; j++) {
-        var topBlock = stacks[j];
-        if (this.blocks.getBlock(topBlock).opcode === 'event_whenflagclicked') {
-            this._pushThread(stacks[j]);
-        }
-    }
-};
-
-/**
- * Distance sensor hack
- */
-Runtime.prototype.startDistanceSensors = function () {
-    // Add all top stacks with distance sensor
-    var stacks = this.blocks.getStacks();
-    for (var j = 0; j < stacks.length; j++) {
-        var topBlock = stacks[j];
-        if (this.blocks.getBlock(topBlock).opcode ===
-            'wedo_whendistanceclose') {
-            var alreadyRunning = false;
-            for (var k = 0; k < this.threads.length; k++) {
-                if (this.threads[k].topBlock === topBlock) {
-                    alreadyRunning = true;
-                }
-            }
-            if (!alreadyRunning) {
+    for (var t = 0; t < this.targets.length; t++) {
+        var target = this.targets[t];
+        var stacks = target.blocks.getStacks();
+        for (var j = 0; j < stacks.length; j++) {
+            var topBlock = stacks[j];
+            if (target.blocks.getBlock(topBlock).opcode ===
+                'event_whenflagclicked') {
                 this._pushThread(stacks[j]);
             }
         }
@@ -228,13 +209,27 @@ Runtime.prototype._step = function () {
  * @param {boolean} isGlowing True to turn on glow; false to turn off.
  */
 Runtime.prototype.glowBlock = function (blockId, isGlowing) {
-    if (!this.blocks.getBlock(blockId)) {
-        return;
-    }
     if (isGlowing) {
         this.emit(Runtime.BLOCK_GLOW_ON, blockId);
     } else {
         this.emit(Runtime.BLOCK_GLOW_OFF, blockId);
+    }
+};
+
+/**
+ * Return the Target for a particular thread.
+ * @param {!Thread} thread Thread to determine target for.
+ * @return {?Target} Target object, if one exists.
+ */
+Runtime.prototype.targetForThread = function (thread) {
+    // @todo This is a messy solution,
+    // but prevents having circular data references.
+    // Have a map or some other way to associate target with threads.
+    for (var t = 0; t < this.targets.length; t++) {
+        var target = this.targets[t];
+        if (target.blocks.getBlock(thread.topBlock)) {
+            return target;
+        }
     }
 };
 

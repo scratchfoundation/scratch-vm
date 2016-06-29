@@ -7,6 +7,7 @@ var Thread = require('./thread');
  */
 var execute = function (sequencer, thread) {
     var runtime = sequencer.runtime;
+    var target = runtime.targetForThread(thread);
 
     // Current block to execute is the one on the top of the stack.
     var currentBlockId = thread.peekStack();
@@ -29,13 +30,13 @@ var execute = function (sequencer, thread) {
     var argValues = {};
 
     // Add all fields on this block to the argValues.
-    var fields = runtime.blocks.getFields(currentBlockId);
+    var fields = target.blocks.getFields(currentBlockId);
     for (var fieldName in fields) {
         argValues[fieldName] = fields[fieldName].value;
     }
 
     // Recursively evaluate input blocks.
-    var inputs = runtime.blocks.getInputs(currentBlockId);
+    var inputs = target.blocks.getInputs(currentBlockId);
     for (var inputName in inputs) {
         var input = inputs[inputName];
         var inputBlockId = input.block;

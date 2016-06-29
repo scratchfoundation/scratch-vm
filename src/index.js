@@ -1,7 +1,7 @@
 var EventEmitter = require('events');
 var util = require('util');
 
-var Blocks = require('./engine/blocks');
+var Sprite = require('./sprites/sprite');
 var Runtime = require('./engine/runtime');
 
 /**
@@ -21,18 +21,22 @@ function VirtualMachine () {
     // Bind event emitter and runtime to VM instance
     // @todo Post message (Web Worker) polyfill
     EventEmitter.call(instance);
-    instance.blocks = new Blocks();
-    instance.runtime = new Runtime(instance.blocks);
+    // @todo support multiple targets/sprites.
+    // This is just a demo/example.
+    var exampleSprite = new Sprite();
+    var exampleTargets = [exampleSprite.clones[0]];
+    instance.exampleSprite = exampleSprite;
+    instance.runtime = new Runtime(exampleTargets);
 
     /**
      * Event listeners for scratch-blocks.
      */
     instance.blockListener = (
-        instance.blocks.generateBlockListener(false, instance.runtime)
+        exampleSprite.blocks.generateBlockListener(false, instance.runtime)
     );
 
     instance.flyoutBlockListener = (
-        instance.blocks.generateBlockListener(true, instance.runtime)
+        exampleSprite.blocks.generateBlockListener(true, instance.runtime)
     );
 
     // Runtime emits are passed along as VM emits.
@@ -81,7 +85,7 @@ VirtualMachine.prototype.stopAll = function () {
  */
 VirtualMachine.prototype.getPlaygroundData = function () {
     this.emit('playgroundData', {
-        blocks: this.blocks,
+        blocks: this.exampleSprite.blocks,
         threads: this.runtime.threads
     });
 };
@@ -114,7 +118,7 @@ if (ENV_WORKER) {
         case 'getPlaygroundData':
             self.postMessage({
                 method: 'playgroundData',
-                blocks: self.vmInstance.blocks,
+                blocks: self.vmInstance.exampleSprite.blocks,
                 threads: self.vmInstance.runtime.threads
             });
             break;

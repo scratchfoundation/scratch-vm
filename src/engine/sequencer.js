@@ -106,7 +106,7 @@ Sequencer.prototype.stepToSubstack = function (thread, substackNum) {
         substackNum = 1;
     }
     var currentBlockId = thread.peekStack();
-    var substackId = this.runtime.blocks.getSubstack(
+    var substackId = this.runtime.targetForThread(thread).blocks.getSubstack(
         currentBlockId,
         substackNum
     );
@@ -153,7 +153,8 @@ Sequencer.prototype.proceedThread = function (thread) {
     // Pop from the stack - finished this level of execution.
     thread.popStack();
     // Push next connected block, if there is one.
-    var nextBlockId = this.runtime.blocks.getNextBlock(currentBlockId);
+    var nextBlockId = (this.runtime.targetForThread(thread).
+        blocks.getNextBlock(currentBlockId));
     if (nextBlockId) {
         thread.pushStack(nextBlockId);
     }
