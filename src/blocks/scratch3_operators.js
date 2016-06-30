@@ -84,16 +84,16 @@ Scratch3OperatorsBlocks.prototype.not = function (args) {
 };
 
 Scratch3OperatorsBlocks.prototype.random = function (args) {
-    // As a demo, this implementation of random returns after 1 second of yield.
-    // @todo Match Scratch 2.0 implementation with int-truncation.
-    // See: http://bit.ly/1Qc0GzC
-    var examplePromise = new Promise(function(resolve) {
-        setTimeout(function() {
-            var res = (Math.random() * (args.TO - args.FROM)) + args.FROM;
-            resolve(res);
-        }, 1000);
-    });
-    return examplePromise;
+    var low = args.FROM <= args.TO ? args.FROM : args.TO;
+    var high = args.FROM <= args.TO ? args.TO : args.FROM;
+    if (low == high) return low;
+    // If both low and high are ints, truncate the result to an int.
+    var lowInt = low == parseInt(low);
+    var highInt = high == parseInt(high);
+    if (lowInt && highInt) {
+        return low + parseInt(Math.random() * ((high + 1) - low));
+    }
+    return (Math.random() * (high - low)) + low;
 };
 
 module.exports = Scratch3OperatorsBlocks;
