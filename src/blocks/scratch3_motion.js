@@ -18,7 +18,13 @@ Scratch3MotionBlocks.prototype.getPrimitives = function() {
         'motion_gotoxy': this.goToXY,
         'motion_turnright': this.turnRight,
         'motion_turnleft': this.turnLeft,
-        'motion_pointindirection': this.pointInDirection
+        'motion_pointindirection': this.pointInDirection,
+        'motion_changexby': this.changeX,
+        'motion_setx': this.setX,
+        'motion_changeyby': this.changeY,
+        'motion_sety': this.setY,
+        'motion_xposition': this.getX,
+        'motion_yposition': this.getY
     };
 };
 
@@ -43,6 +49,30 @@ Scratch3MotionBlocks.prototype.turnLeft = function (args, util) {
 
 Scratch3MotionBlocks.prototype.pointInDirection = function (args, util) {
     util.target.setDirection(args.DIRECTION);
+};
+
+Scratch3MotionBlocks.prototype.changeX = function (args, util) {
+    util.target.setXY(util.target.x + args.DX, util.target.y);
+};
+
+Scratch3MotionBlocks.prototype.setX = function (args, util) {
+    util.target.setXY(args.X, util.target.y);
+};
+
+Scratch3MotionBlocks.prototype.changeY = function (args, util) {
+    util.target.setXY(util.target.x, util.target.y + args.DY);
+};
+
+Scratch3MotionBlocks.prototype.setY = function (args, util) {
+    util.target.setXY(util.target.x, args.Y);
+};
+
+Scratch3MotionBlocks.prototype.getX = function (args, util) {
+    return util.target.x;
+};
+
+Scratch3MotionBlocks.prototype.getY = function (args, util) {
+    return util.target.y;
 };
 
 module.exports = Scratch3MotionBlocks;
