@@ -1,11 +1,10 @@
-var YieldTimers = require('../util/yieldtimers.js');
+var Thread = require('./thread');
 
 /**
- * If set, block calls, args, and return values will be logged to the console.
- * @const {boolean}
+ * Execute a block.
+ * @param {!Sequencer} sequencer Which sequencer is executing.
+ * @param {!Thread} thread Thread which to read and execute.
  */
-var DEBUG_BLOCK_CALLS = true;
-
 var execute = function (sequencer, thread) {
     var runtime = sequencer.runtime;
 
@@ -13,12 +12,18 @@ var execute = function (sequencer, thread) {
     var currentBlockId = thread.peekStack();
     var currentStackFrame = thread.peekStackFrame();
 
-    // Save the yield timer ID, in case a primitive makes a new one
-    // @todo hack - perhaps patch this to allow more than one timer per
-    // primitive, for example...
-    var oldYieldTimerId = YieldTimers.timerId;
-
     var opcode = runtime.blocks.getOpcode(currentBlockId);
+
+    if (!opcode) {
+        console.warn('Could not get opcode for block: ' + currentBlockId);
+        return;
+    }
+
+    var blockFunction = runtime.getOpcodeFunction(opcode);
+    if (!blockFunction) {
+        console.warn('Could not get implementation for opcode: ' + opcode);
+        return;
+    }
 
     // Generate values for arguments (inputs).
     var argValues = {};
@@ -34,53 +39,65 @@ var execute = function (sequencer, thread) {
     for (var inputName in inputs) {
         var input = inputs[inputName];
         var inputBlockId = input.block;
-        // Push to the stack to evaluate this input.
-        thread.pushStack(inputBlockId);
-        var result = execute(sequencer, thread);
-        thread.popStack();
-        argValues[input.name] = result;
+        // Is there no value for this input waiting in the stack frame?
+        if (typeof currentStackFrame.reported[inputName] === 'undefined') {
+            // If there's not, we need to evaluate the block.
+            var reporterYielded = (
+                sequencer.stepToReporter(thread, inputBlockId, inputName)
+            );
+            // If the reporter yielded, return immediately;
+            // it needs time to finish and report its value.
+            if (reporterYielded) {
+                return;
+            }
+        }
+        argValues[inputName] = currentStackFrame.reported[inputName];
     }
 
-    if (!opcode) {
-        console.warn('Could not get opcode for block: ' + currentBlockId);
-        return;
-    }
+    // If we've gotten this far, all of the input blocks are evaluated,
+    // and `argValues` is fully populated. So, execute the block primitive.
+    // First, clear `currentStackFrame.reported`, so any subsequent execution
+    // (e.g., on return from a substack) gets fresh inputs.
+    currentStackFrame.reported = {};
 
-    var blockFunction = runtime.getOpcodeFunction(opcode);
-    if (!blockFunction) {
-        console.warn('Could not get implementation for opcode: ' + opcode);
-        return;
-    }
-
-    if (DEBUG_BLOCK_CALLS) {
-        console.groupCollapsed('Executing: ' + opcode);
-        console.log('with arguments: ', argValues);
-        console.log('and stack frame: ', currentStackFrame);
-    }
-    var primitiveReturnValue = null;
-    // @todo deal with the return value
-    primitiveReturnValue = blockFunction(argValues, {
+    var primitiveReportedValue = null;
+    primitiveReportedValue = blockFunction(argValues, {
         yield: thread.yield.bind(thread),
         done: function() {
             sequencer.proceedThread(thread);
         },
-        timeout: YieldTimers.timeout,
-        stackFrame: currentStackFrame,
+        stackFrame: currentStackFrame.executionContext,
         startSubstack: function (substackNum) {
             sequencer.stepToSubstack(thread, substackNum);
         }
     });
-    // Update if the thread has set a yield timer ID
-    // @todo hack
-    if (YieldTimers.timerId > oldYieldTimerId) {
-        thread.yieldTimerId = YieldTimers.timerId;
+
+    // Deal with any reported value.
+    // If it's a promise, wait until promise resolves.
+    var isPromise = (
+        primitiveReportedValue &&
+        primitiveReportedValue.then &&
+        typeof primitiveReportedValue.then === 'function'
+    );
+    if (isPromise) {
+        if (thread.status === Thread.STATUS_RUNNING) {
+            // Primitive returned a promise; automatically yield thread.
+            thread.status = Thread.STATUS_YIELD;
+        }
+        // Promise handlers
+        primitiveReportedValue.then(function(resolvedValue) {
+            // Promise resolved: the primitive reported a value.
+            thread.pushReportedValue(resolvedValue);
+            sequencer.proceedThread(thread);
+        }, function(rejectionReason) {
+            // Promise rejected: the primitive had some error.
+            // Log it and proceed.
+            console.warn('Primitive rejected promise: ', rejectionReason);
+            sequencer.proceedThread(thread);
+        });
+    } else if (thread.status === Thread.STATUS_RUNNING) {
+        thread.pushReportedValue(primitiveReportedValue);
     }
-    if (DEBUG_BLOCK_CALLS) {
-        console.log('ending stack frame: ', currentStackFrame);
-        console.log('returned: ', primitiveReturnValue);
-        console.groupEnd();
-    }
-    return primitiveReturnValue;
 };
 
 module.exports = execute;

@@ -15,7 +15,8 @@
   },
   "dependencies": {
     "htmlparser2": "3.9.0",
-    "memoizee": "0.3.10"
+    "memoizee": "0.3.10",
+    "promise": "7.1.1"
   },
   "devDependencies": {
     "eslint": "2.7.0",

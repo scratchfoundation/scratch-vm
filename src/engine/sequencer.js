@@ -1,6 +1,5 @@
 var Timer = require('../util/timer');
 var Thread = require('./thread');
-var YieldTimers = require('../util/yieldtimers.js');
 var execute = require('./execute.js');
 
 function Sequencer (runtime) {
@@ -53,16 +52,8 @@ Sequencer.prototype.stepThreads = function (threads) {
                 // Normal-mode thread: step.
                 this.startThread(activeThread);
             } else if (activeThread.status === Thread.STATUS_YIELD) {
-                // Yield-mode thread: check if the time has passed.
-                if (!YieldTimers.resolve(activeThread.yieldTimerId)) {
-                    // Thread is still yielding
-                    // if YieldTimers.resolve returns false.
-                    numYieldingThreads++;
-                }
-            } else if (activeThread.status === Thread.STATUS_DONE) {
-                // Moved to a done state - finish up
-                activeThread.status = Thread.STATUS_RUNNING;
-                // @todo Deal with the return value
+                // Yielding thread: do nothing for this step.
+                continue;
             }
             if (activeThread.stack.length === 0 &&
                 activeThread.status === Thread.STATUS_DONE) {
@@ -101,7 +92,7 @@ Sequencer.prototype.startThread = function (thread) {
     // move to done.
     if (thread.status === Thread.STATUS_RUNNING &&
         thread.peekStack() === currentBlockId) {
-        this.proceedThread(thread, currentBlockId);
+        this.proceedThread(thread);
     }
 };
 
@@ -129,6 +120,27 @@ Sequencer.prototype.stepToSubstack = function (thread, substackNum) {
 };
 
 /**
+ * Step a thread into an input reporter, and manage its status appropriately.
+ * @param {!Thread} thread Thread object to step to reporter.
+ * @param {!string} blockId ID of reporter block.
+ * @param {!string} inputName Name of input on parent block.
+ * @return {boolean} True if yielded, false if it finished immediately.
+ */
+Sequencer.prototype.stepToReporter = function (thread, blockId, inputName) {
+    var currentStackFrame = thread.peekStackFrame();
+    // Push to the stack to evaluate the reporter block.
+    thread.pushStack(blockId);
+    // Save name of input for `Thread.pushReportedValue`.
+    currentStackFrame.waitingReporter = inputName;
+    // Actually execute the block.
+    this.startThread(thread);
+    // If a reporter yielded, caller must wait for it to unyield.
+    // The value will be populated once the reporter unyields,
+    // and passed up to the currentStackFrame on next execution.
+    return thread.status === Thread.STATUS_YIELD;
+};
+
+/**
  * Finish stepping a thread and proceed it to the next block.
  * @param {!Thread} thread Thread object to proceed.
  */
@@ -136,7 +148,8 @@ Sequencer.prototype.proceedThread = function (thread) {
     var currentBlockId = thread.peekStack();
     // Mark the status as done and proceed to the next block.
     this.runtime.glowBlock(currentBlockId, false);
-    thread.status = Thread.STATUS_DONE;
+    // If the block was yielding, move back to running state.
+    thread.status = Thread.STATUS_RUNNING;
     // Pop from the stack - finished this level of execution.
     thread.popStack();
     // Push next connected block, if there is one.
@@ -147,6 +160,10 @@ Sequencer.prototype.proceedThread = function (thread) {
     // Pop from the stack until we have a next block.
     while (thread.peekStack() === null && thread.stack.length > 0) {
         thread.popStack();
+    }
+    // If we still can't find a next block to run, mark the thread as done.
+    if (thread.peekStack() === null) {
+        thread.status = Thread.STATUS_DONE;
     }
 };
 

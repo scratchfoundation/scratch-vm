@@ -28,32 +28,27 @@ function Thread (firstBlock) {
      * @type {number}
      */
     this.status = 0; /* Thread.STATUS_RUNNING */
-
-    /**
-     * Yield timer ID (for checking when the thread should unyield).
-     * @type {number}
-     */
-    this.yieldTimerId = -1;
 }
 
 /**
  * Thread status for initialized or running thread.
- * Threads are in this state when the primitive is called for the first time.
+ * This is the default state for a thread - execution should run normally,
+ * stepping from block to block.
  * @const
  */
 Thread.STATUS_RUNNING = 0;
 
 /**
  * Thread status for a yielded thread.
- * Threads are in this state when a primitive has yielded.
+ * Threads are in this state when a primitive has yielded; execution is paused
+ * until the relevant primitive unyields.
  * @const
  */
 Thread.STATUS_YIELD = 1;
 
 /**
  * Thread status for a finished/done thread.
- * Thread is moved to this state when the interpreter
- * can proceed with execution.
+ * Thread is in this state when there are no more blocks to execute.
  * @const
  */
 Thread.STATUS_DONE = 2;
@@ -67,7 +62,11 @@ Thread.prototype.pushStack = function (blockId) {
     // Push an empty stack frame, if we need one.
     // Might not, if we just popped the stack.
     if (this.stack.length > this.stackFrames.length) {
-        this.stackFrames.push({});
+        this.stackFrames.push({
+            reported: {}, // Collects reported input values.
+            waitingReporter: null, // Name of waiting reporter.
+            executionContext: {} // A context passed to block implementations.
+        });
     }
 };
 
@@ -95,6 +94,27 @@ Thread.prototype.peekStack = function () {
  */
 Thread.prototype.peekStackFrame = function () {
     return this.stackFrames[this.stackFrames.length - 1];
+};
+
+/**
+ * Get stack frame above the current top.
+ * @return {?Object} Second to last stack frame stored on this thread.
+ */
+Thread.prototype.peekParentStackFrame = function () {
+    return this.stackFrames[this.stackFrames.length - 2];
+};
+
+/**
+ * Push a reported value to the parent of the current stack frame.
+ * @param {!Any} value Reported value to push.
+ */
+Thread.prototype.pushReportedValue = function (value) {
+    var parentStackFrame = this.peekParentStackFrame();
+    if (parentStackFrame) {
+        var waitingReporter = parentStackFrame.waitingReporter;
+        parentStackFrame.reported[waitingReporter] = value;
+        parentStackFrame.waitingReporter = null;
+    }
 };
 
 /**

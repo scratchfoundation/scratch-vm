@@ -1,3 +1,5 @@
+var Promise = require('promise');
+
 function Scratch3ControlBlocks(runtime) {
     /**
      * The runtime instantiating this block package.
@@ -38,11 +40,12 @@ Scratch3ControlBlocks.prototype.forever = function(args, util) {
     util.startSubstack();
 };
 
-Scratch3ControlBlocks.prototype.wait = function(args, util) {
-    util.yield();
-    util.timeout(function() {
-        util.done();
-    }, 1000 * args.DURATION);
+Scratch3ControlBlocks.prototype.wait = function(args) {
+    return new Promise(function(resolve) {
+        setTimeout(function() {
+            resolve();
+        }, 1000 * args.DURATION);
+    });
 };
 
 Scratch3ControlBlocks.prototype.if = function(args, util) {
