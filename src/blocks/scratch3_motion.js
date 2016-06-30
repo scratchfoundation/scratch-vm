@@ -1,3 +1,5 @@
+var MathUtil = require('../util/math-util');
+
 function Scratch3MotionBlocks(runtime) {
     /**
      * The runtime instantiating this block package.
@@ -12,9 +14,19 @@ function Scratch3MotionBlocks(runtime) {
  */
 Scratch3MotionBlocks.prototype.getPrimitives = function() {
     return {
+        'motion_movesteps': this.moveSteps,
         'motion_gotoxy': this.goToXY,
-        'motion_turnright': this.turnRight
+        'motion_turnright': this.turnRight,
+        'motion_turnleft': this.turnLeft,
+        'motion_pointindirection': this.pointInDirection
     };
+};
+
+Scratch3MotionBlocks.prototype.moveSteps = function (args, util) {
+    var radians = MathUtil.degToRad(util.target.direction);
+    var dx = args.STEPS * Math.cos(radians);
+    var dy = args.STEPS * Math.sin(radians);
+    util.target.setXY(util.target.x + dx, util.target.y + dy);
 };
 
 Scratch3MotionBlocks.prototype.goToXY = function (args, util) {
@@ -22,10 +34,15 @@ Scratch3MotionBlocks.prototype.goToXY = function (args, util) {
 };
 
 Scratch3MotionBlocks.prototype.turnRight = function (args, util) {
-    if (args.DEGREES !== args.DEGREES) {
-        throw "Bad degrees" + args.DEGREES;
-    }
-    util.target.setDirection(args.DEGREES + util.target.direction);
+    util.target.setDirection(util.target.direction + args.DEGREES);
+};
+
+Scratch3MotionBlocks.prototype.turnLeft = function (args, util) {
+    util.target.setDirection(util.target.direction - args.DEGREES);
+};
+
+Scratch3MotionBlocks.prototype.pointInDirection = function (args, util) {
+    util.target.setDirection(args.DIRECTION);
 };
 
 module.exports = Scratch3MotionBlocks;
