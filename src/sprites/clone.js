@@ -1,4 +1,5 @@
 var util = require('util');
+var MathUtil = require('../util/math-util');
 var Target = require('../engine/target');
 
 function Clone(spriteBlocks) {
@@ -32,7 +33,7 @@ Clone.prototype.setXY = function (x, y) {
 };
 
 Clone.prototype.setDirection = function (direction) {
-    this.direction = direction;
+    this.direction = MathUtil.wrapClamp(direction, -179, 180);
     self.renderer.updateDrawableProperties(this.drawableID, {
         direction: this.direction
     });
