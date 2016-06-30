@@ -134,17 +134,10 @@ Sequencer.prototype.stepToReporter = function (thread, blockId, inputName) {
     currentStackFrame.waitingReporter = inputName;
     // Actually execute the block.
     this.startThread(thread);
-    if (thread.status === Thread.STATUS_YIELD ||
-        thread.status === Thread.STATUS_YIELD_BLOCK) {
-        // Reporter yielded; caller must wait for it to unyield.
-        // The value will be populated once the reporter unyields,
-        // and passed up to the currentStackFrame on next execution.
-        return true;
-    } else if (thread.status === Thread.STATUS_DONE) {
-        // Reporter finished, mark the thread as running.
-        thread.status = Thread.STATUS_RUNNING;
-        return false;
-    }
+    // If a reporter yielded, caller must wait for it to unyield.
+    // The value will be populated once the reporter unyields,
+    // and passed up to the currentStackFrame on next execution.
+    return thread.status === Thread.STATUS_YIELD;
 };
 
 /**
@@ -155,7 +148,8 @@ Sequencer.prototype.proceedThread = function (thread) {
     var currentBlockId = thread.peekStack();
     // Mark the status as done and proceed to the next block.
     this.runtime.glowBlock(currentBlockId, false);
-    thread.status = Thread.STATUS_DONE;
+    // If the block was yielding, move back to running state.
+    thread.status = Thread.STATUS_RUNNING;
     // Pop from the stack - finished this level of execution.
     thread.popStack();
     // Push next connected block, if there is one.
@@ -166,6 +160,10 @@ Sequencer.prototype.proceedThread = function (thread) {
     // Pop from the stack until we have a next block.
     while (thread.peekStack() === null && thread.stack.length > 0) {
         thread.popStack();
+    }
+    // If we still can't find a next block to run, mark the thread as done.
+    if (thread.peekStack() === null) {
+        thread.status = Thread.STATUS_DONE;
     }
 };
 

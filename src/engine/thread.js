@@ -32,22 +32,23 @@ function Thread (firstBlock) {
 
 /**
  * Thread status for initialized or running thread.
- * Threads are in this state when the primitive is called for the first time.
+ * This is the default state for a thread - execution should run normally,
+ * stepping from block to block.
  * @const
  */
 Thread.STATUS_RUNNING = 0;
 
 /**
  * Thread status for a yielded thread.
- * Threads are in this state when a primitive has yielded.
+ * Threads are in this state when a primitive has yielded; execution is paused
+ * until the relevant primitive unyields.
  * @const
  */
 Thread.STATUS_YIELD = 1;
 
 /**
  * Thread status for a finished/done thread.
- * Thread is moved to this state when the interpreter
- * can proceed with execution.
+ * Thread is in this state when there are no more blocks to execute.
  * @const
  */
 Thread.STATUS_DONE = 2;
