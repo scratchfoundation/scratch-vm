@@ -74,7 +74,6 @@ var execute = function (sequencer, thread) {
     var primitiveReportedValue = null;
     primitiveReportedValue = blockFunction(argValues, {
         yield: thread.yield.bind(thread),
-        yieldAndBlock: thread.yieldAndBlock.bind(thread),
         done: function() {
             sequencer.proceedThread(thread);
         },

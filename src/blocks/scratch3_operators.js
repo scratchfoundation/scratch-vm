@@ -78,11 +78,10 @@ Scratch3OperatorsBlocks.prototype.not = function (args) {
     return Boolean(!args.OPERAND);
 };
 
-Scratch3OperatorsBlocks.prototype.random = function (args, util) {
+Scratch3OperatorsBlocks.prototype.random = function (args) {
     // As a demo, this implementation of random returns after 1 second of yield.
     // @todo Match Scratch 2.0 implementation with int-truncation.
     // See: http://bit.ly/1Qc0GzC
-    util.yieldAndBlock();
     var examplePromise = new Promise(function(resolve) {
         setTimeout(function() {
             var res = (Math.random() * (args.TO - args.FROM)) + args.FROM;
