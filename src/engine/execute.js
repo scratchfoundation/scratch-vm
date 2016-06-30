@@ -13,7 +13,7 @@ var execute = function (sequencer, thread) {
     var currentBlockId = thread.peekStack();
     var currentStackFrame = thread.peekStackFrame();
 
-    var opcode = runtime.blocks.getOpcode(currentBlockId);
+    var opcode = target.blocks.getOpcode(currentBlockId);
 
     if (!opcode) {
         console.warn('Could not get opcode for block: ' + currentBlockId);
