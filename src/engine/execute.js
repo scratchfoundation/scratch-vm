@@ -77,7 +77,6 @@ var execute = function (sequencer, thread) {
         done: function() {
             sequencer.proceedThread(thread);
         },
-        timeout: thread.addTimeout.bind(thread),
         stackFrame: currentStackFrame.executionContext,
         startSubstack: function (substackNum) {
             sequencer.stepToSubstack(thread, substackNum);

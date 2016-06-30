@@ -52,16 +52,8 @@ Sequencer.prototype.stepThreads = function (threads) {
                 // Normal-mode thread: step.
                 this.startThread(activeThread);
             } else if (activeThread.status === Thread.STATUS_YIELD) {
-                // Yield-mode thread: resolve timers.
-                activeThread.resolveTimeouts();
-                if (activeThread.status === Thread.STATUS_YIELD) {
-                    // Still yielding.
-                    numYieldingThreads++;
-                }
-            } else if (activeThread.status === Thread.STATUS_DONE) {
-                // Moved to a done state - finish up
-                activeThread.status = Thread.STATUS_RUNNING;
-                // @todo Deal with the return value
+                // Yielding thread: do nothing for this step.
+                continue;
             }
             if (activeThread.stack.length === 0 &&
                 activeThread.status === Thread.STATUS_DONE) {
