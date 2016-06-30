@@ -1,12 +1,6 @@
 var Thread = require('./thread');
 
 /**
- * If set, block calls, args, and return values will be logged to the console.
- * @const {boolean}
- */
-var DEBUG_BLOCK_CALLS = true;
-
-/**
  * Execute a block.
  * @param {!Sequencer} sequencer Which sequencer is executing.
  * @param {!Thread} thread Thread which to read and execute.
@@ -66,11 +60,6 @@ var execute = function (sequencer, thread) {
     // (e.g., on return from a substack) gets fresh inputs.
     currentStackFrame.reported = {};
 
-    if (DEBUG_BLOCK_CALLS) {
-        console.groupCollapsed('Executing: ' + opcode);
-        console.log('with arguments: ', argValues);
-        console.log('and stack frame: ', currentStackFrame);
-    }
     var primitiveReportedValue = null;
     primitiveReportedValue = blockFunction(argValues, {
         yield: thread.yield.bind(thread),
@@ -98,28 +87,16 @@ var execute = function (sequencer, thread) {
         // Promise handlers
         primitiveReportedValue.then(function(resolvedValue) {
             // Promise resolved: the primitive reported a value.
-            if (DEBUG_BLOCK_CALLS) {
-                console.log('reporting value: ', resolvedValue);
-            }
             thread.pushReportedValue(resolvedValue);
             sequencer.proceedThread(thread);
         }, function(rejectionReason) {
             // Promise rejected: the primitive had some error.
             // Log it and proceed.
-            if (DEBUG_BLOCK_CALLS) {
-                console.warn('primitive rejected promise: ', rejectionReason);
-            }
+            console.warn('Primitive rejected promise: ', rejectionReason);
             sequencer.proceedThread(thread);
         });
     } else if (thread.status === Thread.STATUS_RUNNING) {
-        if (DEBUG_BLOCK_CALLS) {
-            console.log('reporting value: ', primitiveReportedValue);
-        }
         thread.pushReportedValue(primitiveReportedValue);
-    }
-    if (DEBUG_BLOCK_CALLS) {
-        console.log('ending stack frame: ', currentStackFrame);
-        console.groupEnd();
     }
 };
 
