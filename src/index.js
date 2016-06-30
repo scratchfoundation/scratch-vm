@@ -24,6 +24,7 @@ function VirtualMachine () {
     // @todo support multiple targets/sprites.
     // This is just a demo/example.
     var exampleSprite = new Sprite();
+    exampleSprite.createClone();
     var exampleTargets = [exampleSprite.clones[0]];
     instance.exampleSprite = exampleSprite;
     instance.runtime = new Runtime(exampleTargets);
@@ -96,6 +97,10 @@ VirtualMachine.prototype.getPlaygroundData = function () {
  * from a worker environment.
  */
 if (ENV_WORKER) {
+    self.importScripts(
+        './node_modules/scratch-render-webgl/build/render-webgl-worker.js'
+    );
+    self.renderer = new self.RenderWebGLWorker();
     self.vmInstance = new VirtualMachine();
     self.onmessage = function (e) {
         var messageData = e.data;
@@ -123,7 +128,11 @@ if (ENV_WORKER) {
             });
             break;
         default:
-            throw 'Unknown method' + messageData.method;
+            if (e.data.id == 'RendererConnected') {
+                //initRenderWorker();
+            }
+            self.renderer.onmessage(e);
+            break;
         }
     };
     // Bind runtime's emitted events to postmessages.

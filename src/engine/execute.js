@@ -70,7 +70,8 @@ var execute = function (sequencer, thread) {
         stackFrame: currentStackFrame.executionContext,
         startSubstack: function (substackNum) {
             sequencer.stepToSubstack(thread, substackNum);
-        }
+        },
+        target: target
     });
 
     // Deal with any reported value.

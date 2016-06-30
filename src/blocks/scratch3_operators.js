@@ -31,7 +31,12 @@ Scratch3OperatorsBlocks.prototype.getPrimitives = function() {
 };
 
 Scratch3OperatorsBlocks.prototype.number = function (args) {
-    return Number(args.NUM);
+    var num = Number(args.NUM);
+    if (num !== num) {
+        // NaN
+        return 0;
+    }
+    return num;
 };
 
 Scratch3OperatorsBlocks.prototype.text = function (args) {

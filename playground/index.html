@@ -13,9 +13,14 @@
         <button id="greenflag">Green flag</button>
         <button id="stopall">Stop</button>
         <p>
+            <a id="renderexplorer-link" href="#">Renderer</a><br />
             <a id="threadexplorer-link" href="#">VM Threads</a><br />
             <a id="blockexplorer-link" href="#">VM Block Representation</a>
         </p>
+        <div id="tab-renderexplorer">
+            Render<br />
+            <canvas id="scratch-stage" style="width: 480px; height: 360px;"></canvas>
+        </div>
         <div id="tab-threadexplorer">
             Thread explorer
             <pre id="threadexplorer"></pre>
@@ -240,6 +245,54 @@
               </value>
             </block>
         </category>
+        <category name="Motion">
+            <block type="motion_movesteps">
+             <value name="STEPS">
+               <shadow type="math_number">
+                 <field name="NUM">10</field>
+               </shadow>
+             </value>
+           </block>
+           <block type="motion_turnright">
+             <value name="DEGREES">
+               <shadow type="math_number">
+                 <field name="NUM">15</field>
+               </shadow>
+             </value>
+           </block>
+           <block type="motion_turnleft">
+             <value name="DEGREES">
+               <shadow type="math_number">
+                 <field name="NUM">15</field>
+               </shadow>
+             </value>
+           </block>
+           <block type="motion_pointindirection">
+             <value name="DIRECTION">
+               <shadow type="math_number">
+                 <field name="NUM">90</field>
+               </shadow>
+             </value>
+           </block>
+           <block type="motion_pointtowards">
+             <value name="TOWARDS">
+               <shadow type="motion_pointtowards_menu">
+               </shadow>
+             </value>
+           </block>
+           <block type="motion_gotoxy">
+             <value name="X">
+               <shadow type="math_number">
+                 <field name="NUM">0</field>
+               </shadow>
+             </value>
+             <value name="Y">
+               <shadow type="math_number">
+                 <field name="NUM">0</field>
+               </shadow>
+             </value>
+           </block>
+        </category>
     </xml>
 
     <!-- Syntax highlighter -->
@@ -249,6 +302,8 @@
     <script src="../node_modules/scratch-blocks/blockly_compressed_vertical.js"></script>
     <script src="../node_modules/scratch-blocks/blocks_compressed.js"></script>
     <script src="../node_modules/scratch-blocks/blocks_compressed_vertical.js"></script>
+    <!-- Renderer -->
+    <script src="../node_modules/scratch-render-webgl/build/render-webgl.js"></script>
     <!-- VM Worker -->
     <script src="../vm.worker.js"></script>
     <!-- Playground -->

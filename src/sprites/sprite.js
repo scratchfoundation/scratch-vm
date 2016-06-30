@@ -9,9 +9,12 @@ function Sprite (blocks) {
     }
     this.blocks = blocks;
     this.clones = [];
-
-    // Initial single clone with the shared blocks.
-    this.clones.push(new Clone(this.blocks));
 }
+
+Sprite.prototype.createClone = function () {
+    var newClone = new Clone(this.blocks);
+    this.clones.push(newClone);
+    return newClone;
+};
 
 module.exports = Sprite;

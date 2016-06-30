@@ -3,6 +3,10 @@ window.onload = function() {
     var vm = new window.VirtualMachine();
     window.vm = vm;
 
+    var canvas = document.getElementById('scratch-stage');
+    window.renderer = new window.RenderWebGLLocal(canvas);
+    window.renderer.connectWorker(window.vm.vmWorker);
+
     var toolbox = document.getElementById('toolbox');
     var workspace = window.Blockly.inject('blocks', {
         toolbox: toolbox,
@@ -85,16 +89,25 @@ window.onload = function() {
 
     var tabBlockExplorer = document.getElementById('tab-blockexplorer');
     var tabThreadExplorer = document.getElementById('tab-threadexplorer');
+    var tabRenderExplorer = document.getElementById('tab-renderexplorer');
 
     // Handlers to show different explorers.
     document.getElementById('threadexplorer-link').addEventListener('click',
         function () {
             tabBlockExplorer.style.display = 'none';
+            tabRenderExplorer.style.display = 'none';
             tabThreadExplorer.style.display = 'block';
         });
     document.getElementById('blockexplorer-link').addEventListener('click',
         function () {
             tabBlockExplorer.style.display = 'block';
+            tabRenderExplorer.style.display = 'none';
+            tabThreadExplorer.style.display = 'none';
+        });
+    document.getElementById('renderexplorer-link').addEventListener('click',
+        function () {
+            tabBlockExplorer.style.display = 'none';
+            tabRenderExplorer.style.display = 'block';
             tabThreadExplorer.style.display = 'none';
         });
 };

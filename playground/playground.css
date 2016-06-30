@@ -32,6 +32,6 @@ a {
     font-size: 10pt;
 }
 
-#tab-blockexplorer {
+#tab-blockexplorer, #tab-threadexplorer {
     display: none;
 }

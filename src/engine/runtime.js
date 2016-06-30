@@ -6,6 +6,7 @@ var util = require('util');
 var defaultBlockPackages = {
     'scratch3_control': require('../blocks/scratch3_control'),
     'scratch3_event': require('../blocks/scratch3_event'),
+    'scratch3_motion': require('../blocks/scratch3_motion'),
     'scratch3_operators': require('../blocks/scratch3_operators')
 };
 
@@ -257,6 +258,9 @@ Runtime.prototype._setInterval = function(fcn, interval) {
 Runtime.prototype.start = function () {
     this._setInterval(function() {
         this._step();
+        if (self.renderer) {
+            self.renderer.draw();
+        }
     }.bind(this), Runtime.THREAD_STEP_INTERVAL);
 };
 
