@@ -24,6 +24,18 @@ Clone.prototype.y = 0;
 
 Clone.prototype.direction = 90;
 
+Clone.prototype.size = 100;
+
+Clone.prototype.effects = {
+    'color': 0,
+    'fisheye': 0,
+    'whirl': 0,
+    'pixelate': 0,
+    'mosaic': 0,
+    'brightness': 0,
+    'ghost': 0
+};
+
 Clone.prototype.setXY = function (x, y) {
     this.x = x;
     this.y = y;
@@ -37,6 +49,27 @@ Clone.prototype.setDirection = function (direction) {
     self.renderer.updateDrawableProperties(this.drawableID, {
         direction: this.direction
     });
+};
+
+Clone.prototype.setSize = function (size) {
+    this.size = MathUtil.clamp(size, 5, 535);
+    self.renderer.updateDrawableProperties(this.drawableID, {
+        scale: this.size
+    });
+};
+
+Clone.prototype.setEffect = function (effectName, value) {
+    this.effects[effectName] = value;
+    var props = {};
+    props[effectName] = this.effects[effectName];
+    self.renderer.updateDrawableProperties(this.drawableID, props);
+};
+
+Clone.prototype.clearEffects = function () {
+    for (var effectName in this.effects) {
+        this.effects[effectName] = 0;
+    }
+    self.renderer.updateDrawableProperties(this.drawableID, this.effects);
 };
 
 module.exports = Clone;
