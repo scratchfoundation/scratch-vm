@@ -51,11 +51,14 @@ window.onload = function() {
         }
     };
 
+    // Only request data from the VM thread if the appropriate tab is open.
+    window.exploreTabOpen = false;
     var getPlaygroundData = function () {
         vm.getPlaygroundData();
-        window.requestAnimationFrame(getPlaygroundData);
+        if (window.exploreTabOpen) {
+            window.requestAnimationFrame(getPlaygroundData);
+        }
     };
-    getPlaygroundData();
 
     vm.on('playgroundData', function(data) {
         updateThreadExplorer(data.threads);
@@ -101,18 +104,23 @@ window.onload = function() {
     // Handlers to show different explorers.
     document.getElementById('threadexplorer-link').addEventListener('click',
         function () {
+            window.exploreTabOpen = true;
+            getPlaygroundData();
             tabBlockExplorer.style.display = 'none';
             tabRenderExplorer.style.display = 'none';
             tabThreadExplorer.style.display = 'block';
         });
     document.getElementById('blockexplorer-link').addEventListener('click',
         function () {
+            window.exploreTabOpen = true;
+            getPlaygroundData();
             tabBlockExplorer.style.display = 'block';
             tabRenderExplorer.style.display = 'none';
             tabThreadExplorer.style.display = 'none';
         });
     document.getElementById('renderexplorer-link').addEventListener('click',
         function () {
+            window.exploreTabOpen = false;
             tabBlockExplorer.style.display = 'none';
             tabRenderExplorer.style.display = 'block';
             tabThreadExplorer.style.display = 'none';
