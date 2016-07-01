@@ -32,8 +32,8 @@ Scratch3ControlBlocks.prototype.repeat = function(args, util) {
     // Only execute once per frame.
     // When the substack finishes, `repeat` will be executed again and
     // the second branch will be taken, yielding for the rest of the frame.
-    if (!util.stackFrame.executed) {
-        util.stackFrame.executed = true;
+    if (!util.stackFrame.executedInFrame) {
+        util.stackFrame.executedInFrame = true;
         // Decrease counter
         util.stackFrame.loopCounter--;
         // If we still have some left, start the substack
@@ -97,8 +97,8 @@ Scratch3ControlBlocks.prototype.if = function(args, util) {
 Scratch3ControlBlocks.prototype.ifElse = function(args, util) {
     // Only execute one time. `ifElse` will be returned to
     // when the substack finishes, but it shouldn't execute again.
-    if (util.stackFrame.executed === undefined) {
-        util.stackFrame.executed = true;
+    if (util.stackFrame.executedInFrame === undefined) {
+        util.stackFrame.executedInFrame = true;
         if (args.CONDITION) {
             util.startSubstack(1);
         } else {
