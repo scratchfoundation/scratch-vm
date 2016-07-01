@@ -28,15 +28,27 @@ Scratch3ControlBlocks.prototype.repeat = function(args, util) {
     if (util.stackFrame.loopCounter === undefined) {
         util.stackFrame.loopCounter = parseInt(args.TIMES);
     }
-    // Decrease counter
-    util.stackFrame.loopCounter--;
-    // If we still have some left, start the substack
-    if (util.stackFrame.loopCounter >= 0) {
-        util.startSubstack();
+    // Only execute once per frame.
+    // When the substack finishes, `repeat` will be executed again and
+    // the second branch will be taken, yielding for the rest of the frame.
+    if (!util.stackFrame.executed) {
+        util.stackFrame.executed = true;
+        // Decrease counter
+        util.stackFrame.loopCounter--;
+        // If we still have some left, start the substack
+        if (util.stackFrame.loopCounter >= 0) {
+            util.startSubstack();
+        }
+    } else {
+        util.stackFrame.executed = false;
+        util.yieldFrame();
     }
 };
 
 Scratch3ControlBlocks.prototype.forever = function(args, util) {
+    // Only execute once per frame.
+    // When the substack finishes, `forever` will be executed again and
+    // the second branch will be taken, yielding for the rest of the frame.
     if (!util.stackFrame.executed) {
         util.stackFrame.executed = true;
         util.startSubstack();
