@@ -92,12 +92,8 @@ Sequencer.prototype.startThread = function (thread) {
         thread.setStatus(Thread.STATUS_YIELD_FRAME);
         return;
     }
-    // Start showing run feedback in the editor.
-    this.runtime.glowBlock(currentBlockId, true);
-
     // Execute the current block
     execute(this, thread);
-
     // If the block executed without yielding and without doing control flow,
     // move to done.
     if (thread.status === Thread.STATUS_RUNNING &&
@@ -157,7 +153,6 @@ Sequencer.prototype.stepToReporter = function (thread, blockId, inputName) {
 Sequencer.prototype.proceedThread = function (thread) {
     var currentBlockId = thread.peekStack();
     // Mark the status as done and proceed to the next block.
-    this.runtime.glowBlock(currentBlockId, false);
     // Pop from the stack - finished this level of execution.
     thread.popStack();
     // Push next connected block, if there is one.
