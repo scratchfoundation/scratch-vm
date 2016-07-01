@@ -24,7 +24,8 @@ Scratch3MotionBlocks.prototype.getPrimitives = function() {
         'motion_changeyby': this.changeY,
         'motion_sety': this.setY,
         'motion_xposition': this.getX,
-        'motion_yposition': this.getY
+        'motion_yposition': this.getY,
+        'motion_direction': this.getDirection
     };
 };
 
@@ -73,6 +74,10 @@ Scratch3MotionBlocks.prototype.getX = function (args, util) {
 
 Scratch3MotionBlocks.prototype.getY = function (args, util) {
     return util.target.y;
+};
+
+Scratch3MotionBlocks.prototype.getDirection = function (args, util) {
+    return util.target.direction;
 };
 
 module.exports = Scratch3MotionBlocks;
