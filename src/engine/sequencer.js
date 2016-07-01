@@ -36,6 +36,13 @@ Sequencer.prototype.stepThreads = function (threads) {
     var inactiveThreads = [];
     // If all of the threads are yielding, we should yield.
     var numYieldingThreads = 0;
+    // Clear all yield statuses that were for the previous frame.
+    for (var t = 0; t < threads.length; t++) {
+        if (threads[t].status === Thread.STATUS_YIELD_FRAME) {
+            threads[t].setStatus(Thread.STATUS_RUNNING);
+        }
+    }
+
     // While there are still threads to run and we are within WORK_TIME,
     // continue executing threads.
     while (threads.length > 0 &&
@@ -51,8 +58,10 @@ Sequencer.prototype.stepThreads = function (threads) {
             if (activeThread.status === Thread.STATUS_RUNNING) {
                 // Normal-mode thread: step.
                 this.startThread(activeThread);
-            } else if (activeThread.status === Thread.STATUS_YIELD) {
+            } else if (activeThread.status === Thread.STATUS_YIELD ||
+                       activeThread.status === Thread.STATUS_YIELD_FRAME) {
                 // Yielding thread: do nothing for this step.
+                numYieldingThreads++;
                 continue;
             }
             if (activeThread.stack.length === 0 &&
@@ -148,8 +157,6 @@ Sequencer.prototype.proceedThread = function (thread) {
     var currentBlockId = thread.peekStack();
     // Mark the status as done and proceed to the next block.
     this.runtime.glowBlock(currentBlockId, false);
-    // If the block was yielding, move back to running state.
-    thread.status = Thread.STATUS_RUNNING;
     // Pop from the stack - finished this level of execution.
     thread.popStack();
     // Push next connected block, if there is one.
@@ -164,7 +171,7 @@ Sequencer.prototype.proceedThread = function (thread) {
     }
     // If we still can't find a next block to run, mark the thread as done.
     if (thread.peekStack() === null) {
-        thread.status = Thread.STATUS_DONE;
+        thread.setStatus(Thread.STATUS_DONE);
     }
 };
 

@@ -63,8 +63,14 @@ var execute = function (sequencer, thread) {
 
     var primitiveReportedValue = null;
     primitiveReportedValue = blockFunction(argValues, {
-        yield: thread.yield.bind(thread),
+        yield: function() {
+            thread.setStatus(Thread.STATUS_YIELD);
+        },
+        yieldFrame: function() {
+            thread.setStatus(Thread.STATUS_YIELD_FRAME);
+        },
         done: function() {
+            thread.setStatus(Thread.STATUS_RUNNING);
             sequencer.proceedThread(thread);
         },
         stackFrame: currentStackFrame.executionContext,
@@ -84,17 +90,19 @@ var execute = function (sequencer, thread) {
     if (isPromise) {
         if (thread.status === Thread.STATUS_RUNNING) {
             // Primitive returned a promise; automatically yield thread.
-            thread.status = Thread.STATUS_YIELD;
+            thread.setStatus(Thread.STATUS_YIELD);
         }
         // Promise handlers
         primitiveReportedValue.then(function(resolvedValue) {
             // Promise resolved: the primitive reported a value.
             thread.pushReportedValue(resolvedValue);
+            thread.setStatus(Thread.STATUS_RUNNING);
             sequencer.proceedThread(thread);
         }, function(rejectionReason) {
             // Promise rejected: the primitive had some error.
             // Log it and proceed.
             console.warn('Primitive rejected promise: ', rejectionReason);
+            thread.setStatus(Thread.STATUS_RUNNING);
             sequencer.proceedThread(thread);
         });
     } else if (thread.status === Thread.STATUS_RUNNING) {

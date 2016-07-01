@@ -47,11 +47,17 @@ Thread.STATUS_RUNNING = 0;
 Thread.STATUS_YIELD = 1;
 
 /**
+ * Thread status for a single-frame yield.
+ * @const
+ */
+Thread.STATUS_YIELD_FRAME = 2;
+
+/**
  * Thread status for a finished/done thread.
  * Thread is in this state when there are no more blocks to execute.
  * @const
  */
-Thread.STATUS_DONE = 2;
+Thread.STATUS_DONE = 3;
 
 /**
  * Push stack and update stack frames appropriately.
@@ -118,10 +124,11 @@ Thread.prototype.pushReportedValue = function (value) {
 };
 
 /**
- * Yields the thread.
+ * Set thread status.
+ * @param {number} status Enum representing thread status.
  */
-Thread.prototype.yield = function () {
-    this.status = Thread.STATUS_YIELD;
+Thread.prototype.setStatus = function (status) {
+    this.status = status;
 };
 
 module.exports = Thread;

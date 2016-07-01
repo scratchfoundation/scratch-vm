@@ -37,7 +37,13 @@ Scratch3ControlBlocks.prototype.repeat = function(args, util) {
 };
 
 Scratch3ControlBlocks.prototype.forever = function(args, util) {
-    util.startSubstack();
+    if (!util.stackFrame.executed) {
+        util.stackFrame.executed = true;
+        util.startSubstack();
+    } else {
+        util.stackFrame.executed = false;
+        util.yieldFrame();
+    }
 };
 
 Scratch3ControlBlocks.prototype.wait = function(args) {
