@@ -15,6 +15,7 @@ function Scratch3ControlBlocks(runtime) {
 Scratch3ControlBlocks.prototype.getPrimitives = function() {
     return {
         'control_repeat': this.repeat,
+        'control_repeat_until': this.repeatUntil,
         'control_forever': this.forever,
         'control_wait': this.wait,
         'control_if': this.if,
@@ -45,15 +46,31 @@ Scratch3ControlBlocks.prototype.repeat = function(args, util) {
     }
 };
 
+Scratch3ControlBlocks.prototype.repeatUntil = function(args, util) {
+    // Only execute once per frame.
+    // When the substack finishes, `repeat` will be executed again and
+    // the second branch will be taken, yielding for the rest of the frame.
+    if (!util.stackFrame.executedInFrame) {
+        util.stackFrame.executedInFrame = true;
+        // If the condition is true, start the substack.
+        if (!args.CONDITION) {
+            util.startSubstack();
+        }
+    } else {
+        util.stackFrame.executedInFrame = false;
+        util.yieldFrame();
+    }
+};
+
 Scratch3ControlBlocks.prototype.forever = function(args, util) {
     // Only execute once per frame.
     // When the substack finishes, `forever` will be executed again and
     // the second branch will be taken, yielding for the rest of the frame.
-    if (!util.stackFrame.executed) {
-        util.stackFrame.executed = true;
+    if (!util.stackFrame.executedInFrame) {
+        util.stackFrame.executedInFrame = true;
         util.startSubstack();
     } else {
-        util.stackFrame.executed = false;
+        util.stackFrame.executedInFrame = false;
         util.yieldFrame();
     }
 };
@@ -69,8 +86,8 @@ Scratch3ControlBlocks.prototype.wait = function(args) {
 Scratch3ControlBlocks.prototype.if = function(args, util) {
     // Only execute one time. `if` will be returned to
     // when the substack finishes, but it shouldn't execute again.
-    if (util.stackFrame.executed === undefined) {
-        util.stackFrame.executed = true;
+    if (util.stackFrame.executedInFrame === undefined) {
+        util.stackFrame.executedInFrame = true;
         if (args.CONDITION) {
             util.startSubstack();
         }
