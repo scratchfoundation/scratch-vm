@@ -86,9 +86,10 @@ Sequencer.prototype.stepThreads = function (threads) {
 Sequencer.prototype.startThread = function (thread) {
     var currentBlockId = thread.peekStack();
     if (!currentBlockId) {
-        // A "null block" - empty substack. Pop the stack.
+        // A "null block" - empty substack.
+        // Yield for the frame.
         thread.popStack();
-        thread.status = Thread.STATUS_DONE;
+        thread.setStatus(Thread.STATUS_YIELD_FRAME);
         return;
     }
     // Start showing run feedback in the editor.
@@ -165,12 +166,8 @@ Sequencer.prototype.proceedThread = function (thread) {
     if (nextBlockId) {
         thread.pushStack(nextBlockId);
     }
-    // Pop from the stack until we have a next block.
-    while (thread.peekStack() === null && thread.stack.length > 0) {
-        thread.popStack();
-    }
-    // If we still can't find a next block to run, mark the thread as done.
-    if (thread.peekStack() === null) {
+    // If we can't find a next block to run, mark the thread as done.
+    if (!thread.peekStack()) {
         thread.setStatus(Thread.STATUS_DONE);
     }
 };
