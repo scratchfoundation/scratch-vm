@@ -24,6 +24,8 @@ Clone.prototype.y = 0;
 
 Clone.prototype.direction = 90;
 
+Clone.prototype.visible = true;
+
 Clone.prototype.size = 100;
 
 Clone.prototype.effects = {
@@ -49,6 +51,16 @@ Clone.prototype.setDirection = function (direction) {
     self.renderer.updateDrawableProperties(this.drawableID, {
         direction: this.direction
     });
+};
+
+Clone.prototype.setVisible = function (visible) {
+    this.visible = visible;
+    // @todo: Until visibility is implemented in the renderer, use a ghost.
+    if (this.visible) {
+        this.setEffect('ghost', 0);
+    } else {
+        this.setEffect('ghost', 100);
+    }
 };
 
 Clone.prototype.setSize = function (size) {

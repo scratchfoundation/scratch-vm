@@ -12,6 +12,8 @@ function Scratch3LooksBlocks(runtime) {
  */
 Scratch3LooksBlocks.prototype.getPrimitives = function() {
     return {
+        'looks_show': this.show,
+        'looks_hide': this.hide,
         'looks_effectmenu': this.effectMenu,
         'looks_changeeffectby': this.changeEffect,
         'looks_seteffectto': this.setEffect,
@@ -20,6 +22,14 @@ Scratch3LooksBlocks.prototype.getPrimitives = function() {
         'looks_setsizeto': this.setSize,
         'looks_size': this.getSize
     };
+};
+
+Scratch3LooksBlocks.prototype.show = function (args, util) {
+    util.target.setVisible(true);
+};
+
+Scratch3LooksBlocks.prototype.hide = function (args, util) {
+    util.target.setVisible(false);
 };
 
 Scratch3LooksBlocks.prototype.effectMenu = function (args) {
