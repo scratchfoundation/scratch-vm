@@ -91,6 +91,13 @@ VirtualMachine.prototype.getPlaygroundData = function () {
     });
 };
 
+/**
+ * Handle an animation frame.
+ */
+VirtualMachine.prototype.animationFrame = function () {
+    this.runtime.animationFrame();
+};
+
 /*
  * Worker handlers: for all public methods available above,
  * we must also provide a message handler in case the VM is run
@@ -126,6 +133,9 @@ if (ENV_WORKER) {
                 blocks: self.vmInstance.exampleSprite.blocks,
                 threads: self.vmInstance.runtime.threads
             });
+            break;
+        case 'animationFrame':
+            self.vmInstance.animationFrame();
             break;
         default:
             if (e.data.id == 'RendererConnected') {

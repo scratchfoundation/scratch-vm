@@ -79,6 +79,13 @@ window.onload = function() {
     // Run threads
     vm.start();
 
+    // Inform VM of animation frames.
+    var animate = function() {
+        window.vm.animationFrame();
+        requestAnimationFrame(animate);
+    };
+    requestAnimationFrame(animate);
+
     // Handlers for green flag and stop all.
     document.getElementById('greenflag').addEventListener('click', function() {
         vm.greenFlag();

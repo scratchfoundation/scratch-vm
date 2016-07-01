@@ -236,32 +236,20 @@ Runtime.prototype.targetForThread = function (thread) {
 };
 
 /**
- * setInterval implementation that works in a WebWorker or not.
- * @param {?Function} fcn Function to call.
- * @param {number} interval Interval at which to call it.
- * @return {number} Value returned by setInterval.
+ * Handle an animation frame from the main thread.
  */
-Runtime.prototype._setInterval = function(fcn, interval) {
-    var setInterval = null;
-    if (typeof window !== 'undefined' && window.setInterval) {
-        setInterval = window.setInterval;
-    } else if (typeof self !== 'undefined' && self.setInterval) {
-        setInterval = self.setInterval;
-    } else {
-        return;
+Runtime.prototype.animationFrame = function () {
+    if (self.renderer) {
+        self.renderer.draw();
     }
-    return setInterval(fcn, interval);
 };
 
 /**
  * Set up timers to repeatedly step in a browser
  */
 Runtime.prototype.start = function () {
-    this._setInterval(function() {
+    self.setInterval(function() {
         this._step();
-        if (self.renderer) {
-            self.renderer.draw();
-        }
     }.bind(this), Runtime.THREAD_STEP_INTERVAL);
 };
 
