@@ -12,6 +12,10 @@ function Scratch3LooksBlocks(runtime) {
  */
 Scratch3LooksBlocks.prototype.getPrimitives = function() {
     return {
+        'looks_say': this.say,
+        'looks_sayforsecs': this.sayforsecs,
+        'looks_think': this.think,
+        'looks_thinkforsecs': this.sayforsecs,
         'looks_show': this.show,
         'looks_hide': this.hide,
         'looks_effectmenu': this.effectMenu,
@@ -22,6 +26,36 @@ Scratch3LooksBlocks.prototype.getPrimitives = function() {
         'looks_setsizeto': this.setSize,
         'looks_size': this.getSize
     };
+};
+
+Scratch3LooksBlocks.prototype.say = function (args, util) {
+    util.target.setSay('say', args.MESSAGE);
+};
+
+Scratch3LooksBlocks.prototype.sayforsecs = function (args, util) {
+    util.target.setSay('say', args.MESSAGE);
+    return new Promise(function(resolve) {
+        setTimeout(function() {
+            // Clear say bubble and proceed.
+            util.target.setSay();
+            resolve();
+        }, 1000 * args.SECS);
+    });
+};
+
+Scratch3LooksBlocks.prototype.think = function (args, util) {
+    util.target.setSay('think', args.MESSAGE);
+};
+
+Scratch3LooksBlocks.prototype.thinkforsecs = function (args, util) {
+    util.target.setSay('think', args.MESSAGE);
+    return new Promise(function(resolve) {
+        setTimeout(function() {
+            // Clear say bubble and proceed.
+            util.target.setSay();
+            resolve();
+        }, 1000 * args.SECS);
+    });
 };
 
 Scratch3LooksBlocks.prototype.show = function (args, util) {

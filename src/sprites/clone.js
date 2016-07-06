@@ -53,6 +53,20 @@ Clone.prototype.setDirection = function (direction) {
     });
 };
 
+/**
+ * Set a say bubble on this clone.
+ * @param {?string} type Type of say bubble: "say", "think", or null.
+ * @param {?string} message Message to put in say bubble.
+ */
+Clone.prototype.setSay = function (type, message) {
+    // @todo: Render to stage.
+    if (!type || !message) {
+        console.log('Clearing say bubble');
+        return;
+    }
+    console.log('Setting say bubble:', type, message);
+};
+
 Clone.prototype.setVisible = function (visible) {
     this.visible = visible;
     // @todo: Until visibility is implemented in the renderer, use a ghost.
