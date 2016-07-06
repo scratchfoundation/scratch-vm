@@ -2,6 +2,11 @@ var util = require('util');
 var MathUtil = require('../util/math-util');
 var Target = require('../engine/target');
 
+/**
+ * Clone (instance) of a sprite. 
+ * @param {!Blocks} spriteBlocks Reference to the sprite's blocks.
+ * @constructor
+ */
 function Clone(spriteBlocks) {
     Target.call(this, spriteBlocks);
     this.drawableID = null;
