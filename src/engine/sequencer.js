@@ -62,7 +62,6 @@ Sequencer.prototype.stepThreads = function (threads) {
                        activeThread.status === Thread.STATUS_YIELD_FRAME) {
                 // Yielding thread: do nothing for this step.
                 numYieldingThreads++;
-                continue;
             }
             if (activeThread.stack.length === 0 &&
                 activeThread.status === Thread.STATUS_DONE) {
