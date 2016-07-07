@@ -70,6 +70,12 @@ Runtime.BLOCK_GLOW_ON = 'BLOCK_GLOW_ON';
 Runtime.BLOCK_GLOW_OFF = 'BLOCK_GLOW_OFF';
 
 /**
+ * Event name for visual value report.
+ * @const {string}
+ */
+Runtime.VISUAL_REPORT = 'VISUAL_REPORT';
+
+/**
  * Inherit from EventEmitter
  */
 util.inherits(Runtime, EventEmitter);
@@ -216,6 +222,15 @@ Runtime.prototype.glowBlock = function (blockId, isGlowing) {
     } else {
         this.emit(Runtime.BLOCK_GLOW_OFF, blockId);
     }
+};
+
+/**
+ * Emit value for reporter to show in the blocks.
+ * @param {string} blockId ID for the block.
+ * @param {string} value Value to show associated with the block.
+ */
+Runtime.prototype.visualReport = function (blockId, value) {
+    this.emit(Runtime.VISUAL_REPORT, blockId, String(value));
 };
 
 /**

@@ -78,6 +78,9 @@ window.onload = function() {
     vm.on('BLOCK_GLOW_OFF', function(data) {
         workspace.glowBlock(data.id, false);
     });
+    vm.on('VISUAL_REPORT', function(data) {
+        workspace.reportValue(data.id, data.value);
+    });
 
     // Run threads
     vm.start();

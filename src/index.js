@@ -53,6 +53,9 @@ function VirtualMachine () {
     instance.runtime.on(Runtime.BLOCK_GLOW_OFF, function (id) {
         instance.emit(Runtime.BLOCK_GLOW_OFF, {id: id});
     });
+    instance.runtime.on(Runtime.VISUAL_REPORT, function (id, value) {
+        instance.emit(Runtime.VISUAL_REPORT, {id: id, value: value});
+    });
 }
 
 /**
@@ -157,6 +160,9 @@ if (ENV_WORKER) {
     });
     self.vmInstance.runtime.on(Runtime.BLOCK_GLOW_OFF, function (id) {
         self.postMessage({method: Runtime.BLOCK_GLOW_OFF, id: id});
+    });
+    self.vmInstance.runtime.on(Runtime.VISUAL_REPORT, function (id, value) {
+        self.postMessage({method: Runtime.VISUAL_REPORT, id: id, value: value});
     });
 }
 
