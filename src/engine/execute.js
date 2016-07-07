@@ -97,7 +97,8 @@ var execute = function (sequencer, thread) {
             // Promise resolved: the primitive reported a value.
             thread.pushReportedValue(resolvedValue);
             // Report the value visually if necessary.
-            if (thread.peekStack() === thread.topBlock) {
+            if (typeof resolvedValue !== 'undefined' &&
+                thread.peekStack() === thread.topBlock) {
                 runtime.visualReport(thread.peekStack(), resolvedValue);
             }
             thread.setStatus(Thread.STATUS_RUNNING);
@@ -112,7 +113,8 @@ var execute = function (sequencer, thread) {
     } else if (thread.status === Thread.STATUS_RUNNING) {
         thread.pushReportedValue(primitiveReportedValue);
         // Report the value visually if necessary.
-        if (thread.peekStack() === thread.topBlock) {
+        if (typeof primitiveReportedValue !== 'undefined' &&
+            thread.peekStack() === thread.topBlock) {
             runtime.visualReport(thread.peekStack(), primitiveReportedValue);
         }
     }
