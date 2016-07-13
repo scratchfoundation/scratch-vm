@@ -3,7 +3,7 @@ var MathUtil = require('../util/math-util');
 var Target = require('../engine/target');
 
 /**
- * Clone (instance) of a sprite. 
+ * Clone (instance) of a sprite.
  * @param {!Blocks} spriteBlocks Reference to the sprite's blocks.
  * @constructor
  */
@@ -116,12 +116,9 @@ Clone.prototype.setSay = function (type, message) {
  */
 Clone.prototype.setVisible = function (visible) {
     this.visible = visible;
-    // @todo: Until visibility is implemented in the renderer, use a ghost.
-    if (this.visible) {
-        this.setEffect('ghost', 0);
-    } else {
-        this.setEffect('ghost', 100);
-    }
+    self.renderer.updateDrawableProperties(this.drawableID, {
+        visible: this.visible
+    });
 };
 
 /**
