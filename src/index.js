@@ -108,7 +108,7 @@ VirtualMachine.prototype.animationFrame = function () {
  */
 if (ENV_WORKER) {
     self.importScripts(
-        './node_modules/scratch-render-webgl/build/render-webgl-worker.js'
+        './node_modules/scratch-render/render-worker.js'
     );
     self.renderer = new self.RenderWebGLWorker();
     self.vmInstance = new VirtualMachine();

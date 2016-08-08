@@ -1,5 +1,3 @@
-var Promise = require('promise');
-
 function Scratch3OperatorsBlocks(runtime) {
     /**
      * The runtime instantiating this block package.

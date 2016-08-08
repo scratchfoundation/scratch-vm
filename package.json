@@ -16,14 +16,14 @@
   "dependencies": {
     "htmlparser2": "3.9.0",
     "memoizee": "0.3.10",
-    "promise": "7.1.1",
-    "scratch-render-webgl": "git+https://github.com/LLK/scratch-render-webgl.git"
+    "promise": "7.1.1"
   },
   "devDependencies": {
     "eslint": "2.7.0",
     "highlightjs": "8.7.0",
     "json-loader": "0.5.4",
     "scratch-blocks": "git+https://git@github.com/LLK/scratch-blocks.git",
+    "scratch-render": "git+https://git@github.com/LLK/scratch-render.git",
     "tap": "5.7.1",
     "webpack": "1.13.0",
     "webpack-dev-server": "1.14.1"
