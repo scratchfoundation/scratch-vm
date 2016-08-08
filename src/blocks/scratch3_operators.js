@@ -15,6 +15,7 @@ Scratch3OperatorsBlocks.prototype.getPrimitives = function() {
         'math_number': this.number,
         'math_positive_number': this.number,
         'math_whole_number': this.number,
+        'math_angle': this.number,
         'text': this.text,
         'operator_add': this.add,
         'operator_subtract': this.subtract,
