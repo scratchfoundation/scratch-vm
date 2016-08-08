@@ -36,6 +36,13 @@ Sequencer.prototype.stepThreads = function (threads) {
     var inactiveThreads = [];
     // If all of the threads are yielding, we should yield.
     var numYieldingThreads = 0;
+    // Clear all yield statuses that were for the previous frame.
+    for (var t = 0; t < threads.length; t++) {
+        if (threads[t].status === Thread.STATUS_YIELD_FRAME) {
+            threads[t].setStatus(Thread.STATUS_RUNNING);
+        }
+    }
+
     // While there are still threads to run and we are within WORK_TIME,
     // continue executing threads.
     while (threads.length > 0 &&
@@ -51,9 +58,10 @@ Sequencer.prototype.stepThreads = function (threads) {
             if (activeThread.status === Thread.STATUS_RUNNING) {
                 // Normal-mode thread: step.
                 this.startThread(activeThread);
-            } else if (activeThread.status === Thread.STATUS_YIELD) {
+            } else if (activeThread.status === Thread.STATUS_YIELD ||
+                       activeThread.status === Thread.STATUS_YIELD_FRAME) {
                 // Yielding thread: do nothing for this step.
-                continue;
+                numYieldingThreads++;
             }
             if (activeThread.stack.length === 0 &&
                 activeThread.status === Thread.STATUS_DONE) {
@@ -77,17 +85,14 @@ Sequencer.prototype.stepThreads = function (threads) {
 Sequencer.prototype.startThread = function (thread) {
     var currentBlockId = thread.peekStack();
     if (!currentBlockId) {
-        // A "null block" - empty substack. Pop the stack.
+        // A "null block" - empty substack.
+        // Yield for the frame.
         thread.popStack();
-        thread.status = Thread.STATUS_DONE;
+        thread.setStatus(Thread.STATUS_YIELD_FRAME);
         return;
     }
-    // Start showing run feedback in the editor.
-    this.runtime.glowBlock(currentBlockId, true);
-
     // Execute the current block
     execute(this, thread);
-
     // If the block executed without yielding and without doing control flow,
     // move to done.
     if (thread.status === Thread.STATUS_RUNNING &&
@@ -106,7 +111,7 @@ Sequencer.prototype.stepToSubstack = function (thread, substackNum) {
         substackNum = 1;
     }
     var currentBlockId = thread.peekStack();
-    var substackId = this.runtime.blocks.getSubstack(
+    var substackId = this.runtime.targetForThread(thread).blocks.getSubstack(
         currentBlockId,
         substackNum
     );
@@ -147,23 +152,17 @@ Sequencer.prototype.stepToReporter = function (thread, blockId, inputName) {
 Sequencer.prototype.proceedThread = function (thread) {
     var currentBlockId = thread.peekStack();
     // Mark the status as done and proceed to the next block.
-    this.runtime.glowBlock(currentBlockId, false);
-    // If the block was yielding, move back to running state.
-    thread.status = Thread.STATUS_RUNNING;
     // Pop from the stack - finished this level of execution.
     thread.popStack();
     // Push next connected block, if there is one.
-    var nextBlockId = this.runtime.blocks.getNextBlock(currentBlockId);
+    var nextBlockId = (this.runtime.targetForThread(thread).
+        blocks.getNextBlock(currentBlockId));
     if (nextBlockId) {
         thread.pushStack(nextBlockId);
     }
-    // Pop from the stack until we have a next block.
-    while (thread.peekStack() === null && thread.stack.length > 0) {
-        thread.popStack();
-    }
-    // If we still can't find a next block to run, mark the thread as done.
-    if (thread.peekStack() === null) {
-        thread.status = Thread.STATUS_DONE;
+    // If we can't find a next block to run, mark the thread as done.
+    if (!thread.peekStack()) {
+        thread.setStatus(Thread.STATUS_DONE);
     }
 };
 

@@ -16,7 +16,8 @@
   "dependencies": {
     "htmlparser2": "3.9.0",
     "memoizee": "0.3.10",
-    "promise": "7.1.1"
+    "promise": "7.1.1",
+    "scratch-render-webgl": "git+https://github.com/LLK/scratch-render-webgl.git"
   },
   "devDependencies": {
     "eslint": "2.7.0",

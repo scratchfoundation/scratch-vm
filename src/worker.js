@@ -63,6 +63,10 @@ VirtualMachine.prototype.stopAll = function () {
     this.vmWorker.postMessage({method: 'stopAll'});
 };
 
+VirtualMachine.prototype.animationFrame = function () {
+    this.vmWorker.postMessage({method: 'animationFrame'});
+};
+
 /**
  * Export and bind to `window`
  */
