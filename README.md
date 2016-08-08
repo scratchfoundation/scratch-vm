@@ -7,7 +7,7 @@
 
 ## Installation
 ```bash
-npm install scratch-vm
+npm install https://github.com/LLK/scratch-vm.git
 ```
 
 ## Setup
