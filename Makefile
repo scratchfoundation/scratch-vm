@@ -31,4 +31,4 @@ coverage:
 
 # ------------------------------------------------------------------------------
 
-.PHONY: build lint test coverage benchmark
+.PHONY: build lint test coverage benchmark serve
