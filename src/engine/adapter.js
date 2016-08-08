@@ -1,10 +1,4 @@
 var html = require('htmlparser2');
-var memoize = require('memoizee');
-var parseDOM = memoize(html.parseDOM, {
-    length: 1,
-    resolvers: [String],
-    max: 200
-});
 
 /**
  * Adapter between block creation events and block representation which can be
@@ -17,7 +11,7 @@ module.exports = function (e) {
     if (typeof e !== 'object') return;
     if (typeof e.xml !== 'object') return;
 
-    return domToBlocks(parseDOM(e.xml.outerHTML));
+    return domToBlocks(html.parseDOM(e.xml.outerHTML));
 };
 
 /**
