@@ -129,7 +129,7 @@ Clone.prototype.setSize = function (size) {
     // Keep size between 5% and 535%.
     this.size = MathUtil.clamp(size, 5, 535);
     self.renderer.updateDrawableProperties(this.drawableID, {
-        scale: this.size
+        scale: [this.size, this.size]
     });
 };
 
