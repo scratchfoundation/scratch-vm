@@ -3,6 +3,10 @@ window.onload = function() {
     var vm = new window.VirtualMachine();
     window.vm = vm;
 
+    var canvas = document.getElementById('scratch-stage');
+    window.renderer = new window.RenderWebGLLocal(canvas);
+    window.renderer.connectWorker(window.vm.vmWorker);
+
     var toolbox = document.getElementById('toolbox');
     var workspace = window.Blockly.inject('blocks', {
         toolbox: toolbox,
@@ -47,11 +51,14 @@ window.onload = function() {
         }
     };
 
+    // Only request data from the VM thread if the appropriate tab is open.
+    window.exploreTabOpen = false;
     var getPlaygroundData = function () {
         vm.getPlaygroundData();
-        window.requestAnimationFrame(getPlaygroundData);
+        if (window.exploreTabOpen) {
+            window.requestAnimationFrame(getPlaygroundData);
+        }
     };
-    getPlaygroundData();
 
     vm.on('playgroundData', function(data) {
         updateThreadExplorer(data.threads);
@@ -71,9 +78,19 @@ window.onload = function() {
     vm.on('BLOCK_GLOW_OFF', function(data) {
         workspace.glowBlock(data.id, false);
     });
+    vm.on('VISUAL_REPORT', function(data) {
+        workspace.reportValue(data.id, data.value);
+    });
 
     // Run threads
     vm.start();
+
+    // Inform VM of animation frames.
+    var animate = function() {
+        window.vm.animationFrame();
+        requestAnimationFrame(animate);
+    };
+    requestAnimationFrame(animate);
 
     // Handlers for green flag and stop all.
     document.getElementById('greenflag').addEventListener('click', function() {
@@ -85,16 +102,30 @@ window.onload = function() {
 
     var tabBlockExplorer = document.getElementById('tab-blockexplorer');
     var tabThreadExplorer = document.getElementById('tab-threadexplorer');
+    var tabRenderExplorer = document.getElementById('tab-renderexplorer');
 
     // Handlers to show different explorers.
     document.getElementById('threadexplorer-link').addEventListener('click',
         function () {
+            window.exploreTabOpen = true;
+            getPlaygroundData();
             tabBlockExplorer.style.display = 'none';
+            tabRenderExplorer.style.display = 'none';
             tabThreadExplorer.style.display = 'block';
         });
     document.getElementById('blockexplorer-link').addEventListener('click',
         function () {
+            window.exploreTabOpen = true;
+            getPlaygroundData();
             tabBlockExplorer.style.display = 'block';
+            tabRenderExplorer.style.display = 'none';
+            tabThreadExplorer.style.display = 'none';
+        });
+    document.getElementById('renderexplorer-link').addEventListener('click',
+        function () {
+            window.exploreTabOpen = false;
+            tabBlockExplorer.style.display = 'none';
+            tabRenderExplorer.style.display = 'block';
             tabThreadExplorer.style.display = 'none';
         });
 };

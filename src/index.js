@@ -1,7 +1,7 @@
 var EventEmitter = require('events');
 var util = require('util');
 
-var Blocks = require('./engine/blocks');
+var Sprite = require('./sprites/sprite');
 var Runtime = require('./engine/runtime');
 
 /**
@@ -21,18 +21,23 @@ function VirtualMachine () {
     // Bind event emitter and runtime to VM instance
     // @todo Post message (Web Worker) polyfill
     EventEmitter.call(instance);
-    instance.blocks = new Blocks();
-    instance.runtime = new Runtime(instance.blocks);
+    // @todo support multiple targets/sprites.
+    // This is just a demo/example.
+    var exampleSprite = new Sprite();
+    exampleSprite.createClone();
+    var exampleTargets = [exampleSprite.clones[0]];
+    instance.exampleSprite = exampleSprite;
+    instance.runtime = new Runtime(exampleTargets);
 
     /**
      * Event listeners for scratch-blocks.
      */
     instance.blockListener = (
-        instance.blocks.generateBlockListener(false, instance.runtime)
+        exampleSprite.blocks.generateBlockListener(false, instance.runtime)
     );
 
     instance.flyoutBlockListener = (
-        instance.blocks.generateBlockListener(true, instance.runtime)
+        exampleSprite.blocks.generateBlockListener(true, instance.runtime)
     );
 
     // Runtime emits are passed along as VM emits.
@@ -47,6 +52,9 @@ function VirtualMachine () {
     });
     instance.runtime.on(Runtime.BLOCK_GLOW_OFF, function (id) {
         instance.emit(Runtime.BLOCK_GLOW_OFF, {id: id});
+    });
+    instance.runtime.on(Runtime.VISUAL_REPORT, function (id, value) {
+        instance.emit(Runtime.VISUAL_REPORT, {id: id, value: value});
     });
 }
 
@@ -81,9 +89,16 @@ VirtualMachine.prototype.stopAll = function () {
  */
 VirtualMachine.prototype.getPlaygroundData = function () {
     this.emit('playgroundData', {
-        blocks: this.blocks,
+        blocks: this.exampleSprite.blocks,
         threads: this.runtime.threads
     });
+};
+
+/**
+ * Handle an animation frame.
+ */
+VirtualMachine.prototype.animationFrame = function () {
+    this.runtime.animationFrame();
 };
 
 /*
@@ -92,6 +107,10 @@ VirtualMachine.prototype.getPlaygroundData = function () {
  * from a worker environment.
  */
 if (ENV_WORKER) {
+    self.importScripts(
+        './node_modules/scratch-render/render-worker.js'
+    );
+    self.renderer = new self.RenderWebGLWorker();
     self.vmInstance = new VirtualMachine();
     self.onmessage = function (e) {
         var messageData = e.data;
@@ -114,12 +133,19 @@ if (ENV_WORKER) {
         case 'getPlaygroundData':
             self.postMessage({
                 method: 'playgroundData',
-                blocks: self.vmInstance.blocks,
+                blocks: self.vmInstance.exampleSprite.blocks,
                 threads: self.vmInstance.runtime.threads
             });
             break;
+        case 'animationFrame':
+            self.vmInstance.animationFrame();
+            break;
         default:
-            throw 'Unknown method' + messageData.method;
+            if (e.data.id == 'RendererConnected') {
+                //initRenderWorker();
+            }
+            self.renderer.onmessage(e);
+            break;
         }
     };
     // Bind runtime's emitted events to postmessages.
@@ -134,6 +160,9 @@ if (ENV_WORKER) {
     });
     self.vmInstance.runtime.on(Runtime.BLOCK_GLOW_OFF, function (id) {
         self.postMessage({method: Runtime.BLOCK_GLOW_OFF, id: id});
+    });
+    self.vmInstance.runtime.on(Runtime.VISUAL_REPORT, function (id, value) {
+        self.postMessage({method: Runtime.VISUAL_REPORT, id: id, value: value});
     });
 }
 

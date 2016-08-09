@@ -7,12 +7,13 @@ var Thread = require('./thread');
  */
 var execute = function (sequencer, thread) {
     var runtime = sequencer.runtime;
+    var target = runtime.targetForThread(thread);
 
     // Current block to execute is the one on the top of the stack.
     var currentBlockId = thread.peekStack();
     var currentStackFrame = thread.peekStackFrame();
 
-    var opcode = runtime.blocks.getOpcode(currentBlockId);
+    var opcode = target.blocks.getOpcode(currentBlockId);
 
     if (!opcode) {
         console.warn('Could not get opcode for block: ' + currentBlockId);
@@ -29,13 +30,13 @@ var execute = function (sequencer, thread) {
     var argValues = {};
 
     // Add all fields on this block to the argValues.
-    var fields = runtime.blocks.getFields(currentBlockId);
+    var fields = target.blocks.getFields(currentBlockId);
     for (var fieldName in fields) {
         argValues[fieldName] = fields[fieldName].value;
     }
 
     // Recursively evaluate input blocks.
-    var inputs = runtime.blocks.getInputs(currentBlockId);
+    var inputs = target.blocks.getInputs(currentBlockId);
     for (var inputName in inputs) {
         var input = inputs[inputName];
         var inputBlockId = input.block;
@@ -62,14 +63,21 @@ var execute = function (sequencer, thread) {
 
     var primitiveReportedValue = null;
     primitiveReportedValue = blockFunction(argValues, {
-        yield: thread.yield.bind(thread),
+        yield: function() {
+            thread.setStatus(Thread.STATUS_YIELD);
+        },
+        yieldFrame: function() {
+            thread.setStatus(Thread.STATUS_YIELD_FRAME);
+        },
         done: function() {
+            thread.setStatus(Thread.STATUS_RUNNING);
             sequencer.proceedThread(thread);
         },
         stackFrame: currentStackFrame.executionContext,
         startSubstack: function (substackNum) {
             sequencer.stepToSubstack(thread, substackNum);
-        }
+        },
+        target: target
     });
 
     // Deal with any reported value.
@@ -82,21 +90,33 @@ var execute = function (sequencer, thread) {
     if (isPromise) {
         if (thread.status === Thread.STATUS_RUNNING) {
             // Primitive returned a promise; automatically yield thread.
-            thread.status = Thread.STATUS_YIELD;
+            thread.setStatus(Thread.STATUS_YIELD);
         }
         // Promise handlers
         primitiveReportedValue.then(function(resolvedValue) {
             // Promise resolved: the primitive reported a value.
             thread.pushReportedValue(resolvedValue);
+            // Report the value visually if necessary.
+            if (typeof resolvedValue !== 'undefined' &&
+                thread.peekStack() === thread.topBlock) {
+                runtime.visualReport(thread.peekStack(), resolvedValue);
+            }
+            thread.setStatus(Thread.STATUS_RUNNING);
             sequencer.proceedThread(thread);
         }, function(rejectionReason) {
             // Promise rejected: the primitive had some error.
             // Log it and proceed.
             console.warn('Primitive rejected promise: ', rejectionReason);
+            thread.setStatus(Thread.STATUS_RUNNING);
             sequencer.proceedThread(thread);
         });
     } else if (thread.status === Thread.STATUS_RUNNING) {
         thread.pushReportedValue(primitiveReportedValue);
+        // Report the value visually if necessary.
+        if (typeof primitiveReportedValue !== 'undefined' &&
+            thread.peekStack() === thread.topBlock) {
+            runtime.visualReport(thread.peekStack(), primitiveReportedValue);
+        }
     }
 };
 

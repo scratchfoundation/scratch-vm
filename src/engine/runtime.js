@@ -6,23 +6,25 @@ var util = require('util');
 var defaultBlockPackages = {
     'scratch3_control': require('../blocks/scratch3_control'),
     'scratch3_event': require('../blocks/scratch3_event'),
+    'scratch3_looks': require('../blocks/scratch3_looks'),
+    'scratch3_motion': require('../blocks/scratch3_motion'),
     'scratch3_operators': require('../blocks/scratch3_operators')
 };
 
 /**
- * Manages blocks, stacks, and the sequencer.
- * @param {!Blocks} blocks Blocks instance for this runtime.
+ * Manages targets, stacks, and the sequencer.
+ * @param {!Array.<Target>} targets List of targets for this runtime.
  */
-function Runtime (blocks) {
+function Runtime (targets) {
     // Bind event emitter
     EventEmitter.call(this);
 
     // State for the runtime
 
     /**
-     * Block management and storage
+     * Target management and storage.
      */
-    this.blocks = blocks;
+    this.targets = targets;
 
     /**
      * A list of threads that are currently running in the VM.
@@ -68,6 +70,12 @@ Runtime.BLOCK_GLOW_ON = 'BLOCK_GLOW_ON';
 Runtime.BLOCK_GLOW_OFF = 'BLOCK_GLOW_OFF';
 
 /**
+ * Event name for visual value report.
+ * @const {string}
+ */
+Runtime.VISUAL_REPORT = 'VISUAL_REPORT';
+
+/**
  * Inherit from EventEmitter
  */
 util.inherits(Runtime, EventEmitter);
@@ -75,7 +83,7 @@ util.inherits(Runtime, EventEmitter);
 /**
  * How rapidly we try to step threads, in ms.
  */
-Runtime.THREAD_STEP_INTERVAL = 1000 / 30;
+Runtime.THREAD_STEP_INTERVAL = 1000 / 60;
 
 
 // -----------------------------------------------------------------------------
@@ -163,32 +171,13 @@ Runtime.prototype.greenFlag = function () {
         this._removeThread(this.threads[i]);
     }
     // Add all top stacks with green flag
-    var stacks = this.blocks.getStacks();
-    for (var j = 0; j < stacks.length; j++) {
-        var topBlock = stacks[j];
-        if (this.blocks.getBlock(topBlock).opcode === 'event_whenflagclicked') {
-            this._pushThread(stacks[j]);
-        }
-    }
-};
-
-/**
- * Distance sensor hack
- */
-Runtime.prototype.startDistanceSensors = function () {
-    // Add all top stacks with distance sensor
-    var stacks = this.blocks.getStacks();
-    for (var j = 0; j < stacks.length; j++) {
-        var topBlock = stacks[j];
-        if (this.blocks.getBlock(topBlock).opcode ===
-            'wedo_whendistanceclose') {
-            var alreadyRunning = false;
-            for (var k = 0; k < this.threads.length; k++) {
-                if (this.threads[k].topBlock === topBlock) {
-                    alreadyRunning = true;
-                }
-            }
-            if (!alreadyRunning) {
+    for (var t = 0; t < this.targets.length; t++) {
+        var target = this.targets[t];
+        var stacks = target.blocks.getStacks();
+        for (var j = 0; j < stacks.length; j++) {
+            var topBlock = stacks[j];
+            if (target.blocks.getBlock(topBlock).opcode ===
+                'event_whenflagclicked') {
                 this._pushThread(stacks[j]);
             }
         }
@@ -228,9 +217,6 @@ Runtime.prototype._step = function () {
  * @param {boolean} isGlowing True to turn on glow; false to turn off.
  */
 Runtime.prototype.glowBlock = function (blockId, isGlowing) {
-    if (!this.blocks.getBlock(blockId)) {
-        return;
-    }
     if (isGlowing) {
         this.emit(Runtime.BLOCK_GLOW_ON, blockId);
     } else {
@@ -239,28 +225,45 @@ Runtime.prototype.glowBlock = function (blockId, isGlowing) {
 };
 
 /**
- * setInterval implementation that works in a WebWorker or not.
- * @param {?Function} fcn Function to call.
- * @param {number} interval Interval at which to call it.
- * @return {number} Value returned by setInterval.
+ * Emit value for reporter to show in the blocks.
+ * @param {string} blockId ID for the block.
+ * @param {string} value Value to show associated with the block.
  */
-Runtime.prototype._setInterval = function(fcn, interval) {
-    var setInterval = null;
-    if (typeof window !== 'undefined' && window.setInterval) {
-        setInterval = window.setInterval;
-    } else if (typeof self !== 'undefined' && self.setInterval) {
-        setInterval = self.setInterval;
-    } else {
-        return;
+Runtime.prototype.visualReport = function (blockId, value) {
+    this.emit(Runtime.VISUAL_REPORT, blockId, String(value));
+};
+
+/**
+ * Return the Target for a particular thread.
+ * @param {!Thread} thread Thread to determine target for.
+ * @return {?Target} Target object, if one exists.
+ */
+Runtime.prototype.targetForThread = function (thread) {
+    // @todo This is a messy solution,
+    // but prevents having circular data references.
+    // Have a map or some other way to associate target with threads.
+    for (var t = 0; t < this.targets.length; t++) {
+        var target = this.targets[t];
+        if (target.blocks.getBlock(thread.topBlock)) {
+            return target;
+        }
     }
-    return setInterval(fcn, interval);
+};
+
+/**
+ * Handle an animation frame from the main thread.
+ */
+Runtime.prototype.animationFrame = function () {
+    if (self.renderer) {
+        self.renderer.draw();
+    }
 };
 
 /**
  * Set up timers to repeatedly step in a browser
  */
 Runtime.prototype.start = function () {
-    this._setInterval(function() {
+    self.setInterval(function() {
         this._step();
     }.bind(this), Runtime.THREAD_STEP_INTERVAL);
 };

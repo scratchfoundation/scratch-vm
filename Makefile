@@ -13,7 +13,7 @@ watch:
 	$(WEBPACK) --watch
 
 serve:
-	$(WEBPACK_DEV_SERVER) --content-base ./
+	$(WEBPACK_DEV_SERVER) --host 0.0.0.0 --content-base ./
 
 # ------------------------------------------------------------------------------
 
@@ -31,4 +31,4 @@ coverage:
 
 # ------------------------------------------------------------------------------
 
-.PHONY: build lint test coverage benchmark
+.PHONY: build lint test coverage benchmark serve
