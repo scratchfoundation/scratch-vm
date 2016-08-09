@@ -248,7 +248,7 @@
             <block type="looks_size"></block>
           </category>
           <category name="Sound" colour="#D65CD6">
-            <block type="sound_play">
+            <block type="sound_playsound">
               <value name="SOUND_MENU">
                 <shadow type="sound_sounds_option"></shadow>
               </value>
@@ -278,6 +278,7 @@
                 </shadow>
               </value>
             </block>
+            
             <block type="sound_playnoteforbeats">
               <value name="NOTE">
                 <shadow type="math_number">
@@ -285,11 +286,23 @@
                 </shadow>
               </value>
               <value name="BEATS">
-                <shadow type="math_number">
-                  <field name="NUM">0.5</field>
+                <shadow type="sound_beats_menu">
                 </shadow>
               </value>
             </block>
+            
+		<block type="sound_setkey">
+          <value name="ROOT">
+            <shadow type="sound_roots_menu">
+            </shadow>
+          </value>
+          <value name="SCALE">
+            <shadow type="sound_scales_menu">
+            </shadow>
+          </value>
+        </block>
+            
+            
             <block type="sound_setinstrumentto">
               <value name="INSTRUMENT">
                 <shadow type="math_number">
