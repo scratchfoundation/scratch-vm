@@ -9,20 +9,37 @@ var Target = require('../engine/target');
  */
 function Clone(spriteBlocks) {
     Target.call(this, spriteBlocks);
+    /**
+     * Reference to the global renderer for this VM, if one exists.
+     * @type {?RenderWebGLWorker}
+     */
+    this.renderer = null;
+    // If this is not true, there is no renderer (e.g., running in a test env).
+    if (typeof self !== 'undefined' && self.renderer) {
+        // Pull from `self.renderer`.
+        this.renderer = self.renderer;
+    }
+    /**
+     * ID of the drawable for this clone returned by the renderer, if rendered.
+     * @type {?Number}
+     */
     this.drawableID = null;
+
     this.initDrawable();
 }
 util.inherits(Clone, Target);
 
 /**
- * Create a clone's drawable with the renderer.
+ * Create a clone's drawable with the this.renderer.
  */
 Clone.prototype.initDrawable = function () {
-    var createPromise = self.renderer.createDrawable();
-    var instance = this;
-    createPromise.then(function (id) {
-        instance.drawableID = id;
-    });
+    if (this.renderer) {
+        var createPromise = this.renderer.createDrawable();
+        var instance = this;
+        createPromise.then(function (id) {
+            instance.drawableID = id;
+        });
+    }
 };
 
 // Clone-level properties.
@@ -79,9 +96,11 @@ Clone.prototype.effects = {
 Clone.prototype.setXY = function (x, y) {
     this.x = x;
     this.y = y;
-    self.renderer.updateDrawableProperties(this.drawableID, {
-        position: [this.x, this.y]
-    });
+    if (this.renderer) {
+        this.renderer.updateDrawableProperties(this.drawableID, {
+            position: [this.x, this.y]
+        });
+    }
 };
 
 /**
@@ -91,9 +110,11 @@ Clone.prototype.setXY = function (x, y) {
 Clone.prototype.setDirection = function (direction) {
     // Keep direction between -179 and +180.
     this.direction = MathUtil.wrapClamp(direction, -179, 180);
-    self.renderer.updateDrawableProperties(this.drawableID, {
-        direction: this.direction
-    });
+    if (this.renderer) {
+        this.renderer.updateDrawableProperties(this.drawableID, {
+            direction: this.direction
+        });
+    }
 };
 
 /**
@@ -116,9 +137,11 @@ Clone.prototype.setSay = function (type, message) {
  */
 Clone.prototype.setVisible = function (visible) {
     this.visible = visible;
-    self.renderer.updateDrawableProperties(this.drawableID, {
-        visible: this.visible
-    });
+    if (this.renderer) {
+        this.renderer.updateDrawableProperties(this.drawableID, {
+            visible: this.visible
+        });
+    }
 };
 
 /**
@@ -128,9 +151,11 @@ Clone.prototype.setVisible = function (visible) {
 Clone.prototype.setSize = function (size) {
     // Keep size between 5% and 535%.
     this.size = MathUtil.clamp(size, 5, 535);
-    self.renderer.updateDrawableProperties(this.drawableID, {
-        scale: [this.size, this.size]
-    });
+    if (this.renderer) {
+        this.renderer.updateDrawableProperties(this.drawableID, {
+            scale: [this.size, this.size]
+        });
+    }
 };
 
 /**
@@ -140,9 +165,11 @@ Clone.prototype.setSize = function (size) {
  */
 Clone.prototype.setEffect = function (effectName, value) {
     this.effects[effectName] = value;
-    var props = {};
-    props[effectName] = this.effects[effectName];
-    self.renderer.updateDrawableProperties(this.drawableID, props);
+    if (this.renderer) {
+        var props = {};
+        props[effectName] = this.effects[effectName];
+        this.renderer.updateDrawableProperties(this.drawableID, props);
+    }
 };
 
 /**
@@ -152,7 +179,9 @@ Clone.prototype.clearEffects = function () {
     for (var effectName in this.effects) {
         this.effects[effectName] = 0;
     }
-    self.renderer.updateDrawableProperties(this.drawableID, this.effects);
+    if (this.renderer) {
+        this.renderer.updateDrawableProperties(this.drawableID, this.effects);
+    }
 };
 
 module.exports = Clone;
