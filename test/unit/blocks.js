@@ -19,7 +19,7 @@ test('spec', function (t) {
     t.type(b.getBlock, 'function');
     t.type(b.getStacks, 'function');
     t.type(b.getNextBlock, 'function');
-    t.type(b.getSubstack, 'function');
+    t.type(b.getBranch, 'function');
     t.type(b.getOpcode, 'function');
 
 
@@ -119,9 +119,9 @@ test('getNextBlock', function (t) {
     t.end();
 });
 
-test('getSubstack', function (t) {
+test('getBranch', function (t) {
     var b = new Blocks();
-    // Single substack
+    // Single branch
     b.createBlock({
         id: 'foo',
         opcode: 'TEST_BLOCK',
@@ -144,18 +144,18 @@ test('getSubstack', function (t) {
         topLevel: false
     });
 
-    var substack = b.getSubstack('foo');
-    t.equals(substack, 'foo2');
+    var branch = b.getBranch('foo');
+    t.equals(branch, 'foo2');
 
-    var notSubstack = b.getSubstack('?');
-    t.equals(notSubstack, null);
+    var notBranch = b.getBranch('?');
+    t.equals(notBranch, null);
 
     t.end();
 });
 
-test('getSubstack2', function (t) {
+test('getBranch2', function (t) {
     var b = new Blocks();
-    // Second substack
+    // Second branch
     b.createBlock({
         id: 'foo',
         opcode: 'TEST_BLOCK',
@@ -190,15 +190,15 @@ test('getSubstack2', function (t) {
         topLevel: false
     });
 
-    var substack1 = b.getSubstack('foo', 1);
-    var substack2 = b.getSubstack('foo', 2);
-    t.equals(substack1, 'foo2');
-    t.equals(substack2, 'foo3');
+    var branch1 = b.getBranch('foo', 1);
+    var branch2 = b.getBranch('foo', 2);
+    t.equals(branch1, 'foo2');
+    t.equals(branch2, 'foo3');
 
     t.end();
 });
 
-test('getSubstack with none', function (t) {
+test('getBranch with none', function (t) {
     var b = new Blocks();
     b.createBlock({
         id: 'foo',
@@ -208,8 +208,8 @@ test('getSubstack with none', function (t) {
         inputs: {},
         topLevel: true
     });
-    var noSubstack = b.getSubstack('foo');
-    t.equals(noSubstack, null);
+    var noBranch = b.getBranch('foo');
+    t.equals(noBranch, null);
     t.end();
 });
 

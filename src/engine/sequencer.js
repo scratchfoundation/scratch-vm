@@ -85,7 +85,7 @@ Sequencer.prototype.stepThreads = function (threads) {
 Sequencer.prototype.startThread = function (thread) {
     var currentBlockId = thread.peekStack();
     if (!currentBlockId) {
-        // A "null block" - empty substack.
+        // A "null block" - empty branch.
         // Yield for the frame.
         thread.popStack();
         thread.setStatus(Thread.STATUS_YIELD_FRAME);
@@ -102,22 +102,22 @@ Sequencer.prototype.startThread = function (thread) {
 };
 
 /**
- * Step a thread into a block's substack.
- * @param {!Thread} thread Thread object to step to substack.
- * @param {Number} substackNum Which substack to step to (i.e., 1, 2).
+ * Step a thread into a block's branch.
+ * @param {!Thread} thread Thread object to step to branch.
+ * @param {Number} branchNum Which branch to step to (i.e., 1, 2).
  */
-Sequencer.prototype.stepToSubstack = function (thread, substackNum) {
-    if (!substackNum) {
-        substackNum = 1;
+Sequencer.prototype.stepToBranch = function (thread, branchNum) {
+    if (!branchNum) {
+        branchNum = 1;
     }
     var currentBlockId = thread.peekStack();
-    var substackId = this.runtime.targetForThread(thread).blocks.getSubstack(
+    var branchId = this.runtime.targetForThread(thread).blocks.getBranch(
         currentBlockId,
-        substackNum
+        branchNum
     );
-    if (substackId) {
-        // Push substack ID to the thread's stack.
-        thread.pushStack(substackId);
+    if (branchId) {
+        // Push branch ID to the thread's stack.
+        thread.pushStack(branchId);
     } else {
         // Push null, so we come back to the current block.
         thread.pushStack(null);
