@@ -23,11 +23,11 @@ function Blocks () {
 }
 
 /**
- * Blockly inputs that represent statements/substacks
+ * Blockly inputs that represent statements/branch.
  * are prefixed with this string.
  * @const{string}
  */
-Blocks.SUBSTACK_INPUT_PREFIX = 'SUBSTACK';
+Blocks.BRANCH_INPUT_PREFIX = 'SUBSTACK';
 
 /**
  * Provide an object with metadata for the requested block ID.
@@ -57,19 +57,19 @@ Blocks.prototype.getNextBlock = function (id) {
 };
 
 /**
- * Get the substack for a particular C-shaped block
- * @param {?string} id ID for block to get the substack for
- * @param {?number} substackNum Which substack to select (e.g. for if-else)
- * @return {?string} ID of block in the substack
+ * Get the branch for a particular C-shaped block.
+ * @param {?string} id ID for block to get the branch for.
+ * @param {?number} branchNum Which branch to select (e.g. for if-else).
+ * @return {?string} ID of block in the branch.
  */
-Blocks.prototype.getSubstack = function (id, substackNum) {
+Blocks.prototype.getBranch = function (id, branchNum) {
     var block = this._blocks[id];
     if (typeof block === 'undefined') return null;
-    if (!substackNum) substackNum = 1;
+    if (!branchNum) branchNum = 1;
 
-    var inputName = Blocks.SUBSTACK_INPUT_PREFIX;
-    if (substackNum > 1) {
-        inputName += substackNum;
+    var inputName = Blocks.BRANCH_INPUT_PREFIX;
+    if (branchNum > 1) {
+        inputName += branchNum;
     }
 
     // Empty C-block?
@@ -98,17 +98,17 @@ Blocks.prototype.getFields = function (id) {
 };
 
 /**
- * Get all non-substack inputs for a block.
+ * Get all non-branch inputs for a block.
  * @param {?string} id ID of block to query.
- * @return {!Object} All non-substack inputs and their associated blocks.
+ * @return {!Object} All non-branch inputs and their associated blocks.
  */
 Blocks.prototype.getInputs = function (id) {
     if (typeof this._blocks[id] === 'undefined') return null;
     var inputs = {};
     for (var input in this._blocks[id].inputs) {
-        // Ignore blocks prefixed with substack prefix.
-        if (input.substring(0, Blocks.SUBSTACK_INPUT_PREFIX.length)
-            != Blocks.SUBSTACK_INPUT_PREFIX) {
+        // Ignore blocks prefixed with branch prefix.
+        if (input.substring(0, Blocks.BRANCH_INPUT_PREFIX.length)
+            != Blocks.BRANCH_INPUT_PREFIX) {
             inputs[input] = this._blocks[id].inputs[input];
         }
     }
@@ -266,7 +266,7 @@ Blocks.prototype.deleteBlock = function (e) {
         this.deleteBlock({id: block.next});
     }
 
-    // Delete inputs (including substacks)
+    // Delete inputs (including branches)
     for (var input in block.inputs) {
         // If it's null, the block in this input moved away.
         if (block.inputs[input].block !== null) {

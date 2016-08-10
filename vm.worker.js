@@ -109,6 +109,10 @@
 	    this.vmWorker.postMessage({method: 'stopAll'});
 	};
 
+	VirtualMachine.prototype.animationFrame = function () {
+	    this.vmWorker.postMessage({method: 'animationFrame'});
+	};
+
 	/**
 	 * Export and bind to `window`
 	 */
@@ -1026,6 +1030,9 @@
 	var queueIndex = -1;
 
 	function cleanUpNextTick() {
+	    if (!draining || !currentQueue) {
+	        return;
+	    }
 	    draining = false;
 	    if (currentQueue.length) {
 	        queue = currentQueue.concat(queue);
