@@ -102,10 +102,7 @@ Scratch3OperatorsBlocks.prototype.random = function (args) {
 };
 
 Scratch3OperatorsBlocks.prototype.join = function (args) {
-    return Cast.toString(
-        Cast.toString(args.STRING1) +
-        Cast.toString(args.STRING2)
-    );
+    return Cast.toString(args.STRING1) + Cast.toString(args.STRING2);
 };
 
 Scratch3OperatorsBlocks.prototype.letterOf = function (args) {
