@@ -27,7 +27,14 @@ Scratch3OperatorsBlocks.prototype.getPrimitives = function() {
         'operator_and': this.and,
         'operator_or': this.or,
         'operator_not': this.not,
-        'operator_random': this.random
+        'operator_random': this.random,
+        'operator_join': this.join,
+        'operator_letter_of': this.letterOf,
+        'operator_length': this.length,
+        'operator_mod': this.mod,
+        'operator_round': this.round,
+        'operator_mathop_menu': this.mathopMenu,
+        'operator_mathop': this.mathop
     };
 };
 
@@ -95,6 +102,63 @@ Scratch3OperatorsBlocks.prototype.random = function (args) {
         return low + parseInt(Math.random() * ((high + 1) - low));
     }
     return (Math.random() * (high - low)) + low;
+};
+
+Scratch3OperatorsBlocks.prototype.join = function (args) {
+    return String(String(args.STRING1) + String(args.STRING2));
+};
+
+Scratch3OperatorsBlocks.prototype.letterOf = function (args) {
+    var index = Number(args.LETTER) - 1;
+    var str = String(args.STRING);
+    // Out of bounds?
+    if (index < 0 || index >= str.length) {
+        return '';
+    }
+    return str.charAt(index);
+};
+
+Scratch3OperatorsBlocks.prototype.length = function (args) {
+    return String(args.STRING).length;
+};
+
+Scratch3OperatorsBlocks.prototype.mod = function (args) {
+    var n = Number(args.NUM1);
+    var modulus = Number(args.NUM2);
+    var result = n % modulus;
+    // Scratch mod is kept positive.
+    if (result / modulus < 0) result += modulus;
+    return result;
+};
+
+Scratch3OperatorsBlocks.prototype.round = function (args) {
+    return Math.round(Number(args.NUM));
+};
+
+Scratch3OperatorsBlocks.prototype.mathopMenu = function (args) {
+    return args.OPERATOR;
+};
+
+Scratch3OperatorsBlocks.prototype.mathop = function (args) {
+    var operator = String(args.OPERATOR).toLowerCase();
+    var n = Number(args.NUM);
+    switch (operator) {
+    case 'abs': return Math.abs(n);
+    case 'floor': return Math.floor(n);
+    case 'ceiling': return Math.ceil(n);
+    case 'sqrt': return Math.sqrt(n);
+    case 'sin': return Math.sin((Math.PI * n) / 180);
+    case 'cos': return Math.cos((Math.PI * n) / 180);
+    case 'tan': return Math.tan((Math.PI * n) / 180);
+    case 'asin': return (Math.asin(n) * 180) / Math.PI;
+    case 'acos': return (Math.acos(n) * 180) / Math.PI;
+    case 'atan': return (Math.atan(n) * 180) / Math.PI;
+    case 'ln': return Math.log(n);
+    case 'log': return Math.log(n) / Math.LN10;
+    case 'e ^': return Math.exp(n);
+    case '10 ^': return Math.pow(10, n);
+    }
+    return 0;
 };
 
 module.exports = Scratch3OperatorsBlocks;
