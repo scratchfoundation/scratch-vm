@@ -9,15 +9,15 @@ test('spec', function (t) {
     t.ok(b instanceof Blocks);
 
     t.type(b._blocks, 'object');
-    t.type(b._stacks, 'object');
-    t.ok(Array.isArray(b._stacks));
+    t.type(b._scripts, 'object');
+    t.ok(Array.isArray(b._scripts));
 
     t.type(b.createBlock, 'function');
     t.type(b.moveBlock, 'function');
     t.type(b.changeBlock, 'function');
     t.type(b.deleteBlock, 'function');
     t.type(b.getBlock, 'function');
-    t.type(b.getStacks, 'function');
+    t.type(b.getScripts, 'function');
     t.type(b.getNextBlock, 'function');
     t.type(b.getBranch, 'function');
     t.type(b.getOpcode, 'function');
@@ -44,11 +44,11 @@ test('getBlock', function (t) {
     t.end();
 });
 
-test('getStacks', function (t) {
+test('getScripts', function (t) {
     var b = new Blocks();
-    var stacks = b.getStacks();
-    t.type(stacks, 'object');
-    t.equals(stacks.length, 0);
+    var scripts = b.getScripts();
+    t.type(scripts, 'object');
+    t.equals(scripts.length, 0);
     // Create two top-level blocks and one not.
     b.createBlock({
         id: 'foo',
@@ -75,12 +75,12 @@ test('getStacks', function (t) {
         topLevel: false
     });
 
-    stacks = b.getStacks();
-    t.type(stacks, 'object');
-    t.equals(stacks.length, 2);
-    t.ok(stacks.indexOf('foo') > -1);
-    t.ok(stacks.indexOf('foo2') > -1);
-    t.equals(stacks.indexOf('foo3'), -1);
+    scripts = b.getScripts();
+    t.type(scripts, 'object');
+    t.equals(scripts.length, 2);
+    t.ok(scripts.indexOf('foo') > -1);
+    t.ok(scripts.indexOf('foo2') > -1);
+    t.equals(scripts.indexOf('foo3'), -1);
     t.end();
 
 });
@@ -244,7 +244,7 @@ test('create', function (t) {
 
     t.type(b._blocks['foo'], 'object');
     t.equal(b._blocks['foo'].opcode, 'TEST_BLOCK');
-    t.notEqual(b._stacks.indexOf('foo'), -1);
+    t.notEqual(b._scripts.indexOf('foo'), -1);
     t.end();
 });
 
@@ -272,7 +272,7 @@ test('move', function (t) {
         id: 'bar',
         newParent: 'foo'
     });
-    t.equal(b._stacks.length, 1);
+    t.equal(b._scripts.length, 1);
     t.equal(Object.keys(b._blocks).length, 2);
     t.equal(b._blocks['foo'].next, 'bar');
 
@@ -281,7 +281,7 @@ test('move', function (t) {
         id: 'bar',
         oldParent: 'foo'
     });
-    t.equal(b._stacks.length, 2);
+    t.equal(b._scripts.length, 2);
     t.equal(Object.keys(b._blocks).length, 2);
     t.equal(b._blocks['foo'].next, null);
 
@@ -360,7 +360,7 @@ test('delete', function (t) {
     });
 
     t.type(b._blocks['foo'], 'undefined');
-    t.equal(b._stacks.indexOf('foo'), -1);
+    t.equal(b._scripts.indexOf('foo'), -1);
     t.end();
 });
 
@@ -398,9 +398,9 @@ test('delete chain', function (t) {
     t.type(b._blocks['foo'], 'undefined');
     t.type(b._blocks['foo2'], 'undefined');
     t.type(b._blocks['foo3'], 'undefined');
-    t.equal(b._stacks.indexOf('foo'), -1);
+    t.equal(b._scripts.indexOf('foo'), -1);
     t.equal(Object.keys(b._blocks).length, 0);
-    t.equal(b._stacks.length, 0);
+    t.equal(b._scripts.length, 0);
     t.end();
 });
 
@@ -461,8 +461,8 @@ test('delete inputs', function (t) {
     t.type(b._blocks['foo2'], 'undefined');
     t.type(b._blocks['foo3'], 'undefined');
     t.type(b._blocks['foo4'], 'undefined');
-    t.equal(b._stacks.indexOf('foo'), -1);
+    t.equal(b._scripts.indexOf('foo'), -1);
     t.equal(Object.keys(b._blocks).length, 0);
-    t.equal(b._stacks.length, 0);
+    t.equal(b._scripts.length, 0);
     t.end();
 });

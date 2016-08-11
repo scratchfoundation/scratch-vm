@@ -12,7 +12,7 @@ var defaultBlockPackages = {
 };
 
 /**
- * Manages targets, stacks, and the sequencer.
+ * Manages targets, scripts, and the sequencer.
  * @param {!Array.<Target>} targets List of targets for this runtime.
  */
 function Runtime (targets) {
@@ -146,39 +146,39 @@ Runtime.prototype._removeThread = function (thread) {
 };
 
 /**
- * Toggle a stack
- * @param {!string} stackId ID of block that starts the stack
+ * Toggle a script.
+ * @param {!string} topBlockId ID of block that starts the script.
  */
-Runtime.prototype.toggleStack = function (stackId) {
-    // Remove any existing thread
+Runtime.prototype.toggleScript = function (topBlockId) {
+    // Remove any existing thread.
     for (var i = 0; i < this.threads.length; i++) {
-        if (this.threads[i].topBlock == stackId) {
+        if (this.threads[i].topBlock == topBlockId) {
             this._removeThread(this.threads[i]);
             return;
         }
     }
-    // Otherwise add it
-    this._pushThread(stackId);
+    // Otherwise add it.
+    this._pushThread(topBlockId);
 };
 
 /**
  * Green flag, which stops currently running threads
- * and adds all top-level stacks that start with the green flag
+ * and adds all top-level scripts that start with the green flag
  */
 Runtime.prototype.greenFlag = function () {
     // Remove all existing threads
     for (var i = 0; i < this.threads.length; i++) {
         this._removeThread(this.threads[i]);
     }
-    // Add all top stacks with green flag
+    // Add all top scripts with green flag
     for (var t = 0; t < this.targets.length; t++) {
         var target = this.targets[t];
-        var stacks = target.blocks.getStacks();
-        for (var j = 0; j < stacks.length; j++) {
-            var topBlock = stacks[j];
+        var scripts = target.blocks.getScripts();
+        for (var j = 0; j < scripts.length; j++) {
+            var topBlock = scripts[j];
             if (target.blocks.getBlock(topBlock).opcode ===
                 'event_whenflagclicked') {
-                this._pushThread(stacks[j]);
+                this._pushThread(scripts[j]);
             }
         }
     }
