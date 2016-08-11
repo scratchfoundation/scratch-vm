@@ -1,3 +1,5 @@
+var Cast = require('../util/cast.js');
+
 function Scratch3OperatorsBlocks(runtime) {
     /**
      * The runtime instantiating this block package.
@@ -39,56 +41,51 @@ Scratch3OperatorsBlocks.prototype.getPrimitives = function() {
 };
 
 Scratch3OperatorsBlocks.prototype.number = function (args) {
-    var num = Number(args.NUM);
-    if (num !== num) {
-        // NaN
-        return 0;
-    }
-    return num;
+    return Cast.toNumber(args.NUM);
 };
 
 Scratch3OperatorsBlocks.prototype.text = function (args) {
-    return String(args.TEXT);
+    return Cast.toString(args.TEXT);
 };
 
 Scratch3OperatorsBlocks.prototype.add = function (args) {
-    return args.NUM1 + args.NUM2;
+    return Cast.toNumber(args.NUM1) + Cast.toNumber(args.NUM2);
 };
 
 Scratch3OperatorsBlocks.prototype.subtract = function (args) {
-    return args.NUM1 - args.NUM2;
+    return Cast.toNumber(args.NUM1) - Cast.toNumber(args.NUM2);
 };
 
 Scratch3OperatorsBlocks.prototype.multiply = function (args) {
-    return args.NUM1 * args.NUM2;
+    return Cast.toNumber(args.NUM1) * Cast.toNumber(args.NUM2);
 };
 
 Scratch3OperatorsBlocks.prototype.divide = function (args) {
-    return args.NUM1 / args.NUM2;
+    return Cast.toNumber(args.NUM1) / Cast.toNumber(args.NUM2);
 };
 
 Scratch3OperatorsBlocks.prototype.lt = function (args) {
-    return Boolean(args.OPERAND1 < args.OPERAND2);
+    return Cast.compare(args.OPERAND1, args.OPERAND2) < 0;
 };
 
 Scratch3OperatorsBlocks.prototype.equals = function (args) {
-    return Boolean(args.OPERAND1 == args.OPERAND2);
+    return Cast.compare(args.OPERAND1, args.OPERAND2) == 0;
 };
 
 Scratch3OperatorsBlocks.prototype.gt = function (args) {
-    return Boolean(args.OPERAND1 > args.OPERAND2);
+    return Cast.compare(args.OPERAND1, args.OPERAND2) > 0;
 };
 
 Scratch3OperatorsBlocks.prototype.and = function (args) {
-    return Boolean(args.OPERAND1 && args.OPERAND2);
+    return Cast.toBoolean(args.OPERAND1 && args.OPERAND2);
 };
 
 Scratch3OperatorsBlocks.prototype.or = function (args) {
-    return Boolean(args.OPERAND1 || args.OPERAND2);
+    return Cast.toBoolean(args.OPERAND1 || args.OPERAND2);
 };
 
 Scratch3OperatorsBlocks.prototype.not = function (args) {
-    return Boolean(!args.OPERAND);
+    return Cast.toBoolean(!args.OPERAND);
 };
 
 Scratch3OperatorsBlocks.prototype.random = function (args) {
@@ -105,12 +102,15 @@ Scratch3OperatorsBlocks.prototype.random = function (args) {
 };
 
 Scratch3OperatorsBlocks.prototype.join = function (args) {
-    return String(String(args.STRING1) + String(args.STRING2));
+    return Cast.toString(
+        Cast.toString(args.STRING1) +
+        Cast.toString(args.STRING2)
+    );
 };
 
 Scratch3OperatorsBlocks.prototype.letterOf = function (args) {
-    var index = Number(args.LETTER) - 1;
-    var str = String(args.STRING);
+    var index = Cast.toNumber(args.LETTER) - 1;
+    var str = Cast.toString(args.STRING);
     // Out of bounds?
     if (index < 0 || index >= str.length) {
         return '';
@@ -119,12 +119,12 @@ Scratch3OperatorsBlocks.prototype.letterOf = function (args) {
 };
 
 Scratch3OperatorsBlocks.prototype.length = function (args) {
-    return String(args.STRING).length;
+    return Cast.toString(args.STRING).length;
 };
 
 Scratch3OperatorsBlocks.prototype.mod = function (args) {
-    var n = Number(args.NUM1);
-    var modulus = Number(args.NUM2);
+    var n = Cast.toNumber(args.NUM1);
+    var modulus = Cast.toNumber(args.NUM2);
     var result = n % modulus;
     // Scratch mod is kept positive.
     if (result / modulus < 0) result += modulus;
@@ -132,7 +132,7 @@ Scratch3OperatorsBlocks.prototype.mod = function (args) {
 };
 
 Scratch3OperatorsBlocks.prototype.round = function (args) {
-    return Math.round(Number(args.NUM));
+    return Math.round(Cast.toNumber(args.NUM));
 };
 
 Scratch3OperatorsBlocks.prototype.mathopMenu = function (args) {
@@ -140,8 +140,8 @@ Scratch3OperatorsBlocks.prototype.mathopMenu = function (args) {
 };
 
 Scratch3OperatorsBlocks.prototype.mathop = function (args) {
-    var operator = String(args.OPERATOR).toLowerCase();
-    var n = Number(args.NUM);
+    var operator = Cast.toString(args.OPERATOR).toLowerCase();
+    var n = Cast.toNumber(args.NUM);
     switch (operator) {
     case 'abs': return Math.abs(n);
     case 'floor': return Math.floor(n);
