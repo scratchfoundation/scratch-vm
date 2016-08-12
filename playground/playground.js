@@ -29,6 +29,12 @@ window.onload = function() {
     });
     window.workspace = workspace;
 
+    // FPS counter.
+    var stats = new window.Stats();
+    document.getElementById('tab-renderexplorer').appendChild(stats.dom);
+    stats.dom.style.position = 'relative';
+    stats.begin();
+
     // Block events.
     // @todo: Re-enable flyout listening after fixing GH-69.
     workspace.addChangeListener(vm.blockListener);
@@ -87,6 +93,8 @@ window.onload = function() {
 
     // Inform VM of animation frames.
     var animate = function() {
+        stats.end();
+        stats.begin();
         window.vm.animationFrame();
         requestAnimationFrame(animate);
     };
