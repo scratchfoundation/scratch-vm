@@ -25,7 +25,7 @@ function VirtualMachine () {
     
     var pitchShift = new Tone.PitchShift();
 
-    var panner = new Tone.Panner(0);
+    var panner = new Tone.Panner();
 
     var reverb = new Tone.Freeverb();
     reverb.wet.value = 0;
@@ -144,7 +144,7 @@ function VirtualMachine () {
                     case 'ECHO':
                         delay.wet.value = (e.data.value / 100) / 2; // max 50% wet (need dry signal too)
                         break;
-                    case 'PANNER':
+                    case 'PAN':
                         panner.pan.value = e.data.value / 100;
                         break;
                     case 'REVERB':
@@ -161,7 +161,7 @@ function VirtualMachine () {
                         delay.wet.value += (e.data.value / 100) / 2; // max 50% wet (need dry signal too)
                         delay.wet.value = clamp(delay.wet.value, 0, 0.5);
                         break;
-                    case 'PANNER':
+                    case 'PAN':
                         panner.pan.value += e.data.value / 100;
                         panner.pan.value = clamp(panner.pan.value, -1, 1);
                         break;
