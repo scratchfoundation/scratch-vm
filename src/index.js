@@ -101,6 +101,17 @@ VirtualMachine.prototype.animationFrame = function () {
     this.runtime.animationFrame();
 };
 
+/**
+ * Post I/O data to the virtual devices.
+ * @param {?string} device Name of virtual I/O device.
+ * @param {Object} data Any data object to post to the I/O device.
+ */
+VirtualMachine.prototype.postIOData = function (device, data) {
+    if (this.runtime.ioDevices[device]) {
+        this.runtime.ioDevices[device].postData(data);
+    }
+};
+
 /*
  * Worker handlers: for all public methods available above,
  * we must also provide a message handler in case the VM is run
@@ -139,6 +150,9 @@ if (ENV_WORKER) {
             break;
         case 'animationFrame':
             self.vmInstance.animationFrame();
+            break;
+        case 'postIOData':
+            self.vmInstance.postIOData(messageData.device, messageData.data);
             break;
         default:
             if (e.data.id == 'RendererConnected') {

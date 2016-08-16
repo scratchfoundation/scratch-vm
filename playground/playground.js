@@ -88,6 +88,24 @@ window.onload = function() {
         workspace.reportValue(data.id, data.value);
     });
 
+    // Feed mouse events as VM I/O events.
+    document.addEventListener('mousemove', function (e) {
+        var rect = canvas.getBoundingClientRect();
+        var coordinates = {
+            x: e.clientX - rect.left - rect.width / 2,
+            y: e.clientY - rect.top - rect.height / 2
+        };
+        window.vm.postIOData('mouse', coordinates);
+    });
+    canvas.addEventListener('mousedown', function (e) {
+        window.vm.postIOData('mouse', {isDown: true});
+        e.preventDefault();
+    });
+    canvas.addEventListener('mouseup', function (e) {
+        window.vm.postIOData('mouse', {isDown: false});
+        e.preventDefault();
+    });
+
     // Run threads
     vm.start();
 

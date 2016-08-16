@@ -3,12 +3,17 @@ var Sequencer = require('./sequencer');
 var Thread = require('./thread');
 var util = require('util');
 
+// Virtual I/O devices.
+var Clock = require('../io/clock');
+var Mouse = require('../io/mouse');
+
 var defaultBlockPackages = {
     'scratch3_control': require('../blocks/scratch3_control'),
     'scratch3_event': require('../blocks/scratch3_event'),
     'scratch3_looks': require('../blocks/scratch3_looks'),
     'scratch3_motion': require('../blocks/scratch3_motion'),
-    'scratch3_operators': require('../blocks/scratch3_operators')
+    'scratch3_operators': require('../blocks/scratch3_operators'),
+    'scratch3_sensing': require('../blocks/scratch3_sensing')
 };
 
 /**
@@ -43,6 +48,11 @@ function Runtime (targets) {
      */
     this._primitives = {};
     this._registerBlockPackages();
+
+    this.ioDevices = {
+        'clock': new Clock(),
+        'mouse': new Mouse()
+    };
 }
 
 /**
