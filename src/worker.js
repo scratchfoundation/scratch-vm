@@ -18,6 +18,11 @@ function VirtualMachine () {
     
     var tone = new Tone();
 
+    Tone.Transport.start();
+
+    var quantizeUnit = '@8n';
+    // var quantizeUnit = '';
+
     // effects 
 
     var delay = new Tone.FeedbackDelay(0.25, 0.5);
@@ -43,7 +48,7 @@ function VirtualMachine () {
 
     // sounds
 
-    var soundFileNames = ['meow', 'boing', 'cave', 'drip_drop', 'drum_machine', 'eggs', 'zoop'];
+    var soundFileNames = ['meow','boing','this_is_a_test','who_put_the_bomp','cave','drip_drop','drum_machine','eggs','zoop'];
     var soundSamplers = loadSoundFiles(soundFileNames);
 
     // polyphonic samplers
@@ -112,17 +117,17 @@ function VirtualMachine () {
     function playNoteForBeats(note, beats) {
         var midiNote = scaleNoteToMidiNote(note, currentScale, rootNote);
         var freq = midiToFreq(midiNote);
-        synth.triggerAttackRelease(freq, beats);        
+        synth.triggerAttackRelease(freq, beats, quantizeUnit);        
     }
 
     // onmessage calls are converted into emitted events.
     instance.vmWorker.onmessage = function (e) {
         switch (e.data.method) {
             case 'playsound':
-                soundSamplers[e.data.soundnum].nextVoice().triggerAttack();
+                soundSamplers[e.data.soundnum].nextVoice().triggerAttack(0, quantizeUnit);
                 break;
             case 'playsoundwithpitch':
-                soundSamplers[e.data.soundnum].nextVoice().triggerAttack(e.data.pitch);
+                soundSamplers[e.data.soundnum].nextVoice().triggerAttack(e.data.pitch, quantizeUnit);
                 break;
             case 'playnoteforbeats':
                 playNoteForBeats(e.data.note, e.data.beats);
@@ -137,7 +142,7 @@ function VirtualMachine () {
             case 'playdrumforbeats':
             case 'playdrum':
                 var drumNum = e.data.drum - 1; // one-indexing
-                drumSamplers[drumNum].nextVoice().triggerAttack();
+                drumSamplers[drumNum].nextVoice().triggerAttack(0, quantizeUnit);
                 break;
             case 'seteffect' :
                 switch (e.data.effect) {

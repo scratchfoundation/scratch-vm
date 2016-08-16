@@ -48,7 +48,7 @@ Scratch3SoundBlocks.prototype.playNoteForBeats = function (args, util) {
 	return new Promise(function(resolve) {
         setTimeout(function() {
             resolve();
-        }, 1000 * args.BEATS);
+        }, (1000 * args.BEATS) );
     });
 };
 
@@ -61,7 +61,7 @@ Scratch3SoundBlocks.prototype.playDrumForBeats = function (args, util) {
     return new Promise(function(resolve) {
         setTimeout(function() {
             resolve();
-        }, 1000 * args.BEATS);
+        }, (1000 * args.BEATS) );
     });
 };
 
