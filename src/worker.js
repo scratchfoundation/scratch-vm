@@ -51,6 +51,14 @@ VirtualMachine.prototype.getPlaygroundData = function () {
     this.vmWorker.postMessage({method: 'getPlaygroundData'});
 };
 
+VirtualMachine.prototype.postIOData = function (device, data) {
+    this.vmWorker.postMessage({
+        method: 'postIOData',
+        device: device,
+        data: data
+    });
+};
+
 VirtualMachine.prototype.start = function () {
     this.vmWorker.postMessage({method: 'start'});
 };
