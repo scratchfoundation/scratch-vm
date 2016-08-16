@@ -147,6 +147,17 @@
 	    this.runtime.animationFrame();
 	};
 
+	/**
+	 * Post I/O data to the virtual devices.
+	 * @param {?string} device Name of virtual I/O device.
+	 * @param {Object} data Any data object to post to the I/O device.
+	 */
+	VirtualMachine.prototype.postIOData = function (device, data) {
+	    if (this.runtime.ioDevices[device]) {
+	        this.runtime.ioDevices[device].postData(data);
+	    }
+	};
+
 	/*
 	 * Worker handlers: for all public methods available above,
 	 * we must also provide a message handler in case the VM is run
@@ -185,6 +196,9 @@
 	            break;
 	        case 'animationFrame':
 	            self.vmInstance.animationFrame();
+	            break;
+	        case 'postIOData':
+	            self.vmInstance.postIOData(messageData.device, messageData.data);
 	            break;
 	        default:
 	            if (e.data.id == 'RendererConnected') {
@@ -1855,25 +1869,25 @@
 
 	/**
 	 * Helper to add a stack to `this._scripts`.
-	 * @param {?string} id ID of block that starts the script.
+	 * @param {?string} topBlockId ID of block that starts the script.
 	 */
-	Blocks.prototype._addScript = function (id) {
-	    var i = this._scripts.indexOf(id);
+	Blocks.prototype._addScript = function (topBlockId) {
+	    var i = this._scripts.indexOf(topBlockId);
 	    if (i > -1) return; // Already in scripts.
-	    this._scripts.push(id);
+	    this._scripts.push(topBlockId);
 	    // Update `topLevel` property on the top block.
-	    this._blocks[id].topLevel = true;
+	    this._blocks[topBlockId].topLevel = true;
 	};
 
 	/**
-	 * Helper to remove a stack from `this._scripts`.
-	 * @param {?string} id ID of block that starts the script.
+	 * Helper to remove a script from `this._scripts`.
+	 * @param {?string} topBlockId ID of block that starts the script.
 	 */
-	Blocks.prototype._deleteStack = function (id) {
-	    var i = this._scripts.indexOf(id);
+	Blocks.prototype._deleteScript = function (topBlockId) {
+	    var i = this._scripts.indexOf(topBlockId);
 	    if (i > -1) this._scripts.splice(i, 1);
 	    // Update `topLevel` property on the top block.
-	    if (this._blocks[id]) this._blocks[id].topLevel = false;
+	    if (this._blocks[topBlockId]) this._blocks[topBlockId].topLevel = false;
 	};
 
 	module.exports = Blocks;
@@ -11270,12 +11284,17 @@
 	var Thread = __webpack_require__(64);
 	var util = __webpack_require__(2);
 
+	// Virtual I/O devices.
+	var Clock = __webpack_require__(66);
+	var Mouse = __webpack_require__(67);
+
 	var defaultBlockPackages = {
-	    'scratch3_control': __webpack_require__(66),
-	    'scratch3_event': __webpack_require__(77),
-	    'scratch3_looks': __webpack_require__(78),
-	    'scratch3_motion': __webpack_require__(79),
-	    'scratch3_operators': __webpack_require__(80)
+	    'scratch3_control': __webpack_require__(68),
+	    'scratch3_event': __webpack_require__(79),
+	    'scratch3_looks': __webpack_require__(80),
+	    'scratch3_motion': __webpack_require__(81),
+	    'scratch3_operators': __webpack_require__(82),
+	    'scratch3_sensing': __webpack_require__(84)
 	};
 
 	/**
@@ -11310,6 +11329,11 @@
 	     */
 	    this._primitives = {};
 	    this._registerBlockPackages();
+
+	    this.ioDevices = {
+	        'clock': new Clock(),
+	        'mouse': new Mouse()
+	    };
 	}
 
 	/**
@@ -11962,7 +11986,14 @@
 	        startBranch: function (branchNum) {
 	            sequencer.stepToBranch(thread, branchNum);
 	        },
-	        target: target
+	        target: target,
+	        ioQuery: function (device, func, args) {
+	            // Find the I/O device and execute the query/function call.
+	            if (runtime.ioDevices[device] && runtime.ioDevices[device][func]) {
+	                var devObject = runtime.ioDevices[device];
+	                return devObject[func].call(devObject, args);
+	            }
+	        }
 	    });
 
 	    // Deal with any reported value.
@@ -12012,7 +12043,68 @@
 /* 66 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var Promise = __webpack_require__(67);
+	var Timer = __webpack_require__(63);
+
+	function Clock () {
+	    this._projectTimer = new Timer();
+	    this._projectTimer.start();
+	}
+
+	Clock.prototype.projectTimer = function () {
+	    return this._projectTimer.timeElapsed() / 1000;
+	};
+
+	Clock.prototype.resetProjectTimer = function () {
+	    this._projectTimer.start();
+	};
+
+	module.exports = Clock;
+
+
+/***/ },
+/* 67 */
+/***/ function(module, exports, __webpack_require__) {
+
+	var MathUtil = __webpack_require__(8);
+
+	function Mouse () {
+	    this._x = 0;
+	    this._y = 0;
+	    this._isDown = false;
+	}
+
+	Mouse.prototype.postData = function(data) {
+	    if (data.x) {
+	        this._x = data.x;
+	    }
+	    if (data.y) {
+	        this._y = data.y;
+	    }
+	    if (typeof data.isDown !== 'undefined') {
+	        this._isDown = data.isDown;
+	    }
+	};
+
+	Mouse.prototype.getX = function () {
+	    return MathUtil.clamp(this._x, -240, 240);
+	};
+
+	Mouse.prototype.getY = function () {
+	    return MathUtil.clamp(-this._y, -180, 180);
+	};
+
+	Mouse.prototype.getIsDown = function () {
+	    return this._isDown;
+	};
+
+	module.exports = Mouse;
+
+
+/***/ },
+/* 68 */
+/***/ function(module, exports, __webpack_require__) {
+
+	var Promise = __webpack_require__(69);
 
 	function Scratch3ControlBlocks(runtime) {
 	    /**
@@ -12130,35 +12222,35 @@
 
 
 /***/ },
-/* 67 */
-/***/ function(module, exports, __webpack_require__) {
-
-	'use strict';
-
-	module.exports = __webpack_require__(68)
-
-
-/***/ },
-/* 68 */
-/***/ function(module, exports, __webpack_require__) {
-
-	'use strict';
-
-	module.exports = __webpack_require__(69);
-	__webpack_require__(71);
-	__webpack_require__(72);
-	__webpack_require__(73);
-	__webpack_require__(74);
-	__webpack_require__(76);
-
-
-/***/ },
 /* 69 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 
-	var asap = __webpack_require__(70);
+	module.exports = __webpack_require__(70)
+
+
+/***/ },
+/* 70 */
+/***/ function(module, exports, __webpack_require__) {
+
+	'use strict';
+
+	module.exports = __webpack_require__(71);
+	__webpack_require__(73);
+	__webpack_require__(74);
+	__webpack_require__(75);
+	__webpack_require__(76);
+	__webpack_require__(78);
+
+
+/***/ },
+/* 71 */
+/***/ function(module, exports, __webpack_require__) {
+
+	'use strict';
+
+	var asap = __webpack_require__(72);
 
 	function noop() {}
 
@@ -12372,7 +12464,7 @@
 
 
 /***/ },
-/* 70 */
+/* 72 */
 /***/ function(module, exports) {
 
 	/* WEBPACK VAR INJECTION */(function(global) {"use strict";
@@ -12599,12 +12691,12 @@
 	/* WEBPACK VAR INJECTION */}.call(exports, (function() { return this; }())))
 
 /***/ },
-/* 71 */
+/* 73 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 
-	var Promise = __webpack_require__(69);
+	var Promise = __webpack_require__(71);
 
 	module.exports = Promise;
 	Promise.prototype.done = function (onFulfilled, onRejected) {
@@ -12618,12 +12710,12 @@
 
 
 /***/ },
-/* 72 */
+/* 74 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 
-	var Promise = __webpack_require__(69);
+	var Promise = __webpack_require__(71);
 
 	module.exports = Promise;
 	Promise.prototype['finally'] = function (f) {
@@ -12640,14 +12732,14 @@
 
 
 /***/ },
-/* 73 */
+/* 75 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 
 	//This file contains the ES6 extensions to the core Promises/A+ API
 
-	var Promise = __webpack_require__(69);
+	var Promise = __webpack_require__(71);
 
 	module.exports = Promise;
 
@@ -12753,7 +12845,7 @@
 
 
 /***/ },
-/* 74 */
+/* 76 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -12761,8 +12853,8 @@
 	// This file contains then/promise specific extensions that are only useful
 	// for node.js interop
 
-	var Promise = __webpack_require__(69);
-	var asap = __webpack_require__(75);
+	var Promise = __webpack_require__(71);
+	var asap = __webpack_require__(77);
 
 	module.exports = Promise;
 
@@ -12889,13 +12981,13 @@
 
 
 /***/ },
-/* 75 */
+/* 77 */
 /***/ function(module, exports, __webpack_require__) {
 
 	"use strict";
 
 	// rawAsap provides everything we need except exception management.
-	var rawAsap = __webpack_require__(70);
+	var rawAsap = __webpack_require__(72);
 	// RawTasks are recycled to reduce GC churn.
 	var freeTasks = [];
 	// We queue errors to ensure they are thrown in right order (FIFO).
@@ -12961,12 +13053,12 @@
 
 
 /***/ },
-/* 76 */
+/* 78 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 
-	var Promise = __webpack_require__(69);
+	var Promise = __webpack_require__(71);
 
 	module.exports = Promise;
 	Promise.enableSynchronous = function () {
@@ -13029,7 +13121,7 @@
 
 
 /***/ },
-/* 77 */
+/* 79 */
 /***/ function(module, exports) {
 
 	function Scratch3EventBlocks(runtime) {
@@ -13069,7 +13161,7 @@
 
 
 /***/ },
-/* 78 */
+/* 80 */
 /***/ function(module, exports) {
 
 	function Scratch3LooksBlocks(runtime) {
@@ -13173,7 +13265,7 @@
 
 
 /***/ },
-/* 79 */
+/* 81 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var MathUtil = __webpack_require__(8);
@@ -13262,8 +13354,10 @@
 
 
 /***/ },
-/* 80 */
-/***/ function(module, exports) {
+/* 82 */
+/***/ function(module, exports, __webpack_require__) {
+
+	var Cast = __webpack_require__(83);
 
 	function Scratch3OperatorsBlocks(runtime) {
 	    /**
@@ -13294,61 +13388,63 @@
 	        'operator_and': this.and,
 	        'operator_or': this.or,
 	        'operator_not': this.not,
-	        'operator_random': this.random
+	        'operator_random': this.random,
+	        'operator_join': this.join,
+	        'operator_letter_of': this.letterOf,
+	        'operator_length': this.length,
+	        'operator_mod': this.mod,
+	        'operator_round': this.round,
+	        'operator_mathop_menu': this.mathopMenu,
+	        'operator_mathop': this.mathop
 	    };
 	};
 
 	Scratch3OperatorsBlocks.prototype.number = function (args) {
-	    var num = Number(args.NUM);
-	    if (num !== num) {
-	        // NaN
-	        return 0;
-	    }
-	    return num;
+	    return Cast.toNumber(args.NUM);
 	};
 
 	Scratch3OperatorsBlocks.prototype.text = function (args) {
-	    return String(args.TEXT);
+	    return Cast.toString(args.TEXT);
 	};
 
 	Scratch3OperatorsBlocks.prototype.add = function (args) {
-	    return args.NUM1 + args.NUM2;
+	    return Cast.toNumber(args.NUM1) + Cast.toNumber(args.NUM2);
 	};
 
 	Scratch3OperatorsBlocks.prototype.subtract = function (args) {
-	    return args.NUM1 - args.NUM2;
+	    return Cast.toNumber(args.NUM1) - Cast.toNumber(args.NUM2);
 	};
 
 	Scratch3OperatorsBlocks.prototype.multiply = function (args) {
-	    return args.NUM1 * args.NUM2;
+	    return Cast.toNumber(args.NUM1) * Cast.toNumber(args.NUM2);
 	};
 
 	Scratch3OperatorsBlocks.prototype.divide = function (args) {
-	    return args.NUM1 / args.NUM2;
+	    return Cast.toNumber(args.NUM1) / Cast.toNumber(args.NUM2);
 	};
 
 	Scratch3OperatorsBlocks.prototype.lt = function (args) {
-	    return Boolean(args.OPERAND1 < args.OPERAND2);
+	    return Cast.compare(args.OPERAND1, args.OPERAND2) < 0;
 	};
 
 	Scratch3OperatorsBlocks.prototype.equals = function (args) {
-	    return Boolean(args.OPERAND1 == args.OPERAND2);
+	    return Cast.compare(args.OPERAND1, args.OPERAND2) == 0;
 	};
 
 	Scratch3OperatorsBlocks.prototype.gt = function (args) {
-	    return Boolean(args.OPERAND1 > args.OPERAND2);
+	    return Cast.compare(args.OPERAND1, args.OPERAND2) > 0;
 	};
 
 	Scratch3OperatorsBlocks.prototype.and = function (args) {
-	    return Boolean(args.OPERAND1 && args.OPERAND2);
+	    return Cast.toBoolean(args.OPERAND1 && args.OPERAND2);
 	};
 
 	Scratch3OperatorsBlocks.prototype.or = function (args) {
-	    return Boolean(args.OPERAND1 || args.OPERAND2);
+	    return Cast.toBoolean(args.OPERAND1 || args.OPERAND2);
 	};
 
 	Scratch3OperatorsBlocks.prototype.not = function (args) {
-	    return Boolean(!args.OPERAND);
+	    return Cast.toBoolean(!args.OPERAND);
 	};
 
 	Scratch3OperatorsBlocks.prototype.random = function (args) {
@@ -13364,7 +13460,207 @@
 	    return (Math.random() * (high - low)) + low;
 	};
 
+	Scratch3OperatorsBlocks.prototype.join = function (args) {
+	    return Cast.toString(args.STRING1) + Cast.toString(args.STRING2);
+	};
+
+	Scratch3OperatorsBlocks.prototype.letterOf = function (args) {
+	    var index = Cast.toNumber(args.LETTER) - 1;
+	    var str = Cast.toString(args.STRING);
+	    // Out of bounds?
+	    if (index < 0 || index >= str.length) {
+	        return '';
+	    }
+	    return str.charAt(index);
+	};
+
+	Scratch3OperatorsBlocks.prototype.length = function (args) {
+	    return Cast.toString(args.STRING).length;
+	};
+
+	Scratch3OperatorsBlocks.prototype.mod = function (args) {
+	    var n = Cast.toNumber(args.NUM1);
+	    var modulus = Cast.toNumber(args.NUM2);
+	    var result = n % modulus;
+	    // Scratch mod is kept positive.
+	    if (result / modulus < 0) result += modulus;
+	    return result;
+	};
+
+	Scratch3OperatorsBlocks.prototype.round = function (args) {
+	    return Math.round(Cast.toNumber(args.NUM));
+	};
+
+	Scratch3OperatorsBlocks.prototype.mathopMenu = function (args) {
+	    return args.OPERATOR;
+	};
+
+	Scratch3OperatorsBlocks.prototype.mathop = function (args) {
+	    var operator = Cast.toString(args.OPERATOR).toLowerCase();
+	    var n = Cast.toNumber(args.NUM);
+	    switch (operator) {
+	    case 'abs': return Math.abs(n);
+	    case 'floor': return Math.floor(n);
+	    case 'ceiling': return Math.ceil(n);
+	    case 'sqrt': return Math.sqrt(n);
+	    case 'sin': return Math.sin((Math.PI * n) / 180);
+	    case 'cos': return Math.cos((Math.PI * n) / 180);
+	    case 'tan': return Math.tan((Math.PI * n) / 180);
+	    case 'asin': return (Math.asin(n) * 180) / Math.PI;
+	    case 'acos': return (Math.acos(n) * 180) / Math.PI;
+	    case 'atan': return (Math.atan(n) * 180) / Math.PI;
+	    case 'ln': return Math.log(n);
+	    case 'log': return Math.log(n) / Math.LN10;
+	    case 'e ^': return Math.exp(n);
+	    case '10 ^': return Math.pow(10, n);
+	    }
+	    return 0;
+	};
+
 	module.exports = Scratch3OperatorsBlocks;
+
+
+/***/ },
+/* 83 */
+/***/ function(module, exports) {
+
+	function Cast () {}
+
+	/**
+	 * @fileoverview
+	 * Utilities for casting and comparing Scratch data-types.
+	 * Scratch behaves slightly differently from JavaScript in many respects,
+	 * and these differences should be encapsulated below.
+	 * For example, in Scratch, add(1, join("hello", world")) -> 1.
+	 * This is because "hello world" is cast to 0.
+	 * In JavaScript, 1 + Number("hello" + "world") would give you NaN.
+	 * Use when coercing a value before computation.
+	 */
+
+	/**
+	 * Scratch cast to number.
+	 * Treats NaN as 0.
+	 * In Scratch 2.0, this is captured by `interp.numArg.`
+	 * @param {*} value Value to cast to number.
+	 * @return {number} The Scratch-casted number value.
+	 */
+	Cast.toNumber = function (value) {
+	    var n = Number(value);
+	    if (isNaN(n)) {
+	        // Scratch treats NaN as 0, when needed as a number.
+	        // E.g., 0 + NaN -> 0.
+	        return 0;
+	    }
+	    return n;
+	};
+
+	/**
+	 * Scratch cast to boolean.
+	 * In Scratch 2.0, this is captured by `interp.boolArg.`
+	 * Treats some string values differently from JavaScript.
+	 * @param {*} value Value to cast to boolean.
+	 * @return {boolean} The Scratch-casted boolean value.
+	 */
+	Cast.toBoolean = function (value) {
+	    // Already a boolean?
+	    if (typeof value === 'boolean') {
+	        return value;
+	    }
+	    if (typeof value === 'string') {
+	        // These specific strings are treated as false in Scratch.
+	        if ((value == '') ||
+	            (value == '0') ||
+	            (value.toLowerCase() == 'false')) {
+	            return false;
+	        }
+	        // All other strings treated as true.
+	        return true;
+	    }
+	    // Coerce other values and numbers.
+	    return Boolean(value);
+	};
+
+	/**
+	 * Scratch cast to string.
+	 * @param {*} value Value to cast to string.
+	 * @return {string} The Scratch-casted string value.
+	 */
+	Cast.toString = function (value) {
+	    return String(value);
+	};
+
+	/**
+	 * Compare two values, using Scratch cast, case-insensitive string compare, etc.
+	 * In Scratch 2.0, this is captured by `interp.compare.`
+	 * @param {*} v1 First value to compare.
+	 * @param {*} v2 Second value to compare.
+	 * @returns {Number} Negative number if v1 < v2; 0 if equal; positive otherwise.
+	 */
+	Cast.compare = function (v1, v2) {
+	    var n1 = Number(v1);
+	    var n2 = Number(v2);
+	    if (isNaN(n1) || isNaN(n2)) {
+	        // At least one argument can't be converted to a number.
+	        // Scratch compares strings as case insensitive.
+	        var s1 = String(v1).toLowerCase();
+	        var s2 = String(v2).toLowerCase();
+	        return s1.localeCompare(s2);
+	    } else {
+	        // Compare as numbers.
+	        return n1 - n2;
+	    }
+	};
+
+	module.exports = Cast;
+
+
+/***/ },
+/* 84 */
+/***/ function(module, exports) {
+
+	function Scratch3SensingBlocks(runtime) {
+	    /**
+	     * The runtime instantiating this block package.
+	     * @type {Runtime}
+	     */
+	    this.runtime = runtime;
+	}
+
+	/**
+	 * Retrieve the block primitives implemented by this package.
+	 * @return {Object.<string, Function>} Mapping of opcode to Function.
+	 */
+	Scratch3SensingBlocks.prototype.getPrimitives = function() {
+	    return {
+	        'sensing_timer': this.getTimer,
+	        'sensing_resettimer': this.resetTimer,
+	        'sensing_mousex': this.getMouseX,
+	        'sensing_mousey': this.getMouseY,
+	        'sensing_mousedown': this.getMouseDown
+	    };
+	};
+
+	Scratch3SensingBlocks.prototype.getTimer = function (args, util) {
+	    return util.ioQuery('clock', 'projectTimer');
+	};
+
+	Scratch3SensingBlocks.prototype.resetTimer = function (args, util) {
+	    util.ioQuery('clock', 'resetProjectTimer');
+	};
+
+	Scratch3SensingBlocks.prototype.getMouseX = function (args, util) {
+	    return util.ioQuery('mouse', 'getX');
+	};
+
+	Scratch3SensingBlocks.prototype.getMouseY = function (args, util) {
+	    return util.ioQuery('mouse', 'getY');
+	};
+
+	Scratch3SensingBlocks.prototype.getMouseDown = function (args, util) {
+	    return util.ioQuery('mouse', 'getIsDown');
+	};
+
+	module.exports = Scratch3SensingBlocks;
 
 
 /***/ }
