@@ -97,6 +97,14 @@
 	    this.vmWorker.postMessage({method: 'getPlaygroundData'});
 	};
 
+	VirtualMachine.prototype.postIOData = function (device, data) {
+	    this.vmWorker.postMessage({
+	        method: 'postIOData',
+	        device: device,
+	        data: data
+	    });
+	};
+
 	VirtualMachine.prototype.start = function () {
 	    this.vmWorker.postMessage({method: 'start'});
 	};
@@ -107,6 +115,10 @@
 
 	VirtualMachine.prototype.stopAll = function () {
 	    this.vmWorker.postMessage({method: 'stopAll'});
+	};
+
+	VirtualMachine.prototype.animationFrame = function () {
+	    this.vmWorker.postMessage({method: 'animationFrame'});
 	};
 
 	/**
@@ -1026,6 +1038,9 @@
 	var queueIndex = -1;
 
 	function cleanUpNextTick() {
+	    if (!draining || !currentQueue) {
+	        return;
+	    }
 	    draining = false;
 	    if (currentQueue.length) {
 	        queue = currentQueue.concat(queue);

@@ -43,8 +43,8 @@ test('create event', function (t) {
     t.end();
 });
 
-test('create with substack', function (t) {
-    var result = adapter(events.createsubstack);
+test('create with branch', function (t) {
+    var result = adapter(events.createbranch);
     // Outer block
     t.type(result[0].id, 'string');
     t.type(result[0].opcode, 'string');
@@ -53,22 +53,22 @@ test('create with substack', function (t) {
     t.type(result[0].inputs['SUBSTACK'], 'object');
     t.type(result[0].topLevel, 'boolean');
     t.equal(result[0].topLevel, true);
-    // In substack
-    var substackBlockId = result[0].inputs['SUBSTACK']['block'];
-    t.type(substackBlockId, 'string');
-    // Find actual substack block
-    var substackBlock = null;
+    // In branch
+    var branchBlockId = result[0].inputs['SUBSTACK']['block'];
+    t.type(branchBlockId, 'string');
+    // Find actual branch block
+    var branchBlock = null;
     for (var i = 0; i < result.length; i++) {
-        if (result[i].id == substackBlockId) {
-            substackBlock = result[i];
+        if (result[i].id == branchBlockId) {
+            branchBlock = result[i];
         }
     }
-    t.type(substackBlock, 'object');
+    t.type(branchBlock, 'object');
     t.end();
 });
 
-test('create with two substacks', function (t) {
-    var result = adapter(events.createtwosubstacks);
+test('create with two branches', function (t) {
+    var result = adapter(events.createtwobranches);
     // Outer block
     t.type(result[0].id, 'string');
     t.type(result[0].opcode, 'string');
@@ -78,24 +78,24 @@ test('create with two substacks', function (t) {
     t.type(result[0].inputs['SUBSTACK2'], 'object');
     t.type(result[0].topLevel, 'boolean');
     t.equal(result[0].topLevel, true);
-    // In substacks
-    var firstSubstackBlockId = result[0].inputs['SUBSTACK']['block'];
-    var secondSubstackBlockId = result[0].inputs['SUBSTACK2']['block'];
-    t.type(firstSubstackBlockId, 'string');
-    t.type(secondSubstackBlockId, 'string');
-    // Find actual substack blocks
-    var firstSubstackBlock = null;
-    var secondSubstackBlock = null;
+    // In branchs
+    var firstBranchBlockId = result[0].inputs['SUBSTACK']['block'];
+    var secondBranchBlockId = result[0].inputs['SUBSTACK2']['block'];
+    t.type(firstBranchBlockId, 'string');
+    t.type(secondBranchBlockId, 'string');
+    // Find actual branch blocks
+    var firstBranchBlock = null;
+    var secondBranchBlock = null;
     for (var i = 0; i < result.length; i++) {
-        if (result[i].id == firstSubstackBlockId) {
-            firstSubstackBlock = result[i];
+        if (result[i].id == firstBranchBlockId) {
+            firstBranchBlock = result[i];
         }
-        if (result[i].id == secondSubstackBlockId) {
-            secondSubstackBlock = result[i];
+        if (result[i].id == secondBranchBlockId) {
+            secondBranchBlock = result[i];
         }
     }
-    t.type(firstSubstackBlock, 'object');
-    t.type(secondSubstackBlock, 'object');
+    t.type(firstBranchBlock, 'object');
+    t.type(secondBranchBlock, 'object');
     t.end();
 });
 

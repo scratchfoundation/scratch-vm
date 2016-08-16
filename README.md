@@ -11,6 +11,7 @@ npm install https://github.com/LLK/scratch-vm.git
 ```
 
 ## Setup
+For an extended setup example, check out the /playground directory, which includes a fully running VM instance.
 ```js
 var VirtualMachine = require('scratch-vm');
 var vm = new VirtualMachine();
@@ -23,6 +24,16 @@ flyoutWorkspace.addChangeListener(vm.flyoutBlockListener);
 // Run threads
 vm.runtime.start();
 ```
+## Development Server and Playground
+For convenience, we've included a development server with the VM. This is useful because the VM can take advantage of executing in a WebWorker, which is not permitted in a local file. To start the server, run:
+
+```bash
+make serve
+```
+and go to [http://localhost:8080/](http://localhost:8080/) - you will be redirected to the playground, which demonstrates various tools and internal state.
+
+![VM Playground Screenshot](https://i.imgur.com/nOCNqEc.gif)
+
 
 ## Standalone Build
 ```bash

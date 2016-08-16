@@ -30,15 +30,15 @@ Scratch3ControlBlocks.prototype.repeat = function(args, util) {
         util.stackFrame.loopCounter = parseInt(args.TIMES);
     }
     // Only execute once per frame.
-    // When the substack finishes, `repeat` will be executed again and
+    // When the branch finishes, `repeat` will be executed again and
     // the second branch will be taken, yielding for the rest of the frame.
     if (!util.stackFrame.executedInFrame) {
         util.stackFrame.executedInFrame = true;
         // Decrease counter
         util.stackFrame.loopCounter--;
-        // If we still have some left, start the substack
+        // If we still have some left, start the branch.
         if (util.stackFrame.loopCounter >= 0) {
-            util.startSubstack();
+            util.startBranch();
         }
     } else {
         util.stackFrame.executedInFrame = false;
@@ -48,13 +48,13 @@ Scratch3ControlBlocks.prototype.repeat = function(args, util) {
 
 Scratch3ControlBlocks.prototype.repeatUntil = function(args, util) {
     // Only execute once per frame.
-    // When the substack finishes, `repeat` will be executed again and
+    // When the branch finishes, `repeat` will be executed again and
     // the second branch will be taken, yielding for the rest of the frame.
     if (!util.stackFrame.executedInFrame) {
         util.stackFrame.executedInFrame = true;
-        // If the condition is true, start the substack.
+        // If the condition is true, start the branch.
         if (!args.CONDITION) {
-            util.startSubstack();
+            util.startBranch();
         }
     } else {
         util.stackFrame.executedInFrame = false;
@@ -64,11 +64,11 @@ Scratch3ControlBlocks.prototype.repeatUntil = function(args, util) {
 
 Scratch3ControlBlocks.prototype.forever = function(args, util) {
     // Only execute once per frame.
-    // When the substack finishes, `forever` will be executed again and
+    // When the branch finishes, `forever` will be executed again and
     // the second branch will be taken, yielding for the rest of the frame.
     if (!util.stackFrame.executedInFrame) {
         util.stackFrame.executedInFrame = true;
-        util.startSubstack();
+        util.startBranch();
     } else {
         util.stackFrame.executedInFrame = false;
         util.yieldFrame();
@@ -85,24 +85,24 @@ Scratch3ControlBlocks.prototype.wait = function(args) {
 
 Scratch3ControlBlocks.prototype.if = function(args, util) {
     // Only execute one time. `if` will be returned to
-    // when the substack finishes, but it shouldn't execute again.
+    // when the branch finishes, but it shouldn't execute again.
     if (util.stackFrame.executedInFrame === undefined) {
         util.stackFrame.executedInFrame = true;
         if (args.CONDITION) {
-            util.startSubstack();
+            util.startBranch();
         }
     }
 };
 
 Scratch3ControlBlocks.prototype.ifElse = function(args, util) {
     // Only execute one time. `ifElse` will be returned to
-    // when the substack finishes, but it shouldn't execute again.
+    // when the branch finishes, but it shouldn't execute again.
     if (util.stackFrame.executedInFrame === undefined) {
         util.stackFrame.executedInFrame = true;
         if (args.CONDITION) {
-            util.startSubstack(1);
+            util.startBranch(1);
         } else {
-            util.startSubstack(2);
+            util.startBranch(2);
         }
     }
 };

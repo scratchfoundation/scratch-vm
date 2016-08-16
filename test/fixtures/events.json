@@ -12,13 +12,13 @@
             "!6Ahqg4f}Ljl}X5Hws?Z"
         ]
     },
-    "createsubstack": {
+    "createbranch": {
         "name": "block",
         "xml": {
             "outerHTML": "<block type=\"control_forever\" id=\"r9`RpL74T6*SXPKv7}Dq\" x=\"61\" y=\"90\"><statement name=\"SUBSTACK\"><block type=\"control_wait\" id=\"{Rwt[LFtD1-JPAi-qf:.\"><value name=\"DURATION\"><shadow type=\"math_number\" id=\"VMDxt_9SYe5{*eNRe5dZ\"><field name=\"NUM\">1</field></shadow></value></block></statement></block>"
         }
     },
-    "createtwosubstacks": {
+    "createtwobranches": {
         "name": "block",
         "xml": {
             "outerHTML": "<block type=\"control_if_else\" id=\"8W?lmIY!Tgnh)~0!G#9-\" x=\"87\" y=\"159\"><statement name=\"SUBSTACK\"><block type=\"event_broadcast\" id=\"lgU2GGtwlREuasCB02Vr\"></block></statement><statement name=\"SUBSTACK2\"><block type=\"event_broadcast\" id=\"Gb]N,2P;|J%F?pxSwz(2\"></block></statement></block>"

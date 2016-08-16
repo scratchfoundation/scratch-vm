@@ -58,7 +58,7 @@ var execute = function (sequencer, thread) {
     // If we've gotten this far, all of the input blocks are evaluated,
     // and `argValues` is fully populated. So, execute the block primitive.
     // First, clear `currentStackFrame.reported`, so any subsequent execution
-    // (e.g., on return from a substack) gets fresh inputs.
+    // (e.g., on return from a branch) gets fresh inputs.
     currentStackFrame.reported = {};
 
     var primitiveReportedValue = null;
@@ -74,10 +74,17 @@ var execute = function (sequencer, thread) {
             sequencer.proceedThread(thread);
         },
         stackFrame: currentStackFrame.executionContext,
-        startSubstack: function (substackNum) {
-            sequencer.stepToSubstack(thread, substackNum);
+        startBranch: function (branchNum) {
+            sequencer.stepToBranch(thread, branchNum);
         },
-        target: target
+        target: target,
+        ioQuery: function (device, func, args) {
+            // Find the I/O device and execute the query/function call.
+            if (runtime.ioDevices[device] && runtime.ioDevices[device][func]) {
+                var devObject = runtime.ioDevices[device];
+                return devObject[func].call(devObject, args);
+            }
+        }
     });
 
     // Deal with any reported value.
