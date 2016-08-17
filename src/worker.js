@@ -21,7 +21,7 @@ function VirtualMachine () {
     Tone.Transport.start();
 
     // var quantizeUnit = '@8n';
-    var quantizeUnit = '0';
+    var quantizeUnit = '+0';
 
     // effects 
 
