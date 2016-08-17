@@ -17,6 +17,7 @@ Scratch3SoundBlocks.prototype.getPrimitives = function() {
         'sound_stopallsounds': this.stopAllSounds,
         'sound_playnote': this.playNote,
         'sound_playnoteforbeats': this.playNoteForBeats,
+        'sound_scalenotetomidinote': this.scaleNoteToMidiNote,
         'sound_playdrum': this.playDrum,
         'sound_playdrumforbeats': this.playDrumForBeats,
         'sound_setkey' : this.setKey,
@@ -54,6 +55,31 @@ Scratch3SoundBlocks.prototype.playNoteForBeats = function (args, util) {
 
 Scratch3SoundBlocks.prototype.playNote = function (args, util) {
     self.postMessage({method: 'playnote', note:args.NOTE});
+};
+
+Scratch3SoundBlocks.prototype.scaleNoteToMidiNote = function (args, util) {
+
+    var root = parseInt(args.ROOT) + 60;
+
+    var scales = {
+        'MAJOR' : [0,2,4,5,7,9,11],
+        'MINOR' : [0,2,3,5,7,8,10],
+        'PENTATONIC': [0, 2, 4, 7, 9],
+        'CHROMATIC' : [0,1,2,3,4,5,6,7,8,9,10,11],
+    };
+
+    var scale = scales[args.SCALE];
+
+    var scaleNote = args.NOTE;
+    
+    var scaleIndex = (Math.round(scaleNote) - 1) % scale.length;
+    if (scaleIndex < 0) {
+        scaleIndex += scale.length;
+    }
+    var octave = Math.floor((scaleNote - 1) / scale.length);
+    var midiNote = root + (octave * 12) + scale[scaleIndex]; 
+
+    return midiNote;
 };
 
 Scratch3SoundBlocks.prototype.playDrumForBeats = function (args, util) {
