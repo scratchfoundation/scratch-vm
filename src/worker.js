@@ -20,8 +20,8 @@ function VirtualMachine () {
 
     Tone.Transport.start();
 
-    var quantizeUnit = '@8n';
-    // var quantizeUnit = '';
+    // var quantizeUnit = '@8n';
+    var quantizeUnit = '';
 
     // effects 
 
