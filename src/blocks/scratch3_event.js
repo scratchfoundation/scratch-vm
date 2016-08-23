@@ -76,7 +76,8 @@ Scratch3EventBlocks.prototype.broadcastAndWait = function (args, util) {
     var waiting = false;
     for (var i = 0; i < util.stackFrame.triggeredThreads.length; i++) {
         var thread = util.stackFrame.triggeredThreads[i];
-        if (thread.status !== Thread.STATUS_DONE) {
+        var activeThreads = this.runtime.threads;
+        if (activeThreads.indexOf(thread) > -1) { // @todo: A cleaner way?
             waiting = true;
         }
     }

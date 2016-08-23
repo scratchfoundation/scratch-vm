@@ -204,7 +204,6 @@ Runtime.prototype._pushThread = function (id) {
  * @param {?Thread} thread Thread object to remove from actives
  */
 Runtime.prototype._removeThread = function (thread) {
-    thread.setStatus(Thread.STATUS_DONE);
     var i = this.threads.indexOf(thread);
     if (i > -1) {
         this.glowScript(thread.topBlock, false);
