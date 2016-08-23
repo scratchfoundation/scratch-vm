@@ -1,6 +1,15 @@
 var Thread = require('./thread');
 
 /**
+ * Utility function to determine if a value is a Promise.
+ * @param {*} value Value to check for a Promise.
+ * @return {Boolean} True if the value appears to be a Promise.
+ */
+var isPromise = function (value) {
+    return value && value.then && typeof value.then === 'function';
+};
+
+/**
  * Execute a block.
  * @param {!Sequencer} sequencer Which sequencer is executing.
  * @param {!Thread} thread Thread which to read and execute.
@@ -21,9 +30,28 @@ var execute = function (sequencer, thread) {
     }
 
     var blockFunction = runtime.getOpcodeFunction(opcode);
-    if (!blockFunction) {
-        console.warn('Could not get implementation for opcode: ' + opcode);
-        return;
+    var isHat = runtime.getIsHat(opcode);
+
+    // Hats are implemented slightly differently from regular blocks.
+    // If they have an associated block function, it's treated as a predicate;
+    // if not, execution will proceed right through it (as a no-op).
+    if (isHat) {
+        var nextBlock = target.blocks.getNextBlock(currentBlockId);
+        if (!nextBlock) {
+            // Hat with no next block - don't try to evaluate it.
+            sequencer.retireThread(thread);
+            return;
+        }
+        if (!blockFunction) {
+            // No predicate for the hat - just continue to next block.
+            sequencer.proceedThread(thread);
+            return;
+        }
+    } else {
+        if (!blockFunction) {
+            console.warn('Could not get implementation for opcode: ' + opcode);
+            return;
+        }
     }
 
     // Generate values for arguments (inputs).
@@ -63,6 +91,8 @@ var execute = function (sequencer, thread) {
 
     var primitiveReportedValue = null;
     primitiveReportedValue = blockFunction(argValues, {
+        stackFrame: currentStackFrame.executionContext,
+        target: target,
         yield: function() {
             thread.setStatus(Thread.STATUS_YIELD);
         },
@@ -73,11 +103,14 @@ var execute = function (sequencer, thread) {
             thread.setStatus(Thread.STATUS_RUNNING);
             sequencer.proceedThread(thread);
         },
-        stackFrame: currentStackFrame.executionContext,
         startBranch: function (branchNum) {
             sequencer.stepToBranch(thread, branchNum);
         },
-        target: target,
+        triggerHats: function(requestedHat, opt_matchFields, opt_target) {
+            return (
+                runtime.triggerHats(requestedHat, opt_matchFields, opt_target)
+            );
+        },
         ioQuery: function (device, func, args) {
             // Find the I/O device and execute the query/function call.
             if (runtime.ioDevices[device] && runtime.ioDevices[device][func]) {
@@ -87,28 +120,53 @@ var execute = function (sequencer, thread) {
         }
     });
 
-    // Deal with any reported value.
+    /**
+     * Handle any reported value from the primitive, either directly returned
+     * or after a promise resolves.
+     * @param {*} resolvedValue Value eventually returned from the primitive.
+     */
+    var handleReport = function (resolvedValue) {
+        thread.pushReportedValue(resolvedValue);
+        if (isHat) {
+            // Hat predicate was evaluated.
+            if (runtime.getIsEdgeTriggeredHat(opcode)) {
+                // If this is an edge-triggered hat, only proceed if
+                // the value is true and used to be false.
+                var oldEdgeValue = runtime.updateEdgeTriggeredValue(
+                    currentBlockId,
+                    resolvedValue
+                );
+                var edgeWasTriggered = !oldEdgeValue && resolvedValue;
+                if (!edgeWasTriggered) {
+                    sequencer.retireThread(thread);
+                }
+            } else {
+                // Not an edge-triggered hat: retire the thread
+                // if predicate was false.
+                if (!resolvedValue) {
+                    sequencer.retireThread(thread);
+                }
+            }
+        } else {
+            // In a non-hat, report the value visually if necessary if
+            // at the top of the thread stack.
+            if (typeof resolvedValue !== 'undefined' && thread.atStackTop()) {
+                runtime.visualReport(currentBlockId, resolvedValue);
+            }
+            // Finished any yields.
+            thread.setStatus(Thread.STATUS_RUNNING);
+        }
+    };
+
     // If it's a promise, wait until promise resolves.
-    var isPromise = (
-        primitiveReportedValue &&
-        primitiveReportedValue.then &&
-        typeof primitiveReportedValue.then === 'function'
-    );
-    if (isPromise) {
+    if (isPromise(primitiveReportedValue)) {
         if (thread.status === Thread.STATUS_RUNNING) {
             // Primitive returned a promise; automatically yield thread.
             thread.setStatus(Thread.STATUS_YIELD);
         }
         // Promise handlers
         primitiveReportedValue.then(function(resolvedValue) {
-            // Promise resolved: the primitive reported a value.
-            thread.pushReportedValue(resolvedValue);
-            // Report the value visually if necessary.
-            if (typeof resolvedValue !== 'undefined' &&
-                thread.peekStack() === thread.topBlock) {
-                runtime.visualReport(thread.peekStack(), resolvedValue);
-            }
-            thread.setStatus(Thread.STATUS_RUNNING);
+            handleReport(resolvedValue);
             sequencer.proceedThread(thread);
         }, function(rejectionReason) {
             // Promise rejected: the primitive had some error.
@@ -118,12 +176,7 @@ var execute = function (sequencer, thread) {
             sequencer.proceedThread(thread);
         });
     } else if (thread.status === Thread.STATUS_RUNNING) {
-        thread.pushReportedValue(primitiveReportedValue);
-        // Report the value visually if necessary.
-        if (typeof primitiveReportedValue !== 'undefined' &&
-            thread.peekStack() === thread.topBlock) {
-            runtime.visualReport(thread.peekStack(), primitiveReportedValue);
-        }
+        handleReport(primitiveReportedValue);
     }
 };
 
