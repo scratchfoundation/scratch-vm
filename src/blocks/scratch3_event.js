@@ -1,5 +1,3 @@
-var Thread = require('../engine/thread');
-
 function Scratch3EventBlocks(runtime) {
     /**
      * The runtime instantiating this block package.
