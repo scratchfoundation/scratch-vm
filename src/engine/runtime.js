@@ -135,12 +135,14 @@ Runtime.prototype.getOpcodeFunction = function (opcode) {
 /**
  * Create a thread and push it to the list of threads.
  * @param {!string} id ID of block that starts the stack
+ * @return {!Thread} The newly created thread.
  */
 Runtime.prototype._pushThread = function (id) {
-    this.emit(Runtime.STACK_GLOW_ON, id);
     var thread = new Thread(id);
+    this.glowScript(id, true);
     thread.pushStack(id);
     this.threads.push(thread);
+    return thread;
 };
 
 /**
@@ -150,7 +152,7 @@ Runtime.prototype._pushThread = function (id) {
 Runtime.prototype._removeThread = function (thread) {
     var i = this.threads.indexOf(thread);
     if (i > -1) {
-        this.emit(Runtime.STACK_GLOW_OFF, thread.topBlock);
+        this.glowScript(thread.topBlock, false);
         this.threads.splice(i, 1);
     }
 };
@@ -231,6 +233,19 @@ Runtime.prototype.glowBlock = function (blockId, isGlowing) {
         this.emit(Runtime.BLOCK_GLOW_ON, blockId);
     } else {
         this.emit(Runtime.BLOCK_GLOW_OFF, blockId);
+    }
+};
+
+/**
+ * Emit feedback for script glowing.
+ * @param {?string} topBlockId ID for the top block to update glow
+ * @param {boolean} isGlowing True to turn on glow; false to turn off.
+ */
+Runtime.prototype.glowScript = function (topBlockId, isGlowing) {
+    if (isGlowing) {
+        this.emit(Runtime.STACK_GLOW_ON, topBlockId);
+    } else {
+        this.emit(Runtime.STACK_GLOW_OFF, topBlockId);
     }
 };
 
