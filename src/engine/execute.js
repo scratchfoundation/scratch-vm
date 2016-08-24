@@ -35,23 +35,13 @@ var execute = function (sequencer, thread) {
     // Hats are implemented slightly differently from regular blocks.
     // If they have an associated block function, it's treated as a predicate;
     // if not, execution will proceed right through it (as a no-op).
-    if (isHat) {
-        var nextBlock = target.blocks.getNextBlock(currentBlockId);
-        if (!nextBlock) {
-            // Hat with no next block - don't try to evaluate it.
-            sequencer.retireThread(thread);
-            return;
-        }
-        if (!blockFunction) {
-            // No predicate for the hat - just continue to next block.
-            sequencer.proceedThread(thread);
-            return;
-        }
-    } else {
-        if (!blockFunction) {
+    if (!blockFunction) {
+        if (!isHat) {
             console.warn('Could not get implementation for opcode: ' + opcode);
-            return;
         }
+        // Skip through the block.
+        // (either hat with no predicate, or missing op).
+        return;
     }
 
     // Generate values for arguments (inputs).
