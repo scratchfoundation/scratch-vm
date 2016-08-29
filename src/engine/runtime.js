@@ -212,6 +212,15 @@ Runtime.prototype._removeThread = function (thread) {
 };
 
 /**
+ * Return whether a thread is currently active/running.
+ * @param {?Thread} thread Thread object to check.
+ * @return {Boolean} True if the thread is active/running.
+ */
+Runtime.prototype.isActiveThread = function (thread) {
+    return this.threads.indexOf(thread) > -1;
+};
+
+/**
  * Toggle a script.
  * @param {!string} topBlockId ID of block that starts the script.
  */
