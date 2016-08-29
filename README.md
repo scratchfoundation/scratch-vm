@@ -6,8 +6,15 @@
 [![devDependency Status](https://david-dm.org/LLK/scratch-vm/dev-status.svg)](https://david-dm.org/LLK/scratch-vm#info=devDependencies)
 
 ## Installation
+If you build own application:
 ```bash
 npm install https://github.com/LLK/scratch-vm.git
+```
+If you want to edit/play yourself:
+```bash
+git clone git@github.com:LLK/scratch-vm.git
+cd scratch-vm
+npm install
 ```
 
 ## Setup
