@@ -350,8 +350,8 @@ Runtime.prototype._step = function () {
         }
     }
     var inactiveThreads = this.sequencer.stepThreads(this.threads);
-    for (var j = 0; j < inactiveThreads.length; j++) {
-        this._removeThread(inactiveThreads[j]);
+    for (var i = 0; i < inactiveThreads.length; i++) {
+        this._removeThread(inactiveThreads[i]);
     }
 };
 
