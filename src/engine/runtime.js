@@ -152,7 +152,7 @@ Runtime.prototype.getOpcodeFunction = function (opcode) {
  * @return {Boolean} True if the op is known to be a hat.
  */
 Runtime.prototype.getIsHat = function (opcode) {
-    return opcode in this._hats;
+    return this._hats.hasOwnProperty(opcode);
 };
 
 /**
@@ -161,7 +161,8 @@ Runtime.prototype.getIsHat = function (opcode) {
  * @return {Boolean} True if the op is known to be a edge-triggered hat.
  */
 Runtime.prototype.getIsEdgeTriggeredHat = function (opcode) {
-    return opcode in this._hats && this._hats[opcode].edgeTriggered;
+    return this._hats.hasOwnProperty(opcode) &&
+        this._hats[opcode].edgeTriggered;
 };
 
 /**
