@@ -6,7 +6,7 @@
 [![devDependency Status](https://david-dm.org/LLK/scratch-vm/dev-status.svg)](https://david-dm.org/LLK/scratch-vm#info=devDependencies)
 
 ## Installation
-If you build own application:
+In your own node environment/application:
 ```bash
 npm install https://github.com/LLK/scratch-vm.git
 ```
