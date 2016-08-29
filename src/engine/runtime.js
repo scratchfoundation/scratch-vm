@@ -240,9 +240,8 @@ Runtime.prototype.toggleScript = function (topBlockId) {
 /**
  * Run a function `f` for all scripts in a workspace.
  * `f` will be called with two parameters:
- *   -the top block ID of each script
- *   -the opcode of that block, for convenience.
- *   -fields on that block, for convenience.
+ *  - the top block ID of the script.
+ *  - the target that owns the script.
  * @param {!Function} f Function to call for each script.
  * @param {Target=} opt_target Optionally, a target to restrict to.
  */
@@ -255,28 +254,31 @@ Runtime.prototype.allScriptsDo = function (f, opt_target) {
         var target = targets[t];
         var scripts = target.blocks.getScripts();
         for (var j = 0; j < scripts.length; j++) {
-            var topBlock = scripts[j];
-            var topOpcode = target.blocks.getBlock(topBlock).opcode;
-            var topFields = target.blocks.getFields(topBlock);
-            f(topBlock, topOpcode, topFields);
+            var topBlockId = scripts[j];
+            f(topBlockId, target);
         }
     }
 };
 
 /**
  * Trigger all relevant hats.
- * @param {!string} requestedHat Name of hat to trigger.
+ * @param {!string} requestedHatOpcode Opcode of hat to trigger.
  * @param {Object=} opt_matchFields Optionally, fields to match on the hat.
  * @param {Target=} opt_target Optionally, a target to restrict to.
  * @return {Array.<Thread>} List of threads started by this trigger.
  */
-Runtime.prototype.triggerHats = function (requestedHat,
+Runtime.prototype.triggerHats = function (requestedHatOpcode,
     opt_matchFields, opt_target) {
+    if (!this._hats.hasOwnProperty(requestedHatOpcode)) {
+        // No known hat with this opcode.
+        return;
+    }
     var instance = this;
     var newThreads = [];
-    // Consider all scripts, looking for hats named `requestedHat`.
-    this.allScriptsDo(function(topBlockId, topOpcode, topFields) {
-        if (topOpcode !== requestedHat) {
+    // Consider all scripts, looking for hats with opcode `requestedHatOpcode`.
+    this.allScriptsDo(function(topBlockId, target) {
+        var potentialHatOpcode = target.blocks.getBlock(topBlockId).opcode;
+        if (potentialHatOpcode !== requestedHatOpcode) {
             // Not the right hat.
             return;
         }
@@ -285,39 +287,38 @@ Runtime.prototype.triggerHats = function (requestedHat,
         // This needs to happen before the block is evaluated
         // (i.e., before the predicate can be run) because "broadcast and wait"
         // needs to have a precise collection of triggered threads.
+        var hatFields = target.blocks.getFields(topBlockId);
         if (opt_matchFields) {
             for (var matchField in opt_matchFields) {
-                if (topFields[matchField].value !==
+                if (hatFields[matchField].value !==
                     opt_matchFields[matchField]) {
                     // Field mismatch.
                     return;
                 }
             }
         }
-        if (instance._hats.hasOwnProperty(topOpcode)) {
-            // Look up metadata for the relevant hat.
-            var hatMeta = instance._hats[topOpcode];
-            if (hatMeta.restartExistingThreads) {
-                // If `restartExistingThreads` is true, this trigger
-                // should stop any existing threads starting with the top block.
-                for (var i = 0; i < instance.threads.length; i++) {
-                    if (instance.threads[i].topBlock === topBlockId) {
-                        instance._removeThread(instance.threads[i]);
-                    }
-                }
-            } else {
-                // If `restartExistingThreads` is false, this trigger
-                // should give up if any threads with the top block are running.
-                for (var j = 0; j < instance.threads.length; j++) {
-                    if (instance.threads[j].topBlock === topBlockId) {
-                        // Some thread is already running.
-                        return;
-                    }
+        // Look up metadata for the relevant hat.
+        var hatMeta = instance._hats[requestedHatOpcode];
+        if (hatMeta.restartExistingThreads) {
+            // If `restartExistingThreads` is true, this trigger
+            // should stop any existing threads starting with the top block.
+            for (var i = 0; i < instance.threads.length; i++) {
+                if (instance.threads[i].topBlock === topBlockId) {
+                    instance._removeThread(instance.threads[i]);
                 }
             }
-            // Start the thread with this top block.
-            newThreads.push(instance._pushThread(topBlockId));
+        } else {
+            // If `restartExistingThreads` is false, this trigger
+            // should give up if any threads with the top block are running.
+            for (var j = 0; j < instance.threads.length; j++) {
+                if (instance.threads[j].topBlock === topBlockId) {
+                    // Some thread is already running.
+                    return;
+                }
+            }
         }
+        // Start the thread with this top block.
+        newThreads.push(instance._pushThread(topBlockId));
     }, opt_target);
     return newThreads;
 };
