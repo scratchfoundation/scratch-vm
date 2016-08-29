@@ -34,7 +34,7 @@ Scratch3EventBlocks.prototype.getHats = function () {
         },*/
         'event_whengreaterthan': {
             restartExistingThreads: false,
-            edgeTriggered: true
+            edgeActivated: true
         },
         'event_whenbroadcastreceived': {
             restartExistingThreads: true
@@ -51,28 +51,28 @@ Scratch3EventBlocks.prototype.hatGreaterThanPredicate = function (args, util) {
 };
 
 Scratch3EventBlocks.prototype.broadcast = function(args, util) {
-    util.triggerHats('event_whenbroadcastreceived', {
+    util.startHats('event_whenbroadcastreceived', {
         'BROADCAST_OPTION': args.BROADCAST_OPTION
     });
 };
 
 Scratch3EventBlocks.prototype.broadcastAndWait = function (args, util) {
-    // Have we run before, triggering threads?
-    if (!util.stackFrame.triggeredThreads) {
-        // No - trigger hats for this broadcast.
-        util.stackFrame.triggeredThreads = util.triggerHats(
+    // Have we run before, starting threads?
+    if (!util.stackFrame.startedThreads) {
+        // No - start hats for this broadcast.
+        util.stackFrame.startedThreads = util.startHats(
             'event_whenbroadcastreceived', {
                 'BROADCAST_OPTION': args.BROADCAST_OPTION
             }
         );
-        if (util.stackFrame.triggeredThreads.length == 0) {
+        if (util.stackFrame.startedThreads.length == 0) {
             // Nothing was started.
             return;
         }
     }
     // We've run before; check if the wait is still going on.
     var instance = this;
-    var waiting = util.stackFrame.triggeredThreads.some(function(thread) {
+    var waiting = util.stackFrame.startedThreads.some(function(thread) {
         return instance.runtime.isActiveThread(thread);
     });
     if (waiting) {

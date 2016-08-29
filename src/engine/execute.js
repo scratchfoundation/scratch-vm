@@ -96,9 +96,9 @@ var execute = function (sequencer, thread) {
         startBranch: function (branchNum) {
             sequencer.stepToBranch(thread, branchNum);
         },
-        triggerHats: function(requestedHat, opt_matchFields, opt_target) {
+        startHats: function(requestedHat, opt_matchFields, opt_target) {
             return (
-                runtime.triggerHats(requestedHat, opt_matchFields, opt_target)
+                runtime.startHats(requestedHat, opt_matchFields, opt_target)
             );
         },
         ioQuery: function (device, func, args) {
@@ -119,19 +119,19 @@ var execute = function (sequencer, thread) {
         thread.pushReportedValue(resolvedValue);
         if (isHat) {
             // Hat predicate was evaluated.
-            if (runtime.getIsEdgeTriggeredHat(opcode)) {
-                // If this is an edge-triggered hat, only proceed if
+            if (runtime.getIsEdgeActivatedHat(opcode)) {
+                // If this is an edge-activated hat, only proceed if
                 // the value is true and used to be false.
-                var oldEdgeValue = runtime.updateEdgeTriggeredValue(
+                var oldEdgeValue = runtime.updateEdgeActivatedValue(
                     currentBlockId,
                     resolvedValue
                 );
-                var edgeWasTriggered = !oldEdgeValue && resolvedValue;
-                if (!edgeWasTriggered) {
+                var edgeWasActivated = !oldEdgeValue && resolvedValue;
+                if (!edgeWasActivated) {
                     sequencer.retireThread(thread);
                 }
             } else {
-                // Not an edge-triggered hat: retire the thread
+                // Not an edge-activated hat: retire the thread
                 // if predicate was false.
                 if (!resolvedValue) {
                     sequencer.retireThread(thread);

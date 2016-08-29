@@ -48,7 +48,7 @@ function Runtime (targets) {
      */
     this._primitives = {};
     this._hats = {};
-    this._edgeTriggeredHatValues = {};
+    this._edgeActivatedHatValues = {};
     this._registerBlockPackages();
 
     this.ioDevices = {
@@ -156,32 +156,32 @@ Runtime.prototype.getIsHat = function (opcode) {
 };
 
 /**
- * Return whether an opcode represents an edge-triggered hat block.
+ * Return whether an opcode represents an edge-activated hat block.
  * @param {!string} opcode The opcode to look up.
- * @return {Boolean} True if the op is known to be a edge-triggered hat.
+ * @return {Boolean} True if the op is known to be a edge-activated hat.
  */
-Runtime.prototype.getIsEdgeTriggeredHat = function (opcode) {
+Runtime.prototype.getIsEdgeActivatedHat = function (opcode) {
     return this._hats.hasOwnProperty(opcode) &&
-        this._hats[opcode].edgeTriggered;
+        this._hats[opcode].edgeActivated;
 };
 
 /**
- * Update an edge-triggered hat block value.
+ * Update an edge-activated hat block value.
  * @param {!string} blockId ID of hat to store value for.
- * @param {*} newValue Value to store for edge-triggered hat.
- * @return {*} The old value for the edge-triggered hat.
+ * @param {*} newValue Value to store for edge-activated hat.
+ * @return {*} The old value for the edge-activated hat.
  */
-Runtime.prototype.updateEdgeTriggeredValue = function (blockId, newValue) {
-    var oldValue = this._edgeTriggeredHatValues[blockId];
-    this._edgeTriggeredHatValues[blockId] = newValue;
+Runtime.prototype.updateEdgeActivatedValue = function (blockId, newValue) {
+    var oldValue = this._edgeActivatedHatValues[blockId];
+    this._edgeActivatedHatValues[blockId] = newValue;
     return oldValue;
 };
 
 /**
- * Clear all edge-triggered hat values.
+ * Clear all edge-activaed hat values.
  */
-Runtime.prototype.clearEdgeTriggeredValues = function () {
-    this._edgeTriggeredHatValues = {};
+Runtime.prototype.clearEdgeActivatedValues = function () {
+    this._edgeActivatedHatValues = {};
 };
 
 // -----------------------------------------------------------------------------
@@ -261,13 +261,13 @@ Runtime.prototype.allScriptsDo = function (f, opt_target) {
 };
 
 /**
- * Trigger all relevant hats.
- * @param {!string} requestedHatOpcode Opcode of hat to trigger.
+ * Start all relevant hats.
+ * @param {!string} requestedHatOpcode Opcode of hats to start.
  * @param {Object=} opt_matchFields Optionally, fields to match on the hat.
  * @param {Target=} opt_target Optionally, a target to restrict to.
- * @return {Array.<Thread>} List of threads started by this trigger.
+ * @return {Array.<Thread>} List of threads started by this function.
  */
-Runtime.prototype.triggerHats = function (requestedHatOpcode,
+Runtime.prototype.startHats = function (requestedHatOpcode,
     opt_matchFields, opt_target) {
     if (!this._hats.hasOwnProperty(requestedHatOpcode)) {
         // No known hat with this opcode.
@@ -286,7 +286,7 @@ Runtime.prototype.triggerHats = function (requestedHatOpcode,
         // For example: ensures that broadcasts match.
         // This needs to happen before the block is evaluated
         // (i.e., before the predicate can be run) because "broadcast and wait"
-        // needs to have a precise collection of triggered threads.
+        // needs to have a precise collection of started threads.
         var hatFields = target.blocks.getFields(topBlockId);
         if (opt_matchFields) {
             for (var matchField in opt_matchFields) {
@@ -300,16 +300,16 @@ Runtime.prototype.triggerHats = function (requestedHatOpcode,
         // Look up metadata for the relevant hat.
         var hatMeta = instance._hats[requestedHatOpcode];
         if (hatMeta.restartExistingThreads) {
-            // If `restartExistingThreads` is true, this trigger
-            // should stop any existing threads starting with the top block.
+            // If `restartExistingThreads` is true, we should stop
+            // any existing threads starting with the top block.
             for (var i = 0; i < instance.threads.length; i++) {
                 if (instance.threads[i].topBlock === topBlockId) {
                     instance._removeThread(instance.threads[i]);
                 }
             }
         } else {
-            // If `restartExistingThreads` is false, this trigger
-            // should give up if any threads with the top block are running.
+            // If `restartExistingThreads` is false, we should
+            // give up if any threads with the top block are running.
             for (var j = 0; j < instance.threads.length; j++) {
                 if (instance.threads[j].topBlock === topBlockId) {
                     // Some thread is already running.
@@ -328,8 +328,8 @@ Runtime.prototype.triggerHats = function (requestedHatOpcode,
  */
 Runtime.prototype.greenFlag = function () {
     this.ioDevices.clock.resetProjectTimer();
-    this.clearEdgeTriggeredValues();
-    this.triggerHats('event_whenflagclicked');
+    this.clearEdgeActivatedValues();
+    this.startHats('event_whenflagclicked');
 };
 
 /**
@@ -353,11 +353,11 @@ Runtime.prototype.stopAll = function () {
  * inactive threads after each iteration.
  */
 Runtime.prototype._step = function () {
-    // Find all edge-triggered hats, and add them to threads to be evaluated.
+    // Find all edge-activated hats, and add them to threads to be evaluated.
     for (var hatType in this._hats) {
         var hat = this._hats[hatType];
-        if (hat.edgeTriggered) {
-            this.triggerHats(hatType);
+        if (hat.edgeActivated) {
+            this.startHats(hatType);
         }
     }
     var inactiveThreads = this.sequencer.stepThreads(this.threads);
