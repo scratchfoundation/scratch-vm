@@ -19,7 +19,7 @@ cd scratch-vm
 npm install
 ```
 
-## Development Server and Playground
+## Development Server
 This requires NodeJS to be installed.
 
 For convenience, we've included a development server with the VM. This is useful because the VM can take advantage of executing in a WebWorker, which is not permitted in a local file.
