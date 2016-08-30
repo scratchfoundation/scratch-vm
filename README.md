@@ -35,6 +35,10 @@ Open a Command Prompt in the repository and run:
 ```bash
 node_modules\.bin\webpack-dev-server --host 0.0.0.0 --content-base .\
 ```
+Or
+```bash
+StartServerWindows.bat
+```
 
 ## Playground
 To run the Playground, make sure the dev server's runniong and go to [http://localhost:8080/](http://localhost:8080/) - you will be redirected to the playground, which demonstrates various tools and internal state.
