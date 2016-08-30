@@ -32,12 +32,22 @@ flyoutWorkspace.addChangeListener(vm.flyoutBlockListener);
 vm.runtime.start();
 ```
 ## Development Server and Playground
-For convenience, we've included a development server with the VM. This is useful because the VM can take advantage of executing in a WebWorker, which is not permitted in a local file. To start the server, run:
+For convenience, we've included a development server with the VM. This is useful because the VM can take advantage of executing in a WebWorker, which is not permitted in a local file.
 
+## Running The Dev Server On Linux
+Open a Terminal in the repository and run:
 ```bash
 make serve
 ```
-and go to [http://localhost:8080/](http://localhost:8080/) - you will be redirected to the playground, which demonstrates various tools and internal state.
+
+## Running The Dev Server On Windows
+Open a Command Prompt in the repository and run:
+```bash
+node_modules\.bin\webpack-dev-server --host 0.0.0.0 --content-base .\
+```
+
+## Playground
+To run the Playground, make sure the dev server's runniong and go to [http://localhost:8080/](http://localhost:8080/) - you will be redirected to the playground, which demonstrates various tools and internal state.
 
 ![VM Playground Screenshot](https://i.imgur.com/nOCNqEc.gif)
 
