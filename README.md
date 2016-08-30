@@ -19,20 +19,6 @@ cd scratch-vm
 npm install
 ```
 
-## Setup
-For an extended setup example, check out the /playground directory, which includes a fully running VM instance.
-```js
-var VirtualMachine = require('scratch-vm');
-var vm = new VirtualMachine();
-
-// Block events
-workspace.addChangeListener(vm.blockListener);
-var flyoutWorkspace = workspace.toolbox_.flyout_.workspace_;
-flyoutWorkspace.addChangeListener(vm.flyoutBlockListener);
-
-// Run threads
-vm.runtime.start();
-```
 ## Development Server and Playground
 This requires NodeJS to be installed.
 
@@ -67,6 +53,21 @@ make build
     var vm = new window.VirtualMachine();
     // do things
 </script>
+```
+
+## How To Include In A Node App
+For an extended setup example, check out the /playground directory, which includes a fully running VM instance.
+```js
+var VirtualMachine = require('scratch-vm');
+var vm = new VirtualMachine();
+
+// Block events
+workspace.addChangeListener(vm.blockListener);
+var flyoutWorkspace = workspace.toolbox_.flyout_.workspace_;
+flyoutWorkspace.addChangeListener(vm.flyoutBlockListener);
+
+// Run threads
+vm.runtime.start();
 ```
 
 ## Abstract Syntax Tree
