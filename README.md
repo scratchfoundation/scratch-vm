@@ -6,7 +6,7 @@
 [![devDependency Status](https://david-dm.org/LLK/scratch-vm/dev-status.svg)](https://david-dm.org/LLK/scratch-vm#info=devDependencies)
 
 ## Installation
-This requires you to have Git and NodeJS installed.
+This requires you to have Git and Node,js installed.
 
 In your own node environment/application:
 ```bash
@@ -20,22 +20,16 @@ npm install
 ```
 
 ## Development Server
-This requires NodeJS to be installed.
+This requires Node.js to be installed.
 
 For convenience, we've included a development server with the VM. This is useful because the VM can take advantage of executing in a WebWorker, which is not permitted in a local file.
 
-## Running The Dev Server On Linux
-Open a Terminal in the repository and run:
+## Running The Dev Server
+Open a Command Prompt or Terminal in the repository and run:
 ```bash
-make serve
+npm start
 ```
-
-## Running The Dev Server On Windows
-Open a Command Prompt in the repository and run:
-```bash
-node_modules\.bin\webpack-dev-server --host 0.0.0.0 --content-base .\
-```
-Or
+Or on Windows:
 ```bash
 StartServerWindows.bat
 ```
