@@ -6,6 +6,8 @@
 [![devDependency Status](https://david-dm.org/LLK/scratch-vm/dev-status.svg)](https://david-dm.org/LLK/scratch-vm#info=devDependencies)
 
 ## Installation
+This Requires You To Have Git And NodeJS Installed
+
 In your own node environment/application:
 ```bash
 npm install https://github.com/LLK/scratch-vm.git
@@ -32,6 +34,13 @@ flyoutWorkspace.addChangeListener(vm.flyoutBlockListener);
 vm.runtime.start();
 ```
 ## Development Server and Playground
+This Requires:
+    On Linux:
+        Make
+        NodeJS
+    On Windows:
+        NodeJS
+
 For convenience, we've included a development server with the VM. This is useful because the VM can take advantage of executing in a WebWorker, which is not permitted in a local file.
 
 ## Running The Dev Server On Linux
