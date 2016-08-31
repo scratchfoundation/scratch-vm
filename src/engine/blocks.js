@@ -212,6 +212,12 @@ Blocks.prototype.changeBlock = function (args) {
  * @param {!Object} e Blockly move event to be processed
  */
 Blocks.prototype.moveBlock = function (e) {
+    // Move coordinate changes.
+    if (e.newCoordinate) {
+        this._blocks[e.id].x = e.newCoordinate.x;
+        this._blocks[e.id].y = e.newCoordinate.y;
+    }
+
     // Remove from any old parent.
     if (e.oldParent !== undefined) {
         var oldParent = this._blocks[e.oldParent];
