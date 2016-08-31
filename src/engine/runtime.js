@@ -18,9 +18,8 @@ var defaultBlockPackages = {
 
 /**
  * Manages targets, scripts, and the sequencer.
- * @param {!Array.<Target>} targets List of targets for this runtime.
  */
-function Runtime (targets) {
+function Runtime () {
     // Bind event emitter
     EventEmitter.call(this);
 
@@ -28,8 +27,9 @@ function Runtime (targets) {
 
     /**
      * Target management and storage.
+     * @type {Array.<!Target>}
      */
-    this.targets = targets;
+    this.targets = [];
 
     /**
      * A list of threads that are currently running in the VM.
