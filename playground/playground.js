@@ -1,7 +1,26 @@
+var loadProject = function () {
+    var id = location.hash.substring(1) || 119615668;
+    var url = 'https://projects.scratch.mit.edu/internalapi/project/' +
+        id + '/get/';
+    var r = new XMLHttpRequest();
+    r.addEventListener('load', function() {
+        window.vm.loadProject(this.responseText);
+    });
+    r.open('GET', url);
+    r.send();
+};
+
 window.onload = function() {
     // Lots of global variables to make debugging easier
     var vm = new window.VirtualMachine();
     window.vm = vm;
+
+    // Loading projects from the server.
+    document.getElementById('projectLoadButton').onclick = function () {
+        document.location = '#' + document.getElementById('projectId').value;
+        location.reload();
+    };
+    loadProject();
 
     var canvas = document.getElementById('scratch-stage');
     window.renderer = new window.RenderWebGLLocal(canvas);
@@ -70,6 +89,38 @@ window.onload = function() {
         updateThreadExplorer(data.threads);
         updateBlockExplorer(data.blocks);
     });
+
+    vm.on('workspaceUpdate', function (data) {
+        window.Blockly.Events.disable();
+        workspace.clear();
+        var dom = window.Blockly.Xml.textToDom(data.xml);
+        window.Blockly.Xml.domToWorkspace(dom, workspace);
+        window.Blockly.Events.enable();
+    });
+
+    var selectedTarget = document.getElementById('selectedTarget');
+    vm.on('targetsUpdate', function (data) {
+        // Clear select box.
+        while (selectedTarget.firstChild) {
+            selectedTarget.removeChild(selectedTarget.firstChild);
+        }
+        // Generate new select box.
+        for (var i = 0; i < data.targetList.length; i++) {
+            var targetOption = document.createElement('option');
+            targetOption.setAttribute('value', data.targetList[i][0]);
+            // If target id matches editingTarget id, select it.
+            if (data.targetList[i][0] == data.editingTarget) {
+                targetOption.setAttribute('selected', 'selected');
+            }
+            targetOption.appendChild(
+                document.createTextNode(data.targetList[i][1])
+            );
+            selectedTarget.appendChild(targetOption);
+        }
+    });
+    selectedTarget.onchange = function () {
+        vm.setEditingTarget(this.value);
+    };
 
     // Feedback for stacks and blocks running.
     vm.on('STACK_GLOW_ON', function(data) {
