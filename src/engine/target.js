@@ -27,4 +27,14 @@ function Target (blocks) {
     this.blocks = blocks;
 }
 
+/**
+ * Return a human-readable name for this target.
+ * Target implementations should override this.
+ * @abstract
+ * @returns {string} Human-readable name for the target.
+ */
+Target.prototype.getName = function () {
+    return this.id;
+};
+
 module.exports = Target;

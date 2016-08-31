@@ -226,4 +226,13 @@ Clone.prototype.updateAllDrawableProperties = function () {
     }
 };
 
+/**
+ * Return the human-readable name for this clone, i.e., the sprite's name.
+ * @override
+ * @returns {string} Human-readable name for the clone.
+ */
+Clone.prototype.getName = function () {
+    return this.sprite.name;
+};
+
 module.exports = Clone;
