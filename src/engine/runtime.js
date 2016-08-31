@@ -261,6 +261,20 @@ Runtime.prototype.targetForThread = function (thread) {
 };
 
 /**
+ * Get a target by its id.
+ * @param {string} targetId Id of target to find.
+ * @return {?Target} The target, if found.
+ */
+Runtime.prototype.getTargetById = function (targetId) {
+    for (var i = 0; i < this.targets.length; i++) {
+        var target = this.targets[i];
+        if (target.id == targetId) {
+            return target;
+        }
+    }
+};
+
+/**
  * Handle an animation frame from the main thread.
  */
 Runtime.prototype.animationFrame = function () {
