@@ -29,6 +29,7 @@ function VirtualMachine () {
             oldInputName: e.oldInputName,
             newParentId: e.newParentId,
             newInputName: e.newInputName,
+            newCoordinate: e.newCoordinate,
             xml: {
                 outerHTML: (e.xml) ? e.xml.outerHTML : null
             }
