@@ -101,6 +101,65 @@ VirtualMachine.prototype.postIOData = function (device, data) {
     }
 };
 
+/**
+ * Load a project from a Scratch 2.0 JSON representation.
+ * @param {string} json JSON string representing the project.
+ */
+VirtualMachine.prototype.loadProject = function (json) {
+    // Select the first target for editing, e.g., the stage.
+    this.editingTarget = this.runtime.targets[0];
+    // Update the VM user's knowledge of targets and blocks on the workspace.
+    this.emitTargetsUpdate();
+    this.emitWorkspaceUpdate();
+};
+
+/**
+ * Set an editing target. An editor UI can use this function to switch
+ * between editing different targets, sprites, etc.
+ * After switching the editing target, the VM may emit updates
+ * to the list of targets and any attached workspace blocks
+ * (see `emitTargetsUpdate` and `emitWorkspaceUpdate`).
+ * @param {string} targetId Id of target to set as editing.
+ */
+VirtualMachine.prototype.setEditingTarget = function (targetId) {
+    if (targetId == this.editingTarget.id) { // No change.
+        return;
+    }
+    var target = this.runtime.getTargetById(targetId);
+    if (target) {
+        this.editingTarget = target;
+        // Emit appropriate UI updates.
+        this.emitTargetsUpdate();
+        this.emitWorkspaceUpdate();
+    }
+};
+
+/**
+ * Emit metadata about available targets.
+ * An editor UI could use this to display a list of targets and show
+ * the currently editing one.
+ */
+VirtualMachine.prototype.emitTargetsUpdate = function () {
+    this.emit('targetsUpdate', {
+        // [[target id, human readable target name], ...].
+        targetList: this.runtime.targets.map(function(target) {
+            return [target.id, target.getName()];
+        }),
+        // Currently editing target id.
+        editingTarget: this.editingTarget.id
+    });
+};
+
+/**
+ * Emit an Blockly/scratch-blocks compatible XML representation
+ * of the current editing target's blocks.
+ */
+VirtualMachine.prototype.emitWorkspaceUpdate = function () {
+    this.emit('workspaceUpdate', {
+        'xml': this.editingTarget.blocks.toXML()
+    });
+};
+
 /*
  * Worker handlers: for all public methods available above,
  * we must also provide a message handler in case the VM is run
@@ -155,6 +214,12 @@ if (ENV_WORKER) {
         case 'postIOData':
             self.vmInstance.postIOData(messageData.device, messageData.data);
             break;
+        case 'setEditingTarget':
+            self.vmInstance.setEditingTarget(messageData.targetId);
+            break;
+        case 'loadProject':
+            self.vmInstance.loadProject(messageData.json);
+            break;
         default:
             if (e.data.id == 'RendererConnected') {
                 //initRenderWorker();
@@ -178,6 +243,17 @@ if (ENV_WORKER) {
     });
     self.vmInstance.runtime.on(Runtime.VISUAL_REPORT, function (id, value) {
         self.postMessage({method: Runtime.VISUAL_REPORT, id: id, value: value});
+    });
+    self.vmInstance.on('workspaceUpdate', function(data) {
+        self.postMessage({method: 'workspaceUpdate',
+            xml: data.xml
+        });
+    });
+    self.vmInstance.on('targetsUpdate', function(data) {
+        self.postMessage({method: 'targetsUpdate',
+            targetList: data.targetList,
+            editingTarget: data.editingTarget
+        });
     });
 }
 

@@ -76,6 +76,14 @@ VirtualMachine.prototype.animationFrame = function () {
     this.vmWorker.postMessage({method: 'animationFrame'});
 };
 
+VirtualMachine.prototype.loadProject = function (json) {
+    this.vmWorker.postMessage({method: 'loadProject', json: json});
+};
+
+VirtualMachine.prototype.setEditingTarget = function (targetId) {
+    this.vmWorker.postMessage({method: 'setEditingTarget', targetId: targetId});
+};
+
 /**
  * Export and bind to `window`
  */
