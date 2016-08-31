@@ -7,14 +7,34 @@ var Blocks = require('../engine/blocks');
  * @param {?Blocks} blocks Shared blocks object for all clones of sprite.
  * @constructor
  */
-function Sprite (blocks, name) {
+function Sprite (blocks) {
     if (!blocks) {
         // Shared set of blocks for all clones.
         blocks = new Blocks();
     }
     this.blocks = blocks;
-    this.name = name;
+    /**
+     * Human-readable name for this sprite (and all clones).
+     * @type {string}
+     */
+    this.name = '';
+    /**
+     * List of costumes for this sprite.
+     * Each entry is an object, e.g.,
+     * {
+     *      skin: "costume.svg",
+     *      name: "Costume Name",
+     *      bitmapResolution: 2,
+     *      rotationCenterX: 0,
+     *      rotationCenterY: 0
+     * }
+     * @type {Array.<!Object>}
+     */
     this.costumes = [];
+    /**
+     * List of clones for this sprite, including the original.
+     * @type {Array.<!Clone>}
+     */
     this.clones = [];
 }
 

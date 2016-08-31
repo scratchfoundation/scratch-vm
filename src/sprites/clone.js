@@ -205,7 +205,7 @@ Clone.prototype.setCostume = function (index) {
     this.currentCostume = index;
     if (this.renderer) {
         this.renderer.updateDrawableProperties(this.drawableID, {
-            skin: this.sprite.costumes[this.currentCostume].baseLayerMD5
+            skin: this.sprite.costumes[this.currentCostume].skin
         });
     }
 };
@@ -221,7 +221,7 @@ Clone.prototype.updateAllDrawableProperties = function () {
             direction: this.direction,
             scale: [this.size, this.size],
             visible: this.visible,
-            skin: this.sprite.costumes[this.currentCostume].baseLayerMD5
+            skin: this.sprite.costumes[this.currentCostume].skin
         });
     }
 };
