@@ -284,6 +284,63 @@ Blocks.prototype.deleteBlock = function (e) {
 // ---------------------------------------------------------------------
 
 /**
+ * Encode all of `this._blocks` as an XML string usable
+ * by a Blockly/scratch-blocks workspace.
+ * @return {string} String of XML representing this object's blocks.
+ */
+Blocks.prototype.toXML = function () {
+    var xmlString = '<xml xmlns="http://www.w3.org/1999/xhtml">';
+    for (var i = 0; i < this._scripts.length; i++) {
+        xmlString += this.blockToXML(this._scripts[i]);
+    }
+    return xmlString + '</xml>';
+};
+
+/**
+ * Recursively encode an individual block and its children
+ * into a Blockly/scratch-blocks XML string.
+ * @param {!string} blockId ID of block to encode.
+ * @return {string} String of XML representing this block and any children.
+ */
+Blocks.prototype.blockToXML = function (blockId) {
+    var block = this._blocks[blockId];
+    // Encode properties of this block.
+    var tagName = (block.shadow) ? 'shadow' : 'block';
+    var xy = (block.topLevel) ?
+        ' x="' + block.x +'"' + ' y="' + block.y +'"' :
+        '';
+    var xmlString = '';
+    xmlString += '<' + tagName +
+        ' id="' + block.id + '"' +
+        ' type="' + block.opcode + '"' +
+        xy +
+        '>';
+    // Add any inputs on this block.
+    for (var input in block.inputs) {
+        var blockInput = block.inputs[input];
+        // Only encode a value tag if the value input is occupied.
+        if (blockInput.block) {
+            xmlString += '<value name="' + blockInput.name + '">' +
+                this.blockToXML(blockInput.block) + '</value>';
+        }
+    }
+    // Add any fields on this block.
+    for (var field in block.fields) {
+        var blockField = block.fields[field];
+        xmlString += '<field name="' + blockField.name + '">' +
+            blockField.value + '</field>';
+    }
+    // Add blocks connected to the next connection.
+    if (block.next) {
+        xmlString += '<next>' + this.blockToXML(block.next) + '</next>';
+    }
+    xmlString += '</' + tagName + '>';
+    return xmlString;
+};
+
+// ---------------------------------------------------------------------
+
+/**
  * Helper to add a stack to `this._scripts`.
  * @param {?string} topBlockId ID of block that starts the script.
  */
