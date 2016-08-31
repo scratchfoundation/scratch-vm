@@ -24,7 +24,7 @@ This requires Node.js to be installed.
 
 For convenience, we've included a development server with the VM. This is useful because the VM can take advantage of executing in a WebWorker, which is not permitted in a local file.
 
-## Running The Dev Server
+## Running the Development Server
 Open a Command Prompt or Terminal in the repository and run:
 ```bash
 npm start
@@ -53,7 +53,7 @@ make build
 </script>
 ```
 
-## How To Include In A Node App
+## How to include in a Node.js App
 For an extended setup example, check out the /playground directory, which includes a fully running VM instance.
 ```js
 var VirtualMachine = require('scratch-vm');
