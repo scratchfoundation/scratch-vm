@@ -1,7 +1,6 @@
 var EventEmitter = require('events');
 var util = require('util');
 
-var Sprite = require('./sprites/sprite');
 var Runtime = require('./engine/runtime');
 
 /**
@@ -17,29 +16,19 @@ var ENV_WORKER = typeof importScripts === 'function';
  */
 function VirtualMachine () {
     var instance = this;
-
     // Bind event emitter and runtime to VM instance
-    // @todo Post message (Web Worker) polyfill
     EventEmitter.call(instance);
-    // @todo support multiple targets/sprites.
-    // This is just a demo/example.
-    var exampleSprite = new Sprite();
-    exampleSprite.createClone();
-    var exampleTargets = [exampleSprite.clones[0]];
-    instance.exampleSprite = exampleSprite;
-    instance.runtime = new Runtime(exampleTargets);
-
     /**
-     * Event listeners for scratch-blocks.
+     * VM runtime, to store blocks, I/O devices, sprites/targets, etc.
+     * @type {!Runtime}
      */
-    instance.blockListener = (
-        exampleSprite.blocks.generateBlockListener(false, instance.runtime)
-    );
-
-    instance.flyoutBlockListener = (
-        exampleSprite.blocks.generateBlockListener(true, instance.runtime)
-    );
-
+    instance.runtime = new Runtime();
+    /**
+     * The "currently editing"/selected target ID for the VM.
+     * Block events from any Blockly workspace are routed to this target.
+     * @type {!string}
+     */
+    instance.editingTarget = null;
     // Runtime emits are passed along as VM emits.
     instance.runtime.on(Runtime.STACK_GLOW_ON, function (id) {
         instance.emit(Runtime.STACK_GLOW_ON, {id: id});
@@ -89,7 +78,7 @@ VirtualMachine.prototype.stopAll = function () {
  */
 VirtualMachine.prototype.getPlaygroundData = function () {
     this.emit('playgroundData', {
-        blocks: this.exampleSprite.blocks,
+        blocks: this.editingTarget.blocks,
         threads: this.runtime.threads
     });
 };
@@ -136,15 +125,27 @@ if (ENV_WORKER) {
             self.vmInstance.runtime.stopAll();
             break;
         case 'blockListener':
-            self.vmInstance.blockListener(messageData.args);
+            if (self.vmInstance.editingTarget) {
+                self.vmInstance.editingTarget.blocks.blocklyListen(
+                    messageData.args,
+                    false,
+                    self.vmInstance.runtime
+                );
+            }
             break;
         case 'flyoutBlockListener':
-            self.vmInstance.flyoutBlockListener(messageData.args);
+            if (self.vmInstance.editingTarget) {
+                self.vmInstance.editingTarget.blocks.blocklyListen(
+                    messageData.args,
+                    true,
+                    self.vmInstance.runtime
+                );
+            }
             break;
         case 'getPlaygroundData':
             self.postMessage({
                 method: 'playgroundData',
-                blocks: self.vmInstance.exampleSprite.blocks,
+                blocks: self.vmInstance.editingTarget.blocks,
                 threads: self.vmInstance.runtime.threads
             });
             break;
