@@ -1,4 +1,5 @@
 var Blocks = require('./blocks');
+var uid = require('../util/uid');
 
 /**
  * @fileoverview
@@ -14,6 +15,15 @@ function Target (blocks) {
     if (!blocks) {
         blocks = new Blocks(this);
     }
+    /**
+     * A unique ID for this target.
+     * @type {string}
+     */
+    this.id = uid();
+    /**
+     * Blocks run as code for this target.
+     * @type {!Blocks}
+     */
     this.blocks = blocks;
 }
 
