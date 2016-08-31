@@ -120,63 +120,57 @@ Blocks.prototype.getInputs = function (id) {
 /**
  * Create event listener for blocks. Handles validation and serves as a generic
  * adapter between the blocks and the runtime interface.
+ * @param {Object} e Blockly "block" event
  * @param {boolean} isFlyout If true, create a listener for flyout events.
  * @param {?Runtime} opt_runtime Optional runtime to forward click events to.
- * @return {Function} A generated listener to attach to Blockly instance.
  */
 
-Blocks.prototype.generateBlockListener = function (isFlyout, opt_runtime) {
-    var instance = this;
-    /**
-     * The actual generated block listener.
-     * @param {Object} e Blockly "block" event
-     */
-    return function (e) {
-        // Validate event
-        if (typeof e !== 'object') return;
-        if (typeof e.blockId !== 'string') return;
+Blocks.prototype.blocklyListen = function (e, isFlyout, opt_runtime) {
+    // Validate event
+    if (typeof e !== 'object') return;
+    if (typeof e.blockId !== 'string') return;
 
-        // UI event: clicked scripts toggle in the runtime.
-        if (e.element === 'stackclick') {
-            if (opt_runtime) {
-                opt_runtime.toggleScript(e.blockId);
-            }
-            return;
+    // UI event: clicked scripts toggle in the runtime.
+    if (e.element === 'stackclick') {
+        if (opt_runtime) {
+            opt_runtime.toggleScript(e.blockId);
         }
+        return;
+    }
 
-        // Block create/update/destroy
-        switch (e.type) {
-        case 'create':
-            var newBlocks = adapter(e);
-            // A create event can create many blocks. Add them all.
-            for (var i = 0; i < newBlocks.length; i++) {
-                instance.createBlock(newBlocks[i], isFlyout);
-            }
-            break;
-        case 'change':
-            instance.changeBlock({
-                id: e.blockId,
-                element: e.element,
-                name: e.name,
-                value: e.newValue
-            });
-            break;
-        case 'move':
-            instance.moveBlock({
-                id: e.blockId,
-                oldParent: e.oldParentId,
-                oldInput: e.oldInputName,
-                newParent: e.newParentId,
-                newInput: e.newInputName
-            });
-            break;
-        case 'delete':
-            instance.deleteBlock({
-                id: e.blockId
-            });
-            break;
+    // Block create/update/destroy
+    switch (e.type) {
+    case 'create':
+        var newBlocks = adapter(e);
+        // A create event can create many blocks. Add them all.
+        for (var i = 0; i < newBlocks.length; i++) {
+            this.createBlock(newBlocks[i], isFlyout);
         }
-    };
+        break;
+    case 'change':
+        this.changeBlock({
+            id: e.blockId,
+            element: e.element,
+            name: e.name,
+            value: e.newValue
+        });
+        break;
+    case 'move':
+        this.moveBlock({
+            id: e.blockId,
+            oldParent: e.oldParentId,
+            oldInput: e.oldInputName,
+            newParent: e.newParentId,
+            newInput: e.newInputName,
+            newCoordinate: e.newCoordinate
+        });
+        break;
+    case 'delete':
+        this.deleteBlock({
+            id: e.blockId
+        });
+        break;
+    }
 };
 
 // ---------------------------------------------------------------------
