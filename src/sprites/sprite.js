@@ -7,12 +7,14 @@ var Blocks = require('../engine/blocks');
  * @param {?Blocks} blocks Shared blocks object for all clones of sprite.
  * @constructor
  */
-function Sprite (blocks) {
+function Sprite (blocks, name) {
     if (!blocks) {
         // Shared set of blocks for all clones.
         blocks = new Blocks();
     }
     this.blocks = blocks;
+    this.name = name;
+    this.costumes = [];
     this.clones = [];
 }
 
@@ -21,7 +23,7 @@ function Sprite (blocks) {
  * @returns {!Clone} Newly created clone.
  */
 Sprite.prototype.createClone = function () {
-    var newClone = new Clone(this.blocks);
+    var newClone = new Clone(this);
     this.clones.push(newClone);
     return newClone;
 };
