@@ -2,6 +2,7 @@ var EventEmitter = require('events');
 var util = require('util');
 
 var Runtime = require('./engine/runtime');
+var sb2import = require('./import/sb2import');
 
 /**
  * Whether the environment is a WebWorker.
@@ -106,6 +107,8 @@ VirtualMachine.prototype.postIOData = function (device, data) {
  * @param {string} json JSON string representing the project.
  */
 VirtualMachine.prototype.loadProject = function (json) {
+    // @todo: Handle other formats, e.g., Scratch 1.4, Scratch 3.0.
+    sb2import(json, this.runtime);
     // Select the first target for editing, e.g., the stage.
     this.editingTarget = this.runtime.targets[0];
     // Update the VM user's knowledge of targets and blocks on the workspace.
