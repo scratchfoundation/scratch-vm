@@ -6,7 +6,7 @@
 [![devDependency Status](https://david-dm.org/LLK/scratch-vm/dev-status.svg)](https://david-dm.org/LLK/scratch-vm#info=devDependencies)
 
 ## Installation
-This requires you to have Git and Node,js installed.
+This requires you to have Git and Node.js installed.
 
 In your own node environment/application:
 ```bash
