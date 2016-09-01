@@ -16,7 +16,9 @@ Scratch3SensingBlocks.prototype.getPrimitives = function() {
         'sensing_resettimer': this.resetTimer,
         'sensing_mousex': this.getMouseX,
         'sensing_mousey': this.getMouseY,
-        'sensing_mousedown': this.getMouseDown
+        'sensing_mousedown': this.getMouseDown,
+        'sensing_keyoptions': this.keyOptions,
+        'sensing_keypressed': this.getKeyPressed
     };
 };
 
@@ -38,6 +40,14 @@ Scratch3SensingBlocks.prototype.getMouseY = function (args, util) {
 
 Scratch3SensingBlocks.prototype.getMouseDown = function (args, util) {
     return util.ioQuery('mouse', 'getIsDown');
+};
+
+Scratch3SensingBlocks.prototype.keyOptions = function (args) {
+    return args.KEY_OPTION.toLowerCase();
+};
+
+Scratch3SensingBlocks.prototype.getKeyPressed = function (args, util) {
+    return util.ioQuery('keyboard', 'getKeyIsDown', args.KEY_OPTIONS);
 };
 
 module.exports = Scratch3SensingBlocks;

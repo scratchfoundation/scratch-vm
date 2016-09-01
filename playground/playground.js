@@ -106,6 +106,30 @@ window.onload = function() {
         e.preventDefault();
     });
 
+    // Feed keyboard events as VM I/O events.
+    document.addEventListener('keydown', function (e) {
+        // Don't capture input keys.
+        if (e.target != document && e.target != document.body) {
+            return;
+        }
+        window.vm.postIOData('keyboard', {
+            keyCode: e.keyCode,
+            isDown: true
+        });
+        e.preventDefault();
+    });
+    document.addEventListener('keyup', function(e) {
+        // Don't capture input keys.
+        if (e.target != document && e.target != document.body) {
+            return;
+        }
+        window.vm.postIOData('keyboard', {
+            keyCode: e.keyCode,
+            isDown: false
+        });
+        e.preventDefault();
+    });
+
     // Run threads
     vm.start();
 
