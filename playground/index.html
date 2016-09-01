@@ -26,6 +26,15 @@
             <pre id="threadexplorer"></pre>
         </div>
         <div id="tab-blockexplorer">
+            Import/Export XML
+            <p>
+                <input type="button" value="Export to XML" onclick="toXml()">
+                &nbsp;
+                <input type="button" value="Import from XML" onclick="fromXml()" id="import">
+                <br>
+                <textarea id="importExport" style="width: 30%; height: 30%"
+                onchange="taChange();" onkeyup="taChange()"></textarea>
+            </p>
             Block explorer
             <pre id="blockexplorer"></pre>
         </div>
@@ -741,5 +750,36 @@
     <script src="../vm.worker.js"></script>
     <!-- Playground -->
     <script src="./playground.js"></script>
+    <script>
+        function toXml() {
+            var output = document.getElementById('importExport');
+            var xml = Blockly.Xml.workspaceToDom(workspace);
+            output.value = Blockly.Xml.domToPrettyText(xml);
+            output.focus();
+            output.select();
+            taChange();
+          }
+    
+          function fromXml() {
+            var input = document.getElementById('importExport');
+            var xml = Blockly.Xml.textToDom(input.value);
+            Blockly.Xml.domToWorkspace(workspace, xml);
+            taChange();
+          }
+    
+          // Disable the "Import from XML" button if the XML is invalid.
+          // Preserve text between page reloads.
+          function taChange() {
+            var textarea = document.getElementById('importExport');
+            sessionStorage.setItem('textarea', textarea.value)
+            var valid = true;
+            try {
+              Blockly.Xml.textToDom(textarea.value);
+            } catch (e) {
+              valid = false;
+            }
+            document.getElementById('import').disabled = !valid;
+          }
+    </script>
 </body>
 </html>
