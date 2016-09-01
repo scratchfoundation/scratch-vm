@@ -108,7 +108,7 @@ window.onload = function() {
 
     // Feed keyboard events as VM I/O events.
     document.addEventListener('keydown', function (e) {
-        // Don't capture input keys.
+        // Don't capture keys intended for Blockly inputs.
         if (e.target != document && e.target != document.body) {
             return;
         }
@@ -119,7 +119,7 @@ window.onload = function() {
         e.preventDefault();
     });
     document.addEventListener('keyup', function(e) {
-        // Don't capture input keys.
+        // Don't capture keys intended for Blockly inputs.
         if (e.target != document && e.target != document.body) {
             return;
         }
