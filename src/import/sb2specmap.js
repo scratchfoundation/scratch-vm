@@ -255,7 +255,7 @@ var specMap = {
             {
                 'type':'input',
                 'inputOp':'looks_backdrops',
-                'inputName':'COSTUME'
+                'inputName':'BACKDROP'
             }
         ]
     },
@@ -350,7 +350,7 @@ var specMap = {
             {
                 'type':'input',
                 'inputOp':'looks_backdrops',
-                'inputName':'COSTUME'
+                'inputName':'BACKDROP'
             }
         ]
     },
