@@ -17,13 +17,11 @@
             <a id="renderexplorer-link" href="#">Renderer</a><br />
             <a id="threadexplorer-link" href="#">VM Threads</a><br />
             <a id="blockexplorer-link" href="#">VM Block Representation</a><br />
-            <a id="importexport-link" href="#">Import/Export XML</a>
+            <a id="importexport-link" href="#">Import/Export</a>
         </p>
         <div id="tab-renderexplorer">
             Render<br />
             <canvas id="scratch-stage" style="width: 480px; height: 360px;"></canvas>
-            <input id="projectId" value="119615668" />
-            <button id="projectLoadButton">Load</button>
         </div>
         <div id="tab-threadexplorer">
             Thread explorer
@@ -34,7 +32,9 @@
             <pre id="blockexplorer"></pre>
         </div>
         <div id="tab-importexport">
-            Import/Export XML
+            Import/Export
+            <input id="projectId" value="119615668" />
+            <button id="projectLoadButton">Load SB2</button><br />
             <p>
                 <input type="button" value="Export to XML" onclick="toXml()">
                 &nbsp;
