@@ -475,7 +475,7 @@ var specMap = {
         ]
     },
     'setTempoTo:':{
-        'opcode':'sound_settempoto',
+        'opcode':'sound_settempotobpm',
         'argMap':[
             {
                 'type':'input',
@@ -695,7 +695,7 @@ var specMap = {
         ]
     },
     'doIfElse':{
-        'opcode':'control_ifelse',
+        'opcode':'control_if_else',
         'argMap':[
             {
                 'type':'input',
@@ -721,7 +721,7 @@ var specMap = {
         ]
     },
     'doUntil':{
-        'opcode':'control_repeatuntil',
+        'opcode':'control_repeat_until',
         'argMap':[
             {
                 'type':'input',
