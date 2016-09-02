@@ -42,23 +42,16 @@ Scratch3SensingBlocks.prototype.getMouseDown = function (args, util) {
     return util.ioQuery('mouse', 'getIsDown');
 };
 
-Scratch3SensingBlocks.prototype.current = function (args, util) {
+Scratch3SensingBlocks.prototype.current = function (args) {
     var date = new Date();
     switch (args.CURRENTMENU) {
-    case 'year':
-        return date.getFullYear();
-    case 'month':
-        return date.getMonth();
-    case 'date':
-        return date.getDate();
-    case 'dayofweek':
-        return date.getDay();
-    case 'hour':
-        return date.getHours();
-    case 'minute':
-        return date.getMinutes();
-    case 'second':
-        return date.getSeconds();
+    case 'year': return date.getFullYear();
+    case 'month': return date.getMonth() + 1; // getMonth is zero-based
+    case 'date': return date.getDate();
+    case 'dayofweek': return date.getDay();
+    case 'hour': return date.getHours();
+    case 'minute': return date.getMinutes();
+    case 'second': return date.getSeconds();
     }
 };
 
