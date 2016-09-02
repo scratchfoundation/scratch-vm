@@ -12,6 +12,7 @@ var loadProject = function () {
 
 window.onload = function() {
     // Lots of global variables to make debugging easier
+    // Instantiate the VM worker.
     var vm = new window.VirtualMachine();
     window.vm = vm;
 
@@ -22,10 +23,12 @@ window.onload = function() {
     };
     loadProject();
 
+    // Instantiate the renderer and connect it to the VM.
     var canvas = document.getElementById('scratch-stage');
     window.renderer = new window.RenderWebGLLocal(canvas);
     window.renderer.connectWorker(window.vm.vmWorker);
 
+    // Instantiate scratch-blocks and attach it to the DOM.
     var toolbox = document.getElementById('toolbox');
     var workspace = window.Blockly.inject('blocks', {
         toolbox: toolbox,
@@ -48,23 +51,25 @@ window.onload = function() {
     });
     window.workspace = workspace;
 
-    // FPS counter.
+    // Attach scratch-blocks events to VM.
+    // @todo: Re-enable flyout listening after fixing GH-69.
+    workspace.addChangeListener(vm.blockListener);
+
+    // Create FPS counter.
     var stats = new window.Stats();
     document.getElementById('tab-renderexplorer').appendChild(stats.dom);
     stats.dom.style.position = 'relative';
     stats.begin();
 
-    // Block events.
-    // @todo: Re-enable flyout listening after fixing GH-69.
-    workspace.addChangeListener(vm.blockListener);
-
-    // Playground data
+    // Playground data tabs.
+    // Block representation tab.
     var blockexplorer = document.getElementById('blockexplorer');
     var updateBlockExplorer = function(blocks) {
         blockexplorer.innerHTML = JSON.stringify(blocks, null, 2);
         window.hljs.highlightBlock(blockexplorer);
     };
 
+    // Thread representation tab.
     var threadexplorer = document.getElementById('threadexplorer');
     var cachedThreadJSON = '';
     var updateThreadExplorer = function (threads) {
@@ -85,11 +90,14 @@ window.onload = function() {
         }
     };
 
+    // VM handlers.
+    // Receipt of new playground data (thread, block representations).
     vm.on('playgroundData', function(data) {
         updateThreadExplorer(data.threads);
         updateBlockExplorer(data.blocks);
     });
 
+    // Receipt of new block XML for the selected target.
     vm.on('workspaceUpdate', function (data) {
         window.Blockly.Events.disable();
         workspace.clear();
@@ -98,6 +106,7 @@ window.onload = function() {
         window.Blockly.Events.enable();
     });
 
+    // Receipt of new list of targets, selected target update.
     var selectedTarget = document.getElementById('selectedTarget');
     vm.on('targetsUpdate', function (data) {
         // Clear select box.
