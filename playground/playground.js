@@ -1,5 +1,5 @@
 var loadProject = function () {
-    var id = location.hash.substring(1) || 119615668;
+    var id = location.hash.substring(1);
     var url = 'https://projects.scratch.mit.edu/internalapi/project/' +
         id + '/get/';
     var r = new XMLHttpRequest();
