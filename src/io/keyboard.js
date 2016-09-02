@@ -1,82 +1,50 @@
 function Keyboard () {
-    this._keyMap = {
-        'space': false,
-        'leftarrow': false,
-        'rightarrow': false,
-        'downarrow': false,
-        'uparrow': false,
-        'a': false,
-        'b': false,
-        'c': false,
-        'd': false,
-        'e': false,
-        'f': false,
-        'g': false,
-        'h': false,
-        'i': false,
-        'j': false,
-        'k': false,
-        'm': false,
-        'n': false,
-        'o': false,
-        'p': false,
-        'q': false,
-        'r': false,
-        's': false,
-        't': false,
-        'u': false,
-        'v': false,
-        'w': false,
-        'x': false,
-        'y': false,
-        '0': false,
-        '1': false,
-        '2': false,
-        '3': false,
-        '4': false,
-        '5': false,
-        '6': false,
-        '7': false,
-        '8': false,
-        '9': false
-    };
+    /**
+     * List of currently pressed keys.
+     * @type{Array.<number>}
+     */
+    this._keysPressed = [];
 }
 
 /**
- * Convert a browser keyCode to a Scratch key name.
- * @param {number} keyCode keyCode from a DOM event.
- * @return {?string} Name of key.
+ * Convert a Scratch key name to a DOM keyCode.
+ * @param {?string} keyName Name of key.
+ * @return {number} Key code corresponding to a DOM event.
  */
-Keyboard.prototype._keyCodeToScratchKey = function (keyCode) {
-    if (keyCode >= 48 && keyCode <= 90) {
-        // Standard letter.
-        return String.fromCharCode(keyCode).toLowerCase();
+Keyboard.prototype._scratchKeyToKeyCode = function (keyName) {
+    console.log(keyName);
+    switch (keyName) {
+    case 'space': return 32;
+    case 'leftarrow': return 37;
+    case 'uparrow': return 38;
+    case 'rightarrow': return 39;
+    case 'downarrow': return 40;
+    // @todo: Consider adding other special keys here.
     }
-    switch (keyCode) {
-    case 32: return 'space';
-    case 37: return 'leftarrow';
-    case 38: return 'uparrow';
-    case 39: return 'rightarrow';
-    case 40: return 'downarrow';
-    }
-    return null;
+    return keyName.toUpperCase().charCodeAt(0);
 };
 
 Keyboard.prototype.postData = function (data) {
-    var key = this._keyCodeToScratchKey(data.keyCode);
-    if (key) {
-        this._keyMap[key] = data.isDown;
+    if (data.keyCode) {
+        var index = this._keysPressed.indexOf(data.keyCode);
+        if (data.isDown) {
+            // If not already present, add to the list.
+            if (index < 0) {
+                this._keysPressed.push(data.keyCode);
+            }
+        } else if (index > -1) {
+            // If already present, remove from the list.
+            this._keysPressed.splice(index, 1);
+        }
     }
 };
 
 Keyboard.prototype.getKeyIsDown = function (key) {
     if (key == 'any') {
-        for (var k in this._keyMap) {
-            if (this._keyMap[k]) return true;
-        }
-        return false;
+        return this._keysPressed.length > 0;
     }
-    return this._keyMap[key];
+    var keyCode = this._scratchKeyToKeyCode(key);
+    return this._keysPressed.indexOf(keyCode) > -1;
 };
 
 module.exports = Keyboard;
