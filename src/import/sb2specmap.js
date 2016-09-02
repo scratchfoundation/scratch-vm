@@ -1169,11 +1169,12 @@ var specMap = {
         ]
     },
     'readVariable':{
-        'opcode':'data_getvariable',
+        'opcode':'data_variable',
         'argMap':[
             {
-                'type':'field',
-                'fieldName':'VARIABLE'
+                'type':'input',
+                'inputOp':'data_variablemenu',
+                'inputName':'VARIABLE'
             }
         ]
     },
@@ -1181,8 +1182,9 @@ var specMap = {
         'opcode':'data_setvariableto',
         'argMap':[
             {
-                'type':'field',
-                'fieldName':'VARIABLE'
+                'type':'input',
+                'inputOp':'data_variablemenu',
+                'inputName':'VARIABLE'
             },
             {
                 'type':'input',
@@ -1195,8 +1197,9 @@ var specMap = {
         'opcode':'data_changevariableby',
         'argMap':[
             {
-                'type':'field',
-                'fieldName':'VARIABLE'
+                'type':'input',
+                'inputOp':'data_variablemenu',
+                'inputName':'VARIABLE'
             },
             {
                 'type':'input',
@@ -1209,8 +1212,9 @@ var specMap = {
         'opcode':'data_showvariable',
         'argMap':[
             {
-                'type':'field',
-                'fieldName':'VARIABLE'
+                'type':'input',
+                'inputOp':'data_variablemenu',
+                'inputName':'VARIABLE'
             }
         ]
     },
@@ -1218,8 +1222,9 @@ var specMap = {
         'opcode':'data_hidevariable',
         'argMap':[
             {
-                'type':'field',
-                'fieldName':'VARIABLE'
+                'type':'input',
+                'inputOp':'data_variablemenu',
+                'inputName':'VARIABLE'
             }
         ]
     },
