@@ -220,12 +220,17 @@ function parseBlock (sb2block) {
             } else if (expectedArg.inputOp) {
                 // Unoccupied input. Generate a shadow block to occupy it.
                 var fieldName = expectedArg.inputName;
-                if (expectedArg.inputOp == 'math_number') {
+                if (expectedArg.inputOp == 'math_number' ||
+                    expectedArg.inputOp == 'math_whole_number' ||
+                    expectedArg.inputOp == 'math_positive_number' ||
+                    expectedArg.inputOp == 'math_integer') {
                     fieldName = 'NUM';
                 } else if (expectedArg.inputOp == 'text') {
                     fieldName = 'TEXT';
                 } else if (expectedArg.inputOp == 'colour_picker') {
-                    fieldName = 'COLOR';
+                    fieldName = 'COLOUR';
+                } else if (expectedArg.inputOp == 'math_angle') {
+                    fieldName = 'NUM';
                 }
                 var fields = {};
                 fields[fieldName] = {
