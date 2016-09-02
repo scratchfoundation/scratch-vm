@@ -416,11 +416,13 @@ test('delete inputs', function (t) {
         inputs: {
             input1: {
                 name: 'input1',
-                block: 'foo2'
+                block: 'foo2',
+                shadow: null
             },
             SUBSTACK: {
                 name: 'SUBSTACK',
-                block: 'foo3'
+                block: 'foo3',
+                shadow: null
             }
         },
         topLevel: true
@@ -441,7 +443,8 @@ test('delete inputs', function (t) {
         inputs: {
             subinput: {
                 name: 'subinput',
-                block: 'foo4'
+                block: 'foo4',
+                shadow: null
             }
         },
         topLevel: false
