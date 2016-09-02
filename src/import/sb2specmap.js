@@ -210,7 +210,7 @@ var specMap = {
             {
                 'type':'input',
                 'inputOp':'math_number',
-                'inputName':'MESSAGE'
+                'inputName':'SECS'
             }
         ]
     },
