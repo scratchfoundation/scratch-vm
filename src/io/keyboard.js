@@ -1,3 +1,5 @@
+var Cast = require('../util/cast');
+
 function Keyboard () {
     /**
      * List of currently pressed keys.
@@ -8,20 +10,29 @@ function Keyboard () {
 
 /**
  * Convert a Scratch key name to a DOM keyCode.
- * @param {?string} keyName Name of key.
+ * @param {Any} keyName Scratch key argument.
  * @return {number} Key code corresponding to a DOM event.
  */
 Keyboard.prototype._scratchKeyToKeyCode = function (keyName) {
-    console.log(keyName);
-    switch (keyName) {
+    if (typeof keyName == 'number') {
+        // Key codes placed in with number blocks.
+        return keyName;
+    }
+    var keyString = Cast.toString(keyName);
+    switch (keyString) {
     case 'space': return 32;
     case 'leftarrow': return 37;
+    case 'left arrow': return 37;
     case 'uparrow': return 38;
+    case 'up arrow': return 38;
     case 'rightarrow': return 39;
+    case 'right arrow': return 39;
     case 'downarrow': return 40;
+    case 'down arrow': return 40;
     // @todo: Consider adding other special keys here.
     }
-    return keyName.toUpperCase().charCodeAt(0);
+    // Keys reported by DOM keyCode are upper case.
+    return keyString.toUpperCase().charCodeAt(0);
 };
 
 Keyboard.prototype.postData = function (data) {
