@@ -114,11 +114,16 @@ function domToBlock (blockDOM, blocks, isTopBlock) {
         case 'statement':
             // Recursively generate block structure for input block.
             domToBlock(childBlockNode, blocks, false);
+            if (childShadowNode && childBlockNode != childShadowNode) {
+                // Also generate the shadow block.
+                domToBlock(childShadowNode, blocks, false);
+            }
             // Link this block's input to the child block.
             var inputName = xmlChild.attribs.name;
             block.inputs[inputName] = {
                 name: inputName,
-                block: childBlockNode.attribs.id
+                block: childBlockNode.attribs.id,
+                shadow: childShadowNode ? childShadowNode.attribs.id : null
             };
             break;
         case 'next':
