@@ -324,7 +324,7 @@ var specMap = {
         'argMap':[
             {
                 'type':'input',
-                'inputOp':'math_number',
+                'inputOp':'math_integer',
                 'inputName':'NUM'
             }
         ]
@@ -653,7 +653,7 @@ var specMap = {
         'argMap':[
             {
                 'type':'input',
-                'inputOp':'math_number',
+                'inputOp':'math_positive_number',
                 'inputName':'DURATION'
             }
         ]
@@ -663,7 +663,7 @@ var specMap = {
         'argMap':[
             {
                 'type':'input',
-                'inputOp':'math_number',
+                'inputOp':'math_whole_number',
                 'inputName':'TIMES'
             },
             {
@@ -1108,7 +1108,7 @@ var specMap = {
         'argMap':[
             {
                 'type':'input',
-                'inputOp':'math_number',
+                'inputOp':'math_whole_number',
                 'inputName':'LETTER'
             },
             {
