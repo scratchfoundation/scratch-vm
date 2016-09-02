@@ -5,6 +5,7 @@ var util = require('util');
 
 // Virtual I/O devices.
 var Clock = require('../io/clock');
+var Keyboard = require('../io/keyboard');
 var Mouse = require('../io/mouse');
 
 var defaultBlockPackages = {
@@ -53,6 +54,7 @@ function Runtime () {
 
     this.ioDevices = {
         'clock': new Clock(),
+        'keyboard': new Keyboard(),
         'mouse': new Mouse()
     };
 }

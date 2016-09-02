@@ -166,6 +166,31 @@ window.onload = function() {
         e.preventDefault();
     });
 
+    // Feed keyboard events as VM I/O events.
+    document.addEventListener('keydown', function (e) {
+        // Don't capture keys intended for Blockly inputs.
+        if (e.target != document && e.target != document.body) {
+            return;
+        }
+        window.vm.postIOData('keyboard', {
+            keyCode: e.keyCode,
+            isDown: true
+        });
+        e.preventDefault();
+    });
+    document.addEventListener('keyup', function(e) {
+        // Always capture up events,
+        // even those that have switched to other targets.
+        window.vm.postIOData('keyboard', {
+            keyCode: e.keyCode,
+            isDown: false
+        });
+        // E.g., prevent scroll.
+        if (e.target != document && e.target != document.body) {
+            e.preventDefault();
+        }
+    });
+
     // Run threads
     vm.start();
 

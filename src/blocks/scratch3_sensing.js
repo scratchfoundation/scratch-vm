@@ -17,6 +17,8 @@ Scratch3SensingBlocks.prototype.getPrimitives = function() {
         'sensing_mousex': this.getMouseX,
         'sensing_mousey': this.getMouseY,
         'sensing_mousedown': this.getMouseDown,
+        'sensing_keyoptions': this.keyOptions,
+        'sensing_keypressed': this.getKeyPressed,
         'sensing_current': this.current,
         'sensing_currentmenu': this.currentMenu
     };
@@ -57,6 +59,14 @@ Scratch3SensingBlocks.prototype.current = function (args) {
 
 Scratch3SensingBlocks.prototype.currentMenu = function (args) {
     return args.CURRENTMENU.toLowerCase();
+};
+
+Scratch3SensingBlocks.prototype.keyOptions = function (args) {
+    return args.KEY_OPTION.toLowerCase();
+};
+
+Scratch3SensingBlocks.prototype.getKeyPressed = function (args, util) {
+    return util.ioQuery('keyboard', 'getKeyIsDown', args.KEY_OPTIONS);
 };
 
 module.exports = Scratch3SensingBlocks;
