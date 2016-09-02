@@ -125,7 +125,8 @@ VirtualMachine.prototype.loadProject = function (json) {
  * @param {string} targetId Id of target to set as editing.
  */
 VirtualMachine.prototype.setEditingTarget = function (targetId) {
-    if (targetId == this.editingTarget.id) { // No change.
+    // Has the target id changed? If not, exit.
+    if (targetId == this.editingTarget.id) {
         return;
     }
     var target = this.runtime.getTargetById(targetId);
