@@ -19,7 +19,7 @@ Scratch3SensingBlocks.prototype.getPrimitives = function() {
         'sensing_mousedown': this.getMouseDown,
         'sensing_keyoptions': this.keyOptions,
         'sensing_keypressed': this.getKeyPressed,
-'sensing_current': this.current,
+        'sensing_current': this.current,
         'sensing_currentmenu': this.currentMenu
     };
 };
