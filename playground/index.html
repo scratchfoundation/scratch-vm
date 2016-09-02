@@ -759,28 +759,12 @@
             output.value = Blockly.Xml.domToPrettyText(xml);
             output.focus();
             output.select();
-            taChange();
           }
     
           function fromXml() {
             var input = document.getElementById('importExport');
             var xml = Blockly.Xml.textToDom(input.value);
             Blockly.Xml.domToWorkspace(workspace, xml);
-            taChange();
-          }
-    
-          // Disable the "Import from XML" button if the XML is invalid.
-          // Preserve text between page reloads.
-          function taChange() {
-            var textarea = document.getElementById('importExport');
-            sessionStorage.setItem('textarea', textarea.value)
-            var valid = true;
-            try {
-              Blockly.Xml.textToDom(textarea.value);
-            } catch (e) {
-              valid = false;
-            }
-            document.getElementById('import').disabled = !valid;
           }
     </script>
 </body>
