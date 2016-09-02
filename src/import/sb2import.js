@@ -5,10 +5,11 @@
  * scratch-vm runtime structures.
  */
 
-var Sprite = require('../sprites/sprite');
 var Blocks = require('../engine/blocks');
-
+var Sprite = require('../sprites/sprite');
+var MathUtil = require('../util/math-util.js');
 var uid = require('../util/uid');
+
 var specMap = require('./sb2specmap');
 
 /**
@@ -228,6 +229,8 @@ function parseBlock (sb2block) {
                 } else if (expectedArg.inputOp == 'text') {
                     fieldName = 'TEXT';
                 } else if (expectedArg.inputOp == 'colour_picker') {
+                    // Convert SB2 color to hex.
+                    providedArg = MathUtil.scratchColorToHex(providedArg);
                     fieldName = 'COLOUR';
                 } else if (expectedArg.inputOp == 'math_angle') {
                     fieldName = 'NUM';
