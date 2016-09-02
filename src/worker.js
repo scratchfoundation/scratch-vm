@@ -29,6 +29,7 @@ function VirtualMachine () {
             oldInputName: e.oldInputName,
             newParentId: e.newParentId,
             newInputName: e.newInputName,
+            newCoordinate: e.newCoordinate,
             xml: {
                 outerHTML: (e.xml) ? e.xml.outerHTML : null
             }
@@ -73,6 +74,14 @@ VirtualMachine.prototype.stopAll = function () {
 
 VirtualMachine.prototype.animationFrame = function () {
     this.vmWorker.postMessage({method: 'animationFrame'});
+};
+
+VirtualMachine.prototype.loadProject = function (json) {
+    this.vmWorker.postMessage({method: 'loadProject', json: json});
+};
+
+VirtualMachine.prototype.setEditingTarget = function (targetId) {
+    this.vmWorker.postMessage({method: 'setEditingTarget', targetId: targetId});
 };
 
 /**

@@ -166,4 +166,14 @@ Sequencer.prototype.proceedThread = function (thread) {
     }
 };
 
+/**
+ * Retire a thread in the middle, without considering further blocks.
+ * @param {!Thread} thread Thread object to retire.
+ */
+Sequencer.prototype.retireThread = function (thread) {
+    thread.stack = [];
+    thread.stackFrame = [];
+    thread.setStatus(Thread.STATUS_DONE);
+};
+
 module.exports = Sequencer;

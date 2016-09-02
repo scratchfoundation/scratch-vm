@@ -12,14 +12,18 @@
         <h2>Scratch VM Playground</h2>
         <button id="greenflag">Green flag</button>
         <button id="stopall">Stop</button>
+        <select id="selectedTarget" multiple></select>
         <p>
             <a id="renderexplorer-link" href="#">Renderer</a><br />
             <a id="threadexplorer-link" href="#">VM Threads</a><br />
-            <a id="blockexplorer-link" href="#">VM Block Representation</a>
+            <a id="blockexplorer-link" href="#">VM Block Representation</a><br />
+            <a id="importexport-link" href="#">Import/Export XML</a>
         </p>
         <div id="tab-renderexplorer">
             Render<br />
             <canvas id="scratch-stage" style="width: 480px; height: 360px;"></canvas>
+            <input id="projectId" value="119615668" />
+            <button id="projectLoadButton">Load</button>
         </div>
         <div id="tab-threadexplorer">
             Thread explorer
@@ -29,7 +33,18 @@
             Block explorer
             <pre id="blockexplorer"></pre>
         </div>
+        <div id="tab-importexport">
+            Import/Export XML
+            <p>
+                <input type="button" value="Export to XML" onclick="toXml()">
+                &nbsp;
+                <input type="button" value="Import from XML" onclick="fromXml()" id="import">
+                <br><br>
+                <textarea id="importExport"></textarea>
+            </p>
+        </div>
     </div>
+
     <div id="blocks"></div>
 
     <xml id="toolbox" style="display: none">
@@ -741,5 +756,20 @@
     <script src="../vm.worker.js"></script>
     <!-- Playground -->
     <script src="./playground.js"></script>
+    <script>
+        function toXml() {
+            var output = document.getElementById('importExport');
+            var xml = Blockly.Xml.workspaceToDom(workspace);
+            output.value = Blockly.Xml.domToPrettyText(xml);
+            output.focus();
+            output.select();
+          }
+    
+          function fromXml() {
+            var input = document.getElementById('importExport');
+            var xml = Blockly.Xml.textToDom(input.value);
+            Blockly.Xml.domToWorkspace(workspace, xml);
+          }
+    </script>
 </body>
 </html>
