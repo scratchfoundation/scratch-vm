@@ -332,9 +332,16 @@ Blocks.prototype.blockToXML = function (blockId) {
     for (var input in block.inputs) {
         var blockInput = block.inputs[input];
         // Only encode a value tag if the value input is occupied.
-        if (blockInput.block) {
-            xmlString += '<value name="' + blockInput.name + '">' +
-                this.blockToXML(blockInput.block) + '</value>';
+        if (blockInput.block || blockInput.shadow) {
+            xmlString += '<value name="' + blockInput.name + '">';
+            if (blockInput.block) {
+                xmlString += this.blockToXML(blockInput.block);
+            }
+            if (blockInput.shadow && blockInput.shadow != blockInput.block) {
+                // Obscured shadow.
+                xmlString += this.blockToXML(blockInput.shadow);
+            }
+            xmlString += '</value>';
         }
     }
     // Add any fields on this block.
