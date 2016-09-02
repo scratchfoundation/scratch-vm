@@ -44,7 +44,7 @@ var specMap = {
         'argMap':[
             {
                 'type':'input',
-                'inputOp':'math_number',
+                'inputOp':'math_angle',
                 'inputName':'DIRECTION'
             }
         ]
