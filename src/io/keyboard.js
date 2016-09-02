@@ -21,13 +21,9 @@ Keyboard.prototype._scratchKeyToKeyCode = function (keyName) {
     var keyString = Cast.toString(keyName);
     switch (keyString) {
     case 'space': return 32;
-    case 'leftarrow': return 37;
     case 'left arrow': return 37;
-    case 'uparrow': return 38;
     case 'up arrow': return 38;
-    case 'rightarrow': return 39;
     case 'right arrow': return 39;
-    case 'downarrow': return 40;
     case 'down arrow': return 40;
     // @todo: Consider adding other special keys here.
     }
