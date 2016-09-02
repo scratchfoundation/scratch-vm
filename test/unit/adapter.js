@@ -142,6 +142,13 @@ test('create with next connection', function (t) {
     t.end();
 });
 
+test('create with obscured shadow', function (t) {
+    var result = adapter(events.createobscuredshadow);
+    t.ok(Array.isArray(result));
+    t.equal(result.length, 4);
+    t.end();
+});
+
 test('create with invalid block xml', function (t) {
     // Entirely invalid block XML
     var result = adapter(events.createinvalid);
