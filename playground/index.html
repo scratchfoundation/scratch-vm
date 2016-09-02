@@ -16,6 +16,7 @@
             <a id="renderexplorer-link" href="#">Renderer</a><br />
             <a id="threadexplorer-link" href="#">VM Threads</a><br />
             <a id="blockexplorer-link" href="#">VM Block Representation</a>
+            <a id="importexport-link" href="#">Import/Export XML</a>
         </p>
         <div id="tab-renderexplorer">
             Render<br />
@@ -26,6 +27,10 @@
             <pre id="threadexplorer"></pre>
         </div>
         <div id="tab-blockexplorer">
+            Block explorer
+            <pre id="blockexplorer"></pre>
+        </div>
+        <div id="tab-importexport">
             Import/Export XML
             <p>
                 <input type="button" value="Export to XML" onclick="toXml()">
@@ -35,8 +40,6 @@
                 <textarea id="importExport" style="width: 480px; height: 360px"
                 onchange="taChange();" onkeyup="taChange()"></textarea>
             </p>
-            Block explorer
-            <pre id="blockexplorer"></pre>
         </div>
     </div>
     <div id="blocks"></div>
