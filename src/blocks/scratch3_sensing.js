@@ -48,7 +48,7 @@ Scratch3SensingBlocks.prototype.current = function (args) {
     case 'year': return date.getFullYear();
     case 'month': return date.getMonth() + 1; // getMonth is zero-based
     case 'date': return date.getDate();
-    case 'dayofweek': return date.getDay();
+    case 'dayofweek': return date.getDay() + 1; // getDay is zero-based, Sun=0
     case 'hour': return date.getHours();
     case 'minute': return date.getMinutes();
     case 'second': return date.getSeconds();
