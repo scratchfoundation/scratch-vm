@@ -20,7 +20,7 @@ a {
     bottom: 0;
     width: 35%;
 }
-#blockexplorer, #threadexplorer {
+#blockexplorer, #threadexplorer, #importexport {
     position: absolute;
     width: 100%;
     height: 75%;
@@ -32,6 +32,6 @@ a {
     font-size: 10pt;
 }
 
-#tab-blockexplorer, #tab-threadexplorer {
+#tab-blockexplorer, #tab-threadexplorer, #tab-importexport {
     display: none;
 }

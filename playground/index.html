@@ -15,7 +15,8 @@
         <p>
             <a id="renderexplorer-link" href="#">Renderer</a><br />
             <a id="threadexplorer-link" href="#">VM Threads</a><br />
-            <a id="blockexplorer-link" href="#">VM Block Representation</a>
+            <a id="blockexplorer-link" href="#">VM Block Representation</a><br />
+            <a id="importexport-link" href="#">Import/Export XML</a>
         </p>
         <div id="tab-renderexplorer">
             Render<br />
@@ -28,6 +29,16 @@
         <div id="tab-blockexplorer">
             Block explorer
             <pre id="blockexplorer"></pre>
+        </div>
+        <div id="tab-importexport">
+            Import/Export XML
+            <p>
+                <input type="button" value="Export to XML" onclick="toXml()">
+                &nbsp;
+                <input type="button" value="Import from XML" onclick="fromXml()" id="import">
+                <br><br>
+                <textarea id="importExport" style="width: 480px; height: 360px"></textarea>
+            </p>
         </div>
     </div>
     <div id="blocks"></div>
@@ -741,5 +752,20 @@
     <script src="../vm.worker.js"></script>
     <!-- Playground -->
     <script src="./playground.js"></script>
+    <script>
+        function toXml() {
+            var output = document.getElementById('importExport');
+            var xml = Blockly.Xml.workspaceToDom(workspace);
+            output.value = Blockly.Xml.domToPrettyText(xml);
+            output.focus();
+            output.select();
+          }
+    
+          function fromXml() {
+            var input = document.getElementById('importExport');
+            var xml = Blockly.Xml.textToDom(input.value);
+            Blockly.Xml.domToWorkspace(workspace, xml);
+          }
+    </script>
 </body>
 </html>

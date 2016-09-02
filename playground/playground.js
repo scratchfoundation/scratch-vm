@@ -129,6 +129,7 @@ window.onload = function() {
     var tabBlockExplorer = document.getElementById('tab-blockexplorer');
     var tabThreadExplorer = document.getElementById('tab-threadexplorer');
     var tabRenderExplorer = document.getElementById('tab-renderexplorer');
+    var tabImportExport = document.getElementById('tab-importexport');
 
     // Handlers to show different explorers.
     document.getElementById('threadexplorer-link').addEventListener('click',
@@ -138,6 +139,7 @@ window.onload = function() {
             tabBlockExplorer.style.display = 'none';
             tabRenderExplorer.style.display = 'none';
             tabThreadExplorer.style.display = 'block';
+            tabImportExport.style.display = 'none';
         });
     document.getElementById('blockexplorer-link').addEventListener('click',
         function () {
@@ -146,6 +148,7 @@ window.onload = function() {
             tabBlockExplorer.style.display = 'block';
             tabRenderExplorer.style.display = 'none';
             tabThreadExplorer.style.display = 'none';
+            tabImportExport.style.display = 'none';
         });
     document.getElementById('renderexplorer-link').addEventListener('click',
         function () {
@@ -153,5 +156,14 @@ window.onload = function() {
             tabBlockExplorer.style.display = 'none';
             tabRenderExplorer.style.display = 'block';
             tabThreadExplorer.style.display = 'none';
+            tabImportExport.style.display = 'none';
+        });
+    document.getElementById('importexport-link').addEventListener('click',
+        function () {
+            window.exploreTabOpen = false;
+            tabBlockExplorer.style.display = 'none';
+            tabRenderExplorer.style.display = 'none';
+            tabThreadExplorer.style.display = 'none';
+            tabImportExport.style.display = 'block';
         });
 };
