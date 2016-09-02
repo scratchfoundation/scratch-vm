@@ -193,13 +193,16 @@ function parseBlock (sb2block) {
     for (var i = 0; i < blockMetadata.argMap.length; i++) {
         var expectedArg = blockMetadata.argMap[i];
         var providedArg = sb2block[i + 1]; // (i = 0 is opcode)
+        // Whether the input is obscuring a shadow.
+        var shadowObscured = false;
         // Positional argument is an input.
         if (expectedArg.type == 'input') {
             // Create a new block and input metadata.
             var inputUid = uid();
             activeBlock.inputs[expectedArg.inputName] = {
                 name: expectedArg.inputName,
-                block: inputUid
+                block: null,
+                shadow: null
             };
             if (typeof providedArg == 'object') {
                 // Block or block list occupies the input.
@@ -211,38 +214,58 @@ function parseBlock (sb2block) {
                     // Single block occupies the input.
                     innerBlocks = [parseBlock(providedArg)];
                 }
-                activeBlock.inputs[expectedArg.inputName] = {
-                    name: expectedArg.inputName,
-                    block: innerBlocks[0].id
-                };
+                // Obscures any shadow.
+                shadowObscured = true;
+                activeBlock.inputs[expectedArg.inputName].block = (
+                    innerBlocks[0].id
+                );
                 activeBlock.children = (
                     activeBlock.children.concat(innerBlocks)
                 );
-            } else if (expectedArg.inputOp) {
-                // Unoccupied input. Generate a shadow block to occupy it.
-                var fieldName = expectedArg.inputName;
-                if (expectedArg.inputOp == 'math_number') {
-                    fieldName = 'NUM';
-                } else if (expectedArg.inputOp == 'text') {
-                    fieldName = 'TEXT';
-                } else if (expectedArg.inputOp == 'colour_picker') {
-                    fieldName = 'COLOR';
-                }
-                var fields = {};
-                fields[fieldName] = {
-                    name: fieldName,
-                    value: providedArg
-                };
-                activeBlock.children.push({
-                    id: inputUid,
-                    opcode: expectedArg.inputOp,
-                    inputs: {},
-                    fields: fields,
-                    next: null,
-                    topLevel: false,
-                    shadow: true
-                });
             }
+            // Generate a shadow block to occupy the input.
+            // The shadow block is either visible or obscured.
+            if (!expectedArg.inputOp) {
+                // No editable shadow input; e.g., for a boolean.
+                continue;
+            }
+            // Each shadow has a field generated for it automatically.
+            // Value to be filled in the field.
+            var fieldValue = providedArg;
+            // Shadows' field names match the input name, except for these:
+            var fieldName = expectedArg.inputName;
+            if (expectedArg.inputOp == 'math_number') {
+                fieldName = 'NUM';
+                // Fields are given Scratch 2.0 default values if obscured.
+                if (shadowObscured) {
+                    fieldValue = 10;
+                }
+            } else if (expectedArg.inputOp == 'text') {
+                fieldName = 'TEXT';
+                if (shadowObscured) {
+                    fieldValue = '';
+                }
+            } else if (expectedArg.inputOp == 'colour_picker') {
+                fieldName = 'COLOR';
+                if (shadowObscured) {
+                    fieldValue = '#990000';
+                }
+            }
+            var fields = {};
+            fields[fieldName] = {
+                name: fieldName,
+                value: fieldValue
+            };
+            activeBlock.children.push({
+                id: inputUid,
+                opcode: expectedArg.inputOp,
+                inputs: {},
+                fields: fields,
+                next: null,
+                topLevel: false,
+                shadow: true
+            });
+            activeBlock.inputs[expectedArg.inputName].shadow = inputUid;
         } else if (expectedArg.type == 'field') {
             // Add as a field on this block.
             activeBlock.fields[expectedArg.fieldName] = {
