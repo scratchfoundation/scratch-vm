@@ -16,7 +16,9 @@ Scratch3SensingBlocks.prototype.getPrimitives = function() {
         'sensing_resettimer': this.resetTimer,
         'sensing_mousex': this.getMouseX,
         'sensing_mousey': this.getMouseY,
-        'sensing_mousedown': this.getMouseDown
+        'sensing_mousedown': this.getMouseDown,
+        'sensing_current': this.current,
+        'sensing_currentmenu': this.currentMenu
     };
 };
 
@@ -38,6 +40,30 @@ Scratch3SensingBlocks.prototype.getMouseY = function (args, util) {
 
 Scratch3SensingBlocks.prototype.getMouseDown = function (args, util) {
     return util.ioQuery('mouse', 'getIsDown');
+};
+
+Scratch3SensingBlocks.prototype.current = function (args, util) {
+    var date = new Date();
+    switch (args.CURRENTMENU) {
+    case 'year':
+        return date.getFullYear();
+    case 'month':
+        return date.getMonth();
+    case 'date':
+        return date.getDate();
+    case 'dayofweek':
+        return date.getDay();
+    case 'hour':
+        return date.getHours();
+    case 'minute':
+        return date.getMinutes();
+    case 'second':
+        return date.getSeconds();
+    }
+};
+
+Scratch3SensingBlocks.prototype.currentMenu = function (args) {
+    return args.CURRENTMENU.toLowerCase();
 };
 
 module.exports = Scratch3SensingBlocks;
