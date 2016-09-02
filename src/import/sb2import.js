@@ -200,10 +200,10 @@ function parseBlock (sb2block) {
                 name: expectedArg.inputName,
                 block: inputUid
             };
-            if (typeof providedArg == 'object') {
+            if (typeof providedArg == 'object' && providedArg) {
                 // Block or block list occupies the input.
                 var innerBlocks;
-                if (typeof providedArg[0] == 'object') {
+                if (typeof providedArg[0] == 'object' && providedArg[0]) {
                     // Block list occupies the input.
                     innerBlocks = parseBlockList(providedArg);
                 } else {
@@ -246,6 +246,8 @@ function parseBlock (sb2block) {
                     topLevel: false,
                     shadow: true
                 });
+            } else {
+                delete activeBlock.inputs[expectedArg.inputName];
             }
         } else if (expectedArg.type == 'field') {
             // Add as a field on this block.
