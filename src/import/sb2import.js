@@ -266,6 +266,10 @@ function parseBlock (sb2block) {
                 shadow: true
             });
             activeBlock.inputs[expectedArg.inputName].shadow = inputUid;
+            // If no block occupying the input, alias the block to the shadow.
+            if (!activeBlock.inputs[expectedArg.inputName].block) {
+                activeBlock.inputs[expectedArg.inputName].block = inputUid;
+            }
         } else if (expectedArg.type == 'field') {
             // Add as a field on this block.
             activeBlock.fields[expectedArg.fieldName] = {
