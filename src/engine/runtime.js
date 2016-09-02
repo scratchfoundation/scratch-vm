@@ -18,9 +18,8 @@ var defaultBlockPackages = {
 
 /**
  * Manages targets, scripts, and the sequencer.
- * @param {!Array.<Target>} targets List of targets for this runtime.
  */
-function Runtime (targets) {
+function Runtime () {
     // Bind event emitter
     EventEmitter.call(this);
 
@@ -28,8 +27,9 @@ function Runtime (targets) {
 
     /**
      * Target management and storage.
+     * @type {Array.<!Target>}
      */
-    this.targets = targets;
+    this.targets = [];
 
     /**
      * A list of threads that are currently running in the VM.
@@ -413,6 +413,20 @@ Runtime.prototype.targetForThread = function (thread) {
     for (var t = 0; t < this.targets.length; t++) {
         var target = this.targets[t];
         if (target.blocks.getBlock(thread.topBlock)) {
+            return target;
+        }
+    }
+};
+
+/**
+ * Get a target by its id.
+ * @param {string} targetId Id of target to find.
+ * @return {?Target} The target, if found.
+ */
+Runtime.prototype.getTargetById = function (targetId) {
+    for (var i = 0; i < this.targets.length; i++) {
+        var target = this.targets[i];
+        if (target.id == targetId) {
             return target;
         }
     }

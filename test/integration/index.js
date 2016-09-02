@@ -6,7 +6,6 @@ test('spec', function (t) {
 
     t.type(VirtualMachine, 'function');
     t.type(vm, 'object');
-    t.type(vm.blockListener, 'function');
     t.end();
 });
 

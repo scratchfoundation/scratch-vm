@@ -12,6 +12,7 @@
         <h2>Scratch VM Playground</h2>
         <button id="greenflag">Green flag</button>
         <button id="stopall">Stop</button>
+        <select id="selectedTarget" multiple></select>
         <p>
             <a id="renderexplorer-link" href="#">Renderer</a><br />
             <a id="threadexplorer-link" href="#">VM Threads</a><br />
@@ -21,6 +22,8 @@
         <div id="tab-renderexplorer">
             Render<br />
             <canvas id="scratch-stage" style="width: 480px; height: 360px;"></canvas>
+            <input id="projectId" value="119615668" />
+            <button id="projectLoadButton">Load</button>
         </div>
         <div id="tab-threadexplorer">
             Thread explorer
@@ -41,6 +44,7 @@
             </p>
         </div>
     </div>
+
     <div id="blocks"></div>
 
     <xml id="toolbox" style="display: none">
