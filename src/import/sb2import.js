@@ -224,7 +224,8 @@ function parseBlock (sb2block) {
                 if (expectedArg.inputOp == 'math_number' ||
                     expectedArg.inputOp == 'math_whole_number' ||
                     expectedArg.inputOp == 'math_positive_number' ||
-                    expectedArg.inputOp == 'math_integer') {
+                    expectedArg.inputOp == 'math_integer' ||
+                    expectedArg.inputOp == 'math_angle') {
                     fieldName = 'NUM';
                 } else if (expectedArg.inputOp == 'text') {
                     fieldName = 'TEXT';
@@ -232,8 +233,6 @@ function parseBlock (sb2block) {
                     // Convert SB2 color to hex.
                     providedArg = MathUtil.scratchColorToHex(providedArg);
                     fieldName = 'COLOUR';
-                } else if (expectedArg.inputOp == 'math_angle') {
-                    fieldName = 'NUM';
                 }
                 var fields = {};
                 fields[fieldName] = {
