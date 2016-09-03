@@ -1,16 +1,16 @@
 var Cast = require('../util/cast');
 
-function Keyboard (rt) {
+function Keyboard (runtime) {
     /**
      * List of currently pressed keys.
      * @type{Array.<number>}
      */
     this._keysPressed = [];
     /**
-     * For activate hat
-     * @type{Runtime}
+     * Reference to the owning Runtime. Can be used, for example, to activate hats.
+     * @type{!Runtime}
      */
-    this._rt = rt;
+    this.runtime = runtime;
 }
 
 /**
@@ -58,13 +58,13 @@ Keyboard.prototype.postData = function (data) {
             // If not already present, add to the list.
             if (index < 0) {
                 this._keysPressed.push(data.keyCode);
-                this._rt.startHats('event_whenkeypressed',
+                this.runtime.startHats('event_whenkeypressed',
                     {
                         'KEY_OPTION': this._keyCodeToScratchKey(data.keyCode)
                                           .toUpperCase()
                     });
 
-                this._rt.startHats('event_whenkeypressed',
+                this.runtime.startHats('event_whenkeypressed',
                     {
                         'KEY_OPTION': 'ANY'
                     });
