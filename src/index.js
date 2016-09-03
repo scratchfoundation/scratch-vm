@@ -3,7 +3,7 @@ var util = require('util');
 
 var Runtime = require('./engine/runtime');
 var sb2import = require('./import/sb2import');
-var sb3new = require('./newProject');
+var newProject = require('./newProject');
 
 /**
  * Whether the environment is a WebWorker.
