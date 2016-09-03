@@ -1,5 +1,5 @@
-var Sprite = require('sprites/sprite');
-var Blocks = require('engine/blocks');
+var Sprite = require('./sprites/sprite');
+var Blocks = require('./engine/blocks');
 
 function newProject (runtime) {
     var blocks = new Blocks();
