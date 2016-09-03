@@ -1,7 +1,7 @@
-var Sprite = require('../sprites/sprite');
-var Blocks = require('../engine/blocks');
+var Sprite = require('sprites/sprite');
+var Blocks = require('engine/blocks');
 
-function sb3new (runtime) {
+function newProject (runtime) {
     var blocks = new Blocks();
     var sprite = new Sprite(blocks);
     sprite.name = 'Sprite1';
@@ -13,4 +13,4 @@ function sb3new (runtime) {
     target.size = 100;
     target.visible = true;
 }
-module.exports = sb3new;
+module.exports = newProject;
