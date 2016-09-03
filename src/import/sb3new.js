@@ -4,7 +4,7 @@ var Blocks = require('../engine/blocks');
 function sb3new (runtime) {
     var blocks = new Blocks();
     var sprite = new Sprite(blocks);
-    sprite.name = "Sprite1";
+    sprite.name = 'Sprite1';
     var target = sprite.createClone();
     runtime.targets.push(target);
     target.x = 0;
