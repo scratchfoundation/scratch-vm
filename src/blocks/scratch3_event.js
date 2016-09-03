@@ -14,7 +14,8 @@ Scratch3EventBlocks.prototype.getPrimitives = function() {
     return {
         'event_broadcast': this.broadcast,
         'event_broadcastandwait': this.broadcastAndWait,
-        'event_whengreaterthan': this.hatGreaterThanPredicate
+        'event_whengreaterthan': this.hatGreaterThanPredicate,
+		'event_whenkeypressed': this.hatKeyPressed
     };
 };
 
@@ -23,12 +24,13 @@ Scratch3EventBlocks.prototype.getHats = function () {
         'event_whenflagclicked': {
             restartExistingThreads: true
         },
-        /*'event_whenkeypressed': {
+        'event_whenkeypressed': {
             restartExistingThreads: false
         },
         'event_whenthisspriteclicked': {
             restartExistingThreads: true
         },
+		/*
         'event_whenbackdropswitchesto': {
             restartExistingThreads: true
         },*/
@@ -78,6 +80,10 @@ Scratch3EventBlocks.prototype.broadcastAndWait = function (args, util) {
     if (waiting) {
         util.yieldFrame();
     }
+};
+
+Scratch3EventBlocks.prototype.hatKeyPressed = function (args, util) {
+	return util.ioQuery('keyboard', 'getKeyIsDown', args.KEY_OPTION);
 };
 
 module.exports = Scratch3EventBlocks;
