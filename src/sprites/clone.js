@@ -4,11 +4,16 @@ var Target = require('../engine/target');
 
 /**
  * Clone (instance) of a sprite.
- * @param {!Blocks} spriteBlocks Reference to the sprite's blocks.
+ * @param {!Sprite} sprite Reference to the sprite.
  * @constructor
  */
-function Clone(spriteBlocks) {
-    Target.call(this, spriteBlocks);
+function Clone(sprite) {
+    Target.call(this, sprite.blocks);
+    /**
+     * Reference to the sprite that this is a clone of.
+     * @type {!Sprite}
+     */
+    this.sprite = sprite;
     /**
      * Reference to the global renderer for this VM, if one exists.
      * @type {?RenderWebGLWorker}
@@ -38,6 +43,8 @@ Clone.prototype.initDrawable = function () {
         var instance = this;
         createPromise.then(function (id) {
             instance.drawableID = id;
+            // Once the drawable is created, send our current set of properties.
+            instance.updateAllDrawableProperties();
         });
     }
 };
@@ -45,33 +52,39 @@ Clone.prototype.initDrawable = function () {
 // Clone-level properties.
 /**
  * Scratch X coordinate. Currently should range from -240 to 240.
- * @type {!number}
+ * @type {Number}
  */
 Clone.prototype.x = 0;
 
 /**
  * Scratch Y coordinate. Currently should range from -180 to 180.
- * @type {!number}
+ * @type {number}
  */
 Clone.prototype.y = 0;
 
 /**
  * Scratch direction. Currently should range from -179 to 180.
- * @type {!number}
+ * @type {number}
  */
 Clone.prototype.direction = 90;
 
 /**
  * Whether the clone is currently visible.
- * @type {!boolean}
+ * @type {boolean}
  */
 Clone.prototype.visible = true;
 
 /**
  * Size of clone as a percent of costume size. Ranges from 5% to 535%.
- * @type {!number}
+ * @type {number}
  */
 Clone.prototype.size = 100;
+
+/**
+ * Currently selected costume index.
+ * @type {number}
+ */
+Clone.prototype.currentCostume = 0;
 
 /**
  * Map of current graphic effect values.
@@ -182,6 +195,44 @@ Clone.prototype.clearEffects = function () {
     if (this.renderer) {
         this.renderer.updateDrawableProperties(this.drawableID, this.effects);
     }
+};
+
+/**
+ * Set the current costume of this clone.
+ * @param {number} index New index of costume.
+ */
+Clone.prototype.setCostume = function (index) {
+    this.currentCostume = index;
+    if (this.renderer) {
+        this.renderer.updateDrawableProperties(this.drawableID, {
+            skin: this.sprite.costumes[this.currentCostume].skin
+        });
+    }
+};
+
+/**
+ * Update all drawable properties for this clone.
+ * Use when a batch has changed, e.g., when the drawable is first created.
+ */
+Clone.prototype.updateAllDrawableProperties = function () {
+    if (this.renderer) {
+        this.renderer.updateDrawableProperties(this.drawableID, {
+            position: [this.x, this.y],
+            direction: this.direction,
+            scale: [this.size, this.size],
+            visible: this.visible,
+            skin: this.sprite.costumes[this.currentCostume].skin
+        });
+    }
+};
+
+/**
+ * Return the human-readable name for this clone, i.e., the sprite's name.
+ * @override
+ * @returns {string} Human-readable name for the clone.
+ */
+Clone.prototype.getName = function () {
+    return this.sprite.name;
 };
 
 module.exports = Clone;

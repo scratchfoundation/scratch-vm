@@ -13,6 +13,28 @@ function Sprite (blocks) {
         blocks = new Blocks();
     }
     this.blocks = blocks;
+    /**
+     * Human-readable name for this sprite (and all clones).
+     * @type {string}
+     */
+    this.name = '';
+    /**
+     * List of costumes for this sprite.
+     * Each entry is an object, e.g.,
+     * {
+     *      skin: "costume.svg",
+     *      name: "Costume Name",
+     *      bitmapResolution: 2,
+     *      rotationCenterX: 0,
+     *      rotationCenterY: 0
+     * }
+     * @type {Array.<!Object>}
+     */
+    this.costumes = [];
+    /**
+     * List of clones for this sprite, including the original.
+     * @type {Array.<!Clone>}
+     */
     this.clones = [];
 }
 
@@ -21,7 +43,7 @@ function Sprite (blocks) {
  * @returns {!Clone} Newly created clone.
  */
 Sprite.prototype.createClone = function () {
-    var newClone = new Clone(this.blocks);
+    var newClone = new Clone(this);
     this.clones.push(newClone);
     return newClone;
 };

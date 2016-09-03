@@ -6,31 +6,36 @@
 [![devDependency Status](https://david-dm.org/LLK/scratch-vm/dev-status.svg)](https://david-dm.org/LLK/scratch-vm#info=devDependencies)
 
 ## Installation
+This requires you to have Git and Node.js installed.
+
+In your own node environment/application:
 ```bash
 npm install https://github.com/LLK/scratch-vm.git
 ```
-
-## Setup
-For an extended setup example, check out the /playground directory, which includes a fully running VM instance.
-```js
-var VirtualMachine = require('scratch-vm');
-var vm = new VirtualMachine();
-
-// Block events
-workspace.addChangeListener(vm.blockListener);
-var flyoutWorkspace = workspace.toolbox_.flyout_.workspace_;
-flyoutWorkspace.addChangeListener(vm.flyoutBlockListener);
-
-// Run threads
-vm.runtime.start();
-```
-## Development Server and Playground
-For convenience, we've included a development server with the VM. This is useful because the VM can take advantage of executing in a WebWorker, which is not permitted in a local file. To start the server, run:
-
+If you want to edit/play yourself:
 ```bash
-make serve
+git clone git@github.com:LLK/scratch-vm.git
+cd scratch-vm
+npm install
 ```
-and go to [http://localhost:8080/](http://localhost:8080/) - you will be redirected to the playground, which demonstrates various tools and internal state.
+
+## Development Server
+This requires Node.js to be installed.
+
+For convenience, we've included a development server with the VM. This is useful because the VM can take advantage of executing in a WebWorker, which is not permitted in a local file.
+
+## Running the Development Server
+Open a Command Prompt or Terminal in the repository and run:
+```bash
+npm start
+```
+Or on Windows:
+```bash
+StartServerWindows.bat
+```
+
+## Playground
+To run the Playground, make sure the dev server's running and go to [http://localhost:8080/](http://localhost:8080/) - you will be redirected to the playground, which demonstrates various tools and internal state.
 
 ![VM Playground Screenshot](https://i.imgur.com/nOCNqEc.gif)
 
@@ -46,6 +51,21 @@ make build
     var vm = new window.VirtualMachine();
     // do things
 </script>
+```
+
+## How to include in a Node.js App
+For an extended setup example, check out the /playground directory, which includes a fully running VM instance.
+```js
+var VirtualMachine = require('scratch-vm');
+var vm = new VirtualMachine();
+
+// Block events
+workspace.addChangeListener(vm.blockListener);
+var flyoutWorkspace = workspace.toolbox_.flyout_.workspace_;
+flyoutWorkspace.addChangeListener(vm.flyoutBlockListener);
+
+// Run threads
+vm.runtime.start();
 ```
 
 ## Abstract Syntax Tree

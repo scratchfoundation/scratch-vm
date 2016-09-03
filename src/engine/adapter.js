@@ -57,7 +57,10 @@ function domToBlock (blockDOM, blocks, isTopBlock) {
         inputs: {}, // Inputs to this block and the blocks they point to.
         fields: {}, // Fields on this block and their values.
         next: null, // Next block in the stack, if one exists.
-        topLevel: isTopBlock // If this block starts a stack.
+        topLevel: isTopBlock, // If this block starts a stack.
+        shadow: blockDOM.name == 'shadow', // If this represents a shadow/slot.
+        x: blockDOM.attribs.x, // X position of script, if top-level.
+        y: blockDOM.attribs.y // Y position of script, if top-level.
     };
 
     // Add the block to the representation tree.
