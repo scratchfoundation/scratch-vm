@@ -23,12 +23,13 @@ Scratch3EventBlocks.prototype.getHats = function () {
         'event_whenflagclicked': {
             restartExistingThreads: true
         },
-        /*'event_whenkeypressed': {
+        'event_whenkeypressed': {
             restartExistingThreads: false
         },
         'event_whenthisspriteclicked': {
             restartExistingThreads: true
         },
+		/*
         'event_whenbackdropswitchesto': {
             restartExistingThreads: true
         },*/
