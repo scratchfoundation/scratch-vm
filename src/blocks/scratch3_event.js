@@ -24,7 +24,7 @@ Scratch3EventBlocks.prototype.getHats = function () {
             restartExistingThreads: true
         },
         'event_whenkeypressed': {
-            restartExistingThreads: false,
+            restartExistingThreads: false
         },
         'event_whenthisspriteclicked': {
             restartExistingThreads: true

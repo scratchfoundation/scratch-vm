@@ -59,13 +59,15 @@ Keyboard.prototype.postData = function (data) {
             if (index < 0) {
                 this._keysPressed.push(data.keyCode);
                 this._rt.startHats('event_whenkeypressed',
-                {
-                    'KEY_OPTION': this._keyCodeToScratchKey(data.keyCode).toUpperCase()
-                });
+                    {
+                        'KEY_OPTION': this._keyCodeToScratchKey(data.keyCode)
+                                          .toUpperCase()
+                    });
+
                 this._rt.startHats('event_whenkeypressed',
-                {
-                    'KEY_OPTION': 'ANY'
-                });
+                    {
+                        'KEY_OPTION': 'ANY'
+                    });
             }
         } else if (index > -1) {
             // If already present, remove from the list.
