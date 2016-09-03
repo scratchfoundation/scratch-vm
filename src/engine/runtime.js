@@ -54,7 +54,7 @@ function Runtime () {
 
     this.ioDevices = {
         'clock': new Clock(),
-        'keyboard': new Keyboard(),
+        'keyboard': new Keyboard(this),
         'mouse': new Mouse()
     };
 }
