@@ -83,7 +83,7 @@ Scratch3EventBlocks.prototype.broadcastAndWait = function (args, util) {
 };
 
 Scratch3EventBlocks.prototype.hatKeyPressed = function (args, util) {
-	return util.ioQuery('keyboard', 'getKeyIsDown', args.KEY_OPTION);
+    return util.ioQuery('keyboard', 'getKeyIsDown', args.KEY_OPTION);
 };
 
 module.exports = Scratch3EventBlocks;
