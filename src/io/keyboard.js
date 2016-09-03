@@ -7,7 +7,8 @@ function Keyboard (runtime) {
      */
     this._keysPressed = [];
     /**
-     * Reference to the owning Runtime. Can be used, for example, to activate hats.
+     * Reference to the owning Runtime.
+     * Can be used, for example, to activate hats.
      * @type{!Runtime}
      */
     this.runtime = runtime;
