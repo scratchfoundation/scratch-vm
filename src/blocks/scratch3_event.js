@@ -15,7 +15,7 @@ Scratch3EventBlocks.prototype.getPrimitives = function() {
         'event_broadcast': this.broadcast,
         'event_broadcastandwait': this.broadcastAndWait,
         'event_whengreaterthan': this.hatGreaterThanPredicate,
-		'event_whenkeypressed': this.hatKeyPressed
+        'event_whenkeypressed': this.hatKeyPressed
     };
 };
 
