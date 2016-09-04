@@ -106,7 +106,7 @@ VirtualMachine.prototype.postIOData = function (device, data) {
 
 /**
  * Load a project from a Scratch 2.0 JSON representation.
- * @param {string} json JSON string representing the project.
+ * @param {?string} json JSON string representing the project.
  * If JSON is NULL, fallback to creating blank project.
  */
 VirtualMachine.prototype.loadProject = function (json) {
