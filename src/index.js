@@ -114,7 +114,8 @@ VirtualMachine.prototype.loadProject = function (json) {
         var blocks = new Blocks();
         var sprite = new Sprite(blocks);
         sprite.name = 'Sprite1';
-        sprite.costumes.push({skin: '09dc888b0b7df19f70d81588ae73420e.svg',
+        sprite.costumes.push({
+            skin: 'scratch_cat.svg',
             name: 'costume1',
             bitmapResolution: 1,
             rotationCenterX: 47,
