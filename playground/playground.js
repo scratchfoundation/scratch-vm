@@ -6,7 +6,7 @@ var loadProject = function () {
     r.onreadystatechange = function() {
         if (this.readyState == 4) {
             window.vm.loadProject(this.responseText);
-        };
+        }
     };
     r.open('GET', url);
     r.send();
