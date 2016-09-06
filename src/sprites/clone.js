@@ -202,12 +202,29 @@ Clone.prototype.clearEffects = function () {
  * @param {number} index New index of costume.
  */
 Clone.prototype.setCostume = function (index) {
-    this.currentCostume = index;
+    // Keep the costume index within possible values.
+    this.currentCostume = MathUtil.wrapClamp(
+        index, 0, this.sprite.costumes.length - 1
+    );
     if (this.renderer) {
         this.renderer.updateDrawableProperties(this.drawableID, {
             skin: this.sprite.costumes[this.currentCostume].skin
         });
     }
+};
+
+/**
+ * Get a costume index of this clone, by name of the costume.
+ * @param {?string} costumeName Name of a costume.
+ * @return {number} Index of the named costume, or -1 if not present.
+ */
+Clone.prototype.getCostumeIndexByName = function (costumeName) {
+    for (var i = 0; i < this.sprite.costumes.length; i++) {
+        if (this.sprite.costumes[i].name == costumeName) {
+            return i;
+        }
+    }
+    return -1;
 };
 
 /**
