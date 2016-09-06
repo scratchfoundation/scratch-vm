@@ -120,63 +120,61 @@ Blocks.prototype.getInputs = function (id) {
 /**
  * Create event listener for blocks. Handles validation and serves as a generic
  * adapter between the blocks and the runtime interface.
+ * @param {Object} e Blockly "block" event
  * @param {boolean} isFlyout If true, create a listener for flyout events.
  * @param {?Runtime} opt_runtime Optional runtime to forward click events to.
- * @return {Function} A generated listener to attach to Blockly instance.
  */
 
-Blocks.prototype.generateBlockListener = function (isFlyout, opt_runtime) {
-    var instance = this;
-    /**
-     * The actual generated block listener.
-     * @param {Object} e Blockly "block" event
-     */
-    return function (e) {
-        // Validate event
-        if (typeof e !== 'object') return;
-        if (typeof e.blockId !== 'string') return;
+Blocks.prototype.blocklyListen = function (e, isFlyout, opt_runtime) {
+    // Validate event
+    if (typeof e !== 'object') return;
+    if (typeof e.blockId !== 'string') return;
 
-        // UI event: clicked scripts toggle in the runtime.
-        if (e.element === 'stackclick') {
-            if (opt_runtime) {
-                opt_runtime.toggleScript(e.blockId);
-            }
+    // UI event: clicked scripts toggle in the runtime.
+    if (e.element === 'stackclick') {
+        if (opt_runtime) {
+            opt_runtime.toggleScript(e.blockId);
+        }
+        return;
+    }
+
+    // Block create/update/destroy
+    switch (e.type) {
+    case 'create':
+        var newBlocks = adapter(e);
+        // A create event can create many blocks. Add them all.
+        for (var i = 0; i < newBlocks.length; i++) {
+            this.createBlock(newBlocks[i], isFlyout);
+        }
+        break;
+    case 'change':
+        this.changeBlock({
+            id: e.blockId,
+            element: e.element,
+            name: e.name,
+            value: e.newValue
+        });
+        break;
+    case 'move':
+        this.moveBlock({
+            id: e.blockId,
+            oldParent: e.oldParentId,
+            oldInput: e.oldInputName,
+            newParent: e.newParentId,
+            newInput: e.newInputName,
+            newCoordinate: e.newCoordinate
+        });
+        break;
+    case 'delete':
+        // Don't accept delete events for shadow blocks being obscured.
+        if (this._blocks[e.blockId].shadow) {
             return;
         }
-
-        // Block create/update/destroy
-        switch (e.type) {
-        case 'create':
-            var newBlocks = adapter(e);
-            // A create event can create many blocks. Add them all.
-            for (var i = 0; i < newBlocks.length; i++) {
-                instance.createBlock(newBlocks[i], isFlyout);
-            }
-            break;
-        case 'change':
-            instance.changeBlock({
-                id: e.blockId,
-                element: e.element,
-                name: e.name,
-                value: e.newValue
-            });
-            break;
-        case 'move':
-            instance.moveBlock({
-                id: e.blockId,
-                oldParent: e.oldParentId,
-                oldInput: e.oldInputName,
-                newParent: e.newParentId,
-                newInput: e.newInputName
-            });
-            break;
-        case 'delete':
-            instance.deleteBlock({
-                id: e.blockId
-            });
-            break;
-        }
-    };
+        this.deleteBlock({
+            id: e.blockId
+        });
+        break;
+    }
 };
 
 // ---------------------------------------------------------------------
@@ -187,9 +185,13 @@ Blocks.prototype.generateBlockListener = function (isFlyout, opt_runtime) {
  * @param {boolean} opt_isFlyoutBlock Whether the block is in the flyout.
  */
 Blocks.prototype.createBlock = function (block, opt_isFlyoutBlock) {
-    // Create new block
+    // Does the block already exist?
+    // Could happen, e.g., for an unobscured shadow.
+    if (this._blocks.hasOwnProperty(block.id)) {
+        return;
+    }
+    // Create new block.
     this._blocks[block.id] = block;
-
     // Push block id to scripts array.
     // Blocks are added as a top-level stack if they are marked as a top-block
     // (if they were top-level XML in the event) and if they are not
@@ -218,6 +220,12 @@ Blocks.prototype.changeBlock = function (args) {
  * @param {!Object} e Blockly move event to be processed
  */
 Blocks.prototype.moveBlock = function (e) {
+    // Move coordinate changes.
+    if (e.newCoordinate) {
+        this._blocks[e.id].x = e.newCoordinate.x;
+        this._blocks[e.id].y = e.newCoordinate.y;
+    }
+
     // Remove from any old parent.
     if (e.oldParent !== undefined) {
         var oldParent = this._blocks[e.oldParent];
@@ -239,11 +247,11 @@ Blocks.prototype.moveBlock = function (e) {
         this._deleteScript(e.id);
         // Otherwise, try to connect it in its new place.
         if (e.newInput !== undefined) {
-             // Moved to the new parent's input.
-            this._blocks[e.newParent].inputs[e.newInput] = {
-                name: e.newInput,
-                block: e.id
-            };
+            // Moved to the new parent's input.
+            // Don't obscure the shadow block.
+            var newInput = this._blocks[e.newParent].inputs[e.newInput];
+            newInput.name = e.newInput;
+            newInput.block = e.id;
         } else {
             // Moved to the new parent's next connection.
             this._blocks[e.newParent].next = e.id;
@@ -272,6 +280,11 @@ Blocks.prototype.deleteBlock = function (e) {
         if (block.inputs[input].block !== null) {
             this.deleteBlock({id: block.inputs[input].block});
         }
+        // Delete obscured shadow blocks.
+        if (block.inputs[input].shadow !== null &&
+            block.inputs[input].shadow !== block.inputs[input].block) {
+            this.deleteBlock({id: block.inputs[input].shadow});
+        }
     }
 
     // Delete any script starting with this block.
@@ -279,6 +292,70 @@ Blocks.prototype.deleteBlock = function (e) {
 
     // Delete block itself.
     delete this._blocks[e.id];
+};
+
+// ---------------------------------------------------------------------
+
+/**
+ * Encode all of `this._blocks` as an XML string usable
+ * by a Blockly/scratch-blocks workspace.
+ * @return {string} String of XML representing this object's blocks.
+ */
+Blocks.prototype.toXML = function () {
+    var xmlString = '<xml xmlns="http://www.w3.org/1999/xhtml">';
+    for (var i = 0; i < this._scripts.length; i++) {
+        xmlString += this.blockToXML(this._scripts[i]);
+    }
+    return xmlString + '</xml>';
+};
+
+/**
+ * Recursively encode an individual block and its children
+ * into a Blockly/scratch-blocks XML string.
+ * @param {!string} blockId ID of block to encode.
+ * @return {string} String of XML representing this block and any children.
+ */
+Blocks.prototype.blockToXML = function (blockId) {
+    var block = this._blocks[blockId];
+    // Encode properties of this block.
+    var tagName = (block.shadow) ? 'shadow' : 'block';
+    var xy = (block.topLevel) ?
+        ' x="' + block.x +'"' + ' y="' + block.y +'"' :
+        '';
+    var xmlString = '';
+    xmlString += '<' + tagName +
+        ' id="' + block.id + '"' +
+        ' type="' + block.opcode + '"' +
+        xy +
+        '>';
+    // Add any inputs on this block.
+    for (var input in block.inputs) {
+        var blockInput = block.inputs[input];
+        // Only encode a value tag if the value input is occupied.
+        if (blockInput.block || blockInput.shadow) {
+            xmlString += '<value name="' + blockInput.name + '">';
+            if (blockInput.block) {
+                xmlString += this.blockToXML(blockInput.block);
+            }
+            if (blockInput.shadow && blockInput.shadow != blockInput.block) {
+                // Obscured shadow.
+                xmlString += this.blockToXML(blockInput.shadow);
+            }
+            xmlString += '</value>';
+        }
+    }
+    // Add any fields on this block.
+    for (var field in block.fields) {
+        var blockField = block.fields[field];
+        xmlString += '<field name="' + blockField.name + '">' +
+            blockField.value + '</field>';
+    }
+    // Add blocks connected to the next connection.
+    if (block.next) {
+        xmlString += '<next>' + this.blockToXML(block.next) + '</next>';
+    }
+    xmlString += '</' + tagName + '>';
+    return xmlString;
 };
 
 // ---------------------------------------------------------------------

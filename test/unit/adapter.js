@@ -55,7 +55,9 @@ test('create with branch', function (t) {
     t.equal(result[0].topLevel, true);
     // In branch
     var branchBlockId = result[0].inputs['SUBSTACK']['block'];
+    var branchShadowId = result[0].inputs['SUBSTACK']['shadow'];
     t.type(branchBlockId, 'string');
+    t.equal(branchShadowId, null);
     // Find actual branch block
     var branchBlock = null;
     for (var i = 0; i < result.length; i++) {
@@ -83,6 +85,10 @@ test('create with two branches', function (t) {
     var secondBranchBlockId = result[0].inputs['SUBSTACK2']['block'];
     t.type(firstBranchBlockId, 'string');
     t.type(secondBranchBlockId, 'string');
+    var firstBranchShadowBlockId = result[0].inputs['SUBSTACK']['shadow'];
+    var secondBranchShadowBlockId = result[0].inputs['SUBSTACK2']['shadow'];
+    t.equal(firstBranchShadowBlockId, null);
+    t.equal(secondBranchShadowBlockId, null);
     // Find actual branch blocks
     var firstBranchBlock = null;
     var secondBranchBlock = null;
@@ -139,6 +145,13 @@ test('create with next connection', function (t) {
     t.equal(result[1].topLevel, false);
     t.equal(result[1].next, null);
 
+    t.end();
+});
+
+test('create with obscured shadow', function (t) {
+    var result = adapter(events.createobscuredshadow);
+    t.ok(Array.isArray(result));
+    t.equal(result.length, 4);
     t.end();
 });
 

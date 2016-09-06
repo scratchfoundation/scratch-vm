@@ -59,5 +59,11 @@
         "xml": {
             "outerHTML":  "<block type='operator_equals' id='l^H_{8[DDyDW?m)HIt@b' x='100' y='362'><value name='OPERAND1'><shadow type='text' id='Ud@4y]bc./]uv~te?brb'><field name='TEXT'></field></shadow></value><value name='OPERAND2'><shadow type='text' id='p8[y..,[K;~G,k7]N;08'><field name='TEXT'></field></shadow></value></block>"
         }
+    },
+    "createobscuredshadow": {
+        "name": "block",
+        "xml": {
+            "outerHTML": "<block type='operator_add' id='D;MqidqmaN}Dft)y#Bf`' x='80' y='98'><value name='NUM1'><shadow type='math_number' id='F[IFAdLbq8!q25+Nio@i'><field name='NUM'></field></shadow><block type='sensing_answer' id='D~ZQ|BYb1)xw4)8ziI%.'></block</value><value name='NUM2'><shadow type='math_number' id='|Sjv4!*X6;wj?QaCE{-9'><field name='NUM'></field></shadow></value></block>"
+        }
     }
 }

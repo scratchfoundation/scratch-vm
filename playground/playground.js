@@ -1,12 +1,34 @@
+var loadProject = function () {
+    var id = location.hash.substring(1) || 119615668;
+    var url = 'https://projects.scratch.mit.edu/internalapi/project/' +
+        id + '/get/';
+    var r = new XMLHttpRequest();
+    r.addEventListener('load', function() {
+        window.vm.loadProject(this.responseText);
+    });
+    r.open('GET', url);
+    r.send();
+};
+
 window.onload = function() {
     // Lots of global variables to make debugging easier
+    // Instantiate the VM worker.
     var vm = new window.VirtualMachine();
     window.vm = vm;
 
+    // Loading projects from the server.
+    document.getElementById('projectLoadButton').onclick = function () {
+        document.location = '#' + document.getElementById('projectId').value;
+        location.reload();
+    };
+    loadProject();
+
+    // Instantiate the renderer and connect it to the VM.
     var canvas = document.getElementById('scratch-stage');
     window.renderer = new window.RenderWebGLLocal(canvas);
     window.renderer.connectWorker(window.vm.vmWorker);
 
+    // Instantiate scratch-blocks and attach it to the DOM.
     var toolbox = document.getElementById('toolbox');
     var workspace = window.Blockly.inject('blocks', {
         toolbox: toolbox,
@@ -29,23 +51,25 @@ window.onload = function() {
     });
     window.workspace = workspace;
 
-    // FPS counter.
+    // Attach scratch-blocks events to VM.
+    // @todo: Re-enable flyout listening after fixing GH-69.
+    workspace.addChangeListener(vm.blockListener);
+
+    // Create FPS counter.
     var stats = new window.Stats();
     document.getElementById('tab-renderexplorer').appendChild(stats.dom);
     stats.dom.style.position = 'relative';
     stats.begin();
 
-    // Block events.
-    // @todo: Re-enable flyout listening after fixing GH-69.
-    workspace.addChangeListener(vm.blockListener);
-
-    // Playground data
+    // Playground data tabs.
+    // Block representation tab.
     var blockexplorer = document.getElementById('blockexplorer');
     var updateBlockExplorer = function(blocks) {
         blockexplorer.innerHTML = JSON.stringify(blocks, null, 2);
         window.hljs.highlightBlock(blockexplorer);
     };
 
+    // Thread representation tab.
     var threadexplorer = document.getElementById('threadexplorer');
     var cachedThreadJSON = '';
     var updateThreadExplorer = function (threads) {
@@ -66,10 +90,46 @@ window.onload = function() {
         }
     };
 
+    // VM handlers.
+    // Receipt of new playground data (thread, block representations).
     vm.on('playgroundData', function(data) {
         updateThreadExplorer(data.threads);
         updateBlockExplorer(data.blocks);
     });
+
+    // Receipt of new block XML for the selected target.
+    vm.on('workspaceUpdate', function (data) {
+        window.Blockly.Events.disable();
+        workspace.clear();
+        var dom = window.Blockly.Xml.textToDom(data.xml);
+        window.Blockly.Xml.domToWorkspace(dom, workspace);
+        window.Blockly.Events.enable();
+    });
+
+    // Receipt of new list of targets, selected target update.
+    var selectedTarget = document.getElementById('selectedTarget');
+    vm.on('targetsUpdate', function (data) {
+        // Clear select box.
+        while (selectedTarget.firstChild) {
+            selectedTarget.removeChild(selectedTarget.firstChild);
+        }
+        // Generate new select box.
+        for (var i = 0; i < data.targetList.length; i++) {
+            var targetOption = document.createElement('option');
+            targetOption.setAttribute('value', data.targetList[i][0]);
+            // If target id matches editingTarget id, select it.
+            if (data.targetList[i][0] == data.editingTarget) {
+                targetOption.setAttribute('selected', 'selected');
+            }
+            targetOption.appendChild(
+                document.createTextNode(data.targetList[i][1])
+            );
+            selectedTarget.appendChild(targetOption);
+        }
+    });
+    selectedTarget.onchange = function () {
+        vm.setEditingTarget(this.value);
+    };
 
     // Feedback for stacks and blocks running.
     vm.on('STACK_GLOW_ON', function(data) {
@@ -106,6 +166,31 @@ window.onload = function() {
         e.preventDefault();
     });
 
+    // Feed keyboard events as VM I/O events.
+    document.addEventListener('keydown', function (e) {
+        // Don't capture keys intended for Blockly inputs.
+        if (e.target != document && e.target != document.body) {
+            return;
+        }
+        window.vm.postIOData('keyboard', {
+            keyCode: e.keyCode,
+            isDown: true
+        });
+        e.preventDefault();
+    });
+    document.addEventListener('keyup', function(e) {
+        // Always capture up events,
+        // even those that have switched to other targets.
+        window.vm.postIOData('keyboard', {
+            keyCode: e.keyCode,
+            isDown: false
+        });
+        // E.g., prevent scroll.
+        if (e.target != document && e.target != document.body) {
+            e.preventDefault();
+        }
+    });
+
     // Run threads
     vm.start();
 
@@ -129,6 +214,7 @@ window.onload = function() {
     var tabBlockExplorer = document.getElementById('tab-blockexplorer');
     var tabThreadExplorer = document.getElementById('tab-threadexplorer');
     var tabRenderExplorer = document.getElementById('tab-renderexplorer');
+    var tabImportExport = document.getElementById('tab-importexport');
 
     // Handlers to show different explorers.
     document.getElementById('threadexplorer-link').addEventListener('click',
@@ -138,6 +224,7 @@ window.onload = function() {
             tabBlockExplorer.style.display = 'none';
             tabRenderExplorer.style.display = 'none';
             tabThreadExplorer.style.display = 'block';
+            tabImportExport.style.display = 'none';
         });
     document.getElementById('blockexplorer-link').addEventListener('click',
         function () {
@@ -146,6 +233,7 @@ window.onload = function() {
             tabBlockExplorer.style.display = 'block';
             tabRenderExplorer.style.display = 'none';
             tabThreadExplorer.style.display = 'none';
+            tabImportExport.style.display = 'none';
         });
     document.getElementById('renderexplorer-link').addEventListener('click',
         function () {
@@ -153,5 +241,14 @@ window.onload = function() {
             tabBlockExplorer.style.display = 'none';
             tabRenderExplorer.style.display = 'block';
             tabThreadExplorer.style.display = 'none';
+            tabImportExport.style.display = 'none';
+        });
+    document.getElementById('importexport-link').addEventListener('click',
+        function () {
+            window.exploreTabOpen = false;
+            tabBlockExplorer.style.display = 'none';
+            tabRenderExplorer.style.display = 'none';
+            tabThreadExplorer.style.display = 'none';
+            tabImportExport.style.display = 'block';
         });
 };

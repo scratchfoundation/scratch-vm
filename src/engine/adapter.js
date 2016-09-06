@@ -57,7 +57,10 @@ function domToBlock (blockDOM, blocks, isTopBlock) {
         inputs: {}, // Inputs to this block and the blocks they point to.
         fields: {}, // Fields on this block and their values.
         next: null, // Next block in the stack, if one exists.
-        topLevel: isTopBlock // If this block starts a stack.
+        topLevel: isTopBlock, // If this block starts a stack.
+        shadow: blockDOM.name == 'shadow', // If this represents a shadow/slot.
+        x: blockDOM.attribs.x, // X position of script, if top-level.
+        y: blockDOM.attribs.y // Y position of script, if top-level.
     };
 
     // Add the block to the representation tree.
@@ -111,11 +114,16 @@ function domToBlock (blockDOM, blocks, isTopBlock) {
         case 'statement':
             // Recursively generate block structure for input block.
             domToBlock(childBlockNode, blocks, false);
+            if (childShadowNode && childBlockNode != childShadowNode) {
+                // Also generate the shadow block.
+                domToBlock(childShadowNode, blocks, false);
+            }
             // Link this block's input to the child block.
             var inputName = xmlChild.attribs.name;
             block.inputs[inputName] = {
                 name: inputName,
-                block: childBlockNode.attribs.id
+                block: childBlockNode.attribs.id,
+                shadow: childShadowNode ? childShadowNode.attribs.id : null
             };
             break;
         case 'next':

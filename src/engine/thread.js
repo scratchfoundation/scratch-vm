@@ -124,6 +124,14 @@ Thread.prototype.pushReportedValue = function (value) {
 };
 
 /**
+ * Whether the current execution of a thread is at the top of the stack.
+ * @return {Boolean} True if execution is at top of the stack.
+ */
+Thread.prototype.atStackTop = function () {
+    return this.peekStack() === this.topBlock;
+};
+
+/**
  * Set thread status.
  * @param {number} status Enum representing thread status.
  */
