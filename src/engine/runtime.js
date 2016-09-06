@@ -288,6 +288,13 @@ Runtime.prototype.startHats = function (requestedHatOpcode,
             // Not the right hat.
             return;
         }
+        // Look up metadata for the relevant hat.
+        var hatMeta = instance._hats[requestedHatOpcode];
+        // Should the hat be skipped because it's a clone target?
+        if (hatMeta.skipClones &&
+            target.hasOwnProperty('isOriginal') && !target.isOriginal) {
+            return;
+        }
         // Match any requested fields.
         // For example: ensures that broadcasts match.
         // This needs to happen before the block is evaluated
@@ -303,13 +310,12 @@ Runtime.prototype.startHats = function (requestedHatOpcode,
                 }
             }
         }
-        // Look up metadata for the relevant hat.
-        var hatMeta = instance._hats[requestedHatOpcode];
         if (hatMeta.restartExistingThreads) {
             // If `restartExistingThreads` is true, we should stop
             // any existing threads starting with the top block.
             for (var i = 0; i < instance.threads.length; i++) {
-                if (instance.threads[i].topBlock === topBlockId) {
+                if (instance.threads[i].topBlock === topBlockId &&
+                    (!opt_target || instance.threads[i].target == opt_target)) {
                     instance._removeThread(instance.threads[i]);
                 }
             }
@@ -317,14 +323,15 @@ Runtime.prototype.startHats = function (requestedHatOpcode,
             // If `restartExistingThreads` is false, we should
             // give up if any threads with the top block are running.
             for (var j = 0; j < instance.threads.length; j++) {
-                if (instance.threads[j].topBlock === topBlockId) {
+                if (instance.threads[j].topBlock === topBlockId &&
+                    (!opt_target || instance.threads[j].target == opt_target)) {
                     // Some thread is already running.
                     return;
                 }
             }
         }
         // Start the thread with this top block.
-        newThreads.push(instance._pushThread(topBlockId));
+        newThreads.push(instance._pushThread(topBlockId, target));
     }, opt_target);
     return newThreads;
 };
@@ -462,23 +469,6 @@ Runtime.prototype.visualReport = function (blockId, value) {
 };
 
 /**
- * Return the Target for a particular thread.
- * @param {!Thread} thread Thread to determine target for.
- * @return {?Target} Target object, if one exists.
- */
-Runtime.prototype.targetForThread = function (thread) {
-    // @todo This is a messy solution,
-    // but prevents having circular data references.
-    // Have a map or some other way to associate target with threads.
-    for (var t = 0; t < this.targets.length; t++) {
-        var target = this.targets[t];
-        if (target.blocks.getBlock(thread.topBlock)) {
-            return target;
-        }
-    }
-};
-
-/**
  * Get a target by its id.
  * @param {string} targetId Id of target to find.
  * @return {?Target} The target, if found.
@@ -487,6 +477,20 @@ Runtime.prototype.getTargetById = function (targetId) {
     for (var i = 0; i < this.targets.length; i++) {
         var target = this.targets[i];
         if (target.id == targetId) {
+            return target;
+        }
+    }
+};
+
+/**
+ * Get the first original (non-clone-block-created) sprite given a name.
+ * @param {string} spriteName Name of sprite to look for.
+ * @return {?Target} Target representing a sprite of the given name.
+ */
+Runtime.prototype.getSpriteTargetByName = function (spriteName) {
+    for (var i = 0; i < this.targets.length; i++) {
+        var target = this.targets[i];
+        if (target.sprite && target.sprite.name == spriteName) {
             return target;
         }
     }
