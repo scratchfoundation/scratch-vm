@@ -88,7 +88,6 @@ Scratch3LooksBlocks.prototype.hide = function (args, util) {
  */
 Scratch3LooksBlocks.prototype._setCostumeOrBackdrop = function (target,
         requestedCostume, opt_zeroIndex) {
-    var oldCostume = target.currentCostume;
     if (typeof requestedCostume === 'number') {
         target.setCostume(opt_zeroIndex ?
             requestedCostume : requestedCostume - 1);
@@ -110,9 +109,8 @@ Scratch3LooksBlocks.prototype._setCostumeOrBackdrop = function (target,
             }
         }
     }
-    if (oldCostume !== target.currentCostume &&
-        target == this.runtime.getTargetForStage()) {
-        // Costume switched and we're the stage - start hats.
+    if (target == this.runtime.getTargetForStage()) {
+        // Target is the stage - start hats.
         var newName = target.sprite.costumes[target.currentCostume].name;
         return this.runtime.startHats('event_whenbackdropswitchesto', {
             'BACKDROP': newName
