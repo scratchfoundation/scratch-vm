@@ -46,6 +46,13 @@ Clone.prototype.initDrawable = function () {
 
 // Clone-level properties.
 /**
+ * Whether this represents an "original" clone, i.e., created by the editor
+ * and not clone blocks. In interface terms, this true for a "sprite."
+ * @type {boolean}
+ */
+Clone.prototype.isOriginal = true;
+
+/**
  * Whether this clone represents the Scratch stage.
  * @type {boolean}
  */
