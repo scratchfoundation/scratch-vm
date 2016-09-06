@@ -115,9 +115,10 @@ function VirtualMachine () {
     };
 
     function playNoteForBeats(note, beats) {
-        // var midiNote = scaleNoteToMidiNote(note, currentScale, rootNote);
+//        var freq = midiToFreq(note);
 
-        var freq = midiToFreq(note);
+        var midiNote = scaleNoteToMidiNote(note, currentScale, rootNote);
+        var freq = midiToFreq(midiNote);
         synth.triggerAttackRelease(freq, beats, quantizeUnit);        
     }
 
