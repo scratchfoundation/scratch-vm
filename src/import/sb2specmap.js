@@ -545,12 +545,12 @@ var specMap = {
             {
                 'type':'input',
                 'inputOp':'math_number',
-                'inputName':'XXXNAME'
+                'inputName':'SHADE'
             }
         ]
     },
     'setPenShadeTo:':{
-        'opcode':'pen_changepenshadeto',
+        'opcode':'pen_changepenshadeby',
         'argMap':[
             {
                 'type':'input',
