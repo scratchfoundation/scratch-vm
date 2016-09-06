@@ -45,15 +45,4 @@ MathUtil.wrapClamp = function (n, min, max) {
     return n - Math.floor((n - min) / range) * range;
 };
 
-/**
- * Convert a Scratch color number to a hex string, #RRGGBB.
- * @param {number} color RGB color as a decimal.
- * @return {string} RGB color as #RRGGBB hex string.
- */
-MathUtil.scratchColorToHex = function (color) {
-    var hex = Number(color).toString(16);
-    hex = '#' + '000000'.substr(0, 6 - hex.length) + hex;
-    return hex;
-};
-
 module.exports = MathUtil;

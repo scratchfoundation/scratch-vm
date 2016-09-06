@@ -7,7 +7,7 @@
 
 var Blocks = require('../engine/blocks');
 var Sprite = require('../sprites/sprite');
-var MathUtil = require('../util/math-util.js');
+var Color = require('../util/color.js');
 var uid = require('../util/uid');
 
 var specMap = require('./sb2specmap');
@@ -231,7 +231,7 @@ function parseBlock (sb2block) {
                     fieldName = 'TEXT';
                 } else if (expectedArg.inputOp == 'colour_picker') {
                     // Convert SB2 color to hex.
-                    providedArg = MathUtil.scratchColorToHex(providedArg);
+                    providedArg = Color.scratchColorToHex(providedArg);
                     fieldName = 'COLOUR';
                 }
                 var fields = {};
