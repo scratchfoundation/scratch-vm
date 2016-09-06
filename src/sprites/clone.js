@@ -5,10 +5,12 @@ var Target = require('../engine/target');
 /**
  * Clone (instance) of a sprite.
  * @param {!Sprite} sprite Reference to the sprite.
+ * @param {Runtime} runtime Reference to the runtime.
  * @constructor
  */
-function Clone(sprite) {
+function Clone(sprite, runtime) {
     Target.call(this, sprite.blocks);
+    this.runtime = runtime;
     /**
      * Reference to the sprite that this is a clone of.
      * @type {!Sprite}
