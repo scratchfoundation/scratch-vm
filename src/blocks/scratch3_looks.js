@@ -22,7 +22,9 @@ Scratch3LooksBlocks.prototype.getPrimitives = function() {
         'looks_hide': this.hide,
         'looks_costume': this.costumeMenu,
         'looks_switchcostumeto': this.switchCostume,
+        'looks_switchbackdropto': this.switchBackdrop,
         'looks_nextcostume': this.nextCostume,
+        'looks_nextbackdrop': this.nextBackdrop,
         'looks_effectmenu': this.effectMenu,
         'looks_changeeffectby': this.changeEffect,
         'looks_seteffectto': this.setEffect,
@@ -30,7 +32,9 @@ Scratch3LooksBlocks.prototype.getPrimitives = function() {
         'looks_changesizeby': this.changeSize,
         'looks_setsizeto': this.setSize,
         'looks_size': this.getSize,
-        'looks_costumeorder': this.getCostumeIndex
+        'looks_costumeorder': this.getCostumeIndex,
+        'looks_backdroporder': this.getBackdropIndex,
+        'looks_backdropname': this.getBackdropName
     };
 };
 
@@ -98,8 +102,20 @@ Scratch3LooksBlocks.prototype.switchCostume = function (args, util) {
     }
 };
 
+Scratch3LooksBlocks.prototype.switchBackdrop = function (args, util) {
+    // Patch the target to be the stage; then treat as a costume.
+    util.target = this.runtime.getTargetForStage();
+    this.switchCostume(args, util);
+};
+
 Scratch3LooksBlocks.prototype.nextCostume = function (args, util) {
     util.target.setCostume(util.target.currentCostume + 1);
+};
+
+Scratch3LooksBlocks.prototype.nextBackdrop = function (args, util) {
+    // Patch the target to be the stage; then treat as a costume.
+    util.target = this.runtime.getTargetForStage();
+    this.nextCostume(args, util);
 };
 
 Scratch3LooksBlocks.prototype.effectMenu = function (args) {
@@ -129,6 +145,16 @@ Scratch3LooksBlocks.prototype.setSize = function (args, util) {
 
 Scratch3LooksBlocks.prototype.getSize = function (args, util) {
     return util.target.size;
+};
+
+Scratch3LooksBlocks.prototype.getBackdropIndex = function () {
+    var stage = this.runtime.getTargetForStage();
+    return stage.currentCostume;
+};
+
+Scratch3LooksBlocks.prototype.getBackdropName = function () {
+    var stage = this.runtime.getTargetForStage();
+    return stage.sprite.costumes[stage.currentCostume].name;
 };
 
 Scratch3LooksBlocks.prototype.getCostumeIndex = function (args, util) {
