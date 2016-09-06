@@ -113,6 +113,9 @@ Clone.prototype.effects = {
  * @param {!number} y New Y coordinate of clone, in Scratch coordinates.
  */
 Clone.prototype.setXY = function (x, y) {
+    if (this.isStage) {
+        return;
+    }
     this.x = x;
     this.y = y;
     if (this.renderer) {
@@ -127,6 +130,9 @@ Clone.prototype.setXY = function (x, y) {
  * @param {!number} direction New direction of clone.
  */
 Clone.prototype.setDirection = function (direction) {
+    if (this.isStage) {
+        return;
+    }
     // Keep direction between -179 and +180.
     this.direction = MathUtil.wrapClamp(direction, -179, 180);
     if (this.renderer) {
@@ -142,6 +148,9 @@ Clone.prototype.setDirection = function (direction) {
  * @param {?string} message Message to put in say bubble.
  */
 Clone.prototype.setSay = function (type, message) {
+    if (this.isStage) {
+        return;
+    }
     // @todo: Render to stage.
     if (!type || !message) {
         console.log('Clearing say bubble');
@@ -155,6 +164,9 @@ Clone.prototype.setSay = function (type, message) {
  * @param {!boolean} visible True if the sprite should be shown.
  */
 Clone.prototype.setVisible = function (visible) {
+    if (this.isStage) {
+        return;
+    }
     this.visible = visible;
     if (this.renderer) {
         this.renderer.updateDrawableProperties(this.drawableID, {
@@ -168,6 +180,9 @@ Clone.prototype.setVisible = function (visible) {
  * @param {!number} size Size of clone, from 5 to 535.
  */
 Clone.prototype.setSize = function (size) {
+    if (this.isStage) {
+        return;
+    }
     // Keep size between 5% and 535%.
     this.size = MathUtil.clamp(size, 5, 535);
     if (this.renderer) {
