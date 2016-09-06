@@ -20,6 +20,7 @@ Scratch3LooksBlocks.prototype.getPrimitives = function() {
         'looks_thinkforsecs': this.sayforsecs,
         'looks_show': this.show,
         'looks_hide': this.hide,
+        'looks_backdrops': this.backdropMenu,
         'looks_costume': this.costumeMenu,
         'looks_switchcostumeto': this.switchCostume,
         'looks_switchbackdropto': this.switchBackdrop,
@@ -81,6 +82,11 @@ Scratch3LooksBlocks.prototype.costumeMenu = function (args) {
     return args.COSTUME;
 };
 
+// @todo(GH-146): Remove.
+Scratch3LooksBlocks.prototype.backdropMenu = function (args) {
+    return args.BACKDROP;
+};
+
 Scratch3LooksBlocks.prototype.switchCostume = function (args, util) {
     var requestedCostume = args.COSTUME;
     if (typeof requestedCostume === 'number') {
@@ -105,7 +111,7 @@ Scratch3LooksBlocks.prototype.switchCostume = function (args, util) {
 Scratch3LooksBlocks.prototype.switchBackdrop = function (args, util) {
     // Patch the target to be the stage; then treat as a costume.
     util.target = this.runtime.getTargetForStage();
-    this.switchCostume(args, util);
+    this.switchCostume({COSTUME: args.BACKDROP}, util);
 };
 
 Scratch3LooksBlocks.prototype.nextCostume = function (args, util) {
