@@ -305,4 +305,21 @@ Clone.prototype.colorIsTouchingColor = function (targetRgb, maskRgb) {
     return false;
 };
 
+/**
+ * Make a clone of this clone, copying any run-time properties.
+ * @return {!Clone} New clone object.
+ */
+Clone.prototype.makeClone = function () {
+    var newClone = this.sprite.createClone();
+    newClone.isOriginal = false;
+    newClone.x = this.x;
+    newClone.y = this.y;
+    newClone.direction = this.direction;
+    newClone.visible = this.visible;
+    newClone.size = this.size;
+    newClone.currentCostume = this.currentCostume;
+    newClone.effects = JSON.parse(JSON.stringify(this.effects));
+    return newClone;
+};
+
 module.exports = Clone;
