@@ -6,6 +6,9 @@ function Color () {}
  * @return {string} RGB color as #RRGGBB hex string.
  */
 Color.scratchColorToHex = function (color) {
+    if (color < 0) {
+        color += 0xFFFFFF + 1;
+    }
     var hex = Number(color).toString(16);
     hex = '#' + '000000'.substr(0, 6 - hex.length) + hex;
     return hex;
