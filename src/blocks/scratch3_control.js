@@ -23,7 +23,8 @@ Scratch3ControlBlocks.prototype.getPrimitives = function() {
         'control_if_else': this.ifElse,
         'control_stop': this.stop,
         'control_create_clone_of_menu': this.createCloneMenu,
-        'control_create_clone_of': this.createClone
+        'control_create_clone_of': this.createClone,
+        'control_delete_this_clone': this.deleteClone
     };
 };
 
@@ -145,7 +146,10 @@ Scratch3ControlBlocks.prototype.createClone = function (args, util) {
     }
     var newClone = cloneTarget.cloneClone();
     this.runtime.targets.push(newClone);
-    util.startHats('control_start_as_clone', null, newClone);
+};
+
+Scratch3ControlBlocks.prototype.deleteClone = function (args, util) {
+    this.runtime.disposeTarget(util.target);
 };
 
 module.exports = Scratch3ControlBlocks;

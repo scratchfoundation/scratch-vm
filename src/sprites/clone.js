@@ -44,6 +44,12 @@ Clone.prototype.initDrawable = function () {
         this.drawableID = this.renderer.createDrawable();
         this.updateAllDrawableProperties();
     }
+    // If we're a clone, start the hats.
+    if (!this.isOriginal) {
+        this.runtime.startHats(
+            'control_start_as_clone', null, this
+        );
+    }
 };
 
 // Clone-level properties.
@@ -322,6 +328,15 @@ Clone.prototype.makeClone = function () {
     newClone.currentCostume = this.currentCostume;
     newClone.effects = JSON.parse(JSON.stringify(this.effects));
     return newClone;
+};
+
+/**
+ * Dispose of this clone, destroying any run-time properties.
+ */
+Clone.prototype.dispose = function () {
+    if (this.renderer && this.drawableID !== null) {
+        this.renderer.destroyDrawable(this.drawableID);
+    }
 };
 
 module.exports = Clone;

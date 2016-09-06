@@ -337,18 +337,47 @@ Runtime.prototype.startHats = function (requestedHatOpcode,
 };
 
 /**
+ * Dispose of a target.
+ * @param {!Target} target Target to dispose of.
+ */
+Runtime.prototype.disposeTarget = function (target) {
+    // Allow target to do dispose actions.
+    target.dispose();
+    // Remove from list of targets.
+    var index = this.targets.indexOf(target);
+    if (index > -1) {
+        this.targets.splice(index, 1);
+    }
+    // Stop any threads on the target.
+    for (var i = 0; i < this.threads.length; i++) {
+        if (this.threads[i].target == target) {
+            this._removeThread(this.threads[i]);
+        }
+    }
+};
+
+/**
  * Start all threads that start with the green flag.
  */
 Runtime.prototype.greenFlag = function () {
+    this.stopAll();
     this.ioDevices.clock.resetProjectTimer();
     this.clearEdgeActivatedValues();
     this.startHats('event_whenflagclicked');
 };
 
 /**
- * Stop "everything"
+ * Stop "everything."
  */
 Runtime.prototype.stopAll = function () {
+    // Dispose all clones.
+    for (var i = 0; i < this.targets.length; i++) {
+        if (this.targets[i].hasOwnProperty('isOriginal') &&
+            !this.targets[i].isOriginal) {
+            this.disposeTarget(this.targets[i]);
+        }
+    }
+    // Dispose all threads.
     var threadsCopy = this.threads.slice();
     while (threadsCopy.length > 0) {
         var poppedThread = threadsCopy.pop();
