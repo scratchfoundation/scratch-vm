@@ -194,11 +194,13 @@ Runtime.prototype.clearEdgeActivatedValues = function () {
 
 /**
  * Create a thread and push it to the list of threads.
- * @param {!string} id ID of block that starts the stack
+ * @param {!string} id ID of block that starts the stack.
+ * @param {!Target} target Target to run thread on.
  * @return {!Thread} The newly created thread.
  */
-Runtime.prototype._pushThread = function (id) {
+Runtime.prototype._pushThread = function (id, target) {
     var thread = new Thread(id);
+    thread.setTarget(target);
     thread.pushStack(id);
     this.threads.push(thread);
     return thread;
@@ -237,7 +239,8 @@ Runtime.prototype.toggleScript = function (topBlockId) {
         }
     }
     // Otherwise add it.
-    this._pushThread(topBlockId);
+    // @todo: Don't directly reference `self.vmInstance.`
+    this._pushThread(topBlockId, self.vmInstance.editingTarget);
 };
 
 /**

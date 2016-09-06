@@ -16,7 +16,7 @@ var isPromise = function (value) {
  */
 var execute = function (sequencer, thread) {
     var runtime = sequencer.runtime;
-    var target = runtime.targetForThread(thread);
+    var target = thread.target;
 
     // Current block to execute is the one on the top of the stack.
     var currentBlockId = thread.peekStack();

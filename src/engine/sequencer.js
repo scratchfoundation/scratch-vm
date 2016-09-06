@@ -111,7 +111,7 @@ Sequencer.prototype.stepToBranch = function (thread, branchNum) {
         branchNum = 1;
     }
     var currentBlockId = thread.peekStack();
-    var branchId = this.runtime.targetForThread(thread).blocks.getBranch(
+    var branchId = thread.target.blocks.getBranch(
         currentBlockId,
         branchNum
     );
@@ -155,8 +155,7 @@ Sequencer.prototype.proceedThread = function (thread) {
     // Pop from the stack - finished this level of execution.
     thread.popStack();
     // Push next connected block, if there is one.
-    var nextBlockId = (this.runtime.targetForThread(thread).
-        blocks.getNextBlock(currentBlockId));
+    var nextBlockId = thread.target.blocks.getNextBlock(currentBlockId);
     if (nextBlockId) {
         thread.pushStack(nextBlockId);
     }
