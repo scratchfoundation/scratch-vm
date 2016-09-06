@@ -348,6 +348,13 @@ Runtime.prototype.disposeTarget = function (target) {
     if (index > -1) {
         this.targets.splice(index, 1);
     }
+};
+
+/**
+ * Stop any threads acting on the target.
+ * @param {!Target} target Target to stop threads for.
+ */
+Runtime.prototype.stopForTarget = function (target) {
     // Stop any threads on the target.
     for (var i = 0; i < this.threads.length; i++) {
         if (this.threads[i].target == target) {
@@ -371,12 +378,16 @@ Runtime.prototype.greenFlag = function () {
  */
 Runtime.prototype.stopAll = function () {
     // Dispose all clones.
+    var newTargets = [];
     for (var i = 0; i < this.targets.length; i++) {
         if (this.targets[i].hasOwnProperty('isOriginal') &&
             !this.targets[i].isOriginal) {
-            this.disposeTarget(this.targets[i]);
+            this.targets[i].dispose();
+        } else {
+            newTargets.push(this.targets[i]);
         }
     }
+    this.targets = newTargets;
     // Dispose all threads.
     var threadsCopy = this.threads.slice();
     while (threadsCopy.length > 0) {
