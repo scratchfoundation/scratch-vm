@@ -57,13 +57,6 @@ Clone.prototype.initDrawable = function () {
 Clone.prototype.isStage = false;
 
 /**
- * Whether this clone represents an "original sprite," i.e.,
- * created by the editor, not by cloning blocks.
- * @type {boolean}
- */
-Clone.prototype.isOriginalSprite = true;
-
-/**
  * Scratch X coordinate. Currently should range from -240 to 240.
  * @type {Number}
  */

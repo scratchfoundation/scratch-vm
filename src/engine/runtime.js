@@ -435,23 +435,6 @@ Runtime.prototype.getTargetById = function (targetId) {
 };
 
 /**
- * Get a sprite target by its name.
- * Finds the first "original" (non-cloned-by-block) sprite.
- * @param {string} spriteName Name of sprite to find.
- * @return {?Target} The sprite target, if found.
- */
-Runtime.prototype.getTargetForSpriteName = function (spriteName) {
-    for (var i = 0; i < this.targets.length; i++) {
-        var target = this.targets[i];
-        if (target.isOriginalSprite &&
-            target.sprite &&
-            target.sprite.name == spriteName) {
-            return target;
-        }
-    }
-};
-
-/**
  * Get a target representing the Scratch stage, if one exists.
  * @return {?Target} The target, if found.
  */
