@@ -828,7 +828,7 @@ var specMap = {
         'argMap':[
             {
                 'type':'input',
-                'inputOp':'sensing_key_options',
+                'inputOp':'sensing_keyoptions',
                 'inputName':'KEY_OPTION'
             }
         ]
