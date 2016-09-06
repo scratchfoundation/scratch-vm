@@ -166,6 +166,10 @@ Blocks.prototype.blocklyListen = function (e, isFlyout, opt_runtime) {
         });
         break;
     case 'delete':
+        // Don't accept delete events for shadow blocks being obscured.
+        if (this._blocks[e.blockId].shadow) {
+            return;
+        }
         this.deleteBlock({
             id: e.blockId
         });
@@ -181,9 +185,13 @@ Blocks.prototype.blocklyListen = function (e, isFlyout, opt_runtime) {
  * @param {boolean} opt_isFlyoutBlock Whether the block is in the flyout.
  */
 Blocks.prototype.createBlock = function (block, opt_isFlyoutBlock) {
-    // Create new block
+    // Does the block already exist?
+    // Could happen, e.g., for an unobscured shadow.
+    if (this._blocks.hasOwnProperty(block.id)) {
+        return;
+    }
+    // Create new block.
     this._blocks[block.id] = block;
-
     // Push block id to scripts array.
     // Blocks are added as a top-level stack if they are marked as a top-block
     // (if they were top-level XML in the event) and if they are not
@@ -239,11 +247,11 @@ Blocks.prototype.moveBlock = function (e) {
         this._deleteScript(e.id);
         // Otherwise, try to connect it in its new place.
         if (e.newInput !== undefined) {
-             // Moved to the new parent's input.
-            this._blocks[e.newParent].inputs[e.newInput] = {
-                name: e.newInput,
-                block: e.id
-            };
+            // Moved to the new parent's input.
+            // Don't obscure the shadow block.
+            var newInput = this._blocks[e.newParent].inputs[e.newInput];
+            newInput.name = e.newInput;
+            newInput.block = e.id;
         } else {
             // Moved to the new parent's next connection.
             this._blocks[e.newParent].next = e.id;
@@ -271,6 +279,11 @@ Blocks.prototype.deleteBlock = function (e) {
         // If it's null, the block in this input moved away.
         if (block.inputs[input].block !== null) {
             this.deleteBlock({id: block.inputs[input].block});
+        }
+        // Delete obscured shadow blocks.
+        if (block.inputs[input].shadow !== null &&
+            block.inputs[input].shadow !== block.inputs[input].block) {
+            this.deleteBlock({id: block.inputs[input].shadow});
         }
     }
 
@@ -319,9 +332,16 @@ Blocks.prototype.blockToXML = function (blockId) {
     for (var input in block.inputs) {
         var blockInput = block.inputs[input];
         // Only encode a value tag if the value input is occupied.
-        if (blockInput.block) {
-            xmlString += '<value name="' + blockInput.name + '">' +
-                this.blockToXML(blockInput.block) + '</value>';
+        if (blockInput.block || blockInput.shadow) {
+            xmlString += '<value name="' + blockInput.name + '">';
+            if (blockInput.block) {
+                xmlString += this.blockToXML(blockInput.block);
+            }
+            if (blockInput.shadow && blockInput.shadow != blockInput.block) {
+                // Obscured shadow.
+                xmlString += this.blockToXML(blockInput.shadow);
+            }
+            xmlString += '</value>';
         }
     }
     // Add any fields on this block.
