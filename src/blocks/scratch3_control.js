@@ -21,7 +21,17 @@ Scratch3ControlBlocks.prototype.getPrimitives = function() {
         'control_wait': this.wait,
         'control_if': this.if,
         'control_if_else': this.ifElse,
-        'control_stop': this.stop
+        'control_stop': this.stop,
+        'control_create_clone_of_menu': this.createCloneMenu,
+        'control_create_clone_of': this.createClone
+    };
+};
+
+Scratch3ControlBlocks.prototype.getHats = function () {
+    return {
+        'control_start_as_clone': {
+            restartExistingThreads: false
+        }
     };
 };
 
@@ -116,6 +126,26 @@ Scratch3ControlBlocks.prototype.ifElse = function(args, util) {
 Scratch3ControlBlocks.prototype.stop = function() {
     // @todo - don't use this.runtime
     this.runtime.stopAll();
+};
+
+// @todo (GH-146): remove.
+Scratch3ControlBlocks.prototype.createCloneMenu = function (args) {
+    return args.CLONE_OPTION;
+};
+
+Scratch3ControlBlocks.prototype.createClone = function (args, util) {
+    var cloneTarget;
+    if (args.CLONE_OPTION == '_myself_') {
+        cloneTarget = util.target;
+    } else {
+        cloneTarget = this.runtime.getSpriteTargetByName(args.CLONE_OPTION);
+    }
+    if (!cloneTarget) {
+        return;
+    }
+    var newClone = cloneTarget.cloneClone();
+    this.runtime.targets.push(newClone);
+    util.startHats('control_start_as_clone', null, newClone);
 };
 
 module.exports = Scratch3ControlBlocks;
