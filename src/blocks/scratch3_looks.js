@@ -1,3 +1,5 @@
+var Cast = require('../util/cast');
+
 function Scratch3LooksBlocks(runtime) {
     /**
      * The runtime instantiating this block package.
@@ -18,6 +20,9 @@ Scratch3LooksBlocks.prototype.getPrimitives = function() {
         'looks_thinkforsecs': this.sayforsecs,
         'looks_show': this.show,
         'looks_hide': this.hide,
+        'looks_costume': this.costumeMenu,
+        'looks_switchcostumeto': this.switchCostume,
+        'looks_nextcostume': this.nextCostume,
         'looks_effectmenu': this.effectMenu,
         'looks_changeeffectby': this.changeEffect,
         'looks_seteffectto': this.setEffect,
@@ -64,6 +69,36 @@ Scratch3LooksBlocks.prototype.show = function (args, util) {
 
 Scratch3LooksBlocks.prototype.hide = function (args, util) {
     util.target.setVisible(false);
+};
+
+// @todo(GH-146): Remove.
+Scratch3LooksBlocks.prototype.costumeMenu = function (args) {
+    return args.COSTUME;
+};
+
+Scratch3LooksBlocks.prototype.switchCostume = function (args, util) {
+    var requestedCostume = args.COSTUME;
+    if (typeof requestedCostume === 'number') {
+        util.target.setCostume(requestedCostume - 1);
+    } else {
+        var costumeIndex = util.target.getCostumeIndexByName(requestedCostume);
+        if (costumeIndex > -1) {
+            util.target.setCostume(costumeIndex);
+        } else if (costumeIndex == 'previous costume') {
+            util.target.setCostume(util.target.currentCostume - 1);
+        } else if (costumeIndex == 'next costume') {
+            util.target.setCostume(util.target.currentCostume + 1);
+        } else {
+            var forcedNumber = Cast.toNumber(requestedCostume);
+            if (!isNaN(forcedNumber)) {
+                util.target.setCostume(forcedNumber - 1);
+            }
+        }
+    }
+};
+
+Scratch3LooksBlocks.prototype.nextCostume = function (args, util) {
+    util.target.setCostume(util.target.currentCostume + 1);
 };
 
 Scratch3LooksBlocks.prototype.effectMenu = function (args) {
