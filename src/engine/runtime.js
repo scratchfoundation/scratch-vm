@@ -288,13 +288,6 @@ Runtime.prototype.startHats = function (requestedHatOpcode,
             // Not the right hat.
             return;
         }
-        // Look up metadata for the relevant hat.
-        var hatMeta = instance._hats[requestedHatOpcode];
-        // Should the hat be skipped because it's a clone target?
-        if (hatMeta.skipClones &&
-            target.hasOwnProperty('isOriginal') && !target.isOriginal) {
-            return;
-        }
         // Match any requested fields.
         // For example: ensures that broadcasts match.
         // This needs to happen before the block is evaluated
@@ -310,6 +303,8 @@ Runtime.prototype.startHats = function (requestedHatOpcode,
                 }
             }
         }
+        // Look up metadata for the relevant hat.
+        var hatMeta = instance._hats[requestedHatOpcode];
         if (hatMeta.restartExistingThreads) {
             // If `restartExistingThreads` is true, we should stop
             // any existing threads starting with the top block.
