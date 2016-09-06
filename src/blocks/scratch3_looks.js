@@ -155,7 +155,7 @@ Scratch3LooksBlocks.prototype.getSize = function (args, util) {
 
 Scratch3LooksBlocks.prototype.getBackdropIndex = function () {
     var stage = this.runtime.getTargetForStage();
-    return stage.currentCostume;
+    return stage.currentCostume + 1;
 };
 
 Scratch3LooksBlocks.prototype.getBackdropName = function () {
@@ -164,7 +164,7 @@ Scratch3LooksBlocks.prototype.getBackdropName = function () {
 };
 
 Scratch3LooksBlocks.prototype.getCostumeIndex = function (args, util) {
-    return util.target.currentCostume;
+    return util.target.currentCostume + 1;
 };
 
 module.exports = Scratch3LooksBlocks;
