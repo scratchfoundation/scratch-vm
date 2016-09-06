@@ -23,7 +23,8 @@ Scratch3EventBlocks.prototype.getPrimitives = function() {
 Scratch3EventBlocks.prototype.getHats = function () {
     return {
         'event_whenflagclicked': {
-            restartExistingThreads: true
+            restartExistingThreads: true,
+            skipClones: true
         },
         'event_whenkeypressed': {
             restartExistingThreads: false
