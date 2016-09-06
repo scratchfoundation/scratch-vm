@@ -712,7 +712,7 @@ var specMap = {
         ]
     },
     'doWaitUntil':{
-        'opcode':'control_waituntil',
+        'opcode':'control_wait_until',
         'argMap':[
             {
                 'type':'input',
