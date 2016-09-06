@@ -110,8 +110,17 @@ Scratch3LooksBlocks.prototype.switchCostume = function (args, util) {
 
 Scratch3LooksBlocks.prototype.switchBackdrop = function (args, util) {
     // Patch the target to be the stage; then treat as a costume.
-    util.target = this.runtime.getTargetForStage();
+    var stage = this.runtime.getTargetForStage();
+    util.target = stage;
+    var oldBackdrop = stage.currentCostume;
     this.switchCostume({COSTUME: args.BACKDROP}, util);
+    if (stage.currentCostume !== oldBackdrop) {
+        // Backdrop changed - fire hats.
+        var backdropName = stage.sprite.costumes[stage.currentCostume].name;
+        this.runtime.startHats('event_whenbackdropswitchesto', {
+            'BACKDROP': backdropName
+        });
+    }
 };
 
 Scratch3LooksBlocks.prototype.nextCostume = function (args, util) {
