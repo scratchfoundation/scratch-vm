@@ -29,7 +29,8 @@ Scratch3LooksBlocks.prototype.getPrimitives = function() {
         'looks_cleargraphiceffects': this.clearEffects,
         'looks_changesizeby': this.changeSize,
         'looks_setsizeto': this.setSize,
-        'looks_size': this.getSize
+        'looks_size': this.getSize,
+        'looks_costumeorder': this.getCostumeIndex
     };
 };
 
@@ -128,6 +129,10 @@ Scratch3LooksBlocks.prototype.setSize = function (args, util) {
 
 Scratch3LooksBlocks.prototype.getSize = function (args, util) {
     return util.target.size;
+};
+
+Scratch3LooksBlocks.prototype.getCostumeIndex = function (args, util) {
+    return util.target.currentCostume;
 };
 
 module.exports = Scratch3LooksBlocks;
