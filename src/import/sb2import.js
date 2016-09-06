@@ -5,9 +5,9 @@
  * scratch-vm runtime structures.
  */
 
-var Sprite = require('../sprites/sprite');
 var Blocks = require('../engine/blocks');
-
+var Sprite = require('../sprites/sprite');
+var Color = require('../util/color.js');
 var uid = require('../util/uid');
 var specMap = require('./sb2specmap');
 
@@ -204,10 +204,10 @@ function parseBlock (sb2block) {
                 block: null,
                 shadow: null
             };
-            if (typeof providedArg == 'object') {
+            if (typeof providedArg == 'object' && providedArg) {
                 // Block or block list occupies the input.
                 var innerBlocks;
-                if (typeof providedArg[0] == 'object') {
+                if (typeof providedArg[0] == 'object' && providedArg[0]) {
                     // Block list occupies the input.
                     innerBlocks = parseBlockList(providedArg);
                 } else {
@@ -224,7 +224,6 @@ function parseBlock (sb2block) {
                 );
             }
             // Generate a shadow block to occupy the input.
-            // The shadow block is either visible or obscured.
             if (!expectedArg.inputOp) {
                 // No editable shadow input; e.g., for a boolean.
                 continue;
@@ -234,7 +233,11 @@ function parseBlock (sb2block) {
             var fieldValue = providedArg;
             // Shadows' field names match the input name, except for these:
             var fieldName = expectedArg.inputName;
-            if (expectedArg.inputOp == 'math_number') {
+            if (expectedArg.inputOp == 'math_number' ||
+                expectedArg.inputOp == 'math_whole_number' ||
+                expectedArg.inputOp == 'math_positive_number' ||
+                expectedArg.inputOp == 'math_integer' ||
+                expectedArg.inputOp == 'math_angle') {
                 fieldName = 'NUM';
                 // Fields are given Scratch 2.0 default values if obscured.
                 if (shadowObscured) {
@@ -246,7 +249,9 @@ function parseBlock (sb2block) {
                     fieldValue = '';
                 }
             } else if (expectedArg.inputOp == 'colour_picker') {
-                fieldName = 'COLOR';
+                // Convert SB2 color to hex.
+                fieldValue = Color.scratchColorToHex(providedArg);
+                fieldName = 'COLOUR';
                 if (shadowObscured) {
                     fieldValue = '#990000';
                 }
@@ -266,7 +271,7 @@ function parseBlock (sb2block) {
                 shadow: true
             });
             activeBlock.inputs[expectedArg.inputName].shadow = inputUid;
-            // If no block occupying the input, alias the block to the shadow.
+            // If no block occupying the input, alias to the shadow.
             if (!activeBlock.inputs[expectedArg.inputName].block) {
                 activeBlock.inputs[expectedArg.inputName].block = inputUid;
             }

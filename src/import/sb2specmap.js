@@ -44,7 +44,7 @@ var specMap = {
         'argMap':[
             {
                 'type':'input',
-                'inputOp':'math_number',
+                'inputOp':'math_angle',
                 'inputName':'DIRECTION'
             }
         ]
@@ -210,7 +210,7 @@ var specMap = {
             {
                 'type':'input',
                 'inputOp':'math_number',
-                'inputName':'MESSAGE'
+                'inputName':'SECS'
             }
         ]
     },
@@ -255,7 +255,7 @@ var specMap = {
             {
                 'type':'input',
                 'inputOp':'looks_backdrops',
-                'inputName':'COSTUME'
+                'inputName':'BACKDROP'
             }
         ]
     },
@@ -324,7 +324,7 @@ var specMap = {
         'argMap':[
             {
                 'type':'input',
-                'inputOp':'math_number',
+                'inputOp':'math_integer',
                 'inputName':'NUM'
             }
         ]
@@ -350,7 +350,7 @@ var specMap = {
             {
                 'type':'input',
                 'inputOp':'looks_backdrops',
-                'inputName':'COSTUME'
+                'inputName':'BACKDROP'
             }
         ]
     },
@@ -475,7 +475,7 @@ var specMap = {
         ]
     },
     'setTempoTo:':{
-        'opcode':'sound_settempoto',
+        'opcode':'sound_settempotobpm',
         'argMap':[
             {
                 'type':'input',
@@ -545,12 +545,12 @@ var specMap = {
             {
                 'type':'input',
                 'inputOp':'math_number',
-                'inputName':'XXXNAME'
+                'inputName':'SHADE'
             }
         ]
     },
     'setPenShadeTo:':{
-        'opcode':'pen_changepenshadeto',
+        'opcode':'pen_changepenshadeby',
         'argMap':[
             {
                 'type':'input',
@@ -653,7 +653,7 @@ var specMap = {
         'argMap':[
             {
                 'type':'input',
-                'inputOp':'math_number',
+                'inputOp':'math_positive_number',
                 'inputName':'DURATION'
             }
         ]
@@ -663,7 +663,7 @@ var specMap = {
         'argMap':[
             {
                 'type':'input',
-                'inputOp':'math_number',
+                'inputOp':'math_whole_number',
                 'inputName':'TIMES'
             },
             {
@@ -695,7 +695,7 @@ var specMap = {
         ]
     },
     'doIfElse':{
-        'opcode':'control_ifelse',
+        'opcode':'control_if_else',
         'argMap':[
             {
                 'type':'input',
@@ -712,7 +712,7 @@ var specMap = {
         ]
     },
     'doWaitUntil':{
-        'opcode':'control_waituntil',
+        'opcode':'control_wait_until',
         'argMap':[
             {
                 'type':'input',
@@ -721,7 +721,7 @@ var specMap = {
         ]
     },
     'doUntil':{
-        'opcode':'control_repeatuntil',
+        'opcode':'control_repeat_until',
         'argMap':[
             {
                 'type':'input',
@@ -829,7 +829,7 @@ var specMap = {
             {
                 'type':'input',
                 'inputOp':'sensing_keyoptions',
-                'inputName':'KEY_OPTIONS'
+                'inputName':'KEY_OPTION'
             }
         ]
     },
@@ -1108,7 +1108,7 @@ var specMap = {
         'argMap':[
             {
                 'type':'input',
-                'inputOp':'math_number',
+                'inputOp':'math_whole_number',
                 'inputName':'LETTER'
             },
             {
@@ -1169,11 +1169,12 @@ var specMap = {
         ]
     },
     'readVariable':{
-        'opcode':'data_getvariable',
+        'opcode':'data_variable',
         'argMap':[
             {
-                'type':'field',
-                'fieldName':'VARIABLE'
+                'type':'input',
+                'inputOp':'data_variablemenu',
+                'inputName':'VARIABLE'
             }
         ]
     },
@@ -1181,8 +1182,9 @@ var specMap = {
         'opcode':'data_setvariableto',
         'argMap':[
             {
-                'type':'field',
-                'fieldName':'VARIABLE'
+                'type':'input',
+                'inputOp':'data_variablemenu',
+                'inputName':'VARIABLE'
             },
             {
                 'type':'input',
@@ -1195,8 +1197,9 @@ var specMap = {
         'opcode':'data_changevariableby',
         'argMap':[
             {
-                'type':'field',
-                'fieldName':'VARIABLE'
+                'type':'input',
+                'inputOp':'data_variablemenu',
+                'inputName':'VARIABLE'
             },
             {
                 'type':'input',
@@ -1209,8 +1212,9 @@ var specMap = {
         'opcode':'data_showvariable',
         'argMap':[
             {
-                'type':'field',
-                'fieldName':'VARIABLE'
+                'type':'input',
+                'inputOp':'data_variablemenu',
+                'inputName':'VARIABLE'
             }
         ]
     },
@@ -1218,8 +1222,9 @@ var specMap = {
         'opcode':'data_hidevariable',
         'argMap':[
             {
-                'type':'field',
-                'fieldName':'VARIABLE'
+                'type':'input',
+                'inputOp':'data_variablemenu',
+                'inputName':'VARIABLE'
             }
         ]
     },
