@@ -68,20 +68,14 @@ Cast.toString = function (value) {
 /**
  * Cast any Scratch argument to an RGB color object.
  * @param {*} value Value to convert to RGB color object.
- * @return {Object} {r: R, g: G, b: B}, values between 0-1.
+ * @return {Object} {r: R, g: G, b: B}, values between 0-255.
  */
-Cast.toScaledRgbColor = function (value) {
-    var color;
+Cast.toRgbColor = function (value) {
     if (typeof value == 'string' && value.substring(0, 1) == '#') {
-        color = Color.hexToRgb(value);
+        return Color.hexToRgb(value);
     } else {
-        color = Color.decimalToRgb(Cast.toNumber(value));
+        return Color.decimalToRgb(Cast.toNumber(value));
     }
-    return {
-        r: color.r / 255,
-        g: color.g / 255,
-        b: color.b / 255
-    };
 };
 
 /**
