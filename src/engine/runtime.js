@@ -355,6 +355,13 @@ Runtime.prototype.stopAll = function () {
  * inactive threads after each iteration.
  */
 Runtime.prototype._step = function () {
+    // Allow I/O devices to step.
+    for (var i in this.ioDevices) {
+        var ioDevice = this.ioDevices[i];
+        if (ioDevice.step) {
+            ioDevice.step();
+        }
+    }
     // Find all edge-activated hats, and add them to threads to be evaluated.
     for (var hatType in this._hats) {
         var hat = this._hats[hatType];

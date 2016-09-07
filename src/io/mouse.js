@@ -18,6 +18,8 @@ Mouse.prototype.postData = function(data) {
     }
 };
 
+Mouse.prototype.step = function () {};
+
 Mouse.prototype.getX = function () {
     return MathUtil.clamp(this._x, -240, 240);
 };
