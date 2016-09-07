@@ -114,6 +114,7 @@ VirtualMachine.prototype.loadProject = function (json) {
     // Update the VM user's knowledge of targets and blocks on the workspace.
     this.emitTargetsUpdate();
     this.emitWorkspaceUpdate();
+    this.runtime.setEditingTarget(this.editingTarget);
 };
 
 /**
@@ -135,6 +136,7 @@ VirtualMachine.prototype.setEditingTarget = function (targetId) {
         // Emit appropriate UI updates.
         this.emitTargetsUpdate();
         this.emitWorkspaceUpdate();
+        this.runtime.setEditingTarget(target);
     }
 };
 

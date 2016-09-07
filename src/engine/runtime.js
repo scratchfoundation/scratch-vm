@@ -57,6 +57,9 @@ function Runtime () {
         'keyboard': new Keyboard(this),
         'mouse': new Mouse()
     };
+
+    this._scriptGlowsPreviousFrame = [];
+    this._editingTarget = null;
 }
 
 /**
@@ -356,9 +359,51 @@ Runtime.prototype._step = function () {
         }
     }
     var inactiveThreads = this.sequencer.stepThreads(this.threads);
+    this._updateScriptGlows();
     for (var i = 0; i < inactiveThreads.length; i++) {
         this._removeThread(inactiveThreads[i]);
     }
+};
+
+Runtime.prototype.setEditingTarget = function (editingTarget) {
+    this._scriptGlowsPreviousFrame = [];
+    this._editingTarget = editingTarget;
+    this._updateScriptGlows();
+};
+
+Runtime.prototype._updateScriptGlows = function () {
+    // Set of scripts that request a glow this frame.
+    var requestedGlowsThisFrame = [];
+    // Final set of scripts glowing during this frame.
+    var finalScriptGlows = [];
+    // Find all scripts that should be glowing.
+    for (var i = 0; i < this.threads.length; i++) {
+        var thread = this.threads[i];
+        if (thread.requestScriptGlowInFrame &&
+            this.targetForThread(thread) == this._editingTarget) {
+            requestedGlowsThisFrame.push(thread.topBlock);
+        }
+    }
+    // Compare to previous frame.
+    for (var j = 0; j < this._scriptGlowsPreviousFrame.length; j++) {
+        var previousFrameGlow = this._scriptGlowsPreviousFrame[j];
+        if (requestedGlowsThisFrame.indexOf(previousFrameGlow) < 0) {
+            // Glow turned off.
+            this.glowScript(previousFrameGlow, false);
+        } else {
+            // Still glowing.
+            finalScriptGlows.push(previousFrameGlow);
+        }
+    }
+    for (var k = 0; k < requestedGlowsThisFrame.length; k++) {
+        var currentFrameGlow = requestedGlowsThisFrame[k];
+        if (this._scriptGlowsPreviousFrame.indexOf(currentFrameGlow) < 0) {
+            // Glow turned on.
+            this.glowScript(currentFrameGlow, true);
+            finalScriptGlows.push(currentFrameGlow);
+        }
+    }
+    this._scriptGlowsPreviousFrame = finalScriptGlows;
 };
 
 /**
