@@ -4,6 +4,8 @@ var util = require('util');
 var Runtime = require('./engine/runtime');
 var sb2import = require('./import/sb2import');
 
+var AudioWorker = require('../audioWorker');
+
 /**
  * Whether the environment is a WebWorker.
  * @const{boolean}
@@ -174,6 +176,7 @@ if (ENV_WORKER) {
         './node_modules/scratch-render/render-worker.js'
     );
     self.renderer = new self.RenderWebGLWorker();
+    self.audioWorker = new AudioWorker();
     self.vmInstance = new VirtualMachine();
     self.onmessage = function (e) {
         var messageData = e.data;

@@ -31,6 +31,9 @@ function Clone(sprite) {
     this.drawableID = null;
 
     this.initDrawable();
+
+    // audio engine
+    this.audioWorker = self.audioWorker;
 }
 util.inherits(Clone, Target);
 
@@ -234,5 +237,11 @@ Clone.prototype.updateAllDrawableProperties = function () {
 Clone.prototype.getName = function () {
     return this.sprite.name;
 };
+
+// Audio
+
+Clone.prototype.playSound = function (soundNum) {
+    this.audioWorker.playSound(soundNum);
+}
 
 module.exports = Clone;

@@ -33,7 +33,8 @@ Scratch3SoundBlocks.prototype.getPrimitives = function() {
 };
 
 Scratch3SoundBlocks.prototype.playSound = function (args, util) {
-	self.postMessage({method: 'playsound', soundnum:args.SOUND_NUM});
+	// self.postMessage({method: 'playsound', soundnum:args.SOUND_NUM});
+    util.target.playSound(args.SOUND_NUM);
 };
 
 Scratch3SoundBlocks.prototype.playSoundWithPitch = function (args, util) {

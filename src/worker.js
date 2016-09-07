@@ -1,6 +1,6 @@
 var EventEmitter = require('events');
 var util = require('util');
-var Tone = require('tone');
+// var Tone = require('tone');
 
 function VirtualMachine () {
     if (!window.Worker) {
@@ -12,6 +12,7 @@ function VirtualMachine () {
     EventEmitter.call(instance);
     instance.vmWorker = new Worker('../vm.js');
 
+/*
 	// MUSIC STUFF by ericr
 
     // tone setup
@@ -115,15 +116,16 @@ function VirtualMachine () {
     };
 
     function playNoteForBeats(note, beats) {
-//        var freq = midiToFreq(note);
-
         var midiNote = scaleNoteToMidiNote(note, currentScale, rootNote);
         var freq = midiToFreq(midiNote);
         synth.triggerAttackRelease(freq, beats, quantizeUnit);        
     }
 
+    */
+
     // onmessage calls are converted into emitted events.
     instance.vmWorker.onmessage = function (e) {
+        /*
         switch (e.data.method) {
             case 'playsound':
                 soundSamplers[e.data.soundnum].nextVoice().triggerAttack(0, quantizeUnit);
@@ -195,6 +197,7 @@ function VirtualMachine () {
                 }
                 break;
         }
+        */
         instance.emit(e.data.method, e.data);
     };
 

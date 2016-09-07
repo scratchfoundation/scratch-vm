@@ -28,6 +28,10 @@ window.onload = function() {
     window.renderer = new window.RenderWebGLLocal(canvas);
     window.renderer.connectWorker(window.vm.vmWorker);
 
+    // Instantiate audio engine and connect it to the VM
+    window.audioLocal = new window.AudioLocal();
+    window.audioLocal.connectWorker(window.vm.vmWorker);
+
     // Instantiate scratch-blocks and attach it to the DOM.
     var toolbox = document.getElementById('toolbox');
     var workspace = window.Blockly.inject('blocks', {
