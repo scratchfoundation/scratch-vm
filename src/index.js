@@ -111,8 +111,27 @@ VirtualMachine.prototype.postIOData = function (device, data) {
  */
 VirtualMachine.prototype.loadProject = function (json) {
     if (!json) {
-        var blocks = new Blocks();
-        var sprite = new Sprite(blocks);
+        // Created 'Stage'
+        var blocks2 = new Blocks();
+        var stage = new Sprite(blocks2);
+        stage.name = 'Stage';
+        stage.costumes.push({
+            skin: 'Stage.png',
+            name: 'backdrop1',
+            bitmapResolution: 1,
+            rotationCenterX: 240,
+            rotationCenterY: 180}); 
+        var target2 = stage.createClone();
+        this.runtime.targets.push(target2);
+        target2.x = 0;
+        target2.y = 0;
+        target2.direction = 90;
+        target2.size = 100;
+        target2.visible = true;
+        target2.isStage = true;
+        // Creates 'Sprite1'
+        var blocks1 = new Blocks();
+        var sprite = new Sprite(blocks1);
         sprite.name = 'Sprite1';
         sprite.costumes.push({
             skin: 'scratch_cat.svg',
@@ -120,13 +139,13 @@ VirtualMachine.prototype.loadProject = function (json) {
             bitmapResolution: 1,
             rotationCenterX: 47,
             rotationCenterY: 55}); 
-        var target = sprite.createClone();
-        this.runtime.targets.push(target);
-        target.x = 0;
-        target.y = 0;
-        target.direction = 90;
-        target.size = 100;
-        target.visible = true;
+        var target1 = sprite.createClone();
+        this.runtime.targets.push(target1);
+        target1.x = 0;
+        target1.y = 0;
+        target1.direction = 90;
+        target1.size = 100;
+        target1.visible = true;
         this.editingTarget = this.runtime.targets[0];
         this.emitTargetsUpdate();
         this.emitWorkspaceUpdate();
