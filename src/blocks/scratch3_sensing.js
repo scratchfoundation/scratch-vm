@@ -34,13 +34,13 @@ Scratch3SensingBlocks.prototype.colorPicker = function (args) {
 };
 
 Scratch3SensingBlocks.prototype.touchingColor = function (args, util) {
-    var color = Cast.toRgbColor(args.COLOR);
+    var color = Cast.toRgbColorList(args.COLOR);
     return util.target.isTouchingColor(color);
 };
 
 Scratch3SensingBlocks.prototype.colorTouchingColor = function (args, util) {
-    var maskColor = Cast.toRgbColor(args.COLOR);
-    var targetColor = Cast.toRgbColor(args.COLOR2);
+    var maskColor = Cast.toRgbColorList(args.COLOR);
+    var targetColor = Cast.toRgbColorList(args.COLOR2);
     return util.target.colorIsTouchingColor(targetColor, maskColor);
 };
 

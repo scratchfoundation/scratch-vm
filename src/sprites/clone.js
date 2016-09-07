@@ -237,7 +237,7 @@ Clone.prototype.getName = function () {
 
 /**
  * Return whether the clone is touching a color.
- * @param {Object} rgb {r: R, g: G, b: B}, values between 0-255.
+ * @param {Array.<number>} rgb [r,g,b], values between 0-255.
  * @return {Promise.<Boolean>} True iff the clone is touching the color.
  */
 Clone.prototype.isTouchingColor = function (rgb) {
@@ -249,8 +249,8 @@ Clone.prototype.isTouchingColor = function (rgb) {
 
 /**
  * Return whether the clone's color is touching a color.
- * @param {Object} targetRgb {r: R, g: G, b: B}, values between 0-255.
- * @param {Object} maskRgb {r: R, g: G, b: B}, values between 0-255.
+ * @param {Object} targetRgb {Array.<number>} [r,g,b], values between 0-255.
+ * @param {Object} maskRgb {Array.<number>} [r,g,b], values between 0-255.
  * @return {Promise.<Boolean>} True iff the clone's color is touching the color.
  */
 Clone.prototype.colorIsTouchingColor = function (targetRgb, maskRgb) {
