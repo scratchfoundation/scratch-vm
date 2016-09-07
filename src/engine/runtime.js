@@ -60,25 +60,25 @@ function Runtime () {
 }
 
 /**
- * Event name for glowing a stack
+ * Event name for glowing a script.
  * @const {string}
  */
-Runtime.STACK_GLOW_ON = 'STACK_GLOW_ON';
+Runtime.SCRIPT_GLOW_ON = 'STACK_GLOW_ON';
 
 /**
- * Event name for unglowing a stack
+ * Event name for unglowing a script.
  * @const {string}
  */
-Runtime.STACK_GLOW_OFF = 'STACK_GLOW_OFF';
+Runtime.SCRIPT_GLOW_OFF = 'STACK_GLOW_OFF';
 
 /**
- * Event name for glowing a block
+ * Event name for glowing a block.
  * @const {string}
  */
 Runtime.BLOCK_GLOW_ON = 'BLOCK_GLOW_ON';
 
 /**
- * Event name for unglowing a block
+ * Event name for unglowing a block.
  * @const {string}
  */
 Runtime.BLOCK_GLOW_OFF = 'BLOCK_GLOW_OFF';
@@ -196,7 +196,6 @@ Runtime.prototype.clearEdgeActivatedValues = function () {
  */
 Runtime.prototype._pushThread = function (id) {
     var thread = new Thread(id);
-    this.glowScript(id, true);
     thread.pushStack(id);
     this.threads.push(thread);
     return thread;
@@ -209,7 +208,6 @@ Runtime.prototype._pushThread = function (id) {
 Runtime.prototype._removeThread = function (thread) {
     var i = this.threads.indexOf(thread);
     if (i > -1) {
-        this.glowScript(thread.topBlock, false);
         this.threads.splice(i, 1);
     }
 };
@@ -341,11 +339,6 @@ Runtime.prototype.stopAll = function () {
     var threadsCopy = this.threads.slice();
     while (threadsCopy.length > 0) {
         var poppedThread = threadsCopy.pop();
-        // Unglow any blocks on this thread's stack.
-        for (var i = 0; i < poppedThread.stack.length; i++) {
-            this.glowBlock(poppedThread.stack[i], false);
-        }
-        // Actually remove the thread.
         this._removeThread(poppedThread);
     }
 };
@@ -388,9 +381,9 @@ Runtime.prototype.glowBlock = function (blockId, isGlowing) {
  */
 Runtime.prototype.glowScript = function (topBlockId, isGlowing) {
     if (isGlowing) {
-        this.emit(Runtime.STACK_GLOW_ON, topBlockId);
+        this.emit(Runtime.SCRIPT_GLOW_ON, topBlockId);
     } else {
-        this.emit(Runtime.STACK_GLOW_OFF, topBlockId);
+        this.emit(Runtime.SCRIPT_GLOW_OFF, topBlockId);
     }
 };
 

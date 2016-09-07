@@ -31,11 +31,11 @@ function VirtualMachine () {
      */
     instance.editingTarget = null;
     // Runtime emits are passed along as VM emits.
-    instance.runtime.on(Runtime.STACK_GLOW_ON, function (id) {
-        instance.emit(Runtime.STACK_GLOW_ON, {id: id});
+    instance.runtime.on(Runtime.SCRIPT_GLOW_ON, function (id) {
+        instance.emit(Runtime.SCRIPT_GLOW_ON, {id: id});
     });
-    instance.runtime.on(Runtime.STACK_GLOW_OFF, function (id) {
-        instance.emit(Runtime.STACK_GLOW_OFF, {id: id});
+    instance.runtime.on(Runtime.SCRIPT_GLOW_OFF, function (id) {
+        instance.emit(Runtime.SCRIPT_GLOW_OFF, {id: id});
     });
     instance.runtime.on(Runtime.BLOCK_GLOW_ON, function (id) {
         instance.emit(Runtime.BLOCK_GLOW_ON, {id: id});
@@ -233,11 +233,11 @@ if (ENV_WORKER) {
         }
     };
     // Bind runtime's emitted events to postmessages.
-    self.vmInstance.runtime.on(Runtime.STACK_GLOW_ON, function (id) {
-        self.postMessage({method: Runtime.STACK_GLOW_ON, id: id});
+    self.vmInstance.runtime.on(Runtime.SCRIPT_GLOW_ON, function (id) {
+        self.postMessage({method: Runtime.SCRIPT_GLOW_ON, id: id});
     });
-    self.vmInstance.runtime.on(Runtime.STACK_GLOW_OFF, function (id) {
-        self.postMessage({method: Runtime.STACK_GLOW_OFF, id: id});
+    self.vmInstance.runtime.on(Runtime.SCRIPT_GLOW_OFF, function (id) {
+        self.postMessage({method: Runtime.SCRIPT_GLOW_OFF, id: id});
     });
     self.vmInstance.runtime.on(Runtime.BLOCK_GLOW_ON, function (id) {
         self.postMessage({method: Runtime.BLOCK_GLOW_ON, id: id});
