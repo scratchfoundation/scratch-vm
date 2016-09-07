@@ -112,6 +112,7 @@ function parseScripts (scripts, blocks) {
             parsedBlockList[0].x = scriptX * 1.1;
             parsedBlockList[0].y = scriptY * 1.1;
             parsedBlockList[0].topLevel = true;
+            parsedBlockList[0].parent = null;
         }
         // Flatten children and create add the blocks.
         var convertedBlocks = flatten(parsedBlockList);
@@ -136,6 +137,7 @@ function parseBlockList (blockList) {
         var block = blockList[i];
         var parsedBlock = parseBlock(block);
         if (previousBlock) {
+            parsedBlock.parent = previousBlock.id;
             previousBlock.next = parsedBlock.id;
         }
         previousBlock = parsedBlock;
@@ -214,6 +216,9 @@ function parseBlock (sb2block) {
                     // Single block occupies the input.
                     innerBlocks = [parseBlock(providedArg)];
                 }
+                for (var j = 0; j < innerBlocks.length; j++) {
+                    innerBlocks[j].parent = activeBlock.id;
+                }
                 // Obscures any shadow.
                 shadowObscured = true;
                 activeBlock.inputs[expectedArg.inputName].block = (
@@ -268,6 +273,7 @@ function parseBlock (sb2block) {
                 fields: fields,
                 next: null,
                 topLevel: false,
+                parent: activeBlock.id,
                 shadow: true
             });
             activeBlock.inputs[expectedArg.inputName].shadow = inputUid;

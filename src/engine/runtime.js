@@ -379,9 +379,10 @@ Runtime.prototype._updateScriptGlows = function () {
     // Find all scripts that should be glowing.
     for (var i = 0; i < this.threads.length; i++) {
         var thread = this.threads[i];
-        if (thread.requestScriptGlowInFrame &&
-            this.targetForThread(thread) == this._editingTarget) {
-            requestedGlowsThisFrame.push(thread.topBlock);
+        var target = this.targetForThread(thread);
+        if (thread.requestScriptGlowInFrame && target == this._editingTarget) {
+            var script = target.blocks.getTopLevelScript(thread.peekStack());
+            requestedGlowsThisFrame.push(script);
         }
     }
     // Compare to previous frame.
