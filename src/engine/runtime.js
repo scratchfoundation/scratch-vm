@@ -356,8 +356,8 @@ Runtime.prototype.stopAll = function () {
  */
 Runtime.prototype._step = function () {
     // Allow I/O devices to step.
-    for (var i in this.ioDevices) {
-        var ioDevice = this.ioDevices[i];
+    for (var device in this.ioDevices) {
+        var ioDevice = this.ioDevices[device];
         if (ioDevice.step) {
             ioDevice.step();
         }
