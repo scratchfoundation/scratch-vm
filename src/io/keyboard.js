@@ -44,10 +44,10 @@ Keyboard.prototype._keyCodeToScratchKey = function (keyCode) {
     }
     switch (keyCode) {
     case 32: return 'space';
-    case 37: return 'leftarrow';
-    case 38: return 'uparrow';
-    case 39: return 'rightarrow';
-    case 40: return 'downarrow';
+    case 37: return 'left arrow';
+    case 38: return 'up arrow';
+    case 39: return 'right arrow';
+    case 40: return 'down arrow';
     }
     return null;
 };
