@@ -235,4 +235,33 @@ Clone.prototype.getName = function () {
     return this.sprite.name;
 };
 
+/**
+ * Return whether the clone is touching a color.
+ * @param {Object} rgb {r: R, g: G, b: B}, values between 0-255.
+ * @return {Promise.<Boolean>} True iff the clone is touching the color.
+ */
+Clone.prototype.isTouchingColor = function (rgb) {
+    if (this.renderer) {
+        return this.renderer.isTouchingColor(this.drawableID, rgb);
+    }
+    return false;
+};
+
+/**
+ * Return whether the clone's color is touching a color.
+ * @param {Object} targetRgb {r: R, g: G, b: B}, values between 0-255.
+ * @param {Object} maskRgb {r: R, g: G, b: B}, values between 0-255.
+ * @return {Promise.<Boolean>} True iff the clone's color is touching the color.
+ */
+Clone.prototype.colorIsTouchingColor = function (targetRgb, maskRgb) {
+    if (this.renderer) {
+        return this.renderer.isTouchingColor(
+            this.drawableID,
+            targetRgb,
+            maskRgb
+        );
+    }
+    return false;
+};
+
 module.exports = Clone;
