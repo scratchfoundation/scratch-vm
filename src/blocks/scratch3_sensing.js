@@ -66,7 +66,7 @@ Scratch3SensingBlocks.prototype.keyOptions = function (args) {
 };
 
 Scratch3SensingBlocks.prototype.getKeyPressed = function (args, util) {
-    return util.ioQuery('keyboard', 'getKeyIsDown', args.KEY_OPTIONS);
+    return util.ioQuery('keyboard', 'getKeyIsDown', args.KEY_OPTION);
 };
 
 module.exports = Scratch3SensingBlocks;
