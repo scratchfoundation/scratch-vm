@@ -381,7 +381,9 @@ Runtime.prototype._updateScriptGlows = function () {
         var thread = this.threads[i];
         var target = this.targetForThread(thread);
         if (thread.requestScriptGlowInFrame && target == this._editingTarget) {
-            var script = target.blocks.getTopLevelScript(thread.peekStack());
+            var blockForThread = thread.peekStack() || thread.topBlock;
+            var script = target.blocks.getTopLevelScript(blockForThread);
+            console.log(script);
             requestedGlowsThisFrame.push(script);
         }
     }
