@@ -250,7 +250,7 @@ function parseBlock (sb2block) {
                 }
             } else if (expectedArg.inputOp == 'colour_picker') {
                 // Convert SB2 color to hex.
-                fieldValue = Color.scratchColorToHex(providedArg);
+                fieldValue = Color.decimalToHex(providedArg);
                 fieldName = 'COLOUR';
                 if (shadowObscured) {
                     fieldValue = '#990000';
