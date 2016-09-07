@@ -1,3 +1,5 @@
+var Color = require('../util/color');
+
 function Cast () {}
 
 /**
@@ -61,6 +63,25 @@ Cast.toBoolean = function (value) {
  */
 Cast.toString = function (value) {
     return String(value);
+};
+
+/**
+ * Cast any Scratch argument to an RGB color object.
+ * @param {*} value Value to convert to RGB color object.
+ * @return {Object} {r: R, g: G, b: B}, values between 0-1.
+ */
+Cast.toScaledRgbColor = function (value) {
+    var color;
+    if (typeof value == 'string' && value.substring(0, 1) == '#') {
+        color = Color.hexToRgb(value);
+    } else {
+        color = Color.decimalToRgb(Cast.toNumber(value));
+    }
+    return {
+        r: color.r / 255,
+        g: color.g / 255,
+        b: color.b / 255
+    };
 };
 
 /**
