@@ -41,6 +41,7 @@ var execute = function (sequencer, thread) {
         }
         // Skip through the block.
         // (either hat with no predicate, or missing op).
+        thread.requestScriptGlowInFrame = true;
         return;
     }
 
@@ -109,6 +110,12 @@ var execute = function (sequencer, thread) {
             }
         }
     });
+
+    if (typeof primitiveReportedValue === 'undefined') {
+        // No value reported - potentially a command block.
+        // Edge-activated hats don't request a glow; all commands do.
+        thread.requestScriptGlowInFrame = true;
+    }
 
     /**
      * Handle any reported value from the primitive, either directly returned

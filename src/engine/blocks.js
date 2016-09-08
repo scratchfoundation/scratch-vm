@@ -115,6 +115,20 @@ Blocks.prototype.getInputs = function (id) {
     return inputs;
 };
 
+/**
+ * Get the top-level script for a given block.
+ * @param {?string} id ID of block to query.
+ * @return {?string} ID of top-level script block.
+ */
+Blocks.prototype.getTopLevelScript = function (id) {
+    if (typeof this._blocks[id] === 'undefined') return null;
+    var block = this._blocks[id];
+    while (block.parent !== null) {
+        block = this._blocks[block.parent];
+    }
+    return block.id;
+};
+
 // ---------------------------------------------------------------------
 
 /**
@@ -237,6 +251,7 @@ Blocks.prototype.moveBlock = function (e) {
             // This block was connected to the old parent's next connection.
             oldParent.next = null;
         }
+        this._blocks[e.id].parent = null;
     }
 
     // Has the block become a top-level block?
@@ -262,6 +277,7 @@ Blocks.prototype.moveBlock = function (e) {
             // Moved to the new parent's next connection.
             this._blocks[e.newParent].next = e.id;
         }
+        this._blocks[e.id].parent = e.newParent;
     }
 };
 
