@@ -383,7 +383,9 @@ Runtime.prototype._updateScriptGlows = function () {
         if (thread.requestScriptGlowInFrame && target == this._editingTarget) {
             var blockForThread = thread.peekStack() || thread.topBlock;
             var script = target.blocks.getTopLevelScript(blockForThread);
-            requestedGlowsThisFrame.push(script);
+            if (script) {
+                requestedGlowsThisFrame.push(script);
+            }
         }
     }
     // Compare to previous frame.
