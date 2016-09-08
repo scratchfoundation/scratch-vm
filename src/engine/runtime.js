@@ -409,6 +409,19 @@ Runtime.prototype._updateScriptGlows = function () {
 };
 
 /**
+ * "Quiet" a script's glow: stop the VM from generating glow/unglow events
+ * about that script. Use when a script has just been deleted, but we may
+ * still be tracking glow data about it.
+ * @param {!string} scriptBlockId Id of top-level block in script to quiet.
+ */
+Runtime.prototype.quietGlow = function (scriptBlockId) {
+    var index = this._scriptGlowsPreviousFrame.indexOf(scriptBlockId);
+    if (index > -1) {
+        this._scriptGlowsPreviousFrame.splice(index, 1);
+    }
+};
+
+/**
  * Emit feedback for block glowing (used in the sequencer).
  * @param {?string} blockId ID for the block to update glow
  * @param {boolean} isGlowing True to turn on glow; false to turn off.
