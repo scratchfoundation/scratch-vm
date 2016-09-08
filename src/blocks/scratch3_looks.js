@@ -20,14 +20,11 @@ Scratch3LooksBlocks.prototype.getPrimitives = function() {
         'looks_thinkforsecs': this.sayforsecs,
         'looks_show': this.show,
         'looks_hide': this.hide,
-        'looks_backdrops': this.backdropMenu,
-        'looks_costume': this.costumeMenu,
         'looks_switchcostumeto': this.switchCostume,
         'looks_switchbackdropto': this.switchBackdrop,
         'looks_switchbackdroptoandwait': this.switchBackdropAndWait,
         'looks_nextcostume': this.nextCostume,
         'looks_nextbackdrop': this.nextBackdrop,
-        'looks_effectmenu': this.effectMenu,
         'looks_changeeffectby': this.changeEffect,
         'looks_seteffectto': this.setEffect,
         'looks_cleargraphiceffects': this.clearEffects,
@@ -119,11 +116,6 @@ Scratch3LooksBlocks.prototype._setCostumeOrBackdrop = function (target,
     return [];
 };
 
-// @todo(GH-146): Remove.
-Scratch3LooksBlocks.prototype.costumeMenu = function (args) {
-    return args.COSTUME;
-};
-
 Scratch3LooksBlocks.prototype.switchCostume = function (args, util) {
     this._setCostumeOrBackdrop(util.target, args.COSTUME);
 };
@@ -132,11 +124,6 @@ Scratch3LooksBlocks.prototype.nextCostume = function (args, util) {
     this._setCostumeOrBackdrop(
         util.target, util.target.currentCostume + 1, true
     );
-};
-
-// @todo(GH-146): Remove.
-Scratch3LooksBlocks.prototype.backdropMenu = function (args) {
-    return args.BACKDROP;
 };
 
 Scratch3LooksBlocks.prototype.switchBackdrop = function (args) {
@@ -173,10 +160,6 @@ Scratch3LooksBlocks.prototype.nextBackdrop = function () {
     this._setCostumeOrBackdrop(
         stage, stage.currentCostume + 1, true
     );
-};
-
-Scratch3LooksBlocks.prototype.effectMenu = function (args) {
-    return args.EFFECT.toLowerCase();
 };
 
 Scratch3LooksBlocks.prototype.changeEffect = function (args, util) {
