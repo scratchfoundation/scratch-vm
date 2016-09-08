@@ -249,9 +249,15 @@ Blocks.prototype.moveBlock = function (e) {
         if (e.newInput !== undefined) {
             // Moved to the new parent's input.
             // Don't obscure the shadow block.
-            var newInput = this._blocks[e.newParent].inputs[e.newInput];
-            newInput.name = e.newInput;
-            newInput.block = e.id;
+            var oldShadow = null;
+            if (this._blocks[e.newParent].inputs.hasOwnProperty(e.newInput)) {
+                oldShadow = this._blocks[e.newParent].inputs[e.newInput].shadow;
+            }
+            this._blocks[e.newParent].inputs[e.newInput] = {
+                name: e.newInput,
+                block: e.id,
+                shadow: oldShadow
+            };
         } else {
             // Moved to the new parent's next connection.
             this._blocks[e.newParent].next = e.id;
