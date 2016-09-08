@@ -26,7 +26,7 @@ Scratch3ControlBlocks.prototype.getPrimitives = function() {
 };
 
 Scratch3ControlBlocks.prototype.repeat = function(args, util) {
-    var times = Cast.toNumber(args.TIMES);
+    var times = Math.floor(Cast.toNumber(args.TIMES));
     // Initialize loop
     if (util.stackFrame.loopCounter === undefined) {
         util.stackFrame.loopCounter = times;
