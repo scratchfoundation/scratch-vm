@@ -63,8 +63,9 @@ Scratch3SensingBlocks.prototype.getMouseDown = function (args, util) {
 };
 
 Scratch3SensingBlocks.prototype.current = function (args) {
+    var menuOption = Cast.toString(args.CURRENTMENU).toLowerCase();
     var date = new Date();
-    switch (args.CURRENTMENU) {
+    switch (menuOption) {
     case 'year': return date.getFullYear();
     case 'month': return date.getMonth() + 1; // getMonth is zero-based
     case 'date': return date.getDate();
@@ -73,6 +74,7 @@ Scratch3SensingBlocks.prototype.current = function (args) {
     case 'minute': return date.getMinutes();
     case 'second': return date.getSeconds();
     }
+    return 0;
 };
 
 Scratch3SensingBlocks.prototype.getKeyPressed = function (args, util) {

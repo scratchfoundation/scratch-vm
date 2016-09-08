@@ -63,20 +63,22 @@ Scratch3OperatorsBlocks.prototype.gt = function (args) {
 };
 
 Scratch3OperatorsBlocks.prototype.and = function (args) {
-    return Cast.toBoolean(args.OPERAND1 && args.OPERAND2);
+    return Cast.toBoolean(args.OPERAND1) && Cast.toBoolean(args.OPERAND2);
 };
 
 Scratch3OperatorsBlocks.prototype.or = function (args) {
-    return Cast.toBoolean(args.OPERAND1 || args.OPERAND2);
+    return Cast.toBoolean(args.OPERAND1) || Cast.toBoolean(args.OPERAND2);
 };
 
 Scratch3OperatorsBlocks.prototype.not = function (args) {
-    return Cast.toBoolean(!args.OPERAND);
+    return !Cast.toBoolean(args.OPERAND);
 };
 
 Scratch3OperatorsBlocks.prototype.random = function (args) {
-    var low = args.FROM <= args.TO ? args.FROM : args.TO;
-    var high = args.FROM <= args.TO ? args.TO : args.FROM;
+    var nFrom = Cast.toNumber(args.FROM);
+    var nTo = Cast.toNumber(args.TO);
+    var low = nFrom <= nTo ? nFrom : nTo;
+    var high = nFrom <= nTo ? nTo : nFrom;
     if (low == high) return low;
     // If both low and high are ints, truncate the result to an int.
     var lowInt = low == parseInt(low);

@@ -198,6 +198,7 @@ Clone.prototype.setSize = function (size) {
  * @param {!number} value Numerical magnitude of effect.
  */
 Clone.prototype.setEffect = function (effectName, value) {
+    if (!this.effects.hasOwnProperty(effectName)) return;
     this.effects[effectName] = value;
     if (this.renderer) {
         var props = {};
