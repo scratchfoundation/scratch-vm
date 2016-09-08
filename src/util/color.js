@@ -73,6 +73,4 @@ Color.hexToDecimal = function (hex) {
     return Color.rgbToDecimal(Color.hexToRgb(hex));
 };
 
-self.Color = Color;
-
 module.exports = Color;
