@@ -111,7 +111,7 @@ VirtualMachine.prototype.postIOData = function (device, data) {
  */
 VirtualMachine.prototype.loadProject = function (json) {
     if (!json) {
-        // Created 'Stage'
+        // Creates 'Stage'
         var blocks2 = new Blocks();
         var stage = new Sprite(blocks2);
         stage.name = 'Stage';
@@ -126,7 +126,7 @@ VirtualMachine.prototype.loadProject = function (json) {
         target2.x = 0;
         target2.y = 0;
         target2.direction = 90;
-        target2.size = 100;
+        target2.size = 200;
         target2.visible = true;
         target2.isStage = true;
         // Creates 'Sprite1'
