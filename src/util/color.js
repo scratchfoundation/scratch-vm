@@ -16,16 +16,13 @@ Color.decimalToHex = function (decimal) {
 
 /**
  * Convert a Scratch decimal color to an RGB color object.
- * CC-BY-SA
- * https://stackoverflow.com/questions/29241442/
- * decimal-to-rgb-in-javascript-and-php
  * @param {number} decimal RGB color as decimal.
  * @returns {Object} {r: R, g: G, b: B}, values between 0-255
  */
 Color.decimalToRgb = function (decimal) {
-    var r = Math.floor(decimal / (256 * 256));
-    var g = Math.floor(decimal / 256) % 256;
-    var b = decimal % 256;
+    var r = (decimal >> 16) & 0xFF;
+    var g = (decimal >> 8) & 0xFF;
+    var b = decimal & 0xFF;
     return {r: r, g: g, b: b};
 };
 
@@ -75,5 +72,7 @@ Color.rgbToDecimal = function (rgb) {
 Color.hexToDecimal = function (hex) {
     return Color.rgbToDecimal(Color.hexToRgb(hex));
 };
+
+self.Color = Color;
 
 module.exports = Color;
