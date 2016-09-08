@@ -43,7 +43,8 @@ Timer.prototype.time = function () {
  * @returns {number} ms-scale accurate time relative to other relative times.
  */
 Timer.prototype.relativeTime = function () {
-    if (self.performance && 'now' in self.performance) {
+    if (typeof self !== 'undefined' &&
+        self.performance && 'now' in self.performance) {
         return self.performance.now();
     } else {
         return this.time();
