@@ -20,7 +20,8 @@ var specMap = require('./sb2specmap');
 function sb2import (json, runtime) {
     parseScratchObject(
         JSON.parse(json),
-        runtime
+        runtime,
+        true
     );
 }
 
@@ -28,8 +29,9 @@ function sb2import (json, runtime) {
  * Parse a single "Scratch object" and create all its in-memory VM objects.
  * @param {!Object} object From-JSON "Scratch object:" sprite, stage, watcher.
  * @param {!Runtime} runtime Runtime object to load all structures into.
+ * @param {boolean} topLevel Whether this is the top-level object (stage).
  */
-function parseScratchObject (object, runtime) {
+function parseScratchObject (object, runtime, topLevel) {
     if (!object.hasOwnProperty('objName')) {
         // Watcher/monitor - skip this object until those are implemented in VM.
         // @todo
@@ -84,10 +86,11 @@ function parseScratchObject (object, runtime) {
     if (object.currentCostumeIndex) {
         target.currentCostume = object.currentCostumeIndex;
     }
+    target.isStage = topLevel;
     // The stage will have child objects; recursively process them.
     if (object.children) {
         for (var j = 0; j < object.children.length; j++) {
-            parseScratchObject(object.children[j], runtime);
+            parseScratchObject(object.children[j], runtime, false);
         }
     }
 }

@@ -435,6 +435,19 @@ Runtime.prototype.getTargetById = function (targetId) {
 };
 
 /**
+ * Get a target representing the Scratch stage, if one exists.
+ * @return {?Target} The target, if found.
+ */
+Runtime.prototype.getTargetForStage = function () {
+    for (var i = 0; i < this.targets.length; i++) {
+        var target = this.targets[i];
+        if (target.isStage) {
+            return target;
+        }
+    }
+};
+
+/**
  * Handle an animation frame from the main thread.
  */
 Runtime.prototype.animationFrame = function () {
