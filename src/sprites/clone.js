@@ -318,6 +318,10 @@ Clone.prototype.colorIsTouchingColor = function (targetRgb, maskRgb) {
  * @return {!Clone} New clone object.
  */
 Clone.prototype.makeClone = function () {
+    if (!this.runtime.clonesAvailable()) {
+        return; // Hit max clone limit.
+    }
+    this.runtime.changeCloneCounter(1);
     var newClone = this.sprite.createClone();
     newClone.isOriginal = false;
     newClone.x = this.x;
@@ -334,6 +338,7 @@ Clone.prototype.makeClone = function () {
  * Dispose of this clone, destroying any run-time properties.
  */
 Clone.prototype.dispose = function () {
+    this.runtime.changeCloneCounter(-1);
     if (this.renderer && this.drawableID !== null) {
         this.renderer.destroyDrawable(this.drawableID);
     }

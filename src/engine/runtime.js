@@ -60,6 +60,11 @@ function Runtime () {
 
     this._scriptGlowsPreviousFrame = [];
     this._editingTarget = null;
+    /**
+     * Currently known number of clones.
+     * @type {number}
+     */
+    this._cloneCounter = 0;
 }
 
 /**
@@ -102,6 +107,11 @@ util.inherits(Runtime, EventEmitter);
  */
 Runtime.THREAD_STEP_INTERVAL = 1000 / 60;
 
+/**
+ * How many clones can be created at a time.
+ * @const {number}
+ */
+Runtime.MAX_CLONES = 300;
 
 // -----------------------------------------------------------------------------
 // -----------------------------------------------------------------------------
@@ -529,6 +539,22 @@ Runtime.prototype.getSpriteTargetByName = function (spriteName) {
             return target;
         }
     }
+};
+
+/**
+ * Update the clone counter to track how many clones are created.
+ * @param {number} changeAmount How many clones have been created/destroyed.
+ */
+Runtime.prototype.changeCloneCounter = function (changeAmount) {
+    this._cloneCounter += changeAmount;
+};
+
+/**
+ * Return whether there are clones available.
+ * @return {boolean} True until the number of clones hits Runtime.MAX_CLONES.
+ */
+Runtime.prototype.clonesAvailable = function () {
+    return this._cloneCounter < Runtime.MAX_CLONES;
 };
 
 /**

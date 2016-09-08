@@ -145,7 +145,9 @@ Scratch3ControlBlocks.prototype.createClone = function (args, util) {
         return;
     }
     var newClone = cloneTarget.cloneClone();
-    this.runtime.targets.push(newClone);
+    if (newClone) {
+        this.runtime.targets.push(newClone);
+    }
 };
 
 Scratch3ControlBlocks.prototype.deleteClone = function (args, util) {
