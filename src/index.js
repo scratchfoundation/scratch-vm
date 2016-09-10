@@ -116,7 +116,7 @@ VirtualMachine.prototype.loadProject = function (json) {
         var stage = new Sprite(blocks2);
         stage.name = 'Stage';
         stage.costumes.push({
-            skin: 'Stage.png',
+            skin: '/src/Stage.png',
             name: 'backdrop1',
             bitmapResolution: 1,
             rotationCenterX: 240,
@@ -134,7 +134,7 @@ VirtualMachine.prototype.loadProject = function (json) {
         var sprite = new Sprite(blocks1);
         sprite.name = 'Sprite1';
         sprite.costumes.push({
-            skin: 'scratch_cat.svg',
+            skin: '/src/scratch_cat.svg',
             name: 'costume1',
             bitmapResolution: 1,
             rotationCenterX: 47,
