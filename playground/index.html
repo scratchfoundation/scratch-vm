@@ -9,19 +9,18 @@
 </head>
 <body>
     <div id="vm-devtools">
-        <h2>Scratch VM Playground</h2>
-        <button id="greenflag">Green flag</button>
-        <button id="stopall">Stop</button>
-        <select id="selectedTarget" multiple></select>
-        <p>
-            <a id="renderexplorer-link" href="#">Renderer</a><br />
-            <a id="threadexplorer-link" href="#">VM Threads</a><br />
-            <a id="blockexplorer-link" href="#">VM Block Representation</a><br />
-            <a id="importexport-link" href="#">Import/Export</a>
-        </p>
+        <ul>
+            <li><a id="renderexplorer-link" href="#">Home</a></li>
+            <li><a id="threadexplorer-link" href="#">VM Threads</a></li>
+            <li><a id="blockexplorer-link" href="#">VM Block Representation</a></li>
+            <li><a id="importexport-link" href="#">Import/Export</a></li>
+        </ul><br />
         <div id="tab-renderexplorer">
-            Render<br />
-            <canvas id="scratch-stage" style="width: 480px; height: 360px;"></canvas>
+            Home<br />
+            <button id="greenflag">Green flag</button>
+            <button id="stopall">Stop</button><br />
+            <canvas id="scratch-stage" style="width: 480px; height: 360px;"></canvas><br />
+            <select id="selectedTarget" multiple></select><br />
         </div>
         <div id="tab-threadexplorer">
             Thread explorer
