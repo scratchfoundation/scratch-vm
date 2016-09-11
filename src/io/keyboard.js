@@ -1,11 +1,17 @@
 var Cast = require('../util/cast');
 
-function Keyboard () {
+function Keyboard (runtime) {
     /**
      * List of currently pressed keys.
      * @type{Array.<number>}
      */
     this._keysPressed = [];
+    /**
+     * Reference to the owning Runtime.
+     * Can be used, for example, to activate hats.
+     * @type{!Runtime}
+     */
+    this.runtime = runtime;
 }
 
 /**
@@ -31,6 +37,21 @@ Keyboard.prototype._scratchKeyToKeyCode = function (keyName) {
     return keyString.toUpperCase().charCodeAt(0);
 };
 
+Keyboard.prototype._keyCodeToScratchKey = function (keyCode) {
+    if (keyCode >= 48 && keyCode <= 90) {
+        // Standard letter.
+        return String.fromCharCode(keyCode).toLowerCase();
+    }
+    switch (keyCode) {
+    case 32: return 'space';
+    case 37: return 'leftarrow';
+    case 38: return 'uparrow';
+    case 39: return 'rightarrow';
+    case 40: return 'downarrow';
+    }
+    return null;
+};
+
 Keyboard.prototype.postData = function (data) {
     if (data.keyCode) {
         var index = this._keysPressed.indexOf(data.keyCode);
@@ -38,6 +59,16 @@ Keyboard.prototype.postData = function (data) {
             // If not already present, add to the list.
             if (index < 0) {
                 this._keysPressed.push(data.keyCode);
+                this.runtime.startHats('event_whenkeypressed',
+                    {
+                        'KEY_OPTION': this._keyCodeToScratchKey(data.keyCode)
+                                          .toUpperCase()
+                    });
+
+                this.runtime.startHats('event_whenkeypressed',
+                    {
+                        'KEY_OPTION': 'ANY'
+                    });
             }
         } else if (index > -1) {
             // If already present, remove from the list.
