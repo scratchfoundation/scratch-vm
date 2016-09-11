@@ -49,7 +49,8 @@ function parseScratchObject (object, runtime) {
             var costume = object.costumes[i];
             // @todo: Make sure all the relevant metadata is being pulled out.
             sprite.costumes.push({
-                skin: costume.baseLayerMD5,
+                skin: 'https://cdn.assets.scratch.mit.edu/internalapi/asset/' 
+                    + costume.baseLayerMD5 + '/get/',
                 name: costume.costumeName,
                 bitmapResolution: costume.bitmapResolution,
                 rotationCenterX: costume.rotationCenterX,
