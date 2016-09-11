@@ -51,6 +51,12 @@ Clone.prototype.initDrawable = function () {
 
 // Clone-level properties.
 /**
+ * Whether this clone represents the Scratch stage.
+ * @type {boolean}
+ */
+Clone.prototype.isStage = false;
+
+/**
  * Scratch X coordinate. Currently should range from -240 to 240.
  * @type {Number}
  */
@@ -107,6 +113,9 @@ Clone.prototype.effects = {
  * @param {!number} y New Y coordinate of clone, in Scratch coordinates.
  */
 Clone.prototype.setXY = function (x, y) {
+    if (this.isStage) {
+        return;
+    }
     this.x = x;
     this.y = y;
     if (this.renderer) {
@@ -121,6 +130,9 @@ Clone.prototype.setXY = function (x, y) {
  * @param {!number} direction New direction of clone.
  */
 Clone.prototype.setDirection = function (direction) {
+    if (this.isStage) {
+        return;
+    }
     // Keep direction between -179 and +180.
     this.direction = MathUtil.wrapClamp(direction, -179, 180);
     if (this.renderer) {
@@ -136,6 +148,9 @@ Clone.prototype.setDirection = function (direction) {
  * @param {?string} message Message to put in say bubble.
  */
 Clone.prototype.setSay = function (type, message) {
+    if (this.isStage) {
+        return;
+    }
     // @todo: Render to stage.
     if (!type || !message) {
         console.log('Clearing say bubble');
@@ -149,6 +164,9 @@ Clone.prototype.setSay = function (type, message) {
  * @param {!boolean} visible True if the sprite should be shown.
  */
 Clone.prototype.setVisible = function (visible) {
+    if (this.isStage) {
+        return;
+    }
     this.visible = visible;
     if (this.renderer) {
         this.renderer.updateDrawableProperties(this.drawableID, {
@@ -162,6 +180,9 @@ Clone.prototype.setVisible = function (visible) {
  * @param {!number} size Size of clone, from 5 to 535.
  */
 Clone.prototype.setSize = function (size) {
+    if (this.isStage) {
+        return;
+    }
     // Keep size between 5% and 535%.
     this.size = MathUtil.clamp(size, 5, 535);
     if (this.renderer) {
@@ -202,12 +223,29 @@ Clone.prototype.clearEffects = function () {
  * @param {number} index New index of costume.
  */
 Clone.prototype.setCostume = function (index) {
-    this.currentCostume = index;
+    // Keep the costume index within possible values.
+    this.currentCostume = MathUtil.wrapClamp(
+        index, 0, this.sprite.costumes.length - 1
+    );
     if (this.renderer) {
         this.renderer.updateDrawableProperties(this.drawableID, {
             skin: this.sprite.costumes[this.currentCostume].skin
         });
     }
+};
+
+/**
+ * Get a costume index of this clone, by name of the costume.
+ * @param {?string} costumeName Name of a costume.
+ * @return {number} Index of the named costume, or -1 if not present.
+ */
+Clone.prototype.getCostumeIndexByName = function (costumeName) {
+    for (var i = 0; i < this.sprite.costumes.length; i++) {
+        if (this.sprite.costumes[i].name == costumeName) {
+            return i;
+        }
+    }
+    return -1;
 };
 
 /**

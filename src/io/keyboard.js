@@ -62,12 +62,11 @@ Keyboard.prototype.postData = function (data) {
                 this.runtime.startHats('event_whenkeypressed',
                     {
                         'KEY_OPTION': this._keyCodeToScratchKey(data.keyCode)
-                                          .toUpperCase()
                     });
 
                 this.runtime.startHats('event_whenkeypressed',
                     {
-                        'KEY_OPTION': 'ANY'
+                        'KEY_OPTION': 'any'
                     });
             }
         } else if (index > -1) {

@@ -28,6 +28,12 @@ function Thread (firstBlock) {
      * @type {number}
      */
     this.status = 0; /* Thread.STATUS_RUNNING */
+
+    /**
+     * Whether the thread requests its script to glow during this frame.
+     * @type {boolean}
+     */
+    this.requestScriptGlowInFrame = false;
 }
 
 /**

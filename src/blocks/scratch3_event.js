@@ -29,10 +29,9 @@ Scratch3EventBlocks.prototype.getHats = function () {
         'event_whenthisspriteclicked': {
             restartExistingThreads: true
         },
-		/*
         'event_whenbackdropswitchesto': {
             restartExistingThreads: true
-        },*/
+        },
         'event_whengreaterthan': {
             restartExistingThreads: false,
             edgeActivated: true

@@ -130,7 +130,8 @@ test('getBranch', function (t) {
         inputs: {
             SUBSTACK: {
                 name: 'SUBSTACK',
-                block: 'foo2'
+                block: 'foo2',
+                shadow: null
             }
         },
         topLevel: true
@@ -164,11 +165,13 @@ test('getBranch2', function (t) {
         inputs: {
             SUBSTACK: {
                 name: 'SUBSTACK',
-                block: 'foo2'
+                block: 'foo2',
+                shadow: null
             },
             SUBSTACK2: {
                 name: 'SUBSTACK2',
-                block: 'foo3'
+                block: 'foo3',
+                shadow: null
             }
         },
         topLevel: true
@@ -285,6 +288,67 @@ test('move', function (t) {
     t.equal(Object.keys(b._blocks).length, 2);
     t.equal(b._blocks['foo'].next, null);
 
+    t.end();
+});
+
+test('move into empty', function (t) {
+    var b = new Blocks();
+    b.createBlock({
+        id: 'foo',
+        opcode: 'TEST_BLOCK',
+        next: null,
+        fields: {},
+        inputs: {},
+        topLevel: true
+    });
+    b.createBlock({
+        id: 'bar',
+        opcode: 'TEST_BLOCK',
+        next: null,
+        fields: {},
+        inputs: {},
+        topLevel: true
+    });
+    b.moveBlock({
+        id: 'bar',
+        newInput: 'fooInput',
+        newParent: 'foo'
+    });
+    t.equal(b._blocks['foo'].inputs['fooInput'].block, 'bar');
+    t.end();
+});
+
+test('move no obscure shadow', function (t) {
+    var b = new Blocks();
+    b.createBlock({
+        id: 'foo',
+        opcode: 'TEST_BLOCK',
+        next: null,
+        fields: {},
+        inputs: {
+            'fooInput': {
+                name: 'fooInput',
+                block: 'x',
+                shadow: 'y'
+            }
+        },
+        topLevel: true
+    });
+    b.createBlock({
+        id: 'bar',
+        opcode: 'TEST_BLOCK',
+        next: null,
+        fields: {},
+        inputs: {},
+        topLevel: true
+    });
+    b.moveBlock({
+        id: 'bar',
+        newInput: 'fooInput',
+        newParent: 'foo'
+    });
+    t.equal(b._blocks['foo'].inputs['fooInput'].block, 'bar');
+    t.equal(b._blocks['foo'].inputs['fooInput'].shadow, 'y');
     t.end();
 });
 
@@ -416,11 +480,13 @@ test('delete inputs', function (t) {
         inputs: {
             input1: {
                 name: 'input1',
-                block: 'foo2'
+                block: 'foo2',
+                shadow: 'foo2'
             },
             SUBSTACK: {
                 name: 'SUBSTACK',
-                block: 'foo3'
+                block: 'foo3',
+                shadow: null
             }
         },
         topLevel: true
@@ -434,6 +500,14 @@ test('delete inputs', function (t) {
         topLevel: false
     });
     b.createBlock({
+        id: 'foo5',
+        opcode: 'TEST_OBSCURED_SHADOW',
+        next: null,
+        fields: {},
+        inputs: {},
+        topLevel: false
+    });
+    b.createBlock({
         id: 'foo3',
         opcode: 'TEST_BLOCK',
         next: null,
@@ -441,7 +515,8 @@ test('delete inputs', function (t) {
         inputs: {
             subinput: {
                 name: 'subinput',
-                block: 'foo4'
+                block: 'foo4',
+                shadow: 'foo5'
             }
         },
         topLevel: false
@@ -461,6 +536,7 @@ test('delete inputs', function (t) {
     t.type(b._blocks['foo2'], 'undefined');
     t.type(b._blocks['foo3'], 'undefined');
     t.type(b._blocks['foo4'], 'undefined');
+    t.type(b._blocks['foo5'], 'undefined');
     t.equal(b._scripts.indexOf('foo'), -1);
     t.equal(Object.keys(b._blocks).length, 0);
     t.equal(b._scripts.length, 0);

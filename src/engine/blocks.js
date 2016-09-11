@@ -115,6 +115,20 @@ Blocks.prototype.getInputs = function (id) {
     return inputs;
 };
 
+/**
+ * Get the top-level script for a given block.
+ * @param {?string} id ID of block to query.
+ * @return {?string} ID of top-level script block.
+ */
+Blocks.prototype.getTopLevelScript = function (id) {
+    if (typeof this._blocks[id] === 'undefined') return null;
+    var block = this._blocks[id];
+    while (block.parent !== null) {
+        block = this._blocks[block.parent];
+    }
+    return block.id;
+};
+
 // ---------------------------------------------------------------------
 
 /**
@@ -166,6 +180,10 @@ Blocks.prototype.blocklyListen = function (e, isFlyout, opt_runtime) {
         });
         break;
     case 'delete':
+        // Don't accept delete events for shadow blocks being obscured.
+        if (this._blocks[e.blockId].shadow) {
+            return;
+        }
         this.deleteBlock({
             id: e.blockId
         });
@@ -181,9 +199,13 @@ Blocks.prototype.blocklyListen = function (e, isFlyout, opt_runtime) {
  * @param {boolean} opt_isFlyoutBlock Whether the block is in the flyout.
  */
 Blocks.prototype.createBlock = function (block, opt_isFlyoutBlock) {
-    // Create new block
+    // Does the block already exist?
+    // Could happen, e.g., for an unobscured shadow.
+    if (this._blocks.hasOwnProperty(block.id)) {
+        return;
+    }
+    // Create new block.
     this._blocks[block.id] = block;
-
     // Push block id to scripts array.
     // Blocks are added as a top-level stack if they are marked as a top-block
     // (if they were top-level XML in the event) and if they are not
@@ -229,6 +251,7 @@ Blocks.prototype.moveBlock = function (e) {
             // This block was connected to the old parent's next connection.
             oldParent.next = null;
         }
+        this._blocks[e.id].parent = null;
     }
 
     // Has the block become a top-level block?
@@ -239,15 +262,22 @@ Blocks.prototype.moveBlock = function (e) {
         this._deleteScript(e.id);
         // Otherwise, try to connect it in its new place.
         if (e.newInput !== undefined) {
-             // Moved to the new parent's input.
+            // Moved to the new parent's input.
+            // Don't obscure the shadow block.
+            var oldShadow = null;
+            if (this._blocks[e.newParent].inputs.hasOwnProperty(e.newInput)) {
+                oldShadow = this._blocks[e.newParent].inputs[e.newInput].shadow;
+            }
             this._blocks[e.newParent].inputs[e.newInput] = {
                 name: e.newInput,
-                block: e.id
+                block: e.id,
+                shadow: oldShadow
             };
         } else {
             // Moved to the new parent's next connection.
             this._blocks[e.newParent].next = e.id;
         }
+        this._blocks[e.id].parent = e.newParent;
     }
 };
 
@@ -271,6 +301,11 @@ Blocks.prototype.deleteBlock = function (e) {
         // If it's null, the block in this input moved away.
         if (block.inputs[input].block !== null) {
             this.deleteBlock({id: block.inputs[input].block});
+        }
+        // Delete obscured shadow blocks.
+        if (block.inputs[input].shadow !== null &&
+            block.inputs[input].shadow !== block.inputs[input].block) {
+            this.deleteBlock({id: block.inputs[input].shadow});
         }
     }
 
@@ -319,9 +354,16 @@ Blocks.prototype.blockToXML = function (blockId) {
     for (var input in block.inputs) {
         var blockInput = block.inputs[input];
         // Only encode a value tag if the value input is occupied.
-        if (blockInput.block) {
-            xmlString += '<value name="' + blockInput.name + '">' +
-                this.blockToXML(blockInput.block) + '</value>';
+        if (blockInput.block || blockInput.shadow) {
+            xmlString += '<value name="' + blockInput.name + '">';
+            if (blockInput.block) {
+                xmlString += this.blockToXML(blockInput.block);
+            }
+            if (blockInput.shadow && blockInput.shadow != blockInput.block) {
+                // Obscured shadow.
+                xmlString += this.blockToXML(blockInput.shadow);
+            }
+            xmlString += '</value>';
         }
     }
     // Add any fields on this block.
