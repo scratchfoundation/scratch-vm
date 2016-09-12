@@ -55,7 +55,7 @@ function Runtime () {
     this.ioDevices = {
         'clock': new Clock(),
         'keyboard': new Keyboard(this),
-        'mouse': new Mouse()
+        'mouse': new Mouse(this)
     };
 
     this._scriptGlowsPreviousFrame = [];

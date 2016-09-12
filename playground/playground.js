@@ -161,17 +161,35 @@ window.onload = function() {
     document.addEventListener('mousemove', function (e) {
         var rect = canvas.getBoundingClientRect();
         var coordinates = {
-            x: e.clientX - rect.left - rect.width / 2,
-            y: e.clientY - rect.top - rect.height / 2
+            x: e.clientX - rect.left,
+            y: e.clientY - rect.top,
+            canvasWidth: rect.width,
+            canvasHeight: rect.height
         };
         window.vm.postIOData('mouse', coordinates);
     });
     canvas.addEventListener('mousedown', function (e) {
-        window.vm.postIOData('mouse', {isDown: true});
+        var rect = canvas.getBoundingClientRect();
+        var data = {
+            isDown: true,
+            x: e.clientX - rect.left,
+            y: e.clientY - rect.top,
+            canvasWidth: rect.width,
+            canvasHeight: rect.height
+        };
+        window.vm.postIOData('mouse', data);
         e.preventDefault();
     });
     canvas.addEventListener('mouseup', function (e) {
-        window.vm.postIOData('mouse', {isDown: false});
+        var rect = canvas.getBoundingClientRect();
+        var data = {
+            isDown: false,
+            x: e.clientX - rect.left,
+            y: e.clientY - rect.top,
+            canvasWidth: rect.width,
+            canvasHeight: rect.height
+        };
+        window.vm.postIOData('mouse', data);
         e.preventDefault();
     });
 
