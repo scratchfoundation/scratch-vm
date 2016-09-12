@@ -5,6 +5,8 @@ function Clock () {
     this._projectTimer.start();
 }
 
+Clock.prototype.step = function () {};
+
 Clock.prototype.projectTimer = function () {
     return this._projectTimer.timeElapsed() / 1000;
 };
