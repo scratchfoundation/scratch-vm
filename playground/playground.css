@@ -60,6 +60,19 @@ ul {
     overflow: hidden;
     background-color: #333;
 }
+rendererTop {
+    display: block;
+    list-style-type: none;
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+    background-color: #696969;
+    width: 480px;
+}
+rendererButtons {
+    float: right;
+    padding: 12px;
+}
 li {
     float: left;
 }
