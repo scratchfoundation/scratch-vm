@@ -3,6 +3,8 @@ var util = require('util');
 
 var Runtime = require('./engine/runtime');
 var sb2import = require('./import/sb2import');
+var Sprite = require('./sprites/sprite');
+var Blocks = require('./engine/blocks');
 
 /**
  * Whether the environment is a WebWorker.
@@ -104,9 +106,51 @@ VirtualMachine.prototype.postIOData = function (device, data) {
 
 /**
  * Load a project from a Scratch 2.0 JSON representation.
- * @param {string} json JSON string representing the project.
+ * @param {?string} json JSON string representing the project.
+ * If JSON is NULL, fallback to creating blank project.
  */
 VirtualMachine.prototype.loadProject = function (json) {
+    if (!json) {
+        // Creates 'Stage'
+        var blocks2 = new Blocks();
+        var stage = new Sprite(blocks2);
+        stage.name = 'Stage';
+        stage.costumes.push({
+            skin: '/src/Stage.png',
+            name: 'backdrop1',
+            bitmapResolution: 1,
+            rotationCenterX: 240,
+            rotationCenterY: 180}); 
+        var target2 = stage.createClone();
+        this.runtime.targets.push(target2);
+        target2.x = 0;
+        target2.y = 0;
+        target2.direction = 90;
+        target2.size = 200;
+        target2.visible = true;
+        target2.isStage = true;
+        // Creates 'Sprite1'
+        var blocks1 = new Blocks();
+        var sprite = new Sprite(blocks1);
+        sprite.name = 'Sprite1';
+        sprite.costumes.push({
+            skin: '/src/scratch_cat.svg',
+            name: 'costume1',
+            bitmapResolution: 1,
+            rotationCenterX: 47,
+            rotationCenterY: 55}); 
+        var target1 = sprite.createClone();
+        this.runtime.targets.push(target1);
+        target1.x = 0;
+        target1.y = 0;
+        target1.direction = 90;
+        target1.size = 100;
+        target1.visible = true;
+        this.editingTarget = this.runtime.targets[0];
+        this.emitTargetsUpdate();
+        this.emitWorkspaceUpdate();
+        return;
+    }
     // @todo: Handle other formats, e.g., Scratch 1.4, Scratch 3.0.
     sb2import(json, this.runtime);
     // Select the first target for editing, e.g., the stage.

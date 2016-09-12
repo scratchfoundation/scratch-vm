@@ -1,11 +1,13 @@
 var loadProject = function () {
-    var id = location.hash.substring(1) || 119615668;
+    var id = location.hash.substring(1);
     var url = 'https://projects.scratch.mit.edu/internalapi/project/' +
         id + '/get/';
     var r = new XMLHttpRequest();
-    r.addEventListener('load', function() {
-        window.vm.loadProject(this.responseText);
-    });
+    r.onreadystatechange = function() {
+        if (this.readyState == 4) {
+            window.vm.loadProject(this.responseText);
+        }
+    };
     r.open('GET', url);
     r.send();
 };

@@ -1,6 +1,9 @@
 body {
     background: rgb(36,36,36);
 }
+textarea {
+    resize: none;
+}
 a {
     color: rgb(217,217,217);
 }
@@ -16,13 +19,12 @@ a {
     position: absolute;
     left: 1%;
     right: 60%;
-    top: 0;
+    top: 1%;
     bottom: 0;
     width: 35%;
 }
 #blockexplorer, #threadexplorer, #importexport {
     position: absolute;
-    width: 100%;
     height: 75%;
     overflow: scroll;
     border: 1px solid #fff;
@@ -30,17 +32,58 @@ a {
     color: rgb(217,217,217);
     font-family: monospace;
     font-size: 10pt;
+    width: 480px;
+    height: 360px;
 }
-
 #tab-blockexplorer, #tab-threadexplorer, #tab-importexport {
     display: none;
 }
-
 #importExport {
-    width: 400px;
+    width: 480px;
     height: 360px;
     background: rgb(36,36,36);
     color: rgb(217,217,217);
     font-family: monospace;
     font-size: 10pt;
+}
+#projectId {
+    background: rgb(36,36,36);
+    color: rgb(217,217,217);
+    font-family: monospace;
+    font-size: 10pt;
+}
+ul {
+    display: block;
+    list-style-type: none;
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+    background-color: #333;
+}
+rendererTop {
+    display: block;
+    list-style-type: none;
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+    background-color: #696969;
+    width: 480px;
+}
+rendererButtons {
+    float: right;
+    padding: 12px;
+}
+li {
+    float: left;
+}
+li a {
+    display: block;
+    color: white;
+    text-align: center;
+    padding: 14px 16px;
+    text-decoration: none;
+}
+/* Change the link color to #111 (black) on hover */
+li a:hover {
+    background-color: #111;
 }

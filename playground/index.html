@@ -9,19 +9,20 @@
 </head>
 <body>
     <div id="vm-devtools">
-        <h2>Scratch VM Playground</h2>
-        <button id="greenflag">Green flag</button>
-        <button id="stopall">Stop</button>
-        <select id="selectedTarget" multiple></select>
-        <p>
-            <a id="renderexplorer-link" href="#">Renderer</a><br />
-            <a id="threadexplorer-link" href="#">VM Threads</a><br />
-            <a id="blockexplorer-link" href="#">VM Block Representation</a><br />
-            <a id="importexport-link" href="#">Import/Export</a>
-        </p>
+        <ul>
+            <li><a id="renderexplorer-link" href="#">Home</a></li>
+            <li><a id="threadexplorer-link" href="#">VM Threads</a></li>
+            <li><a id="blockexplorer-link" href="#">VM Block Representation</a></li>
+            <li><a id="importexport-link" href="#">Import/Export</a></li>
+        </ul><br />
         <div id="tab-renderexplorer">
-            Render<br />
-            <canvas id="scratch-stage" style="width: 480px; height: 360px;"></canvas>
+            Home<br />
+            <rendererTop><rendererButtons>
+                <button id="greenflag">Green flag</button>
+                <button id="stopall">Stop</button><br />
+            </rendererButtons></rendererTop>
+            <canvas id="scratch-stage" style="width: 480px; height: 360px;"></canvas><br />
+            <select id="selectedTarget" multiple></select><br />
         </div>
         <div id="tab-threadexplorer">
             Thread explorer
@@ -32,8 +33,8 @@
             <pre id="blockexplorer"></pre>
         </div>
         <div id="tab-importexport">
-            Import/Export
-            <input id="projectId" value="119615668" />
+            Import/Export<br />
+            Project ID: <input id="projectId" value="" />
             <button id="projectLoadButton">Load SB2</button><br />
             <p>
                 <input type="button" value="Export to XML" onclick="toXml()">
