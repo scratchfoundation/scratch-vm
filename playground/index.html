@@ -9,20 +9,22 @@
 </head>
 <body>
     <div id="vm-devtools">
-        <ul>
-            <li><a id="renderexplorer-link" href="#">Home</a></li>
-            <li><a id="threadexplorer-link" href="#">VM Threads</a></li>
-            <li><a id="blockexplorer-link" href="#">VM Block Representation</a></li>
+        <h2>Scratch VM Playground</h2>
+        <select id="selectedTarget" multiple></select>
+        <div id="projectButtons">
+            <button id="greenflag">Green flag</button>
+            <button id="stopall">Stop</button>
+        </div>
+        <br />
+        <ul id="playgroundLinks">
+            <li><a id="renderexplorer-link" href="#">Renderer</a></li>
+            <li><a id="threadexplorer-link" href="#">Threads</a></li>
+            <li><a id="blockexplorer-link" href="#">Block Representation</a></li>
             <li><a id="importexport-link" href="#">Import/Export</a></li>
         </ul><br />
         <div id="tab-renderexplorer">
-            Home<br />
-            <rendererTop><rendererButtons>
-                <button id="greenflag">Green flag</button>
-                <button id="stopall">Stop</button><br />
-            </rendererButtons></rendererTop>
+            Renderer<br />
             <canvas id="scratch-stage" style="width: 480px; height: 360px;"></canvas><br />
-            <select id="selectedTarget" multiple></select><br />
         </div>
         <div id="tab-threadexplorer">
             Thread explorer
@@ -34,13 +36,13 @@
         </div>
         <div id="tab-importexport">
             Import/Export<br />
-            Project ID: <input id="projectId" value="" />
-            <button id="projectLoadButton">Load SB2</button><br />
+            Project ID: <input id="projectId" value="119615668" />
+            <button id="projectLoadButton">Load</button><br />
             <p>
                 <input type="button" value="Export to XML" onclick="toXml()">
                 &nbsp;
                 <input type="button" value="Import from XML" onclick="fromXml()" id="import">
-                <br><br>
+                <br /><br />
                 <textarea id="importExport"></textarea>
             </p>
         </div>

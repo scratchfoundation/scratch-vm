@@ -80,6 +80,10 @@ VirtualMachine.prototype.loadProject = function (json) {
     this.vmWorker.postMessage({method: 'loadProject', json: json});
 };
 
+VirtualMachine.prototype.createEmptyProject = function () {
+    this.vmWorker.postMessage({method: 'createEmptyProject'});
+};
+
 VirtualMachine.prototype.setEditingTarget = function (targetId) {
     this.vmWorker.postMessage({method: 'setEditingTarget', targetId: targetId});
 };
