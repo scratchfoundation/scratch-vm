@@ -1,8 +1,7 @@
 var loadProject = function () {
     var id = location.hash.substring(1);
     if (id.length < 1) {
-        window.vm.createEmptyProject();
-        return;
+        id = '119615668';
     }
     var url = 'https://projects.scratch.mit.edu/internalapi/project/' +
         id + '/get/';
