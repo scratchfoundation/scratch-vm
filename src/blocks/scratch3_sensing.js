@@ -1,3 +1,5 @@
+var Cast = require('../util/cast');
+
 function Scratch3SensingBlocks(runtime) {
     /**
      * The runtime instantiating this block package.
@@ -12,6 +14,9 @@ function Scratch3SensingBlocks(runtime) {
  */
 Scratch3SensingBlocks.prototype.getPrimitives = function() {
     return {
+        'colour_picker': this.colorPicker,
+        'sensing_touchingcolor': this.touchingColor,
+        'sensing_coloristouchingcolor': this.colorTouchingColor,
         'sensing_timer': this.getTimer,
         'sensing_resettimer': this.resetTimer,
         'sensing_mousex': this.getMouseX,
@@ -22,6 +27,21 @@ Scratch3SensingBlocks.prototype.getPrimitives = function() {
         'sensing_current': this.current,
         'sensing_currentmenu': this.currentMenu
     };
+};
+
+Scratch3SensingBlocks.prototype.colorPicker = function (args) {
+    return args.COLOUR;
+};
+
+Scratch3SensingBlocks.prototype.touchingColor = function (args, util) {
+    var color = Cast.toRgbColorList(args.COLOR);
+    return util.target.isTouchingColor(color);
+};
+
+Scratch3SensingBlocks.prototype.colorTouchingColor = function (args, util) {
+    var maskColor = Cast.toRgbColorList(args.COLOR);
+    var targetColor = Cast.toRgbColorList(args.COLOR2);
+    return util.target.colorIsTouchingColor(targetColor, maskColor);
 };
 
 Scratch3SensingBlocks.prototype.getTimer = function (args, util) {
