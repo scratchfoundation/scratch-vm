@@ -1,11 +1,11 @@
 body {
     background: rgb(36,36,36);
 }
-textarea {
-    resize: none;
-}
 a {
     color: rgb(217,217,217);
+}
+h2 {
+    font-size: 1em;
 }
 #blocks {
     position: absolute;
@@ -52,7 +52,7 @@ a {
     font-family: monospace;
     font-size: 10pt;
 }
-ul {
+ul#projectBar {
     display: block;
     list-style-type: none;
     margin: 0;
@@ -60,30 +60,22 @@ ul {
     overflow: hidden;
     background-color: #333;
 }
-rendererTop {
-    display: block;
-    list-style-type: none;
-    margin: 0;
-    padding: 0;
-    overflow: hidden;
-    background-color: #696969;
-    width: 480px;
-}
-rendererButtons {
-    float: right;
-    padding: 12px;
-}
-li {
+#projectBar li {
     float: left;
 }
-li a {
+#projectBar li a {
     display: block;
     color: white;
     text-align: center;
-    padding: 14px 16px;
-    text-decoration: none;
+    padding: 5px 10px;
 }
-/* Change the link color to #111 (black) on hover */
-li a:hover {
+#projectBar li a:hover {
     background-color: #111;
+}
+#rendererTop {
+    display: block;
+    margin: 0;
+    padding: 0;
+    background-color: #696969;
+    width: 480px;
 }
