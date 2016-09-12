@@ -14,7 +14,6 @@ function Scratch3SensingBlocks(runtime) {
  */
 Scratch3SensingBlocks.prototype.getPrimitives = function() {
     return {
-        'colour_picker': this.colorPicker,
         'sensing_touchingcolor': this.touchingColor,
         'sensing_coloristouchingcolor': this.colorTouchingColor,
         'sensing_timer': this.getTimer,
@@ -22,15 +21,9 @@ Scratch3SensingBlocks.prototype.getPrimitives = function() {
         'sensing_mousex': this.getMouseX,
         'sensing_mousey': this.getMouseY,
         'sensing_mousedown': this.getMouseDown,
-        'sensing_keyoptions': this.keyOptions,
         'sensing_keypressed': this.getKeyPressed,
-        'sensing_current': this.current,
-        'sensing_currentmenu': this.currentMenu
+        'sensing_current': this.current
     };
-};
-
-Scratch3SensingBlocks.prototype.colorPicker = function (args) {
-    return args.COLOUR;
 };
 
 Scratch3SensingBlocks.prototype.touchingColor = function (args, util) {
@@ -65,8 +58,9 @@ Scratch3SensingBlocks.prototype.getMouseDown = function (args, util) {
 };
 
 Scratch3SensingBlocks.prototype.current = function (args) {
+    var menuOption = Cast.toString(args.CURRENTMENU).toLowerCase();
     var date = new Date();
-    switch (args.CURRENTMENU) {
+    switch (menuOption) {
     case 'year': return date.getFullYear();
     case 'month': return date.getMonth() + 1; // getMonth is zero-based
     case 'date': return date.getDate();
@@ -75,14 +69,7 @@ Scratch3SensingBlocks.prototype.current = function (args) {
     case 'minute': return date.getMinutes();
     case 'second': return date.getSeconds();
     }
-};
-
-Scratch3SensingBlocks.prototype.currentMenu = function (args) {
-    return args.CURRENTMENU.toLowerCase();
-};
-
-Scratch3SensingBlocks.prototype.keyOptions = function (args) {
-    return args.KEY_OPTION.toLowerCase();
+    return 0;
 };
 
 Scratch3SensingBlocks.prototype.getKeyPressed = function (args, util) {

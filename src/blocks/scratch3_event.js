@@ -1,3 +1,5 @@
+var Cast = require('../util/cast');
+
 function Scratch3EventBlocks(runtime) {
     /**
      * The runtime instantiating this block package.
@@ -43,26 +45,30 @@ Scratch3EventBlocks.prototype.getHats = function () {
 };
 
 Scratch3EventBlocks.prototype.hatGreaterThanPredicate = function (args, util) {
+    var option = Cast.toString(args.WHENGREATERTHANMENU).toLowerCase();
+    var value = Cast.toNumber(args.VALUE);
     // @todo: Other cases :)
-    if (args.WHENGREATERTHANMENU == 'TIMER') {
-        return util.ioQuery('clock', 'projectTimer') > args.VALUE;
+    if (option == 'timer') {
+        return util.ioQuery('clock', 'projectTimer') > value;
     }
     return false;
 };
 
 Scratch3EventBlocks.prototype.broadcast = function(args, util) {
+    var broadcastOption = Cast.toString(args.BROADCAST_OPTION);
     util.startHats('event_whenbroadcastreceived', {
-        'BROADCAST_OPTION': args.BROADCAST_OPTION
+        'BROADCAST_OPTION': broadcastOption
     });
 };
 
 Scratch3EventBlocks.prototype.broadcastAndWait = function (args, util) {
+    var broadcastOption = Cast.toString(args.BROADCAST_OPTION);
     // Have we run before, starting threads?
     if (!util.stackFrame.startedThreads) {
         // No - start hats for this broadcast.
         util.stackFrame.startedThreads = util.startHats(
             'event_whenbroadcastreceived', {
-                'BROADCAST_OPTION': args.BROADCAST_OPTION
+                'BROADCAST_OPTION': broadcastOption
             }
         );
         if (util.stackFrame.startedThreads.length == 0) {

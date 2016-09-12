@@ -20,14 +20,11 @@ Scratch3LooksBlocks.prototype.getPrimitives = function() {
         'looks_thinkforsecs': this.sayforsecs,
         'looks_show': this.show,
         'looks_hide': this.hide,
-        'looks_backdrops': this.backdropMenu,
-        'looks_costume': this.costumeMenu,
         'looks_switchcostumeto': this.switchCostume,
         'looks_switchbackdropto': this.switchBackdrop,
         'looks_switchbackdroptoandwait': this.switchBackdropAndWait,
         'looks_nextcostume': this.nextCostume,
         'looks_nextbackdrop': this.nextBackdrop,
-        'looks_effectmenu': this.effectMenu,
         'looks_changeeffectby': this.changeEffect,
         'looks_seteffectto': this.setEffect,
         'looks_cleargraphiceffects': this.clearEffects,
@@ -119,11 +116,6 @@ Scratch3LooksBlocks.prototype._setCostumeOrBackdrop = function (target,
     return [];
 };
 
-// @todo(GH-146): Remove.
-Scratch3LooksBlocks.prototype.costumeMenu = function (args) {
-    return args.COSTUME;
-};
-
 Scratch3LooksBlocks.prototype.switchCostume = function (args, util) {
     this._setCostumeOrBackdrop(util.target, args.COSTUME);
 };
@@ -132,11 +124,6 @@ Scratch3LooksBlocks.prototype.nextCostume = function (args, util) {
     this._setCostumeOrBackdrop(
         util.target, util.target.currentCostume + 1, true
     );
-};
-
-// @todo(GH-146): Remove.
-Scratch3LooksBlocks.prototype.backdropMenu = function (args) {
-    return args.BACKDROP;
 };
 
 Scratch3LooksBlocks.prototype.switchBackdrop = function (args) {
@@ -175,17 +162,18 @@ Scratch3LooksBlocks.prototype.nextBackdrop = function () {
     );
 };
 
-Scratch3LooksBlocks.prototype.effectMenu = function (args) {
-    return args.EFFECT.toLowerCase();
-};
-
 Scratch3LooksBlocks.prototype.changeEffect = function (args, util) {
-    var newValue = args.CHANGE + util.target.effects[args.EFFECT];
-    util.target.setEffect(args.EFFECT, newValue);
+    var effect = Cast.toString(args.EFFECT).toLowerCase();
+    var change = Cast.toNumber(args.CHANGE);
+    if (!util.target.effects.hasOwnProperty(effect)) return;
+    var newValue = change + util.target.effects[effect];
+    util.target.setEffect(effect, newValue);
 };
 
 Scratch3LooksBlocks.prototype.setEffect = function (args, util) {
-    util.target.setEffect(args.EFFECT, args.VALUE);
+    var effect = Cast.toString(args.EFFECT).toLowerCase();
+    var value = Cast.toNumber(args.VALUE);
+    util.target.setEffect(effect, value);
 };
 
 Scratch3LooksBlocks.prototype.clearEffects = function (args, util) {
@@ -193,11 +181,13 @@ Scratch3LooksBlocks.prototype.clearEffects = function (args, util) {
 };
 
 Scratch3LooksBlocks.prototype.changeSize = function (args, util) {
-    util.target.setSize(util.target.size + args.CHANGE);
+    var change = Cast.toNumber(args.CHANGE);
+    util.target.setSize(util.target.size + change);
 };
 
 Scratch3LooksBlocks.prototype.setSize = function (args, util) {
-    util.target.setSize(args.SIZE);
+    var size = Cast.toNumber(args.SIZE);
+    util.target.setSize(size);
 };
 
 Scratch3LooksBlocks.prototype.getSize = function (args, util) {
