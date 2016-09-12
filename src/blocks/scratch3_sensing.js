@@ -14,7 +14,6 @@ function Scratch3SensingBlocks(runtime) {
  */
 Scratch3SensingBlocks.prototype.getPrimitives = function() {
     return {
-        'colour_picker': this.colorPicker,
         'sensing_touchingcolor': this.touchingColor,
         'sensing_coloristouchingcolor': this.colorTouchingColor,
         'sensing_timer': this.getTimer,
@@ -25,10 +24,6 @@ Scratch3SensingBlocks.prototype.getPrimitives = function() {
         'sensing_keypressed': this.getKeyPressed,
         'sensing_current': this.current
     };
-};
-
-Scratch3SensingBlocks.prototype.colorPicker = function (args) {
-    return args.COLOUR;
 };
 
 Scratch3SensingBlocks.prototype.touchingColor = function (args, util) {
