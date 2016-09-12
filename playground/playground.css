@@ -50,7 +50,7 @@ h2 {
     font-family: monospace;
     font-size: 10pt;
 }
-ul#projectBar {
+ul#playgroundLinks {
     display: block;
     list-style-type: none;
     margin: 0;
@@ -58,22 +58,15 @@ ul#projectBar {
     overflow: hidden;
     background-color: #333;
 }
-#projectBar li {
+#playgroundLinks li {
     float: left;
 }
-#projectBar li a {
+#playgroundLinks li a {
     display: block;
     color: white;
     text-align: center;
     padding: 5px 10px;
 }
-#projectBar li a:hover {
+#playgroundLinks li a:hover {
     background-color: #111;
-}
-#rendererTop {
-    display: block;
-    margin: 0;
-    padding: 0;
-    background-color: #696969;
-    width: 480px;
 }
