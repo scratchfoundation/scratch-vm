@@ -371,7 +371,7 @@ Blocks.prototype.blockToXML = function (blockId) {
     for (var field in block.fields) {
         var blockField = block.fields[field];
         var value = blockField.value;
-        if (typeof value == 'string') {
+        if (typeof value === 'string') {
             value = xmlEscape(blockField.value);
         }
         xmlString += '<field name="' + blockField.name + '">' +
