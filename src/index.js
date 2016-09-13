@@ -7,12 +7,6 @@ var Sprite = require('./sprites/sprite');
 var Blocks = require('./engine/blocks');
 
 /**
- * Whether the environment is a WebWorker.
- * @const{boolean}
- */
-var ENV_WORKER = typeof importScripts === 'function';
-
-/**
  * Handles connections between blocks, stage, and extensions.
  *
  * @author Andrew Sliwinski <ascii@media.mit.edu>
@@ -48,6 +42,8 @@ function VirtualMachine () {
     instance.runtime.on(Runtime.VISUAL_REPORT, function (id, value) {
         instance.emit(Runtime.VISUAL_REPORT, {id: id, value: value});
     });
+
+    this.blockListener = this.blockListener.bind(this);
 }
 
 /**
@@ -167,6 +163,20 @@ VirtualMachine.prototype.createEmptyProject = function () {
 };
 
 /**
+ * Handle a Blockly event for the current editing target.
+ * @param {!Blockly.Event} e Any Blockly event.
+ */
+VirtualMachine.prototype.blockListener = function (e) {
+    if (this.editingTarget) {
+        this.editingTarget.blocks.blocklyListen(
+            e,
+            false,
+            this.runtime
+        );
+    }
+};
+
+/**
  * Set an editing target. An editor UI can use this function to switch
  * between editing different targets, sprites, etc.
  * After switching the editing target, the VM may emit updates
@@ -214,107 +224,6 @@ VirtualMachine.prototype.emitWorkspaceUpdate = function () {
         'xml': this.editingTarget.blocks.toXML()
     });
 };
-
-/*
- * Worker handlers: for all public methods available above,
- * we must also provide a message handler in case the VM is run
- * from a worker environment.
- */
-if (ENV_WORKER) {
-    self.importScripts(
-        './node_modules/scratch-render/render-worker.js'
-    );
-    self.renderer = new self.RenderWebGLWorker();
-    self.vmInstance = new VirtualMachine();
-    self.onmessage = function (e) {
-        var messageData = e.data;
-        switch (messageData.method) {
-        case 'start':
-            self.vmInstance.runtime.start();
-            break;
-        case 'greenFlag':
-            self.vmInstance.runtime.greenFlag();
-            break;
-        case 'stopAll':
-            self.vmInstance.runtime.stopAll();
-            break;
-        case 'blockListener':
-            if (self.vmInstance.editingTarget) {
-                self.vmInstance.editingTarget.blocks.blocklyListen(
-                    messageData.args,
-                    false,
-                    self.vmInstance.runtime
-                );
-            }
-            break;
-        case 'flyoutBlockListener':
-            if (self.vmInstance.editingTarget) {
-                self.vmInstance.editingTarget.blocks.blocklyListen(
-                    messageData.args,
-                    true,
-                    self.vmInstance.runtime
-                );
-            }
-            break;
-        case 'getPlaygroundData':
-            self.postMessage({
-                method: 'playgroundData',
-                blocks: self.vmInstance.editingTarget.blocks,
-                threads: self.vmInstance.runtime.threads
-            });
-            break;
-        case 'animationFrame':
-            self.vmInstance.animationFrame();
-            break;
-        case 'postIOData':
-            self.vmInstance.postIOData(messageData.device, messageData.data);
-            break;
-        case 'setEditingTarget':
-            self.vmInstance.setEditingTarget(messageData.targetId);
-            break;
-        case 'createEmptyProject':
-            self.vmInstance.createEmptyProject();
-            break;
-        case 'loadProject':
-            self.vmInstance.loadProject(messageData.json);
-            break;
-        default:
-            if (e.data.id == 'RendererConnected') {
-                //initRenderWorker();
-            }
-            self.renderer.onmessage(e);
-            break;
-        }
-    };
-    // Bind runtime's emitted events to postmessages.
-    self.vmInstance.runtime.on(Runtime.SCRIPT_GLOW_ON, function (id) {
-        self.postMessage({method: Runtime.SCRIPT_GLOW_ON, id: id});
-    });
-    self.vmInstance.runtime.on(Runtime.SCRIPT_GLOW_OFF, function (id) {
-        self.postMessage({method: Runtime.SCRIPT_GLOW_OFF, id: id});
-    });
-    self.vmInstance.runtime.on(Runtime.BLOCK_GLOW_ON, function (id) {
-        self.postMessage({method: Runtime.BLOCK_GLOW_ON, id: id});
-    });
-    self.vmInstance.runtime.on(Runtime.BLOCK_GLOW_OFF, function (id) {
-        self.postMessage({method: Runtime.BLOCK_GLOW_OFF, id: id});
-    });
-    self.vmInstance.runtime.on(Runtime.VISUAL_REPORT, function (id, value) {
-        self.postMessage({method: Runtime.VISUAL_REPORT, id: id, value: value});
-    });
-    self.vmInstance.on('workspaceUpdate', function(data) {
-        self.postMessage({method: 'workspaceUpdate',
-            xml: data.xml
-        });
-    });
-    self.vmInstance.on('targetsUpdate', function(data) {
-        self.postMessage({method: 'targetsUpdate',
-            targetList: data.targetList,
-            editingTarget: data.editingTarget
-        });
-    });
-}
-
 /**
  * Export and bind to `window`
  */
