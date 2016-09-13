@@ -47,14 +47,10 @@
 	var EventEmitter = __webpack_require__(1);
 	var util = __webpack_require__(2);
 
-	var Sprite = __webpack_require__(6);
-	var Runtime = __webpack_require__(61);
-
-	/**
-	 * Whether the environment is a WebWorker.
-	 * @const{boolean}
-	 */
-	var ENV_WORKER = typeof importScripts === 'function';
+	var Runtime = __webpack_require__(6);
+	var sb2import = __webpack_require__(33);
+	var Sprite = __webpack_require__(85);
+	var Blocks = __webpack_require__(34);
 
 	/**
 	 * Handles connections between blocks, stage, and extensions.
@@ -63,35 +59,25 @@
 	 */
 	function VirtualMachine () {
 	    var instance = this;
-
 	    // Bind event emitter and runtime to VM instance
-	    // @todo Post message (Web Worker) polyfill
 	    EventEmitter.call(instance);
-	    // @todo support multiple targets/sprites.
-	    // This is just a demo/example.
-	    var exampleSprite = new Sprite();
-	    exampleSprite.createClone();
-	    var exampleTargets = [exampleSprite.clones[0]];
-	    instance.exampleSprite = exampleSprite;
-	    instance.runtime = new Runtime(exampleTargets);
-
 	    /**
-	     * Event listeners for scratch-blocks.
+	     * VM runtime, to store blocks, I/O devices, sprites/targets, etc.
+	     * @type {!Runtime}
 	     */
-	    instance.blockListener = (
-	        exampleSprite.blocks.generateBlockListener(false, instance.runtime)
-	    );
-
-	    instance.flyoutBlockListener = (
-	        exampleSprite.blocks.generateBlockListener(true, instance.runtime)
-	    );
-
+	    instance.runtime = new Runtime();
+	    /**
+	     * The "currently editing"/selected target ID for the VM.
+	     * Block events from any Blockly workspace are routed to this target.
+	     * @type {!string}
+	     */
+	    instance.editingTarget = null;
 	    // Runtime emits are passed along as VM emits.
-	    instance.runtime.on(Runtime.STACK_GLOW_ON, function (id) {
-	        instance.emit(Runtime.STACK_GLOW_ON, {id: id});
+	    instance.runtime.on(Runtime.SCRIPT_GLOW_ON, function (id) {
+	        instance.emit(Runtime.SCRIPT_GLOW_ON, {id: id});
 	    });
-	    instance.runtime.on(Runtime.STACK_GLOW_OFF, function (id) {
-	        instance.emit(Runtime.STACK_GLOW_OFF, {id: id});
+	    instance.runtime.on(Runtime.SCRIPT_GLOW_OFF, function (id) {
+	        instance.emit(Runtime.SCRIPT_GLOW_OFF, {id: id});
 	    });
 	    instance.runtime.on(Runtime.BLOCK_GLOW_ON, function (id) {
 	        instance.emit(Runtime.BLOCK_GLOW_ON, {id: id});
@@ -102,6 +88,8 @@
 	    instance.runtime.on(Runtime.VISUAL_REPORT, function (id, value) {
 	        instance.emit(Runtime.VISUAL_REPORT, {id: id, value: value});
 	    });
+
+	    this.blockListener = this.blockListener.bind(this);
 	}
 
 	/**
@@ -135,7 +123,7 @@
 	 */
 	VirtualMachine.prototype.getPlaygroundData = function () {
 	    this.emit('playgroundData', {
-	        blocks: this.exampleSprite.blocks,
+	        blocks: this.editingTarget.blocks,
 	        threads: this.runtime.threads
 	    });
 	};
@@ -158,74 +146,130 @@
 	    }
 	};
 
-	/*
-	 * Worker handlers: for all public methods available above,
-	 * we must also provide a message handler in case the VM is run
-	 * from a worker environment.
+	/**
+	 * Load a project from a Scratch 2.0 JSON representation.
+	 * @param {?string} json JSON string representing the project.
 	 */
-	if (ENV_WORKER) {
-	    self.importScripts(
-	        './node_modules/scratch-render/render-worker.js'
-	    );
-	    self.renderer = new self.RenderWebGLWorker();
-	    self.vmInstance = new VirtualMachine();
-	    self.onmessage = function (e) {
-	        var messageData = e.data;
-	        switch (messageData.method) {
-	        case 'start':
-	            self.vmInstance.runtime.start();
-	            break;
-	        case 'greenFlag':
-	            self.vmInstance.runtime.greenFlag();
-	            break;
-	        case 'stopAll':
-	            self.vmInstance.runtime.stopAll();
-	            break;
-	        case 'blockListener':
-	            self.vmInstance.blockListener(messageData.args);
-	            break;
-	        case 'flyoutBlockListener':
-	            self.vmInstance.flyoutBlockListener(messageData.args);
-	            break;
-	        case 'getPlaygroundData':
-	            self.postMessage({
-	                method: 'playgroundData',
-	                blocks: self.vmInstance.exampleSprite.blocks,
-	                threads: self.vmInstance.runtime.threads
-	            });
-	            break;
-	        case 'animationFrame':
-	            self.vmInstance.animationFrame();
-	            break;
-	        case 'postIOData':
-	            self.vmInstance.postIOData(messageData.device, messageData.data);
-	            break;
-	        default:
-	            if (e.data.id == 'RendererConnected') {
-	                //initRenderWorker();
-	            }
-	            self.renderer.onmessage(e);
-	            break;
-	        }
-	    };
-	    // Bind runtime's emitted events to postmessages.
-	    self.vmInstance.runtime.on(Runtime.STACK_GLOW_ON, function (id) {
-	        self.postMessage({method: Runtime.STACK_GLOW_ON, id: id});
-	    });
-	    self.vmInstance.runtime.on(Runtime.STACK_GLOW_OFF, function (id) {
-	        self.postMessage({method: Runtime.STACK_GLOW_OFF, id: id});
-	    });
-	    self.vmInstance.runtime.on(Runtime.BLOCK_GLOW_ON, function (id) {
-	        self.postMessage({method: Runtime.BLOCK_GLOW_ON, id: id});
-	    });
-	    self.vmInstance.runtime.on(Runtime.BLOCK_GLOW_OFF, function (id) {
-	        self.postMessage({method: Runtime.BLOCK_GLOW_OFF, id: id});
-	    });
-	    self.vmInstance.runtime.on(Runtime.VISUAL_REPORT, function (id, value) {
-	        self.postMessage({method: Runtime.VISUAL_REPORT, id: id, value: value});
-	    });
-	}
+	VirtualMachine.prototype.loadProject = function (json) {
+	    // @todo: Handle other formats, e.g., Scratch 1.4, Scratch 3.0.
+	    sb2import(json, this.runtime);
+	    // Select the first target for editing, e.g., the stage.
+	    this.editingTarget = this.runtime.targets[0];
+	    // Update the VM user's knowledge of targets and blocks on the workspace.
+	    this.emitTargetsUpdate();
+	    this.emitWorkspaceUpdate();
+	    this.runtime.setEditingTarget(this.editingTarget);
+	};
 
+	/**
+	 * Temporary way to make an empty project, in case the desired project
+	 * cannot be loaded from the online server.
+	 */
+	VirtualMachine.prototype.createEmptyProject = function () {
+	    // Stage.
+	    var blocks2 = new Blocks();
+	    var stage = new Sprite(blocks2);
+	    stage.name = 'Stage';
+	    stage.costumes.push({
+	        skin: '/assets/stage.png',
+	        name: 'backdrop1',
+	        bitmapResolution: 1,
+	        rotationCenterX: 240,
+	        rotationCenterY: 180
+	    });
+	    var target2 = stage.createClone();
+	    this.runtime.targets.push(target2);
+	    target2.x = 0;
+	    target2.y = 0;
+	    target2.direction = 90;
+	    target2.size = 200;
+	    target2.visible = true;
+	    target2.isStage = true;
+	    // Sprite1 (cat).
+	    var blocks1 = new Blocks();
+	    var sprite = new Sprite(blocks1);
+	    sprite.name = 'Sprite1';
+	    sprite.costumes.push({
+	        skin: '/assets/scratch_cat.svg',
+	        name: 'costume1',
+	        bitmapResolution: 1,
+	        rotationCenterX: 47,
+	        rotationCenterY: 55
+	    });
+	    var target1 = sprite.createClone();
+	    this.runtime.targets.push(target1);
+	    target1.x = 0;
+	    target1.y = 0;
+	    target1.direction = 90;
+	    target1.size = 100;
+	    target1.visible = true;
+	    this.editingTarget = this.runtime.targets[0];
+	    this.emitTargetsUpdate();
+	    this.emitWorkspaceUpdate();
+	};
+
+	/**
+	 * Handle a Blockly event for the current editing target.
+	 * @param {!Blockly.Event} e Any Blockly event.
+	 */
+	VirtualMachine.prototype.blockListener = function (e) {
+	    if (this.editingTarget) {
+	        this.editingTarget.blocks.blocklyListen(
+	            e,
+	            false,
+	            this.runtime
+	        );
+	    }
+	};
+
+	/**
+	 * Set an editing target. An editor UI can use this function to switch
+	 * between editing different targets, sprites, etc.
+	 * After switching the editing target, the VM may emit updates
+	 * to the list of targets and any attached workspace blocks
+	 * (see `emitTargetsUpdate` and `emitWorkspaceUpdate`).
+	 * @param {string} targetId Id of target to set as editing.
+	 */
+	VirtualMachine.prototype.setEditingTarget = function (targetId) {
+	    // Has the target id changed? If not, exit.
+	    if (targetId == this.editingTarget.id) {
+	        return;
+	    }
+	    var target = this.runtime.getTargetById(targetId);
+	    if (target) {
+	        this.editingTarget = target;
+	        // Emit appropriate UI updates.
+	        this.emitTargetsUpdate();
+	        this.emitWorkspaceUpdate();
+	        this.runtime.setEditingTarget(target);
+	    }
+	};
+
+	/**
+	 * Emit metadata about available targets.
+	 * An editor UI could use this to display a list of targets and show
+	 * the currently editing one.
+	 */
+	VirtualMachine.prototype.emitTargetsUpdate = function () {
+	    this.emit('targetsUpdate', {
+	        // [[target id, human readable target name], ...].
+	        targetList: this.runtime.targets.map(function(target) {
+	            return [target.id, target.getName()];
+	        }),
+	        // Currently editing target id.
+	        editingTarget: this.editingTarget.id
+	    });
+	};
+
+	/**
+	 * Emit an Blockly/scratch-blocks compatible XML representation
+	 * of the current editing target's blocks.
+	 */
+	VirtualMachine.prototype.emitWorkspaceUpdate = function () {
+	    this.emit('workspaceUpdate', {
+	        'xml': this.editingTarget.blocks.toXML()
+	    });
+	};
 	/**
 	 * Export and bind to `window`
 	 */
@@ -296,8 +340,12 @@
 	      er = arguments[1];
 	      if (er instanceof Error) {
 	        throw er; // Unhandled 'error' event
+	      } else {
+	        // At least give some kind of context to the user
+	        var err = new Error('Uncaught, unspecified "error" event. (' + er + ')');
+	        err.context = er;
+	        throw err;
 	      }
-	      throw TypeError('Uncaught, unspecified "error" event.');
 	    }
 	  }
 
@@ -1135,8 +1183,74 @@
 /***/ function(module, exports) {
 
 	// shim for using process in browser
-
 	var process = module.exports = {};
+
+	// cached from whatever global is present so that test runners that stub it
+	// don't break things.  But we need to wrap it in a try catch in case it is
+	// wrapped in strict mode code which doesn't define any globals.  It's inside a
+	// function because try/catches deoptimize in certain engines.
+
+	var cachedSetTimeout;
+	var cachedClearTimeout;
+
+	(function () {
+	    try {
+	        cachedSetTimeout = setTimeout;
+	    } catch (e) {
+	        cachedSetTimeout = function () {
+	            throw new Error('setTimeout is not defined');
+	        }
+	    }
+	    try {
+	        cachedClearTimeout = clearTimeout;
+	    } catch (e) {
+	        cachedClearTimeout = function () {
+	            throw new Error('clearTimeout is not defined');
+	        }
+	    }
+	} ())
+	function runTimeout(fun) {
+	    if (cachedSetTimeout === setTimeout) {
+	        //normal enviroments in sane situations
+	        return setTimeout(fun, 0);
+	    }
+	    try {
+	        // when when somebody has screwed with setTimeout but no I.E. maddness
+	        return cachedSetTimeout(fun, 0);
+	    } catch(e){
+	        try {
+	            // When we are in I.E. but the script has been evaled so I.E. doesn't trust the global object when called normally
+	            return cachedSetTimeout.call(null, fun, 0);
+	        } catch(e){
+	            // same as above but when it's a version of I.E. that must have the global object for 'this', hopfully our context correct otherwise it will throw a global error
+	            return cachedSetTimeout.call(this, fun, 0);
+	        }
+	    }
+
+
+	}
+	function runClearTimeout(marker) {
+	    if (cachedClearTimeout === clearTimeout) {
+	        //normal enviroments in sane situations
+	        return clearTimeout(marker);
+	    }
+	    try {
+	        // when when somebody has screwed with setTimeout but no I.E. maddness
+	        return cachedClearTimeout(marker);
+	    } catch (e){
+	        try {
+	            // When we are in I.E. but the script has been evaled so I.E. doesn't  trust the global object when called normally
+	            return cachedClearTimeout.call(null, marker);
+	        } catch (e){
+	            // same as above but when it's a version of I.E. that must have the global object for 'this', hopfully our context correct otherwise it will throw a global error.
+	            // Some versions of I.E. have different rules for clearTimeout vs setTimeout
+	            return cachedClearTimeout.call(this, marker);
+	        }
+	    }
+
+
+
+	}
 	var queue = [];
 	var draining = false;
 	var currentQueue;
@@ -1161,7 +1275,7 @@
 	    if (draining) {
 	        return;
 	    }
-	    var timeout = setTimeout(cleanUpNextTick);
+	    var timeout = runTimeout(cleanUpNextTick);
 	    draining = true;
 
 	    var len = queue.length;
@@ -1178,7 +1292,7 @@
 	    }
 	    currentQueue = null;
 	    draining = false;
-	    clearTimeout(timeout);
+	    runClearTimeout(timeout);
 	}
 
 	process.nextTick = function (fun) {
@@ -1190,7 +1304,7 @@
 	    }
 	    queue.push(new Item(fun, args));
 	    if (queue.length === 1 && !draining) {
-	        setTimeout(drainQueue, 0);
+	        runTimeout(drainQueue);
 	    }
 	};
 
@@ -1274,232 +1388,1504 @@
 /* 6 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var Clone = __webpack_require__(7);
-	var Blocks = __webpack_require__(10);
+	var EventEmitter = __webpack_require__(1);
+	var Sequencer = __webpack_require__(7);
+	var Thread = __webpack_require__(9);
+	var util = __webpack_require__(2);
+
+	// Virtual I/O devices.
+	var Clock = __webpack_require__(11);
+	var Keyboard = __webpack_require__(12);
+	var Mouse = __webpack_require__(15);
+
+	var defaultBlockPackages = {
+	    'scratch3_control': __webpack_require__(17),
+	    'scratch3_event': __webpack_require__(28),
+	    'scratch3_looks': __webpack_require__(29),
+	    'scratch3_motion': __webpack_require__(30),
+	    'scratch3_operators': __webpack_require__(31),
+	    'scratch3_sensing': __webpack_require__(32)
+	};
 
 	/**
-	 * Sprite to be used on the Scratch stage.
-	 * All clones of a sprite have shared blocks, shared costumes, shared variables.
-	 * @param {?Blocks} blocks Shared blocks object for all clones of sprite.
-	 * @constructor
+	 * Manages targets, scripts, and the sequencer.
 	 */
-	function Sprite (blocks) {
-	    if (!blocks) {
-	        // Shared set of blocks for all clones.
-	        blocks = new Blocks();
-	    }
-	    this.blocks = blocks;
-	    this.clones = [];
+	function Runtime () {
+	    // Bind event emitter
+	    EventEmitter.call(this);
+
+	    // State for the runtime
+
+	    /**
+	     * Target management and storage.
+	     * @type {Array.<!Target>}
+	     */
+	    this.targets = [];
+
+	    /**
+	     * A list of threads that are currently running in the VM.
+	     * Threads are added when execution starts and pruned when execution ends.
+	     * @type {Array.<Thread>}
+	     */
+	    this.threads = [];
+
+	    /** @type {!Sequencer} */
+	    this.sequencer = new Sequencer(this);
+
+	    /**
+	     * Map to look up a block primitive's implementation function by its opcode.
+	     * This is a two-step lookup: package name first, then primitive name.
+	     * @type {Object.<string, Function>}
+	     */
+	    this._primitives = {};
+	    this._hats = {};
+	    this._edgeActivatedHatValues = {};
+	    this._registerBlockPackages();
+
+	    this.ioDevices = {
+	        'clock': new Clock(),
+	        'keyboard': new Keyboard(this),
+	        'mouse': new Mouse(this)
+	    };
+
+	    this._scriptGlowsPreviousFrame = [];
+	    this._editingTarget = null;
 	}
 
 	/**
-	 * Create a clone of this sprite.
-	 * @returns {!Clone} Newly created clone.
+	 * Event name for glowing a script.
+	 * @const {string}
 	 */
-	Sprite.prototype.createClone = function () {
-	    var newClone = new Clone(this.blocks);
-	    this.clones.push(newClone);
-	    return newClone;
+	Runtime.SCRIPT_GLOW_ON = 'STACK_GLOW_ON';
+
+	/**
+	 * Event name for unglowing a script.
+	 * @const {string}
+	 */
+	Runtime.SCRIPT_GLOW_OFF = 'STACK_GLOW_OFF';
+
+	/**
+	 * Event name for glowing a block.
+	 * @const {string}
+	 */
+	Runtime.BLOCK_GLOW_ON = 'BLOCK_GLOW_ON';
+
+	/**
+	 * Event name for unglowing a block.
+	 * @const {string}
+	 */
+	Runtime.BLOCK_GLOW_OFF = 'BLOCK_GLOW_OFF';
+
+	/**
+	 * Event name for visual value report.
+	 * @const {string}
+	 */
+	Runtime.VISUAL_REPORT = 'VISUAL_REPORT';
+
+	/**
+	 * Inherit from EventEmitter
+	 */
+	util.inherits(Runtime, EventEmitter);
+
+	/**
+	 * How rapidly we try to step threads, in ms.
+	 */
+	Runtime.THREAD_STEP_INTERVAL = 1000 / 60;
+
+
+	// -----------------------------------------------------------------------------
+	// -----------------------------------------------------------------------------
+
+	/**
+	 * Register default block packages with this runtime.
+	 * @todo Prefix opcodes with package name.
+	 * @private
+	 */
+	Runtime.prototype._registerBlockPackages = function () {
+	    for (var packageName in defaultBlockPackages) {
+	        if (defaultBlockPackages.hasOwnProperty(packageName)) {
+	            // @todo pass a different runtime depending on package privilege?
+	            var packageObject = new (defaultBlockPackages[packageName])(this);
+	            // Collect primitives from package.
+	            if (packageObject.getPrimitives) {
+	                var packagePrimitives = packageObject.getPrimitives();
+	                for (var op in packagePrimitives) {
+	                    if (packagePrimitives.hasOwnProperty(op)) {
+	                        this._primitives[op] =
+	                            packagePrimitives[op].bind(packageObject);
+	                    }
+	                }
+	            }
+	            // Collect hat metadata from package.
+	            if (packageObject.getHats) {
+	                var packageHats = packageObject.getHats();
+	                for (var hatName in packageHats) {
+	                    if (packageHats.hasOwnProperty(hatName)) {
+	                        this._hats[hatName] = packageHats[hatName];
+	                    }
+	                }
+	            }
+	        }
+	    }
 	};
 
-	module.exports = Sprite;
+	/**
+	 * Retrieve the function associated with the given opcode.
+	 * @param {!string} opcode The opcode to look up.
+	 * @return {Function} The function which implements the opcode.
+	 */
+	Runtime.prototype.getOpcodeFunction = function (opcode) {
+	    return this._primitives[opcode];
+	};
+
+	// -----------------------------------------------------------------------------
+	// -----------------------------------------------------------------------------
+
+	/**
+	 * Return whether an opcode represents a hat block.
+	 * @param {!string} opcode The opcode to look up.
+	 * @return {Boolean} True if the op is known to be a hat.
+	 */
+	Runtime.prototype.getIsHat = function (opcode) {
+	    return this._hats.hasOwnProperty(opcode);
+	};
+
+	/**
+	 * Return whether an opcode represents an edge-activated hat block.
+	 * @param {!string} opcode The opcode to look up.
+	 * @return {Boolean} True if the op is known to be a edge-activated hat.
+	 */
+	Runtime.prototype.getIsEdgeActivatedHat = function (opcode) {
+	    return this._hats.hasOwnProperty(opcode) &&
+	        this._hats[opcode].edgeActivated;
+	};
+
+	/**
+	 * Update an edge-activated hat block value.
+	 * @param {!string} blockId ID of hat to store value for.
+	 * @param {*} newValue Value to store for edge-activated hat.
+	 * @return {*} The old value for the edge-activated hat.
+	 */
+	Runtime.prototype.updateEdgeActivatedValue = function (blockId, newValue) {
+	    var oldValue = this._edgeActivatedHatValues[blockId];
+	    this._edgeActivatedHatValues[blockId] = newValue;
+	    return oldValue;
+	};
+
+	/**
+	 * Clear all edge-activaed hat values.
+	 */
+	Runtime.prototype.clearEdgeActivatedValues = function () {
+	    this._edgeActivatedHatValues = {};
+	};
+
+	// -----------------------------------------------------------------------------
+	// -----------------------------------------------------------------------------
+
+	/**
+	 * Create a thread and push it to the list of threads.
+	 * @param {!string} id ID of block that starts the stack
+	 * @return {!Thread} The newly created thread.
+	 */
+	Runtime.prototype._pushThread = function (id) {
+	    var thread = new Thread(id);
+	    thread.pushStack(id);
+	    this.threads.push(thread);
+	    return thread;
+	};
+
+	/**
+	 * Remove a thread from the list of threads.
+	 * @param {?Thread} thread Thread object to remove from actives
+	 */
+	Runtime.prototype._removeThread = function (thread) {
+	    var i = this.threads.indexOf(thread);
+	    if (i > -1) {
+	        this.threads.splice(i, 1);
+	    }
+	};
+
+	/**
+	 * Return whether a thread is currently active/running.
+	 * @param {?Thread} thread Thread object to check.
+	 * @return {Boolean} True if the thread is active/running.
+	 */
+	Runtime.prototype.isActiveThread = function (thread) {
+	    return this.threads.indexOf(thread) > -1;
+	};
+
+	/**
+	 * Toggle a script.
+	 * @param {!string} topBlockId ID of block that starts the script.
+	 */
+	Runtime.prototype.toggleScript = function (topBlockId) {
+	    // Remove any existing thread.
+	    for (var i = 0; i < this.threads.length; i++) {
+	        if (this.threads[i].topBlock == topBlockId) {
+	            this._removeThread(this.threads[i]);
+	            return;
+	        }
+	    }
+	    // Otherwise add it.
+	    this._pushThread(topBlockId);
+	};
+
+	/**
+	 * Run a function `f` for all scripts in a workspace.
+	 * `f` will be called with two parameters:
+	 *  - the top block ID of the script.
+	 *  - the target that owns the script.
+	 * @param {!Function} f Function to call for each script.
+	 * @param {Target=} opt_target Optionally, a target to restrict to.
+	 */
+	Runtime.prototype.allScriptsDo = function (f, opt_target) {
+	    var targets = this.targets;
+	    if (opt_target) {
+	        targets = [opt_target];
+	    }
+	    for (var t = 0; t < targets.length; t++) {
+	        var target = targets[t];
+	        var scripts = target.blocks.getScripts();
+	        for (var j = 0; j < scripts.length; j++) {
+	            var topBlockId = scripts[j];
+	            f(topBlockId, target);
+	        }
+	    }
+	};
+
+	/**
+	 * Start all relevant hats.
+	 * @param {!string} requestedHatOpcode Opcode of hats to start.
+	 * @param {Object=} opt_matchFields Optionally, fields to match on the hat.
+	 * @param {Target=} opt_target Optionally, a target to restrict to.
+	 * @return {Array.<Thread>} List of threads started by this function.
+	 */
+	Runtime.prototype.startHats = function (requestedHatOpcode,
+	    opt_matchFields, opt_target) {
+	    if (!this._hats.hasOwnProperty(requestedHatOpcode)) {
+	        // No known hat with this opcode.
+	        return;
+	    }
+	    var instance = this;
+	    var newThreads = [];
+	    // Consider all scripts, looking for hats with opcode `requestedHatOpcode`.
+	    this.allScriptsDo(function(topBlockId, target) {
+	        var potentialHatOpcode = target.blocks.getBlock(topBlockId).opcode;
+	        if (potentialHatOpcode !== requestedHatOpcode) {
+	            // Not the right hat.
+	            return;
+	        }
+	        // Match any requested fields.
+	        // For example: ensures that broadcasts match.
+	        // This needs to happen before the block is evaluated
+	        // (i.e., before the predicate can be run) because "broadcast and wait"
+	        // needs to have a precise collection of started threads.
+	        var hatFields = target.blocks.getFields(topBlockId);
+	        if (opt_matchFields) {
+	            for (var matchField in opt_matchFields) {
+	                if (hatFields[matchField].value !==
+	                    opt_matchFields[matchField]) {
+	                    // Field mismatch.
+	                    return;
+	                }
+	            }
+	        }
+	        // Look up metadata for the relevant hat.
+	        var hatMeta = instance._hats[requestedHatOpcode];
+	        if (hatMeta.restartExistingThreads) {
+	            // If `restartExistingThreads` is true, we should stop
+	            // any existing threads starting with the top block.
+	            for (var i = 0; i < instance.threads.length; i++) {
+	                if (instance.threads[i].topBlock === topBlockId) {
+	                    instance._removeThread(instance.threads[i]);
+	                }
+	            }
+	        } else {
+	            // If `restartExistingThreads` is false, we should
+	            // give up if any threads with the top block are running.
+	            for (var j = 0; j < instance.threads.length; j++) {
+	                if (instance.threads[j].topBlock === topBlockId) {
+	                    // Some thread is already running.
+	                    return;
+	                }
+	            }
+	        }
+	        // Start the thread with this top block.
+	        newThreads.push(instance._pushThread(topBlockId));
+	    }, opt_target);
+	    return newThreads;
+	};
+
+	/**
+	 * Start all threads that start with the green flag.
+	 */
+	Runtime.prototype.greenFlag = function () {
+	    this.ioDevices.clock.resetProjectTimer();
+	    this.clearEdgeActivatedValues();
+	    this.startHats('event_whenflagclicked');
+	};
+
+	/**
+	 * Stop "everything"
+	 */
+	Runtime.prototype.stopAll = function () {
+	    var threadsCopy = this.threads.slice();
+	    while (threadsCopy.length > 0) {
+	        var poppedThread = threadsCopy.pop();
+	        this._removeThread(poppedThread);
+	    }
+	};
+
+	/**
+	 * Repeatedly run `sequencer.stepThreads` and filter out
+	 * inactive threads after each iteration.
+	 */
+	Runtime.prototype._step = function () {
+	    // Find all edge-activated hats, and add them to threads to be evaluated.
+	    for (var hatType in this._hats) {
+	        var hat = this._hats[hatType];
+	        if (hat.edgeActivated) {
+	            this.startHats(hatType);
+	        }
+	    }
+	    var inactiveThreads = this.sequencer.stepThreads(this.threads);
+	    this._updateScriptGlows();
+	    for (var i = 0; i < inactiveThreads.length; i++) {
+	        this._removeThread(inactiveThreads[i]);
+	    }
+	};
+
+	Runtime.prototype.setEditingTarget = function (editingTarget) {
+	    this._scriptGlowsPreviousFrame = [];
+	    this._editingTarget = editingTarget;
+	    this._updateScriptGlows();
+	};
+
+	Runtime.prototype._updateScriptGlows = function () {
+	    // Set of scripts that request a glow this frame.
+	    var requestedGlowsThisFrame = [];
+	    // Final set of scripts glowing during this frame.
+	    var finalScriptGlows = [];
+	    // Find all scripts that should be glowing.
+	    for (var i = 0; i < this.threads.length; i++) {
+	        var thread = this.threads[i];
+	        var target = this.targetForThread(thread);
+	        if (thread.requestScriptGlowInFrame && target == this._editingTarget) {
+	            var blockForThread = thread.peekStack() || thread.topBlock;
+	            var script = target.blocks.getTopLevelScript(blockForThread);
+	            requestedGlowsThisFrame.push(script);
+	        }
+	    }
+	    // Compare to previous frame.
+	    for (var j = 0; j < this._scriptGlowsPreviousFrame.length; j++) {
+	        var previousFrameGlow = this._scriptGlowsPreviousFrame[j];
+	        if (requestedGlowsThisFrame.indexOf(previousFrameGlow) < 0) {
+	            // Glow turned off.
+	            this.glowScript(previousFrameGlow, false);
+	        } else {
+	            // Still glowing.
+	            finalScriptGlows.push(previousFrameGlow);
+	        }
+	    }
+	    for (var k = 0; k < requestedGlowsThisFrame.length; k++) {
+	        var currentFrameGlow = requestedGlowsThisFrame[k];
+	        if (this._scriptGlowsPreviousFrame.indexOf(currentFrameGlow) < 0) {
+	            // Glow turned on.
+	            this.glowScript(currentFrameGlow, true);
+	            finalScriptGlows.push(currentFrameGlow);
+	        }
+	    }
+	    this._scriptGlowsPreviousFrame = finalScriptGlows;
+	};
+
+	/**
+	 * Emit feedback for block glowing (used in the sequencer).
+	 * @param {?string} blockId ID for the block to update glow
+	 * @param {boolean} isGlowing True to turn on glow; false to turn off.
+	 */
+	Runtime.prototype.glowBlock = function (blockId, isGlowing) {
+	    if (isGlowing) {
+	        this.emit(Runtime.BLOCK_GLOW_ON, blockId);
+	    } else {
+	        this.emit(Runtime.BLOCK_GLOW_OFF, blockId);
+	    }
+	};
+
+	/**
+	 * Emit feedback for script glowing.
+	 * @param {?string} topBlockId ID for the top block to update glow
+	 * @param {boolean} isGlowing True to turn on glow; false to turn off.
+	 */
+	Runtime.prototype.glowScript = function (topBlockId, isGlowing) {
+	    if (isGlowing) {
+	        this.emit(Runtime.SCRIPT_GLOW_ON, topBlockId);
+	    } else {
+	        this.emit(Runtime.SCRIPT_GLOW_OFF, topBlockId);
+	    }
+	};
+
+	/**
+	 * Emit value for reporter to show in the blocks.
+	 * @param {string} blockId ID for the block.
+	 * @param {string} value Value to show associated with the block.
+	 */
+	Runtime.prototype.visualReport = function (blockId, value) {
+	    this.emit(Runtime.VISUAL_REPORT, blockId, String(value));
+	};
+
+	/**
+	 * Return the Target for a particular thread.
+	 * @param {!Thread} thread Thread to determine target for.
+	 * @return {?Target} Target object, if one exists.
+	 */
+	Runtime.prototype.targetForThread = function (thread) {
+	    // @todo This is a messy solution,
+	    // but prevents having circular data references.
+	    // Have a map or some other way to associate target with threads.
+	    for (var t = 0; t < this.targets.length; t++) {
+	        var target = this.targets[t];
+	        if (target.blocks.getBlock(thread.topBlock)) {
+	            return target;
+	        }
+	    }
+	};
+
+	/**
+	 * Get a target by its id.
+	 * @param {string} targetId Id of target to find.
+	 * @return {?Target} The target, if found.
+	 */
+	Runtime.prototype.getTargetById = function (targetId) {
+	    for (var i = 0; i < this.targets.length; i++) {
+	        var target = this.targets[i];
+	        if (target.id == targetId) {
+	            return target;
+	        }
+	    }
+	};
+
+	/**
+	 * Get a target representing the Scratch stage, if one exists.
+	 * @return {?Target} The target, if found.
+	 */
+	Runtime.prototype.getTargetForStage = function () {
+	    for (var i = 0; i < this.targets.length; i++) {
+	        var target = this.targets[i];
+	        if (target.isStage) {
+	            return target;
+	        }
+	    }
+	};
+
+	/**
+	 * Handle an animation frame from the main thread.
+	 */
+	Runtime.prototype.animationFrame = function () {
+	    if (self.renderer) {
+	        self.renderer.draw();
+	    }
+	};
+
+	/**
+	 * Set up timers to repeatedly step in a browser
+	 */
+	Runtime.prototype.start = function () {
+	    self.setInterval(function() {
+	        this._step();
+	    }.bind(this), Runtime.THREAD_STEP_INTERVAL);
+	};
+
+	module.exports = Runtime;
 
 
 /***/ },
 /* 7 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var util = __webpack_require__(2);
-	var MathUtil = __webpack_require__(8);
-	var Target = __webpack_require__(9);
+	var Timer = __webpack_require__(8);
+	var Thread = __webpack_require__(9);
+	var execute = __webpack_require__(10);
 
-	/**
-	 * Clone (instance) of a sprite.
-	 * @param {!Blocks} spriteBlocks Reference to the sprite's blocks.
-	 * @constructor
-	 */
-	function Clone(spriteBlocks) {
-	    Target.call(this, spriteBlocks);
+	function Sequencer (runtime) {
 	    /**
-	     * Reference to the global renderer for this VM, if one exists.
-	     * @type {?RenderWebGLWorker}
+	     * A utility timer for timing thread sequencing.
+	     * @type {!Timer}
 	     */
-	    this.renderer = null;
-	    // If this is not true, there is no renderer (e.g., running in a test env).
-	    if (typeof self !== 'undefined' && self.renderer) {
-	        // Pull from `self.renderer`.
-	        this.renderer = self.renderer;
-	    }
-	    /**
-	     * ID of the drawable for this clone returned by the renderer, if rendered.
-	     * @type {?Number}
-	     */
-	    this.drawableID = null;
+	    this.timer = new Timer();
 
-	    this.initDrawable();
+	    /**
+	     * Reference to the runtime owning this sequencer.
+	     * @type {!Runtime}
+	     */
+	    this.runtime = runtime;
 	}
-	util.inherits(Clone, Target);
 
 	/**
-	 * Create a clone's drawable with the this.renderer.
+	 * The sequencer does as much work as it can within WORK_TIME milliseconds,
+	 * then yields. This is essentially a rate-limiter for blocks.
+	 * In Scratch 2.0, this is set to 75% of the target stage frame-rate (30fps).
+	 * @const {!number}
 	 */
-	Clone.prototype.initDrawable = function () {
-	    if (this.renderer) {
-	        var createPromise = this.renderer.createDrawable();
-	        var instance = this;
-	        createPromise.then(function (id) {
-	            instance.drawableID = id;
-	        });
+	Sequencer.WORK_TIME = 10;
+
+	/**
+	 * Step through all threads in `this.threads`, running them in order.
+	 * @param {Array.<Thread>} threads List of which threads to step.
+	 * @return {Array.<Thread>} All threads which have finished in this iteration.
+	 */
+	Sequencer.prototype.stepThreads = function (threads) {
+	    // Start counting toward WORK_TIME
+	    this.timer.start();
+	    // List of threads which have been killed by this step.
+	    var inactiveThreads = [];
+	    // If all of the threads are yielding, we should yield.
+	    var numYieldingThreads = 0;
+	    // Clear all yield statuses that were for the previous frame.
+	    for (var t = 0; t < threads.length; t++) {
+	        if (threads[t].status === Thread.STATUS_YIELD_FRAME) {
+	            threads[t].setStatus(Thread.STATUS_RUNNING);
+	        }
 	    }
-	};
 
-	// Clone-level properties.
-	/**
-	 * Scratch X coordinate. Currently should range from -240 to 240.
-	 * @type {!number}
-	 */
-	Clone.prototype.x = 0;
-
-	/**
-	 * Scratch Y coordinate. Currently should range from -180 to 180.
-	 * @type {!number}
-	 */
-	Clone.prototype.y = 0;
-
-	/**
-	 * Scratch direction. Currently should range from -179 to 180.
-	 * @type {!number}
-	 */
-	Clone.prototype.direction = 90;
-
-	/**
-	 * Whether the clone is currently visible.
-	 * @type {!boolean}
-	 */
-	Clone.prototype.visible = true;
-
-	/**
-	 * Size of clone as a percent of costume size. Ranges from 5% to 535%.
-	 * @type {!number}
-	 */
-	Clone.prototype.size = 100;
-
-	/**
-	 * Map of current graphic effect values.
-	 * @type {!Object.<string, number>}
-	 */
-	Clone.prototype.effects = {
-	    'color': 0,
-	    'fisheye': 0,
-	    'whirl': 0,
-	    'pixelate': 0,
-	    'mosaic': 0,
-	    'brightness': 0,
-	    'ghost': 0
-	};
-	// End clone-level properties.
-
-	/**
-	 * Set the X and Y coordinates of a clone.
-	 * @param {!number} x New X coordinate of clone, in Scratch coordinates.
-	 * @param {!number} y New Y coordinate of clone, in Scratch coordinates.
-	 */
-	Clone.prototype.setXY = function (x, y) {
-	    this.x = x;
-	    this.y = y;
-	    if (this.renderer) {
-	        this.renderer.updateDrawableProperties(this.drawableID, {
-	            position: [this.x, this.y]
-	        });
+	    // While there are still threads to run and we are within WORK_TIME,
+	    // continue executing threads.
+	    while (threads.length > 0 &&
+	           threads.length > numYieldingThreads &&
+	           this.timer.timeElapsed() < Sequencer.WORK_TIME) {
+	        // New threads at the end of the iteration.
+	        var newThreads = [];
+	        // Reset yielding thread count.
+	        numYieldingThreads = 0;
+	        // Attempt to run each thread one time
+	        for (var i = 0; i < threads.length; i++) {
+	            var activeThread = threads[i];
+	            if (activeThread.status === Thread.STATUS_RUNNING) {
+	                // Normal-mode thread: step.
+	                this.startThread(activeThread);
+	            } else if (activeThread.status === Thread.STATUS_YIELD ||
+	                       activeThread.status === Thread.STATUS_YIELD_FRAME) {
+	                // Yielding thread: do nothing for this step.
+	                numYieldingThreads++;
+	            }
+	            if (activeThread.stack.length === 0 &&
+	                activeThread.status === Thread.STATUS_DONE) {
+	                // Finished with this thread - tell runtime to clean it up.
+	                inactiveThreads.push(activeThread);
+	            } else {
+	                // Keep this thead in the loop.
+	                newThreads.push(activeThread);
+	            }
+	        }
+	        // Effectively filters out threads that have stopped.
+	        threads = newThreads;
 	    }
+	    return inactiveThreads;
 	};
 
 	/**
-	 * Set the direction of a clone.
-	 * @param {!number} direction New direction of clone.
+	 * Step the requested thread
+	 * @param {!Thread} thread Thread object to step
 	 */
-	Clone.prototype.setDirection = function (direction) {
-	    // Keep direction between -179 and +180.
-	    this.direction = MathUtil.wrapClamp(direction, -179, 180);
-	    if (this.renderer) {
-	        this.renderer.updateDrawableProperties(this.drawableID, {
-	            direction: this.direction
-	        });
-	    }
-	};
-
-	/**
-	 * Set a say bubble on this clone.
-	 * @param {?string} type Type of say bubble: "say", "think", or null.
-	 * @param {?string} message Message to put in say bubble.
-	 */
-	Clone.prototype.setSay = function (type, message) {
-	    // @todo: Render to stage.
-	    if (!type || !message) {
-	        console.log('Clearing say bubble');
+	Sequencer.prototype.startThread = function (thread) {
+	    var currentBlockId = thread.peekStack();
+	    if (!currentBlockId) {
+	        // A "null block" - empty branch.
+	        // Yield for the frame.
+	        thread.popStack();
+	        thread.setStatus(Thread.STATUS_YIELD_FRAME);
 	        return;
 	    }
-	    console.log('Setting say bubble:', type, message);
-	};
-
-	/**
-	 * Set visibility of the clone; i.e., whether it's shown or hidden.
-	 * @param {!boolean} visible True if the sprite should be shown.
-	 */
-	Clone.prototype.setVisible = function (visible) {
-	    this.visible = visible;
-	    if (this.renderer) {
-	        this.renderer.updateDrawableProperties(this.drawableID, {
-	            visible: this.visible
-	        });
+	    // Execute the current block
+	    execute(this, thread);
+	    // If the block executed without yielding and without doing control flow,
+	    // move to done.
+	    if (thread.status === Thread.STATUS_RUNNING &&
+	        thread.peekStack() === currentBlockId) {
+	        this.proceedThread(thread);
 	    }
 	};
 
 	/**
-	 * Set size of the clone, as a percentage of the costume size.
-	 * @param {!number} size Size of clone, from 5 to 535.
+	 * Step a thread into a block's branch.
+	 * @param {!Thread} thread Thread object to step to branch.
+	 * @param {Number} branchNum Which branch to step to (i.e., 1, 2).
 	 */
-	Clone.prototype.setSize = function (size) {
-	    // Keep size between 5% and 535%.
-	    this.size = MathUtil.clamp(size, 5, 535);
-	    if (this.renderer) {
-	        this.renderer.updateDrawableProperties(this.drawableID, {
-	            scale: [this.size, this.size]
-	        });
+	Sequencer.prototype.stepToBranch = function (thread, branchNum) {
+	    if (!branchNum) {
+	        branchNum = 1;
+	    }
+	    var currentBlockId = thread.peekStack();
+	    var branchId = this.runtime.targetForThread(thread).blocks.getBranch(
+	        currentBlockId,
+	        branchNum
+	    );
+	    if (branchId) {
+	        // Push branch ID to the thread's stack.
+	        thread.pushStack(branchId);
+	    } else {
+	        // Push null, so we come back to the current block.
+	        thread.pushStack(null);
 	    }
 	};
 
 	/**
-	 * Set a particular graphic effect on this clone.
-	 * @param {!string} effectName Name of effect (see `Clone.prototype.effects`).
-	 * @param {!number} value Numerical magnitude of effect.
+	 * Step a thread into an input reporter, and manage its status appropriately.
+	 * @param {!Thread} thread Thread object to step to reporter.
+	 * @param {!string} blockId ID of reporter block.
+	 * @param {!string} inputName Name of input on parent block.
+	 * @return {boolean} True if yielded, false if it finished immediately.
 	 */
-	Clone.prototype.setEffect = function (effectName, value) {
-	    this.effects[effectName] = value;
-	    if (this.renderer) {
-	        var props = {};
-	        props[effectName] = this.effects[effectName];
-	        this.renderer.updateDrawableProperties(this.drawableID, props);
+	Sequencer.prototype.stepToReporter = function (thread, blockId, inputName) {
+	    var currentStackFrame = thread.peekStackFrame();
+	    // Push to the stack to evaluate the reporter block.
+	    thread.pushStack(blockId);
+	    // Save name of input for `Thread.pushReportedValue`.
+	    currentStackFrame.waitingReporter = inputName;
+	    // Actually execute the block.
+	    this.startThread(thread);
+	    // If a reporter yielded, caller must wait for it to unyield.
+	    // The value will be populated once the reporter unyields,
+	    // and passed up to the currentStackFrame on next execution.
+	    return thread.status === Thread.STATUS_YIELD;
+	};
+
+	/**
+	 * Finish stepping a thread and proceed it to the next block.
+	 * @param {!Thread} thread Thread object to proceed.
+	 */
+	Sequencer.prototype.proceedThread = function (thread) {
+	    var currentBlockId = thread.peekStack();
+	    // Mark the status as done and proceed to the next block.
+	    // Pop from the stack - finished this level of execution.
+	    thread.popStack();
+	    // Push next connected block, if there is one.
+	    var nextBlockId = (this.runtime.targetForThread(thread).
+	        blocks.getNextBlock(currentBlockId));
+	    if (nextBlockId) {
+	        thread.pushStack(nextBlockId);
+	    }
+	    // If we can't find a next block to run, mark the thread as done.
+	    if (!thread.peekStack()) {
+	        thread.setStatus(Thread.STATUS_DONE);
 	    }
 	};
 
 	/**
-	 * Clear all graphic effects on this clone.
+	 * Retire a thread in the middle, without considering further blocks.
+	 * @param {!Thread} thread Thread object to retire.
 	 */
-	Clone.prototype.clearEffects = function () {
-	    for (var effectName in this.effects) {
-	        this.effects[effectName] = 0;
-	    }
-	    if (this.renderer) {
-	        this.renderer.updateDrawableProperties(this.drawableID, this.effects);
-	    }
+	Sequencer.prototype.retireThread = function (thread) {
+	    thread.stack = [];
+	    thread.stackFrame = [];
+	    thread.setStatus(Thread.STATUS_DONE);
 	};
 
-	module.exports = Clone;
+	module.exports = Sequencer;
 
 
 /***/ },
 /* 8 */
+/***/ function(module, exports) {
+
+	/**
+	 * @fileoverview
+	 * A utility for accurately measuring time.
+	 * To use:
+	 * ---
+	 * var timer = new Timer();
+	 * timer.start();
+	 * ... pass some time ...
+	 * var timeDifference = timer.timeElapsed();
+	 * ---
+	 * Or, you can use the `time` and `relativeTime`
+	 * to do some measurement yourself.
+	 */
+
+	/**
+	 * @constructor
+	 */
+	function Timer () {}
+
+	/**
+	 * Used to store the start time of a timer action.
+	 * Updated when calling `timer.start`.
+	 */
+	Timer.prototype.startTime = 0;
+
+	/**
+	 * Return the currently known absolute time, in ms precision.
+	 * @returns {number} ms elapsed since 1 January 1970 00:00:00 UTC.
+	 */
+	Timer.prototype.time = function () {
+	    if (Date.now) {
+	        return Date.now();
+	    } else {
+	        return new Date().getTime();
+	    }
+	};
+
+	/**
+	 * Returns a time accurate relative to other times produced by this function.
+	 * If possible, will use sub-millisecond precision.
+	 * If not, will use millisecond precision.
+	 * Not guaranteed to produce the same absolute values per-system.
+	 * @returns {number} ms-scale accurate time relative to other relative times.
+	 */
+	Timer.prototype.relativeTime = function () {
+	    if (typeof self !== 'undefined' &&
+	        self.performance && 'now' in self.performance) {
+	        return self.performance.now();
+	    } else {
+	        return this.time();
+	    }
+	};
+
+	/**
+	 * Start a timer for measuring elapsed time,
+	 * at the most accurate precision possible.
+	 */
+	Timer.prototype.start = function () {
+	    this.startTime = this.relativeTime();
+	};
+
+	/**
+	 * Check time elapsed since `timer.start` was called.
+	 * @returns {number} Time elapsed, in ms (possibly sub-ms precision).
+	 */
+	Timer.prototype.timeElapsed = function () {
+	    return this.relativeTime() - this.startTime;
+	};
+
+	module.exports = Timer;
+
+
+/***/ },
+/* 9 */
+/***/ function(module, exports) {
+
+	/**
+	 * A thread is a running stack context and all the metadata needed.
+	 * @param {?string} firstBlock First block to execute in the thread.
+	 * @constructor
+	 */
+	function Thread (firstBlock) {
+	    /**
+	     * ID of top block of the thread
+	     * @type {!string}
+	     */
+	    this.topBlock = firstBlock;
+
+	    /**
+	     * Stack for the thread. When the sequencer enters a control structure,
+	     * the block is pushed onto the stack so we know where to exit.
+	     * @type {Array.<string>}
+	     */
+	    this.stack = [];
+
+	    /**
+	     * Stack frames for the thread. Store metadata for the executing blocks.
+	     * @type {Array.<Object>}
+	     */
+	    this.stackFrames = [];
+
+	    /**
+	     * Status of the thread, one of three states (below)
+	     * @type {number}
+	     */
+	    this.status = 0; /* Thread.STATUS_RUNNING */
+
+	    /**
+	     * Whether the thread requests its script to glow during this frame.
+	     * @type {boolean}
+	     */
+	    this.requestScriptGlowInFrame = false;
+	}
+
+	/**
+	 * Thread status for initialized or running thread.
+	 * This is the default state for a thread - execution should run normally,
+	 * stepping from block to block.
+	 * @const
+	 */
+	Thread.STATUS_RUNNING = 0;
+
+	/**
+	 * Thread status for a yielded thread.
+	 * Threads are in this state when a primitive has yielded; execution is paused
+	 * until the relevant primitive unyields.
+	 * @const
+	 */
+	Thread.STATUS_YIELD = 1;
+
+	/**
+	 * Thread status for a single-frame yield.
+	 * @const
+	 */
+	Thread.STATUS_YIELD_FRAME = 2;
+
+	/**
+	 * Thread status for a finished/done thread.
+	 * Thread is in this state when there are no more blocks to execute.
+	 * @const
+	 */
+	Thread.STATUS_DONE = 3;
+
+	/**
+	 * Push stack and update stack frames appropriately.
+	 * @param {string} blockId Block ID to push to stack.
+	 */
+	Thread.prototype.pushStack = function (blockId) {
+	    this.stack.push(blockId);
+	    // Push an empty stack frame, if we need one.
+	    // Might not, if we just popped the stack.
+	    if (this.stack.length > this.stackFrames.length) {
+	        this.stackFrames.push({
+	            reported: {}, // Collects reported input values.
+	            waitingReporter: null, // Name of waiting reporter.
+	            executionContext: {} // A context passed to block implementations.
+	        });
+	    }
+	};
+
+	/**
+	 * Pop last block on the stack and its stack frame.
+	 * @return {string} Block ID popped from the stack.
+	 */
+	Thread.prototype.popStack = function () {
+	    this.stackFrames.pop();
+	    return this.stack.pop();
+	};
+
+	/**
+	 * Get top stack item.
+	 * @return {?string} Block ID on top of stack.
+	 */
+	Thread.prototype.peekStack = function () {
+	    return this.stack[this.stack.length - 1];
+	};
+
+
+	/**
+	 * Get top stack frame.
+	 * @return {?Object} Last stack frame stored on this thread.
+	 */
+	Thread.prototype.peekStackFrame = function () {
+	    return this.stackFrames[this.stackFrames.length - 1];
+	};
+
+	/**
+	 * Get stack frame above the current top.
+	 * @return {?Object} Second to last stack frame stored on this thread.
+	 */
+	Thread.prototype.peekParentStackFrame = function () {
+	    return this.stackFrames[this.stackFrames.length - 2];
+	};
+
+	/**
+	 * Push a reported value to the parent of the current stack frame.
+	 * @param {!Any} value Reported value to push.
+	 */
+	Thread.prototype.pushReportedValue = function (value) {
+	    var parentStackFrame = this.peekParentStackFrame();
+	    if (parentStackFrame) {
+	        var waitingReporter = parentStackFrame.waitingReporter;
+	        parentStackFrame.reported[waitingReporter] = value;
+	        parentStackFrame.waitingReporter = null;
+	    }
+	};
+
+	/**
+	 * Whether the current execution of a thread is at the top of the stack.
+	 * @return {Boolean} True if execution is at top of the stack.
+	 */
+	Thread.prototype.atStackTop = function () {
+	    return this.peekStack() === this.topBlock;
+	};
+
+	/**
+	 * Set thread status.
+	 * @param {number} status Enum representing thread status.
+	 */
+	Thread.prototype.setStatus = function (status) {
+	    this.status = status;
+	};
+
+	module.exports = Thread;
+
+
+/***/ },
+/* 10 */
+/***/ function(module, exports, __webpack_require__) {
+
+	var Thread = __webpack_require__(9);
+
+	/**
+	 * Utility function to determine if a value is a Promise.
+	 * @param {*} value Value to check for a Promise.
+	 * @return {Boolean} True if the value appears to be a Promise.
+	 */
+	var isPromise = function (value) {
+	    return value && value.then && typeof value.then === 'function';
+	};
+
+	/**
+	 * Execute a block.
+	 * @param {!Sequencer} sequencer Which sequencer is executing.
+	 * @param {!Thread} thread Thread which to read and execute.
+	 */
+	var execute = function (sequencer, thread) {
+	    var runtime = sequencer.runtime;
+	    var target = runtime.targetForThread(thread);
+
+	    // Current block to execute is the one on the top of the stack.
+	    var currentBlockId = thread.peekStack();
+	    var currentStackFrame = thread.peekStackFrame();
+
+	    // Query info about the block.
+	    var opcode = target.blocks.getOpcode(currentBlockId);
+	    var blockFunction = runtime.getOpcodeFunction(opcode);
+	    var isHat = runtime.getIsHat(opcode);
+	    var fields = target.blocks.getFields(currentBlockId);
+	    var inputs = target.blocks.getInputs(currentBlockId);
+
+	    if (!opcode) {
+	        console.warn('Could not get opcode for block: ' + currentBlockId);
+	        return;
+	    }
+
+	    /**
+	     * Handle any reported value from the primitive, either directly returned
+	     * or after a promise resolves.
+	     * @param {*} resolvedValue Value eventually returned from the primitive.
+	     */
+	    var handleReport = function (resolvedValue) {
+	        thread.pushReportedValue(resolvedValue);
+	        if (isHat) {
+	            // Hat predicate was evaluated.
+	            if (runtime.getIsEdgeActivatedHat(opcode)) {
+	                // If this is an edge-activated hat, only proceed if
+	                // the value is true and used to be false.
+	                var oldEdgeValue = runtime.updateEdgeActivatedValue(
+	                    currentBlockId,
+	                    resolvedValue
+	                );
+	                var edgeWasActivated = !oldEdgeValue && resolvedValue;
+	                if (!edgeWasActivated) {
+	                    sequencer.retireThread(thread);
+	                }
+	            } else {
+	                // Not an edge-activated hat: retire the thread
+	                // if predicate was false.
+	                if (!resolvedValue) {
+	                    sequencer.retireThread(thread);
+	                }
+	            }
+	        } else {
+	            // In a non-hat, report the value visually if necessary if
+	            // at the top of the thread stack.
+	            if (typeof resolvedValue !== 'undefined' && thread.atStackTop()) {
+	                runtime.visualReport(currentBlockId, resolvedValue);
+	            }
+	            // Finished any yields.
+	            thread.setStatus(Thread.STATUS_RUNNING);
+	        }
+	    };
+
+	    // Hats and single-field shadows are implemented slightly differently
+	    // from regular blocks.
+	    // For hats: if they have an associated block function,
+	    // it's treated as a predicate; if not, execution will proceed as a no-op.
+	    // For single-field shadows: If the block has a single field, and no inputs,
+	    // immediately return the value of the field.
+	    if (!blockFunction) {
+	        if (isHat) {
+	            // Skip through the block (hat with no predicate).
+	            return;
+	        } else {
+	            if (Object.keys(fields).length == 1 &&
+	                Object.keys(inputs).length == 0) {
+	                // One field and no inputs - treat as arg.
+	                for (var fieldKey in fields) { // One iteration.
+	                    handleReport(fields[fieldKey].value);
+	                }
+	            } else {
+	                console.warn('Could not get implementation for opcode: ' +
+	                    opcode);
+	            }
+	            thread.requestScriptGlowInFrame = true;
+	            return;
+	        }
+	    }
+
+	    // Generate values for arguments (inputs).
+	    var argValues = {};
+
+	    // Add all fields on this block to the argValues.
+	    for (var fieldName in fields) {
+	        argValues[fieldName] = fields[fieldName].value;
+	    }
+
+	    // Recursively evaluate input blocks.
+	    for (var inputName in inputs) {
+	        var input = inputs[inputName];
+	        var inputBlockId = input.block;
+	        // Is there no value for this input waiting in the stack frame?
+	        if (typeof currentStackFrame.reported[inputName] === 'undefined') {
+	            // If there's not, we need to evaluate the block.
+	            var reporterYielded = (
+	                sequencer.stepToReporter(thread, inputBlockId, inputName)
+	            );
+	            // If the reporter yielded, return immediately;
+	            // it needs time to finish and report its value.
+	            if (reporterYielded) {
+	                return;
+	            }
+	        }
+	        argValues[inputName] = currentStackFrame.reported[inputName];
+	    }
+
+	    // If we've gotten this far, all of the input blocks are evaluated,
+	    // and `argValues` is fully populated. So, execute the block primitive.
+	    // First, clear `currentStackFrame.reported`, so any subsequent execution
+	    // (e.g., on return from a branch) gets fresh inputs.
+	    currentStackFrame.reported = {};
+
+	    var primitiveReportedValue = null;
+	    primitiveReportedValue = blockFunction(argValues, {
+	        stackFrame: currentStackFrame.executionContext,
+	        target: target,
+	        yield: function() {
+	            thread.setStatus(Thread.STATUS_YIELD);
+	        },
+	        yieldFrame: function() {
+	            thread.setStatus(Thread.STATUS_YIELD_FRAME);
+	        },
+	        done: function() {
+	            thread.setStatus(Thread.STATUS_RUNNING);
+	            sequencer.proceedThread(thread);
+	        },
+	        startBranch: function (branchNum) {
+	            sequencer.stepToBranch(thread, branchNum);
+	        },
+	        startHats: function(requestedHat, opt_matchFields, opt_target) {
+	            return (
+	                runtime.startHats(requestedHat, opt_matchFields, opt_target)
+	            );
+	        },
+	        ioQuery: function (device, func, args) {
+	            // Find the I/O device and execute the query/function call.
+	            if (runtime.ioDevices[device] && runtime.ioDevices[device][func]) {
+	                var devObject = runtime.ioDevices[device];
+	                return devObject[func].call(devObject, args);
+	            }
+	        }
+	    });
+
+	    if (typeof primitiveReportedValue === 'undefined') {
+	        // No value reported - potentially a command block.
+	        // Edge-activated hats don't request a glow; all commands do.
+	        thread.requestScriptGlowInFrame = true;
+	    }
+
+	    // If it's a promise, wait until promise resolves.
+	    if (isPromise(primitiveReportedValue)) {
+	        if (thread.status === Thread.STATUS_RUNNING) {
+	            // Primitive returned a promise; automatically yield thread.
+	            thread.setStatus(Thread.STATUS_YIELD);
+	        }
+	        // Promise handlers
+	        primitiveReportedValue.then(function(resolvedValue) {
+	            handleReport(resolvedValue);
+	            sequencer.proceedThread(thread);
+	        }, function(rejectionReason) {
+	            // Promise rejected: the primitive had some error.
+	            // Log it and proceed.
+	            console.warn('Primitive rejected promise: ', rejectionReason);
+	            thread.setStatus(Thread.STATUS_RUNNING);
+	            sequencer.proceedThread(thread);
+	        });
+	    } else if (thread.status === Thread.STATUS_RUNNING) {
+	        handleReport(primitiveReportedValue);
+	    }
+	};
+
+	module.exports = execute;
+
+
+/***/ },
+/* 11 */
+/***/ function(module, exports, __webpack_require__) {
+
+	var Timer = __webpack_require__(8);
+
+	function Clock () {
+	    this._projectTimer = new Timer();
+	    this._projectTimer.start();
+	}
+
+	Clock.prototype.projectTimer = function () {
+	    return this._projectTimer.timeElapsed() / 1000;
+	};
+
+	Clock.prototype.resetProjectTimer = function () {
+	    this._projectTimer.start();
+	};
+
+	module.exports = Clock;
+
+
+/***/ },
+/* 12 */
+/***/ function(module, exports, __webpack_require__) {
+
+	var Cast = __webpack_require__(13);
+
+	function Keyboard (runtime) {
+	    /**
+	     * List of currently pressed keys.
+	     * @type{Array.<number>}
+	     */
+	    this._keysPressed = [];
+	    /**
+	     * Reference to the owning Runtime.
+	     * Can be used, for example, to activate hats.
+	     * @type{!Runtime}
+	     */
+	    this.runtime = runtime;
+	}
+
+	/**
+	 * Convert a Scratch key name to a DOM keyCode.
+	 * @param {Any} keyName Scratch key argument.
+	 * @return {number} Key code corresponding to a DOM event.
+	 */
+	Keyboard.prototype._scratchKeyToKeyCode = function (keyName) {
+	    if (typeof keyName == 'number') {
+	        // Key codes placed in with number blocks.
+	        return keyName;
+	    }
+	    var keyString = Cast.toString(keyName);
+	    switch (keyString) {
+	    case 'space': return 32;
+	    case 'left arrow': return 37;
+	    case 'up arrow': return 38;
+	    case 'right arrow': return 39;
+	    case 'down arrow': return 40;
+	    // @todo: Consider adding other special keys here.
+	    }
+	    // Keys reported by DOM keyCode are upper case.
+	    return keyString.toUpperCase().charCodeAt(0);
+	};
+
+	Keyboard.prototype._keyCodeToScratchKey = function (keyCode) {
+	    if (keyCode >= 48 && keyCode <= 90) {
+	        // Standard letter.
+	        return String.fromCharCode(keyCode).toLowerCase();
+	    }
+	    switch (keyCode) {
+	    case 32: return 'space';
+	    case 37: return 'left arrow';
+	    case 38: return 'up arrow';
+	    case 39: return 'right arrow';
+	    case 40: return 'down arrow';
+	    }
+	    return null;
+	};
+
+	Keyboard.prototype.postData = function (data) {
+	    if (data.keyCode) {
+	        var index = this._keysPressed.indexOf(data.keyCode);
+	        if (data.isDown) {
+	            // If not already present, add to the list.
+	            if (index < 0) {
+	                this._keysPressed.push(data.keyCode);
+	            }
+	            // Always trigger hats, even if it was already pressed.
+	            this.runtime.startHats('event_whenkeypressed', {
+	                'KEY_OPTION': this._keyCodeToScratchKey(data.keyCode)
+	            });
+	            this.runtime.startHats('event_whenkeypressed', {
+	                'KEY_OPTION': 'any'
+	            });
+	        } else if (index > -1) {
+	            // If already present, remove from the list.
+	            this._keysPressed.splice(index, 1);
+	        }
+	    }
+	};
+
+	Keyboard.prototype.getKeyIsDown = function (key) {
+	    if (key == 'any') {
+	        return this._keysPressed.length > 0;
+	    }
+	    var keyCode = this._scratchKeyToKeyCode(key);
+	    return this._keysPressed.indexOf(keyCode) > -1;
+	};
+
+	module.exports = Keyboard;
+
+
+/***/ },
+/* 13 */
+/***/ function(module, exports, __webpack_require__) {
+
+	var Color = __webpack_require__(14);
+
+	function Cast () {}
+
+	/**
+	 * @fileoverview
+	 * Utilities for casting and comparing Scratch data-types.
+	 * Scratch behaves slightly differently from JavaScript in many respects,
+	 * and these differences should be encapsulated below.
+	 * For example, in Scratch, add(1, join("hello", world")) -> 1.
+	 * This is because "hello world" is cast to 0.
+	 * In JavaScript, 1 + Number("hello" + "world") would give you NaN.
+	 * Use when coercing a value before computation.
+	 */
+
+	/**
+	 * Scratch cast to number.
+	 * Treats NaN as 0.
+	 * In Scratch 2.0, this is captured by `interp.numArg.`
+	 * @param {*} value Value to cast to number.
+	 * @return {number} The Scratch-casted number value.
+	 */
+	Cast.toNumber = function (value) {
+	    var n = Number(value);
+	    if (isNaN(n)) {
+	        // Scratch treats NaN as 0, when needed as a number.
+	        // E.g., 0 + NaN -> 0.
+	        return 0;
+	    }
+	    return n;
+	};
+
+	/**
+	 * Scratch cast to boolean.
+	 * In Scratch 2.0, this is captured by `interp.boolArg.`
+	 * Treats some string values differently from JavaScript.
+	 * @param {*} value Value to cast to boolean.
+	 * @return {boolean} The Scratch-casted boolean value.
+	 */
+	Cast.toBoolean = function (value) {
+	    // Already a boolean?
+	    if (typeof value === 'boolean') {
+	        return value;
+	    }
+	    if (typeof value === 'string') {
+	        // These specific strings are treated as false in Scratch.
+	        if ((value == '') ||
+	            (value == '0') ||
+	            (value.toLowerCase() == 'false')) {
+	            return false;
+	        }
+	        // All other strings treated as true.
+	        return true;
+	    }
+	    // Coerce other values and numbers.
+	    return Boolean(value);
+	};
+
+	/**
+	 * Scratch cast to string.
+	 * @param {*} value Value to cast to string.
+	 * @return {string} The Scratch-casted string value.
+	 */
+	Cast.toString = function (value) {
+	    return String(value);
+	};
+
+	/**
+	 * Cast any Scratch argument to an RGB color object to be used for the renderer.
+	 * @param {*} value Value to convert to RGB color object.
+	 * @return {Array.<number>} [r,g,b], values between 0-255.
+	 */
+	Cast.toRgbColorList = function (value) {
+	    var color;
+	    if (typeof value == 'string' && value.substring(0, 1) == '#') {
+	        color = Color.hexToRgb(value);
+	    } else {
+	        color = Color.decimalToRgb(Cast.toNumber(value));
+	    }
+	    return [color.r, color.g, color.b];
+	};
+
+	/**
+	 * Compare two values, using Scratch cast, case-insensitive string compare, etc.
+	 * In Scratch 2.0, this is captured by `interp.compare.`
+	 * @param {*} v1 First value to compare.
+	 * @param {*} v2 Second value to compare.
+	 * @returns {Number} Negative number if v1 < v2; 0 if equal; positive otherwise.
+	 */
+	Cast.compare = function (v1, v2) {
+	    var n1 = Number(v1);
+	    var n2 = Number(v2);
+	    if (isNaN(n1) || isNaN(n2)) {
+	        // At least one argument can't be converted to a number.
+	        // Scratch compares strings as case insensitive.
+	        var s1 = String(v1).toLowerCase();
+	        var s2 = String(v2).toLowerCase();
+	        return s1.localeCompare(s2);
+	    } else {
+	        // Compare as numbers.
+	        return n1 - n2;
+	    }
+	};
+
+	module.exports = Cast;
+
+
+/***/ },
+/* 14 */
+/***/ function(module, exports) {
+
+	function Color () {}
+
+	/**
+	 * Convert a Scratch decimal color to a hex string, #RRGGBB.
+	 * @param {number} decimal RGB color as a decimal.
+	 * @return {string} RGB color as #RRGGBB hex string.
+	 */
+	Color.decimalToHex = function (decimal) {
+	    if (decimal < 0) {
+	        decimal += 0xFFFFFF + 1;
+	    }
+	    var hex = Number(decimal).toString(16);
+	    hex = '#' + '000000'.substr(0, 6 - hex.length) + hex;
+	    return hex;
+	};
+
+	/**
+	 * Convert a Scratch decimal color to an RGB color object.
+	 * @param {number} decimal RGB color as decimal.
+	 * @returns {Object} {r: R, g: G, b: B}, values between 0-255
+	 */
+	Color.decimalToRgb = function (decimal) {
+	    var r = (decimal >> 16) & 0xFF;
+	    var g = (decimal >> 8) & 0xFF;
+	    var b = decimal & 0xFF;
+	    return {r: r, g: g, b: b};
+	};
+
+	/**
+	 * Convert a hex color (e.g., F00, #03F, #0033FF) to an RGB color object.
+	 * CC-BY-SA Tim Down:
+	 * https://stackoverflow.com/questions/5623838/rgb-to-hex-and-hex-to-rgb
+	 * @param {!string} hex Hex representation of the color.
+	 * @return {Object} {r: R, g: G, b: B}, 0-255, or null.
+	 */
+	Color.hexToRgb = function (hex) {
+	    var shorthandRegex = /^#?([a-f\d])([a-f\d])([a-f\d])$/i;
+	    hex = hex.replace(shorthandRegex, function(m, r, g, b) {
+	        return r + r + g + g + b + b;
+	    });
+	    var result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+	    return result ? {
+	        r: parseInt(result[1], 16),
+	        g: parseInt(result[2], 16),
+	        b: parseInt(result[3], 16)
+	    } : null;
+	};
+
+	/**
+	 * Convert an RGB color object to a hex color.
+	 * @param {Object} rgb {r: R, g: G, b: B}, values between 0-255.
+	 * @return {!string} Hex representation of the color.
+	 */
+	Color.rgbToHex = function (rgb) {
+	    return Color.decimalToHex(Color.rgbToDecimal(rgb));
+	};
+
+	/**
+	 * Convert an RGB color object to a Scratch decimal color.
+	 * @param {Object} rgb {r: R, g: G, b: B}, values between 0-255.
+	 * @return {!number} Number representing the color.
+	 */
+	Color.rgbToDecimal = function (rgb) {
+	    return (rgb.r << 16) + (rgb.g << 8) + rgb.b;
+	};
+
+	/**
+	* Convert a hex color (e.g., F00, #03F, #0033FF) to a decimal color number.
+	* @param {!string} hex Hex representation of the color.
+	* @return {!number} Number representing the color.
+	*/
+	Color.hexToDecimal = function (hex) {
+	    return Color.rgbToDecimal(Color.hexToRgb(hex));
+	};
+
+	module.exports = Color;
+
+
+/***/ },
+/* 15 */
+/***/ function(module, exports, __webpack_require__) {
+
+	var MathUtil = __webpack_require__(16);
+
+	function Mouse (runtime) {
+	    this._x = 0;
+	    this._y = 0;
+	    this._isDown = false;
+	    /**
+	     * Reference to the owning Runtime.
+	     * Can be used, for example, to activate hats.
+	     * @type{!Runtime}
+	     */
+	    this.runtime = runtime;
+	}
+
+	Mouse.prototype.postData = function(data) {
+	    if (data.x) {
+	        this._x = data.x - data.canvasWidth / 2;
+	    }
+	    if (data.y) {
+	        this._y = data.y - data.canvasHeight / 2;
+	    }
+	    if (typeof data.isDown !== 'undefined') {
+	        this._isDown = data.isDown;
+	        if (this._isDown) {
+	            this._activateClickHats(data.x, data.y);
+	        }
+	    }
+	};
+
+	Mouse.prototype._activateClickHats = function (x, y) {
+	    if (self.renderer) {
+	        var pickPromise = self.renderer.pick(x, y);
+	        var instance = this;
+	        pickPromise.then(function(drawableID) {
+	            for (var i = 0; i < instance.runtime.targets.length; i++) {
+	                var target = instance.runtime.targets[i];
+	                if (target.hasOwnProperty('drawableID') &&
+	                    target.drawableID == drawableID) {
+	                    instance.runtime.startHats('event_whenthisspriteclicked',
+	                        null, target);
+	                    return;
+	                }
+	            }
+	        });
+	    }
+	};
+
+	Mouse.prototype.getX = function () {
+	    return MathUtil.clamp(this._x, -240, 240);
+	};
+
+	Mouse.prototype.getY = function () {
+	    return MathUtil.clamp(-this._y, -180, 180);
+	};
+
+	Mouse.prototype.getIsDown = function () {
+	    return this._isDown;
+	};
+
+	module.exports = Mouse;
+
+
+/***/ },
+/* 16 */
 /***/ function(module, exports) {
 
 	function MathUtil () {}
@@ -1553,36 +2939,2026 @@
 
 
 /***/ },
-/* 9 */
+/* 17 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var Blocks = __webpack_require__(10);
+	var Cast = __webpack_require__(13);
+	var Promise = __webpack_require__(18);
 
-	/**
-	 * @fileoverview
-	 * A Target is an abstract "code-running" object for the Scratch VM.
-	 * Examples include sprites/clones or potentially physical-world devices.
-	 */
-
-	/**
-	 * @param {?Blocks} blocks Blocks instance for the blocks owned by this target.
-	 * @constructor
-	 */
-	function Target (blocks) {
-	    if (!blocks) {
-	        blocks = new Blocks(this);
-	    }
-	    this.blocks = blocks;
+	function Scratch3ControlBlocks(runtime) {
+	    /**
+	     * The runtime instantiating this block package.
+	     * @type {Runtime}
+	     */
+	    this.runtime = runtime;
 	}
 
-	module.exports = Target;
+	/**
+	 * Retrieve the block primitives implemented by this package.
+	 * @return {Object.<string, Function>} Mapping of opcode to Function.
+	 */
+	Scratch3ControlBlocks.prototype.getPrimitives = function() {
+	    return {
+	        'control_repeat': this.repeat,
+	        'control_repeat_until': this.repeatUntil,
+	        'control_forever': this.forever,
+	        'control_wait': this.wait,
+	        'control_if': this.if,
+	        'control_if_else': this.ifElse,
+	        'control_stop': this.stop
+	    };
+	};
+
+	Scratch3ControlBlocks.prototype.repeat = function(args, util) {
+	    var times = Math.floor(Cast.toNumber(args.TIMES));
+	    // Initialize loop
+	    if (util.stackFrame.loopCounter === undefined) {
+	        util.stackFrame.loopCounter = times;
+	    }
+	    // Only execute once per frame.
+	    // When the branch finishes, `repeat` will be executed again and
+	    // the second branch will be taken, yielding for the rest of the frame.
+	    if (!util.stackFrame.executedInFrame) {
+	        util.stackFrame.executedInFrame = true;
+	        // Decrease counter
+	        util.stackFrame.loopCounter--;
+	        // If we still have some left, start the branch.
+	        if (util.stackFrame.loopCounter >= 0) {
+	            util.startBranch();
+	        }
+	    } else {
+	        util.stackFrame.executedInFrame = false;
+	        util.yieldFrame();
+	    }
+	};
+
+	Scratch3ControlBlocks.prototype.repeatUntil = function(args, util) {
+	    var condition = Cast.toBoolean(args.CONDITION);
+	    // Only execute once per frame.
+	    // When the branch finishes, `repeat` will be executed again and
+	    // the second branch will be taken, yielding for the rest of the frame.
+	    if (!util.stackFrame.executedInFrame) {
+	        util.stackFrame.executedInFrame = true;
+	        // If the condition is true, start the branch.
+	        if (!condition) {
+	            util.startBranch();
+	        }
+	    } else {
+	        util.stackFrame.executedInFrame = false;
+	        util.yieldFrame();
+	    }
+	};
+
+	Scratch3ControlBlocks.prototype.forever = function(args, util) {
+	    // Only execute once per frame.
+	    // When the branch finishes, `forever` will be executed again and
+	    // the second branch will be taken, yielding for the rest of the frame.
+	    if (!util.stackFrame.executedInFrame) {
+	        util.stackFrame.executedInFrame = true;
+	        util.startBranch();
+	    } else {
+	        util.stackFrame.executedInFrame = false;
+	        util.yieldFrame();
+	    }
+	};
+
+	Scratch3ControlBlocks.prototype.wait = function(args) {
+	    var duration = Cast.toNumber(args.DURATION);
+	    return new Promise(function(resolve) {
+	        setTimeout(function() {
+	            resolve();
+	        }, 1000 * duration);
+	    });
+	};
+
+	Scratch3ControlBlocks.prototype.if = function(args, util) {
+	    var condition = Cast.toBoolean(args.CONDITION);
+	    // Only execute one time. `if` will be returned to
+	    // when the branch finishes, but it shouldn't execute again.
+	    if (util.stackFrame.executedInFrame === undefined) {
+	        util.stackFrame.executedInFrame = true;
+	        if (condition) {
+	            util.startBranch();
+	        }
+	    }
+	};
+
+	Scratch3ControlBlocks.prototype.ifElse = function(args, util) {
+	    var condition = Cast.toBoolean(args.CONDITION);
+	    // Only execute one time. `ifElse` will be returned to
+	    // when the branch finishes, but it shouldn't execute again.
+	    if (util.stackFrame.executedInFrame === undefined) {
+	        util.stackFrame.executedInFrame = true;
+	        if (condition) {
+	            util.startBranch(1);
+	        } else {
+	            util.startBranch(2);
+	        }
+	    }
+	};
+
+	Scratch3ControlBlocks.prototype.stop = function() {
+	    // @todo - don't use this.runtime
+	    this.runtime.stopAll();
+	};
+
+	module.exports = Scratch3ControlBlocks;
 
 
 /***/ },
-/* 10 */
+/* 18 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var adapter = __webpack_require__(11);
+	'use strict';
+
+	module.exports = __webpack_require__(19)
+
+
+/***/ },
+/* 19 */
+/***/ function(module, exports, __webpack_require__) {
+
+	'use strict';
+
+	module.exports = __webpack_require__(20);
+	__webpack_require__(22);
+	__webpack_require__(23);
+	__webpack_require__(24);
+	__webpack_require__(25);
+	__webpack_require__(27);
+
+
+/***/ },
+/* 20 */
+/***/ function(module, exports, __webpack_require__) {
+
+	'use strict';
+
+	var asap = __webpack_require__(21);
+
+	function noop() {}
+
+	// States:
+	//
+	// 0 - pending
+	// 1 - fulfilled with _value
+	// 2 - rejected with _value
+	// 3 - adopted the state of another promise, _value
+	//
+	// once the state is no longer pending (0) it is immutable
+
+	// All `_` prefixed properties will be reduced to `_{random number}`
+	// at build time to obfuscate them and discourage their use.
+	// We don't use symbols or Object.defineProperty to fully hide them
+	// because the performance isn't good enough.
+
+
+	// to avoid using try/catch inside critical functions, we
+	// extract them to here.
+	var LAST_ERROR = null;
+	var IS_ERROR = {};
+	function getThen(obj) {
+	  try {
+	    return obj.then;
+	  } catch (ex) {
+	    LAST_ERROR = ex;
+	    return IS_ERROR;
+	  }
+	}
+
+	function tryCallOne(fn, a) {
+	  try {
+	    return fn(a);
+	  } catch (ex) {
+	    LAST_ERROR = ex;
+	    return IS_ERROR;
+	  }
+	}
+	function tryCallTwo(fn, a, b) {
+	  try {
+	    fn(a, b);
+	  } catch (ex) {
+	    LAST_ERROR = ex;
+	    return IS_ERROR;
+	  }
+	}
+
+	module.exports = Promise;
+
+	function Promise(fn) {
+	  if (typeof this !== 'object') {
+	    throw new TypeError('Promises must be constructed via new');
+	  }
+	  if (typeof fn !== 'function') {
+	    throw new TypeError('not a function');
+	  }
+	  this._45 = 0;
+	  this._81 = 0;
+	  this._65 = null;
+	  this._54 = null;
+	  if (fn === noop) return;
+	  doResolve(fn, this);
+	}
+	Promise._10 = null;
+	Promise._97 = null;
+	Promise._61 = noop;
+
+	Promise.prototype.then = function(onFulfilled, onRejected) {
+	  if (this.constructor !== Promise) {
+	    return safeThen(this, onFulfilled, onRejected);
+	  }
+	  var res = new Promise(noop);
+	  handle(this, new Handler(onFulfilled, onRejected, res));
+	  return res;
+	};
+
+	function safeThen(self, onFulfilled, onRejected) {
+	  return new self.constructor(function (resolve, reject) {
+	    var res = new Promise(noop);
+	    res.then(resolve, reject);
+	    handle(self, new Handler(onFulfilled, onRejected, res));
+	  });
+	};
+	function handle(self, deferred) {
+	  while (self._81 === 3) {
+	    self = self._65;
+	  }
+	  if (Promise._10) {
+	    Promise._10(self);
+	  }
+	  if (self._81 === 0) {
+	    if (self._45 === 0) {
+	      self._45 = 1;
+	      self._54 = deferred;
+	      return;
+	    }
+	    if (self._45 === 1) {
+	      self._45 = 2;
+	      self._54 = [self._54, deferred];
+	      return;
+	    }
+	    self._54.push(deferred);
+	    return;
+	  }
+	  handleResolved(self, deferred);
+	}
+
+	function handleResolved(self, deferred) {
+	  asap(function() {
+	    var cb = self._81 === 1 ? deferred.onFulfilled : deferred.onRejected;
+	    if (cb === null) {
+	      if (self._81 === 1) {
+	        resolve(deferred.promise, self._65);
+	      } else {
+	        reject(deferred.promise, self._65);
+	      }
+	      return;
+	    }
+	    var ret = tryCallOne(cb, self._65);
+	    if (ret === IS_ERROR) {
+	      reject(deferred.promise, LAST_ERROR);
+	    } else {
+	      resolve(deferred.promise, ret);
+	    }
+	  });
+	}
+	function resolve(self, newValue) {
+	  // Promise Resolution Procedure: https://github.com/promises-aplus/promises-spec#the-promise-resolution-procedure
+	  if (newValue === self) {
+	    return reject(
+	      self,
+	      new TypeError('A promise cannot be resolved with itself.')
+	    );
+	  }
+	  if (
+	    newValue &&
+	    (typeof newValue === 'object' || typeof newValue === 'function')
+	  ) {
+	    var then = getThen(newValue);
+	    if (then === IS_ERROR) {
+	      return reject(self, LAST_ERROR);
+	    }
+	    if (
+	      then === self.then &&
+	      newValue instanceof Promise
+	    ) {
+	      self._81 = 3;
+	      self._65 = newValue;
+	      finale(self);
+	      return;
+	    } else if (typeof then === 'function') {
+	      doResolve(then.bind(newValue), self);
+	      return;
+	    }
+	  }
+	  self._81 = 1;
+	  self._65 = newValue;
+	  finale(self);
+	}
+
+	function reject(self, newValue) {
+	  self._81 = 2;
+	  self._65 = newValue;
+	  if (Promise._97) {
+	    Promise._97(self, newValue);
+	  }
+	  finale(self);
+	}
+	function finale(self) {
+	  if (self._45 === 1) {
+	    handle(self, self._54);
+	    self._54 = null;
+	  }
+	  if (self._45 === 2) {
+	    for (var i = 0; i < self._54.length; i++) {
+	      handle(self, self._54[i]);
+	    }
+	    self._54 = null;
+	  }
+	}
+
+	function Handler(onFulfilled, onRejected, promise){
+	  this.onFulfilled = typeof onFulfilled === 'function' ? onFulfilled : null;
+	  this.onRejected = typeof onRejected === 'function' ? onRejected : null;
+	  this.promise = promise;
+	}
+
+	/**
+	 * Take a potentially misbehaving resolver function and make sure
+	 * onFulfilled and onRejected are only called once.
+	 *
+	 * Makes no guarantees about asynchrony.
+	 */
+	function doResolve(fn, promise) {
+	  var done = false;
+	  var res = tryCallTwo(fn, function (value) {
+	    if (done) return;
+	    done = true;
+	    resolve(promise, value);
+	  }, function (reason) {
+	    if (done) return;
+	    done = true;
+	    reject(promise, reason);
+	  })
+	  if (!done && res === IS_ERROR) {
+	    done = true;
+	    reject(promise, LAST_ERROR);
+	  }
+	}
+
+
+/***/ },
+/* 21 */
+/***/ function(module, exports) {
+
+	/* WEBPACK VAR INJECTION */(function(global) {"use strict";
+
+	// Use the fastest means possible to execute a task in its own turn, with
+	// priority over other events including IO, animation, reflow, and redraw
+	// events in browsers.
+	//
+	// An exception thrown by a task will permanently interrupt the processing of
+	// subsequent tasks. The higher level `asap` function ensures that if an
+	// exception is thrown by a task, that the task queue will continue flushing as
+	// soon as possible, but if you use `rawAsap` directly, you are responsible to
+	// either ensure that no exceptions are thrown from your task, or to manually
+	// call `rawAsap.requestFlush` if an exception is thrown.
+	module.exports = rawAsap;
+	function rawAsap(task) {
+	    if (!queue.length) {
+	        requestFlush();
+	        flushing = true;
+	    }
+	    // Equivalent to push, but avoids a function call.
+	    queue[queue.length] = task;
+	}
+
+	var queue = [];
+	// Once a flush has been requested, no further calls to `requestFlush` are
+	// necessary until the next `flush` completes.
+	var flushing = false;
+	// `requestFlush` is an implementation-specific method that attempts to kick
+	// off a `flush` event as quickly as possible. `flush` will attempt to exhaust
+	// the event queue before yielding to the browser's own event loop.
+	var requestFlush;
+	// The position of the next task to execute in the task queue. This is
+	// preserved between calls to `flush` so that it can be resumed if
+	// a task throws an exception.
+	var index = 0;
+	// If a task schedules additional tasks recursively, the task queue can grow
+	// unbounded. To prevent memory exhaustion, the task queue will periodically
+	// truncate already-completed tasks.
+	var capacity = 1024;
+
+	// The flush function processes all tasks that have been scheduled with
+	// `rawAsap` unless and until one of those tasks throws an exception.
+	// If a task throws an exception, `flush` ensures that its state will remain
+	// consistent and will resume where it left off when called again.
+	// However, `flush` does not make any arrangements to be called again if an
+	// exception is thrown.
+	function flush() {
+	    while (index < queue.length) {
+	        var currentIndex = index;
+	        // Advance the index before calling the task. This ensures that we will
+	        // begin flushing on the next task the task throws an error.
+	        index = index + 1;
+	        queue[currentIndex].call();
+	        // Prevent leaking memory for long chains of recursive calls to `asap`.
+	        // If we call `asap` within tasks scheduled by `asap`, the queue will
+	        // grow, but to avoid an O(n) walk for every task we execute, we don't
+	        // shift tasks off the queue after they have been executed.
+	        // Instead, we periodically shift 1024 tasks off the queue.
+	        if (index > capacity) {
+	            // Manually shift all values starting at the index back to the
+	            // beginning of the queue.
+	            for (var scan = 0, newLength = queue.length - index; scan < newLength; scan++) {
+	                queue[scan] = queue[scan + index];
+	            }
+	            queue.length -= index;
+	            index = 0;
+	        }
+	    }
+	    queue.length = 0;
+	    index = 0;
+	    flushing = false;
+	}
+
+	// `requestFlush` is implemented using a strategy based on data collected from
+	// every available SauceLabs Selenium web driver worker at time of writing.
+	// https://docs.google.com/spreadsheets/d/1mG-5UYGup5qxGdEMWkhP6BWCz053NUb2E1QoUTU16uA/edit#gid=783724593
+
+	// Safari 6 and 6.1 for desktop, iPad, and iPhone are the only browsers that
+	// have WebKitMutationObserver but not un-prefixed MutationObserver.
+	// Must use `global` instead of `window` to work in both frames and web
+	// workers. `global` is a provision of Browserify, Mr, Mrs, or Mop.
+	var BrowserMutationObserver = global.MutationObserver || global.WebKitMutationObserver;
+
+	// MutationObservers are desirable because they have high priority and work
+	// reliably everywhere they are implemented.
+	// They are implemented in all modern browsers.
+	//
+	// - Android 4-4.3
+	// - Chrome 26-34
+	// - Firefox 14-29
+	// - Internet Explorer 11
+	// - iPad Safari 6-7.1
+	// - iPhone Safari 7-7.1
+	// - Safari 6-7
+	if (typeof BrowserMutationObserver === "function") {
+	    requestFlush = makeRequestCallFromMutationObserver(flush);
+
+	// MessageChannels are desirable because they give direct access to the HTML
+	// task queue, are implemented in Internet Explorer 10, Safari 5.0-1, and Opera
+	// 11-12, and in web workers in many engines.
+	// Although message channels yield to any queued rendering and IO tasks, they
+	// would be better than imposing the 4ms delay of timers.
+	// However, they do not work reliably in Internet Explorer or Safari.
+
+	// Internet Explorer 10 is the only browser that has setImmediate but does
+	// not have MutationObservers.
+	// Although setImmediate yields to the browser's renderer, it would be
+	// preferrable to falling back to setTimeout since it does not have
+	// the minimum 4ms penalty.
+	// Unfortunately there appears to be a bug in Internet Explorer 10 Mobile (and
+	// Desktop to a lesser extent) that renders both setImmediate and
+	// MessageChannel useless for the purposes of ASAP.
+	// https://github.com/kriskowal/q/issues/396
+
+	// Timers are implemented universally.
+	// We fall back to timers in workers in most engines, and in foreground
+	// contexts in the following browsers.
+	// However, note that even this simple case requires nuances to operate in a
+	// broad spectrum of browsers.
+	//
+	// - Firefox 3-13
+	// - Internet Explorer 6-9
+	// - iPad Safari 4.3
+	// - Lynx 2.8.7
+	} else {
+	    requestFlush = makeRequestCallFromTimer(flush);
+	}
+
+	// `requestFlush` requests that the high priority event queue be flushed as
+	// soon as possible.
+	// This is useful to prevent an error thrown in a task from stalling the event
+	// queue if the exception handled by Node.js’s
+	// `process.on("uncaughtException")` or by a domain.
+	rawAsap.requestFlush = requestFlush;
+
+	// To request a high priority event, we induce a mutation observer by toggling
+	// the text of a text node between "1" and "-1".
+	function makeRequestCallFromMutationObserver(callback) {
+	    var toggle = 1;
+	    var observer = new BrowserMutationObserver(callback);
+	    var node = document.createTextNode("");
+	    observer.observe(node, {characterData: true});
+	    return function requestCall() {
+	        toggle = -toggle;
+	        node.data = toggle;
+	    };
+	}
+
+	// The message channel technique was discovered by Malte Ubl and was the
+	// original foundation for this library.
+	// http://www.nonblocking.io/2011/06/windownexttick.html
+
+	// Safari 6.0.5 (at least) intermittently fails to create message ports on a
+	// page's first load. Thankfully, this version of Safari supports
+	// MutationObservers, so we don't need to fall back in that case.
+
+	// function makeRequestCallFromMessageChannel(callback) {
+	//     var channel = new MessageChannel();
+	//     channel.port1.onmessage = callback;
+	//     return function requestCall() {
+	//         channel.port2.postMessage(0);
+	//     };
+	// }
+
+	// For reasons explained above, we are also unable to use `setImmediate`
+	// under any circumstances.
+	// Even if we were, there is another bug in Internet Explorer 10.
+	// It is not sufficient to assign `setImmediate` to `requestFlush` because
+	// `setImmediate` must be called *by name* and therefore must be wrapped in a
+	// closure.
+	// Never forget.
+
+	// function makeRequestCallFromSetImmediate(callback) {
+	//     return function requestCall() {
+	//         setImmediate(callback);
+	//     };
+	// }
+
+	// Safari 6.0 has a problem where timers will get lost while the user is
+	// scrolling. This problem does not impact ASAP because Safari 6.0 supports
+	// mutation observers, so that implementation is used instead.
+	// However, if we ever elect to use timers in Safari, the prevalent work-around
+	// is to add a scroll event listener that calls for a flush.
+
+	// `setTimeout` does not call the passed callback if the delay is less than
+	// approximately 7 in web workers in Firefox 8 through 18, and sometimes not
+	// even then.
+
+	function makeRequestCallFromTimer(callback) {
+	    return function requestCall() {
+	        // We dispatch a timeout with a specified delay of 0 for engines that
+	        // can reliably accommodate that request. This will usually be snapped
+	        // to a 4 milisecond delay, but once we're flushing, there's no delay
+	        // between events.
+	        var timeoutHandle = setTimeout(handleTimer, 0);
+	        // However, since this timer gets frequently dropped in Firefox
+	        // workers, we enlist an interval handle that will try to fire
+	        // an event 20 times per second until it succeeds.
+	        var intervalHandle = setInterval(handleTimer, 50);
+
+	        function handleTimer() {
+	            // Whichever timer succeeds will cancel both timers and
+	            // execute the callback.
+	            clearTimeout(timeoutHandle);
+	            clearInterval(intervalHandle);
+	            callback();
+	        }
+	    };
+	}
+
+	// This is for `asap.js` only.
+	// Its name will be periodically randomized to break any code that depends on
+	// its existence.
+	rawAsap.makeRequestCallFromTimer = makeRequestCallFromTimer;
+
+	// ASAP was originally a nextTick shim included in Q. This was factored out
+	// into this ASAP package. It was later adapted to RSVP which made further
+	// amendments. These decisions, particularly to marginalize MessageChannel and
+	// to capture the MutationObserver implementation in a closure, were integrated
+	// back into ASAP proper.
+	// https://github.com/tildeio/rsvp.js/blob/cddf7232546a9cf858524b75cde6f9edf72620a7/lib/rsvp/asap.js
+
+	/* WEBPACK VAR INJECTION */}.call(exports, (function() { return this; }())))
+
+/***/ },
+/* 22 */
+/***/ function(module, exports, __webpack_require__) {
+
+	'use strict';
+
+	var Promise = __webpack_require__(20);
+
+	module.exports = Promise;
+	Promise.prototype.done = function (onFulfilled, onRejected) {
+	  var self = arguments.length ? this.then.apply(this, arguments) : this;
+	  self.then(null, function (err) {
+	    setTimeout(function () {
+	      throw err;
+	    }, 0);
+	  });
+	};
+
+
+/***/ },
+/* 23 */
+/***/ function(module, exports, __webpack_require__) {
+
+	'use strict';
+
+	var Promise = __webpack_require__(20);
+
+	module.exports = Promise;
+	Promise.prototype['finally'] = function (f) {
+	  return this.then(function (value) {
+	    return Promise.resolve(f()).then(function () {
+	      return value;
+	    });
+	  }, function (err) {
+	    return Promise.resolve(f()).then(function () {
+	      throw err;
+	    });
+	  });
+	};
+
+
+/***/ },
+/* 24 */
+/***/ function(module, exports, __webpack_require__) {
+
+	'use strict';
+
+	//This file contains the ES6 extensions to the core Promises/A+ API
+
+	var Promise = __webpack_require__(20);
+
+	module.exports = Promise;
+
+	/* Static Functions */
+
+	var TRUE = valuePromise(true);
+	var FALSE = valuePromise(false);
+	var NULL = valuePromise(null);
+	var UNDEFINED = valuePromise(undefined);
+	var ZERO = valuePromise(0);
+	var EMPTYSTRING = valuePromise('');
+
+	function valuePromise(value) {
+	  var p = new Promise(Promise._61);
+	  p._81 = 1;
+	  p._65 = value;
+	  return p;
+	}
+	Promise.resolve = function (value) {
+	  if (value instanceof Promise) return value;
+
+	  if (value === null) return NULL;
+	  if (value === undefined) return UNDEFINED;
+	  if (value === true) return TRUE;
+	  if (value === false) return FALSE;
+	  if (value === 0) return ZERO;
+	  if (value === '') return EMPTYSTRING;
+
+	  if (typeof value === 'object' || typeof value === 'function') {
+	    try {
+	      var then = value.then;
+	      if (typeof then === 'function') {
+	        return new Promise(then.bind(value));
+	      }
+	    } catch (ex) {
+	      return new Promise(function (resolve, reject) {
+	        reject(ex);
+	      });
+	    }
+	  }
+	  return valuePromise(value);
+	};
+
+	Promise.all = function (arr) {
+	  var args = Array.prototype.slice.call(arr);
+
+	  return new Promise(function (resolve, reject) {
+	    if (args.length === 0) return resolve([]);
+	    var remaining = args.length;
+	    function res(i, val) {
+	      if (val && (typeof val === 'object' || typeof val === 'function')) {
+	        if (val instanceof Promise && val.then === Promise.prototype.then) {
+	          while (val._81 === 3) {
+	            val = val._65;
+	          }
+	          if (val._81 === 1) return res(i, val._65);
+	          if (val._81 === 2) reject(val._65);
+	          val.then(function (val) {
+	            res(i, val);
+	          }, reject);
+	          return;
+	        } else {
+	          var then = val.then;
+	          if (typeof then === 'function') {
+	            var p = new Promise(then.bind(val));
+	            p.then(function (val) {
+	              res(i, val);
+	            }, reject);
+	            return;
+	          }
+	        }
+	      }
+	      args[i] = val;
+	      if (--remaining === 0) {
+	        resolve(args);
+	      }
+	    }
+	    for (var i = 0; i < args.length; i++) {
+	      res(i, args[i]);
+	    }
+	  });
+	};
+
+	Promise.reject = function (value) {
+	  return new Promise(function (resolve, reject) {
+	    reject(value);
+	  });
+	};
+
+	Promise.race = function (values) {
+	  return new Promise(function (resolve, reject) {
+	    values.forEach(function(value){
+	      Promise.resolve(value).then(resolve, reject);
+	    });
+	  });
+	};
+
+	/* Prototype Methods */
+
+	Promise.prototype['catch'] = function (onRejected) {
+	  return this.then(null, onRejected);
+	};
+
+
+/***/ },
+/* 25 */
+/***/ function(module, exports, __webpack_require__) {
+
+	'use strict';
+
+	// This file contains then/promise specific extensions that are only useful
+	// for node.js interop
+
+	var Promise = __webpack_require__(20);
+	var asap = __webpack_require__(26);
+
+	module.exports = Promise;
+
+	/* Static Functions */
+
+	Promise.denodeify = function (fn, argumentCount) {
+	  if (
+	    typeof argumentCount === 'number' && argumentCount !== Infinity
+	  ) {
+	    return denodeifyWithCount(fn, argumentCount);
+	  } else {
+	    return denodeifyWithoutCount(fn);
+	  }
+	}
+
+	var callbackFn = (
+	  'function (err, res) {' +
+	  'if (err) { rj(err); } else { rs(res); }' +
+	  '}'
+	);
+	function denodeifyWithCount(fn, argumentCount) {
+	  var args = [];
+	  for (var i = 0; i < argumentCount; i++) {
+	    args.push('a' + i);
+	  }
+	  var body = [
+	    'return function (' + args.join(',') + ') {',
+	    'var self = this;',
+	    'return new Promise(function (rs, rj) {',
+	    'var res = fn.call(',
+	    ['self'].concat(args).concat([callbackFn]).join(','),
+	    ');',
+	    'if (res &&',
+	    '(typeof res === "object" || typeof res === "function") &&',
+	    'typeof res.then === "function"',
+	    ') {rs(res);}',
+	    '});',
+	    '};'
+	  ].join('');
+	  return Function(['Promise', 'fn'], body)(Promise, fn);
+	}
+	function denodeifyWithoutCount(fn) {
+	  var fnLength = Math.max(fn.length - 1, 3);
+	  var args = [];
+	  for (var i = 0; i < fnLength; i++) {
+	    args.push('a' + i);
+	  }
+	  var body = [
+	    'return function (' + args.join(',') + ') {',
+	    'var self = this;',
+	    'var args;',
+	    'var argLength = arguments.length;',
+	    'if (arguments.length > ' + fnLength + ') {',
+	    'args = new Array(arguments.length + 1);',
+	    'for (var i = 0; i < arguments.length; i++) {',
+	    'args[i] = arguments[i];',
+	    '}',
+	    '}',
+	    'return new Promise(function (rs, rj) {',
+	    'var cb = ' + callbackFn + ';',
+	    'var res;',
+	    'switch (argLength) {',
+	    args.concat(['extra']).map(function (_, index) {
+	      return (
+	        'case ' + (index) + ':' +
+	        'res = fn.call(' + ['self'].concat(args.slice(0, index)).concat('cb').join(',') + ');' +
+	        'break;'
+	      );
+	    }).join(''),
+	    'default:',
+	    'args[argLength] = cb;',
+	    'res = fn.apply(self, args);',
+	    '}',
+	    
+	    'if (res &&',
+	    '(typeof res === "object" || typeof res === "function") &&',
+	    'typeof res.then === "function"',
+	    ') {rs(res);}',
+	    '});',
+	    '};'
+	  ].join('');
+
+	  return Function(
+	    ['Promise', 'fn'],
+	    body
+	  )(Promise, fn);
+	}
+
+	Promise.nodeify = function (fn) {
+	  return function () {
+	    var args = Array.prototype.slice.call(arguments);
+	    var callback =
+	      typeof args[args.length - 1] === 'function' ? args.pop() : null;
+	    var ctx = this;
+	    try {
+	      return fn.apply(this, arguments).nodeify(callback, ctx);
+	    } catch (ex) {
+	      if (callback === null || typeof callback == 'undefined') {
+	        return new Promise(function (resolve, reject) {
+	          reject(ex);
+	        });
+	      } else {
+	        asap(function () {
+	          callback.call(ctx, ex);
+	        })
+	      }
+	    }
+	  }
+	}
+
+	Promise.prototype.nodeify = function (callback, ctx) {
+	  if (typeof callback != 'function') return this;
+
+	  this.then(function (value) {
+	    asap(function () {
+	      callback.call(ctx, null, value);
+	    });
+	  }, function (err) {
+	    asap(function () {
+	      callback.call(ctx, err);
+	    });
+	  });
+	}
+
+
+/***/ },
+/* 26 */
+/***/ function(module, exports, __webpack_require__) {
+
+	"use strict";
+
+	// rawAsap provides everything we need except exception management.
+	var rawAsap = __webpack_require__(21);
+	// RawTasks are recycled to reduce GC churn.
+	var freeTasks = [];
+	// We queue errors to ensure they are thrown in right order (FIFO).
+	// Array-as-queue is good enough here, since we are just dealing with exceptions.
+	var pendingErrors = [];
+	var requestErrorThrow = rawAsap.makeRequestCallFromTimer(throwFirstError);
+
+	function throwFirstError() {
+	    if (pendingErrors.length) {
+	        throw pendingErrors.shift();
+	    }
+	}
+
+	/**
+	 * Calls a task as soon as possible after returning, in its own event, with priority
+	 * over other events like animation, reflow, and repaint. An error thrown from an
+	 * event will not interrupt, nor even substantially slow down the processing of
+	 * other events, but will be rather postponed to a lower priority event.
+	 * @param {{call}} task A callable object, typically a function that takes no
+	 * arguments.
+	 */
+	module.exports = asap;
+	function asap(task) {
+	    var rawTask;
+	    if (freeTasks.length) {
+	        rawTask = freeTasks.pop();
+	    } else {
+	        rawTask = new RawTask();
+	    }
+	    rawTask.task = task;
+	    rawAsap(rawTask);
+	}
+
+	// We wrap tasks with recyclable task objects.  A task object implements
+	// `call`, just like a function.
+	function RawTask() {
+	    this.task = null;
+	}
+
+	// The sole purpose of wrapping the task is to catch the exception and recycle
+	// the task object after its single use.
+	RawTask.prototype.call = function () {
+	    try {
+	        this.task.call();
+	    } catch (error) {
+	        if (asap.onerror) {
+	            // This hook exists purely for testing purposes.
+	            // Its name will be periodically randomized to break any code that
+	            // depends on its existence.
+	            asap.onerror(error);
+	        } else {
+	            // In a web browser, exceptions are not fatal. However, to avoid
+	            // slowing down the queue of pending tasks, we rethrow the error in a
+	            // lower priority turn.
+	            pendingErrors.push(error);
+	            requestErrorThrow();
+	        }
+	    } finally {
+	        this.task = null;
+	        freeTasks[freeTasks.length] = this;
+	    }
+	};
+
+
+/***/ },
+/* 27 */
+/***/ function(module, exports, __webpack_require__) {
+
+	'use strict';
+
+	var Promise = __webpack_require__(20);
+
+	module.exports = Promise;
+	Promise.enableSynchronous = function () {
+	  Promise.prototype.isPending = function() {
+	    return this.getState() == 0;
+	  };
+
+	  Promise.prototype.isFulfilled = function() {
+	    return this.getState() == 1;
+	  };
+
+	  Promise.prototype.isRejected = function() {
+	    return this.getState() == 2;
+	  };
+
+	  Promise.prototype.getValue = function () {
+	    if (this._81 === 3) {
+	      return this._65.getValue();
+	    }
+
+	    if (!this.isFulfilled()) {
+	      throw new Error('Cannot get a value of an unfulfilled promise.');
+	    }
+
+	    return this._65;
+	  };
+
+	  Promise.prototype.getReason = function () {
+	    if (this._81 === 3) {
+	      return this._65.getReason();
+	    }
+
+	    if (!this.isRejected()) {
+	      throw new Error('Cannot get a rejection reason of a non-rejected promise.');
+	    }
+
+	    return this._65;
+	  };
+
+	  Promise.prototype.getState = function () {
+	    if (this._81 === 3) {
+	      return this._65.getState();
+	    }
+	    if (this._81 === -1 || this._81 === -2) {
+	      return 0;
+	    }
+
+	    return this._81;
+	  };
+	};
+
+	Promise.disableSynchronous = function() {
+	  Promise.prototype.isPending = undefined;
+	  Promise.prototype.isFulfilled = undefined;
+	  Promise.prototype.isRejected = undefined;
+	  Promise.prototype.getValue = undefined;
+	  Promise.prototype.getReason = undefined;
+	  Promise.prototype.getState = undefined;
+	};
+
+
+/***/ },
+/* 28 */
+/***/ function(module, exports, __webpack_require__) {
+
+	var Cast = __webpack_require__(13);
+
+	function Scratch3EventBlocks(runtime) {
+	    /**
+	     * The runtime instantiating this block package.
+	     * @type {Runtime}
+	     */
+	    this.runtime = runtime;
+	}
+
+	/**
+	 * Retrieve the block primitives implemented by this package.
+	 * @return {Object.<string, Function>} Mapping of opcode to Function.
+	 */
+	Scratch3EventBlocks.prototype.getPrimitives = function() {
+	    return {
+	        'event_broadcast': this.broadcast,
+	        'event_broadcastandwait': this.broadcastAndWait,
+	        'event_whengreaterthan': this.hatGreaterThanPredicate
+	    };
+	};
+
+	Scratch3EventBlocks.prototype.getHats = function () {
+	    return {
+	        'event_whenflagclicked': {
+	            restartExistingThreads: true
+	        },
+	        'event_whenkeypressed': {
+	            restartExistingThreads: false
+	        },
+	        'event_whenthisspriteclicked': {
+	            restartExistingThreads: true
+	        },
+	        'event_whenbackdropswitchesto': {
+	            restartExistingThreads: true
+	        },
+	        'event_whengreaterthan': {
+	            restartExistingThreads: false,
+	            edgeActivated: true
+	        },
+	        'event_whenbroadcastreceived': {
+	            restartExistingThreads: true
+	        }
+	    };
+	};
+
+	Scratch3EventBlocks.prototype.hatGreaterThanPredicate = function (args, util) {
+	    var option = Cast.toString(args.WHENGREATERTHANMENU).toLowerCase();
+	    var value = Cast.toNumber(args.VALUE);
+	    // @todo: Other cases :)
+	    if (option == 'timer') {
+	        return util.ioQuery('clock', 'projectTimer') > value;
+	    }
+	    return false;
+	};
+
+	Scratch3EventBlocks.prototype.broadcast = function(args, util) {
+	    var broadcastOption = Cast.toString(args.BROADCAST_OPTION);
+	    util.startHats('event_whenbroadcastreceived', {
+	        'BROADCAST_OPTION': broadcastOption
+	    });
+	};
+
+	Scratch3EventBlocks.prototype.broadcastAndWait = function (args, util) {
+	    var broadcastOption = Cast.toString(args.BROADCAST_OPTION);
+	    // Have we run before, starting threads?
+	    if (!util.stackFrame.startedThreads) {
+	        // No - start hats for this broadcast.
+	        util.stackFrame.startedThreads = util.startHats(
+	            'event_whenbroadcastreceived', {
+	                'BROADCAST_OPTION': broadcastOption
+	            }
+	        );
+	        if (util.stackFrame.startedThreads.length == 0) {
+	            // Nothing was started.
+	            return;
+	        }
+	    }
+	    // We've run before; check if the wait is still going on.
+	    var instance = this;
+	    var waiting = util.stackFrame.startedThreads.some(function(thread) {
+	        return instance.runtime.isActiveThread(thread);
+	    });
+	    if (waiting) {
+	        util.yieldFrame();
+	    }
+	};
+
+	module.exports = Scratch3EventBlocks;
+
+
+/***/ },
+/* 29 */
+/***/ function(module, exports, __webpack_require__) {
+
+	var Cast = __webpack_require__(13);
+
+	function Scratch3LooksBlocks(runtime) {
+	    /**
+	     * The runtime instantiating this block package.
+	     * @type {Runtime}
+	     */
+	    this.runtime = runtime;
+	}
+
+	/**
+	 * Retrieve the block primitives implemented by this package.
+	 * @return {Object.<string, Function>} Mapping of opcode to Function.
+	 */
+	Scratch3LooksBlocks.prototype.getPrimitives = function() {
+	    return {
+	        'looks_say': this.say,
+	        'looks_sayforsecs': this.sayforsecs,
+	        'looks_think': this.think,
+	        'looks_thinkforsecs': this.sayforsecs,
+	        'looks_show': this.show,
+	        'looks_hide': this.hide,
+	        'looks_switchcostumeto': this.switchCostume,
+	        'looks_switchbackdropto': this.switchBackdrop,
+	        'looks_switchbackdroptoandwait': this.switchBackdropAndWait,
+	        'looks_nextcostume': this.nextCostume,
+	        'looks_nextbackdrop': this.nextBackdrop,
+	        'looks_changeeffectby': this.changeEffect,
+	        'looks_seteffectto': this.setEffect,
+	        'looks_cleargraphiceffects': this.clearEffects,
+	        'looks_changesizeby': this.changeSize,
+	        'looks_setsizeto': this.setSize,
+	        'looks_size': this.getSize,
+	        'looks_costumeorder': this.getCostumeIndex,
+	        'looks_backdroporder': this.getBackdropIndex,
+	        'looks_backdropname': this.getBackdropName
+	    };
+	};
+
+	Scratch3LooksBlocks.prototype.say = function (args, util) {
+	    util.target.setSay('say', args.MESSAGE);
+	};
+
+	Scratch3LooksBlocks.prototype.sayforsecs = function (args, util) {
+	    util.target.setSay('say', args.MESSAGE);
+	    return new Promise(function(resolve) {
+	        setTimeout(function() {
+	            // Clear say bubble and proceed.
+	            util.target.setSay();
+	            resolve();
+	        }, 1000 * args.SECS);
+	    });
+	};
+
+	Scratch3LooksBlocks.prototype.think = function (args, util) {
+	    util.target.setSay('think', args.MESSAGE);
+	};
+
+	Scratch3LooksBlocks.prototype.thinkforsecs = function (args, util) {
+	    util.target.setSay('think', args.MESSAGE);
+	    return new Promise(function(resolve) {
+	        setTimeout(function() {
+	            // Clear say bubble and proceed.
+	            util.target.setSay();
+	            resolve();
+	        }, 1000 * args.SECS);
+	    });
+	};
+
+	Scratch3LooksBlocks.prototype.show = function (args, util) {
+	    util.target.setVisible(true);
+	};
+
+	Scratch3LooksBlocks.prototype.hide = function (args, util) {
+	    util.target.setVisible(false);
+	};
+
+	/**
+	 * Utility function to set the costume or backdrop of a target.
+	 * Matches the behavior of Scratch 2.0 for different types of arguments.
+	 * @param {!Target} target Target to set costume/backdrop to.
+	 * @param {Any} requestedCostume Costume requested, e.g., 0, 'name', etc.
+	 * @param {boolean=} opt_zeroIndex Set to zero-index the requestedCostume.
+	 * @return {Array.<!Thread>} Any threads started by this switch.
+	 */
+	Scratch3LooksBlocks.prototype._setCostumeOrBackdrop = function (target,
+	        requestedCostume, opt_zeroIndex) {
+	    if (typeof requestedCostume === 'number') {
+	        target.setCostume(opt_zeroIndex ?
+	            requestedCostume : requestedCostume - 1);
+	    } else {
+	        var costumeIndex = target.getCostumeIndexByName(requestedCostume);
+	        if (costumeIndex > -1) {
+	            target.setCostume(costumeIndex);
+	        } else if (costumeIndex == 'previous costume' ||
+	                   costumeIndex == 'previous backdrop') {
+	            target.setCostume(target.currentCostume - 1);
+	        } else if (costumeIndex == 'next costume' ||
+	                   costumeIndex == 'next backdrop') {
+	            target.setCostume(target.currentCostume + 1);
+	        } else {
+	            var forcedNumber = Cast.toNumber(requestedCostume);
+	            if (!isNaN(forcedNumber)) {
+	                target.setCostume(opt_zeroIndex ?
+	                    forcedNumber : forcedNumber - 1);
+	            }
+	        }
+	    }
+	    if (target == this.runtime.getTargetForStage()) {
+	        // Target is the stage - start hats.
+	        var newName = target.sprite.costumes[target.currentCostume].name;
+	        return this.runtime.startHats('event_whenbackdropswitchesto', {
+	            'BACKDROP': newName
+	        });
+	    }
+	    return [];
+	};
+
+	Scratch3LooksBlocks.prototype.switchCostume = function (args, util) {
+	    this._setCostumeOrBackdrop(util.target, args.COSTUME);
+	};
+
+	Scratch3LooksBlocks.prototype.nextCostume = function (args, util) {
+	    this._setCostumeOrBackdrop(
+	        util.target, util.target.currentCostume + 1, true
+	    );
+	};
+
+	Scratch3LooksBlocks.prototype.switchBackdrop = function (args) {
+	    this._setCostumeOrBackdrop(this.runtime.getTargetForStage(), args.BACKDROP);
+	};
+
+	Scratch3LooksBlocks.prototype.switchBackdropAndWait = function (args, util) {
+	    // Have we run before, starting threads?
+	    if (!util.stackFrame.startedThreads) {
+	        // No - switch the backdrop.
+	        util.stackFrame.startedThreads = (
+	            this._setCostumeOrBackdrop(
+	                this.runtime.getTargetForStage(),
+	                args.BACKDROP
+	            )
+	        );
+	        if (util.stackFrame.startedThreads.length == 0) {
+	            // Nothing was started.
+	            return;
+	        }
+	    }
+	    // We've run before; check if the wait is still going on.
+	    var instance = this;
+	    var waiting = util.stackFrame.startedThreads.some(function(thread) {
+	        return instance.runtime.isActiveThread(thread);
+	    });
+	    if (waiting) {
+	        util.yieldFrame();
+	    }
+	};
+
+	Scratch3LooksBlocks.prototype.nextBackdrop = function () {
+	    var stage = this.runtime.getTargetForStage();
+	    this._setCostumeOrBackdrop(
+	        stage, stage.currentCostume + 1, true
+	    );
+	};
+
+	Scratch3LooksBlocks.prototype.changeEffect = function (args, util) {
+	    var effect = Cast.toString(args.EFFECT).toLowerCase();
+	    var change = Cast.toNumber(args.CHANGE);
+	    if (!util.target.effects.hasOwnProperty(effect)) return;
+	    var newValue = change + util.target.effects[effect];
+	    util.target.setEffect(effect, newValue);
+	};
+
+	Scratch3LooksBlocks.prototype.setEffect = function (args, util) {
+	    var effect = Cast.toString(args.EFFECT).toLowerCase();
+	    var value = Cast.toNumber(args.VALUE);
+	    util.target.setEffect(effect, value);
+	};
+
+	Scratch3LooksBlocks.prototype.clearEffects = function (args, util) {
+	    util.target.clearEffects();
+	};
+
+	Scratch3LooksBlocks.prototype.changeSize = function (args, util) {
+	    var change = Cast.toNumber(args.CHANGE);
+	    util.target.setSize(util.target.size + change);
+	};
+
+	Scratch3LooksBlocks.prototype.setSize = function (args, util) {
+	    var size = Cast.toNumber(args.SIZE);
+	    util.target.setSize(size);
+	};
+
+	Scratch3LooksBlocks.prototype.getSize = function (args, util) {
+	    return util.target.size;
+	};
+
+	Scratch3LooksBlocks.prototype.getBackdropIndex = function () {
+	    var stage = this.runtime.getTargetForStage();
+	    return stage.currentCostume + 1;
+	};
+
+	Scratch3LooksBlocks.prototype.getBackdropName = function () {
+	    var stage = this.runtime.getTargetForStage();
+	    return stage.sprite.costumes[stage.currentCostume].name;
+	};
+
+	Scratch3LooksBlocks.prototype.getCostumeIndex = function (args, util) {
+	    return util.target.currentCostume + 1;
+	};
+
+	module.exports = Scratch3LooksBlocks;
+
+
+/***/ },
+/* 30 */
+/***/ function(module, exports, __webpack_require__) {
+
+	var Cast = __webpack_require__(13);
+	var MathUtil = __webpack_require__(16);
+	var Timer = __webpack_require__(8);
+
+	function Scratch3MotionBlocks(runtime) {
+	    /**
+	     * The runtime instantiating this block package.
+	     * @type {Runtime}
+	     */
+	    this.runtime = runtime;
+	}
+
+	/**
+	 * Retrieve the block primitives implemented by this package.
+	 * @return {Object.<string, Function>} Mapping of opcode to Function.
+	 */
+	Scratch3MotionBlocks.prototype.getPrimitives = function() {
+	    return {
+	        'motion_movesteps': this.moveSteps,
+	        'motion_gotoxy': this.goToXY,
+	        'motion_turnright': this.turnRight,
+	        'motion_turnleft': this.turnLeft,
+	        'motion_pointindirection': this.pointInDirection,
+	        'motion_glidesecstoxy': this.glide,
+	        'motion_changexby': this.changeX,
+	        'motion_setx': this.setX,
+	        'motion_changeyby': this.changeY,
+	        'motion_sety': this.setY,
+	        'motion_xposition': this.getX,
+	        'motion_yposition': this.getY,
+	        'motion_direction': this.getDirection
+	    };
+	};
+
+	Scratch3MotionBlocks.prototype.moveSteps = function (args, util) {
+	    var steps = Cast.toNumber(args.STEPS);
+	    var radians = MathUtil.degToRad(util.target.direction);
+	    var dx = steps * Math.cos(radians);
+	    var dy = steps * Math.sin(radians);
+	    util.target.setXY(util.target.x + dx, util.target.y + dy);
+	};
+
+	Scratch3MotionBlocks.prototype.goToXY = function (args, util) {
+	    var x = Cast.toNumber(args.X);
+	    var y = Cast.toNumber(args.Y);
+	    util.target.setXY(x, y);
+	};
+
+	Scratch3MotionBlocks.prototype.turnRight = function (args, util) {
+	    var degrees = Cast.toNumber(args.DEGREES);
+	    util.target.setDirection(util.target.direction + degrees);
+	};
+
+	Scratch3MotionBlocks.prototype.turnLeft = function (args, util) {
+	    var degrees = Cast.toNumber(args.DEGREES);
+	    util.target.setDirection(util.target.direction - degrees);
+	};
+
+	Scratch3MotionBlocks.prototype.pointInDirection = function (args, util) {
+	    var direction = Cast.toNumber(args.DIRECTION);
+	    util.target.setDirection(direction);
+	};
+
+	Scratch3MotionBlocks.prototype.glide = function (args, util) {
+	    if (!util.stackFrame.timer) {
+	        // First time: save data for future use.
+	        util.stackFrame.timer = new Timer();
+	        util.stackFrame.timer.start();
+	        util.stackFrame.duration = Cast.toNumber(args.SECS);
+	        util.stackFrame.startX = util.target.x;
+	        util.stackFrame.startY = util.target.y;
+	        util.stackFrame.endX = Cast.toNumber(args.X);
+	        util.stackFrame.endY = Cast.toNumber(args.Y);
+	        if (util.stackFrame.duration <= 0) {
+	            // Duration too short to glide.
+	            util.target.setXY(util.stackFrame.endX, util.stackFrame.endY);
+	            return;
+	        }
+	        util.yieldFrame();
+	    } else {
+	        var timeElapsed = util.stackFrame.timer.timeElapsed();
+	        if (timeElapsed < util.stackFrame.duration * 1000) {
+	            // In progress: move to intermediate position.
+	            var frac = timeElapsed / (util.stackFrame.duration * 1000);
+	            var dx = frac * (util.stackFrame.endX - util.stackFrame.startX);
+	            var dy = frac * (util.stackFrame.endY - util.stackFrame.startY);
+	            util.target.setXY(
+	                util.stackFrame.startX + dx,
+	                util.stackFrame.startY + dy
+	            );
+	            util.yieldFrame();
+	        } else {
+	            // Finished: move to final position.
+	            util.target.setXY(util.stackFrame.endX, util.stackFrame.endY);
+	        }
+	    }
+	};
+
+	Scratch3MotionBlocks.prototype.changeX = function (args, util) {
+	    var dx = Cast.toNumber(args.DX);
+	    util.target.setXY(util.target.x + dx, util.target.y);
+	};
+
+	Scratch3MotionBlocks.prototype.setX = function (args, util) {
+	    var x = Cast.toNumber(args.X);
+	    util.target.setXY(x, util.target.y);
+	};
+
+	Scratch3MotionBlocks.prototype.changeY = function (args, util) {
+	    var dy = Cast.toNumber(args.DY);
+	    util.target.setXY(util.target.x, util.target.y + dy);
+	};
+
+	Scratch3MotionBlocks.prototype.setY = function (args, util) {
+	    var y = Cast.toNumber(args.Y);
+	    util.target.setXY(util.target.x, y);
+	};
+
+	Scratch3MotionBlocks.prototype.getX = function (args, util) {
+	    return util.target.x;
+	};
+
+	Scratch3MotionBlocks.prototype.getY = function (args, util) {
+	    return util.target.y;
+	};
+
+	Scratch3MotionBlocks.prototype.getDirection = function (args, util) {
+	    return util.target.direction;
+	};
+
+	module.exports = Scratch3MotionBlocks;
+
+
+/***/ },
+/* 31 */
+/***/ function(module, exports, __webpack_require__) {
+
+	var Cast = __webpack_require__(13);
+
+	function Scratch3OperatorsBlocks(runtime) {
+	    /**
+	     * The runtime instantiating this block package.
+	     * @type {Runtime}
+	     */
+	    this.runtime = runtime;
+	}
+
+	/**
+	 * Retrieve the block primitives implemented by this package.
+	 * @return {Object.<string, Function>} Mapping of opcode to Function.
+	 */
+	Scratch3OperatorsBlocks.prototype.getPrimitives = function() {
+	    return {
+	        'operator_add': this.add,
+	        'operator_subtract': this.subtract,
+	        'operator_multiply': this.multiply,
+	        'operator_divide': this.divide,
+	        'operator_lt': this.lt,
+	        'operator_equals': this.equals,
+	        'operator_gt': this.gt,
+	        'operator_and': this.and,
+	        'operator_or': this.or,
+	        'operator_not': this.not,
+	        'operator_random': this.random,
+	        'operator_join': this.join,
+	        'operator_letter_of': this.letterOf,
+	        'operator_length': this.length,
+	        'operator_mod': this.mod,
+	        'operator_round': this.round,
+	        'operator_mathop': this.mathop
+	    };
+	};
+
+	Scratch3OperatorsBlocks.prototype.add = function (args) {
+	    return Cast.toNumber(args.NUM1) + Cast.toNumber(args.NUM2);
+	};
+
+	Scratch3OperatorsBlocks.prototype.subtract = function (args) {
+	    return Cast.toNumber(args.NUM1) - Cast.toNumber(args.NUM2);
+	};
+
+	Scratch3OperatorsBlocks.prototype.multiply = function (args) {
+	    return Cast.toNumber(args.NUM1) * Cast.toNumber(args.NUM2);
+	};
+
+	Scratch3OperatorsBlocks.prototype.divide = function (args) {
+	    return Cast.toNumber(args.NUM1) / Cast.toNumber(args.NUM2);
+	};
+
+	Scratch3OperatorsBlocks.prototype.lt = function (args) {
+	    return Cast.compare(args.OPERAND1, args.OPERAND2) < 0;
+	};
+
+	Scratch3OperatorsBlocks.prototype.equals = function (args) {
+	    return Cast.compare(args.OPERAND1, args.OPERAND2) == 0;
+	};
+
+	Scratch3OperatorsBlocks.prototype.gt = function (args) {
+	    return Cast.compare(args.OPERAND1, args.OPERAND2) > 0;
+	};
+
+	Scratch3OperatorsBlocks.prototype.and = function (args) {
+	    return Cast.toBoolean(args.OPERAND1) && Cast.toBoolean(args.OPERAND2);
+	};
+
+	Scratch3OperatorsBlocks.prototype.or = function (args) {
+	    return Cast.toBoolean(args.OPERAND1) || Cast.toBoolean(args.OPERAND2);
+	};
+
+	Scratch3OperatorsBlocks.prototype.not = function (args) {
+	    return !Cast.toBoolean(args.OPERAND);
+	};
+
+	Scratch3OperatorsBlocks.prototype.random = function (args) {
+	    var nFrom = Cast.toNumber(args.FROM);
+	    var nTo = Cast.toNumber(args.TO);
+	    var low = nFrom <= nTo ? nFrom : nTo;
+	    var high = nFrom <= nTo ? nTo : nFrom;
+	    if (low == high) return low;
+	    // If both low and high are ints, truncate the result to an int.
+	    var lowInt = low == parseInt(low);
+	    var highInt = high == parseInt(high);
+	    if (lowInt && highInt) {
+	        return low + parseInt(Math.random() * ((high + 1) - low));
+	    }
+	    return (Math.random() * (high - low)) + low;
+	};
+
+	Scratch3OperatorsBlocks.prototype.join = function (args) {
+	    return Cast.toString(args.STRING1) + Cast.toString(args.STRING2);
+	};
+
+	Scratch3OperatorsBlocks.prototype.letterOf = function (args) {
+	    var index = Cast.toNumber(args.LETTER) - 1;
+	    var str = Cast.toString(args.STRING);
+	    // Out of bounds?
+	    if (index < 0 || index >= str.length) {
+	        return '';
+	    }
+	    return str.charAt(index);
+	};
+
+	Scratch3OperatorsBlocks.prototype.length = function (args) {
+	    return Cast.toString(args.STRING).length;
+	};
+
+	Scratch3OperatorsBlocks.prototype.mod = function (args) {
+	    var n = Cast.toNumber(args.NUM1);
+	    var modulus = Cast.toNumber(args.NUM2);
+	    var result = n % modulus;
+	    // Scratch mod is kept positive.
+	    if (result / modulus < 0) result += modulus;
+	    return result;
+	};
+
+	Scratch3OperatorsBlocks.prototype.round = function (args) {
+	    return Math.round(Cast.toNumber(args.NUM));
+	};
+
+	Scratch3OperatorsBlocks.prototype.mathop = function (args) {
+	    var operator = Cast.toString(args.OPERATOR).toLowerCase();
+	    var n = Cast.toNumber(args.NUM);
+	    switch (operator) {
+	    case 'abs': return Math.abs(n);
+	    case 'floor': return Math.floor(n);
+	    case 'ceiling': return Math.ceil(n);
+	    case 'sqrt': return Math.sqrt(n);
+	    case 'sin': return Math.sin((Math.PI * n) / 180);
+	    case 'cos': return Math.cos((Math.PI * n) / 180);
+	    case 'tan': return Math.tan((Math.PI * n) / 180);
+	    case 'asin': return (Math.asin(n) * 180) / Math.PI;
+	    case 'acos': return (Math.acos(n) * 180) / Math.PI;
+	    case 'atan': return (Math.atan(n) * 180) / Math.PI;
+	    case 'ln': return Math.log(n);
+	    case 'log': return Math.log(n) / Math.LN10;
+	    case 'e ^': return Math.exp(n);
+	    case '10 ^': return Math.pow(10, n);
+	    }
+	    return 0;
+	};
+
+	module.exports = Scratch3OperatorsBlocks;
+
+
+/***/ },
+/* 32 */
+/***/ function(module, exports, __webpack_require__) {
+
+	var Cast = __webpack_require__(13);
+
+	function Scratch3SensingBlocks(runtime) {
+	    /**
+	     * The runtime instantiating this block package.
+	     * @type {Runtime}
+	     */
+	    this.runtime = runtime;
+	}
+
+	/**
+	 * Retrieve the block primitives implemented by this package.
+	 * @return {Object.<string, Function>} Mapping of opcode to Function.
+	 */
+	Scratch3SensingBlocks.prototype.getPrimitives = function() {
+	    return {
+	        'sensing_touchingcolor': this.touchingColor,
+	        'sensing_coloristouchingcolor': this.colorTouchingColor,
+	        'sensing_timer': this.getTimer,
+	        'sensing_resettimer': this.resetTimer,
+	        'sensing_mousex': this.getMouseX,
+	        'sensing_mousey': this.getMouseY,
+	        'sensing_mousedown': this.getMouseDown,
+	        'sensing_keypressed': this.getKeyPressed,
+	        'sensing_current': this.current
+	    };
+	};
+
+	Scratch3SensingBlocks.prototype.touchingColor = function (args, util) {
+	    var color = Cast.toRgbColorList(args.COLOR);
+	    return util.target.isTouchingColor(color);
+	};
+
+	Scratch3SensingBlocks.prototype.colorTouchingColor = function (args, util) {
+	    var maskColor = Cast.toRgbColorList(args.COLOR);
+	    var targetColor = Cast.toRgbColorList(args.COLOR2);
+	    return util.target.colorIsTouchingColor(targetColor, maskColor);
+	};
+
+	Scratch3SensingBlocks.prototype.getTimer = function (args, util) {
+	    return util.ioQuery('clock', 'projectTimer');
+	};
+
+	Scratch3SensingBlocks.prototype.resetTimer = function (args, util) {
+	    util.ioQuery('clock', 'resetProjectTimer');
+	};
+
+	Scratch3SensingBlocks.prototype.getMouseX = function (args, util) {
+	    return util.ioQuery('mouse', 'getX');
+	};
+
+	Scratch3SensingBlocks.prototype.getMouseY = function (args, util) {
+	    return util.ioQuery('mouse', 'getY');
+	};
+
+	Scratch3SensingBlocks.prototype.getMouseDown = function (args, util) {
+	    return util.ioQuery('mouse', 'getIsDown');
+	};
+
+	Scratch3SensingBlocks.prototype.current = function (args) {
+	    var menuOption = Cast.toString(args.CURRENTMENU).toLowerCase();
+	    var date = new Date();
+	    switch (menuOption) {
+	    case 'year': return date.getFullYear();
+	    case 'month': return date.getMonth() + 1; // getMonth is zero-based
+	    case 'date': return date.getDate();
+	    case 'dayofweek': return date.getDay() + 1; // getDay is zero-based, Sun=0
+	    case 'hour': return date.getHours();
+	    case 'minute': return date.getMinutes();
+	    case 'second': return date.getSeconds();
+	    }
+	    return 0;
+	};
+
+	Scratch3SensingBlocks.prototype.getKeyPressed = function (args, util) {
+	    return util.ioQuery('keyboard', 'getKeyIsDown', args.KEY_OPTION);
+	};
+
+	module.exports = Scratch3SensingBlocks;
+
+
+/***/ },
+/* 33 */
+/***/ function(module, exports, __webpack_require__) {
+
+	/**
+	 * @fileoverview
+	 * Partial implementation of an SB2 JSON importer.
+	 * Parses provided JSON and then generates all needed
+	 * scratch-vm runtime structures.
+	 */
+
+	var Blocks = __webpack_require__(34);
+	var Sprite = __webpack_require__(85);
+	var Color = __webpack_require__(14);
+	var uid = __webpack_require__(88);
+	var specMap = __webpack_require__(89);
+
+	/**
+	 * Top-level handler. Parse provided JSON,
+	 * and process the top-level object (the stage object).
+	 * @param {!string} json SB2-format JSON to load.
+	 * @param {!Runtime} runtime Runtime object to load all structures into.
+	 */
+	function sb2import (json, runtime) {
+	    parseScratchObject(
+	        JSON.parse(json),
+	        runtime,
+	        true
+	    );
+	}
+
+	/**
+	 * Parse a single "Scratch object" and create all its in-memory VM objects.
+	 * @param {!Object} object From-JSON "Scratch object:" sprite, stage, watcher.
+	 * @param {!Runtime} runtime Runtime object to load all structures into.
+	 * @param {boolean} topLevel Whether this is the top-level object (stage).
+	 */
+	function parseScratchObject (object, runtime, topLevel) {
+	    if (!object.hasOwnProperty('objName')) {
+	        // Watcher/monitor - skip this object until those are implemented in VM.
+	        // @todo
+	        return;
+	    }
+	    // Blocks container for this object.
+	    var blocks = new Blocks();
+	    // @todo: For now, load all Scratch objects (stage/sprites) as a Sprite.
+	    var sprite = new Sprite(blocks);
+	    // Sprite/stage name from JSON.
+	    if (object.hasOwnProperty('objName')) {
+	        sprite.name = object.objName;
+	    }
+	    // Costumes from JSON.
+	    if (object.hasOwnProperty('costumes')) {
+	        for (var i = 0; i < object.costumes.length; i++) {
+	            var costume = object.costumes[i];
+	            // @todo: Make sure all the relevant metadata is being pulled out.
+	            sprite.costumes.push({
+	                skin: 'https://cdn.assets.scratch.mit.edu/internalapi/asset/' 
+	                    + costume.baseLayerMD5 + '/get/',
+	                name: costume.costumeName,
+	                bitmapResolution: costume.bitmapResolution,
+	                rotationCenterX: costume.rotationCenterX,
+	                rotationCenterY: costume.rotationCenterY
+	            });
+	        }
+	    }
+	    // If included, parse any and all scripts/blocks on the object.
+	    if (object.hasOwnProperty('scripts')) {
+	        parseScripts(object.scripts, blocks);
+	    }
+	    // Create the first clone, and load its run-state from JSON.
+	    var target = sprite.createClone();
+	    // Add it to the runtime's list of targets.
+	    runtime.targets.push(target);
+	    if (object.scratchX) {
+	        target.x = object.scratchX;
+	    }
+	    if (object.scratchY) {
+	        target.y = object.scratchY;
+	    }
+	    if (object.direction) {
+	        target.direction = object.direction;
+	    }
+	    if (object.scale) {
+	        // SB2 stores as 1.0 = 100%; we use % in the VM.
+	        target.size = object.scale * 100;
+	    }
+	    if (object.visible) {
+	        target.visible = object.visible;
+	    }
+	    if (object.currentCostumeIndex) {
+	        target.currentCostume = object.currentCostumeIndex;
+	    }
+	    target.isStage = topLevel;
+	    // The stage will have child objects; recursively process them.
+	    if (object.children) {
+	        for (var j = 0; j < object.children.length; j++) {
+	            parseScratchObject(object.children[j], runtime, false);
+	        }
+	    }
+	}
+
+	/**
+	 * Parse a Scratch object's scripts into VM blocks.
+	 * This should only handle top-level scripts that include X, Y coordinates.
+	 * @param {!Object} scripts Scripts object from SB2 JSON.
+	 * @param {!Blocks} blocks Blocks object to load parsed blocks into.
+	 */
+	function parseScripts (scripts, blocks) {
+	    for (var i = 0; i < scripts.length; i++) {
+	        var script = scripts[i];
+	        var scriptX = script[0];
+	        var scriptY = script[1];
+	        var blockList = script[2];
+	        var parsedBlockList = parseBlockList(blockList);
+	        if (parsedBlockList[0]) {
+	            // Adjust script coordinates to account for
+	            // larger block size in scratch-blocks.
+	            // @todo: Determine more precisely the right formulas here.
+	            parsedBlockList[0].x = scriptX * 1.1;
+	            parsedBlockList[0].y = scriptY * 1.1;
+	            parsedBlockList[0].topLevel = true;
+	            parsedBlockList[0].parent = null;
+	        }
+	        // Flatten children and create add the blocks.
+	        var convertedBlocks = flatten(parsedBlockList);
+	        for (var j = 0; j < convertedBlocks.length; j++) {
+	            blocks.createBlock(convertedBlocks[j]);
+	        }
+	    }
+	}
+
+	/**
+	 * Parse any list of blocks from SB2 JSON into a list of VM-format blocks.
+	 * Could be used to parse a top-level script,
+	 * a list of blocks in a branch (e.g., in forever),
+	 * or a list of blocks in an argument (e.g., move [pick random...]).
+	 * @param {Array.<Object>} blockList SB2 JSON-format block list.
+	 * @return {Array.<Object>} Scratch VM-format block list.
+	 */
+	function parseBlockList (blockList) {
+	    var resultingList = [];
+	    var previousBlock = null; // For setting next.
+	    for (var i = 0; i < blockList.length; i++) {
+	        var block = blockList[i];
+	        var parsedBlock = parseBlock(block);
+	        if (previousBlock) {
+	            parsedBlock.parent = previousBlock.id;
+	            previousBlock.next = parsedBlock.id;
+	        }
+	        previousBlock = parsedBlock;
+	        resultingList.push(parsedBlock);
+	    }
+	    return resultingList;
+	}
+
+	/**
+	 * Flatten a block tree into a block list.
+	 * Children are temporarily stored on the `block.children` property.
+	 * @param {Array.<Object>} blocks list generated by `parseBlockList`.
+	 * @return {Array.<Object>} Flattened list to be passed to `blocks.createBlock`.
+	 */
+	function flatten (blocks) {
+	    var finalBlocks = [];
+	    for (var i = 0; i < blocks.length; i++) {
+	        var block = blocks[i];
+	        finalBlocks.push(block);
+	        if (block.children) {
+	            finalBlocks = finalBlocks.concat(flatten(block.children));
+	        }
+	        delete block.children;
+	    }
+	    return finalBlocks;
+	}
+
+	/**
+	 * Parse a single SB2 JSON-formatted block and its children.
+	 * @param {!Object} sb2block SB2 JSON-formatted block.
+	 * @return {Object} Scratch VM format block.
+	 */
+	function parseBlock (sb2block) {
+	    // First item in block object is the old opcode (e.g., 'forward:').
+	    var oldOpcode = sb2block[0];
+	    // Convert the block using the specMap. See sb2specmap.js.
+	    if (!oldOpcode || !specMap[oldOpcode]) {
+	        console.warn('Couldn\'t find SB2 block: ', oldOpcode);
+	        return;
+	    }
+	    var blockMetadata = specMap[oldOpcode];
+	    // Block skeleton.
+	    var activeBlock = {
+	        id: uid(), // Generate a new block unique ID.
+	        opcode: blockMetadata.opcode, // Converted, e.g. "motion_movesteps".
+	        inputs: {}, // Inputs to this block and the blocks they point to.
+	        fields: {}, // Fields on this block and their values.
+	        next: null, // Next block.
+	        shadow: false, // No shadow blocks in an SB2 by default.
+	        children: [] // Store any generated children, flattened in `flatten`.
+	    };
+	    // Look at the expected arguments in `blockMetadata.argMap.`
+	    // The basic problem here is to turn positional SB2 arguments into
+	    // non-positional named Scratch VM arguments.
+	    for (var i = 0; i < blockMetadata.argMap.length; i++) {
+	        var expectedArg = blockMetadata.argMap[i];
+	        var providedArg = sb2block[i + 1]; // (i = 0 is opcode)
+	        // Whether the input is obscuring a shadow.
+	        var shadowObscured = false;
+	        // Positional argument is an input.
+	        if (expectedArg.type == 'input') {
+	            // Create a new block and input metadata.
+	            var inputUid = uid();
+	            activeBlock.inputs[expectedArg.inputName] = {
+	                name: expectedArg.inputName,
+	                block: null,
+	                shadow: null
+	            };
+	            if (typeof providedArg == 'object' && providedArg) {
+	                // Block or block list occupies the input.
+	                var innerBlocks;
+	                if (typeof providedArg[0] == 'object' && providedArg[0]) {
+	                    // Block list occupies the input.
+	                    innerBlocks = parseBlockList(providedArg);
+	                } else {
+	                    // Single block occupies the input.
+	                    innerBlocks = [parseBlock(providedArg)];
+	                }
+	                for (var j = 0; j < innerBlocks.length; j++) {
+	                    innerBlocks[j].parent = activeBlock.id;
+	                }
+	                // Obscures any shadow.
+	                shadowObscured = true;
+	                activeBlock.inputs[expectedArg.inputName].block = (
+	                    innerBlocks[0].id
+	                );
+	                activeBlock.children = (
+	                    activeBlock.children.concat(innerBlocks)
+	                );
+	            }
+	            // Generate a shadow block to occupy the input.
+	            if (!expectedArg.inputOp) {
+	                // No editable shadow input; e.g., for a boolean.
+	                continue;
+	            }
+	            // Each shadow has a field generated for it automatically.
+	            // Value to be filled in the field.
+	            var fieldValue = providedArg;
+	            // Shadows' field names match the input name, except for these:
+	            var fieldName = expectedArg.inputName;
+	            if (expectedArg.inputOp == 'math_number' ||
+	                expectedArg.inputOp == 'math_whole_number' ||
+	                expectedArg.inputOp == 'math_positive_number' ||
+	                expectedArg.inputOp == 'math_integer' ||
+	                expectedArg.inputOp == 'math_angle') {
+	                fieldName = 'NUM';
+	                // Fields are given Scratch 2.0 default values if obscured.
+	                if (shadowObscured) {
+	                    fieldValue = 10;
+	                }
+	            } else if (expectedArg.inputOp == 'text') {
+	                fieldName = 'TEXT';
+	                if (shadowObscured) {
+	                    fieldValue = '';
+	                }
+	            } else if (expectedArg.inputOp == 'colour_picker') {
+	                // Convert SB2 color to hex.
+	                fieldValue = Color.decimalToHex(providedArg);
+	                fieldName = 'COLOUR';
+	                if (shadowObscured) {
+	                    fieldValue = '#990000';
+	                }
+	            }
+	            var fields = {};
+	            fields[fieldName] = {
+	                name: fieldName,
+	                value: fieldValue
+	            };
+	            activeBlock.children.push({
+	                id: inputUid,
+	                opcode: expectedArg.inputOp,
+	                inputs: {},
+	                fields: fields,
+	                next: null,
+	                topLevel: false,
+	                parent: activeBlock.id,
+	                shadow: true
+	            });
+	            activeBlock.inputs[expectedArg.inputName].shadow = inputUid;
+	            // If no block occupying the input, alias to the shadow.
+	            if (!activeBlock.inputs[expectedArg.inputName].block) {
+	                activeBlock.inputs[expectedArg.inputName].block = inputUid;
+	            }
+	        } else if (expectedArg.type == 'field') {
+	            // Add as a field on this block.
+	            activeBlock.fields[expectedArg.fieldName] = {
+	                name: expectedArg.fieldName,
+	                value: providedArg
+	            };
+	        }
+	    }
+	    return activeBlock;
+	}
+
+	module.exports = sb2import;
+
+
+/***/ },
+/* 34 */
+/***/ function(module, exports, __webpack_require__) {
+
+	var adapter = __webpack_require__(35);
 
 	/**
 	 * @fileoverview
@@ -1699,68 +5075,80 @@
 	    return inputs;
 	};
 
+	/**
+	 * Get the top-level script for a given block.
+	 * @param {?string} id ID of block to query.
+	 * @return {?string} ID of top-level script block.
+	 */
+	Blocks.prototype.getTopLevelScript = function (id) {
+	    if (typeof this._blocks[id] === 'undefined') return null;
+	    var block = this._blocks[id];
+	    while (block.parent !== null) {
+	        block = this._blocks[block.parent];
+	    }
+	    return block.id;
+	};
+
 	// ---------------------------------------------------------------------
 
 	/**
 	 * Create event listener for blocks. Handles validation and serves as a generic
 	 * adapter between the blocks and the runtime interface.
+	 * @param {Object} e Blockly "block" event
 	 * @param {boolean} isFlyout If true, create a listener for flyout events.
 	 * @param {?Runtime} opt_runtime Optional runtime to forward click events to.
-	 * @return {Function} A generated listener to attach to Blockly instance.
 	 */
 
-	Blocks.prototype.generateBlockListener = function (isFlyout, opt_runtime) {
-	    var instance = this;
-	    /**
-	     * The actual generated block listener.
-	     * @param {Object} e Blockly "block" event
-	     */
-	    return function (e) {
-	        // Validate event
-	        if (typeof e !== 'object') return;
-	        if (typeof e.blockId !== 'string') return;
+	Blocks.prototype.blocklyListen = function (e, isFlyout, opt_runtime) {
+	    // Validate event
+	    if (typeof e !== 'object') return;
+	    if (typeof e.blockId !== 'string') return;
 
-	        // UI event: clicked scripts toggle in the runtime.
-	        if (e.element === 'stackclick') {
-	            if (opt_runtime) {
-	                opt_runtime.toggleScript(e.blockId);
-	            }
+	    // UI event: clicked scripts toggle in the runtime.
+	    if (e.element === 'stackclick') {
+	        if (opt_runtime) {
+	            opt_runtime.toggleScript(e.blockId);
+	        }
+	        return;
+	    }
+
+	    // Block create/update/destroy
+	    switch (e.type) {
+	    case 'create':
+	        var newBlocks = adapter(e);
+	        // A create event can create many blocks. Add them all.
+	        for (var i = 0; i < newBlocks.length; i++) {
+	            this.createBlock(newBlocks[i], isFlyout);
+	        }
+	        break;
+	    case 'change':
+	        this.changeBlock({
+	            id: e.blockId,
+	            element: e.element,
+	            name: e.name,
+	            value: e.newValue
+	        });
+	        break;
+	    case 'move':
+	        this.moveBlock({
+	            id: e.blockId,
+	            oldParent: e.oldParentId,
+	            oldInput: e.oldInputName,
+	            newParent: e.newParentId,
+	            newInput: e.newInputName,
+	            newCoordinate: e.newCoordinate
+	        });
+	        break;
+	    case 'delete':
+	        // Don't accept delete events for shadow blocks being obscured.
+	        if (this._blocks[e.blockId].shadow) {
 	            return;
 	        }
-
-	        // Block create/update/destroy
-	        switch (e.type) {
-	        case 'create':
-	            var newBlocks = adapter(e);
-	            // A create event can create many blocks. Add them all.
-	            for (var i = 0; i < newBlocks.length; i++) {
-	                instance.createBlock(newBlocks[i], isFlyout);
-	            }
-	            break;
-	        case 'change':
-	            instance.changeBlock({
-	                id: e.blockId,
-	                element: e.element,
-	                name: e.name,
-	                value: e.newValue
-	            });
-	            break;
-	        case 'move':
-	            instance.moveBlock({
-	                id: e.blockId,
-	                oldParent: e.oldParentId,
-	                oldInput: e.oldInputName,
-	                newParent: e.newParentId,
-	                newInput: e.newInputName
-	            });
-	            break;
-	        case 'delete':
-	            instance.deleteBlock({
-	                id: e.blockId
-	            });
-	            break;
-	        }
-	    };
+	        this.deleteBlock({
+	            id: e.blockId
+	        });
+	        break;
+	    }
 	};
 
 	// ---------------------------------------------------------------------
@@ -1771,9 +5159,13 @@
 	 * @param {boolean} opt_isFlyoutBlock Whether the block is in the flyout.
 	 */
 	Blocks.prototype.createBlock = function (block, opt_isFlyoutBlock) {
-	    // Create new block
+	    // Does the block already exist?
+	    // Could happen, e.g., for an unobscured shadow.
+	    if (this._blocks.hasOwnProperty(block.id)) {
+	        return;
+	    }
+	    // Create new block.
 	    this._blocks[block.id] = block;
-
 	    // Push block id to scripts array.
 	    // Blocks are added as a top-level stack if they are marked as a top-block
 	    // (if they were top-level XML in the event) and if they are not
@@ -1802,6 +5194,12 @@
 	 * @param {!Object} e Blockly move event to be processed
 	 */
 	Blocks.prototype.moveBlock = function (e) {
+	    // Move coordinate changes.
+	    if (e.newCoordinate) {
+	        this._blocks[e.id].x = e.newCoordinate.x;
+	        this._blocks[e.id].y = e.newCoordinate.y;
+	    }
+
 	    // Remove from any old parent.
 	    if (e.oldParent !== undefined) {
 	        var oldParent = this._blocks[e.oldParent];
@@ -1813,6 +5211,7 @@
 	            // This block was connected to the old parent's next connection.
 	            oldParent.next = null;
 	        }
+	        this._blocks[e.id].parent = null;
 	    }
 
 	    // Has the block become a top-level block?
@@ -1823,15 +5222,22 @@
 	        this._deleteScript(e.id);
 	        // Otherwise, try to connect it in its new place.
 	        if (e.newInput !== undefined) {
-	             // Moved to the new parent's input.
+	            // Moved to the new parent's input.
+	            // Don't obscure the shadow block.
+	            var oldShadow = null;
+	            if (this._blocks[e.newParent].inputs.hasOwnProperty(e.newInput)) {
+	                oldShadow = this._blocks[e.newParent].inputs[e.newInput].shadow;
+	            }
 	            this._blocks[e.newParent].inputs[e.newInput] = {
 	                name: e.newInput,
-	                block: e.id
+	                block: e.id,
+	                shadow: oldShadow
 	            };
 	        } else {
 	            // Moved to the new parent's next connection.
 	            this._blocks[e.newParent].next = e.id;
 	        }
+	        this._blocks[e.id].parent = e.newParent;
 	    }
 	};
 
@@ -1856,6 +5262,11 @@
 	        if (block.inputs[input].block !== null) {
 	            this.deleteBlock({id: block.inputs[input].block});
 	        }
+	        // Delete obscured shadow blocks.
+	        if (block.inputs[input].shadow !== null &&
+	            block.inputs[input].shadow !== block.inputs[input].block) {
+	            this.deleteBlock({id: block.inputs[input].shadow});
+	        }
 	    }
 
 	    // Delete any script starting with this block.
@@ -1863,6 +5274,70 @@
 
 	    // Delete block itself.
 	    delete this._blocks[e.id];
+	};
+
+	// ---------------------------------------------------------------------
+
+	/**
+	 * Encode all of `this._blocks` as an XML string usable
+	 * by a Blockly/scratch-blocks workspace.
+	 * @return {string} String of XML representing this object's blocks.
+	 */
+	Blocks.prototype.toXML = function () {
+	    var xmlString = '<xml xmlns="http://www.w3.org/1999/xhtml">';
+	    for (var i = 0; i < this._scripts.length; i++) {
+	        xmlString += this.blockToXML(this._scripts[i]);
+	    }
+	    return xmlString + '</xml>';
+	};
+
+	/**
+	 * Recursively encode an individual block and its children
+	 * into a Blockly/scratch-blocks XML string.
+	 * @param {!string} blockId ID of block to encode.
+	 * @return {string} String of XML representing this block and any children.
+	 */
+	Blocks.prototype.blockToXML = function (blockId) {
+	    var block = this._blocks[blockId];
+	    // Encode properties of this block.
+	    var tagName = (block.shadow) ? 'shadow' : 'block';
+	    var xy = (block.topLevel) ?
+	        ' x="' + block.x +'"' + ' y="' + block.y +'"' :
+	        '';
+	    var xmlString = '';
+	    xmlString += '<' + tagName +
+	        ' id="' + block.id + '"' +
+	        ' type="' + block.opcode + '"' +
+	        xy +
+	        '>';
+	    // Add any inputs on this block.
+	    for (var input in block.inputs) {
+	        var blockInput = block.inputs[input];
+	        // Only encode a value tag if the value input is occupied.
+	        if (blockInput.block || blockInput.shadow) {
+	            xmlString += '<value name="' + blockInput.name + '">';
+	            if (blockInput.block) {
+	                xmlString += this.blockToXML(blockInput.block);
+	            }
+	            if (blockInput.shadow && blockInput.shadow != blockInput.block) {
+	                // Obscured shadow.
+	                xmlString += this.blockToXML(blockInput.shadow);
+	            }
+	            xmlString += '</value>';
+	        }
+	    }
+	    // Add any fields on this block.
+	    for (var field in block.fields) {
+	        var blockField = block.fields[field];
+	        xmlString += '<field name="' + blockField.name + '">' +
+	            blockField.value + '</field>';
+	    }
+	    // Add blocks connected to the next connection.
+	    if (block.next) {
+	        xmlString += '<next>' + this.blockToXML(block.next) + '</next>';
+	    }
+	    xmlString += '</' + tagName + '>';
+	    return xmlString;
 	};
 
 	// ---------------------------------------------------------------------
@@ -1894,10 +5369,10 @@
 
 
 /***/ },
-/* 11 */
+/* 35 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var html = __webpack_require__(12);
+	var html = __webpack_require__(36);
 
 	/**
 	 * Adapter between block creation events and block representation which can be
@@ -1930,7 +5405,7 @@
 	        }
 	        var tagName = block.name.toLowerCase();
 	        if (tagName == 'block' || tagName == 'shadow') {
-	            domToBlock(block, blocks, true);
+	            domToBlock(block, blocks, true, null);
 	        }
 	    }
 	    // Flatten blocks object into a list.
@@ -1947,8 +5422,9 @@
 	 * @param {Element} blockDOM DOM tree for an individual block.
 	 * @param {Object} blocks Collection of blocks to add to.
 	 * @param {Boolean} isTopBlock Whether blocks at this level are "top blocks."
+	 * @param {?string} parent Parent block ID.
 	 */
-	function domToBlock (blockDOM, blocks, isTopBlock) {
+	function domToBlock (blockDOM, blocks, isTopBlock, parent) {
 	    // Block skeleton.
 	    var block = {
 	        id: blockDOM.attribs.id, // Block ID
@@ -1956,7 +5432,11 @@
 	        inputs: {}, // Inputs to this block and the blocks they point to.
 	        fields: {}, // Fields on this block and their values.
 	        next: null, // Next block in the stack, if one exists.
-	        topLevel: isTopBlock // If this block starts a stack.
+	        topLevel: isTopBlock, // If this block starts a stack.
+	        parent: parent, // Parent block ID, if available.
+	        shadow: blockDOM.name == 'shadow', // If this represents a shadow/slot.
+	        x: blockDOM.attribs.x, // X position of script, if top-level.
+	        y: blockDOM.attribs.y // Y position of script, if top-level.
 	    };
 
 	    // Add the block to the representation tree.
@@ -2009,12 +5489,17 @@
 	        case 'value':
 	        case 'statement':
 	            // Recursively generate block structure for input block.
-	            domToBlock(childBlockNode, blocks, false);
+	            domToBlock(childBlockNode, blocks, false, block.id);
+	            if (childShadowNode && childBlockNode != childShadowNode) {
+	                // Also generate the shadow block.
+	                domToBlock(childShadowNode, blocks, false, block.id);
+	            }
 	            // Link this block's input to the child block.
 	            var inputName = xmlChild.attribs.name;
 	            block.inputs[inputName] = {
 	                name: inputName,
-	                block: childBlockNode.attribs.id
+	                block: childBlockNode.attribs.id,
+	                shadow: childShadowNode ? childShadowNode.attribs.id : null
 	            };
 	            break;
 	        case 'next':
@@ -2023,7 +5508,7 @@
 	                continue;
 	            }
 	            // Recursively generate block structure for next block.
-	            domToBlock(childBlockNode, blocks, false);
+	            domToBlock(childBlockNode, blocks, false, block.id);
 	            // Link next block to this block.
 	            block.next = childBlockNode.attribs.id;
 	            break;
@@ -2033,11 +5518,11 @@
 
 
 /***/ },
-/* 12 */
+/* 36 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var Parser = __webpack_require__(13),
-	    DomHandler = __webpack_require__(20);
+	var Parser = __webpack_require__(37),
+	    DomHandler = __webpack_require__(44);
 
 	function defineProp(name, value){
 		delete module.exports[name];
@@ -2047,26 +5532,26 @@
 
 	module.exports = {
 		Parser: Parser,
-		Tokenizer: __webpack_require__(14),
-		ElementType: __webpack_require__(21),
+		Tokenizer: __webpack_require__(38),
+		ElementType: __webpack_require__(45),
 		DomHandler: DomHandler,
 		get FeedHandler(){
-			return defineProp("FeedHandler", __webpack_require__(24));
+			return defineProp("FeedHandler", __webpack_require__(48));
 		},
 		get Stream(){
-			return defineProp("Stream", __webpack_require__(25));
+			return defineProp("Stream", __webpack_require__(49));
 		},
 		get WritableStream(){
-			return defineProp("WritableStream", __webpack_require__(26));
+			return defineProp("WritableStream", __webpack_require__(50));
 		},
 		get ProxyHandler(){
-			return defineProp("ProxyHandler", __webpack_require__(47));
+			return defineProp("ProxyHandler", __webpack_require__(71));
 		},
 		get DomUtils(){
-			return defineProp("DomUtils", __webpack_require__(48));
+			return defineProp("DomUtils", __webpack_require__(72));
 		},
 		get CollectingHandler(){
-			return defineProp("CollectingHandler", __webpack_require__(60));
+			return defineProp("CollectingHandler", __webpack_require__(84));
 		},
 		// For legacy support
 		DefaultHandler: DomHandler,
@@ -2107,10 +5592,10 @@
 
 
 /***/ },
-/* 13 */
+/* 37 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var Tokenizer = __webpack_require__(14);
+	var Tokenizer = __webpack_require__(38);
 
 	/*
 		Options:
@@ -2465,15 +5950,15 @@
 
 
 /***/ },
-/* 14 */
+/* 38 */
 /***/ function(module, exports, __webpack_require__) {
 
 	module.exports = Tokenizer;
 
-	var decodeCodePoint = __webpack_require__(15),
-	    entityMap = __webpack_require__(17),
-	    legacyMap = __webpack_require__(18),
-	    xmlMap    = __webpack_require__(19),
+	var decodeCodePoint = __webpack_require__(39),
+	    entityMap = __webpack_require__(41),
+	    legacyMap = __webpack_require__(42),
+	    xmlMap    = __webpack_require__(43),
 
 	    i = 0,
 
@@ -3377,10 +6862,10 @@
 
 
 /***/ },
-/* 15 */
+/* 39 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var decodeMap = __webpack_require__(16);
+	var decodeMap = __webpack_require__(40);
 
 	module.exports = decodeCodePoint;
 
@@ -3409,7 +6894,7 @@
 
 
 /***/ },
-/* 16 */
+/* 40 */
 /***/ function(module, exports) {
 
 	module.exports = {
@@ -3444,7 +6929,7 @@
 	};
 
 /***/ },
-/* 17 */
+/* 41 */
 /***/ function(module, exports) {
 
 	module.exports = {
@@ -5576,7 +9061,7 @@
 	};
 
 /***/ },
-/* 18 */
+/* 42 */
 /***/ function(module, exports) {
 
 	module.exports = {
@@ -5689,7 +9174,7 @@
 	};
 
 /***/ },
-/* 19 */
+/* 43 */
 /***/ function(module, exports) {
 
 	module.exports = {
@@ -5701,14 +9186,14 @@
 	};
 
 /***/ },
-/* 20 */
+/* 44 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var ElementType = __webpack_require__(21);
+	var ElementType = __webpack_require__(45);
 
 	var re_whitespace = /\s+/g;
-	var NodePrototype = __webpack_require__(22);
-	var ElementPrototype = __webpack_require__(23);
+	var NodePrototype = __webpack_require__(46);
+	var ElementPrototype = __webpack_require__(47);
 
 	function DomHandler(callback, options, elementCB){
 		if(typeof callback === "object"){
@@ -5889,7 +9374,7 @@
 
 
 /***/ },
-/* 21 */
+/* 45 */
 /***/ function(module, exports) {
 
 	//Types of elements found in the DOM
@@ -5910,7 +9395,7 @@
 
 
 /***/ },
-/* 22 */
+/* 46 */
 /***/ function(module, exports) {
 
 	// This object will be used as the prototype for Nodes when creating a
@@ -5960,11 +9445,11 @@
 
 
 /***/ },
-/* 23 */
+/* 47 */
 /***/ function(module, exports, __webpack_require__) {
 
 	// DOM-Level-1-compliant structure
-	var NodePrototype = __webpack_require__(22);
+	var NodePrototype = __webpack_require__(46);
 	var ElementPrototype = module.exports = Object.create(NodePrototype);
 
 	var domLvl1 = {
@@ -5986,10 +9471,10 @@
 
 
 /***/ },
-/* 24 */
+/* 48 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var index = __webpack_require__(12),
+	var index = __webpack_require__(36),
 	    DomHandler = index.DomHandler,
 		DomUtils = index.DomUtils;
 
@@ -6087,12 +9572,12 @@
 
 
 /***/ },
-/* 25 */
+/* 49 */
 /***/ function(module, exports, __webpack_require__) {
 
 	module.exports = Stream;
 
-	var Parser = __webpack_require__(26);
+	var Parser = __webpack_require__(50);
 
 	function Stream(options){
 		Parser.call(this, new Cbs(this), options);
@@ -6106,7 +9591,7 @@
 		this.scope = scope;
 	}
 
-	var EVENTS = __webpack_require__(12).EVENTS;
+	var EVENTS = __webpack_require__(36).EVENTS;
 
 	Object.keys(EVENTS).forEach(function(name){
 		if(EVENTS[name] === 0){
@@ -6127,13 +9612,13 @@
 	});
 
 /***/ },
-/* 26 */
+/* 50 */
 /***/ function(module, exports, __webpack_require__) {
 
 	module.exports = Stream;
 
-	var Parser = __webpack_require__(13),
-	    WritableStream = __webpack_require__(27).Writable || __webpack_require__(46).Writable;
+	var Parser = __webpack_require__(37),
+	    WritableStream = __webpack_require__(51).Writable || __webpack_require__(70).Writable;
 
 	function Stream(cbs, options){
 		var parser = this._parser = new Parser(cbs, options);
@@ -6153,7 +9638,7 @@
 	};
 
 /***/ },
-/* 27 */
+/* 51 */
 /***/ function(module, exports, __webpack_require__) {
 
 	// Copyright Joyent, Inc. and other Node contributors.
@@ -6183,11 +9668,11 @@
 	var inherits = __webpack_require__(5);
 
 	inherits(Stream, EE);
-	Stream.Readable = __webpack_require__(28);
-	Stream.Writable = __webpack_require__(42);
-	Stream.Duplex = __webpack_require__(43);
-	Stream.Transform = __webpack_require__(44);
-	Stream.PassThrough = __webpack_require__(45);
+	Stream.Readable = __webpack_require__(52);
+	Stream.Writable = __webpack_require__(66);
+	Stream.Duplex = __webpack_require__(67);
+	Stream.Transform = __webpack_require__(68);
+	Stream.PassThrough = __webpack_require__(69);
 
 	// Backwards-compat with node 0.4.x
 	Stream.Stream = Stream;
@@ -6286,24 +9771,24 @@
 
 
 /***/ },
-/* 28 */
+/* 52 */
 /***/ function(module, exports, __webpack_require__) {
 
-	/* WEBPACK VAR INJECTION */(function(process) {exports = module.exports = __webpack_require__(29);
-	exports.Stream = __webpack_require__(27);
+	/* WEBPACK VAR INJECTION */(function(process) {exports = module.exports = __webpack_require__(53);
+	exports.Stream = __webpack_require__(51);
 	exports.Readable = exports;
-	exports.Writable = __webpack_require__(38);
-	exports.Duplex = __webpack_require__(37);
-	exports.Transform = __webpack_require__(40);
-	exports.PassThrough = __webpack_require__(41);
+	exports.Writable = __webpack_require__(62);
+	exports.Duplex = __webpack_require__(61);
+	exports.Transform = __webpack_require__(64);
+	exports.PassThrough = __webpack_require__(65);
 	if (!process.browser && process.env.READABLE_STREAM === 'disable') {
-	  module.exports = __webpack_require__(27);
+	  module.exports = __webpack_require__(51);
 	}
 
 	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(3)))
 
 /***/ },
-/* 29 */
+/* 53 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/* WEBPACK VAR INJECTION */(function(process) {// Copyright Joyent, Inc. and other Node contributors.
@@ -6330,12 +9815,12 @@
 	module.exports = Readable;
 
 	/*<replacement>*/
-	var isArray = __webpack_require__(30);
+	var isArray = __webpack_require__(54);
 	/*</replacement>*/
 
 
 	/*<replacement>*/
-	var Buffer = __webpack_require__(31).Buffer;
+	var Buffer = __webpack_require__(55).Buffer;
 	/*</replacement>*/
 
 	Readable.ReadableState = ReadableState;
@@ -6348,10 +9833,10 @@
 	};
 	/*</replacement>*/
 
-	var Stream = __webpack_require__(27);
+	var Stream = __webpack_require__(51);
 
 	/*<replacement>*/
-	var util = __webpack_require__(35);
+	var util = __webpack_require__(59);
 	util.inherits = __webpack_require__(5);
 	/*</replacement>*/
 
@@ -6359,7 +9844,7 @@
 
 
 	/*<replacement>*/
-	var debug = __webpack_require__(36);
+	var debug = __webpack_require__(60);
 	if (debug && debug.debuglog) {
 	  debug = debug.debuglog('stream');
 	} else {
@@ -6371,7 +9856,7 @@
 	util.inherits(Readable, Stream);
 
 	function ReadableState(options, stream) {
-	  var Duplex = __webpack_require__(37);
+	  var Duplex = __webpack_require__(61);
 
 	  options = options || {};
 
@@ -6432,14 +9917,14 @@
 	  this.encoding = null;
 	  if (options.encoding) {
 	    if (!StringDecoder)
-	      StringDecoder = __webpack_require__(39).StringDecoder;
+	      StringDecoder = __webpack_require__(63).StringDecoder;
 	    this.decoder = new StringDecoder(options.encoding);
 	    this.encoding = options.encoding;
 	  }
 	}
 
 	function Readable(options) {
-	  var Duplex = __webpack_require__(37);
+	  var Duplex = __webpack_require__(61);
 
 	  if (!(this instanceof Readable))
 	    return new Readable(options);
@@ -6542,7 +10027,7 @@
 	// backwards compatibility.
 	Readable.prototype.setEncoding = function(enc) {
 	  if (!StringDecoder)
-	    StringDecoder = __webpack_require__(39).StringDecoder;
+	    StringDecoder = __webpack_require__(63).StringDecoder;
 	  this._readableState.decoder = new StringDecoder(enc);
 	  this._readableState.encoding = enc;
 	  return this;
@@ -7261,7 +10746,7 @@
 	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(3)))
 
 /***/ },
-/* 30 */
+/* 54 */
 /***/ function(module, exports) {
 
 	module.exports = Array.isArray || function (arr) {
@@ -7270,7 +10755,7 @@
 
 
 /***/ },
-/* 31 */
+/* 55 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/* WEBPACK VAR INJECTION */(function(Buffer, global) {/*!
@@ -7283,16 +10768,13 @@
 
 	'use strict'
 
-	var base64 = __webpack_require__(32)
-	var ieee754 = __webpack_require__(33)
-	var isArray = __webpack_require__(34)
+	var base64 = __webpack_require__(56)
+	var ieee754 = __webpack_require__(57)
+	var isArray = __webpack_require__(58)
 
 	exports.Buffer = Buffer
 	exports.SlowBuffer = SlowBuffer
 	exports.INSPECT_MAX_BYTES = 50
-	Buffer.poolSize = 8192 // not used by this implementation
-
-	var rootParent = {}
 
 	/**
 	 * If `Buffer.TYPED_ARRAY_SUPPORT`:
@@ -7310,9 +10792,6 @@
 	 *   - Firefox 4-29 lacks support for adding new properties to `Uint8Array` instances,
 	 *     See: https://bugzilla.mozilla.org/show_bug.cgi?id=695438.
 	 *
-	 *   - Safari 5-7 lacks support for changing the `Object.prototype.constructor` property
-	 *     on objects.
-	 *
 	 *   - Chrome 9-10 is missing the `TypedArray.prototype.subarray` function.
 	 *
 	 *   - IE10 has a broken `TypedArray.prototype.subarray` function which returns arrays of
@@ -7325,14 +10804,16 @@
 	  ? global.TYPED_ARRAY_SUPPORT
 	  : typedArraySupport()
 
+	/*
+	 * Export kMaxLength after typed array support is determined.
+	 */
+	exports.kMaxLength = kMaxLength()
+
 	function typedArraySupport () {
-	  function Bar () {}
 	  try {
 	    var arr = new Uint8Array(1)
-	    arr.foo = function () { return 42 }
-	    arr.constructor = Bar
+	    arr.__proto__ = {__proto__: Uint8Array.prototype, foo: function () { return 42 }}
 	    return arr.foo() === 42 && // typed array instances can be augmented
-	        arr.constructor === Bar && // constructor can be set
 	        typeof arr.subarray === 'function' && // chrome 9-10 lack `subarray`
 	        arr.subarray(1, 1).byteLength === 0 // ie10 has broken `subarray`
 	  } catch (e) {
@@ -7346,184 +10827,252 @@
 	    : 0x3fffffff
 	}
 
-	/**
-	 * Class: Buffer
-	 * =============
-	 *
-	 * The Buffer constructor returns instances of `Uint8Array` that are augmented
-	 * with function properties for all the node `Buffer` API functions. We use
-	 * `Uint8Array` so that square bracket notation works as expected -- it returns
-	 * a single octet.
-	 *
-	 * By augmenting the instances, we can avoid modifying the `Uint8Array`
-	 * prototype.
-	 */
-	function Buffer (arg) {
-	  if (!(this instanceof Buffer)) {
-	    // Avoid going through an ArgumentsAdaptorTrampoline in the common case.
-	    if (arguments.length > 1) return new Buffer(arg, arguments[1])
-	    return new Buffer(arg)
+	function createBuffer (that, length) {
+	  if (kMaxLength() < length) {
+	    throw new RangeError('Invalid typed array length')
+	  }
+	  if (Buffer.TYPED_ARRAY_SUPPORT) {
+	    // Return an augmented `Uint8Array` instance, for best performance
+	    that = new Uint8Array(length)
+	    that.__proto__ = Buffer.prototype
+	  } else {
+	    // Fallback: Return an object instance of the Buffer class
+	    if (that === null) {
+	      that = new Buffer(length)
+	    }
+	    that.length = length
 	  }
 
-	  if (!Buffer.TYPED_ARRAY_SUPPORT) {
-	    this.length = 0
-	    this.parent = undefined
+	  return that
+	}
+
+	/**
+	 * The Buffer constructor returns instances of `Uint8Array` that have their
+	 * prototype changed to `Buffer.prototype`. Furthermore, `Buffer` is a subclass of
+	 * `Uint8Array`, so the returned instances will have all the node `Buffer` methods
+	 * and the `Uint8Array` methods. Square bracket notation works as expected -- it
+	 * returns a single octet.
+	 *
+	 * The `Uint8Array` prototype remains unmodified.
+	 */
+
+	function Buffer (arg, encodingOrOffset, length) {
+	  if (!Buffer.TYPED_ARRAY_SUPPORT && !(this instanceof Buffer)) {
+	    return new Buffer(arg, encodingOrOffset, length)
 	  }
 
 	  // Common case.
 	  if (typeof arg === 'number') {
-	    return fromNumber(this, arg)
+	    if (typeof encodingOrOffset === 'string') {
+	      throw new Error(
+	        'If encoding is specified then the first argument must be a string'
+	      )
+	    }
+	    return allocUnsafe(this, arg)
 	  }
-
-	  // Slightly less common case.
-	  if (typeof arg === 'string') {
-	    return fromString(this, arg, arguments.length > 1 ? arguments[1] : 'utf8')
-	  }
-
-	  // Unusual.
-	  return fromObject(this, arg)
+	  return from(this, arg, encodingOrOffset, length)
 	}
 
-	function fromNumber (that, length) {
-	  that = allocate(that, length < 0 ? 0 : checked(length) | 0)
+	Buffer.poolSize = 8192 // not used by this implementation
+
+	// TODO: Legacy, not needed anymore. Remove in next major version.
+	Buffer._augment = function (arr) {
+	  arr.__proto__ = Buffer.prototype
+	  return arr
+	}
+
+	function from (that, value, encodingOrOffset, length) {
+	  if (typeof value === 'number') {
+	    throw new TypeError('"value" argument must not be a number')
+	  }
+
+	  if (typeof ArrayBuffer !== 'undefined' && value instanceof ArrayBuffer) {
+	    return fromArrayBuffer(that, value, encodingOrOffset, length)
+	  }
+
+	  if (typeof value === 'string') {
+	    return fromString(that, value, encodingOrOffset)
+	  }
+
+	  return fromObject(that, value)
+	}
+
+	/**
+	 * Functionally equivalent to Buffer(arg, encoding) but throws a TypeError
+	 * if value is a number.
+	 * Buffer.from(str[, encoding])
+	 * Buffer.from(array)
+	 * Buffer.from(buffer)
+	 * Buffer.from(arrayBuffer[, byteOffset[, length]])
+	 **/
+	Buffer.from = function (value, encodingOrOffset, length) {
+	  return from(null, value, encodingOrOffset, length)
+	}
+
+	if (Buffer.TYPED_ARRAY_SUPPORT) {
+	  Buffer.prototype.__proto__ = Uint8Array.prototype
+	  Buffer.__proto__ = Uint8Array
+	  if (typeof Symbol !== 'undefined' && Symbol.species &&
+	      Buffer[Symbol.species] === Buffer) {
+	    // Fix subarray() in ES2016. See: https://github.com/feross/buffer/pull/97
+	    Object.defineProperty(Buffer, Symbol.species, {
+	      value: null,
+	      configurable: true
+	    })
+	  }
+	}
+
+	function assertSize (size) {
+	  if (typeof size !== 'number') {
+	    throw new TypeError('"size" argument must be a number')
+	  } else if (size < 0) {
+	    throw new RangeError('"size" argument must not be negative')
+	  }
+	}
+
+	function alloc (that, size, fill, encoding) {
+	  assertSize(size)
+	  if (size <= 0) {
+	    return createBuffer(that, size)
+	  }
+	  if (fill !== undefined) {
+	    // Only pay attention to encoding if it's a string. This
+	    // prevents accidentally sending in a number that would
+	    // be interpretted as a start offset.
+	    return typeof encoding === 'string'
+	      ? createBuffer(that, size).fill(fill, encoding)
+	      : createBuffer(that, size).fill(fill)
+	  }
+	  return createBuffer(that, size)
+	}
+
+	/**
+	 * Creates a new filled Buffer instance.
+	 * alloc(size[, fill[, encoding]])
+	 **/
+	Buffer.alloc = function (size, fill, encoding) {
+	  return alloc(null, size, fill, encoding)
+	}
+
+	function allocUnsafe (that, size) {
+	  assertSize(size)
+	  that = createBuffer(that, size < 0 ? 0 : checked(size) | 0)
 	  if (!Buffer.TYPED_ARRAY_SUPPORT) {
-	    for (var i = 0; i < length; i++) {
+	    for (var i = 0; i < size; ++i) {
 	      that[i] = 0
 	    }
 	  }
 	  return that
 	}
 
+	/**
+	 * Equivalent to Buffer(num), by default creates a non-zero-filled Buffer instance.
+	 * */
+	Buffer.allocUnsafe = function (size) {
+	  return allocUnsafe(null, size)
+	}
+	/**
+	 * Equivalent to SlowBuffer(num), by default creates a non-zero-filled Buffer instance.
+	 */
+	Buffer.allocUnsafeSlow = function (size) {
+	  return allocUnsafe(null, size)
+	}
+
 	function fromString (that, string, encoding) {
-	  if (typeof encoding !== 'string' || encoding === '') encoding = 'utf8'
+	  if (typeof encoding !== 'string' || encoding === '') {
+	    encoding = 'utf8'
+	  }
 
-	  // Assumption: byteLength() return value is always < kMaxLength.
+	  if (!Buffer.isEncoding(encoding)) {
+	    throw new TypeError('"encoding" must be a valid string encoding')
+	  }
+
 	  var length = byteLength(string, encoding) | 0
-	  that = allocate(that, length)
+	  that = createBuffer(that, length)
 
-	  that.write(string, encoding)
-	  return that
-	}
+	  var actual = that.write(string, encoding)
 
-	function fromObject (that, object) {
-	  if (Buffer.isBuffer(object)) return fromBuffer(that, object)
-
-	  if (isArray(object)) return fromArray(that, object)
-
-	  if (object == null) {
-	    throw new TypeError('must start with number, buffer, array or string')
+	  if (actual !== length) {
+	    // Writing a hex string, for example, that contains invalid characters will
+	    // cause everything after the first invalid character to be ignored. (e.g.
+	    // 'abxxcd' will be treated as 'ab')
+	    that = that.slice(0, actual)
 	  }
 
-	  if (typeof ArrayBuffer !== 'undefined') {
-	    if (object.buffer instanceof ArrayBuffer) {
-	      return fromTypedArray(that, object)
-	    }
-	    if (object instanceof ArrayBuffer) {
-	      return fromArrayBuffer(that, object)
-	    }
-	  }
-
-	  if (object.length) return fromArrayLike(that, object)
-
-	  return fromJsonObject(that, object)
-	}
-
-	function fromBuffer (that, buffer) {
-	  var length = checked(buffer.length) | 0
-	  that = allocate(that, length)
-	  buffer.copy(that, 0, 0, length)
-	  return that
-	}
-
-	function fromArray (that, array) {
-	  var length = checked(array.length) | 0
-	  that = allocate(that, length)
-	  for (var i = 0; i < length; i += 1) {
-	    that[i] = array[i] & 255
-	  }
-	  return that
-	}
-
-	// Duplicate of fromArray() to keep fromArray() monomorphic.
-	function fromTypedArray (that, array) {
-	  var length = checked(array.length) | 0
-	  that = allocate(that, length)
-	  // Truncating the elements is probably not what people expect from typed
-	  // arrays with BYTES_PER_ELEMENT > 1 but it's compatible with the behavior
-	  // of the old Buffer constructor.
-	  for (var i = 0; i < length; i += 1) {
-	    that[i] = array[i] & 255
-	  }
-	  return that
-	}
-
-	function fromArrayBuffer (that, array) {
-	  if (Buffer.TYPED_ARRAY_SUPPORT) {
-	    // Return an augmented `Uint8Array` instance, for best performance
-	    array.byteLength
-	    that = Buffer._augment(new Uint8Array(array))
-	  } else {
-	    // Fallback: Return an object instance of the Buffer class
-	    that = fromTypedArray(that, new Uint8Array(array))
-	  }
 	  return that
 	}
 
 	function fromArrayLike (that, array) {
-	  var length = checked(array.length) | 0
-	  that = allocate(that, length)
+	  var length = array.length < 0 ? 0 : checked(array.length) | 0
+	  that = createBuffer(that, length)
 	  for (var i = 0; i < length; i += 1) {
 	    that[i] = array[i] & 255
 	  }
 	  return that
 	}
 
-	// Deserialize { type: 'Buffer', data: [1,2,3,...] } into a Buffer object.
-	// Returns a zero-length buffer for inputs that don't conform to the spec.
-	function fromJsonObject (that, object) {
-	  var array
-	  var length = 0
+	function fromArrayBuffer (that, array, byteOffset, length) {
+	  array.byteLength // this throws if `array` is not a valid ArrayBuffer
 
-	  if (object.type === 'Buffer' && isArray(object.data)) {
-	    array = object.data
-	    length = checked(array.length) | 0
+	  if (byteOffset < 0 || array.byteLength < byteOffset) {
+	    throw new RangeError('\'offset\' is out of bounds')
 	  }
-	  that = allocate(that, length)
 
-	  for (var i = 0; i < length; i += 1) {
-	    that[i] = array[i] & 255
+	  if (array.byteLength < byteOffset + (length || 0)) {
+	    throw new RangeError('\'length\' is out of bounds')
 	  }
-	  return that
-	}
 
-	if (Buffer.TYPED_ARRAY_SUPPORT) {
-	  Buffer.prototype.__proto__ = Uint8Array.prototype
-	  Buffer.__proto__ = Uint8Array
-	} else {
-	  // pre-set for values that may exist in the future
-	  Buffer.prototype.length = undefined
-	  Buffer.prototype.parent = undefined
-	}
+	  if (byteOffset === undefined && length === undefined) {
+	    array = new Uint8Array(array)
+	  } else if (length === undefined) {
+	    array = new Uint8Array(array, byteOffset)
+	  } else {
+	    array = new Uint8Array(array, byteOffset, length)
+	  }
 
-	function allocate (that, length) {
 	  if (Buffer.TYPED_ARRAY_SUPPORT) {
 	    // Return an augmented `Uint8Array` instance, for best performance
-	    that = Buffer._augment(new Uint8Array(length))
+	    that = array
 	    that.__proto__ = Buffer.prototype
 	  } else {
 	    // Fallback: Return an object instance of the Buffer class
-	    that.length = length
-	    that._isBuffer = true
+	    that = fromArrayLike(that, array)
 	  }
-
-	  var fromPool = length !== 0 && length <= Buffer.poolSize >>> 1
-	  if (fromPool) that.parent = rootParent
-
 	  return that
 	}
 
+	function fromObject (that, obj) {
+	  if (Buffer.isBuffer(obj)) {
+	    var len = checked(obj.length) | 0
+	    that = createBuffer(that, len)
+
+	    if (that.length === 0) {
+	      return that
+	    }
+
+	    obj.copy(that, 0, 0, len)
+	    return that
+	  }
+
+	  if (obj) {
+	    if ((typeof ArrayBuffer !== 'undefined' &&
+	        obj.buffer instanceof ArrayBuffer) || 'length' in obj) {
+	      if (typeof obj.length !== 'number' || isnan(obj.length)) {
+	        return createBuffer(that, 0)
+	      }
+	      return fromArrayLike(that, obj)
+	    }
+
+	    if (obj.type === 'Buffer' && isArray(obj.data)) {
+	      return fromArrayLike(that, obj.data)
+	    }
+	  }
+
+	  throw new TypeError('First argument must be a string, Buffer, ArrayBuffer, Array, or array-like object.')
+	}
+
 	function checked (length) {
-	  // Note: cannot use `length < kMaxLength` here because that fails when
+	  // Note: cannot use `length < kMaxLength()` here because that fails when
 	  // length is NaN (which is otherwise coerced to zero.)
 	  if (length >= kMaxLength()) {
 	    throw new RangeError('Attempt to allocate Buffer larger than maximum ' +
@@ -7532,12 +11081,11 @@
 	  return length | 0
 	}
 
-	function SlowBuffer (subject, encoding) {
-	  if (!(this instanceof SlowBuffer)) return new SlowBuffer(subject, encoding)
-
-	  var buf = new Buffer(subject, encoding)
-	  delete buf.parent
-	  return buf
+	function SlowBuffer (length) {
+	  if (+length != length) { // eslint-disable-line eqeqeq
+	    length = 0
+	  }
+	  return Buffer.alloc(+length)
 	}
 
 	Buffer.isBuffer = function isBuffer (b) {
@@ -7554,17 +11102,12 @@
 	  var x = a.length
 	  var y = b.length
 
-	  var i = 0
-	  var len = Math.min(x, y)
-	  while (i < len) {
-	    if (a[i] !== b[i]) break
-
-	    ++i
-	  }
-
-	  if (i !== len) {
-	    x = a[i]
-	    y = b[i]
+	  for (var i = 0, len = Math.min(x, y); i < len; ++i) {
+	    if (a[i] !== b[i]) {
+	      x = a[i]
+	      y = b[i]
+	      break
+	    }
 	  }
 
 	  if (x < y) return -1
@@ -7578,9 +11121,9 @@
 	    case 'utf8':
 	    case 'utf-8':
 	    case 'ascii':
+	    case 'latin1':
 	    case 'binary':
 	    case 'base64':
-	    case 'raw':
 	    case 'ucs2':
 	    case 'ucs-2':
 	    case 'utf16le':
@@ -7592,32 +11135,46 @@
 	}
 
 	Buffer.concat = function concat (list, length) {
-	  if (!isArray(list)) throw new TypeError('list argument must be an Array of Buffers.')
+	  if (!isArray(list)) {
+	    throw new TypeError('"list" argument must be an Array of Buffers')
+	  }
 
 	  if (list.length === 0) {
-	    return new Buffer(0)
+	    return Buffer.alloc(0)
 	  }
 
 	  var i
 	  if (length === undefined) {
 	    length = 0
-	    for (i = 0; i < list.length; i++) {
+	    for (i = 0; i < list.length; ++i) {
 	      length += list[i].length
 	    }
 	  }
 
-	  var buf = new Buffer(length)
+	  var buffer = Buffer.allocUnsafe(length)
 	  var pos = 0
-	  for (i = 0; i < list.length; i++) {
-	    var item = list[i]
-	    item.copy(buf, pos)
-	    pos += item.length
+	  for (i = 0; i < list.length; ++i) {
+	    var buf = list[i]
+	    if (!Buffer.isBuffer(buf)) {
+	      throw new TypeError('"list" argument must be an Array of Buffers')
+	    }
+	    buf.copy(buffer, pos)
+	    pos += buf.length
 	  }
-	  return buf
+	  return buffer
 	}
 
 	function byteLength (string, encoding) {
-	  if (typeof string !== 'string') string = '' + string
+	  if (Buffer.isBuffer(string)) {
+	    return string.length
+	  }
+	  if (typeof ArrayBuffer !== 'undefined' && typeof ArrayBuffer.isView === 'function' &&
+	      (ArrayBuffer.isView(string) || string instanceof ArrayBuffer)) {
+	    return string.byteLength
+	  }
+	  if (typeof string !== 'string') {
+	    string = '' + string
+	  }
 
 	  var len = string.length
 	  if (len === 0) return 0
@@ -7627,13 +11184,12 @@
 	  for (;;) {
 	    switch (encoding) {
 	      case 'ascii':
+	      case 'latin1':
 	      case 'binary':
-	      // Deprecated
-	      case 'raw':
-	      case 'raws':
 	        return len
 	      case 'utf8':
 	      case 'utf-8':
+	      case undefined:
 	        return utf8ToBytes(string).length
 	      case 'ucs2':
 	      case 'ucs-2':
@@ -7656,13 +11212,39 @@
 	function slowToString (encoding, start, end) {
 	  var loweredCase = false
 
-	  start = start | 0
-	  end = end === undefined || end === Infinity ? this.length : end | 0
+	  // No need to verify that "this.length <= MAX_UINT32" since it's a read-only
+	  // property of a typed array.
+
+	  // This behaves neither like String nor Uint8Array in that we set start/end
+	  // to their upper/lower bounds if the value passed is out of range.
+	  // undefined is handled specially as per ECMA-262 6th Edition,
+	  // Section 13.3.3.7 Runtime Semantics: KeyedBindingInitialization.
+	  if (start === undefined || start < 0) {
+	    start = 0
+	  }
+	  // Return early if start > this.length. Done here to prevent potential uint32
+	  // coercion fail below.
+	  if (start > this.length) {
+	    return ''
+	  }
+
+	  if (end === undefined || end > this.length) {
+	    end = this.length
+	  }
+
+	  if (end <= 0) {
+	    return ''
+	  }
+
+	  // Force coersion to uint32. This will also coerce falsey/NaN values to 0.
+	  end >>>= 0
+	  start >>>= 0
+
+	  if (end <= start) {
+	    return ''
+	  }
 
 	  if (!encoding) encoding = 'utf8'
-	  if (start < 0) start = 0
-	  if (end > this.length) end = this.length
-	  if (end <= start) return ''
 
 	  while (true) {
 	    switch (encoding) {
@@ -7676,8 +11258,9 @@
 	      case 'ascii':
 	        return asciiSlice(this, start, end)
 
+	      case 'latin1':
 	      case 'binary':
-	        return binarySlice(this, start, end)
+	        return latin1Slice(this, start, end)
 
 	      case 'base64':
 	        return base64Slice(this, start, end)
@@ -7694,6 +11277,53 @@
 	        loweredCase = true
 	    }
 	  }
+	}
+
+	// The property is used by `Buffer.isBuffer` and `is-buffer` (in Safari 5-7) to detect
+	// Buffer instances.
+	Buffer.prototype._isBuffer = true
+
+	function swap (b, n, m) {
+	  var i = b[n]
+	  b[n] = b[m]
+	  b[m] = i
+	}
+
+	Buffer.prototype.swap16 = function swap16 () {
+	  var len = this.length
+	  if (len % 2 !== 0) {
+	    throw new RangeError('Buffer size must be a multiple of 16-bits')
+	  }
+	  for (var i = 0; i < len; i += 2) {
+	    swap(this, i, i + 1)
+	  }
+	  return this
+	}
+
+	Buffer.prototype.swap32 = function swap32 () {
+	  var len = this.length
+	  if (len % 4 !== 0) {
+	    throw new RangeError('Buffer size must be a multiple of 32-bits')
+	  }
+	  for (var i = 0; i < len; i += 4) {
+	    swap(this, i, i + 3)
+	    swap(this, i + 1, i + 2)
+	  }
+	  return this
+	}
+
+	Buffer.prototype.swap64 = function swap64 () {
+	  var len = this.length
+	  if (len % 8 !== 0) {
+	    throw new RangeError('Buffer size must be a multiple of 64-bits')
+	  }
+	  for (var i = 0; i < len; i += 8) {
+	    swap(this, i, i + 7)
+	    swap(this, i + 1, i + 6)
+	    swap(this, i + 2, i + 5)
+	    swap(this, i + 3, i + 4)
+	  }
+	  return this
 	}
 
 	Buffer.prototype.toString = function toString () {
@@ -7719,63 +11349,197 @@
 	  return '<Buffer ' + str + '>'
 	}
 
-	Buffer.prototype.compare = function compare (b) {
-	  if (!Buffer.isBuffer(b)) throw new TypeError('Argument must be a Buffer')
-	  if (this === b) return 0
-	  return Buffer.compare(this, b)
+	Buffer.prototype.compare = function compare (target, start, end, thisStart, thisEnd) {
+	  if (!Buffer.isBuffer(target)) {
+	    throw new TypeError('Argument must be a Buffer')
+	  }
+
+	  if (start === undefined) {
+	    start = 0
+	  }
+	  if (end === undefined) {
+	    end = target ? target.length : 0
+	  }
+	  if (thisStart === undefined) {
+	    thisStart = 0
+	  }
+	  if (thisEnd === undefined) {
+	    thisEnd = this.length
+	  }
+
+	  if (start < 0 || end > target.length || thisStart < 0 || thisEnd > this.length) {
+	    throw new RangeError('out of range index')
+	  }
+
+	  if (thisStart >= thisEnd && start >= end) {
+	    return 0
+	  }
+	  if (thisStart >= thisEnd) {
+	    return -1
+	  }
+	  if (start >= end) {
+	    return 1
+	  }
+
+	  start >>>= 0
+	  end >>>= 0
+	  thisStart >>>= 0
+	  thisEnd >>>= 0
+
+	  if (this === target) return 0
+
+	  var x = thisEnd - thisStart
+	  var y = end - start
+	  var len = Math.min(x, y)
+
+	  var thisCopy = this.slice(thisStart, thisEnd)
+	  var targetCopy = target.slice(start, end)
+
+	  for (var i = 0; i < len; ++i) {
+	    if (thisCopy[i] !== targetCopy[i]) {
+	      x = thisCopy[i]
+	      y = targetCopy[i]
+	      break
+	    }
+	  }
+
+	  if (x < y) return -1
+	  if (y < x) return 1
+	  return 0
 	}
 
-	Buffer.prototype.indexOf = function indexOf (val, byteOffset) {
-	  if (byteOffset > 0x7fffffff) byteOffset = 0x7fffffff
-	  else if (byteOffset < -0x80000000) byteOffset = -0x80000000
-	  byteOffset >>= 0
+	// Finds either the first index of `val` in `buffer` at offset >= `byteOffset`,
+	// OR the last index of `val` in `buffer` at offset <= `byteOffset`.
+	//
+	// Arguments:
+	// - buffer - a Buffer to search
+	// - val - a string, Buffer, or number
+	// - byteOffset - an index into `buffer`; will be clamped to an int32
+	// - encoding - an optional encoding, relevant is val is a string
+	// - dir - true for indexOf, false for lastIndexOf
+	function bidirectionalIndexOf (buffer, val, byteOffset, encoding, dir) {
+	  // Empty buffer means no match
+	  if (buffer.length === 0) return -1
 
-	  if (this.length === 0) return -1
-	  if (byteOffset >= this.length) return -1
+	  // Normalize byteOffset
+	  if (typeof byteOffset === 'string') {
+	    encoding = byteOffset
+	    byteOffset = 0
+	  } else if (byteOffset > 0x7fffffff) {
+	    byteOffset = 0x7fffffff
+	  } else if (byteOffset < -0x80000000) {
+	    byteOffset = -0x80000000
+	  }
+	  byteOffset = +byteOffset  // Coerce to Number.
+	  if (isNaN(byteOffset)) {
+	    // byteOffset: it it's undefined, null, NaN, "foo", etc, search whole buffer
+	    byteOffset = dir ? 0 : (buffer.length - 1)
+	  }
 
-	  // Negative offsets start from the end of the buffer
-	  if (byteOffset < 0) byteOffset = Math.max(this.length + byteOffset, 0)
+	  // Normalize byteOffset: negative offsets start from the end of the buffer
+	  if (byteOffset < 0) byteOffset = buffer.length + byteOffset
+	  if (byteOffset >= buffer.length) {
+	    if (dir) return -1
+	    else byteOffset = buffer.length - 1
+	  } else if (byteOffset < 0) {
+	    if (dir) byteOffset = 0
+	    else return -1
+	  }
 
+	  // Normalize val
 	  if (typeof val === 'string') {
-	    if (val.length === 0) return -1 // special case: looking for empty string always fails
-	    return String.prototype.indexOf.call(this, val, byteOffset)
-	  }
-	  if (Buffer.isBuffer(val)) {
-	    return arrayIndexOf(this, val, byteOffset)
-	  }
-	  if (typeof val === 'number') {
-	    if (Buffer.TYPED_ARRAY_SUPPORT && Uint8Array.prototype.indexOf === 'function') {
-	      return Uint8Array.prototype.indexOf.call(this, val, byteOffset)
-	    }
-	    return arrayIndexOf(this, [ val ], byteOffset)
+	    val = Buffer.from(val, encoding)
 	  }
 
-	  function arrayIndexOf (arr, val, byteOffset) {
-	    var foundIndex = -1
-	    for (var i = 0; byteOffset + i < arr.length; i++) {
-	      if (arr[byteOffset + i] === val[foundIndex === -1 ? 0 : i - foundIndex]) {
-	        if (foundIndex === -1) foundIndex = i
-	        if (i - foundIndex + 1 === val.length) return byteOffset + foundIndex
+	  // Finally, search either indexOf (if dir is true) or lastIndexOf
+	  if (Buffer.isBuffer(val)) {
+	    // Special case: looking for empty string/buffer always fails
+	    if (val.length === 0) {
+	      return -1
+	    }
+	    return arrayIndexOf(buffer, val, byteOffset, encoding, dir)
+	  } else if (typeof val === 'number') {
+	    val = val & 0xFF // Search for a byte value [0-255]
+	    if (Buffer.TYPED_ARRAY_SUPPORT &&
+	        typeof Uint8Array.prototype.indexOf === 'function') {
+	      if (dir) {
+	        return Uint8Array.prototype.indexOf.call(buffer, val, byteOffset)
 	      } else {
-	        foundIndex = -1
+	        return Uint8Array.prototype.lastIndexOf.call(buffer, val, byteOffset)
 	      }
 	    }
-	    return -1
+	    return arrayIndexOf(buffer, [ val ], byteOffset, encoding, dir)
 	  }
 
 	  throw new TypeError('val must be string, number or Buffer')
 	}
 
-	// `get` is deprecated
-	Buffer.prototype.get = function get (offset) {
-	  console.log('.get() is deprecated. Access using array indexes instead.')
-	  return this.readUInt8(offset)
+	function arrayIndexOf (arr, val, byteOffset, encoding, dir) {
+	  var indexSize = 1
+	  var arrLength = arr.length
+	  var valLength = val.length
+
+	  if (encoding !== undefined) {
+	    encoding = String(encoding).toLowerCase()
+	    if (encoding === 'ucs2' || encoding === 'ucs-2' ||
+	        encoding === 'utf16le' || encoding === 'utf-16le') {
+	      if (arr.length < 2 || val.length < 2) {
+	        return -1
+	      }
+	      indexSize = 2
+	      arrLength /= 2
+	      valLength /= 2
+	      byteOffset /= 2
+	    }
+	  }
+
+	  function read (buf, i) {
+	    if (indexSize === 1) {
+	      return buf[i]
+	    } else {
+	      return buf.readUInt16BE(i * indexSize)
+	    }
+	  }
+
+	  var i
+	  if (dir) {
+	    var foundIndex = -1
+	    for (i = byteOffset; i < arrLength; i++) {
+	      if (read(arr, i) === read(val, foundIndex === -1 ? 0 : i - foundIndex)) {
+	        if (foundIndex === -1) foundIndex = i
+	        if (i - foundIndex + 1 === valLength) return foundIndex * indexSize
+	      } else {
+	        if (foundIndex !== -1) i -= i - foundIndex
+	        foundIndex = -1
+	      }
+	    }
+	  } else {
+	    if (byteOffset + valLength > arrLength) byteOffset = arrLength - valLength
+	    for (i = byteOffset; i >= 0; i--) {
+	      var found = true
+	      for (var j = 0; j < valLength; j++) {
+	        if (read(arr, i + j) !== read(val, j)) {
+	          found = false
+	          break
+	        }
+	      }
+	      if (found) return i
+	    }
+	  }
+
+	  return -1
 	}
 
-	// `set` is deprecated
-	Buffer.prototype.set = function set (v, offset) {
-	  console.log('.set() is deprecated. Access using array indexes instead.')
-	  return this.writeUInt8(v, offset)
+	Buffer.prototype.includes = function includes (val, byteOffset, encoding) {
+	  return this.indexOf(val, byteOffset, encoding) !== -1
+	}
+
+	Buffer.prototype.indexOf = function indexOf (val, byteOffset, encoding) {
+	  return bidirectionalIndexOf(this, val, byteOffset, encoding, true)
+	}
+
+	Buffer.prototype.lastIndexOf = function lastIndexOf (val, byteOffset, encoding) {
+	  return bidirectionalIndexOf(this, val, byteOffset, encoding, false)
 	}
 
 	function hexWrite (buf, string, offset, length) {
@@ -7792,14 +11556,14 @@
 
 	  // must be an even number of digits
 	  var strLen = string.length
-	  if (strLen % 2 !== 0) throw new Error('Invalid hex string')
+	  if (strLen % 2 !== 0) throw new TypeError('Invalid hex string')
 
 	  if (length > strLen / 2) {
 	    length = strLen / 2
 	  }
-	  for (var i = 0; i < length; i++) {
+	  for (var i = 0; i < length; ++i) {
 	    var parsed = parseInt(string.substr(i * 2, 2), 16)
-	    if (isNaN(parsed)) throw new Error('Invalid hex string')
+	    if (isNaN(parsed)) return i
 	    buf[offset + i] = parsed
 	  }
 	  return i
@@ -7813,7 +11577,7 @@
 	  return blitBuffer(asciiToBytes(string), buf, offset, length)
 	}
 
-	function binaryWrite (buf, string, offset, length) {
+	function latin1Write (buf, string, offset, length) {
 	  return asciiWrite(buf, string, offset, length)
 	}
 
@@ -7848,17 +11612,16 @@
 	    }
 	  // legacy write(string, encoding, offset, length) - remove in v0.13
 	  } else {
-	    var swap = encoding
-	    encoding = offset
-	    offset = length | 0
-	    length = swap
+	    throw new Error(
+	      'Buffer.write(string, encoding, offset[, length]) is no longer supported'
+	    )
 	  }
 
 	  var remaining = this.length - offset
 	  if (length === undefined || length > remaining) length = remaining
 
 	  if ((string.length > 0 && (length < 0 || offset < 0)) || offset > this.length) {
-	    throw new RangeError('attempt to write outside buffer bounds')
+	    throw new RangeError('Attempt to write outside buffer bounds')
 	  }
 
 	  if (!encoding) encoding = 'utf8'
@@ -7876,8 +11639,9 @@
 	      case 'ascii':
 	        return asciiWrite(this, string, offset, length)
 
+	      case 'latin1':
 	      case 'binary':
-	        return binaryWrite(this, string, offset, length)
+	        return latin1Write(this, string, offset, length)
 
 	      case 'base64':
 	        // Warning: maxLength not taken into account in base64Write
@@ -8012,17 +11776,17 @@
 	  var ret = ''
 	  end = Math.min(buf.length, end)
 
-	  for (var i = start; i < end; i++) {
+	  for (var i = start; i < end; ++i) {
 	    ret += String.fromCharCode(buf[i] & 0x7F)
 	  }
 	  return ret
 	}
 
-	function binarySlice (buf, start, end) {
+	function latin1Slice (buf, start, end) {
 	  var ret = ''
 	  end = Math.min(buf.length, end)
 
-	  for (var i = start; i < end; i++) {
+	  for (var i = start; i < end; ++i) {
 	    ret += String.fromCharCode(buf[i])
 	  }
 	  return ret
@@ -8035,7 +11799,7 @@
 	  if (!end || end < 0 || end > len) end = len
 
 	  var out = ''
-	  for (var i = start; i < end; i++) {
+	  for (var i = start; i < end; ++i) {
 	    out += toHex(buf[i])
 	  }
 	  return out
@@ -8073,16 +11837,15 @@
 
 	  var newBuf
 	  if (Buffer.TYPED_ARRAY_SUPPORT) {
-	    newBuf = Buffer._augment(this.subarray(start, end))
+	    newBuf = this.subarray(start, end)
+	    newBuf.__proto__ = Buffer.prototype
 	  } else {
 	    var sliceLen = end - start
 	    newBuf = new Buffer(sliceLen, undefined)
-	    for (var i = 0; i < sliceLen; i++) {
+	    for (var i = 0; i < sliceLen; ++i) {
 	      newBuf[i] = this[i + start]
 	    }
 	  }
-
-	  if (newBuf.length) newBuf.parent = this.parent || this
 
 	  return newBuf
 	}
@@ -8252,16 +12015,19 @@
 	}
 
 	function checkInt (buf, value, offset, ext, max, min) {
-	  if (!Buffer.isBuffer(buf)) throw new TypeError('buffer must be a Buffer instance')
-	  if (value > max || value < min) throw new RangeError('value is out of bounds')
-	  if (offset + ext > buf.length) throw new RangeError('index out of range')
+	  if (!Buffer.isBuffer(buf)) throw new TypeError('"buffer" argument must be a Buffer instance')
+	  if (value > max || value < min) throw new RangeError('"value" argument is out of bounds')
+	  if (offset + ext > buf.length) throw new RangeError('Index out of range')
 	}
 
 	Buffer.prototype.writeUIntLE = function writeUIntLE (value, offset, byteLength, noAssert) {
 	  value = +value
 	  offset = offset | 0
 	  byteLength = byteLength | 0
-	  if (!noAssert) checkInt(this, value, offset, byteLength, Math.pow(2, 8 * byteLength), 0)
+	  if (!noAssert) {
+	    var maxBytes = Math.pow(2, 8 * byteLength) - 1
+	    checkInt(this, value, offset, byteLength, maxBytes, 0)
+	  }
 
 	  var mul = 1
 	  var i = 0
@@ -8277,7 +12043,10 @@
 	  value = +value
 	  offset = offset | 0
 	  byteLength = byteLength | 0
-	  if (!noAssert) checkInt(this, value, offset, byteLength, Math.pow(2, 8 * byteLength), 0)
+	  if (!noAssert) {
+	    var maxBytes = Math.pow(2, 8 * byteLength) - 1
+	    checkInt(this, value, offset, byteLength, maxBytes, 0)
+	  }
 
 	  var i = byteLength - 1
 	  var mul = 1
@@ -8300,7 +12069,7 @@
 
 	function objectWriteUInt16 (buf, value, offset, littleEndian) {
 	  if (value < 0) value = 0xffff + value + 1
-	  for (var i = 0, j = Math.min(buf.length - offset, 2); i < j; i++) {
+	  for (var i = 0, j = Math.min(buf.length - offset, 2); i < j; ++i) {
 	    buf[offset + i] = (value & (0xff << (8 * (littleEndian ? i : 1 - i)))) >>>
 	      (littleEndian ? i : 1 - i) * 8
 	  }
@@ -8334,7 +12103,7 @@
 
 	function objectWriteUInt32 (buf, value, offset, littleEndian) {
 	  if (value < 0) value = 0xffffffff + value + 1
-	  for (var i = 0, j = Math.min(buf.length - offset, 4); i < j; i++) {
+	  for (var i = 0, j = Math.min(buf.length - offset, 4); i < j; ++i) {
 	    buf[offset + i] = (value >>> (littleEndian ? i : 3 - i) * 8) & 0xff
 	  }
 	}
@@ -8380,9 +12149,12 @@
 
 	  var i = 0
 	  var mul = 1
-	  var sub = value < 0 ? 1 : 0
+	  var sub = 0
 	  this[offset] = value & 0xFF
 	  while (++i < byteLength && (mul *= 0x100)) {
+	    if (value < 0 && sub === 0 && this[offset + i - 1] !== 0) {
+	      sub = 1
+	    }
 	    this[offset + i] = ((value / mul) >> 0) - sub & 0xFF
 	  }
 
@@ -8400,9 +12172,12 @@
 
 	  var i = byteLength - 1
 	  var mul = 1
-	  var sub = value < 0 ? 1 : 0
+	  var sub = 0
 	  this[offset + i] = value & 0xFF
 	  while (--i >= 0 && (mul *= 0x100)) {
+	    if (value < 0 && sub === 0 && this[offset + i + 1] !== 0) {
+	      sub = 1
+	    }
 	    this[offset + i] = ((value / mul) >> 0) - sub & 0xFF
 	  }
 
@@ -8477,9 +12252,8 @@
 	}
 
 	function checkIEEE754 (buf, value, offset, ext, max, min) {
-	  if (value > max || value < min) throw new RangeError('value is out of bounds')
-	  if (offset + ext > buf.length) throw new RangeError('index out of range')
-	  if (offset < 0) throw new RangeError('index out of range')
+	  if (offset + ext > buf.length) throw new RangeError('Index out of range')
+	  if (offset < 0) throw new RangeError('Index out of range')
 	}
 
 	function writeFloat (buf, value, offset, littleEndian, noAssert) {
@@ -8544,142 +12318,90 @@
 
 	  if (this === target && start < targetStart && targetStart < end) {
 	    // descending copy from end
-	    for (i = len - 1; i >= 0; i--) {
+	    for (i = len - 1; i >= 0; --i) {
 	      target[i + targetStart] = this[i + start]
 	    }
 	  } else if (len < 1000 || !Buffer.TYPED_ARRAY_SUPPORT) {
 	    // ascending copy from start
-	    for (i = 0; i < len; i++) {
+	    for (i = 0; i < len; ++i) {
 	      target[i + targetStart] = this[i + start]
 	    }
 	  } else {
-	    target._set(this.subarray(start, start + len), targetStart)
+	    Uint8Array.prototype.set.call(
+	      target,
+	      this.subarray(start, start + len),
+	      targetStart
+	    )
 	  }
 
 	  return len
 	}
 
-	// fill(value, start=0, end=buffer.length)
-	Buffer.prototype.fill = function fill (value, start, end) {
-	  if (!value) value = 0
-	  if (!start) start = 0
-	  if (!end) end = this.length
+	// Usage:
+	//    buffer.fill(number[, offset[, end]])
+	//    buffer.fill(buffer[, offset[, end]])
+	//    buffer.fill(string[, offset[, end]][, encoding])
+	Buffer.prototype.fill = function fill (val, start, end, encoding) {
+	  // Handle string cases:
+	  if (typeof val === 'string') {
+	    if (typeof start === 'string') {
+	      encoding = start
+	      start = 0
+	      end = this.length
+	    } else if (typeof end === 'string') {
+	      encoding = end
+	      end = this.length
+	    }
+	    if (val.length === 1) {
+	      var code = val.charCodeAt(0)
+	      if (code < 256) {
+	        val = code
+	      }
+	    }
+	    if (encoding !== undefined && typeof encoding !== 'string') {
+	      throw new TypeError('encoding must be a string')
+	    }
+	    if (typeof encoding === 'string' && !Buffer.isEncoding(encoding)) {
+	      throw new TypeError('Unknown encoding: ' + encoding)
+	    }
+	  } else if (typeof val === 'number') {
+	    val = val & 255
+	  }
 
-	  if (end < start) throw new RangeError('end < start')
+	  // Invalid ranges are not set to a default, so can range check early.
+	  if (start < 0 || this.length < start || this.length < end) {
+	    throw new RangeError('Out of range index')
+	  }
 
-	  // Fill 0 bytes; we're done
-	  if (end === start) return
-	  if (this.length === 0) return
+	  if (end <= start) {
+	    return this
+	  }
 
-	  if (start < 0 || start >= this.length) throw new RangeError('start out of bounds')
-	  if (end < 0 || end > this.length) throw new RangeError('end out of bounds')
+	  start = start >>> 0
+	  end = end === undefined ? this.length : end >>> 0
+
+	  if (!val) val = 0
 
 	  var i
-	  if (typeof value === 'number') {
-	    for (i = start; i < end; i++) {
-	      this[i] = value
+	  if (typeof val === 'number') {
+	    for (i = start; i < end; ++i) {
+	      this[i] = val
 	    }
 	  } else {
-	    var bytes = utf8ToBytes(value.toString())
+	    var bytes = Buffer.isBuffer(val)
+	      ? val
+	      : utf8ToBytes(new Buffer(val, encoding).toString())
 	    var len = bytes.length
-	    for (i = start; i < end; i++) {
-	      this[i] = bytes[i % len]
+	    for (i = 0; i < end - start; ++i) {
+	      this[i + start] = bytes[i % len]
 	    }
 	  }
 
 	  return this
 	}
 
-	/**
-	 * Creates a new `ArrayBuffer` with the *copied* memory of the buffer instance.
-	 * Added in Node 0.12. Only available in browsers that support ArrayBuffer.
-	 */
-	Buffer.prototype.toArrayBuffer = function toArrayBuffer () {
-	  if (typeof Uint8Array !== 'undefined') {
-	    if (Buffer.TYPED_ARRAY_SUPPORT) {
-	      return (new Buffer(this)).buffer
-	    } else {
-	      var buf = new Uint8Array(this.length)
-	      for (var i = 0, len = buf.length; i < len; i += 1) {
-	        buf[i] = this[i]
-	      }
-	      return buf.buffer
-	    }
-	  } else {
-	    throw new TypeError('Buffer.toArrayBuffer not supported in this browser')
-	  }
-	}
-
 	// HELPER FUNCTIONS
 	// ================
-
-	var BP = Buffer.prototype
-
-	/**
-	 * Augment a Uint8Array *instance* (not the Uint8Array class!) with Buffer methods
-	 */
-	Buffer._augment = function _augment (arr) {
-	  arr.constructor = Buffer
-	  arr._isBuffer = true
-
-	  // save reference to original Uint8Array set method before overwriting
-	  arr._set = arr.set
-
-	  // deprecated
-	  arr.get = BP.get
-	  arr.set = BP.set
-
-	  arr.write = BP.write
-	  arr.toString = BP.toString
-	  arr.toLocaleString = BP.toString
-	  arr.toJSON = BP.toJSON
-	  arr.equals = BP.equals
-	  arr.compare = BP.compare
-	  arr.indexOf = BP.indexOf
-	  arr.copy = BP.copy
-	  arr.slice = BP.slice
-	  arr.readUIntLE = BP.readUIntLE
-	  arr.readUIntBE = BP.readUIntBE
-	  arr.readUInt8 = BP.readUInt8
-	  arr.readUInt16LE = BP.readUInt16LE
-	  arr.readUInt16BE = BP.readUInt16BE
-	  arr.readUInt32LE = BP.readUInt32LE
-	  arr.readUInt32BE = BP.readUInt32BE
-	  arr.readIntLE = BP.readIntLE
-	  arr.readIntBE = BP.readIntBE
-	  arr.readInt8 = BP.readInt8
-	  arr.readInt16LE = BP.readInt16LE
-	  arr.readInt16BE = BP.readInt16BE
-	  arr.readInt32LE = BP.readInt32LE
-	  arr.readInt32BE = BP.readInt32BE
-	  arr.readFloatLE = BP.readFloatLE
-	  arr.readFloatBE = BP.readFloatBE
-	  arr.readDoubleLE = BP.readDoubleLE
-	  arr.readDoubleBE = BP.readDoubleBE
-	  arr.writeUInt8 = BP.writeUInt8
-	  arr.writeUIntLE = BP.writeUIntLE
-	  arr.writeUIntBE = BP.writeUIntBE
-	  arr.writeUInt16LE = BP.writeUInt16LE
-	  arr.writeUInt16BE = BP.writeUInt16BE
-	  arr.writeUInt32LE = BP.writeUInt32LE
-	  arr.writeUInt32BE = BP.writeUInt32BE
-	  arr.writeIntLE = BP.writeIntLE
-	  arr.writeIntBE = BP.writeIntBE
-	  arr.writeInt8 = BP.writeInt8
-	  arr.writeInt16LE = BP.writeInt16LE
-	  arr.writeInt16BE = BP.writeInt16BE
-	  arr.writeInt32LE = BP.writeInt32LE
-	  arr.writeInt32BE = BP.writeInt32BE
-	  arr.writeFloatLE = BP.writeFloatLE
-	  arr.writeFloatBE = BP.writeFloatBE
-	  arr.writeDoubleLE = BP.writeDoubleLE
-	  arr.writeDoubleBE = BP.writeDoubleBE
-	  arr.fill = BP.fill
-	  arr.inspect = BP.inspect
-	  arr.toArrayBuffer = BP.toArrayBuffer
-
-	  return arr
-	}
 
 	var INVALID_BASE64_RE = /[^+\/0-9A-Za-z-_]/g
 
@@ -8712,7 +12434,7 @@
 	  var leadSurrogate = null
 	  var bytes = []
 
-	  for (var i = 0; i < length; i++) {
+	  for (var i = 0; i < length; ++i) {
 	    codePoint = string.charCodeAt(i)
 
 	    // is surrogate component
@@ -8787,7 +12509,7 @@
 
 	function asciiToBytes (str) {
 	  var byteArray = []
-	  for (var i = 0; i < str.length; i++) {
+	  for (var i = 0; i < str.length; ++i) {
 	    // Node's code seems to be doing this and not & 0x7F..
 	    byteArray.push(str.charCodeAt(i) & 0xFF)
 	  }
@@ -8797,7 +12519,7 @@
 	function utf16leToBytes (str, units) {
 	  var c, hi, lo
 	  var byteArray = []
-	  for (var i = 0; i < str.length; i++) {
+	  for (var i = 0; i < str.length; ++i) {
 	    if ((units -= 2) < 0) break
 
 	    c = str.charCodeAt(i)
@@ -8815,147 +12537,136 @@
 	}
 
 	function blitBuffer (src, dst, offset, length) {
-	  for (var i = 0; i < length; i++) {
+	  for (var i = 0; i < length; ++i) {
 	    if ((i + offset >= dst.length) || (i >= src.length)) break
 	    dst[i + offset] = src[i]
 	  }
 	  return i
 	}
 
-	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(31).Buffer, (function() { return this; }())))
+	function isnan (val) {
+	  return val !== val // eslint-disable-line no-self-compare
+	}
+
+	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(55).Buffer, (function() { return this; }())))
 
 /***/ },
-/* 32 */
-/***/ function(module, exports, __webpack_require__) {
+/* 56 */
+/***/ function(module, exports) {
 
-	var lookup = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
+	'use strict'
 
-	;(function (exports) {
-		'use strict';
+	exports.toByteArray = toByteArray
+	exports.fromByteArray = fromByteArray
 
-	  var Arr = (typeof Uint8Array !== 'undefined')
-	    ? Uint8Array
-	    : Array
+	var lookup = []
+	var revLookup = []
+	var Arr = typeof Uint8Array !== 'undefined' ? Uint8Array : Array
 
-		var PLUS   = '+'.charCodeAt(0)
-		var SLASH  = '/'.charCodeAt(0)
-		var NUMBER = '0'.charCodeAt(0)
-		var LOWER  = 'a'.charCodeAt(0)
-		var UPPER  = 'A'.charCodeAt(0)
-		var PLUS_URL_SAFE = '-'.charCodeAt(0)
-		var SLASH_URL_SAFE = '_'.charCodeAt(0)
+	function init () {
+	  var code = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/'
+	  for (var i = 0, len = code.length; i < len; ++i) {
+	    lookup[i] = code[i]
+	    revLookup[code.charCodeAt(i)] = i
+	  }
 
-		function decode (elt) {
-			var code = elt.charCodeAt(0)
-			if (code === PLUS ||
-			    code === PLUS_URL_SAFE)
-				return 62 // '+'
-			if (code === SLASH ||
-			    code === SLASH_URL_SAFE)
-				return 63 // '/'
-			if (code < NUMBER)
-				return -1 //no match
-			if (code < NUMBER + 10)
-				return code - NUMBER + 26 + 26
-			if (code < UPPER + 26)
-				return code - UPPER
-			if (code < LOWER + 26)
-				return code - LOWER + 26
-		}
+	  revLookup['-'.charCodeAt(0)] = 62
+	  revLookup['_'.charCodeAt(0)] = 63
+	}
 
-		function b64ToByteArray (b64) {
-			var i, j, l, tmp, placeHolders, arr
+	init()
 
-			if (b64.length % 4 > 0) {
-				throw new Error('Invalid string. Length must be a multiple of 4')
-			}
+	function toByteArray (b64) {
+	  var i, j, l, tmp, placeHolders, arr
+	  var len = b64.length
 
-			// the number of equal signs (place holders)
-			// if there are two placeholders, than the two characters before it
-			// represent one byte
-			// if there is only one, then the three characters before it represent 2 bytes
-			// this is just a cheap hack to not do indexOf twice
-			var len = b64.length
-			placeHolders = '=' === b64.charAt(len - 2) ? 2 : '=' === b64.charAt(len - 1) ? 1 : 0
+	  if (len % 4 > 0) {
+	    throw new Error('Invalid string. Length must be a multiple of 4')
+	  }
 
-			// base64 is 4/3 + up to two characters of the original data
-			arr = new Arr(b64.length * 3 / 4 - placeHolders)
+	  // the number of equal signs (place holders)
+	  // if there are two placeholders, than the two characters before it
+	  // represent one byte
+	  // if there is only one, then the three characters before it represent 2 bytes
+	  // this is just a cheap hack to not do indexOf twice
+	  placeHolders = b64[len - 2] === '=' ? 2 : b64[len - 1] === '=' ? 1 : 0
 
-			// if there are placeholders, only get up to the last complete 4 chars
-			l = placeHolders > 0 ? b64.length - 4 : b64.length
+	  // base64 is 4/3 + up to two characters of the original data
+	  arr = new Arr(len * 3 / 4 - placeHolders)
 
-			var L = 0
+	  // if there are placeholders, only get up to the last complete 4 chars
+	  l = placeHolders > 0 ? len - 4 : len
 
-			function push (v) {
-				arr[L++] = v
-			}
+	  var L = 0
 
-			for (i = 0, j = 0; i < l; i += 4, j += 3) {
-				tmp = (decode(b64.charAt(i)) << 18) | (decode(b64.charAt(i + 1)) << 12) | (decode(b64.charAt(i + 2)) << 6) | decode(b64.charAt(i + 3))
-				push((tmp & 0xFF0000) >> 16)
-				push((tmp & 0xFF00) >> 8)
-				push(tmp & 0xFF)
-			}
+	  for (i = 0, j = 0; i < l; i += 4, j += 3) {
+	    tmp = (revLookup[b64.charCodeAt(i)] << 18) | (revLookup[b64.charCodeAt(i + 1)] << 12) | (revLookup[b64.charCodeAt(i + 2)] << 6) | revLookup[b64.charCodeAt(i + 3)]
+	    arr[L++] = (tmp >> 16) & 0xFF
+	    arr[L++] = (tmp >> 8) & 0xFF
+	    arr[L++] = tmp & 0xFF
+	  }
 
-			if (placeHolders === 2) {
-				tmp = (decode(b64.charAt(i)) << 2) | (decode(b64.charAt(i + 1)) >> 4)
-				push(tmp & 0xFF)
-			} else if (placeHolders === 1) {
-				tmp = (decode(b64.charAt(i)) << 10) | (decode(b64.charAt(i + 1)) << 4) | (decode(b64.charAt(i + 2)) >> 2)
-				push((tmp >> 8) & 0xFF)
-				push(tmp & 0xFF)
-			}
+	  if (placeHolders === 2) {
+	    tmp = (revLookup[b64.charCodeAt(i)] << 2) | (revLookup[b64.charCodeAt(i + 1)] >> 4)
+	    arr[L++] = tmp & 0xFF
+	  } else if (placeHolders === 1) {
+	    tmp = (revLookup[b64.charCodeAt(i)] << 10) | (revLookup[b64.charCodeAt(i + 1)] << 4) | (revLookup[b64.charCodeAt(i + 2)] >> 2)
+	    arr[L++] = (tmp >> 8) & 0xFF
+	    arr[L++] = tmp & 0xFF
+	  }
 
-			return arr
-		}
+	  return arr
+	}
 
-		function uint8ToBase64 (uint8) {
-			var i,
-				extraBytes = uint8.length % 3, // if we have 1 byte left, pad 2 bytes
-				output = "",
-				temp, length
+	function tripletToBase64 (num) {
+	  return lookup[num >> 18 & 0x3F] + lookup[num >> 12 & 0x3F] + lookup[num >> 6 & 0x3F] + lookup[num & 0x3F]
+	}
 
-			function encode (num) {
-				return lookup.charAt(num)
-			}
+	function encodeChunk (uint8, start, end) {
+	  var tmp
+	  var output = []
+	  for (var i = start; i < end; i += 3) {
+	    tmp = (uint8[i] << 16) + (uint8[i + 1] << 8) + (uint8[i + 2])
+	    output.push(tripletToBase64(tmp))
+	  }
+	  return output.join('')
+	}
 
-			function tripletToBase64 (num) {
-				return encode(num >> 18 & 0x3F) + encode(num >> 12 & 0x3F) + encode(num >> 6 & 0x3F) + encode(num & 0x3F)
-			}
+	function fromByteArray (uint8) {
+	  var tmp
+	  var len = uint8.length
+	  var extraBytes = len % 3 // if we have 1 byte left, pad 2 bytes
+	  var output = ''
+	  var parts = []
+	  var maxChunkLength = 16383 // must be multiple of 3
 
-			// go through the array every three bytes, we'll deal with trailing stuff later
-			for (i = 0, length = uint8.length - extraBytes; i < length; i += 3) {
-				temp = (uint8[i] << 16) + (uint8[i + 1] << 8) + (uint8[i + 2])
-				output += tripletToBase64(temp)
-			}
+	  // go through the array every three bytes, we'll deal with trailing stuff later
+	  for (var i = 0, len2 = len - extraBytes; i < len2; i += maxChunkLength) {
+	    parts.push(encodeChunk(uint8, i, (i + maxChunkLength) > len2 ? len2 : (i + maxChunkLength)))
+	  }
 
-			// pad the end with zeros, but make sure to not forget the extra bytes
-			switch (extraBytes) {
-				case 1:
-					temp = uint8[uint8.length - 1]
-					output += encode(temp >> 2)
-					output += encode((temp << 4) & 0x3F)
-					output += '=='
-					break
-				case 2:
-					temp = (uint8[uint8.length - 2] << 8) + (uint8[uint8.length - 1])
-					output += encode(temp >> 10)
-					output += encode((temp >> 4) & 0x3F)
-					output += encode((temp << 2) & 0x3F)
-					output += '='
-					break
-			}
+	  // pad the end with zeros, but make sure to not forget the extra bytes
+	  if (extraBytes === 1) {
+	    tmp = uint8[len - 1]
+	    output += lookup[tmp >> 2]
+	    output += lookup[(tmp << 4) & 0x3F]
+	    output += '=='
+	  } else if (extraBytes === 2) {
+	    tmp = (uint8[len - 2] << 8) + (uint8[len - 1])
+	    output += lookup[tmp >> 10]
+	    output += lookup[(tmp >> 4) & 0x3F]
+	    output += lookup[(tmp << 2) & 0x3F]
+	    output += '='
+	  }
 
-			return output
-		}
+	  parts.push(output)
 
-		exports.toByteArray = b64ToByteArray
-		exports.fromByteArray = uint8ToBase64
-	}( false ? (this.base64js = {}) : exports))
+	  return parts.join('')
+	}
 
 
 /***/ },
-/* 33 */
+/* 57 */
 /***/ function(module, exports) {
 
 	exports.read = function (buffer, offset, isLE, mLen, nBytes) {
@@ -9045,7 +12756,7 @@
 
 
 /***/ },
-/* 34 */
+/* 58 */
 /***/ function(module, exports) {
 
 	var toString = {}.toString;
@@ -9056,7 +12767,7 @@
 
 
 /***/ },
-/* 35 */
+/* 59 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/* WEBPACK VAR INJECTION */(function(Buffer) {// Copyright Joyent, Inc. and other Node contributors.
@@ -9167,16 +12878,16 @@
 	  return Object.prototype.toString.call(o);
 	}
 
-	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(31).Buffer))
+	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(55).Buffer))
 
 /***/ },
-/* 36 */
+/* 60 */
 /***/ function(module, exports) {
 
 	/* (ignored) */
 
 /***/ },
-/* 37 */
+/* 61 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/* WEBPACK VAR INJECTION */(function(process) {// Copyright Joyent, Inc. and other Node contributors.
@@ -9217,12 +12928,12 @@
 
 
 	/*<replacement>*/
-	var util = __webpack_require__(35);
+	var util = __webpack_require__(59);
 	util.inherits = __webpack_require__(5);
 	/*</replacement>*/
 
-	var Readable = __webpack_require__(29);
-	var Writable = __webpack_require__(38);
+	var Readable = __webpack_require__(53);
+	var Writable = __webpack_require__(62);
 
 	util.inherits(Duplex, Readable);
 
@@ -9272,7 +12983,7 @@
 	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(3)))
 
 /***/ },
-/* 38 */
+/* 62 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/* WEBPACK VAR INJECTION */(function(process) {// Copyright Joyent, Inc. and other Node contributors.
@@ -9303,18 +13014,18 @@
 	module.exports = Writable;
 
 	/*<replacement>*/
-	var Buffer = __webpack_require__(31).Buffer;
+	var Buffer = __webpack_require__(55).Buffer;
 	/*</replacement>*/
 
 	Writable.WritableState = WritableState;
 
 
 	/*<replacement>*/
-	var util = __webpack_require__(35);
+	var util = __webpack_require__(59);
 	util.inherits = __webpack_require__(5);
 	/*</replacement>*/
 
-	var Stream = __webpack_require__(27);
+	var Stream = __webpack_require__(51);
 
 	util.inherits(Writable, Stream);
 
@@ -9325,7 +13036,7 @@
 	}
 
 	function WritableState(options, stream) {
-	  var Duplex = __webpack_require__(37);
+	  var Duplex = __webpack_require__(61);
 
 	  options = options || {};
 
@@ -9413,7 +13124,7 @@
 	}
 
 	function Writable(options) {
-	  var Duplex = __webpack_require__(37);
+	  var Duplex = __webpack_require__(61);
 
 	  // Writable ctor is applied to Duplexes, though they're not
 	  // instanceof Writable, they're instanceof Readable.
@@ -9756,7 +13467,7 @@
 	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(3)))
 
 /***/ },
-/* 39 */
+/* 63 */
 /***/ function(module, exports, __webpack_require__) {
 
 	// Copyright Joyent, Inc. and other Node contributors.
@@ -9780,7 +13491,7 @@
 	// OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
 	// USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-	var Buffer = __webpack_require__(31).Buffer;
+	var Buffer = __webpack_require__(55).Buffer;
 
 	var isBufferEncoding = Buffer.isEncoding
 	  || function(encoding) {
@@ -9983,7 +13694,7 @@
 
 
 /***/ },
-/* 40 */
+/* 64 */
 /***/ function(module, exports, __webpack_require__) {
 
 	// Copyright Joyent, Inc. and other Node contributors.
@@ -10052,10 +13763,10 @@
 
 	module.exports = Transform;
 
-	var Duplex = __webpack_require__(37);
+	var Duplex = __webpack_require__(61);
 
 	/*<replacement>*/
-	var util = __webpack_require__(35);
+	var util = __webpack_require__(59);
 	util.inherits = __webpack_require__(5);
 	/*</replacement>*/
 
@@ -10198,7 +13909,7 @@
 
 
 /***/ },
-/* 41 */
+/* 65 */
 /***/ function(module, exports, __webpack_require__) {
 
 	// Copyright Joyent, Inc. and other Node contributors.
@@ -10228,10 +13939,10 @@
 
 	module.exports = PassThrough;
 
-	var Transform = __webpack_require__(40);
+	var Transform = __webpack_require__(64);
 
 	/*<replacement>*/
-	var util = __webpack_require__(35);
+	var util = __webpack_require__(59);
 	util.inherits = __webpack_require__(5);
 	/*</replacement>*/
 
@@ -10250,41 +13961,41 @@
 
 
 /***/ },
-/* 42 */
+/* 66 */
 /***/ function(module, exports, __webpack_require__) {
 
-	module.exports = __webpack_require__(38)
+	module.exports = __webpack_require__(62)
 
 
 /***/ },
-/* 43 */
+/* 67 */
 /***/ function(module, exports, __webpack_require__) {
 
-	module.exports = __webpack_require__(37)
+	module.exports = __webpack_require__(61)
 
 
 /***/ },
-/* 44 */
+/* 68 */
 /***/ function(module, exports, __webpack_require__) {
 
-	module.exports = __webpack_require__(40)
+	module.exports = __webpack_require__(64)
 
 
 /***/ },
-/* 45 */
+/* 69 */
 /***/ function(module, exports, __webpack_require__) {
 
-	module.exports = __webpack_require__(41)
+	module.exports = __webpack_require__(65)
 
 
 /***/ },
-/* 46 */
+/* 70 */
 /***/ function(module, exports) {
 
 	/* (ignored) */
 
 /***/ },
-/* 47 */
+/* 71 */
 /***/ function(module, exports, __webpack_require__) {
 
 	module.exports = ProxyHandler;
@@ -10293,7 +14004,7 @@
 		this._cbs = cbs || {};
 	}
 
-	var EVENTS = __webpack_require__(12).EVENTS;
+	var EVENTS = __webpack_require__(36).EVENTS;
 	Object.keys(EVENTS).forEach(function(name){
 		if(EVENTS[name] === 0){
 			name = "on" + name;
@@ -10316,18 +14027,18 @@
 	});
 
 /***/ },
-/* 48 */
+/* 72 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var DomUtils = module.exports;
 
 	[
-		__webpack_require__(49),
-		__webpack_require__(55),
-		__webpack_require__(56),
-		__webpack_require__(57),
-		__webpack_require__(58),
-		__webpack_require__(59)
+		__webpack_require__(73),
+		__webpack_require__(79),
+		__webpack_require__(80),
+		__webpack_require__(81),
+		__webpack_require__(82),
+		__webpack_require__(83)
 	].forEach(function(ext){
 		Object.keys(ext).forEach(function(key){
 			DomUtils[key] = ext[key].bind(DomUtils);
@@ -10336,11 +14047,11 @@
 
 
 /***/ },
-/* 49 */
+/* 73 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var ElementType = __webpack_require__(21),
-	    getOuterHTML = __webpack_require__(50),
+	var ElementType = __webpack_require__(45),
+	    getOuterHTML = __webpack_require__(74),
 	    isTag = ElementType.isTag;
 
 	module.exports = {
@@ -10364,14 +14075,14 @@
 
 
 /***/ },
-/* 50 */
+/* 74 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/*
 	  Module dependencies
 	*/
-	var ElementType = __webpack_require__(51);
-	var entities = __webpack_require__(52);
+	var ElementType = __webpack_require__(75);
+	var entities = __webpack_require__(76);
 
 	/*
 	  Boolean Attributes
@@ -10548,7 +14259,7 @@
 
 
 /***/ },
-/* 51 */
+/* 75 */
 /***/ function(module, exports) {
 
 	//Types of elements found in the DOM
@@ -10567,11 +14278,11 @@
 	};
 
 /***/ },
-/* 52 */
+/* 76 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var encode = __webpack_require__(53),
-	    decode = __webpack_require__(54);
+	var encode = __webpack_require__(77),
+	    decode = __webpack_require__(78);
 
 	exports.decode = function(data, level){
 		return (!level || level <= 0 ? decode.XML : decode.HTML)(data);
@@ -10606,15 +14317,15 @@
 
 
 /***/ },
-/* 53 */
+/* 77 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var inverseXML = getInverseObj(__webpack_require__(19)),
+	var inverseXML = getInverseObj(__webpack_require__(43)),
 	    xmlReplacer = getInverseReplacer(inverseXML);
 
 	exports.XML = getInverse(inverseXML, xmlReplacer);
 
-	var inverseHTML = getInverseObj(__webpack_require__(17)),
+	var inverseHTML = getInverseObj(__webpack_require__(41)),
 	    htmlReplacer = getInverseReplacer(inverseHTML);
 
 	exports.HTML = getInverse(inverseHTML, htmlReplacer);
@@ -10685,13 +14396,13 @@
 
 
 /***/ },
-/* 54 */
+/* 78 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var entityMap = __webpack_require__(17),
-	    legacyMap = __webpack_require__(18),
-	    xmlMap    = __webpack_require__(19),
-	    decodeCodePoint = __webpack_require__(15);
+	var entityMap = __webpack_require__(41),
+	    legacyMap = __webpack_require__(42),
+	    xmlMap    = __webpack_require__(43),
+	    decodeCodePoint = __webpack_require__(39);
 
 	var decodeXMLStrict  = getStrictDecoder(xmlMap),
 	    decodeHTMLStrict = getStrictDecoder(entityMap);
@@ -10762,7 +14473,7 @@
 	};
 
 /***/ },
-/* 55 */
+/* 79 */
 /***/ function(module, exports) {
 
 	var getChildren = exports.getChildren = function(elem){
@@ -10792,7 +14503,7 @@
 
 
 /***/ },
-/* 56 */
+/* 80 */
 /***/ function(module, exports) {
 
 	exports.removeElement = function(elem){
@@ -10875,10 +14586,10 @@
 
 
 /***/ },
-/* 57 */
+/* 81 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var isTag = __webpack_require__(21).isTag;
+	var isTag = __webpack_require__(45).isTag;
 
 	module.exports = {
 		filter: filter,
@@ -10975,10 +14686,10 @@
 
 
 /***/ },
-/* 58 */
+/* 82 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var ElementType = __webpack_require__(21);
+	var ElementType = __webpack_require__(45);
 	var isTag = exports.isTag = ElementType.isTag;
 
 	exports.testElement = function(options, element){
@@ -11068,7 +14779,7 @@
 
 
 /***/ },
-/* 59 */
+/* 83 */
 /***/ function(module, exports) {
 
 	// removeSubsets
@@ -11215,7 +14926,7 @@
 
 
 /***/ },
-/* 60 */
+/* 84 */
 /***/ function(module, exports, __webpack_require__) {
 
 	module.exports = CollectingHandler;
@@ -11225,7 +14936,7 @@
 		this.events = [];
 	}
 
-	var EVENTS = __webpack_require__(12).EVENTS;
+	var EVENTS = __webpack_require__(36).EVENTS;
 	Object.keys(EVENTS).forEach(function(name){
 		if(EVENTS[name] === 0){
 			name = "on" + name;
@@ -11276,2391 +14987,1824 @@
 
 
 /***/ },
-/* 61 */
+/* 85 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var EventEmitter = __webpack_require__(1);
-	var Sequencer = __webpack_require__(62);
-	var Thread = __webpack_require__(64);
-	var util = __webpack_require__(2);
-
-	// Virtual I/O devices.
-	var Clock = __webpack_require__(66);
-	var Mouse = __webpack_require__(67);
-
-	var defaultBlockPackages = {
-	    'scratch3_control': __webpack_require__(68),
-	    'scratch3_event': __webpack_require__(79),
-	    'scratch3_looks': __webpack_require__(80),
-	    'scratch3_motion': __webpack_require__(81),
-	    'scratch3_operators': __webpack_require__(82),
-	    'scratch3_sensing': __webpack_require__(84)
-	};
+	var Clone = __webpack_require__(86);
+	var Blocks = __webpack_require__(34);
 
 	/**
-	 * Manages targets, scripts, and the sequencer.
-	 * @param {!Array.<Target>} targets List of targets for this runtime.
-	 */
-	function Runtime (targets) {
-	    // Bind event emitter
-	    EventEmitter.call(this);
-
-	    // State for the runtime
-
-	    /**
-	     * Target management and storage.
-	     */
-	    this.targets = targets;
-
-	    /**
-	     * A list of threads that are currently running in the VM.
-	     * Threads are added when execution starts and pruned when execution ends.
-	     * @type {Array.<Thread>}
-	     */
-	    this.threads = [];
-
-	    /** @type {!Sequencer} */
-	    this.sequencer = new Sequencer(this);
-
-	    /**
-	     * Map to look up a block primitive's implementation function by its opcode.
-	     * This is a two-step lookup: package name first, then primitive name.
-	     * @type {Object.<string, Function>}
-	     */
-	    this._primitives = {};
-	    this._registerBlockPackages();
-
-	    this.ioDevices = {
-	        'clock': new Clock(),
-	        'mouse': new Mouse()
-	    };
-	}
-
-	/**
-	 * Event name for glowing a stack
-	 * @const {string}
-	 */
-	Runtime.STACK_GLOW_ON = 'STACK_GLOW_ON';
-
-	/**
-	 * Event name for unglowing a stack
-	 * @const {string}
-	 */
-	Runtime.STACK_GLOW_OFF = 'STACK_GLOW_OFF';
-
-	/**
-	 * Event name for glowing a block
-	 * @const {string}
-	 */
-	Runtime.BLOCK_GLOW_ON = 'BLOCK_GLOW_ON';
-
-	/**
-	 * Event name for unglowing a block
-	 * @const {string}
-	 */
-	Runtime.BLOCK_GLOW_OFF = 'BLOCK_GLOW_OFF';
-
-	/**
-	 * Event name for visual value report.
-	 * @const {string}
-	 */
-	Runtime.VISUAL_REPORT = 'VISUAL_REPORT';
-
-	/**
-	 * Inherit from EventEmitter
-	 */
-	util.inherits(Runtime, EventEmitter);
-
-	/**
-	 * How rapidly we try to step threads, in ms.
-	 */
-	Runtime.THREAD_STEP_INTERVAL = 1000 / 60;
-
-
-	// -----------------------------------------------------------------------------
-	// -----------------------------------------------------------------------------
-
-	/**
-	 * Register default block packages with this runtime.
-	 * @todo Prefix opcodes with package name.
-	 * @private
-	 */
-	Runtime.prototype._registerBlockPackages = function () {
-	    for (var packageName in defaultBlockPackages) {
-	        if (defaultBlockPackages.hasOwnProperty(packageName)) {
-	            // @todo pass a different runtime depending on package privilege?
-	            var packageObject = new (defaultBlockPackages[packageName])(this);
-	            var packageContents = packageObject.getPrimitives();
-	            for (var op in packageContents) {
-	                if (packageContents.hasOwnProperty(op)) {
-	                    this._primitives[op] =
-	                        packageContents[op].bind(packageObject);
-	                }
-	            }
-	        }
-	    }
-	};
-
-	/**
-	 * Retrieve the function associated with the given opcode.
-	 * @param {!string} opcode The opcode to look up.
-	 * @return {Function} The function which implements the opcode.
-	 */
-	Runtime.prototype.getOpcodeFunction = function (opcode) {
-	    return this._primitives[opcode];
-	};
-
-	// -----------------------------------------------------------------------------
-	// -----------------------------------------------------------------------------
-
-	/**
-	 * Create a thread and push it to the list of threads.
-	 * @param {!string} id ID of block that starts the stack
-	 */
-	Runtime.prototype._pushThread = function (id) {
-	    this.emit(Runtime.STACK_GLOW_ON, id);
-	    var thread = new Thread(id);
-	    thread.pushStack(id);
-	    this.threads.push(thread);
-	};
-
-	/**
-	 * Remove a thread from the list of threads.
-	 * @param {?Thread} thread Thread object to remove from actives
-	 */
-	Runtime.prototype._removeThread = function (thread) {
-	    var i = this.threads.indexOf(thread);
-	    if (i > -1) {
-	        this.emit(Runtime.STACK_GLOW_OFF, thread.topBlock);
-	        this.threads.splice(i, 1);
-	    }
-	};
-
-	/**
-	 * Toggle a script.
-	 * @param {!string} topBlockId ID of block that starts the script.
-	 */
-	Runtime.prototype.toggleScript = function (topBlockId) {
-	    // Remove any existing thread.
-	    for (var i = 0; i < this.threads.length; i++) {
-	        if (this.threads[i].topBlock == topBlockId) {
-	            this._removeThread(this.threads[i]);
-	            return;
-	        }
-	    }
-	    // Otherwise add it.
-	    this._pushThread(topBlockId);
-	};
-
-	/**
-	 * Green flag, which stops currently running threads
-	 * and adds all top-level scripts that start with the green flag
-	 */
-	Runtime.prototype.greenFlag = function () {
-	    // Remove all existing threads
-	    for (var i = 0; i < this.threads.length; i++) {
-	        this._removeThread(this.threads[i]);
-	    }
-	    // Add all top scripts with green flag
-	    for (var t = 0; t < this.targets.length; t++) {
-	        var target = this.targets[t];
-	        var scripts = target.blocks.getScripts();
-	        for (var j = 0; j < scripts.length; j++) {
-	            var topBlock = scripts[j];
-	            if (target.blocks.getBlock(topBlock).opcode ===
-	                'event_whenflagclicked') {
-	                this._pushThread(scripts[j]);
-	            }
-	        }
-	    }
-	};
-
-	/**
-	 * Stop "everything"
-	 */
-	Runtime.prototype.stopAll = function () {
-	    var threadsCopy = this.threads.slice();
-	    while (threadsCopy.length > 0) {
-	        var poppedThread = threadsCopy.pop();
-	        // Unglow any blocks on this thread's stack.
-	        for (var i = 0; i < poppedThread.stack.length; i++) {
-	            this.glowBlock(poppedThread.stack[i], false);
-	        }
-	        // Actually remove the thread.
-	        this._removeThread(poppedThread);
-	    }
-	};
-
-	/**
-	 * Repeatedly run `sequencer.stepThreads` and filter out
-	 * inactive threads after each iteration.
-	 */
-	Runtime.prototype._step = function () {
-	    var inactiveThreads = this.sequencer.stepThreads(this.threads);
-	    for (var i = 0; i < inactiveThreads.length; i++) {
-	        this._removeThread(inactiveThreads[i]);
-	    }
-	};
-
-	/**
-	 * Emit feedback for block glowing (used in the sequencer).
-	 * @param {?string} blockId ID for the block to update glow
-	 * @param {boolean} isGlowing True to turn on glow; false to turn off.
-	 */
-	Runtime.prototype.glowBlock = function (blockId, isGlowing) {
-	    if (isGlowing) {
-	        this.emit(Runtime.BLOCK_GLOW_ON, blockId);
-	    } else {
-	        this.emit(Runtime.BLOCK_GLOW_OFF, blockId);
-	    }
-	};
-
-	/**
-	 * Emit value for reporter to show in the blocks.
-	 * @param {string} blockId ID for the block.
-	 * @param {string} value Value to show associated with the block.
-	 */
-	Runtime.prototype.visualReport = function (blockId, value) {
-	    this.emit(Runtime.VISUAL_REPORT, blockId, String(value));
-	};
-
-	/**
-	 * Return the Target for a particular thread.
-	 * @param {!Thread} thread Thread to determine target for.
-	 * @return {?Target} Target object, if one exists.
-	 */
-	Runtime.prototype.targetForThread = function (thread) {
-	    // @todo This is a messy solution,
-	    // but prevents having circular data references.
-	    // Have a map or some other way to associate target with threads.
-	    for (var t = 0; t < this.targets.length; t++) {
-	        var target = this.targets[t];
-	        if (target.blocks.getBlock(thread.topBlock)) {
-	            return target;
-	        }
-	    }
-	};
-
-	/**
-	 * Handle an animation frame from the main thread.
-	 */
-	Runtime.prototype.animationFrame = function () {
-	    if (self.renderer) {
-	        self.renderer.draw();
-	    }
-	};
-
-	/**
-	 * Set up timers to repeatedly step in a browser
-	 */
-	Runtime.prototype.start = function () {
-	    self.setInterval(function() {
-	        this._step();
-	    }.bind(this), Runtime.THREAD_STEP_INTERVAL);
-	};
-
-	module.exports = Runtime;
-
-
-/***/ },
-/* 62 */
-/***/ function(module, exports, __webpack_require__) {
-
-	var Timer = __webpack_require__(63);
-	var Thread = __webpack_require__(64);
-	var execute = __webpack_require__(65);
-
-	function Sequencer (runtime) {
-	    /**
-	     * A utility timer for timing thread sequencing.
-	     * @type {!Timer}
-	     */
-	    this.timer = new Timer();
-
-	    /**
-	     * Reference to the runtime owning this sequencer.
-	     * @type {!Runtime}
-	     */
-	    this.runtime = runtime;
-	}
-
-	/**
-	 * The sequencer does as much work as it can within WORK_TIME milliseconds,
-	 * then yields. This is essentially a rate-limiter for blocks.
-	 * In Scratch 2.0, this is set to 75% of the target stage frame-rate (30fps).
-	 * @const {!number}
-	 */
-	Sequencer.WORK_TIME = 10;
-
-	/**
-	 * Step through all threads in `this.threads`, running them in order.
-	 * @param {Array.<Thread>} threads List of which threads to step.
-	 * @return {Array.<Thread>} All threads which have finished in this iteration.
-	 */
-	Sequencer.prototype.stepThreads = function (threads) {
-	    // Start counting toward WORK_TIME
-	    this.timer.start();
-	    // List of threads which have been killed by this step.
-	    var inactiveThreads = [];
-	    // If all of the threads are yielding, we should yield.
-	    var numYieldingThreads = 0;
-	    // Clear all yield statuses that were for the previous frame.
-	    for (var t = 0; t < threads.length; t++) {
-	        if (threads[t].status === Thread.STATUS_YIELD_FRAME) {
-	            threads[t].setStatus(Thread.STATUS_RUNNING);
-	        }
-	    }
-
-	    // While there are still threads to run and we are within WORK_TIME,
-	    // continue executing threads.
-	    while (threads.length > 0 &&
-	           threads.length > numYieldingThreads &&
-	           this.timer.timeElapsed() < Sequencer.WORK_TIME) {
-	        // New threads at the end of the iteration.
-	        var newThreads = [];
-	        // Reset yielding thread count.
-	        numYieldingThreads = 0;
-	        // Attempt to run each thread one time
-	        for (var i = 0; i < threads.length; i++) {
-	            var activeThread = threads[i];
-	            if (activeThread.status === Thread.STATUS_RUNNING) {
-	                // Normal-mode thread: step.
-	                this.startThread(activeThread);
-	            } else if (activeThread.status === Thread.STATUS_YIELD ||
-	                       activeThread.status === Thread.STATUS_YIELD_FRAME) {
-	                // Yielding thread: do nothing for this step.
-	                numYieldingThreads++;
-	            }
-	            if (activeThread.stack.length === 0 &&
-	                activeThread.status === Thread.STATUS_DONE) {
-	                // Finished with this thread - tell runtime to clean it up.
-	                inactiveThreads.push(activeThread);
-	            } else {
-	                // Keep this thead in the loop.
-	                newThreads.push(activeThread);
-	            }
-	        }
-	        // Effectively filters out threads that have stopped.
-	        threads = newThreads;
-	    }
-	    return inactiveThreads;
-	};
-
-	/**
-	 * Step the requested thread
-	 * @param {!Thread} thread Thread object to step
-	 */
-	Sequencer.prototype.startThread = function (thread) {
-	    var currentBlockId = thread.peekStack();
-	    if (!currentBlockId) {
-	        // A "null block" - empty branch.
-	        // Yield for the frame.
-	        thread.popStack();
-	        thread.setStatus(Thread.STATUS_YIELD_FRAME);
-	        return;
-	    }
-	    // Execute the current block
-	    execute(this, thread);
-	    // If the block executed without yielding and without doing control flow,
-	    // move to done.
-	    if (thread.status === Thread.STATUS_RUNNING &&
-	        thread.peekStack() === currentBlockId) {
-	        this.proceedThread(thread);
-	    }
-	};
-
-	/**
-	 * Step a thread into a block's branch.
-	 * @param {!Thread} thread Thread object to step to branch.
-	 * @param {Number} branchNum Which branch to step to (i.e., 1, 2).
-	 */
-	Sequencer.prototype.stepToBranch = function (thread, branchNum) {
-	    if (!branchNum) {
-	        branchNum = 1;
-	    }
-	    var currentBlockId = thread.peekStack();
-	    var branchId = this.runtime.targetForThread(thread).blocks.getBranch(
-	        currentBlockId,
-	        branchNum
-	    );
-	    if (branchId) {
-	        // Push branch ID to the thread's stack.
-	        thread.pushStack(branchId);
-	    } else {
-	        // Push null, so we come back to the current block.
-	        thread.pushStack(null);
-	    }
-	};
-
-	/**
-	 * Step a thread into an input reporter, and manage its status appropriately.
-	 * @param {!Thread} thread Thread object to step to reporter.
-	 * @param {!string} blockId ID of reporter block.
-	 * @param {!string} inputName Name of input on parent block.
-	 * @return {boolean} True if yielded, false if it finished immediately.
-	 */
-	Sequencer.prototype.stepToReporter = function (thread, blockId, inputName) {
-	    var currentStackFrame = thread.peekStackFrame();
-	    // Push to the stack to evaluate the reporter block.
-	    thread.pushStack(blockId);
-	    // Save name of input for `Thread.pushReportedValue`.
-	    currentStackFrame.waitingReporter = inputName;
-	    // Actually execute the block.
-	    this.startThread(thread);
-	    // If a reporter yielded, caller must wait for it to unyield.
-	    // The value will be populated once the reporter unyields,
-	    // and passed up to the currentStackFrame on next execution.
-	    return thread.status === Thread.STATUS_YIELD;
-	};
-
-	/**
-	 * Finish stepping a thread and proceed it to the next block.
-	 * @param {!Thread} thread Thread object to proceed.
-	 */
-	Sequencer.prototype.proceedThread = function (thread) {
-	    var currentBlockId = thread.peekStack();
-	    // Mark the status as done and proceed to the next block.
-	    // Pop from the stack - finished this level of execution.
-	    thread.popStack();
-	    // Push next connected block, if there is one.
-	    var nextBlockId = (this.runtime.targetForThread(thread).
-	        blocks.getNextBlock(currentBlockId));
-	    if (nextBlockId) {
-	        thread.pushStack(nextBlockId);
-	    }
-	    // If we can't find a next block to run, mark the thread as done.
-	    if (!thread.peekStack()) {
-	        thread.setStatus(Thread.STATUS_DONE);
-	    }
-	};
-
-	module.exports = Sequencer;
-
-
-/***/ },
-/* 63 */
-/***/ function(module, exports) {
-
-	/**
-	 * Constructor
-	 */
-	function Timer () {
-	    this.startTime = 0;
-	}
-
-	Timer.prototype.time = function () {
-	    return Date.now();
-	};
-
-	Timer.prototype.start = function () {
-	    this.startTime = this.time();
-	};
-
-	Timer.prototype.timeElapsed = function () {
-	    return this.time() - this.startTime;
-	};
-
-	module.exports = Timer;
-
-
-/***/ },
-/* 64 */
-/***/ function(module, exports) {
-
-	/**
-	 * A thread is a running stack context and all the metadata needed.
-	 * @param {?string} firstBlock First block to execute in the thread.
+	 * Sprite to be used on the Scratch stage.
+	 * All clones of a sprite have shared blocks, shared costumes, shared variables.
+	 * @param {?Blocks} blocks Shared blocks object for all clones of sprite.
 	 * @constructor
 	 */
-	function Thread (firstBlock) {
+	function Sprite (blocks) {
+	    if (!blocks) {
+	        // Shared set of blocks for all clones.
+	        blocks = new Blocks();
+	    }
+	    this.blocks = blocks;
 	    /**
-	     * ID of top block of the thread
-	     * @type {!string}
+	     * Human-readable name for this sprite (and all clones).
+	     * @type {string}
 	     */
-	    this.topBlock = firstBlock;
-
+	    this.name = '';
 	    /**
-	     * Stack for the thread. When the sequencer enters a control structure,
-	     * the block is pushed onto the stack so we know where to exit.
-	     * @type {Array.<string>}
+	     * List of costumes for this sprite.
+	     * Each entry is an object, e.g.,
+	     * {
+	     *      skin: "costume.svg",
+	     *      name: "Costume Name",
+	     *      bitmapResolution: 2,
+	     *      rotationCenterX: 0,
+	     *      rotationCenterY: 0
+	     * }
+	     * @type {Array.<!Object>}
 	     */
-	    this.stack = [];
-
+	    this.costumes = [];
 	    /**
-	     * Stack frames for the thread. Store metadata for the executing blocks.
-	     * @type {Array.<Object>}
+	     * List of clones for this sprite, including the original.
+	     * @type {Array.<!Clone>}
 	     */
-	    this.stackFrames = [];
-
-	    /**
-	     * Status of the thread, one of three states (below)
-	     * @type {number}
-	     */
-	    this.status = 0; /* Thread.STATUS_RUNNING */
+	    this.clones = [];
 	}
 
 	/**
-	 * Thread status for initialized or running thread.
-	 * This is the default state for a thread - execution should run normally,
-	 * stepping from block to block.
-	 * @const
+	 * Create a clone of this sprite.
+	 * @returns {!Clone} Newly created clone.
 	 */
-	Thread.STATUS_RUNNING = 0;
+	Sprite.prototype.createClone = function () {
+	    var newClone = new Clone(this);
+	    this.clones.push(newClone);
+	    return newClone;
+	};
+
+	module.exports = Sprite;
+
+
+/***/ },
+/* 86 */
+/***/ function(module, exports, __webpack_require__) {
+
+	var util = __webpack_require__(2);
+	var MathUtil = __webpack_require__(16);
+	var Target = __webpack_require__(87);
 
 	/**
-	 * Thread status for a yielded thread.
-	 * Threads are in this state when a primitive has yielded; execution is paused
-	 * until the relevant primitive unyields.
-	 * @const
+	 * Clone (instance) of a sprite.
+	 * @param {!Sprite} sprite Reference to the sprite.
+	 * @constructor
 	 */
-	Thread.STATUS_YIELD = 1;
+	function Clone(sprite) {
+	    Target.call(this, sprite.blocks);
+	    /**
+	     * Reference to the sprite that this is a clone of.
+	     * @type {!Sprite}
+	     */
+	    this.sprite = sprite;
+	    /**
+	     * Reference to the global renderer for this VM, if one exists.
+	     * @type {?RenderWebGLWorker}
+	     */
+	    this.renderer = null;
+	    // If this is not true, there is no renderer (e.g., running in a test env).
+	    if (typeof self !== 'undefined' && self.renderer) {
+	        // Pull from `self.renderer`.
+	        this.renderer = self.renderer;
+	    }
+	    /**
+	     * ID of the drawable for this clone returned by the renderer, if rendered.
+	     * @type {?Number}
+	     */
+	    this.drawableID = null;
+
+	    this.initDrawable();
+	}
+	util.inherits(Clone, Target);
 
 	/**
-	 * Thread status for a single-frame yield.
-	 * @const
+	 * Create a clone's drawable with the this.renderer.
 	 */
-	Thread.STATUS_YIELD_FRAME = 2;
-
-	/**
-	 * Thread status for a finished/done thread.
-	 * Thread is in this state when there are no more blocks to execute.
-	 * @const
-	 */
-	Thread.STATUS_DONE = 3;
-
-	/**
-	 * Push stack and update stack frames appropriately.
-	 * @param {string} blockId Block ID to push to stack.
-	 */
-	Thread.prototype.pushStack = function (blockId) {
-	    this.stack.push(blockId);
-	    // Push an empty stack frame, if we need one.
-	    // Might not, if we just popped the stack.
-	    if (this.stack.length > this.stackFrames.length) {
-	        this.stackFrames.push({
-	            reported: {}, // Collects reported input values.
-	            waitingReporter: null, // Name of waiting reporter.
-	            executionContext: {} // A context passed to block implementations.
+	Clone.prototype.initDrawable = function () {
+	    if (this.renderer) {
+	        var createPromise = this.renderer.createDrawable();
+	        var instance = this;
+	        createPromise.then(function (id) {
+	            instance.drawableID = id;
+	            // Once the drawable is created, send our current set of properties.
+	            instance.updateAllDrawableProperties();
 	        });
 	    }
 	};
 
+	// Clone-level properties.
 	/**
-	 * Pop last block on the stack and its stack frame.
-	 * @return {string} Block ID popped from the stack.
+	 * Whether this clone represents the Scratch stage.
+	 * @type {boolean}
 	 */
-	Thread.prototype.popStack = function () {
-	    this.stackFrames.pop();
-	    return this.stack.pop();
+	Clone.prototype.isStage = false;
+
+	/**
+	 * Scratch X coordinate. Currently should range from -240 to 240.
+	 * @type {Number}
+	 */
+	Clone.prototype.x = 0;
+
+	/**
+	 * Scratch Y coordinate. Currently should range from -180 to 180.
+	 * @type {number}
+	 */
+	Clone.prototype.y = 0;
+
+	/**
+	 * Scratch direction. Currently should range from -179 to 180.
+	 * @type {number}
+	 */
+	Clone.prototype.direction = 90;
+
+	/**
+	 * Whether the clone is currently visible.
+	 * @type {boolean}
+	 */
+	Clone.prototype.visible = true;
+
+	/**
+	 * Size of clone as a percent of costume size. Ranges from 5% to 535%.
+	 * @type {number}
+	 */
+	Clone.prototype.size = 100;
+
+	/**
+	 * Currently selected costume index.
+	 * @type {number}
+	 */
+	Clone.prototype.currentCostume = 0;
+
+	/**
+	 * Map of current graphic effect values.
+	 * @type {!Object.<string, number>}
+	 */
+	Clone.prototype.effects = {
+	    'color': 0,
+	    'fisheye': 0,
+	    'whirl': 0,
+	    'pixelate': 0,
+	    'mosaic': 0,
+	    'brightness': 0,
+	    'ghost': 0
 	};
+	// End clone-level properties.
 
 	/**
-	 * Get top stack item.
-	 * @return {?string} Block ID on top of stack.
+	 * Set the X and Y coordinates of a clone.
+	 * @param {!number} x New X coordinate of clone, in Scratch coordinates.
+	 * @param {!number} y New Y coordinate of clone, in Scratch coordinates.
 	 */
-	Thread.prototype.peekStack = function () {
-	    return this.stack[this.stack.length - 1];
-	};
-
-
-	/**
-	 * Get top stack frame.
-	 * @return {?Object} Last stack frame stored on this thread.
-	 */
-	Thread.prototype.peekStackFrame = function () {
-	    return this.stackFrames[this.stackFrames.length - 1];
-	};
-
-	/**
-	 * Get stack frame above the current top.
-	 * @return {?Object} Second to last stack frame stored on this thread.
-	 */
-	Thread.prototype.peekParentStackFrame = function () {
-	    return this.stackFrames[this.stackFrames.length - 2];
-	};
-
-	/**
-	 * Push a reported value to the parent of the current stack frame.
-	 * @param {!Any} value Reported value to push.
-	 */
-	Thread.prototype.pushReportedValue = function (value) {
-	    var parentStackFrame = this.peekParentStackFrame();
-	    if (parentStackFrame) {
-	        var waitingReporter = parentStackFrame.waitingReporter;
-	        parentStackFrame.reported[waitingReporter] = value;
-	        parentStackFrame.waitingReporter = null;
-	    }
-	};
-
-	/**
-	 * Set thread status.
-	 * @param {number} status Enum representing thread status.
-	 */
-	Thread.prototype.setStatus = function (status) {
-	    this.status = status;
-	};
-
-	module.exports = Thread;
-
-
-/***/ },
-/* 65 */
-/***/ function(module, exports, __webpack_require__) {
-
-	var Thread = __webpack_require__(64);
-
-	/**
-	 * Execute a block.
-	 * @param {!Sequencer} sequencer Which sequencer is executing.
-	 * @param {!Thread} thread Thread which to read and execute.
-	 */
-	var execute = function (sequencer, thread) {
-	    var runtime = sequencer.runtime;
-	    var target = runtime.targetForThread(thread);
-
-	    // Current block to execute is the one on the top of the stack.
-	    var currentBlockId = thread.peekStack();
-	    var currentStackFrame = thread.peekStackFrame();
-
-	    var opcode = target.blocks.getOpcode(currentBlockId);
-
-	    if (!opcode) {
-	        console.warn('Could not get opcode for block: ' + currentBlockId);
+	Clone.prototype.setXY = function (x, y) {
+	    if (this.isStage) {
 	        return;
 	    }
+	    this.x = x;
+	    this.y = y;
+	    if (this.renderer) {
+	        this.renderer.updateDrawableProperties(this.drawableID, {
+	            position: [this.x, this.y]
+	        });
+	    }
+	};
 
-	    var blockFunction = runtime.getOpcodeFunction(opcode);
-	    if (!blockFunction) {
-	        console.warn('Could not get implementation for opcode: ' + opcode);
+	/**
+	 * Set the direction of a clone.
+	 * @param {!number} direction New direction of clone.
+	 */
+	Clone.prototype.setDirection = function (direction) {
+	    if (this.isStage) {
 	        return;
 	    }
-
-	    // Generate values for arguments (inputs).
-	    var argValues = {};
-
-	    // Add all fields on this block to the argValues.
-	    var fields = target.blocks.getFields(currentBlockId);
-	    for (var fieldName in fields) {
-	        argValues[fieldName] = fields[fieldName].value;
-	    }
-
-	    // Recursively evaluate input blocks.
-	    var inputs = target.blocks.getInputs(currentBlockId);
-	    for (var inputName in inputs) {
-	        var input = inputs[inputName];
-	        var inputBlockId = input.block;
-	        // Is there no value for this input waiting in the stack frame?
-	        if (typeof currentStackFrame.reported[inputName] === 'undefined') {
-	            // If there's not, we need to evaluate the block.
-	            var reporterYielded = (
-	                sequencer.stepToReporter(thread, inputBlockId, inputName)
-	            );
-	            // If the reporter yielded, return immediately;
-	            // it needs time to finish and report its value.
-	            if (reporterYielded) {
-	                return;
-	            }
-	        }
-	        argValues[inputName] = currentStackFrame.reported[inputName];
-	    }
-
-	    // If we've gotten this far, all of the input blocks are evaluated,
-	    // and `argValues` is fully populated. So, execute the block primitive.
-	    // First, clear `currentStackFrame.reported`, so any subsequent execution
-	    // (e.g., on return from a branch) gets fresh inputs.
-	    currentStackFrame.reported = {};
-
-	    var primitiveReportedValue = null;
-	    primitiveReportedValue = blockFunction(argValues, {
-	        yield: function() {
-	            thread.setStatus(Thread.STATUS_YIELD);
-	        },
-	        yieldFrame: function() {
-	            thread.setStatus(Thread.STATUS_YIELD_FRAME);
-	        },
-	        done: function() {
-	            thread.setStatus(Thread.STATUS_RUNNING);
-	            sequencer.proceedThread(thread);
-	        },
-	        stackFrame: currentStackFrame.executionContext,
-	        startBranch: function (branchNum) {
-	            sequencer.stepToBranch(thread, branchNum);
-	        },
-	        target: target,
-	        ioQuery: function (device, func, args) {
-	            // Find the I/O device and execute the query/function call.
-	            if (runtime.ioDevices[device] && runtime.ioDevices[device][func]) {
-	                var devObject = runtime.ioDevices[device];
-	                return devObject[func].call(devObject, args);
-	            }
-	        }
-	    });
-
-	    // Deal with any reported value.
-	    // If it's a promise, wait until promise resolves.
-	    var isPromise = (
-	        primitiveReportedValue &&
-	        primitiveReportedValue.then &&
-	        typeof primitiveReportedValue.then === 'function'
-	    );
-	    if (isPromise) {
-	        if (thread.status === Thread.STATUS_RUNNING) {
-	            // Primitive returned a promise; automatically yield thread.
-	            thread.setStatus(Thread.STATUS_YIELD);
-	        }
-	        // Promise handlers
-	        primitiveReportedValue.then(function(resolvedValue) {
-	            // Promise resolved: the primitive reported a value.
-	            thread.pushReportedValue(resolvedValue);
-	            // Report the value visually if necessary.
-	            if (typeof resolvedValue !== 'undefined' &&
-	                thread.peekStack() === thread.topBlock) {
-	                runtime.visualReport(thread.peekStack(), resolvedValue);
-	            }
-	            thread.setStatus(Thread.STATUS_RUNNING);
-	            sequencer.proceedThread(thread);
-	        }, function(rejectionReason) {
-	            // Promise rejected: the primitive had some error.
-	            // Log it and proceed.
-	            console.warn('Primitive rejected promise: ', rejectionReason);
-	            thread.setStatus(Thread.STATUS_RUNNING);
-	            sequencer.proceedThread(thread);
+	    // Keep direction between -179 and +180.
+	    this.direction = MathUtil.wrapClamp(direction, -179, 180);
+	    if (this.renderer) {
+	        this.renderer.updateDrawableProperties(this.drawableID, {
+	            direction: this.direction
 	        });
-	    } else if (thread.status === Thread.STATUS_RUNNING) {
-	        thread.pushReportedValue(primitiveReportedValue);
-	        // Report the value visually if necessary.
-	        if (typeof primitiveReportedValue !== 'undefined' &&
-	            thread.peekStack() === thread.topBlock) {
-	            runtime.visualReport(thread.peekStack(), primitiveReportedValue);
-	        }
 	    }
 	};
-
-	module.exports = execute;
-
-
-/***/ },
-/* 66 */
-/***/ function(module, exports, __webpack_require__) {
-
-	var Timer = __webpack_require__(63);
-
-	function Clock () {
-	    this._projectTimer = new Timer();
-	    this._projectTimer.start();
-	}
-
-	Clock.prototype.projectTimer = function () {
-	    return this._projectTimer.timeElapsed() / 1000;
-	};
-
-	Clock.prototype.resetProjectTimer = function () {
-	    this._projectTimer.start();
-	};
-
-	module.exports = Clock;
-
-
-/***/ },
-/* 67 */
-/***/ function(module, exports, __webpack_require__) {
-
-	var MathUtil = __webpack_require__(8);
-
-	function Mouse () {
-	    this._x = 0;
-	    this._y = 0;
-	    this._isDown = false;
-	}
-
-	Mouse.prototype.postData = function(data) {
-	    if (data.x) {
-	        this._x = data.x;
-	    }
-	    if (data.y) {
-	        this._y = data.y;
-	    }
-	    if (typeof data.isDown !== 'undefined') {
-	        this._isDown = data.isDown;
-	    }
-	};
-
-	Mouse.prototype.getX = function () {
-	    return MathUtil.clamp(this._x, -240, 240);
-	};
-
-	Mouse.prototype.getY = function () {
-	    return MathUtil.clamp(-this._y, -180, 180);
-	};
-
-	Mouse.prototype.getIsDown = function () {
-	    return this._isDown;
-	};
-
-	module.exports = Mouse;
-
-
-/***/ },
-/* 68 */
-/***/ function(module, exports, __webpack_require__) {
-
-	var Promise = __webpack_require__(69);
-
-	function Scratch3ControlBlocks(runtime) {
-	    /**
-	     * The runtime instantiating this block package.
-	     * @type {Runtime}
-	     */
-	    this.runtime = runtime;
-	}
 
 	/**
-	 * Retrieve the block primitives implemented by this package.
-	 * @return {Object.<string, Function>} Mapping of opcode to Function.
+	 * Set a say bubble on this clone.
+	 * @param {?string} type Type of say bubble: "say", "think", or null.
+	 * @param {?string} message Message to put in say bubble.
 	 */
-	Scratch3ControlBlocks.prototype.getPrimitives = function() {
-	    return {
-	        'control_repeat': this.repeat,
-	        'control_repeat_until': this.repeatUntil,
-	        'control_forever': this.forever,
-	        'control_wait': this.wait,
-	        'control_if': this.if,
-	        'control_if_else': this.ifElse,
-	        'control_stop': this.stop
-	    };
+	Clone.prototype.setSay = function (type, message) {
+	    if (this.isStage) {
+	        return;
+	    }
+	    // @todo: Render to stage.
+	    if (!type || !message) {
+	        console.log('Clearing say bubble');
+	        return;
+	    }
+	    console.log('Setting say bubble:', type, message);
 	};
-
-	Scratch3ControlBlocks.prototype.repeat = function(args, util) {
-	    // Initialize loop
-	    if (util.stackFrame.loopCounter === undefined) {
-	        util.stackFrame.loopCounter = parseInt(args.TIMES);
-	    }
-	    // Only execute once per frame.
-	    // When the branch finishes, `repeat` will be executed again and
-	    // the second branch will be taken, yielding for the rest of the frame.
-	    if (!util.stackFrame.executedInFrame) {
-	        util.stackFrame.executedInFrame = true;
-	        // Decrease counter
-	        util.stackFrame.loopCounter--;
-	        // If we still have some left, start the branch.
-	        if (util.stackFrame.loopCounter >= 0) {
-	            util.startBranch();
-	        }
-	    } else {
-	        util.stackFrame.executedInFrame = false;
-	        util.yieldFrame();
-	    }
-	};
-
-	Scratch3ControlBlocks.prototype.repeatUntil = function(args, util) {
-	    // Only execute once per frame.
-	    // When the branch finishes, `repeat` will be executed again and
-	    // the second branch will be taken, yielding for the rest of the frame.
-	    if (!util.stackFrame.executedInFrame) {
-	        util.stackFrame.executedInFrame = true;
-	        // If the condition is true, start the branch.
-	        if (!args.CONDITION) {
-	            util.startBranch();
-	        }
-	    } else {
-	        util.stackFrame.executedInFrame = false;
-	        util.yieldFrame();
-	    }
-	};
-
-	Scratch3ControlBlocks.prototype.forever = function(args, util) {
-	    // Only execute once per frame.
-	    // When the branch finishes, `forever` will be executed again and
-	    // the second branch will be taken, yielding for the rest of the frame.
-	    if (!util.stackFrame.executedInFrame) {
-	        util.stackFrame.executedInFrame = true;
-	        util.startBranch();
-	    } else {
-	        util.stackFrame.executedInFrame = false;
-	        util.yieldFrame();
-	    }
-	};
-
-	Scratch3ControlBlocks.prototype.wait = function(args) {
-	    return new Promise(function(resolve) {
-	        setTimeout(function() {
-	            resolve();
-	        }, 1000 * args.DURATION);
-	    });
-	};
-
-	Scratch3ControlBlocks.prototype.if = function(args, util) {
-	    // Only execute one time. `if` will be returned to
-	    // when the branch finishes, but it shouldn't execute again.
-	    if (util.stackFrame.executedInFrame === undefined) {
-	        util.stackFrame.executedInFrame = true;
-	        if (args.CONDITION) {
-	            util.startBranch();
-	        }
-	    }
-	};
-
-	Scratch3ControlBlocks.prototype.ifElse = function(args, util) {
-	    // Only execute one time. `ifElse` will be returned to
-	    // when the branch finishes, but it shouldn't execute again.
-	    if (util.stackFrame.executedInFrame === undefined) {
-	        util.stackFrame.executedInFrame = true;
-	        if (args.CONDITION) {
-	            util.startBranch(1);
-	        } else {
-	            util.startBranch(2);
-	        }
-	    }
-	};
-
-	Scratch3ControlBlocks.prototype.stop = function() {
-	    // @todo - don't use this.runtime
-	    this.runtime.stopAll();
-	};
-
-	module.exports = Scratch3ControlBlocks;
-
-
-/***/ },
-/* 69 */
-/***/ function(module, exports, __webpack_require__) {
-
-	'use strict';
-
-	module.exports = __webpack_require__(70)
-
-
-/***/ },
-/* 70 */
-/***/ function(module, exports, __webpack_require__) {
-
-	'use strict';
-
-	module.exports = __webpack_require__(71);
-	__webpack_require__(73);
-	__webpack_require__(74);
-	__webpack_require__(75);
-	__webpack_require__(76);
-	__webpack_require__(78);
-
-
-/***/ },
-/* 71 */
-/***/ function(module, exports, __webpack_require__) {
-
-	'use strict';
-
-	var asap = __webpack_require__(72);
-
-	function noop() {}
-
-	// States:
-	//
-	// 0 - pending
-	// 1 - fulfilled with _value
-	// 2 - rejected with _value
-	// 3 - adopted the state of another promise, _value
-	//
-	// once the state is no longer pending (0) it is immutable
-
-	// All `_` prefixed properties will be reduced to `_{random number}`
-	// at build time to obfuscate them and discourage their use.
-	// We don't use symbols or Object.defineProperty to fully hide them
-	// because the performance isn't good enough.
-
-
-	// to avoid using try/catch inside critical functions, we
-	// extract them to here.
-	var LAST_ERROR = null;
-	var IS_ERROR = {};
-	function getThen(obj) {
-	  try {
-	    return obj.then;
-	  } catch (ex) {
-	    LAST_ERROR = ex;
-	    return IS_ERROR;
-	  }
-	}
-
-	function tryCallOne(fn, a) {
-	  try {
-	    return fn(a);
-	  } catch (ex) {
-	    LAST_ERROR = ex;
-	    return IS_ERROR;
-	  }
-	}
-	function tryCallTwo(fn, a, b) {
-	  try {
-	    fn(a, b);
-	  } catch (ex) {
-	    LAST_ERROR = ex;
-	    return IS_ERROR;
-	  }
-	}
-
-	module.exports = Promise;
-
-	function Promise(fn) {
-	  if (typeof this !== 'object') {
-	    throw new TypeError('Promises must be constructed via new');
-	  }
-	  if (typeof fn !== 'function') {
-	    throw new TypeError('not a function');
-	  }
-	  this._45 = 0;
-	  this._81 = 0;
-	  this._65 = null;
-	  this._54 = null;
-	  if (fn === noop) return;
-	  doResolve(fn, this);
-	}
-	Promise._10 = null;
-	Promise._97 = null;
-	Promise._61 = noop;
-
-	Promise.prototype.then = function(onFulfilled, onRejected) {
-	  if (this.constructor !== Promise) {
-	    return safeThen(this, onFulfilled, onRejected);
-	  }
-	  var res = new Promise(noop);
-	  handle(this, new Handler(onFulfilled, onRejected, res));
-	  return res;
-	};
-
-	function safeThen(self, onFulfilled, onRejected) {
-	  return new self.constructor(function (resolve, reject) {
-	    var res = new Promise(noop);
-	    res.then(resolve, reject);
-	    handle(self, new Handler(onFulfilled, onRejected, res));
-	  });
-	};
-	function handle(self, deferred) {
-	  while (self._81 === 3) {
-	    self = self._65;
-	  }
-	  if (Promise._10) {
-	    Promise._10(self);
-	  }
-	  if (self._81 === 0) {
-	    if (self._45 === 0) {
-	      self._45 = 1;
-	      self._54 = deferred;
-	      return;
-	    }
-	    if (self._45 === 1) {
-	      self._45 = 2;
-	      self._54 = [self._54, deferred];
-	      return;
-	    }
-	    self._54.push(deferred);
-	    return;
-	  }
-	  handleResolved(self, deferred);
-	}
-
-	function handleResolved(self, deferred) {
-	  asap(function() {
-	    var cb = self._81 === 1 ? deferred.onFulfilled : deferred.onRejected;
-	    if (cb === null) {
-	      if (self._81 === 1) {
-	        resolve(deferred.promise, self._65);
-	      } else {
-	        reject(deferred.promise, self._65);
-	      }
-	      return;
-	    }
-	    var ret = tryCallOne(cb, self._65);
-	    if (ret === IS_ERROR) {
-	      reject(deferred.promise, LAST_ERROR);
-	    } else {
-	      resolve(deferred.promise, ret);
-	    }
-	  });
-	}
-	function resolve(self, newValue) {
-	  // Promise Resolution Procedure: https://github.com/promises-aplus/promises-spec#the-promise-resolution-procedure
-	  if (newValue === self) {
-	    return reject(
-	      self,
-	      new TypeError('A promise cannot be resolved with itself.')
-	    );
-	  }
-	  if (
-	    newValue &&
-	    (typeof newValue === 'object' || typeof newValue === 'function')
-	  ) {
-	    var then = getThen(newValue);
-	    if (then === IS_ERROR) {
-	      return reject(self, LAST_ERROR);
-	    }
-	    if (
-	      then === self.then &&
-	      newValue instanceof Promise
-	    ) {
-	      self._81 = 3;
-	      self._65 = newValue;
-	      finale(self);
-	      return;
-	    } else if (typeof then === 'function') {
-	      doResolve(then.bind(newValue), self);
-	      return;
-	    }
-	  }
-	  self._81 = 1;
-	  self._65 = newValue;
-	  finale(self);
-	}
-
-	function reject(self, newValue) {
-	  self._81 = 2;
-	  self._65 = newValue;
-	  if (Promise._97) {
-	    Promise._97(self, newValue);
-	  }
-	  finale(self);
-	}
-	function finale(self) {
-	  if (self._45 === 1) {
-	    handle(self, self._54);
-	    self._54 = null;
-	  }
-	  if (self._45 === 2) {
-	    for (var i = 0; i < self._54.length; i++) {
-	      handle(self, self._54[i]);
-	    }
-	    self._54 = null;
-	  }
-	}
-
-	function Handler(onFulfilled, onRejected, promise){
-	  this.onFulfilled = typeof onFulfilled === 'function' ? onFulfilled : null;
-	  this.onRejected = typeof onRejected === 'function' ? onRejected : null;
-	  this.promise = promise;
-	}
 
 	/**
-	 * Take a potentially misbehaving resolver function and make sure
-	 * onFulfilled and onRejected are only called once.
-	 *
-	 * Makes no guarantees about asynchrony.
+	 * Set visibility of the clone; i.e., whether it's shown or hidden.
+	 * @param {!boolean} visible True if the sprite should be shown.
 	 */
-	function doResolve(fn, promise) {
-	  var done = false;
-	  var res = tryCallTwo(fn, function (value) {
-	    if (done) return;
-	    done = true;
-	    resolve(promise, value);
-	  }, function (reason) {
-	    if (done) return;
-	    done = true;
-	    reject(promise, reason);
-	  })
-	  if (!done && res === IS_ERROR) {
-	    done = true;
-	    reject(promise, LAST_ERROR);
-	  }
-	}
-
-
-/***/ },
-/* 72 */
-/***/ function(module, exports) {
-
-	/* WEBPACK VAR INJECTION */(function(global) {"use strict";
-
-	// Use the fastest means possible to execute a task in its own turn, with
-	// priority over other events including IO, animation, reflow, and redraw
-	// events in browsers.
-	//
-	// An exception thrown by a task will permanently interrupt the processing of
-	// subsequent tasks. The higher level `asap` function ensures that if an
-	// exception is thrown by a task, that the task queue will continue flushing as
-	// soon as possible, but if you use `rawAsap` directly, you are responsible to
-	// either ensure that no exceptions are thrown from your task, or to manually
-	// call `rawAsap.requestFlush` if an exception is thrown.
-	module.exports = rawAsap;
-	function rawAsap(task) {
-	    if (!queue.length) {
-	        requestFlush();
-	        flushing = true;
+	Clone.prototype.setVisible = function (visible) {
+	    if (this.isStage) {
+	        return;
 	    }
-	    // Equivalent to push, but avoids a function call.
-	    queue[queue.length] = task;
-	}
-
-	var queue = [];
-	// Once a flush has been requested, no further calls to `requestFlush` are
-	// necessary until the next `flush` completes.
-	var flushing = false;
-	// `requestFlush` is an implementation-specific method that attempts to kick
-	// off a `flush` event as quickly as possible. `flush` will attempt to exhaust
-	// the event queue before yielding to the browser's own event loop.
-	var requestFlush;
-	// The position of the next task to execute in the task queue. This is
-	// preserved between calls to `flush` so that it can be resumed if
-	// a task throws an exception.
-	var index = 0;
-	// If a task schedules additional tasks recursively, the task queue can grow
-	// unbounded. To prevent memory exhaustion, the task queue will periodically
-	// truncate already-completed tasks.
-	var capacity = 1024;
-
-	// The flush function processes all tasks that have been scheduled with
-	// `rawAsap` unless and until one of those tasks throws an exception.
-	// If a task throws an exception, `flush` ensures that its state will remain
-	// consistent and will resume where it left off when called again.
-	// However, `flush` does not make any arrangements to be called again if an
-	// exception is thrown.
-	function flush() {
-	    while (index < queue.length) {
-	        var currentIndex = index;
-	        // Advance the index before calling the task. This ensures that we will
-	        // begin flushing on the next task the task throws an error.
-	        index = index + 1;
-	        queue[currentIndex].call();
-	        // Prevent leaking memory for long chains of recursive calls to `asap`.
-	        // If we call `asap` within tasks scheduled by `asap`, the queue will
-	        // grow, but to avoid an O(n) walk for every task we execute, we don't
-	        // shift tasks off the queue after they have been executed.
-	        // Instead, we periodically shift 1024 tasks off the queue.
-	        if (index > capacity) {
-	            // Manually shift all values starting at the index back to the
-	            // beginning of the queue.
-	            for (var scan = 0, newLength = queue.length - index; scan < newLength; scan++) {
-	                queue[scan] = queue[scan + index];
-	            }
-	            queue.length -= index;
-	            index = 0;
-	        }
-	    }
-	    queue.length = 0;
-	    index = 0;
-	    flushing = false;
-	}
-
-	// `requestFlush` is implemented using a strategy based on data collected from
-	// every available SauceLabs Selenium web driver worker at time of writing.
-	// https://docs.google.com/spreadsheets/d/1mG-5UYGup5qxGdEMWkhP6BWCz053NUb2E1QoUTU16uA/edit#gid=783724593
-
-	// Safari 6 and 6.1 for desktop, iPad, and iPhone are the only browsers that
-	// have WebKitMutationObserver but not un-prefixed MutationObserver.
-	// Must use `global` instead of `window` to work in both frames and web
-	// workers. `global` is a provision of Browserify, Mr, Mrs, or Mop.
-	var BrowserMutationObserver = global.MutationObserver || global.WebKitMutationObserver;
-
-	// MutationObservers are desirable because they have high priority and work
-	// reliably everywhere they are implemented.
-	// They are implemented in all modern browsers.
-	//
-	// - Android 4-4.3
-	// - Chrome 26-34
-	// - Firefox 14-29
-	// - Internet Explorer 11
-	// - iPad Safari 6-7.1
-	// - iPhone Safari 7-7.1
-	// - Safari 6-7
-	if (typeof BrowserMutationObserver === "function") {
-	    requestFlush = makeRequestCallFromMutationObserver(flush);
-
-	// MessageChannels are desirable because they give direct access to the HTML
-	// task queue, are implemented in Internet Explorer 10, Safari 5.0-1, and Opera
-	// 11-12, and in web workers in many engines.
-	// Although message channels yield to any queued rendering and IO tasks, they
-	// would be better than imposing the 4ms delay of timers.
-	// However, they do not work reliably in Internet Explorer or Safari.
-
-	// Internet Explorer 10 is the only browser that has setImmediate but does
-	// not have MutationObservers.
-	// Although setImmediate yields to the browser's renderer, it would be
-	// preferrable to falling back to setTimeout since it does not have
-	// the minimum 4ms penalty.
-	// Unfortunately there appears to be a bug in Internet Explorer 10 Mobile (and
-	// Desktop to a lesser extent) that renders both setImmediate and
-	// MessageChannel useless for the purposes of ASAP.
-	// https://github.com/kriskowal/q/issues/396
-
-	// Timers are implemented universally.
-	// We fall back to timers in workers in most engines, and in foreground
-	// contexts in the following browsers.
-	// However, note that even this simple case requires nuances to operate in a
-	// broad spectrum of browsers.
-	//
-	// - Firefox 3-13
-	// - Internet Explorer 6-9
-	// - iPad Safari 4.3
-	// - Lynx 2.8.7
-	} else {
-	    requestFlush = makeRequestCallFromTimer(flush);
-	}
-
-	// `requestFlush` requests that the high priority event queue be flushed as
-	// soon as possible.
-	// This is useful to prevent an error thrown in a task from stalling the event
-	// queue if the exception handled by Node.js’s
-	// `process.on("uncaughtException")` or by a domain.
-	rawAsap.requestFlush = requestFlush;
-
-	// To request a high priority event, we induce a mutation observer by toggling
-	// the text of a text node between "1" and "-1".
-	function makeRequestCallFromMutationObserver(callback) {
-	    var toggle = 1;
-	    var observer = new BrowserMutationObserver(callback);
-	    var node = document.createTextNode("");
-	    observer.observe(node, {characterData: true});
-	    return function requestCall() {
-	        toggle = -toggle;
-	        node.data = toggle;
-	    };
-	}
-
-	// The message channel technique was discovered by Malte Ubl and was the
-	// original foundation for this library.
-	// http://www.nonblocking.io/2011/06/windownexttick.html
-
-	// Safari 6.0.5 (at least) intermittently fails to create message ports on a
-	// page's first load. Thankfully, this version of Safari supports
-	// MutationObservers, so we don't need to fall back in that case.
-
-	// function makeRequestCallFromMessageChannel(callback) {
-	//     var channel = new MessageChannel();
-	//     channel.port1.onmessage = callback;
-	//     return function requestCall() {
-	//         channel.port2.postMessage(0);
-	//     };
-	// }
-
-	// For reasons explained above, we are also unable to use `setImmediate`
-	// under any circumstances.
-	// Even if we were, there is another bug in Internet Explorer 10.
-	// It is not sufficient to assign `setImmediate` to `requestFlush` because
-	// `setImmediate` must be called *by name* and therefore must be wrapped in a
-	// closure.
-	// Never forget.
-
-	// function makeRequestCallFromSetImmediate(callback) {
-	//     return function requestCall() {
-	//         setImmediate(callback);
-	//     };
-	// }
-
-	// Safari 6.0 has a problem where timers will get lost while the user is
-	// scrolling. This problem does not impact ASAP because Safari 6.0 supports
-	// mutation observers, so that implementation is used instead.
-	// However, if we ever elect to use timers in Safari, the prevalent work-around
-	// is to add a scroll event listener that calls for a flush.
-
-	// `setTimeout` does not call the passed callback if the delay is less than
-	// approximately 7 in web workers in Firefox 8 through 18, and sometimes not
-	// even then.
-
-	function makeRequestCallFromTimer(callback) {
-	    return function requestCall() {
-	        // We dispatch a timeout with a specified delay of 0 for engines that
-	        // can reliably accommodate that request. This will usually be snapped
-	        // to a 4 milisecond delay, but once we're flushing, there's no delay
-	        // between events.
-	        var timeoutHandle = setTimeout(handleTimer, 0);
-	        // However, since this timer gets frequently dropped in Firefox
-	        // workers, we enlist an interval handle that will try to fire
-	        // an event 20 times per second until it succeeds.
-	        var intervalHandle = setInterval(handleTimer, 50);
-
-	        function handleTimer() {
-	            // Whichever timer succeeds will cancel both timers and
-	            // execute the callback.
-	            clearTimeout(timeoutHandle);
-	            clearInterval(intervalHandle);
-	            callback();
-	        }
-	    };
-	}
-
-	// This is for `asap.js` only.
-	// Its name will be periodically randomized to break any code that depends on
-	// its existence.
-	rawAsap.makeRequestCallFromTimer = makeRequestCallFromTimer;
-
-	// ASAP was originally a nextTick shim included in Q. This was factored out
-	// into this ASAP package. It was later adapted to RSVP which made further
-	// amendments. These decisions, particularly to marginalize MessageChannel and
-	// to capture the MutationObserver implementation in a closure, were integrated
-	// back into ASAP proper.
-	// https://github.com/tildeio/rsvp.js/blob/cddf7232546a9cf858524b75cde6f9edf72620a7/lib/rsvp/asap.js
-
-	/* WEBPACK VAR INJECTION */}.call(exports, (function() { return this; }())))
-
-/***/ },
-/* 73 */
-/***/ function(module, exports, __webpack_require__) {
-
-	'use strict';
-
-	var Promise = __webpack_require__(71);
-
-	module.exports = Promise;
-	Promise.prototype.done = function (onFulfilled, onRejected) {
-	  var self = arguments.length ? this.then.apply(this, arguments) : this;
-	  self.then(null, function (err) {
-	    setTimeout(function () {
-	      throw err;
-	    }, 0);
-	  });
-	};
-
-
-/***/ },
-/* 74 */
-/***/ function(module, exports, __webpack_require__) {
-
-	'use strict';
-
-	var Promise = __webpack_require__(71);
-
-	module.exports = Promise;
-	Promise.prototype['finally'] = function (f) {
-	  return this.then(function (value) {
-	    return Promise.resolve(f()).then(function () {
-	      return value;
-	    });
-	  }, function (err) {
-	    return Promise.resolve(f()).then(function () {
-	      throw err;
-	    });
-	  });
-	};
-
-
-/***/ },
-/* 75 */
-/***/ function(module, exports, __webpack_require__) {
-
-	'use strict';
-
-	//This file contains the ES6 extensions to the core Promises/A+ API
-
-	var Promise = __webpack_require__(71);
-
-	module.exports = Promise;
-
-	/* Static Functions */
-
-	var TRUE = valuePromise(true);
-	var FALSE = valuePromise(false);
-	var NULL = valuePromise(null);
-	var UNDEFINED = valuePromise(undefined);
-	var ZERO = valuePromise(0);
-	var EMPTYSTRING = valuePromise('');
-
-	function valuePromise(value) {
-	  var p = new Promise(Promise._61);
-	  p._81 = 1;
-	  p._65 = value;
-	  return p;
-	}
-	Promise.resolve = function (value) {
-	  if (value instanceof Promise) return value;
-
-	  if (value === null) return NULL;
-	  if (value === undefined) return UNDEFINED;
-	  if (value === true) return TRUE;
-	  if (value === false) return FALSE;
-	  if (value === 0) return ZERO;
-	  if (value === '') return EMPTYSTRING;
-
-	  if (typeof value === 'object' || typeof value === 'function') {
-	    try {
-	      var then = value.then;
-	      if (typeof then === 'function') {
-	        return new Promise(then.bind(value));
-	      }
-	    } catch (ex) {
-	      return new Promise(function (resolve, reject) {
-	        reject(ex);
-	      });
-	    }
-	  }
-	  return valuePromise(value);
-	};
-
-	Promise.all = function (arr) {
-	  var args = Array.prototype.slice.call(arr);
-
-	  return new Promise(function (resolve, reject) {
-	    if (args.length === 0) return resolve([]);
-	    var remaining = args.length;
-	    function res(i, val) {
-	      if (val && (typeof val === 'object' || typeof val === 'function')) {
-	        if (val instanceof Promise && val.then === Promise.prototype.then) {
-	          while (val._81 === 3) {
-	            val = val._65;
-	          }
-	          if (val._81 === 1) return res(i, val._65);
-	          if (val._81 === 2) reject(val._65);
-	          val.then(function (val) {
-	            res(i, val);
-	          }, reject);
-	          return;
-	        } else {
-	          var then = val.then;
-	          if (typeof then === 'function') {
-	            var p = new Promise(then.bind(val));
-	            p.then(function (val) {
-	              res(i, val);
-	            }, reject);
-	            return;
-	          }
-	        }
-	      }
-	      args[i] = val;
-	      if (--remaining === 0) {
-	        resolve(args);
-	      }
-	    }
-	    for (var i = 0; i < args.length; i++) {
-	      res(i, args[i]);
-	    }
-	  });
-	};
-
-	Promise.reject = function (value) {
-	  return new Promise(function (resolve, reject) {
-	    reject(value);
-	  });
-	};
-
-	Promise.race = function (values) {
-	  return new Promise(function (resolve, reject) {
-	    values.forEach(function(value){
-	      Promise.resolve(value).then(resolve, reject);
-	    });
-	  });
-	};
-
-	/* Prototype Methods */
-
-	Promise.prototype['catch'] = function (onRejected) {
-	  return this.then(null, onRejected);
-	};
-
-
-/***/ },
-/* 76 */
-/***/ function(module, exports, __webpack_require__) {
-
-	'use strict';
-
-	// This file contains then/promise specific extensions that are only useful
-	// for node.js interop
-
-	var Promise = __webpack_require__(71);
-	var asap = __webpack_require__(77);
-
-	module.exports = Promise;
-
-	/* Static Functions */
-
-	Promise.denodeify = function (fn, argumentCount) {
-	  if (
-	    typeof argumentCount === 'number' && argumentCount !== Infinity
-	  ) {
-	    return denodeifyWithCount(fn, argumentCount);
-	  } else {
-	    return denodeifyWithoutCount(fn);
-	  }
-	}
-
-	var callbackFn = (
-	  'function (err, res) {' +
-	  'if (err) { rj(err); } else { rs(res); }' +
-	  '}'
-	);
-	function denodeifyWithCount(fn, argumentCount) {
-	  var args = [];
-	  for (var i = 0; i < argumentCount; i++) {
-	    args.push('a' + i);
-	  }
-	  var body = [
-	    'return function (' + args.join(',') + ') {',
-	    'var self = this;',
-	    'return new Promise(function (rs, rj) {',
-	    'var res = fn.call(',
-	    ['self'].concat(args).concat([callbackFn]).join(','),
-	    ');',
-	    'if (res &&',
-	    '(typeof res === "object" || typeof res === "function") &&',
-	    'typeof res.then === "function"',
-	    ') {rs(res);}',
-	    '});',
-	    '};'
-	  ].join('');
-	  return Function(['Promise', 'fn'], body)(Promise, fn);
-	}
-	function denodeifyWithoutCount(fn) {
-	  var fnLength = Math.max(fn.length - 1, 3);
-	  var args = [];
-	  for (var i = 0; i < fnLength; i++) {
-	    args.push('a' + i);
-	  }
-	  var body = [
-	    'return function (' + args.join(',') + ') {',
-	    'var self = this;',
-	    'var args;',
-	    'var argLength = arguments.length;',
-	    'if (arguments.length > ' + fnLength + ') {',
-	    'args = new Array(arguments.length + 1);',
-	    'for (var i = 0; i < arguments.length; i++) {',
-	    'args[i] = arguments[i];',
-	    '}',
-	    '}',
-	    'return new Promise(function (rs, rj) {',
-	    'var cb = ' + callbackFn + ';',
-	    'var res;',
-	    'switch (argLength) {',
-	    args.concat(['extra']).map(function (_, index) {
-	      return (
-	        'case ' + (index) + ':' +
-	        'res = fn.call(' + ['self'].concat(args.slice(0, index)).concat('cb').join(',') + ');' +
-	        'break;'
-	      );
-	    }).join(''),
-	    'default:',
-	    'args[argLength] = cb;',
-	    'res = fn.apply(self, args);',
-	    '}',
-	    
-	    'if (res &&',
-	    '(typeof res === "object" || typeof res === "function") &&',
-	    'typeof res.then === "function"',
-	    ') {rs(res);}',
-	    '});',
-	    '};'
-	  ].join('');
-
-	  return Function(
-	    ['Promise', 'fn'],
-	    body
-	  )(Promise, fn);
-	}
-
-	Promise.nodeify = function (fn) {
-	  return function () {
-	    var args = Array.prototype.slice.call(arguments);
-	    var callback =
-	      typeof args[args.length - 1] === 'function' ? args.pop() : null;
-	    var ctx = this;
-	    try {
-	      return fn.apply(this, arguments).nodeify(callback, ctx);
-	    } catch (ex) {
-	      if (callback === null || typeof callback == 'undefined') {
-	        return new Promise(function (resolve, reject) {
-	          reject(ex);
+	    this.visible = visible;
+	    if (this.renderer) {
+	        this.renderer.updateDrawableProperties(this.drawableID, {
+	            visible: this.visible
 	        });
-	      } else {
-	        asap(function () {
-	          callback.call(ctx, ex);
-	        })
-	      }
 	    }
-	  }
-	}
-
-	Promise.prototype.nodeify = function (callback, ctx) {
-	  if (typeof callback != 'function') return this;
-
-	  this.then(function (value) {
-	    asap(function () {
-	      callback.call(ctx, null, value);
-	    });
-	  }, function (err) {
-	    asap(function () {
-	      callback.call(ctx, err);
-	    });
-	  });
-	}
-
-
-/***/ },
-/* 77 */
-/***/ function(module, exports, __webpack_require__) {
-
-	"use strict";
-
-	// rawAsap provides everything we need except exception management.
-	var rawAsap = __webpack_require__(72);
-	// RawTasks are recycled to reduce GC churn.
-	var freeTasks = [];
-	// We queue errors to ensure they are thrown in right order (FIFO).
-	// Array-as-queue is good enough here, since we are just dealing with exceptions.
-	var pendingErrors = [];
-	var requestErrorThrow = rawAsap.makeRequestCallFromTimer(throwFirstError);
-
-	function throwFirstError() {
-	    if (pendingErrors.length) {
-	        throw pendingErrors.shift();
-	    }
-	}
+	};
 
 	/**
-	 * Calls a task as soon as possible after returning, in its own event, with priority
-	 * over other events like animation, reflow, and repaint. An error thrown from an
-	 * event will not interrupt, nor even substantially slow down the processing of
-	 * other events, but will be rather postponed to a lower priority event.
-	 * @param {{call}} task A callable object, typically a function that takes no
-	 * arguments.
+	 * Set size of the clone, as a percentage of the costume size.
+	 * @param {!number} size Size of clone, from 5 to 535.
 	 */
-	module.exports = asap;
-	function asap(task) {
-	    var rawTask;
-	    if (freeTasks.length) {
-	        rawTask = freeTasks.pop();
-	    } else {
-	        rawTask = new RawTask();
+	Clone.prototype.setSize = function (size) {
+	    if (this.isStage) {
+	        return;
 	    }
-	    rawTask.task = task;
-	    rawAsap(rawTask);
-	}
+	    // Keep size between 5% and 535%.
+	    this.size = MathUtil.clamp(size, 5, 535);
+	    if (this.renderer) {
+	        this.renderer.updateDrawableProperties(this.drawableID, {
+	            scale: [this.size, this.size]
+	        });
+	    }
+	};
 
-	// We wrap tasks with recyclable task objects.  A task object implements
-	// `call`, just like a function.
-	function RawTask() {
-	    this.task = null;
-	}
+	/**
+	 * Set a particular graphic effect on this clone.
+	 * @param {!string} effectName Name of effect (see `Clone.prototype.effects`).
+	 * @param {!number} value Numerical magnitude of effect.
+	 */
+	Clone.prototype.setEffect = function (effectName, value) {
+	    if (!this.effects.hasOwnProperty(effectName)) return;
+	    this.effects[effectName] = value;
+	    if (this.renderer) {
+	        var props = {};
+	        props[effectName] = this.effects[effectName];
+	        this.renderer.updateDrawableProperties(this.drawableID, props);
+	    }
+	};
 
-	// The sole purpose of wrapping the task is to catch the exception and recycle
-	// the task object after its single use.
-	RawTask.prototype.call = function () {
-	    try {
-	        this.task.call();
-	    } catch (error) {
-	        if (asap.onerror) {
-	            // This hook exists purely for testing purposes.
-	            // Its name will be periodically randomized to break any code that
-	            // depends on its existence.
-	            asap.onerror(error);
-	        } else {
-	            // In a web browser, exceptions are not fatal. However, to avoid
-	            // slowing down the queue of pending tasks, we rethrow the error in a
-	            // lower priority turn.
-	            pendingErrors.push(error);
-	            requestErrorThrow();
+	/**
+	 * Clear all graphic effects on this clone.
+	 */
+	Clone.prototype.clearEffects = function () {
+	    for (var effectName in this.effects) {
+	        this.effects[effectName] = 0;
+	    }
+	    if (this.renderer) {
+	        this.renderer.updateDrawableProperties(this.drawableID, this.effects);
+	    }
+	};
+
+	/**
+	 * Set the current costume of this clone.
+	 * @param {number} index New index of costume.
+	 */
+	Clone.prototype.setCostume = function (index) {
+	    // Keep the costume index within possible values.
+	    this.currentCostume = MathUtil.wrapClamp(
+	        index, 0, this.sprite.costumes.length - 1
+	    );
+	    if (this.renderer) {
+	        this.renderer.updateDrawableProperties(this.drawableID, {
+	            skin: this.sprite.costumes[this.currentCostume].skin
+	        });
+	    }
+	};
+
+	/**
+	 * Get a costume index of this clone, by name of the costume.
+	 * @param {?string} costumeName Name of a costume.
+	 * @return {number} Index of the named costume, or -1 if not present.
+	 */
+	Clone.prototype.getCostumeIndexByName = function (costumeName) {
+	    for (var i = 0; i < this.sprite.costumes.length; i++) {
+	        if (this.sprite.costumes[i].name == costumeName) {
+	            return i;
 	        }
-	    } finally {
-	        this.task = null;
-	        freeTasks[freeTasks.length] = this;
+	    }
+	    return -1;
+	};
+
+	/**
+	 * Update all drawable properties for this clone.
+	 * Use when a batch has changed, e.g., when the drawable is first created.
+	 */
+	Clone.prototype.updateAllDrawableProperties = function () {
+	    if (this.renderer) {
+	        this.renderer.updateDrawableProperties(this.drawableID, {
+	            position: [this.x, this.y],
+	            direction: this.direction,
+	            scale: [this.size, this.size],
+	            visible: this.visible,
+	            skin: this.sprite.costumes[this.currentCostume].skin
+	        });
 	    }
 	};
 
+	/**
+	 * Return the human-readable name for this clone, i.e., the sprite's name.
+	 * @override
+	 * @returns {string} Human-readable name for the clone.
+	 */
+	Clone.prototype.getName = function () {
+	    return this.sprite.name;
+	};
+
+	/**
+	 * Return whether the clone is touching a color.
+	 * @param {Array.<number>} rgb [r,g,b], values between 0-255.
+	 * @return {Promise.<Boolean>} True iff the clone is touching the color.
+	 */
+	Clone.prototype.isTouchingColor = function (rgb) {
+	    if (this.renderer) {
+	        return this.renderer.isTouchingColor(this.drawableID, rgb);
+	    }
+	    return false;
+	};
+
+	/**
+	 * Return whether the clone's color is touching a color.
+	 * @param {Object} targetRgb {Array.<number>} [r,g,b], values between 0-255.
+	 * @param {Object} maskRgb {Array.<number>} [r,g,b], values between 0-255.
+	 * @return {Promise.<Boolean>} True iff the clone's color is touching the color.
+	 */
+	Clone.prototype.colorIsTouchingColor = function (targetRgb, maskRgb) {
+	    if (this.renderer) {
+	        return this.renderer.isTouchingColor(
+	            this.drawableID,
+	            targetRgb,
+	            maskRgb
+	        );
+	    }
+	    return false;
+	};
+
+	module.exports = Clone;
+
 
 /***/ },
-/* 78 */
+/* 87 */
 /***/ function(module, exports, __webpack_require__) {
 
-	'use strict';
-
-	var Promise = __webpack_require__(71);
-
-	module.exports = Promise;
-	Promise.enableSynchronous = function () {
-	  Promise.prototype.isPending = function() {
-	    return this.getState() == 0;
-	  };
-
-	  Promise.prototype.isFulfilled = function() {
-	    return this.getState() == 1;
-	  };
-
-	  Promise.prototype.isRejected = function() {
-	    return this.getState() == 2;
-	  };
-
-	  Promise.prototype.getValue = function () {
-	    if (this._81 === 3) {
-	      return this._65.getValue();
-	    }
-
-	    if (!this.isFulfilled()) {
-	      throw new Error('Cannot get a value of an unfulfilled promise.');
-	    }
-
-	    return this._65;
-	  };
-
-	  Promise.prototype.getReason = function () {
-	    if (this._81 === 3) {
-	      return this._65.getReason();
-	    }
-
-	    if (!this.isRejected()) {
-	      throw new Error('Cannot get a rejection reason of a non-rejected promise.');
-	    }
-
-	    return this._65;
-	  };
-
-	  Promise.prototype.getState = function () {
-	    if (this._81 === 3) {
-	      return this._65.getState();
-	    }
-	    if (this._81 === -1 || this._81 === -2) {
-	      return 0;
-	    }
-
-	    return this._81;
-	  };
-	};
-
-	Promise.disableSynchronous = function() {
-	  Promise.prototype.isPending = undefined;
-	  Promise.prototype.isFulfilled = undefined;
-	  Promise.prototype.isRejected = undefined;
-	  Promise.prototype.getValue = undefined;
-	  Promise.prototype.getReason = undefined;
-	  Promise.prototype.getState = undefined;
-	};
-
-
-/***/ },
-/* 79 */
-/***/ function(module, exports) {
-
-	function Scratch3EventBlocks(runtime) {
-	    /**
-	     * The runtime instantiating this block package.
-	     * @type {Runtime}
-	     */
-	    this.runtime = runtime;
-	}
-
-	/**
-	 * Retrieve the block primitives implemented by this package.
-	 * @return {Object.<string, Function>} Mapping of opcode to Function.
-	 */
-	Scratch3EventBlocks.prototype.getPrimitives = function() {
-	    return {
-	        'event_whenflagclicked': this.whenFlagClicked,
-	        'event_whenbroadcastreceived': this.whenBroadcastReceived,
-	        'event_broadcast': this.broadcast
-	    };
-	};
-
-
-	Scratch3EventBlocks.prototype.whenFlagClicked = function() {
-	    // No-op
-	};
-
-	Scratch3EventBlocks.prototype.whenBroadcastReceived = function() {
-	    // No-op
-	};
-
-	Scratch3EventBlocks.prototype.broadcast = function() {
-	    // @todo
-	};
-
-	module.exports = Scratch3EventBlocks;
-
-
-/***/ },
-/* 80 */
-/***/ function(module, exports) {
-
-	function Scratch3LooksBlocks(runtime) {
-	    /**
-	     * The runtime instantiating this block package.
-	     * @type {Runtime}
-	     */
-	    this.runtime = runtime;
-	}
-
-	/**
-	 * Retrieve the block primitives implemented by this package.
-	 * @return {Object.<string, Function>} Mapping of opcode to Function.
-	 */
-	Scratch3LooksBlocks.prototype.getPrimitives = function() {
-	    return {
-	        'looks_say': this.say,
-	        'looks_sayforsecs': this.sayforsecs,
-	        'looks_think': this.think,
-	        'looks_thinkforsecs': this.sayforsecs,
-	        'looks_show': this.show,
-	        'looks_hide': this.hide,
-	        'looks_effectmenu': this.effectMenu,
-	        'looks_changeeffectby': this.changeEffect,
-	        'looks_seteffectto': this.setEffect,
-	        'looks_cleargraphiceffects': this.clearEffects,
-	        'looks_changesizeby': this.changeSize,
-	        'looks_setsizeto': this.setSize,
-	        'looks_size': this.getSize
-	    };
-	};
-
-	Scratch3LooksBlocks.prototype.say = function (args, util) {
-	    util.target.setSay('say', args.MESSAGE);
-	};
-
-	Scratch3LooksBlocks.prototype.sayforsecs = function (args, util) {
-	    util.target.setSay('say', args.MESSAGE);
-	    return new Promise(function(resolve) {
-	        setTimeout(function() {
-	            // Clear say bubble and proceed.
-	            util.target.setSay();
-	            resolve();
-	        }, 1000 * args.SECS);
-	    });
-	};
-
-	Scratch3LooksBlocks.prototype.think = function (args, util) {
-	    util.target.setSay('think', args.MESSAGE);
-	};
-
-	Scratch3LooksBlocks.prototype.thinkforsecs = function (args, util) {
-	    util.target.setSay('think', args.MESSAGE);
-	    return new Promise(function(resolve) {
-	        setTimeout(function() {
-	            // Clear say bubble and proceed.
-	            util.target.setSay();
-	            resolve();
-	        }, 1000 * args.SECS);
-	    });
-	};
-
-	Scratch3LooksBlocks.prototype.show = function (args, util) {
-	    util.target.setVisible(true);
-	};
-
-	Scratch3LooksBlocks.prototype.hide = function (args, util) {
-	    util.target.setVisible(false);
-	};
-
-	Scratch3LooksBlocks.prototype.effectMenu = function (args) {
-	    return args.EFFECT.toLowerCase();
-	};
-
-	Scratch3LooksBlocks.prototype.changeEffect = function (args, util) {
-	    var newValue = args.CHANGE + util.target.effects[args.EFFECT];
-	    util.target.setEffect(args.EFFECT, newValue);
-	};
-
-	Scratch3LooksBlocks.prototype.setEffect = function (args, util) {
-	    util.target.setEffect(args.EFFECT, args.VALUE);
-	};
-
-	Scratch3LooksBlocks.prototype.clearEffects = function (args, util) {
-	    util.target.clearEffects();
-	};
-
-	Scratch3LooksBlocks.prototype.changeSize = function (args, util) {
-	    util.target.setSize(util.target.size + args.CHANGE);
-	};
-
-	Scratch3LooksBlocks.prototype.setSize = function (args, util) {
-	    util.target.setSize(args.SIZE);
-	};
-
-	Scratch3LooksBlocks.prototype.getSize = function (args, util) {
-	    return util.target.size;
-	};
-
-	module.exports = Scratch3LooksBlocks;
-
-
-/***/ },
-/* 81 */
-/***/ function(module, exports, __webpack_require__) {
-
-	var MathUtil = __webpack_require__(8);
-
-	function Scratch3MotionBlocks(runtime) {
-	    /**
-	     * The runtime instantiating this block package.
-	     * @type {Runtime}
-	     */
-	    this.runtime = runtime;
-	}
-
-	/**
-	 * Retrieve the block primitives implemented by this package.
-	 * @return {Object.<string, Function>} Mapping of opcode to Function.
-	 */
-	Scratch3MotionBlocks.prototype.getPrimitives = function() {
-	    return {
-	        'motion_movesteps': this.moveSteps,
-	        'motion_gotoxy': this.goToXY,
-	        'motion_turnright': this.turnRight,
-	        'motion_turnleft': this.turnLeft,
-	        'motion_pointindirection': this.pointInDirection,
-	        'motion_changexby': this.changeX,
-	        'motion_setx': this.setX,
-	        'motion_changeyby': this.changeY,
-	        'motion_sety': this.setY,
-	        'motion_xposition': this.getX,
-	        'motion_yposition': this.getY,
-	        'motion_direction': this.getDirection
-	    };
-	};
-
-	Scratch3MotionBlocks.prototype.moveSteps = function (args, util) {
-	    var radians = MathUtil.degToRad(util.target.direction);
-	    var dx = args.STEPS * Math.cos(radians);
-	    var dy = args.STEPS * Math.sin(radians);
-	    util.target.setXY(util.target.x + dx, util.target.y + dy);
-	};
-
-	Scratch3MotionBlocks.prototype.goToXY = function (args, util) {
-	    util.target.setXY(args.X, args.Y);
-	};
-
-	Scratch3MotionBlocks.prototype.turnRight = function (args, util) {
-	    util.target.setDirection(util.target.direction + args.DEGREES);
-	};
-
-	Scratch3MotionBlocks.prototype.turnLeft = function (args, util) {
-	    util.target.setDirection(util.target.direction - args.DEGREES);
-	};
-
-	Scratch3MotionBlocks.prototype.pointInDirection = function (args, util) {
-	    util.target.setDirection(args.DIRECTION);
-	};
-
-	Scratch3MotionBlocks.prototype.changeX = function (args, util) {
-	    util.target.setXY(util.target.x + args.DX, util.target.y);
-	};
-
-	Scratch3MotionBlocks.prototype.setX = function (args, util) {
-	    util.target.setXY(args.X, util.target.y);
-	};
-
-	Scratch3MotionBlocks.prototype.changeY = function (args, util) {
-	    util.target.setXY(util.target.x, util.target.y + args.DY);
-	};
-
-	Scratch3MotionBlocks.prototype.setY = function (args, util) {
-	    util.target.setXY(util.target.x, args.Y);
-	};
-
-	Scratch3MotionBlocks.prototype.getX = function (args, util) {
-	    return util.target.x;
-	};
-
-	Scratch3MotionBlocks.prototype.getY = function (args, util) {
-	    return util.target.y;
-	};
-
-	Scratch3MotionBlocks.prototype.getDirection = function (args, util) {
-	    return util.target.direction;
-	};
-
-	module.exports = Scratch3MotionBlocks;
-
-
-/***/ },
-/* 82 */
-/***/ function(module, exports, __webpack_require__) {
-
-	var Cast = __webpack_require__(83);
-
-	function Scratch3OperatorsBlocks(runtime) {
-	    /**
-	     * The runtime instantiating this block package.
-	     * @type {Runtime}
-	     */
-	    this.runtime = runtime;
-	}
-
-	/**
-	 * Retrieve the block primitives implemented by this package.
-	 * @return {Object.<string, Function>} Mapping of opcode to Function.
-	 */
-	Scratch3OperatorsBlocks.prototype.getPrimitives = function() {
-	    return {
-	        'math_number': this.number,
-	        'math_positive_number': this.number,
-	        'math_whole_number': this.number,
-	        'math_angle': this.number,
-	        'text': this.text,
-	        'operator_add': this.add,
-	        'operator_subtract': this.subtract,
-	        'operator_multiply': this.multiply,
-	        'operator_divide': this.divide,
-	        'operator_lt': this.lt,
-	        'operator_equals': this.equals,
-	        'operator_gt': this.gt,
-	        'operator_and': this.and,
-	        'operator_or': this.or,
-	        'operator_not': this.not,
-	        'operator_random': this.random,
-	        'operator_join': this.join,
-	        'operator_letter_of': this.letterOf,
-	        'operator_length': this.length,
-	        'operator_mod': this.mod,
-	        'operator_round': this.round,
-	        'operator_mathop_menu': this.mathopMenu,
-	        'operator_mathop': this.mathop
-	    };
-	};
-
-	Scratch3OperatorsBlocks.prototype.number = function (args) {
-	    return Cast.toNumber(args.NUM);
-	};
-
-	Scratch3OperatorsBlocks.prototype.text = function (args) {
-	    return Cast.toString(args.TEXT);
-	};
-
-	Scratch3OperatorsBlocks.prototype.add = function (args) {
-	    return Cast.toNumber(args.NUM1) + Cast.toNumber(args.NUM2);
-	};
-
-	Scratch3OperatorsBlocks.prototype.subtract = function (args) {
-	    return Cast.toNumber(args.NUM1) - Cast.toNumber(args.NUM2);
-	};
-
-	Scratch3OperatorsBlocks.prototype.multiply = function (args) {
-	    return Cast.toNumber(args.NUM1) * Cast.toNumber(args.NUM2);
-	};
-
-	Scratch3OperatorsBlocks.prototype.divide = function (args) {
-	    return Cast.toNumber(args.NUM1) / Cast.toNumber(args.NUM2);
-	};
-
-	Scratch3OperatorsBlocks.prototype.lt = function (args) {
-	    return Cast.compare(args.OPERAND1, args.OPERAND2) < 0;
-	};
-
-	Scratch3OperatorsBlocks.prototype.equals = function (args) {
-	    return Cast.compare(args.OPERAND1, args.OPERAND2) == 0;
-	};
-
-	Scratch3OperatorsBlocks.prototype.gt = function (args) {
-	    return Cast.compare(args.OPERAND1, args.OPERAND2) > 0;
-	};
-
-	Scratch3OperatorsBlocks.prototype.and = function (args) {
-	    return Cast.toBoolean(args.OPERAND1 && args.OPERAND2);
-	};
-
-	Scratch3OperatorsBlocks.prototype.or = function (args) {
-	    return Cast.toBoolean(args.OPERAND1 || args.OPERAND2);
-	};
-
-	Scratch3OperatorsBlocks.prototype.not = function (args) {
-	    return Cast.toBoolean(!args.OPERAND);
-	};
-
-	Scratch3OperatorsBlocks.prototype.random = function (args) {
-	    var low = args.FROM <= args.TO ? args.FROM : args.TO;
-	    var high = args.FROM <= args.TO ? args.TO : args.FROM;
-	    if (low == high) return low;
-	    // If both low and high are ints, truncate the result to an int.
-	    var lowInt = low == parseInt(low);
-	    var highInt = high == parseInt(high);
-	    if (lowInt && highInt) {
-	        return low + parseInt(Math.random() * ((high + 1) - low));
-	    }
-	    return (Math.random() * (high - low)) + low;
-	};
-
-	Scratch3OperatorsBlocks.prototype.join = function (args) {
-	    return Cast.toString(args.STRING1) + Cast.toString(args.STRING2);
-	};
-
-	Scratch3OperatorsBlocks.prototype.letterOf = function (args) {
-	    var index = Cast.toNumber(args.LETTER) - 1;
-	    var str = Cast.toString(args.STRING);
-	    // Out of bounds?
-	    if (index < 0 || index >= str.length) {
-	        return '';
-	    }
-	    return str.charAt(index);
-	};
-
-	Scratch3OperatorsBlocks.prototype.length = function (args) {
-	    return Cast.toString(args.STRING).length;
-	};
-
-	Scratch3OperatorsBlocks.prototype.mod = function (args) {
-	    var n = Cast.toNumber(args.NUM1);
-	    var modulus = Cast.toNumber(args.NUM2);
-	    var result = n % modulus;
-	    // Scratch mod is kept positive.
-	    if (result / modulus < 0) result += modulus;
-	    return result;
-	};
-
-	Scratch3OperatorsBlocks.prototype.round = function (args) {
-	    return Math.round(Cast.toNumber(args.NUM));
-	};
-
-	Scratch3OperatorsBlocks.prototype.mathopMenu = function (args) {
-	    return args.OPERATOR;
-	};
-
-	Scratch3OperatorsBlocks.prototype.mathop = function (args) {
-	    var operator = Cast.toString(args.OPERATOR).toLowerCase();
-	    var n = Cast.toNumber(args.NUM);
-	    switch (operator) {
-	    case 'abs': return Math.abs(n);
-	    case 'floor': return Math.floor(n);
-	    case 'ceiling': return Math.ceil(n);
-	    case 'sqrt': return Math.sqrt(n);
-	    case 'sin': return Math.sin((Math.PI * n) / 180);
-	    case 'cos': return Math.cos((Math.PI * n) / 180);
-	    case 'tan': return Math.tan((Math.PI * n) / 180);
-	    case 'asin': return (Math.asin(n) * 180) / Math.PI;
-	    case 'acos': return (Math.acos(n) * 180) / Math.PI;
-	    case 'atan': return (Math.atan(n) * 180) / Math.PI;
-	    case 'ln': return Math.log(n);
-	    case 'log': return Math.log(n) / Math.LN10;
-	    case 'e ^': return Math.exp(n);
-	    case '10 ^': return Math.pow(10, n);
-	    }
-	    return 0;
-	};
-
-	module.exports = Scratch3OperatorsBlocks;
-
-
-/***/ },
-/* 83 */
-/***/ function(module, exports) {
-
-	function Cast () {}
+	var Blocks = __webpack_require__(34);
+	var uid = __webpack_require__(88);
 
 	/**
 	 * @fileoverview
-	 * Utilities for casting and comparing Scratch data-types.
-	 * Scratch behaves slightly differently from JavaScript in many respects,
-	 * and these differences should be encapsulated below.
-	 * For example, in Scratch, add(1, join("hello", world")) -> 1.
-	 * This is because "hello world" is cast to 0.
-	 * In JavaScript, 1 + Number("hello" + "world") would give you NaN.
-	 * Use when coercing a value before computation.
+	 * A Target is an abstract "code-running" object for the Scratch VM.
+	 * Examples include sprites/clones or potentially physical-world devices.
 	 */
 
 	/**
-	 * Scratch cast to number.
-	 * Treats NaN as 0.
-	 * In Scratch 2.0, this is captured by `interp.numArg.`
-	 * @param {*} value Value to cast to number.
-	 * @return {number} The Scratch-casted number value.
+	 * @param {?Blocks} blocks Blocks instance for the blocks owned by this target.
+	 * @constructor
 	 */
-	Cast.toNumber = function (value) {
-	    var n = Number(value);
-	    if (isNaN(n)) {
-	        // Scratch treats NaN as 0, when needed as a number.
-	        // E.g., 0 + NaN -> 0.
-	        return 0;
+	function Target (blocks) {
+	    if (!blocks) {
+	        blocks = new Blocks(this);
 	    }
-	    return n;
-	};
-
-	/**
-	 * Scratch cast to boolean.
-	 * In Scratch 2.0, this is captured by `interp.boolArg.`
-	 * Treats some string values differently from JavaScript.
-	 * @param {*} value Value to cast to boolean.
-	 * @return {boolean} The Scratch-casted boolean value.
-	 */
-	Cast.toBoolean = function (value) {
-	    // Already a boolean?
-	    if (typeof value === 'boolean') {
-	        return value;
-	    }
-	    if (typeof value === 'string') {
-	        // These specific strings are treated as false in Scratch.
-	        if ((value == '') ||
-	            (value == '0') ||
-	            (value.toLowerCase() == 'false')) {
-	            return false;
-	        }
-	        // All other strings treated as true.
-	        return true;
-	    }
-	    // Coerce other values and numbers.
-	    return Boolean(value);
-	};
-
-	/**
-	 * Scratch cast to string.
-	 * @param {*} value Value to cast to string.
-	 * @return {string} The Scratch-casted string value.
-	 */
-	Cast.toString = function (value) {
-	    return String(value);
-	};
-
-	/**
-	 * Compare two values, using Scratch cast, case-insensitive string compare, etc.
-	 * In Scratch 2.0, this is captured by `interp.compare.`
-	 * @param {*} v1 First value to compare.
-	 * @param {*} v2 Second value to compare.
-	 * @returns {Number} Negative number if v1 < v2; 0 if equal; positive otherwise.
-	 */
-	Cast.compare = function (v1, v2) {
-	    var n1 = Number(v1);
-	    var n2 = Number(v2);
-	    if (isNaN(n1) || isNaN(n2)) {
-	        // At least one argument can't be converted to a number.
-	        // Scratch compares strings as case insensitive.
-	        var s1 = String(v1).toLowerCase();
-	        var s2 = String(v2).toLowerCase();
-	        return s1.localeCompare(s2);
-	    } else {
-	        // Compare as numbers.
-	        return n1 - n2;
-	    }
-	};
-
-	module.exports = Cast;
-
-
-/***/ },
-/* 84 */
-/***/ function(module, exports) {
-
-	function Scratch3SensingBlocks(runtime) {
 	    /**
-	     * The runtime instantiating this block package.
-	     * @type {Runtime}
+	     * A unique ID for this target.
+	     * @type {string}
 	     */
-	    this.runtime = runtime;
+	    this.id = uid();
+	    /**
+	     * Blocks run as code for this target.
+	     * @type {!Blocks}
+	     */
+	    this.blocks = blocks;
 	}
 
 	/**
-	 * Retrieve the block primitives implemented by this package.
-	 * @return {Object.<string, Function>} Mapping of opcode to Function.
+	 * Return a human-readable name for this target.
+	 * Target implementations should override this.
+	 * @abstract
+	 * @returns {string} Human-readable name for the target.
 	 */
-	Scratch3SensingBlocks.prototype.getPrimitives = function() {
-	    return {
-	        'sensing_timer': this.getTimer,
-	        'sensing_resettimer': this.resetTimer,
-	        'sensing_mousex': this.getMouseX,
-	        'sensing_mousey': this.getMouseY,
-	        'sensing_mousedown': this.getMouseDown
-	    };
+	Target.prototype.getName = function () {
+	    return this.id;
 	};
 
-	Scratch3SensingBlocks.prototype.getTimer = function (args, util) {
-	    return util.ioQuery('clock', 'projectTimer');
+	module.exports = Target;
+
+
+/***/ },
+/* 88 */
+/***/ function(module, exports) {
+
+	/**
+	 * @fileoverview UID generator, from Blockly.
+	 */
+
+	/**
+	 * Legal characters for the unique ID.
+	 * Should be all on a US keyboard.  No XML special characters or control codes.
+	 * Removed $ due to issue 251.
+	 * @private
+	 */
+	var soup_ = '!#%()*+,-./:;=?@[]^_`{|}~' +
+	    'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+
+	/**
+	 * Generate a unique ID, from Blockly.  This should be globally unique.
+	 * 87 characters ^ 20 length > 128 bits (better than a UUID).
+	 * @return {string} A globally unique ID string.
+	 */
+	var uid = function () {
+	    var length = 20;
+	    var soupLength = soup_.length;
+	    var id = [];
+	    for (var i = 0; i < length; i++) {
+	        id[i] = soup_.charAt(Math.random() * soupLength);
+	    }
+	    return id.join('');
 	};
 
-	Scratch3SensingBlocks.prototype.resetTimer = function (args, util) {
-	    util.ioQuery('clock', 'resetProjectTimer');
-	};
+	module.exports = uid;
 
-	Scratch3SensingBlocks.prototype.getMouseX = function (args, util) {
-	    return util.ioQuery('mouse', 'getX');
-	};
 
-	Scratch3SensingBlocks.prototype.getMouseY = function (args, util) {
-	    return util.ioQuery('mouse', 'getY');
-	};
+/***/ },
+/* 89 */
+/***/ function(module, exports) {
 
-	Scratch3SensingBlocks.prototype.getMouseDown = function (args, util) {
-	    return util.ioQuery('mouse', 'getIsDown');
+	/**
+	 * @fileoverview
+	 * The specMap below handles a few pieces of "translation" work between
+	 * the SB2 JSON format and the data we need to run a project
+	 * in the Scratch 3.0 VM.
+	 * Notably:
+	 *  - Map 2.0-format opcodes (forward:) into 3.0-format (motion_movesteps).
+	 *  - Map ordered, unnamed args to unordered, named inputs and fields.
+	 * Keep this up-to-date as 3.0 blocks are renamed, changed, etc.
+	 */
+	var specMap = {
+	    'forward:':{
+	        'opcode':'motion_movesteps',
+	        'argMap':[
+	            {
+	                'type':'input',
+	                'inputOp':'math_number',
+	                'inputName':'STEPS'
+	            }
+	        ]
+	    },
+	    'turnRight:':{
+	        'opcode':'motion_turnright',
+	        'argMap':[
+	            {
+	                'type':'input',
+	                'inputOp':'math_number',
+	                'inputName':'DEGREES'
+	            }
+	        ]
+	    },
+	    'turnLeft:':{
+	        'opcode':'motion_turnleft',
+	        'argMap':[
+	            {
+	                'type':'input',
+	                'inputOp':'math_number',
+	                'inputName':'DEGREES'
+	            }
+	        ]
+	    },
+	    'heading:':{
+	        'opcode':'motion_pointindirection',
+	        'argMap':[
+	            {
+	                'type':'input',
+	                'inputOp':'math_angle',
+	                'inputName':'DIRECTION'
+	            }
+	        ]
+	    },
+	    'pointTowards:':{
+	        'opcode':'motion_pointtowards',
+	        'argMap':[
+	            {
+	                'type':'input',
+	                'inputOp':'motion_pointtowards_menu',
+	                'inputName':'TOWARDS'
+	            }
+	        ]
+	    },
+	    'gotoX:y:':{
+	        'opcode':'motion_gotoxy',
+	        'argMap':[
+	            {
+	                'type':'input',
+	                'inputOp':'math_number',
+	                'inputName':'X'
+	            },
+	            {
+	                'type':'input',
+	                'inputOp':'math_number',
+	                'inputName':'Y'
+	            }
+	        ]
+	    },
+	    'gotoSpriteOrMouse:':{
+	        'opcode':'motion_goto',
+	        'argMap':[
+	            {
+	                'type':'input',
+	                'inputOp':'motion_goto_menu',
+	                'inputName':'TO'
+	            }
+	        ]
+	    },
+	    'glideSecs:toX:y:elapsed:from:':{
+	        'opcode':'motion_glidesecstoxy',
+	        'argMap':[
+	            {
+	                'type':'input',
+	                'inputOp':'math_number',
+	                'inputName':'SECS'
+	            },
+	            {
+	                'type':'input',
+	                'inputOp':'math_number',
+	                'inputName':'X'
+	            },
+	            {
+	                'type':'input',
+	                'inputOp':'math_number',
+	                'inputName':'Y'
+	            }
+	        ]
+	    },
+	    'changeXposBy:':{
+	        'opcode':'motion_changexby',
+	        'argMap':[
+	            {
+	                'type':'input',
+	                'inputOp':'math_number',
+	                'inputName':'DX'
+	            }
+	        ]
+	    },
+	    'xpos:':{
+	        'opcode':'motion_setx',
+	        'argMap':[
+	            {
+	                'type':'input',
+	                'inputOp':'math_number',
+	                'inputName':'X'
+	            }
+	        ]
+	    },
+	    'changeYposBy:':{
+	        'opcode':'motion_changeyby',
+	        'argMap':[
+	            {
+	                'type':'input',
+	                'inputOp':'math_number',
+	                'inputName':'DY'
+	            }
+	        ]
+	    },
+	    'ypos:':{
+	        'opcode':'motion_sety',
+	        'argMap':[
+	            {
+	                'type':'input',
+	                'inputOp':'math_number',
+	                'inputName':'Y'
+	            }
+	        ]
+	    },
+	    'bounceOffEdge':{
+	        'opcode':'motion_ifonedgebounce',
+	        'argMap':[
+	        ]
+	    },
+	    'setRotationStyle':{
+	        'opcode':'motion_setrotationstyle',
+	        'argMap':[
+	            {
+	                'type':'input',
+	                'inputOp':'motion_setrotationstyle_menu',
+	                'inputName':'STYLE'
+	            }
+	        ]
+	    },
+	    'xpos':{
+	        'opcode':'motion_xposition',
+	        'argMap':[
+	        ]
+	    },
+	    'ypos':{
+	        'opcode':'motion_yposition',
+	        'argMap':[
+	        ]
+	    },
+	    'heading':{
+	        'opcode':'motion_direction',
+	        'argMap':[
+	        ]
+	    },
+	    'say:duration:elapsed:from:':{
+	        'opcode':'looks_sayforsecs',
+	        'argMap':[
+	            {
+	                'type':'input',
+	                'inputOp':'text',
+	                'inputName':'MESSAGE'
+	            },
+	            {
+	                'type':'input',
+	                'inputOp':'math_number',
+	                'inputName':'SECS'
+	            }
+	        ]
+	    },
+	    'say:':{
+	        'opcode':'looks_say',
+	        'argMap':[
+	            {
+	                'type':'input',
+	                'inputOp':'text',
+	                'inputName':'MESSAGE'
+	            }
+	        ]
+	    },
+	    'think:duration:elapsed:from:':{
+	        'opcode':'looks_thinkforsecs',
+	        'argMap':[
+	            {
+	                'type':'input',
+	                'inputOp':'text',
+	                'inputName':'MESSAGE'
+	            },
+	            {
+	                'type':'input',
+	                'inputOp':'math_number',
+	                'inputName':'SECS'
+	            }
+	        ]
+	    },
+	    'think:':{
+	        'opcode':'looks_think',
+	        'argMap':[
+	            {
+	                'type':'input',
+	                'inputOp':'text',
+	                'inputName':'MESSAGE'
+	            }
+	        ]
+	    },
+	    'show':{
+	        'opcode':'looks_show',
+	        'argMap':[
+	        ]
+	    },
+	    'hide':{
+	        'opcode':'looks_hide',
+	        'argMap':[
+	        ]
+	    },
+	    'lookLike:':{
+	        'opcode':'looks_switchcostumeto',
+	        'argMap':[
+	            {
+	                'type':'input',
+	                'inputOp':'looks_costume',
+	                'inputName':'COSTUME'
+	            }
+	        ]
+	    },
+	    'nextCostume':{
+	        'opcode':'looks_nextcostume',
+	        'argMap':[
+	        ]
+	    },
+	    'startScene':{
+	        'opcode':'looks_switchbackdropto',
+	        'argMap':[
+	            {
+	                'type':'input',
+	                'inputOp':'looks_backdrops',
+	                'inputName':'BACKDROP'
+	            }
+	        ]
+	    },
+	    'changeGraphicEffect:by:':{
+	        'opcode':'looks_changeeffectby',
+	        'argMap':[
+	            {
+	                'type':'input',
+	                'inputOp':'looks_effectmenu',
+	                'inputName':'EFFECT'
+	            },
+	            {
+	                'type':'input',
+	                'inputOp':'math_number',
+	                'inputName':'CHANGE'
+	            }
+	        ]
+	    },
+	    'setGraphicEffect:to:':{
+	        'opcode':'looks_seteffectto',
+	        'argMap':[
+	            {
+	                'type':'input',
+	                'inputOp':'looks_effectmenu',
+	                'inputName':'EFFECT'
+	            },
+	            {
+	                'type':'input',
+	                'inputOp':'math_number',
+	                'inputName':'VALUE'
+	            }
+	        ]
+	    },
+	    'filterReset':{
+	        'opcode':'looks_cleargraphiceffects',
+	        'argMap':[
+	        ]
+	    },
+	    'changeSizeBy:':{
+	        'opcode':'looks_changesizeby',
+	        'argMap':[
+	            {
+	                'type':'input',
+	                'inputOp':'math_number',
+	                'inputName':'CHANGE'
+	            }
+	        ]
+	    },
+	    'setSizeTo:':{
+	        'opcode':'looks_setsizeto',
+	        'argMap':[
+	            {
+	                'type':'input',
+	                'inputOp':'math_number',
+	                'inputName':'SIZE'
+	            }
+	        ]
+	    },
+	    'comeToFront':{
+	        'opcode':'looks_gotofront',
+	        'argMap':[
+	        ]
+	    },
+	    'goBackByLayers:':{
+	        'opcode':'looks_gobacklayers',
+	        'argMap':[
+	            {
+	                'type':'input',
+	                'inputOp':'math_integer',
+	                'inputName':'NUM'
+	            }
+	        ]
+	    },
+	    'costumeIndex':{
+	        'opcode':'looks_costumeorder',
+	        'argMap':[
+	        ]
+	    },
+	    'sceneName':{
+	        'opcode':'looks_backdropname',
+	        'argMap':[
+	        ]
+	    },
+	    'scale':{
+	        'opcode':'looks_size',
+	        'argMap':[
+	        ]
+	    },
+	    'startSceneAndWait':{
+	        'opcode':'looks_switchbackdroptoandwait',
+	        'argMap':[
+	            {
+	                'type':'input',
+	                'inputOp':'looks_backdrops',
+	                'inputName':'BACKDROP'
+	            }
+	        ]
+	    },
+	    'nextScene':{
+	        'opcode':'looks_nextbackdrop',
+	        'argMap':[
+	        ]
+	    },
+	    'backgroundIndex':{
+	        'opcode':'looks_backdroporder',
+	        'argMap':[
+	        ]
+	    },
+	    'playSound:':{
+	        'opcode':'sound_play',
+	        'argMap':[
+	            {
+	                'type':'input',
+	                'inputOp':'sound_sounds_option',
+	                'inputName':'SOUND_MENU'
+	            }
+	        ]
+	    },
+	    'doPlaySoundAndWait':{
+	        'opcode':'sound_playuntildone',
+	        'argMap':[
+	            {
+	                'type':'input',
+	                'inputOp':'sound_sounds_option',
+	                'inputName':'SOUND_MENU'
+	            }
+	        ]
+	    },
+	    'stopAllSounds':{
+	        'opcode':'sound_stopallsounds',
+	        'argMap':[
+	        ]
+	    },
+	    'playDrum':{
+	        'opcode':'sound_playdrumforbeats',
+	        'argMap':[
+	            {
+	                'type':'input',
+	                'inputOp':'math_number',
+	                'inputName':'DRUMTYPE'
+	            },
+	            {
+	                'type':'input',
+	                'inputOp':'math_number',
+	                'inputName':'BEATS'
+	            }
+	        ]
+	    },
+	    'rest:elapsed:from:':{
+	        'opcode':'sound_restforbeats',
+	        'argMap':[
+	            {
+	                'type':'input',
+	                'inputOp':'math_number',
+	                'inputName':'BEATS'
+	            }
+	        ]
+	    },
+	    'noteOn:duration:elapsed:from:':{
+	        'opcode':'sound_playnoteforbeats',
+	        'argMap':[
+	            {
+	                'type':'input',
+	                'inputOp':'math_number',
+	                'inputName':'NOTE'
+	            },
+	            {
+	                'type':'input',
+	                'inputOp':'math_number',
+	                'inputName':'BEATS'
+	            }
+	        ]
+	    },
+	    'instrument:':{
+	        'opcode':'sound_setinstrumentto',
+	        'argMap':[
+	            {
+	                'type':'input',
+	                'inputOp':'math_number',
+	                'inputName':'INSTRUMENT'
+	            }
+	        ]
+	    },
+	    'changeVolumeBy:':{
+	        'opcode':'sound_changevolumeby',
+	        'argMap':[
+	            {
+	                'type':'input',
+	                'inputOp':'math_number',
+	                'inputName':'VOLUME'
+	            }
+	        ]
+	    },
+	    'setVolumeTo:':{
+	        'opcode':'sound_setvolumeto',
+	        'argMap':[
+	            {
+	                'type':'input',
+	                'inputOp':'math_number',
+	                'inputName':'VOLUME'
+	            }
+	        ]
+	    },
+	    'volume':{
+	        'opcode':'sound_volume',
+	        'argMap':[
+	        ]
+	    },
+	    'changeTempoBy:':{
+	        'opcode':'sound_changetempoby',
+	        'argMap':[
+	            {
+	                'type':'input',
+	                'inputOp':'math_number',
+	                'inputName':'TEMPO'
+	            }
+	        ]
+	    },
+	    'setTempoTo:':{
+	        'opcode':'sound_settempotobpm',
+	        'argMap':[
+	            {
+	                'type':'input',
+	                'inputOp':'math_number',
+	                'inputName':'TEMPO'
+	            }
+	        ]
+	    },
+	    'tempo':{
+	        'opcode':'sound_tempo',
+	        'argMap':[
+	        ]
+	    },
+	    'clearPenTrails':{
+	        'opcode':'pen_clear',
+	        'argMap':[
+	        ]
+	    },
+	    'stampCostume':{
+	        'opcode':'pen_stamp',
+	        'argMap':[
+	        ]
+	    },
+	    'putPenDown':{
+	        'opcode':'pen_pendown',
+	        'argMap':[
+	        ]
+	    },
+	    'putPenUp':{
+	        'opcode':'pen_penup',
+	        'argMap':[
+	        ]
+	    },
+	    'penColor:':{
+	        'opcode':'pen_setpencolortocolor',
+	        'argMap':[
+	            {
+	                'type':'input',
+	                'inputOp':'colour_picker',
+	                'inputName':'COLOR'
+	            }
+	        ]
+	    },
+	    'changePenHueBy:':{
+	        'opcode':'pen_changepencolorby',
+	        'argMap':[
+	            {
+	                'type':'input',
+	                'inputOp':'math_number',
+	                'inputName':'COLOR'
+	            }
+	        ]
+	    },
+	    'setPenHueTo:':{
+	        'opcode':'pen_setpencolortonum',
+	        'argMap':[
+	            {
+	                'type':'input',
+	                'inputOp':'math_number',
+	                'inputName':'COLOR'
+	            }
+	        ]
+	    },
+	    'changePenShadeBy:':{
+	        'opcode':'pen_changepenshadeby',
+	        'argMap':[
+	            {
+	                'type':'input',
+	                'inputOp':'math_number',
+	                'inputName':'SHADE'
+	            }
+	        ]
+	    },
+	    'setPenShadeTo:':{
+	        'opcode':'pen_changepenshadeby',
+	        'argMap':[
+	            {
+	                'type':'input',
+	                'inputOp':'math_number',
+	                'inputName':'SHADE'
+	            }
+	        ]
+	    },
+	    'changePenSizeBy:':{
+	        'opcode':'pen_changepensizeby',
+	        'argMap':[
+	            {
+	                'type':'input',
+	                'inputOp':'math_number',
+	                'inputName':'SIZE'
+	            }
+	        ]
+	    },
+	    'penSize:':{
+	        'opcode':'pen_setpensizeto',
+	        'argMap':[
+	            {
+	                'type':'input',
+	                'inputOp':'math_number',
+	                'inputName':'SIZE'
+	            }
+	        ]
+	    },
+	    'whenGreenFlag':{
+	        'opcode':'event_whenflagclicked',
+	        'argMap':[
+	        ]
+	    },
+	    'whenKeyPressed':{
+	        'opcode':'event_whenkeypressed',
+	        'argMap':[
+	            {
+	                'type':'field',
+	                'fieldName':'KEY_OPTION'
+	            }
+	        ]
+	    },
+	    'whenClicked':{
+	        'opcode':'event_whenthisspriteclicked',
+	        'argMap':[
+	        ]
+	    },
+	    'whenSceneStarts':{
+	        'opcode':'event_whenbackdropswitchesto',
+	        'argMap':[
+	            {
+	                'type':'field',
+	                'fieldName':'BACKDROP'
+	            }
+	        ]
+	    },
+	    'whenSensorGreaterThan':{
+	        'opcode':'event_whengreaterthan',
+	        'argMap':[
+	            {
+	                'type':'field',
+	                'fieldName':'WHENGREATERTHANMENU'
+	            },
+	            {
+	                'type':'input',
+	                'inputOp':'math_number',
+	                'inputName':'VALUE'
+	            }
+	        ]
+	    },
+	    'whenIReceive':{
+	        'opcode':'event_whenbroadcastreceived',
+	        'argMap':[
+	            {
+	                'type':'field',
+	                'fieldName':'BROADCAST_OPTION'
+	            }
+	        ]
+	    },
+	    'broadcast:':{
+	        'opcode':'event_broadcast',
+	        'argMap':[
+	            {
+	                'type':'field',
+	                'fieldName':'BROADCAST_OPTION'
+	            }
+	        ]
+	    },
+	    'doBroadcastAndWait':{
+	        'opcode':'event_broadcastandwait',
+	        'argMap':[
+	            {
+	                'type':'field',
+	                'fieldName':'BROADCAST_OPTION'
+	            }
+	        ]
+	    },
+	    'wait:elapsed:from:':{
+	        'opcode':'control_wait',
+	        'argMap':[
+	            {
+	                'type':'input',
+	                'inputOp':'math_positive_number',
+	                'inputName':'DURATION'
+	            }
+	        ]
+	    },
+	    'doRepeat':{
+	        'opcode':'control_repeat',
+	        'argMap':[
+	            {
+	                'type':'input',
+	                'inputOp':'math_whole_number',
+	                'inputName':'TIMES'
+	            },
+	            {
+	                'type':'input',
+	                'inputName': 'SUBSTACK'
+	            }
+	        ]
+	    },
+	    'doForever':{
+	        'opcode':'control_forever',
+	        'argMap':[
+	            {
+	                'type':'input',
+	                'inputName':'SUBSTACK'
+	            }
+	        ]
+	    },
+	    'doIf':{
+	        'opcode':'control_if',
+	        'argMap':[
+	            {
+	                'type':'input',
+	                'inputName':'CONDITION'
+	            },
+	            {
+	                'type':'input',
+	                'inputName':'SUBSTACK'
+	            }
+	        ]
+	    },
+	    'doIfElse':{
+	        'opcode':'control_if_else',
+	        'argMap':[
+	            {
+	                'type':'input',
+	                'inputName':'CONDITION'
+	            },
+	            {
+	                'type':'input',
+	                'inputName':'SUBSTACK'
+	            },
+	            {
+	                'type':'input',
+	                'inputName':'SUBSTACK2'
+	            }
+	        ]
+	    },
+	    'doWaitUntil':{
+	        'opcode':'control_wait_until',
+	        'argMap':[
+	            {
+	                'type':'input',
+	                'inputName':'CONDITION'
+	            }
+	        ]
+	    },
+	    'doUntil':{
+	        'opcode':'control_repeat_until',
+	        'argMap':[
+	            {
+	                'type':'input',
+	                'inputName':'CONDITION'
+	            },
+	            {
+	                'type':'input',
+	                'inputName':'SUBSTACK'
+	            }
+	        ]
+	    },
+	    'stopScripts':{
+	        'opcode':'control_stop',
+	        'argMap':[
+	            {
+	                'type':'input',
+	                'inputOp':'control_stop_menu',
+	                'inputName':'STOP_OPTION'
+	            }
+	        ]
+	    },
+	    'whenCloned':{
+	        'opcode':'control_start_as_clone',
+	        'argMap':[
+	        ]
+	    },
+	    'createCloneOf':{
+	        'opcode':'control_create_clone_of',
+	        'argMap':[
+	            {
+	                'type':'input',
+	                'inputOp':'control_create_clone_of_menu',
+	                'inputName':'CLONE_OPTION'
+	            }
+	        ]
+	    },
+	    'deleteClone':{
+	        'opcode':'control_delete_this_clone',
+	        'argMap':[
+	        ]
+	    },
+	    'touching:':{
+	        'opcode':'sensing_touchingobject',
+	        'argMap':[
+	            {
+	                'type':'input',
+	                'inputOp':'sensing_touchingobjectmenu',
+	                'inputName':'TOUCHINGOBJECTMENU'
+	            }
+	        ]
+	    },
+	    'touchingColor:':{
+	        'opcode':'sensing_touchingcolor',
+	        'argMap':[
+	            {
+	                'type':'input',
+	                'inputOp':'colour_picker',
+	                'inputName':'COLOR'
+	            }
+	        ]
+	    },
+	    'color:sees:':{
+	        'opcode':'sensing_coloristouchingcolor',
+	        'argMap':[
+	            {
+	                'type':'input',
+	                'inputOp':'colour_picker',
+	                'inputName':'COLOR'
+	            },
+	            {
+	                'type':'input',
+	                'inputOp':'colour_picker',
+	                'inputName':'COLOR2'
+	            }
+	        ]
+	    },
+	    'distanceTo:':{
+	        'opcode':'sensing_distanceto',
+	        'argMap':[
+	            {
+	                'type':'input',
+	                'inputOp':'sensing_distancetomenu',
+	                'inputName':'DISTANCETOMENU'
+	            }
+	        ]
+	    },
+	    'doAsk':{
+	        'opcode':'sensing_askandwait',
+	        'argMap':[
+	            {
+	                'type':'input',
+	                'inputOp':'text',
+	                'inputName':'QUESTION'
+	            }
+	        ]
+	    },
+	    'answer':{
+	        'opcode':'sensing_answer',
+	        'argMap':[
+	        ]
+	    },
+	    'keyPressed:':{
+	        'opcode':'sensing_keypressed',
+	        'argMap':[
+	            {
+	                'type':'input',
+	                'inputOp':'sensing_keyoptions',
+	                'inputName':'KEY_OPTION'
+	            }
+	        ]
+	    },
+	    'mousePressed':{
+	        'opcode':'sensing_mousedown',
+	        'argMap':[
+	        ]
+	    },
+	    'mouseX':{
+	        'opcode':'sensing_mousex',
+	        'argMap':[
+	        ]
+	    },
+	    'mouseY':{
+	        'opcode':'sensing_mousey',
+	        'argMap':[
+	        ]
+	    },
+	    'soundLevel':{
+	        'opcode':'sensing_loudness',
+	        'argMap':[
+	        ]
+	    },
+	    'senseVideoMotion':{
+	        'opcode':'sensing_videoon',
+	        'argMap':[
+	            {
+	                'type':'input',
+	                'inputOp':'sensing_videoonmenuone',
+	                'inputName':'VIDEOONMENU1'
+	            },
+	            {
+	                'type':'input',
+	                'inputOp':'sensing_videoonmenutwo',
+	                'inputName':'VIDEOONMENU2'
+	            }
+	        ]
+	    },
+	    'setVideoState':{
+	        'opcode':'sensing_videotoggle',
+	        'argMap':[
+	            {
+	                'type':'input',
+	                'inputOp':'sensing_videotogglemenu',
+	                'inputName':'VIDEOTOGGLEMENU'
+	            }
+	        ]
+	    },
+	    'setVideoTransparency':{
+	        'opcode':'sensing_setvideotransparency',
+	        'argMap':[
+	            {
+	                'type':'input',
+	                'inputOp':'math_number',
+	                'inputName':'TRANSPARENCY'
+	            }
+	        ]
+	    },
+	    'timer':{
+	        'opcode':'sensing_timer',
+	        'argMap':[
+	        ]
+	    },
+	    'timerReset':{
+	        'opcode':'sensing_resettimer',
+	        'argMap':[
+	        ]
+	    },
+	    'getAttribute:of:':{
+	        'opcode':'sensing_of',
+	        'argMap':[
+	            {
+	                'type':'input',
+	                'inputOp':'sensing_ofattributemenu',
+	                'inputName':'ATTRIBUTE'
+	            },
+	            {
+	                'type':'input',
+	                'inputOp':'sensing_ofobjectmenu',
+	                'inputName':'OBJECT'
+	            }
+	        ]
+	    },
+	    'timeAndDate':{
+	        'opcode':'sensing_current',
+	        'argMap':[
+	            {
+	                'type':'input',
+	                'inputOp':'sensing_currentmenu',
+	                'inputName':'CURRENTMENU'
+	            }
+	        ]
+	    },
+	    'timestamp':{
+	        'opcode':'sensing_dayssince2000',
+	        'argMap':[
+	        ]
+	    },
+	    'getUserName':{
+	        'opcode':'sensing_username',
+	        'argMap':[
+	        ]
+	    },
+	    '+':{
+	        'opcode':'operator_add',
+	        'argMap':[
+	            {
+	                'type':'input',
+	                'inputOp':'math_number',
+	                'inputName':'NUM1'
+	            },
+	            {
+	                'type':'input',
+	                'inputOp':'math_number',
+	                'inputName':'NUM2'
+	            }
+	        ]
+	    },
+	    '-':{
+	        'opcode':'operator_subtract',
+	        'argMap':[
+	            {
+	                'type':'input',
+	                'inputOp':'math_number',
+	                'inputName':'NUM1'
+	            },
+	            {
+	                'type':'input',
+	                'inputOp':'math_number',
+	                'inputName':'NUM2'
+	            }
+	        ]
+	    },
+	    '*':{
+	        'opcode':'operator_multiply',
+	        'argMap':[
+	            {
+	                'type':'input',
+	                'inputOp':'math_number',
+	                'inputName':'NUM1'
+	            },
+	            {
+	                'type':'input',
+	                'inputOp':'math_number',
+	                'inputName':'NUM2'
+	            }
+	        ]
+	    },
+	    '/':{
+	        'opcode':'operator_divide',
+	        'argMap':[
+	            {
+	                'type':'input',
+	                'inputOp':'math_number',
+	                'inputName':'NUM1'
+	            },
+	            {
+	                'type':'input',
+	                'inputOp':'math_number',
+	                'inputName':'NUM2'
+	            }
+	        ]
+	    },
+	    'randomFrom:to:':{
+	        'opcode':'operator_random',
+	        'argMap':[
+	            {
+	                'type':'input',
+	                'inputOp':'math_number',
+	                'inputName':'FROM'
+	            },
+	            {
+	                'type':'input',
+	                'inputOp':'math_number',
+	                'inputName':'TO'
+	            }
+	        ]
+	    },
+	    '<':{
+	        'opcode':'operator_lt',
+	        'argMap':[
+	            {
+	                'type':'input',
+	                'inputOp':'text',
+	                'inputName':'OPERAND1'
+	            },
+	            {
+	                'type':'input',
+	                'inputOp':'text',
+	                'inputName':'OPERAND2'
+	            }
+	        ]
+	    },
+	    '=':{
+	        'opcode':'operator_equals',
+	        'argMap':[
+	            {
+	                'type':'input',
+	                'inputOp':'text',
+	                'inputName':'OPERAND1'
+	            },
+	            {
+	                'type':'input',
+	                'inputOp':'text',
+	                'inputName':'OPERAND2'
+	            }
+	        ]
+	    },
+	    '>':{
+	        'opcode':'operator_gt',
+	        'argMap':[
+	            {
+	                'type':'input',
+	                'inputOp':'text',
+	                'inputName':'OPERAND1'
+	            },
+	            {
+	                'type':'input',
+	                'inputOp':'text',
+	                'inputName':'OPERAND2'
+	            }
+	        ]
+	    },
+	    '&':{
+	        'opcode':'operator_and',
+	        'argMap':[
+	            {
+	                'type':'input',
+	                'inputName':'OPERAND1'
+	            },
+	            {
+	                'type':'input',
+	                'inputName':'OPERAND2'
+	            }
+	        ]
+	    },
+	    '|':{
+	        'opcode':'operator_or',
+	        'argMap':[
+	            {
+	                'type':'input',
+	                'inputName':'OPERAND1'
+	            },
+	            {
+	                'type':'input',
+	                'inputName':'OPERAND2'
+	            }
+	        ]
+	    },
+	    'not':{
+	        'opcode':'operator_not',
+	        'argMap':[
+	            {
+	                'type':'input',
+	                'inputName':'OPERAND'
+	            }
+	        ]
+	    },
+	    'concatenate:with:':{
+	        'opcode':'operator_join',
+	        'argMap':[
+	            {
+	                'type':'input',
+	                'inputOp':'text',
+	                'inputName':'STRING1'
+	            },
+	            {
+	                'type':'input',
+	                'inputOp':'text',
+	                'inputName':'STRING2'
+	            }
+	        ]
+	    },
+	    'letter:of:':{
+	        'opcode':'operator_letter_of',
+	        'argMap':[
+	            {
+	                'type':'input',
+	                'inputOp':'math_whole_number',
+	                'inputName':'LETTER'
+	            },
+	            {
+	                'type':'input',
+	                'inputOp':'text',
+	                'inputName':'STRING'
+	            }
+	        ]
+	    },
+	    'stringLength:':{
+	        'opcode':'operator_length',
+	        'argMap':[
+	            {
+	                'type':'input',
+	                'inputOp':'text',
+	                'inputName':'STRING'
+	            }
+	        ]
+	    },
+	    '%':{
+	        'opcode':'operator_mod',
+	        'argMap':[
+	            {
+	                'type':'input',
+	                'inputOp':'math_number',
+	                'inputName':'NUM1'
+	            },
+	            {
+	                'type':'input',
+	                'inputOp':'math_number',
+	                'inputName':'NUM2'
+	            }
+	        ]
+	    },
+	    'rounded':{
+	        'opcode':'operator_round',
+	        'argMap':[
+	            {
+	                'type':'input',
+	                'inputOp':'math_number',
+	                'inputName':'NUM'
+	            }
+	        ]
+	    },
+	    'computeFunction:of:':{
+	        'opcode':'operator_mathop',
+	        'argMap':[
+	            {
+	                'type':'input',
+	                'inputOp':'operator_mathop_menu',
+	                'inputName':'OPERATOR'
+	            },
+	            {
+	                'type':'input',
+	                'inputOp':'math_number',
+	                'inputName':'NUM'
+	            }
+	        ]
+	    },
+	    'readVariable':{
+	        'opcode':'data_variable',
+	        'argMap':[
+	            {
+	                'type':'input',
+	                'inputOp':'data_variablemenu',
+	                'inputName':'VARIABLE'
+	            }
+	        ]
+	    },
+	    'setVar:to:':{
+	        'opcode':'data_setvariableto',
+	        'argMap':[
+	            {
+	                'type':'input',
+	                'inputOp':'data_variablemenu',
+	                'inputName':'VARIABLE'
+	            },
+	            {
+	                'type':'input',
+	                'inputOp':'text',
+	                'inputName':'VALUE'
+	            }
+	        ]
+	    },
+	    'changeVar:by:':{
+	        'opcode':'data_changevariableby',
+	        'argMap':[
+	            {
+	                'type':'input',
+	                'inputOp':'data_variablemenu',
+	                'inputName':'VARIABLE'
+	            },
+	            {
+	                'type':'input',
+	                'inputOp':'math_number',
+	                'inputName':'VALUE'
+	            }
+	        ]
+	    },
+	    'showVariable:':{
+	        'opcode':'data_showvariable',
+	        'argMap':[
+	            {
+	                'type':'input',
+	                'inputOp':'data_variablemenu',
+	                'inputName':'VARIABLE'
+	            }
+	        ]
+	    },
+	    'hideVariable:':{
+	        'opcode':'data_hidevariable',
+	        'argMap':[
+	            {
+	                'type':'input',
+	                'inputOp':'data_variablemenu',
+	                'inputName':'VARIABLE'
+	            }
+	        ]
+	    },
+	    'append:toList:':{
+	        'opcode':'data_listadd',
+	        'argMap':[
+	            {
+	                'type':'input',
+	                'inputOp':'text',
+	                'inputName':'VALUE'
+	            },
+	            {
+	                'type':'field',
+	                'fieldName':'LIST'
+	            }
+	        ]
+	    },
+	    'deleteLine:ofList:':{
+	        'opcode':'data_listdelete',
+	        'argMap':[
+	            {
+	                'type':'input',
+	                'inputOp':'text',
+	                'inputName':'LINE'
+	            },
+	            {
+	                'type':'field',
+	                'fieldName':'LIST'
+	            }
+	        ]
+	    },
+	    'insert:at:ofList:':{
+	        'opcode':'data_listinsert',
+	        'argMap':[
+	            {
+	                'type':'input',
+	                'inputOp':'text',
+	                'inputName':'VALUE'
+	            },
+	            {
+	                'type':'input',
+	                'inputOp':'text',
+	                'inputName':'LINE'
+	            },
+	            {
+	                'type':'field',
+	                'fieldName':'LIST'
+	            }
+	        ]
+	    },
+	    'setLine:ofList:to:':{
+	        'opcode':'data_listreplace',
+	        'argMap':[
+	            {
+	                'type':'input',
+	                'inputOp':'text',
+	                'inputName':'LINE'
+	            },
+	            {
+	                'type':'field',
+	                'fieldName':'LIST'
+	            },
+	            {
+	                'type':'input',
+	                'inputOp':'text',
+	                'inputName':'VALUE'
+	            }
+	        ]
+	    },
+	    'getLine:ofList:':{
+	        'opcode':'data_listitem',
+	        'argMap':[
+	            {
+	                'type':'input',
+	                'inputOp':'text',
+	                'inputName':'LINE'
+	            },
+	            {
+	                'type':'field',
+	                'fieldName':'LIST'
+	            }
+	        ]
+	    },
+	    'lineCountOfList:':{
+	        'opcode':'data_listlength',
+	        'argMap':[
+	            {
+	                'type':'field',
+	                'fieldName':'LIST'
+	            }
+	        ]
+	    },
+	    'list:contains:':{
+	        'opcode':'data_listcontains',
+	        'argMap':[
+	            {
+	                'type':'field',
+	                'fieldName':'LIST'
+	            },
+	            {
+	                'type':'input',
+	                'inputOp':'text',
+	                'inputName':'VALUE'
+	            }
+	        ]
+	    },
+	    'showList:':{
+	        'opcode':'data_showlist',
+	        'argMap':[
+	            {
+	                'type':'field',
+	                'fieldName':'LIST'
+	            }
+	        ]
+	    },
+	    'hideList:':{
+	        'opcode':'data_hidelist',
+	        'argMap':[
+	            {
+	                'type':'field',
+	                'fieldName':'LIST'
+	            }
+	        ]
+	    },
+	    'procDef':{
+	        'opcode':'proc_def',
+	        'argMap':[]
+	    },
+	    'getParam':{
+	        'opcode':'proc_param',
+	        'argMap':[]
+	    },
+	    'call':{
+	        'opcode':'proc_call',
+	        'argMap':[]
+	    }
 	};
-
-	module.exports = Scratch3SensingBlocks;
+	module.exports = specMap;
 
 
 /***/ }
