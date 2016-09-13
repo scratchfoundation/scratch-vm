@@ -31,7 +31,7 @@ function domToBlocks (blocksDOM) {
         }
         var tagName = block.name.toLowerCase();
         if (tagName == 'block' || tagName == 'shadow') {
-            domToBlock(block, blocks, true);
+            domToBlock(block, blocks, true, null);
         }
     }
     // Flatten blocks object into a list.
@@ -48,8 +48,9 @@ function domToBlocks (blocksDOM) {
  * @param {Element} blockDOM DOM tree for an individual block.
  * @param {Object} blocks Collection of blocks to add to.
  * @param {Boolean} isTopBlock Whether blocks at this level are "top blocks."
+ * @param {?string} parent Parent block ID.
  */
-function domToBlock (blockDOM, blocks, isTopBlock) {
+function domToBlock (blockDOM, blocks, isTopBlock, parent) {
     // Block skeleton.
     var block = {
         id: blockDOM.attribs.id, // Block ID
@@ -58,6 +59,7 @@ function domToBlock (blockDOM, blocks, isTopBlock) {
         fields: {}, // Fields on this block and their values.
         next: null, // Next block in the stack, if one exists.
         topLevel: isTopBlock, // If this block starts a stack.
+        parent: parent, // Parent block ID, if available.
         shadow: blockDOM.name == 'shadow', // If this represents a shadow/slot.
         x: blockDOM.attribs.x, // X position of script, if top-level.
         y: blockDOM.attribs.y // Y position of script, if top-level.
@@ -113,10 +115,10 @@ function domToBlock (blockDOM, blocks, isTopBlock) {
         case 'value':
         case 'statement':
             // Recursively generate block structure for input block.
-            domToBlock(childBlockNode, blocks, false);
+            domToBlock(childBlockNode, blocks, false, block.id);
             if (childShadowNode && childBlockNode != childShadowNode) {
                 // Also generate the shadow block.
-                domToBlock(childShadowNode, blocks, false);
+                domToBlock(childShadowNode, blocks, false, block.id);
             }
             // Link this block's input to the child block.
             var inputName = xmlChild.attribs.name;
@@ -132,7 +134,7 @@ function domToBlock (blockDOM, blocks, isTopBlock) {
                 continue;
             }
             // Recursively generate block structure for next block.
-            domToBlock(childBlockNode, blocks, false);
+            domToBlock(childBlockNode, blocks, false, block.id);
             // Link next block to this block.
             block.next = childBlockNode.attribs.id;
             break;

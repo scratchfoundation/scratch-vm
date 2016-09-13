@@ -44,10 +44,10 @@ Keyboard.prototype._keyCodeToScratchKey = function (keyCode) {
     }
     switch (keyCode) {
     case 32: return 'space';
-    case 37: return 'leftarrow';
-    case 38: return 'uparrow';
-    case 39: return 'rightarrow';
-    case 40: return 'downarrow';
+    case 37: return 'left arrow';
+    case 38: return 'up arrow';
+    case 39: return 'right arrow';
+    case 40: return 'down arrow';
     }
     return null;
 };
@@ -59,17 +59,14 @@ Keyboard.prototype.postData = function (data) {
             // If not already present, add to the list.
             if (index < 0) {
                 this._keysPressed.push(data.keyCode);
-                this.runtime.startHats('event_whenkeypressed',
-                    {
-                        'KEY_OPTION': this._keyCodeToScratchKey(data.keyCode)
-                                          .toUpperCase()
-                    });
-
-                this.runtime.startHats('event_whenkeypressed',
-                    {
-                        'KEY_OPTION': 'ANY'
-                    });
             }
+            // Always trigger hats, even if it was already pressed.
+            this.runtime.startHats('event_whenkeypressed', {
+                'KEY_OPTION': this._keyCodeToScratchKey(data.keyCode)
+            });
+            this.runtime.startHats('event_whenkeypressed', {
+                'KEY_OPTION': 'any'
+            });
         } else if (index > -1) {
             // If already present, remove from the list.
             this._keysPressed.splice(index, 1);

@@ -20,7 +20,8 @@ var specMap = require('./sb2specmap');
 function sb2import (json, runtime) {
     parseScratchObject(
         JSON.parse(json),
-        runtime
+        runtime,
+        true
     );
 }
 
@@ -28,8 +29,9 @@ function sb2import (json, runtime) {
  * Parse a single "Scratch object" and create all its in-memory VM objects.
  * @param {!Object} object From-JSON "Scratch object:" sprite, stage, watcher.
  * @param {!Runtime} runtime Runtime object to load all structures into.
+ * @param {boolean} topLevel Whether this is the top-level object (stage).
  */
-function parseScratchObject (object, runtime) {
+function parseScratchObject (object, runtime, topLevel) {
     if (!object.hasOwnProperty('objName')) {
         // Watcher/monitor - skip this object until those are implemented in VM.
         // @todo
@@ -49,7 +51,8 @@ function parseScratchObject (object, runtime) {
             var costume = object.costumes[i];
             // @todo: Make sure all the relevant metadata is being pulled out.
             sprite.costumes.push({
-                skin: costume.baseLayerMD5,
+                skin: 'https://cdn.assets.scratch.mit.edu/internalapi/asset/' 
+                    + costume.baseLayerMD5 + '/get/',
                 name: costume.costumeName,
                 bitmapResolution: costume.bitmapResolution,
                 rotationCenterX: costume.rotationCenterX,
@@ -84,10 +87,11 @@ function parseScratchObject (object, runtime) {
     if (object.currentCostumeIndex) {
         target.currentCostume = object.currentCostumeIndex;
     }
+    target.isStage = topLevel;
     // The stage will have child objects; recursively process them.
     if (object.children) {
         for (var j = 0; j < object.children.length; j++) {
-            parseScratchObject(object.children[j], runtime);
+            parseScratchObject(object.children[j], runtime, false);
         }
     }
 }
@@ -112,6 +116,7 @@ function parseScripts (scripts, blocks) {
             parsedBlockList[0].x = scriptX * 1.1;
             parsedBlockList[0].y = scriptY * 1.1;
             parsedBlockList[0].topLevel = true;
+            parsedBlockList[0].parent = null;
         }
         // Flatten children and create add the blocks.
         var convertedBlocks = flatten(parsedBlockList);
@@ -136,6 +141,7 @@ function parseBlockList (blockList) {
         var block = blockList[i];
         var parsedBlock = parseBlock(block);
         if (previousBlock) {
+            parsedBlock.parent = previousBlock.id;
             previousBlock.next = parsedBlock.id;
         }
         previousBlock = parsedBlock;
@@ -214,6 +220,9 @@ function parseBlock (sb2block) {
                     // Single block occupies the input.
                     innerBlocks = [parseBlock(providedArg)];
                 }
+                for (var j = 0; j < innerBlocks.length; j++) {
+                    innerBlocks[j].parent = activeBlock.id;
+                }
                 // Obscures any shadow.
                 shadowObscured = true;
                 activeBlock.inputs[expectedArg.inputName].block = (
@@ -250,7 +259,7 @@ function parseBlock (sb2block) {
                 }
             } else if (expectedArg.inputOp == 'colour_picker') {
                 // Convert SB2 color to hex.
-                fieldValue = Color.scratchColorToHex(providedArg);
+                fieldValue = Color.decimalToHex(providedArg);
                 fieldName = 'COLOUR';
                 if (shadowObscured) {
                     fieldValue = '#990000';
@@ -268,6 +277,7 @@ function parseBlock (sb2block) {
                 fields: fields,
                 next: null,
                 topLevel: false,
+                parent: activeBlock.id,
                 shadow: true
             });
             activeBlock.inputs[expectedArg.inputName].shadow = inputUid;

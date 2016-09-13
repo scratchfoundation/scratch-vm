@@ -1,4 +1,5 @@
 var adapter = require('./adapter');
+var xmlEscape = require('../util/xml-escape');
 
 /**
  * @fileoverview
@@ -113,6 +114,20 @@ Blocks.prototype.getInputs = function (id) {
         }
     }
     return inputs;
+};
+
+/**
+ * Get the top-level script for a given block.
+ * @param {?string} id ID of block to query.
+ * @return {?string} ID of top-level script block.
+ */
+Blocks.prototype.getTopLevelScript = function (id) {
+    if (typeof this._blocks[id] === 'undefined') return null;
+    var block = this._blocks[id];
+    while (block.parent !== null) {
+        block = this._blocks[block.parent];
+    }
+    return block.id;
 };
 
 // ---------------------------------------------------------------------
@@ -237,6 +252,7 @@ Blocks.prototype.moveBlock = function (e) {
             // This block was connected to the old parent's next connection.
             oldParent.next = null;
         }
+        this._blocks[e.id].parent = null;
     }
 
     // Has the block become a top-level block?
@@ -249,13 +265,20 @@ Blocks.prototype.moveBlock = function (e) {
         if (e.newInput !== undefined) {
             // Moved to the new parent's input.
             // Don't obscure the shadow block.
-            var newInput = this._blocks[e.newParent].inputs[e.newInput];
-            newInput.name = e.newInput;
-            newInput.block = e.id;
+            var oldShadow = null;
+            if (this._blocks[e.newParent].inputs.hasOwnProperty(e.newInput)) {
+                oldShadow = this._blocks[e.newParent].inputs[e.newInput].shadow;
+            }
+            this._blocks[e.newParent].inputs[e.newInput] = {
+                name: e.newInput,
+                block: e.id,
+                shadow: oldShadow
+            };
         } else {
             // Moved to the new parent's next connection.
             this._blocks[e.newParent].next = e.id;
         }
+        this._blocks[e.id].parent = e.newParent;
     }
 };
 
@@ -347,8 +370,12 @@ Blocks.prototype.blockToXML = function (blockId) {
     // Add any fields on this block.
     for (var field in block.fields) {
         var blockField = block.fields[field];
+        var value = blockField.value;
+        if (typeof value === 'string') {
+            value = xmlEscape(blockField.value);
+        }
         xmlString += '<field name="' + blockField.name + '">' +
-            blockField.value + '</field>';
+            value + '</field>';
     }
     // Add blocks connected to the next connection.
     if (block.next) {

@@ -291,6 +291,67 @@ test('move', function (t) {
     t.end();
 });
 
+test('move into empty', function (t) {
+    var b = new Blocks();
+    b.createBlock({
+        id: 'foo',
+        opcode: 'TEST_BLOCK',
+        next: null,
+        fields: {},
+        inputs: {},
+        topLevel: true
+    });
+    b.createBlock({
+        id: 'bar',
+        opcode: 'TEST_BLOCK',
+        next: null,
+        fields: {},
+        inputs: {},
+        topLevel: true
+    });
+    b.moveBlock({
+        id: 'bar',
+        newInput: 'fooInput',
+        newParent: 'foo'
+    });
+    t.equal(b._blocks['foo'].inputs['fooInput'].block, 'bar');
+    t.end();
+});
+
+test('move no obscure shadow', function (t) {
+    var b = new Blocks();
+    b.createBlock({
+        id: 'foo',
+        opcode: 'TEST_BLOCK',
+        next: null,
+        fields: {},
+        inputs: {
+            'fooInput': {
+                name: 'fooInput',
+                block: 'x',
+                shadow: 'y'
+            }
+        },
+        topLevel: true
+    });
+    b.createBlock({
+        id: 'bar',
+        opcode: 'TEST_BLOCK',
+        next: null,
+        fields: {},
+        inputs: {},
+        topLevel: true
+    });
+    b.moveBlock({
+        id: 'bar',
+        newInput: 'fooInput',
+        newParent: 'foo'
+    });
+    t.equal(b._blocks['foo'].inputs['fooInput'].block, 'bar');
+    t.equal(b._blocks['foo'].inputs['fooInput'].shadow, 'y');
+    t.end();
+});
+
 test('change', function (t) {
     var b = new Blocks();
     b.createBlock({

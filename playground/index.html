@@ -10,18 +10,21 @@
 <body>
     <div id="vm-devtools">
         <h2>Scratch VM Playground</h2>
-        <button id="greenflag">Green flag</button>
-        <button id="stopall">Stop</button>
         <select id="selectedTarget" multiple></select>
-        <p>
-            <a id="renderexplorer-link" href="#">Renderer</a><br />
-            <a id="threadexplorer-link" href="#">VM Threads</a><br />
-            <a id="blockexplorer-link" href="#">VM Block Representation</a><br />
-            <a id="importexport-link" href="#">Import/Export</a>
-        </p>
+        <div id="projectButtons">
+            <button id="greenflag">Green flag</button>
+            <button id="stopall">Stop</button>
+        </div>
+        <br />
+        <ul id="playgroundLinks">
+            <li><a id="renderexplorer-link" href="#">Renderer</a></li>
+            <li><a id="threadexplorer-link" href="#">Threads</a></li>
+            <li><a id="blockexplorer-link" href="#">Block Representation</a></li>
+            <li><a id="importexport-link" href="#">Import/Export</a></li>
+        </ul><br />
         <div id="tab-renderexplorer">
-            Render<br />
-            <canvas id="scratch-stage" style="width: 480px; height: 360px;"></canvas>
+            Renderer<br />
+            <canvas id="scratch-stage" style="width: 480px; height: 360px;"></canvas><br />
         </div>
         <div id="tab-threadexplorer">
             Thread explorer
@@ -32,14 +35,14 @@
             <pre id="blockexplorer"></pre>
         </div>
         <div id="tab-importexport">
-            Import/Export
-            <input id="projectId" value="119615668" />
-            <button id="projectLoadButton">Load SB2</button><br />
+            Import/Export<br />
+            Project ID: <input id="projectId" value="119615668" />
+            <button id="projectLoadButton">Load</button><br />
             <p>
                 <input type="button" value="Export to XML" onclick="toXml()">
                 &nbsp;
                 <input type="button" value="Import from XML" onclick="fromXml()" id="import">
-                <br><br>
+                <br /><br />
                 <textarea id="importExport"></textarea>
             </p>
         </div>
@@ -751,7 +754,7 @@
     <script src="../audioLocal.js"></script>
     <script src="../Tone.min.js"></script>
     <!-- VM Worker -->
-    <script src="../vm.worker.js"></script>
+    <script src="../vm.js"></script>
     <!-- Playground -->
     <script src="./playground.js"></script>
     <script>

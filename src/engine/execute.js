@@ -22,39 +22,91 @@ var execute = function (sequencer, thread) {
     var currentBlockId = thread.peekStack();
     var currentStackFrame = thread.peekStackFrame();
 
+    // Query info about the block.
     var opcode = target.blocks.getOpcode(currentBlockId);
+    var blockFunction = runtime.getOpcodeFunction(opcode);
+    var isHat = runtime.getIsHat(opcode);
+    var fields = target.blocks.getFields(currentBlockId);
+    var inputs = target.blocks.getInputs(currentBlockId);
 
     if (!opcode) {
         console.warn('Could not get opcode for block: ' + currentBlockId);
         return;
     }
 
-    var blockFunction = runtime.getOpcodeFunction(opcode);
-    var isHat = runtime.getIsHat(opcode);
-
-    // Hats are implemented slightly differently from regular blocks.
-    // If they have an associated block function, it's treated as a predicate;
-    // if not, execution will proceed right through it (as a no-op).
-    if (!blockFunction) {
-        if (!isHat) {
-            console.warn('Could not get implementation for opcode: ' + opcode);
+    /**
+     * Handle any reported value from the primitive, either directly returned
+     * or after a promise resolves.
+     * @param {*} resolvedValue Value eventually returned from the primitive.
+     */
+    var handleReport = function (resolvedValue) {
+        thread.pushReportedValue(resolvedValue);
+        if (isHat) {
+            // Hat predicate was evaluated.
+            if (runtime.getIsEdgeActivatedHat(opcode)) {
+                // If this is an edge-activated hat, only proceed if
+                // the value is true and used to be false.
+                var oldEdgeValue = runtime.updateEdgeActivatedValue(
+                    currentBlockId,
+                    resolvedValue
+                );
+                var edgeWasActivated = !oldEdgeValue && resolvedValue;
+                if (!edgeWasActivated) {
+                    sequencer.retireThread(thread);
+                }
+            } else {
+                // Not an edge-activated hat: retire the thread
+                // if predicate was false.
+                if (!resolvedValue) {
+                    sequencer.retireThread(thread);
+                }
+            }
+        } else {
+            // In a non-hat, report the value visually if necessary if
+            // at the top of the thread stack.
+            if (typeof resolvedValue !== 'undefined' && thread.atStackTop()) {
+                runtime.visualReport(currentBlockId, resolvedValue);
+            }
+            // Finished any yields.
+            thread.setStatus(Thread.STATUS_RUNNING);
         }
-        // Skip through the block.
-        // (either hat with no predicate, or missing op).
-        return;
+    };
+
+    // Hats and single-field shadows are implemented slightly differently
+    // from regular blocks.
+    // For hats: if they have an associated block function,
+    // it's treated as a predicate; if not, execution will proceed as a no-op.
+    // For single-field shadows: If the block has a single field, and no inputs,
+    // immediately return the value of the field.
+    if (!blockFunction) {
+        if (isHat) {
+            // Skip through the block (hat with no predicate).
+            return;
+        } else {
+            if (Object.keys(fields).length == 1 &&
+                Object.keys(inputs).length == 0) {
+                // One field and no inputs - treat as arg.
+                for (var fieldKey in fields) { // One iteration.
+                    handleReport(fields[fieldKey].value);
+                }
+            } else {
+                console.warn('Could not get implementation for opcode: ' +
+                    opcode);
+            }
+            thread.requestScriptGlowInFrame = true;
+            return;
+        }
     }
 
     // Generate values for arguments (inputs).
     var argValues = {};
 
     // Add all fields on this block to the argValues.
-    var fields = target.blocks.getFields(currentBlockId);
     for (var fieldName in fields) {
         argValues[fieldName] = fields[fieldName].value;
     }
 
     // Recursively evaluate input blocks.
-    var inputs = target.blocks.getInputs(currentBlockId);
     for (var inputName in inputs) {
         var input = inputs[inputName];
         var inputBlockId = input.block;
@@ -110,43 +162,11 @@ var execute = function (sequencer, thread) {
         }
     });
 
-    /**
-     * Handle any reported value from the primitive, either directly returned
-     * or after a promise resolves.
-     * @param {*} resolvedValue Value eventually returned from the primitive.
-     */
-    var handleReport = function (resolvedValue) {
-        thread.pushReportedValue(resolvedValue);
-        if (isHat) {
-            // Hat predicate was evaluated.
-            if (runtime.getIsEdgeActivatedHat(opcode)) {
-                // If this is an edge-activated hat, only proceed if
-                // the value is true and used to be false.
-                var oldEdgeValue = runtime.updateEdgeActivatedValue(
-                    currentBlockId,
-                    resolvedValue
-                );
-                var edgeWasActivated = !oldEdgeValue && resolvedValue;
-                if (!edgeWasActivated) {
-                    sequencer.retireThread(thread);
-                }
-            } else {
-                // Not an edge-activated hat: retire the thread
-                // if predicate was false.
-                if (!resolvedValue) {
-                    sequencer.retireThread(thread);
-                }
-            }
-        } else {
-            // In a non-hat, report the value visually if necessary if
-            // at the top of the thread stack.
-            if (typeof resolvedValue !== 'undefined' && thread.atStackTop()) {
-                runtime.visualReport(currentBlockId, resolvedValue);
-            }
-            // Finished any yields.
-            thread.setStatus(Thread.STATUS_RUNNING);
-        }
-    };
+    if (typeof primitiveReportedValue === 'undefined') {
+        // No value reported - potentially a command block.
+        // Edge-activated hats don't request a glow; all commands do.
+        thread.requestScriptGlowInFrame = true;
+    }
 
     // If it's a promise, wait until promise resolves.
     if (isPromise(primitiveReportedValue)) {

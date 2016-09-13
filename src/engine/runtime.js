@@ -56,30 +56,33 @@ function Runtime () {
     this.ioDevices = {
         'clock': new Clock(),
         'keyboard': new Keyboard(this),
-        'mouse': new Mouse()
+        'mouse': new Mouse(this)
     };
+
+    this._scriptGlowsPreviousFrame = [];
+    this._editingTarget = null;
 }
 
 /**
- * Event name for glowing a stack
+ * Event name for glowing a script.
  * @const {string}
  */
-Runtime.STACK_GLOW_ON = 'STACK_GLOW_ON';
+Runtime.SCRIPT_GLOW_ON = 'STACK_GLOW_ON';
 
 /**
- * Event name for unglowing a stack
+ * Event name for unglowing a script.
  * @const {string}
  */
-Runtime.STACK_GLOW_OFF = 'STACK_GLOW_OFF';
+Runtime.SCRIPT_GLOW_OFF = 'STACK_GLOW_OFF';
 
 /**
- * Event name for glowing a block
+ * Event name for glowing a block.
  * @const {string}
  */
 Runtime.BLOCK_GLOW_ON = 'BLOCK_GLOW_ON';
 
 /**
- * Event name for unglowing a block
+ * Event name for unglowing a block.
  * @const {string}
  */
 Runtime.BLOCK_GLOW_OFF = 'BLOCK_GLOW_OFF';
@@ -197,7 +200,6 @@ Runtime.prototype.clearEdgeActivatedValues = function () {
  */
 Runtime.prototype._pushThread = function (id) {
     var thread = new Thread(id);
-    this.glowScript(id, true);
     thread.pushStack(id);
     this.threads.push(thread);
     return thread;
@@ -210,7 +212,6 @@ Runtime.prototype._pushThread = function (id) {
 Runtime.prototype._removeThread = function (thread) {
     var i = this.threads.indexOf(thread);
     if (i > -1) {
-        this.glowScript(thread.topBlock, false);
         this.threads.splice(i, 1);
     }
 };
@@ -342,11 +343,6 @@ Runtime.prototype.stopAll = function () {
     var threadsCopy = this.threads.slice();
     while (threadsCopy.length > 0) {
         var poppedThread = threadsCopy.pop();
-        // Unglow any blocks on this thread's stack.
-        for (var i = 0; i < poppedThread.stack.length; i++) {
-            this.glowBlock(poppedThread.stack[i], false);
-        }
-        // Actually remove the thread.
         this._removeThread(poppedThread);
     }
 };
@@ -364,9 +360,53 @@ Runtime.prototype._step = function () {
         }
     }
     var inactiveThreads = this.sequencer.stepThreads(this.threads);
+    this._updateScriptGlows();
     for (var i = 0; i < inactiveThreads.length; i++) {
         this._removeThread(inactiveThreads[i]);
     }
+};
+
+Runtime.prototype.setEditingTarget = function (editingTarget) {
+    this._scriptGlowsPreviousFrame = [];
+    this._editingTarget = editingTarget;
+    this._updateScriptGlows();
+};
+
+Runtime.prototype._updateScriptGlows = function () {
+    // Set of scripts that request a glow this frame.
+    var requestedGlowsThisFrame = [];
+    // Final set of scripts glowing during this frame.
+    var finalScriptGlows = [];
+    // Find all scripts that should be glowing.
+    for (var i = 0; i < this.threads.length; i++) {
+        var thread = this.threads[i];
+        var target = this.targetForThread(thread);
+        if (thread.requestScriptGlowInFrame && target == this._editingTarget) {
+            var blockForThread = thread.peekStack() || thread.topBlock;
+            var script = target.blocks.getTopLevelScript(blockForThread);
+            requestedGlowsThisFrame.push(script);
+        }
+    }
+    // Compare to previous frame.
+    for (var j = 0; j < this._scriptGlowsPreviousFrame.length; j++) {
+        var previousFrameGlow = this._scriptGlowsPreviousFrame[j];
+        if (requestedGlowsThisFrame.indexOf(previousFrameGlow) < 0) {
+            // Glow turned off.
+            this.glowScript(previousFrameGlow, false);
+        } else {
+            // Still glowing.
+            finalScriptGlows.push(previousFrameGlow);
+        }
+    }
+    for (var k = 0; k < requestedGlowsThisFrame.length; k++) {
+        var currentFrameGlow = requestedGlowsThisFrame[k];
+        if (this._scriptGlowsPreviousFrame.indexOf(currentFrameGlow) < 0) {
+            // Glow turned on.
+            this.glowScript(currentFrameGlow, true);
+            finalScriptGlows.push(currentFrameGlow);
+        }
+    }
+    this._scriptGlowsPreviousFrame = finalScriptGlows;
 };
 
 /**
@@ -389,9 +429,9 @@ Runtime.prototype.glowBlock = function (blockId, isGlowing) {
  */
 Runtime.prototype.glowScript = function (topBlockId, isGlowing) {
     if (isGlowing) {
-        this.emit(Runtime.STACK_GLOW_ON, topBlockId);
+        this.emit(Runtime.SCRIPT_GLOW_ON, topBlockId);
     } else {
-        this.emit(Runtime.STACK_GLOW_OFF, topBlockId);
+        this.emit(Runtime.SCRIPT_GLOW_OFF, topBlockId);
     }
 };
 
@@ -430,6 +470,19 @@ Runtime.prototype.getTargetById = function (targetId) {
     for (var i = 0; i < this.targets.length; i++) {
         var target = this.targets[i];
         if (target.id == targetId) {
+            return target;
+        }
+    }
+};
+
+/**
+ * Get a target representing the Scratch stage, if one exists.
+ * @return {?Target} The target, if found.
+ */
+Runtime.prototype.getTargetForStage = function () {
+    for (var i = 0; i < this.targets.length; i++) {
+        var target = this.targets[i];
+        if (target.isStage) {
             return target;
         }
     }

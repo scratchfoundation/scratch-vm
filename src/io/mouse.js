@@ -1,20 +1,47 @@
 var MathUtil = require('../util/math-util');
 
-function Mouse () {
+function Mouse (runtime) {
     this._x = 0;
     this._y = 0;
     this._isDown = false;
+    /**
+     * Reference to the owning Runtime.
+     * Can be used, for example, to activate hats.
+     * @type{!Runtime}
+     */
+    this.runtime = runtime;
 }
 
 Mouse.prototype.postData = function(data) {
     if (data.x) {
-        this._x = data.x;
+        this._x = data.x - data.canvasWidth / 2;
     }
     if (data.y) {
-        this._y = data.y;
+        this._y = data.y - data.canvasHeight / 2;
     }
     if (typeof data.isDown !== 'undefined') {
         this._isDown = data.isDown;
+        if (this._isDown) {
+            this._activateClickHats(data.x, data.y);
+        }
+    }
+};
+
+Mouse.prototype._activateClickHats = function (x, y) {
+    if (self.renderer) {
+        var pickPromise = self.renderer.pick(x, y);
+        var instance = this;
+        pickPromise.then(function(drawableID) {
+            for (var i = 0; i < instance.runtime.targets.length; i++) {
+                var target = instance.runtime.targets[i];
+                if (target.hasOwnProperty('drawableID') &&
+                    target.drawableID == drawableID) {
+                    instance.runtime.startHats('event_whenthisspriteclicked',
+                        null, target);
+                    return;
+                }
+            }
+        });
     }
 };
 

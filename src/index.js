@@ -4,13 +4,8 @@ var util = require('util');
 var Runtime = require('./engine/runtime');
 var sb2import = require('./import/sb2import');
 
-var AudioWorker = require('../audioWorker');
-
-/**
- * Whether the environment is a WebWorker.
- * @const{boolean}
- */
-var ENV_WORKER = typeof importScripts === 'function';
+var Sprite = require('./sprites/sprite');
+var Blocks = require('./engine/blocks');
 
 /**
  * Handles connections between blocks, stage, and extensions.
@@ -33,11 +28,11 @@ function VirtualMachine () {
      */
     instance.editingTarget = null;
     // Runtime emits are passed along as VM emits.
-    instance.runtime.on(Runtime.STACK_GLOW_ON, function (id) {
-        instance.emit(Runtime.STACK_GLOW_ON, {id: id});
+    instance.runtime.on(Runtime.SCRIPT_GLOW_ON, function (id) {
+        instance.emit(Runtime.SCRIPT_GLOW_ON, {id: id});
     });
-    instance.runtime.on(Runtime.STACK_GLOW_OFF, function (id) {
-        instance.emit(Runtime.STACK_GLOW_OFF, {id: id});
+    instance.runtime.on(Runtime.SCRIPT_GLOW_OFF, function (id) {
+        instance.emit(Runtime.SCRIPT_GLOW_OFF, {id: id});
     });
     instance.runtime.on(Runtime.BLOCK_GLOW_ON, function (id) {
         instance.emit(Runtime.BLOCK_GLOW_ON, {id: id});
@@ -48,6 +43,8 @@ function VirtualMachine () {
     instance.runtime.on(Runtime.VISUAL_REPORT, function (id, value) {
         instance.emit(Runtime.VISUAL_REPORT, {id: id, value: value});
     });
+
+    this.blockListener = this.blockListener.bind(this);
 }
 
 /**
@@ -106,7 +103,7 @@ VirtualMachine.prototype.postIOData = function (device, data) {
 
 /**
  * Load a project from a Scratch 2.0 JSON representation.
- * @param {string} json JSON string representing the project.
+ * @param {?string} json JSON string representing the project.
  */
 VirtualMachine.prototype.loadProject = function (json) {
     // @todo: Handle other formats, e.g., Scratch 1.4, Scratch 3.0.
@@ -116,6 +113,68 @@ VirtualMachine.prototype.loadProject = function (json) {
     // Update the VM user's knowledge of targets and blocks on the workspace.
     this.emitTargetsUpdate();
     this.emitWorkspaceUpdate();
+    this.runtime.setEditingTarget(this.editingTarget);
+};
+
+/**
+ * Temporary way to make an empty project, in case the desired project
+ * cannot be loaded from the online server.
+ */
+VirtualMachine.prototype.createEmptyProject = function () {
+    // Stage.
+    var blocks2 = new Blocks();
+    var stage = new Sprite(blocks2);
+    stage.name = 'Stage';
+    stage.costumes.push({
+        skin: '/assets/stage.png',
+        name: 'backdrop1',
+        bitmapResolution: 1,
+        rotationCenterX: 240,
+        rotationCenterY: 180
+    });
+    var target2 = stage.createClone();
+    this.runtime.targets.push(target2);
+    target2.x = 0;
+    target2.y = 0;
+    target2.direction = 90;
+    target2.size = 200;
+    target2.visible = true;
+    target2.isStage = true;
+    // Sprite1 (cat).
+    var blocks1 = new Blocks();
+    var sprite = new Sprite(blocks1);
+    sprite.name = 'Sprite1';
+    sprite.costumes.push({
+        skin: '/assets/scratch_cat.svg',
+        name: 'costume1',
+        bitmapResolution: 1,
+        rotationCenterX: 47,
+        rotationCenterY: 55
+    });
+    var target1 = sprite.createClone();
+    this.runtime.targets.push(target1);
+    target1.x = 0;
+    target1.y = 0;
+    target1.direction = 90;
+    target1.size = 100;
+    target1.visible = true;
+    this.editingTarget = this.runtime.targets[0];
+    this.emitTargetsUpdate();
+    this.emitWorkspaceUpdate();
+};
+
+/**
+ * Handle a Blockly event for the current editing target.
+ * @param {!Blockly.Event} e Any Blockly event.
+ */
+VirtualMachine.prototype.blockListener = function (e) {
+    if (this.editingTarget) {
+        this.editingTarget.blocks.blocklyListen(
+            e,
+            false,
+            this.runtime
+        );
+    }
 };
 
 /**
@@ -137,6 +196,7 @@ VirtualMachine.prototype.setEditingTarget = function (targetId) {
         // Emit appropriate UI updates.
         this.emitTargetsUpdate();
         this.emitWorkspaceUpdate();
+        this.runtime.setEditingTarget(target);
     }
 };
 
@@ -165,104 +225,6 @@ VirtualMachine.prototype.emitWorkspaceUpdate = function () {
         'xml': this.editingTarget.blocks.toXML()
     });
 };
-
-/*
- * Worker handlers: for all public methods available above,
- * we must also provide a message handler in case the VM is run
- * from a worker environment.
- */
-if (ENV_WORKER) {
-    self.importScripts(
-        './node_modules/scratch-render/render-worker.js'
-    );
-    self.renderer = new self.RenderWebGLWorker();
-    self.audioWorker = new AudioWorker();
-    self.vmInstance = new VirtualMachine();
-    self.onmessage = function (e) {
-        var messageData = e.data;
-        switch (messageData.method) {
-        case 'start':
-            self.vmInstance.runtime.start();
-            break;
-        case 'greenFlag':
-            self.vmInstance.runtime.greenFlag();
-            break;
-        case 'stopAll':
-            self.vmInstance.runtime.stopAll();
-            break;
-        case 'blockListener':
-            if (self.vmInstance.editingTarget) {
-                self.vmInstance.editingTarget.blocks.blocklyListen(
-                    messageData.args,
-                    false,
-                    self.vmInstance.runtime
-                );
-            }
-            break;
-        case 'flyoutBlockListener':
-            if (self.vmInstance.editingTarget) {
-                self.vmInstance.editingTarget.blocks.blocklyListen(
-                    messageData.args,
-                    true,
-                    self.vmInstance.runtime
-                );
-            }
-            break;
-        case 'getPlaygroundData':
-            self.postMessage({
-                method: 'playgroundData',
-                blocks: self.vmInstance.editingTarget.blocks,
-                threads: self.vmInstance.runtime.threads
-            });
-            break;
-        case 'animationFrame':
-            self.vmInstance.animationFrame();
-            break;
-        case 'postIOData':
-            self.vmInstance.postIOData(messageData.device, messageData.data);
-            break;
-        case 'setEditingTarget':
-            self.vmInstance.setEditingTarget(messageData.targetId);
-            break;
-        case 'loadProject':
-            self.vmInstance.loadProject(messageData.json);
-            break;
-        default:
-            if (e.data.id == 'RendererConnected') {
-                //initRenderWorker();
-            }
-            self.renderer.onmessage(e);
-            break;
-        }
-    };
-    // Bind runtime's emitted events to postmessages.
-    self.vmInstance.runtime.on(Runtime.STACK_GLOW_ON, function (id) {
-        self.postMessage({method: Runtime.STACK_GLOW_ON, id: id});
-    });
-    self.vmInstance.runtime.on(Runtime.STACK_GLOW_OFF, function (id) {
-        self.postMessage({method: Runtime.STACK_GLOW_OFF, id: id});
-    });
-    self.vmInstance.runtime.on(Runtime.BLOCK_GLOW_ON, function (id) {
-        self.postMessage({method: Runtime.BLOCK_GLOW_ON, id: id});
-    });
-    self.vmInstance.runtime.on(Runtime.BLOCK_GLOW_OFF, function (id) {
-        self.postMessage({method: Runtime.BLOCK_GLOW_OFF, id: id});
-    });
-    self.vmInstance.runtime.on(Runtime.VISUAL_REPORT, function (id, value) {
-        self.postMessage({method: Runtime.VISUAL_REPORT, id: id, value: value});
-    });
-    self.vmInstance.on('workspaceUpdate', function(data) {
-        self.postMessage({method: 'workspaceUpdate',
-            xml: data.xml
-        });
-    });
-    self.vmInstance.on('targetsUpdate', function(data) {
-        self.postMessage({method: 'targetsUpdate',
-            targetList: data.targetList,
-            editingTarget: data.editingTarget
-        });
-    });
-}
 
 /**
  * Export and bind to `window`

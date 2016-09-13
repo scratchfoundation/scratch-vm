@@ -14,11 +14,6 @@ function Scratch3OperatorsBlocks(runtime) {
  */
 Scratch3OperatorsBlocks.prototype.getPrimitives = function() {
     return {
-        'math_number': this.number,
-        'math_positive_number': this.number,
-        'math_whole_number': this.number,
-        'math_angle': this.number,
-        'text': this.text,
         'operator_add': this.add,
         'operator_subtract': this.subtract,
         'operator_multiply': this.multiply,
@@ -35,17 +30,8 @@ Scratch3OperatorsBlocks.prototype.getPrimitives = function() {
         'operator_length': this.length,
         'operator_mod': this.mod,
         'operator_round': this.round,
-        'operator_mathop_menu': this.mathopMenu,
         'operator_mathop': this.mathop
     };
-};
-
-Scratch3OperatorsBlocks.prototype.number = function (args) {
-    return Cast.toNumber(args.NUM);
-};
-
-Scratch3OperatorsBlocks.prototype.text = function (args) {
-    return Cast.toString(args.TEXT);
 };
 
 Scratch3OperatorsBlocks.prototype.add = function (args) {
@@ -77,20 +63,22 @@ Scratch3OperatorsBlocks.prototype.gt = function (args) {
 };
 
 Scratch3OperatorsBlocks.prototype.and = function (args) {
-    return Cast.toBoolean(args.OPERAND1 && args.OPERAND2);
+    return Cast.toBoolean(args.OPERAND1) && Cast.toBoolean(args.OPERAND2);
 };
 
 Scratch3OperatorsBlocks.prototype.or = function (args) {
-    return Cast.toBoolean(args.OPERAND1 || args.OPERAND2);
+    return Cast.toBoolean(args.OPERAND1) || Cast.toBoolean(args.OPERAND2);
 };
 
 Scratch3OperatorsBlocks.prototype.not = function (args) {
-    return Cast.toBoolean(!args.OPERAND);
+    return !Cast.toBoolean(args.OPERAND);
 };
 
 Scratch3OperatorsBlocks.prototype.random = function (args) {
-    var low = args.FROM <= args.TO ? args.FROM : args.TO;
-    var high = args.FROM <= args.TO ? args.TO : args.FROM;
+    var nFrom = Cast.toNumber(args.FROM);
+    var nTo = Cast.toNumber(args.TO);
+    var low = nFrom <= nTo ? nFrom : nTo;
+    var high = nFrom <= nTo ? nTo : nFrom;
     if (low == high) return low;
     // If both low and high are ints, truncate the result to an int.
     var lowInt = low == parseInt(low);
@@ -130,10 +118,6 @@ Scratch3OperatorsBlocks.prototype.mod = function (args) {
 
 Scratch3OperatorsBlocks.prototype.round = function (args) {
     return Math.round(Cast.toNumber(args.NUM));
-};
-
-Scratch3OperatorsBlocks.prototype.mathopMenu = function (args) {
-    return args.OPERATOR;
 };
 
 Scratch3OperatorsBlocks.prototype.mathop = function (args) {

@@ -1,3 +1,5 @@
+var Cast = require('../util/cast');
+
 function Scratch3SensingBlocks(runtime) {
     /**
      * The runtime instantiating this block package.
@@ -12,16 +14,27 @@ function Scratch3SensingBlocks(runtime) {
  */
 Scratch3SensingBlocks.prototype.getPrimitives = function() {
     return {
+        'sensing_touchingcolor': this.touchingColor,
+        'sensing_coloristouchingcolor': this.colorTouchingColor,
         'sensing_timer': this.getTimer,
         'sensing_resettimer': this.resetTimer,
         'sensing_mousex': this.getMouseX,
         'sensing_mousey': this.getMouseY,
         'sensing_mousedown': this.getMouseDown,
-        'sensing_keyoptions': this.keyOptions,
         'sensing_keypressed': this.getKeyPressed,
-        'sensing_current': this.current,
-        'sensing_currentmenu': this.currentMenu
+        'sensing_current': this.current
     };
+};
+
+Scratch3SensingBlocks.prototype.touchingColor = function (args, util) {
+    var color = Cast.toRgbColorList(args.COLOR);
+    return util.target.isTouchingColor(color);
+};
+
+Scratch3SensingBlocks.prototype.colorTouchingColor = function (args, util) {
+    var maskColor = Cast.toRgbColorList(args.COLOR);
+    var targetColor = Cast.toRgbColorList(args.COLOR2);
+    return util.target.colorIsTouchingColor(targetColor, maskColor);
 };
 
 Scratch3SensingBlocks.prototype.getTimer = function (args, util) {
@@ -45,8 +58,9 @@ Scratch3SensingBlocks.prototype.getMouseDown = function (args, util) {
 };
 
 Scratch3SensingBlocks.prototype.current = function (args) {
+    var menuOption = Cast.toString(args.CURRENTMENU).toLowerCase();
     var date = new Date();
-    switch (args.CURRENTMENU) {
+    switch (menuOption) {
     case 'year': return date.getFullYear();
     case 'month': return date.getMonth() + 1; // getMonth is zero-based
     case 'date': return date.getDate();
@@ -55,18 +69,11 @@ Scratch3SensingBlocks.prototype.current = function (args) {
     case 'minute': return date.getMinutes();
     case 'second': return date.getSeconds();
     }
-};
-
-Scratch3SensingBlocks.prototype.currentMenu = function (args) {
-    return args.CURRENTMENU.toLowerCase();
-};
-
-Scratch3SensingBlocks.prototype.keyOptions = function (args) {
-    return args.KEY_OPTION.toLowerCase();
+    return 0;
 };
 
 Scratch3SensingBlocks.prototype.getKeyPressed = function (args, util) {
-    return util.ioQuery('keyboard', 'getKeyIsDown', args.KEY_OPTIONS);
+    return util.ioQuery('keyboard', 'getKeyIsDown', args.KEY_OPTION);
 };
 
 module.exports = Scratch3SensingBlocks;
