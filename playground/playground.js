@@ -35,7 +35,6 @@ window.onload = function() {
     // Instantiate the renderer and connect it to the VM.
     var canvas = document.getElementById('scratch-stage');
     window.renderer = new window.RenderWebGLLocal(canvas);
-    window.renderer.connectWorker(window.vm.vmWorker);
 
     // Instantiate scratch-blocks and attach it to the DOM.
     var toolbox = document.getElementById('toolbox');
