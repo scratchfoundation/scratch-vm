@@ -1,4 +1,5 @@
 var adapter = require('./adapter');
+var xmlEscape = require('../util/xml-escape');
 
 /**
  * @fileoverview
@@ -369,8 +370,12 @@ Blocks.prototype.blockToXML = function (blockId) {
     // Add any fields on this block.
     for (var field in block.fields) {
         var blockField = block.fields[field];
+        var value = blockField.value;
+        if (typeof value === 'string') {
+            value = xmlEscape(blockField.value);
+        }
         xmlString += '<field name="' + blockField.name + '">' +
-            blockField.value + '</field>';
+            value + '</field>';
     }
     // Add blocks connected to the next connection.
     if (block.next) {
