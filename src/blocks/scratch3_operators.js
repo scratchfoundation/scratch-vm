@@ -80,10 +80,8 @@ Scratch3OperatorsBlocks.prototype.random = function (args) {
     var low = nFrom <= nTo ? nFrom : nTo;
     var high = nFrom <= nTo ? nTo : nFrom;
     if (low == high) return low;
-    // If both low and high are ints, truncate the result to an int.
-    var lowInt = low == parseInt(low);
-    var highInt = high == parseInt(high);
-    if (lowInt && highInt) {
+    // If both arguments are ints, truncate the result to an int.
+    if (Cast.isInt(args.FROM) && Cast.isInt(args.TO)) {
         return low + parseInt(Math.random() * ((high + 1) - low));
     }
     return (Math.random() * (high - low)) + low;
