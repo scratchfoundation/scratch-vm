@@ -109,16 +109,16 @@ Cast.compare = function (v1, v2) {
  */
 Cast.isInt = function (val) {
     // Values that are already numbers.
-    if (typeof val == 'number') {
+    if (typeof val === 'number') {
         if (isNaN(val)) { // NaN is considered an integer.
             return true;
         }
         // True if it's "round" (e.g., 2.0 and 2).
         return val == parseInt(val);
-    } else if (typeof val == 'boolean') {
+    } else if (typeof val === 'boolean') {
         // `True` and `false` always represent integer after Scratch cast.
         return true;
-    } else if (typeof val == 'string') {
+    } else if (typeof val === 'string') {
         // If it contains a decimal point, don't consider it an int.
         return val.indexOf('.') < 0;
     }
