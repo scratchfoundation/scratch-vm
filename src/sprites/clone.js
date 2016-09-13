@@ -244,4 +244,12 @@ Clone.prototype.playSound = function (soundNum) {
     this.audioWorker.playSound(soundNum);
 }
 
+Clone.prototype.stopAllSounds = function () {
+    this.audioWorker.stopAllSounds();
+}
+
+Clone.prototype.playNoteForBeats = function (note,beats) {
+    this.audioWorker.playNoteForBeats(note, beats);
+}
+
 module.exports = Clone;

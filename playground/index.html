@@ -278,27 +278,7 @@
               </value>
             </block>
 
-            <block type="sound_playwithpitch">
-              <value name="SOUND_NUM">
-                <shadow type="sound_sounds_menu">
-                </shadow>
-              </value>
-              <value name="PITCH">
-                <shadow type="math_number">
-                  <field name="NUM">1</field>
-                </shadow>
-              </value>
-            </block>
-
             <block type="sound_stopallsounds"></block>
-
-            <block type="sound_playdrum">
-              <value name="DRUMTYPE">
-                <shadow type="math_number">
-                  <field name="NUM">1</field>
-                </shadow>
-              </value>
-            </block>
 
             <block type="sound_playdrumforbeats">
               <value name="DRUMTYPE">
@@ -320,18 +300,10 @@
               </value>
             </block>
             
-            <block type="sound_playnote">
-              <value name="NOTE">
-                <shadow type="math_number">
-                  <field name="NUM">1</field>
-                </shadow>
-              </value>
-            </block>
-
             <block type="sound_playnoteforbeats">
               <value name="NOTE">
                 <shadow type="math_number">
-                  <field name="NUM">1</field>
+                  <field name="NUM">60</field>
                 </shadow>
               </value>
               <value name="BEATS">
@@ -339,34 +311,7 @@
                 </shadow>
               </value>
             </block>
-            
-            <block type="sound_scalenotetomidinote">
-              <value name="NOTE">
-                <shadow type="math_number">
-                  <field name="NUM">1</field>
-                </shadow>
-              </value>
-              <value name="ROOT">
-                <shadow type="sound_roots_menu">
-                </shadow>
-              </value>
-              <value name="SCALE">
-                <shadow type="sound_scales_menu">
-                </shadow>
-              </value>
-            </block>
-
-        		<block type="sound_setkey">
-              <value name="ROOT">
-                <shadow type="sound_roots_menu">
-                </shadow>
-              </value>
-              <value name="SCALE">
-                <shadow type="sound_scales_menu">
-                </shadow>
-              </value>
-            </block>
-            
+                       
             <block type="sound_seteffectto">
               <value name="EFFECT">
                 <shadow type="sound_effects_menu"></shadow>

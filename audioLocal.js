@@ -39,29 +39,15 @@ AudioLocal.prototype._loadSoundFiles = function(filenames) {
     var samplers = [];
     
     for (var name of filenames) {
-
-    	// create an array of samplers for each sound (a hack to get polyphony for each sound)
-        var myVoices = [];
-        for (var i=0; i<6; i++) {
-            var p = new Tone.Sampler('sounds/' + name + '.mp3').toMaster();
-            myVoices.push(p);
-        }
-
-        var polySampler = {
-            voices : myVoices,
-            currentVoice : 0,
-            nextVoice : function() {return this.voices[this.currentVoice++ % this.voices.length];},
-            stopAllVoices : function() {for (var i=0;i<this.voices.length;i++) {this.voices[i].triggerRelease()}},
-        };
-
-        samplers.push(polySampler);
+        var sampler = new Tone.Sampler('sounds/' + name + '.mp3').toMaster();
+        samplers.push(sampler);
     }
 
     return samplers;
 };
 
-AudioLocal.prototype.midiToFreq = function(midiNote) {
-	var freq = tone.intervalToFrequencyRatio(midiNote - 60) * 261.63; // 60 is C4
+AudioLocal.prototype._midiToFreq = function(midiNote) {
+	var freq = this.tone.intervalToFrequencyRatio(midiNote - 60) * 261.63; // 60 is C4
 	return freq;
 };
 
@@ -70,11 +56,16 @@ AudioLocal.prototype.clamp = function(input, min, max) {
 };
 
 AudioLocal.prototype.playNoteForBeats = function(note, beats) {
-    var midiNote = scaleNoteToMidiNote(note, currentScale, rootNote);
-    var freq = midiToFreq(midiNote);
-    synth.triggerAttackRelease(freq, beats, quantizeUnit);        
+    var freq = this._midiToFreq(note);
+    this.synth.triggerAttackRelease(freq, beats);        
 };
 
+AudioLocal.prototype.stopAllSounds = function() {
+	// stop sounds triggered with playSound
+    for (var i=0; i<this.soundSamplers.length; i++) {
+        this.soundSamplers[i].triggerRelease();
+    }
+};
 
 AudioLocal.prototype.connectWorker = function(worker) {
     var instance = this;
@@ -87,7 +78,14 @@ AudioLocal.prototype._onWorkerMessage = function(worker, message) {
     if (message.data.type == 'audio') {
     	switch(message.data.method) {
     		case 'playSound' :
-                this.soundSamplers[message.data.value].nextVoice().triggerAttack();
+                this.soundSamplers[message.data.value].triggerRelease();
+                this.soundSamplers[message.data.value].triggerAttack();
+    			break;
+    		case 'stopAllSounds' :
+    			this.stopAllSounds();
+    			break;
+    		case 'playNoteForBeats' :
+    			this.playNoteForBeats(message.data.note, message.data.beats);
     			break;
     	}
     }
