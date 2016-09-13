@@ -42,6 +42,8 @@ function VirtualMachine () {
     instance.runtime.on(Runtime.VISUAL_REPORT, function (id, value) {
         instance.emit(Runtime.VISUAL_REPORT, {id: id, value: value});
     });
+
+    this.blockListener = this.blockListener.bind(this);
 }
 
 /**
@@ -158,6 +160,20 @@ VirtualMachine.prototype.createEmptyProject = function () {
     this.editingTarget = this.runtime.targets[0];
     this.emitTargetsUpdate();
     this.emitWorkspaceUpdate();
+};
+
+/**
+ * Handle a Blockly event for the current editing target.
+ * @param {!Blockly.Event} e Any Blockly event.
+ */
+VirtualMachine.prototype.blockListener = function (e) {
+    if (this.editingTarget) {
+        this.editingTarget.blocks.blocklyListen(
+            e,
+            false,
+            this.runtime
+        );
+    }
 };
 
 /**
