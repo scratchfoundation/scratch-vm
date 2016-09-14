@@ -475,6 +475,20 @@ Runtime.prototype.getTargetById = function (targetId) {
 };
 
 /**
+ * Get a Clone by its name.
+ * @param {string} targetName Name of clone's sprite to find.
+ * @return {?Clone} The clone target, if found.
+ */
+Runtime.prototype.getCloneByName = function (targetName) {
+    for (var i = 0; i <this.targets.length; i++) {
+        var target = this.targets[i];
+        if (target.sprite && (target.sprite.name == targetName)) {
+            return target;
+        }
+    }
+};
+
+/**
  * Get a target representing the Scratch stage, if one exists.
  * @return {?Target} The target, if found.
  */

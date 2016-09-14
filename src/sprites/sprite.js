@@ -49,3 +49,4 @@ Sprite.prototype.createClone = function () {
 };
 
 module.exports = Sprite;
+if (typeof window !== 'undefined') window.Sprite = module.exports;
