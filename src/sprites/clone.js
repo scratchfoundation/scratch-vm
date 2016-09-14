@@ -39,13 +39,8 @@ util.inherits(Clone, Target);
  */
 Clone.prototype.initDrawable = function () {
     if (this.renderer) {
-        var createPromise = this.renderer.createDrawable();
-        var instance = this;
-        createPromise.then(function (id) {
-            instance.drawableID = id;
-            // Once the drawable is created, send our current set of properties.
-            instance.updateAllDrawableProperties();
-        });
+        this.drawableID = this.renderer.createDrawable();
+        this.updateAllDrawableProperties();
     }
 };
 

@@ -30,7 +30,8 @@ window.onload = function() {
         document.location = '#' + document.getElementById('projectId').value;
         location.reload();
     };
-    document.getElementById('createEmptyProject').addEventListener('click', function() {
+    document.getElementById('createEmptyProject').addEventListener('click',
+    function() {
         document.location = '#' + 'createEmptyProject';
         location.reload();
     });
@@ -38,7 +39,7 @@ window.onload = function() {
 
     // Instantiate the renderer and connect it to the VM.
     var canvas = document.getElementById('scratch-stage');
-    window.renderer = new window.RenderWebGLLocal(canvas);
+    window.renderer = new window.RenderWebGL(canvas);
 
     // Instantiate scratch-blocks and attach it to the DOM.
     var toolbox = document.getElementById('toolbox');
