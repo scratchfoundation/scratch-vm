@@ -26,13 +26,30 @@ window.onload = function() {
     window.vm = vm;
 
     // Loading projects from the server.
-    document.getElementById('projectLoadButton').onclick = function () {
+    document.getElementById('projectLoadButton').addEventListener('click', function () {
         document.location = '#' + document.getElementById('projectId').value;
         location.reload();
-    };
+    });
     document.getElementById('createEmptyProject').addEventListener('click', function() {
         document.location = '#' + 'createEmptyProject';
         location.reload();
+    });
+    document.getElementById('newSprite').addEventListener('click', function() {
+        var blocks = new window.Blocks();
+        var sprite = new window.Sprite(blocks);
+        sprite.name = 'Sprite1';
+        sprite.costumes.push({
+            skin: '/assets/scratch_cat.svg',
+            name: 'costume1',
+            bitmapResolution: 1,
+            rotationCenterX: 47,
+            rotationCenterY: 55
+        });
+        var target = sprite.createClone();
+        vm.runtime.targets.push(target);
+        vm.editingTarget = target;
+        vm.emitTargetsUpdate();
+        vm.emitWorkspaceUpdate();
     });
     loadProject();
 
