@@ -37,7 +37,11 @@ window.onload = function() {
     document.getElementById('newSprite').addEventListener('click', function() {
         var blocks = new window.Blocks();
         var sprite = new window.Sprite(blocks);
-        sprite.name = 'Sprite1';
+        var i = 1;
+        while (vm.runtime.getCloneByName('Sprite' + i)) {
+            ++i;
+        }
+        sprite.name = 'Sprite' + i;
         sprite.costumes.push({
             skin: '/assets/scratch_cat.svg',
             name: 'costume1',
