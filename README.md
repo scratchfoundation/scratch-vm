@@ -22,7 +22,7 @@ npm install
 ## Development Server
 This requires Node.js to be installed.
 
-For convenience, we've included a development server with the VM. This is useful because the VM can take advantage of executing in a WebWorker, which is not permitted in a local file.
+For convenience, we've included a development server with the VM. This is sometimes useful when running in an environment that's loading remote resources (e.g., SVGs from the Scratch server).
 
 ## Running the Development Server
 Open a Command Prompt or Terminal in the repository and run:
@@ -61,48 +61,44 @@ var vm = new VirtualMachine();
 
 // Block events
 workspace.addChangeListener(vm.blockListener);
-var flyoutWorkspace = workspace.toolbox_.flyout_.workspace_;
-flyoutWorkspace.addChangeListener(vm.flyoutBlockListener);
 
 // Run threads
-vm.runtime.start();
+vm.start();
 ```
 
 ## Abstract Syntax Tree
 
 #### Overview
-The Virtual Machine constructs and maintains the state of an [Abstract Syntax Tree](https://en.wikipedia.org/wiki/Abstract_syntax_tree) (AST) by listening to events emitted by the [scratch-blocks](https://github.com/LLK/scratch-blocks) workspace via the `blockListener`. At any time, the current state of the AST can be viewed by inspecting the `vm.runtime.blocks` object.
+The Virtual Machine constructs and maintains the state of an [Abstract Syntax Tree](https://en.wikipedia.org/wiki/Abstract_syntax_tree) (AST) by listening to events emitted by the [scratch-blocks](https://github.com/LLK/scratch-blocks) workspace via the `blockListener`. Each target (code-running object, for example, a sprite) keeps an AST for its blocks. At any time, the current state of an AST can be viewed by inspecting the `vm.runtime.targets[...].blocks` object.
 
 #### Anatomy of a Block
+The VM's block representation contains all the important information for execution and storage. Here's an example representing the "when key pressed" script on a workspace:
 ```json
 {
-    "7AJZR#NA;m*b}R]pdq63": {
-      "id": "7AJZR#NA;m*b}R]pdq63",
-      "opcode": "control_wait",
+  "_blocks": {
+    "Q]PK~yJ@BTV8Y~FfISeo": {
+      "id": "Q]PK~yJ@BTV8Y~FfISeo",
+      "opcode": "event_whenkeypressed",
       "inputs": {
-        "DURATION": {
-          "name": "DURATION",
-          "block": ",xA8/S!Z6+kR,9dph.rO"
-        }
       },
-      "fields": {},
-      "next": null,
-      "topLevel": true
-    },
-    ",xA8/S!Z6+kR,9dph.rO": {
-      "id": ",xA8/S!Z6+kR,9dph.rO",
-      "opcode": "math_number",
-      "inputs": {},
       "fields": {
-        "NUM": {
-          "name": "NUM",
-          "value": "1"
+        "KEY_OPTION": {
+          "name": "KEY_OPTION",
+          "value": "space"
         }
       },
       "next": null,
-      "topLevel": false
+      "topLevel": true,
+      "parent": null,
+      "shadow": false,
+      "x": -69.333333333333,
+      "y": 174
     }
-  }
+  },
+  "_scripts": [
+    "Q]PK~yJ@BTV8Y~FfISeo"
+  ]
+}
 ```
 
 ## Testing
