@@ -411,3 +411,4 @@ Blocks.prototype._deleteScript = function (topBlockId) {
 };
 
 module.exports = Blocks;
+if (typeof window !== 'undefined') window.Blocks = module.exports;
