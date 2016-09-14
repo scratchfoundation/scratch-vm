@@ -634,8 +634,9 @@ var specMap = {
         'opcode':'event_broadcast',
         'argMap':[
             {
-                'type':'field',
-                'fieldName':'BROADCAST_OPTION'
+                'type':'input',
+                'inputOp':'event_broadcast_menu',
+                'inputName':'BROADCAST_OPTION'
             }
         ]
     },
@@ -643,8 +644,9 @@ var specMap = {
         'opcode':'event_broadcastandwait',
         'argMap':[
             {
-                'type':'field',
-                'fieldName':'BROADCAST_OPTION'
+                'type':'input',
+                'inputOp':'event_broadcast_menu',
+                'inputName':'BROADCAST_OPTION'
             }
         ]
     },
