@@ -174,7 +174,7 @@ VirtualMachine.prototype.SpriteSave = function () {
     this.visible = false;
     this.isStage = false;
     this.currentCostume = 0;
-}
+};
 
 VirtualMachine.prototype.toJSON = function () {
     var Project = [];
@@ -194,7 +194,7 @@ VirtualMachine.prototype.toJSON = function () {
         Project.push(SpriteSave);
     }
     return JSON.stringify(Project);
-}
+};
 
 VirtualMachine.prototype.fromJSON = function (json) {
     var Project = JSON.parse(json);
@@ -218,7 +218,7 @@ VirtualMachine.prototype.fromJSON = function (json) {
     this.editingTarget = this.runtime.targets[0];
     this.emitTargetsUpdate();
     this.emitWorkspaceUpdate();
-}
+};
 
 /**
  * Handle a Blockly event for the current editing target.
