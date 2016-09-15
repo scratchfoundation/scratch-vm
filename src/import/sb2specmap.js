@@ -905,12 +905,12 @@ var specMap = {
         'argMap':[
             {
                 'type':'input',
-                'inputOp':'sensing_ofattributemenu',
-                'inputName':'ATTRIBUTE'
+                'inputOp':'sensing_of_property_menu',
+                'inputName':'PROPERTY'
             },
             {
                 'type':'input',
-                'inputOp':'sensing_ofobjectmenu',
+                'inputOp':'sensing_of_object_menu',
                 'inputName':'OBJECT'
             }
         ]
@@ -1230,13 +1230,22 @@ var specMap = {
             }
         ]
     },
+    'contentsOfList:':{
+        'opcode':'data_list',
+        'argMap':[
+            {
+                'type':'field',
+                'fieldName':'LIST'
+            }
+        ]
+    },
     'append:toList:':{
-        'opcode':'data_listadd',
+        'opcode':'data_addtolist',
         'argMap':[
             {
                 'type':'input',
                 'inputOp':'text',
-                'inputName':'VALUE'
+                'inputName':'ITEM'
             },
             {
                 'type':'field',
@@ -1245,12 +1254,12 @@ var specMap = {
         ]
     },
     'deleteLine:ofList:':{
-        'opcode':'data_listdelete',
+        'opcode':'data_deleteoflist',
         'argMap':[
             {
                 'type':'input',
-                'inputOp':'text',
-                'inputName':'LINE'
+                'inputOp':'math_integer',
+                'inputName':'INDEX'
             },
             {
                 'type':'field',
@@ -1259,17 +1268,17 @@ var specMap = {
         ]
     },
     'insert:at:ofList:':{
-        'opcode':'data_listinsert',
+        'opcode':'data_insertatlist',
         'argMap':[
             {
                 'type':'input',
                 'inputOp':'text',
-                'inputName':'VALUE'
+                'inputName':'ITEM'
             },
             {
                 'type':'input',
-                'inputOp':'text',
-                'inputName':'LINE'
+                'inputOp':'math_integer',
+                'inputName':'INDEX'
             },
             {
                 'type':'field',
@@ -1278,12 +1287,12 @@ var specMap = {
         ]
     },
     'setLine:ofList:to:':{
-        'opcode':'data_listreplace',
+        'opcode':'data_replaceitemoflist',
         'argMap':[
             {
                 'type':'input',
-                'inputOp':'text',
-                'inputName':'LINE'
+                'inputOp':'math_integer',
+                'inputName':'INDEX'
             },
             {
                 'type':'field',
@@ -1292,17 +1301,17 @@ var specMap = {
             {
                 'type':'input',
                 'inputOp':'text',
-                'inputName':'VALUE'
+                'inputName':'ITEM'
             }
         ]
     },
     'getLine:ofList:':{
-        'opcode':'data_listitem',
+        'opcode':'data_itemoflist',
         'argMap':[
             {
                 'type':'input',
-                'inputOp':'text',
-                'inputName':'LINE'
+                'inputOp':'math_integer',
+                'inputName':'INDEX'
             },
             {
                 'type':'field',
@@ -1311,7 +1320,7 @@ var specMap = {
         ]
     },
     'lineCountOfList:':{
-        'opcode':'data_listlength',
+        'opcode':'data_lengthoflist',
         'argMap':[
             {
                 'type':'field',
@@ -1320,7 +1329,7 @@ var specMap = {
         ]
     },
     'list:contains:':{
-        'opcode':'data_listcontains',
+        'opcode':'data_listcontainsitem',
         'argMap':[
             {
                 'type':'field',
@@ -1329,7 +1338,7 @@ var specMap = {
             {
                 'type':'input',
                 'inputOp':'text',
-                'inputName':'VALUE'
+                'inputName':'ITEM'
             }
         ]
     },
