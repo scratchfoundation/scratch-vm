@@ -36,9 +36,8 @@ window.onload = function() {
     var canvas = document.getElementById('scratch-stage');
     window.renderer = new window.RenderWebGLLocal(canvas);
 
-    // Instantiate audio engine and connect it to the VM
-    window.audioLocal = new window.AudioLocal();
-    window.audioLocal.connectWorker(window.vm.vmWorker);
+    // Instantiate audio engine
+    window.audioEngine = new window.AudioEngine();
 
     // Instantiate scratch-blocks and attach it to the DOM.
     var toolbox = document.getElementById('toolbox');

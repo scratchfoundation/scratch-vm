@@ -280,7 +280,7 @@ Clone.prototype.getName = function () {
 // Audio
 
 Clone.prototype.playSound = function (soundNum) {
-    this.audioWorker.playSound(soundNum);
+    window.audioEngine.playSound(soundNum);
 }
 
 Clone.prototype.stopAllSounds = function () {
