@@ -46,7 +46,12 @@ function Sprite (blocks, runtime) {
  */
 Sprite.prototype.createClone = function () {
     var newClone = new Clone(this, this.runtime);
+    newClone.isOriginal = this.clones.length == 0;
     this.clones.push(newClone);
+    if (newClone.isOriginal) {
+        newClone.initDrawable();
+        newClone.updateAllDrawableProperties();
+    }
     return newClone;
 };
 

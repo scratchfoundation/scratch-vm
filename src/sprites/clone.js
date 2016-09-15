@@ -31,8 +31,6 @@ function Clone(sprite, runtime) {
      * @type {?Number}
      */
     this.drawableID = null;
-
-    this.initDrawable();
 }
 util.inherits(Clone, Target);
 
@@ -324,7 +322,6 @@ Clone.prototype.makeClone = function () {
     }
     this.runtime.changeCloneCounter(1);
     var newClone = this.sprite.createClone();
-    newClone.isOriginal = false;
     newClone.x = this.x;
     newClone.y = this.y;
     newClone.direction = this.direction;
@@ -332,6 +329,8 @@ Clone.prototype.makeClone = function () {
     newClone.size = this.size;
     newClone.currentCostume = this.currentCostume;
     newClone.effects = JSON.parse(JSON.stringify(this.effects));
+    newClone.initDrawable();
+    newClone.updateAllDrawableProperties();
     return newClone;
 };
 
