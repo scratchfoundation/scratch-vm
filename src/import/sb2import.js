@@ -40,7 +40,7 @@ function parseScratchObject (object, runtime, topLevel) {
     // Blocks container for this object.
     var blocks = new Blocks();
     // @todo: For now, load all Scratch objects (stage/sprites) as a Sprite.
-    var sprite = new Sprite(blocks);
+    var sprite = new Sprite(blocks, runtime);
     // Sprite/stage name from JSON.
     if (object.hasOwnProperty('objName')) {
         sprite.name = object.objName;

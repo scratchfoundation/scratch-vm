@@ -5,10 +5,12 @@ var Target = require('../engine/target');
 /**
  * Clone (instance) of a sprite.
  * @param {!Sprite} sprite Reference to the sprite.
+ * @param {Runtime} runtime Reference to the runtime.
  * @constructor
  */
-function Clone(sprite) {
+function Clone(sprite, runtime) {
     Target.call(this, sprite.blocks);
+    this.runtime = runtime;
     /**
      * Reference to the sprite that this is a clone of.
      * @type {!Sprite}
@@ -29,8 +31,6 @@ function Clone(sprite) {
      * @type {?Number}
      */
     this.drawableID = null;
-
-    this.initDrawable();
 }
 util.inherits(Clone, Target);
 
@@ -42,9 +42,22 @@ Clone.prototype.initDrawable = function () {
         this.drawableID = this.renderer.createDrawable();
         this.updateAllDrawableProperties();
     }
+    // If we're a clone, start the hats.
+    if (!this.isOriginal) {
+        this.runtime.startHats(
+            'control_start_as_clone', null, this
+        );
+    }
 };
 
 // Clone-level properties.
+/**
+ * Whether this represents an "original" clone, i.e., created by the editor
+ * and not clone blocks. In interface terms, this true for a "sprite."
+ * @type {boolean}
+ */
+Clone.prototype.isOriginal = true;
+
 /**
  * Whether this clone represents the Scratch stage.
  * @type {boolean}
@@ -296,6 +309,42 @@ Clone.prototype.colorIsTouchingColor = function (targetRgb, maskRgb) {
         );
     }
     return false;
+};
+
+/**
+ * Make a clone of this clone, copying any run-time properties.
+ * If we've hit the global clone limit, returns null.
+ * @return {!Clone} New clone object.
+ */
+Clone.prototype.makeClone = function () {
+    if (!this.runtime.clonesAvailable()) {
+        return; // Hit max clone limit.
+    }
+    this.runtime.changeCloneCounter(1);
+    var newClone = this.sprite.createClone();
+    newClone.x = this.x;
+    newClone.y = this.y;
+    newClone.direction = this.direction;
+    newClone.visible = this.visible;
+    newClone.size = this.size;
+    newClone.currentCostume = this.currentCostume;
+    newClone.effects = JSON.parse(JSON.stringify(this.effects));
+    newClone.initDrawable();
+    newClone.updateAllDrawableProperties();
+    return newClone;
+};
+
+/**
+ * Dispose of this clone, destroying any run-time properties.
+ */
+Clone.prototype.dispose = function () {
+    if (this.isOriginal) { // Don't allow a non-clone to delete itself.
+        return;
+    }
+    this.runtime.changeCloneCounter(-1);
+    if (this.renderer && this.drawableID !== null) {
+        this.renderer.destroyDrawable(this.drawableID);
+    }
 };
 
 module.exports = Clone;

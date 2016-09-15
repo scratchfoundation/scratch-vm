@@ -207,7 +207,10 @@ VirtualMachine.prototype.setEditingTarget = function (targetId) {
 VirtualMachine.prototype.emitTargetsUpdate = function () {
     this.emit('targetsUpdate', {
         // [[target id, human readable target name], ...].
-        targetList: this.runtime.targets.map(function(target) {
+        targetList: this.runtime.targets.filter(function (target) {
+            // Don't report clones.
+            return !target.hasOwnProperty('isOriginal') || target.isOriginal;
+        }).map(function(target) {
             return [target.id, target.getName()];
         }),
         // Currently editing target id.

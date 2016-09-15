@@ -5,9 +5,11 @@ var Blocks = require('../engine/blocks');
  * Sprite to be used on the Scratch stage.
  * All clones of a sprite have shared blocks, shared costumes, shared variables.
  * @param {?Blocks} blocks Shared blocks object for all clones of sprite.
+ * @param {Runtime} runtime Reference to the runtime.
  * @constructor
  */
-function Sprite (blocks) {
+function Sprite (blocks, runtime) {
+    this.runtime = runtime;
     if (!blocks) {
         // Shared set of blocks for all clones.
         blocks = new Blocks();
@@ -43,8 +45,13 @@ function Sprite (blocks) {
  * @returns {!Clone} Newly created clone.
  */
 Sprite.prototype.createClone = function () {
-    var newClone = new Clone(this);
+    var newClone = new Clone(this, this.runtime);
+    newClone.isOriginal = this.clones.length == 0;
     this.clones.push(newClone);
+    if (newClone.isOriginal) {
+        newClone.initDrawable();
+        newClone.updateAllDrawableProperties();
+    }
     return newClone;
 };
 
