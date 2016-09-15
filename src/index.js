@@ -178,6 +178,7 @@ VirtualMachine.prototype.SpriteSave = function () {
 
 VirtualMachine.prototype.toJSON = function () {
     var Project = [];
+    var i = 0;
     for (i = 0; i < this.runtime.targets.length; i++) {
         var SpriteSave = new this.SpriteSave();
         SpriteSave.blocks = this.runtime.targets[i].sprite.blocks._blocks;
@@ -199,6 +200,7 @@ VirtualMachine.prototype.toJSON = function () {
 VirtualMachine.prototype.fromJSON = function (json) {
     var Project = JSON.parse(json);
     var targets = [];
+    var i = 0;
     for (i = 0; i < Project.length; i++) {
         var blocks = new Blocks();
         blocks._blocks = Project[i].blocks;
