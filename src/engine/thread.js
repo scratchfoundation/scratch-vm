@@ -30,6 +30,12 @@ function Thread (firstBlock) {
     this.status = 0; /* Thread.STATUS_RUNNING */
 
     /**
+     * Target of this thread.
+     * @type {?Target}
+     */
+    this.target = null;
+
+    /**
      * Whether the thread requests its script to glow during this frame.
      * @type {boolean}
      */
@@ -143,6 +149,22 @@ Thread.prototype.atStackTop = function () {
  */
 Thread.prototype.setStatus = function (status) {
     this.status = status;
+};
+
+/**
+ * Set thread target.
+ * @param {?Target} target Target for this thread.
+ */
+Thread.prototype.setTarget = function (target) {
+    this.target = target;
+};
+
+/**
+ * Get thread target.
+ * @return {?Target} Target for this thread, if available.
+ */
+Thread.prototype.getTarget = function () {
+    return this.target;
 };
 
 module.exports = Thread;

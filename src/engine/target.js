@@ -37,4 +37,12 @@ Target.prototype.getName = function () {
     return this.id;
 };
 
+/**
+ * Call to destroy a target.
+ * @abstract
+ */
+Target.prototype.dispose = function () {
+
+};
+
 module.exports = Target;
