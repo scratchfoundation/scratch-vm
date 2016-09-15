@@ -249,8 +249,7 @@ Runtime.prototype.toggleScript = function (topBlockId) {
         }
     }
     // Otherwise add it.
-    // @todo: Don't directly reference `self.vmInstance.`
-    this._pushThread(topBlockId, self.vmInstance.editingTarget);
+    this._pushThread(topBlockId, this._editingTarget);
 };
 
 /**
@@ -434,7 +433,7 @@ Runtime.prototype._updateScriptGlows = function () {
     // Find all scripts that should be glowing.
     for (var i = 0; i < this.threads.length; i++) {
         var thread = this.threads[i];
-        var target = this.targetForThread(thread);
+        var target = thread.target;
         if (thread.requestScriptGlowInFrame && target == this._editingTarget) {
             var blockForThread = thread.peekStack() || thread.topBlock;
             var script = target.blocks.getTopLevelScript(blockForThread);
