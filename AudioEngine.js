@@ -32,11 +32,29 @@ function AudioEngine () {
 }
 
 AudioEngine.prototype.playSound = function (soundNum) {
-  this.soundSamplers[soundNum].triggerAttack();
+    this.soundSamplers[soundNum].triggerAttack();
 };
 
-AudioEngine.prototype.helloWorld = function () {
-  console.log('it lives');
+AudioEngine.prototype.playNoteForBeats = function(note, beats) {
+    var freq = this._midiToFreq(note);
+    this.synth.triggerAttackRelease(freq, beats);        
+};
+
+AudioEngine.prototype.playDrumForBeats = function(drumNum, beats) {
+    this.drumSamplers[drumNum].triggerAttack();        
+};
+
+AudioEngine.prototype.stopAllSounds = function() {
+    // stop synth notes
+    this.synth.releaseAll();
+    // stop drum notes
+    for (var i=0; i<this.drumSamplers.length; i++) {
+        this.drumSamplers[i].triggerRelease();
+    }
+    // stop sounds triggered with playSound
+    for (var i=0; i<this.soundSamplers.length; i++) {
+        this.soundSamplers[i].triggerRelease();
+    }
 };
 
 AudioEngine.prototype._loadSoundFiles = function(filenames) {
@@ -55,18 +73,7 @@ AudioEngine.prototype._midiToFreq = function(midiNote) {
 	return freq;
 };
 
-AudioEngine.prototype.clamp = function(input, min, max) {
+AudioEngine.prototype._clamp = function(input, min, max) {
     return Math.min(Math.max(input, min), max);
 };
 
-AudioEngine.prototype.playNoteForBeats = function(note, beats) {
-    var freq = this._midiToFreq(note);
-    this.synth.triggerAttackRelease(freq, beats);        
-};
-
-AudioEngine.prototype.stopAllSounds = function() {
-	// stop sounds triggered with playSound
-    for (var i=0; i<this.soundSamplers.length; i++) {
-        this.soundSamplers[i].triggerRelease();
-    }
-};

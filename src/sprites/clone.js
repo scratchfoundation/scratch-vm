@@ -284,11 +284,15 @@ Clone.prototype.playSound = function (soundNum) {
 }
 
 Clone.prototype.stopAllSounds = function () {
-    this.audioWorker.stopAllSounds();
+    window.audioEngine.stopAllSounds();
 }
 
 Clone.prototype.playNoteForBeats = function (note,beats) {
-    this.audioWorker.playNoteForBeats(note, beats);
+    window.audioEngine.playNoteForBeats(note, beats);
+}
+
+Clone.prototype.playDrumForBeats = function (drumNum,beats) {
+    window.audioEngine.playDrumForBeats(drumNum, beats);
 }
 
 /**

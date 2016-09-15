@@ -1,3 +1,6 @@
+var Cast = require('../util/cast');
+var Promise = require('promise');
+
 function Scratch3SoundBlocks(runtime) {
     /**
      * The runtime instantiating this block package.
@@ -44,7 +47,7 @@ Scratch3SoundBlocks.prototype.playNoteForBeats = function (args, util) {
 };
 
 Scratch3SoundBlocks.prototype.playDrumForBeats = function (args, util) {
-    self.postMessage({method: 'playdrumforbeats', drum:args.DRUMTYPE, beats:args.BEATS});
+    util.target.playDrumForBeats(args.DRUMTYPE, args.BEATS);
     return new Promise(function(resolve) {
         setTimeout(function() {
             resolve();
@@ -53,15 +56,12 @@ Scratch3SoundBlocks.prototype.playDrumForBeats = function (args, util) {
 };
 
 Scratch3SoundBlocks.prototype.setEffect = function (args, util) {
-    self.postMessage({method: 'seteffect', effect:args.EFFECT, value:args.VALUE});
 };
 
 Scratch3SoundBlocks.prototype.changeEffect = function (args, util) {
-    self.postMessage({method: 'changeeffect', effect:args.EFFECT, value:args.VALUE});
 };
 
 Scratch3SoundBlocks.prototype.clearEffects = function (args, util) {
-    self.postMessage({method: 'cleareffects'});
 };
 
 Scratch3SoundBlocks.prototype.soundsMenu = function (args, util) {
