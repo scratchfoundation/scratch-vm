@@ -162,6 +162,64 @@ VirtualMachine.prototype.createEmptyProject = function () {
     this.emitWorkspaceUpdate();
 };
 
+VirtualMachine.prototype.SpriteSave = function () {
+    this.blocks = '';
+    this.scripts = '';
+    this.name = '';
+    this.costumes = [];
+    this.x = 0;
+    this.y = 0;
+    this.direction = 0;
+    this.size = 0;
+    this.visible = false;
+    this.isStage = false;
+    this.currentCostume = 0;
+}
+
+VirtualMachine.prototype.toJSON = function () {
+    var Project = [];
+    for (i = 0; i < this.runtime.targets.length; i++) {
+        var SpriteSave = new this.SpriteSave();
+        SpriteSave.blocks = this.runtime.targets[i].sprite.blocks._blocks;
+        SpriteSave.scripts = this.runtime.targets[i].sprite.blocks._scripts;
+        SpriteSave.name = this.runtime.targets[i].sprite.name;
+        SpriteSave.costumes = this.runtime.targets[i].sprite.costumes;
+        SpriteSave.x = this.runtime.targets[i].x;
+        SpriteSave.y = this.runtime.targets[i].y;
+        SpriteSave.isStage = this.runtime.targets[i].isStage;
+        SpriteSave.direction = this.runtime.targets[i].direction;
+        SpriteSave.size = this.runtime.targets[i].size;
+        SpriteSave.visible = this.runtime.targets[i].visible;
+        SpriteSave.currentCostume = this.runtime.targets[i].currentCostume;
+        Project.push(SpriteSave);
+    }
+    return JSON.stringify(Project);
+}
+
+VirtualMachine.prototype.fromJSON = function (json) {
+    var Project = JSON.parse(json);
+    var targets = [];
+    for (i = 0; i < Project.length; i++) {
+        var blocks = new Blocks();
+        blocks._blocks = Project[i].blocks;
+        blocks._scripts = Project[i].scripts;
+        var sprite = new Sprite(blocks);
+        sprite.name = Project[i].name;
+        sprite.costumes = Project[i].costumes;
+        var target = sprite.createClone();
+        target.x = Project[i].x;
+        target.y = Project[i].y;
+        target.direction = Project[i].direction;
+        target.size = Project[i].size;
+        target.visible = Project[i].visible;
+        targets.push(target);
+    }
+    this.runtime.targets = targets;
+    this.editingTarget = this.runtime.targets[0];
+    this.emitTargetsUpdate();
+    this.emitWorkspaceUpdate();
+}
+
 /**
  * Handle a Blockly event for the current editing target.
  * @param {!Blockly.Event} e Any Blockly event.
