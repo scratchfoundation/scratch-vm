@@ -315,6 +315,7 @@ Clone.prototype.colorIsTouchingColor = function (targetRgb, maskRgb) {
 
 /**
  * Make a clone of this clone, copying any run-time properties.
+ * If we've hit the global clone limit, returns null.
  * @return {!Clone} New clone object.
  */
 Clone.prototype.makeClone = function () {
