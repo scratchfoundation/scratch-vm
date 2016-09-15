@@ -173,6 +173,7 @@ Sequencer.prototype.proceedThread = function (thread) {
 Sequencer.prototype.retireThread = function (thread) {
     thread.stack = [];
     thread.stackFrame = [];
+    thread.requestScriptGlowInFrame = false;
     thread.setStatus(Thread.STATUS_DONE);
 };
 

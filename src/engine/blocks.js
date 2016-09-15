@@ -185,6 +185,10 @@ Blocks.prototype.blocklyListen = function (e, isFlyout, opt_runtime) {
         if (this._blocks[e.blockId].shadow) {
             return;
         }
+        // Inform any runtime to forget about glows on this script.
+        if (opt_runtime && this._blocks[e.blockId].topLevel) {
+            opt_runtime.quietGlow(e.blockId);
+        }
         this.deleteBlock({
             id: e.blockId
         });

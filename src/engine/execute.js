@@ -22,6 +22,13 @@ var execute = function (sequencer, thread) {
     var currentBlockId = thread.peekStack();
     var currentStackFrame = thread.peekStackFrame();
 
+    // Verify that the block still exists.
+    if (!target ||
+        typeof target.blocks.getBlock(currentBlockId) === 'undefined') {
+        // No block found: stop the thread; script no longer exists.
+        sequencer.retireThread(thread);
+        return;
+    }
     // Query info about the block.
     var opcode = target.blocks.getOpcode(currentBlockId);
     var blockFunction = runtime.getOpcodeFunction(opcode);

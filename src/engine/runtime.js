@@ -384,7 +384,9 @@ Runtime.prototype._updateScriptGlows = function () {
         if (thread.requestScriptGlowInFrame && target == this._editingTarget) {
             var blockForThread = thread.peekStack() || thread.topBlock;
             var script = target.blocks.getTopLevelScript(blockForThread);
-            requestedGlowsThisFrame.push(script);
+            if (script) {
+                requestedGlowsThisFrame.push(script);
+            }
         }
     }
     // Compare to previous frame.
@@ -407,6 +409,19 @@ Runtime.prototype._updateScriptGlows = function () {
         }
     }
     this._scriptGlowsPreviousFrame = finalScriptGlows;
+};
+
+/**
+ * "Quiet" a script's glow: stop the VM from generating glow/unglow events
+ * about that script. Use when a script has just been deleted, but we may
+ * still be tracking glow data about it.
+ * @param {!string} scriptBlockId Id of top-level block in script to quiet.
+ */
+Runtime.prototype.quietGlow = function (scriptBlockId) {
+    var index = this._scriptGlowsPreviousFrame.indexOf(scriptBlockId);
+    if (index > -1) {
+        this._scriptGlowsPreviousFrame.splice(index, 1);
+    }
 };
 
 /**

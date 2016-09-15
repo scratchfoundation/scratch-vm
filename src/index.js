@@ -3,7 +3,6 @@ var util = require('util');
 
 var Runtime = require('./engine/runtime');
 var sb2import = require('./import/sb2import');
-
 var Sprite = require('./sprites/sprite');
 var Blocks = require('./engine/blocks');
 
@@ -225,7 +224,10 @@ VirtualMachine.prototype.emitWorkspaceUpdate = function () {
         'xml': this.editingTarget.blocks.toXML()
     });
 };
+<<<<<<< HEAD
 
+=======
+>>>>>>> LLK/develop
 /**
  * Export and bind to `window`
  */

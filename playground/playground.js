@@ -30,6 +30,10 @@ window.onload = function() {
         document.location = '#' + document.getElementById('projectId').value;
         location.reload();
     };
+    document.getElementById('createEmptyProject').addEventListener('click', function() {
+        document.location = '#' + 'createEmptyProject';
+        location.reload();
+    });
     loadProject();
 
     // Instantiate the renderer and connect it to the VM.
