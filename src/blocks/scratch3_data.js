@@ -21,18 +21,20 @@ Scratch3DataBlocks.prototype.getPrimitives = function () {
 };
 
 Scratch3DataBlocks.prototype.getVariable = function (args, util) {
-    return util.target.getVariable(args.VARIABLE);
+    var variable = util.target.lookupOrCreateVariable(args.VARIABLE);
+    return variable.value;
 };
 
 Scratch3DataBlocks.prototype.setVariable = function (args, util) {
-    util.target.setVariable(args.VARIABLE, args.VALUE);
+    var variable = util.target.lookupOrCreateVariable(args.VARIABLE);
+    variable.value = args.VALUE;
 };
 
 Scratch3DataBlocks.prototype.changeVariable = function (args, util) {
-    var value = util.target.getVariable(args.VARIABLE);
-    var castedValue = Cast.toNumber(value);
+    var variable = util.target.lookupOrCreateVariable(args.VARIABLE);
+    var castedValue = Cast.toNumber(variable.value);
     var dValue = Cast.toNumber(args.VALUE);
-    util.target.setVariable(args.VARIABLE, castedValue + dValue);
+    variable.value = castedValue + dValue;
 };
 
 module.exports = Scratch3DataBlocks;
