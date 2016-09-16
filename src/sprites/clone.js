@@ -31,6 +31,18 @@ function Clone(sprite, runtime) {
      * @type {?Number}
      */
     this.drawableID = null;
+    /**
+     * Dictionary of variables and their values for this clone.
+     * Key is the variable name.
+     * @type {Object.<string,*>}
+     */
+    this.variables = {};
+    /**
+     * Dictionary of lists and their contents for this clone.
+     * Key is the list name.
+     * @type {Object.<string,*>}
+     */
+    this.lists = {};
 }
 util.inherits(Clone, Target);
 

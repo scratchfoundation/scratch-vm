@@ -68,6 +68,27 @@ function parseScratchObject (object, runtime, topLevel) {
     var target = sprite.createClone();
     // Add it to the runtime's list of targets.
     runtime.targets.push(target);
+    // Load target properties from JSON.
+    if (object.hasOwnProperty('variables')) {
+        for (var j = 0; j < object.variables.length; j++) {
+            var variable = object.variables[j];
+            target.variables[variable.name] = {
+                name: variable.name,
+                value: variable.value,
+                isCloud: variable.isPersistent
+            };
+        }
+    }
+    if (object.hasOwnProperty('lists')) {
+        for (var k = 0; k < object.lists.length; k++) {
+            var list = object.lists[k];
+            target.lists[list.listName] = {
+                name: list.listName,
+                contents: list.contents
+                // @todo: monitor properties.
+            };
+        }
+    }
     if (object.scratchX) {
         target.x = object.scratchX;
     }
@@ -90,8 +111,8 @@ function parseScratchObject (object, runtime, topLevel) {
     target.isStage = topLevel;
     // The stage will have child objects; recursively process them.
     if (object.children) {
-        for (var j = 0; j < object.children.length; j++) {
-            parseScratchObject(object.children[j], runtime, false);
+        for (var m = 0; m < object.children.length; m++) {
+            parseScratchObject(object.children[m], runtime, false);
         }
     }
 }
