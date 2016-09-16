@@ -215,6 +215,7 @@ VirtualMachine.prototype.fromJSON = function (json) {
         target.size = Project[i].size;
         target.visible = Project[i].visible;
         target.currentCostume = Project[i].currentCostume;
+        target.isStage = Project[i].isStage;
         targets.push(target);
     }
     this.runtime.targets = targets;
