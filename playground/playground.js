@@ -30,8 +30,16 @@ window.onload = function() {
         document.location = '#' + document.getElementById('projectId').value;
         location.reload();
     };
-    document.getElementById('createEmptyProject').addEventListener('click',
-    function() {
+    jsonPicker = document.getElementById('jsonPicker');
+    jsonPicker.addEventListener('change', function(e) {
+        var file = jsonPicker.files[0];
+        var reader = new FileReader();
+        reader.onload = function(e) {
+            window.vm.fromJSON(reader.result);
+        }
+        reader.readAsText(file);
+    });
+    document.getElementById('createEmptyProject').addEventListener('click', function() {
         document.location = '#' + 'createEmptyProject';
         location.reload();
     });
