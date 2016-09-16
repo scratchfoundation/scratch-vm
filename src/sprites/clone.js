@@ -1,6 +1,8 @@
 var util = require('util');
 var MathUtil = require('../util/math-util');
 var Target = require('../engine/target');
+var Variable = require('../engine/variable');
+var List = require('../engine/list');
 
 /**
  * Clone (instance) of a sprite.
@@ -357,6 +359,49 @@ Clone.prototype.dispose = function () {
     if (this.renderer && this.drawableID !== null) {
         this.renderer.destroyDrawable(this.drawableID);
     }
+};
+
+/**
+ * Look up a variable object for this clone, and create it if one doesn't exist.
+ * Search begins for local variables; then look for globals.
+ * @param {!string} name Name of the variable.
+ * @return {!Object} Variable object.
+ */
+Clone.prototype.lookupOrCreateVariable = function (name) {
+    // If we have a local copy, return it.
+    if (this.variables.hasOwnProperty(name)) {
+        return this.variables[name];
+    }
+    // If the stage has a global copy, return it.
+    if (!this.isStage) {
+        var stage = this.runtime.getTargetForStage();
+        if (stage.variables.hasOwnProperty(name)) {
+            return stage.variables[name];
+        }
+    }
+    // No variable with this name exists - create it locally.
+    var newVariable = new Variable(name, 0, false);
+    this.variables[name] = newVariable;
+    return newVariable;
+};
+
+/**
+ * Get the value of a variable.
+ * @param {!string} name Name of the variable.
+ * @returns {(string|Number)} Value for the named variable.
+ */
+Clone.prototype.getVariable = function (name) {
+    return this.lookupOrCreateVariable(name).value;
+};
+
+/**
+ * Set the value of a variable.
+ * @param {!string} name Name of the variable.
+ * @param {(string|Number)} newValue Value for the named variable.
+ */
+Clone.prototype.setVariable = function (name, newValue) {
+    var variable = this.lookupOrCreateVariable(name);
+    variable.value = newValue;
 };
 
 module.exports = Clone;
