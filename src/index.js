@@ -194,7 +194,7 @@ VirtualMachine.prototype.toJSON = function () {
         SpriteSave.currentCostume = this.runtime.targets[i].currentCostume;
         Project.push(SpriteSave);
     }
-    return JSON.stringify(Project);
+    return JSON.stringify(Project, null, 4);
 };
 
 VirtualMachine.prototype.fromJSON = function (json) {
