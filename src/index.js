@@ -214,6 +214,7 @@ VirtualMachine.prototype.fromJSON = function (json) {
         target.direction = Project[i].direction;
         target.size = Project[i].size;
         target.visible = Project[i].visible;
+        target.currentCostume = Project[i].currentCostume;
         targets.push(target);
     }
     this.runtime.targets = targets;
