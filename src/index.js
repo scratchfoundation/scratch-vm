@@ -105,7 +105,11 @@ VirtualMachine.prototype.postIOData = function (device, data) {
  * @param {?string} json JSON string representing the project.
  */
 VirtualMachine.prototype.loadProject = function (json) {
-    // @todo: Handle other formats, e.g., Scratch 1.4, Scratch 3.0.
+    if (JSON.parse(json).version == '3.0') {
+        this.fromJSON(json);
+        return;
+    }
+    // @todo: Handle other formats, e.g., Scratch 1.4.
     sb2import(json, this.runtime);
     // Select the first target for editing, e.g., the stage.
     this.editingTarget = this.runtime.targets[0];
@@ -157,12 +161,13 @@ VirtualMachine.prototype.createEmptyProject = function () {
     target1.direction = 90;
     target1.size = 100;
     target1.visible = true;
+    this.projectName = 'Untitled';
     this.editingTarget = this.runtime.targets[0];
     this.emitTargetsUpdate();
     this.emitWorkspaceUpdate();
 };
 
-VirtualMachine.prototype.SpriteSave = function () {
+VirtualMachine.prototype.spriteSave = function () {
     this.blocks = '';
     this.scripts = '';
     this.name = '';
@@ -176,48 +181,55 @@ VirtualMachine.prototype.SpriteSave = function () {
     this.currentCostume = 0;
 };
 
+VirtualMachine.prototype.projectName = 'Untitled';
+
 VirtualMachine.prototype.toJSON = function () {
-    var Project = [];
+    var project = [];
     var i = 0;
     for (i = 0; i < this.runtime.targets.length; i++) {
-        var SpriteSave = new this.SpriteSave();
-        SpriteSave.blocks = this.runtime.targets[i].sprite.blocks._blocks;
-        SpriteSave.scripts = this.runtime.targets[i].sprite.blocks._scripts;
-        SpriteSave.name = this.runtime.targets[i].sprite.name;
-        SpriteSave.costumes = this.runtime.targets[i].sprite.costumes;
-        SpriteSave.x = this.runtime.targets[i].x;
-        SpriteSave.y = this.runtime.targets[i].y;
-        SpriteSave.isStage = this.runtime.targets[i].isStage;
-        SpriteSave.direction = this.runtime.targets[i].direction;
-        SpriteSave.size = this.runtime.targets[i].size;
-        SpriteSave.visible = this.runtime.targets[i].visible;
-        SpriteSave.currentCostume = this.runtime.targets[i].currentCostume;
-        Project.push(SpriteSave);
+        var spriteSave = new this.spriteSave();
+        spriteSave.blocks = this.runtime.targets[i].sprite.blocks._blocks;
+        spriteSave.scripts = this.runtime.targets[i].sprite.blocks._scripts;
+        spriteSave.name = this.runtime.targets[i].sprite.name;
+        spriteSave.costumes = this.runtime.targets[i].sprite.costumes;
+        spriteSave.x = this.runtime.targets[i].x;
+        spriteSave.y = this.runtime.targets[i].y;
+        spriteSave.isStage = this.runtime.targets[i].isStage;
+        spriteSave.direction = this.runtime.targets[i].direction;
+        spriteSave.size = this.runtime.targets[i].size;
+        spriteSave.visible = this.runtime.targets[i].visible;
+        spriteSave.currentCostume = this.runtime.targets[i].currentCostume;
+        project.push(spriteSave);
     }
-    return JSON.stringify(Project, null, 4);
+    var SB3 = new Object();
+    SB3.project = project;
+    SB3.projectName = this.projectName;
+    SB3.version = '3.0';
+    return JSON.stringify(SB3, null, 4);
 };
 
 VirtualMachine.prototype.fromJSON = function (json) {
-    var Project = JSON.parse(json);
+    var SB3 = JSON.parse(json);
     var targets = [];
     var i = 0;
-    for (i = 0; i < Project.length; i++) {
+    for (i = 0; i < SB3.project.length; i++) {
         var blocks = new Blocks();
-        blocks._blocks = Project[i].blocks;
-        blocks._scripts = Project[i].scripts;
+        blocks._blocks = SB3.project[i].blocks;
+        blocks._scripts = SB3.project[i].scripts;
         var sprite = new Sprite(blocks);
-        sprite.name = Project[i].name;
-        sprite.costumes = Project[i].costumes;
+        sprite.name = SB3.project[i].name;
+        sprite.costumes = SB3.project[i].costumes;
         var target = sprite.createClone();
-        target.x = Project[i].x;
-        target.y = Project[i].y;
-        target.direction = Project[i].direction;
-        target.size = Project[i].size;
-        target.visible = Project[i].visible;
-        target.currentCostume = Project[i].currentCostume;
-        target.isStage = Project[i].isStage;
+        target.x = SB3.project[i].x;
+        target.y = SB3.project[i].y;
+        target.direction = SB3.project[i].direction;
+        target.size = SB3.project[i].size;
+        target.visible = SB3.project[i].visible;
+        target.currentCostume = SB3.project[i].currentCostume;
+        target.isStage = SB3.project[i].isStage;
         targets.push(target);
     }
+    this.projectName = SB3.projectName;
     this.runtime.targets = targets;
     this.editingTarget = this.runtime.targets[0];
     this.emitTargetsUpdate();
