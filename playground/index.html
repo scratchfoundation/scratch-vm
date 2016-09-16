@@ -782,6 +782,7 @@
     <script>
         function toJSON() {
             var output = document.getElementById('importExport');
+            window.vm.projectName = prompt('Name Your Project', window.vm.projectName);
             output.value = window.vm.toJSON();
             output.focus();
             output.select();
