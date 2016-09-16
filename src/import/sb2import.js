@@ -10,6 +10,8 @@ var Sprite = require('../sprites/sprite');
 var Color = require('../util/color.js');
 var uid = require('../util/uid');
 var specMap = require('./sb2specmap');
+var Variable = require('../engine/variable');
+var List = require('../engine/list');
 
 /**
  * Top-level handler. Parse provided JSON,
@@ -51,7 +53,7 @@ function parseScratchObject (object, runtime, topLevel) {
             var costume = object.costumes[i];
             // @todo: Make sure all the relevant metadata is being pulled out.
             sprite.costumes.push({
-                skin: 'https://cdn.assets.scratch.mit.edu/internalapi/asset/' 
+                skin: 'https://cdn.assets.scratch.mit.edu/internalapi/asset/'
                     + costume.baseLayerMD5 + '/get/',
                 name: costume.costumeName,
                 bitmapResolution: costume.bitmapResolution,
@@ -72,21 +74,21 @@ function parseScratchObject (object, runtime, topLevel) {
     if (object.hasOwnProperty('variables')) {
         for (var j = 0; j < object.variables.length; j++) {
             var variable = object.variables[j];
-            target.variables[variable.name] = {
-                name: variable.name,
-                value: variable.value,
-                isCloud: variable.isPersistent
-            };
+            target.variables[variable.name] = new Variable(
+                variable.name,
+                variable.value,
+                variable.isPersistent
+            );
         }
     }
     if (object.hasOwnProperty('lists')) {
         for (var k = 0; k < object.lists.length; k++) {
             var list = object.lists[k];
-            target.lists[list.listName] = {
-                name: list.listName,
-                contents: list.contents
-                // @todo: monitor properties.
-            };
+            // @todo: monitor properties.
+            target.lists[list.listName] = new List(
+                list.listName,
+                list.contents
+            );
         }
     }
     if (object.scratchX) {
