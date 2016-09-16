@@ -179,6 +179,8 @@ VirtualMachine.prototype.spriteSave = function () {
     this.visible = false;
     this.isStage = false;
     this.currentCostume = 0;
+    this.lists = {};
+    this.variables = {};
 };
 
 VirtualMachine.prototype.projectName = 'Untitled';
@@ -199,6 +201,8 @@ VirtualMachine.prototype.toJSON = function () {
         spriteSave.size = this.runtime.targets[i].size;
         spriteSave.visible = this.runtime.targets[i].visible;
         spriteSave.currentCostume = this.runtime.targets[i].currentCostume;
+        spriteSave.lists = this.runtime.targets[i].lists;
+        spriteSave.variables = this.runtime.targets[i].variables;
         project.push(spriteSave);
     }
     var SB3 = new Object();
@@ -227,6 +231,8 @@ VirtualMachine.prototype.fromJSON = function (json) {
         target.visible = SB3.project[i].visible;
         target.currentCostume = SB3.project[i].currentCostume;
         target.isStage = SB3.project[i].isStage;
+        target.lists = SB3.project[i].lists;
+        target.variables = SB3.project[i].variables;
         targets.push(target);
     }
     this.projectName = SB3.projectName;
