@@ -20,7 +20,7 @@ var loadProject = function () {
 };
 
 window.onload = function() {
-    window.vm.assets = '../assets';
+    window.vm.assets = '../assets/';
     // Lots of global variables to make debugging easier
     // Instantiate the VM worker.
     var vm = new window.VirtualMachine();
