@@ -789,6 +789,12 @@
         function fromJSON() {
             var input = document.getElementById('importExport');
             window.vm.fromJSON(input.value);
+            window.exploreTabOpen = false;
+            tabBlockExplorer.style.display = 'none';
+            tabRenderExplorer.style.display = 'block';
+            tabThreadExplorer.style.display = 'none';
+            tabImportExport.style.display = 'none';
+            alert('Imported!');
         }
         function toJSONandDownload() {
             window.vm.projectName = prompt('Name Your Project', window.vm.projectName);
