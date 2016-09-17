@@ -115,7 +115,7 @@ VirtualMachine.prototype.loadProject = function (json) {
     this.runtime.setEditingTarget(this.editingTarget);
 };
 
-VirtualMachine.prototype.assets = '/';
+VirtualMachine.prototype.assets = '/assets/';
 
 /**
  * Temporary way to make an empty project, in case the desired project
