@@ -10,10 +10,9 @@ var loadProject = function () {
         if (this.readyState === 4) {
             if (r.status === 200) {
                 window.vm.loadProject(this.responseText);
-                alert('Imported');
             } else {
                 window.vm.createEmptyProject();
-                alert('Error: ' + r.status + '\nCreated Empty Project');
+                alert('Error: ' + r.status);
             }
         }
     };
@@ -42,7 +41,6 @@ window.onload = function() {
             tabRenderExplorer.style.display = 'block';
             tabThreadExplorer.style.display = 'none';
             tabImportExport.style.display = 'none';
-            alert('Imported');
         }
         reader.readAsText(file);
     });
