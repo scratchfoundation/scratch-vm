@@ -36,6 +36,11 @@ window.onload = function() {
         var reader = new FileReader();
         reader.onload = function(e) {
             window.vm.fromJSON(reader.result);
+            tabBlockExplorer.style.display = 'none';
+            tabRenderExplorer.style.display = 'block';
+            tabThreadExplorer.style.display = 'none';
+            tabImportExport.style.display = 'none';
+            alert('Imported!');
         }
         reader.readAsText(file);
     });
