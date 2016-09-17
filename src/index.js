@@ -115,6 +115,8 @@ VirtualMachine.prototype.loadProject = function (json) {
     this.runtime.setEditingTarget(this.editingTarget);
 };
 
+VirtualMachine.prototype.assets = '/';
+
 /**
  * Temporary way to make an empty project, in case the desired project
  * cannot be loaded from the online server.
@@ -125,7 +127,7 @@ VirtualMachine.prototype.createEmptyProject = function () {
     var stage = new Sprite(blocks2);
     stage.name = 'Stage';
     stage.costumes.push({
-        skin: '/assets/stage.png',
+        skin: this.assets + 'stage.png',
         name: 'backdrop1',
         bitmapResolution: 1,
         rotationCenterX: 240,
@@ -144,7 +146,7 @@ VirtualMachine.prototype.createEmptyProject = function () {
     var sprite = new Sprite(blocks1);
     sprite.name = 'Sprite1';
     sprite.costumes.push({
-        skin: '/assets/scratch_cat.svg',
+        skin: this.assets + 'scratch_cat.svg',
         name: 'costume1',
         bitmapResolution: 1,
         rotationCenterX: 47,
