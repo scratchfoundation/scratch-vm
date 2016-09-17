@@ -127,7 +127,7 @@ VirtualMachine.prototype.createEmptyProject = function () {
     var stage = new Sprite(blocks2);
     stage.name = 'Stage';
     stage.costumes.push({
-        skin: this.assets + 'stage.png',
+        skin: '[assetsDir]stage.png',
         name: 'backdrop1',
         bitmapResolution: 1,
         rotationCenterX: 240,
@@ -146,7 +146,7 @@ VirtualMachine.prototype.createEmptyProject = function () {
     var sprite = new Sprite(blocks1);
     sprite.name = 'Sprite1';
     sprite.costumes.push({
-        skin: this.assets + 'scratch_cat.svg',
+        skin: '[assetsDir]scratch_cat.svg',
         name: 'costume1',
         bitmapResolution: 1,
         rotationCenterX: 47,
