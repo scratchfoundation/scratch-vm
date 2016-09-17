@@ -168,19 +168,19 @@ VirtualMachine.prototype.createEmptyProject = function () {
 };
 
 VirtualMachine.prototype.spriteSave = function () {
-    this.blocks = '';
-    this.scripts = '';
-    this.name = '';
+    this.blocks = {};
+    this.scripts = [];
     this.costumes = [];
+    this.lists = {};
+    this.variables = {};
     this.x = 0;
     this.y = 0;
+    this.name = '';
     this.direction = 0;
     this.size = 0;
     this.visible = false;
     this.isStage = false;
     this.currentCostume = 0;
-    this.lists = {};
-    this.variables = {};
 };
 
 VirtualMachine.prototype.projectName = 'Untitled';
