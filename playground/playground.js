@@ -12,7 +12,6 @@ var loadProject = function () {
                 window.vm.loadProject(this.responseText);
             } else {
                 window.vm.createEmptyProject();
-                alert('Failed To Retrieve Project From Server\nError Code: ' + r.status + '\nCreating Empty Project...');
             }
         }
     };
