@@ -1,6 +1,9 @@
 body {
     background: rgb(36,36,36);
 }
+textarea {
+    resize: none;
+}
 a {
     color: rgb(217,217,217);
 }
