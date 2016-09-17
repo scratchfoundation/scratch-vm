@@ -238,7 +238,7 @@ Clone.prototype.setCostume = function (index) {
     );
     if (this.renderer) {
         this.renderer.updateDrawableProperties(this.drawableID, {
-            skin: this.sprite.costumes[this.currentCostume].skin
+            skin: this.sprite.costumes[this.currentCostume].skin.replace('[assetsDir]', window.vm.assets)
         });
     }
 };
@@ -268,7 +268,7 @@ Clone.prototype.updateAllDrawableProperties = function () {
             direction: this.direction,
             scale: [this.size, this.size],
             visible: this.visible,
-            skin: this.sprite.costumes[this.currentCostume].skin
+            skin: this.sprite.costumes[this.currentCostume].skin.replace('[assetsDir]', window.vm.assets)
         });
     }
 };
