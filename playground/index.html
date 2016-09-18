@@ -39,13 +39,12 @@
             Project ID: <input id="projectId" value="119615668" />
             <button id="projectLoadButton">Load</button>
             <button id="createEmptyProject">New Project</button><br />
-            <p>
-                <input type="button" value="Export to XML" onclick="toXml()">
-                &nbsp;
-                <input type="button" value="Import from XML" onclick="fromXml()" id="import">
-                <br /><br />
-                <textarea id="importExport"></textarea>
-            </p>
+            Upload JSON File: <input type=file id="jsonPicker" accept=".json" /><br />
+            <input type="button" value="Export to JSON" onclick="toJSON()">
+            <input type="button" value="Import from JSON" onclick="fromJSON()" id="import">
+            <input type="button" value="Export to JSON and Download" onclick="toJSONandDownload()">
+            <br />
+            <textarea id="importExport"></textarea>
         </div>
     </div>
 
@@ -780,19 +779,35 @@
     <!-- Playground -->
     <script src="./playground.js"></script>
     <script>
-        function toXml() {
+        function toJSON() {
             var output = document.getElementById('importExport');
-            var xml = Blockly.Xml.workspaceToDom(workspace);
-            output.value = Blockly.Xml.domToPrettyText(xml);
+            window.vm.projectName = prompt('Name Your Project', window.vm.projectName);
+            output.value = window.vm.toJSON();
             output.focus();
             output.select();
-          }
-
-          function fromXml() {
+        }
+        function fromJSON() {
+            var tabBlockExplorer = document.getElementById('tab-blockexplorer');
+            var tabThreadExplorer = document.getElementById('tab-threadexplorer');
+            var tabRenderExplorer = document.getElementById('tab-renderexplorer');
+            var tabImportExport = document.getElementById('tab-importexport');
             var input = document.getElementById('importExport');
-            var xml = Blockly.Xml.textToDom(input.value);
-            Blockly.Xml.domToWorkspace(workspace, xml);
-          }
+            window.vm.fromJSON(input.value);
+            window.exploreTabOpen = false;
+            tabBlockExplorer.style.display = 'none';
+            tabRenderExplorer.style.display = 'block';
+            tabThreadExplorer.style.display = 'none';
+            tabImportExport.style.display = 'none';
+        }
+        function toJSONandDownload() {
+            window.vm.projectName = prompt('Name Your Project', window.vm.projectName);
+            var hiddenElement = document.createElement('a');
+            hiddenElement.href = 'data:attachment/text,' + encodeURI(window.vm.toJSON());
+            hiddenElement.target = '_blank';
+            hiddenElement.download = window.vm.projectName + '.json';
+            hiddenElement.click();
+            delete hiddenElement;
+        }
     </script>
 </body>
 </html>

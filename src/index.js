@@ -105,7 +105,11 @@ VirtualMachine.prototype.postIOData = function (device, data) {
  * @param {?string} json JSON string representing the project.
  */
 VirtualMachine.prototype.loadProject = function (json) {
-    // @todo: Handle other formats, e.g., Scratch 1.4, Scratch 3.0.
+    if (JSON.parse(json).version == '3.0') {
+        this.fromJSON(json);
+        return;
+    }
+    // @todo: Handle other formats, e.g., Scratch 1.4.
     sb2import(json, this.runtime);
     // Select the first target for editing, e.g., the stage.
     this.editingTarget = this.runtime.targets[0];
@@ -122,26 +126,26 @@ VirtualMachine.prototype.loadProject = function (json) {
 VirtualMachine.prototype.createEmptyProject = function () {
     // Stage.
     var blocks2 = new Blocks();
-    var stage = new Sprite(blocks2);
+    var stage = new Sprite(blocks2, this.runtime);
     stage.name = 'Stage';
     stage.costumes.push({
         skin: '/assets/stage.png',
         name: 'backdrop1',
-        bitmapResolution: 1,
-        rotationCenterX: 240,
-        rotationCenterY: 180
+        bitmapResolution: 2,
+        rotationCenterX: 480,
+        rotationCenterY: 360
     });
     var target2 = stage.createClone();
     this.runtime.targets.push(target2);
     target2.x = 0;
     target2.y = 0;
     target2.direction = 90;
-    target2.size = 200;
+    target2.size = 100;
     target2.visible = true;
     target2.isStage = true;
     // Sprite1 (cat).
     var blocks1 = new Blocks();
-    var sprite = new Sprite(blocks1);
+    var sprite = new Sprite(blocks1, this.runtime);
     sprite.name = 'Sprite1';
     sprite.costumes.push({
         skin: '/assets/scratch_cat.svg',
@@ -157,6 +161,82 @@ VirtualMachine.prototype.createEmptyProject = function () {
     target1.direction = 90;
     target1.size = 100;
     target1.visible = true;
+    this.projectName = 'Untitled';
+    this.editingTarget = this.runtime.targets[0];
+    this.emitTargetsUpdate();
+    this.emitWorkspaceUpdate();
+};
+
+VirtualMachine.prototype.spriteSave = function () {
+    this.blocks = {};
+    this.scripts = [];
+    this.costumes = [];
+    this.lists = {};
+    this.variables = {};
+    this.x = 0;
+    this.y = 0;
+    this.name = '';
+    this.direction = 0;
+    this.size = 0;
+    this.visible = false;
+    this.isStage = false;
+    this.currentCostume = 0;
+};
+
+VirtualMachine.prototype.projectName = 'Untitled';
+
+VirtualMachine.prototype.toJSON = function () {
+    var project = [];
+    var i = 0;
+    for (i = 0; i < this.runtime.targets.length; i++) {
+        var spriteSave = new this.spriteSave();
+        spriteSave.blocks = this.runtime.targets[i].sprite.blocks._blocks;
+        spriteSave.scripts = this.runtime.targets[i].sprite.blocks._scripts;
+        spriteSave.name = this.runtime.targets[i].sprite.name;
+        spriteSave.costumes = this.runtime.targets[i].sprite.costumes;
+        spriteSave.x = this.runtime.targets[i].x;
+        spriteSave.y = this.runtime.targets[i].y;
+        spriteSave.isStage = this.runtime.targets[i].isStage;
+        spriteSave.direction = this.runtime.targets[i].direction;
+        spriteSave.size = this.runtime.targets[i].size;
+        spriteSave.visible = this.runtime.targets[i].visible;
+        spriteSave.currentCostume = this.runtime.targets[i].currentCostume;
+        spriteSave.lists = this.runtime.targets[i].lists;
+        spriteSave.variables = this.runtime.targets[i].variables;
+        project.push(spriteSave);
+    }
+    var SB3 = new Object();
+    SB3.project = project;
+    SB3.projectName = this.projectName;
+    SB3.version = '3.0';
+    return JSON.stringify(SB3, null, 4);
+};
+
+VirtualMachine.prototype.fromJSON = function (json) {
+    var SB3 = JSON.parse(json);
+    var targets = [];
+    var i = 0;
+    for (i = 0; i < SB3.project.length; i++) {
+        var blocks = new Blocks();
+        blocks._blocks = SB3.project[i].blocks;
+        blocks._scripts = SB3.project[i].scripts;
+        var sprite = new Sprite(blocks, this.runtime);
+        sprite.name = SB3.project[i].name;
+        sprite.costumes = SB3.project[i].costumes;
+        var target = sprite.createClone();
+        target.x = SB3.project[i].x;
+        target.y = SB3.project[i].y;
+        target.direction = SB3.project[i].direction;
+        target.size = SB3.project[i].size;
+        target.visible = SB3.project[i].visible;
+        target.currentCostume = SB3.project[i].currentCostume;
+        target.isStage = SB3.project[i].isStage;
+        target.lists = SB3.project[i].lists;
+        target.variables = SB3.project[i].variables;
+        targets.push(target);
+    }
+    this.projectName = SB3.projectName;
+    this.runtime.targets = targets;
     this.editingTarget = this.runtime.targets[0];
     this.emitTargetsUpdate();
     this.emitWorkspaceUpdate();
