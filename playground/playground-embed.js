@@ -72,31 +72,6 @@ window.onload = function() {
         window.Blockly.Events.enable();
     });
 
-    // Receipt of new list of targets, selected target update.
-    var selectedTarget = document.getElementById('selectedTarget');
-    vm.on('targetsUpdate', function (data) {
-        // Clear select box.
-        while (selectedTarget.firstChild) {
-            selectedTarget.removeChild(selectedTarget.firstChild);
-        }
-        // Generate new select box.
-        for (var i = 0; i < data.targetList.length; i++) {
-            var targetOption = document.createElement('option');
-            targetOption.setAttribute('value', data.targetList[i][0]);
-            // If target id matches editingTarget id, select it.
-            if (data.targetList[i][0] == data.editingTarget) {
-                targetOption.setAttribute('selected', 'selected');
-            }
-            targetOption.appendChild(
-                document.createTextNode(data.targetList[i][1])
-            );
-            selectedTarget.appendChild(targetOption);
-        }
-    });
-    selectedTarget.onchange = function () {
-        vm.setEditingTarget(this.value);
-    };
-
     // Feedback for stacks and blocks running.
     vm.on('STACK_GLOW_ON', function(data) {
         workspace.glowStack(data.id, true);
