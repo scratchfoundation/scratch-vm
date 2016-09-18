@@ -26,16 +26,7 @@ window.onload = function() {
     window.vm = vm;
     window.vm.assets = '../assets/';
 
-    // Loading projects from the server.
-    document.getElementById('projectLoadButton').onclick = function () {
-        document.location = '#' + document.getElementById('projectId').value;
-        location.reload();
-    };
-    document.getElementById('createEmptyProject').addEventListener('click',
-    function() {
-        document.location = '#' + 'createEmptyProject';
-        location.reload();
-    });
+    // Loading projects from the server.    
     loadProject();
 
     // Instantiate the renderer and connect it to the VM.
@@ -69,47 +60,8 @@ window.onload = function() {
     // @todo: Re-enable flyout listening after fixing GH-69.
     workspace.addChangeListener(vm.blockListener);
 
-    // Create FPS counter.
-    var stats = new window.Stats();
-    document.getElementById('tab-renderexplorer').appendChild(stats.dom);
-    stats.dom.style.position = 'relative';
-    stats.begin();
-
-    // Playground data tabs.
-    // Block representation tab.
-    var blockexplorer = document.getElementById('blockexplorer');
-    var updateBlockExplorer = function(blocks) {
-        blockexplorer.innerHTML = JSON.stringify(blocks, null, 2);
-        window.hljs.highlightBlock(blockexplorer);
-    };
-
-    // Thread representation tab.
-    var threadexplorer = document.getElementById('threadexplorer');
-    var cachedThreadJSON = '';
-    var updateThreadExplorer = function (threads) {
-        var newJSON = JSON.stringify(threads, null, 2);
-        if (newJSON != cachedThreadJSON) {
-            cachedThreadJSON = newJSON;
-            threadexplorer.innerHTML = cachedThreadJSON;
-            window.hljs.highlightBlock(threadexplorer);
-        }
-    };
-
-    // Only request data from the VM thread if the appropriate tab is open.
-    window.exploreTabOpen = false;
-    var getPlaygroundData = function () {
-        vm.getPlaygroundData();
-        if (window.exploreTabOpen) {
-            window.requestAnimationFrame(getPlaygroundData);
-        }
-    };
-
     // VM handlers.
     // Receipt of new playground data (thread, block representations).
-    vm.on('playgroundData', function(data) {
-        updateThreadExplorer(data.threads);
-        updateBlockExplorer(data.blocks);
-    });
 
     // Receipt of new block XML for the selected target.
     vm.on('workspaceUpdate', function (data) {
@@ -119,31 +71,6 @@ window.onload = function() {
         window.Blockly.Xml.domToWorkspace(dom, workspace);
         window.Blockly.Events.enable();
     });
-
-    // Receipt of new list of targets, selected target update.
-    var selectedTarget = document.getElementById('selectedTarget');
-    vm.on('targetsUpdate', function (data) {
-        // Clear select box.
-        while (selectedTarget.firstChild) {
-            selectedTarget.removeChild(selectedTarget.firstChild);
-        }
-        // Generate new select box.
-        for (var i = 0; i < data.targetList.length; i++) {
-            var targetOption = document.createElement('option');
-            targetOption.setAttribute('value', data.targetList[i][0]);
-            // If target id matches editingTarget id, select it.
-            if (data.targetList[i][0] == data.editingTarget) {
-                targetOption.setAttribute('selected', 'selected');
-            }
-            targetOption.appendChild(
-                document.createTextNode(data.targetList[i][1])
-            );
-            selectedTarget.appendChild(targetOption);
-        }
-    });
-    selectedTarget.onchange = function () {
-        vm.setEditingTarget(this.value);
-    };
 
     // Feedback for stacks and blocks running.
     vm.on('STACK_GLOW_ON', function(data) {
@@ -228,8 +155,6 @@ window.onload = function() {
 
     // Inform VM of animation frames.
     var animate = function() {
-        stats.end();
-        stats.begin();
         window.vm.animationFrame();
         requestAnimationFrame(animate);
     };
@@ -242,45 +167,4 @@ window.onload = function() {
     document.getElementById('stopall').addEventListener('click', function() {
         vm.stopAll();
     });
-
-    var tabBlockExplorer = document.getElementById('tab-blockexplorer');
-    var tabThreadExplorer = document.getElementById('tab-threadexplorer');
-    var tabRenderExplorer = document.getElementById('tab-renderexplorer');
-    var tabImportExport = document.getElementById('tab-importexport');
-
-    // Handlers to show different explorers.
-    document.getElementById('threadexplorer-link').addEventListener('click',
-        function () {
-            window.exploreTabOpen = true;
-            getPlaygroundData();
-            tabBlockExplorer.style.display = 'none';
-            tabRenderExplorer.style.display = 'none';
-            tabThreadExplorer.style.display = 'block';
-            tabImportExport.style.display = 'none';
-        });
-    document.getElementById('blockexplorer-link').addEventListener('click',
-        function () {
-            window.exploreTabOpen = true;
-            getPlaygroundData();
-            tabBlockExplorer.style.display = 'block';
-            tabRenderExplorer.style.display = 'none';
-            tabThreadExplorer.style.display = 'none';
-            tabImportExport.style.display = 'none';
-        });
-    document.getElementById('renderexplorer-link').addEventListener('click',
-        function () {
-            window.exploreTabOpen = false;
-            tabBlockExplorer.style.display = 'none';
-            tabRenderExplorer.style.display = 'block';
-            tabThreadExplorer.style.display = 'none';
-            tabImportExport.style.display = 'none';
-        });
-    document.getElementById('importexport-link').addEventListener('click',
-        function () {
-            window.exploreTabOpen = false;
-            tabBlockExplorer.style.display = 'none';
-            tabRenderExplorer.style.display = 'none';
-            tabThreadExplorer.style.display = 'none';
-            tabImportExport.style.display = 'block';
-        });
 };

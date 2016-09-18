@@ -1,0 +1,36 @@
+<!doctype html>
+
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <link rel="stylesheet" href="../node_modules/highlightjs/styles/zenburn.css">
+</head>
+<body>
+    <div id="projectButtons">
+        <button id="greenflag">Green flag</button>
+        <button id="stopall">Stop</button>
+    </div>
+    <canvas id="scratch-stage" style="width: 480px; height: 360px;"></canvas>
+
+    <div id="blocks" style="display: none;"></div>
+
+    <xml id="toolbox" style="display: none">
+    </xml>
+    <!-- FPS counter -->
+    <script src="../node_modules/stats.js/build/stats.min.js"></script>
+    <!-- Syntax highlighter -->
+    <script src="../node_modules/highlightjs/highlight.pack.min.js"></script>
+    <!-- Scratch Blocks -->
+    <!-- For easier development between the two, use `npm link` -->
+    <script src="../node_modules/scratch-blocks/blockly_compressed_vertical.js"></script>
+    <script src="../node_modules/scratch-blocks/blocks_compressed.js"></script>
+    <script src="../node_modules/scratch-blocks/blocks_compressed_vertical.js"></script>
+    <script src="../node_modules/scratch-blocks/msg/messages.js"></script>
+    <!-- Renderer -->
+    <script src="../node_modules/scratch-render/render.js"></script>
+    <!-- VM Worker -->
+    <script src="../vm.js"></script>
+    <!-- Playground -->
+    <script src="./playground-embed.js"></script>
+</body>
+</html>

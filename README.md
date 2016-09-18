@@ -59,6 +59,8 @@ For an extended setup example, check out the /playground directory, which includ
 var VirtualMachine = require('scratch-vm');
 var vm = new VirtualMachine();
 
+vm.assets = '/path/to/assets/dir/';
+
 // Block events
 workspace.addChangeListener(vm.blockListener);
 
