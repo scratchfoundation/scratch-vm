@@ -76,9 +76,19 @@ VirtualMachine.prototype.stopAll = function () {
  * Get data for playground. Data comes back in an emitted event.
  */
 VirtualMachine.prototype.getPlaygroundData = function () {
+    var instance = this;
+    // Only send back thread data for the current editingTarget.
+    var threadData = this.runtime.threads.filter(function(thread) {
+        return thread.target == instance.editingTarget;
+    });
+    // Remove the target key, since it's a circular reference.
+    var filteredThreadData = JSON.stringify(threadData, function(key, value) {
+        if (key == 'target') return undefined;
+        return value;
+    }, 2);
     this.emit('playgroundData', {
         blocks: this.editingTarget.blocks,
-        threads: this.runtime.threads
+        threads: filteredThreadData
     });
 };
 
