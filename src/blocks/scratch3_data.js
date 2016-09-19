@@ -17,7 +17,7 @@ Scratch3DataBlocks.prototype.getPrimitives = function () {
         'data_variable': this.getVariable,
         'data_setvariableto': this.setVariableTo,
         'data_changevariableby': this.changeVariableBy,
-        'data_list': this.getListAsString,
+        'data_list': this.getListContents,
         'data_addtolist': this.addToList,
         'data_deleteoflist': this.deleteOfList,
         'data_insertatlist': this.insertAtList,
@@ -45,7 +45,7 @@ Scratch3DataBlocks.prototype.changeVariableBy = function (args, util) {
     variable.value = castedValue + dValue;
 };
 
-Scratch3DataBlocks.prototype.getListAsString = function (args, util) {
+Scratch3DataBlocks.prototype.getListContents = function (args, util) {
     var list = util.target.lookupOrCreateList(args.LIST);
     // Determine if the list is all single letters.
     // If it is, report contents joined together with no separator.
