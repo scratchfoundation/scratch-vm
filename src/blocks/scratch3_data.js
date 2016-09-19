@@ -71,56 +71,12 @@ Scratch3DataBlocks.prototype.addToList = function (args, util) {
     list.contents.push(args.ITEM);
 };
 
-Scratch3DataBlocks.LIST_INVALID = 'INVALID';
-Scratch3DataBlocks.LIST_ALL = 'ALL';
-/**
- * Compute a 1-based index into a list, based on a Scratch argument.
- * Two special cases may be returned:
- * LIST_ALL: if the block is referring to all of the items in the list.
- * LIST_INVALID: if the index was invalid in any way.
- * @param {*} index Scratch arg, including 1-based numbers or special cases.
- * @param {number} length Length of the list.
- * @param {boolean} useRound If set, Math.round (not Math.floor for 2.0 compat).
- * @return {(number|string)} 1-based index for list, LIST_ALL, or LIST_INVALID.
- */
-Scratch3DataBlocks.prototype._computeIndex = function (
-    index, length, useRound) {
-    if (typeof index !== 'number') {
-        if (index == 'all') {
-            return Scratch3DataBlocks.LIST_ALL;
-        }
-        if (index == 'last') {
-            if (length > 0) {
-                return length;
-            }
-            return Scratch3DataBlocks.LIST_INVALID;
-        } else if (index == 'random' || index == 'any') {
-            if (length > 0) {
-                return 1 + Math.floor(Math.random() * length);
-            }
-            return Scratch3DataBlocks.LIST_INVALID;
-        }
-        if (isNaN(Number(index))) {
-            return Scratch3DataBlocks.LIST_INVALID;
-        }
-    }
-    if (useRound) {
-        index = Math.round(Cast.toNumber(index));
-    } else {
-        index = Math.floor(Cast.toNumber(index));
-    }
-    if (index < 1 || index > length) {
-        return Scratch3DataBlocks.LIST_INVALID;
-    }
-    return index;
-};
-
 Scratch3DataBlocks.prototype.deleteOfList = function (args, util) {
     var list = util.target.lookupOrCreateList(args.LIST);
-    var index = this._computeIndex(args.INDEX, list.contents.length, true);
-    if (index == Scratch3DataBlocks.LIST_INVALID) {
+    var index = Cast.toListIndex(args.INDEX, list.contents.length, true);
+    if (index === Cast.LIST_INVALID) {
         return;
-    } else if (index == Scratch3DataBlocks.LIST_ALL) {
+    } else if (index === Cast.LIST_ALL) {
         list.contents = [];
         return;
     }
@@ -130,8 +86,8 @@ Scratch3DataBlocks.prototype.deleteOfList = function (args, util) {
 Scratch3DataBlocks.prototype.insertAtList = function (args, util) {
     var item = args.ITEM;
     var list = util.target.lookupOrCreateList(args.LIST);
-    var index = this._computeIndex(args.INDEX, list.contents.length + 1);
-    if (index == Scratch3DataBlocks.LIST_INVALID) {
+    var index = Cast.toListIndex(args.INDEX, list.contents.length + 1);
+    if (index === Cast.LIST_INVALID) {
         return;
     }
     list.contents.splice(index - 1, 0, item);
@@ -140,8 +96,8 @@ Scratch3DataBlocks.prototype.insertAtList = function (args, util) {
 Scratch3DataBlocks.prototype.replaceItemOfList = function (args, util) {
     var item = args.ITEM;
     var list = util.target.lookupOrCreateList(args.LIST);
-    var index = this._computeIndex(args.INDEX, list.contents.length);
-    if (index == Scratch3DataBlocks.LIST_INVALID) {
+    var index = Cast.toListIndex(args.INDEX, list.contents.length);
+    if (index === Cast.LIST_INVALID) {
         return;
     }
     list.contents.splice(index - 1, 1, item);
@@ -149,8 +105,8 @@ Scratch3DataBlocks.prototype.replaceItemOfList = function (args, util) {
 
 Scratch3DataBlocks.prototype.getItemOfList = function (args, util) {
     var list = util.target.lookupOrCreateList(args.LIST);
-    var index = this._computeIndex(args.INDEX, list.contents.length);
-    if (index == Scratch3DataBlocks.LIST_INVALID) {
+    var index = Cast.toListIndex(args.INDEX, list.contents.length);
+    if (index === Cast.LIST_INVALID) {
         return '';
     }
     return list.contents[index - 1];
