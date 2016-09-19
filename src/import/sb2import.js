@@ -68,23 +68,23 @@ function parseScratchObject (object, runtime, topLevel) {
     var target = sprite.createClone();
     // Add it to the runtime's list of targets.
     runtime.targets.push(target);
-    if (object.scratchX) {
+    if (object.hasOwnProperty('scratchX')) {
         target.x = object.scratchX;
     }
-    if (object.scratchY) {
+    if (object.hasOwnProperty('scratchY')) {
         target.y = object.scratchY;
     }
-    if (object.direction) {
+    if (object.hasOwnProperty('direction')) {
         target.direction = object.direction;
     }
-    if (object.scale) {
+    if (object.hasOwnProperty('scale')) {
         // SB2 stores as 1.0 = 100%; we use % in the VM.
         target.size = object.scale * 100;
     }
-    if (object.visible) {
+    if (object.hasOwnProperty('visible')) {
         target.visible = object.visible;
     }
-    if (object.currentCostumeIndex) {
+    if (object.hasOwnProperty('currentCostumeIndex')) {
         target.currentCostume = object.currentCostumeIndex;
     }
     target.isStage = topLevel;
