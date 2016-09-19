@@ -374,6 +374,10 @@ Runtime.prototype.greenFlag = function () {
     this.stopAll();
     this.ioDevices.clock.resetProjectTimer();
     this.clearEdgeActivatedValues();
+    // Inform all targets of the green flag.
+    for (var i = 0; i < this.targets.length; i++) {
+        this.targets[i].onGreenFlag();
+    }
     this.startHats('event_whenflagclicked');
 };
 
