@@ -1,8 +1,6 @@
 var util = require('util');
 var MathUtil = require('../util/math-util');
 var Target = require('../engine/target');
-var Variable = require('../engine/variable');
-var List = require('../engine/list');
 
 /**
  * Clone (instance) of a sprite.
@@ -33,18 +31,6 @@ function Clone(sprite, runtime) {
      * @type {?Number}
      */
     this.drawableID = null;
-    /**
-     * Dictionary of variables and their values for this clone.
-     * Key is the variable name.
-     * @type {Object.<string,*>}
-     */
-    this.variables = {};
-    /**
-     * Dictionary of lists and their contents for this clone.
-     * Key is the list name.
-     * @type {Object.<string,*>}
-     */
-    this.lists = {};
 }
 util.inherits(Clone, Target);
 
@@ -323,54 +309,6 @@ Clone.prototype.colorIsTouchingColor = function (targetRgb, maskRgb) {
         );
     }
     return false;
-};
-
-/**
- * Look up a variable object for this clone, and create it if one doesn't exist.
- * Search begins for local variables; then look for globals.
- * @param {!string} name Name of the variable.
- * @return {!Variable} Variable object.
- */
-Clone.prototype.lookupOrCreateVariable = function (name) {
-    // If we have a local copy, return it.
-    if (this.variables.hasOwnProperty(name)) {
-        return this.variables[name];
-    }
-    // If the stage has a global copy, return it.
-    if (!this.isStage) {
-        var stage = this.runtime.getTargetForStage();
-        if (stage.variables.hasOwnProperty(name)) {
-            return stage.variables[name];
-        }
-    }
-    // No variable with this name exists - create it locally.
-    var newVariable = new Variable(name, 0, false);
-    this.variables[name] = newVariable;
-    return newVariable;
-};
-
-/**
-* Look up a list object for this clone, and create it if one doesn't exist.
-* Search begins for local lists; then look for globals.
-* @param {!string} name Name of the list.
-* @return {!List} List object.
- */
-Clone.prototype.lookupOrCreateList = function (name) {
-    // If we have a local copy, return it.
-    if (this.lists.hasOwnProperty(name)) {
-        return this.lists[name];
-    }
-    // If the stage has a global copy, return it.
-    if (!this.isStage) {
-        var stage = this.runtime.getTargetForStage();
-        if (stage.lists.hasOwnProperty(name)) {
-            return stage.lists[name];
-        }
-    }
-    // No list with this name exists - create it locally.
-    var newList = new List(name, []);
-    this.lists[name] = newList;
-    return newList;
 };
 
 /**
