@@ -154,9 +154,6 @@ Cast.toListIndex = function (
             }
             return Cast.LIST_INVALID;
         }
-        if (isNaN(Number(index))) {
-            return Cast.LIST_INVALID;
-        }
     }
     if (useRound) {
         index = Math.round(Cast.toNumber(index));
