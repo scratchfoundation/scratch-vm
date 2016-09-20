@@ -19,12 +19,19 @@ var defaultBlockPackages = {
 
 /**
  * Manages targets, scripts, and the sequencer.
+ * @param {!RenderWebGL} renderer Renderer for the VM
  */
-function Runtime () {
+function Runtime (renderer) {
     // Bind event emitter
     EventEmitter.call(this);
 
     // State for the runtime
+
+    /**
+     * Renderer
+     * @type {!RenderWebGL}
+     */
+    this.renderer = renderer;
 
     /**
      * Target management and storage.
@@ -573,8 +580,8 @@ Runtime.prototype.getTargetForStage = function () {
  * Handle an animation frame from the main thread.
  */
 Runtime.prototype.animationFrame = function () {
-    if (self.renderer) {
-        self.renderer.draw();
+    if (this.renderer) {
+        this.renderer.draw();
     }
 };
 

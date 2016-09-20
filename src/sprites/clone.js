@@ -21,10 +21,8 @@ function Clone(sprite, runtime) {
      * @type {?RenderWebGLWorker}
      */
     this.renderer = null;
-    // If this is not true, there is no renderer (e.g., running in a test env).
-    if (typeof self !== 'undefined' && self.renderer) {
-        // Pull from `self.renderer`.
-        this.renderer = self.renderer;
+    if (this.runtime) {
+        this.renderer = this.runtime.renderer;
     }
     /**
      * ID of the drawable for this clone returned by the renderer, if rendered.

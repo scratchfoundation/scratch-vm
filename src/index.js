@@ -10,8 +10,9 @@ var Blocks = require('./engine/blocks');
  * Handles connections between blocks, stage, and extensions.
  *
  * @author Andrew Sliwinski <ascii@media.mit.edu>
+ * @param {!RenderWebGL} renderer Renderer for the VM
  */
-function VirtualMachine () {
+function VirtualMachine (renderer) {
     var instance = this;
     // Bind event emitter and runtime to VM instance
     EventEmitter.call(instance);
@@ -19,7 +20,7 @@ function VirtualMachine () {
      * VM runtime, to store blocks, I/O devices, sprites/targets, etc.
      * @type {!Runtime}
      */
-    instance.runtime = new Runtime();
+    instance.runtime = new Runtime(renderer);
     /**
      * The "currently editing"/selected target ID for the VM.
      * Block events from any Blockly workspace are routed to this target.
