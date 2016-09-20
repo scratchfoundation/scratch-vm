@@ -28,8 +28,8 @@ Mouse.prototype.postData = function(data) {
 };
 
 Mouse.prototype._activateClickHats = function (x, y) {
-    if (self.renderer) {
-        var drawableID = self.renderer.pick(x, y);
+    if (this.runtime.renderer) {
+        var drawableID = this.runtime.renderer.pick(x, y);
         for (var i = 0; i < this.runtime.targets.length; i++) {
             var target = this.runtime.targets[i];
             if (target.hasOwnProperty('drawableID') &&

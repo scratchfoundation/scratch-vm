@@ -14,6 +14,9 @@ module.exports = {
             {
                 test: /\.json$/,
                 loader: 'json-loader'
+            }, {
+                test: require.resolve('./src/index.js'),
+                loader: 'expose?VirtualMachine'
             }
         ]
     },

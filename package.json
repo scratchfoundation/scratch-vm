@@ -20,6 +20,7 @@
   },
   "devDependencies": {
     "eslint": "2.7.0",
+    "expose-loader": "0.7.1",
     "highlightjs": "8.7.0",
     "json-loader": "0.5.4",
     "scratch-blocks": "git+https://git@github.com/LLK/scratch-blocks.git#develop",

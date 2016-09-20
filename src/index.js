@@ -163,6 +163,14 @@ VirtualMachine.prototype.createEmptyProject = function () {
 };
 
 /**
+ * Set the renderer for the VM/runtime
+ * @param {!RenderWebGL} renderer The renderer to attach
+ */
+VirtualMachine.prototype.attachRenderer = function (renderer) {
+    this.runtime.attachRenderer(renderer);
+};
+
+/**
  * Handle a Blockly event for the current editing target.
  * @param {!Blockly.Event} e Any Blockly event.
  */
@@ -227,8 +235,5 @@ VirtualMachine.prototype.emitWorkspaceUpdate = function () {
         'xml': this.editingTarget.blocks.toXML()
     });
 };
-/**
- * Export and bind to `window`
- */
+
 module.exports = VirtualMachine;
-if (typeof window !== 'undefined') window.VirtualMachine = module.exports;

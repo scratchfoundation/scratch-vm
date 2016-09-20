@@ -199,6 +199,14 @@ Runtime.prototype.clearEdgeActivatedValues = function () {
     this._edgeActivatedHatValues = {};
 };
 
+/**
+ * Attach the renderer
+ * @param {!RenderWebGL} renderer The renderer to attach
+ */
+Runtime.prototype.attachRenderer = function (renderer) {
+    this.renderer = renderer;
+};
+
 // -----------------------------------------------------------------------------
 // -----------------------------------------------------------------------------
 
@@ -573,8 +581,8 @@ Runtime.prototype.getTargetForStage = function () {
  * Handle an animation frame from the main thread.
  */
 Runtime.prototype.animationFrame = function () {
-    if (self.renderer) {
-        self.renderer.draw();
+    if (this.renderer) {
+        this.renderer.draw();
     }
 };
 
