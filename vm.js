@@ -63,9 +63,8 @@
 	 * Handles connections between blocks, stage, and extensions.
 	 *
 	 * @author Andrew Sliwinski <ascii@media.mit.edu>
-	 * @param {!RenderWebGL} renderer Renderer for the VM
 	 */
-	function VirtualMachine (renderer) {
+	function VirtualMachine () {
 	    var instance = this;
 	    // Bind event emitter and runtime to VM instance
 	    EventEmitter.call(instance);
@@ -73,7 +72,7 @@
 	     * VM runtime, to store blocks, I/O devices, sprites/targets, etc.
 	     * @type {!Runtime}
 	     */
-	    instance.runtime = new Runtime(renderer);
+	    instance.runtime = new Runtime();
 	    /**
 	     * The "currently editing"/selected target ID for the VM.
 	     * Block events from any Blockly workspace are routed to this target.
@@ -214,6 +213,14 @@
 	    this.editingTarget = this.runtime.targets[0];
 	    this.emitTargetsUpdate();
 	    this.emitWorkspaceUpdate();
+	};
+
+	/**
+	 * Set the renderer for the VM/runtime
+	 * @param {!RenderWebGL} renderer The renderer to attach
+	 */
+	VirtualMachine.prototype.attachRenderer = function (renderer) {
+	    this.runtime.attachRenderer(renderer);
 	};
 
 	/**
@@ -1437,19 +1444,12 @@
 
 	/**
 	 * Manages targets, scripts, and the sequencer.
-	 * @param {!RenderWebGL} renderer Renderer for the VM
 	 */
-	function Runtime (renderer) {
+	function Runtime () {
 	    // Bind event emitter
 	    EventEmitter.call(this);
 
 	    // State for the runtime
-
-	    /**
-	     * Renderer
-	     * @type {!RenderWebGL}
-	     */
-	    this.renderer = renderer;
 
 	    /**
 	     * Target management and storage.
@@ -1622,6 +1622,14 @@
 	 */
 	Runtime.prototype.clearEdgeActivatedValues = function () {
 	    this._edgeActivatedHatValues = {};
+	};
+
+	/**
+	 * Attach the renderer
+	 * @param {!RenderWebGL} renderer The renderer to attach
+	 */
+	Runtime.prototype.attachRenderer = function (renderer) {
+	    this.renderer = renderer;
 	};
 
 	// -----------------------------------------------------------------------------
