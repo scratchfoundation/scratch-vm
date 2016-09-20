@@ -1,14 +1,6 @@
 var webpack = require('webpack');
 
-module.exports = {
-    entry: {
-        'vm': './src/index.js',
-        'vm.min': './src/index.js'
-    },
-    output: {
-        path: __dirname,
-        filename: '[name].js'
-    },
+var base = {
     module: {
         loaders: [
             {
@@ -30,3 +22,24 @@ module.exports = {
         })
     ]
 };
+
+module.exports = [Object.assign({}, base, {
+    entry: {
+        'vm': './src/index.js',
+        'vm.min': './src/index.js'
+    },
+    output: {
+        path: __dirname,
+        filename: '[name].js'
+    }
+}), Object.assign({}, base, {
+    entry: {
+        'dist': './src/index.js'
+    },
+    output: {
+        library: 'VirtualMachine',
+        libraryTarget: 'commonjs2',
+        path: __dirname,
+        filename: '[name].js'
+    }
+})];

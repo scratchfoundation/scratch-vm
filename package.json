@@ -9,25 +9,26 @@
     "type": "git",
     "url": "git+ssh://git@github.com/LLK/scratch-vm.git"
   },
-  "main": "./src/index.js",
+  "main": "./dist.js",
   "scripts": {
-    "test": "make test",
-    "start": "webpack-dev-server --host 0.0.0.0 --content-base ."
+    "postinstall": "./node_modules/.bin/webpack",
+    "start": "webpack-dev-server --host 0.0.0.0 --content-base .",
+    "test": "make test"
   },
   "dependencies": {
+    "expose-loader": "0.7.1",
     "htmlparser2": "3.9.0",
-    "promise": "7.1.1"
+    "json-loader": "0.5.4",
+    "promise": "7.1.1",
+    "webpack": "1.13.0"
   },
   "devDependencies": {
     "eslint": "2.7.0",
-    "expose-loader": "0.7.1",
     "highlightjs": "8.7.0",
-    "json-loader": "0.5.4",
     "scratch-blocks": "git+https://git@github.com/LLK/scratch-blocks.git#develop",
     "scratch-render": "git+https://git@github.com/LLK/scratch-render.git#develop",
     "stats.js": "0.16.0",
     "tap": "5.7.1",
-    "webpack": "1.13.0",
     "webpack-dev-server": "1.14.1"
   }
 }
