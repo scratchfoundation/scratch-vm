@@ -228,8 +228,5 @@ VirtualMachine.prototype.emitWorkspaceUpdate = function () {
         'xml': this.editingTarget.blocks.toXML()
     });
 };
-/**
- * Export and bind to `window`
- */
+
 module.exports = VirtualMachine;
-if (typeof window !== 'undefined') window.VirtualMachine = module.exports;
