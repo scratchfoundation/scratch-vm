@@ -21,12 +21,8 @@ var loadProject = function () {
 
 window.onload = function() {
     // Lots of global variables to make debugging easier
-    // Instantiate the renderer and connect it to the VM.
-    var canvas = document.getElementById('scratch-stage');
-    window.renderer = new window.RenderWebGL(canvas);
-
-    // Instantiate the VM worker.
-    var vm = new window.VirtualMachine(window.renderer);
+    // Instantiate the VM.
+    var vm = new window.VirtualMachine();
     window.vm = vm;
 
     // Loading projects from the server.
@@ -40,6 +36,12 @@ window.onload = function() {
         location.reload();
     });
     loadProject();
+
+    // Instantiate the renderer and connect it to the VM.
+    var canvas = document.getElementById('scratch-stage');
+    var renderer = new window.RenderWebGL(canvas);
+    window.renderer = renderer;
+    vm.attachRenderer(renderer);
 
     // Instantiate scratch-blocks and attach it to the DOM.
     var toolbox = document.getElementById('toolbox');

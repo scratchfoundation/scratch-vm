@@ -19,19 +19,12 @@ var defaultBlockPackages = {
 
 /**
  * Manages targets, scripts, and the sequencer.
- * @param {!RenderWebGL} renderer Renderer for the VM
  */
-function Runtime (renderer) {
+function Runtime () {
     // Bind event emitter
     EventEmitter.call(this);
 
     // State for the runtime
-
-    /**
-     * Renderer
-     * @type {!RenderWebGL}
-     */
-    this.renderer = renderer;
 
     /**
      * Target management and storage.
@@ -204,6 +197,14 @@ Runtime.prototype.updateEdgeActivatedValue = function (blockId, newValue) {
  */
 Runtime.prototype.clearEdgeActivatedValues = function () {
     this._edgeActivatedHatValues = {};
+};
+
+/**
+ * Attach the renderer
+ * @param {!RenderWebGL} renderer The renderer to attach
+ */
+Runtime.prototype.attachRenderer = function (renderer) {
+    this.renderer = renderer;
 };
 
 // -----------------------------------------------------------------------------
