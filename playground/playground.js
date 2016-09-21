@@ -21,7 +21,7 @@ var loadProject = function () {
 
 window.onload = function() {
     // Lots of global variables to make debugging easier
-    // Instantiate the VM worker.
+    // Instantiate the VM.
     var vm = new window.VirtualMachine();
     window.vm = vm;
 
@@ -39,7 +39,9 @@ window.onload = function() {
 
     // Instantiate the renderer and connect it to the VM.
     var canvas = document.getElementById('scratch-stage');
-    window.renderer = new window.RenderWebGL(canvas);
+    var renderer = new window.RenderWebGL(canvas);
+    window.renderer = renderer;
+    vm.attachRenderer(renderer);
 
     // Instantiate scratch-blocks and attach it to the DOM.
     var toolbox = document.getElementById('toolbox');
@@ -85,8 +87,7 @@ window.onload = function() {
     // Thread representation tab.
     var threadexplorer = document.getElementById('threadexplorer');
     var cachedThreadJSON = '';
-    var updateThreadExplorer = function (threads) {
-        var newJSON = JSON.stringify(threads, null, 2);
+    var updateThreadExplorer = function (newJSON) {
         if (newJSON != cachedThreadJSON) {
             cachedThreadJSON = newJSON;
             threadexplorer.innerHTML = cachedThreadJSON;

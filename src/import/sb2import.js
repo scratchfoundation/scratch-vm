@@ -91,26 +91,27 @@ function parseScratchObject (object, runtime, topLevel) {
             );
         }
     }
-    if (object.scratchX) {
+    if (object.hasOwnProperty('scratchX')) {
         target.x = object.scratchX;
     }
-    if (object.scratchY) {
+    if (object.hasOwnProperty('scratchY')) {
         target.y = object.scratchY;
     }
-    if (object.direction) {
+    if (object.hasOwnProperty('direction')) {
         target.direction = object.direction;
     }
-    if (object.scale) {
+    if (object.hasOwnProperty('scale')) {
         // SB2 stores as 1.0 = 100%; we use % in the VM.
         target.size = object.scale * 100;
     }
-    if (object.visible) {
+    if (object.hasOwnProperty('visible')) {
         target.visible = object.visible;
     }
-    if (object.currentCostumeIndex) {
+    if (object.hasOwnProperty('currentCostumeIndex')) {
         target.currentCostume = object.currentCostumeIndex;
     }
     target.isStage = topLevel;
+    target.updateAllDrawableProperties();
     // The stage will have child objects; recursively process them.
     if (object.children) {
         for (var m = 0; m < object.children.length; m++) {

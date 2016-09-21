@@ -200,6 +200,14 @@ Runtime.prototype.clearEdgeActivatedValues = function () {
     this._edgeActivatedHatValues = {};
 };
 
+/**
+ * Attach the renderer
+ * @param {!RenderWebGL} renderer The renderer to attach
+ */
+Runtime.prototype.attachRenderer = function (renderer) {
+    this.renderer = renderer;
+};
+
 // -----------------------------------------------------------------------------
 // -----------------------------------------------------------------------------
 
@@ -375,6 +383,10 @@ Runtime.prototype.greenFlag = function () {
     this.stopAll();
     this.ioDevices.clock.resetProjectTimer();
     this.clearEdgeActivatedValues();
+    // Inform all targets of the green flag.
+    for (var i = 0; i < this.targets.length; i++) {
+        this.targets[i].onGreenFlag();
+    }
     this.startHats('event_whenflagclicked');
 };
 
@@ -574,8 +586,8 @@ Runtime.prototype.getTargetForStage = function () {
  * Handle an animation frame from the main thread.
  */
 Runtime.prototype.animationFrame = function () {
-    if (self.renderer) {
-        self.renderer.draw();
+    if (this.renderer) {
+        this.renderer.draw();
     }
 };
 

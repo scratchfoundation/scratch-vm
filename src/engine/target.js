@@ -42,6 +42,12 @@ function Target (blocks) {
 }
 
 /**
+ * Called when the project receives a "green flag."
+ * @abstract
+ */
+Target.prototype.onGreenFlag = function () {};
+
+/**
  * Return a human-readable name for this target.
  * Target implementations should override this.
  * @abstract

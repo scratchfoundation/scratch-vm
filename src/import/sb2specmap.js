@@ -4,9 +4,22 @@
  * the SB2 JSON format and the data we need to run a project
  * in the Scratch 3.0 VM.
  * Notably:
- *  - Map 2.0-format opcodes (forward:) into 3.0-format (motion_movesteps).
+ *  - Map 2.0 and 1.4 opcodes (forward:) into 3.0-format (motion_movesteps).
  *  - Map ordered, unnamed args to unordered, named inputs and fields.
  * Keep this up-to-date as 3.0 blocks are renamed, changed, etc.
+ * Originally this was generated largely by a hand-guided scripting process.
+ * The relevant data lives here:
+ * https://github.com/LLK/scratch-flash/blob/master/src/Specs.as
+ * (for the old opcode and argument order).
+ * and here:
+ * https://github.com/LLK/scratch-blocks/tree/develop/blocks_vertical
+ * (for the new opcodes and argument names).
+ * and here:
+ * https://github.com/LLK/scratch-blocks/blob/develop/tests/
+ * (for the shadow blocks created for each block).
+ * I started with the `commands` array in Specs.as, and discarded irrelevant
+ * properties. By hand, I matched the opcode name to the 3.0 opcode.
+ * Finally, I filled in the expected arguments as below.
  */
 var specMap = {
     'forward:':{
