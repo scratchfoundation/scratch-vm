@@ -87,8 +87,7 @@ window.onload = function() {
     // Thread representation tab.
     var threadexplorer = document.getElementById('threadexplorer');
     var cachedThreadJSON = '';
-    var updateThreadExplorer = function (threads) {
-        var newJSON = JSON.stringify(threads, null, 2);
+    var updateThreadExplorer = function (newJSON) {
         if (newJSON != cachedThreadJSON) {
             cachedThreadJSON = newJSON;
             threadexplorer.innerHTML = cachedThreadJSON;
