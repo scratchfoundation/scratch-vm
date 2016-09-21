@@ -10,6 +10,8 @@ var Sprite = require('../sprites/sprite');
 var Color = require('../util/color.js');
 var uid = require('../util/uid');
 var specMap = require('./sb2specmap');
+var Variable = require('../engine/variable');
+var List = require('../engine/list');
 
 /**
  * Top-level handler. Parse provided JSON,
@@ -68,6 +70,27 @@ function parseScratchObject (object, runtime, topLevel) {
     var target = sprite.createClone();
     // Add it to the runtime's list of targets.
     runtime.targets.push(target);
+    // Load target properties from JSON.
+    if (object.hasOwnProperty('variables')) {
+        for (var j = 0; j < object.variables.length; j++) {
+            var variable = object.variables[j];
+            target.variables[variable.name] = new Variable(
+                variable.name,
+                variable.value,
+                variable.isPersistent
+            );
+        }
+    }
+    if (object.hasOwnProperty('lists')) {
+        for (var k = 0; k < object.lists.length; k++) {
+            var list = object.lists[k];
+            // @todo: monitor properties.
+            target.lists[list.listName] = new List(
+                list.listName,
+                list.contents
+            );
+        }
+    }
     if (object.hasOwnProperty('scratchX')) {
         target.x = object.scratchX;
     }
@@ -91,8 +114,8 @@ function parseScratchObject (object, runtime, topLevel) {
     target.updateAllDrawableProperties();
     // The stage will have child objects; recursively process them.
     if (object.children) {
-        for (var j = 0; j < object.children.length; j++) {
-            parseScratchObject(object.children[j], runtime, false);
+        for (var m = 0; m < object.children.length; m++) {
+            parseScratchObject(object.children[m], runtime, false);
         }
     }
 }

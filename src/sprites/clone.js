@@ -327,6 +327,8 @@ Clone.prototype.makeClone = function () {
     newClone.size = this.size;
     newClone.currentCostume = this.currentCostume;
     newClone.effects = JSON.parse(JSON.stringify(this.effects));
+    newClone.variables = JSON.parse(JSON.stringify(this.variables));
+    newClone.lists = JSON.parse(JSON.stringify(this.lists));
     newClone.initDrawable();
     newClone.updateAllDrawableProperties();
     return newClone;
