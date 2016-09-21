@@ -333,6 +333,14 @@ Clone.prototype.makeClone = function () {
 };
 
 /**
+ * Called when the project receives a "green flag."
+ * For a clone, this clears graphic effects.
+ */
+Clone.prototype.onGreenFlag = function () {
+    this.clearEffects();
+};
+
+/**
  * Dispose of this clone, destroying any run-time properties.
  */
 Clone.prototype.dispose = function () {
