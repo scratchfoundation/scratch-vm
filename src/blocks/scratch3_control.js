@@ -19,6 +19,7 @@ Scratch3ControlBlocks.prototype.getPrimitives = function() {
         'control_repeat_until': this.repeatUntil,
         'control_forever': this.forever,
         'control_wait': this.wait,
+        'control_wait_until': this.waitUntil,
         'control_if': this.if,
         'control_if_else': this.ifElse,
         'control_stop': this.stop,
@@ -72,6 +73,14 @@ Scratch3ControlBlocks.prototype.repeatUntil = function(args, util) {
         }
     } else {
         util.stackFrame.executedInFrame = false;
+        util.yieldFrame();
+    }
+};
+
+Scratch3ControlBlocks.prototype.waitUntil = function(args, util) {
+    var condition = Cast.toBoolean(args.CONDITION);
+    // Only execute once per frame.
+    if (!condition) {
         util.yieldFrame();
     }
 };
