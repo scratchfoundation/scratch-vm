@@ -118,6 +118,16 @@ Blocks.prototype.getInputs = function (id) {
 };
 
 /**
+ * Get mutation data for a block.
+ * @param {?string} id ID of block to query.
+ * @return {!Object} Mutation for the block.
+ */
+Blocks.prototype.getMutation = function (id) {
+    if (typeof this._blocks[id] === 'undefined') return null;
+    return this._blocks[id].mutation;
+};
+
+/**
  * Get the top-level script for a given block.
  * @param {?string} id ID of block to query.
  * @return {?string} ID of top-level script block.
@@ -129,6 +139,23 @@ Blocks.prototype.getTopLevelScript = function (id) {
         block = this._blocks[block.parent];
     }
     return block.id;
+};
+
+/**
+ * Get the procedure definition for a given name.
+ * @param {?string} name Name of procedure to query.
+ * @return {?string} ID of procedure definition.
+ */
+Blocks.prototype.getProcedureDefinition = function (name) {
+    for (var id in this._blocks) {
+        var block = this._blocks[id];
+        if ((block.opcode == 'procedures_defnoreturn' ||
+            block.opcode == 'procedures_defreturn') &&
+            block.fields['NAME'].value == name) {
+            return id;
+        }
+    }
+    return null;
 };
 
 // ---------------------------------------------------------------------

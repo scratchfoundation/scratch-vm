@@ -125,6 +125,16 @@ Sequencer.prototype.stepToBranch = function (thread, branchNum) {
 };
 
 /**
+ * Step a procedure.
+ * @param {!Thread} thread Thread object to step to procedure.
+ * @param {!string} procedureName Name of procedure defined in this target.
+ */
+Sequencer.prototype.stepToProcedure = function (thread, procedureName) {
+    var definition = thread.target.blocks.getProcedureDefinition(procedureName);
+    thread.pushStack(definition);
+};
+
+/**
  * Step a thread into an input reporter, and manage its status appropriately.
  * @param {!Thread} thread Thread object to step to reporter.
  * @param {!string} blockId ID of reporter block.
