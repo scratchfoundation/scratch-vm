@@ -136,8 +136,7 @@ Cast.LIST_ALL = 'ALL';
  * @param {number} length Length of the list.
  * @return {(number|string)} 1-based index for list, LIST_ALL, or LIST_INVALID.
  */
-Cast.toListIndex = function (
-    index, length, useRound) {
+Cast.toListIndex = function (index, length) {
     if (typeof index !== 'number') {
         if (index == 'all') {
             return Cast.LIST_ALL;
