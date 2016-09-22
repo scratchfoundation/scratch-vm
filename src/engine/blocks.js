@@ -259,6 +259,7 @@ Blocks.prototype.changeBlock = function (args) {
 
     if (args.element == 'field') {
         // Update block value
+        if (!this._blocks[args.id].fields[args.name]) return;
         this._blocks[args.id].fields[args.name].value = args.value;
     } else if (args.element == 'mutation') {
         this._blocks[args.id].mutation = mutationAdapter(args.value);
