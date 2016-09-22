@@ -73,7 +73,7 @@ Scratch3DataBlocks.prototype.addToList = function (args, util) {
 
 Scratch3DataBlocks.prototype.deleteOfList = function (args, util) {
     var list = util.target.lookupOrCreateList(args.LIST);
-    var index = Cast.toListIndex(args.INDEX, list.contents.length, true);
+    var index = Cast.toListIndex(args.INDEX, list.contents.length);
     if (index === Cast.LIST_INVALID) {
         return;
     } else if (index === Cast.LIST_ALL) {
