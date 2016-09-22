@@ -1,4 +1,5 @@
 var adapter = require('./adapter');
+var mutationAdapter = require('./mutation-adapter');
 var xmlEscape = require('../util/xml-escape');
 
 /**
@@ -226,12 +227,15 @@ Blocks.prototype.createBlock = function (block, opt_isFlyoutBlock) {
  */
 Blocks.prototype.changeBlock = function (args) {
     // Validate
-    if (args.element !== 'field') return;
+    if (args.element !== 'field' && args.element !== 'mutation') return;
     if (typeof this._blocks[args.id] === 'undefined') return;
-    if (typeof this._blocks[args.id].fields[args.name] === 'undefined') return;
 
-    // Update block value
-    this._blocks[args.id].fields[args.name].value = args.value;
+    if (args.element == 'field') {
+        // Update block value
+        this._blocks[args.id].fields[args.name].value = args.value;
+    } else if (args.element == 'mutation') {
+        this._blocks[args.id].mutation = mutationAdapter(args.value);
+    }
 };
 
 /**
