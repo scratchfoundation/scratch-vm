@@ -325,8 +325,6 @@ function parseBlock (sb2block) {
             name: sb2block[1]
         };
     }
-    if (oldOpcode == 'procDef') {
-    }
     return activeBlock;
 }
 
