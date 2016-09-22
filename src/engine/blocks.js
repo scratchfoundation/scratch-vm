@@ -359,6 +359,10 @@ Blocks.prototype.blockToXML = function (blockId) {
         ' type="' + block.opcode + '"' +
         xy +
         '>';
+    // Add any mutation. Must come before inputs.
+    if (block.mutation) {
+        xmlString += this.mutationToXML(block.mutation);
+    }
     // Add any inputs on this block.
     for (var input in block.inputs) {
         var blockInput = block.inputs[input];
@@ -391,6 +395,25 @@ Blocks.prototype.blockToXML = function (blockId) {
     }
     xmlString += '</' + tagName + '>';
     return xmlString;
+};
+
+/**
+ * Recursively encode a mutation object to XML.
+ * @param {!Object} mutation Object representing a mutation.
+ * @return {string} XML string representing a mutation.
+ */
+Blocks.prototype.mutationToXML = function (mutation) {
+    var mutationString = '<' + mutation.tagName;
+    for (var prop in mutation) {
+        if (prop == 'children' || prop == 'tagName') continue;
+        mutationString += ' ' + prop + '="' + mutation[prop] + '"';
+    }
+    mutationString += '>';
+    for (var i = 0; i < mutation.children.length; i++) {
+        mutationString += this.mutationToXML(mutation.children[i]);
+    }
+    mutationString += '</' + mutation.tagName + '>';
+    return mutationString;
 };
 
 // ---------------------------------------------------------------------

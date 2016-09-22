@@ -23,7 +23,7 @@ module.exports = function (mutation) {
  * @return {Object} Object representing useful parts of this mutation.
  */
 function mutatorTagToObject (dom) {
-    var obj = {};
+    var obj = Object.create(null);
     obj.tagName = dom.name;
     obj.children = [];
     for (var prop in dom.attribs) {
