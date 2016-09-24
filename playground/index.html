@@ -5,7 +5,7 @@
     <meta charset="utf-8">
     <title>Scratch VM Playground</title>
     <link rel="stylesheet" href="playground.css">
-    <link rel="stylesheet" href="../node_modules/highlightjs/styles/zenburn.css">
+    <link rel="stylesheet" href="zenburn.css">
 </head>
 <body>
     <div id="vm-devtools">
@@ -763,20 +763,10 @@
       </category>
       <category name="More Blocks" colour="#FF6680" custom="PROCEDURE"></category>
     </xml>
-    <!-- FPS counter -->
-    <script src="../node_modules/stats.js/build/stats.min.js"></script>
-    <!-- Syntax highlighter -->
-    <script src="../node_modules/highlightjs/highlight.pack.min.js"></script>
-    <!-- Scratch Blocks -->
-    <!-- For easier development between the two, use `npm link` -->
-    <script src="../node_modules/scratch-blocks/blockly_compressed_vertical.js"></script>
-    <script src="../node_modules/scratch-blocks/blocks_compressed.js"></script>
-    <script src="../node_modules/scratch-blocks/blocks_compressed_vertical.js"></script>
-    <script src="../node_modules/scratch-blocks/msg/messages.js"></script>
-    <!-- Renderer -->
-    <script src="../node_modules/scratch-render/render.js"></script>
+    <!-- FPS counter, Syntax highlighter, Blocks, Renderer -->
+    <script src="./vendor.js"></script>
     <!-- VM Worker -->
-    <script src="../vm.js"></script>
+    <script src="./vm.js"></script>
     <!-- Playground -->
     <script src="./playground.js"></script>
     <script>

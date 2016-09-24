@@ -15,20 +15,22 @@
     "start": "webpack-dev-server --host 0.0.0.0 --content-base .",
     "test": "make test"
   },
-  "dependencies": {
+  "dependencies": {},
+  "devDependencies": {
+    "copy-webpack-plugin": "3.0.1",
+    "eslint": "2.7.0",
     "expose-loader": "0.7.1",
+    "highlightjs": "8.7.0",
     "htmlparser2": "3.9.0",
     "json-loader": "0.5.4",
+    "lodash.defaultsdeep": "4.6.0",
     "promise": "7.1.1",
-    "webpack": "1.13.0"
-  },
-  "devDependencies": {
-    "eslint": "2.7.0",
-    "highlightjs": "8.7.0",
-    "scratch-blocks": "git+https://git@github.com/LLK/scratch-blocks.git#develop",
-    "scratch-render": "git+https://git@github.com/LLK/scratch-render.git#develop",
+    "scratch-blocks": "0.1.0-80849",
+    "scratch-render": "0.1.0-9f26a",
+    "script-loader": "0.7.0",
     "stats.js": "0.16.0",
     "tap": "5.7.1",
+    "webpack": "1.13.0",
     "webpack-dev-server": "1.14.1"
   }
 }
