@@ -6,3 +6,19 @@ sudo: false
 cache:
   directories:
   - node_modules
+after_script:
+- |
+  # RELEASE_BRANCHES and NPM_TOKEN defined in Travis settings panel
+  declare exitCode
+  $(npm bin)/travis-after-all
+  exitCode=$?
+  if [[
+    $exitCode = 0 &&
+    $RELEASE_BRANCHES =~ $TRAVIS_BRANCH &&
+    $TRAVIS_PULL_REQUEST = "false"
+  ]]; then
+    ./node_modules/.bin/gh-pages -x -r https://${GH_TOKEN}@github.com/${TRAVIS_REPO_SLUG}.git -d playground -m "Travis build ${TRAVIS_BUILD_NUMBER}"
+    git config --global user.email $(git log --pretty=format:"%ce" -n1)
+    git config --global user.name $(git log --pretty=format:"%cn" -n1)
+    ./node_modules/.bin/gh-pages -x -r https://${GH_TOKEN}@github.com/${TRAVIS_REPO_SLUG}.git -d playground -m "Build for $(git log --pretty=format:%H)"
+  fi
