@@ -14,7 +14,7 @@ npm install https://github.com/LLK/scratch-vm.git
 ```
 If you want to edit/play yourself:
 ```bash
-git clone git@github.com:LLK/scratch-vm.git
+git clone https://github.com/LLK/scratch-vm.git
 cd scratch-vm
 npm install
 ```
