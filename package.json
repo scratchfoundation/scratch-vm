@@ -11,7 +11,7 @@
   },
   "main": "./dist.js",
   "scripts": {
-    "postinstall": "./node_modules/.bin/webpack",
+    "prepublish": "./node_modules/.bin/webpack --bail",
     "start": "webpack-dev-server --host 0.0.0.0 --content-base .",
     "test": "make test"
   },

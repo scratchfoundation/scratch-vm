@@ -17,7 +17,9 @@ after_script:
     $RELEASE_BRANCHES =~ $TRAVIS_BRANCH &&
     $TRAVIS_PULL_REQUEST = "false"
   ]]; then
-    ./node_modules/.bin/gh-pages -x -r https://${GH_TOKEN}@github.com/${TRAVIS_REPO_SLUG}.git -d playground -m "Travis build ${TRAVIS_BUILD_NUMBER}"
+    echo "//registry.npmjs.org/:_authToken=\${NPM_TOKEN}" > .npmrc
+    npm --no-git-tag-version version $(node -p -e "require('./package.json').version")-${TRAVIS_COMMIT:0:5}
+    npm publish
     git config --global user.email $(git log --pretty=format:"%ce" -n1)
     git config --global user.name $(git log --pretty=format:"%cn" -n1)
     ./node_modules/.bin/gh-pages -x -r https://${GH_TOKEN}@github.com/${TRAVIS_REPO_SLUG}.git -d playground -m "Build for $(git log --pretty=format:%H)"

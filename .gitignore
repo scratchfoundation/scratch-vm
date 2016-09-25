@@ -9,3 +9,5 @@ npm-*
 /.nyc_output
 /coverage
 /dist.js
+/vm.js
+/vm.min.js
