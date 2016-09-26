@@ -47,7 +47,7 @@ window.onload = function() {
     var toolbox = document.getElementById('toolbox');
     var workspace = window.Blockly.inject('blocks', {
         toolbox: toolbox,
-        media: '../node_modules/scratch-blocks/media/',
+        media: './media/',
         zoom: {
             controls: true,
             wheel: true,
