@@ -134,11 +134,9 @@ Cast.LIST_ALL = 'ALL';
  * LIST_INVALID: if the index was invalid in any way.
  * @param {*} index Scratch arg, including 1-based numbers or special cases.
  * @param {number} length Length of the list.
- * @param {boolean} useRound If set, Math.round (not Math.floor for 2.0 compat).
  * @return {(number|string)} 1-based index for list, LIST_ALL, or LIST_INVALID.
  */
-Cast.toListIndex = function (
-    index, length, useRound) {
+Cast.toListIndex = function (index, length) {
     if (typeof index !== 'number') {
         if (index == 'all') {
             return Cast.LIST_ALL;
@@ -155,11 +153,7 @@ Cast.toListIndex = function (
             return Cast.LIST_INVALID;
         }
     }
-    if (useRound) {
-        index = Math.round(Cast.toNumber(index));
-    } else {
-        index = Math.floor(Cast.toNumber(index));
-    }
+    index = Math.floor(Cast.toNumber(index));
     if (index < 1 || index > length) {
         return Cast.LIST_INVALID;
     }
