@@ -12,7 +12,7 @@
   "main": "./dist.js",
   "scripts": {
     "prepublish": "./node_modules/.bin/webpack --bail",
-    "start": "webpack-dev-server --host 0.0.0.0 --content-base .",
+    "start": "make serve",
     "test": "make test"
   },
   "dependencies": {},

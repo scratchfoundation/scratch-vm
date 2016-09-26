@@ -1,8 +1,13 @@
 var CopyWebpackPlugin = require('copy-webpack-plugin');
 var defaultsDeep = require('lodash.defaultsdeep');
+var path = require('path');
 var webpack = require('webpack');
 
 var base = {
+    devServer: {
+        contentBase: path.resolve(__dirname, 'playground'),
+        host: '0.0.0.0'
+    },
     module: {
         loaders: [
             {
@@ -57,8 +62,8 @@ module.exports = [
     // Playground
     defaultsDeep({}, base, {
         entry: {
-            'playground/vm': './src/index.js',
-            'playground/vendor': [
+            'vm': './src/index.js',
+            'vendor': [
                 // FPS counter
                 'stats.js/build/stats.min.js',
                 // Syntax highlighter
@@ -70,7 +75,7 @@ module.exports = [
             ]
         },
         output: {
-            path: __dirname,
+            path: path.resolve(__dirname, 'playground'),
             filename: '[name].js'
         },
         module: {
@@ -100,10 +105,9 @@ module.exports = [
         plugins: base.plugins.concat([
             new CopyWebpackPlugin([{
                 from: 'node_modules/scratch-blocks/media',
-                to: 'playground/media'
+                to: 'media'
             }, {
-                from: 'node_modules/highlightjs/styles/zenburn.css',
-                to: 'playground'
+                from: 'node_modules/highlightjs/styles/zenburn.css'
             }])
         ])
     })
