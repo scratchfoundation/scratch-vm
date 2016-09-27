@@ -9,3 +9,9 @@ npm-*
 /.nyc_output
 /coverage
 /dist.js
+/vm.js
+/vm.min.js
+/playground/media
+/playground/vendor.js
+/playground/vm.js
+/playground/zenburn.css
