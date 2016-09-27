@@ -224,10 +224,6 @@ VirtualMachine.prototype.emitWorkspaceUpdate = function () {
         'xml': this.editingTarget.blocks.toXML()
     });
 };
-<<<<<<< HEAD
-
-=======
->>>>>>> LLK/develop
 /**
  * Export and bind to `window`
  */

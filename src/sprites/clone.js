@@ -32,8 +32,6 @@ function Clone(sprite) {
 
     this.initDrawable();
 
-    // audio engine
-    this.audioWorker = self.audioWorker;
 }
 util.inherits(Clone, Target);
 
@@ -276,24 +274,6 @@ Clone.prototype.updateAllDrawableProperties = function () {
 Clone.prototype.getName = function () {
     return this.sprite.name;
 };
-
-// Audio
-
-Clone.prototype.playSound = function (soundNum) {
-    window.audioEngine.playSound(soundNum);
-}
-
-Clone.prototype.stopAllSounds = function () {
-    window.audioEngine.stopAllSounds();
-}
-
-Clone.prototype.playNoteForBeats = function (note,beats) {
-    window.audioEngine.playNoteForBeats(note, beats);
-}
-
-Clone.prototype.playDrumForBeats = function (drumNum,beats) {
-    window.audioEngine.playDrumForBeats(drumNum, beats);
-}
 
 /**
  * Return whether the clone is touching a color.

@@ -27,12 +27,16 @@ function AudioEngine () {
 
     // sound files
 
-    var soundFileNames = ['meow','boing','this_is_a_test','who_put_the_bomp','cave','drip_drop','drum_machine','eggs','zoop'];
+    var soundFileNames = ['meow','boing','cave','drip_drop','drum_machine','eggs','zoop'];
     this.soundSamplers = this._loadSoundFiles(soundFileNames);
 }
 
 AudioEngine.prototype.playSound = function (soundNum) {
     this.soundSamplers[soundNum].triggerAttack();
+};
+
+AudioEngine.prototype.getSoundDuration = function (soundNum) {
+    return this.soundSamplers[soundNum].player.buffer.duration;
 };
 
 AudioEngine.prototype.playNoteForBeats = function(note, beats) {
@@ -56,6 +60,50 @@ AudioEngine.prototype.stopAllSounds = function() {
         this.soundSamplers[i].triggerRelease();
     }
 };
+
+AudioEngine.prototype.setEffect = function(effect, value) {
+    switch (effect) {
+        case 'ECHO':
+            this.delay.wet.value = (value / 100) / 2; // max 50% wet (need dry signal too)
+            break;
+        case 'PAN':
+            this.panner.pan.value = value / 100;
+            break;
+        case 'REVERB':
+            this.reverb.wet.value = value / 100;
+            break;
+        case 'PITCH':
+            this.pitchShift.pitch = value / 20; // arbitrary scaling of 20 per semitone, for now... default 100 is a perfect fourth
+            break;
+    }
+}
+
+AudioEngine.prototype.changeEffect = function(effect, value) {
+    switch (effect) {
+        case 'ECHO':
+            this.delay.wet.value += (value / 100) / 2; // max 50% wet (need dry signal too)
+            this.delay.wet.value = this._clamp(this.delay.wet.value, 0, 0.5);
+            break;
+        case 'PAN':
+            this.panner.pan.value += value / 100;
+            this.panner.pan.value = this._clamp(this.panner.pan.value, -1, 1);
+            break;
+        case 'REVERB':
+            this.reverb.wet.value += value / 100;
+            this.reverb.wet.value = this._clamp(this.reverb.wet.value, 0, 1);
+            break;
+        case 'PITCH':
+            this.pitchShift.pitch += value / 20;
+            break;
+    }
+} 
+
+AudioEngine.prototype.clearEffects = function() {
+    this.delay.wet.value = 0;
+    this.panner.pan.value = 0;
+    this.reverb.wet.value = 0;
+    this.pitchShift.pitch = 0;
+}
 
 AudioEngine.prototype._loadSoundFiles = function(filenames) {
     var samplers = [];
