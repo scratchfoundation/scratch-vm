@@ -13,9 +13,9 @@
   "scripts": {
     "prepublish": "./node_modules/.bin/webpack --bail",
     "start": "make serve",
-    "test": "make test"
+    "test": "make test",
+    "version": "./node_modules/.bin/json -f package.json -I -e \"this.repository.sha = '$(git log -n1 --pretty=format:%H)'\""
   },
-  "dependencies": {},
   "devDependencies": {
     "copy-webpack-plugin": "3.0.1",
     "eslint": "2.7.0",
@@ -23,6 +23,7 @@
     "gh-pages": "0.11.0",
     "highlightjs": "8.7.0",
     "htmlparser2": "3.9.0",
+    "json": "9.0.4",
     "json-loader": "0.5.4",
     "lodash.defaultsdeep": "4.6.0",
     "promise": "7.1.1",
