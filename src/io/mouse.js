@@ -28,20 +28,17 @@ Mouse.prototype.postData = function(data) {
 };
 
 Mouse.prototype._activateClickHats = function (x, y) {
-    if (self.renderer) {
-        var pickPromise = self.renderer.pick(x, y);
-        var instance = this;
-        pickPromise.then(function(drawableID) {
-            for (var i = 0; i < instance.runtime.targets.length; i++) {
-                var target = instance.runtime.targets[i];
-                if (target.hasOwnProperty('drawableID') &&
-                    target.drawableID == drawableID) {
-                    instance.runtime.startHats('event_whenthisspriteclicked',
-                        null, target);
-                    return;
-                }
+    if (this.runtime.renderer) {
+        var drawableID = this.runtime.renderer.pick(x, y);
+        for (var i = 0; i < this.runtime.targets.length; i++) {
+            var target = this.runtime.targets[i];
+            if (target.hasOwnProperty('drawableID') &&
+                target.drawableID == drawableID) {
+                this.runtime.startHats('event_whenthisspriteclicked',
+                    null, target);
+                return;
             }
-        });
+        }
     }
 };
 

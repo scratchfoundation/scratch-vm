@@ -10,6 +10,8 @@ var Sprite = require('../sprites/sprite');
 var Color = require('../util/color.js');
 var uid = require('../util/uid');
 var specMap = require('./sb2specmap');
+var Variable = require('../engine/variable');
+var List = require('../engine/list');
 
 /**
  * Top-level handler. Parse provided JSON,
@@ -40,7 +42,7 @@ function parseScratchObject (object, runtime, topLevel) {
     // Blocks container for this object.
     var blocks = new Blocks();
     // @todo: For now, load all Scratch objects (stage/sprites) as a Sprite.
-    var sprite = new Sprite(blocks);
+    var sprite = new Sprite(blocks, runtime);
     // Sprite/stage name from JSON.
     if (object.hasOwnProperty('objName')) {
         sprite.name = object.objName;
@@ -51,7 +53,7 @@ function parseScratchObject (object, runtime, topLevel) {
             var costume = object.costumes[i];
             // @todo: Make sure all the relevant metadata is being pulled out.
             sprite.costumes.push({
-                skin: 'https://cdn.assets.scratch.mit.edu/internalapi/asset/' 
+                skin: 'https://cdn.assets.scratch.mit.edu/internalapi/asset/'
                     + costume.baseLayerMD5 + '/get/',
                 name: costume.costumeName,
                 bitmapResolution: costume.bitmapResolution,
@@ -68,30 +70,52 @@ function parseScratchObject (object, runtime, topLevel) {
     var target = sprite.createClone();
     // Add it to the runtime's list of targets.
     runtime.targets.push(target);
-    if (object.scratchX) {
+    // Load target properties from JSON.
+    if (object.hasOwnProperty('variables')) {
+        for (var j = 0; j < object.variables.length; j++) {
+            var variable = object.variables[j];
+            target.variables[variable.name] = new Variable(
+                variable.name,
+                variable.value,
+                variable.isPersistent
+            );
+        }
+    }
+    if (object.hasOwnProperty('lists')) {
+        for (var k = 0; k < object.lists.length; k++) {
+            var list = object.lists[k];
+            // @todo: monitor properties.
+            target.lists[list.listName] = new List(
+                list.listName,
+                list.contents
+            );
+        }
+    }
+    if (object.hasOwnProperty('scratchX')) {
         target.x = object.scratchX;
     }
-    if (object.scratchY) {
+    if (object.hasOwnProperty('scratchY')) {
         target.y = object.scratchY;
     }
-    if (object.direction) {
+    if (object.hasOwnProperty('direction')) {
         target.direction = object.direction;
     }
-    if (object.scale) {
+    if (object.hasOwnProperty('scale')) {
         // SB2 stores as 1.0 = 100%; we use % in the VM.
         target.size = object.scale * 100;
     }
-    if (object.visible) {
+    if (object.hasOwnProperty('visible')) {
         target.visible = object.visible;
     }
-    if (object.currentCostumeIndex) {
+    if (object.hasOwnProperty('currentCostumeIndex')) {
         target.currentCostume = object.currentCostumeIndex;
     }
     target.isStage = topLevel;
+    target.updateAllDrawableProperties();
     // The stage will have child objects; recursively process them.
     if (object.children) {
-        for (var j = 0; j < object.children.length; j++) {
-            parseScratchObject(object.children[j], runtime, false);
+        for (var m = 0; m < object.children.length; m++) {
+            parseScratchObject(object.children[m], runtime, false);
         }
     }
 }

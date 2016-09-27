@@ -15,7 +15,8 @@ var defaultBlockPackages = {
     'scratch3_motion': require('../blocks/scratch3_motion'),
     'scratch3_operators': require('../blocks/scratch3_operators'),
     'scratch3_sound': require('../blocks/scratch3_sound'),
-    'scratch3_sensing': require('../blocks/scratch3_sensing')
+    'scratch3_sensing': require('../blocks/scratch3_sensing'),
+    'scratch3_data': require('../blocks/scratch3_data')
 };
 
 /**
@@ -61,6 +62,11 @@ function Runtime () {
 
     this._scriptGlowsPreviousFrame = [];
     this._editingTarget = null;
+    /**
+     * Currently known number of clones.
+     * @type {number}
+     */
+    this._cloneCounter = 0;
 }
 
 /**
@@ -103,6 +109,11 @@ util.inherits(Runtime, EventEmitter);
  */
 Runtime.THREAD_STEP_INTERVAL = 1000 / 60;
 
+/**
+ * How many clones can be created at a time.
+ * @const {number}
+ */
+Runtime.MAX_CLONES = 300;
 
 // -----------------------------------------------------------------------------
 // -----------------------------------------------------------------------------
@@ -190,16 +201,26 @@ Runtime.prototype.clearEdgeActivatedValues = function () {
     this._edgeActivatedHatValues = {};
 };
 
+/**
+ * Attach the renderer
+ * @param {!RenderWebGL} renderer The renderer to attach
+ */
+Runtime.prototype.attachRenderer = function (renderer) {
+    this.renderer = renderer;
+};
+
 // -----------------------------------------------------------------------------
 // -----------------------------------------------------------------------------
 
 /**
  * Create a thread and push it to the list of threads.
- * @param {!string} id ID of block that starts the stack
+ * @param {!string} id ID of block that starts the stack.
+ * @param {!Target} target Target to run thread on.
  * @return {!Thread} The newly created thread.
  */
-Runtime.prototype._pushThread = function (id) {
+Runtime.prototype._pushThread = function (id, target) {
     var thread = new Thread(id);
+    thread.setTarget(target);
     thread.pushStack(id);
     this.threads.push(thread);
     return thread;
@@ -238,7 +259,7 @@ Runtime.prototype.toggleScript = function (topBlockId) {
         }
     }
     // Otherwise add it.
-    this._pushThread(topBlockId);
+    this._pushThread(topBlockId, this._editingTarget);
 };
 
 /**
@@ -307,7 +328,8 @@ Runtime.prototype.startHats = function (requestedHatOpcode,
             // If `restartExistingThreads` is true, we should stop
             // any existing threads starting with the top block.
             for (var i = 0; i < instance.threads.length; i++) {
-                if (instance.threads[i].topBlock === topBlockId) {
+                if (instance.threads[i].topBlock === topBlockId &&
+                    (!opt_target || instance.threads[i].target == opt_target)) {
                     instance._removeThread(instance.threads[i]);
                 }
             }
@@ -315,31 +337,76 @@ Runtime.prototype.startHats = function (requestedHatOpcode,
             // If `restartExistingThreads` is false, we should
             // give up if any threads with the top block are running.
             for (var j = 0; j < instance.threads.length; j++) {
-                if (instance.threads[j].topBlock === topBlockId) {
+                if (instance.threads[j].topBlock === topBlockId &&
+                    (!opt_target || instance.threads[j].target == opt_target)) {
                     // Some thread is already running.
                     return;
                 }
             }
         }
         // Start the thread with this top block.
-        newThreads.push(instance._pushThread(topBlockId));
+        newThreads.push(instance._pushThread(topBlockId, target));
     }, opt_target);
     return newThreads;
+};
+
+/**
+ * Dispose of a target.
+ * @param {!Target} target Target to dispose of.
+ */
+Runtime.prototype.disposeTarget = function (target) {
+    // Allow target to do dispose actions.
+    target.dispose();
+    // Remove from list of targets.
+    var index = this.targets.indexOf(target);
+    if (index > -1) {
+        this.targets.splice(index, 1);
+    }
+};
+
+/**
+ * Stop any threads acting on the target.
+ * @param {!Target} target Target to stop threads for.
+ */
+Runtime.prototype.stopForTarget = function (target) {
+    // Stop any threads on the target.
+    for (var i = 0; i < this.threads.length; i++) {
+        if (this.threads[i].target == target) {
+            this._removeThread(this.threads[i]);
+        }
+    }
 };
 
 /**
  * Start all threads that start with the green flag.
  */
 Runtime.prototype.greenFlag = function () {
+    this.stopAll();
     this.ioDevices.clock.resetProjectTimer();
     this.clearEdgeActivatedValues();
+    // Inform all targets of the green flag.
+    for (var i = 0; i < this.targets.length; i++) {
+        this.targets[i].onGreenFlag();
+    }
     this.startHats('event_whenflagclicked');
 };
 
 /**
- * Stop "everything"
+ * Stop "everything."
  */
 Runtime.prototype.stopAll = function () {
+    // Dispose all clones.
+    var newTargets = [];
+    for (var i = 0; i < this.targets.length; i++) {
+        if (this.targets[i].hasOwnProperty('isOriginal') &&
+            !this.targets[i].isOriginal) {
+            this.targets[i].dispose();
+        } else {
+            newTargets.push(this.targets[i]);
+        }
+    }
+    this.targets = newTargets;
+    // Dispose all threads.
     var threadsCopy = this.threads.slice();
     while (threadsCopy.length > 0) {
         var poppedThread = threadsCopy.pop();
@@ -380,7 +447,7 @@ Runtime.prototype._updateScriptGlows = function () {
     // Find all scripts that should be glowing.
     for (var i = 0; i < this.threads.length; i++) {
         var thread = this.threads[i];
-        var target = this.targetForThread(thread);
+        var target = thread.target;
         if (thread.requestScriptGlowInFrame && target == this._editingTarget) {
             var blockForThread = thread.peekStack() || thread.topBlock;
             var script = target.blocks.getTopLevelScript(blockForThread);
@@ -460,23 +527,6 @@ Runtime.prototype.visualReport = function (blockId, value) {
 };
 
 /**
- * Return the Target for a particular thread.
- * @param {!Thread} thread Thread to determine target for.
- * @return {?Target} Target object, if one exists.
- */
-Runtime.prototype.targetForThread = function (thread) {
-    // @todo This is a messy solution,
-    // but prevents having circular data references.
-    // Have a map or some other way to associate target with threads.
-    for (var t = 0; t < this.targets.length; t++) {
-        var target = this.targets[t];
-        if (target.blocks.getBlock(thread.topBlock)) {
-            return target;
-        }
-    }
-};
-
-/**
  * Get a target by its id.
  * @param {string} targetId Id of target to find.
  * @return {?Target} The target, if found.
@@ -488,6 +538,36 @@ Runtime.prototype.getTargetById = function (targetId) {
             return target;
         }
     }
+};
+
+/**
+ * Get the first original (non-clone-block-created) sprite given a name.
+ * @param {string} spriteName Name of sprite to look for.
+ * @return {?Target} Target representing a sprite of the given name.
+ */
+Runtime.prototype.getSpriteTargetByName = function (spriteName) {
+    for (var i = 0; i < this.targets.length; i++) {
+        var target = this.targets[i];
+        if (target.sprite && target.sprite.name == spriteName) {
+            return target;
+        }
+    }
+};
+
+/**
+ * Update the clone counter to track how many clones are created.
+ * @param {number} changeAmount How many clones have been created/destroyed.
+ */
+Runtime.prototype.changeCloneCounter = function (changeAmount) {
+    this._cloneCounter += changeAmount;
+};
+
+/**
+ * Return whether there are clones available.
+ * @return {boolean} True until the number of clones hits Runtime.MAX_CLONES.
+ */
+Runtime.prototype.clonesAvailable = function () {
+    return this._cloneCounter < Runtime.MAX_CLONES;
 };
 
 /**
@@ -507,8 +587,8 @@ Runtime.prototype.getTargetForStage = function () {
  * Handle an animation frame from the main thread.
  */
 Runtime.prototype.animationFrame = function () {
-    if (self.renderer) {
-        self.renderer.draw();
+    if (this.renderer) {
+        this.renderer.draw();
     }
 };
 

@@ -4,9 +4,22 @@
  * the SB2 JSON format and the data we need to run a project
  * in the Scratch 3.0 VM.
  * Notably:
- *  - Map 2.0-format opcodes (forward:) into 3.0-format (motion_movesteps).
+ *  - Map 2.0 and 1.4 opcodes (forward:) into 3.0-format (motion_movesteps).
  *  - Map ordered, unnamed args to unordered, named inputs and fields.
  * Keep this up-to-date as 3.0 blocks are renamed, changed, etc.
+ * Originally this was generated largely by a hand-guided scripting process.
+ * The relevant data lives here:
+ * https://github.com/LLK/scratch-flash/blob/master/src/Specs.as
+ * (for the old opcode and argument order).
+ * and here:
+ * https://github.com/LLK/scratch-blocks/tree/develop/blocks_vertical
+ * (for the new opcodes and argument names).
+ * and here:
+ * https://github.com/LLK/scratch-blocks/blob/develop/tests/
+ * (for the shadow blocks created for each block).
+ * I started with the `commands` array in Specs.as, and discarded irrelevant
+ * properties. By hand, I matched the opcode name to the 3.0 opcode.
+ * Finally, I filled in the expected arguments as below.
  */
 var specMap = {
     'forward:':{
@@ -905,12 +918,12 @@ var specMap = {
         'argMap':[
             {
                 'type':'input',
-                'inputOp':'sensing_ofattributemenu',
-                'inputName':'ATTRIBUTE'
+                'inputOp':'sensing_of_property_menu',
+                'inputName':'PROPERTY'
             },
             {
                 'type':'input',
-                'inputOp':'sensing_ofobjectmenu',
+                'inputOp':'sensing_of_object_menu',
                 'inputName':'OBJECT'
             }
         ]
@@ -1230,13 +1243,22 @@ var specMap = {
             }
         ]
     },
+    'contentsOfList:':{
+        'opcode':'data_list',
+        'argMap':[
+            {
+                'type':'field',
+                'fieldName':'LIST'
+            }
+        ]
+    },
     'append:toList:':{
-        'opcode':'data_listadd',
+        'opcode':'data_addtolist',
         'argMap':[
             {
                 'type':'input',
                 'inputOp':'text',
-                'inputName':'VALUE'
+                'inputName':'ITEM'
             },
             {
                 'type':'field',
@@ -1245,12 +1267,12 @@ var specMap = {
         ]
     },
     'deleteLine:ofList:':{
-        'opcode':'data_listdelete',
+        'opcode':'data_deleteoflist',
         'argMap':[
             {
                 'type':'input',
-                'inputOp':'text',
-                'inputName':'LINE'
+                'inputOp':'math_integer',
+                'inputName':'INDEX'
             },
             {
                 'type':'field',
@@ -1259,17 +1281,17 @@ var specMap = {
         ]
     },
     'insert:at:ofList:':{
-        'opcode':'data_listinsert',
+        'opcode':'data_insertatlist',
         'argMap':[
             {
                 'type':'input',
                 'inputOp':'text',
-                'inputName':'VALUE'
+                'inputName':'ITEM'
             },
             {
                 'type':'input',
-                'inputOp':'text',
-                'inputName':'LINE'
+                'inputOp':'math_integer',
+                'inputName':'INDEX'
             },
             {
                 'type':'field',
@@ -1278,12 +1300,12 @@ var specMap = {
         ]
     },
     'setLine:ofList:to:':{
-        'opcode':'data_listreplace',
+        'opcode':'data_replaceitemoflist',
         'argMap':[
             {
                 'type':'input',
-                'inputOp':'text',
-                'inputName':'LINE'
+                'inputOp':'math_integer',
+                'inputName':'INDEX'
             },
             {
                 'type':'field',
@@ -1292,17 +1314,17 @@ var specMap = {
             {
                 'type':'input',
                 'inputOp':'text',
-                'inputName':'VALUE'
+                'inputName':'ITEM'
             }
         ]
     },
     'getLine:ofList:':{
-        'opcode':'data_listitem',
+        'opcode':'data_itemoflist',
         'argMap':[
             {
                 'type':'input',
-                'inputOp':'text',
-                'inputName':'LINE'
+                'inputOp':'math_integer',
+                'inputName':'INDEX'
             },
             {
                 'type':'field',
@@ -1311,7 +1333,7 @@ var specMap = {
         ]
     },
     'lineCountOfList:':{
-        'opcode':'data_listlength',
+        'opcode':'data_lengthoflist',
         'argMap':[
             {
                 'type':'field',
@@ -1320,7 +1342,7 @@ var specMap = {
         ]
     },
     'list:contains:':{
-        'opcode':'data_listcontains',
+        'opcode':'data_listcontainsitem',
         'argMap':[
             {
                 'type':'field',
@@ -1329,7 +1351,7 @@ var specMap = {
             {
                 'type':'input',
                 'inputOp':'text',
-                'inputName':'VALUE'
+                'inputName':'ITEM'
             }
         ]
     },

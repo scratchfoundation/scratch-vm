@@ -21,7 +21,7 @@ var loadProject = function () {
 
 window.onload = function() {
     // Lots of global variables to make debugging easier
-    // Instantiate the VM worker.
+    // Instantiate the VM.
     var vm = new window.VirtualMachine();
     window.vm = vm;
 
@@ -30,7 +30,8 @@ window.onload = function() {
         document.location = '#' + document.getElementById('projectId').value;
         location.reload();
     };
-    document.getElementById('createEmptyProject').addEventListener('click', function() {
+    document.getElementById('createEmptyProject').addEventListener('click',
+    function() {
         document.location = '#' + 'createEmptyProject';
         location.reload();
     });
@@ -38,7 +39,9 @@ window.onload = function() {
 
     // Instantiate the renderer and connect it to the VM.
     var canvas = document.getElementById('scratch-stage');
-    window.renderer = new window.RenderWebGLLocal(canvas);
+    var renderer = new window.RenderWebGL(canvas);
+    window.renderer = renderer;
+    vm.attachRenderer(renderer);
 
     // Instantiate audio engine
     window.audioEngine = new window.AudioEngine();
@@ -47,7 +50,7 @@ window.onload = function() {
     var toolbox = document.getElementById('toolbox');
     var workspace = window.Blockly.inject('blocks', {
         toolbox: toolbox,
-        media: '../node_modules/scratch-blocks/media/',
+        media: './media/',
         zoom: {
             controls: true,
             wheel: true,
@@ -87,8 +90,7 @@ window.onload = function() {
     // Thread representation tab.
     var threadexplorer = document.getElementById('threadexplorer');
     var cachedThreadJSON = '';
-    var updateThreadExplorer = function (threads) {
-        var newJSON = JSON.stringify(threads, null, 2);
+    var updateThreadExplorer = function (newJSON) {
         if (newJSON != cachedThreadJSON) {
             cachedThreadJSON = newJSON;
             threadexplorer.innerHTML = cachedThreadJSON;

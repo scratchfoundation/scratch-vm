@@ -76,9 +76,19 @@ VirtualMachine.prototype.stopAll = function () {
  * Get data for playground. Data comes back in an emitted event.
  */
 VirtualMachine.prototype.getPlaygroundData = function () {
+    var instance = this;
+    // Only send back thread data for the current editingTarget.
+    var threadData = this.runtime.threads.filter(function(thread) {
+        return thread.target == instance.editingTarget;
+    });
+    // Remove the target key, since it's a circular reference.
+    var filteredThreadData = JSON.stringify(threadData, function(key, value) {
+        if (key == 'target') return undefined;
+        return value;
+    }, 2);
     this.emit('playgroundData', {
         blocks: this.editingTarget.blocks,
-        threads: this.runtime.threads
+        threads: filteredThreadData
     });
 };
 
@@ -163,6 +173,14 @@ VirtualMachine.prototype.createEmptyProject = function () {
 };
 
 /**
+ * Set the renderer for the VM/runtime
+ * @param {!RenderWebGL} renderer The renderer to attach
+ */
+VirtualMachine.prototype.attachRenderer = function (renderer) {
+    this.runtime.attachRenderer(renderer);
+};
+
+/**
  * Handle a Blockly event for the current editing target.
  * @param {!Blockly.Event} e Any Blockly event.
  */
@@ -207,7 +225,10 @@ VirtualMachine.prototype.setEditingTarget = function (targetId) {
 VirtualMachine.prototype.emitTargetsUpdate = function () {
     this.emit('targetsUpdate', {
         // [[target id, human readable target name], ...].
-        targetList: this.runtime.targets.map(function(target) {
+        targetList: this.runtime.targets.filter(function (target) {
+            // Don't report clones.
+            return !target.hasOwnProperty('isOriginal') || target.isOriginal;
+        }).map(function(target) {
             return [target.id, target.getName()];
         }),
         // Currently editing target id.
@@ -224,8 +245,5 @@ VirtualMachine.prototype.emitWorkspaceUpdate = function () {
         'xml': this.editingTarget.blocks.toXML()
     });
 };
-/**
- * Export and bind to `window`
- */
+
 module.exports = VirtualMachine;
-if (typeof window !== 'undefined') window.VirtualMachine = module.exports;

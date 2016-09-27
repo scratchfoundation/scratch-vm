@@ -19,9 +19,21 @@ Scratch3ControlBlocks.prototype.getPrimitives = function() {
         'control_repeat_until': this.repeatUntil,
         'control_forever': this.forever,
         'control_wait': this.wait,
+        'control_wait_until': this.waitUntil,
         'control_if': this.if,
         'control_if_else': this.ifElse,
-        'control_stop': this.stop
+        'control_stop': this.stop,
+        'control_create_clone_of_menu': this.createCloneMenu,
+        'control_create_clone_of': this.createClone,
+        'control_delete_this_clone': this.deleteClone
+    };
+};
+
+Scratch3ControlBlocks.prototype.getHats = function () {
+    return {
+        'control_start_as_clone': {
+            restartExistingThreads: false
+        }
     };
 };
 
@@ -61,6 +73,14 @@ Scratch3ControlBlocks.prototype.repeatUntil = function(args, util) {
         }
     } else {
         util.stackFrame.executedInFrame = false;
+        util.yieldFrame();
+    }
+};
+
+Scratch3ControlBlocks.prototype.waitUntil = function(args, util) {
+    var condition = Cast.toBoolean(args.CONDITION);
+    // Only execute once per frame.
+    if (!condition) {
         util.yieldFrame();
     }
 };
@@ -116,6 +136,32 @@ Scratch3ControlBlocks.prototype.ifElse = function(args, util) {
 Scratch3ControlBlocks.prototype.stop = function() {
     // @todo - don't use this.runtime
     this.runtime.stopAll();
+};
+
+// @todo (GH-146): remove.
+Scratch3ControlBlocks.prototype.createCloneMenu = function (args) {
+    return args.CLONE_OPTION;
+};
+
+Scratch3ControlBlocks.prototype.createClone = function (args, util) {
+    var cloneTarget;
+    if (args.CLONE_OPTION == '_myself_') {
+        cloneTarget = util.target;
+    } else {
+        cloneTarget = this.runtime.getSpriteTargetByName(args.CLONE_OPTION);
+    }
+    if (!cloneTarget) {
+        return;
+    }
+    var newClone = cloneTarget.makeClone();
+    if (newClone) {
+        this.runtime.targets.push(newClone);
+    }
+};
+
+Scratch3ControlBlocks.prototype.deleteClone = function (args, util) {
+    this.runtime.disposeTarget(util.target);
+    this.runtime.stopForTarget(util.target);
 };
 
 module.exports = Scratch3ControlBlocks;
