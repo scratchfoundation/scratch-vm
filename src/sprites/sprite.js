@@ -50,7 +50,6 @@ Sprite.prototype.createClone = function () {
     this.clones.push(newClone);
     if (newClone.isOriginal) {
         newClone.initDrawable();
-        newClone.updateAllDrawableProperties();
     }
     return newClone;
 };
