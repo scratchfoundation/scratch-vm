@@ -22,6 +22,7 @@ Scratch3MotionBlocks.prototype.getPrimitives = function() {
         'motion_turnleft': this.turnLeft,
         'motion_pointindirection': this.pointInDirection,
         'motion_glidesecstoxy': this.glide,
+        'motion_setrotationstyle': this.setRotationStyle,
         'motion_changexby': this.changeX,
         'motion_setx': this.setX,
         'motion_changeyby': this.changeY,
@@ -94,6 +95,10 @@ Scratch3MotionBlocks.prototype.glide = function (args, util) {
             util.target.setXY(util.stackFrame.endX, util.stackFrame.endY);
         }
     }
+};
+
+Scratch3MotionBlocks.prototype.setRotationStyle = function (args, util) {
+    util.target.setRotationStyle(args.STYLE);
 };
 
 Scratch3MotionBlocks.prototype.changeX = function (args, util) {
