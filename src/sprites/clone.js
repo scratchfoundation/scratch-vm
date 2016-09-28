@@ -38,7 +38,6 @@ util.inherits(Clone, Target);
 Clone.prototype.initDrawable = function () {
     if (this.renderer) {
         this.drawableID = this.renderer.createDrawable();
-        this.updateAllDrawableProperties();
     }
     // If we're a clone, start the hats.
     if (!this.isOriginal) {
