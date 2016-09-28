@@ -23,10 +23,6 @@ function AudioEngine () {
     this.reverb.wet.value = 0;
 
     Tone.Master.chain(this.delay, this.pitchShift, this.panner, this.reverb);
-
-    // synth setup for play note block
-    
-	this.synth = new Tone.PolySynth(6, Tone.Synth).toMaster();
 	
     // drum sounds
 
@@ -35,12 +31,28 @@ function AudioEngine () {
 
     // sound files
 
-    var soundFileNames = ['meow','boing','cave','drip_drop','drum_machine','eggs','zoop'];
-    this.soundSamplers = this._loadSoundFiles(soundFileNames);
+    // var soundFileNames = ['meow','boing','cave','drip_drop','drum_machine','eggs','zoop'];
+    // this.soundSamplers = this._loadSoundFiles(soundFileNames);
+
+    // sound urls - map each url to its tone.sampler
+    this.soundSamplers = [];
 }
 
 AudioEngine.prototype.playSound = function (soundNum) {
     this.soundSamplers[soundNum].triggerAttack();
+};
+
+AudioEngine.prototype.playSoundFromUrl = function (url) {
+    if (url) {
+        // if we've loaded it already, play it
+        if (this.soundSamplers[url]) {
+            this.soundSamplers[url].triggerAttack();
+        } else {
+        // else load, play, and store it    
+            var sampler = new Tone.Sampler(url, function() {sampler.triggerAttack();}).toMaster();
+            this.soundSamplers[url] = sampler;
+        }
+    }
 };
 
 AudioEngine.prototype.getSoundDuration = function (soundNum) {
@@ -48,7 +60,8 @@ AudioEngine.prototype.getSoundDuration = function (soundNum) {
 };
 
 AudioEngine.prototype.playNoteForBeats = function(note, beats) {
-    this.instrument.play(note, this.tone.now(), beats);
+    this.instrument.start(note, Tone.context.currentTime, beats);
+    // this.instrument.play(note).stop(Tone.context.currentTime+beats);
 };
 
 AudioEngine.prototype.playDrumForBeats = function(drumNum, beats) {
@@ -56,8 +69,6 @@ AudioEngine.prototype.playDrumForBeats = function(drumNum, beats) {
 };
 
 AudioEngine.prototype.stopAllSounds = function() {
-    // stop synth notes
-    this.synth.releaseAll();
     // stop drum notes
     for (var i=0; i<this.drumSamplers.length; i++) {
         this.drumSamplers[i].triggerRelease();
@@ -66,6 +77,8 @@ AudioEngine.prototype.stopAllSounds = function() {
     for (var i=0; i<this.soundSamplers.length; i++) {
         this.soundSamplers[i].triggerRelease();
     }
+    // stop soundfont notes
+    this.instrument.stop();
 };
 
 AudioEngine.prototype.setEffect = function(effect, value) {
@@ -111,6 +124,10 @@ AudioEngine.prototype.clearEffects = function() {
     this.reverb.wet.value = 0;
     this.pitchShift.pitch = 0;
 }
+
+AudioEngine.prototype.loadSoundFromUrl = function(url) {
+
+};
 
 AudioEngine.prototype._loadSoundFiles = function(filenames) {
     var samplers = [];

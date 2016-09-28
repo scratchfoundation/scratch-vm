@@ -1,4 +1,5 @@
 var Cast = require('../util/cast');
+var MathUtil = require('../util/math-util');
 var Promise = require('promise');
 
 function Scratch3SoundBlocks(runtime) {
@@ -15,7 +16,7 @@ function Scratch3SoundBlocks(runtime) {
  */
 Scratch3SoundBlocks.prototype.getPrimitives = function() {
     return {
-        'sound_playsound': this.playSound,
+        'sound_play': this.playSound,
         'sound_playuntildone': this.playSoundAndWait,
         'sound_stopallsounds': this.stopAllSounds,
         'sound_playnoteforbeats': this.playNoteForBeats,
@@ -30,12 +31,31 @@ Scratch3SoundBlocks.prototype.getPrimitives = function() {
 };
 
 Scratch3SoundBlocks.prototype.playSound = function (args, util) {
-    window.audioEngine.playSound(args.SOUND_NUM);
+    var url = this._getSoundUrl(args.SOUND_MENU, util);
+    window.audioEngine.playSoundFromUrl(url);
 };
 
+Scratch3SoundBlocks.prototype._getSoundUrl = function (soundName, util) {
+    if (util.target.sprite.sounds.length == 0) {
+        return '';
+    }
+    var index;
+    if (typeof soundName === 'number') {
+        index = MathUtil.wrapClamp(soundName,0,util.target.sprite.sounds.length);
+    } else {
+        index = util.target.getSoundIndexByName(soundName);
+        if (index == -1) {
+            return '';
+        }
+    }
+    return util.target.sprite.sounds[index].soundFile;
+};
+
+
 Scratch3SoundBlocks.prototype.playSoundAndWait = function (args, util) {
-    window.audioEngine.playSound(args.SOUND_NUM);
-    var duration = window.audioEngine.getSoundDuration(args.SOUND_NUM); 
+    // window.audioEngine.playSound(args.SOUND_NUM);
+    // var duration = window.audioEngine.getSoundDuration(args.SOUND_NUM); 
+
     return new Promise(function(resolve) {
             setTimeout(function() {
                 resolve();
