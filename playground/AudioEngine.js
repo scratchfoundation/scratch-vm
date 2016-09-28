@@ -1,5 +1,13 @@
 function AudioEngine () {
 
+    // soundfont setup
+
+    Soundfont.instrument(Tone.context, 'acoustic_grand_piano').then(function (piano) {
+        this.instrument = piano;
+    }.bind(this));
+
+    // tone setup
+
 	this.tone = new Tone();
 
 	// effects setup
@@ -40,8 +48,7 @@ AudioEngine.prototype.getSoundDuration = function (soundNum) {
 };
 
 AudioEngine.prototype.playNoteForBeats = function(note, beats) {
-    var freq = this._midiToFreq(note);
-    this.synth.triggerAttackRelease(freq, beats);        
+    this.instrument.play(note, this.tone.now(), beats);
 };
 
 AudioEngine.prototype.playDrumForBeats = function(drumNum, beats) {
