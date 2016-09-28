@@ -108,7 +108,7 @@ function parseScratchObject (object, runtime, topLevel) {
         target.visible = object.visible;
     }
     if (object.hasOwnProperty('currentCostumeIndex')) {
-        target.currentCostume = object.currentCostumeIndex;
+        target.currentCostume = Math.round(object.currentCostumeIndex);
     }
     target.isStage = topLevel;
     target.updateAllDrawableProperties();

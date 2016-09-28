@@ -230,6 +230,7 @@ Clone.prototype.clearEffects = function () {
  */
 Clone.prototype.setCostume = function (index) {
     // Keep the costume index within possible values.
+    index = Math.round(index);
     this.currentCostume = MathUtil.wrapClamp(
         index, 0, this.sprite.costumes.length - 1
     );
