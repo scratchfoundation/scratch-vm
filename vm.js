@@ -65,7 +65,7 @@
 
 	var Runtime = __webpack_require__(16);
 	var sb2import = __webpack_require__(44);
-	var Sprite = __webpack_require__(99);
+	var Sprite = __webpack_require__(104);
 	var Blocks = __webpack_require__(45);
 
 	/**
@@ -4586,6 +4586,7 @@
 	        'motion_turnleft': this.turnLeft,
 	        'motion_pointindirection': this.pointInDirection,
 	        'motion_glidesecstoxy': this.glide,
+	        'motion_setrotationstyle': this.setRotationStyle,
 	        'motion_changexby': this.changeX,
 	        'motion_setx': this.setX,
 	        'motion_changeyby': this.changeY,
@@ -4658,6 +4659,10 @@
 	            util.target.setXY(util.stackFrame.endX, util.stackFrame.endY);
 	        }
 	    }
+	};
+
+	Scratch3MotionBlocks.prototype.setRotationStyle = function (args, util) {
+	    util.target.setRotationStyle(args.STYLE);
 	};
 
 	Scratch3MotionBlocks.prototype.changeX = function (args, util) {
@@ -5083,12 +5088,13 @@
 	 */
 
 	var Blocks = __webpack_require__(45);
-	var Sprite = __webpack_require__(99);
+	var Clone = __webpack_require__(99);
+	var Sprite = __webpack_require__(104);
 	var Color = __webpack_require__(24);
-	var uid = __webpack_require__(104);
+	var uid = __webpack_require__(103);
 	var specMap = __webpack_require__(105);
-	var Variable = __webpack_require__(102);
-	var List = __webpack_require__(103);
+	var Variable = __webpack_require__(101);
+	var List = __webpack_require__(102);
 
 	/**
 	 * Top-level handler. Parse provided JSON,
@@ -5186,6 +5192,15 @@
 	    }
 	    if (object.hasOwnProperty('currentCostumeIndex')) {
 	        target.currentCostume = Math.round(object.currentCostumeIndex);
+	    }
+	    if (object.hasOwnProperty('rotationStyle')) {
+	        if (object.rotationStyle == 'none') {
+	            target.rotationStyle = Clone.ROTATION_STYLE_NONE;
+	        } else if (object.rotationStyle == 'leftRight') {
+	            target.rotationStyle = Clone.ROTATION_STYLE_LEFT_RIGHT;
+	        } else if (object.rotationStyle == 'normal') {
+	            target.rotationStyle = Clone.ROTATION_STYLE_ALL_AROUND;
+	        }
 	    }
 	    target.isStage = topLevel;
 	    target.updateAllDrawableProperties();
@@ -15535,72 +15550,9 @@
 /* 99 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var Clone = __webpack_require__(100);
-	var Blocks = __webpack_require__(45);
-
-	/**
-	 * Sprite to be used on the Scratch stage.
-	 * All clones of a sprite have shared blocks, shared costumes, shared variables.
-	 * @param {?Blocks} blocks Shared blocks object for all clones of sprite.
-	 * @param {Runtime} runtime Reference to the runtime.
-	 * @constructor
-	 */
-	function Sprite (blocks, runtime) {
-	    this.runtime = runtime;
-	    if (!blocks) {
-	        // Shared set of blocks for all clones.
-	        blocks = new Blocks();
-	    }
-	    this.blocks = blocks;
-	    /**
-	     * Human-readable name for this sprite (and all clones).
-	     * @type {string}
-	     */
-	    this.name = '';
-	    /**
-	     * List of costumes for this sprite.
-	     * Each entry is an object, e.g.,
-	     * {
-	     *      skin: "costume.svg",
-	     *      name: "Costume Name",
-	     *      bitmapResolution: 2,
-	     *      rotationCenterX: 0,
-	     *      rotationCenterY: 0
-	     * }
-	     * @type {Array.<!Object>}
-	     */
-	    this.costumes = [];
-	    /**
-	     * List of clones for this sprite, including the original.
-	     * @type {Array.<!Clone>}
-	     */
-	    this.clones = [];
-	}
-
-	/**
-	 * Create a clone of this sprite.
-	 * @returns {!Clone} Newly created clone.
-	 */
-	Sprite.prototype.createClone = function () {
-	    var newClone = new Clone(this, this.runtime);
-	    newClone.isOriginal = this.clones.length == 0;
-	    this.clones.push(newClone);
-	    if (newClone.isOriginal) {
-	        newClone.initDrawable();
-	    }
-	    return newClone;
-	};
-
-	module.exports = Sprite;
-
-
-/***/ },
-/* 100 */
-/***/ function(module, exports, __webpack_require__) {
-
 	var util = __webpack_require__(12);
 	var MathUtil = __webpack_require__(26);
-	var Target = __webpack_require__(101);
+	var Target = __webpack_require__(100);
 
 	/**
 	 * Clone (instance) of a sprite.
@@ -15698,6 +15650,30 @@
 	Clone.prototype.currentCostume = 0;
 
 	/**
+	 * Rotation style for "all around"/spinning.
+	 * @enum
+	 */
+	Clone.ROTATION_STYLE_ALL_AROUND = 'all around';
+
+	/**
+	 * Rotation style for "left-right"/flipping.
+	 * @enum
+	 */
+	Clone.ROTATION_STYLE_LEFT_RIGHT = 'left-right';
+
+	/**
+	 * Rotation style for "no rotation."
+	 * @enum
+	 */
+	Clone.ROTATION_STYLE_NONE = 'don\'t rotate';
+
+	/**
+	 * Current rotation style.
+	 * @type {!string}
+	 */
+	Clone.prototype.rotationStyle = Clone.ROTATION_STYLE_ALL_AROUND;
+
+	/**
 	 * Map of current graphic effect values.
 	 * @type {!Object.<string, number>}
 	 */
@@ -15731,6 +15707,26 @@
 	};
 
 	/**
+	 * Get the rendered direction and scale, after applying rotation style.
+	 * @return {Object<string, number>} Direction and scale to render.
+	 */
+	Clone.prototype._getRenderedDirectionAndScale = function () {
+	    // Default: no changes to `this.direction` or `this.scale`.
+	    var finalDirection = this.direction;
+	    var finalScale = [this.size, this.size];
+	    if (this.rotationStyle == Clone.ROTATION_STYLE_NONE) {
+	        // Force rendered direction to be 90.
+	        finalDirection = 90;
+	    } else if (this.rotationStyle === Clone.ROTATION_STYLE_LEFT_RIGHT) {
+	        // Force rendered direction to be 90, and flip drawable if needed.
+	        finalDirection = 90;
+	        var scaleFlip = (this.direction < 0) ? -1 : 1;
+	        finalScale = [scaleFlip * this.size, this.size];
+	    }
+	    return {direction: finalDirection, scale: finalScale};
+	};
+
+	/**
 	 * Set the direction of a clone.
 	 * @param {!number} direction New direction of clone.
 	 */
@@ -15741,8 +15737,10 @@
 	    // Keep direction between -179 and +180.
 	    this.direction = MathUtil.wrapClamp(direction, -179, 180);
 	    if (this.renderer) {
+	        var renderedDirectionScale = this._getRenderedDirectionAndScale();
 	        this.renderer.updateDrawableProperties(this.drawableID, {
-	            direction: this.direction
+	            direction: renderedDirectionScale.direction,
+	            scale: renderedDirectionScale.scale
 	        });
 	    }
 	};
@@ -15791,8 +15789,10 @@
 	    // Keep size between 5% and 535%.
 	    this.size = MathUtil.clamp(size, 5, 535);
 	    if (this.renderer) {
+	        var renderedDirectionScale = this._getRenderedDirectionAndScale();
 	        this.renderer.updateDrawableProperties(this.drawableID, {
-	            scale: [this.size, this.size]
+	            direction: renderedDirectionScale.direction,
+	            scale: renderedDirectionScale.scale
 	        });
 	    }
 	};
@@ -15842,6 +15842,27 @@
 	};
 
 	/**
+	 * Update the rotation style for this clone.
+	 * @param {!string} rotationStyle New rotation style.
+	 */
+	Clone.prototype.setRotationStyle = function (rotationStyle) {
+	    if (rotationStyle == Clone.ROTATION_STYLE_NONE) {
+	        this.rotationStyle = Clone.ROTATION_STYLE_NONE;
+	    } else if (rotationStyle == Clone.ROTATION_STYLE_ALL_AROUND) {
+	        this.rotationStyle = Clone.ROTATION_STYLE_ALL_AROUND;
+	    } else if (rotationStyle == Clone.ROTATION_STYLE_LEFT_RIGHT) {
+	        this.rotationStyle = Clone.ROTATION_STYLE_LEFT_RIGHT;
+	    }
+	    if (this.renderer) {
+	        var renderedDirectionScale = this._getRenderedDirectionAndScale();
+	        this.renderer.updateDrawableProperties(this.drawableID, {
+	            direction: renderedDirectionScale.direction,
+	            scale: renderedDirectionScale.scale
+	        });
+	    }
+	};
+
+	/**
 	 * Get a costume index of this clone, by name of the costume.
 	 * @param {?string} costumeName Name of a costume.
 	 * @return {number} Index of the named costume, or -1 if not present.
@@ -15861,10 +15882,11 @@
 	 */
 	Clone.prototype.updateAllDrawableProperties = function () {
 	    if (this.renderer) {
+	        var renderedDirectionScale = this._getRenderedDirectionAndScale();
 	        this.renderer.updateDrawableProperties(this.drawableID, {
 	            position: [this.x, this.y],
-	            direction: this.direction,
-	            scale: [this.size, this.size],
+	            direction: renderedDirectionScale.direction,
+	            scale: renderedDirectionScale.scale,
 	            visible: this.visible,
 	            skin: this.sprite.costumes[this.currentCostume].skin
 	        });
@@ -15926,6 +15948,7 @@
 	    newClone.visible = this.visible;
 	    newClone.size = this.size;
 	    newClone.currentCostume = this.currentCostume;
+	    newClone.rotationStyle = this.rotationStyle;
 	    newClone.effects = JSON.parse(JSON.stringify(this.effects));
 	    newClone.variables = JSON.parse(JSON.stringify(this.variables));
 	    newClone.lists = JSON.parse(JSON.stringify(this.lists));
@@ -15959,13 +15982,13 @@
 
 
 /***/ },
-/* 101 */
+/* 100 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var Blocks = __webpack_require__(45);
-	var Variable = __webpack_require__(102);
-	var List = __webpack_require__(103);
-	var uid = __webpack_require__(104);
+	var Variable = __webpack_require__(101);
+	var List = __webpack_require__(102);
+	var uid = __webpack_require__(103);
 
 	/**
 	 * @fileoverview
@@ -16081,7 +16104,7 @@
 
 
 /***/ },
-/* 102 */
+/* 101 */
 /***/ function(module, exports) {
 
 	/**
@@ -16105,7 +16128,7 @@
 
 
 /***/ },
-/* 103 */
+/* 102 */
 /***/ function(module, exports) {
 
 	/**
@@ -16127,7 +16150,7 @@
 
 
 /***/ },
-/* 104 */
+/* 103 */
 /***/ function(module, exports) {
 
 	/**
@@ -16159,6 +16182,69 @@
 	};
 
 	module.exports = uid;
+
+
+/***/ },
+/* 104 */
+/***/ function(module, exports, __webpack_require__) {
+
+	var Clone = __webpack_require__(99);
+	var Blocks = __webpack_require__(45);
+
+	/**
+	 * Sprite to be used on the Scratch stage.
+	 * All clones of a sprite have shared blocks, shared costumes, shared variables.
+	 * @param {?Blocks} blocks Shared blocks object for all clones of sprite.
+	 * @param {Runtime} runtime Reference to the runtime.
+	 * @constructor
+	 */
+	function Sprite (blocks, runtime) {
+	    this.runtime = runtime;
+	    if (!blocks) {
+	        // Shared set of blocks for all clones.
+	        blocks = new Blocks();
+	    }
+	    this.blocks = blocks;
+	    /**
+	     * Human-readable name for this sprite (and all clones).
+	     * @type {string}
+	     */
+	    this.name = '';
+	    /**
+	     * List of costumes for this sprite.
+	     * Each entry is an object, e.g.,
+	     * {
+	     *      skin: "costume.svg",
+	     *      name: "Costume Name",
+	     *      bitmapResolution: 2,
+	     *      rotationCenterX: 0,
+	     *      rotationCenterY: 0
+	     * }
+	     * @type {Array.<!Object>}
+	     */
+	    this.costumes = [];
+	    /**
+	     * List of clones for this sprite, including the original.
+	     * @type {Array.<!Clone>}
+	     */
+	    this.clones = [];
+	}
+
+	/**
+	 * Create a clone of this sprite.
+	 * @returns {!Clone} Newly created clone.
+	 */
+	Sprite.prototype.createClone = function () {
+	    var newClone = new Clone(this, this.runtime);
+	    newClone.isOriginal = this.clones.length == 0;
+	    this.clones.push(newClone);
+	    if (newClone.isOriginal) {
+	        newClone.initDrawable();
+	    }
+	    return newClone;
+	};
+
+	module.exports = Sprite;
 
 
 /***/ },
