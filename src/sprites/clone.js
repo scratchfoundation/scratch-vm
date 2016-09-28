@@ -98,6 +98,30 @@ Clone.prototype.size = 100;
 Clone.prototype.currentCostume = 0;
 
 /**
+ * Rotation style for "all around"/spinning.
+ * @enum
+ */
+Clone.ROTATION_STYLE_ALL_AROUND = 'all around';
+
+/**
+ * Rotation style for "left-right"/flipping.
+ * @enum
+ */
+Clone.ROTATION_STYLE_LEFT_RIGHT = 'left-right';
+
+/**
+ * Rotation style for "no rotation."
+ * @enum
+ */
+Clone.ROTATION_STYLE_NONE = 'don\'t rotate';
+
+/**
+ * Current rotation style.
+ * @type {!string}
+ */
+Clone.prototype.rotationStyle = Clone.ROTATION_STYLE_ALL_AROUND;
+
+/**
  * Map of current graphic effect values.
  * @type {!Object.<string, number>}
  */
@@ -131,6 +155,26 @@ Clone.prototype.setXY = function (x, y) {
 };
 
 /**
+ * Get the rendered direction and scale, after applying rotation style.
+ * @return {Object<string, number>} Direction and scale to render.
+ */
+Clone.prototype._getRenderedDirectionAndScale = function () {
+    // Default: no changes to `this.direction` or `this.scale`.
+    var finalDirection = this.direction;
+    var finalScale = [this.size, this.size];
+    if (this.rotationStyle == Clone.ROTATION_STYLE_NONE) {
+        // Force rendered direction to be 90.
+        finalDirection = 90;
+    } else if (this.rotationStyle === Clone.ROTATION_STYLE_LEFT_RIGHT) {
+        // Force rendered direction to be 90, and flip drawable if needed.
+        finalDirection = 90;
+        var scaleFlip = (this.direction < 0) ? -1 : 1;
+        finalScale = [scaleFlip * this.size, this.size];
+    }
+    return {direction: finalDirection, scale: finalScale};
+};
+
+/**
  * Set the direction of a clone.
  * @param {!number} direction New direction of clone.
  */
@@ -141,8 +185,10 @@ Clone.prototype.setDirection = function (direction) {
     // Keep direction between -179 and +180.
     this.direction = MathUtil.wrapClamp(direction, -179, 180);
     if (this.renderer) {
+        var renderedDirectionScale = this._getRenderedDirectionAndScale();
         this.renderer.updateDrawableProperties(this.drawableID, {
-            direction: this.direction
+            direction: renderedDirectionScale.direction,
+            scale: renderedDirectionScale.scale
         });
     }
 };
@@ -191,8 +237,10 @@ Clone.prototype.setSize = function (size) {
     // Keep size between 5% and 535%.
     this.size = MathUtil.clamp(size, 5, 535);
     if (this.renderer) {
+        var renderedDirectionScale = this._getRenderedDirectionAndScale();
         this.renderer.updateDrawableProperties(this.drawableID, {
-            scale: [this.size, this.size]
+            direction: renderedDirectionScale.direction,
+            scale: renderedDirectionScale.scale
         });
     }
 };
@@ -242,6 +290,27 @@ Clone.prototype.setCostume = function (index) {
 };
 
 /**
+ * Update the rotation style for this clone.
+ * @param {!string} rotationStyle New rotation style.
+ */
+Clone.prototype.setRotationStyle = function (rotationStyle) {
+    if (rotationStyle == Clone.ROTATION_STYLE_NONE) {
+        this.rotationStyle = Clone.ROTATION_STYLE_NONE;
+    } else if (rotationStyle == Clone.ROTATION_STYLE_ALL_AROUND) {
+        this.rotationStyle = Clone.ROTATION_STYLE_ALL_AROUND;
+    } else if (rotationStyle == Clone.ROTATION_STYLE_LEFT_RIGHT) {
+        this.rotationStyle = Clone.ROTATION_STYLE_LEFT_RIGHT;
+    }
+    if (this.renderer) {
+        var renderedDirectionScale = this._getRenderedDirectionAndScale();
+        this.renderer.updateDrawableProperties(this.drawableID, {
+            direction: renderedDirectionScale.direction,
+            scale: renderedDirectionScale.scale
+        });
+    }
+};
+
+/**
  * Get a costume index of this clone, by name of the costume.
  * @param {?string} costumeName Name of a costume.
  * @return {number} Index of the named costume, or -1 if not present.
@@ -261,10 +330,11 @@ Clone.prototype.getCostumeIndexByName = function (costumeName) {
  */
 Clone.prototype.updateAllDrawableProperties = function () {
     if (this.renderer) {
+        var renderedDirectionScale = this._getRenderedDirectionAndScale();
         this.renderer.updateDrawableProperties(this.drawableID, {
             position: [this.x, this.y],
-            direction: this.direction,
-            scale: [this.size, this.size],
+            direction: renderedDirectionScale.direction,
+            scale: renderedDirectionScale.scale,
             visible: this.visible,
             skin: this.sprite.costumes[this.currentCostume].skin
         });
@@ -326,6 +396,7 @@ Clone.prototype.makeClone = function () {
     newClone.visible = this.visible;
     newClone.size = this.size;
     newClone.currentCostume = this.currentCostume;
+    newClone.rotationStyle = this.rotationStyle;
     newClone.effects = JSON.parse(JSON.stringify(this.effects));
     newClone.variables = JSON.parse(JSON.stringify(this.variables));
     newClone.lists = JSON.parse(JSON.stringify(this.lists));
