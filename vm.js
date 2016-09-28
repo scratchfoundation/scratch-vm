@@ -5185,7 +5185,7 @@
 	        target.visible = object.visible;
 	    }
 	    if (object.hasOwnProperty('currentCostumeIndex')) {
-	        target.currentCostume = object.currentCostumeIndex;
+	        target.currentCostume = Math.round(object.currentCostumeIndex);
 	    }
 	    target.isStage = topLevel;
 	    target.updateAllDrawableProperties();
@@ -15830,6 +15830,7 @@
 	 */
 	Clone.prototype.setCostume = function (index) {
 	    // Keep the costume index within possible values.
+	    index = Math.round(index);
 	    this.currentCostume = MathUtil.wrapClamp(
 	        index, 0, this.sprite.costumes.length - 1
 	    );
