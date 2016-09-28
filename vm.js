@@ -15587,7 +15587,6 @@
 	    this.clones.push(newClone);
 	    if (newClone.isOriginal) {
 	        newClone.initDrawable();
-	        newClone.updateAllDrawableProperties();
 	    }
 	    return newClone;
 	};
@@ -15639,7 +15638,6 @@
 	Clone.prototype.initDrawable = function () {
 	    if (this.renderer) {
 	        this.drawableID = this.renderer.createDrawable();
-	        this.updateAllDrawableProperties();
 	    }
 	    // If we're a clone, start the hats.
 	    if (!this.isOriginal) {
