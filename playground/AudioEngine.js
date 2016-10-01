@@ -49,8 +49,10 @@ AudioEngine.prototype.playSoundFromUrl = function (url) {
             this.soundSamplers[url].triggerAttack();
         } else {
         // else load, play, and store it    
-            var sampler = new Tone.Sampler(url, function() {sampler.triggerAttack();}).toMaster();
-            this.soundSamplers[url] = sampler;
+            var sampler = new Tone.Sampler(url, function() {
+                sampler.triggerAttack();
+                this.soundSamplers[url] = sampler;
+            }.bind(this)).toMaster();
         }
     }
 };
@@ -73,8 +75,8 @@ AudioEngine.prototype.stopAllSounds = function() {
     for (var i=0; i<this.drumSamplers.length; i++) {
         this.drumSamplers[i].triggerRelease();
     }
-    // stop sounds triggered with playSound
-    for (var i=0; i<this.soundSamplers.length; i++) {
+    // stop sounds triggered with playSound (indexed by their urls)
+    for (var i in this.soundSamplers) {
         this.soundSamplers[i].triggerRelease();
     }
     // stop soundfont notes

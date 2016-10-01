@@ -76,6 +76,7 @@ function parseScratchObject (object, runtime, topLevel) {
                 name: sound.soundName
             });
         }
+        console.log(sprite.sounds);
     }
     // If included, parse any and all scripts/blocks on the object.
     if (object.hasOwnProperty('scripts')) {
