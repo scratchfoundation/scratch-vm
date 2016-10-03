@@ -15581,6 +15581,20 @@
 	     * @type {?Number}
 	     */
 	    this.drawableID = null;
+
+	    /**
+	     * Map of current graphic effect values.
+	     * @type {!Object.<string, number>}
+	     */
+	    this.effects = {
+	        'color': 0,
+	        'fisheye': 0,
+	        'whirl': 0,
+	        'pixelate': 0,
+	        'mosaic': 0,
+	        'brightness': 0,
+	        'ghost': 0
+	    };
 	}
 	util.inherits(Clone, Target);
 
@@ -15673,19 +15687,6 @@
 	 */
 	Clone.prototype.rotationStyle = Clone.ROTATION_STYLE_ALL_AROUND;
 
-	/**
-	 * Map of current graphic effect values.
-	 * @type {!Object.<string, number>}
-	 */
-	Clone.prototype.effects = {
-	    'color': 0,
-	    'fisheye': 0,
-	    'whirl': 0,
-	    'pixelate': 0,
-	    'mosaic': 0,
-	    'brightness': 0,
-	    'ghost': 0
-	};
 	// End clone-level properties.
 
 	/**
