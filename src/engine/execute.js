@@ -132,6 +132,12 @@ var execute = function (sequencer, thread) {
         argValues[inputName] = currentStackFrame.reported[inputName];
     }
 
+    // Add any mutation to args (e.g., for procedures).
+    var mutation = target.blocks.getMutation(currentBlockId);
+    if (mutation) {
+        argValues.mutation = mutation;
+    }
+
     // If we've gotten this far, all of the input blocks are evaluated,
     // and `argValues` is fully populated. So, execute the block primitive.
     // First, clear `currentStackFrame.reported`, so any subsequent execution
@@ -154,6 +160,9 @@ var execute = function (sequencer, thread) {
         },
         startBranch: function (branchNum) {
             sequencer.stepToBranch(thread, branchNum);
+        },
+        startProcedure: function (procedureName) {
+            sequencer.stepToProcedure(thread, procedureName);
         },
         startHats: function(requestedHat, opt_matchFields, opt_target) {
             return (

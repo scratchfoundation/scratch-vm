@@ -1,3 +1,4 @@
+var mutationAdapter = require('./mutation-adapter');
 var html = require('htmlparser2');
 
 /**
@@ -137,6 +138,9 @@ function domToBlock (blockDOM, blocks, isTopBlock, parent) {
             domToBlock(childBlockNode, blocks, false, block.id);
             // Link next block to this block.
             block.next = childBlockNode.attribs.id;
+            break;
+        case 'mutation':
+            block.mutation = mutationAdapter(xmlChild);
             break;
         }
     }
