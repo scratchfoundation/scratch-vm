@@ -3,72 +3,73 @@ var cast = require('../../src/util/cast');
 
 test('toNumber', function (t) {
     // Numeric
-    t.equal(cast.toNumber(0), 0);
-    t.equal(cast.toNumber(1), 1);
-    t.equal(cast.toNumber(3.14), 3.14);
+    t.strictEqual(cast.toNumber(0), 0);
+    t.strictEqual(cast.toNumber(1), 1);
+    t.strictEqual(cast.toNumber(3.14), 3.14);
 
     // String
-    t.equal(cast.toNumber('0'), 0);
-    t.equal(cast.toNumber('1'), 1);
-    t.equal(cast.toNumber('3.14'), 3.14);
-    t.equal(cast.toNumber('0.1e10'), 1000000000);
-    t.equal(cast.toNumber('foobar'), 0);
+    t.strictEqual(cast.toNumber('0'), 0);
+    t.strictEqual(cast.toNumber('1'), 1);
+    t.strictEqual(cast.toNumber('3.14'), 3.14);
+    t.strictEqual(cast.toNumber('0.1e10'), 1000000000);
+    t.strictEqual(cast.toNumber('foobar'), 0);
 
     // Boolean
-    t.equal(cast.toNumber(true), 1);
-    t.equal(cast.toNumber(false), 0);
-    t.equal(cast.toNumber('true'), 0);
-    t.equal(cast.toNumber('false'), 0);
+    t.strictEqual(cast.toNumber(true), 1);
+    t.strictEqual(cast.toNumber(false), 0);
+    t.strictEqual(cast.toNumber('true'), 0);
+    t.strictEqual(cast.toNumber('false'), 0);
 
     // Undefined & object
-    t.equal(cast.toNumber(undefined), 0);
-    t.equal(cast.toNumber({}), 0);
+    t.strictEqual(cast.toNumber(undefined), 0);
+    t.strictEqual(cast.toNumber({}), 0);
+    t.strictEqual(cast.toNumber(NaN), 0);
     t.end();
 });
 
 test('toBoolean', function (t) {
     // Numeric
-    t.equal(cast.toBoolean(0), false);
-    t.equal(cast.toBoolean(1), true);
-    t.equal(cast.toBoolean(3.14), true);
+    t.strictEqual(cast.toBoolean(0), false);
+    t.strictEqual(cast.toBoolean(1), true);
+    t.strictEqual(cast.toBoolean(3.14), true);
 
     // String
-    t.equal(cast.toBoolean('0'), false);
-    t.equal(cast.toBoolean('1'), true);
-    t.equal(cast.toBoolean('3.14'), true);
-    t.equal(cast.toBoolean('0.1e10'), true);
-    t.equal(cast.toBoolean('foobar'), true);
+    t.strictEqual(cast.toBoolean('0'), false);
+    t.strictEqual(cast.toBoolean('1'), true);
+    t.strictEqual(cast.toBoolean('3.14'), true);
+    t.strictEqual(cast.toBoolean('0.1e10'), true);
+    t.strictEqual(cast.toBoolean('foobar'), true);
 
     // Boolean
-    t.equal(cast.toBoolean(true), true);
-    t.equal(cast.toBoolean(false), false);
+    t.strictEqual(cast.toBoolean(true), true);
+    t.strictEqual(cast.toBoolean(false), false);
 
     // Undefined & object
-    t.equal(cast.toBoolean(undefined), false);
-    t.equal(cast.toBoolean({}), true);
+    t.strictEqual(cast.toBoolean(undefined), false);
+    t.strictEqual(cast.toBoolean({}), true);
     t.end();
 });
 
 test('toString', function (t) {
     // Numeric
-    t.equal(cast.toString(0), '0');
-    t.equal(cast.toString(1), '1');
-    t.equal(cast.toString(3.14), '3.14');
+    t.strictEqual(cast.toString(0), '0');
+    t.strictEqual(cast.toString(1), '1');
+    t.strictEqual(cast.toString(3.14), '3.14');
 
     // String
-    t.equal(cast.toString('0'), '0');
-    t.equal(cast.toString('1'), '1');
-    t.equal(cast.toString('3.14'), '3.14');
-    t.equal(cast.toString('0.1e10'), '0.1e10');
-    t.equal(cast.toString('foobar'), 'foobar');
+    t.strictEqual(cast.toString('0'), '0');
+    t.strictEqual(cast.toString('1'), '1');
+    t.strictEqual(cast.toString('3.14'), '3.14');
+    t.strictEqual(cast.toString('0.1e10'), '0.1e10');
+    t.strictEqual(cast.toString('foobar'), 'foobar');
 
     // Boolean
-    t.equal(cast.toString(true), 'true');
-    t.equal(cast.toString(false), 'false');
+    t.strictEqual(cast.toString(true), 'true');
+    t.strictEqual(cast.toString(false), 'false');
 
     // Undefined & object
-    t.equal(cast.toString(undefined), 'undefined');
-    t.equal(cast.toString({}), '[object Object]');
+    t.strictEqual(cast.toString(undefined), 'undefined');
+    t.strictEqual(cast.toString({}), '[object Object]');
     t.end();
 });
 
@@ -92,53 +93,53 @@ test('toRbgColorList', function (t) {
 
 test('compare', function (t) {
     // Numeric
-    t.equal(cast.compare(0, 0), 0);
-    t.equal(cast.compare(1, 0), 1);
-    t.equal(cast.compare(0, 1), -1);
-    t.equal(cast.compare(1, 1), 0);
+    t.strictEqual(cast.compare(0, 0), 0);
+    t.strictEqual(cast.compare(1, 0), 1);
+    t.strictEqual(cast.compare(0, 1), -1);
+    t.strictEqual(cast.compare(1, 1), 0);
 
     // String
-    t.equal(cast.compare('0', '0'), 0);
-    t.equal(cast.compare('0.1e10', '1000000000'), 0);
-    t.equal(cast.compare('foobar', 'FOOBAR'), 0);
-    t.equal(cast.compare('dog', 'cat'), 1);
+    t.strictEqual(cast.compare('0', '0'), 0);
+    t.strictEqual(cast.compare('0.1e10', '1000000000'), 0);
+    t.strictEqual(cast.compare('foobar', 'FOOBAR'), 0);
+    t.ok(cast.compare('dog', 'cat') > 0);
 
     // Boolean
-    t.equal(cast.compare(true, true), 0);
-    t.equal(cast.compare(true, false), 1);
-    t.equal(cast.compare(false, true), -1);
-    t.equal(cast.compare(true, true), 0);
+    t.strictEqual(cast.compare(true, true), 0);
+    t.strictEqual(cast.compare(true, false), 1);
+    t.strictEqual(cast.compare(false, true), -1);
+    t.strictEqual(cast.compare(true, true), 0);
 
     // Undefined & object
-    t.equal(cast.compare(undefined, undefined), 0);
-    t.equal(cast.compare(undefined, 'undefined'), 0);
-    t.equal(cast.compare({}, {}), 0);
-    t.equal(cast.compare({}, '[object Object]'), 0);
+    t.strictEqual(cast.compare(undefined, undefined), 0);
+    t.strictEqual(cast.compare(undefined, 'undefined'), 0);
+    t.strictEqual(cast.compare({}, {}), 0);
+    t.strictEqual(cast.compare({}, '[object Object]'), 0);
     t.end();
 });
 
 test('isInt', function (t) {
     // Numeric
-    t.equal(cast.isInt(0), true);
-    t.equal(cast.isInt(1), true);
-    t.equal(cast.isInt(0.0), true);
-    t.equal(cast.isInt(3.14), false);
-    t.equal(cast.isInt(NaN), true);
+    t.strictEqual(cast.isInt(0), true);
+    t.strictEqual(cast.isInt(1), true);
+    t.strictEqual(cast.isInt(0.0), true);
+    t.strictEqual(cast.isInt(3.14), false);
+    t.strictEqual(cast.isInt(NaN), true);
 
     // String
-    t.equal(cast.isInt('0'), true);
-    t.equal(cast.isInt('1'), true);
-    t.equal(cast.isInt('0.0'), false);      // @todo This should be true
-    t.equal(cast.isInt('0.1e10'), false);   // @todo This should be true
-    t.equal(cast.isInt('3.14'), false);
+    t.strictEqual(cast.isInt('0'), true);
+    t.strictEqual(cast.isInt('1'), true);
+    t.strictEqual(cast.isInt('0.0'), false);
+    t.strictEqual(cast.isInt('0.1e10'), false);
+    t.strictEqual(cast.isInt('3.14'), false);
 
     // Boolean
-    t.equal(cast.isInt(true), true);
-    t.equal(cast.isInt(false), true);
+    t.strictEqual(cast.isInt(true), true);
+    t.strictEqual(cast.isInt(false), true);
 
     // Undefined & object
-    t.equal(cast.isInt(undefined), false);
-    t.equal(cast.isInt({}), false);
+    t.strictEqual(cast.isInt(undefined), false);
+    t.strictEqual(cast.isInt({}), false);
     t.end();
 });
 
@@ -147,32 +148,32 @@ test('toListIndex', function (t) {
     var empty = [];
 
     // Valid
-    t.equal(cast.toListIndex(1, list.length), 1);
-    t.equal(cast.toListIndex(6, list.length), 6);
+    t.strictEqual(cast.toListIndex(1, list.length), 1);
+    t.strictEqual(cast.toListIndex(6, list.length), 6);
 
     // Invalid
-    t.equal(cast.toListIndex(-1, list.length), 'INVALID');
-    t.equal(cast.toListIndex(0.1, list.length), 'INVALID');
-    t.equal(cast.toListIndex(0, list.length), 'INVALID');
-    t.equal(cast.toListIndex(7, list.length), 'INVALID');
+    t.strictEqual(cast.toListIndex(-1, list.length), cast.LIST_INVALID);
+    t.strictEqual(cast.toListIndex(0.1, list.length), cast.LIST_INVALID);
+    t.strictEqual(cast.toListIndex(0, list.length), cast.LIST_INVALID);
+    t.strictEqual(cast.toListIndex(7, list.length), cast.LIST_INVALID);
 
     // "all"
-    t.equal(cast.toListIndex('all', list.length), 'ALL');
+    t.strictEqual(cast.toListIndex('all', list.length), cast.LIST_ALL);
 
     // "last"
-    t.equal(cast.toListIndex('last', list.length), list.length);
-    t.equal(cast.toListIndex('last', empty.length), 'INVALID');
+    t.strictEqual(cast.toListIndex('last', list.length), list.length);
+    t.strictEqual(cast.toListIndex('last', empty.length), cast.LIST_INVALID);
 
     // "random"
     var random = cast.toListIndex('random', list.length);
     t.ok(random <= list.length);
     t.ok(random > 0);
-    t.equal(cast.toListIndex('random', empty.length), 'INVALID');
+    t.strictEqual(cast.toListIndex('random', empty.length), cast.LIST_INVALID);
 
     // "any" (alias for "random")
     var any = cast.toListIndex('any', list.length);
     t.ok(any <= list.length);
     t.ok(any > 0);
-    t.equal(cast.toListIndex('any', empty.length), 'INVALID');
+    t.strictEqual(cast.toListIndex('any', empty.length), cast.LIST_INVALID);
     t.end();
 });
