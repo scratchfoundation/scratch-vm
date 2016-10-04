@@ -68,7 +68,7 @@ function parseScratchObject (object, runtime, topLevel) {
             var sound = object.sounds[i];
             sprite.sounds.push({
                 format: sound.format,
-                soundFile: 'https://cdn.assets.scratch.mit.edu/internalapi/asset/'
+                fileUrl: 'https://cdn.assets.scratch.mit.edu/internalapi/asset/'
                     + sound.md5 + '/get/',
                 rate: sound.rate,
                 sampleCount: sound.sampleCount,
@@ -76,7 +76,6 @@ function parseScratchObject (object, runtime, topLevel) {
                 name: sound.soundName
             });
         }
-        console.log(sprite.sounds);
     }
     // If included, parse any and all scripts/blocks on the object.
     if (object.hasOwnProperty('scripts')) {

@@ -48,7 +48,7 @@ Scratch3SoundBlocks.prototype._getSoundUrl = function (soundName, util) {
             return '';
         }
     }
-    return util.target.sprite.sounds[index].soundFile;
+    return util.target.sprite.sounds[index].fileUrl;
 };
 
 

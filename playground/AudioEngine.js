@@ -2,6 +2,10 @@ function AudioEngine () {
 
     // soundfont setup
 
+    // instrument names used by Musyng Kite soundfont, in order to match scratch instruments
+    this.instrumentNames = ['acoustic_grand_piano', 'electric_piano_1', 'drawbar_organ', 'acoustic_guitar_nylon',
+        'electric_guitar_clean', 'acoustic_bass', 'pizzicato_strings', 'cello', 'trombone', 'clarinet'];
+
     Soundfont.instrument(Tone.context, 'acoustic_grand_piano').then(function (piano) {
         this.instrument = piano;
     }.bind(this));
@@ -28,11 +32,6 @@ function AudioEngine () {
 
     var drumFileNames = ['high_conga', 'small_cowbell', 'snare_drum', 'splash cymbal'];
     this.drumSamplers = this._loadSoundFiles(drumFileNames);
-
-    // sound files
-
-    // var soundFileNames = ['meow','boing','cave','drip_drop','drum_machine','eggs','zoop'];
-    // this.soundSamplers = this._loadSoundFiles(soundFileNames);
 
     // sound urls - map each url to its tone.sampler
     this.soundSamplers = [];
@@ -63,8 +62,10 @@ AudioEngine.prototype.getSoundDuration = function (soundNum) {
 };
 
 AudioEngine.prototype.playNoteForBeats = function(note, beats) {
-    this.instrument.start(note, Tone.context.currentTime, beats); // duration not working
-    // this.instrument.play(note).stop(Tone.context.currentTime+beats);
+};
+
+AudioEngine.prototype.playNoteForBeats = function(note, beats) {
+    this.instrument.play(note, Tone.context.currentTime, {duration : Number(beats)}); 
 };
 
 AudioEngine.prototype.playDrumForBeats = function(drumNum, beats) {
