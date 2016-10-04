@@ -26,7 +26,7 @@ Scratch3ProcedureBlocks.prototype.defNoReturn = function () {
 
 Scratch3ProcedureBlocks.prototype.defReturn = function (args) {
     this.REPORT = ((typeof this.REPORT === 'undefined') ? args.RETURN : this.REPORT);
-}
+};
 
 Scratch3ProcedureBlocks.prototype.callNoReturn = function (args, util) {
     if (!util.stackFrame.executed) {
@@ -45,10 +45,10 @@ Scratch3ProcedureBlocks.prototype.callReturn = function (args, util) {
     var rep = this.REPORT;
     delete this.REPORT;
     return rep;
-}
+};
 
 Scratch3ProcedureBlocks.prototype.report = function (args, util) {
     this.REPORT = args.VALUE;
-}
+};
 
 module.exports = Scratch3ProcedureBlocks;
