@@ -55,6 +55,9 @@ Scratch3MotionBlocks.prototype.goTo = function (args, util) {
     if (args.TO === '_mouse_') {
         targetX = util.ioQuery('mouse', 'getX');
         targetY = util.ioQuery('mouse', 'getY');
+    } else if (args.TO === '_random_') {
+        targetX = this.runtime.constructor.STAGE_WIDTH * (Math.random() - 0.5)
+        targetY = this.runtime.constructor.STAGE_HEIGHT * (Math.random() - 0.5)
     } else {
         var goToTarget = this.runtime.getSpriteTargetByName(args.TO);
         if (!goToTarget) return;

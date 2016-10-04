@@ -70,6 +70,18 @@ function Runtime () {
 }
 
 /**
+ * Width of the stage, in pixels.
+ * @const {number}
+ */
+Runtime.STAGE_WIDTH = 480;
+
+/**
+ * Height of the stage, in pixels.
+ * @const {number}
+ */
+Runtime.STAGE_HEIGHT = 360;
+
+/**
  * Event name for glowing a script.
  * @const {string}
  */
