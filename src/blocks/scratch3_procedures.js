@@ -13,13 +13,20 @@ function Scratch3ProcedureBlocks(runtime) {
 Scratch3ProcedureBlocks.prototype.getPrimitives = function() {
     return {
         'procedures_defnoreturn': this.defNoReturn,
-        'procedures_callnoreturn': this.callNoReturn
+        'procedures_callnoreturn': this.callNoReturn,
+        'procedures_callreturn' : this.callReturn,
+        'procedures_report': this.report,
+        'procedures_defreturn': this.defReturn
     };
 };
 
 Scratch3ProcedureBlocks.prototype.defNoReturn = function () {
     // No-op: execute the blocks.
 };
+
+Scratch3ProcedureBlocks.prototype.defReturn = function (args) {
+    this.REPORT = ((typeof this.REPORT === 'undefined') ? args.RETURN : this.REPORT);
+}
 
 Scratch3ProcedureBlocks.prototype.callNoReturn = function (args, util) {
     if (!util.stackFrame.executed) {
@@ -28,5 +35,20 @@ Scratch3ProcedureBlocks.prototype.callNoReturn = function (args, util) {
         util.startProcedure(procedureName);
     }
 };
+
+Scratch3ProcedureBlocks.prototype.callReturn = function (args, util) {
+    if (!util.stackFrame.executed) {
+        var procedureName = args.mutation.name;
+        util.stackFrame.executed = true;
+        util.startProcedure(procedureName);
+    }
+    var rep = this.REPORT;
+    delete this.REPORT;
+    return rep;
+}
+
+Scratch3ProcedureBlocks.prototype.report = function (args, util) {
+    this.REPORT = args.VALUE;
+}
 
 module.exports = Scratch3ProcedureBlocks;
