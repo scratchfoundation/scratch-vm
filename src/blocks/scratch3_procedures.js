@@ -50,7 +50,7 @@ Scratch3ProcedureBlocks.prototype.callReturn = function (args, util) {
             );
             if (util.stackFrame.startedThreads.length == 0) {
                 // Nothing was started.
-                return false;
+                return '';
             }
         }
         // We've run before; check if the wait is still going on.
