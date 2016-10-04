@@ -77,7 +77,7 @@ test('not', function (t) {
 test('random', function (t) {
     var min = 0;
     var max = 100;
-    var result = blocks.random({FROM:0, TO:1});
+    var result = blocks.random({FROM:min, TO:max});
     t.ok(result >= min);
     t.ok(result <= max);
     t.end();
