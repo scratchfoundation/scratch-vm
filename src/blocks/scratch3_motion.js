@@ -71,6 +71,7 @@ Scratch3MotionBlocks.prototype.pointTowards = function (args, util) {
         targetY = util.ioQuery('mouse', 'getY');
     } else {
         var pointTarget = this.runtime.getSpriteTargetByName(args.TOWARDS);
+        if (!pointTarget) return;
         targetX = pointTarget.x;
         targetY = pointTarget.y;
     }
