@@ -1514,6 +1514,18 @@
 	}
 
 	/**
+	 * Width of the stage, in pixels.
+	 * @const {number}
+	 */
+	Runtime.STAGE_WIDTH = 480;
+
+	/**
+	 * Height of the stage, in pixels.
+	 * @const {number}
+	 */
+	Runtime.STAGE_HEIGHT = 360;
+
+	/**
 	 * Event name for glowing a script.
 	 * @const {string}
 	 */
@@ -4602,6 +4614,7 @@
 	    return {
 	        'motion_movesteps': this.moveSteps,
 	        'motion_gotoxy': this.goToXY,
+	        'motion_goto': this.goTo,
 	        'motion_turnright': this.turnRight,
 	        'motion_turnleft': this.turnLeft,
 	        'motion_pointindirection': this.pointInDirection,
@@ -4630,6 +4643,26 @@
 	    var x = Cast.toNumber(args.X);
 	    var y = Cast.toNumber(args.Y);
 	    util.target.setXY(x, y);
+	};
+
+	Scratch3MotionBlocks.prototype.goTo = function (args, util) {
+	    var targetX = 0;
+	    var targetY = 0;
+	    if (args.TO === '_mouse_') {
+	        targetX = util.ioQuery('mouse', 'getX');
+	        targetY = util.ioQuery('mouse', 'getY');
+	    } else if (args.TO === '_random_') {
+	        var stageWidth = this.runtime.constructor.STAGE_WIDTH;
+	        var stageHeight = this.runtime.constructor.STAGE_HEIGHT;
+	        targetX = Math.round(stageWidth * (Math.random() - 0.5));
+	        targetY = Math.round(stageHeight * (Math.random() - 0.5));
+	    } else {
+	        var goToTarget = this.runtime.getSpriteTargetByName(args.TO);
+	        if (!goToTarget) return;
+	        targetX = goToTarget.x;
+	        targetY = goToTarget.y;
+	    }
+	    util.target.setXY(targetX, targetY);
 	};
 
 	Scratch3MotionBlocks.prototype.turnRight = function (args, util) {
