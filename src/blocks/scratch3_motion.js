@@ -58,8 +58,8 @@ Scratch3MotionBlocks.prototype.goTo = function (args, util) {
     } else if (args.TO === '_random_') {
         var stageWidth = this.runtime.constructor.STAGE_WIDTH;
         var stageHeight = this.runtime.constructor.STAGE_HEIGHT;
-        targetX = stageWidth * (Math.random() - 0.5);
-        targetY = stageHeight * (Math.random() - 0.5);
+        targetX = Math.round(stageWidth * (Math.random() - 0.5));
+        targetY = Math.round(stageHeight * (Math.random() - 0.5));
     } else {
         var goToTarget = this.runtime.getSpriteTargetByName(args.TO);
         if (!goToTarget) return;
