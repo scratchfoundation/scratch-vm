@@ -41,11 +41,32 @@ Scratch3ProcedureBlocks.prototype.callReturn = function (args, util) {
     if (!util.stackFrame.executed) {
         var procedureName = args.mutation.name;
         util.stackFrame.executed = true;
-        util.startProcedure(procedureName);
+        if (!util.stackFrame.startedThreads) {
+            // No - start hats for this broadcast.
+            util.stackFrame.startedThreads = util.startHats(
+                'procedures_defreturn', {
+                    'NAME': procedureName
+                }
+            );
+            if (util.stackFrame.startedThreads.length == 0) {
+                // Nothing was started.
+                return '';
+            }
+        }
+        // We've run before; check if the wait is still going on.
+        var instance = this;
+        var waiting = util.stackFrame.startedThreads.some(function(thread) {
+            return instance.runtime.isActiveThread(thread);
+        });
+        if (waiting) {
+            util.yieldFrame();
+        }
+        if (!waiting) {
+            var rep = this.REPORT;
+            delete this.REPORT;
+            return rep;
+        }
     }
-    var rep = this.REPORT;
-    delete this.REPORT;
-    return rep;
 };
 
 Scratch3ProcedureBlocks.prototype.report = function (args) {
