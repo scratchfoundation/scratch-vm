@@ -49,6 +49,7 @@ AudioEngine.prototype.playSoundFromUrl = function (url) {
             this.soundSamplers[url].triggerAttack();
         } else {
         // else load, play, and store it    
+        // this results in a delay the first time you play the sound
             var sampler = new Tone.Sampler(url, function() {
                 sampler.triggerAttack();
                 this.soundSamplers[url] = sampler;
@@ -62,7 +63,7 @@ AudioEngine.prototype.getSoundDuration = function (soundNum) {
 };
 
 AudioEngine.prototype.playNoteForBeats = function(note, beats) {
-    this.instrument.start(note, Tone.context.currentTime, beats);
+    this.instrument.start(note, Tone.context.currentTime, beats); // duration not working
     // this.instrument.play(note).stop(Tone.context.currentTime+beats);
 };
 
