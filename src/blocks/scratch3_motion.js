@@ -21,6 +21,7 @@ Scratch3MotionBlocks.prototype.getPrimitives = function() {
         'motion_turnright': this.turnRight,
         'motion_turnleft': this.turnLeft,
         'motion_pointindirection': this.pointInDirection,
+        'motion_pointtowards': this.pointTowards,
         'motion_glidesecstoxy': this.glide,
         'motion_setrotationstyle': this.setRotationStyle,
         'motion_changexby': this.changeX,
@@ -59,6 +60,25 @@ Scratch3MotionBlocks.prototype.turnLeft = function (args, util) {
 
 Scratch3MotionBlocks.prototype.pointInDirection = function (args, util) {
     var direction = Cast.toNumber(args.DIRECTION);
+    util.target.setDirection(direction);
+};
+
+Scratch3MotionBlocks.prototype.pointTowards = function (args, util) {
+    var targetX = 0;
+    var targetY = 0;
+    if (args.TOWARDS === '_mouse_') {
+        targetX = util.ioQuery('mouse', 'getX');
+        targetY = util.ioQuery('mouse', 'getY');
+    } else {
+        var pointTarget = this.runtime.getSpriteTargetByName(args.TOWARDS);
+        if (!pointTarget) return;
+        targetX = pointTarget.x;
+        targetY = pointTarget.y;
+    }
+
+    var dx = targetX - util.target.x;
+    var dy = targetY - util.target.y;
+    var direction = 90 - MathUtil.radToDeg(Math.atan2(dy, dx));
     util.target.setDirection(direction);
 };
 
