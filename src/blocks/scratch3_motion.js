@@ -62,7 +62,7 @@ Scratch3MotionBlocks.prototype.goTo = function (args, util) {
         targetY = goToTarget.y;
     }
     util.target.setXY(targetX, targetY);
-}
+};
 
 Scratch3MotionBlocks.prototype.turnRight = function (args, util) {
     var degrees = Cast.toNumber(args.DEGREES);
