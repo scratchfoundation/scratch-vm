@@ -18,6 +18,7 @@ Scratch3MotionBlocks.prototype.getPrimitives = function() {
     return {
         'motion_movesteps': this.moveSteps,
         'motion_gotoxy': this.goToXY,
+        'motion_goto': this.goTo,
         'motion_turnright': this.turnRight,
         'motion_turnleft': this.turnLeft,
         'motion_pointindirection': this.pointInDirection,
@@ -47,6 +48,21 @@ Scratch3MotionBlocks.prototype.goToXY = function (args, util) {
     var y = Cast.toNumber(args.Y);
     util.target.setXY(x, y);
 };
+
+Scratch3MotionBlocks.prototype.goTo = function (args, util) {
+    var targetX = 0;
+    var targetY = 0;
+    if (args.TO === '_mouse_') {
+        targetX = util.ioQuery('mouse', 'getX');
+        targetY = util.ioQuery('mouse', 'getY');
+    } else {
+        var goToTarget = this.runtime.getSpriteTargetByName(args.TO);
+        if (!goToTarget) return;
+        targetX = goToTarget.x;
+        targetY = goToTarget.y;
+    }
+    util.target.setXY(targetX, targetY);
+}
 
 Scratch3MotionBlocks.prototype.turnRight = function (args, util) {
     var degrees = Cast.toNumber(args.DEGREES);
