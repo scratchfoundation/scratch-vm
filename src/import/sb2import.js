@@ -327,6 +327,14 @@ function parseBlock (sb2block) {
             };
         }
     }
+    // Special cases to generate mutations.
+    if (oldOpcode == 'call') {
+        activeBlock.mutation = {
+            tagName: 'mutation',
+            children: [],
+            name: sb2block[1]
+        };
+    }
     return activeBlock;
 }
 
