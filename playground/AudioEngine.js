@@ -1,15 +1,5 @@
 function AudioEngine () {
 
-    // soundfont setup
-
-    // instrument names used by Musyng Kite soundfont, in order to match scratch instruments
-    this.instrumentNames = ['acoustic_grand_piano', 'electric_piano_1', 'drawbar_organ', 'acoustic_guitar_nylon',
-        'electric_guitar_clean', 'acoustic_bass', 'pizzicato_strings', 'cello', 'trombone', 'clarinet'];
-
-    Soundfont.instrument(Tone.context, 'acoustic_grand_piano').then(function (piano) {
-        this.instrument = piano;
-    }.bind(this));
-
     // tone setup
 
 	this.tone = new Tone();
@@ -35,6 +25,17 @@ function AudioEngine () {
 
     // sound urls - map each url to its tone.sampler
     this.soundSamplers = [];
+
+       // soundfont setup
+
+    // instrument names used by Musyng Kite soundfont, in order to match scratch instruments
+    this.instrumentNames = ['acoustic_grand_piano', 'electric_piano_1', 'drawbar_organ', 'acoustic_guitar_nylon',
+        'electric_guitar_clean', 'acoustic_bass', 'pizzicato_strings', 'cello', 'trombone', 'clarinet'];
+
+    Soundfont.instrument(Tone.context, this.instrumentNames[0], {destination:this.delay}).then(function (inst) {
+        this.instrument = inst;
+        this.instrument.connect(Tone.Master);
+    }.bind(this));
 }
 
 AudioEngine.prototype.playSound = function (soundNum) {
@@ -59,9 +60,6 @@ AudioEngine.prototype.playSoundFromUrl = function (url) {
 
 AudioEngine.prototype.getSoundDuration = function (soundNum) {
     return this.soundSamplers[soundNum].player.buffer.duration;
-};
-
-AudioEngine.prototype.playNoteForBeats = function(note, beats) {
 };
 
 AudioEngine.prototype.playNoteForBeats = function(note, beats) {
