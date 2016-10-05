@@ -16,7 +16,7 @@ but some think that estimate is a little low. While we welcome suggestions for n
 new features that haven't been thought through and discussed as a group. Why? Because we have a strong belief
 in the value of keeping things simple for new users. To learn more about our design philosophy,
 see [the Scratch Developers page](https://scratch.mit.edu/developers), or
-[this paper](http://web.media.mit.edu/~jmaloney/papers/ScratchLangAndEnvironment.pdf).
+[this paper](http://web.media.mit.edu/~mres/papers/Scratch-CACM-final.pdf).
 
 Beyond this repo, there are also some other resources that you might want to take a look at:
 * [Community Guidelines](https://github.com/LLK/scratch-www/wiki/Community-Guidelines) (we find it important to maintain a constructive and welcoming community, just like on Scratch)
