@@ -12,7 +12,8 @@
   "main": "./dist.js",
   "scripts": {
     "prepublish": "./node_modules/.bin/webpack --bail",
-    "start": "make serve",
+    "start": "webpack-dev-server",
+    "start": "webpack --colors --progress",
     "test": "make test",
     "version": "./node_modules/.bin/json -f package.json -I -e \"this.repository.sha = '$(git log -n1 --pretty=format:%H)'\""
   },
