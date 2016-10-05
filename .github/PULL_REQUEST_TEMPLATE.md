@@ -1,10 +1,3 @@
-### Type of change
-
-- [ ] Bug fix
-- [ ] New feature
-- [ ] Refactor
-- [ ] "Chore" (changes to build script, updates to README, etc.)
-
 ### Proposed changes
 
 _Describe what this Pull Request does_
