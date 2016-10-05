@@ -6,6 +6,8 @@ function Scratch3ProcedureBlocks(runtime) {
     this.runtime = runtime;
 }
 
+var this.REPORT = [];
+
 /**
  * Retrieve the block primitives implemented by this package.
  * @return {Object.<string, Function>} Mapping of opcode to Function.
@@ -25,8 +27,11 @@ Scratch3ProcedureBlocks.prototype.defNoReturn = function () {
 };
 
 Scratch3ProcedureBlocks.prototype.defReturn = function (args) {
-    this.REPORT = ((typeof this.REPORT === 'undefined') ?
-        args.RETURN : this.REPORT);
+    var value = new Object();
+    value.NAME = args.NAME;
+    value.REPORT = ((typeof value.REPORT === 'undefined') ?
+        args.RETURN : value.REPORT);
+    this.REPORT.push(value);
 };
 
 Scratch3ProcedureBlocks.prototype.callNoReturn = function (args, util) {
@@ -62,9 +67,12 @@ Scratch3ProcedureBlocks.prototype.callReturn = function (args, util) {
             util.yieldFrame();
         }
         if (!waiting) {
-            var rep = this.REPORT;
-            delete this.REPORT;
-            return rep;
+            for (i = 0; i < this.REPORT.length; i++) { 
+                if (this.REPORT[i].NAME == procedureName) {
+                    var rep = this.REPORT[i].REPORT;
+                    return rep;
+                }
+            }
         }
     }
 };
