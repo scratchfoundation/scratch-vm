@@ -1374,15 +1374,20 @@ var specMap = {
         ]
     },
     'procDef':{
-        'opcode':'proc_def',
-        'argMap':[]
+        'opcode':'procedures_defnoreturn',
+        'argMap':[
+            {
+                'type':'field',
+                'fieldName':'NAME'
+            }
+        ]
     },
     'getParam':{
         'opcode':'proc_param',
         'argMap':[]
     },
     'call':{
-        'opcode':'proc_call',
+        'opcode':'procedures_callnoreturn',
         'argMap':[]
     }
 };

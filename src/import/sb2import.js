@@ -6,6 +6,7 @@
  */
 
 var Blocks = require('../engine/blocks');
+var Clone = require('../sprites/clone');
 var Sprite = require('../sprites/sprite');
 var Color = require('../util/color.js');
 var uid = require('../util/uid');
@@ -123,7 +124,16 @@ function parseScratchObject (object, runtime, topLevel) {
         target.visible = object.visible;
     }
     if (object.hasOwnProperty('currentCostumeIndex')) {
-        target.currentCostume = object.currentCostumeIndex;
+        target.currentCostume = Math.round(object.currentCostumeIndex);
+    }
+    if (object.hasOwnProperty('rotationStyle')) {
+        if (object.rotationStyle == 'none') {
+            target.rotationStyle = Clone.ROTATION_STYLE_NONE;
+        } else if (object.rotationStyle == 'leftRight') {
+            target.rotationStyle = Clone.ROTATION_STYLE_LEFT_RIGHT;
+        } else if (object.rotationStyle == 'normal') {
+            target.rotationStyle = Clone.ROTATION_STYLE_ALL_AROUND;
+        }
     }
     target.isStage = topLevel;
     target.updateAllDrawableProperties();
@@ -331,6 +341,14 @@ function parseBlock (sb2block) {
                 value: providedArg
             };
         }
+    }
+    // Special cases to generate mutations.
+    if (oldOpcode == 'call') {
+        activeBlock.mutation = {
+            tagName: 'mutation',
+            children: [],
+            name: sb2block[1]
+        };
     }
     return activeBlock;
 }

@@ -1,4 +1,5 @@
 var adapter = require('./adapter');
+var mutationAdapter = require('./mutation-adapter');
 var xmlEscape = require('../util/xml-escape');
 
 /**
@@ -117,6 +118,16 @@ Blocks.prototype.getInputs = function (id) {
 };
 
 /**
+ * Get mutation data for a block.
+ * @param {?string} id ID of block to query.
+ * @return {!Object} Mutation for the block.
+ */
+Blocks.prototype.getMutation = function (id) {
+    if (typeof this._blocks[id] === 'undefined') return null;
+    return this._blocks[id].mutation;
+};
+
+/**
  * Get the top-level script for a given block.
  * @param {?string} id ID of block to query.
  * @return {?string} ID of top-level script block.
@@ -128,6 +139,23 @@ Blocks.prototype.getTopLevelScript = function (id) {
         block = this._blocks[block.parent];
     }
     return block.id;
+};
+
+/**
+ * Get the procedure definition for a given name.
+ * @param {?string} name Name of procedure to query.
+ * @return {?string} ID of procedure definition.
+ */
+Blocks.prototype.getProcedureDefinition = function (name) {
+    for (var id in this._blocks) {
+        var block = this._blocks[id];
+        if ((block.opcode == 'procedures_defnoreturn' ||
+            block.opcode == 'procedures_defreturn') &&
+            block.fields['NAME'].value == name) {
+            return id;
+        }
+    }
+    return null;
 };
 
 // ---------------------------------------------------------------------
@@ -226,12 +254,16 @@ Blocks.prototype.createBlock = function (block, opt_isFlyoutBlock) {
  */
 Blocks.prototype.changeBlock = function (args) {
     // Validate
-    if (args.element !== 'field') return;
+    if (args.element !== 'field' && args.element !== 'mutation') return;
     if (typeof this._blocks[args.id] === 'undefined') return;
-    if (typeof this._blocks[args.id].fields[args.name] === 'undefined') return;
 
-    // Update block value
-    this._blocks[args.id].fields[args.name].value = args.value;
+    if (args.element == 'field') {
+        // Update block value
+        if (!this._blocks[args.id].fields[args.name]) return;
+        this._blocks[args.id].fields[args.name].value = args.value;
+    } else if (args.element == 'mutation') {
+        this._blocks[args.id].mutation = mutationAdapter(args.value);
+    }
 };
 
 /**
@@ -355,6 +387,10 @@ Blocks.prototype.blockToXML = function (blockId) {
         ' type="' + block.opcode + '"' +
         xy +
         '>';
+    // Add any mutation. Must come before inputs.
+    if (block.mutation) {
+        xmlString += this.mutationToXML(block.mutation);
+    }
     // Add any inputs on this block.
     for (var input in block.inputs) {
         var blockInput = block.inputs[input];
@@ -387,6 +423,25 @@ Blocks.prototype.blockToXML = function (blockId) {
     }
     xmlString += '</' + tagName + '>';
     return xmlString;
+};
+
+/**
+ * Recursively encode a mutation object to XML.
+ * @param {!Object} mutation Object representing a mutation.
+ * @return {string} XML string representing a mutation.
+ */
+Blocks.prototype.mutationToXML = function (mutation) {
+    var mutationString = '<' + mutation.tagName;
+    for (var prop in mutation) {
+        if (prop == 'children' || prop == 'tagName') continue;
+        mutationString += ' ' + prop + '="' + mutation[prop] + '"';
+    }
+    mutationString += '>';
+    for (var i = 0; i < mutation.children.length; i++) {
+        mutationString += this.mutationToXML(mutation.children[i]);
+    }
+    mutationString += '</' + mutation.tagName + '>';
+    return mutationString;
 };
 
 // ---------------------------------------------------------------------
