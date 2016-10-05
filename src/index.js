@@ -137,9 +137,9 @@ VirtualMachine.prototype.createEmptyProject = function () {
     stage.costumes.push({
         skin: '/assets/stage.png',
         name: 'backdrop1',
-        bitmapResolution: 1,
-        rotationCenterX: 240,
-        rotationCenterY: 180
+        bitmapResolution: 2,
+        rotationCenterX: 480,
+        rotationCenterY: 360
     });
     var target2 = stage.createClone();
     this.runtime.targets.push(target2);
