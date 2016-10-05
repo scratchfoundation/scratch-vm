@@ -39,6 +39,8 @@ Scratch3SensingBlocks.prototype.colorTouchingColor = function (args, util) {
 };
 
 Scratch3SensingBlocks.prototype.distanceTo = function (args, util) {
+    if (util.target.isStage) return 10000;
+
     var targetX = 0;
     var targetY = 0;
     if (args.DISTANCETOMENU === '_mouse_') {
@@ -52,6 +54,7 @@ Scratch3SensingBlocks.prototype.distanceTo = function (args, util) {
         targetX = distTarget.x;
         targetY = distTarget.y;
     }
+
     var dx = util.target.x - targetX;
     var dy = util.target.y - targetY;
     return Math.sqrt((dx * dx) + (dy * dy));
