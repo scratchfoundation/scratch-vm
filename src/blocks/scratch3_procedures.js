@@ -16,7 +16,7 @@ Scratch3ProcedureBlocks.prototype.getPrimitives = function() {
     return {
         'procedures_callnoreturn': this.callNoReturn,
         'procedures_callreturn' : this.callReturn,
-        'procedures_report': this.report,
+        'procedures_report': this.report
     };
 };
 
