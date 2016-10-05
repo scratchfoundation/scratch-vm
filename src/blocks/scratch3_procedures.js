@@ -46,7 +46,10 @@ Scratch3ProcedureBlocks.prototype.callReturn = function (args, util) {
         util.stackFrame.executed = true;
         if (!util.stackFrame.startedThreads) {
             // No - start hats for this broadcast.
-            this.currentCall = {name: procedureName, parent: this.currentCall || null};
+            this.currentCall = {
+                name: procedureName,
+                parent: this.currentCall || null
+            };
             util.stackFrame.startedThreads = util.startHats(
                 'procedures_defreturn', {
                     'NAME': procedureName
