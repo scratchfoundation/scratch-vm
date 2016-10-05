@@ -54,7 +54,6 @@ Scratch3ProcedureBlocks.prototype.callNoReturn = function (args, util) {
 Scratch3ProcedureBlocks.prototype.callReturn = function (args, util) {
     if (!util.stackFrame.executed) {
         var procedureName = args.mutation.name;
-        util.stackFrame.executed = true;
         if (!util.stackFrame.startedThreads) {
             // No - start hats for this broadcast.
             this.currentCall = {
@@ -68,6 +67,7 @@ Scratch3ProcedureBlocks.prototype.callReturn = function (args, util) {
             );
             if (util.stackFrame.startedThreads.length == 0) {
                 // Nothing was started.
+                util.stackFrame.executed = true;
                 return '';
             }
         }
@@ -80,6 +80,7 @@ Scratch3ProcedureBlocks.prototype.callReturn = function (args, util) {
             util.yieldFrame();
         }
         if (!waiting) {
+            util.stackFrame.executed = true;
             var rep = this.REPORT[procedureName];
             delete this.REPORT[procedureName];
             this.currentCall = this.currentCall.parent;
