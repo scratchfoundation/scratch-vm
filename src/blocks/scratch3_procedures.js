@@ -4,6 +4,8 @@ function Scratch3ProcedureBlocks(runtime) {
      * @type {Runtime}
      */
     this.runtime = runtime;
+    this.REPORT = {};
+    this.currentCall = null;
 }
 
 /**
@@ -25,8 +27,9 @@ Scratch3ProcedureBlocks.prototype.defNoReturn = function () {
 };
 
 Scratch3ProcedureBlocks.prototype.defReturn = function (args) {
-    this.REPORT = ((typeof this.REPORT === 'undefined') ?
-        args.RETURN : this.REPORT);
+    var name = args.NAME;
+    this.REPORT[name] = ((typeof this.REPORT[name] === 'undefined') ?
+        args.RETURN : this.REPORT[name]);
 };
 
 Scratch3ProcedureBlocks.prototype.callNoReturn = function (args, util) {
@@ -43,6 +46,7 @@ Scratch3ProcedureBlocks.prototype.callReturn = function (args, util) {
         util.stackFrame.executed = true;
         if (!util.stackFrame.startedThreads) {
             // No - start hats for this broadcast.
+            this.currentCall = {name: procedureName, parent: this.currentCall || null};
             util.stackFrame.startedThreads = util.startHats(
                 'procedures_defreturn', {
                     'NAME': procedureName
@@ -62,15 +66,18 @@ Scratch3ProcedureBlocks.prototype.callReturn = function (args, util) {
             util.yieldFrame();
         }
         if (!waiting) {
-            var rep = this.REPORT;
-            delete this.REPORT;
+            var rep = this.REPORT[procedureName];
+            delete this.REPORT[procedureName];
+            this.currentCall = this.currentCall.parent;
             return rep;
         }
     }
 };
 
 Scratch3ProcedureBlocks.prototype.report = function (args) {
-    this.REPORT = args.VALUE;
+    if (this.currentCall) {
+        this.REPORT[this.currentCall.name] = args.VALUE;
+    }
 };
 
 module.exports = Scratch3ProcedureBlocks;
