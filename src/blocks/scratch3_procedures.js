@@ -4,9 +4,9 @@ function Scratch3ProcedureBlocks(runtime) {
      * @type {Runtime}
      */
     this.runtime = runtime;
+    this.REPORT = {};
+    this.currentCall = null;
 }
-
-var this.REPORT = [];
 
 /**
  * Retrieve the block primitives implemented by this package.
@@ -27,11 +27,9 @@ Scratch3ProcedureBlocks.prototype.defNoReturn = function () {
 };
 
 Scratch3ProcedureBlocks.prototype.defReturn = function (args) {
-    var value = new Object();
-    value.NAME = args.NAME;
-    value.REPORT = ((typeof value.REPORT === 'undefined') ?
-        args.RETURN : value.REPORT);
-    this.REPORT.push(value);
+    var name = args.NAME;
+    this.REPORT[name] = ((typeof this.REPORT[name] === 'undefined') ?
+        args.RETURN : this.REPORT[name]);
 };
 
 Scratch3ProcedureBlocks.prototype.callNoReturn = function (args, util) {
@@ -48,6 +46,7 @@ Scratch3ProcedureBlocks.prototype.callReturn = function (args, util) {
         util.stackFrame.executed = true;
         if (!util.stackFrame.startedThreads) {
             // No - start hats for this broadcast.
+            this.currentCall = {name: procedureName, parent: this.currentCall || null};
             util.stackFrame.startedThreads = util.startHats(
                 'procedures_defreturn', {
                     'NAME': procedureName
@@ -67,18 +66,18 @@ Scratch3ProcedureBlocks.prototype.callReturn = function (args, util) {
             util.yieldFrame();
         }
         if (!waiting) {
-            for (i = 0; i < this.REPORT.length; i++) { 
-                if (this.REPORT[i].NAME == procedureName) {
-                    var rep = this.REPORT[i].REPORT;
-                    return rep;
-                }
-            }
+            var rep = this.REPORT[procedureName];
+            delete this.REPORT[procedureName];
+            this.currentCall = this.currentCall.parent;
+            return rep;
         }
     }
 };
 
 Scratch3ProcedureBlocks.prototype.report = function (args) {
-    this.REPORT = args.VALUE;
+    if (this.currentCall) {
+        this.REPORT[this.currentCall.name] = args.VALUE;
+    }
 };
 
 module.exports = Scratch3ProcedureBlocks;
