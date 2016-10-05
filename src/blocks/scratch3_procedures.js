@@ -14,10 +14,15 @@ function Scratch3ProcedureBlocks(runtime) {
  */
 Scratch3ProcedureBlocks.prototype.getPrimitives = function() {
     return {
-        'procedures_defnoreturn': this.defNoReturn,
         'procedures_callnoreturn': this.callNoReturn,
         'procedures_callreturn' : this.callReturn,
         'procedures_report': this.report,
+    };
+};
+
+Scratch3ProcedureBlocks.prototype.getHats = function() {
+    return {
+        'procedures_defnoreturn': this.defNoReturn,
         'procedures_defreturn': this.defReturn
     };
 };
