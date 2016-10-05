@@ -15,7 +15,7 @@ but some think that estimate is a little low. While we welcome suggestions for n
 [suggestions forum](https://scratch.mit.edu/discuss/1/) (especially ones that come with mockups), we are unlikely to accept PRs with
 new features that haven't been thought through and discussed as a group. Why? Because we have a strong belief
 in the value of keeping things simple for new users. To learn more about our design philosophy,
-see [this forum post](http://scratch.mit.edu/discuss/post/1576/), or
+see [the Scratch Developers page](https://scratch.mit.edu/developers), or
 [this paper](http://web.media.mit.edu/~jmaloney/papers/ScratchLangAndEnvironment.pdf).
 
 Beyond this repo, there are also some other resources that you might want to take a look at:
