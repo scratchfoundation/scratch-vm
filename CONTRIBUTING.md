@@ -13,7 +13,7 @@ and collaboration from the Scratch Team, so these types of changes should be avo
 It's been said that the Scratch Team spends about one hour of design discussion for every pixel in Scratch,
 but some think that estimate is a little low. While we welcome suggestions for new features in our
 [suggestions forum](https://scratch.mit.edu/discuss/1/) (especially ones that come with mockups), we are unlikely to accept PRs with
-new features that we haven't deeply thought through. Why? Because we have a strong belief
+new features that haven't been thought through and discussed as a group. Why? Because we have a strong belief
 in the value of keeping things simple for new users. To learn more about our design philosophy,
 see [this forum post](http://scratch.mit.edu/discuss/post/1576/), or
 [this paper](http://web.media.mit.edu/~jmaloney/papers/ScratchLangAndEnvironment.pdf).
