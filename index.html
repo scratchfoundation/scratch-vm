@@ -52,7 +52,7 @@
     <div id="blocks"></div>
 
     <xml id="toolbox" style="display: none">
-        <category name="Motion" colour="#4C97FF">
+        <category name="Motion" colour="#4C97FF" secondaryColour="#3373CC">
         <block type="motion_movesteps">
           <value name="STEPS">
             <shadow type="math_number">
@@ -160,7 +160,7 @@
         <block type="motion_yposition"></block>
         <block type="motion_direction"></block>
       </category>
-      <category name="Looks" colour="#9966FF">
+      <category name="Looks" colour="#9966FF" secondaryColour="#774DCB">
         <block type="looks_sayforsecs">
           <value name="MESSAGE">
             <shadow type="text">
@@ -266,7 +266,7 @@
         <block type="looks_backdropname"></block>
         <block type="looks_size"></block>
       </category>
-      <category name="Sound" colour="#D65CD6">
+      <category name="Sound" colour="#D65CD6" secondaryColour="#BD42BD">
         <block type="sound_play">
           <value name="SOUND_MENU">
             <shadow type="sound_sounds_option"></shadow>
@@ -347,7 +347,7 @@
         </block>
         <block type="sound_tempo"></block>
       </category>
-      <category name="Pen" colour="#00B295">
+      <category name="Pen" colour="#00B295" secondaryColour="#0B8E69">
         <block type="pen_clear"></block>
         <block type="pen_stamp"></block>
         <block type="pen_pendown"></block>
@@ -401,9 +401,9 @@
           </value>
 		    </block>
       </category>
-      <category name="Data" colour="#FF8C1A" custom="VARIABLE">
+      <category name="Data" colour="#FF8C1A" secondaryColour="#DB6E00" custom="VARIABLE">
       </category>
-      <category name="Lists" colour="#FF8C1A">
+      <category name="Lists" colour="#FF8C1A" secondaryColour="#DB6E00">
         <block type="data_listcontents"></block>
         <block type="data_addtolist">
           <value name="ITEM">
@@ -414,15 +414,15 @@
         </block>
         <block type="data_deleteoflist">
           <value name="INDEX">
-            <shadow type="math_integer">
-              <field name="NUM">1</field>
+            <shadow type="data_listindexall">
+              <field name="INDEX">1</field>
             </shadow>
           </value>
         </block>
         <block type="data_insertatlist">
           <value name="INDEX">
-            <shadow type="math_integer">
-              <field name="NUM">1</field>
+            <shadow type="data_listindexrandom">
+              <field name="INDEX">1</field>
             </shadow>
           </value>
           <value name="ITEM">
@@ -433,8 +433,8 @@
         </block>
         <block type="data_replaceitemoflist">
           <value name="INDEX">
-            <shadow type="math_integer">
-              <field name="NUM">1</field>
+            <shadow type="data_listindexrandom">
+              <field name="INDEX">1</field>
             </shadow>
           </value>
           <value name="ITEM">
@@ -445,8 +445,8 @@
         </block>
         <block type="data_itemoflist">
           <value name="INDEX">
-            <shadow type="math_integer">
-              <field name="NUM">1</field>
+            <shadow type="data_listindexrandom">
+              <field name="INDEX">1</field>
             </shadow>
           </value>
         </block>
@@ -461,7 +461,7 @@
         <block type="data_showlist"></block>
         <block type="data_hidelist"></block>
       </category>
-      <category name="Events" colour="#FFD500">
+      <category name="Events" colour="#FFD500" secondaryColour="#CC9900">
         <block type="event_whenflagclicked"></block>
         <block type="event_whenkeypressed">
         </block>
@@ -488,7 +488,7 @@
           </value>
         </block>
       </category>
-      <category name="Control" colour="#FFAB19">
+      <category name="Control" colour="#FFAB19" secondaryColour="#CF8B17">
         <block type="control_wait">
           <value name="DURATION">
             <shadow type="math_positive_number">
@@ -508,11 +508,7 @@
         <block type="control_if_else"></block>
         <block type="control_wait_until"></block>
         <block type="control_repeat_until"></block>
-        <block type="control_stop">
-          <value name="STOP_OPTION">
-            <shadow type="control_stop_menu"></shadow>
-          </value>
-        </block>
+        <block type="control_stop"></block>
         <block type="control_start_as_clone"></block>
         <block type="control_create_clone_of">
           <value name="CLONE_OPTION">
@@ -521,7 +517,7 @@
         </block>
         <block type="control_delete_this_clone"></block>
       </category>
-      <category name="Sensing" colour="#4CBFE6">
+      <category name="Sensing" colour="#4CBFE6" secondaryColour="#2E8EB8">
         <block type="sensing_touchingobject">
           <value name="TOUCHINGOBJECTMENU">
             <shadow type="sensing_touchingobjectmenu"></shadow>
@@ -600,7 +596,7 @@
   		<block type="sensing_dayssince2000"></block>
   		<block type="sensing_username"></block>
 	  </category>
-    <category name="Operators" colour="#40BF4A">
+    <category name="Operators" colour="#40BF4A" secondaryColour="#389438">
         <block type="operator_add">
           <value name="NUM1">
             <shadow type="math_number">
@@ -761,7 +757,7 @@
           </value>
         </block>
       </category>
-      <category name="More Blocks" colour="#FF6680" custom="PROCEDURE"></category>
+      <category name="More Blocks" colour="#FF6680" secondaryColour="#FF3355" custom="PROCEDURE"></category>
     </xml>
     <!-- FPS counter, Syntax highlighter, Blocks, Renderer -->
     <script src="./vendor.js"></script>
