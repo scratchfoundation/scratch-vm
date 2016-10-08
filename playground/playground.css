@@ -2,7 +2,7 @@ body {
     background: #DDDEDE;
 }
 a {
-    color: rgb(217,217,217);
+    color: black;
 }
 h2 {
     font-size: 1em;
@@ -16,13 +16,12 @@ h2 {
     font-family: "Helvetica Neue", Helvetica, sans-serif;
 }
 #vm-devtools {
-    color: #DDDEDE;
+    color: black;
     position: absolute;
     left: 1%;
     right: 60%;
     top: 1%;
-    bottom: 0;
-    width: 35%;
+    bottom: 0;    width: 35%;
 }
 #blockexplorer, #threadexplorer, #importexport {
     position: absolute;
@@ -30,7 +29,7 @@ h2 {
     overflow: scroll;
     border: 1px solid #fff;
     background: #DDDEDE;
-    color: rgb(217,217,217);
+    color: black;
     font-family: monospace;
     font-size: 10pt;
     width: 480px;
@@ -43,7 +42,7 @@ h2 {
     width: 480px;
     height: 360px;
     background: #DDDEDE;
-    color: rgb(217,217,217);
+    color: black;
 }
 #projectId {
     background: #DDDEDE;
@@ -64,7 +63,7 @@ ul#playgroundLinks {
 }
 #playgroundLinks li a {
     display: block;
-    color: white;
+    color: black;
     text-align: center;
     padding: 5px 10px;
 }
