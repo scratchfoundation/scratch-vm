@@ -1,5 +1,5 @@
 body {
-    background: rgb(36,36,36);
+    background: #DDDEDE;
 }
 a {
     color: rgb(217,217,217);
@@ -16,7 +16,7 @@ h2 {
     font-family: "Helvetica Neue", Helvetica, sans-serif;
 }
 #vm-devtools {
-    color: rgb(217,217,217);
+    color: #DDDEDE;
     position: absolute;
     left: 1%;
     right: 60%;
@@ -29,7 +29,7 @@ h2 {
     height: 75%;
     overflow: scroll;
     border: 1px solid #fff;
-    background: rgb(36,36,36);
+    background: #DDDEDE;
     color: rgb(217,217,217);
     font-family: monospace;
     font-size: 10pt;
@@ -42,11 +42,11 @@ h2 {
 #importExport {
     width: 480px;
     height: 360px;
-    background: rgb(36,36,36);
+    background: #DDDEDE;
     color: rgb(217,217,217);
 }
 #projectId {
-    background: rgb(36,36,36);
+    background: #DDDEDE;
     color: rgb(217,217,217);
     font-family: monospace;
     font-size: 10pt;
@@ -57,7 +57,7 @@ ul#playgroundLinks {
     margin: 0;
     padding: 0;
     overflow: hidden;
-    background-color: #333;
+    background-color: #E6E8E8;
 }
 #playgroundLinks li {
     float: left;
@@ -69,5 +69,5 @@ ul#playgroundLinks {
     padding: 5px 10px;
 }
 #playgroundLinks li a:hover {
-    background-color: #111;
+    background-color: #808080;
 }
