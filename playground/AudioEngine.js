@@ -6,18 +6,14 @@ function AudioEngine () {
 
 	// effects setup
 
-    this.delay = new Tone.FeedbackDelay(0.25, 0.5);
-    this.delay.wet.value = 0;
-    
-    this.pitchShift = new Tone.PitchShift();
-
+    this.delay = new Tone.FeedbackDelay(0.25, 0.5);    
     this.panner = new Tone.Panner();
-
     this.reverb = new Tone.Freeverb();
-    this.reverb.wet.value = 0;
 
-    Tone.Master.chain(this.delay, this.pitchShift, this.panner, this.reverb);
-	
+    this.clearEffects();
+
+    Tone.Master.chain(this.delay, this.panner, this.reverb);
+
     // drum sounds
 
     var drumFileNames = ['high_conga', 'small_cowbell', 'snare_drum', 'splash cymbal'];
@@ -32,7 +28,7 @@ function AudioEngine () {
     this.instrumentNames = ['acoustic_grand_piano', 'electric_piano_1', 'drawbar_organ', 'acoustic_guitar_nylon',
         'electric_guitar_clean', 'acoustic_bass', 'pizzicato_strings', 'cello', 'trombone', 'clarinet'];
 
-    Soundfont.instrument(Tone.context, this.instrumentNames[0], {destination:this.delay}).then(function (inst) {
+    Soundfont.instrument(Tone.context, this.instrumentNames[0]).then(function (inst) {
         this.instrument = inst;
         this.instrument.connect(Tone.Master);
     }.bind(this));
@@ -46,7 +42,8 @@ AudioEngine.prototype.playSoundFromUrl = function (url) {
     if (url) {
         // if we've loaded it already, play it
         if (this.soundSamplers[url]) {
-            this.soundSamplers[url].triggerAttack();
+            // this.soundSamplers[url].triggerAttack();
+            this.soundSamplers[url].player.start();
         } else {
         // else load, play, and store it    
         // this results in a delay the first time you play the sound
@@ -95,7 +92,8 @@ AudioEngine.prototype.setEffect = function(effect, value) {
             this.reverb.wet.value = value / 100;
             break;
         case 'PITCH':
-            this.pitchShift.pitch = value / 20; // arbitrary scaling of 20 per semitone, for now... default 100 is a perfect fourth
+            // this.pitchShift.pitch = value / 20; // arbitrary scaling of 20 per semitone, for now... default 100 is a perfect fourth
+            this._setPitchShift(value / 20);
             break;
     }
 }
@@ -115,17 +113,24 @@ AudioEngine.prototype.changeEffect = function(effect, value) {
             this.reverb.wet.value = this._clamp(this.reverb.wet.value, 0, 1);
             break;
         case 'PITCH':
-            this.pitchShift.pitch += value / 20;
+            // this.pitchShift.pitch += value / 20;
             break;
     }
 } 
 
+AudioEngine.prototype._setPitchShift = function(value) {
+    for (var i in this.soundSamplers) {
+        this.soundSamplers[i].player.playbackRate = 1 + value;
+        console.log(this.soundSamplers[i].player.playbackRate);
+    }
+};
+
 AudioEngine.prototype.clearEffects = function() {
     this.delay.wet.value = 0;
+    this._setPitchShift(0);
     this.panner.pan.value = 0;
     this.reverb.wet.value = 0;
-    this.pitchShift.pitch = 0;
-}
+};
 
 AudioEngine.prototype.loadSoundFromUrl = function(url) {
 
