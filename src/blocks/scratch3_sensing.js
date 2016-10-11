@@ -16,6 +16,7 @@ Scratch3SensingBlocks.prototype.getPrimitives = function() {
     return {
         'sensing_touchingcolor': this.touchingColor,
         'sensing_coloristouchingcolor': this.colorTouchingColor,
+        'sensing_distanceto': this.distanceTo,
         'sensing_timer': this.getTimer,
         'sensing_resettimer': this.resetTimer,
         'sensing_mousex': this.getMouseX,
@@ -35,6 +36,28 @@ Scratch3SensingBlocks.prototype.colorTouchingColor = function (args, util) {
     var maskColor = Cast.toRgbColorList(args.COLOR);
     var targetColor = Cast.toRgbColorList(args.COLOR2);
     return util.target.colorIsTouchingColor(targetColor, maskColor);
+};
+
+Scratch3SensingBlocks.prototype.distanceTo = function (args, util) {
+    if (util.target.isStage) return 10000;
+
+    var targetX = 0;
+    var targetY = 0;
+    if (args.DISTANCETOMENU === '_mouse_') {
+        targetX = util.ioQuery('mouse', 'getX');
+        targetY = util.ioQuery('mouse', 'getY');
+    } else {
+        var distTarget = this.runtime.getSpriteTargetByName(
+            args.DISTANCETOMENU
+        );
+        if (!distTarget) return 10000;
+        targetX = distTarget.x;
+        targetY = distTarget.y;
+    }
+
+    var dx = util.target.x - targetX;
+    var dy = util.target.y - targetY;
+    return Math.sqrt((dx * dx) + (dy * dy));
 };
 
 Scratch3SensingBlocks.prototype.getTimer = function (args, util) {
