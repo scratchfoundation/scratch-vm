@@ -5053,7 +5053,7 @@
 	        'data_variable': this.getVariable,
 	        'data_setvariableto': this.setVariableTo,
 	        'data_changevariableby': this.changeVariableBy,
-	        'data_list': this.getListContents,
+	        'data_listcontents': this.getListContents,
 	        'data_addtolist': this.addToList,
 	        'data_deleteoflist': this.deleteOfList,
 	        'data_insertatlist': this.insertAtList,

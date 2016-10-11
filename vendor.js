@@ -3422,6 +3422,40 @@
 		};
 
 		/**
+		 * Set a drawable's order in the drawable list (effectively, z/layer).
+		 * Can be used to move drawables to absolute positions in the list,
+		 * or relative to their current positions.
+		 * "go back N layers": setDrawableOrder(id, -N, true, 1); (assuming stage at 0).
+		 * "go to back": setDrawableOrder(id, 1); (assuming stage at 0).
+		 * "go to front": setDrawableOrder(id, Infinity);
+		 * @param {int} drawableID ID of Drawable to reorder.
+		 * @param {Number} order New absolute order or relative order adjusment.
+		 * @param {Boolean=} opt_isRelative If set, `order` refers to a relative change.
+		 * @param {Number=} opt_min If set, order constrained to be at least `opt_min`.
+		 * @return {?Number} New order if changed, or null.
+		 */
+		RenderWebGL.prototype.setDrawableOrder = function (drawableID, order, opt_isRelative, opt_min) {
+		    var oldIndex = this._drawables.indexOf(drawableID);
+		    if (oldIndex >= 0) {
+		        // Remove drawable from the list.
+		        var drawable = this._drawables.splice(oldIndex, 1)[0];
+		        // Determine new index.
+		        var newIndex = order;
+		        if (opt_isRelative) {
+		            newIndex += oldIndex;
+		        }
+		        if (opt_min) {
+		            newIndex = Math.min(newIndex, opt_min);
+		        }
+		        newIndex = Math.max(newIndex, 0);
+		        // Insert at new index.
+		        this._drawables.splice(newIndex, 0, drawable);
+		        return this._drawables.indexOf(drawable);
+		    }
+		    return null;
+		};
+
+		/**
 		 * Draw all current drawables and present the frame on the canvas.
 		 */
 		RenderWebGL.prototype.draw = function () {
