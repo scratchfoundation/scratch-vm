@@ -1,3 +1,4 @@
+
 function Scratch3ProcedureBlocks(runtime) {
     /**
      * The runtime instantiating this block package.
@@ -6,6 +7,7 @@ function Scratch3ProcedureBlocks(runtime) {
     this.runtime = runtime;
     this.running = false;
     this.runState = 0;
+    this.currentThread = null;
 }
 
 /**
@@ -48,9 +50,18 @@ Scratch3ProcedureBlocks.prototype.callReturn = function (args, util) {
         var procedureName = args.mutation.name;
         util.stackFrame.executed = true;
         util.startProcedure(procedureName);
+        this.currentThread = util.getThread();
     } else if (this.runState == 2) {
         this.runState = 0;
+        this.currentThread = null;
         return this.report;
+    }
+};
+
+Scratch3ProcedureBlocks.prototype.report = function (args, util) {
+    // No-op: execute the blocks.
+    if (util.getThread === this.currentThread) {
+        this.report = args.VALUE;
     }
 };
 
