@@ -132,7 +132,7 @@ VirtualMachine.prototype.loadProject = function (json) {
 VirtualMachine.prototype.createEmptyProject = function () {
     // Stage.
     var blocks2 = new Blocks();
-    var stage = new Sprite(blocks2);
+    var stage = new Sprite(blocks2, this.runtime);
     stage.name = 'Stage';
     stage.costumes.push({
         skin: '/assets/stage.png',
@@ -151,7 +151,7 @@ VirtualMachine.prototype.createEmptyProject = function () {
     target2.isStage = true;
     // Sprite1 (cat).
     var blocks1 = new Blocks();
-    var sprite = new Sprite(blocks1);
+    var sprite = new Sprite(blocks1, this.runtime);
     sprite.name = 'Sprite1';
     sprite.costumes.push({
         skin: '/assets/scratch_cat.svg',
