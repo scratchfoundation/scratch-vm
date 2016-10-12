@@ -5,11 +5,11 @@ function AudioEngine () {
 
     // tone setup
 
-	this.tone = new Tone();
+    this.tone = new Tone();
 
 	// effects setup
 
-    this.delay = new Tone.FeedbackDelay(0.25, 0.5);    
+    this.delay = new Tone.FeedbackDelay(0.25, 0.5);
     this.panner = new Tone.Panner();
     this.reverb = new Tone.Freeverb();
 
@@ -19,7 +19,8 @@ function AudioEngine () {
 
     // drum sounds
 
-    // var drumFileNames = ['high_conga', 'small_cowbell', 'snare_drum', 'splash cymbal'];
+    // var drumFileNames = ['high_conga', 'small_cowbell',
+    // 'snare_drum', 'splash cymbal'];
     // this.drumSamplers = this._loadSoundFiles(drumFileNames);
 
     // sound urls - map each url to its tone.sampler
@@ -27,14 +28,18 @@ function AudioEngine () {
 
        // soundfont setup
 
-    // instrument names used by Musyng Kite soundfont, in order to match scratch instruments
-    this.instrumentNames = ['acoustic_grand_piano', 'electric_piano_1', 'drawbar_organ', 'acoustic_guitar_nylon',
-        'electric_guitar_clean', 'acoustic_bass', 'pizzicato_strings', 'cello', 'trombone', 'clarinet'];
+    // instrument names used by Musyng Kite soundfont, in order to
+    // match scratch instruments
+    this.instrumentNames = ['acoustic_grand_piano', 'electric_piano_1',
+        'drawbar_organ', 'acoustic_guitar_nylon', 'electric_guitar_clean',
+         'acoustic_bass', 'pizzicato_strings', 'cello', 'trombone', 'clarinet'];
 
-    Soundfont.instrument(Tone.context, this.instrumentNames[0]).then(function (inst) {
-        this.instrument = inst;
-        this.instrument.connect(Tone.Master);
-    }.bind(this));
+    Soundfont.instrument(Tone.context, this.instrumentNames[0]).then(
+        function (inst) {
+            this.instrument = inst;
+            this.instrument.connect(Tone.Master);
+        }.bind(this)
+    );
 }
 
 AudioEngine.prototype.playSound = function (soundNum) {
@@ -48,7 +53,7 @@ AudioEngine.prototype.playSoundFromUrl = function (url) {
             // this.soundSamplers[url].triggerAttack();
             this.soundSamplers[url].player.start();
         } else {
-        // else load, play, and store it    
+        // else load, play, and store it
         // this results in a delay the first time you play the sound
             var sampler = new Tone.Sampler(url, function() {
                 sampler.triggerAttack();
@@ -63,11 +68,13 @@ AudioEngine.prototype.getSoundDuration = function (url) {
 };
 
 AudioEngine.prototype.playNoteForBeats = function(note, beats) {
-    this.instrument.play(note, Tone.context.currentTime, {duration : Number(beats)}); 
+    this.instrument.play(
+        note, Tone.context.currentTime, {duration : Number(beats)}
+    );
 };
 
 AudioEngine.prototype.playDrumForBeats = function(drumNum, beats) {
-    this.drumSamplers[drumNum].triggerAttack();        
+    this.drumSamplers[drumNum].triggerAttack();
 };
 
 AudioEngine.prototype.stopAllSounds = function() {
@@ -119,7 +126,7 @@ AudioEngine.prototype.changeEffect = function(effect, value) {
             // this.pitchShift.pitch += value / 20;
             break;
     }
-} 
+}
 
 AudioEngine.prototype._setPitchShift = function(value) {
     for (var i in this.soundSamplers) {
@@ -141,7 +148,7 @@ AudioEngine.prototype.loadSoundFromUrl = function(url) {
 
 AudioEngine.prototype._loadSoundFiles = function(filenames) {
     var samplers = [];
-    
+
     for (name in filenames) {
         var sampler = new Tone.Sampler('sounds/' + name + '.mp3').toMaster();
         samplers.push(sampler);
