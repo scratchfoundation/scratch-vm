@@ -395,10 +395,10 @@ Clone.prototype.isTouchingEdge = function () {
         var stageWidth = this.runtime.constructor.STAGE_WIDTH;
         var stageHeight = this.runtime.constructor.STAGE_HEIGHT;
         var bounds = this.getBounds();
-        if (bounds.left <= -stageWidth / 2 ||
-            bounds.right >= stageWidth / 2 ||
-            bounds.top >= stageHeight / 2 ||
-            bounds.bottom <= -stageHeight / 2) {
+        if (bounds.left < -stageWidth / 2 ||
+            bounds.right > stageWidth / 2 ||
+            bounds.top > stageHeight / 2 ||
+            bounds.bottom < -stageHeight / 2) {
             return true;
         }
     }
@@ -468,6 +468,48 @@ Clone.prototype.goBackLayers = function (nLayers) {
     if (this.renderer) {
         this.renderer.setDrawableOrder(this.drawableID, -nLayers, true, 1);
     }
+};
+
+/**
+ * Keep a desired position within a fence.
+ * @param {number} newX New desired X position.
+ * @param {number} newY New desired Y position.
+ * @param {Object=} opt_fence Optional fence with left, right, top bottom.
+ * @return {Array.<number>} Fenced X and Y coordinates.
+ */
+Clone.prototype.keepInFence = function (newX, newY, opt_fence) {
+    var fence = opt_fence;
+    if (!fence) {
+        fence = {
+            left: -this.runtime.constructor.STAGE_WIDTH / 2,
+            right: this.runtime.constructor.STAGE_WIDTH / 2,
+            top: this.runtime.constructor.STAGE_HEIGHT / 2,
+            bottom: -this.runtime.constructor.STAGE_HEIGHT / 2
+        };
+    }
+    var bounds = this.getBounds();
+    if (!bounds) return;
+    // Adjust the known bounds to the target position.
+    bounds.left += (newX - this.x);
+    bounds.right += (newX - this.x);
+    bounds.top += (newY - this.y);
+    bounds.bottom += (newY - this.y);
+    // Find how far we need to move the target position.
+    var dx = 0;
+    var dy = 0;
+    if (bounds.left < fence.left) {
+        dx += fence.left - bounds.left;
+    }
+    if (bounds.right > fence.right) {
+        dx += fence.right - bounds.right;
+    }
+    if (bounds.top > fence.top) {
+        dy += fence.top - bounds.top;
+    }
+    if (bounds.bottom < fence.bottom) {
+        dy += fence.bottom - bounds.bottom;
+    }
+    return [newX + dx, newY + dy];
 };
 
 /**
