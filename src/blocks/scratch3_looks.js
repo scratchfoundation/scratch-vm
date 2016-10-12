@@ -30,6 +30,8 @@ Scratch3LooksBlocks.prototype.getPrimitives = function() {
         'looks_cleargraphiceffects': this.clearEffects,
         'looks_changesizeby': this.changeSize,
         'looks_setsizeto': this.setSize,
+        'looks_gotofront': this.goToFront,
+        'looks_gobacklayers': this.goBackLayers,
         'looks_size': this.getSize,
         'looks_costumeorder': this.getCostumeIndex,
         'looks_backdroporder': this.getBackdropIndex,
@@ -188,6 +190,14 @@ Scratch3LooksBlocks.prototype.changeSize = function (args, util) {
 Scratch3LooksBlocks.prototype.setSize = function (args, util) {
     var size = Cast.toNumber(args.SIZE);
     util.target.setSize(size);
+};
+
+Scratch3LooksBlocks.prototype.goToFront = function (args, util) {
+    util.target.goToFront();
+};
+
+Scratch3LooksBlocks.prototype.goBackLayers = function (args, util) {
+    util.target.goBackLayers(args.NUM);
 };
 
 Scratch3LooksBlocks.prototype.getSize = function (args, util) {
