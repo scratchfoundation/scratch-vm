@@ -45,7 +45,7 @@ Scratch3ProcedureBlocks.prototype.callNoReturn = function (args, util) {
 };
 
 Scratch3ProcedureBlocks.prototype.callReturn = function (args, util) {
-    if (!util.stackFrame.executed || this.runState == 0) {
+    if (!util.stackFrame.executed && this.runState == 0) {
         this.runState = 1;
         var procedureName = args.mutation.name;
         util.stackFrame.executed = true;
@@ -60,7 +60,7 @@ Scratch3ProcedureBlocks.prototype.callReturn = function (args, util) {
 
 Scratch3ProcedureBlocks.prototype.report = function (args, util) {
     // No-op: execute the blocks.
-    if (util.getThread === this.currentThread) {
+    if (util.getThread === this.currentThread && args.VALUE) {
         this.report = args.VALUE;
     }
 };
