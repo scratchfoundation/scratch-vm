@@ -1,6 +1,12 @@
+var NEW_PROJECT_HASH = 'createEmptyProject';
+
 var loadProject = function () {
     var id = location.hash.substring(1);
-    if (id.length < 1) {
+    if (id === NEW_PROJECT_HASH) {
+        window.vm.createEmptyProject();
+        return;
+    }
+    if (id.length < 1 || !isFinite(id)) {
         id = '119615668';
     }
     var url = 'https://projects.scratch.mit.edu/internalapi/project/' +
@@ -32,7 +38,7 @@ window.onload = function() {
     };
     document.getElementById('createEmptyProject').addEventListener('click',
     function() {
-        document.location = '#' + 'createEmptyProject';
+        document.location = '#' + NEW_PROJECT_HASH;
         location.reload();
     });
     loadProject();

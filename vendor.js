@@ -1408,7 +1408,7 @@
 		Blockly.Blocks.motion_changeyby={init:function(){this.jsonInit({message0:"change y by %1",args0:[{type:"input_value",name:"DY"}],inputsInline:!0,previousStatement:null,nextStatement:null,category:Blockly.Categories.motion,colour:Blockly.Colours.motion.primary,colourSecondary:Blockly.Colours.motion.secondary,colourTertiary:Blockly.Colours.motion.tertiary})}};
 		Blockly.Blocks.motion_sety={init:function(){this.jsonInit({message0:"set y to %1",args0:[{type:"input_value",name:"Y"}],inputsInline:!0,previousStatement:null,nextStatement:null,category:Blockly.Categories.motion,colour:Blockly.Colours.motion.primary,colourSecondary:Blockly.Colours.motion.secondary,colourTertiary:Blockly.Colours.motion.tertiary})}};
 		Blockly.Blocks.motion_ifonedgebounce={init:function(){this.jsonInit({message0:"if on edge, bounce",previousStatement:null,nextStatement:null,category:Blockly.Categories.motion,colour:Blockly.Colours.motion.primary,colourSecondary:Blockly.Colours.motion.secondary,colourTertiary:Blockly.Colours.motion.tertiary})}};
-		Blockly.Blocks.motion_setrotationstyle_menu={init:function(){this.jsonInit({message0:"%1",args0:[{type:"field_dropdown",name:"STYLE",options:[["left-right","LEFT-RIGHT"],["don't rotate","NONE"],["all around","ALL"]]}],inputsInline:!0,output:"String",colour:Blockly.Colours.motion.secondary,colourSecondary:Blockly.Colours.motion.secondary,colourTertiary:Blockly.Colours.motion.tertiary,outputShape:Blockly.OUTPUT_SHAPE_ROUND})}};
+		Blockly.Blocks.motion_setrotationstyle_menu={init:function(){this.jsonInit({message0:"%1",args0:[{type:"field_dropdown",name:"STYLE",options:[["left-right","left-right"],["don't rotate","don't rotate"],["all around","all around"]]}],inputsInline:!0,output:"String",colour:Blockly.Colours.motion.secondary,colourSecondary:Blockly.Colours.motion.secondary,colourTertiary:Blockly.Colours.motion.tertiary,outputShape:Blockly.OUTPUT_SHAPE_ROUND})}};
 		Blockly.Blocks.motion_setrotationstyle={init:function(){this.jsonInit({message0:"set rotation style %1",args0:[{type:"input_value",name:"STYLE"}],previousStatement:null,nextStatement:null,category:Blockly.Categories.motion,colour:Blockly.Colours.motion.primary,colourSecondary:Blockly.Colours.motion.secondary,colourTertiary:Blockly.Colours.motion.tertiary})}};
 		Blockly.Blocks.motion_xposition={init:function(){this.jsonInit({message0:"x position",output:"Number",outputShape:Blockly.OUTPUT_SHAPE_ROUND,category:Blockly.Categories.motion,colour:Blockly.Colours.motion.primary,colourSecondary:Blockly.Colours.motion.secondary,colourTertiary:Blockly.Colours.motion.tertiary,checkboxInFlyout:!0})}};
 		Blockly.Blocks.motion_yposition={init:function(){this.jsonInit({message0:"y position",output:"Number",outputShape:Blockly.OUTPUT_SHAPE_ROUND,category:Blockly.Categories.motion,colour:Blockly.Colours.motion.primary,colourSecondary:Blockly.Colours.motion.secondary,colourTertiary:Blockly.Colours.motion.tertiary,checkboxInFlyout:!0})}};
@@ -3279,12 +3279,15 @@
 
 		/* WEBPACK VAR INJECTION */(function(Buffer) {'use strict';
 
+		var _slicedToArray = function () { function sliceIterator(arr, i) { var _arr = []; var _n = true; var _d = false; var _e = undefined; try { for (var _i = arr[Symbol.iterator](), _s; !(_n = (_s = _i.next()).done); _n = true) { _arr.push(_s.value); if (i && _arr.length === i) break; } } catch (err) { _d = true; _e = err; } finally { try { if (!_n && _i["return"]) _i["return"](); } finally { if (_d) throw _e; } } return _arr; } return function (arr, i) { if (Array.isArray(arr)) { return arr; } else if (Symbol.iterator in Object(arr)) { return sliceIterator(arr, i); } else { throw new TypeError("Invalid attempt to destructure non-iterable instance"); } }; }();
+
 		function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
-		var twgl = __webpack_require__(6);
+		var hull = __webpack_require__(6);
+		var twgl = __webpack_require__(11);
 
-		var Drawable = __webpack_require__(7);
-		var ShaderManager = __webpack_require__(19);
+		var Drawable = __webpack_require__(12);
+		var ShaderManager = __webpack_require__(24);
 
 		var RenderWebGL =
 		/**
@@ -3445,7 +3448,7 @@
 		            newIndex += oldIndex;
 		        }
 		        if (opt_min) {
-		            newIndex = Math.min(newIndex, opt_min);
+		            newIndex = Math.max(newIndex, opt_min);
 		        }
 		        newIndex = Math.max(newIndex, 0);
 		        // Insert at new index.
@@ -3467,6 +3470,43 @@
 		    gl.clear(gl.COLOR_BUFFER_BIT);
 
 		    this._drawThese(this._drawables, ShaderManager.DRAW_MODE.default, this._projection);
+		};
+
+		/**
+		 * Get the precise bounds for a Drawable.
+		 * @param {int} drawableID ID of Drawable to get bounds for.
+		 * @return {Object} Bounds for a tight box around the Drawable.
+		 */
+		RenderWebGL.prototype.getBounds = function (drawableID) {
+		    var drawable = Drawable.getDrawableByID(drawableID);
+		    // Tell the Drawable about its updated convex hull, if necessary.
+		    if (drawable.needsConvexHullPoints()) {
+		        var points = this._getConvexHullPointsForDrawable(drawableID);
+		        drawable.setConvexHullPoints(points);
+		    }
+		    var bounds = drawable.getBounds();
+		    // In debug mode, draw the bounds.
+		    if (this._debugCanvas) {
+		        var gl = this._gl;
+		        this._debugCanvas.width = gl.canvas.width;
+		        this._debugCanvas.height = gl.canvas.height;
+		        var context = this._debugCanvas.getContext('2d');
+		        context.drawImage(gl.canvas, 0, 0);
+		        context.strokeStyle = '#FF0000';
+		        var pr = window.devicePixelRatio;
+		        context.strokeRect(pr * (bounds.left + this._nativeSize[0] / 2), pr * (bounds.top + this._nativeSize[1] / 2), pr * (bounds.right - bounds.left), pr * (bounds.bottom - bounds.top));
+		    }
+		    return bounds;
+		};
+
+		/**
+		 * Get the current skin (costume) size of a Drawable.
+		 * @param {int} drawableID The ID of the Drawable to measure.
+		 * @return {Array.<number>} Skin size, width and height.
+		 */
+		RenderWebGL.prototype.getSkinSize = function (drawableID) {
+		    var drawable = Drawable.getDrawableByID(drawableID);
+		    return drawable.getSkinSize();
 		};
 
 		/**
@@ -3540,6 +3580,72 @@
 		        var pixelDistanceB = Math.abs(pixels[pixelBase + 2] - color3b[2]);
 
 		        if (pixelDistanceR <= RenderWebGL.TOLERANCE_TOUCHING_COLOR && pixelDistanceG <= RenderWebGL.TOLERANCE_TOUCHING_COLOR && pixelDistanceB <= RenderWebGL.TOLERANCE_TOUCHING_COLOR) {
+		            return true;
+		        }
+		    }
+
+		    return false;
+		};
+
+		/**
+		 * Check if a particular Drawable is touching any in a set of Drawables.
+		 * @param {int} drawableID The ID of the Drawable to check.
+		 * @param {int[]} candidateIDs The Drawable IDs to check, otherwise all.
+		 * @returns {Boolean} True iff the Drawable is touching one of candidateIDs.
+		 */
+		RenderWebGL.prototype.isTouchingDrawables = function (drawableID, candidateIDs) {
+		    candidateIDs = candidateIDs || this._drawables;
+
+		    var gl = this._gl;
+
+		    twgl.bindFramebufferInfo(gl, this._queryBufferInfo);
+
+		    // TODO: restrict to only the area overlapped by the target Drawable
+		    // - limit size of viewport to the AABB around the target Drawable
+		    // - draw only the Drawables which could overlap the target Drawable
+		    // - read only the pixels in the AABB around the target Drawable
+		    gl.viewport(0, 0, this._nativeSize[0], this._nativeSize[1]);
+
+		    var noneColor = Drawable.color4fFromID(Drawable.NONE);
+		    gl.clearColor.apply(gl, noneColor);
+		    gl.clear(gl.COLOR_BUFFER_BIT | gl.STENCIL_BUFFER_BIT);
+
+		    try {
+		        gl.enable(gl.STENCIL_TEST);
+		        gl.stencilFunc(gl.ALWAYS, 1, 1);
+		        gl.stencilOp(gl.KEEP, gl.KEEP, gl.REPLACE);
+		        gl.colorMask(false, false, false, false);
+		        this._drawThese([drawableID], ShaderManager.DRAW_MODE.silhouette, this._projection);
+
+		        gl.stencilFunc(gl.EQUAL, 1, 1);
+		        gl.stencilOp(gl.KEEP, gl.KEEP, gl.KEEP);
+		        gl.colorMask(true, true, true, true);
+
+		        // TODO: only draw items which could possibly overlap target Drawable
+		        // It might work to use the filter function for that
+		        this._drawThese(candidateIDs, ShaderManager.DRAW_MODE.silhouette, this._projection);
+		    } finally {
+		        gl.colorMask(true, true, true, true);
+		        gl.disable(gl.STENCIL_TEST);
+		    }
+
+		    var pixels = new Buffer(this._nativeSize[0] * this._nativeSize[1] * 4);
+		    gl.readPixels(0, 0, this._nativeSize[0], this._nativeSize[1], gl.RGBA, gl.UNSIGNED_BYTE, pixels);
+
+		    if (this._debugCanvas) {
+		        this._debugCanvas.width = this._nativeSize[0];
+		        this._debugCanvas.height = this._nativeSize[1];
+		        var context = this._debugCanvas.getContext('2d');
+		        var imageData = context.getImageData(0, 0, this._nativeSize[0], this._nativeSize[1]);
+		        for (var i = 0, bytes = pixels.length; i < bytes; ++i) {
+		            imageData.data[i] = pixels[i];
+		        }
+		        context.putImageData(imageData, 0, 0);
+		    }
+
+		    for (var pixelBase = 0; pixelBase < pixels.length; pixelBase += 4) {
+		        var pixelID = Drawable.color4bToID(pixels[pixelBase], pixels[pixelBase + 1], pixels[pixelBase + 2], pixels[pixelBase + 3]);
+		        if (pixelID > Drawable.NONE) {
 		            return true;
 		        }
 		    }
@@ -3717,18 +3823,93 @@
 		            twgl.setBuffersAndAttributes(gl, currentShader, this._bufferInfo);
 		            twgl.setUniforms(currentShader, { u_projectionMatrix: projection });
 		            twgl.setUniforms(currentShader, { u_fudge: window.fudge || 0 });
-
-		            // TODO: should these be set after the Drawable's uniforms?
-		            // That would allow Drawable-scope uniforms to be overridden...
-		            if (extraUniforms) {
-		                twgl.setUniforms(currentShader, extraUniforms);
-		            }
 		        }
 
 		        twgl.setUniforms(currentShader, drawable.getUniforms());
 
+		        // Apply extra uniforms after the Drawable's, to allow overwriting.
+		        if (extraUniforms) {
+		            twgl.setUniforms(currentShader, extraUniforms);
+		        }
+
 		        twgl.drawBufferInfo(gl, gl.TRIANGLES, this._bufferInfo);
 		    }
+		};
+
+		/**
+		 * Get the convex hull points for a particular Drawable.
+		 * To do this, draw the Drawable unrotated, unscaled, and untranslated.
+		 * Read back the pixels and find all boundary points.
+		 * Finally, apply a convex hull algorithm to simplify the set.
+		 * @param {int} drawablesID The Drawable IDs calculate convex hull for.
+		 * @return {Array.<Array.<number>>} points Convex hull points, as [[x, y], ...]
+		 */
+		RenderWebGL.prototype._getConvexHullPointsForDrawable = function (drawableID) {
+		    var drawable = Drawable.getDrawableByID(drawableID);
+
+		    var _drawable$_uniforms$u = _slicedToArray(drawable._uniforms.u_skinSize, 2);
+
+		    var width = _drawable$_uniforms$u[0];
+		    var height = _drawable$_uniforms$u[1];
+		    // No points in the hull if invisible or size is 0.
+
+		    if (!drawable.getVisible() || width == 0 || height == 0) {
+		        return [];
+		    }
+
+		    // Only draw to the size of the untransformed drawable.
+		    var gl = this._gl;
+		    twgl.bindFramebufferInfo(gl, this._queryBufferInfo);
+		    gl.viewport(0, 0, width, height);
+
+		    // Clear the canvas with Drawable.NONE.
+		    var noneColor = Drawable.color4fFromID(Drawable.NONE);
+		    gl.clearColor.apply(gl, noneColor);
+		    gl.clear(gl.COLOR_BUFFER_BIT);
+
+		    // Overwrite the model matrix to be unrotated, unscaled, untranslated.
+		    var modelMatrix = twgl.m4.identity();
+		    twgl.m4.rotateZ(modelMatrix, Math.PI, modelMatrix);
+		    twgl.m4.scale(modelMatrix, [width, height], modelMatrix);
+
+		    var projection = twgl.m4.ortho(-0.5 * width, 0.5 * width, -0.5 * height, 0.5 * height, -1, 1);
+
+		    this._drawThese([drawableID], ShaderManager.DRAW_MODE.silhouette, projection, undefined, { u_modelMatrix: modelMatrix });
+
+		    var pixels = new Buffer(width * height * 4);
+		    gl.readPixels(0, 0, width, height, gl.RGBA, gl.UNSIGNED_BYTE, pixels);
+
+		    // Known boundary points on left/right edges of pixels.
+		    var boundaryPoints = [];
+
+		    /**
+		     * Helper method to look up a pixel.
+		     * @param {int} x X coordinate of the pixel in `pixels`.
+		     * @param {int} y Y coordinate of the pixel in `pixels`.
+		     * @return Known ID at that pixel, or Drawable.NONE.
+		     */
+		    var _getPixel = function _getPixel(x, y) {
+		        var pixelBase = (width * y + x) * 4;
+		        return Drawable.color4bToID(pixels[pixelBase], pixels[pixelBase + 1], pixels[pixelBase + 2], pixels[pixelBase + 3]);
+		    };
+		    for (var y = 0; y <= height; y++) {
+		        // Scan from left.
+		        for (var x = 0; x < width; x++) {
+		            if (_getPixel(x, y) > Drawable.NONE) {
+		                boundaryPoints.push([x, y]);
+		                break;
+		            }
+		        }
+		        // Scan from right.
+		        for (var _x = width - 1; _x >= 0; _x--) {
+		            if (_getPixel(_x, y) > Drawable.NONE) {
+		                boundaryPoints.push([_x, y]);
+		                break;
+		            }
+		        }
+		    }
+		    // Simplify boundary points using convex hull.
+		    return hull(boundaryPoints, Infinity);
 		};
 		/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(2).Buffer))
 
@@ -5746,6 +5927,390 @@
 
 	/***/ },
 	/* 6 */
+	/***/ function(module, exports, __webpack_require__) {
+
+		/*
+		 (c) 2014-2016, Andrii Heonia
+		 Hull.js, a JavaScript library for concave hull generation by set of points.
+		 https://github.com/AndriiHeonia/hull
+		*/
+
+		'use strict';
+
+		var intersect = __webpack_require__(7);
+		var grid = __webpack_require__(8);
+		var formatUtil = __webpack_require__(9);
+		var convexHull = __webpack_require__(10);
+
+		function _filterDuplicates(pointset) {
+		    return pointset.filter(function(el, idx, arr) {
+		        var prevEl = arr[idx - 1];
+		        return idx === 0 || !(prevEl[0] === el[0] && prevEl[1] === el[1]);
+		    });
+		}
+
+		function _sortByX(pointset) {
+		    return pointset.sort(function(a, b) {
+		        if (a[0] == b[0]) {
+		            return a[1] - b[1];
+		        } else {
+		            return a[0] - b[0];
+		        }
+		    });
+		}
+
+		function _sqLength(a, b) {
+		    return Math.pow(b[0] - a[0], 2) + Math.pow(b[1] - a[1], 2);
+		}
+
+		function _cos(o, a, b) {
+		    var aShifted = [a[0] - o[0], a[1] - o[1]],
+		        bShifted = [b[0] - o[0], b[1] - o[1]],
+		        sqALen = _sqLength(o, a),
+		        sqBLen = _sqLength(o, b),
+		        dot = aShifted[0] * bShifted[0] + aShifted[1] * bShifted[1];
+
+		    return dot / Math.sqrt(sqALen * sqBLen);
+		}
+
+		function _intersect(segment, pointset) {
+		    for (var i = 0; i < pointset.length - 1; i++) {
+		        var seg = [pointset[i], pointset[i + 1]];
+		        if (segment[0][0] === seg[0][0] && segment[0][1] === seg[0][1] ||
+		            segment[0][0] === seg[1][0] && segment[0][1] === seg[1][1]) {
+		            continue;
+		        }
+		        if (intersect(segment, seg)) {
+		            return true;
+		        }
+		    }
+		    return false;
+		}
+
+		function _occupiedArea(pointset) {
+		    var minX = Infinity,
+		        minY = Infinity,
+		        maxX = -Infinity,
+		        maxY = -Infinity;
+
+		    for (var i = pointset.length - 1; i >= 0; i--) {
+		        if (pointset[i][0] < minX) {
+		            minX = pointset[i][0];
+		        }
+		        if (pointset[i][1] < minY) {
+		            minY = pointset[i][1];
+		        }
+		        if (pointset[i][0] > maxX) {
+		            maxX = pointset[i][0];
+		        }
+		        if (pointset[i][1] > maxY) {
+		            maxY = pointset[i][1];
+		        }
+		    }
+
+		    return [
+		        maxX - minX, // width
+		        maxY - minY  // height
+		    ];
+		}
+
+		function _bBoxAround(edge) {
+		    return [
+		        Math.min(edge[0][0], edge[1][0]), // left
+		        Math.min(edge[0][1], edge[1][1]), // top
+		        Math.max(edge[0][0], edge[1][0]), // right
+		        Math.max(edge[0][1], edge[1][1])  // bottom
+		    ];
+		}
+
+		function _midPoint(edge, innerPoints, convex) {
+		    var point = null,
+		        angle1Cos = MAX_CONCAVE_ANGLE_COS,
+		        angle2Cos = MAX_CONCAVE_ANGLE_COS,
+		        a1Cos, a2Cos;
+
+		    for (var i = 0; i < innerPoints.length; i++) {
+		        a1Cos = _cos(edge[0], edge[1], innerPoints[i]);
+		        a2Cos = _cos(edge[1], edge[0], innerPoints[i]);
+
+		        if (a1Cos > angle1Cos && a2Cos > angle2Cos &&
+		            !_intersect([edge[0], innerPoints[i]], convex) &&
+		            !_intersect([edge[1], innerPoints[i]], convex)) {
+
+		            angle1Cos = a1Cos;
+		            angle2Cos = a2Cos;
+		            point = innerPoints[i];
+		        }
+		    }
+
+		    return point;
+		}
+
+		function _concave(convex, maxSqEdgeLen, maxSearchArea, grid, edgeSkipList) {
+		    var edge,
+		        keyInSkipList,
+		        scaleFactor,
+		        midPoint,
+		        bBoxAround,
+		        bBoxWidth,
+		        bBoxHeight,
+		        midPointInserted = false;
+
+		    for (var i = 0; i < convex.length - 1; i++) {
+		        edge = [convex[i], convex[i + 1]];
+		        keyInSkipList = edge[0].join() + ',' + edge[1].join();
+
+		        if (_sqLength(edge[0], edge[1]) < maxSqEdgeLen ||
+		            edgeSkipList[keyInSkipList] === true) { continue; }
+
+		        scaleFactor = 0;
+		        bBoxAround = _bBoxAround(edge);
+		        do {
+		            bBoxAround = grid.extendBbox(bBoxAround, scaleFactor);
+		            bBoxWidth = bBoxAround[2] - bBoxAround[0];
+		            bBoxHeight = bBoxAround[3] - bBoxAround[1];
+
+		            midPoint = _midPoint(edge, grid.rangePoints(bBoxAround), convex);            
+		            scaleFactor++;
+		        }  while (midPoint === null && (maxSearchArea[0] > bBoxWidth || maxSearchArea[1] > bBoxHeight));
+
+		        if (bBoxWidth >= maxSearchArea[0] && bBoxHeight >= maxSearchArea[1]) {
+		            edgeSkipList[keyInSkipList] = true;
+		        }
+
+		        if (midPoint !== null) {
+		            convex.splice(i + 1, 0, midPoint);
+		            grid.removePoint(midPoint);
+		            midPointInserted = true;
+		        }
+		    }
+
+		    if (midPointInserted) {
+		        return _concave(convex, maxSqEdgeLen, maxSearchArea, grid, edgeSkipList);
+		    }
+
+		    return convex;
+		}
+
+		function hull(pointset, concavity, format) {
+		    var convex,
+		        concave,
+		        innerPoints,
+		        occupiedArea,
+		        maxSearchArea,
+		        cellSize,
+		        points,
+		        maxEdgeLen = concavity || 20;
+
+		    if (pointset.length < 4) {
+		        return pointset.slice();
+		    }
+
+		    points = _filterDuplicates(_sortByX(formatUtil.toXy(pointset, format)));
+
+		    occupiedArea = _occupiedArea(points);
+		    maxSearchArea = [
+		        occupiedArea[0] * MAX_SEARCH_BBOX_SIZE_PERCENT,
+		        occupiedArea[1] * MAX_SEARCH_BBOX_SIZE_PERCENT
+		    ];
+
+		    convex = convexHull(points);
+		    innerPoints = points.filter(function(pt) {
+		        return convex.indexOf(pt) < 0;
+		    });
+
+		    cellSize = Math.ceil(1 / (points.length / (occupiedArea[0] * occupiedArea[1])));
+
+		    concave = _concave(
+		        convex, Math.pow(maxEdgeLen, 2),
+		        maxSearchArea, grid(innerPoints, cellSize), {});
+		 
+		    return formatUtil.fromXy(concave, format);
+		}
+
+		var MAX_CONCAVE_ANGLE_COS = Math.cos(90 / (180 / Math.PI)); // angle = 90 deg
+		var MAX_SEARCH_BBOX_SIZE_PERCENT = 0.6;
+
+		module.exports = hull;
+
+	/***/ },
+	/* 7 */
+	/***/ function(module, exports) {
+
+		function ccw(x1, y1, x2, y2, x3, y3) {           
+		    var cw = ((y3 - y1) * (x2 - x1)) - ((y2 - y1) * (x3 - x1));
+		    return cw > 0 ? true : cw < 0 ? false : true; // colinear
+		}
+
+		function intersect(seg1, seg2) {
+		  var x1 = seg1[0][0], y1 = seg1[0][1],
+		      x2 = seg1[1][0], y2 = seg1[1][1],
+		      x3 = seg2[0][0], y3 = seg2[0][1],
+		      x4 = seg2[1][0], y4 = seg2[1][1];
+
+		    return ccw(x1, y1, x3, y3, x4, y4) !== ccw(x2, y2, x3, y3, x4, y4) && ccw(x1, y1, x2, y2, x3, y3) !== ccw(x1, y1, x2, y2, x4, y4);
+		}
+
+		module.exports = intersect;
+
+	/***/ },
+	/* 8 */
+	/***/ function(module, exports) {
+
+		function Grid(points, cellSize) {
+		    this._cells = [];
+		    this._cellSize = cellSize;
+
+		    points.forEach(function(point) {
+		        var cellXY = this.point2CellXY(point),
+		            x = cellXY[0],
+		            y = cellXY[1];
+		        if (this._cells[x] === undefined) {
+		            this._cells[x] = [];
+		        }
+		        if (this._cells[x][y] === undefined) {
+		            this._cells[x][y] = [];
+		        }
+		        this._cells[x][y].push(point);
+		    }, this);
+		}
+
+		Grid.prototype = {
+		    cellPoints: function(x, y) { // (Number, Number) -> Array
+		        return (this._cells[x] !== undefined && this._cells[x][y] !== undefined) ? this._cells[x][y] : [];
+		    },
+
+		    rangePoints: function(bbox) { // (Array) -> Array
+		        var tlCellXY = this.point2CellXY([bbox[0], bbox[1]]),
+		            brCellXY = this.point2CellXY([bbox[2], bbox[3]]),
+		            points = [];
+
+		        for (var x = tlCellXY[0]; x <= brCellXY[0]; x++) {
+		            for (var y = tlCellXY[1]; y <= brCellXY[1]; y++) {
+		                points = points.concat(this.cellPoints(x, y));
+		            }
+		        }
+
+		        return points;
+		    },
+
+		    removePoint: function(point) { // (Array) -> Array
+		        var cellXY = this.point2CellXY(point),
+		            cell = this._cells[cellXY[0]][cellXY[1]],
+		            pointIdxInCell;
+		        
+		        for (var i = 0; i < cell.length; i++) {
+		            if (cell[i][0] === point[0] && cell[i][1] === point[1]) {
+		                pointIdxInCell = i;
+		                break;
+		            }
+		        }
+
+		        cell.splice(pointIdxInCell, 1);
+
+		        return cell;
+		    },
+
+		    point2CellXY: function(point) { // (Array) -> Array
+		        var x = parseInt(point[0] / this._cellSize),
+		            y = parseInt(point[1] / this._cellSize);
+		        return [x, y];
+		    },
+
+		    extendBbox: function(bbox, scaleFactor) { // (Array, Number) -> Array
+		        return [
+		            bbox[0] - (scaleFactor * this._cellSize),
+		            bbox[1] - (scaleFactor * this._cellSize),
+		            bbox[2] + (scaleFactor * this._cellSize),
+		            bbox[3] + (scaleFactor * this._cellSize)
+		        ];
+		    }
+		};
+
+		function grid(points, cellSize) {
+		    return new Grid(points, cellSize);
+		}
+
+		module.exports = grid;
+
+	/***/ },
+	/* 9 */
+	/***/ function(module, exports) {
+
+		module.exports = {
+
+		    toXy: function(pointset, format) {
+		        if (format === undefined) {
+		            return pointset.slice();
+		        }
+		        return pointset.map(function(pt) {
+		            /*jslint evil: true */
+		            var _getXY = new Function('pt', 'return [pt' + format[0] + ',' + 'pt' + format[1] + '];');
+		            return _getXY(pt);
+		        });
+		    },
+
+		    fromXy: function(pointset, format) {
+		        if (format === undefined) {
+		            return pointset.slice();
+		        }
+		        return pointset.map(function(pt) {
+		            /*jslint evil: true */
+		            var _getObj = new Function('pt', 'var o = {}; o' + format[0] + '= pt[0]; o' + format[1] + '= pt[1]; return o;');
+		            return _getObj(pt);
+		        });
+		    }
+
+		}
+
+	/***/ },
+	/* 10 */
+	/***/ function(module, exports) {
+
+		function _cross(o, a, b) {
+		    return (a[0] - o[0]) * (b[1] - o[1]) - (a[1] - o[1]) * (b[0] - o[0]);
+		}
+
+		function _upperTangent(pointset) {
+		    var lower = [];
+		    for (var l = 0; l < pointset.length; l++) {
+		        while (lower.length >= 2 && (_cross(lower[lower.length - 2], lower[lower.length - 1], pointset[l]) <= 0)) {
+		            lower.pop();
+		        }
+		        lower.push(pointset[l]);
+		    }
+		    lower.pop();
+		    return lower;
+		}
+
+		function _lowerTangent(pointset) {
+		    var reversed = pointset.reverse(),
+		        upper = [];
+		    for (var u = 0; u < reversed.length; u++) {
+		        while (upper.length >= 2 && (_cross(upper[upper.length - 2], upper[upper.length - 1], reversed[u]) <= 0)) {
+		            upper.pop();
+		        }
+		        upper.push(reversed[u]);
+		    }
+		    upper.pop();
+		    return upper;
+		}
+
+		// pointset has to be sorted by X
+		function convex(pointset) {
+		    var convex,
+		        upper = _upperTangent(pointset),
+		        lower = _lowerTangent(pointset);
+		    convex = lower.concat(upper);
+		    convex.push(pointset[0]);  
+		    return convex;  
+		}
+
+		module.exports = convex;
+
+
+	/***/ },
+	/* 11 */
 	/***/ function(module, exports, __webpack_require__) {
 
 		var __WEBPACK_AMD_DEFINE_FACTORY__, __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;/**
@@ -14065,18 +14630,18 @@
 
 
 	/***/ },
-	/* 7 */
+	/* 12 */
 	/***/ function(module, exports, __webpack_require__) {
 
 		'use strict';
 
 		function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
-		var twgl = __webpack_require__(6);
-		var svgToImage = __webpack_require__(8);
-		var xhr = __webpack_require__(11);
+		var twgl = __webpack_require__(11);
+		var svgToImage = __webpack_require__(13);
+		var xhr = __webpack_require__(16);
 
-		var ShaderManager = __webpack_require__(19);
+		var ShaderManager = __webpack_require__(24);
 
 		var Drawable =
 		/**
@@ -14140,6 +14705,9 @@
 		    this._transformDirty = true;
 		    this._visible = true;
 		    this._effectBits = 0;
+
+		    this._convexHullPoints = null;
+		    this._convexHullDirty = true;
 
 		    // Create a transparent 1x1 texture for temporary use
 		    var tempTexture = twgl.createTexture(gl, { src: [0, 0, 0, 0] });
@@ -14376,6 +14944,7 @@
 		    var dirty = false;
 		    if ('skin' in properties) {
 		        this.setSkin(properties.skin);
+		        this.setConvexHullDirty();
 		    }
 		    if ('position' in properties && (this._position[0] != properties.position[0] || this._position[1] != properties.position[1])) {
 		        this._position[0] = properties.position[0];
@@ -14393,6 +14962,7 @@
 		    }
 		    if ('visible' in properties) {
 		        this._visible = properties.visible;
+		        this.setConvexHullDirty();
 		    }
 		    if (dirty) {
 		        this.setTransformDirty();
@@ -14410,6 +14980,9 @@
 		            }
 		            var converter = effectInfo.converter;
 		            this._uniforms['u_' + effectName] = converter(rawValue);
+		            if (effectInfo.shapeChanges) {
+		                this.setConvexHullDirty();
+		            }
 		        }
 		    }
 		};
@@ -14430,6 +15003,15 @@
 		        this._uniforms.u_skinSize[1] = height;
 		        this.setTransformDirty();
 		    }
+		    this.setConvexHullDirty();
+		};
+
+		/**
+		 * Get the size of the Drawable's current skin.
+		 * @return {Array.<number>} Skin size, width and height.
+		 */
+		Drawable.prototype.getSkinSize = function () {
+		    return this._uniforms.u_skinSize.slice();
 		};
 
 		/**
@@ -14446,10 +15028,85 @@
 		    twgl.m4.rotateZ(modelMatrix, rotation, modelMatrix);
 
 		    var scaledSize = twgl.v3.divScalar(twgl.v3.multiply(this._uniforms.u_skinSize, this._scale), 100);
-		    scaledSize[3] = 0; // was NaN because the vectors have only 2 components.
+		    scaledSize[2] = 0; // was NaN because the vectors have only 2 components.
 		    twgl.m4.scale(modelMatrix, scaledSize, modelMatrix);
 
 		    this._transformDirty = false;
+		};
+
+		/**
+		 * Whether the Drawable needs convex hull points provided by the renderer.
+		 * @return {boolean} True when no convex hull known, or it's dirty.
+		 */
+		Drawable.prototype.needsConvexHullPoints = function () {
+		    return !this._convexHullPoints || this._convexHullDirty;
+		};
+
+		/**
+		 * Set the convex hull to be dirty.
+		 * Do this whenever the Drawable's shape has possibly changed.
+		 */
+		Drawable.prototype.setConvexHullDirty = function () {
+		    this._convexHullDirty = true;
+		};
+
+		/**
+		 * Set the convex hull points for the Drawable.
+		 * @param {Array.<Array.<number>>} points Convex hull points, as [[x, y], ...]
+		 */
+		Drawable.prototype.setConvexHullPoints = function (points) {
+		    this._convexHullPoints = points;
+		    this._convexHullDirty = false;
+		};
+
+		/**
+		 * Get the precise bounds for a Drawable.
+		 * This function applies the transform matrix to the known convex hull,
+		 * and then finds the minimum box along the axes.
+		 * Before calling this, ensure the renderer has updated convex hull points.
+		 * @return {Object} Bounds for a tight box around the Drawable.
+		 */
+		Drawable.prototype.getBounds = function () {
+		    if (this.needsConvexHullPoints()) {
+		        throw 'Needs updated convex hull points before bounds calculation.';
+		    }
+		    // First, transform all the convex hull points by the current Drawable's
+		    // transform. This allows us to skip recalculating the convex hull
+		    // for many Drawable updates, including translation, rotation, scaling.
+		    var projection = twgl.m4.ortho(-1, 1, 1, -1, -1, 1);
+		    var skinSize = this._uniforms.u_skinSize;
+		    var tm = twgl.m4.multiply(this._uniforms.u_modelMatrix, projection);
+		    var transformedHullPoints = [];
+		    for (var i = 0; i < this._convexHullPoints.length; i++) {
+		        var point = this._convexHullPoints[i];
+		        var glPoint = twgl.v3.create(0.5 + -point[0] / skinSize[0], 0.5 + -point[1] / skinSize[1], 0);
+		        twgl.m4.transformPoint(tm, glPoint, glPoint);
+		        transformedHullPoints.push(glPoint);
+		    }
+		    // Search through transformed points to generate box on axes.
+		    var bounds = {
+		        left: Infinity,
+		        right: -Infinity,
+		        top: Infinity,
+		        bottom: -Infinity
+		    };
+		    for (var _i = 0; _i < transformedHullPoints.length; _i++) {
+		        var x = transformedHullPoints[_i][0];
+		        var y = transformedHullPoints[_i][1];
+		        if (x < bounds.left) {
+		            bounds.left = x;
+		        }
+		        if (x > bounds.right) {
+		            bounds.right = x;
+		        }
+		        if (y < bounds.top) {
+		            bounds.top = y;
+		        }
+		        if (y > bounds.bottom) {
+		            bounds.bottom = y;
+		        }
+		    }
+		    return bounds;
 		};
 
 		/**
@@ -14486,10 +15143,10 @@
 		};
 
 	/***/ },
-	/* 8 */
+	/* 13 */
 	/***/ function(module, exports, __webpack_require__) {
 
-		/* WEBPACK VAR INJECTION */(function(process) {var loadImage = __webpack_require__(10)
+		/* WEBPACK VAR INJECTION */(function(process) {var loadImage = __webpack_require__(15)
 		var noop = function () {}
 
 		module.exports = svgToImage
@@ -14556,10 +15213,10 @@
 		  window.msURL
 		}
 
-		/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(9)))
+		/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(14)))
 
 	/***/ },
-	/* 9 */
+	/* 14 */
 	/***/ function(module, exports) {
 
 		// shim for using process in browser
@@ -14745,7 +15402,7 @@
 
 
 	/***/ },
-	/* 10 */
+	/* 15 */
 	/***/ function(module, exports) {
 
 		module.exports = loadImage;
@@ -14783,15 +15440,15 @@
 
 
 	/***/ },
-	/* 11 */
+	/* 16 */
 	/***/ function(module, exports, __webpack_require__) {
 
 		"use strict";
-		var window = __webpack_require__(12)
-		var once = __webpack_require__(13)
-		var isFunction = __webpack_require__(14)
-		var parseHeaders = __webpack_require__(15)
-		var xtend = __webpack_require__(18)
+		var window = __webpack_require__(17)
+		var once = __webpack_require__(18)
+		var isFunction = __webpack_require__(19)
+		var parseHeaders = __webpack_require__(20)
+		var xtend = __webpack_require__(23)
 
 		module.exports = createXHR
 		createXHR.XMLHttpRequest = window.XMLHttpRequest || noop
@@ -15008,7 +15665,7 @@
 
 
 	/***/ },
-	/* 12 */
+	/* 17 */
 	/***/ function(module, exports) {
 
 		/* WEBPACK VAR INJECTION */(function(global) {if (typeof window !== "undefined") {
@@ -15024,7 +15681,7 @@
 		/* WEBPACK VAR INJECTION */}.call(exports, (function() { return this; }())))
 
 	/***/ },
-	/* 13 */
+	/* 18 */
 	/***/ function(module, exports) {
 
 		module.exports = once
@@ -15049,7 +15706,7 @@
 
 
 	/***/ },
-	/* 14 */
+	/* 19 */
 	/***/ function(module, exports) {
 
 		module.exports = isFunction
@@ -15070,11 +15727,11 @@
 
 
 	/***/ },
-	/* 15 */
+	/* 20 */
 	/***/ function(module, exports, __webpack_require__) {
 
-		var trim = __webpack_require__(16)
-		  , forEach = __webpack_require__(17)
+		var trim = __webpack_require__(21)
+		  , forEach = __webpack_require__(22)
 		  , isArray = function(arg) {
 		      return Object.prototype.toString.call(arg) === '[object Array]';
 		    }
@@ -15106,7 +15763,7 @@
 		}
 
 	/***/ },
-	/* 16 */
+	/* 21 */
 	/***/ function(module, exports) {
 
 		
@@ -15126,10 +15783,10 @@
 
 
 	/***/ },
-	/* 17 */
+	/* 22 */
 	/***/ function(module, exports, __webpack_require__) {
 
-		var isFunction = __webpack_require__(14)
+		var isFunction = __webpack_require__(19)
 
 		module.exports = forEach
 
@@ -15178,7 +15835,7 @@
 
 
 	/***/ },
-	/* 18 */
+	/* 23 */
 	/***/ function(module, exports) {
 
 		module.exports = extend
@@ -15203,14 +15860,14 @@
 
 
 	/***/ },
-	/* 19 */
+	/* 24 */
 	/***/ function(module, exports, __webpack_require__) {
 
 		'use strict';
 
 		function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
-		var twgl = __webpack_require__(6);
+		var twgl = __webpack_require__(11);
 
 		var ShaderManager = function ShaderManager(gl) {
 		    _classCallCheck(this, ShaderManager);
@@ -15239,6 +15896,7 @@
 		 * - A conversion function which takes a Scratch value (generally in the range
 		 *   0..100 or -100..100) and maps it to a value useful to the shader. This
 		 *   mapping may not be reversible.
+		 * - `shapeChanges`, whether the effect could change the drawn shape.
 		 * @type {Object.<string,Object.<string,*>>}
 		 */
 		ShaderManager.EFFECT_INFO = {
@@ -15246,25 +15904,29 @@
 		        mask: 1 << 0,
 		        converter: function converter(x) {
 		            return x / 200 % 1;
-		        }
+		        },
+		        shapeChanges: false
 		    },
 		    fisheye: {
 		        mask: 1 << 1,
 		        converter: function converter(x) {
 		            return Math.max(0, (x + 100) / 100);
-		        }
+		        },
+		        shapeChanges: true
 		    },
 		    whirl: {
 		        mask: 1 << 2,
 		        converter: function converter(x) {
 		            return x * Math.PI / 180;
-		        }
+		        },
+		        shapeChanges: true
 		    },
 		    pixelate: {
 		        mask: 1 << 3,
 		        converter: function converter(x) {
 		            return Math.abs(x) / 10;
-		        }
+		        },
+		        shapeChanges: true
 		    },
 		    mosaic: {
 		        mask: 1 << 4,
@@ -15272,19 +15934,22 @@
 		            x = Math.round((Math.abs(x) + 10) / 10);
 		            // TODO: cap by Math.min(srcWidth, srcHeight)
 		            return Math.max(1, Math.min(x, 512));
-		        }
+		        },
+		        shapeChanges: true
 		    },
 		    brightness: {
 		        mask: 1 << 5,
 		        converter: function converter(x) {
 		            return Math.max(-100, Math.min(x, 100)) / 100;
-		        }
+		        },
+		        shapeChanges: false
 		    },
 		    ghost: {
 		        mask: 1 << 6,
 		        converter: function converter(x) {
 		            return 1 - Math.max(0, Math.min(x, 100)) / 100;
-		        }
+		        },
+		        shapeChanges: false
 		    }
 		};
 
@@ -15354,23 +16019,23 @@
 		    }
 
 		    var definesText = defines.join('\n') + '\n';
-		    var vsFullText = definesText + __webpack_require__(20);
-		    var fsFullText = definesText + __webpack_require__(21);
+		    var vsFullText = definesText + __webpack_require__(25);
+		    var fsFullText = definesText + __webpack_require__(26);
 
 		    return twgl.createProgramInfo(this._gl, [vsFullText, fsFullText]);
 		};
 
 	/***/ },
-	/* 20 */
+	/* 25 */
 	/***/ function(module, exports) {
 
 		module.exports = "uniform mat4 u_projectionMatrix;\nuniform mat4 u_modelMatrix;\n\nattribute vec2 a_position;\nattribute vec2 a_texCoord;\n\nvarying vec2 v_texCoord;\n\nvoid main() {\n    gl_Position = u_projectionMatrix * u_modelMatrix * vec4(a_position, 0, 1);\n    v_texCoord = a_texCoord;\n}\n"
 
 	/***/ },
-	/* 21 */
+	/* 26 */
 	/***/ function(module, exports) {
 
-		module.exports = "precision mediump float;\n\nuniform float u_fudge;\n\n#ifdef DRAW_MODE_silhouette\nuniform vec4 u_silhouetteColor;\n#else // DRAW_MODE_silhouette\n# ifdef ENABLE_color\nuniform float u_color;\n# endif // ENABLE_color\n# ifdef ENABLE_brightness\nuniform float u_brightness;\n# endif // ENABLE_brightness\n#endif // DRAW_MODE_silhouette\n\n#ifdef DRAW_MODE_colorMask\nuniform vec3 u_colorMask;\nuniform float u_colorMaskTolerance;\n#endif // DRAW_MODE_colorMask\n\n#ifdef ENABLE_fisheye\nuniform float u_fisheye;\n#endif // ENABLE_fisheye\n#ifdef ENABLE_whirl\nuniform float u_whirl;\n#endif // ENABLE_whirl\n#ifdef ENABLE_pixelate\nuniform float u_pixelate;\nuniform vec2 u_skinSize;\n#endif // ENABLE_pixelate\n#ifdef ENABLE_mosaic\nuniform float u_mosaic;\n#endif // ENABLE_mosaic\n#ifdef ENABLE_ghost\nuniform float u_ghost;\n#endif // ENABLE_ghost\n\nuniform sampler2D u_skin;\n\nvarying vec2 v_texCoord;\n\n#if !defined(DRAW_MODE_silhouette) && (defined(ENABLE_color) || defined(ENABLE_brightness))\n// Branchless color conversions based on code from:\n// http://www.chilliant.com/rgb2hsv.html by Ian Taylor\n// Based in part on work by Sam Hocevar and Emil Persson\n\nconst float kEpsilon = 1e-6;\n\nvec3 convertRGB2HCV(vec3 rgb)\n{\n\tvec4 p = (rgb.g < rgb.b) ? vec4(rgb.bg, -1, 2.0/3.0) : vec4(rgb.gb, 0, -1.0/3.0);\n\tvec4 q = (rgb.r < p.x) ? vec4(p.xyw, rgb.r) : vec4(rgb.r, p.yzx);\n\tfloat c = q.x - min(q.w, q.y);\n\tfloat h = abs((q.w - q.y) / (6.0 * c + kEpsilon) + q.z);\n\treturn vec3(h, c, q.x);\n}\n\nvec3 convertRGB2HSL(vec3 rgb)\n{\n\tvec3 hcv = convertRGB2HCV(rgb);\n\tfloat l = hcv.z - hcv.y * 0.5;\n\tfloat s = hcv.y / (1.0 - abs(l * 2.0 - 1.0) + kEpsilon);\n\treturn vec3(hcv.x, s, l);\n}\n\nvec3 convertHue2RGB(float hue)\n{\n\tfloat r = abs(hue * 6.0 - 3.0) - 1.0;\n\tfloat g = 2.0 - abs(hue * 6.0 - 2.0);\n\tfloat b = 2.0 - abs(hue * 6.0 - 4.0);\n\treturn clamp(vec3(r, g, b), 0.0, 1.0);\n}\n\nvec3 convertHSL2RGB(vec3 hsl)\n{\n\tvec3 rgb = convertHue2RGB(hsl.x);\n\tfloat c = (1.0 - abs(2.0 * hsl.z - 1.0)) * hsl.y;\n\treturn (rgb - 0.5) * c + hsl.z;\n}\n#endif // !defined(DRAW_MODE_silhouette) && (defined(ENABLE_color) || defined(ENABLE_brightness))\n\nconst vec2 kCenter = vec2(0.5, 0.5);\n\nvoid main()\n{\n\tvec2 texcoord0 = v_texCoord;\n\n\t#ifdef ENABLE_mosaic\n\ttexcoord0 = fract(u_mosaic * texcoord0);\n\t#endif // ENABLE_mosaic\n\n\t#ifdef ENABLE_pixelate\n\t{\n\t\t// TODO: clean up \"pixel\" edges\n\t\tvec2 pixelTexelSize = u_skinSize / u_pixelate;\n\t\ttexcoord0 = (floor(texcoord0 * pixelTexelSize) + kCenter) / pixelTexelSize;\n\t}\n\t#endif // ENABLE_pixelate\n\n\t#ifdef ENABLE_whirl\n\t{\n\t\tconst float kRadius = 0.5;\n\t\tvec2 offset = texcoord0 - kCenter;\n\t\tfloat offsetMagnitude = length(offset);\n\t\tfloat whirlFactor = 1.0 - (offsetMagnitude / kRadius);\n\t\tfloat whirlActual = u_whirl * whirlFactor * whirlFactor;\n\t\tfloat sinWhirl = sin(whirlActual);\n\t\tfloat cosWhirl = cos(whirlActual);\n\t\tmat2 rotationMatrix = mat2(\n\t\t\tcosWhirl, -sinWhirl,\n\t\t\tsinWhirl, cosWhirl\n\t\t);\n\n\t\t// TODO: tweak this algorithm such that texture coordinates don't depend on conditionals.\n\t\t// see: https://www.opengl.org/wiki/Sampler_%28GLSL%29#Non-uniform_flow_control\n\t\tif (offsetMagnitude <= kRadius)\n\t\t{\n\t\t\ttexcoord0 = rotationMatrix * offset + kCenter;\n\t\t}\n\t}\n\t#endif // ENABLE_whirl\n\n\t#ifdef ENABLE_fisheye\n\t{\n\t\tvec2 vec = (texcoord0 - kCenter) / kCenter;\n\t\tfloat r = pow(length(vec), u_fisheye);\n\t\tfloat angle = atan(vec.y, vec.x);\n\t\t// TODO: tweak this algorithm such that texture coordinates don't depend on conditionals.\n\t\t// see: https://www.opengl.org/wiki/Sampler_%28GLSL%29#Non-uniform_flow_control\n\t\tif (r <= 1.0)\n\t\t{\n\t\t\ttexcoord0 = kCenter + r * vec2(cos(angle), sin(angle)) * kCenter;\n\t\t}\n\t}\n\t#endif // ENABLE_fisheye\n\n\tgl_FragColor = texture2D(u_skin, texcoord0);\n\n\t#ifdef ENABLE_ghost\n\tgl_FragColor.a *= u_ghost;\n\t#endif // ENABLE_ghost\n\n\tif (gl_FragColor.a == 0.0)\n\t{\n\t\tdiscard;\n\t}\n\n\t#ifdef DRAW_MODE_silhouette\n\t// switch to u_silhouetteColor only AFTER the alpha test\n\tgl_FragColor = u_silhouetteColor;\n\t#else // DRAW_MODE_silhouette\n\n\t#if defined(ENABLE_color) || defined(ENABLE_brightness)\n\t{\n\t\tvec3 hsl = convertRGB2HSL(gl_FragColor.xyz);\n\n\t\t#ifdef ENABLE_color\n\t\t{\n\t\t\t// this code forces grayscale values to be slightly saturated\n\t\t\t// so that some slight change of hue will be visible\n\t\t\tconst float minLightness = 0.11 / 2.0;\n\t\t\tconst float minSaturation = 0.09;\n\t\t\tif (hsl.z < minLightness) hsl = vec3(0.0, 1.0, minLightness);\n\t\t\telse if (hsl.y < minSaturation) hsl = vec3(0.0, minSaturation, hsl.z);\n\n\t\t\thsl.x = mod(hsl.x + u_color, 1.0);\n\t\t\tif (hsl.x < 0.0) hsl.x += 1.0;\n\t\t}\n\t\t#endif // ENABLE_color\n\n\t\t#ifdef ENABLE_brightness\n\t\thsl.z = clamp(hsl.z + u_brightness, 0.0, 1.0);\n\t\t#endif // ENABLE_brightness\n\n\t\tgl_FragColor.rgb = convertHSL2RGB(hsl);\n\t}\n\t#endif // defined(ENABLE_color) || defined(ENABLE_brightness)\n\n\t#ifdef DRAW_MODE_colorMask\n\tvec3 maskDistance = abs(gl_FragColor.rgb - u_colorMask);\n\tvec3 colorMaskTolerance = vec3(u_colorMaskTolerance, u_colorMaskTolerance, u_colorMaskTolerance);\n\tif (any(greaterThan(maskDistance, colorMaskTolerance)))\n\t{\n\t\tdiscard;\n\t}\n\t#endif // DRAW_MODE_colorMask\n\n\t// WebGL defaults to premultiplied alpha\n\tgl_FragColor.rgb *= gl_FragColor.a;\n\n\t#endif // DRAW_MODE_silhouette\n}\n"
+		module.exports = "precision mediump float;\n\nuniform float u_fudge;\n\n#ifdef DRAW_MODE_silhouette\nuniform vec4 u_silhouetteColor;\n#else // DRAW_MODE_silhouette\n# ifdef ENABLE_color\nuniform float u_color;\n# endif // ENABLE_color\n# ifdef ENABLE_brightness\nuniform float u_brightness;\n# endif // ENABLE_brightness\n#endif // DRAW_MODE_silhouette\n\n#ifdef DRAW_MODE_colorMask\nuniform vec3 u_colorMask;\nuniform float u_colorMaskTolerance;\n#endif // DRAW_MODE_colorMask\n\n#ifdef ENABLE_fisheye\nuniform float u_fisheye;\n#endif // ENABLE_fisheye\n#ifdef ENABLE_whirl\nuniform float u_whirl;\n#endif // ENABLE_whirl\n#ifdef ENABLE_pixelate\nuniform float u_pixelate;\nuniform vec2 u_skinSize;\n#endif // ENABLE_pixelate\n#ifdef ENABLE_mosaic\nuniform float u_mosaic;\n#endif // ENABLE_mosaic\n#ifdef ENABLE_ghost\nuniform float u_ghost;\n#endif // ENABLE_ghost\n\nuniform sampler2D u_skin;\n\nvarying vec2 v_texCoord;\n\n#if !defined(DRAW_MODE_silhouette) && (defined(ENABLE_color) || defined(ENABLE_brightness))\n// Branchless color conversions based on code from:\n// http://www.chilliant.com/rgb2hsv.html by Ian Taylor\n// Based in part on work by Sam Hocevar and Emil Persson\n\nconst float kEpsilon = 1e-6;\n\nvec3 convertRGB2HCV(vec3 rgb)\n{\n\tvec4 p = (rgb.g < rgb.b) ? vec4(rgb.bg, -1, 2.0/3.0) : vec4(rgb.gb, 0, -1.0/3.0);\n\tvec4 q = (rgb.r < p.x) ? vec4(p.xyw, rgb.r) : vec4(rgb.r, p.yzx);\n\tfloat c = q.x - min(q.w, q.y);\n\tfloat h = abs((q.w - q.y) / (6.0 * c + kEpsilon) + q.z);\n\treturn vec3(h, c, q.x);\n}\n\nvec3 convertRGB2HSL(vec3 rgb)\n{\n\tvec3 hcv = convertRGB2HCV(rgb);\n\tfloat l = hcv.z - hcv.y * 0.5;\n\tfloat s = hcv.y / (1.0 - abs(l * 2.0 - 1.0) + kEpsilon);\n\treturn vec3(hcv.x, s, l);\n}\n\nvec3 convertHue2RGB(float hue)\n{\n\tfloat r = abs(hue * 6.0 - 3.0) - 1.0;\n\tfloat g = 2.0 - abs(hue * 6.0 - 2.0);\n\tfloat b = 2.0 - abs(hue * 6.0 - 4.0);\n\treturn clamp(vec3(r, g, b), 0.0, 1.0);\n}\n\nvec3 convertHSL2RGB(vec3 hsl)\n{\n\tvec3 rgb = convertHue2RGB(hsl.x);\n\tfloat c = (1.0 - abs(2.0 * hsl.z - 1.0)) * hsl.y;\n\treturn (rgb - 0.5) * c + hsl.z;\n}\n#endif // !defined(DRAW_MODE_silhouette) && (defined(ENABLE_color) || defined(ENABLE_brightness))\n\nconst vec2 kCenter = vec2(0.5, 0.5);\n\nvoid main()\n{\n\tvec2 texcoord0 = v_texCoord;\n\n\t#ifdef ENABLE_mosaic\n\ttexcoord0 = fract(u_mosaic * texcoord0);\n\t#endif // ENABLE_mosaic\n\n\t#ifdef ENABLE_pixelate\n\t{\n\t\t// TODO: clean up \"pixel\" edges\n\t\tvec2 pixelTexelSize = u_skinSize / u_pixelate;\n\t\ttexcoord0 = (floor(texcoord0 * pixelTexelSize) + kCenter) / pixelTexelSize;\n\t}\n\t#endif // ENABLE_pixelate\n\n\t#ifdef ENABLE_whirl\n\t{\n\t\tconst float kRadius = 0.5;\n\t\tvec2 offset = texcoord0 - kCenter;\n\t\tfloat offsetMagnitude = length(offset);\n\t\tfloat whirlFactor = 1.0 - (offsetMagnitude / kRadius);\n\t\tfloat whirlActual = u_whirl * whirlFactor * whirlFactor;\n\t\tfloat sinWhirl = sin(whirlActual);\n\t\tfloat cosWhirl = cos(whirlActual);\n\t\tmat2 rotationMatrix = mat2(\n\t\t\tcosWhirl, -sinWhirl,\n\t\t\tsinWhirl, cosWhirl\n\t\t);\n\n\t\t// TODO: tweak this algorithm such that texture coordinates don't depend on conditionals.\n\t\t// see: https://www.opengl.org/wiki/Sampler_%28GLSL%29#Non-uniform_flow_control\n\t\tif (offsetMagnitude <= kRadius)\n\t\t{\n\t\t\ttexcoord0 = rotationMatrix * offset + kCenter;\n\t\t}\n\t}\n\t#endif // ENABLE_whirl\n\n\t#ifdef ENABLE_fisheye\n\t{\n\t\tvec2 vec = (texcoord0 - kCenter) / kCenter;\n\t\tfloat r = pow(length(vec), u_fisheye);\n\t\tfloat angle = atan(vec.y, vec.x);\n\t\t// TODO: tweak this algorithm such that texture coordinates don't depend on conditionals.\n\t\t// see: https://www.opengl.org/wiki/Sampler_%28GLSL%29#Non-uniform_flow_control\n\t\tif (r <= 1.0)\n\t\t{\n\t\t\ttexcoord0 = kCenter + r * vec2(cos(angle), sin(angle)) * kCenter;\n\t\t}\n\t}\n\t#endif // ENABLE_fisheye\n\n\tgl_FragColor = texture2D(u_skin, texcoord0);\n\n\n\tif (gl_FragColor.a == 0.0)\n\t{\n\t\tdiscard;\n\t}\n\n    #ifdef ENABLE_ghost\n    gl_FragColor.a *= u_ghost;\n    #endif // ENABLE_ghost\n\n\t#ifdef DRAW_MODE_silhouette\n\t// switch to u_silhouetteColor only AFTER the alpha test\n\tgl_FragColor = u_silhouetteColor;\n\t#else // DRAW_MODE_silhouette\n\n\t#if defined(ENABLE_color) || defined(ENABLE_brightness)\n\t{\n\t\tvec3 hsl = convertRGB2HSL(gl_FragColor.xyz);\n\n\t\t#ifdef ENABLE_color\n\t\t{\n\t\t\t// this code forces grayscale values to be slightly saturated\n\t\t\t// so that some slight change of hue will be visible\n\t\t\tconst float minLightness = 0.11 / 2.0;\n\t\t\tconst float minSaturation = 0.09;\n\t\t\tif (hsl.z < minLightness) hsl = vec3(0.0, 1.0, minLightness);\n\t\t\telse if (hsl.y < minSaturation) hsl = vec3(0.0, minSaturation, hsl.z);\n\n\t\t\thsl.x = mod(hsl.x + u_color, 1.0);\n\t\t\tif (hsl.x < 0.0) hsl.x += 1.0;\n\t\t}\n\t\t#endif // ENABLE_color\n\n\t\t#ifdef ENABLE_brightness\n\t\thsl.z = clamp(hsl.z + u_brightness, 0.0, 1.0);\n\t\t#endif // ENABLE_brightness\n\n\t\tgl_FragColor.rgb = convertHSL2RGB(hsl);\n\t}\n\t#endif // defined(ENABLE_color) || defined(ENABLE_brightness)\n\n\t#ifdef DRAW_MODE_colorMask\n\tvec3 maskDistance = abs(gl_FragColor.rgb - u_colorMask);\n\tvec3 colorMaskTolerance = vec3(u_colorMaskTolerance, u_colorMaskTolerance, u_colorMaskTolerance);\n\tif (any(greaterThan(maskDistance, colorMaskTolerance)))\n\t{\n\t\tdiscard;\n\t}\n\t#endif // DRAW_MODE_colorMask\n\n\t// WebGL defaults to premultiplied alpha\n\tgl_FragColor.rgb *= gl_FragColor.a;\n\n\t#endif // DRAW_MODE_silhouette\n}\n"
 
 	/***/ }
 	/******/ ]);
