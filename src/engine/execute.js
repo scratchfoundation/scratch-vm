@@ -175,6 +175,9 @@ var execute = function (sequencer, thread) {
                 var devObject = runtime.ioDevices[device];
                 return devObject[func].call(devObject, args);
             }
+        },
+        getThread: function () {
+            return thread;
         }
     });
 
