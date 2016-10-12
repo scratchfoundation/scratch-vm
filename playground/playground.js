@@ -1,8 +1,8 @@
-const newProjectStr = 'createEmptyProject';
+var NEW_PROJECT_HASH = 'createEmptyProject';
 
 var loadProject = function () {
     var id = location.hash.substring(1);
-    if (id === newProjectStr) {
+    if (id === NEW_PROJECT_HASH) {
         window.vm.createEmptyProject();
         return;
     }
@@ -38,7 +38,7 @@ window.onload = function() {
     };
     document.getElementById('createEmptyProject').addEventListener('click',
     function() {
-        document.location = '#' + newProjectStr;
+        document.location = '#' + NEW_PROJECT_HASH;
         location.reload();
     });
     loadProject();
