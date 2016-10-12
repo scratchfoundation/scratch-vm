@@ -1,6 +1,7 @@
 var util = require('util');
 var MathUtil = require('../util/math-util');
 var Target = require('../engine/target');
+var AudioEngine = require('../audio/AudioEngine.js');
 
 /**
  * Clone (instance) of a sprite.
@@ -43,6 +44,11 @@ function Clone(sprite, runtime) {
         'brightness': 0,
         'ghost': 0
     };
+
+    /**
+    * Audio engine
+    */
+    this.audioEngine = new AudioEngine();
 }
 util.inherits(Clone, Target);
 

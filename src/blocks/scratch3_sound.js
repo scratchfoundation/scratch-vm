@@ -32,7 +32,7 @@ Scratch3SoundBlocks.prototype.getPrimitives = function() {
 
 Scratch3SoundBlocks.prototype.playSound = function (args, util) {
     var url = this._getSoundUrl(args.SOUND_MENU, util);
-    window.audioEngine.playSoundFromUrl(url);
+    util.target.audioEngine.playSoundFromUrl(url);
 };
 
 Scratch3SoundBlocks.prototype._getSoundUrl = function (soundName, util) {
@@ -53,8 +53,10 @@ Scratch3SoundBlocks.prototype._getSoundUrl = function (soundName, util) {
 
 
 Scratch3SoundBlocks.prototype.playSoundAndWait = function (args, util) {
-    // window.audioEngine.playSound(args.SOUND_NUM);
-    // var duration = window.audioEngine.getSoundDuration(args.SOUND_NUM); 
+    var url = this._getSoundUrl(args.SOUND_MENU, util);
+    util.target.audioEngine.playSoundFromUrl(url);
+
+    var duration = util.target.audioEngine.getSoundDuration(url); 
 
     return new Promise(function(resolve) {
             setTimeout(function() {
@@ -64,11 +66,11 @@ Scratch3SoundBlocks.prototype.playSoundAndWait = function (args, util) {
 };
 
 Scratch3SoundBlocks.prototype.stopAllSounds = function (args, util) {
-    window.audioEngine.stopAllSounds();
+    util.target.audioEngine.stopAllSounds();
 };
 
 Scratch3SoundBlocks.prototype.playNoteForBeats = function (args, util) {
-    window.audioEngine.playNoteForBeats(args.NOTE, args.BEATS);
+    util.target.audioEngine.playNoteForBeats(args.NOTE, args.BEATS);
     return new Promise(function(resolve) {
             setTimeout(function() {
                 resolve();
@@ -77,7 +79,7 @@ Scratch3SoundBlocks.prototype.playNoteForBeats = function (args, util) {
 };
 
 Scratch3SoundBlocks.prototype.playDrumForBeats = function (args, util) {
-    window.audioEngine.playDrumForBeats(args.DRUMTYPE, args.BEATS);
+    util.target.audioEngine.playDrumForBeats(args.DRUMTYPE, args.BEATS);
     return new Promise(function(resolve) {
         setTimeout(function() {
             resolve();
@@ -86,15 +88,15 @@ Scratch3SoundBlocks.prototype.playDrumForBeats = function (args, util) {
 };
 
 Scratch3SoundBlocks.prototype.setEffect = function (args, util) {
-    window.audioEngine.setEffect(args.EFFECT, args.VALUE);
+    util.target.audioEngine.setEffect(args.EFFECT, args.VALUE);
 };
 
 Scratch3SoundBlocks.prototype.changeEffect = function (args, util) {
-    window.audioEngine.changeEffect(args.EFFECT, args.VALUE);
+    util.target.audioEngine.changeEffect(args.EFFECT, args.VALUE);
 };
 
 Scratch3SoundBlocks.prototype.clearEffects = function (args, util) {
-    window.audioEngine.clearEffects();
+    util.target.audioEngine.clearEffects();
 };
 
 Scratch3SoundBlocks.prototype.soundsMenu = function (args, util) {
