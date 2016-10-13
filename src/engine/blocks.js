@@ -151,8 +151,25 @@ Blocks.prototype.getProcedureDefinition = function (name) {
         var block = this._blocks[id];
         if ((block.opcode == 'procedures_defnoreturn' ||
             block.opcode == 'procedures_defreturn') &&
-            block.fields['NAME'].value == name) {
+            block.mutation.proccode == name) {
             return id;
+        }
+    }
+    return null;
+};
+
+/**
+ * Get the procedure definition for a given name.
+ * @param {?string} name Name of procedure to query.
+ * @return {?string} ID of procedure definition.
+ */
+Blocks.prototype.getProcedureParamNames = function (name) {
+    for (var id in this._blocks) {
+        var block = this._blocks[id];
+        if ((block.opcode == 'procedures_defnoreturn' ||
+            block.opcode == 'procedures_defreturn') &&
+            block.mutation.proccode == name) {
+            return JSON.parse(block.mutation.argumentnames);
         }
     }
     return null;
@@ -434,7 +451,9 @@ Blocks.prototype.mutationToXML = function (mutation) {
     var mutationString = '<' + mutation.tagName;
     for (var prop in mutation) {
         if (prop == 'children' || prop == 'tagName') continue;
-        mutationString += ' ' + prop + '="' + mutation[prop] + '"';
+        var mutationValue = (typeof mutation[prop] === 'string') ?
+            xmlEscape(mutation[prop]) : mutation[prop];
+        mutationString += ' ' + prop + '="' + mutationValue + '"';
     }
     mutationString += '>';
     for (var i = 0; i < mutation.children.length; i++) {
