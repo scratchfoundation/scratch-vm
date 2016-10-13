@@ -64,9 +64,9 @@
 	var util = __webpack_require__(12);
 
 	var Runtime = __webpack_require__(16);
-	var sb2import = __webpack_require__(45);
+	var sb2import = __webpack_require__(100);
 	var Sprite = __webpack_require__(106);
-	var Blocks = __webpack_require__(46);
+	var Blocks = __webpack_require__(21);
 
 	/**
 	 * Handles connections between blocks, stage, and extensions.
@@ -106,6 +106,7 @@
 	    });
 
 	    this.blockListener = this.blockListener.bind(this);
+	    this.flyoutBlockListener = this.flyoutBlockListener.bind(this);
 	}
 
 	/**
@@ -248,12 +249,16 @@
 	 */
 	VirtualMachine.prototype.blockListener = function (e) {
 	    if (this.editingTarget) {
-	        this.editingTarget.blocks.blocklyListen(
-	            e,
-	            false,
-	            this.runtime
-	        );
+	        this.editingTarget.blocks.blocklyListen(e, this.runtime);
 	    }
+	};
+
+	/**
+	 * Handle a Blockly event for the flyout.
+	 * @param {!Blockly.Event} e Any Blockly event.
+	 */
+	VirtualMachine.prototype.flyoutBlockListener = function (e) {
+	    this.runtime.flyoutBlocks.blocklyListen(e, this.runtime);
 	};
 
 	/**
@@ -1444,23 +1449,24 @@
 
 	var EventEmitter = __webpack_require__(11);
 	var Sequencer = __webpack_require__(17);
+	var Blocks = __webpack_require__(21);
 	var Thread = __webpack_require__(19);
 	var util = __webpack_require__(12);
 
 	// Virtual I/O devices.
-	var Clock = __webpack_require__(21);
-	var Keyboard = __webpack_require__(22);
-	var Mouse = __webpack_require__(25);
+	var Clock = __webpack_require__(76);
+	var Keyboard = __webpack_require__(77);
+	var Mouse = __webpack_require__(80);
 
 	var defaultBlockPackages = {
-	    'scratch3_control': __webpack_require__(27),
-	    'scratch3_event': __webpack_require__(38),
-	    'scratch3_looks': __webpack_require__(39),
-	    'scratch3_motion': __webpack_require__(40),
-	    'scratch3_operators': __webpack_require__(41),
-	    'scratch3_sensing': __webpack_require__(42),
-	    'scratch3_data': __webpack_require__(43),
-	    'scratch3_procedures': __webpack_require__(44)
+	    'scratch3_control': __webpack_require__(82),
+	    'scratch3_event': __webpack_require__(93),
+	    'scratch3_looks': __webpack_require__(94),
+	    'scratch3_motion': __webpack_require__(95),
+	    'scratch3_operators': __webpack_require__(96),
+	    'scratch3_sensing': __webpack_require__(97),
+	    'scratch3_data': __webpack_require__(98),
+	    'scratch3_procedures': __webpack_require__(99)
 	};
 
 	/**
@@ -1487,6 +1493,8 @@
 
 	    /** @type {!Sequencer} */
 	    this.sequencer = new Sequencer(this);
+
+	    this.flyoutBlocks = new Blocks();
 
 	    /**
 	     * Map to look up a block primitive's implementation function by its opcode.
@@ -1907,6 +1915,10 @@
 	        if (thread.requestScriptGlowInFrame && target == this._editingTarget) {
 	            var blockForThread = thread.peekStack() || thread.topBlock;
 	            var script = target.blocks.getTopLevelScript(blockForThread);
+	            if (!script) {
+	                // Attempt to find in flyout blocks.
+	                script = this.flyoutBlocks.getTopLevelScript(blockForThread);
+	            }
 	            if (script) {
 	                requestedGlowsThisFrame.push(script);
 	            }
@@ -2556,19 +2568,34 @@
 	    var currentBlockId = thread.peekStack();
 	    var currentStackFrame = thread.peekStackFrame();
 
-	    // Verify that the block still exists.
-	    if (!target ||
-	        typeof target.blocks.getBlock(currentBlockId) === 'undefined') {
+	    // Check where the block lives: target blocks or flyout blocks.
+	    var targetHasBlock = (
+	        typeof target.blocks.getBlock(currentBlockId) !== 'undefined'
+	    );
+	    var flyoutHasBlock = (
+	        typeof runtime.flyoutBlocks.getBlock(currentBlockId) !== 'undefined'
+	    );
+
+	    // Stop if block or target no longer exists.
+	    if (!target || (!targetHasBlock && !flyoutHasBlock)) {
 	        // No block found: stop the thread; script no longer exists.
 	        sequencer.retireThread(thread);
 	        return;
 	    }
+
 	    // Query info about the block.
-	    var opcode = target.blocks.getOpcode(currentBlockId);
+	    var blockContainer = null;
+	    if (targetHasBlock) {
+	        blockContainer = target.blocks;
+	    } else {
+	        blockContainer = runtime.flyoutBlocks;
+	    }
+	    var opcode = blockContainer.getOpcode(currentBlockId);
+	    var fields = blockContainer.getFields(currentBlockId);
+	    var inputs = blockContainer.getInputs(currentBlockId);
 	    var blockFunction = runtime.getOpcodeFunction(opcode);
 	    var isHat = runtime.getIsHat(opcode);
-	    var fields = target.blocks.getFields(currentBlockId);
-	    var inputs = target.blocks.getInputs(currentBlockId);
+
 
 	    if (!opcode) {
 	        console.warn('Could not get opcode for block: ' + currentBlockId);
@@ -2667,7 +2694,7 @@
 	    }
 
 	    // Add any mutation to args (e.g., for procedures).
-	    var mutation = target.blocks.getMutation(currentBlockId);
+	    var mutation = blockContainer.getMutation(currentBlockId);
 	    if (mutation) {
 	        argValues.mutation = mutation;
 	    }
@@ -2699,7 +2726,7 @@
 	            sequencer.stepToProcedure(thread, procedureName);
 	        },
 	        getProcedureParamNames: function (procedureName) {
-	            return thread.target.blocks.getProcedureParamNames(procedureName);
+	            return blockContainer.getProcedureParamNames(procedureName);
 	        },
 	        pushParam: function (paramName, paramValue) {
 	            thread.pushParam(paramName, paramValue);
@@ -2756,2929 +2783,9 @@
 /* 21 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var Timer = __webpack_require__(18);
-
-	function Clock () {
-	    this._projectTimer = new Timer();
-	    this._projectTimer.start();
-	}
-
-	Clock.prototype.projectTimer = function () {
-	    return this._projectTimer.timeElapsed() / 1000;
-	};
-
-	Clock.prototype.resetProjectTimer = function () {
-	    this._projectTimer.start();
-	};
-
-	module.exports = Clock;
-
-
-/***/ },
-/* 22 */
-/***/ function(module, exports, __webpack_require__) {
-
-	var Cast = __webpack_require__(23);
-
-	function Keyboard (runtime) {
-	    /**
-	     * List of currently pressed keys.
-	     * @type{Array.<number>}
-	     */
-	    this._keysPressed = [];
-	    /**
-	     * Reference to the owning Runtime.
-	     * Can be used, for example, to activate hats.
-	     * @type{!Runtime}
-	     */
-	    this.runtime = runtime;
-	}
-
-	/**
-	 * Convert a Scratch key name to a DOM keyCode.
-	 * @param {Any} keyName Scratch key argument.
-	 * @return {number} Key code corresponding to a DOM event.
-	 */
-	Keyboard.prototype._scratchKeyToKeyCode = function (keyName) {
-	    if (typeof keyName == 'number') {
-	        // Key codes placed in with number blocks.
-	        return keyName;
-	    }
-	    var keyString = Cast.toString(keyName);
-	    switch (keyString) {
-	    case 'space': return 32;
-	    case 'left arrow': return 37;
-	    case 'up arrow': return 38;
-	    case 'right arrow': return 39;
-	    case 'down arrow': return 40;
-	    // @todo: Consider adding other special keys here.
-	    }
-	    // Keys reported by DOM keyCode are upper case.
-	    return keyString.toUpperCase().charCodeAt(0);
-	};
-
-	Keyboard.prototype._keyCodeToScratchKey = function (keyCode) {
-	    if (keyCode >= 48 && keyCode <= 90) {
-	        // Standard letter.
-	        return String.fromCharCode(keyCode).toLowerCase();
-	    }
-	    switch (keyCode) {
-	    case 32: return 'space';
-	    case 37: return 'left arrow';
-	    case 38: return 'up arrow';
-	    case 39: return 'right arrow';
-	    case 40: return 'down arrow';
-	    }
-	    return null;
-	};
-
-	Keyboard.prototype.postData = function (data) {
-	    if (data.keyCode) {
-	        var index = this._keysPressed.indexOf(data.keyCode);
-	        if (data.isDown) {
-	            // If not already present, add to the list.
-	            if (index < 0) {
-	                this._keysPressed.push(data.keyCode);
-	            }
-	            // Always trigger hats, even if it was already pressed.
-	            this.runtime.startHats('event_whenkeypressed', {
-	                'KEY_OPTION': this._keyCodeToScratchKey(data.keyCode)
-	            });
-	            this.runtime.startHats('event_whenkeypressed', {
-	                'KEY_OPTION': 'any'
-	            });
-	        } else if (index > -1) {
-	            // If already present, remove from the list.
-	            this._keysPressed.splice(index, 1);
-	        }
-	    }
-	};
-
-	Keyboard.prototype.getKeyIsDown = function (key) {
-	    if (key == 'any') {
-	        return this._keysPressed.length > 0;
-	    }
-	    var keyCode = this._scratchKeyToKeyCode(key);
-	    return this._keysPressed.indexOf(keyCode) > -1;
-	};
-
-	module.exports = Keyboard;
-
-
-/***/ },
-/* 23 */
-/***/ function(module, exports, __webpack_require__) {
-
-	var Color = __webpack_require__(24);
-
-	function Cast () {}
-
-	/**
-	 * @fileoverview
-	 * Utilities for casting and comparing Scratch data-types.
-	 * Scratch behaves slightly differently from JavaScript in many respects,
-	 * and these differences should be encapsulated below.
-	 * For example, in Scratch, add(1, join("hello", world")) -> 1.
-	 * This is because "hello world" is cast to 0.
-	 * In JavaScript, 1 + Number("hello" + "world") would give you NaN.
-	 * Use when coercing a value before computation.
-	 */
-
-	/**
-	 * Scratch cast to number.
-	 * Treats NaN as 0.
-	 * In Scratch 2.0, this is captured by `interp.numArg.`
-	 * @param {*} value Value to cast to number.
-	 * @return {number} The Scratch-casted number value.
-	 */
-	Cast.toNumber = function (value) {
-	    var n = Number(value);
-	    if (isNaN(n)) {
-	        // Scratch treats NaN as 0, when needed as a number.
-	        // E.g., 0 + NaN -> 0.
-	        return 0;
-	    }
-	    return n;
-	};
-
-	/**
-	 * Scratch cast to boolean.
-	 * In Scratch 2.0, this is captured by `interp.boolArg.`
-	 * Treats some string values differently from JavaScript.
-	 * @param {*} value Value to cast to boolean.
-	 * @return {boolean} The Scratch-casted boolean value.
-	 */
-	Cast.toBoolean = function (value) {
-	    // Already a boolean?
-	    if (typeof value === 'boolean') {
-	        return value;
-	    }
-	    if (typeof value === 'string') {
-	        // These specific strings are treated as false in Scratch.
-	        if ((value == '') ||
-	            (value == '0') ||
-	            (value.toLowerCase() == 'false')) {
-	            return false;
-	        }
-	        // All other strings treated as true.
-	        return true;
-	    }
-	    // Coerce other values and numbers.
-	    return Boolean(value);
-	};
-
-	/**
-	 * Scratch cast to string.
-	 * @param {*} value Value to cast to string.
-	 * @return {string} The Scratch-casted string value.
-	 */
-	Cast.toString = function (value) {
-	    return String(value);
-	};
-
-	/**
-	 * Cast any Scratch argument to an RGB color object to be used for the renderer.
-	 * @param {*} value Value to convert to RGB color object.
-	 * @return {Array.<number>} [r,g,b], values between 0-255.
-	 */
-	Cast.toRgbColorList = function (value) {
-	    var color;
-	    if (typeof value == 'string' && value.substring(0, 1) == '#') {
-	        color = Color.hexToRgb(value);
-	    } else {
-	        color = Color.decimalToRgb(Cast.toNumber(value));
-	    }
-	    return [color.r, color.g, color.b];
-	};
-
-	/**
-	 * Compare two values, using Scratch cast, case-insensitive string compare, etc.
-	 * In Scratch 2.0, this is captured by `interp.compare.`
-	 * @param {*} v1 First value to compare.
-	 * @param {*} v2 Second value to compare.
-	 * @returns {Number} Negative number if v1 < v2; 0 if equal; positive otherwise.
-	 */
-	Cast.compare = function (v1, v2) {
-	    var n1 = Number(v1);
-	    var n2 = Number(v2);
-	    if (isNaN(n1) || isNaN(n2)) {
-	        // At least one argument can't be converted to a number.
-	        // Scratch compares strings as case insensitive.
-	        var s1 = String(v1).toLowerCase();
-	        var s2 = String(v2).toLowerCase();
-	        return s1.localeCompare(s2);
-	    } else {
-	        // Compare as numbers.
-	        return n1 - n2;
-	    }
-	};
-
-	/**
-	 * Determine if a Scratch argument number represents a round integer.
-	 * @param {*} val Value to check.
-	 * @return {boolean} True if number looks like an integer.
-	 */
-	Cast.isInt = function (val) {
-	    // Values that are already numbers.
-	    if (typeof val === 'number') {
-	        if (isNaN(val)) { // NaN is considered an integer.
-	            return true;
-	        }
-	        // True if it's "round" (e.g., 2.0 and 2).
-	        return val == parseInt(val);
-	    } else if (typeof val === 'boolean') {
-	        // `True` and `false` always represent integer after Scratch cast.
-	        return true;
-	    } else if (typeof val === 'string') {
-	        // If it contains a decimal point, don't consider it an int.
-	        return val.indexOf('.') < 0;
-	    }
-	    return false;
-	};
-
-	Cast.LIST_INVALID = 'INVALID';
-	Cast.LIST_ALL = 'ALL';
-	/**
-	 * Compute a 1-based index into a list, based on a Scratch argument.
-	 * Two special cases may be returned:
-	 * LIST_ALL: if the block is referring to all of the items in the list.
-	 * LIST_INVALID: if the index was invalid in any way.
-	 * @param {*} index Scratch arg, including 1-based numbers or special cases.
-	 * @param {number} length Length of the list.
-	 * @return {(number|string)} 1-based index for list, LIST_ALL, or LIST_INVALID.
-	 */
-	Cast.toListIndex = function (index, length) {
-	    if (typeof index !== 'number') {
-	        if (index == 'all') {
-	            return Cast.LIST_ALL;
-	        }
-	        if (index == 'last') {
-	            if (length > 0) {
-	                return length;
-	            }
-	            return Cast.LIST_INVALID;
-	        } else if (index == 'random' || index == 'any') {
-	            if (length > 0) {
-	                return 1 + Math.floor(Math.random() * length);
-	            }
-	            return Cast.LIST_INVALID;
-	        }
-	    }
-	    index = Math.floor(Cast.toNumber(index));
-	    if (index < 1 || index > length) {
-	        return Cast.LIST_INVALID;
-	    }
-	    return index;
-	};
-
-	module.exports = Cast;
-
-
-/***/ },
-/* 24 */
-/***/ function(module, exports) {
-
-	function Color () {}
-
-	/**
-	 * Convert a Scratch decimal color to a hex string, #RRGGBB.
-	 * @param {number} decimal RGB color as a decimal.
-	 * @return {string} RGB color as #RRGGBB hex string.
-	 */
-	Color.decimalToHex = function (decimal) {
-	    if (decimal < 0) {
-	        decimal += 0xFFFFFF + 1;
-	    }
-	    var hex = Number(decimal).toString(16);
-	    hex = '#' + '000000'.substr(0, 6 - hex.length) + hex;
-	    return hex;
-	};
-
-	/**
-	 * Convert a Scratch decimal color to an RGB color object.
-	 * @param {number} decimal RGB color as decimal.
-	 * @returns {Object} {r: R, g: G, b: B}, values between 0-255
-	 */
-	Color.decimalToRgb = function (decimal) {
-	    var r = (decimal >> 16) & 0xFF;
-	    var g = (decimal >> 8) & 0xFF;
-	    var b = decimal & 0xFF;
-	    return {r: r, g: g, b: b};
-	};
-
-	/**
-	 * Convert a hex color (e.g., F00, #03F, #0033FF) to an RGB color object.
-	 * CC-BY-SA Tim Down:
-	 * https://stackoverflow.com/questions/5623838/rgb-to-hex-and-hex-to-rgb
-	 * @param {!string} hex Hex representation of the color.
-	 * @return {Object} {r: R, g: G, b: B}, 0-255, or null.
-	 */
-	Color.hexToRgb = function (hex) {
-	    var shorthandRegex = /^#?([a-f\d])([a-f\d])([a-f\d])$/i;
-	    hex = hex.replace(shorthandRegex, function(m, r, g, b) {
-	        return r + r + g + g + b + b;
-	    });
-	    var result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
-	    return result ? {
-	        r: parseInt(result[1], 16),
-	        g: parseInt(result[2], 16),
-	        b: parseInt(result[3], 16)
-	    } : null;
-	};
-
-	/**
-	 * Convert an RGB color object to a hex color.
-	 * @param {Object} rgb {r: R, g: G, b: B}, values between 0-255.
-	 * @return {!string} Hex representation of the color.
-	 */
-	Color.rgbToHex = function (rgb) {
-	    return Color.decimalToHex(Color.rgbToDecimal(rgb));
-	};
-
-	/**
-	 * Convert an RGB color object to a Scratch decimal color.
-	 * @param {Object} rgb {r: R, g: G, b: B}, values between 0-255.
-	 * @return {!number} Number representing the color.
-	 */
-	Color.rgbToDecimal = function (rgb) {
-	    return (rgb.r << 16) + (rgb.g << 8) + rgb.b;
-	};
-
-	/**
-	* Convert a hex color (e.g., F00, #03F, #0033FF) to a decimal color number.
-	* @param {!string} hex Hex representation of the color.
-	* @return {!number} Number representing the color.
-	*/
-	Color.hexToDecimal = function (hex) {
-	    return Color.rgbToDecimal(Color.hexToRgb(hex));
-	};
-
-	module.exports = Color;
-
-
-/***/ },
-/* 25 */
-/***/ function(module, exports, __webpack_require__) {
-
-	var MathUtil = __webpack_require__(26);
-
-	function Mouse (runtime) {
-	    this._x = 0;
-	    this._y = 0;
-	    this._isDown = false;
-	    /**
-	     * Reference to the owning Runtime.
-	     * Can be used, for example, to activate hats.
-	     * @type{!Runtime}
-	     */
-	    this.runtime = runtime;
-	}
-
-	Mouse.prototype.postData = function(data) {
-	    if (data.x) {
-	        this._x = data.x - data.canvasWidth / 2;
-	    }
-	    if (data.y) {
-	        this._y = data.y - data.canvasHeight / 2;
-	    }
-	    if (typeof data.isDown !== 'undefined') {
-	        this._isDown = data.isDown;
-	        if (this._isDown) {
-	            this._activateClickHats(data.x, data.y);
-	        }
-	    }
-	};
-
-	Mouse.prototype._activateClickHats = function (x, y) {
-	    if (this.runtime.renderer) {
-	        var drawableID = this.runtime.renderer.pick(x, y);
-	        for (var i = 0; i < this.runtime.targets.length; i++) {
-	            var target = this.runtime.targets[i];
-	            if (target.hasOwnProperty('drawableID') &&
-	                target.drawableID == drawableID) {
-	                this.runtime.startHats('event_whenthisspriteclicked',
-	                    null, target);
-	                return;
-	            }
-	        }
-	    }
-	};
-
-	Mouse.prototype.getX = function () {
-	    return MathUtil.clamp(this._x, -240, 240);
-	};
-
-	Mouse.prototype.getY = function () {
-	    return MathUtil.clamp(-this._y, -180, 180);
-	};
-
-	Mouse.prototype.getIsDown = function () {
-	    return this._isDown;
-	};
-
-	module.exports = Mouse;
-
-
-/***/ },
-/* 26 */
-/***/ function(module, exports) {
-
-	function MathUtil () {}
-
-	/**
-	 * Convert a value from degrees to radians.
-	 * @param {!number} deg Value in degrees.
-	 * @return {!number} Equivalent value in radians.
-	 */
-	MathUtil.degToRad = function (deg) {
-	    return (Math.PI * (90 - deg)) / 180;
-	};
-
-	/**
-	 * Convert a value from radians to degrees.
-	 * @param {!number} rad Value in radians.
-	 * @return {!number} Equivalent value in degrees.
-	 */
-	MathUtil.radToDeg = function (rad) {
-	    return rad * 180 / Math.PI;
-	};
-
-	/**
-	 * Clamp a number between two limits.
-	 * If n < min, return min. If n > max, return max. Else, return n.
-	 * @param {!number} n Number to clamp.
-	 * @param {!number} min Minimum limit.
-	 * @param {!number} max Maximum limit.
-	 * @return {!number} Value of n clamped to min and max.
-	 */
-	MathUtil.clamp = function (n, min, max) {
-	    return Math.min(Math.max(n, min), max);
-	};
-
-	/**
-	 * Keep a number between two limits, wrapping "extra" into the range.
-	 * e.g., wrapClamp(7, 1, 5) == 2
-	 * wrapClamp(0, 1, 5) == 5
-	 * wrapClamp(-11, -10, 6) == 6, etc.
-	 * @param {!number} n Number to wrap.
-	 * @param {!number} min Minimum limit.
-	 * @param {!number} max Maximum limit.
-	 * @return {!number} Value of n wrapped between min and max.
-	 */
-	MathUtil.wrapClamp = function (n, min, max) {
-	    var range = (max - min) + 1;
-	    return n - Math.floor((n - min) / range) * range;
-	};
-
-	module.exports = MathUtil;
-
-
-/***/ },
-/* 27 */
-/***/ function(module, exports, __webpack_require__) {
-
-	var Cast = __webpack_require__(23);
-	var Promise = __webpack_require__(28);
-
-	function Scratch3ControlBlocks(runtime) {
-	    /**
-	     * The runtime instantiating this block package.
-	     * @type {Runtime}
-	     */
-	    this.runtime = runtime;
-	}
-
-	/**
-	 * Retrieve the block primitives implemented by this package.
-	 * @return {Object.<string, Function>} Mapping of opcode to Function.
-	 */
-	Scratch3ControlBlocks.prototype.getPrimitives = function() {
-	    return {
-	        'control_repeat': this.repeat,
-	        'control_repeat_until': this.repeatUntil,
-	        'control_forever': this.forever,
-	        'control_wait': this.wait,
-	        'control_wait_until': this.waitUntil,
-	        'control_if': this.if,
-	        'control_if_else': this.ifElse,
-	        'control_stop': this.stop,
-	        'control_create_clone_of_menu': this.createCloneMenu,
-	        'control_create_clone_of': this.createClone,
-	        'control_delete_this_clone': this.deleteClone
-	    };
-	};
-
-	Scratch3ControlBlocks.prototype.getHats = function () {
-	    return {
-	        'control_start_as_clone': {
-	            restartExistingThreads: false
-	        }
-	    };
-	};
-
-	Scratch3ControlBlocks.prototype.repeat = function(args, util) {
-	    var times = Math.floor(Cast.toNumber(args.TIMES));
-	    // Initialize loop
-	    if (util.stackFrame.loopCounter === undefined) {
-	        util.stackFrame.loopCounter = times;
-	    }
-	    // Only execute once per frame.
-	    // When the branch finishes, `repeat` will be executed again and
-	    // the second branch will be taken, yielding for the rest of the frame.
-	    if (!util.stackFrame.executedInFrame) {
-	        util.stackFrame.executedInFrame = true;
-	        // Decrease counter
-	        util.stackFrame.loopCounter--;
-	        // If we still have some left, start the branch.
-	        if (util.stackFrame.loopCounter >= 0) {
-	            util.startBranch();
-	        }
-	    } else {
-	        util.stackFrame.executedInFrame = false;
-	        util.yieldFrame();
-	    }
-	};
-
-	Scratch3ControlBlocks.prototype.repeatUntil = function(args, util) {
-	    var condition = Cast.toBoolean(args.CONDITION);
-	    // Only execute once per frame.
-	    // When the branch finishes, `repeat` will be executed again and
-	    // the second branch will be taken, yielding for the rest of the frame.
-	    if (!util.stackFrame.executedInFrame) {
-	        util.stackFrame.executedInFrame = true;
-	        // If the condition is true, start the branch.
-	        if (!condition) {
-	            util.startBranch();
-	        }
-	    } else {
-	        util.stackFrame.executedInFrame = false;
-	        util.yieldFrame();
-	    }
-	};
-
-	Scratch3ControlBlocks.prototype.waitUntil = function(args, util) {
-	    var condition = Cast.toBoolean(args.CONDITION);
-	    // Only execute once per frame.
-	    if (!condition) {
-	        util.yieldFrame();
-	    }
-	};
-
-	Scratch3ControlBlocks.prototype.forever = function(args, util) {
-	    // Only execute once per frame.
-	    // When the branch finishes, `forever` will be executed again and
-	    // the second branch will be taken, yielding for the rest of the frame.
-	    if (!util.stackFrame.executedInFrame) {
-	        util.stackFrame.executedInFrame = true;
-	        util.startBranch();
-	    } else {
-	        util.stackFrame.executedInFrame = false;
-	        util.yieldFrame();
-	    }
-	};
-
-	Scratch3ControlBlocks.prototype.wait = function(args) {
-	    var duration = Cast.toNumber(args.DURATION);
-	    return new Promise(function(resolve) {
-	        setTimeout(function() {
-	            resolve();
-	        }, 1000 * duration);
-	    });
-	};
-
-	Scratch3ControlBlocks.prototype.if = function(args, util) {
-	    var condition = Cast.toBoolean(args.CONDITION);
-	    // Only execute one time. `if` will be returned to
-	    // when the branch finishes, but it shouldn't execute again.
-	    if (util.stackFrame.executedInFrame === undefined) {
-	        util.stackFrame.executedInFrame = true;
-	        if (condition) {
-	            util.startBranch();
-	        }
-	    }
-	};
-
-	Scratch3ControlBlocks.prototype.ifElse = function(args, util) {
-	    var condition = Cast.toBoolean(args.CONDITION);
-	    // Only execute one time. `ifElse` will be returned to
-	    // when the branch finishes, but it shouldn't execute again.
-	    if (util.stackFrame.executedInFrame === undefined) {
-	        util.stackFrame.executedInFrame = true;
-	        if (condition) {
-	            util.startBranch(1);
-	        } else {
-	            util.startBranch(2);
-	        }
-	    }
-	};
-
-	Scratch3ControlBlocks.prototype.stop = function() {
-	    // @todo - don't use this.runtime
-	    this.runtime.stopAll();
-	};
-
-	// @todo (GH-146): remove.
-	Scratch3ControlBlocks.prototype.createCloneMenu = function (args) {
-	    return args.CLONE_OPTION;
-	};
-
-	Scratch3ControlBlocks.prototype.createClone = function (args, util) {
-	    var cloneTarget;
-	    if (args.CLONE_OPTION == '_myself_') {
-	        cloneTarget = util.target;
-	    } else {
-	        cloneTarget = this.runtime.getSpriteTargetByName(args.CLONE_OPTION);
-	    }
-	    if (!cloneTarget) {
-	        return;
-	    }
-	    var newClone = cloneTarget.makeClone();
-	    if (newClone) {
-	        this.runtime.targets.push(newClone);
-	    }
-	};
-
-	Scratch3ControlBlocks.prototype.deleteClone = function (args, util) {
-	    this.runtime.disposeTarget(util.target);
-	    this.runtime.stopForTarget(util.target);
-	};
-
-	module.exports = Scratch3ControlBlocks;
-
-
-/***/ },
-/* 28 */
-/***/ function(module, exports, __webpack_require__) {
-
-	'use strict';
-
-	module.exports = __webpack_require__(29)
-
-
-/***/ },
-/* 29 */
-/***/ function(module, exports, __webpack_require__) {
-
-	'use strict';
-
-	module.exports = __webpack_require__(30);
-	__webpack_require__(32);
-	__webpack_require__(33);
-	__webpack_require__(34);
-	__webpack_require__(35);
-	__webpack_require__(37);
-
-
-/***/ },
-/* 30 */
-/***/ function(module, exports, __webpack_require__) {
-
-	'use strict';
-
-	var asap = __webpack_require__(31);
-
-	function noop() {}
-
-	// States:
-	//
-	// 0 - pending
-	// 1 - fulfilled with _value
-	// 2 - rejected with _value
-	// 3 - adopted the state of another promise, _value
-	//
-	// once the state is no longer pending (0) it is immutable
-
-	// All `_` prefixed properties will be reduced to `_{random number}`
-	// at build time to obfuscate them and discourage their use.
-	// We don't use symbols or Object.defineProperty to fully hide them
-	// because the performance isn't good enough.
-
-
-	// to avoid using try/catch inside critical functions, we
-	// extract them to here.
-	var LAST_ERROR = null;
-	var IS_ERROR = {};
-	function getThen(obj) {
-	  try {
-	    return obj.then;
-	  } catch (ex) {
-	    LAST_ERROR = ex;
-	    return IS_ERROR;
-	  }
-	}
-
-	function tryCallOne(fn, a) {
-	  try {
-	    return fn(a);
-	  } catch (ex) {
-	    LAST_ERROR = ex;
-	    return IS_ERROR;
-	  }
-	}
-	function tryCallTwo(fn, a, b) {
-	  try {
-	    fn(a, b);
-	  } catch (ex) {
-	    LAST_ERROR = ex;
-	    return IS_ERROR;
-	  }
-	}
-
-	module.exports = Promise;
-
-	function Promise(fn) {
-	  if (typeof this !== 'object') {
-	    throw new TypeError('Promises must be constructed via new');
-	  }
-	  if (typeof fn !== 'function') {
-	    throw new TypeError('not a function');
-	  }
-	  this._45 = 0;
-	  this._81 = 0;
-	  this._65 = null;
-	  this._54 = null;
-	  if (fn === noop) return;
-	  doResolve(fn, this);
-	}
-	Promise._10 = null;
-	Promise._97 = null;
-	Promise._61 = noop;
-
-	Promise.prototype.then = function(onFulfilled, onRejected) {
-	  if (this.constructor !== Promise) {
-	    return safeThen(this, onFulfilled, onRejected);
-	  }
-	  var res = new Promise(noop);
-	  handle(this, new Handler(onFulfilled, onRejected, res));
-	  return res;
-	};
-
-	function safeThen(self, onFulfilled, onRejected) {
-	  return new self.constructor(function (resolve, reject) {
-	    var res = new Promise(noop);
-	    res.then(resolve, reject);
-	    handle(self, new Handler(onFulfilled, onRejected, res));
-	  });
-	};
-	function handle(self, deferred) {
-	  while (self._81 === 3) {
-	    self = self._65;
-	  }
-	  if (Promise._10) {
-	    Promise._10(self);
-	  }
-	  if (self._81 === 0) {
-	    if (self._45 === 0) {
-	      self._45 = 1;
-	      self._54 = deferred;
-	      return;
-	    }
-	    if (self._45 === 1) {
-	      self._45 = 2;
-	      self._54 = [self._54, deferred];
-	      return;
-	    }
-	    self._54.push(deferred);
-	    return;
-	  }
-	  handleResolved(self, deferred);
-	}
-
-	function handleResolved(self, deferred) {
-	  asap(function() {
-	    var cb = self._81 === 1 ? deferred.onFulfilled : deferred.onRejected;
-	    if (cb === null) {
-	      if (self._81 === 1) {
-	        resolve(deferred.promise, self._65);
-	      } else {
-	        reject(deferred.promise, self._65);
-	      }
-	      return;
-	    }
-	    var ret = tryCallOne(cb, self._65);
-	    if (ret === IS_ERROR) {
-	      reject(deferred.promise, LAST_ERROR);
-	    } else {
-	      resolve(deferred.promise, ret);
-	    }
-	  });
-	}
-	function resolve(self, newValue) {
-	  // Promise Resolution Procedure: https://github.com/promises-aplus/promises-spec#the-promise-resolution-procedure
-	  if (newValue === self) {
-	    return reject(
-	      self,
-	      new TypeError('A promise cannot be resolved with itself.')
-	    );
-	  }
-	  if (
-	    newValue &&
-	    (typeof newValue === 'object' || typeof newValue === 'function')
-	  ) {
-	    var then = getThen(newValue);
-	    if (then === IS_ERROR) {
-	      return reject(self, LAST_ERROR);
-	    }
-	    if (
-	      then === self.then &&
-	      newValue instanceof Promise
-	    ) {
-	      self._81 = 3;
-	      self._65 = newValue;
-	      finale(self);
-	      return;
-	    } else if (typeof then === 'function') {
-	      doResolve(then.bind(newValue), self);
-	      return;
-	    }
-	  }
-	  self._81 = 1;
-	  self._65 = newValue;
-	  finale(self);
-	}
-
-	function reject(self, newValue) {
-	  self._81 = 2;
-	  self._65 = newValue;
-	  if (Promise._97) {
-	    Promise._97(self, newValue);
-	  }
-	  finale(self);
-	}
-	function finale(self) {
-	  if (self._45 === 1) {
-	    handle(self, self._54);
-	    self._54 = null;
-	  }
-	  if (self._45 === 2) {
-	    for (var i = 0; i < self._54.length; i++) {
-	      handle(self, self._54[i]);
-	    }
-	    self._54 = null;
-	  }
-	}
-
-	function Handler(onFulfilled, onRejected, promise){
-	  this.onFulfilled = typeof onFulfilled === 'function' ? onFulfilled : null;
-	  this.onRejected = typeof onRejected === 'function' ? onRejected : null;
-	  this.promise = promise;
-	}
-
-	/**
-	 * Take a potentially misbehaving resolver function and make sure
-	 * onFulfilled and onRejected are only called once.
-	 *
-	 * Makes no guarantees about asynchrony.
-	 */
-	function doResolve(fn, promise) {
-	  var done = false;
-	  var res = tryCallTwo(fn, function (value) {
-	    if (done) return;
-	    done = true;
-	    resolve(promise, value);
-	  }, function (reason) {
-	    if (done) return;
-	    done = true;
-	    reject(promise, reason);
-	  })
-	  if (!done && res === IS_ERROR) {
-	    done = true;
-	    reject(promise, LAST_ERROR);
-	  }
-	}
-
-
-/***/ },
-/* 31 */
-/***/ function(module, exports) {
-
-	/* WEBPACK VAR INJECTION */(function(global) {"use strict";
-
-	// Use the fastest means possible to execute a task in its own turn, with
-	// priority over other events including IO, animation, reflow, and redraw
-	// events in browsers.
-	//
-	// An exception thrown by a task will permanently interrupt the processing of
-	// subsequent tasks. The higher level `asap` function ensures that if an
-	// exception is thrown by a task, that the task queue will continue flushing as
-	// soon as possible, but if you use `rawAsap` directly, you are responsible to
-	// either ensure that no exceptions are thrown from your task, or to manually
-	// call `rawAsap.requestFlush` if an exception is thrown.
-	module.exports = rawAsap;
-	function rawAsap(task) {
-	    if (!queue.length) {
-	        requestFlush();
-	        flushing = true;
-	    }
-	    // Equivalent to push, but avoids a function call.
-	    queue[queue.length] = task;
-	}
-
-	var queue = [];
-	// Once a flush has been requested, no further calls to `requestFlush` are
-	// necessary until the next `flush` completes.
-	var flushing = false;
-	// `requestFlush` is an implementation-specific method that attempts to kick
-	// off a `flush` event as quickly as possible. `flush` will attempt to exhaust
-	// the event queue before yielding to the browser's own event loop.
-	var requestFlush;
-	// The position of the next task to execute in the task queue. This is
-	// preserved between calls to `flush` so that it can be resumed if
-	// a task throws an exception.
-	var index = 0;
-	// If a task schedules additional tasks recursively, the task queue can grow
-	// unbounded. To prevent memory exhaustion, the task queue will periodically
-	// truncate already-completed tasks.
-	var capacity = 1024;
-
-	// The flush function processes all tasks that have been scheduled with
-	// `rawAsap` unless and until one of those tasks throws an exception.
-	// If a task throws an exception, `flush` ensures that its state will remain
-	// consistent and will resume where it left off when called again.
-	// However, `flush` does not make any arrangements to be called again if an
-	// exception is thrown.
-	function flush() {
-	    while (index < queue.length) {
-	        var currentIndex = index;
-	        // Advance the index before calling the task. This ensures that we will
-	        // begin flushing on the next task the task throws an error.
-	        index = index + 1;
-	        queue[currentIndex].call();
-	        // Prevent leaking memory for long chains of recursive calls to `asap`.
-	        // If we call `asap` within tasks scheduled by `asap`, the queue will
-	        // grow, but to avoid an O(n) walk for every task we execute, we don't
-	        // shift tasks off the queue after they have been executed.
-	        // Instead, we periodically shift 1024 tasks off the queue.
-	        if (index > capacity) {
-	            // Manually shift all values starting at the index back to the
-	            // beginning of the queue.
-	            for (var scan = 0, newLength = queue.length - index; scan < newLength; scan++) {
-	                queue[scan] = queue[scan + index];
-	            }
-	            queue.length -= index;
-	            index = 0;
-	        }
-	    }
-	    queue.length = 0;
-	    index = 0;
-	    flushing = false;
-	}
-
-	// `requestFlush` is implemented using a strategy based on data collected from
-	// every available SauceLabs Selenium web driver worker at time of writing.
-	// https://docs.google.com/spreadsheets/d/1mG-5UYGup5qxGdEMWkhP6BWCz053NUb2E1QoUTU16uA/edit#gid=783724593
-
-	// Safari 6 and 6.1 for desktop, iPad, and iPhone are the only browsers that
-	// have WebKitMutationObserver but not un-prefixed MutationObserver.
-	// Must use `global` or `self` instead of `window` to work in both frames and web
-	// workers. `global` is a provision of Browserify, Mr, Mrs, or Mop.
-
-	/* globals self */
-	var scope = typeof global !== "undefined" ? global : self;
-	var BrowserMutationObserver = scope.MutationObserver || scope.WebKitMutationObserver;
-
-	// MutationObservers are desirable because they have high priority and work
-	// reliably everywhere they are implemented.
-	// They are implemented in all modern browsers.
-	//
-	// - Android 4-4.3
-	// - Chrome 26-34
-	// - Firefox 14-29
-	// - Internet Explorer 11
-	// - iPad Safari 6-7.1
-	// - iPhone Safari 7-7.1
-	// - Safari 6-7
-	if (typeof BrowserMutationObserver === "function") {
-	    requestFlush = makeRequestCallFromMutationObserver(flush);
-
-	// MessageChannels are desirable because they give direct access to the HTML
-	// task queue, are implemented in Internet Explorer 10, Safari 5.0-1, and Opera
-	// 11-12, and in web workers in many engines.
-	// Although message channels yield to any queued rendering and IO tasks, they
-	// would be better than imposing the 4ms delay of timers.
-	// However, they do not work reliably in Internet Explorer or Safari.
-
-	// Internet Explorer 10 is the only browser that has setImmediate but does
-	// not have MutationObservers.
-	// Although setImmediate yields to the browser's renderer, it would be
-	// preferrable to falling back to setTimeout since it does not have
-	// the minimum 4ms penalty.
-	// Unfortunately there appears to be a bug in Internet Explorer 10 Mobile (and
-	// Desktop to a lesser extent) that renders both setImmediate and
-	// MessageChannel useless for the purposes of ASAP.
-	// https://github.com/kriskowal/q/issues/396
-
-	// Timers are implemented universally.
-	// We fall back to timers in workers in most engines, and in foreground
-	// contexts in the following browsers.
-	// However, note that even this simple case requires nuances to operate in a
-	// broad spectrum of browsers.
-	//
-	// - Firefox 3-13
-	// - Internet Explorer 6-9
-	// - iPad Safari 4.3
-	// - Lynx 2.8.7
-	} else {
-	    requestFlush = makeRequestCallFromTimer(flush);
-	}
-
-	// `requestFlush` requests that the high priority event queue be flushed as
-	// soon as possible.
-	// This is useful to prevent an error thrown in a task from stalling the event
-	// queue if the exception handled by Node.js’s
-	// `process.on("uncaughtException")` or by a domain.
-	rawAsap.requestFlush = requestFlush;
-
-	// To request a high priority event, we induce a mutation observer by toggling
-	// the text of a text node between "1" and "-1".
-	function makeRequestCallFromMutationObserver(callback) {
-	    var toggle = 1;
-	    var observer = new BrowserMutationObserver(callback);
-	    var node = document.createTextNode("");
-	    observer.observe(node, {characterData: true});
-	    return function requestCall() {
-	        toggle = -toggle;
-	        node.data = toggle;
-	    };
-	}
-
-	// The message channel technique was discovered by Malte Ubl and was the
-	// original foundation for this library.
-	// http://www.nonblocking.io/2011/06/windownexttick.html
-
-	// Safari 6.0.5 (at least) intermittently fails to create message ports on a
-	// page's first load. Thankfully, this version of Safari supports
-	// MutationObservers, so we don't need to fall back in that case.
-
-	// function makeRequestCallFromMessageChannel(callback) {
-	//     var channel = new MessageChannel();
-	//     channel.port1.onmessage = callback;
-	//     return function requestCall() {
-	//         channel.port2.postMessage(0);
-	//     };
-	// }
-
-	// For reasons explained above, we are also unable to use `setImmediate`
-	// under any circumstances.
-	// Even if we were, there is another bug in Internet Explorer 10.
-	// It is not sufficient to assign `setImmediate` to `requestFlush` because
-	// `setImmediate` must be called *by name* and therefore must be wrapped in a
-	// closure.
-	// Never forget.
-
-	// function makeRequestCallFromSetImmediate(callback) {
-	//     return function requestCall() {
-	//         setImmediate(callback);
-	//     };
-	// }
-
-	// Safari 6.0 has a problem where timers will get lost while the user is
-	// scrolling. This problem does not impact ASAP because Safari 6.0 supports
-	// mutation observers, so that implementation is used instead.
-	// However, if we ever elect to use timers in Safari, the prevalent work-around
-	// is to add a scroll event listener that calls for a flush.
-
-	// `setTimeout` does not call the passed callback if the delay is less than
-	// approximately 7 in web workers in Firefox 8 through 18, and sometimes not
-	// even then.
-
-	function makeRequestCallFromTimer(callback) {
-	    return function requestCall() {
-	        // We dispatch a timeout with a specified delay of 0 for engines that
-	        // can reliably accommodate that request. This will usually be snapped
-	        // to a 4 milisecond delay, but once we're flushing, there's no delay
-	        // between events.
-	        var timeoutHandle = setTimeout(handleTimer, 0);
-	        // However, since this timer gets frequently dropped in Firefox
-	        // workers, we enlist an interval handle that will try to fire
-	        // an event 20 times per second until it succeeds.
-	        var intervalHandle = setInterval(handleTimer, 50);
-
-	        function handleTimer() {
-	            // Whichever timer succeeds will cancel both timers and
-	            // execute the callback.
-	            clearTimeout(timeoutHandle);
-	            clearInterval(intervalHandle);
-	            callback();
-	        }
-	    };
-	}
-
-	// This is for `asap.js` only.
-	// Its name will be periodically randomized to break any code that depends on
-	// its existence.
-	rawAsap.makeRequestCallFromTimer = makeRequestCallFromTimer;
-
-	// ASAP was originally a nextTick shim included in Q. This was factored out
-	// into this ASAP package. It was later adapted to RSVP which made further
-	// amendments. These decisions, particularly to marginalize MessageChannel and
-	// to capture the MutationObserver implementation in a closure, were integrated
-	// back into ASAP proper.
-	// https://github.com/tildeio/rsvp.js/blob/cddf7232546a9cf858524b75cde6f9edf72620a7/lib/rsvp/asap.js
-
-	/* WEBPACK VAR INJECTION */}.call(exports, (function() { return this; }())))
-
-/***/ },
-/* 32 */
-/***/ function(module, exports, __webpack_require__) {
-
-	'use strict';
-
-	var Promise = __webpack_require__(30);
-
-	module.exports = Promise;
-	Promise.prototype.done = function (onFulfilled, onRejected) {
-	  var self = arguments.length ? this.then.apply(this, arguments) : this;
-	  self.then(null, function (err) {
-	    setTimeout(function () {
-	      throw err;
-	    }, 0);
-	  });
-	};
-
-
-/***/ },
-/* 33 */
-/***/ function(module, exports, __webpack_require__) {
-
-	'use strict';
-
-	var Promise = __webpack_require__(30);
-
-	module.exports = Promise;
-	Promise.prototype['finally'] = function (f) {
-	  return this.then(function (value) {
-	    return Promise.resolve(f()).then(function () {
-	      return value;
-	    });
-	  }, function (err) {
-	    return Promise.resolve(f()).then(function () {
-	      throw err;
-	    });
-	  });
-	};
-
-
-/***/ },
-/* 34 */
-/***/ function(module, exports, __webpack_require__) {
-
-	'use strict';
-
-	//This file contains the ES6 extensions to the core Promises/A+ API
-
-	var Promise = __webpack_require__(30);
-
-	module.exports = Promise;
-
-	/* Static Functions */
-
-	var TRUE = valuePromise(true);
-	var FALSE = valuePromise(false);
-	var NULL = valuePromise(null);
-	var UNDEFINED = valuePromise(undefined);
-	var ZERO = valuePromise(0);
-	var EMPTYSTRING = valuePromise('');
-
-	function valuePromise(value) {
-	  var p = new Promise(Promise._61);
-	  p._81 = 1;
-	  p._65 = value;
-	  return p;
-	}
-	Promise.resolve = function (value) {
-	  if (value instanceof Promise) return value;
-
-	  if (value === null) return NULL;
-	  if (value === undefined) return UNDEFINED;
-	  if (value === true) return TRUE;
-	  if (value === false) return FALSE;
-	  if (value === 0) return ZERO;
-	  if (value === '') return EMPTYSTRING;
-
-	  if (typeof value === 'object' || typeof value === 'function') {
-	    try {
-	      var then = value.then;
-	      if (typeof then === 'function') {
-	        return new Promise(then.bind(value));
-	      }
-	    } catch (ex) {
-	      return new Promise(function (resolve, reject) {
-	        reject(ex);
-	      });
-	    }
-	  }
-	  return valuePromise(value);
-	};
-
-	Promise.all = function (arr) {
-	  var args = Array.prototype.slice.call(arr);
-
-	  return new Promise(function (resolve, reject) {
-	    if (args.length === 0) return resolve([]);
-	    var remaining = args.length;
-	    function res(i, val) {
-	      if (val && (typeof val === 'object' || typeof val === 'function')) {
-	        if (val instanceof Promise && val.then === Promise.prototype.then) {
-	          while (val._81 === 3) {
-	            val = val._65;
-	          }
-	          if (val._81 === 1) return res(i, val._65);
-	          if (val._81 === 2) reject(val._65);
-	          val.then(function (val) {
-	            res(i, val);
-	          }, reject);
-	          return;
-	        } else {
-	          var then = val.then;
-	          if (typeof then === 'function') {
-	            var p = new Promise(then.bind(val));
-	            p.then(function (val) {
-	              res(i, val);
-	            }, reject);
-	            return;
-	          }
-	        }
-	      }
-	      args[i] = val;
-	      if (--remaining === 0) {
-	        resolve(args);
-	      }
-	    }
-	    for (var i = 0; i < args.length; i++) {
-	      res(i, args[i]);
-	    }
-	  });
-	};
-
-	Promise.reject = function (value) {
-	  return new Promise(function (resolve, reject) {
-	    reject(value);
-	  });
-	};
-
-	Promise.race = function (values) {
-	  return new Promise(function (resolve, reject) {
-	    values.forEach(function(value){
-	      Promise.resolve(value).then(resolve, reject);
-	    });
-	  });
-	};
-
-	/* Prototype Methods */
-
-	Promise.prototype['catch'] = function (onRejected) {
-	  return this.then(null, onRejected);
-	};
-
-
-/***/ },
-/* 35 */
-/***/ function(module, exports, __webpack_require__) {
-
-	'use strict';
-
-	// This file contains then/promise specific extensions that are only useful
-	// for node.js interop
-
-	var Promise = __webpack_require__(30);
-	var asap = __webpack_require__(36);
-
-	module.exports = Promise;
-
-	/* Static Functions */
-
-	Promise.denodeify = function (fn, argumentCount) {
-	  if (
-	    typeof argumentCount === 'number' && argumentCount !== Infinity
-	  ) {
-	    return denodeifyWithCount(fn, argumentCount);
-	  } else {
-	    return denodeifyWithoutCount(fn);
-	  }
-	}
-
-	var callbackFn = (
-	  'function (err, res) {' +
-	  'if (err) { rj(err); } else { rs(res); }' +
-	  '}'
-	);
-	function denodeifyWithCount(fn, argumentCount) {
-	  var args = [];
-	  for (var i = 0; i < argumentCount; i++) {
-	    args.push('a' + i);
-	  }
-	  var body = [
-	    'return function (' + args.join(',') + ') {',
-	    'var self = this;',
-	    'return new Promise(function (rs, rj) {',
-	    'var res = fn.call(',
-	    ['self'].concat(args).concat([callbackFn]).join(','),
-	    ');',
-	    'if (res &&',
-	    '(typeof res === "object" || typeof res === "function") &&',
-	    'typeof res.then === "function"',
-	    ') {rs(res);}',
-	    '});',
-	    '};'
-	  ].join('');
-	  return Function(['Promise', 'fn'], body)(Promise, fn);
-	}
-	function denodeifyWithoutCount(fn) {
-	  var fnLength = Math.max(fn.length - 1, 3);
-	  var args = [];
-	  for (var i = 0; i < fnLength; i++) {
-	    args.push('a' + i);
-	  }
-	  var body = [
-	    'return function (' + args.join(',') + ') {',
-	    'var self = this;',
-	    'var args;',
-	    'var argLength = arguments.length;',
-	    'if (arguments.length > ' + fnLength + ') {',
-	    'args = new Array(arguments.length + 1);',
-	    'for (var i = 0; i < arguments.length; i++) {',
-	    'args[i] = arguments[i];',
-	    '}',
-	    '}',
-	    'return new Promise(function (rs, rj) {',
-	    'var cb = ' + callbackFn + ';',
-	    'var res;',
-	    'switch (argLength) {',
-	    args.concat(['extra']).map(function (_, index) {
-	      return (
-	        'case ' + (index) + ':' +
-	        'res = fn.call(' + ['self'].concat(args.slice(0, index)).concat('cb').join(',') + ');' +
-	        'break;'
-	      );
-	    }).join(''),
-	    'default:',
-	    'args[argLength] = cb;',
-	    'res = fn.apply(self, args);',
-	    '}',
-	    
-	    'if (res &&',
-	    '(typeof res === "object" || typeof res === "function") &&',
-	    'typeof res.then === "function"',
-	    ') {rs(res);}',
-	    '});',
-	    '};'
-	  ].join('');
-
-	  return Function(
-	    ['Promise', 'fn'],
-	    body
-	  )(Promise, fn);
-	}
-
-	Promise.nodeify = function (fn) {
-	  return function () {
-	    var args = Array.prototype.slice.call(arguments);
-	    var callback =
-	      typeof args[args.length - 1] === 'function' ? args.pop() : null;
-	    var ctx = this;
-	    try {
-	      return fn.apply(this, arguments).nodeify(callback, ctx);
-	    } catch (ex) {
-	      if (callback === null || typeof callback == 'undefined') {
-	        return new Promise(function (resolve, reject) {
-	          reject(ex);
-	        });
-	      } else {
-	        asap(function () {
-	          callback.call(ctx, ex);
-	        })
-	      }
-	    }
-	  }
-	}
-
-	Promise.prototype.nodeify = function (callback, ctx) {
-	  if (typeof callback != 'function') return this;
-
-	  this.then(function (value) {
-	    asap(function () {
-	      callback.call(ctx, null, value);
-	    });
-	  }, function (err) {
-	    asap(function () {
-	      callback.call(ctx, err);
-	    });
-	  });
-	}
-
-
-/***/ },
-/* 36 */
-/***/ function(module, exports, __webpack_require__) {
-
-	"use strict";
-
-	// rawAsap provides everything we need except exception management.
-	var rawAsap = __webpack_require__(31);
-	// RawTasks are recycled to reduce GC churn.
-	var freeTasks = [];
-	// We queue errors to ensure they are thrown in right order (FIFO).
-	// Array-as-queue is good enough here, since we are just dealing with exceptions.
-	var pendingErrors = [];
-	var requestErrorThrow = rawAsap.makeRequestCallFromTimer(throwFirstError);
-
-	function throwFirstError() {
-	    if (pendingErrors.length) {
-	        throw pendingErrors.shift();
-	    }
-	}
-
-	/**
-	 * Calls a task as soon as possible after returning, in its own event, with priority
-	 * over other events like animation, reflow, and repaint. An error thrown from an
-	 * event will not interrupt, nor even substantially slow down the processing of
-	 * other events, but will be rather postponed to a lower priority event.
-	 * @param {{call}} task A callable object, typically a function that takes no
-	 * arguments.
-	 */
-	module.exports = asap;
-	function asap(task) {
-	    var rawTask;
-	    if (freeTasks.length) {
-	        rawTask = freeTasks.pop();
-	    } else {
-	        rawTask = new RawTask();
-	    }
-	    rawTask.task = task;
-	    rawAsap(rawTask);
-	}
-
-	// We wrap tasks with recyclable task objects.  A task object implements
-	// `call`, just like a function.
-	function RawTask() {
-	    this.task = null;
-	}
-
-	// The sole purpose of wrapping the task is to catch the exception and recycle
-	// the task object after its single use.
-	RawTask.prototype.call = function () {
-	    try {
-	        this.task.call();
-	    } catch (error) {
-	        if (asap.onerror) {
-	            // This hook exists purely for testing purposes.
-	            // Its name will be periodically randomized to break any code that
-	            // depends on its existence.
-	            asap.onerror(error);
-	        } else {
-	            // In a web browser, exceptions are not fatal. However, to avoid
-	            // slowing down the queue of pending tasks, we rethrow the error in a
-	            // lower priority turn.
-	            pendingErrors.push(error);
-	            requestErrorThrow();
-	        }
-	    } finally {
-	        this.task = null;
-	        freeTasks[freeTasks.length] = this;
-	    }
-	};
-
-
-/***/ },
-/* 37 */
-/***/ function(module, exports, __webpack_require__) {
-
-	'use strict';
-
-	var Promise = __webpack_require__(30);
-
-	module.exports = Promise;
-	Promise.enableSynchronous = function () {
-	  Promise.prototype.isPending = function() {
-	    return this.getState() == 0;
-	  };
-
-	  Promise.prototype.isFulfilled = function() {
-	    return this.getState() == 1;
-	  };
-
-	  Promise.prototype.isRejected = function() {
-	    return this.getState() == 2;
-	  };
-
-	  Promise.prototype.getValue = function () {
-	    if (this._81 === 3) {
-	      return this._65.getValue();
-	    }
-
-	    if (!this.isFulfilled()) {
-	      throw new Error('Cannot get a value of an unfulfilled promise.');
-	    }
-
-	    return this._65;
-	  };
-
-	  Promise.prototype.getReason = function () {
-	    if (this._81 === 3) {
-	      return this._65.getReason();
-	    }
-
-	    if (!this.isRejected()) {
-	      throw new Error('Cannot get a rejection reason of a non-rejected promise.');
-	    }
-
-	    return this._65;
-	  };
-
-	  Promise.prototype.getState = function () {
-	    if (this._81 === 3) {
-	      return this._65.getState();
-	    }
-	    if (this._81 === -1 || this._81 === -2) {
-	      return 0;
-	    }
-
-	    return this._81;
-	  };
-	};
-
-	Promise.disableSynchronous = function() {
-	  Promise.prototype.isPending = undefined;
-	  Promise.prototype.isFulfilled = undefined;
-	  Promise.prototype.isRejected = undefined;
-	  Promise.prototype.getValue = undefined;
-	  Promise.prototype.getReason = undefined;
-	  Promise.prototype.getState = undefined;
-	};
-
-
-/***/ },
-/* 38 */
-/***/ function(module, exports, __webpack_require__) {
-
-	var Cast = __webpack_require__(23);
-
-	function Scratch3EventBlocks(runtime) {
-	    /**
-	     * The runtime instantiating this block package.
-	     * @type {Runtime}
-	     */
-	    this.runtime = runtime;
-	}
-
-	/**
-	 * Retrieve the block primitives implemented by this package.
-	 * @return {Object.<string, Function>} Mapping of opcode to Function.
-	 */
-	Scratch3EventBlocks.prototype.getPrimitives = function() {
-	    return {
-	        'event_broadcast': this.broadcast,
-	        'event_broadcastandwait': this.broadcastAndWait,
-	        'event_whengreaterthan': this.hatGreaterThanPredicate
-	    };
-	};
-
-	Scratch3EventBlocks.prototype.getHats = function () {
-	    return {
-	        'event_whenflagclicked': {
-	            restartExistingThreads: true
-	        },
-	        'event_whenkeypressed': {
-	            restartExistingThreads: false
-	        },
-	        'event_whenthisspriteclicked': {
-	            restartExistingThreads: true
-	        },
-	        'event_whenbackdropswitchesto': {
-	            restartExistingThreads: true
-	        },
-	        'event_whengreaterthan': {
-	            restartExistingThreads: false,
-	            edgeActivated: true
-	        },
-	        'event_whenbroadcastreceived': {
-	            restartExistingThreads: true
-	        }
-	    };
-	};
-
-	Scratch3EventBlocks.prototype.hatGreaterThanPredicate = function (args, util) {
-	    var option = Cast.toString(args.WHENGREATERTHANMENU).toLowerCase();
-	    var value = Cast.toNumber(args.VALUE);
-	    // @todo: Other cases :)
-	    if (option == 'timer') {
-	        return util.ioQuery('clock', 'projectTimer') > value;
-	    }
-	    return false;
-	};
-
-	Scratch3EventBlocks.prototype.broadcast = function(args, util) {
-	    var broadcastOption = Cast.toString(args.BROADCAST_OPTION);
-	    util.startHats('event_whenbroadcastreceived', {
-	        'BROADCAST_OPTION': broadcastOption
-	    });
-	};
-
-	Scratch3EventBlocks.prototype.broadcastAndWait = function (args, util) {
-	    var broadcastOption = Cast.toString(args.BROADCAST_OPTION);
-	    // Have we run before, starting threads?
-	    if (!util.stackFrame.startedThreads) {
-	        // No - start hats for this broadcast.
-	        util.stackFrame.startedThreads = util.startHats(
-	            'event_whenbroadcastreceived', {
-	                'BROADCAST_OPTION': broadcastOption
-	            }
-	        );
-	        if (util.stackFrame.startedThreads.length == 0) {
-	            // Nothing was started.
-	            return;
-	        }
-	    }
-	    // We've run before; check if the wait is still going on.
-	    var instance = this;
-	    var waiting = util.stackFrame.startedThreads.some(function(thread) {
-	        return instance.runtime.isActiveThread(thread);
-	    });
-	    if (waiting) {
-	        util.yieldFrame();
-	    }
-	};
-
-	module.exports = Scratch3EventBlocks;
-
-
-/***/ },
-/* 39 */
-/***/ function(module, exports, __webpack_require__) {
-
-	var Cast = __webpack_require__(23);
-
-	function Scratch3LooksBlocks(runtime) {
-	    /**
-	     * The runtime instantiating this block package.
-	     * @type {Runtime}
-	     */
-	    this.runtime = runtime;
-	}
-
-	/**
-	 * Retrieve the block primitives implemented by this package.
-	 * @return {Object.<string, Function>} Mapping of opcode to Function.
-	 */
-	Scratch3LooksBlocks.prototype.getPrimitives = function() {
-	    return {
-	        'looks_say': this.say,
-	        'looks_sayforsecs': this.sayforsecs,
-	        'looks_think': this.think,
-	        'looks_thinkforsecs': this.sayforsecs,
-	        'looks_show': this.show,
-	        'looks_hide': this.hide,
-	        'looks_switchcostumeto': this.switchCostume,
-	        'looks_switchbackdropto': this.switchBackdrop,
-	        'looks_switchbackdroptoandwait': this.switchBackdropAndWait,
-	        'looks_nextcostume': this.nextCostume,
-	        'looks_nextbackdrop': this.nextBackdrop,
-	        'looks_changeeffectby': this.changeEffect,
-	        'looks_seteffectto': this.setEffect,
-	        'looks_cleargraphiceffects': this.clearEffects,
-	        'looks_changesizeby': this.changeSize,
-	        'looks_setsizeto': this.setSize,
-	        'looks_size': this.getSize,
-	        'looks_costumeorder': this.getCostumeIndex,
-	        'looks_backdroporder': this.getBackdropIndex,
-	        'looks_backdropname': this.getBackdropName
-	    };
-	};
-
-	Scratch3LooksBlocks.prototype.say = function (args, util) {
-	    util.target.setSay('say', args.MESSAGE);
-	};
-
-	Scratch3LooksBlocks.prototype.sayforsecs = function (args, util) {
-	    util.target.setSay('say', args.MESSAGE);
-	    return new Promise(function(resolve) {
-	        setTimeout(function() {
-	            // Clear say bubble and proceed.
-	            util.target.setSay();
-	            resolve();
-	        }, 1000 * args.SECS);
-	    });
-	};
-
-	Scratch3LooksBlocks.prototype.think = function (args, util) {
-	    util.target.setSay('think', args.MESSAGE);
-	};
-
-	Scratch3LooksBlocks.prototype.thinkforsecs = function (args, util) {
-	    util.target.setSay('think', args.MESSAGE);
-	    return new Promise(function(resolve) {
-	        setTimeout(function() {
-	            // Clear say bubble and proceed.
-	            util.target.setSay();
-	            resolve();
-	        }, 1000 * args.SECS);
-	    });
-	};
-
-	Scratch3LooksBlocks.prototype.show = function (args, util) {
-	    util.target.setVisible(true);
-	};
-
-	Scratch3LooksBlocks.prototype.hide = function (args, util) {
-	    util.target.setVisible(false);
-	};
-
-	/**
-	 * Utility function to set the costume or backdrop of a target.
-	 * Matches the behavior of Scratch 2.0 for different types of arguments.
-	 * @param {!Target} target Target to set costume/backdrop to.
-	 * @param {Any} requestedCostume Costume requested, e.g., 0, 'name', etc.
-	 * @param {boolean=} opt_zeroIndex Set to zero-index the requestedCostume.
-	 * @return {Array.<!Thread>} Any threads started by this switch.
-	 */
-	Scratch3LooksBlocks.prototype._setCostumeOrBackdrop = function (target,
-	        requestedCostume, opt_zeroIndex) {
-	    if (typeof requestedCostume === 'number') {
-	        target.setCostume(opt_zeroIndex ?
-	            requestedCostume : requestedCostume - 1);
-	    } else {
-	        var costumeIndex = target.getCostumeIndexByName(requestedCostume);
-	        if (costumeIndex > -1) {
-	            target.setCostume(costumeIndex);
-	        } else if (costumeIndex == 'previous costume' ||
-	                   costumeIndex == 'previous backdrop') {
-	            target.setCostume(target.currentCostume - 1);
-	        } else if (costumeIndex == 'next costume' ||
-	                   costumeIndex == 'next backdrop') {
-	            target.setCostume(target.currentCostume + 1);
-	        } else {
-	            var forcedNumber = Cast.toNumber(requestedCostume);
-	            if (!isNaN(forcedNumber)) {
-	                target.setCostume(opt_zeroIndex ?
-	                    forcedNumber : forcedNumber - 1);
-	            }
-	        }
-	    }
-	    if (target == this.runtime.getTargetForStage()) {
-	        // Target is the stage - start hats.
-	        var newName = target.sprite.costumes[target.currentCostume].name;
-	        return this.runtime.startHats('event_whenbackdropswitchesto', {
-	            'BACKDROP': newName
-	        });
-	    }
-	    return [];
-	};
-
-	Scratch3LooksBlocks.prototype.switchCostume = function (args, util) {
-	    this._setCostumeOrBackdrop(util.target, args.COSTUME);
-	};
-
-	Scratch3LooksBlocks.prototype.nextCostume = function (args, util) {
-	    this._setCostumeOrBackdrop(
-	        util.target, util.target.currentCostume + 1, true
-	    );
-	};
-
-	Scratch3LooksBlocks.prototype.switchBackdrop = function (args) {
-	    this._setCostumeOrBackdrop(this.runtime.getTargetForStage(), args.BACKDROP);
-	};
-
-	Scratch3LooksBlocks.prototype.switchBackdropAndWait = function (args, util) {
-	    // Have we run before, starting threads?
-	    if (!util.stackFrame.startedThreads) {
-	        // No - switch the backdrop.
-	        util.stackFrame.startedThreads = (
-	            this._setCostumeOrBackdrop(
-	                this.runtime.getTargetForStage(),
-	                args.BACKDROP
-	            )
-	        );
-	        if (util.stackFrame.startedThreads.length == 0) {
-	            // Nothing was started.
-	            return;
-	        }
-	    }
-	    // We've run before; check if the wait is still going on.
-	    var instance = this;
-	    var waiting = util.stackFrame.startedThreads.some(function(thread) {
-	        return instance.runtime.isActiveThread(thread);
-	    });
-	    if (waiting) {
-	        util.yieldFrame();
-	    }
-	};
-
-	Scratch3LooksBlocks.prototype.nextBackdrop = function () {
-	    var stage = this.runtime.getTargetForStage();
-	    this._setCostumeOrBackdrop(
-	        stage, stage.currentCostume + 1, true
-	    );
-	};
-
-	Scratch3LooksBlocks.prototype.changeEffect = function (args, util) {
-	    var effect = Cast.toString(args.EFFECT).toLowerCase();
-	    var change = Cast.toNumber(args.CHANGE);
-	    if (!util.target.effects.hasOwnProperty(effect)) return;
-	    var newValue = change + util.target.effects[effect];
-	    util.target.setEffect(effect, newValue);
-	};
-
-	Scratch3LooksBlocks.prototype.setEffect = function (args, util) {
-	    var effect = Cast.toString(args.EFFECT).toLowerCase();
-	    var value = Cast.toNumber(args.VALUE);
-	    util.target.setEffect(effect, value);
-	};
-
-	Scratch3LooksBlocks.prototype.clearEffects = function (args, util) {
-	    util.target.clearEffects();
-	};
-
-	Scratch3LooksBlocks.prototype.changeSize = function (args, util) {
-	    var change = Cast.toNumber(args.CHANGE);
-	    util.target.setSize(util.target.size + change);
-	};
-
-	Scratch3LooksBlocks.prototype.setSize = function (args, util) {
-	    var size = Cast.toNumber(args.SIZE);
-	    util.target.setSize(size);
-	};
-
-	Scratch3LooksBlocks.prototype.getSize = function (args, util) {
-	    return util.target.size;
-	};
-
-	Scratch3LooksBlocks.prototype.getBackdropIndex = function () {
-	    var stage = this.runtime.getTargetForStage();
-	    return stage.currentCostume + 1;
-	};
-
-	Scratch3LooksBlocks.prototype.getBackdropName = function () {
-	    var stage = this.runtime.getTargetForStage();
-	    return stage.sprite.costumes[stage.currentCostume].name;
-	};
-
-	Scratch3LooksBlocks.prototype.getCostumeIndex = function (args, util) {
-	    return util.target.currentCostume + 1;
-	};
-
-	module.exports = Scratch3LooksBlocks;
-
-
-/***/ },
-/* 40 */
-/***/ function(module, exports, __webpack_require__) {
-
-	var Cast = __webpack_require__(23);
-	var MathUtil = __webpack_require__(26);
-	var Timer = __webpack_require__(18);
-
-	function Scratch3MotionBlocks(runtime) {
-	    /**
-	     * The runtime instantiating this block package.
-	     * @type {Runtime}
-	     */
-	    this.runtime = runtime;
-	}
-
-	/**
-	 * Retrieve the block primitives implemented by this package.
-	 * @return {Object.<string, Function>} Mapping of opcode to Function.
-	 */
-	Scratch3MotionBlocks.prototype.getPrimitives = function() {
-	    return {
-	        'motion_movesteps': this.moveSteps,
-	        'motion_gotoxy': this.goToXY,
-	        'motion_goto': this.goTo,
-	        'motion_turnright': this.turnRight,
-	        'motion_turnleft': this.turnLeft,
-	        'motion_pointindirection': this.pointInDirection,
-	        'motion_pointtowards': this.pointTowards,
-	        'motion_glidesecstoxy': this.glide,
-	        'motion_setrotationstyle': this.setRotationStyle,
-	        'motion_changexby': this.changeX,
-	        'motion_setx': this.setX,
-	        'motion_changeyby': this.changeY,
-	        'motion_sety': this.setY,
-	        'motion_xposition': this.getX,
-	        'motion_yposition': this.getY,
-	        'motion_direction': this.getDirection
-	    };
-	};
-
-	Scratch3MotionBlocks.prototype.moveSteps = function (args, util) {
-	    var steps = Cast.toNumber(args.STEPS);
-	    var radians = MathUtil.degToRad(util.target.direction);
-	    var dx = steps * Math.cos(radians);
-	    var dy = steps * Math.sin(radians);
-	    util.target.setXY(util.target.x + dx, util.target.y + dy);
-	};
-
-	Scratch3MotionBlocks.prototype.goToXY = function (args, util) {
-	    var x = Cast.toNumber(args.X);
-	    var y = Cast.toNumber(args.Y);
-	    util.target.setXY(x, y);
-	};
-
-	Scratch3MotionBlocks.prototype.goTo = function (args, util) {
-	    var targetX = 0;
-	    var targetY = 0;
-	    if (args.TO === '_mouse_') {
-	        targetX = util.ioQuery('mouse', 'getX');
-	        targetY = util.ioQuery('mouse', 'getY');
-	    } else if (args.TO === '_random_') {
-	        var stageWidth = this.runtime.constructor.STAGE_WIDTH;
-	        var stageHeight = this.runtime.constructor.STAGE_HEIGHT;
-	        targetX = Math.round(stageWidth * (Math.random() - 0.5));
-	        targetY = Math.round(stageHeight * (Math.random() - 0.5));
-	    } else {
-	        var goToTarget = this.runtime.getSpriteTargetByName(args.TO);
-	        if (!goToTarget) return;
-	        targetX = goToTarget.x;
-	        targetY = goToTarget.y;
-	    }
-	    util.target.setXY(targetX, targetY);
-	};
-
-	Scratch3MotionBlocks.prototype.turnRight = function (args, util) {
-	    var degrees = Cast.toNumber(args.DEGREES);
-	    util.target.setDirection(util.target.direction + degrees);
-	};
-
-	Scratch3MotionBlocks.prototype.turnLeft = function (args, util) {
-	    var degrees = Cast.toNumber(args.DEGREES);
-	    util.target.setDirection(util.target.direction - degrees);
-	};
-
-	Scratch3MotionBlocks.prototype.pointInDirection = function (args, util) {
-	    var direction = Cast.toNumber(args.DIRECTION);
-	    util.target.setDirection(direction);
-	};
-
-	Scratch3MotionBlocks.prototype.pointTowards = function (args, util) {
-	    var targetX = 0;
-	    var targetY = 0;
-	    if (args.TOWARDS === '_mouse_') {
-	        targetX = util.ioQuery('mouse', 'getX');
-	        targetY = util.ioQuery('mouse', 'getY');
-	    } else {
-	        var pointTarget = this.runtime.getSpriteTargetByName(args.TOWARDS);
-	        if (!pointTarget) return;
-	        targetX = pointTarget.x;
-	        targetY = pointTarget.y;
-	    }
-
-	    var dx = targetX - util.target.x;
-	    var dy = targetY - util.target.y;
-	    var direction = 90 - MathUtil.radToDeg(Math.atan2(dy, dx));
-	    util.target.setDirection(direction);
-	};
-
-	Scratch3MotionBlocks.prototype.glide = function (args, util) {
-	    if (!util.stackFrame.timer) {
-	        // First time: save data for future use.
-	        util.stackFrame.timer = new Timer();
-	        util.stackFrame.timer.start();
-	        util.stackFrame.duration = Cast.toNumber(args.SECS);
-	        util.stackFrame.startX = util.target.x;
-	        util.stackFrame.startY = util.target.y;
-	        util.stackFrame.endX = Cast.toNumber(args.X);
-	        util.stackFrame.endY = Cast.toNumber(args.Y);
-	        if (util.stackFrame.duration <= 0) {
-	            // Duration too short to glide.
-	            util.target.setXY(util.stackFrame.endX, util.stackFrame.endY);
-	            return;
-	        }
-	        util.yieldFrame();
-	    } else {
-	        var timeElapsed = util.stackFrame.timer.timeElapsed();
-	        if (timeElapsed < util.stackFrame.duration * 1000) {
-	            // In progress: move to intermediate position.
-	            var frac = timeElapsed / (util.stackFrame.duration * 1000);
-	            var dx = frac * (util.stackFrame.endX - util.stackFrame.startX);
-	            var dy = frac * (util.stackFrame.endY - util.stackFrame.startY);
-	            util.target.setXY(
-	                util.stackFrame.startX + dx,
-	                util.stackFrame.startY + dy
-	            );
-	            util.yieldFrame();
-	        } else {
-	            // Finished: move to final position.
-	            util.target.setXY(util.stackFrame.endX, util.stackFrame.endY);
-	        }
-	    }
-	};
-
-	Scratch3MotionBlocks.prototype.setRotationStyle = function (args, util) {
-	    util.target.setRotationStyle(args.STYLE);
-	};
-
-	Scratch3MotionBlocks.prototype.changeX = function (args, util) {
-	    var dx = Cast.toNumber(args.DX);
-	    util.target.setXY(util.target.x + dx, util.target.y);
-	};
-
-	Scratch3MotionBlocks.prototype.setX = function (args, util) {
-	    var x = Cast.toNumber(args.X);
-	    util.target.setXY(x, util.target.y);
-	};
-
-	Scratch3MotionBlocks.prototype.changeY = function (args, util) {
-	    var dy = Cast.toNumber(args.DY);
-	    util.target.setXY(util.target.x, util.target.y + dy);
-	};
-
-	Scratch3MotionBlocks.prototype.setY = function (args, util) {
-	    var y = Cast.toNumber(args.Y);
-	    util.target.setXY(util.target.x, y);
-	};
-
-	Scratch3MotionBlocks.prototype.getX = function (args, util) {
-	    return util.target.x;
-	};
-
-	Scratch3MotionBlocks.prototype.getY = function (args, util) {
-	    return util.target.y;
-	};
-
-	Scratch3MotionBlocks.prototype.getDirection = function (args, util) {
-	    return util.target.direction;
-	};
-
-	module.exports = Scratch3MotionBlocks;
-
-
-/***/ },
-/* 41 */
-/***/ function(module, exports, __webpack_require__) {
-
-	var Cast = __webpack_require__(23);
-
-	function Scratch3OperatorsBlocks(runtime) {
-	    /**
-	     * The runtime instantiating this block package.
-	     * @type {Runtime}
-	     */
-	    this.runtime = runtime;
-	}
-
-	/**
-	 * Retrieve the block primitives implemented by this package.
-	 * @return {Object.<string, Function>} Mapping of opcode to Function.
-	 */
-	Scratch3OperatorsBlocks.prototype.getPrimitives = function() {
-	    return {
-	        'operator_add': this.add,
-	        'operator_subtract': this.subtract,
-	        'operator_multiply': this.multiply,
-	        'operator_divide': this.divide,
-	        'operator_lt': this.lt,
-	        'operator_equals': this.equals,
-	        'operator_gt': this.gt,
-	        'operator_and': this.and,
-	        'operator_or': this.or,
-	        'operator_not': this.not,
-	        'operator_random': this.random,
-	        'operator_join': this.join,
-	        'operator_letter_of': this.letterOf,
-	        'operator_length': this.length,
-	        'operator_mod': this.mod,
-	        'operator_round': this.round,
-	        'operator_mathop': this.mathop
-	    };
-	};
-
-	Scratch3OperatorsBlocks.prototype.add = function (args) {
-	    return Cast.toNumber(args.NUM1) + Cast.toNumber(args.NUM2);
-	};
-
-	Scratch3OperatorsBlocks.prototype.subtract = function (args) {
-	    return Cast.toNumber(args.NUM1) - Cast.toNumber(args.NUM2);
-	};
-
-	Scratch3OperatorsBlocks.prototype.multiply = function (args) {
-	    return Cast.toNumber(args.NUM1) * Cast.toNumber(args.NUM2);
-	};
-
-	Scratch3OperatorsBlocks.prototype.divide = function (args) {
-	    return Cast.toNumber(args.NUM1) / Cast.toNumber(args.NUM2);
-	};
-
-	Scratch3OperatorsBlocks.prototype.lt = function (args) {
-	    return Cast.compare(args.OPERAND1, args.OPERAND2) < 0;
-	};
-
-	Scratch3OperatorsBlocks.prototype.equals = function (args) {
-	    return Cast.compare(args.OPERAND1, args.OPERAND2) == 0;
-	};
-
-	Scratch3OperatorsBlocks.prototype.gt = function (args) {
-	    return Cast.compare(args.OPERAND1, args.OPERAND2) > 0;
-	};
-
-	Scratch3OperatorsBlocks.prototype.and = function (args) {
-	    return Cast.toBoolean(args.OPERAND1) && Cast.toBoolean(args.OPERAND2);
-	};
-
-	Scratch3OperatorsBlocks.prototype.or = function (args) {
-	    return Cast.toBoolean(args.OPERAND1) || Cast.toBoolean(args.OPERAND2);
-	};
-
-	Scratch3OperatorsBlocks.prototype.not = function (args) {
-	    return !Cast.toBoolean(args.OPERAND);
-	};
-
-	Scratch3OperatorsBlocks.prototype.random = function (args) {
-	    var nFrom = Cast.toNumber(args.FROM);
-	    var nTo = Cast.toNumber(args.TO);
-	    var low = nFrom <= nTo ? nFrom : nTo;
-	    var high = nFrom <= nTo ? nTo : nFrom;
-	    if (low == high) return low;
-	    // If both arguments are ints, truncate the result to an int.
-	    if (Cast.isInt(args.FROM) && Cast.isInt(args.TO)) {
-	        return low + parseInt(Math.random() * ((high + 1) - low));
-	    }
-	    return (Math.random() * (high - low)) + low;
-	};
-
-	Scratch3OperatorsBlocks.prototype.join = function (args) {
-	    return Cast.toString(args.STRING1) + Cast.toString(args.STRING2);
-	};
-
-	Scratch3OperatorsBlocks.prototype.letterOf = function (args) {
-	    var index = Cast.toNumber(args.LETTER) - 1;
-	    var str = Cast.toString(args.STRING);
-	    // Out of bounds?
-	    if (index < 0 || index >= str.length) {
-	        return '';
-	    }
-	    return str.charAt(index);
-	};
-
-	Scratch3OperatorsBlocks.prototype.length = function (args) {
-	    return Cast.toString(args.STRING).length;
-	};
-
-	Scratch3OperatorsBlocks.prototype.mod = function (args) {
-	    var n = Cast.toNumber(args.NUM1);
-	    var modulus = Cast.toNumber(args.NUM2);
-	    var result = n % modulus;
-	    // Scratch mod is kept positive.
-	    if (result / modulus < 0) result += modulus;
-	    return result;
-	};
-
-	Scratch3OperatorsBlocks.prototype.round = function (args) {
-	    return Math.round(Cast.toNumber(args.NUM));
-	};
-
-	Scratch3OperatorsBlocks.prototype.mathop = function (args) {
-	    var operator = Cast.toString(args.OPERATOR).toLowerCase();
-	    var n = Cast.toNumber(args.NUM);
-	    switch (operator) {
-	    case 'abs': return Math.abs(n);
-	    case 'floor': return Math.floor(n);
-	    case 'ceiling': return Math.ceil(n);
-	    case 'sqrt': return Math.sqrt(n);
-	    case 'sin': return Math.sin((Math.PI * n) / 180);
-	    case 'cos': return Math.cos((Math.PI * n) / 180);
-	    case 'tan': return Math.tan((Math.PI * n) / 180);
-	    case 'asin': return (Math.asin(n) * 180) / Math.PI;
-	    case 'acos': return (Math.acos(n) * 180) / Math.PI;
-	    case 'atan': return (Math.atan(n) * 180) / Math.PI;
-	    case 'ln': return Math.log(n);
-	    case 'log': return Math.log(n) / Math.LN10;
-	    case 'e ^': return Math.exp(n);
-	    case '10 ^': return Math.pow(10, n);
-	    }
-	    return 0;
-	};
-
-	module.exports = Scratch3OperatorsBlocks;
-
-
-/***/ },
-/* 42 */
-/***/ function(module, exports, __webpack_require__) {
-
-	var Cast = __webpack_require__(23);
-
-	function Scratch3SensingBlocks(runtime) {
-	    /**
-	     * The runtime instantiating this block package.
-	     * @type {Runtime}
-	     */
-	    this.runtime = runtime;
-	}
-
-	/**
-	 * Retrieve the block primitives implemented by this package.
-	 * @return {Object.<string, Function>} Mapping of opcode to Function.
-	 */
-	Scratch3SensingBlocks.prototype.getPrimitives = function() {
-	    return {
-	        'sensing_touchingcolor': this.touchingColor,
-	        'sensing_coloristouchingcolor': this.colorTouchingColor,
-	        'sensing_distanceto': this.distanceTo,
-	        'sensing_timer': this.getTimer,
-	        'sensing_resettimer': this.resetTimer,
-	        'sensing_mousex': this.getMouseX,
-	        'sensing_mousey': this.getMouseY,
-	        'sensing_mousedown': this.getMouseDown,
-	        'sensing_keypressed': this.getKeyPressed,
-	        'sensing_current': this.current
-	    };
-	};
-
-	Scratch3SensingBlocks.prototype.touchingColor = function (args, util) {
-	    var color = Cast.toRgbColorList(args.COLOR);
-	    return util.target.isTouchingColor(color);
-	};
-
-	Scratch3SensingBlocks.prototype.colorTouchingColor = function (args, util) {
-	    var maskColor = Cast.toRgbColorList(args.COLOR);
-	    var targetColor = Cast.toRgbColorList(args.COLOR2);
-	    return util.target.colorIsTouchingColor(targetColor, maskColor);
-	};
-
-	Scratch3SensingBlocks.prototype.distanceTo = function (args, util) {
-	    if (util.target.isStage) return 10000;
-
-	    var targetX = 0;
-	    var targetY = 0;
-	    if (args.DISTANCETOMENU === '_mouse_') {
-	        targetX = util.ioQuery('mouse', 'getX');
-	        targetY = util.ioQuery('mouse', 'getY');
-	    } else {
-	        var distTarget = this.runtime.getSpriteTargetByName(
-	            args.DISTANCETOMENU
-	        );
-	        if (!distTarget) return 10000;
-	        targetX = distTarget.x;
-	        targetY = distTarget.y;
-	    }
-
-	    var dx = util.target.x - targetX;
-	    var dy = util.target.y - targetY;
-	    return Math.sqrt((dx * dx) + (dy * dy));
-	};
-
-	Scratch3SensingBlocks.prototype.getTimer = function (args, util) {
-	    return util.ioQuery('clock', 'projectTimer');
-	};
-
-	Scratch3SensingBlocks.prototype.resetTimer = function (args, util) {
-	    util.ioQuery('clock', 'resetProjectTimer');
-	};
-
-	Scratch3SensingBlocks.prototype.getMouseX = function (args, util) {
-	    return util.ioQuery('mouse', 'getX');
-	};
-
-	Scratch3SensingBlocks.prototype.getMouseY = function (args, util) {
-	    return util.ioQuery('mouse', 'getY');
-	};
-
-	Scratch3SensingBlocks.prototype.getMouseDown = function (args, util) {
-	    return util.ioQuery('mouse', 'getIsDown');
-	};
-
-	Scratch3SensingBlocks.prototype.current = function (args) {
-	    var menuOption = Cast.toString(args.CURRENTMENU).toLowerCase();
-	    var date = new Date();
-	    switch (menuOption) {
-	    case 'year': return date.getFullYear();
-	    case 'month': return date.getMonth() + 1; // getMonth is zero-based
-	    case 'date': return date.getDate();
-	    case 'dayofweek': return date.getDay() + 1; // getDay is zero-based, Sun=0
-	    case 'hour': return date.getHours();
-	    case 'minute': return date.getMinutes();
-	    case 'second': return date.getSeconds();
-	    }
-	    return 0;
-	};
-
-	Scratch3SensingBlocks.prototype.getKeyPressed = function (args, util) {
-	    return util.ioQuery('keyboard', 'getKeyIsDown', args.KEY_OPTION);
-	};
-
-	module.exports = Scratch3SensingBlocks;
-
-
-/***/ },
-/* 43 */
-/***/ function(module, exports, __webpack_require__) {
-
-	var Cast = __webpack_require__(23);
-
-	function Scratch3DataBlocks(runtime) {
-	    /**
-	     * The runtime instantiating this block package.
-	     * @type {Runtime}
-	     */
-	    this.runtime = runtime;
-	}
-
-	/**
-	 * Retrieve the block primitives implemented by this package.
-	 * @return {Object.<string, Function>} Mapping of opcode to Function.
-	 */
-	Scratch3DataBlocks.prototype.getPrimitives = function () {
-	    return {
-	        'data_variable': this.getVariable,
-	        'data_setvariableto': this.setVariableTo,
-	        'data_changevariableby': this.changeVariableBy,
-	        'data_listcontents': this.getListContents,
-	        'data_addtolist': this.addToList,
-	        'data_deleteoflist': this.deleteOfList,
-	        'data_insertatlist': this.insertAtList,
-	        'data_replaceitemoflist': this.replaceItemOfList,
-	        'data_itemoflist': this.getItemOfList,
-	        'data_lengthoflist': this.lengthOfList,
-	        'data_listcontainsitem': this.listContainsItem
-	    };
-	};
-
-	Scratch3DataBlocks.prototype.getVariable = function (args, util) {
-	    var variable = util.target.lookupOrCreateVariable(args.VARIABLE);
-	    return variable.value;
-	};
-
-	Scratch3DataBlocks.prototype.setVariableTo = function (args, util) {
-	    var variable = util.target.lookupOrCreateVariable(args.VARIABLE);
-	    variable.value = args.VALUE;
-	};
-
-	Scratch3DataBlocks.prototype.changeVariableBy = function (args, util) {
-	    var variable = util.target.lookupOrCreateVariable(args.VARIABLE);
-	    var castedValue = Cast.toNumber(variable.value);
-	    var dValue = Cast.toNumber(args.VALUE);
-	    variable.value = castedValue + dValue;
-	};
-
-	Scratch3DataBlocks.prototype.getListContents = function (args, util) {
-	    var list = util.target.lookupOrCreateList(args.LIST);
-	    // Determine if the list is all single letters.
-	    // If it is, report contents joined together with no separator.
-	    // If it's not, report contents joined together with a space.
-	    var allSingleLetters = true;
-	    for (var i = 0; i < list.contents.length; i++) {
-	        var listItem = list.contents[i];
-	        if (!((typeof listItem === 'string') &&
-	              (listItem.length == 1))) {
-	            allSingleLetters = false;
-	            break;
-	        }
-	    }
-	    if (allSingleLetters) {
-	        return list.contents.join('');
-	    } else {
-	        return list.contents.join(' ');
-	    }
-	};
-
-	Scratch3DataBlocks.prototype.addToList = function (args, util) {
-	    var list = util.target.lookupOrCreateList(args.LIST);
-	    list.contents.push(args.ITEM);
-	};
-
-	Scratch3DataBlocks.prototype.deleteOfList = function (args, util) {
-	    var list = util.target.lookupOrCreateList(args.LIST);
-	    var index = Cast.toListIndex(args.INDEX, list.contents.length);
-	    if (index === Cast.LIST_INVALID) {
-	        return;
-	    } else if (index === Cast.LIST_ALL) {
-	        list.contents = [];
-	        return;
-	    }
-	    list.contents.splice(index - 1, 1);
-	};
-
-	Scratch3DataBlocks.prototype.insertAtList = function (args, util) {
-	    var item = args.ITEM;
-	    var list = util.target.lookupOrCreateList(args.LIST);
-	    var index = Cast.toListIndex(args.INDEX, list.contents.length + 1);
-	    if (index === Cast.LIST_INVALID) {
-	        return;
-	    }
-	    list.contents.splice(index - 1, 0, item);
-	};
-
-	Scratch3DataBlocks.prototype.replaceItemOfList = function (args, util) {
-	    var item = args.ITEM;
-	    var list = util.target.lookupOrCreateList(args.LIST);
-	    var index = Cast.toListIndex(args.INDEX, list.contents.length);
-	    if (index === Cast.LIST_INVALID) {
-	        return;
-	    }
-	    list.contents.splice(index - 1, 1, item);
-	};
-
-	Scratch3DataBlocks.prototype.getItemOfList = function (args, util) {
-	    var list = util.target.lookupOrCreateList(args.LIST);
-	    var index = Cast.toListIndex(args.INDEX, list.contents.length);
-	    if (index === Cast.LIST_INVALID) {
-	        return '';
-	    }
-	    return list.contents[index - 1];
-	};
-
-	Scratch3DataBlocks.prototype.lengthOfList = function (args, util) {
-	    var list = util.target.lookupOrCreateList(args.LIST);
-	    return list.contents.length;
-	};
-
-	Scratch3DataBlocks.prototype.listContainsItem = function (args, util) {
-	    var item = args.ITEM;
-	    var list = util.target.lookupOrCreateList(args.LIST);
-	    if (list.contents.indexOf(item) >= 0) {
-	        return true;
-	    }
-	    // Try using Scratch comparison operator on each item.
-	    // (Scratch considers the string '123' equal to the number 123).
-	    for (var i = 0; i < list.contents.length; i++) {
-	        if (Cast.compare(list.contents[i], item) == 0) {
-	            return true;
-	        }
-	    }
-	    return false;
-	};
-
-	module.exports = Scratch3DataBlocks;
-
-
-/***/ },
-/* 44 */
-/***/ function(module, exports) {
-
-	function Scratch3ProcedureBlocks(runtime) {
-	    /**
-	     * The runtime instantiating this block package.
-	     * @type {Runtime}
-	     */
-	    this.runtime = runtime;
-	}
-
-	/**
-	 * Retrieve the block primitives implemented by this package.
-	 * @return {Object.<string, Function>} Mapping of opcode to Function.
-	 */
-	Scratch3ProcedureBlocks.prototype.getPrimitives = function() {
-	    return {
-	        'procedures_defnoreturn': this.defNoReturn,
-	        'procedures_callnoreturn': this.callNoReturn,
-	        'procedures_param': this.param
-	    };
-	};
-
-	Scratch3ProcedureBlocks.prototype.defNoReturn = function () {
-	    // No-op: execute the blocks.
-	};
-
-	Scratch3ProcedureBlocks.prototype.callNoReturn = function (args, util) {
-	    if (!util.stackFrame.executed) {
-	        var procedureName = args.mutation.proccode;
-	        var paramNames = util.getProcedureParamNames(procedureName);
-	        for (var i = 0; i < paramNames.length; i++) {
-	            if (args.hasOwnProperty('input' + i)) {
-	                util.pushParam(paramNames[i], args['input' + i]);
-	            }
-	        }
-	        util.stackFrame.executed = true;
-	        util.startProcedure(procedureName);
-	    }
-	};
-
-	Scratch3ProcedureBlocks.prototype.param = function (args, util) {
-	    var value = util.getParam(args.mutation.paramname);
-	    if (!value) {
-	        return 0;
-	    }
-	    return value;
-	};
-
-	module.exports = Scratch3ProcedureBlocks;
-
-
-/***/ },
-/* 45 */
-/***/ function(module, exports, __webpack_require__) {
-
-	/**
-	 * @fileoverview
-	 * Partial implementation of an SB2 JSON importer.
-	 * Parses provided JSON and then generates all needed
-	 * scratch-vm runtime structures.
-	 */
-
-	var Blocks = __webpack_require__(46);
-	var Clone = __webpack_require__(101);
-	var Sprite = __webpack_require__(106);
-	var Color = __webpack_require__(24);
-	var uid = __webpack_require__(105);
-	var specMap = __webpack_require__(107);
-	var Variable = __webpack_require__(103);
-	var List = __webpack_require__(104);
-
-	/**
-	 * Top-level handler. Parse provided JSON,
-	 * and process the top-level object (the stage object).
-	 * @param {!string} json SB2-format JSON to load.
-	 * @param {!Runtime} runtime Runtime object to load all structures into.
-	 */
-	function sb2import (json, runtime) {
-	    parseScratchObject(
-	        JSON.parse(json),
-	        runtime,
-	        true
-	    );
-	}
-
-	/**
-	 * Parse a single "Scratch object" and create all its in-memory VM objects.
-	 * @param {!Object} object From-JSON "Scratch object:" sprite, stage, watcher.
-	 * @param {!Runtime} runtime Runtime object to load all structures into.
-	 * @param {boolean} topLevel Whether this is the top-level object (stage).
-	 */
-	function parseScratchObject (object, runtime, topLevel) {
-	    if (!object.hasOwnProperty('objName')) {
-	        // Watcher/monitor - skip this object until those are implemented in VM.
-	        // @todo
-	        return;
-	    }
-	    // Blocks container for this object.
-	    var blocks = new Blocks();
-	    // @todo: For now, load all Scratch objects (stage/sprites) as a Sprite.
-	    var sprite = new Sprite(blocks, runtime);
-	    // Sprite/stage name from JSON.
-	    if (object.hasOwnProperty('objName')) {
-	        sprite.name = object.objName;
-	    }
-	    // Costumes from JSON.
-	    if (object.hasOwnProperty('costumes')) {
-	        for (var i = 0; i < object.costumes.length; i++) {
-	            var costume = object.costumes[i];
-	            // @todo: Make sure all the relevant metadata is being pulled out.
-	            sprite.costumes.push({
-	                skin: 'https://cdn.assets.scratch.mit.edu/internalapi/asset/'
-	                    + costume.baseLayerMD5 + '/get/',
-	                name: costume.costumeName,
-	                bitmapResolution: costume.bitmapResolution,
-	                rotationCenterX: costume.rotationCenterX,
-	                rotationCenterY: costume.rotationCenterY
-	            });
-	        }
-	    }
-	    // If included, parse any and all scripts/blocks on the object.
-	    if (object.hasOwnProperty('scripts')) {
-	        parseScripts(object.scripts, blocks);
-	    }
-	    // Create the first clone, and load its run-state from JSON.
-	    var target = sprite.createClone();
-	    // Add it to the runtime's list of targets.
-	    runtime.targets.push(target);
-	    // Load target properties from JSON.
-	    if (object.hasOwnProperty('variables')) {
-	        for (var j = 0; j < object.variables.length; j++) {
-	            var variable = object.variables[j];
-	            target.variables[variable.name] = new Variable(
-	                variable.name,
-	                variable.value,
-	                variable.isPersistent
-	            );
-	        }
-	    }
-	    if (object.hasOwnProperty('lists')) {
-	        for (var k = 0; k < object.lists.length; k++) {
-	            var list = object.lists[k];
-	            // @todo: monitor properties.
-	            target.lists[list.listName] = new List(
-	                list.listName,
-	                list.contents
-	            );
-	        }
-	    }
-	    if (object.hasOwnProperty('scratchX')) {
-	        target.x = object.scratchX;
-	    }
-	    if (object.hasOwnProperty('scratchY')) {
-	        target.y = object.scratchY;
-	    }
-	    if (object.hasOwnProperty('direction')) {
-	        target.direction = object.direction;
-	    }
-	    if (object.hasOwnProperty('scale')) {
-	        // SB2 stores as 1.0 = 100%; we use % in the VM.
-	        target.size = object.scale * 100;
-	    }
-	    if (object.hasOwnProperty('visible')) {
-	        target.visible = object.visible;
-	    }
-	    if (object.hasOwnProperty('currentCostumeIndex')) {
-	        target.currentCostume = Math.round(object.currentCostumeIndex);
-	    }
-	    if (object.hasOwnProperty('rotationStyle')) {
-	        if (object.rotationStyle == 'none') {
-	            target.rotationStyle = Clone.ROTATION_STYLE_NONE;
-	        } else if (object.rotationStyle == 'leftRight') {
-	            target.rotationStyle = Clone.ROTATION_STYLE_LEFT_RIGHT;
-	        } else if (object.rotationStyle == 'normal') {
-	            target.rotationStyle = Clone.ROTATION_STYLE_ALL_AROUND;
-	        }
-	    }
-	    target.isStage = topLevel;
-	    target.updateAllDrawableProperties();
-	    // The stage will have child objects; recursively process them.
-	    if (object.children) {
-	        for (var m = 0; m < object.children.length; m++) {
-	            parseScratchObject(object.children[m], runtime, false);
-	        }
-	    }
-	}
-
-	/**
-	 * Parse a Scratch object's scripts into VM blocks.
-	 * This should only handle top-level scripts that include X, Y coordinates.
-	 * @param {!Object} scripts Scripts object from SB2 JSON.
-	 * @param {!Blocks} blocks Blocks object to load parsed blocks into.
-	 */
-	function parseScripts (scripts, blocks) {
-	    for (var i = 0; i < scripts.length; i++) {
-	        var script = scripts[i];
-	        var scriptX = script[0];
-	        var scriptY = script[1];
-	        var blockList = script[2];
-	        var parsedBlockList = parseBlockList(blockList);
-	        if (parsedBlockList[0]) {
-	            // Adjust script coordinates to account for
-	            // larger block size in scratch-blocks.
-	            // @todo: Determine more precisely the right formulas here.
-	            parsedBlockList[0].x = scriptX * 1.1;
-	            parsedBlockList[0].y = scriptY * 1.1;
-	            parsedBlockList[0].topLevel = true;
-	            parsedBlockList[0].parent = null;
-	        }
-	        // Flatten children and create add the blocks.
-	        var convertedBlocks = flatten(parsedBlockList);
-	        for (var j = 0; j < convertedBlocks.length; j++) {
-	            blocks.createBlock(convertedBlocks[j]);
-	        }
-	    }
-	}
-
-	/**
-	 * Parse any list of blocks from SB2 JSON into a list of VM-format blocks.
-	 * Could be used to parse a top-level script,
-	 * a list of blocks in a branch (e.g., in forever),
-	 * or a list of blocks in an argument (e.g., move [pick random...]).
-	 * @param {Array.<Object>} blockList SB2 JSON-format block list.
-	 * @return {Array.<Object>} Scratch VM-format block list.
-	 */
-	function parseBlockList (blockList) {
-	    var resultingList = [];
-	    var previousBlock = null; // For setting next.
-	    for (var i = 0; i < blockList.length; i++) {
-	        var block = blockList[i];
-	        var parsedBlock = parseBlock(block);
-	        if (previousBlock) {
-	            parsedBlock.parent = previousBlock.id;
-	            previousBlock.next = parsedBlock.id;
-	        }
-	        previousBlock = parsedBlock;
-	        resultingList.push(parsedBlock);
-	    }
-	    return resultingList;
-	}
-
-	/**
-	 * Flatten a block tree into a block list.
-	 * Children are temporarily stored on the `block.children` property.
-	 * @param {Array.<Object>} blocks list generated by `parseBlockList`.
-	 * @return {Array.<Object>} Flattened list to be passed to `blocks.createBlock`.
-	 */
-	function flatten (blocks) {
-	    var finalBlocks = [];
-	    for (var i = 0; i < blocks.length; i++) {
-	        var block = blocks[i];
-	        finalBlocks.push(block);
-	        if (block.children) {
-	            finalBlocks = finalBlocks.concat(flatten(block.children));
-	        }
-	        delete block.children;
-	    }
-	    return finalBlocks;
-	}
-
-	/**
-	 * Convert a Scratch 2.0 procedure string (e.g., "my_procedure %s %b %n")
-	 * into an argument map. This allows us to provide the expected inputs
-	 * to a mutated procedure call.
-	 * @param {string} procCode Scratch 2.0 procedure string.
-	 * @return {Object} Argument map compatible with those in sb2specmap.
-	 */
-	function parseProcedureArgMap (procCode) {
-	    var argMap = [
-	        {} // First item in list is op string.
-	    ];
-	    var INPUT_PREFIX = 'input';
-	    var inputCount = 0;
-	    // Split by %n, %b, %s.
-	    var parts = procCode.split(/(?=[^\\]\%[nbs])/);
-	    for (var i = 0; i < parts.length; i++) {
-	        var part = parts[i].trim();
-	        if (part.substring(0, 1) == '%') {
-	            var argType = part.substring(1, 2);
-	            var arg = {
-	                type: 'input',
-	                inputName: INPUT_PREFIX + (inputCount++)
-	            };
-	            if (argType == 'n') {
-	                arg.inputOp = 'math_number';
-	            } else if (argType == 's') {
-	                arg.inputOp = 'text';
-	            }
-	            argMap.push(arg);
-	        }
-	    }
-	    return argMap;
-	}
-
-	/**
-	 * Parse a single SB2 JSON-formatted block and its children.
-	 * @param {!Object} sb2block SB2 JSON-formatted block.
-	 * @return {Object} Scratch VM format block.
-	 */
-	function parseBlock (sb2block) {
-	    // First item in block object is the old opcode (e.g., 'forward:').
-	    var oldOpcode = sb2block[0];
-	    // Convert the block using the specMap. See sb2specmap.js.
-	    if (!oldOpcode || !specMap[oldOpcode]) {
-	        console.warn('Couldn\'t find SB2 block: ', oldOpcode);
-	        return;
-	    }
-	    var blockMetadata = specMap[oldOpcode];
-	    // Block skeleton.
-	    var activeBlock = {
-	        id: uid(), // Generate a new block unique ID.
-	        opcode: blockMetadata.opcode, // Converted, e.g. "motion_movesteps".
-	        inputs: {}, // Inputs to this block and the blocks they point to.
-	        fields: {}, // Fields on this block and their values.
-	        next: null, // Next block.
-	        shadow: false, // No shadow blocks in an SB2 by default.
-	        children: [] // Store any generated children, flattened in `flatten`.
-	    };
-	    // For a procedure call, generate argument map from proc string.
-	    if (oldOpcode == 'call') {
-	        blockMetadata.argMap = parseProcedureArgMap(sb2block[1]);
-	    }
-	    // Look at the expected arguments in `blockMetadata.argMap.`
-	    // The basic problem here is to turn positional SB2 arguments into
-	    // non-positional named Scratch VM arguments.
-	    for (var i = 0; i < blockMetadata.argMap.length; i++) {
-	        var expectedArg = blockMetadata.argMap[i];
-	        var providedArg = sb2block[i + 1]; // (i = 0 is opcode)
-	        // Whether the input is obscuring a shadow.
-	        var shadowObscured = false;
-	        // Positional argument is an input.
-	        if (expectedArg.type == 'input') {
-	            // Create a new block and input metadata.
-	            var inputUid = uid();
-	            activeBlock.inputs[expectedArg.inputName] = {
-	                name: expectedArg.inputName,
-	                block: null,
-	                shadow: null
-	            };
-	            if (typeof providedArg == 'object' && providedArg) {
-	                // Block or block list occupies the input.
-	                var innerBlocks;
-	                if (typeof providedArg[0] == 'object' && providedArg[0]) {
-	                    // Block list occupies the input.
-	                    innerBlocks = parseBlockList(providedArg);
-	                } else {
-	                    // Single block occupies the input.
-	                    innerBlocks = [parseBlock(providedArg)];
-	                }
-	                for (var j = 0; j < innerBlocks.length; j++) {
-	                    innerBlocks[j].parent = activeBlock.id;
-	                }
-	                // Obscures any shadow.
-	                shadowObscured = true;
-	                activeBlock.inputs[expectedArg.inputName].block = (
-	                    innerBlocks[0].id
-	                );
-	                activeBlock.children = (
-	                    activeBlock.children.concat(innerBlocks)
-	                );
-	            }
-	            // Generate a shadow block to occupy the input.
-	            if (!expectedArg.inputOp) {
-	                // No editable shadow input; e.g., for a boolean.
-	                continue;
-	            }
-	            // Each shadow has a field generated for it automatically.
-	            // Value to be filled in the field.
-	            var fieldValue = providedArg;
-	            // Shadows' field names match the input name, except for these:
-	            var fieldName = expectedArg.inputName;
-	            if (expectedArg.inputOp == 'math_number' ||
-	                expectedArg.inputOp == 'math_whole_number' ||
-	                expectedArg.inputOp == 'math_positive_number' ||
-	                expectedArg.inputOp == 'math_integer' ||
-	                expectedArg.inputOp == 'math_angle') {
-	                fieldName = 'NUM';
-	                // Fields are given Scratch 2.0 default values if obscured.
-	                if (shadowObscured) {
-	                    fieldValue = 10;
-	                }
-	            } else if (expectedArg.inputOp == 'text') {
-	                fieldName = 'TEXT';
-	                if (shadowObscured) {
-	                    fieldValue = '';
-	                }
-	            } else if (expectedArg.inputOp == 'colour_picker') {
-	                // Convert SB2 color to hex.
-	                fieldValue = Color.decimalToHex(providedArg);
-	                fieldName = 'COLOUR';
-	                if (shadowObscured) {
-	                    fieldValue = '#990000';
-	                }
-	            }
-	            var fields = {};
-	            fields[fieldName] = {
-	                name: fieldName,
-	                value: fieldValue
-	            };
-	            activeBlock.children.push({
-	                id: inputUid,
-	                opcode: expectedArg.inputOp,
-	                inputs: {},
-	                fields: fields,
-	                next: null,
-	                topLevel: false,
-	                parent: activeBlock.id,
-	                shadow: true
-	            });
-	            activeBlock.inputs[expectedArg.inputName].shadow = inputUid;
-	            // If no block occupying the input, alias to the shadow.
-	            if (!activeBlock.inputs[expectedArg.inputName].block) {
-	                activeBlock.inputs[expectedArg.inputName].block = inputUid;
-	            }
-	        } else if (expectedArg.type == 'field') {
-	            // Add as a field on this block.
-	            activeBlock.fields[expectedArg.fieldName] = {
-	                name: expectedArg.fieldName,
-	                value: providedArg
-	            };
-	        }
-	    }
-	    // Special cases to generate mutations.
-	    if (oldOpcode == 'stopScripts') {
-	        // Mutation for stop block: if the argument is 'other scripts',
-	        // the block needs a next connection.
-	        if (sb2block[1] == 'other scripts in sprite') {
-	            activeBlock.mutation = {
-	                tagName: 'mutation',
-	                hasnext: 'true',
-	                children: []
-	            };
-	        }
-	    } else if (oldOpcode == 'procDef') {
-	        // Mutation for procedure definition:
-	        // store all 2.0 proc data.
-	        var procData = sb2block.slice(1);
-	        activeBlock.mutation = {
-	            tagName: 'mutation',
-	            proccode: procData[0], // e.g., "abc %n %b %s"
-	            argumentnames: JSON.stringify(procData[1]), // e.g. ['arg1', 'arg2']
-	            argumentdefaults: JSON.stringify(procData[2]), // e.g., [1, 'abc']
-	            warp: procData[3], // Warp mode, e.g., true/false.
-	            children: []
-	        };
-	    } else if (oldOpcode == 'call') {
-	        // Mutation for procedure call:
-	        // string for proc code (e.g., "abc %n %b %s").
-	        activeBlock.mutation = {
-	            tagName: 'mutation',
-	            children: [],
-	            proccode: sb2block[1]
-	        };
-	    } else if (oldOpcode == 'getParam') {
-	        // Mutation for procedure parameter.
-	        activeBlock.mutation = {
-	            tagName: 'mutation',
-	            children: [],
-	            paramname: sb2block[1], // Name of parameter.
-	            shape: sb2block[2] // Shape - in 2.0, 'r' or 'b'.
-	        };
-	    }
-	    return activeBlock;
-	}
-
-	module.exports = sb2import;
-
-
-/***/ },
-/* 46 */
-/***/ function(module, exports, __webpack_require__) {
-
-	var adapter = __webpack_require__(47);
-	var mutationAdapter = __webpack_require__(48);
-	var xmlEscape = __webpack_require__(100);
+	var adapter = __webpack_require__(22);
+	var mutationAdapter = __webpack_require__(23);
+	var xmlEscape = __webpack_require__(75);
 
 	/**
 	 * @fileoverview
@@ -5859,11 +2966,10 @@
 	 * Create event listener for blocks. Handles validation and serves as a generic
 	 * adapter between the blocks and the runtime interface.
 	 * @param {Object} e Blockly "block" event
-	 * @param {boolean} isFlyout If true, create a listener for flyout events.
 	 * @param {?Runtime} opt_runtime Optional runtime to forward click events to.
 	 */
 
-	Blocks.prototype.blocklyListen = function (e, isFlyout, opt_runtime) {
+	Blocks.prototype.blocklyListen = function (e, opt_runtime) {
 	    // Validate event
 	    if (typeof e !== 'object') return;
 	    if (typeof e.blockId !== 'string') return;
@@ -5882,7 +2988,7 @@
 	        var newBlocks = adapter(e);
 	        // A create event can create many blocks. Add them all.
 	        for (var i = 0; i < newBlocks.length; i++) {
-	            this.createBlock(newBlocks[i], isFlyout);
+	            this.createBlock(newBlocks[i]);
 	        }
 	        break;
 	    case 'change':
@@ -5904,8 +3010,10 @@
 	        });
 	        break;
 	    case 'delete':
-	        // Don't accept delete events for shadow blocks being obscured.
-	        if (this._blocks[e.blockId].shadow) {
+	        // Don't accept delete events for missing blocks,
+	        // or shadow blocks being obscured.
+	        if (!this._blocks.hasOwnProperty(e.blockId) ||
+	            this._blocks[e.blockId].shadow) {
 	            return;
 	        }
 	        // Inform any runtime to forget about glows on this script.
@@ -5924,9 +3032,8 @@
 	/**
 	 * Block management: create blocks and scripts from a `create` event
 	 * @param {!Object} block Blockly create event to be processed
-	 * @param {boolean} opt_isFlyoutBlock Whether the block is in the flyout.
 	 */
-	Blocks.prototype.createBlock = function (block, opt_isFlyoutBlock) {
+	Blocks.prototype.createBlock = function (block) {
 	    // Does the block already exist?
 	    // Could happen, e.g., for an unobscured shadow.
 	    if (this._blocks.hasOwnProperty(block.id)) {
@@ -5936,9 +3043,8 @@
 	    this._blocks[block.id] = block;
 	    // Push block id to scripts array.
 	    // Blocks are added as a top-level stack if they are marked as a top-block
-	    // (if they were top-level XML in the event) and if they are not
-	    // flyout blocks.
-	    if (!opt_isFlyoutBlock && block.topLevel) {
+	    // (if they were top-level XML in the event).
+	    if (block.topLevel) {
 	        this._addScript(block.id);
 	    }
 	};
@@ -5966,6 +3072,10 @@
 	 * @param {!Object} e Blockly move event to be processed
 	 */
 	Blocks.prototype.moveBlock = function (e) {
+	    if (!this._blocks.hasOwnProperty(e.id)) {
+	        return;
+	    }
+
 	    // Move coordinate changes.
 	    if (e.newCoordinate) {
 	        this._blocks[e.id].x = e.newCoordinate.x;
@@ -6170,11 +3280,11 @@
 
 
 /***/ },
-/* 47 */
+/* 22 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var mutationAdapter = __webpack_require__(48);
-	var html = __webpack_require__(49);
+	var mutationAdapter = __webpack_require__(23);
+	var html = __webpack_require__(24);
 
 	/**
 	 * Adapter between block creation events and block representation which can be
@@ -6323,10 +3433,10 @@
 
 
 /***/ },
-/* 48 */
+/* 23 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var html = __webpack_require__(49);
+	var html = __webpack_require__(24);
 
 	/**
 	 * Adapter between mutator XML or DOM and block representation which can be
@@ -6368,11 +3478,11 @@
 
 
 /***/ },
-/* 49 */
+/* 24 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var Parser = __webpack_require__(50),
-	    DomHandler = __webpack_require__(57);
+	var Parser = __webpack_require__(25),
+	    DomHandler = __webpack_require__(32);
 
 	function defineProp(name, value){
 		delete module.exports[name];
@@ -6382,26 +3492,26 @@
 
 	module.exports = {
 		Parser: Parser,
-		Tokenizer: __webpack_require__(51),
-		ElementType: __webpack_require__(58),
+		Tokenizer: __webpack_require__(26),
+		ElementType: __webpack_require__(33),
 		DomHandler: DomHandler,
 		get FeedHandler(){
-			return defineProp("FeedHandler", __webpack_require__(61));
+			return defineProp("FeedHandler", __webpack_require__(36));
 		},
 		get Stream(){
-			return defineProp("Stream", __webpack_require__(62));
+			return defineProp("Stream", __webpack_require__(37));
 		},
 		get WritableStream(){
-			return defineProp("WritableStream", __webpack_require__(63));
+			return defineProp("WritableStream", __webpack_require__(38));
 		},
 		get ProxyHandler(){
-			return defineProp("ProxyHandler", __webpack_require__(86));
+			return defineProp("ProxyHandler", __webpack_require__(61));
 		},
 		get DomUtils(){
-			return defineProp("DomUtils", __webpack_require__(87));
+			return defineProp("DomUtils", __webpack_require__(62));
 		},
 		get CollectingHandler(){
-			return defineProp("CollectingHandler", __webpack_require__(99));
+			return defineProp("CollectingHandler", __webpack_require__(74));
 		},
 		// For legacy support
 		DefaultHandler: DomHandler,
@@ -6442,10 +3552,10 @@
 
 
 /***/ },
-/* 50 */
+/* 25 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var Tokenizer = __webpack_require__(51);
+	var Tokenizer = __webpack_require__(26);
 
 	/*
 		Options:
@@ -6800,15 +3910,15 @@
 
 
 /***/ },
-/* 51 */
+/* 26 */
 /***/ function(module, exports, __webpack_require__) {
 
 	module.exports = Tokenizer;
 
-	var decodeCodePoint = __webpack_require__(52),
-	    entityMap = __webpack_require__(54),
-	    legacyMap = __webpack_require__(55),
-	    xmlMap    = __webpack_require__(56),
+	var decodeCodePoint = __webpack_require__(27),
+	    entityMap = __webpack_require__(29),
+	    legacyMap = __webpack_require__(30),
+	    xmlMap    = __webpack_require__(31),
 
 	    i = 0,
 
@@ -7712,10 +4822,10 @@
 
 
 /***/ },
-/* 52 */
+/* 27 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var decodeMap = __webpack_require__(53);
+	var decodeMap = __webpack_require__(28);
 
 	module.exports = decodeCodePoint;
 
@@ -7744,7 +4854,7 @@
 
 
 /***/ },
-/* 53 */
+/* 28 */
 /***/ function(module, exports) {
 
 	module.exports = {
@@ -7779,7 +4889,7 @@
 	};
 
 /***/ },
-/* 54 */
+/* 29 */
 /***/ function(module, exports) {
 
 	module.exports = {
@@ -9911,7 +7021,7 @@
 	};
 
 /***/ },
-/* 55 */
+/* 30 */
 /***/ function(module, exports) {
 
 	module.exports = {
@@ -10024,7 +7134,7 @@
 	};
 
 /***/ },
-/* 56 */
+/* 31 */
 /***/ function(module, exports) {
 
 	module.exports = {
@@ -10036,14 +7146,14 @@
 	};
 
 /***/ },
-/* 57 */
+/* 32 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var ElementType = __webpack_require__(58);
+	var ElementType = __webpack_require__(33);
 
 	var re_whitespace = /\s+/g;
-	var NodePrototype = __webpack_require__(59);
-	var ElementPrototype = __webpack_require__(60);
+	var NodePrototype = __webpack_require__(34);
+	var ElementPrototype = __webpack_require__(35);
 
 	function DomHandler(callback, options, elementCB){
 		if(typeof callback === "object"){
@@ -10224,7 +7334,7 @@
 
 
 /***/ },
-/* 58 */
+/* 33 */
 /***/ function(module, exports) {
 
 	//Types of elements found in the DOM
@@ -10245,7 +7355,7 @@
 
 
 /***/ },
-/* 59 */
+/* 34 */
 /***/ function(module, exports) {
 
 	// This object will be used as the prototype for Nodes when creating a
@@ -10295,11 +7405,11 @@
 
 
 /***/ },
-/* 60 */
+/* 35 */
 /***/ function(module, exports, __webpack_require__) {
 
 	// DOM-Level-1-compliant structure
-	var NodePrototype = __webpack_require__(59);
+	var NodePrototype = __webpack_require__(34);
 	var ElementPrototype = module.exports = Object.create(NodePrototype);
 
 	var domLvl1 = {
@@ -10321,10 +7431,10 @@
 
 
 /***/ },
-/* 61 */
+/* 36 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var index = __webpack_require__(49),
+	var index = __webpack_require__(24),
 	    DomHandler = index.DomHandler,
 		DomUtils = index.DomUtils;
 
@@ -10422,12 +7532,12 @@
 
 
 /***/ },
-/* 62 */
+/* 37 */
 /***/ function(module, exports, __webpack_require__) {
 
 	module.exports = Stream;
 
-	var Parser = __webpack_require__(63);
+	var Parser = __webpack_require__(38);
 
 	function Stream(options){
 		Parser.call(this, new Cbs(this), options);
@@ -10441,7 +7551,7 @@
 		this.scope = scope;
 	}
 
-	var EVENTS = __webpack_require__(49).EVENTS;
+	var EVENTS = __webpack_require__(24).EVENTS;
 
 	Object.keys(EVENTS).forEach(function(name){
 		if(EVENTS[name] === 0){
@@ -10462,13 +7572,13 @@
 	});
 
 /***/ },
-/* 63 */
+/* 38 */
 /***/ function(module, exports, __webpack_require__) {
 
 	module.exports = Stream;
 
-	var Parser = __webpack_require__(50),
-	    WritableStream = __webpack_require__(64).Writable || __webpack_require__(85).Writable;
+	var Parser = __webpack_require__(25),
+	    WritableStream = __webpack_require__(39).Writable || __webpack_require__(60).Writable;
 
 	function Stream(cbs, options){
 		var parser = this._parser = new Parser(cbs, options);
@@ -10488,7 +7598,7 @@
 	};
 
 /***/ },
-/* 64 */
+/* 39 */
 /***/ function(module, exports, __webpack_require__) {
 
 	// Copyright Joyent, Inc. and other Node contributors.
@@ -10515,14 +7625,14 @@
 	module.exports = Stream;
 
 	var EE = __webpack_require__(11).EventEmitter;
-	var inherits = __webpack_require__(65);
+	var inherits = __webpack_require__(40);
 
 	inherits(Stream, EE);
-	Stream.Readable = __webpack_require__(66);
-	Stream.Writable = __webpack_require__(81);
-	Stream.Duplex = __webpack_require__(82);
-	Stream.Transform = __webpack_require__(83);
-	Stream.PassThrough = __webpack_require__(84);
+	Stream.Readable = __webpack_require__(41);
+	Stream.Writable = __webpack_require__(56);
+	Stream.Duplex = __webpack_require__(57);
+	Stream.Transform = __webpack_require__(58);
+	Stream.PassThrough = __webpack_require__(59);
 
 	// Backwards-compat with node 0.4.x
 	Stream.Stream = Stream;
@@ -10621,7 +7731,7 @@
 
 
 /***/ },
-/* 65 */
+/* 40 */
 /***/ function(module, exports) {
 
 	if (typeof Object.create === 'function') {
@@ -10650,24 +7760,24 @@
 
 
 /***/ },
-/* 66 */
+/* 41 */
 /***/ function(module, exports, __webpack_require__) {
 
-	/* WEBPACK VAR INJECTION */(function(process) {exports = module.exports = __webpack_require__(67);
-	exports.Stream = __webpack_require__(64);
+	/* WEBPACK VAR INJECTION */(function(process) {exports = module.exports = __webpack_require__(42);
+	exports.Stream = __webpack_require__(39);
 	exports.Readable = exports;
-	exports.Writable = __webpack_require__(77);
-	exports.Duplex = __webpack_require__(76);
-	exports.Transform = __webpack_require__(79);
-	exports.PassThrough = __webpack_require__(80);
+	exports.Writable = __webpack_require__(52);
+	exports.Duplex = __webpack_require__(51);
+	exports.Transform = __webpack_require__(54);
+	exports.PassThrough = __webpack_require__(55);
 	if (!process.browser && process.env.READABLE_STREAM === 'disable') {
-	  module.exports = __webpack_require__(64);
+	  module.exports = __webpack_require__(39);
 	}
 
 	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(13)))
 
 /***/ },
-/* 67 */
+/* 42 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/* WEBPACK VAR INJECTION */(function(process) {// Copyright Joyent, Inc. and other Node contributors.
@@ -10694,12 +7804,12 @@
 	module.exports = Readable;
 
 	/*<replacement>*/
-	var isArray = __webpack_require__(68);
+	var isArray = __webpack_require__(43);
 	/*</replacement>*/
 
 
 	/*<replacement>*/
-	var Buffer = __webpack_require__(69).Buffer;
+	var Buffer = __webpack_require__(44).Buffer;
 	/*</replacement>*/
 
 	Readable.ReadableState = ReadableState;
@@ -10712,18 +7822,18 @@
 	};
 	/*</replacement>*/
 
-	var Stream = __webpack_require__(64);
+	var Stream = __webpack_require__(39);
 
 	/*<replacement>*/
-	var util = __webpack_require__(73);
-	util.inherits = __webpack_require__(74);
+	var util = __webpack_require__(48);
+	util.inherits = __webpack_require__(49);
 	/*</replacement>*/
 
 	var StringDecoder;
 
 
 	/*<replacement>*/
-	var debug = __webpack_require__(75);
+	var debug = __webpack_require__(50);
 	if (debug && debug.debuglog) {
 	  debug = debug.debuglog('stream');
 	} else {
@@ -10735,7 +7845,7 @@
 	util.inherits(Readable, Stream);
 
 	function ReadableState(options, stream) {
-	  var Duplex = __webpack_require__(76);
+	  var Duplex = __webpack_require__(51);
 
 	  options = options || {};
 
@@ -10796,14 +7906,14 @@
 	  this.encoding = null;
 	  if (options.encoding) {
 	    if (!StringDecoder)
-	      StringDecoder = __webpack_require__(78).StringDecoder;
+	      StringDecoder = __webpack_require__(53).StringDecoder;
 	    this.decoder = new StringDecoder(options.encoding);
 	    this.encoding = options.encoding;
 	  }
 	}
 
 	function Readable(options) {
-	  var Duplex = __webpack_require__(76);
+	  var Duplex = __webpack_require__(51);
 
 	  if (!(this instanceof Readable))
 	    return new Readable(options);
@@ -10906,7 +8016,7 @@
 	// backwards compatibility.
 	Readable.prototype.setEncoding = function(enc) {
 	  if (!StringDecoder)
-	    StringDecoder = __webpack_require__(78).StringDecoder;
+	    StringDecoder = __webpack_require__(53).StringDecoder;
 	  this._readableState.decoder = new StringDecoder(enc);
 	  this._readableState.encoding = enc;
 	  return this;
@@ -11625,7 +8735,7 @@
 	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(13)))
 
 /***/ },
-/* 68 */
+/* 43 */
 /***/ function(module, exports) {
 
 	module.exports = Array.isArray || function (arr) {
@@ -11634,7 +8744,7 @@
 
 
 /***/ },
-/* 69 */
+/* 44 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/* WEBPACK VAR INJECTION */(function(Buffer, global) {/*!
@@ -11647,9 +8757,9 @@
 
 	'use strict'
 
-	var base64 = __webpack_require__(70)
-	var ieee754 = __webpack_require__(71)
-	var isArray = __webpack_require__(72)
+	var base64 = __webpack_require__(45)
+	var ieee754 = __webpack_require__(46)
+	var isArray = __webpack_require__(47)
 
 	exports.Buffer = Buffer
 	exports.SlowBuffer = SlowBuffer
@@ -13427,10 +10537,10 @@
 	  return val !== val // eslint-disable-line no-self-compare
 	}
 
-	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(69).Buffer, (function() { return this; }())))
+	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(44).Buffer, (function() { return this; }())))
 
 /***/ },
-/* 70 */
+/* 45 */
 /***/ function(module, exports) {
 
 	'use strict'
@@ -13550,7 +10660,7 @@
 
 
 /***/ },
-/* 71 */
+/* 46 */
 /***/ function(module, exports) {
 
 	exports.read = function (buffer, offset, isLE, mLen, nBytes) {
@@ -13640,7 +10750,7 @@
 
 
 /***/ },
-/* 72 */
+/* 47 */
 /***/ function(module, exports) {
 
 	var toString = {}.toString;
@@ -13651,7 +10761,7 @@
 
 
 /***/ },
-/* 73 */
+/* 48 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/* WEBPACK VAR INJECTION */(function(Buffer) {// Copyright Joyent, Inc. and other Node contributors.
@@ -13762,10 +10872,10 @@
 	  return Object.prototype.toString.call(o);
 	}
 
-	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(69).Buffer))
+	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(44).Buffer))
 
 /***/ },
-/* 74 */
+/* 49 */
 /***/ function(module, exports) {
 
 	if (typeof Object.create === 'function') {
@@ -13794,13 +10904,13 @@
 
 
 /***/ },
-/* 75 */
+/* 50 */
 /***/ function(module, exports) {
 
 	/* (ignored) */
 
 /***/ },
-/* 76 */
+/* 51 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/* WEBPACK VAR INJECTION */(function(process) {// Copyright Joyent, Inc. and other Node contributors.
@@ -13841,12 +10951,12 @@
 
 
 	/*<replacement>*/
-	var util = __webpack_require__(73);
-	util.inherits = __webpack_require__(74);
+	var util = __webpack_require__(48);
+	util.inherits = __webpack_require__(49);
 	/*</replacement>*/
 
-	var Readable = __webpack_require__(67);
-	var Writable = __webpack_require__(77);
+	var Readable = __webpack_require__(42);
+	var Writable = __webpack_require__(52);
 
 	util.inherits(Duplex, Readable);
 
@@ -13896,7 +11006,7 @@
 	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(13)))
 
 /***/ },
-/* 77 */
+/* 52 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/* WEBPACK VAR INJECTION */(function(process) {// Copyright Joyent, Inc. and other Node contributors.
@@ -13927,18 +11037,18 @@
 	module.exports = Writable;
 
 	/*<replacement>*/
-	var Buffer = __webpack_require__(69).Buffer;
+	var Buffer = __webpack_require__(44).Buffer;
 	/*</replacement>*/
 
 	Writable.WritableState = WritableState;
 
 
 	/*<replacement>*/
-	var util = __webpack_require__(73);
-	util.inherits = __webpack_require__(74);
+	var util = __webpack_require__(48);
+	util.inherits = __webpack_require__(49);
 	/*</replacement>*/
 
-	var Stream = __webpack_require__(64);
+	var Stream = __webpack_require__(39);
 
 	util.inherits(Writable, Stream);
 
@@ -13949,7 +11059,7 @@
 	}
 
 	function WritableState(options, stream) {
-	  var Duplex = __webpack_require__(76);
+	  var Duplex = __webpack_require__(51);
 
 	  options = options || {};
 
@@ -14037,7 +11147,7 @@
 	}
 
 	function Writable(options) {
-	  var Duplex = __webpack_require__(76);
+	  var Duplex = __webpack_require__(51);
 
 	  // Writable ctor is applied to Duplexes, though they're not
 	  // instanceof Writable, they're instanceof Readable.
@@ -14380,7 +11490,7 @@
 	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(13)))
 
 /***/ },
-/* 78 */
+/* 53 */
 /***/ function(module, exports, __webpack_require__) {
 
 	// Copyright Joyent, Inc. and other Node contributors.
@@ -14404,7 +11514,7 @@
 	// OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
 	// USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-	var Buffer = __webpack_require__(69).Buffer;
+	var Buffer = __webpack_require__(44).Buffer;
 
 	var isBufferEncoding = Buffer.isEncoding
 	  || function(encoding) {
@@ -14607,7 +11717,7 @@
 
 
 /***/ },
-/* 79 */
+/* 54 */
 /***/ function(module, exports, __webpack_require__) {
 
 	// Copyright Joyent, Inc. and other Node contributors.
@@ -14676,11 +11786,11 @@
 
 	module.exports = Transform;
 
-	var Duplex = __webpack_require__(76);
+	var Duplex = __webpack_require__(51);
 
 	/*<replacement>*/
-	var util = __webpack_require__(73);
-	util.inherits = __webpack_require__(74);
+	var util = __webpack_require__(48);
+	util.inherits = __webpack_require__(49);
 	/*</replacement>*/
 
 	util.inherits(Transform, Duplex);
@@ -14822,7 +11932,7 @@
 
 
 /***/ },
-/* 80 */
+/* 55 */
 /***/ function(module, exports, __webpack_require__) {
 
 	// Copyright Joyent, Inc. and other Node contributors.
@@ -14852,11 +11962,11 @@
 
 	module.exports = PassThrough;
 
-	var Transform = __webpack_require__(79);
+	var Transform = __webpack_require__(54);
 
 	/*<replacement>*/
-	var util = __webpack_require__(73);
-	util.inherits = __webpack_require__(74);
+	var util = __webpack_require__(48);
+	util.inherits = __webpack_require__(49);
 	/*</replacement>*/
 
 	util.inherits(PassThrough, Transform);
@@ -14874,41 +11984,41 @@
 
 
 /***/ },
-/* 81 */
+/* 56 */
 /***/ function(module, exports, __webpack_require__) {
 
-	module.exports = __webpack_require__(77)
+	module.exports = __webpack_require__(52)
 
 
 /***/ },
-/* 82 */
+/* 57 */
 /***/ function(module, exports, __webpack_require__) {
 
-	module.exports = __webpack_require__(76)
+	module.exports = __webpack_require__(51)
 
 
 /***/ },
-/* 83 */
+/* 58 */
 /***/ function(module, exports, __webpack_require__) {
 
-	module.exports = __webpack_require__(79)
+	module.exports = __webpack_require__(54)
 
 
 /***/ },
-/* 84 */
+/* 59 */
 /***/ function(module, exports, __webpack_require__) {
 
-	module.exports = __webpack_require__(80)
+	module.exports = __webpack_require__(55)
 
 
 /***/ },
-/* 85 */
+/* 60 */
 /***/ function(module, exports) {
 
 	/* (ignored) */
 
 /***/ },
-/* 86 */
+/* 61 */
 /***/ function(module, exports, __webpack_require__) {
 
 	module.exports = ProxyHandler;
@@ -14917,7 +12027,7 @@
 		this._cbs = cbs || {};
 	}
 
-	var EVENTS = __webpack_require__(49).EVENTS;
+	var EVENTS = __webpack_require__(24).EVENTS;
 	Object.keys(EVENTS).forEach(function(name){
 		if(EVENTS[name] === 0){
 			name = "on" + name;
@@ -14940,18 +12050,18 @@
 	});
 
 /***/ },
-/* 87 */
+/* 62 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var DomUtils = module.exports;
 
 	[
-		__webpack_require__(88),
-		__webpack_require__(94),
-		__webpack_require__(95),
-		__webpack_require__(96),
-		__webpack_require__(97),
-		__webpack_require__(98)
+		__webpack_require__(63),
+		__webpack_require__(69),
+		__webpack_require__(70),
+		__webpack_require__(71),
+		__webpack_require__(72),
+		__webpack_require__(73)
 	].forEach(function(ext){
 		Object.keys(ext).forEach(function(key){
 			DomUtils[key] = ext[key].bind(DomUtils);
@@ -14960,11 +12070,11 @@
 
 
 /***/ },
-/* 88 */
+/* 63 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var ElementType = __webpack_require__(58),
-	    getOuterHTML = __webpack_require__(89),
+	var ElementType = __webpack_require__(33),
+	    getOuterHTML = __webpack_require__(64),
 	    isTag = ElementType.isTag;
 
 	module.exports = {
@@ -14988,14 +12098,14 @@
 
 
 /***/ },
-/* 89 */
+/* 64 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/*
 	  Module dependencies
 	*/
-	var ElementType = __webpack_require__(90);
-	var entities = __webpack_require__(91);
+	var ElementType = __webpack_require__(65);
+	var entities = __webpack_require__(66);
 
 	/*
 	  Boolean Attributes
@@ -15172,7 +12282,7 @@
 
 
 /***/ },
-/* 90 */
+/* 65 */
 /***/ function(module, exports) {
 
 	//Types of elements found in the DOM
@@ -15191,11 +12301,11 @@
 	};
 
 /***/ },
-/* 91 */
+/* 66 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var encode = __webpack_require__(92),
-	    decode = __webpack_require__(93);
+	var encode = __webpack_require__(67),
+	    decode = __webpack_require__(68);
 
 	exports.decode = function(data, level){
 		return (!level || level <= 0 ? decode.XML : decode.HTML)(data);
@@ -15230,15 +12340,15 @@
 
 
 /***/ },
-/* 92 */
+/* 67 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var inverseXML = getInverseObj(__webpack_require__(56)),
+	var inverseXML = getInverseObj(__webpack_require__(31)),
 	    xmlReplacer = getInverseReplacer(inverseXML);
 
 	exports.XML = getInverse(inverseXML, xmlReplacer);
 
-	var inverseHTML = getInverseObj(__webpack_require__(54)),
+	var inverseHTML = getInverseObj(__webpack_require__(29)),
 	    htmlReplacer = getInverseReplacer(inverseHTML);
 
 	exports.HTML = getInverse(inverseHTML, htmlReplacer);
@@ -15309,13 +12419,13 @@
 
 
 /***/ },
-/* 93 */
+/* 68 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var entityMap = __webpack_require__(54),
-	    legacyMap = __webpack_require__(55),
-	    xmlMap    = __webpack_require__(56),
-	    decodeCodePoint = __webpack_require__(52);
+	var entityMap = __webpack_require__(29),
+	    legacyMap = __webpack_require__(30),
+	    xmlMap    = __webpack_require__(31),
+	    decodeCodePoint = __webpack_require__(27);
 
 	var decodeXMLStrict  = getStrictDecoder(xmlMap),
 	    decodeHTMLStrict = getStrictDecoder(entityMap);
@@ -15386,7 +12496,7 @@
 	};
 
 /***/ },
-/* 94 */
+/* 69 */
 /***/ function(module, exports) {
 
 	var getChildren = exports.getChildren = function(elem){
@@ -15416,7 +12526,7 @@
 
 
 /***/ },
-/* 95 */
+/* 70 */
 /***/ function(module, exports) {
 
 	exports.removeElement = function(elem){
@@ -15499,10 +12609,10 @@
 
 
 /***/ },
-/* 96 */
+/* 71 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var isTag = __webpack_require__(58).isTag;
+	var isTag = __webpack_require__(33).isTag;
 
 	module.exports = {
 		filter: filter,
@@ -15599,10 +12709,10 @@
 
 
 /***/ },
-/* 97 */
+/* 72 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var ElementType = __webpack_require__(58);
+	var ElementType = __webpack_require__(33);
 	var isTag = exports.isTag = ElementType.isTag;
 
 	exports.testElement = function(options, element){
@@ -15692,7 +12802,7 @@
 
 
 /***/ },
-/* 98 */
+/* 73 */
 /***/ function(module, exports) {
 
 	// removeSubsets
@@ -15839,7 +12949,7 @@
 
 
 /***/ },
-/* 99 */
+/* 74 */
 /***/ function(module, exports, __webpack_require__) {
 
 	module.exports = CollectingHandler;
@@ -15849,7 +12959,7 @@
 		this.events = [];
 	}
 
-	var EVENTS = __webpack_require__(49).EVENTS;
+	var EVENTS = __webpack_require__(24).EVENTS;
 	Object.keys(EVENTS).forEach(function(name){
 		if(EVENTS[name] === 0){
 			name = "on" + name;
@@ -15900,7 +13010,7 @@
 
 
 /***/ },
-/* 100 */
+/* 75 */
 /***/ function(module, exports) {
 
 	/**
@@ -15927,11 +13037,2931 @@
 
 
 /***/ },
+/* 76 */
+/***/ function(module, exports, __webpack_require__) {
+
+	var Timer = __webpack_require__(18);
+
+	function Clock () {
+	    this._projectTimer = new Timer();
+	    this._projectTimer.start();
+	}
+
+	Clock.prototype.projectTimer = function () {
+	    return this._projectTimer.timeElapsed() / 1000;
+	};
+
+	Clock.prototype.resetProjectTimer = function () {
+	    this._projectTimer.start();
+	};
+
+	module.exports = Clock;
+
+
+/***/ },
+/* 77 */
+/***/ function(module, exports, __webpack_require__) {
+
+	var Cast = __webpack_require__(78);
+
+	function Keyboard (runtime) {
+	    /**
+	     * List of currently pressed keys.
+	     * @type{Array.<number>}
+	     */
+	    this._keysPressed = [];
+	    /**
+	     * Reference to the owning Runtime.
+	     * Can be used, for example, to activate hats.
+	     * @type{!Runtime}
+	     */
+	    this.runtime = runtime;
+	}
+
+	/**
+	 * Convert a Scratch key name to a DOM keyCode.
+	 * @param {Any} keyName Scratch key argument.
+	 * @return {number} Key code corresponding to a DOM event.
+	 */
+	Keyboard.prototype._scratchKeyToKeyCode = function (keyName) {
+	    if (typeof keyName == 'number') {
+	        // Key codes placed in with number blocks.
+	        return keyName;
+	    }
+	    var keyString = Cast.toString(keyName);
+	    switch (keyString) {
+	    case 'space': return 32;
+	    case 'left arrow': return 37;
+	    case 'up arrow': return 38;
+	    case 'right arrow': return 39;
+	    case 'down arrow': return 40;
+	    // @todo: Consider adding other special keys here.
+	    }
+	    // Keys reported by DOM keyCode are upper case.
+	    return keyString.toUpperCase().charCodeAt(0);
+	};
+
+	Keyboard.prototype._keyCodeToScratchKey = function (keyCode) {
+	    if (keyCode >= 48 && keyCode <= 90) {
+	        // Standard letter.
+	        return String.fromCharCode(keyCode).toLowerCase();
+	    }
+	    switch (keyCode) {
+	    case 32: return 'space';
+	    case 37: return 'left arrow';
+	    case 38: return 'up arrow';
+	    case 39: return 'right arrow';
+	    case 40: return 'down arrow';
+	    }
+	    return null;
+	};
+
+	Keyboard.prototype.postData = function (data) {
+	    if (data.keyCode) {
+	        var index = this._keysPressed.indexOf(data.keyCode);
+	        if (data.isDown) {
+	            // If not already present, add to the list.
+	            if (index < 0) {
+	                this._keysPressed.push(data.keyCode);
+	            }
+	            // Always trigger hats, even if it was already pressed.
+	            this.runtime.startHats('event_whenkeypressed', {
+	                'KEY_OPTION': this._keyCodeToScratchKey(data.keyCode)
+	            });
+	            this.runtime.startHats('event_whenkeypressed', {
+	                'KEY_OPTION': 'any'
+	            });
+	        } else if (index > -1) {
+	            // If already present, remove from the list.
+	            this._keysPressed.splice(index, 1);
+	        }
+	    }
+	};
+
+	Keyboard.prototype.getKeyIsDown = function (key) {
+	    if (key == 'any') {
+	        return this._keysPressed.length > 0;
+	    }
+	    var keyCode = this._scratchKeyToKeyCode(key);
+	    return this._keysPressed.indexOf(keyCode) > -1;
+	};
+
+	module.exports = Keyboard;
+
+
+/***/ },
+/* 78 */
+/***/ function(module, exports, __webpack_require__) {
+
+	var Color = __webpack_require__(79);
+
+	function Cast () {}
+
+	/**
+	 * @fileoverview
+	 * Utilities for casting and comparing Scratch data-types.
+	 * Scratch behaves slightly differently from JavaScript in many respects,
+	 * and these differences should be encapsulated below.
+	 * For example, in Scratch, add(1, join("hello", world")) -> 1.
+	 * This is because "hello world" is cast to 0.
+	 * In JavaScript, 1 + Number("hello" + "world") would give you NaN.
+	 * Use when coercing a value before computation.
+	 */
+
+	/**
+	 * Scratch cast to number.
+	 * Treats NaN as 0.
+	 * In Scratch 2.0, this is captured by `interp.numArg.`
+	 * @param {*} value Value to cast to number.
+	 * @return {number} The Scratch-casted number value.
+	 */
+	Cast.toNumber = function (value) {
+	    var n = Number(value);
+	    if (isNaN(n)) {
+	        // Scratch treats NaN as 0, when needed as a number.
+	        // E.g., 0 + NaN -> 0.
+	        return 0;
+	    }
+	    return n;
+	};
+
+	/**
+	 * Scratch cast to boolean.
+	 * In Scratch 2.0, this is captured by `interp.boolArg.`
+	 * Treats some string values differently from JavaScript.
+	 * @param {*} value Value to cast to boolean.
+	 * @return {boolean} The Scratch-casted boolean value.
+	 */
+	Cast.toBoolean = function (value) {
+	    // Already a boolean?
+	    if (typeof value === 'boolean') {
+	        return value;
+	    }
+	    if (typeof value === 'string') {
+	        // These specific strings are treated as false in Scratch.
+	        if ((value == '') ||
+	            (value == '0') ||
+	            (value.toLowerCase() == 'false')) {
+	            return false;
+	        }
+	        // All other strings treated as true.
+	        return true;
+	    }
+	    // Coerce other values and numbers.
+	    return Boolean(value);
+	};
+
+	/**
+	 * Scratch cast to string.
+	 * @param {*} value Value to cast to string.
+	 * @return {string} The Scratch-casted string value.
+	 */
+	Cast.toString = function (value) {
+	    return String(value);
+	};
+
+	/**
+	 * Cast any Scratch argument to an RGB color object to be used for the renderer.
+	 * @param {*} value Value to convert to RGB color object.
+	 * @return {Array.<number>} [r,g,b], values between 0-255.
+	 */
+	Cast.toRgbColorList = function (value) {
+	    var color;
+	    if (typeof value == 'string' && value.substring(0, 1) == '#') {
+	        color = Color.hexToRgb(value);
+	    } else {
+	        color = Color.decimalToRgb(Cast.toNumber(value));
+	    }
+	    return [color.r, color.g, color.b];
+	};
+
+	/**
+	 * Compare two values, using Scratch cast, case-insensitive string compare, etc.
+	 * In Scratch 2.0, this is captured by `interp.compare.`
+	 * @param {*} v1 First value to compare.
+	 * @param {*} v2 Second value to compare.
+	 * @returns {Number} Negative number if v1 < v2; 0 if equal; positive otherwise.
+	 */
+	Cast.compare = function (v1, v2) {
+	    var n1 = Number(v1);
+	    var n2 = Number(v2);
+	    if (isNaN(n1) || isNaN(n2)) {
+	        // At least one argument can't be converted to a number.
+	        // Scratch compares strings as case insensitive.
+	        var s1 = String(v1).toLowerCase();
+	        var s2 = String(v2).toLowerCase();
+	        return s1.localeCompare(s2);
+	    } else {
+	        // Compare as numbers.
+	        return n1 - n2;
+	    }
+	};
+
+	/**
+	 * Determine if a Scratch argument number represents a round integer.
+	 * @param {*} val Value to check.
+	 * @return {boolean} True if number looks like an integer.
+	 */
+	Cast.isInt = function (val) {
+	    // Values that are already numbers.
+	    if (typeof val === 'number') {
+	        if (isNaN(val)) { // NaN is considered an integer.
+	            return true;
+	        }
+	        // True if it's "round" (e.g., 2.0 and 2).
+	        return val == parseInt(val);
+	    } else if (typeof val === 'boolean') {
+	        // `True` and `false` always represent integer after Scratch cast.
+	        return true;
+	    } else if (typeof val === 'string') {
+	        // If it contains a decimal point, don't consider it an int.
+	        return val.indexOf('.') < 0;
+	    }
+	    return false;
+	};
+
+	Cast.LIST_INVALID = 'INVALID';
+	Cast.LIST_ALL = 'ALL';
+	/**
+	 * Compute a 1-based index into a list, based on a Scratch argument.
+	 * Two special cases may be returned:
+	 * LIST_ALL: if the block is referring to all of the items in the list.
+	 * LIST_INVALID: if the index was invalid in any way.
+	 * @param {*} index Scratch arg, including 1-based numbers or special cases.
+	 * @param {number} length Length of the list.
+	 * @return {(number|string)} 1-based index for list, LIST_ALL, or LIST_INVALID.
+	 */
+	Cast.toListIndex = function (index, length) {
+	    if (typeof index !== 'number') {
+	        if (index == 'all') {
+	            return Cast.LIST_ALL;
+	        }
+	        if (index == 'last') {
+	            if (length > 0) {
+	                return length;
+	            }
+	            return Cast.LIST_INVALID;
+	        } else if (index == 'random' || index == 'any') {
+	            if (length > 0) {
+	                return 1 + Math.floor(Math.random() * length);
+	            }
+	            return Cast.LIST_INVALID;
+	        }
+	    }
+	    index = Math.floor(Cast.toNumber(index));
+	    if (index < 1 || index > length) {
+	        return Cast.LIST_INVALID;
+	    }
+	    return index;
+	};
+
+	module.exports = Cast;
+
+
+/***/ },
+/* 79 */
+/***/ function(module, exports) {
+
+	function Color () {}
+
+	/**
+	 * Convert a Scratch decimal color to a hex string, #RRGGBB.
+	 * @param {number} decimal RGB color as a decimal.
+	 * @return {string} RGB color as #RRGGBB hex string.
+	 */
+	Color.decimalToHex = function (decimal) {
+	    if (decimal < 0) {
+	        decimal += 0xFFFFFF + 1;
+	    }
+	    var hex = Number(decimal).toString(16);
+	    hex = '#' + '000000'.substr(0, 6 - hex.length) + hex;
+	    return hex;
+	};
+
+	/**
+	 * Convert a Scratch decimal color to an RGB color object.
+	 * @param {number} decimal RGB color as decimal.
+	 * @returns {Object} {r: R, g: G, b: B}, values between 0-255
+	 */
+	Color.decimalToRgb = function (decimal) {
+	    var r = (decimal >> 16) & 0xFF;
+	    var g = (decimal >> 8) & 0xFF;
+	    var b = decimal & 0xFF;
+	    return {r: r, g: g, b: b};
+	};
+
+	/**
+	 * Convert a hex color (e.g., F00, #03F, #0033FF) to an RGB color object.
+	 * CC-BY-SA Tim Down:
+	 * https://stackoverflow.com/questions/5623838/rgb-to-hex-and-hex-to-rgb
+	 * @param {!string} hex Hex representation of the color.
+	 * @return {Object} {r: R, g: G, b: B}, 0-255, or null.
+	 */
+	Color.hexToRgb = function (hex) {
+	    var shorthandRegex = /^#?([a-f\d])([a-f\d])([a-f\d])$/i;
+	    hex = hex.replace(shorthandRegex, function(m, r, g, b) {
+	        return r + r + g + g + b + b;
+	    });
+	    var result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+	    return result ? {
+	        r: parseInt(result[1], 16),
+	        g: parseInt(result[2], 16),
+	        b: parseInt(result[3], 16)
+	    } : null;
+	};
+
+	/**
+	 * Convert an RGB color object to a hex color.
+	 * @param {Object} rgb {r: R, g: G, b: B}, values between 0-255.
+	 * @return {!string} Hex representation of the color.
+	 */
+	Color.rgbToHex = function (rgb) {
+	    return Color.decimalToHex(Color.rgbToDecimal(rgb));
+	};
+
+	/**
+	 * Convert an RGB color object to a Scratch decimal color.
+	 * @param {Object} rgb {r: R, g: G, b: B}, values between 0-255.
+	 * @return {!number} Number representing the color.
+	 */
+	Color.rgbToDecimal = function (rgb) {
+	    return (rgb.r << 16) + (rgb.g << 8) + rgb.b;
+	};
+
+	/**
+	* Convert a hex color (e.g., F00, #03F, #0033FF) to a decimal color number.
+	* @param {!string} hex Hex representation of the color.
+	* @return {!number} Number representing the color.
+	*/
+	Color.hexToDecimal = function (hex) {
+	    return Color.rgbToDecimal(Color.hexToRgb(hex));
+	};
+
+	module.exports = Color;
+
+
+/***/ },
+/* 80 */
+/***/ function(module, exports, __webpack_require__) {
+
+	var MathUtil = __webpack_require__(81);
+
+	function Mouse (runtime) {
+	    this._x = 0;
+	    this._y = 0;
+	    this._isDown = false;
+	    /**
+	     * Reference to the owning Runtime.
+	     * Can be used, for example, to activate hats.
+	     * @type{!Runtime}
+	     */
+	    this.runtime = runtime;
+	}
+
+	Mouse.prototype.postData = function(data) {
+	    if (data.x) {
+	        this._x = data.x - data.canvasWidth / 2;
+	    }
+	    if (data.y) {
+	        this._y = data.y - data.canvasHeight / 2;
+	    }
+	    if (typeof data.isDown !== 'undefined') {
+	        this._isDown = data.isDown;
+	        if (this._isDown) {
+	            this._activateClickHats(data.x, data.y);
+	        }
+	    }
+	};
+
+	Mouse.prototype._activateClickHats = function (x, y) {
+	    if (this.runtime.renderer) {
+	        var drawableID = this.runtime.renderer.pick(x, y);
+	        for (var i = 0; i < this.runtime.targets.length; i++) {
+	            var target = this.runtime.targets[i];
+	            if (target.hasOwnProperty('drawableID') &&
+	                target.drawableID == drawableID) {
+	                this.runtime.startHats('event_whenthisspriteclicked',
+	                    null, target);
+	                return;
+	            }
+	        }
+	    }
+	};
+
+	Mouse.prototype.getX = function () {
+	    return MathUtil.clamp(this._x, -240, 240);
+	};
+
+	Mouse.prototype.getY = function () {
+	    return MathUtil.clamp(-this._y, -180, 180);
+	};
+
+	Mouse.prototype.getIsDown = function () {
+	    return this._isDown;
+	};
+
+	module.exports = Mouse;
+
+
+/***/ },
+/* 81 */
+/***/ function(module, exports) {
+
+	function MathUtil () {}
+
+	/**
+	 * Convert a value from degrees to radians.
+	 * @param {!number} deg Value in degrees.
+	 * @return {!number} Equivalent value in radians.
+	 */
+	MathUtil.degToRad = function (deg) {
+	    return (Math.PI * (90 - deg)) / 180;
+	};
+
+	/**
+	 * Convert a value from radians to degrees.
+	 * @param {!number} rad Value in radians.
+	 * @return {!number} Equivalent value in degrees.
+	 */
+	MathUtil.radToDeg = function (rad) {
+	    return rad * 180 / Math.PI;
+	};
+
+	/**
+	 * Clamp a number between two limits.
+	 * If n < min, return min. If n > max, return max. Else, return n.
+	 * @param {!number} n Number to clamp.
+	 * @param {!number} min Minimum limit.
+	 * @param {!number} max Maximum limit.
+	 * @return {!number} Value of n clamped to min and max.
+	 */
+	MathUtil.clamp = function (n, min, max) {
+	    return Math.min(Math.max(n, min), max);
+	};
+
+	/**
+	 * Keep a number between two limits, wrapping "extra" into the range.
+	 * e.g., wrapClamp(7, 1, 5) == 2
+	 * wrapClamp(0, 1, 5) == 5
+	 * wrapClamp(-11, -10, 6) == 6, etc.
+	 * @param {!number} n Number to wrap.
+	 * @param {!number} min Minimum limit.
+	 * @param {!number} max Maximum limit.
+	 * @return {!number} Value of n wrapped between min and max.
+	 */
+	MathUtil.wrapClamp = function (n, min, max) {
+	    var range = (max - min) + 1;
+	    return n - Math.floor((n - min) / range) * range;
+	};
+
+	module.exports = MathUtil;
+
+
+/***/ },
+/* 82 */
+/***/ function(module, exports, __webpack_require__) {
+
+	var Cast = __webpack_require__(78);
+	var Promise = __webpack_require__(83);
+
+	function Scratch3ControlBlocks(runtime) {
+	    /**
+	     * The runtime instantiating this block package.
+	     * @type {Runtime}
+	     */
+	    this.runtime = runtime;
+	}
+
+	/**
+	 * Retrieve the block primitives implemented by this package.
+	 * @return {Object.<string, Function>} Mapping of opcode to Function.
+	 */
+	Scratch3ControlBlocks.prototype.getPrimitives = function() {
+	    return {
+	        'control_repeat': this.repeat,
+	        'control_repeat_until': this.repeatUntil,
+	        'control_forever': this.forever,
+	        'control_wait': this.wait,
+	        'control_wait_until': this.waitUntil,
+	        'control_if': this.if,
+	        'control_if_else': this.ifElse,
+	        'control_stop': this.stop,
+	        'control_create_clone_of_menu': this.createCloneMenu,
+	        'control_create_clone_of': this.createClone,
+	        'control_delete_this_clone': this.deleteClone
+	    };
+	};
+
+	Scratch3ControlBlocks.prototype.getHats = function () {
+	    return {
+	        'control_start_as_clone': {
+	            restartExistingThreads: false
+	        }
+	    };
+	};
+
+	Scratch3ControlBlocks.prototype.repeat = function(args, util) {
+	    var times = Math.floor(Cast.toNumber(args.TIMES));
+	    // Initialize loop
+	    if (util.stackFrame.loopCounter === undefined) {
+	        util.stackFrame.loopCounter = times;
+	    }
+	    // Only execute once per frame.
+	    // When the branch finishes, `repeat` will be executed again and
+	    // the second branch will be taken, yielding for the rest of the frame.
+	    if (!util.stackFrame.executedInFrame) {
+	        util.stackFrame.executedInFrame = true;
+	        // Decrease counter
+	        util.stackFrame.loopCounter--;
+	        // If we still have some left, start the branch.
+	        if (util.stackFrame.loopCounter >= 0) {
+	            util.startBranch();
+	        }
+	    } else {
+	        util.stackFrame.executedInFrame = false;
+	        util.yieldFrame();
+	    }
+	};
+
+	Scratch3ControlBlocks.prototype.repeatUntil = function(args, util) {
+	    var condition = Cast.toBoolean(args.CONDITION);
+	    // Only execute once per frame.
+	    // When the branch finishes, `repeat` will be executed again and
+	    // the second branch will be taken, yielding for the rest of the frame.
+	    if (!util.stackFrame.executedInFrame) {
+	        util.stackFrame.executedInFrame = true;
+	        // If the condition is true, start the branch.
+	        if (!condition) {
+	            util.startBranch();
+	        }
+	    } else {
+	        util.stackFrame.executedInFrame = false;
+	        util.yieldFrame();
+	    }
+	};
+
+	Scratch3ControlBlocks.prototype.waitUntil = function(args, util) {
+	    var condition = Cast.toBoolean(args.CONDITION);
+	    // Only execute once per frame.
+	    if (!condition) {
+	        util.yieldFrame();
+	    }
+	};
+
+	Scratch3ControlBlocks.prototype.forever = function(args, util) {
+	    // Only execute once per frame.
+	    // When the branch finishes, `forever` will be executed again and
+	    // the second branch will be taken, yielding for the rest of the frame.
+	    if (!util.stackFrame.executedInFrame) {
+	        util.stackFrame.executedInFrame = true;
+	        util.startBranch();
+	    } else {
+	        util.stackFrame.executedInFrame = false;
+	        util.yieldFrame();
+	    }
+	};
+
+	Scratch3ControlBlocks.prototype.wait = function(args) {
+	    var duration = Cast.toNumber(args.DURATION);
+	    return new Promise(function(resolve) {
+	        setTimeout(function() {
+	            resolve();
+	        }, 1000 * duration);
+	    });
+	};
+
+	Scratch3ControlBlocks.prototype.if = function(args, util) {
+	    var condition = Cast.toBoolean(args.CONDITION);
+	    // Only execute one time. `if` will be returned to
+	    // when the branch finishes, but it shouldn't execute again.
+	    if (util.stackFrame.executedInFrame === undefined) {
+	        util.stackFrame.executedInFrame = true;
+	        if (condition) {
+	            util.startBranch();
+	        }
+	    }
+	};
+
+	Scratch3ControlBlocks.prototype.ifElse = function(args, util) {
+	    var condition = Cast.toBoolean(args.CONDITION);
+	    // Only execute one time. `ifElse` will be returned to
+	    // when the branch finishes, but it shouldn't execute again.
+	    if (util.stackFrame.executedInFrame === undefined) {
+	        util.stackFrame.executedInFrame = true;
+	        if (condition) {
+	            util.startBranch(1);
+	        } else {
+	            util.startBranch(2);
+	        }
+	    }
+	};
+
+	Scratch3ControlBlocks.prototype.stop = function() {
+	    // @todo - don't use this.runtime
+	    this.runtime.stopAll();
+	};
+
+	// @todo (GH-146): remove.
+	Scratch3ControlBlocks.prototype.createCloneMenu = function (args) {
+	    return args.CLONE_OPTION;
+	};
+
+	Scratch3ControlBlocks.prototype.createClone = function (args, util) {
+	    var cloneTarget;
+	    if (args.CLONE_OPTION == '_myself_') {
+	        cloneTarget = util.target;
+	    } else {
+	        cloneTarget = this.runtime.getSpriteTargetByName(args.CLONE_OPTION);
+	    }
+	    if (!cloneTarget) {
+	        return;
+	    }
+	    var newClone = cloneTarget.makeClone();
+	    if (newClone) {
+	        this.runtime.targets.push(newClone);
+	    }
+	};
+
+	Scratch3ControlBlocks.prototype.deleteClone = function (args, util) {
+	    this.runtime.disposeTarget(util.target);
+	    this.runtime.stopForTarget(util.target);
+	};
+
+	module.exports = Scratch3ControlBlocks;
+
+
+/***/ },
+/* 83 */
+/***/ function(module, exports, __webpack_require__) {
+
+	'use strict';
+
+	module.exports = __webpack_require__(84)
+
+
+/***/ },
+/* 84 */
+/***/ function(module, exports, __webpack_require__) {
+
+	'use strict';
+
+	module.exports = __webpack_require__(85);
+	__webpack_require__(87);
+	__webpack_require__(88);
+	__webpack_require__(89);
+	__webpack_require__(90);
+	__webpack_require__(92);
+
+
+/***/ },
+/* 85 */
+/***/ function(module, exports, __webpack_require__) {
+
+	'use strict';
+
+	var asap = __webpack_require__(86);
+
+	function noop() {}
+
+	// States:
+	//
+	// 0 - pending
+	// 1 - fulfilled with _value
+	// 2 - rejected with _value
+	// 3 - adopted the state of another promise, _value
+	//
+	// once the state is no longer pending (0) it is immutable
+
+	// All `_` prefixed properties will be reduced to `_{random number}`
+	// at build time to obfuscate them and discourage their use.
+	// We don't use symbols or Object.defineProperty to fully hide them
+	// because the performance isn't good enough.
+
+
+	// to avoid using try/catch inside critical functions, we
+	// extract them to here.
+	var LAST_ERROR = null;
+	var IS_ERROR = {};
+	function getThen(obj) {
+	  try {
+	    return obj.then;
+	  } catch (ex) {
+	    LAST_ERROR = ex;
+	    return IS_ERROR;
+	  }
+	}
+
+	function tryCallOne(fn, a) {
+	  try {
+	    return fn(a);
+	  } catch (ex) {
+	    LAST_ERROR = ex;
+	    return IS_ERROR;
+	  }
+	}
+	function tryCallTwo(fn, a, b) {
+	  try {
+	    fn(a, b);
+	  } catch (ex) {
+	    LAST_ERROR = ex;
+	    return IS_ERROR;
+	  }
+	}
+
+	module.exports = Promise;
+
+	function Promise(fn) {
+	  if (typeof this !== 'object') {
+	    throw new TypeError('Promises must be constructed via new');
+	  }
+	  if (typeof fn !== 'function') {
+	    throw new TypeError('not a function');
+	  }
+	  this._45 = 0;
+	  this._81 = 0;
+	  this._65 = null;
+	  this._54 = null;
+	  if (fn === noop) return;
+	  doResolve(fn, this);
+	}
+	Promise._10 = null;
+	Promise._97 = null;
+	Promise._61 = noop;
+
+	Promise.prototype.then = function(onFulfilled, onRejected) {
+	  if (this.constructor !== Promise) {
+	    return safeThen(this, onFulfilled, onRejected);
+	  }
+	  var res = new Promise(noop);
+	  handle(this, new Handler(onFulfilled, onRejected, res));
+	  return res;
+	};
+
+	function safeThen(self, onFulfilled, onRejected) {
+	  return new self.constructor(function (resolve, reject) {
+	    var res = new Promise(noop);
+	    res.then(resolve, reject);
+	    handle(self, new Handler(onFulfilled, onRejected, res));
+	  });
+	};
+	function handle(self, deferred) {
+	  while (self._81 === 3) {
+	    self = self._65;
+	  }
+	  if (Promise._10) {
+	    Promise._10(self);
+	  }
+	  if (self._81 === 0) {
+	    if (self._45 === 0) {
+	      self._45 = 1;
+	      self._54 = deferred;
+	      return;
+	    }
+	    if (self._45 === 1) {
+	      self._45 = 2;
+	      self._54 = [self._54, deferred];
+	      return;
+	    }
+	    self._54.push(deferred);
+	    return;
+	  }
+	  handleResolved(self, deferred);
+	}
+
+	function handleResolved(self, deferred) {
+	  asap(function() {
+	    var cb = self._81 === 1 ? deferred.onFulfilled : deferred.onRejected;
+	    if (cb === null) {
+	      if (self._81 === 1) {
+	        resolve(deferred.promise, self._65);
+	      } else {
+	        reject(deferred.promise, self._65);
+	      }
+	      return;
+	    }
+	    var ret = tryCallOne(cb, self._65);
+	    if (ret === IS_ERROR) {
+	      reject(deferred.promise, LAST_ERROR);
+	    } else {
+	      resolve(deferred.promise, ret);
+	    }
+	  });
+	}
+	function resolve(self, newValue) {
+	  // Promise Resolution Procedure: https://github.com/promises-aplus/promises-spec#the-promise-resolution-procedure
+	  if (newValue === self) {
+	    return reject(
+	      self,
+	      new TypeError('A promise cannot be resolved with itself.')
+	    );
+	  }
+	  if (
+	    newValue &&
+	    (typeof newValue === 'object' || typeof newValue === 'function')
+	  ) {
+	    var then = getThen(newValue);
+	    if (then === IS_ERROR) {
+	      return reject(self, LAST_ERROR);
+	    }
+	    if (
+	      then === self.then &&
+	      newValue instanceof Promise
+	    ) {
+	      self._81 = 3;
+	      self._65 = newValue;
+	      finale(self);
+	      return;
+	    } else if (typeof then === 'function') {
+	      doResolve(then.bind(newValue), self);
+	      return;
+	    }
+	  }
+	  self._81 = 1;
+	  self._65 = newValue;
+	  finale(self);
+	}
+
+	function reject(self, newValue) {
+	  self._81 = 2;
+	  self._65 = newValue;
+	  if (Promise._97) {
+	    Promise._97(self, newValue);
+	  }
+	  finale(self);
+	}
+	function finale(self) {
+	  if (self._45 === 1) {
+	    handle(self, self._54);
+	    self._54 = null;
+	  }
+	  if (self._45 === 2) {
+	    for (var i = 0; i < self._54.length; i++) {
+	      handle(self, self._54[i]);
+	    }
+	    self._54 = null;
+	  }
+	}
+
+	function Handler(onFulfilled, onRejected, promise){
+	  this.onFulfilled = typeof onFulfilled === 'function' ? onFulfilled : null;
+	  this.onRejected = typeof onRejected === 'function' ? onRejected : null;
+	  this.promise = promise;
+	}
+
+	/**
+	 * Take a potentially misbehaving resolver function and make sure
+	 * onFulfilled and onRejected are only called once.
+	 *
+	 * Makes no guarantees about asynchrony.
+	 */
+	function doResolve(fn, promise) {
+	  var done = false;
+	  var res = tryCallTwo(fn, function (value) {
+	    if (done) return;
+	    done = true;
+	    resolve(promise, value);
+	  }, function (reason) {
+	    if (done) return;
+	    done = true;
+	    reject(promise, reason);
+	  })
+	  if (!done && res === IS_ERROR) {
+	    done = true;
+	    reject(promise, LAST_ERROR);
+	  }
+	}
+
+
+/***/ },
+/* 86 */
+/***/ function(module, exports) {
+
+	/* WEBPACK VAR INJECTION */(function(global) {"use strict";
+
+	// Use the fastest means possible to execute a task in its own turn, with
+	// priority over other events including IO, animation, reflow, and redraw
+	// events in browsers.
+	//
+	// An exception thrown by a task will permanently interrupt the processing of
+	// subsequent tasks. The higher level `asap` function ensures that if an
+	// exception is thrown by a task, that the task queue will continue flushing as
+	// soon as possible, but if you use `rawAsap` directly, you are responsible to
+	// either ensure that no exceptions are thrown from your task, or to manually
+	// call `rawAsap.requestFlush` if an exception is thrown.
+	module.exports = rawAsap;
+	function rawAsap(task) {
+	    if (!queue.length) {
+	        requestFlush();
+	        flushing = true;
+	    }
+	    // Equivalent to push, but avoids a function call.
+	    queue[queue.length] = task;
+	}
+
+	var queue = [];
+	// Once a flush has been requested, no further calls to `requestFlush` are
+	// necessary until the next `flush` completes.
+	var flushing = false;
+	// `requestFlush` is an implementation-specific method that attempts to kick
+	// off a `flush` event as quickly as possible. `flush` will attempt to exhaust
+	// the event queue before yielding to the browser's own event loop.
+	var requestFlush;
+	// The position of the next task to execute in the task queue. This is
+	// preserved between calls to `flush` so that it can be resumed if
+	// a task throws an exception.
+	var index = 0;
+	// If a task schedules additional tasks recursively, the task queue can grow
+	// unbounded. To prevent memory exhaustion, the task queue will periodically
+	// truncate already-completed tasks.
+	var capacity = 1024;
+
+	// The flush function processes all tasks that have been scheduled with
+	// `rawAsap` unless and until one of those tasks throws an exception.
+	// If a task throws an exception, `flush` ensures that its state will remain
+	// consistent and will resume where it left off when called again.
+	// However, `flush` does not make any arrangements to be called again if an
+	// exception is thrown.
+	function flush() {
+	    while (index < queue.length) {
+	        var currentIndex = index;
+	        // Advance the index before calling the task. This ensures that we will
+	        // begin flushing on the next task the task throws an error.
+	        index = index + 1;
+	        queue[currentIndex].call();
+	        // Prevent leaking memory for long chains of recursive calls to `asap`.
+	        // If we call `asap` within tasks scheduled by `asap`, the queue will
+	        // grow, but to avoid an O(n) walk for every task we execute, we don't
+	        // shift tasks off the queue after they have been executed.
+	        // Instead, we periodically shift 1024 tasks off the queue.
+	        if (index > capacity) {
+	            // Manually shift all values starting at the index back to the
+	            // beginning of the queue.
+	            for (var scan = 0, newLength = queue.length - index; scan < newLength; scan++) {
+	                queue[scan] = queue[scan + index];
+	            }
+	            queue.length -= index;
+	            index = 0;
+	        }
+	    }
+	    queue.length = 0;
+	    index = 0;
+	    flushing = false;
+	}
+
+	// `requestFlush` is implemented using a strategy based on data collected from
+	// every available SauceLabs Selenium web driver worker at time of writing.
+	// https://docs.google.com/spreadsheets/d/1mG-5UYGup5qxGdEMWkhP6BWCz053NUb2E1QoUTU16uA/edit#gid=783724593
+
+	// Safari 6 and 6.1 for desktop, iPad, and iPhone are the only browsers that
+	// have WebKitMutationObserver but not un-prefixed MutationObserver.
+	// Must use `global` or `self` instead of `window` to work in both frames and web
+	// workers. `global` is a provision of Browserify, Mr, Mrs, or Mop.
+
+	/* globals self */
+	var scope = typeof global !== "undefined" ? global : self;
+	var BrowserMutationObserver = scope.MutationObserver || scope.WebKitMutationObserver;
+
+	// MutationObservers are desirable because they have high priority and work
+	// reliably everywhere they are implemented.
+	// They are implemented in all modern browsers.
+	//
+	// - Android 4-4.3
+	// - Chrome 26-34
+	// - Firefox 14-29
+	// - Internet Explorer 11
+	// - iPad Safari 6-7.1
+	// - iPhone Safari 7-7.1
+	// - Safari 6-7
+	if (typeof BrowserMutationObserver === "function") {
+	    requestFlush = makeRequestCallFromMutationObserver(flush);
+
+	// MessageChannels are desirable because they give direct access to the HTML
+	// task queue, are implemented in Internet Explorer 10, Safari 5.0-1, and Opera
+	// 11-12, and in web workers in many engines.
+	// Although message channels yield to any queued rendering and IO tasks, they
+	// would be better than imposing the 4ms delay of timers.
+	// However, they do not work reliably in Internet Explorer or Safari.
+
+	// Internet Explorer 10 is the only browser that has setImmediate but does
+	// not have MutationObservers.
+	// Although setImmediate yields to the browser's renderer, it would be
+	// preferrable to falling back to setTimeout since it does not have
+	// the minimum 4ms penalty.
+	// Unfortunately there appears to be a bug in Internet Explorer 10 Mobile (and
+	// Desktop to a lesser extent) that renders both setImmediate and
+	// MessageChannel useless for the purposes of ASAP.
+	// https://github.com/kriskowal/q/issues/396
+
+	// Timers are implemented universally.
+	// We fall back to timers in workers in most engines, and in foreground
+	// contexts in the following browsers.
+	// However, note that even this simple case requires nuances to operate in a
+	// broad spectrum of browsers.
+	//
+	// - Firefox 3-13
+	// - Internet Explorer 6-9
+	// - iPad Safari 4.3
+	// - Lynx 2.8.7
+	} else {
+	    requestFlush = makeRequestCallFromTimer(flush);
+	}
+
+	// `requestFlush` requests that the high priority event queue be flushed as
+	// soon as possible.
+	// This is useful to prevent an error thrown in a task from stalling the event
+	// queue if the exception handled by Node.js’s
+	// `process.on("uncaughtException")` or by a domain.
+	rawAsap.requestFlush = requestFlush;
+
+	// To request a high priority event, we induce a mutation observer by toggling
+	// the text of a text node between "1" and "-1".
+	function makeRequestCallFromMutationObserver(callback) {
+	    var toggle = 1;
+	    var observer = new BrowserMutationObserver(callback);
+	    var node = document.createTextNode("");
+	    observer.observe(node, {characterData: true});
+	    return function requestCall() {
+	        toggle = -toggle;
+	        node.data = toggle;
+	    };
+	}
+
+	// The message channel technique was discovered by Malte Ubl and was the
+	// original foundation for this library.
+	// http://www.nonblocking.io/2011/06/windownexttick.html
+
+	// Safari 6.0.5 (at least) intermittently fails to create message ports on a
+	// page's first load. Thankfully, this version of Safari supports
+	// MutationObservers, so we don't need to fall back in that case.
+
+	// function makeRequestCallFromMessageChannel(callback) {
+	//     var channel = new MessageChannel();
+	//     channel.port1.onmessage = callback;
+	//     return function requestCall() {
+	//         channel.port2.postMessage(0);
+	//     };
+	// }
+
+	// For reasons explained above, we are also unable to use `setImmediate`
+	// under any circumstances.
+	// Even if we were, there is another bug in Internet Explorer 10.
+	// It is not sufficient to assign `setImmediate` to `requestFlush` because
+	// `setImmediate` must be called *by name* and therefore must be wrapped in a
+	// closure.
+	// Never forget.
+
+	// function makeRequestCallFromSetImmediate(callback) {
+	//     return function requestCall() {
+	//         setImmediate(callback);
+	//     };
+	// }
+
+	// Safari 6.0 has a problem where timers will get lost while the user is
+	// scrolling. This problem does not impact ASAP because Safari 6.0 supports
+	// mutation observers, so that implementation is used instead.
+	// However, if we ever elect to use timers in Safari, the prevalent work-around
+	// is to add a scroll event listener that calls for a flush.
+
+	// `setTimeout` does not call the passed callback if the delay is less than
+	// approximately 7 in web workers in Firefox 8 through 18, and sometimes not
+	// even then.
+
+	function makeRequestCallFromTimer(callback) {
+	    return function requestCall() {
+	        // We dispatch a timeout with a specified delay of 0 for engines that
+	        // can reliably accommodate that request. This will usually be snapped
+	        // to a 4 milisecond delay, but once we're flushing, there's no delay
+	        // between events.
+	        var timeoutHandle = setTimeout(handleTimer, 0);
+	        // However, since this timer gets frequently dropped in Firefox
+	        // workers, we enlist an interval handle that will try to fire
+	        // an event 20 times per second until it succeeds.
+	        var intervalHandle = setInterval(handleTimer, 50);
+
+	        function handleTimer() {
+	            // Whichever timer succeeds will cancel both timers and
+	            // execute the callback.
+	            clearTimeout(timeoutHandle);
+	            clearInterval(intervalHandle);
+	            callback();
+	        }
+	    };
+	}
+
+	// This is for `asap.js` only.
+	// Its name will be periodically randomized to break any code that depends on
+	// its existence.
+	rawAsap.makeRequestCallFromTimer = makeRequestCallFromTimer;
+
+	// ASAP was originally a nextTick shim included in Q. This was factored out
+	// into this ASAP package. It was later adapted to RSVP which made further
+	// amendments. These decisions, particularly to marginalize MessageChannel and
+	// to capture the MutationObserver implementation in a closure, were integrated
+	// back into ASAP proper.
+	// https://github.com/tildeio/rsvp.js/blob/cddf7232546a9cf858524b75cde6f9edf72620a7/lib/rsvp/asap.js
+
+	/* WEBPACK VAR INJECTION */}.call(exports, (function() { return this; }())))
+
+/***/ },
+/* 87 */
+/***/ function(module, exports, __webpack_require__) {
+
+	'use strict';
+
+	var Promise = __webpack_require__(85);
+
+	module.exports = Promise;
+	Promise.prototype.done = function (onFulfilled, onRejected) {
+	  var self = arguments.length ? this.then.apply(this, arguments) : this;
+	  self.then(null, function (err) {
+	    setTimeout(function () {
+	      throw err;
+	    }, 0);
+	  });
+	};
+
+
+/***/ },
+/* 88 */
+/***/ function(module, exports, __webpack_require__) {
+
+	'use strict';
+
+	var Promise = __webpack_require__(85);
+
+	module.exports = Promise;
+	Promise.prototype['finally'] = function (f) {
+	  return this.then(function (value) {
+	    return Promise.resolve(f()).then(function () {
+	      return value;
+	    });
+	  }, function (err) {
+	    return Promise.resolve(f()).then(function () {
+	      throw err;
+	    });
+	  });
+	};
+
+
+/***/ },
+/* 89 */
+/***/ function(module, exports, __webpack_require__) {
+
+	'use strict';
+
+	//This file contains the ES6 extensions to the core Promises/A+ API
+
+	var Promise = __webpack_require__(85);
+
+	module.exports = Promise;
+
+	/* Static Functions */
+
+	var TRUE = valuePromise(true);
+	var FALSE = valuePromise(false);
+	var NULL = valuePromise(null);
+	var UNDEFINED = valuePromise(undefined);
+	var ZERO = valuePromise(0);
+	var EMPTYSTRING = valuePromise('');
+
+	function valuePromise(value) {
+	  var p = new Promise(Promise._61);
+	  p._81 = 1;
+	  p._65 = value;
+	  return p;
+	}
+	Promise.resolve = function (value) {
+	  if (value instanceof Promise) return value;
+
+	  if (value === null) return NULL;
+	  if (value === undefined) return UNDEFINED;
+	  if (value === true) return TRUE;
+	  if (value === false) return FALSE;
+	  if (value === 0) return ZERO;
+	  if (value === '') return EMPTYSTRING;
+
+	  if (typeof value === 'object' || typeof value === 'function') {
+	    try {
+	      var then = value.then;
+	      if (typeof then === 'function') {
+	        return new Promise(then.bind(value));
+	      }
+	    } catch (ex) {
+	      return new Promise(function (resolve, reject) {
+	        reject(ex);
+	      });
+	    }
+	  }
+	  return valuePromise(value);
+	};
+
+	Promise.all = function (arr) {
+	  var args = Array.prototype.slice.call(arr);
+
+	  return new Promise(function (resolve, reject) {
+	    if (args.length === 0) return resolve([]);
+	    var remaining = args.length;
+	    function res(i, val) {
+	      if (val && (typeof val === 'object' || typeof val === 'function')) {
+	        if (val instanceof Promise && val.then === Promise.prototype.then) {
+	          while (val._81 === 3) {
+	            val = val._65;
+	          }
+	          if (val._81 === 1) return res(i, val._65);
+	          if (val._81 === 2) reject(val._65);
+	          val.then(function (val) {
+	            res(i, val);
+	          }, reject);
+	          return;
+	        } else {
+	          var then = val.then;
+	          if (typeof then === 'function') {
+	            var p = new Promise(then.bind(val));
+	            p.then(function (val) {
+	              res(i, val);
+	            }, reject);
+	            return;
+	          }
+	        }
+	      }
+	      args[i] = val;
+	      if (--remaining === 0) {
+	        resolve(args);
+	      }
+	    }
+	    for (var i = 0; i < args.length; i++) {
+	      res(i, args[i]);
+	    }
+	  });
+	};
+
+	Promise.reject = function (value) {
+	  return new Promise(function (resolve, reject) {
+	    reject(value);
+	  });
+	};
+
+	Promise.race = function (values) {
+	  return new Promise(function (resolve, reject) {
+	    values.forEach(function(value){
+	      Promise.resolve(value).then(resolve, reject);
+	    });
+	  });
+	};
+
+	/* Prototype Methods */
+
+	Promise.prototype['catch'] = function (onRejected) {
+	  return this.then(null, onRejected);
+	};
+
+
+/***/ },
+/* 90 */
+/***/ function(module, exports, __webpack_require__) {
+
+	'use strict';
+
+	// This file contains then/promise specific extensions that are only useful
+	// for node.js interop
+
+	var Promise = __webpack_require__(85);
+	var asap = __webpack_require__(91);
+
+	module.exports = Promise;
+
+	/* Static Functions */
+
+	Promise.denodeify = function (fn, argumentCount) {
+	  if (
+	    typeof argumentCount === 'number' && argumentCount !== Infinity
+	  ) {
+	    return denodeifyWithCount(fn, argumentCount);
+	  } else {
+	    return denodeifyWithoutCount(fn);
+	  }
+	}
+
+	var callbackFn = (
+	  'function (err, res) {' +
+	  'if (err) { rj(err); } else { rs(res); }' +
+	  '}'
+	);
+	function denodeifyWithCount(fn, argumentCount) {
+	  var args = [];
+	  for (var i = 0; i < argumentCount; i++) {
+	    args.push('a' + i);
+	  }
+	  var body = [
+	    'return function (' + args.join(',') + ') {',
+	    'var self = this;',
+	    'return new Promise(function (rs, rj) {',
+	    'var res = fn.call(',
+	    ['self'].concat(args).concat([callbackFn]).join(','),
+	    ');',
+	    'if (res &&',
+	    '(typeof res === "object" || typeof res === "function") &&',
+	    'typeof res.then === "function"',
+	    ') {rs(res);}',
+	    '});',
+	    '};'
+	  ].join('');
+	  return Function(['Promise', 'fn'], body)(Promise, fn);
+	}
+	function denodeifyWithoutCount(fn) {
+	  var fnLength = Math.max(fn.length - 1, 3);
+	  var args = [];
+	  for (var i = 0; i < fnLength; i++) {
+	    args.push('a' + i);
+	  }
+	  var body = [
+	    'return function (' + args.join(',') + ') {',
+	    'var self = this;',
+	    'var args;',
+	    'var argLength = arguments.length;',
+	    'if (arguments.length > ' + fnLength + ') {',
+	    'args = new Array(arguments.length + 1);',
+	    'for (var i = 0; i < arguments.length; i++) {',
+	    'args[i] = arguments[i];',
+	    '}',
+	    '}',
+	    'return new Promise(function (rs, rj) {',
+	    'var cb = ' + callbackFn + ';',
+	    'var res;',
+	    'switch (argLength) {',
+	    args.concat(['extra']).map(function (_, index) {
+	      return (
+	        'case ' + (index) + ':' +
+	        'res = fn.call(' + ['self'].concat(args.slice(0, index)).concat('cb').join(',') + ');' +
+	        'break;'
+	      );
+	    }).join(''),
+	    'default:',
+	    'args[argLength] = cb;',
+	    'res = fn.apply(self, args);',
+	    '}',
+	    
+	    'if (res &&',
+	    '(typeof res === "object" || typeof res === "function") &&',
+	    'typeof res.then === "function"',
+	    ') {rs(res);}',
+	    '});',
+	    '};'
+	  ].join('');
+
+	  return Function(
+	    ['Promise', 'fn'],
+	    body
+	  )(Promise, fn);
+	}
+
+	Promise.nodeify = function (fn) {
+	  return function () {
+	    var args = Array.prototype.slice.call(arguments);
+	    var callback =
+	      typeof args[args.length - 1] === 'function' ? args.pop() : null;
+	    var ctx = this;
+	    try {
+	      return fn.apply(this, arguments).nodeify(callback, ctx);
+	    } catch (ex) {
+	      if (callback === null || typeof callback == 'undefined') {
+	        return new Promise(function (resolve, reject) {
+	          reject(ex);
+	        });
+	      } else {
+	        asap(function () {
+	          callback.call(ctx, ex);
+	        })
+	      }
+	    }
+	  }
+	}
+
+	Promise.prototype.nodeify = function (callback, ctx) {
+	  if (typeof callback != 'function') return this;
+
+	  this.then(function (value) {
+	    asap(function () {
+	      callback.call(ctx, null, value);
+	    });
+	  }, function (err) {
+	    asap(function () {
+	      callback.call(ctx, err);
+	    });
+	  });
+	}
+
+
+/***/ },
+/* 91 */
+/***/ function(module, exports, __webpack_require__) {
+
+	"use strict";
+
+	// rawAsap provides everything we need except exception management.
+	var rawAsap = __webpack_require__(86);
+	// RawTasks are recycled to reduce GC churn.
+	var freeTasks = [];
+	// We queue errors to ensure they are thrown in right order (FIFO).
+	// Array-as-queue is good enough here, since we are just dealing with exceptions.
+	var pendingErrors = [];
+	var requestErrorThrow = rawAsap.makeRequestCallFromTimer(throwFirstError);
+
+	function throwFirstError() {
+	    if (pendingErrors.length) {
+	        throw pendingErrors.shift();
+	    }
+	}
+
+	/**
+	 * Calls a task as soon as possible after returning, in its own event, with priority
+	 * over other events like animation, reflow, and repaint. An error thrown from an
+	 * event will not interrupt, nor even substantially slow down the processing of
+	 * other events, but will be rather postponed to a lower priority event.
+	 * @param {{call}} task A callable object, typically a function that takes no
+	 * arguments.
+	 */
+	module.exports = asap;
+	function asap(task) {
+	    var rawTask;
+	    if (freeTasks.length) {
+	        rawTask = freeTasks.pop();
+	    } else {
+	        rawTask = new RawTask();
+	    }
+	    rawTask.task = task;
+	    rawAsap(rawTask);
+	}
+
+	// We wrap tasks with recyclable task objects.  A task object implements
+	// `call`, just like a function.
+	function RawTask() {
+	    this.task = null;
+	}
+
+	// The sole purpose of wrapping the task is to catch the exception and recycle
+	// the task object after its single use.
+	RawTask.prototype.call = function () {
+	    try {
+	        this.task.call();
+	    } catch (error) {
+	        if (asap.onerror) {
+	            // This hook exists purely for testing purposes.
+	            // Its name will be periodically randomized to break any code that
+	            // depends on its existence.
+	            asap.onerror(error);
+	        } else {
+	            // In a web browser, exceptions are not fatal. However, to avoid
+	            // slowing down the queue of pending tasks, we rethrow the error in a
+	            // lower priority turn.
+	            pendingErrors.push(error);
+	            requestErrorThrow();
+	        }
+	    } finally {
+	        this.task = null;
+	        freeTasks[freeTasks.length] = this;
+	    }
+	};
+
+
+/***/ },
+/* 92 */
+/***/ function(module, exports, __webpack_require__) {
+
+	'use strict';
+
+	var Promise = __webpack_require__(85);
+
+	module.exports = Promise;
+	Promise.enableSynchronous = function () {
+	  Promise.prototype.isPending = function() {
+	    return this.getState() == 0;
+	  };
+
+	  Promise.prototype.isFulfilled = function() {
+	    return this.getState() == 1;
+	  };
+
+	  Promise.prototype.isRejected = function() {
+	    return this.getState() == 2;
+	  };
+
+	  Promise.prototype.getValue = function () {
+	    if (this._81 === 3) {
+	      return this._65.getValue();
+	    }
+
+	    if (!this.isFulfilled()) {
+	      throw new Error('Cannot get a value of an unfulfilled promise.');
+	    }
+
+	    return this._65;
+	  };
+
+	  Promise.prototype.getReason = function () {
+	    if (this._81 === 3) {
+	      return this._65.getReason();
+	    }
+
+	    if (!this.isRejected()) {
+	      throw new Error('Cannot get a rejection reason of a non-rejected promise.');
+	    }
+
+	    return this._65;
+	  };
+
+	  Promise.prototype.getState = function () {
+	    if (this._81 === 3) {
+	      return this._65.getState();
+	    }
+	    if (this._81 === -1 || this._81 === -2) {
+	      return 0;
+	    }
+
+	    return this._81;
+	  };
+	};
+
+	Promise.disableSynchronous = function() {
+	  Promise.prototype.isPending = undefined;
+	  Promise.prototype.isFulfilled = undefined;
+	  Promise.prototype.isRejected = undefined;
+	  Promise.prototype.getValue = undefined;
+	  Promise.prototype.getReason = undefined;
+	  Promise.prototype.getState = undefined;
+	};
+
+
+/***/ },
+/* 93 */
+/***/ function(module, exports, __webpack_require__) {
+
+	var Cast = __webpack_require__(78);
+
+	function Scratch3EventBlocks(runtime) {
+	    /**
+	     * The runtime instantiating this block package.
+	     * @type {Runtime}
+	     */
+	    this.runtime = runtime;
+	}
+
+	/**
+	 * Retrieve the block primitives implemented by this package.
+	 * @return {Object.<string, Function>} Mapping of opcode to Function.
+	 */
+	Scratch3EventBlocks.prototype.getPrimitives = function() {
+	    return {
+	        'event_broadcast': this.broadcast,
+	        'event_broadcastandwait': this.broadcastAndWait,
+	        'event_whengreaterthan': this.hatGreaterThanPredicate
+	    };
+	};
+
+	Scratch3EventBlocks.prototype.getHats = function () {
+	    return {
+	        'event_whenflagclicked': {
+	            restartExistingThreads: true
+	        },
+	        'event_whenkeypressed': {
+	            restartExistingThreads: false
+	        },
+	        'event_whenthisspriteclicked': {
+	            restartExistingThreads: true
+	        },
+	        'event_whenbackdropswitchesto': {
+	            restartExistingThreads: true
+	        },
+	        'event_whengreaterthan': {
+	            restartExistingThreads: false,
+	            edgeActivated: true
+	        },
+	        'event_whenbroadcastreceived': {
+	            restartExistingThreads: true
+	        }
+	    };
+	};
+
+	Scratch3EventBlocks.prototype.hatGreaterThanPredicate = function (args, util) {
+	    var option = Cast.toString(args.WHENGREATERTHANMENU).toLowerCase();
+	    var value = Cast.toNumber(args.VALUE);
+	    // @todo: Other cases :)
+	    if (option == 'timer') {
+	        return util.ioQuery('clock', 'projectTimer') > value;
+	    }
+	    return false;
+	};
+
+	Scratch3EventBlocks.prototype.broadcast = function(args, util) {
+	    var broadcastOption = Cast.toString(args.BROADCAST_OPTION);
+	    util.startHats('event_whenbroadcastreceived', {
+	        'BROADCAST_OPTION': broadcastOption
+	    });
+	};
+
+	Scratch3EventBlocks.prototype.broadcastAndWait = function (args, util) {
+	    var broadcastOption = Cast.toString(args.BROADCAST_OPTION);
+	    // Have we run before, starting threads?
+	    if (!util.stackFrame.startedThreads) {
+	        // No - start hats for this broadcast.
+	        util.stackFrame.startedThreads = util.startHats(
+	            'event_whenbroadcastreceived', {
+	                'BROADCAST_OPTION': broadcastOption
+	            }
+	        );
+	        if (util.stackFrame.startedThreads.length == 0) {
+	            // Nothing was started.
+	            return;
+	        }
+	    }
+	    // We've run before; check if the wait is still going on.
+	    var instance = this;
+	    var waiting = util.stackFrame.startedThreads.some(function(thread) {
+	        return instance.runtime.isActiveThread(thread);
+	    });
+	    if (waiting) {
+	        util.yieldFrame();
+	    }
+	};
+
+	module.exports = Scratch3EventBlocks;
+
+
+/***/ },
+/* 94 */
+/***/ function(module, exports, __webpack_require__) {
+
+	var Cast = __webpack_require__(78);
+
+	function Scratch3LooksBlocks(runtime) {
+	    /**
+	     * The runtime instantiating this block package.
+	     * @type {Runtime}
+	     */
+	    this.runtime = runtime;
+	}
+
+	/**
+	 * Retrieve the block primitives implemented by this package.
+	 * @return {Object.<string, Function>} Mapping of opcode to Function.
+	 */
+	Scratch3LooksBlocks.prototype.getPrimitives = function() {
+	    return {
+	        'looks_say': this.say,
+	        'looks_sayforsecs': this.sayforsecs,
+	        'looks_think': this.think,
+	        'looks_thinkforsecs': this.sayforsecs,
+	        'looks_show': this.show,
+	        'looks_hide': this.hide,
+	        'looks_switchcostumeto': this.switchCostume,
+	        'looks_switchbackdropto': this.switchBackdrop,
+	        'looks_switchbackdroptoandwait': this.switchBackdropAndWait,
+	        'looks_nextcostume': this.nextCostume,
+	        'looks_nextbackdrop': this.nextBackdrop,
+	        'looks_changeeffectby': this.changeEffect,
+	        'looks_seteffectto': this.setEffect,
+	        'looks_cleargraphiceffects': this.clearEffects,
+	        'looks_changesizeby': this.changeSize,
+	        'looks_setsizeto': this.setSize,
+	        'looks_size': this.getSize,
+	        'looks_costumeorder': this.getCostumeIndex,
+	        'looks_backdroporder': this.getBackdropIndex,
+	        'looks_backdropname': this.getBackdropName
+	    };
+	};
+
+	Scratch3LooksBlocks.prototype.say = function (args, util) {
+	    util.target.setSay('say', args.MESSAGE);
+	};
+
+	Scratch3LooksBlocks.prototype.sayforsecs = function (args, util) {
+	    util.target.setSay('say', args.MESSAGE);
+	    return new Promise(function(resolve) {
+	        setTimeout(function() {
+	            // Clear say bubble and proceed.
+	            util.target.setSay();
+	            resolve();
+	        }, 1000 * args.SECS);
+	    });
+	};
+
+	Scratch3LooksBlocks.prototype.think = function (args, util) {
+	    util.target.setSay('think', args.MESSAGE);
+	};
+
+	Scratch3LooksBlocks.prototype.thinkforsecs = function (args, util) {
+	    util.target.setSay('think', args.MESSAGE);
+	    return new Promise(function(resolve) {
+	        setTimeout(function() {
+	            // Clear say bubble and proceed.
+	            util.target.setSay();
+	            resolve();
+	        }, 1000 * args.SECS);
+	    });
+	};
+
+	Scratch3LooksBlocks.prototype.show = function (args, util) {
+	    util.target.setVisible(true);
+	};
+
+	Scratch3LooksBlocks.prototype.hide = function (args, util) {
+	    util.target.setVisible(false);
+	};
+
+	/**
+	 * Utility function to set the costume or backdrop of a target.
+	 * Matches the behavior of Scratch 2.0 for different types of arguments.
+	 * @param {!Target} target Target to set costume/backdrop to.
+	 * @param {Any} requestedCostume Costume requested, e.g., 0, 'name', etc.
+	 * @param {boolean=} opt_zeroIndex Set to zero-index the requestedCostume.
+	 * @return {Array.<!Thread>} Any threads started by this switch.
+	 */
+	Scratch3LooksBlocks.prototype._setCostumeOrBackdrop = function (target,
+	        requestedCostume, opt_zeroIndex) {
+	    if (typeof requestedCostume === 'number') {
+	        target.setCostume(opt_zeroIndex ?
+	            requestedCostume : requestedCostume - 1);
+	    } else {
+	        var costumeIndex = target.getCostumeIndexByName(requestedCostume);
+	        if (costumeIndex > -1) {
+	            target.setCostume(costumeIndex);
+	        } else if (costumeIndex == 'previous costume' ||
+	                   costumeIndex == 'previous backdrop') {
+	            target.setCostume(target.currentCostume - 1);
+	        } else if (costumeIndex == 'next costume' ||
+	                   costumeIndex == 'next backdrop') {
+	            target.setCostume(target.currentCostume + 1);
+	        } else {
+	            var forcedNumber = Cast.toNumber(requestedCostume);
+	            if (!isNaN(forcedNumber)) {
+	                target.setCostume(opt_zeroIndex ?
+	                    forcedNumber : forcedNumber - 1);
+	            }
+	        }
+	    }
+	    if (target == this.runtime.getTargetForStage()) {
+	        // Target is the stage - start hats.
+	        var newName = target.sprite.costumes[target.currentCostume].name;
+	        return this.runtime.startHats('event_whenbackdropswitchesto', {
+	            'BACKDROP': newName
+	        });
+	    }
+	    return [];
+	};
+
+	Scratch3LooksBlocks.prototype.switchCostume = function (args, util) {
+	    this._setCostumeOrBackdrop(util.target, args.COSTUME);
+	};
+
+	Scratch3LooksBlocks.prototype.nextCostume = function (args, util) {
+	    this._setCostumeOrBackdrop(
+	        util.target, util.target.currentCostume + 1, true
+	    );
+	};
+
+	Scratch3LooksBlocks.prototype.switchBackdrop = function (args) {
+	    this._setCostumeOrBackdrop(this.runtime.getTargetForStage(), args.BACKDROP);
+	};
+
+	Scratch3LooksBlocks.prototype.switchBackdropAndWait = function (args, util) {
+	    // Have we run before, starting threads?
+	    if (!util.stackFrame.startedThreads) {
+	        // No - switch the backdrop.
+	        util.stackFrame.startedThreads = (
+	            this._setCostumeOrBackdrop(
+	                this.runtime.getTargetForStage(),
+	                args.BACKDROP
+	            )
+	        );
+	        if (util.stackFrame.startedThreads.length == 0) {
+	            // Nothing was started.
+	            return;
+	        }
+	    }
+	    // We've run before; check if the wait is still going on.
+	    var instance = this;
+	    var waiting = util.stackFrame.startedThreads.some(function(thread) {
+	        return instance.runtime.isActiveThread(thread);
+	    });
+	    if (waiting) {
+	        util.yieldFrame();
+	    }
+	};
+
+	Scratch3LooksBlocks.prototype.nextBackdrop = function () {
+	    var stage = this.runtime.getTargetForStage();
+	    this._setCostumeOrBackdrop(
+	        stage, stage.currentCostume + 1, true
+	    );
+	};
+
+	Scratch3LooksBlocks.prototype.changeEffect = function (args, util) {
+	    var effect = Cast.toString(args.EFFECT).toLowerCase();
+	    var change = Cast.toNumber(args.CHANGE);
+	    if (!util.target.effects.hasOwnProperty(effect)) return;
+	    var newValue = change + util.target.effects[effect];
+	    util.target.setEffect(effect, newValue);
+	};
+
+	Scratch3LooksBlocks.prototype.setEffect = function (args, util) {
+	    var effect = Cast.toString(args.EFFECT).toLowerCase();
+	    var value = Cast.toNumber(args.VALUE);
+	    util.target.setEffect(effect, value);
+	};
+
+	Scratch3LooksBlocks.prototype.clearEffects = function (args, util) {
+	    util.target.clearEffects();
+	};
+
+	Scratch3LooksBlocks.prototype.changeSize = function (args, util) {
+	    var change = Cast.toNumber(args.CHANGE);
+	    util.target.setSize(util.target.size + change);
+	};
+
+	Scratch3LooksBlocks.prototype.setSize = function (args, util) {
+	    var size = Cast.toNumber(args.SIZE);
+	    util.target.setSize(size);
+	};
+
+	Scratch3LooksBlocks.prototype.getSize = function (args, util) {
+	    return util.target.size;
+	};
+
+	Scratch3LooksBlocks.prototype.getBackdropIndex = function () {
+	    var stage = this.runtime.getTargetForStage();
+	    return stage.currentCostume + 1;
+	};
+
+	Scratch3LooksBlocks.prototype.getBackdropName = function () {
+	    var stage = this.runtime.getTargetForStage();
+	    return stage.sprite.costumes[stage.currentCostume].name;
+	};
+
+	Scratch3LooksBlocks.prototype.getCostumeIndex = function (args, util) {
+	    return util.target.currentCostume + 1;
+	};
+
+	module.exports = Scratch3LooksBlocks;
+
+
+/***/ },
+/* 95 */
+/***/ function(module, exports, __webpack_require__) {
+
+	var Cast = __webpack_require__(78);
+	var MathUtil = __webpack_require__(81);
+	var Timer = __webpack_require__(18);
+
+	function Scratch3MotionBlocks(runtime) {
+	    /**
+	     * The runtime instantiating this block package.
+	     * @type {Runtime}
+	     */
+	    this.runtime = runtime;
+	}
+
+	/**
+	 * Retrieve the block primitives implemented by this package.
+	 * @return {Object.<string, Function>} Mapping of opcode to Function.
+	 */
+	Scratch3MotionBlocks.prototype.getPrimitives = function() {
+	    return {
+	        'motion_movesteps': this.moveSteps,
+	        'motion_gotoxy': this.goToXY,
+	        'motion_goto': this.goTo,
+	        'motion_turnright': this.turnRight,
+	        'motion_turnleft': this.turnLeft,
+	        'motion_pointindirection': this.pointInDirection,
+	        'motion_pointtowards': this.pointTowards,
+	        'motion_glidesecstoxy': this.glide,
+	        'motion_setrotationstyle': this.setRotationStyle,
+	        'motion_changexby': this.changeX,
+	        'motion_setx': this.setX,
+	        'motion_changeyby': this.changeY,
+	        'motion_sety': this.setY,
+	        'motion_xposition': this.getX,
+	        'motion_yposition': this.getY,
+	        'motion_direction': this.getDirection
+	    };
+	};
+
+	Scratch3MotionBlocks.prototype.moveSteps = function (args, util) {
+	    var steps = Cast.toNumber(args.STEPS);
+	    var radians = MathUtil.degToRad(util.target.direction);
+	    var dx = steps * Math.cos(radians);
+	    var dy = steps * Math.sin(radians);
+	    util.target.setXY(util.target.x + dx, util.target.y + dy);
+	};
+
+	Scratch3MotionBlocks.prototype.goToXY = function (args, util) {
+	    var x = Cast.toNumber(args.X);
+	    var y = Cast.toNumber(args.Y);
+	    util.target.setXY(x, y);
+	};
+
+	Scratch3MotionBlocks.prototype.goTo = function (args, util) {
+	    var targetX = 0;
+	    var targetY = 0;
+	    if (args.TO === '_mouse_') {
+	        targetX = util.ioQuery('mouse', 'getX');
+	        targetY = util.ioQuery('mouse', 'getY');
+	    } else if (args.TO === '_random_') {
+	        var stageWidth = this.runtime.constructor.STAGE_WIDTH;
+	        var stageHeight = this.runtime.constructor.STAGE_HEIGHT;
+	        targetX = Math.round(stageWidth * (Math.random() - 0.5));
+	        targetY = Math.round(stageHeight * (Math.random() - 0.5));
+	    } else {
+	        var goToTarget = this.runtime.getSpriteTargetByName(args.TO);
+	        if (!goToTarget) return;
+	        targetX = goToTarget.x;
+	        targetY = goToTarget.y;
+	    }
+	    util.target.setXY(targetX, targetY);
+	};
+
+	Scratch3MotionBlocks.prototype.turnRight = function (args, util) {
+	    var degrees = Cast.toNumber(args.DEGREES);
+	    util.target.setDirection(util.target.direction + degrees);
+	};
+
+	Scratch3MotionBlocks.prototype.turnLeft = function (args, util) {
+	    var degrees = Cast.toNumber(args.DEGREES);
+	    util.target.setDirection(util.target.direction - degrees);
+	};
+
+	Scratch3MotionBlocks.prototype.pointInDirection = function (args, util) {
+	    var direction = Cast.toNumber(args.DIRECTION);
+	    util.target.setDirection(direction);
+	};
+
+	Scratch3MotionBlocks.prototype.pointTowards = function (args, util) {
+	    var targetX = 0;
+	    var targetY = 0;
+	    if (args.TOWARDS === '_mouse_') {
+	        targetX = util.ioQuery('mouse', 'getX');
+	        targetY = util.ioQuery('mouse', 'getY');
+	    } else {
+	        var pointTarget = this.runtime.getSpriteTargetByName(args.TOWARDS);
+	        if (!pointTarget) return;
+	        targetX = pointTarget.x;
+	        targetY = pointTarget.y;
+	    }
+
+	    var dx = targetX - util.target.x;
+	    var dy = targetY - util.target.y;
+	    var direction = 90 - MathUtil.radToDeg(Math.atan2(dy, dx));
+	    util.target.setDirection(direction);
+	};
+
+	Scratch3MotionBlocks.prototype.glide = function (args, util) {
+	    if (!util.stackFrame.timer) {
+	        // First time: save data for future use.
+	        util.stackFrame.timer = new Timer();
+	        util.stackFrame.timer.start();
+	        util.stackFrame.duration = Cast.toNumber(args.SECS);
+	        util.stackFrame.startX = util.target.x;
+	        util.stackFrame.startY = util.target.y;
+	        util.stackFrame.endX = Cast.toNumber(args.X);
+	        util.stackFrame.endY = Cast.toNumber(args.Y);
+	        if (util.stackFrame.duration <= 0) {
+	            // Duration too short to glide.
+	            util.target.setXY(util.stackFrame.endX, util.stackFrame.endY);
+	            return;
+	        }
+	        util.yieldFrame();
+	    } else {
+	        var timeElapsed = util.stackFrame.timer.timeElapsed();
+	        if (timeElapsed < util.stackFrame.duration * 1000) {
+	            // In progress: move to intermediate position.
+	            var frac = timeElapsed / (util.stackFrame.duration * 1000);
+	            var dx = frac * (util.stackFrame.endX - util.stackFrame.startX);
+	            var dy = frac * (util.stackFrame.endY - util.stackFrame.startY);
+	            util.target.setXY(
+	                util.stackFrame.startX + dx,
+	                util.stackFrame.startY + dy
+	            );
+	            util.yieldFrame();
+	        } else {
+	            // Finished: move to final position.
+	            util.target.setXY(util.stackFrame.endX, util.stackFrame.endY);
+	        }
+	    }
+	};
+
+	Scratch3MotionBlocks.prototype.setRotationStyle = function (args, util) {
+	    util.target.setRotationStyle(args.STYLE);
+	};
+
+	Scratch3MotionBlocks.prototype.changeX = function (args, util) {
+	    var dx = Cast.toNumber(args.DX);
+	    util.target.setXY(util.target.x + dx, util.target.y);
+	};
+
+	Scratch3MotionBlocks.prototype.setX = function (args, util) {
+	    var x = Cast.toNumber(args.X);
+	    util.target.setXY(x, util.target.y);
+	};
+
+	Scratch3MotionBlocks.prototype.changeY = function (args, util) {
+	    var dy = Cast.toNumber(args.DY);
+	    util.target.setXY(util.target.x, util.target.y + dy);
+	};
+
+	Scratch3MotionBlocks.prototype.setY = function (args, util) {
+	    var y = Cast.toNumber(args.Y);
+	    util.target.setXY(util.target.x, y);
+	};
+
+	Scratch3MotionBlocks.prototype.getX = function (args, util) {
+	    return util.target.x;
+	};
+
+	Scratch3MotionBlocks.prototype.getY = function (args, util) {
+	    return util.target.y;
+	};
+
+	Scratch3MotionBlocks.prototype.getDirection = function (args, util) {
+	    return util.target.direction;
+	};
+
+	module.exports = Scratch3MotionBlocks;
+
+
+/***/ },
+/* 96 */
+/***/ function(module, exports, __webpack_require__) {
+
+	var Cast = __webpack_require__(78);
+
+	function Scratch3OperatorsBlocks(runtime) {
+	    /**
+	     * The runtime instantiating this block package.
+	     * @type {Runtime}
+	     */
+	    this.runtime = runtime;
+	}
+
+	/**
+	 * Retrieve the block primitives implemented by this package.
+	 * @return {Object.<string, Function>} Mapping of opcode to Function.
+	 */
+	Scratch3OperatorsBlocks.prototype.getPrimitives = function() {
+	    return {
+	        'operator_add': this.add,
+	        'operator_subtract': this.subtract,
+	        'operator_multiply': this.multiply,
+	        'operator_divide': this.divide,
+	        'operator_lt': this.lt,
+	        'operator_equals': this.equals,
+	        'operator_gt': this.gt,
+	        'operator_and': this.and,
+	        'operator_or': this.or,
+	        'operator_not': this.not,
+	        'operator_random': this.random,
+	        'operator_join': this.join,
+	        'operator_letter_of': this.letterOf,
+	        'operator_length': this.length,
+	        'operator_mod': this.mod,
+	        'operator_round': this.round,
+	        'operator_mathop': this.mathop
+	    };
+	};
+
+	Scratch3OperatorsBlocks.prototype.add = function (args) {
+	    return Cast.toNumber(args.NUM1) + Cast.toNumber(args.NUM2);
+	};
+
+	Scratch3OperatorsBlocks.prototype.subtract = function (args) {
+	    return Cast.toNumber(args.NUM1) - Cast.toNumber(args.NUM2);
+	};
+
+	Scratch3OperatorsBlocks.prototype.multiply = function (args) {
+	    return Cast.toNumber(args.NUM1) * Cast.toNumber(args.NUM2);
+	};
+
+	Scratch3OperatorsBlocks.prototype.divide = function (args) {
+	    return Cast.toNumber(args.NUM1) / Cast.toNumber(args.NUM2);
+	};
+
+	Scratch3OperatorsBlocks.prototype.lt = function (args) {
+	    return Cast.compare(args.OPERAND1, args.OPERAND2) < 0;
+	};
+
+	Scratch3OperatorsBlocks.prototype.equals = function (args) {
+	    return Cast.compare(args.OPERAND1, args.OPERAND2) == 0;
+	};
+
+	Scratch3OperatorsBlocks.prototype.gt = function (args) {
+	    return Cast.compare(args.OPERAND1, args.OPERAND2) > 0;
+	};
+
+	Scratch3OperatorsBlocks.prototype.and = function (args) {
+	    return Cast.toBoolean(args.OPERAND1) && Cast.toBoolean(args.OPERAND2);
+	};
+
+	Scratch3OperatorsBlocks.prototype.or = function (args) {
+	    return Cast.toBoolean(args.OPERAND1) || Cast.toBoolean(args.OPERAND2);
+	};
+
+	Scratch3OperatorsBlocks.prototype.not = function (args) {
+	    return !Cast.toBoolean(args.OPERAND);
+	};
+
+	Scratch3OperatorsBlocks.prototype.random = function (args) {
+	    var nFrom = Cast.toNumber(args.FROM);
+	    var nTo = Cast.toNumber(args.TO);
+	    var low = nFrom <= nTo ? nFrom : nTo;
+	    var high = nFrom <= nTo ? nTo : nFrom;
+	    if (low == high) return low;
+	    // If both arguments are ints, truncate the result to an int.
+	    if (Cast.isInt(args.FROM) && Cast.isInt(args.TO)) {
+	        return low + parseInt(Math.random() * ((high + 1) - low));
+	    }
+	    return (Math.random() * (high - low)) + low;
+	};
+
+	Scratch3OperatorsBlocks.prototype.join = function (args) {
+	    return Cast.toString(args.STRING1) + Cast.toString(args.STRING2);
+	};
+
+	Scratch3OperatorsBlocks.prototype.letterOf = function (args) {
+	    var index = Cast.toNumber(args.LETTER) - 1;
+	    var str = Cast.toString(args.STRING);
+	    // Out of bounds?
+	    if (index < 0 || index >= str.length) {
+	        return '';
+	    }
+	    return str.charAt(index);
+	};
+
+	Scratch3OperatorsBlocks.prototype.length = function (args) {
+	    return Cast.toString(args.STRING).length;
+	};
+
+	Scratch3OperatorsBlocks.prototype.mod = function (args) {
+	    var n = Cast.toNumber(args.NUM1);
+	    var modulus = Cast.toNumber(args.NUM2);
+	    var result = n % modulus;
+	    // Scratch mod is kept positive.
+	    if (result / modulus < 0) result += modulus;
+	    return result;
+	};
+
+	Scratch3OperatorsBlocks.prototype.round = function (args) {
+	    return Math.round(Cast.toNumber(args.NUM));
+	};
+
+	Scratch3OperatorsBlocks.prototype.mathop = function (args) {
+	    var operator = Cast.toString(args.OPERATOR).toLowerCase();
+	    var n = Cast.toNumber(args.NUM);
+	    switch (operator) {
+	    case 'abs': return Math.abs(n);
+	    case 'floor': return Math.floor(n);
+	    case 'ceiling': return Math.ceil(n);
+	    case 'sqrt': return Math.sqrt(n);
+	    case 'sin': return Math.sin((Math.PI * n) / 180);
+	    case 'cos': return Math.cos((Math.PI * n) / 180);
+	    case 'tan': return Math.tan((Math.PI * n) / 180);
+	    case 'asin': return (Math.asin(n) * 180) / Math.PI;
+	    case 'acos': return (Math.acos(n) * 180) / Math.PI;
+	    case 'atan': return (Math.atan(n) * 180) / Math.PI;
+	    case 'ln': return Math.log(n);
+	    case 'log': return Math.log(n) / Math.LN10;
+	    case 'e ^': return Math.exp(n);
+	    case '10 ^': return Math.pow(10, n);
+	    }
+	    return 0;
+	};
+
+	module.exports = Scratch3OperatorsBlocks;
+
+
+/***/ },
+/* 97 */
+/***/ function(module, exports, __webpack_require__) {
+
+	var Cast = __webpack_require__(78);
+
+	function Scratch3SensingBlocks(runtime) {
+	    /**
+	     * The runtime instantiating this block package.
+	     * @type {Runtime}
+	     */
+	    this.runtime = runtime;
+	}
+
+	/**
+	 * Retrieve the block primitives implemented by this package.
+	 * @return {Object.<string, Function>} Mapping of opcode to Function.
+	 */
+	Scratch3SensingBlocks.prototype.getPrimitives = function() {
+	    return {
+	        'sensing_touchingcolor': this.touchingColor,
+	        'sensing_coloristouchingcolor': this.colorTouchingColor,
+	        'sensing_distanceto': this.distanceTo,
+	        'sensing_timer': this.getTimer,
+	        'sensing_resettimer': this.resetTimer,
+	        'sensing_mousex': this.getMouseX,
+	        'sensing_mousey': this.getMouseY,
+	        'sensing_mousedown': this.getMouseDown,
+	        'sensing_keypressed': this.getKeyPressed,
+	        'sensing_current': this.current
+	    };
+	};
+
+	Scratch3SensingBlocks.prototype.touchingColor = function (args, util) {
+	    var color = Cast.toRgbColorList(args.COLOR);
+	    return util.target.isTouchingColor(color);
+	};
+
+	Scratch3SensingBlocks.prototype.colorTouchingColor = function (args, util) {
+	    var maskColor = Cast.toRgbColorList(args.COLOR);
+	    var targetColor = Cast.toRgbColorList(args.COLOR2);
+	    return util.target.colorIsTouchingColor(targetColor, maskColor);
+	};
+
+	Scratch3SensingBlocks.prototype.distanceTo = function (args, util) {
+	    if (util.target.isStage) return 10000;
+
+	    var targetX = 0;
+	    var targetY = 0;
+	    if (args.DISTANCETOMENU === '_mouse_') {
+	        targetX = util.ioQuery('mouse', 'getX');
+	        targetY = util.ioQuery('mouse', 'getY');
+	    } else {
+	        var distTarget = this.runtime.getSpriteTargetByName(
+	            args.DISTANCETOMENU
+	        );
+	        if (!distTarget) return 10000;
+	        targetX = distTarget.x;
+	        targetY = distTarget.y;
+	    }
+
+	    var dx = util.target.x - targetX;
+	    var dy = util.target.y - targetY;
+	    return Math.sqrt((dx * dx) + (dy * dy));
+	};
+
+	Scratch3SensingBlocks.prototype.getTimer = function (args, util) {
+	    return util.ioQuery('clock', 'projectTimer');
+	};
+
+	Scratch3SensingBlocks.prototype.resetTimer = function (args, util) {
+	    util.ioQuery('clock', 'resetProjectTimer');
+	};
+
+	Scratch3SensingBlocks.prototype.getMouseX = function (args, util) {
+	    return util.ioQuery('mouse', 'getX');
+	};
+
+	Scratch3SensingBlocks.prototype.getMouseY = function (args, util) {
+	    return util.ioQuery('mouse', 'getY');
+	};
+
+	Scratch3SensingBlocks.prototype.getMouseDown = function (args, util) {
+	    return util.ioQuery('mouse', 'getIsDown');
+	};
+
+	Scratch3SensingBlocks.prototype.current = function (args) {
+	    var menuOption = Cast.toString(args.CURRENTMENU).toLowerCase();
+	    var date = new Date();
+	    switch (menuOption) {
+	    case 'year': return date.getFullYear();
+	    case 'month': return date.getMonth() + 1; // getMonth is zero-based
+	    case 'date': return date.getDate();
+	    case 'dayofweek': return date.getDay() + 1; // getDay is zero-based, Sun=0
+	    case 'hour': return date.getHours();
+	    case 'minute': return date.getMinutes();
+	    case 'second': return date.getSeconds();
+	    }
+	    return 0;
+	};
+
+	Scratch3SensingBlocks.prototype.getKeyPressed = function (args, util) {
+	    return util.ioQuery('keyboard', 'getKeyIsDown', args.KEY_OPTION);
+	};
+
+	module.exports = Scratch3SensingBlocks;
+
+
+/***/ },
+/* 98 */
+/***/ function(module, exports, __webpack_require__) {
+
+	var Cast = __webpack_require__(78);
+
+	function Scratch3DataBlocks(runtime) {
+	    /**
+	     * The runtime instantiating this block package.
+	     * @type {Runtime}
+	     */
+	    this.runtime = runtime;
+	}
+
+	/**
+	 * Retrieve the block primitives implemented by this package.
+	 * @return {Object.<string, Function>} Mapping of opcode to Function.
+	 */
+	Scratch3DataBlocks.prototype.getPrimitives = function () {
+	    return {
+	        'data_variable': this.getVariable,
+	        'data_setvariableto': this.setVariableTo,
+	        'data_changevariableby': this.changeVariableBy,
+	        'data_listcontents': this.getListContents,
+	        'data_addtolist': this.addToList,
+	        'data_deleteoflist': this.deleteOfList,
+	        'data_insertatlist': this.insertAtList,
+	        'data_replaceitemoflist': this.replaceItemOfList,
+	        'data_itemoflist': this.getItemOfList,
+	        'data_lengthoflist': this.lengthOfList,
+	        'data_listcontainsitem': this.listContainsItem
+	    };
+	};
+
+	Scratch3DataBlocks.prototype.getVariable = function (args, util) {
+	    var variable = util.target.lookupOrCreateVariable(args.VARIABLE);
+	    return variable.value;
+	};
+
+	Scratch3DataBlocks.prototype.setVariableTo = function (args, util) {
+	    var variable = util.target.lookupOrCreateVariable(args.VARIABLE);
+	    variable.value = args.VALUE;
+	};
+
+	Scratch3DataBlocks.prototype.changeVariableBy = function (args, util) {
+	    var variable = util.target.lookupOrCreateVariable(args.VARIABLE);
+	    var castedValue = Cast.toNumber(variable.value);
+	    var dValue = Cast.toNumber(args.VALUE);
+	    variable.value = castedValue + dValue;
+	};
+
+	Scratch3DataBlocks.prototype.getListContents = function (args, util) {
+	    var list = util.target.lookupOrCreateList(args.LIST);
+	    // Determine if the list is all single letters.
+	    // If it is, report contents joined together with no separator.
+	    // If it's not, report contents joined together with a space.
+	    var allSingleLetters = true;
+	    for (var i = 0; i < list.contents.length; i++) {
+	        var listItem = list.contents[i];
+	        if (!((typeof listItem === 'string') &&
+	              (listItem.length == 1))) {
+	            allSingleLetters = false;
+	            break;
+	        }
+	    }
+	    if (allSingleLetters) {
+	        return list.contents.join('');
+	    } else {
+	        return list.contents.join(' ');
+	    }
+	};
+
+	Scratch3DataBlocks.prototype.addToList = function (args, util) {
+	    var list = util.target.lookupOrCreateList(args.LIST);
+	    list.contents.push(args.ITEM);
+	};
+
+	Scratch3DataBlocks.prototype.deleteOfList = function (args, util) {
+	    var list = util.target.lookupOrCreateList(args.LIST);
+	    var index = Cast.toListIndex(args.INDEX, list.contents.length);
+	    if (index === Cast.LIST_INVALID) {
+	        return;
+	    } else if (index === Cast.LIST_ALL) {
+	        list.contents = [];
+	        return;
+	    }
+	    list.contents.splice(index - 1, 1);
+	};
+
+	Scratch3DataBlocks.prototype.insertAtList = function (args, util) {
+	    var item = args.ITEM;
+	    var list = util.target.lookupOrCreateList(args.LIST);
+	    var index = Cast.toListIndex(args.INDEX, list.contents.length + 1);
+	    if (index === Cast.LIST_INVALID) {
+	        return;
+	    }
+	    list.contents.splice(index - 1, 0, item);
+	};
+
+	Scratch3DataBlocks.prototype.replaceItemOfList = function (args, util) {
+	    var item = args.ITEM;
+	    var list = util.target.lookupOrCreateList(args.LIST);
+	    var index = Cast.toListIndex(args.INDEX, list.contents.length);
+	    if (index === Cast.LIST_INVALID) {
+	        return;
+	    }
+	    list.contents.splice(index - 1, 1, item);
+	};
+
+	Scratch3DataBlocks.prototype.getItemOfList = function (args, util) {
+	    var list = util.target.lookupOrCreateList(args.LIST);
+	    var index = Cast.toListIndex(args.INDEX, list.contents.length);
+	    if (index === Cast.LIST_INVALID) {
+	        return '';
+	    }
+	    return list.contents[index - 1];
+	};
+
+	Scratch3DataBlocks.prototype.lengthOfList = function (args, util) {
+	    var list = util.target.lookupOrCreateList(args.LIST);
+	    return list.contents.length;
+	};
+
+	Scratch3DataBlocks.prototype.listContainsItem = function (args, util) {
+	    var item = args.ITEM;
+	    var list = util.target.lookupOrCreateList(args.LIST);
+	    if (list.contents.indexOf(item) >= 0) {
+	        return true;
+	    }
+	    // Try using Scratch comparison operator on each item.
+	    // (Scratch considers the string '123' equal to the number 123).
+	    for (var i = 0; i < list.contents.length; i++) {
+	        if (Cast.compare(list.contents[i], item) == 0) {
+	            return true;
+	        }
+	    }
+	    return false;
+	};
+
+	module.exports = Scratch3DataBlocks;
+
+
+/***/ },
+/* 99 */
+/***/ function(module, exports) {
+
+	function Scratch3ProcedureBlocks(runtime) {
+	    /**
+	     * The runtime instantiating this block package.
+	     * @type {Runtime}
+	     */
+	    this.runtime = runtime;
+	}
+
+	/**
+	 * Retrieve the block primitives implemented by this package.
+	 * @return {Object.<string, Function>} Mapping of opcode to Function.
+	 */
+	Scratch3ProcedureBlocks.prototype.getPrimitives = function() {
+	    return {
+	        'procedures_defnoreturn': this.defNoReturn,
+	        'procedures_callnoreturn': this.callNoReturn,
+	        'procedures_param': this.param
+	    };
+	};
+
+	Scratch3ProcedureBlocks.prototype.defNoReturn = function () {
+	    // No-op: execute the blocks.
+	};
+
+	Scratch3ProcedureBlocks.prototype.callNoReturn = function (args, util) {
+	    if (!util.stackFrame.executed) {
+	        var procedureName = args.mutation.proccode;
+	        var paramNames = util.getProcedureParamNames(procedureName);
+	        for (var i = 0; i < paramNames.length; i++) {
+	            if (args.hasOwnProperty('input' + i)) {
+	                util.pushParam(paramNames[i], args['input' + i]);
+	            }
+	        }
+	        util.stackFrame.executed = true;
+	        util.startProcedure(procedureName);
+	    }
+	};
+
+	Scratch3ProcedureBlocks.prototype.param = function (args, util) {
+	    var value = util.getParam(args.mutation.paramname);
+	    if (!value) {
+	        return 0;
+	    }
+	    return value;
+	};
+
+	module.exports = Scratch3ProcedureBlocks;
+
+
+/***/ },
+/* 100 */
+/***/ function(module, exports, __webpack_require__) {
+
+	/**
+	 * @fileoverview
+	 * Partial implementation of an SB2 JSON importer.
+	 * Parses provided JSON and then generates all needed
+	 * scratch-vm runtime structures.
+	 */
+
+	var Blocks = __webpack_require__(21);
+	var Clone = __webpack_require__(101);
+	var Sprite = __webpack_require__(106);
+	var Color = __webpack_require__(79);
+	var uid = __webpack_require__(105);
+	var specMap = __webpack_require__(107);
+	var Variable = __webpack_require__(103);
+	var List = __webpack_require__(104);
+
+	/**
+	 * Top-level handler. Parse provided JSON,
+	 * and process the top-level object (the stage object).
+	 * @param {!string} json SB2-format JSON to load.
+	 * @param {!Runtime} runtime Runtime object to load all structures into.
+	 */
+	function sb2import (json, runtime) {
+	    parseScratchObject(
+	        JSON.parse(json),
+	        runtime,
+	        true
+	    );
+	}
+
+	/**
+	 * Parse a single "Scratch object" and create all its in-memory VM objects.
+	 * @param {!Object} object From-JSON "Scratch object:" sprite, stage, watcher.
+	 * @param {!Runtime} runtime Runtime object to load all structures into.
+	 * @param {boolean} topLevel Whether this is the top-level object (stage).
+	 */
+	function parseScratchObject (object, runtime, topLevel) {
+	    if (!object.hasOwnProperty('objName')) {
+	        // Watcher/monitor - skip this object until those are implemented in VM.
+	        // @todo
+	        return;
+	    }
+	    // Blocks container for this object.
+	    var blocks = new Blocks();
+	    // @todo: For now, load all Scratch objects (stage/sprites) as a Sprite.
+	    var sprite = new Sprite(blocks, runtime);
+	    // Sprite/stage name from JSON.
+	    if (object.hasOwnProperty('objName')) {
+	        sprite.name = object.objName;
+	    }
+	    // Costumes from JSON.
+	    if (object.hasOwnProperty('costumes')) {
+	        for (var i = 0; i < object.costumes.length; i++) {
+	            var costume = object.costumes[i];
+	            // @todo: Make sure all the relevant metadata is being pulled out.
+	            sprite.costumes.push({
+	                skin: 'https://cdn.assets.scratch.mit.edu/internalapi/asset/'
+	                    + costume.baseLayerMD5 + '/get/',
+	                name: costume.costumeName,
+	                bitmapResolution: costume.bitmapResolution,
+	                rotationCenterX: costume.rotationCenterX,
+	                rotationCenterY: costume.rotationCenterY
+	            });
+	        }
+	    }
+	    // If included, parse any and all scripts/blocks on the object.
+	    if (object.hasOwnProperty('scripts')) {
+	        parseScripts(object.scripts, blocks);
+	    }
+	    // Create the first clone, and load its run-state from JSON.
+	    var target = sprite.createClone();
+	    // Add it to the runtime's list of targets.
+	    runtime.targets.push(target);
+	    // Load target properties from JSON.
+	    if (object.hasOwnProperty('variables')) {
+	        for (var j = 0; j < object.variables.length; j++) {
+	            var variable = object.variables[j];
+	            target.variables[variable.name] = new Variable(
+	                variable.name,
+	                variable.value,
+	                variable.isPersistent
+	            );
+	        }
+	    }
+	    if (object.hasOwnProperty('lists')) {
+	        for (var k = 0; k < object.lists.length; k++) {
+	            var list = object.lists[k];
+	            // @todo: monitor properties.
+	            target.lists[list.listName] = new List(
+	                list.listName,
+	                list.contents
+	            );
+	        }
+	    }
+	    if (object.hasOwnProperty('scratchX')) {
+	        target.x = object.scratchX;
+	    }
+	    if (object.hasOwnProperty('scratchY')) {
+	        target.y = object.scratchY;
+	    }
+	    if (object.hasOwnProperty('direction')) {
+	        target.direction = object.direction;
+	    }
+	    if (object.hasOwnProperty('scale')) {
+	        // SB2 stores as 1.0 = 100%; we use % in the VM.
+	        target.size = object.scale * 100;
+	    }
+	    if (object.hasOwnProperty('visible')) {
+	        target.visible = object.visible;
+	    }
+	    if (object.hasOwnProperty('currentCostumeIndex')) {
+	        target.currentCostume = Math.round(object.currentCostumeIndex);
+	    }
+	    if (object.hasOwnProperty('rotationStyle')) {
+	        if (object.rotationStyle == 'none') {
+	            target.rotationStyle = Clone.ROTATION_STYLE_NONE;
+	        } else if (object.rotationStyle == 'leftRight') {
+	            target.rotationStyle = Clone.ROTATION_STYLE_LEFT_RIGHT;
+	        } else if (object.rotationStyle == 'normal') {
+	            target.rotationStyle = Clone.ROTATION_STYLE_ALL_AROUND;
+	        }
+	    }
+	    target.isStage = topLevel;
+	    target.updateAllDrawableProperties();
+	    // The stage will have child objects; recursively process them.
+	    if (object.children) {
+	        for (var m = 0; m < object.children.length; m++) {
+	            parseScratchObject(object.children[m], runtime, false);
+	        }
+	    }
+	}
+
+	/**
+	 * Parse a Scratch object's scripts into VM blocks.
+	 * This should only handle top-level scripts that include X, Y coordinates.
+	 * @param {!Object} scripts Scripts object from SB2 JSON.
+	 * @param {!Blocks} blocks Blocks object to load parsed blocks into.
+	 */
+	function parseScripts (scripts, blocks) {
+	    for (var i = 0; i < scripts.length; i++) {
+	        var script = scripts[i];
+	        var scriptX = script[0];
+	        var scriptY = script[1];
+	        var blockList = script[2];
+	        var parsedBlockList = parseBlockList(blockList);
+	        if (parsedBlockList[0]) {
+	            // Adjust script coordinates to account for
+	            // larger block size in scratch-blocks.
+	            // @todo: Determine more precisely the right formulas here.
+	            parsedBlockList[0].x = scriptX * 1.1;
+	            parsedBlockList[0].y = scriptY * 1.1;
+	            parsedBlockList[0].topLevel = true;
+	            parsedBlockList[0].parent = null;
+	        }
+	        // Flatten children and create add the blocks.
+	        var convertedBlocks = flatten(parsedBlockList);
+	        for (var j = 0; j < convertedBlocks.length; j++) {
+	            blocks.createBlock(convertedBlocks[j]);
+	        }
+	    }
+	}
+
+	/**
+	 * Parse any list of blocks from SB2 JSON into a list of VM-format blocks.
+	 * Could be used to parse a top-level script,
+	 * a list of blocks in a branch (e.g., in forever),
+	 * or a list of blocks in an argument (e.g., move [pick random...]).
+	 * @param {Array.<Object>} blockList SB2 JSON-format block list.
+	 * @return {Array.<Object>} Scratch VM-format block list.
+	 */
+	function parseBlockList (blockList) {
+	    var resultingList = [];
+	    var previousBlock = null; // For setting next.
+	    for (var i = 0; i < blockList.length; i++) {
+	        var block = blockList[i];
+	        var parsedBlock = parseBlock(block);
+	        if (previousBlock) {
+	            parsedBlock.parent = previousBlock.id;
+	            previousBlock.next = parsedBlock.id;
+	        }
+	        previousBlock = parsedBlock;
+	        resultingList.push(parsedBlock);
+	    }
+	    return resultingList;
+	}
+
+	/**
+	 * Flatten a block tree into a block list.
+	 * Children are temporarily stored on the `block.children` property.
+	 * @param {Array.<Object>} blocks list generated by `parseBlockList`.
+	 * @return {Array.<Object>} Flattened list to be passed to `blocks.createBlock`.
+	 */
+	function flatten (blocks) {
+	    var finalBlocks = [];
+	    for (var i = 0; i < blocks.length; i++) {
+	        var block = blocks[i];
+	        finalBlocks.push(block);
+	        if (block.children) {
+	            finalBlocks = finalBlocks.concat(flatten(block.children));
+	        }
+	        delete block.children;
+	    }
+	    return finalBlocks;
+	}
+
+	/**
+	 * Convert a Scratch 2.0 procedure string (e.g., "my_procedure %s %b %n")
+	 * into an argument map. This allows us to provide the expected inputs
+	 * to a mutated procedure call.
+	 * @param {string} procCode Scratch 2.0 procedure string.
+	 * @return {Object} Argument map compatible with those in sb2specmap.
+	 */
+	function parseProcedureArgMap (procCode) {
+	    var argMap = [
+	        {} // First item in list is op string.
+	    ];
+	    var INPUT_PREFIX = 'input';
+	    var inputCount = 0;
+	    // Split by %n, %b, %s.
+	    var parts = procCode.split(/(?=[^\\]\%[nbs])/);
+	    for (var i = 0; i < parts.length; i++) {
+	        var part = parts[i].trim();
+	        if (part.substring(0, 1) == '%') {
+	            var argType = part.substring(1, 2);
+	            var arg = {
+	                type: 'input',
+	                inputName: INPUT_PREFIX + (inputCount++)
+	            };
+	            if (argType == 'n') {
+	                arg.inputOp = 'math_number';
+	            } else if (argType == 's') {
+	                arg.inputOp = 'text';
+	            }
+	            argMap.push(arg);
+	        }
+	    }
+	    return argMap;
+	}
+
+	/**
+	 * Parse a single SB2 JSON-formatted block and its children.
+	 * @param {!Object} sb2block SB2 JSON-formatted block.
+	 * @return {Object} Scratch VM format block.
+	 */
+	function parseBlock (sb2block) {
+	    // First item in block object is the old opcode (e.g., 'forward:').
+	    var oldOpcode = sb2block[0];
+	    // Convert the block using the specMap. See sb2specmap.js.
+	    if (!oldOpcode || !specMap[oldOpcode]) {
+	        console.warn('Couldn\'t find SB2 block: ', oldOpcode);
+	        return;
+	    }
+	    var blockMetadata = specMap[oldOpcode];
+	    // Block skeleton.
+	    var activeBlock = {
+	        id: uid(), // Generate a new block unique ID.
+	        opcode: blockMetadata.opcode, // Converted, e.g. "motion_movesteps".
+	        inputs: {}, // Inputs to this block and the blocks they point to.
+	        fields: {}, // Fields on this block and their values.
+	        next: null, // Next block.
+	        shadow: false, // No shadow blocks in an SB2 by default.
+	        children: [] // Store any generated children, flattened in `flatten`.
+	    };
+	    // For a procedure call, generate argument map from proc string.
+	    if (oldOpcode == 'call') {
+	        blockMetadata.argMap = parseProcedureArgMap(sb2block[1]);
+	    }
+	    // Look at the expected arguments in `blockMetadata.argMap.`
+	    // The basic problem here is to turn positional SB2 arguments into
+	    // non-positional named Scratch VM arguments.
+	    for (var i = 0; i < blockMetadata.argMap.length; i++) {
+	        var expectedArg = blockMetadata.argMap[i];
+	        var providedArg = sb2block[i + 1]; // (i = 0 is opcode)
+	        // Whether the input is obscuring a shadow.
+	        var shadowObscured = false;
+	        // Positional argument is an input.
+	        if (expectedArg.type == 'input') {
+	            // Create a new block and input metadata.
+	            var inputUid = uid();
+	            activeBlock.inputs[expectedArg.inputName] = {
+	                name: expectedArg.inputName,
+	                block: null,
+	                shadow: null
+	            };
+	            if (typeof providedArg == 'object' && providedArg) {
+	                // Block or block list occupies the input.
+	                var innerBlocks;
+	                if (typeof providedArg[0] == 'object' && providedArg[0]) {
+	                    // Block list occupies the input.
+	                    innerBlocks = parseBlockList(providedArg);
+	                } else {
+	                    // Single block occupies the input.
+	                    innerBlocks = [parseBlock(providedArg)];
+	                }
+	                for (var j = 0; j < innerBlocks.length; j++) {
+	                    innerBlocks[j].parent = activeBlock.id;
+	                }
+	                // Obscures any shadow.
+	                shadowObscured = true;
+	                activeBlock.inputs[expectedArg.inputName].block = (
+	                    innerBlocks[0].id
+	                );
+	                activeBlock.children = (
+	                    activeBlock.children.concat(innerBlocks)
+	                );
+	            }
+	            // Generate a shadow block to occupy the input.
+	            if (!expectedArg.inputOp) {
+	                // No editable shadow input; e.g., for a boolean.
+	                continue;
+	            }
+	            // Each shadow has a field generated for it automatically.
+	            // Value to be filled in the field.
+	            var fieldValue = providedArg;
+	            // Shadows' field names match the input name, except for these:
+	            var fieldName = expectedArg.inputName;
+	            if (expectedArg.inputOp == 'math_number' ||
+	                expectedArg.inputOp == 'math_whole_number' ||
+	                expectedArg.inputOp == 'math_positive_number' ||
+	                expectedArg.inputOp == 'math_integer' ||
+	                expectedArg.inputOp == 'math_angle') {
+	                fieldName = 'NUM';
+	                // Fields are given Scratch 2.0 default values if obscured.
+	                if (shadowObscured) {
+	                    fieldValue = 10;
+	                }
+	            } else if (expectedArg.inputOp == 'text') {
+	                fieldName = 'TEXT';
+	                if (shadowObscured) {
+	                    fieldValue = '';
+	                }
+	            } else if (expectedArg.inputOp == 'colour_picker') {
+	                // Convert SB2 color to hex.
+	                fieldValue = Color.decimalToHex(providedArg);
+	                fieldName = 'COLOUR';
+	                if (shadowObscured) {
+	                    fieldValue = '#990000';
+	                }
+	            }
+	            var fields = {};
+	            fields[fieldName] = {
+	                name: fieldName,
+	                value: fieldValue
+	            };
+	            activeBlock.children.push({
+	                id: inputUid,
+	                opcode: expectedArg.inputOp,
+	                inputs: {},
+	                fields: fields,
+	                next: null,
+	                topLevel: false,
+	                parent: activeBlock.id,
+	                shadow: true
+	            });
+	            activeBlock.inputs[expectedArg.inputName].shadow = inputUid;
+	            // If no block occupying the input, alias to the shadow.
+	            if (!activeBlock.inputs[expectedArg.inputName].block) {
+	                activeBlock.inputs[expectedArg.inputName].block = inputUid;
+	            }
+	        } else if (expectedArg.type == 'field') {
+	            // Add as a field on this block.
+	            activeBlock.fields[expectedArg.fieldName] = {
+	                name: expectedArg.fieldName,
+	                value: providedArg
+	            };
+	        }
+	    }
+	    // Special cases to generate mutations.
+	    if (oldOpcode == 'stopScripts') {
+	        // Mutation for stop block: if the argument is 'other scripts',
+	        // the block needs a next connection.
+	        if (sb2block[1] == 'other scripts in sprite') {
+	            activeBlock.mutation = {
+	                tagName: 'mutation',
+	                hasnext: 'true',
+	                children: []
+	            };
+	        }
+	    } else if (oldOpcode == 'procDef') {
+	        // Mutation for procedure definition:
+	        // store all 2.0 proc data.
+	        var procData = sb2block.slice(1);
+	        activeBlock.mutation = {
+	            tagName: 'mutation',
+	            proccode: procData[0], // e.g., "abc %n %b %s"
+	            argumentnames: JSON.stringify(procData[1]), // e.g. ['arg1', 'arg2']
+	            argumentdefaults: JSON.stringify(procData[2]), // e.g., [1, 'abc']
+	            warp: procData[3], // Warp mode, e.g., true/false.
+	            children: []
+	        };
+	    } else if (oldOpcode == 'call') {
+	        // Mutation for procedure call:
+	        // string for proc code (e.g., "abc %n %b %s").
+	        activeBlock.mutation = {
+	            tagName: 'mutation',
+	            children: [],
+	            proccode: sb2block[1]
+	        };
+	    } else if (oldOpcode == 'getParam') {
+	        // Mutation for procedure parameter.
+	        activeBlock.mutation = {
+	            tagName: 'mutation',
+	            children: [],
+	            paramname: sb2block[1], // Name of parameter.
+	            shape: sb2block[2] // Shape - in 2.0, 'r' or 'b'.
+	        };
+	    }
+	    return activeBlock;
+	}
+
+	module.exports = sb2import;
+
+
+/***/ },
 /* 101 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var util = __webpack_require__(12);
-	var MathUtil = __webpack_require__(26);
+	var MathUtil = __webpack_require__(81);
 	var Target = __webpack_require__(102);
 
 	/**
@@ -16366,7 +16396,7 @@
 /* 102 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var Blocks = __webpack_require__(46);
+	var Blocks = __webpack_require__(21);
 	var Variable = __webpack_require__(103);
 	var List = __webpack_require__(104);
 	var uid = __webpack_require__(105);
@@ -16570,7 +16600,7 @@
 /***/ function(module, exports, __webpack_require__) {
 
 	var Clone = __webpack_require__(101);
-	var Blocks = __webpack_require__(46);
+	var Blocks = __webpack_require__(21);
 
 	/**
 	 * Sprite to be used on the Scratch stage.

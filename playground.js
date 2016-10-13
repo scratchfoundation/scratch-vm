@@ -71,8 +71,9 @@ window.onload = function() {
     window.workspace = workspace;
 
     // Attach scratch-blocks events to VM.
-    // @todo: Re-enable flyout listening after fixing GH-69.
     workspace.addChangeListener(vm.blockListener);
+    var flyoutWorkspace = workspace.getFlyout().getWorkspace();
+    flyoutWorkspace.addChangeListener(vm.flyoutBlockListener);
 
     // Create FPS counter.
     var stats = new window.Stats();
@@ -117,11 +118,9 @@ window.onload = function() {
 
     // Receipt of new block XML for the selected target.
     vm.on('workspaceUpdate', function (data) {
-        window.Blockly.Events.disable();
         workspace.clear();
         var dom = window.Blockly.Xml.textToDom(data.xml);
         window.Blockly.Xml.domToWorkspace(dom, workspace);
-        window.Blockly.Events.enable();
     });
 
     // Receipt of new list of targets, selected target update.
