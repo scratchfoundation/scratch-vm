@@ -64,9 +64,9 @@ function parseScratchObject (object, runtime, topLevel) {
         }
     }
     // Sounds from JSON
-        if (object.hasOwnProperty('sounds')) {
-        for (var i = 0; i < object.sounds.length; i++) {
-            var sound = object.sounds[i];
+    if (object.hasOwnProperty('sounds')) {
+        for (var s = 0; s < object.sounds.length; s++) {
+            var sound = object.sounds[s];
             sprite.sounds.push({
                 format: sound.format,
                 fileUrl: 'https://cdn.assets.scratch.mit.edu/internalapi/asset/'
