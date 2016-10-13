@@ -2198,6 +2198,11 @@
 	Sequencer.prototype.stepToProcedure = function (thread, procedureName) {
 	    var definition = thread.target.blocks.getProcedureDefinition(procedureName);
 	    thread.pushStack(definition);
+	    // Check if the call is recursive. If so, yield.
+	    // @todo: Have behavior match Scratch 2.0.
+	    if (thread.stack.indexOf(definition) > -1) {
+	        thread.setStatus(Thread.STATUS_YIELD_FRAME);
+	    }
 	};
 
 	/**
@@ -2420,6 +2425,7 @@
 	        this.stackFrames.push({
 	            reported: {}, // Collects reported input values.
 	            waitingReporter: null, // Name of waiting reporter.
+	            params: {}, // Procedure parameters.
 	            executionContext: {} // A context passed to block implementations.
 	        });
 	    }
@@ -2470,6 +2476,21 @@
 	        parentStackFrame.reported[waitingReporter] = value;
 	        parentStackFrame.waitingReporter = null;
 	    }
+	};
+
+	Thread.prototype.pushParam = function (paramName, value) {
+	    var stackFrame = this.peekStackFrame();
+	    stackFrame.params[paramName] = value;
+	};
+
+	Thread.prototype.getParam = function (paramName) {
+	    for (var i = this.stackFrames.length - 1; i >= 0; i--) {
+	        var frame = this.stackFrames[i];
+	        if (frame.params.hasOwnProperty(paramName)) {
+	            return frame.params[paramName];
+	        }
+	    }
+	    return null;
 	};
 
 	/**
@@ -2676,6 +2697,15 @@
 	        },
 	        startProcedure: function (procedureName) {
 	            sequencer.stepToProcedure(thread, procedureName);
+	        },
+	        getProcedureParamNames: function (procedureName) {
+	            return thread.target.blocks.getProcedureParamNames(procedureName);
+	        },
+	        pushParam: function (paramName, paramValue) {
+	            thread.pushParam(paramName, paramValue);
+	        },
+	        getParam: function (paramName) {
+	            return thread.getParam(paramName);
 	        },
 	        startHats: function(requestedHat, opt_matchFields, opt_target) {
 	            return (
@@ -5191,7 +5221,8 @@
 	Scratch3ProcedureBlocks.prototype.getPrimitives = function() {
 	    return {
 	        'procedures_defnoreturn': this.defNoReturn,
-	        'procedures_callnoreturn': this.callNoReturn
+	        'procedures_callnoreturn': this.callNoReturn,
+	        'procedures_param': this.param
 	    };
 	};
 
@@ -5201,10 +5232,24 @@
 
 	Scratch3ProcedureBlocks.prototype.callNoReturn = function (args, util) {
 	    if (!util.stackFrame.executed) {
-	        var procedureName = args.mutation.name;
+	        var procedureName = args.mutation.proccode;
+	        var paramNames = util.getProcedureParamNames(procedureName);
+	        for (var i = 0; i < paramNames.length; i++) {
+	            if (args.hasOwnProperty('input' + i)) {
+	                util.pushParam(paramNames[i], args['input' + i]);
+	            }
+	        }
 	        util.stackFrame.executed = true;
 	        util.startProcedure(procedureName);
 	    }
+	};
+
+	Scratch3ProcedureBlocks.prototype.param = function (args, util) {
+	    var value = util.getParam(args.mutation.paramname);
+	    if (!value) {
+	        return 0;
+	    }
+	    return value;
 	};
 
 	module.exports = Scratch3ProcedureBlocks;
@@ -5420,6 +5465,40 @@
 	}
 
 	/**
+	 * Convert a Scratch 2.0 procedure string (e.g., "my_procedure %s %b %n")
+	 * into an argument map. This allows us to provide the expected inputs
+	 * to a mutated procedure call.
+	 * @param {string} procCode Scratch 2.0 procedure string.
+	 * @return {Object} Argument map compatible with those in sb2specmap.
+	 */
+	function parseProcedureArgMap (procCode) {
+	    var argMap = [
+	        {} // First item in list is op string.
+	    ];
+	    var INPUT_PREFIX = 'input';
+	    var inputCount = 0;
+	    // Split by %n, %b, %s.
+	    var parts = procCode.split(/(?=[^\\]\%[nbs])/);
+	    for (var i = 0; i < parts.length; i++) {
+	        var part = parts[i].trim();
+	        if (part.substring(0, 1) == '%') {
+	            var argType = part.substring(1, 2);
+	            var arg = {
+	                type: 'input',
+	                inputName: INPUT_PREFIX + (inputCount++)
+	            };
+	            if (argType == 'n') {
+	                arg.inputOp = 'math_number';
+	            } else if (argType == 's') {
+	                arg.inputOp = 'text';
+	            }
+	            argMap.push(arg);
+	        }
+	    }
+	    return argMap;
+	}
+
+	/**
 	 * Parse a single SB2 JSON-formatted block and its children.
 	 * @param {!Object} sb2block SB2 JSON-formatted block.
 	 * @return {Object} Scratch VM format block.
@@ -5443,6 +5522,10 @@
 	        shadow: false, // No shadow blocks in an SB2 by default.
 	        children: [] // Store any generated children, flattened in `flatten`.
 	    };
+	    // For a procedure call, generate argument map from proc string.
+	    if (oldOpcode == 'call') {
+	        blockMetadata.argMap = parseProcedureArgMap(sb2block[1]);
+	    }
 	    // Look at the expected arguments in `blockMetadata.argMap.`
 	    // The basic problem here is to turn positional SB2 arguments into
 	    // non-positional named Scratch VM arguments.
@@ -5544,11 +5627,43 @@
 	        }
 	    }
 	    // Special cases to generate mutations.
-	    if (oldOpcode == 'call') {
+	    if (oldOpcode == 'stopScripts') {
+	        // Mutation for stop block: if the argument is 'other scripts',
+	        // the block needs a next connection.
+	        if (sb2block[1] == 'other scripts in sprite') {
+	            activeBlock.mutation = {
+	                tagName: 'mutation',
+	                hasnext: 'true',
+	                children: []
+	            };
+	        }
+	    } else if (oldOpcode == 'procDef') {
+	        // Mutation for procedure definition:
+	        // store all 2.0 proc data.
+	        var procData = sb2block.slice(1);
+	        activeBlock.mutation = {
+	            tagName: 'mutation',
+	            proccode: procData[0], // e.g., "abc %n %b %s"
+	            argumentnames: JSON.stringify(procData[1]), // e.g. ['arg1', 'arg2']
+	            argumentdefaults: JSON.stringify(procData[2]), // e.g., [1, 'abc']
+	            warp: procData[3], // Warp mode, e.g., true/false.
+	            children: []
+	        };
+	    } else if (oldOpcode == 'call') {
+	        // Mutation for procedure call:
+	        // string for proc code (e.g., "abc %n %b %s").
 	        activeBlock.mutation = {
 	            tagName: 'mutation',
 	            children: [],
-	            name: sb2block[1]
+	            proccode: sb2block[1]
+	        };
+	    } else if (oldOpcode == 'getParam') {
+	        // Mutation for procedure parameter.
+	        activeBlock.mutation = {
+	            tagName: 'mutation',
+	            children: [],
+	            paramname: sb2block[1], // Name of parameter.
+	            shape: sb2block[2] // Shape - in 2.0, 'r' or 'b'.
 	        };
 	    }
 	    return activeBlock;
@@ -5714,8 +5829,25 @@
 	        var block = this._blocks[id];
 	        if ((block.opcode == 'procedures_defnoreturn' ||
 	            block.opcode == 'procedures_defreturn') &&
-	            block.fields['NAME'].value == name) {
+	            block.mutation.proccode == name) {
 	            return id;
+	        }
+	    }
+	    return null;
+	};
+
+	/**
+	 * Get the procedure definition for a given name.
+	 * @param {?string} name Name of procedure to query.
+	 * @return {?string} ID of procedure definition.
+	 */
+	Blocks.prototype.getProcedureParamNames = function (name) {
+	    for (var id in this._blocks) {
+	        var block = this._blocks[id];
+	        if ((block.opcode == 'procedures_defnoreturn' ||
+	            block.opcode == 'procedures_defreturn') &&
+	            block.mutation.proccode == name) {
+	            return JSON.parse(block.mutation.argumentnames);
 	        }
 	    }
 	    return null;
@@ -5997,7 +6129,9 @@
 	    var mutationString = '<' + mutation.tagName;
 	    for (var prop in mutation) {
 	        if (prop == 'children' || prop == 'tagName') continue;
-	        mutationString += ' ' + prop + '="' + mutation[prop] + '"';
+	        var mutationValue = (typeof mutation[prop] === 'string') ?
+	            xmlEscape(mutation[prop]) : mutation[prop];
+	        mutationString += ' ' + prop + '="' + mutationValue + '"';
 	    }
 	    mutationString += '>';
 	    for (var i = 0; i < mutation.children.length; i++) {
@@ -17252,9 +17386,8 @@
 	        'opcode':'control_stop',
 	        'argMap':[
 	            {
-	                'type':'input',
-	                'inputOp':'control_stop_menu',
-	                'inputName':'STOP_OPTION'
+	                'type':'field',
+	                'fieldName':'STOP_OPTION'
 	            }
 	        ]
 	    },
@@ -17875,15 +18008,10 @@
 	    },
 	    'procDef':{
 	        'opcode':'procedures_defnoreturn',
-	        'argMap':[
-	            {
-	                'type':'field',
-	                'fieldName':'NAME'
-	            }
-	        ]
+	        'argMap':[]
 	    },
 	    'getParam':{
-	        'opcode':'proc_param',
+	        'opcode':'procedures_param',
 	        'argMap':[]
 	    },
 	    'call':{
