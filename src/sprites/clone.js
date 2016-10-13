@@ -210,7 +210,7 @@ Clone.prototype.setSay = function (type, message) {
     }
     // @todo: Render to stage.
     if (!message) {
-        this.render.clearBubble(this.bubble);
+        this.render.destroyDrawable(this.bubble);
         return;
     }
     if (type === 'say') {
