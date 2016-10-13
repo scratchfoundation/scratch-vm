@@ -50,9 +50,7 @@ window.onload = function() {
     vm.attachRenderer(renderer);
 
     // Instantiate scratch-blocks and attach it to the DOM.
-    var toolbox = document.getElementById('toolbox');
     var workspace = window.Blockly.inject('blocks', {
-        toolbox: toolbox,
         media: './media/',
         zoom: {
             controls: true,
