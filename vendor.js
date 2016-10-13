@@ -3494,7 +3494,7 @@
 		        context.drawImage(gl.canvas, 0, 0);
 		        context.strokeStyle = '#FF0000';
 		        var pr = window.devicePixelRatio;
-		        context.strokeRect(pr * (bounds.left + this._nativeSize[0] / 2), pr * (bounds.top + this._nativeSize[1] / 2), pr * (bounds.right - bounds.left), pr * (bounds.bottom - bounds.top));
+		        context.strokeRect(pr * (bounds.left + this._nativeSize[0] / 2), pr * (-bounds.top + this._nativeSize[1] / 2), pr * (bounds.right - bounds.left), pr * (-bounds.bottom + bounds.top));
 		    }
 		    return bounds;
 		};
@@ -15070,10 +15070,13 @@
 		    if (this.needsConvexHullPoints()) {
 		        throw 'Needs updated convex hull points before bounds calculation.';
 		    }
+		    if (this._transformDirty) {
+		        this._calculateTransform();
+		    }
 		    // First, transform all the convex hull points by the current Drawable's
 		    // transform. This allows us to skip recalculating the convex hull
 		    // for many Drawable updates, including translation, rotation, scaling.
-		    var projection = twgl.m4.ortho(-1, 1, 1, -1, -1, 1);
+		    var projection = twgl.m4.ortho(-1, 1, -1, 1, -1, 1);
 		    var skinSize = this._uniforms.u_skinSize;
 		    var tm = twgl.m4.multiply(this._uniforms.u_modelMatrix, projection);
 		    var transformedHullPoints = [];
@@ -15087,8 +15090,8 @@
 		    var bounds = {
 		        left: Infinity,
 		        right: -Infinity,
-		        top: Infinity,
-		        bottom: -Infinity
+		        top: -Infinity,
+		        bottom: Infinity
 		    };
 		    for (var _i = 0; _i < transformedHullPoints.length; _i++) {
 		        var x = transformedHullPoints[_i][0];
@@ -15099,10 +15102,10 @@
 		        if (x > bounds.right) {
 		            bounds.right = x;
 		        }
-		        if (y < bounds.top) {
+		        if (y > bounds.top) {
 		            bounds.top = y;
 		        }
-		        if (y > bounds.bottom) {
+		        if (y < bounds.bottom) {
 		            bounds.bottom = y;
 		        }
 		    }

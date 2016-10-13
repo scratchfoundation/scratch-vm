@@ -197,7 +197,7 @@
 	    var stage = new Sprite(blocks2, this.runtime);
 	    stage.name = 'Stage';
 	    stage.costumes.push({
-	        skin: '/assets/stage.png',
+	        skin: './assets/stage.png',
 	        name: 'backdrop1',
 	        bitmapResolution: 2,
 	        rotationCenterX: 480,
@@ -216,7 +216,7 @@
 	    var sprite = new Sprite(blocks1, this.runtime);
 	    sprite.name = 'Sprite1';
 	    sprite.costumes.push({
-	        skin: '/assets/scratch_cat.svg',
+	        skin: './assets/scratch_cat.svg',
 	        name: 'costume1',
 	        bitmapResolution: 1,
 	        rotationCenterX: 47,
