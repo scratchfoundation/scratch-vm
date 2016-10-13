@@ -259,6 +259,44 @@ Clone.prototype.setSize = function (size) {
 };
 
 /**
+ * Set stretch X
+ * @param {!number}
+ */
+Clone.prototype.setStretchX = function (stretchX) {
+    if (this.isStage) {
+        return;
+    }
+    // Keep size between 5% and 535%.
+    this.stretchX = stretchX;
+    if (this.renderer) {
+        var renderedDirectionScale = this._getRenderedDirectionAndScale();
+        this.renderer.updateDrawableProperties(this.drawableID, {
+            direction: renderedDirectionScale.direction,
+            scale: renderedDirectionScale.scale
+        });
+    }
+};
+
+/**
+ * Set stretch Y
+ * @param {!number}
+ */
+Clone.prototype.setStretchY = function (stretchY) {
+    if (this.isStage) {
+        return;
+    }
+    // Keep size between 5% and 535%.
+    this.stretchY = stretchY;
+    if (this.renderer) {
+        var renderedDirectionScale = this._getRenderedDirectionAndScale();
+        this.renderer.updateDrawableProperties(this.drawableID, {
+            direction: renderedDirectionScale.direction,
+            scale: renderedDirectionScale.scale
+        });
+    }
+};
+
+/**
  * Set a particular graphic effect on this clone.
  * @param {!string} effectName Name of effect (see `Clone.prototype.effects`).
  * @param {!number} value Numerical magnitude of effect.
