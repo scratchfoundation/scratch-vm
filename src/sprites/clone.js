@@ -18,7 +18,7 @@ function Clone(sprite, runtime) {
     this.sprite = sprite;
     /**
      * Reference to the global renderer for this VM, if one exists.
-     * @type {?RenderWebGLWorker}
+     * @type {?RenderWebGL}
      */
     this.renderer = null;
     if (this.runtime) {
@@ -29,6 +29,11 @@ function Clone(sprite, runtime) {
      * @type {?Number}
      */
     this.drawableID = null;
+    /**
+     * ID of my bubble for say and think block.
+     * @type {?Number}
+     */
+    this.bubble = null;
 
     /**
      * Map of current graphic effect values.
@@ -200,15 +205,17 @@ Clone.prototype.setDirection = function (direction) {
  * @param {?string} message Message to put in say bubble.
  */
 Clone.prototype.setSay = function (type, message) {
-    if (this.isStage) {
+    if (this.isStage || !this.render) {
         return;
     }
     // @todo: Render to stage.
-    if (!type || !message) {
-        console.log('Clearing say bubble');
+    if (!message) {
+        this.render.clearBubble(this.bubble);
         return;
     }
-    console.log('Setting say bubble:', type, message);
+    if (type === 'say') {
+        this.bubble = this.render.renderBubble(this.drawableID, message);
+    }
 };
 
 /**
