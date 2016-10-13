@@ -106,6 +106,18 @@ Clone.prototype.visible = true;
 Clone.prototype.size = 100;
 
 /**
+ * How Far It Is Stretched On The X Axis
+ * @type {number}
+ */
+Clone.prototype.stretchX = 0;
+
+/**
+ * How Far It Is Stretched On The Y Axis
+ * @type {number}
+ */
+Clone.prototype.stretchY = 0;
+
+/**
  * Currently selected costume index.
  * @type {number}
  */
@@ -162,7 +174,7 @@ Clone.prototype.setXY = function (x, y) {
 Clone.prototype._getRenderedDirectionAndScale = function () {
     // Default: no changes to `this.direction` or `this.scale`.
     var finalDirection = this.direction;
-    var finalScale = [this.size, this.size];
+    var finalScale = [this.size + this.stretchX, this.size + this.stretchY];
     if (this.rotationStyle == Clone.ROTATION_STYLE_NONE) {
         // Force rendered direction to be 90.
         finalDirection = 90;
