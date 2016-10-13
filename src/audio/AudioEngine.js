@@ -73,18 +73,18 @@ AudioEngine.prototype.playNoteForBeats = function(note, beats) {
     );
 };
 
-AudioEngine.prototype.playDrumForBeats = function(drumNum, beats) {
+AudioEngine.prototype.playDrumForBeats = function(drumNum) {
     this.drumSamplers[drumNum].triggerAttack();
 };
 
 AudioEngine.prototype.stopAllSounds = function() {
     // stop drum notes
-    for (var i=0; i<this.drumSamplers.length; i++) {
-        this.drumSamplers[i].triggerRelease();
-    }
+    // for (var i = 0; i<this.drumSamplers.length; i++) {
+    //     this.drumSamplers[i].triggerRelease();
+    // }
     // stop sounds triggered with playSound (indexed by their urls)
-    for (var i in this.soundSamplers) {
-        this.soundSamplers[i].triggerRelease();
+    for (var key in this.soundSamplers) {
+        this.soundSamplers[key].triggerRelease();
     }
     // stop soundfont notes
     this.instrument.stop();
@@ -92,41 +92,40 @@ AudioEngine.prototype.stopAllSounds = function() {
 
 AudioEngine.prototype.setEffect = function(effect, value) {
     switch (effect) {
-        case 'ECHO':
-            this.delay.wet.value = (value / 100) / 2; // max 50% wet (need dry signal too)
-            break;
-        case 'PAN':
-            this.panner.pan.value = value / 100;
-            break;
-        case 'REVERB':
-            this.reverb.wet.value = value / 100;
-            break;
-        case 'PITCH':
-            // this.pitchShift.pitch = value / 20; // arbitrary scaling of 20 per semitone, for now... default 100 is a perfect fourth
-            this._setPitchShift(value / 20);
-            break;
+    case 'ECHO':
+        this.delay.wet.value = (value / 100) / 2; // max 50% wet
+        break;
+    case 'PAN':
+        this.panner.pan.value = value / 100;
+        break;
+    case 'REVERB':
+        this.reverb.wet.value = value / 100;
+        break;
+    case 'PITCH':
+        this._setPitchShift(value / 20);
+        break;
     }
-}
+};
 
 AudioEngine.prototype.changeEffect = function(effect, value) {
     switch (effect) {
-        case 'ECHO':
-            this.delay.wet.value += (value / 100) / 2; // max 50% wet (need dry signal too)
-            this.delay.wet.value = this._clamp(this.delay.wet.value, 0, 0.5);
-            break;
-        case 'PAN':
-            this.panner.pan.value += value / 100;
-            this.panner.pan.value = this._clamp(this.panner.pan.value, -1, 1);
-            break;
-        case 'REVERB':
-            this.reverb.wet.value += value / 100;
-            this.reverb.wet.value = this._clamp(this.reverb.wet.value, 0, 1);
-            break;
-        case 'PITCH':
-            // this.pitchShift.pitch += value / 20;
-            break;
+    case 'ECHO':
+        this.delay.wet.value += (value / 100) / 2; // max 50% wet
+        this.delay.wet.value = this._clamp(this.delay.wet.value, 0, 0.5);
+        break;
+    case 'PAN':
+        this.panner.pan.value += value / 100;
+        this.panner.pan.value = this._clamp(this.panner.pan.value, -1, 1);
+        break;
+    case 'REVERB':
+        this.reverb.wet.value += value / 100;
+        this.reverb.wet.value = this._clamp(this.reverb.wet.value, 0, 1);
+        break;
+    case 'PITCH':
+        // this.pitchShift.pitch += value / 20;
+        break;
     }
-}
+};
 
 AudioEngine.prototype._setPitchShift = function(value) {
     for (var i in this.soundSamplers) {
@@ -142,9 +141,9 @@ AudioEngine.prototype.clearEffects = function() {
     this.reverb.wet.value = 0;
 };
 
-AudioEngine.prototype.loadSoundFromUrl = function(url) {
+// AudioEngine.prototype.loadSoundFromUrl = function(url) {
 
-};
+// };
 
 AudioEngine.prototype._loadSoundFiles = function(filenames) {
     var samplers = [];
@@ -155,11 +154,6 @@ AudioEngine.prototype._loadSoundFiles = function(filenames) {
     }
 
     return samplers;
-};
-
-AudioEngine.prototype._midiToFreq = function(midiNote) {
-	var freq = this.tone.intervalToFrequencyRatio(midiNote - 60) * 261.63; // 60 is C4
-	return freq;
 };
 
 AudioEngine.prototype._clamp = function(input, min, max) {
