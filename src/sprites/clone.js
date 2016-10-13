@@ -204,7 +204,7 @@ Clone.prototype.setDirection = function (direction) {
             scale: renderedDirectionScale.scale
         });
     }
- };
+};
 
 /**
  * Set a say bubble on this clone.
@@ -260,7 +260,7 @@ Clone.prototype.setSize = function (size) {
 
 /**
  * Set stretch X
- * @param {!number} stretchX
+ * @param {!number} stretchX Amount
  */
 Clone.prototype.setStretchX = function (stretchX) {
     if (this.isStage) {
@@ -279,7 +279,7 @@ Clone.prototype.setStretchX = function (stretchX) {
 
 /**
  * Set stretch Y
- * @param {!number} stretchY
+ * @param {!number} stretchY Amount
  */
 Clone.prototype.setStretchY = function (stretchY) {
     if (this.isStage) {
