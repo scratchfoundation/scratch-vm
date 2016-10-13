@@ -13,7 +13,7 @@
   "scripts": {
     "prepublish": "./node_modules/.bin/webpack --bail",
     "start": "webpack-dev-server",
-    "start": "webpack --colors --progress",
+    "build": "webpack --colors --progress",
     "test": "make test",
     "version": "./node_modules/.bin/json -f package.json -I -e \"this.repository.sha = '$(git log -n1 --pretty=format:%H)'\""
   },
