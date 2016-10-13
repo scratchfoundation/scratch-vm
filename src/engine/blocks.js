@@ -181,11 +181,10 @@ Blocks.prototype.getProcedureParamNames = function (name) {
  * Create event listener for blocks. Handles validation and serves as a generic
  * adapter between the blocks and the runtime interface.
  * @param {Object} e Blockly "block" event
- * @param {boolean} isFlyout If true, create a listener for flyout events.
  * @param {?Runtime} opt_runtime Optional runtime to forward click events to.
  */
 
-Blocks.prototype.blocklyListen = function (e, isFlyout, opt_runtime) {
+Blocks.prototype.blocklyListen = function (e, opt_runtime) {
     // Validate event
     if (typeof e !== 'object') return;
     if (typeof e.blockId !== 'string') return;
@@ -204,7 +203,7 @@ Blocks.prototype.blocklyListen = function (e, isFlyout, opt_runtime) {
         var newBlocks = adapter(e);
         // A create event can create many blocks. Add them all.
         for (var i = 0; i < newBlocks.length; i++) {
-            this.createBlock(newBlocks[i], isFlyout);
+            this.createBlock(newBlocks[i]);
         }
         break;
     case 'change':
@@ -226,8 +225,10 @@ Blocks.prototype.blocklyListen = function (e, isFlyout, opt_runtime) {
         });
         break;
     case 'delete':
-        // Don't accept delete events for shadow blocks being obscured.
-        if (this._blocks[e.blockId].shadow) {
+        // Don't accept delete events for missing blocks,
+        // or shadow blocks being obscured.
+        if (!this._blocks.hasOwnProperty(e.blockId) ||
+            this._blocks[e.blockId].shadow) {
             return;
         }
         // Inform any runtime to forget about glows on this script.
@@ -246,9 +247,8 @@ Blocks.prototype.blocklyListen = function (e, isFlyout, opt_runtime) {
 /**
  * Block management: create blocks and scripts from a `create` event
  * @param {!Object} block Blockly create event to be processed
- * @param {boolean} opt_isFlyoutBlock Whether the block is in the flyout.
  */
-Blocks.prototype.createBlock = function (block, opt_isFlyoutBlock) {
+Blocks.prototype.createBlock = function (block) {
     // Does the block already exist?
     // Could happen, e.g., for an unobscured shadow.
     if (this._blocks.hasOwnProperty(block.id)) {
@@ -258,9 +258,8 @@ Blocks.prototype.createBlock = function (block, opt_isFlyoutBlock) {
     this._blocks[block.id] = block;
     // Push block id to scripts array.
     // Blocks are added as a top-level stack if they are marked as a top-block
-    // (if they were top-level XML in the event) and if they are not
-    // flyout blocks.
-    if (!opt_isFlyoutBlock && block.topLevel) {
+    // (if they were top-level XML in the event).
+    if (block.topLevel) {
         this._addScript(block.id);
     }
 };
@@ -288,6 +287,10 @@ Blocks.prototype.changeBlock = function (args) {
  * @param {!Object} e Blockly move event to be processed
  */
 Blocks.prototype.moveBlock = function (e) {
+    if (!this._blocks.hasOwnProperty(e.id)) {
+        return;
+    }
+
     // Move coordinate changes.
     if (e.newCoordinate) {
         this._blocks[e.id].x = e.newCoordinate.x;
