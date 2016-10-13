@@ -106,6 +106,18 @@ Clone.prototype.visible = true;
 Clone.prototype.size = 100;
 
 /**
+ * How Far It Is Stretched On The X Axis
+ * @type {number}
+ */
+Clone.prototype.stretchX = 0;
+
+/**
+ * How Far It Is Stretched On The Y Axis
+ * @type {number}
+ */
+Clone.prototype.stretchY = 0;
+
+/**
  * Currently selected costume index.
  * @type {number}
  */
@@ -162,7 +174,7 @@ Clone.prototype.setXY = function (x, y) {
 Clone.prototype._getRenderedDirectionAndScale = function () {
     // Default: no changes to `this.direction` or `this.scale`.
     var finalDirection = this.direction;
-    var finalScale = [this.size, this.size];
+    var finalScale = [this.size + this.stretchX, this.size + this.stretchY];
     if (this.rotationStyle == Clone.ROTATION_STYLE_NONE) {
         // Force rendered direction to be 90.
         finalDirection = 90;
@@ -237,6 +249,44 @@ Clone.prototype.setSize = function (size) {
     }
     // Keep size between 5% and 535%.
     this.size = MathUtil.clamp(size, 5, 535);
+    if (this.renderer) {
+        var renderedDirectionScale = this._getRenderedDirectionAndScale();
+        this.renderer.updateDrawableProperties(this.drawableID, {
+            direction: renderedDirectionScale.direction,
+            scale: renderedDirectionScale.scale
+        });
+    }
+};
+
+/**
+ * Set stretch X
+ * @param {!number} stretchX Amount
+ */
+Clone.prototype.setStretchX = function (stretchX) {
+    if (this.isStage) {
+        return;
+    }
+    // Keep size between 5% and 535%.
+    this.stretchX = stretchX;
+    if (this.renderer) {
+        var renderedDirectionScale = this._getRenderedDirectionAndScale();
+        this.renderer.updateDrawableProperties(this.drawableID, {
+            direction: renderedDirectionScale.direction,
+            scale: renderedDirectionScale.scale
+        });
+    }
+};
+
+/**
+ * Set stretch Y
+ * @param {!number} stretchY Amount
+ */
+Clone.prototype.setStretchY = function (stretchY) {
+    if (this.isStage) {
+        return;
+    }
+    // Keep size between 5% and 535%.
+    this.stretchY = stretchY;
     if (this.renderer) {
         var renderedDirectionScale = this._getRenderedDirectionAndScale();
         this.renderer.updateDrawableProperties(this.drawableID, {
