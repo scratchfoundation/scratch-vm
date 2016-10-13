@@ -164,6 +164,15 @@ var execute = function (sequencer, thread) {
         startProcedure: function (procedureName) {
             sequencer.stepToProcedure(thread, procedureName);
         },
+        getProcedureParamNames: function (procedureName) {
+            return thread.target.blocks.getProcedureParamNames(procedureName);
+        },
+        pushParam: function (paramName, paramValue) {
+            thread.pushParam(paramName, paramValue);
+        },
+        getParam: function (paramName) {
+            return thread.getParam(paramName);
+        },
         startHats: function(requestedHat, opt_matchFields, opt_target) {
             return (
                 runtime.startHats(requestedHat, opt_matchFields, opt_target)
