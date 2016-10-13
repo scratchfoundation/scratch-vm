@@ -1,4 +1,4 @@
-var Cast = require('../util/cast');
+// var Cast = require('../util/cast');
 var MathUtil = require('../util/math-util');
 var Promise = require('promise');
 
@@ -26,7 +26,7 @@ Scratch3SoundBlocks.prototype.getPrimitives = function() {
         'sound_cleareffects' : this.clearEffects,
         'sound_sounds_menu' : this.soundsMenu,
         'sound_beats_menu' : this.beatsMenu,
-        'sound_effects_menu' : this.effectsMenu,
+        'sound_effects_menu' : this.effectsMenu
     };
 };
 
@@ -41,7 +41,8 @@ Scratch3SoundBlocks.prototype._getSoundUrl = function (soundName, util) {
     }
     var index;
     if (typeof soundName === 'number') {
-        index = MathUtil.wrapClamp(soundName,0,util.target.sprite.sounds.length-1);
+        var len = util.target.sprite.sounds.length;
+        index = MathUtil.wrapClamp(soundName,0,len-1);
     } else {
         index = util.target.getSoundIndexByName(soundName);
         if (index == -1) {
@@ -56,13 +57,13 @@ Scratch3SoundBlocks.prototype.playSoundAndWait = function (args, util) {
     var url = this._getSoundUrl(args.SOUND_MENU, util);
     util.target.audioEngine.playSoundFromUrl(url);
 
-    var duration = util.target.audioEngine.getSoundDuration(url); 
+    var duration = util.target.audioEngine.getSoundDuration(url);
 
     return new Promise(function(resolve) {
-            setTimeout(function() {
-                resolve();
-            }, 1000*duration);
-        });
+        setTimeout(function() {
+            resolve();
+        }, 1000*duration);
+    });
 };
 
 Scratch3SoundBlocks.prototype.stopAllSounds = function (args, util) {
@@ -72,10 +73,10 @@ Scratch3SoundBlocks.prototype.stopAllSounds = function (args, util) {
 Scratch3SoundBlocks.prototype.playNoteForBeats = function (args, util) {
     util.target.audioEngine.playNoteForBeats(args.NOTE, args.BEATS);
     return new Promise(function(resolve) {
-            setTimeout(function() {
-                resolve();
-            }, (1000 * args.BEATS) );
-        });
+        setTimeout(function() {
+            resolve();
+        }, (1000 * args.BEATS) );
+    });
 };
 
 Scratch3SoundBlocks.prototype.playDrumForBeats = function (args, util) {
@@ -99,15 +100,15 @@ Scratch3SoundBlocks.prototype.clearEffects = function (args, util) {
     util.target.audioEngine.clearEffects();
 };
 
-Scratch3SoundBlocks.prototype.soundsMenu = function (args, util) {
+Scratch3SoundBlocks.prototype.soundsMenu = function (args) {
     return args.SOUND_MENU;
 };
 
-Scratch3SoundBlocks.prototype.beatsMenu = function (args, util) {
-	return args.BEATS;
+Scratch3SoundBlocks.prototype.beatsMenu = function (args) {
+    return args.BEATS;
 };
 
-Scratch3SoundBlocks.prototype.effectsMenu = function (args, util) {
+Scratch3SoundBlocks.prototype.effectsMenu = function (args) {
     return args.EFFECT;
 };
 
