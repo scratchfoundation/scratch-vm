@@ -44,6 +44,7 @@ function VirtualMachine () {
     });
 
     this.blockListener = this.blockListener.bind(this);
+    this.flyoutBlockListener = this.flyoutBlockListener.bind(this);
 }
 
 /**
@@ -186,12 +187,16 @@ VirtualMachine.prototype.attachRenderer = function (renderer) {
  */
 VirtualMachine.prototype.blockListener = function (e) {
     if (this.editingTarget) {
-        this.editingTarget.blocks.blocklyListen(
-            e,
-            false,
-            this.runtime
-        );
+        this.editingTarget.blocks.blocklyListen(e, this.runtime);
     }
+};
+
+/**
+ * Handle a Blockly event for the flyout.
+ * @param {!Blockly.Event} e Any Blockly event.
+ */
+VirtualMachine.prototype.flyoutBlockListener = function (e) {
+    this.runtime.flyoutBlocks.blocklyListen(e, this.runtime);
 };
 
 /**

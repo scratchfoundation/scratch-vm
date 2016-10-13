@@ -1,5 +1,6 @@
 var EventEmitter = require('events');
 var Sequencer = require('./sequencer');
+var Blocks = require('./blocks');
 var Thread = require('./thread');
 var util = require('util');
 
@@ -43,6 +44,8 @@ function Runtime () {
 
     /** @type {!Sequencer} */
     this.sequencer = new Sequencer(this);
+
+    this.flyoutBlocks = new Blocks();
 
     /**
      * Map to look up a block primitive's implementation function by its opcode.
@@ -463,6 +466,10 @@ Runtime.prototype._updateScriptGlows = function () {
         if (thread.requestScriptGlowInFrame && target == this._editingTarget) {
             var blockForThread = thread.peekStack() || thread.topBlock;
             var script = target.blocks.getTopLevelScript(blockForThread);
+            if (!script) {
+                // Attempt to find in flyout blocks.
+                script = this.flyoutBlocks.getTopLevelScript(blockForThread);
+            }
             if (script) {
                 requestedGlowsThisFrame.push(script);
             }
