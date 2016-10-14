@@ -46,56 +46,31 @@ Scratch3ControlBlocks.prototype.repeat = function(args, util) {
     // Only execute once per frame.
     // When the branch finishes, `repeat` will be executed again and
     // the second branch will be taken, yielding for the rest of the frame.
-    if (!util.stackFrame.executedInFrame) {
-        util.stackFrame.executedInFrame = true;
-        // Decrease counter
-        util.stackFrame.loopCounter--;
-        // If we still have some left, start the branch.
-        if (util.stackFrame.loopCounter >= 0) {
-            util.startBranch();
-        }
-    } else {
-        util.stackFrame.executedInFrame = false;
-        util.yieldFrame();
+    // Decrease counter
+    util.stackFrame.loopCounter--;
+    // If we still have some left, start the branch.
+    if (util.stackFrame.loopCounter >= 0) {
+        util.startBranch(1, true);
     }
 };
 
 Scratch3ControlBlocks.prototype.repeatUntil = function(args, util) {
     var condition = Cast.toBoolean(args.CONDITION);
-    // Only execute once per frame.
-    // When the branch finishes, `repeat` will be executed again and
-    // the second branch will be taken, yielding for the rest of the frame.
-    if (!util.stackFrame.executedInFrame) {
-        util.stackFrame.executedInFrame = true;
-        // If the condition is true, start the branch.
-        if (!condition) {
-            util.startBranch();
-        }
-    } else {
-        util.stackFrame.executedInFrame = false;
-        util.yieldFrame();
+    // If the condition is true, start the branch.
+    if (!condition) {
+        util.startBranch(1, true);
     }
 };
 
 Scratch3ControlBlocks.prototype.waitUntil = function(args, util) {
     var condition = Cast.toBoolean(args.CONDITION);
-    // Only execute once per frame.
     if (!condition) {
         util.yieldFrame();
     }
 };
 
 Scratch3ControlBlocks.prototype.forever = function(args, util) {
-    // Only execute once per frame.
-    // When the branch finishes, `forever` will be executed again and
-    // the second branch will be taken, yielding for the rest of the frame.
-    if (!util.stackFrame.executedInFrame) {
-        util.stackFrame.executedInFrame = true;
-        util.startBranch();
-    } else {
-        util.stackFrame.executedInFrame = false;
-        util.yieldFrame();
-    }
+    util.startBranch(1, true);
 };
 
 Scratch3ControlBlocks.prototype.wait = function(args) {
@@ -109,27 +84,17 @@ Scratch3ControlBlocks.prototype.wait = function(args) {
 
 Scratch3ControlBlocks.prototype.if = function(args, util) {
     var condition = Cast.toBoolean(args.CONDITION);
-    // Only execute one time. `if` will be returned to
-    // when the branch finishes, but it shouldn't execute again.
-    if (util.stackFrame.executedInFrame === undefined) {
-        util.stackFrame.executedInFrame = true;
-        if (condition) {
-            util.startBranch();
-        }
+    if (condition) {
+        util.startBranch(1, false);
     }
 };
 
 Scratch3ControlBlocks.prototype.ifElse = function(args, util) {
     var condition = Cast.toBoolean(args.CONDITION);
-    // Only execute one time. `ifElse` will be returned to
-    // when the branch finishes, but it shouldn't execute again.
-    if (util.stackFrame.executedInFrame === undefined) {
-        util.stackFrame.executedInFrame = true;
-        if (condition) {
-            util.startBranch(1);
-        } else {
-            util.startBranch(2);
-        }
+    if (condition) {
+        util.startBranch(1, false);
+    } else {
+        util.startBranch(2, false);
     }
 };
 

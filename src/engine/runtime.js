@@ -130,6 +130,8 @@ Runtime.THREAD_STEP_INTERVAL = 1000 / 60;
  */
 Runtime.MAX_CLONES = 300;
 
+Runtime.redrawRequested = false;
+
 // -----------------------------------------------------------------------------
 // -----------------------------------------------------------------------------
 
@@ -456,6 +458,7 @@ Runtime.prototype._step = function () {
             this.startHats(hatType);
         }
     }
+    this.redrawRequested = false;
     var inactiveThreads = this.sequencer.stepThreads(this.threads);
     this._updateScriptGlows();
     for (var i = 0; i < inactiveThreads.length; i++) {
@@ -617,12 +620,19 @@ Runtime.prototype.getTargetForStage = function () {
     }
 };
 
+Runtime.prototype.requestRedraw = function () {
+    this.redrawRequested = true;
+};
+
 /**
  * Handle an animation frame from the main thread.
  */
 Runtime.prototype.animationFrame = function () {
     if (this.renderer) {
-        this.renderer.draw();
+        this._step();
+        if (this.redrawRequested) {
+            this.renderer.draw();
+        }
     }
 };
 
@@ -630,9 +640,8 @@ Runtime.prototype.animationFrame = function () {
  * Set up timers to repeatedly step in a browser
  */
 Runtime.prototype.start = function () {
-    self.setInterval(function() {
-        this._step();
-    }.bind(this), Runtime.THREAD_STEP_INTERVAL);
+    /*self.setInterval(function() {
+    }.bind(this), Runtime.THREAD_STEP_INTERVAL);*/
 };
 
 module.exports = Runtime;

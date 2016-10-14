@@ -51,12 +51,11 @@ function Thread (firstBlock) {
 Thread.STATUS_RUNNING = 0;
 
 /**
- * Thread status for a yielded thread.
- * Threads are in this state when a primitive has yielded; execution is paused
- * until the relevant primitive unyields.
+ * Threads are in this state when a primitive is waiting on a promise;
+ * execution is paused until the promise changes thread status.
  * @const
  */
-Thread.STATUS_YIELD = 1;
+Thread.STATUS_PROMISE_WAIT = 1;
 
 /**
  * Thread status for a single-frame yield.
@@ -81,6 +80,7 @@ Thread.prototype.pushStack = function (blockId) {
     // Might not, if we just popped the stack.
     if (this.stack.length > this.stackFrames.length) {
         this.stackFrames.push({
+            isLoop: false, // Whether this level of the stack is a loop.
             reported: {}, // Collects reported input values.
             waitingReporter: null, // Name of waiting reporter.
             params: {}, // Procedure parameters.
@@ -132,7 +132,6 @@ Thread.prototype.pushReportedValue = function (value) {
     if (parentStackFrame) {
         var waitingReporter = parentStackFrame.waitingReporter;
         parentStackFrame.reported[waitingReporter] = value;
-        parentStackFrame.waitingReporter = null;
     }
 };
 
@@ -181,6 +180,12 @@ Thread.prototype.setTarget = function (target) {
  */
 Thread.prototype.getTarget = function () {
     return this.target;
+};
+
+Thread.prototype.goToNextBlock = function () {
+    var nextBlockId = this.target.blocks.getNextBlock(this.peekStack());
+    this.popStack();
+    this.pushStack(nextBlockId);
 };
 
 module.exports = Thread;
