@@ -210,11 +210,15 @@ Clone.prototype.setSay = function (type, message) {
     }
     // @todo: Render to stage.
     if (!message) {
+        if (type === 'think') console.log('Clearing think bubble...');
         this.renderer.destroyDrawable(this.bubble);
         return;
     }
     if (type === 'say') {
         this.bubble = this.renderer.renderBubble(this.drawableID, message);
+    } else if (type === 'think') {
+        // this.bubble = this.renderer.renderBubble(this.drawableID, message, true);
+        console.log('Setting think bubble:', message);
     }
 };
 
