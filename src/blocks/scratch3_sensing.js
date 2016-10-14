@@ -99,6 +99,7 @@ Scratch3SensingBlocks.prototype.current = function (args) {
 Scratch3SensingBlocks.prototype.getKeyPressed = function (args, util) {
     return util.ioQuery('keyboard', 'getKeyIsDown', args.KEY_OPTION);
 };
+
 Scratch3SensingBlocks.prototype.daysSince2000 = function()
 {
   var start = new Date(2000, 1-1, 1); 
