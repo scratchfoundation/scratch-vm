@@ -215,7 +215,7 @@ Clone.prototype.setSay = function (type, message) {
         this.bubble = null;
         return;
     }
-    if (this.bubble) {
+    if (this.bubble !== null) {
         this.renderer.destroyDrawable(this.bubble);
         this.bubble = null;
     }
