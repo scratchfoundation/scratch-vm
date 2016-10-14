@@ -1695,6 +1695,9 @@
 	 * @param {?Thread} thread Thread object to remove from actives
 	 */
 	Runtime.prototype._removeThread = function (thread) {
+	    // Inform sequencer to stop executing that thread.
+	    this.sequencer.retireThread(thread);
+	    // Remove from the list.
 	    var i = this.threads.indexOf(thread);
 	    if (i > -1) {
 	        this.threads.splice(i, 1);
@@ -1831,10 +1834,14 @@
 	/**
 	 * Stop any threads acting on the target.
 	 * @param {!Target} target Target to stop threads for.
+	 * @param {Thread=} opt_threadException Optional thread to skip.
 	 */
-	Runtime.prototype.stopForTarget = function (target) {
+	Runtime.prototype.stopForTarget = function (target, opt_threadException) {
 	    // Stop any threads on the target.
 	    for (var i = 0; i < this.threads.length; i++) {
+	        if (this.threads[i] === opt_threadException) {
+	            continue;
+	        }
 	        if (this.threads[i].target == target) {
 	            this._removeThread(this.threads[i]);
 	        }
@@ -2721,6 +2728,15 @@
 	        },
 	        startBranch: function (branchNum) {
 	            sequencer.stepToBranch(thread, branchNum);
+	        },
+	        stopAll: function () {
+	            runtime.stopAll();
+	        },
+	        stopOtherTargetThreads: function() {
+	            runtime.stopForTarget(target, thread);
+	        },
+	        stopThread: function() {
+	            sequencer.retireThread(thread);
 	        },
 	        startProcedure: function (procedureName) {
 	            sequencer.stepToProcedure(thread, procedureName);
@@ -13656,9 +13672,16 @@
 	    }
 	};
 
-	Scratch3ControlBlocks.prototype.stop = function() {
-	    // @todo - don't use this.runtime
-	    this.runtime.stopAll();
+	Scratch3ControlBlocks.prototype.stop = function(args, util) {
+	    var option = args.STOP_OPTION;
+	    if (option == 'all') {
+	        util.stopAll();
+	    } else if (option == 'other scripts in sprite' ||
+	        option == 'other scripts in stage') {
+	        util.stopOtherTargetThreads();
+	    } else if (option == 'this script') {
+	        util.stopThread();
+	    }
 	};
 
 	// @todo (GH-146): remove.
@@ -15914,7 +15937,8 @@
 	    if (oldOpcode == 'stopScripts') {
 	        // Mutation for stop block: if the argument is 'other scripts',
 	        // the block needs a next connection.
-	        if (sb2block[1] == 'other scripts in sprite') {
+	        if (sb2block[1] == 'other scripts in sprite' ||
+	            sb2block[1] == 'other scripts in stage') {
 	            activeBlock.mutation = {
 	                tagName: 'mutation',
 	                hasnext: 'true',
