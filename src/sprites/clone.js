@@ -212,7 +212,12 @@ Clone.prototype.setSay = function (type, message) {
     if (!message) {
         if (type === 'think') console.log('Clearing think bubble...');
         this.renderer.destroyDrawable(this.bubble);
+        this.bubble = null;
         return;
+    }
+    if (this.bubble) {
+        this.renderer.destroyDrawable(this.bubble);
+        this.bubble = null;
     }
     if (type === 'say') {
         this.bubble = this.renderer.renderBubble(this.drawableID, message);
