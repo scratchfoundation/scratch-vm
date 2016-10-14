@@ -217,7 +217,8 @@ Clone.prototype.setSay = function (type, message) {
     if (type === 'say') {
         this.bubble = this.renderer.renderBubble(this.drawableID, message);
     } else if (type === 'think') {
-        // this.bubble = this.renderer.renderBubble(this.drawableID, message, true);
+        // this.bubble = this.renderer.renderBubble(
+        // this.drawableID, message, true);
         console.log('Setting think bubble:', message);
     }
 };
