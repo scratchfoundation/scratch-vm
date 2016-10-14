@@ -25,7 +25,6 @@ Scratch3SensingBlocks.prototype.getPrimitives = function() {
         'sensing_keypressed': this.getKeyPressed,
         'sensing_current': this.current,
         'sensing_dayssince2000': this.daysSince2000
-        
     };
 };
 
