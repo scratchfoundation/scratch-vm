@@ -205,16 +205,16 @@ Clone.prototype.setDirection = function (direction) {
  * @param {?string} message Message to put in say bubble.
  */
 Clone.prototype.setSay = function (type, message) {
-    if (this.isStage || !this.render) {
+    if (this.isStage || !this.renderer) {
         return;
     }
     // @todo: Render to stage.
     if (!message) {
-        this.render.destroyDrawable(this.bubble);
+        this.renderer.destroyDrawable(this.bubble);
         return;
     }
     if (type === 'say') {
-        this.bubble = this.render.renderBubble(this.drawableID, message);
+        this.bubble = this.renderer.renderBubble(this.drawableID, message);
     }
 };
 
