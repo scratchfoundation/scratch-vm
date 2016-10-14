@@ -344,7 +344,7 @@ Runtime.prototype.startHats = function (requestedHatOpcode,
             // any existing threads starting with the top block.
             for (var i = 0; i < instance.threads.length; i++) {
                 if (instance.threads[i].topBlock === topBlockId &&
-                    (!opt_target || instance.threads[i].target == opt_target)) {
+                    instance.threads[i].target == target) {
                     instance._removeThread(instance.threads[i]);
                 }
             }
@@ -353,7 +353,7 @@ Runtime.prototype.startHats = function (requestedHatOpcode,
             // give up if any threads with the top block are running.
             for (var j = 0; j < instance.threads.length; j++) {
                 if (instance.threads[j].topBlock === topBlockId &&
-                    (!opt_target || instance.threads[j].target == opt_target)) {
+                    instance.threads[j].target == target) {
                     // Some thread is already running.
                     return;
                 }
