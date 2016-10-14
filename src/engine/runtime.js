@@ -246,6 +246,9 @@ Runtime.prototype._pushThread = function (id, target) {
  * @param {?Thread} thread Thread object to remove from actives
  */
 Runtime.prototype._removeThread = function (thread) {
+    // Inform sequencer to stop executing that thread.
+    this.sequencer.retireThread(thread);
+    // Remove from the list.
     var i = this.threads.indexOf(thread);
     if (i > -1) {
         this.threads.splice(i, 1);
@@ -382,10 +385,14 @@ Runtime.prototype.disposeTarget = function (target) {
 /**
  * Stop any threads acting on the target.
  * @param {!Target} target Target to stop threads for.
+ * @param {Thread=} opt_threadException Optional thread to skip.
  */
-Runtime.prototype.stopForTarget = function (target) {
+Runtime.prototype.stopForTarget = function (target, opt_threadException) {
     // Stop any threads on the target.
     for (var i = 0; i < this.threads.length; i++) {
+        if (this.threads[i] === opt_threadException) {
+            continue;
+        }
         if (this.threads[i].target == target) {
             this._removeThread(this.threads[i]);
         }

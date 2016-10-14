@@ -176,6 +176,15 @@ var execute = function (sequencer, thread) {
         startBranch: function (branchNum) {
             sequencer.stepToBranch(thread, branchNum);
         },
+        stopAll: function () {
+            runtime.stopAll();
+        },
+        stopOtherTargetThreads: function() {
+            runtime.stopForTarget(target, thread);
+        },
+        stopThread: function() {
+            sequencer.retireThread(thread);
+        },
         startProcedure: function (procedureName) {
             sequencer.stepToProcedure(thread, procedureName);
         },
