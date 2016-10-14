@@ -105,6 +105,6 @@ Scratch3SensingBlocks.prototype.daysSince2000 = function()
   var start = new Date(2000, 1-1, 1); 
   var today =   new Date(); 
   return (today.valueOf() - start.valueOf()) / 1000 / 86400;
-}
+};
 
 module.exports = Scratch3SensingBlocks;
