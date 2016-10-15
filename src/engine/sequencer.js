@@ -34,35 +34,29 @@ Sequencer.prototype.stepThreads = function (threads) {
     this.timer.start();
     // List of threads which have been killed by this step.
     var inactiveThreads = [];
-    // If all of the threads are yielding, we should yield.
-    var numYieldingThreads = 0;
-    // Clear all yield statuses that were for the previous frame.
-    for (var t = 0; t < threads.length; t++) {
-        if (threads[t].status === Thread.STATUS_YIELD_FRAME) {
-            threads[t].setStatus(Thread.STATUS_RUNNING);
-        }
-    }
-
+    // Count of active threads.
+    var numActiveThreads = Infinity;
     // While there are still threads to run and we are within WORK_TIME,
     // continue executing threads.
     while (threads.length > 0 &&
-           threads.length > numYieldingThreads &&
+           numActiveThreads > 0 &&
            this.timer.timeElapsed() < Sequencer.WORK_TIME &&
            (this.runtime.turboMode || !this.runtime.redrawRequested)) {
         // New threads at the end of the iteration.
         var newThreads = [];
-        // Reset yielding thread count.
-        numYieldingThreads = 0;
+        numActiveThreads = 0;
         // Attempt to run each thread one time
         for (var i = 0; i < threads.length; i++) {
             var activeThread = threads[i];
-            if (activeThread.status === Thread.STATUS_RUNNING) {
+            if (activeThread.status !== Thread.STATUS_PROMISE_WAIT) {
                 // Normal-mode thread: step.
                 this.stepThread(activeThread);
-            } else if (activeThread.status === Thread.STATUS_PROMISE_WAIT ||
-                       activeThread.status === Thread.STATUS_YIELD_FRAME) {
-                // Yielding thread: do nothing for this step.
-                numYieldingThreads++;
+            }
+            if (activeThread.status === Thread.STATUS_YIELD) {
+                throw 'No thread should be in yield mode after `stepThread`.';
+            }
+            if (activeThread.status === Thread.STATUS_RUNNING) {
+                numActiveThreads++;
             }
             if (activeThread.stack.length === 0 ||
                 activeThread.status === Thread.STATUS_DONE) {
@@ -89,16 +83,17 @@ Sequencer.prototype.stepThread = function (thread) {
         // A "null block" - empty branch.
         // Yield for the frame.
         thread.popStack();
-        thread.setStatus(Thread.STATUS_YIELD_FRAME);
-        return;
+        //return;
     }
     while (thread.peekStack()) {
         // Execute the current block.
         currentBlockId = thread.peekStack();
         execute(this, thread);
         // If the thread has yielded or is waiting, yield to other threads.
-        if (thread.status === Thread.STATUS_YIELD_FRAME ||
-            thread.status === Thread.STATUS_PROMISE_WAIT) {
+        if (thread.status === Thread.STATUS_YIELD) {
+            thread.status = Thread.STATUS_RUNNING;
+            return;
+        } else if (thread.status === Thread.STATUS_PROMISE_WAIT) {
             return;
         }
         // If no control flow has happened, switch to next block.
@@ -142,6 +137,8 @@ Sequencer.prototype.stepToBranch = function (thread, branchNum, isLoop) {
     if (branchId) {
         // Push branch ID to the thread's stack.
         thread.pushStack(branchId);
+    } else {
+        thread.pushStack(null);
     }
 };
 
@@ -156,7 +153,6 @@ Sequencer.prototype.stepToProcedure = function (thread, procedureName) {
     // Check if the call is recursive. If so, yield.
     // @todo: Have behavior match Scratch 2.0.
     /*if (thread.stack.indexOf(definition) > -1) {
-        thread.setStatus(Thread.STATUS_YIELD_FRAME);
     }*/
 };
 
@@ -172,7 +168,7 @@ Sequencer.prototype.proceedThread = function (thread) {
     }
     // If we can't find a next block to run, mark the thread as done.
     if (!thread.peekStack()) {
-        thread.setStatus(Thread.STATUS_DONE);
+        thread.status = Thread.STATUS_DONE;
     }
 };
 
@@ -184,7 +180,7 @@ Sequencer.prototype.retireThread = function (thread) {
     thread.stack = [];
     thread.stackFrame = [];
     thread.requestScriptGlowInFrame = false;
-    thread.setStatus(Thread.STATUS_DONE);
+    thread.status = Thread.STATUS_DONE;
 };
 
 module.exports = Sequencer;

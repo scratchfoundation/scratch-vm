@@ -118,7 +118,6 @@ Scratch3MotionBlocks.prototype.glide = function (args, util) {
             util.target.setXY(util.stackFrame.endX, util.stackFrame.endY);
             return;
         }
-        util.yieldFrame();
     } else {
         var timeElapsed = util.stackFrame.timer.timeElapsed();
         if (timeElapsed < util.stackFrame.duration * 1000) {
@@ -130,7 +129,6 @@ Scratch3MotionBlocks.prototype.glide = function (args, util) {
                 util.stackFrame.startX + dx,
                 util.stackFrame.startY + dy
             );
-            util.yieldFrame();
         } else {
             // Finished: move to final position.
             util.target.setXY(util.stackFrame.endX, util.stackFrame.endY);

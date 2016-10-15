@@ -65,7 +65,7 @@ Scratch3ControlBlocks.prototype.repeatUntil = function(args, util) {
 Scratch3ControlBlocks.prototype.waitUntil = function(args, util) {
     var condition = Cast.toBoolean(args.CONDITION);
     if (!condition) {
-        util.yieldFrame();
+        util.yield();
     }
 };
 

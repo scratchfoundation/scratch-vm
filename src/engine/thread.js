@@ -58,10 +58,10 @@ Thread.STATUS_RUNNING = 0;
 Thread.STATUS_PROMISE_WAIT = 1;
 
 /**
- * Thread status for a single-frame yield.
+ * Thread status for yield.
  * @const
  */
-Thread.STATUS_YIELD_FRAME = 2;
+Thread.STATUS_YIELD = 2;
 
 /**
  * Thread status for a finished/done thread.
@@ -156,14 +156,6 @@ Thread.prototype.getParam = function (paramName) {
  */
 Thread.prototype.atStackTop = function () {
     return this.peekStack() === this.topBlock;
-};
-
-/**
- * Set thread status.
- * @param {number} status Enum representing thread status.
- */
-Thread.prototype.setStatus = function (status) {
-    this.status = status;
 };
 
 /**

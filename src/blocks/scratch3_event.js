@@ -82,7 +82,7 @@ Scratch3EventBlocks.prototype.broadcastAndWait = function (args, util) {
         return instance.runtime.isActiveThread(thread);
     });
     if (waiting) {
-        util.yieldFrame();
+        util.yield();
     }
 };
 

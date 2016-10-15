@@ -90,7 +90,7 @@ var execute = function (sequencer, thread) {
                 runtime.visualReport(currentBlockId, resolvedValue);
             }
             // Finished any yields.
-            thread.setStatus(Thread.STATUS_RUNNING);
+            thread.status = Thread.STATUS_RUNNING;
         }
     };
 
@@ -168,8 +168,8 @@ var execute = function (sequencer, thread) {
     primitiveReportedValue = blockFunction(argValues, {
         stackFrame: currentStackFrame.executionContext,
         target: target,
-        yieldFrame: function() {
-            thread.setStatus(Thread.STATUS_YIELD_FRAME);
+        yield: function() {
+            thread.status = Thread.STATUS_YIELD;
         },
         startBranch: function (branchNum, isLoop) {
             sequencer.stepToBranch(thread, branchNum, isLoop);
@@ -219,7 +219,7 @@ var execute = function (sequencer, thread) {
     if (isPromise(primitiveReportedValue)) {
         if (thread.status === Thread.STATUS_RUNNING) {
             // Primitive returned a promise; automatically yield thread.
-            thread.setStatus(Thread.STATUS_PROMISE_WAIT);
+            thread.status = Thread.STATUS_PROMISE_WAIT;
         }
         // Promise handlers
         primitiveReportedValue.then(function(resolvedValue) {
@@ -235,7 +235,7 @@ var execute = function (sequencer, thread) {
             // Promise rejected: the primitive had some error.
             // Log it and proceed.
             console.warn('Primitive rejected promise: ', rejectionReason);
-            thread.setStatus(Thread.STATUS_RUNNING);
+            thread.status = Thread.STATUS_RUNNING;
             thread.popStack();
         });
     } else if (thread.status === Thread.STATUS_RUNNING) {
