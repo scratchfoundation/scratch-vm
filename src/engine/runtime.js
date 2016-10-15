@@ -70,6 +70,18 @@ function Runtime () {
      * @type {number}
      */
     this._cloneCounter = 0;
+
+    /**
+     * Whether the project is in "turbo mode."
+     * @type {Boolean}
+     */
+    this.turboMode = false;
+
+    /**
+     * Whether the project is in "pause mode."
+     * @type {Boolean}
+     */
+    this.pauseMode = false;
 }
 
 /**
@@ -451,6 +463,10 @@ Runtime.prototype.stopAll = function () {
  * inactive threads after each iteration.
  */
 Runtime.prototype._step = function () {
+    if (this.pauseMode) {
+        // Don't do any execution while in pause mode.
+        return;
+    }
     // Find all edge-activated hats, and add them to threads to be evaluated.
     for (var hatType in this._hats) {
         var hat = this._hats[hatType];

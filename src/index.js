@@ -67,6 +67,24 @@ VirtualMachine.prototype.greenFlag = function () {
 };
 
 /**
+ * Set whether the project is in "turbo mode."
+ * When true, loops don't yield to redraw.
+ * @param {Boolean} turboModeOn Whether turbo mode should be set.
+ */
+VirtualMachine.prototype.setTurboMode = function (turboModeOn) {
+    this.runtime.turboMode = (turboModeOn == true);
+};
+
+/**
+ * Set whether the project is in "pause mode."
+ * When true, nothing is stepped.
+ * @param {Boolean} pauseModeOn Whether pause mode should be set.
+ */
+VirtualMachine.prototype.setPauseMode = function (pauseModeOn) {
+    this.runtime.pauseMode = (pauseModeOn == true);
+};
+
+/**
  * Stop all threads and running activities.
  */
 VirtualMachine.prototype.stopAll = function () {

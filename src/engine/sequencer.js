@@ -48,7 +48,7 @@ Sequencer.prototype.stepThreads = function (threads) {
     while (threads.length > 0 &&
            threads.length > numYieldingThreads &&
            this.timer.timeElapsed() < Sequencer.WORK_TIME &&
-           !this.runtime.redrawRequested) {
+           (this.runtime.turboMode || !this.runtime.redrawRequested)) {
         // New threads at the end of the iteration.
         var newThreads = [];
         // Reset yielding thread count.

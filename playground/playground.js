@@ -245,6 +245,14 @@ window.onload = function() {
     document.getElementById('stopall').addEventListener('click', function() {
         vm.stopAll();
     });
+    document.getElementById('turbomode').addEventListener('change', function() {
+        var turboOn = document.getElementById('turbomode').checked;
+        vm.setTurboMode(turboOn);
+    });
+    document.getElementById('pausemode').addEventListener('change', function() {
+        var pauseOn = document.getElementById('pausemode').checked;
+        vm.setPauseMode(pauseOn);
+    });
 
     var tabBlockExplorer = document.getElementById('tab-blockexplorer');
     var tabThreadExplorer = document.getElementById('tab-threadexplorer');
