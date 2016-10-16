@@ -1,5 +1,5 @@
 var Cast = require('../util/cast');
-var Promise = require('promise');
+var Timer = require('../util/timer');
 
 function Scratch3ControlBlocks(runtime) {
     /**
@@ -73,13 +73,18 @@ Scratch3ControlBlocks.prototype.forever = function(args, util) {
     util.startBranch(1, true);
 };
 
-Scratch3ControlBlocks.prototype.wait = function(args) {
-    var duration = Cast.toNumber(args.DURATION);
-    return new Promise(function(resolve) {
-        setTimeout(function() {
-            resolve();
-        }, 1000 * duration);
-    });
+Scratch3ControlBlocks.prototype.wait = function(args, util) {
+    if (!util.stackFrame.timer) {
+        util.stackFrame.timer = new Timer();
+        util.stackFrame.timer.start();
+        util.yield();
+        this.runtime.requestRedraw();
+    } else {
+        var duration = Math.max(0, 1000 * Cast.toNumber(args.DURATION));
+        if (util.stackFrame.timer.timeElapsed() < duration) {
+            util.yield();
+        }
+    }
 };
 
 Scratch3ControlBlocks.prototype.if = function(args, util) {
