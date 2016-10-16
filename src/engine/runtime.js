@@ -645,10 +645,8 @@ Runtime.prototype.requestRedraw = function () {
  */
 Runtime.prototype.animationFrame = function () {
     if (this.renderer) {
-        this._step();
-        if (this.redrawRequested) {
-            this.renderer.draw();
-        }
+        // @todo: Only render when this.redrawRequested or clones rendered.
+        this.renderer.draw();
     }
 };
 
@@ -656,8 +654,9 @@ Runtime.prototype.animationFrame = function () {
  * Set up timers to repeatedly step in a browser
  */
 Runtime.prototype.start = function () {
-    /*self.setInterval(function() {
-    }.bind(this), Runtime.THREAD_STEP_INTERVAL);*/
+    self.setInterval(function() {
+        this._step();
+    }.bind(this), Runtime.THREAD_STEP_INTERVAL);
 };
 
 module.exports = Runtime;
