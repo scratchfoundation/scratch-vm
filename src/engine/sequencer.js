@@ -24,6 +24,8 @@ function Sequencer (runtime) {
  */
 Sequencer.WORK_TIME = 10;
 
+Sequencer.WARP_TIME = 500;
+
 /**
  * Step through all threads in `this.threads`, running them in order.
  * @param {Array.<Thread>} threads List of which threads to step.
@@ -58,6 +60,9 @@ Sequencer.prototype.stepThreads = function (threads) {
             if (activeThread.status === Thread.STATUS_RUNNING) {
                 numActiveThreads++;
             }
+            if (activeThread.warpTimer) {
+                activeThread.warpTimer = null;
+            }
             if (activeThread.stack.length === 0 ||
                 activeThread.status === Thread.STATUS_DONE) {
                 // Finished with this thread - tell runtime to clean it up.
@@ -89,9 +94,17 @@ Sequencer.prototype.stepThread = function (thread) {
         // Execute the current block.
         currentBlockId = thread.peekStack();
         execute(this, thread);
+        if (thread.warpMode && !thread.warpTimer) {
+            thread.warpTimer = new Timer();
+            thread.warpTimer.start();
+        }
         // If the thread has yielded or is waiting, yield to other threads.
         if (thread.status === Thread.STATUS_YIELD) {
             thread.status = Thread.STATUS_RUNNING;
+            if (thread.warpMode && thread.warpTimer &&
+                thread.warpTimer.timeElapsed() <= Sequencer.WARP_TIME) {
+                continue;
+            }
             return;
         } else if (thread.status === Thread.STATUS_PROMISE_WAIT) {
             return;
@@ -108,7 +121,10 @@ Sequencer.prototype.stepThread = function (thread) {
                 return;
             }
             if (thread.peekStackFrame().isLoop) {
-                return;
+                if (!thread.warpMode ||
+                    thread.warpTimer.timeElapsed() > Sequencer.WARP_TIME) {
+                    return;
+                }
             } else if (thread.peekStackFrame().waitingReporter) {
                 return;
             }
@@ -150,10 +166,18 @@ Sequencer.prototype.stepToBranch = function (thread, branchNum, isLoop) {
 Sequencer.prototype.stepToProcedure = function (thread, procedureName) {
     var definition = thread.target.blocks.getProcedureDefinition(procedureName);
     thread.pushStack(definition);
-    // Check if the call is recursive. If so, yield.
-    // @todo: Have behavior match Scratch 2.0.
-    /*if (thread.stack.indexOf(definition) > -1) {
-    }*/
+    if (thread.warpMode && thread.warpTimer &&
+        thread.warpTimer.timeElapsed() > Sequencer.WARP_TIME) {
+        thread.status = Thread.STATUS_YIELD;
+    } else {
+        var definitionBlock = thread.target.blocks.getBlock(definition);
+        var doWarp = definitionBlock.mutation.warp;
+        if (doWarp) {
+            thread.warpMode = true;
+        }
+        // Check if the call is recursive. If so, yield.
+        thread.status = Thread.STATUS_YIELD;
+    }
 };
 
 Sequencer.prototype.proceedThread = function (thread) {

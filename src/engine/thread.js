@@ -40,6 +40,9 @@ function Thread (firstBlock) {
      * @type {boolean}
      */
     this.requestScriptGlowInFrame = false;
+
+    this.warpMode = false;
+    this.warpTimer = null;
 }
 
 /**
