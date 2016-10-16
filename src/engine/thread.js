@@ -183,4 +183,18 @@ Thread.prototype.goToNextBlock = function () {
     this.pushStack(nextBlockId);
 };
 
+Thread.prototype.isRecursiveCall = function (procedureName) {
+    // @todo: Scratch 2.0 only checks 5 levels, probably as an optimization.
+    // Should we do the same?
+    var sp = this.stack.length;
+    for (var i = sp - 1; i >= 0; i--) {
+        var block = this.target.blocks.getBlock(this.stack[i]);
+        if (block.opcode == 'procedures_callnoreturn' &&
+            block.mutation.proccode == procedureName)  {
+            return true;
+        }
+    }
+    return false;
+};
+
 module.exports = Thread;

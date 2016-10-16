@@ -176,7 +176,9 @@ Sequencer.prototype.stepToProcedure = function (thread, procedureName) {
             thread.warpMode = true;
         }
         // Check if the call is recursive. If so, yield.
-        thread.status = Thread.STATUS_YIELD;
+        if (thread.isRecursiveCall(procedureName)) {
+            thread.status = Thread.STATUS_YIELD;
+        }
     }
 };
 
