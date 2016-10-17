@@ -16,14 +16,6 @@ function Sequencer (runtime) {
     this.runtime = runtime;
 }
 
-/**
- * The sequencer does as much work as it can within WORK_TIME milliseconds,
- * then yields. This is essentially a rate-limiter for blocks.
- * In Scratch 2.0, this is set to 75% of the target stage frame-rate (30fps).
- * @const {!number}
- */
-Sequencer.WORK_TIME = 10;
-
 Sequencer.WARP_TIME = 500;
 
 /**
@@ -32,6 +24,7 @@ Sequencer.WARP_TIME = 500;
  * @return {Array.<Thread>} All threads which have finished in this iteration.
  */
 Sequencer.prototype.stepThreads = function (threads) {
+    var WORK_TIME = 0.75 * this.runtime.currentStepTime;
     // Start counting toward WORK_TIME
     this.timer.start();
     // List of threads which have been killed by this step.
@@ -42,7 +35,7 @@ Sequencer.prototype.stepThreads = function (threads) {
     // continue executing threads.
     while (threads.length > 0 &&
            numActiveThreads > 0 &&
-           this.timer.timeElapsed() < Sequencer.WORK_TIME &&
+           this.timer.timeElapsed() < WORK_TIME &&
            (this.runtime.turboMode || !this.runtime.redrawRequested)) {
         // New threads at the end of the iteration.
         var newThreads = [];

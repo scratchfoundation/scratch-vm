@@ -67,7 +67,7 @@ VirtualMachine.prototype.greenFlag = function () {
 };
 
 /**
- * Set whether the project is in "turbo mode."
+ * Set whether the VM is in "turbo mode."
  * When true, loops don't yield to redraw.
  * @param {Boolean} turboModeOn Whether turbo mode should be set.
  */
@@ -76,12 +76,21 @@ VirtualMachine.prototype.setTurboMode = function (turboModeOn) {
 };
 
 /**
- * Set whether the project is in "pause mode."
+ * Set whether the VM is in "pause mode."
  * When true, nothing is stepped.
  * @param {Boolean} pauseModeOn Whether pause mode should be set.
  */
 VirtualMachine.prototype.setPauseMode = function (pauseModeOn) {
     this.runtime.pauseMode = (pauseModeOn == true);
+};
+
+/**
+ * Set whether the VM is in 2.0 "compatibility mode."
+ * When true, ticks go at 2.0 speed (30 TPS).
+ * @param {Boolean} compatibilityModeOn Whether compatibility mode is set.
+ */
+VirtualMachine.prototype.setCompatibilityMode = function (compatibilityModeOn) {
+    this.runtime.setCompatibilityMode(compatibilityModeOn == true);
 };
 
 /**

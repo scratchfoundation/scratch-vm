@@ -65,6 +65,8 @@ function Runtime () {
 
     this._scriptGlowsPreviousFrame = [];
     this._editingTarget = null;
+    this._steppingInterval = null;
+    this.currentStepTime = null;
     /**
      * Currently known number of clones.
      * @type {number}
@@ -82,6 +84,12 @@ function Runtime () {
      * @type {Boolean}
      */
     this.pauseMode = false;
+
+    /**
+     * Whether the project is in "compatibility mode" (30 TPS).
+     * @type {Boolean}
+     */
+    this.compatibilityMode = false;
 }
 
 /**
@@ -135,6 +143,11 @@ util.inherits(Runtime, EventEmitter);
  * How rapidly we try to step threads, in ms.
  */
 Runtime.THREAD_STEP_INTERVAL = 1000 / 60;
+
+/**
+ * In compatibility mode, how rapidly we try to step threads, in ms.
+ */
+Runtime.THREAD_STEP_INTERVAL_COMPATIBILITY = 1000 / 30;
 
 /**
  * How many clones can be created at a time.
@@ -488,6 +501,12 @@ Runtime.prototype.setEditingTarget = function (editingTarget) {
     this._updateScriptGlows();
 };
 
+Runtime.prototype.setCompatibilityMode = function (compatibilityModeOn) {
+    this.compatibilityMode_ = compatibilityModeOn;
+    self.clearInterval(this._steppingInterval);
+    this.start();
+};
+
 Runtime.prototype._updateScriptGlows = function () {
     // Set of scripts that request a glow this frame.
     var requestedGlowsThisFrame = [];
@@ -651,12 +670,16 @@ Runtime.prototype.animationFrame = function () {
 };
 
 /**
- * Set up timers to repeatedly step in a browser
+ * Set up timers to repeatedly step in a browser.
  */
 Runtime.prototype.start = function () {
-    self.setInterval(function() {
+    var interval = (this.compatibilityMode_) ?
+        Runtime.THREAD_STEP_INTERVAL_COMPATIBILITY :
+        Runtime.THREAD_STEP_INTERVAL;
+    this.currentStepTime = interval;
+    this._steppingInterval = self.setInterval(function() {
         this._step();
-    }.bind(this), Runtime.THREAD_STEP_INTERVAL);
+    }.bind(this), interval);
 };
 
 module.exports = Runtime;

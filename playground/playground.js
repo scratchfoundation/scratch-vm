@@ -253,6 +253,11 @@ window.onload = function() {
         var pauseOn = document.getElementById('pausemode').checked;
         vm.setPauseMode(pauseOn);
     });
+    document.getElementById('compatmode').addEventListener('change',
+    function() {
+        var compatibilityMode = document.getElementById('compatmode').checked;
+        vm.setCompatibilityMode(compatibilityMode);
+    });
 
     var tabBlockExplorer = document.getElementById('tab-blockexplorer');
     var tabThreadExplorer = document.getElementById('tab-threadexplorer');
