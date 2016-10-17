@@ -135,7 +135,7 @@ Blocks.prototype.getMutation = function (id) {
 Blocks.prototype.getTopLevelScript = function (id) {
     if (typeof this._blocks[id] === 'undefined') return null;
     var block = this._blocks[id];
-    while (block.parent !== null) {
+    while (block.parent !== null && this._blocks[block.parent]) {
         block = this._blocks[block.parent];
     }
     return block.id;
