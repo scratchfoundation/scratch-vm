@@ -102,9 +102,13 @@ Scratch3SensingBlocks.prototype.getKeyPressed = function (args, util) {
 
 Scratch3SensingBlocks.prototype.daysSince2000 = function()
 {
+    var msPerDay = 24 * 60 * 60 * 1000;
     var start = new Date(2000, 1-1, 1); 
     var today =   new Date(); 
-    return (today.valueOf() - start.valueOf()) / 1000 / 86400;
+    var dstAdjust = today.getTimezoneOffset() - start.getTimezoneOffset();
+    var mSecsSinceStart = today.valueOf() - start.valueOf();
+    mSecsSinceStart += ((today.getTimezoneOffset() - dstAdjust) * 60 * 1000);
+    return mSecsSinceStart / msPerDay;
 };
 
 module.exports = Scratch3SensingBlocks;
