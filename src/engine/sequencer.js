@@ -111,6 +111,7 @@ Sequencer.prototype.stepThread = function (thread) {
         // Save the current block ID to notice if we did control flow.
         currentBlockId = thread.peekStack();
         execute(this, thread);
+        thread.blockGlowInFrame = currentBlockId;
         // If the thread has yielded or is waiting, yield to other threads.
         if (thread.status === Thread.STATUS_YIELD) {
             // Mark as running for next iteration.

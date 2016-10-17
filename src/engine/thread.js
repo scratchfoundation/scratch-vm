@@ -42,6 +42,12 @@ function Thread (firstBlock) {
     this.requestScriptGlowInFrame = false;
 
     /**
+     * Which block ID should glow during this frame, if any.
+     * @type {?string}
+     */
+    this.blockGlowInFrame = null;
+
+    /**
      * A timer for when the thread enters warp mode.
      * Substitutes the sequencer's count toward WORK_TIME on a per-thread basis.
      * @type {?Timer}
