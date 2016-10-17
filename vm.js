@@ -136,6 +136,15 @@
 	};
 
 	/**
+	 * Clear out current running project data.
+	 */
+	VirtualMachine.prototype.clear = function () {
+	    this.runtime.dispose();
+	    this.editingTarget = null;
+	    this.emitTargetsUpdate();
+	};
+
+	/**
 	 * Get data for playground. Data comes back in an emitted event.
 	 */
 	VirtualMachine.prototype.getPlaygroundData = function () {
@@ -178,6 +187,7 @@
 	 * @param {?string} json JSON string representing the project.
 	 */
 	VirtualMachine.prototype.loadProject = function (json) {
+	    this.clear();
 	    // @todo: Handle other formats, e.g., Scratch 1.4, Scratch 3.0.
 	    sb2import(json, this.runtime);
 	    // Select the first target for editing, e.g., the stage.
@@ -299,7 +309,7 @@
 	            return [target.id, target.getName()];
 	        }),
 	        // Currently editing target id.
-	        editingTarget: this.editingTarget.id
+	        editingTarget: this.editingTarget ? this.editingTarget.id : null
 	    });
 	};
 
@@ -1818,17 +1828,25 @@
 	};
 
 	/**
-	 * Dispose of a target.
-	 * @param {!Target} target Target to dispose of.
+	 * Dispose all targets. Return to clean state.
 	 */
-	Runtime.prototype.disposeTarget = function (target) {
-	    // Allow target to do dispose actions.
-	    target.dispose();
-	    // Remove from list of targets.
-	    var index = this.targets.indexOf(target);
-	    if (index > -1) {
-	        this.targets.splice(index, 1);
-	    }
+	Runtime.prototype.dispose = function () {
+	    this.stopAll();
+	    this.targets.map(this.disposeTarget, this);
+	};
+
+	/**
+	 * Dispose of a target.
+	 * @param {!Target} disposingTarget Target to dispose of.
+	 */
+	Runtime.prototype.disposeTarget = function (disposingTarget) {
+	    this.targets = this.targets.filter(function (target) {
+	        if (disposingTarget !== target) return true;
+	        // Allow target to do dispose actions.
+	        target.dispose();
+	        // Remove from list of targets.
+	        return false;
+	    });
 	};
 
 	/**
@@ -13706,6 +13724,7 @@
 	};
 
 	Scratch3ControlBlocks.prototype.deleteClone = function (args, util) {
+	    if (util.target.isOriginal) return;
 	    this.runtime.disposeTarget(util.target);
 	    this.runtime.stopForTarget(util.target);
 	};
@@ -16404,9 +16423,6 @@
 	 * Dispose of this clone, destroying any run-time properties.
 	 */
 	Clone.prototype.dispose = function () {
-	    if (this.isOriginal) { // Don't allow a non-clone to delete itself.
-	        return;
-	    }
 	    this.runtime.changeCloneCounter(-1);
 	    if (this.renderer && this.drawableID !== null) {
 	        this.renderer.destroyDrawable(this.drawableID);
