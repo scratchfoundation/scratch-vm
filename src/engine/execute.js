@@ -145,6 +145,8 @@ var execute = function (sequencer, thread) {
             if (thread.status === Thread.STATUS_PROMISE_WAIT) {
                 return;
             } else {
+                // Execution returned immediately,
+                // and presumably a value was reported, so pop the stack.
                 currentStackFrame.waitingReporter = null;
                 thread.popStack();
             }
@@ -183,11 +185,11 @@ var execute = function (sequencer, thread) {
         stopThread: function() {
             sequencer.retireThread(thread);
         },
-        startProcedure: function (procedureName) {
-            sequencer.stepToProcedure(thread, procedureName);
+        startProcedure: function (procedureCode) {
+            sequencer.stepToProcedure(thread, procedureCode);
         },
-        getProcedureParamNames: function (procedureName) {
-            return blockContainer.getProcedureParamNames(procedureName);
+        getProcedureParamNames: function (procedureCode) {
+            return blockContainer.getProcedureParamNames(procedureCode);
         },
         pushParam: function (paramName, paramValue) {
             thread.pushParam(paramName, paramValue);

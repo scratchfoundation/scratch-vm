@@ -27,8 +27,6 @@ function Runtime () {
     // Bind event emitter
     EventEmitter.call(this);
 
-    // State for the runtime
-
     /**
      * Target management and storage.
      * @type {Array.<!Target>}
@@ -45,7 +43,18 @@ function Runtime () {
     /** @type {!Sequencer} */
     this.sequencer = new Sequencer(this);
 
+    /**
+     * Storage container for flyout blocks.
+     * These will execute on `_editingTarget.`
+     * @type {!Blocks}
+     */
     this.flyoutBlocks = new Blocks();
+
+    /**
+     * Currently known editing target for the VM.
+     * @type {?Target}
+     */
+    this._editingTarget = null;
 
     /**
      * Map to look up a block primitive's implementation function by its opcode.
@@ -53,23 +62,35 @@ function Runtime () {
      * @type {Object.<string, Function>}
      */
     this._primitives = {};
-    this._hats = {};
-    this._edgeActivatedHatValues = {};
-    this._registerBlockPackages();
 
-    this.ioDevices = {
-        'clock': new Clock(),
-        'keyboard': new Keyboard(this),
-        'mouse': new Mouse(this)
-    };
-
-    this._scriptGlowsPreviousFrame = [];
-    this._blockGlowsPreviousFrame = [];
-    this._editingTarget = null;
-    this._steppingInterval = null;
-    this.currentStepTime = null;
     /**
-     * Currently known number of clones.
+     * Map to look up hat blocks' metadata.
+     * Keys are opcode for hat, values are metadata objects.
+     * @type {Object.<string, Object>}
+     */
+    this._hats = {};
+
+    /**
+     * Currently known values for edge-activated hats.
+     * Keys are block ID for the hat; values are the currently known values.
+     * @type {Object.<string, *>}
+     */
+    this._edgeActivatedHatValues = {};
+
+    /**
+     * A list of script block IDs that were glowing during the previous frame.
+     * @type {!Array.<!string>}
+     */
+    this._scriptGlowsPreviousFrame = [];
+
+    /**
+     * A list of block IDs that were glowing during the previous frame.
+     * @type {!Array.<!string>}
+     */
+    this._blockGlowsPreviousFrame = [];
+
+    /**
+     * Currently known number of clones, used to enforce clone limit.
      * @type {number}
      */
     this._cloneCounter = 0;
@@ -85,7 +106,6 @@ function Runtime () {
      * @type {Boolean}
      */
     this.pauseMode = false;
-    this.pauseTime = null;
 
     /**
      * Whether the project is in "compatibility mode" (30 TPS).
@@ -100,10 +120,53 @@ function Runtime () {
     this.singleStepping = false;
 
     /**
-     * How fast in ms "single stepping mode" should run.
+     * How fast in ms "single stepping mode" should run, in ms.
+     * Can be updated dynamically.
+     * @type {!number}
      */
     this.singleStepInterval = 1000 / 10;
+
+    /**
+     * A reference to the current runtime stepping interval, set
+     * by a `setInterval`.
+     * @type {!number}
+     */
+    this._steppingInterval = null;
+
+    /**
+     * Current length of a step.
+     * Changes as mode switches, and used by the sequencer to calculate
+     * WORK_TIME.
+     * @type {!number}
+     */
+    this.currentStepTime = null;
+
+    /**
+     * Whether any primitive has requested a redraw.
+     * Affects whether `Sequencer.stepThreads` will yield
+     * after stepping each thread.
+     * Reset on every frame.
+     * @type {boolean}
+     */
+    this.redrawRequested = false;
+
+    // Register all given block packages.
+    this._registerBlockPackages();
+
+    // Register and initialize "IO devices", containers for processing
+    // I/O related data.
+    /** @type {Object.<string, Object>} */
+    this.ioDevices = {
+        'clock': new Clock(),
+        'keyboard': new Keyboard(this),
+        'mouse': new Mouse(this)
+    };
 }
+
+/**
+ * Inherit from EventEmitter
+ */
+util.inherits(Runtime, EventEmitter);
 
 /**
  * Width of the stage, in pixels.
@@ -148,12 +211,7 @@ Runtime.BLOCK_GLOW_OFF = 'BLOCK_GLOW_OFF';
 Runtime.VISUAL_REPORT = 'VISUAL_REPORT';
 
 /**
- * Inherit from EventEmitter
- */
-util.inherits(Runtime, EventEmitter);
-
-/**
- * How rapidly we try to step threads, in ms.
+ * How rapidly we try to step threads by default, in ms.
  */
 Runtime.THREAD_STEP_INTERVAL = 1000 / 60;
 
@@ -167,8 +225,6 @@ Runtime.THREAD_STEP_INTERVAL_COMPATIBILITY = 1000 / 30;
  * @const {number}
  */
 Runtime.MAX_CLONES = 300;
-
-Runtime.redrawRequested = false;
 
 // -----------------------------------------------------------------------------
 // -----------------------------------------------------------------------------
@@ -214,9 +270,6 @@ Runtime.prototype._registerBlockPackages = function () {
 Runtime.prototype.getOpcodeFunction = function (opcode) {
     return this._primitives[opcode];
 };
-
-// -----------------------------------------------------------------------------
-// -----------------------------------------------------------------------------
 
 /**
  * Return whether an opcode represents a hat block.
@@ -275,7 +328,7 @@ Runtime.prototype.attachRenderer = function (renderer) {
  */
 Runtime.prototype._pushThread = function (id, target) {
     var thread = new Thread(id);
-    thread.setTarget(target);
+    thread.target = target;
     thread.pushStack(id);
     this.threads.push(thread);
     return thread;
@@ -505,24 +558,38 @@ Runtime.prototype._step = function () {
     this._updateScriptGlows(inactiveThreads);
 };
 
+/**
+ * Set the current editing target known by the runtime.
+ * @param {!Target} editingTarget New editing target.
+ */
 Runtime.prototype.setEditingTarget = function (editingTarget) {
-    this._scriptGlowsPreviousFrame = [];
     this._editingTarget = editingTarget;
+    // Script glows must be cleared.
+    this._scriptGlowsPreviousFrame = [];
     this._updateScriptGlows();
 };
 
+/**
+ * Set whether we are in pause mode.
+ * @param {boolean} pauseModeOn True iff in pause mode.
+ */
 Runtime.prototype.setPauseMode = function (pauseModeOn) {
+    // Inform the project clock/timer to pause/resume its time.
     if (this.ioDevices.clock) {
         if (pauseModeOn && !this.pauseMode) {
             this.ioDevices.clock.pause();
         }
         if (!pauseModeOn && this.pauseMode) {
             this.ioDevices.clock.resume();
-        }    
+        }
     }
     this.pauseMode = pauseModeOn;
 };
 
+/**
+ * Set whether we are in 30 TPS compatibility mode.
+ * @param {boolean} compatibilityModeOn True iff in compatibility mode.
+ */
 Runtime.prototype.setCompatibilityMode = function (compatibilityModeOn) {
     this.compatibilityMode = compatibilityModeOn;
     if (this._steppingInterval) {
@@ -531,6 +598,10 @@ Runtime.prototype.setCompatibilityMode = function (compatibilityModeOn) {
     }
 };
 
+/**
+ * Set whether we are in single-stepping mode.
+ * @param {boolean} singleSteppingOn True iff in single-stepping mode.
+ */
 Runtime.prototype.setSingleSteppingMode = function (singleSteppingOn) {
     this.singleStepping = singleSteppingOn;
     if (this._steppingInterval) {
@@ -539,6 +610,10 @@ Runtime.prototype.setSingleSteppingMode = function (singleSteppingOn) {
     }
 };
 
+/**
+ * Set the speed during single-stepping mode.
+ * @param {number} speed Interval length to step threads, in ms.
+ */
 Runtime.prototype.setSingleSteppingSpeed = function (speed) {
     this.singleStepInterval = 1000 / speed;
     if (this._steppingInterval) {
@@ -547,6 +622,11 @@ Runtime.prototype.setSingleSteppingSpeed = function (speed) {
     }
 };
 
+/**
+ * Emit glows/glow clears for blocks and scripts after a single tick.
+ * Looks at `this.threads` and notices which have turned on/off new glows.
+ * @param {Array.<Thread>=} opt_extraThreads Optional list of inactive threads.
+ */
 Runtime.prototype._updateScriptGlows = function (opt_extraThreads) {
     var searchThreads = [];
     searchThreads.push.apply(searchThreads, this.threads);
@@ -733,6 +813,10 @@ Runtime.prototype.getTargetForStage = function () {
     }
 };
 
+/**
+ * Tell the runtime to request a redraw.
+ * Use after a clone/sprite has completed some visible operation on the stage.
+ */
 Runtime.prototype.requestRedraw = function () {
     this.redrawRequested = true;
 };

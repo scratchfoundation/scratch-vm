@@ -24,15 +24,15 @@ Scratch3ProcedureBlocks.prototype.defNoReturn = function () {
 
 Scratch3ProcedureBlocks.prototype.callNoReturn = function (args, util) {
     if (!util.stackFrame.executed) {
-        var procedureName = args.mutation.proccode;
-        var paramNames = util.getProcedureParamNames(procedureName);
+        var procedureCode = args.mutation.proccode;
+        var paramNames = util.getProcedureParamNames(procedureCode);
         for (var i = 0; i < paramNames.length; i++) {
             if (args.hasOwnProperty('input' + i)) {
                 util.pushParam(paramNames[i], args['input' + i]);
             }
         }
         util.stackFrame.executed = true;
-        util.startProcedure(procedureName);
+        util.startProcedure(procedureCode);
     }
 };
 
