@@ -2,12 +2,11 @@ var test = require('tap').test;
 var math = require('../../src/util/math-util');
 
 test('degToRad', function (t) {
-    // @todo This is incorrect
-    t.strictEqual(math.degToRad(0), 1.5707963267948966);
-    t.strictEqual(math.degToRad(1), 1.5533430342749535);
-    t.strictEqual(math.degToRad(180), -1.5707963267948966);
-    t.strictEqual(math.degToRad(360), -4.71238898038469);
-    t.strictEqual(math.degToRad(720), -10.995574287564276);
+    t.strictEqual(math.degToRad(0), 0);
+    t.strictEqual(math.degToRad(1), 0.017453292519943295);
+    t.strictEqual(math.degToRad(180), Math.PI);
+    t.strictEqual(math.degToRad(360), 2 * Math.PI);
+    t.strictEqual(math.degToRad(720), 4 * Math.PI);
     t.end();
 });
 
