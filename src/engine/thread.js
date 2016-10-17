@@ -41,7 +41,6 @@ function Thread (firstBlock) {
      */
     this.requestScriptGlowInFrame = false;
 
-    this.warpMode = false;
     this.warpTimer = null;
 }
 
@@ -82,8 +81,14 @@ Thread.prototype.pushStack = function (blockId) {
     // Push an empty stack frame, if we need one.
     // Might not, if we just popped the stack.
     if (this.stack.length > this.stackFrames.length) {
+        // Copy warp mode from any higher level.
+        var warpMode = false;
+        if (this.stackFrames[this.stackFrames.length - 1]) {
+            warpMode = this.stackFrames[this.stackFrames.length - 1].warpMode;
+        }
         this.stackFrames.push({
             isLoop: false, // Whether this level of the stack is a loop.
+            warpMode: warpMode, // Whether this level is in warp mode.
             reported: {}, // Collects reported input values.
             waitingReporter: null, // Name of waiting reporter.
             params: {}, // Procedure parameters.
@@ -179,13 +184,18 @@ Thread.prototype.getTarget = function () {
 
 Thread.prototype.goToNextBlock = function () {
     var nextBlockId = this.target.blocks.getNextBlock(this.peekStack());
+    // Copy warp mode to next blocks.
+    var warpMode = this.peekStackFrame().warpMode;
     this.popStack();
     this.pushStack(nextBlockId);
+    if (this.peekStackFrame()) {
+        this.peekStackFrame().warpMode = warpMode;
+    }
 };
 
 Thread.prototype.isRecursiveCall = function (procedureName) {
     var callCount = 5; // Max number of enclosing procedure calls to examine.
-    var sp = this.stack.length;
+    var sp = this.stack.length - 1;
     for (var i = sp - 1; i >= 0; i--) {
         var block = this.target.blocks.getBlock(this.stack[i]);
         if (block.opcode == 'procedures_callnoreturn' &&

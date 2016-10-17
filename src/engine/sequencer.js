@@ -42,15 +42,13 @@ Sequencer.prototype.stepThreads = function () {
             if (activeThread.status !== Thread.STATUS_PROMISE_WAIT) {
                 // Normal-mode thread: step.
                 this.stepThread(activeThread);
+                activeThread.warpTimer = null;
             }
             if (activeThread.status === Thread.STATUS_YIELD) {
                 throw 'No thread should be in yield mode after `stepThread`.';
             }
             if (activeThread.status === Thread.STATUS_RUNNING) {
                 numActiveThreads++;
-            }
-            if (activeThread.warpTimer) {
-                activeThread.warpTimer = null;
             }
             if (activeThread.stack.length === 0 ||
                 activeThread.status === Thread.STATUS_DONE) {
@@ -73,22 +71,21 @@ Sequencer.prototype.stepThread = function (thread) {
     var currentBlockId = thread.peekStack();
     if (!currentBlockId) {
         // A "null block" - empty branch.
-        // Yield for the frame.
         thread.popStack();
-        //return;
     }
     while (thread.peekStack()) {
-        // Execute the current block.
-        currentBlockId = thread.peekStack();
-        execute(this, thread);
-        if (thread.warpMode && !thread.warpTimer) {
+        var isWarpMode = thread.peekStackFrame().warpMode;
+        if (isWarpMode && !thread.warpTimer) {
             thread.warpTimer = new Timer();
             thread.warpTimer.start();
         }
+        // Execute the current block.
+        currentBlockId = thread.peekStack();
+        execute(this, thread);
         // If the thread has yielded or is waiting, yield to other threads.
         if (thread.status === Thread.STATUS_YIELD) {
             thread.status = Thread.STATUS_RUNNING;
-            if (thread.warpMode && thread.warpTimer &&
+            if (isWarpMode &&
                 thread.warpTimer.timeElapsed() <= Sequencer.WARP_TIME) {
                 continue;
             }
@@ -108,9 +105,11 @@ Sequencer.prototype.stepThread = function (thread) {
                 return;
             }
             if (thread.peekStackFrame().isLoop) {
-                if (!thread.warpMode ||
+                if (!isWarpMode ||
                     thread.warpTimer.timeElapsed() > Sequencer.WARP_TIME) {
                     return;
+                } else {
+                    continue;
                 }
             } else if (thread.peekStackFrame().waitingReporter) {
                 return;
@@ -152,36 +151,20 @@ Sequencer.prototype.stepToBranch = function (thread, branchNum, isLoop) {
  */
 Sequencer.prototype.stepToProcedure = function (thread, procedureName) {
     var definition = thread.target.blocks.getProcedureDefinition(procedureName);
+    // Check if the call is recursive. If so, yield.
+    if (thread.isRecursiveCall(procedureName)) {
+        thread.status = Thread.STATUS_YIELD;
+    }
     thread.pushStack(definition);
-    if (thread.warpMode && thread.warpTimer &&
+    if (thread.peekStackFrame().warpMode &&
         thread.warpTimer.timeElapsed() > Sequencer.WARP_TIME) {
         thread.status = Thread.STATUS_YIELD;
     } else {
         var definitionBlock = thread.target.blocks.getBlock(definition);
         var doWarp = definitionBlock.mutation.warp;
         if (doWarp) {
-            thread.warpMode = true;
+            thread.peekStackFrame().warpMode = true;
         }
-        // Check if the call is recursive. If so, yield.
-        if (thread.isRecursiveCall(procedureName)) {
-            thread.status = Thread.STATUS_YIELD;
-        }
-    }
-};
-
-Sequencer.prototype.proceedThread = function (thread) {
-    var currentBlockId = thread.peekStack();
-    // Mark the status as done and proceed to the next block.
-    // Pop from the stack - finished this level of execution.
-    thread.popStack();
-    // Push next connected block, if there is one.
-    var nextBlockId = thread.target.blocks.getNextBlock(currentBlockId);
-    if (nextBlockId) {
-        thread.pushStack(nextBlockId);
-    }
-    // If we can't find a next block to run, mark the thread as done.
-    if (!thread.peekStack()) {
-        thread.status = Thread.STATUS_DONE;
     }
 };
 
