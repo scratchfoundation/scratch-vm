@@ -52,6 +52,7 @@ module.exports = [
         entry: {
             'dist': './src/index.js'
         },
+
         output: {
             library: 'VirtualMachine',
             libraryTarget: 'commonjs2',
@@ -108,6 +109,9 @@ module.exports = [
                 to: 'media'
             }, {
                 from: 'node_modules/highlightjs/styles/zenburn.css'
+            }, {
+                from: 'assets',
+                to: 'assets'
             }])
         ])
     })

@@ -1,6 +1,12 @@
+var NEW_PROJECT_HASH = 'createEmptyProject';
+
 var loadProject = function () {
     var id = location.hash.substring(1);
-    if (id.length < 1) {
+    if (id === NEW_PROJECT_HASH) {
+        window.vm.createEmptyProject();
+        return;
+    }
+    if (id.length < 1 || !isFinite(id)) {
         id = '119615668';
     }
     var url = 'https://projects.scratch.mit.edu/internalapi/project/' +
@@ -32,7 +38,7 @@ window.onload = function() {
     };
     document.getElementById('createEmptyProject').addEventListener('click',
     function() {
-        document.location = '#' + 'createEmptyProject';
+        document.location = '#' + NEW_PROJECT_HASH;
         location.reload();
     });
     loadProject();
@@ -44,9 +50,7 @@ window.onload = function() {
     vm.attachRenderer(renderer);
 
     // Instantiate scratch-blocks and attach it to the DOM.
-    var toolbox = document.getElementById('toolbox');
     var workspace = window.Blockly.inject('blocks', {
-        toolbox: toolbox,
         media: './media/',
         zoom: {
             controls: true,
@@ -67,8 +71,9 @@ window.onload = function() {
     window.workspace = workspace;
 
     // Attach scratch-blocks events to VM.
-    // @todo: Re-enable flyout listening after fixing GH-69.
     workspace.addChangeListener(vm.blockListener);
+    var flyoutWorkspace = workspace.getFlyout().getWorkspace();
+    flyoutWorkspace.addChangeListener(vm.flyoutBlockListener);
 
     // Create FPS counter.
     var stats = new window.Stats();
@@ -113,11 +118,9 @@ window.onload = function() {
 
     // Receipt of new block XML for the selected target.
     vm.on('workspaceUpdate', function (data) {
-        window.Blockly.Events.disable();
         workspace.clear();
         var dom = window.Blockly.Xml.textToDom(data.xml);
         window.Blockly.Xml.domToWorkspace(dom, workspace);
-        window.Blockly.Events.enable();
     });
 
     // Receipt of new list of targets, selected target update.

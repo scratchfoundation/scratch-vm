@@ -752,9 +752,8 @@ var specMap = {
         'opcode':'control_stop',
         'argMap':[
             {
-                'type':'input',
-                'inputOp':'control_stop_menu',
-                'inputName':'STOP_OPTION'
+                'type':'field',
+                'fieldName':'STOP_OPTION'
             }
         ]
     },
@@ -1375,15 +1374,10 @@ var specMap = {
     },
     'procDef':{
         'opcode':'procedures_defnoreturn',
-        'argMap':[
-            {
-                'type':'field',
-                'fieldName':'NAME'
-            }
-        ]
+        'argMap':[]
     },
     'getParam':{
-        'opcode':'proc_param',
+        'opcode':'procedures_param',
         'argMap':[]
     },
     'call':{

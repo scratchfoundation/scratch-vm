@@ -1,5 +1,6 @@
 var EventEmitter = require('events');
 var Sequencer = require('./sequencer');
+var Blocks = require('./blocks');
 var Thread = require('./thread');
 var util = require('util');
 
@@ -44,6 +45,8 @@ function Runtime () {
     /** @type {!Sequencer} */
     this.sequencer = new Sequencer(this);
 
+    this.flyoutBlocks = new Blocks();
+
     /**
      * Map to look up a block primitive's implementation function by its opcode.
      * This is a two-step lookup: package name first, then primitive name.
@@ -68,6 +71,18 @@ function Runtime () {
      */
     this._cloneCounter = 0;
 }
+
+/**
+ * Width of the stage, in pixels.
+ * @const {number}
+ */
+Runtime.STAGE_WIDTH = 480;
+
+/**
+ * Height of the stage, in pixels.
+ * @const {number}
+ */
+Runtime.STAGE_HEIGHT = 360;
 
 /**
  * Event name for glowing a script.
@@ -231,6 +246,9 @@ Runtime.prototype._pushThread = function (id, target) {
  * @param {?Thread} thread Thread object to remove from actives
  */
 Runtime.prototype._removeThread = function (thread) {
+    // Inform sequencer to stop executing that thread.
+    this.sequencer.retireThread(thread);
+    // Remove from the list.
     var i = this.threads.indexOf(thread);
     if (i > -1) {
         this.threads.splice(i, 1);
@@ -329,7 +347,7 @@ Runtime.prototype.startHats = function (requestedHatOpcode,
             // any existing threads starting with the top block.
             for (var i = 0; i < instance.threads.length; i++) {
                 if (instance.threads[i].topBlock === topBlockId &&
-                    (!opt_target || instance.threads[i].target == opt_target)) {
+                    instance.threads[i].target == target) {
                     instance._removeThread(instance.threads[i]);
                 }
             }
@@ -338,7 +356,7 @@ Runtime.prototype.startHats = function (requestedHatOpcode,
             // give up if any threads with the top block are running.
             for (var j = 0; j < instance.threads.length; j++) {
                 if (instance.threads[j].topBlock === topBlockId &&
-                    (!opt_target || instance.threads[j].target == opt_target)) {
+                    instance.threads[j].target == target) {
                     // Some thread is already running.
                     return;
                 }
@@ -367,10 +385,14 @@ Runtime.prototype.disposeTarget = function (target) {
 /**
  * Stop any threads acting on the target.
  * @param {!Target} target Target to stop threads for.
+ * @param {Thread=} opt_threadException Optional thread to skip.
  */
-Runtime.prototype.stopForTarget = function (target) {
+Runtime.prototype.stopForTarget = function (target, opt_threadException) {
     // Stop any threads on the target.
     for (var i = 0; i < this.threads.length; i++) {
+        if (this.threads[i] === opt_threadException) {
+            continue;
+        }
         if (this.threads[i].target == target) {
             this._removeThread(this.threads[i]);
         }
@@ -451,6 +473,10 @@ Runtime.prototype._updateScriptGlows = function () {
         if (thread.requestScriptGlowInFrame && target == this._editingTarget) {
             var blockForThread = thread.peekStack() || thread.topBlock;
             var script = target.blocks.getTopLevelScript(blockForThread);
+            if (!script) {
+                // Attempt to find in flyout blocks.
+                script = this.flyoutBlocks.getTopLevelScript(blockForThread);
+            }
             if (script) {
                 requestedGlowsThisFrame.push(script);
             }

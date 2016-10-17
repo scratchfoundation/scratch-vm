@@ -6,11 +6,9 @@ sudo: false
 cache:
   directories:
   - node_modules
-env:
-  global:
-    secure: pgTtizuHLxuSOtDZ/DBoxcBeigRPiBTAuWo5Kn5wVtnXhqpWfzcT6DGe9vVwbaFLvb+zdY3pYmopAZnZTUCmGRGgPgNdE7BFwwCpMSbHHjtlHkcwCOwRUaNcW6iB9WjfwOM/I6UTy2N0OiUQdZcysW2ybdIxzYdYHElQE47kJHIecOoxJXRw/c0nv7MUkmVYnMt7gOqH2sK9kWyUDgDbtG4sCLb5LhN5/WFzUopACpN6VvAYaCIU8BTAAnb0XxIAD5mmBrOScbANTodnN4ubFjtNfMBd+j7h02bFBHbbJ73Z5gnRRonDos5kkRuFI08IV/0QauMwMSv2TKCVvsbaf53zWbfPkWr7zbj6gtisscfK0zEW9lTz7lvhyUeiPonzAqeV39gd+oPowWM5ZuyIZoawPbIvTJtGb4RlkEPI8OQST6O6g71hMksw0VDWDiLDneLCcHYFw7Q25qAkBg9P4ahH6McP4BB4gTJfQFKCDKvGYFsGrxM2IvYkXcZ0CdcatnNZGLsvHFk24sIQleLZPiCXOZKfp6zbNLwoJWhkoLz8aZ5hJoiRpoztyyrAdh6IL9MwZIgQ9KI10GfKpHmX5jbnh55KRc3G8a65fksHP5TFt2JjKtiN6A3oJAGzltdatW2TwlhyweEnjfpmtQcN8I4OKfgnsOcohcS+RaBNPCQ=
-before_install:
-- rm -rf node_modules/scratch-*
+install:
+- npm install
+- npm update
 after_script:
 - |
   # RELEASE_BRANCHES and NPM_TOKEN defined in Travis settings panel

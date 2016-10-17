@@ -44,6 +44,7 @@ function VirtualMachine () {
     });
 
     this.blockListener = this.blockListener.bind(this);
+    this.flyoutBlockListener = this.flyoutBlockListener.bind(this);
 }
 
 /**
@@ -132,14 +133,14 @@ VirtualMachine.prototype.loadProject = function (json) {
 VirtualMachine.prototype.createEmptyProject = function () {
     // Stage.
     var blocks2 = new Blocks();
-    var stage = new Sprite(blocks2);
+    var stage = new Sprite(blocks2, this.runtime);
     stage.name = 'Stage';
     stage.costumes.push({
-        skin: '/assets/stage.png',
+        skin: './assets/stage.png',
         name: 'backdrop1',
-        bitmapResolution: 1,
-        rotationCenterX: 240,
-        rotationCenterY: 180
+        bitmapResolution: 2,
+        rotationCenterX: 480,
+        rotationCenterY: 360
     });
     var target2 = stage.createClone();
     this.runtime.targets.push(target2);
@@ -151,10 +152,10 @@ VirtualMachine.prototype.createEmptyProject = function () {
     target2.isStage = true;
     // Sprite1 (cat).
     var blocks1 = new Blocks();
-    var sprite = new Sprite(blocks1);
+    var sprite = new Sprite(blocks1, this.runtime);
     sprite.name = 'Sprite1';
     sprite.costumes.push({
-        skin: '/assets/scratch_cat.svg',
+        skin: './assets/scratch_cat.svg',
         name: 'costume1',
         bitmapResolution: 1,
         rotationCenterX: 47,
@@ -186,12 +187,16 @@ VirtualMachine.prototype.attachRenderer = function (renderer) {
  */
 VirtualMachine.prototype.blockListener = function (e) {
     if (this.editingTarget) {
-        this.editingTarget.blocks.blocklyListen(
-            e,
-            false,
-            this.runtime
-        );
+        this.editingTarget.blocks.blocklyListen(e, this.runtime);
     }
+};
+
+/**
+ * Handle a Blockly event for the flyout.
+ * @param {!Blockly.Event} e Any Blockly event.
+ */
+VirtualMachine.prototype.flyoutBlockListener = function (e) {
+    this.runtime.flyoutBlocks.blocklyListen(e, this.runtime);
 };
 
 /**

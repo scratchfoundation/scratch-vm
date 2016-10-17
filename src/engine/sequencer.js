@@ -132,6 +132,11 @@ Sequencer.prototype.stepToBranch = function (thread, branchNum) {
 Sequencer.prototype.stepToProcedure = function (thread, procedureName) {
     var definition = thread.target.blocks.getProcedureDefinition(procedureName);
     thread.pushStack(definition);
+    // Check if the call is recursive. If so, yield.
+    // @todo: Have behavior match Scratch 2.0.
+    if (thread.stack.indexOf(definition) > -1) {
+        thread.setStatus(Thread.STATUS_YIELD_FRAME);
+    }
 };
 
 /**

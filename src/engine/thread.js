@@ -83,6 +83,7 @@ Thread.prototype.pushStack = function (blockId) {
         this.stackFrames.push({
             reported: {}, // Collects reported input values.
             waitingReporter: null, // Name of waiting reporter.
+            params: {}, // Procedure parameters.
             executionContext: {} // A context passed to block implementations.
         });
     }
@@ -133,6 +134,21 @@ Thread.prototype.pushReportedValue = function (value) {
         parentStackFrame.reported[waitingReporter] = value;
         parentStackFrame.waitingReporter = null;
     }
+};
+
+Thread.prototype.pushParam = function (paramName, value) {
+    var stackFrame = this.peekStackFrame();
+    stackFrame.params[paramName] = value;
+};
+
+Thread.prototype.getParam = function (paramName) {
+    for (var i = this.stackFrames.length - 1; i >= 0; i--) {
+        var frame = this.stackFrames[i];
+        if (frame.params.hasOwnProperty(paramName)) {
+            return frame.params[paramName];
+        }
+    }
+    return null;
 };
 
 /**
