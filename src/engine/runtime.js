@@ -378,7 +378,7 @@ Runtime.prototype.dispose = function () {
 
 /**
  * Dispose of a target.
- * @param {!Target} target Target to dispose of.
+ * @param {!Target} disposingTarget Target to dispose of.
  */
 Runtime.prototype.disposeTarget = function (disposingTarget) {
     this.targets = this.targets.filter(function (target) {
