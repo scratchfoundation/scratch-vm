@@ -206,19 +206,31 @@ Sequencer.prototype.stepToProcedure = function (thread, procedureCode) {
     if (!definition) {
         return;
     }
-    // Check if the call is recursive. If so, yield.
-    if (thread.isRecursiveCall(procedureCode)) {
-        thread.status = Thread.STATUS_YIELD;
-    }
+    // Check if the call is recursive.
+    // If so, set the thread to yield after pushing.
+    var isRecursive = thread.isRecursiveCall(procedureCode);
+    // To step to a procedure, we put its definition on the stack.
+    // Execution for the thread will proceed through the definition hat
+    // and on to the main definition of the procedure.
+    // When that set of blocks finishes executing, it will be popped
+    // from the stack by the sequencer, returning control to the caller.
     thread.pushStack(definition);
+    // In known warp-mode threads, only yield when time is up.
     if (thread.peekStackFrame().warpMode &&
         thread.warpTimer.timeElapsed() > Sequencer.WARP_TIME) {
         thread.status = Thread.STATUS_YIELD;
     } else {
+        // Look for warp-mode flag on definition, and set the thread
+        // to warp-mode if needed.
         var definitionBlock = thread.target.blocks.getBlock(definition);
         var doWarp = definitionBlock.mutation.warp;
         if (doWarp) {
             thread.peekStackFrame().warpMode = true;
+        } else {
+            // In normal-mode threads, yield any time we have a recursive call.
+            if (isRecursive) {
+                thread.status = Thread.STATUS_YIELD;
+            }
         }
     }
 };
