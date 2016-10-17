@@ -11,10 +11,16 @@
   },
   "main": "./dist.js",
   "scripts": {
-    "prepublish": "./node_modules/.bin/webpack --bail",
-    "start": "webpack-dev-server",
-    "build": "webpack --colors --progress",
-    "test": "make test",
+    "build": "./node_modules/.bin/webpack --progress --colors --bail",
+    "coverage": "./node_modules/.bin/tap ./test/{unit,integration}/*.js --coverage --coverage-report=lcov",
+    "lint": "./node_modules/.bin/eslint .",
+    "prepublish": "npm run build",
+    "prepublish-watch": "npm run watch",
+    "start": "./node_modules/.bin/webpack-dev-server",
+    "tap-integration": "./node_modules/.bin/tap ./test/integration/*.js",
+    "tap-unit": "./node_modules/.bin/tap ./test/unit/*.js",
+    "test": "npm run lint && npm run tap-unit && npm run tap-integration",
+    "watch": "./node_modules/.bin/webpack --progress --colors --watch",
     "version": "./node_modules/.bin/json -f package.json -I -e \"this.repository.sha = '$(git log -n1 --pretty=format:%H)'\""
   },
   "devDependencies": {

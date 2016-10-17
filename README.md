@@ -43,7 +43,7 @@ To run the Playground, make sure the dev server's running and go to [http://loca
 
 ## Standalone Build
 ```bash
-make build
+npm run build
 ```
 
 ```html
@@ -104,11 +104,11 @@ The VM's block representation contains all the important information for executi
 
 ## Testing
 ```bash
-make test
+npm test
 ```
 
 ```bash
-make coverage
+npm run coverage
 ```
 
 ## Donate
