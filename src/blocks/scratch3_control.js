@@ -23,7 +23,6 @@ Scratch3ControlBlocks.prototype.getPrimitives = function() {
         'control_if': this.if,
         'control_if_else': this.ifElse,
         'control_stop': this.stop,
-        'control_create_clone_of_menu': this.createCloneMenu,
         'control_create_clone_of': this.createClone,
         'control_delete_this_clone': this.deleteClone
     };
@@ -113,11 +112,6 @@ Scratch3ControlBlocks.prototype.stop = function(args, util) {
     } else if (option == 'this script') {
         util.stopThread();
     }
-};
-
-// @todo (GH-146): remove.
-Scratch3ControlBlocks.prototype.createCloneMenu = function (args) {
-    return args.CLONE_OPTION;
 };
 
 Scratch3ControlBlocks.prototype.createClone = function (args, util) {

@@ -38,9 +38,6 @@ Scratch3ProcedureBlocks.prototype.callNoReturn = function (args, util) {
 
 Scratch3ProcedureBlocks.prototype.param = function (args, util) {
     var value = util.getParam(args.mutation.paramname);
-    if (!value) {
-        return 0;
-    }
     return value;
 };
 
