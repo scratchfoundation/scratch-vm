@@ -644,7 +644,7 @@ Runtime.prototype._updateScriptGlows = function (opt_extraThreads) {
         var thread = searchThreads[i];
         var target = thread.target;
         if (target == this._editingTarget) {
-            var blockForThread = thread.peekStack() || thread.topBlock;
+            var blockForThread = thread.peekStack();
             if (thread.requestScriptGlowInFrame) {
                 var script = target.blocks.getTopLevelScript(blockForThread);
                 if (!script) {
