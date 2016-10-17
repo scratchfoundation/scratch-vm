@@ -27,6 +27,7 @@ Sequencer.prototype.stepThreads = function () {
     this.timer.start();
     // Count of active threads.
     var numActiveThreads = Infinity;
+    var ranFirstFrame = false;
     // While there are still threads to run and we are within WORK_TIME,
     // continue executing threads.
     while (this.runtime.threads.length > 0 &&
@@ -39,20 +40,26 @@ Sequencer.prototype.stepThreads = function () {
         // Attempt to run each thread one time
         for (var i = 0; i < this.runtime.threads.length; i++) {
             var activeThread = this.runtime.threads[i];
-            if (activeThread.status !== Thread.STATUS_PROMISE_WAIT) {
+            if (activeThread.status === Thread.STATUS_YIELD_FRAME &&
+                !ranFirstFrame) {
+                // Clear single-frame yield from last time.
+                activeThread.status = Thread.STATUS_RUNNING;
+            }
+            if (activeThread.status !== Thread.STATUS_PROMISE_WAIT &&
+                activeThread.status !== Thread.STATUS_YIELD_FRAME) {
                 // Normal-mode thread: step.
                 this.stepThread(activeThread);
                 activeThread.warpTimer = null;
             }
-            if (activeThread.status === Thread.STATUS_YIELD) {
-                throw 'No thread should be in yield mode after `stepThread`.';
-            }
             if (activeThread.status === Thread.STATUS_RUNNING) {
+                if (this.runtime.singleStepping) {
+                    activeThread.status = Thread.STATUS_YIELD_FRAME;
+                }
                 numActiveThreads++;
             }
             if (activeThread.stack.length === 0 ||
                 activeThread.status === Thread.STATUS_DONE) {
-                // Finished with this thread - tell runtime to clean it up.
+                // Finished with this thread.
             } else {
                 // Keep this thead in the loop.
                 newThreads.push(activeThread);
@@ -60,10 +67,7 @@ Sequencer.prototype.stepThreads = function () {
         }
         // Filter out threads that have stopped.
         this.runtime.threads = newThreads;
-        // In single-stepping mode, only step each thread once per interval.
-        if (this.runtime.singleStepping) {
-            return;
-        }
+        ranFirstFrame = true;
     }
 };
 

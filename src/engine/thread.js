@@ -66,11 +66,18 @@ Thread.STATUS_PROMISE_WAIT = 1;
 Thread.STATUS_YIELD = 2;
 
 /**
+ * Thread status for a single-frame yield. This will be cleared when the
+ * thread is returned to.
+ * @const
+ */
+Thread.STATUS_YIELD_FRAME = 3;
+
+/**
  * Thread status for a finished/done thread.
  * Thread is in this state when there are no more blocks to execute.
  * @const
  */
-Thread.STATUS_DONE = 3;
+Thread.STATUS_DONE = 4;
 
 /**
  * Push stack and update stack frames appropriately.
