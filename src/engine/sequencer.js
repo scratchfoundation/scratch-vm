@@ -44,12 +44,20 @@ Sequencer.prototype.stepThreads = function () {
            numActiveThreads > 0 &&
            this.timer.timeElapsed() < WORK_TIME &&
            (this.runtime.turboMode || !this.runtime.redrawRequested)) {
-        // New threads at the end of the iteration.
-        var newThreads = [];
         numActiveThreads = 0;
-        // Attempt to run each thread one time
-        for (var i = 0; i < this.runtime.threads.length; i++) {
-            var activeThread = this.runtime.threads[i];
+        // Inline copy of the threads, updated on each step.
+        var threadsCopy = this.runtime.threads.slice();
+        // Attempt to run each thread one time.
+        for (var i = 0; i < threadsCopy.length; i++) {
+            var activeThread = threadsCopy[i];
+            if (activeThread.stack.length === 0 ||
+                activeThread.status === Thread.STATUS_DONE) {
+                // Finished with this thread.
+                if (inactiveThreads.indexOf(activeThread) < -1) {
+                    inactiveThreads.push(activeThread);
+                }
+                continue;
+            }
             if (activeThread.status === Thread.STATUS_YIELD_TICK &&
                 !ranFirstTick) {
                 // Clear single-tick yield from the last call of `stepThreads`.
@@ -71,17 +79,7 @@ Sequencer.prototype.stepThreads = function () {
                 }
                 numActiveThreads++;
             }
-            if (activeThread.stack.length === 0 ||
-                activeThread.status === Thread.STATUS_DONE) {
-                // Finished with this thread.
-                inactiveThreads.push(activeThread);
-            } else {
-                // Keep this thead in the loop.
-                newThreads.push(activeThread);
-            }
         }
-        // Filter out threads that have stopped.
-        this.runtime.threads = newThreads;
         // We successfully ticked once. Prevents running STATUS_YIELD_TICK
         // threads on the next tick.
         ranFirstTick = true;
