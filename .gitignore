@@ -11,6 +11,7 @@ npm-*
 /dist.js
 /vm.js
 /vm.min.js
+/playground/assets
 /playground/media
 /playground/vendor.js
 /playground/vm.js

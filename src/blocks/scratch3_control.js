@@ -167,6 +167,7 @@ Scratch3ControlBlocks.prototype.createClone = function (args, util) {
 };
 
 Scratch3ControlBlocks.prototype.deleteClone = function (args, util) {
+    if (util.target.isOriginal) return;
     this.runtime.disposeTarget(util.target);
     this.runtime.stopForTarget(util.target);
 };

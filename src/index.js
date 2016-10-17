@@ -74,6 +74,15 @@ VirtualMachine.prototype.stopAll = function () {
 };
 
 /**
+ * Clear out current running project data.
+ */
+VirtualMachine.prototype.clear = function () {
+    this.runtime.dispose();
+    this.editingTarget = null;
+    this.emitTargetsUpdate();
+};
+
+/**
  * Get data for playground. Data comes back in an emitted event.
  */
 VirtualMachine.prototype.getPlaygroundData = function () {
@@ -116,6 +125,7 @@ VirtualMachine.prototype.postIOData = function (device, data) {
  * @param {?string} json JSON string representing the project.
  */
 VirtualMachine.prototype.loadProject = function (json) {
+    this.clear();
     // @todo: Handle other formats, e.g., Scratch 1.4, Scratch 3.0.
     sb2import(json, this.runtime);
     // Select the first target for editing, e.g., the stage.
@@ -237,7 +247,7 @@ VirtualMachine.prototype.emitTargetsUpdate = function () {
             return [target.id, target.getName()];
         }),
         // Currently editing target id.
-        editingTarget: this.editingTarget.id
+        editingTarget: this.editingTarget ? this.editingTarget.id : null
     });
 };
 

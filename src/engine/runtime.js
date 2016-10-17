@@ -369,17 +369,25 @@ Runtime.prototype.startHats = function (requestedHatOpcode,
 };
 
 /**
- * Dispose of a target.
- * @param {!Target} target Target to dispose of.
+ * Dispose all targets. Return to clean state.
  */
-Runtime.prototype.disposeTarget = function (target) {
-    // Allow target to do dispose actions.
-    target.dispose();
-    // Remove from list of targets.
-    var index = this.targets.indexOf(target);
-    if (index > -1) {
-        this.targets.splice(index, 1);
-    }
+Runtime.prototype.dispose = function () {
+    this.stopAll();
+    this.targets.map(this.disposeTarget, this);
+};
+
+/**
+ * Dispose of a target.
+ * @param {!Target} disposingTarget Target to dispose of.
+ */
+Runtime.prototype.disposeTarget = function (disposingTarget) {
+    this.targets = this.targets.filter(function (target) {
+        if (disposingTarget !== target) return true;
+        // Allow target to do dispose actions.
+        target.dispose();
+        // Remove from list of targets.
+        return false;
+    });
 };
 
 /**
