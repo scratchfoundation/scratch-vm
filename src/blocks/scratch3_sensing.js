@@ -23,7 +23,8 @@ Scratch3SensingBlocks.prototype.getPrimitives = function() {
         'sensing_mousey': this.getMouseY,
         'sensing_mousedown': this.getMouseDown,
         'sensing_keypressed': this.getKeyPressed,
-        'sensing_current': this.current
+        'sensing_current': this.current,
+        'sensing_dayssince2000': this.daysSince2000
     };
 };
 
@@ -97,6 +98,17 @@ Scratch3SensingBlocks.prototype.current = function (args) {
 
 Scratch3SensingBlocks.prototype.getKeyPressed = function (args, util) {
     return util.ioQuery('keyboard', 'getKeyIsDown', args.KEY_OPTION);
+};
+
+Scratch3SensingBlocks.prototype.daysSince2000 = function()
+{
+    var msPerDay = 24 * 60 * 60 * 1000;
+    var start = new Date(2000, 1-1, 1); 
+    var today = new Date(); 
+    var dstAdjust = today.getTimezoneOffset() - start.getTimezoneOffset();
+    var mSecsSinceStart = today.valueOf() - start.valueOf();
+    mSecsSinceStart += ((today.getTimezoneOffset() - dstAdjust) * 60 * 1000);
+    return mSecsSinceStart / msPerDay;
 };
 
 module.exports = Scratch3SensingBlocks;

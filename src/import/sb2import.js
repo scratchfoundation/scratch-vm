@@ -219,6 +219,40 @@ function flatten (blocks) {
 }
 
 /**
+ * Convert a Scratch 2.0 procedure string (e.g., "my_procedure %s %b %n")
+ * into an argument map. This allows us to provide the expected inputs
+ * to a mutated procedure call.
+ * @param {string} procCode Scratch 2.0 procedure string.
+ * @return {Object} Argument map compatible with those in sb2specmap.
+ */
+function parseProcedureArgMap (procCode) {
+    var argMap = [
+        {} // First item in list is op string.
+    ];
+    var INPUT_PREFIX = 'input';
+    var inputCount = 0;
+    // Split by %n, %b, %s.
+    var parts = procCode.split(/(?=[^\\]\%[nbs])/);
+    for (var i = 0; i < parts.length; i++) {
+        var part = parts[i].trim();
+        if (part.substring(0, 1) == '%') {
+            var argType = part.substring(1, 2);
+            var arg = {
+                type: 'input',
+                inputName: INPUT_PREFIX + (inputCount++)
+            };
+            if (argType == 'n') {
+                arg.inputOp = 'math_number';
+            } else if (argType == 's') {
+                arg.inputOp = 'text';
+            }
+            argMap.push(arg);
+        }
+    }
+    return argMap;
+}
+
+/**
  * Parse a single SB2 JSON-formatted block and its children.
  * @param {!Object} sb2block SB2 JSON-formatted block.
  * @return {Object} Scratch VM format block.
@@ -242,6 +276,10 @@ function parseBlock (sb2block) {
         shadow: false, // No shadow blocks in an SB2 by default.
         children: [] // Store any generated children, flattened in `flatten`.
     };
+    // For a procedure call, generate argument map from proc string.
+    if (oldOpcode == 'call') {
+        blockMetadata.argMap = parseProcedureArgMap(sb2block[1]);
+    }
     // Look at the expected arguments in `blockMetadata.argMap.`
     // The basic problem here is to turn positional SB2 arguments into
     // non-positional named Scratch VM arguments.
@@ -269,8 +307,14 @@ function parseBlock (sb2block) {
                     // Single block occupies the input.
                     innerBlocks = [parseBlock(providedArg)];
                 }
+                var previousBlock = null;
                 for (var j = 0; j < innerBlocks.length; j++) {
-                    innerBlocks[j].parent = activeBlock.id;
+                    if (j == 0) {
+                        innerBlocks[j].parent = activeBlock.id;
+                    } else {
+                        innerBlocks[j].parent = previousBlock;
+                    }
+                    previousBlock = innerBlocks[j].id;
                 }
                 // Obscures any shadow.
                 shadowObscured = true;
@@ -343,11 +387,44 @@ function parseBlock (sb2block) {
         }
     }
     // Special cases to generate mutations.
-    if (oldOpcode == 'call') {
+    if (oldOpcode == 'stopScripts') {
+        // Mutation for stop block: if the argument is 'other scripts',
+        // the block needs a next connection.
+        if (sb2block[1] == 'other scripts in sprite' ||
+            sb2block[1] == 'other scripts in stage') {
+            activeBlock.mutation = {
+                tagName: 'mutation',
+                hasnext: 'true',
+                children: []
+            };
+        }
+    } else if (oldOpcode == 'procDef') {
+        // Mutation for procedure definition:
+        // store all 2.0 proc data.
+        var procData = sb2block.slice(1);
+        activeBlock.mutation = {
+            tagName: 'mutation',
+            proccode: procData[0], // e.g., "abc %n %b %s"
+            argumentnames: JSON.stringify(procData[1]), // e.g. ['arg1', 'arg2']
+            argumentdefaults: JSON.stringify(procData[2]), // e.g., [1, 'abc']
+            warp: procData[3], // Warp mode, e.g., true/false.
+            children: []
+        };
+    } else if (oldOpcode == 'call') {
+        // Mutation for procedure call:
+        // string for proc code (e.g., "abc %n %b %s").
         activeBlock.mutation = {
             tagName: 'mutation',
             children: [],
-            name: sb2block[1]
+            proccode: sb2block[1]
+        };
+    } else if (oldOpcode == 'getParam') {
+        // Mutation for procedure parameter.
+        activeBlock.mutation = {
+            tagName: 'mutation',
+            children: [],
+            paramname: sb2block[1], // Name of parameter.
+            shape: sb2block[2] // Shape - in 2.0, 'r' or 'b'.
         };
     }
     return activeBlock;

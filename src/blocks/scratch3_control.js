@@ -133,9 +133,16 @@ Scratch3ControlBlocks.prototype.ifElse = function(args, util) {
     }
 };
 
-Scratch3ControlBlocks.prototype.stop = function() {
-    // @todo - don't use this.runtime
-    this.runtime.stopAll();
+Scratch3ControlBlocks.prototype.stop = function(args, util) {
+    var option = args.STOP_OPTION;
+    if (option == 'all') {
+        util.stopAll();
+    } else if (option == 'other scripts in sprite' ||
+        option == 'other scripts in stage') {
+        util.stopOtherTargetThreads();
+    } else if (option == 'this script') {
+        util.stopThread();
+    }
 };
 
 // @todo (GH-146): remove.
@@ -160,6 +167,7 @@ Scratch3ControlBlocks.prototype.createClone = function (args, util) {
 };
 
 Scratch3ControlBlocks.prototype.deleteClone = function (args, util) {
+    if (util.target.isOriginal) return;
     this.runtime.disposeTarget(util.target);
     this.runtime.stopForTarget(util.target);
 };

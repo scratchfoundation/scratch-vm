@@ -6,7 +6,7 @@ function MathUtil () {}
  * @return {!number} Equivalent value in radians.
  */
 MathUtil.degToRad = function (deg) {
-    return (Math.PI * (90 - deg)) / 180;
+    return deg * Math.PI / 180;
 };
 
 /**

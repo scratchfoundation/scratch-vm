@@ -438,9 +438,6 @@ Clone.prototype.onGreenFlag = function () {
  * Dispose of this clone, destroying any run-time properties.
  */
 Clone.prototype.dispose = function () {
-    if (this.isOriginal) { // Don't allow a non-clone to delete itself.
-        return;
-    }
     this.runtime.changeCloneCounter(-1);
     if (this.renderer && this.drawableID !== null) {
         this.renderer.destroyDrawable(this.drawableID);

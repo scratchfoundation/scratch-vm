@@ -22,19 +22,34 @@ var execute = function (sequencer, thread) {
     var currentBlockId = thread.peekStack();
     var currentStackFrame = thread.peekStackFrame();
 
-    // Verify that the block still exists.
-    if (!target ||
-        typeof target.blocks.getBlock(currentBlockId) === 'undefined') {
+    // Check where the block lives: target blocks or flyout blocks.
+    var targetHasBlock = (
+        typeof target.blocks.getBlock(currentBlockId) !== 'undefined'
+    );
+    var flyoutHasBlock = (
+        typeof runtime.flyoutBlocks.getBlock(currentBlockId) !== 'undefined'
+    );
+
+    // Stop if block or target no longer exists.
+    if (!target || (!targetHasBlock && !flyoutHasBlock)) {
         // No block found: stop the thread; script no longer exists.
         sequencer.retireThread(thread);
         return;
     }
+
     // Query info about the block.
-    var opcode = target.blocks.getOpcode(currentBlockId);
+    var blockContainer = null;
+    if (targetHasBlock) {
+        blockContainer = target.blocks;
+    } else {
+        blockContainer = runtime.flyoutBlocks;
+    }
+    var opcode = blockContainer.getOpcode(currentBlockId);
+    var fields = blockContainer.getFields(currentBlockId);
+    var inputs = blockContainer.getInputs(currentBlockId);
     var blockFunction = runtime.getOpcodeFunction(opcode);
     var isHat = runtime.getIsHat(opcode);
-    var fields = target.blocks.getFields(currentBlockId);
-    var inputs = target.blocks.getInputs(currentBlockId);
+
 
     if (!opcode) {
         console.warn('Could not get opcode for block: ' + currentBlockId);
@@ -133,7 +148,7 @@ var execute = function (sequencer, thread) {
     }
 
     // Add any mutation to args (e.g., for procedures).
-    var mutation = target.blocks.getMutation(currentBlockId);
+    var mutation = blockContainer.getMutation(currentBlockId);
     if (mutation) {
         argValues.mutation = mutation;
     }
@@ -161,8 +176,26 @@ var execute = function (sequencer, thread) {
         startBranch: function (branchNum) {
             sequencer.stepToBranch(thread, branchNum);
         },
+        stopAll: function () {
+            runtime.stopAll();
+        },
+        stopOtherTargetThreads: function() {
+            runtime.stopForTarget(target, thread);
+        },
+        stopThread: function() {
+            sequencer.retireThread(thread);
+        },
         startProcedure: function (procedureName) {
             sequencer.stepToProcedure(thread, procedureName);
+        },
+        getProcedureParamNames: function (procedureName) {
+            return blockContainer.getProcedureParamNames(procedureName);
+        },
+        pushParam: function (paramName, paramValue) {
+            thread.pushParam(paramName, paramValue);
+        },
+        getParam: function (paramName) {
+            return thread.getParam(paramName);
         },
         startHats: function(requestedHat, opt_matchFields, opt_target) {
             return (
