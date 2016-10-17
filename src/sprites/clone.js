@@ -1,7 +1,7 @@
 var util = require('util');
 var MathUtil = require('../util/math-util');
 var Target = require('../engine/target');
-var AudioEngine = require('../audio/AudioEngine.js');
+var AudioEngine = require('scratch-audioengine');
 
 /**
  * Clone (instance) of a sprite.
