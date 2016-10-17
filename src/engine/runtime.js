@@ -555,7 +555,7 @@ Runtime.prototype._step = function () {
     }
     this.redrawRequested = false;
     var inactiveThreads = this.sequencer.stepThreads();
-    this._updateScriptGlows(inactiveThreads);
+    this._updateGlows(inactiveThreads);
 };
 
 /**
@@ -566,7 +566,7 @@ Runtime.prototype.setEditingTarget = function (editingTarget) {
     this._editingTarget = editingTarget;
     // Script glows must be cleared.
     this._scriptGlowsPreviousFrame = [];
-    this._updateScriptGlows();
+    this._updateGlows();
 };
 
 /**
@@ -627,7 +627,7 @@ Runtime.prototype.setSingleSteppingSpeed = function (speed) {
  * Looks at `this.threads` and notices which have turned on/off new glows.
  * @param {Array.<Thread>=} opt_extraThreads Optional list of inactive threads.
  */
-Runtime.prototype._updateScriptGlows = function (opt_extraThreads) {
+Runtime.prototype._updateGlows = function (opt_extraThreads) {
     var searchThreads = [];
     searchThreads.push.apply(searchThreads, this.threads);
     if (opt_extraThreads) {
@@ -658,7 +658,7 @@ Runtime.prototype._updateScriptGlows = function (opt_extraThreads) {
                 }
             }
             // Only show block glows in single-stepping mode.
-            if (this.singleStepping) {
+            if (this.singleStepping && blockForThread) {
                 requestedBlockGlowsThisFrame.push(blockForThread);
             }
         }
