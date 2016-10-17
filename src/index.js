@@ -102,6 +102,17 @@ VirtualMachine.prototype.setSingleSteppingMode = function (singleSteppingOn) {
     this.runtime.setSingleSteppingMode(singleSteppingOn == true);
 };
 
+
+/**
+ * Set single-stepping mode speed.
+ * When in single-stepping mode, adjusts the speed of execution.
+ * @param {Number} speed Interval length in ms.
+ */
+VirtualMachine.prototype.setSingleSteppingSpeed = function (speed) {
+    this.runtime.setSingleSteppingSpeed(speed);
+};
+
+
 /**
  * Stop all threads and running activities.
  */

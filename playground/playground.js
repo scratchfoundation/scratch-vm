@@ -263,6 +263,11 @@ window.onload = function() {
         var singleStep = document.getElementById('singlestepmode').checked;
         vm.setSingleSteppingMode(singleStep);
     });
+    document.getElementById('singlestepspeed').addEventListener('input',
+    function() {
+        var speed = document.getElementById('singlestepspeed').value;
+        vm.setSingleSteppingSpeed(speed);
+    });
 
     var tabBlockExplorer = document.getElementById('tab-blockexplorer');
     var tabThreadExplorer = document.getElementById('tab-threadexplorer');

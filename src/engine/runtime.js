@@ -97,6 +97,11 @@ function Runtime () {
      * @type {Boolean}
      */
     this.singleStepping = false;
+
+    /**
+     * How fast in ms "single stepping mode" should run.
+     */
+    this.singleStepInterval = 1000 / 10;
 }
 
 /**
@@ -155,11 +160,6 @@ Runtime.THREAD_STEP_INTERVAL = 1000 / 60;
  * In compatibility mode, how rapidly we try to step threads, in ms.
  */
 Runtime.THREAD_STEP_INTERVAL_COMPATIBILITY = 1000 / 30;
-
-/**
- * In single-stepping mode, how rapidly we try to step threads, in ms.
- */
-Runtime.THREAD_STEP_INTERVAL_SINGLE_STEP = 1000 / 4;
 
 /**
  * How many clones can be created at a time.
@@ -526,6 +526,14 @@ Runtime.prototype.setSingleSteppingMode = function (singleSteppingOn) {
     }
 };
 
+Runtime.prototype.setSingleSteppingSpeed = function (speed) {
+    this.singleStepInterval = 1000 / speed;
+    if (this._steppingInterval) {
+        self.clearInterval(this._steppingInterval);
+        this.start();
+    }
+};
+
 Runtime.prototype._updateScriptGlows = function () {
     // Set of scripts that request a glow this frame.
     var requestedGlowsThisFrame = [];
@@ -727,7 +735,7 @@ Runtime.prototype.animationFrame = function () {
 Runtime.prototype.start = function () {
     var interval = Runtime.THREAD_STEP_INTERVAL;
     if (this.singleStepping) {
-        interval = Runtime.THREAD_STEP_INTERVAL_SINGLE_STEP;
+        interval = this.singleStepInterval;
     } else if (this.compatibilityMode) {
         interval = Runtime.THREAD_STEP_INTERVAL_COMPATIBILITY;
     }
