@@ -53,7 +53,7 @@ Sequencer.prototype.stepThreads = function () {
             if (activeThread.stack.length === 0 ||
                 activeThread.status === Thread.STATUS_DONE) {
                 // Finished with this thread.
-                if (inactiveThreads.indexOf(activeThread) < -1) {
+                if (inactiveThreads.indexOf(activeThread) < 0) {
                     inactiveThreads.push(activeThread);
                 }
                 continue;
@@ -84,6 +84,13 @@ Sequencer.prototype.stepThreads = function () {
         // threads on the next tick.
         ranFirstTick = true;
     }
+    // Filter inactive threads from `this.runtime.threads`.
+    this.runtime.threads = this.runtime.threads.filter(function(thread) {
+        if (inactiveThreads.indexOf(thread) > -1) {
+            return false;
+        }
+        return true;
+    });
     return inactiveThreads;
 };
 
