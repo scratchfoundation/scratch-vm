@@ -488,11 +488,8 @@ Runtime.prototype._step = function () {
         }
     }
     this.redrawRequested = false;
-    var inactiveThreads = this.sequencer.stepThreads(this.threads);
+    this.sequencer.stepThreads();
     this._updateScriptGlows();
-    for (var i = 0; i < inactiveThreads.length; i++) {
-        this._removeThread(inactiveThreads[i]);
-    }
 };
 
 Runtime.prototype.setEditingTarget = function (editingTarget) {

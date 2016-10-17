@@ -19,21 +19,17 @@ function Sequencer (runtime) {
 Sequencer.WARP_TIME = 500;
 
 /**
- * Step through all threads in `this.threads`, running them in order.
- * @param {Array.<Thread>} threads List of which threads to step.
- * @return {Array.<Thread>} All threads which have finished in this iteration.
+ * Step through all threads in `this.runtime.threads`, running them in order.
  */
-Sequencer.prototype.stepThreads = function (threads) {
+Sequencer.prototype.stepThreads = function () {
     var WORK_TIME = 0.75 * this.runtime.currentStepTime;
     // Start counting toward WORK_TIME
     this.timer.start();
-    // List of threads which have been killed by this step.
-    var inactiveThreads = [];
     // Count of active threads.
     var numActiveThreads = Infinity;
     // While there are still threads to run and we are within WORK_TIME,
     // continue executing threads.
-    while (threads.length > 0 &&
+    while (this.runtime.threads.length > 0 &&
            numActiveThreads > 0 &&
            this.timer.timeElapsed() < WORK_TIME &&
            (this.runtime.turboMode || !this.runtime.redrawRequested)) {
@@ -41,8 +37,8 @@ Sequencer.prototype.stepThreads = function (threads) {
         var newThreads = [];
         numActiveThreads = 0;
         // Attempt to run each thread one time
-        for (var i = 0; i < threads.length; i++) {
-            var activeThread = threads[i];
+        for (var i = 0; i < this.runtime.threads.length; i++) {
+            var activeThread = this.runtime.threads[i];
             if (activeThread.status !== Thread.STATUS_PROMISE_WAIT) {
                 // Normal-mode thread: step.
                 this.stepThread(activeThread);
@@ -59,16 +55,14 @@ Sequencer.prototype.stepThreads = function (threads) {
             if (activeThread.stack.length === 0 ||
                 activeThread.status === Thread.STATUS_DONE) {
                 // Finished with this thread - tell runtime to clean it up.
-                inactiveThreads.push(activeThread);
             } else {
                 // Keep this thead in the loop.
                 newThreads.push(activeThread);
             }
         }
-        // Effectively filters out threads that have stopped.
-        threads = newThreads;
+        // Filter out threads that have stopped.
+        this.runtime.threads = newThreads;
     }
-    return inactiveThreads;
 };
 
 /**
