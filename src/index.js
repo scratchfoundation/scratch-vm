@@ -94,6 +94,15 @@ VirtualMachine.prototype.setCompatibilityMode = function (compatibilityModeOn) {
 };
 
 /**
+ * Set whether the VM is in "single stepping mode."
+ * When true, blocks execute slowly and are highlighted visually.
+ * @param {Boolean} singleSteppingOn Whether single-stepping mode is set.
+ */
+VirtualMachine.prototype.setSingleSteppingMode = function (singleSteppingOn) {
+    this.runtime.setSingleSteppingMode(singleSteppingOn == true);
+};
+
+/**
  * Stop all threads and running activities.
  */
 VirtualMachine.prototype.stopAll = function () {

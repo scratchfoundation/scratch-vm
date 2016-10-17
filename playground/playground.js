@@ -258,6 +258,11 @@ window.onload = function() {
         var compatibilityMode = document.getElementById('compatmode').checked;
         vm.setCompatibilityMode(compatibilityMode);
     });
+    document.getElementById('singlestepmode').addEventListener('change',
+    function() {
+        var singleStep = document.getElementById('singlestepmode').checked;
+        vm.setSingleSteppingMode(singleStep);
+    });
 
     var tabBlockExplorer = document.getElementById('tab-blockexplorer');
     var tabThreadExplorer = document.getElementById('tab-threadexplorer');

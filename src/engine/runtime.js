@@ -64,6 +64,7 @@ function Runtime () {
     };
 
     this._scriptGlowsPreviousFrame = [];
+    this._blockGlowsPreviousFrame = [];
     this._editingTarget = null;
     this._steppingInterval = null;
     this.currentStepTime = null;
@@ -90,6 +91,12 @@ function Runtime () {
      * @type {Boolean}
      */
     this.compatibilityMode = false;
+
+    /**
+     * Whether the project is in "single stepping mode."
+     * @type {Boolean}
+     */
+    this.singleStepping = false;
 }
 
 /**
@@ -148,6 +155,11 @@ Runtime.THREAD_STEP_INTERVAL = 1000 / 60;
  * In compatibility mode, how rapidly we try to step threads, in ms.
  */
 Runtime.THREAD_STEP_INTERVAL_COMPATIBILITY = 1000 / 30;
+
+/**
+ * In single-stepping mode, how rapidly we try to step threads, in ms.
+ */
+Runtime.THREAD_STEP_INTERVAL_SINGLE_STEP = 1000 / 4;
 
 /**
  * How many clones can be created at a time.
@@ -499,29 +511,49 @@ Runtime.prototype.setEditingTarget = function (editingTarget) {
 };
 
 Runtime.prototype.setCompatibilityMode = function (compatibilityModeOn) {
-    this.compatibilityMode_ = compatibilityModeOn;
-    self.clearInterval(this._steppingInterval);
-    this.start();
+    this.compatibilityMode = compatibilityModeOn;
+    if (this._steppingInterval) {
+        self.clearInterval(this._steppingInterval);
+        this.start();
+    }
+};
+
+Runtime.prototype.setSingleSteppingMode = function (singleSteppingOn) {
+    this.singleStepping = singleSteppingOn;
+    if (this._steppingInterval) {
+        self.clearInterval(this._steppingInterval);
+        this.start();
+    }
 };
 
 Runtime.prototype._updateScriptGlows = function () {
     // Set of scripts that request a glow this frame.
     var requestedGlowsThisFrame = [];
+    var requestedBlockGlowsThisFrame = [];
     // Final set of scripts glowing during this frame.
     var finalScriptGlows = [];
+    var finalBlockGlows = [];
     // Find all scripts that should be glowing.
     for (var i = 0; i < this.threads.length; i++) {
         var thread = this.threads[i];
         var target = thread.target;
-        if (thread.requestScriptGlowInFrame && target == this._editingTarget) {
+        if (target == this._editingTarget) {
             var blockForThread = thread.peekStack() || thread.topBlock;
-            var script = target.blocks.getTopLevelScript(blockForThread);
-            if (!script) {
-                // Attempt to find in flyout blocks.
-                script = this.flyoutBlocks.getTopLevelScript(blockForThread);
+            if (thread.requestScriptGlowInFrame) {
+                var script = target.blocks.getTopLevelScript(blockForThread);
+                if (!script) {
+                    // Attempt to find in flyout blocks.
+                    script = this.flyoutBlocks.getTopLevelScript(
+                        blockForThread
+                    );
+                }
+                if (script) {
+                    requestedGlowsThisFrame.push(script);
+                }
             }
-            if (script) {
-                requestedGlowsThisFrame.push(script);
+            // Only show block glows in single-stepping mode.
+            if (this.singleStepping) {
+                requestedBlockGlowsThisFrame.push(blockForThread);
             }
         }
     }
@@ -544,7 +576,30 @@ Runtime.prototype._updateScriptGlows = function () {
             finalScriptGlows.push(currentFrameGlow);
         }
     }
+    for (var m = 0; m < this._blockGlowsPreviousFrame.length; m++) {
+        var previousBlockGlow = this._blockGlowsPreviousFrame[m];
+        if (requestedBlockGlowsThisFrame.indexOf(previousBlockGlow) < 0) {
+            // Glow turned off.
+            try {
+                this.glowBlock(previousBlockGlow, false);
+            } catch (e) {
+                // Block has been removed.
+            }
+        } else {
+            // Still glowing.
+            finalBlockGlows.push(previousBlockGlow);
+        }
+    }
+    for (var p = 0; p < requestedBlockGlowsThisFrame.length; p++) {
+        var currentBlockFrameGlow = requestedBlockGlowsThisFrame[p];
+        if (this._blockGlowsPreviousFrame.indexOf(currentBlockFrameGlow) < 0) {
+            // Glow turned on.
+            this.glowBlock(currentBlockFrameGlow, true);
+            finalBlockGlows.push(currentBlockFrameGlow);
+        }
+    }
     this._scriptGlowsPreviousFrame = finalScriptGlows;
+    this._blockGlowsPreviousFrame = finalBlockGlows;
 };
 
 /**
@@ -670,9 +725,12 @@ Runtime.prototype.animationFrame = function () {
  * Set up timers to repeatedly step in a browser.
  */
 Runtime.prototype.start = function () {
-    var interval = (this.compatibilityMode_) ?
-        Runtime.THREAD_STEP_INTERVAL_COMPATIBILITY :
-        Runtime.THREAD_STEP_INTERVAL;
+    var interval = Runtime.THREAD_STEP_INTERVAL;
+    if (this.singleStepping) {
+        interval = Runtime.THREAD_STEP_INTERVAL_SINGLE_STEP;
+    } else if (this.compatibilityMode) {
+        interval = Runtime.THREAD_STEP_INTERVAL_COMPATIBILITY;
+    }
     this.currentStepTime = interval;
     this._steppingInterval = self.setInterval(function() {
         this._step();

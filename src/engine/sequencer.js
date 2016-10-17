@@ -60,6 +60,10 @@ Sequencer.prototype.stepThreads = function () {
         }
         // Filter out threads that have stopped.
         this.runtime.threads = newThreads;
+        // In single-stepping mode, only step each thread once per interval.
+        if (this.runtime.singleStepping) {
+            return;
+        }
     }
 };
 
@@ -116,6 +120,11 @@ Sequencer.prototype.stepThread = function (thread) {
             }
             // Get next block of existing block on the stack.
             thread.goToNextBlock();
+        }
+        // In single-stepping mode, force `stepThread` to only run one block
+        // at a time.
+        if (this.runtime.singleStepping) {
+            return;
         }
     }
 };
