@@ -173,8 +173,7 @@ Scratch3MotionBlocks.prototype.ifOnEdgeBounce = function (args, util) {
         return; // Not touching any edge.
     }
     // Point away from the nearest edge.
-    // @todo: Fix after GH-229 is resolved.
-    var radians = MathUtil.degToRad(util.target.direction);
+    var radians = MathUtil.degToRad(90 - util.target.direction);
     var dx = Math.cos(radians);
     var dy = -Math.sin(radians);
     if (nearestEdge == 'left') {
