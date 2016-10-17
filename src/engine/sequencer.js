@@ -20,6 +20,7 @@ Sequencer.WARP_TIME = 500;
 
 /**
  * Step through all threads in `this.runtime.threads`, running them in order.
+ * @return {Array.<!Thread>} List of inactive threads after stepping.
  */
 Sequencer.prototype.stepThreads = function () {
     var WORK_TIME = 0.75 * this.runtime.currentStepTime;
@@ -28,6 +29,7 @@ Sequencer.prototype.stepThreads = function () {
     // Count of active threads.
     var numActiveThreads = Infinity;
     var ranFirstFrame = false;
+    var filteredThreads = [];
     // While there are still threads to run and we are within WORK_TIME,
     // continue executing threads.
     while (this.runtime.threads.length > 0 &&
@@ -60,6 +62,7 @@ Sequencer.prototype.stepThreads = function () {
             if (activeThread.stack.length === 0 ||
                 activeThread.status === Thread.STATUS_DONE) {
                 // Finished with this thread.
+                filteredThreads.push(activeThread);
             } else {
                 // Keep this thead in the loop.
                 newThreads.push(activeThread);
@@ -69,6 +72,7 @@ Sequencer.prototype.stepThreads = function () {
         this.runtime.threads = newThreads;
         ranFirstFrame = true;
     }
+    return filteredThreads;
 };
 
 /**

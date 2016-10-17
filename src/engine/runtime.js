@@ -500,8 +500,8 @@ Runtime.prototype._step = function () {
         }
     }
     this.redrawRequested = false;
-    this.sequencer.stepThreads();
-    this._updateScriptGlows();
+    var inactiveThreads = this.sequencer.stepThreads();
+    this._updateScriptGlows(inactiveThreads);
 };
 
 Runtime.prototype.setEditingTarget = function (editingTarget) {
@@ -534,7 +534,12 @@ Runtime.prototype.setSingleSteppingSpeed = function (speed) {
     }
 };
 
-Runtime.prototype._updateScriptGlows = function () {
+Runtime.prototype._updateScriptGlows = function (opt_extraThreads) {
+    var searchThreads = [];
+    searchThreads.push.apply(searchThreads, this.threads);
+    if (opt_extraThreads) {
+        searchThreads.push.apply(searchThreads, opt_extraThreads);
+    }
     // Set of scripts that request a glow this frame.
     var requestedGlowsThisFrame = [];
     var requestedBlockGlowsThisFrame = [];
@@ -542,8 +547,8 @@ Runtime.prototype._updateScriptGlows = function () {
     var finalScriptGlows = [];
     var finalBlockGlows = [];
     // Find all scripts that should be glowing.
-    for (var i = 0; i < this.threads.length; i++) {
-        var thread = this.threads[i];
+    for (var i = 0; i < searchThreads.length; i++) {
+        var thread = searchThreads[i];
         var target = thread.target;
         if (target == this._editingTarget) {
             var blockForThread = thread.peekStack() || thread.topBlock;
