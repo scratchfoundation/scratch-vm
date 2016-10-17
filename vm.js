@@ -13491,7 +13491,7 @@
 	 * @return {!number} Equivalent value in radians.
 	 */
 	MathUtil.degToRad = function (deg) {
-	    return (Math.PI * (90 - deg)) / 180;
+	    return deg * Math.PI / 180;
 	};
 
 	/**
@@ -14970,7 +14970,7 @@
 
 	Scratch3MotionBlocks.prototype.moveSteps = function (args, util) {
 	    var steps = Cast.toNumber(args.STEPS);
-	    var radians = MathUtil.degToRad(util.target.direction);
+	    var radians = MathUtil.degToRad(90 - util.target.direction);
 	    var dx = steps * Math.cos(radians);
 	    var dy = steps * Math.sin(radians);
 	    util.target.setXY(util.target.x + dx, util.target.y + dy);
