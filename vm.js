@@ -15891,8 +15891,14 @@
 	                    // Single block occupies the input.
 	                    innerBlocks = [parseBlock(providedArg)];
 	                }
+	                var previousBlock = null;
 	                for (var j = 0; j < innerBlocks.length; j++) {
-	                    innerBlocks[j].parent = activeBlock.id;
+	                    if (j == 0) {
+	                        innerBlocks[j].parent = activeBlock.id;
+	                    } else {
+	                        innerBlocks[j].parent = previousBlock;
+	                    }
+	                    previousBlock = innerBlocks[j].id;
 	                }
 	                // Obscures any shadow.
 	                shadowObscured = true;
