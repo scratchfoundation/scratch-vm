@@ -81,7 +81,7 @@ VirtualMachine.prototype.setTurboMode = function (turboModeOn) {
  * @param {Boolean} pauseModeOn Whether pause mode should be set.
  */
 VirtualMachine.prototype.setPauseMode = function (pauseModeOn) {
-    this.runtime.pauseMode = (pauseModeOn == true);
+    this.runtime.setPauseMode(pauseModeOn == true);
 };
 
 /**

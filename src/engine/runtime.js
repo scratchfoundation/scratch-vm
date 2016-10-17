@@ -85,6 +85,7 @@ function Runtime () {
      * @type {Boolean}
      */
     this.pauseMode = false;
+    this.pauseTime = null;
 
     /**
      * Whether the project is in "compatibility mode" (30 TPS).
@@ -508,6 +509,18 @@ Runtime.prototype.setEditingTarget = function (editingTarget) {
     this._scriptGlowsPreviousFrame = [];
     this._editingTarget = editingTarget;
     this._updateScriptGlows();
+};
+
+Runtime.prototype.setPauseMode = function (pauseModeOn) {
+    if (this.ioDevices.clock) {
+        if (pauseModeOn && !this.pauseMode) {
+            this.ioDevices.clock.pause();
+        }
+        if (!pauseModeOn && this.pauseMode) {
+            this.ioDevices.clock.resume();
+        }    
+    }
+    this.pauseMode = pauseModeOn;
 };
 
 Runtime.prototype.setCompatibilityMode = function (compatibilityModeOn) {
