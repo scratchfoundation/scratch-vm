@@ -1,4 +1,3 @@
-// var Cast = require('../util/cast');
 var MathUtil = require('../util/math-util');
 var Promise = require('promise');
 
@@ -31,13 +30,26 @@ Scratch3SoundBlocks.prototype.getPrimitives = function() {
 };
 
 Scratch3SoundBlocks.prototype.playSound = function (args, util) {
-    var url = this._getSoundUrl(args.SOUND_MENU, util);
-    util.target.audioEngine.playSoundFromUrl(url);
+    var index = this._getSoundIndex(args.SOUND_MENU, util);
+    util.target.audioEngine.playSound(index);
 };
 
-Scratch3SoundBlocks.prototype._getSoundUrl = function (soundName, util) {
+Scratch3SoundBlocks.prototype.playSoundAndWait = function (args, util) {
+    var index = this._getSoundIndex(args.SOUND_MENU, util);
+    util.target.audioEngine.playSound(index);
+
+    var duration = util.target.audioEngine.getSoundDuration(index);
+
+    return new Promise(function(resolve) {
+        setTimeout(function() {
+            resolve();
+        }, 1000*duration);
+    });
+};
+
+Scratch3SoundBlocks.prototype._getSoundIndex = function (soundName, util) {
     if (util.target.sprite.sounds.length == 0) {
-        return '';
+        return 0;
     }
     var index;
     if (typeof soundName === 'number') {
@@ -46,24 +58,10 @@ Scratch3SoundBlocks.prototype._getSoundUrl = function (soundName, util) {
     } else {
         index = util.target.getSoundIndexByName(soundName);
         if (index == -1) {
-            return '';
+            index = 0;
         }
     }
-    return util.target.sprite.sounds[index].fileUrl;
-};
-
-
-Scratch3SoundBlocks.prototype.playSoundAndWait = function (args, util) {
-    var url = this._getSoundUrl(args.SOUND_MENU, util);
-    util.target.audioEngine.playSoundFromUrl(url);
-
-    var duration = util.target.audioEngine.getSoundDuration(url);
-
-    return new Promise(function(resolve) {
-        setTimeout(function() {
-            resolve();
-        }, 1000*duration);
-    });
+    return index;
 };
 
 Scratch3SoundBlocks.prototype.stopAllSounds = function (args, util) {

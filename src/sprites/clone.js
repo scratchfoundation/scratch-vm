@@ -48,7 +48,10 @@ function Clone(sprite, runtime) {
     /**
     * Audio engine
     */
-    this.audioEngine = new AudioEngine();
+    this.audioEngine = null;
+    if (this.runtime) {
+        this.audioEngine = new AudioEngine(this.sprite.sounds);
+    }
 }
 util.inherits(Clone, Target);
 
