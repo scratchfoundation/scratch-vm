@@ -15,6 +15,7 @@
     "start": "webpack-dev-server",
     "build": "webpack --colors --progress",
     "test": "make test",
+    "watch": "webpack --colors --progress --watch",
     "version": "./node_modules/.bin/json -f package.json -I -e \"this.repository.sha = '$(git log -n1 --pretty=format:%H)'\""
   },
   "devDependencies": {
