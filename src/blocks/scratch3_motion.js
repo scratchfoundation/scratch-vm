@@ -24,6 +24,7 @@ Scratch3MotionBlocks.prototype.getPrimitives = function() {
         'motion_pointindirection': this.pointInDirection,
         'motion_pointtowards': this.pointTowards,
         'motion_glidesecstoxy': this.glide,
+        'motion_ifonedgebounce': this.ifOnEdgeBounce,
         'motion_setrotationstyle': this.setRotationStyle,
         'motion_changexby': this.changeX,
         'motion_setx': this.setX,
@@ -136,6 +137,62 @@ Scratch3MotionBlocks.prototype.glide = function (args, util) {
             util.target.setXY(util.stackFrame.endX, util.stackFrame.endY);
         }
     }
+};
+
+Scratch3MotionBlocks.prototype.ifOnEdgeBounce = function (args, util) {
+    var bounds = util.target.getBounds();
+    if (!bounds) {
+        return;
+    }
+    // Measure distance to edges.
+    // Values are positive when the sprite is far away,
+    // and clamped to zero when the sprite is beyond.
+    var stageWidth = this.runtime.constructor.STAGE_WIDTH;
+    var stageHeight = this.runtime.constructor.STAGE_HEIGHT;
+    var distLeft = Math.max(0, stageWidth / 2 + bounds.left);
+    var distTop = Math.max(0, stageHeight / 2 - bounds.top);
+    var distRight = Math.max(0, stageWidth / 2 - bounds.right);
+    var distBottom = Math.max(0, stageHeight / 2 + bounds.bottom);
+    // Find the nearest edge.
+    var nearestEdge = '';
+    var minDist = Infinity;
+    if (distLeft < minDist) {
+        minDist = distLeft;
+        nearestEdge = 'left';
+    }
+    if (distTop < minDist) {
+        minDist = distTop;
+        nearestEdge = 'top';
+    }
+    if (distRight < minDist) {
+        minDist = distRight;
+        nearestEdge = 'right';
+    }
+    if (distBottom < minDist) {
+        minDist = distBottom;
+        nearestEdge = 'bottom';
+    }
+    if (minDist > 0) {
+        return; // Not touching any edge.
+    }
+    // Point away from the nearest edge.
+    var radians = MathUtil.degToRad(90 - util.target.direction);
+    var dx = Math.cos(radians);
+    var dy = -Math.sin(radians);
+    if (nearestEdge == 'left') {
+        dx = Math.max(0.2, Math.abs(dx));
+    } else if (nearestEdge == 'top') {
+        dy = Math.max(0.2, Math.abs(dy));
+    } else if (nearestEdge == 'right') {
+        dx = 0 - Math.max(0.2, Math.abs(dx));
+    } else if (nearestEdge == 'bottom') {
+        dy = 0 - Math.max(0.2, Math.abs(dy));
+    }
+    var newDirection = MathUtil.radToDeg(Math.atan2(dy, dx)) + 90;
+    util.target.setDirection(newDirection);
+    // Keep within the stage.
+    var fencedPosition = util.target.keepInFence(util.target.x, util.target.y);
+    util.target.setXY(fencedPosition[0], fencedPosition[1]);
 };
 
 Scratch3MotionBlocks.prototype.setRotationStyle = function (args, util) {

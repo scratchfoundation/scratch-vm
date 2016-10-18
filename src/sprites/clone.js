@@ -352,6 +352,76 @@ Clone.prototype.getName = function () {
 };
 
 /**
+ * Return the clone's tight bounding box.
+ * Includes top, left, bottom, right attributes in Scratch coordinates.
+ * @return {?Object} Tight bounding box of clone, or null.
+ */
+Clone.prototype.getBounds = function () {
+    if (this.renderer) {
+        return this.runtime.renderer.getBounds(this.drawableID);
+    }
+    return null;
+};
+
+/**
+ * Return whether the clone is touching a point.
+ * @param {number} x X coordinate of test point.
+ * @param {number} y Y coordinate of test point.
+ * @return {Boolean} True iff the clone is touching the point.
+ */
+Clone.prototype.isTouchingPoint = function (x, y) {
+    if (this.renderer) {
+        // @todo: Update once pick is in Scratch coordinates.
+        // Limits test to this Drawable, so this will return true
+        // even if the clone is obscured by another Drawable.
+        var pickResult = this.runtime.renderer.pick(
+            x + this.runtime.constructor.STAGE_WIDTH / 2,
+            -y + this.runtime.constructor.STAGE_HEIGHT / 2,
+            null, null,
+            [this.drawableID]
+        );
+        return pickResult === this.drawableID;
+    }
+    return false;
+};
+
+/**
+ * Return whether the clone is touching a stage edge.
+ * @return {Boolean} True iff the clone is touching the stage edge.
+ */
+Clone.prototype.isTouchingEdge = function () {
+    if (this.renderer) {
+        var stageWidth = this.runtime.constructor.STAGE_WIDTH;
+        var stageHeight = this.runtime.constructor.STAGE_HEIGHT;
+        var bounds = this.getBounds();
+        if (bounds.left < -stageWidth / 2 ||
+            bounds.right > stageWidth / 2 ||
+            bounds.top > stageHeight / 2 ||
+            bounds.bottom < -stageHeight / 2) {
+            return true;
+        }
+    }
+    return false;
+};
+
+/**
+ * Return whether the clone is touching a named sprite.
+ * @param {string} spriteName Name fo the sprite.
+ * @return {Boolean} True iff the clone is touching a clone of the sprite.
+ */
+Clone.prototype.isTouchingSprite = function (spriteName) {
+    var firstClone = this.runtime.getSpriteTargetByName(spriteName);
+    if (!firstClone || !this.renderer) {
+        return false;
+    }
+    var drawableCandidates = firstClone.sprite.clones.map(function(clone) {
+        return clone.drawableID;
+    });
+    return this.renderer.isTouchingDrawables(
+        this.drawableID, drawableCandidates);
+};
+
+/**
  * Return whether the clone is touching a color.
  * @param {Array.<number>} rgb [r,g,b], values between 0-255.
  * @return {Promise.<Boolean>} True iff the clone is touching the color.
@@ -378,6 +448,67 @@ Clone.prototype.colorIsTouchingColor = function (targetRgb, maskRgb) {
         );
     }
     return false;
+};
+
+/**
+ * Move clone to the front layer.
+ */
+Clone.prototype.goToFront = function () {
+    if (this.renderer) {
+        this.renderer.setDrawableOrder(this.drawableID, Infinity);
+    }
+};
+
+/**
+ * Move clone back a number of layers.
+ * @param {number} nLayers How many layers to go back.
+ */
+Clone.prototype.goBackLayers = function (nLayers) {
+    if (this.renderer) {
+        this.renderer.setDrawableOrder(this.drawableID, -nLayers, true, 1);
+    }
+};
+
+/**
+ * Keep a desired position within a fence.
+ * @param {number} newX New desired X position.
+ * @param {number} newY New desired Y position.
+ * @param {Object=} opt_fence Optional fence with left, right, top bottom.
+ * @return {Array.<number>} Fenced X and Y coordinates.
+ */
+Clone.prototype.keepInFence = function (newX, newY, opt_fence) {
+    var fence = opt_fence;
+    if (!fence) {
+        fence = {
+            left: -this.runtime.constructor.STAGE_WIDTH / 2,
+            right: this.runtime.constructor.STAGE_WIDTH / 2,
+            top: this.runtime.constructor.STAGE_HEIGHT / 2,
+            bottom: -this.runtime.constructor.STAGE_HEIGHT / 2
+        };
+    }
+    var bounds = this.getBounds();
+    if (!bounds) return;
+    // Adjust the known bounds to the target position.
+    bounds.left += (newX - this.x);
+    bounds.right += (newX - this.x);
+    bounds.top += (newY - this.y);
+    bounds.bottom += (newY - this.y);
+    // Find how far we need to move the target position.
+    var dx = 0;
+    var dy = 0;
+    if (bounds.left < fence.left) {
+        dx += fence.left - bounds.left;
+    }
+    if (bounds.right > fence.right) {
+        dx += fence.right - bounds.right;
+    }
+    if (bounds.top > fence.top) {
+        dy += fence.top - bounds.top;
+    }
+    if (bounds.bottom < fence.bottom) {
+        dy += fence.bottom - bounds.bottom;
+    }
+    return [newX + dx, newY + dy];
 };
 
 /**

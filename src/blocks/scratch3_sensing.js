@@ -14,6 +14,7 @@ function Scratch3SensingBlocks(runtime) {
  */
 Scratch3SensingBlocks.prototype.getPrimitives = function() {
     return {
+        'sensing_touchingobject': this.touchingObject,
         'sensing_touchingcolor': this.touchingColor,
         'sensing_coloristouchingcolor': this.colorTouchingColor,
         'sensing_distanceto': this.distanceTo,
@@ -26,6 +27,19 @@ Scratch3SensingBlocks.prototype.getPrimitives = function() {
         'sensing_current': this.current,
         'sensing_dayssince2000': this.daysSince2000
     };
+};
+
+Scratch3SensingBlocks.prototype.touchingObject = function (args, util) {
+    var requestedObject = args.TOUCHINGOBJECTMENU;
+    if (requestedObject == '_mouse_') {
+        var mouseX = util.ioQuery('mouse', 'getX');
+        var mouseY = util.ioQuery('mouse', 'getY');
+        return util.target.isTouchingPoint(mouseX, mouseY);
+    } else if (requestedObject == '_edge_') {
+        return util.target.isTouchingEdge();
+    } else {
+        return util.target.isTouchingSprite(requestedObject);
+    }
 };
 
 Scratch3SensingBlocks.prototype.touchingColor = function (args, util) {
