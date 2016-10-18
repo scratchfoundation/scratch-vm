@@ -31,5 +31,5 @@ after_script:
     # Publish to gh-pages as most recent committer
     git config --global user.email $(git log --pretty=format:"%ae" -n1)
     git config --global user.name $(git log --pretty=format:"%an" -n1)
-    ./node_modules/.bin/gh-pages -x -r https://${GH_TOKEN}@github.com/${TRAVIS_REPO_SLUG}.git -d playground -m "Build for $(git log --pretty=format:%H -n1)"
+    npm run deploy -- -x -r https://${GH_TOKEN}@github.com/${TRAVIS_REPO_SLUG}.git
   fi

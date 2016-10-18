@@ -13,6 +13,7 @@
   "scripts": {
     "build": "./node_modules/.bin/webpack --progress --colors --bail",
     "coverage": "./node_modules/.bin/tap ./test/{unit,integration}/*.js --coverage --coverage-report=lcov",
+    "deploy": "./node_modules/.bin/gh-pages -d playground -m \"Build for $(git log --pretty=format:%H -n1)\"",
     "lint": "./node_modules/.bin/eslint .",
     "prepublish": "npm run build",
     "prepublish-watch": "npm run watch",
@@ -34,8 +35,8 @@
     "json-loader": "0.5.4",
     "lodash.defaultsdeep": "4.6.0",
     "promise": "7.1.1",
-    "scratch-blocks": "^0.1.0-prepublish",
-    "scratch-render": "^0.1.0-prepublish",
+    "scratch-blocks": "latest",
+    "scratch-render": "latest",
     "script-loader": "0.7.0",
     "stats.js": "0.16.0",
     "tap": "5.7.1",
