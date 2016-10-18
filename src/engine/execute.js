@@ -90,7 +90,7 @@ var execute = function (sequencer, thread) {
                 runtime.visualReport(currentBlockId, resolvedValue);
             }
             // Finished any yields.
-            thread.setStatus(Thread.STATUS_RUNNING);
+            thread.status = Thread.STATUS_RUNNING;
         }
     };
 
@@ -133,15 +133,22 @@ var execute = function (sequencer, thread) {
         var input = inputs[inputName];
         var inputBlockId = input.block;
         // Is there no value for this input waiting in the stack frame?
-        if (typeof currentStackFrame.reported[inputName] === 'undefined') {
+        if (typeof currentStackFrame.reported[inputName] === 'undefined'
+            && inputBlockId) {
             // If there's not, we need to evaluate the block.
-            var reporterYielded = (
-                sequencer.stepToReporter(thread, inputBlockId, inputName)
-            );
-            // If the reporter yielded, return immediately;
-            // it needs time to finish and report its value.
-            if (reporterYielded) {
+            // Push to the stack to evaluate the reporter block.
+            thread.pushStack(inputBlockId);
+            // Save name of input for `Thread.pushReportedValue`.
+            currentStackFrame.waitingReporter = inputName;
+            // Actually execute the block.
+            execute(sequencer, thread);
+            if (thread.status === Thread.STATUS_PROMISE_WAIT) {
                 return;
+            } else {
+                // Execution returned immediately,
+                // and presumably a value was reported, so pop the stack.
+                currentStackFrame.waitingReporter = null;
+                thread.popStack();
             }
         }
         argValues[inputName] = currentStackFrame.reported[inputName];
@@ -164,17 +171,10 @@ var execute = function (sequencer, thread) {
         stackFrame: currentStackFrame.executionContext,
         target: target,
         yield: function() {
-            thread.setStatus(Thread.STATUS_YIELD);
+            thread.status = Thread.STATUS_YIELD;
         },
-        yieldFrame: function() {
-            thread.setStatus(Thread.STATUS_YIELD_FRAME);
-        },
-        done: function() {
-            thread.setStatus(Thread.STATUS_RUNNING);
-            sequencer.proceedThread(thread);
-        },
-        startBranch: function (branchNum) {
-            sequencer.stepToBranch(thread, branchNum);
+        startBranch: function (branchNum, isLoop) {
+            sequencer.stepToBranch(thread, branchNum, isLoop);
         },
         stopAll: function () {
             runtime.stopAll();
@@ -185,11 +185,11 @@ var execute = function (sequencer, thread) {
         stopThread: function() {
             sequencer.retireThread(thread);
         },
-        startProcedure: function (procedureName) {
-            sequencer.stepToProcedure(thread, procedureName);
+        startProcedure: function (procedureCode) {
+            sequencer.stepToProcedure(thread, procedureCode);
         },
-        getProcedureParamNames: function (procedureName) {
-            return blockContainer.getProcedureParamNames(procedureName);
+        getProcedureParamNames: function (procedureCode) {
+            return blockContainer.getProcedureParamNames(procedureCode);
         },
         pushParam: function (paramName, paramValue) {
             thread.pushParam(paramName, paramValue);
@@ -221,18 +221,24 @@ var execute = function (sequencer, thread) {
     if (isPromise(primitiveReportedValue)) {
         if (thread.status === Thread.STATUS_RUNNING) {
             // Primitive returned a promise; automatically yield thread.
-            thread.setStatus(Thread.STATUS_YIELD);
+            thread.status = Thread.STATUS_PROMISE_WAIT;
         }
         // Promise handlers
         primitiveReportedValue.then(function(resolvedValue) {
             handleReport(resolvedValue);
-            sequencer.proceedThread(thread);
+            if (typeof resolvedValue !== 'undefined') {
+                thread.popStack();
+            } else {
+                var popped = thread.popStack();
+                var nextBlockId = thread.target.blocks.getNextBlock(popped);
+                thread.pushStack(nextBlockId);
+            }
         }, function(rejectionReason) {
             // Promise rejected: the primitive had some error.
             // Log it and proceed.
             console.warn('Primitive rejected promise: ', rejectionReason);
-            thread.setStatus(Thread.STATUS_RUNNING);
-            sequencer.proceedThread(thread);
+            thread.status = Thread.STATUS_RUNNING;
+            thread.popStack();
         });
     } else if (thread.status === Thread.STATUS_RUNNING) {
         handleReport(primitiveReportedValue);

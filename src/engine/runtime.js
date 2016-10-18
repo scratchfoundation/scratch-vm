@@ -27,8 +27,6 @@ function Runtime () {
     // Bind event emitter
     EventEmitter.call(this);
 
-    // State for the runtime
-
     /**
      * Target management and storage.
      * @type {Array.<!Target>}
@@ -45,7 +43,18 @@ function Runtime () {
     /** @type {!Sequencer} */
     this.sequencer = new Sequencer(this);
 
+    /**
+     * Storage container for flyout blocks.
+     * These will execute on `_editingTarget.`
+     * @type {!Blocks}
+     */
     this.flyoutBlocks = new Blocks();
+
+    /**
+     * Currently known editing target for the VM.
+     * @type {?Target}
+     */
+    this._editingTarget = null;
 
     /**
      * Map to look up a block primitive's implementation function by its opcode.
@@ -53,24 +62,111 @@ function Runtime () {
      * @type {Object.<string, Function>}
      */
     this._primitives = {};
+
+    /**
+     * Map to look up hat blocks' metadata.
+     * Keys are opcode for hat, values are metadata objects.
+     * @type {Object.<string, Object>}
+     */
     this._hats = {};
+
+    /**
+     * Currently known values for edge-activated hats.
+     * Keys are block ID for the hat; values are the currently known values.
+     * @type {Object.<string, *>}
+     */
     this._edgeActivatedHatValues = {};
+
+    /**
+     * A list of script block IDs that were glowing during the previous frame.
+     * @type {!Array.<!string>}
+     */
+    this._scriptGlowsPreviousFrame = [];
+
+    /**
+     * A list of block IDs that were glowing during the previous frame.
+     * @type {!Array.<!string>}
+     */
+    this._blockGlowsPreviousFrame = [];
+
+    /**
+     * Currently known number of clones, used to enforce clone limit.
+     * @type {number}
+     */
+    this._cloneCounter = 0;
+
+    /**
+     * Whether the project is in "turbo mode."
+     * @type {Boolean}
+     */
+    this.turboMode = false;
+
+    /**
+     * Whether the project is in "pause mode."
+     * @type {Boolean}
+     */
+    this.pauseMode = false;
+
+    /**
+     * Whether the project is in "compatibility mode" (30 TPS).
+     * @type {Boolean}
+     */
+    this.compatibilityMode = false;
+
+    /**
+     * Whether the project is in "single stepping mode."
+     * @type {Boolean}
+     */
+    this.singleStepping = false;
+
+    /**
+     * How fast in ms "single stepping mode" should run, in ms.
+     * Can be updated dynamically.
+     * @type {!number}
+     */
+    this.singleStepInterval = 1000 / 10;
+
+    /**
+     * A reference to the current runtime stepping interval, set
+     * by a `setInterval`.
+     * @type {!number}
+     */
+    this._steppingInterval = null;
+
+    /**
+     * Current length of a step.
+     * Changes as mode switches, and used by the sequencer to calculate
+     * WORK_TIME.
+     * @type {!number}
+     */
+    this.currentStepTime = null;
+
+    /**
+     * Whether any primitive has requested a redraw.
+     * Affects whether `Sequencer.stepThreads` will yield
+     * after stepping each thread.
+     * Reset on every frame.
+     * @type {boolean}
+     */
+    this.redrawRequested = false;
+
+    // Register all given block packages.
     this._registerBlockPackages();
 
+    // Register and initialize "IO devices", containers for processing
+    // I/O related data.
+    /** @type {Object.<string, Object>} */
     this.ioDevices = {
         'clock': new Clock(),
         'keyboard': new Keyboard(this),
         'mouse': new Mouse(this)
     };
-
-    this._scriptGlowsPreviousFrame = [];
-    this._editingTarget = null;
-    /**
-     * Currently known number of clones.
-     * @type {number}
-     */
-    this._cloneCounter = 0;
 }
+
+/**
+ * Inherit from EventEmitter
+ */
+util.inherits(Runtime, EventEmitter);
 
 /**
  * Width of the stage, in pixels.
@@ -115,14 +211,14 @@ Runtime.BLOCK_GLOW_OFF = 'BLOCK_GLOW_OFF';
 Runtime.VISUAL_REPORT = 'VISUAL_REPORT';
 
 /**
- * Inherit from EventEmitter
- */
-util.inherits(Runtime, EventEmitter);
-
-/**
- * How rapidly we try to step threads, in ms.
+ * How rapidly we try to step threads by default, in ms.
  */
 Runtime.THREAD_STEP_INTERVAL = 1000 / 60;
+
+/**
+ * In compatibility mode, how rapidly we try to step threads, in ms.
+ */
+Runtime.THREAD_STEP_INTERVAL_COMPATIBILITY = 1000 / 30;
 
 /**
  * How many clones can be created at a time.
@@ -174,9 +270,6 @@ Runtime.prototype._registerBlockPackages = function () {
 Runtime.prototype.getOpcodeFunction = function (opcode) {
     return this._primitives[opcode];
 };
-
-// -----------------------------------------------------------------------------
-// -----------------------------------------------------------------------------
 
 /**
  * Return whether an opcode represents a hat block.
@@ -235,7 +328,7 @@ Runtime.prototype.attachRenderer = function (renderer) {
  */
 Runtime.prototype._pushThread = function (id, target) {
     var thread = new Thread(id);
-    thread.setTarget(target);
+    thread.target = target;
     thread.pushStack(id);
     this.threads.push(thread);
     return thread;
@@ -449,6 +542,10 @@ Runtime.prototype.stopAll = function () {
  * inactive threads after each iteration.
  */
 Runtime.prototype._step = function () {
+    if (this.pauseMode) {
+        // Don't do any execution while in pause mode.
+        return;
+    }
     // Find all edge-activated hats, and add them to threads to be evaluated.
     for (var hatType in this._hats) {
         var hat = this._hats[hatType];
@@ -456,37 +553,113 @@ Runtime.prototype._step = function () {
             this.startHats(hatType);
         }
     }
-    var inactiveThreads = this.sequencer.stepThreads(this.threads);
-    this._updateScriptGlows();
-    for (var i = 0; i < inactiveThreads.length; i++) {
-        this._removeThread(inactiveThreads[i]);
+    this.redrawRequested = false;
+    var inactiveThreads = this.sequencer.stepThreads();
+    this._updateGlows(inactiveThreads);
+};
+
+/**
+ * Set the current editing target known by the runtime.
+ * @param {!Target} editingTarget New editing target.
+ */
+Runtime.prototype.setEditingTarget = function (editingTarget) {
+    this._editingTarget = editingTarget;
+    // Script glows must be cleared.
+    this._scriptGlowsPreviousFrame = [];
+    this._updateGlows();
+};
+
+/**
+ * Set whether we are in pause mode.
+ * @param {boolean} pauseModeOn True iff in pause mode.
+ */
+Runtime.prototype.setPauseMode = function (pauseModeOn) {
+    // Inform the project clock/timer to pause/resume its time.
+    if (this.ioDevices.clock) {
+        if (pauseModeOn && !this.pauseMode) {
+            this.ioDevices.clock.pause();
+        }
+        if (!pauseModeOn && this.pauseMode) {
+            this.ioDevices.clock.resume();
+        }
+    }
+    this.pauseMode = pauseModeOn;
+};
+
+/**
+ * Set whether we are in 30 TPS compatibility mode.
+ * @param {boolean} compatibilityModeOn True iff in compatibility mode.
+ */
+Runtime.prototype.setCompatibilityMode = function (compatibilityModeOn) {
+    this.compatibilityMode = compatibilityModeOn;
+    if (this._steppingInterval) {
+        self.clearInterval(this._steppingInterval);
+        this.start();
     }
 };
 
-Runtime.prototype.setEditingTarget = function (editingTarget) {
-    this._scriptGlowsPreviousFrame = [];
-    this._editingTarget = editingTarget;
-    this._updateScriptGlows();
+/**
+ * Set whether we are in single-stepping mode.
+ * @param {boolean} singleSteppingOn True iff in single-stepping mode.
+ */
+Runtime.prototype.setSingleSteppingMode = function (singleSteppingOn) {
+    this.singleStepping = singleSteppingOn;
+    if (this._steppingInterval) {
+        self.clearInterval(this._steppingInterval);
+        this.start();
+    }
 };
 
-Runtime.prototype._updateScriptGlows = function () {
+/**
+ * Set the speed during single-stepping mode.
+ * @param {number} speed Interval length to step threads, in ms.
+ */
+Runtime.prototype.setSingleSteppingSpeed = function (speed) {
+    this.singleStepInterval = 1000 / speed;
+    if (this._steppingInterval) {
+        self.clearInterval(this._steppingInterval);
+        this.start();
+    }
+};
+
+/**
+ * Emit glows/glow clears for blocks and scripts after a single tick.
+ * Looks at `this.threads` and notices which have turned on/off new glows.
+ * @param {Array.<Thread>=} opt_extraThreads Optional list of inactive threads.
+ */
+Runtime.prototype._updateGlows = function (opt_extraThreads) {
+    var searchThreads = [];
+    searchThreads.push.apply(searchThreads, this.threads);
+    if (opt_extraThreads) {
+        searchThreads.push.apply(searchThreads, opt_extraThreads);
+    }
     // Set of scripts that request a glow this frame.
     var requestedGlowsThisFrame = [];
+    var requestedBlockGlowsThisFrame = [];
     // Final set of scripts glowing during this frame.
     var finalScriptGlows = [];
+    var finalBlockGlows = [];
     // Find all scripts that should be glowing.
-    for (var i = 0; i < this.threads.length; i++) {
-        var thread = this.threads[i];
+    for (var i = 0; i < searchThreads.length; i++) {
+        var thread = searchThreads[i];
         var target = thread.target;
-        if (thread.requestScriptGlowInFrame && target == this._editingTarget) {
-            var blockForThread = thread.peekStack() || thread.topBlock;
-            var script = target.blocks.getTopLevelScript(blockForThread);
-            if (!script) {
-                // Attempt to find in flyout blocks.
-                script = this.flyoutBlocks.getTopLevelScript(blockForThread);
+        if (target == this._editingTarget) {
+            var blockForThread = thread.blockGlowInFrame;
+            if (thread.requestScriptGlowInFrame) {
+                var script = target.blocks.getTopLevelScript(blockForThread);
+                if (!script) {
+                    // Attempt to find in flyout blocks.
+                    script = this.flyoutBlocks.getTopLevelScript(
+                        blockForThread
+                    );
+                }
+                if (script) {
+                    requestedGlowsThisFrame.push(script);
+                }
             }
-            if (script) {
-                requestedGlowsThisFrame.push(script);
+            // Only show block glows in single-stepping mode.
+            if (this.singleStepping && blockForThread) {
+                requestedBlockGlowsThisFrame.push(blockForThread);
             }
         }
     }
@@ -509,7 +682,30 @@ Runtime.prototype._updateScriptGlows = function () {
             finalScriptGlows.push(currentFrameGlow);
         }
     }
+    for (var m = 0; m < this._blockGlowsPreviousFrame.length; m++) {
+        var previousBlockGlow = this._blockGlowsPreviousFrame[m];
+        if (requestedBlockGlowsThisFrame.indexOf(previousBlockGlow) < 0) {
+            // Glow turned off.
+            try {
+                this.glowBlock(previousBlockGlow, false);
+            } catch (e) {
+                // Block has been removed.
+            }
+        } else {
+            // Still glowing.
+            finalBlockGlows.push(previousBlockGlow);
+        }
+    }
+    for (var p = 0; p < requestedBlockGlowsThisFrame.length; p++) {
+        var currentBlockFrameGlow = requestedBlockGlowsThisFrame[p];
+        if (this._blockGlowsPreviousFrame.indexOf(currentBlockFrameGlow) < 0) {
+            // Glow turned on.
+            this.glowBlock(currentBlockFrameGlow, true);
+            finalBlockGlows.push(currentBlockFrameGlow);
+        }
+    }
     this._scriptGlowsPreviousFrame = finalScriptGlows;
+    this._blockGlowsPreviousFrame = finalBlockGlows;
 };
 
 /**
@@ -618,21 +814,37 @@ Runtime.prototype.getTargetForStage = function () {
 };
 
 /**
+ * Tell the runtime to request a redraw.
+ * Use after a clone/sprite has completed some visible operation on the stage.
+ */
+Runtime.prototype.requestRedraw = function () {
+    this.redrawRequested = true;
+};
+
+/**
  * Handle an animation frame from the main thread.
  */
 Runtime.prototype.animationFrame = function () {
     if (this.renderer) {
+        // @todo: Only render when this.redrawRequested or clones rendered.
         this.renderer.draw();
     }
 };
 
 /**
- * Set up timers to repeatedly step in a browser
+ * Set up timers to repeatedly step in a browser.
  */
 Runtime.prototype.start = function () {
-    self.setInterval(function() {
+    var interval = Runtime.THREAD_STEP_INTERVAL;
+    if (this.singleStepping) {
+        interval = this.singleStepInterval;
+    } else if (this.compatibilityMode) {
+        interval = Runtime.THREAD_STEP_INTERVAL_COMPATIBILITY;
+    }
+    this.currentStepTime = interval;
+    this._steppingInterval = self.setInterval(function() {
         this._step();
-    }.bind(this), Runtime.THREAD_STEP_INTERVAL);
+    }.bind(this), interval);
 };
 
 module.exports = Runtime;

@@ -67,6 +67,53 @@ VirtualMachine.prototype.greenFlag = function () {
 };
 
 /**
+ * Set whether the VM is in "turbo mode."
+ * When true, loops don't yield to redraw.
+ * @param {Boolean} turboModeOn Whether turbo mode should be set.
+ */
+VirtualMachine.prototype.setTurboMode = function (turboModeOn) {
+    this.runtime.turboMode = !!turboModeOn;
+};
+
+/**
+ * Set whether the VM is in "pause mode."
+ * When true, nothing is stepped.
+ * @param {Boolean} pauseModeOn Whether pause mode should be set.
+ */
+VirtualMachine.prototype.setPauseMode = function (pauseModeOn) {
+    this.runtime.setPauseMode(!!pauseModeOn);
+};
+
+/**
+ * Set whether the VM is in 2.0 "compatibility mode."
+ * When true, ticks go at 2.0 speed (30 TPS).
+ * @param {Boolean} compatibilityModeOn Whether compatibility mode is set.
+ */
+VirtualMachine.prototype.setCompatibilityMode = function (compatibilityModeOn) {
+    this.runtime.setCompatibilityMode(!!compatibilityModeOn);
+};
+
+/**
+ * Set whether the VM is in "single stepping mode."
+ * When true, blocks execute slowly and are highlighted visually.
+ * @param {Boolean} singleSteppingOn Whether single-stepping mode is set.
+ */
+VirtualMachine.prototype.setSingleSteppingMode = function (singleSteppingOn) {
+    this.runtime.setSingleSteppingMode(!!singleSteppingOn);
+};
+
+
+/**
+ * Set single-stepping mode speed.
+ * When in single-stepping mode, adjusts the speed of execution.
+ * @param {Number} speed Interval length in ms.
+ */
+VirtualMachine.prototype.setSingleSteppingSpeed = function (speed) {
+    this.runtime.setSingleSteppingSpeed(speed);
+};
+
+
+/**
  * Stop all threads and running activities.
  */
 VirtualMachine.prototype.stopAll = function () {

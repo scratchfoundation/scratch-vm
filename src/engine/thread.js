@@ -40,6 +40,19 @@ function Thread (firstBlock) {
      * @type {boolean}
      */
     this.requestScriptGlowInFrame = false;
+
+    /**
+     * Which block ID should glow during this frame, if any.
+     * @type {?string}
+     */
+    this.blockGlowInFrame = null;
+
+    /**
+     * A timer for when the thread enters warp mode.
+     * Substitutes the sequencer's count toward WORK_TIME on a per-thread basis.
+     * @type {?Timer}
+     */
+    this.warpTimer = null;
 }
 
 /**
@@ -51,25 +64,31 @@ function Thread (firstBlock) {
 Thread.STATUS_RUNNING = 0;
 
 /**
- * Thread status for a yielded thread.
- * Threads are in this state when a primitive has yielded; execution is paused
- * until the relevant primitive unyields.
+ * Threads are in this state when a primitive is waiting on a promise;
+ * execution is paused until the promise changes thread status.
  * @const
  */
-Thread.STATUS_YIELD = 1;
+Thread.STATUS_PROMISE_WAIT = 1;
 
 /**
- * Thread status for a single-frame yield.
+ * Thread status for yield.
  * @const
  */
-Thread.STATUS_YIELD_FRAME = 2;
+Thread.STATUS_YIELD = 2;
+
+/**
+ * Thread status for a single-tick yield. This will be cleared when the
+ * thread is resumed.
+ * @const
+ */
+Thread.STATUS_YIELD_TICK = 3;
 
 /**
  * Thread status for a finished/done thread.
  * Thread is in this state when there are no more blocks to execute.
  * @const
  */
-Thread.STATUS_DONE = 3;
+Thread.STATUS_DONE = 4;
 
 /**
  * Push stack and update stack frames appropriately.
@@ -80,7 +99,14 @@ Thread.prototype.pushStack = function (blockId) {
     // Push an empty stack frame, if we need one.
     // Might not, if we just popped the stack.
     if (this.stack.length > this.stackFrames.length) {
+        // Copy warp mode from any higher level.
+        var warpMode = false;
+        if (this.stackFrames[this.stackFrames.length - 1]) {
+            warpMode = this.stackFrames[this.stackFrames.length - 1].warpMode;
+        }
         this.stackFrames.push({
+            isLoop: false, // Whether this level of the stack is a loop.
+            warpMode: warpMode, // Whether this level is in warp mode.
             reported: {}, // Collects reported input values.
             waitingReporter: null, // Name of waiting reporter.
             params: {}, // Procedure parameters.
@@ -125,22 +151,32 @@ Thread.prototype.peekParentStackFrame = function () {
 
 /**
  * Push a reported value to the parent of the current stack frame.
- * @param {!Any} value Reported value to push.
+ * @param {*} value Reported value to push.
  */
 Thread.prototype.pushReportedValue = function (value) {
     var parentStackFrame = this.peekParentStackFrame();
     if (parentStackFrame) {
         var waitingReporter = parentStackFrame.waitingReporter;
         parentStackFrame.reported[waitingReporter] = value;
-        parentStackFrame.waitingReporter = null;
     }
 };
 
+/**
+ * Add a parameter to the stack frame.
+ * Use when calling a procedure with parameter values.
+ * @param {!string} paramName Name of parameter.
+ * @param {*} value Value to set for parameter.
+ */
 Thread.prototype.pushParam = function (paramName, value) {
     var stackFrame = this.peekStackFrame();
     stackFrame.params[paramName] = value;
 };
 
+/**
+ * Get a parameter at the lowest possible level of the stack.
+ * @param {!string} paramName Name of parameter.
+ * @return {*} value Value for parameter.
+ */
 Thread.prototype.getParam = function (paramName) {
     for (var i = this.stackFrames.length - 1; i >= 0; i--) {
         var frame = this.stackFrames[i];
@@ -159,28 +195,43 @@ Thread.prototype.atStackTop = function () {
     return this.peekStack() === this.topBlock;
 };
 
+
 /**
- * Set thread status.
- * @param {number} status Enum representing thread status.
+ * Switch the thread to the next block at the current level of the stack.
+ * For example, this is used in a standard sequence of blocks,
+ * where execution proceeds from one block to the next.
  */
-Thread.prototype.setStatus = function (status) {
-    this.status = status;
+Thread.prototype.goToNextBlock = function () {
+    var nextBlockId = this.target.blocks.getNextBlock(this.peekStack());
+    // Copy warp mode to next block.
+    var warpMode = this.peekStackFrame().warpMode;
+    // The current block is on the stack - pop it and push the next.
+    // Note that this could push `null` - that is handled by the sequencer.
+    this.popStack();
+    this.pushStack(nextBlockId);
+    if (this.peekStackFrame()) {
+        this.peekStackFrame().warpMode = warpMode;
+    }
 };
 
 /**
- * Set thread target.
- * @param {?Target} target Target for this thread.
+ * Attempt to determine whether a procedure call is recursive,
+ * by examining the stack.
+ * @param {!string} procedureCode Procedure code of procedure being called.
+ * @return {boolean} True if the call appears recursive.
  */
-Thread.prototype.setTarget = function (target) {
-    this.target = target;
-};
-
-/**
- * Get thread target.
- * @return {?Target} Target for this thread, if available.
- */
-Thread.prototype.getTarget = function () {
-    return this.target;
+Thread.prototype.isRecursiveCall = function (procedureCode) {
+    var callCount = 5; // Max number of enclosing procedure calls to examine.
+    var sp = this.stack.length - 1;
+    for (var i = sp - 1; i >= 0; i--) {
+        var block = this.target.blocks.getBlock(this.stack[i]);
+        if (block.opcode == 'procedures_callnoreturn' &&
+            block.mutation.proccode == procedureCode)  {
+            return true;
+        }
+        if (--callCount < 0) return false;
+    }
+    return false;
 };
 
 module.exports = Thread;

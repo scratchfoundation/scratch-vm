@@ -152,6 +152,9 @@ Clone.prototype.setXY = function (x, y) {
         this.renderer.updateDrawableProperties(this.drawableID, {
             position: [this.x, this.y]
         });
+        if (this.visible) {
+            this.runtime.requestRedraw();
+        }
     }
 };
 
@@ -191,6 +194,9 @@ Clone.prototype.setDirection = function (direction) {
             direction: renderedDirectionScale.direction,
             scale: renderedDirectionScale.scale
         });
+        if (this.visible) {
+            this.runtime.requestRedraw();
+        }
     }
 };
 
@@ -224,6 +230,9 @@ Clone.prototype.setVisible = function (visible) {
         this.renderer.updateDrawableProperties(this.drawableID, {
             visible: this.visible
         });
+        if (this.visible) {
+            this.runtime.requestRedraw();
+        }
     }
 };
 
@@ -243,6 +252,9 @@ Clone.prototype.setSize = function (size) {
             direction: renderedDirectionScale.direction,
             scale: renderedDirectionScale.scale
         });
+        if (this.visible) {
+            this.runtime.requestRedraw();
+        }
     }
 };
 
@@ -258,6 +270,9 @@ Clone.prototype.setEffect = function (effectName, value) {
         var props = {};
         props[effectName] = this.effects[effectName];
         this.renderer.updateDrawableProperties(this.drawableID, props);
+        if (this.visible) {
+            this.runtime.requestRedraw();
+        }
     }
 };
 
@@ -270,6 +285,9 @@ Clone.prototype.clearEffects = function () {
     }
     if (this.renderer) {
         this.renderer.updateDrawableProperties(this.drawableID, this.effects);
+        if (this.visible) {
+            this.runtime.requestRedraw();
+        }
     }
 };
 
@@ -287,6 +305,9 @@ Clone.prototype.setCostume = function (index) {
         this.renderer.updateDrawableProperties(this.drawableID, {
             skin: this.sprite.costumes[this.currentCostume].skin
         });
+        if (this.visible) {
+            this.runtime.requestRedraw();
+        }
     }
 };
 
@@ -308,6 +329,9 @@ Clone.prototype.setRotationStyle = function (rotationStyle) {
             direction: renderedDirectionScale.direction,
             scale: renderedDirectionScale.scale
         });
+        if (this.visible) {
+            this.runtime.requestRedraw();
+        }
     }
 };
 
@@ -339,6 +363,9 @@ Clone.prototype.updateAllDrawableProperties = function () {
             visible: this.visible,
             skin: this.sprite.costumes[this.currentCostume].skin
         });
+        if (this.visible) {
+            this.runtime.requestRedraw();
+        }
     }
 };
 
@@ -552,6 +579,9 @@ Clone.prototype.dispose = function () {
     this.runtime.changeCloneCounter(-1);
     if (this.renderer && this.drawableID !== null) {
         this.renderer.destroyDrawable(this.drawableID);
+        if (this.visible) {
+            this.runtime.requestRedraw();
+        }
     }
 };
 
