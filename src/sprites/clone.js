@@ -302,8 +302,11 @@ Clone.prototype.setCostume = function (index) {
         index, 0, this.sprite.costumes.length - 1
     );
     if (this.renderer) {
+        var costume = this.sprite.costumes[this.currentCostume];
         this.renderer.updateDrawableProperties(this.drawableID, {
-            skin: this.sprite.costumes[this.currentCostume].skin
+            skin: costume.skin,
+            costumeResolution: costume.bitmapResolution,
+            rotationCenter: [costume.rotationCenterX, costume.rotationCenterY]
         });
         if (this.visible) {
             this.runtime.requestRedraw();
@@ -356,12 +359,15 @@ Clone.prototype.getCostumeIndexByName = function (costumeName) {
 Clone.prototype.updateAllDrawableProperties = function () {
     if (this.renderer) {
         var renderedDirectionScale = this._getRenderedDirectionAndScale();
+        var costume = this.sprite.costumes[this.currentCostume];
         this.renderer.updateDrawableProperties(this.drawableID, {
             position: [this.x, this.y],
             direction: renderedDirectionScale.direction,
             scale: renderedDirectionScale.scale,
             visible: this.visible,
-            skin: this.sprite.costumes[this.currentCostume].skin
+            skin: costume.skin,
+            costumeResolution: costume.bitmapResolution,
+            rotationCenter: [costume.rotationCenterX, costume.rotationCenterY]
         });
         if (this.visible) {
             this.runtime.requestRedraw();
