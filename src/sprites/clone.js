@@ -353,9 +353,8 @@ Clone.prototype.getName = function () {
 
 /**
  * Return the clone's tight bounding box.
- * @param {number} x X coordinate of test point.
- * @param {number} y Y coordinate of test point.
- * @return {Boolean} True iff the clone is touching the point.
+ * Includes top, left, bottom, right attributes in Scratch coordinates.
+ * @return {?Object} Tight bounding box of clone, or null.
  */
 Clone.prototype.getBounds = function () {
     if (this.renderer) {

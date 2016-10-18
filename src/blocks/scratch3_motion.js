@@ -141,6 +141,9 @@ Scratch3MotionBlocks.prototype.glide = function (args, util) {
 
 Scratch3MotionBlocks.prototype.ifOnEdgeBounce = function (args, util) {
     var bounds = util.target.getBounds();
+    if (!bounds) {
+        return;
+    }
     // Measure distance to edges.
     // Values are positive when the sprite is far away,
     // and clamped to zero when the sprite is beyond.
