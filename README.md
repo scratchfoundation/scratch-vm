@@ -111,5 +111,17 @@ npm test
 npm run coverage
 ```
 
+## Publishing to GitHub Pages
+```bash
+npm run deploy
+```
+
+This will push the currently built playground to the gh-pages branch of the
+currently tracked remote.  If you would like to change where to push to, add
+a repo url argument:
+```bash
+npm run deploy -- -r <your repo url>
+```
+
 ## Donate
 We provide [Scratch](https://scratch.mit.edu) free of charge, and want to keep it that way! Please consider making a [donation](https://secure.donationpay.org/scratchfoundation/) to support our continued engineering, design, community, and resource development efforts. Donations of any size are appreciated. Thank you!
