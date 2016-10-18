@@ -72,7 +72,7 @@ VirtualMachine.prototype.greenFlag = function () {
  * @param {Boolean} turboModeOn Whether turbo mode should be set.
  */
 VirtualMachine.prototype.setTurboMode = function (turboModeOn) {
-    this.runtime.turboMode = (turboModeOn == true);
+    this.runtime.turboMode = !!turboModeOn;
 };
 
 /**
@@ -81,7 +81,7 @@ VirtualMachine.prototype.setTurboMode = function (turboModeOn) {
  * @param {Boolean} pauseModeOn Whether pause mode should be set.
  */
 VirtualMachine.prototype.setPauseMode = function (pauseModeOn) {
-    this.runtime.setPauseMode(pauseModeOn == true);
+    this.runtime.setPauseMode(!!pauseModeOn);
 };
 
 /**
@@ -90,7 +90,7 @@ VirtualMachine.prototype.setPauseMode = function (pauseModeOn) {
  * @param {Boolean} compatibilityModeOn Whether compatibility mode is set.
  */
 VirtualMachine.prototype.setCompatibilityMode = function (compatibilityModeOn) {
-    this.runtime.setCompatibilityMode(compatibilityModeOn == true);
+    this.runtime.setCompatibilityMode(!!compatibilityModeOn);
 };
 
 /**
@@ -99,7 +99,7 @@ VirtualMachine.prototype.setCompatibilityMode = function (compatibilityModeOn) {
  * @param {Boolean} singleSteppingOn Whether single-stepping mode is set.
  */
 VirtualMachine.prototype.setSingleSteppingMode = function (singleSteppingOn) {
-    this.runtime.setSingleSteppingMode(singleSteppingOn == true);
+    this.runtime.setSingleSteppingMode(!!singleSteppingOn);
 };
 
 
