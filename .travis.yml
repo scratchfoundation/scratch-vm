@@ -31,5 +31,5 @@ after_script:
     # Publish to gh-pages as most recent committer
     git config --global user.email $(git log --pretty=format:"%ae" -n1)
     git config --global user.name $(git log --pretty=format:"%an" -n1)
-    npm run deploy -- -x -r https://${GH_TOKEN}@github.com/${TRAVIS_REPO_SLUG}.git
+    npm run --silent deploy -- -x -r $GH_PAGES_REPO
   fi
