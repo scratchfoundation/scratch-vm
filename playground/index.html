@@ -1,0 +1,89 @@
+<!doctype html>
+
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>Scratch VM Playground</title>
+    <link rel="stylesheet" href="playground.css">
+    <link rel="stylesheet" href="zenburn.css">
+</head>
+<body>
+    <div id="vm-devtools">
+        <h2>Scratch VM Playground</h2>
+        <select id="selectedTarget" multiple></select>
+        <div id="projectButtons">
+            <button id="greenflag">Green flag</button>
+            <button id="stopall">Stop</button>
+        </div>
+        <div>
+            Turbo: <input id='turbomode' type='checkbox' />
+        </div>
+        <div>
+            Pause: <input id='pausemode' type='checkbox' />
+        </div>
+        <div>
+            Compatibility (30 TPS):  <input id='compatmode' type='checkbox' />
+        </div>
+        <div>
+            Single stepping:  <input id='singlestepmode' type='checkbox' />
+            <input id='singlestepspeed' type='range' min='1' max='20' value='10' />
+        </div>
+        <br />
+        <ul id="playgroundLinks">
+            <li><a id="renderexplorer-link" href="#">Renderer</a></li>
+            <li><a id="threadexplorer-link" href="#">Threads</a></li>
+            <li><a id="blockexplorer-link" href="#">Block Representation</a></li>
+            <li><a id="importexport-link" href="#">Import/Export</a></li>
+        </ul><br />
+        <div id="tab-renderexplorer">
+            Renderer<br />
+            <canvas id="scratch-stage" style="width: 480px; height: 360px;"></canvas><br />
+        </div>
+        <div id="tab-threadexplorer">
+            Thread explorer
+            <pre id="threadexplorer"></pre>
+        </div>
+        <div id="tab-blockexplorer">
+            Block explorer
+            <pre id="blockexplorer"></pre>
+        </div>
+        <div id="tab-importexport">
+            Import/Export<br />
+            Project ID: <input id="projectId" value="119615668" />
+            <button id="projectLoadButton">Load</button>
+            <button id="createEmptyProject">New Project</button><br />
+            <p>
+                <input type="button" value="Export to XML" onclick="toXml()">
+                &nbsp;
+                <input type="button" value="Import from XML" onclick="fromXml()" id="import">
+                <br /><br />
+                <textarea id="importExport"></textarea>
+            </p>
+        </div>
+    </div>
+
+    <div id="blocks"></div>
+
+    <!-- FPS counter, Syntax highlighter, Blocks, Renderer -->
+    <script src="./vendor.js"></script>
+    <!-- VM Worker -->
+    <script src="./vm.js"></script>
+    <!-- Playground -->
+    <script src="./playground.js"></script>
+    <script>
+        function toXml() {
+            var output = document.getElementById('importExport');
+            var xml = Blockly.Xml.workspaceToDom(workspace);
+            output.value = Blockly.Xml.domToPrettyText(xml);
+            output.focus();
+            output.select();
+          }
+
+          function fromXml() {
+            var input = document.getElementById('importExport');
+            var xml = Blockly.Xml.textToDom(input.value);
+            Blockly.Xml.domToWorkspace(workspace, xml);
+          }
+    </script>
+</body>
+</html>

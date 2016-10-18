@@ -9,18 +9,32 @@
     "type": "git",
     "url": "git+ssh://git@github.com/LLK/scratch-vm.git"
   },
-  "main": "./src/index.js",
+  "main": "./dist.js",
   "scripts": {
-    "test": "make test"
-  },
-  "dependencies": {
-    "htmlparser2": "3.9.0",
-    "memoizee": "0.3.10"
+    "prepublish": "./node_modules/.bin/webpack --bail",
+    "start": "webpack-dev-server",
+    "build": "webpack --colors --progress",
+    "test": "make test",
+    "version": "./node_modules/.bin/json -f package.json -I -e \"this.repository.sha = '$(git log -n1 --pretty=format:%H)'\""
   },
   "devDependencies": {
+    "copy-webpack-plugin": "3.0.1",
     "eslint": "2.7.0",
+    "expose-loader": "0.7.1",
+    "gh-pages": "0.11.0",
+    "highlightjs": "8.7.0",
+    "htmlparser2": "3.9.0",
+    "json": "9.0.4",
     "json-loader": "0.5.4",
+    "lodash.defaultsdeep": "4.6.0",
+    "promise": "7.1.1",
+    "scratch-blocks": "^0.1.0-prepublish",
+    "scratch-render": "^0.1.0-prepublish",
+    "script-loader": "0.7.0",
+    "stats.js": "0.16.0",
     "tap": "5.7.1",
-    "webpack": "1.13.0"
+    "travis-after-all": "1.4.4",
+    "webpack": "1.13.0",
+    "webpack-dev-server": "1.14.1"
   }
 }
