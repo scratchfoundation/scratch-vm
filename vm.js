@@ -14765,6 +14765,8 @@
 	        'looks_cleargraphiceffects': this.clearEffects,
 	        'looks_changesizeby': this.changeSize,
 	        'looks_setsizeto': this.setSize,
+	        'looks_gotofront': this.goToFront,
+	        'looks_gobacklayers': this.goBackLayers,
 	        'looks_size': this.getSize,
 	        'looks_costumeorder': this.getCostumeIndex,
 	        'looks_backdroporder': this.getBackdropIndex,
@@ -14925,6 +14927,14 @@
 	    util.target.setSize(size);
 	};
 
+	Scratch3LooksBlocks.prototype.goToFront = function (args, util) {
+	    util.target.goToFront();
+	};
+
+	Scratch3LooksBlocks.prototype.goBackLayers = function (args, util) {
+	    util.target.goBackLayers(args.NUM);
+	};
+
 	Scratch3LooksBlocks.prototype.getSize = function (args, util) {
 	    return util.target.size;
 	};
@@ -14976,6 +14986,7 @@
 	        'motion_pointindirection': this.pointInDirection,
 	        'motion_pointtowards': this.pointTowards,
 	        'motion_glidesecstoxy': this.glide,
+	        'motion_ifonedgebounce': this.ifOnEdgeBounce,
 	        'motion_setrotationstyle': this.setRotationStyle,
 	        'motion_changexby': this.changeX,
 	        'motion_setx': this.setX,
@@ -15088,6 +15099,62 @@
 	            util.target.setXY(util.stackFrame.endX, util.stackFrame.endY);
 	        }
 	    }
+	};
+
+	Scratch3MotionBlocks.prototype.ifOnEdgeBounce = function (args, util) {
+	    var bounds = util.target.getBounds();
+	    if (!bounds) {
+	        return;
+	    }
+	    // Measure distance to edges.
+	    // Values are positive when the sprite is far away,
+	    // and clamped to zero when the sprite is beyond.
+	    var stageWidth = this.runtime.constructor.STAGE_WIDTH;
+	    var stageHeight = this.runtime.constructor.STAGE_HEIGHT;
+	    var distLeft = Math.max(0, stageWidth / 2 + bounds.left);
+	    var distTop = Math.max(0, stageHeight / 2 - bounds.top);
+	    var distRight = Math.max(0, stageWidth / 2 - bounds.right);
+	    var distBottom = Math.max(0, stageHeight / 2 + bounds.bottom);
+	    // Find the nearest edge.
+	    var nearestEdge = '';
+	    var minDist = Infinity;
+	    if (distLeft < minDist) {
+	        minDist = distLeft;
+	        nearestEdge = 'left';
+	    }
+	    if (distTop < minDist) {
+	        minDist = distTop;
+	        nearestEdge = 'top';
+	    }
+	    if (distRight < minDist) {
+	        minDist = distRight;
+	        nearestEdge = 'right';
+	    }
+	    if (distBottom < minDist) {
+	        minDist = distBottom;
+	        nearestEdge = 'bottom';
+	    }
+	    if (minDist > 0) {
+	        return; // Not touching any edge.
+	    }
+	    // Point away from the nearest edge.
+	    var radians = MathUtil.degToRad(90 - util.target.direction);
+	    var dx = Math.cos(radians);
+	    var dy = -Math.sin(radians);
+	    if (nearestEdge == 'left') {
+	        dx = Math.max(0.2, Math.abs(dx));
+	    } else if (nearestEdge == 'top') {
+	        dy = Math.max(0.2, Math.abs(dy));
+	    } else if (nearestEdge == 'right') {
+	        dx = 0 - Math.max(0.2, Math.abs(dx));
+	    } else if (nearestEdge == 'bottom') {
+	        dy = 0 - Math.max(0.2, Math.abs(dy));
+	    }
+	    var newDirection = MathUtil.radToDeg(Math.atan2(dy, dx)) + 90;
+	    util.target.setDirection(newDirection);
+	    // Keep within the stage.
+	    var fencedPosition = util.target.keepInFence(util.target.x, util.target.y);
+	    util.target.setXY(fencedPosition[0], fencedPosition[1]);
 	};
 
 	Scratch3MotionBlocks.prototype.setRotationStyle = function (args, util) {
@@ -15298,6 +15365,7 @@
 	 */
 	Scratch3SensingBlocks.prototype.getPrimitives = function() {
 	    return {
+	        'sensing_touchingobject': this.touchingObject,
 	        'sensing_touchingcolor': this.touchingColor,
 	        'sensing_coloristouchingcolor': this.colorTouchingColor,
 	        'sensing_distanceto': this.distanceTo,
@@ -15310,6 +15378,19 @@
 	        'sensing_current': this.current,
 	        'sensing_dayssince2000': this.daysSince2000
 	    };
+	};
+
+	Scratch3SensingBlocks.prototype.touchingObject = function (args, util) {
+	    var requestedObject = args.TOUCHINGOBJECTMENU;
+	    if (requestedObject == '_mouse_') {
+	        var mouseX = util.ioQuery('mouse', 'getX');
+	        var mouseY = util.ioQuery('mouse', 'getY');
+	        return util.target.isTouchingPoint(mouseX, mouseY);
+	    } else if (requestedObject == '_edge_') {
+	        return util.target.isTouchingEdge();
+	    } else {
+	        return util.target.isTouchingSprite(requestedObject);
+	    }
 	};
 
 	Scratch3SensingBlocks.prototype.touchingColor = function (args, util) {
@@ -16375,6 +16456,76 @@
 	};
 
 	/**
+	 * Return the clone's tight bounding box.
+	 * Includes top, left, bottom, right attributes in Scratch coordinates.
+	 * @return {?Object} Tight bounding box of clone, or null.
+	 */
+	Clone.prototype.getBounds = function () {
+	    if (this.renderer) {
+	        return this.runtime.renderer.getBounds(this.drawableID);
+	    }
+	    return null;
+	};
+
+	/**
+	 * Return whether the clone is touching a point.
+	 * @param {number} x X coordinate of test point.
+	 * @param {number} y Y coordinate of test point.
+	 * @return {Boolean} True iff the clone is touching the point.
+	 */
+	Clone.prototype.isTouchingPoint = function (x, y) {
+	    if (this.renderer) {
+	        // @todo: Update once pick is in Scratch coordinates.
+	        // Limits test to this Drawable, so this will return true
+	        // even if the clone is obscured by another Drawable.
+	        var pickResult = this.runtime.renderer.pick(
+	            x + this.runtime.constructor.STAGE_WIDTH / 2,
+	            -y + this.runtime.constructor.STAGE_HEIGHT / 2,
+	            null, null,
+	            [this.drawableID]
+	        );
+	        return pickResult === this.drawableID;
+	    }
+	    return false;
+	};
+
+	/**
+	 * Return whether the clone is touching a stage edge.
+	 * @return {Boolean} True iff the clone is touching the stage edge.
+	 */
+	Clone.prototype.isTouchingEdge = function () {
+	    if (this.renderer) {
+	        var stageWidth = this.runtime.constructor.STAGE_WIDTH;
+	        var stageHeight = this.runtime.constructor.STAGE_HEIGHT;
+	        var bounds = this.getBounds();
+	        if (bounds.left < -stageWidth / 2 ||
+	            bounds.right > stageWidth / 2 ||
+	            bounds.top > stageHeight / 2 ||
+	            bounds.bottom < -stageHeight / 2) {
+	            return true;
+	        }
+	    }
+	    return false;
+	};
+
+	/**
+	 * Return whether the clone is touching a named sprite.
+	 * @param {string} spriteName Name fo the sprite.
+	 * @return {Boolean} True iff the clone is touching a clone of the sprite.
+	 */
+	Clone.prototype.isTouchingSprite = function (spriteName) {
+	    var firstClone = this.runtime.getSpriteTargetByName(spriteName);
+	    if (!firstClone || !this.renderer) {
+	        return false;
+	    }
+	    var drawableCandidates = firstClone.sprite.clones.map(function(clone) {
+	        return clone.drawableID;
+	    });
+	    return this.renderer.isTouchingDrawables(
+	        this.drawableID, drawableCandidates);
+	};
+
+	/**
 	 * Return whether the clone is touching a color.
 	 * @param {Array.<number>} rgb [r,g,b], values between 0-255.
 	 * @return {Promise.<Boolean>} True iff the clone is touching the color.
@@ -16401,6 +16552,67 @@
 	        );
 	    }
 	    return false;
+	};
+
+	/**
+	 * Move clone to the front layer.
+	 */
+	Clone.prototype.goToFront = function () {
+	    if (this.renderer) {
+	        this.renderer.setDrawableOrder(this.drawableID, Infinity);
+	    }
+	};
+
+	/**
+	 * Move clone back a number of layers.
+	 * @param {number} nLayers How many layers to go back.
+	 */
+	Clone.prototype.goBackLayers = function (nLayers) {
+	    if (this.renderer) {
+	        this.renderer.setDrawableOrder(this.drawableID, -nLayers, true, 1);
+	    }
+	};
+
+	/**
+	 * Keep a desired position within a fence.
+	 * @param {number} newX New desired X position.
+	 * @param {number} newY New desired Y position.
+	 * @param {Object=} opt_fence Optional fence with left, right, top bottom.
+	 * @return {Array.<number>} Fenced X and Y coordinates.
+	 */
+	Clone.prototype.keepInFence = function (newX, newY, opt_fence) {
+	    var fence = opt_fence;
+	    if (!fence) {
+	        fence = {
+	            left: -this.runtime.constructor.STAGE_WIDTH / 2,
+	            right: this.runtime.constructor.STAGE_WIDTH / 2,
+	            top: this.runtime.constructor.STAGE_HEIGHT / 2,
+	            bottom: -this.runtime.constructor.STAGE_HEIGHT / 2
+	        };
+	    }
+	    var bounds = this.getBounds();
+	    if (!bounds) return;
+	    // Adjust the known bounds to the target position.
+	    bounds.left += (newX - this.x);
+	    bounds.right += (newX - this.x);
+	    bounds.top += (newY - this.y);
+	    bounds.bottom += (newY - this.y);
+	    // Find how far we need to move the target position.
+	    var dx = 0;
+	    var dy = 0;
+	    if (bounds.left < fence.left) {
+	        dx += fence.left - bounds.left;
+	    }
+	    if (bounds.right > fence.right) {
+	        dx += fence.right - bounds.right;
+	    }
+	    if (bounds.top > fence.top) {
+	        dy += fence.top - bounds.top;
+	    }
+	    if (bounds.bottom < fence.bottom) {
+	        dy += fence.bottom - bounds.bottom;
+	    }
+	    return [newX + dx, newY + dy];
 	};
 
 	/**
