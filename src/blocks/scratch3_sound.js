@@ -1,4 +1,5 @@
 var MathUtil = require('../util/math-util');
+var Cast = require('../util/cast');
 var Promise = require('promise');
 
 function Scratch3SoundBlocks(runtime) {
@@ -19,7 +20,9 @@ Scratch3SoundBlocks.prototype.getPrimitives = function() {
         'sound_playuntildone': this.playSoundAndWait,
         'sound_stopallsounds': this.stopAllSounds,
         'sound_playnoteforbeats': this.playNoteForBeats,
+        'sound_playthereminforbeats': this.playThereminForBeats,
         'sound_playdrumforbeats': this.playDrumForBeats,
+        'sound_setinstrumentto': this.setInstrument,
         'sound_seteffectto' : this.setEffect,
         'sound_changeeffectby' : this.changeEffect,
         'sound_cleareffects' : this.clearEffects,
@@ -77,6 +80,15 @@ Scratch3SoundBlocks.prototype.playNoteForBeats = function (args, util) {
     });
 };
 
+Scratch3SoundBlocks.prototype.playThereminForBeats = function (args, util) {
+    util.target.audioEngine.playThereminForBeats(args.NOTE, args.BEATS);
+    return new Promise(function(resolve) {
+        setTimeout(function() {
+            resolve();
+        }, (1000 * args.BEATS) );
+    });
+};
+
 Scratch3SoundBlocks.prototype.playDrumForBeats = function (args, util) {
     util.target.audioEngine.playDrumForBeats(args.DRUMTYPE, args.BEATS);
     return new Promise(function(resolve) {
@@ -84,6 +96,11 @@ Scratch3SoundBlocks.prototype.playDrumForBeats = function (args, util) {
             resolve();
         }, (1000 * args.BEATS) );
     });
+};
+
+Scratch3SoundBlocks.prototype.setInstrument = function (args, util) {
+    var instNum = Cast.toNumber(args.INSTRUMENT);
+    return util.target.audioEngine.setInstrument(instNum);
 };
 
 Scratch3SoundBlocks.prototype.setEffect = function (args, util) {
