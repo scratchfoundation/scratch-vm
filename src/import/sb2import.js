@@ -19,12 +19,13 @@ var List = require('../engine/list');
  * and process the top-level object (the stage object).
  * @param {!string} json SB2-format JSON to load.
  * @param {!Runtime} runtime Runtime object to load all structures into.
+ * @param {Boolean=} opt_forceSprite If set, treat as sprite (Sprite2).
  */
-function sb2import (json, runtime) {
+function sb2import (json, runtime, opt_forceSprite) {
     parseScratchObject(
         JSON.parse(json),
         runtime,
-        true
+        !opt_forceSprite
     );
 }
 
