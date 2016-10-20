@@ -14693,6 +14693,7 @@
 
 		    this._position = twgl.v3.create(0, 0);
 		    this._scale = twgl.v3.create(100, 100);
+		    this._rotationCenter = twgl.v3.create(0, 0);
 		    this._direction = 90;
 		    this._transformDirty = true;
 		    this._visible = true;
@@ -14785,8 +14786,9 @@
 		 * The Drawable will continue using the existing skin until the new one loads.
 		 * If there is no existing skin, the Drawable will use a 1x1 transparent image.
 		 * @param {string} skin_url The URL of the skin.
+		 * @param {number=} opt_costumeResolution Optionally, a resolution for the skin.
 		 */
-		Drawable.prototype.setSkin = function (skin_url) {
+		Drawable.prototype.setSkin = function (skin_url, opt_costumeResolution) {
 		    // TODO: cache Skins instead of loading each time. Ref count them?
 		    // TODO: share Skins across Drawables - see also destroy()
 		    if (skin_url) {
@@ -14799,7 +14801,7 @@
 		                this._setSkinSVG(skin_url);
 		                break;
 		            default:
-		                this._setSkinBitmap(skin_url);
+		                this._setSkinBitmap(skin_url, opt_costumeResolution);
 		                break;
 		        }
 		    } else {
@@ -14839,11 +14841,12 @@
 		/**
 		 * Load a bitmap skin. Supports the same formats as the Image element.
 		 * @param {string} skin_md5ext The MD5 and file extension of the bitmap skin.
+		 * @param {number=} opt_costumeResolution Optionally, a resolution for the skin.
 		 * @private
 		 */
-		Drawable.prototype._setSkinBitmap = function (skin_md5ext) {
+		Drawable.prototype._setSkinBitmap = function (skin_md5ext, opt_costumeResolution) {
 		    var url = skin_md5ext;
-		    this._setSkinCore(url, 2);
+		    this._setSkinCore(url, opt_costumeResolution);
 		};
 
 		/**
@@ -14935,7 +14938,7 @@
 		Drawable.prototype.updateProperties = function (properties) {
 		    var dirty = false;
 		    if ('skin' in properties) {
-		        this.setSkin(properties.skin);
+		        this.setSkin(properties.skin, properties.costumeResolution);
 		        this.setConvexHullDirty();
 		    }
 		    if ('position' in properties && (this._position[0] != properties.position[0] || this._position[1] != properties.position[1])) {
@@ -14950,6 +14953,11 @@
 		    if ('scale' in properties && (this._scale[0] != properties.scale[0] || this._scale[1] != properties.scale[1])) {
 		        this._scale[0] = properties.scale[0];
 		        this._scale[1] = properties.scale[1];
+		        dirty = true;
+		    }
+		    if ('rotationCenter' in properties && (this._rotationCenter[0] != properties.rotationCenter[0] || this._rotationCenter[1] != properties.rotationCenter[1])) {
+		        this._rotationCenter[0] = properties.rotationCenter[0];
+		        this._rotationCenter[1] = properties.rotationCenter[1];
 		        dirty = true;
 		    }
 		    if ('visible' in properties) {
@@ -15018,6 +15026,13 @@
 
 		    var rotation = (270 - this._direction) * Math.PI / 180;
 		    twgl.m4.rotateZ(modelMatrix, rotation, modelMatrix);
+
+		    // Adjust rotation center relative to the skin.
+		    var rotationAdjusted = twgl.v3.subtract(this._rotationCenter, twgl.v3.divScalar(this._uniforms.u_skinSize, 2));
+		    rotationAdjusted[1] *= -1; // Y flipped to Scratch coordinate.
+		    rotationAdjusted[2] = 0; // Z coordinate is 0.
+
+		    twgl.m4.translate(modelMatrix, rotationAdjusted, modelMatrix);
 
 		    var scaledSize = twgl.v3.divScalar(twgl.v3.multiply(this._uniforms.u_skinSize, this._scale), 100);
 		    scaledSize[2] = 0; // was NaN because the vectors have only 2 components.

@@ -138,15 +138,6 @@
 	};
 
 	/**
-	 * Set whether the VM is in "pause mode."
-	 * When true, nothing is stepped.
-	 * @param {Boolean} pauseModeOn Whether pause mode should be set.
-	 */
-	VirtualMachine.prototype.setPauseMode = function (pauseModeOn) {
-	    this.runtime.setPauseMode(!!pauseModeOn);
-	};
-
-	/**
 	 * Set whether the VM is in 2.0 "compatibility mode."
 	 * When true, ticks go at 2.0 speed (30 TPS).
 	 * @param {Boolean} compatibilityModeOn Whether compatibility mode is set.
@@ -154,26 +145,6 @@
 	VirtualMachine.prototype.setCompatibilityMode = function (compatibilityModeOn) {
 	    this.runtime.setCompatibilityMode(!!compatibilityModeOn);
 	};
-
-	/**
-	 * Set whether the VM is in "single stepping mode."
-	 * When true, blocks execute slowly and are highlighted visually.
-	 * @param {Boolean} singleSteppingOn Whether single-stepping mode is set.
-	 */
-	VirtualMachine.prototype.setSingleSteppingMode = function (singleSteppingOn) {
-	    this.runtime.setSingleSteppingMode(!!singleSteppingOn);
-	};
-
-
-	/**
-	 * Set single-stepping mode speed.
-	 * When in single-stepping mode, adjusts the speed of execution.
-	 * @param {Number} speed Interval length in ms.
-	 */
-	VirtualMachine.prototype.setSingleSteppingSpeed = function (speed) {
-	    this.runtime.setSingleSteppingSpeed(speed);
-	};
-
 
 	/**
 	 * Stop all threads and running activities.
@@ -237,12 +208,48 @@
 	    this.clear();
 	    // @todo: Handle other formats, e.g., Scratch 1.4, Scratch 3.0.
 	    sb2import(json, this.runtime);
-	    // Select the first target for editing, e.g., the stage.
-	    this.editingTarget = this.runtime.targets[0];
+	    // Select the first target for editing, e.g., the first sprite.
+	    this.editingTarget = this.runtime.targets[1];
 	    // Update the VM user's knowledge of targets and blocks on the workspace.
 	    this.emitTargetsUpdate();
 	    this.emitWorkspaceUpdate();
 	    this.runtime.setEditingTarget(this.editingTarget);
+	};
+
+	/**
+	 * Add a single sprite from the "Sprite2" (i.e., SB2 sprite) format.
+	 * @param {?string} json JSON string representing the sprite.
+	 */
+	VirtualMachine.prototype.addSprite2 = function (json) {
+	    // Select new sprite.
+	    this.editingTarget = sb2import(json, this.runtime, true);
+	    // Update the VM user's knowledge of targets and blocks on the workspace.
+	    this.emitTargetsUpdate();
+	    this.emitWorkspaceUpdate();
+	    this.runtime.setEditingTarget(this.editingTarget);
+	};
+
+	/**
+	 * Add a costume to the current editing target.
+	 * @param {!Object} costumeObject Object representing the costume.
+	 */
+	VirtualMachine.prototype.addCostume = function (costumeObject) {
+	    this.editingTarget.sprite.costumes.push(costumeObject);
+	    // Switch to the costume.
+	    this.editingTarget.setCostume(
+	        this.editingTarget.sprite.costumes.length - 1
+	    );
+	};
+
+	/**
+	 * Add a backdrop to the stage.
+	 * @param {!Object} backdropObject Object representing the backdrop.
+	 */
+	VirtualMachine.prototype.addBackdrop = function (backdropObject) {
+	    var stage = this.runtime.getTargetForStage();
+	    stage.sprite.costumes.push(backdropObject);
+	    // Switch to the backdrop.
+	    stage.setCostume(stage.sprite.costumes.length - 1);
 	};
 
 	/**
@@ -1590,12 +1597,6 @@
 	    this._scriptGlowsPreviousFrame = [];
 
 	    /**
-	     * A list of block IDs that were glowing during the previous frame.
-	     * @type {!Array.<!string>}
-	     */
-	    this._blockGlowsPreviousFrame = [];
-
-	    /**
 	     * Currently known number of clones, used to enforce clone limit.
 	     * @type {number}
 	     */
@@ -1608,22 +1609,10 @@
 	    this.turboMode = false;
 
 	    /**
-	     * Whether the project is in "pause mode."
-	     * @type {Boolean}
-	     */
-	    this.pauseMode = false;
-
-	    /**
 	     * Whether the project is in "compatibility mode" (30 TPS).
 	     * @type {Boolean}
 	     */
 	    this.compatibilityMode = false;
-
-	    /**
-	     * Whether the project is in "single stepping mode."
-	     * @type {Boolean}
-	     */
-	    this.singleStepping = false;
 
 	    /**
 	     * How fast in ms "single stepping mode" should run, in ms.
@@ -2048,10 +2037,6 @@
 	 * inactive threads after each iteration.
 	 */
 	Runtime.prototype._step = function () {
-	    if (this.pauseMode) {
-	        // Don't do any execution while in pause mode.
-	        return;
-	    }
 	    // Find all edge-activated hats, and add them to threads to be evaluated.
 	    for (var hatType in this._hats) {
 	        var hat = this._hats[hatType];
@@ -2076,23 +2061,6 @@
 	};
 
 	/**
-	 * Set whether we are in pause mode.
-	 * @param {boolean} pauseModeOn True iff in pause mode.
-	 */
-	Runtime.prototype.setPauseMode = function (pauseModeOn) {
-	    // Inform the project clock/timer to pause/resume its time.
-	    if (this.ioDevices.clock) {
-	        if (pauseModeOn && !this.pauseMode) {
-	            this.ioDevices.clock.pause();
-	        }
-	        if (!pauseModeOn && this.pauseMode) {
-	            this.ioDevices.clock.resume();
-	        }
-	    }
-	    this.pauseMode = pauseModeOn;
-	};
-
-	/**
 	 * Set whether we are in 30 TPS compatibility mode.
 	 * @param {boolean} compatibilityModeOn True iff in compatibility mode.
 	 */
@@ -2105,31 +2073,7 @@
 	};
 
 	/**
-	 * Set whether we are in single-stepping mode.
-	 * @param {boolean} singleSteppingOn True iff in single-stepping mode.
-	 */
-	Runtime.prototype.setSingleSteppingMode = function (singleSteppingOn) {
-	    this.singleStepping = singleSteppingOn;
-	    if (this._steppingInterval) {
-	        self.clearInterval(this._steppingInterval);
-	        this.start();
-	    }
-	};
-
-	/**
-	 * Set the speed during single-stepping mode.
-	 * @param {number} speed Interval length to step threads, in ms.
-	 */
-	Runtime.prototype.setSingleSteppingSpeed = function (speed) {
-	    this.singleStepInterval = 1000 / speed;
-	    if (this._steppingInterval) {
-	        self.clearInterval(this._steppingInterval);
-	        this.start();
-	    }
-	};
-
-	/**
-	 * Emit glows/glow clears for blocks and scripts after a single tick.
+	 * Emit glows/glow clears for scripts after a single tick.
 	 * Looks at `this.threads` and notices which have turned on/off new glows.
 	 * @param {Array.<Thread>=} opt_extraThreads Optional list of inactive threads.
 	 */
@@ -2141,10 +2085,8 @@
 	    }
 	    // Set of scripts that request a glow this frame.
 	    var requestedGlowsThisFrame = [];
-	    var requestedBlockGlowsThisFrame = [];
 	    // Final set of scripts glowing during this frame.
 	    var finalScriptGlows = [];
-	    var finalBlockGlows = [];
 	    // Find all scripts that should be glowing.
 	    for (var i = 0; i < searchThreads.length; i++) {
 	        var thread = searchThreads[i];
@@ -2162,10 +2104,6 @@
 	                if (script) {
 	                    requestedGlowsThisFrame.push(script);
 	                }
-	            }
-	            // Only show block glows in single-stepping mode.
-	            if (this.singleStepping && blockForThread) {
-	                requestedBlockGlowsThisFrame.push(blockForThread);
 	            }
 	        }
 	    }
@@ -2188,30 +2126,7 @@
 	            finalScriptGlows.push(currentFrameGlow);
 	        }
 	    }
-	    for (var m = 0; m < this._blockGlowsPreviousFrame.length; m++) {
-	        var previousBlockGlow = this._blockGlowsPreviousFrame[m];
-	        if (requestedBlockGlowsThisFrame.indexOf(previousBlockGlow) < 0) {
-	            // Glow turned off.
-	            try {
-	                this.glowBlock(previousBlockGlow, false);
-	            } catch (e) {
-	                // Block has been removed.
-	            }
-	        } else {
-	            // Still glowing.
-	            finalBlockGlows.push(previousBlockGlow);
-	        }
-	    }
-	    for (var p = 0; p < requestedBlockGlowsThisFrame.length; p++) {
-	        var currentBlockFrameGlow = requestedBlockGlowsThisFrame[p];
-	        if (this._blockGlowsPreviousFrame.indexOf(currentBlockFrameGlow) < 0) {
-	            // Glow turned on.
-	            this.glowBlock(currentBlockFrameGlow, true);
-	            finalBlockGlows.push(currentBlockFrameGlow);
-	        }
-	    }
 	    this._scriptGlowsPreviousFrame = finalScriptGlows;
-	    this._blockGlowsPreviousFrame = finalBlockGlows;
 	};
 
 	/**
@@ -2432,13 +2347,6 @@
 	                activeThread.warpTimer = null;
 	            }
 	            if (activeThread.status === Thread.STATUS_RUNNING) {
-	                // After stepping, status is still running.
-	                // If we're in single-stepping mode, mark the thread as
-	                // a single-tick yield so it doesn't re-execute
-	                // until the next frame.
-	                if (this.runtime.singleStepping) {
-	                    activeThread.status = Thread.STATUS_YIELD_TICK;
-	                }
 	                numActiveThreads++;
 	            }
 	        }
@@ -2530,11 +2438,6 @@
 	            }
 	            // Get next block of existing block on the stack.
 	            thread.goToNextBlock();
-	        }
-	        // In single-stepping mode, force `stepThread` to only run one block
-	        // at a time.
-	        if (this.runtime.singleStepping) {
-	            return;
 	        }
 	    }
 	};
@@ -15155,12 +15058,14 @@
 	 * and process the top-level object (the stage object).
 	 * @param {!string} json SB2-format JSON to load.
 	 * @param {!Runtime} runtime Runtime object to load all structures into.
+	 * @param {Boolean=} opt_forceSprite If set, treat as sprite (Sprite2).
+	 * @return {?Target} Top-level target created (stage or sprite).
 	 */
-	function sb2import (json, runtime) {
-	    parseScratchObject(
+	function sb2import (json, runtime, opt_forceSprite) {
+	    return parseScratchObject(
 	        JSON.parse(json),
 	        runtime,
-	        true
+	        !opt_forceSprite
 	    );
 	}
 
@@ -15169,6 +15074,7 @@
 	 * @param {!Object} object From-JSON "Scratch object:" sprite, stage, watcher.
 	 * @param {!Runtime} runtime Runtime object to load all structures into.
 	 * @param {boolean} topLevel Whether this is the top-level object (stage).
+	 * @return {?Target} Target created (stage or sprite).
 	 */
 	function parseScratchObject (object, runtime, topLevel) {
 	    if (!object.hasOwnProperty('objName')) {
@@ -15264,6 +15170,7 @@
 	            parseScratchObject(object.children[m], runtime, false);
 	        }
 	    }
+	    return target;
 	}
 
 	/**
