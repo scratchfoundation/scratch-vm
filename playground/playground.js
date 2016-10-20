@@ -249,26 +249,11 @@ window.onload = function() {
         var turboOn = document.getElementById('turbomode').checked;
         vm.setTurboMode(turboOn);
     });
-    document.getElementById('pausemode').addEventListener('change', function() {
-        var pauseOn = document.getElementById('pausemode').checked;
-        vm.setPauseMode(pauseOn);
-    });
     document.getElementById('compatmode').addEventListener('change',
     function() {
         var compatibilityMode = document.getElementById('compatmode').checked;
         vm.setCompatibilityMode(compatibilityMode);
     });
-    document.getElementById('singlestepmode').addEventListener('change',
-    function() {
-        var singleStep = document.getElementById('singlestepmode').checked;
-        vm.setSingleSteppingMode(singleStep);
-    });
-    document.getElementById('singlestepspeed').addEventListener('input',
-    function() {
-        var speed = document.getElementById('singlestepspeed').value;
-        vm.setSingleSteppingSpeed(speed);
-    });
-
     var tabBlockExplorer = document.getElementById('tab-blockexplorer');
     var tabThreadExplorer = document.getElementById('tab-threadexplorer');
     var tabRenderExplorer = document.getElementById('tab-renderexplorer');

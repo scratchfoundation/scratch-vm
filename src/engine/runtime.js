@@ -84,12 +84,6 @@ function Runtime () {
     this._scriptGlowsPreviousFrame = [];
 
     /**
-     * A list of block IDs that were glowing during the previous frame.
-     * @type {!Array.<!string>}
-     */
-    this._blockGlowsPreviousFrame = [];
-
-    /**
      * Currently known number of clones, used to enforce clone limit.
      * @type {number}
      */
@@ -102,22 +96,10 @@ function Runtime () {
     this.turboMode = false;
 
     /**
-     * Whether the project is in "pause mode."
-     * @type {Boolean}
-     */
-    this.pauseMode = false;
-
-    /**
      * Whether the project is in "compatibility mode" (30 TPS).
      * @type {Boolean}
      */
     this.compatibilityMode = false;
-
-    /**
-     * Whether the project is in "single stepping mode."
-     * @type {Boolean}
-     */
-    this.singleStepping = false;
 
     /**
      * How fast in ms "single stepping mode" should run, in ms.
@@ -542,10 +524,6 @@ Runtime.prototype.stopAll = function () {
  * inactive threads after each iteration.
  */
 Runtime.prototype._step = function () {
-    if (this.pauseMode) {
-        // Don't do any execution while in pause mode.
-        return;
-    }
     // Find all edge-activated hats, and add them to threads to be evaluated.
     for (var hatType in this._hats) {
         var hat = this._hats[hatType];
@@ -570,23 +548,6 @@ Runtime.prototype.setEditingTarget = function (editingTarget) {
 };
 
 /**
- * Set whether we are in pause mode.
- * @param {boolean} pauseModeOn True iff in pause mode.
- */
-Runtime.prototype.setPauseMode = function (pauseModeOn) {
-    // Inform the project clock/timer to pause/resume its time.
-    if (this.ioDevices.clock) {
-        if (pauseModeOn && !this.pauseMode) {
-            this.ioDevices.clock.pause();
-        }
-        if (!pauseModeOn && this.pauseMode) {
-            this.ioDevices.clock.resume();
-        }
-    }
-    this.pauseMode = pauseModeOn;
-};
-
-/**
  * Set whether we are in 30 TPS compatibility mode.
  * @param {boolean} compatibilityModeOn True iff in compatibility mode.
  */
@@ -599,31 +560,7 @@ Runtime.prototype.setCompatibilityMode = function (compatibilityModeOn) {
 };
 
 /**
- * Set whether we are in single-stepping mode.
- * @param {boolean} singleSteppingOn True iff in single-stepping mode.
- */
-Runtime.prototype.setSingleSteppingMode = function (singleSteppingOn) {
-    this.singleStepping = singleSteppingOn;
-    if (this._steppingInterval) {
-        self.clearInterval(this._steppingInterval);
-        this.start();
-    }
-};
-
-/**
- * Set the speed during single-stepping mode.
- * @param {number} speed Interval length to step threads, in ms.
- */
-Runtime.prototype.setSingleSteppingSpeed = function (speed) {
-    this.singleStepInterval = 1000 / speed;
-    if (this._steppingInterval) {
-        self.clearInterval(this._steppingInterval);
-        this.start();
-    }
-};
-
-/**
- * Emit glows/glow clears for blocks and scripts after a single tick.
+ * Emit glows/glow clears for scripts after a single tick.
  * Looks at `this.threads` and notices which have turned on/off new glows.
  * @param {Array.<Thread>=} opt_extraThreads Optional list of inactive threads.
  */
@@ -635,10 +572,8 @@ Runtime.prototype._updateGlows = function (opt_extraThreads) {
     }
     // Set of scripts that request a glow this frame.
     var requestedGlowsThisFrame = [];
-    var requestedBlockGlowsThisFrame = [];
     // Final set of scripts glowing during this frame.
     var finalScriptGlows = [];
-    var finalBlockGlows = [];
     // Find all scripts that should be glowing.
     for (var i = 0; i < searchThreads.length; i++) {
         var thread = searchThreads[i];
@@ -656,10 +591,6 @@ Runtime.prototype._updateGlows = function (opt_extraThreads) {
                 if (script) {
                     requestedGlowsThisFrame.push(script);
                 }
-            }
-            // Only show block glows in single-stepping mode.
-            if (this.singleStepping && blockForThread) {
-                requestedBlockGlowsThisFrame.push(blockForThread);
             }
         }
     }
@@ -682,30 +613,7 @@ Runtime.prototype._updateGlows = function (opt_extraThreads) {
             finalScriptGlows.push(currentFrameGlow);
         }
     }
-    for (var m = 0; m < this._blockGlowsPreviousFrame.length; m++) {
-        var previousBlockGlow = this._blockGlowsPreviousFrame[m];
-        if (requestedBlockGlowsThisFrame.indexOf(previousBlockGlow) < 0) {
-            // Glow turned off.
-            try {
-                this.glowBlock(previousBlockGlow, false);
-            } catch (e) {
-                // Block has been removed.
-            }
-        } else {
-            // Still glowing.
-            finalBlockGlows.push(previousBlockGlow);
-        }
-    }
-    for (var p = 0; p < requestedBlockGlowsThisFrame.length; p++) {
-        var currentBlockFrameGlow = requestedBlockGlowsThisFrame[p];
-        if (this._blockGlowsPreviousFrame.indexOf(currentBlockFrameGlow) < 0) {
-            // Glow turned on.
-            this.glowBlock(currentBlockFrameGlow, true);
-            finalBlockGlows.push(currentBlockFrameGlow);
-        }
-    }
     this._scriptGlowsPreviousFrame = finalScriptGlows;
-    this._blockGlowsPreviousFrame = finalBlockGlows;
 };
 
 /**
