@@ -70,13 +70,6 @@ Sequencer.prototype.stepThreads = function () {
                 activeThread.warpTimer = null;
             }
             if (activeThread.status === Thread.STATUS_RUNNING) {
-                // After stepping, status is still running.
-                // If we're in single-stepping mode, mark the thread as
-                // a single-tick yield so it doesn't re-execute
-                // until the next frame.
-                if (this.runtime.singleStepping) {
-                    activeThread.status = Thread.STATUS_YIELD_TICK;
-                }
                 numActiveThreads++;
             }
         }
@@ -168,11 +161,6 @@ Sequencer.prototype.stepThread = function (thread) {
             }
             // Get next block of existing block on the stack.
             thread.goToNextBlock();
-        }
-        // In single-stepping mode, force `stepThread` to only run one block
-        // at a time.
-        if (this.runtime.singleStepping) {
-            return;
         }
     }
 };
