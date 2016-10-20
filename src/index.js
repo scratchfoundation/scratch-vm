@@ -188,9 +188,8 @@ VirtualMachine.prototype.loadProject = function (json) {
  * @param {?string} json JSON string representing the sprite.
  */
 VirtualMachine.prototype.addSprite2 = function (json) {
-    sb2import(json, this.runtime, true);
     // Select new sprite.
-    this.editingTarget = this.runtime.targets[this.runtime.targets.length - 1];
+    this.editingTarget = sb2import(json, this.runtime, true);
     // Update the VM user's knowledge of targets and blocks on the workspace.
     this.emitTargetsUpdate();
     this.emitWorkspaceUpdate();

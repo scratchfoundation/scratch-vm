@@ -20,9 +20,10 @@ var List = require('../engine/list');
  * @param {!string} json SB2-format JSON to load.
  * @param {!Runtime} runtime Runtime object to load all structures into.
  * @param {Boolean=} opt_forceSprite If set, treat as sprite (Sprite2).
+ * @return {?Target} Top-level target created (stage or sprite).
  */
 function sb2import (json, runtime, opt_forceSprite) {
-    parseScratchObject(
+    return parseScratchObject(
         JSON.parse(json),
         runtime,
         !opt_forceSprite
@@ -34,6 +35,7 @@ function sb2import (json, runtime, opt_forceSprite) {
  * @param {!Object} object From-JSON "Scratch object:" sprite, stage, watcher.
  * @param {!Runtime} runtime Runtime object to load all structures into.
  * @param {boolean} topLevel Whether this is the top-level object (stage).
+ * @return {?Target} Target created (stage or sprite).
  */
 function parseScratchObject (object, runtime, topLevel) {
     if (!object.hasOwnProperty('objName')) {
@@ -129,6 +131,7 @@ function parseScratchObject (object, runtime, topLevel) {
             parseScratchObject(object.children[m], runtime, false);
         }
     }
+    return target;
 }
 
 /**
