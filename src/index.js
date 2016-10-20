@@ -146,12 +146,48 @@ VirtualMachine.prototype.loadProject = function (json) {
     this.clear();
     // @todo: Handle other formats, e.g., Scratch 1.4, Scratch 3.0.
     sb2import(json, this.runtime);
-    // Select the first target for editing, e.g., the stage.
-    this.editingTarget = this.runtime.targets[0];
+    // Select the first target for editing, e.g., the first sprite.
+    this.editingTarget = this.runtime.targets[1];
     // Update the VM user's knowledge of targets and blocks on the workspace.
     this.emitTargetsUpdate();
     this.emitWorkspaceUpdate();
     this.runtime.setEditingTarget(this.editingTarget);
+};
+
+/**
+ * Add a single sprite from the "Sprite2" (i.e., SB2 sprite) format.
+ * @param {?string} json JSON string representing the sprite.
+ */
+VirtualMachine.prototype.addSprite2 = function (json) {
+    // Select new sprite.
+    this.editingTarget = sb2import(json, this.runtime, true);
+    // Update the VM user's knowledge of targets and blocks on the workspace.
+    this.emitTargetsUpdate();
+    this.emitWorkspaceUpdate();
+    this.runtime.setEditingTarget(this.editingTarget);
+};
+
+/**
+ * Add a costume to the current editing target.
+ * @param {!Object} costumeObject Object representing the costume.
+ */
+VirtualMachine.prototype.addCostume = function (costumeObject) {
+    this.editingTarget.sprite.costumes.push(costumeObject);
+    // Switch to the costume.
+    this.editingTarget.setCostume(
+        this.editingTarget.sprite.costumes.length - 1
+    );
+};
+
+/**
+ * Add a backdrop to the stage.
+ * @param {!Object} backdropObject Object representing the backdrop.
+ */
+VirtualMachine.prototype.addBackdrop = function (backdropObject) {
+    var stage = this.runtime.getTargetForStage();
+    stage.sprite.costumes.push(backdropObject);
+    // Switch to the backdrop.
+    stage.setCostume(stage.sprite.costumes.length - 1);
 };
 
 /**
