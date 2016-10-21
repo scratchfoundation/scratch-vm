@@ -5,6 +5,8 @@
  * Look at ./sb3format.json
  */
 
+ var JSZip = require('jszip');
+
 /**
  * @TODO: [X] Done [ ] Undone [~] In work
  * [X] Name of project
@@ -24,7 +26,9 @@
 function sb3export (runtime) {
     var pack = Object.create(null);
     // @TODO: costumes
-    pack['package.json'] = projectjson (runtime);
+    pack['package.json'] = {contents: projectjson(runtime), options: {
+        base64: true
+    }};
     return pack;
 };
 
@@ -64,5 +68,20 @@ function projectjson (runtime) {
     return JSON.stringify(json, null, 4);
 };
 
-// sb3export.exportZIP = exportZIP
+/**
+ * Exports package as ZIP
+ * @param {!Runtime} runtime A Runtime for export project from
+ * @return {Promise} Promise containing ZIP string
+ */
+function exportZIP (runtime) {
+	var zip = new JSZip(),
+	    pack = sb3export(runtime),
+	    entry;
+	for (entry in pack) {
+		zip.file(entry, pack[entry].contents, pack[entry].options);
+	}
+	return zip.generateAsync({type: 'binarystring'});
+};
+
+sb3export.exportZIP = exportZIP;
 module.exports = sb3export;
