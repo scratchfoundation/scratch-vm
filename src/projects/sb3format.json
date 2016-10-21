@@ -30,9 +30,11 @@
           "inputs": {
             "name": "block_ID"
           },
-          "next": "opt_next_block_ID"
+          "next": "opt_next_block_ID",
+          "isField": "true/false"
         }
-      ]
+      ],
+      "scripts": ["ID of top-level block"]
     }
   ]
 }
