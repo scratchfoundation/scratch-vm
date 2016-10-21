@@ -1,0 +1,38 @@
+{
+  "name": "A name of project",
+  "sprites": [
+    {
+      "name": "A target name",
+      "costumes": [
+        {
+          "name": "A costume name",
+          "image": "ID of cosutme in ZIP package"
+        }
+      ],
+      "original_clone": {
+        "x": "x",
+        "y": "y",
+        "effects": {
+          "effect_name": "effect_value"
+        },
+        "current_costume": "ID of current costume"
+      },
+      "clones": [
+        { "ID":"numerical_ID", "...": "..." }
+      ],
+      "blocks": [
+        {
+          "ID": "NUMERICAL ID of the block",
+          "opcode": "opcode_spec_for_block",
+          "fields": {
+            "name": "value"
+          },
+          "inputs": {
+            "name": "block_ID"
+          },
+          "next": "opt_next_block_ID"
+        }
+      ]
+    }
+  ]
+}
