@@ -19,10 +19,13 @@
 /**
  * Exporter for SB3 format.
  * @param {!Runtime} runtime A Runtime for export project from
- * @return {string} A JSON string representing project
+ * @return {Object} An Object representing project. It can be exported as ZIP later
  */
 function sb3export (runtime) {
-    ;
+    var pack = Object.create(null);
+    // @TODO: costumes
+    pack['package.json'] = projectjson (runtime);
+    return pack;
 };
 
 /**
@@ -60,3 +63,6 @@ function projectjson (runtime) {
     }
     return JSON.stringify(json, null, 4);
 };
+
+// sb3export.exportZIP = exportZIP
+module.exports = sb3export;
