@@ -2,13 +2,13 @@ var Cast = require('../util/cast');
 var MathUtil = require('../util/math-util');
 var Timer = require('../util/timer');
 
-function Scratch3MotionBlocks (runtime) {
+var Scratch3MotionBlocks = function (runtime) {
     /**
      * The runtime instantiating this block package.
      * @type {Runtime}
      */
     this.runtime = runtime;
-}
+};
 
 /**
  * Retrieve the block primitives implemented by this package.
@@ -149,10 +149,10 @@ Scratch3MotionBlocks.prototype.ifOnEdgeBounce = function (args, util) {
     // and clamped to zero when the sprite is beyond.
     var stageWidth = this.runtime.constructor.STAGE_WIDTH;
     var stageHeight = this.runtime.constructor.STAGE_HEIGHT;
-    var distLeft = Math.max(0, stageWidth / 2 + bounds.left);
-    var distTop = Math.max(0, stageHeight / 2 - bounds.top);
-    var distRight = Math.max(0, stageWidth / 2 - bounds.right);
-    var distBottom = Math.max(0, stageHeight / 2 + bounds.bottom);
+    var distLeft = Math.max(0, (stageWidth / 2) + bounds.left);
+    var distTop = Math.max(0, (stageHeight / 2) - bounds.top);
+    var distRight = Math.max(0, (stageWidth / 2) - bounds.right);
+    var distBottom = Math.max(0, (stageHeight / 2) + bounds.bottom);
     // Find the nearest edge.
     var nearestEdge = '';
     var minDist = Infinity;
@@ -179,13 +179,13 @@ Scratch3MotionBlocks.prototype.ifOnEdgeBounce = function (args, util) {
     var radians = MathUtil.degToRad(90 - util.target.direction);
     var dx = Math.cos(radians);
     var dy = -Math.sin(radians);
-    if (nearestEdge == 'left') {
+    if (nearestEdge === 'left') {
         dx = Math.max(0.2, Math.abs(dx));
-    } else if (nearestEdge == 'top') {
+    } else if (nearestEdge === 'top') {
         dy = Math.max(0.2, Math.abs(dy));
-    } else if (nearestEdge == 'right') {
+    } else if (nearestEdge === 'right') {
         dx = 0 - Math.max(0.2, Math.abs(dx));
-    } else if (nearestEdge == 'bottom') {
+    } else if (nearestEdge === 'bottom') {
         dy = 0 - Math.max(0.2, Math.abs(dy));
     }
     var newDirection = MathUtil.radToDeg(Math.atan2(dy, dx)) + 90;

@@ -1,12 +1,12 @@
 var Cast = require('../util/cast');
 
-function Scratch3LooksBlocks (runtime) {
+var Scratch3LooksBlocks = function (runtime) {
     /**
      * The runtime instantiating this block package.
      * @type {Runtime}
      */
     this.runtime = runtime;
-}
+};
 
 /**
  * Retrieve the block primitives implemented by this package.
@@ -82,33 +82,33 @@ Scratch3LooksBlocks.prototype.hide = function (args, util) {
  * Matches the behavior of Scratch 2.0 for different types of arguments.
  * @param {!Target} target Target to set costume/backdrop to.
  * @param {Any} requestedCostume Costume requested, e.g., 0, 'name', etc.
- * @param {boolean=} opt_zeroIndex Set to zero-index the requestedCostume.
+ * @param {boolean=} optZeroIndex Set to zero-index the requestedCostume.
  * @return {Array.<!Thread>} Any threads started by this switch.
  */
 Scratch3LooksBlocks.prototype._setCostumeOrBackdrop = function (target,
-        requestedCostume, opt_zeroIndex) {
+        requestedCostume, optZeroIndex) {
     if (typeof requestedCostume === 'number') {
-        target.setCostume(opt_zeroIndex ?
+        target.setCostume(optZeroIndex ?
             requestedCostume : requestedCostume - 1);
     } else {
         var costumeIndex = target.getCostumeIndexByName(requestedCostume);
         if (costumeIndex > -1) {
             target.setCostume(costumeIndex);
-        } else if (costumeIndex == 'previous costume' ||
-                   costumeIndex == 'previous backdrop') {
+        } else if (costumeIndex === 'previous costume' ||
+                   costumeIndex === 'previous backdrop') {
             target.setCostume(target.currentCostume - 1);
-        } else if (costumeIndex == 'next costume' ||
-                   costumeIndex == 'next backdrop') {
+        } else if (costumeIndex === 'next costume' ||
+                   costumeIndex === 'next backdrop') {
             target.setCostume(target.currentCostume + 1);
         } else {
             var forcedNumber = Cast.toNumber(requestedCostume);
             if (!isNaN(forcedNumber)) {
-                target.setCostume(opt_zeroIndex ?
+                target.setCostume(optZeroIndex ?
                     forcedNumber : forcedNumber - 1);
             }
         }
     }
-    if (target == this.runtime.getTargetForStage()) {
+    if (target === this.runtime.getTargetForStage()) {
         // Target is the stage - start hats.
         var newName = target.sprite.costumes[target.currentCostume].name;
         return this.runtime.startHats('event_whenbackdropswitchesto', {
@@ -142,7 +142,7 @@ Scratch3LooksBlocks.prototype.switchBackdropAndWait = function (args, util) {
                 args.BACKDROP
             )
         );
-        if (util.stackFrame.startedThreads.length == 0) {
+        if (util.stackFrame.startedThreads.length === 0) {
             // Nothing was started.
             return;
         }

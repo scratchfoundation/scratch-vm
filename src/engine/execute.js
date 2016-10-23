@@ -76,12 +76,10 @@ var execute = function (sequencer, thread) {
                 if (!edgeWasActivated) {
                     sequencer.retireThread(thread);
                 }
-            } else {
+            } else if (!resolvedValue) {
                 // Not an edge-activated hat: retire the thread
                 // if predicate was false.
-                if (!resolvedValue) {
-                    sequencer.retireThread(thread);
-                }
+                sequencer.retireThread(thread);
             }
         } else {
             // In a non-hat, report the value visually if necessary if
@@ -105,8 +103,8 @@ var execute = function (sequencer, thread) {
             // Skip through the block (hat with no predicate).
             return;
         } else {
-            if (Object.keys(fields).length == 1 &&
-                Object.keys(inputs).length == 0) {
+            if (Object.keys(fields).length === 1 &&
+                Object.keys(inputs).length === 0) {
                 // One field and no inputs - treat as arg.
                 for (var fieldKey in fields) { // One iteration.
                     handleReport(fields[fieldKey].value);
@@ -133,8 +131,8 @@ var execute = function (sequencer, thread) {
         var input = inputs[inputName];
         var inputBlockId = input.block;
         // Is there no value for this input waiting in the stack frame?
-        if (typeof currentStackFrame.reported[inputName] === 'undefined'
-            && inputBlockId) {
+        if (typeof currentStackFrame.reported[inputName] === 'undefined' &&
+            inputBlockId) {
             // If there's not, we need to evaluate the block.
             // Push to the stack to evaluate the reporter block.
             thread.pushStack(inputBlockId);
@@ -197,16 +195,16 @@ var execute = function (sequencer, thread) {
         getParam: function (paramName) {
             return thread.getParam(paramName);
         },
-        startHats: function (requestedHat, opt_matchFields, opt_target) {
+        startHats: function (requestedHat, optMatchFields, optTarget) {
             return (
-                runtime.startHats(requestedHat, opt_matchFields, opt_target)
+                runtime.startHats(requestedHat, optMatchFields, optTarget)
             );
         },
         ioQuery: function (device, func, args) {
             // Find the I/O device and execute the query/function call.
             if (runtime.ioDevices[device] && runtime.ioDevices[device][func]) {
                 var devObject = runtime.ioDevices[device];
-                return devObject[func].call(devObject, args);
+                return devObject[func](args);
             }
         }
     });
@@ -226,12 +224,12 @@ var execute = function (sequencer, thread) {
         // Promise handlers
         primitiveReportedValue.then(function (resolvedValue) {
             handleReport(resolvedValue);
-            if (typeof resolvedValue !== 'undefined') {
-                thread.popStack();
-            } else {
+            if (typeof resolvedValue === 'undefined') {
                 var popped = thread.popStack();
                 var nextBlockId = thread.target.blocks.getNextBlock(popped);
                 thread.pushStack(nextBlockId);
+            } else {
+                thread.popStack();
             }
         }, function (rejectionReason) {
             // Promise rejected: the primitive had some error.

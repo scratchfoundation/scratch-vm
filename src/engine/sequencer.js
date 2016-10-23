@@ -2,7 +2,7 @@ var Timer = require('../util/timer');
 var Thread = require('./thread');
 var execute = require('./execute.js');
 
-function Sequencer (runtime) {
+var Sequencer = function (runtime) {
     /**
      * A utility timer for timing thread sequencing.
      * @type {!Timer}
@@ -14,7 +14,7 @@ function Sequencer (runtime) {
      * @type {!Runtime}
      */
     this.runtime = runtime;
-}
+};
 
 /**
  * Time to run a warp-mode thread, in ms.
@@ -219,11 +219,9 @@ Sequencer.prototype.stepToProcedure = function (thread, procedureCode) {
         var doWarp = definitionBlock.mutation.warp;
         if (doWarp) {
             thread.peekStackFrame().warpMode = true;
-        } else {
+        } else if (isRecursive) {
             // In normal-mode threads, yield any time we have a recursive call.
-            if (isRecursive) {
-                thread.status = Thread.STATUS_YIELD;
-            }
+            thread.status = Thread.STATUS_YIELD;
         }
     }
 };

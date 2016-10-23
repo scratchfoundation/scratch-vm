@@ -8,9 +8,7 @@
   * @param {Array} contents Contents of the list, as an array.
   * @constructor
   */
-function List (name, contents) {
+module.exports = function List (name, contents) {
     this.name = name;
     this.contents = contents;
-}
-
-module.exports = List;
+};

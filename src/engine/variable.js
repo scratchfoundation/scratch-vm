@@ -9,10 +9,8 @@
  * @param {boolean} isCloud Whether the variable is stored in the cloud.
  * @constructor
  */
-function Variable (name, value, isCloud) {
+module.exports = function Variable (name, value, isCloud) {
     this.name = name;
     this.value = value;
     this.isCloud = isCloud;
-}
-
-module.exports = Variable;
+};

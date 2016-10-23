@@ -1,10 +1,10 @@
-function Scratch3ProcedureBlocks (runtime) {
+var Scratch3ProcedureBlocks = function (runtime) {
     /**
      * The runtime instantiating this block package.
      * @type {Runtime}
      */
     this.runtime = runtime;
-}
+};
 
 /**
  * Retrieve the block primitives implemented by this package.

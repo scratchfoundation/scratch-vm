@@ -1,12 +1,12 @@
 var Cast = require('../util/cast');
 
-function Scratch3SensingBlocks (runtime) {
+var Scratch3SensingBlocks = function (runtime) {
     /**
      * The runtime instantiating this block package.
      * @type {Runtime}
      */
     this.runtime = runtime;
-}
+};
 
 /**
  * Retrieve the block primitives implemented by this package.
@@ -31,11 +31,11 @@ Scratch3SensingBlocks.prototype.getPrimitives = function () {
 
 Scratch3SensingBlocks.prototype.touchingObject = function (args, util) {
     var requestedObject = args.TOUCHINGOBJECTMENU;
-    if (requestedObject == '_mouse_') {
+    if (requestedObject === '_mouse_') {
         var mouseX = util.ioQuery('mouse', 'getX');
         var mouseY = util.ioQuery('mouse', 'getY');
         return util.target.isTouchingPoint(mouseX, mouseY);
-    } else if (requestedObject == '_edge_') {
+    } else if (requestedObject === '_edge_') {
         return util.target.isTouchingEdge();
     } else {
         return util.target.isTouchingSprite(requestedObject);
@@ -114,8 +114,7 @@ Scratch3SensingBlocks.prototype.getKeyPressed = function (args, util) {
     return util.ioQuery('keyboard', 'getKeyIsDown', args.KEY_OPTION);
 };
 
-Scratch3SensingBlocks.prototype.daysSince2000 = function ()
-{
+Scratch3SensingBlocks.prototype.daysSince2000 = function () {
     var msPerDay = 24 * 60 * 60 * 1000;
     var start = new Date(2000, 1-1, 1);
     var today = new Date();

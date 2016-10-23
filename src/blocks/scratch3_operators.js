@@ -1,12 +1,12 @@
 var Cast = require('../util/cast.js');
 
-function Scratch3OperatorsBlocks (runtime) {
+var Scratch3OperatorsBlocks = function (runtime) {
     /**
      * The runtime instantiating this block package.
      * @type {Runtime}
      */
     this.runtime = runtime;
-}
+};
 
 /**
  * Retrieve the block primitives implemented by this package.
@@ -55,7 +55,7 @@ Scratch3OperatorsBlocks.prototype.lt = function (args) {
 };
 
 Scratch3OperatorsBlocks.prototype.equals = function (args) {
-    return Cast.compare(args.OPERAND1, args.OPERAND2) == 0;
+    return Cast.compare(args.OPERAND1, args.OPERAND2) === 0;
 };
 
 Scratch3OperatorsBlocks.prototype.gt = function (args) {
@@ -79,10 +79,10 @@ Scratch3OperatorsBlocks.prototype.random = function (args) {
     var nTo = Cast.toNumber(args.TO);
     var low = nFrom <= nTo ? nFrom : nTo;
     var high = nFrom <= nTo ? nTo : nFrom;
-    if (low == high) return low;
+    if (low === high) return low;
     // If both arguments are ints, truncate the result to an int.
     if (Cast.isInt(args.FROM) && Cast.isInt(args.TO)) {
-        return low + parseInt(Math.random() * ((high + 1) - low));
+        return low + parseInt(Math.random() * ((high + 1) - low), 10);
     }
     return (Math.random() * (high - low)) + low;
 };

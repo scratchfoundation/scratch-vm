@@ -15,7 +15,7 @@
 /**
  * @constructor
  */
-function Timer () {}
+var Timer = function () {};
 
 /**
  * Used to store the start time of a timer action.

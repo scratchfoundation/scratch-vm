@@ -2,6 +2,34 @@ var mutationAdapter = require('./mutation-adapter');
 var html = require('htmlparser2');
 
 /**
+ * Convert outer blocks DOM from a Blockly CREATE event
+ * to a usable form for the Scratch runtime.
+ * This structure is based on Blockly xml.js:`domToWorkspace` and `domToBlock`.
+ * @param {Element} blocksDOM DOM tree for this event.
+ * @return {Array.<Object>} Usable list of blocks from this CREATE event.
+ */
+var domToBlocks = function (blocksDOM) {
+    // At this level, there could be multiple blocks adjacent in the DOM tree.
+    var blocks = {};
+    for (var i = 0; i < blocksDOM.length; i++) {
+        var block = blocksDOM[i];
+        if (!block.name || !block.attribs) {
+            continue;
+        }
+        var tagName = block.name.toLowerCase();
+        if (tagName === 'block' || tagName === 'shadow') {
+            domToBlock(block, blocks, true, null);
+        }
+    }
+    // Flatten blocks object into a list.
+    var blocksList = [];
+    for (var b in blocks) {
+        blocksList.push(blocks[b]);
+    }
+    return blocksList;
+};
+
+/**
  * Adapter between block creation events and block representation which can be
  * used by the Scratch runtime.
  * @param {Object} e `Blockly.events.create`
@@ -16,42 +44,15 @@ module.exports = function (e) {
 };
 
 /**
- * Convert outer blocks DOM from a Blockly CREATE event
- * to a usable form for the Scratch runtime.
- * This structure is based on Blockly xml.js:`domToWorkspace` and `domToBlock`.
- * @param {Element} blocksDOM DOM tree for this event.
- * @return {Array.<Object>} Usable list of blocks from this CREATE event.
- */
-function domToBlocks (blocksDOM) {
-    // At this level, there could be multiple blocks adjacent in the DOM tree.
-    var blocks = {};
-    for (var i = 0; i < blocksDOM.length; i++) {
-        var block = blocksDOM[i];
-        if (!block.name || !block.attribs) {
-            continue;
-        }
-        var tagName = block.name.toLowerCase();
-        if (tagName == 'block' || tagName == 'shadow') {
-            domToBlock(block, blocks, true, null);
-        }
-    }
-    // Flatten blocks object into a list.
-    var blocksList = [];
-    for (var b in blocks) {
-        blocksList.push(blocks[b]);
-    }
-    return blocksList;
-}
-
-/**
  * Convert and an individual block DOM to the representation tree.
  * Based on Blockly's `domToBlockHeadless_`.
  * @param {Element} blockDOM DOM tree for an individual block.
  * @param {Object} blocks Collection of blocks to add to.
  * @param {Boolean} isTopBlock Whether blocks at this level are "top blocks."
  * @param {?string} parent Parent block ID.
+ * @return {undefined}
  */
-function domToBlock (blockDOM, blocks, isTopBlock, parent) {
+var domToBlock = function (blockDOM, blocks, isTopBlock, parent) {
     // Block skeleton.
     var block = {
         id: blockDOM.attribs.id, // Block ID
@@ -61,7 +62,7 @@ function domToBlock (blockDOM, blocks, isTopBlock, parent) {
         next: null, // Next block in the stack, if one exists.
         topLevel: isTopBlock, // If this block starts a stack.
         parent: parent, // Parent block ID, if available.
-        shadow: blockDOM.name == 'shadow', // If this represents a shadow/slot.
+        shadow: blockDOM.name === 'shadow', // If this represents a shadow/slot.
         x: blockDOM.attribs.x, // X position of script, if top-level.
         y: blockDOM.attribs.y // Y position of script, if top-level.
     };
@@ -82,9 +83,9 @@ function domToBlock (blockDOM, blocks, isTopBlock, parent) {
                 continue;
             }
             var grandChildNodeName = grandChildNode.name.toLowerCase();
-            if (grandChildNodeName == 'block') {
+            if (grandChildNodeName === 'block') {
                 childBlockNode = grandChildNode;
-            } else if (grandChildNodeName == 'shadow') {
+            } else if (grandChildNodeName === 'shadow') {
                 childShadowNode = grandChildNode;
             }
         }
@@ -117,7 +118,7 @@ function domToBlock (blockDOM, blocks, isTopBlock, parent) {
         case 'statement':
             // Recursively generate block structure for input block.
             domToBlock(childBlockNode, blocks, false, block.id);
-            if (childShadowNode && childBlockNode != childShadowNode) {
+            if (childShadowNode && childBlockNode !== childShadowNode) {
                 // Also generate the shadow block.
                 domToBlock(childShadowNode, blocks, false, block.id);
             }
@@ -144,4 +145,4 @@ function domToBlock (blockDOM, blocks, isTopBlock, parent) {
             break;
         }
     }
-}
+};

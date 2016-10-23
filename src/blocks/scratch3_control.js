@@ -1,13 +1,13 @@
 var Cast = require('../util/cast');
 var Timer = require('../util/timer');
 
-function Scratch3ControlBlocks (runtime) {
+var Scratch3ControlBlocks = function (runtime) {
     /**
      * The runtime instantiating this block package.
      * @type {Runtime}
      */
     this.runtime = runtime;
-}
+};
 
 /**
  * Retrieve the block primitives implemented by this package.
@@ -39,7 +39,7 @@ Scratch3ControlBlocks.prototype.getHats = function () {
 Scratch3ControlBlocks.prototype.repeat = function (args, util) {
     var times = Math.floor(Cast.toNumber(args.TIMES));
     // Initialize loop
-    if (util.stackFrame.loopCounter === undefined) {
+    if (typeof util.stackFrame.loopCounter === 'undefined') {
         util.stackFrame.loopCounter = times;
     }
     // Only execute once per frame.
@@ -104,19 +104,19 @@ Scratch3ControlBlocks.prototype.ifElse = function (args, util) {
 
 Scratch3ControlBlocks.prototype.stop = function (args, util) {
     var option = args.STOP_OPTION;
-    if (option == 'all') {
+    if (option === 'all') {
         util.stopAll();
-    } else if (option == 'other scripts in sprite' ||
-        option == 'other scripts in stage') {
+    } else if (option === 'other scripts in sprite' ||
+        option === 'other scripts in stage') {
         util.stopOtherTargetThreads();
-    } else if (option == 'this script') {
+    } else if (option === 'this script') {
         util.stopThread();
     }
 };
 
 Scratch3ControlBlocks.prototype.createClone = function (args, util) {
     var cloneTarget;
-    if (args.CLONE_OPTION == '_myself_') {
+    if (args.CLONE_OPTION === '_myself_') {
         cloneTarget = util.target;
     } else {
         cloneTarget = this.runtime.getSpriteTargetByName(args.CLONE_OPTION);

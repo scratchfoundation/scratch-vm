@@ -1,12 +1,12 @@
 var Cast = require('../util/cast');
 
-function Scratch3EventBlocks (runtime) {
+var Scratch3EventBlocks = function (runtime) {
     /**
      * The runtime instantiating this block package.
      * @type {Runtime}
      */
     this.runtime = runtime;
-}
+};
 
 /**
  * Retrieve the block primitives implemented by this package.
@@ -48,7 +48,7 @@ Scratch3EventBlocks.prototype.hatGreaterThanPredicate = function (args, util) {
     var option = Cast.toString(args.WHENGREATERTHANMENU).toLowerCase();
     var value = Cast.toNumber(args.VALUE);
     // @todo: Other cases :)
-    if (option == 'timer') {
+    if (option === 'timer') {
         return util.ioQuery('clock', 'projectTimer') > value;
     }
     return false;
@@ -71,7 +71,7 @@ Scratch3EventBlocks.prototype.broadcastAndWait = function (args, util) {
                 'BROADCAST_OPTION': broadcastOption
             }
         );
-        if (util.stackFrame.startedThreads.length == 0) {
+        if (util.stackFrame.startedThreads.length === 0) {
             // Nothing was started.
             return;
         }

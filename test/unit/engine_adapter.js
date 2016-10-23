@@ -61,7 +61,7 @@ test('create with branch', function (t) {
     // Find actual branch block
     var branchBlock = null;
     for (var i = 0; i < result.length; i++) {
-        if (result[i].id == branchBlockId) {
+        if (result[i].id === branchBlockId) {
             branchBlock = result[i];
         }
     }
@@ -93,10 +93,10 @@ test('create with two branches', function (t) {
     var firstBranchBlock = null;
     var secondBranchBlock = null;
     for (var i = 0; i < result.length; i++) {
-        if (result[i].id == firstBranchBlockId) {
+        if (result[i].id === firstBranchBlockId) {
             firstBranchBlock = result[i];
         }
-        if (result[i].id == secondBranchBlockId) {
+        if (result[i].id === secondBranchBlockId) {
             secondBranchBlock = result[i];
         }
     }

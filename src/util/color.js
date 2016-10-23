@@ -1,4 +1,4 @@
-function Color () {}
+var Color = function () {};
 
 /**
  * Convert a Scratch decimal color to a hex string, #RRGGBB.

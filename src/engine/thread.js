@@ -3,7 +3,7 @@
  * @param {?string} firstBlock First block to execute in the thread.
  * @constructor
  */
-function Thread (firstBlock) {
+var Thread = function (firstBlock) {
     /**
      * ID of top block of the thread
      * @type {!string}
@@ -53,7 +53,7 @@ function Thread (firstBlock) {
      * @type {?Timer}
      */
     this.warpTimer = null;
-}
+};
 
 /**
  * Thread status for initialized or running thread.
@@ -225,8 +225,8 @@ Thread.prototype.isRecursiveCall = function (procedureCode) {
     var sp = this.stack.length - 1;
     for (var i = sp - 1; i >= 0; i--) {
         var block = this.target.blocks.getBlock(this.stack[i]);
-        if (block.opcode == 'procedures_callnoreturn' &&
-            block.mutation.proccode == procedureCode) {
+        if (block.opcode === 'procedures_callnoreturn' &&
+            block.mutation.proccode === procedureCode) {
             return true;
         }
         if (--callCount < 0) return false;

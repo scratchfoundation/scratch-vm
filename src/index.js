@@ -11,7 +11,7 @@ var Blocks = require('./engine/blocks');
  *
  * @author Andrew Sliwinski <ascii@media.mit.edu>
  */
-function VirtualMachine () {
+var VirtualMachine = function () {
     var instance = this;
     // Bind event emitter and runtime to VM instance
     EventEmitter.call(instance);
@@ -45,7 +45,7 @@ function VirtualMachine () {
 
     this.blockListener = this.blockListener.bind(this);
     this.flyoutBlockListener = this.flyoutBlockListener.bind(this);
-}
+};
 
 /**
  * Inherit from EventEmitter
@@ -107,11 +107,11 @@ VirtualMachine.prototype.getPlaygroundData = function () {
     var instance = this;
     // Only send back thread data for the current editingTarget.
     var threadData = this.runtime.threads.filter(function (thread) {
-        return thread.target == instance.editingTarget;
+        return thread.target === instance.editingTarget;
     });
     // Remove the target key, since it's a circular reference.
     var filteredThreadData = JSON.stringify(threadData, function (key, value) {
-        if (key == 'target') return undefined;
+        if (key === 'target') return;
         return value;
     }, 2);
     this.emit('playgroundData', {
@@ -273,7 +273,7 @@ VirtualMachine.prototype.flyoutBlockListener = function (e) {
  */
 VirtualMachine.prototype.setEditingTarget = function (targetId) {
     // Has the target id changed? If not, exit.
-    if (targetId == this.editingTarget.id) {
+    if (targetId === this.editingTarget.id) {
         return;
     }
     var target = this.runtime.getTargetById(targetId);

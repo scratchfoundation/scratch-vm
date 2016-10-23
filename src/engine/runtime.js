@@ -23,7 +23,7 @@ var defaultBlockPackages = {
 /**
  * Manages targets, scripts, and the sequencer.
  */
-function Runtime () {
+var Runtime = function () {
     // Bind event emitter
     EventEmitter.call(this);
 
@@ -143,7 +143,7 @@ function Runtime () {
         'keyboard': new Keyboard(this),
         'mouse': new Mouse(this)
     };
-}
+};
 
 /**
  * Inherit from EventEmitter
@@ -346,7 +346,7 @@ Runtime.prototype.isActiveThread = function (thread) {
 Runtime.prototype.toggleScript = function (topBlockId) {
     // Remove any existing thread.
     for (var i = 0; i < this.threads.length; i++) {
-        if (this.threads[i].topBlock == topBlockId) {
+        if (this.threads[i].topBlock === topBlockId) {
             this._removeThread(this.threads[i]);
             return;
         }
@@ -361,12 +361,12 @@ Runtime.prototype.toggleScript = function (topBlockId) {
  *  - the top block ID of the script.
  *  - the target that owns the script.
  * @param {!Function} f Function to call for each script.
- * @param {Target=} opt_target Optionally, a target to restrict to.
+ * @param {Target=} optTarget Optionally, a target to restrict to.
  */
-Runtime.prototype.allScriptsDo = function (f, opt_target) {
+Runtime.prototype.allScriptsDo = function (f, optTarget) {
     var targets = this.targets;
-    if (opt_target) {
-        targets = [opt_target];
+    if (optTarget) {
+        targets = [optTarget];
     }
     for (var t = 0; t < targets.length; t++) {
         var target = targets[t];
@@ -381,12 +381,12 @@ Runtime.prototype.allScriptsDo = function (f, opt_target) {
 /**
  * Start all relevant hats.
  * @param {!string} requestedHatOpcode Opcode of hats to start.
- * @param {Object=} opt_matchFields Optionally, fields to match on the hat.
- * @param {Target=} opt_target Optionally, a target to restrict to.
+ * @param {Object=} optMatchFields Optionally, fields to match on the hat.
+ * @param {Target=} optTarget Optionally, a target to restrict to.
  * @return {Array.<Thread>} List of threads started by this function.
  */
 Runtime.prototype.startHats = function (requestedHatOpcode,
-    opt_matchFields, opt_target) {
+    optMatchFields, optTarget) {
     if (!this._hats.hasOwnProperty(requestedHatOpcode)) {
         // No known hat with this opcode.
         return;
@@ -406,10 +406,10 @@ Runtime.prototype.startHats = function (requestedHatOpcode,
         // (i.e., before the predicate can be run) because "broadcast and wait"
         // needs to have a precise collection of started threads.
         var hatFields = target.blocks.getFields(topBlockId);
-        if (opt_matchFields) {
-            for (var matchField in opt_matchFields) {
+        if (optMatchFields) {
+            for (var matchField in optMatchFields) {
                 if (hatFields[matchField].value !==
-                    opt_matchFields[matchField]) {
+                    optMatchFields[matchField]) {
                     // Field mismatch.
                     return;
                 }
@@ -422,7 +422,7 @@ Runtime.prototype.startHats = function (requestedHatOpcode,
             // any existing threads starting with the top block.
             for (var i = 0; i < instance.threads.length; i++) {
                 if (instance.threads[i].topBlock === topBlockId &&
-                    instance.threads[i].target == target) {
+                    instance.threads[i].target === target) {
                     instance._removeThread(instance.threads[i]);
                 }
             }
@@ -431,7 +431,7 @@ Runtime.prototype.startHats = function (requestedHatOpcode,
             // give up if any threads with the top block are running.
             for (var j = 0; j < instance.threads.length; j++) {
                 if (instance.threads[j].topBlock === topBlockId &&
-                    instance.threads[j].target == target) {
+                    instance.threads[j].target === target) {
                     // Some thread is already running.
                     return;
                 }
@@ -439,7 +439,7 @@ Runtime.prototype.startHats = function (requestedHatOpcode,
         }
         // Start the thread with this top block.
         newThreads.push(instance._pushThread(topBlockId, target));
-    }, opt_target);
+    }, optTarget);
     return newThreads;
 };
 
@@ -468,15 +468,15 @@ Runtime.prototype.disposeTarget = function (disposingTarget) {
 /**
  * Stop any threads acting on the target.
  * @param {!Target} target Target to stop threads for.
- * @param {Thread=} opt_threadException Optional thread to skip.
+ * @param {Thread=} optThreadException Optional thread to skip.
  */
-Runtime.prototype.stopForTarget = function (target, opt_threadException) {
+Runtime.prototype.stopForTarget = function (target, optThreadException) {
     // Stop any threads on the target.
     for (var i = 0; i < this.threads.length; i++) {
-        if (this.threads[i] === opt_threadException) {
+        if (this.threads[i] === optThreadException) {
             continue;
         }
-        if (this.threads[i].target == target) {
+        if (this.threads[i].target === target) {
             this._removeThread(this.threads[i]);
         }
     }
@@ -562,13 +562,13 @@ Runtime.prototype.setCompatibilityMode = function (compatibilityModeOn) {
 /**
  * Emit glows/glow clears for scripts after a single tick.
  * Looks at `this.threads` and notices which have turned on/off new glows.
- * @param {Array.<Thread>=} opt_extraThreads Optional list of inactive threads.
+ * @param {Array.<Thread>=} optExtraThreads Optional list of inactive threads.
  */
-Runtime.prototype._updateGlows = function (opt_extraThreads) {
+Runtime.prototype._updateGlows = function (optExtraThreads) {
     var searchThreads = [];
     searchThreads.push.apply(searchThreads, this.threads);
-    if (opt_extraThreads) {
-        searchThreads.push.apply(searchThreads, opt_extraThreads);
+    if (optExtraThreads) {
+        searchThreads.push.apply(searchThreads, optExtraThreads);
     }
     // Set of scripts that request a glow this frame.
     var requestedGlowsThisFrame = [];
@@ -578,7 +578,7 @@ Runtime.prototype._updateGlows = function (opt_extraThreads) {
     for (var i = 0; i < searchThreads.length; i++) {
         var thread = searchThreads[i];
         var target = thread.target;
-        if (target == this._editingTarget) {
+        if (target === this._editingTarget) {
             var blockForThread = thread.blockGlowInFrame;
             if (thread.requestScriptGlowInFrame) {
                 var script = target.blocks.getTopLevelScript(blockForThread);
@@ -672,7 +672,7 @@ Runtime.prototype.visualReport = function (blockId, value) {
 Runtime.prototype.getTargetById = function (targetId) {
     for (var i = 0; i < this.targets.length; i++) {
         var target = this.targets[i];
-        if (target.id == targetId) {
+        if (target.id === targetId) {
             return target;
         }
     }
@@ -686,7 +686,7 @@ Runtime.prototype.getTargetById = function (targetId) {
 Runtime.prototype.getSpriteTargetByName = function (spriteName) {
     for (var i = 0; i < this.targets.length; i++) {
         var target = this.targets[i];
-        if (target.sprite && target.sprite.name == spriteName) {
+        if (target.sprite && target.sprite.name === spriteName) {
             return target;
         }
     }
