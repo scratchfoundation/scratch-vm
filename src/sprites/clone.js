@@ -1,4 +1,6 @@
 var util = require('util');
+
+var log = require('../util/log');
 var MathUtil = require('../util/math-util');
 var Target = require('../engine/target');
 
@@ -211,10 +213,10 @@ Clone.prototype.setSay = function (type, message) {
     }
     // @todo: Render to stage.
     if (!type || !message) {
-        console.log('Clearing say bubble');
+        log.info('Clearing say bubble');
         return;
     }
-    console.log('Setting say bubble:', type, message);
+    log.info('Setting say bubble:', type, message);
 };
 
 /**

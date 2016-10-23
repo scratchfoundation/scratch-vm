@@ -1,3 +1,4 @@
+var log = require('../util/log');
 var Thread = require('./thread');
 
 /**
@@ -52,7 +53,7 @@ var execute = function (sequencer, thread) {
 
 
     if (!opcode) {
-        console.warn('Could not get opcode for block: ' + currentBlockId);
+        log.warn('Could not get opcode for block: ' + currentBlockId);
         return;
     }
 
@@ -110,7 +111,7 @@ var execute = function (sequencer, thread) {
                     handleReport(fields[fieldKey].value);
                 }
             } else {
-                console.warn('Could not get implementation for opcode: ' +
+                log.warn('Could not get implementation for opcode: ' +
                     opcode);
             }
             thread.requestScriptGlowInFrame = true;
@@ -234,7 +235,7 @@ var execute = function (sequencer, thread) {
         }, function (rejectionReason) {
             // Promise rejected: the primitive had some error.
             // Log it and proceed.
-            console.warn('Primitive rejected promise: ', rejectionReason);
+            log.warn('Primitive rejected promise: ', rejectionReason);
             thread.status = Thread.STATUS_RUNNING;
             thread.popStack();
         });

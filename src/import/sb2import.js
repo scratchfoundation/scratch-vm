@@ -9,6 +9,7 @@ var Blocks = require('../engine/blocks');
 var Clone = require('../sprites/clone');
 var Sprite = require('../sprites/sprite');
 var Color = require('../util/color.js');
+var log = require('../util/log');
 var uid = require('../util/uid');
 var specMap = require('./sb2specmap');
 var Variable = require('../engine/variable');
@@ -251,7 +252,7 @@ var parseBlock = function (sb2block) {
     var oldOpcode = sb2block[0];
     // Convert the block using the specMap. See sb2specmap.js.
     if (!oldOpcode || !specMap[oldOpcode]) {
-        console.warn('Couldn\'t find SB2 block: ', oldOpcode);
+        log.warn('Couldn\'t find SB2 block: ', oldOpcode);
         return;
     }
     var blockMetadata = specMap[oldOpcode];
