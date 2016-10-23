@@ -106,11 +106,11 @@ VirtualMachine.prototype.clear = function () {
 VirtualMachine.prototype.getPlaygroundData = function () {
     var instance = this;
     // Only send back thread data for the current editingTarget.
-    var threadData = this.runtime.threads.filter(function(thread) {
+    var threadData = this.runtime.threads.filter(function (thread) {
         return thread.target == instance.editingTarget;
     });
     // Remove the target key, since it's a circular reference.
-    var filteredThreadData = JSON.stringify(threadData, function(key, value) {
+    var filteredThreadData = JSON.stringify(threadData, function (key, value) {
         if (key == 'target') return undefined;
         return value;
     }, 2);
@@ -297,7 +297,7 @@ VirtualMachine.prototype.emitTargetsUpdate = function () {
         targetList: this.runtime.targets.filter(function (target) {
             // Don't report clones.
             return !target.hasOwnProperty('isOriginal') || target.isOriginal;
-        }).map(function(target) {
+        }).map(function (target) {
             return [target.id, target.getName()];
         }),
         // Currently editing target id.

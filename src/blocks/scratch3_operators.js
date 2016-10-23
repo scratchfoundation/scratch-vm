@@ -1,6 +1,6 @@
 var Cast = require('../util/cast.js');
 
-function Scratch3OperatorsBlocks(runtime) {
+function Scratch3OperatorsBlocks (runtime) {
     /**
      * The runtime instantiating this block package.
      * @type {Runtime}
@@ -12,7 +12,7 @@ function Scratch3OperatorsBlocks(runtime) {
  * Retrieve the block primitives implemented by this package.
  * @return {Object.<string, Function>} Mapping of opcode to Function.
  */
-Scratch3OperatorsBlocks.prototype.getPrimitives = function() {
+Scratch3OperatorsBlocks.prototype.getPrimitives = function () {
     return {
         'operator_add': this.add,
         'operator_subtract': this.subtract,

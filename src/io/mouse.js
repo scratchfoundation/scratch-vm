@@ -12,7 +12,7 @@ function Mouse (runtime) {
     this.runtime = runtime;
 }
 
-Mouse.prototype.postData = function(data) {
+Mouse.prototype.postData = function (data) {
     if (data.x) {
         this._x = data.x - data.canvasWidth / 2;
     }

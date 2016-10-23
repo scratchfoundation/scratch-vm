@@ -226,7 +226,7 @@ Thread.prototype.isRecursiveCall = function (procedureCode) {
     for (var i = sp - 1; i >= 0; i--) {
         var block = this.target.blocks.getBlock(this.stack[i]);
         if (block.opcode == 'procedures_callnoreturn' &&
-            block.mutation.proccode == procedureCode)  {
+            block.mutation.proccode == procedureCode) {
             return true;
         }
         if (--callCount < 0) return false;

@@ -170,7 +170,7 @@ var execute = function (sequencer, thread) {
     primitiveReportedValue = blockFunction(argValues, {
         stackFrame: currentStackFrame.executionContext,
         target: target,
-        yield: function() {
+        yield: function () {
             thread.status = Thread.STATUS_YIELD;
         },
         startBranch: function (branchNum, isLoop) {
@@ -179,10 +179,10 @@ var execute = function (sequencer, thread) {
         stopAll: function () {
             runtime.stopAll();
         },
-        stopOtherTargetThreads: function() {
+        stopOtherTargetThreads: function () {
             runtime.stopForTarget(target, thread);
         },
-        stopThread: function() {
+        stopThread: function () {
             sequencer.retireThread(thread);
         },
         startProcedure: function (procedureCode) {
@@ -197,7 +197,7 @@ var execute = function (sequencer, thread) {
         getParam: function (paramName) {
             return thread.getParam(paramName);
         },
-        startHats: function(requestedHat, opt_matchFields, opt_target) {
+        startHats: function (requestedHat, opt_matchFields, opt_target) {
             return (
                 runtime.startHats(requestedHat, opt_matchFields, opt_target)
             );
@@ -224,7 +224,7 @@ var execute = function (sequencer, thread) {
             thread.status = Thread.STATUS_PROMISE_WAIT;
         }
         // Promise handlers
-        primitiveReportedValue.then(function(resolvedValue) {
+        primitiveReportedValue.then(function (resolvedValue) {
             handleReport(resolvedValue);
             if (typeof resolvedValue !== 'undefined') {
                 thread.popStack();
@@ -233,7 +233,7 @@ var execute = function (sequencer, thread) {
                 var nextBlockId = thread.target.blocks.getNextBlock(popped);
                 thread.pushStack(nextBlockId);
             }
-        }, function(rejectionReason) {
+        }, function (rejectionReason) {
             // Promise rejected: the primitive had some error.
             // Log it and proceed.
             console.warn('Primitive rejected promise: ', rejectionReason);

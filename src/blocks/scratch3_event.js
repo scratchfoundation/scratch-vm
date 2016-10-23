@@ -1,6 +1,6 @@
 var Cast = require('../util/cast');
 
-function Scratch3EventBlocks(runtime) {
+function Scratch3EventBlocks (runtime) {
     /**
      * The runtime instantiating this block package.
      * @type {Runtime}
@@ -12,7 +12,7 @@ function Scratch3EventBlocks(runtime) {
  * Retrieve the block primitives implemented by this package.
  * @return {Object.<string, Function>} Mapping of opcode to Function.
  */
-Scratch3EventBlocks.prototype.getPrimitives = function() {
+Scratch3EventBlocks.prototype.getPrimitives = function () {
     return {
         'event_broadcast': this.broadcast,
         'event_broadcastandwait': this.broadcastAndWait,
@@ -54,7 +54,7 @@ Scratch3EventBlocks.prototype.hatGreaterThanPredicate = function (args, util) {
     return false;
 };
 
-Scratch3EventBlocks.prototype.broadcast = function(args, util) {
+Scratch3EventBlocks.prototype.broadcast = function (args, util) {
     var broadcastOption = Cast.toString(args.BROADCAST_OPTION);
     util.startHats('event_whenbroadcastreceived', {
         'BROADCAST_OPTION': broadcastOption
@@ -78,7 +78,7 @@ Scratch3EventBlocks.prototype.broadcastAndWait = function (args, util) {
     }
     // We've run before; check if the wait is still going on.
     var instance = this;
-    var waiting = util.stackFrame.startedThreads.some(function(thread) {
+    var waiting = util.stackFrame.startedThreads.some(function (thread) {
         return instance.runtime.isActiveThread(thread);
     });
     if (waiting) {

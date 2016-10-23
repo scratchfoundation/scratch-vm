@@ -8,7 +8,7 @@ var Target = require('../engine/target');
  * @param {Runtime} runtime Reference to the runtime.
  * @constructor
  */
-function Clone(sprite, runtime) {
+function Clone (sprite, runtime) {
     Target.call(this, sprite.blocks);
     this.runtime = runtime;
     /**
@@ -447,7 +447,7 @@ Clone.prototype.isTouchingSprite = function (spriteName) {
     if (!firstClone || !this.renderer) {
         return false;
     }
-    var drawableCandidates = firstClone.sprite.clones.map(function(clone) {
+    var drawableCandidates = firstClone.sprite.clones.map(function (clone) {
         return clone.drawableID;
     });
     return this.renderer.isTouchingDrawables(

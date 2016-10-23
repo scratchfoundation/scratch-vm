@@ -2,7 +2,7 @@ var Cast = require('../util/cast');
 var MathUtil = require('../util/math-util');
 var Timer = require('../util/timer');
 
-function Scratch3MotionBlocks(runtime) {
+function Scratch3MotionBlocks (runtime) {
     /**
      * The runtime instantiating this block package.
      * @type {Runtime}
@@ -14,7 +14,7 @@ function Scratch3MotionBlocks(runtime) {
  * Retrieve the block primitives implemented by this package.
  * @return {Object.<string, Function>} Mapping of opcode to Function.
  */
-Scratch3MotionBlocks.prototype.getPrimitives = function() {
+Scratch3MotionBlocks.prototype.getPrimitives = function () {
     return {
         'motion_movesteps': this.moveSteps,
         'motion_gotoxy': this.goToXY,

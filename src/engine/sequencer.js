@@ -78,7 +78,7 @@ Sequencer.prototype.stepThreads = function () {
         ranFirstTick = true;
     }
     // Filter inactive threads from `this.runtime.threads`.
-    this.runtime.threads = this.runtime.threads.filter(function(thread) {
+    this.runtime.threads = this.runtime.threads.filter(function (thread) {
         if (inactiveThreads.indexOf(thread) > -1) {
             return false;
         }

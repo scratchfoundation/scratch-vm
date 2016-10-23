@@ -394,7 +394,7 @@ Runtime.prototype.startHats = function (requestedHatOpcode,
     var instance = this;
     var newThreads = [];
     // Consider all scripts, looking for hats with opcode `requestedHatOpcode`.
-    this.allScriptsDo(function(topBlockId, target) {
+    this.allScriptsDo(function (topBlockId, target) {
         var potentialHatOpcode = target.blocks.getBlock(topBlockId).opcode;
         if (potentialHatOpcode !== requestedHatOpcode) {
             // Not the right hat.
@@ -750,7 +750,7 @@ Runtime.prototype.start = function () {
         interval = Runtime.THREAD_STEP_INTERVAL_COMPATIBILITY;
     }
     this.currentStepTime = interval;
-    this._steppingInterval = self.setInterval(function() {
+    this._steppingInterval = self.setInterval(function () {
         this._step();
     }.bind(this), interval);
 };

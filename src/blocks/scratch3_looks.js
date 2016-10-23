@@ -1,6 +1,6 @@
 var Cast = require('../util/cast');
 
-function Scratch3LooksBlocks(runtime) {
+function Scratch3LooksBlocks (runtime) {
     /**
      * The runtime instantiating this block package.
      * @type {Runtime}
@@ -12,7 +12,7 @@ function Scratch3LooksBlocks(runtime) {
  * Retrieve the block primitives implemented by this package.
  * @return {Object.<string, Function>} Mapping of opcode to Function.
  */
-Scratch3LooksBlocks.prototype.getPrimitives = function() {
+Scratch3LooksBlocks.prototype.getPrimitives = function () {
     return {
         'looks_say': this.say,
         'looks_sayforsecs': this.sayforsecs,
@@ -45,8 +45,8 @@ Scratch3LooksBlocks.prototype.say = function (args, util) {
 
 Scratch3LooksBlocks.prototype.sayforsecs = function (args, util) {
     util.target.setSay('say', args.MESSAGE);
-    return new Promise(function(resolve) {
-        setTimeout(function() {
+    return new Promise(function (resolve) {
+        setTimeout(function () {
             // Clear say bubble and proceed.
             util.target.setSay();
             resolve();
@@ -60,8 +60,8 @@ Scratch3LooksBlocks.prototype.think = function (args, util) {
 
 Scratch3LooksBlocks.prototype.thinkforsecs = function (args, util) {
     util.target.setSay('think', args.MESSAGE);
-    return new Promise(function(resolve) {
-        setTimeout(function() {
+    return new Promise(function (resolve) {
+        setTimeout(function () {
             // Clear say bubble and proceed.
             util.target.setSay();
             resolve();
@@ -149,7 +149,7 @@ Scratch3LooksBlocks.prototype.switchBackdropAndWait = function (args, util) {
     }
     // We've run before; check if the wait is still going on.
     var instance = this;
-    var waiting = util.stackFrame.startedThreads.some(function(thread) {
+    var waiting = util.stackFrame.startedThreads.some(function (thread) {
         return instance.runtime.isActiveThread(thread);
     });
     if (waiting) {

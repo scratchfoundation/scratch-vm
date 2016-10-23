@@ -1,6 +1,6 @@
 var Cast = require('../util/cast');
 
-function Scratch3DataBlocks(runtime) {
+function Scratch3DataBlocks (runtime) {
     /**
      * The runtime instantiating this block package.
      * @type {Runtime}

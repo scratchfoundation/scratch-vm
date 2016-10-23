@@ -1,7 +1,7 @@
 var Cast = require('../util/cast');
 var Timer = require('../util/timer');
 
-function Scratch3ControlBlocks(runtime) {
+function Scratch3ControlBlocks (runtime) {
     /**
      * The runtime instantiating this block package.
      * @type {Runtime}
@@ -13,7 +13,7 @@ function Scratch3ControlBlocks(runtime) {
  * Retrieve the block primitives implemented by this package.
  * @return {Object.<string, Function>} Mapping of opcode to Function.
  */
-Scratch3ControlBlocks.prototype.getPrimitives = function() {
+Scratch3ControlBlocks.prototype.getPrimitives = function () {
     return {
         'control_repeat': this.repeat,
         'control_repeat_until': this.repeatUntil,
@@ -36,7 +36,7 @@ Scratch3ControlBlocks.prototype.getHats = function () {
     };
 };
 
-Scratch3ControlBlocks.prototype.repeat = function(args, util) {
+Scratch3ControlBlocks.prototype.repeat = function (args, util) {
     var times = Math.floor(Cast.toNumber(args.TIMES));
     // Initialize loop
     if (util.stackFrame.loopCounter === undefined) {
@@ -53,7 +53,7 @@ Scratch3ControlBlocks.prototype.repeat = function(args, util) {
     }
 };
 
-Scratch3ControlBlocks.prototype.repeatUntil = function(args, util) {
+Scratch3ControlBlocks.prototype.repeatUntil = function (args, util) {
     var condition = Cast.toBoolean(args.CONDITION);
     // If the condition is true, start the branch.
     if (!condition) {
@@ -61,18 +61,18 @@ Scratch3ControlBlocks.prototype.repeatUntil = function(args, util) {
     }
 };
 
-Scratch3ControlBlocks.prototype.waitUntil = function(args, util) {
+Scratch3ControlBlocks.prototype.waitUntil = function (args, util) {
     var condition = Cast.toBoolean(args.CONDITION);
     if (!condition) {
         util.yield();
     }
 };
 
-Scratch3ControlBlocks.prototype.forever = function(args, util) {
+Scratch3ControlBlocks.prototype.forever = function (args, util) {
     util.startBranch(1, true);
 };
 
-Scratch3ControlBlocks.prototype.wait = function(args, util) {
+Scratch3ControlBlocks.prototype.wait = function (args, util) {
     if (!util.stackFrame.timer) {
         util.stackFrame.timer = new Timer();
         util.stackFrame.timer.start();
@@ -86,14 +86,14 @@ Scratch3ControlBlocks.prototype.wait = function(args, util) {
     }
 };
 
-Scratch3ControlBlocks.prototype.if = function(args, util) {
+Scratch3ControlBlocks.prototype.if = function (args, util) {
     var condition = Cast.toBoolean(args.CONDITION);
     if (condition) {
         util.startBranch(1, false);
     }
 };
 
-Scratch3ControlBlocks.prototype.ifElse = function(args, util) {
+Scratch3ControlBlocks.prototype.ifElse = function (args, util) {
     var condition = Cast.toBoolean(args.CONDITION);
     if (condition) {
         util.startBranch(1, false);
@@ -102,7 +102,7 @@ Scratch3ControlBlocks.prototype.ifElse = function(args, util) {
     }
 };
 
-Scratch3ControlBlocks.prototype.stop = function(args, util) {
+Scratch3ControlBlocks.prototype.stop = function (args, util) {
     var option = args.STOP_OPTION;
     if (option == 'all') {
         util.stopAll();
