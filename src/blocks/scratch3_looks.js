@@ -1,41 +1,41 @@
 var Cast = require('../util/cast');
 
-function Scratch3LooksBlocks(runtime) {
+var Scratch3LooksBlocks = function (runtime) {
     /**
      * The runtime instantiating this block package.
      * @type {Runtime}
      */
     this.runtime = runtime;
-}
+};
 
 /**
  * Retrieve the block primitives implemented by this package.
  * @return {Object.<string, Function>} Mapping of opcode to Function.
  */
-Scratch3LooksBlocks.prototype.getPrimitives = function() {
+Scratch3LooksBlocks.prototype.getPrimitives = function () {
     return {
-        'looks_say': this.say,
-        'looks_sayforsecs': this.sayforsecs,
-        'looks_think': this.think,
-        'looks_thinkforsecs': this.sayforsecs,
-        'looks_show': this.show,
-        'looks_hide': this.hide,
-        'looks_switchcostumeto': this.switchCostume,
-        'looks_switchbackdropto': this.switchBackdrop,
-        'looks_switchbackdroptoandwait': this.switchBackdropAndWait,
-        'looks_nextcostume': this.nextCostume,
-        'looks_nextbackdrop': this.nextBackdrop,
-        'looks_changeeffectby': this.changeEffect,
-        'looks_seteffectto': this.setEffect,
-        'looks_cleargraphiceffects': this.clearEffects,
-        'looks_changesizeby': this.changeSize,
-        'looks_setsizeto': this.setSize,
-        'looks_gotofront': this.goToFront,
-        'looks_gobacklayers': this.goBackLayers,
-        'looks_size': this.getSize,
-        'looks_costumeorder': this.getCostumeIndex,
-        'looks_backdroporder': this.getBackdropIndex,
-        'looks_backdropname': this.getBackdropName
+        looks_say: this.say,
+        looks_sayforsecs: this.sayforsecs,
+        looks_think: this.think,
+        looks_thinkforsecs: this.sayforsecs,
+        looks_show: this.show,
+        looks_hide: this.hide,
+        looks_switchcostumeto: this.switchCostume,
+        looks_switchbackdropto: this.switchBackdrop,
+        looks_switchbackdroptoandwait: this.switchBackdropAndWait,
+        looks_nextcostume: this.nextCostume,
+        looks_nextbackdrop: this.nextBackdrop,
+        looks_changeeffectby: this.changeEffect,
+        looks_seteffectto: this.setEffect,
+        looks_cleargraphiceffects: this.clearEffects,
+        looks_changesizeby: this.changeSize,
+        looks_setsizeto: this.setSize,
+        looks_gotofront: this.goToFront,
+        looks_gobacklayers: this.goBackLayers,
+        looks_size: this.getSize,
+        looks_costumeorder: this.getCostumeIndex,
+        looks_backdroporder: this.getBackdropIndex,
+        looks_backdropname: this.getBackdropName
     };
 };
 
@@ -45,8 +45,8 @@ Scratch3LooksBlocks.prototype.say = function (args, util) {
 
 Scratch3LooksBlocks.prototype.sayforsecs = function (args, util) {
     util.target.setSay('say', args.MESSAGE);
-    return new Promise(function(resolve) {
-        setTimeout(function() {
+    return new Promise(function (resolve) {
+        setTimeout(function () {
             // Clear say bubble and proceed.
             util.target.setSay();
             resolve();
@@ -60,8 +60,8 @@ Scratch3LooksBlocks.prototype.think = function (args, util) {
 
 Scratch3LooksBlocks.prototype.thinkforsecs = function (args, util) {
     util.target.setSay('think', args.MESSAGE);
-    return new Promise(function(resolve) {
-        setTimeout(function() {
+    return new Promise(function (resolve) {
+        setTimeout(function () {
             // Clear say bubble and proceed.
             util.target.setSay();
             resolve();
@@ -82,37 +82,37 @@ Scratch3LooksBlocks.prototype.hide = function (args, util) {
  * Matches the behavior of Scratch 2.0 for different types of arguments.
  * @param {!Target} target Target to set costume/backdrop to.
  * @param {Any} requestedCostume Costume requested, e.g., 0, 'name', etc.
- * @param {boolean=} opt_zeroIndex Set to zero-index the requestedCostume.
+ * @param {boolean=} optZeroIndex Set to zero-index the requestedCostume.
  * @return {Array.<!Thread>} Any threads started by this switch.
  */
 Scratch3LooksBlocks.prototype._setCostumeOrBackdrop = function (target,
-        requestedCostume, opt_zeroIndex) {
+        requestedCostume, optZeroIndex) {
     if (typeof requestedCostume === 'number') {
-        target.setCostume(opt_zeroIndex ?
+        target.setCostume(optZeroIndex ?
             requestedCostume : requestedCostume - 1);
     } else {
         var costumeIndex = target.getCostumeIndexByName(requestedCostume);
         if (costumeIndex > -1) {
             target.setCostume(costumeIndex);
-        } else if (costumeIndex == 'previous costume' ||
-                   costumeIndex == 'previous backdrop') {
+        } else if (costumeIndex === 'previous costume' ||
+                   costumeIndex === 'previous backdrop') {
             target.setCostume(target.currentCostume - 1);
-        } else if (costumeIndex == 'next costume' ||
-                   costumeIndex == 'next backdrop') {
+        } else if (costumeIndex === 'next costume' ||
+                   costumeIndex === 'next backdrop') {
             target.setCostume(target.currentCostume + 1);
         } else {
             var forcedNumber = Cast.toNumber(requestedCostume);
             if (!isNaN(forcedNumber)) {
-                target.setCostume(opt_zeroIndex ?
+                target.setCostume(optZeroIndex ?
                     forcedNumber : forcedNumber - 1);
             }
         }
     }
-    if (target == this.runtime.getTargetForStage()) {
+    if (target === this.runtime.getTargetForStage()) {
         // Target is the stage - start hats.
         var newName = target.sprite.costumes[target.currentCostume].name;
         return this.runtime.startHats('event_whenbackdropswitchesto', {
-            'BACKDROP': newName
+            BACKDROP: newName
         });
     }
     return [];
@@ -142,14 +142,14 @@ Scratch3LooksBlocks.prototype.switchBackdropAndWait = function (args, util) {
                 args.BACKDROP
             )
         );
-        if (util.stackFrame.startedThreads.length == 0) {
+        if (util.stackFrame.startedThreads.length === 0) {
             // Nothing was started.
             return;
         }
     }
     // We've run before; check if the wait is still going on.
     var instance = this;
-    var waiting = util.stackFrame.startedThreads.some(function(thread) {
+    var waiting = util.stackFrame.startedThreads.some(function (thread) {
         return instance.runtime.isActiveThread(thread);
     });
     if (waiting) {

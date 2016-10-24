@@ -1,6 +1,6 @@
 var Cast = require('../util/cast');
 
-function Keyboard (runtime) {
+var Keyboard = function (runtime) {
     /**
      * List of currently pressed keys.
      * @type{Array.<number>}
@@ -12,7 +12,7 @@ function Keyboard (runtime) {
      * @type{!Runtime}
      */
     this.runtime = runtime;
-}
+};
 
 /**
  * Convert a Scratch key name to a DOM keyCode.
@@ -21,7 +21,7 @@ function Keyboard (runtime) {
  * @private
  */
 Keyboard.prototype._scratchKeyToKeyCode = function (keyName) {
-    if (typeof keyName == 'number') {
+    if (typeof keyName === 'number') {
         // Key codes placed in with number blocks.
         return keyName;
     }
@@ -73,10 +73,10 @@ Keyboard.prototype.postData = function (data) {
             }
             // Always trigger hats, even if it was already pressed.
             this.runtime.startHats('event_whenkeypressed', {
-                'KEY_OPTION': this._keyCodeToScratchKey(data.keyCode)
+                KEY_OPTION: this._keyCodeToScratchKey(data.keyCode)
             });
             this.runtime.startHats('event_whenkeypressed', {
-                'KEY_OPTION': 'any'
+                KEY_OPTION: 'any'
             });
         } else if (index > -1) {
             // If already present, remove from the list.
@@ -91,7 +91,7 @@ Keyboard.prototype.postData = function (data) {
  * @return {boolean} Is the specified key down?
  */
 Keyboard.prototype.getKeyIsDown = function (key) {
-    if (key == 'any') {
+    if (key === 'any') {
         return this._keysPressed.length > 0;
     }
     var keyCode = this._scratchKeyToKeyCode(key);

@@ -1,3 +1,4 @@
+var log = require('../util/log');
 var Thread = require('./thread');
 
 /**
@@ -52,7 +53,7 @@ var execute = function (sequencer, thread) {
 
 
     if (!opcode) {
-        console.warn('Could not get opcode for block: ' + currentBlockId);
+        log.warn('Could not get opcode for block: ' + currentBlockId);
         return;
     }
 
@@ -105,14 +106,14 @@ var execute = function (sequencer, thread) {
             // Skip through the block (hat with no predicate).
             return;
         } else {
-            if (Object.keys(fields).length == 1 &&
-                Object.keys(inputs).length == 0) {
+            if (Object.keys(fields).length === 1 &&
+                Object.keys(inputs).length === 0) {
                 // One field and no inputs - treat as arg.
                 for (var fieldKey in fields) { // One iteration.
                     handleReport(fields[fieldKey].value);
                 }
             } else {
-                console.warn('Could not get implementation for opcode: ' +
+                log.warn('Could not get implementation for opcode: ' +
                     opcode);
             }
             thread.requestScriptGlowInFrame = true;
@@ -133,8 +134,8 @@ var execute = function (sequencer, thread) {
         var input = inputs[inputName];
         var inputBlockId = input.block;
         // Is there no value for this input waiting in the stack frame?
-        if (typeof currentStackFrame.reported[inputName] === 'undefined'
-            && inputBlockId) {
+        if (typeof currentStackFrame.reported[inputName] === 'undefined' &&
+            inputBlockId) {
             // If there's not, we need to evaluate the block.
             // Push to the stack to evaluate the reporter block.
             thread.pushStack(inputBlockId);
@@ -170,7 +171,7 @@ var execute = function (sequencer, thread) {
     primitiveReportedValue = blockFunction(argValues, {
         stackFrame: currentStackFrame.executionContext,
         target: target,
-        yield: function() {
+        yield: function () {
             thread.status = Thread.STATUS_YIELD;
         },
         startBranch: function (branchNum, isLoop) {
@@ -179,10 +180,10 @@ var execute = function (sequencer, thread) {
         stopAll: function () {
             runtime.stopAll();
         },
-        stopOtherTargetThreads: function() {
+        stopOtherTargetThreads: function () {
             runtime.stopForTarget(target, thread);
         },
-        stopThread: function() {
+        stopThread: function () {
             sequencer.retireThread(thread);
         },
         startProcedure: function (procedureCode) {
@@ -197,15 +198,20 @@ var execute = function (sequencer, thread) {
         getParam: function (paramName) {
             return thread.getParam(paramName);
         },
-        startHats: function(requestedHat, opt_matchFields, opt_target) {
+        startHats: function (requestedHat, optMatchFields, optTarget) {
             return (
-                runtime.startHats(requestedHat, opt_matchFields, opt_target)
+                runtime.startHats(requestedHat, optMatchFields, optTarget)
             );
         },
         ioQuery: function (device, func, args) {
             // Find the I/O device and execute the query/function call.
             if (runtime.ioDevices[device] && runtime.ioDevices[device][func]) {
                 var devObject = runtime.ioDevices[device];
+                // @todo Figure out why eslint complains about no-useless-call
+                // no-useless-call can't tell if the call is useless for dynamic
+                // expressions... or something. Not exactly sure why it
+                // complains here.
+                // eslint-disable-next-line no-useless-call
                 return devObject[func].call(devObject, args);
             }
         }
@@ -224,19 +230,19 @@ var execute = function (sequencer, thread) {
             thread.status = Thread.STATUS_PROMISE_WAIT;
         }
         // Promise handlers
-        primitiveReportedValue.then(function(resolvedValue) {
+        primitiveReportedValue.then(function (resolvedValue) {
             handleReport(resolvedValue);
-            if (typeof resolvedValue !== 'undefined') {
-                thread.popStack();
-            } else {
+            if (typeof resolvedValue === 'undefined') {
                 var popped = thread.popStack();
                 var nextBlockId = thread.target.blocks.getNextBlock(popped);
                 thread.pushStack(nextBlockId);
+            } else {
+                thread.popStack();
             }
-        }, function(rejectionReason) {
+        }, function (rejectionReason) {
             // Promise rejected: the primitive had some error.
             // Log it and proceed.
-            console.warn('Primitive rejected promise: ', rejectionReason);
+            log.warn('Primitive rejected promise: ', rejectionReason);
             thread.status = Thread.STATUS_RUNNING;
             thread.popStack();
         });

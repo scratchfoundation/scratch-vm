@@ -1,6 +1,6 @@
 var Color = require('../util/color');
 
-function Cast () {}
+var Cast = function () {};
 
 /**
  * @fileoverview
@@ -44,9 +44,9 @@ Cast.toBoolean = function (value) {
     }
     if (typeof value === 'string') {
         // These specific strings are treated as false in Scratch.
-        if ((value == '') ||
-            (value == '0') ||
-            (value.toLowerCase() == 'false')) {
+        if ((value === '') ||
+            (value === '0') ||
+            (value.toLowerCase() === 'false')) {
             return false;
         }
         // All other strings treated as true.
@@ -72,7 +72,7 @@ Cast.toString = function (value) {
  */
 Cast.toRgbColorList = function (value) {
     var color;
-    if (typeof value == 'string' && value.substring(0, 1) == '#') {
+    if (typeof value === 'string' && value.substring(0, 1) === '#') {
         color = Color.hexToRgb(value);
     } else {
         color = Color.decimalToRgb(Cast.toNumber(value));
@@ -114,7 +114,7 @@ Cast.isInt = function (val) {
             return true;
         }
         // True if it's "round" (e.g., 2.0 and 2).
-        return val == parseInt(val);
+        return val === parseInt(val, 10);
     } else if (typeof val === 'boolean') {
         // `True` and `false` always represent integer after Scratch cast.
         return true;
@@ -138,15 +138,15 @@ Cast.LIST_ALL = 'ALL';
  */
 Cast.toListIndex = function (index, length) {
     if (typeof index !== 'number') {
-        if (index == 'all') {
+        if (index === 'all') {
             return Cast.LIST_ALL;
         }
-        if (index == 'last') {
+        if (index === 'last') {
             if (length > 0) {
                 return length;
             }
             return Cast.LIST_INVALID;
-        } else if (index == 'random' || index == 'any') {
+        } else if (index === 'random' || index === 'any') {
             if (length > 0) {
                 return 1 + Math.floor(Math.random() * length);
             }

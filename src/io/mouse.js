@@ -1,6 +1,6 @@
 var MathUtil = require('../util/math-util');
 
-function Mouse (runtime) {
+var Mouse = function (runtime) {
     this._x = 0;
     this._y = 0;
     this._isDown = false;
@@ -10,7 +10,7 @@ function Mouse (runtime) {
      * @type{!Runtime}
      */
     this.runtime = runtime;
-}
+};
 
 /**
  * Activate "event_whenthisspriteclicked" hats if needed.
@@ -24,7 +24,7 @@ Mouse.prototype._activateClickHats = function (x, y) {
         for (var i = 0; i < this.runtime.targets.length; i++) {
             var target = this.runtime.targets[i];
             if (target.hasOwnProperty('drawableID') &&
-                target.drawableID == drawableID) {
+                target.drawableID === drawableID) {
                 this.runtime.startHats('event_whenthisspriteclicked',
                     null, target);
                 return;
@@ -37,7 +37,7 @@ Mouse.prototype._activateClickHats = function (x, y) {
  * Mouse DOM event handler.
  * @param  {object} data Data from DOM event.
  */
-Mouse.prototype.postData = function(data) {
+Mouse.prototype.postData = function (data) {
     if (data.x) {
         this._x = data.x - data.canvasWidth / 2;
     }
