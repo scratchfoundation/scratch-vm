@@ -207,7 +207,12 @@ var execute = function (sequencer, thread) {
             // Find the I/O device and execute the query/function call.
             if (runtime.ioDevices[device] && runtime.ioDevices[device][func]) {
                 var devObject = runtime.ioDevices[device];
-                return devObject[func](args);
+                // @todo Figure out why eslint complains about no-useless-call
+                // no-useless-call can't tell if the call is useless for dynamic
+                // expressions... or something. Not exactly sure why it
+                // complains here.
+                // eslint-disable-next-line no-useless-call
+                return devObject[func].call(devObject[func], args);
             }
         }
     });
