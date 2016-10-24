@@ -27,7 +27,7 @@ var mutatorTagToObject = function (dom) {
  * @param {(Object|string)} mutation Mutation XML string or DOM.
  * @return {Object} Object representing the mutation.
  */
-module.exports = function (mutation) {
+var mutationAdpater = function (mutation) {
     var mutationParsed;
     // Check if the mutation is already parsed; if not, parse it.
     if (typeof mutation === 'object') {
@@ -37,3 +37,5 @@ module.exports = function (mutation) {
     }
     return mutatorTagToObject(mutationParsed);
 };
+
+module.exports = mutationAdpater;

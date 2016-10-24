@@ -35,7 +35,7 @@ var domToBlocks = function (blocksDOM) {
  * @param {Object} e `Blockly.events.create`
  * @return {Array.<Object>} List of blocks from this CREATE event.
  */
-module.exports = function (e) {
+var adapter = function (e) {
     // Validate input
     if (typeof e !== 'object') return;
     if (typeof e.xml !== 'object') return;
@@ -146,3 +146,5 @@ var domToBlock = function (blockDOM, blocks, isTopBlock, parent) {
         }
     }
 };
+
+module.exports = adapter;
