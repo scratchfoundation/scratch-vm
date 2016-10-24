@@ -77,10 +77,12 @@ var execute = function (sequencer, thread) {
                 if (!edgeWasActivated) {
                     sequencer.retireThread(thread);
                 }
-            } else if (!resolvedValue) {
+            } else {
                 // Not an edge-activated hat: retire the thread
                 // if predicate was false.
-                sequencer.retireThread(thread);
+                if (!resolvedValue) {
+                    sequencer.retireThread(thread);
+                }
             }
         } else {
             // In a non-hat, report the value visually if necessary if
