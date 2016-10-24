@@ -212,7 +212,7 @@ var execute = function (sequencer, thread) {
                 // expressions... or something. Not exactly sure why it
                 // complains here.
                 // eslint-disable-next-line no-useless-call
-                return devObject[func].call(devObject[func], args);
+                return devObject[func].call(devObject, args);
             }
         }
     });
