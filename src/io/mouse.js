@@ -14,9 +14,10 @@ function Mouse (runtime) {
 
 /**
  * Activate "event_whenthisspriteclicked" hats if needed.
- * @param  {int} X position to be sent to the renderer.
- * @param  {int} Y position to be sent to the renderer.
+ * @param  {int} x X position to be sent to the renderer.
+ * @param  {int} y Y position to be sent to the renderer.
  * @return {void}
+ * @private
  */
 Mouse.prototype._activateClickHats = function (x, y) {
     if (this.runtime.renderer) {
@@ -35,7 +36,7 @@ Mouse.prototype._activateClickHats = function (x, y) {
 
 /**
  * Mouse DOM event handler.
- * @param  {object} DOM event.
+ * @param  {object} data DOM event.
  * @return {void}
  */
 Mouse.prototype.postData = function(data) {

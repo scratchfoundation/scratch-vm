@@ -40,7 +40,7 @@ Keyboard.prototype._scratchKeyToKeyCode = function (keyName) {
 
 /**
  * Convert a DOM keyCode into a Scratch key name.
- * @param  {number} Key code from DOM event.
+ * @param  {number} keyCode Key code from DOM event.
  * @return {Any} Scratch key argument.
  * @private
  */
@@ -61,7 +61,7 @@ Keyboard.prototype._keyCodeToScratchKey = function (keyCode) {
 
 /**
  * Keyboard DOM event handler.
- * @param  {object} DOM event.
+ * @param  {object} data DOM event.
  * @return {void}
  */
 Keyboard.prototype.postData = function (data) {
@@ -88,8 +88,8 @@ Keyboard.prototype.postData = function (data) {
 
 /**
  * Get key down state for a specified Scratch key name.
- * @param  {Any} Scratch key argument.
- * @return {boolean}
+ * @param  {Any} key Scratch key argument.
+ * @return {boolean} Is the specified key down?
  */
 Keyboard.prototype.getKeyIsDown = function (key) {
     if (key == 'any') {
