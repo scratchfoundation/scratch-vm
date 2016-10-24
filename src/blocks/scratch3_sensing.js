@@ -125,7 +125,7 @@ Scratch3SensingBlocks.prototype.daysSince2000 = function () {
     return mSecsSinceStart / msPerDay;
 };
 
-Scratch3SensingBlocks.prototype.getAttributeOf = function (args, util) {
+Scratch3SensingBlocks.prototype.getAttributeOf = function (args) {
     var attrTarget;
 
     if (args.OBJECT === '_stage_') {
