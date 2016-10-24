@@ -14,9 +14,8 @@ function Mouse (runtime) {
 
 /**
  * Activate "event_whenthisspriteclicked" hats if needed.
- * @param  {int} x X position to be sent to the renderer.
- * @param  {int} y Y position to be sent to the renderer.
- * @return {void}
+ * @param  {number} x X position to be sent to the renderer.
+ * @param  {number} y Y position to be sent to the renderer.
  * @private
  */
 Mouse.prototype._activateClickHats = function (x, y) {
@@ -36,8 +35,7 @@ Mouse.prototype._activateClickHats = function (x, y) {
 
 /**
  * Mouse DOM event handler.
- * @param  {object} data DOM event.
- * @return {void}
+ * @param  {object} data Data from DOM event.
  */
 Mouse.prototype.postData = function(data) {
     if (data.x) {
@@ -56,7 +54,7 @@ Mouse.prototype.postData = function(data) {
 
 /**
  * Get the X position of the mouse.
- * @return {float} Clamped X position of the mouse cursor.
+ * @return {number} Clamped X position of the mouse cursor.
  */
 Mouse.prototype.getX = function () {
     return MathUtil.clamp(this._x, -240, 240);
@@ -64,7 +62,7 @@ Mouse.prototype.getX = function () {
 
 /**
  * Get the Y position of the mouse.
- * @return {float} Clamped Y position of the mouse cursor.
+ * @return {number} Clamped Y position of the mouse cursor.
  */
 Mouse.prototype.getY = function () {
     return MathUtil.clamp(-this._y, -180, 180);

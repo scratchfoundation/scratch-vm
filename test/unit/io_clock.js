@@ -19,7 +19,7 @@ test('cycle', function (t) {
     var rt = new Runtime();
     var c = new Clock(rt);
 
-    t.ok(c.projectTimer() <= 0.001);
+    t.ok(c.projectTimer() <= 0.1);
     setTimeout(function () {
         c.resetProjectTimer();
         setTimeout(function () {
