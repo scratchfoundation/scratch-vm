@@ -18,6 +18,7 @@ var Keyboard = function (runtime) {
  * Convert a Scratch key name to a DOM keyCode.
  * @param {Any} keyName Scratch key argument.
  * @return {number} Key code corresponding to a DOM event.
+ * @private
  */
 Keyboard.prototype._scratchKeyToKeyCode = function (keyName) {
     if (typeof keyName === 'number') {
@@ -37,6 +38,12 @@ Keyboard.prototype._scratchKeyToKeyCode = function (keyName) {
     return keyString.toUpperCase().charCodeAt(0);
 };
 
+/**
+ * Convert a DOM keyCode into a Scratch key name.
+ * @param  {number} keyCode Key code from DOM event.
+ * @return {Any} Scratch key argument.
+ * @private
+ */
 Keyboard.prototype._keyCodeToScratchKey = function (keyCode) {
     if (keyCode >= 48 && keyCode <= 90) {
         // Standard letter.
@@ -52,6 +59,10 @@ Keyboard.prototype._keyCodeToScratchKey = function (keyCode) {
     return null;
 };
 
+/**
+ * Keyboard DOM event handler.
+ * @param  {object} data Data from DOM event.
+ */
 Keyboard.prototype.postData = function (data) {
     if (data.keyCode) {
         var index = this._keysPressed.indexOf(data.keyCode);
@@ -74,6 +85,11 @@ Keyboard.prototype.postData = function (data) {
     }
 };
 
+/**
+ * Get key down state for a specified Scratch key name.
+ * @param  {Any} key Scratch key argument.
+ * @return {boolean} Is the specified key down?
+ */
 Keyboard.prototype.getKeyIsDown = function (key) {
     if (key === 'any') {
         return this._keysPressed.length > 0;
