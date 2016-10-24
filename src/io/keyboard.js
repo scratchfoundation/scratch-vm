@@ -61,7 +61,7 @@ Keyboard.prototype._keyCodeToScratchKey = function (keyCode) {
 
 /**
  * Keyboard DOM event handler.
- * @param  {object} DOM event object.
+ * @param  {object} DOM event.
  * @return {void}
  */
 Keyboard.prototype.postData = function (data) {
