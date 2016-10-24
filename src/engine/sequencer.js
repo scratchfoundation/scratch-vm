@@ -219,9 +219,11 @@ Sequencer.prototype.stepToProcedure = function (thread, procedureCode) {
         var doWarp = definitionBlock.mutation.warp;
         if (doWarp) {
             thread.peekStackFrame().warpMode = true;
-        } else if (isRecursive) {
+        } else {
             // In normal-mode threads, yield any time we have a recursive call.
-            thread.status = Thread.STATUS_YIELD;
+            if (isRecursive) {
+                thread.status = Thread.STATUS_YIELD;
+            }
         }
     }
 };
