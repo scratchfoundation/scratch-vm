@@ -399,7 +399,7 @@ Blocks.prototype.blockToXML = function (blockId) {
     // Encode properties of this block.
     var tagName = (block.shadow) ? 'shadow' : 'block';
     var xy = (block.topLevel) ?
-        ' x="' + block.x +'" y="' + block.y +'"' :
+        ' x="' + block.x + '" y="' + block.y + '"' :
         '';
     var xmlString = '';
     xmlString += '<' + tagName +
