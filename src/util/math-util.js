@@ -1,4 +1,4 @@
-function MathUtil () {}
+var MathUtil = function () {};
 
 /**
  * Convert a value from degrees to radians.
@@ -42,7 +42,7 @@ MathUtil.clamp = function (n, min, max) {
  */
 MathUtil.wrapClamp = function (n, min, max) {
     var range = (max - min) + 1;
-    return n - Math.floor((n - min) / range) * range;
+    return n - (Math.floor((n - min) / range) * range);
 };
 
 module.exports = MathUtil;

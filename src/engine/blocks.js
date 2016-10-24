@@ -8,7 +8,7 @@ var xmlEscape = require('../util/xml-escape');
  * and handle updates from Scratch Blocks events.
  */
 
-function Blocks () {
+var Blocks = function () {
     /**
      * All blocks in the workspace.
      * Keys are block IDs, values are metadata about the block.
@@ -22,7 +22,7 @@ function Blocks () {
      * @type {Array.<String>}
      */
     this._scripts = [];
-}
+};
 
 /**
  * Blockly inputs that represent statements/branch.
@@ -109,8 +109,8 @@ Blocks.prototype.getInputs = function (id) {
     var inputs = {};
     for (var input in this._blocks[id].inputs) {
         // Ignore blocks prefixed with branch prefix.
-        if (input.substring(0, Blocks.BRANCH_INPUT_PREFIX.length)
-            != Blocks.BRANCH_INPUT_PREFIX) {
+        if (input.substring(0, Blocks.BRANCH_INPUT_PREFIX.length) !==
+            Blocks.BRANCH_INPUT_PREFIX) {
             inputs[input] = this._blocks[id].inputs[input];
         }
     }
@@ -149,9 +149,9 @@ Blocks.prototype.getTopLevelScript = function (id) {
 Blocks.prototype.getProcedureDefinition = function (name) {
     for (var id in this._blocks) {
         var block = this._blocks[id];
-        if ((block.opcode == 'procedures_defnoreturn' ||
-            block.opcode == 'procedures_defreturn') &&
-            block.mutation.proccode == name) {
+        if ((block.opcode === 'procedures_defnoreturn' ||
+            block.opcode === 'procedures_defreturn') &&
+            block.mutation.proccode === name) {
             return id;
         }
     }
@@ -166,9 +166,9 @@ Blocks.prototype.getProcedureDefinition = function (name) {
 Blocks.prototype.getProcedureParamNames = function (name) {
     for (var id in this._blocks) {
         var block = this._blocks[id];
-        if ((block.opcode == 'procedures_defnoreturn' ||
-            block.opcode == 'procedures_defreturn') &&
-            block.mutation.proccode == name) {
+        if ((block.opcode === 'procedures_defnoreturn' ||
+            block.opcode === 'procedures_defreturn') &&
+            block.mutation.proccode === name) {
             return JSON.parse(block.mutation.argumentnames);
         }
     }
@@ -181,18 +181,18 @@ Blocks.prototype.getProcedureParamNames = function (name) {
  * Create event listener for blocks. Handles validation and serves as a generic
  * adapter between the blocks and the runtime interface.
  * @param {Object} e Blockly "block" event
- * @param {?Runtime} opt_runtime Optional runtime to forward click events to.
+ * @param {?Runtime} optRuntime Optional runtime to forward click events to.
  */
 
-Blocks.prototype.blocklyListen = function (e, opt_runtime) {
+Blocks.prototype.blocklyListen = function (e, optRuntime) {
     // Validate event
     if (typeof e !== 'object') return;
     if (typeof e.blockId !== 'string') return;
 
     // UI event: clicked scripts toggle in the runtime.
     if (e.element === 'stackclick') {
-        if (opt_runtime) {
-            opt_runtime.toggleScript(e.blockId);
+        if (optRuntime) {
+            optRuntime.toggleScript(e.blockId);
         }
         return;
     }
@@ -232,8 +232,8 @@ Blocks.prototype.blocklyListen = function (e, opt_runtime) {
             return;
         }
         // Inform any runtime to forget about glows on this script.
-        if (opt_runtime && this._blocks[e.blockId].topLevel) {
-            opt_runtime.quietGlow(e.blockId);
+        if (optRuntime && this._blocks[e.blockId].topLevel) {
+            optRuntime.quietGlow(e.blockId);
         }
         this.deleteBlock({
             id: e.blockId
@@ -273,11 +273,11 @@ Blocks.prototype.changeBlock = function (args) {
     if (args.element !== 'field' && args.element !== 'mutation') return;
     if (typeof this._blocks[args.id] === 'undefined') return;
 
-    if (args.element == 'field') {
+    if (args.element === 'field') {
         // Update block value
         if (!this._blocks[args.id].fields[args.name]) return;
         this._blocks[args.id].fields[args.name].value = args.value;
-    } else if (args.element == 'mutation') {
+    } else if (args.element === 'mutation') {
         this._blocks[args.id].mutation = mutationAdapter(args.value);
     }
 };
@@ -298,9 +298,9 @@ Blocks.prototype.moveBlock = function (e) {
     }
 
     // Remove from any old parent.
-    if (e.oldParent !== undefined) {
+    if (typeof e.oldParent !== 'undefined') {
         var oldParent = this._blocks[e.oldParent];
-        if (e.oldInput !== undefined &&
+        if (typeof e.oldInput !== 'undefined' &&
             oldParent.inputs[e.oldInput].block === e.id) {
             // This block was connected to the old parent's input.
             oldParent.inputs[e.oldInput].block = null;
@@ -312,13 +312,16 @@ Blocks.prototype.moveBlock = function (e) {
     }
 
     // Has the block become a top-level block?
-    if (e.newParent === undefined) {
+    if (typeof e.newParent === 'undefined') {
         this._addScript(e.id);
     } else {
         // Remove script, if one exists.
         this._deleteScript(e.id);
         // Otherwise, try to connect it in its new place.
-        if (e.newInput !== undefined) {
+        if (typeof e.newInput === 'undefined') {
+            // Moved to the new parent's next connection.
+            this._blocks[e.newParent].next = e.id;
+        } else {
             // Moved to the new parent's input.
             // Don't obscure the shadow block.
             var oldShadow = null;
@@ -330,9 +333,6 @@ Blocks.prototype.moveBlock = function (e) {
                 block: e.id,
                 shadow: oldShadow
             };
-        } else {
-            // Moved to the new parent's next connection.
-            this._blocks[e.newParent].next = e.id;
         }
         this._blocks[e.id].parent = e.newParent;
     }
@@ -399,7 +399,7 @@ Blocks.prototype.blockToXML = function (blockId) {
     // Encode properties of this block.
     var tagName = (block.shadow) ? 'shadow' : 'block';
     var xy = (block.topLevel) ?
-        ' x="' + block.x +'"' + ' y="' + block.y +'"' :
+        ' x="' + block.x + '" y="' + block.y + '"' :
         '';
     var xmlString = '';
     xmlString += '<' + tagName +
@@ -420,7 +420,7 @@ Blocks.prototype.blockToXML = function (blockId) {
             if (blockInput.block) {
                 xmlString += this.blockToXML(blockInput.block);
             }
-            if (blockInput.shadow && blockInput.shadow != blockInput.block) {
+            if (blockInput.shadow && blockInput.shadow !== blockInput.block) {
                 // Obscured shadow.
                 xmlString += this.blockToXML(blockInput.shadow);
             }
@@ -453,7 +453,7 @@ Blocks.prototype.blockToXML = function (blockId) {
 Blocks.prototype.mutationToXML = function (mutation) {
     var mutationString = '<' + mutation.tagName;
     for (var prop in mutation) {
-        if (prop == 'children' || prop == 'tagName') continue;
+        if (prop === 'children' || prop === 'tagName') continue;
         var mutationValue = (typeof mutation[prop] === 'string') ?
             xmlEscape(mutation[prop]) : mutation[prop];
         mutationString += ' ' + prop + '="' + mutationValue + '"';

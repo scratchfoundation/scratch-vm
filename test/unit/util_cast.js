@@ -75,19 +75,19 @@ test('toString', function (t) {
 
 test('toRbgColorList', function (t) {
     // Hex (minimal, see "color" util tests)
-    t.deepEqual(cast.toRgbColorList('#000'), [0,0,0]);
-    t.deepEqual(cast.toRgbColorList('#000000'), [0,0,0]);
-    t.deepEqual(cast.toRgbColorList('#fff'), [255,255,255]);
-    t.deepEqual(cast.toRgbColorList('#ffffff'), [255,255,255]);
+    t.deepEqual(cast.toRgbColorList('#000'), [0, 0, 0]);
+    t.deepEqual(cast.toRgbColorList('#000000'), [0, 0, 0]);
+    t.deepEqual(cast.toRgbColorList('#fff'), [255, 255, 255]);
+    t.deepEqual(cast.toRgbColorList('#ffffff'), [255, 255, 255]);
 
     // Decimal (minimal, see "color" util tests)
-    t.deepEqual(cast.toRgbColorList(0), [0,0,0]);
-    t.deepEqual(cast.toRgbColorList(1), [0,0,1]);
-    t.deepEqual(cast.toRgbColorList(16777215), [255,255,255]);
+    t.deepEqual(cast.toRgbColorList(0), [0, 0, 0]);
+    t.deepEqual(cast.toRgbColorList(1), [0, 0, 1]);
+    t.deepEqual(cast.toRgbColorList(16777215), [255, 255, 255]);
 
     // Malformed
-    t.deepEqual(cast.toRgbColorList('ffffff'), [0,0,0]);
-    t.deepEqual(cast.toRgbColorList('foobar'), [0,0,0]);
+    t.deepEqual(cast.toRgbColorList('ffffff'), [0, 0, 0]);
+    t.deepEqual(cast.toRgbColorList('foobar'), [0, 0, 0]);
     t.end();
 });
 
@@ -144,7 +144,7 @@ test('isInt', function (t) {
 });
 
 test('toListIndex', function (t) {
-    var list = [0,1,2,3,4,5];
+    var list = [0, 1, 2, 3, 4, 5];
     var empty = [];
 
     // Valid

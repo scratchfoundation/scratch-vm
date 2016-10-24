@@ -1,4 +1,6 @@
 var util = require('util');
+
+var log = require('../util/log');
 var MathUtil = require('../util/math-util');
 var Target = require('../engine/target');
 
@@ -8,7 +10,7 @@ var Target = require('../engine/target');
  * @param {Runtime} runtime Reference to the runtime.
  * @constructor
  */
-function Clone(sprite, runtime) {
+var Clone = function (sprite, runtime) {
     Target.call(this, sprite.blocks);
     this.runtime = runtime;
     /**
@@ -35,15 +37,15 @@ function Clone(sprite, runtime) {
      * @type {!Object.<string, number>}
      */
     this.effects = {
-        'color': 0,
-        'fisheye': 0,
-        'whirl': 0,
-        'pixelate': 0,
-        'mosaic': 0,
-        'brightness': 0,
-        'ghost': 0
+        color: 0,
+        fisheye: 0,
+        whirl: 0,
+        pixelate: 0,
+        mosaic: 0,
+        brightness: 0,
+        ghost: 0
     };
-}
+};
 util.inherits(Clone, Target);
 
 /**
@@ -166,7 +168,7 @@ Clone.prototype._getRenderedDirectionAndScale = function () {
     // Default: no changes to `this.direction` or `this.scale`.
     var finalDirection = this.direction;
     var finalScale = [this.size, this.size];
-    if (this.rotationStyle == Clone.ROTATION_STYLE_NONE) {
+    if (this.rotationStyle === Clone.ROTATION_STYLE_NONE) {
         // Force rendered direction to be 90.
         finalDirection = 90;
     } else if (this.rotationStyle === Clone.ROTATION_STYLE_LEFT_RIGHT) {
@@ -211,10 +213,10 @@ Clone.prototype.setSay = function (type, message) {
     }
     // @todo: Render to stage.
     if (!type || !message) {
-        console.log('Clearing say bubble');
+        log.info('Clearing say bubble');
         return;
     }
-    console.log('Setting say bubble:', type, message);
+    log.info('Setting say bubble:', type, message);
 };
 
 /**
@@ -319,11 +321,11 @@ Clone.prototype.setCostume = function (index) {
  * @param {!string} rotationStyle New rotation style.
  */
 Clone.prototype.setRotationStyle = function (rotationStyle) {
-    if (rotationStyle == Clone.ROTATION_STYLE_NONE) {
+    if (rotationStyle === Clone.ROTATION_STYLE_NONE) {
         this.rotationStyle = Clone.ROTATION_STYLE_NONE;
-    } else if (rotationStyle == Clone.ROTATION_STYLE_ALL_AROUND) {
+    } else if (rotationStyle === Clone.ROTATION_STYLE_ALL_AROUND) {
         this.rotationStyle = Clone.ROTATION_STYLE_ALL_AROUND;
-    } else if (rotationStyle == Clone.ROTATION_STYLE_LEFT_RIGHT) {
+    } else if (rotationStyle === Clone.ROTATION_STYLE_LEFT_RIGHT) {
         this.rotationStyle = Clone.ROTATION_STYLE_LEFT_RIGHT;
     }
     if (this.renderer) {
@@ -345,7 +347,7 @@ Clone.prototype.setRotationStyle = function (rotationStyle) {
  */
 Clone.prototype.getCostumeIndexByName = function (costumeName) {
     for (var i = 0; i < this.sprite.costumes.length; i++) {
-        if (this.sprite.costumes[i].name == costumeName) {
+        if (this.sprite.costumes[i].name === costumeName) {
             return i;
         }
     }
@@ -408,8 +410,8 @@ Clone.prototype.isTouchingPoint = function (x, y) {
         // Limits test to this Drawable, so this will return true
         // even if the clone is obscured by another Drawable.
         var pickResult = this.runtime.renderer.pick(
-            x + this.runtime.constructor.STAGE_WIDTH / 2,
-            -y + this.runtime.constructor.STAGE_HEIGHT / 2,
+            x + (this.runtime.constructor.STAGE_WIDTH / 2),
+            -y + (this.runtime.constructor.STAGE_HEIGHT / 2),
             null, null,
             [this.drawableID]
         );
@@ -447,7 +449,7 @@ Clone.prototype.isTouchingSprite = function (spriteName) {
     if (!firstClone || !this.renderer) {
         return false;
     }
-    var drawableCandidates = firstClone.sprite.clones.map(function(clone) {
+    var drawableCandidates = firstClone.sprite.clones.map(function (clone) {
         return clone.drawableID;
     });
     return this.renderer.isTouchingDrawables(
@@ -506,11 +508,11 @@ Clone.prototype.goBackLayers = function (nLayers) {
  * Keep a desired position within a fence.
  * @param {number} newX New desired X position.
  * @param {number} newY New desired Y position.
- * @param {Object=} opt_fence Optional fence with left, right, top bottom.
+ * @param {Object=} optFence Optional fence with left, right, top bottom.
  * @return {Array.<number>} Fenced X and Y coordinates.
  */
-Clone.prototype.keepInFence = function (newX, newY, opt_fence) {
-    var fence = opt_fence;
+Clone.prototype.keepInFence = function (newX, newY, optFence) {
+    var fence = optFence;
     if (!fence) {
         fence = {
             left: -this.runtime.constructor.STAGE_WIDTH / 2,

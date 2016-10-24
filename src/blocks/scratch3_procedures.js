@@ -1,20 +1,20 @@
-function Scratch3ProcedureBlocks(runtime) {
+var Scratch3ProcedureBlocks = function (runtime) {
     /**
      * The runtime instantiating this block package.
      * @type {Runtime}
      */
     this.runtime = runtime;
-}
+};
 
 /**
  * Retrieve the block primitives implemented by this package.
  * @return {Object.<string, Function>} Mapping of opcode to Function.
  */
-Scratch3ProcedureBlocks.prototype.getPrimitives = function() {
+Scratch3ProcedureBlocks.prototype.getPrimitives = function () {
     return {
-        'procedures_defnoreturn': this.defNoReturn,
-        'procedures_callnoreturn': this.callNoReturn,
-        'procedures_param': this.param
+        procedures_defnoreturn: this.defNoReturn,
+        procedures_callnoreturn: this.callNoReturn,
+        procedures_param: this.param
     };
 };
 

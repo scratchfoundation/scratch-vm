@@ -50,7 +50,7 @@ module.exports = [
     // Webpack-compatible
     defaultsDeep({}, base, {
         entry: {
-            'dist': './src/index.js'
+            dist: './src/index.js'
         },
 
         output: {
@@ -63,8 +63,8 @@ module.exports = [
     // Playground
     defaultsDeep({}, base, {
         entry: {
-            'vm': './src/index.js',
-            'vendor': [
+            vm: './src/index.js',
+            vendor: [
                 // FPS counter
                 'stats.js/build/stats.min.js',
                 // Syntax highlighter

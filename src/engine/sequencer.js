@@ -2,7 +2,7 @@ var Timer = require('../util/timer');
 var Thread = require('./thread');
 var execute = require('./execute.js');
 
-function Sequencer (runtime) {
+var Sequencer = function (runtime) {
     /**
      * A utility timer for timing thread sequencing.
      * @type {!Timer}
@@ -14,7 +14,7 @@ function Sequencer (runtime) {
      * @type {!Runtime}
      */
     this.runtime = runtime;
-}
+};
 
 /**
  * Time to run a warp-mode thread, in ms.
@@ -78,7 +78,7 @@ Sequencer.prototype.stepThreads = function () {
         ranFirstTick = true;
     }
     // Filter inactive threads from `this.runtime.threads`.
-    this.runtime.threads = this.runtime.threads.filter(function(thread) {
+    this.runtime.threads = this.runtime.threads.filter(function (thread) {
         if (inactiveThreads.indexOf(thread) > -1) {
             return false;
         }

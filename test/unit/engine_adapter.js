@@ -7,10 +7,10 @@ test('spec', function (t) {
     t.end();
 });
 
-test('invalid inputs', function(t) {
+test('invalid inputs', function (t) {
     var nothing = adapter('not an object');
     t.type(nothing, 'undefined');
-    nothing = adapter({noxmlproperty:true});
+    nothing = adapter({noxmlproperty: true});
     t.type(nothing, 'undefined');
     t.end();
 });
@@ -26,7 +26,7 @@ test('create event', function (t) {
     t.type(result[0].opcode, 'string');
     t.type(result[0].fields, 'object');
     t.type(result[0].inputs, 'object');
-    t.type(result[0].inputs['DURATION'], 'object');
+    t.type(result[0].inputs.DURATION, 'object');
     t.type(result[0].topLevel, 'boolean');
     t.equal(result[0].topLevel, true);
 
@@ -35,8 +35,8 @@ test('create event', function (t) {
     t.type(result[1].opcode, 'string');
     t.type(result[1].fields, 'object');
     t.type(result[1].inputs, 'object');
-    t.type(result[1].fields['NUM'], 'object');
-    t.type(result[1].fields['NUM'].value, '10');
+    t.type(result[1].fields.NUM, 'object');
+    t.type(result[1].fields.NUM.value, '10');
     t.type(result[1].topLevel, 'boolean');
     t.equal(result[1].topLevel, false);
 
@@ -50,18 +50,18 @@ test('create with branch', function (t) {
     t.type(result[0].opcode, 'string');
     t.type(result[0].fields, 'object');
     t.type(result[0].inputs, 'object');
-    t.type(result[0].inputs['SUBSTACK'], 'object');
+    t.type(result[0].inputs.SUBSTACK, 'object');
     t.type(result[0].topLevel, 'boolean');
     t.equal(result[0].topLevel, true);
     // In branch
-    var branchBlockId = result[0].inputs['SUBSTACK']['block'];
-    var branchShadowId = result[0].inputs['SUBSTACK']['shadow'];
+    var branchBlockId = result[0].inputs.SUBSTACK.block;
+    var branchShadowId = result[0].inputs.SUBSTACK.shadow;
     t.type(branchBlockId, 'string');
     t.equal(branchShadowId, null);
     // Find actual branch block
     var branchBlock = null;
     for (var i = 0; i < result.length; i++) {
-        if (result[i].id == branchBlockId) {
+        if (result[i].id === branchBlockId) {
             branchBlock = result[i];
         }
     }
@@ -76,27 +76,27 @@ test('create with two branches', function (t) {
     t.type(result[0].opcode, 'string');
     t.type(result[0].fields, 'object');
     t.type(result[0].inputs, 'object');
-    t.type(result[0].inputs['SUBSTACK'], 'object');
-    t.type(result[0].inputs['SUBSTACK2'], 'object');
+    t.type(result[0].inputs.SUBSTACK, 'object');
+    t.type(result[0].inputs.SUBSTACK2, 'object');
     t.type(result[0].topLevel, 'boolean');
     t.equal(result[0].topLevel, true);
     // In branchs
-    var firstBranchBlockId = result[0].inputs['SUBSTACK']['block'];
-    var secondBranchBlockId = result[0].inputs['SUBSTACK2']['block'];
+    var firstBranchBlockId = result[0].inputs.SUBSTACK.block;
+    var secondBranchBlockId = result[0].inputs.SUBSTACK2.block;
     t.type(firstBranchBlockId, 'string');
     t.type(secondBranchBlockId, 'string');
-    var firstBranchShadowBlockId = result[0].inputs['SUBSTACK']['shadow'];
-    var secondBranchShadowBlockId = result[0].inputs['SUBSTACK2']['shadow'];
+    var firstBranchShadowBlockId = result[0].inputs.SUBSTACK.shadow;
+    var secondBranchShadowBlockId = result[0].inputs.SUBSTACK2.shadow;
     t.equal(firstBranchShadowBlockId, null);
     t.equal(secondBranchShadowBlockId, null);
     // Find actual branch blocks
     var firstBranchBlock = null;
     var secondBranchBlock = null;
     for (var i = 0; i < result.length; i++) {
-        if (result[i].id == firstBranchBlockId) {
+        if (result[i].id === firstBranchBlockId) {
             firstBranchBlock = result[i];
         }
-        if (result[i].id == secondBranchBlockId) {
+        if (result[i].id === secondBranchBlockId) {
             secondBranchBlock = result[i];
         }
     }
