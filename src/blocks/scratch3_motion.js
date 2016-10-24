@@ -16,23 +16,23 @@ var Scratch3MotionBlocks = function (runtime) {
  */
 Scratch3MotionBlocks.prototype.getPrimitives = function () {
     return {
-        'motion_movesteps': this.moveSteps,
-        'motion_gotoxy': this.goToXY,
-        'motion_goto': this.goTo,
-        'motion_turnright': this.turnRight,
-        'motion_turnleft': this.turnLeft,
-        'motion_pointindirection': this.pointInDirection,
-        'motion_pointtowards': this.pointTowards,
-        'motion_glidesecstoxy': this.glide,
-        'motion_ifonedgebounce': this.ifOnEdgeBounce,
-        'motion_setrotationstyle': this.setRotationStyle,
-        'motion_changexby': this.changeX,
-        'motion_setx': this.setX,
-        'motion_changeyby': this.changeY,
-        'motion_sety': this.setY,
-        'motion_xposition': this.getX,
-        'motion_yposition': this.getY,
-        'motion_direction': this.getDirection
+        motion_movesteps: this.moveSteps,
+        motion_gotoxy: this.goToXY,
+        motion_goto: this.goTo,
+        motion_turnright: this.turnRight,
+        motion_turnleft: this.turnLeft,
+        motion_pointindirection: this.pointInDirection,
+        motion_pointtowards: this.pointTowards,
+        motion_glidesecstoxy: this.glide,
+        motion_ifonedgebounce: this.ifOnEdgeBounce,
+        motion_setrotationstyle: this.setRotationStyle,
+        motion_changexby: this.changeX,
+        motion_setx: this.setX,
+        motion_changeyby: this.changeY,
+        motion_sety: this.setY,
+        motion_xposition: this.getX,
+        motion_yposition: this.getY,
+        motion_direction: this.getDirection
     };
 };
 

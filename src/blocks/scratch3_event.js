@@ -14,31 +14,31 @@ var Scratch3EventBlocks = function (runtime) {
  */
 Scratch3EventBlocks.prototype.getPrimitives = function () {
     return {
-        'event_broadcast': this.broadcast,
-        'event_broadcastandwait': this.broadcastAndWait,
-        'event_whengreaterthan': this.hatGreaterThanPredicate
+        event_broadcast: this.broadcast,
+        event_broadcastandwait: this.broadcastAndWait,
+        event_whengreaterthan: this.hatGreaterThanPredicate
     };
 };
 
 Scratch3EventBlocks.prototype.getHats = function () {
     return {
-        'event_whenflagclicked': {
+        event_whenflagclicked: {
             restartExistingThreads: true
         },
-        'event_whenkeypressed': {
+        event_whenkeypressed: {
             restartExistingThreads: false
         },
-        'event_whenthisspriteclicked': {
+        event_whenthisspriteclicked: {
             restartExistingThreads: true
         },
-        'event_whenbackdropswitchesto': {
+        event_whenbackdropswitchesto: {
             restartExistingThreads: true
         },
-        'event_whengreaterthan': {
+        event_whengreaterthan: {
             restartExistingThreads: false,
             edgeActivated: true
         },
-        'event_whenbroadcastreceived': {
+        event_whenbroadcastreceived: {
             restartExistingThreads: true
         }
     };
@@ -57,7 +57,7 @@ Scratch3EventBlocks.prototype.hatGreaterThanPredicate = function (args, util) {
 Scratch3EventBlocks.prototype.broadcast = function (args, util) {
     var broadcastOption = Cast.toString(args.BROADCAST_OPTION);
     util.startHats('event_whenbroadcastreceived', {
-        'BROADCAST_OPTION': broadcastOption
+        BROADCAST_OPTION: broadcastOption
     });
 };
 
@@ -68,7 +68,7 @@ Scratch3EventBlocks.prototype.broadcastAndWait = function (args, util) {
         // No - start hats for this broadcast.
         util.stackFrame.startedThreads = util.startHats(
             'event_whenbroadcastreceived', {
-                'BROADCAST_OPTION': broadcastOption
+                BROADCAST_OPTION: broadcastOption
             }
         );
         if (util.stackFrame.startedThreads.length === 0) {

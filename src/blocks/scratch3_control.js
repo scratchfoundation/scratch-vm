@@ -15,22 +15,22 @@ var Scratch3ControlBlocks = function (runtime) {
  */
 Scratch3ControlBlocks.prototype.getPrimitives = function () {
     return {
-        'control_repeat': this.repeat,
-        'control_repeat_until': this.repeatUntil,
-        'control_forever': this.forever,
-        'control_wait': this.wait,
-        'control_wait_until': this.waitUntil,
-        'control_if': this.if,
-        'control_if_else': this.ifElse,
-        'control_stop': this.stop,
-        'control_create_clone_of': this.createClone,
-        'control_delete_this_clone': this.deleteClone
+        control_repeat: this.repeat,
+        control_repeat_until: this.repeatUntil,
+        control_forever: this.forever,
+        control_wait: this.wait,
+        control_wait_until: this.waitUntil,
+        control_if: this.if,
+        control_if_else: this.ifElse,
+        control_stop: this.stop,
+        control_create_clone_of: this.createClone,
+        control_delete_this_clone: this.deleteClone
     };
 };
 
 Scratch3ControlBlocks.prototype.getHats = function () {
     return {
-        'control_start_as_clone': {
+        control_start_as_clone: {
             restartExistingThreads: false
         }
     };

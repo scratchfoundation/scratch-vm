@@ -37,13 +37,13 @@ var Clone = function (sprite, runtime) {
      * @type {!Object.<string, number>}
      */
     this.effects = {
-        'color': 0,
-        'fisheye': 0,
-        'whirl': 0,
-        'pixelate': 0,
-        'mosaic': 0,
-        'brightness': 0,
-        'ghost': 0
+        color: 0,
+        fisheye: 0,
+        whirl: 0,
+        pixelate: 0,
+        mosaic: 0,
+        brightness: 0,
+        ghost: 0
     };
 };
 util.inherits(Clone, Target);

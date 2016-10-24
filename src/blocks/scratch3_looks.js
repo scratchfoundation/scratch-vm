@@ -14,28 +14,28 @@ var Scratch3LooksBlocks = function (runtime) {
  */
 Scratch3LooksBlocks.prototype.getPrimitives = function () {
     return {
-        'looks_say': this.say,
-        'looks_sayforsecs': this.sayforsecs,
-        'looks_think': this.think,
-        'looks_thinkforsecs': this.sayforsecs,
-        'looks_show': this.show,
-        'looks_hide': this.hide,
-        'looks_switchcostumeto': this.switchCostume,
-        'looks_switchbackdropto': this.switchBackdrop,
-        'looks_switchbackdroptoandwait': this.switchBackdropAndWait,
-        'looks_nextcostume': this.nextCostume,
-        'looks_nextbackdrop': this.nextBackdrop,
-        'looks_changeeffectby': this.changeEffect,
-        'looks_seteffectto': this.setEffect,
-        'looks_cleargraphiceffects': this.clearEffects,
-        'looks_changesizeby': this.changeSize,
-        'looks_setsizeto': this.setSize,
-        'looks_gotofront': this.goToFront,
-        'looks_gobacklayers': this.goBackLayers,
-        'looks_size': this.getSize,
-        'looks_costumeorder': this.getCostumeIndex,
-        'looks_backdroporder': this.getBackdropIndex,
-        'looks_backdropname': this.getBackdropName
+        looks_say: this.say,
+        looks_sayforsecs: this.sayforsecs,
+        looks_think: this.think,
+        looks_thinkforsecs: this.sayforsecs,
+        looks_show: this.show,
+        looks_hide: this.hide,
+        looks_switchcostumeto: this.switchCostume,
+        looks_switchbackdropto: this.switchBackdrop,
+        looks_switchbackdroptoandwait: this.switchBackdropAndWait,
+        looks_nextcostume: this.nextCostume,
+        looks_nextbackdrop: this.nextBackdrop,
+        looks_changeeffectby: this.changeEffect,
+        looks_seteffectto: this.setEffect,
+        looks_cleargraphiceffects: this.clearEffects,
+        looks_changesizeby: this.changeSize,
+        looks_setsizeto: this.setSize,
+        looks_gotofront: this.goToFront,
+        looks_gobacklayers: this.goBackLayers,
+        looks_size: this.getSize,
+        looks_costumeorder: this.getCostumeIndex,
+        looks_backdroporder: this.getBackdropIndex,
+        looks_backdropname: this.getBackdropName
     };
 };
 
@@ -112,7 +112,7 @@ Scratch3LooksBlocks.prototype._setCostumeOrBackdrop = function (target,
         // Target is the stage - start hats.
         var newName = target.sprite.costumes[target.currentCostume].name;
         return this.runtime.startHats('event_whenbackdropswitchesto', {
-            'BACKDROP': newName
+            BACKDROP: newName
         });
     }
     return [];

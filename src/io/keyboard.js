@@ -62,10 +62,10 @@ Keyboard.prototype.postData = function (data) {
             }
             // Always trigger hats, even if it was already pressed.
             this.runtime.startHats('event_whenkeypressed', {
-                'KEY_OPTION': this._keyCodeToScratchKey(data.keyCode)
+                KEY_OPTION: this._keyCodeToScratchKey(data.keyCode)
             });
             this.runtime.startHats('event_whenkeypressed', {
-                'KEY_OPTION': 'any'
+                KEY_OPTION: 'any'
             });
         } else if (index > -1) {
             // If already present, remove from the list.

@@ -311,7 +311,7 @@ VirtualMachine.prototype.emitTargetsUpdate = function () {
  */
 VirtualMachine.prototype.emitWorkspaceUpdate = function () {
     this.emit('workspaceUpdate', {
-        'xml': this.editingTarget.blocks.toXML()
+        xml: this.editingTarget.blocks.toXML()
     });
 };
 

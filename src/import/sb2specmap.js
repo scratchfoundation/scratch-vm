@@ -23,1366 +23,1366 @@
  */
 var specMap = {
     'forward:': {
-        'opcode': 'motion_movesteps',
-        'argMap': [
+        opcode: 'motion_movesteps',
+        argMap: [
             {
-                'type': 'input',
-                'inputOp': 'math_number',
-                'inputName': 'STEPS'
+                type: 'input',
+                inputOp: 'math_number',
+                inputName: 'STEPS'
             }
         ]
     },
     'turnRight:': {
-        'opcode': 'motion_turnright',
-        'argMap': [
+        opcode: 'motion_turnright',
+        argMap: [
             {
-                'type': 'input',
-                'inputOp': 'math_number',
-                'inputName': 'DEGREES'
+                type: 'input',
+                inputOp: 'math_number',
+                inputName: 'DEGREES'
             }
         ]
     },
     'turnLeft:': {
-        'opcode': 'motion_turnleft',
-        'argMap': [
+        opcode: 'motion_turnleft',
+        argMap: [
             {
-                'type': 'input',
-                'inputOp': 'math_number',
-                'inputName': 'DEGREES'
+                type: 'input',
+                inputOp: 'math_number',
+                inputName: 'DEGREES'
             }
         ]
     },
     'heading:': {
-        'opcode': 'motion_pointindirection',
-        'argMap': [
+        opcode: 'motion_pointindirection',
+        argMap: [
             {
-                'type': 'input',
-                'inputOp': 'math_angle',
-                'inputName': 'DIRECTION'
+                type: 'input',
+                inputOp: 'math_angle',
+                inputName: 'DIRECTION'
             }
         ]
     },
     'pointTowards:': {
-        'opcode': 'motion_pointtowards',
-        'argMap': [
+        opcode: 'motion_pointtowards',
+        argMap: [
             {
-                'type': 'input',
-                'inputOp': 'motion_pointtowards_menu',
-                'inputName': 'TOWARDS'
+                type: 'input',
+                inputOp: 'motion_pointtowards_menu',
+                inputName: 'TOWARDS'
             }
         ]
     },
     'gotoX:y:': {
-        'opcode': 'motion_gotoxy',
-        'argMap': [
+        opcode: 'motion_gotoxy',
+        argMap: [
             {
-                'type': 'input',
-                'inputOp': 'math_number',
-                'inputName': 'X'
+                type: 'input',
+                inputOp: 'math_number',
+                inputName: 'X'
             },
             {
-                'type': 'input',
-                'inputOp': 'math_number',
-                'inputName': 'Y'
+                type: 'input',
+                inputOp: 'math_number',
+                inputName: 'Y'
             }
         ]
     },
     'gotoSpriteOrMouse:': {
-        'opcode': 'motion_goto',
-        'argMap': [
+        opcode: 'motion_goto',
+        argMap: [
             {
-                'type': 'input',
-                'inputOp': 'motion_goto_menu',
-                'inputName': 'TO'
+                type: 'input',
+                inputOp: 'motion_goto_menu',
+                inputName: 'TO'
             }
         ]
     },
     'glideSecs:toX:y:elapsed:from:': {
-        'opcode': 'motion_glidesecstoxy',
-        'argMap': [
+        opcode: 'motion_glidesecstoxy',
+        argMap: [
             {
-                'type': 'input',
-                'inputOp': 'math_number',
-                'inputName': 'SECS'
+                type: 'input',
+                inputOp: 'math_number',
+                inputName: 'SECS'
             },
             {
-                'type': 'input',
-                'inputOp': 'math_number',
-                'inputName': 'X'
+                type: 'input',
+                inputOp: 'math_number',
+                inputName: 'X'
             },
             {
-                'type': 'input',
-                'inputOp': 'math_number',
-                'inputName': 'Y'
+                type: 'input',
+                inputOp: 'math_number',
+                inputName: 'Y'
             }
         ]
     },
     'changeXposBy:': {
-        'opcode': 'motion_changexby',
-        'argMap': [
+        opcode: 'motion_changexby',
+        argMap: [
             {
-                'type': 'input',
-                'inputOp': 'math_number',
-                'inputName': 'DX'
+                type: 'input',
+                inputOp: 'math_number',
+                inputName: 'DX'
             }
         ]
     },
     'xpos:': {
-        'opcode': 'motion_setx',
-        'argMap': [
+        opcode: 'motion_setx',
+        argMap: [
             {
-                'type': 'input',
-                'inputOp': 'math_number',
-                'inputName': 'X'
+                type: 'input',
+                inputOp: 'math_number',
+                inputName: 'X'
             }
         ]
     },
     'changeYposBy:': {
-        'opcode': 'motion_changeyby',
-        'argMap': [
+        opcode: 'motion_changeyby',
+        argMap: [
             {
-                'type': 'input',
-                'inputOp': 'math_number',
-                'inputName': 'DY'
+                type: 'input',
+                inputOp: 'math_number',
+                inputName: 'DY'
             }
         ]
     },
     'ypos:': {
-        'opcode': 'motion_sety',
-        'argMap': [
+        opcode: 'motion_sety',
+        argMap: [
             {
-                'type': 'input',
-                'inputOp': 'math_number',
-                'inputName': 'Y'
+                type: 'input',
+                inputOp: 'math_number',
+                inputName: 'Y'
             }
         ]
     },
     'bounceOffEdge': {
-        'opcode': 'motion_ifonedgebounce',
-        'argMap': [
+        opcode: 'motion_ifonedgebounce',
+        argMap: [
         ]
     },
     'setRotationStyle': {
-        'opcode': 'motion_setrotationstyle',
-        'argMap': [
+        opcode: 'motion_setrotationstyle',
+        argMap: [
             {
-                'type': 'input',
-                'inputOp': 'motion_setrotationstyle_menu',
-                'inputName': 'STYLE'
+                type: 'input',
+                inputOp: 'motion_setrotationstyle_menu',
+                inputName: 'STYLE'
             }
         ]
     },
     'xpos': {
-        'opcode': 'motion_xposition',
-        'argMap': [
+        opcode: 'motion_xposition',
+        argMap: [
         ]
     },
     'ypos': {
-        'opcode': 'motion_yposition',
-        'argMap': [
+        opcode: 'motion_yposition',
+        argMap: [
         ]
     },
     'heading': {
-        'opcode': 'motion_direction',
-        'argMap': [
+        opcode: 'motion_direction',
+        argMap: [
         ]
     },
     'say:duration:elapsed:from:': {
-        'opcode': 'looks_sayforsecs',
-        'argMap': [
+        opcode: 'looks_sayforsecs',
+        argMap: [
             {
-                'type': 'input',
-                'inputOp': 'text',
-                'inputName': 'MESSAGE'
+                type: 'input',
+                inputOp: 'text',
+                inputName: 'MESSAGE'
             },
             {
-                'type': 'input',
-                'inputOp': 'math_number',
-                'inputName': 'SECS'
+                type: 'input',
+                inputOp: 'math_number',
+                inputName: 'SECS'
             }
         ]
     },
     'say:': {
-        'opcode': 'looks_say',
-        'argMap': [
+        opcode: 'looks_say',
+        argMap: [
             {
-                'type': 'input',
-                'inputOp': 'text',
-                'inputName': 'MESSAGE'
+                type: 'input',
+                inputOp: 'text',
+                inputName: 'MESSAGE'
             }
         ]
     },
     'think:duration:elapsed:from:': {
-        'opcode': 'looks_thinkforsecs',
-        'argMap': [
+        opcode: 'looks_thinkforsecs',
+        argMap: [
             {
-                'type': 'input',
-                'inputOp': 'text',
-                'inputName': 'MESSAGE'
+                type: 'input',
+                inputOp: 'text',
+                inputName: 'MESSAGE'
             },
             {
-                'type': 'input',
-                'inputOp': 'math_number',
-                'inputName': 'SECS'
+                type: 'input',
+                inputOp: 'math_number',
+                inputName: 'SECS'
             }
         ]
     },
     'think:': {
-        'opcode': 'looks_think',
-        'argMap': [
+        opcode: 'looks_think',
+        argMap: [
             {
-                'type': 'input',
-                'inputOp': 'text',
-                'inputName': 'MESSAGE'
+                type: 'input',
+                inputOp: 'text',
+                inputName: 'MESSAGE'
             }
         ]
     },
     'show': {
-        'opcode': 'looks_show',
-        'argMap': [
+        opcode: 'looks_show',
+        argMap: [
         ]
     },
     'hide': {
-        'opcode': 'looks_hide',
-        'argMap': [
+        opcode: 'looks_hide',
+        argMap: [
         ]
     },
     'lookLike:': {
-        'opcode': 'looks_switchcostumeto',
-        'argMap': [
+        opcode: 'looks_switchcostumeto',
+        argMap: [
             {
-                'type': 'input',
-                'inputOp': 'looks_costume',
-                'inputName': 'COSTUME'
+                type: 'input',
+                inputOp: 'looks_costume',
+                inputName: 'COSTUME'
             }
         ]
     },
     'nextCostume': {
-        'opcode': 'looks_nextcostume',
-        'argMap': [
+        opcode: 'looks_nextcostume',
+        argMap: [
         ]
     },
     'startScene': {
-        'opcode': 'looks_switchbackdropto',
-        'argMap': [
+        opcode: 'looks_switchbackdropto',
+        argMap: [
             {
-                'type': 'input',
-                'inputOp': 'looks_backdrops',
-                'inputName': 'BACKDROP'
+                type: 'input',
+                inputOp: 'looks_backdrops',
+                inputName: 'BACKDROP'
             }
         ]
     },
     'changeGraphicEffect:by:': {
-        'opcode': 'looks_changeeffectby',
-        'argMap': [
+        opcode: 'looks_changeeffectby',
+        argMap: [
             {
-                'type': 'input',
-                'inputOp': 'looks_effectmenu',
-                'inputName': 'EFFECT'
+                type: 'input',
+                inputOp: 'looks_effectmenu',
+                inputName: 'EFFECT'
             },
             {
-                'type': 'input',
-                'inputOp': 'math_number',
-                'inputName': 'CHANGE'
+                type: 'input',
+                inputOp: 'math_number',
+                inputName: 'CHANGE'
             }
         ]
     },
     'setGraphicEffect:to:': {
-        'opcode': 'looks_seteffectto',
-        'argMap': [
+        opcode: 'looks_seteffectto',
+        argMap: [
             {
-                'type': 'input',
-                'inputOp': 'looks_effectmenu',
-                'inputName': 'EFFECT'
+                type: 'input',
+                inputOp: 'looks_effectmenu',
+                inputName: 'EFFECT'
             },
             {
-                'type': 'input',
-                'inputOp': 'math_number',
-                'inputName': 'VALUE'
+                type: 'input',
+                inputOp: 'math_number',
+                inputName: 'VALUE'
             }
         ]
     },
     'filterReset': {
-        'opcode': 'looks_cleargraphiceffects',
-        'argMap': [
+        opcode: 'looks_cleargraphiceffects',
+        argMap: [
         ]
     },
     'changeSizeBy:': {
-        'opcode': 'looks_changesizeby',
-        'argMap': [
+        opcode: 'looks_changesizeby',
+        argMap: [
             {
-                'type': 'input',
-                'inputOp': 'math_number',
-                'inputName': 'CHANGE'
+                type: 'input',
+                inputOp: 'math_number',
+                inputName: 'CHANGE'
             }
         ]
     },
     'setSizeTo:': {
-        'opcode': 'looks_setsizeto',
-        'argMap': [
+        opcode: 'looks_setsizeto',
+        argMap: [
             {
-                'type': 'input',
-                'inputOp': 'math_number',
-                'inputName': 'SIZE'
+                type: 'input',
+                inputOp: 'math_number',
+                inputName: 'SIZE'
             }
         ]
     },
     'comeToFront': {
-        'opcode': 'looks_gotofront',
-        'argMap': [
+        opcode: 'looks_gotofront',
+        argMap: [
         ]
     },
     'goBackByLayers:': {
-        'opcode': 'looks_gobacklayers',
-        'argMap': [
+        opcode: 'looks_gobacklayers',
+        argMap: [
             {
-                'type': 'input',
-                'inputOp': 'math_integer',
-                'inputName': 'NUM'
+                type: 'input',
+                inputOp: 'math_integer',
+                inputName: 'NUM'
             }
         ]
     },
     'costumeIndex': {
-        'opcode': 'looks_costumeorder',
-        'argMap': [
+        opcode: 'looks_costumeorder',
+        argMap: [
         ]
     },
     'sceneName': {
-        'opcode': 'looks_backdropname',
-        'argMap': [
+        opcode: 'looks_backdropname',
+        argMap: [
         ]
     },
     'scale': {
-        'opcode': 'looks_size',
-        'argMap': [
+        opcode: 'looks_size',
+        argMap: [
         ]
     },
     'startSceneAndWait': {
-        'opcode': 'looks_switchbackdroptoandwait',
-        'argMap': [
+        opcode: 'looks_switchbackdroptoandwait',
+        argMap: [
             {
-                'type': 'input',
-                'inputOp': 'looks_backdrops',
-                'inputName': 'BACKDROP'
+                type: 'input',
+                inputOp: 'looks_backdrops',
+                inputName: 'BACKDROP'
             }
         ]
     },
     'nextScene': {
-        'opcode': 'looks_nextbackdrop',
-        'argMap': [
+        opcode: 'looks_nextbackdrop',
+        argMap: [
         ]
     },
     'backgroundIndex': {
-        'opcode': 'looks_backdroporder',
-        'argMap': [
+        opcode: 'looks_backdroporder',
+        argMap: [
         ]
     },
     'playSound:': {
-        'opcode': 'sound_play',
-        'argMap': [
+        opcode: 'sound_play',
+        argMap: [
             {
-                'type': 'input',
-                'inputOp': 'sound_sounds_option',
-                'inputName': 'SOUND_MENU'
+                type: 'input',
+                inputOp: 'sound_sounds_option',
+                inputName: 'SOUND_MENU'
             }
         ]
     },
     'doPlaySoundAndWait': {
-        'opcode': 'sound_playuntildone',
-        'argMap': [
+        opcode: 'sound_playuntildone',
+        argMap: [
             {
-                'type': 'input',
-                'inputOp': 'sound_sounds_option',
-                'inputName': 'SOUND_MENU'
+                type: 'input',
+                inputOp: 'sound_sounds_option',
+                inputName: 'SOUND_MENU'
             }
         ]
     },
     'stopAllSounds': {
-        'opcode': 'sound_stopallsounds',
-        'argMap': [
+        opcode: 'sound_stopallsounds',
+        argMap: [
         ]
     },
     'playDrum': {
-        'opcode': 'sound_playdrumforbeats',
-        'argMap': [
+        opcode: 'sound_playdrumforbeats',
+        argMap: [
             {
-                'type': 'input',
-                'inputOp': 'math_number',
-                'inputName': 'DRUMTYPE'
+                type: 'input',
+                inputOp: 'math_number',
+                inputName: 'DRUMTYPE'
             },
             {
-                'type': 'input',
-                'inputOp': 'math_number',
-                'inputName': 'BEATS'
+                type: 'input',
+                inputOp: 'math_number',
+                inputName: 'BEATS'
             }
         ]
     },
     'rest:elapsed:from:': {
-        'opcode': 'sound_restforbeats',
-        'argMap': [
+        opcode: 'sound_restforbeats',
+        argMap: [
             {
-                'type': 'input',
-                'inputOp': 'math_number',
-                'inputName': 'BEATS'
+                type: 'input',
+                inputOp: 'math_number',
+                inputName: 'BEATS'
             }
         ]
     },
     'noteOn:duration:elapsed:from:': {
-        'opcode': 'sound_playnoteforbeats',
-        'argMap': [
+        opcode: 'sound_playnoteforbeats',
+        argMap: [
             {
-                'type': 'input',
-                'inputOp': 'math_number',
-                'inputName': 'NOTE'
+                type: 'input',
+                inputOp: 'math_number',
+                inputName: 'NOTE'
             },
             {
-                'type': 'input',
-                'inputOp': 'math_number',
-                'inputName': 'BEATS'
+                type: 'input',
+                inputOp: 'math_number',
+                inputName: 'BEATS'
             }
         ]
     },
     'instrument:': {
-        'opcode': 'sound_setinstrumentto',
-        'argMap': [
+        opcode: 'sound_setinstrumentto',
+        argMap: [
             {
-                'type': 'input',
-                'inputOp': 'math_number',
-                'inputName': 'INSTRUMENT'
+                type: 'input',
+                inputOp: 'math_number',
+                inputName: 'INSTRUMENT'
             }
         ]
     },
     'changeVolumeBy:': {
-        'opcode': 'sound_changevolumeby',
-        'argMap': [
+        opcode: 'sound_changevolumeby',
+        argMap: [
             {
-                'type': 'input',
-                'inputOp': 'math_number',
-                'inputName': 'VOLUME'
+                type: 'input',
+                inputOp: 'math_number',
+                inputName: 'VOLUME'
             }
         ]
     },
     'setVolumeTo:': {
-        'opcode': 'sound_setvolumeto',
-        'argMap': [
+        opcode: 'sound_setvolumeto',
+        argMap: [
             {
-                'type': 'input',
-                'inputOp': 'math_number',
-                'inputName': 'VOLUME'
+                type: 'input',
+                inputOp: 'math_number',
+                inputName: 'VOLUME'
             }
         ]
     },
     'volume': {
-        'opcode': 'sound_volume',
-        'argMap': [
+        opcode: 'sound_volume',
+        argMap: [
         ]
     },
     'changeTempoBy:': {
-        'opcode': 'sound_changetempoby',
-        'argMap': [
+        opcode: 'sound_changetempoby',
+        argMap: [
             {
-                'type': 'input',
-                'inputOp': 'math_number',
-                'inputName': 'TEMPO'
+                type: 'input',
+                inputOp: 'math_number',
+                inputName: 'TEMPO'
             }
         ]
     },
     'setTempoTo:': {
-        'opcode': 'sound_settempotobpm',
-        'argMap': [
+        opcode: 'sound_settempotobpm',
+        argMap: [
             {
-                'type': 'input',
-                'inputOp': 'math_number',
-                'inputName': 'TEMPO'
+                type: 'input',
+                inputOp: 'math_number',
+                inputName: 'TEMPO'
             }
         ]
     },
     'tempo': {
-        'opcode': 'sound_tempo',
-        'argMap': [
+        opcode: 'sound_tempo',
+        argMap: [
         ]
     },
     'clearPenTrails': {
-        'opcode': 'pen_clear',
-        'argMap': [
+        opcode: 'pen_clear',
+        argMap: [
         ]
     },
     'stampCostume': {
-        'opcode': 'pen_stamp',
-        'argMap': [
+        opcode: 'pen_stamp',
+        argMap: [
         ]
     },
     'putPenDown': {
-        'opcode': 'pen_pendown',
-        'argMap': [
+        opcode: 'pen_pendown',
+        argMap: [
         ]
     },
     'putPenUp': {
-        'opcode': 'pen_penup',
-        'argMap': [
+        opcode: 'pen_penup',
+        argMap: [
         ]
     },
     'penColor:': {
-        'opcode': 'pen_setpencolortocolor',
-        'argMap': [
+        opcode: 'pen_setpencolortocolor',
+        argMap: [
             {
-                'type': 'input',
-                'inputOp': 'colour_picker',
-                'inputName': 'COLOR'
+                type: 'input',
+                inputOp: 'colour_picker',
+                inputName: 'COLOR'
             }
         ]
     },
     'changePenHueBy:': {
-        'opcode': 'pen_changepencolorby',
-        'argMap': [
+        opcode: 'pen_changepencolorby',
+        argMap: [
             {
-                'type': 'input',
-                'inputOp': 'math_number',
-                'inputName': 'COLOR'
+                type: 'input',
+                inputOp: 'math_number',
+                inputName: 'COLOR'
             }
         ]
     },
     'setPenHueTo:': {
-        'opcode': 'pen_setpencolortonum',
-        'argMap': [
+        opcode: 'pen_setpencolortonum',
+        argMap: [
             {
-                'type': 'input',
-                'inputOp': 'math_number',
-                'inputName': 'COLOR'
+                type: 'input',
+                inputOp: 'math_number',
+                inputName: 'COLOR'
             }
         ]
     },
     'changePenShadeBy:': {
-        'opcode': 'pen_changepenshadeby',
-        'argMap': [
+        opcode: 'pen_changepenshadeby',
+        argMap: [
             {
-                'type': 'input',
-                'inputOp': 'math_number',
-                'inputName': 'SHADE'
+                type: 'input',
+                inputOp: 'math_number',
+                inputName: 'SHADE'
             }
         ]
     },
     'setPenShadeTo:': {
-        'opcode': 'pen_changepenshadeby',
-        'argMap': [
+        opcode: 'pen_changepenshadeby',
+        argMap: [
             {
-                'type': 'input',
-                'inputOp': 'math_number',
-                'inputName': 'SHADE'
+                type: 'input',
+                inputOp: 'math_number',
+                inputName: 'SHADE'
             }
         ]
     },
     'changePenSizeBy:': {
-        'opcode': 'pen_changepensizeby',
-        'argMap': [
+        opcode: 'pen_changepensizeby',
+        argMap: [
             {
-                'type': 'input',
-                'inputOp': 'math_number',
-                'inputName': 'SIZE'
+                type: 'input',
+                inputOp: 'math_number',
+                inputName: 'SIZE'
             }
         ]
     },
     'penSize:': {
-        'opcode': 'pen_setpensizeto',
-        'argMap': [
+        opcode: 'pen_setpensizeto',
+        argMap: [
             {
-                'type': 'input',
-                'inputOp': 'math_number',
-                'inputName': 'SIZE'
+                type: 'input',
+                inputOp: 'math_number',
+                inputName: 'SIZE'
             }
         ]
     },
     'whenGreenFlag': {
-        'opcode': 'event_whenflagclicked',
-        'argMap': [
+        opcode: 'event_whenflagclicked',
+        argMap: [
         ]
     },
     'whenKeyPressed': {
-        'opcode': 'event_whenkeypressed',
-        'argMap': [
+        opcode: 'event_whenkeypressed',
+        argMap: [
             {
-                'type': 'field',
-                'fieldName': 'KEY_OPTION'
+                type: 'field',
+                fieldName: 'KEY_OPTION'
             }
         ]
     },
     'whenClicked': {
-        'opcode': 'event_whenthisspriteclicked',
-        'argMap': [
+        opcode: 'event_whenthisspriteclicked',
+        argMap: [
         ]
     },
     'whenSceneStarts': {
-        'opcode': 'event_whenbackdropswitchesto',
-        'argMap': [
+        opcode: 'event_whenbackdropswitchesto',
+        argMap: [
             {
-                'type': 'field',
-                'fieldName': 'BACKDROP'
+                type: 'field',
+                fieldName: 'BACKDROP'
             }
         ]
     },
     'whenSensorGreaterThan': {
-        'opcode': 'event_whengreaterthan',
-        'argMap': [
+        opcode: 'event_whengreaterthan',
+        argMap: [
             {
-                'type': 'field',
-                'fieldName': 'WHENGREATERTHANMENU'
+                type: 'field',
+                fieldName: 'WHENGREATERTHANMENU'
             },
             {
-                'type': 'input',
-                'inputOp': 'math_number',
-                'inputName': 'VALUE'
+                type: 'input',
+                inputOp: 'math_number',
+                inputName: 'VALUE'
             }
         ]
     },
     'whenIReceive': {
-        'opcode': 'event_whenbroadcastreceived',
-        'argMap': [
+        opcode: 'event_whenbroadcastreceived',
+        argMap: [
             {
-                'type': 'field',
-                'fieldName': 'BROADCAST_OPTION'
+                type: 'field',
+                fieldName: 'BROADCAST_OPTION'
             }
         ]
     },
     'broadcast:': {
-        'opcode': 'event_broadcast',
-        'argMap': [
+        opcode: 'event_broadcast',
+        argMap: [
             {
-                'type': 'input',
-                'inputOp': 'event_broadcast_menu',
-                'inputName': 'BROADCAST_OPTION'
+                type: 'input',
+                inputOp: 'event_broadcast_menu',
+                inputName: 'BROADCAST_OPTION'
             }
         ]
     },
     'doBroadcastAndWait': {
-        'opcode': 'event_broadcastandwait',
-        'argMap': [
+        opcode: 'event_broadcastandwait',
+        argMap: [
             {
-                'type': 'input',
-                'inputOp': 'event_broadcast_menu',
-                'inputName': 'BROADCAST_OPTION'
+                type: 'input',
+                inputOp: 'event_broadcast_menu',
+                inputName: 'BROADCAST_OPTION'
             }
         ]
     },
     'wait:elapsed:from:': {
-        'opcode': 'control_wait',
-        'argMap': [
+        opcode: 'control_wait',
+        argMap: [
             {
-                'type': 'input',
-                'inputOp': 'math_positive_number',
-                'inputName': 'DURATION'
+                type: 'input',
+                inputOp: 'math_positive_number',
+                inputName: 'DURATION'
             }
         ]
     },
     'doRepeat': {
-        'opcode': 'control_repeat',
-        'argMap': [
+        opcode: 'control_repeat',
+        argMap: [
             {
-                'type': 'input',
-                'inputOp': 'math_whole_number',
-                'inputName': 'TIMES'
+                type: 'input',
+                inputOp: 'math_whole_number',
+                inputName: 'TIMES'
             },
             {
-                'type': 'input',
-                'inputName': 'SUBSTACK'
+                type: 'input',
+                inputName: 'SUBSTACK'
             }
         ]
     },
     'doForever': {
-        'opcode': 'control_forever',
-        'argMap': [
+        opcode: 'control_forever',
+        argMap: [
             {
-                'type': 'input',
-                'inputName': 'SUBSTACK'
+                type: 'input',
+                inputName: 'SUBSTACK'
             }
         ]
     },
     'doIf': {
-        'opcode': 'control_if',
-        'argMap': [
+        opcode: 'control_if',
+        argMap: [
             {
-                'type': 'input',
-                'inputName': 'CONDITION'
+                type: 'input',
+                inputName: 'CONDITION'
             },
             {
-                'type': 'input',
-                'inputName': 'SUBSTACK'
+                type: 'input',
+                inputName: 'SUBSTACK'
             }
         ]
     },
     'doIfElse': {
-        'opcode': 'control_if_else',
-        'argMap': [
+        opcode: 'control_if_else',
+        argMap: [
             {
-                'type': 'input',
-                'inputName': 'CONDITION'
+                type: 'input',
+                inputName: 'CONDITION'
             },
             {
-                'type': 'input',
-                'inputName': 'SUBSTACK'
+                type: 'input',
+                inputName: 'SUBSTACK'
             },
             {
-                'type': 'input',
-                'inputName': 'SUBSTACK2'
+                type: 'input',
+                inputName: 'SUBSTACK2'
             }
         ]
     },
     'doWaitUntil': {
-        'opcode': 'control_wait_until',
-        'argMap': [
+        opcode: 'control_wait_until',
+        argMap: [
             {
-                'type': 'input',
-                'inputName': 'CONDITION'
+                type: 'input',
+                inputName: 'CONDITION'
             }
         ]
     },
     'doUntil': {
-        'opcode': 'control_repeat_until',
-        'argMap': [
+        opcode: 'control_repeat_until',
+        argMap: [
             {
-                'type': 'input',
-                'inputName': 'CONDITION'
+                type: 'input',
+                inputName: 'CONDITION'
             },
             {
-                'type': 'input',
-                'inputName': 'SUBSTACK'
+                type: 'input',
+                inputName: 'SUBSTACK'
             }
         ]
     },
     'stopScripts': {
-        'opcode': 'control_stop',
-        'argMap': [
+        opcode: 'control_stop',
+        argMap: [
             {
-                'type': 'field',
-                'fieldName': 'STOP_OPTION'
+                type: 'field',
+                fieldName: 'STOP_OPTION'
             }
         ]
     },
     'whenCloned': {
-        'opcode': 'control_start_as_clone',
-        'argMap': [
+        opcode: 'control_start_as_clone',
+        argMap: [
         ]
     },
     'createCloneOf': {
-        'opcode': 'control_create_clone_of',
-        'argMap': [
+        opcode: 'control_create_clone_of',
+        argMap: [
             {
-                'type': 'input',
-                'inputOp': 'control_create_clone_of_menu',
-                'inputName': 'CLONE_OPTION'
+                type: 'input',
+                inputOp: 'control_create_clone_of_menu',
+                inputName: 'CLONE_OPTION'
             }
         ]
     },
     'deleteClone': {
-        'opcode': 'control_delete_this_clone',
-        'argMap': [
+        opcode: 'control_delete_this_clone',
+        argMap: [
         ]
     },
     'touching:': {
-        'opcode': 'sensing_touchingobject',
-        'argMap': [
+        opcode: 'sensing_touchingobject',
+        argMap: [
             {
-                'type': 'input',
-                'inputOp': 'sensing_touchingobjectmenu',
-                'inputName': 'TOUCHINGOBJECTMENU'
+                type: 'input',
+                inputOp: 'sensing_touchingobjectmenu',
+                inputName: 'TOUCHINGOBJECTMENU'
             }
         ]
     },
     'touchingColor:': {
-        'opcode': 'sensing_touchingcolor',
-        'argMap': [
+        opcode: 'sensing_touchingcolor',
+        argMap: [
             {
-                'type': 'input',
-                'inputOp': 'colour_picker',
-                'inputName': 'COLOR'
+                type: 'input',
+                inputOp: 'colour_picker',
+                inputName: 'COLOR'
             }
         ]
     },
     'color:sees:': {
-        'opcode': 'sensing_coloristouchingcolor',
-        'argMap': [
+        opcode: 'sensing_coloristouchingcolor',
+        argMap: [
             {
-                'type': 'input',
-                'inputOp': 'colour_picker',
-                'inputName': 'COLOR'
+                type: 'input',
+                inputOp: 'colour_picker',
+                inputName: 'COLOR'
             },
             {
-                'type': 'input',
-                'inputOp': 'colour_picker',
-                'inputName': 'COLOR2'
+                type: 'input',
+                inputOp: 'colour_picker',
+                inputName: 'COLOR2'
             }
         ]
     },
     'distanceTo:': {
-        'opcode': 'sensing_distanceto',
-        'argMap': [
+        opcode: 'sensing_distanceto',
+        argMap: [
             {
-                'type': 'input',
-                'inputOp': 'sensing_distancetomenu',
-                'inputName': 'DISTANCETOMENU'
+                type: 'input',
+                inputOp: 'sensing_distancetomenu',
+                inputName: 'DISTANCETOMENU'
             }
         ]
     },
     'doAsk': {
-        'opcode': 'sensing_askandwait',
-        'argMap': [
+        opcode: 'sensing_askandwait',
+        argMap: [
             {
-                'type': 'input',
-                'inputOp': 'text',
-                'inputName': 'QUESTION'
+                type: 'input',
+                inputOp: 'text',
+                inputName: 'QUESTION'
             }
         ]
     },
     'answer': {
-        'opcode': 'sensing_answer',
-        'argMap': [
+        opcode: 'sensing_answer',
+        argMap: [
         ]
     },
     'keyPressed:': {
-        'opcode': 'sensing_keypressed',
-        'argMap': [
+        opcode: 'sensing_keypressed',
+        argMap: [
             {
-                'type': 'input',
-                'inputOp': 'sensing_keyoptions',
-                'inputName': 'KEY_OPTION'
+                type: 'input',
+                inputOp: 'sensing_keyoptions',
+                inputName: 'KEY_OPTION'
             }
         ]
     },
     'mousePressed': {
-        'opcode': 'sensing_mousedown',
-        'argMap': [
+        opcode: 'sensing_mousedown',
+        argMap: [
         ]
     },
     'mouseX': {
-        'opcode': 'sensing_mousex',
-        'argMap': [
+        opcode: 'sensing_mousex',
+        argMap: [
         ]
     },
     'mouseY': {
-        'opcode': 'sensing_mousey',
-        'argMap': [
+        opcode: 'sensing_mousey',
+        argMap: [
         ]
     },
     'soundLevel': {
-        'opcode': 'sensing_loudness',
-        'argMap': [
+        opcode: 'sensing_loudness',
+        argMap: [
         ]
     },
     'senseVideoMotion': {
-        'opcode': 'sensing_videoon',
-        'argMap': [
+        opcode: 'sensing_videoon',
+        argMap: [
             {
-                'type': 'input',
-                'inputOp': 'sensing_videoonmenuone',
-                'inputName': 'VIDEOONMENU1'
+                type: 'input',
+                inputOp: 'sensing_videoonmenuone',
+                inputName: 'VIDEOONMENU1'
             },
             {
-                'type': 'input',
-                'inputOp': 'sensing_videoonmenutwo',
-                'inputName': 'VIDEOONMENU2'
+                type: 'input',
+                inputOp: 'sensing_videoonmenutwo',
+                inputName: 'VIDEOONMENU2'
             }
         ]
     },
     'setVideoState': {
-        'opcode': 'sensing_videotoggle',
-        'argMap': [
+        opcode: 'sensing_videotoggle',
+        argMap: [
             {
-                'type': 'input',
-                'inputOp': 'sensing_videotogglemenu',
-                'inputName': 'VIDEOTOGGLEMENU'
+                type: 'input',
+                inputOp: 'sensing_videotogglemenu',
+                inputName: 'VIDEOTOGGLEMENU'
             }
         ]
     },
     'setVideoTransparency': {
-        'opcode': 'sensing_setvideotransparency',
-        'argMap': [
+        opcode: 'sensing_setvideotransparency',
+        argMap: [
             {
-                'type': 'input',
-                'inputOp': 'math_number',
-                'inputName': 'TRANSPARENCY'
+                type: 'input',
+                inputOp: 'math_number',
+                inputName: 'TRANSPARENCY'
             }
         ]
     },
     'timer': {
-        'opcode': 'sensing_timer',
-        'argMap': [
+        opcode: 'sensing_timer',
+        argMap: [
         ]
     },
     'timerReset': {
-        'opcode': 'sensing_resettimer',
-        'argMap': [
+        opcode: 'sensing_resettimer',
+        argMap: [
         ]
     },
     'getAttribute:of:': {
-        'opcode': 'sensing_of',
-        'argMap': [
+        opcode: 'sensing_of',
+        argMap: [
             {
-                'type': 'input',
-                'inputOp': 'sensing_of_property_menu',
-                'inputName': 'PROPERTY'
+                type: 'input',
+                inputOp: 'sensing_of_property_menu',
+                inputName: 'PROPERTY'
             },
             {
-                'type': 'input',
-                'inputOp': 'sensing_of_object_menu',
-                'inputName': 'OBJECT'
+                type: 'input',
+                inputOp: 'sensing_of_object_menu',
+                inputName: 'OBJECT'
             }
         ]
     },
     'timeAndDate': {
-        'opcode': 'sensing_current',
-        'argMap': [
+        opcode: 'sensing_current',
+        argMap: [
             {
-                'type': 'input',
-                'inputOp': 'sensing_currentmenu',
-                'inputName': 'CURRENTMENU'
+                type: 'input',
+                inputOp: 'sensing_currentmenu',
+                inputName: 'CURRENTMENU'
             }
         ]
     },
     'timestamp': {
-        'opcode': 'sensing_dayssince2000',
-        'argMap': [
+        opcode: 'sensing_dayssince2000',
+        argMap: [
         ]
     },
     'getUserName': {
-        'opcode': 'sensing_username',
-        'argMap': [
+        opcode: 'sensing_username',
+        argMap: [
         ]
     },
     '+': {
-        'opcode': 'operator_add',
-        'argMap': [
+        opcode: 'operator_add',
+        argMap: [
             {
-                'type': 'input',
-                'inputOp': 'math_number',
-                'inputName': 'NUM1'
+                type: 'input',
+                inputOp: 'math_number',
+                inputName: 'NUM1'
             },
             {
-                'type': 'input',
-                'inputOp': 'math_number',
-                'inputName': 'NUM2'
+                type: 'input',
+                inputOp: 'math_number',
+                inputName: 'NUM2'
             }
         ]
     },
     '-': {
-        'opcode': 'operator_subtract',
-        'argMap': [
+        opcode: 'operator_subtract',
+        argMap: [
             {
-                'type': 'input',
-                'inputOp': 'math_number',
-                'inputName': 'NUM1'
+                type: 'input',
+                inputOp: 'math_number',
+                inputName: 'NUM1'
             },
             {
-                'type': 'input',
-                'inputOp': 'math_number',
-                'inputName': 'NUM2'
+                type: 'input',
+                inputOp: 'math_number',
+                inputName: 'NUM2'
             }
         ]
     },
     '*': {
-        'opcode': 'operator_multiply',
-        'argMap': [
+        opcode: 'operator_multiply',
+        argMap: [
             {
-                'type': 'input',
-                'inputOp': 'math_number',
-                'inputName': 'NUM1'
+                type: 'input',
+                inputOp: 'math_number',
+                inputName: 'NUM1'
             },
             {
-                'type': 'input',
-                'inputOp': 'math_number',
-                'inputName': 'NUM2'
+                type: 'input',
+                inputOp: 'math_number',
+                inputName: 'NUM2'
             }
         ]
     },
     '/': {
-        'opcode': 'operator_divide',
-        'argMap': [
+        opcode: 'operator_divide',
+        argMap: [
             {
-                'type': 'input',
-                'inputOp': 'math_number',
-                'inputName': 'NUM1'
+                type: 'input',
+                inputOp: 'math_number',
+                inputName: 'NUM1'
             },
             {
-                'type': 'input',
-                'inputOp': 'math_number',
-                'inputName': 'NUM2'
+                type: 'input',
+                inputOp: 'math_number',
+                inputName: 'NUM2'
             }
         ]
     },
     'randomFrom:to:': {
-        'opcode': 'operator_random',
-        'argMap': [
+        opcode: 'operator_random',
+        argMap: [
             {
-                'type': 'input',
-                'inputOp': 'math_number',
-                'inputName': 'FROM'
+                type: 'input',
+                inputOp: 'math_number',
+                inputName: 'FROM'
             },
             {
-                'type': 'input',
-                'inputOp': 'math_number',
-                'inputName': 'TO'
+                type: 'input',
+                inputOp: 'math_number',
+                inputName: 'TO'
             }
         ]
     },
     '<': {
-        'opcode': 'operator_lt',
-        'argMap': [
+        opcode: 'operator_lt',
+        argMap: [
             {
-                'type': 'input',
-                'inputOp': 'text',
-                'inputName': 'OPERAND1'
+                type: 'input',
+                inputOp: 'text',
+                inputName: 'OPERAND1'
             },
             {
-                'type': 'input',
-                'inputOp': 'text',
-                'inputName': 'OPERAND2'
+                type: 'input',
+                inputOp: 'text',
+                inputName: 'OPERAND2'
             }
         ]
     },
     '=': {
-        'opcode': 'operator_equals',
-        'argMap': [
+        opcode: 'operator_equals',
+        argMap: [
             {
-                'type': 'input',
-                'inputOp': 'text',
-                'inputName': 'OPERAND1'
+                type: 'input',
+                inputOp: 'text',
+                inputName: 'OPERAND1'
             },
             {
-                'type': 'input',
-                'inputOp': 'text',
-                'inputName': 'OPERAND2'
+                type: 'input',
+                inputOp: 'text',
+                inputName: 'OPERAND2'
             }
         ]
     },
     '>': {
-        'opcode': 'operator_gt',
-        'argMap': [
+        opcode: 'operator_gt',
+        argMap: [
             {
-                'type': 'input',
-                'inputOp': 'text',
-                'inputName': 'OPERAND1'
+                type: 'input',
+                inputOp: 'text',
+                inputName: 'OPERAND1'
             },
             {
-                'type': 'input',
-                'inputOp': 'text',
-                'inputName': 'OPERAND2'
+                type: 'input',
+                inputOp: 'text',
+                inputName: 'OPERAND2'
             }
         ]
     },
     '&': {
-        'opcode': 'operator_and',
-        'argMap': [
+        opcode: 'operator_and',
+        argMap: [
             {
-                'type': 'input',
-                'inputName': 'OPERAND1'
+                type: 'input',
+                inputName: 'OPERAND1'
             },
             {
-                'type': 'input',
-                'inputName': 'OPERAND2'
+                type: 'input',
+                inputName: 'OPERAND2'
             }
         ]
     },
     '|': {
-        'opcode': 'operator_or',
-        'argMap': [
+        opcode: 'operator_or',
+        argMap: [
             {
-                'type': 'input',
-                'inputName': 'OPERAND1'
+                type: 'input',
+                inputName: 'OPERAND1'
             },
             {
-                'type': 'input',
-                'inputName': 'OPERAND2'
+                type: 'input',
+                inputName: 'OPERAND2'
             }
         ]
     },
     'not': {
-        'opcode': 'operator_not',
-        'argMap': [
+        opcode: 'operator_not',
+        argMap: [
             {
-                'type': 'input',
-                'inputName': 'OPERAND'
+                type: 'input',
+                inputName: 'OPERAND'
             }
         ]
     },
     'concatenate:with:': {
-        'opcode': 'operator_join',
-        'argMap': [
+        opcode: 'operator_join',
+        argMap: [
             {
-                'type': 'input',
-                'inputOp': 'text',
-                'inputName': 'STRING1'
+                type: 'input',
+                inputOp: 'text',
+                inputName: 'STRING1'
             },
             {
-                'type': 'input',
-                'inputOp': 'text',
-                'inputName': 'STRING2'
+                type: 'input',
+                inputOp: 'text',
+                inputName: 'STRING2'
             }
         ]
     },
     'letter:of:': {
-        'opcode': 'operator_letter_of',
-        'argMap': [
+        opcode: 'operator_letter_of',
+        argMap: [
             {
-                'type': 'input',
-                'inputOp': 'math_whole_number',
-                'inputName': 'LETTER'
+                type: 'input',
+                inputOp: 'math_whole_number',
+                inputName: 'LETTER'
             },
             {
-                'type': 'input',
-                'inputOp': 'text',
-                'inputName': 'STRING'
+                type: 'input',
+                inputOp: 'text',
+                inputName: 'STRING'
             }
         ]
     },
     'stringLength:': {
-        'opcode': 'operator_length',
-        'argMap': [
+        opcode: 'operator_length',
+        argMap: [
             {
-                'type': 'input',
-                'inputOp': 'text',
-                'inputName': 'STRING'
+                type: 'input',
+                inputOp: 'text',
+                inputName: 'STRING'
             }
         ]
     },
     '%': {
-        'opcode': 'operator_mod',
-        'argMap': [
+        opcode: 'operator_mod',
+        argMap: [
             {
-                'type': 'input',
-                'inputOp': 'math_number',
-                'inputName': 'NUM1'
+                type: 'input',
+                inputOp: 'math_number',
+                inputName: 'NUM1'
             },
             {
-                'type': 'input',
-                'inputOp': 'math_number',
-                'inputName': 'NUM2'
+                type: 'input',
+                inputOp: 'math_number',
+                inputName: 'NUM2'
             }
         ]
     },
     'rounded': {
-        'opcode': 'operator_round',
-        'argMap': [
+        opcode: 'operator_round',
+        argMap: [
             {
-                'type': 'input',
-                'inputOp': 'math_number',
-                'inputName': 'NUM'
+                type: 'input',
+                inputOp: 'math_number',
+                inputName: 'NUM'
             }
         ]
     },
     'computeFunction:of:': {
-        'opcode': 'operator_mathop',
-        'argMap': [
+        opcode: 'operator_mathop',
+        argMap: [
             {
-                'type': 'input',
-                'inputOp': 'operator_mathop_menu',
-                'inputName': 'OPERATOR'
+                type: 'input',
+                inputOp: 'operator_mathop_menu',
+                inputName: 'OPERATOR'
             },
             {
-                'type': 'input',
-                'inputOp': 'math_number',
-                'inputName': 'NUM'
+                type: 'input',
+                inputOp: 'math_number',
+                inputName: 'NUM'
             }
         ]
     },
     'readVariable': {
-        'opcode': 'data_variable',
-        'argMap': [
+        opcode: 'data_variable',
+        argMap: [
             {
-                'type': 'input',
-                'inputOp': 'data_variablemenu',
-                'inputName': 'VARIABLE'
+                type: 'input',
+                inputOp: 'data_variablemenu',
+                inputName: 'VARIABLE'
             }
         ]
     },
     'setVar:to:': {
-        'opcode': 'data_setvariableto',
-        'argMap': [
+        opcode: 'data_setvariableto',
+        argMap: [
             {
-                'type': 'input',
-                'inputOp': 'data_variablemenu',
-                'inputName': 'VARIABLE'
+                type: 'input',
+                inputOp: 'data_variablemenu',
+                inputName: 'VARIABLE'
             },
             {
-                'type': 'input',
-                'inputOp': 'text',
-                'inputName': 'VALUE'
+                type: 'input',
+                inputOp: 'text',
+                inputName: 'VALUE'
             }
         ]
     },
     'changeVar:by:': {
-        'opcode': 'data_changevariableby',
-        'argMap': [
+        opcode: 'data_changevariableby',
+        argMap: [
             {
-                'type': 'input',
-                'inputOp': 'data_variablemenu',
-                'inputName': 'VARIABLE'
+                type: 'input',
+                inputOp: 'data_variablemenu',
+                inputName: 'VARIABLE'
             },
             {
-                'type': 'input',
-                'inputOp': 'math_number',
-                'inputName': 'VALUE'
+                type: 'input',
+                inputOp: 'math_number',
+                inputName: 'VALUE'
             }
         ]
     },
     'showVariable:': {
-        'opcode': 'data_showvariable',
-        'argMap': [
+        opcode: 'data_showvariable',
+        argMap: [
             {
-                'type': 'input',
-                'inputOp': 'data_variablemenu',
-                'inputName': 'VARIABLE'
+                type: 'input',
+                inputOp: 'data_variablemenu',
+                inputName: 'VARIABLE'
             }
         ]
     },
     'hideVariable:': {
-        'opcode': 'data_hidevariable',
-        'argMap': [
+        opcode: 'data_hidevariable',
+        argMap: [
             {
-                'type': 'input',
-                'inputOp': 'data_variablemenu',
-                'inputName': 'VARIABLE'
+                type: 'input',
+                inputOp: 'data_variablemenu',
+                inputName: 'VARIABLE'
             }
         ]
     },
     'contentsOfList:': {
-        'opcode': 'data_list',
-        'argMap': [
+        opcode: 'data_list',
+        argMap: [
             {
-                'type': 'field',
-                'fieldName': 'LIST'
+                type: 'field',
+                fieldName: 'LIST'
             }
         ]
     },
     'append:toList:': {
-        'opcode': 'data_addtolist',
-        'argMap': [
+        opcode: 'data_addtolist',
+        argMap: [
             {
-                'type': 'input',
-                'inputOp': 'text',
-                'inputName': 'ITEM'
+                type: 'input',
+                inputOp: 'text',
+                inputName: 'ITEM'
             },
             {
-                'type': 'field',
-                'fieldName': 'LIST'
+                type: 'field',
+                fieldName: 'LIST'
             }
         ]
     },
     'deleteLine:ofList:': {
-        'opcode': 'data_deleteoflist',
-        'argMap': [
+        opcode: 'data_deleteoflist',
+        argMap: [
             {
-                'type': 'input',
-                'inputOp': 'math_integer',
-                'inputName': 'INDEX'
+                type: 'input',
+                inputOp: 'math_integer',
+                inputName: 'INDEX'
             },
             {
-                'type': 'field',
-                'fieldName': 'LIST'
+                type: 'field',
+                fieldName: 'LIST'
             }
         ]
     },
     'insert:at:ofList:': {
-        'opcode': 'data_insertatlist',
-        'argMap': [
+        opcode: 'data_insertatlist',
+        argMap: [
             {
-                'type': 'input',
-                'inputOp': 'text',
-                'inputName': 'ITEM'
+                type: 'input',
+                inputOp: 'text',
+                inputName: 'ITEM'
             },
             {
-                'type': 'input',
-                'inputOp': 'math_integer',
-                'inputName': 'INDEX'
+                type: 'input',
+                inputOp: 'math_integer',
+                inputName: 'INDEX'
             },
             {
-                'type': 'field',
-                'fieldName': 'LIST'
+                type: 'field',
+                fieldName: 'LIST'
             }
         ]
     },
     'setLine:ofList:to:': {
-        'opcode': 'data_replaceitemoflist',
-        'argMap': [
+        opcode: 'data_replaceitemoflist',
+        argMap: [
             {
-                'type': 'input',
-                'inputOp': 'math_integer',
-                'inputName': 'INDEX'
+                type: 'input',
+                inputOp: 'math_integer',
+                inputName: 'INDEX'
             },
             {
-                'type': 'field',
-                'fieldName': 'LIST'
+                type: 'field',
+                fieldName: 'LIST'
             },
             {
-                'type': 'input',
-                'inputOp': 'text',
-                'inputName': 'ITEM'
+                type: 'input',
+                inputOp: 'text',
+                inputName: 'ITEM'
             }
         ]
     },
     'getLine:ofList:': {
-        'opcode': 'data_itemoflist',
-        'argMap': [
+        opcode: 'data_itemoflist',
+        argMap: [
             {
-                'type': 'input',
-                'inputOp': 'math_integer',
-                'inputName': 'INDEX'
+                type: 'input',
+                inputOp: 'math_integer',
+                inputName: 'INDEX'
             },
             {
-                'type': 'field',
-                'fieldName': 'LIST'
+                type: 'field',
+                fieldName: 'LIST'
             }
         ]
     },
     'lineCountOfList:': {
-        'opcode': 'data_lengthoflist',
-        'argMap': [
+        opcode: 'data_lengthoflist',
+        argMap: [
             {
-                'type': 'field',
-                'fieldName': 'LIST'
+                type: 'field',
+                fieldName: 'LIST'
             }
         ]
     },
     'list:contains:': {
-        'opcode': 'data_listcontainsitem',
-        'argMap': [
+        opcode: 'data_listcontainsitem',
+        argMap: [
             {
-                'type': 'field',
-                'fieldName': 'LIST'
+                type: 'field',
+                fieldName: 'LIST'
             },
             {
-                'type': 'input',
-                'inputOp': 'text',
-                'inputName': 'ITEM'
+                type: 'input',
+                inputOp: 'text',
+                inputName: 'ITEM'
             }
         ]
     },
     'showList:': {
-        'opcode': 'data_showlist',
-        'argMap': [
+        opcode: 'data_showlist',
+        argMap: [
             {
-                'type': 'field',
-                'fieldName': 'LIST'
+                type: 'field',
+                fieldName: 'LIST'
             }
         ]
     },
     'hideList:': {
-        'opcode': 'data_hidelist',
-        'argMap': [
+        opcode: 'data_hidelist',
+        argMap: [
             {
-                'type': 'field',
-                'fieldName': 'LIST'
+                type: 'field',
+                fieldName: 'LIST'
             }
         ]
     },
     'procDef': {
-        'opcode': 'procedures_defnoreturn',
-        'argMap': []
+        opcode: 'procedures_defnoreturn',
+        argMap: []
     },
     'getParam': {
-        'opcode': 'procedures_param',
-        'argMap': []
+        opcode: 'procedures_param',
+        argMap: []
     },
     'call': {
-        'opcode': 'procedures_callnoreturn',
-        'argMap': []
+        opcode: 'procedures_callnoreturn',
+        argMap: []
     }
 };
 module.exports = specMap;

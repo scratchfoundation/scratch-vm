@@ -14,17 +14,17 @@ var Scratch3DataBlocks = function (runtime) {
  */
 Scratch3DataBlocks.prototype.getPrimitives = function () {
     return {
-        'data_variable': this.getVariable,
-        'data_setvariableto': this.setVariableTo,
-        'data_changevariableby': this.changeVariableBy,
-        'data_listcontents': this.getListContents,
-        'data_addtolist': this.addToList,
-        'data_deleteoflist': this.deleteOfList,
-        'data_insertatlist': this.insertAtList,
-        'data_replaceitemoflist': this.replaceItemOfList,
-        'data_itemoflist': this.getItemOfList,
-        'data_lengthoflist': this.lengthOfList,
-        'data_listcontainsitem': this.listContainsItem
+        data_variable: this.getVariable,
+        data_setvariableto: this.setVariableTo,
+        data_changevariableby: this.changeVariableBy,
+        data_listcontents: this.getListContents,
+        data_addtolist: this.addToList,
+        data_deleteoflist: this.deleteOfList,
+        data_insertatlist: this.insertAtList,
+        data_replaceitemoflist: this.replaceItemOfList,
+        data_itemoflist: this.getItemOfList,
+        data_lengthoflist: this.lengthOfList,
+        data_listcontainsitem: this.listContainsItem
     };
 };
 

@@ -14,23 +14,23 @@ var Scratch3OperatorsBlocks = function (runtime) {
  */
 Scratch3OperatorsBlocks.prototype.getPrimitives = function () {
     return {
-        'operator_add': this.add,
-        'operator_subtract': this.subtract,
-        'operator_multiply': this.multiply,
-        'operator_divide': this.divide,
-        'operator_lt': this.lt,
-        'operator_equals': this.equals,
-        'operator_gt': this.gt,
-        'operator_and': this.and,
-        'operator_or': this.or,
-        'operator_not': this.not,
-        'operator_random': this.random,
-        'operator_join': this.join,
-        'operator_letter_of': this.letterOf,
-        'operator_length': this.length,
-        'operator_mod': this.mod,
-        'operator_round': this.round,
-        'operator_mathop': this.mathop
+        operator_add: this.add,
+        operator_subtract: this.subtract,
+        operator_multiply: this.multiply,
+        operator_divide: this.divide,
+        operator_lt: this.lt,
+        operator_equals: this.equals,
+        operator_gt: this.gt,
+        operator_and: this.and,
+        operator_or: this.or,
+        operator_not: this.not,
+        operator_random: this.random,
+        operator_join: this.join,
+        operator_letter_of: this.letterOf,
+        operator_length: this.length,
+        operator_mod: this.mod,
+        operator_round: this.round,
+        operator_mathop: this.mathop
     };
 };
 

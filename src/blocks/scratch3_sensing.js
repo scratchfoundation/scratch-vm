@@ -14,18 +14,18 @@ var Scratch3SensingBlocks = function (runtime) {
  */
 Scratch3SensingBlocks.prototype.getPrimitives = function () {
     return {
-        'sensing_touchingobject': this.touchingObject,
-        'sensing_touchingcolor': this.touchingColor,
-        'sensing_coloristouchingcolor': this.colorTouchingColor,
-        'sensing_distanceto': this.distanceTo,
-        'sensing_timer': this.getTimer,
-        'sensing_resettimer': this.resetTimer,
-        'sensing_mousex': this.getMouseX,
-        'sensing_mousey': this.getMouseY,
-        'sensing_mousedown': this.getMouseDown,
-        'sensing_keypressed': this.getKeyPressed,
-        'sensing_current': this.current,
-        'sensing_dayssince2000': this.daysSince2000
+        sensing_touchingobject: this.touchingObject,
+        sensing_touchingcolor: this.touchingColor,
+        sensing_coloristouchingcolor: this.colorTouchingColor,
+        sensing_distanceto: this.distanceTo,
+        sensing_timer: this.getTimer,
+        sensing_resettimer: this.resetTimer,
+        sensing_mousex: this.getMouseX,
+        sensing_mousey: this.getMouseY,
+        sensing_mousedown: this.getMouseDown,
+        sensing_keypressed: this.getKeyPressed,
+        sensing_current: this.current,
+        sensing_dayssince2000: this.daysSince2000
     };
 };
 

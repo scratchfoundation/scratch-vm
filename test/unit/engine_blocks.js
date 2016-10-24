@@ -326,7 +326,7 @@ test('move no obscure shadow', function (t) {
         next: null,
         fields: {},
         inputs: {
-            'fooInput': {
+            fooInput: {
                 name: 'fooInput',
                 block: 'x',
                 shadow: 'y'

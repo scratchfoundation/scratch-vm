@@ -12,9 +12,9 @@ var Scratch3ProcedureBlocks = function (runtime) {
  */
 Scratch3ProcedureBlocks.prototype.getPrimitives = function () {
     return {
-        'procedures_defnoreturn': this.defNoReturn,
-        'procedures_callnoreturn': this.callNoReturn,
-        'procedures_param': this.param
+        procedures_defnoreturn: this.defNoReturn,
+        procedures_callnoreturn: this.callNoReturn,
+        procedures_param: this.param
     };
 };
 
