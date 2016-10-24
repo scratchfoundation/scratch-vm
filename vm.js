@@ -64,16 +64,16 @@
 	var util = __webpack_require__(12);
 
 	var Runtime = __webpack_require__(16);
-	var sb2import = __webpack_require__(90);
-	var Sprite = __webpack_require__(96);
-	var Blocks = __webpack_require__(21);
+	var sb2import = __webpack_require__(103);
+	var Sprite = __webpack_require__(109);
+	var Blocks = __webpack_require__(34);
 
 	/**
 	 * Handles connections between blocks, stage, and extensions.
 	 *
 	 * @author Andrew Sliwinski <ascii@media.mit.edu>
 	 */
-	function VirtualMachine () {
+	var VirtualMachine = function () {
 	    var instance = this;
 	    // Bind event emitter and runtime to VM instance
 	    EventEmitter.call(instance);
@@ -107,7 +107,7 @@
 
 	    this.blockListener = this.blockListener.bind(this);
 	    this.flyoutBlockListener = this.flyoutBlockListener.bind(this);
-	}
+	};
 
 	/**
 	 * Inherit from EventEmitter
@@ -168,12 +168,12 @@
 	VirtualMachine.prototype.getPlaygroundData = function () {
 	    var instance = this;
 	    // Only send back thread data for the current editingTarget.
-	    var threadData = this.runtime.threads.filter(function(thread) {
-	        return thread.target == instance.editingTarget;
+	    var threadData = this.runtime.threads.filter(function (thread) {
+	        return thread.target === instance.editingTarget;
 	    });
 	    // Remove the target key, since it's a circular reference.
-	    var filteredThreadData = JSON.stringify(threadData, function(key, value) {
-	        if (key == 'target') return undefined;
+	    var filteredThreadData = JSON.stringify(threadData, function (key, value) {
+	        if (key === 'target') return;
 	        return value;
 	    }, 2);
 	    this.emit('playgroundData', {
@@ -208,12 +208,48 @@
 	    this.clear();
 	    // @todo: Handle other formats, e.g., Scratch 1.4, Scratch 3.0.
 	    sb2import(json, this.runtime);
-	    // Select the first target for editing, e.g., the stage.
-	    this.editingTarget = this.runtime.targets[0];
+	    // Select the first target for editing, e.g., the first sprite.
+	    this.editingTarget = this.runtime.targets[1];
 	    // Update the VM user's knowledge of targets and blocks on the workspace.
 	    this.emitTargetsUpdate();
 	    this.emitWorkspaceUpdate();
 	    this.runtime.setEditingTarget(this.editingTarget);
+	};
+
+	/**
+	 * Add a single sprite from the "Sprite2" (i.e., SB2 sprite) format.
+	 * @param {?string} json JSON string representing the sprite.
+	 */
+	VirtualMachine.prototype.addSprite2 = function (json) {
+	    // Select new sprite.
+	    this.editingTarget = sb2import(json, this.runtime, true);
+	    // Update the VM user's knowledge of targets and blocks on the workspace.
+	    this.emitTargetsUpdate();
+	    this.emitWorkspaceUpdate();
+	    this.runtime.setEditingTarget(this.editingTarget);
+	};
+
+	/**
+	 * Add a costume to the current editing target.
+	 * @param {!Object} costumeObject Object representing the costume.
+	 */
+	VirtualMachine.prototype.addCostume = function (costumeObject) {
+	    this.editingTarget.sprite.costumes.push(costumeObject);
+	    // Switch to the costume.
+	    this.editingTarget.setCostume(
+	        this.editingTarget.sprite.costumes.length - 1
+	    );
+	};
+
+	/**
+	 * Add a backdrop to the stage.
+	 * @param {!Object} backdropObject Object representing the backdrop.
+	 */
+	VirtualMachine.prototype.addBackdrop = function (backdropObject) {
+	    var stage = this.runtime.getTargetForStage();
+	    stage.sprite.costumes.push(backdropObject);
+	    // Switch to the backdrop.
+	    stage.setCostume(stage.sprite.costumes.length - 1);
 	};
 
 	/**
@@ -299,7 +335,7 @@
 	 */
 	VirtualMachine.prototype.setEditingTarget = function (targetId) {
 	    // Has the target id changed? If not, exit.
-	    if (targetId == this.editingTarget.id) {
+	    if (targetId === this.editingTarget.id) {
 	        return;
 	    }
 	    var target = this.runtime.getTargetById(targetId);
@@ -323,7 +359,7 @@
 	        targetList: this.runtime.targets.filter(function (target) {
 	            // Don't report clones.
 	            return !target.hasOwnProperty('isOriginal') || target.isOriginal;
-	        }).map(function(target) {
+	        }).map(function (target) {
 	            return [target.id, target.getName()];
 	        }),
 	        // Currently editing target id.
@@ -337,7 +373,7 @@
 	 */
 	VirtualMachine.prototype.emitWorkspaceUpdate = function () {
 	    this.emit('workspaceUpdate', {
-	        'xml': this.editingTarget.blocks.toXML()
+	        xml: this.editingTarget.blocks.toXML()
 	    });
 	};
 
@@ -1477,30 +1513,30 @@
 
 	var EventEmitter = __webpack_require__(11);
 	var Sequencer = __webpack_require__(17);
-	var Blocks = __webpack_require__(21);
+	var Blocks = __webpack_require__(34);
 	var Thread = __webpack_require__(19);
 	var util = __webpack_require__(12);
 
 	// Virtual I/O devices.
-	var Clock = __webpack_require__(76);
-	var Keyboard = __webpack_require__(77);
-	var Mouse = __webpack_require__(80);
+	var Clock = __webpack_require__(89);
+	var Keyboard = __webpack_require__(90);
+	var Mouse = __webpack_require__(93);
 
 	var defaultBlockPackages = {
-	    'scratch3_control': __webpack_require__(82),
-	    'scratch3_event': __webpack_require__(83),
-	    'scratch3_looks': __webpack_require__(84),
-	    'scratch3_motion': __webpack_require__(85),
-	    'scratch3_operators': __webpack_require__(86),
-	    'scratch3_sensing': __webpack_require__(87),
-	    'scratch3_data': __webpack_require__(88),
-	    'scratch3_procedures': __webpack_require__(89)
+	    scratch3_control: __webpack_require__(95),
+	    scratch3_event: __webpack_require__(96),
+	    scratch3_looks: __webpack_require__(97),
+	    scratch3_motion: __webpack_require__(98),
+	    scratch3_operators: __webpack_require__(99),
+	    scratch3_sensing: __webpack_require__(100),
+	    scratch3_data: __webpack_require__(101),
+	    scratch3_procedures: __webpack_require__(102)
 	};
 
 	/**
 	 * Manages targets, scripts, and the sequencer.
 	 */
-	function Runtime () {
+	var Runtime = function () {
 	    // Bind event emitter
 	    EventEmitter.call(this);
 
@@ -1616,11 +1652,11 @@
 	    // I/O related data.
 	    /** @type {Object.<string, Object>} */
 	    this.ioDevices = {
-	        'clock': new Clock(),
-	        'keyboard': new Keyboard(this),
-	        'mouse': new Mouse(this)
+	        clock: new Clock(),
+	        keyboard: new Keyboard(this),
+	        mouse: new Mouse(this)
 	    };
-	}
+	};
 
 	/**
 	 * Inherit from EventEmitter
@@ -1823,7 +1859,7 @@
 	Runtime.prototype.toggleScript = function (topBlockId) {
 	    // Remove any existing thread.
 	    for (var i = 0; i < this.threads.length; i++) {
-	        if (this.threads[i].topBlock == topBlockId) {
+	        if (this.threads[i].topBlock === topBlockId) {
 	            this._removeThread(this.threads[i]);
 	            return;
 	        }
@@ -1838,12 +1874,12 @@
 	 *  - the top block ID of the script.
 	 *  - the target that owns the script.
 	 * @param {!Function} f Function to call for each script.
-	 * @param {Target=} opt_target Optionally, a target to restrict to.
+	 * @param {Target=} optTarget Optionally, a target to restrict to.
 	 */
-	Runtime.prototype.allScriptsDo = function (f, opt_target) {
+	Runtime.prototype.allScriptsDo = function (f, optTarget) {
 	    var targets = this.targets;
-	    if (opt_target) {
-	        targets = [opt_target];
+	    if (optTarget) {
+	        targets = [optTarget];
 	    }
 	    for (var t = 0; t < targets.length; t++) {
 	        var target = targets[t];
@@ -1858,12 +1894,12 @@
 	/**
 	 * Start all relevant hats.
 	 * @param {!string} requestedHatOpcode Opcode of hats to start.
-	 * @param {Object=} opt_matchFields Optionally, fields to match on the hat.
-	 * @param {Target=} opt_target Optionally, a target to restrict to.
+	 * @param {Object=} optMatchFields Optionally, fields to match on the hat.
+	 * @param {Target=} optTarget Optionally, a target to restrict to.
 	 * @return {Array.<Thread>} List of threads started by this function.
 	 */
 	Runtime.prototype.startHats = function (requestedHatOpcode,
-	    opt_matchFields, opt_target) {
+	    optMatchFields, optTarget) {
 	    if (!this._hats.hasOwnProperty(requestedHatOpcode)) {
 	        // No known hat with this opcode.
 	        return;
@@ -1871,7 +1907,7 @@
 	    var instance = this;
 	    var newThreads = [];
 	    // Consider all scripts, looking for hats with opcode `requestedHatOpcode`.
-	    this.allScriptsDo(function(topBlockId, target) {
+	    this.allScriptsDo(function (topBlockId, target) {
 	        var potentialHatOpcode = target.blocks.getBlock(topBlockId).opcode;
 	        if (potentialHatOpcode !== requestedHatOpcode) {
 	            // Not the right hat.
@@ -1883,10 +1919,10 @@
 	        // (i.e., before the predicate can be run) because "broadcast and wait"
 	        // needs to have a precise collection of started threads.
 	        var hatFields = target.blocks.getFields(topBlockId);
-	        if (opt_matchFields) {
-	            for (var matchField in opt_matchFields) {
+	        if (optMatchFields) {
+	            for (var matchField in optMatchFields) {
 	                if (hatFields[matchField].value !==
-	                    opt_matchFields[matchField]) {
+	                    optMatchFields[matchField]) {
 	                    // Field mismatch.
 	                    return;
 	                }
@@ -1899,7 +1935,7 @@
 	            // any existing threads starting with the top block.
 	            for (var i = 0; i < instance.threads.length; i++) {
 	                if (instance.threads[i].topBlock === topBlockId &&
-	                    instance.threads[i].target == target) {
+	                    instance.threads[i].target === target) {
 	                    instance._removeThread(instance.threads[i]);
 	                }
 	            }
@@ -1908,7 +1944,7 @@
 	            // give up if any threads with the top block are running.
 	            for (var j = 0; j < instance.threads.length; j++) {
 	                if (instance.threads[j].topBlock === topBlockId &&
-	                    instance.threads[j].target == target) {
+	                    instance.threads[j].target === target) {
 	                    // Some thread is already running.
 	                    return;
 	                }
@@ -1916,7 +1952,7 @@
 	        }
 	        // Start the thread with this top block.
 	        newThreads.push(instance._pushThread(topBlockId, target));
-	    }, opt_target);
+	    }, optTarget);
 	    return newThreads;
 	};
 
@@ -1945,15 +1981,15 @@
 	/**
 	 * Stop any threads acting on the target.
 	 * @param {!Target} target Target to stop threads for.
-	 * @param {Thread=} opt_threadException Optional thread to skip.
+	 * @param {Thread=} optThreadException Optional thread to skip.
 	 */
-	Runtime.prototype.stopForTarget = function (target, opt_threadException) {
+	Runtime.prototype.stopForTarget = function (target, optThreadException) {
 	    // Stop any threads on the target.
 	    for (var i = 0; i < this.threads.length; i++) {
-	        if (this.threads[i] === opt_threadException) {
+	        if (this.threads[i] === optThreadException) {
 	            continue;
 	        }
-	        if (this.threads[i].target == target) {
+	        if (this.threads[i].target === target) {
 	            this._removeThread(this.threads[i]);
 	        }
 	    }
@@ -2039,13 +2075,13 @@
 	/**
 	 * Emit glows/glow clears for scripts after a single tick.
 	 * Looks at `this.threads` and notices which have turned on/off new glows.
-	 * @param {Array.<Thread>=} opt_extraThreads Optional list of inactive threads.
+	 * @param {Array.<Thread>=} optExtraThreads Optional list of inactive threads.
 	 */
-	Runtime.prototype._updateGlows = function (opt_extraThreads) {
+	Runtime.prototype._updateGlows = function (optExtraThreads) {
 	    var searchThreads = [];
 	    searchThreads.push.apply(searchThreads, this.threads);
-	    if (opt_extraThreads) {
-	        searchThreads.push.apply(searchThreads, opt_extraThreads);
+	    if (optExtraThreads) {
+	        searchThreads.push.apply(searchThreads, optExtraThreads);
 	    }
 	    // Set of scripts that request a glow this frame.
 	    var requestedGlowsThisFrame = [];
@@ -2055,7 +2091,7 @@
 	    for (var i = 0; i < searchThreads.length; i++) {
 	        var thread = searchThreads[i];
 	        var target = thread.target;
-	        if (target == this._editingTarget) {
+	        if (target === this._editingTarget) {
 	            var blockForThread = thread.blockGlowInFrame;
 	            if (thread.requestScriptGlowInFrame) {
 	                var script = target.blocks.getTopLevelScript(blockForThread);
@@ -2149,7 +2185,7 @@
 	Runtime.prototype.getTargetById = function (targetId) {
 	    for (var i = 0; i < this.targets.length; i++) {
 	        var target = this.targets[i];
-	        if (target.id == targetId) {
+	        if (target.id === targetId) {
 	            return target;
 	        }
 	    }
@@ -2163,7 +2199,7 @@
 	Runtime.prototype.getSpriteTargetByName = function (spriteName) {
 	    for (var i = 0; i < this.targets.length; i++) {
 	        var target = this.targets[i];
-	        if (target.sprite && target.sprite.name == spriteName) {
+	        if (target.sprite && target.sprite.name === spriteName) {
 	            return target;
 	        }
 	    }
@@ -2227,7 +2263,7 @@
 	        interval = Runtime.THREAD_STEP_INTERVAL_COMPATIBILITY;
 	    }
 	    this.currentStepTime = interval;
-	    this._steppingInterval = self.setInterval(function() {
+	    this._steppingInterval = self.setInterval(function () {
 	        this._step();
 	    }.bind(this), interval);
 	};
@@ -2243,7 +2279,7 @@
 	var Thread = __webpack_require__(19);
 	var execute = __webpack_require__(20);
 
-	function Sequencer (runtime) {
+	var Sequencer = function (runtime) {
 	    /**
 	     * A utility timer for timing thread sequencing.
 	     * @type {!Timer}
@@ -2255,7 +2291,7 @@
 	     * @type {!Runtime}
 	     */
 	    this.runtime = runtime;
-	}
+	};
 
 	/**
 	 * Time to run a warp-mode thread, in ms.
@@ -2319,7 +2355,7 @@
 	        ranFirstTick = true;
 	    }
 	    // Filter inactive threads from `this.runtime.threads`.
-	    this.runtime.threads = this.runtime.threads.filter(function(thread) {
+	    this.runtime.threads = this.runtime.threads.filter(function (thread) {
 	        if (inactiveThreads.indexOf(thread) > -1) {
 	            return false;
 	        }
@@ -2504,7 +2540,7 @@
 	/**
 	 * @constructor
 	 */
-	function Timer () {}
+	var Timer = function () {};
 
 	/**
 	 * Used to store the start time of a timer action.
@@ -2568,7 +2604,7 @@
 	 * @param {?string} firstBlock First block to execute in the thread.
 	 * @constructor
 	 */
-	function Thread (firstBlock) {
+	var Thread = function (firstBlock) {
 	    /**
 	     * ID of top block of the thread
 	     * @type {!string}
@@ -2618,7 +2654,7 @@
 	     * @type {?Timer}
 	     */
 	    this.warpTimer = null;
-	}
+	};
 
 	/**
 	 * Thread status for initialized or running thread.
@@ -2790,8 +2826,8 @@
 	    var sp = this.stack.length - 1;
 	    for (var i = sp - 1; i >= 0; i--) {
 	        var block = this.target.blocks.getBlock(this.stack[i]);
-	        if (block.opcode == 'procedures_callnoreturn' &&
-	            block.mutation.proccode == procedureCode)  {
+	        if (block.opcode === 'procedures_callnoreturn' &&
+	            block.mutation.proccode === procedureCode) {
 	            return true;
 	        }
 	        if (--callCount < 0) return false;
@@ -2806,6 +2842,7 @@
 /* 20 */
 /***/ function(module, exports, __webpack_require__) {
 
+	var log = __webpack_require__(21);
 	var Thread = __webpack_require__(19);
 
 	/**
@@ -2860,7 +2897,7 @@
 
 
 	    if (!opcode) {
-	        console.warn('Could not get opcode for block: ' + currentBlockId);
+	        log.warn('Could not get opcode for block: ' + currentBlockId);
 	        return;
 	    }
 
@@ -2913,14 +2950,14 @@
 	            // Skip through the block (hat with no predicate).
 	            return;
 	        } else {
-	            if (Object.keys(fields).length == 1 &&
-	                Object.keys(inputs).length == 0) {
+	            if (Object.keys(fields).length === 1 &&
+	                Object.keys(inputs).length === 0) {
 	                // One field and no inputs - treat as arg.
 	                for (var fieldKey in fields) { // One iteration.
 	                    handleReport(fields[fieldKey].value);
 	                }
 	            } else {
-	                console.warn('Could not get implementation for opcode: ' +
+	                log.warn('Could not get implementation for opcode: ' +
 	                    opcode);
 	            }
 	            thread.requestScriptGlowInFrame = true;
@@ -2941,8 +2978,8 @@
 	        var input = inputs[inputName];
 	        var inputBlockId = input.block;
 	        // Is there no value for this input waiting in the stack frame?
-	        if (typeof currentStackFrame.reported[inputName] === 'undefined'
-	            && inputBlockId) {
+	        if (typeof currentStackFrame.reported[inputName] === 'undefined' &&
+	            inputBlockId) {
 	            // If there's not, we need to evaluate the block.
 	            // Push to the stack to evaluate the reporter block.
 	            thread.pushStack(inputBlockId);
@@ -2978,7 +3015,7 @@
 	    primitiveReportedValue = blockFunction(argValues, {
 	        stackFrame: currentStackFrame.executionContext,
 	        target: target,
-	        yield: function() {
+	        yield: function () {
 	            thread.status = Thread.STATUS_YIELD;
 	        },
 	        startBranch: function (branchNum, isLoop) {
@@ -2987,10 +3024,10 @@
 	        stopAll: function () {
 	            runtime.stopAll();
 	        },
-	        stopOtherTargetThreads: function() {
+	        stopOtherTargetThreads: function () {
 	            runtime.stopForTarget(target, thread);
 	        },
-	        stopThread: function() {
+	        stopThread: function () {
 	            sequencer.retireThread(thread);
 	        },
 	        startProcedure: function (procedureCode) {
@@ -3005,15 +3042,20 @@
 	        getParam: function (paramName) {
 	            return thread.getParam(paramName);
 	        },
-	        startHats: function(requestedHat, opt_matchFields, opt_target) {
+	        startHats: function (requestedHat, optMatchFields, optTarget) {
 	            return (
-	                runtime.startHats(requestedHat, opt_matchFields, opt_target)
+	                runtime.startHats(requestedHat, optMatchFields, optTarget)
 	            );
 	        },
 	        ioQuery: function (device, func, args) {
 	            // Find the I/O device and execute the query/function call.
 	            if (runtime.ioDevices[device] && runtime.ioDevices[device][func]) {
 	                var devObject = runtime.ioDevices[device];
+	                // @todo Figure out why eslint complains about no-useless-call
+	                // no-useless-call can't tell if the call is useless for dynamic
+	                // expressions... or something. Not exactly sure why it
+	                // complains here.
+	                // eslint-disable-next-line no-useless-call
 	                return devObject[func].call(devObject, args);
 	            }
 	        }
@@ -3032,19 +3074,19 @@
 	            thread.status = Thread.STATUS_PROMISE_WAIT;
 	        }
 	        // Promise handlers
-	        primitiveReportedValue.then(function(resolvedValue) {
+	        primitiveReportedValue.then(function (resolvedValue) {
 	            handleReport(resolvedValue);
-	            if (typeof resolvedValue !== 'undefined') {
-	                thread.popStack();
-	            } else {
+	            if (typeof resolvedValue === 'undefined') {
 	                var popped = thread.popStack();
 	                var nextBlockId = thread.target.blocks.getNextBlock(popped);
 	                thread.pushStack(nextBlockId);
+	            } else {
+	                thread.popStack();
 	            }
-	        }, function(rejectionReason) {
+	        }, function (rejectionReason) {
 	            // Promise rejected: the primitive had some error.
 	            // Log it and proceed.
-	            console.warn('Primitive rejected promise: ', rejectionReason);
+	            log.warn('Primitive rejected promise: ', rejectionReason);
 	            thread.status = Thread.STATUS_RUNNING;
 	            thread.popStack();
 	        });
@@ -3060,9 +3102,551 @@
 /* 21 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var adapter = __webpack_require__(22);
-	var mutationAdapter = __webpack_require__(23);
-	var xmlEscape = __webpack_require__(75);
+	var minilog = __webpack_require__(22);
+	minilog.enable();
+
+	module.exports = minilog('vm');
+
+
+/***/ },
+/* 22 */
+/***/ function(module, exports, __webpack_require__) {
+
+	var Minilog = __webpack_require__(23);
+
+	var oldEnable = Minilog.enable,
+	    oldDisable = Minilog.disable,
+	    isChrome = (typeof navigator != 'undefined' && /chrome/i.test(navigator.userAgent)),
+	    console = __webpack_require__(27);
+
+	// Use a more capable logging backend if on Chrome
+	Minilog.defaultBackend = (isChrome ? console.minilog : console);
+
+	// apply enable inputs from localStorage and from the URL
+	if(typeof window != 'undefined') {
+	  try {
+	    Minilog.enable(JSON.parse(window.localStorage['minilogSettings']));
+	  } catch(e) {}
+	  if(window.location && window.location.search) {
+	    var match = RegExp('[?&]minilog=([^&]*)').exec(window.location.search);
+	    match && Minilog.enable(decodeURIComponent(match[1]));
+	  }
+	}
+
+	// Make enable also add to localStorage
+	Minilog.enable = function() {
+	  oldEnable.call(Minilog, true);
+	  try { window.localStorage['minilogSettings'] = JSON.stringify(true); } catch(e) {}
+	  return this;
+	};
+
+	Minilog.disable = function() {
+	  oldDisable.call(Minilog);
+	  try { delete window.localStorage.minilogSettings; } catch(e) {}
+	  return this;
+	};
+
+	exports = module.exports = Minilog;
+
+	exports.backends = {
+	  array: __webpack_require__(31),
+	  browser: Minilog.defaultBackend,
+	  localStorage: __webpack_require__(32),
+	  jQuery: __webpack_require__(33)
+	};
+
+
+/***/ },
+/* 23 */
+/***/ function(module, exports, __webpack_require__) {
+
+	var Transform = __webpack_require__(24),
+	    Filter = __webpack_require__(26);
+
+	var log = new Transform(),
+	    slice = Array.prototype.slice;
+
+	exports = module.exports = function create(name) {
+	  var o   = function() { log.write(name, undefined, slice.call(arguments)); return o; };
+	  o.debug = function() { log.write(name, 'debug', slice.call(arguments)); return o; };
+	  o.info  = function() { log.write(name, 'info',  slice.call(arguments)); return o; };
+	  o.warn  = function() { log.write(name, 'warn',  slice.call(arguments)); return o; };
+	  o.error = function() { log.write(name, 'error', slice.call(arguments)); return o; };
+	  o.log   = o.debug; // for interface compliance with Node and browser consoles
+	  o.suggest = exports.suggest;
+	  o.format = log.format;
+	  return o;
+	};
+
+	// filled in separately
+	exports.defaultBackend = exports.defaultFormatter = null;
+
+	exports.pipe = function(dest) {
+	  return log.pipe(dest);
+	};
+
+	exports.end = exports.unpipe = exports.disable = function(from) {
+	  return log.unpipe(from);
+	};
+
+	exports.Transform = Transform;
+	exports.Filter = Filter;
+	// this is the default filter that's applied when .enable() is called normally
+	// you can bypass it completely and set up your own pipes
+	exports.suggest = new Filter();
+
+	exports.enable = function() {
+	  if(exports.defaultFormatter) {
+	    return log.pipe(exports.suggest) // filter
+	              .pipe(exports.defaultFormatter) // formatter
+	              .pipe(exports.defaultBackend); // backend
+	  }
+	  return log.pipe(exports.suggest) // filter
+	            .pipe(exports.defaultBackend); // formatter
+	};
+
+
+
+/***/ },
+/* 24 */
+/***/ function(module, exports, __webpack_require__) {
+
+	var microee = __webpack_require__(25);
+
+	// Implements a subset of Node's stream.Transform - in a cross-platform manner.
+	function Transform() {}
+
+	microee.mixin(Transform);
+
+	// The write() signature is different from Node's
+	// --> makes it much easier to work with objects in logs.
+	// One of the lessons from v1 was that it's better to target
+	// a good browser rather than the lowest common denominator
+	// internally.
+	// If you want to use external streams, pipe() to ./stringify.js first.
+	Transform.prototype.write = function(name, level, args) {
+	  this.emit('item', name, level, args);
+	};
+
+	Transform.prototype.end = function() {
+	  this.emit('end');
+	  this.removeAllListeners();
+	};
+
+	Transform.prototype.pipe = function(dest) {
+	  var s = this;
+	  // prevent double piping
+	  s.emit('unpipe', dest);
+	  // tell the dest that it's being piped to
+	  dest.emit('pipe', s);
+
+	  function onItem() {
+	    dest.write.apply(dest, Array.prototype.slice.call(arguments));
+	  }
+	  function onEnd() { !dest._isStdio && dest.end(); }
+
+	  s.on('item', onItem);
+	  s.on('end', onEnd);
+
+	  s.when('unpipe', function(from) {
+	    var match = (from === dest) || typeof from == 'undefined';
+	    if(match) {
+	      s.removeListener('item', onItem);
+	      s.removeListener('end', onEnd);
+	      dest.emit('unpipe');
+	    }
+	    return match;
+	  });
+
+	  return dest;
+	};
+
+	Transform.prototype.unpipe = function(from) {
+	  this.emit('unpipe', from);
+	  return this;
+	};
+
+	Transform.prototype.format = function(dest) {
+	  throw new Error([
+	    'Warning: .format() is deprecated in Minilog v2! Use .pipe() instead. For example:',
+	    'var Minilog = require(\'minilog\');',
+	    'Minilog',
+	    '  .pipe(Minilog.backends.console.formatClean)',
+	    '  .pipe(Minilog.backends.console);'].join('\n'));
+	};
+
+	Transform.mixin = function(dest) {
+	  var o = Transform.prototype, k;
+	  for (k in o) {
+	    o.hasOwnProperty(k) && (dest.prototype[k] = o[k]);
+	  }
+	};
+
+	module.exports = Transform;
+
+
+/***/ },
+/* 25 */
+/***/ function(module, exports) {
+
+	function M() { this._events = {}; }
+	M.prototype = {
+	  on: function(ev, cb) {
+	    this._events || (this._events = {});
+	    var e = this._events;
+	    (e[ev] || (e[ev] = [])).push(cb);
+	    return this;
+	  },
+	  removeListener: function(ev, cb) {
+	    var e = this._events[ev] || [], i;
+	    for(i = e.length-1; i >= 0 && e[i]; i--){
+	      if(e[i] === cb || e[i].cb === cb) { e.splice(i, 1); }
+	    }
+	  },
+	  removeAllListeners: function(ev) {
+	    if(!ev) { this._events = {}; }
+	    else { this._events[ev] && (this._events[ev] = []); }
+	  },
+	  emit: function(ev) {
+	    this._events || (this._events = {});
+	    var args = Array.prototype.slice.call(arguments, 1), i, e = this._events[ev] || [];
+	    for(i = e.length-1; i >= 0 && e[i]; i--){
+	      e[i].apply(this, args);
+	    }
+	    return this;
+	  },
+	  when: function(ev, cb) {
+	    return this.once(ev, cb, true);
+	  },
+	  once: function(ev, cb, when) {
+	    if(!cb) return this;
+	    function c() {
+	      if(!when) this.removeListener(ev, c);
+	      if(cb.apply(this, arguments) && when) this.removeListener(ev, c);
+	    }
+	    c.cb = cb;
+	    this.on(ev, c);
+	    return this;
+	  }
+	};
+	M.mixin = function(dest) {
+	  var o = M.prototype, k;
+	  for (k in o) {
+	    o.hasOwnProperty(k) && (dest.prototype[k] = o[k]);
+	  }
+	};
+	module.exports = M;
+
+
+/***/ },
+/* 26 */
+/***/ function(module, exports, __webpack_require__) {
+
+	// default filter
+	var Transform = __webpack_require__(24);
+
+	var levelMap = { debug: 1, info: 2, warn: 3, error: 4 };
+
+	function Filter() {
+	  this.enabled = true;
+	  this.defaultResult = true;
+	  this.clear();
+	}
+
+	Transform.mixin(Filter);
+
+	// allow all matching, with level >= given level
+	Filter.prototype.allow = function(name, level) {
+	  this._white.push({ n: name, l: levelMap[level] });
+	  return this;
+	};
+
+	// deny all matching, with level <= given level
+	Filter.prototype.deny = function(name, level) {
+	  this._black.push({ n: name, l: levelMap[level] });
+	  return this;
+	};
+
+	Filter.prototype.clear = function() {
+	  this._white = [];
+	  this._black = [];
+	  return this;
+	};
+
+	function test(rule, name) {
+	  // use .test for RegExps
+	  return (rule.n.test ? rule.n.test(name) : rule.n == name);
+	};
+
+	Filter.prototype.test = function(name, level) {
+	  var i, len = Math.max(this._white.length, this._black.length);
+	  for(i = 0; i < len; i++) {
+	    if(this._white[i] && test(this._white[i], name) && levelMap[level] >= this._white[i].l) {
+	      return true;
+	    }
+	    if(this._black[i] && test(this._black[i], name) && levelMap[level] < this._black[i].l) {
+	      return false;
+	    }
+	  }
+	  return this.defaultResult;
+	};
+
+	Filter.prototype.write = function(name, level, args) {
+	  if(!this.enabled || this.test(name, level)) {
+	    return this.emit('item', name, level, args);
+	  }
+	};
+
+	module.exports = Filter;
+
+
+/***/ },
+/* 27 */
+/***/ function(module, exports, __webpack_require__) {
+
+	var Transform = __webpack_require__(24);
+
+	var newlines = /\n+$/,
+	    logger = new Transform();
+
+	logger.write = function(name, level, args) {
+	  var i = args.length-1;
+	  if (typeof console === 'undefined' || !console.log) {
+	    return;
+	  }
+	  if(console.log.apply) {
+	    return console.log.apply(console, [name, level].concat(args));
+	  } else if(JSON && JSON.stringify) {
+	    // console.log.apply is undefined in IE8 and IE9
+	    // for IE8/9: make console.log at least a bit less awful
+	    if(args[i] && typeof args[i] == 'string') {
+	      args[i] = args[i].replace(newlines, '');
+	    }
+	    try {
+	      for(i = 0; i < args.length; i++) {
+	        args[i] = JSON.stringify(args[i]);
+	      }
+	    } catch(e) {}
+	    console.log(args.join(' '));
+	  }
+	};
+
+	logger.formatters = ['color', 'minilog'];
+	logger.color = __webpack_require__(28);
+	logger.minilog = __webpack_require__(30);
+
+	module.exports = logger;
+
+
+/***/ },
+/* 28 */
+/***/ function(module, exports, __webpack_require__) {
+
+	var Transform = __webpack_require__(24),
+	    color = __webpack_require__(29);
+
+	var colors = { debug: ['cyan'], info: ['purple' ], warn: [ 'yellow', true ], error: [ 'red', true ] },
+	    logger = new Transform();
+
+	logger.write = function(name, level, args) {
+	  var fn = console.log;
+	  if(console[level] && console[level].apply) {
+	    fn = console[level];
+	    fn.apply(console, [ '%c'+name+' %c'+level, color('gray'), color.apply(color, colors[level])].concat(args));
+	  }
+	};
+
+	// NOP, because piping the formatted logs can only cause trouble.
+	logger.pipe = function() { };
+
+	module.exports = logger;
+
+
+/***/ },
+/* 29 */
+/***/ function(module, exports) {
+
+	var hex = {
+	  black: '#000',
+	  red: '#c23621',
+	  green: '#25bc26',
+	  yellow: '#bbbb00',
+	  blue:  '#492ee1',
+	  magenta: '#d338d3',
+	  cyan: '#33bbc8',
+	  gray: '#808080',
+	  purple: '#708'
+	};
+	function color(fg, isInverse) {
+	  if(isInverse) {
+	    return 'color: #fff; background: '+hex[fg]+';';
+	  } else {
+	    return 'color: '+hex[fg]+';';
+	  }
+	}
+
+	module.exports = color;
+
+
+/***/ },
+/* 30 */
+/***/ function(module, exports, __webpack_require__) {
+
+	var Transform = __webpack_require__(24),
+	    color = __webpack_require__(29),
+	    colors = { debug: ['gray'], info: ['purple' ], warn: [ 'yellow', true ], error: [ 'red', true ] },
+	    logger = new Transform();
+
+	logger.write = function(name, level, args) {
+	  var fn = console.log;
+	  if(level != 'debug' && console[level]) {
+	    fn = console[level];
+	  }
+
+	  var subset = [], i = 0;
+	  if(level != 'info') {
+	    for(; i < args.length; i++) {
+	      if(typeof args[i] != 'string') break;
+	    }
+	    fn.apply(console, [ '%c'+name +' '+ args.slice(0, i).join(' '), color.apply(color, colors[level]) ].concat(args.slice(i)));
+	  } else {
+	    fn.apply(console, [ '%c'+name, color.apply(color, colors[level]) ].concat(args));
+	  }
+	};
+
+	// NOP, because piping the formatted logs can only cause trouble.
+	logger.pipe = function() { };
+
+	module.exports = logger;
+
+
+/***/ },
+/* 31 */
+/***/ function(module, exports, __webpack_require__) {
+
+	var Transform = __webpack_require__(24),
+	    cache = [ ];
+
+	var logger = new Transform();
+
+	logger.write = function(name, level, args) {
+	  cache.push([ name, level, args ]);
+	};
+
+	// utility functions
+	logger.get = function() { return cache; };
+	logger.empty = function() { cache = []; };
+
+	module.exports = logger;
+
+
+/***/ },
+/* 32 */
+/***/ function(module, exports, __webpack_require__) {
+
+	var Transform = __webpack_require__(24),
+	    cache = false;
+
+	var logger = new Transform();
+
+	logger.write = function(name, level, args) {
+	  if(typeof window == 'undefined' || typeof JSON == 'undefined' || !JSON.stringify || !JSON.parse) return;
+	  try {
+	    if(!cache) { cache = (window.localStorage.minilog ? JSON.parse(window.localStorage.minilog) : []); }
+	    cache.push([ new Date().toString(), name, level, args ]);
+	    window.localStorage.minilog = JSON.stringify(cache);
+	  } catch(e) {}
+	};
+
+	module.exports = logger;
+
+/***/ },
+/* 33 */
+/***/ function(module, exports, __webpack_require__) {
+
+	var Transform = __webpack_require__(24);
+
+	var cid = new Date().valueOf().toString(36);
+
+	function AjaxLogger(options) {
+	  this.url = options.url || '';
+	  this.cache = [];
+	  this.timer = null;
+	  this.interval = options.interval || 30*1000;
+	  this.enabled = true;
+	  this.jQuery = window.jQuery;
+	  this.extras = {};
+	}
+
+	Transform.mixin(AjaxLogger);
+
+	AjaxLogger.prototype.write = function(name, level, args) {
+	  if(!this.timer) { this.init(); }
+	  this.cache.push([name, level].concat(args));
+	};
+
+	AjaxLogger.prototype.init = function() {
+	  if(!this.enabled || !this.jQuery) return;
+	  var self = this;
+	  this.timer = setTimeout(function() {
+	    var i, logs = [], ajaxData, url = self.url;
+	    if(self.cache.length == 0) return self.init();
+	    // Test each log line and only log the ones that are valid (e.g. don't have circular references).
+	    // Slight performance hit but benefit is we log all valid lines.
+	    for(i = 0; i < self.cache.length; i++) {
+	      try {
+	        JSON.stringify(self.cache[i]);
+	        logs.push(self.cache[i]);
+	      } catch(e) { }
+	    }
+	    if(self.jQuery.isEmptyObject(self.extras)) {
+	        ajaxData = JSON.stringify({ logs: logs });
+	        url = self.url + '?client_id=' + cid;
+	    } else {
+	        ajaxData = JSON.stringify(self.jQuery.extend({logs: logs}, self.extras));
+	    }
+
+	    self.jQuery.ajax(url, {
+	      type: 'POST',
+	      cache: false,
+	      processData: false,
+	      data: ajaxData,
+	      contentType: 'application/json',
+	      timeout: 10000
+	    }).success(function(data, status, jqxhr) {
+	      if(data.interval) {
+	        self.interval = Math.max(1000, data.interval);
+	      }
+	    }).error(function() {
+	      self.interval = 30000;
+	    }).always(function() {
+	      self.init();
+	    });
+	    self.cache = [];
+	  }, this.interval);
+	};
+
+	AjaxLogger.prototype.end = function() {};
+
+	// wait until jQuery is defined. Useful if you don't control the load order.
+	AjaxLogger.jQueryWait = function(onDone) {
+	  if(typeof window !== 'undefined' && (window.jQuery || window.$)) {
+	    return onDone(window.jQuery || window.$);
+	  } else if (typeof window !== 'undefined') {
+	    setTimeout(function() { AjaxLogger.jQueryWait(onDone); }, 200);
+	  }
+	};
+
+	module.exports = AjaxLogger;
+
+
+/***/ },
+/* 34 */
+/***/ function(module, exports, __webpack_require__) {
+
+	var adapter = __webpack_require__(35);
+	var mutationAdapter = __webpack_require__(36);
+	var xmlEscape = __webpack_require__(88);
 
 	/**
 	 * @fileoverview
@@ -3070,7 +3654,7 @@
 	 * and handle updates from Scratch Blocks events.
 	 */
 
-	function Blocks () {
+	var Blocks = function () {
 	    /**
 	     * All blocks in the workspace.
 	     * Keys are block IDs, values are metadata about the block.
@@ -3084,7 +3668,7 @@
 	     * @type {Array.<String>}
 	     */
 	    this._scripts = [];
-	}
+	};
 
 	/**
 	 * Blockly inputs that represent statements/branch.
@@ -3171,8 +3755,8 @@
 	    var inputs = {};
 	    for (var input in this._blocks[id].inputs) {
 	        // Ignore blocks prefixed with branch prefix.
-	        if (input.substring(0, Blocks.BRANCH_INPUT_PREFIX.length)
-	            != Blocks.BRANCH_INPUT_PREFIX) {
+	        if (input.substring(0, Blocks.BRANCH_INPUT_PREFIX.length) !==
+	            Blocks.BRANCH_INPUT_PREFIX) {
 	            inputs[input] = this._blocks[id].inputs[input];
 	        }
 	    }
@@ -3211,9 +3795,9 @@
 	Blocks.prototype.getProcedureDefinition = function (name) {
 	    for (var id in this._blocks) {
 	        var block = this._blocks[id];
-	        if ((block.opcode == 'procedures_defnoreturn' ||
-	            block.opcode == 'procedures_defreturn') &&
-	            block.mutation.proccode == name) {
+	        if ((block.opcode === 'procedures_defnoreturn' ||
+	            block.opcode === 'procedures_defreturn') &&
+	            block.mutation.proccode === name) {
 	            return id;
 	        }
 	    }
@@ -3228,9 +3812,9 @@
 	Blocks.prototype.getProcedureParamNames = function (name) {
 	    for (var id in this._blocks) {
 	        var block = this._blocks[id];
-	        if ((block.opcode == 'procedures_defnoreturn' ||
-	            block.opcode == 'procedures_defreturn') &&
-	            block.mutation.proccode == name) {
+	        if ((block.opcode === 'procedures_defnoreturn' ||
+	            block.opcode === 'procedures_defreturn') &&
+	            block.mutation.proccode === name) {
 	            return JSON.parse(block.mutation.argumentnames);
 	        }
 	    }
@@ -3243,18 +3827,18 @@
 	 * Create event listener for blocks. Handles validation and serves as a generic
 	 * adapter between the blocks and the runtime interface.
 	 * @param {Object} e Blockly "block" event
-	 * @param {?Runtime} opt_runtime Optional runtime to forward click events to.
+	 * @param {?Runtime} optRuntime Optional runtime to forward click events to.
 	 */
 
-	Blocks.prototype.blocklyListen = function (e, opt_runtime) {
+	Blocks.prototype.blocklyListen = function (e, optRuntime) {
 	    // Validate event
 	    if (typeof e !== 'object') return;
 	    if (typeof e.blockId !== 'string') return;
 
 	    // UI event: clicked scripts toggle in the runtime.
 	    if (e.element === 'stackclick') {
-	        if (opt_runtime) {
-	            opt_runtime.toggleScript(e.blockId);
+	        if (optRuntime) {
+	            optRuntime.toggleScript(e.blockId);
 	        }
 	        return;
 	    }
@@ -3294,8 +3878,8 @@
 	            return;
 	        }
 	        // Inform any runtime to forget about glows on this script.
-	        if (opt_runtime && this._blocks[e.blockId].topLevel) {
-	            opt_runtime.quietGlow(e.blockId);
+	        if (optRuntime && this._blocks[e.blockId].topLevel) {
+	            optRuntime.quietGlow(e.blockId);
 	        }
 	        this.deleteBlock({
 	            id: e.blockId
@@ -3335,11 +3919,11 @@
 	    if (args.element !== 'field' && args.element !== 'mutation') return;
 	    if (typeof this._blocks[args.id] === 'undefined') return;
 
-	    if (args.element == 'field') {
+	    if (args.element === 'field') {
 	        // Update block value
 	        if (!this._blocks[args.id].fields[args.name]) return;
 	        this._blocks[args.id].fields[args.name].value = args.value;
-	    } else if (args.element == 'mutation') {
+	    } else if (args.element === 'mutation') {
 	        this._blocks[args.id].mutation = mutationAdapter(args.value);
 	    }
 	};
@@ -3360,9 +3944,9 @@
 	    }
 
 	    // Remove from any old parent.
-	    if (e.oldParent !== undefined) {
+	    if (typeof e.oldParent !== 'undefined') {
 	        var oldParent = this._blocks[e.oldParent];
-	        if (e.oldInput !== undefined &&
+	        if (typeof e.oldInput !== 'undefined' &&
 	            oldParent.inputs[e.oldInput].block === e.id) {
 	            // This block was connected to the old parent's input.
 	            oldParent.inputs[e.oldInput].block = null;
@@ -3374,13 +3958,16 @@
 	    }
 
 	    // Has the block become a top-level block?
-	    if (e.newParent === undefined) {
+	    if (typeof e.newParent === 'undefined') {
 	        this._addScript(e.id);
 	    } else {
 	        // Remove script, if one exists.
 	        this._deleteScript(e.id);
 	        // Otherwise, try to connect it in its new place.
-	        if (e.newInput !== undefined) {
+	        if (typeof e.newInput === 'undefined') {
+	            // Moved to the new parent's next connection.
+	            this._blocks[e.newParent].next = e.id;
+	        } else {
 	            // Moved to the new parent's input.
 	            // Don't obscure the shadow block.
 	            var oldShadow = null;
@@ -3392,9 +3979,6 @@
 	                block: e.id,
 	                shadow: oldShadow
 	            };
-	        } else {
-	            // Moved to the new parent's next connection.
-	            this._blocks[e.newParent].next = e.id;
 	        }
 	        this._blocks[e.id].parent = e.newParent;
 	    }
@@ -3461,7 +4045,7 @@
 	    // Encode properties of this block.
 	    var tagName = (block.shadow) ? 'shadow' : 'block';
 	    var xy = (block.topLevel) ?
-	        ' x="' + block.x +'"' + ' y="' + block.y +'"' :
+	        ' x="' + block.x + '" y="' + block.y + '"' :
 	        '';
 	    var xmlString = '';
 	    xmlString += '<' + tagName +
@@ -3482,7 +4066,7 @@
 	            if (blockInput.block) {
 	                xmlString += this.blockToXML(blockInput.block);
 	            }
-	            if (blockInput.shadow && blockInput.shadow != blockInput.block) {
+	            if (blockInput.shadow && blockInput.shadow !== blockInput.block) {
 	                // Obscured shadow.
 	                xmlString += this.blockToXML(blockInput.shadow);
 	            }
@@ -3515,7 +4099,7 @@
 	Blocks.prototype.mutationToXML = function (mutation) {
 	    var mutationString = '<' + mutation.tagName;
 	    for (var prop in mutation) {
-	        if (prop == 'children' || prop == 'tagName') continue;
+	        if (prop === 'children' || prop === 'tagName') continue;
 	        var mutationValue = (typeof mutation[prop] === 'string') ?
 	            xmlEscape(mutation[prop]) : mutation[prop];
 	        mutationString += ' ' + prop + '="' + mutationValue + '"';
@@ -3557,25 +4141,11 @@
 
 
 /***/ },
-/* 22 */
+/* 35 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var mutationAdapter = __webpack_require__(23);
-	var html = __webpack_require__(24);
-
-	/**
-	 * Adapter between block creation events and block representation which can be
-	 * used by the Scratch runtime.
-	 * @param {Object} e `Blockly.events.create`
-	 * @return {Array.<Object>} List of blocks from this CREATE event.
-	 */
-	module.exports = function (e) {
-	    // Validate input
-	    if (typeof e !== 'object') return;
-	    if (typeof e.xml !== 'object') return;
-
-	    return domToBlocks(html.parseDOM(e.xml.outerHTML));
-	};
+	var mutationAdapter = __webpack_require__(36);
+	var html = __webpack_require__(37);
 
 	/**
 	 * Convert outer blocks DOM from a Blockly CREATE event
@@ -3584,7 +4154,7 @@
 	 * @param {Element} blocksDOM DOM tree for this event.
 	 * @return {Array.<Object>} Usable list of blocks from this CREATE event.
 	 */
-	function domToBlocks (blocksDOM) {
+	var domToBlocks = function (blocksDOM) {
 	    // At this level, there could be multiple blocks adjacent in the DOM tree.
 	    var blocks = {};
 	    for (var i = 0; i < blocksDOM.length; i++) {
@@ -3593,7 +4163,7 @@
 	            continue;
 	        }
 	        var tagName = block.name.toLowerCase();
-	        if (tagName == 'block' || tagName == 'shadow') {
+	        if (tagName === 'block' || tagName === 'shadow') {
 	            domToBlock(block, blocks, true, null);
 	        }
 	    }
@@ -3603,7 +4173,21 @@
 	        blocksList.push(blocks[b]);
 	    }
 	    return blocksList;
-	}
+	};
+
+	/**
+	 * Adapter between block creation events and block representation which can be
+	 * used by the Scratch runtime.
+	 * @param {Object} e `Blockly.events.create`
+	 * @return {Array.<Object>} List of blocks from this CREATE event.
+	 */
+	var adapter = function (e) {
+	    // Validate input
+	    if (typeof e !== 'object') return;
+	    if (typeof e.xml !== 'object') return;
+
+	    return domToBlocks(html.parseDOM(e.xml.outerHTML));
+	};
 
 	/**
 	 * Convert and an individual block DOM to the representation tree.
@@ -3612,8 +4196,9 @@
 	 * @param {Object} blocks Collection of blocks to add to.
 	 * @param {Boolean} isTopBlock Whether blocks at this level are "top blocks."
 	 * @param {?string} parent Parent block ID.
+	 * @return {undefined}
 	 */
-	function domToBlock (blockDOM, blocks, isTopBlock, parent) {
+	var domToBlock = function (blockDOM, blocks, isTopBlock, parent) {
 	    // Block skeleton.
 	    var block = {
 	        id: blockDOM.attribs.id, // Block ID
@@ -3623,7 +4208,7 @@
 	        next: null, // Next block in the stack, if one exists.
 	        topLevel: isTopBlock, // If this block starts a stack.
 	        parent: parent, // Parent block ID, if available.
-	        shadow: blockDOM.name == 'shadow', // If this represents a shadow/slot.
+	        shadow: blockDOM.name === 'shadow', // If this represents a shadow/slot.
 	        x: blockDOM.attribs.x, // X position of script, if top-level.
 	        y: blockDOM.attribs.y // Y position of script, if top-level.
 	    };
@@ -3644,9 +4229,9 @@
 	                continue;
 	            }
 	            var grandChildNodeName = grandChildNode.name.toLowerCase();
-	            if (grandChildNodeName == 'block') {
+	            if (grandChildNodeName === 'block') {
 	                childBlockNode = grandChildNode;
-	            } else if (grandChildNodeName == 'shadow') {
+	            } else if (grandChildNodeName === 'shadow') {
 	                childShadowNode = grandChildNode;
 	            }
 	        }
@@ -3679,7 +4264,7 @@
 	        case 'statement':
 	            // Recursively generate block structure for input block.
 	            domToBlock(childBlockNode, blocks, false, block.id);
-	            if (childShadowNode && childBlockNode != childShadowNode) {
+	            if (childShadowNode && childBlockNode !== childShadowNode) {
 	                // Also generate the shadow block.
 	                domToBlock(childShadowNode, blocks, false, block.id);
 	            }
@@ -3706,14 +4291,37 @@
 	            break;
 	        }
 	    }
-	}
+	};
+
+	module.exports = adapter;
 
 
 /***/ },
-/* 23 */
+/* 36 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var html = __webpack_require__(24);
+	var html = __webpack_require__(37);
+
+	/**
+	 * Convert a part of a mutation DOM to a mutation VM object, recursively.
+	 * @param {Object} dom DOM object for mutation tag.
+	 * @return {Object} Object representing useful parts of this mutation.
+	 */
+	var mutatorTagToObject = function (dom) {
+	    var obj = Object.create(null);
+	    obj.tagName = dom.name;
+	    obj.children = [];
+	    for (var prop in dom.attribs) {
+	        if (prop === 'xmlns') continue;
+	        obj[prop] = dom.attribs[prop];
+	    }
+	    for (var i = 0; i < dom.children.length; i++) {
+	        obj.children.push(
+	            mutatorTagToObject(dom.children[i])
+	        );
+	    }
+	    return obj;
+	};
 
 	/**
 	 * Adapter between mutator XML or DOM and block representation which can be
@@ -3721,7 +4329,7 @@
 	 * @param {(Object|string)} mutation Mutation XML string or DOM.
 	 * @return {Object} Object representing the mutation.
 	 */
-	module.exports = function (mutation) {
+	var mutationAdpater = function (mutation) {
 	    var mutationParsed;
 	    // Check if the mutation is already parsed; if not, parse it.
 	    if (typeof mutation === 'object') {
@@ -3732,34 +4340,15 @@
 	    return mutatorTagToObject(mutationParsed);
 	};
 
-	/**
-	 * Convert a part of a mutation DOM to a mutation VM object, recursively.
-	 * @param {Object} dom DOM object for mutation tag.
-	 * @return {Object} Object representing useful parts of this mutation.
-	 */
-	function mutatorTagToObject (dom) {
-	    var obj = Object.create(null);
-	    obj.tagName = dom.name;
-	    obj.children = [];
-	    for (var prop in dom.attribs) {
-	        if (prop == 'xmlns') continue;
-	        obj[prop] = dom.attribs[prop];
-	    }
-	    for (var i = 0; i < dom.children.length; i++) {
-	        obj.children.push(
-	            mutatorTagToObject(dom.children[i])
-	        );
-	    }
-	    return obj;
-	}
+	module.exports = mutationAdpater;
 
 
 /***/ },
-/* 24 */
+/* 37 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var Parser = __webpack_require__(25),
-	    DomHandler = __webpack_require__(32);
+	var Parser = __webpack_require__(38),
+	    DomHandler = __webpack_require__(45);
 
 	function defineProp(name, value){
 		delete module.exports[name];
@@ -3769,26 +4358,26 @@
 
 	module.exports = {
 		Parser: Parser,
-		Tokenizer: __webpack_require__(26),
-		ElementType: __webpack_require__(33),
+		Tokenizer: __webpack_require__(39),
+		ElementType: __webpack_require__(46),
 		DomHandler: DomHandler,
 		get FeedHandler(){
-			return defineProp("FeedHandler", __webpack_require__(36));
+			return defineProp("FeedHandler", __webpack_require__(49));
 		},
 		get Stream(){
-			return defineProp("Stream", __webpack_require__(37));
+			return defineProp("Stream", __webpack_require__(50));
 		},
 		get WritableStream(){
-			return defineProp("WritableStream", __webpack_require__(38));
+			return defineProp("WritableStream", __webpack_require__(51));
 		},
 		get ProxyHandler(){
-			return defineProp("ProxyHandler", __webpack_require__(61));
+			return defineProp("ProxyHandler", __webpack_require__(74));
 		},
 		get DomUtils(){
-			return defineProp("DomUtils", __webpack_require__(62));
+			return defineProp("DomUtils", __webpack_require__(75));
 		},
 		get CollectingHandler(){
-			return defineProp("CollectingHandler", __webpack_require__(74));
+			return defineProp("CollectingHandler", __webpack_require__(87));
 		},
 		// For legacy support
 		DefaultHandler: DomHandler,
@@ -3829,10 +4418,10 @@
 
 
 /***/ },
-/* 25 */
+/* 38 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var Tokenizer = __webpack_require__(26);
+	var Tokenizer = __webpack_require__(39);
 
 	/*
 		Options:
@@ -4187,15 +4776,15 @@
 
 
 /***/ },
-/* 26 */
+/* 39 */
 /***/ function(module, exports, __webpack_require__) {
 
 	module.exports = Tokenizer;
 
-	var decodeCodePoint = __webpack_require__(27),
-	    entityMap = __webpack_require__(29),
-	    legacyMap = __webpack_require__(30),
-	    xmlMap    = __webpack_require__(31),
+	var decodeCodePoint = __webpack_require__(40),
+	    entityMap = __webpack_require__(42),
+	    legacyMap = __webpack_require__(43),
+	    xmlMap    = __webpack_require__(44),
 
 	    i = 0,
 
@@ -5099,10 +5688,10 @@
 
 
 /***/ },
-/* 27 */
+/* 40 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var decodeMap = __webpack_require__(28);
+	var decodeMap = __webpack_require__(41);
 
 	module.exports = decodeCodePoint;
 
@@ -5131,7 +5720,7 @@
 
 
 /***/ },
-/* 28 */
+/* 41 */
 /***/ function(module, exports) {
 
 	module.exports = {
@@ -5166,7 +5755,7 @@
 	};
 
 /***/ },
-/* 29 */
+/* 42 */
 /***/ function(module, exports) {
 
 	module.exports = {
@@ -7298,7 +7887,7 @@
 	};
 
 /***/ },
-/* 30 */
+/* 43 */
 /***/ function(module, exports) {
 
 	module.exports = {
@@ -7411,7 +8000,7 @@
 	};
 
 /***/ },
-/* 31 */
+/* 44 */
 /***/ function(module, exports) {
 
 	module.exports = {
@@ -7423,14 +8012,14 @@
 	};
 
 /***/ },
-/* 32 */
+/* 45 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var ElementType = __webpack_require__(33);
+	var ElementType = __webpack_require__(46);
 
 	var re_whitespace = /\s+/g;
-	var NodePrototype = __webpack_require__(34);
-	var ElementPrototype = __webpack_require__(35);
+	var NodePrototype = __webpack_require__(47);
+	var ElementPrototype = __webpack_require__(48);
 
 	function DomHandler(callback, options, elementCB){
 		if(typeof callback === "object"){
@@ -7611,7 +8200,7 @@
 
 
 /***/ },
-/* 33 */
+/* 46 */
 /***/ function(module, exports) {
 
 	//Types of elements found in the DOM
@@ -7632,7 +8221,7 @@
 
 
 /***/ },
-/* 34 */
+/* 47 */
 /***/ function(module, exports) {
 
 	// This object will be used as the prototype for Nodes when creating a
@@ -7682,11 +8271,11 @@
 
 
 /***/ },
-/* 35 */
+/* 48 */
 /***/ function(module, exports, __webpack_require__) {
 
 	// DOM-Level-1-compliant structure
-	var NodePrototype = __webpack_require__(34);
+	var NodePrototype = __webpack_require__(47);
 	var ElementPrototype = module.exports = Object.create(NodePrototype);
 
 	var domLvl1 = {
@@ -7708,10 +8297,10 @@
 
 
 /***/ },
-/* 36 */
+/* 49 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var index = __webpack_require__(24),
+	var index = __webpack_require__(37),
 	    DomHandler = index.DomHandler,
 		DomUtils = index.DomUtils;
 
@@ -7809,12 +8398,12 @@
 
 
 /***/ },
-/* 37 */
+/* 50 */
 /***/ function(module, exports, __webpack_require__) {
 
 	module.exports = Stream;
 
-	var Parser = __webpack_require__(38);
+	var Parser = __webpack_require__(51);
 
 	function Stream(options){
 		Parser.call(this, new Cbs(this), options);
@@ -7828,7 +8417,7 @@
 		this.scope = scope;
 	}
 
-	var EVENTS = __webpack_require__(24).EVENTS;
+	var EVENTS = __webpack_require__(37).EVENTS;
 
 	Object.keys(EVENTS).forEach(function(name){
 		if(EVENTS[name] === 0){
@@ -7849,13 +8438,13 @@
 	});
 
 /***/ },
-/* 38 */
+/* 51 */
 /***/ function(module, exports, __webpack_require__) {
 
 	module.exports = Stream;
 
-	var Parser = __webpack_require__(25),
-	    WritableStream = __webpack_require__(39).Writable || __webpack_require__(60).Writable;
+	var Parser = __webpack_require__(38),
+	    WritableStream = __webpack_require__(52).Writable || __webpack_require__(73).Writable;
 
 	function Stream(cbs, options){
 		var parser = this._parser = new Parser(cbs, options);
@@ -7875,7 +8464,7 @@
 	};
 
 /***/ },
-/* 39 */
+/* 52 */
 /***/ function(module, exports, __webpack_require__) {
 
 	// Copyright Joyent, Inc. and other Node contributors.
@@ -7902,14 +8491,14 @@
 	module.exports = Stream;
 
 	var EE = __webpack_require__(11).EventEmitter;
-	var inherits = __webpack_require__(40);
+	var inherits = __webpack_require__(53);
 
 	inherits(Stream, EE);
-	Stream.Readable = __webpack_require__(41);
-	Stream.Writable = __webpack_require__(56);
-	Stream.Duplex = __webpack_require__(57);
-	Stream.Transform = __webpack_require__(58);
-	Stream.PassThrough = __webpack_require__(59);
+	Stream.Readable = __webpack_require__(54);
+	Stream.Writable = __webpack_require__(69);
+	Stream.Duplex = __webpack_require__(70);
+	Stream.Transform = __webpack_require__(71);
+	Stream.PassThrough = __webpack_require__(72);
 
 	// Backwards-compat with node 0.4.x
 	Stream.Stream = Stream;
@@ -8008,7 +8597,7 @@
 
 
 /***/ },
-/* 40 */
+/* 53 */
 /***/ function(module, exports) {
 
 	if (typeof Object.create === 'function') {
@@ -8037,24 +8626,24 @@
 
 
 /***/ },
-/* 41 */
+/* 54 */
 /***/ function(module, exports, __webpack_require__) {
 
-	/* WEBPACK VAR INJECTION */(function(process) {exports = module.exports = __webpack_require__(42);
-	exports.Stream = __webpack_require__(39);
+	/* WEBPACK VAR INJECTION */(function(process) {exports = module.exports = __webpack_require__(55);
+	exports.Stream = __webpack_require__(52);
 	exports.Readable = exports;
-	exports.Writable = __webpack_require__(52);
-	exports.Duplex = __webpack_require__(51);
-	exports.Transform = __webpack_require__(54);
-	exports.PassThrough = __webpack_require__(55);
+	exports.Writable = __webpack_require__(65);
+	exports.Duplex = __webpack_require__(64);
+	exports.Transform = __webpack_require__(67);
+	exports.PassThrough = __webpack_require__(68);
 	if (!process.browser && process.env.READABLE_STREAM === 'disable') {
-	  module.exports = __webpack_require__(39);
+	  module.exports = __webpack_require__(52);
 	}
 
 	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(13)))
 
 /***/ },
-/* 42 */
+/* 55 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/* WEBPACK VAR INJECTION */(function(process) {// Copyright Joyent, Inc. and other Node contributors.
@@ -8081,12 +8670,12 @@
 	module.exports = Readable;
 
 	/*<replacement>*/
-	var isArray = __webpack_require__(43);
+	var isArray = __webpack_require__(56);
 	/*</replacement>*/
 
 
 	/*<replacement>*/
-	var Buffer = __webpack_require__(44).Buffer;
+	var Buffer = __webpack_require__(57).Buffer;
 	/*</replacement>*/
 
 	Readable.ReadableState = ReadableState;
@@ -8099,18 +8688,18 @@
 	};
 	/*</replacement>*/
 
-	var Stream = __webpack_require__(39);
+	var Stream = __webpack_require__(52);
 
 	/*<replacement>*/
-	var util = __webpack_require__(48);
-	util.inherits = __webpack_require__(49);
+	var util = __webpack_require__(61);
+	util.inherits = __webpack_require__(62);
 	/*</replacement>*/
 
 	var StringDecoder;
 
 
 	/*<replacement>*/
-	var debug = __webpack_require__(50);
+	var debug = __webpack_require__(63);
 	if (debug && debug.debuglog) {
 	  debug = debug.debuglog('stream');
 	} else {
@@ -8122,7 +8711,7 @@
 	util.inherits(Readable, Stream);
 
 	function ReadableState(options, stream) {
-	  var Duplex = __webpack_require__(51);
+	  var Duplex = __webpack_require__(64);
 
 	  options = options || {};
 
@@ -8183,14 +8772,14 @@
 	  this.encoding = null;
 	  if (options.encoding) {
 	    if (!StringDecoder)
-	      StringDecoder = __webpack_require__(53).StringDecoder;
+	      StringDecoder = __webpack_require__(66).StringDecoder;
 	    this.decoder = new StringDecoder(options.encoding);
 	    this.encoding = options.encoding;
 	  }
 	}
 
 	function Readable(options) {
-	  var Duplex = __webpack_require__(51);
+	  var Duplex = __webpack_require__(64);
 
 	  if (!(this instanceof Readable))
 	    return new Readable(options);
@@ -8293,7 +8882,7 @@
 	// backwards compatibility.
 	Readable.prototype.setEncoding = function(enc) {
 	  if (!StringDecoder)
-	    StringDecoder = __webpack_require__(53).StringDecoder;
+	    StringDecoder = __webpack_require__(66).StringDecoder;
 	  this._readableState.decoder = new StringDecoder(enc);
 	  this._readableState.encoding = enc;
 	  return this;
@@ -9012,7 +9601,7 @@
 	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(13)))
 
 /***/ },
-/* 43 */
+/* 56 */
 /***/ function(module, exports) {
 
 	module.exports = Array.isArray || function (arr) {
@@ -9021,7 +9610,7 @@
 
 
 /***/ },
-/* 44 */
+/* 57 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/* WEBPACK VAR INJECTION */(function(Buffer, global) {/*!
@@ -9034,9 +9623,9 @@
 
 	'use strict'
 
-	var base64 = __webpack_require__(45)
-	var ieee754 = __webpack_require__(46)
-	var isArray = __webpack_require__(47)
+	var base64 = __webpack_require__(58)
+	var ieee754 = __webpack_require__(59)
+	var isArray = __webpack_require__(60)
 
 	exports.Buffer = Buffer
 	exports.SlowBuffer = SlowBuffer
@@ -10814,10 +11403,10 @@
 	  return val !== val // eslint-disable-line no-self-compare
 	}
 
-	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(44).Buffer, (function() { return this; }())))
+	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(57).Buffer, (function() { return this; }())))
 
 /***/ },
-/* 45 */
+/* 58 */
 /***/ function(module, exports) {
 
 	'use strict'
@@ -10937,7 +11526,7 @@
 
 
 /***/ },
-/* 46 */
+/* 59 */
 /***/ function(module, exports) {
 
 	exports.read = function (buffer, offset, isLE, mLen, nBytes) {
@@ -11027,7 +11616,7 @@
 
 
 /***/ },
-/* 47 */
+/* 60 */
 /***/ function(module, exports) {
 
 	var toString = {}.toString;
@@ -11038,7 +11627,7 @@
 
 
 /***/ },
-/* 48 */
+/* 61 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/* WEBPACK VAR INJECTION */(function(Buffer) {// Copyright Joyent, Inc. and other Node contributors.
@@ -11149,10 +11738,10 @@
 	  return Object.prototype.toString.call(o);
 	}
 
-	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(44).Buffer))
+	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(57).Buffer))
 
 /***/ },
-/* 49 */
+/* 62 */
 /***/ function(module, exports) {
 
 	if (typeof Object.create === 'function') {
@@ -11181,13 +11770,13 @@
 
 
 /***/ },
-/* 50 */
+/* 63 */
 /***/ function(module, exports) {
 
 	/* (ignored) */
 
 /***/ },
-/* 51 */
+/* 64 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/* WEBPACK VAR INJECTION */(function(process) {// Copyright Joyent, Inc. and other Node contributors.
@@ -11228,12 +11817,12 @@
 
 
 	/*<replacement>*/
-	var util = __webpack_require__(48);
-	util.inherits = __webpack_require__(49);
+	var util = __webpack_require__(61);
+	util.inherits = __webpack_require__(62);
 	/*</replacement>*/
 
-	var Readable = __webpack_require__(42);
-	var Writable = __webpack_require__(52);
+	var Readable = __webpack_require__(55);
+	var Writable = __webpack_require__(65);
 
 	util.inherits(Duplex, Readable);
 
@@ -11283,7 +11872,7 @@
 	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(13)))
 
 /***/ },
-/* 52 */
+/* 65 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/* WEBPACK VAR INJECTION */(function(process) {// Copyright Joyent, Inc. and other Node contributors.
@@ -11314,18 +11903,18 @@
 	module.exports = Writable;
 
 	/*<replacement>*/
-	var Buffer = __webpack_require__(44).Buffer;
+	var Buffer = __webpack_require__(57).Buffer;
 	/*</replacement>*/
 
 	Writable.WritableState = WritableState;
 
 
 	/*<replacement>*/
-	var util = __webpack_require__(48);
-	util.inherits = __webpack_require__(49);
+	var util = __webpack_require__(61);
+	util.inherits = __webpack_require__(62);
 	/*</replacement>*/
 
-	var Stream = __webpack_require__(39);
+	var Stream = __webpack_require__(52);
 
 	util.inherits(Writable, Stream);
 
@@ -11336,7 +11925,7 @@
 	}
 
 	function WritableState(options, stream) {
-	  var Duplex = __webpack_require__(51);
+	  var Duplex = __webpack_require__(64);
 
 	  options = options || {};
 
@@ -11424,7 +12013,7 @@
 	}
 
 	function Writable(options) {
-	  var Duplex = __webpack_require__(51);
+	  var Duplex = __webpack_require__(64);
 
 	  // Writable ctor is applied to Duplexes, though they're not
 	  // instanceof Writable, they're instanceof Readable.
@@ -11767,7 +12356,7 @@
 	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(13)))
 
 /***/ },
-/* 53 */
+/* 66 */
 /***/ function(module, exports, __webpack_require__) {
 
 	// Copyright Joyent, Inc. and other Node contributors.
@@ -11791,7 +12380,7 @@
 	// OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
 	// USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-	var Buffer = __webpack_require__(44).Buffer;
+	var Buffer = __webpack_require__(57).Buffer;
 
 	var isBufferEncoding = Buffer.isEncoding
 	  || function(encoding) {
@@ -11994,7 +12583,7 @@
 
 
 /***/ },
-/* 54 */
+/* 67 */
 /***/ function(module, exports, __webpack_require__) {
 
 	// Copyright Joyent, Inc. and other Node contributors.
@@ -12063,11 +12652,11 @@
 
 	module.exports = Transform;
 
-	var Duplex = __webpack_require__(51);
+	var Duplex = __webpack_require__(64);
 
 	/*<replacement>*/
-	var util = __webpack_require__(48);
-	util.inherits = __webpack_require__(49);
+	var util = __webpack_require__(61);
+	util.inherits = __webpack_require__(62);
 	/*</replacement>*/
 
 	util.inherits(Transform, Duplex);
@@ -12209,7 +12798,7 @@
 
 
 /***/ },
-/* 55 */
+/* 68 */
 /***/ function(module, exports, __webpack_require__) {
 
 	// Copyright Joyent, Inc. and other Node contributors.
@@ -12239,11 +12828,11 @@
 
 	module.exports = PassThrough;
 
-	var Transform = __webpack_require__(54);
+	var Transform = __webpack_require__(67);
 
 	/*<replacement>*/
-	var util = __webpack_require__(48);
-	util.inherits = __webpack_require__(49);
+	var util = __webpack_require__(61);
+	util.inherits = __webpack_require__(62);
 	/*</replacement>*/
 
 	util.inherits(PassThrough, Transform);
@@ -12261,41 +12850,41 @@
 
 
 /***/ },
-/* 56 */
+/* 69 */
 /***/ function(module, exports, __webpack_require__) {
 
-	module.exports = __webpack_require__(52)
+	module.exports = __webpack_require__(65)
 
 
 /***/ },
-/* 57 */
+/* 70 */
 /***/ function(module, exports, __webpack_require__) {
 
-	module.exports = __webpack_require__(51)
+	module.exports = __webpack_require__(64)
 
 
 /***/ },
-/* 58 */
+/* 71 */
 /***/ function(module, exports, __webpack_require__) {
 
-	module.exports = __webpack_require__(54)
+	module.exports = __webpack_require__(67)
 
 
 /***/ },
-/* 59 */
+/* 72 */
 /***/ function(module, exports, __webpack_require__) {
 
-	module.exports = __webpack_require__(55)
+	module.exports = __webpack_require__(68)
 
 
 /***/ },
-/* 60 */
+/* 73 */
 /***/ function(module, exports) {
 
 	/* (ignored) */
 
 /***/ },
-/* 61 */
+/* 74 */
 /***/ function(module, exports, __webpack_require__) {
 
 	module.exports = ProxyHandler;
@@ -12304,7 +12893,7 @@
 		this._cbs = cbs || {};
 	}
 
-	var EVENTS = __webpack_require__(24).EVENTS;
+	var EVENTS = __webpack_require__(37).EVENTS;
 	Object.keys(EVENTS).forEach(function(name){
 		if(EVENTS[name] === 0){
 			name = "on" + name;
@@ -12327,18 +12916,18 @@
 	});
 
 /***/ },
-/* 62 */
+/* 75 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var DomUtils = module.exports;
 
 	[
-		__webpack_require__(63),
-		__webpack_require__(69),
-		__webpack_require__(70),
-		__webpack_require__(71),
-		__webpack_require__(72),
-		__webpack_require__(73)
+		__webpack_require__(76),
+		__webpack_require__(82),
+		__webpack_require__(83),
+		__webpack_require__(84),
+		__webpack_require__(85),
+		__webpack_require__(86)
 	].forEach(function(ext){
 		Object.keys(ext).forEach(function(key){
 			DomUtils[key] = ext[key].bind(DomUtils);
@@ -12347,11 +12936,11 @@
 
 
 /***/ },
-/* 63 */
+/* 76 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var ElementType = __webpack_require__(33),
-	    getOuterHTML = __webpack_require__(64),
+	var ElementType = __webpack_require__(46),
+	    getOuterHTML = __webpack_require__(77),
 	    isTag = ElementType.isTag;
 
 	module.exports = {
@@ -12375,14 +12964,14 @@
 
 
 /***/ },
-/* 64 */
+/* 77 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/*
 	  Module dependencies
 	*/
-	var ElementType = __webpack_require__(65);
-	var entities = __webpack_require__(66);
+	var ElementType = __webpack_require__(78);
+	var entities = __webpack_require__(79);
 
 	/*
 	  Boolean Attributes
@@ -12559,7 +13148,7 @@
 
 
 /***/ },
-/* 65 */
+/* 78 */
 /***/ function(module, exports) {
 
 	//Types of elements found in the DOM
@@ -12578,11 +13167,11 @@
 	};
 
 /***/ },
-/* 66 */
+/* 79 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var encode = __webpack_require__(67),
-	    decode = __webpack_require__(68);
+	var encode = __webpack_require__(80),
+	    decode = __webpack_require__(81);
 
 	exports.decode = function(data, level){
 		return (!level || level <= 0 ? decode.XML : decode.HTML)(data);
@@ -12617,15 +13206,15 @@
 
 
 /***/ },
-/* 67 */
+/* 80 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var inverseXML = getInverseObj(__webpack_require__(31)),
+	var inverseXML = getInverseObj(__webpack_require__(44)),
 	    xmlReplacer = getInverseReplacer(inverseXML);
 
 	exports.XML = getInverse(inverseXML, xmlReplacer);
 
-	var inverseHTML = getInverseObj(__webpack_require__(29)),
+	var inverseHTML = getInverseObj(__webpack_require__(42)),
 	    htmlReplacer = getInverseReplacer(inverseHTML);
 
 	exports.HTML = getInverse(inverseHTML, htmlReplacer);
@@ -12696,13 +13285,13 @@
 
 
 /***/ },
-/* 68 */
+/* 81 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var entityMap = __webpack_require__(29),
-	    legacyMap = __webpack_require__(30),
-	    xmlMap    = __webpack_require__(31),
-	    decodeCodePoint = __webpack_require__(27);
+	var entityMap = __webpack_require__(42),
+	    legacyMap = __webpack_require__(43),
+	    xmlMap    = __webpack_require__(44),
+	    decodeCodePoint = __webpack_require__(40);
 
 	var decodeXMLStrict  = getStrictDecoder(xmlMap),
 	    decodeHTMLStrict = getStrictDecoder(entityMap);
@@ -12773,7 +13362,7 @@
 	};
 
 /***/ },
-/* 69 */
+/* 82 */
 /***/ function(module, exports) {
 
 	var getChildren = exports.getChildren = function(elem){
@@ -12803,7 +13392,7 @@
 
 
 /***/ },
-/* 70 */
+/* 83 */
 /***/ function(module, exports) {
 
 	exports.removeElement = function(elem){
@@ -12886,10 +13475,10 @@
 
 
 /***/ },
-/* 71 */
+/* 84 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var isTag = __webpack_require__(33).isTag;
+	var isTag = __webpack_require__(46).isTag;
 
 	module.exports = {
 		filter: filter,
@@ -12986,10 +13575,10 @@
 
 
 /***/ },
-/* 72 */
+/* 85 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var ElementType = __webpack_require__(33);
+	var ElementType = __webpack_require__(46);
 	var isTag = exports.isTag = ElementType.isTag;
 
 	exports.testElement = function(options, element){
@@ -13079,7 +13668,7 @@
 
 
 /***/ },
-/* 73 */
+/* 86 */
 /***/ function(module, exports) {
 
 	// removeSubsets
@@ -13226,7 +13815,7 @@
 
 
 /***/ },
-/* 74 */
+/* 87 */
 /***/ function(module, exports, __webpack_require__) {
 
 	module.exports = CollectingHandler;
@@ -13236,7 +13825,7 @@
 		this.events = [];
 	}
 
-	var EVENTS = __webpack_require__(24).EVENTS;
+	var EVENTS = __webpack_require__(37).EVENTS;
 	Object.keys(EVENTS).forEach(function(name){
 		if(EVENTS[name] === 0){
 			name = "on" + name;
@@ -13287,7 +13876,7 @@
 
 
 /***/ },
-/* 75 */
+/* 88 */
 /***/ function(module, exports) {
 
 	/**
@@ -13314,12 +13903,12 @@
 
 
 /***/ },
-/* 76 */
+/* 89 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var Timer = __webpack_require__(18);
 
-	function Clock (runtime) {
+	var Clock = function (runtime) {
 	    this._projectTimer = new Timer();
 	    this._projectTimer.start();
 	    this._pausedTime = null;
@@ -13329,7 +13918,7 @@
 	     * @type{!Runtime}
 	     */
 	    this.runtime = runtime;
-	}
+	};
 
 	Clock.prototype.projectTimer = function () {
 	    if (this._paused) {
@@ -13357,12 +13946,12 @@
 
 
 /***/ },
-/* 77 */
+/* 90 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var Cast = __webpack_require__(78);
+	var Cast = __webpack_require__(91);
 
-	function Keyboard (runtime) {
+	var Keyboard = function (runtime) {
 	    /**
 	     * List of currently pressed keys.
 	     * @type{Array.<number>}
@@ -13374,7 +13963,7 @@
 	     * @type{!Runtime}
 	     */
 	    this.runtime = runtime;
-	}
+	};
 
 	/**
 	 * Convert a Scratch key name to a DOM keyCode.
@@ -13382,7 +13971,7 @@
 	 * @return {number} Key code corresponding to a DOM event.
 	 */
 	Keyboard.prototype._scratchKeyToKeyCode = function (keyName) {
-	    if (typeof keyName == 'number') {
+	    if (typeof keyName === 'number') {
 	        // Key codes placed in with number blocks.
 	        return keyName;
 	    }
@@ -13424,10 +14013,10 @@
 	            }
 	            // Always trigger hats, even if it was already pressed.
 	            this.runtime.startHats('event_whenkeypressed', {
-	                'KEY_OPTION': this._keyCodeToScratchKey(data.keyCode)
+	                KEY_OPTION: this._keyCodeToScratchKey(data.keyCode)
 	            });
 	            this.runtime.startHats('event_whenkeypressed', {
-	                'KEY_OPTION': 'any'
+	                KEY_OPTION: 'any'
 	            });
 	        } else if (index > -1) {
 	            // If already present, remove from the list.
@@ -13437,7 +14026,7 @@
 	};
 
 	Keyboard.prototype.getKeyIsDown = function (key) {
-	    if (key == 'any') {
+	    if (key === 'any') {
 	        return this._keysPressed.length > 0;
 	    }
 	    var keyCode = this._scratchKeyToKeyCode(key);
@@ -13448,12 +14037,12 @@
 
 
 /***/ },
-/* 78 */
+/* 91 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var Color = __webpack_require__(79);
+	var Color = __webpack_require__(92);
 
-	function Cast () {}
+	var Cast = function () {};
 
 	/**
 	 * @fileoverview
@@ -13497,9 +14086,9 @@
 	    }
 	    if (typeof value === 'string') {
 	        // These specific strings are treated as false in Scratch.
-	        if ((value == '') ||
-	            (value == '0') ||
-	            (value.toLowerCase() == 'false')) {
+	        if ((value === '') ||
+	            (value === '0') ||
+	            (value.toLowerCase() === 'false')) {
 	            return false;
 	        }
 	        // All other strings treated as true.
@@ -13525,7 +14114,7 @@
 	 */
 	Cast.toRgbColorList = function (value) {
 	    var color;
-	    if (typeof value == 'string' && value.substring(0, 1) == '#') {
+	    if (typeof value === 'string' && value.substring(0, 1) === '#') {
 	        color = Color.hexToRgb(value);
 	    } else {
 	        color = Color.decimalToRgb(Cast.toNumber(value));
@@ -13567,7 +14156,7 @@
 	            return true;
 	        }
 	        // True if it's "round" (e.g., 2.0 and 2).
-	        return val == parseInt(val);
+	        return val === parseInt(val, 10);
 	    } else if (typeof val === 'boolean') {
 	        // `True` and `false` always represent integer after Scratch cast.
 	        return true;
@@ -13591,15 +14180,15 @@
 	 */
 	Cast.toListIndex = function (index, length) {
 	    if (typeof index !== 'number') {
-	        if (index == 'all') {
+	        if (index === 'all') {
 	            return Cast.LIST_ALL;
 	        }
-	        if (index == 'last') {
+	        if (index === 'last') {
 	            if (length > 0) {
 	                return length;
 	            }
 	            return Cast.LIST_INVALID;
-	        } else if (index == 'random' || index == 'any') {
+	        } else if (index === 'random' || index === 'any') {
 	            if (length > 0) {
 	                return 1 + Math.floor(Math.random() * length);
 	            }
@@ -13617,10 +14206,10 @@
 
 
 /***/ },
-/* 79 */
+/* 92 */
 /***/ function(module, exports) {
 
-	function Color () {}
+	var Color = function () {};
 
 	/**
 	 * Convert a Scratch decimal color to a hex string, #RRGGBB.
@@ -13657,7 +14246,7 @@
 	 */
 	Color.hexToRgb = function (hex) {
 	    var shorthandRegex = /^#?([a-f\d])([a-f\d])([a-f\d])$/i;
-	    hex = hex.replace(shorthandRegex, function(m, r, g, b) {
+	    hex = hex.replace(shorthandRegex, function (m, r, g, b) {
 	        return r + r + g + g + b + b;
 	    });
 	    var result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
@@ -13699,12 +14288,12 @@
 
 
 /***/ },
-/* 80 */
+/* 93 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var MathUtil = __webpack_require__(81);
+	var MathUtil = __webpack_require__(94);
 
-	function Mouse (runtime) {
+	var Mouse = function (runtime) {
 	    this._x = 0;
 	    this._y = 0;
 	    this._isDown = false;
@@ -13714,14 +14303,14 @@
 	     * @type{!Runtime}
 	     */
 	    this.runtime = runtime;
-	}
+	};
 
-	Mouse.prototype.postData = function(data) {
+	Mouse.prototype.postData = function (data) {
 	    if (data.x) {
-	        this._x = data.x - data.canvasWidth / 2;
+	        this._x = data.x - (data.canvasWidth / 2);
 	    }
 	    if (data.y) {
-	        this._y = data.y - data.canvasHeight / 2;
+	        this._y = data.y - (data.canvasHeight / 2);
 	    }
 	    if (typeof data.isDown !== 'undefined') {
 	        this._isDown = data.isDown;
@@ -13737,7 +14326,7 @@
 	        for (var i = 0; i < this.runtime.targets.length; i++) {
 	            var target = this.runtime.targets[i];
 	            if (target.hasOwnProperty('drawableID') &&
-	                target.drawableID == drawableID) {
+	                target.drawableID === drawableID) {
 	                this.runtime.startHats('event_whenthisspriteclicked',
 	                    null, target);
 	                return;
@@ -13762,10 +14351,10 @@
 
 
 /***/ },
-/* 81 */
+/* 94 */
 /***/ function(module, exports) {
 
-	function MathUtil () {}
+	var MathUtil = function () {};
 
 	/**
 	 * Convert a value from degrees to radians.
@@ -13809,58 +14398,58 @@
 	 */
 	MathUtil.wrapClamp = function (n, min, max) {
 	    var range = (max - min) + 1;
-	    return n - Math.floor((n - min) / range) * range;
+	    return n - (Math.floor((n - min) / range) * range);
 	};
 
 	module.exports = MathUtil;
 
 
 /***/ },
-/* 82 */
+/* 95 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var Cast = __webpack_require__(78);
+	var Cast = __webpack_require__(91);
 	var Timer = __webpack_require__(18);
 
-	function Scratch3ControlBlocks(runtime) {
+	var Scratch3ControlBlocks = function (runtime) {
 	    /**
 	     * The runtime instantiating this block package.
 	     * @type {Runtime}
 	     */
 	    this.runtime = runtime;
-	}
+	};
 
 	/**
 	 * Retrieve the block primitives implemented by this package.
 	 * @return {Object.<string, Function>} Mapping of opcode to Function.
 	 */
-	Scratch3ControlBlocks.prototype.getPrimitives = function() {
+	Scratch3ControlBlocks.prototype.getPrimitives = function () {
 	    return {
-	        'control_repeat': this.repeat,
-	        'control_repeat_until': this.repeatUntil,
-	        'control_forever': this.forever,
-	        'control_wait': this.wait,
-	        'control_wait_until': this.waitUntil,
-	        'control_if': this.if,
-	        'control_if_else': this.ifElse,
-	        'control_stop': this.stop,
-	        'control_create_clone_of': this.createClone,
-	        'control_delete_this_clone': this.deleteClone
+	        control_repeat: this.repeat,
+	        control_repeat_until: this.repeatUntil,
+	        control_forever: this.forever,
+	        control_wait: this.wait,
+	        control_wait_until: this.waitUntil,
+	        control_if: this.if,
+	        control_if_else: this.ifElse,
+	        control_stop: this.stop,
+	        control_create_clone_of: this.createClone,
+	        control_delete_this_clone: this.deleteClone
 	    };
 	};
 
 	Scratch3ControlBlocks.prototype.getHats = function () {
 	    return {
-	        'control_start_as_clone': {
+	        control_start_as_clone: {
 	            restartExistingThreads: false
 	        }
 	    };
 	};
 
-	Scratch3ControlBlocks.prototype.repeat = function(args, util) {
+	Scratch3ControlBlocks.prototype.repeat = function (args, util) {
 	    var times = Math.floor(Cast.toNumber(args.TIMES));
 	    // Initialize loop
-	    if (util.stackFrame.loopCounter === undefined) {
+	    if (typeof util.stackFrame.loopCounter === 'undefined') {
 	        util.stackFrame.loopCounter = times;
 	    }
 	    // Only execute once per frame.
@@ -13874,7 +14463,7 @@
 	    }
 	};
 
-	Scratch3ControlBlocks.prototype.repeatUntil = function(args, util) {
+	Scratch3ControlBlocks.prototype.repeatUntil = function (args, util) {
 	    var condition = Cast.toBoolean(args.CONDITION);
 	    // If the condition is true, start the branch.
 	    if (!condition) {
@@ -13882,18 +14471,18 @@
 	    }
 	};
 
-	Scratch3ControlBlocks.prototype.waitUntil = function(args, util) {
+	Scratch3ControlBlocks.prototype.waitUntil = function (args, util) {
 	    var condition = Cast.toBoolean(args.CONDITION);
 	    if (!condition) {
 	        util.yield();
 	    }
 	};
 
-	Scratch3ControlBlocks.prototype.forever = function(args, util) {
+	Scratch3ControlBlocks.prototype.forever = function (args, util) {
 	    util.startBranch(1, true);
 	};
 
-	Scratch3ControlBlocks.prototype.wait = function(args, util) {
+	Scratch3ControlBlocks.prototype.wait = function (args, util) {
 	    if (!util.stackFrame.timer) {
 	        util.stackFrame.timer = new Timer();
 	        util.stackFrame.timer.start();
@@ -13907,14 +14496,14 @@
 	    }
 	};
 
-	Scratch3ControlBlocks.prototype.if = function(args, util) {
+	Scratch3ControlBlocks.prototype.if = function (args, util) {
 	    var condition = Cast.toBoolean(args.CONDITION);
 	    if (condition) {
 	        util.startBranch(1, false);
 	    }
 	};
 
-	Scratch3ControlBlocks.prototype.ifElse = function(args, util) {
+	Scratch3ControlBlocks.prototype.ifElse = function (args, util) {
 	    var condition = Cast.toBoolean(args.CONDITION);
 	    if (condition) {
 	        util.startBranch(1, false);
@@ -13923,21 +14512,21 @@
 	    }
 	};
 
-	Scratch3ControlBlocks.prototype.stop = function(args, util) {
+	Scratch3ControlBlocks.prototype.stop = function (args, util) {
 	    var option = args.STOP_OPTION;
-	    if (option == 'all') {
+	    if (option === 'all') {
 	        util.stopAll();
-	    } else if (option == 'other scripts in sprite' ||
-	        option == 'other scripts in stage') {
+	    } else if (option === 'other scripts in sprite' ||
+	        option === 'other scripts in stage') {
 	        util.stopOtherTargetThreads();
-	    } else if (option == 'this script') {
+	    } else if (option === 'this script') {
 	        util.stopThread();
 	    }
 	};
 
 	Scratch3ControlBlocks.prototype.createClone = function (args, util) {
 	    var cloneTarget;
-	    if (args.CLONE_OPTION == '_myself_') {
+	    if (args.CLONE_OPTION === '_myself_') {
 	        cloneTarget = util.target;
 	    } else {
 	        cloneTarget = this.runtime.getSpriteTargetByName(args.CLONE_OPTION);
@@ -13961,50 +14550,50 @@
 
 
 /***/ },
-/* 83 */
+/* 96 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var Cast = __webpack_require__(78);
+	var Cast = __webpack_require__(91);
 
-	function Scratch3EventBlocks(runtime) {
+	var Scratch3EventBlocks = function (runtime) {
 	    /**
 	     * The runtime instantiating this block package.
 	     * @type {Runtime}
 	     */
 	    this.runtime = runtime;
-	}
+	};
 
 	/**
 	 * Retrieve the block primitives implemented by this package.
 	 * @return {Object.<string, Function>} Mapping of opcode to Function.
 	 */
-	Scratch3EventBlocks.prototype.getPrimitives = function() {
+	Scratch3EventBlocks.prototype.getPrimitives = function () {
 	    return {
-	        'event_broadcast': this.broadcast,
-	        'event_broadcastandwait': this.broadcastAndWait,
-	        'event_whengreaterthan': this.hatGreaterThanPredicate
+	        event_broadcast: this.broadcast,
+	        event_broadcastandwait: this.broadcastAndWait,
+	        event_whengreaterthan: this.hatGreaterThanPredicate
 	    };
 	};
 
 	Scratch3EventBlocks.prototype.getHats = function () {
 	    return {
-	        'event_whenflagclicked': {
+	        event_whenflagclicked: {
 	            restartExistingThreads: true
 	        },
-	        'event_whenkeypressed': {
+	        event_whenkeypressed: {
 	            restartExistingThreads: false
 	        },
-	        'event_whenthisspriteclicked': {
+	        event_whenthisspriteclicked: {
 	            restartExistingThreads: true
 	        },
-	        'event_whenbackdropswitchesto': {
+	        event_whenbackdropswitchesto: {
 	            restartExistingThreads: true
 	        },
-	        'event_whengreaterthan': {
+	        event_whengreaterthan: {
 	            restartExistingThreads: false,
 	            edgeActivated: true
 	        },
-	        'event_whenbroadcastreceived': {
+	        event_whenbroadcastreceived: {
 	            restartExistingThreads: true
 	        }
 	    };
@@ -14014,16 +14603,16 @@
 	    var option = Cast.toString(args.WHENGREATERTHANMENU).toLowerCase();
 	    var value = Cast.toNumber(args.VALUE);
 	    // @todo: Other cases :)
-	    if (option == 'timer') {
+	    if (option === 'timer') {
 	        return util.ioQuery('clock', 'projectTimer') > value;
 	    }
 	    return false;
 	};
 
-	Scratch3EventBlocks.prototype.broadcast = function(args, util) {
+	Scratch3EventBlocks.prototype.broadcast = function (args, util) {
 	    var broadcastOption = Cast.toString(args.BROADCAST_OPTION);
 	    util.startHats('event_whenbroadcastreceived', {
-	        'BROADCAST_OPTION': broadcastOption
+	        BROADCAST_OPTION: broadcastOption
 	    });
 	};
 
@@ -14034,17 +14623,17 @@
 	        // No - start hats for this broadcast.
 	        util.stackFrame.startedThreads = util.startHats(
 	            'event_whenbroadcastreceived', {
-	                'BROADCAST_OPTION': broadcastOption
+	                BROADCAST_OPTION: broadcastOption
 	            }
 	        );
-	        if (util.stackFrame.startedThreads.length == 0) {
+	        if (util.stackFrame.startedThreads.length === 0) {
 	            // Nothing was started.
 	            return;
 	        }
 	    }
 	    // We've run before; check if the wait is still going on.
 	    var instance = this;
-	    var waiting = util.stackFrame.startedThreads.some(function(thread) {
+	    var waiting = util.stackFrame.startedThreads.some(function (thread) {
 	        return instance.runtime.isActiveThread(thread);
 	    });
 	    if (waiting) {
@@ -14056,47 +14645,47 @@
 
 
 /***/ },
-/* 84 */
+/* 97 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var Cast = __webpack_require__(78);
+	var Cast = __webpack_require__(91);
 
-	function Scratch3LooksBlocks(runtime) {
+	var Scratch3LooksBlocks = function (runtime) {
 	    /**
 	     * The runtime instantiating this block package.
 	     * @type {Runtime}
 	     */
 	    this.runtime = runtime;
-	}
+	};
 
 	/**
 	 * Retrieve the block primitives implemented by this package.
 	 * @return {Object.<string, Function>} Mapping of opcode to Function.
 	 */
-	Scratch3LooksBlocks.prototype.getPrimitives = function() {
+	Scratch3LooksBlocks.prototype.getPrimitives = function () {
 	    return {
-	        'looks_say': this.say,
-	        'looks_sayforsecs': this.sayforsecs,
-	        'looks_think': this.think,
-	        'looks_thinkforsecs': this.sayforsecs,
-	        'looks_show': this.show,
-	        'looks_hide': this.hide,
-	        'looks_switchcostumeto': this.switchCostume,
-	        'looks_switchbackdropto': this.switchBackdrop,
-	        'looks_switchbackdroptoandwait': this.switchBackdropAndWait,
-	        'looks_nextcostume': this.nextCostume,
-	        'looks_nextbackdrop': this.nextBackdrop,
-	        'looks_changeeffectby': this.changeEffect,
-	        'looks_seteffectto': this.setEffect,
-	        'looks_cleargraphiceffects': this.clearEffects,
-	        'looks_changesizeby': this.changeSize,
-	        'looks_setsizeto': this.setSize,
-	        'looks_gotofront': this.goToFront,
-	        'looks_gobacklayers': this.goBackLayers,
-	        'looks_size': this.getSize,
-	        'looks_costumeorder': this.getCostumeIndex,
-	        'looks_backdroporder': this.getBackdropIndex,
-	        'looks_backdropname': this.getBackdropName
+	        looks_say: this.say,
+	        looks_sayforsecs: this.sayforsecs,
+	        looks_think: this.think,
+	        looks_thinkforsecs: this.sayforsecs,
+	        looks_show: this.show,
+	        looks_hide: this.hide,
+	        looks_switchcostumeto: this.switchCostume,
+	        looks_switchbackdropto: this.switchBackdrop,
+	        looks_switchbackdroptoandwait: this.switchBackdropAndWait,
+	        looks_nextcostume: this.nextCostume,
+	        looks_nextbackdrop: this.nextBackdrop,
+	        looks_changeeffectby: this.changeEffect,
+	        looks_seteffectto: this.setEffect,
+	        looks_cleargraphiceffects: this.clearEffects,
+	        looks_changesizeby: this.changeSize,
+	        looks_setsizeto: this.setSize,
+	        looks_gotofront: this.goToFront,
+	        looks_gobacklayers: this.goBackLayers,
+	        looks_size: this.getSize,
+	        looks_costumeorder: this.getCostumeIndex,
+	        looks_backdroporder: this.getBackdropIndex,
+	        looks_backdropname: this.getBackdropName
 	    };
 	};
 
@@ -14106,8 +14695,8 @@
 
 	Scratch3LooksBlocks.prototype.sayforsecs = function (args, util) {
 	    util.target.setSay('say', args.MESSAGE);
-	    return new Promise(function(resolve) {
-	        setTimeout(function() {
+	    return new Promise(function (resolve) {
+	        setTimeout(function () {
 	            // Clear say bubble and proceed.
 	            util.target.setSay();
 	            resolve();
@@ -14121,8 +14710,8 @@
 
 	Scratch3LooksBlocks.prototype.thinkforsecs = function (args, util) {
 	    util.target.setSay('think', args.MESSAGE);
-	    return new Promise(function(resolve) {
-	        setTimeout(function() {
+	    return new Promise(function (resolve) {
+	        setTimeout(function () {
 	            // Clear say bubble and proceed.
 	            util.target.setSay();
 	            resolve();
@@ -14143,37 +14732,37 @@
 	 * Matches the behavior of Scratch 2.0 for different types of arguments.
 	 * @param {!Target} target Target to set costume/backdrop to.
 	 * @param {Any} requestedCostume Costume requested, e.g., 0, 'name', etc.
-	 * @param {boolean=} opt_zeroIndex Set to zero-index the requestedCostume.
+	 * @param {boolean=} optZeroIndex Set to zero-index the requestedCostume.
 	 * @return {Array.<!Thread>} Any threads started by this switch.
 	 */
 	Scratch3LooksBlocks.prototype._setCostumeOrBackdrop = function (target,
-	        requestedCostume, opt_zeroIndex) {
+	        requestedCostume, optZeroIndex) {
 	    if (typeof requestedCostume === 'number') {
-	        target.setCostume(opt_zeroIndex ?
+	        target.setCostume(optZeroIndex ?
 	            requestedCostume : requestedCostume - 1);
 	    } else {
 	        var costumeIndex = target.getCostumeIndexByName(requestedCostume);
 	        if (costumeIndex > -1) {
 	            target.setCostume(costumeIndex);
-	        } else if (costumeIndex == 'previous costume' ||
-	                   costumeIndex == 'previous backdrop') {
+	        } else if (costumeIndex === 'previous costume' ||
+	                   costumeIndex === 'previous backdrop') {
 	            target.setCostume(target.currentCostume - 1);
-	        } else if (costumeIndex == 'next costume' ||
-	                   costumeIndex == 'next backdrop') {
+	        } else if (costumeIndex === 'next costume' ||
+	                   costumeIndex === 'next backdrop') {
 	            target.setCostume(target.currentCostume + 1);
 	        } else {
 	            var forcedNumber = Cast.toNumber(requestedCostume);
 	            if (!isNaN(forcedNumber)) {
-	                target.setCostume(opt_zeroIndex ?
+	                target.setCostume(optZeroIndex ?
 	                    forcedNumber : forcedNumber - 1);
 	            }
 	        }
 	    }
-	    if (target == this.runtime.getTargetForStage()) {
+	    if (target === this.runtime.getTargetForStage()) {
 	        // Target is the stage - start hats.
 	        var newName = target.sprite.costumes[target.currentCostume].name;
 	        return this.runtime.startHats('event_whenbackdropswitchesto', {
-	            'BACKDROP': newName
+	            BACKDROP: newName
 	        });
 	    }
 	    return [];
@@ -14203,14 +14792,14 @@
 	                args.BACKDROP
 	            )
 	        );
-	        if (util.stackFrame.startedThreads.length == 0) {
+	        if (util.stackFrame.startedThreads.length === 0) {
 	            // Nothing was started.
 	            return;
 	        }
 	    }
 	    // We've run before; check if the wait is still going on.
 	    var instance = this;
-	    var waiting = util.stackFrame.startedThreads.some(function(thread) {
+	    var waiting = util.stackFrame.startedThreads.some(function (thread) {
 	        return instance.runtime.isActiveThread(thread);
 	    });
 	    if (waiting) {
@@ -14283,44 +14872,44 @@
 
 
 /***/ },
-/* 85 */
+/* 98 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var Cast = __webpack_require__(78);
-	var MathUtil = __webpack_require__(81);
+	var Cast = __webpack_require__(91);
+	var MathUtil = __webpack_require__(94);
 	var Timer = __webpack_require__(18);
 
-	function Scratch3MotionBlocks(runtime) {
+	var Scratch3MotionBlocks = function (runtime) {
 	    /**
 	     * The runtime instantiating this block package.
 	     * @type {Runtime}
 	     */
 	    this.runtime = runtime;
-	}
+	};
 
 	/**
 	 * Retrieve the block primitives implemented by this package.
 	 * @return {Object.<string, Function>} Mapping of opcode to Function.
 	 */
-	Scratch3MotionBlocks.prototype.getPrimitives = function() {
+	Scratch3MotionBlocks.prototype.getPrimitives = function () {
 	    return {
-	        'motion_movesteps': this.moveSteps,
-	        'motion_gotoxy': this.goToXY,
-	        'motion_goto': this.goTo,
-	        'motion_turnright': this.turnRight,
-	        'motion_turnleft': this.turnLeft,
-	        'motion_pointindirection': this.pointInDirection,
-	        'motion_pointtowards': this.pointTowards,
-	        'motion_glidesecstoxy': this.glide,
-	        'motion_ifonedgebounce': this.ifOnEdgeBounce,
-	        'motion_setrotationstyle': this.setRotationStyle,
-	        'motion_changexby': this.changeX,
-	        'motion_setx': this.setX,
-	        'motion_changeyby': this.changeY,
-	        'motion_sety': this.setY,
-	        'motion_xposition': this.getX,
-	        'motion_yposition': this.getY,
-	        'motion_direction': this.getDirection
+	        motion_movesteps: this.moveSteps,
+	        motion_gotoxy: this.goToXY,
+	        motion_goto: this.goTo,
+	        motion_turnright: this.turnRight,
+	        motion_turnleft: this.turnLeft,
+	        motion_pointindirection: this.pointInDirection,
+	        motion_pointtowards: this.pointTowards,
+	        motion_glidesecstoxy: this.glide,
+	        motion_ifonedgebounce: this.ifOnEdgeBounce,
+	        motion_setrotationstyle: this.setRotationStyle,
+	        motion_changexby: this.changeX,
+	        motion_setx: this.setX,
+	        motion_changeyby: this.changeY,
+	        motion_sety: this.setY,
+	        motion_xposition: this.getX,
+	        motion_yposition: this.getY,
+	        motion_direction: this.getDirection
 	    };
 	};
 
@@ -14437,10 +15026,10 @@
 	    // and clamped to zero when the sprite is beyond.
 	    var stageWidth = this.runtime.constructor.STAGE_WIDTH;
 	    var stageHeight = this.runtime.constructor.STAGE_HEIGHT;
-	    var distLeft = Math.max(0, stageWidth / 2 + bounds.left);
-	    var distTop = Math.max(0, stageHeight / 2 - bounds.top);
-	    var distRight = Math.max(0, stageWidth / 2 - bounds.right);
-	    var distBottom = Math.max(0, stageHeight / 2 + bounds.bottom);
+	    var distLeft = Math.max(0, (stageWidth / 2) + bounds.left);
+	    var distTop = Math.max(0, (stageHeight / 2) - bounds.top);
+	    var distRight = Math.max(0, (stageWidth / 2) - bounds.right);
+	    var distBottom = Math.max(0, (stageHeight / 2) + bounds.bottom);
 	    // Find the nearest edge.
 	    var nearestEdge = '';
 	    var minDist = Infinity;
@@ -14467,13 +15056,13 @@
 	    var radians = MathUtil.degToRad(90 - util.target.direction);
 	    var dx = Math.cos(radians);
 	    var dy = -Math.sin(radians);
-	    if (nearestEdge == 'left') {
+	    if (nearestEdge === 'left') {
 	        dx = Math.max(0.2, Math.abs(dx));
-	    } else if (nearestEdge == 'top') {
+	    } else if (nearestEdge === 'top') {
 	        dy = Math.max(0.2, Math.abs(dy));
-	    } else if (nearestEdge == 'right') {
+	    } else if (nearestEdge === 'right') {
 	        dx = 0 - Math.max(0.2, Math.abs(dx));
-	    } else if (nearestEdge == 'bottom') {
+	    } else if (nearestEdge === 'bottom') {
 	        dy = 0 - Math.max(0.2, Math.abs(dy));
 	    }
 	    var newDirection = MathUtil.radToDeg(Math.atan2(dy, dx)) + 90;
@@ -14523,42 +15112,42 @@
 
 
 /***/ },
-/* 86 */
+/* 99 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var Cast = __webpack_require__(78);
+	var Cast = __webpack_require__(91);
 
-	function Scratch3OperatorsBlocks(runtime) {
+	var Scratch3OperatorsBlocks = function (runtime) {
 	    /**
 	     * The runtime instantiating this block package.
 	     * @type {Runtime}
 	     */
 	    this.runtime = runtime;
-	}
+	};
 
 	/**
 	 * Retrieve the block primitives implemented by this package.
 	 * @return {Object.<string, Function>} Mapping of opcode to Function.
 	 */
-	Scratch3OperatorsBlocks.prototype.getPrimitives = function() {
+	Scratch3OperatorsBlocks.prototype.getPrimitives = function () {
 	    return {
-	        'operator_add': this.add,
-	        'operator_subtract': this.subtract,
-	        'operator_multiply': this.multiply,
-	        'operator_divide': this.divide,
-	        'operator_lt': this.lt,
-	        'operator_equals': this.equals,
-	        'operator_gt': this.gt,
-	        'operator_and': this.and,
-	        'operator_or': this.or,
-	        'operator_not': this.not,
-	        'operator_random': this.random,
-	        'operator_join': this.join,
-	        'operator_letter_of': this.letterOf,
-	        'operator_length': this.length,
-	        'operator_mod': this.mod,
-	        'operator_round': this.round,
-	        'operator_mathop': this.mathop
+	        operator_add: this.add,
+	        operator_subtract: this.subtract,
+	        operator_multiply: this.multiply,
+	        operator_divide: this.divide,
+	        operator_lt: this.lt,
+	        operator_equals: this.equals,
+	        operator_gt: this.gt,
+	        operator_and: this.and,
+	        operator_or: this.or,
+	        operator_not: this.not,
+	        operator_random: this.random,
+	        operator_join: this.join,
+	        operator_letter_of: this.letterOf,
+	        operator_length: this.length,
+	        operator_mod: this.mod,
+	        operator_round: this.round,
+	        operator_mathop: this.mathop
 	    };
 	};
 
@@ -14583,7 +15172,7 @@
 	};
 
 	Scratch3OperatorsBlocks.prototype.equals = function (args) {
-	    return Cast.compare(args.OPERAND1, args.OPERAND2) == 0;
+	    return Cast.compare(args.OPERAND1, args.OPERAND2) === 0;
 	};
 
 	Scratch3OperatorsBlocks.prototype.gt = function (args) {
@@ -14607,10 +15196,10 @@
 	    var nTo = Cast.toNumber(args.TO);
 	    var low = nFrom <= nTo ? nFrom : nTo;
 	    var high = nFrom <= nTo ? nTo : nFrom;
-	    if (low == high) return low;
+	    if (low === high) return low;
 	    // If both arguments are ints, truncate the result to an int.
 	    if (Cast.isInt(args.FROM) && Cast.isInt(args.TO)) {
-	        return low + parseInt(Math.random() * ((high + 1) - low));
+	        return low + parseInt(Math.random() * ((high + 1) - low), 10);
 	    }
 	    return (Math.random() * (high - low)) + low;
 	};
@@ -14672,47 +15261,47 @@
 
 
 /***/ },
-/* 87 */
+/* 100 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var Cast = __webpack_require__(78);
+	var Cast = __webpack_require__(91);
 
-	function Scratch3SensingBlocks(runtime) {
+	var Scratch3SensingBlocks = function (runtime) {
 	    /**
 	     * The runtime instantiating this block package.
 	     * @type {Runtime}
 	     */
 	    this.runtime = runtime;
-	}
+	};
 
 	/**
 	 * Retrieve the block primitives implemented by this package.
 	 * @return {Object.<string, Function>} Mapping of opcode to Function.
 	 */
-	Scratch3SensingBlocks.prototype.getPrimitives = function() {
+	Scratch3SensingBlocks.prototype.getPrimitives = function () {
 	    return {
-	        'sensing_touchingobject': this.touchingObject,
-	        'sensing_touchingcolor': this.touchingColor,
-	        'sensing_coloristouchingcolor': this.colorTouchingColor,
-	        'sensing_distanceto': this.distanceTo,
-	        'sensing_timer': this.getTimer,
-	        'sensing_resettimer': this.resetTimer,
-	        'sensing_mousex': this.getMouseX,
-	        'sensing_mousey': this.getMouseY,
-	        'sensing_mousedown': this.getMouseDown,
-	        'sensing_keypressed': this.getKeyPressed,
-	        'sensing_current': this.current,
-	        'sensing_dayssince2000': this.daysSince2000
+	        sensing_touchingobject: this.touchingObject,
+	        sensing_touchingcolor: this.touchingColor,
+	        sensing_coloristouchingcolor: this.colorTouchingColor,
+	        sensing_distanceto: this.distanceTo,
+	        sensing_timer: this.getTimer,
+	        sensing_resettimer: this.resetTimer,
+	        sensing_mousex: this.getMouseX,
+	        sensing_mousey: this.getMouseY,
+	        sensing_mousedown: this.getMouseDown,
+	        sensing_keypressed: this.getKeyPressed,
+	        sensing_current: this.current,
+	        sensing_dayssince2000: this.daysSince2000
 	    };
 	};
 
 	Scratch3SensingBlocks.prototype.touchingObject = function (args, util) {
 	    var requestedObject = args.TOUCHINGOBJECTMENU;
-	    if (requestedObject == '_mouse_') {
+	    if (requestedObject === '_mouse_') {
 	        var mouseX = util.ioQuery('mouse', 'getX');
 	        var mouseY = util.ioQuery('mouse', 'getY');
 	        return util.target.isTouchingPoint(mouseX, mouseY);
-	    } else if (requestedObject == '_edge_') {
+	    } else if (requestedObject === '_edge_') {
 	        return util.target.isTouchingEdge();
 	    } else {
 	        return util.target.isTouchingSprite(requestedObject);
@@ -14791,11 +15380,10 @@
 	    return util.ioQuery('keyboard', 'getKeyIsDown', args.KEY_OPTION);
 	};
 
-	Scratch3SensingBlocks.prototype.daysSince2000 = function()
-	{
+	Scratch3SensingBlocks.prototype.daysSince2000 = function () {
 	    var msPerDay = 24 * 60 * 60 * 1000;
-	    var start = new Date(2000, 1-1, 1); 
-	    var today = new Date(); 
+	    var start = new Date(2000, 1 - 1, 1);
+	    var today = new Date();
 	    var dstAdjust = today.getTimezoneOffset() - start.getTimezoneOffset();
 	    var mSecsSinceStart = today.valueOf() - start.valueOf();
 	    mSecsSinceStart += ((today.getTimezoneOffset() - dstAdjust) * 60 * 1000);
@@ -14806,18 +15394,18 @@
 
 
 /***/ },
-/* 88 */
+/* 101 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var Cast = __webpack_require__(78);
+	var Cast = __webpack_require__(91);
 
-	function Scratch3DataBlocks(runtime) {
+	var Scratch3DataBlocks = function (runtime) {
 	    /**
 	     * The runtime instantiating this block package.
 	     * @type {Runtime}
 	     */
 	    this.runtime = runtime;
-	}
+	};
 
 	/**
 	 * Retrieve the block primitives implemented by this package.
@@ -14825,17 +15413,17 @@
 	 */
 	Scratch3DataBlocks.prototype.getPrimitives = function () {
 	    return {
-	        'data_variable': this.getVariable,
-	        'data_setvariableto': this.setVariableTo,
-	        'data_changevariableby': this.changeVariableBy,
-	        'data_listcontents': this.getListContents,
-	        'data_addtolist': this.addToList,
-	        'data_deleteoflist': this.deleteOfList,
-	        'data_insertatlist': this.insertAtList,
-	        'data_replaceitemoflist': this.replaceItemOfList,
-	        'data_itemoflist': this.getItemOfList,
-	        'data_lengthoflist': this.lengthOfList,
-	        'data_listcontainsitem': this.listContainsItem
+	        data_variable: this.getVariable,
+	        data_setvariableto: this.setVariableTo,
+	        data_changevariableby: this.changeVariableBy,
+	        data_listcontents: this.getListContents,
+	        data_addtolist: this.addToList,
+	        data_deleteoflist: this.deleteOfList,
+	        data_insertatlist: this.insertAtList,
+	        data_replaceitemoflist: this.replaceItemOfList,
+	        data_itemoflist: this.getItemOfList,
+	        data_lengthoflist: this.lengthOfList,
+	        data_listcontainsitem: this.listContainsItem
 	    };
 	};
 
@@ -14865,7 +15453,7 @@
 	    for (var i = 0; i < list.contents.length; i++) {
 	        var listItem = list.contents[i];
 	        if (!((typeof listItem === 'string') &&
-	              (listItem.length == 1))) {
+	              (listItem.length === 1))) {
 	            allSingleLetters = false;
 	            break;
 	        }
@@ -14937,7 +15525,7 @@
 	    // Try using Scratch comparison operator on each item.
 	    // (Scratch considers the string '123' equal to the number 123).
 	    for (var i = 0; i < list.contents.length; i++) {
-	        if (Cast.compare(list.contents[i], item) == 0) {
+	        if (Cast.compare(list.contents[i], item) === 0) {
 	            return true;
 	        }
 	    }
@@ -14948,26 +15536,26 @@
 
 
 /***/ },
-/* 89 */
+/* 102 */
 /***/ function(module, exports) {
 
-	function Scratch3ProcedureBlocks(runtime) {
+	var Scratch3ProcedureBlocks = function (runtime) {
 	    /**
 	     * The runtime instantiating this block package.
 	     * @type {Runtime}
 	     */
 	    this.runtime = runtime;
-	}
+	};
 
 	/**
 	 * Retrieve the block primitives implemented by this package.
 	 * @return {Object.<string, Function>} Mapping of opcode to Function.
 	 */
-	Scratch3ProcedureBlocks.prototype.getPrimitives = function() {
+	Scratch3ProcedureBlocks.prototype.getPrimitives = function () {
 	    return {
-	        'procedures_defnoreturn': this.defNoReturn,
-	        'procedures_callnoreturn': this.callNoReturn,
-	        'procedures_param': this.param
+	        procedures_defnoreturn: this.defNoReturn,
+	        procedures_callnoreturn: this.callNoReturn,
+	        procedures_param: this.param
 	    };
 	};
 
@@ -14998,7 +15586,7 @@
 
 
 /***/ },
-/* 90 */
+/* 103 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/**
@@ -15008,36 +15596,24 @@
 	 * scratch-vm runtime structures.
 	 */
 
-	var Blocks = __webpack_require__(21);
-	var Clone = __webpack_require__(91);
-	var Sprite = __webpack_require__(96);
-	var Color = __webpack_require__(79);
-	var uid = __webpack_require__(95);
-	var specMap = __webpack_require__(97);
-	var Variable = __webpack_require__(93);
-	var List = __webpack_require__(94);
-
-	/**
-	 * Top-level handler. Parse provided JSON,
-	 * and process the top-level object (the stage object).
-	 * @param {!string} json SB2-format JSON to load.
-	 * @param {!Runtime} runtime Runtime object to load all structures into.
-	 */
-	function sb2import (json, runtime) {
-	    parseScratchObject(
-	        JSON.parse(json),
-	        runtime,
-	        true
-	    );
-	}
+	var Blocks = __webpack_require__(34);
+	var Clone = __webpack_require__(104);
+	var Sprite = __webpack_require__(109);
+	var Color = __webpack_require__(92);
+	var log = __webpack_require__(21);
+	var uid = __webpack_require__(108);
+	var specMap = __webpack_require__(110);
+	var Variable = __webpack_require__(106);
+	var List = __webpack_require__(107);
 
 	/**
 	 * Parse a single "Scratch object" and create all its in-memory VM objects.
 	 * @param {!Object} object From-JSON "Scratch object:" sprite, stage, watcher.
 	 * @param {!Runtime} runtime Runtime object to load all structures into.
 	 * @param {boolean} topLevel Whether this is the top-level object (stage).
+	 * @return {?Target} Target created (stage or sprite).
 	 */
-	function parseScratchObject (object, runtime, topLevel) {
+	var parseScratchObject = function (object, runtime, topLevel) {
 	    if (!object.hasOwnProperty('objName')) {
 	        // Watcher/monitor - skip this object until those are implemented in VM.
 	        // @todo
@@ -15057,8 +15633,8 @@
 	            var costume = object.costumes[i];
 	            // @todo: Make sure all the relevant metadata is being pulled out.
 	            sprite.costumes.push({
-	                skin: 'https://cdn.assets.scratch.mit.edu/internalapi/asset/'
-	                    + costume.baseLayerMD5 + '/get/',
+	                skin: 'https://cdn.assets.scratch.mit.edu/internalapi/asset/' +
+	                    costume.baseLayerMD5 + '/get/',
 	                name: costume.costumeName,
 	                bitmapResolution: costume.bitmapResolution,
 	                rotationCenterX: costume.rotationCenterX,
@@ -15115,11 +15691,11 @@
 	        target.currentCostume = Math.round(object.currentCostumeIndex);
 	    }
 	    if (object.hasOwnProperty('rotationStyle')) {
-	        if (object.rotationStyle == 'none') {
+	        if (object.rotationStyle === 'none') {
 	            target.rotationStyle = Clone.ROTATION_STYLE_NONE;
-	        } else if (object.rotationStyle == 'leftRight') {
+	        } else if (object.rotationStyle === 'leftRight') {
 	            target.rotationStyle = Clone.ROTATION_STYLE_LEFT_RIGHT;
-	        } else if (object.rotationStyle == 'normal') {
+	        } else if (object.rotationStyle === 'normal') {
 	            target.rotationStyle = Clone.ROTATION_STYLE_ALL_AROUND;
 	        }
 	    }
@@ -15131,7 +15707,24 @@
 	            parseScratchObject(object.children[m], runtime, false);
 	        }
 	    }
-	}
+	    return target;
+	};
+
+	/**
+	 * Top-level handler. Parse provided JSON,
+	 * and process the top-level object (the stage object).
+	 * @param {!string} json SB2-format JSON to load.
+	 * @param {!Runtime} runtime Runtime object to load all structures into.
+	 * @param {Boolean=} optForceSprite If set, treat as sprite (Sprite2).
+	 * @return {?Target} Top-level target created (stage or sprite).
+	 */
+	var sb2import = function (json, runtime, optForceSprite) {
+	    return parseScratchObject(
+	        JSON.parse(json),
+	        runtime,
+	        !optForceSprite
+	    );
+	};
 
 	/**
 	 * Parse a Scratch object's scripts into VM blocks.
@@ -15139,7 +15732,7 @@
 	 * @param {!Object} scripts Scripts object from SB2 JSON.
 	 * @param {!Blocks} blocks Blocks object to load parsed blocks into.
 	 */
-	function parseScripts (scripts, blocks) {
+	var parseScripts = function (scripts, blocks) {
 	    for (var i = 0; i < scripts.length; i++) {
 	        var script = scripts[i];
 	        var scriptX = script[0];
@@ -15161,7 +15754,7 @@
 	            blocks.createBlock(convertedBlocks[j]);
 	        }
 	    }
-	}
+	};
 
 	/**
 	 * Parse any list of blocks from SB2 JSON into a list of VM-format blocks.
@@ -15171,7 +15764,7 @@
 	 * @param {Array.<Object>} blockList SB2 JSON-format block list.
 	 * @return {Array.<Object>} Scratch VM-format block list.
 	 */
-	function parseBlockList (blockList) {
+	var parseBlockList = function (blockList) {
 	    var resultingList = [];
 	    var previousBlock = null; // For setting next.
 	    for (var i = 0; i < blockList.length; i++) {
@@ -15185,7 +15778,7 @@
 	        resultingList.push(parsedBlock);
 	    }
 	    return resultingList;
-	}
+	};
 
 	/**
 	 * Flatten a block tree into a block list.
@@ -15193,7 +15786,7 @@
 	 * @param {Array.<Object>} blocks list generated by `parseBlockList`.
 	 * @return {Array.<Object>} Flattened list to be passed to `blocks.createBlock`.
 	 */
-	function flatten (blocks) {
+	var flatten = function (blocks) {
 	    var finalBlocks = [];
 	    for (var i = 0; i < blocks.length; i++) {
 	        var block = blocks[i];
@@ -15204,7 +15797,7 @@
 	        delete block.children;
 	    }
 	    return finalBlocks;
-	}
+	};
 
 	/**
 	 * Convert a Scratch 2.0 procedure string (e.g., "my_procedure %s %b %n")
@@ -15213,44 +15806,44 @@
 	 * @param {string} procCode Scratch 2.0 procedure string.
 	 * @return {Object} Argument map compatible with those in sb2specmap.
 	 */
-	function parseProcedureArgMap (procCode) {
+	var parseProcedureArgMap = function (procCode) {
 	    var argMap = [
 	        {} // First item in list is op string.
 	    ];
 	    var INPUT_PREFIX = 'input';
 	    var inputCount = 0;
 	    // Split by %n, %b, %s.
-	    var parts = procCode.split(/(?=[^\\]\%[nbs])/);
+	    var parts = procCode.split(/(?=[^\\]%[nbs])/);
 	    for (var i = 0; i < parts.length; i++) {
 	        var part = parts[i].trim();
-	        if (part.substring(0, 1) == '%') {
+	        if (part.substring(0, 1) === '%') {
 	            var argType = part.substring(1, 2);
 	            var arg = {
 	                type: 'input',
 	                inputName: INPUT_PREFIX + (inputCount++)
 	            };
-	            if (argType == 'n') {
+	            if (argType === 'n') {
 	                arg.inputOp = 'math_number';
-	            } else if (argType == 's') {
+	            } else if (argType === 's') {
 	                arg.inputOp = 'text';
 	            }
 	            argMap.push(arg);
 	        }
 	    }
 	    return argMap;
-	}
+	};
 
 	/**
 	 * Parse a single SB2 JSON-formatted block and its children.
 	 * @param {!Object} sb2block SB2 JSON-formatted block.
 	 * @return {Object} Scratch VM format block.
 	 */
-	function parseBlock (sb2block) {
+	var parseBlock = function (sb2block) {
 	    // First item in block object is the old opcode (e.g., 'forward:').
 	    var oldOpcode = sb2block[0];
 	    // Convert the block using the specMap. See sb2specmap.js.
 	    if (!oldOpcode || !specMap[oldOpcode]) {
-	        console.warn('Couldn\'t find SB2 block: ', oldOpcode);
+	        log.warn('Couldn\'t find SB2 block: ', oldOpcode);
 	        return;
 	    }
 	    var blockMetadata = specMap[oldOpcode];
@@ -15265,7 +15858,7 @@
 	        children: [] // Store any generated children, flattened in `flatten`.
 	    };
 	    // For a procedure call, generate argument map from proc string.
-	    if (oldOpcode == 'call') {
+	    if (oldOpcode === 'call') {
 	        blockMetadata.argMap = parseProcedureArgMap(sb2block[1]);
 	    }
 	    // Look at the expected arguments in `blockMetadata.argMap.`
@@ -15277,7 +15870,7 @@
 	        // Whether the input is obscuring a shadow.
 	        var shadowObscured = false;
 	        // Positional argument is an input.
-	        if (expectedArg.type == 'input') {
+	        if (expectedArg.type === 'input') {
 	            // Create a new block and input metadata.
 	            var inputUid = uid();
 	            activeBlock.inputs[expectedArg.inputName] = {
@@ -15285,10 +15878,10 @@
 	                block: null,
 	                shadow: null
 	            };
-	            if (typeof providedArg == 'object' && providedArg) {
+	            if (typeof providedArg === 'object' && providedArg) {
 	                // Block or block list occupies the input.
 	                var innerBlocks;
-	                if (typeof providedArg[0] == 'object' && providedArg[0]) {
+	                if (typeof providedArg[0] === 'object' && providedArg[0]) {
 	                    // Block list occupies the input.
 	                    innerBlocks = parseBlockList(providedArg);
 	                } else {
@@ -15297,7 +15890,7 @@
 	                }
 	                var previousBlock = null;
 	                for (var j = 0; j < innerBlocks.length; j++) {
-	                    if (j == 0) {
+	                    if (j === 0) {
 	                        innerBlocks[j].parent = activeBlock.id;
 	                    } else {
 	                        innerBlocks[j].parent = previousBlock;
@@ -15323,22 +15916,22 @@
 	            var fieldValue = providedArg;
 	            // Shadows' field names match the input name, except for these:
 	            var fieldName = expectedArg.inputName;
-	            if (expectedArg.inputOp == 'math_number' ||
-	                expectedArg.inputOp == 'math_whole_number' ||
-	                expectedArg.inputOp == 'math_positive_number' ||
-	                expectedArg.inputOp == 'math_integer' ||
-	                expectedArg.inputOp == 'math_angle') {
+	            if (expectedArg.inputOp === 'math_number' ||
+	                expectedArg.inputOp === 'math_whole_number' ||
+	                expectedArg.inputOp === 'math_positive_number' ||
+	                expectedArg.inputOp === 'math_integer' ||
+	                expectedArg.inputOp === 'math_angle') {
 	                fieldName = 'NUM';
 	                // Fields are given Scratch 2.0 default values if obscured.
 	                if (shadowObscured) {
 	                    fieldValue = 10;
 	                }
-	            } else if (expectedArg.inputOp == 'text') {
+	            } else if (expectedArg.inputOp === 'text') {
 	                fieldName = 'TEXT';
 	                if (shadowObscured) {
 	                    fieldValue = '';
 	                }
-	            } else if (expectedArg.inputOp == 'colour_picker') {
+	            } else if (expectedArg.inputOp === 'colour_picker') {
 	                // Convert SB2 color to hex.
 	                fieldValue = Color.decimalToHex(providedArg);
 	                fieldName = 'COLOUR';
@@ -15366,7 +15959,7 @@
 	            if (!activeBlock.inputs[expectedArg.inputName].block) {
 	                activeBlock.inputs[expectedArg.inputName].block = inputUid;
 	            }
-	        } else if (expectedArg.type == 'field') {
+	        } else if (expectedArg.type === 'field') {
 	            // Add as a field on this block.
 	            activeBlock.fields[expectedArg.fieldName] = {
 	                name: expectedArg.fieldName,
@@ -15375,18 +15968,18 @@
 	        }
 	    }
 	    // Special cases to generate mutations.
-	    if (oldOpcode == 'stopScripts') {
+	    if (oldOpcode === 'stopScripts') {
 	        // Mutation for stop block: if the argument is 'other scripts',
 	        // the block needs a next connection.
-	        if (sb2block[1] == 'other scripts in sprite' ||
-	            sb2block[1] == 'other scripts in stage') {
+	        if (sb2block[1] === 'other scripts in sprite' ||
+	            sb2block[1] === 'other scripts in stage') {
 	            activeBlock.mutation = {
 	                tagName: 'mutation',
 	                hasnext: 'true',
 	                children: []
 	            };
 	        }
-	    } else if (oldOpcode == 'procDef') {
+	    } else if (oldOpcode === 'procDef') {
 	        // Mutation for procedure definition:
 	        // store all 2.0 proc data.
 	        var procData = sb2block.slice(1);
@@ -15398,7 +15991,7 @@
 	            warp: procData[3], // Warp mode, e.g., true/false.
 	            children: []
 	        };
-	    } else if (oldOpcode == 'call') {
+	    } else if (oldOpcode === 'call') {
 	        // Mutation for procedure call:
 	        // string for proc code (e.g., "abc %n %b %s").
 	        activeBlock.mutation = {
@@ -15406,7 +15999,7 @@
 	            children: [],
 	            proccode: sb2block[1]
 	        };
-	    } else if (oldOpcode == 'getParam') {
+	    } else if (oldOpcode === 'getParam') {
 	        // Mutation for procedure parameter.
 	        activeBlock.mutation = {
 	            tagName: 'mutation',
@@ -15416,18 +16009,20 @@
 	        };
 	    }
 	    return activeBlock;
-	}
+	};
 
 	module.exports = sb2import;
 
 
 /***/ },
-/* 91 */
+/* 104 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var util = __webpack_require__(12);
-	var MathUtil = __webpack_require__(81);
-	var Target = __webpack_require__(92);
+
+	var log = __webpack_require__(21);
+	var MathUtil = __webpack_require__(94);
+	var Target = __webpack_require__(105);
 
 	/**
 	 * Clone (instance) of a sprite.
@@ -15435,7 +16030,7 @@
 	 * @param {Runtime} runtime Reference to the runtime.
 	 * @constructor
 	 */
-	function Clone(sprite, runtime) {
+	var Clone = function (sprite, runtime) {
 	    Target.call(this, sprite.blocks);
 	    this.runtime = runtime;
 	    /**
@@ -15462,15 +16057,15 @@
 	     * @type {!Object.<string, number>}
 	     */
 	    this.effects = {
-	        'color': 0,
-	        'fisheye': 0,
-	        'whirl': 0,
-	        'pixelate': 0,
-	        'mosaic': 0,
-	        'brightness': 0,
-	        'ghost': 0
+	        color: 0,
+	        fisheye: 0,
+	        whirl: 0,
+	        pixelate: 0,
+	        mosaic: 0,
+	        brightness: 0,
+	        ghost: 0
 	    };
-	}
+	};
 	util.inherits(Clone, Target);
 
 	/**
@@ -15593,7 +16188,7 @@
 	    // Default: no changes to `this.direction` or `this.scale`.
 	    var finalDirection = this.direction;
 	    var finalScale = [this.size, this.size];
-	    if (this.rotationStyle == Clone.ROTATION_STYLE_NONE) {
+	    if (this.rotationStyle === Clone.ROTATION_STYLE_NONE) {
 	        // Force rendered direction to be 90.
 	        finalDirection = 90;
 	    } else if (this.rotationStyle === Clone.ROTATION_STYLE_LEFT_RIGHT) {
@@ -15638,10 +16233,10 @@
 	    }
 	    // @todo: Render to stage.
 	    if (!type || !message) {
-	        console.log('Clearing say bubble');
+	        log.info('Clearing say bubble');
 	        return;
 	    }
-	    console.log('Setting say bubble:', type, message);
+	    log.info('Setting say bubble:', type, message);
 	};
 
 	/**
@@ -15746,11 +16341,11 @@
 	 * @param {!string} rotationStyle New rotation style.
 	 */
 	Clone.prototype.setRotationStyle = function (rotationStyle) {
-	    if (rotationStyle == Clone.ROTATION_STYLE_NONE) {
+	    if (rotationStyle === Clone.ROTATION_STYLE_NONE) {
 	        this.rotationStyle = Clone.ROTATION_STYLE_NONE;
-	    } else if (rotationStyle == Clone.ROTATION_STYLE_ALL_AROUND) {
+	    } else if (rotationStyle === Clone.ROTATION_STYLE_ALL_AROUND) {
 	        this.rotationStyle = Clone.ROTATION_STYLE_ALL_AROUND;
-	    } else if (rotationStyle == Clone.ROTATION_STYLE_LEFT_RIGHT) {
+	    } else if (rotationStyle === Clone.ROTATION_STYLE_LEFT_RIGHT) {
 	        this.rotationStyle = Clone.ROTATION_STYLE_LEFT_RIGHT;
 	    }
 	    if (this.renderer) {
@@ -15772,7 +16367,7 @@
 	 */
 	Clone.prototype.getCostumeIndexByName = function (costumeName) {
 	    for (var i = 0; i < this.sprite.costumes.length; i++) {
-	        if (this.sprite.costumes[i].name == costumeName) {
+	        if (this.sprite.costumes[i].name === costumeName) {
 	            return i;
 	        }
 	    }
@@ -15835,8 +16430,8 @@
 	        // Limits test to this Drawable, so this will return true
 	        // even if the clone is obscured by another Drawable.
 	        var pickResult = this.runtime.renderer.pick(
-	            x + this.runtime.constructor.STAGE_WIDTH / 2,
-	            -y + this.runtime.constructor.STAGE_HEIGHT / 2,
+	            x + (this.runtime.constructor.STAGE_WIDTH / 2),
+	            -y + (this.runtime.constructor.STAGE_HEIGHT / 2),
 	            null, null,
 	            [this.drawableID]
 	        );
@@ -15874,7 +16469,7 @@
 	    if (!firstClone || !this.renderer) {
 	        return false;
 	    }
-	    var drawableCandidates = firstClone.sprite.clones.map(function(clone) {
+	    var drawableCandidates = firstClone.sprite.clones.map(function (clone) {
 	        return clone.drawableID;
 	    });
 	    return this.renderer.isTouchingDrawables(
@@ -15933,11 +16528,11 @@
 	 * Keep a desired position within a fence.
 	 * @param {number} newX New desired X position.
 	 * @param {number} newY New desired Y position.
-	 * @param {Object=} opt_fence Optional fence with left, right, top bottom.
+	 * @param {Object=} optFence Optional fence with left, right, top bottom.
 	 * @return {Array.<number>} Fenced X and Y coordinates.
 	 */
-	Clone.prototype.keepInFence = function (newX, newY, opt_fence) {
-	    var fence = opt_fence;
+	Clone.prototype.keepInFence = function (newX, newY, optFence) {
+	    var fence = optFence;
 	    if (!fence) {
 	        fence = {
 	            left: -this.runtime.constructor.STAGE_WIDTH / 2,
@@ -16022,13 +16617,13 @@
 
 
 /***/ },
-/* 92 */
+/* 105 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var Blocks = __webpack_require__(21);
-	var Variable = __webpack_require__(93);
-	var List = __webpack_require__(94);
-	var uid = __webpack_require__(95);
+	var Blocks = __webpack_require__(34);
+	var Variable = __webpack_require__(106);
+	var List = __webpack_require__(107);
+	var uid = __webpack_require__(108);
 
 	/**
 	 * @fileoverview
@@ -16040,7 +16635,7 @@
 	 * @param {?Blocks} blocks Blocks instance for the blocks owned by this target.
 	 * @constructor
 	 */
-	function Target (blocks) {
+	var Target = function (blocks) {
 	    if (!blocks) {
 	        blocks = new Blocks(this);
 	    }
@@ -16066,7 +16661,7 @@
 	     * @type {Object.<string,*>}
 	     */
 	    this.lists = {};
-	}
+	};
 
 	/**
 	 * Called when the project receives a "green flag."
@@ -16136,15 +16731,13 @@
 	 * Call to destroy a target.
 	 * @abstract
 	 */
-	Target.prototype.dispose = function () {
-
-	};
+	Target.prototype.dispose = function () {};
 
 	module.exports = Target;
 
 
 /***/ },
-/* 93 */
+/* 106 */
 /***/ function(module, exports) {
 
 	/**
@@ -16158,17 +16751,17 @@
 	 * @param {boolean} isCloud Whether the variable is stored in the cloud.
 	 * @constructor
 	 */
-	function Variable (name, value, isCloud) {
+	var Variable = function (name, value, isCloud) {
 	    this.name = name;
 	    this.value = value;
 	    this.isCloud = isCloud;
-	}
+	};
 
 	module.exports = Variable;
 
 
 /***/ },
-/* 94 */
+/* 107 */
 /***/ function(module, exports) {
 
 	/**
@@ -16181,16 +16774,16 @@
 	  * @param {Array} contents Contents of the list, as an array.
 	  * @constructor
 	  */
-	function List (name, contents) {
+	var List = function (name, contents) {
 	    this.name = name;
 	    this.contents = contents;
-	}
+	};
 
 	module.exports = List;
 
 
 /***/ },
-/* 95 */
+/* 108 */
 /***/ function(module, exports) {
 
 	/**
@@ -16225,11 +16818,11 @@
 
 
 /***/ },
-/* 96 */
+/* 109 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var Clone = __webpack_require__(91);
-	var Blocks = __webpack_require__(21);
+	var Clone = __webpack_require__(104);
+	var Blocks = __webpack_require__(34);
 
 	/**
 	 * Sprite to be used on the Scratch stage.
@@ -16238,7 +16831,7 @@
 	 * @param {Runtime} runtime Reference to the runtime.
 	 * @constructor
 	 */
-	function Sprite (blocks, runtime) {
+	var Sprite = function (blocks, runtime) {
 	    this.runtime = runtime;
 	    if (!blocks) {
 	        // Shared set of blocks for all clones.
@@ -16268,7 +16861,7 @@
 	     * @type {Array.<!Clone>}
 	     */
 	    this.clones = [];
-	}
+	};
 
 	/**
 	 * Create a clone of this sprite.
@@ -16276,7 +16869,7 @@
 	 */
 	Sprite.prototype.createClone = function () {
 	    var newClone = new Clone(this, this.runtime);
-	    newClone.isOriginal = this.clones.length == 0;
+	    newClone.isOriginal = this.clones.length === 0;
 	    this.clones.push(newClone);
 	    if (newClone.isOriginal) {
 	        newClone.initDrawable();
@@ -16288,7 +16881,7 @@
 
 
 /***/ },
-/* 97 */
+/* 110 */
 /***/ function(module, exports) {
 
 	/**
@@ -16315,1367 +16908,1367 @@
 	 * Finally, I filled in the expected arguments as below.
 	 */
 	var specMap = {
-	    'forward:':{
-	        'opcode':'motion_movesteps',
-	        'argMap':[
+	    'forward:': {
+	        opcode: 'motion_movesteps',
+	        argMap: [
 	            {
-	                'type':'input',
-	                'inputOp':'math_number',
-	                'inputName':'STEPS'
+	                type: 'input',
+	                inputOp: 'math_number',
+	                inputName: 'STEPS'
 	            }
 	        ]
 	    },
-	    'turnRight:':{
-	        'opcode':'motion_turnright',
-	        'argMap':[
+	    'turnRight:': {
+	        opcode: 'motion_turnright',
+	        argMap: [
 	            {
-	                'type':'input',
-	                'inputOp':'math_number',
-	                'inputName':'DEGREES'
+	                type: 'input',
+	                inputOp: 'math_number',
+	                inputName: 'DEGREES'
 	            }
 	        ]
 	    },
-	    'turnLeft:':{
-	        'opcode':'motion_turnleft',
-	        'argMap':[
+	    'turnLeft:': {
+	        opcode: 'motion_turnleft',
+	        argMap: [
 	            {
-	                'type':'input',
-	                'inputOp':'math_number',
-	                'inputName':'DEGREES'
+	                type: 'input',
+	                inputOp: 'math_number',
+	                inputName: 'DEGREES'
 	            }
 	        ]
 	    },
-	    'heading:':{
-	        'opcode':'motion_pointindirection',
-	        'argMap':[
+	    'heading:': {
+	        opcode: 'motion_pointindirection',
+	        argMap: [
 	            {
-	                'type':'input',
-	                'inputOp':'math_angle',
-	                'inputName':'DIRECTION'
+	                type: 'input',
+	                inputOp: 'math_angle',
+	                inputName: 'DIRECTION'
 	            }
 	        ]
 	    },
-	    'pointTowards:':{
-	        'opcode':'motion_pointtowards',
-	        'argMap':[
+	    'pointTowards:': {
+	        opcode: 'motion_pointtowards',
+	        argMap: [
 	            {
-	                'type':'input',
-	                'inputOp':'motion_pointtowards_menu',
-	                'inputName':'TOWARDS'
+	                type: 'input',
+	                inputOp: 'motion_pointtowards_menu',
+	                inputName: 'TOWARDS'
 	            }
 	        ]
 	    },
-	    'gotoX:y:':{
-	        'opcode':'motion_gotoxy',
-	        'argMap':[
+	    'gotoX:y:': {
+	        opcode: 'motion_gotoxy',
+	        argMap: [
 	            {
-	                'type':'input',
-	                'inputOp':'math_number',
-	                'inputName':'X'
+	                type: 'input',
+	                inputOp: 'math_number',
+	                inputName: 'X'
 	            },
 	            {
-	                'type':'input',
-	                'inputOp':'math_number',
-	                'inputName':'Y'
+	                type: 'input',
+	                inputOp: 'math_number',
+	                inputName: 'Y'
 	            }
 	        ]
 	    },
-	    'gotoSpriteOrMouse:':{
-	        'opcode':'motion_goto',
-	        'argMap':[
+	    'gotoSpriteOrMouse:': {
+	        opcode: 'motion_goto',
+	        argMap: [
 	            {
-	                'type':'input',
-	                'inputOp':'motion_goto_menu',
-	                'inputName':'TO'
+	                type: 'input',
+	                inputOp: 'motion_goto_menu',
+	                inputName: 'TO'
 	            }
 	        ]
 	    },
-	    'glideSecs:toX:y:elapsed:from:':{
-	        'opcode':'motion_glidesecstoxy',
-	        'argMap':[
+	    'glideSecs:toX:y:elapsed:from:': {
+	        opcode: 'motion_glidesecstoxy',
+	        argMap: [
 	            {
-	                'type':'input',
-	                'inputOp':'math_number',
-	                'inputName':'SECS'
+	                type: 'input',
+	                inputOp: 'math_number',
+	                inputName: 'SECS'
 	            },
 	            {
-	                'type':'input',
-	                'inputOp':'math_number',
-	                'inputName':'X'
+	                type: 'input',
+	                inputOp: 'math_number',
+	                inputName: 'X'
 	            },
 	            {
-	                'type':'input',
-	                'inputOp':'math_number',
-	                'inputName':'Y'
+	                type: 'input',
+	                inputOp: 'math_number',
+	                inputName: 'Y'
 	            }
 	        ]
 	    },
-	    'changeXposBy:':{
-	        'opcode':'motion_changexby',
-	        'argMap':[
+	    'changeXposBy:': {
+	        opcode: 'motion_changexby',
+	        argMap: [
 	            {
-	                'type':'input',
-	                'inputOp':'math_number',
-	                'inputName':'DX'
+	                type: 'input',
+	                inputOp: 'math_number',
+	                inputName: 'DX'
 	            }
 	        ]
 	    },
-	    'xpos:':{
-	        'opcode':'motion_setx',
-	        'argMap':[
+	    'xpos:': {
+	        opcode: 'motion_setx',
+	        argMap: [
 	            {
-	                'type':'input',
-	                'inputOp':'math_number',
-	                'inputName':'X'
+	                type: 'input',
+	                inputOp: 'math_number',
+	                inputName: 'X'
 	            }
 	        ]
 	    },
-	    'changeYposBy:':{
-	        'opcode':'motion_changeyby',
-	        'argMap':[
+	    'changeYposBy:': {
+	        opcode: 'motion_changeyby',
+	        argMap: [
 	            {
-	                'type':'input',
-	                'inputOp':'math_number',
-	                'inputName':'DY'
+	                type: 'input',
+	                inputOp: 'math_number',
+	                inputName: 'DY'
 	            }
 	        ]
 	    },
-	    'ypos:':{
-	        'opcode':'motion_sety',
-	        'argMap':[
+	    'ypos:': {
+	        opcode: 'motion_sety',
+	        argMap: [
 	            {
-	                'type':'input',
-	                'inputOp':'math_number',
-	                'inputName':'Y'
+	                type: 'input',
+	                inputOp: 'math_number',
+	                inputName: 'Y'
 	            }
 	        ]
 	    },
-	    'bounceOffEdge':{
-	        'opcode':'motion_ifonedgebounce',
-	        'argMap':[
+	    'bounceOffEdge': {
+	        opcode: 'motion_ifonedgebounce',
+	        argMap: [
 	        ]
 	    },
-	    'setRotationStyle':{
-	        'opcode':'motion_setrotationstyle',
-	        'argMap':[
+	    'setRotationStyle': {
+	        opcode: 'motion_setrotationstyle',
+	        argMap: [
 	            {
-	                'type':'input',
-	                'inputOp':'motion_setrotationstyle_menu',
-	                'inputName':'STYLE'
+	                type: 'input',
+	                inputOp: 'motion_setrotationstyle_menu',
+	                inputName: 'STYLE'
 	            }
 	        ]
 	    },
-	    'xpos':{
-	        'opcode':'motion_xposition',
-	        'argMap':[
+	    'xpos': {
+	        opcode: 'motion_xposition',
+	        argMap: [
 	        ]
 	    },
-	    'ypos':{
-	        'opcode':'motion_yposition',
-	        'argMap':[
+	    'ypos': {
+	        opcode: 'motion_yposition',
+	        argMap: [
 	        ]
 	    },
-	    'heading':{
-	        'opcode':'motion_direction',
-	        'argMap':[
+	    'heading': {
+	        opcode: 'motion_direction',
+	        argMap: [
 	        ]
 	    },
-	    'say:duration:elapsed:from:':{
-	        'opcode':'looks_sayforsecs',
-	        'argMap':[
+	    'say:duration:elapsed:from:': {
+	        opcode: 'looks_sayforsecs',
+	        argMap: [
 	            {
-	                'type':'input',
-	                'inputOp':'text',
-	                'inputName':'MESSAGE'
+	                type: 'input',
+	                inputOp: 'text',
+	                inputName: 'MESSAGE'
 	            },
 	            {
-	                'type':'input',
-	                'inputOp':'math_number',
-	                'inputName':'SECS'
+	                type: 'input',
+	                inputOp: 'math_number',
+	                inputName: 'SECS'
 	            }
 	        ]
 	    },
-	    'say:':{
-	        'opcode':'looks_say',
-	        'argMap':[
+	    'say:': {
+	        opcode: 'looks_say',
+	        argMap: [
 	            {
-	                'type':'input',
-	                'inputOp':'text',
-	                'inputName':'MESSAGE'
+	                type: 'input',
+	                inputOp: 'text',
+	                inputName: 'MESSAGE'
 	            }
 	        ]
 	    },
-	    'think:duration:elapsed:from:':{
-	        'opcode':'looks_thinkforsecs',
-	        'argMap':[
+	    'think:duration:elapsed:from:': {
+	        opcode: 'looks_thinkforsecs',
+	        argMap: [
 	            {
-	                'type':'input',
-	                'inputOp':'text',
-	                'inputName':'MESSAGE'
+	                type: 'input',
+	                inputOp: 'text',
+	                inputName: 'MESSAGE'
 	            },
 	            {
-	                'type':'input',
-	                'inputOp':'math_number',
-	                'inputName':'SECS'
+	                type: 'input',
+	                inputOp: 'math_number',
+	                inputName: 'SECS'
 	            }
 	        ]
 	    },
-	    'think:':{
-	        'opcode':'looks_think',
-	        'argMap':[
+	    'think:': {
+	        opcode: 'looks_think',
+	        argMap: [
 	            {
-	                'type':'input',
-	                'inputOp':'text',
-	                'inputName':'MESSAGE'
+	                type: 'input',
+	                inputOp: 'text',
+	                inputName: 'MESSAGE'
 	            }
 	        ]
 	    },
-	    'show':{
-	        'opcode':'looks_show',
-	        'argMap':[
+	    'show': {
+	        opcode: 'looks_show',
+	        argMap: [
 	        ]
 	    },
-	    'hide':{
-	        'opcode':'looks_hide',
-	        'argMap':[
+	    'hide': {
+	        opcode: 'looks_hide',
+	        argMap: [
 	        ]
 	    },
-	    'lookLike:':{
-	        'opcode':'looks_switchcostumeto',
-	        'argMap':[
+	    'lookLike:': {
+	        opcode: 'looks_switchcostumeto',
+	        argMap: [
 	            {
-	                'type':'input',
-	                'inputOp':'looks_costume',
-	                'inputName':'COSTUME'
+	                type: 'input',
+	                inputOp: 'looks_costume',
+	                inputName: 'COSTUME'
 	            }
 	        ]
 	    },
-	    'nextCostume':{
-	        'opcode':'looks_nextcostume',
-	        'argMap':[
+	    'nextCostume': {
+	        opcode: 'looks_nextcostume',
+	        argMap: [
 	        ]
 	    },
-	    'startScene':{
-	        'opcode':'looks_switchbackdropto',
-	        'argMap':[
+	    'startScene': {
+	        opcode: 'looks_switchbackdropto',
+	        argMap: [
 	            {
-	                'type':'input',
-	                'inputOp':'looks_backdrops',
-	                'inputName':'BACKDROP'
+	                type: 'input',
+	                inputOp: 'looks_backdrops',
+	                inputName: 'BACKDROP'
 	            }
 	        ]
 	    },
-	    'changeGraphicEffect:by:':{
-	        'opcode':'looks_changeeffectby',
-	        'argMap':[
+	    'changeGraphicEffect:by:': {
+	        opcode: 'looks_changeeffectby',
+	        argMap: [
 	            {
-	                'type':'input',
-	                'inputOp':'looks_effectmenu',
-	                'inputName':'EFFECT'
+	                type: 'input',
+	                inputOp: 'looks_effectmenu',
+	                inputName: 'EFFECT'
 	            },
 	            {
-	                'type':'input',
-	                'inputOp':'math_number',
-	                'inputName':'CHANGE'
+	                type: 'input',
+	                inputOp: 'math_number',
+	                inputName: 'CHANGE'
 	            }
 	        ]
 	    },
-	    'setGraphicEffect:to:':{
-	        'opcode':'looks_seteffectto',
-	        'argMap':[
+	    'setGraphicEffect:to:': {
+	        opcode: 'looks_seteffectto',
+	        argMap: [
 	            {
-	                'type':'input',
-	                'inputOp':'looks_effectmenu',
-	                'inputName':'EFFECT'
+	                type: 'input',
+	                inputOp: 'looks_effectmenu',
+	                inputName: 'EFFECT'
 	            },
 	            {
-	                'type':'input',
-	                'inputOp':'math_number',
-	                'inputName':'VALUE'
+	                type: 'input',
+	                inputOp: 'math_number',
+	                inputName: 'VALUE'
 	            }
 	        ]
 	    },
-	    'filterReset':{
-	        'opcode':'looks_cleargraphiceffects',
-	        'argMap':[
+	    'filterReset': {
+	        opcode: 'looks_cleargraphiceffects',
+	        argMap: [
 	        ]
 	    },
-	    'changeSizeBy:':{
-	        'opcode':'looks_changesizeby',
-	        'argMap':[
+	    'changeSizeBy:': {
+	        opcode: 'looks_changesizeby',
+	        argMap: [
 	            {
-	                'type':'input',
-	                'inputOp':'math_number',
-	                'inputName':'CHANGE'
+	                type: 'input',
+	                inputOp: 'math_number',
+	                inputName: 'CHANGE'
 	            }
 	        ]
 	    },
-	    'setSizeTo:':{
-	        'opcode':'looks_setsizeto',
-	        'argMap':[
+	    'setSizeTo:': {
+	        opcode: 'looks_setsizeto',
+	        argMap: [
 	            {
-	                'type':'input',
-	                'inputOp':'math_number',
-	                'inputName':'SIZE'
+	                type: 'input',
+	                inputOp: 'math_number',
+	                inputName: 'SIZE'
 	            }
 	        ]
 	    },
-	    'comeToFront':{
-	        'opcode':'looks_gotofront',
-	        'argMap':[
+	    'comeToFront': {
+	        opcode: 'looks_gotofront',
+	        argMap: [
 	        ]
 	    },
-	    'goBackByLayers:':{
-	        'opcode':'looks_gobacklayers',
-	        'argMap':[
+	    'goBackByLayers:': {
+	        opcode: 'looks_gobacklayers',
+	        argMap: [
 	            {
-	                'type':'input',
-	                'inputOp':'math_integer',
-	                'inputName':'NUM'
+	                type: 'input',
+	                inputOp: 'math_integer',
+	                inputName: 'NUM'
 	            }
 	        ]
 	    },
-	    'costumeIndex':{
-	        'opcode':'looks_costumeorder',
-	        'argMap':[
+	    'costumeIndex': {
+	        opcode: 'looks_costumeorder',
+	        argMap: [
 	        ]
 	    },
-	    'sceneName':{
-	        'opcode':'looks_backdropname',
-	        'argMap':[
+	    'sceneName': {
+	        opcode: 'looks_backdropname',
+	        argMap: [
 	        ]
 	    },
-	    'scale':{
-	        'opcode':'looks_size',
-	        'argMap':[
+	    'scale': {
+	        opcode: 'looks_size',
+	        argMap: [
 	        ]
 	    },
-	    'startSceneAndWait':{
-	        'opcode':'looks_switchbackdroptoandwait',
-	        'argMap':[
+	    'startSceneAndWait': {
+	        opcode: 'looks_switchbackdroptoandwait',
+	        argMap: [
 	            {
-	                'type':'input',
-	                'inputOp':'looks_backdrops',
-	                'inputName':'BACKDROP'
+	                type: 'input',
+	                inputOp: 'looks_backdrops',
+	                inputName: 'BACKDROP'
 	            }
 	        ]
 	    },
-	    'nextScene':{
-	        'opcode':'looks_nextbackdrop',
-	        'argMap':[
+	    'nextScene': {
+	        opcode: 'looks_nextbackdrop',
+	        argMap: [
 	        ]
 	    },
-	    'backgroundIndex':{
-	        'opcode':'looks_backdroporder',
-	        'argMap':[
+	    'backgroundIndex': {
+	        opcode: 'looks_backdroporder',
+	        argMap: [
 	        ]
 	    },
-	    'playSound:':{
-	        'opcode':'sound_play',
-	        'argMap':[
+	    'playSound:': {
+	        opcode: 'sound_play',
+	        argMap: [
 	            {
-	                'type':'input',
-	                'inputOp':'sound_sounds_option',
-	                'inputName':'SOUND_MENU'
+	                type: 'input',
+	                inputOp: 'sound_sounds_option',
+	                inputName: 'SOUND_MENU'
 	            }
 	        ]
 	    },
-	    'doPlaySoundAndWait':{
-	        'opcode':'sound_playuntildone',
-	        'argMap':[
+	    'doPlaySoundAndWait': {
+	        opcode: 'sound_playuntildone',
+	        argMap: [
 	            {
-	                'type':'input',
-	                'inputOp':'sound_sounds_option',
-	                'inputName':'SOUND_MENU'
+	                type: 'input',
+	                inputOp: 'sound_sounds_option',
+	                inputName: 'SOUND_MENU'
 	            }
 	        ]
 	    },
-	    'stopAllSounds':{
-	        'opcode':'sound_stopallsounds',
-	        'argMap':[
+	    'stopAllSounds': {
+	        opcode: 'sound_stopallsounds',
+	        argMap: [
 	        ]
 	    },
-	    'playDrum':{
-	        'opcode':'sound_playdrumforbeats',
-	        'argMap':[
+	    'playDrum': {
+	        opcode: 'sound_playdrumforbeats',
+	        argMap: [
 	            {
-	                'type':'input',
-	                'inputOp':'math_number',
-	                'inputName':'DRUMTYPE'
+	                type: 'input',
+	                inputOp: 'math_number',
+	                inputName: 'DRUMTYPE'
 	            },
 	            {
-	                'type':'input',
-	                'inputOp':'math_number',
-	                'inputName':'BEATS'
+	                type: 'input',
+	                inputOp: 'math_number',
+	                inputName: 'BEATS'
 	            }
 	        ]
 	    },
-	    'rest:elapsed:from:':{
-	        'opcode':'sound_restforbeats',
-	        'argMap':[
+	    'rest:elapsed:from:': {
+	        opcode: 'sound_restforbeats',
+	        argMap: [
 	            {
-	                'type':'input',
-	                'inputOp':'math_number',
-	                'inputName':'BEATS'
+	                type: 'input',
+	                inputOp: 'math_number',
+	                inputName: 'BEATS'
 	            }
 	        ]
 	    },
-	    'noteOn:duration:elapsed:from:':{
-	        'opcode':'sound_playnoteforbeats',
-	        'argMap':[
+	    'noteOn:duration:elapsed:from:': {
+	        opcode: 'sound_playnoteforbeats',
+	        argMap: [
 	            {
-	                'type':'input',
-	                'inputOp':'math_number',
-	                'inputName':'NOTE'
+	                type: 'input',
+	                inputOp: 'math_number',
+	                inputName: 'NOTE'
 	            },
 	            {
-	                'type':'input',
-	                'inputOp':'math_number',
-	                'inputName':'BEATS'
+	                type: 'input',
+	                inputOp: 'math_number',
+	                inputName: 'BEATS'
 	            }
 	        ]
 	    },
-	    'instrument:':{
-	        'opcode':'sound_setinstrumentto',
-	        'argMap':[
+	    'instrument:': {
+	        opcode: 'sound_setinstrumentto',
+	        argMap: [
 	            {
-	                'type':'input',
-	                'inputOp':'math_number',
-	                'inputName':'INSTRUMENT'
+	                type: 'input',
+	                inputOp: 'math_number',
+	                inputName: 'INSTRUMENT'
 	            }
 	        ]
 	    },
-	    'changeVolumeBy:':{
-	        'opcode':'sound_changevolumeby',
-	        'argMap':[
+	    'changeVolumeBy:': {
+	        opcode: 'sound_changevolumeby',
+	        argMap: [
 	            {
-	                'type':'input',
-	                'inputOp':'math_number',
-	                'inputName':'VOLUME'
+	                type: 'input',
+	                inputOp: 'math_number',
+	                inputName: 'VOLUME'
 	            }
 	        ]
 	    },
-	    'setVolumeTo:':{
-	        'opcode':'sound_setvolumeto',
-	        'argMap':[
+	    'setVolumeTo:': {
+	        opcode: 'sound_setvolumeto',
+	        argMap: [
 	            {
-	                'type':'input',
-	                'inputOp':'math_number',
-	                'inputName':'VOLUME'
+	                type: 'input',
+	                inputOp: 'math_number',
+	                inputName: 'VOLUME'
 	            }
 	        ]
 	    },
-	    'volume':{
-	        'opcode':'sound_volume',
-	        'argMap':[
+	    'volume': {
+	        opcode: 'sound_volume',
+	        argMap: [
 	        ]
 	    },
-	    'changeTempoBy:':{
-	        'opcode':'sound_changetempoby',
-	        'argMap':[
+	    'changeTempoBy:': {
+	        opcode: 'sound_changetempoby',
+	        argMap: [
 	            {
-	                'type':'input',
-	                'inputOp':'math_number',
-	                'inputName':'TEMPO'
+	                type: 'input',
+	                inputOp: 'math_number',
+	                inputName: 'TEMPO'
 	            }
 	        ]
 	    },
-	    'setTempoTo:':{
-	        'opcode':'sound_settempotobpm',
-	        'argMap':[
+	    'setTempoTo:': {
+	        opcode: 'sound_settempotobpm',
+	        argMap: [
 	            {
-	                'type':'input',
-	                'inputOp':'math_number',
-	                'inputName':'TEMPO'
+	                type: 'input',
+	                inputOp: 'math_number',
+	                inputName: 'TEMPO'
 	            }
 	        ]
 	    },
-	    'tempo':{
-	        'opcode':'sound_tempo',
-	        'argMap':[
+	    'tempo': {
+	        opcode: 'sound_tempo',
+	        argMap: [
 	        ]
 	    },
-	    'clearPenTrails':{
-	        'opcode':'pen_clear',
-	        'argMap':[
+	    'clearPenTrails': {
+	        opcode: 'pen_clear',
+	        argMap: [
 	        ]
 	    },
-	    'stampCostume':{
-	        'opcode':'pen_stamp',
-	        'argMap':[
+	    'stampCostume': {
+	        opcode: 'pen_stamp',
+	        argMap: [
 	        ]
 	    },
-	    'putPenDown':{
-	        'opcode':'pen_pendown',
-	        'argMap':[
+	    'putPenDown': {
+	        opcode: 'pen_pendown',
+	        argMap: [
 	        ]
 	    },
-	    'putPenUp':{
-	        'opcode':'pen_penup',
-	        'argMap':[
+	    'putPenUp': {
+	        opcode: 'pen_penup',
+	        argMap: [
 	        ]
 	    },
-	    'penColor:':{
-	        'opcode':'pen_setpencolortocolor',
-	        'argMap':[
+	    'penColor:': {
+	        opcode: 'pen_setpencolortocolor',
+	        argMap: [
 	            {
-	                'type':'input',
-	                'inputOp':'colour_picker',
-	                'inputName':'COLOR'
+	                type: 'input',
+	                inputOp: 'colour_picker',
+	                inputName: 'COLOR'
 	            }
 	        ]
 	    },
-	    'changePenHueBy:':{
-	        'opcode':'pen_changepencolorby',
-	        'argMap':[
+	    'changePenHueBy:': {
+	        opcode: 'pen_changepencolorby',
+	        argMap: [
 	            {
-	                'type':'input',
-	                'inputOp':'math_number',
-	                'inputName':'COLOR'
+	                type: 'input',
+	                inputOp: 'math_number',
+	                inputName: 'COLOR'
 	            }
 	        ]
 	    },
-	    'setPenHueTo:':{
-	        'opcode':'pen_setpencolortonum',
-	        'argMap':[
+	    'setPenHueTo:': {
+	        opcode: 'pen_setpencolortonum',
+	        argMap: [
 	            {
-	                'type':'input',
-	                'inputOp':'math_number',
-	                'inputName':'COLOR'
+	                type: 'input',
+	                inputOp: 'math_number',
+	                inputName: 'COLOR'
 	            }
 	        ]
 	    },
-	    'changePenShadeBy:':{
-	        'opcode':'pen_changepenshadeby',
-	        'argMap':[
+	    'changePenShadeBy:': {
+	        opcode: 'pen_changepenshadeby',
+	        argMap: [
 	            {
-	                'type':'input',
-	                'inputOp':'math_number',
-	                'inputName':'SHADE'
+	                type: 'input',
+	                inputOp: 'math_number',
+	                inputName: 'SHADE'
 	            }
 	        ]
 	    },
-	    'setPenShadeTo:':{
-	        'opcode':'pen_changepenshadeby',
-	        'argMap':[
+	    'setPenShadeTo:': {
+	        opcode: 'pen_changepenshadeby',
+	        argMap: [
 	            {
-	                'type':'input',
-	                'inputOp':'math_number',
-	                'inputName':'SHADE'
+	                type: 'input',
+	                inputOp: 'math_number',
+	                inputName: 'SHADE'
 	            }
 	        ]
 	    },
-	    'changePenSizeBy:':{
-	        'opcode':'pen_changepensizeby',
-	        'argMap':[
+	    'changePenSizeBy:': {
+	        opcode: 'pen_changepensizeby',
+	        argMap: [
 	            {
-	                'type':'input',
-	                'inputOp':'math_number',
-	                'inputName':'SIZE'
+	                type: 'input',
+	                inputOp: 'math_number',
+	                inputName: 'SIZE'
 	            }
 	        ]
 	    },
-	    'penSize:':{
-	        'opcode':'pen_setpensizeto',
-	        'argMap':[
+	    'penSize:': {
+	        opcode: 'pen_setpensizeto',
+	        argMap: [
 	            {
-	                'type':'input',
-	                'inputOp':'math_number',
-	                'inputName':'SIZE'
+	                type: 'input',
+	                inputOp: 'math_number',
+	                inputName: 'SIZE'
 	            }
 	        ]
 	    },
-	    'whenGreenFlag':{
-	        'opcode':'event_whenflagclicked',
-	        'argMap':[
+	    'whenGreenFlag': {
+	        opcode: 'event_whenflagclicked',
+	        argMap: [
 	        ]
 	    },
-	    'whenKeyPressed':{
-	        'opcode':'event_whenkeypressed',
-	        'argMap':[
+	    'whenKeyPressed': {
+	        opcode: 'event_whenkeypressed',
+	        argMap: [
 	            {
-	                'type':'field',
-	                'fieldName':'KEY_OPTION'
+	                type: 'field',
+	                fieldName: 'KEY_OPTION'
 	            }
 	        ]
 	    },
-	    'whenClicked':{
-	        'opcode':'event_whenthisspriteclicked',
-	        'argMap':[
+	    'whenClicked': {
+	        opcode: 'event_whenthisspriteclicked',
+	        argMap: [
 	        ]
 	    },
-	    'whenSceneStarts':{
-	        'opcode':'event_whenbackdropswitchesto',
-	        'argMap':[
+	    'whenSceneStarts': {
+	        opcode: 'event_whenbackdropswitchesto',
+	        argMap: [
 	            {
-	                'type':'field',
-	                'fieldName':'BACKDROP'
+	                type: 'field',
+	                fieldName: 'BACKDROP'
 	            }
 	        ]
 	    },
-	    'whenSensorGreaterThan':{
-	        'opcode':'event_whengreaterthan',
-	        'argMap':[
+	    'whenSensorGreaterThan': {
+	        opcode: 'event_whengreaterthan',
+	        argMap: [
 	            {
-	                'type':'field',
-	                'fieldName':'WHENGREATERTHANMENU'
+	                type: 'field',
+	                fieldName: 'WHENGREATERTHANMENU'
 	            },
 	            {
-	                'type':'input',
-	                'inputOp':'math_number',
-	                'inputName':'VALUE'
+	                type: 'input',
+	                inputOp: 'math_number',
+	                inputName: 'VALUE'
 	            }
 	        ]
 	    },
-	    'whenIReceive':{
-	        'opcode':'event_whenbroadcastreceived',
-	        'argMap':[
+	    'whenIReceive': {
+	        opcode: 'event_whenbroadcastreceived',
+	        argMap: [
 	            {
-	                'type':'field',
-	                'fieldName':'BROADCAST_OPTION'
+	                type: 'field',
+	                fieldName: 'BROADCAST_OPTION'
 	            }
 	        ]
 	    },
-	    'broadcast:':{
-	        'opcode':'event_broadcast',
-	        'argMap':[
+	    'broadcast:': {
+	        opcode: 'event_broadcast',
+	        argMap: [
 	            {
-	                'type':'input',
-	                'inputOp':'event_broadcast_menu',
-	                'inputName':'BROADCAST_OPTION'
+	                type: 'input',
+	                inputOp: 'event_broadcast_menu',
+	                inputName: 'BROADCAST_OPTION'
 	            }
 	        ]
 	    },
-	    'doBroadcastAndWait':{
-	        'opcode':'event_broadcastandwait',
-	        'argMap':[
+	    'doBroadcastAndWait': {
+	        opcode: 'event_broadcastandwait',
+	        argMap: [
 	            {
-	                'type':'input',
-	                'inputOp':'event_broadcast_menu',
-	                'inputName':'BROADCAST_OPTION'
+	                type: 'input',
+	                inputOp: 'event_broadcast_menu',
+	                inputName: 'BROADCAST_OPTION'
 	            }
 	        ]
 	    },
-	    'wait:elapsed:from:':{
-	        'opcode':'control_wait',
-	        'argMap':[
+	    'wait:elapsed:from:': {
+	        opcode: 'control_wait',
+	        argMap: [
 	            {
-	                'type':'input',
-	                'inputOp':'math_positive_number',
-	                'inputName':'DURATION'
+	                type: 'input',
+	                inputOp: 'math_positive_number',
+	                inputName: 'DURATION'
 	            }
 	        ]
 	    },
-	    'doRepeat':{
-	        'opcode':'control_repeat',
-	        'argMap':[
+	    'doRepeat': {
+	        opcode: 'control_repeat',
+	        argMap: [
 	            {
-	                'type':'input',
-	                'inputOp':'math_whole_number',
-	                'inputName':'TIMES'
+	                type: 'input',
+	                inputOp: 'math_whole_number',
+	                inputName: 'TIMES'
 	            },
 	            {
-	                'type':'input',
-	                'inputName': 'SUBSTACK'
+	                type: 'input',
+	                inputName: 'SUBSTACK'
 	            }
 	        ]
 	    },
-	    'doForever':{
-	        'opcode':'control_forever',
-	        'argMap':[
+	    'doForever': {
+	        opcode: 'control_forever',
+	        argMap: [
 	            {
-	                'type':'input',
-	                'inputName':'SUBSTACK'
+	                type: 'input',
+	                inputName: 'SUBSTACK'
 	            }
 	        ]
 	    },
-	    'doIf':{
-	        'opcode':'control_if',
-	        'argMap':[
+	    'doIf': {
+	        opcode: 'control_if',
+	        argMap: [
 	            {
-	                'type':'input',
-	                'inputName':'CONDITION'
+	                type: 'input',
+	                inputName: 'CONDITION'
 	            },
 	            {
-	                'type':'input',
-	                'inputName':'SUBSTACK'
+	                type: 'input',
+	                inputName: 'SUBSTACK'
 	            }
 	        ]
 	    },
-	    'doIfElse':{
-	        'opcode':'control_if_else',
-	        'argMap':[
+	    'doIfElse': {
+	        opcode: 'control_if_else',
+	        argMap: [
 	            {
-	                'type':'input',
-	                'inputName':'CONDITION'
+	                type: 'input',
+	                inputName: 'CONDITION'
 	            },
 	            {
-	                'type':'input',
-	                'inputName':'SUBSTACK'
+	                type: 'input',
+	                inputName: 'SUBSTACK'
 	            },
 	            {
-	                'type':'input',
-	                'inputName':'SUBSTACK2'
+	                type: 'input',
+	                inputName: 'SUBSTACK2'
 	            }
 	        ]
 	    },
-	    'doWaitUntil':{
-	        'opcode':'control_wait_until',
-	        'argMap':[
+	    'doWaitUntil': {
+	        opcode: 'control_wait_until',
+	        argMap: [
 	            {
-	                'type':'input',
-	                'inputName':'CONDITION'
+	                type: 'input',
+	                inputName: 'CONDITION'
 	            }
 	        ]
 	    },
-	    'doUntil':{
-	        'opcode':'control_repeat_until',
-	        'argMap':[
+	    'doUntil': {
+	        opcode: 'control_repeat_until',
+	        argMap: [
 	            {
-	                'type':'input',
-	                'inputName':'CONDITION'
+	                type: 'input',
+	                inputName: 'CONDITION'
 	            },
 	            {
-	                'type':'input',
-	                'inputName':'SUBSTACK'
+	                type: 'input',
+	                inputName: 'SUBSTACK'
 	            }
 	        ]
 	    },
-	    'stopScripts':{
-	        'opcode':'control_stop',
-	        'argMap':[
+	    'stopScripts': {
+	        opcode: 'control_stop',
+	        argMap: [
 	            {
-	                'type':'field',
-	                'fieldName':'STOP_OPTION'
+	                type: 'field',
+	                fieldName: 'STOP_OPTION'
 	            }
 	        ]
 	    },
-	    'whenCloned':{
-	        'opcode':'control_start_as_clone',
-	        'argMap':[
+	    'whenCloned': {
+	        opcode: 'control_start_as_clone',
+	        argMap: [
 	        ]
 	    },
-	    'createCloneOf':{
-	        'opcode':'control_create_clone_of',
-	        'argMap':[
+	    'createCloneOf': {
+	        opcode: 'control_create_clone_of',
+	        argMap: [
 	            {
-	                'type':'input',
-	                'inputOp':'control_create_clone_of_menu',
-	                'inputName':'CLONE_OPTION'
+	                type: 'input',
+	                inputOp: 'control_create_clone_of_menu',
+	                inputName: 'CLONE_OPTION'
 	            }
 	        ]
 	    },
-	    'deleteClone':{
-	        'opcode':'control_delete_this_clone',
-	        'argMap':[
+	    'deleteClone': {
+	        opcode: 'control_delete_this_clone',
+	        argMap: [
 	        ]
 	    },
-	    'touching:':{
-	        'opcode':'sensing_touchingobject',
-	        'argMap':[
+	    'touching:': {
+	        opcode: 'sensing_touchingobject',
+	        argMap: [
 	            {
-	                'type':'input',
-	                'inputOp':'sensing_touchingobjectmenu',
-	                'inputName':'TOUCHINGOBJECTMENU'
+	                type: 'input',
+	                inputOp: 'sensing_touchingobjectmenu',
+	                inputName: 'TOUCHINGOBJECTMENU'
 	            }
 	        ]
 	    },
-	    'touchingColor:':{
-	        'opcode':'sensing_touchingcolor',
-	        'argMap':[
+	    'touchingColor:': {
+	        opcode: 'sensing_touchingcolor',
+	        argMap: [
 	            {
-	                'type':'input',
-	                'inputOp':'colour_picker',
-	                'inputName':'COLOR'
+	                type: 'input',
+	                inputOp: 'colour_picker',
+	                inputName: 'COLOR'
 	            }
 	        ]
 	    },
-	    'color:sees:':{
-	        'opcode':'sensing_coloristouchingcolor',
-	        'argMap':[
+	    'color:sees:': {
+	        opcode: 'sensing_coloristouchingcolor',
+	        argMap: [
 	            {
-	                'type':'input',
-	                'inputOp':'colour_picker',
-	                'inputName':'COLOR'
+	                type: 'input',
+	                inputOp: 'colour_picker',
+	                inputName: 'COLOR'
 	            },
 	            {
-	                'type':'input',
-	                'inputOp':'colour_picker',
-	                'inputName':'COLOR2'
+	                type: 'input',
+	                inputOp: 'colour_picker',
+	                inputName: 'COLOR2'
 	            }
 	        ]
 	    },
-	    'distanceTo:':{
-	        'opcode':'sensing_distanceto',
-	        'argMap':[
+	    'distanceTo:': {
+	        opcode: 'sensing_distanceto',
+	        argMap: [
 	            {
-	                'type':'input',
-	                'inputOp':'sensing_distancetomenu',
-	                'inputName':'DISTANCETOMENU'
+	                type: 'input',
+	                inputOp: 'sensing_distancetomenu',
+	                inputName: 'DISTANCETOMENU'
 	            }
 	        ]
 	    },
-	    'doAsk':{
-	        'opcode':'sensing_askandwait',
-	        'argMap':[
+	    'doAsk': {
+	        opcode: 'sensing_askandwait',
+	        argMap: [
 	            {
-	                'type':'input',
-	                'inputOp':'text',
-	                'inputName':'QUESTION'
+	                type: 'input',
+	                inputOp: 'text',
+	                inputName: 'QUESTION'
 	            }
 	        ]
 	    },
-	    'answer':{
-	        'opcode':'sensing_answer',
-	        'argMap':[
+	    'answer': {
+	        opcode: 'sensing_answer',
+	        argMap: [
 	        ]
 	    },
-	    'keyPressed:':{
-	        'opcode':'sensing_keypressed',
-	        'argMap':[
+	    'keyPressed:': {
+	        opcode: 'sensing_keypressed',
+	        argMap: [
 	            {
-	                'type':'input',
-	                'inputOp':'sensing_keyoptions',
-	                'inputName':'KEY_OPTION'
+	                type: 'input',
+	                inputOp: 'sensing_keyoptions',
+	                inputName: 'KEY_OPTION'
 	            }
 	        ]
 	    },
-	    'mousePressed':{
-	        'opcode':'sensing_mousedown',
-	        'argMap':[
+	    'mousePressed': {
+	        opcode: 'sensing_mousedown',
+	        argMap: [
 	        ]
 	    },
-	    'mouseX':{
-	        'opcode':'sensing_mousex',
-	        'argMap':[
+	    'mouseX': {
+	        opcode: 'sensing_mousex',
+	        argMap: [
 	        ]
 	    },
-	    'mouseY':{
-	        'opcode':'sensing_mousey',
-	        'argMap':[
+	    'mouseY': {
+	        opcode: 'sensing_mousey',
+	        argMap: [
 	        ]
 	    },
-	    'soundLevel':{
-	        'opcode':'sensing_loudness',
-	        'argMap':[
+	    'soundLevel': {
+	        opcode: 'sensing_loudness',
+	        argMap: [
 	        ]
 	    },
-	    'senseVideoMotion':{
-	        'opcode':'sensing_videoon',
-	        'argMap':[
+	    'senseVideoMotion': {
+	        opcode: 'sensing_videoon',
+	        argMap: [
 	            {
-	                'type':'input',
-	                'inputOp':'sensing_videoonmenuone',
-	                'inputName':'VIDEOONMENU1'
+	                type: 'input',
+	                inputOp: 'sensing_videoonmenuone',
+	                inputName: 'VIDEOONMENU1'
 	            },
 	            {
-	                'type':'input',
-	                'inputOp':'sensing_videoonmenutwo',
-	                'inputName':'VIDEOONMENU2'
+	                type: 'input',
+	                inputOp: 'sensing_videoonmenutwo',
+	                inputName: 'VIDEOONMENU2'
 	            }
 	        ]
 	    },
-	    'setVideoState':{
-	        'opcode':'sensing_videotoggle',
-	        'argMap':[
+	    'setVideoState': {
+	        opcode: 'sensing_videotoggle',
+	        argMap: [
 	            {
-	                'type':'input',
-	                'inputOp':'sensing_videotogglemenu',
-	                'inputName':'VIDEOTOGGLEMENU'
+	                type: 'input',
+	                inputOp: 'sensing_videotogglemenu',
+	                inputName: 'VIDEOTOGGLEMENU'
 	            }
 	        ]
 	    },
-	    'setVideoTransparency':{
-	        'opcode':'sensing_setvideotransparency',
-	        'argMap':[
+	    'setVideoTransparency': {
+	        opcode: 'sensing_setvideotransparency',
+	        argMap: [
 	            {
-	                'type':'input',
-	                'inputOp':'math_number',
-	                'inputName':'TRANSPARENCY'
+	                type: 'input',
+	                inputOp: 'math_number',
+	                inputName: 'TRANSPARENCY'
 	            }
 	        ]
 	    },
-	    'timer':{
-	        'opcode':'sensing_timer',
-	        'argMap':[
+	    'timer': {
+	        opcode: 'sensing_timer',
+	        argMap: [
 	        ]
 	    },
-	    'timerReset':{
-	        'opcode':'sensing_resettimer',
-	        'argMap':[
+	    'timerReset': {
+	        opcode: 'sensing_resettimer',
+	        argMap: [
 	        ]
 	    },
-	    'getAttribute:of:':{
-	        'opcode':'sensing_of',
-	        'argMap':[
+	    'getAttribute:of:': {
+	        opcode: 'sensing_of',
+	        argMap: [
 	            {
-	                'type':'input',
-	                'inputOp':'sensing_of_property_menu',
-	                'inputName':'PROPERTY'
+	                type: 'input',
+	                inputOp: 'sensing_of_property_menu',
+	                inputName: 'PROPERTY'
 	            },
 	            {
-	                'type':'input',
-	                'inputOp':'sensing_of_object_menu',
-	                'inputName':'OBJECT'
+	                type: 'input',
+	                inputOp: 'sensing_of_object_menu',
+	                inputName: 'OBJECT'
 	            }
 	        ]
 	    },
-	    'timeAndDate':{
-	        'opcode':'sensing_current',
-	        'argMap':[
+	    'timeAndDate': {
+	        opcode: 'sensing_current',
+	        argMap: [
 	            {
-	                'type':'input',
-	                'inputOp':'sensing_currentmenu',
-	                'inputName':'CURRENTMENU'
+	                type: 'input',
+	                inputOp: 'sensing_currentmenu',
+	                inputName: 'CURRENTMENU'
 	            }
 	        ]
 	    },
-	    'timestamp':{
-	        'opcode':'sensing_dayssince2000',
-	        'argMap':[
+	    'timestamp': {
+	        opcode: 'sensing_dayssince2000',
+	        argMap: [
 	        ]
 	    },
-	    'getUserName':{
-	        'opcode':'sensing_username',
-	        'argMap':[
+	    'getUserName': {
+	        opcode: 'sensing_username',
+	        argMap: [
 	        ]
 	    },
-	    '+':{
-	        'opcode':'operator_add',
-	        'argMap':[
+	    '+': {
+	        opcode: 'operator_add',
+	        argMap: [
 	            {
-	                'type':'input',
-	                'inputOp':'math_number',
-	                'inputName':'NUM1'
+	                type: 'input',
+	                inputOp: 'math_number',
+	                inputName: 'NUM1'
 	            },
 	            {
-	                'type':'input',
-	                'inputOp':'math_number',
-	                'inputName':'NUM2'
+	                type: 'input',
+	                inputOp: 'math_number',
+	                inputName: 'NUM2'
 	            }
 	        ]
 	    },
-	    '-':{
-	        'opcode':'operator_subtract',
-	        'argMap':[
+	    '-': {
+	        opcode: 'operator_subtract',
+	        argMap: [
 	            {
-	                'type':'input',
-	                'inputOp':'math_number',
-	                'inputName':'NUM1'
+	                type: 'input',
+	                inputOp: 'math_number',
+	                inputName: 'NUM1'
 	            },
 	            {
-	                'type':'input',
-	                'inputOp':'math_number',
-	                'inputName':'NUM2'
+	                type: 'input',
+	                inputOp: 'math_number',
+	                inputName: 'NUM2'
 	            }
 	        ]
 	    },
-	    '*':{
-	        'opcode':'operator_multiply',
-	        'argMap':[
+	    '*': {
+	        opcode: 'operator_multiply',
+	        argMap: [
 	            {
-	                'type':'input',
-	                'inputOp':'math_number',
-	                'inputName':'NUM1'
+	                type: 'input',
+	                inputOp: 'math_number',
+	                inputName: 'NUM1'
 	            },
 	            {
-	                'type':'input',
-	                'inputOp':'math_number',
-	                'inputName':'NUM2'
+	                type: 'input',
+	                inputOp: 'math_number',
+	                inputName: 'NUM2'
 	            }
 	        ]
 	    },
-	    '/':{
-	        'opcode':'operator_divide',
-	        'argMap':[
+	    '/': {
+	        opcode: 'operator_divide',
+	        argMap: [
 	            {
-	                'type':'input',
-	                'inputOp':'math_number',
-	                'inputName':'NUM1'
+	                type: 'input',
+	                inputOp: 'math_number',
+	                inputName: 'NUM1'
 	            },
 	            {
-	                'type':'input',
-	                'inputOp':'math_number',
-	                'inputName':'NUM2'
+	                type: 'input',
+	                inputOp: 'math_number',
+	                inputName: 'NUM2'
 	            }
 	        ]
 	    },
-	    'randomFrom:to:':{
-	        'opcode':'operator_random',
-	        'argMap':[
+	    'randomFrom:to:': {
+	        opcode: 'operator_random',
+	        argMap: [
 	            {
-	                'type':'input',
-	                'inputOp':'math_number',
-	                'inputName':'FROM'
+	                type: 'input',
+	                inputOp: 'math_number',
+	                inputName: 'FROM'
 	            },
 	            {
-	                'type':'input',
-	                'inputOp':'math_number',
-	                'inputName':'TO'
+	                type: 'input',
+	                inputOp: 'math_number',
+	                inputName: 'TO'
 	            }
 	        ]
 	    },
-	    '<':{
-	        'opcode':'operator_lt',
-	        'argMap':[
+	    '<': {
+	        opcode: 'operator_lt',
+	        argMap: [
 	            {
-	                'type':'input',
-	                'inputOp':'text',
-	                'inputName':'OPERAND1'
+	                type: 'input',
+	                inputOp: 'text',
+	                inputName: 'OPERAND1'
 	            },
 	            {
-	                'type':'input',
-	                'inputOp':'text',
-	                'inputName':'OPERAND2'
+	                type: 'input',
+	                inputOp: 'text',
+	                inputName: 'OPERAND2'
 	            }
 	        ]
 	    },
-	    '=':{
-	        'opcode':'operator_equals',
-	        'argMap':[
+	    '=': {
+	        opcode: 'operator_equals',
+	        argMap: [
 	            {
-	                'type':'input',
-	                'inputOp':'text',
-	                'inputName':'OPERAND1'
+	                type: 'input',
+	                inputOp: 'text',
+	                inputName: 'OPERAND1'
 	            },
 	            {
-	                'type':'input',
-	                'inputOp':'text',
-	                'inputName':'OPERAND2'
+	                type: 'input',
+	                inputOp: 'text',
+	                inputName: 'OPERAND2'
 	            }
 	        ]
 	    },
-	    '>':{
-	        'opcode':'operator_gt',
-	        'argMap':[
+	    '>': {
+	        opcode: 'operator_gt',
+	        argMap: [
 	            {
-	                'type':'input',
-	                'inputOp':'text',
-	                'inputName':'OPERAND1'
+	                type: 'input',
+	                inputOp: 'text',
+	                inputName: 'OPERAND1'
 	            },
 	            {
-	                'type':'input',
-	                'inputOp':'text',
-	                'inputName':'OPERAND2'
+	                type: 'input',
+	                inputOp: 'text',
+	                inputName: 'OPERAND2'
 	            }
 	        ]
 	    },
-	    '&':{
-	        'opcode':'operator_and',
-	        'argMap':[
+	    '&': {
+	        opcode: 'operator_and',
+	        argMap: [
 	            {
-	                'type':'input',
-	                'inputName':'OPERAND1'
+	                type: 'input',
+	                inputName: 'OPERAND1'
 	            },
 	            {
-	                'type':'input',
-	                'inputName':'OPERAND2'
+	                type: 'input',
+	                inputName: 'OPERAND2'
 	            }
 	        ]
 	    },
-	    '|':{
-	        'opcode':'operator_or',
-	        'argMap':[
+	    '|': {
+	        opcode: 'operator_or',
+	        argMap: [
 	            {
-	                'type':'input',
-	                'inputName':'OPERAND1'
+	                type: 'input',
+	                inputName: 'OPERAND1'
 	            },
 	            {
-	                'type':'input',
-	                'inputName':'OPERAND2'
+	                type: 'input',
+	                inputName: 'OPERAND2'
 	            }
 	        ]
 	    },
-	    'not':{
-	        'opcode':'operator_not',
-	        'argMap':[
+	    'not': {
+	        opcode: 'operator_not',
+	        argMap: [
 	            {
-	                'type':'input',
-	                'inputName':'OPERAND'
+	                type: 'input',
+	                inputName: 'OPERAND'
 	            }
 	        ]
 	    },
-	    'concatenate:with:':{
-	        'opcode':'operator_join',
-	        'argMap':[
+	    'concatenate:with:': {
+	        opcode: 'operator_join',
+	        argMap: [
 	            {
-	                'type':'input',
-	                'inputOp':'text',
-	                'inputName':'STRING1'
+	                type: 'input',
+	                inputOp: 'text',
+	                inputName: 'STRING1'
 	            },
 	            {
-	                'type':'input',
-	                'inputOp':'text',
-	                'inputName':'STRING2'
+	                type: 'input',
+	                inputOp: 'text',
+	                inputName: 'STRING2'
 	            }
 	        ]
 	    },
-	    'letter:of:':{
-	        'opcode':'operator_letter_of',
-	        'argMap':[
+	    'letter:of:': {
+	        opcode: 'operator_letter_of',
+	        argMap: [
 	            {
-	                'type':'input',
-	                'inputOp':'math_whole_number',
-	                'inputName':'LETTER'
+	                type: 'input',
+	                inputOp: 'math_whole_number',
+	                inputName: 'LETTER'
 	            },
 	            {
-	                'type':'input',
-	                'inputOp':'text',
-	                'inputName':'STRING'
+	                type: 'input',
+	                inputOp: 'text',
+	                inputName: 'STRING'
 	            }
 	        ]
 	    },
-	    'stringLength:':{
-	        'opcode':'operator_length',
-	        'argMap':[
+	    'stringLength:': {
+	        opcode: 'operator_length',
+	        argMap: [
 	            {
-	                'type':'input',
-	                'inputOp':'text',
-	                'inputName':'STRING'
+	                type: 'input',
+	                inputOp: 'text',
+	                inputName: 'STRING'
 	            }
 	        ]
 	    },
-	    '%':{
-	        'opcode':'operator_mod',
-	        'argMap':[
+	    '%': {
+	        opcode: 'operator_mod',
+	        argMap: [
 	            {
-	                'type':'input',
-	                'inputOp':'math_number',
-	                'inputName':'NUM1'
+	                type: 'input',
+	                inputOp: 'math_number',
+	                inputName: 'NUM1'
 	            },
 	            {
-	                'type':'input',
-	                'inputOp':'math_number',
-	                'inputName':'NUM2'
+	                type: 'input',
+	                inputOp: 'math_number',
+	                inputName: 'NUM2'
 	            }
 	        ]
 	    },
-	    'rounded':{
-	        'opcode':'operator_round',
-	        'argMap':[
+	    'rounded': {
+	        opcode: 'operator_round',
+	        argMap: [
 	            {
-	                'type':'input',
-	                'inputOp':'math_number',
-	                'inputName':'NUM'
+	                type: 'input',
+	                inputOp: 'math_number',
+	                inputName: 'NUM'
 	            }
 	        ]
 	    },
-	    'computeFunction:of:':{
-	        'opcode':'operator_mathop',
-	        'argMap':[
+	    'computeFunction:of:': {
+	        opcode: 'operator_mathop',
+	        argMap: [
 	            {
-	                'type':'input',
-	                'inputOp':'operator_mathop_menu',
-	                'inputName':'OPERATOR'
+	                type: 'input',
+	                inputOp: 'operator_mathop_menu',
+	                inputName: 'OPERATOR'
 	            },
 	            {
-	                'type':'input',
-	                'inputOp':'math_number',
-	                'inputName':'NUM'
+	                type: 'input',
+	                inputOp: 'math_number',
+	                inputName: 'NUM'
 	            }
 	        ]
 	    },
-	    'readVariable':{
-	        'opcode':'data_variable',
-	        'argMap':[
+	    'readVariable': {
+	        opcode: 'data_variable',
+	        argMap: [
 	            {
-	                'type':'input',
-	                'inputOp':'data_variablemenu',
-	                'inputName':'VARIABLE'
+	                type: 'input',
+	                inputOp: 'data_variablemenu',
+	                inputName: 'VARIABLE'
 	            }
 	        ]
 	    },
-	    'setVar:to:':{
-	        'opcode':'data_setvariableto',
-	        'argMap':[
+	    'setVar:to:': {
+	        opcode: 'data_setvariableto',
+	        argMap: [
 	            {
-	                'type':'input',
-	                'inputOp':'data_variablemenu',
-	                'inputName':'VARIABLE'
+	                type: 'input',
+	                inputOp: 'data_variablemenu',
+	                inputName: 'VARIABLE'
 	            },
 	            {
-	                'type':'input',
-	                'inputOp':'text',
-	                'inputName':'VALUE'
+	                type: 'input',
+	                inputOp: 'text',
+	                inputName: 'VALUE'
 	            }
 	        ]
 	    },
-	    'changeVar:by:':{
-	        'opcode':'data_changevariableby',
-	        'argMap':[
+	    'changeVar:by:': {
+	        opcode: 'data_changevariableby',
+	        argMap: [
 	            {
-	                'type':'input',
-	                'inputOp':'data_variablemenu',
-	                'inputName':'VARIABLE'
+	                type: 'input',
+	                inputOp: 'data_variablemenu',
+	                inputName: 'VARIABLE'
 	            },
 	            {
-	                'type':'input',
-	                'inputOp':'math_number',
-	                'inputName':'VALUE'
+	                type: 'input',
+	                inputOp: 'math_number',
+	                inputName: 'VALUE'
 	            }
 	        ]
 	    },
-	    'showVariable:':{
-	        'opcode':'data_showvariable',
-	        'argMap':[
+	    'showVariable:': {
+	        opcode: 'data_showvariable',
+	        argMap: [
 	            {
-	                'type':'input',
-	                'inputOp':'data_variablemenu',
-	                'inputName':'VARIABLE'
+	                type: 'input',
+	                inputOp: 'data_variablemenu',
+	                inputName: 'VARIABLE'
 	            }
 	        ]
 	    },
-	    'hideVariable:':{
-	        'opcode':'data_hidevariable',
-	        'argMap':[
+	    'hideVariable:': {
+	        opcode: 'data_hidevariable',
+	        argMap: [
 	            {
-	                'type':'input',
-	                'inputOp':'data_variablemenu',
-	                'inputName':'VARIABLE'
+	                type: 'input',
+	                inputOp: 'data_variablemenu',
+	                inputName: 'VARIABLE'
 	            }
 	        ]
 	    },
-	    'contentsOfList:':{
-	        'opcode':'data_list',
-	        'argMap':[
+	    'contentsOfList:': {
+	        opcode: 'data_list',
+	        argMap: [
 	            {
-	                'type':'field',
-	                'fieldName':'LIST'
+	                type: 'field',
+	                fieldName: 'LIST'
 	            }
 	        ]
 	    },
-	    'append:toList:':{
-	        'opcode':'data_addtolist',
-	        'argMap':[
+	    'append:toList:': {
+	        opcode: 'data_addtolist',
+	        argMap: [
 	            {
-	                'type':'input',
-	                'inputOp':'text',
-	                'inputName':'ITEM'
+	                type: 'input',
+	                inputOp: 'text',
+	                inputName: 'ITEM'
 	            },
 	            {
-	                'type':'field',
-	                'fieldName':'LIST'
+	                type: 'field',
+	                fieldName: 'LIST'
 	            }
 	        ]
 	    },
-	    'deleteLine:ofList:':{
-	        'opcode':'data_deleteoflist',
-	        'argMap':[
+	    'deleteLine:ofList:': {
+	        opcode: 'data_deleteoflist',
+	        argMap: [
 	            {
-	                'type':'input',
-	                'inputOp':'math_integer',
-	                'inputName':'INDEX'
+	                type: 'input',
+	                inputOp: 'math_integer',
+	                inputName: 'INDEX'
 	            },
 	            {
-	                'type':'field',
-	                'fieldName':'LIST'
+	                type: 'field',
+	                fieldName: 'LIST'
 	            }
 	        ]
 	    },
-	    'insert:at:ofList:':{
-	        'opcode':'data_insertatlist',
-	        'argMap':[
+	    'insert:at:ofList:': {
+	        opcode: 'data_insertatlist',
+	        argMap: [
 	            {
-	                'type':'input',
-	                'inputOp':'text',
-	                'inputName':'ITEM'
+	                type: 'input',
+	                inputOp: 'text',
+	                inputName: 'ITEM'
 	            },
 	            {
-	                'type':'input',
-	                'inputOp':'math_integer',
-	                'inputName':'INDEX'
+	                type: 'input',
+	                inputOp: 'math_integer',
+	                inputName: 'INDEX'
 	            },
 	            {
-	                'type':'field',
-	                'fieldName':'LIST'
+	                type: 'field',
+	                fieldName: 'LIST'
 	            }
 	        ]
 	    },
-	    'setLine:ofList:to:':{
-	        'opcode':'data_replaceitemoflist',
-	        'argMap':[
+	    'setLine:ofList:to:': {
+	        opcode: 'data_replaceitemoflist',
+	        argMap: [
 	            {
-	                'type':'input',
-	                'inputOp':'math_integer',
-	                'inputName':'INDEX'
+	                type: 'input',
+	                inputOp: 'math_integer',
+	                inputName: 'INDEX'
 	            },
 	            {
-	                'type':'field',
-	                'fieldName':'LIST'
+	                type: 'field',
+	                fieldName: 'LIST'
 	            },
 	            {
-	                'type':'input',
-	                'inputOp':'text',
-	                'inputName':'ITEM'
+	                type: 'input',
+	                inputOp: 'text',
+	                inputName: 'ITEM'
 	            }
 	        ]
 	    },
-	    'getLine:ofList:':{
-	        'opcode':'data_itemoflist',
-	        'argMap':[
+	    'getLine:ofList:': {
+	        opcode: 'data_itemoflist',
+	        argMap: [
 	            {
-	                'type':'input',
-	                'inputOp':'math_integer',
-	                'inputName':'INDEX'
+	                type: 'input',
+	                inputOp: 'math_integer',
+	                inputName: 'INDEX'
 	            },
 	            {
-	                'type':'field',
-	                'fieldName':'LIST'
+	                type: 'field',
+	                fieldName: 'LIST'
 	            }
 	        ]
 	    },
-	    'lineCountOfList:':{
-	        'opcode':'data_lengthoflist',
-	        'argMap':[
+	    'lineCountOfList:': {
+	        opcode: 'data_lengthoflist',
+	        argMap: [
 	            {
-	                'type':'field',
-	                'fieldName':'LIST'
+	                type: 'field',
+	                fieldName: 'LIST'
 	            }
 	        ]
 	    },
-	    'list:contains:':{
-	        'opcode':'data_listcontainsitem',
-	        'argMap':[
+	    'list:contains:': {
+	        opcode: 'data_listcontainsitem',
+	        argMap: [
 	            {
-	                'type':'field',
-	                'fieldName':'LIST'
+	                type: 'field',
+	                fieldName: 'LIST'
 	            },
 	            {
-	                'type':'input',
-	                'inputOp':'text',
-	                'inputName':'ITEM'
+	                type: 'input',
+	                inputOp: 'text',
+	                inputName: 'ITEM'
 	            }
 	        ]
 	    },
-	    'showList:':{
-	        'opcode':'data_showlist',
-	        'argMap':[
+	    'showList:': {
+	        opcode: 'data_showlist',
+	        argMap: [
 	            {
-	                'type':'field',
-	                'fieldName':'LIST'
+	                type: 'field',
+	                fieldName: 'LIST'
 	            }
 	        ]
 	    },
-	    'hideList:':{
-	        'opcode':'data_hidelist',
-	        'argMap':[
+	    'hideList:': {
+	        opcode: 'data_hidelist',
+	        argMap: [
 	            {
-	                'type':'field',
-	                'fieldName':'LIST'
+	                type: 'field',
+	                fieldName: 'LIST'
 	            }
 	        ]
 	    },
-	    'procDef':{
-	        'opcode':'procedures_defnoreturn',
-	        'argMap':[]
+	    'procDef': {
+	        opcode: 'procedures_defnoreturn',
+	        argMap: []
 	    },
-	    'getParam':{
-	        'opcode':'procedures_param',
-	        'argMap':[]
+	    'getParam': {
+	        opcode: 'procedures_param',
+	        argMap: []
 	    },
-	    'call':{
-	        'opcode':'procedures_callnoreturn',
-	        'argMap':[]
+	    'call': {
+	        opcode: 'procedures_callnoreturn',
+	        argMap: []
 	    }
 	};
 	module.exports = specMap;
