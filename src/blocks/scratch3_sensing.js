@@ -20,6 +20,7 @@ Scratch3SensingBlocks.prototype.getPrimitives = function () {
         sensing_distanceto: this.distanceTo,
         sensing_timer: this.getTimer,
         sensing_resettimer: this.resetTimer,
+        sensing_of: this.getAttributeOf,
         sensing_mousex: this.getMouseX,
         sensing_mousey: this.getMouseY,
         sensing_mousedown: this.getMouseDown,
@@ -122,6 +123,49 @@ Scratch3SensingBlocks.prototype.daysSince2000 = function () {
     var mSecsSinceStart = today.valueOf() - start.valueOf();
     mSecsSinceStart += ((today.getTimezoneOffset() - dstAdjust) * 60 * 1000);
     return mSecsSinceStart / msPerDay;
+};
+
+Scratch3SensingBlocks.prototype.getAttributeOf = function (args) {
+    var attrTarget;
+
+    if (args.OBJECT === '_stage_') {
+        attrTarget = this.runtime.getTargetForStage();
+    } else {
+        attrTarget = this.runtime.getSpriteTargetByName(args.OBJECT);
+    }
+
+    // Generic attributes
+    if (attrTarget.isStage) {
+        switch (args.PROPERTY) {
+        // Scratch 1.4 support
+        case 'background #': return attrTarget.currentCostume + 1;
+
+        case 'backdrop #': return attrTarget.currentCostume + 1;
+        case 'backdrop name':
+            return attrTarget.sprite.costumes[attrTarget.currentCostume].name;
+        case 'volume': return; // @todo: Keep this in mind for sound blocks!
+        }
+    } else {
+        switch (args.PROPERTY) {
+        case 'x position': return attrTarget.x;
+        case 'y position': return attrTarget.y;
+        case 'direction': return attrTarget.direction;
+        case 'costume #': return attrTarget.currentCostume + 1;
+        case 'costume name':
+            return attrTarget.sprite.costumes[attrTarget.currentCostume].name;
+        case 'size': return attrTarget.size;
+        case 'volume': return; // @todo: above, keep in mind for sound blocks..
+        }
+    }
+
+    // Variables
+    var varName = args.PROPERTY;
+    if (attrTarget.variables.hasOwnProperty(varName)) {
+        return attrTarget.variables[varName].value;
+    }
+
+    // Otherwise, 0
+    return 0;
 };
 
 module.exports = Scratch3SensingBlocks;
