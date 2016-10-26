@@ -3,8 +3,6 @@ var util = require('util');
 
 var Runtime = require('./engine/runtime');
 var sb2import = require('./import/sb2import');
-var Sprite = require('./sprites/sprite');
-var Blocks = require('./engine/blocks');
 
 /**
  * Handles connections between blocks, stage, and extensions.
@@ -188,53 +186,6 @@ VirtualMachine.prototype.addBackdrop = function (backdropObject) {
     stage.sprite.costumes.push(backdropObject);
     // Switch to the backdrop.
     stage.setCostume(stage.sprite.costumes.length - 1);
-};
-
-/**
- * Temporary way to make an empty project, in case the desired project
- * cannot be loaded from the online server.
- */
-VirtualMachine.prototype.createEmptyProject = function () {
-    // Stage.
-    var blocks2 = new Blocks();
-    var stage = new Sprite(blocks2, this.runtime);
-    stage.name = 'Stage';
-    stage.costumes.push({
-        skin: './assets/stage.png',
-        name: 'backdrop1',
-        bitmapResolution: 2,
-        rotationCenterX: 480,
-        rotationCenterY: 360
-    });
-    var target2 = stage.createClone();
-    this.runtime.targets.push(target2);
-    target2.x = 0;
-    target2.y = 0;
-    target2.direction = 90;
-    target2.size = 200;
-    target2.visible = true;
-    target2.isStage = true;
-    // Sprite1 (cat).
-    var blocks1 = new Blocks();
-    var sprite = new Sprite(blocks1, this.runtime);
-    sprite.name = 'Sprite1';
-    sprite.costumes.push({
-        skin: './assets/scratch_cat.svg',
-        name: 'costume1',
-        bitmapResolution: 1,
-        rotationCenterX: 47,
-        rotationCenterY: 55
-    });
-    var target1 = sprite.createClone();
-    this.runtime.targets.push(target1);
-    target1.x = 0;
-    target1.y = 0;
-    target1.direction = 90;
-    target1.size = 100;
-    target1.visible = true;
-    this.editingTarget = this.runtime.targets[0];
-    this.emitTargetsUpdate();
-    this.emitWorkspaceUpdate();
 };
 
 /**
