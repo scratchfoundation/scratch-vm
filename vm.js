@@ -104,6 +104,9 @@
 	    instance.runtime.on(Runtime.VISUAL_REPORT, function (id, value) {
 	        instance.emit(Runtime.VISUAL_REPORT, {id: id, value: value});
 	    });
+	    instance.runtime.on(Runtime.SPRITE_INFO_REPORT, function (data) {
+	        instance.emit(Runtime.SPRITE_INFO_REPORT, data);
+	    });
 
 	    this.blockListener = this.blockListener.bind(this);
 	    this.flyoutBlockListener = this.flyoutBlockListener.bind(this);
@@ -368,6 +371,14 @@
 	    this.emit('workspaceUpdate', {
 	        xml: this.editingTarget.blocks.toXML()
 	    });
+	};
+
+	/**
+	 * Post/edit sprite info for the current editing target.
+	 * @param {object} data An object with sprite info data to set.
+	 */
+	VirtualMachine.prototype.postSpriteInfo = function (data) {
+	    this.editingTarget.postSpriteInfo(data);
 	};
 
 	module.exports = VirtualMachine;
@@ -1692,6 +1703,12 @@
 	Runtime.VISUAL_REPORT = 'VISUAL_REPORT';
 
 	/**
+	 * Event name for sprite info report.
+	 * @const {string}
+	 */
+	Runtime.SPRITE_INFO_REPORT = 'SPRITE_INFO_REPORT';
+
+	/**
 	 * How rapidly we try to step threads by default, in ms.
 	 */
 	Runtime.THREAD_STEP_INTERVAL = 1000 / 60;
@@ -2048,6 +2065,7 @@
 	    // Script glows must be cleared.
 	    this._scriptGlowsPreviousFrame = [];
 	    this._updateGlows();
+	    this.spriteInfoReport(editingTarget);
 	};
 
 	/**
@@ -2165,6 +2183,23 @@
 	 */
 	Runtime.prototype.visualReport = function (blockId, value) {
 	    this.emit(Runtime.VISUAL_REPORT, blockId, String(value));
+	};
+
+	/**
+	 * Emit a sprite info report if the provided target is the editing target.
+	 * @param {!Target} target Target to report sprite info for.
+	 */
+	Runtime.prototype.spriteInfoReport = function (target) {
+	    if (target !== this._editingTarget) {
+	        return;
+	    }
+	    this.emit(Runtime.SPRITE_INFO_REPORT, {
+	        x: target.x,
+	        y: target.y,
+	        direction: target.direction,
+	        visible: target.visible,
+	        rotationStyle: target.rotationStyle
+	    });
 	};
 
 	/**
@@ -16241,6 +16276,7 @@
 	            this.runtime.requestRedraw();
 	        }
 	    }
+	    this.runtime.spriteInfoReport(this);
 	};
 
 	/**
@@ -16283,6 +16319,7 @@
 	            this.runtime.requestRedraw();
 	        }
 	    }
+	    this.runtime.spriteInfoReport(this);
 	};
 
 	/**
@@ -16310,7 +16347,7 @@
 	    if (this.isStage) {
 	        return;
 	    }
-	    this.visible = visible;
+	    this.visible = !!visible;
 	    if (this.renderer) {
 	        this.renderer.updateDrawableProperties(this.drawableID, {
 	            visible: this.visible
@@ -16319,6 +16356,7 @@
 	            this.runtime.requestRedraw();
 	        }
 	    }
+	    this.runtime.spriteInfoReport(this);
 	};
 
 	/**
@@ -16424,6 +16462,7 @@
 	            this.runtime.requestRedraw();
 	        }
 	    }
+	    this.runtime.spriteInfoReport(this);
 	};
 
 	/**
@@ -16464,6 +16503,7 @@
 	            this.runtime.requestRedraw();
 	        }
 	    }
+	    this.runtime.spriteInfoReport(this);
 	};
 
 	/**
@@ -16685,6 +16725,28 @@
 	};
 
 	/**
+	 * Post/edit sprite info.
+	 * @param {object} data An object with sprite info data to set.
+	 */
+	RenderedTarget.prototype.postSpriteInfo = function (data) {
+	    if (data.hasOwnProperty('x')) {
+	        this.setXY(data.x, this.y);
+	    }
+	    if (data.hasOwnProperty('y')) {
+	        this.setXY(this.x, data.y);
+	    }
+	    if (data.hasOwnProperty('direction')) {
+	        this.setDirection(data.direction);
+	    }
+	    if (data.hasOwnProperty('rotationStyle')) {
+	        this.setRotationStyle(data.rotationStyle);
+	    }
+	    if (data.hasOwnProperty('visible')) {
+	        this.setVisible(data.visible);
+	    }
+	};
+
+	/**
 	 * Dispose, destroying any run-time properties.
 	 */
 	RenderedTarget.prototype.dispose = function () {
@@ -16810,6 +16872,13 @@
 	    this.lists[name] = newList;
 	    return newList;
 	};
+
+	/**
+	 * Post/edit sprite info.
+	 * @param {object} data An object with sprite info data to set.
+	 * @abstract
+	 */
+	Target.prototype.postSpriteInfo = function () {};
 
 	/**
 	 * Call to destroy a target.
