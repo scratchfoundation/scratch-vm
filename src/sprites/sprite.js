@@ -1,4 +1,4 @@
-var Clone = require('./clone');
+var RenderedTarget = require('./rendered-target');
 var Blocks = require('../engine/blocks');
 
 /**
@@ -45,7 +45,7 @@ var Sprite = function (blocks, runtime) {
  * @returns {!Clone} Newly created clone.
  */
 Sprite.prototype.createClone = function () {
-    var newClone = new Clone(this, this.runtime);
+    var newClone = new RenderedTarget(this, this.runtime);
     newClone.isOriginal = this.clones.length === 0;
     this.clones.push(newClone);
     if (newClone.isOriginal) {
