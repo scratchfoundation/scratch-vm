@@ -186,6 +186,12 @@ Runtime.BLOCK_GLOW_OFF = 'BLOCK_GLOW_OFF';
 Runtime.VISUAL_REPORT = 'VISUAL_REPORT';
 
 /**
+ * Event name for sprite info report.
+ * @const {string}
+ */
+Runtime.SPRITE_INFO_REPORT = 'SPRITE_INFO_REPORT';
+
+/**
  * How rapidly we try to step threads by default, in ms.
  */
 Runtime.THREAD_STEP_INTERVAL = 1000 / 60;
@@ -542,6 +548,7 @@ Runtime.prototype.setEditingTarget = function (editingTarget) {
     // Script glows must be cleared.
     this._scriptGlowsPreviousFrame = [];
     this._updateGlows();
+    this.spriteInfoReport(editingTarget);
 };
 
 /**
@@ -659,6 +666,23 @@ Runtime.prototype.glowScript = function (topBlockId, isGlowing) {
  */
 Runtime.prototype.visualReport = function (blockId, value) {
     this.emit(Runtime.VISUAL_REPORT, blockId, String(value));
+};
+
+/**
+ * Emit a sprite info report if the provided target is the editing target.
+ * @param {!Target} target Target to report sprite info for.
+ */
+Runtime.prototype.spriteInfoReport = function (target) {
+    if (target !== this._editingTarget) {
+        return;
+    }
+    this.emit(Runtime.SPRITE_INFO_REPORT, {
+        x: target.x,
+        y: target.y,
+        direction: target.direction,
+        visible: target.visible,
+        rotationStyle: target.rotationStyle
+    });
 };
 
 /**

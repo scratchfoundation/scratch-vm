@@ -42,6 +42,9 @@ var VirtualMachine = function () {
     instance.runtime.on(Runtime.VISUAL_REPORT, function (id, value) {
         instance.emit(Runtime.VISUAL_REPORT, {id: id, value: value});
     });
+    instance.runtime.on(Runtime.SPRITE_INFO_REPORT, function (data) {
+        instance.emit(Runtime.SPRITE_INFO_REPORT, data);
+    });
 
     this.blockListener = this.blockListener.bind(this);
     this.flyoutBlockListener = this.flyoutBlockListener.bind(this);
@@ -306,6 +309,14 @@ VirtualMachine.prototype.emitWorkspaceUpdate = function () {
     this.emit('workspaceUpdate', {
         xml: this.editingTarget.blocks.toXML()
     });
+};
+
+/**
+ * Post/edit sprite info for the current editing target.
+ * @param {object} data An object with sprite info data to set.
+ */
+VirtualMachine.prototype.postSpriteInfo = function (data) {
+    this.editingTarget.postSpriteInfo(data);
 };
 
 module.exports = VirtualMachine;
