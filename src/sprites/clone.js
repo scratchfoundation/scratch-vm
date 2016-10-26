@@ -505,6 +505,18 @@ Clone.prototype.goBackLayers = function (nLayers) {
 };
 
 /**
+ * Move behind some other clone.
+ * @param {!Clone} otherClone Other clone to move behind.
+ */
+Clone.prototype.goBehindOtherClone = function (otherClone) {
+    if (this.renderer) {
+        var otherLayer = this.renderer.setDrawableOrder(
+            otherClone.drawableID, 0, true);
+        this.renderer.setDrawableOrder(this.drawableID, otherLayer);
+    }
+};
+
+/**
  * Keep a desired position within a fence.
  * @param {number} newX New desired X position.
  * @param {number} newY New desired Y position.
@@ -552,11 +564,12 @@ Clone.prototype.keepInFence = function (newX, newY, optFence) {
  * @return {!Clone} New clone object.
  */
 Clone.prototype.makeClone = function () {
-    if (!this.runtime.clonesAvailable()) {
-        return; // Hit max clone limit.
+    if (!this.runtime.clonesAvailable() || this.isStage) {
+        return; // Hit max clone limit, or this is the stage.
     }
     this.runtime.changeCloneCounter(1);
     var newClone = this.sprite.createClone();
+    // Copy all properties.
     newClone.x = this.x;
     newClone.y = this.y;
     newClone.direction = this.direction;
@@ -569,6 +582,8 @@ Clone.prototype.makeClone = function () {
     newClone.lists = JSON.parse(JSON.stringify(this.lists));
     newClone.initDrawable();
     newClone.updateAllDrawableProperties();
+    // Place clone behind the current target.
+    newClone.goBehindOtherClone(this);
     return newClone;
 };
 
