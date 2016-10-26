@@ -6,7 +6,7 @@
  */
 
 var Blocks = require('../engine/blocks');
-var Clone = require('../sprites/clone');
+var RenderedTarget = require('../sprites/rendered-target');
 var Sprite = require('../sprites/sprite');
 var Color = require('../util/color.js');
 var log = require('../util/log');
@@ -101,11 +101,11 @@ var parseScratchObject = function (object, runtime, topLevel) {
     }
     if (object.hasOwnProperty('rotationStyle')) {
         if (object.rotationStyle === 'none') {
-            target.rotationStyle = Clone.ROTATION_STYLE_NONE;
+            target.rotationStyle = RenderedTarget.ROTATION_STYLE_NONE;
         } else if (object.rotationStyle === 'leftRight') {
-            target.rotationStyle = Clone.ROTATION_STYLE_LEFT_RIGHT;
+            target.rotationStyle = RenderedTarget.ROTATION_STYLE_LEFT_RIGHT;
         } else if (object.rotationStyle === 'normal') {
-            target.rotationStyle = Clone.ROTATION_STYLE_ALL_AROUND;
+            target.rotationStyle = RenderedTarget.ROTATION_STYLE_ALL_AROUND;
         }
     }
     target.isStage = topLevel;
