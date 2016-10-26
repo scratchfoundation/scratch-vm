@@ -231,9 +231,7 @@ window.onload = function() {
 
     // Inform VM of animation frames.
     var animate = function() {
-        stats.end();
-        stats.begin();
-        window.vm.animationFrame();
+        stats.update();
         requestAnimationFrame(animate);
     };
     requestAnimationFrame(animate);

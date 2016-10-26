@@ -121,13 +121,6 @@ VirtualMachine.prototype.getPlaygroundData = function () {
 };
 
 /**
- * Handle an animation frame.
- */
-VirtualMachine.prototype.animationFrame = function () {
-    this.runtime.animationFrame();
-};
-
-/**
  * Post I/O data to the virtual devices.
  * @param {?string} device Name of virtual I/O device.
  * @param {Object} data Any data object to post to the I/O device.

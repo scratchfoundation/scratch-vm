@@ -102,13 +102,6 @@ var Runtime = function () {
     this.compatibilityMode = false;
 
     /**
-     * How fast in ms "single stepping mode" should run, in ms.
-     * Can be updated dynamically.
-     * @type {!number}
-     */
-    this.singleStepInterval = 1000 / 10;
-
-    /**
      * A reference to the current runtime stepping interval, set
      * by a `setInterval`.
      * @type {!number}
@@ -534,6 +527,10 @@ Runtime.prototype._step = function () {
     this.redrawRequested = false;
     var inactiveThreads = this.sequencer.stepThreads();
     this._updateGlows(inactiveThreads);
+    if (this.renderer) {
+        // @todo: Only render when this.redrawRequested or clones rendered.
+        this.renderer.draw();
+    }
 };
 
 /**
@@ -730,23 +727,11 @@ Runtime.prototype.requestRedraw = function () {
 };
 
 /**
- * Handle an animation frame from the main thread.
- */
-Runtime.prototype.animationFrame = function () {
-    if (this.renderer) {
-        // @todo: Only render when this.redrawRequested or clones rendered.
-        this.renderer.draw();
-    }
-};
-
-/**
  * Set up timers to repeatedly step in a browser.
  */
 Runtime.prototype.start = function () {
     var interval = Runtime.THREAD_STEP_INTERVAL;
-    if (this.singleStepping) {
-        interval = this.singleStepInterval;
-    } else if (this.compatibilityMode) {
+    if (this.compatibilityMode) {
         interval = Runtime.THREAD_STEP_INTERVAL_COMPATIBILITY;
     }
     this.currentStepTime = interval;
