@@ -191,6 +191,9 @@ VirtualMachine.prototype.addBackdrop = function (backdropObject) {
 VirtualMachine.prototype.renameSprite = function (targetId, newName) {
     var target = this.runtime.getTargetById(targetId);
     if (target) {
+        if (!target.isSprite()) {
+            throw new Error('Cannot rename non-sprite targets.');
+        }
         var sprite = target.sprite;
         if (!sprite) {
             throw new Error('No sprite associated with this target.');
@@ -209,8 +212,8 @@ VirtualMachine.prototype.renameSprite = function (targetId, newName) {
 VirtualMachine.prototype.deleteSprite = function (targetId) {
     var target = this.runtime.getTargetById(targetId);
     if (target) {
-        if (target.isStage) {
-            throw new Error('Cannot delete stage targets.');
+        if (!target.isSprite()) {
+            throw new Error('Cannot delete non-sprite targets.');
         }
         var sprite = target.sprite;
         if (!sprite) {
