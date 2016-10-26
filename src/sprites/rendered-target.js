@@ -398,6 +398,14 @@ RenderedTarget.prototype.getName = function () {
 };
 
 /**
+ * Return whether this rendered target is a sprite (not a clone, not the stage).
+ * @return {boolean} True if not a clone and not the stage.
+ */
+RenderedTarget.prototype.isSprite = function () {
+    return !this.isStage && this.isOriginal;
+};
+
+/**
  * Return the rendered target's tight bounding box.
  * Includes top, left, bottom, right attributes in Scratch coordinates.
  * @return {?Object} Tight bounding box, or null.

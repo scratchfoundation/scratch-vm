@@ -187,6 +187,59 @@ VirtualMachine.prototype.addBackdrop = function (backdropObject) {
 };
 
 /**
+ * Rename a sprite.
+ * @param {string} targetId ID of a target whose sprite to rename.
+ * @param {string} newName New name of the sprite.
+ */
+VirtualMachine.prototype.renameSprite = function (targetId, newName) {
+    var target = this.runtime.getTargetById(targetId);
+    if (target) {
+        if (!target.isSprite()) {
+            throw new Error('Cannot rename non-sprite targets.');
+        }
+        var sprite = target.sprite;
+        if (!sprite) {
+            throw new Error('No sprite associated with this target.');
+        }
+        sprite.name = newName;
+        this.emitTargetsUpdate();
+    } else {
+        throw new Error('No target with the provided id.');
+    }
+};
+
+/**
+ * Delete a sprite and all its clones.
+ * @param {string} targetId ID of a target whose sprite to delete.
+ */
+VirtualMachine.prototype.deleteSprite = function (targetId) {
+    var target = this.runtime.getTargetById(targetId);
+    if (target) {
+        if (!target.isSprite()) {
+            throw new Error('Cannot delete non-sprite targets.');
+        }
+        var sprite = target.sprite;
+        if (!sprite) {
+            throw new Error('No sprite associated with this target.');
+        }
+        var currentEditingTarget = this.editingTarget;
+        for (var i = 0; i < sprite.clones.length; i++) {
+            var clone = sprite.clones[i];
+            this.runtime.stopForTarget(sprite.clones[i]);
+            this.runtime.disposeTarget(sprite.clones[i]);
+            // Ensure editing target is switched if we are deleting it.
+            if (clone === currentEditingTarget) {
+                this.setEditingTarget(this.runtime.targets[0].id);
+            }
+        }
+        // Sprite object should be deleted by GC.
+        this.emitTargetsUpdate();
+    } else {
+        throw new Error('No target with the provided id.');
+    }
+};
+
+/**
  * Temporary way to make an empty project, in case the desired project
  * cannot be loaded from the online server.
  */
