@@ -158,6 +158,7 @@ RenderedTarget.prototype.setXY = function (x, y) {
             this.runtime.requestRedraw();
         }
     }
+    this.runtime.spriteInfoReport(this);
 };
 
 /**
@@ -200,6 +201,7 @@ RenderedTarget.prototype.setDirection = function (direction) {
             this.runtime.requestRedraw();
         }
     }
+    this.runtime.spriteInfoReport(this);
 };
 
 /**
@@ -227,7 +229,7 @@ RenderedTarget.prototype.setVisible = function (visible) {
     if (this.isStage) {
         return;
     }
-    this.visible = visible;
+    this.visible = !!visible;
     if (this.renderer) {
         this.renderer.updateDrawableProperties(this.drawableID, {
             visible: this.visible
@@ -236,6 +238,7 @@ RenderedTarget.prototype.setVisible = function (visible) {
             this.runtime.requestRedraw();
         }
     }
+    this.runtime.spriteInfoReport(this);
 };
 
 /**
@@ -341,6 +344,7 @@ RenderedTarget.prototype.setRotationStyle = function (rotationStyle) {
             this.runtime.requestRedraw();
         }
     }
+    this.runtime.spriteInfoReport(this);
 };
 
 /**
@@ -381,6 +385,7 @@ RenderedTarget.prototype.updateAllDrawableProperties = function () {
             this.runtime.requestRedraw();
         }
     }
+    this.runtime.spriteInfoReport(this);
 };
 
 /**
@@ -599,6 +604,28 @@ RenderedTarget.prototype.makeClone = function () {
  */
 RenderedTarget.prototype.onGreenFlag = function () {
     this.clearEffects();
+};
+
+/**
+ * Post/edit sprite info.
+ * @param {object} data An object with sprite info data to set.
+ */
+RenderedTarget.prototype.postSpriteInfo = function (data) {
+    if (data.hasOwnProperty('x')) {
+        this.setXY(data.x, this.y);
+    }
+    if (data.hasOwnProperty('y')) {
+        this.setXY(this.x, data.y);
+    }
+    if (data.hasOwnProperty('direction')) {
+        this.setDirection(data.direction);
+    }
+    if (data.hasOwnProperty('rotationStyle')) {
+        this.setRotationStyle(data.rotationStyle);
+    }
+    if (data.hasOwnProperty('visible')) {
+        this.setVisible(data.visible);
+    }
 };
 
 /**

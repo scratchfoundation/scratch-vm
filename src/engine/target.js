@@ -106,6 +106,13 @@ Target.prototype.lookupOrCreateList = function (name) {
 };
 
 /**
+ * Post/edit sprite info.
+ * @param {object} data An object with sprite info data to set.
+ * @abstract
+ */
+Target.prototype.postSpriteInfo = function () {};
+
+/**
  * Call to destroy a target.
  * @abstract
  */
