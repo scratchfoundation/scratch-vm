@@ -564,8 +564,8 @@ Clone.prototype.keepInFence = function (newX, newY, optFence) {
  * @return {!Clone} New clone object.
  */
 Clone.prototype.makeClone = function () {
-    if (!this.runtime.clonesAvailable()) {
-        return; // Hit max clone limit.
+    if (!this.runtime.clonesAvailable() || this.isStage) {
+        return; // Hit max clone limit, or this is the stage.
     }
     this.runtime.changeCloneCounter(1);
     var newClone = this.sprite.createClone();
