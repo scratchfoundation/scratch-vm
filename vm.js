@@ -16413,7 +16413,10 @@
 	        this.renderer.updateDrawableProperties(this.drawableID, {
 	            skin: costume.skin,
 	            costumeResolution: costume.bitmapResolution,
-	            rotationCenter: [costume.rotationCenterX, costume.rotationCenterY]
+	            rotationCenter: [
+	                costume.rotationCenterX / costume.bitmapResolution,
+	                costume.rotationCenterY / costume.bitmapResolution
+	            ]
 	        });
 	        if (this.visible) {
 	            this.runtime.requestRedraw();
@@ -16474,7 +16477,10 @@
 	            visible: this.visible,
 	            skin: costume.skin,
 	            costumeResolution: costume.bitmapResolution,
-	            rotationCenter: [costume.rotationCenterX, costume.rotationCenterY]
+	            rotationCenter: [
+	                costume.rotationCenterX / costume.bitmapResolution,
+	                costume.rotationCenterY / costume.bitmapResolution
+	            ]
 	        });
 	        if (this.visible) {
 	            this.runtime.requestRedraw();
