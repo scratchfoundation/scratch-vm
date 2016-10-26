@@ -35,7 +35,7 @@ var Sprite = function (blocks, runtime) {
     this.costumes = [];
     /**
      * List of clones for this sprite, including the original.
-     * @type {Array.<!Clone>}
+     * @type {Array.<!RenderedTarget>}
      */
     this.clones = [];
 };
