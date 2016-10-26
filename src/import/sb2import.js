@@ -347,6 +347,9 @@ var parseBlock = function (sb2block) {
                 if (shadowObscured) {
                     fieldValue = '#990000';
                 }
+            } else if (shadowObscured) {
+                // Filled drop-down menu.
+                fieldValue = '';
             }
             var fields = {};
             fields[fieldName] = {
