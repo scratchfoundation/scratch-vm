@@ -429,6 +429,7 @@ Runtime.prototype.stopAll = function () {
     // Dispose all clones.
     var newTargets = [];
     for (var i = 0; i < this.targets.length; i++) {
+        this.targets[i].onStopAll();
         if (this.targets[i].hasOwnProperty('isOriginal') &&
             !this.targets[i].isOriginal) {
             this.targets[i].dispose();

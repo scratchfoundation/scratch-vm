@@ -435,6 +435,21 @@ Clone.prototype.makeClone = function () {
  */
 Clone.prototype.onGreenFlag = function () {
     this.clearEffects();
+    if (this.audioEngine) {
+        this.audioEngine.stopAllSounds();
+        this.audioEngine.clearEffects();
+    }
+};
+
+/**
+ * Called when the project receives a "stop all"
+ * Stop all sounds
+ */
+Clone.prototype.onStopAll = function () {
+    if (this.audioEngine) {
+        this.audioEngine.stopAllSounds();
+        this.audioEngine.clearEffects();
+    }
 };
 
 /**
