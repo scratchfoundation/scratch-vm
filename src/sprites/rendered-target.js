@@ -250,8 +250,8 @@ RenderedTarget.prototype.setSize = function (size) {
         return;
     }
     // Keep size between 5% and 535%.
-    var sizeMin = Math.min(1, Math.max(5 / costume.width, 5 / costume.height));
-    var sizeMax = Math.min((1.5 * 480) / costume.width, (1.5 * 360) / costume.height);
+    var sizeMin = Math.min(1, Math.max(5 / this.costume.width, 5 / this.costume.height));
+    var sizeMax = Math.min((1.5 * 480) / this.costume.width, (1.5 * 360) / this.costume.height);
     this.size = MathUtil.clamp(size, sizeMin, sizeMax);
     if (this.renderer) {
         var renderedDirectionScale = this._getRenderedDirectionAndScale();
