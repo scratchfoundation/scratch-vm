@@ -250,7 +250,6 @@ RenderedTarget.prototype.setSize = function (size) {
         return;
     }
     // Keep size between 5% and 535%.
-
     this.size = MathUtil.clamp(size, Math.min(1, Math.max(5 / costume.width, 5 / costume.height)), Math.min((1.5 * 480) / costume.width, (1.5 * 360) / costume.height);
     if (this.renderer) {
         var renderedDirectionScale = this._getRenderedDirectionAndScale();
