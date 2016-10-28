@@ -250,7 +250,8 @@ RenderedTarget.prototype.setSize = function (size) {
         return;
     }
     // Keep size between 5% and 535%.
-    this.size = MathUtil.clamp(size, 5, 535);
+    //@todo get minimum size
+    this.size = MathUtil.clamp(size, 5, math.min((stage.height / costume.height) * 100, (stage.width / costume.width) * 100));
     if (this.renderer) {
         var renderedDirectionScale = this._getRenderedDirectionAndScale();
         this.renderer.updateDrawableProperties(this.drawableID, {
