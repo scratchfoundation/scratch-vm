@@ -102,13 +102,6 @@ var Runtime = function () {
     this.compatibilityMode = false;
 
     /**
-     * How fast in ms "single stepping mode" should run, in ms.
-     * Can be updated dynamically.
-     * @type {!number}
-     */
-    this.singleStepInterval = 1000 / 10;
-
-    /**
      * A reference to the current runtime stepping interval, set
      * by a `setInterval`.
      * @type {!number}
@@ -191,6 +184,12 @@ Runtime.BLOCK_GLOW_OFF = 'BLOCK_GLOW_OFF';
  * @const {string}
  */
 Runtime.VISUAL_REPORT = 'VISUAL_REPORT';
+
+/**
+ * Event name for sprite info report.
+ * @const {string}
+ */
+Runtime.SPRITE_INFO_REPORT = 'SPRITE_INFO_REPORT';
 
 /**
  * How rapidly we try to step threads by default, in ms.
@@ -534,6 +533,10 @@ Runtime.prototype._step = function () {
     this.redrawRequested = false;
     var inactiveThreads = this.sequencer.stepThreads();
     this._updateGlows(inactiveThreads);
+    if (this.renderer) {
+        // @todo: Only render when this.redrawRequested or clones rendered.
+        this.renderer.draw();
+    }
 };
 
 /**
@@ -545,6 +548,7 @@ Runtime.prototype.setEditingTarget = function (editingTarget) {
     // Script glows must be cleared.
     this._scriptGlowsPreviousFrame = [];
     this._updateGlows();
+    this.spriteInfoReport(editingTarget);
 };
 
 /**
@@ -665,6 +669,23 @@ Runtime.prototype.visualReport = function (blockId, value) {
 };
 
 /**
+ * Emit a sprite info report if the provided target is the editing target.
+ * @param {!Target} target Target to report sprite info for.
+ */
+Runtime.prototype.spriteInfoReport = function (target) {
+    if (target !== this._editingTarget) {
+        return;
+    }
+    this.emit(Runtime.SPRITE_INFO_REPORT, {
+        x: target.x,
+        y: target.y,
+        direction: target.direction,
+        visible: target.visible,
+        rotationStyle: target.rotationStyle
+    });
+};
+
+/**
  * Get a target by its id.
  * @param {string} targetId Id of target to find.
  * @return {?Target} The target, if found.
@@ -730,23 +751,11 @@ Runtime.prototype.requestRedraw = function () {
 };
 
 /**
- * Handle an animation frame from the main thread.
- */
-Runtime.prototype.animationFrame = function () {
-    if (this.renderer) {
-        // @todo: Only render when this.redrawRequested or clones rendered.
-        this.renderer.draw();
-    }
-};
-
-/**
  * Set up timers to repeatedly step in a browser.
  */
 Runtime.prototype.start = function () {
     var interval = Runtime.THREAD_STEP_INTERVAL;
-    if (this.singleStepping) {
-        interval = this.singleStepInterval;
-    } else if (this.compatibilityMode) {
+    if (this.compatibilityMode) {
         interval = Runtime.THREAD_STEP_INTERVAL_COMPATIBILITY;
     }
     this.currentStepTime = interval;

@@ -40,6 +40,9 @@ var VirtualMachine = function () {
     instance.runtime.on(Runtime.VISUAL_REPORT, function (id, value) {
         instance.emit(Runtime.VISUAL_REPORT, {id: id, value: value});
     });
+    instance.runtime.on(Runtime.SPRITE_INFO_REPORT, function (data) {
+        instance.emit(Runtime.SPRITE_INFO_REPORT, data);
+    });
 
     this.blockListener = this.blockListener.bind(this);
     this.flyoutBlockListener = this.flyoutBlockListener.bind(this);
@@ -119,13 +122,6 @@ VirtualMachine.prototype.getPlaygroundData = function () {
 };
 
 /**
- * Handle an animation frame.
- */
-VirtualMachine.prototype.animationFrame = function () {
-    this.runtime.animationFrame();
-};
-
-/**
  * Post I/O data to the virtual devices.
  * @param {?string} device Name of virtual I/O device.
  * @param {Object} data Any data object to post to the I/O device.
@@ -186,6 +182,59 @@ VirtualMachine.prototype.addBackdrop = function (backdropObject) {
     stage.sprite.costumes.push(backdropObject);
     // Switch to the backdrop.
     stage.setCostume(stage.sprite.costumes.length - 1);
+};
+
+/**
+ * Rename a sprite.
+ * @param {string} targetId ID of a target whose sprite to rename.
+ * @param {string} newName New name of the sprite.
+ */
+VirtualMachine.prototype.renameSprite = function (targetId, newName) {
+    var target = this.runtime.getTargetById(targetId);
+    if (target) {
+        if (!target.isSprite()) {
+            throw new Error('Cannot rename non-sprite targets.');
+        }
+        var sprite = target.sprite;
+        if (!sprite) {
+            throw new Error('No sprite associated with this target.');
+        }
+        sprite.name = newName;
+        this.emitTargetsUpdate();
+    } else {
+        throw new Error('No target with the provided id.');
+    }
+};
+
+/**
+ * Delete a sprite and all its clones.
+ * @param {string} targetId ID of a target whose sprite to delete.
+ */
+VirtualMachine.prototype.deleteSprite = function (targetId) {
+    var target = this.runtime.getTargetById(targetId);
+    if (target) {
+        if (!target.isSprite()) {
+            throw new Error('Cannot delete non-sprite targets.');
+        }
+        var sprite = target.sprite;
+        if (!sprite) {
+            throw new Error('No sprite associated with this target.');
+        }
+        var currentEditingTarget = this.editingTarget;
+        for (var i = 0; i < sprite.clones.length; i++) {
+            var clone = sprite.clones[i];
+            this.runtime.stopForTarget(sprite.clones[i]);
+            this.runtime.disposeTarget(sprite.clones[i]);
+            // Ensure editing target is switched if we are deleting it.
+            if (clone === currentEditingTarget) {
+                this.setEditingTarget(this.runtime.targets[0].id);
+            }
+        }
+        // Sprite object should be deleted by GC.
+        this.emitTargetsUpdate();
+    } else {
+        throw new Error('No target with the provided id.');
+    }
 };
 
 /**
@@ -264,6 +313,14 @@ VirtualMachine.prototype.emitWorkspaceUpdate = function () {
     this.emit('workspaceUpdate', {
         xml: this.editingTarget.blocks.toXML()
     });
+};
+
+/**
+ * Post/edit sprite info for the current editing target.
+ * @param {object} data An object with sprite info data to set.
+ */
+VirtualMachine.prototype.postSpriteInfo = function (data) {
+    this.editingTarget.postSpriteInfo(data);
 };
 
 module.exports = VirtualMachine;

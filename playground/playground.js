@@ -153,6 +153,24 @@ window.onload = function() {
         workspace.reportValue(data.id, data.value);
     });
 
+    vm.on('SPRITE_INFO_REPORT', function(data) {
+        document.getElementById('sinfo-x').value = data.x;
+        document.getElementById('sinfo-y').value = data.y;
+        document.getElementById('sinfo-direction').value = data.direction;
+        document.getElementById('sinfo-rotationstyle').value = data.rotationStyle;
+        document.getElementById('sinfo-visible').value = data.visible;
+    });
+
+    document.getElementById('sinfo-post').addEventListener('click', function () {
+        var data = {};
+        data.x = document.getElementById('sinfo-x').value;
+        data.y = document.getElementById('sinfo-y').value;
+        data.direction = document.getElementById('sinfo-direction').value;
+        data.rotationStyle = document.getElementById('sinfo-rotationstyle').value;
+        data.visible = document.getElementById('sinfo-visible').value === 'true';
+        vm.postSpriteInfo(data);
+    });
+
     // Feed mouse events as VM I/O events.
     document.addEventListener('mousemove', function (e) {
         var rect = canvas.getBoundingClientRect();
@@ -219,9 +237,7 @@ window.onload = function() {
 
     // Inform VM of animation frames.
     var animate = function() {
-        stats.end();
-        stats.begin();
-        window.vm.animationFrame();
+        stats.update();
         requestAnimationFrame(animate);
     };
     requestAnimationFrame(animate);

@@ -5,16 +5,16 @@ var MathUtil = require('../util/math-util');
 var Target = require('../engine/target');
 
 /**
- * Clone (instance) of a sprite.
- * @param {!Sprite} sprite Reference to the sprite.
+ * Rendered target: instance of a sprite (clone), or the stage.
+ * @param {!Sprite} sprite Reference to the parent sprite.
  * @param {Runtime} runtime Reference to the runtime.
  * @constructor
  */
-var Clone = function (sprite, runtime) {
+var RenderedTarget = function (sprite, runtime) {
     Target.call(this, sprite.blocks);
     this.runtime = runtime;
     /**
-     * Reference to the sprite that this is a clone of.
+     * Reference to the sprite that this is a render of.
      * @type {!Sprite}
      */
     this.sprite = sprite;
@@ -27,7 +27,8 @@ var Clone = function (sprite, runtime) {
         this.renderer = this.runtime.renderer;
     }
     /**
-     * ID of the drawable for this clone returned by the renderer, if rendered.
+     * ID of the drawable for this rendered target,
+     * returned by the renderer, if rendered.
      * @type {?Number}
      */
     this.drawableID = null;
@@ -46,12 +47,12 @@ var Clone = function (sprite, runtime) {
         ghost: 0
     };
 };
-util.inherits(Clone, Target);
+util.inherits(RenderedTarget, Target);
 
 /**
- * Create a clone's drawable with the this.renderer.
+ * Create a drawable with the this.renderer.
  */
-Clone.prototype.initDrawable = function () {
+RenderedTarget.prototype.initDrawable = function () {
     if (this.renderer) {
         this.drawableID = this.renderer.createDrawable();
     }
@@ -63,88 +64,87 @@ Clone.prototype.initDrawable = function () {
     }
 };
 
-// Clone-level properties.
 /**
- * Whether this represents an "original" clone, i.e., created by the editor
- * and not clone blocks. In interface terms, this true for a "sprite."
+ * Whether this represents an "original" non-clone rendered-target for a sprite,
+ * i.e., created by the editor and not clone blocks.
  * @type {boolean}
  */
-Clone.prototype.isOriginal = true;
+RenderedTarget.prototype.isOriginal = true;
 
 /**
- * Whether this clone represents the Scratch stage.
+ * Whether this rendered target represents the Scratch stage.
  * @type {boolean}
  */
-Clone.prototype.isStage = false;
+RenderedTarget.prototype.isStage = false;
 
 /**
  * Scratch X coordinate. Currently should range from -240 to 240.
  * @type {Number}
  */
-Clone.prototype.x = 0;
+RenderedTarget.prototype.x = 0;
 
 /**
  * Scratch Y coordinate. Currently should range from -180 to 180.
  * @type {number}
  */
-Clone.prototype.y = 0;
+RenderedTarget.prototype.y = 0;
 
 /**
  * Scratch direction. Currently should range from -179 to 180.
  * @type {number}
  */
-Clone.prototype.direction = 90;
+RenderedTarget.prototype.direction = 90;
 
 /**
- * Whether the clone is currently visible.
+ * Whether the rendered target is currently visible.
  * @type {boolean}
  */
-Clone.prototype.visible = true;
+RenderedTarget.prototype.visible = true;
 
 /**
- * Size of clone as a percent of costume size. Ranges from 5% to 535%.
+ * Size of rendered target as a percent of costume size.
  * @type {number}
  */
-Clone.prototype.size = 100;
+RenderedTarget.prototype.size = 100;
 
 /**
  * Currently selected costume index.
  * @type {number}
  */
-Clone.prototype.currentCostume = 0;
+RenderedTarget.prototype.currentCostume = 0;
 
 /**
  * Rotation style for "all around"/spinning.
  * @enum
  */
-Clone.ROTATION_STYLE_ALL_AROUND = 'all around';
+RenderedTarget.ROTATION_STYLE_ALL_AROUND = 'all around';
 
 /**
  * Rotation style for "left-right"/flipping.
  * @enum
  */
-Clone.ROTATION_STYLE_LEFT_RIGHT = 'left-right';
+RenderedTarget.ROTATION_STYLE_LEFT_RIGHT = 'left-right';
 
 /**
  * Rotation style for "no rotation."
  * @enum
  */
-Clone.ROTATION_STYLE_NONE = 'don\'t rotate';
+RenderedTarget.ROTATION_STYLE_NONE = 'don\'t rotate';
 
 /**
  * Current rotation style.
  * @type {!string}
  */
-Clone.prototype.rotationStyle = Clone.ROTATION_STYLE_ALL_AROUND;
-
-// End clone-level properties.
+RenderedTarget.prototype.rotationStyle = (
+    RenderedTarget.ROTATION_STYLE_ALL_AROUND
+);
 
 /**
- * Set the X and Y coordinates of a clone.
- * @param {!number} x New X coordinate of clone, in Scratch coordinates.
- * @param {!number} y New Y coordinate of clone, in Scratch coordinates.
+ * Set the X and Y coordinates.
+ * @param {!number} x New X coordinate, in Scratch coordinates.
+ * @param {!number} y New Y coordinate, in Scratch coordinates.
  */
-Clone.prototype.setXY = function (x, y) {
+RenderedTarget.prototype.setXY = function (x, y) {
     if (this.isStage) {
         return;
     }
@@ -158,20 +158,21 @@ Clone.prototype.setXY = function (x, y) {
             this.runtime.requestRedraw();
         }
     }
+    this.runtime.spriteInfoReport(this);
 };
 
 /**
  * Get the rendered direction and scale, after applying rotation style.
  * @return {Object<string, number>} Direction and scale to render.
  */
-Clone.prototype._getRenderedDirectionAndScale = function () {
+RenderedTarget.prototype._getRenderedDirectionAndScale = function () {
     // Default: no changes to `this.direction` or `this.scale`.
     var finalDirection = this.direction;
     var finalScale = [this.size, this.size];
-    if (this.rotationStyle === Clone.ROTATION_STYLE_NONE) {
+    if (this.rotationStyle === RenderedTarget.ROTATION_STYLE_NONE) {
         // Force rendered direction to be 90.
         finalDirection = 90;
-    } else if (this.rotationStyle === Clone.ROTATION_STYLE_LEFT_RIGHT) {
+    } else if (this.rotationStyle === RenderedTarget.ROTATION_STYLE_LEFT_RIGHT) {
         // Force rendered direction to be 90, and flip drawable if needed.
         finalDirection = 90;
         var scaleFlip = (this.direction < 0) ? -1 : 1;
@@ -181,10 +182,10 @@ Clone.prototype._getRenderedDirectionAndScale = function () {
 };
 
 /**
- * Set the direction of a clone.
- * @param {!number} direction New direction of clone.
+ * Set the direction.
+ * @param {!number} direction New direction.
  */
-Clone.prototype.setDirection = function (direction) {
+RenderedTarget.prototype.setDirection = function (direction) {
     if (this.isStage) {
         return;
     }
@@ -200,14 +201,15 @@ Clone.prototype.setDirection = function (direction) {
             this.runtime.requestRedraw();
         }
     }
+    this.runtime.spriteInfoReport(this);
 };
 
 /**
- * Set a say bubble on this clone.
+ * Set a say bubble.
  * @param {?string} type Type of say bubble: "say", "think", or null.
  * @param {?string} message Message to put in say bubble.
  */
-Clone.prototype.setSay = function (type, message) {
+RenderedTarget.prototype.setSay = function (type, message) {
     if (this.isStage) {
         return;
     }
@@ -220,14 +222,14 @@ Clone.prototype.setSay = function (type, message) {
 };
 
 /**
- * Set visibility of the clone; i.e., whether it's shown or hidden.
- * @param {!boolean} visible True if the sprite should be shown.
+ * Set visibility; i.e., whether it's shown or hidden.
+ * @param {!boolean} visible True if should be shown.
  */
-Clone.prototype.setVisible = function (visible) {
+RenderedTarget.prototype.setVisible = function (visible) {
     if (this.isStage) {
         return;
     }
-    this.visible = visible;
+    this.visible = !!visible;
     if (this.renderer) {
         this.renderer.updateDrawableProperties(this.drawableID, {
             visible: this.visible
@@ -236,13 +238,14 @@ Clone.prototype.setVisible = function (visible) {
             this.runtime.requestRedraw();
         }
     }
+    this.runtime.spriteInfoReport(this);
 };
 
 /**
- * Set size of the clone, as a percentage of the costume size.
- * @param {!number} size Size of clone, from 5 to 535.
+ * Set size, as a percentage of the costume size.
+ * @param {!number} size Size of rendered target, as % of costume size.
  */
-Clone.prototype.setSize = function (size) {
+RenderedTarget.prototype.setSize = function (size) {
     if (this.isStage) {
         return;
     }
@@ -261,11 +264,11 @@ Clone.prototype.setSize = function (size) {
 };
 
 /**
- * Set a particular graphic effect on this clone.
- * @param {!string} effectName Name of effect (see `Clone.prototype.effects`).
+ * Set a particular graphic effect value.
+ * @param {!string} effectName Name of effect (see `RenderedTarget.prototype.effects`).
  * @param {!number} value Numerical magnitude of effect.
  */
-Clone.prototype.setEffect = function (effectName, value) {
+RenderedTarget.prototype.setEffect = function (effectName, value) {
     if (!this.effects.hasOwnProperty(effectName)) return;
     this.effects[effectName] = value;
     if (this.renderer) {
@@ -279,9 +282,9 @@ Clone.prototype.setEffect = function (effectName, value) {
 };
 
 /**
- * Clear all graphic effects on this clone.
+ * Clear all graphic effects on this rendered target.
  */
-Clone.prototype.clearEffects = function () {
+RenderedTarget.prototype.clearEffects = function () {
     for (var effectName in this.effects) {
         this.effects[effectName] = 0;
     }
@@ -294,10 +297,10 @@ Clone.prototype.clearEffects = function () {
 };
 
 /**
- * Set the current costume of this clone.
+ * Set the current costume.
  * @param {number} index New index of costume.
  */
-Clone.prototype.setCostume = function (index) {
+RenderedTarget.prototype.setCostume = function (index) {
     // Keep the costume index within possible values.
     index = Math.round(index);
     this.currentCostume = MathUtil.wrapClamp(
@@ -308,7 +311,10 @@ Clone.prototype.setCostume = function (index) {
         this.renderer.updateDrawableProperties(this.drawableID, {
             skin: costume.skin,
             costumeResolution: costume.bitmapResolution,
-            rotationCenter: [costume.rotationCenterX, costume.rotationCenterY]
+            rotationCenter: [
+                costume.rotationCenterX / costume.bitmapResolution,
+                costume.rotationCenterY / costume.bitmapResolution
+            ]
         });
         if (this.visible) {
             this.runtime.requestRedraw();
@@ -317,16 +323,16 @@ Clone.prototype.setCostume = function (index) {
 };
 
 /**
- * Update the rotation style for this clone.
+ * Update the rotation style.
  * @param {!string} rotationStyle New rotation style.
  */
-Clone.prototype.setRotationStyle = function (rotationStyle) {
-    if (rotationStyle === Clone.ROTATION_STYLE_NONE) {
-        this.rotationStyle = Clone.ROTATION_STYLE_NONE;
-    } else if (rotationStyle === Clone.ROTATION_STYLE_ALL_AROUND) {
-        this.rotationStyle = Clone.ROTATION_STYLE_ALL_AROUND;
-    } else if (rotationStyle === Clone.ROTATION_STYLE_LEFT_RIGHT) {
-        this.rotationStyle = Clone.ROTATION_STYLE_LEFT_RIGHT;
+RenderedTarget.prototype.setRotationStyle = function (rotationStyle) {
+    if (rotationStyle === RenderedTarget.ROTATION_STYLE_NONE) {
+        this.rotationStyle = RenderedTarget.ROTATION_STYLE_NONE;
+    } else if (rotationStyle === RenderedTarget.ROTATION_STYLE_ALL_AROUND) {
+        this.rotationStyle = RenderedTarget.ROTATION_STYLE_ALL_AROUND;
+    } else if (rotationStyle === RenderedTarget.ROTATION_STYLE_LEFT_RIGHT) {
+        this.rotationStyle = RenderedTarget.ROTATION_STYLE_LEFT_RIGHT;
     }
     if (this.renderer) {
         var renderedDirectionScale = this._getRenderedDirectionAndScale();
@@ -338,14 +344,15 @@ Clone.prototype.setRotationStyle = function (rotationStyle) {
             this.runtime.requestRedraw();
         }
     }
+    this.runtime.spriteInfoReport(this);
 };
 
 /**
- * Get a costume index of this clone, by name of the costume.
+ * Get a costume index of this rendered target, by name of the costume.
  * @param {?string} costumeName Name of a costume.
  * @return {number} Index of the named costume, or -1 if not present.
  */
-Clone.prototype.getCostumeIndexByName = function (costumeName) {
+RenderedTarget.prototype.getCostumeIndexByName = function (costumeName) {
     for (var i = 0; i < this.sprite.costumes.length; i++) {
         if (this.sprite.costumes[i].name === costumeName) {
             return i;
@@ -355,10 +362,10 @@ Clone.prototype.getCostumeIndexByName = function (costumeName) {
 };
 
 /**
- * Update all drawable properties for this clone.
+ * Update all drawable properties for this rendered target.
  * Use when a batch has changed, e.g., when the drawable is first created.
  */
-Clone.prototype.updateAllDrawableProperties = function () {
+RenderedTarget.prototype.updateAllDrawableProperties = function () {
     if (this.renderer) {
         var renderedDirectionScale = this._getRenderedDirectionAndScale();
         var costume = this.sprite.costumes[this.currentCostume];
@@ -369,29 +376,41 @@ Clone.prototype.updateAllDrawableProperties = function () {
             visible: this.visible,
             skin: costume.skin,
             costumeResolution: costume.bitmapResolution,
-            rotationCenter: [costume.rotationCenterX, costume.rotationCenterY]
+            rotationCenter: [
+                costume.rotationCenterX / costume.bitmapResolution,
+                costume.rotationCenterY / costume.bitmapResolution
+            ]
         });
         if (this.visible) {
             this.runtime.requestRedraw();
         }
     }
+    this.runtime.spriteInfoReport(this);
 };
 
 /**
- * Return the human-readable name for this clone, i.e., the sprite's name.
+ * Return the human-readable name for this rendered target, e.g., the sprite's name.
  * @override
- * @returns {string} Human-readable name for the clone.
+ * @returns {string} Human-readable name.
  */
-Clone.prototype.getName = function () {
+RenderedTarget.prototype.getName = function () {
     return this.sprite.name;
 };
 
 /**
- * Return the clone's tight bounding box.
- * Includes top, left, bottom, right attributes in Scratch coordinates.
- * @return {?Object} Tight bounding box of clone, or null.
+ * Return whether this rendered target is a sprite (not a clone, not the stage).
+ * @return {boolean} True if not a clone and not the stage.
  */
-Clone.prototype.getBounds = function () {
+RenderedTarget.prototype.isSprite = function () {
+    return !this.isStage && this.isOriginal;
+};
+
+/**
+ * Return the rendered target's tight bounding box.
+ * Includes top, left, bottom, right attributes in Scratch coordinates.
+ * @return {?Object} Tight bounding box, or null.
+ */
+RenderedTarget.prototype.getBounds = function () {
     if (this.renderer) {
         return this.runtime.renderer.getBounds(this.drawableID);
     }
@@ -399,12 +418,12 @@ Clone.prototype.getBounds = function () {
 };
 
 /**
- * Return whether the clone is touching a point.
+ * Return whether touching a point.
  * @param {number} x X coordinate of test point.
  * @param {number} y Y coordinate of test point.
- * @return {Boolean} True iff the clone is touching the point.
+ * @return {Boolean} True iff the rendered target is touching the point.
  */
-Clone.prototype.isTouchingPoint = function (x, y) {
+RenderedTarget.prototype.isTouchingPoint = function (x, y) {
     if (this.renderer) {
         // @todo: Update once pick is in Scratch coordinates.
         // Limits test to this Drawable, so this will return true
@@ -421,10 +440,10 @@ Clone.prototype.isTouchingPoint = function (x, y) {
 };
 
 /**
- * Return whether the clone is touching a stage edge.
- * @return {Boolean} True iff the clone is touching the stage edge.
+ * Return whether touching a stage edge.
+ * @return {Boolean} True iff the rendered target is touching the stage edge.
  */
-Clone.prototype.isTouchingEdge = function () {
+RenderedTarget.prototype.isTouchingEdge = function () {
     if (this.renderer) {
         var stageWidth = this.runtime.constructor.STAGE_WIDTH;
         var stageHeight = this.runtime.constructor.STAGE_HEIGHT;
@@ -440,11 +459,11 @@ Clone.prototype.isTouchingEdge = function () {
 };
 
 /**
- * Return whether the clone is touching a named sprite.
- * @param {string} spriteName Name fo the sprite.
- * @return {Boolean} True iff the clone is touching a clone of the sprite.
+ * Return whether touching any of a named sprite's clones.
+ * @param {string} spriteName Name of the sprite.
+ * @return {Boolean} True iff touching a clone of the sprite.
  */
-Clone.prototype.isTouchingSprite = function (spriteName) {
+RenderedTarget.prototype.isTouchingSprite = function (spriteName) {
     var firstClone = this.runtime.getSpriteTargetByName(spriteName);
     if (!firstClone || !this.renderer) {
         return false;
@@ -457,11 +476,11 @@ Clone.prototype.isTouchingSprite = function (spriteName) {
 };
 
 /**
- * Return whether the clone is touching a color.
+ * Return whether touching a color.
  * @param {Array.<number>} rgb [r,g,b], values between 0-255.
- * @return {Promise.<Boolean>} True iff the clone is touching the color.
+ * @return {Promise.<Boolean>} True iff the rendered target is touching the color.
  */
-Clone.prototype.isTouchingColor = function (rgb) {
+RenderedTarget.prototype.isTouchingColor = function (rgb) {
     if (this.renderer) {
         return this.renderer.isTouchingColor(this.drawableID, rgb);
     }
@@ -469,12 +488,12 @@ Clone.prototype.isTouchingColor = function (rgb) {
 };
 
 /**
- * Return whether the clone's color is touching a color.
+ * Return whether rendered target's color is touching a color.
  * @param {Object} targetRgb {Array.<number>} [r,g,b], values between 0-255.
  * @param {Object} maskRgb {Array.<number>} [r,g,b], values between 0-255.
- * @return {Promise.<Boolean>} True iff the clone's color is touching the color.
+ * @return {Promise.<Boolean>} True iff the color is touching the color.
  */
-Clone.prototype.colorIsTouchingColor = function (targetRgb, maskRgb) {
+RenderedTarget.prototype.colorIsTouchingColor = function (targetRgb, maskRgb) {
     if (this.renderer) {
         return this.renderer.isTouchingColor(
             this.drawableID,
@@ -486,32 +505,32 @@ Clone.prototype.colorIsTouchingColor = function (targetRgb, maskRgb) {
 };
 
 /**
- * Move clone to the front layer.
+ * Move to the front layer.
  */
-Clone.prototype.goToFront = function () {
+RenderedTarget.prototype.goToFront = function () {
     if (this.renderer) {
         this.renderer.setDrawableOrder(this.drawableID, Infinity);
     }
 };
 
 /**
- * Move clone back a number of layers.
+ * Move back a number of layers.
  * @param {number} nLayers How many layers to go back.
  */
-Clone.prototype.goBackLayers = function (nLayers) {
+RenderedTarget.prototype.goBackLayers = function (nLayers) {
     if (this.renderer) {
         this.renderer.setDrawableOrder(this.drawableID, -nLayers, true, 1);
     }
 };
 
 /**
- * Move behind some other clone.
- * @param {!Clone} otherClone Other clone to move behind.
+ * Move behind some other rendered target.
+ * @param {!Clone} other Other rendered target to move behind.
  */
-Clone.prototype.goBehindOtherClone = function (otherClone) {
+RenderedTarget.prototype.goBehindOther = function (other) {
     if (this.renderer) {
         var otherLayer = this.renderer.setDrawableOrder(
-            otherClone.drawableID, 0, true);
+            other.drawableID, 0, true);
         this.renderer.setDrawableOrder(this.drawableID, otherLayer);
     }
 };
@@ -523,7 +542,7 @@ Clone.prototype.goBehindOtherClone = function (otherClone) {
  * @param {Object=} optFence Optional fence with left, right, top bottom.
  * @return {Array.<number>} Fenced X and Y coordinates.
  */
-Clone.prototype.keepInFence = function (newX, newY, optFence) {
+RenderedTarget.prototype.keepInFence = function (newX, newY, optFence) {
     var fence = optFence;
     if (!fence) {
         fence = {
@@ -559,11 +578,11 @@ Clone.prototype.keepInFence = function (newX, newY, optFence) {
 };
 
 /**
- * Make a clone of this clone, copying any run-time properties.
+ * Make a clone, copying any run-time properties.
  * If we've hit the global clone limit, returns null.
- * @return {!Clone} New clone object.
+ * @return {!RenderedTarget} New clone.
  */
-Clone.prototype.makeClone = function () {
+RenderedTarget.prototype.makeClone = function () {
     if (!this.runtime.clonesAvailable() || this.isStage) {
         return; // Hit max clone limit, or this is the stage.
     }
@@ -582,23 +601,45 @@ Clone.prototype.makeClone = function () {
     newClone.lists = JSON.parse(JSON.stringify(this.lists));
     newClone.initDrawable();
     newClone.updateAllDrawableProperties();
-    // Place clone behind the current target.
-    newClone.goBehindOtherClone(this);
+    // Place behind the current target.
+    newClone.goBehindOther(this);
     return newClone;
 };
 
 /**
  * Called when the project receives a "green flag."
- * For a clone, this clears graphic effects.
+ * For a rendered target, this clears graphic effects.
  */
-Clone.prototype.onGreenFlag = function () {
+RenderedTarget.prototype.onGreenFlag = function () {
     this.clearEffects();
 };
 
 /**
- * Dispose of this clone, destroying any run-time properties.
+ * Post/edit sprite info.
+ * @param {object} data An object with sprite info data to set.
  */
-Clone.prototype.dispose = function () {
+RenderedTarget.prototype.postSpriteInfo = function (data) {
+    if (data.hasOwnProperty('x')) {
+        this.setXY(data.x, this.y);
+    }
+    if (data.hasOwnProperty('y')) {
+        this.setXY(this.x, data.y);
+    }
+    if (data.hasOwnProperty('direction')) {
+        this.setDirection(data.direction);
+    }
+    if (data.hasOwnProperty('rotationStyle')) {
+        this.setRotationStyle(data.rotationStyle);
+    }
+    if (data.hasOwnProperty('visible')) {
+        this.setVisible(data.visible);
+    }
+};
+
+/**
+ * Dispose, destroying any run-time properties.
+ */
+RenderedTarget.prototype.dispose = function () {
     this.runtime.changeCloneCounter(-1);
     if (this.renderer && this.drawableID !== null) {
         this.renderer.destroyDrawable(this.drawableID);
@@ -608,4 +649,4 @@ Clone.prototype.dispose = function () {
     }
 };
 
-module.exports = Clone;
+module.exports = RenderedTarget;
