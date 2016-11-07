@@ -284,6 +284,7 @@ VirtualMachine.prototype.createEmptyProject = function () {
     this.editingTarget = this.runtime.targets[0];
     this.emitTargetsUpdate();
     this.emitWorkspaceUpdate();
+    this.runtime.setEditingTarget(this.editingTarget);
 };
 
 /**
