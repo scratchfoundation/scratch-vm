@@ -94,11 +94,11 @@ Scratch3LooksBlocks.prototype._setCostumeOrBackdrop = function (target,
         var costumeIndex = target.getCostumeIndexByName(requestedCostume);
         if (costumeIndex > -1) {
             target.setCostume(costumeIndex);
-        } else if (costumeIndex === 'previous costume' ||
-                   costumeIndex === 'previous backdrop') {
+        } else if (requestedCostume === 'previous costume' ||
+                   requestedCostume === 'previous backdrop') {
             target.setCostume(target.currentCostume - 1);
-        } else if (costumeIndex === 'next costume' ||
-                   costumeIndex === 'next backdrop') {
+        } else if (requestedCostume === 'next costume' ||
+                   requestedCostume === 'next backdrop') {
             target.setCostume(target.currentCostume + 1);
         } else {
             var forcedNumber = Cast.toNumber(requestedCostume);
