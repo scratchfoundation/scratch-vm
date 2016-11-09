@@ -13,7 +13,7 @@
   "scripts": {
     "build": "./node_modules/.bin/webpack --progress --colors --bail",
     "coverage": "./node_modules/.bin/tap ./test/{unit,integration}/*.js --coverage --coverage-report=lcov",
-    "deploy": "touch build/.nojekyll && ./node_modules/.bin/gh-pages -d playground -m \"Build for $(git log --pretty=format:%H -n1)\"",
+    "deploy": "touch playground/.nojekyll && ./node_modules/.bin/gh-pages -d playground -m \"Build for $(git log --pretty=format:%H -n1)\"",
     "lint": "./node_modules/.bin/eslint .",
     "prepublish": "npm run build",
     "prepublish-watch": "npm run watch",
