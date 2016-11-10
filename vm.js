@@ -1851,6 +1851,24 @@
 	};
 
 	/**
+	 * Restart a thread in place, maintaining its position in the list of threads.
+	 * This is used by `startHats` to and is necessary to ensure 2.0-like execution order.
+	 * Test project: https://scratch.mit.edu/projects/130183108/
+	 * @param {!Thread} thread Thread object to restart.
+	 */
+	Runtime.prototype._restartThread = function (thread) {
+	    var newThread = new Thread(thread.topBlock);
+	    newThread.target = thread.target;
+	    newThread.pushStack(thread.topBlock);
+	    var i = this.threads.indexOf(thread);
+	    if (i > -1) {
+	        this.threads[i] = newThread;
+	    } else {
+	        this.threads.push(thread);
+	    }
+	};
+
+	/**
 	 * Return whether a thread is currently active/running.
 	 * @param {?Thread} thread Thread object to check.
 	 * @return {Boolean} True if the thread is active/running.
@@ -1943,7 +1961,8 @@
 	            for (var i = 0; i < instance.threads.length; i++) {
 	                if (instance.threads[i].topBlock === topBlockId &&
 	                    instance.threads[i].target === target) {
-	                    instance._removeThread(instance.threads[i]);
+	                    instance._restartThread(instance.threads[i]);
+	                    return;
 	                }
 	            }
 	        } else {
@@ -2339,11 +2358,9 @@
 	           this.timer.timeElapsed() < WORK_TIME &&
 	           (this.runtime.turboMode || !this.runtime.redrawRequested)) {
 	        numActiveThreads = 0;
-	        // Inline copy of the threads, updated on each step.
-	        var threadsCopy = this.runtime.threads.slice();
 	        // Attempt to run each thread one time.
-	        for (var i = 0; i < threadsCopy.length; i++) {
-	            var activeThread = threadsCopy[i];
+	        for (var i = 0; i < this.runtime.threads.length; i++) {
+	            var activeThread = this.runtime.threads[i];
 	            if (activeThread.stack.length === 0 ||
 	                activeThread.status === Thread.STATUS_DONE) {
 	                // Finished with this thread.
