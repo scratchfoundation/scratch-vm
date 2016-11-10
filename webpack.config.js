@@ -109,9 +109,6 @@ module.exports = [
                 to: 'media'
             }, {
                 from: 'node_modules/highlightjs/styles/zenburn.css'
-            }, {
-                from: 'assets',
-                to: 'assets'
             }])
         ])
     })
