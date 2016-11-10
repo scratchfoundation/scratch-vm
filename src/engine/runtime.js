@@ -330,6 +330,24 @@ Runtime.prototype._removeThread = function (thread) {
 };
 
 /**
+ * Restart a thread in place, maintaining its position in the list of threads.
+ * This is used by `startHats` to and is necessary to ensure 2.0-like execution order.
+ * Test project: https://scratch.mit.edu/projects/130183108/
+ * @param {!Thread} thread Thread object to restart.
+ */
+Runtime.prototype._restartThread = function (thread) {
+    var newThread = new Thread(thread.topBlock);
+    newThread.target = thread.target;
+    newThread.pushStack(thread.topBlock);
+    var i = this.threads.indexOf(thread);
+    if (i > -1) {
+        this.threads[i] = newThread;
+    } else {
+        this.threads.push(thread);
+    }
+};
+
+/**
  * Return whether a thread is currently active/running.
  * @param {?Thread} thread Thread object to check.
  * @return {Boolean} True if the thread is active/running.
@@ -422,7 +440,8 @@ Runtime.prototype.startHats = function (requestedHatOpcode,
             for (var i = 0; i < instance.threads.length; i++) {
                 if (instance.threads[i].topBlock === topBlockId &&
                     instance.threads[i].target === target) {
-                    instance._removeThread(instance.threads[i]);
+                    instance._restartThread(instance.threads[i]);
+                    return;
                 }
             }
         } else {

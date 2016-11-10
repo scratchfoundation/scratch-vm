@@ -45,11 +45,9 @@ Sequencer.prototype.stepThreads = function () {
            this.timer.timeElapsed() < WORK_TIME &&
            (this.runtime.turboMode || !this.runtime.redrawRequested)) {
         numActiveThreads = 0;
-        // Inline copy of the threads, updated on each step.
-        var threadsCopy = this.runtime.threads.slice();
         // Attempt to run each thread one time.
-        for (var i = 0; i < threadsCopy.length; i++) {
-            var activeThread = threadsCopy[i];
+        for (var i = 0; i < this.runtime.threads.length; i++) {
+            var activeThread = this.runtime.threads[i];
             if (activeThread.stack.length === 0 ||
                 activeThread.status === Thread.STATUS_DONE) {
                 // Finished with this thread.
