@@ -65,8 +65,6 @@
 
 	var Runtime = __webpack_require__(16);
 	var sb2import = __webpack_require__(103);
-	var Sprite = __webpack_require__(109);
-	var Blocks = __webpack_require__(34);
 
 	/**
 	 * Handles connections between blocks, stage, and extensions.
@@ -299,53 +297,6 @@
 	    } else {
 	        throw new Error('No target with the provided id.');
 	    }
-	};
-
-	/**
-	 * Temporary way to make an empty project, in case the desired project
-	 * cannot be loaded from the online server.
-	 */
-	VirtualMachine.prototype.createEmptyProject = function () {
-	    // Stage.
-	    var blocks2 = new Blocks();
-	    var stage = new Sprite(blocks2, this.runtime);
-	    stage.name = 'Stage';
-	    stage.costumes.push({
-	        skin: './assets/stage.png',
-	        name: 'backdrop1',
-	        bitmapResolution: 2,
-	        rotationCenterX: 480,
-	        rotationCenterY: 360
-	    });
-	    var target2 = stage.createClone();
-	    this.runtime.targets.push(target2);
-	    target2.x = 0;
-	    target2.y = 0;
-	    target2.direction = 90;
-	    target2.size = 200;
-	    target2.visible = true;
-	    target2.isStage = true;
-	    // Sprite1 (cat).
-	    var blocks1 = new Blocks();
-	    var sprite = new Sprite(blocks1, this.runtime);
-	    sprite.name = 'Sprite1';
-	    sprite.costumes.push({
-	        skin: './assets/scratch_cat.svg',
-	        name: 'costume1',
-	        bitmapResolution: 1,
-	        rotationCenterX: 47,
-	        rotationCenterY: 55
-	    });
-	    var target1 = sprite.createClone();
-	    this.runtime.targets.push(target1);
-	    target1.x = 0;
-	    target1.y = 0;
-	    target1.direction = 90;
-	    target1.size = 100;
-	    target1.visible = true;
-	    this.editingTarget = this.runtime.targets[0];
-	    this.emitTargetsUpdate();
-	    this.emitWorkspaceUpdate();
 	};
 
 	/**
