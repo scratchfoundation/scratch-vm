@@ -31,7 +31,7 @@ Scratch3ProcedureBlocks.prototype.callNoReturn = function (args, util) {
         var procedureCode = args.mutation.proccode;
         var paramNames = util.getProcedureParamNames(procedureCode);
         util.stackFrame.thread = this.thread;
-        this.thread = this.thread + 1;
+        this.thread++;
         for (var i = 0; i < paramNames.length; i++) {
             if (args.hasOwnProperty('input' + i)) {
                 util.pushParam(paramNames[i], args['input' + i]);
@@ -47,7 +47,7 @@ Scratch3ProcedureBlocks.prototype.callReturn = function (args, util) {
         var procedureCode = args.mutation.proccode;
         var paramNames = util.getProcedureParamNames(procedureCode);
         util.stackFrame.thread = this.thread;
-        this.thread = this.thread + 1;
+        this.thread++;
         for (var i = 0; i < paramNames.length; i++) {
             if (args.hasOwnProperty('input' + i)) {
                 util.pushParam(paramNames[i], args['input' + i]);
