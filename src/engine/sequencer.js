@@ -191,7 +191,7 @@ Sequencer.prototype.stepToBranch = function (thread, branchNum, isLoop) {
  * Step a procedure.
  * @param {!Thread} thread Thread object to step to procedure.
  * @param {!string} procedureCode Procedure code of procedure to step to.
- * @param {!Number} Procedure ID.
+ * @param {!Number} threadNum Procedure ID.
  */
 Sequencer.prototype.stepToProcedure = function (thread, procedureCode, threadNum) {
     var definition = thread.target.blocks.getProcedureDefinition(procedureCode);
