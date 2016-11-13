@@ -201,6 +201,7 @@ var execute = function (sequencer, thread) {
                     }
                 }
             }
+            return 'undefined';
         },
         isProcedureDone: function (threadNum) {
             var i = 0;
@@ -225,6 +226,9 @@ var execute = function (sequencer, thread) {
         },
         getParam: function (paramName) {
             return thread.getParam(paramName);
+        },
+        setProcedureReturn: function (value) {
+            thread.stackFrames[0].executionContext.return = value;
         },
         startHats: function (requestedHat, optMatchFields, optTarget) {
             return (
