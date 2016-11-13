@@ -21,7 +21,7 @@ Scratch3ProcedureBlocks.prototype.getPrimitives = function () {
     };
 };
 
-Scratch3ProcedureBlocks.prototype.defNoReturn = function () {
+Scratch3ProcedureBlocks.prototype.defNoReturn = function (args, util) {
     // No-op: execute the blocks.
     util.stackFrame.done = true;
 };
