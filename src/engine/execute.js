@@ -194,8 +194,8 @@ var execute = function (sequencer, thread) {
             for (; i < this.runtime.threads.length; i++) {
                 var k = 0;
                 for (; k < this.runtime.threads[k].stackFrames.length; k++) {
-                    if (this.runtime.threads[k].stackFrames[k].executionContext.hasOwnProperty("thread")) {
-                        if (this.runtime.threads[k].stackFrames[k].executionContext.thread == threadNum) {
+                    if (this.runtime.threads[k].stackFrames[k].executionContext.hasOwnProperty('thread')) {
+                        if (this.runtime.threads[k].stackFrames[k].executionContext.thread === threadNum) {
                             return this.runtime.threads[k].stackFrames[k].executionContext.return;
                         }
                     }
@@ -208,9 +208,9 @@ var execute = function (sequencer, thread) {
             for (; i < this.runtime.threads.length; i++) {
                 var k = 0;
                 for (; k < this.runtime.threads[k].stackFrames.length; k++) {
-                    if (this.runtime.threads[k].stackFrames[k].executionContext.hasOwnProperty("thread")) {
-                        if (this.runtime.threads[k].stackFrames[k].executionContext.thread == threadNum) {
-                            if (this.runtime.threads[k].stackFrames[k].executionContext.done == true) {
+                    if (this.runtime.threads[k].stackFrames[k].executionContext.hasOwnProperty('thread')) {
+                        if (this.runtime.threads[k].stackFrames[k].executionContext.thread === threadNum) {
+                            if (this.runtime.threads[k].stackFrames[k].executionContext.done === true) {
                                 return true;
                             }
                         }
