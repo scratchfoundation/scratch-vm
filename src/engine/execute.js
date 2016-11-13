@@ -186,8 +186,36 @@ var execute = function (sequencer, thread) {
         stopThread: function () {
             sequencer.retireThread(thread);
         },
-        startProcedure: function (procedureCode) {
-            sequencer.stepToProcedure(thread, procedureCode);
+        startProcedure: function (procedureCode, threadNum) {
+            sequencer.stepToProcedure(thread, procedureCode, threadNum);
+        },
+        getProcedureReturn: function (threadNum) {
+            var i = 0;
+            for (; i < this.runtime.threads.length; i++) {
+                var k = 0;
+                for (; k < this.runtime.threads[k].stackFrames.length; k++) {
+                    if (this.runtime.threads[k].stackFrames[k].executionContext.hasOwnProperty("thread")) {
+                        if (this.runtime.threads[k].stackFrames[k].executionContext.thread == threadNum) {
+                            return this.runtime.threads[k].stackFrames[k].executionContext.return;
+                        }
+                    }
+                }
+            }
+        },
+        isProcedureDone: function (threadNum) {
+            var i = 0;
+            for (; i < this.runtime.threads.length; i++) {
+                var k = 0;
+                for (; k < this.runtime.threads[k].stackFrames.length; k++) {
+                    if (this.runtime.threads[k].stackFrames[k].executionContext.hasOwnProperty("thread")) {
+                        if (this.runtime.threads[k].stackFrames[k].executionContext.thread == threadNum) {
+                            if (this.runtime.threads[k].stackFrames[k].executionContext.done == true) {
+                                return true;
+                            }
+                        }
+                    }
+                }
+            }
         },
         getProcedureParamNames: function (procedureCode) {
             return blockContainer.getProcedureParamNames(procedureCode);
