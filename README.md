@@ -36,7 +36,7 @@ StartServerWindows.bat
 ```
 
 ## Playground
-To run the Playground, make sure the dev server's running and go to [http://localhost:8080/](http://localhost:8080/) - you will be directed to the playground, which demonstrates various tools and internal state.
+To run the Playground, make sure the dev server's running and go to [http://localhost:8073/](http://localhost:8073/) - you will be directed to the playground, which demonstrates various tools and internal state.
 
 ![VM Playground Screenshot](https://i.imgur.com/nOCNqEc.gif)
 
