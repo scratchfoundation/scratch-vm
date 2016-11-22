@@ -146,11 +146,10 @@ Sequencer.prototype.stepThread = function (thread) {
                     // Don't do anything to the stack, since loops need
                     // to be re-executed.
                     return;
-                } else {
-                    // Don't go to the next block for this level of the stack,
-                    // since loops need to be re-executed.
-                    continue;
                 }
+                // Don't go to the next block for this level of the stack,
+                // since loops need to be re-executed.
+                continue;
             } else if (thread.peekStackFrame().waitingReporter) {
                 // This level of the stack was waiting for a value.
                 // This means a reporter has just returned - so don't go
@@ -217,11 +216,9 @@ Sequencer.prototype.stepToProcedure = function (thread, procedureCode) {
         var doWarp = definitionBlock.mutation.warp;
         if (doWarp) {
             thread.peekStackFrame().warpMode = true;
-        } else {
+        } else if (isRecursive) {
             // In normal-mode threads, yield any time we have a recursive call.
-            if (isRecursive) {
-                thread.status = Thread.STATUS_YIELD;
-            }
+            thread.status = Thread.STATUS_YIELD;
         }
     }
 };

@@ -343,8 +343,6 @@ Blocks.prototype.moveBlock = function (e) {
  * @param {!Object} e Blockly delete event to be processed.
  */
 Blocks.prototype.deleteBlock = function (e) {
-    // @todo In runtime, stop threads running on this script.
-
     // Get block
     var block = this._blocks[e.id];
 

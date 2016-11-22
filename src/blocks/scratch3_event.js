@@ -47,7 +47,6 @@ Scratch3EventBlocks.prototype.getHats = function () {
 Scratch3EventBlocks.prototype.hatGreaterThanPredicate = function (args, util) {
     var option = Cast.toString(args.WHENGREATERTHANMENU).toLowerCase();
     var value = Cast.toNumber(args.VALUE);
-    // @todo: Other cases :)
     if (option === 'timer') {
         return util.ioQuery('clock', 'projectTimer') > value;
     }

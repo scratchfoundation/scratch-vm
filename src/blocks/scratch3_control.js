@@ -73,16 +73,16 @@ Scratch3ControlBlocks.prototype.forever = function (args, util) {
 };
 
 Scratch3ControlBlocks.prototype.wait = function (args, util) {
-    if (!util.stackFrame.timer) {
-        util.stackFrame.timer = new Timer();
-        util.stackFrame.timer.start();
-        util.yield();
-        this.runtime.requestRedraw();
-    } else {
+    if (util.stackFrame.timer) {
         var duration = Math.max(0, 1000 * Cast.toNumber(args.DURATION));
         if (util.stackFrame.timer.timeElapsed() < duration) {
             util.yield();
         }
+    } else {
+        util.stackFrame.timer = new Timer();
+        util.stackFrame.timer.start();
+        util.yield();
+        this.runtime.requestRedraw();
     }
 };
 

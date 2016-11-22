@@ -32,7 +32,6 @@ Keyboard.prototype._scratchKeyToKeyCode = function (keyName) {
     case 'up arrow': return 38;
     case 'right arrow': return 39;
     case 'down arrow': return 40;
-    // @todo: Consider adding other special keys here.
     }
     // Keys reported by DOM keyCode are upper case.
     return keyString.toUpperCase().charCodeAt(0);

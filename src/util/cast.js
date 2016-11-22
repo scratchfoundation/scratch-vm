@@ -96,10 +96,9 @@ Cast.compare = function (v1, v2) {
         var s1 = String(v1).toLowerCase();
         var s2 = String(v2).toLowerCase();
         return s1.localeCompare(s2);
-    } else {
-        // Compare as numbers.
-        return n1 - n2;
     }
+    // Compare as numbers.
+    return n1 - n2;
 };
 
 /**

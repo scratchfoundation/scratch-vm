@@ -61,9 +61,8 @@ Scratch3DataBlocks.prototype.getListContents = function (args, util) {
     }
     if (allSingleLetters) {
         return list.contents.join('');
-    } else {
-        return list.contents.join(' ');
     }
+    return list.contents.join(' ');
 };
 
 Scratch3DataBlocks.prototype.addToList = function (args, util) {

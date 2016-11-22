@@ -38,9 +38,8 @@ Scratch3SensingBlocks.prototype.touchingObject = function (args, util) {
         return util.target.isTouchingPoint(mouseX, mouseY);
     } else if (requestedObject === '_edge_') {
         return util.target.isTouchingEdge();
-    } else {
-        return util.target.isTouchingSprite(requestedObject);
     }
+    return util.target.isTouchingSprite(requestedObject);
 };
 
 Scratch3SensingBlocks.prototype.touchingColor = function (args, util) {
@@ -112,7 +111,7 @@ Scratch3SensingBlocks.prototype.current = function (args) {
 };
 
 Scratch3SensingBlocks.prototype.getKeyPressed = function (args, util) {
-    return util.ioQuery('keyboard', 'getKeyIsDown', args.KEY_OPTION);
+    return util.ioQuery('keyboard', 'getKeyIsDown', [args.KEY_OPTION]);
 };
 
 Scratch3SensingBlocks.prototype.daysSince2000 = function () {
@@ -143,7 +142,7 @@ Scratch3SensingBlocks.prototype.getAttributeOf = function (args) {
         case 'backdrop #': return attrTarget.currentCostume + 1;
         case 'backdrop name':
             return attrTarget.sprite.costumes[attrTarget.currentCostume].name;
-        case 'volume': return; // @todo: Keep this in mind for sound blocks!
+        case 'volume': return;
         }
     } else {
         switch (args.PROPERTY) {
@@ -154,7 +153,7 @@ Scratch3SensingBlocks.prototype.getAttributeOf = function (args) {
         case 'costume name':
             return attrTarget.sprite.costumes[attrTarget.currentCostume].name;
         case 'size': return attrTarget.size;
-        case 'volume': return; // @todo: above, keep in mind for sound blocks..
+        case 'volume': return;
         }
     }
 

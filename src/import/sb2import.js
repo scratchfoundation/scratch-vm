@@ -25,12 +25,10 @@ var List = require('../engine/list');
 var parseScratchObject = function (object, runtime, topLevel) {
     if (!object.hasOwnProperty('objName')) {
         // Watcher/monitor - skip this object until those are implemented in VM.
-        // @todo
         return;
     }
     // Blocks container for this object.
     var blocks = new Blocks();
-    // @todo: For now, load all Scratch objects (stage/sprites) as a Sprite.
     var sprite = new Sprite(blocks, runtime);
     // Sprite/stage name from JSON.
     if (object.hasOwnProperty('objName')) {
@@ -40,7 +38,6 @@ var parseScratchObject = function (object, runtime, topLevel) {
     if (object.hasOwnProperty('costumes')) {
         for (var i = 0; i < object.costumes.length; i++) {
             var costume = object.costumes[i];
-            // @todo: Make sure all the relevant metadata is being pulled out.
             sprite.costumes.push({
                 skin: 'https://cdn.assets.scratch.mit.edu/internalapi/asset/' +
                     costume.baseLayerMD5 + '/get/',
@@ -73,7 +70,6 @@ var parseScratchObject = function (object, runtime, topLevel) {
     if (object.hasOwnProperty('lists')) {
         for (var k = 0; k < object.lists.length; k++) {
             var list = object.lists[k];
-            // @todo: monitor properties.
             target.lists[list.listName] = new List(
                 list.listName,
                 list.contents
@@ -151,7 +147,6 @@ var parseScripts = function (scripts, blocks) {
         if (parsedBlockList[0]) {
             // Adjust script coordinates to account for
             // larger block size in scratch-blocks.
-            // @todo: Determine more precisely the right formulas here.
             parsedBlockList[0].x = scriptX * 1.1;
             parsedBlockList[0].y = scriptY * 1.1;
             parsedBlockList[0].topLevel = true;

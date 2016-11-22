@@ -105,22 +105,7 @@ Scratch3MotionBlocks.prototype.pointTowards = function (args, util) {
 };
 
 Scratch3MotionBlocks.prototype.glide = function (args, util) {
-    if (!util.stackFrame.timer) {
-        // First time: save data for future use.
-        util.stackFrame.timer = new Timer();
-        util.stackFrame.timer.start();
-        util.stackFrame.duration = Cast.toNumber(args.SECS);
-        util.stackFrame.startX = util.target.x;
-        util.stackFrame.startY = util.target.y;
-        util.stackFrame.endX = Cast.toNumber(args.X);
-        util.stackFrame.endY = Cast.toNumber(args.Y);
-        if (util.stackFrame.duration <= 0) {
-            // Duration too short to glide.
-            util.target.setXY(util.stackFrame.endX, util.stackFrame.endY);
-            return;
-        }
-        util.yield();
-    } else {
+    if (util.stackFrame.timer) {
         var timeElapsed = util.stackFrame.timer.timeElapsed();
         if (timeElapsed < util.stackFrame.duration * 1000) {
             // In progress: move to intermediate position.
@@ -136,6 +121,21 @@ Scratch3MotionBlocks.prototype.glide = function (args, util) {
             // Finished: move to final position.
             util.target.setXY(util.stackFrame.endX, util.stackFrame.endY);
         }
+    } else {
+        // First time: save data for future use.
+        util.stackFrame.timer = new Timer();
+        util.stackFrame.timer.start();
+        util.stackFrame.duration = Cast.toNumber(args.SECS);
+        util.stackFrame.startX = util.target.x;
+        util.stackFrame.startY = util.target.y;
+        util.stackFrame.endX = Cast.toNumber(args.X);
+        util.stackFrame.endY = Cast.toNumber(args.Y);
+        if (util.stackFrame.duration <= 0) {
+            // Duration too short to glide.
+            util.target.setXY(util.stackFrame.endX, util.stackFrame.endY);
+            return;
+        }
+        util.yield();
     }
 };
 

@@ -30,9 +30,8 @@ Timer.prototype.startTime = 0;
 Timer.prototype.time = function () {
     if (Date.now) {
         return Date.now();
-    } else {
-        return new Date().getTime();
     }
+    return new Date().getTime();
 };
 
 /**
@@ -46,9 +45,8 @@ Timer.prototype.relativeTime = function () {
     if (typeof self !== 'undefined' &&
         self.performance && 'now' in self.performance) {
         return self.performance.now();
-    } else {
-        return this.time();
     }
+    return this.time();
 };
 
 /**

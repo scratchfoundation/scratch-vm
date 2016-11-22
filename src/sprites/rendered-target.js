@@ -213,7 +213,6 @@ RenderedTarget.prototype.setSay = function (type, message) {
     if (this.isStage) {
         return;
     }
-    // @todo: Render to stage.
     if (!type || !message) {
         log.info('Clearing say bubble');
         return;
@@ -434,7 +433,7 @@ RenderedTarget.prototype.getBounds = function () {
  */
 RenderedTarget.prototype.isTouchingPoint = function (x, y) {
     if (this.renderer) {
-        // @todo: Update once pick is in Scratch coordinates.
+        // Update once pick is in Scratch coordinates.
         // Limits test to this Drawable, so this will return true
         // even if the clone is obscured by another Drawable.
         var pickResult = this.runtime.renderer.pick(

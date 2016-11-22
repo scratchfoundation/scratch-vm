@@ -138,7 +138,7 @@ VirtualMachine.prototype.postIOData = function (device, data) {
  */
 VirtualMachine.prototype.loadProject = function (json) {
     this.clear();
-    // @todo: Handle other formats, e.g., Scratch 1.4, Scratch 3.0.
+    // Handle other formats here, e.g., Scratch 1.4, Scratch 3.0.
     sb2import(json, this.runtime);
     // Select the first target for editing, e.g., the first sprite.
     this.editingTarget = this.runtime.targets[1];

@@ -212,13 +212,11 @@ Runtime.MAX_CLONES = 300;
 
 /**
  * Register default block packages with this runtime.
- * @todo Prefix opcodes with package name.
  * @private
  */
 Runtime.prototype._registerBlockPackages = function () {
     for (var packageName in defaultBlockPackages) {
         if (defaultBlockPackages.hasOwnProperty(packageName)) {
-            // @todo pass a different runtime depending on package privilege?
             var packageObject = new (defaultBlockPackages[packageName])(this);
             // Collect primitives from package.
             if (packageObject.getPrimitives) {
@@ -553,7 +551,6 @@ Runtime.prototype._step = function () {
     var inactiveThreads = this.sequencer.stepThreads();
     this._updateGlows(inactiveThreads);
     if (this.renderer) {
-        // @todo: Only render when this.redrawRequested or clones rendered.
         this.renderer.draw();
     }
 };

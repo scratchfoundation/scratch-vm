@@ -77,12 +77,10 @@ var execute = function (sequencer, thread) {
                 if (!edgeWasActivated) {
                     sequencer.retireThread(thread);
                 }
-            } else {
+            } else if (!resolvedValue) {
                 // Not an edge-activated hat: retire the thread
                 // if predicate was false.
-                if (!resolvedValue) {
-                    sequencer.retireThread(thread);
-                }
+                sequencer.retireThread(thread);
             }
         } else {
             // In a non-hat, report the value visually if necessary if
@@ -105,20 +103,19 @@ var execute = function (sequencer, thread) {
         if (isHat) {
             // Skip through the block (hat with no predicate).
             return;
-        } else {
-            if (Object.keys(fields).length === 1 &&
-                Object.keys(inputs).length === 0) {
-                // One field and no inputs - treat as arg.
-                for (var fieldKey in fields) { // One iteration.
-                    handleReport(fields[fieldKey].value);
-                }
-            } else {
-                log.warn('Could not get implementation for opcode: ' +
-                    opcode);
-            }
-            thread.requestScriptGlowInFrame = true;
-            return;
         }
+        if (Object.keys(fields).length === 1 &&
+            Object.keys(inputs).length === 0) {
+            // One field and no inputs - treat as arg.
+            for (var fieldKey in fields) { // One iteration.
+                handleReport(fields[fieldKey].value);
+            }
+        } else {
+            log.warn('Could not get implementation for opcode: ' +
+                opcode);
+        }
+        thread.requestScriptGlowInFrame = true;
+        return;
     }
 
     // Generate values for arguments (inputs).
@@ -145,12 +142,11 @@ var execute = function (sequencer, thread) {
             execute(sequencer, thread);
             if (thread.status === Thread.STATUS_PROMISE_WAIT) {
                 return;
-            } else {
-                // Execution returned immediately,
-                // and presumably a value was reported, so pop the stack.
-                currentStackFrame.waitingReporter = null;
-                thread.popStack();
             }
+            // Execution returned immediately,
+            // and presumably a value was reported, so pop the stack.
+            currentStackFrame.waitingReporter = null;
+            thread.popStack();
         }
         argValues[inputName] = currentStackFrame.reported[inputName];
     }
@@ -207,12 +203,7 @@ var execute = function (sequencer, thread) {
             // Find the I/O device and execute the query/function call.
             if (runtime.ioDevices[device] && runtime.ioDevices[device][func]) {
                 var devObject = runtime.ioDevices[device];
-                // @todo Figure out why eslint complains about no-useless-call
-                // no-useless-call can't tell if the call is useless for dynamic
-                // expressions... or something. Not exactly sure why it
-                // complains here.
-                // eslint-disable-next-line no-useless-call
-                return devObject[func].call(devObject, args);
+                return devObject[func].apply(devObject, args);
             }
         }
     });
