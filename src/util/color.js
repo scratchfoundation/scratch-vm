@@ -17,7 +17,7 @@ Color.decimalToHex = function (decimal) {
 /**
  * Convert a Scratch decimal color to an RGB color object.
  * @param {number} decimal RGB color as decimal.
- * @returns {Object} {r: R, g: G, b: B}, values between 0-255
+ * @returns {object} {r: R, g: G, b: B}, values between 0-255
  */
 Color.decimalToRgb = function (decimal) {
     var r = (decimal >> 16) & 0xFF;
@@ -31,7 +31,7 @@ Color.decimalToRgb = function (decimal) {
  * CC-BY-SA Tim Down:
  * https://stackoverflow.com/questions/5623838/rgb-to-hex-and-hex-to-rgb
  * @param {!string} hex Hex representation of the color.
- * @return {Object} {r: R, g: G, b: B}, 0-255, or null.
+ * @return {object} {r: R, g: G, b: B}, 0-255, or null.
  */
 Color.hexToRgb = function (hex) {
     var shorthandRegex = /^#?([a-f\d])([a-f\d])([a-f\d])$/i;
@@ -48,7 +48,7 @@ Color.hexToRgb = function (hex) {
 
 /**
  * Convert an RGB color object to a hex color.
- * @param {Object} rgb {r: R, g: G, b: B}, values between 0-255.
+ * @param {object} rgb {r: R, g: G, b: B}, values between 0-255.
  * @return {!string} Hex representation of the color.
  */
 Color.rgbToHex = function (rgb) {
@@ -57,7 +57,7 @@ Color.rgbToHex = function (rgb) {
 
 /**
  * Convert an RGB color object to a Scratch decimal color.
- * @param {Object} rgb {r: R, g: G, b: B}, values between 0-255.
+ * @param {object} rgb {r: R, g: G, b: B}, values between 0-255.
  * @return {!number} Number representing the color.
  */
 Color.rgbToDecimal = function (rgb) {

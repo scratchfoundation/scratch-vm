@@ -10,7 +10,7 @@ var Scratch3DataBlocks = function (runtime) {
 
 /**
  * Retrieve the block primitives implemented by this package.
- * @return {Object.<string, Function>} Mapping of opcode to Function.
+ * @return {object.<string, Function>} Mapping of opcode to Function.
  */
 Scratch3DataBlocks.prototype.getPrimitives = function () {
     return {
