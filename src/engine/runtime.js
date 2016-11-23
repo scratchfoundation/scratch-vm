@@ -84,6 +84,12 @@ var Runtime = function () {
     this._scriptGlowsPreviousFrame = [];
 
     /**
+     * Number of threads running during the previous frame
+     * @type {number}
+     */
+    this._threadCount = 0;
+
+    /**
      * Currently known number of clones, used to enforce clone limit.
      * @type {number}
      */
@@ -178,6 +184,18 @@ Runtime.BLOCK_GLOW_ON = 'BLOCK_GLOW_ON';
  * @const {string}
  */
 Runtime.BLOCK_GLOW_OFF = 'BLOCK_GLOW_OFF';
+
+/**
+ * Event name for glowing the green flag
+ * @const {string}
+ */
+Runtime.PROJECT_RUN_START = 'PROJECT_RUN_START'
+
+/**
+ * Event name for unglowing the green flag
+ * @const {string}
+ */
+Runtime.PROJECT_RUN_STOP = 'PROJECT_RUN_STOP'
 
 /**
  * Event name for visual value report.
@@ -552,6 +570,7 @@ Runtime.prototype._step = function () {
     this.redrawRequested = false;
     var inactiveThreads = this.sequencer.stepThreads();
     this._updateGlows(inactiveThreads);
+    this._setThreadCount(this.threads.length);
     if (this.renderer) {
         // @todo: Only render when this.redrawRequested or clones rendered.
         this.renderer.draw();
@@ -637,6 +656,20 @@ Runtime.prototype._updateGlows = function (optExtraThreads) {
         }
     }
     this._scriptGlowsPreviousFrame = finalScriptGlows;
+};
+
+/**
+ * Emit run start/stop after each tick. Emits when `this.threads.length` goes
+ * between non-zero and zero
+ */
+Runtime.prototype._setThreadCount = function (threadCount) {
+    if (this._threadCount === 0 && threadCount > 0) {
+        this.emit(Runtime.PROJECT_RUN_START);
+    }
+    if (this._threadCount > 0 && threadCount === 0) {
+        this.emit(Runtime.PROJECT_RUN_STOP);
+    }
+    this._threadCount = threadCount;
 };
 
 /**

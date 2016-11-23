@@ -37,6 +37,11 @@ var VirtualMachine = function () {
     instance.runtime.on(Runtime.BLOCK_GLOW_OFF, function (glowData) {
         instance.emit(Runtime.BLOCK_GLOW_OFF, glowData);
     });
+    instance.runtime.on(Runtime.PROJECT_RUN_START, function () {
+        instance.emit(Runtime.PROJECT_RUN_START);
+    });
+    instance.runtime.on(Runtime.PROJECT_RUN_STOP, function () {
+        instance.emit(Runtime.PROJECT_RUN_STOP);
     });
     instance.runtime.on(Runtime.VISUAL_REPORT, function (visualReport) {
         instance.emit(Runtime.VISUAL_REPORT, visualReport);
