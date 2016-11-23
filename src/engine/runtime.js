@@ -159,13 +159,13 @@ Runtime.STAGE_HEIGHT = 360;
  * Event name for glowing a script.
  * @const {string}
  */
-Runtime.SCRIPT_GLOW_ON = 'STACK_GLOW_ON';
+Runtime.SCRIPT_GLOW_ON = 'SCRIPT_GLOW_ON';
 
 /**
  * Event name for unglowing a script.
  * @const {string}
  */
-Runtime.SCRIPT_GLOW_OFF = 'STACK_GLOW_OFF';
+Runtime.SCRIPT_GLOW_OFF = 'SCRIPT_GLOW_OFF';
 
 /**
  * Event name for glowing a block.
@@ -659,9 +659,9 @@ Runtime.prototype.quietGlow = function (scriptBlockId) {
  */
 Runtime.prototype.glowBlock = function (blockId, isGlowing) {
     if (isGlowing) {
-        this.emit(Runtime.BLOCK_GLOW_ON, blockId);
+        this.emit(Runtime.BLOCK_GLOW_ON, {id: blockId});
     } else {
-        this.emit(Runtime.BLOCK_GLOW_OFF, blockId);
+        this.emit(Runtime.BLOCK_GLOW_OFF, {id: blockId});
     }
 };
 
@@ -672,9 +672,9 @@ Runtime.prototype.glowBlock = function (blockId, isGlowing) {
  */
 Runtime.prototype.glowScript = function (topBlockId, isGlowing) {
     if (isGlowing) {
-        this.emit(Runtime.SCRIPT_GLOW_ON, topBlockId);
+        this.emit(Runtime.SCRIPT_GLOW_ON, {id: topBlockId});
     } else {
-        this.emit(Runtime.SCRIPT_GLOW_OFF, topBlockId);
+        this.emit(Runtime.SCRIPT_GLOW_OFF, {id: topBlockId});
     }
 };
 
@@ -684,7 +684,7 @@ Runtime.prototype.glowScript = function (topBlockId, isGlowing) {
  * @param {string} value Value to show associated with the block.
  */
 Runtime.prototype.visualReport = function (blockId, value) {
-    this.emit(Runtime.VISUAL_REPORT, blockId, String(value));
+    this.emit(Runtime.VISUAL_REPORT, {id: blockId, value: String(value)});
 };
 
 /**

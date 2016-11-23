@@ -25,23 +25,24 @@ var VirtualMachine = function () {
      */
     instance.editingTarget = null;
     // Runtime emits are passed along as VM emits.
-    instance.runtime.on(Runtime.SCRIPT_GLOW_ON, function (id) {
-        instance.emit(Runtime.SCRIPT_GLOW_ON, {id: id});
+    instance.runtime.on(Runtime.SCRIPT_GLOW_ON, function (glowData) {
+        instance.emit(Runtime.SCRIPT_GLOW_ON, glowData);
     });
-    instance.runtime.on(Runtime.SCRIPT_GLOW_OFF, function (id) {
-        instance.emit(Runtime.SCRIPT_GLOW_OFF, {id: id});
+    instance.runtime.on(Runtime.SCRIPT_GLOW_OFF, function (glowData) {
+        instance.emit(Runtime.SCRIPT_GLOW_OFF, glowData);
     });
-    instance.runtime.on(Runtime.BLOCK_GLOW_ON, function (id) {
-        instance.emit(Runtime.BLOCK_GLOW_ON, {id: id});
+    instance.runtime.on(Runtime.BLOCK_GLOW_ON, function (glowData) {
+        instance.emit(Runtime.BLOCK_GLOW_ON, glowData);
     });
-    instance.runtime.on(Runtime.BLOCK_GLOW_OFF, function (id) {
-        instance.emit(Runtime.BLOCK_GLOW_OFF, {id: id});
+    instance.runtime.on(Runtime.BLOCK_GLOW_OFF, function (glowData) {
+        instance.emit(Runtime.BLOCK_GLOW_OFF, glowData);
     });
-    instance.runtime.on(Runtime.VISUAL_REPORT, function (id, value) {
-        instance.emit(Runtime.VISUAL_REPORT, {id: id, value: value});
     });
-    instance.runtime.on(Runtime.SPRITE_INFO_REPORT, function (data) {
-        instance.emit(Runtime.SPRITE_INFO_REPORT, data);
+    instance.runtime.on(Runtime.VISUAL_REPORT, function (visualReport) {
+        instance.emit(Runtime.VISUAL_REPORT, visualReport);
+    });
+    instance.runtime.on(Runtime.SPRITE_INFO_REPORT, function (spriteInfo) {
+        instance.emit(Runtime.SPRITE_INFO_REPORT, spriteInfo);
     });
 
     this.blockListener = this.blockListener.bind(this);

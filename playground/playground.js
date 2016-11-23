@@ -137,10 +137,10 @@ window.onload = function() {
     };
 
     // Feedback for stacks and blocks running.
-    vm.on('STACK_GLOW_ON', function(data) {
+    vm.on('SCRIPT_GLOW_ON', function(data) {
         workspace.glowStack(data.id, true);
     });
-    vm.on('STACK_GLOW_OFF', function(data) {
+    vm.on('SCRIPT_GLOW_OFF', function(data) {
         workspace.glowStack(data.id, false);
     });
     vm.on('BLOCK_GLOW_ON', function(data) {
