@@ -189,13 +189,13 @@ Runtime.BLOCK_GLOW_OFF = 'BLOCK_GLOW_OFF';
  * Event name for glowing the green flag
  * @const {string}
  */
-Runtime.PROJECT_RUN_START = 'PROJECT_RUN_START'
+Runtime.PROJECT_RUN_START = 'PROJECT_RUN_START';
 
 /**
  * Event name for unglowing the green flag
  * @const {string}
  */
-Runtime.PROJECT_RUN_STOP = 'PROJECT_RUN_STOP'
+Runtime.PROJECT_RUN_STOP = 'PROJECT_RUN_STOP';
 
 /**
  * Event name for visual value report.
@@ -661,6 +661,8 @@ Runtime.prototype._updateGlows = function (optExtraThreads) {
 /**
  * Emit run start/stop after each tick. Emits when `this.threads.length` goes
  * between non-zero and zero
+ *
+ * @param {number} threadCount The new threadCount
  */
 Runtime.prototype._setThreadCount = function (threadCount) {
     if (this._threadCount === 0 && threadCount > 0) {
