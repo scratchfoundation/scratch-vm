@@ -87,23 +87,29 @@
 	     */
 	    instance.editingTarget = null;
 	    // Runtime emits are passed along as VM emits.
-	    instance.runtime.on(Runtime.SCRIPT_GLOW_ON, function (id) {
-	        instance.emit(Runtime.SCRIPT_GLOW_ON, {id: id});
+	    instance.runtime.on(Runtime.SCRIPT_GLOW_ON, function (glowData) {
+	        instance.emit(Runtime.SCRIPT_GLOW_ON, glowData);
 	    });
-	    instance.runtime.on(Runtime.SCRIPT_GLOW_OFF, function (id) {
-	        instance.emit(Runtime.SCRIPT_GLOW_OFF, {id: id});
+	    instance.runtime.on(Runtime.SCRIPT_GLOW_OFF, function (glowData) {
+	        instance.emit(Runtime.SCRIPT_GLOW_OFF, glowData);
 	    });
-	    instance.runtime.on(Runtime.BLOCK_GLOW_ON, function (id) {
-	        instance.emit(Runtime.BLOCK_GLOW_ON, {id: id});
+	    instance.runtime.on(Runtime.BLOCK_GLOW_ON, function (glowData) {
+	        instance.emit(Runtime.BLOCK_GLOW_ON, glowData);
 	    });
-	    instance.runtime.on(Runtime.BLOCK_GLOW_OFF, function (id) {
-	        instance.emit(Runtime.BLOCK_GLOW_OFF, {id: id});
+	    instance.runtime.on(Runtime.BLOCK_GLOW_OFF, function (glowData) {
+	        instance.emit(Runtime.BLOCK_GLOW_OFF, glowData);
 	    });
-	    instance.runtime.on(Runtime.VISUAL_REPORT, function (id, value) {
-	        instance.emit(Runtime.VISUAL_REPORT, {id: id, value: value});
+	    instance.runtime.on(Runtime.PROJECT_RUN_START, function () {
+	        instance.emit(Runtime.PROJECT_RUN_START);
 	    });
-	    instance.runtime.on(Runtime.SPRITE_INFO_REPORT, function (data) {
-	        instance.emit(Runtime.SPRITE_INFO_REPORT, data);
+	    instance.runtime.on(Runtime.PROJECT_RUN_STOP, function () {
+	        instance.emit(Runtime.PROJECT_RUN_STOP);
+	    });
+	    instance.runtime.on(Runtime.VISUAL_REPORT, function (visualReport) {
+	        instance.emit(Runtime.VISUAL_REPORT, visualReport);
+	    });
+	    instance.runtime.on(Runtime.SPRITE_INFO_REPORT, function (spriteInfo) {
+	        instance.emit(Runtime.SPRITE_INFO_REPORT, spriteInfo);
 	    });
 
 	    this.blockListener = this.blockListener.bind(this);
@@ -1605,6 +1611,12 @@
 	    this._scriptGlowsPreviousFrame = [];
 
 	    /**
+	     * Number of threads running during the previous frame
+	     * @type {number}
+	     */
+	    this._threadCount = 0;
+
+	    /**
 	     * Currently known number of clones, used to enforce clone limit.
 	     * @type {number}
 	     */
@@ -1680,13 +1692,13 @@
 	 * Event name for glowing a script.
 	 * @const {string}
 	 */
-	Runtime.SCRIPT_GLOW_ON = 'STACK_GLOW_ON';
+	Runtime.SCRIPT_GLOW_ON = 'SCRIPT_GLOW_ON';
 
 	/**
 	 * Event name for unglowing a script.
 	 * @const {string}
 	 */
-	Runtime.SCRIPT_GLOW_OFF = 'STACK_GLOW_OFF';
+	Runtime.SCRIPT_GLOW_OFF = 'SCRIPT_GLOW_OFF';
 
 	/**
 	 * Event name for glowing a block.
@@ -1699,6 +1711,18 @@
 	 * @const {string}
 	 */
 	Runtime.BLOCK_GLOW_OFF = 'BLOCK_GLOW_OFF';
+
+	/**
+	 * Event name for glowing the green flag
+	 * @const {string}
+	 */
+	Runtime.PROJECT_RUN_START = 'PROJECT_RUN_START';
+
+	/**
+	 * Event name for unglowing the green flag
+	 * @const {string}
+	 */
+	Runtime.PROJECT_RUN_STOP = 'PROJECT_RUN_STOP';
 
 	/**
 	 * Event name for visual value report.
@@ -2071,8 +2095,9 @@
 	        }
 	    }
 	    this.redrawRequested = false;
-	    var inactiveThreads = this.sequencer.stepThreads();
-	    this._updateGlows(inactiveThreads);
+	    var doneThreads = this.sequencer.stepThreads();
+	    this._updateGlows(doneThreads);
+	    this._setThreadCount(this.threads.length + doneThreads.length);
 	    if (this.renderer) {
 	        // @todo: Only render when this.redrawRequested or clones rendered.
 	        this.renderer.draw();
@@ -2161,6 +2186,22 @@
 	};
 
 	/**
+	 * Emit run start/stop after each tick. Emits when `this.threads.length` goes
+	 * between non-zero and zero
+	 *
+	 * @param {number} threadCount The new threadCount
+	 */
+	Runtime.prototype._setThreadCount = function (threadCount) {
+	    if (this._threadCount === 0 && threadCount > 0) {
+	        this.emit(Runtime.PROJECT_RUN_START);
+	    }
+	    if (this._threadCount > 0 && threadCount === 0) {
+	        this.emit(Runtime.PROJECT_RUN_STOP);
+	    }
+	    this._threadCount = threadCount;
+	};
+
+	/**
 	 * "Quiet" a script's glow: stop the VM from generating glow/unglow events
 	 * about that script. Use when a script has just been deleted, but we may
 	 * still be tracking glow data about it.
@@ -2180,9 +2221,9 @@
 	 */
 	Runtime.prototype.glowBlock = function (blockId, isGlowing) {
 	    if (isGlowing) {
-	        this.emit(Runtime.BLOCK_GLOW_ON, blockId);
+	        this.emit(Runtime.BLOCK_GLOW_ON, {id: blockId});
 	    } else {
-	        this.emit(Runtime.BLOCK_GLOW_OFF, blockId);
+	        this.emit(Runtime.BLOCK_GLOW_OFF, {id: blockId});
 	    }
 	};
 
@@ -2193,9 +2234,9 @@
 	 */
 	Runtime.prototype.glowScript = function (topBlockId, isGlowing) {
 	    if (isGlowing) {
-	        this.emit(Runtime.SCRIPT_GLOW_ON, topBlockId);
+	        this.emit(Runtime.SCRIPT_GLOW_ON, {id: topBlockId});
 	    } else {
-	        this.emit(Runtime.SCRIPT_GLOW_OFF, topBlockId);
+	        this.emit(Runtime.SCRIPT_GLOW_OFF, {id: topBlockId});
 	    }
 	};
 
@@ -2205,7 +2246,7 @@
 	 * @param {string} value Value to show associated with the block.
 	 */
 	Runtime.prototype.visualReport = function (blockId, value) {
-	    this.emit(Runtime.VISUAL_REPORT, blockId, String(value));
+	    this.emit(Runtime.VISUAL_REPORT, {id: blockId, value: String(value)});
 	};
 
 	/**
@@ -2348,7 +2389,7 @@
 	    var numActiveThreads = Infinity;
 	    // Whether `stepThreads` has run through a full single tick.
 	    var ranFirstTick = false;
-	    var inactiveThreads = [];
+	    var doneThreads = [];
 	    // Conditions for continuing to stepping threads:
 	    // 1. We must have threads in the list, and some must be active.
 	    // 2. Time elapsed must be less than WORK_TIME.
@@ -2364,8 +2405,8 @@
 	            if (activeThread.stack.length === 0 ||
 	                activeThread.status === Thread.STATUS_DONE) {
 	                // Finished with this thread.
-	                if (inactiveThreads.indexOf(activeThread) < 0) {
-	                    inactiveThreads.push(activeThread);
+	                if (doneThreads.indexOf(activeThread) < 0) {
+	                    doneThreads.push(activeThread);
 	                }
 	                continue;
 	            }
@@ -2390,12 +2431,12 @@
 	    }
 	    // Filter inactive threads from `this.runtime.threads`.
 	    this.runtime.threads = this.runtime.threads.filter(function (thread) {
-	        if (inactiveThreads.indexOf(thread) > -1) {
+	        if (doneThreads.indexOf(thread) > -1) {
 	            return false;
 	        }
 	        return true;
 	    });
-	    return inactiveThreads;
+	    return doneThreads;
 	};
 
 	/**
