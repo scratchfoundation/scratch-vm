@@ -568,9 +568,9 @@ Runtime.prototype._step = function () {
         }
     }
     this.redrawRequested = false;
-    var inactiveThreads = this.sequencer.stepThreads();
-    this._updateGlows(inactiveThreads);
-    this._setThreadCount(this.threads.length);
+    var doneThreads = this.sequencer.stepThreads();
+    this._updateGlows(doneThreads);
+    this._setThreadCount(this.threads.length + doneThreads.length);
     if (this.renderer) {
         // @todo: Only render when this.redrawRequested or clones rendered.
         this.renderer.draw();
