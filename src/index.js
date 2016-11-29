@@ -181,6 +181,9 @@ VirtualMachine.prototype.importFromJson = function (json) {
         var target = sprite.createClone();
         this.runtime.targets.push(target);
         for (x in obj.sprites[i]) {
+            if (x == "sprite") {
+                continue;
+            }
             target[x] = obj.sprites[y];
         }
     }
