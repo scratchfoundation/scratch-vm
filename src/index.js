@@ -163,10 +163,10 @@ VirtualMachine.prototype.exportToJson = function () {
     for (; i < this.runtime.targets; i++) {
         obj.sprites.push(this.runtime.targets[i].export());
     }
-    obj.meta.name = "WIP";
+    obj.meta.name = 'WIP';
     obj.meta.useragent = navigator.userAgent;
     return JSON.stringify(obj);
-}
+};
 
 VirtualMachine.prototype.importFromJson = function (json) {
     var obj = JSON.parse(json);
@@ -174,16 +174,18 @@ VirtualMachine.prototype.importFromJson = function (json) {
     for (; i < obj.sprites.length; i++) {
         var blocks = new Blocks();
         var sprite = new Sprite(blocks, this.runtime);
+        var y = null;
         for (y in obj.sprites[i].sprite) {
             sprite[y] = obj.sprites[i].sprite[y];
         }
         var target = sprite.createClone();
         this.runtime.targets.push(target);
+        var x = null;
         for (x in obj.sprites[i]) {
-            if (x == "sprite") {
+            if (x === 'sprite') {
                 continue;
             }
-            target[x] = obj.sprites[y];
+            target[x] = obj.sprites[x];
         }
     }
     this.editingTarget = this.runtime.targets[1];
@@ -191,7 +193,7 @@ VirtualMachine.prototype.importFromJson = function (json) {
     this.emitTargetsUpdate();
     this.emitWorkspaceUpdate();
     this.runtime.setEditingTarget(this.editingTarget);
-}
+};
 
 /**
  * Add a single sprite from the "Sprite2" (i.e., SB2 sprite) format.
