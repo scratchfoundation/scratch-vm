@@ -1,8 +1,7 @@
 var EventEmitter = require('events');
 var util = require('util');
-var Blocks = require('../engine/blocks');
-var RenderedTarget = require('../sprites/rendered-target');
-var Sprite = require('../sprites/sprite');
+var Blocks = require('./engine/blocks');
+var Sprite = require('./sprites/sprite');
 var Runtime = require('./engine/runtime');
 var sb2import = require('./import/sb2import');
 
