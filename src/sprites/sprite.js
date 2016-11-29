@@ -56,12 +56,13 @@ Sprite.prototype.createClone = function () {
 
 Sprite.prototype.export = function () {
     var result = new Object();
-    var notSaved = ["clones","runtime"];
+    var notSaved = ['clones', 'runtime'];
+    var x = null;
     for (x in this) {
-        if (typeof(this[x]) === "function") {
+        if (typeof this[x] === 'function') {
             continue;
         }
-        if (notSaved.indexOf(x) == -1) {
+        if (notSaved.indexOf(x) === -1) {
             result[x] = this[x];
         }
     }
