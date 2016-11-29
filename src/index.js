@@ -1,6 +1,8 @@
 var EventEmitter = require('events');
 var util = require('util');
-
+var Blocks = require('../engine/blocks');
+var RenderedTarget = require('../sprites/rendered-target');
+var Sprite = require('../sprites/sprite');
 var Runtime = require('./engine/runtime');
 var sb2import = require('./import/sb2import');
 
@@ -153,6 +155,41 @@ VirtualMachine.prototype.loadProject = function (json) {
     this.emitWorkspaceUpdate();
     this.runtime.setEditingTarget(this.editingTarget);
 };
+
+VirtualMachine.prototype.exportToJson = function () {
+    this.clear();
+    var obj = new Object();
+    var i = 0;
+    obj.sprites = [];
+    for (; i < this.runtime.targets; i++) {
+        obj.sprites.push(this.runtime.targets[i].export());
+    }
+    obj.meta.name = "WIP";
+    obj.meta.useragent = navigator.userAgent;
+    return JSON.stringify(obj);
+}
+
+VirtualMachine.prototype.importFromJson = function (json) {
+    var obj = JSON.parse(json);
+    var i = 0;
+    for (; i < obj.sprites.length; i++) {
+        var blocks = new Blocks();
+        var sprite = new Sprite(blocks, this.runtime);
+        for (y in obj.sprites[i].sprite) {
+            sprite[y] = obj.sprites[i].sprite[y];
+        }
+        var target = sprite.createClone();
+        this.runtime.targets.push(target);
+        for (x in obj.sprites[i]) {
+            target[x] = obj.sprites[y];
+        }
+    }
+    this.editingTarget = this.runtime.targets[1];
+    // Update the VM user's knowledge of targets and blocks on the workspace.
+    this.emitTargetsUpdate();
+    this.emitWorkspaceUpdate();
+    this.runtime.setEditingTarget(this.editingTarget);
+}
 
 /**
  * Add a single sprite from the "Sprite2" (i.e., SB2 sprite) format.
