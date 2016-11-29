@@ -54,4 +54,18 @@ Sprite.prototype.createClone = function () {
     return newClone;
 };
 
+Sprite.prototype.export = function () {
+    var result = new Object();
+    var notSaved = ["clones","runtime"];
+    for (x in this) {
+        if (typeof(this[x]) === "function") {
+            continue;
+        }
+        if (notSaved.indexOf(x) == -1) {
+            result[x] = this[x];
+        }
+    }
+    return result;
+};
+
 module.exports = Sprite;
