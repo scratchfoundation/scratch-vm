@@ -66,12 +66,13 @@ RenderedTarget.prototype.initDrawable = function () {
 
 RenderedTarget.prototype.export = function () {
     var result = new Object();
-    var notSaved = ["renderer","effects","sprite","drawableID","runtime"];
+    var notSaved = ['renderer', 'effects', 'sprite', 'drawableID', 'runtime'];
+    var x = null;
     for (x in this) {
-        if (typeof(this[x]) === "function") {
+        if (typeof this[x] === 'function') {
             continue;
         }
-        if (notSaved.indexOf(x) == -1) {
+        if (notSaved.indexOf(x) === -1) {
             result[x] = this[x];
         }
     }
