@@ -64,6 +64,21 @@ RenderedTarget.prototype.initDrawable = function () {
     }
 };
 
+RenderedTarget.prototype.export = function () {
+    var result = new Object();
+    var notSaved = ["renderer","effects","sprite","drawableID","runtime"];
+    for (x in this) {
+        if (typeof(this[x]) === "function") {
+            continue;
+        }
+        if (notSaved.indexOf(x) == -1) {
+            result[x] = this[x];
+        }
+    }
+    result.sprite = this.sprite.export();
+    return result;
+};
+
 /**
  * Whether this represents an "original" non-clone rendered-target for a sprite,
  * i.e., created by the editor and not clone blocks.
