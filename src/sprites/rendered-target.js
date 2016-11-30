@@ -329,6 +329,7 @@ RenderedTarget.prototype.setCostume = function (index) {
             this.runtime.requestRedraw();
         }
     }
+    this.runtime.spriteInfoReport(this);
 };
 
 /**
@@ -368,6 +369,14 @@ RenderedTarget.prototype.getCostumeIndexByName = function (costumeName) {
         }
     }
     return -1;
+};
+
+/**
+ * Get a costume of this rendered target by id.
+ * @return {object} current costume
+ */
+RenderedTarget.prototype.getCurrentCostume = function () {
+    return this.sprite.costumes[this.currentCostume];
 };
 
 /**

@@ -734,6 +734,7 @@ Runtime.prototype.spriteInfoReport = function (target) {
         x: target.x,
         y: target.y,
         direction: target.direction,
+        costume: target.getCurrentCostume(),
         visible: target.visible,
         rotationStyle: target.rotationStyle
     });
