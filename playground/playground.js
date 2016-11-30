@@ -154,6 +154,7 @@ window.onload = function() {
     });
 
     vm.on('SPRITE_INFO_REPORT', function(data) {
+        if (data.id !== selectedTarget.value) return; // Not the editingTarget
         document.getElementById('sinfo-x').value = data.x;
         document.getElementById('sinfo-y').value = data.y;
         document.getElementById('sinfo-direction').value = data.direction;
