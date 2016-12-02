@@ -160,7 +160,7 @@ VirtualMachine.prototype.exportToJson = function () {
     obj.sprites = this.runtime.targets;
     obj.meta.name = 'WIP';
     obj.meta.useragent = navigator.userAgent;
-    return JSON.stringify(obj);
+    return JSON.stringify(obj, null, 2);
 };
 
 VirtualMachine.prototype.importFromJson = function (json) {
