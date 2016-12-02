@@ -158,6 +158,7 @@ VirtualMachine.prototype.loadProject = function (json) {
 VirtualMachine.prototype.exportToJson = function () {
     var obj = new Object();
     obj.sprites = this.runtime.targets;
+    obj.meta = new Object();
     obj.meta.name = 'WIP';
     obj.meta.useragent = navigator.userAgent;
     return JSON.stringify(obj, null, 2);
