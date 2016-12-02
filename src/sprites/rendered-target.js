@@ -64,9 +64,9 @@ RenderedTarget.prototype.initDrawable = function () {
     }
 };
 
-RenderedTarget.prototype.export = function () {
+RenderedTarget.prototype.toJSON = function () {
     var result = new Object();
-    var notSaved = ['renderer', 'effects', 'sprite', 'drawableID', 'runtime', 'id'];
+    var notSaved = ['renderer', 'effects', 'sprite', 'drawableID', 'runtime', 'id', 'blocks'];
     var x = null;
     for (x in this) {
         if (typeof this[x] === 'function') {
