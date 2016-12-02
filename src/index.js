@@ -170,9 +170,16 @@ VirtualMachine.prototype.fromJSON = function (json) {
     var i = 0;
     for (; i < obj.sprites.length; i++) {
         var blocks = new Blocks();
+        var z = null;
+        for (z in obj.sprites[i].sprite.blocks) {
+            blocks[z] = obj.sprites[i].sprite.blocks[z];
+        }
         var sprite = new Sprite(blocks, this.runtime);
         var y = null;
         for (y in obj.sprites[i].sprite) {
+            if (y === 'blocks') {
+                continue;
+            }
             sprite[y] = obj.sprites[i].sprite[y];
         }
         var target = sprite.createClone();
