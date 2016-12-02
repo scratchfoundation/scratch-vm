@@ -156,19 +156,16 @@ VirtualMachine.prototype.loadProject = function (json) {
 };
 
 VirtualMachine.prototype.exportToJson = function () {
-    this.clear();
     var obj = new Object();
     var i = 0;
-    obj.sprites = [];
-    for (; i < this.runtime.targets; i++) {
-        obj.sprites.push(this.runtime.targets[i].export());
-    }
+    obj.sprites = this.runtime.targets;
     obj.meta.name = 'WIP';
     obj.meta.useragent = navigator.userAgent;
     return JSON.stringify(obj);
 };
 
 VirtualMachine.prototype.importFromJson = function (json) {
+    this.clear();
     var obj = JSON.parse(json);
     var i = 0;
     for (; i < obj.sprites.length; i++) {
