@@ -155,7 +155,7 @@ VirtualMachine.prototype.loadProject = function (json) {
     this.runtime.setEditingTarget(this.editingTarget);
 };
 
-VirtualMachine.prototype.exportToJson = function () {
+VirtualMachine.prototype.toJSON = function () {
     var obj = new Object();
     obj.sprites = this.runtime.targets;
     obj.meta = new Object();
@@ -164,7 +164,7 @@ VirtualMachine.prototype.exportToJson = function () {
     return JSON.stringify(obj, null, 2);
 };
 
-VirtualMachine.prototype.importFromJson = function (json) {
+VirtualMachine.prototype.fromJSON = function (json) {
     this.clear();
     var obj = JSON.parse(json);
     var i = 0;
