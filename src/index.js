@@ -191,6 +191,7 @@ VirtualMachine.prototype.fromJSON = function (json) {
             }
             target[x] = obj.sprites[i][x];
         }
+        target.updateAllDrawablePropertie();
     }
     this.editingTarget = this.runtime.targets[1];
     // Update the VM user's knowledge of targets and blocks on the workspace.
