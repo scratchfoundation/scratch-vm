@@ -189,7 +189,7 @@ VirtualMachine.prototype.fromJSON = function (json) {
             if (x === 'sprite') {
                 continue;
             }
-            target[x] = obj.sprites[x];
+            target[x] = obj.sprites[i][x];
         }
     }
     this.editingTarget = this.runtime.targets[1];
