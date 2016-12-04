@@ -72,7 +72,7 @@
     <script>
         function toJson() {
             var output = document.getElementById('importExport');
-            var json = window.vm.toJSON(workspace);
+            var json = window.vm.toPrettyJSON(workspace);
             output.value = json;
             output.focus();
             output.select();
