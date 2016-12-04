@@ -155,13 +155,17 @@ VirtualMachine.prototype.loadProject = function (json) {
     this.runtime.setEditingTarget(this.editingTarget);
 };
 
+VirtualMachine.prototype.toPrettyJSON = function () {
+    return JSON.stringify(this.toJSON(), null, 4);
+}
+
 VirtualMachine.prototype.toJSON = function () {
     var obj = new Object();
     obj.sprites = this.runtime.targets;
     obj.meta = new Object();
     obj.meta.name = 'WIP';
     obj.meta.useragent = navigator.userAgent;
-    return JSON.stringify(obj, null, 2);
+    return obj;
 };
 
 VirtualMachine.prototype.fromJSON = function (json) {
