@@ -157,7 +157,7 @@ VirtualMachine.prototype.loadProject = function (json) {
 
 VirtualMachine.prototype.toPrettyJSON = function () {
     return JSON.stringify(this.toJSON(), null, 4);
-}
+};
 
 VirtualMachine.prototype.toJSON = function () {
     var obj = new Object();
