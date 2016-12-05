@@ -380,6 +380,14 @@ RenderedTarget.prototype.getCurrentCostume = function () {
 };
 
 /**
+ * Get full costume list
+ * @return {object[]} list of costumes
+ */
+RenderedTarget.prototype.getCostumes = function () {
+    return this.sprite.costumes;
+};
+
+/**
  * Update all drawable properties for this rendered target.
  * Use when a batch has changed, e.g., when the drawable is first created.
  */
@@ -652,6 +660,25 @@ RenderedTarget.prototype.postSpriteInfo = function (data) {
     if (data.hasOwnProperty('visible')) {
         this.setVisible(data.visible);
     }
+};
+
+/**
+ * Serialize sprite info, used when emitting events about the sprite
+ * @returns {object} sprite data as a simple object
+ */
+RenderedTarget.prototype.toJSON = function () {
+    return {
+        id: this.id,
+        name: this.getName(),
+        isStage: this.isStage,
+        x: this.x,
+        y: this.y,
+        direction: this.direction,
+        costume: this.getCurrentCostume(),
+        costumeCount: this.getCostumes().length,
+        visible: this.visible,
+        rotationStyle: this.rotationStyle
+    };
 };
 
 /**

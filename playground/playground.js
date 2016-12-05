@@ -121,13 +121,13 @@ window.onload = function() {
         // Generate new select box.
         for (var i = 0; i < data.targetList.length; i++) {
             var targetOption = document.createElement('option');
-            targetOption.setAttribute('value', data.targetList[i][0]);
+            targetOption.setAttribute('value', data.targetList[i].id);
             // If target id matches editingTarget id, select it.
-            if (data.targetList[i][0] == data.editingTarget) {
+            if (data.targetList[i].id == data.editingTarget) {
                 targetOption.setAttribute('selected', 'selected');
             }
             targetOption.appendChild(
-                document.createTextNode(data.targetList[i][1])
+                document.createTextNode(data.targetList[i].name)
             );
             selectedTarget.appendChild(targetOption);
         }

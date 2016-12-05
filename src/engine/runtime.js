@@ -729,15 +729,7 @@ Runtime.prototype.visualReport = function (blockId, value) {
 Runtime.prototype.spriteInfoReport = function (target) {
     if (!target.isOriginal) return;
 
-    this.emit(Runtime.SPRITE_INFO_REPORT, {
-        id: target.id,
-        x: target.x,
-        y: target.y,
-        direction: target.direction,
-        costume: target.getCurrentCostume(),
-        visible: target.visible,
-        rotationStyle: target.rotationStyle
-    });
+    this.emit(Runtime.SPRITE_INFO_REPORT, target.toJSON());
 };
 
 /**
