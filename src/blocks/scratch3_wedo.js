@@ -44,15 +44,15 @@ Scratch3WedoBlocks.prototype.setColor = function(args, util) {
     // Pause for quarter second
     if (!util.stackFrame.timer) {
         // If extension interface is available, send LED color "set" command
-        if (typeof window.extensions !== 'undefined') {
+        if (typeof window.ext !== 'undefined') {
             var colorIndex = this._getColor(Cast.toString(args.CHOICE));
-            window.extensions.postMessage({
-                                          extension: 'wedo',
-                                          method: 'lightSet',
-                                          args: [colorIndex]
-                                          });
+            window.ext.postMessage({
+                extension: 'wedo',
+                method: 'lightSet',
+                args: [colorIndex]
+            });
         }
-        
+
         // Yield
         util.stackFrame.timer = new Timer();
         util.stackFrame.timer.start();
@@ -124,14 +124,14 @@ Scratch3WedoBlocks.prototype._motorOnFor = function(direction, durationSeconds, 
     // Start motor and begin timer
     if (!util.stackFrame.timer) {
         // If extension interface is available, send LED color "set" command
-        if (typeof window.extensions !== 'undefined') {
-            window.extensions.postMessage({
+        if (typeof window.ext !== 'undefined') {
+            window.ext.postMessage({
                 extension: 'wedo',
                 method: 'motorRun',
                 args: [direction, this._motorSpeed]
             });
         }
-        
+
         // Yield
         util.stackFrame.timer = new Timer();
         util.stackFrame.timer.start();
@@ -140,8 +140,8 @@ Scratch3WedoBlocks.prototype._motorOnFor = function(direction, durationSeconds, 
         if (util.stackFrame.timer.timeElapsed() < 1000 * durationSeconds) {
             util.yield();
         } else {
-            if (typeof window.extensions !== 'undefined') {
-                window.extensions.postMessage({
+            if (typeof window.ext !== 'undefined') {
+                window.ext.postMessage({
                     extension: 'wedo',
                     method: 'motorStop',
                     args: []
