@@ -10,10 +10,10 @@ var Scratch3WedoBlocks = function (runtime) {
     this.runtime = runtime;
 
     /**
-     * Current motor speed as a percentage (100 = full speed).
+     * Current motor speed as a percentage (50 = half speed).
      * @type {Number}
      */
-    this._motorSpeed = 100;
+    this._motorSpeed = 50;
 };
 
 /**
@@ -25,7 +25,9 @@ Scratch3WedoBlocks.prototype.getPrimitives = function () {
         wedo_setcolor: this.setColor,
         wedo_motorclockwise: this.motorClockwise,
         wedo_motorcounterclockwise: this.motorCounterClockwise,
-        wedo_motorspeed: this.motorSpeed
+        wedo_motorspeed: this.motorSpeed,
+        wedo_distance: this.distance,
+        wedo_tilt: this.tilt
     };
 };
 
@@ -44,12 +46,12 @@ Scratch3WedoBlocks.prototype.setColor = function(args, util) {
     // Pause for quarter second
     if (!util.stackFrame.timer) {
         // If extension interface is available, send LED color "set" command
+        // @todo Handle CHOICE and NUM for vertical and horizontal grammars
         if (typeof window.ext !== 'undefined') {
-            var colorIndex = this._getColor(Cast.toString(args.CHOICE));
             window.ext.postMessage({
                 extension: 'wedo',
                 method: 'lightSet',
-                args: [colorIndex]
+                args: [Cast.toNumber(args.CHOICE)]
             });
         }
 
@@ -73,44 +75,27 @@ Scratch3WedoBlocks.prototype.motorCounterClockwise = function(args, util) {
 };
 
 Scratch3WedoBlocks.prototype.motorSpeed = function(args) {
-    var speed = Cast.toString(args.CHOICE);
-    switch (speed) {
-    case 'slow':
-        this._motorSpeed = 20;
-        break;
-    case 'medium':
-        this._motorSpeed = 50;
-        break;
-    case 'fast':
-        this._motorSpeed = 100;
-        break;
-    }
+    // @todo Handle CHOICE and NUM for vertical and horizontal grammars
+    var speed = Cast.toNumber(args.CHOICE);
+    this._motorSpeed = MathUtil.clamp(speed, 0, 100);
 };
 
-/**
- * Convert a color name to a WeDo color index.
- * Supports 'mystery' for a random hue.
- * @param colorName The color to retrieve.
- * @returns {number} The WeDo color index.
- * @private
- */
-Scratch3WedoBlocks.prototype._getColor = function(colorName) {
-    var colors = {
-        'yellow': 7,
-        'orange': 8,
-        'coral': 9,
-        'magenta': 1,
-        'purple': 2,
-        'blue': 3,
-        'green': 6,
-        'white': 10
-    };
+Scratch3WedoBlocks.prototype.distance = function(args) {
+    if (typeof window.ext === 'undefined') return 0;
+    if (typeof window.ext.distance === 'undefined') return 0;
 
-    if (colorName == 'mystery') {
-        return Math.floor((Math.random() * 10) + 1);
-    }
+    var distance = Cast.toNumber(window.ext.distance);
+    var mapped = MathUtil.map(distance, 0, 7, 0, 100);
+    return Math.round(mapped);
+};
 
-    return colors[colorName];
+Scratch3WedoBlocks.prototype.tilt = function(args) {
+    if (typeof window.ext === 'undefined') return 0;
+    if (typeof window.ext.tilt === 'undefined') return 0;
+
+    var distance = Cast.toNumber(window.ext.tilt[args.CHOICE]);
+    var mapped = MathUtil.map(distance, -45, 45, -100, 100);
+    return Math.round(mapped);
 };
 
 /**

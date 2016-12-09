@@ -45,4 +45,8 @@ MathUtil.wrapClamp = function (n, min, max) {
     return n - (Math.floor((n - min) / range) * range);
 };
 
+MathUtil.map = function (n, sMin, sMax, tMin, tMax) {
+    return (n - sMin) / (sMax - sMin) * (tMax - tMin) + tMin
+};
+
 module.exports = MathUtil;
