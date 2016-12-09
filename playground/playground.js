@@ -121,13 +121,13 @@ window.onload = function() {
         // Generate new select box.
         for (var i = 0; i < data.targetList.length; i++) {
             var targetOption = document.createElement('option');
-            targetOption.setAttribute('value', data.targetList[i][0]);
+            targetOption.setAttribute('value', data.targetList[i].id);
             // If target id matches editingTarget id, select it.
-            if (data.targetList[i][0] == data.editingTarget) {
+            if (data.targetList[i].id == data.editingTarget) {
                 targetOption.setAttribute('selected', 'selected');
             }
             targetOption.appendChild(
-                document.createTextNode(data.targetList[i][1])
+                document.createTextNode(data.targetList[i].name)
             );
             selectedTarget.appendChild(targetOption);
         }
@@ -154,6 +154,7 @@ window.onload = function() {
     });
 
     vm.on('SPRITE_INFO_REPORT', function(data) {
+        if (data.id !== selectedTarget.value) return; // Not the editingTarget
         document.getElementById('sinfo-x').value = data.x;
         document.getElementById('sinfo-y').value = data.y;
         document.getElementById('sinfo-direction').value = data.direction;

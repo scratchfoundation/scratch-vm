@@ -329,6 +329,7 @@ RenderedTarget.prototype.setCostume = function (index) {
             this.runtime.requestRedraw();
         }
     }
+    this.runtime.spriteInfoReport(this);
 };
 
 /**
@@ -368,6 +369,22 @@ RenderedTarget.prototype.getCostumeIndexByName = function (costumeName) {
         }
     }
     return -1;
+};
+
+/**
+ * Get a costume of this rendered target by id.
+ * @return {object} current costume
+ */
+RenderedTarget.prototype.getCurrentCostume = function () {
+    return this.sprite.costumes[this.currentCostume];
+};
+
+/**
+ * Get full costume list
+ * @return {object[]} list of costumes
+ */
+RenderedTarget.prototype.getCostumes = function () {
+    return this.sprite.costumes;
 };
 
 /**
@@ -643,6 +660,25 @@ RenderedTarget.prototype.postSpriteInfo = function (data) {
     if (data.hasOwnProperty('visible')) {
         this.setVisible(data.visible);
     }
+};
+
+/**
+ * Serialize sprite info, used when emitting events about the sprite
+ * @returns {object} sprite data as a simple object
+ */
+RenderedTarget.prototype.toJSON = function () {
+    return {
+        id: this.id,
+        name: this.getName(),
+        isStage: this.isStage,
+        x: this.x,
+        y: this.y,
+        direction: this.direction,
+        costume: this.getCurrentCostume(),
+        costumeCount: this.getCostumes().length,
+        visible: this.visible,
+        rotationStyle: this.rotationStyle
+    };
 };
 
 /**

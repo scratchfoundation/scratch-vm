@@ -723,20 +723,13 @@ Runtime.prototype.visualReport = function (blockId, value) {
 };
 
 /**
- * Emit a sprite info report if the provided target is the editing target.
+ * Emit a sprite info report if the provided target is the original sprite
  * @param {!Target} target Target to report sprite info for.
  */
 Runtime.prototype.spriteInfoReport = function (target) {
-    if (target !== this._editingTarget) {
-        return;
-    }
-    this.emit(Runtime.SPRITE_INFO_REPORT, {
-        x: target.x,
-        y: target.y,
-        direction: target.direction,
-        visible: target.visible,
-        rotationStyle: target.rotationStyle
-    });
+    if (!target.isOriginal) return;
+
+    this.emit(Runtime.SPRITE_INFO_REPORT, target.toJSON());
 };
 
 /**

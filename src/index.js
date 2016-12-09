@@ -304,7 +304,7 @@ VirtualMachine.prototype.emitTargetsUpdate = function () {
             // Don't report clones.
             return !target.hasOwnProperty('isOriginal') || target.isOriginal;
         }).map(function (target) {
-            return [target.id, target.getName()];
+            return target.toJSON();
         }),
         // Currently editing target id.
         editingTarget: this.editingTarget ? this.editingTarget.id : null
