@@ -155,8 +155,14 @@ VirtualMachine.prototype.loadProject = function (json) {
     this.runtime.setEditingTarget(this.editingTarget);
 };
 
-VirtualMachine.prototype.toPrettyJSON = function () {
-    return JSON.stringify(this.toJSON(), null, 4);
+VirtualMachine.prototype.toPrettyJSON = function (testing) {
+    this.runtime.targets.testing = testing;
+    var json = JSON.stringify(this.toJSON(), null, 4);
+    this.runtime.targets.testing = false;
+    if (testing == true) {
+        console.log('Exported To JSON');
+    }
+    return json;
 };
 
 VirtualMachine.prototype.toJSON = function () {
@@ -168,8 +174,11 @@ VirtualMachine.prototype.toJSON = function () {
     return obj;
 };
 
-VirtualMachine.prototype.fromJSON = function (json) {
+VirtualMachine.prototype.fromJSON = function (json, testing) {
     this.clear();
+    if (testing == true) {
+        console.log('Importing JSON');
+    }
     var obj = JSON.parse(json);
     var i = 0;
     for (; i < obj.sprites.length; i++) {
@@ -177,6 +186,9 @@ VirtualMachine.prototype.fromJSON = function (json) {
         var z = null;
         for (z in obj.sprites[i].sprite.blocks) {
             blocks[z] = obj.sprites[i].sprite.blocks[z];
+            if (testing == true) {
+                console.log('Importing ' + z + ' to Blocks');
+            }
         }
         var sprite = new Sprite(blocks, this.runtime);
         var y = null;
@@ -185,6 +197,9 @@ VirtualMachine.prototype.fromJSON = function (json) {
                 continue;
             }
             sprite[y] = obj.sprites[i].sprite[y];
+            if (testing == true) {
+                console.log('Importing ' + y + ' to Sprite');
+            }
         }
         var target = sprite.createClone();
         this.runtime.targets.push(target);
@@ -194,11 +209,37 @@ VirtualMachine.prototype.fromJSON = function (json) {
                 continue;
             }
             target[x] = obj.sprites[i][x];
+            console.log('Importing ' + x + ' to Rendered Target');
         }
         target.updateAllDrawablePropertie();
     }
-    this.editingTarget = this.runtime.targets[1];
+    this.editingTarget = this.runtime.targets[0];
     // Update the VM user's knowledge of targets and blocks on the workspace.
+    this.emitTargetsUpdate();
+    this.emitWorkspaceUpdate();
+    this.runtime.setEditingTarget(this.editingTarget);
+    if (testing == true) {
+        console.log('Imported from JSON');
+    }
+};
+
+VirtualMachine.prototype.testJSON = function () {
+    console.log('Exporting to JSON...');
+    var json = this.toPrettyJSON(true);
+    console.log('Importing from JSON...');
+    this.fromJSON(json, true);
+    console.log('Exporting to JSON...');
+    var json2 = this.toPrettyJSON(true);
+    if (json == json2) {
+        console.log('JSON Test: Successful');
+    } else {
+        console.log('JSON Test: Failed: JSON Not Equivalent');
+        console.log('JSON 1:');
+        console.log(json);
+        console.log('JSON 2:');
+        console.log(json2);
+    }
+    this.editingTarget = this.runtime.targets[0];
     this.emitTargetsUpdate();
     this.emitWorkspaceUpdate();
     this.runtime.setEditingTarget(this.editingTarget);
