@@ -71,9 +71,17 @@ RenderedTarget.prototype.toJSON = function () {
     for (x in this) {
         if (typeof this[x] === 'function') {
             continue;
+            if (this.runtime.targets.testing == true) {
+                console.log('Ignoring ' + x);
+            }
         }
         if (notSaved.indexOf(x) === -1) {
+            if (this.runtime.targets.testing == true) {
+                console.log('Exporting ' + x);
+            }
             result[x] = this[x];
+        } else if (this.runtime.targets.testing == true) {
+            console.log('Ignoring ' + x);
         }
     }
     result.sprite = this.sprite.export();
