@@ -166,6 +166,9 @@ VirtualMachine.prototype.toPrettyJSON = function (testing) {
 };
 
 VirtualMachine.prototype.toJSON = function () {
+    if (this.runtime.targets.hasOwnProperty('testing') == false) {
+        this.runtime.targets.testing = false;
+    }
     var obj = new Object();
     obj.sprites = this.runtime.targets;
     obj.meta = new Object();
