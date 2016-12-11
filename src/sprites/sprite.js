@@ -61,9 +61,17 @@ Sprite.prototype.export = function () {
     for (x in this) {
         if (typeof this[x] === 'function') {
             continue;
+            if (this.runtime.targets.testing == true) {
+                console.log('Ignoring ' + x);
+            }
         }
         if (notSaved.indexOf(x) === -1) {
             result[x] = this[x];
+            if (this.runtime.targets.testing == true) {
+                console.log('Exporting ' + x);
+            }
+        } else if (this.runtime.targets.testing == true) {
+            console.log('Ignoring ' + x);
         }
     }
     return result;
