@@ -382,6 +382,20 @@ RenderedTarget.prototype.getCostumeIndexByName = function (costumeName) {
 };
 
 /**
+ * Get a sound index of this rendered target, by name of the sound.
+ * @param {?string} soundName Name of a sound.
+ * @return {number} Index of the named sound, or -1 if not present.
+ */
+RenderedTarget.prototype.getSoundIndexByName = function (soundName) {
+    for (var i = 0; i < this.sprite.sounds.length; i++) {
+        if (this.sprite.sounds[i].name == soundName) {
+            return i;
+        }
+    }
+    return -1;
+};
+
+/**
  * Get a costume of this rendered target by id.
  * @return {object} current costume
  */
