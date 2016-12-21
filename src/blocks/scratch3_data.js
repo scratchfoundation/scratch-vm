@@ -1,12 +1,12 @@
 var Cast = require('../util/cast');
 
-function Scratch3DataBlocks(runtime) {
+var Scratch3DataBlocks = function (runtime) {
     /**
      * The runtime instantiating this block package.
      * @type {Runtime}
      */
     this.runtime = runtime;
-}
+};
 
 /**
  * Retrieve the block primitives implemented by this package.
@@ -14,17 +14,17 @@ function Scratch3DataBlocks(runtime) {
  */
 Scratch3DataBlocks.prototype.getPrimitives = function () {
     return {
-        'data_variable': this.getVariable,
-        'data_setvariableto': this.setVariableTo,
-        'data_changevariableby': this.changeVariableBy,
-        'data_listcontents': this.getListContents,
-        'data_addtolist': this.addToList,
-        'data_deleteoflist': this.deleteOfList,
-        'data_insertatlist': this.insertAtList,
-        'data_replaceitemoflist': this.replaceItemOfList,
-        'data_itemoflist': this.getItemOfList,
-        'data_lengthoflist': this.lengthOfList,
-        'data_listcontainsitem': this.listContainsItem
+        data_variable: this.getVariable,
+        data_setvariableto: this.setVariableTo,
+        data_changevariableby: this.changeVariableBy,
+        data_listcontents: this.getListContents,
+        data_addtolist: this.addToList,
+        data_deleteoflist: this.deleteOfList,
+        data_insertatlist: this.insertAtList,
+        data_replaceitemoflist: this.replaceItemOfList,
+        data_itemoflist: this.getItemOfList,
+        data_lengthoflist: this.lengthOfList,
+        data_listcontainsitem: this.listContainsItem
     };
 };
 
@@ -54,7 +54,7 @@ Scratch3DataBlocks.prototype.getListContents = function (args, util) {
     for (var i = 0; i < list.contents.length; i++) {
         var listItem = list.contents[i];
         if (!((typeof listItem === 'string') &&
-              (listItem.length == 1))) {
+              (listItem.length === 1))) {
             allSingleLetters = false;
             break;
         }
@@ -126,7 +126,7 @@ Scratch3DataBlocks.prototype.listContainsItem = function (args, util) {
     // Try using Scratch comparison operator on each item.
     // (Scratch considers the string '123' equal to the number 123).
     for (var i = 0; i < list.contents.length; i++) {
-        if (Cast.compare(list.contents[i], item) == 0) {
+        if (Cast.compare(list.contents[i], item) === 0) {
             return true;
         }
     }

@@ -36,14 +36,14 @@ StartServerWindows.bat
 ```
 
 ## Playground
-To run the Playground, make sure the dev server's running and go to [http://localhost:8080/](http://localhost:8080/) - you will be directed to the playground, which demonstrates various tools and internal state.
+To run the Playground, make sure the dev server's running and go to [http://localhost:8073/](http://localhost:8073/) - you will be directed to the playground, which demonstrates various tools and internal state.
 
 ![VM Playground Screenshot](https://i.imgur.com/nOCNqEc.gif)
 
 
 ## Standalone Build
 ```bash
-make build
+npm run build
 ```
 
 ```html
@@ -104,11 +104,23 @@ The VM's block representation contains all the important information for executi
 
 ## Testing
 ```bash
-make test
+npm test
 ```
 
 ```bash
-make coverage
+npm run coverage
+```
+
+## Publishing to GitHub Pages
+```bash
+npm run deploy
+```
+
+This will push the currently built playground to the gh-pages branch of the
+currently tracked remote.  If you would like to change where to push to, add
+a repo url argument:
+```bash
+npm run deploy -- -r <your repo url>
 ```
 
 ## Donate

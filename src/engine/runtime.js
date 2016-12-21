@@ -10,25 +10,23 @@ var Keyboard = require('../io/keyboard');
 var Mouse = require('../io/mouse');
 
 var defaultBlockPackages = {
-    'scratch3_control': require('../blocks/scratch3_control'),
-    'scratch3_event': require('../blocks/scratch3_event'),
-    'scratch3_looks': require('../blocks/scratch3_looks'),
-    'scratch3_motion': require('../blocks/scratch3_motion'),
-    'scratch3_operators': require('../blocks/scratch3_operators'),
-    'scratch3_sound': require('../blocks/scratch3_sound'),
-    'scratch3_sensing': require('../blocks/scratch3_sensing'),
-    'scratch3_data': require('../blocks/scratch3_data'),
-    'scratch3_procedures': require('../blocks/scratch3_procedures')
+    scratch3_control: require('../blocks/scratch3_control'),
+    scratch3_event: require('../blocks/scratch3_event'),
+    scratch3_looks: require('../blocks/scratch3_looks'),
+    scratch3_motion: require('../blocks/scratch3_motion'),
+    scratch3_operators: require('../blocks/scratch3_operators'),
+    scratch3_sound: require('../blocks/scratch3_sound'),
+    scratch3_sensing: require('../blocks/scratch3_sensing'),
+    scratch3_data: require('../blocks/scratch3_data'),
+    scratch3_procedures: require('../blocks/scratch3_procedures')
 };
 
 /**
  * Manages targets, scripts, and the sequencer.
  */
-function Runtime () {
+var Runtime = function () {
     // Bind event emitter
     EventEmitter.call(this);
-
-    // State for the runtime
 
     /**
      * Target management and storage.
@@ -46,7 +44,18 @@ function Runtime () {
     /** @type {!Sequencer} */
     this.sequencer = new Sequencer(this);
 
+    /**
+     * Storage container for flyout blocks.
+     * These will execute on `_editingTarget.`
+     * @type {!Blocks}
+     */
     this.flyoutBlocks = new Blocks();
+
+    /**
+     * Currently known editing target for the VM.
+     * @type {?Target}
+     */
+    this._editingTarget = null;
 
     /**
      * Map to look up a block primitive's implementation function by its opcode.
@@ -54,24 +63,92 @@ function Runtime () {
      * @type {Object.<string, Function>}
      */
     this._primitives = {};
-    this._hats = {};
-    this._edgeActivatedHatValues = {};
-    this._registerBlockPackages();
 
-    this.ioDevices = {
-        'clock': new Clock(),
-        'keyboard': new Keyboard(this),
-        'mouse': new Mouse(this)
-    };
-
-    this._scriptGlowsPreviousFrame = [];
-    this._editingTarget = null;
     /**
-     * Currently known number of clones.
+     * Map to look up hat blocks' metadata.
+     * Keys are opcode for hat, values are metadata objects.
+     * @type {Object.<string, Object>}
+     */
+    this._hats = {};
+
+    /**
+     * Currently known values for edge-activated hats.
+     * Keys are block ID for the hat; values are the currently known values.
+     * @type {Object.<string, *>}
+     */
+    this._edgeActivatedHatValues = {};
+
+    /**
+     * A list of script block IDs that were glowing during the previous frame.
+     * @type {!Array.<!string>}
+     */
+    this._scriptGlowsPreviousFrame = [];
+
+    /**
+     * Number of threads running during the previous frame
+     * @type {number}
+     */
+    this._threadCount = 0;
+
+    /**
+     * Currently known number of clones, used to enforce clone limit.
      * @type {number}
      */
     this._cloneCounter = 0;
-}
+
+    /**
+     * Whether the project is in "turbo mode."
+     * @type {Boolean}
+     */
+    this.turboMode = false;
+
+    /**
+     * Whether the project is in "compatibility mode" (30 TPS).
+     * @type {Boolean}
+     */
+    this.compatibilityMode = false;
+
+    /**
+     * A reference to the current runtime stepping interval, set
+     * by a `setInterval`.
+     * @type {!number}
+     */
+    this._steppingInterval = null;
+
+    /**
+     * Current length of a step.
+     * Changes as mode switches, and used by the sequencer to calculate
+     * WORK_TIME.
+     * @type {!number}
+     */
+    this.currentStepTime = null;
+
+    /**
+     * Whether any primitive has requested a redraw.
+     * Affects whether `Sequencer.stepThreads` will yield
+     * after stepping each thread.
+     * Reset on every frame.
+     * @type {boolean}
+     */
+    this.redrawRequested = false;
+
+    // Register all given block packages.
+    this._registerBlockPackages();
+
+    // Register and initialize "IO devices", containers for processing
+    // I/O related data.
+    /** @type {Object.<string, Object>} */
+    this.ioDevices = {
+        clock: new Clock(),
+        keyboard: new Keyboard(this),
+        mouse: new Mouse(this)
+    };
+};
+
+/**
+ * Inherit from EventEmitter
+ */
+util.inherits(Runtime, EventEmitter);
 
 /**
  * Width of the stage, in pixels.
@@ -89,13 +166,13 @@ Runtime.STAGE_HEIGHT = 360;
  * Event name for glowing a script.
  * @const {string}
  */
-Runtime.SCRIPT_GLOW_ON = 'STACK_GLOW_ON';
+Runtime.SCRIPT_GLOW_ON = 'SCRIPT_GLOW_ON';
 
 /**
  * Event name for unglowing a script.
  * @const {string}
  */
-Runtime.SCRIPT_GLOW_OFF = 'STACK_GLOW_OFF';
+Runtime.SCRIPT_GLOW_OFF = 'SCRIPT_GLOW_OFF';
 
 /**
  * Event name for glowing a block.
@@ -110,20 +187,38 @@ Runtime.BLOCK_GLOW_ON = 'BLOCK_GLOW_ON';
 Runtime.BLOCK_GLOW_OFF = 'BLOCK_GLOW_OFF';
 
 /**
+ * Event name for glowing the green flag
+ * @const {string}
+ */
+Runtime.PROJECT_RUN_START = 'PROJECT_RUN_START';
+
+/**
+ * Event name for unglowing the green flag
+ * @const {string}
+ */
+Runtime.PROJECT_RUN_STOP = 'PROJECT_RUN_STOP';
+
+/**
  * Event name for visual value report.
  * @const {string}
  */
 Runtime.VISUAL_REPORT = 'VISUAL_REPORT';
 
 /**
- * Inherit from EventEmitter
+ * Event name for sprite info report.
+ * @const {string}
  */
-util.inherits(Runtime, EventEmitter);
+Runtime.SPRITE_INFO_REPORT = 'SPRITE_INFO_REPORT';
 
 /**
- * How rapidly we try to step threads, in ms.
+ * How rapidly we try to step threads by default, in ms.
  */
 Runtime.THREAD_STEP_INTERVAL = 1000 / 60;
+
+/**
+ * In compatibility mode, how rapidly we try to step threads, in ms.
+ */
+Runtime.THREAD_STEP_INTERVAL_COMPATIBILITY = 1000 / 30;
 
 /**
  * How many clones can be created at a time.
@@ -175,9 +270,6 @@ Runtime.prototype._registerBlockPackages = function () {
 Runtime.prototype.getOpcodeFunction = function (opcode) {
     return this._primitives[opcode];
 };
-
-// -----------------------------------------------------------------------------
-// -----------------------------------------------------------------------------
 
 /**
  * Return whether an opcode represents a hat block.
@@ -236,7 +328,7 @@ Runtime.prototype.attachRenderer = function (renderer) {
  */
 Runtime.prototype._pushThread = function (id, target) {
     var thread = new Thread(id);
-    thread.setTarget(target);
+    thread.target = target;
     thread.pushStack(id);
     this.threads.push(thread);
     return thread;
@@ -257,6 +349,24 @@ Runtime.prototype._removeThread = function (thread) {
 };
 
 /**
+ * Restart a thread in place, maintaining its position in the list of threads.
+ * This is used by `startHats` to and is necessary to ensure 2.0-like execution order.
+ * Test project: https://scratch.mit.edu/projects/130183108/
+ * @param {!Thread} thread Thread object to restart.
+ */
+Runtime.prototype._restartThread = function (thread) {
+    var newThread = new Thread(thread.topBlock);
+    newThread.target = thread.target;
+    newThread.pushStack(thread.topBlock);
+    var i = this.threads.indexOf(thread);
+    if (i > -1) {
+        this.threads[i] = newThread;
+    } else {
+        this.threads.push(thread);
+    }
+};
+
+/**
  * Return whether a thread is currently active/running.
  * @param {?Thread} thread Thread object to check.
  * @return {Boolean} True if the thread is active/running.
@@ -272,7 +382,7 @@ Runtime.prototype.isActiveThread = function (thread) {
 Runtime.prototype.toggleScript = function (topBlockId) {
     // Remove any existing thread.
     for (var i = 0; i < this.threads.length; i++) {
-        if (this.threads[i].topBlock == topBlockId) {
+        if (this.threads[i].topBlock === topBlockId) {
             this._removeThread(this.threads[i]);
             return;
         }
@@ -287,12 +397,12 @@ Runtime.prototype.toggleScript = function (topBlockId) {
  *  - the top block ID of the script.
  *  - the target that owns the script.
  * @param {!Function} f Function to call for each script.
- * @param {Target=} opt_target Optionally, a target to restrict to.
+ * @param {Target=} optTarget Optionally, a target to restrict to.
  */
-Runtime.prototype.allScriptsDo = function (f, opt_target) {
+Runtime.prototype.allScriptsDo = function (f, optTarget) {
     var targets = this.targets;
-    if (opt_target) {
-        targets = [opt_target];
+    if (optTarget) {
+        targets = [optTarget];
     }
     for (var t = 0; t < targets.length; t++) {
         var target = targets[t];
@@ -307,12 +417,12 @@ Runtime.prototype.allScriptsDo = function (f, opt_target) {
 /**
  * Start all relevant hats.
  * @param {!string} requestedHatOpcode Opcode of hats to start.
- * @param {Object=} opt_matchFields Optionally, fields to match on the hat.
- * @param {Target=} opt_target Optionally, a target to restrict to.
+ * @param {Object=} optMatchFields Optionally, fields to match on the hat.
+ * @param {Target=} optTarget Optionally, a target to restrict to.
  * @return {Array.<Thread>} List of threads started by this function.
  */
 Runtime.prototype.startHats = function (requestedHatOpcode,
-    opt_matchFields, opt_target) {
+    optMatchFields, optTarget) {
     if (!this._hats.hasOwnProperty(requestedHatOpcode)) {
         // No known hat with this opcode.
         return;
@@ -320,7 +430,7 @@ Runtime.prototype.startHats = function (requestedHatOpcode,
     var instance = this;
     var newThreads = [];
     // Consider all scripts, looking for hats with opcode `requestedHatOpcode`.
-    this.allScriptsDo(function(topBlockId, target) {
+    this.allScriptsDo(function (topBlockId, target) {
         var potentialHatOpcode = target.blocks.getBlock(topBlockId).opcode;
         if (potentialHatOpcode !== requestedHatOpcode) {
             // Not the right hat.
@@ -332,10 +442,10 @@ Runtime.prototype.startHats = function (requestedHatOpcode,
         // (i.e., before the predicate can be run) because "broadcast and wait"
         // needs to have a precise collection of started threads.
         var hatFields = target.blocks.getFields(topBlockId);
-        if (opt_matchFields) {
-            for (var matchField in opt_matchFields) {
+        if (optMatchFields) {
+            for (var matchField in optMatchFields) {
                 if (hatFields[matchField].value !==
-                    opt_matchFields[matchField]) {
+                    optMatchFields[matchField]) {
                     // Field mismatch.
                     return;
                 }
@@ -348,8 +458,9 @@ Runtime.prototype.startHats = function (requestedHatOpcode,
             // any existing threads starting with the top block.
             for (var i = 0; i < instance.threads.length; i++) {
                 if (instance.threads[i].topBlock === topBlockId &&
-                    instance.threads[i].target == target) {
-                    instance._removeThread(instance.threads[i]);
+                    instance.threads[i].target === target) {
+                    instance._restartThread(instance.threads[i]);
+                    return;
                 }
             }
         } else {
@@ -357,7 +468,7 @@ Runtime.prototype.startHats = function (requestedHatOpcode,
             // give up if any threads with the top block are running.
             for (var j = 0; j < instance.threads.length; j++) {
                 if (instance.threads[j].topBlock === topBlockId &&
-                    instance.threads[j].target == target) {
+                    instance.threads[j].target === target) {
                     // Some thread is already running.
                     return;
                 }
@@ -365,7 +476,7 @@ Runtime.prototype.startHats = function (requestedHatOpcode,
         }
         // Start the thread with this top block.
         newThreads.push(instance._pushThread(topBlockId, target));
-    }, opt_target);
+    }, optTarget);
     return newThreads;
 };
 
@@ -394,15 +505,15 @@ Runtime.prototype.disposeTarget = function (disposingTarget) {
 /**
  * Stop any threads acting on the target.
  * @param {!Target} target Target to stop threads for.
- * @param {Thread=} opt_threadException Optional thread to skip.
+ * @param {Thread=} optThreadException Optional thread to skip.
  */
-Runtime.prototype.stopForTarget = function (target, opt_threadException) {
+Runtime.prototype.stopForTarget = function (target, optThreadException) {
     // Stop any threads on the target.
     for (var i = 0; i < this.threads.length; i++) {
-        if (this.threads[i] === opt_threadException) {
+        if (this.threads[i] === optThreadException) {
             continue;
         }
-        if (this.threads[i].target == target) {
+        if (this.threads[i].target === target) {
             this._removeThread(this.threads[i]);
         }
     }
@@ -458,37 +569,72 @@ Runtime.prototype._step = function () {
             this.startHats(hatType);
         }
     }
-    var inactiveThreads = this.sequencer.stepThreads(this.threads);
-    this._updateScriptGlows();
-    for (var i = 0; i < inactiveThreads.length; i++) {
-        this._removeThread(inactiveThreads[i]);
+    this.redrawRequested = false;
+    var doneThreads = this.sequencer.stepThreads();
+    this._updateGlows(doneThreads);
+    this._setThreadCount(this.threads.length + doneThreads.length);
+    if (this.renderer) {
+        // @todo: Only render when this.redrawRequested or clones rendered.
+        this.renderer.draw();
     }
 };
 
+/**
+ * Set the current editing target known by the runtime.
+ * @param {!Target} editingTarget New editing target.
+ */
 Runtime.prototype.setEditingTarget = function (editingTarget) {
-    this._scriptGlowsPreviousFrame = [];
     this._editingTarget = editingTarget;
-    this._updateScriptGlows();
+    // Script glows must be cleared.
+    this._scriptGlowsPreviousFrame = [];
+    this._updateGlows();
+    this.spriteInfoReport(editingTarget);
 };
 
-Runtime.prototype._updateScriptGlows = function () {
+/**
+ * Set whether we are in 30 TPS compatibility mode.
+ * @param {boolean} compatibilityModeOn True iff in compatibility mode.
+ */
+Runtime.prototype.setCompatibilityMode = function (compatibilityModeOn) {
+    this.compatibilityMode = compatibilityModeOn;
+    if (this._steppingInterval) {
+        self.clearInterval(this._steppingInterval);
+        this.start();
+    }
+};
+
+/**
+ * Emit glows/glow clears for scripts after a single tick.
+ * Looks at `this.threads` and notices which have turned on/off new glows.
+ * @param {Array.<Thread>=} optExtraThreads Optional list of inactive threads.
+ */
+Runtime.prototype._updateGlows = function (optExtraThreads) {
+    var searchThreads = [];
+    searchThreads.push.apply(searchThreads, this.threads);
+    if (optExtraThreads) {
+        searchThreads.push.apply(searchThreads, optExtraThreads);
+    }
     // Set of scripts that request a glow this frame.
     var requestedGlowsThisFrame = [];
     // Final set of scripts glowing during this frame.
     var finalScriptGlows = [];
     // Find all scripts that should be glowing.
-    for (var i = 0; i < this.threads.length; i++) {
-        var thread = this.threads[i];
+    for (var i = 0; i < searchThreads.length; i++) {
+        var thread = searchThreads[i];
         var target = thread.target;
-        if (thread.requestScriptGlowInFrame && target == this._editingTarget) {
-            var blockForThread = thread.peekStack() || thread.topBlock;
-            var script = target.blocks.getTopLevelScript(blockForThread);
-            if (!script) {
-                // Attempt to find in flyout blocks.
-                script = this.flyoutBlocks.getTopLevelScript(blockForThread);
-            }
-            if (script) {
-                requestedGlowsThisFrame.push(script);
+        if (target === this._editingTarget) {
+            var blockForThread = thread.blockGlowInFrame;
+            if (thread.requestScriptGlowInFrame) {
+                var script = target.blocks.getTopLevelScript(blockForThread);
+                if (!script) {
+                    // Attempt to find in flyout blocks.
+                    script = this.flyoutBlocks.getTopLevelScript(
+                        blockForThread
+                    );
+                }
+                if (script) {
+                    requestedGlowsThisFrame.push(script);
+                }
             }
         }
     }
@@ -515,6 +661,22 @@ Runtime.prototype._updateScriptGlows = function () {
 };
 
 /**
+ * Emit run start/stop after each tick. Emits when `this.threads.length` goes
+ * between non-zero and zero
+ *
+ * @param {number} threadCount The new threadCount
+ */
+Runtime.prototype._setThreadCount = function (threadCount) {
+    if (this._threadCount === 0 && threadCount > 0) {
+        this.emit(Runtime.PROJECT_RUN_START);
+    }
+    if (this._threadCount > 0 && threadCount === 0) {
+        this.emit(Runtime.PROJECT_RUN_STOP);
+    }
+    this._threadCount = threadCount;
+};
+
+/**
  * "Quiet" a script's glow: stop the VM from generating glow/unglow events
  * about that script. Use when a script has just been deleted, but we may
  * still be tracking glow data about it.
@@ -534,9 +696,9 @@ Runtime.prototype.quietGlow = function (scriptBlockId) {
  */
 Runtime.prototype.glowBlock = function (blockId, isGlowing) {
     if (isGlowing) {
-        this.emit(Runtime.BLOCK_GLOW_ON, blockId);
+        this.emit(Runtime.BLOCK_GLOW_ON, {id: blockId});
     } else {
-        this.emit(Runtime.BLOCK_GLOW_OFF, blockId);
+        this.emit(Runtime.BLOCK_GLOW_OFF, {id: blockId});
     }
 };
 
@@ -547,9 +709,9 @@ Runtime.prototype.glowBlock = function (blockId, isGlowing) {
  */
 Runtime.prototype.glowScript = function (topBlockId, isGlowing) {
     if (isGlowing) {
-        this.emit(Runtime.SCRIPT_GLOW_ON, topBlockId);
+        this.emit(Runtime.SCRIPT_GLOW_ON, {id: topBlockId});
     } else {
-        this.emit(Runtime.SCRIPT_GLOW_OFF, topBlockId);
+        this.emit(Runtime.SCRIPT_GLOW_OFF, {id: topBlockId});
     }
 };
 
@@ -559,7 +721,17 @@ Runtime.prototype.glowScript = function (topBlockId, isGlowing) {
  * @param {string} value Value to show associated with the block.
  */
 Runtime.prototype.visualReport = function (blockId, value) {
-    this.emit(Runtime.VISUAL_REPORT, blockId, String(value));
+    this.emit(Runtime.VISUAL_REPORT, {id: blockId, value: String(value)});
+};
+
+/**
+ * Emit a sprite info report if the provided target is the original sprite
+ * @param {!Target} target Target to report sprite info for.
+ */
+Runtime.prototype.spriteInfoReport = function (target) {
+    if (!target.isOriginal) return;
+
+    this.emit(Runtime.SPRITE_INFO_REPORT, target.toJSON());
 };
 
 /**
@@ -570,7 +742,7 @@ Runtime.prototype.visualReport = function (blockId, value) {
 Runtime.prototype.getTargetById = function (targetId) {
     for (var i = 0; i < this.targets.length; i++) {
         var target = this.targets[i];
-        if (target.id == targetId) {
+        if (target.id === targetId) {
             return target;
         }
     }
@@ -584,7 +756,7 @@ Runtime.prototype.getTargetById = function (targetId) {
 Runtime.prototype.getSpriteTargetByName = function (spriteName) {
     for (var i = 0; i < this.targets.length; i++) {
         var target = this.targets[i];
-        if (target.sprite && target.sprite.name == spriteName) {
+        if (target.sprite && target.sprite.name === spriteName) {
             return target;
         }
     }
@@ -620,21 +792,25 @@ Runtime.prototype.getTargetForStage = function () {
 };
 
 /**
- * Handle an animation frame from the main thread.
+ * Tell the runtime to request a redraw.
+ * Use after a clone/sprite has completed some visible operation on the stage.
  */
-Runtime.prototype.animationFrame = function () {
-    if (this.renderer) {
-        this.renderer.draw();
-    }
+Runtime.prototype.requestRedraw = function () {
+    this.redrawRequested = true;
 };
 
 /**
- * Set up timers to repeatedly step in a browser
+ * Set up timers to repeatedly step in a browser.
  */
 Runtime.prototype.start = function () {
-    self.setInterval(function() {
+    var interval = Runtime.THREAD_STEP_INTERVAL;
+    if (this.compatibilityMode) {
+        interval = Runtime.THREAD_STEP_INTERVAL_COMPATIBILITY;
+    }
+    this.currentStepTime = interval;
+    this._steppingInterval = self.setInterval(function () {
         this._step();
-    }.bind(this), Runtime.THREAD_STEP_INTERVAL);
+    }.bind(this), interval);
 };
 
 module.exports = Runtime;

@@ -1,4 +1,4 @@
-var Clone = require('./clone');
+var RenderedTarget = require('./rendered-target');
 var Blocks = require('../engine/blocks');
 
 /**
@@ -8,7 +8,7 @@ var Blocks = require('../engine/blocks');
  * @param {Runtime} runtime Reference to the runtime.
  * @constructor
  */
-function Sprite (blocks, runtime) {
+var Sprite = function (blocks, runtime) {
     this.runtime = runtime;
     if (!blocks) {
         // Shared set of blocks for all clones.
@@ -39,18 +39,18 @@ function Sprite (blocks, runtime) {
     this.sounds = [];
     /**
      * List of clones for this sprite, including the original.
-     * @type {Array.<!Clone>}
+     * @type {Array.<!RenderedTarget>}
      */
     this.clones = [];
-}
+};
 
 /**
  * Create a clone of this sprite.
  * @returns {!Clone} Newly created clone.
  */
 Sprite.prototype.createClone = function () {
-    var newClone = new Clone(this, this.runtime);
-    newClone.isOriginal = this.clones.length == 0;
+    var newClone = new RenderedTarget(this, this.runtime);
+    newClone.isOriginal = this.clones.length === 0;
     this.clones.push(newClone);
     if (newClone.isOriginal) {
         newClone.initDrawable();

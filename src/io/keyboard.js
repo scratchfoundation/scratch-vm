@@ -1,6 +1,6 @@
 var Cast = require('../util/cast');
 
-function Keyboard (runtime) {
+var Keyboard = function (runtime) {
     /**
      * List of currently pressed keys.
      * @type{Array.<number>}
@@ -12,15 +12,16 @@ function Keyboard (runtime) {
      * @type{!Runtime}
      */
     this.runtime = runtime;
-}
+};
 
 /**
  * Convert a Scratch key name to a DOM keyCode.
  * @param {Any} keyName Scratch key argument.
  * @return {number} Key code corresponding to a DOM event.
+ * @private
  */
 Keyboard.prototype._scratchKeyToKeyCode = function (keyName) {
-    if (typeof keyName == 'number') {
+    if (typeof keyName === 'number') {
         // Key codes placed in with number blocks.
         return keyName;
     }
@@ -37,6 +38,12 @@ Keyboard.prototype._scratchKeyToKeyCode = function (keyName) {
     return keyString.toUpperCase().charCodeAt(0);
 };
 
+/**
+ * Convert a DOM keyCode into a Scratch key name.
+ * @param  {number} keyCode Key code from DOM event.
+ * @return {Any} Scratch key argument.
+ * @private
+ */
 Keyboard.prototype._keyCodeToScratchKey = function (keyCode) {
     if (keyCode >= 48 && keyCode <= 90) {
         // Standard letter.
@@ -52,6 +59,10 @@ Keyboard.prototype._keyCodeToScratchKey = function (keyCode) {
     return null;
 };
 
+/**
+ * Keyboard DOM event handler.
+ * @param  {object} data Data from DOM event.
+ */
 Keyboard.prototype.postData = function (data) {
     if (data.keyCode) {
         var index = this._keysPressed.indexOf(data.keyCode);
@@ -62,10 +73,10 @@ Keyboard.prototype.postData = function (data) {
             }
             // Always trigger hats, even if it was already pressed.
             this.runtime.startHats('event_whenkeypressed', {
-                'KEY_OPTION': this._keyCodeToScratchKey(data.keyCode)
+                KEY_OPTION: this._keyCodeToScratchKey(data.keyCode)
             });
             this.runtime.startHats('event_whenkeypressed', {
-                'KEY_OPTION': 'any'
+                KEY_OPTION: 'any'
             });
         } else if (index > -1) {
             // If already present, remove from the list.
@@ -74,8 +85,13 @@ Keyboard.prototype.postData = function (data) {
     }
 };
 
+/**
+ * Get key down state for a specified Scratch key name.
+ * @param  {Any} key Scratch key argument.
+ * @return {boolean} Is the specified key down?
+ */
 Keyboard.prototype.getKeyIsDown = function (key) {
-    if (key == 'any') {
+    if (key === 'any') {
         return this._keysPressed.length > 0;
     }
     var keyCode = this._scratchKeyToKeyCode(key);

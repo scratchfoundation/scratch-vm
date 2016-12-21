@@ -1,11 +1,6 @@
-var NEW_PROJECT_HASH = 'createEmptyProject';
 
 var loadProject = function () {
     var id = location.hash.substring(1);
-    if (id === NEW_PROJECT_HASH) {
-        window.vm.createEmptyProject();
-        return;
-    }
     if (id.length < 1 || !isFinite(id)) {
         id = '119615668';
     }
@@ -16,8 +11,6 @@ var loadProject = function () {
         if (this.readyState === 4) {
             if (r.status === 200) {
                 window.vm.loadProject(this.responseText);
-            } else {
-                window.vm.createEmptyProject();
             }
         }
     };
@@ -36,11 +29,6 @@ window.onload = function() {
         document.location = '#' + document.getElementById('projectId').value;
         location.reload();
     };
-    document.getElementById('createEmptyProject').addEventListener('click',
-    function() {
-        document.location = '#' + NEW_PROJECT_HASH;
-        location.reload();
-    });
     loadProject();
 
     // Instantiate the renderer and connect it to the VM.
@@ -136,13 +124,13 @@ window.onload = function() {
         // Generate new select box.
         for (var i = 0; i < data.targetList.length; i++) {
             var targetOption = document.createElement('option');
-            targetOption.setAttribute('value', data.targetList[i][0]);
+            targetOption.setAttribute('value', data.targetList[i].id);
             // If target id matches editingTarget id, select it.
-            if (data.targetList[i][0] == data.editingTarget) {
+            if (data.targetList[i].id == data.editingTarget) {
                 targetOption.setAttribute('selected', 'selected');
             }
             targetOption.appendChild(
-                document.createTextNode(data.targetList[i][1])
+                document.createTextNode(data.targetList[i].name)
             );
             selectedTarget.appendChild(targetOption);
         }
@@ -152,10 +140,10 @@ window.onload = function() {
     };
 
     // Feedback for stacks and blocks running.
-    vm.on('STACK_GLOW_ON', function(data) {
+    vm.on('SCRIPT_GLOW_ON', function(data) {
         workspace.glowStack(data.id, true);
     });
-    vm.on('STACK_GLOW_OFF', function(data) {
+    vm.on('SCRIPT_GLOW_OFF', function(data) {
         workspace.glowStack(data.id, false);
     });
     vm.on('BLOCK_GLOW_ON', function(data) {
@@ -166,6 +154,25 @@ window.onload = function() {
     });
     vm.on('VISUAL_REPORT', function(data) {
         workspace.reportValue(data.id, data.value);
+    });
+
+    vm.on('SPRITE_INFO_REPORT', function(data) {
+        if (data.id !== selectedTarget.value) return; // Not the editingTarget
+        document.getElementById('sinfo-x').value = data.x;
+        document.getElementById('sinfo-y').value = data.y;
+        document.getElementById('sinfo-direction').value = data.direction;
+        document.getElementById('sinfo-rotationstyle').value = data.rotationStyle;
+        document.getElementById('sinfo-visible').value = data.visible;
+    });
+
+    document.getElementById('sinfo-post').addEventListener('click', function () {
+        var data = {};
+        data.x = document.getElementById('sinfo-x').value;
+        data.y = document.getElementById('sinfo-y').value;
+        data.direction = document.getElementById('sinfo-direction').value;
+        data.rotationStyle = document.getElementById('sinfo-rotationstyle').value;
+        data.visible = document.getElementById('sinfo-visible').value === 'true';
+        vm.postSpriteInfo(data);
     });
 
     // Feed mouse events as VM I/O events.
@@ -234,9 +241,7 @@ window.onload = function() {
 
     // Inform VM of animation frames.
     var animate = function() {
-        stats.end();
-        stats.begin();
-        window.vm.animationFrame();
+        stats.update();
         requestAnimationFrame(animate);
     };
     requestAnimationFrame(animate);
@@ -248,7 +253,15 @@ window.onload = function() {
     document.getElementById('stopall').addEventListener('click', function() {
         vm.stopAll();
     });
-
+    document.getElementById('turbomode').addEventListener('change', function() {
+        var turboOn = document.getElementById('turbomode').checked;
+        vm.setTurboMode(turboOn);
+    });
+    document.getElementById('compatmode').addEventListener('change',
+    function() {
+        var compatibilityMode = document.getElementById('compatmode').checked;
+        vm.setCompatibilityMode(compatibilityMode);
+    });
     var tabBlockExplorer = document.getElementById('tab-blockexplorer');
     var tabThreadExplorer = document.getElementById('tab-threadexplorer');
     var tabRenderExplorer = document.getElementById('tab-renderexplorer');

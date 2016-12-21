@@ -245,8 +245,8 @@ test('create', function (t) {
         topLevel: true
     });
 
-    t.type(b._blocks['foo'], 'object');
-    t.equal(b._blocks['foo'].opcode, 'TEST_BLOCK');
+    t.type(b._blocks.foo, 'object');
+    t.equal(b._blocks.foo.opcode, 'TEST_BLOCK');
     t.notEqual(b._scripts.indexOf('foo'), -1);
     t.end();
 });
@@ -277,7 +277,7 @@ test('move', function (t) {
     });
     t.equal(b._scripts.length, 1);
     t.equal(Object.keys(b._blocks).length, 2);
-    t.equal(b._blocks['foo'].next, 'bar');
+    t.equal(b._blocks.foo.next, 'bar');
 
     // Detach 'bar' from 'foo'
     b.moveBlock({
@@ -286,7 +286,7 @@ test('move', function (t) {
     });
     t.equal(b._scripts.length, 2);
     t.equal(Object.keys(b._blocks).length, 2);
-    t.equal(b._blocks['foo'].next, null);
+    t.equal(b._blocks.foo.next, null);
 
     t.end();
 });
@@ -314,7 +314,7 @@ test('move into empty', function (t) {
         newInput: 'fooInput',
         newParent: 'foo'
     });
-    t.equal(b._blocks['foo'].inputs['fooInput'].block, 'bar');
+    t.equal(b._blocks.foo.inputs.fooInput.block, 'bar');
     t.end();
 });
 
@@ -326,7 +326,7 @@ test('move no obscure shadow', function (t) {
         next: null,
         fields: {},
         inputs: {
-            'fooInput': {
+            fooInput: {
                 name: 'fooInput',
                 block: 'x',
                 shadow: 'y'
@@ -347,8 +347,8 @@ test('move no obscure shadow', function (t) {
         newInput: 'fooInput',
         newParent: 'foo'
     });
-    t.equal(b._blocks['foo'].inputs['fooInput'].block, 'bar');
-    t.equal(b._blocks['foo'].inputs['fooInput'].shadow, 'y');
+    t.equal(b._blocks.foo.inputs.fooInput.block, 'bar');
+    t.equal(b._blocks.foo.inputs.fooInput.shadow, 'y');
     t.end();
 });
 
@@ -369,7 +369,7 @@ test('change', function (t) {
     });
 
     // Test that the field is updated
-    t.equal(b._blocks['foo'].fields.someField.value, 'initial-value');
+    t.equal(b._blocks.foo.fields.someField.value, 'initial-value');
 
     b.changeBlock({
         element: 'field',
@@ -378,7 +378,7 @@ test('change', function (t) {
         value: 'final-value'
     });
 
-    t.equal(b._blocks['foo'].fields.someField.value, 'final-value');
+    t.equal(b._blocks.foo.fields.someField.value, 'final-value');
 
     // Invalid cases
     // No `element`
@@ -387,7 +387,7 @@ test('change', function (t) {
         name: 'someField',
         value: 'invalid-value'
     });
-    t.equal(b._blocks['foo'].fields.someField.value, 'final-value');
+    t.equal(b._blocks.foo.fields.someField.value, 'final-value');
 
     // No block ID
     b.changeBlock({
@@ -395,7 +395,7 @@ test('change', function (t) {
         name: 'someField',
         value: 'invalid-value'
     });
-    t.equal(b._blocks['foo'].fields.someField.value, 'final-value');
+    t.equal(b._blocks.foo.fields.someField.value, 'final-value');
 
     // No such field
     b.changeBlock({
@@ -404,7 +404,7 @@ test('change', function (t) {
         name: 'someWrongField',
         value: 'final-value'
     });
-    t.equal(b._blocks['foo'].fields.someField.value, 'final-value');
+    t.equal(b._blocks.foo.fields.someField.value, 'final-value');
 
     t.end();
 });
@@ -423,7 +423,7 @@ test('delete', function (t) {
         id: 'foo'
     });
 
-    t.type(b._blocks['foo'], 'undefined');
+    t.type(b._blocks.foo, 'undefined');
     t.equal(b._scripts.indexOf('foo'), -1);
     t.end();
 });
@@ -459,9 +459,9 @@ test('delete chain', function (t) {
     b.deleteBlock({
         id: 'foo'
     });
-    t.type(b._blocks['foo'], 'undefined');
-    t.type(b._blocks['foo2'], 'undefined');
-    t.type(b._blocks['foo3'], 'undefined');
+    t.type(b._blocks.foo, 'undefined');
+    t.type(b._blocks.foo2, 'undefined');
+    t.type(b._blocks.foo3, 'undefined');
     t.equal(b._scripts.indexOf('foo'), -1);
     t.equal(Object.keys(b._blocks).length, 0);
     t.equal(b._scripts.length, 0);
@@ -532,11 +532,11 @@ test('delete inputs', function (t) {
     b.deleteBlock({
         id: 'foo'
     });
-    t.type(b._blocks['foo'], 'undefined');
-    t.type(b._blocks['foo2'], 'undefined');
-    t.type(b._blocks['foo3'], 'undefined');
-    t.type(b._blocks['foo4'], 'undefined');
-    t.type(b._blocks['foo5'], 'undefined');
+    t.type(b._blocks.foo, 'undefined');
+    t.type(b._blocks.foo2, 'undefined');
+    t.type(b._blocks.foo3, 'undefined');
+    t.type(b._blocks.foo4, 'undefined');
+    t.type(b._blocks.foo5, 'undefined');
     t.equal(b._scripts.indexOf('foo'), -1);
     t.equal(Object.keys(b._blocks).length, 0);
     t.equal(b._scripts.length, 0);

@@ -13,7 +13,7 @@ var uid = require('../util/uid');
  * @param {?Blocks} blocks Blocks instance for the blocks owned by this target.
  * @constructor
  */
-function Target (blocks) {
+var Target = function (blocks) {
     if (!blocks) {
         blocks = new Blocks(this);
     }
@@ -39,7 +39,7 @@ function Target (blocks) {
      * @type {Object.<string,*>}
      */
     this.lists = {};
-}
+};
 
 /**
  * Called when the project receives a "green flag."
@@ -106,11 +106,16 @@ Target.prototype.lookupOrCreateList = function (name) {
 };
 
 /**
+ * Post/edit sprite info.
+ * @param {object} data An object with sprite info data to set.
+ * @abstract
+ */
+Target.prototype.postSpriteInfo = function () {};
+
+/**
  * Call to destroy a target.
  * @abstract
  */
-Target.prototype.dispose = function () {
-
-};
+Target.prototype.dispose = function () {};
 
 module.exports = Target;

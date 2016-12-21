@@ -6,35 +6,23 @@
  */
 
 var Blocks = require('../engine/blocks');
-var Clone = require('../sprites/clone');
+var RenderedTarget = require('../sprites/rendered-target');
 var Sprite = require('../sprites/sprite');
 var Color = require('../util/color.js');
+var log = require('../util/log');
 var uid = require('../util/uid');
 var specMap = require('./sb2specmap');
 var Variable = require('../engine/variable');
 var List = require('../engine/list');
 
 /**
- * Top-level handler. Parse provided JSON,
- * and process the top-level object (the stage object).
- * @param {!string} json SB2-format JSON to load.
- * @param {!Runtime} runtime Runtime object to load all structures into.
- */
-function sb2import (json, runtime) {
-    parseScratchObject(
-        JSON.parse(json),
-        runtime,
-        true
-    );
-}
-
-/**
  * Parse a single "Scratch object" and create all its in-memory VM objects.
  * @param {!Object} object From-JSON "Scratch object:" sprite, stage, watcher.
  * @param {!Runtime} runtime Runtime object to load all structures into.
  * @param {boolean} topLevel Whether this is the top-level object (stage).
+ * @return {?Target} Target created (stage or sprite).
  */
-function parseScratchObject (object, runtime, topLevel) {
+var parseScratchObject = function (object, runtime, topLevel) {
     if (!object.hasOwnProperty('objName')) {
         // Watcher/monitor - skip this object until those are implemented in VM.
         // @todo
@@ -54,8 +42,8 @@ function parseScratchObject (object, runtime, topLevel) {
             var costume = object.costumes[i];
             // @todo: Make sure all the relevant metadata is being pulled out.
             sprite.costumes.push({
-                skin: 'https://cdn.assets.scratch.mit.edu/internalapi/asset/'
-                    + costume.baseLayerMD5 + '/get/',
+                skin: 'https://cdn.assets.scratch.mit.edu/internalapi/asset/' +
+                    costume.baseLayerMD5 + '/get/',
                 name: costume.costumeName,
                 bitmapResolution: costume.bitmapResolution,
                 rotationCenterX: costume.rotationCenterX,
@@ -127,12 +115,12 @@ function parseScratchObject (object, runtime, topLevel) {
         target.currentCostume = Math.round(object.currentCostumeIndex);
     }
     if (object.hasOwnProperty('rotationStyle')) {
-        if (object.rotationStyle == 'none') {
-            target.rotationStyle = Clone.ROTATION_STYLE_NONE;
-        } else if (object.rotationStyle == 'leftRight') {
-            target.rotationStyle = Clone.ROTATION_STYLE_LEFT_RIGHT;
-        } else if (object.rotationStyle == 'normal') {
-            target.rotationStyle = Clone.ROTATION_STYLE_ALL_AROUND;
+        if (object.rotationStyle === 'none') {
+            target.rotationStyle = RenderedTarget.ROTATION_STYLE_NONE;
+        } else if (object.rotationStyle === 'leftRight') {
+            target.rotationStyle = RenderedTarget.ROTATION_STYLE_LEFT_RIGHT;
+        } else if (object.rotationStyle === 'normal') {
+            target.rotationStyle = RenderedTarget.ROTATION_STYLE_ALL_AROUND;
         }
     }
     target.isStage = topLevel;
@@ -143,7 +131,24 @@ function parseScratchObject (object, runtime, topLevel) {
             parseScratchObject(object.children[m], runtime, false);
         }
     }
-}
+    return target;
+};
+
+/**
+ * Top-level handler. Parse provided JSON,
+ * and process the top-level object (the stage object).
+ * @param {!string} json SB2-format JSON to load.
+ * @param {!Runtime} runtime Runtime object to load all structures into.
+ * @param {Boolean=} optForceSprite If set, treat as sprite (Sprite2).
+ * @return {?Target} Top-level target created (stage or sprite).
+ */
+var sb2import = function (json, runtime, optForceSprite) {
+    return parseScratchObject(
+        JSON.parse(json),
+        runtime,
+        !optForceSprite
+    );
+};
 
 /**
  * Parse a Scratch object's scripts into VM blocks.
@@ -151,7 +156,7 @@ function parseScratchObject (object, runtime, topLevel) {
  * @param {!Object} scripts Scripts object from SB2 JSON.
  * @param {!Blocks} blocks Blocks object to load parsed blocks into.
  */
-function parseScripts (scripts, blocks) {
+var parseScripts = function (scripts, blocks) {
     for (var i = 0; i < scripts.length; i++) {
         var script = scripts[i];
         var scriptX = script[0];
@@ -173,7 +178,7 @@ function parseScripts (scripts, blocks) {
             blocks.createBlock(convertedBlocks[j]);
         }
     }
-}
+};
 
 /**
  * Parse any list of blocks from SB2 JSON into a list of VM-format blocks.
@@ -183,7 +188,7 @@ function parseScripts (scripts, blocks) {
  * @param {Array.<Object>} blockList SB2 JSON-format block list.
  * @return {Array.<Object>} Scratch VM-format block list.
  */
-function parseBlockList (blockList) {
+var parseBlockList = function (blockList) {
     var resultingList = [];
     var previousBlock = null; // For setting next.
     for (var i = 0; i < blockList.length; i++) {
@@ -197,7 +202,7 @@ function parseBlockList (blockList) {
         resultingList.push(parsedBlock);
     }
     return resultingList;
-}
+};
 
 /**
  * Flatten a block tree into a block list.
@@ -205,7 +210,7 @@ function parseBlockList (blockList) {
  * @param {Array.<Object>} blocks list generated by `parseBlockList`.
  * @return {Array.<Object>} Flattened list to be passed to `blocks.createBlock`.
  */
-function flatten (blocks) {
+var flatten = function (blocks) {
     var finalBlocks = [];
     for (var i = 0; i < blocks.length; i++) {
         var block = blocks[i];
@@ -216,7 +221,7 @@ function flatten (blocks) {
         delete block.children;
     }
     return finalBlocks;
-}
+};
 
 /**
  * Convert a Scratch 2.0 procedure string (e.g., "my_procedure %s %b %n")
@@ -225,44 +230,44 @@ function flatten (blocks) {
  * @param {string} procCode Scratch 2.0 procedure string.
  * @return {Object} Argument map compatible with those in sb2specmap.
  */
-function parseProcedureArgMap (procCode) {
+var parseProcedureArgMap = function (procCode) {
     var argMap = [
         {} // First item in list is op string.
     ];
     var INPUT_PREFIX = 'input';
     var inputCount = 0;
     // Split by %n, %b, %s.
-    var parts = procCode.split(/(?=[^\\]\%[nbs])/);
+    var parts = procCode.split(/(?=[^\\]%[nbs])/);
     for (var i = 0; i < parts.length; i++) {
         var part = parts[i].trim();
-        if (part.substring(0, 1) == '%') {
+        if (part.substring(0, 1) === '%') {
             var argType = part.substring(1, 2);
             var arg = {
                 type: 'input',
                 inputName: INPUT_PREFIX + (inputCount++)
             };
-            if (argType == 'n') {
+            if (argType === 'n') {
                 arg.inputOp = 'math_number';
-            } else if (argType == 's') {
+            } else if (argType === 's') {
                 arg.inputOp = 'text';
             }
             argMap.push(arg);
         }
     }
     return argMap;
-}
+};
 
 /**
  * Parse a single SB2 JSON-formatted block and its children.
  * @param {!Object} sb2block SB2 JSON-formatted block.
  * @return {Object} Scratch VM format block.
  */
-function parseBlock (sb2block) {
+var parseBlock = function (sb2block) {
     // First item in block object is the old opcode (e.g., 'forward:').
     var oldOpcode = sb2block[0];
     // Convert the block using the specMap. See sb2specmap.js.
     if (!oldOpcode || !specMap[oldOpcode]) {
-        console.warn('Couldn\'t find SB2 block: ', oldOpcode);
+        log.warn('Couldn\'t find SB2 block: ', oldOpcode);
         return;
     }
     var blockMetadata = specMap[oldOpcode];
@@ -277,7 +282,7 @@ function parseBlock (sb2block) {
         children: [] // Store any generated children, flattened in `flatten`.
     };
     // For a procedure call, generate argument map from proc string.
-    if (oldOpcode == 'call') {
+    if (oldOpcode === 'call') {
         blockMetadata.argMap = parseProcedureArgMap(sb2block[1]);
     }
     // Look at the expected arguments in `blockMetadata.argMap.`
@@ -289,7 +294,7 @@ function parseBlock (sb2block) {
         // Whether the input is obscuring a shadow.
         var shadowObscured = false;
         // Positional argument is an input.
-        if (expectedArg.type == 'input') {
+        if (expectedArg.type === 'input') {
             // Create a new block and input metadata.
             var inputUid = uid();
             activeBlock.inputs[expectedArg.inputName] = {
@@ -297,10 +302,10 @@ function parseBlock (sb2block) {
                 block: null,
                 shadow: null
             };
-            if (typeof providedArg == 'object' && providedArg) {
+            if (typeof providedArg === 'object' && providedArg) {
                 // Block or block list occupies the input.
                 var innerBlocks;
-                if (typeof providedArg[0] == 'object' && providedArg[0]) {
+                if (typeof providedArg[0] === 'object' && providedArg[0]) {
                     // Block list occupies the input.
                     innerBlocks = parseBlockList(providedArg);
                 } else {
@@ -309,7 +314,7 @@ function parseBlock (sb2block) {
                 }
                 var previousBlock = null;
                 for (var j = 0; j < innerBlocks.length; j++) {
-                    if (j == 0) {
+                    if (j === 0) {
                         innerBlocks[j].parent = activeBlock.id;
                     } else {
                         innerBlocks[j].parent = previousBlock;
@@ -335,28 +340,31 @@ function parseBlock (sb2block) {
             var fieldValue = providedArg;
             // Shadows' field names match the input name, except for these:
             var fieldName = expectedArg.inputName;
-            if (expectedArg.inputOp == 'math_number' ||
-                expectedArg.inputOp == 'math_whole_number' ||
-                expectedArg.inputOp == 'math_positive_number' ||
-                expectedArg.inputOp == 'math_integer' ||
-                expectedArg.inputOp == 'math_angle') {
+            if (expectedArg.inputOp === 'math_number' ||
+                expectedArg.inputOp === 'math_whole_number' ||
+                expectedArg.inputOp === 'math_positive_number' ||
+                expectedArg.inputOp === 'math_integer' ||
+                expectedArg.inputOp === 'math_angle') {
                 fieldName = 'NUM';
                 // Fields are given Scratch 2.0 default values if obscured.
                 if (shadowObscured) {
                     fieldValue = 10;
                 }
-            } else if (expectedArg.inputOp == 'text') {
+            } else if (expectedArg.inputOp === 'text') {
                 fieldName = 'TEXT';
                 if (shadowObscured) {
                     fieldValue = '';
                 }
-            } else if (expectedArg.inputOp == 'colour_picker') {
+            } else if (expectedArg.inputOp === 'colour_picker') {
                 // Convert SB2 color to hex.
                 fieldValue = Color.decimalToHex(providedArg);
                 fieldName = 'COLOUR';
                 if (shadowObscured) {
                     fieldValue = '#990000';
                 }
+            } else if (shadowObscured) {
+                // Filled drop-down menu.
+                fieldValue = '';
             }
             var fields = {};
             fields[fieldName] = {
@@ -378,7 +386,7 @@ function parseBlock (sb2block) {
             if (!activeBlock.inputs[expectedArg.inputName].block) {
                 activeBlock.inputs[expectedArg.inputName].block = inputUid;
             }
-        } else if (expectedArg.type == 'field') {
+        } else if (expectedArg.type === 'field') {
             // Add as a field on this block.
             activeBlock.fields[expectedArg.fieldName] = {
                 name: expectedArg.fieldName,
@@ -387,18 +395,18 @@ function parseBlock (sb2block) {
         }
     }
     // Special cases to generate mutations.
-    if (oldOpcode == 'stopScripts') {
+    if (oldOpcode === 'stopScripts') {
         // Mutation for stop block: if the argument is 'other scripts',
         // the block needs a next connection.
-        if (sb2block[1] == 'other scripts in sprite' ||
-            sb2block[1] == 'other scripts in stage') {
+        if (sb2block[1] === 'other scripts in sprite' ||
+            sb2block[1] === 'other scripts in stage') {
             activeBlock.mutation = {
                 tagName: 'mutation',
                 hasnext: 'true',
                 children: []
             };
         }
-    } else if (oldOpcode == 'procDef') {
+    } else if (oldOpcode === 'procDef') {
         // Mutation for procedure definition:
         // store all 2.0 proc data.
         var procData = sb2block.slice(1);
@@ -410,7 +418,7 @@ function parseBlock (sb2block) {
             warp: procData[3], // Warp mode, e.g., true/false.
             children: []
         };
-    } else if (oldOpcode == 'call') {
+    } else if (oldOpcode === 'call') {
         // Mutation for procedure call:
         // string for proc code (e.g., "abc %n %b %s").
         activeBlock.mutation = {
@@ -418,7 +426,7 @@ function parseBlock (sb2block) {
             children: [],
             proccode: sb2block[1]
         };
-    } else if (oldOpcode == 'getParam') {
+    } else if (oldOpcode === 'getParam') {
         // Mutation for procedure parameter.
         activeBlock.mutation = {
             tagName: 'mutation',
@@ -428,6 +436,6 @@ function parseBlock (sb2block) {
         };
     }
     return activeBlock;
-}
+};
 
 module.exports = sb2import;

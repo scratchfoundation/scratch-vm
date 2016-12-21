@@ -1,0 +1,7 @@
+build/*
+dist.js
+node_modules/*
+playground/*
+vm.js
+vm.min.js
+coverage/*

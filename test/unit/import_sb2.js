@@ -2,7 +2,7 @@ var fs = require('fs');
 var path = require('path');
 var test = require('tap').test;
 
-var clone = require('../../src/sprites/clone');
+var renderedTarget = require('../../src/sprites/rendered-target');
 var runtime = require('../../src/engine/runtime');
 var sb2 = require('../../src/import/sb2import');
 
@@ -25,7 +25,7 @@ test('default', function (t) {
     t.type(rt, 'object');
     t.type(rt.targets, 'object');
 
-    t.ok(rt.targets[0] instanceof clone);
+    t.ok(rt.targets[0] instanceof renderedTarget);
     t.type(rt.targets[0].id, 'string');
     t.type(rt.targets[0].blocks, 'object');
     t.type(rt.targets[0].variables, 'object');
@@ -36,7 +36,7 @@ test('default', function (t) {
     t.equal(rt.targets[0].isOriginal, true);
     t.equal(rt.targets[0].isStage, true);
 
-    t.ok(rt.targets[1] instanceof clone);
+    t.ok(rt.targets[1] instanceof renderedTarget);
     t.type(rt.targets[1].id, 'string');
     t.type(rt.targets[1].blocks, 'object');
     t.type(rt.targets[1].variables, 'object');
@@ -63,7 +63,7 @@ test('demo', function (t) {
     t.type(rt, 'object');
     t.type(rt.targets, 'object');
 
-    t.ok(rt.targets[0] instanceof clone);
+    t.ok(rt.targets[0] instanceof renderedTarget);
     t.type(rt.targets[0].id, 'string');
     t.type(rt.targets[0].blocks, 'object');
     t.type(rt.targets[0].variables, 'object');
@@ -74,7 +74,7 @@ test('demo', function (t) {
     t.equal(rt.targets[0].isOriginal, true);
     t.equal(rt.targets[0].isStage, true);
 
-    t.ok(rt.targets[1] instanceof clone);
+    t.ok(rt.targets[1] instanceof renderedTarget);
     t.type(rt.targets[1].id, 'string');
     t.type(rt.targets[1].blocks, 'object');
     t.type(rt.targets[1].variables, 'object');

@@ -15,6 +15,12 @@
             <button id="greenflag">Green flag</button>
             <button id="stopall">Stop</button>
         </div>
+        <div>
+            Turbo: <input id='turbomode' type='checkbox' />
+        </div>
+        <div>
+            Compatibility (30 TPS):  <input id='compatmode' type='checkbox' />
+        </div>
         <br />
         <ul id="playgroundLinks">
             <li><a id="renderexplorer-link" href="#">Renderer</a></li>
@@ -25,6 +31,12 @@
         <div id="tab-renderexplorer">
             Renderer<br />
             <canvas id="scratch-stage" style="width: 480px; height: 360px;"></canvas><br />
+            x: <input id='sinfo-x' />
+            y: <input id='sinfo-y' /><br />
+            dir: <input id='sinfo-direction' />
+            rotation style: <input id='sinfo-rotationstyle' /><br />
+            visible: <input id='sinfo-visible' />
+            <button id='sinfo-post'>Post</button>
         </div>
         <div id="tab-threadexplorer">
             Thread explorer
