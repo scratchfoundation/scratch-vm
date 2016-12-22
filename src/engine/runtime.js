@@ -233,11 +233,14 @@ Runtime.MAX_CLONES = 300;
  * @todo Prefix opcodes with package name.
  * @private
  */
-Runtime.prototype._registerBlockPackages = function () {
-    for (var packageName in defaultBlockPackages) {
-        if (defaultBlockPackages.hasOwnProperty(packageName)) {
+Runtime.prototype._registerBlockPackages = function (packageToLoad) {
+    if(packageToLoad==null){
+        packageToLoad = defaultBlockPackages;
+    }
+    for (var packageName in packageToLoad) {
+        if (packageToLoad.hasOwnProperty(packageName)) {
             // @todo pass a different runtime depending on package privilege?
-            var packageObject = new (defaultBlockPackages[packageName])(this);
+            var packageObject = new (packageToLoad[packageName])(this);
             // Collect primitives from package.
             if (packageObject.getPrimitives) {
                 var packagePrimitives = packageObject.getPrimitives();
