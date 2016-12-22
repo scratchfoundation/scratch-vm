@@ -231,10 +231,11 @@ Runtime.MAX_CLONES = 300;
 /**
  * Register default block packages with this runtime.
  * @todo Prefix opcodes with package name.
+ * @param {!string} packageToLoad The package to be loaded, if null load the defaultBlockPackages
  * @private
  */
 Runtime.prototype._registerBlockPackages = function (packageToLoad) {
-    if(packageToLoad==null){
+    if (packageToLoad === null){
         packageToLoad = defaultBlockPackages;
     }
     for (var packageName in packageToLoad) {
