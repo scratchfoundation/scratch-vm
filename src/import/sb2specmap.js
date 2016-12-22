@@ -382,7 +382,7 @@ var specMap = {
         argMap: [
             {
                 type: 'input',
-                inputOp: 'sound_sounds_option',
+                inputOp: 'sound_sounds_menu',
                 inputName: 'SOUND_MENU'
             }
         ]
@@ -392,7 +392,7 @@ var specMap = {
         argMap: [
             {
                 type: 'input',
-                inputOp: 'sound_sounds_option',
+                inputOp: 'sound_sounds_menu',
                 inputName: 'SOUND_MENU'
             }
         ]
