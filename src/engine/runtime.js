@@ -435,12 +435,24 @@ Runtime.prototype.startHats = function (requestedHatOpcode,
             // Not the right hat.
             return;
         }
+
         // Match any requested fields.
         // For example: ensures that broadcasts match.
         // This needs to happen before the block is evaluated
         // (i.e., before the predicate can be run) because "broadcast and wait"
         // needs to have a precise collection of started threads.
         var hatFields = target.blocks.getFields(topBlockId);
+
+        // If no fields are present, check inputs (horizontal blocks)
+        if (Object.keys(hatFields).length === 0) {
+            var hatInputs = target.blocks.getInputs(topBlockId);
+            for (var input in hatInputs) {
+                var id = hatInputs[input].block;
+                var fields = target.blocks.getFields(id);
+                hatFields = Object.assign(fields, hatFields);
+            }
+        }
+
         if (optMatchFields) {
             for (var matchField in optMatchFields) {
                 if (hatFields[matchField].value !==
@@ -450,6 +462,7 @@ Runtime.prototype.startHats = function (requestedHatOpcode,
                 }
             }
         }
+
         // Look up metadata for the relevant hat.
         var hatMeta = instance._hats[requestedHatOpcode];
         if (hatMeta.restartExistingThreads) {
