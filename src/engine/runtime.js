@@ -22,6 +22,7 @@ var defaultBlockPackages = {
 
 /**
  * Manages targets, scripts, and the sequencer.
+ * @constructor
  */
 var Runtime = function () {
     // Bind event emitter
@@ -596,7 +597,7 @@ Runtime.prototype.setEditingTarget = function (editingTarget) {
 Runtime.prototype.setCompatibilityMode = function (compatibilityModeOn) {
     this.compatibilityMode = compatibilityModeOn;
     if (this._steppingInterval) {
-        self.clearInterval(this._steppingInterval);
+        clearInterval(this._steppingInterval);
         this.start();
     }
 };
@@ -806,7 +807,7 @@ Runtime.prototype.start = function () {
         interval = Runtime.THREAD_STEP_INTERVAL_COMPATIBILITY;
     }
     this.currentStepTime = interval;
-    this._steppingInterval = self.setInterval(function () {
+    this._steppingInterval = setInterval(function () {
         this._step();
     }.bind(this), interval);
 };

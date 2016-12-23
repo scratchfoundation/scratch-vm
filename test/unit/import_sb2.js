@@ -13,7 +13,7 @@ test('spec', function (t) {
 
 test('default', function (t) {
     // Get SB2 JSON (string)
-    var uri = path.resolve(__dirname, '../fixtures/default.json');
+    var uri = path.resolve(__dirname, '../fixtures/project_default.json');
     var file = fs.readFileSync(uri, 'utf8');
 
     // Create runtime instance & load SB2 into it
@@ -51,7 +51,7 @@ test('default', function (t) {
 
 test('demo', function (t) {
     // Get SB2 JSON (string)
-    var uri = path.resolve(__dirname, '../fixtures/demo.json');
+    var uri = path.resolve(__dirname, '../fixtures/project_demo.json');
     var file = fs.readFileSync(uri, 'utf8');
 
     // Create runtime instance & load SB2 into it
