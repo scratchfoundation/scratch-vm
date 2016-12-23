@@ -1,15 +1,15 @@
 var test = require('tap').test;
 var VirtualMachine = require('../../src/index');
 
-var project = require('../fixtures/project_default.json');
+var project = require('../fixtures/project_demo.json');
 
-test('default project', function (t) {
+test('demo project', function (t) {
     var vm = new VirtualMachine();
 
     // Evaluate playground data and exit
     vm.on('playgroundData', function (e) {
         var threads = JSON.parse(e.threads);
-        t.ok(threads.length == 0);
+        t.ok(threads.length > 0);
         t.end();
         process.nextTick(process.exit);
     });
