@@ -1,15 +1,17 @@
 var test = require('tap').test;
+var extract = require('../fixtures/extract');
 var VirtualMachine = require('../../src/index');
 
-var project = require('../fixtures/project_default.json');
+var path = __dirname + '/../fixtures/looks.sb2';
+var project = extract(path);
 
-test('default project', function (t) {
+test('looks project', function (t) {
     var vm = new VirtualMachine();
 
     // Evaluate playground data and exit
     vm.on('playgroundData', function (e) {
         var threads = JSON.parse(e.threads);
-        t.ok(threads.length == 0);
+        t.ok(threads.length === 0);
         t.end();
         process.nextTick(process.exit);
     });
@@ -20,7 +22,7 @@ test('default project', function (t) {
         vm.clear();
         vm.setCompatibilityMode(false);
         vm.setTurboMode(false);
-        vm.loadProject(JSON.stringify(project));
+        vm.loadProject(project);
         vm.greenFlag();
     });
 
