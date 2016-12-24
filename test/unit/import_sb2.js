@@ -1,4 +1,3 @@
-var fs = require('fs');
 var path = require('path');
 var test = require('tap').test;
 var extract = require('../fixtures/extract');

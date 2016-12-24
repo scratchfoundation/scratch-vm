@@ -1,9 +1,10 @@
+var path = require('path');
 var test = require('tap').test;
 var extract = require('../fixtures/extract');
 var VirtualMachine = require('../../src/index');
 
-var path = __dirname + '/../fixtures/looks.sb2';
-var project = extract(path);
+var uri = path.resolve(__dirname, '../fixtures/looks.sb2');
+var project = extract(uri);
 
 test('looks project', function (t) {
     var vm = new VirtualMachine();
