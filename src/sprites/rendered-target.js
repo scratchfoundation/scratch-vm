@@ -64,6 +64,30 @@ RenderedTarget.prototype.initDrawable = function () {
     }
 };
 
+RenderedTarget.prototype.toJSON = function () {
+    var result = new Object();
+    var notSaved = ['renderer', 'effects', 'sprite', 'drawableID', 'runtime', 'id', 'blocks'];
+    var x = null;
+    for (x in this) {
+        if (typeof this[x] === 'function') {
+            continue;
+            if (this.runtime.targets.testing == true) {
+                console.log('Ignoring ' + x);
+            }
+        }
+        if (notSaved.indexOf(x) === -1) {
+            if (this.runtime.targets.testing == true) {
+                console.log('Exporting ' + x);
+            }
+            result[x] = this[x];
+        } else if (this.runtime.targets.testing == true) {
+            console.log('Ignoring ' + x);
+        }
+    }
+    result.sprite = this.sprite.export();
+    return result;
+};
+
 /**
  * Whether this represents an "original" non-clone rendered-target for a sprite,
  * i.e., created by the editor and not clone blocks.
