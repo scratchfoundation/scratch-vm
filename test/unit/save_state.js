@@ -1,10 +1,10 @@
+var fs = require('fs');
 var path = require('path');
 var test = require('tap').test;
 var VirtualMachine = require('../../src/index');
 
 var uri = path.resolve(__dirname, '../fixtures/default.json');
 var file = fs.readFileSync(uri, 'utf8');
-var project = extract(uri);
 
 test('save state', function (t) {
     var vm = new VirtualMachine();
