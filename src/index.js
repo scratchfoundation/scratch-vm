@@ -226,26 +226,37 @@ VirtualMachine.prototype.fromJSON = function (json, testing) {
     }
 };
 
-VirtualMachine.prototype.testJSON = function () {
-    console.log('Exporting to JSON...');
-    var json = this.toPrettyJSON(true);
-    console.log('Importing from JSON...');
-    this.fromJSON(json, true);
-    console.log('Exporting to JSON...');
-    var json2 = this.toPrettyJSON(true);
+VirtualMachine.prototype.testJSON = function (debug) {
+    if (debug == true) {
+        console.log('Exporting to JSON...');
+    }
+    var json = this.toPrettyJSON(debug);
+    if (debug == true) {
+        console.log('Importing from JSON...');
+    }
+    this.fromJSON(json, debug);
+    if (debug == true) {
+        console.log('Exporting to JSON...');
+    }
+    var json2 = this.toPrettyJSON(debug);
     if (json == json2) {
-        console.log('JSON Test: Successful');
+        if (debug == true) {
+            console.log('JSON Test: Successful');
+        }
     } else {
-        console.log('JSON Test: Failed: JSON Not Equivalent');
-        console.log('JSON 1:');
-        console.log(json);
-        console.log('JSON 2:');
-        console.log(json2);
+        if (debug == true) {
+            console.log('JSON Test: Failed: JSON Not Equivalent');
+            console.log('JSON 1:');
+            console.log(json);
+            console.log('JSON 2:');
+            console.log(json2);
+        }
     }
     this.editingTarget = this.runtime.targets[0];
     this.emitTargetsUpdate();
     this.emitWorkspaceUpdate();
     this.runtime.setEditingTarget(this.editingTarget);
+    return json == json2;
 };
 
 /**
