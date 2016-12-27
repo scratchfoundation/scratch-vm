@@ -30,10 +30,6 @@ Open a Command Prompt or Terminal in the repository and run:
 ```bash
 npm start
 ```
-Or on Windows:
-```bash
-StartServerWindows.bat
-```
 
 ## Playground
 To run the Playground, make sure the dev server's running and go to [http://localhost:8073/](http://localhost:8073/) - you will be directed to the playground, which demonstrates various tools and internal state.
