@@ -11,7 +11,7 @@ var Sprite = require('../sprites/sprite');
 var Color = require('../util/color.js');
 var log = require('../util/log');
 var uid = require('../util/uid');
-var specMap = require('./sb2specmap');
+var specMap = require('./sb2_specmap');
 var Variable = require('../engine/variable');
 var List = require('../engine/list');
 
@@ -129,7 +129,7 @@ var parseScratchObject = function (object, runtime, topLevel) {
  */
 var sb2import = function (json, runtime, optForceSprite) {
     return parseScratchObject(
-        JSON.parse(json),
+        json,
         runtime,
         !optForceSprite
     );
@@ -423,4 +423,6 @@ var parseBlock = function (sb2block) {
     return activeBlock;
 };
 
-module.exports = sb2import;
+module.exports = {
+    deserialize: sb2import
+};

@@ -3,7 +3,9 @@ var util = require('util');
 var Blocks = require('./engine/blocks');
 var Sprite = require('./sprites/sprite');
 var Runtime = require('./engine/runtime');
-var sb2import = require('./import/sb2import');
+
+var sb2 = require('./serialization/sb2');
+var sb3 = require('./serialization/sb3');
 
 /**
  * Handles connections between blocks, stage, and extensions.
@@ -139,113 +141,105 @@ VirtualMachine.prototype.postIOData = function (device, data) {
     }
 };
 
+// /**
+//  * Load a project from a Scratch 2.0 JSON representation.
+//  * @param {?string} json JSON string representing the project.
+//  */
+// VirtualMachine.prototype.loadProject = function (json) {
+//     this.clear();
+//     // @todo: Handle other formats, e.g., Scratch 1.4, Scratch 3.0.
+//     sb2import(json, this.runtime);
+//     // Select the first target for editing, e.g., the first sprite.
+//     this.editingTarget = this.runtime.targets[1];
+//     // Update the VM user's knowledge of targets and blocks on the workspace.
+//     this.emitTargetsUpdate();
+//     this.emitWorkspaceUpdate();
+//     this.runtime.setEditingTarget(this.editingTarget);
+// };
+
 /**
- * Load a project from a Scratch 2.0 JSON representation.
- * @param {?string} json JSON string representing the project.
+ * Export project as a Scratch 3.0 JSON representation.
+ * @return {string} Serialized state of the runtime.
  */
-VirtualMachine.prototype.loadProject = function (json) {
+VirtualMachine.prototype.toJSON = function () {
+    return JSON.stringify(sb3.serialize(this.runtime));
+};
+
+/**
+ * Load a project from a Scratch JSON representation.
+ * @param {string} json JSON string representing a project.
+ */
+VirtualMachine.prototype.fromJSON = function (json) {
+    // Clear the current runtime
     this.clear();
-    // @todo: Handle other formats, e.g., Scratch 1.4, Scratch 3.0.
-    sb2import(json, this.runtime);
+
+    // Validate & parse
+    if (typeof json !== 'string') return;
+    json = JSON.parse(json);
+    if (typeof json !== 'object') return;
+    if (typeof json.info === 'undefined') return;
+
+    // Establish version, deserialize, and load into runtime
+    // @todo Support Scratch 1.4
+    // @todo This is an extremely naïve / dangerous way of determining version.
+    //       See `scratch-parser` for a more sophisticated validation
+    //       methodology that should be adapted for use here.
+    if (typeof json.info.swfVersion !== 'undefined') {
+        sb2.deserialize(json, this.runtime);
+    } else {
+        sb3.deserialize(json, this.runtime);
+    }
+
     // Select the first target for editing, e.g., the first sprite.
     this.editingTarget = this.runtime.targets[1];
+
     // Update the VM user's knowledge of targets and blocks on the workspace.
     this.emitTargetsUpdate();
     this.emitWorkspaceUpdate();
     this.runtime.setEditingTarget(this.editingTarget);
-};
 
-VirtualMachine.prototype.toPrettyJSON = function (testing) {
-    this.runtime.targets.testing = testing;
-    var json = JSON.stringify(this.toJSON(), null, 4);
-    this.runtime.targets.testing = false;
-    if (testing == true) {
-        console.log('Exported To JSON');
-    }
-    return json;
-};
-
-VirtualMachine.prototype.toJSON = function () {
-    if (this.runtime.targets.hasOwnProperty('testing') == false) {
-        this.runtime.targets.testing = false;
-    }
-    var obj = new Object();
-    obj.sprites = this.runtime.targets;
-    obj.meta = new Object();
-    obj.meta.name = 'WIP';
-    obj.meta.useragent = navigator.userAgent;
-    return obj;
-};
-
-VirtualMachine.prototype.fromJSON = function (json, testing) {
-    this.clear();
-    if (testing == true) {
-        console.log('Importing JSON');
-    }
-    var obj = JSON.parse(json);
-    var i = 0;
-    for (; i < obj.sprites.length; i++) {
-        var blocks = new Blocks();
-        var z = null;
-        for (z in obj.sprites[i].sprite.blocks) {
-            blocks[z] = obj.sprites[i].sprite.blocks[z];
-            if (testing == true) {
-                console.log('Importing ' + z + ' to Blocks');
-            }
-        }
-        var sprite = new Sprite(blocks, this.runtime);
-        var y = null;
-        for (y in obj.sprites[i].sprite) {
-            if (y === 'blocks') {
-                continue;
-            }
-            sprite[y] = obj.sprites[i].sprite[y];
-            if (testing == true) {
-                console.log('Importing ' + y + ' to Sprite');
-            }
-        }
-        var target = sprite.createClone();
-        this.runtime.targets.push(target);
-        var x = null;
-        for (x in obj.sprites[i]) {
-            if (x === 'sprite') {
-                continue;
-            }
-            target[x] = obj.sprites[i][x];
-            console.log('Importing ' + x + ' to Rendered Target');
-        }
-        target.updateAllDrawablePropertie();
-    }
-    this.editingTarget = this.runtime.targets[0];
-    // Update the VM user's knowledge of targets and blocks on the workspace.
-    this.emitTargetsUpdate();
-    this.emitWorkspaceUpdate();
-    this.runtime.setEditingTarget(this.editingTarget);
-    if (testing == true) {
-        console.log('Imported from JSON');
-    }
-};
-
-VirtualMachine.prototype.testJSON = function () {
-    console.log('Exporting to JSON...');
-    var json = this.toPrettyJSON(true);
-    console.log('Importing from JSON...');
-    this.fromJSON(json, true);
-    console.log('Exporting to JSON...');
-    var json2 = this.toPrettyJSON(true);
-    if (json == json2) {
-        console.log('JSON Test: Successful');
-    } else {
-        console.log('JSON Test: Failed: JSON Not Equivalent');
-        console.log('JSON 1:');
-        console.log(json);
-        console.log('JSON 2:');
-        console.log(json2);
-    }
-    this.editingTarget = this.runtime.targets[0];
-    this.emitTargetsUpdate();
-    this.emitWorkspaceUpdate();
-    this.runtime.setEditingTarget(this.editingTarget);
+    // var obj = JSON.parse(json);
+    // var i = 0;
+    // for (; i < obj.sprites.length; i++) {
+    //     var blocks = new Blocks();
+    //     var z = null;
+    //     for (z in obj.sprites[i].sprite.blocks) {
+    //         blocks[z] = obj.sprites[i].sprite.blocks[z];
+    //         if (testing == true) {
+    //             console.log('Importing ' + z + ' to Blocks');
+    //         }
+    //     }
+    //     var sprite = new Sprite(blocks, this.runtime);
+    //     var y = null;
+    //     for (y in obj.sprites[i].sprite) {
+    //         if (y === 'blocks') {
+    //             continue;
+    //         }
+    //         sprite[y] = obj.sprites[i].sprite[y];
+    //         if (testing == true) {
+    //             console.log('Importing ' + y + ' to Sprite');
+    //         }
+    //     }
+    //     var target = sprite.createClone();
+    //     this.runtime.targets.push(target);
+    //     var x = null;
+    //     for (x in obj.sprites[i]) {
+    //         if (x === 'sprite') {
+    //             continue;
+    //         }
+    //         target[x] = obj.sprites[i][x];
+    //         console.log('Importing ' + x + ' to Rendered Target');
+    //     }
+    //     target.updateAllDrawablePropertie();
+    // }
+    // this.editingTarget = this.runtime.targets[0];
+    // // Update the VM user's knowledge of targets and blocks on the workspace.
+    // this.emitTargetsUpdate();
+    // this.emitWorkspaceUpdate();
+    // this.runtime.setEditingTarget(this.editingTarget);
+    // if (testing == true) {
+    //     console.log('Imported from JSON');
+    // }
 };
 
 /**
