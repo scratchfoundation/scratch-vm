@@ -252,6 +252,14 @@ VirtualMachine.prototype.attachRenderer = function (renderer) {
 };
 
 /**
+ * Set the audio engine for the VM/runtime
+ * @param {!AudioEngine} audioEngine The audio engine to attach
+ */
+VirtualMachine.prototype.attachAudioEngine = function (audioEngine) {
+    this.runtime.attachAudioEngine(audioEngine);
+};
+
+/**
  * Handle a Blockly event for the current editing target.
  * @param {!Blockly.Event} e Any Blockly event.
  */

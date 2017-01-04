@@ -49,11 +49,12 @@ var RenderedTarget = function (sprite, runtime) {
     };
 
     /**
-    * Audio engine
+    * Audio player
     */
-    this.audioEngine = null;
+    this.audioPlayer = null;
     if (this.runtime) {
-        this.audioEngine = new AudioEngine(this.sprite.sounds);
+        this.audioPlayer = this.runtime.audioEngine.createPlayer();
+        this.audioPlayer.loadSounds(this.sprite.sounds);
     }
 
 };
