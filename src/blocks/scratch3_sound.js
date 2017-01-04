@@ -2,37 +2,36 @@ var MathUtil = require('../util/math-util');
 var Cast = require('../util/cast');
 var Promise = require('promise');
 
-function Scratch3SoundBlocks(runtime) {
+var Scratch3SoundBlocks = function (runtime) {
     /**
      * The runtime instantiating this block package.
      * @type {Runtime}
      */
     this.runtime = runtime;
-}
+};
 
 /**
  * Retrieve the block primitives implemented by this package.
  * @return {Object.<string, Function>} Mapping of opcode to Function.
  */
-Scratch3SoundBlocks.prototype.getPrimitives = function() {
+Scratch3SoundBlocks.prototype.getPrimitives = function () {
     return {
-        'sound_play': this.playSound,
-        'sound_playuntildone': this.playSoundAndWait,
-        'sound_stopallsounds': this.stopAllSounds,
-        'sound_playnoteforbeats': this.playNoteForBeats,
-        'sound_playthereminforbeats': this.playThereminForBeats,
-        'sound_playdrumforbeats': this.playDrumForBeats,
-        'sound_setinstrumentto': this.setInstrument,
-        'sound_seteffectto' : this.setEffect,
-        'sound_changeeffectby' : this.changeEffect,
-        'sound_cleareffects' : this.clearEffects,
-        'sound_sounds_menu' : this.soundsMenu,
-        'sound_beats_menu' : this.beatsMenu,
-        'sound_effects_menu' : this.effectsMenu,
-        'sound_setvolumeto' : this.setVolume,
-        'sound_changevolumeby' : this.changeVolume,
-        'sound_sound_settempotobpm' : this.setTempo,
-        'sound_changetempoby' : this.changeTempo
+        sound_play: this.playSound,
+        sound_playuntildone: this.playSoundAndWait,
+        sound_stopallsounds: this.stopAllSounds,
+        sound_playnoteforbeats: this.playNoteForBeats,
+        sound_playdrumforbeats: this.playDrumForBeats,
+        sound_setinstrumentto: this.setInstrument,
+        sound_seteffectto: this.setEffect,
+        sound_changeeffectby: this.changeEffect,
+        sound_cleareffects: this.clearEffects,
+        sound_sounds_menu: this.soundsMenu,
+        sound_beats_menu: this.beatsMenu,
+        sound_effects_menu: this.effectsMenu,
+        sound_setvolumeto: this.setVolume,
+        sound_changevolumeby: this.changeVolume,
+        sound_sound_settempotobpm: this.setTempo,
+        sound_changetempoby: this.changeTempo
     };
 };
 
@@ -47,19 +46,20 @@ Scratch3SoundBlocks.prototype.playSoundAndWait = function (args, util) {
 };
 
 Scratch3SoundBlocks.prototype._getSoundIndex = function (soundName, util) {
-    if (util.target.sprite.sounds.length == 0) {
+    if (util.target.sprite.sounds.length === 0) {
         return 0;
     }
     var index;
+
     if (Number(soundName)) {
         soundName = Number(soundName);
     }
     if (typeof soundName === 'number') {
         var len = util.target.sprite.sounds.length;
-        index = MathUtil.wrapClamp(soundName,0,len-1);
+        index = MathUtil.wrapClamp(soundName, 0, len - 1);
     } else {
         index = util.target.getSoundIndexByName(soundName);
-        if (index == -1) {
+        if (index === -1) {
             index = 0;
         }
     }
@@ -72,28 +72,19 @@ Scratch3SoundBlocks.prototype.stopAllSounds = function (args, util) {
 
 Scratch3SoundBlocks.prototype.playNoteForBeats = function (args, util) {
     util.target.audioEngine.playNoteForBeats(args.NOTE, args.BEATS);
-    return new Promise(function(resolve) {
-        setTimeout(function() {
+    return new Promise(function (resolve) {
+        setTimeout(function () {
             resolve();
-        }, (1000 * args.BEATS) );
-    });
-};
-
-Scratch3SoundBlocks.prototype.playThereminForBeats = function (args, util) {
-    util.target.audioEngine.playThereminForBeats(args.NOTE, args.BEATS);
-    return new Promise(function(resolve) {
-        setTimeout(function() {
-            resolve();
-        }, (1000 * args.BEATS) );
+        }, (1000 * args.BEATS));
     });
 };
 
 Scratch3SoundBlocks.prototype.playDrumForBeats = function (args, util) {
-    util.target.audioEngine.playDrumForBeats(args.DRUMTYPE, args.BEATS);
-    return new Promise(function(resolve) {
-        setTimeout(function() {
+    util.target.audioEngine.playDrumForBeats(args.DRUM, args.BEATS);
+    return new Promise(function (resolve) {
+        setTimeout(function () {
             resolve();
-        }, (1000 * args.BEATS) );
+        }, (1000 * args.BEATS));
     });
 };
 
