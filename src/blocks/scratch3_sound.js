@@ -53,8 +53,6 @@ Scratch3SoundBlocks.prototype._getSoundIndex = function (soundName, util) {
 
     if (Number(soundName)) {
         soundName = Number(soundName);
-    }
-    if (typeof soundName === 'number') {
         var len = util.target.sprite.sounds.length;
         index = MathUtil.wrapClamp(soundName, 1, len) - 1;
     } else {
