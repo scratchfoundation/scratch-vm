@@ -1,6 +1,5 @@
 var MathUtil = require('../util/math-util');
 var Cast = require('../util/cast');
-var Promise = require('promise');
 
 var Scratch3SoundBlocks = function (runtime) {
     /**
@@ -21,6 +20,7 @@ Scratch3SoundBlocks.prototype.getPrimitives = function () {
         sound_stopallsounds: this.stopAllSounds,
         sound_playnoteforbeats: this.playNoteForBeats,
         sound_playdrumforbeats: this.playDrumForBeats,
+        sound_restforbeats: this.restForBeats,
         sound_setinstrumentto: this.setInstrument,
         sound_seteffectto: this.setEffect,
         sound_changeeffectby: this.changeEffect,
@@ -30,8 +30,9 @@ Scratch3SoundBlocks.prototype.getPrimitives = function () {
         sound_effects_menu: this.effectsMenu,
         sound_setvolumeto: this.setVolume,
         sound_changevolumeby: this.changeVolume,
-        sound_sound_settempotobpm: this.setTempo,
-        sound_changetempoby: this.changeTempo
+        sound_settempotobpm: this.setTempo,
+        sound_changetempoby: this.changeTempo,
+        sound_tempo: this.getTempo
     };
 };
 
@@ -69,21 +70,15 @@ Scratch3SoundBlocks.prototype.stopAllSounds = function (args, util) {
 };
 
 Scratch3SoundBlocks.prototype.playNoteForBeats = function (args, util) {
-    util.target.audioPlayer.playNoteForBeats(args.NOTE, args.BEATS);
-    return new Promise(function (resolve) {
-        setTimeout(function () {
-            resolve();
-        }, (1000 * args.BEATS));
-    });
-};
+    return util.target.audioPlayer.playNoteForBeats(args.NOTE, args.BEATS);
+ };
 
 Scratch3SoundBlocks.prototype.playDrumForBeats = function (args, util) {
-    util.target.audioPlayer.playDrumForBeats(args.DRUM, args.BEATS);
-    return new Promise(function (resolve) {
-        setTimeout(function () {
-            resolve();
-        }, (1000 * args.BEATS));
-    });
+    return util.target.audioPlayer.playDrumForBeats(args.DRUM, args.BEATS);
+};
+
+Scratch3SoundBlocks.prototype.restForBeats = function (args, util) {
+    return util.target.audioPlayer.waitForBeats(args.BEATS);
 };
 
 Scratch3SoundBlocks.prototype.setInstrument = function (args, util) {
@@ -123,6 +118,10 @@ Scratch3SoundBlocks.prototype.setTempo = function (args, util) {
 Scratch3SoundBlocks.prototype.changeTempo = function (args, util) {
     var value = Cast.toNumber(args.TEMPO);
     util.target.audioPlayer.changeTempo(value);
+};
+
+Scratch3SoundBlocks.prototype.getTempo = function (args, util) {
+    return util.target.audioPlayer.currentTempo;
 };
 
 Scratch3SoundBlocks.prototype.soundsMenu = function (args) {
