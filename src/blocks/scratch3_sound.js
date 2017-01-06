@@ -110,6 +110,10 @@ Scratch3SoundBlocks.prototype.changeVolume = function (args, util) {
     util.target.audioPlayer.changeVolume(value);
 };
 
+Scratch3SoundBlocks.prototype.getVolume = function (args, util) {
+    return util.target.audioPlayer.currentVolume;
+};
+
 Scratch3SoundBlocks.prototype.setTempo = function (args, util) {
     var value = Cast.toNumber(args.TEMPO);
     util.target.audioPlayer.setTempo(value);
