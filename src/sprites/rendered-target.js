@@ -46,16 +46,6 @@ var RenderedTarget = function (sprite, runtime) {
         brightness: 0,
         ghost: 0
     };
-
-    /**
-    * Audio player
-    */
-    this.audioPlayer = null;
-    if (this.runtime) {
-        this.audioPlayer = this.runtime.audioEngine.createPlayer();
-        this.audioPlayer.loadSounds(this.sprite.sounds);
-    }
-
 };
 util.inherits(RenderedTarget, Target);
 
@@ -71,6 +61,18 @@ RenderedTarget.prototype.initDrawable = function () {
         this.runtime.startHats(
             'control_start_as_clone', null, this
         );
+    }
+
+    /**
+    * Audio player
+    */
+    this.audioPlayer = null;
+    if (this.runtime) {
+        if (this.isOriginal) {
+            this.sprite.audioPlayer = this.runtime.audioEngine.createPlayer();
+            this.sprite.audioPlayer.loadSounds(this.sprite.sounds);
+        }
+        this.audioPlayer = this.sprite.audioPlayer;
     }
 };
 
