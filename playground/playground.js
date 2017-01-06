@@ -37,9 +37,6 @@ window.onload = function() {
     window.renderer = renderer;
     vm.attachRenderer(renderer);
 
-    // Instantiate audio engine
-    window.audioEngine = new window.AudioEngine();
-
     // Instantiate scratch-blocks and attach it to the DOM.
     var workspace = window.Blockly.inject('blocks', {
         media: './media/',
