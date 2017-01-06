@@ -319,7 +319,7 @@ Runtime.prototype.attachRenderer = function (renderer) {
 
 /**
  * Attach the audio engine
- * @param {!RenderWebGL} audioEngine The audio engine to attach
+ * @param {!AudioEngine} audioEngine The audio engine to attach
  */
 Runtime.prototype.attachAudioEngine = function (audioEngine) {
     this.audioEngine = audioEngine;
