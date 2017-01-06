@@ -71,7 +71,7 @@ Scratch3SoundBlocks.prototype.stopAllSounds = function (args, util) {
 
 Scratch3SoundBlocks.prototype.playNoteForBeats = function (args, util) {
     return util.target.audioPlayer.playNoteForBeats(args.NOTE, args.BEATS);
- };
+};
 
 Scratch3SoundBlocks.prototype.playDrumForBeats = function (args, util) {
     return util.target.audioPlayer.playDrumForBeats(args.DRUM, args.BEATS);

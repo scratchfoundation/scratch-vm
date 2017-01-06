@@ -1,4 +1,3 @@
-var AudioEngine = require('scratch-audioengine');
 var util = require('util');
 
 var log = require('../util/log');
@@ -389,7 +388,7 @@ RenderedTarget.prototype.getCostumeIndexByName = function (costumeName) {
  */
 RenderedTarget.prototype.getSoundIndexByName = function (soundName) {
     for (var i = 0; i < this.sprite.sounds.length; i++) {
-        if (this.sprite.sounds[i].name == soundName) {
+        if (this.sprite.sounds[i].name === soundName) {
             return i;
         }
     }

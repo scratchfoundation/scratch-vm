@@ -73,7 +73,9 @@ module.exports = [
                 // Scratch Blocks
                 'scratch-blocks/dist/vertical.js',
                 // Renderer
-                'scratch-render'
+                'scratch-render',
+                // Audio
+                'scratch-audio'
             ]
         },
         output: {
@@ -101,6 +103,10 @@ module.exports = [
                 {
                     test: require.resolve('scratch-render'),
                     loader: 'expose?RenderWebGL'
+                },
+                {
+                    test: require.resolve('scratch-audio'),
+                    loader: 'expose?AudioEngine'
                 }
             ])
         },

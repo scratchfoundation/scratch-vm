@@ -57,8 +57,7 @@ var parseScratchObject = function (object, runtime, topLevel) {
             var sound = object.sounds[s];
             sprite.sounds.push({
                 format: sound.format,
-                fileUrl: 'https://cdn.assets.scratch.mit.edu/internalapi/asset/'
-                    + sound.md5 + '/get/',
+                fileUrl: 'https://cdn.assets.scratch.mit.edu/internalapi/asset/' + sound.md5 + '/get/',
                 rate: sound.rate,
                 sampleCount: sound.sampleCount,
                 soundID: sound.soundID,
