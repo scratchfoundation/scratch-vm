@@ -664,10 +664,6 @@ RenderedTarget.prototype.makeClone = function () {
  */
 RenderedTarget.prototype.onGreenFlag = function () {
     this.clearEffects();
-    if (this.audioEngine) {
-        this.audioEngine.stopAllSounds();
-        this.audioEngine.clearEffects();
-    }
 };
 
 /**
@@ -675,9 +671,9 @@ RenderedTarget.prototype.onGreenFlag = function () {
  * Stop all sounds
  */
 RenderedTarget.prototype.onStopAll = function () {
-    if (this.audioEngine) {
-        this.audioEngine.stopAllSounds();
-        this.audioEngine.clearEffects();
+    if (this.audioPlayer) {
+        this.audioPlayer.stopAllSounds();
+        this.audioPlayer.clearEffects();
     }
 };
 
