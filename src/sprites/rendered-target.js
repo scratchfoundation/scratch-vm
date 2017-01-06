@@ -62,6 +62,18 @@ RenderedTarget.prototype.initDrawable = function () {
             'control_start_as_clone', null, this
         );
     }
+
+    /**
+    * Audio player
+    */
+    this.audioPlayer = null;
+    if (this.runtime && this.runtime.audioEngine) {
+        if (this.isOriginal) {
+            this.sprite.audioPlayer = this.runtime.audioEngine.createPlayer();
+            this.sprite.audioPlayer.loadSounds(this.sprite.sounds);
+        }
+        this.audioPlayer = this.sprite.audioPlayer;
+    }
 };
 
 /**
@@ -372,6 +384,20 @@ RenderedTarget.prototype.getCostumeIndexByName = function (costumeName) {
 };
 
 /**
+ * Get a sound index of this rendered target, by name of the sound.
+ * @param {?string} soundName Name of a sound.
+ * @return {number} Index of the named sound, or -1 if not present.
+ */
+RenderedTarget.prototype.getSoundIndexByName = function (soundName) {
+    for (var i = 0; i < this.sprite.sounds.length; i++) {
+        if (this.sprite.sounds[i].name === soundName) {
+            return i;
+        }
+    }
+    return -1;
+};
+
+/**
  * Get a costume of this rendered target by id.
  * @return {object} current costume
  */
@@ -638,6 +664,17 @@ RenderedTarget.prototype.makeClone = function () {
  */
 RenderedTarget.prototype.onGreenFlag = function () {
     this.clearEffects();
+};
+
+/**
+ * Called when the project receives a "stop all"
+ * Stop all sounds
+ */
+RenderedTarget.prototype.onStopAll = function () {
+    if (this.audioPlayer) {
+        this.audioPlayer.stopAllSounds();
+        this.audioPlayer.clearEffects();
+    }
 };
 
 /**

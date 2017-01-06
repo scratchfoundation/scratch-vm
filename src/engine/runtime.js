@@ -15,6 +15,7 @@ var defaultBlockPackages = {
     scratch3_looks: require('../blocks/scratch3_looks'),
     scratch3_motion: require('../blocks/scratch3_motion'),
     scratch3_operators: require('../blocks/scratch3_operators'),
+    scratch3_sound: require('../blocks/scratch3_sound'),
     scratch3_sensing: require('../blocks/scratch3_sensing'),
     scratch3_data: require('../blocks/scratch3_data'),
     scratch3_procedures: require('../blocks/scratch3_procedures')
@@ -317,6 +318,14 @@ Runtime.prototype.attachRenderer = function (renderer) {
     this.renderer = renderer;
 };
 
+/**
+ * Attach the audio engine
+ * @param {!AudioEngine} audioEngine The audio engine to attach
+ */
+Runtime.prototype.attachAudioEngine = function (audioEngine) {
+    this.audioEngine = audioEngine;
+};
+
 // -----------------------------------------------------------------------------
 // -----------------------------------------------------------------------------
 
@@ -553,6 +562,7 @@ Runtime.prototype.stopAll = function () {
     // Dispose all clones.
     var newTargets = [];
     for (var i = 0; i < this.targets.length; i++) {
+        this.targets[i].onStopAll();
         if (this.targets[i].hasOwnProperty('isOriginal') &&
             !this.targets[i].isOriginal) {
             this.targets[i].dispose();
