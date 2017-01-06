@@ -67,7 +67,7 @@ RenderedTarget.prototype.initDrawable = function () {
     * Audio player
     */
     this.audioPlayer = null;
-    if (this.runtime) {
+    if (this.runtime && this.runtime.audioEngine) {
         if (this.isOriginal) {
             this.sprite.audioPlayer = this.runtime.audioEngine.createPlayer();
             this.sprite.audioPlayer.loadSounds(this.sprite.sounds);
