@@ -6,8 +6,7 @@ var sb2import = require('./import/sb2import');
 
 /**
  * Handles connections between blocks, stage, and extensions.
- *
- * @author Andrew Sliwinski <ascii@media.mit.edu>
+ * @constructor
  */
 var VirtualMachine = function () {
     var instance = this;

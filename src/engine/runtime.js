@@ -23,6 +23,7 @@ var defaultBlockPackages = {
 
 /**
  * Manages targets, scripts, and the sequencer.
+ * @constructor
  */
 var Runtime = function () {
     // Bind event emitter
@@ -444,12 +445,24 @@ Runtime.prototype.startHats = function (requestedHatOpcode,
             // Not the right hat.
             return;
         }
+
         // Match any requested fields.
         // For example: ensures that broadcasts match.
         // This needs to happen before the block is evaluated
         // (i.e., before the predicate can be run) because "broadcast and wait"
         // needs to have a precise collection of started threads.
         var hatFields = target.blocks.getFields(topBlockId);
+
+        // If no fields are present, check inputs (horizontal blocks)
+        if (Object.keys(hatFields).length === 0) {
+            var hatInputs = target.blocks.getInputs(topBlockId);
+            for (var input in hatInputs) {
+                var id = hatInputs[input].block;
+                var fields = target.blocks.getFields(id);
+                hatFields = Object.assign(fields, hatFields);
+            }
+        }
+
         if (optMatchFields) {
             for (var matchField in optMatchFields) {
                 if (hatFields[matchField].value !==
@@ -459,6 +472,7 @@ Runtime.prototype.startHats = function (requestedHatOpcode,
                 }
             }
         }
+
         // Look up metadata for the relevant hat.
         var hatMeta = instance._hats[requestedHatOpcode];
         if (hatMeta.restartExistingThreads) {
@@ -606,7 +620,7 @@ Runtime.prototype.setEditingTarget = function (editingTarget) {
 Runtime.prototype.setCompatibilityMode = function (compatibilityModeOn) {
     this.compatibilityMode = compatibilityModeOn;
     if (this._steppingInterval) {
-        self.clearInterval(this._steppingInterval);
+        clearInterval(this._steppingInterval);
         this.start();
     }
 };
@@ -816,7 +830,7 @@ Runtime.prototype.start = function () {
         interval = Runtime.THREAD_STEP_INTERVAL_COMPATIBILITY;
     }
     this.currentStepTime = interval;
-    this._steppingInterval = self.setInterval(function () {
+    this._steppingInterval = setInterval(function () {
         this._step();
     }.bind(this), interval);
 };
