@@ -114,18 +114,18 @@ Scratch3SoundBlocks.prototype.getVolume = function (args, util) {
     return util.target.audioPlayer.currentVolume;
 };
 
-Scratch3SoundBlocks.prototype.setTempo = function (args, util) {
+Scratch3SoundBlocks.prototype.setTempo = function (args) {
     var value = Cast.toNumber(args.TEMPO);
-    util.target.audioPlayer.setTempo(value);
+    this.runtime.audioEngine.setTempo(value);
 };
 
-Scratch3SoundBlocks.prototype.changeTempo = function (args, util) {
+Scratch3SoundBlocks.prototype.changeTempo = function (args) {
     var value = Cast.toNumber(args.TEMPO);
-    util.target.audioPlayer.changeTempo(value);
+    this.runtime.audioEngine.changeTempo(value);
 };
 
-Scratch3SoundBlocks.prototype.getTempo = function (args, util) {
-    return util.target.audioPlayer.currentTempo;
+Scratch3SoundBlocks.prototype.getTempo = function () {
+    return this.runtime.audioEngine.currentTempo;
 };
 
 Scratch3SoundBlocks.prototype.soundsMenu = function (args) {
