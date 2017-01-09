@@ -84,6 +84,7 @@ Scratch3SoundBlocks.prototype.restForBeats = function (args, util) {
 
 Scratch3SoundBlocks.prototype.setInstrument = function (args, util) {
     var instNum = Cast.toNumber(args.INSTRUMENT);
+    instNum -= 1;
     return util.target.audioPlayer.setInstrument(instNum);
 };
 
