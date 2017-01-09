@@ -30,6 +30,7 @@ Scratch3SoundBlocks.prototype.getPrimitives = function () {
         sound_effects_menu: this.effectsMenu,
         sound_setvolumeto: this.setVolume,
         sound_changevolumeby: this.changeVolume,
+        sound_volume: this.getVolume,
         sound_settempotobpm: this.setTempo,
         sound_changetempoby: this.changeTempo,
         sound_tempo: this.getTempo
