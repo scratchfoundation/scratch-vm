@@ -408,7 +408,7 @@ var specMap = {
             {
                 type: 'input',
                 inputOp: 'math_number',
-                inputName: 'DRUMTYPE'
+                inputName: 'DRUM'
             },
             {
                 type: 'input',
