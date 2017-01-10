@@ -8,6 +8,11 @@ npm-*
 # Testing
 /.nyc_output
 /coverage
+
+# IDEA
+/.idea
+
+# Build
 /dist.js
 /vm.js
 /vm.min.js
