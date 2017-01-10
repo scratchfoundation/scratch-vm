@@ -71,15 +71,20 @@ Scratch3SoundBlocks.prototype.stopAllSounds = function (args, util) {
 };
 
 Scratch3SoundBlocks.prototype.playNoteForBeats = function (args, util) {
-    return util.target.audioPlayer.playNoteForBeats(args.NOTE, args.BEATS);
+    var note = Cast.toNumber(args.NOTE);
+    var beats = Cast.toNumber(args.BEATS);
+    return util.target.audioPlayer.playNoteForBeats(note, beats);
 };
 
 Scratch3SoundBlocks.prototype.playDrumForBeats = function (args, util) {
-    return util.target.audioPlayer.playDrumForBeats(args.DRUM, args.BEATS);
+    var drum = Cast.toNumber(args.DRUMTYPE);
+    var beats = Cast.toNumber(args.BEATS);
+    return util.target.audioPlayer.playDrumForBeats(drum, beats);
 };
 
 Scratch3SoundBlocks.prototype.restForBeats = function (args, util) {
-    return util.target.audioPlayer.waitForBeats(args.BEATS);
+    var beats = Cast.toNumber(args.BEATS);
+    return util.target.audioPlayer.waitForBeats(beats);
 };
 
 Scratch3SoundBlocks.prototype.setInstrument = function (args, util) {
