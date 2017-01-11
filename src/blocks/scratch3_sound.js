@@ -79,6 +79,7 @@ Scratch3SoundBlocks.prototype.playNoteForBeats = function (args, util) {
 Scratch3SoundBlocks.prototype.playDrumForBeats = function (args, util) {
     var drum = Cast.toNumber(args.DRUM);
     drum -= 1; // drums are one-indexed
+    drum = MathUtil.wrapClamp(drum, 0, this.runtime.audioEngine.numDrums);
     var beats = Cast.toNumber(args.BEATS);
     return util.target.audioPlayer.playDrumForBeats(drum, beats);
 };
@@ -91,6 +92,7 @@ Scratch3SoundBlocks.prototype.restForBeats = function (args, util) {
 Scratch3SoundBlocks.prototype.setInstrument = function (args, util) {
     var instNum = Cast.toNumber(args.INSTRUMENT);
     instNum -= 1; // instruments are one-indexed
+    instNum = MathUtil.wrapClamp(instNum, 0, this.runtime.audioEngine.numInstruments);
     return util.target.audioPlayer.setInstrument(instNum);
 };
 
