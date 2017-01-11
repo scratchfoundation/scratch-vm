@@ -46,6 +46,19 @@ var RenderedTarget = function (sprite, runtime) {
         brightness: 0,
         ghost: 0
     };
+
+    /**
+     * Map of current audio effect values.
+     * @type {!Object.<string, number>}
+     */
+    this.audioEffects = {
+        pitch: 0,
+        pan: 0,
+        echo: 0,
+        reverb: 0,
+        fuzz: 0.,
+        robot: 0
+    };
 };
 util.inherits(RenderedTarget, Target);
 
@@ -150,6 +163,18 @@ RenderedTarget.ROTATION_STYLE_NONE = 'don\'t rotate';
 RenderedTarget.prototype.rotationStyle = (
     RenderedTarget.ROTATION_STYLE_ALL_AROUND
 );
+
+/**
+ * Volume for playback of sounds, as a percentage
+ * @type {number}
+ */
+RenderedTarget.prototype.volume = 100;
+
+/**
+ * Currently selected instrument
+ * @type {number}
+ */
+RenderedTarget.prototype.currentInstrument = 0;
 
 /**
  * Set the X and Y coordinates.
