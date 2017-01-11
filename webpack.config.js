@@ -68,7 +68,7 @@ module.exports = [
         target: 'web',
         entry: {
             'scratch-vm': './src/index.js',
-            vendor: [
+            'vendor': [
                 // FPS counter
                 'stats.js/build/stats.min.js',
                 // Syntax highlighter
