@@ -3,10 +3,10 @@ var test = require('tap').test;
 var extract = require('../fixtures/extract');
 var VirtualMachine = require('../../src/index');
 
-var uri = path.resolve(__dirname, '../fixtures/motion.sb2');
+var uri = path.resolve(__dirname, '../fixtures/sensing.sb2');
 var project = extract(uri);
 
-test('motion', function (t) {
+test('sensing', function (t) {
     var vm = new VirtualMachine();
 
     // Evaluate playground data and exit

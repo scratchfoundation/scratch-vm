@@ -3,16 +3,16 @@ var test = require('tap').test;
 var extract = require('../fixtures/extract');
 var VirtualMachine = require('../../src/index');
 
-var uri = path.resolve(__dirname, '../fixtures/motion.sb2');
+var uri = path.resolve(__dirname, '../fixtures/procedure.sb2');
 var project = extract(uri);
 
-test('motion', function (t) {
+test('procedure', function (t) {
     var vm = new VirtualMachine();
 
     // Evaluate playground data and exit
     vm.on('playgroundData', function (e) {
         var threads = JSON.parse(e.threads);
-        t.ok(threads.length > 0);
+        t.ok(threads.length === 0);
         t.end();
         process.nextTick(process.exit);
     });
