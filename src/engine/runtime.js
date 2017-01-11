@@ -15,6 +15,7 @@ var defaultBlockPackages = {
     scratch3_looks: require('../blocks/scratch3_looks'),
     scratch3_motion: require('../blocks/scratch3_motion'),
     scratch3_operators: require('../blocks/scratch3_operators'),
+    scratch3_sound: require('../blocks/scratch3_sound'),
     scratch3_sensing: require('../blocks/scratch3_sensing'),
     scratch3_data: require('../blocks/scratch3_data'),
     scratch3_procedures: require('../blocks/scratch3_procedures')
@@ -22,6 +23,7 @@ var defaultBlockPackages = {
 
 /**
  * Manages targets, scripts, and the sequencer.
+ * @constructor
  */
 var Runtime = function () {
     // Bind event emitter
@@ -316,6 +318,14 @@ Runtime.prototype.attachRenderer = function (renderer) {
     this.renderer = renderer;
 };
 
+/**
+ * Attach the audio engine
+ * @param {!AudioEngine} audioEngine The audio engine to attach
+ */
+Runtime.prototype.attachAudioEngine = function (audioEngine) {
+    this.audioEngine = audioEngine;
+};
+
 // -----------------------------------------------------------------------------
 // -----------------------------------------------------------------------------
 
@@ -435,12 +445,24 @@ Runtime.prototype.startHats = function (requestedHatOpcode,
             // Not the right hat.
             return;
         }
+
         // Match any requested fields.
         // For example: ensures that broadcasts match.
         // This needs to happen before the block is evaluated
         // (i.e., before the predicate can be run) because "broadcast and wait"
         // needs to have a precise collection of started threads.
         var hatFields = target.blocks.getFields(topBlockId);
+
+        // If no fields are present, check inputs (horizontal blocks)
+        if (Object.keys(hatFields).length === 0) {
+            var hatInputs = target.blocks.getInputs(topBlockId);
+            for (var input in hatInputs) {
+                var id = hatInputs[input].block;
+                var fields = target.blocks.getFields(id);
+                hatFields = Object.assign(fields, hatFields);
+            }
+        }
+
         if (optMatchFields) {
             for (var matchField in optMatchFields) {
                 if (hatFields[matchField].value !==
@@ -450,6 +472,7 @@ Runtime.prototype.startHats = function (requestedHatOpcode,
                 }
             }
         }
+
         // Look up metadata for the relevant hat.
         var hatMeta = instance._hats[requestedHatOpcode];
         if (hatMeta.restartExistingThreads) {
@@ -539,6 +562,7 @@ Runtime.prototype.stopAll = function () {
     // Dispose all clones.
     var newTargets = [];
     for (var i = 0; i < this.targets.length; i++) {
+        this.targets[i].onStopAll();
         if (this.targets[i].hasOwnProperty('isOriginal') &&
             !this.targets[i].isOriginal) {
             this.targets[i].dispose();
@@ -596,7 +620,7 @@ Runtime.prototype.setEditingTarget = function (editingTarget) {
 Runtime.prototype.setCompatibilityMode = function (compatibilityModeOn) {
     this.compatibilityMode = compatibilityModeOn;
     if (this._steppingInterval) {
-        self.clearInterval(this._steppingInterval);
+        clearInterval(this._steppingInterval);
         this.start();
     }
 };
@@ -806,7 +830,7 @@ Runtime.prototype.start = function () {
         interval = Runtime.THREAD_STEP_INTERVAL_COMPATIBILITY;
     }
     this.currentStepTime = interval;
-    this._steppingInterval = self.setInterval(function () {
+    this._steppingInterval = setInterval(function () {
         this._step();
     }.bind(this), interval);
 };

@@ -6,8 +6,7 @@ var sb2import = require('./import/sb2import');
 
 /**
  * Handles connections between blocks, stage, and extensions.
- *
- * @author Andrew Sliwinski <ascii@media.mit.edu>
+ * @constructor
  */
 var VirtualMachine = function () {
     var instance = this;
@@ -249,6 +248,14 @@ VirtualMachine.prototype.deleteSprite = function (targetId) {
  */
 VirtualMachine.prototype.attachRenderer = function (renderer) {
     this.runtime.attachRenderer(renderer);
+};
+
+/**
+ * Set the audio engine for the VM/runtime
+ * @param {!AudioEngine} audioEngine The audio engine to attach
+ */
+VirtualMachine.prototype.attachAudioEngine = function (audioEngine) {
+    this.runtime.attachAudioEngine(audioEngine);
 };
 
 /**

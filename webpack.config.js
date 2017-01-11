@@ -107,6 +107,10 @@ module.exports = [
                 {
                     test: require.resolve('scratch-render'),
                     loader: 'expose?RenderWebGL'
+                },
+                {
+                    test: require.resolve('scratch-audio'),
+                    loader: 'expose?AudioEngine'
                 }
             ])
         },

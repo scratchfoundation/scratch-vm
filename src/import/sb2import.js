@@ -51,6 +51,20 @@ var parseScratchObject = function (object, runtime, topLevel) {
             });
         }
     }
+    // Sounds from JSON
+    if (object.hasOwnProperty('sounds')) {
+        for (var s = 0; s < object.sounds.length; s++) {
+            var sound = object.sounds[s];
+            sprite.sounds.push({
+                format: sound.format,
+                fileUrl: 'https://cdn.assets.scratch.mit.edu/internalapi/asset/' + sound.md5 + '/get/',
+                rate: sound.rate,
+                sampleCount: sound.sampleCount,
+                soundID: sound.soundID,
+                name: sound.soundName
+            });
+        }
+    }
     // If included, parse any and all scripts/blocks on the object.
     if (object.hasOwnProperty('scripts')) {
         parseScripts(object.scripts, blocks);

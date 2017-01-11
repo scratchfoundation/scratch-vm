@@ -34,6 +34,10 @@ var Sprite = function (blocks, runtime) {
      */
     this.costumes = [];
     /**
+     * List of sounds for this sprite.
+    */
+    this.sounds = [];
+    /**
      * List of clones for this sprite, including the original.
      * @type {Array.<!RenderedTarget>}
      */
