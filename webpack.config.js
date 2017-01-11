@@ -71,7 +71,9 @@ module.exports = [
                 // Syntax highlighter
                 'highlightjs/highlight.pack.min.js',
                 // Renderer
-                'scratch-render'
+                'scratch-render',
+                // Audio
+                'scratch-audio'
             ],
             vertical: 'scratch-blocks/dist/vertical.js',
             horizontal: 'scratch-blocks/dist/horizontal.js'
