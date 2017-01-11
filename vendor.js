@@ -16641,31 +16641,69 @@
 
 		var PitchEffect = __webpack_require__(15);
 		var PanEffect = __webpack_require__(16);
+
 		var RoboticEffect = __webpack_require__(17);
 		var FuzzEffect = __webpack_require__(18);
 		var EchoEffect = __webpack_require__(19);
 		var ReverbEffect = __webpack_require__(20);
 
 		var SoundPlayer = __webpack_require__(21);
-		var Soundfont = __webpack_require__(22);
-		var ADPCMSoundLoader = __webpack_require__(37);
+		var ADPCMSoundLoader = __webpack_require__(22);
+		var InstrumentPlayer = __webpack_require__(24);
+		var DrumPlayer = __webpack_require__(40);
+
+		/* Audio Engine
+
+		The Scratch runtime has a single audio engine that handles global audio properties and effects,
+		and creates the instrument player and a drum player, used by all play note and play drum blocks
+
+		*/
 
 		function AudioEngine() {
+
+		    // create the global audio effects
 		    this.roboticEffect = new RoboticEffect();
 		    this.fuzzEffect = new FuzzEffect();
 		    this.echoEffect = new EchoEffect();
 		    this.reverbEffect = new ReverbEffect();
 
+		    // chain the global effects to the output
 		    this.input = new Tone.Gain();
 		    this.input.chain(this.roboticEffect, this.fuzzEffect, this.echoEffect, this.reverbEffect, Tone.Master);
 
-		    // this.input = new Tone.Gain();
-		    // this.input.connect(Tone.Master);
+		    // global tempo in bpm (beats per minute)
+		    this.currentTempo = 60;
+		    this.minTempo = 10;
+		    this.maxTempo = 1000;
+
+		    // instrument player for play note blocks
+		    this.instrumentPlayer = new InstrumentPlayer(this.input);
+
+		    // drum player for play drum blocks
+		    this.drumPlayer = new DrumPlayer(this.input);
 		}
+
+		AudioEngine.prototype.setTempo = function (value) {
+		    // var newTempo = this._clamp(value, this.minTempo, this.maxTempo);
+		    this.currentTempo = value;
+		};
+
+		AudioEngine.prototype.changeTempo = function (value) {
+		    this.setTempo(this.currentTempo + value);
+		};
 
 		AudioEngine.prototype.createPlayer = function () {
 		    return new AudioPlayer(this);
 		};
+
+		/* Audio Player
+
+		Each sprite has an audio player
+		Clones receive a reference to their parent's audio player
+		the audio player currently handles sound loading and playback, sprite-specific effects
+		(pitch and pan) and volume
+
+		*/
 
 		function AudioPlayer(audioEngine) {
 
@@ -16675,30 +16713,20 @@
 		    this.pitchEffect = new PitchEffect();
 		    this.panEffect = new PanEffect();
 
-		    // the effects are chained to an effects node for this player, then to the master output
-		    // so audio is sent from each player or instrument, through the effects in order, then out
-		    // note that the pitch effect works differently - it sets the playback rate for each player
+		    // the effects are chained to an effects node for this player, then to the main audio engine
+		    // audio is sent from each soundplayer, through the effects in order, then to the global effects
+		    // note that the pitch effect works differently - it sets the playback rate for each soundplayer
 		    this.effectsNode = new Tone.Gain();
 		    this.effectsNode.chain(this.panEffect, this.audioEngine.input);
 
 		    // reset effects to their default parameters
 		    this.clearEffects();
 
-		    this.effectNames = ['PITCH', 'PAN', 'ECHO', 'REVERB', 'FUZZ', 'WOBBLE', 'ROBOTIC'];
+		    this.effectNames = ['PITCH', 'PAN', 'ECHO', 'REVERB', 'FUZZ', 'ROBOT'];
 
-		    // soundfont instrument setup
+		    this.currentVolume = 100;
 
-		    // instrument names used by Musyng Kite soundfont, in order to
-		    // match scratch instruments
-		    this.instrumentNames = ['acoustic_grand_piano', 'electric_piano_1', 'drawbar_organ', 'acoustic_guitar_nylon', 'electric_guitar_clean', 'acoustic_bass', 'pizzicato_strings', 'cello', 'trombone', 'clarinet', 'tenor_sax', 'flute', 'pan_flute', 'bassoon', 'choir_aahs', 'vibraphone', 'music_box', 'steel_drums', 'marimba', 'lead_1_square', 'fx_4_atmosphere'];
-
-		    this.instrumentNum;
-		    this.setInstrument(1);
-
-		    // tempo in bpm (beats per minute)
-		    // default is 60bpm
-
-		    this.currentTempo = 60;
+		    this.currentInstrument = 0;
 		}
 
 		AudioPlayer.prototype.loadSounds = function (sounds) {
@@ -16737,6 +16765,8 @@
 		};
 
 		AudioPlayer.prototype.playSound = function (index) {
+		    if (!this.soundPlayers[index]) return;
+
 		    this.soundPlayers[index].start();
 
 		    var storedContext = this;
@@ -16746,33 +16776,40 @@
 		};
 
 		AudioPlayer.prototype.playNoteForBeats = function (note, beats) {
-		    this.instrument.play(note, Tone.context.currentTime, { duration: Number(beats) });
+		    var sec = this.beatsToSec(beats);
+		    this.audioEngine.instrumentPlayer.playNoteForSecWithInst(note, sec, this.currentInstrument);
+		    return this.waitForBeats(beats);
 		};
 
-		AudioPlayer.prototype._midiToFreq = function (midiNote) {
-		    var freq = this.tone.intervalToFrequencyRatio(midiNote - 60) * 261.63; // 60 is C4
-		    return freq;
+		AudioPlayer.prototype.playDrumForBeats = function (drum, beats) {
+		    this.audioEngine.drumPlayer.play(drum, this.effectsNode);
+		    return this.waitForBeats(beats);
 		};
 
-		AudioPlayer.prototype.playDrumForBeats = function () {
-		    // this.drumSamplers[drumNum].triggerAttack();
+		AudioPlayer.prototype.waitForBeats = function (beats) {
+		    var storedContext = this;
+		    return new Promise(function (resolve) {
+		        setTimeout(function () {
+		            resolve();
+		        }, storedContext.beatsToSec(beats) * 1000);
+		    });
+		};
+
+		AudioPlayer.prototype.beatsToSec = function (beats) {
+		    return 60 / this.audioEngine.currentTempo * beats;
 		};
 
 		AudioPlayer.prototype.stopAllSounds = function () {
-		    // stop drum notes
-		    // for (var i = 0; i<this.drumSamplers.length; i++) {
-		    //     this.drumSamplers[i].triggerRelease();
-		    // }
-
-		    // stop sounds triggered with playSound
+		    // stop all sound players
 		    for (var i = 0; i < this.soundPlayers.length; i++) {
 		        this.soundPlayers[i].stop();
 		    }
 
-		    // stop soundfont notes
-		    if (this.instrument) {
-		        this.instrument.stop();
-		    }
+		    // stop all instruments
+		    this.audioEngine.instrumentPlayer.stopAll();
+
+		    // stop drum notes
+		    this.audioEngine.drumPlayer.stopAll();
 		};
 
 		AudioPlayer.prototype.setEffect = function (effect, value) {
@@ -16792,7 +16829,7 @@
 		        case 'FUZZ':
 		            this.audioEngine.fuzzEffect.set(value);
 		            break;
-		        case 'ROBOTIC':
+		        case 'ROBOT':
 		            this.audioEngine.roboticEffect.set(value);
 		            break;
 		    }
@@ -16815,7 +16852,7 @@
 		        case 'FUZZ':
 		            this.audioEngine.fuzzEffect.changeBy(value);
 		            break;
-		        case 'ROBOTIC':
+		        case 'ROBOT':
 		            this.audioEngine.roboticEffect.changeBy(value);
 		            break;
 
@@ -16834,34 +16871,17 @@
 		};
 
 		AudioPlayer.prototype.setInstrument = function (instrumentNum) {
-		    this.instrumentNum = instrumentNum - 1;
-
-		    return Soundfont.instrument(Tone.context, this.instrumentNames[this.instrumentNum]).then(function (inst) {
-		        this.instrument = inst;
-		        this.instrument.connect(this.effectsNode);
-		    }.bind(this));
+		    this.currentInstrument = instrumentNum;
+		    return this.audioEngine.instrumentPlayer.loadInstrument(this.currentInstrument);
 		};
 
 		AudioPlayer.prototype.setVolume = function (value) {
-		    var vol = this._clamp(value, 0, 100);
-		    vol /= 100;
-		    this.effectsNode.gain.value = vol;
+		    this.currentVolume = this._clamp(value, 0, 100);
+		    this.effectsNode.gain.value = this.currentVolume / 100;
 		};
 
 		AudioPlayer.prototype.changeVolume = function (value) {
-		    value /= 100;
-		    var newVol = this.effectsNode.gain.value + value;
-		    this.effectsNode.gain.value = this._clamp(newVol, 0, 1);
-		};
-
-		AudioPlayer.prototype.setTempo = function (value) {
-		    var newTempo = this._clamp(value, 10, 1000);
-		    this.currentTempo = newTempo;
-		};
-
-		AudioPlayer.prototype.changeTempo = function (value) {
-		    var newTempo = this._clamp(this.currentTempo + value, 10, 1000);
-		    this.currentTempo = newTempo;
+		    this.setVolume(this.currentVolume + value);
 		};
 
 		AudioPlayer.prototype._clamp = function (input, min, max) {
@@ -39390,7 +39410,7 @@
 
 		A Pan effect
 
-		-100 puts the audio on the left channel, 0 centers it, 100 makes puts it on the right.
+		-100 puts the audio on the left channel, 0 centers it, 100 puts it on the right.
 
 		Clamped -100 to 100
 
@@ -39711,10 +39731,289 @@
 	/* 22 */
 	/***/ function(module, exports, __webpack_require__) {
 
+		'use strict';
+
+		/*
+
+		ADPCMSoundLoader loads wav files that have been compressed with the ADPCM format
+
+		based on code from Scratch-Flash:
+		https://github.com/LLK/scratch-flash/blob/master/src/sound/WAVFile.as
+
+		*/
+
+		var ArrayBufferStream = __webpack_require__(23);
+		var Tone = __webpack_require__(14);
+		var log = __webpack_require__(1);
+
+		function ADPCMSoundLoader() {}
+
+		ADPCMSoundLoader.prototype.load = function (url) {
+
+		    return new Promise(function (resolve, reject) {
+
+		        var request = new XMLHttpRequest();
+		        request.open('GET', url, true);
+		        request.responseType = 'arraybuffer';
+
+		        request.onload = function () {
+		            var audioData = request.response;
+		            var stream = new ArrayBufferStream(audioData);
+
+		            var riffStr = stream.readUint8String(4);
+		            if (riffStr != 'RIFF') {
+		                log.warn('incorrect adpcm wav header');
+		                reject();
+		            }
+
+		            var lengthInHeader = stream.readInt32();
+		            if (lengthInHeader + 8 != audioData.byteLength) {
+		                log.warn('adpcm wav length in header: ' + lengthInHeader + ' is incorrect');
+		            }
+
+		            var wavStr = stream.readUint8String(4);
+		            if (wavStr != 'WAVE') {
+		                log.warn('incorrect adpcm wav header');
+		                reject();
+		            }
+
+		            var formatChunk = this.extractChunk('fmt ', stream);
+		            this.encoding = formatChunk.readUint16();
+		            this.channels = formatChunk.readUint16();
+		            this.samplesPerSecond = formatChunk.readUint32();
+		            this.bytesPerSecond = formatChunk.readUint32();
+		            this.blockAlignment = formatChunk.readUint16();
+		            this.bitsPerSample = formatChunk.readUint16();
+		            formatChunk.position += 2; // skip extra header byte count
+		            this.samplesPerBlock = formatChunk.readUint16();
+		            this.adpcmBlockSize = (this.samplesPerBlock - 1) / 2 + 4; // block size in bytes
+
+		            var samples = this.imaDecompress(this.extractChunk('data', stream), this.adpcmBlockSize);
+
+		            // this line is the only place Tone is used here, should be possible to remove
+		            var buffer = Tone.context.createBuffer(1, samples.length, this.samplesPerSecond);
+
+		            // todo: optimize this? e.g. replace the divide by storing 1/32768 and multiply?
+		            for (var i = 0; i < samples.length; i++) {
+		                buffer.getChannelData(0)[i] = samples[i] / 32768;
+		            }
+
+		            resolve(buffer);
+		        }.bind(this);
+
+		        request.send();
+		    }.bind(this));
+		};
+
+		ADPCMSoundLoader.prototype.stepTable = [7, 8, 9, 10, 11, 12, 13, 14, 16, 17, 19, 21, 23, 25, 28, 31, 34, 37, 41, 45, 50, 55, 60, 66, 73, 80, 88, 97, 107, 118, 130, 143, 157, 173, 190, 209, 230, 253, 279, 307, 337, 371, 408, 449, 494, 544, 598, 658, 724, 796, 876, 963, 1060, 1166, 1282, 1411, 1552, 1707, 1878, 2066, 2272, 2499, 2749, 3024, 3327, 3660, 4026, 4428, 4871, 5358, 5894, 6484, 7132, 7845, 8630, 9493, 10442, 11487, 12635, 13899, 15289, 16818, 18500, 20350, 22385, 24623, 27086, 29794, 32767];
+
+		ADPCMSoundLoader.prototype.indexTable = [-1, -1, -1, -1, 2, 4, 6, 8, -1, -1, -1, -1, 2, 4, 6, 8];
+
+		ADPCMSoundLoader.prototype.extractChunk = function (chunkType, stream) {
+		    stream.position = 12;
+		    while (stream.position < stream.getLength() - 8) {
+		        var typeStr = stream.readUint8String(4);
+		        var chunkSize = stream.readInt32();
+		        if (typeStr == chunkType) {
+		            var chunk = stream.extract(chunkSize);
+		            return chunk;
+		        } else {
+		            stream.position += chunkSize;
+		        }
+		    }
+		};
+
+		ADPCMSoundLoader.prototype.imaDecompress = function (compressedData, blockSize) {
+		    // Decompress sample data using the IMA ADPCM algorithm.
+		    // Note: Handles only one channel, 4-bits/sample.
+		    var sample, step, code, delta;
+		    var index = 0;
+		    var lastByte = -1; // -1 indicates that there is no saved lastByte
+		    var out = [];
+
+		    // Bail and return no samples if we have no data
+		    if (!compressedData) return out;
+
+		    compressedData.position = 0;
+		    var a = 0;
+		    while (a == 0) {
+		        if (compressedData.position % blockSize == 0 && lastByte < 0) {
+		            // read block header
+		            if (compressedData.getBytesAvailable() == 0) break;
+		            sample = compressedData.readInt16();
+		            index = compressedData.readUint8();
+		            compressedData.position++; // skip extra header byte
+		            if (index > 88) index = 88;
+		            out.push(sample);
+		        } else {
+		            // read 4-bit code and compute delta from previous sample
+		            if (lastByte < 0) {
+		                if (compressedData.getBytesAvailable() == 0) break;
+		                lastByte = compressedData.readUint8();
+		                code = lastByte & 0xF;
+		            } else {
+		                code = lastByte >> 4 & 0xF;
+		                lastByte = -1;
+		            }
+		            step = this.stepTable[index];
+		            delta = 0;
+		            if (code & 4) delta += step;
+		            if (code & 2) delta += step >> 1;
+		            if (code & 1) delta += step >> 2;
+		            delta += step >> 3;
+		            // compute next index
+		            index += this.indexTable[code];
+		            if (index > 88) index = 88;
+		            if (index < 0) index = 0;
+		            // compute and output sample
+		            sample += code & 8 ? -delta : delta;
+		            if (sample > 32767) sample = 32767;
+		            if (sample < -32768) sample = -32768;
+		            out.push(sample);
+		        }
+		    }
+		    var samples = Int16Array.from(out);
+		    return samples;
+		};
+
+		module.exports = ADPCMSoundLoader;
+
+	/***/ },
+	/* 23 */
+	/***/ function(module, exports) {
+
+		'use strict';
+
+		/*
+
+		ArrayBufferStream wraps the built-in javascript ArrayBuffer, adding the ability to access
+		data in it like a stream. You can request to read a value from the front of the array,
+		such as an 8 bit unsigned int, a 16 bit int, etc, and it will keep track of the position
+		within the byte array, so that successive reads are consecutive.
+
+		*/
+		function ArrayBufferStream(arrayBuffer) {
+		    this.arrayBuffer = arrayBuffer;
+		    this.position = 0;
+		}
+
+		// return a new ArrayBufferStream that is a slice of the existing one
+		ArrayBufferStream.prototype.extract = function (length) {
+		    var slicedArrayBuffer = this.arrayBuffer.slice(this.position, this.position + length);
+		    var newStream = new ArrayBufferStream(slicedArrayBuffer);
+		    return newStream;
+		};
+
+		ArrayBufferStream.prototype.getLength = function () {
+		    return this.arrayBuffer.byteLength;
+		};
+
+		ArrayBufferStream.prototype.getBytesAvailable = function () {
+		    return this.arrayBuffer.byteLength - this.position;
+		};
+
+		ArrayBufferStream.prototype.readUint8 = function () {
+		    var val = new Uint8Array(this.arrayBuffer, this.position, 1)[0];
+		    this.position += 1;
+		    return val;
+		};
+
+		// convert a sequence of bytes of the given length to a string
+		// for small length strings only
+		ArrayBufferStream.prototype.readUint8String = function (length) {
+		    var arr = new Uint8Array(this.arrayBuffer, this.position, length);
+		    this.position += length;
+		    var str = '';
+		    for (var i = 0; i < arr.length; i++) {
+		        str += String.fromCharCode(arr[i]);
+		    }
+		    return str;
+		};
+
+		ArrayBufferStream.prototype.readInt16 = function () {
+		    var val = new Int16Array(this.arrayBuffer, this.position, 1)[0];
+		    this.position += 2; // one 16 bit int is 2 bytes
+		    return val;
+		};
+
+		ArrayBufferStream.prototype.readUint16 = function () {
+		    var val = new Uint16Array(this.arrayBuffer, this.position, 1)[0];
+		    this.position += 2; // one 16 bit int is 2 bytes
+		    return val;
+		};
+
+		ArrayBufferStream.prototype.readInt32 = function () {
+		    var val = new Int32Array(this.arrayBuffer, this.position, 1)[0];
+		    this.position += 4; // one 32 bit int is 4 bytes
+		    return val;
+		};
+
+		ArrayBufferStream.prototype.readUint32 = function () {
+		    var val = new Uint32Array(this.arrayBuffer, this.position, 1)[0];
+		    this.position += 4; // one 32 bit int is 4 bytes
+		    return val;
+		};
+
+		module.exports = ArrayBufferStream;
+
+	/***/ },
+	/* 24 */
+	/***/ function(module, exports, __webpack_require__) {
+
+		'use strict';
+
+		var Tone = __webpack_require__(14);
+		var Soundfont = __webpack_require__(25);
+
+		function InstrumentPlayer(outputNode) {
+		    this.outputNode = outputNode;
+
+		    // instrument names used by Musyng Kite soundfont, in order to
+		    // match scratch instruments
+		    this.instrumentNames = ['acoustic_grand_piano', 'electric_piano_1', 'drawbar_organ', 'acoustic_guitar_nylon', 'electric_guitar_clean', 'acoustic_bass', 'pizzicato_strings', 'cello', 'trombone', 'clarinet', 'tenor_sax', 'flute', 'pan_flute', 'bassoon', 'choir_aahs', 'vibraphone', 'music_box', 'steel_drums', 'marimba', 'lead_1_square', 'fx_4_atmosphere'];
+
+		    this.instruments = [];
+		}
+
+		InstrumentPlayer.prototype.playNoteForSecWithInst = function (note, sec, instrumentNum) {
+		    var _this = this;
+
+		    this.loadInstrument(instrumentNum).then(function () {
+		        _this.instruments[instrumentNum].play(note, Tone.context.currentTime, { duration: sec });
+		    });
+		};
+
+		InstrumentPlayer.prototype.loadInstrument = function (instrumentNum) {
+		    var _this2 = this;
+
+		    if (this.instruments[instrumentNum]) {
+		        return Promise.resolve();
+		    } else {
+		        return Soundfont.instrument(Tone.context, this.instrumentNames[instrumentNum]).then(function (inst) {
+		            inst.connect(_this2.outputNode);
+		            _this2.instruments[instrumentNum] = inst;
+		        });
+		    }
+		};
+
+		InstrumentPlayer.prototype.stopAll = function () {
+		    for (var i = 0; i < this.instruments.length; i++) {
+		        if (this.instruments[i]) {
+		            this.instruments[i].stop();
+		        }
+		    }
+		};
+
+		module.exports = InstrumentPlayer;
+
+	/***/ },
+	/* 25 */
+	/***/ function(module, exports, __webpack_require__) {
+
 		'use strict'
 
-		var load = __webpack_require__(23)
-		var player = __webpack_require__(26)
+		var load = __webpack_require__(26)
+		var player = __webpack_require__(29)
 
 		/**
 		 * Load a soundfont instrument. It returns a promise that resolves to a
@@ -39790,7 +40089,7 @@
 
 		// In the 1.0.0 release it will be:
 		// var Soundfont = {}
-		var Soundfont = __webpack_require__(35)
+		var Soundfont = __webpack_require__(38)
 		Soundfont.instrument = instrument
 		Soundfont.nameToUrl = nameToUrl
 
@@ -39799,13 +40098,13 @@
 
 
 	/***/ },
-	/* 23 */
+	/* 26 */
 	/***/ function(module, exports, __webpack_require__) {
 
 		'use strict'
 
-		var base64 = __webpack_require__(24)
-		var fetch = __webpack_require__(25)
+		var base64 = __webpack_require__(27)
+		var fetch = __webpack_require__(28)
 
 		// Given a regex, return a function that test if against a string
 		function fromRegex (r) {
@@ -39952,7 +40251,7 @@
 
 
 	/***/ },
-	/* 24 */
+	/* 27 */
 	/***/ function(module, exports) {
 
 		'use strict'
@@ -39994,7 +40293,7 @@
 
 
 	/***/ },
-	/* 25 */
+	/* 28 */
 	/***/ function(module, exports) {
 
 		/* global XMLHttpRequest */
@@ -40024,16 +40323,16 @@
 
 
 	/***/ },
-	/* 26 */
+	/* 29 */
 	/***/ function(module, exports, __webpack_require__) {
 
 		'use strict'
 
-		var player = __webpack_require__(27)
-		var events = __webpack_require__(29)
-		var notes = __webpack_require__(30)
-		var scheduler = __webpack_require__(32)
-		var midi = __webpack_require__(33)
+		var player = __webpack_require__(30)
+		var events = __webpack_require__(32)
+		var notes = __webpack_require__(33)
+		var scheduler = __webpack_require__(35)
+		var midi = __webpack_require__(36)
 
 		function SamplePlayer (ac, source, options) {
 		  return midi(scheduler(notes(events(player(ac, source, options)))))
@@ -40044,13 +40343,13 @@
 
 
 	/***/ },
-	/* 27 */
+	/* 30 */
 	/***/ function(module, exports, __webpack_require__) {
 
 		/* global AudioBuffer */
 		'use strict'
 
-		var ADSR = __webpack_require__(28)
+		var ADSR = __webpack_require__(31)
 
 		var EMPTY = {}
 		var DEFAULTS = {
@@ -40262,7 +40561,7 @@
 
 
 	/***/ },
-	/* 28 */
+	/* 31 */
 	/***/ function(module, exports) {
 
 		module.exports = ADSR
@@ -40428,7 +40727,7 @@
 
 
 	/***/ },
-	/* 29 */
+	/* 32 */
 	/***/ function(module, exports) {
 
 		
@@ -40460,12 +40759,12 @@
 
 
 	/***/ },
-	/* 30 */
+	/* 33 */
 	/***/ function(module, exports, __webpack_require__) {
 
 		'use strict'
 
-		var note = __webpack_require__(31)
+		var note = __webpack_require__(34)
 		var isMidi = function (n) { return n !== null && n !== [] && n >= 0 && n < 129 }
 		var toMidi = function (n) { return isMidi(n) ? +n : note.midi(n) }
 
@@ -40502,7 +40801,7 @@
 
 
 	/***/ },
-	/* 31 */
+	/* 34 */
 	/***/ function(module, exports) {
 
 		'use strict'
@@ -40657,7 +40956,7 @@
 
 
 	/***/ },
-	/* 32 */
+	/* 35 */
 	/***/ function(module, exports) {
 
 		'use strict'
@@ -40725,10 +41024,10 @@
 
 
 	/***/ },
-	/* 33 */
+	/* 36 */
 	/***/ function(module, exports, __webpack_require__) {
 
-		var midimessage = __webpack_require__(34)
+		var midimessage = __webpack_require__(37)
 
 		module.exports = function (player) {
 		  /**
@@ -40780,19 +41079,19 @@
 
 
 	/***/ },
-	/* 34 */
+	/* 37 */
 	/***/ function(module, exports, __webpack_require__) {
 
 		var require;var require;(function(e){if(true){module.exports=e()}else if(typeof define==="function"&&define.amd){define([],e)}else{var t;if(typeof window!=="undefined"){t=window}else if(typeof global!=="undefined"){t=global}else if(typeof self!=="undefined"){t=self}else{t=this}t.midimessage=e()}})(function(){var e,t,s;return function o(e,t,s){function a(n,i){if(!t[n]){if(!e[n]){var l=typeof require=="function"&&require;if(!i&&l)return require(n,!0);if(r)return r(n,!0);var h=new Error("Cannot find module '"+n+"'");throw h.code="MODULE_NOT_FOUND",h}var c=t[n]={exports:{}};e[n][0].call(c.exports,function(t){var s=e[n][1][t];return a(s?s:t)},c,c.exports,o,e,t,s)}return t[n].exports}var r=typeof require=="function"&&require;for(var n=0;n<s.length;n++)a(s[n]);return a}({1:[function(e,t,s){"use strict";Object.defineProperty(s,"__esModule",{value:true});s["default"]=function(e){function t(e){this._event=e;this._data=e.data;this.receivedTime=e.receivedTime;if(this._data&&this._data.length<2){console.warn("Illegal MIDI message of length",this._data.length);return}this._messageCode=e.data[0]&240;this.channel=e.data[0]&15;switch(this._messageCode){case 128:this.messageType="noteoff";this.key=e.data[1]&127;this.velocity=e.data[2]&127;break;case 144:this.messageType="noteon";this.key=e.data[1]&127;this.velocity=e.data[2]&127;break;case 160:this.messageType="keypressure";this.key=e.data[1]&127;this.pressure=e.data[2]&127;break;case 176:this.messageType="controlchange";this.controllerNumber=e.data[1]&127;this.controllerValue=e.data[2]&127;if(this.controllerNumber===120&&this.controllerValue===0){this.channelModeMessage="allsoundoff"}else if(this.controllerNumber===121){this.channelModeMessage="resetallcontrollers"}else if(this.controllerNumber===122){if(this.controllerValue===0){this.channelModeMessage="localcontroloff"}else{this.channelModeMessage="localcontrolon"}}else if(this.controllerNumber===123&&this.controllerValue===0){this.channelModeMessage="allnotesoff"}else if(this.controllerNumber===124&&this.controllerValue===0){this.channelModeMessage="omnimodeoff"}else if(this.controllerNumber===125&&this.controllerValue===0){this.channelModeMessage="omnimodeon"}else if(this.controllerNumber===126){this.channelModeMessage="monomodeon"}else if(this.controllerNumber===127){this.channelModeMessage="polymodeon"}break;case 192:this.messageType="programchange";this.program=e.data[1];break;case 208:this.messageType="channelpressure";this.pressure=e.data[1]&127;break;case 224:this.messageType="pitchbendchange";var t=e.data[2]&127;var s=e.data[1]&127;this.pitchBend=(t<<8)+s;break}}return new t(e)};t.exports=s["default"]},{}]},{},[1])(1)});
 		//# sourceMappingURL=dist/index.js.map
 
 	/***/ },
-	/* 35 */
+	/* 38 */
 	/***/ function(module, exports, __webpack_require__) {
 
 		'use strict'
 
-		var parser = __webpack_require__(36)
+		var parser = __webpack_require__(39)
 
 		/**
 		 * Create a Soundfont object
@@ -40933,7 +41232,7 @@
 
 
 	/***/ },
-	/* 36 */
+	/* 39 */
 	/***/ function(module, exports) {
 
 		'use strict'
@@ -41136,233 +41435,42 @@
 
 
 	/***/ },
-	/* 37 */
+	/* 40 */
 	/***/ function(module, exports, __webpack_require__) {
 
 		'use strict';
 
-		/*
-
-		ADPCMSoundLoader loads wav files that have been compressed with the ADPCM format
-
-		based on code from Scratch-Flash:
-		https://github.com/LLK/scratch-flash/blob/master/src/sound/WAVFile.as
-
-		*/
-
-		var ArrayBufferStream = __webpack_require__(38);
+		var SoundPlayer = __webpack_require__(21);
 		var Tone = __webpack_require__(14);
-		var log = __webpack_require__(1);
 
-		function ADPCMSoundLoader() {}
+		function DrumPlayer(outputNode) {
+		    this.outputNode = outputNode;
 
-		ADPCMSoundLoader.prototype.load = function (url) {
+		    var baseUrl = 'https://raw.githubusercontent.com/LLK/scratch-audio/develop/sound-files/drums/';
+		    var fileNames = ['SnareDrum(1)', 'BassDrum(1b)', 'SideStick(1)', 'Crash(2)', 'HiHatOpen(2)', 'HiHatClosed(1)', 'Tambourine(3)', 'Clap(1)', 'Claves(1)', 'WoodBlock(1)', 'Cowbell(3)', 'Triangle(1)', 'Bongo', 'Conga(1)', 'Cabasa(1)', 'GuiroLong(1)', 'Vibraslap(1)', 'Cuica(2)'];
 
-		    return new Promise(function (resolve, reject) {
+		    this.drumSounds = [];
 
-		        var request = new XMLHttpRequest();
-		        request.open('GET', url, true);
-		        request.responseType = 'arraybuffer';
-
-		        request.onload = function () {
-		            var audioData = request.response;
-		            var stream = new ArrayBufferStream(audioData);
-
-		            var riffStr = stream.readUint8String(4);
-		            if (riffStr != 'RIFF') {
-		                log.warn('incorrect adpcm wav header');
-		                reject();
-		            }
-
-		            var lengthInHeader = stream.readInt32();
-		            if (lengthInHeader + 8 != audioData.byteLength) {
-		                log.warn('adpcm wav length in header: ' + lengthInHeader + ' is incorrect');
-		            }
-
-		            var wavStr = stream.readUint8String(4);
-		            if (wavStr != 'WAVE') {
-		                log.warn('incorrect adpcm wav header');
-		                reject();
-		            }
-
-		            var formatChunk = this.extractChunk('fmt ', stream);
-		            this.encoding = formatChunk.readUint16();
-		            this.channels = formatChunk.readUint16();
-		            this.samplesPerSecond = formatChunk.readUint32();
-		            this.bytesPerSecond = formatChunk.readUint32();
-		            this.blockAlignment = formatChunk.readUint16();
-		            this.bitsPerSample = formatChunk.readUint16();
-		            formatChunk.position += 2; // skip extra header byte count
-		            this.samplesPerBlock = formatChunk.readUint16();
-		            this.adpcmBlockSize = (this.samplesPerBlock - 1) / 2 + 4; // block size in bytes
-
-		            var samples = this.imaDecompress(this.extractChunk('data', stream), this.adpcmBlockSize);
-
-		            // this line is the only place Tone is used here, should be possible to remove
-		            var buffer = Tone.context.createBuffer(1, samples.length, this.samplesPerSecond);
-
-		            // todo: optimize this? e.g. replace the divide by storing 1/32768 and multiply?
-		            for (var i = 0; i < samples.length; i++) {
-		                buffer.getChannelData(0)[i] = samples[i] / 32768;
-		            }
-
-		            resolve(buffer);
-		        }.bind(this);
-
-		        request.send();
-		    }.bind(this));
-		};
-
-		ADPCMSoundLoader.prototype.stepTable = [7, 8, 9, 10, 11, 12, 13, 14, 16, 17, 19, 21, 23, 25, 28, 31, 34, 37, 41, 45, 50, 55, 60, 66, 73, 80, 88, 97, 107, 118, 130, 143, 157, 173, 190, 209, 230, 253, 279, 307, 337, 371, 408, 449, 494, 544, 598, 658, 724, 796, 876, 963, 1060, 1166, 1282, 1411, 1552, 1707, 1878, 2066, 2272, 2499, 2749, 3024, 3327, 3660, 4026, 4428, 4871, 5358, 5894, 6484, 7132, 7845, 8630, 9493, 10442, 11487, 12635, 13899, 15289, 16818, 18500, 20350, 22385, 24623, 27086, 29794, 32767];
-
-		ADPCMSoundLoader.prototype.indexTable = [-1, -1, -1, -1, 2, 4, 6, 8, -1, -1, -1, -1, 2, 4, 6, 8];
-
-		ADPCMSoundLoader.prototype.extractChunk = function (chunkType, stream) {
-		    stream.position = 12;
-		    while (stream.position < stream.getLength() - 8) {
-		        var typeStr = stream.readUint8String(4);
-		        var chunkSize = stream.readInt32();
-		        if (typeStr == chunkType) {
-		            var chunk = stream.extract(chunkSize);
-		            return chunk;
-		        } else {
-		            stream.position += chunkSize;
-		        }
+		    for (var i = 0; i < fileNames.length; i++) {
+		        var url = baseUrl + fileNames[i] + '_22k.wav';
+		        this.drumSounds[i] = new SoundPlayer(this.outputNode);
+		        this.drumSounds[i].setBuffer(new Tone.Buffer(url));
 		    }
-		};
-
-		ADPCMSoundLoader.prototype.imaDecompress = function (compressedData, blockSize) {
-		    // Decompress sample data using the IMA ADPCM algorithm.
-		    // Note: Handles only one channel, 4-bits/sample.
-		    var sample, step, code, delta;
-		    var index = 0;
-		    var lastByte = -1; // -1 indicates that there is no saved lastByte
-		    var out = [];
-
-		    // Bail and return no samples if we have no data
-		    if (!compressedData) return out;
-
-		    compressedData.position = 0;
-		    var a = 0;
-		    while (a == 0) {
-		        if (compressedData.position % blockSize == 0 && lastByte < 0) {
-		            // read block header
-		            if (compressedData.getBytesAvailable() == 0) break;
-		            sample = compressedData.readInt16();
-		            index = compressedData.readUint8();
-		            compressedData.position++; // skip extra header byte
-		            if (index > 88) index = 88;
-		            out.push(sample);
-		        } else {
-		            // read 4-bit code and compute delta from previous sample
-		            if (lastByte < 0) {
-		                if (compressedData.getBytesAvailable() == 0) break;
-		                lastByte = compressedData.readUint8();
-		                code = lastByte & 0xF;
-		            } else {
-		                code = lastByte >> 4 & 0xF;
-		                lastByte = -1;
-		            }
-		            step = this.stepTable[index];
-		            delta = 0;
-		            if (code & 4) delta += step;
-		            if (code & 2) delta += step >> 1;
-		            if (code & 1) delta += step >> 2;
-		            delta += step >> 3;
-		            // compute next index
-		            index += this.indexTable[code];
-		            if (index > 88) index = 88;
-		            if (index < 0) index = 0;
-		            // compute and output sample
-		            sample += code & 8 ? -delta : delta;
-		            if (sample > 32767) sample = 32767;
-		            if (sample < -32768) sample = -32768;
-		            out.push(sample);
-		        }
-		    }
-		    var samples = Int16Array.from(out);
-		    return samples;
-		};
-
-		module.exports = ADPCMSoundLoader;
-
-	/***/ },
-	/* 38 */
-	/***/ function(module, exports) {
-
-		'use strict';
-
-		/*
-
-		ArrayBufferStream wraps the built-in javascript ArrayBuffer, adding the ability to access
-		data in it like a stream. You can request to read a value from the front of the array,
-		such as an 8 bit unsigned int, a 16 bit int, etc, and it will keep track of the position
-		within the byte array, so that successive reads are consecutive.
-
-		*/
-		function ArrayBufferStream(arrayBuffer) {
-		    this.arrayBuffer = arrayBuffer;
-		    this.position = 0;
 		}
 
-		// return a new ArrayBufferStream that is a slice of the existing one
-		ArrayBufferStream.prototype.extract = function (length) {
-		    var slicedArrayBuffer = this.arrayBuffer.slice(this.position, this.position + length);
-		    var newStream = new ArrayBufferStream(slicedArrayBuffer);
-		    return newStream;
+		DrumPlayer.prototype.play = function (drum, outputNode) {
+		    var drumNum = drum - 1;
+		    this.drumSounds[drumNum].outputNode = outputNode;
+		    this.drumSounds[drumNum].start();
 		};
 
-		ArrayBufferStream.prototype.getLength = function () {
-		    return this.arrayBuffer.byteLength;
-		};
-
-		ArrayBufferStream.prototype.getBytesAvailable = function () {
-		    return this.arrayBuffer.byteLength - this.position;
-		};
-
-		ArrayBufferStream.prototype.readUint8 = function () {
-		    var val = new Uint8Array(this.arrayBuffer, this.position, 1)[0];
-		    this.position += 1;
-		    return val;
-		};
-
-		// convert a sequence of bytes of the given length to a string
-		// for small length strings only
-		ArrayBufferStream.prototype.readUint8String = function (length) {
-		    var arr = new Uint8Array(this.arrayBuffer, this.position, length);
-		    this.position += length;
-		    var str = '';
-		    for (var i = 0; i < arr.length; i++) {
-		        str += String.fromCharCode(arr[i]);
+		DrumPlayer.prototype.stopAll = function () {
+		    for (var i = 0; i < this.drumSounds.length; i++) {
+		        this.drumSounds[i].stop();
 		    }
-		    return str;
 		};
 
-		ArrayBufferStream.prototype.readInt16 = function () {
-		    var val = new Int16Array(this.arrayBuffer, this.position, 1)[0];
-		    this.position += 2; // one 16 bit int is 2 bytes
-		    return val;
-		};
-
-		ArrayBufferStream.prototype.readUint16 = function () {
-		    var val = new Uint16Array(this.arrayBuffer, this.position, 1)[0];
-		    this.position += 2; // one 16 bit int is 2 bytes
-		    return val;
-		};
-
-		ArrayBufferStream.prototype.readInt32 = function () {
-		    var val = new Int32Array(this.arrayBuffer, this.position, 1)[0];
-		    this.position += 4; // one 32 bit int is 4 bytes
-		    return val;
-		};
-
-		ArrayBufferStream.prototype.readUint32 = function () {
-		    var val = new Uint32Array(this.arrayBuffer, this.position, 1)[0];
-		    this.position += 4; // one 32 bit int is 4 bytes
-		    return val;
-		};
-
-		module.exports = ArrayBufferStream;
+		module.exports = DrumPlayer;
 
 	/***/ }
 	/******/ ]);
