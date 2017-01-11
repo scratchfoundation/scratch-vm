@@ -6,7 +6,7 @@ var VirtualMachine = require('../../src/index');
 var uri = path.resolve(__dirname, '../fixtures/data.sb2');
 var project = extract(uri);
 
-test('data project', function (t) {
+test('data', function (t) {
     var vm = new VirtualMachine();
 
     // Evaluate playground data and exit

@@ -6,7 +6,7 @@ var VirtualMachine = require('../../src/index');
 var uri = path.resolve(__dirname, '../fixtures/control.sb2');
 var project = extract(uri);
 
-test('control project', function (t) {
+test('control', function (t) {
     var vm = new VirtualMachine();
 
     // Evaluate playground data and exit

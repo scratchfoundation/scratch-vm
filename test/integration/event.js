@@ -6,7 +6,7 @@ var VirtualMachine = require('../../src/index');
 var uri = path.resolve(__dirname, '../fixtures/event.sb2');
 var project = extract(uri);
 
-test('event project', function (t) {
+test('event', function (t) {
     var vm = new VirtualMachine();
 
     // Evaluate playground data and exit
