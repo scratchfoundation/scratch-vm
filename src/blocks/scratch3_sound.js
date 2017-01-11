@@ -77,7 +77,7 @@ Scratch3SoundBlocks.prototype.playNoteForBeats = function (args, util) {
 };
 
 Scratch3SoundBlocks.prototype.playDrumForBeats = function (args, util) {
-    var drum = Cast.toNumber(args.DRUMTYPE);
+    var drum = Cast.toNumber(args.DRUM);
     var beats = Cast.toNumber(args.BEATS);
     return util.target.audioPlayer.playDrumForBeats(drum, beats);
 };
