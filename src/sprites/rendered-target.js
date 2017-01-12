@@ -329,13 +329,17 @@ RenderedTarget.prototype.setCostume = function (index) {
     );
     if (this.renderer) {
         var costume = this.sprite.costumes[this.currentCostume];
+        var rotationCenter = costume.bitmapResolution ? [
+            costume.rotationCenterX / costume.bitmapResolution,
+            costume.rotationCenterY / costume.bitmapResolution
+        ] : [
+            costume.rotationCenterX,
+            costume.rotationCenterY
+        ];
         this.renderer.updateDrawableProperties(this.drawableID, {
             skin: costume.skin,
             costumeResolution: costume.bitmapResolution,
-            rotationCenter: [
-                costume.rotationCenterX / costume.bitmapResolution,
-                costume.rotationCenterY / costume.bitmapResolution
-            ]
+            rotationCenter: rotationCenter
         });
         if (this.visible) {
             this.runtime.requestRedraw();
