@@ -329,18 +329,21 @@ RenderedTarget.prototype.setCostume = function (index) {
     );
     if (this.renderer) {
         var costume = this.sprite.costumes[this.currentCostume];
-        var rotationCenter = costume.bitmapResolution ? [
-            costume.rotationCenterX / costume.bitmapResolution,
-            costume.rotationCenterY / costume.bitmapResolution
-        ] : [
-            costume.rotationCenterX,
-            costume.rotationCenterY
-        ];
-        this.renderer.updateDrawableProperties(this.drawableID, {
+        var drawableProperties = {
             skin: costume.skin,
-            costumeResolution: costume.bitmapResolution,
-            rotationCenter: rotationCenter
-        });
+            costumeResolution: costume.bitmapResolution
+        };
+        if (
+            typeof costume.rotationCenterX !== 'undefined' &&
+            typeof costume.rotationCenterY !== 'undefined'
+        ) {
+            var scale = costume.bitmapResolution || 1;
+            drawableProperties.rotationCenter = [
+                costume.rotationCenterX / scale,
+                costume.rotationCenterY / scale
+            ];
+        }
+        this.renderer.updateDrawableProperties(this.drawableID, drawableProperties);
         if (this.visible) {
             this.runtime.requestRedraw();
         }
