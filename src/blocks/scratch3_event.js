@@ -10,7 +10,7 @@ var Scratch3EventBlocks = function (runtime) {
 
 /**
  * Retrieve the block primitives implemented by this package.
- * @return {Object.<string, Function>} Mapping of opcode to Function.
+ * @return {object.<string, Function>} Mapping of opcode to Function.
  */
 Scratch3EventBlocks.prototype.getPrimitives = function () {
     return {
@@ -47,7 +47,6 @@ Scratch3EventBlocks.prototype.getHats = function () {
 Scratch3EventBlocks.prototype.hatGreaterThanPredicate = function (args, util) {
     var option = Cast.toString(args.WHENGREATERTHANMENU).toLowerCase();
     var value = Cast.toNumber(args.VALUE);
-    // @todo: Other cases :)
     if (option === 'timer') {
         return util.ioQuery('clock', 'projectTimer') > value;
     }

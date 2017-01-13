@@ -10,7 +10,7 @@ var Scratch3DataBlocks = function (runtime) {
 
 /**
  * Retrieve the block primitives implemented by this package.
- * @return {Object.<string, Function>} Mapping of opcode to Function.
+ * @return {object.<string, Function>} Mapping of opcode to Function.
  */
 Scratch3DataBlocks.prototype.getPrimitives = function () {
     return {
@@ -61,9 +61,8 @@ Scratch3DataBlocks.prototype.getListContents = function (args, util) {
     }
     if (allSingleLetters) {
         return list.contents.join('');
-    } else {
-        return list.contents.join(' ');
     }
+    return list.contents.join(' ');
 };
 
 Scratch3DataBlocks.prototype.addToList = function (args, util) {
