@@ -9,7 +9,7 @@
     "type": "git",
     "url": "git+ssh://git@github.com/LLK/scratch-vm.git"
   },
-  "main": "./dist.js",
+  "main": "./dist/node/scratch-vm.js",
   "scripts": {
     "build": "./node_modules/.bin/webpack --progress --colors --bail",
     "coverage": "./node_modules/.bin/tap ./test/{unit,integration}/*.js --coverage --coverage-report=lcov",

@@ -9,6 +9,7 @@ var base = {
         host: '0.0.0.0',
         port: process.env.PORT || 8073
     },
+    devtool: 'source-map',
     module: {
         loaders: [
             {
@@ -29,14 +30,15 @@ var base = {
 };
 
 module.exports = [
-    // Web-compatible, playground
+    // Web-compatible
     defaultsDeep({}, base, {
+        target: 'web',
         entry: {
-            'vm': './src/index.js',
-            'vm.min': './src/index.js'
+            'scratch-vm': './src/index.js',
+            'scratch-vm.min': './src/index.js'
         },
         output: {
-            path: __dirname,
+            path: path.resolve(__dirname, 'dist/web'),
             filename: '[name].js'
         },
         module: {
@@ -48,24 +50,25 @@ module.exports = [
             ])
         }
     }),
-    // Webpack-compatible
+    // Node-compatible
     defaultsDeep({}, base, {
+        target: 'node',
         entry: {
-            dist: './src/index.js'
+            'scratch-vm': './src/index.js'
         },
-
         output: {
             library: 'VirtualMachine',
             libraryTarget: 'commonjs2',
-            path: __dirname,
+            path: path.resolve(__dirname, 'dist/node'),
             filename: '[name].js'
         }
     }),
     // Playground
     defaultsDeep({}, base, {
+        target: 'web',
         entry: {
-            vm: './src/index.js',
-            vendor: [
+            'scratch-vm': './src/index.js',
+            'vendor': [
                 // FPS counter
                 'stats.js/build/stats.min.js',
                 // Syntax highlighter
