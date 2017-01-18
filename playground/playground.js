@@ -48,10 +48,10 @@ window.onload = function() {
             startScale: 0.75
         },
         colours: {
-            workspace: '#334771',
-            flyout: '#283856',
-            scrollbar: '#24324D',
-            scrollbarHover: '#0C111A',
+            workspace: '#DDDEDE',
+            flyout: '#E6E8E8',
+            scrollbar: '#BBBBBB',
+            scrollbarHover: '#BBBBBB',
             insertionMarker: '#FFFFFF',
             insertionMarkerOpacity: 0.3,
             fieldShadow: 'rgba(255, 255, 255, 0.3)',

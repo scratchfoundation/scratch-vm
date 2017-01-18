@@ -1,8 +1,8 @@
 body {
-    background: rgb(36,36,36);
+    background: #DDDEDE;
 }
 a {
-    color: rgb(217,217,217);
+    color: black;
 }
 h2 {
     font-size: 1em;
@@ -16,21 +16,20 @@ h2 {
     font-family: "Helvetica Neue", Helvetica, sans-serif;
 }
 #vm-devtools {
-    color: rgb(217,217,217);
+    color: black;
     position: absolute;
     left: 1%;
     right: 60%;
     top: 1%;
-    bottom: 0;
-    width: 35%;
+    bottom: 0;    width: 35%;
 }
 #blockexplorer, #threadexplorer, #importexport {
     position: absolute;
     height: 75%;
     overflow: scroll;
     border: 1px solid #fff;
-    background: rgb(36,36,36);
-    color: rgb(217,217,217);
+    background: #DDDEDE;
+    color: black;
     font-family: monospace;
     font-size: 10pt;
     width: 480px;
@@ -42,11 +41,11 @@ h2 {
 #importExport {
     width: 480px;
     height: 360px;
-    background: rgb(36,36,36);
-    color: rgb(217,217,217);
+    background: #DDDEDE;
+    color: black;
 }
 #projectId {
-    background: rgb(36,36,36);
+    background: #DDDEDE;
     color: rgb(217,217,217);
     font-family: monospace;
     font-size: 10pt;
@@ -57,17 +56,17 @@ ul#playgroundLinks {
     margin: 0;
     padding: 0;
     overflow: hidden;
-    background-color: #333;
+    background-color: #E6E8E8;
 }
 #playgroundLinks li {
     float: left;
 }
 #playgroundLinks li a {
     display: block;
-    color: white;
+    color: black;
     text-align: center;
     padding: 5px 10px;
 }
 #playgroundLinks li a:hover {
-    background-color: #111;
+    background-color: #808080;
 }
