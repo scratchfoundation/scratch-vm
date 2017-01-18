@@ -1,15 +1,15 @@
-### Expected behavior
+### Expected Behavior
 
 _Please describe what should happen_
 
-### Actual behavior
+### Actual Behavior
 
 _Describe what actually happens_
 
-### Steps to reproduce
+### Steps to Reproduce
 
 _Explain what someone needs to do in order to see what's described in *Actual behavior* above_
 
-### Operating system and browser
+### Operating System and Browser
 
 _e.g. Mac OS 10.11.6 Safari 10.0_
