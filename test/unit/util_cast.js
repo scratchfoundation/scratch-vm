@@ -91,6 +91,24 @@ test('toRbgColorList', function (t) {
     t.end();
 });
 
+test('toRbgColorObject', function (t) {
+    // Hex (minimal, see "color" util tests)
+    t.deepEqual(cast.toRgbColorObject('#000'), {r: 0, g: 0, b: 0});
+    t.deepEqual(cast.toRgbColorObject('#000000'), {r: 0, g: 0, b: 0});
+    t.deepEqual(cast.toRgbColorObject('#fff'), {r: 255, g: 255, b: 255});
+    t.deepEqual(cast.toRgbColorObject('#ffffff'), {r: 255, g: 255, b: 255});
+
+    // Decimal (minimal, see "color" util tests)
+    t.deepEqual(cast.toRgbColorObject(0), {r: 0, g: 0, b: 0});
+    t.deepEqual(cast.toRgbColorObject(1), {r: 0, g: 0, b: 1});
+    t.deepEqual(cast.toRgbColorObject(16777215), {r: 255, g: 255, b: 255});
+
+    // Malformed
+    t.deepEqual(cast.toRgbColorObject('ffffff'), {r: 0, g: 0, b: 0});
+    t.deepEqual(cast.toRgbColorObject('foobar'), {r: 0, g: 0, b: 0});
+    t.end();
+});
+
 test('compare', function (t) {
     // Numeric
     t.strictEqual(cast.compare(0, 0), 0);

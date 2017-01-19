@@ -37,7 +37,7 @@ Color.decimalToHex = function (decimal) {
 /**
  * Convert a Scratch decimal color to an RGB color object.
  * @param {number} decimal RGB color as decimal.
- * @returns {RGBObject} {r: R, g: G, b: B}, values between 0-255
+ * @return {RGBObject} rgb - {r: red [0,255], g: green [0,255], b: blue [0,255]}.
  */
 Color.decimalToRgb = function (decimal) {
     var r = (decimal >> 16) & 0xFF;
@@ -51,7 +51,7 @@ Color.decimalToRgb = function (decimal) {
  * CC-BY-SA Tim Down:
  * https://stackoverflow.com/questions/5623838/rgb-to-hex-and-hex-to-rgb
  * @param {!string} hex Hex representation of the color.
- * @return {Object} {r: R, g: G, b: B}, 0-255, or null.
+ * @return {RGBObject} null on failure, or rgb: {r: red [0,255], g: green [0,255], b: blue [0,255]}.
  */
 Color.hexToRgb = function (hex) {
     var shorthandRegex = /^#?([a-f\d])([a-f\d])([a-f\d])$/i;
@@ -68,7 +68,7 @@ Color.hexToRgb = function (hex) {
 
 /**
  * Convert an RGB color object to a hex color.
- * @param {Object} rgb {r: R, g: G, b: B}, values between 0-255.
+ * @param {RGBObject} rgb - {r: red [0,255], g: green [0,255], b: blue [0,255]}.
  * @return {!string} Hex representation of the color.
  */
 Color.rgbToHex = function (rgb) {
@@ -77,7 +77,7 @@ Color.rgbToHex = function (rgb) {
 
 /**
  * Convert an RGB color object to a Scratch decimal color.
- * @param {Object} rgb {r: R, g: G, b: B}, values between 0-255.
+ * @param {RGBObject} rgb - {r: red [0,255], g: green [0,255], b: blue [0,255]}.
  * @return {!number} Number representing the color.
  */
 Color.rgbToDecimal = function (rgb) {
@@ -96,7 +96,7 @@ Color.hexToDecimal = function (hex) {
 /**
  * Convert an HSV color to RGB format.
  * @param {HSVObject} hsv - {h: hue [0,360), s: saturation [0,1], v: value [0,1]}
- * @returns {RGBObject} rgb - {r: red [0,255], g: green [0,255], b: blue [0,255]}.
+ * @return {RGBObject} rgb - {r: red [0,255], g: green [0,255], b: blue [0,255]}.
  */
 Color.hsvToRgb = function (hsv) {
     var h = hsv.h % 360;
@@ -158,12 +158,12 @@ Color.hsvToRgb = function (hsv) {
 /**
  * Convert an RGB color to HSV format.
  * @param {RGBObject} rgb - {r: red [0,255], g: green [0,255], b: blue [0,255]}.
- * @returns {HSVObject} hsv - {h: hue [0,360), s: saturation [0,1], v: value [0,1]}
+ * @return {HSVObject} hsv - {h: hue [0,360), s: saturation [0,1], v: value [0,1]}
  */
 Color.rgbToHsv = function (rgb) {
-    var r = rgb.r;
-    var g = rgb.g;
-    var b = rgb.b;
+    var r = rgb.r / 255;
+    var g = rgb.g / 255;
+    var b = rgb.b / 255;
     var x = Math.min(Math.min(r, g), b);
     var v = Math.max(Math.max(r, g), b);
 
@@ -185,7 +185,7 @@ Color.rgbToHsv = function (rgb) {
  * @param {RGBObject} rgb0 - the color corresponding to fraction1 <= 0.
  * @param {RGBObject} rgb1 - the color corresponding to fraction1 >= 1.
  * @param {number} fraction1 - the interpolation parameter. If this is 0.5, for example, mix the two colors equally.
- * @returns {RGBObject} the interpolated color.
+ * @return {RGBObject} the interpolated color.
  */
 Color.mixRgb = function (rgb0, rgb1, fraction1) {
     if (fraction1 <= 0) return rgb0;
