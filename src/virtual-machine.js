@@ -318,6 +318,16 @@ VirtualMachine.prototype.emitTargetsUpdate = function () {
     });
 };
 
+this.on('targetsUpdate', function (data) {
+    var sprites = [];
+    var i = 0;
+    for (i = 0; i < data.targetList.length; i++) {
+        sprites.push(data.targetList[i].name);
+    }
+    Blockly.Blocks.Sprites = sprites;
+    Blockly.Blocks.SelectedSprite = this.editingTarget.sprite.name;
+});
+
 /**
  * Emit an Blockly/scratch-blocks compatible XML representation
  * of the current editing target's blocks.
