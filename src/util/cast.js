@@ -66,18 +66,28 @@ Cast.toString = function (value) {
 };
 
 /**
- * Cast any Scratch argument to an RGB color object to be used for the renderer.
- * @param {*} value Value to convert to RGB color object.
+ * Cast any Scratch argument to an RGB color array to be used for the renderer.
+ * @param {*} value Value to convert to RGB color array.
  * @return {Array.<number>} [r,g,b], values between 0-255.
  */
 Cast.toRgbColorList = function (value) {
+    var color = Cast.toRgbColorObject(value);
+    return [color.r, color.g, color.b];
+};
+
+/**
+ * Cast any Scratch argument to an RGB color object to be used for the renderer.
+ * @param {*} value Value to convert to RGB color object.
+ * @return {RGBOject} [r,g,b], values between 0-255.
+ */
+Cast.toRgbColorObject = function (value) {
     var color;
     if (typeof value === 'string' && value.substring(0, 1) === '#') {
         color = Color.hexToRgb(value);
     } else {
         color = Color.decimalToRgb(Cast.toNumber(value));
     }
-    return [color.r, color.g, color.b];
+    return color;
 };
 
 /**

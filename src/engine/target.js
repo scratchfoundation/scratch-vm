@@ -1,3 +1,6 @@
+var EventEmitter = require('events');
+var util = require('util');
+
 var Blocks = require('./blocks');
 var Variable = require('../engine/variable');
 var List = require('../engine/list');
@@ -14,6 +17,8 @@ var uid = require('../util/uid');
  * @constructor
  */
 var Target = function (blocks) {
+    EventEmitter.call(this);
+
     if (!blocks) {
         blocks = new Blocks(this);
     }
@@ -39,7 +44,19 @@ var Target = function (blocks) {
      * @type {Object.<string,*>}
      */
     this.lists = {};
+    /**
+     * Dictionary of custom state for this target.
+     * This can be used to store target-specific custom state for blocks which need it.
+     * TODO: do we want to persist this in SB3 files?
+     * @type {Object.<string,*>}
+     */
+    this._customState = {};
 };
+
+/**
+ * Inherit from EventEmitter
+ */
+util.inherits(Target, EventEmitter);
 
 /**
  * Called when the project receives a "green flag."
@@ -112,10 +129,20 @@ Target.prototype.lookupOrCreateList = function (name) {
  */
 Target.prototype.postSpriteInfo = function () {};
 
+Target.prototype.getCustomState = function (stateId) {
+    return this._customState[stateId];
+};
+
+Target.prototype.setCustomState = function (stateId, newValue) {
+    this._customState[stateId] = newValue;
+};
+
 /**
  * Call to destroy a target.
  * @abstract
  */
-Target.prototype.dispose = function () {};
+Target.prototype.dispose = function () {
+    this._customState = {};
+};
 
 module.exports = Target;

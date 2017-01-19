@@ -126,6 +126,12 @@ RenderedTarget.prototype.size = 100;
 RenderedTarget.prototype.currentCostume = 0;
 
 /**
+ * Event which fires when a target moves.
+ * @type {string}
+ */
+RenderedTarget.EVENT_TARGET_MOVED = 'TARGET_MOVED';
+
+/**
  * Rotation style for "all around"/spinning.
  * @enum
  */
@@ -160,6 +166,7 @@ RenderedTarget.prototype.setXY = function (x, y) {
     if (this.isStage) {
         return;
     }
+    var oldX = this.x, oldY = this.y;
     this.x = x;
     this.y = y;
     if (this.renderer) {
@@ -170,6 +177,7 @@ RenderedTarget.prototype.setXY = function (x, y) {
             this.runtime.requestRedraw();
         }
     }
+    this.emit(RenderedTarget.EVENT_TARGET_MOVED, this, oldX, oldY);
     this.runtime.spriteInfoReport(this);
 };
 
