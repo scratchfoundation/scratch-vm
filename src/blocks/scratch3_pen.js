@@ -81,9 +81,9 @@ Scratch3PenBlocks.prototype._getPenState = function (target) {
 
 /**
  * Handle a target which has moved. This only fires when the pen is down.
- * @param {RenderedTarget} target
- * @param {number} oldX
- * @param {number} oldY
+ * @param {RenderedTarget} target - the target which has moved.
+ * @param {number} oldX - the previous X position.
+ * @param {number} oldY - the previous Y position.
  * @private
  */
 Scratch3PenBlocks.prototype._onTargetMoved = function (target, oldX, oldY) {

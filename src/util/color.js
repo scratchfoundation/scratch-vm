@@ -99,14 +99,10 @@ Color.hexToDecimal = function (hex) {
  * @returns {RGBObject} rgb - {r: red [0,255], g: green [0,255], b: blue [0,255]}.
  */
 Color.hsvToRgb = function (hsv) {
-    var h = hsv.h;
-    var s = hsv.s;
-    var v = hsv.v;
-
-    h = h % 360;
+    var h = hsv.h % 360;
     if (h < 0) h += 360;
-    s = Math.max(0, Math.min(s, 1));
-    v = Math.max(0, Math.min(v, 1));
+    var s = Math.max(0, Math.min(hsv.s, 1));
+    var v = Math.max(0, Math.min(hsv.v, 1));
 
     var i = Math.floor(h / 60);
     var f = (h / 60) - i;
@@ -114,13 +110,43 @@ Color.hsvToRgb = function (hsv) {
     var q = v * (1 - (s * f));
     var t = v * (1 - (s * (1 - f)));
 
-    var r, g, b;
-    if (i == 0) { r = v; g = t; b = p; }
-    else if (i == 1) { r = q; g = v; b = p; }
-    else if (i == 2) { r = p; g = v; b = t; }
-    else if (i == 3) { r = p; g = q; b = v; }
-    else if (i == 4) { r = t; g = p; b = v; }
-    else if (i == 5) { r = v; g = p; b = q; }
+    var r;
+    var g;
+    var b;
+
+    switch (i) {
+    default:
+    case 0:
+        r = v;
+        g = t;
+        b = p;
+        break;
+    case 1:
+        r = q;
+        g = v;
+        b = p;
+        break;
+    case 2:
+        r = p;
+        g = v;
+        b = t;
+        break;
+    case 3:
+        r = p;
+        g = q;
+        b = v;
+        break;
+    case 4:
+        r = t;
+        g = p;
+        b = v;
+        break;
+    case 5:
+        r = v;
+        g = p;
+        b = q;
+        break;
+    }
 
     return {
         r: Math.floor(r * 255),
@@ -135,18 +161,18 @@ Color.hsvToRgb = function (hsv) {
  * @returns {HSVObject} hsv - {h: hue [0,360), s: saturation [0,1], v: value [0,1]}
  */
 Color.rgbToHsv = function (rgb) {
-    var v, x, f, i;
-    var h = 0, s = 0;
     var r = rgb.r;
     var g = rgb.g;
     var b = rgb.b;
-    x = Math.min(Math.min(r, g), b);
-    v = Math.max(Math.max(r, g), b);
+    var x = Math.min(Math.min(r, g), b);
+    var v = Math.max(Math.max(r, g), b);
 
     // For grays, hue will be arbitrarily reported as zero. Otherwise, calculate
-    if (x != v) {
-        f = (r == x) ? g - b : ((g == x) ? b - r : r - g);
-        i = (r == x) ? 3 : ((g == x) ? 5 : 1);
+    var h = 0;
+    var s = 0;
+    if (x !== v) {
+        var f = (r === x) ? g - b : ((g === x) ? b - r : r - g);
+        var i = (r === x) ? 3 : ((g === x) ? 5 : 1);
         h = ((i - (f / (v - x))) * 60) % 360;
         s = (v - x) / v;
     }
@@ -166,9 +192,9 @@ Color.mixRgb = function (rgb0, rgb1, fraction1) {
     if (fraction1 >= 1) return rgb1;
     var fraction0 = 1 - fraction1;
     return {
-        r: fraction0 * rgb0.r + fraction1 * rgb1.r,
-        g: fraction0 * rgb0.g + fraction1 * rgb1.g,
-        b: fraction0 * rgb0.b + fraction1 * rgb1.b
+        r: (fraction0 * rgb0.r) + (fraction1 * rgb1.r),
+        g: (fraction0 * rgb0.g) + (fraction1 * rgb1.g),
+        b: (fraction0 * rgb0.b) + (fraction1 * rgb1.b)
     };
 };
 

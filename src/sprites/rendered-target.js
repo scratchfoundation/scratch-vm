@@ -166,7 +166,8 @@ RenderedTarget.prototype.setXY = function (x, y) {
     if (this.isStage) {
         return;
     }
-    var oldX = this.x, oldY = this.y;
+    var oldX = this.x;
+    var oldY = this.y;
     this.x = x;
     this.y = y;
     if (this.renderer) {
