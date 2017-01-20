@@ -129,10 +129,20 @@ Target.prototype.lookupOrCreateList = function (name) {
  */
 Target.prototype.postSpriteInfo = function () {};
 
+/**
+ * Retrieve custom state associated with this target and the provided state ID.
+ * @param {string} stateId - specify which piece of state to retrieve.
+ * @returns {*} the associated state, if any was found.
+ */
 Target.prototype.getCustomState = function (stateId) {
     return this._customState[stateId];
 };
 
+/**
+ * Store custom state associated with this target and the provided state ID.
+ * @param {string} stateId - specify which piece of state to store on this target.
+ * @param {*} newValue - the state value to store.
+ */
 Target.prototype.setCustomState = function (stateId, newValue) {
     this._customState[stateId] = newValue;
 };
