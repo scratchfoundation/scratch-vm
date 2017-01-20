@@ -64,7 +64,7 @@
 	var util = __webpack_require__(4);
 	
 	var Runtime = __webpack_require__(8);
-	var sb2import = __webpack_require__(96);
+	var sb2import = __webpack_require__(103);
 	
 	/**
 	 * Handles connections between blocks, stage, and extensions.
@@ -1549,10 +1549,11 @@
 	    scratch3_looks: __webpack_require__(89),
 	    scratch3_motion: __webpack_require__(90),
 	    scratch3_operators: __webpack_require__(91),
-	    scratch3_sound: __webpack_require__(92),
-	    scratch3_sensing: __webpack_require__(93),
-	    scratch3_data: __webpack_require__(94),
-	    scratch3_procedures: __webpack_require__(95)
+	    scratch3_pen: __webpack_require__(92),
+	    scratch3_sound: __webpack_require__(99),
+	    scratch3_sensing: __webpack_require__(100),
+	    scratch3_data: __webpack_require__(101),
+	    scratch3_procedures: __webpack_require__(102)
 	};
 	
 	/**
@@ -14223,18 +14224,28 @@
 	};
 	
 	/**
-	 * Cast any Scratch argument to an RGB color object to be used for the renderer.
-	 * @param {*} value Value to convert to RGB color object.
+	 * Cast any Scratch argument to an RGB color array to be used for the renderer.
+	 * @param {*} value Value to convert to RGB color array.
 	 * @return {Array.<number>} [r,g,b], values between 0-255.
 	 */
 	Cast.toRgbColorList = function (value) {
+	    var color = Cast.toRgbColorObject(value);
+	    return [color.r, color.g, color.b];
+	};
+	
+	/**
+	 * Cast any Scratch argument to an RGB color object to be used for the renderer.
+	 * @param {*} value Value to convert to RGB color object.
+	 * @return {RGBOject} [r,g,b], values between 0-255.
+	 */
+	Cast.toRgbColorObject = function (value) {
 	    var color;
 	    if (typeof value === 'string' && value.substring(0, 1) === '#') {
 	        color = Color.hexToRgb(value);
 	    } else {
 	        color = Color.decimalToRgb(Cast.toNumber(value));
 	    }
-	    return [color.r, color.g, color.b];
+	    return color;
 	};
 	
 	/**
@@ -14327,6 +14338,26 @@
 	var Color = function () {};
 	
 	/**
+	 * @typedef {object} RGBObject - An object representing a color in RGB format.
+	 * @property {number} r - the red component, in the range [0, 255].
+	 * @property {number} g - the green component, in the range [0, 255].
+	 * @property {number} b - the blue component, in the range [0, 255].
+	 */
+	
+	/**
+	 * @typedef {object} HSVObject - An object representing a color in HSV format.
+	 * @property {number} h - hue, in the range [0-359).
+	 * @property {number} s - saturation, in the range [0,1].
+	 * @property {number} v - value, in the range [0,1].
+	 */
+	
+	/** @type {RGBObject} */
+	Color.RGB_BLACK = {r: 0, g: 0, b: 0};
+	
+	/** @type {RGBObject} */
+	Color.RGB_WHITE = {r: 255, g: 255, b: 255};
+	
+	/**
 	 * Convert a Scratch decimal color to a hex string, #RRGGBB.
 	 * @param {number} decimal RGB color as a decimal.
 	 * @return {string} RGB color as #RRGGBB hex string.
@@ -14343,7 +14374,7 @@
 	/**
 	 * Convert a Scratch decimal color to an RGB color object.
 	 * @param {number} decimal RGB color as decimal.
-	 * @returns {Object} {r: R, g: G, b: B}, values between 0-255
+	 * @return {RGBObject} rgb - {r: red [0,255], g: green [0,255], b: blue [0,255]}.
 	 */
 	Color.decimalToRgb = function (decimal) {
 	    var r = (decimal >> 16) & 0xFF;
@@ -14357,7 +14388,7 @@
 	 * CC-BY-SA Tim Down:
 	 * https://stackoverflow.com/questions/5623838/rgb-to-hex-and-hex-to-rgb
 	 * @param {!string} hex Hex representation of the color.
-	 * @return {Object} {r: R, g: G, b: B}, 0-255, or null.
+	 * @return {RGBObject} null on failure, or rgb: {r: red [0,255], g: green [0,255], b: blue [0,255]}.
 	 */
 	Color.hexToRgb = function (hex) {
 	    var shorthandRegex = /^#?([a-f\d])([a-f\d])([a-f\d])$/i;
@@ -14374,7 +14405,7 @@
 	
 	/**
 	 * Convert an RGB color object to a hex color.
-	 * @param {Object} rgb {r: R, g: G, b: B}, values between 0-255.
+	 * @param {RGBObject} rgb - {r: red [0,255], g: green [0,255], b: blue [0,255]}.
 	 * @return {!string} Hex representation of the color.
 	 */
 	Color.rgbToHex = function (rgb) {
@@ -14383,7 +14414,7 @@
 	
 	/**
 	 * Convert an RGB color object to a Scratch decimal color.
-	 * @param {Object} rgb {r: R, g: G, b: B}, values between 0-255.
+	 * @param {RGBObject} rgb - {r: red [0,255], g: green [0,255], b: blue [0,255]}.
 	 * @return {!number} Number representing the color.
 	 */
 	Color.rgbToDecimal = function (rgb) {
@@ -14397,6 +14428,111 @@
 	*/
 	Color.hexToDecimal = function (hex) {
 	    return Color.rgbToDecimal(Color.hexToRgb(hex));
+	};
+	
+	/**
+	 * Convert an HSV color to RGB format.
+	 * @param {HSVObject} hsv - {h: hue [0,360), s: saturation [0,1], v: value [0,1]}
+	 * @return {RGBObject} rgb - {r: red [0,255], g: green [0,255], b: blue [0,255]}.
+	 */
+	Color.hsvToRgb = function (hsv) {
+	    var h = hsv.h % 360;
+	    if (h < 0) h += 360;
+	    var s = Math.max(0, Math.min(hsv.s, 1));
+	    var v = Math.max(0, Math.min(hsv.v, 1));
+	
+	    var i = Math.floor(h / 60);
+	    var f = (h / 60) - i;
+	    var p = v * (1 - s);
+	    var q = v * (1 - (s * f));
+	    var t = v * (1 - (s * (1 - f)));
+	
+	    var r;
+	    var g;
+	    var b;
+	
+	    switch (i) {
+	    default:
+	    case 0:
+	        r = v;
+	        g = t;
+	        b = p;
+	        break;
+	    case 1:
+	        r = q;
+	        g = v;
+	        b = p;
+	        break;
+	    case 2:
+	        r = p;
+	        g = v;
+	        b = t;
+	        break;
+	    case 3:
+	        r = p;
+	        g = q;
+	        b = v;
+	        break;
+	    case 4:
+	        r = t;
+	        g = p;
+	        b = v;
+	        break;
+	    case 5:
+	        r = v;
+	        g = p;
+	        b = q;
+	        break;
+	    }
+	
+	    return {
+	        r: Math.floor(r * 255),
+	        g: Math.floor(g * 255),
+	        b: Math.floor(b * 255)
+	    };
+	};
+	
+	/**
+	 * Convert an RGB color to HSV format.
+	 * @param {RGBObject} rgb - {r: red [0,255], g: green [0,255], b: blue [0,255]}.
+	 * @return {HSVObject} hsv - {h: hue [0,360), s: saturation [0,1], v: value [0,1]}
+	 */
+	Color.rgbToHsv = function (rgb) {
+	    var r = rgb.r / 255;
+	    var g = rgb.g / 255;
+	    var b = rgb.b / 255;
+	    var x = Math.min(Math.min(r, g), b);
+	    var v = Math.max(Math.max(r, g), b);
+	
+	    // For grays, hue will be arbitrarily reported as zero. Otherwise, calculate
+	    var h = 0;
+	    var s = 0;
+	    if (x !== v) {
+	        var f = (r === x) ? g - b : ((g === x) ? b - r : r - g);
+	        var i = (r === x) ? 3 : ((g === x) ? 5 : 1);
+	        h = ((i - (f / (v - x))) * 60) % 360;
+	        s = (v - x) / v;
+	    }
+	
+	    return {h: h, s: s, v: v};
+	};
+	
+	/**
+	 * Linear interpolation between rgb0 and rgb1.
+	 * @param {RGBObject} rgb0 - the color corresponding to fraction1 <= 0.
+	 * @param {RGBObject} rgb1 - the color corresponding to fraction1 >= 1.
+	 * @param {number} fraction1 - the interpolation parameter. If this is 0.5, for example, mix the two colors equally.
+	 * @return {RGBObject} the interpolated color.
+	 */
+	Color.mixRgb = function (rgb0, rgb1, fraction1) {
+	    if (fraction1 <= 0) return rgb0;
+	    if (fraction1 >= 1) return rgb1;
+	    var fraction0 = 1 - fraction1;
+	    return {
+	        r: (fraction0 * rgb0.r) + (fraction1 * rgb1.r),
+	        g: (fraction0 * rgb0.g) + (fraction1 * rgb1.g),
+	        b: (fraction0 * rgb0.b) + (fraction1 * rgb1.b)
+	    };
 	};
 	
 	module.exports = Color;
@@ -15401,975 +15537,373 @@
 /* 92 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var MathUtil = __webpack_require__(86);
 	var Cast = __webpack_require__(83);
+	var Clone = __webpack_require__(93);
+	var Color = __webpack_require__(84);
+	var MathUtil = __webpack_require__(86);
+	var RenderedTarget = __webpack_require__(94);
 	
-	var Scratch3SoundBlocks = function (runtime) {
+	/**
+	 * @typedef {object} PenState - the pen state associated with a particular target.
+	 * @property {Boolean} penDown - tracks whether the pen should draw for this target.
+	 * @property {number} hue - the current hue of the pen.
+	 * @property {number} shade - the current shade of the pen.
+	 * @property {PenAttributes} penAttributes - cached pen attributes for the renderer. This is the authoritative value for
+	 *   diameter but not for pen color.
+	 */
+	
+	/**
+	 * Host for the Pen-related blocks in Scratch 3.0
+	 * @param {Runtime} runtime - the runtime instantiating this block package.
+	 * @constructor
+	 */
+	var Scratch3PenBlocks = function (runtime) {
 	    /**
 	     * The runtime instantiating this block package.
 	     * @type {Runtime}
 	     */
 	    this.runtime = runtime;
+	
+	    /**
+	     * The ID of the renderer Drawable corresponding to the pen layer.
+	     * @type {int}
+	     * @private
+	     */
+	    this._penDrawableId = -1;
+	
+	    /**
+	     * The ID of the renderer Skin corresponding to the pen layer.
+	     * @type {int}
+	     * @private
+	     */
+	    this._penSkinId = -1;
+	
+	    this._onTargetMoved = this._onTargetMoved.bind(this);
+	};
+	
+	/**
+	 * The default pen state, to be used when a target has no existing pen state.
+	 * @type {PenState}
+	 */
+	Scratch3PenBlocks.DEFAULT_PEN_STATE = {
+	    penDown: false,
+	    hue: 120,
+	    shade: 50,
+	    penAttributes: {
+	        color4f: [0, 0, 1, 1],
+	        diameter: 1
+	    }
+	};
+	
+	/**
+	 * Place the pen layer in front of the backdrop but behind everything else.
+	 * We should probably handle this somewhere else... somewhere central that knows about pen, backdrop, video, etc.
+	 * Maybe it should be in the GUI?
+	 * @type {int}
+	 */
+	Scratch3PenBlocks.PEN_ORDER = 1;
+	
+	/**
+	 * The minimum and maximum allowed pen size.
+	 * @type {{min: number, max: number}}
+	 */
+	Scratch3PenBlocks.PEN_SIZE_RANGE = {min: 1, max: 255};
+	
+	/**
+	 * The key to load & store a target's pen-related state.
+	 * @type {string}
+	 */
+	Scratch3PenBlocks.STATE_KEY = 'Scratch.pen';
+	
+	/**
+	 * Clamp a pen size value to the range allowed by the pen.
+	 * @param {number} requestedSize - the requested pen size.
+	 * @returns {number} the clamped size.
+	 * @private
+	 */
+	Scratch3PenBlocks.prototype._clampPenSize = function (requestedSize) {
+	    return MathUtil.clamp(requestedSize, Scratch3PenBlocks.PEN_SIZE_RANGE.min, Scratch3PenBlocks.PEN_SIZE_RANGE.max);
+	};
+	
+	/**
+	 * Retrieve the ID of the renderer "Skin" corresponding to the pen layer. If the pen Skin doesn't yet exist, create it.
+	 * @returns {int} the Skin ID of the pen layer, or -1 on failure.
+	 * @private
+	 */
+	Scratch3PenBlocks.prototype._getPenLayerID = function () {
+	    if (this._penSkinId < 0 && this.runtime.renderer) {
+	        this._penSkinId = this.runtime.renderer.createPenSkin();
+	        this._penDrawableId = this.runtime.renderer.createDrawable();
+	        this.runtime.renderer.setDrawableOrder(this._penDrawableId, Scratch3PenBlocks.PEN_ORDER);
+	        this.runtime.renderer.updateDrawableProperties(this._penDrawableId, {skinId: this._penSkinId});
+	    }
+	    return this._penSkinId;
+	};
+	
+	/**
+	 * @param {Target} target - collect pen state for this target. Probably, but not necessarily, a RenderedTarget.
+	 * @returns {PenState} the mutable pen state associated with that target. This will be created if necessary.
+	 * @private
+	 */
+	Scratch3PenBlocks.prototype._getPenState = function (target) {
+	    var penState = target.getCustomState(Scratch3PenBlocks.STATE_KEY);
+	    if (!penState) {
+	        penState = Clone.simple(Scratch3PenBlocks.DEFAULT_PEN_STATE);
+	        target.setCustomState(Scratch3PenBlocks.STATE_KEY, penState);
+	    }
+	    return penState;
+	};
+	
+	/**
+	 * Handle a target which has moved. This only fires when the pen is down.
+	 * @param {RenderedTarget} target - the target which has moved.
+	 * @param {number} oldX - the previous X position.
+	 * @param {number} oldY - the previous Y position.
+	 * @private
+	 */
+	Scratch3PenBlocks.prototype._onTargetMoved = function (target, oldX, oldY) {
+	    var penSkinId = this._getPenLayerID();
+	    if (penSkinId >= 0) {
+	        var penState = this._getPenState(target);
+	        this.runtime.renderer.penLine(penSkinId, penState.penAttributes, oldX, oldY, target.x, target.y);
+	        this.runtime.requestRedraw();
+	    }
+	};
+	
+	/**
+	 * Update the cached RGB color from the hue & shade values in the provided PenState object.
+	 * @param {PenState} penState - the pen state to update.
+	 * @private
+	 */
+	Scratch3PenBlocks.prototype._updatePenColor = function (penState) {
+	    var rgb = Color.hsvToRgb({h: penState.hue * 180 / 100, s: 1, v: 1});
+	    var shade = (penState.shade > 100) ? 200 - penState.shade : penState.shade;
+	    if (shade < 50) {
+	        rgb = Color.mixRgb(Color.RGB_BLACK, rgb, (10 + shade) / 60);
+	    } else {
+	        rgb = Color.mixRgb(rgb, Color.RGB_WHITE, (shade - 50) / 60);
+	    }
+	    penState.penAttributes.color4f[0] = rgb.r / 255.0;
+	    penState.penAttributes.color4f[1] = rgb.g / 255.0;
+	    penState.penAttributes.color4f[2] = rgb.b / 255.0;
+	};
+	
+	/**
+	 * Wrap a pen hue or shade values to the range [0,200).
+	 * @param {number} value - the pen hue or shade value to the proper range.
+	 * @returns {number} the wrapped value.
+	 * @private
+	 */
+	Scratch3PenBlocks.prototype._wrapHueOrShade = function (value) {
+	    value = value % 200;
+	    if (value < 0) value += 200;
+	    return value;
 	};
 	
 	/**
 	 * Retrieve the block primitives implemented by this package.
 	 * @return {Object.<string, Function>} Mapping of opcode to Function.
 	 */
-	Scratch3SoundBlocks.prototype.getPrimitives = function () {
+	Scratch3PenBlocks.prototype.getPrimitives = function () {
 	    return {
-	        sound_play: this.playSound,
-	        sound_playuntildone: this.playSoundAndWait,
-	        sound_stopallsounds: this.stopAllSounds,
-	        sound_playnoteforbeats: this.playNoteForBeats,
-	        sound_playdrumforbeats: this.playDrumForBeats,
-	        sound_restforbeats: this.restForBeats,
-	        sound_setinstrumentto: this.setInstrument,
-	        sound_seteffectto: this.setEffect,
-	        sound_changeeffectby: this.changeEffect,
-	        sound_cleareffects: this.clearEffects,
-	        sound_sounds_menu: this.soundsMenu,
-	        sound_beats_menu: this.beatsMenu,
-	        sound_effects_menu: this.effectsMenu,
-	        sound_setvolumeto: this.setVolume,
-	        sound_changevolumeby: this.changeVolume,
-	        sound_settempotobpm: this.setTempo,
-	        sound_changetempoby: this.changeTempo,
-	        sound_tempo: this.getTempo
+	        pen_clear: this.clear,
+	        pen_stamp: this.stamp,
+	        pen_pendown: this.penDown,
+	        pen_penup: this.penUp,
+	        pen_setpencolortocolor: this.setPenColorToColor,
+	        pen_changepencolorby: this.changePenHueBy,
+	        pen_setpencolortonum: this.setPenHueToNumber,
+	        pen_changepenshadeby: this.changePenShadeBy,
+	        pen_setpenshadeto: this.setPenShadeToNumber,
+	        pen_changepensizeby: this.changePenSizeBy,
+	        pen_setpensizeto: this.setPenSizeTo
 	    };
 	};
 	
-	Scratch3SoundBlocks.prototype.playSound = function (args, util) {
-	    var index = this._getSoundIndex(args.SOUND_MENU, util);
-	    util.target.audioPlayer.playSound(index);
-	};
-	
-	Scratch3SoundBlocks.prototype.playSoundAndWait = function (args, util) {
-	    var index = this._getSoundIndex(args.SOUND_MENU, util);
-	    return util.target.audioPlayer.playSound(index);
-	};
-	
-	Scratch3SoundBlocks.prototype._getSoundIndex = function (soundName, util) {
-	    if (util.target.sprite.sounds.length === 0) {
-	        return 0;
+	/**
+	 * The pen "clear" block clears the pen layer's contents.
+	 */
+	Scratch3PenBlocks.prototype.clear = function () {
+	    var penSkinId = this._getPenLayerID();
+	    if (penSkinId >= 0) {
+	        this.runtime.renderer.penClear(penSkinId);
+	        this.runtime.requestRedraw();
 	    }
-	    var index;
+	};
 	
-	    if (Number(soundName)) {
-	        soundName = Number(soundName);
-	        var len = util.target.sprite.sounds.length;
-	        index = MathUtil.wrapClamp(soundName, 1, len) - 1;
-	    } else {
-	        index = util.target.getSoundIndexByName(soundName);
-	        if (index === -1) {
-	            index = 0;
-	        }
+	/**
+	 * The pen "stamp" block stamps the current drawable's image onto the pen layer.
+	 * @param {object} args - the block arguments.
+	 * @param {object} util - utility object provided by the runtime.
+	 */
+	Scratch3PenBlocks.prototype.stamp = function (args, util) {
+	    var penSkinId = this._getPenLayerID();
+	    if (penSkinId >= 0) {
+	        var target = util.target;
+	        this.runtime.renderer.penStamp(penSkinId, target.drawableID);
+	        this.runtime.requestRedraw();
 	    }
-	    return index;
 	};
 	
-	Scratch3SoundBlocks.prototype.stopAllSounds = function (args, util) {
-	    util.target.audioPlayer.stopAllSounds();
+	/**
+	 * The pen "pen down" block causes the target to leave pen trails on future motion.
+	 * @param {object} args - the block arguments.
+	 * @param {object} util - utility object provided by the runtime.
+	 */
+	Scratch3PenBlocks.prototype.penDown = function (args, util) {
+	    var target = util.target;
+	    var penState = this._getPenState(target);
+	
+	    if (!penState.penDown) {
+	        penState.penDown = true;
+	        target.addListener(RenderedTarget.EVENT_TARGET_MOVED, this._onTargetMoved);
+	    }
+	
+	    var penSkinId = this._getPenLayerID();
+	    if (penSkinId >= 0) {
+	        this.runtime.renderer.penPoint(penSkinId, penState.penAttributes, target.x, target.y);
+	        this.runtime.requestRedraw();
+	    }
 	};
 	
-	Scratch3SoundBlocks.prototype.playNoteForBeats = function (args, util) {
-	    return util.target.audioPlayer.playNoteForBeats(args.NOTE, args.BEATS);
+	/**
+	 * The pen "pen up" block stops the target from leaving pen trails.
+	 * @param {object} args - the block arguments.
+	 * @param {object} util - utility object provided by the runtime.
+	 */
+	Scratch3PenBlocks.prototype.penUp = function (args, util) {
+	    var target = util.target;
+	    var penState = this._getPenState(target);
+	
+	    if (penState.penDown) {
+	        penState.penDown = false;
+	        target.removeListener(RenderedTarget.EVENT_TARGET_MOVED, this._onTargetMoved);
+	    }
 	};
 	
-	Scratch3SoundBlocks.prototype.playDrumForBeats = function (args, util) {
-	    return util.target.audioPlayer.playDrumForBeats(args.DRUM, args.BEATS);
+	/**
+	 * The pen "set pen color to {color}" block sets the pen to a particular RGB color.
+	 * @param {object} args - the block arguments.
+	 *  @property {int} COLOR - the color to set, expressed as a 24-bit RGB value (0xRRGGBB).
+	 * @param {object} util - utility object provided by the runtime.
+	 */
+	Scratch3PenBlocks.prototype.setPenColorToColor = function (args, util) {
+	    var penState = this._getPenState(util.target);
+	    var rgb = Cast.toRgbColorObject(args.COLOR);
+	    var hsv = Color.rgbToHsv(rgb);
+	
+	    penState.hue = 200 * hsv.h / 360;
+	    penState.shade = 50 * hsv.v;
+	    penState.penAttributes.color4f[0] = rgb.r / 255.0;
+	    penState.penAttributes.color4f[1] = rgb.g / 255.0;
+	    penState.penAttributes.color4f[2] = rgb.b / 255.0;
 	};
 	
-	Scratch3SoundBlocks.prototype.restForBeats = function (args, util) {
-	    return util.target.audioPlayer.waitForBeats(args.BEATS);
+	/**
+	 * The pen "change pen color by {number}" block rotates the hue of the pen by the given amount.
+	 * @param {object} args - the block arguments.
+	 *  @property {number} COLOR - the amount of desired hue rotation.
+	 * @param {object} util - utility object provided by the runtime.
+	 */
+	Scratch3PenBlocks.prototype.changePenHueBy = function (args, util) {
+	    var penState = this._getPenState(util.target);
+	    penState.hue = this._wrapHueOrShade(penState.hue + Cast.toNumber(args.COLOR));
+	    this._updatePenColor(penState);
 	};
 	
-	Scratch3SoundBlocks.prototype.setInstrument = function (args, util) {
-	    var instNum = Cast.toNumber(args.INSTRUMENT);
-	    return util.target.audioPlayer.setInstrument(instNum);
+	/**
+	 * The pen "set pen color to {number}" block sets the hue of the pen.
+	 * @param {object} args - the block arguments.
+	 *  @property {number} COLOR - the desired hue.
+	 * @param {object} util - utility object provided by the runtime.
+	 */
+	Scratch3PenBlocks.prototype.setPenHueToNumber = function (args, util) {
+	    var penState = this._getPenState(util.target);
+	    penState.hue = this._wrapHueOrShade(Cast.toNumber(args.COLOR));
+	    this._updatePenColor(penState);
 	};
 	
-	Scratch3SoundBlocks.prototype.setEffect = function (args, util) {
-	    var value = Cast.toNumber(args.VALUE);
-	    util.target.audioPlayer.setEffect(args.EFFECT, value);
+	/**
+	 * The pen "change pen shade by {number}" block changes the "shade" of the pen, related to the HSV value.
+	 * @param {object} args - the block arguments.
+	 *  @property {number} SHADE - the amount of desired shade change.
+	 * @param {object} util - utility object provided by the runtime.
+	 */
+	Scratch3PenBlocks.prototype.changePenShadeBy = function (args, util) {
+	    var penState = this._getPenState(util.target);
+	    penState.shade = this._wrapHueOrShade(penState.shade + Cast.toNumber(args.SHADE));
+	    this._updatePenColor(penState);
 	};
 	
-	Scratch3SoundBlocks.prototype.changeEffect = function (args, util) {
-	    var value = Cast.toNumber(args.VALUE);
-	    util.target.audioPlayer.changeEffect(args.EFFECT, value);
+	/**
+	 * The pen "set pen shade to {number}" block sets the "shade" of the pen, related to the HSV value.
+	 * @param {object} args - the block arguments.
+	 *  @property {number} SHADE - the amount of desired shade change.
+	 * @param {object} util - utility object provided by the runtime.
+	 */
+	Scratch3PenBlocks.prototype.setPenShadeToNumber = function (args, util) {
+	    var penState = this._getPenState(util.target);
+	    penState.shade = this._wrapHueOrShade(Cast.toNumber(args.SHADE));
+	    this._updatePenColor(penState);
 	};
 	
-	Scratch3SoundBlocks.prototype.clearEffects = function (args, util) {
-	    util.target.audioPlayer.clearEffects();
+	/**
+	 * The pen "change pen size by {number}" block changes the pen size by the given amount.
+	 * @param {object} args - the block arguments.
+	 *  @property {number} SIZE - the amount of desired size change.
+	 * @param {object} util - utility object provided by the runtime.
+	 */
+	Scratch3PenBlocks.prototype.changePenSizeBy = function (args, util) {
+	    var penAttributes = this._getPenState(util.target).penAttributes;
+	    penAttributes.diameter = this._clampPenSize(penAttributes.diameter + Cast.toNumber(args.SIZE));
 	};
 	
-	Scratch3SoundBlocks.prototype.setVolume = function (args, util) {
-	    var value = Cast.toNumber(args.VOLUME);
-	    util.target.audioPlayer.setVolume(value);
+	/**
+	 * The pen "set pen size to {number}" block sets the pen size to the given amount.
+	 * @param {object} args - the block arguments.
+	 *  @property {number} SIZE - the amount of desired size change.
+	 * @param {object} util - utility object provided by the runtime.
+	 */
+	Scratch3PenBlocks.prototype.setPenSizeTo = function (args, util) {
+	    var penAttributes = this._getPenState(util.target).penAttributes;
+	    penAttributes.diameter = this._clampPenSize(Cast.toNumber(args.SIZE));
 	};
 	
-	Scratch3SoundBlocks.prototype.changeVolume = function (args, util) {
-	    var value = Cast.toNumber(args.VOLUME);
-	    util.target.audioPlayer.changeVolume(value);
-	};
-	
-	Scratch3SoundBlocks.prototype.getVolume = function (args, util) {
-	    return util.target.audioPlayer.currentVolume;
-	};
-	
-	Scratch3SoundBlocks.prototype.setTempo = function (args, util) {
-	    var value = Cast.toNumber(args.TEMPO);
-	    util.target.audioPlayer.setTempo(value);
-	};
-	
-	Scratch3SoundBlocks.prototype.changeTempo = function (args, util) {
-	    var value = Cast.toNumber(args.TEMPO);
-	    util.target.audioPlayer.changeTempo(value);
-	};
-	
-	Scratch3SoundBlocks.prototype.getTempo = function (args, util) {
-	    return util.target.audioPlayer.currentTempo;
-	};
-	
-	Scratch3SoundBlocks.prototype.soundsMenu = function (args) {
-	    return args.SOUND_MENU;
-	};
-	
-	Scratch3SoundBlocks.prototype.beatsMenu = function (args) {
-	    return args.BEATS;
-	};
-	
-	Scratch3SoundBlocks.prototype.effectsMenu = function (args) {
-	    return args.EFFECT;
-	};
-	
-	module.exports = Scratch3SoundBlocks;
+	module.exports = Scratch3PenBlocks;
 
 
 /***/ },
 /* 93 */
-/***/ function(module, exports, __webpack_require__) {
+/***/ function(module, exports) {
 
-	var Cast = __webpack_require__(83);
-	
-	var Scratch3SensingBlocks = function (runtime) {
-	    /**
-	     * The runtime instantiating this block package.
-	     * @type {Runtime}
-	     */
-	    this.runtime = runtime;
-	};
+	/**
+	 * Methods for cloning JavaScript objects.
+	 * @type {object}
+	 */
+	var Clone = {};
 	
 	/**
-	 * Retrieve the block primitives implemented by this package.
-	 * @return {Object.<string, Function>} Mapping of opcode to Function.
+	 * Deep-clone a "simple" object: one which can be fully expressed with JSON.
+	 * Non-JSON values, such as functions, will be stripped from the clone.
+	 * @param {object} original - the object to be cloned.
+	 * @returns {object} a deep clone of the original object.
 	 */
-	Scratch3SensingBlocks.prototype.getPrimitives = function () {
-	    return {
-	        sensing_touchingobject: this.touchingObject,
-	        sensing_touchingcolor: this.touchingColor,
-	        sensing_coloristouchingcolor: this.colorTouchingColor,
-	        sensing_distanceto: this.distanceTo,
-	        sensing_timer: this.getTimer,
-	        sensing_resettimer: this.resetTimer,
-	        sensing_of: this.getAttributeOf,
-	        sensing_mousex: this.getMouseX,
-	        sensing_mousey: this.getMouseY,
-	        sensing_mousedown: this.getMouseDown,
-	        sensing_keypressed: this.getKeyPressed,
-	        sensing_current: this.current,
-	        sensing_dayssince2000: this.daysSince2000
-	    };
+	Clone.simple = function (original) {
+	    return JSON.parse(JSON.stringify(original));
 	};
 	
-	Scratch3SensingBlocks.prototype.touchingObject = function (args, util) {
-	    var requestedObject = args.TOUCHINGOBJECTMENU;
-	    if (requestedObject === '_mouse_') {
-	        var mouseX = util.ioQuery('mouse', 'getX');
-	        var mouseY = util.ioQuery('mouse', 'getY');
-	        return util.target.isTouchingPoint(mouseX, mouseY);
-	    } else if (requestedObject === '_edge_') {
-	        return util.target.isTouchingEdge();
-	    } else {
-	        return util.target.isTouchingSprite(requestedObject);
-	    }
-	};
-	
-	Scratch3SensingBlocks.prototype.touchingColor = function (args, util) {
-	    var color = Cast.toRgbColorList(args.COLOR);
-	    return util.target.isTouchingColor(color);
-	};
-	
-	Scratch3SensingBlocks.prototype.colorTouchingColor = function (args, util) {
-	    var maskColor = Cast.toRgbColorList(args.COLOR);
-	    var targetColor = Cast.toRgbColorList(args.COLOR2);
-	    return util.target.colorIsTouchingColor(targetColor, maskColor);
-	};
-	
-	Scratch3SensingBlocks.prototype.distanceTo = function (args, util) {
-	    if (util.target.isStage) return 10000;
-	
-	    var targetX = 0;
-	    var targetY = 0;
-	    if (args.DISTANCETOMENU === '_mouse_') {
-	        targetX = util.ioQuery('mouse', 'getX');
-	        targetY = util.ioQuery('mouse', 'getY');
-	    } else {
-	        var distTarget = this.runtime.getSpriteTargetByName(
-	            args.DISTANCETOMENU
-	        );
-	        if (!distTarget) return 10000;
-	        targetX = distTarget.x;
-	        targetY = distTarget.y;
-	    }
-	
-	    var dx = util.target.x - targetX;
-	    var dy = util.target.y - targetY;
-	    return Math.sqrt((dx * dx) + (dy * dy));
-	};
-	
-	Scratch3SensingBlocks.prototype.getTimer = function (args, util) {
-	    return util.ioQuery('clock', 'projectTimer');
-	};
-	
-	Scratch3SensingBlocks.prototype.resetTimer = function (args, util) {
-	    util.ioQuery('clock', 'resetProjectTimer');
-	};
-	
-	Scratch3SensingBlocks.prototype.getMouseX = function (args, util) {
-	    return util.ioQuery('mouse', 'getX');
-	};
-	
-	Scratch3SensingBlocks.prototype.getMouseY = function (args, util) {
-	    return util.ioQuery('mouse', 'getY');
-	};
-	
-	Scratch3SensingBlocks.prototype.getMouseDown = function (args, util) {
-	    return util.ioQuery('mouse', 'getIsDown');
-	};
-	
-	Scratch3SensingBlocks.prototype.current = function (args) {
-	    var menuOption = Cast.toString(args.CURRENTMENU).toLowerCase();
-	    var date = new Date();
-	    switch (menuOption) {
-	    case 'year': return date.getFullYear();
-	    case 'month': return date.getMonth() + 1; // getMonth is zero-based
-	    case 'date': return date.getDate();
-	    case 'dayofweek': return date.getDay() + 1; // getDay is zero-based, Sun=0
-	    case 'hour': return date.getHours();
-	    case 'minute': return date.getMinutes();
-	    case 'second': return date.getSeconds();
-	    }
-	    return 0;
-	};
-	
-	Scratch3SensingBlocks.prototype.getKeyPressed = function (args, util) {
-	    return util.ioQuery('keyboard', 'getKeyIsDown', args.KEY_OPTION);
-	};
-	
-	Scratch3SensingBlocks.prototype.daysSince2000 = function () {
-	    var msPerDay = 24 * 60 * 60 * 1000;
-	    var start = new Date(2000, 0, 1); // Months are 0-indexed.
-	    var today = new Date();
-	    var dstAdjust = today.getTimezoneOffset() - start.getTimezoneOffset();
-	    var mSecsSinceStart = today.valueOf() - start.valueOf();
-	    mSecsSinceStart += ((today.getTimezoneOffset() - dstAdjust) * 60 * 1000);
-	    return mSecsSinceStart / msPerDay;
-	};
-	
-	Scratch3SensingBlocks.prototype.getAttributeOf = function (args) {
-	    var attrTarget;
-	
-	    if (args.OBJECT === '_stage_') {
-	        attrTarget = this.runtime.getTargetForStage();
-	    } else {
-	        attrTarget = this.runtime.getSpriteTargetByName(args.OBJECT);
-	    }
-	
-	    // Generic attributes
-	    if (attrTarget.isStage) {
-	        switch (args.PROPERTY) {
-	        // Scratch 1.4 support
-	        case 'background #': return attrTarget.currentCostume + 1;
-	
-	        case 'backdrop #': return attrTarget.currentCostume + 1;
-	        case 'backdrop name':
-	            return attrTarget.sprite.costumes[attrTarget.currentCostume].name;
-	        case 'volume': return; // @todo: Keep this in mind for sound blocks!
-	        }
-	    } else {
-	        switch (args.PROPERTY) {
-	        case 'x position': return attrTarget.x;
-	        case 'y position': return attrTarget.y;
-	        case 'direction': return attrTarget.direction;
-	        case 'costume #': return attrTarget.currentCostume + 1;
-	        case 'costume name':
-	            return attrTarget.sprite.costumes[attrTarget.currentCostume].name;
-	        case 'size': return attrTarget.size;
-	        case 'volume': return; // @todo: above, keep in mind for sound blocks..
-	        }
-	    }
-	
-	    // Variables
-	    var varName = args.PROPERTY;
-	    if (attrTarget.variables.hasOwnProperty(varName)) {
-	        return attrTarget.variables[varName].value;
-	    }
-	
-	    // Otherwise, 0
-	    return 0;
-	};
-	
-	module.exports = Scratch3SensingBlocks;
+	module.exports = Clone;
 
 
 /***/ },
 /* 94 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var Cast = __webpack_require__(83);
-	
-	var Scratch3DataBlocks = function (runtime) {
-	    /**
-	     * The runtime instantiating this block package.
-	     * @type {Runtime}
-	     */
-	    this.runtime = runtime;
-	};
-	
-	/**
-	 * Retrieve the block primitives implemented by this package.
-	 * @return {Object.<string, Function>} Mapping of opcode to Function.
-	 */
-	Scratch3DataBlocks.prototype.getPrimitives = function () {
-	    return {
-	        data_variable: this.getVariable,
-	        data_setvariableto: this.setVariableTo,
-	        data_changevariableby: this.changeVariableBy,
-	        data_listcontents: this.getListContents,
-	        data_addtolist: this.addToList,
-	        data_deleteoflist: this.deleteOfList,
-	        data_insertatlist: this.insertAtList,
-	        data_replaceitemoflist: this.replaceItemOfList,
-	        data_itemoflist: this.getItemOfList,
-	        data_lengthoflist: this.lengthOfList,
-	        data_listcontainsitem: this.listContainsItem
-	    };
-	};
-	
-	Scratch3DataBlocks.prototype.getVariable = function (args, util) {
-	    var variable = util.target.lookupOrCreateVariable(args.VARIABLE);
-	    return variable.value;
-	};
-	
-	Scratch3DataBlocks.prototype.setVariableTo = function (args, util) {
-	    var variable = util.target.lookupOrCreateVariable(args.VARIABLE);
-	    variable.value = args.VALUE;
-	};
-	
-	Scratch3DataBlocks.prototype.changeVariableBy = function (args, util) {
-	    var variable = util.target.lookupOrCreateVariable(args.VARIABLE);
-	    var castedValue = Cast.toNumber(variable.value);
-	    var dValue = Cast.toNumber(args.VALUE);
-	    variable.value = castedValue + dValue;
-	};
-	
-	Scratch3DataBlocks.prototype.getListContents = function (args, util) {
-	    var list = util.target.lookupOrCreateList(args.LIST);
-	    // Determine if the list is all single letters.
-	    // If it is, report contents joined together with no separator.
-	    // If it's not, report contents joined together with a space.
-	    var allSingleLetters = true;
-	    for (var i = 0; i < list.contents.length; i++) {
-	        var listItem = list.contents[i];
-	        if (!((typeof listItem === 'string') &&
-	              (listItem.length === 1))) {
-	            allSingleLetters = false;
-	            break;
-	        }
-	    }
-	    if (allSingleLetters) {
-	        return list.contents.join('');
-	    } else {
-	        return list.contents.join(' ');
-	    }
-	};
-	
-	Scratch3DataBlocks.prototype.addToList = function (args, util) {
-	    var list = util.target.lookupOrCreateList(args.LIST);
-	    list.contents.push(args.ITEM);
-	};
-	
-	Scratch3DataBlocks.prototype.deleteOfList = function (args, util) {
-	    var list = util.target.lookupOrCreateList(args.LIST);
-	    var index = Cast.toListIndex(args.INDEX, list.contents.length);
-	    if (index === Cast.LIST_INVALID) {
-	        return;
-	    } else if (index === Cast.LIST_ALL) {
-	        list.contents = [];
-	        return;
-	    }
-	    list.contents.splice(index - 1, 1);
-	};
-	
-	Scratch3DataBlocks.prototype.insertAtList = function (args, util) {
-	    var item = args.ITEM;
-	    var list = util.target.lookupOrCreateList(args.LIST);
-	    var index = Cast.toListIndex(args.INDEX, list.contents.length + 1);
-	    if (index === Cast.LIST_INVALID) {
-	        return;
-	    }
-	    list.contents.splice(index - 1, 0, item);
-	};
-	
-	Scratch3DataBlocks.prototype.replaceItemOfList = function (args, util) {
-	    var item = args.ITEM;
-	    var list = util.target.lookupOrCreateList(args.LIST);
-	    var index = Cast.toListIndex(args.INDEX, list.contents.length);
-	    if (index === Cast.LIST_INVALID) {
-	        return;
-	    }
-	    list.contents.splice(index - 1, 1, item);
-	};
-	
-	Scratch3DataBlocks.prototype.getItemOfList = function (args, util) {
-	    var list = util.target.lookupOrCreateList(args.LIST);
-	    var index = Cast.toListIndex(args.INDEX, list.contents.length);
-	    if (index === Cast.LIST_INVALID) {
-	        return '';
-	    }
-	    return list.contents[index - 1];
-	};
-	
-	Scratch3DataBlocks.prototype.lengthOfList = function (args, util) {
-	    var list = util.target.lookupOrCreateList(args.LIST);
-	    return list.contents.length;
-	};
-	
-	Scratch3DataBlocks.prototype.listContainsItem = function (args, util) {
-	    var item = args.ITEM;
-	    var list = util.target.lookupOrCreateList(args.LIST);
-	    if (list.contents.indexOf(item) >= 0) {
-	        return true;
-	    }
-	    // Try using Scratch comparison operator on each item.
-	    // (Scratch considers the string '123' equal to the number 123).
-	    for (var i = 0; i < list.contents.length; i++) {
-	        if (Cast.compare(list.contents[i], item) === 0) {
-	            return true;
-	        }
-	    }
-	    return false;
-	};
-	
-	module.exports = Scratch3DataBlocks;
-
-
-/***/ },
-/* 95 */
-/***/ function(module, exports) {
-
-	var Scratch3ProcedureBlocks = function (runtime) {
-	    /**
-	     * The runtime instantiating this block package.
-	     * @type {Runtime}
-	     */
-	    this.runtime = runtime;
-	};
-	
-	/**
-	 * Retrieve the block primitives implemented by this package.
-	 * @return {Object.<string, Function>} Mapping of opcode to Function.
-	 */
-	Scratch3ProcedureBlocks.prototype.getPrimitives = function () {
-	    return {
-	        procedures_defnoreturn: this.defNoReturn,
-	        procedures_callnoreturn: this.callNoReturn,
-	        procedures_param: this.param
-	    };
-	};
-	
-	Scratch3ProcedureBlocks.prototype.defNoReturn = function () {
-	    // No-op: execute the blocks.
-	};
-	
-	Scratch3ProcedureBlocks.prototype.callNoReturn = function (args, util) {
-	    if (!util.stackFrame.executed) {
-	        var procedureCode = args.mutation.proccode;
-	        var paramNames = util.getProcedureParamNames(procedureCode);
-	        for (var i = 0; i < paramNames.length; i++) {
-	            if (args.hasOwnProperty('input' + i)) {
-	                util.pushParam(paramNames[i], args['input' + i]);
-	            }
-	        }
-	        util.stackFrame.executed = true;
-	        util.startProcedure(procedureCode);
-	    }
-	};
-	
-	Scratch3ProcedureBlocks.prototype.param = function (args, util) {
-	    var value = util.getParam(args.mutation.paramname);
-	    return value;
-	};
-	
-	module.exports = Scratch3ProcedureBlocks;
-
-
-/***/ },
-/* 96 */
-/***/ function(module, exports, __webpack_require__) {
-
-	/**
-	 * @fileoverview
-	 * Partial implementation of an SB2 JSON importer.
-	 * Parses provided JSON and then generates all needed
-	 * scratch-vm runtime structures.
-	 */
-	
-	var Blocks = __webpack_require__(26);
-	var RenderedTarget = __webpack_require__(97);
-	var Sprite = __webpack_require__(102);
-	var Color = __webpack_require__(84);
-	var log = __webpack_require__(13);
-	var uid = __webpack_require__(101);
-	var specMap = __webpack_require__(103);
-	var Variable = __webpack_require__(99);
-	var List = __webpack_require__(100);
-	
-	/**
-	 * Parse a single "Scratch object" and create all its in-memory VM objects.
-	 * @param {!Object} object From-JSON "Scratch object:" sprite, stage, watcher.
-	 * @param {!Runtime} runtime Runtime object to load all structures into.
-	 * @param {boolean} topLevel Whether this is the top-level object (stage).
-	 * @return {?Target} Target created (stage or sprite).
-	 */
-	var parseScratchObject = function (object, runtime, topLevel) {
-	    if (!object.hasOwnProperty('objName')) {
-	        // Watcher/monitor - skip this object until those are implemented in VM.
-	        // @todo
-	        return;
-	    }
-	    // Blocks container for this object.
-	    var blocks = new Blocks();
-	    // @todo: For now, load all Scratch objects (stage/sprites) as a Sprite.
-	    var sprite = new Sprite(blocks, runtime);
-	    // Sprite/stage name from JSON.
-	    if (object.hasOwnProperty('objName')) {
-	        sprite.name = object.objName;
-	    }
-	    // Costumes from JSON.
-	    if (object.hasOwnProperty('costumes')) {
-	        for (var i = 0; i < object.costumes.length; i++) {
-	            var costume = object.costumes[i];
-	            // @todo: Make sure all the relevant metadata is being pulled out.
-	            sprite.costumes.push({
-	                skin: 'https://cdn.assets.scratch.mit.edu/internalapi/asset/' +
-	                    costume.baseLayerMD5 + '/get/',
-	                name: costume.costumeName,
-	                bitmapResolution: costume.bitmapResolution,
-	                rotationCenterX: costume.rotationCenterX,
-	                rotationCenterY: costume.rotationCenterY
-	            });
-	        }
-	    }
-	    // Sounds from JSON
-	    if (object.hasOwnProperty('sounds')) {
-	        for (var s = 0; s < object.sounds.length; s++) {
-	            var sound = object.sounds[s];
-	            sprite.sounds.push({
-	                format: sound.format,
-	                fileUrl: 'https://cdn.assets.scratch.mit.edu/internalapi/asset/' + sound.md5 + '/get/',
-	                rate: sound.rate,
-	                sampleCount: sound.sampleCount,
-	                soundID: sound.soundID,
-	                name: sound.soundName
-	            });
-	        }
-	    }
-	    // If included, parse any and all scripts/blocks on the object.
-	    if (object.hasOwnProperty('scripts')) {
-	        parseScripts(object.scripts, blocks);
-	    }
-	    // Create the first clone, and load its run-state from JSON.
-	    var target = sprite.createClone();
-	    // Add it to the runtime's list of targets.
-	    runtime.targets.push(target);
-	    // Load target properties from JSON.
-	    if (object.hasOwnProperty('variables')) {
-	        for (var j = 0; j < object.variables.length; j++) {
-	            var variable = object.variables[j];
-	            target.variables[variable.name] = new Variable(
-	                variable.name,
-	                variable.value,
-	                variable.isPersistent
-	            );
-	        }
-	    }
-	    if (object.hasOwnProperty('lists')) {
-	        for (var k = 0; k < object.lists.length; k++) {
-	            var list = object.lists[k];
-	            // @todo: monitor properties.
-	            target.lists[list.listName] = new List(
-	                list.listName,
-	                list.contents
-	            );
-	        }
-	    }
-	    if (object.hasOwnProperty('scratchX')) {
-	        target.x = object.scratchX;
-	    }
-	    if (object.hasOwnProperty('scratchY')) {
-	        target.y = object.scratchY;
-	    }
-	    if (object.hasOwnProperty('direction')) {
-	        target.direction = object.direction;
-	    }
-	    if (object.hasOwnProperty('scale')) {
-	        // SB2 stores as 1.0 = 100%; we use % in the VM.
-	        target.size = object.scale * 100;
-	    }
-	    if (object.hasOwnProperty('visible')) {
-	        target.visible = object.visible;
-	    }
-	    if (object.hasOwnProperty('currentCostumeIndex')) {
-	        target.currentCostume = Math.round(object.currentCostumeIndex);
-	    }
-	    if (object.hasOwnProperty('rotationStyle')) {
-	        if (object.rotationStyle === 'none') {
-	            target.rotationStyle = RenderedTarget.ROTATION_STYLE_NONE;
-	        } else if (object.rotationStyle === 'leftRight') {
-	            target.rotationStyle = RenderedTarget.ROTATION_STYLE_LEFT_RIGHT;
-	        } else if (object.rotationStyle === 'normal') {
-	            target.rotationStyle = RenderedTarget.ROTATION_STYLE_ALL_AROUND;
-	        }
-	    }
-	    target.isStage = topLevel;
-	    target.updateAllDrawableProperties();
-	    // The stage will have child objects; recursively process them.
-	    if (object.children) {
-	        for (var m = 0; m < object.children.length; m++) {
-	            parseScratchObject(object.children[m], runtime, false);
-	        }
-	    }
-	    return target;
-	};
-	
-	/**
-	 * Top-level handler. Parse provided JSON,
-	 * and process the top-level object (the stage object).
-	 * @param {!string} json SB2-format JSON to load.
-	 * @param {!Runtime} runtime Runtime object to load all structures into.
-	 * @param {Boolean=} optForceSprite If set, treat as sprite (Sprite2).
-	 * @return {?Target} Top-level target created (stage or sprite).
-	 */
-	var sb2import = function (json, runtime, optForceSprite) {
-	    return parseScratchObject(
-	        JSON.parse(json),
-	        runtime,
-	        !optForceSprite
-	    );
-	};
-	
-	/**
-	 * Parse a Scratch object's scripts into VM blocks.
-	 * This should only handle top-level scripts that include X, Y coordinates.
-	 * @param {!Object} scripts Scripts object from SB2 JSON.
-	 * @param {!Blocks} blocks Blocks object to load parsed blocks into.
-	 */
-	var parseScripts = function (scripts, blocks) {
-	    for (var i = 0; i < scripts.length; i++) {
-	        var script = scripts[i];
-	        var scriptX = script[0];
-	        var scriptY = script[1];
-	        var blockList = script[2];
-	        var parsedBlockList = parseBlockList(blockList);
-	        if (parsedBlockList[0]) {
-	            // Adjust script coordinates to account for
-	            // larger block size in scratch-blocks.
-	            // @todo: Determine more precisely the right formulas here.
-	            parsedBlockList[0].x = scriptX * 1.1;
-	            parsedBlockList[0].y = scriptY * 1.1;
-	            parsedBlockList[0].topLevel = true;
-	            parsedBlockList[0].parent = null;
-	        }
-	        // Flatten children and create add the blocks.
-	        var convertedBlocks = flatten(parsedBlockList);
-	        for (var j = 0; j < convertedBlocks.length; j++) {
-	            blocks.createBlock(convertedBlocks[j]);
-	        }
-	    }
-	};
-	
-	/**
-	 * Parse any list of blocks from SB2 JSON into a list of VM-format blocks.
-	 * Could be used to parse a top-level script,
-	 * a list of blocks in a branch (e.g., in forever),
-	 * or a list of blocks in an argument (e.g., move [pick random...]).
-	 * @param {Array.<Object>} blockList SB2 JSON-format block list.
-	 * @return {Array.<Object>} Scratch VM-format block list.
-	 */
-	var parseBlockList = function (blockList) {
-	    var resultingList = [];
-	    var previousBlock = null; // For setting next.
-	    for (var i = 0; i < blockList.length; i++) {
-	        var block = blockList[i];
-	        var parsedBlock = parseBlock(block);
-	        if (previousBlock) {
-	            parsedBlock.parent = previousBlock.id;
-	            previousBlock.next = parsedBlock.id;
-	        }
-	        previousBlock = parsedBlock;
-	        resultingList.push(parsedBlock);
-	    }
-	    return resultingList;
-	};
-	
-	/**
-	 * Flatten a block tree into a block list.
-	 * Children are temporarily stored on the `block.children` property.
-	 * @param {Array.<Object>} blocks list generated by `parseBlockList`.
-	 * @return {Array.<Object>} Flattened list to be passed to `blocks.createBlock`.
-	 */
-	var flatten = function (blocks) {
-	    var finalBlocks = [];
-	    for (var i = 0; i < blocks.length; i++) {
-	        var block = blocks[i];
-	        finalBlocks.push(block);
-	        if (block.children) {
-	            finalBlocks = finalBlocks.concat(flatten(block.children));
-	        }
-	        delete block.children;
-	    }
-	    return finalBlocks;
-	};
-	
-	/**
-	 * Convert a Scratch 2.0 procedure string (e.g., "my_procedure %s %b %n")
-	 * into an argument map. This allows us to provide the expected inputs
-	 * to a mutated procedure call.
-	 * @param {string} procCode Scratch 2.0 procedure string.
-	 * @return {Object} Argument map compatible with those in sb2specmap.
-	 */
-	var parseProcedureArgMap = function (procCode) {
-	    var argMap = [
-	        {} // First item in list is op string.
-	    ];
-	    var INPUT_PREFIX = 'input';
-	    var inputCount = 0;
-	    // Split by %n, %b, %s.
-	    var parts = procCode.split(/(?=[^\\]%[nbs])/);
-	    for (var i = 0; i < parts.length; i++) {
-	        var part = parts[i].trim();
-	        if (part.substring(0, 1) === '%') {
-	            var argType = part.substring(1, 2);
-	            var arg = {
-	                type: 'input',
-	                inputName: INPUT_PREFIX + (inputCount++)
-	            };
-	            if (argType === 'n') {
-	                arg.inputOp = 'math_number';
-	            } else if (argType === 's') {
-	                arg.inputOp = 'text';
-	            }
-	            argMap.push(arg);
-	        }
-	    }
-	    return argMap;
-	};
-	
-	/**
-	 * Parse a single SB2 JSON-formatted block and its children.
-	 * @param {!Object} sb2block SB2 JSON-formatted block.
-	 * @return {Object} Scratch VM format block.
-	 */
-	var parseBlock = function (sb2block) {
-	    // First item in block object is the old opcode (e.g., 'forward:').
-	    var oldOpcode = sb2block[0];
-	    // Convert the block using the specMap. See sb2specmap.js.
-	    if (!oldOpcode || !specMap[oldOpcode]) {
-	        log.warn('Couldn\'t find SB2 block: ', oldOpcode);
-	        return;
-	    }
-	    var blockMetadata = specMap[oldOpcode];
-	    // Block skeleton.
-	    var activeBlock = {
-	        id: uid(), // Generate a new block unique ID.
-	        opcode: blockMetadata.opcode, // Converted, e.g. "motion_movesteps".
-	        inputs: {}, // Inputs to this block and the blocks they point to.
-	        fields: {}, // Fields on this block and their values.
-	        next: null, // Next block.
-	        shadow: false, // No shadow blocks in an SB2 by default.
-	        children: [] // Store any generated children, flattened in `flatten`.
-	    };
-	    // For a procedure call, generate argument map from proc string.
-	    if (oldOpcode === 'call') {
-	        blockMetadata.argMap = parseProcedureArgMap(sb2block[1]);
-	    }
-	    // Look at the expected arguments in `blockMetadata.argMap.`
-	    // The basic problem here is to turn positional SB2 arguments into
-	    // non-positional named Scratch VM arguments.
-	    for (var i = 0; i < blockMetadata.argMap.length; i++) {
-	        var expectedArg = blockMetadata.argMap[i];
-	        var providedArg = sb2block[i + 1]; // (i = 0 is opcode)
-	        // Whether the input is obscuring a shadow.
-	        var shadowObscured = false;
-	        // Positional argument is an input.
-	        if (expectedArg.type === 'input') {
-	            // Create a new block and input metadata.
-	            var inputUid = uid();
-	            activeBlock.inputs[expectedArg.inputName] = {
-	                name: expectedArg.inputName,
-	                block: null,
-	                shadow: null
-	            };
-	            if (typeof providedArg === 'object' && providedArg) {
-	                // Block or block list occupies the input.
-	                var innerBlocks;
-	                if (typeof providedArg[0] === 'object' && providedArg[0]) {
-	                    // Block list occupies the input.
-	                    innerBlocks = parseBlockList(providedArg);
-	                } else {
-	                    // Single block occupies the input.
-	                    innerBlocks = [parseBlock(providedArg)];
-	                }
-	                var previousBlock = null;
-	                for (var j = 0; j < innerBlocks.length; j++) {
-	                    if (j === 0) {
-	                        innerBlocks[j].parent = activeBlock.id;
-	                    } else {
-	                        innerBlocks[j].parent = previousBlock;
-	                    }
-	                    previousBlock = innerBlocks[j].id;
-	                }
-	                // Obscures any shadow.
-	                shadowObscured = true;
-	                activeBlock.inputs[expectedArg.inputName].block = (
-	                    innerBlocks[0].id
-	                );
-	                activeBlock.children = (
-	                    activeBlock.children.concat(innerBlocks)
-	                );
-	            }
-	            // Generate a shadow block to occupy the input.
-	            if (!expectedArg.inputOp) {
-	                // No editable shadow input; e.g., for a boolean.
-	                continue;
-	            }
-	            // Each shadow has a field generated for it automatically.
-	            // Value to be filled in the field.
-	            var fieldValue = providedArg;
-	            // Shadows' field names match the input name, except for these:
-	            var fieldName = expectedArg.inputName;
-	            if (expectedArg.inputOp === 'math_number' ||
-	                expectedArg.inputOp === 'math_whole_number' ||
-	                expectedArg.inputOp === 'math_positive_number' ||
-	                expectedArg.inputOp === 'math_integer' ||
-	                expectedArg.inputOp === 'math_angle') {
-	                fieldName = 'NUM';
-	                // Fields are given Scratch 2.0 default values if obscured.
-	                if (shadowObscured) {
-	                    fieldValue = 10;
-	                }
-	            } else if (expectedArg.inputOp === 'text') {
-	                fieldName = 'TEXT';
-	                if (shadowObscured) {
-	                    fieldValue = '';
-	                }
-	            } else if (expectedArg.inputOp === 'colour_picker') {
-	                // Convert SB2 color to hex.
-	                fieldValue = Color.decimalToHex(providedArg);
-	                fieldName = 'COLOUR';
-	                if (shadowObscured) {
-	                    fieldValue = '#990000';
-	                }
-	            } else if (shadowObscured) {
-	                // Filled drop-down menu.
-	                fieldValue = '';
-	            }
-	            var fields = {};
-	            fields[fieldName] = {
-	                name: fieldName,
-	                value: fieldValue
-	            };
-	            activeBlock.children.push({
-	                id: inputUid,
-	                opcode: expectedArg.inputOp,
-	                inputs: {},
-	                fields: fields,
-	                next: null,
-	                topLevel: false,
-	                parent: activeBlock.id,
-	                shadow: true
-	            });
-	            activeBlock.inputs[expectedArg.inputName].shadow = inputUid;
-	            // If no block occupying the input, alias to the shadow.
-	            if (!activeBlock.inputs[expectedArg.inputName].block) {
-	                activeBlock.inputs[expectedArg.inputName].block = inputUid;
-	            }
-	        } else if (expectedArg.type === 'field') {
-	            // Add as a field on this block.
-	            activeBlock.fields[expectedArg.fieldName] = {
-	                name: expectedArg.fieldName,
-	                value: providedArg
-	            };
-	        }
-	    }
-	    // Special cases to generate mutations.
-	    if (oldOpcode === 'stopScripts') {
-	        // Mutation for stop block: if the argument is 'other scripts',
-	        // the block needs a next connection.
-	        if (sb2block[1] === 'other scripts in sprite' ||
-	            sb2block[1] === 'other scripts in stage') {
-	            activeBlock.mutation = {
-	                tagName: 'mutation',
-	                hasnext: 'true',
-	                children: []
-	            };
-	        }
-	    } else if (oldOpcode === 'procDef') {
-	        // Mutation for procedure definition:
-	        // store all 2.0 proc data.
-	        var procData = sb2block.slice(1);
-	        activeBlock.mutation = {
-	            tagName: 'mutation',
-	            proccode: procData[0], // e.g., "abc %n %b %s"
-	            argumentnames: JSON.stringify(procData[1]), // e.g. ['arg1', 'arg2']
-	            argumentdefaults: JSON.stringify(procData[2]), // e.g., [1, 'abc']
-	            warp: procData[3], // Warp mode, e.g., true/false.
-	            children: []
-	        };
-	    } else if (oldOpcode === 'call') {
-	        // Mutation for procedure call:
-	        // string for proc code (e.g., "abc %n %b %s").
-	        activeBlock.mutation = {
-	            tagName: 'mutation',
-	            children: [],
-	            proccode: sb2block[1]
-	        };
-	    } else if (oldOpcode === 'getParam') {
-	        // Mutation for procedure parameter.
-	        activeBlock.mutation = {
-	            tagName: 'mutation',
-	            children: [],
-	            paramname: sb2block[1], // Name of parameter.
-	            shape: sb2block[2] // Shape - in 2.0, 'r' or 'b'.
-	        };
-	    }
-	    return activeBlock;
-	};
-	
-	module.exports = sb2import;
-
-
-/***/ },
-/* 97 */
-/***/ function(module, exports, __webpack_require__) {
-
 	var util = __webpack_require__(4);
 	
 	var log = __webpack_require__(13);
 	var MathUtil = __webpack_require__(86);
-	var Target = __webpack_require__(98);
+	var Target = __webpack_require__(95);
 	
 	/**
 	 * Rendered target: instance of a sprite (clone), or the stage.
@@ -16493,6 +16027,12 @@
 	RenderedTarget.prototype.currentCostume = 0;
 	
 	/**
+	 * Event which fires when a target moves.
+	 * @type {string}
+	 */
+	RenderedTarget.EVENT_TARGET_MOVED = 'TARGET_MOVED';
+	
+	/**
 	 * Rotation style for "all around"/spinning.
 	 * @enum
 	 */
@@ -16527,6 +16067,8 @@
 	    if (this.isStage) {
 	        return;
 	    }
+	    var oldX = this.x;
+	    var oldY = this.y;
 	    this.x = x;
 	    this.y = y;
 	    if (this.renderer) {
@@ -16537,6 +16079,7 @@
 	            this.runtime.requestRedraw();
 	        }
 	    }
+	    this.emit(RenderedTarget.EVENT_TARGET_MOVED, this, oldX, oldY);
 	    this.runtime.spriteInfoReport(this);
 	};
 	
@@ -17109,13 +16652,16 @@
 
 
 /***/ },
-/* 98 */
+/* 95 */
 /***/ function(module, exports, __webpack_require__) {
 
+	var EventEmitter = __webpack_require__(3);
+	var util = __webpack_require__(4);
+	
 	var Blocks = __webpack_require__(26);
-	var Variable = __webpack_require__(99);
-	var List = __webpack_require__(100);
-	var uid = __webpack_require__(101);
+	var Variable = __webpack_require__(96);
+	var List = __webpack_require__(97);
+	var uid = __webpack_require__(98);
 	
 	/**
 	 * @fileoverview
@@ -17128,6 +16674,8 @@
 	 * @constructor
 	 */
 	var Target = function (blocks) {
+	    EventEmitter.call(this);
+	
 	    if (!blocks) {
 	        blocks = new Blocks(this);
 	    }
@@ -17153,7 +16701,19 @@
 	     * @type {Object.<string,*>}
 	     */
 	    this.lists = {};
+	    /**
+	     * Dictionary of custom state for this target.
+	     * This can be used to store target-specific custom state for blocks which need it.
+	     * TODO: do we want to persist this in SB3 files?
+	     * @type {Object.<string,*>}
+	     */
+	    this._customState = {};
 	};
+	
+	/**
+	 * Inherit from EventEmitter
+	 */
+	util.inherits(Target, EventEmitter);
 	
 	/**
 	 * Called when the project receives a "green flag."
@@ -17227,16 +16787,36 @@
 	Target.prototype.postSpriteInfo = function () {};
 	
 	/**
+	 * Retrieve custom state associated with this target and the provided state ID.
+	 * @param {string} stateId - specify which piece of state to retrieve.
+	 * @returns {*} the associated state, if any was found.
+	 */
+	Target.prototype.getCustomState = function (stateId) {
+	    return this._customState[stateId];
+	};
+	
+	/**
+	 * Store custom state associated with this target and the provided state ID.
+	 * @param {string} stateId - specify which piece of state to store on this target.
+	 * @param {*} newValue - the state value to store.
+	 */
+	Target.prototype.setCustomState = function (stateId, newValue) {
+	    this._customState[stateId] = newValue;
+	};
+	
+	/**
 	 * Call to destroy a target.
 	 * @abstract
 	 */
-	Target.prototype.dispose = function () {};
+	Target.prototype.dispose = function () {
+	    this._customState = {};
+	};
 	
 	module.exports = Target;
 
 
 /***/ },
-/* 99 */
+/* 96 */
 /***/ function(module, exports) {
 
 	/**
@@ -17260,7 +16840,7 @@
 
 
 /***/ },
-/* 100 */
+/* 97 */
 /***/ function(module, exports) {
 
 	/**
@@ -17282,7 +16862,7 @@
 
 
 /***/ },
-/* 101 */
+/* 98 */
 /***/ function(module, exports) {
 
 	/**
@@ -17317,10 +16897,974 @@
 
 
 /***/ },
-/* 102 */
+/* 99 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var RenderedTarget = __webpack_require__(97);
+	var MathUtil = __webpack_require__(86);
+	var Cast = __webpack_require__(83);
+	
+	var Scratch3SoundBlocks = function (runtime) {
+	    /**
+	     * The runtime instantiating this block package.
+	     * @type {Runtime}
+	     */
+	    this.runtime = runtime;
+	};
+	
+	/**
+	 * Retrieve the block primitives implemented by this package.
+	 * @return {Object.<string, Function>} Mapping of opcode to Function.
+	 */
+	Scratch3SoundBlocks.prototype.getPrimitives = function () {
+	    return {
+	        sound_play: this.playSound,
+	        sound_playuntildone: this.playSoundAndWait,
+	        sound_stopallsounds: this.stopAllSounds,
+	        sound_playnoteforbeats: this.playNoteForBeats,
+	        sound_playdrumforbeats: this.playDrumForBeats,
+	        sound_restforbeats: this.restForBeats,
+	        sound_setinstrumentto: this.setInstrument,
+	        sound_seteffectto: this.setEffect,
+	        sound_changeeffectby: this.changeEffect,
+	        sound_cleareffects: this.clearEffects,
+	        sound_sounds_menu: this.soundsMenu,
+	        sound_beats_menu: this.beatsMenu,
+	        sound_effects_menu: this.effectsMenu,
+	        sound_setvolumeto: this.setVolume,
+	        sound_changevolumeby: this.changeVolume,
+	        sound_settempotobpm: this.setTempo,
+	        sound_changetempoby: this.changeTempo,
+	        sound_tempo: this.getTempo
+	    };
+	};
+	
+	Scratch3SoundBlocks.prototype.playSound = function (args, util) {
+	    var index = this._getSoundIndex(args.SOUND_MENU, util);
+	    util.target.audioPlayer.playSound(index);
+	};
+	
+	Scratch3SoundBlocks.prototype.playSoundAndWait = function (args, util) {
+	    var index = this._getSoundIndex(args.SOUND_MENU, util);
+	    return util.target.audioPlayer.playSound(index);
+	};
+	
+	Scratch3SoundBlocks.prototype._getSoundIndex = function (soundName, util) {
+	    if (util.target.sprite.sounds.length === 0) {
+	        return 0;
+	    }
+	    var index;
+	
+	    if (Number(soundName)) {
+	        soundName = Number(soundName);
+	        var len = util.target.sprite.sounds.length;
+	        index = MathUtil.wrapClamp(soundName, 1, len) - 1;
+	    } else {
+	        index = util.target.getSoundIndexByName(soundName);
+	        if (index === -1) {
+	            index = 0;
+	        }
+	    }
+	    return index;
+	};
+	
+	Scratch3SoundBlocks.prototype.stopAllSounds = function (args, util) {
+	    util.target.audioPlayer.stopAllSounds();
+	};
+	
+	Scratch3SoundBlocks.prototype.playNoteForBeats = function (args, util) {
+	    return util.target.audioPlayer.playNoteForBeats(args.NOTE, args.BEATS);
+	};
+	
+	Scratch3SoundBlocks.prototype.playDrumForBeats = function (args, util) {
+	    return util.target.audioPlayer.playDrumForBeats(args.DRUM, args.BEATS);
+	};
+	
+	Scratch3SoundBlocks.prototype.restForBeats = function (args, util) {
+	    return util.target.audioPlayer.waitForBeats(args.BEATS);
+	};
+	
+	Scratch3SoundBlocks.prototype.setInstrument = function (args, util) {
+	    var instNum = Cast.toNumber(args.INSTRUMENT);
+	    return util.target.audioPlayer.setInstrument(instNum);
+	};
+	
+	Scratch3SoundBlocks.prototype.setEffect = function (args, util) {
+	    var value = Cast.toNumber(args.VALUE);
+	    util.target.audioPlayer.setEffect(args.EFFECT, value);
+	};
+	
+	Scratch3SoundBlocks.prototype.changeEffect = function (args, util) {
+	    var value = Cast.toNumber(args.VALUE);
+	    util.target.audioPlayer.changeEffect(args.EFFECT, value);
+	};
+	
+	Scratch3SoundBlocks.prototype.clearEffects = function (args, util) {
+	    util.target.audioPlayer.clearEffects();
+	};
+	
+	Scratch3SoundBlocks.prototype.setVolume = function (args, util) {
+	    var value = Cast.toNumber(args.VOLUME);
+	    util.target.audioPlayer.setVolume(value);
+	};
+	
+	Scratch3SoundBlocks.prototype.changeVolume = function (args, util) {
+	    var value = Cast.toNumber(args.VOLUME);
+	    util.target.audioPlayer.changeVolume(value);
+	};
+	
+	Scratch3SoundBlocks.prototype.getVolume = function (args, util) {
+	    return util.target.audioPlayer.currentVolume;
+	};
+	
+	Scratch3SoundBlocks.prototype.setTempo = function (args, util) {
+	    var value = Cast.toNumber(args.TEMPO);
+	    util.target.audioPlayer.setTempo(value);
+	};
+	
+	Scratch3SoundBlocks.prototype.changeTempo = function (args, util) {
+	    var value = Cast.toNumber(args.TEMPO);
+	    util.target.audioPlayer.changeTempo(value);
+	};
+	
+	Scratch3SoundBlocks.prototype.getTempo = function (args, util) {
+	    return util.target.audioPlayer.currentTempo;
+	};
+	
+	Scratch3SoundBlocks.prototype.soundsMenu = function (args) {
+	    return args.SOUND_MENU;
+	};
+	
+	Scratch3SoundBlocks.prototype.beatsMenu = function (args) {
+	    return args.BEATS;
+	};
+	
+	Scratch3SoundBlocks.prototype.effectsMenu = function (args) {
+	    return args.EFFECT;
+	};
+	
+	module.exports = Scratch3SoundBlocks;
+
+
+/***/ },
+/* 100 */
+/***/ function(module, exports, __webpack_require__) {
+
+	var Cast = __webpack_require__(83);
+	
+	var Scratch3SensingBlocks = function (runtime) {
+	    /**
+	     * The runtime instantiating this block package.
+	     * @type {Runtime}
+	     */
+	    this.runtime = runtime;
+	};
+	
+	/**
+	 * Retrieve the block primitives implemented by this package.
+	 * @return {Object.<string, Function>} Mapping of opcode to Function.
+	 */
+	Scratch3SensingBlocks.prototype.getPrimitives = function () {
+	    return {
+	        sensing_touchingobject: this.touchingObject,
+	        sensing_touchingcolor: this.touchingColor,
+	        sensing_coloristouchingcolor: this.colorTouchingColor,
+	        sensing_distanceto: this.distanceTo,
+	        sensing_timer: this.getTimer,
+	        sensing_resettimer: this.resetTimer,
+	        sensing_of: this.getAttributeOf,
+	        sensing_mousex: this.getMouseX,
+	        sensing_mousey: this.getMouseY,
+	        sensing_mousedown: this.getMouseDown,
+	        sensing_keypressed: this.getKeyPressed,
+	        sensing_current: this.current,
+	        sensing_dayssince2000: this.daysSince2000
+	    };
+	};
+	
+	Scratch3SensingBlocks.prototype.touchingObject = function (args, util) {
+	    var requestedObject = args.TOUCHINGOBJECTMENU;
+	    if (requestedObject === '_mouse_') {
+	        var mouseX = util.ioQuery('mouse', 'getX');
+	        var mouseY = util.ioQuery('mouse', 'getY');
+	        return util.target.isTouchingPoint(mouseX, mouseY);
+	    } else if (requestedObject === '_edge_') {
+	        return util.target.isTouchingEdge();
+	    } else {
+	        return util.target.isTouchingSprite(requestedObject);
+	    }
+	};
+	
+	Scratch3SensingBlocks.prototype.touchingColor = function (args, util) {
+	    var color = Cast.toRgbColorList(args.COLOR);
+	    return util.target.isTouchingColor(color);
+	};
+	
+	Scratch3SensingBlocks.prototype.colorTouchingColor = function (args, util) {
+	    var maskColor = Cast.toRgbColorList(args.COLOR);
+	    var targetColor = Cast.toRgbColorList(args.COLOR2);
+	    return util.target.colorIsTouchingColor(targetColor, maskColor);
+	};
+	
+	Scratch3SensingBlocks.prototype.distanceTo = function (args, util) {
+	    if (util.target.isStage) return 10000;
+	
+	    var targetX = 0;
+	    var targetY = 0;
+	    if (args.DISTANCETOMENU === '_mouse_') {
+	        targetX = util.ioQuery('mouse', 'getX');
+	        targetY = util.ioQuery('mouse', 'getY');
+	    } else {
+	        var distTarget = this.runtime.getSpriteTargetByName(
+	            args.DISTANCETOMENU
+	        );
+	        if (!distTarget) return 10000;
+	        targetX = distTarget.x;
+	        targetY = distTarget.y;
+	    }
+	
+	    var dx = util.target.x - targetX;
+	    var dy = util.target.y - targetY;
+	    return Math.sqrt((dx * dx) + (dy * dy));
+	};
+	
+	Scratch3SensingBlocks.prototype.getTimer = function (args, util) {
+	    return util.ioQuery('clock', 'projectTimer');
+	};
+	
+	Scratch3SensingBlocks.prototype.resetTimer = function (args, util) {
+	    util.ioQuery('clock', 'resetProjectTimer');
+	};
+	
+	Scratch3SensingBlocks.prototype.getMouseX = function (args, util) {
+	    return util.ioQuery('mouse', 'getX');
+	};
+	
+	Scratch3SensingBlocks.prototype.getMouseY = function (args, util) {
+	    return util.ioQuery('mouse', 'getY');
+	};
+	
+	Scratch3SensingBlocks.prototype.getMouseDown = function (args, util) {
+	    return util.ioQuery('mouse', 'getIsDown');
+	};
+	
+	Scratch3SensingBlocks.prototype.current = function (args) {
+	    var menuOption = Cast.toString(args.CURRENTMENU).toLowerCase();
+	    var date = new Date();
+	    switch (menuOption) {
+	    case 'year': return date.getFullYear();
+	    case 'month': return date.getMonth() + 1; // getMonth is zero-based
+	    case 'date': return date.getDate();
+	    case 'dayofweek': return date.getDay() + 1; // getDay is zero-based, Sun=0
+	    case 'hour': return date.getHours();
+	    case 'minute': return date.getMinutes();
+	    case 'second': return date.getSeconds();
+	    }
+	    return 0;
+	};
+	
+	Scratch3SensingBlocks.prototype.getKeyPressed = function (args, util) {
+	    return util.ioQuery('keyboard', 'getKeyIsDown', args.KEY_OPTION);
+	};
+	
+	Scratch3SensingBlocks.prototype.daysSince2000 = function () {
+	    var msPerDay = 24 * 60 * 60 * 1000;
+	    var start = new Date(2000, 0, 1); // Months are 0-indexed.
+	    var today = new Date();
+	    var dstAdjust = today.getTimezoneOffset() - start.getTimezoneOffset();
+	    var mSecsSinceStart = today.valueOf() - start.valueOf();
+	    mSecsSinceStart += ((today.getTimezoneOffset() - dstAdjust) * 60 * 1000);
+	    return mSecsSinceStart / msPerDay;
+	};
+	
+	Scratch3SensingBlocks.prototype.getAttributeOf = function (args) {
+	    var attrTarget;
+	
+	    if (args.OBJECT === '_stage_') {
+	        attrTarget = this.runtime.getTargetForStage();
+	    } else {
+	        attrTarget = this.runtime.getSpriteTargetByName(args.OBJECT);
+	    }
+	
+	    // Generic attributes
+	    if (attrTarget.isStage) {
+	        switch (args.PROPERTY) {
+	        // Scratch 1.4 support
+	        case 'background #': return attrTarget.currentCostume + 1;
+	
+	        case 'backdrop #': return attrTarget.currentCostume + 1;
+	        case 'backdrop name':
+	            return attrTarget.sprite.costumes[attrTarget.currentCostume].name;
+	        case 'volume': return; // @todo: Keep this in mind for sound blocks!
+	        }
+	    } else {
+	        switch (args.PROPERTY) {
+	        case 'x position': return attrTarget.x;
+	        case 'y position': return attrTarget.y;
+	        case 'direction': return attrTarget.direction;
+	        case 'costume #': return attrTarget.currentCostume + 1;
+	        case 'costume name':
+	            return attrTarget.sprite.costumes[attrTarget.currentCostume].name;
+	        case 'size': return attrTarget.size;
+	        case 'volume': return; // @todo: above, keep in mind for sound blocks..
+	        }
+	    }
+	
+	    // Variables
+	    var varName = args.PROPERTY;
+	    if (attrTarget.variables.hasOwnProperty(varName)) {
+	        return attrTarget.variables[varName].value;
+	    }
+	
+	    // Otherwise, 0
+	    return 0;
+	};
+	
+	module.exports = Scratch3SensingBlocks;
+
+
+/***/ },
+/* 101 */
+/***/ function(module, exports, __webpack_require__) {
+
+	var Cast = __webpack_require__(83);
+	
+	var Scratch3DataBlocks = function (runtime) {
+	    /**
+	     * The runtime instantiating this block package.
+	     * @type {Runtime}
+	     */
+	    this.runtime = runtime;
+	};
+	
+	/**
+	 * Retrieve the block primitives implemented by this package.
+	 * @return {Object.<string, Function>} Mapping of opcode to Function.
+	 */
+	Scratch3DataBlocks.prototype.getPrimitives = function () {
+	    return {
+	        data_variable: this.getVariable,
+	        data_setvariableto: this.setVariableTo,
+	        data_changevariableby: this.changeVariableBy,
+	        data_listcontents: this.getListContents,
+	        data_addtolist: this.addToList,
+	        data_deleteoflist: this.deleteOfList,
+	        data_insertatlist: this.insertAtList,
+	        data_replaceitemoflist: this.replaceItemOfList,
+	        data_itemoflist: this.getItemOfList,
+	        data_lengthoflist: this.lengthOfList,
+	        data_listcontainsitem: this.listContainsItem
+	    };
+	};
+	
+	Scratch3DataBlocks.prototype.getVariable = function (args, util) {
+	    var variable = util.target.lookupOrCreateVariable(args.VARIABLE);
+	    return variable.value;
+	};
+	
+	Scratch3DataBlocks.prototype.setVariableTo = function (args, util) {
+	    var variable = util.target.lookupOrCreateVariable(args.VARIABLE);
+	    variable.value = args.VALUE;
+	};
+	
+	Scratch3DataBlocks.prototype.changeVariableBy = function (args, util) {
+	    var variable = util.target.lookupOrCreateVariable(args.VARIABLE);
+	    var castedValue = Cast.toNumber(variable.value);
+	    var dValue = Cast.toNumber(args.VALUE);
+	    variable.value = castedValue + dValue;
+	};
+	
+	Scratch3DataBlocks.prototype.getListContents = function (args, util) {
+	    var list = util.target.lookupOrCreateList(args.LIST);
+	    // Determine if the list is all single letters.
+	    // If it is, report contents joined together with no separator.
+	    // If it's not, report contents joined together with a space.
+	    var allSingleLetters = true;
+	    for (var i = 0; i < list.contents.length; i++) {
+	        var listItem = list.contents[i];
+	        if (!((typeof listItem === 'string') &&
+	              (listItem.length === 1))) {
+	            allSingleLetters = false;
+	            break;
+	        }
+	    }
+	    if (allSingleLetters) {
+	        return list.contents.join('');
+	    } else {
+	        return list.contents.join(' ');
+	    }
+	};
+	
+	Scratch3DataBlocks.prototype.addToList = function (args, util) {
+	    var list = util.target.lookupOrCreateList(args.LIST);
+	    list.contents.push(args.ITEM);
+	};
+	
+	Scratch3DataBlocks.prototype.deleteOfList = function (args, util) {
+	    var list = util.target.lookupOrCreateList(args.LIST);
+	    var index = Cast.toListIndex(args.INDEX, list.contents.length);
+	    if (index === Cast.LIST_INVALID) {
+	        return;
+	    } else if (index === Cast.LIST_ALL) {
+	        list.contents = [];
+	        return;
+	    }
+	    list.contents.splice(index - 1, 1);
+	};
+	
+	Scratch3DataBlocks.prototype.insertAtList = function (args, util) {
+	    var item = args.ITEM;
+	    var list = util.target.lookupOrCreateList(args.LIST);
+	    var index = Cast.toListIndex(args.INDEX, list.contents.length + 1);
+	    if (index === Cast.LIST_INVALID) {
+	        return;
+	    }
+	    list.contents.splice(index - 1, 0, item);
+	};
+	
+	Scratch3DataBlocks.prototype.replaceItemOfList = function (args, util) {
+	    var item = args.ITEM;
+	    var list = util.target.lookupOrCreateList(args.LIST);
+	    var index = Cast.toListIndex(args.INDEX, list.contents.length);
+	    if (index === Cast.LIST_INVALID) {
+	        return;
+	    }
+	    list.contents.splice(index - 1, 1, item);
+	};
+	
+	Scratch3DataBlocks.prototype.getItemOfList = function (args, util) {
+	    var list = util.target.lookupOrCreateList(args.LIST);
+	    var index = Cast.toListIndex(args.INDEX, list.contents.length);
+	    if (index === Cast.LIST_INVALID) {
+	        return '';
+	    }
+	    return list.contents[index - 1];
+	};
+	
+	Scratch3DataBlocks.prototype.lengthOfList = function (args, util) {
+	    var list = util.target.lookupOrCreateList(args.LIST);
+	    return list.contents.length;
+	};
+	
+	Scratch3DataBlocks.prototype.listContainsItem = function (args, util) {
+	    var item = args.ITEM;
+	    var list = util.target.lookupOrCreateList(args.LIST);
+	    if (list.contents.indexOf(item) >= 0) {
+	        return true;
+	    }
+	    // Try using Scratch comparison operator on each item.
+	    // (Scratch considers the string '123' equal to the number 123).
+	    for (var i = 0; i < list.contents.length; i++) {
+	        if (Cast.compare(list.contents[i], item) === 0) {
+	            return true;
+	        }
+	    }
+	    return false;
+	};
+	
+	module.exports = Scratch3DataBlocks;
+
+
+/***/ },
+/* 102 */
+/***/ function(module, exports) {
+
+	var Scratch3ProcedureBlocks = function (runtime) {
+	    /**
+	     * The runtime instantiating this block package.
+	     * @type {Runtime}
+	     */
+	    this.runtime = runtime;
+	};
+	
+	/**
+	 * Retrieve the block primitives implemented by this package.
+	 * @return {Object.<string, Function>} Mapping of opcode to Function.
+	 */
+	Scratch3ProcedureBlocks.prototype.getPrimitives = function () {
+	    return {
+	        procedures_defnoreturn: this.defNoReturn,
+	        procedures_callnoreturn: this.callNoReturn,
+	        procedures_param: this.param
+	    };
+	};
+	
+	Scratch3ProcedureBlocks.prototype.defNoReturn = function () {
+	    // No-op: execute the blocks.
+	};
+	
+	Scratch3ProcedureBlocks.prototype.callNoReturn = function (args, util) {
+	    if (!util.stackFrame.executed) {
+	        var procedureCode = args.mutation.proccode;
+	        var paramNames = util.getProcedureParamNames(procedureCode);
+	        for (var i = 0; i < paramNames.length; i++) {
+	            if (args.hasOwnProperty('input' + i)) {
+	                util.pushParam(paramNames[i], args['input' + i]);
+	            }
+	        }
+	        util.stackFrame.executed = true;
+	        util.startProcedure(procedureCode);
+	    }
+	};
+	
+	Scratch3ProcedureBlocks.prototype.param = function (args, util) {
+	    var value = util.getParam(args.mutation.paramname);
+	    return value;
+	};
+	
+	module.exports = Scratch3ProcedureBlocks;
+
+
+/***/ },
+/* 103 */
+/***/ function(module, exports, __webpack_require__) {
+
+	/**
+	 * @fileoverview
+	 * Partial implementation of an SB2 JSON importer.
+	 * Parses provided JSON and then generates all needed
+	 * scratch-vm runtime structures.
+	 */
+	
+	var Blocks = __webpack_require__(26);
+	var RenderedTarget = __webpack_require__(94);
+	var Sprite = __webpack_require__(104);
+	var Color = __webpack_require__(84);
+	var log = __webpack_require__(13);
+	var uid = __webpack_require__(98);
+	var specMap = __webpack_require__(105);
+	var Variable = __webpack_require__(96);
+	var List = __webpack_require__(97);
+	
+	/**
+	 * Parse a single "Scratch object" and create all its in-memory VM objects.
+	 * @param {!Object} object From-JSON "Scratch object:" sprite, stage, watcher.
+	 * @param {!Runtime} runtime Runtime object to load all structures into.
+	 * @param {boolean} topLevel Whether this is the top-level object (stage).
+	 * @return {?Target} Target created (stage or sprite).
+	 */
+	var parseScratchObject = function (object, runtime, topLevel) {
+	    if (!object.hasOwnProperty('objName')) {
+	        // Watcher/monitor - skip this object until those are implemented in VM.
+	        // @todo
+	        return;
+	    }
+	    // Blocks container for this object.
+	    var blocks = new Blocks();
+	    // @todo: For now, load all Scratch objects (stage/sprites) as a Sprite.
+	    var sprite = new Sprite(blocks, runtime);
+	    // Sprite/stage name from JSON.
+	    if (object.hasOwnProperty('objName')) {
+	        sprite.name = object.objName;
+	    }
+	    // Costumes from JSON.
+	    if (object.hasOwnProperty('costumes')) {
+	        for (var i = 0; i < object.costumes.length; i++) {
+	            var costume = object.costumes[i];
+	            // @todo: Make sure all the relevant metadata is being pulled out.
+	            sprite.costumes.push({
+	                skin: 'https://cdn.assets.scratch.mit.edu/internalapi/asset/' +
+	                    costume.baseLayerMD5 + '/get/',
+	                name: costume.costumeName,
+	                bitmapResolution: costume.bitmapResolution,
+	                rotationCenterX: costume.rotationCenterX,
+	                rotationCenterY: costume.rotationCenterY
+	            });
+	        }
+	    }
+	    // Sounds from JSON
+	    if (object.hasOwnProperty('sounds')) {
+	        for (var s = 0; s < object.sounds.length; s++) {
+	            var sound = object.sounds[s];
+	            sprite.sounds.push({
+	                format: sound.format,
+	                fileUrl: 'https://cdn.assets.scratch.mit.edu/internalapi/asset/' + sound.md5 + '/get/',
+	                rate: sound.rate,
+	                sampleCount: sound.sampleCount,
+	                soundID: sound.soundID,
+	                name: sound.soundName
+	            });
+	        }
+	    }
+	    // If included, parse any and all scripts/blocks on the object.
+	    if (object.hasOwnProperty('scripts')) {
+	        parseScripts(object.scripts, blocks);
+	    }
+	    // Create the first clone, and load its run-state from JSON.
+	    var target = sprite.createClone();
+	    // Add it to the runtime's list of targets.
+	    runtime.targets.push(target);
+	    // Load target properties from JSON.
+	    if (object.hasOwnProperty('variables')) {
+	        for (var j = 0; j < object.variables.length; j++) {
+	            var variable = object.variables[j];
+	            target.variables[variable.name] = new Variable(
+	                variable.name,
+	                variable.value,
+	                variable.isPersistent
+	            );
+	        }
+	    }
+	    if (object.hasOwnProperty('lists')) {
+	        for (var k = 0; k < object.lists.length; k++) {
+	            var list = object.lists[k];
+	            // @todo: monitor properties.
+	            target.lists[list.listName] = new List(
+	                list.listName,
+	                list.contents
+	            );
+	        }
+	    }
+	    if (object.hasOwnProperty('scratchX')) {
+	        target.x = object.scratchX;
+	    }
+	    if (object.hasOwnProperty('scratchY')) {
+	        target.y = object.scratchY;
+	    }
+	    if (object.hasOwnProperty('direction')) {
+	        target.direction = object.direction;
+	    }
+	    if (object.hasOwnProperty('scale')) {
+	        // SB2 stores as 1.0 = 100%; we use % in the VM.
+	        target.size = object.scale * 100;
+	    }
+	    if (object.hasOwnProperty('visible')) {
+	        target.visible = object.visible;
+	    }
+	    if (object.hasOwnProperty('currentCostumeIndex')) {
+	        target.currentCostume = Math.round(object.currentCostumeIndex);
+	    }
+	    if (object.hasOwnProperty('rotationStyle')) {
+	        if (object.rotationStyle === 'none') {
+	            target.rotationStyle = RenderedTarget.ROTATION_STYLE_NONE;
+	        } else if (object.rotationStyle === 'leftRight') {
+	            target.rotationStyle = RenderedTarget.ROTATION_STYLE_LEFT_RIGHT;
+	        } else if (object.rotationStyle === 'normal') {
+	            target.rotationStyle = RenderedTarget.ROTATION_STYLE_ALL_AROUND;
+	        }
+	    }
+	    target.isStage = topLevel;
+	    target.updateAllDrawableProperties();
+	    // The stage will have child objects; recursively process them.
+	    if (object.children) {
+	        for (var m = 0; m < object.children.length; m++) {
+	            parseScratchObject(object.children[m], runtime, false);
+	        }
+	    }
+	    return target;
+	};
+	
+	/**
+	 * Top-level handler. Parse provided JSON,
+	 * and process the top-level object (the stage object).
+	 * @param {!string} json SB2-format JSON to load.
+	 * @param {!Runtime} runtime Runtime object to load all structures into.
+	 * @param {Boolean=} optForceSprite If set, treat as sprite (Sprite2).
+	 * @return {?Target} Top-level target created (stage or sprite).
+	 */
+	var sb2import = function (json, runtime, optForceSprite) {
+	    return parseScratchObject(
+	        JSON.parse(json),
+	        runtime,
+	        !optForceSprite
+	    );
+	};
+	
+	/**
+	 * Parse a Scratch object's scripts into VM blocks.
+	 * This should only handle top-level scripts that include X, Y coordinates.
+	 * @param {!Object} scripts Scripts object from SB2 JSON.
+	 * @param {!Blocks} blocks Blocks object to load parsed blocks into.
+	 */
+	var parseScripts = function (scripts, blocks) {
+	    for (var i = 0; i < scripts.length; i++) {
+	        var script = scripts[i];
+	        var scriptX = script[0];
+	        var scriptY = script[1];
+	        var blockList = script[2];
+	        var parsedBlockList = parseBlockList(blockList);
+	        if (parsedBlockList[0]) {
+	            // Adjust script coordinates to account for
+	            // larger block size in scratch-blocks.
+	            // @todo: Determine more precisely the right formulas here.
+	            parsedBlockList[0].x = scriptX * 1.1;
+	            parsedBlockList[0].y = scriptY * 1.1;
+	            parsedBlockList[0].topLevel = true;
+	            parsedBlockList[0].parent = null;
+	        }
+	        // Flatten children and create add the blocks.
+	        var convertedBlocks = flatten(parsedBlockList);
+	        for (var j = 0; j < convertedBlocks.length; j++) {
+	            blocks.createBlock(convertedBlocks[j]);
+	        }
+	    }
+	};
+	
+	/**
+	 * Parse any list of blocks from SB2 JSON into a list of VM-format blocks.
+	 * Could be used to parse a top-level script,
+	 * a list of blocks in a branch (e.g., in forever),
+	 * or a list of blocks in an argument (e.g., move [pick random...]).
+	 * @param {Array.<Object>} blockList SB2 JSON-format block list.
+	 * @return {Array.<Object>} Scratch VM-format block list.
+	 */
+	var parseBlockList = function (blockList) {
+	    var resultingList = [];
+	    var previousBlock = null; // For setting next.
+	    for (var i = 0; i < blockList.length; i++) {
+	        var block = blockList[i];
+	        var parsedBlock = parseBlock(block);
+	        if (previousBlock) {
+	            parsedBlock.parent = previousBlock.id;
+	            previousBlock.next = parsedBlock.id;
+	        }
+	        previousBlock = parsedBlock;
+	        resultingList.push(parsedBlock);
+	    }
+	    return resultingList;
+	};
+	
+	/**
+	 * Flatten a block tree into a block list.
+	 * Children are temporarily stored on the `block.children` property.
+	 * @param {Array.<Object>} blocks list generated by `parseBlockList`.
+	 * @return {Array.<Object>} Flattened list to be passed to `blocks.createBlock`.
+	 */
+	var flatten = function (blocks) {
+	    var finalBlocks = [];
+	    for (var i = 0; i < blocks.length; i++) {
+	        var block = blocks[i];
+	        finalBlocks.push(block);
+	        if (block.children) {
+	            finalBlocks = finalBlocks.concat(flatten(block.children));
+	        }
+	        delete block.children;
+	    }
+	    return finalBlocks;
+	};
+	
+	/**
+	 * Convert a Scratch 2.0 procedure string (e.g., "my_procedure %s %b %n")
+	 * into an argument map. This allows us to provide the expected inputs
+	 * to a mutated procedure call.
+	 * @param {string} procCode Scratch 2.0 procedure string.
+	 * @return {Object} Argument map compatible with those in sb2specmap.
+	 */
+	var parseProcedureArgMap = function (procCode) {
+	    var argMap = [
+	        {} // First item in list is op string.
+	    ];
+	    var INPUT_PREFIX = 'input';
+	    var inputCount = 0;
+	    // Split by %n, %b, %s.
+	    var parts = procCode.split(/(?=[^\\]%[nbs])/);
+	    for (var i = 0; i < parts.length; i++) {
+	        var part = parts[i].trim();
+	        if (part.substring(0, 1) === '%') {
+	            var argType = part.substring(1, 2);
+	            var arg = {
+	                type: 'input',
+	                inputName: INPUT_PREFIX + (inputCount++)
+	            };
+	            if (argType === 'n') {
+	                arg.inputOp = 'math_number';
+	            } else if (argType === 's') {
+	                arg.inputOp = 'text';
+	            }
+	            argMap.push(arg);
+	        }
+	    }
+	    return argMap;
+	};
+	
+	/**
+	 * Parse a single SB2 JSON-formatted block and its children.
+	 * @param {!Object} sb2block SB2 JSON-formatted block.
+	 * @return {Object} Scratch VM format block.
+	 */
+	var parseBlock = function (sb2block) {
+	    // First item in block object is the old opcode (e.g., 'forward:').
+	    var oldOpcode = sb2block[0];
+	    // Convert the block using the specMap. See sb2specmap.js.
+	    if (!oldOpcode || !specMap[oldOpcode]) {
+	        log.warn('Couldn\'t find SB2 block: ', oldOpcode);
+	        return;
+	    }
+	    var blockMetadata = specMap[oldOpcode];
+	    // Block skeleton.
+	    var activeBlock = {
+	        id: uid(), // Generate a new block unique ID.
+	        opcode: blockMetadata.opcode, // Converted, e.g. "motion_movesteps".
+	        inputs: {}, // Inputs to this block and the blocks they point to.
+	        fields: {}, // Fields on this block and their values.
+	        next: null, // Next block.
+	        shadow: false, // No shadow blocks in an SB2 by default.
+	        children: [] // Store any generated children, flattened in `flatten`.
+	    };
+	    // For a procedure call, generate argument map from proc string.
+	    if (oldOpcode === 'call') {
+	        blockMetadata.argMap = parseProcedureArgMap(sb2block[1]);
+	    }
+	    // Look at the expected arguments in `blockMetadata.argMap.`
+	    // The basic problem here is to turn positional SB2 arguments into
+	    // non-positional named Scratch VM arguments.
+	    for (var i = 0; i < blockMetadata.argMap.length; i++) {
+	        var expectedArg = blockMetadata.argMap[i];
+	        var providedArg = sb2block[i + 1]; // (i = 0 is opcode)
+	        // Whether the input is obscuring a shadow.
+	        var shadowObscured = false;
+	        // Positional argument is an input.
+	        if (expectedArg.type === 'input') {
+	            // Create a new block and input metadata.
+	            var inputUid = uid();
+	            activeBlock.inputs[expectedArg.inputName] = {
+	                name: expectedArg.inputName,
+	                block: null,
+	                shadow: null
+	            };
+	            if (typeof providedArg === 'object' && providedArg) {
+	                // Block or block list occupies the input.
+	                var innerBlocks;
+	                if (typeof providedArg[0] === 'object' && providedArg[0]) {
+	                    // Block list occupies the input.
+	                    innerBlocks = parseBlockList(providedArg);
+	                } else {
+	                    // Single block occupies the input.
+	                    innerBlocks = [parseBlock(providedArg)];
+	                }
+	                var previousBlock = null;
+	                for (var j = 0; j < innerBlocks.length; j++) {
+	                    if (j === 0) {
+	                        innerBlocks[j].parent = activeBlock.id;
+	                    } else {
+	                        innerBlocks[j].parent = previousBlock;
+	                    }
+	                    previousBlock = innerBlocks[j].id;
+	                }
+	                // Obscures any shadow.
+	                shadowObscured = true;
+	                activeBlock.inputs[expectedArg.inputName].block = (
+	                    innerBlocks[0].id
+	                );
+	                activeBlock.children = (
+	                    activeBlock.children.concat(innerBlocks)
+	                );
+	            }
+	            // Generate a shadow block to occupy the input.
+	            if (!expectedArg.inputOp) {
+	                // No editable shadow input; e.g., for a boolean.
+	                continue;
+	            }
+	            // Each shadow has a field generated for it automatically.
+	            // Value to be filled in the field.
+	            var fieldValue = providedArg;
+	            // Shadows' field names match the input name, except for these:
+	            var fieldName = expectedArg.inputName;
+	            if (expectedArg.inputOp === 'math_number' ||
+	                expectedArg.inputOp === 'math_whole_number' ||
+	                expectedArg.inputOp === 'math_positive_number' ||
+	                expectedArg.inputOp === 'math_integer' ||
+	                expectedArg.inputOp === 'math_angle') {
+	                fieldName = 'NUM';
+	                // Fields are given Scratch 2.0 default values if obscured.
+	                if (shadowObscured) {
+	                    fieldValue = 10;
+	                }
+	            } else if (expectedArg.inputOp === 'text') {
+	                fieldName = 'TEXT';
+	                if (shadowObscured) {
+	                    fieldValue = '';
+	                }
+	            } else if (expectedArg.inputOp === 'colour_picker') {
+	                // Convert SB2 color to hex.
+	                fieldValue = Color.decimalToHex(providedArg);
+	                fieldName = 'COLOUR';
+	                if (shadowObscured) {
+	                    fieldValue = '#990000';
+	                }
+	            } else if (shadowObscured) {
+	                // Filled drop-down menu.
+	                fieldValue = '';
+	            }
+	            var fields = {};
+	            fields[fieldName] = {
+	                name: fieldName,
+	                value: fieldValue
+	            };
+	            activeBlock.children.push({
+	                id: inputUid,
+	                opcode: expectedArg.inputOp,
+	                inputs: {},
+	                fields: fields,
+	                next: null,
+	                topLevel: false,
+	                parent: activeBlock.id,
+	                shadow: true
+	            });
+	            activeBlock.inputs[expectedArg.inputName].shadow = inputUid;
+	            // If no block occupying the input, alias to the shadow.
+	            if (!activeBlock.inputs[expectedArg.inputName].block) {
+	                activeBlock.inputs[expectedArg.inputName].block = inputUid;
+	            }
+	        } else if (expectedArg.type === 'field') {
+	            // Add as a field on this block.
+	            activeBlock.fields[expectedArg.fieldName] = {
+	                name: expectedArg.fieldName,
+	                value: providedArg
+	            };
+	        }
+	    }
+	    // Special cases to generate mutations.
+	    if (oldOpcode === 'stopScripts') {
+	        // Mutation for stop block: if the argument is 'other scripts',
+	        // the block needs a next connection.
+	        if (sb2block[1] === 'other scripts in sprite' ||
+	            sb2block[1] === 'other scripts in stage') {
+	            activeBlock.mutation = {
+	                tagName: 'mutation',
+	                hasnext: 'true',
+	                children: []
+	            };
+	        }
+	    } else if (oldOpcode === 'procDef') {
+	        // Mutation for procedure definition:
+	        // store all 2.0 proc data.
+	        var procData = sb2block.slice(1);
+	        activeBlock.mutation = {
+	            tagName: 'mutation',
+	            proccode: procData[0], // e.g., "abc %n %b %s"
+	            argumentnames: JSON.stringify(procData[1]), // e.g. ['arg1', 'arg2']
+	            argumentdefaults: JSON.stringify(procData[2]), // e.g., [1, 'abc']
+	            warp: procData[3], // Warp mode, e.g., true/false.
+	            children: []
+	        };
+	    } else if (oldOpcode === 'call') {
+	        // Mutation for procedure call:
+	        // string for proc code (e.g., "abc %n %b %s").
+	        activeBlock.mutation = {
+	            tagName: 'mutation',
+	            children: [],
+	            proccode: sb2block[1]
+	        };
+	    } else if (oldOpcode === 'getParam') {
+	        // Mutation for procedure parameter.
+	        activeBlock.mutation = {
+	            tagName: 'mutation',
+	            children: [],
+	            paramname: sb2block[1], // Name of parameter.
+	            shape: sb2block[2] // Shape - in 2.0, 'r' or 'b'.
+	        };
+	    }
+	    return activeBlock;
+	};
+	
+	module.exports = sb2import;
+
+
+/***/ },
+/* 104 */
+/***/ function(module, exports, __webpack_require__) {
+
+	var RenderedTarget = __webpack_require__(94);
 	var Blocks = __webpack_require__(26);
 	
 	/**
@@ -17384,7 +17928,7 @@
 
 
 /***/ },
-/* 103 */
+/* 105 */
 /***/ function(module, exports) {
 
 	/**
@@ -17952,7 +18496,7 @@
 	        ]
 	    },
 	    'setPenShadeTo:': {
-	        opcode: 'pen_changepenshadeby',
+	        opcode: 'pen_setpenshadeto',
 	        argMap: [
 	            {
 	                type: 'input',
