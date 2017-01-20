@@ -1,5 +1,4 @@
-var tap = require('tap');
-var test = tap.test;
+var test = require('tap').test;
 var color = require('../../src/util/color');
 
 /**
