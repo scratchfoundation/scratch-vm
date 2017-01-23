@@ -33,6 +33,7 @@ window.onload = function() {
         var file = event.target.files[0];
         var url = window.URL.createObjectURL(file);
         window.vm.expandAndLoadSb2(url);
+        event.target.value = null;
     };
     loadProject();
 
