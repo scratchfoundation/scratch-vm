@@ -189,6 +189,7 @@ Scratch3PenBlocks.prototype.clear = function () {
     if (penSkinId >= 0) {
         this.runtime.renderer.penClear(penSkinId);
         this.runtime.requestRedraw();
+        this.runtime.renderer._allSkins[penSkinId]._canvasDirty=true;
     }
 };
 
