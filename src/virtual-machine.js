@@ -155,6 +155,7 @@ VirtualMachine.prototype.loadProject = function (json) {
 };
 
 VirtualMachine.prototype.expandAndLoadSb2 = function (url) {
+    this.clear();
     var zip = new AdmZip(url);
     var json = zip.readAsText('project.json', 'utf8');
     this.loadProject(json);
