@@ -49,15 +49,13 @@
         <div id="tab-importexport">
             Import/Export<br />
             Project ID: <input id="projectId" value="119615668" />
-            <button id="projectLoadButton">Load</button>
-            <button id="createEmptyProject">New Project</button><br />
-            <p>
-                <input type="button" value="Export to XML" onclick="toXml()">
-                &nbsp;
-                <input type="button" value="Import from XML" onclick="fromXml()" id="import">
-                <br /><br />
-                <textarea id="importExport"></textarea>
-            </p>
+            <button id="projectLoadButton">Load</button><br />
+            <input id="projectLoadPicker" type="file" accept=".sb2"><br />
+            <input type="button" value="Export to XML" onclick="toXml()">
+            &nbsp;
+            <input type="button" value="Import from XML" onclick="fromXml()" id="import">
+            <br /><br />
+            <textarea id="importExport"></textarea>
         </div>
     </div>
 
