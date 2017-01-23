@@ -25,7 +25,6 @@
   },
   "devDependencies": {
     "adm-zip": "0.4.7",
-    "fs": "latest",
     "babel-eslint": "7.0.0",
     "copy-webpack-plugin": "3.0.1",
     "eslint": "3.8.1",
