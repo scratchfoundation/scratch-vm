@@ -1,5 +1,6 @@
 var EventEmitter = require('events');
 var util = require('util');
+var AdmZip = require('adm-zip');
 
 var Runtime = require('./engine/runtime');
 var sb2import = require('./import/sb2import');
@@ -151,6 +152,12 @@ VirtualMachine.prototype.loadProject = function (json) {
     this.emitTargetsUpdate();
     this.emitWorkspaceUpdate();
     this.runtime.setEditingTarget(this.editingTarget);
+};
+
+VirtualMachine.prototype.expandAndLoadSb2 = function (url) {
+    var zip = new AdmZip(url);
+    var json = zip.readAsText('project.json', 'utf8');
+    this.loadProject(json);
 };
 
 /**
