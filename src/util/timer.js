@@ -27,12 +27,10 @@ Timer.prototype.startTime = 0;
  * Return the currently known absolute time, in ms precision.
  * @returns {number} ms elapsed since 1 January 1970 00:00:00 UTC.
  */
-Timer.prototype.time = function () {
-    if (Date.now) {
-        return Date.now();
-    } else {
-        return new Date().getTime();
-    }
+Timer.prototype.time = Date.no ? function () {
+    return Date.now();
+} : function () {
+    return new Date().getTime();
 };
 
 /**
@@ -42,14 +40,13 @@ Timer.prototype.time = function () {
  * Not guaranteed to produce the same absolute values per-system.
  * @returns {number} ms-scale accurate time relative to other relative times.
  */
-Timer.prototype.relativeTime = function () {
-    if (typeof self !== 'undefined' &&
-        self.performance && 'now' in self.performance) {
-        return self.performance.now();
-    } else {
+Timer.prototype.relativeTime = (typeof self !== 'undefined' && self.performance && 'now' in self.performance) ?
+    function () {
+        return self.performance.now()
+    } :
+    function () {
         return this.time();
-    }
-};
+    };
 
 /**
  * Start a timer for measuring elapsed time,

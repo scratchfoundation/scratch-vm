@@ -831,9 +831,7 @@ Runtime.prototype.start = function () {
         interval = Runtime.THREAD_STEP_INTERVAL_COMPATIBILITY;
     }
     this.currentStepTime = interval;
-    this._steppingInterval = setInterval(function () {
-        this._step();
-    }.bind(this), interval);
+    this._steppingInterval = setInterval(this._step.bind(this), interval);
 };
 
 module.exports = Runtime;
