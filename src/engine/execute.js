@@ -19,34 +19,36 @@ var execute = function (sequencer, thread) {
     var runtime = sequencer.runtime;
     var target = thread.target;
 
-    // Current block to execute is the one on the top of the stack.
-    var currentBlockId = thread.peekStack();
-    var currentStackFrame = thread.peekStackFrame();
-
-    // Check where the block lives: target blocks or flyout blocks.
-    var targetHasBlock = (
-        typeof target.blocks.getBlock(currentBlockId) !== 'undefined'
-    );
-    var flyoutHasBlock = (
-        typeof runtime.flyoutBlocks.getBlock(currentBlockId) !== 'undefined'
-    );
-
     // Stop if block or target no longer exists.
-    if (!target || (!targetHasBlock && !flyoutHasBlock)) {
+    if (!target) {
         // No block found: stop the thread; script no longer exists.
         sequencer.retireThread(thread);
         return;
     }
 
-    // Query info about the block.
-    var blockContainer = null;
-    if (targetHasBlock) {
+    // Current block to execute is the one on the top of the stack.
+    var currentBlockId = thread.peekStack();
+    var currentStackFrame = thread.peekStackFrame();
+
+    var blockContainer;
+    var block = target.blocks.getBlock(currentBlockId);
+    if (typeof block !== 'undefined') {
         blockContainer = target.blocks;
     } else {
+        block = runtime.flyoutBlocks.getBlock(currentBlockId);
+        // Stop if block or target no longer exists.
+        if (typeof block == 'undefined') {
+            // No block found: stop the thread; script no longer exists.
+            sequencer.retireThread(thread);
+            return;
+        }
+        
         blockContainer = runtime.flyoutBlocks;
     }
-    var opcode = blockContainer.getOpcode(currentBlockId);
-    var fields = blockContainer.getFields(currentBlockId);
+    
+//    var block = blockContainer.getBlock(currentBlockId);
+    var opcode = block.opcode; // blockContainer.getOpcode(currentBlockId);
+    var fields = block.fields; // blockContainer.getFields(currentBlockId);
     var inputs = blockContainer.getInputs(currentBlockId);
     var blockFunction = runtime.getOpcodeFunction(opcode);
     var isHat = runtime.getIsHat(opcode);
@@ -57,43 +59,7 @@ var execute = function (sequencer, thread) {
         return;
     }
 
-    /**
-     * Handle any reported value from the primitive, either directly returned
-     * or after a promise resolves.
-     * @param {*} resolvedValue Value eventually returned from the primitive.
-     */
-    var handleReport = function (resolvedValue) {
-        thread.pushReportedValue(resolvedValue);
-        if (isHat) {
-            // Hat predicate was evaluated.
-            if (runtime.getIsEdgeActivatedHat(opcode)) {
-                // If this is an edge-activated hat, only proceed if
-                // the value is true and used to be false.
-                var oldEdgeValue = runtime.updateEdgeActivatedValue(
-                    currentBlockId,
-                    resolvedValue
-                );
-                var edgeWasActivated = !oldEdgeValue && resolvedValue;
-                if (!edgeWasActivated) {
-                    sequencer.retireThread(thread);
-                }
-            } else {
-                // Not an edge-activated hat: retire the thread
-                // if predicate was false.
-                if (!resolvedValue) {
-                    sequencer.retireThread(thread);
-                }
-            }
-        } else {
-            // In a non-hat, report the value visually if necessary if
-            // at the top of the thread stack.
-            if (typeof resolvedValue !== 'undefined' && thread.atStackTop()) {
-                runtime.visualReport(currentBlockId, resolvedValue);
-            }
-            // Finished any yields.
-            thread.status = Thread.STATUS_RUNNING;
-        }
-    };
+	var callThing = new CallThing(sequencer, runtime, thread, blockContainer, currentStackFrame.executionContext, target, opcode, currentBlockId, isHat);
 
     // Hats and single-field shadows are implemented slightly differently
     // from regular blocks.
@@ -110,7 +76,7 @@ var execute = function (sequencer, thread) {
                 Object.keys(inputs).length === 0) {
                 // One field and no inputs - treat as arg.
                 for (var fieldKey in fields) { // One iteration.
-                    handleReport(fields[fieldKey].value);
+                    callThing.handleReport(fields[fieldKey].value);
                 }
             } else {
                 log.warn('Could not get implementation for opcode: ' +
@@ -167,55 +133,9 @@ var execute = function (sequencer, thread) {
     // (e.g., on return from a branch) gets fresh inputs.
     currentStackFrame.reported = {};
 
-    var primitiveReportedValue = null;
-    primitiveReportedValue = blockFunction(argValues, {
-        stackFrame: currentStackFrame.executionContext,
-        target: target,
-        yield: function () {
-            thread.status = Thread.STATUS_YIELD;
-        },
-        startBranch: function (branchNum, isLoop) {
-            sequencer.stepToBranch(thread, branchNum, isLoop);
-        },
-        stopAll: function () {
-            runtime.stopAll();
-        },
-        stopOtherTargetThreads: function () {
-            runtime.stopForTarget(target, thread);
-        },
-        stopThread: function () {
-            sequencer.retireThread(thread);
-        },
-        startProcedure: function (procedureCode) {
-            sequencer.stepToProcedure(thread, procedureCode);
-        },
-        getProcedureParamNames: function (procedureCode) {
-            return blockContainer.getProcedureParamNames(procedureCode);
-        },
-        pushParam: function (paramName, paramValue) {
-            thread.pushParam(paramName, paramValue);
-        },
-        getParam: function (paramName) {
-            return thread.getParam(paramName);
-        },
-        startHats: function (requestedHat, optMatchFields, optTarget) {
-            return (
-                runtime.startHats(requestedHat, optMatchFields, optTarget)
-            );
-        },
-        ioQuery: function (device, func, args) {
-            // Find the I/O device and execute the query/function call.
-            if (runtime.ioDevices[device] && runtime.ioDevices[device][func]) {
-                var devObject = runtime.ioDevices[device];
-                // @todo Figure out why eslint complains about no-useless-call
-                // no-useless-call can't tell if the call is useless for dynamic
-                // expressions... or something. Not exactly sure why it
-                // complains here.
-                // eslint-disable-next-line no-useless-call
-                return devObject[func].call(devObject, args);
-            }
-        }
-    });
+    var primitiveReportedValue;
+
+    primitiveReportedValue = blockFunction(argValues, callThing);
 
     if (typeof primitiveReportedValue === 'undefined') {
         // No value reported - potentially a command block.
@@ -231,7 +151,7 @@ var execute = function (sequencer, thread) {
         }
         // Promise handlers
         primitiveReportedValue.then(function (resolvedValue) {
-            handleReport(resolvedValue);
+            callThing.handleReport(resolvedValue);
             if (typeof resolvedValue === 'undefined') {
                 var popped = thread.popStack();
                 var nextBlockId = thread.target.blocks.getNextBlock(popped);
@@ -247,7 +167,116 @@ var execute = function (sequencer, thread) {
             thread.popStack();
         });
     } else if (thread.status === Thread.STATUS_RUNNING) {
-        handleReport(primitiveReportedValue);
+        callThing.handleReport(primitiveReportedValue);
+    }
+};
+
+/**
+ * Object constructor to avoid recreating entire function call util array each time 
+ * @param sequencer
+ * @param runtime
+ * @param thread
+ * @param blockContainer
+ * @param stackFrame
+ * @param target
+ * @param opcode
+ * @param currentBlockId
+ * @param isHat
+ * @constructor
+ */
+var CallThing = function (sequencer, runtime, thread, blockContainer, stackFrame, target, opcode, currentBlockId, isHat) {
+    this.sequencer = sequencer;
+    this.runtime = runtime;
+    this.thread = thread;
+    this.blockContainer = blockContainer;
+    this.stackFrame = stackFrame;
+    this.target = target;
+    this.opcode = opcode;
+    this.currentBlockId = currentBlockId;
+    this.isHat = isHat;
+};
+
+CallThing.prototype.yield = function () {
+    this.thread.status = Thread.STATUS_YIELD;
+};
+CallThing.prototype.startBranch = function (branchNum, isLoop) {
+    this.sequencer.stepToBranch(this.thread, branchNum, isLoop);
+};
+CallThing.prototype.stopAll = function () {
+    this.runtime.stopAll();
+};
+CallThing.prototype.stopOtherTargetThreads = function () {
+    this.runtime.stopForTarget(this.target, this.thread);
+};
+CallThing.prototype.stopThread = function () {
+    this.sequencer.retireThread(this.thread);
+};
+CallThing.prototype.startProcedure = function (procedureCode) {
+    this.sequencer.stepToProcedure(this.thread, procedureCode);
+};
+CallThing.prototype.getProcedureParamNames = function (procedureCode) {
+    return this.blockContainer.getProcedureParamNames(procedureCode);
+};
+CallThing.prototype.pushParam = function (paramName, paramValue) {
+    this.thread.pushParam(paramName, paramValue);
+};
+CallThing.prototype.getParam = function (paramName) {
+    return this.thread.getParam(paramName);
+};
+CallThing.prototype.startHats = function (requestedHat, optMatchFields, optTarget) {
+    return (
+        this.runtime.startHats(requestedHat, optMatchFields, optTarget)
+    );
+};
+CallThing.prototype.ioQuery = function (device, func, args) {
+    // Find the I/O device and execute the query/function call.
+    if (this.runtime.ioDevices[device] && this.runtime.ioDevices[device][func]) {
+        var devObject = this.runtime.ioDevices[device];
+        // @todo Figure out why eslint complains about no-useless-call
+        // no-useless-call can't tell if the call is useless for dynamic
+        // expressions... or something. Not exactly sure why it
+        // complains here.
+        // eslint-disable-next-line no-useless-call
+        return devObject[func].call(devObject, args);
+    }
+};
+
+/**
+ * Handle any reported value from the primitive, either directly returned
+ * or after a promise resolves.
+ * @param {*} resolvedValue Value eventually returned from the primitive.
+ */
+CallThing.prototype.handleReport = function (resolvedValue) {
+
+    this.thread.pushReportedValue(resolvedValue);
+    if (this.isHat) {
+        // Hat predicate was evaluated.
+        if (this.runtime.getIsEdgeActivatedHat(this.opcode)) {
+            // If this is an edge-activated hat, only proceed if
+            // the value is true and used to be false.
+            var oldEdgeValue = this.runtime.updateEdgeActivatedValue(
+                this.currentBlockId,
+                resolvedValue
+            );
+            var edgeWasActivated = !oldEdgeValue && resolvedValue;
+            if (!edgeWasActivated) {
+                this.sequencer.retireThread(this.thread);
+            }
+        } else {
+            // Not an edge-activated hat: retire the thread
+            // if predicate was false.
+            if (!resolvedValue) {
+                this.sequencer.retireThread(this.thread);
+            }
+        }
+    } else {
+        // In a non-hat, report the value visually if necessary if
+        // at the top of the thread stack.
+        if (typeof resolvedValue !== 'undefined' && this.thread.atStackTop()) {
+            this.runtime.visualReport(this.currentBlockId, resolvedValue);
+        }
+        // Finished any yields.
+        this.thread.status = Thread.STATUS_RUNNING;
     }
 };
 
