@@ -3825,13 +3825,15 @@
 		         * Use `createBitmapSkin` or `createSVGSkin` instead.
 		         * @param {!string} skinUrl The URL of the skin.
 		         * @param {!int} [costumeResolution] Optional: resolution for the skin. Ignored unless creating a new Bitmap skin.
+		         * @param {number[]=} rotationCenter Optional: rotation center of the skin. If not supplied, the center of the skin
+		         * will be used.
 		         * @returns {!int} The ID of the Skin.
 		         * @deprecated
 		         */
 		
 		    }, {
 		        key: 'createSkinFromURL',
-		        value: function createSkinFromURL(skinUrl, costumeResolution) {
+		        value: function createSkinFromURL(skinUrl, costumeResolution, rotationCenter) {
 		            var _this2 = this;
 		
 		            if (this._skinUrlMap.hasOwnProperty(skinUrl)) {
@@ -3869,7 +3871,7 @@
 		                    url: skinUrl
 		                }, function (err, response, body) {
 		                    if (!err) {
-		                        newSkin.setSVG(body);
+		                        newSkin.setSVG(body, rotationCenter);
 		                    }
 		                });
 		            } else {
@@ -3878,7 +3880,7 @@
 		                    var img = new Image();
 		                    img.crossOrigin = 'anonymous';
 		                    img.onload = function () {
-		                        newSkin.setBitmap(img, costumeResolution);
+		                        newSkin.setBitmap(img, costumeResolution, rotationCenter);
 		                    };
 		                    img.src = skinUrl;
 		                })();
@@ -3892,15 +3894,16 @@
 		         * Create a new bitmap skin from a snapshot of the provided bitmap data.
 		         * @param {ImageData|HTMLImageElement|HTMLCanvasElement|HTMLVideoElement} bitmapData - new contents for this skin.
 		         * @param {!int} [costumeResolution=1] - The resolution to use for this bitmap.
+		         * @param {number[]=} rotationCenter Optional: rotation center of the skin. If not supplied, the center of the skin
 		         * @returns {!int} the ID for the new skin.
 		         */
 		
 		    }, {
 		        key: 'createBitmapSkin',
-		        value: function createBitmapSkin(bitmapData, costumeResolution) {
+		        value: function createBitmapSkin(bitmapData, costumeResolution, rotationCenter) {
 		            var skinId = this._nextSkinId++;
 		            var newSkin = new BitmapSkin(skinId, this);
-		            newSkin.setBitmap(bitmapData, costumeResolution);
+		            newSkin.setBitmap(bitmapData, costumeResolution, rotationCenter);
 		            this._allSkins[skinId] = newSkin;
 		            return skinId;
 		        }
@@ -3908,15 +3911,16 @@
 		        /**
 		         * Create a new SVG skin.
 		         * @param {!string} svgData - new SVG to use.
+		         * @param {number[]=} rotationCenter Optional: rotation center of the skin. If not supplied, the center of the skin
 		         * @returns {!int} the ID for the new skin.
 		         */
 		
 		    }, {
 		        key: 'createSVGSkin',
-		        value: function createSVGSkin(svgData) {
+		        value: function createSVGSkin(svgData, rotationCenter) {
 		            var skinId = this._nextSkinId++;
 		            var newSkin = new SVGSkin(skinId, this);
-		            newSkin.setSVG(svgData);
+		            newSkin.setSVG(svgData, rotationCenter);
 		            this._allSkins[skinId] = newSkin;
 		            return skinId;
 		        }
@@ -4405,9 +4409,10 @@
 		            // TODO: remove this after fully deprecating URL-based skin paths
 		            if ('skin' in properties) {
 		                var skin = properties.skin,
-		                    costumeResolution = properties.costumeResolution;
+		                    costumeResolution = properties.costumeResolution,
+		                    rotationCenter = properties.rotationCenter;
 		
-		                var skinId = this.createSkinFromURL(skin, costumeResolution);
+		                var skinId = this.createSkinFromURL(skin, costumeResolution, rotationCenter);
 		                drawable.skin = this._allSkins[skinId];
 		            }
 		            if ('skinId' in properties) {
@@ -13931,11 +13936,13 @@
 		         * Set the contents of this skin to a snapshot of the provided bitmap data.
 		         * @param {ImageData|HTMLImageElement|HTMLCanvasElement|HTMLVideoElement} bitmapData - new contents for this skin.
 		         * @param {int} [costumeResolution=1] - The resolution to use for this bitmap.
+		         * @param {number[]=} rotationCenter - Optional rotation center for the bitmap. If not supplied, it will be
+		         * calculated from the bounding box
 		         */
 		
 		    }, {
 		        key: 'setBitmap',
-		        value: function setBitmap(bitmapData, costumeResolution) {
+		        value: function setBitmap(bitmapData, costumeResolution, rotationCenter) {
 		            var gl = this._renderer.gl;
 		
 		            if (this._texture) {
@@ -13956,6 +13963,9 @@
 		            // Do these last in case any of the above throws an exception
 		            this._costumeResolution = costumeResolution || 1;
 		            this._textureSize = BitmapSkin._getBitmapSize(bitmapData);
+		
+		            if (typeof rotationCenter === 'undefined') rotationCenter = this.calculateRotationCenter();
+		            this.setRotationCenter.apply(this, rotationCenter);
 		
 		            this.emit(Skin.Events.WasAltered);
 		        }
@@ -14084,6 +14094,17 @@
 		        this._rotationCenter[1] = y;
 		        this.emit(Skin.Events.WasAltered);
 		      }
+		    }
+		
+		    /**
+		     * Get the center of the current bounding box
+		     * @return {[number,number]} the center of the current bounding box
+		     */
+		
+		  }, {
+		    key: 'calculateRotationCenter',
+		    value: function calculateRotationCenter() {
+		      return [this.size[0] / 2, this.size[1] / 2];
 		    }
 		
 		    /**
@@ -15104,6 +15125,7 @@
 		        value: function clear() {
 		            var ctx = this._canvas.getContext('2d');
 		            ctx.clearRect(0, 0, this._canvas.width, this._canvas.height);
+		            this._canvasDirty = true;
 		        }
 		
 		        /**
@@ -15311,11 +15333,13 @@
 		        /**
 		         * Set the contents of this skin to a snapshot of the provided SVG data.
 		         * @param {string} svgData - new SVG to use.
+		         * @param {number[]=} rotationCenter - Optional rotation center for the SVG. If not supplied, it will be
+		         * calculated from the bounding box
 		         */
 		
 		    }, {
 		        key: 'setSVG',
-		        value: function setSVG(svgData) {
+		        value: function setSVG(svgData, rotationCenter) {
 		            var _this2 = this;
 		
 		            this._svgRenderer.fromString(svgData, function () {
@@ -15334,6 +15358,8 @@
 		
 		                    _this2._texture = twgl.createTexture(gl, textureOptions);
 		                }
+		                if (typeof rotationCenter === 'undefined') rotationCenter = _this2.calculateRotationCenter();
+		                _this2.setRotationCenter.apply(_this2, rotationCenter);
 		                _this2.emit(Skin.Events.WasAltered);
 		            });
 		        }
