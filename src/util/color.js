@@ -40,10 +40,11 @@ Color.decimalToHex = function (decimal) {
  * @return {RGBObject} rgb - {r: red [0,255], g: green [0,255], b: blue [0,255]}.
  */
 Color.decimalToRgb = function (decimal) {
+    var a = (decimal >> 24) & 0xFF;
     var r = (decimal >> 16) & 0xFF;
     var g = (decimal >> 8) & 0xFF;
     var b = decimal & 0xFF;
-    return {r: r, g: g, b: b};
+    return {r: r, g: g, b: b, a: a>0 ? a : 255};
 };
 
 /**
