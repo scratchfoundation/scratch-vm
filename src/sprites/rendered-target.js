@@ -437,7 +437,7 @@ RenderedTarget.prototype.updateAllDrawableProperties = function () {
     if (this.renderer) {
         var renderedDirectionScale = this._getRenderedDirectionAndScale();
         var costume = this.sprite.costumes[this.currentCostume];
-        this.renderer.updateDrawableProperties(this.drawableID, {
+        var props = {
             position: [this.x, this.y],
             direction: renderedDirectionScale.direction,
             scale: renderedDirectionScale.scale,
@@ -448,7 +448,11 @@ RenderedTarget.prototype.updateAllDrawableProperties = function () {
                 costume.rotationCenterX / costume.bitmapResolution,
                 costume.rotationCenterY / costume.bitmapResolution
             ]
-        });
+        };
+        for (var effectID in this.effects) {
+            props[effectID] = this.effects[effectID];
+        }
+        this.renderer.updateDrawableProperties(this.drawableID, props);
         if (this.visible) {
             this.runtime.requestRedraw();
         }
