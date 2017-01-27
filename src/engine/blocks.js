@@ -22,6 +22,8 @@ var Blocks = function () {
      * @type {Array.<String>}
      */
     this._scripts = [];
+
+	this._cacheProceduresByName = {};
 };
 
 /**
@@ -54,8 +56,8 @@ Blocks.prototype.getScripts = function () {
   * @return {?string} ID of next block in the sequence
   */
 Blocks.prototype.getNextBlock = function (id) {
-    if (typeof this._blocks[id] === 'undefined') return null;
-    return this._blocks[id].next;
+    var block = this._blocks[id];
+    return (typeof block === 'undefined') ? null : block.next;
 };
 
 /**
@@ -85,8 +87,8 @@ Blocks.prototype.getBranch = function (id, branchNum) {
  * @return {?string} the opcode corresponding to that block
  */
 Blocks.prototype.getOpcode = function (id) {
-    if (typeof this._blocks[id] === 'undefined') return null;
-    return this._blocks[id].opcode;
+    var block = this._blocks[id];
+    return (typeof block === 'undefined') ? null : block.opcode;
 };
 
 /**
@@ -95,8 +97,8 @@ Blocks.prototype.getOpcode = function (id) {
  * @return {!Object} All fields and their values.
  */
 Blocks.prototype.getFields = function (id) {
-    if (typeof this._blocks[id] === 'undefined') return null;
-    return this._blocks[id].fields;
+    var block = this._blocks[id];
+    return (typeof block === 'undefined') ? null : block.fields;
 };
 
 /**
@@ -105,14 +107,19 @@ Blocks.prototype.getFields = function (id) {
  * @return {!Object} All non-branch inputs and their associated blocks.
  */
 Blocks.prototype.getInputs = function (id) {
-    if (typeof this._blocks[id] === 'undefined') return null;
-    var inputs = {};
-    for (var input in this._blocks[id].inputs) {
-        // Ignore blocks prefixed with branch prefix.
-        if (input.substring(0, Blocks.BRANCH_INPUT_PREFIX.length) !==
-            Blocks.BRANCH_INPUT_PREFIX) {
-            inputs[input] = this._blocks[id].inputs[input];
+    var block = this._blocks[id];
+    if (typeof block === 'undefined') return null;
+    var inputs = block.inputsCached;	// todo: Needs invalidation...
+    if (!inputs) {
+        inputs = {};
+        for (var input in block.inputs) {
+            // Ignore blocks prefixed with branch prefix.
+            if (input.substring(0, Blocks.BRANCH_INPUT_PREFIX.length) !==
+                Blocks.BRANCH_INPUT_PREFIX) {
+                inputs[input] = block.inputs[input];
+            }
         }
+        block.inputsCached = inputs;
     }
     return inputs;
 };
@@ -123,8 +130,9 @@ Blocks.prototype.getInputs = function (id) {
  * @return {!Object} Mutation for the block.
  */
 Blocks.prototype.getMutation = function (id) {
-    if (typeof this._blocks[id] === 'undefined') return null;
-    return this._blocks[id].mutation;
+    var block = this._blocks[id];
+    if (typeof block === 'undefined') return null;
+    return block.mutation;
 };
 
 /**
@@ -133,8 +141,8 @@ Blocks.prototype.getMutation = function (id) {
  * @return {?string} ID of top-level script block.
  */
 Blocks.prototype.getTopLevelScript = function (id) {
-    if (typeof this._blocks[id] === 'undefined') return null;
     var block = this._blocks[id];
+    if (typeof block === 'undefined') return null;
     while (block.parent !== null) {
         block = this._blocks[block.parent];
     }
@@ -147,15 +155,11 @@ Blocks.prototype.getTopLevelScript = function (id) {
  * @return {?string} ID of procedure definition.
  */
 Blocks.prototype.getProcedureDefinition = function (name) {
-    for (var id in this._blocks) {
-        var block = this._blocks[id];
-        if ((block.opcode === 'procedures_defnoreturn' ||
-            block.opcode === 'procedures_defreturn') &&
-            block.mutation.proccode === name) {
-            return id;
-        }
+    var cached = this._cacheProceduresByName[name];
+    if (!cached) {
+        cached = this.getCachedProcedure(name);
     }
-    return null;
+    return cached.id;
 };
 
 /**
@@ -164,15 +168,29 @@ Blocks.prototype.getProcedureDefinition = function (name) {
  * @return {?string} ID of procedure definition.
  */
 Blocks.prototype.getProcedureParamNames = function (name) {
+    var cached = this._cacheProceduresByName[name];
+    if (!cached) {
+        cached = this.getCachedProcedure(name);
+    }
+    return cached.paramNames;
+};
+
+Blocks.prototype.getCachedProcedure = function (name) {
+    var cached = {name:name, paramNames:null, id:null};
+
     for (var id in this._blocks) {
         var block = this._blocks[id];
         if ((block.opcode === 'procedures_defnoreturn' ||
             block.opcode === 'procedures_defreturn') &&
             block.mutation.proccode === name) {
-            return JSON.parse(block.mutation.argumentnames);
+            
+            cached.id = id;
+            cached.paramNames = JSON.parse(block.mutation.argumentnames);
+            break;
         }
     }
-    return null;
+    
+    return this._cacheProceduresByName[name] = cached;
 };
 
 // ---------------------------------------------------------------------
@@ -269,16 +287,22 @@ Blocks.prototype.createBlock = function (block) {
  * @param {!Object} args Blockly change event to be processed
  */
 Blocks.prototype.changeBlock = function (args) {
+
+    this._cacheProceduresByName = {};	// For now... reset cache of procedures at every change!
+
     // Validate
     if (args.element !== 'field' && args.element !== 'mutation') return;
-    if (typeof this._blocks[args.id] === 'undefined') return;
+    var block = this._blocks[args.id];
+    if (typeof block === 'undefined') return;
+
+    if (block.inputsCached) block.inputsCached = null;
 
     if (args.element === 'field') {
         // Update block value
-        if (!this._blocks[args.id].fields[args.name]) return;
-        this._blocks[args.id].fields[args.name].value = args.value;
+        if (!block.fields[args.name]) return;
+        block.fields[args.name].value = args.value;
     } else if (args.element === 'mutation') {
-        this._blocks[args.id].mutation = mutationAdapter(args.value);
+        block.mutation = mutationAdapter(args.value);
     }
 };
 
