@@ -14377,10 +14377,11 @@
 	 * @return {RGBObject} rgb - {r: red [0,255], g: green [0,255], b: blue [0,255]}.
 	 */
 	Color.decimalToRgb = function (decimal) {
+	    var a = (decimal >> 24) & 0xFF;
 	    var r = (decimal >> 16) & 0xFF;
 	    var g = (decimal >> 8) & 0xFF;
 	    var b = decimal & 0xFF;
-	    return {r: r, g: g, b: b};
+	    return {r: r, g: g, b: b, a: a > 0 ? a : 255};
 	};
 	
 	/**
@@ -15797,6 +15798,9 @@
 	    penState.penAttributes.color4f[0] = rgb.r / 255.0;
 	    penState.penAttributes.color4f[1] = rgb.g / 255.0;
 	    penState.penAttributes.color4f[2] = rgb.b / 255.0;
+	    if (rgb.hasOwnProperty('a')) {  // Will there always be an 'a'?
+	        penState.penAttributes.color4f[3] = rgb.a / 255.0;
+	    }
 	};
 	
 	/**
