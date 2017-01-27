@@ -44,7 +44,7 @@ Color.decimalToRgb = function (decimal) {
     var r = (decimal >> 16) & 0xFF;
     var g = (decimal >> 8) & 0xFF;
     var b = decimal & 0xFF;
-    return {r: r, g: g, b: b, a: a>0 ? a : 255};
+    return {r: r, g: g, b: b, a: a > 0 ? a : 255};
 };
 
 /**
