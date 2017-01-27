@@ -367,7 +367,7 @@ RenderedTarget.prototype.setCostume = function (index) {
     if (this.renderer) {
         var costume = this.sprite.costumes[this.currentCostume];
         var drawableProperties = {
-            skin: costume.skin,
+            skinId: costume.skinId,
             costumeResolution: costume.bitmapResolution
         };
         if (
@@ -458,7 +458,7 @@ RenderedTarget.prototype.updateAllDrawableProperties = function () {
             draggable: this.draggable,
             scale: renderedDirectionScale.scale,
             visible: this.visible,
-            skin: costume.skin,
+            skinId: costume.skinId,
             costumeResolution: bitmapResolution,
             rotationCenter: [
                 costume.rotationCenterX / bitmapResolution,

@@ -24,7 +24,7 @@ var Sprite = function (blocks, runtime) {
      * List of costumes for this sprite.
      * Each entry is an object, e.g.,
      * {
-     *      skin: "costume.svg",
+     *      skinId: 1,
      *      name: "Costume Name",
      *      bitmapResolution: 2,
      *      rotationCenterX: 0,

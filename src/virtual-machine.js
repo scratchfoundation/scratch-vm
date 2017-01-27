@@ -3,7 +3,10 @@ var util = require('util');
 
 var filterToolbox = require('./util/filter-toolbox');
 var Runtime = require('./engine/runtime');
+var ScratchStorage = require('scratch-storage');
 var sb2import = require('./import/sb2import');
+
+var AssetType = ScratchStorage.AssetType;
 
 /**
  * Handles connections between blocks, stage, and extensions.
@@ -155,6 +158,18 @@ VirtualMachine.prototype.loadProject = function (json) {
 };
 
 /**
+ * Load a project from the Scratch web site, by ID.
+ * @param {string} id - the ID of the project to download, as a string.
+ */
+VirtualMachine.prototype.downloadProjectId = function (id) {
+    var vm = this;
+    var promise = this.runtime.storage.load(AssetType.Project, id);
+    promise.then(function (projectAsset) {
+        vm.loadProject(projectAsset.decodeText());
+    });
+};
+
+/**
  * Add a single sprite from the "Sprite2" (i.e., SB2 sprite) format.
  * @param {?string} json JSON string representing the sprite.
  */
@@ -244,6 +259,14 @@ VirtualMachine.prototype.deleteSprite = function (targetId) {
 };
 
 /**
+ * Set the audio engine for the VM/runtime
+ * @param {!AudioEngine} audioEngine The audio engine to attach
+ */
+VirtualMachine.prototype.attachAudioEngine = function (audioEngine) {
+    this.runtime.attachAudioEngine(audioEngine);
+};
+
+/**
  * Set the renderer for the VM/runtime
  * @param {!RenderWebGL} renderer The renderer to attach
  */
@@ -252,11 +275,11 @@ VirtualMachine.prototype.attachRenderer = function (renderer) {
 };
 
 /**
- * Set the audio engine for the VM/runtime
- * @param {!AudioEngine} audioEngine The audio engine to attach
+ * Set the storage module for the VM/runtime
+ * @param {!ScratchStorage} storage The storage module to attach
  */
-VirtualMachine.prototype.attachAudioEngine = function (audioEngine) {
-    this.runtime.attachAudioEngine(audioEngine);
+VirtualMachine.prototype.attachStorage = function (storage) {
+    this.runtime.attachStorage(storage);
 };
 
 /**

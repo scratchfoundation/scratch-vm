@@ -1,27 +1,56 @@
+var Scratch = window.Scratch = window.Scratch || {};
+
+var ASSET_SERVER = 'https://cdn.assets.scratch.mit.edu/';
+var PROJECT_SERVER = 'https://cdn.projects.scratch.mit.edu/';
+
 var loadProject = function () {
     var id = location.hash.substring(1);
     if (id.length < 1 || !isFinite(id)) {
         id = '119615668';
     }
-    var url = 'https://projects.scratch.mit.edu/internalapi/project/' +
-        id + '/get/';
-    var r = new XMLHttpRequest();
-    r.onreadystatechange = function () {
-        if (this.readyState === 4) {
-            if (r.status === 200) {
-                window.vm.loadProject(this.responseText);
-            }
-        }
-    };
-    r.open('GET', url);
-    r.send();
+    Scratch.vm.downloadProjectId(id);
+};
+
+/**
+ * @param {Asset} asset - calculate a URL for this asset.
+ * @returns {string} a URL to download a project file.
+ */
+var getProjectUrl = function (asset) {
+    var assetIdParts = asset.assetId.split('.');
+    var assetUrlParts = [PROJECT_SERVER, 'internalapi/project/', assetIdParts[0], '/get/'];
+    if (assetIdParts[1]) {
+        assetUrlParts.push(assetIdParts[1]);
+    }
+    return assetUrlParts.join('');
+};
+
+/**
+ * @param {Asset} asset - calculate a URL for this asset.
+ * @returns {string} a URL to download a project asset (PNG, WAV, etc.)
+ */
+var getAssetUrl = function (asset) {
+    var assetUrlParts = [
+        ASSET_SERVER,
+        'internalapi/asset/',
+        asset.assetId,
+        '.',
+        asset.assetType.runtimeFormat,
+        '/get/'
+    ];
+    return assetUrlParts.join('');
 };
 
 window.onload = function () {
     // Lots of global variables to make debugging easier
     // Instantiate the VM.
     var vm = new window.VirtualMachine();
-    window.vm = vm;
+    Scratch.vm = vm;
+
+    var storage = new Scratch.Storage();
+    var AssetType = Scratch.Storage.AssetType;
+    storage.addWebSource([AssetType.Project], getProjectUrl);
+    storage.addWebSource([AssetType.ImageVector, AssetType.ImageBitmap, AssetType.Sound], getAssetUrl);
+    vm.attachStorage(storage);
 
     // Loading projects from the server.
     document.getElementById('projectLoadButton').onclick = function () {
@@ -33,7 +62,7 @@ window.onload = function () {
     // Instantiate the renderer and connect it to the VM.
     var canvas = document.getElementById('scratch-stage');
     var renderer = new window.RenderWebGL(canvas);
-    window.renderer = renderer;
+    Scratch.renderer = renderer;
     vm.attachRenderer(renderer);
     var audioEngine = new window.AudioEngine();
     vm.attachAudioEngine(audioEngine);
@@ -57,7 +86,7 @@ window.onload = function () {
             dragShadowOpacity: 0.6
         }
     });
-    window.workspace = workspace;
+    Scratch.workspace = workspace;
 
     // Filter available blocks
     var toolbox = vm.filterToolbox(workspace.options.languageTree);
@@ -95,10 +124,10 @@ window.onload = function () {
     };
 
     // Only request data from the VM thread if the appropriate tab is open.
-    window.exploreTabOpen = false;
+    Scratch.exploreTabOpen = false;
     var getPlaygroundData = function () {
         vm.getPlaygroundData();
-        if (window.exploreTabOpen) {
+        if (Scratch.exploreTabOpen) {
             window.requestAnimationFrame(getPlaygroundData);
         }
     };
@@ -187,7 +216,7 @@ window.onload = function () {
             canvasWidth: rect.width,
             canvasHeight: rect.height
         };
-        window.vm.postIOData('mouse', coordinates);
+        Scratch.vm.postIOData('mouse', coordinates);
     });
     canvas.addEventListener('mousedown', function (e) {
         var rect = canvas.getBoundingClientRect();
@@ -198,7 +227,7 @@ window.onload = function () {
             canvasWidth: rect.width,
             canvasHeight: rect.height
         };
-        window.vm.postIOData('mouse', data);
+        Scratch.vm.postIOData('mouse', data);
         e.preventDefault();
     });
     canvas.addEventListener('mouseup', function (e) {
@@ -210,7 +239,7 @@ window.onload = function () {
             canvasWidth: rect.width,
             canvasHeight: rect.height
         };
-        window.vm.postIOData('mouse', data);
+        Scratch.vm.postIOData('mouse', data);
         e.preventDefault();
     });
 
@@ -220,7 +249,7 @@ window.onload = function () {
         if (e.target !== document && e.target !== document.body) {
             return;
         }
-        window.vm.postIOData('keyboard', {
+        Scratch.vm.postIOData('keyboard', {
             keyCode: e.keyCode,
             isDown: true
         });
@@ -229,7 +258,7 @@ window.onload = function () {
     document.addEventListener('keyup', function (e) {
         // Always capture up events,
         // even those that have switched to other targets.
-        window.vm.postIOData('keyboard', {
+        Scratch.vm.postIOData('keyboard', {
             keyCode: e.keyCode,
             isDown: false
         });
@@ -273,7 +302,7 @@ window.onload = function () {
     // Handlers to show different explorers.
     document.getElementById('threadexplorer-link').addEventListener('click',
         function () {
-            window.exploreTabOpen = true;
+            Scratch.exploreTabOpen = true;
             getPlaygroundData();
             tabBlockExplorer.style.display = 'none';
             tabRenderExplorer.style.display = 'none';
@@ -282,7 +311,7 @@ window.onload = function () {
         });
     document.getElementById('blockexplorer-link').addEventListener('click',
         function () {
-            window.exploreTabOpen = true;
+            Scratch.exploreTabOpen = true;
             getPlaygroundData();
             tabBlockExplorer.style.display = 'block';
             tabRenderExplorer.style.display = 'none';
@@ -291,7 +320,7 @@ window.onload = function () {
         });
     document.getElementById('renderexplorer-link').addEventListener('click',
         function () {
-            window.exploreTabOpen = false;
+            Scratch.exploreTabOpen = false;
             tabBlockExplorer.style.display = 'none';
             tabRenderExplorer.style.display = 'block';
             tabThreadExplorer.style.display = 'none';
@@ -299,7 +328,7 @@ window.onload = function () {
         });
     document.getElementById('importexport-link').addEventListener('click',
         function () {
-            window.exploreTabOpen = false;
+            Scratch.exploreTabOpen = false;
             tabBlockExplorer.style.display = 'none';
             tabRenderExplorer.style.display = 'none';
             tabThreadExplorer.style.display = 'none';
