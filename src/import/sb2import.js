@@ -166,8 +166,8 @@ var parseScripts = function (scripts, blocks) {
             // Adjust script coordinates to account for
             // larger block size in scratch-blocks.
             // @todo: Determine more precisely the right formulas here.
-            parsedBlockList[0].x = scriptX * 1.1;
-            parsedBlockList[0].y = scriptY * 1.1;
+            parsedBlockList[0].x = scriptX * 1.5;
+            parsedBlockList[0].y = scriptY * 2.2;
             parsedBlockList[0].topLevel = true;
             parsedBlockList[0].parent = null;
         }
