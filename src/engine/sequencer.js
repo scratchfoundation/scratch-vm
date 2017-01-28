@@ -137,9 +137,9 @@ Sequencer.prototype.stepThread = function (thread) {
                 thread.status = Thread.STATUS_DONE;
                 return;
             }
-			
-			var stackFrame = thread.peekStackFrame();
-	        isWarpMode = stackFrame.warpMode;
+
+            var stackFrame = thread.peekStackFrame();
+            isWarpMode = stackFrame.warpMode;
 
             if (stackFrame.isLoop) {
                 // The current level of the stack is marked as a loop.
