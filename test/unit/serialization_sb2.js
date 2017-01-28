@@ -4,10 +4,11 @@ var extract = require('../fixtures/extract');
 
 var renderedTarget = require('../../src/sprites/rendered-target');
 var runtime = require('../../src/engine/runtime');
-var sb2 = require('../../src/import/sb2import');
+var sb2 = require('../../src/serialization/sb2');
 
 test('spec', function (t) {
-    t.type(sb2, 'function');
+    t.type(sb2, 'object');
+    t.type(sb2.deserialize, 'function');
     t.end();
 });
 
@@ -18,7 +19,7 @@ test('default', function (t) {
 
     // Create runtime instance & load SB2 into it
     var rt = new runtime();
-    sb2(file, rt);
+    sb2.deserialize(file, rt);
 
     // Test
     t.type(file, 'string');

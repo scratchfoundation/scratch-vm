@@ -2,7 +2,9 @@ var EventEmitter = require('events');
 var util = require('util');
 
 var Runtime = require('./engine/runtime');
-var sb2import = require('./import/sb2import');
+
+var sb2 = require('./serialization/sb2');
+var sb3 = require('./serialization/sb3');
 
 /**
  * Handles connections between blocks, stage, and extensions.
@@ -143,10 +145,59 @@ VirtualMachine.prototype.postIOData = function (device, data) {
  */
 VirtualMachine.prototype.loadProject = function (json) {
     this.clear();
-    // @todo: Handle other formats, e.g., Scratch 1.4, Scratch 3.0.
-    sb2import(json, this.runtime);
+    // @todo: Handle other formats, e.g., Scratch 1.4.
+    this.fromJSON(json, this.runtime);
     // Select the first target for editing, e.g., the first sprite.
     this.editingTarget = this.runtime.targets[1];
+    // Update the VM user's knowledge of targets and blocks on the workspace.
+    this.emitTargetsUpdate();
+    this.emitWorkspaceUpdate();
+    this.runtime.setEditingTarget(this.editingTarget);
+};
+
+/**
+ * return a project in a Scratch 3.0 JSON representation.
+ */
+VirtualMachine.prototype.saveProjectSb3 = function () {
+    // @todo: Handle other formats, e.g., Scratch 1.4, Scratch 2.0.
+    return this.toJSON();
+}
+
+/**
+ * Export project as a Scratch 3.0 JSON representation.
+ * @return {string} Serialized state of the runtime.
+ */
+VirtualMachine.prototype.toJSON = function () {
+    return JSON.stringify(sb3.serialize(this.runtime));
+};
+
+/**
+ * Load a project from a Scratch JSON representation.
+ * @param {string} json JSON string representing a project.
+ */
+VirtualMachine.prototype.fromJSON = function (json) {
+    // Clear the current runtime
+    this.clear();
+
+    // Validate & parse
+    if (typeof json !== 'string') return;
+    json = JSON.parse(json);
+    if (typeof json !== 'object') return;
+
+    // Establish version, deserialize, and load into runtime
+    // @todo Support Scratch 1.4
+    // @todo This is an extremely naïve / dangerous way of determining version.
+    //       See `scratch-parser` for a more sophisticated validation
+    //       methodology that should be adapted for use here
+    if ((typeof json.meta !== 'undefined') && (typeof json.meta.semver !== 'undefined') ) {
+        sb3.deserialize(json, this.runtime);
+    } else {
+        sb2.deserialize(json, this.runtime);
+    }
+
+    // Select the first target for editing, e.g., the first sprite.
+    this.editingTarget = this.runtime.targets[1];
+
     // Update the VM user's knowledge of targets and blocks on the workspace.
     this.emitTargetsUpdate();
     this.emitWorkspaceUpdate();
@@ -159,7 +210,7 @@ VirtualMachine.prototype.loadProject = function (json) {
  */
 VirtualMachine.prototype.addSprite2 = function (json) {
     // Select new sprite.
-    this.editingTarget = sb2import(json, this.runtime, true);
+    this.editingTarget = sb2.deserialize(json, this.runtime, true);
     // Update the VM user's knowledge of targets and blocks on the workspace.
     this.emitTargetsUpdate();
     this.emitWorkspaceUpdate();

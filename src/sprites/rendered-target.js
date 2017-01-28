@@ -717,7 +717,7 @@ RenderedTarget.prototype.postSpriteInfo = function (data) {
 
 /**
  * Serialize sprite info, used when emitting events about the sprite
- * @returns {object} sprite data as a simple object
+ * @returns {object} Sprite data as a simple object
  */
 RenderedTarget.prototype.toJSON = function () {
     return {
@@ -726,11 +726,15 @@ RenderedTarget.prototype.toJSON = function () {
         isStage: this.isStage,
         x: this.x,
         y: this.y,
+        size: this.size,
         direction: this.direction,
         costume: this.getCurrentCostume(),
         costumeCount: this.getCostumes().length,
         visible: this.visible,
-        rotationStyle: this.rotationStyle
+        rotationStyle: this.rotationStyle,
+        blocks: this.blocks._blocks,
+        variables: this.variables,
+        lists: this.lists
     };
 };
 
