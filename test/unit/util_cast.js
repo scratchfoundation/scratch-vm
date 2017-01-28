@@ -99,13 +99,14 @@ test('toRbgColorObject', function (t) {
     t.deepEqual(cast.toRgbColorObject('#ffffff'), {r: 255, g: 255, b: 255});
 
     // Decimal (minimal, see "color" util tests)
-    t.deepEqual(cast.toRgbColorObject(0), {r: 0, g: 0, b: 0});
-    t.deepEqual(cast.toRgbColorObject(1), {r: 0, g: 0, b: 1});
-    t.deepEqual(cast.toRgbColorObject(16777215), {r: 255, g: 255, b: 255});
+    t.deepEqual(cast.toRgbColorObject(0), {a: 255, r: 0, g: 0, b: 0});
+    t.deepEqual(cast.toRgbColorObject(1), {a: 255, r: 0, g: 0, b: 1});
+    t.deepEqual(cast.toRgbColorObject(16777215), {a: 255, r: 255, g: 255, b: 255});
+    t.deepEqual(cast.toRgbColorObject('0x80010203'), {a: 128, r: 1, g: 2, b: 3});
 
     // Malformed
-    t.deepEqual(cast.toRgbColorObject('ffffff'), {r: 0, g: 0, b: 0});
-    t.deepEqual(cast.toRgbColorObject('foobar'), {r: 0, g: 0, b: 0});
+    t.deepEqual(cast.toRgbColorObject('ffffff'), {a: 255, r: 0, g: 0, b: 0});
+    t.deepEqual(cast.toRgbColorObject('foobar'), {a: 255, r: 0, g: 0, b: 0});
     t.end();
 });
 
