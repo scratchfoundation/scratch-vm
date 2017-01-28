@@ -131,12 +131,17 @@ Sequencer.prototype.stepThread = function (thread) {
         // If no next block has been found at this point, look on the stack.
         while (!thread.peekStack()) {
             thread.popStack();
+
             if (thread.stack.length === 0) {
                 // No more stack to run!
                 thread.status = Thread.STATUS_DONE;
                 return;
             }
-            if (thread.peekStackFrame().isLoop) {
+
+            var stackFrame = thread.peekStackFrame();
+            isWarpMode = stackFrame.warpMode;
+
+            if (stackFrame.isLoop) {
                 // The current level of the stack is marked as a loop.
                 // Return to yield for the frame/tick in general.
                 // Unless we're in warp mode - then only return if the
@@ -151,7 +156,7 @@ Sequencer.prototype.stepThread = function (thread) {
                     // since loops need to be re-executed.
                     continue;
                 }
-            } else if (thread.peekStackFrame().waitingReporter) {
+            } else if (stackFrame.waitingReporter) {
                 // This level of the stack was waiting for a value.
                 // This means a reporter has just returned - so don't go
                 // to the next block for this level of the stack.
