@@ -101,6 +101,7 @@ Thread.prototype.pushStack = function (blockId) {
     if (this.stack.length > this.stackFrames.length) {
         // Copy warp mode from any higher level.
         var warpMode = false;
+        if (this.stackFrames.length > 0 && this.stackFrames[this.stackFrames.length - 1]) {
             warpMode = this.stackFrames[this.stackFrames.length - 1].warpMode;
         }
         this.stackFrames.push({
