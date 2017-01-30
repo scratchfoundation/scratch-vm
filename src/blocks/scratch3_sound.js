@@ -93,7 +93,8 @@ Scratch3SoundBlocks.prototype.setInstrument = function (args, util) {
     var instNum = Cast.toNumber(args.INSTRUMENT);
     instNum -= 1; // instruments are one-indexed
     instNum = MathUtil.wrapClamp(instNum, 0, this.runtime.audioEngine.numInstruments);
-    return util.target.audioPlayer.setInstrument(instNum);
+    util.target.setInstrument(instNum);
+    return this.runtime.audioEngine.instrumentPlayer.loadInstrument(instNum);
 };
 
 Scratch3SoundBlocks.prototype.setEffect = function (args, util) {
