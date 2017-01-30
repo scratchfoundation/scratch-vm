@@ -465,6 +465,9 @@ RenderedTarget.prototype.updateAllDrawableProperties = function () {
     this.runtime.spriteInfoReport(this);
 };
 
+RenderedTarget.prototype.playSound = function (index) {
+    return this.audioPlayer.playSound(this.sprite.sounds[index].md5);
+};
 /**
  * Return the human-readable name for this rendered target, e.g., the sprite's name.
  * @override

@@ -39,12 +39,12 @@ Scratch3SoundBlocks.prototype.getPrimitives = function () {
 
 Scratch3SoundBlocks.prototype.playSound = function (args, util) {
     var index = this._getSoundIndex(args.SOUND_MENU, util);
-    util.target.audioPlayer.playSound(index);
+    util.target.playSound(index);
 };
 
 Scratch3SoundBlocks.prototype.playSoundAndWait = function (args, util) {
     var index = this._getSoundIndex(args.SOUND_MENU, util);
-    return util.target.audioPlayer.playSound(index);
+    return util.target.playSound(index);
 };
 
 Scratch3SoundBlocks.prototype._getSoundIndex = function (soundName, util) {
