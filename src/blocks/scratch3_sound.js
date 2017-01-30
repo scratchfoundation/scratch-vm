@@ -48,17 +48,22 @@ Scratch3SoundBlocks.prototype.playSoundAndWait = function (args, util) {
 };
 
 Scratch3SoundBlocks.prototype._getSoundIndex = function (soundName, util) {
+    // if the sprite has no sounds, return 0
     if (util.target.sprite.sounds.length === 0) {
         return 0;
     }
     var index;
 
+    // if the sound name is a number, wrapclamp it to a sound index
     if (Number(soundName)) {
         soundName = Number(soundName);
         var len = util.target.sprite.sounds.length;
         index = MathUtil.wrapClamp(soundName, 1, len) - 1;
     } else {
+        // else get the index for that sound of that name
         index = util.target.getSoundIndexByName(soundName);
+        // use zero if there is no sound by that name
+        // to match scratch 2.0 behavior, we should instead play no sound in this case
         if (index === -1) {
             index = 0;
         }
