@@ -84,9 +84,9 @@ Scratch3SoundBlocks.prototype.playDrumForBeats = function (args, util) {
     return util.target.audioPlayer.playDrumForBeats(drum, beats);
 };
 
-Scratch3SoundBlocks.prototype.restForBeats = function (args, util) {
+Scratch3SoundBlocks.prototype.restForBeats = function (args) {
     var beats = Cast.toNumber(args.BEATS);
-    return util.target.audioPlayer.waitForBeats(beats);
+    return this.runtime.audioEngine.waitForBeats(beats);
 };
 
 Scratch3SoundBlocks.prototype.setInstrument = function (args, util) {
