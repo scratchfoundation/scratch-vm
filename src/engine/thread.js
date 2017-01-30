@@ -101,7 +101,7 @@ Thread.prototype.pushStack = function (blockId) {
     if (this.stack.length > this.stackFrames.length) {
         // Copy warp mode from any higher level.
         var warpMode = false;
-        if (this.stackFrames[this.stackFrames.length - 1]) {
+        if (this.stackFrames.length > 0 && this.stackFrames[this.stackFrames.length - 1]) {
             warpMode = this.stackFrames[this.stackFrames.length - 1].warpMode;
         }
         this.stackFrames.push({
@@ -145,7 +145,7 @@ Thread.prototype.popStack = function () {
  * @return {?string} Block ID on top of stack.
  */
 Thread.prototype.peekStack = function () {
-    return this.stack[this.stack.length - 1];
+    return this.stack.length > 0 ? this.stack[this.stack.length - 1] : null;
 };
 
 
@@ -154,7 +154,7 @@ Thread.prototype.peekStack = function () {
  * @return {?Object} Last stack frame stored on this thread.
  */
 Thread.prototype.peekStackFrame = function () {
-    return this.stackFrames[this.stackFrames.length - 1];
+    return this.stackFrames.length > 0 ? this.stackFrames[this.stackFrames.length - 1] : null;
 };
 
 /**
@@ -162,7 +162,7 @@ Thread.prototype.peekStackFrame = function () {
  * @return {?Object} Second to last stack frame stored on this thread.
  */
 Thread.prototype.peekParentStackFrame = function () {
-    return this.stackFrames[this.stackFrames.length - 2];
+    return this.stackFrames.length > 1 ? this.stackFrames[this.stackFrames.length - 2] : null;
 };
 
 /**
