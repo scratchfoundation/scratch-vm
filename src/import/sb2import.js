@@ -61,7 +61,8 @@ var parseScratchObject = function (object, runtime, topLevel) {
                 rate: sound.rate,
                 sampleCount: sound.sampleCount,
                 soundID: sound.soundID,
-                name: sound.soundName
+                name: sound.soundName,
+                md5: sound.md5
             });
         }
     }
