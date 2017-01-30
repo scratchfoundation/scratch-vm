@@ -82,10 +82,9 @@ RenderedTarget.prototype.initDrawable = function () {
     this.audioPlayer = null;
     if (this.runtime && this.runtime.audioEngine) {
         if (this.isOriginal) {
-            this.sprite.audioPlayer = this.runtime.audioEngine.createPlayer();
-            this.sprite.audioPlayer.loadSounds(this.sprite.sounds);
+            this.runtime.audioEngine.loadSounds(this.sprite.sounds);
         }
-        this.audioPlayer = this.sprite.audioPlayer;
+        this.audioPlayer = this.runtime.audioEngine.createPlayer();
     }
 };
 
