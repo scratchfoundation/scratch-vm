@@ -563,7 +563,7 @@ var specMap = {
         ]
     },
     'setPenShadeTo:': {
-        opcode: 'pen_changepenshadeby',
+        opcode: 'pen_setpenshadeto',
         argMap: [
             {
                 type: 'input',

@@ -8,11 +8,16 @@ npm-*
 # Testing
 /.nyc_output
 /coverage
-/dist.js
-/vm.js
-/vm.min.js
+
+# IDEA
+/.idea
+
+# Build
+/dist
 /playground/assets
 /playground/media
+/playground/scratch-vm.js
+/playground/scratch-vm.js.map
 /playground/vendor.js
-/playground/vm.js
+/playground/vendor.js.map
 /playground/zenburn.css

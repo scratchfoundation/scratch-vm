@@ -138,6 +138,12 @@ RenderedTarget.prototype.size = 100;
 RenderedTarget.prototype.currentCostume = 0;
 
 /**
+ * Event which fires when a target moves.
+ * @type {string}
+ */
+RenderedTarget.EVENT_TARGET_MOVED = 'TARGET_MOVED';
+
+/**
  * Rotation style for "all around"/spinning.
  * @enum
  */
@@ -184,6 +190,8 @@ RenderedTarget.prototype.setXY = function (x, y) {
     if (this.isStage) {
         return;
     }
+    var oldX = this.x;
+    var oldY = this.y;
     this.x = x;
     this.y = y;
     if (this.renderer) {
@@ -194,6 +202,7 @@ RenderedTarget.prototype.setXY = function (x, y) {
             this.runtime.requestRedraw();
         }
     }
+    this.emit(RenderedTarget.EVENT_TARGET_MOVED, this, oldX, oldY);
     this.runtime.spriteInfoReport(this);
 };
 
@@ -370,14 +379,21 @@ RenderedTarget.prototype.setCostume = function (index) {
     );
     if (this.renderer) {
         var costume = this.sprite.costumes[this.currentCostume];
-        this.renderer.updateDrawableProperties(this.drawableID, {
+        var drawableProperties = {
             skin: costume.skin,
-            costumeResolution: costume.bitmapResolution,
-            rotationCenter: [
-                costume.rotationCenterX / costume.bitmapResolution,
-                costume.rotationCenterY / costume.bitmapResolution
-            ]
-        });
+            costumeResolution: costume.bitmapResolution
+        };
+        if (
+            typeof costume.rotationCenterX !== 'undefined' &&
+            typeof costume.rotationCenterY !== 'undefined'
+        ) {
+            var scale = costume.bitmapResolution || 1;
+            drawableProperties.rotationCenter = [
+                costume.rotationCenterX / scale,
+                costume.rotationCenterY / scale
+            ];
+        }
+        this.renderer.updateDrawableProperties(this.drawableID, drawableProperties);
         if (this.visible) {
             this.runtime.requestRedraw();
         }
@@ -462,7 +478,7 @@ RenderedTarget.prototype.updateAllDrawableProperties = function () {
     if (this.renderer) {
         var renderedDirectionScale = this._getRenderedDirectionAndScale();
         var costume = this.sprite.costumes[this.currentCostume];
-        this.renderer.updateDrawableProperties(this.drawableID, {
+        var props = {
             position: [this.x, this.y],
             direction: renderedDirectionScale.direction,
             scale: renderedDirectionScale.scale,
@@ -473,7 +489,11 @@ RenderedTarget.prototype.updateAllDrawableProperties = function () {
                 costume.rotationCenterX / costume.bitmapResolution,
                 costume.rotationCenterY / costume.bitmapResolution
             ]
-        });
+        };
+        for (var effectID in this.effects) {
+            props[effectID] = this.effects[effectID];
+        }
+        this.renderer.updateDrawableProperties(this.drawableID, props);
         if (this.visible) {
             this.runtime.requestRedraw();
         }
