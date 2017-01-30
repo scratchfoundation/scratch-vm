@@ -116,6 +116,22 @@ Thread.prototype.pushStack = function (blockId) {
 };
 
 /**
+ * Reset the stack frame for use by the next block.
+ * (avoids popping and re-pushing a new stack frame - keeps the warpmode the same
+ * @param {string} blockId Block ID to push to stack.
+ */
+Thread.prototype.reuseStackForNextBlock = function (blockId) {
+    this.stack[this.stack.length - 1] = blockId;
+    var frame = this.stackFrames[this.stackFrames.length - 1];
+    frame.isLoop = false;
+    // frame.warpMode = warpMode;   // warp mode stays the same when reusing the stack frame.
+    frame.reported = {};
+    frame.waitingReporter = null;
+    frame.params = {};
+    frame.executionContext = {};
+};
+
+/**
  * Pop last block on the stack and its stack frame.
  * @return {string} Block ID popped from the stack.
  */
@@ -203,15 +219,7 @@ Thread.prototype.atStackTop = function () {
  */
 Thread.prototype.goToNextBlock = function () {
     var nextBlockId = this.target.blocks.getNextBlock(this.peekStack());
-    // Copy warp mode to next block.
-    var warpMode = this.peekStackFrame().warpMode;
-    // The current block is on the stack - pop it and push the next.
-    // Note that this could push `null` - that is handled by the sequencer.
-    this.popStack();
-    this.pushStack(nextBlockId);
-    if (this.peekStackFrame()) {
-        this.peekStackFrame().warpMode = warpMode;
-    }
+    this.reuseStackForNextBlock(nextBlockId);
 };
 
 /**
