@@ -97,13 +97,17 @@ Scratch3SoundBlocks.prototype.setInstrument = function (args, util) {
 };
 
 Scratch3SoundBlocks.prototype.setEffect = function (args, util) {
+    var effect = Cast.toString(args.EFFECT).toLowerCase();
     var value = Cast.toNumber(args.VALUE);
-    util.target.audioPlayer.setEffect(args.EFFECT, value);
+    util.target.setAudioEffect(effect, value);
 };
 
 Scratch3SoundBlocks.prototype.changeEffect = function (args, util) {
+    var effect = Cast.toString(args.EFFECT).toLowerCase();
     var value = Cast.toNumber(args.VALUE);
-    util.target.audioPlayer.changeEffect(args.EFFECT, value);
+    if (!util.target.audioEffects.hasOwnProperty(effect)) return;
+    var newValue = value + util.target.audioEffects[effect];
+    util.target.setAudioEffect(effect, newValue);
 };
 
 Scratch3SoundBlocks.prototype.clearEffects = function (args, util) {

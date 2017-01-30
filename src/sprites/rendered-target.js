@@ -342,6 +342,23 @@ RenderedTarget.prototype.clearEffects = function () {
 };
 
 /**
+ * Set a particular audio effect value.
+ * @param {!string} effectName Name audio of effect (see `RenderedTarget.prototype.audioEffects`).
+ * @param {!number} value Numerical magnitude of effect.
+ */
+RenderedTarget.prototype.setAudioEffect = function (effectName, value) {
+    if (!this.audioEffects.hasOwnProperty(effectName)) return;
+    this.audioEffects[effectName] = value;
+    this.audioPlayer.setEffect(effectName, value);
+};
+
+RenderedTarget.prototype.clearAudioEffects = function () {
+    for (var effectName in this.audioEffects) {
+        this.audioEffects[effectName] = 0;
+        this.audioPlayer.setEffect(effectName, 0);
+    }
+};
+/**
  * Set the current costume.
  * @param {number} index New index of costume.
  */
