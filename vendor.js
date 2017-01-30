@@ -15856,8 +15856,7 @@
 		/* Audio Engine
 	
 		The Scratch runtime has a single audio engine that handles global audio properties and effects,
-		loads all the audio buffers for sounds belonging to sprites, and creates a single instrument player
-		and a drum player, used by all play note and play drum blocks
+		and creates the instrument player and a drum player, used by all play note and play drum blocks
 	
 		*/
 	
@@ -15875,6 +15874,8 @@
 	
 		    // global tempo in bpm (beats per minute)
 		    this.currentTempo = 60;
+		    this.minTempo = 10;
+		    this.maxTempo = 1000;
 	
 		    // instrument player for play note blocks
 		    this.instrumentPlayer = new InstrumentPlayer(this.input);
@@ -15883,61 +15884,10 @@
 		    // drum player for play drum blocks
 		    this.drumPlayer = new DrumPlayer(this.input);
 		    this.numDrums = this.drumPlayer.drumSounds.length;
-	
-		    // a map of md5s to audio buffers, holding sounds for all sprites
-		    this.audioBuffers = {};
 		}
 	
-		AudioEngine.prototype.loadSounds = function (sounds) {
-		    // most sounds decode natively, but for adpcm sounds we use our own decoder
-		    var storedContext = this;
-		    for (var i = 0; i < sounds.length; i++) {
-	
-		        var md5 = sounds[i].md5;
-		        var buffer = new Tone.Buffer();
-		        this.audioBuffers[md5] = buffer;
-	
-		        if (sounds[i].format == 'squeak') {
-		            log.warn('unable to load sound in squeak format');
-		            continue;
-		        }
-		        if (sounds[i].format == 'adpcm') {
-		            log.warn('loading sound in adpcm format');
-		            // create a closure to store the sound md5, to use when the
-		            // decoder completes and resolves the promise
-		            (function () {
-		                var storedMd5 = sounds[i].md5;
-		                var loader = new ADPCMSoundLoader();
-		                loader.load(sounds[i].fileUrl).then(function (audioBuffer) {
-		                    storedContext.audioBuffers[storedMd5] = new Tone.Buffer(audioBuffer);
-		                });
-		            })();
-		        } else {
-		            this.audioBuffers[md5] = new Tone.Buffer(sounds[i].fileUrl);
-		        }
-		    }
-		};
-	
-		AudioEngine.prototype.playNoteForBeatsWithInst = function (note, beats, inst) {
-		    var sec = this.beatsToSec(beats);
-		    this.instrumentPlayer.playNoteForSecWithInst(note, sec, inst);
-		    return this.waitForBeats(beats);
-		};
-	
-		AudioEngine.prototype.beatsToSec = function (beats) {
-		    return 60 / this.currentTempo * beats;
-		};
-	
-		AudioEngine.prototype.waitForBeats = function (beats) {
-		    var storedContext = this;
-		    return new Promise(function (resolve) {
-		        setTimeout(function () {
-		            resolve();
-		        }, storedContext.beatsToSec(beats) * 1000);
-		    });
-		};
-	
 		AudioEngine.prototype.setTempo = function (value) {
+		    // var newTempo = this._clamp(value, this.minTempo, this.maxTempo);
 		    this.currentTempo = value;
 		};
 	
@@ -15951,9 +15901,10 @@
 	
 		/* Audio Player
 	
-		Each sprite or clone has an audio player
-		the audio player handles sound playback and the sprite-specific audio effects
-		pitch and pan, and volume
+		Each sprite has an audio player
+		Clones receive a reference to their parent's audio player
+		the audio player currently handles sound loading and playback, sprite-specific effects
+		(pitch and pan) and volume
 	
 		*/
 	
@@ -15974,44 +15925,87 @@
 		    // reset effects to their default parameters
 		    this.clearEffects();
 	
-		    // sound players that are currently playing, indexed by the sound's md5
-		    this.activeSoundPlayers = Object.create({});
+		    this.effectNames = ['PITCH', 'PAN', 'ECHO', 'REVERB', 'FUZZ', 'ROBOT'];
+	
+		    this.currentVolume = 100;
+	
+		    this.currentInstrument = 0;
 		}
 	
-		AudioPlayer.prototype.playSound = function (md5) {
-		    var _this = this;
+		AudioPlayer.prototype.loadSounds = function (sounds) {
 	
-		    // if this sprite or clone is already playing this sound, stop it first
-		    // (this is not working, not sure why)
-		    if (this.activeSoundPlayers[md5]) {
-		        this.activeSoundPlayers[md5].stop();
+		    this.soundPlayers = [];
+	
+		    // create a set of empty sound player objects
+		    // the sound buffers will be added asynchronously as they load
+		    for (var i = 0; i < sounds.length; i++) {
+		        this.soundPlayers[i] = new SoundPlayer(this.effectsNode);
 		    }
 	
-		    // create a new soundplayer to play the sound
-		    var player = new SoundPlayer();
-		    player.setBuffer(this.audioEngine.audioBuffers[md5]);
-		    player.connect(this.effectsNode);
-		    this.pitchEffect.updatePlayer(player);
-		    player.start();
+		    // load the sounds
+		    // most sounds decode natively, but for adpcm sounds we use our own decoder
+		    var storedContext = this;
+		    for (var index = 0; index < sounds.length; index++) {
+		        if (sounds[index].format == 'squeak') {
+		            log.warn('unable to load sound in squeak format');
+		            continue;
+		        }
+		        if (sounds[index].format == 'adpcm') {
+		            log.warn('loading sound in adpcm format');
+		            // create a closure to store the sound index, to use when the
+		            // decoder completes and resolves the promise
+		            (function () {
+		                var storedIndex = index;
+		                var loader = new ADPCMSoundLoader();
+		                loader.load(sounds[storedIndex].fileUrl).then(function (audioBuffer) {
+		                    storedContext.soundPlayers[storedIndex].setBuffer(new Tone.Buffer(audioBuffer));
+		                });
+		            })();
+		        } else {
+		            this.soundPlayers[index].setBuffer(new Tone.Buffer(sounds[index].fileUrl));
+		        }
+		    }
+		};
 	
-		    // add it to the list of active sound players
-		    this.activeSoundPlayers[md5] = player;
+		AudioPlayer.prototype.playSound = function (index) {
+		    if (!this.soundPlayers[index]) return;
 	
-		    // when the sound completes, remove it from the list of active sound players
-		    return player.finished().then(function () {
-		        delete _this.activeSoundPlayers[md5];
+		    this.soundPlayers[index].start();
+	
+		    var storedContext = this;
+		    return new Promise(function (resolve) {
+		        storedContext.soundPlayers[index].onEnded(resolve);
 		    });
+		};
+	
+		AudioPlayer.prototype.playNoteForBeats = function (note, beats) {
+		    var sec = this.beatsToSec(beats);
+		    this.audioEngine.instrumentPlayer.playNoteForSecWithInst(note, sec, this.currentInstrument);
+		    return this.waitForBeats(beats);
 		};
 	
 		AudioPlayer.prototype.playDrumForBeats = function (drum, beats) {
 		    this.audioEngine.drumPlayer.play(drum, this.effectsNode);
-		    return this.audioEngine.waitForBeats(beats);
+		    return this.waitForBeats(beats);
+		};
+	
+		AudioPlayer.prototype.waitForBeats = function (beats) {
+		    var storedContext = this;
+		    return new Promise(function (resolve) {
+		        setTimeout(function () {
+		            resolve();
+		        }, storedContext.beatsToSec(beats) * 1000);
+		    });
+		};
+	
+		AudioPlayer.prototype.beatsToSec = function (beats) {
+		    return 60 / this.audioEngine.currentTempo * beats;
 		};
 	
 		AudioPlayer.prototype.stopAllSounds = function () {
-		    // stop all active sound players
-		    for (var md5 in this.activeSoundPlayers) {
-		        this.activeSoundPlayers[md5].stop();
+		    // stop all sound players
+		    for (var i = 0; i < this.soundPlayers.length; i++) {
+		        this.soundPlayers[i].stop();
 		    }
 	
 		    // stop all instruments
@@ -16021,42 +16015,67 @@
 		    this.audioEngine.drumPlayer.stopAll();
 		};
 	
-		AudioPlayer.prototype.setPitchEffect = function (value) {
-		    this.pitchEffect.set(value, this.activeSoundPlayers);
-		};
-	
 		AudioPlayer.prototype.setEffect = function (effect, value) {
 		    switch (effect) {
-		        case 'pitch':
-		            this.pitchEffect.set(value, this.activeSoundPlayers);
+		        case 'PITCH':
+		            this.pitchEffect.set(value, this.soundPlayers);
 		            break;
-		        case 'pan':
+		        case 'PAN':
 		            this.panEffect.set(value);
 		            break;
-		        case 'echo':
+		        case 'ECHO':
 		            this.audioEngine.echoEffect.set(value);
 		            break;
-		        case 'reverb':
+		        case 'REVERB':
 		            this.audioEngine.reverbEffect.set(value);
 		            break;
-		        case 'fuzz':
+		        case 'FUZZ':
 		            this.audioEngine.fuzzEffect.set(value);
 		            break;
-		        case 'robot':
+		        case 'ROBOT':
 		            this.audioEngine.roboticEffect.set(value);
 		            break;
 		    }
 		};
 	
+		AudioPlayer.prototype.changeEffect = function (effect, value) {
+		    switch (effect) {
+		        case 'PITCH':
+		            this.pitchEffect.changeBy(value, this.soundPlayers);
+		            break;
+		        case 'PAN':
+		            this.panEffect.changeBy(value);
+		            break;
+		        case 'ECHO':
+		            this.audioEngine.echoEffect.changeBy(value);
+		            break;
+		        case 'REVERB':
+		            this.audioEngine.reverbEffect.changeBy(value);
+		            break;
+		        case 'FUZZ':
+		            this.audioEngine.fuzzEffect.changeBy(value);
+		            break;
+		        case 'ROBOT':
+		            this.audioEngine.roboticEffect.changeBy(value);
+		            break;
+	
+		    }
+		};
+	
 		AudioPlayer.prototype.clearEffects = function () {
 		    this.panEffect.set(0);
-		    this.pitchEffect.set(0, this.activeSoundPlayers);
+		    this.pitchEffect.set(0, this.soundPlayers);
 		    this.effectsNode.gain.value = 1;
 	
 		    this.audioEngine.echoEffect.set(0);
 		    this.audioEngine.reverbEffect.set(0);
 		    this.audioEngine.fuzzEffect.set(0);
 		    this.audioEngine.roboticEffect.set(0);
+		};
+	
+		AudioPlayer.prototype.setInstrument = function (instrumentNum) {
+		    this.currentInstrument = instrumentNum;
+		    return this.audioEngine.instrumentPlayer.loadInstrument(this.currentInstrument);
 		};
 	
 		AudioPlayer.prototype.setVolume = function (value) {
@@ -38556,14 +38575,12 @@
 	
 		function PitchEffect() {
 		    this.value = 0;
-		    this.ratio = 1;
 	
 		    this.tone = new Tone();
 		}
 	
 		PitchEffect.prototype.set = function (val, players) {
 		    this.value = val;
-		    this.ratio = this.getRatio(this.value);
 		    this.updatePlayers(players);
 		};
 	
@@ -38571,19 +38588,16 @@
 		    this.set(this.value + val, players);
 		};
 	
-		PitchEffect.prototype.getRatio = function (val) {
-		    return this.tone.intervalToFrequencyRatio(val / 10);
-		};
-	
-		PitchEffect.prototype.updatePlayer = function (player) {
-		    player.setPlaybackRate(this.ratio);
+		PitchEffect.prototype.getRatio = function () {
+		    return this.tone.intervalToFrequencyRatio(this.value / 10);
 		};
 	
 		PitchEffect.prototype.updatePlayers = function (players) {
 		    if (!players) return;
 	
-		    for (var md5 in players) {
-		        this.updatePlayer(players[md5]);
+		    var ratio = this.getRatio();
+		    for (var i = 0; i < players.length; i++) {
+		        players[i].setPlaybackRate(ratio);
 		    }
 		};
 	
@@ -38867,15 +38881,13 @@
 		var Tone = __webpack_require__(14);
 		var log = __webpack_require__(1);
 	
-		function SoundPlayer() {
-		    this.outputNode;
+		function SoundPlayer(outputNode) {
+		    this.outputNode = outputNode;
 		    this.buffer; // a Tone.Buffer
 		    this.bufferSource;
 		    this.playbackRate = 1;
+		    this.isPlaying = false;
 		}
-		SoundPlayer.prototype.connect = function (node) {
-		    this.outputNode = node;
-		};
 	
 		SoundPlayer.prototype.setBuffer = function (buffer) {
 		    this.buffer = buffer;
@@ -38889,7 +38901,7 @@
 		};
 	
 		SoundPlayer.prototype.stop = function () {
-		    if (this.bufferSource) {
+		    if (this.isPlaying) {
 		        this.bufferSource.stop();
 		    }
 		};
@@ -38900,19 +38912,20 @@
 		        return;
 		    }
 	
+		    this.stop();
+	
 		    this.bufferSource = new Tone.BufferSource(this.buffer.get());
 		    this.bufferSource.playbackRate.value = this.playbackRate;
 		    this.bufferSource.connect(this.outputNode);
 		    this.bufferSource.start();
+		    this.isPlaying = true;
 		};
 	
-		SoundPlayer.prototype.finished = function () {
-		    var storedContext = this;
-		    return new Promise(function (resolve) {
-		        storedContext.bufferSource.onended = function () {
-		            resolve();
-		        };
-		    });
+		SoundPlayer.prototype.onEnded = function (callback) {
+		    this.bufferSource.onended = function () {
+		        this.isPlaying = false;
+		        callback();
+		    };
 		};
 	
 		module.exports = SoundPlayer;
@@ -38980,7 +38993,7 @@
 	
 		            var samples = this.imaDecompress(this.extractChunk('data', stream), this.adpcmBlockSize);
 	
-		            // todo: this line is the only place Tone is used here, should be possible to remove
+		            // this line is the only place Tone is used here, should be possible to remove
 		            var buffer = Tone.context.createBuffer(1, samples.length, this.samplesPerSecond);
 	
 		            // todo: optimize this? e.g. replace the divide by storing 1/32768 and multiply?
