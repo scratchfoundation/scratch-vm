@@ -2822,6 +2822,22 @@
 	};
 	
 	/**
+	 * Reset the stack frame for use by the next block.
+	 * (avoids popping and re-pushing a new stack frame - keeps the warpmode the same
+	 * @param {string} blockId Block ID to push to stack.
+	 */
+	Thread.prototype.reuseStackForNextBlock = function (blockId) {
+	    this.stack[this.stack.length - 1] = blockId;
+	    var frame = this.stackFrames[this.stackFrames.length - 1];
+	    frame.isLoop = false;
+	    // frame.warpMode = warpMode;   // warp mode stays the same when reusing the stack frame.
+	    frame.reported = {};
+	    frame.waitingReporter = null;
+	    frame.params = {};
+	    frame.executionContext = {};
+	};
+	
+	/**
 	 * Pop last block on the stack and its stack frame.
 	 * @return {string} Block ID popped from the stack.
 	 */
@@ -2909,15 +2925,7 @@
 	 */
 	Thread.prototype.goToNextBlock = function () {
 	    var nextBlockId = this.target.blocks.getNextBlock(this.peekStack());
-	    // Copy warp mode to next block.
-	    var warpMode = this.peekStackFrame().warpMode;
-	    // The current block is on the stack - pop it and push the next.
-	    // Note that this could push `null` - that is handled by the sequencer.
-	    this.popStack();
-	    this.pushStack(nextBlockId);
-	    if (this.peekStackFrame()) {
-	        this.peekStackFrame().warpMode = warpMode;
-	    }
+	    this.reuseStackForNextBlock(nextBlockId);
 	};
 	
 	/**
@@ -3805,8 +3813,8 @@
 	  * @return {?string} ID of next block in the sequence
 	  */
 	Blocks.prototype.getNextBlock = function (id) {
-	    if (typeof this._blocks[id] === 'undefined') return null;
-	    return this._blocks[id].next;
+	    var block = this._blocks[id];
+	    return (typeof block === 'undefined') ? null : block.next;
 	};
 	
 	/**
@@ -3836,8 +3844,8 @@
 	 * @return {?string} the opcode corresponding to that block
 	 */
 	Blocks.prototype.getOpcode = function (id) {
-	    if (typeof this._blocks[id] === 'undefined') return null;
-	    return this._blocks[id].opcode;
+	    var block = this._blocks[id];
+	    return (typeof block === 'undefined') ? null : block.opcode;
 	};
 	
 	/**
@@ -3846,8 +3854,8 @@
 	 * @return {!Object} All fields and their values.
 	 */
 	Blocks.prototype.getFields = function (id) {
-	    if (typeof this._blocks[id] === 'undefined') return null;
-	    return this._blocks[id].fields;
+	    var block = this._blocks[id];
+	    return (typeof block === 'undefined') ? null : block.fields;
 	};
 	
 	/**
@@ -3856,13 +3864,14 @@
 	 * @return {!Object} All non-branch inputs and their associated blocks.
 	 */
 	Blocks.prototype.getInputs = function (id) {
-	    if (typeof this._blocks[id] === 'undefined') return null;
+	    var block = this._blocks[id];
+	    if (typeof block === 'undefined') return null;
 	    var inputs = {};
-	    for (var input in this._blocks[id].inputs) {
+	    for (var input in block.inputs) {
 	        // Ignore blocks prefixed with branch prefix.
 	        if (input.substring(0, Blocks.BRANCH_INPUT_PREFIX.length) !==
 	            Blocks.BRANCH_INPUT_PREFIX) {
-	            inputs[input] = this._blocks[id].inputs[input];
+	            inputs[input] = block.inputs[input];
 	        }
 	    }
 	    return inputs;
@@ -3874,8 +3883,8 @@
 	 * @return {!Object} Mutation for the block.
 	 */
 	Blocks.prototype.getMutation = function (id) {
-	    if (typeof this._blocks[id] === 'undefined') return null;
-	    return this._blocks[id].mutation;
+	    var block = this._blocks[id];
+	    return (typeof block === 'undefined') ? null : block.mutation;
 	};
 	
 	/**
@@ -3884,8 +3893,8 @@
 	 * @return {?string} ID of top-level script block.
 	 */
 	Blocks.prototype.getTopLevelScript = function (id) {
-	    if (typeof this._blocks[id] === 'undefined') return null;
 	    var block = this._blocks[id];
+	    if (typeof block === 'undefined') return null;
 	    while (block.parent !== null) {
 	        block = this._blocks[block.parent];
 	    }
@@ -4022,14 +4031,15 @@
 	Blocks.prototype.changeBlock = function (args) {
 	    // Validate
 	    if (args.element !== 'field' && args.element !== 'mutation') return;
-	    if (typeof this._blocks[args.id] === 'undefined') return;
+	    var block = this._blocks[args.id];
+	    if (typeof block === 'undefined') return;
 	
 	    if (args.element === 'field') {
 	        // Update block value
-	        if (!this._blocks[args.id].fields[args.name]) return;
-	        this._blocks[args.id].fields[args.name].value = args.value;
+	        if (!block.fields[args.name]) return;
+	        block.fields[args.name].value = args.value;
 	    } else if (args.element === 'mutation') {
-	        this._blocks[args.id].mutation = mutationAdapter(args.value);
+	        block.mutation = mutationAdapter(args.value);
 	    }
 	};
 	
