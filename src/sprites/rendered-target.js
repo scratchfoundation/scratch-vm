@@ -488,6 +488,11 @@ RenderedTarget.prototype.playSound = function (index) {
 RenderedTarget.prototype.setInstrument = function (num) {
     this.currentInstrument = num;
 };
+
+RenderedTarget.prototype.playNoteForBeats = function (note, beats) {
+    return this.runtime.audioEngine.playNoteForBeatsWithInst(note, beats, this.currentInstrument);
+};
+
 /**
  * Return the human-readable name for this rendered target, e.g., the sprite's name.
  * @override
