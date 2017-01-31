@@ -46,19 +46,6 @@ var RenderedTarget = function (sprite, runtime) {
         brightness: 0,
         ghost: 0
     };
-
-    /**
-     * Map of current audio effect values.
-     * @type {!Object.<string, number>}
-     */
-    this.audioEffects = {
-        pitch: 0,
-        pan: 0,
-        echo: 0,
-        reverb: 0,
-        fuzz: 0.,
-        robot: 0
-    };
 };
 util.inherits(RenderedTarget, Target);
 
@@ -168,18 +155,6 @@ RenderedTarget.ROTATION_STYLE_NONE = 'don\'t rotate';
 RenderedTarget.prototype.rotationStyle = (
     RenderedTarget.ROTATION_STYLE_ALL_AROUND
 );
-
-/**
- * Volume for playback of sounds, as a percentage
- * @type {number}
- */
-RenderedTarget.prototype.volume = 100;
-
-/**
- * Currently selected instrument
- * @type {number}
- */
-RenderedTarget.prototype.currentInstrument = 0;
 
 /**
  * Set the X and Y coordinates.
@@ -351,23 +326,6 @@ RenderedTarget.prototype.clearEffects = function () {
 };
 
 /**
- * Set a particular audio effect value.
- * @param {!string} effectName Name audio of effect (see `RenderedTarget.prototype.audioEffects`).
- * @param {!number} value Numerical magnitude of effect.
- */
-RenderedTarget.prototype.setAudioEffect = function (effectName, value) {
-    if (!this.audioEffects.hasOwnProperty(effectName)) return;
-    this.audioEffects[effectName] = value;
-    this.audioPlayer.setEffect(effectName, value);
-};
-
-RenderedTarget.prototype.clearAudioEffects = function () {
-    for (var effectName in this.audioEffects) {
-        this.audioEffects[effectName] = 0;
-        this.audioPlayer.setEffect(effectName, 0);
-    }
-};
-/**
  * Set the current costume.
  * @param {number} index New index of costume.
  */
@@ -441,20 +399,6 @@ RenderedTarget.prototype.getCostumeIndexByName = function (costumeName) {
 };
 
 /**
- * Get a sound index of this rendered target, by name of the sound.
- * @param {?string} soundName Name of a sound.
- * @return {number} Index of the named sound, or -1 if not present.
- */
-RenderedTarget.prototype.getSoundIndexByName = function (soundName) {
-    for (var i = 0; i < this.sprite.sounds.length; i++) {
-        if (this.sprite.sounds[i].name === soundName) {
-            return i;
-        }
-    }
-    return -1;
-};
-
-/**
  * Get a costume of this rendered target by id.
  * @return {object} current costume
  */
@@ -499,18 +443,6 @@ RenderedTarget.prototype.updateAllDrawableProperties = function () {
         }
     }
     this.runtime.spriteInfoReport(this);
-};
-
-RenderedTarget.prototype.playSound = function (index) {
-    return this.audioPlayer.playSound(this.sprite.sounds[index].md5);
-};
-
-RenderedTarget.prototype.setInstrument = function (num) {
-    this.currentInstrument = num;
-};
-
-RenderedTarget.prototype.playNoteForBeats = function (note, beats) {
-    return this.runtime.audioEngine.playNoteForBeatsWithInst(note, beats, this.currentInstrument);
 };
 
 /**
