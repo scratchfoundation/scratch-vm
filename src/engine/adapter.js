@@ -6,7 +6,7 @@ var html = require('htmlparser2');
  * to a usable form for the Scratch runtime.
  * This structure is based on Blockly xml.js:`domToWorkspace` and `domToBlock`.
  * @param {Element} blocksDOM DOM tree for this event.
- * @return {Array.<Object>} Usable list of blocks from this CREATE event.
+ * @return {Array.<object>} Usable list of blocks from this CREATE event.
  */
 var domToBlocks = function (blocksDOM) {
     // At this level, there could be multiple blocks adjacent in the DOM tree.
@@ -32,8 +32,8 @@ var domToBlocks = function (blocksDOM) {
 /**
  * Adapter between block creation events and block representation which can be
  * used by the Scratch runtime.
- * @param {Object} e `Blockly.events.create`
- * @return {Array.<Object>} List of blocks from this CREATE event.
+ * @param {object} e `Blockly.events.create`
+ * @return {Array.<object>} List of blocks from this CREATE event.
  */
 var adapter = function (e) {
     // Validate input
@@ -47,8 +47,8 @@ var adapter = function (e) {
  * Convert and an individual block DOM to the representation tree.
  * Based on Blockly's `domToBlockHeadless_`.
  * @param {Element} blockDOM DOM tree for an individual block.
- * @param {Object} blocks Collection of blocks to add to.
- * @param {Boolean} isTopBlock Whether blocks at this level are "top blocks."
+ * @param {object} blocks Collection of blocks to add to.
+ * @param {boolean} isTopBlock Whether blocks at this level are "top blocks."
  * @param {?string} parent Parent block ID.
  * @return {undefined}
  */

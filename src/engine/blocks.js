@@ -34,7 +34,7 @@ Blocks.BRANCH_INPUT_PREFIX = 'SUBSTACK';
 /**
  * Provide an object with metadata for the requested block ID.
  * @param {!string} blockId ID of block we have stored.
- * @return {?Object} Metadata about the block, if it exists.
+ * @return {?object} Metadata about the block, if it exists.
  */
 Blocks.prototype.getBlock = function (blockId) {
     return this._blocks[blockId];
@@ -92,7 +92,7 @@ Blocks.prototype.getOpcode = function (id) {
 /**
  * Get all fields and their values for a block.
  * @param {?string} id ID of block to query.
- * @return {!Object} All fields and their values.
+ * @return {!object} All fields and their values.
  */
 Blocks.prototype.getFields = function (id) {
     var block = this._blocks[id];
@@ -102,7 +102,7 @@ Blocks.prototype.getFields = function (id) {
 /**
  * Get all non-branch inputs for a block.
  * @param {?string} id ID of block to query.
- * @return {!Object} All non-branch inputs and their associated blocks.
+ * @return {!object} All non-branch inputs and their associated blocks.
  */
 Blocks.prototype.getInputs = function (id) {
     var block = this._blocks[id];
@@ -121,7 +121,7 @@ Blocks.prototype.getInputs = function (id) {
 /**
  * Get mutation data for a block.
  * @param {?string} id ID of block to query.
- * @return {!Object} Mutation for the block.
+ * @return {!object} Mutation for the block.
  */
 Blocks.prototype.getMutation = function (id) {
     var block = this._blocks[id];
@@ -247,7 +247,7 @@ Blocks.prototype.blocklyListen = function (e, optRuntime) {
 
 /**
  * Block management: create blocks and scripts from a `create` event
- * @param {!Object} block Blockly create event to be processed
+ * @param {!object} block Blockly create event to be processed
  */
 Blocks.prototype.createBlock = function (block) {
     // Does the block already exist?
@@ -267,7 +267,7 @@ Blocks.prototype.createBlock = function (block) {
 
 /**
  * Block management: change block field values
- * @param {!Object} args Blockly change event to be processed
+ * @param {!object} args Blockly change event to be processed
  */
 Blocks.prototype.changeBlock = function (args) {
     // Validate
@@ -286,7 +286,7 @@ Blocks.prototype.changeBlock = function (args) {
 
 /**
  * Block management: move blocks from parent to parent
- * @param {!Object} e Blockly move event to be processed
+ * @param {!object} e Blockly move event to be processed
  */
 Blocks.prototype.moveBlock = function (e) {
     if (!this._blocks.hasOwnProperty(e.id)) {
@@ -342,7 +342,7 @@ Blocks.prototype.moveBlock = function (e) {
 
 /**
  * Block management: delete blocks and their associated scripts.
- * @param {!Object} e Blockly delete event to be processed.
+ * @param {!object} e Blockly delete event to be processed.
  */
 Blocks.prototype.deleteBlock = function (e) {
     // @todo In runtime, stop threads running on this script.
@@ -449,7 +449,7 @@ Blocks.prototype.blockToXML = function (blockId) {
 
 /**
  * Recursively encode a mutation object to XML.
- * @param {!Object} mutation Object representing a mutation.
+ * @param {!object} mutation Object representing a mutation.
  * @return {string} XML string representing a mutation.
  */
 Blocks.prototype.mutationToXML = function (mutation) {

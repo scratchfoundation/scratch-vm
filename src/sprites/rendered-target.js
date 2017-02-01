@@ -184,7 +184,7 @@ RenderedTarget.prototype.setXY = function (x, y) {
 
 /**
  * Get the rendered direction and scale, after applying rotation style.
- * @return {Object<string, number>} Direction and scale to render.
+ * @return {object<string, number>} Direction and scale to render.
  */
 RenderedTarget.prototype._getRenderedDirectionAndScale = function () {
     // Default: no changes to `this.direction` or `this.scale`.
@@ -480,7 +480,7 @@ RenderedTarget.prototype.isSprite = function () {
 /**
  * Return the rendered target's tight bounding box.
  * Includes top, left, bottom, right attributes in Scratch coordinates.
- * @return {?Object} Tight bounding box, or null.
+ * @return {?object} Tight bounding box, or null.
  */
 RenderedTarget.prototype.getBounds = function () {
     if (this.renderer) {
@@ -493,7 +493,7 @@ RenderedTarget.prototype.getBounds = function () {
  * Return whether touching a point.
  * @param {number} x X coordinate of test point.
  * @param {number} y Y coordinate of test point.
- * @return {Boolean} True iff the rendered target is touching the point.
+ * @return {boolean} True iff the rendered target is touching the point.
  */
 RenderedTarget.prototype.isTouchingPoint = function (x, y) {
     if (this.renderer) {
@@ -513,7 +513,7 @@ RenderedTarget.prototype.isTouchingPoint = function (x, y) {
 
 /**
  * Return whether touching a stage edge.
- * @return {Boolean} True iff the rendered target is touching the stage edge.
+ * @return {boolean} True iff the rendered target is touching the stage edge.
  */
 RenderedTarget.prototype.isTouchingEdge = function () {
     if (this.renderer) {
@@ -533,7 +533,7 @@ RenderedTarget.prototype.isTouchingEdge = function () {
 /**
  * Return whether touching any of a named sprite's clones.
  * @param {string} spriteName Name of the sprite.
- * @return {Boolean} True iff touching a clone of the sprite.
+ * @return {boolean} True iff touching a clone of the sprite.
  */
 RenderedTarget.prototype.isTouchingSprite = function (spriteName) {
     var firstClone = this.runtime.getSpriteTargetByName(spriteName);
@@ -550,7 +550,7 @@ RenderedTarget.prototype.isTouchingSprite = function (spriteName) {
 /**
  * Return whether touching a color.
  * @param {Array.<number>} rgb [r,g,b], values between 0-255.
- * @return {Promise.<Boolean>} True iff the rendered target is touching the color.
+ * @return {Promise.<boolean>} True iff the rendered target is touching the color.
  */
 RenderedTarget.prototype.isTouchingColor = function (rgb) {
     if (this.renderer) {
@@ -561,9 +561,9 @@ RenderedTarget.prototype.isTouchingColor = function (rgb) {
 
 /**
  * Return whether rendered target's color is touching a color.
- * @param {Object} targetRgb {Array.<number>} [r,g,b], values between 0-255.
- * @param {Object} maskRgb {Array.<number>} [r,g,b], values between 0-255.
- * @return {Promise.<Boolean>} True iff the color is touching the color.
+ * @param {object} targetRgb {Array.<number>} [r,g,b], values between 0-255.
+ * @param {object} maskRgb {Array.<number>} [r,g,b], values between 0-255.
+ * @return {Promise.<boolean>} True iff the color is touching the color.
  */
 RenderedTarget.prototype.colorIsTouchingColor = function (targetRgb, maskRgb) {
     if (this.renderer) {
@@ -611,7 +611,7 @@ RenderedTarget.prototype.goBehindOther = function (other) {
  * Keep a desired position within a fence.
  * @param {number} newX New desired X position.
  * @param {number} newY New desired Y position.
- * @param {Object=} optFence Optional fence with left, right, top bottom.
+ * @param {object=} optFence Optional fence with left, right, top bottom.
  * @return {Array.<number>} Fenced X and Y coordinates.
  */
 RenderedTarget.prototype.keepInFence = function (newX, newY, optFence) {
