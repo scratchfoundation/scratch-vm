@@ -160,9 +160,13 @@ test('mathop', function (t) {
     t.strictEqual(blocks.mathop({OPERATOR: 'floor', NUM: 1.5}), 1);
     t.strictEqual(blocks.mathop({OPERATOR: 'ceiling', NUM: 0.1}), 1);
     t.strictEqual(blocks.mathop({OPERATOR: 'sqrt', NUM: 1}), 1);
-    t.strictEqual(blocks.mathop({OPERATOR: 'sin', NUM: 1}), 0.01745240643728351);
-    t.strictEqual(blocks.mathop({OPERATOR: 'cos', NUM: 1}), 0.9998476951563913);
-    t.strictEqual(blocks.mathop({OPERATOR: 'tan', NUM: 1}), 0.017455064928217585);
+    t.strictEqual(blocks.mathop({OPERATOR: 'sin', NUM: 1}), 0.0174524064);
+    t.strictEqual(blocks.mathop({OPERATOR: 'sin', NUM: 90}), 1);
+    t.strictEqual(blocks.mathop({OPERATOR: 'cos', NUM: 1}), 0.9998476952);
+    t.strictEqual(blocks.mathop({OPERATOR: 'cos', NUM: 180}), -1);
+    t.strictEqual(blocks.mathop({OPERATOR: 'tan', NUM: 1}), 0.0174550649);
+    t.strictEqual(blocks.mathop({OPERATOR: 'tan', NUM: 90}), Infinity);
+    t.strictEqual(blocks.mathop({OPERATOR: 'tan', NUM: 180}), 0);
     t.strictEqual(blocks.mathop({OPERATOR: 'asin', NUM: 1}), 90);
     t.strictEqual(blocks.mathop({OPERATOR: 'acos', NUM: 1}), 0);
     t.strictEqual(blocks.mathop({OPERATOR: 'atan', NUM: 1}), 45);
