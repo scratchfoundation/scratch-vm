@@ -45,4 +45,24 @@ MathUtil.wrapClamp = function (n, min, max) {
     return n - (Math.floor((n - min) / range) * range);
 };
 
+
+/**
+ * Convert a value from tan function in degrees.
+ * @param {!number} angle in degrees
+ * @return {!number} Correct tan value
+ */
+MathUtil.tan = function (angle) {
+    angle = angle % 360;
+    switch (angle) {
+    case -270:
+    case 90:
+        return Infinity;
+    case -90:
+    case 270:
+        return -Infinity;
+    default:
+        return parseFloat(Math.tan((Math.PI * angle) / 180).toFixed(10));
+    }
+};
+
 module.exports = MathUtil;
