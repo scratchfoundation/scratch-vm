@@ -14690,6 +14690,26 @@
 	    return n - (Math.floor((n - min) / range) * range);
 	};
 	
+	
+	/**
+	 * Convert a value from tan function in degrees.
+	 * @param {!number} angle in degrees
+	 * @return {!number} Correct tan value
+	 */
+	MathUtil.tan = function (angle) {
+	    angle = angle % 360;
+	    switch (angle) {
+	    case -270:
+	    case 90:
+	        return Infinity;
+	    case -90:
+	    case 270:
+	        return -Infinity;
+	    default:
+	        return parseFloat(Math.tan((Math.PI * angle) / 180).toFixed(10));
+	    }
+	};
+	
 	module.exports = MathUtil;
 
 
@@ -15405,6 +15425,7 @@
 /***/ function(module, exports, __webpack_require__) {
 
 	var Cast = __webpack_require__(83);
+	var MathUtil = __webpack_require__(86);
 	
 	var Scratch3OperatorsBlocks = function (runtime) {
 	    /**
@@ -15532,9 +15553,9 @@
 	    case 'floor': return Math.floor(n);
 	    case 'ceiling': return Math.ceil(n);
 	    case 'sqrt': return Math.sqrt(n);
-	    case 'sin': return Math.sin((Math.PI * n) / 180);
-	    case 'cos': return Math.cos((Math.PI * n) / 180);
-	    case 'tan': return Math.tan((Math.PI * n) / 180);
+	    case 'sin': return parseFloat(Math.sin((Math.PI * n) / 180).toFixed(10));
+	    case 'cos': return parseFloat(Math.cos((Math.PI * n) / 180).toFixed(10));
+	    case 'tan': return MathUtil.tan(n);
 	    case 'asin': return (Math.asin(n) * 180) / Math.PI;
 	    case 'acos': return (Math.acos(n) * 180) / Math.PI;
 	    case 'atan': return (Math.atan(n) * 180) / Math.PI;
