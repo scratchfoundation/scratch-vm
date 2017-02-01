@@ -5,7 +5,7 @@
 
 /**
  * @param {!string} name Name of the variable.
- * @param {(string|Number)} value Value of the variable.
+ * @param {(string|number)} value Value of the variable.
  * @param {boolean} isCloud Whether the variable is stored in the cloud.
  * @constructor
  */

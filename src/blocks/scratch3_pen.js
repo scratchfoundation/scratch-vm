@@ -163,7 +163,7 @@ Scratch3PenBlocks.prototype._wrapHueOrShade = function (value) {
 
 /**
  * Retrieve the block primitives implemented by this package.
- * @return {Object.<string, Function>} Mapping of opcode to Function.
+ * @return {object.<string, Function>} Mapping of opcode to Function.
  */
 Scratch3PenBlocks.prototype.getPrimitives = function () {
     return {

@@ -95,7 +95,7 @@ Cast.toRgbColorObject = function (value) {
  * In Scratch 2.0, this is captured by `interp.compare.`
  * @param {*} v1 First value to compare.
  * @param {*} v2 Second value to compare.
- * @returns {Number} Negative number if v1 < v2; 0 if equal; positive otherwise.
+ * @returns {number} Negative number if v1 < v2; 0 if equal; positive otherwise.
  */
 Cast.compare = function (v1, v2) {
     var n1 = Number(v1);
