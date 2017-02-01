@@ -10,21 +10,10 @@ var base = {
         port: process.env.PORT || 8073
     },
     devtool: 'source-map',
-    module: {
-        loaders: [
-            {
-                test: /\.json$/,
-                loader: 'json-loader'
-            }
-        ]
-    },
     plugins: [
         new webpack.optimize.UglifyJsPlugin({
             include: /\.min\.js$/,
-            minimize: true,
-            compress: {
-                warnings: false
-            }
+            minimize: true
         })
     ]
 };
@@ -42,12 +31,12 @@ module.exports = [
             filename: '[name].js'
         },
         module: {
-            loaders: base.module.loaders.concat([
+            rules: [
                 {
                     test: require.resolve('./src/index.js'),
-                    loader: 'expose?VirtualMachine'
+                    loader: 'expose-loader?VirtualMachine'
                 }
-            ])
+            ]
         }
     }),
     // Node-compatible
@@ -86,32 +75,32 @@ module.exports = [
             filename: '[name].js'
         },
         module: {
-            loaders: base.module.loaders.concat([
+            loaders: [
                 {
                     test: require.resolve('./src/index.js'),
-                    loader: 'expose?VirtualMachine'
+                    loader: 'expose-loader?VirtualMachine'
                 },
                 {
                     test: require.resolve('stats.js/build/stats.min.js'),
-                    loader: 'script'
+                    loader: 'script-loader'
                 },
                 {
                     test: require.resolve('highlightjs/highlight.pack.min.js'),
-                    loader: 'script'
+                    loader: 'script-loader'
                 },
                 {
                     test: require.resolve('scratch-blocks/dist/vertical.js'),
-                    loader: 'expose?Blockly'
+                    loader: 'expose-loader?Blockly'
                 },
                 {
                     test: require.resolve('scratch-render'),
-                    loader: 'expose?RenderWebGL'
+                    loader: 'expose-loader?RenderWebGL'
                 },
                 {
                     test: require.resolve('scratch-audio'),
-                    loader: 'expose?AudioEngine'
+                    loader: 'expose-loader?AudioEngine'
                 }
-            ])
+            ]
         },
         plugins: base.plugins.concat([
             new CopyWebpackPlugin([{
