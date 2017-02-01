@@ -54,8 +54,8 @@ Blocks.prototype.getScripts = function () {
   * @return {?string} ID of next block in the sequence
   */
 Blocks.prototype.getNextBlock = function (id) {
-    if (typeof this._blocks[id] === 'undefined') return null;
-    return this._blocks[id].next;
+    var block = this._blocks[id];
+    return (typeof block === 'undefined') ? null : block.next;
 };
 
 /**
@@ -85,8 +85,8 @@ Blocks.prototype.getBranch = function (id, branchNum) {
  * @return {?string} the opcode corresponding to that block
  */
 Blocks.prototype.getOpcode = function (id) {
-    if (typeof this._blocks[id] === 'undefined') return null;
-    return this._blocks[id].opcode;
+    var block = this._blocks[id];
+    return (typeof block === 'undefined') ? null : block.opcode;
 };
 
 /**
@@ -95,8 +95,8 @@ Blocks.prototype.getOpcode = function (id) {
  * @return {!Object} All fields and their values.
  */
 Blocks.prototype.getFields = function (id) {
-    if (typeof this._blocks[id] === 'undefined') return null;
-    return this._blocks[id].fields;
+    var block = this._blocks[id];
+    return (typeof block === 'undefined') ? null : block.fields;
 };
 
 /**
@@ -105,13 +105,14 @@ Blocks.prototype.getFields = function (id) {
  * @return {!Object} All non-branch inputs and their associated blocks.
  */
 Blocks.prototype.getInputs = function (id) {
-    if (typeof this._blocks[id] === 'undefined') return null;
+    var block = this._blocks[id];
+    if (typeof block === 'undefined') return null;
     var inputs = {};
-    for (var input in this._blocks[id].inputs) {
+    for (var input in block.inputs) {
         // Ignore blocks prefixed with branch prefix.
         if (input.substring(0, Blocks.BRANCH_INPUT_PREFIX.length) !==
             Blocks.BRANCH_INPUT_PREFIX) {
-            inputs[input] = this._blocks[id].inputs[input];
+            inputs[input] = block.inputs[input];
         }
     }
     return inputs;
@@ -123,8 +124,8 @@ Blocks.prototype.getInputs = function (id) {
  * @return {!Object} Mutation for the block.
  */
 Blocks.prototype.getMutation = function (id) {
-    if (typeof this._blocks[id] === 'undefined') return null;
-    return this._blocks[id].mutation;
+    var block = this._blocks[id];
+    return (typeof block === 'undefined') ? null : block.mutation;
 };
 
 /**
@@ -133,8 +134,8 @@ Blocks.prototype.getMutation = function (id) {
  * @return {?string} ID of top-level script block.
  */
 Blocks.prototype.getTopLevelScript = function (id) {
-    if (typeof this._blocks[id] === 'undefined') return null;
     var block = this._blocks[id];
+    if (typeof block === 'undefined') return null;
     while (block.parent !== null) {
         block = this._blocks[block.parent];
     }
@@ -271,14 +272,15 @@ Blocks.prototype.createBlock = function (block) {
 Blocks.prototype.changeBlock = function (args) {
     // Validate
     if (args.element !== 'field' && args.element !== 'mutation') return;
-    if (typeof this._blocks[args.id] === 'undefined') return;
+    var block = this._blocks[args.id];
+    if (typeof block === 'undefined') return;
 
     if (args.element === 'field') {
         // Update block value
-        if (!this._blocks[args.id].fields[args.name]) return;
-        this._blocks[args.id].fields[args.name].value = args.value;
+        if (!block.fields[args.name]) return;
+        block.fields[args.name].value = args.value;
     } else if (args.element === 'mutation') {
-        this._blocks[args.id].mutation = mutationAdapter(args.value);
+        block.mutation = mutationAdapter(args.value);
     }
 };
 

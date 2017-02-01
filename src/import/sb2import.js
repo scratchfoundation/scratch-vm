@@ -194,6 +194,7 @@ var parseBlockList = function (blockList) {
     for (var i = 0; i < blockList.length; i++) {
         var block = blockList[i];
         var parsedBlock = parseBlock(block);
+        if (typeof parsedBlock === 'undefined') continue;
         if (previousBlock) {
             parsedBlock.parent = previousBlock.id;
             previousBlock.next = parsedBlock.id;
