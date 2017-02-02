@@ -151,7 +151,7 @@ Thread.prototype.peekStack = function () {
 
 /**
  * Get top stack frame.
- * @return {?Object} Last stack frame stored on this thread.
+ * @return {?object} Last stack frame stored on this thread.
  */
 Thread.prototype.peekStackFrame = function () {
     return this.stackFrames.length > 0 ? this.stackFrames[this.stackFrames.length - 1] : null;
@@ -159,7 +159,7 @@ Thread.prototype.peekStackFrame = function () {
 
 /**
  * Get stack frame above the current top.
- * @return {?Object} Second to last stack frame stored on this thread.
+ * @return {?object} Second to last stack frame stored on this thread.
  */
 Thread.prototype.peekParentStackFrame = function () {
     return this.stackFrames.length > 1 ? this.stackFrames[this.stackFrames.length - 2] : null;
@@ -205,7 +205,7 @@ Thread.prototype.getParam = function (paramName) {
 
 /**
  * Whether the current execution of a thread is at the top of the stack.
- * @return {Boolean} True if execution is at top of the stack.
+ * @return {boolean} True if execution is at top of the stack.
  */
 Thread.prototype.atStackTop = function () {
     return this.peekStack() === this.topBlock;

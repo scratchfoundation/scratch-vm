@@ -49,7 +49,7 @@ Scratch3SoundBlocks.prototype._getSoundState = function (target) {
 
 /**
  * Retrieve the block primitives implemented by this package.
- * @return {Object.<string, Function>} Mapping of opcode to Function.
+ * @return {object.<string, Function>} Mapping of opcode to Function.
  */
 Scratch3SoundBlocks.prototype.getPrimitives = function () {
     return {

@@ -171,8 +171,8 @@ Sequencer.prototype.stepThread = function (thread) {
 /**
  * Step a thread into a block's branch.
  * @param {!Thread} thread Thread object to step to branch.
- * @param {Number} branchNum Which branch to step to (i.e., 1, 2).
- * @param {Boolean} isLoop Whether this block is a loop.
+ * @param {number} branchNum Which branch to step to (i.e., 1, 2).
+ * @param {boolean} isLoop Whether this block is a loop.
  */
 Sequencer.prototype.stepToBranch = function (thread, branchNum, isLoop) {
     if (!branchNum) {
