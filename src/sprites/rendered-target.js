@@ -69,10 +69,9 @@ RenderedTarget.prototype.initDrawable = function () {
     this.audioPlayer = null;
     if (this.runtime && this.runtime.audioEngine) {
         if (this.isOriginal) {
-            this.sprite.audioPlayer = this.runtime.audioEngine.createPlayer();
-            this.sprite.audioPlayer.loadSounds(this.sprite.sounds);
+            this.runtime.audioEngine.loadSounds(this.sprite.sounds);
         }
-        this.audioPlayer = this.sprite.audioPlayer;
+        this.audioPlayer = this.runtime.audioEngine.createPlayer();
     }
 };
 
@@ -393,20 +392,6 @@ RenderedTarget.prototype.setRotationStyle = function (rotationStyle) {
 RenderedTarget.prototype.getCostumeIndexByName = function (costumeName) {
     for (var i = 0; i < this.sprite.costumes.length; i++) {
         if (this.sprite.costumes[i].name === costumeName) {
-            return i;
-        }
-    }
-    return -1;
-};
-
-/**
- * Get a sound index of this rendered target, by name of the sound.
- * @param {?string} soundName Name of a sound.
- * @return {number} Index of the named sound, or -1 if not present.
- */
-RenderedTarget.prototype.getSoundIndexByName = function (soundName) {
-    for (var i = 0; i < this.sprite.sounds.length; i++) {
-        if (this.sprite.sounds[i].name === soundName) {
             return i;
         }
     }
