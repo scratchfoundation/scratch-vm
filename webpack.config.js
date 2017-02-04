@@ -62,13 +62,13 @@ module.exports = [
                 'stats.js/build/stats.min.js',
                 // Syntax highlighter
                 'highlightjs/highlight.pack.min.js',
-                // Scratch Blocks
-                'scratch-blocks/dist/vertical.js',
                 // Renderer
                 'scratch-render',
                 // Audio
                 'scratch-audio'
-            ]
+            ],
+            vertical: 'scratch-blocks/dist/vertical.js',
+            horizontal: 'scratch-blocks/dist/horizontal.js'
         },
         output: {
             path: path.resolve(__dirname, 'playground'),
@@ -91,6 +91,10 @@ module.exports = [
                 {
                     test: require.resolve('scratch-blocks/dist/vertical.js'),
                     loader: 'expose-loader?Blockly'
+                },
+                {
+                    test: require.resolve('scratch-blocks/dist/horizontal.js'),
+                    loader: 'expose?Blockly'
                 },
                 {
                     test: require.resolve('scratch-render'),
