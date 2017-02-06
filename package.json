@@ -27,7 +27,7 @@
     "adm-zip": "0.4.7",
     "babel-eslint": "7.1.1",
     "copy-webpack-plugin": "4.0.1",
-    "eslint": "3.14.1",
+    "eslint": "3.15.0",
     "eslint-config-scratch": "^3.1.0",
     "expose-loader": "0.7.1",
     "gh-pages": "0.12.0",
