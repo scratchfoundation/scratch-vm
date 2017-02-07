@@ -67,7 +67,7 @@ var parseScratchObject = function (object, runtime, topLevel) {
     // Costumes from JSON.
     if (object.hasOwnProperty('costumes') || object.hasOwnProperty('costume')) {
         for (var i = 0; i < object.costumeCount; i++) {
-            var costume = object.costume; // [i]?
+            var costume = object.costumes[i];
             // @todo: Make sure all the relevant metadata is being pulled out.
             sprite.costumes.push({
                 skin: costume.skin,

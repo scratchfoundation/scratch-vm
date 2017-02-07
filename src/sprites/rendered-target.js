@@ -723,7 +723,9 @@ RenderedTarget.prototype.toJSON = function () {
         rotationStyle: this.rotationStyle,
         blocks: this.blocks._blocks,
         variables: this.variables,
-        lists: this.lists
+        lists: this.lists,
+        costumes: this.getCostumes(),
+        sounds: this.sprite.sounds
     };
 };
 
