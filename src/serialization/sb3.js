@@ -39,10 +39,9 @@ var serialize = function (runtime) {
  * Parse a single "Scratch object" and create all its in-memory VM objects.
  * @param {!Object} object From-JSON "Scratch object:" sprite, stage, watcher.
  * @param {!Runtime} runtime Runtime object to load all structures into.
- * @param {boolean} topLevel Whether this is the top-level object (stage).
  * @return {?Target} Target created (stage or sprite).
  */
-var parseScratchObject = function (object, runtime, topLevel) {
+var parseScratchObject = function (object, runtime) {
     if (!object.hasOwnProperty('name')) {
         // Watcher/monitor - skip this object until those are implemented in VM.
         // @todo
@@ -138,33 +137,14 @@ var parseScratchObject = function (object, runtime, topLevel) {
     if (object.hasOwnProperty('rotationStyle')) {
         target.rotationStyle = object.rotationStyle;
     }
-    target.isStage = topLevel;
-    target.updateAllDrawableProperties();
-    // The stage will have child objects; recursively process them.
-    if (object.children) {
-        for (var m = 0; m < object.children.length; m++) {
-            parseScratchObject(object.children[m], runtime, false);
-        }
+    if (object.hasOwnProperty('isStage')) {
+        target.isStage = object.isStage;
     }
+    target.updateAllDrawableProperties();
+
     console.log("returning target:");
     console.log(target);
     return target;
-};
-
-/**
- * Top-level handler. Parse provided JSON,
- * and process the top-level object (the stage object).
- * @param {!string} json SB2-format JSON to load.
- * @param {!Runtime} runtime Runtime object to load all structures into.
- * @param {Boolean=} optForceSprite If set, treat as sprite (Sprite2).
- * @return {?Target} Top-level target created (stage or sprite).
- */
-var sb3import = function (json, runtime, optForceSprite) {
-    return parseScratchObject(
-        json,
-        runtime,
-        !optForceSprite
-    );
 };
 
 /**
