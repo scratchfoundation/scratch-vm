@@ -163,7 +163,7 @@ Scratch3PenBlocks.prototype._wrapHueOrShade = function (value) {
 
 /**
  * Retrieve the block primitives implemented by this package.
- * @return {Object.<string, Function>} Mapping of opcode to Function.
+ * @return {object.<string, Function>} Mapping of opcode to Function.
  */
 Scratch3PenBlocks.prototype.getPrimitives = function () {
     return {
@@ -258,6 +258,9 @@ Scratch3PenBlocks.prototype.setPenColorToColor = function (args, util) {
     penState.penAttributes.color4f[0] = rgb.r / 255.0;
     penState.penAttributes.color4f[1] = rgb.g / 255.0;
     penState.penAttributes.color4f[2] = rgb.b / 255.0;
+    if (rgb.hasOwnProperty('a')) {  // Will there always be an 'a'?
+        penState.penAttributes.color4f[3] = rgb.a / 255.0;
+    }
 };
 
 /**

@@ -77,7 +77,7 @@ VirtualMachine.prototype.greenFlag = function () {
 /**
  * Set whether the VM is in "turbo mode."
  * When true, loops don't yield to redraw.
- * @param {Boolean} turboModeOn Whether turbo mode should be set.
+ * @param {boolean} turboModeOn Whether turbo mode should be set.
  */
 VirtualMachine.prototype.setTurboMode = function (turboModeOn) {
     this.runtime.turboMode = !!turboModeOn;
@@ -86,7 +86,7 @@ VirtualMachine.prototype.setTurboMode = function (turboModeOn) {
 /**
  * Set whether the VM is in 2.0 "compatibility mode."
  * When true, ticks go at 2.0 speed (30 TPS).
- * @param {Boolean} compatibilityModeOn Whether compatibility mode is set.
+ * @param {boolean} compatibilityModeOn Whether compatibility mode is set.
  */
 VirtualMachine.prototype.setCompatibilityMode = function (compatibilityModeOn) {
     this.runtime.setCompatibilityMode(!!compatibilityModeOn);
@@ -131,7 +131,7 @@ VirtualMachine.prototype.getPlaygroundData = function () {
 /**
  * Post I/O data to the virtual devices.
  * @param {?string} device Name of virtual I/O device.
- * @param {Object} data Any data object to post to the I/O device.
+ * @param {object} data Any data object to post to the I/O device.
  */
 VirtualMachine.prototype.postIOData = function (device, data) {
     if (this.runtime.ioDevices[device]) {
@@ -219,7 +219,7 @@ VirtualMachine.prototype.addSprite2 = function (json) {
 
 /**
  * Add a costume to the current editing target.
- * @param {!Object} costumeObject Object representing the costume.
+ * @param {!object} costumeObject Object representing the costume.
  */
 VirtualMachine.prototype.addCostume = function (costumeObject) {
     this.editingTarget.sprite.costumes.push(costumeObject);
@@ -231,7 +231,7 @@ VirtualMachine.prototype.addCostume = function (costumeObject) {
 
 /**
  * Add a backdrop to the stage.
- * @param {!Object} backdropObject Object representing the backdrop.
+ * @param {!object} backdropObject Object representing the backdrop.
  */
 VirtualMachine.prototype.addBackdrop = function (backdropObject) {
     var stage = this.runtime.getTargetForStage();

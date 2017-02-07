@@ -34,3 +34,11 @@ test('wrapClamp', function (t) {
     t.strictEqual(math.wrapClamp(100, 0, 10), 1);
     t.end();
 });
+
+test('tan', function (t) {
+    t.strictEqual(math.tan(90), Infinity);
+    t.strictEqual(math.tan(180), 0);
+    t.strictEqual(math.tan(-90), -Infinity);
+    t.strictEqual(math.tan(33), 0.6494075932);
+    t.end();
+});
