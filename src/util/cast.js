@@ -100,6 +100,12 @@ Cast.toRgbColorObject = function (value) {
 Cast.compare = function (v1, v2) {
     var n1 = Number(v1);
     var n2 = Number(v2);
+    if (n1 === 0 && (v1 == null || typeof v1 === 'string' && v1.trim().length === 0)) {
+        n1 = NaN;
+    }
+    if (n2 === 0 && (v2 == null || typeof v2 === 'string' && v2.trim().length === 0)) {
+        n2 = NaN;
+    }
     if (isNaN(n1) || isNaN(n2)) {
         // At least one argument can't be converted to a number.
         // Scratch compares strings as case insensitive.
