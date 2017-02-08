@@ -276,7 +276,7 @@ Runtime.prototype.getOpcodeFunction = function (opcode) {
 /**
  * Return whether an opcode represents a hat block.
  * @param {!string} opcode The opcode to look up.
- * @return {Boolean} True if the op is known to be a hat.
+ * @return {boolean} True if the op is known to be a hat.
  */
 Runtime.prototype.getIsHat = function (opcode) {
     return this._hats.hasOwnProperty(opcode);
@@ -285,7 +285,7 @@ Runtime.prototype.getIsHat = function (opcode) {
 /**
  * Return whether an opcode represents an edge-activated hat block.
  * @param {!string} opcode The opcode to look up.
- * @return {Boolean} True if the op is known to be a edge-activated hat.
+ * @return {boolean} True if the op is known to be a edge-activated hat.
  */
 Runtime.prototype.getIsEdgeActivatedHat = function (opcode) {
     return this._hats.hasOwnProperty(opcode) &&
@@ -379,7 +379,7 @@ Runtime.prototype._restartThread = function (thread) {
 /**
  * Return whether a thread is currently active/running.
  * @param {?Thread} thread Thread object to check.
- * @return {Boolean} True if the thread is active/running.
+ * @return {boolean} True if the thread is active/running.
  */
 Runtime.prototype.isActiveThread = function (thread) {
     return this.threads.indexOf(thread) > -1;
@@ -427,7 +427,7 @@ Runtime.prototype.allScriptsDo = function (f, optTarget) {
 /**
  * Start all relevant hats.
  * @param {!string} requestedHatOpcode Opcode of hats to start.
- * @param {Object=} optMatchFields Optionally, fields to match on the hat.
+ * @param {object=} optMatchFields Optionally, fields to match on the hat.
  * @param {Target=} optTarget Optionally, a target to restrict to.
  * @return {Array.<Thread>} List of threads started by this function.
  */

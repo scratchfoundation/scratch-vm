@@ -11,7 +11,7 @@ var Scratch3ControlBlocks = function (runtime) {
 
 /**
  * Retrieve the block primitives implemented by this package.
- * @return {Object.<string, Function>} Mapping of opcode to Function.
+ * @return {object.<string, Function>} Mapping of opcode to Function.
  */
 Scratch3ControlBlocks.prototype.getPrimitives = function () {
     return {
