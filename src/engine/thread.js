@@ -101,7 +101,7 @@ Thread.prototype.pushStack = function (blockId) {
     if (this.stack.length > this.stackFrames.length) {
         // Copy warp mode from any higher level.
         var warpMode = false;
-        if (this.stackFrames[this.stackFrames.length - 1]) {
+        if (this.stackFrames.length > 0 && this.stackFrames[this.stackFrames.length - 1]) {
             warpMode = this.stackFrames[this.stackFrames.length - 1].warpMode;
         }
         this.stackFrames.push({
@@ -113,6 +113,22 @@ Thread.prototype.pushStack = function (blockId) {
             executionContext: {} // A context passed to block implementations.
         });
     }
+};
+
+/**
+ * Reset the stack frame for use by the next block.
+ * (avoids popping and re-pushing a new stack frame - keeps the warpmode the same
+ * @param {string} blockId Block ID to push to stack.
+ */
+Thread.prototype.reuseStackForNextBlock = function (blockId) {
+    this.stack[this.stack.length - 1] = blockId;
+    var frame = this.stackFrames[this.stackFrames.length - 1];
+    frame.isLoop = false;
+    // frame.warpMode = warpMode;   // warp mode stays the same when reusing the stack frame.
+    frame.reported = {};
+    frame.waitingReporter = null;
+    frame.params = {};
+    frame.executionContext = {};
 };
 
 /**
@@ -129,24 +145,24 @@ Thread.prototype.popStack = function () {
  * @return {?string} Block ID on top of stack.
  */
 Thread.prototype.peekStack = function () {
-    return this.stack[this.stack.length - 1];
+    return this.stack.length > 0 ? this.stack[this.stack.length - 1] : null;
 };
 
 
 /**
  * Get top stack frame.
- * @return {?Object} Last stack frame stored on this thread.
+ * @return {?object} Last stack frame stored on this thread.
  */
 Thread.prototype.peekStackFrame = function () {
-    return this.stackFrames[this.stackFrames.length - 1];
+    return this.stackFrames.length > 0 ? this.stackFrames[this.stackFrames.length - 1] : null;
 };
 
 /**
  * Get stack frame above the current top.
- * @return {?Object} Second to last stack frame stored on this thread.
+ * @return {?object} Second to last stack frame stored on this thread.
  */
 Thread.prototype.peekParentStackFrame = function () {
-    return this.stackFrames[this.stackFrames.length - 2];
+    return this.stackFrames.length > 1 ? this.stackFrames[this.stackFrames.length - 2] : null;
 };
 
 /**
@@ -189,7 +205,7 @@ Thread.prototype.getParam = function (paramName) {
 
 /**
  * Whether the current execution of a thread is at the top of the stack.
- * @return {Boolean} True if execution is at top of the stack.
+ * @return {boolean} True if execution is at top of the stack.
  */
 Thread.prototype.atStackTop = function () {
     return this.peekStack() === this.topBlock;
@@ -203,15 +219,7 @@ Thread.prototype.atStackTop = function () {
  */
 Thread.prototype.goToNextBlock = function () {
     var nextBlockId = this.target.blocks.getNextBlock(this.peekStack());
-    // Copy warp mode to next block.
-    var warpMode = this.peekStackFrame().warpMode;
-    // The current block is on the stack - pop it and push the next.
-    // Note that this could push `null` - that is handled by the sequencer.
-    this.popStack();
-    this.pushStack(nextBlockId);
-    if (this.peekStackFrame()) {
-        this.peekStackFrame().warpMode = warpMode;
-    }
+    this.reuseStackForNextBlock(nextBlockId);
 };
 
 /**
