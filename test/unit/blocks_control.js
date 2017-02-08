@@ -104,7 +104,7 @@ test('stop', function (t) {
     var state = {
         stopAll: 0,
         stopOtherTargetThreads: 0,
-        stopThread: 0
+        stopThisScript: 0
     };
     var util = {
         stopAll: function () {
@@ -113,8 +113,8 @@ test('stop', function (t) {
         stopOtherTargetThreads: function () {
             state.stopOtherTargetThreads++;
         },
-        stopThread: function () {
-            state.stopThread++;
+        stopThisScript: function () {
+            state.stopThisScript++;
         }
     };
 
@@ -125,6 +125,6 @@ test('stop', function (t) {
     c.stop({STOP_OPTION: 'this script'}, util);
     t.strictEqual(state.stopAll, 1);
     t.strictEqual(state.stopOtherTargetThreads, 2);
-    t.strictEqual(state.stopThread, 1);
+    t.strictEqual(state.stopThisScript, 1);
     t.end();
 });
