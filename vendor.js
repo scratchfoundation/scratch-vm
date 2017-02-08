@@ -40563,7 +40563,7 @@ module.exports =
 	        }
 	
 	        /**
-	         * @return {[number,number]} the "native" size, in texels, of this skin.
+	         * @return {[number,number]} the natural size, in Scratch units, of this skin.
 	         */
 	
 	    }, {
@@ -40616,7 +40616,7 @@ module.exports =
 	    }, {
 	        key: 'size',
 	        get: function get() {
-	            return [this._svgRenderer.canvas.width, this._svgRenderer.canvas.height];
+	            return this._svgRenderer.size;
 	        }
 	    }]);
 	
@@ -40713,6 +40713,14 @@ module.exports =
 	        }
 	
 	        /**
+	         * @return {[number,number]} the natural size, in Scratch units, of this SVG.
+	         */
+	
+	    }, {
+	        key: '_transformText',
+	
+	
+	        /**
 	         * Transforms an SVG's text elements for Scratch 2.0 quirks.
 	         * These quirks include:
 	         * 1. `x` and `y` properties are removed/ignored.
@@ -40720,9 +40728,6 @@ module.exports =
 	         * 3. Line-breaks are converted to explicit <tspan> elements.
 	         * 4. Any required fonts are injected.
 	         */
-	
-	    }, {
-	        key: '_transformText',
 	        value: function _transformText() {
 	            // Collect all text elements into a list.
 	            var textElements = [];
@@ -40982,6 +40987,11 @@ module.exports =
 	        key: 'canvas',
 	        get: function get() {
 	            return this._canvas;
+	        }
+	    }, {
+	        key: 'size',
+	        get: function get() {
+	            return [this._measurements.width, this._measurements.height];
 	        }
 	    }]);
 	
