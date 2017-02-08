@@ -719,6 +719,7 @@ RenderedTarget.prototype.toJSON = function () {
         direction: this.direction,
         costume: this.getCurrentCostume(),
         costumeCount: this.getCostumes().length,
+        currentCostume: this.currentCostume,
         visible: this.visible,
         rotationStyle: this.rotationStyle,
         blocks: this.blocks._blocks,

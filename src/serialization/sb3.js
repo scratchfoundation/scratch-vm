@@ -70,7 +70,7 @@ var parseScratchObject = function (object, runtime) {
             // @todo: Make sure all the relevant metadata is being pulled out.
             sprite.costumes.push({
                 skin: costume.skin,
-                name: costume.costumeName,
+                name: costume.name,
                 bitmapResolution: costume.bitmapResolution,
                 rotationCenterX: costume.rotationCenterX,
                 rotationCenterY: costume.rotationCenterY
