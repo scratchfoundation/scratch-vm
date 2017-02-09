@@ -183,8 +183,8 @@ var execute = function (sequencer, thread) {
         stopOtherTargetThreads: function () {
             runtime.stopForTarget(target, thread);
         },
-        stopThread: function () {
-            sequencer.retireThread(thread);
+        stopThisScript: function () {
+            thread.stopThisScript();
         },
         startProcedure: function (procedureCode) {
             sequencer.stepToProcedure(thread, procedureCode);
