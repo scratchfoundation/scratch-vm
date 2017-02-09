@@ -3,6 +3,111 @@ var Thread = require('../../src/engine/thread');
 
 test('spec', function (t) {
     t.type(Thread, 'function');
-    // @todo
+    
+    var th = new Thread('arbitraryString');
+    t.type(th, 'object');
+    t.ok(th instanceof Thread);
+    t.type(th.pushStack, 'function');
+    t.type(th.reuseStackForNextBlock, 'function');
+    t.type(th.popStack, 'function');
+    t.type(th.stopThisScript, 'function');
+    t.type(th.peekStack, 'function');
+    t.type(th.peekStackFrame, 'function');
+    t.type(th.peekParentStackFrame, 'function');
+    t.type(th.pushReportedValue, 'function');
+    t.type(th.pushParam, 'function');
+    t.type(th.peekStack, 'function');
+    t.type(th.getParam, 'function');
+    t.type(th.atStackTop, 'function');
+    t.type(th.goToNextBlock, 'function');
+    t.type(th.isRecursiveCall, 'function');
+    
+    t.end();
+});
+
+test('pushStack', function (t) {
+    var th = new Thread('arbitraryString');
+    th.pushStack('arbitraryString');
+    
+    t.end();
+});
+
+test('popStack', function (t) {
+    var th = new Thread('arbitraryString');
+    th.pushStack('arbitraryString');
+    t.strictEquals(th.popStack(), 'arbitraryString');
+    t.strictEquals(th.popStack(), undefined);
+    
+    t.end();
+});
+
+test('atStackTop', function (t) {
+    var th = new Thread('arbitraryString');
+    th.pushStack('arbitraryString');
+    th.pushStack('secondString');
+    t.strictEquals(th.atStackTop(), false);
+    th.popStack();
+    t.strictEquals(th.atStackTop(), true);
+    
+    t.end();
+});
+
+test('reuseStackForNextBlock', function (t) {
+    var th = new Thread('arbitraryString');
+    th.pushStack('arbitraryString');
+    th.reuseStackForNextBlock('secondString');
+    t.strictEquals(th.popStack(), 'secondString');
+    
+    t.end();
+});
+
+test('peekStackFrame', function (t) {
+    var th = new Thread('arbitraryString');
+    th.pushStack('arbitraryString');
+    t.strictEquals(th.peekStackFrame().warpMode, false);
+    th.popStack();
+    t.strictEquals(th.peekStackFrame(), null);
+    
+    t.end();
+});
+
+test('peekParentStackFrame', function (t) {
+    var th = new Thread('arbitraryString');
+    th.pushStack('arbitraryString');
+    th.peekStackFrame().warpMode = true;
+    t.strictEquals(th.peekParentStackFrame(), null);
+    th.pushStack('secondString');
+    t.strictEquals(th.peekParentStackFrame().warpMode, true);
+    
+    t.end();
+});
+
+test('pushReportedValue', function (t) {
+    var th = new Thread('arbitraryString');
+    th.pushStack('arbitraryString');
+    th.pushStack('secondString');
+    th.pushReportedValue('value');
+    t.strictEquals(th.peekParentStackFrame().reported.null, 'value');
+    
+    t.end();
+});
+
+test('peekStack', function (t) {
+    var th = new Thread('arbitraryString');
+    th.pushStack('arbitraryString');
+    t.strictEquals(th.peekStack(), 'arbitraryString');
+    th.popStack();
+    t.strictEquals(th.peekStack(), null);
+    
+    t.end();
+});
+
+test('PushGetParam', function (t) {
+    var th = new Thread('arbitraryString');
+    th.pushStack('arbitraryString');
+    th.pushParam('testParam', 'testValue');
+    t.strictEquals(th.peekStackFrame().params.testParam, 'testValue');
+    t.strictEquals(th.getParam('testParam'), 'testValue');
+    
     t.end();
 });
