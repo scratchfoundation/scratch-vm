@@ -7801,6 +7801,27 @@ Thread.prototype.popStack = function () {
 };
 
 /**
+ * Pop back down the stack frame until we hit a procedure call or the stack frame is emptied
+ */
+Thread.prototype.stopThisScript = function () {
+    var blockID = this.peekStack();
+    while (blockID !== null) {
+        var block = this.target.blocks.getBlock(blockID);
+        if (typeof block !== 'undefined' && block.opcode === 'procedures_callnoreturn') {
+            break;
+        }
+        this.popStack();
+        blockID = this.peekStack();
+    }
+
+    if (this.stack.length === 0) {
+        // Clean up!
+        this.requestScriptGlowInFrame = false;
+        this.status = Thread.STATUS_DONE;
+    }
+};
+
+/**
  * Get top stack item.
  * @return {?string} Block ID on top of stack.
  */
@@ -14219,7 +14240,7 @@ Scratch3ControlBlocks.prototype.stop = function (args, util) {
         option === 'other scripts in stage') {
         util.stopOtherTargetThreads();
     } else if (option === 'this script') {
-        util.stopThread();
+        util.stopThisScript();
     }
 };
 
@@ -16276,8 +16297,8 @@ var execute = function (sequencer, thread) {
         stopOtherTargetThreads: function () {
             runtime.stopForTarget(target, thread);
         },
-        stopThread: function () {
-            sequencer.retireThread(thread);
+        stopThisScript: function () {
+            thread.stopThisScript();
         },
         startProcedure: function (procedureCode) {
             sequencer.stepToProcedure(thread, procedureCode);
