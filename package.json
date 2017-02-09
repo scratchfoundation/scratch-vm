@@ -42,7 +42,7 @@
     "scratch-render": "latest",
     "script-loader": "0.7.0",
     "stats.js": "0.17.0",
-    "tap": "10.0.2",
+    "tap": "10.1.0",
     "travis-after-all": "1.4.4",
     "webpack": "2.2.1",
     "webpack-dev-server": "1.16.3"
