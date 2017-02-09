@@ -24,15 +24,34 @@ var Timer = function () {};
 Timer.prototype.startTime = 0;
 
 /**
+ * Disable use of self.performance for now as it results in lower performance
+ * However, instancing it like below (caching the self.performance to a local variable) negates most of the issues.
+ * @type {boolean}
+ */
+var USE_PERFORMANCE = false;
+
+/**
+ * Legacy object to allow for us to call now to get the old style date time (for backwards compatibility)
+ * @deprecated This is only called via the nowObj.now() if no other means is possible...
+ */
+var legacyDateCode = {
+    now: function () {
+        return new Date().getTime();
+    }
+};
+
+/**
+ * Use this object to route all time functions through single access points.
+ */
+var nowObj = (USE_PERFORMANCE && typeof self !== 'undefined' && self.performance && 'now' in self.performance) ?
+    self.performance : Date.now ? Date : legacyDateCode;
+
+/**
  * Return the currently known absolute time, in ms precision.
  * @returns {number} ms elapsed since 1 January 1970 00:00:00 UTC.
  */
 Timer.prototype.time = function () {
-    if (Date.now) {
-        return Date.now();
-    } else {
-        return new Date().getTime();
-    }
+    return nowObj.now();
 };
 
 /**
@@ -43,12 +62,7 @@ Timer.prototype.time = function () {
  * @returns {number} ms-scale accurate time relative to other relative times.
  */
 Timer.prototype.relativeTime = function () {
-    if (typeof self !== 'undefined' &&
-        self.performance && 'now' in self.performance) {
-        return self.performance.now();
-    } else {
-        return this.time();
-    }
+    return nowObj.now();
 };
 
 /**
@@ -56,15 +70,11 @@ Timer.prototype.relativeTime = function () {
  * at the most accurate precision possible.
  */
 Timer.prototype.start = function () {
-    this.startTime = this.relativeTime();
+    this.startTime = nowObj.now();
 };
 
-/**
- * Check time elapsed since `timer.start` was called.
- * @returns {number} Time elapsed, in ms (possibly sub-ms precision).
- */
 Timer.prototype.timeElapsed = function () {
-    return this.relativeTime() - this.startTime;
+    return nowObj.now() - this.startTime;
 };
 
 module.exports = Timer;
