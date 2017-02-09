@@ -40484,7 +40484,7 @@ module.exports =
 	            var r = Math.round(color4f[0] * 255);
 	            var g = Math.round(color4f[1] * 255);
 	            var b = Math.round(color4f[2] * 255);
-	            var a = Math.round(color4f[3]); // Alpha is 0 to 1 (not 0 to 255 like r,g,b)
+	            var a = color4f[3]; // Alpha is 0 to 1 (not 0 to 255 like r,g,b)
 	
 	            context.strokeStyle = 'rgba(' + r + ',' + g + ',' + b + ',' + a + ')';
 	            context.lineCap = 'round';
