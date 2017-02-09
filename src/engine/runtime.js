@@ -439,6 +439,11 @@ Runtime.prototype.startHats = function (requestedHatOpcode,
     }
     var instance = this;
     var newThreads = [];
+
+    for (var opts in optMatchFields) {
+        optMatchFields[opts] = optMatchFields[opts].toUpperCase();
+    }
+
     // Consider all scripts, looking for hats with opcode `requestedHatOpcode`.
     this.allScriptsDo(function (topBlockId, target) {
         var potentialHatOpcode = target.blocks.getBlock(topBlockId).opcode;
@@ -466,7 +471,7 @@ Runtime.prototype.startHats = function (requestedHatOpcode,
 
         if (optMatchFields) {
             for (var matchField in optMatchFields) {
-                if (hatFields[matchField].value !==
+                if (hatFields[matchField].value.toUpperCase() !==
                     optMatchFields[matchField]) {
                     // Field mismatch.
                     return;
