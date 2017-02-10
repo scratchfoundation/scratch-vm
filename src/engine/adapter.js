@@ -24,6 +24,7 @@ var domToBlocks = function (blocksDOM) {
     // Flatten blocks object into a list.
     var blocksList = [];
     for (var b in blocks) {
+        if (!blocks.hasOwnProperty(b)) continue;
         blocksList.push(blocks[b]);
     }
     return blocksList;

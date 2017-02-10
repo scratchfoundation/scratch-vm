@@ -441,6 +441,7 @@ Runtime.prototype.startHats = function (requestedHatOpcode,
     var newThreads = [];
 
     for (var opts in optMatchFields) {
+        if (!optMatchFields.hasOwnProperty(opts)) continue;
         optMatchFields[opts] = optMatchFields[opts].toUpperCase();
     }
 
@@ -463,6 +464,7 @@ Runtime.prototype.startHats = function (requestedHatOpcode,
         if (Object.keys(hatFields).length === 0) {
             var hatInputs = target.blocks.getInputs(topBlockId);
             for (var input in hatInputs) {
+                if (!hatInputs.hasOwnProperty(input)) continue;
                 var id = hatInputs[input].block;
                 var fields = target.blocks.getFields(id);
                 hatFields = Object.assign(fields, hatFields);
@@ -592,6 +594,7 @@ Runtime.prototype.stopAll = function () {
 Runtime.prototype._step = function () {
     // Find all edge-activated hats, and add them to threads to be evaluated.
     for (var hatType in this._hats) {
+        if (!this._hats.hasOwnProperty(hatType)) continue;
         var hat = this._hats[hatType];
         if (hat.edgeActivated) {
             this.startHats(hatType);
