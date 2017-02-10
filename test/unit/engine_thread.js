@@ -1,5 +1,7 @@
 var test = require('tap').test;
 var Thread = require('../../src/engine/thread');
+var RenderedTarget = require('../../src/sprites/rendered-target');
+var Sprite = require('../../src/sprites/sprite');
 
 test('spec', function (t) {
     t.type(Thread, 'function');
@@ -108,6 +110,168 @@ test('PushGetParam', function (t) {
     th.pushParam('testParam', 'testValue');
     t.strictEquals(th.peekStackFrame().params.testParam, 'testValue');
     t.strictEquals(th.getParam('testParam'), 'testValue');
+    
+    t.end();
+});
+
+test('goToNextBlock', function (t) {
+    var th = new Thread('arbitraryString');
+    var s = new Sprite();
+    var rt = new RenderedTarget(s, null);
+    var block1 = {fields: Object,
+        id: 'arbitraryString',
+        inputs: Object,
+        STEPS: Object,
+        block: 'fakeBlock',
+        name: 'STEPS',
+        next: 'secondString',
+        opcode: 'motion_movesteps',
+        parent: null,
+        shadow: false,
+        topLevel: true,
+        x: 0,
+        y: 0
+    };
+    var block2 = {fields: Object,
+        id: 'secondString',
+        inputs: Object,
+        STEPS: Object,
+        block: 'fakeBlock',
+        name: 'STEPS',
+        next: null,
+        opcode: 'procedures_callnoreturn',
+        mutation: {proccode: 'fakeCode'},
+        parent: null,
+        shadow: false,
+        topLevel: true,
+        x: 0,
+        y: 0
+    };
+    
+    rt.blocks.createBlock(block1);
+    rt.blocks.createBlock(block2);
+    rt.blocks.createBlock(block2);
+    th.target = rt;
+    
+    t.strictEquals(th.peekStack(), null);
+    th.pushStack('secondString');
+    t.strictEquals(th.peekStack(), 'secondString');
+    th.goToNextBlock();
+    t.strictEquals(th.peekStack(), null);
+    th.pushStack('secondString');
+    th.pushStack('arbitraryString');
+    t.strictEquals(th.peekStack(), 'arbitraryString');
+    th.goToNextBlock();
+    t.strictEquals(th.peekStack(), 'secondString');
+    th.goToNextBlock();
+    t.strictEquals(th.peekStack(), null);
+    
+    t.end();
+});
+
+test('stopThisScript', function (t) {
+    var th = new Thread('arbitraryString');
+    var s = new Sprite();
+    var rt = new RenderedTarget(s, null);
+    var block1 = {fields: Object,
+        id: 'arbitraryString',
+        inputs: Object,
+        STEPS: Object,
+        block: 'fakeBlock',
+        name: 'STEPS',
+        next: null,
+        opcode: 'motion_movesteps',
+        parent: null,
+        shadow: false,
+        topLevel: true,
+        x: 0,
+        y: 0
+    };
+    var block2 = {fields: Object,
+        id: 'secondString',
+        inputs: Object,
+        STEPS: Object,
+        block: 'fakeBlock',
+        name: 'STEPS',
+        next: null,
+        opcode: 'procedures_callnoreturn',
+        mutation: {proccode: 'fakeCode'},
+        parent: null,
+        shadow: false,
+        topLevel: true,
+        x: 0,
+        y: 0
+    };
+    
+    rt.blocks.createBlock(block1);
+    rt.blocks.createBlock(block2);
+    th.target = rt;
+    
+    th.stopThisScript();
+    t.strictEquals(th.peekStack(), null);
+    th.pushStack('arbitraryString');
+    t.strictEquals(th.peekStack(), 'arbitraryString');
+    th.stopThisScript();
+    t.strictEquals(th.peekStack(), null);
+    th.pushStack('arbitraryString');
+    th.pushStack('secondString');
+    th.stopThisScript();
+    t.strictEquals(th.peekStack(), 'secondString');
+    
+    t.end();
+});
+
+test('isRecursiveCall', function (t) {
+    var th = new Thread('arbitraryString');
+    var s = new Sprite();
+    var rt = new RenderedTarget(s, null);
+    var block1 = {fields: Object,
+        id: 'arbitraryString',
+        inputs: Object,
+        STEPS: Object,
+        block: 'fakeBlock',
+        name: 'STEPS',
+        next: null,
+        opcode: 'motion_movesteps',
+        parent: null,
+        shadow: false,
+        topLevel: true,
+        x: 0,
+        y: 0
+    };
+    var block2 = {fields: Object,
+        id: 'secondString',
+        inputs: Object,
+        STEPS: Object,
+        block: 'fakeBlock',
+        name: 'STEPS',
+        next: null,
+        opcode: 'procedures_callnoreturn',
+        mutation: {proccode: 'fakeCode'},
+        parent: null,
+        shadow: false,
+        topLevel: true,
+        x: 0,
+        y: 0
+    };
+    
+    rt.blocks.createBlock(block1);
+    rt.blocks.createBlock(block2);
+    th.target = rt;
+    
+    t.strictEquals(th.isRecursiveCall('fakeCode'), false);
+    th.pushStack('secondString');
+    t.strictEquals(th.isRecursiveCall('fakeCode'), false);
+    th.pushStack('arbitraryString');
+    t.strictEquals(th.isRecursiveCall('fakeCode'), true);
+    th.pushStack('arbitraryString');
+    t.strictEquals(th.isRecursiveCall('fakeCode'), true);
+    th.popStack();
+    t.strictEquals(th.isRecursiveCall('fakeCode'), true);
+    th.popStack();
+    t.strictEquals(th.isRecursiveCall('fakeCode'), false);
+    th.popStack();
+    t.strictEquals(th.isRecursiveCall('fakeCode'), false);
     
     t.end();
 });
