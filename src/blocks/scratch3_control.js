@@ -110,7 +110,7 @@ Scratch3ControlBlocks.prototype.stop = function (args, util) {
         option === 'other scripts in stage') {
         util.stopOtherTargetThreads();
     } else if (option === 'this script') {
-        util.stopThread();
+        util.stopThisScript();
     }
 };
 
