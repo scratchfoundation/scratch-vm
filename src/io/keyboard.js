@@ -56,7 +56,7 @@ Keyboard.prototype._keyCodeToScratchKey = function (keyCode) {
     case 39: return 'right arrow';
     case 40: return 'down arrow';
     }
-    return null;
+    return '';
 };
 
 /**
