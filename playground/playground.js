@@ -29,6 +29,12 @@ window.onload = function() {
         document.location = '#' + document.getElementById('projectId').value;
         location.reload();
     };
+    document.getElementById('projectLoadPicker').onchange = function (event) {
+        var file = event.target.files[0];
+        var url = window.URL.createObjectURL(file);
+        window.vm.expandAndLoadSb2(url);
+        event.target.value = null;
+    };
     loadProject();
 
     // Instantiate the renderer and connect it to the VM.
