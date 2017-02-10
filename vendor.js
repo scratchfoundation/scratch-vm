@@ -614,15 +614,16 @@ module.exports =
 	};
 
 	/**
-	 * Play a note for a duration on an instrument
+	 * Play a note for a duration on an instrument with a volume
 	 * @param  {number} note - a MIDI note number
 	 * @param  {number} beats - a duration in beats
 	 * @param  {number} inst - an instrument number (0-indexed)
+	 * @param  {number} vol - a volume level (0-100%)
 	 * @return {Promise} a Promise that resolves after the duration has elapsed
 	 */
-	AudioEngine.prototype.playNoteForBeatsWithInst = function (note, beats, inst) {
+	AudioEngine.prototype.playNoteForBeatsWithInstAndVol = function (note, beats, inst, vol) {
 	    var sec = this.beatsToSec(beats);
-	    this.instrumentPlayer.playNoteForSecWithInst(note, sec, inst);
+	    this.instrumentPlayer.playNoteForSecWithInstAndVol(note, sec, inst, vol);
 	    return this.waitForBeats(beats);
 	};
 
@@ -24130,12 +24131,17 @@ module.exports =
 	 * @param  {number} note - a MIDI note number
 	 * @param  {number} sec - a duration in seconds
 	 * @param  {number} instrumentNum - an instrument number (0-indexed)
+	 * @param  {number} vol - a volume level (0-100%)
 	 */
-	InstrumentPlayer.prototype.playNoteForSecWithInst = function (note, sec, instrumentNum) {
+	InstrumentPlayer.prototype.playNoteForSecWithInstAndVol = function (note, sec, instrumentNum, vol) {
 	    var _this = this;
 
+	    var gain = vol / 100;
 	    this.loadInstrument(instrumentNum).then(function () {
-	        _this.instruments[instrumentNum].play(note, Tone.context.currentTime, { duration: sec });
+	        _this.instruments[instrumentNum].play(note, Tone.context.currentTime, {
+	            duration: sec,
+	            gain: gain
+	        });
 	    });
 	};
 
