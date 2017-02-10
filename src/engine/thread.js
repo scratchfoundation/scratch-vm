@@ -141,6 +141,27 @@ Thread.prototype.popStack = function () {
 };
 
 /**
+ * Pop back down the stack frame until we hit a procedure call or the stack frame is emptied
+ */
+Thread.prototype.stopThisScript = function () {
+    var blockID = this.peekStack();
+    while (blockID !== null) {
+        var block = this.target.blocks.getBlock(blockID);
+        if (typeof block !== 'undefined' && block.opcode === 'procedures_callnoreturn') {
+            break;
+        }
+        this.popStack();
+        blockID = this.peekStack();
+    }
+
+    if (this.stack.length === 0) {
+        // Clean up!
+        this.requestScriptGlowInFrame = false;
+        this.status = Thread.STATUS_DONE;
+    }
+};
+
+/**
  * Get top stack item.
  * @return {?string} Block ID on top of stack.
  */
