@@ -91,6 +91,15 @@ Cast.toRgbColorObject = function (value) {
 };
 
 /**
+ * Determine if a Scratch argument is a white space string (or null / empty).
+ * @param {*} val value to check.
+ * @return {boolean} True if the argument is all white spaces or null / empty.
+ */
+Cast.isWhiteSpace = function (val) {
+    return val === null || typeof val === 'string' && val.trim().length === 0;
+};
+
+/**
  * Compare two values, using Scratch cast, case-insensitive string compare, etc.
  * In Scratch 2.0, this is captured by `interp.compare.`
  * @param {*} v1 First value to compare.
@@ -100,10 +109,9 @@ Cast.toRgbColorObject = function (value) {
 Cast.compare = function (v1, v2) {
     var n1 = Number(v1);
     var n2 = Number(v2);
-    if (n1 === 0 && (v1 == null || typeof v1 === 'string' && v1.trim().length === 0)) {
+    if (n1 === 0 && Cast.isWhiteSpace(v1)) {
         n1 = NaN;
-    }
-    if (n2 === 0 && (v2 == null || typeof v2 === 'string' && v2.trim().length === 0)) {
+    } else if (n2 === 0 && Cast.isWhiteSpace(v2)) {
         n2 = NaN;
     }
     if (isNaN(n1) || isNaN(n2)) {
