@@ -14,10 +14,4 @@ npm-*
 
 # Build
 /dist
-/playground/assets
-/playground/media
-/playground/scratch-vm.js
-/playground/scratch-vm.js.map
-/playground/vendor.js
-/playground/vendor.js.map
-/playground/zenburn.css
+/playground

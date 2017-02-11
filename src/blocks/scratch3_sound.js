@@ -135,8 +135,9 @@ Scratch3SoundBlocks.prototype.playNoteForBeats = function (args, util) {
     var beats = Cast.toNumber(args.BEATS);
     var soundState = this._getSoundState(util.target);
     var inst = soundState.currentInstrument;
+    var vol = soundState.volume;
     if (typeof this.runtime.audioEngine === 'undefined') return;
-    return this.runtime.audioEngine.playNoteForBeatsWithInst(note, beats, inst);
+    return this.runtime.audioEngine.playNoteForBeatsWithInstAndVol(note, beats, inst, vol);
 };
 
 Scratch3SoundBlocks.prototype.playDrumForBeats = function (args, util) {
