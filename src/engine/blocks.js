@@ -75,8 +75,8 @@ Blocks.prototype.getBranch = function (id, branchNum) {
     }
 
     // Empty C-block?
-    if (!(inputName in block.inputs)) return null;
-    return block.inputs[inputName].block;
+    var input = block.inputs[inputName];
+    return (typeof input === 'undefined') ? null : input.block;
 };
 
 /**
@@ -91,21 +91,21 @@ Blocks.prototype.getOpcode = function (id) {
 
 /**
  * Get all fields and their values for a block.
- * @param {?string} id ID of block to query.
- * @return {!object} All fields and their values.
+ * @param {?object} block The block to query.
+ * @return {?object} All fields and their values.
  */
-Blocks.prototype.getFields = function (id) {
-    var block = this._blocks[id];
+Blocks.prototype.getFields = function (block) {
+    // var block = this._blocks[id];
     return (typeof block === 'undefined') ? null : block.fields;
 };
 
 /**
  * Get all non-branch inputs for a block.
- * @param {?string} id ID of block to query.
+ * @param {?object} block the block to query.
  * @return {!object} All non-branch inputs and their associated blocks.
  */
-Blocks.prototype.getInputs = function (id) {
-    var block = this._blocks[id];
+Blocks.prototype.getInputs = function (block) {
+    // var block = this._blocks[id];
     if (typeof block === 'undefined') return null;
     var inputs = {};
     for (var input in block.inputs) {
@@ -120,11 +120,11 @@ Blocks.prototype.getInputs = function (id) {
 
 /**
  * Get mutation data for a block.
- * @param {?string} id ID of block to query.
- * @return {!object} Mutation for the block.
+ * @param {?object} block The block to query.
+ * @return {?object} Mutation for the block.
  */
-Blocks.prototype.getMutation = function (id) {
-    var block = this._blocks[id];
+Blocks.prototype.getMutation = function (block) {
+    // var block = this._blocks[id];
     return (typeof block === 'undefined') ? null : block.mutation;
 };
 
