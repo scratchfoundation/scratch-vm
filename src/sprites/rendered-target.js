@@ -170,7 +170,7 @@ RenderedTarget.prototype.setXY = function (x, y) {
     this.x = x;
     this.y = y;
     if (this.renderer) {
-        this.renderer.getFencedPositionOfDrawable(this.drawableID, this);
+        this.renderer.fencePositionOfDrawable(this.drawableID, this);
         this.renderer.updateDrawableProperties(this.drawableID, {
             position: [this.x, this.y]
         });
