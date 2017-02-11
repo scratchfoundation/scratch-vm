@@ -1,4 +1,3 @@
-
 var loadProject = function () {
     var id = location.hash.substring(1);
     if (id.length < 1 || !isFinite(id)) {
@@ -7,7 +6,7 @@ var loadProject = function () {
     var url = 'https://projects.scratch.mit.edu/internalapi/project/' +
         id + '/get/';
     var r = new XMLHttpRequest();
-    r.onreadystatechange = function() {
+    r.onreadystatechange = function () {
         if (this.readyState === 4) {
             if (r.status === 200) {
                 window.vm.loadProject(this.responseText);
@@ -18,7 +17,7 @@ var loadProject = function () {
     r.send();
 };
 
-window.onload = function() {
+window.onload = function () {
     // Lots of global variables to make debugging easier
     // Instantiate the VM.
     var vm = new window.VirtualMachine();
@@ -74,7 +73,7 @@ window.onload = function() {
     // Playground data tabs.
     // Block representation tab.
     var blockexplorer = document.getElementById('blockexplorer');
-    var updateBlockExplorer = function(blocks) {
+    var updateBlockExplorer = function (blocks) {
         blockexplorer.innerHTML = JSON.stringify(blocks, null, 2);
         window.hljs.highlightBlock(blockexplorer);
     };
@@ -83,7 +82,7 @@ window.onload = function() {
     var threadexplorer = document.getElementById('threadexplorer');
     var cachedThreadJSON = '';
     var updateThreadExplorer = function (newJSON) {
-        if (newJSON != cachedThreadJSON) {
+        if (newJSON !== cachedThreadJSON) {
             cachedThreadJSON = newJSON;
             threadexplorer.innerHTML = cachedThreadJSON;
             window.hljs.highlightBlock(threadexplorer);
@@ -101,7 +100,7 @@ window.onload = function() {
 
     // VM handlers.
     // Receipt of new playground data (thread, block representations).
-    vm.on('playgroundData', function(data) {
+    vm.on('playgroundData', function (data) {
         updateThreadExplorer(data.threads);
         updateBlockExplorer(data.blocks);
     });
@@ -125,7 +124,7 @@ window.onload = function() {
             var targetOption = document.createElement('option');
             targetOption.setAttribute('value', data.targetList[i].id);
             // If target id matches editingTarget id, select it.
-            if (data.targetList[i].id == data.editingTarget) {
+            if (data.targetList[i].id === data.editingTarget) {
                 targetOption.setAttribute('selected', 'selected');
             }
             targetOption.appendChild(
@@ -139,23 +138,23 @@ window.onload = function() {
     };
 
     // Feedback for stacks and blocks running.
-    vm.on('SCRIPT_GLOW_ON', function(data) {
+    vm.on('SCRIPT_GLOW_ON', function (data) {
         workspace.glowStack(data.id, true);
     });
-    vm.on('SCRIPT_GLOW_OFF', function(data) {
+    vm.on('SCRIPT_GLOW_OFF', function (data) {
         workspace.glowStack(data.id, false);
     });
-    vm.on('BLOCK_GLOW_ON', function(data) {
+    vm.on('BLOCK_GLOW_ON', function (data) {
         workspace.glowBlock(data.id, true);
     });
-    vm.on('BLOCK_GLOW_OFF', function(data) {
+    vm.on('BLOCK_GLOW_OFF', function (data) {
         workspace.glowBlock(data.id, false);
     });
-    vm.on('VISUAL_REPORT', function(data) {
+    vm.on('VISUAL_REPORT', function (data) {
         workspace.reportValue(data.id, data.value);
     });
 
-    vm.on('SPRITE_INFO_REPORT', function(data) {
+    vm.on('SPRITE_INFO_REPORT', function (data) {
         if (data.id !== selectedTarget.value) return; // Not the editingTarget
         document.getElementById('sinfo-x').value = data.x;
         document.getElementById('sinfo-y').value = data.y;
@@ -213,7 +212,7 @@ window.onload = function() {
     // Feed keyboard events as VM I/O events.
     document.addEventListener('keydown', function (e) {
         // Don't capture keys intended for Blockly inputs.
-        if (e.target != document && e.target != document.body) {
+        if (e.target !== document && e.target !== document.body) {
             return;
         }
         window.vm.postIOData('keyboard', {
@@ -222,7 +221,7 @@ window.onload = function() {
         });
         e.preventDefault();
     });
-    document.addEventListener('keyup', function(e) {
+    document.addEventListener('keyup', function (e) {
         // Always capture up events,
         // even those that have switched to other targets.
         window.vm.postIOData('keyboard', {
@@ -230,7 +229,7 @@ window.onload = function() {
             isDown: false
         });
         // E.g., prevent scroll.
-        if (e.target != document && e.target != document.body) {
+        if (e.target !== document && e.target !== document.body) {
             e.preventDefault();
         }
     });
@@ -239,25 +238,25 @@ window.onload = function() {
     vm.start();
 
     // Inform VM of animation frames.
-    var animate = function() {
+    var animate = function () {
         stats.update();
         requestAnimationFrame(animate);
     };
     requestAnimationFrame(animate);
 
     // Handlers for green flag and stop all.
-    document.getElementById('greenflag').addEventListener('click', function() {
+    document.getElementById('greenflag').addEventListener('click', function () {
         vm.greenFlag();
     });
-    document.getElementById('stopall').addEventListener('click', function() {
+    document.getElementById('stopall').addEventListener('click', function () {
         vm.stopAll();
     });
-    document.getElementById('turbomode').addEventListener('change', function() {
+    document.getElementById('turbomode').addEventListener('change', function () {
         var turboOn = document.getElementById('turbomode').checked;
         vm.setTurboMode(turboOn);
     });
     document.getElementById('compatmode').addEventListener('change',
-    function() {
+    function () {
         var compatibilityMode = document.getElementById('compatmode').checked;
         vm.setCompatibilityMode(compatibilityMode);
     });
