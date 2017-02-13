@@ -414,7 +414,7 @@ Runtime.prototype.allScriptsDo = function (f, optTarget) {
     if (optTarget) {
         targets = [optTarget];
     }
-    for (var t = 0; t < targets.length; t++) {
+    for (var t = targets.length - 1; t >= 0; t--) {
         var target = targets[t];
         var scripts = target.blocks.getScripts();
         for (var j = 0; j < scripts.length; j++) {
