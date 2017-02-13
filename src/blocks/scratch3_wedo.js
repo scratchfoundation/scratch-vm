@@ -14,6 +14,16 @@ var Scratch3WedoBlocks = function (runtime) {
      * @type {Number}
      */
     this._motorSpeed = 50;
+
+    // /**
+    //  * Current motor directions (1 or -1)
+    //  * @type {Number}
+    //  */
+    this._motorDirections = {
+        A: 1,
+        B: 1,
+        external: 1
+    };
 };
 
 /**
@@ -26,12 +36,14 @@ Scratch3WedoBlocks.prototype.getPrimitives = function () {
         wedo_motorclockwise: this.motorClockwise,
         wedo_motorcounterclockwise: this.motorCounterClockwise,
         wedo_motorspeed: this.motorSpeed,
+        wedo_motorturndegrees: this.motorTurnDegrees,
+        wedo_motorsetdirection: this.motorSetDirection,
         wedo_distance: this.distance,
         wedo_tilt: this.tilt
     };
 };
 
- Scratch3WedoBlocks.prototype.getHats = function () {
+Scratch3WedoBlocks.prototype.getHats = function () {
      return {
          wedo_whentilt: {
              restartExistingThreads: true
@@ -78,6 +90,30 @@ Scratch3WedoBlocks.prototype.motorSpeed = function(args) {
     // @todo Handle CHOICE and NUM for vertical and horizontal grammars
     var speed = Cast.toNumber(args.CHOICE);
     this._motorSpeed = MathUtil.clamp(speed, 0, 100);
+};
+
+Scratch3WedoBlocks.prototype.motorTurnDegrees = function(args) {
+    var degrees = Cast.toNumber(args.DEGREES);
+    var direction = this._motorDirections[args.MOTOR];
+    if (typeof window.ext !== 'undefined') {
+        window.ext.postMessage({
+            extension: 'wedo',
+            method: 'motorTurnDegrees',
+            args: [args.MOTOR, degrees, direction]
+        });
+    }
+};
+
+Scratch3WedoBlocks.prototype.motorSetDirection = function(args) {
+    if (args.DIRECTION === 'clockwise') {
+        this._motorDirections[args.MOTOR] = 1;
+    }
+    if (args.DIRECTION === 'counter-clockwise') {
+        this._motorDirections[args.MOTOR] = -1;
+    }
+    if (args.DIRECTION === 'reverse') {
+        this._motorDirections[args.MOTOR] *= -1;
+    }
 };
 
 Scratch3WedoBlocks.prototype.distance = function(args) {
