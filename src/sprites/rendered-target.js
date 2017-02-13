@@ -582,7 +582,7 @@ RenderedTarget.prototype.goBackLayers = function (nLayers) {
 
 /**
  * Move behind some other rendered target.
- * @param {!Clone} other Other rendered target to move behind.
+ * @param {!RenderedTarget} other Other rendered target to move behind.
  */
 RenderedTarget.prototype.goBehindOther = function (other) {
     if (this.renderer) {
@@ -637,11 +637,11 @@ RenderedTarget.prototype.keepInFence = function (newX, newY, optFence) {
 /**
  * Make a clone, copying any run-time properties.
  * If we've hit the global clone limit, returns null.
- * @return {!RenderedTarget} New clone.
+ * @return {RenderedTarget} New clone.
  */
 RenderedTarget.prototype.makeClone = function () {
     if (!this.runtime.clonesAvailable() || this.isStage) {
-        return; // Hit max clone limit, or this is the stage.
+        return null; // Hit max clone limit, or this is the stage.
     }
     this.runtime.changeCloneCounter(1);
     var newClone = this.sprite.createClone();
