@@ -336,4 +336,23 @@ VirtualMachine.prototype.postSpriteInfo = function (data) {
     this.editingTarget.postSpriteInfo(data);
 };
 
+VirtualMachine.prototype.filterToolbox = function (toolboxDOM) {
+    var filteredToolbox = toolboxDOM.cloneNode();
+    var category = toolboxDOM.firstElementChild;
+    while (category) {
+        var filteredCategory = category.cloneNode();
+        var block = category.firstElementChild;
+        while (block) {
+            var opcode = block.getAttribute('type');
+            if (opcode in this.runtime._primitives || opcode in this.runtime._hats) {
+                filteredCategory.appendChild(block.cloneNode(true));
+            }
+            block = block.nextElementSibling;
+        }
+        if (filteredCategory.hasChildNodes()) filteredToolbox.appendChild(filteredCategory);
+        category = category.nextElementSibling;
+    }
+    return filteredToolbox;
+};
+
 module.exports = VirtualMachine;
