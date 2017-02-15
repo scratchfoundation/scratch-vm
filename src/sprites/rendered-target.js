@@ -167,20 +167,15 @@ RenderedTarget.prototype.setXY = function (x, y) {
     }
     var oldX = this.x;
     var oldY = this.y;
+    this.x = x;
+    this.y = y;
     if (this.renderer) {
-        var position = this.renderer.getFencedPositionOfDrawable(this.drawableID, [x, y]);
-        this.x = position.x;
-        this.y = position.y;
-
         this.renderer.updateDrawableProperties(this.drawableID, {
-            position: position
+            position: [this.x, this.y]
         });
         if (this.visible) {
             this.runtime.requestRedraw();
         }
-    } else {
-        this.x = x;
-        this.y = y;
     }
     this.emit(RenderedTarget.EVENT_TARGET_MOVED, this, oldX, oldY);
     this.runtime.spriteInfoReport(this);
