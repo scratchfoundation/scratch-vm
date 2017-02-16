@@ -21,7 +21,7 @@ var execute = function (sequencer, thread) {
     var target = thread.target;
 
     // Stop if block or target no longer exists.
-    if (target == null) {
+    if (target === null) {
         // No block found: stop the thread; script no longer exists.
         sequencer.retireThread(thread);
         return;
@@ -33,11 +33,11 @@ var execute = function (sequencer, thread) {
 
     var blockContainer = target.blocks;
     var block = blockContainer.getBlock(currentBlockId);
-    if (block === undefined) {
+    if (typeof block === 'undefined') {
         blockContainer = runtime.flyoutBlocks;
         block = blockContainer.getBlock(currentBlockId);
         // Stop if block or target no longer exists.
-        if (block === undefined) {
+        if (typeof block === 'undefined') {
             // No block found: stop the thread; script no longer exists.
             sequencer.retireThread(thread);
             return;
@@ -105,7 +105,7 @@ var execute = function (sequencer, thread) {
     // it's treated as a predicate; if not, execution will proceed as a no-op.
     // For single-field shadows: If the block has a single field, and no inputs,
     // immediately return the value of the field.
-    if (blockFunction == null) {
+    if (typeof blockFunction === 'undefined') {
         if (isHat) {
             // Skip through the block (hat with no predicate).
             return;
@@ -134,7 +134,7 @@ var execute = function (sequencer, thread) {
         var input = inputs[inputName];
         var inputBlockId = input.block;
         // Is there no value for this input waiting in the stack frame?
-        if (inputBlockId != null && typeof currentStackFrame.reported[inputName] === 'undefined') {
+        if (inputBlockId !== null && typeof currentStackFrame.reported[inputName] === 'undefined') {
             // If there's not, we need to evaluate the block.
             // Push to the stack to evaluate the reporter block.
             thread.pushStack(inputBlockId);
