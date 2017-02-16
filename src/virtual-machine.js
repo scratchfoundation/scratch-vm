@@ -1,6 +1,7 @@
 var EventEmitter = require('events');
 var util = require('util');
 
+var filterToolbox = require('./util/filter-toolbox');
 var Runtime = require('./engine/runtime');
 var sb2import = require('./import/sb2import');
 
@@ -336,23 +337,17 @@ VirtualMachine.prototype.postSpriteInfo = function (data) {
     this.editingTarget.postSpriteInfo(data);
 };
 
-VirtualMachine.prototype.filterToolbox = function (toolboxDOM) {
-    var filteredToolbox = toolboxDOM.cloneNode();
-    var category = toolboxDOM.firstElementChild;
-    while (category) {
-        var filteredCategory = category.cloneNode();
-        var block = category.firstElementChild;
-        while (block) {
-            var opcode = block.getAttribute('type');
-            if (opcode in this.runtime._primitives || opcode in this.runtime._hats) {
-                filteredCategory.appendChild(block.cloneNode(true));
-            }
-            block = block.nextElementSibling;
-        }
-        if (filteredCategory.hasChildNodes()) filteredToolbox.appendChild(filteredCategory);
-        category = category.nextElementSibling;
-    }
-    return filteredToolbox;
+
+/**
+ * Filter Blockly toolbox XML and return a copy which only contains blocks with
+ * existent opcodes. Categories with no valid children will be removed.
+ * @param {HTMLElement} toolbox Blockly toolbox XML node
+ * @returns {HTMLElement} filtered toolbox XML node
+ */
+VirtualMachine.prototype.filterToolbox = function (toolbox) {
+    var opcodes = Object.keys(this.runtime._primitives)
+        .concat(Object.keys(this.runtime._hats));
+    return filterToolbox(toolbox, opcodes);
 };
 
 module.exports = VirtualMachine;
