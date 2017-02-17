@@ -40020,14 +40020,27 @@ var SVGSkin = function (_Skin) {
          */
 
     }, {
-        key: 'getTexture',
+        key: 'setRotationCenter',
 
+
+        /**
+         * Set the origin, in object space, about which this Skin should rotate.
+         * @param {number} x - The x coordinate of the new rotation center.
+         * @param {number} y - The y coordinate of the new rotation center.
+         */
+        value: function setRotationCenter(x, y) {
+            var viewOffset = this._svgRenderer.viewOffset;
+            _get(SVGSkin.prototype.__proto__ || Object.getPrototypeOf(SVGSkin.prototype), 'setRotationCenter', this).call(this, x - viewOffset[0], y - viewOffset[1]);
+        }
 
         /**
          * @param {[number,number]} scale - The scaling factors to be used.
          * @return {WebGLTexture} The GL texture representation of this skin when drawing at the given scale.
          */
         // eslint-disable-next-line no-unused-vars
+
+    }, {
+        key: 'getTexture',
         value: function getTexture(scale) {
             // TODO: re-render a scaled version if the requested scale is significantly larger than the current render
             return this._texture;
@@ -40447,6 +40460,16 @@ var SvgRenderer = function () {
         key: 'size',
         get: function get() {
             return [this._measurements.width, this._measurements.height];
+        }
+
+        /**
+         * @return {[number,number]} the offset (upper left corner) of the SVG's view box.
+         */
+
+    }, {
+        key: 'viewOffset',
+        get: function get() {
+            return [this._measurements.x, this._measurements.y];
         }
     }]);
 
