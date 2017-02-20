@@ -46,7 +46,7 @@ Mouse.prototype.postData = function (data) {
     }
     if (typeof data.isDown !== 'undefined') {
         this._isDown = data.isDown;
-        if (this._isDown) {
+        if (!this._isDown) {
             this._activateClickHats(data.x, data.y);
         }
     }
