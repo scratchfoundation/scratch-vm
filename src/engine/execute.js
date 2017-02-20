@@ -233,8 +233,15 @@ var execute = function (sequencer, thread) {
         primitiveReportedValue.then(function (resolvedValue) {
             handleReport(resolvedValue);
             if (typeof resolvedValue === 'undefined') {
-                var popped = thread.popStack();
-                var nextBlockId = thread.target.blocks.getNextBlock(popped);
+                do {
+                    // In the case that the promise is the last block in the current thread stack
+                    // We need to pop out repeatedly until we find the next block.
+                    var popped = thread.popStack();
+                    if (popped === null) {
+                        return;
+                    }
+                    var nextBlockId = thread.target.blocks.getNextBlock(popped);
+                } while (nextBlockId === null);
                 thread.pushStack(nextBlockId);
             } else {
                 thread.popStack();
