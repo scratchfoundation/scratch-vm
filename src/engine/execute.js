@@ -241,7 +241,15 @@ var execute = function (sequencer, thread) {
                         return;
                     }
                     var nextBlockId = thread.target.blocks.getNextBlock(popped);
-                } while (nextBlockId === null);
+                    if (nextBlockId !== null) {
+                        // A next block exists so break out this loop
+                        break;
+                    }
+                    // Investigate the next block and if not in a loop,
+                    // then repeat and pop the next item off the stack frame
+                    var stackFrame = thread.peekStackFrame();
+                } while (stackFrame !== null && !stackFrame.isLoop);
+
                 thread.pushStack(nextBlockId);
             } else {
                 thread.popStack();
