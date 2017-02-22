@@ -193,6 +193,7 @@ Scratch3SoundBlocks.prototype.changeEffect = function (args, util) {
 Scratch3SoundBlocks.prototype.clearEffects = function (args, util) {
     var soundState = this._getSoundState(util.target);
     for (var effect in soundState.effects) {
+        if (!soundState.effects.hasOwnProperty(effect)) continue;
         soundState.effects[effect] = 0;
     }
     if (util.target.audioPlayer === null) return;

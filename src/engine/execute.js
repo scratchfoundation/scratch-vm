@@ -110,6 +110,7 @@ var execute = function (sequencer, thread) {
                 Object.keys(inputs).length === 0) {
                 // One field and no inputs - treat as arg.
                 for (var fieldKey in fields) { // One iteration.
+                    if (!fields.hasOwnProperty(fieldKey)) continue;
                     handleReport(fields[fieldKey].value);
                 }
             } else {
@@ -126,11 +127,13 @@ var execute = function (sequencer, thread) {
 
     // Add all fields on this block to the argValues.
     for (var fieldName in fields) {
+        if (!fields.hasOwnProperty(fieldName)) continue;
         argValues[fieldName] = fields[fieldName].value;
     }
 
     // Recursively evaluate input blocks.
     for (var inputName in inputs) {
+        if (!inputs.hasOwnProperty(inputName)) continue;
         var input = inputs[inputName];
         var inputBlockId = input.block;
         // Is there no value for this input waiting in the stack frame?

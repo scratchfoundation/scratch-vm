@@ -315,6 +315,7 @@ RenderedTarget.prototype.setEffect = function (effectName, value) {
  */
 RenderedTarget.prototype.clearEffects = function () {
     for (var effectName in this.effects) {
+        if (!this.effects.hasOwnProperty(effectName)) continue;
         this.effects[effectName] = 0;
     }
     if (this.renderer) {
@@ -434,8 +435,9 @@ RenderedTarget.prototype.updateAllDrawableProperties = function () {
                 costume.rotationCenterY / costume.bitmapResolution
             ]
         };
-        for (var effectID in this.effects) {
-            props[effectID] = this.effects[effectID];
+        for (var effectName in this.effects) {
+            if (!this.effects.hasOwnProperty(effectName)) continue;
+            props[effectName] = this.effects[effectName];
         }
         this.renderer.updateDrawableProperties(this.drawableID, props);
         if (this.visible) {
