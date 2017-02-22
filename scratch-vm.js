@@ -3958,6 +3958,7 @@ Blocks.prototype.getTopLevelScript = function (id) {
  */
 Blocks.prototype.getProcedureDefinition = function (name) {
     for (var id in this._blocks) {
+        if (!this._blocks.hasOwnProperty(id)) continue;
         var block = this._blocks[id];
         if ((block.opcode === 'procedures_defnoreturn' ||
             block.opcode === 'procedures_defreturn') &&
@@ -3975,6 +3976,7 @@ Blocks.prototype.getProcedureDefinition = function (name) {
  */
 Blocks.prototype.getProcedureParamNames = function (name) {
     for (var id in this._blocks) {
+        if (!this._blocks.hasOwnProperty(id)) continue;
         var block = this._blocks[id];
         if ((block.opcode === 'procedures_defnoreturn' ||
             block.opcode === 'procedures_defreturn') &&
@@ -4224,6 +4226,7 @@ Blocks.prototype.blockToXML = function (blockId) {
     }
     // Add any inputs on this block.
     for (var input in block.inputs) {
+        if (!block.inputs.hasOwnProperty(input)) continue;
         var blockInput = block.inputs[input];
         // Only encode a value tag if the value input is occupied.
         if (blockInput.block || blockInput.shadow) {
@@ -4240,6 +4243,7 @@ Blocks.prototype.blockToXML = function (blockId) {
     }
     // Add any fields on this block.
     for (var field in block.fields) {
+        if (!block.fields.hasOwnProperty(field)) continue;
         var blockField = block.fields[field];
         var value = blockField.value;
         if (typeof value === 'string') {
@@ -8271,6 +8275,7 @@ RenderedTarget.prototype.setEffect = function (effectName, value) {
  */
 RenderedTarget.prototype.clearEffects = function () {
     for (var effectName in this.effects) {
+        if (!this.effects.hasOwnProperty(effectName)) continue;
         this.effects[effectName] = 0;
     }
     if (this.renderer) {
@@ -8390,8 +8395,9 @@ RenderedTarget.prototype.updateAllDrawableProperties = function () {
                 costume.rotationCenterY / costume.bitmapResolution
             ]
         };
-        for (var effectID in this.effects) {
-            props[effectID] = this.effects[effectID];
+        for (var effectName in this.effects) {
+            if (!this.effects.hasOwnProperty(effectName)) continue;
+            props[effectName] = this.effects[effectName];
         }
         this.renderer.updateDrawableProperties(this.drawableID, props);
         if (this.visible) {
@@ -15918,6 +15924,7 @@ Scratch3SoundBlocks.prototype.changeEffect = function (args, util) {
 Scratch3SoundBlocks.prototype.clearEffects = function (args, util) {
     var soundState = this._getSoundState(util.target);
     for (var effect in soundState.effects) {
+        if (!soundState.effects.hasOwnProperty(effect)) continue;
         soundState.effects[effect] = 0;
     }
     if (util.target.audioPlayer === null) return;
@@ -16010,6 +16017,7 @@ var domToBlocks = function (blocksDOM) {
     // Flatten blocks object into a list.
     var blocksList = [];
     for (var b in blocks) {
+        if (!blocks.hasOwnProperty(b)) continue;
         blocksList.push(blocks[b]);
     }
     return blocksList;
@@ -16252,6 +16260,7 @@ var execute = function (sequencer, thread) {
                 Object.keys(inputs).length === 0) {
                 // One field and no inputs - treat as arg.
                 for (var fieldKey in fields) { // One iteration.
+                    if (!fields.hasOwnProperty(fieldKey)) continue;
                     handleReport(fields[fieldKey].value);
                 }
             } else {
@@ -16268,11 +16277,13 @@ var execute = function (sequencer, thread) {
 
     // Add all fields on this block to the argValues.
     for (var fieldName in fields) {
+        if (!fields.hasOwnProperty(fieldName)) continue;
         argValues[fieldName] = fields[fieldName].value;
     }
 
     // Recursively evaluate input blocks.
     for (var inputName in inputs) {
+        if (!inputs.hasOwnProperty(inputName)) continue;
         var input = inputs[inputName];
         var inputBlockId = input.block;
         // Is there no value for this input waiting in the stack frame?
@@ -16843,6 +16854,7 @@ Runtime.prototype.startHats = function (requestedHatOpcode,
     var newThreads = [];
 
     for (var opts in optMatchFields) {
+        if (!optMatchFields.hasOwnProperty(opts)) continue;
         optMatchFields[opts] = optMatchFields[opts].toUpperCase();
     }
 
@@ -16865,6 +16877,7 @@ Runtime.prototype.startHats = function (requestedHatOpcode,
         if (Object.keys(hatFields).length === 0) {
             var hatInputs = target.blocks.getInputs(topBlockId);
             for (var input in hatInputs) {
+                if (!hatInputs.hasOwnProperty(input)) continue;
                 var id = hatInputs[input].block;
                 var fields = target.blocks.getFields(id);
                 hatFields = Object.assign(fields, hatFields);
@@ -16994,6 +17007,7 @@ Runtime.prototype.stopAll = function () {
 Runtime.prototype._step = function () {
     // Find all edge-activated hats, and add them to threads to be evaluated.
     for (var hatType in this._hats) {
+        if (!this._hats.hasOwnProperty(hatType)) continue;
         var hat = this._hats[hatType];
         if (hat.edgeActivated) {
             this.startHats(hatType);
