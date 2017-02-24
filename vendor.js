@@ -28595,7 +28595,7 @@ module.exports =
 	f.setCheckable(!0);c.addChild(f,!0);g=g==this.value_;f.setChecked(g);g&&(this.selectedItem=f)}goog.events.listen(c,goog.ui.Component.EventType.ACTION,function(a){if(a=a.target)b.onItemSelected(this,a);Blockly.DropDownDiv.hide();Blockly.Events.setGroup(!1)});c.getHandler().listen(c.getElement(),goog.events.EventType.TOUCHSTART,function(a){this.getOwnerControl(a.target).handleMouseDown(a)});c.getHandler().listen(c.getElement(),goog.events.EventType.TOUCHEND,function(a){this.getOwnerControl(a.target).performActionInternal(a)});
 	c.render(a);a=c.getElement();Blockly.utils.addClass(a,"blocklyDropdownMenu");goog.style.getSize(a).height=a.scrollHeight;d=this.sourceBlock_.isShadow()?this.sourceBlock_.parentBlock_.getColour():this.sourceBlock_.getColour();Blockly.DropDownDiv.setColour(d,this.sourceBlock_.getColourTertiary());d=this.sourceBlock_.isShadow()?this.sourceBlock_.parentBlock_.getCategory():this.sourceBlock_.getCategory();Blockly.DropDownDiv.setCategory(d);e=this.sourceBlock_.workspace.scale;g=this.size_.width;d=this.size_.height;
 	g*=e;d*=e;e=this.fieldGroup_.getBoundingClientRect();g=e.left+g/2;d=e.top+d;e=e.top;Blockly.DropDownDiv.setBoundsElement(this.sourceBlock_.workspace.getParentSvg().parentNode);Blockly.DropDownDiv.show(this,g,d,g,e,this.onHide.bind(this));c.setAllowAutoFocus(!0);a.focus();this.disableColourChange_||(this.sourceBlock_.isShadow()?(this.savedPrimary_=this.sourceBlock_.getColour(),this.sourceBlock_.setColour(this.sourceBlock_.getColourTertiary(),this.sourceBlock_.getColourSecondary(),this.sourceBlock_.getColourTertiary())):
-	this.box_&&this.box_.setAttribute("fill",this.sourceBlock_.getColourTertiary()))};Blockly.FieldDropdown.prototype.onHide=function(){this.dropDownOpen_=!1;this.disableColourChange_||(this.sourceBlock_.isShadow()?this.sourceBlock_.setColour(this.savedPrimary_,this.sourceBlock_.getColourSecondary(),this.sourceBlock_.getColourTertiary()):this.box_&&this.box_.setAttribute("fill",this.sourceBlock_.getColour()))};
+	this.box_&&this.box_.setAttribute("fill",this.sourceBlock_.getColourTertiary()))};Blockly.FieldDropdown.prototype.onHide=function(){this.dropDownOpen_=!1;!this.disableColourChange_&&this.sourceBlock_&&(this.sourceBlock_.isShadow()?this.sourceBlock_.setColour(this.savedPrimary_,this.sourceBlock_.getColourSecondary(),this.sourceBlock_.getColourTertiary()):this.box_&&this.box_.setAttribute("fill",this.sourceBlock_.getColour()))};
 	Blockly.FieldDropdown.prototype.onItemSelected=function(a,b){var c=b.getValue();this.sourceBlock_&&(c=this.callValidator(c));null!==c&&this.setValue(c)};
 	Blockly.FieldDropdown.prototype.trimOptions_=function(){this.suffixField=this.prefixField=null;var a=this.menuGenerator_;if(goog.isArray(a)){for(var b=!1,c=0;c<a.length;c++){var d=a[c][0];"string"==typeof d?a[c][0]=Blockly.utils.replaceMessageReferences(d):(null!=d.alt&&(a[c][0].alt=Blockly.utils.replaceMessageReferences(d.alt)),b=!0)}if(!(b||2>a.length)){for(var e=[],c=0;c<a.length;c++)e.push(a[c][0]);c=Blockly.utils.shortestStringLength(e);b=Blockly.utils.commonWordPrefix(e,c);d=Blockly.utils.commonWordSuffix(e,
 	c);if((b||d)&&!(c<=b+d)){b&&(this.prefixField=e[0].substring(0,b-1));d&&(this.suffixField=e[0].substr(1-d));e=[];for(c=0;c<a.length;c++){var f=a[c][0],g=a[c][1],f=f.substring(b,f.length-d);e[c]=[f,g]}this.menuGenerator_=e}}}};Blockly.FieldDropdown.prototype.isOptionListDynamic=function(){return goog.isFunction(this.menuGenerator_)};Blockly.FieldDropdown.prototype.getOptions=function(){return goog.isFunction(this.menuGenerator_)?this.menuGenerator_.call(this):this.menuGenerator_};
@@ -37486,6 +37486,7 @@ return /******/ (function(modules) { // webpackBootstrap
 "use strict";
 
 
+/** @module RenderConstants */
 var DEFAULT_SKIN = {
   squirrel: 'https://cdn.assets.scratch.mit.edu/internalapi/asset/7e24c99c1b853e52f8e7f9004416fa34.png/get/',
   bus: 'https://cdn.assets.scratch.mit.edu/internalapi/asset/66895930177178ea01d9e610917f8acf.png/get/',
@@ -37495,29 +37496,40 @@ var DEFAULT_SKIN = {
 
 /**
  * Various constants meant for use throughout the renderer.
- * @type {object}
+ * @enum
  */
 module.exports = {
   /**
    * The ID value to use for "no item" or when an object has been disposed.
-   * @type {int}
+   * @const {int}
    */
   ID_NONE: -1,
 
   /**
    * The URL to use as the default skin for a Drawable.
-   * TODO: Remove this in favor of falling back on a built-in skin.
-   * @type {string}
+   * @todo Remove this in favor of falling back on a built-in skin.
+   * @const {string}
    */
   DEFAULT_SKIN: DEFAULT_SKIN,
 
   /**
    * Optimize for fewer than this number of Drawables sharing the same Skin.
    * Going above this may cause middleware warnings or a performance penalty but should otherwise behave correctly.
+   * @const {int}
    */
   SKIN_SHARE_SOFT_LIMIT: 300,
 
+  /**
+   * @enum {string}
+   */
   Events: {
+    /**
+    * NativeSizeChanged event
+    *
+    * @event RenderWebGL#event:NativeSizeChanged
+    * @type {object}
+    * @property {Array<int>} newSize - the new size of the renderer
+    */
     NativeSizeChanged: 'NativeSizeChanged'
   }
 };
@@ -37549,6 +37561,7 @@ var Skin = function (_EventEmitter) {
   /**
    * Create a Skin, which stores and/or generates textures for use in rendering.
    * @param {int} id - The unique ID for this Skin.
+   * @constructor
    */
   function Skin(id) {
     _classCallCheck(this, Skin);
@@ -37570,7 +37583,7 @@ var Skin = function (_EventEmitter) {
     _this._uniforms = {
       /**
        * The nominal (not necessarily current) size of the current skin.
-       * @type {number[]}
+       * @type {Array<number>}
        */
       u_skinSize: [0, 0],
 
@@ -37608,6 +37621,7 @@ var Skin = function (_EventEmitter) {
      * Set the origin, in object space, about which this Skin should rotate.
      * @param {number} x - The x coordinate of the new rotation center.
      * @param {number} y - The y coordinate of the new rotation center.
+     * @fires Skin.event:WasAltered
      */
     value: function setRotationCenter(x, y) {
       if (x !== this._rotationCenter[0] || y !== this._rotationCenter[1]) {
@@ -37619,7 +37633,7 @@ var Skin = function (_EventEmitter) {
 
     /**
      * Get the center of the current bounding box
-     * @return {[number,number]} the center of the current bounding box
+     * @return {Array<number>} the center of the current bounding box
      */
 
   }, {
@@ -37630,7 +37644,7 @@ var Skin = function (_EventEmitter) {
 
     /**
      * @abstract
-     * @param {[number,number]} scale - The scaling factors to be used.
+     * @param {Array<number>} scale - The scaling factors to be used.
      * @return {WebGLTexture} The GL texture representation of this skin when drawing at the given size.
      */
     // eslint-disable-next-line no-unused-vars
@@ -37643,7 +37657,7 @@ var Skin = function (_EventEmitter) {
 
     /**
      * Update and returns the uniforms for this skin.
-     * @param {[number,number]} scale - The scaling factors to be used.
+     * @param {Array<number>} scale - The scaling factors to be used.
      * @returns {object.<string, *>} the shader uniforms to be used when rendering with this Skin.
      */
 
@@ -37672,7 +37686,7 @@ var Skin = function (_EventEmitter) {
 
     /**
      * @abstract
-     * @return {[number,number]} the "native" size, in texels, of this skin.
+     * @return {Array<number>} the "native" size, in texels, of this skin.
      */
 
   }, {
@@ -37687,13 +37701,14 @@ var Skin = function (_EventEmitter) {
 
 /**
  * These are the events which can be emitted by instances of this class.
- * @type {object.<string,string>}
+ * @enum {string}
  */
 
 
 Skin.Events = {
   /**
    * Emitted when anything about the Skin has been altered, such as the appearance or rotation center.
+   * @event Skin.event:WasAltered
    */
   WasAltered: 'WasAltered'
 };
@@ -37717,6 +37732,10 @@ var vertexShaderText = __webpack_require__(24);
 var fragmentShaderText = __webpack_require__(23);
 
 var ShaderManager = function () {
+    /**
+     * @param {WebGLRenderingContext} gl WebGL rendering context to create shaders for
+     * @constructor
+     */
     function ShaderManager(gl) {
         _classCallCheck(this, ShaderManager);
 
@@ -37724,7 +37743,7 @@ var ShaderManager = function () {
 
         /**
          * The cache of all shaders compiled so far, filled on demand.
-         * @type {Object.<ShaderManager.DRAW_MODE, Array.<ProgramInfo>>}
+         * @type {Object<ShaderManager.DRAW_MODE, Array<ProgramInfo>>}
          * @private
          */
         this._shaderCache = {};
@@ -37791,18 +37810,22 @@ var ShaderManager = function () {
 }();
 
 /**
- * Mapping of each effect name to info about that effect.
- * The info includes:
- * - The bit in 'effectBits' representing the effect.
- * - A conversion function which takes a Scratch value (generally in the range
+ * @typedef {object} ShaderManager.Effect
+ * @prop {int} mask - The bit in 'effectBits' representing the effect.
+ * @prop {function} converter - A conversion function which takes a Scratch value (generally in the range
  *   0..100 or -100..100) and maps it to a value useful to the shader. This
  *   mapping may not be reversible.
- * - `shapeChanges`, whether the effect could change the drawn shape.
- * @type {Object.<string,Object.<string,*>>}
+ * @prop {boolean} shapeChanges - Whether the effect could change the drawn shape.
+ */
+
+/**
+ * Mapping of each effect name to info about that effect.
+ * @enum {ShaderManager.Effect}
  */
 
 
 ShaderManager.EFFECT_INFO = {
+    /** Color effect */
     color: {
         mask: 1 << 0,
         converter: function converter(x) {
@@ -37810,6 +37833,7 @@ ShaderManager.EFFECT_INFO = {
         },
         shapeChanges: false
     },
+    /** Fisheye effect */
     fisheye: {
         mask: 1 << 1,
         converter: function converter(x) {
@@ -37817,6 +37841,7 @@ ShaderManager.EFFECT_INFO = {
         },
         shapeChanges: true
     },
+    /** Whirl effect */
     whirl: {
         mask: 1 << 2,
         converter: function converter(x) {
@@ -37824,6 +37849,7 @@ ShaderManager.EFFECT_INFO = {
         },
         shapeChanges: true
     },
+    /** Pixelate effect */
     pixelate: {
         mask: 1 << 3,
         converter: function converter(x) {
@@ -37831,15 +37857,17 @@ ShaderManager.EFFECT_INFO = {
         },
         shapeChanges: true
     },
+    /** Mosaic effect */
     mosaic: {
         mask: 1 << 4,
         converter: function converter(x) {
             x = Math.round((Math.abs(x) + 10) / 10);
-            // TODO: cap by Math.min(srcWidth, srcHeight)
+            /** @todo cap by Math.min(srcWidth, srcHeight) */
             return Math.max(1, Math.min(x, 512));
         },
         shapeChanges: true
     },
+    /** Brightness effect */
     brightness: {
         mask: 1 << 5,
         converter: function converter(x) {
@@ -37847,6 +37875,7 @@ ShaderManager.EFFECT_INFO = {
         },
         shapeChanges: false
     },
+    /** Ghost effect */
     ghost: {
         mask: 1 << 6,
         converter: function converter(x) {
@@ -37944,15 +37973,16 @@ var ShaderManager = __webpack_require__(3);
 var SVGSkin = __webpack_require__(11);
 
 /**
- * @callback idFilterFunc
+ * @callback RenderWebGL#idFilterFunc
  * @param {int} drawableID The ID to filter.
  * @return {bool} True if the ID passes the filter, otherwise false.
  */
 
 /**
  * Maximum touch size for a picking check.
- * TODO: Figure out a reasonable max size. Maybe this should be configurable?
- * @type {int[]}
+ * @todo Figure out a reasonable max size. Maybe this should be configurable?
+ * @type {Array<int>}
+ * @memberof RenderWebGL
  */
 var MAX_TOUCH_SIZE = [3, 3];
 
@@ -37960,9 +37990,18 @@ var MAX_TOUCH_SIZE = [3, 3];
  * "touching {color}?" or "{color} touching {color}?" tests will be true if the
  * target is touching a color whose components are each within this tolerance of
  * the corresponding component of the query color.
- * @type {int} between 0 (exact matches only) and 255 (match anything).
+ * between 0 (exact matches only) and 255 (match anything).
+ * @type {int}
+ * @memberof RenderWebGL
  */
 var TOLERANCE_TOUCHING_COLOR = 2;
+
+/**
+ * Sprite Fencing - The number of pixels a sprite is required to leave remaining
+ * onscreen around the edge of the staging area.
+ * @type {number}
+ */
+var FENCE_WIDTH = 15;
 
 var RenderWebGL = function (_EventEmitter) {
     _inherits(RenderWebGL, _EventEmitter);
@@ -37973,14 +38012,15 @@ var RenderWebGL = function (_EventEmitter) {
      * The stage's "native" size will be calculated from the these coordinates.
      * For example, the defaults result in a native size of 480x360.
      * Queries such as "touching color?" will always execute at the native size.
-     * @see setStageSize
-     * @see resize
+     * @see RenderWebGL#setStageSize
+     * @see RenderWebGL#resize
      * @param {canvas} canvas The canvas to draw onto.
      * @param {int} [xLeft=-240] The x-coordinate of the left edge.
      * @param {int} [xRight=240] The x-coordinate of the right edge.
      * @param {int} [yBottom=-180] The y-coordinate of the bottom edge.
      * @param {int} [yTop=180] The y-coordinate of the top edge.
      * @constructor
+     * @listens RenderWebGL#event:NativeSizeChanged
      */
     function RenderWebGL(canvas, xLeft, xRight, yBottom, yTop) {
         _classCallCheck(this, RenderWebGL);
@@ -37993,7 +38033,7 @@ var RenderWebGL = function (_EventEmitter) {
         /** @type {Skin[]} */
         _this._allSkins = [];
 
-        /** @type {int[]} */
+        /** @type {Array<int>} */
         _this._drawList = [];
 
         /** @type {WebGLRenderingContext} */
@@ -38011,6 +38051,7 @@ var RenderWebGL = function (_EventEmitter) {
         /** @type {Object.<string,int>} */
         _this._skinUrlMap = {};
 
+        /** @type {ShaderManager} */
         _this._shaderManager = new ShaderManager(gl);
 
         /** @type {HTMLCanvasElement} */
@@ -38025,7 +38066,8 @@ var RenderWebGL = function (_EventEmitter) {
         _this.resize(_this._nativeSize[0], _this._nativeSize[1]);
 
         gl.disable(gl.DEPTH_TEST);
-        gl.enable(gl.BLEND); // TODO: disable when no partial transparency?
+        /** @todo disable when no partial transparency? */
+        gl.enable(gl.BLEND);
         gl.blendFuncSeparate(gl.ONE, gl.ONE_MINUS_SRC_ALPHA, gl.ZERO, gl.ONE);
         return _this;
     }
@@ -38100,7 +38142,7 @@ var RenderWebGL = function (_EventEmitter) {
         }
 
         /**
-         * @return {[int,int]} the "native" size of the stage, which is used for pen, query renders, etc.
+         * @return {Array<int>} the "native" size of the stage, which is used for pen, query renders, etc.
          */
 
     }, {
@@ -38114,6 +38156,7 @@ var RenderWebGL = function (_EventEmitter) {
          * @param {int} width - the new width to set.
          * @param {int} height - the new height to set.
          * @private
+         * @fires RenderWebGL#event:NativeSizeChanged
          */
 
     }, {
@@ -38129,8 +38172,8 @@ var RenderWebGL = function (_EventEmitter) {
          * Use `createBitmapSkin` or `createSVGSkin` instead.
          * @param {!string} skinUrl The URL of the skin.
          * @param {!int} [costumeResolution] Optional: resolution for the skin. Ignored unless creating a new Bitmap skin.
-         * @param {number[]=} rotationCenter Optional: rotation center of the skin. If not supplied, the center of the skin
-         * will be used.
+         * @param {?Array<number>} rotationCenter Optional: rotation center of the skin. If not supplied, the center of the
+         * skin will be used.
          * @returns {!int} The ID of the Skin.
          * @deprecated
          */
@@ -38198,7 +38241,8 @@ var RenderWebGL = function (_EventEmitter) {
          * Create a new bitmap skin from a snapshot of the provided bitmap data.
          * @param {ImageData|HTMLImageElement|HTMLCanvasElement|HTMLVideoElement} bitmapData - new contents for this skin.
          * @param {!int} [costumeResolution=1] - The resolution to use for this bitmap.
-         * @param {number[]=} rotationCenter Optional: rotation center of the skin. If not supplied, the center of the skin
+         * @param {?Array<number>} rotationCenter Optional: rotation center of the skin. If not supplied, the center of the
+         * skin will be used
          * @returns {!int} the ID for the new skin.
          */
 
@@ -38215,7 +38259,8 @@ var RenderWebGL = function (_EventEmitter) {
         /**
          * Create a new SVG skin.
          * @param {!string} svgData - new SVG to use.
-         * @param {number[]=} rotationCenter Optional: rotation center of the skin. If not supplied, the center of the skin
+         * @param {?Array<number>} rotationCenter Optional: rotation center of the skin. If not supplied, the center of the
+         * skin will be used
          * @returns {!int} the ID for the new skin.
          */
 
@@ -38380,7 +38425,7 @@ var RenderWebGL = function (_EventEmitter) {
         /**
          * Get the current skin (costume) size of a Drawable.
          * @param {int} drawableID The ID of the Drawable to measure.
-         * @return {Array.<number>} Skin size, width and height.
+         * @return {Array<number>} Skin size, width and height.
          */
 
     }, {
@@ -38393,8 +38438,8 @@ var RenderWebGL = function (_EventEmitter) {
         /**
          * Check if a particular Drawable is touching a particular color.
          * @param {int} drawableID The ID of the Drawable to check.
-         * @param {int[]} color3b Test if the Drawable is touching this color.
-         * @param {int[]} [mask3b] Optionally mask the check to this part of Drawable.
+         * @param {Array<int>} color3b Test if the Drawable is touching this color.
+         * @param {Array<int>} [mask3b] Optionally mask the check to this part of Drawable.
          * @returns {boolean} True iff the Drawable is touching the color.
          */
 
@@ -38476,7 +38521,7 @@ var RenderWebGL = function (_EventEmitter) {
         /**
          * Check if a particular Drawable is touching any in a set of Drawables.
          * @param {int} drawableID The ID of the Drawable to check.
-         * @param {int[]} candidateIDs The Drawable IDs to check, otherwise all.
+         * @param {Array<int>} candidateIDs The Drawable IDs to check, otherwise all.
          * @returns {boolean} True iff the Drawable is touching one of candidateIDs.
          */
 
@@ -38554,7 +38599,7 @@ var RenderWebGL = function (_EventEmitter) {
          * @param {int} centerY The client y coordinate of the picking location.
          * @param {int} touchWidth The client width of the touch event (optional).
          * @param {int} touchHeight The client height of the touch event (optional).
-         * @param {int[]} candidateIDs The Drawable IDs to pick from, otherwise all.
+         * @param {Array<int>} candidateIDs The Drawable IDs to pick from, otherwise all.
          * @returns {int} The ID of the topmost Drawable under the picking location, or
          * RenderConstants.ID_NONE if there is no Drawable at that location.
          */
@@ -38720,7 +38765,7 @@ var RenderWebGL = function (_EventEmitter) {
         value: function _touchingBounds(drawableID) {
             var drawable = this._allDrawables[drawableID];
 
-            // TODO: remove this once URL-based skin setting is removed.
+            /** @todo remove this once URL-based skin setting is removed. */
             if (!drawable.skin || !drawable.skin.getTexture([100, 100])) return null;
 
             var bounds = drawable.getFastBounds();
@@ -38743,9 +38788,9 @@ var RenderWebGL = function (_EventEmitter) {
          * Filter a list of candidates for a touching query into only those that
          * could possibly intersect the given bounds.
          * @param {int} drawableID - ID for drawable of query.
-         * @param {Array.<int>} candidateIDs - Candidates for touching query.
+         * @param {Array<int>} candidateIDs - Candidates for touching query.
          * @param {Rectangle} bounds - Bounds to limit candidates to.
-         * @return {?Array.<int>} Filtered candidateIDs, or null if none.
+         * @return {?Array<int>} Filtered candidateIDs, or null if none.
          */
 
     }, {
@@ -38781,11 +38826,13 @@ var RenderWebGL = function (_EventEmitter) {
         value: function updateDrawableProperties(drawableID, properties) {
             var drawable = this._allDrawables[drawableID];
             if (!drawable) {
-                // TODO: fix whatever's wrong in the VM which causes this, then add a warning or throw here.
-                // Right now this happens so much on some projects that a warning or exception here can hang the browser.
+                /**
+                 * @todo fix whatever's wrong in the VM which causes this, then add a warning or throw here.
+                 * Right now this happens so much on some projects that a warning or exception here can hang the browser.
+                 */
                 return;
             }
-            // TODO: remove this after fully deprecating URL-based skin paths
+            /** @todo remove this after fully deprecating URL-based skin paths */
             if ('skin' in properties) {
                 var skin = properties.skin,
                     costumeResolution = properties.costumeResolution,
@@ -38802,6 +38849,47 @@ var RenderWebGL = function (_EventEmitter) {
                 drawable.skin.setRotationCenter(newRotationCenter[0], newRotationCenter[1]);
             }
             drawable.updateProperties(properties);
+        }
+
+        /**
+         * Update the position object's x & y members to keep the drawable fenced in view.
+         * @param {int} drawableID - The ID of the Drawable to update.
+         * @param {Array.<number, number>} position to be fenced - An array of type [x, y]
+         * @return {Array.<number, number>} The fenced position as an array [x, y]
+         */
+
+    }, {
+        key: 'getFencedPositionOfDrawable',
+        value: function getFencedPositionOfDrawable(drawableID, position) {
+
+            var x = position[0];
+            var y = position[1];
+
+            var drawable = this._allDrawables[drawableID];
+            if (!drawable) {
+                // TODO: fix whatever's wrong in the VM which causes this, then add a warning or throw here.
+                // Right now this happens so much on some projects that a warning or exception here can hang the browser.
+                return [x, y];
+            }
+
+            var dx = x - drawable._position[0];
+            var dy = y - drawable._position[1];
+
+            var aabb = drawable.getFastBounds();
+
+            var sx = this._xRight - Math.min(FENCE_WIDTH, Math.floor((aabb.right - aabb.left) / 2));
+            if (aabb.right + dx < -sx) {
+                x = drawable._position[0] - (sx + aabb.right);
+            } else if (aabb.left + dx > sx) {
+                x = drawable._position[0] + (sx - aabb.left);
+            }
+            var sy = this._yTop - Math.min(FENCE_WIDTH, Math.floor((aabb.top - aabb.bottom) / 2));
+            if (aabb.top + dy < -sy) {
+                y = drawable._position[1] - (sy + aabb.top);
+            } else if (aabb.bottom + dy > sy) {
+                y = drawable._position[1] + (sy - aabb.bottom);
+            }
+            return [x, y];
         }
 
         /**
@@ -38948,7 +39036,7 @@ var RenderWebGL = function (_EventEmitter) {
                 this._pickBufferInfo = twgl.createFramebufferInfo(gl, attachments, MAX_TOUCH_SIZE[0], MAX_TOUCH_SIZE[1]);
             }
 
-            // TODO: should we create this on demand to save memory?
+            /** @todo should we create this on demand to save memory? */
             // A 480x360 32-bpp buffer is 675 KiB.
             if (this._queryBufferInfo) {
                 twgl.resizeFramebufferInfo(gl, this._queryBufferInfo, attachments, width, height);
@@ -38958,8 +39046,8 @@ var RenderWebGL = function (_EventEmitter) {
         }
 
         /**
-         * Draw all Drawables, with the possible exception of
-         * @param {int[]} drawables The Drawable IDs to draw, possibly this._drawList.
+         * Draw a set of Drawables, by drawable ID
+         * @param {Array<int>} drawables The Drawable IDs to draw, possibly this._drawList.
          * @param {ShaderManager.DRAW_MODE} drawMode Draw normally, silhouette, etc.
          * @param {module:twgl/m4.Mat4} projection The projection matrix to use.
          * @param {object} [opts] Options for drawing
@@ -38985,7 +39073,7 @@ var RenderWebGL = function (_EventEmitter) {
                 if (opts.filter && !opts.filter(drawableID)) continue;
 
                 var drawable = this._allDrawables[drawableID];
-                // TODO: check if drawable is inside the viewport before anything else
+                /** @todo check if drawable is inside the viewport before anything else */
 
                 // Hidden drawables (e.g., by a "hide" block) are never drawn.
                 if (!drawable.getVisible()) continue;
@@ -39024,7 +39112,7 @@ var RenderWebGL = function (_EventEmitter) {
          * Read back the pixels and find all boundary points.
          * Finally, apply a convex hull algorithm to simplify the set.
          * @param {int} drawableID The Drawable IDs calculate convex hull for.
-         * @return {Array.<Array.<number>>} points Convex hull points, as [[x, y], ...]
+         * @return {Array<Array<number>>} points Convex hull points, as [[x, y], ...]
          */
 
     }, {
@@ -39139,6 +39227,7 @@ var BitmapSkin = function (_Skin) {
 
     /**
      * Create a new Bitmap Skin.
+     * @extends Skin
      * @param {!int} id - The ID for this Skin.
      * @param {!RenderWebGL} renderer - The renderer which will use this skin.
      */
@@ -39156,7 +39245,7 @@ var BitmapSkin = function (_Skin) {
         /** @type {WebGLTexture} */
         _this._texture = null;
 
-        /** @type {[int, int]} */
+        /** @type {Array<int>} */
         _this._textureSize = [0, 0];
         return _this;
     }
@@ -39177,7 +39266,7 @@ var BitmapSkin = function (_Skin) {
         }
 
         /**
-         * @return {[number,number]} the "native" size, in texels, of this skin.
+         * @return {Array<number>} the "native" size, in texels, of this skin.
          */
 
     }, {
@@ -39185,7 +39274,7 @@ var BitmapSkin = function (_Skin) {
 
 
         /**
-         * @param {[number,number]} scale - The scaling factors to be used.
+         * @param {Array<number>} scale - The scaling factors to be used.
          * @return {WebGLTexture} The GL texture representation of this skin when drawing at the given scale.
          */
         // eslint-disable-next-line no-unused-vars
@@ -39197,8 +39286,9 @@ var BitmapSkin = function (_Skin) {
          * Set the contents of this skin to a snapshot of the provided bitmap data.
          * @param {ImageData|HTMLImageElement|HTMLCanvasElement|HTMLVideoElement} bitmapData - new contents for this skin.
          * @param {int} [costumeResolution=1] - The resolution to use for this bitmap.
-         * @param {number[]=} rotationCenter - Optional rotation center for the bitmap. If not supplied, it will be
+         * @param {Array<number>} [rotationCenter] - Optional rotation center for the bitmap. If not supplied, it will be
          * calculated from the bounding box
+         * @fires Skin.event:WasAltered
          */
 
     }, {
@@ -39213,7 +39303,8 @@ var BitmapSkin = function (_Skin) {
                 var textureOptions = {
                     auto: true,
                     mag: gl.NEAREST,
-                    min: gl.NEAREST, // TODO: mipmaps, linear (except pixelate)
+                    /** @todo mipmaps, linear (except pixelate) */
+                    min: gl.NEAREST,
                     wrap: gl.CLAMP_TO_EDGE,
                     src: bitmapData
                 };
@@ -39233,7 +39324,7 @@ var BitmapSkin = function (_Skin) {
 
         /**
          * @param {ImageData|HTMLImageElement|HTMLCanvasElement|HTMLVideoElement} bitmapData - bitmap data to inspect.
-         * @returns {[int,int]} the width and height of the bitmap data, in pixels.
+         * @returns {Array<int>} the width and height of the bitmap data, in pixels.
          * @private
          */
 
@@ -39284,7 +39375,7 @@ var Skin = __webpack_require__(2);
 var Drawable = function () {
     /**
      * An object which can be drawn by the renderer.
-     * TODO: double-buffer all rendering state (position, skin, effects, etc.)
+     * @todo double-buffer all rendering state (position, skin, effects, etc.)
      * @param {!int} id - This Drawable's unique ID.
      * @constructor
      */
@@ -39309,7 +39400,7 @@ var Drawable = function () {
 
             /**
              * The color to use in the silhouette draw mode.
-             * @type {number[]}
+             * @type {Array<number>}
              */
             u_silhouetteColor: Drawable.color4fFromID(this._id)
         };
@@ -39329,7 +39420,7 @@ var Drawable = function () {
         this._visible = true;
         this._effectBits = 0;
 
-        // TODO: move convex hull functionality, maybe bounds functionality overall, to Skin classes
+        /** @todo move convex hull functionality, maybe bounds functionality overall, to Skin classes */
         this._convexHullPoints = null;
         this._convexHullDirty = true;
 
@@ -39501,7 +39592,7 @@ var Drawable = function () {
 
         /**
          * Set the convex hull points for the Drawable.
-         * @param {Array.<Array.<number>>} points Convex hull points, as [[x, y], ...]
+         * @param {Array<Array<number>>} points Convex hull points, as [[x, y], ...]
          */
 
     }, {
@@ -39601,7 +39692,7 @@ var Drawable = function () {
          * Calculate a color to represent the given ID number. At least one component of
          * the resulting color will be non-zero if the ID is not RenderConstants.ID_NONE.
          * @param {int} id The ID to convert.
-         * @returns {number[]} An array of [r,g,b,a], each component in the range [0,1].
+         * @returns {Array<number>} An array of [r,g,b,a], each component in the range [0,1].
          */
 
     }, {
@@ -39638,7 +39729,7 @@ var Drawable = function () {
         }
 
         /**
-         * @returns {[number,number]} the current scaling percentages applied to this Drawable. [100,100] is normal size.
+         * @returns {Array<number>} the current scaling percentages applied to this Drawable. [100,100] is normal size.
          */
 
     }, {
@@ -39708,14 +39799,17 @@ var Skin = __webpack_require__(2);
 
 /**
  * Attributes to use when drawing with the pen
- * @typedef {object} PenAttributes
+ * @typedef {object} PenSkin#PenAttributes
  * @property {number} [diameter] - The size (diameter) of the pen.
- * @property {number[]} [color4f] - The pen color as an array of [r,g,b,a], each component in the range [0,1].
+ * @property {Array<number>} [color4f] - The pen color as an array of [r,g,b,a], each component in the range [0,1].
  */
 
 /**
  * The pen attributes to use when unspecified.
- * @type {PenAttributes}
+ * @type {PenSkin#PenAttributes}
+ * @memberof PenSkin
+ * @private
+ * @const
  */
 var DefaultPenAttributes = {
     color4f: [0, 0, 1, 1],
@@ -39729,11 +39823,16 @@ var PenSkin = function (_Skin) {
      * Create a Skin which implements a Scratch pen layer.
      * @param {int} id - The unique ID for this Skin.
      * @param {RenderWebGL} renderer - The renderer which will use this Skin.
+     * @extends Skin
+     * @listens RenderWebGL#event:NativeSizeChanged
      */
     function PenSkin(id, renderer) {
         _classCallCheck(this, PenSkin);
 
-        /** @type {RenderWebGL} */
+        /**
+         * @private
+         * @type {RenderWebGL}
+         */
         var _this = _possibleConstructorReturn(this, (PenSkin.__proto__ || Object.getPrototypeOf(PenSkin)).call(this, id));
 
         _this._renderer = renderer;
@@ -39769,7 +39868,7 @@ var PenSkin = function (_Skin) {
         }
 
         /**
-         * @return {[number,number]} the "native" size, in texels, of this skin.
+         * @return {Array<number>} the "native" size, in texels, of this skin. [width, height]
          */
 
     }, {
@@ -39869,7 +39968,7 @@ var PenSkin = function (_Skin) {
 
         /**
          * Set the size of the pen canvas.
-         * @param {[int,int]} canvasSize - the new width and height for the canvas.
+         * @param {Array<int>} canvasSize - the new width and height for the canvas.
          * @private
          */
 
@@ -39941,13 +40040,9 @@ var _createClass = function () { function defineProperties(target, props) { for 
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
-/**
- * @fileoverview
- * A utility for creating and comparing axis-aligned rectangles.
- */
-
 var Rectangle = function () {
     /**
+     * A utility for creating and comparing axis-aligned rectangles.
      * Rectangles are always initialized to the "largest possible rectangle";
      * use one of the init* methods below to set up a particular rectangle.
      * @constructor
@@ -39981,7 +40076,7 @@ var Rectangle = function () {
 
         /**
          * Initialize a Rectangle to the minimum AABB around a set of points.
-         * @param {Array.<Array.<number>>} points Array of [x, y] points.
+         * @param {Array<Array<number>>} points Array of [x, y] points.
          */
 
     }, {
@@ -40129,6 +40224,8 @@ var SVGSkin = function (_Skin) {
      * Create a new SVG skin.
      * @param {!int} id - The ID for this Skin.
      * @param {!RenderWebGL} renderer - The renderer which will use this skin.
+     * @constructor
+     * @extends Skin
      */
     function SVGSkin(id, renderer) {
         _classCallCheck(this, SVGSkin);
@@ -40162,7 +40259,7 @@ var SVGSkin = function (_Skin) {
         }
 
         /**
-         * @return {[number,number]} the natural size, in Scratch units, of this skin.
+         * @return {Array<number>} the natural size, in Scratch units, of this skin.
          */
 
     }, {
@@ -40180,7 +40277,7 @@ var SVGSkin = function (_Skin) {
         }
 
         /**
-         * @param {[number,number]} scale - The scaling factors to be used.
+         * @param {Array<number>} scale - The scaling factors to be used.
          * @return {WebGLTexture} The GL texture representation of this skin when drawing at the given scale.
          */
         // eslint-disable-next-line no-unused-vars
@@ -40188,15 +40285,16 @@ var SVGSkin = function (_Skin) {
     }, {
         key: 'getTexture',
         value: function getTexture(scale) {
-            // TODO: re-render a scaled version if the requested scale is significantly larger than the current render
+            /** @todo re-render a scaled version if the requested scale is significantly larger than the current render */
             return this._texture;
         }
 
         /**
          * Set the contents of this skin to a snapshot of the provided SVG data.
          * @param {string} svgData - new SVG to use.
-         * @param {number[]=} rotationCenter - Optional rotation center for the SVG. If not supplied, it will be
+         * @param {Array<number>} [rotationCenter] - Optional rotation center for the SVG. If not supplied, it will be
          * calculated from the bounding box
+         * @fires Skin.event:WasAltered
          */
 
     }, {
@@ -40213,7 +40311,7 @@ var SVGSkin = function (_Skin) {
                     var textureOptions = {
                         auto: true,
                         mag: gl.NEAREST,
-                        min: gl.NEAREST, // TODO: mipmaps, linear (except pixelate)
+                        min: gl.NEAREST, /** @todo mipmaps, linear (except pixelate) */
                         wrap: gl.CLAMP_TO_EDGE,
                         src: _this2._svgRenderer.canvas
                     };
@@ -40306,7 +40404,7 @@ var SvgRenderer = function () {
          * This will be parsed and transformed, and finally drawn.
          * When drawing is finished, the `onFinish` callback is called.
          * @param {string} svgString String of SVG data to draw in quirks-mode.
-         * @param {Function=} onFinish Optional callback for when drawing finished.
+         * @param {Function} [onFinish] Optional callback for when drawing finished.
          */
         value: function fromString(svgString, onFinish) {
             // Store the callback for later.
@@ -40327,7 +40425,7 @@ var SvgRenderer = function () {
         }
 
         /**
-         * @return {[number,number]} the natural size, in Scratch units, of this SVG.
+         * @return {Array<number>} the natural size, in Scratch units, of this SVG.
          */
 
     }, {
@@ -40609,7 +40707,7 @@ var SvgRenderer = function () {
         }
 
         /**
-         * @return {[number,number]} the offset (upper left corner) of the SVG's view box.
+         * @return {Array<number>} the offset (upper left corner) of the SVG's view box.
          */
 
     }, {
