@@ -104,6 +104,9 @@ var parseScratchObject = function (object, runtime, topLevel) {
     if (object.hasOwnProperty('direction')) {
         target.direction = object.direction;
     }
+    if (object.hasOwnProperty('isDraggable')) {
+        target.draggable = object.isDraggable;
+    }
     if (object.hasOwnProperty('scale')) {
         // SB2 stores as 1.0 = 100%; we use % in the VM.
         target.size = object.scale * 100;
