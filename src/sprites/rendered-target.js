@@ -428,16 +428,17 @@ RenderedTarget.prototype.updateAllDrawableProperties = function () {
     if (this.renderer) {
         var renderedDirectionScale = this._getRenderedDirectionAndScale();
         var costume = this.sprite.costumes[this.currentCostume];
+        var bitmapResolution = costume.bitmapResolution || 1;
         var props = {
             position: [this.x, this.y],
             direction: renderedDirectionScale.direction,
             scale: renderedDirectionScale.scale,
             visible: this.visible,
             skin: costume.skin,
-            costumeResolution: costume.bitmapResolution,
+            costumeResolution: bitmapResolution,
             rotationCenter: [
-                costume.rotationCenterX / costume.bitmapResolution,
-                costume.rotationCenterY / costume.bitmapResolution
+                costume.rotationCenterX / bitmapResolution,
+                costume.rotationCenterY / bitmapResolution
             ]
         };
         for (var effectName in this.effects) {
