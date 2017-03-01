@@ -38,7 +38,11 @@ var filterToolbox = function (toolbox, opcodes) {
         ) {
             if (category.nodeName.toLowerCase() !== 'category') continue;
             var filteredCategory = filterToolboxNode(category, opcodes);
-            if (filteredCategory.hasChildNodes()) filteredToolbox.appendChild(filteredCategory);
+            if (filteredCategory.hasChildNodes() ||
+                filteredCategory.hasAttribute('custom')
+            ) {
+                filteredToolbox.appendChild(filteredCategory);
+            }
         }
     } else {
         filteredToolbox = filterToolboxNode(toolbox, opcodes);
