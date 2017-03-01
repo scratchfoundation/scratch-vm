@@ -236,8 +236,23 @@ var execute = function (sequencer, thread) {
         primitiveReportedValue.then(function (resolvedValue) {
             handleReport(resolvedValue);
             if (typeof resolvedValue === 'undefined') {
-                var popped = thread.popStack();
-                var nextBlockId = thread.target.blocks.getNextBlock(popped);
+                do {
+                    // In the case that the promise is the last block in the current thread stack
+                    // We need to pop out repeatedly until we find the next block.
+                    var popped = thread.popStack();
+                    if (popped === null) {
+                        return;
+                    }
+                    var nextBlockId = thread.target.blocks.getNextBlock(popped);
+                    if (nextBlockId !== null) {
+                        // A next block exists so break out this loop
+                        break;
+                    }
+                    // Investigate the next block and if not in a loop,
+                    // then repeat and pop the next item off the stack frame
+                    var stackFrame = thread.peekStackFrame();
+                } while (stackFrame !== null && !stackFrame.isLoop);
+
                 thread.pushStack(nextBlockId);
             } else {
                 thread.popStack();
