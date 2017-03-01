@@ -724,120 +724,115 @@ var categories = '<xml id="toolbox-categories" style="display: none">' +
   '</category>' +
   '<category name="More Blocks" colour="#FF6680" secondaryColour="#FF3355" custom="PROCEDURE"></category>' +
   '</xml>';
-var simple = '<?xml version="1.0" encoding="UTF-8" standalone="no" ?><xml id="toolbox-simple" style="display: none">' +
-    '  <block type="operator_random">' +
-    '    <value name="FROM">' +
-    '      <shadow type="math_number">' +
-    '        <field name="NUM">1</field>' +
-    '      </shadow>' +
-    '    </value>' +
-    '    <value name="TO">' +
-    '      <shadow type="math_number">' +
-    '        <field name="NUM">10</field>' +
-    '      </shadow>' +
-    '    </value>' +
-    '  </block>' +
-    '  <block type="operator_lt">' +
-    '    <value name="OPERAND1">' +
-    '      <shadow type="text">' +
-    '        <field name="TEXT"></field>' +
-    '      </shadow>' +
-    '    </value>' +
-    '    <value name="OPERAND2">' +
-    '      <shadow type="text">' +
-    '        <field name="TEXT"></field>' +
-    '      </shadow>' +
-    '    </value>' +
-    '  </block>' +
-    '  <block type="operator_equals">' +
-    '    <value name="OPERAND1">' +
-    '      <shadow type="text">' +
-    '        <field name="TEXT"></field>' +
-    '      </shadow>' +
-    '    </value>' +
-    '    <value name="OPERAND2">' +
-    '      <shadow type="text">' +
-    '        <field name="TEXT"></field>' +
-    '      </shadow>' +
-    '    </value>' +
-    '  </block>' +
-    '  <block type="operator_gt">' +
-    '    <value name="OPERAND1">' +
-    '      <shadow type="text">' +
-    '        <field name="TEXT"></field>' +
-    '      </shadow>' +
-    '    </value>' +
-    '    <value name="OPERAND2">' +
-    '      <shadow type="text">' +
-    '        <field name="TEXT"></field>' +
-    '      </shadow>' +
-    '    </value>' +
-    '  </block>' +
-    '  <block type="operator_and"></block>' +
-    '  <block type="operator_or"></block>' +
-    '  <block type="operator_not"></block>' +
-    '  <block type="operator_join">' +
-    '    <value name="STRING1">' +
-    '      <shadow type="text">' +
-    '        <field name="TEXT">hello</field>' +
-    '      </shadow>' +
-    '    </value>' +
-    '    <value name="STRING2">' +
-    '      <shadow type="text">' +
-    '        <field name="TEXT">world</field>' +
-    '      </shadow>' +
-    '    </value>' +
-    '  </block>' +
-    '  <block type="operator_letter_of">' +
-    '    <value name="LETTER">' +
-    '      <shadow type="math_whole_number">' +
-    '        <field name="NUM">1</field>' +
-    '      </shadow>' +
-    '    </value>' +
-    '    <value name="STRING">' +
-    '      <shadow type="text">' +
-    '        <field name="TEXT">world</field>' +
-    '      </shadow>' +
-    '    </value>' +
-    '  </block>' +
-    '  <block type="operator_length">' +
-    '    <value name="STRING">' +
-    '      <shadow type="text">' +
-    '        <field name="TEXT">world</field>' +
-    '      </shadow>' +
-    '    </value>' +
-    '  </block>' +
-    '  <block type="operator_mod">' +
-    '    <value name="NUM1">' +
-    '      <shadow type="math_number">' +
-    '        <field name="NUM"></field>' +
-    '      </shadow>' +
-    '    </value>' +
-    '    <value name="NUM2">' +
-    '      <shadow type="math_number">' +
-    '        <field name="NUM"></field>' +
-    '      </shadow>' +
-    '    </value>' +
-    '  </block>' +
-    '  <block type="operator_round">' +
-    '    <value name="NUM">' +
-    '      <shadow type="math_number">' +
-    '        <field name="NUM"></field>' +
-    '      </shadow>' +
-    '    </value>' +
-    '  </block>' +
-    '  <block type="operator_mathop">' +
-    '    <value name="OPERATOR">' +
-    '      <shadow type="operator_mathop_menu"></shadow>' +
-    '    </value>' +
-    '    <value name="NUM">' +
-    '      <shadow type="math_number">' +
-    '        <field name="NUM"></field>' +
-    '      </shadow>' +
-    '    </value>' +
-    '  </block>' +
-    '</xml>';
-var empty = '<?xml version="1.0" encoding="UTF-8" standalone="no" ?><xml id="toolbox-simple" style="display: none"></xml>';
+var simple = '<xml id="toolbox-simple" style="display: none">' +
+    '<block type="motion_movesteps">' +
+      '<value name="STEPS">' +
+        '<shadow type="math_number">' +
+          '<field name="NUM">10</field>' +
+        '</shadow>' +
+      '</value>' +
+    '</block>' +
+    '<block type="motion_turnright">' +
+      '<value name="DEGREES">' +
+        '<shadow type="math_number">' +
+          '<field name="NUM">15</field>' +
+        '</shadow>' +
+      '</value>' +
+    '</block>' +
+    '<block type="motion_turnleft">' +
+      '<value name="DEGREES">' +
+        '<shadow type="math_number">' +
+          '<field name="NUM">15</field>' +
+        '</shadow>' +
+      '</value>' +
+    '</block>' +
+    '<block type="motion_pointindirection">' +
+      '<value name="DIRECTION">' +
+        '<shadow type="math_angle">' +
+          '<field name="NUM">90</field>' +
+        '</shadow>' +
+      '</value>' +
+    '</block>' +
+    '<block type="motion_pointtowards">' +
+      '<value name="TOWARDS">' +
+        '<shadow type="motion_pointtowards_menu">' +
+        '</shadow>' +
+      '</value>' +
+    '</block>' +
+    '<block type="motion_gotoxy">' +
+      '<value name="X">' +
+        '<shadow type="math_number">' +
+          '<field name="NUM">0</field>' +
+        '</shadow>' +
+      '</value>' +
+      '<value name="Y">' +
+        '<shadow type="math_number">' +
+          '<field name="NUM">0</field>' +
+        '</shadow>' +
+      '</value>' +
+    '</block>' +
+    '<block type="motion_goto">' +
+      '<value name="TO">' +
+        '<shadow type="motion_goto_menu">' +
+        '</shadow>' +
+      '</value>' +
+    '</block>' +
+    '<block type="motion_glidesecstoxy">' +
+      '<value name="SECS">' +
+        '<shadow type="math_number">' +
+          '<field name="NUM">1</field>' +
+        '</shadow>' +
+      '</value>' +
+      '<value name="X">' +
+        '<shadow type="math_number">' +
+          '<field name="NUM">0</field>' +
+        '</shadow>' +
+      '</value>' +
+      '<value name="Y">' +
+        '<shadow type="math_number">' +
+          '<field name="NUM">0</field>' +
+        '</shadow>' +
+      '</value>' +
+    '</block>' +
+    '<block type="motion_changexby">' +
+      '<value name="DX">' +
+        '<shadow type="math_number">' +
+          '<field name="NUM">10</field>' +
+        '</shadow>' +
+      '</value>' +
+    '</block>' +
+    '<block type="motion_setx">' +
+      '<value name="X">' +
+        '<shadow type="math_number">' +
+          '<field name="NUM">0</field>' +
+        '</shadow>' +
+      '</value>' +
+    '</block>' +
+    '<block type="motion_changeyby">' +
+      '<value name="DY">' +
+        '<shadow type="math_number">' +
+          '<field name="NUM">10</field>' +
+        '</shadow>' +
+      '</value>' +
+    '</block>' +
+    '<block type="motion_sety">' +
+      '<value name="Y">' +
+        '<shadow type="math_number">' +
+          '<field name="NUM">0</field>' +
+        '</shadow>' +
+      '</value>' +
+    '</block>' +
+    '<block type="motion_ifonedgebounce"></block>' +
+    '<block type="motion_setrotationstyle">' +
+      '<value name="STYLE">' +
+        '<shadow type="motion_setrotationstyle_menu"></shadow>' +
+      '</value>' +
+    '</block>' +
+    '<block type="motion_xposition"></block>' +
+    '<block type="motion_yposition"></block>' +
+    '<block type="motion_direction"></block>' +
+'</xml>';
+var empty = '<xml id="toolbox-simple" style="display: none"></xml>';
 module.exports = {
     categories: jsdom(categories).body.firstElementChild,
     simple: jsdom(simple).body.firstElementChild,
