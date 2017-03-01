@@ -45,7 +45,7 @@ var parseScratchObject = function (object, runtime, topLevel) {
                 skin: 'https://cdn.assets.scratch.mit.edu/internalapi/asset/' +
                     costume.baseLayerMD5 + '/get/',
                 name: costume.costumeName,
-                bitmapResolution: costume.bitmapResolution,
+                bitmapResolution: costume.bitmapResolution || 1,
                 rotationCenterX: costume.rotationCenterX,
                 rotationCenterY: costume.rotationCenterY
             });
