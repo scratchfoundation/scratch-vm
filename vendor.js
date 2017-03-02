@@ -39162,7 +39162,7 @@ var RenderWebGL = function (_EventEmitter) {
              * @return {int} Known ID at that pixel, or RenderConstants.ID_NONE.
              */
             var _getPixel = function _getPixel(x, y) {
-                var pixelBase = (width * y + x) * 4;
+                var pixelBase = Math.round((width * y + x) * 4); // Sometimes SVGs don't have int width and height
                 return Drawable.color3bToID(pixels[pixelBase], pixels[pixelBase + 1], pixels[pixelBase + 2]);
             };
             for (var y = 0; y <= height; y++) {
