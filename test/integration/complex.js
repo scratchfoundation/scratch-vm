@@ -34,6 +34,7 @@ test('complex', function (t) {
                 x: 0,
                 y: 10,
                 direction: 90,
+                draggable: true,
                 rotationStyle: 'all around',
                 visible: true
             });
