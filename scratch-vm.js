@@ -8067,6 +8067,12 @@ RenderedTarget.prototype.y = 0;
 RenderedTarget.prototype.direction = 90;
 
 /**
+ * Whether the rendered target is draggable on the stage
+ * @type {boolean}
+ */
+RenderedTarget.prototype.draggable = false;
+
+/**
  * Whether the rendered target is currently visible.
  * @type {boolean}
  */
@@ -8186,6 +8192,16 @@ RenderedTarget.prototype.setDirection = function (direction) {
             this.runtime.requestRedraw();
         }
     }
+    this.runtime.spriteInfoReport(this);
+};
+
+/**
+ * Set draggability; i.e., whether it's able to be dragged in the player
+ * @param {!boolean} draggable True if should be draggable.
+ */
+RenderedTarget.prototype.setDraggable = function (draggable) {
+    if (this.isStage) return;
+    this.draggable = !!draggable;
     this.runtime.spriteInfoReport(this);
 };
 
@@ -8392,6 +8408,7 @@ RenderedTarget.prototype.updateAllDrawableProperties = function () {
         var props = {
             position: [this.x, this.y],
             direction: renderedDirectionScale.direction,
+            draggable: this.draggable,
             scale: renderedDirectionScale.scale,
             visible: this.visible,
             skin: costume.skin,
@@ -8617,6 +8634,7 @@ RenderedTarget.prototype.makeClone = function () {
     newClone.x = this.x;
     newClone.y = this.y;
     newClone.direction = this.direction;
+    newClone.draggable = this.draggable;
     newClone.visible = this.visible;
     newClone.size = this.size;
     newClone.currentCostume = this.currentCostume;
@@ -8664,6 +8682,9 @@ RenderedTarget.prototype.postSpriteInfo = function (data) {
     if (data.hasOwnProperty('direction')) {
         this.setDirection(data.direction);
     }
+    if (data.hasOwnProperty('draggable')) {
+        this.setDraggable(data.draggable);
+    }
     if (data.hasOwnProperty('rotationStyle')) {
         this.setRotationStyle(data.rotationStyle);
     }
@@ -8684,6 +8705,7 @@ RenderedTarget.prototype.toJSON = function () {
         x: this.x,
         y: this.y,
         direction: this.direction,
+        draggable: this.draggable,
         costume: this.getCurrentCostume(),
         costumeCount: this.getCostumes().length,
         visible: this.visible,
@@ -17805,6 +17827,9 @@ var parseScratchObject = function (object, runtime, topLevel) {
     }
     if (object.hasOwnProperty('direction')) {
         target.direction = object.direction;
+    }
+    if (object.hasOwnProperty('isDraggable')) {
+        target.draggable = object.isDraggable;
     }
     if (object.hasOwnProperty('scale')) {
         // SB2 stores as 1.0 = 100%; we use % in the VM.
