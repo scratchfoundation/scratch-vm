@@ -330,6 +330,41 @@ VirtualMachine.prototype.emitWorkspaceUpdate = function () {
 };
 
 /**
+ * Get a target id for a drawable id. Useful for interacting with the renderer
+ * @param {int} drawableId The drawable id to request the target id for
+ * @returns {?string} The target id, if found. Will also be null if the target found is the stage.
+ */
+VirtualMachine.prototype.getTargetIdForDrawableId = function (drawableId) {
+    var target = this.runtime.getTargetByDrawableId(drawableId);
+    if (target.hasOwnProperty('id') && target.hasOwnProperty('isStage') && !target.isStage) {
+        return target.id;
+    }
+    return null;
+};
+
+/**
+ * Put a target into a "drag" state, during which its X/Y positions will be unaffected
+ * by blocks.
+ * @param {string} targetId The id for the target to put into a drag state
+ */
+VirtualMachine.prototype.startDrag = function (targetId) {
+    var target = this.runtime.getTargetById(targetId);
+    if (target) {
+        target.startDrag();
+        this.setEditingTarget(target.id);
+    }
+};
+
+/**
+ * Remove a target from a drag state, so blocks may begin affecting X/Y position again
+ * @param {string} targetId The id for the target to remove from the drag state
+ */
+VirtualMachine.prototype.stopDrag = function (targetId) {
+    var target = this.runtime.getTargetById(targetId);
+    if (target) target.stopDrag();
+};
+
+/**
  * Post/edit sprite info for the current editing target.
  * @param {object} data An object with sprite info data to set.
  */

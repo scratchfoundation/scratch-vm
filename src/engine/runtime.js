@@ -794,6 +794,18 @@ Runtime.prototype.getSpriteTargetByName = function (spriteName) {
 };
 
 /**
+ * Get a target by its drawable id.
+ * @param {number} drawableID drawable id of target to find
+ * @return {?Target} The target, if found
+ */
+Runtime.prototype.getTargetByDrawableId = function (drawableID) {
+    for (var i = 0; i < this.targets.length; i++) {
+        var target = this.targets[i];
+        if (target.drawableID === drawableID) return target;
+    }
+};
+
+/**
  * Update the clone counter to track how many clones are created.
  * @param {number} changeAmount How many clones have been created/destroyed.
  */
