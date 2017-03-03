@@ -7994,6 +7994,13 @@ var RenderedTarget = function (sprite, runtime) {
     this.drawableID = null;
 
     /**
+     * Drag state of this rendered target. If true, x/y position can't be
+     * changed by blocks.
+     * @type {boolean}
+     */
+    this.dragging = false;
+
+    /**
      * Map of current graphic effect values.
      * @type {!Object.<string, number>}
      */
@@ -8126,11 +8133,11 @@ RenderedTarget.prototype.rotationStyle = (
  * Set the X and Y coordinates.
  * @param {!number} x New X coordinate, in Scratch coordinates.
  * @param {!number} y New Y coordinate, in Scratch coordinates.
+ * @param {?boolean} force Force setting X/Y, in case of dragging
  */
-RenderedTarget.prototype.setXY = function (x, y) {
-    if (this.isStage) {
-        return;
-    }
+RenderedTarget.prototype.setXY = function (x, y, force) {
+    if (this.isStage) return;
+    if (this.dragging && !force) return;
     var oldX = this.x;
     var oldY = this.y;
     if (this.renderer) {
@@ -8673,11 +8680,12 @@ RenderedTarget.prototype.onStopAll = function () {
  * @param {object} data An object with sprite info data to set.
  */
 RenderedTarget.prototype.postSpriteInfo = function (data) {
+    var force = data.hasOwnProperty('force') ? data.force : null;
     if (data.hasOwnProperty('x')) {
-        this.setXY(data.x, this.y);
+        this.setXY(data.x, this.y, force);
     }
     if (data.hasOwnProperty('y')) {
-        this.setXY(this.x, data.y);
+        this.setXY(this.x, data.y, force);
     }
     if (data.hasOwnProperty('direction')) {
         this.setDirection(data.direction);
@@ -8691,6 +8699,20 @@ RenderedTarget.prototype.postSpriteInfo = function (data) {
     if (data.hasOwnProperty('visible')) {
         this.setVisible(data.visible);
     }
+};
+
+/**
+ * Put the sprite into the drag state. While in effect, setXY must be forced
+ */
+RenderedTarget.prototype.startDrag = function () {
+    this.dragging = true;
+};
+
+/**
+ * Remove the sprite from the drag state.
+ */
+RenderedTarget.prototype.stopDrag = function () {
+    this.dragging = false;
 };
 
 /**
@@ -17250,6 +17272,18 @@ Runtime.prototype.getSpriteTargetByName = function (spriteName) {
 };
 
 /**
+ * Get a target by its drawable id.
+ * @param {number} drawableID drawable id of target to find
+ * @return {?Target} The target, if found
+ */
+Runtime.prototype.getTargetByDrawableId = function (drawableID) {
+    for (var i = 0; i < this.targets.length; i++) {
+        var target = this.targets[i];
+        if (target.drawableID === drawableID) return target;
+    }
+};
+
+/**
  * Update the clone counter to track how many clones are created.
  * @param {number} changeAmount How many clones have been created/destroyed.
  */
@@ -19765,7 +19799,7 @@ Mouse.prototype.postData = function (data) {
     }
     if (typeof data.isDown !== 'undefined') {
         this._isDown = data.isDown;
-        if (this._isDown) {
+        if (!this._isDown) {
             this._activateClickHats(data.x, data.y);
         }
     }
@@ -20284,6 +20318,41 @@ VirtualMachine.prototype.emitWorkspaceUpdate = function () {
     this.emit('workspaceUpdate', {
         xml: this.editingTarget.blocks.toXML()
     });
+};
+
+/**
+ * Get a target id for a drawable id. Useful for interacting with the renderer
+ * @param {int} drawableId The drawable id to request the target id for
+ * @returns {?string} The target id, if found. Will also be null if the target found is the stage.
+ */
+VirtualMachine.prototype.getTargetIdForDrawableId = function (drawableId) {
+    var target = this.runtime.getTargetByDrawableId(drawableId);
+    if (target.hasOwnProperty('id') && target.hasOwnProperty('isStage') && !target.isStage) {
+        return target.id;
+    }
+    return null;
+};
+
+/**
+ * Put a target into a "drag" state, during which its X/Y positions will be unaffected
+ * by blocks.
+ * @param {string} targetId The id for the target to put into a drag state
+ */
+VirtualMachine.prototype.startDrag = function (targetId) {
+    var target = this.runtime.getTargetById(targetId);
+    if (target) {
+        target.startDrag();
+        this.setEditingTarget(target.id);
+    }
+};
+
+/**
+ * Remove a target from a drag state, so blocks may begin affecting X/Y position again
+ * @param {string} targetId The id for the target to remove from the drag state
+ */
+VirtualMachine.prototype.stopDrag = function (targetId) {
+    var target = this.runtime.getTargetById(targetId);
+    if (target) target.stopDrag();
 };
 
 /**
