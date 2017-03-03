@@ -25,15 +25,16 @@
   },
   "devDependencies": {
     "adm-zip": "0.4.7",
-    "babel-eslint": "7.1.1",
+    "babel-eslint": "^7.1.1",
     "copy-webpack-plugin": "4.0.1",
-    "eslint": "3.15.0",
+    "eslint": "^3.16.0",
     "eslint-config-scratch": "^3.1.0",
-    "expose-loader": "0.7.1",
-    "gh-pages": "0.12.0",
-    "highlightjs": "9.8.0",
+    "expose-loader": "0.7.3",
+    "gh-pages": "^0.12.0",
+    "highlightjs": "^9.8.0",
     "htmlparser2": "3.9.2",
-    "json": "9.0.4",
+    "jsdom": "^9.11.0",
+    "json": "^9.0.4",
     "lodash.defaultsdeep": "4.6.0",
     "minilog": "3.1.0",
     "promise": "7.1.1",
@@ -41,10 +42,10 @@
     "scratch-blocks": "latest",
     "scratch-render": "latest",
     "script-loader": "0.7.0",
-    "stats.js": "0.17.0",
-    "tap": "10.0.2",
-    "travis-after-all": "1.4.4",
+    "stats.js": "^0.17.0",
+    "tap": "^10.2.0",
+    "travis-after-all": "^1.4.4",
     "webpack": "2.2.1",
-    "webpack-dev-server": "1.16.3"
+    "webpack-dev-server": "^2.4.1"
   }
 }

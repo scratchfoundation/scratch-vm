@@ -414,7 +414,7 @@ Runtime.prototype.allScriptsDo = function (f, optTarget) {
     if (optTarget) {
         targets = [optTarget];
     }
-    for (var t = 0; t < targets.length; t++) {
+    for (var t = targets.length - 1; t >= 0; t--) {
         var target = targets[t];
         var scripts = target.blocks.getScripts();
         for (var j = 0; j < scripts.length; j++) {
@@ -439,6 +439,12 @@ Runtime.prototype.startHats = function (requestedHatOpcode,
     }
     var instance = this;
     var newThreads = [];
+
+    for (var opts in optMatchFields) {
+        if (!optMatchFields.hasOwnProperty(opts)) continue;
+        optMatchFields[opts] = optMatchFields[opts].toUpperCase();
+    }
+
     // Consider all scripts, looking for hats with opcode `requestedHatOpcode`.
     this.allScriptsDo(function (topBlockId, target) {
         var potentialHatOpcode = target.blocks.getBlock(topBlockId).opcode;
@@ -458,6 +464,7 @@ Runtime.prototype.startHats = function (requestedHatOpcode,
         if (Object.keys(hatFields).length === 0) {
             var hatInputs = target.blocks.getInputs(topBlockId);
             for (var input in hatInputs) {
+                if (!hatInputs.hasOwnProperty(input)) continue;
                 var id = hatInputs[input].block;
                 var fields = target.blocks.getFields(id);
                 hatFields = Object.assign(fields, hatFields);
@@ -466,7 +473,7 @@ Runtime.prototype.startHats = function (requestedHatOpcode,
 
         if (optMatchFields) {
             for (var matchField in optMatchFields) {
-                if (hatFields[matchField].value !==
+                if (hatFields[matchField].value.toUpperCase() !==
                     optMatchFields[matchField]) {
                     // Field mismatch.
                     return;
@@ -587,6 +594,7 @@ Runtime.prototype.stopAll = function () {
 Runtime.prototype._step = function () {
     // Find all edge-activated hats, and add them to threads to be evaluated.
     for (var hatType in this._hats) {
+        if (!this._hats.hasOwnProperty(hatType)) continue;
         var hat = this._hats[hatType];
         if (hat.edgeActivated) {
             this.startHats(hatType);
@@ -782,6 +790,18 @@ Runtime.prototype.getSpriteTargetByName = function (spriteName) {
         if (target.sprite && target.sprite.name === spriteName) {
             return target;
         }
+    }
+};
+
+/**
+ * Get a target by its drawable id.
+ * @param {number} drawableID drawable id of target to find
+ * @return {?Target} The target, if found
+ */
+Runtime.prototype.getTargetByDrawableId = function (drawableID) {
+    for (var i = 0; i < this.targets.length; i++) {
+        var target = this.targets[i];
+        if (target.drawableID === drawableID) return target;
     }
 };
 

@@ -34,6 +34,13 @@ var RenderedTarget = function (sprite, runtime) {
     this.drawableID = null;
 
     /**
+     * Drag state of this rendered target. If true, x/y position can't be
+     * changed by blocks.
+     * @type {boolean}
+     */
+    this.dragging = false;
+
+    /**
      * Map of current graphic effect values.
      * @type {!Object.<string, number>}
      */
@@ -107,6 +114,12 @@ RenderedTarget.prototype.y = 0;
 RenderedTarget.prototype.direction = 90;
 
 /**
+ * Whether the rendered target is draggable on the stage
+ * @type {boolean}
+ */
+RenderedTarget.prototype.draggable = false;
+
+/**
  * Whether the rendered target is currently visible.
  * @type {boolean}
  */
@@ -160,22 +173,27 @@ RenderedTarget.prototype.rotationStyle = (
  * Set the X and Y coordinates.
  * @param {!number} x New X coordinate, in Scratch coordinates.
  * @param {!number} y New Y coordinate, in Scratch coordinates.
+ * @param {?boolean} force Force setting X/Y, in case of dragging
  */
-RenderedTarget.prototype.setXY = function (x, y) {
-    if (this.isStage) {
-        return;
-    }
+RenderedTarget.prototype.setXY = function (x, y, force) {
+    if (this.isStage) return;
+    if (this.dragging && !force) return;
     var oldX = this.x;
     var oldY = this.y;
-    this.x = x;
-    this.y = y;
     if (this.renderer) {
+        var position = this.renderer.getFencedPositionOfDrawable(this.drawableID, [x, y]);
+        this.x = position[0];
+        this.y = position[1];
+
         this.renderer.updateDrawableProperties(this.drawableID, {
-            position: [this.x, this.y]
+            position: position
         });
         if (this.visible) {
             this.runtime.requestRedraw();
         }
+    } else {
+        this.x = x;
+        this.y = y;
     }
     this.emit(RenderedTarget.EVENT_TARGET_MOVED, this, oldX, oldY);
     this.runtime.spriteInfoReport(this);
@@ -221,6 +239,16 @@ RenderedTarget.prototype.setDirection = function (direction) {
             this.runtime.requestRedraw();
         }
     }
+    this.runtime.spriteInfoReport(this);
+};
+
+/**
+ * Set draggability; i.e., whether it's able to be dragged in the player
+ * @param {!boolean} draggable True if should be draggable.
+ */
+RenderedTarget.prototype.setDraggable = function (draggable) {
+    if (this.isStage) return;
+    this.draggable = !!draggable;
     this.runtime.spriteInfoReport(this);
 };
 
@@ -315,6 +343,7 @@ RenderedTarget.prototype.setEffect = function (effectName, value) {
  */
 RenderedTarget.prototype.clearEffects = function () {
     for (var effectName in this.effects) {
+        if (!this.effects.hasOwnProperty(effectName)) continue;
         this.effects[effectName] = 0;
     }
     if (this.renderer) {
@@ -422,20 +451,23 @@ RenderedTarget.prototype.updateAllDrawableProperties = function () {
     if (this.renderer) {
         var renderedDirectionScale = this._getRenderedDirectionAndScale();
         var costume = this.sprite.costumes[this.currentCostume];
+        var bitmapResolution = costume.bitmapResolution || 1;
         var props = {
             position: [this.x, this.y],
             direction: renderedDirectionScale.direction,
+            draggable: this.draggable,
             scale: renderedDirectionScale.scale,
             visible: this.visible,
             skin: costume.skin,
-            costumeResolution: costume.bitmapResolution,
+            costumeResolution: bitmapResolution,
             rotationCenter: [
-                costume.rotationCenterX / costume.bitmapResolution,
-                costume.rotationCenterY / costume.bitmapResolution
+                costume.rotationCenterX / bitmapResolution,
+                costume.rotationCenterY / bitmapResolution
             ]
         };
-        for (var effectID in this.effects) {
-            props[effectID] = this.effects[effectID];
+        for (var effectName in this.effects) {
+            if (!this.effects.hasOwnProperty(effectName)) continue;
+            props[effectName] = this.effects[effectName];
         }
         this.renderer.updateDrawableProperties(this.drawableID, props);
         if (this.visible) {
@@ -582,7 +614,7 @@ RenderedTarget.prototype.goBackLayers = function (nLayers) {
 
 /**
  * Move behind some other rendered target.
- * @param {!Clone} other Other rendered target to move behind.
+ * @param {!RenderedTarget} other Other rendered target to move behind.
  */
 RenderedTarget.prototype.goBehindOther = function (other) {
     if (this.renderer) {
@@ -637,11 +669,11 @@ RenderedTarget.prototype.keepInFence = function (newX, newY, optFence) {
 /**
  * Make a clone, copying any run-time properties.
  * If we've hit the global clone limit, returns null.
- * @return {!RenderedTarget} New clone.
+ * @return {RenderedTarget} New clone.
  */
 RenderedTarget.prototype.makeClone = function () {
     if (!this.runtime.clonesAvailable() || this.isStage) {
-        return; // Hit max clone limit, or this is the stage.
+        return null; // Hit max clone limit, or this is the stage.
     }
     this.runtime.changeCloneCounter(1);
     var newClone = this.sprite.createClone();
@@ -649,6 +681,7 @@ RenderedTarget.prototype.makeClone = function () {
     newClone.x = this.x;
     newClone.y = this.y;
     newClone.direction = this.direction;
+    newClone.draggable = this.draggable;
     newClone.visible = this.visible;
     newClone.size = this.size;
     newClone.currentCostume = this.currentCostume;
@@ -687,14 +720,18 @@ RenderedTarget.prototype.onStopAll = function () {
  * @param {object} data An object with sprite info data to set.
  */
 RenderedTarget.prototype.postSpriteInfo = function (data) {
+    var force = data.hasOwnProperty('force') ? data.force : null;
     if (data.hasOwnProperty('x')) {
-        this.setXY(data.x, this.y);
+        this.setXY(data.x, this.y, force);
     }
     if (data.hasOwnProperty('y')) {
-        this.setXY(this.x, data.y);
+        this.setXY(this.x, data.y, force);
     }
     if (data.hasOwnProperty('direction')) {
         this.setDirection(data.direction);
+    }
+    if (data.hasOwnProperty('draggable')) {
+        this.setDraggable(data.draggable);
     }
     if (data.hasOwnProperty('rotationStyle')) {
         this.setRotationStyle(data.rotationStyle);
@@ -702,6 +739,20 @@ RenderedTarget.prototype.postSpriteInfo = function (data) {
     if (data.hasOwnProperty('visible')) {
         this.setVisible(data.visible);
     }
+};
+
+/**
+ * Put the sprite into the drag state. While in effect, setXY must be forced
+ */
+RenderedTarget.prototype.startDrag = function () {
+    this.dragging = true;
+};
+
+/**
+ * Remove the sprite from the drag state.
+ */
+RenderedTarget.prototype.stopDrag = function () {
+    this.dragging = false;
 };
 
 /**
@@ -717,6 +768,7 @@ RenderedTarget.prototype.toJSON = function () {
         y: this.y,
         size: this.size,
         direction: this.direction,
+        draggable: this.draggable,
         costume: this.getCurrentCostume(),
         costumeCount: this.getCostumes().length,
         currentCostume: this.currentCostume,
