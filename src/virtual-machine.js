@@ -4,6 +4,8 @@ var util = require('util');
 var filterToolbox = require('./util/filter-toolbox');
 var Runtime = require('./engine/runtime');
 var sb2import = require('./import/sb2import');
+var Scratch3DataBlocks = require('./blocks/scratch3_data');
+var Scratch3ProcedureBlocks = require('./blocks/scratch3_procedures');
 
 /**
  * Handles connections between blocks, stage, and extensions.
@@ -380,9 +382,22 @@ VirtualMachine.prototype.postSpriteInfo = function (data) {
  * @returns {HTMLElement} filtered toolbox XML node
  */
 VirtualMachine.prototype.filterToolbox = function (toolbox) {
+    var exclusions = [
+        'looks_say',
+        'looks_sayforsecs',
+        'looks_think',
+        'looks_thinkforsecs'
+    ].concat(
+        Object.keys(Scratch3DataBlocks.prototype.getPrimitives())
+    ).concat(
+        Object.keys(Scratch3ProcedureBlocks.prototype.getPrimitives())
+    );
     var opcodes = Object.keys(this.runtime._primitives)
-        .concat(Object.keys(this.runtime._hats));
-    return filterToolbox(toolbox, opcodes);
+        .concat(Object.keys(this.runtime._hats))
+        .filter(function (opcode) {
+            return exclusions.indexOf(opcode) === -1;
+        });
+    return filterToolbox(toolbox, opcodes, false);
 };
 
 module.exports = VirtualMachine;
