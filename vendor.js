@@ -38976,7 +38976,7 @@ var RenderWebGL = function (_EventEmitter) {
 
             try {
                 gl.disable(gl.BLEND);
-                this._drawThese([stampID], ShaderManager.DRAW_MODE.default, projection);
+                this._drawThese([stampID], ShaderManager.DRAW_MODE.default, projection, { isStamping: true });
             } finally {
                 gl.enable(gl.BLEND);
             }
@@ -39061,6 +39061,7 @@ var RenderWebGL = function (_EventEmitter) {
          * @param {idFilterFunc} opts.filter An optional filter function.
          * @param {object.<string,*>} opts.extraUniforms Extra uniforms for the shaders.
          * @param {int} opts.effectMask Bitmask for effects to allow
+         * @param {boolean} opts.isStamping Stamp mode ignores sprite visibility, always drawing.
          * @private
          */
 
@@ -39082,8 +39083,8 @@ var RenderWebGL = function (_EventEmitter) {
                 var drawable = this._allDrawables[drawableID];
                 /** @todo check if drawable is inside the viewport before anything else */
 
-                // Hidden drawables (e.g., by a "hide" block) are never drawn.
-                if (!drawable.getVisible()) continue;
+                // Hidden drawables (e.g., by a "hide" block) are not drawn unless stamping
+                if (!drawable.getVisible() && !opts.isStamping) continue;
 
                 var drawableScale = drawable.scale;
 
