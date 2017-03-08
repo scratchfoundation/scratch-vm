@@ -24,9 +24,11 @@ var filterToolboxNode = function (node, opcodes) {
  * @param {HTMLElement} toolbox Blockly toolbox XML node
  * @param {Array.<string>} opcodes Valid opcodes. Blocks producing other opcodes
  * will be filtered.
+ * @param {boolean} includeCustom Include empty categories with a non-empty `custom` attribute
  * @returns {HTMLElement} filtered toolbox XML node
  */
-var filterToolbox = function (toolbox, opcodes) {
+var filterToolbox = function (toolbox, opcodes, includeCustom) {
+    if (typeof includeCustom === 'undefined') includeCustom = true;
     if (!toolbox.hasChildNodes()) return toolbox;
     var filteredToolbox;
     if (toolbox.firstElementChild.nodeName.toLowerCase() === 'category') {
@@ -39,7 +41,7 @@ var filterToolbox = function (toolbox, opcodes) {
             if (category.nodeName.toLowerCase() !== 'category') continue;
             var filteredCategory = filterToolboxNode(category, opcodes);
             if (filteredCategory.hasChildNodes() ||
-                filteredCategory.hasAttribute('custom')
+                (filteredCategory.hasAttribute('custom') && includeCustom)
             ) {
                 filteredToolbox.appendChild(filteredCategory);
             }
