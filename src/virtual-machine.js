@@ -336,7 +336,7 @@ VirtualMachine.prototype.emitWorkspaceUpdate = function () {
  */
 VirtualMachine.prototype.getTargetIdForDrawableId = function (drawableId) {
     var target = this.runtime.getTargetByDrawableId(drawableId);
-    if (target.hasOwnProperty('id') && target.hasOwnProperty('isStage') && !target.isStage) {
+    if (target && target.hasOwnProperty('id') && target.hasOwnProperty('isStage') && !target.isStage) {
         return target.id;
     }
     return null;
