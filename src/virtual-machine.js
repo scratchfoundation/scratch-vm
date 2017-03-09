@@ -171,7 +171,7 @@ VirtualMachine.prototype.downloadProjectId = function (id) {
 
 /**
  * Add a single sprite from the "Sprite2" (i.e., SB2 sprite) format.
- * @param {?string} json JSON string representing the sprite.
+ * @param {string} json JSON string representing the sprite.
  */
 VirtualMachine.prototype.addSprite2 = function (json) {
     // Select new sprite.

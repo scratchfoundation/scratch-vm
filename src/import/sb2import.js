@@ -51,7 +51,9 @@ var parseScratchObject = function (object, runtime, topLevel) {
                 rotationCenterY: costumeSource.rotationCenterY,
                 skinId: null
             };
-            costumePromises.push(loadCostume(costumeSource.baseLayerMD5, costume, runtime));
+            if (runtime.renderer) {
+                costumePromises.push(loadCostume(costumeSource.baseLayerMD5, costume, runtime));
+            }
             sprite.costumes.push(costume);
         }
     }
@@ -147,6 +149,7 @@ var parseScratchObject = function (object, runtime, topLevel) {
 
 /**
  * Load a costume's asset into memory asynchronously.
+ * Do not call this unless there is a renderer attached.
  * @param {string} md5ext - the MD5 and extension of the costume to be loaded.
  * @param {!object} costume - the Scratch costume object.
  * @property {int} skinId - the ID of the costume's render skin, once installed.
@@ -171,9 +174,7 @@ var loadCostume = function (md5ext, costume, runtime) {
 
     if (assetType === AssetType.ImageVector) {
         promise = promise.then(function (costumeAsset) {
-            if (runtime.renderer) {
-                costume.skinId = runtime.renderer.createSVGSkin(costumeAsset.decodeText(), rotationCenter);
-            }
+            costume.skinId = runtime.renderer.createSVGSkin(costumeAsset.decodeText(), rotationCenter);
         });
     } else {
         promise = promise.then(function (costumeAsset) {
