@@ -63,7 +63,7 @@
 /******/ 	__webpack_require__.p = "";
 /******/
 /******/ 	// Load entry module and return exports
-/******/ 	return __webpack_require__(__webpack_require__.s = 125);
+/******/ 	return __webpack_require__(__webpack_require__.s = 124);
 /******/ })
 /************************************************************************/
 /******/ ([
@@ -3809,7 +3809,7 @@ function hasOwnProperty(obj, prop) {
 
 var adapter = __webpack_require__(109);
 var mutationAdapter = __webpack_require__(39);
-var xmlEscape = __webpack_require__(121);
+var xmlEscape = __webpack_require__(120);
 
 /**
  * @fileoverview
@@ -10248,7 +10248,7 @@ Tokenizer.prototype._emitPartial = function(value){
 module.exports = Stream;
 
 var Parser = __webpack_require__(28),
-    WritableStream = __webpack_require__(13).Writable || __webpack_require__(123).Writable,
+    WritableStream = __webpack_require__(13).Writable || __webpack_require__(122).Writable,
     StringDecoder = __webpack_require__(23).StringDecoder,
     Buffer = __webpack_require__(4).Buffer;
 
@@ -10578,7 +10578,7 @@ util.inherits = __webpack_require__(11);
 /*</replacement>*/
 
 /*<replacement>*/
-var debugUtil = __webpack_require__(124);
+var debugUtil = __webpack_require__(123);
 var debug = void 0;
 if (debugUtil && debugUtil.debuglog) {
   debug = debugUtil.debuglog('stream');
@@ -11633,7 +11633,7 @@ module.exports = uid;
 /* 48 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var VirtualMachine = __webpack_require__(122);
+var VirtualMachine = __webpack_require__(121);
 
 module.exports = VirtualMachine;
 
@@ -19905,65 +19905,6 @@ module.exports = Sprite;
 /***/ (function(module, exports) {
 
 /**
- * Filter Blockly toolbox XML node containing blocks to only those with
- * valid opcodes. Return a copy of the node with valid blocks.
- * @param {HTMLElement} node Blockly toolbox XML node
- * @param {Array.<string>} opcodes Valid opcodes. Blocks producing other opcodes
- * will be filtered.
- * @returns {HTMLElement} filtered toolbox XML node
- */
-var filterToolboxNode = function (node, opcodes) {
-    var filteredCategory = node.cloneNode();
-    for (var block = node.firstElementChild; block; block = block.nextElementSibling) {
-        if (block.nodeName.toLowerCase() !== 'block') continue;
-        var opcode = block.getAttribute('type').toLowerCase();
-        if (opcodes.indexOf(opcode) !== -1) {
-            filteredCategory.appendChild(block.cloneNode(true));
-        }
-    }
-    return filteredCategory;
-};
-
-/**
- * Filter Blockly toolbox XML and return a copy which only contains blocks with
- * existent opcodes. Categories with no valid children will be removed.
- * @param {HTMLElement} toolbox Blockly toolbox XML node
- * @param {Array.<string>} opcodes Valid opcodes. Blocks producing other opcodes
- * will be filtered.
- * @returns {HTMLElement} filtered toolbox XML node
- */
-var filterToolbox = function (toolbox, opcodes) {
-    if (!toolbox.hasChildNodes()) return toolbox;
-    var filteredToolbox;
-    if (toolbox.firstElementChild.nodeName.toLowerCase() === 'category') {
-        filteredToolbox = toolbox.cloneNode();
-        for (
-            var category = toolbox.firstElementChild;
-            category;
-            category = category.nextElementSibling
-        ) {
-            if (category.nodeName.toLowerCase() !== 'category') continue;
-            var filteredCategory = filterToolboxNode(category, opcodes);
-            if (filteredCategory.hasChildNodes() ||
-                filteredCategory.hasAttribute('custom')
-            ) {
-                filteredToolbox.appendChild(filteredCategory);
-            }
-        }
-    } else {
-        filteredToolbox = filterToolboxNode(toolbox, opcodes);
-    }
-    return filteredToolbox;
-};
-
-module.exports = filterToolbox;
-
-
-/***/ }),
-/* 121 */
-/***/ (function(module, exports) {
-
-/**
  * Escape a string to be safe to use in XML content.
  * CC-BY-SA: hgoebl
  * https://stackoverflow.com/questions/7918868/
@@ -19987,13 +19928,12 @@ module.exports = xmlEscape;
 
 
 /***/ }),
-/* 122 */
+/* 121 */
 /***/ (function(module, exports, __webpack_require__) {
 
 var EventEmitter = __webpack_require__(1);
 var util = __webpack_require__(14);
 
-var filterToolbox = __webpack_require__(120);
 var Runtime = __webpack_require__(111);
 var sb2import = __webpack_require__(114);
 
@@ -20364,21 +20304,14 @@ VirtualMachine.prototype.postSpriteInfo = function (data) {
     this.editingTarget.postSpriteInfo(data);
 };
 
-
-/**
- * Filter Blockly toolbox XML and return a copy which only contains blocks with
- * existent opcodes. Categories with no valid children will be removed.
- * @param {HTMLElement} toolbox Blockly toolbox XML node
- * @returns {HTMLElement} filtered toolbox XML node
- */
-VirtualMachine.prototype.filterToolbox = function (toolbox) {
-    var opcodes = Object.keys(this.runtime._primitives)
-        .concat(Object.keys(this.runtime._hats));
-    return filterToolbox(toolbox, opcodes);
-};
-
 module.exports = VirtualMachine;
 
+
+/***/ }),
+/* 122 */
+/***/ (function(module, exports) {
+
+/* (ignored) */
 
 /***/ }),
 /* 123 */
@@ -20388,12 +20321,6 @@ module.exports = VirtualMachine;
 
 /***/ }),
 /* 124 */
-/***/ (function(module, exports) {
-
-/* (ignored) */
-
-/***/ }),
-/* 125 */
 /***/ (function(module, exports, __webpack_require__) {
 
 /* WEBPACK VAR INJECTION */(function(global) {module.exports = global["VirtualMachine"] = __webpack_require__(48);
