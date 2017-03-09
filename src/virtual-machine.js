@@ -1,7 +1,6 @@
 var EventEmitter = require('events');
 var util = require('util');
 
-var filterToolbox = require('./util/filter-toolbox');
 var Runtime = require('./engine/runtime');
 var sb2import = require('./import/sb2import');
 
@@ -370,19 +369,6 @@ VirtualMachine.prototype.stopDrag = function (targetId) {
  */
 VirtualMachine.prototype.postSpriteInfo = function (data) {
     this.editingTarget.postSpriteInfo(data);
-};
-
-
-/**
- * Filter Blockly toolbox XML and return a copy which only contains blocks with
- * existent opcodes. Categories with no valid children will be removed.
- * @param {HTMLElement} toolbox Blockly toolbox XML node
- * @returns {HTMLElement} filtered toolbox XML node
- */
-VirtualMachine.prototype.filterToolbox = function (toolbox) {
-    var opcodes = Object.keys(this.runtime._primitives)
-        .concat(Object.keys(this.runtime._hats));
-    return filterToolbox(toolbox, opcodes);
 };
 
 module.exports = VirtualMachine;
