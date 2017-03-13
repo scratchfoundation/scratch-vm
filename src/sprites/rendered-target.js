@@ -706,9 +706,10 @@ RenderedTarget.prototype.onGreenFlag = function () {
 
 /**
  * Called when the project receives a "stop all"
- * Stop all sounds
+ * Stop all sounds and clear graphic effects.
  */
 RenderedTarget.prototype.onStopAll = function () {
+    this.clearEffects();
     if (this.audioPlayer) {
         this.audioPlayer.stopAllSounds();
         this.audioPlayer.clearEffects();

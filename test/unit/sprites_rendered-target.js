@@ -11,3 +11,13 @@ test('clone effects', function (t) {
     t.ok(a.effects !== b.effects);
     t.end();
 });
+
+test('#stopAll clears graphics effects', function (t) {
+    var spr = new Sprite();
+    var a = new RenderedTarget(spr, null);
+    var effectName = 'brightness';
+    a.setEffect(effectName, 100);
+    a.onStopAll();
+    t.equals(a.effects[effectName], 0);
+    t.end();
+});
