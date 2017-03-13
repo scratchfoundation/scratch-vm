@@ -88,11 +88,6 @@ window.onload = function () {
     });
     Scratch.workspace = workspace;
 
-    // Filter available blocks
-    var toolbox = vm.filterToolbox(workspace.options.languageTree);
-    // var toolbox = workspace.options.languageTree;
-    workspace.updateToolbox(toolbox);
-
     // Attach scratch-blocks events to VM.
     workspace.addChangeListener(vm.blockListener);
     var flyoutWorkspace = workspace.getFlyout().getWorkspace();
