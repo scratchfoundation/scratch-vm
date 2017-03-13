@@ -162,6 +162,10 @@ VirtualMachine.prototype.loadProject = function (json) {
  * @param {string} id - the ID of the project to download, as a string.
  */
 VirtualMachine.prototype.downloadProjectId = function (id) {
+    if (!this.runtime.storage) {
+        log('No storage module present; cannot load project: ', id);
+        return;
+    }
     var vm = this;
     var promise = this.runtime.storage.load(AssetType.Project, id);
     promise.then(function (projectAsset) {

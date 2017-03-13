@@ -51,8 +51,9 @@ var parseScratchObject = function (object, runtime, topLevel) {
                 rotationCenterY: costumeSource.rotationCenterY,
                 skinId: null
             };
-            if (runtime.renderer) {
-                costumePromises.push(loadCostume(costumeSource.baseLayerMD5, costume, runtime));
+            var costumePromise = loadCostume(costumeSource.baseLayerMD5, costume, runtime);
+            if (costumePromise) {
+                costumePromises.push(costumePromise);
             }
             sprite.costumes.push(costume);
         }
@@ -157,9 +158,18 @@ var parseScratchObject = function (object, runtime, topLevel) {
  * @property {number} rotationCenterY - the Y component of the costume's origin.
  * @property {number} [bitmapResolution] - the resolution scale for a bitmap costume.
  * @param {!Runtime} runtime - Scratch runtime, used to access the storage module.
- * @returns {Promise} - a promise which will resolve after skinId is set.
+ * @returns {Promise} - a promise which will resolve after skinId is set, or null on error.
  */
 var loadCostume = function (md5ext, costume, runtime) {
+    if (!runtime.storage) {
+        log('No storage module present; cannot load costume asset: ', md5ext);
+        return null;
+    }
+    if (!runtime.renderer) {
+        log('No rendering module present; cannot load costume asset: ', md5ext);
+        return null;
+    }
+
     var idParts = md5ext.split('.');
     var md5 = idParts[0];
     var ext = idParts[1].toUpperCase();
@@ -212,6 +222,10 @@ var loadCostume = function (md5ext, costume, runtime) {
  * @param {!Runtime} runtime - Scratch runtime, used to access the storage module.
  */
 var loadSound = function (sound, runtime) {
+    if (!runtime.storage) {
+        log('No storage module present; cannot load sound asset: ', sound.md5);
+        return;
+    }
     var idParts = sound.md5.split('.');
     var md5 = idParts[0];
     runtime.storage.load(AssetType.Sound, md5).then(function (soundAsset) {
