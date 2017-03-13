@@ -2,6 +2,7 @@ var EventEmitter = require('events');
 var util = require('util');
 
 var filterToolbox = require('./util/filter-toolbox');
+var log = require('./util/log');
 var Runtime = require('./engine/runtime');
 var ScratchStorage = require('scratch-storage');
 var sb2import = require('./import/sb2import');

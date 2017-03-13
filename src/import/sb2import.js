@@ -158,7 +158,7 @@ var parseScratchObject = function (object, runtime, topLevel) {
  * @property {number} rotationCenterY - the Y component of the costume's origin.
  * @property {number} [bitmapResolution] - the resolution scale for a bitmap costume.
  * @param {!Runtime} runtime - Scratch runtime, used to access the storage module.
- * @returns {Promise} - a promise which will resolve after skinId is set, or null on error.
+ * @returns {?Promise} - a promise which will resolve after skinId is set, or null on error.
  */
 var loadCostume = function (md5ext, costume, runtime) {
     if (!runtime.storage) {
