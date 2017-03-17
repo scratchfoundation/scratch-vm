@@ -40,6 +40,13 @@ Scratch3SoundBlocks.DEFAULT_SOUND_STATE = {
 Scratch3SoundBlocks.MIDI_NOTE_RANGE = {min: 36, max: 96}; // C2 to C7
 
 /**
+ * The minimum and maximum beat values, for clamping the duration of play note, play drum and rest.
+ * 100 beats at the default tempo of 60bpm is 100 seconds.
+ * @type {{min: number, max: number}}
+ */
+Scratch3SoundBlocks.BEAT_RANGE = {min: 0, max: 100};
+
+/**
  * @param {Target} target - collect sound state for this target.
  * @returns {SoundState} the mutable sound state associated with that target. This will be created if necessary.
  * @private
@@ -140,6 +147,7 @@ Scratch3SoundBlocks.prototype.playNoteForBeats = function (args, util) {
     var note = Cast.toNumber(args.NOTE);
     note = MathUtil.clamp(note, Scratch3SoundBlocks.MIDI_NOTE_RANGE.min, Scratch3SoundBlocks.MIDI_NOTE_RANGE.max);
     var beats = Cast.toNumber(args.BEATS);
+    beats = this._clampBeats(beats);
     var soundState = this._getSoundState(util.target);
     var inst = soundState.currentInstrument;
     var vol = soundState.volume;
@@ -153,14 +161,20 @@ Scratch3SoundBlocks.prototype.playDrumForBeats = function (args, util) {
     if (typeof this.runtime.audioEngine === 'undefined') return;
     drum = MathUtil.wrapClamp(drum, 0, this.runtime.audioEngine.numDrums);
     var beats = Cast.toNumber(args.BEATS);
+    beats = this._clampBeats(beats);
     if (util.target.audioPlayer === null) return;
     return util.target.audioPlayer.playDrumForBeats(drum, beats);
 };
 
 Scratch3SoundBlocks.prototype.restForBeats = function (args) {
     var beats = Cast.toNumber(args.BEATS);
+    beats = this._clampBeats(beats);
     if (typeof this.runtime.audioEngine === 'undefined') return;
     return this.runtime.audioEngine.waitForBeats(beats);
+};
+
+Scratch3SoundBlocks.prototype._clampBeats = function (beats) {
+    return MathUtil.clamp(beats, Scratch3SoundBlocks.BEAT_RANGE.min, Scratch3SoundBlocks.BEAT_RANGE.max);
 };
 
 Scratch3SoundBlocks.prototype.setInstrument = function (args, util) {
