@@ -34,6 +34,12 @@ Scratch3SoundBlocks.DEFAULT_SOUND_STATE = {
 };
 
 /**
+ * The minimum and maximum MIDI note numbers, for clamping the input to play note.
+ * @type {{min: number, max: number}}
+ */
+Scratch3SoundBlocks.MIDI_NOTE_RANGE = {min: 36, max: 96}; // C2 to C7
+
+/**
  * @param {Target} target - collect sound state for this target.
  * @returns {SoundState} the mutable sound state associated with that target. This will be created if necessary.
  * @private
@@ -132,6 +138,7 @@ Scratch3SoundBlocks.prototype.stopAllSounds = function (args, util) {
 
 Scratch3SoundBlocks.prototype.playNoteForBeats = function (args, util) {
     var note = Cast.toNumber(args.NOTE);
+    note = MathUtil.clamp(note, Scratch3SoundBlocks.MIDI_NOTE_RANGE.min, Scratch3SoundBlocks.MIDI_NOTE_RANGE.max);
     var beats = Cast.toNumber(args.BEATS);
     var soundState = this._getSoundState(util.target);
     var inst = soundState.currentInstrument;
