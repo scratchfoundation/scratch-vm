@@ -46,6 +46,11 @@ Scratch3SoundBlocks.MIDI_NOTE_RANGE = {min: 36, max: 96}; // C2 to C7
  */
 Scratch3SoundBlocks.BEAT_RANGE = {min: 0, max: 100};
 
+ /** The minimum and maximum tempo values, in bpm.
+ * @type {{min: number, max: number}}
+ */
+Scratch3SoundBlocks.TEMPO_RANGE = {min: 20, max: 500};
+
 /**
  * @param {Target} target - collect sound state for this target.
  * @returns {SoundState} the mutable sound state associated with that target. This will be created if necessary.
@@ -246,15 +251,21 @@ Scratch3SoundBlocks.prototype.getVolume = function (args, util) {
 };
 
 Scratch3SoundBlocks.prototype.setTempo = function (args) {
-    var value = Cast.toNumber(args.TEMPO);
-    if (typeof this.runtime.audioEngine === 'undefined') return;
-    this.runtime.audioEngine.setTempo(value);
+    var tempo = Cast.toNumber(args.TEMPO);
+    this._updateTempo(tempo);
 };
 
 Scratch3SoundBlocks.prototype.changeTempo = function (args) {
-    var value = Cast.toNumber(args.TEMPO);
+    var change = Cast.toNumber(args.TEMPO);
     if (typeof this.runtime.audioEngine === 'undefined') return;
-    this.runtime.audioEngine.changeTempo(value);
+    var tempo = change + this.runtime.audioEngine.currentTempo;
+    this._updateTempo(tempo);
+};
+
+Scratch3SoundBlocks.prototype._updateTempo = function (tempo) {
+    tempo = MathUtil.clamp(tempo, Scratch3SoundBlocks.TEMPO_RANGE.min, Scratch3SoundBlocks.TEMPO_RANGE.max);
+    if (typeof this.runtime.audioEngine === 'undefined') return;
+    this.runtime.audioEngine.setTempo(tempo);
 };
 
 Scratch3SoundBlocks.prototype.getTempo = function () {
