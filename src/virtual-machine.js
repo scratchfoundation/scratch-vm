@@ -204,7 +204,9 @@ VirtualMachine.prototype.renameSprite = function (targetId, newName) {
         if (!sprite) {
             throw new Error('No sprite associated with this target.');
         }
-        sprite.name = newName;
+        if (newName) {
+            sprite.name = newName;
+        }
         this.emitTargetsUpdate();
     } else {
         throw new Error('No target with the provided id.');

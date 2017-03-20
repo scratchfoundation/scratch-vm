@@ -49,3 +49,15 @@ test('renameSprite sets the sprite name', function (t) {
     t.equal(fakeTarget.sprite.name, 'not-original');
     t.end();
 });
+
+test('renameSprite does not set sprite names to an empty string ', function (t) {
+    var vm = new VirtualMachine();
+    var fakeTarget = {
+        sprite: {name: 'original'},
+        isSprite: () => true
+    };
+    vm.runtime.getTargetById = () => (fakeTarget);
+    vm.renameSprite('id', '');
+    t.equal(fakeTarget.sprite.name, 'original');
+    t.end();
+});
