@@ -9,13 +9,28 @@ var base = {
         host: '0.0.0.0',
         port: process.env.PORT || 8073
     },
-    devtool: 'source-map',
+    devtool: 'cheap-module-source-map',
+    module: {
+        rules: [
+            {
+                // allow ES2015 in any *.js file under .../scratch-*/src/...
+                test: /[\\/]+scratch-[^\\/]+[\\/]+src[\\/]+.+\.js$/,
+                loader: 'babel-loader',
+                options: {
+                    presets: ['es2015']
+                }
+            }
+        ]
+    },
     plugins: [
         new webpack.optimize.UglifyJsPlugin({
             include: /\.min\.js$/,
             minimize: true
         })
-    ]
+    ],
+    resolve: {
+        symlinks: false
+    }
 };
 
 module.exports = [
@@ -37,19 +52,6 @@ module.exports = [
                     loader: 'expose-loader?VirtualMachine'
                 }
             ]
-        }
-    }),
-    // Node-compatible
-    defaultsDeep({}, base, {
-        target: 'node',
-        entry: {
-            'scratch-vm': './src/index.js'
-        },
-        output: {
-            library: 'VirtualMachine',
-            libraryTarget: 'commonjs2',
-            path: path.resolve(__dirname, 'dist/node'),
-            filename: '[name].js'
         }
     }),
     // Playground
