@@ -50,7 +50,7 @@ test('renameSprite sets the sprite name', function (t) {
     t.end();
 });
 
-test('renameSprite does not set sprite names to an empty string ', function (t) {
+test('renameSprite does not set sprite names to an empty string', function (t) {
     var vm = new VirtualMachine();
     var fakeTarget = {
         sprite: {name: 'original'},
@@ -59,5 +59,38 @@ test('renameSprite does not set sprite names to an empty string ', function (t) 
     vm.runtime.getTargetById = () => (fakeTarget);
     vm.renameSprite('id', '');
     t.equal(fakeTarget.sprite.name, 'original');
+    t.end();
+});
+
+test('renameSprite does not set sprite names to reserved names', function (t) {
+    var vm = new VirtualMachine();
+    var fakeTarget = {
+        sprite: {name: 'original'},
+        isSprite: () => true
+    };
+    vm.runtime.getTargetById = () => (fakeTarget);
+    vm.renameSprite('id', '_mouse_');
+    t.equal(fakeTarget.sprite.name, 'original');
+    t.end();
+});
+
+test('renameSprite increments from existing sprite names', function (t) {
+    var vm = new VirtualMachine();
+    vm.emitTargetsUpdate = () => {};
+    vm.runtime.targets = [{
+        id: 'id1',
+        isSprite: () => true,
+        sprite: {
+            name: 'this name'
+        }
+    }, {
+        id: 'id2',
+        isSprite: () => true,
+        sprite: {
+            name: 'that name'
+        }
+    }];
+    vm.renameSprite('id1', 'that name');
+    t.equal(vm.runtime.targets[0].sprite.name, 'that name2');
     t.end();
 });
