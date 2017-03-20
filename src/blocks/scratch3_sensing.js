@@ -26,7 +26,8 @@ Scratch3SensingBlocks.prototype.getPrimitives = function () {
         sensing_mousedown: this.getMouseDown,
         sensing_keypressed: this.getKeyPressed,
         sensing_current: this.current,
-        sensing_dayssince2000: this.daysSince2000
+        sensing_dayssince2000: this.daysSince2000,
+        sensing_loudness: this.getLoudness
     };
 };
 
@@ -123,6 +124,11 @@ Scratch3SensingBlocks.prototype.daysSince2000 = function () {
     var mSecsSinceStart = today.valueOf() - start.valueOf();
     mSecsSinceStart += ((today.getTimezoneOffset() - dstAdjust) * 60 * 1000);
     return mSecsSinceStart / msPerDay;
+};
+
+Scratch3SensingBlocks.prototype.getLoudness = function () {
+    if (typeof this.runtime.audioEngine === 'undefined') return 0;
+    return this.runtime.audioEngine.getLoudness();
 };
 
 Scratch3SensingBlocks.prototype.getAttributeOf = function (args) {
