@@ -51,6 +51,18 @@ Scratch3SoundBlocks.BEAT_RANGE = {min: 0, max: 100};
  */
 Scratch3SoundBlocks.TEMPO_RANGE = {min: 20, max: 500};
 
+ /** The minimum and maximum values for each sound effect.
+ * @type {{effect:{min: number, max: number}}}
+ */
+Scratch3SoundBlocks.EFFECT_RANGE = {
+    pitch: {min: -600, max: 600},       // -5 to 5 octaves
+    pan: {min: -100, max: 100},         // 100% left to 100% right
+    echo: {min: 0, max: 100},           // 0 to max (75%) feedback
+    reverb: {min: 0, max: 100},         // wet/dry: 0 to 100% wet
+    fuzz: {min: 0, max: 100},           // wed/dry: 0 to 100% wet
+    robot: {min: 0, max: 600}           // 0 to 5 octaves
+};
+
 /**
  * @param {Target} target - collect sound state for this target.
  * @returns {SoundState} the mutable sound state associated with that target. This will be created if necessary.
@@ -193,25 +205,29 @@ Scratch3SoundBlocks.prototype.setInstrument = function (args, util) {
 };
 
 Scratch3SoundBlocks.prototype.setEffect = function (args, util) {
-    var effect = Cast.toString(args.EFFECT).toLowerCase();
-    var value = Cast.toNumber(args.VALUE);
-
-    var soundState = this._getSoundState(util.target);
-    if (!soundState.effects.hasOwnProperty(effect)) return;
-
-    soundState.effects[effect] = value;
-    if (util.target.audioPlayer === null) return;
-    util.target.audioPlayer.setEffect(effect, soundState.effects[effect]);
+    this._updateEffect(args, util, false);
 };
 
 Scratch3SoundBlocks.prototype.changeEffect = function (args, util) {
+    this._updateEffect(args, util, true);
+};
+
+Scratch3SoundBlocks.prototype._updateEffect = function (args, util, change) {
     var effect = Cast.toString(args.EFFECT).toLowerCase();
     var value = Cast.toNumber(args.VALUE);
 
     var soundState = this._getSoundState(util.target);
     if (!soundState.effects.hasOwnProperty(effect)) return;
 
-    soundState.effects[effect] += value;
+    if (change) {
+        soundState.effects[effect] += value;
+    } else {
+        soundState.effects[effect] = value;
+    }
+
+    var effectRange = Scratch3SoundBlocks.EFFECT_RANGE[effect];
+    soundState.effects[effect] = MathUtil.clamp(soundState.effects[effect], effectRange.min, effectRange.max);
+
     if (util.target.audioPlayer === null) return;
     util.target.audioPlayer.setEffect(effect, soundState.effects[effect]);
 };
