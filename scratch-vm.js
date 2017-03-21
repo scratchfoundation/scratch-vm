@@ -63,7 +63,7 @@
 /******/ 	__webpack_require__.p = "";
 /******/
 /******/ 	// Load entry module and return exports
-/******/ 	return __webpack_require__(__webpack_require__.s = 124);
+/******/ 	return __webpack_require__(__webpack_require__.s = 125);
 /******/ })
 /************************************************************************/
 /******/ ([
@@ -3809,7 +3809,7 @@ function hasOwnProperty(obj, prop) {
 
 var adapter = __webpack_require__(109);
 var mutationAdapter = __webpack_require__(39);
-var xmlEscape = __webpack_require__(120);
+var xmlEscape = __webpack_require__(121);
 
 /**
  * @fileoverview
@@ -10248,7 +10248,7 @@ Tokenizer.prototype._emitPartial = function(value){
 module.exports = Stream;
 
 var Parser = __webpack_require__(28),
-    WritableStream = __webpack_require__(13).Writable || __webpack_require__(122).Writable,
+    WritableStream = __webpack_require__(13).Writable || __webpack_require__(123).Writable,
     StringDecoder = __webpack_require__(23).StringDecoder,
     Buffer = __webpack_require__(4).Buffer;
 
@@ -10578,7 +10578,7 @@ util.inherits = __webpack_require__(11);
 /*</replacement>*/
 
 /*<replacement>*/
-var debugUtil = __webpack_require__(123);
+var debugUtil = __webpack_require__(124);
 var debug = void 0;
 if (debugUtil && debugUtil.debuglog) {
   debug = debugUtil.debuglog('stream');
@@ -11633,7 +11633,7 @@ module.exports = uid;
 /* 48 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var VirtualMachine = __webpack_require__(121);
+var VirtualMachine = __webpack_require__(122);
 
 module.exports = VirtualMachine;
 
@@ -19904,6 +19904,29 @@ module.exports = Sprite;
 /* 120 */
 /***/ (function(module, exports) {
 
+var StringUtil = function () {};
+
+StringUtil.withoutTrailingDigits = function (s) {
+    var i = s.length - 1;
+    while ((i >= 0) && ('0123456789'.indexOf(s.charAt(i)) > -1)) i--;
+    return s.slice(0, i + 1);
+};
+
+StringUtil.unusedName = function (name, existingNames) {
+    if (existingNames.indexOf(name) < 0) return name;
+    name = StringUtil.withoutTrailingDigits(name);
+    var i = 2;
+    while (existingNames.indexOf(name + i) >= 0) i++;
+    return name + i;
+};
+
+module.exports = StringUtil;
+
+
+/***/ }),
+/* 121 */
+/***/ (function(module, exports) {
+
 /**
  * Escape a string to be safe to use in XML content.
  * CC-BY-SA: hgoebl
@@ -19928,7 +19951,7 @@ module.exports = xmlEscape;
 
 
 /***/ }),
-/* 121 */
+/* 122 */
 /***/ (function(module, exports, __webpack_require__) {
 
 var EventEmitter = __webpack_require__(1);
@@ -19936,6 +19959,9 @@ var util = __webpack_require__(14);
 
 var Runtime = __webpack_require__(111);
 var sb2import = __webpack_require__(114);
+var StringUtil = __webpack_require__(120);
+
+var RESERVED_NAMES = ['_mouse_', '_stage_', '_edge_', '_myself_', '_random_'];
 
 /**
  * Handles connections between blocks, stage, and extensions.
@@ -20137,7 +20163,15 @@ VirtualMachine.prototype.renameSprite = function (targetId, newName) {
         if (!sprite) {
             throw new Error('No sprite associated with this target.');
         }
-        sprite.name = newName;
+        if (newName && RESERVED_NAMES.indexOf(newName) === -1) {
+            var names = this.runtime.targets.filter(function (runtimeTarget) {
+                return runtimeTarget.isSprite();
+            }).map(function (runtimeTarget) {
+                return runtimeTarget.sprite.name;
+            });
+
+            sprite.name = StringUtil.unusedName(newName, names);
+        }
         this.emitTargetsUpdate();
     } else {
         throw new Error('No target with the provided id.');
@@ -20308,12 +20342,6 @@ module.exports = VirtualMachine;
 
 
 /***/ }),
-/* 122 */
-/***/ (function(module, exports) {
-
-/* (ignored) */
-
-/***/ }),
 /* 123 */
 /***/ (function(module, exports) {
 
@@ -20321,6 +20349,12 @@ module.exports = VirtualMachine;
 
 /***/ }),
 /* 124 */
+/***/ (function(module, exports) {
+
+/* (ignored) */
+
+/***/ }),
+/* 125 */
 /***/ (function(module, exports, __webpack_require__) {
 
 /* WEBPACK VAR INJECTION */(function(global) {module.exports = global["VirtualMachine"] = __webpack_require__(48);
