@@ -3,6 +3,9 @@ var util = require('util');
 
 var Runtime = require('./engine/runtime');
 var sb2import = require('./import/sb2import');
+var StringUtil = require('./util/string-util');
+
+var RESERVED_NAMES = ['_mouse_', '_stage_', '_edge_', '_myself_', '_random_'];
 
 /**
  * Handles connections between blocks, stage, and extensions.
@@ -204,7 +207,15 @@ VirtualMachine.prototype.renameSprite = function (targetId, newName) {
         if (!sprite) {
             throw new Error('No sprite associated with this target.');
         }
-        sprite.name = newName;
+        if (newName && RESERVED_NAMES.indexOf(newName) === -1) {
+            var names = this.runtime.targets.filter(function (runtimeTarget) {
+                return runtimeTarget.isSprite();
+            }).map(function (runtimeTarget) {
+                return runtimeTarget.sprite.name;
+            });
+
+            sprite.name = StringUtil.unusedName(newName, names);
+        }
         this.emitTargetsUpdate();
     } else {
         throw new Error('No target with the provided id.');
