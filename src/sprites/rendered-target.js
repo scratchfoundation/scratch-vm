@@ -75,9 +75,6 @@ RenderedTarget.prototype.initDrawable = function () {
     */
     this.audioPlayer = null;
     if (this.runtime && this.runtime.audioEngine) {
-        if (this.isOriginal) {
-            this.runtime.audioEngine.loadSounds(this.sprite.sounds);
-        }
         this.audioPlayer = this.runtime.audioEngine.createPlayer();
     }
 };
