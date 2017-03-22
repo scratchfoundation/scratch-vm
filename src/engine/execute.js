@@ -44,13 +44,8 @@ var execute = function (sequencer, thread) {
         }
     }
 
-    // if (eCount++ % 1000==0) {   // 603,000 times!!
-    //     console.log('Execute x' + eCount);
-    // }
-
-    //    var block = blockContainer.getBlock(currentBlockId);
-    var opcode = block.opcode; // blockContainer.getOpcode(currentBlockId);
-    var fields = block.fields; // blockContainer.getFields(currentBlockId);
+    var opcode = blockContainer.getOpcode(block);
+    var fields = blockContainer.getFields(block);
     var inputs = blockContainer.getInputs(block);
     var blockFunction = runtime.getOpcodeFunction(opcode);
     var isHat = runtime.getIsHat(opcode);

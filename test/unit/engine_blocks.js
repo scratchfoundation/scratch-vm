@@ -218,18 +218,20 @@ test('getBranch with none', function (t) {
 
 test('getOpcode', function (t) {
     var b = new Blocks();
-    b.createBlock({
+    var block = {
         id: 'foo',
         opcode: 'TEST_BLOCK',
         next: null,
         fields: {},
         inputs: {},
         topLevel: true
-    });
-    var opcode = b.getOpcode('foo');
+    };
+    b.createBlock(block);
+    var opcode = b.getOpcode(block);
     t.equals(opcode, 'TEST_BLOCK');
-    var notOpcode = b.getOpcode('?');
-    t.equals(notOpcode, null);
+    var undefinedBlock = b.getBlock('?');
+    var undefinedOpcode = b.getOpcode(undefinedBlock);
+    t.equals(undefinedOpcode, null);
     t.end();
 });
 

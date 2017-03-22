@@ -81,11 +81,10 @@ Blocks.prototype.getBranch = function (id, branchNum) {
 
 /**
  * Get the opcode for a particular block
- * @param {?string} id ID of block to query
+ * @param {?object} block The block to query
  * @return {?string} the opcode corresponding to that block
  */
-Blocks.prototype.getOpcode = function (id) {
-    var block = this._blocks[id];
+Blocks.prototype.getOpcode = function (block) {
     return (typeof block === 'undefined') ? null : block.opcode;
 };
 
@@ -95,7 +94,6 @@ Blocks.prototype.getOpcode = function (id) {
  * @return {?object} All fields and their values.
  */
 Blocks.prototype.getFields = function (block) {
-    // var block = this._blocks[id];
     return (typeof block === 'undefined') ? null : block.fields;
 };
 
@@ -105,7 +103,6 @@ Blocks.prototype.getFields = function (block) {
  * @return {!object} All non-branch inputs and their associated blocks.
  */
 Blocks.prototype.getInputs = function (block) {
-    // var block = this._blocks[id];
     if (typeof block === 'undefined') return null;
     var inputs = {};
     for (var input in block.inputs) {
@@ -124,7 +121,6 @@ Blocks.prototype.getInputs = function (block) {
  * @return {?object} Mutation for the block.
  */
 Blocks.prototype.getMutation = function (block) {
-    // var block = this._blocks[id];
     return (typeof block === 'undefined') ? null : block.mutation;
 };
 
