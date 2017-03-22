@@ -16,7 +16,6 @@ var isPromise = function (value) {
  * @param {!Thread} thread Thread which to read and execute.
  */
 var execute = function (sequencer, thread) {
-
     var runtime = sequencer.runtime;
     var target = thread.target;
 
