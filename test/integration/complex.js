@@ -26,7 +26,7 @@ test('complex', function (t) {
         var targets = data.targetList;
         for (var i in targets) {
             if (targets[i].isStage === true) continue;
-            if (targets[i].name === 'test') continue;
+            if (targets[i].name.match(/test/)) continue;
 
             vm.setEditingTarget(targets[i].id);
             vm.renameSprite(targets[i].id, 'test');
@@ -34,6 +34,7 @@ test('complex', function (t) {
                 x: 0,
                 y: 10,
                 direction: 90,
+                draggable: true,
                 rotationStyle: 'all around',
                 visible: true
             });

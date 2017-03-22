@@ -121,11 +121,13 @@ var execute = function (sequencer, thread) {
 
     // Add all fields on this block to the argValues.
     for (var fieldName in fields) {
+        if (!fields.hasOwnProperty(fieldName)) continue;
         argValues[fieldName] = fields[fieldName].value;
     }
 
     // Recursively evaluate input blocks.
     for (var inputName in inputs) {
+        if (!inputs.hasOwnProperty(inputName)) continue;
         var input = inputs[inputName];
         var inputBlockId = input.block;
         // Is there no value for this input waiting in the stack frame?
@@ -227,8 +229,23 @@ var execute = function (sequencer, thread) {
         primitiveReportedValue.then(function (resolvedValue) {
             handleReport(resolvedValue);
             if (typeof resolvedValue === 'undefined') {
-                var popped = thread.popStack();
-                var nextBlockId = thread.target.blocks.getNextBlock(popped);
+                do {
+                    // In the case that the promise is the last block in the current thread stack
+                    // We need to pop out repeatedly until we find the next block.
+                    var popped = thread.popStack();
+                    if (popped === null) {
+                        return;
+                    }
+                    var nextBlockId = thread.target.blocks.getNextBlock(popped);
+                    if (nextBlockId !== null) {
+                        // A next block exists so break out this loop
+                        break;
+                    }
+                    // Investigate the next block and if not in a loop,
+                    // then repeat and pop the next item off the stack frame
+                    var stackFrame = thread.peekStackFrame();
+                } while (stackFrame !== null && !stackFrame.isLoop);
+
                 thread.pushStack(nextBlockId);
             } else {
                 thread.popStack();

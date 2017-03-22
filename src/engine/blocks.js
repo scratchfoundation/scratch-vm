@@ -145,6 +145,7 @@ Blocks.prototype.getTopLevelScript = function (id) {
  */
 Blocks.prototype.getProcedureDefinition = function (name) {
     for (var id in this._blocks) {
+        if (!this._blocks.hasOwnProperty(id)) continue;
         var block = this._blocks[id];
         if ((block.opcode === 'procedures_defnoreturn' ||
             block.opcode === 'procedures_defreturn') &&
@@ -162,6 +163,7 @@ Blocks.prototype.getProcedureDefinition = function (name) {
  */
 Blocks.prototype.getProcedureParamNames = function (name) {
     for (var id in this._blocks) {
+        if (!this._blocks.hasOwnProperty(id)) continue;
         var block = this._blocks[id];
         if ((block.opcode === 'procedures_defnoreturn' ||
             block.opcode === 'procedures_defreturn') &&
@@ -411,6 +413,7 @@ Blocks.prototype.blockToXML = function (blockId) {
     }
     // Add any inputs on this block.
     for (var input in block.inputs) {
+        if (!block.inputs.hasOwnProperty(input)) continue;
         var blockInput = block.inputs[input];
         // Only encode a value tag if the value input is occupied.
         if (blockInput.block || blockInput.shadow) {
@@ -427,6 +430,7 @@ Blocks.prototype.blockToXML = function (blockId) {
     }
     // Add any fields on this block.
     for (var field in block.fields) {
+        if (!block.fields.hasOwnProperty(field)) continue;
         var blockField = block.fields[field];
         var value = blockField.value;
         if (typeof value === 'string') {

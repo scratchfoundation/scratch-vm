@@ -34,6 +34,36 @@ Scratch3SoundBlocks.DEFAULT_SOUND_STATE = {
 };
 
 /**
+ * The minimum and maximum MIDI note numbers, for clamping the input to play note.
+ * @type {{min: number, max: number}}
+ */
+Scratch3SoundBlocks.MIDI_NOTE_RANGE = {min: 36, max: 96}; // C2 to C7
+
+/**
+ * The minimum and maximum beat values, for clamping the duration of play note, play drum and rest.
+ * 100 beats at the default tempo of 60bpm is 100 seconds.
+ * @type {{min: number, max: number}}
+ */
+Scratch3SoundBlocks.BEAT_RANGE = {min: 0, max: 100};
+
+ /** The minimum and maximum tempo values, in bpm.
+ * @type {{min: number, max: number}}
+ */
+Scratch3SoundBlocks.TEMPO_RANGE = {min: 20, max: 500};
+
+ /** The minimum and maximum values for each sound effect.
+ * @type {{effect:{min: number, max: number}}}
+ */
+Scratch3SoundBlocks.EFFECT_RANGE = {
+    pitch: {min: -600, max: 600},       // -5 to 5 octaves
+    pan: {min: -100, max: 100},         // 100% left to 100% right
+    echo: {min: 0, max: 100},           // 0 to max (75%) feedback
+    reverb: {min: 0, max: 100},         // wet/dry: 0 to 100% wet
+    fuzz: {min: 0, max: 100},           // wed/dry: 0 to 100% wet
+    robot: {min: 0, max: 600}           // 0 to 5 octaves
+};
+
+/**
  * @param {Target} target - collect sound state for this target.
  * @returns {SoundState} the mutable sound state associated with that target. This will be created if necessary.
  * @private
@@ -132,7 +162,9 @@ Scratch3SoundBlocks.prototype.stopAllSounds = function (args, util) {
 
 Scratch3SoundBlocks.prototype.playNoteForBeats = function (args, util) {
     var note = Cast.toNumber(args.NOTE);
+    note = MathUtil.clamp(note, Scratch3SoundBlocks.MIDI_NOTE_RANGE.min, Scratch3SoundBlocks.MIDI_NOTE_RANGE.max);
     var beats = Cast.toNumber(args.BEATS);
+    beats = this._clampBeats(beats);
     var soundState = this._getSoundState(util.target);
     var inst = soundState.currentInstrument;
     var vol = soundState.volume;
@@ -146,14 +178,20 @@ Scratch3SoundBlocks.prototype.playDrumForBeats = function (args, util) {
     if (typeof this.runtime.audioEngine === 'undefined') return;
     drum = MathUtil.wrapClamp(drum, 0, this.runtime.audioEngine.numDrums);
     var beats = Cast.toNumber(args.BEATS);
+    beats = this._clampBeats(beats);
     if (util.target.audioPlayer === null) return;
     return util.target.audioPlayer.playDrumForBeats(drum, beats);
 };
 
 Scratch3SoundBlocks.prototype.restForBeats = function (args) {
     var beats = Cast.toNumber(args.BEATS);
+    beats = this._clampBeats(beats);
     if (typeof this.runtime.audioEngine === 'undefined') return;
     return this.runtime.audioEngine.waitForBeats(beats);
+};
+
+Scratch3SoundBlocks.prototype._clampBeats = function (beats) {
+    return MathUtil.clamp(beats, Scratch3SoundBlocks.BEAT_RANGE.min, Scratch3SoundBlocks.BEAT_RANGE.max);
 };
 
 Scratch3SoundBlocks.prototype.setInstrument = function (args, util) {
@@ -167,25 +205,29 @@ Scratch3SoundBlocks.prototype.setInstrument = function (args, util) {
 };
 
 Scratch3SoundBlocks.prototype.setEffect = function (args, util) {
-    var effect = Cast.toString(args.EFFECT).toLowerCase();
-    var value = Cast.toNumber(args.VALUE);
-
-    var soundState = this._getSoundState(util.target);
-    if (!soundState.effects.hasOwnProperty(effect)) return;
-
-    soundState.effects[effect] = value;
-    if (util.target.audioPlayer === null) return;
-    util.target.audioPlayer.setEffect(effect, soundState.effects[effect]);
+    this._updateEffect(args, util, false);
 };
 
 Scratch3SoundBlocks.prototype.changeEffect = function (args, util) {
+    this._updateEffect(args, util, true);
+};
+
+Scratch3SoundBlocks.prototype._updateEffect = function (args, util, change) {
     var effect = Cast.toString(args.EFFECT).toLowerCase();
     var value = Cast.toNumber(args.VALUE);
 
     var soundState = this._getSoundState(util.target);
     if (!soundState.effects.hasOwnProperty(effect)) return;
 
-    soundState.effects[effect] += value;
+    if (change) {
+        soundState.effects[effect] += value;
+    } else {
+        soundState.effects[effect] = value;
+    }
+
+    var effectRange = Scratch3SoundBlocks.EFFECT_RANGE[effect];
+    soundState.effects[effect] = MathUtil.clamp(soundState.effects[effect], effectRange.min, effectRange.max);
+
     if (util.target.audioPlayer === null) return;
     util.target.audioPlayer.setEffect(effect, soundState.effects[effect]);
 };
@@ -193,6 +235,7 @@ Scratch3SoundBlocks.prototype.changeEffect = function (args, util) {
 Scratch3SoundBlocks.prototype.clearEffects = function (args, util) {
     var soundState = this._getSoundState(util.target);
     for (var effect in soundState.effects) {
+        if (!soundState.effects.hasOwnProperty(effect)) continue;
         soundState.effects[effect] = 0;
     }
     if (util.target.audioPlayer === null) return;
@@ -224,15 +267,21 @@ Scratch3SoundBlocks.prototype.getVolume = function (args, util) {
 };
 
 Scratch3SoundBlocks.prototype.setTempo = function (args) {
-    var value = Cast.toNumber(args.TEMPO);
-    if (typeof this.runtime.audioEngine === 'undefined') return;
-    this.runtime.audioEngine.setTempo(value);
+    var tempo = Cast.toNumber(args.TEMPO);
+    this._updateTempo(tempo);
 };
 
 Scratch3SoundBlocks.prototype.changeTempo = function (args) {
-    var value = Cast.toNumber(args.TEMPO);
+    var change = Cast.toNumber(args.TEMPO);
     if (typeof this.runtime.audioEngine === 'undefined') return;
-    this.runtime.audioEngine.changeTempo(value);
+    var tempo = change + this.runtime.audioEngine.currentTempo;
+    this._updateTempo(tempo);
+};
+
+Scratch3SoundBlocks.prototype._updateTempo = function (tempo) {
+    tempo = MathUtil.clamp(tempo, Scratch3SoundBlocks.TEMPO_RANGE.min, Scratch3SoundBlocks.TEMPO_RANGE.max);
+    if (typeof this.runtime.audioEngine === 'undefined') return;
+    this.runtime.audioEngine.setTempo(tempo);
 };
 
 Scratch3SoundBlocks.prototype.getTempo = function () {
