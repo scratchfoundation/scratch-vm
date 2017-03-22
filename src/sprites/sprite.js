@@ -46,7 +46,7 @@ var Sprite = function (blocks, runtime) {
 
 /**
  * Create a clone of this sprite.
- * @returns {!Clone} Newly created clone.
+ * @returns {!RenderedTarget} Newly created clone.
  */
 Sprite.prototype.createClone = function () {
     var newClone = new RenderedTarget(this, this.runtime);
