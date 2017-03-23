@@ -14694,7 +14694,7 @@ Scratch3LooksBlocks.prototype._setCostumeOrBackdrop = function (target,
                    requestedCostume === 'next backdrop') {
             target.setCostume(target.currentCostume + 1);
         } else {
-            var forcedNumber = Cast.toNumber(requestedCostume);
+            var forcedNumber = Number(requestedCostume);
             if (!isNaN(forcedNumber)) {
                 target.setCostume(optZeroIndex ?
                     forcedNumber : forcedNumber - 1);
