@@ -162,11 +162,11 @@ var parseScratchObject = function (object, runtime, topLevel) {
  */
 var loadCostume = function (md5ext, costume, runtime) {
     if (!runtime.storage) {
-        log('No storage module present; cannot load costume asset: ', md5ext);
+        log.error('No storage module present; cannot load costume asset: ', md5ext);
         return null;
     }
     if (!runtime.renderer) {
-        log('No rendering module present; cannot load costume asset: ', md5ext);
+        log.error('No rendering module present; cannot load costume asset: ', md5ext);
         return null;
     }
 
@@ -223,7 +223,7 @@ var loadCostume = function (md5ext, costume, runtime) {
  */
 var loadSound = function (sound, runtime) {
     if (!runtime.storage) {
-        log('No storage module present; cannot load sound asset: ', sound.md5);
+        log.error('No storage module present; cannot load sound asset: ', sound.md5);
         return;
     }
     var idParts = sound.md5.split('.');

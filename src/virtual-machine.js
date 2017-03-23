@@ -163,7 +163,7 @@ VirtualMachine.prototype.loadProject = function (json) {
  */
 VirtualMachine.prototype.downloadProjectId = function (id) {
     if (!this.runtime.storage) {
-        log('No storage module present; cannot load project: ', id);
+        log.error('No storage module present; cannot load project: ', id);
         return;
     }
     var vm = this;
