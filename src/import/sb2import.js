@@ -5,10 +5,13 @@
  * scratch-vm runtime structures.
  */
 
+var ScratchStorage = require('scratch-storage');
+var AssetType = ScratchStorage.AssetType;
+
 var Blocks = require('../engine/blocks');
 var RenderedTarget = require('../sprites/rendered-target');
 var Sprite = require('../sprites/sprite');
-var Color = require('../util/color.js');
+var Color = require('../util/color');
 var log = require('../util/log');
 var uid = require('../util/uid');
 var specMap = require('./sb2specmap');
@@ -26,7 +29,7 @@ var parseScratchObject = function (object, runtime, topLevel) {
     if (!object.hasOwnProperty('objName')) {
         // Watcher/monitor - skip this object until those are implemented in VM.
         // @todo
-        return;
+        return null;
     }
     // Blocks container for this object.
     var blocks = new Blocks();
@@ -37,33 +40,39 @@ var parseScratchObject = function (object, runtime, topLevel) {
         sprite.name = object.objName;
     }
     // Costumes from JSON.
+    var costumePromises = [];
     if (object.hasOwnProperty('costumes')) {
         for (var i = 0; i < object.costumes.length; i++) {
-            var costume = object.costumes[i];
-            // @todo: Make sure all the relevant metadata is being pulled out.
-            sprite.costumes.push({
-                skin: 'https://cdn.assets.scratch.mit.edu/internalapi/asset/' +
-                    costume.baseLayerMD5 + '/get/',
-                name: costume.costumeName,
-                bitmapResolution: costume.bitmapResolution,
-                rotationCenterX: costume.rotationCenterX,
-                rotationCenterY: costume.rotationCenterY
-            });
+            var costumeSource = object.costumes[i];
+            var costume = {
+                name: costumeSource.costumeName,
+                bitmapResolution: costumeSource.bitmapResolution || 1,
+                rotationCenterX: costumeSource.rotationCenterX,
+                rotationCenterY: costumeSource.rotationCenterY,
+                skinId: null
+            };
+            var costumePromise = loadCostume(costumeSource.baseLayerMD5, costume, runtime);
+            if (costumePromise) {
+                costumePromises.push(costumePromise);
+            }
+            sprite.costumes.push(costume);
         }
     }
     // Sounds from JSON
     if (object.hasOwnProperty('sounds')) {
         for (var s = 0; s < object.sounds.length; s++) {
-            var sound = object.sounds[s];
-            sprite.sounds.push({
-                format: sound.format,
-                fileUrl: 'https://cdn.assets.scratch.mit.edu/internalapi/asset/' + sound.md5 + '/get/',
-                rate: sound.rate,
-                sampleCount: sound.sampleCount,
-                soundID: sound.soundID,
-                name: sound.soundName,
-                md5: sound.md5
-            });
+            var soundSource = object.sounds[s];
+            var sound = {
+                name: soundSource.soundName,
+                format: soundSource.format,
+                rate: soundSource.rate,
+                sampleCount: soundSource.sampleCount,
+                soundID: soundSource.soundID,
+                md5: soundSource.md5,
+                data: null
+            };
+            loadSound(sound, runtime);
+            sprite.sounds.push(sound);
         }
     }
     // If included, parse any and all scripts/blocks on the object.
@@ -127,7 +136,9 @@ var parseScratchObject = function (object, runtime, topLevel) {
         }
     }
     target.isStage = topLevel;
-    target.updateAllDrawableProperties();
+    Promise.all(costumePromises).then(function () {
+        target.updateAllDrawableProperties();
+    });
     // The stage will have child objects; recursively process them.
     if (object.children) {
         for (var m = 0; m < object.children.length; m++) {
@@ -135,6 +146,92 @@ var parseScratchObject = function (object, runtime, topLevel) {
         }
     }
     return target;
+};
+
+/**
+ * Load a costume's asset into memory asynchronously.
+ * Do not call this unless there is a renderer attached.
+ * @param {string} md5ext - the MD5 and extension of the costume to be loaded.
+ * @param {!object} costume - the Scratch costume object.
+ * @property {int} skinId - the ID of the costume's render skin, once installed.
+ * @property {number} rotationCenterX - the X component of the costume's origin.
+ * @property {number} rotationCenterY - the Y component of the costume's origin.
+ * @property {number} [bitmapResolution] - the resolution scale for a bitmap costume.
+ * @param {!Runtime} runtime - Scratch runtime, used to access the storage module.
+ * @returns {?Promise} - a promise which will resolve after skinId is set, or null on error.
+ */
+var loadCostume = function (md5ext, costume, runtime) {
+    if (!runtime.storage) {
+        log.error('No storage module present; cannot load costume asset: ', md5ext);
+        return null;
+    }
+    if (!runtime.renderer) {
+        log.error('No rendering module present; cannot load costume asset: ', md5ext);
+        return null;
+    }
+
+    var idParts = md5ext.split('.');
+    var md5 = idParts[0];
+    var ext = idParts[1].toUpperCase();
+    var assetType = (ext === 'SVG') ? AssetType.ImageVector : AssetType.ImageBitmap;
+
+    var rotationCenter = [
+        costume.rotationCenterX / costume.bitmapResolution,
+        costume.rotationCenterY / costume.bitmapResolution
+    ];
+
+    var promise = runtime.storage.load(assetType, md5);
+
+    if (assetType === AssetType.ImageVector) {
+        promise = promise.then(function (costumeAsset) {
+            costume.skinId = runtime.renderer.createSVGSkin(costumeAsset.decodeText(), rotationCenter);
+        });
+    } else {
+        promise = promise.then(function (costumeAsset) {
+            return new Promise(function (resolve, reject) {
+                var imageElement = new Image();
+                var removeEventListeners; // fix no-use-before-define
+                var onError = function () {
+                    removeEventListeners();
+                    reject();
+                };
+                var onLoad = function () {
+                    removeEventListeners();
+                    resolve(imageElement);
+                };
+                removeEventListeners = function () {
+                    imageElement.removeEventListener('error', onError);
+                    imageElement.removeEventListener('load', onLoad);
+                };
+                imageElement.addEventListener('error', onError);
+                imageElement.addEventListener('load', onLoad);
+                imageElement.src = costumeAsset.encodeDataURI();
+            });
+        }).then(function (imageElement) {
+            costume.skinId = runtime.renderer.createBitmapSkin(imageElement, costume.bitmapResolution, rotationCenter);
+        });
+    }
+    return promise;
+};
+
+/**
+ * Load a sound's asset into memory asynchronously.
+ * @param {!object} sound - the Scratch sound object.
+ * @property {string} md5 - the MD5 and extension of the sound to be loaded.
+ * @property {Buffer} data - sound data will be written here once loaded.
+ * @param {!Runtime} runtime - Scratch runtime, used to access the storage module.
+ */
+var loadSound = function (sound, runtime) {
+    if (!runtime.storage) {
+        log.error('No storage module present; cannot load sound asset: ', sound.md5);
+        return;
+    }
+    var idParts = sound.md5.split('.');
+    var md5 = idParts[0];
+    runtime.storage.load(AssetType.Sound, md5).then(function (soundAsset) {
+        sound.data = soundAsset.data;
+        // @todo register sound.data with scratch-audio
+    });
 };
 
 /**

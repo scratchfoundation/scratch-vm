@@ -312,6 +312,14 @@ Runtime.prototype.clearEdgeActivatedValues = function () {
 };
 
 /**
+ * Attach the audio engine
+ * @param {!AudioEngine} audioEngine The audio engine to attach
+ */
+Runtime.prototype.attachAudioEngine = function (audioEngine) {
+    this.audioEngine = audioEngine;
+};
+
+/**
  * Attach the renderer
  * @param {!RenderWebGL} renderer The renderer to attach
  */
@@ -320,11 +328,11 @@ Runtime.prototype.attachRenderer = function (renderer) {
 };
 
 /**
- * Attach the audio engine
- * @param {!AudioEngine} audioEngine The audio engine to attach
+ * Attach the storage module
+ * @param {!ScratchStorage} storage The storage module to attach
  */
-Runtime.prototype.attachAudioEngine = function (audioEngine) {
-    this.audioEngine = audioEngine;
+Runtime.prototype.attachStorage = function (storage) {
+    this.storage = storage;
 };
 
 // -----------------------------------------------------------------------------
