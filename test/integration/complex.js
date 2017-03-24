@@ -1,6 +1,7 @@
 var fs = require('fs');
 var path = require('path');
 var test = require('tap').test;
+var attachTestStorage = require('../fixtures/attach-test-storage');
 var extract = require('../fixtures/extract');
 var VirtualMachine = require('../../src/index');
 
@@ -12,6 +13,7 @@ var sprite = fs.readFileSync(spriteUri, 'utf8');
 
 test('complex', function (t) {
     var vm = new VirtualMachine();
+    attachTestStorage(vm);
 
     // Evaluate playground data and exit
     vm.on('playgroundData', function (e) {
@@ -26,7 +28,7 @@ test('complex', function (t) {
         var targets = data.targetList;
         for (var i in targets) {
             if (targets[i].isStage === true) continue;
-            if (targets[i].name === 'test') continue;
+            if (targets[i].name.match(/test/)) continue;
 
             vm.setEditingTarget(targets[i].id);
             vm.renameSprite(targets[i].id, 'test');

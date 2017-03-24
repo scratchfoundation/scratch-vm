@@ -1,5 +1,6 @@
 var path = require('path');
 var test = require('tap').test;
+var attachTestStorage = require('../fixtures/attach-test-storage');
 var extract = require('../fixtures/extract');
 var VirtualMachine = require('../../src/index');
 
@@ -8,6 +9,7 @@ var project = extract(uri);
 
 test('control', function (t) {
     var vm = new VirtualMachine();
+    attachTestStorage(vm);
 
     // Evaluate playground data and exit
     vm.on('playgroundData', function (e) {
