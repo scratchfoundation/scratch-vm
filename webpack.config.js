@@ -13,8 +13,13 @@ var base = {
     module: {
         rules: [
             {
-                // allow ES2015 in any *.js file under .../scratch-*/src/...
-                test: /[\\/]+scratch-[^\\/]+[\\/]+src[\\/]+.+\.js$/,
+                include: [
+                    path.resolve(__dirname, 'node_modules', 'scratch-audio', 'src'),
+                    path.resolve(__dirname, 'node_modules', 'scratch-render', 'src'),
+                    path.resolve(__dirname, 'node_modules', 'scratch-storage', 'src'),
+                    path.resolve(__dirname, 'src')
+                ],
+                test: /\.js$/,
                 loader: 'babel-loader',
                 options: {
                     presets: ['es2015']
