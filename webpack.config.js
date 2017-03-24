@@ -51,12 +51,12 @@ module.exports = [
             filename: '[name].js'
         },
         module: {
-            rules: [
+            rules: base.module.rules.concat([
                 {
                     test: require.resolve('./src/index.js'),
                     loader: 'expose-loader?VirtualMachine'
                 }
-            ]
+            ])
         }
     }),
     // Playground
@@ -84,7 +84,7 @@ module.exports = [
             filename: '[name].js'
         },
         module: {
-            loaders: [
+            rules: base.module.rules.concat([
                 {
                     test: require.resolve('./src/index.js'),
                     loader: 'expose-loader?VirtualMachine'
@@ -102,18 +102,18 @@ module.exports = [
                     loader: 'expose-loader?Blockly'
                 },
                 {
-                    test: require.resolve('scratch-audio'),
+                    test: path.resolve(__dirname, 'node_modules', 'scratch-audio', 'src', 'index.js'),
                     loader: 'expose-loader?AudioEngine'
                 },
                 {
-                    test: require.resolve('scratch-render'),
+                    test: path.resolve(__dirname, 'node_modules', 'scratch-render', 'src', 'index.js'),
                     loader: 'expose-loader?RenderWebGL'
                 },
                 {
-                    test: require.resolve('scratch-storage'),
+                    test: path.resolve(__dirname, 'node_modules', 'scratch-storage', 'src', 'index.js'),
                     loader: 'expose-loader?Scratch.Storage'
                 }
-            ]
+            ])
         },
         plugins: base.plugins.concat([
             new CopyWebpackPlugin([{
