@@ -1,7 +1,26 @@
 var CopyWebpackPlugin = require('copy-webpack-plugin');
 var defaultsDeep = require('lodash.defaultsdeep');
+var fs = require('fs');
 var path = require('path');
 var webpack = require('webpack');
+
+/**
+ * Resolve a babel plugin or preset to a real path, resolving symlinks the way that Node.js would.
+ * Helps work around the differences between webpack's module lookup and Node's when `npm link` is in use.
+ * @param {string} prefix - 'babel-plugin' for a plugin, 'babel-preset' for a preset, etc.
+ * @param {string|Array} item - either a plugin/preset name or path or an array with such a string at index 0.
+ * @returns {string|Array} - the same type as `item` but the name/path will be replaced with an absolute path.
+ */
+const babelRealPath = function (prefix, item) {
+    if (typeof item === 'string') {
+        if (item.indexOf(prefix) !== 0) {
+            item = [prefix, item].join('-');
+        }
+        return fs.realpathSync(require.resolve(item));
+    }
+    item[0] = babelRealPath(prefix, item[0]);
+    return item;
+};
 
 var base = {
     devServer: {
@@ -18,11 +37,13 @@ var base = {
                     path.resolve(__dirname, 'node_modules', 'scratch-render', 'src'),
                     path.resolve(__dirname, 'node_modules', 'scratch-storage', 'src'),
                     path.resolve(__dirname, 'src')
-                ],
+                ].map(x => fs.realpathSync(x)),
                 test: /\.js$/,
                 loader: 'babel-loader',
                 options: {
-                    presets: ['es2015']
+                    presets: [
+                        'es2015'
+                    ].map(x => babelRealPath('babel-preset', x))
                 }
             }
         ]
@@ -32,10 +53,7 @@ var base = {
             include: /\.min\.js$/,
             minimize: true
         })
-    ],
-    resolve: {
-        symlinks: false
-    }
+    ]
 };
 
 module.exports = [
@@ -102,15 +120,15 @@ module.exports = [
                     loader: 'expose-loader?Blockly'
                 },
                 {
-                    test: path.resolve(__dirname, 'node_modules', 'scratch-audio', 'src', 'index.js'),
+                    test: require.resolve('scratch-audio'),
                     loader: 'expose-loader?AudioEngine'
                 },
                 {
-                    test: path.resolve(__dirname, 'node_modules', 'scratch-render', 'src', 'index.js'),
+                    test: require.resolve('scratch-render'),
                     loader: 'expose-loader?RenderWebGL'
                 },
                 {
-                    test: path.resolve(__dirname, 'node_modules', 'scratch-storage', 'src', 'index.js'),
+                    test: require.resolve('scratch-storage'),
                     loader: 'expose-loader?Scratch.Storage'
                 }
             ])
