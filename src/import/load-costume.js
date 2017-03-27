@@ -1,4 +1,5 @@
 var AssetType = require('scratch-storage').AssetType;
+var log = require('../util/log');
 
 /**
  * Load a costume's asset into memory asynchronously.
