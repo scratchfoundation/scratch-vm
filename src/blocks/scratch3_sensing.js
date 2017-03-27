@@ -26,7 +26,9 @@ Scratch3SensingBlocks.prototype.getPrimitives = function () {
         sensing_mousedown: this.getMouseDown,
         sensing_keypressed: this.getKeyPressed,
         sensing_current: this.current,
-        sensing_dayssince2000: this.daysSince2000
+        sensing_dayssince2000: this.daysSince2000,
+        sensing_askandwait: this.askAndWait,
+        sensing_answer: this.askAnswer
     };
 };
 
@@ -166,6 +168,15 @@ Scratch3SensingBlocks.prototype.getAttributeOf = function (args) {
 
     // Otherwise, 0
     return 0;
+};
+
+Scratch3SensingBlocks.prototype.askAndWait = function(args, util) {
+    var answer = prompt(args.QUESTION);
+    util.target.runtime.answer = answer;
+};
+
+Scratch3SensingBlocks.prototype.askAnswer = function() {
+    return util.target.runtime.answer || '';
 };
 
 module.exports = Scratch3SensingBlocks;

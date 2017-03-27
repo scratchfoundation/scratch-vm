@@ -134,6 +134,12 @@ var Runtime = function () {
      */
     this.redrawRequested = false;
 
+    /**
+     * Last answer for ask & wait block
+     * @type {?string}
+     */
+    this.answer = null;
+
     // Register all given block packages.
     this._registerBlockPackages();
 
