@@ -127,7 +127,7 @@ Scratch3SensingBlocks.prototype.daysSince2000 = function () {
 };
 
 Scratch3SensingBlocks.prototype.getLoudness = function () {
-    if (typeof this.runtime.audioEngine === 'undefined') return 0;
+    if (typeof this.runtime.audioEngine === 'undefined') return -1;
     return this.runtime.audioEngine.getLoudness();
 };
 
