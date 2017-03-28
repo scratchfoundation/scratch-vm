@@ -64,10 +64,12 @@ module.exports = [
                 'highlightjs/highlight.pack.min.js',
                 // Scratch Blocks
                 'scratch-blocks/dist/vertical.js',
+                // Audio
+                'scratch-audio',
                 // Renderer
                 'scratch-render',
-                // Audio
-                'scratch-audio'
+                // Storage
+                'scratch-storage'
             ]
         },
         output: {
@@ -93,12 +95,16 @@ module.exports = [
                     loader: 'expose-loader?Blockly'
                 },
                 {
+                    test: require.resolve('scratch-audio'),
+                    loader: 'expose-loader?AudioEngine'
+                },
+                {
                     test: require.resolve('scratch-render'),
                     loader: 'expose-loader?RenderWebGL'
                 },
                 {
-                    test: require.resolve('scratch-audio'),
-                    loader: 'expose-loader?AudioEngine'
+                    test: require.resolve('scratch-storage'),
+                    loader: 'expose-loader?Scratch.Storage'
                 }
             ]
         },

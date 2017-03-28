@@ -4,17 +4,21 @@ var attachTestStorage = require('../fixtures/attach-test-storage');
 var extract = require('../fixtures/extract');
 var VirtualMachine = require('../../src/index');
 
-var uri = path.resolve(__dirname, '../fixtures/sensing.sb2');
-var project = extract(uri);
+var projectUri = path.resolve(__dirname, '../fixtures/hat-execution-order.sb2');
+var project = extract(projectUri);
 
-test('sensing', function (t) {
+test('complex', function (t) {
     var vm = new VirtualMachine();
     attachTestStorage(vm);
 
     // Evaluate playground data and exit
     vm.on('playgroundData', function (e) {
         var threads = JSON.parse(e.threads);
-        t.ok(threads.length > 0);
+        t.ok(threads.length === 0);
+
+        var results = vm.runtime.targets[0].lists.results.contents;
+        t.deepEqual(results, ['3', '2', '1', 'stage']);
+
         t.end();
         process.nextTick(process.exit);
     });

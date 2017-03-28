@@ -24,7 +24,7 @@ var Sprite = function (blocks, runtime) {
      * List of costumes for this sprite.
      * Each entry is an object, e.g.,
      * {
-     *      skin: "costume.svg",
+     *      skinId: 1,
      *      name: "Costume Name",
      *      bitmapResolution: 2,
      *      rotationCenterX: 0,
@@ -46,7 +46,7 @@ var Sprite = function (blocks, runtime) {
 
 /**
  * Create a clone of this sprite.
- * @returns {!Clone} Newly created clone.
+ * @returns {!RenderedTarget} Newly created clone.
  */
 Sprite.prototype.createClone = function () {
     var newClone = new RenderedTarget(this, this.runtime);

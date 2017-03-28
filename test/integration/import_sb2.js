@@ -1,5 +1,6 @@
 var path = require('path');
 var test = require('tap').test;
+var attachTestStorage = require('../fixtures/attach-test-storage');
 var extract = require('../fixtures/extract');
 
 var renderedTarget = require('../../src/sprites/rendered-target');
@@ -18,6 +19,7 @@ test('default', function (t) {
 
     // Create runtime instance & load SB2 into it
     var rt = new runtime();
+    attachTestStorage(rt);
     sb2(file, rt);
 
     // Test
