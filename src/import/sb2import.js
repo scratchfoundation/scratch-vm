@@ -227,7 +227,7 @@ var loadSound = function (sound, runtime) {
         return;
     }
     if (!runtime.audioEngine) {
-        log('No audio engine present; cannot load sound asset: ', sound.md5);
+        log.error('No audio engine present; cannot load sound asset: ', sound.md5);
         return;
     }
     var idParts = sound.md5.split('.');
