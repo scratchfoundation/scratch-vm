@@ -7,6 +7,8 @@ var ScratchStorage = require('scratch-storage');
 var sb2import = require('./import/sb2import');
 var StringUtil = require('./util/string-util');
 
+var loadCostume = require('./import/load-costume.js');
+
 var RESERVED_NAMES = ['_mouse_', '_stage_', '_edge_', '_myself_', '_random_'];
 
 var AssetType = ScratchStorage.AssetType;
@@ -191,25 +193,37 @@ VirtualMachine.prototype.addSprite2 = function (json) {
 
 /**
  * Add a costume to the current editing target.
+ * @param {string} md5ext - the MD5 and extension of the costume to be loaded.
  * @param {!object} costumeObject Object representing the costume.
+ * @property {int} skinId - the ID of the costume's render skin, once installed.
+ * @property {number} rotationCenterX - the X component of the costume's origin.
+ * @property {number} rotationCenterY - the Y component of the costume's origin.
+ * @property {number} [bitmapResolution] - the resolution scale for a bitmap costume.
  */
-VirtualMachine.prototype.addCostume = function (costumeObject) {
-    this.editingTarget.sprite.costumes.push(costumeObject);
-    // Switch to the costume.
-    this.editingTarget.setCostume(
-        this.editingTarget.sprite.costumes.length - 1
-    );
+VirtualMachine.prototype.addCostume = function (md5ext, costumeObject) {
+    loadCostume(md5ext, costumeObject, this.runtime).then(function () {
+        this.editingTarget.sprite.costumes.push(costumeObject);
+        this.editingTarget.setCostume(
+            this.editingTarget.sprite.costumes.length - 1
+        );
+    }.bind(this));
 };
 
 /**
  * Add a backdrop to the stage.
+ * @param {string} md5ext - the MD5 and extension of the backdrop to be loaded.
  * @param {!object} backdropObject Object representing the backdrop.
+ * @property {int} skinId - the ID of the backdrop's render skin, once installed.
+ * @property {number} rotationCenterX - the X component of the backdrop's origin.
+ * @property {number} rotationCenterY - the Y component of the backdrop's origin.
+ * @property {number} [bitmapResolution] - the resolution scale for a bitmap backdrop.
  */
-VirtualMachine.prototype.addBackdrop = function (backdropObject) {
-    var stage = this.runtime.getTargetForStage();
-    stage.sprite.costumes.push(backdropObject);
-    // Switch to the backdrop.
-    stage.setCostume(stage.sprite.costumes.length - 1);
+VirtualMachine.prototype.addBackdrop = function (md5ext, backdropObject) {
+    loadCostume(md5ext, backdropObject, this.runtime).then(function () {
+        var stage = this.runtime.getTargetForStage();
+        stage.sprite.costumes.push(backdropObject);
+        stage.setCostume(stage.sprite.costumes.length - 1);
+    }.bind(this));
 };
 
 /**
