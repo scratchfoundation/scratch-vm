@@ -16,11 +16,12 @@ var log = require('../util/log');
 var loadCostume = function (md5ext, costume, runtime) {
     if (!runtime.storage) {
         log.error('No storage module present; cannot load costume asset: ', md5ext);
-        return null;
+        return Promise.resolve(null);
     }
+
     if (!runtime.renderer) {
         log.error('No rendering module present; cannot load costume asset: ', md5ext);
-        return null;
+        return Promise.resolve(null);
     }
 
     var idParts = md5ext.split('.');
