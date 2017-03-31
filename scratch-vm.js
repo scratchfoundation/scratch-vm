@@ -67615,9 +67615,6 @@ RenderedTarget.prototype.initDrawable = function () {
     */
     this.audioPlayer = null;
     if (this.runtime && this.runtime.audioEngine) {
-        if (this.isOriginal) {
-            this.runtime.audioEngine.loadSounds(this.sprite.sounds);
-        }
         this.audioPlayer = this.runtime.audioEngine.createPlayer();
     }
 };
@@ -75906,11 +75903,15 @@ var loadSound = function (sound, runtime) {
         log.error('No storage module present; cannot load sound asset: ', sound.md5);
         return;
     }
+    if (!runtime.audioEngine) {
+        log.error('No audio engine present; cannot load sound asset: ', sound.md5);
+        return;
+    }
     var idParts = sound.md5.split('.');
     var md5 = idParts[0];
     runtime.storage.load(AssetType.Sound, md5).then(function (soundAsset) {
         sound.data = soundAsset.data;
-        // @todo register sound.data with scratch-audio
+        runtime.audioEngine.decodeSound(sound);
     });
 };
 
