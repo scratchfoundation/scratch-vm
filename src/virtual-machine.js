@@ -206,7 +206,6 @@ VirtualMachine.prototype.addCostume = function (md5ext, costumeObject) {
         this.editingTarget.setCostume(
             this.editingTarget.sprite.costumes.length - 1
         );
-        this.emitTargetsUpdate();
     }.bind(this));
 };
 
@@ -224,7 +223,6 @@ VirtualMachine.prototype.addBackdrop = function (md5ext, backdropObject) {
         var stage = this.runtime.getTargetForStage();
         stage.sprite.costumes.push(backdropObject);
         stage.setCostume(stage.sprite.costumes.length - 1);
-        this.emitTargetsUpdate();
     }.bind(this));
 };
 
