@@ -16,13 +16,9 @@ var log = require('../util/log');
 var loadCostume = function (md5ext, costume, runtime) {
     if (!runtime.storage) {
         log.error('No storage module present; cannot load costume asset: ', md5ext);
-        return Promise.resolve(null);
+        return Promise.resolve(costume);
     }
 
-    if (!runtime.renderer) {
-        log.error('No rendering module present; cannot load costume asset: ', md5ext);
-        return Promise.resolve(null);
-    }
 
     var idParts = md5ext.split('.');
     var md5 = idParts[0];
@@ -34,11 +30,22 @@ var loadCostume = function (md5ext, costume, runtime) {
         costume.rotationCenterY / costume.bitmapResolution
     ];
 
-    var promise = runtime.storage.load(assetType, md5);
+    var promise = runtime.storage.load(assetType, md5).then(function (costumeAsset) {
+        costume.url = costumeAsset.encodeDataURI();
+        return costumeAsset;
+    });
+
+    if (!runtime.renderer) {
+        log.error('No rendering module present; cannot load costume asset: ', md5ext);
+        return promise.then(function () {
+            return costume;
+        });
+    }
 
     if (assetType === AssetType.ImageVector) {
         promise = promise.then(function (costumeAsset) {
             costume.skinId = runtime.renderer.createSVGSkin(costumeAsset.decodeText(), rotationCenter);
+            return costume;
         });
     } else {
         promise = promise.then(function (costumeAsset) {
@@ -63,6 +70,7 @@ var loadCostume = function (md5ext, costume, runtime) {
             });
         }).then(function (imageElement) {
             costume.skinId = runtime.renderer.createBitmapSkin(imageElement, costume.bitmapResolution, rotationCenter);
+            return costume;
         });
     }
     return promise;
