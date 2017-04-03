@@ -12,11 +12,11 @@ var log = require('../util/log');
 var loadSound = function (sound, runtime) {
     if (!runtime.storage) {
         log.error('No storage module present; cannot load sound asset: ', sound.md5);
-        return Promise.resolve(null);
+        return Promise.resolve(sound);
     }
     if (!runtime.audioEngine) {
         log.error('No audio engine present; cannot load sound asset: ', sound.md5);
-        return Promise.resolve(null);
+        return Promise.resolve(sound);
     }
     var idParts = sound.md5.split('.');
     var md5 = idParts[0];
