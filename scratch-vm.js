@@ -27188,37 +27188,34 @@ Blocks.prototype.getBranch = function (id, branchNum) {
     }
 
     // Empty C-block?
-    if (!(inputName in block.inputs)) return null;
-    return block.inputs[inputName].block;
+    var input = block.inputs[inputName];
+    return (typeof input === 'undefined') ? null : input.block;
 };
 
 /**
  * Get the opcode for a particular block
- * @param {?string} id ID of block to query
+ * @param {?object} block The block to query
  * @return {?string} the opcode corresponding to that block
  */
-Blocks.prototype.getOpcode = function (id) {
-    var block = this._blocks[id];
+Blocks.prototype.getOpcode = function (block) {
     return (typeof block === 'undefined') ? null : block.opcode;
 };
 
 /**
  * Get all fields and their values for a block.
- * @param {?string} id ID of block to query.
- * @return {!object} All fields and their values.
+ * @param {?object} block The block to query.
+ * @return {?object} All fields and their values.
  */
-Blocks.prototype.getFields = function (id) {
-    var block = this._blocks[id];
+Blocks.prototype.getFields = function (block) {
     return (typeof block === 'undefined') ? null : block.fields;
 };
 
 /**
  * Get all non-branch inputs for a block.
- * @param {?string} id ID of block to query.
+ * @param {?object} block the block to query.
  * @return {!object} All non-branch inputs and their associated blocks.
  */
-Blocks.prototype.getInputs = function (id) {
-    var block = this._blocks[id];
+Blocks.prototype.getInputs = function (block) {
     if (typeof block === 'undefined') return null;
     var inputs = {};
     for (var input in block.inputs) {
@@ -27233,11 +27230,10 @@ Blocks.prototype.getInputs = function (id) {
 
 /**
  * Get mutation data for a block.
- * @param {?string} id ID of block to query.
- * @return {!object} Mutation for the block.
+ * @param {?object} block The block to query.
+ * @return {?object} Mutation for the block.
  */
-Blocks.prototype.getMutation = function (id) {
-    var block = this._blocks[id];
+Blocks.prototype.getMutation = function (block) {
     return (typeof block === 'undefined') ? null : block.mutation;
 };
 
@@ -74207,35 +74203,33 @@ var execute = function (sequencer, thread) {
     var runtime = sequencer.runtime;
     var target = thread.target;
 
-    // Current block to execute is the one on the top of the stack.
-    var currentBlockId = thread.peekStack();
-    var currentStackFrame = thread.peekStackFrame();
-
-    // Check where the block lives: target blocks or flyout blocks.
-    var targetHasBlock = (
-        typeof target.blocks.getBlock(currentBlockId) !== 'undefined'
-    );
-    var flyoutHasBlock = (
-        typeof runtime.flyoutBlocks.getBlock(currentBlockId) !== 'undefined'
-    );
-
     // Stop if block or target no longer exists.
-    if (!target || (!targetHasBlock && !flyoutHasBlock)) {
+    if (target === null) {
         // No block found: stop the thread; script no longer exists.
         sequencer.retireThread(thread);
         return;
     }
 
-    // Query info about the block.
-    var blockContainer = null;
-    if (targetHasBlock) {
-        blockContainer = target.blocks;
-    } else {
+    // Current block to execute is the one on the top of the stack.
+    var currentBlockId = thread.peekStack();
+    var currentStackFrame = thread.peekStackFrame();
+
+    var blockContainer = target.blocks;
+    var block = blockContainer.getBlock(currentBlockId);
+    if (typeof block === 'undefined') {
         blockContainer = runtime.flyoutBlocks;
+        block = blockContainer.getBlock(currentBlockId);
+        // Stop if block or target no longer exists.
+        if (typeof block === 'undefined') {
+            // No block found: stop the thread; script no longer exists.
+            sequencer.retireThread(thread);
+            return;
+        }
     }
-    var opcode = blockContainer.getOpcode(currentBlockId);
-    var fields = blockContainer.getFields(currentBlockId);
-    var inputs = blockContainer.getInputs(currentBlockId);
+
+    var opcode = blockContainer.getOpcode(block);
+    var fields = blockContainer.getFields(block);
+    var inputs = blockContainer.getInputs(block);
     var blockFunction = runtime.getOpcodeFunction(opcode);
     var isHat = runtime.getIsHat(opcode);
 
@@ -74289,25 +74283,20 @@ var execute = function (sequencer, thread) {
     // it's treated as a predicate; if not, execution will proceed as a no-op.
     // For single-field shadows: If the block has a single field, and no inputs,
     // immediately return the value of the field.
-    if (!blockFunction) {
+    if (typeof blockFunction === 'undefined') {
         if (isHat) {
             // Skip through the block (hat with no predicate).
             return;
-        } else {
-            if (Object.keys(fields).length === 1 &&
-                Object.keys(inputs).length === 0) {
-                // One field and no inputs - treat as arg.
-                for (var fieldKey in fields) { // One iteration.
-                    if (!fields.hasOwnProperty(fieldKey)) continue;
-                    handleReport(fields[fieldKey].value);
-                }
-            } else {
-                log.warn('Could not get implementation for opcode: ' +
-                    opcode);
-            }
-            thread.requestScriptGlowInFrame = true;
-            return;
         }
+        var keys = Object.keys(fields);
+        if (keys.length === 1 && Object.keys(inputs).length === 0) {
+            // One field and no inputs - treat as arg.
+            handleReport(fields[keys[0]].value);
+        } else {
+            log.warn('Could not get implementation for opcode: ' + opcode);
+        }
+        thread.requestScriptGlowInFrame = true;
+        return;
     }
 
     // Generate values for arguments (inputs).
@@ -74325,8 +74314,7 @@ var execute = function (sequencer, thread) {
         var input = inputs[inputName];
         var inputBlockId = input.block;
         // Is there no value for this input waiting in the stack frame?
-        if (typeof currentStackFrame.reported[inputName] === 'undefined' &&
-            inputBlockId) {
+        if (inputBlockId !== null && typeof currentStackFrame.reported[inputName] === 'undefined') {
             // If there's not, we need to evaluate the block.
             // Push to the stack to evaluate the reporter block.
             thread.pushStack(inputBlockId);
@@ -74336,19 +74324,19 @@ var execute = function (sequencer, thread) {
             execute(sequencer, thread);
             if (thread.status === Thread.STATUS_PROMISE_WAIT) {
                 return;
-            } else {
-                // Execution returned immediately,
-                // and presumably a value was reported, so pop the stack.
-                currentStackFrame.waitingReporter = null;
-                thread.popStack();
             }
+
+            // Execution returned immediately,
+            // and presumably a value was reported, so pop the stack.
+            currentStackFrame.waitingReporter = null;
+            thread.popStack();
         }
         argValues[inputName] = currentStackFrame.reported[inputName];
     }
 
     // Add any mutation to args (e.g., for procedures).
-    var mutation = blockContainer.getMutation(currentBlockId);
-    if (mutation) {
+    var mutation = blockContainer.getMutation(block);
+    if (mutation !== null) {
         argValues.mutation = mutation;
     }
 
@@ -74921,7 +74909,9 @@ Runtime.prototype.startHats = function (requestedHatOpcode,
 
     // Consider all scripts, looking for hats with opcode `requestedHatOpcode`.
     this.allScriptsDo(function (topBlockId, target) {
-        var potentialHatOpcode = target.blocks.getBlock(topBlockId).opcode;
+        var blocks = target.blocks;
+        var block = blocks.getBlock(topBlockId);
+        var potentialHatOpcode = block.opcode;
         if (potentialHatOpcode !== requestedHatOpcode) {
             // Not the right hat.
             return;
@@ -74932,15 +74922,16 @@ Runtime.prototype.startHats = function (requestedHatOpcode,
         // This needs to happen before the block is evaluated
         // (i.e., before the predicate can be run) because "broadcast and wait"
         // needs to have a precise collection of started threads.
-        var hatFields = target.blocks.getFields(topBlockId);
+        var hatFields = blocks.getFields(block);
 
         // If no fields are present, check inputs (horizontal blocks)
         if (Object.keys(hatFields).length === 0) {
-            var hatInputs = target.blocks.getInputs(topBlockId);
+            var hatInputs = blocks.getInputs(block);
             for (var input in hatInputs) {
                 if (!hatInputs.hasOwnProperty(input)) continue;
                 var id = hatInputs[input].block;
-                var fields = target.blocks.getFields(id);
+                var inpBlock = blocks.getBlock(id);
+                var fields = blocks.getFields(inpBlock);
                 hatFields = Object.assign(fields, hatFields);
             }
         }
