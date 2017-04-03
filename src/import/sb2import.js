@@ -136,11 +136,7 @@ var parseScratchObject = function (object, runtime, topLevel) {
     }
     target.isStage = topLevel;
     Promise.all(costumePromises).then(function (costumes) {
-        sprite.costumes = costumes.filter(
-            function (c) {
-                return c !== null;
-            }
-        );
+        sprite.costumes = costumes;
         target.updateAllDrawableProperties();
     });
     // The stage will have child objects; recursively process them.
