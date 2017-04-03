@@ -53,6 +53,7 @@ var parseScratchObject = function (object, runtime, topLevel) {
                 rotationCenterY: costumeSource.rotationCenterY,
                 skinId: null
             };
+            sprite.costumes.push(costume);
             costumePromises.push(loadCostume(costumeSource.baseLayerMD5, costume, runtime));
         }
     }
