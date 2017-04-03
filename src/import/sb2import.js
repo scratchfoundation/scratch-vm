@@ -5,9 +5,6 @@
  * scratch-vm runtime structures.
  */
 
-var ScratchStorage = require('scratch-storage');
-var AssetType = ScratchStorage.AssetType;
-
 var Blocks = require('../engine/blocks');
 var RenderedTarget = require('../sprites/rendered-target');
 var Sprite = require('../sprites/sprite');
@@ -19,6 +16,7 @@ var Variable = require('../engine/variable');
 var List = require('../engine/list');
 
 var loadCostume = require('./load-costume.js');
+var loadSound = require('./load-sound.js');
 
 /**
  * Parse a single "Scratch object" and create all its in-memory VM objects.
@@ -148,30 +146,6 @@ var parseScratchObject = function (object, runtime, topLevel) {
         }
     }
     return target;
-};
-
-/**
- * Load a sound's asset into memory asynchronously.
- * @param {!object} sound - the Scratch sound object.
- * @property {string} md5 - the MD5 and extension of the sound to be loaded.
- * @property {Buffer} data - sound data will be written here once loaded.
- * @param {!Runtime} runtime - Scratch runtime, used to access the storage module.
- */
-var loadSound = function (sound, runtime) {
-    if (!runtime.storage) {
-        log.error('No storage module present; cannot load sound asset: ', sound.md5);
-        return;
-    }
-    if (!runtime.audioEngine) {
-        log.error('No audio engine present; cannot load sound asset: ', sound.md5);
-        return;
-    }
-    var idParts = sound.md5.split('.');
-    var md5 = idParts[0];
-    runtime.storage.load(AssetType.Sound, md5).then(function (soundAsset) {
-        sound.data = soundAsset.data;
-        runtime.audioEngine.decodeSound(sound);
-    });
 };
 
 /**
