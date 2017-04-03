@@ -53,11 +53,7 @@ var parseScratchObject = function (object, runtime, topLevel) {
                 rotationCenterY: costumeSource.rotationCenterY,
                 skinId: null
             };
-            var costumePromise = loadCostume(costumeSource.baseLayerMD5, costume, runtime);
-            if (costumePromise) {
-                costumePromises.push(costumePromise);
-            }
-            sprite.costumes.push(costume);
+            costumePromises.push(loadCostume(costumeSource.baseLayerMD5, costume, runtime));
         }
     }
     // Sounds from JSON
@@ -138,7 +134,12 @@ var parseScratchObject = function (object, runtime, topLevel) {
         }
     }
     target.isStage = topLevel;
-    Promise.all(costumePromises).then(function () {
+    Promise.all(costumePromises).then(function (costumes) {
+        sprite.costumes = costumes.filter(
+            function (c) {
+                return c !== null;
+            }
+        );
         target.updateAllDrawableProperties();
     });
     // The stage will have child objects; recursively process them.
