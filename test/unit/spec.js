@@ -18,6 +18,7 @@ test('interface', function (t) {
     t.type(vm.addSprite2, 'function');
     t.type(vm.addCostume, 'function');
     t.type(vm.addBackdrop, 'function');
+    t.type(vm.addSound, 'function');
     t.type(vm.renameSprite, 'function');
     t.type(vm.deleteSprite, 'function');
 

@@ -8,6 +8,7 @@ var sb2import = require('./import/sb2import');
 var StringUtil = require('./util/string-util');
 
 var loadCostume = require('./import/load-costume.js');
+var loadSound = require('./import/load-sound.js');
 
 var RESERVED_NAMES = ['_mouse_', '_stage_', '_edge_', '_myself_', '_random_'];
 
@@ -206,6 +207,18 @@ VirtualMachine.prototype.addCostume = function (md5ext, costumeObject) {
         this.editingTarget.setCostume(
             this.editingTarget.sprite.costumes.length - 1
         );
+    }.bind(this));
+};
+
+/**
+ * Add a sound to the current editing target.
+ * @param {!object} soundObject Object representing the costume.
+ * @returns {?Promise} - a promise that resolves when the sound has been decoded and added
+ */
+VirtualMachine.prototype.addSound = function (soundObject) {
+    return loadSound(soundObject, this.runtime).then(function () {
+        this.editingTarget.sprite.sounds.push(soundObject);
+        this.emitTargetsUpdate();
     }.bind(this));
 };
 
