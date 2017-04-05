@@ -298,14 +298,14 @@ RenderedTarget.prototype.setSize = function (size) {
         // Clamp to scales relative to costume and stage size.
         // See original ScratchSprite.as:setSize.
         var costumeSize = this.renderer.getSkinSize(this.drawableID);
-        var origW = Math.round(costumeSize[0]);
-        var origH = Math.round(costumeSize[1]);
+        var origW = costumeSize[0];
+        var origH = costumeSize[1];
         var minScale = Math.min(1, Math.max(5 / origW, 5 / origH));
         var maxScale = Math.min(
             (1.5 * this.runtime.constructor.STAGE_WIDTH) / origW,
             (1.5 * this.runtime.constructor.STAGE_HEIGHT) / origH
         );
-        this.size = Math.round(MathUtil.clamp(size / 100, minScale, maxScale) * 100);
+        this.size = MathUtil.clamp(size / 100, minScale, maxScale) * 100;
         var renderedDirectionScale = this._getRenderedDirectionAndScale();
         this.renderer.updateDrawableProperties(this.drawableID, {
             direction: renderedDirectionScale.direction,
