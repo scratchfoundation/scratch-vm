@@ -72,7 +72,7 @@
     <script>
         function toXml() {
             var output = document.getElementById('importExport');
-            var xml = Blockly.Xml.workspaceToDom(workspace);
+            var xml = Blockly.Xml.workspaceToDom(Scratch.workspace);
             output.value = Blockly.Xml.domToPrettyText(xml);
             output.focus();
             output.select();
@@ -81,7 +81,7 @@
           function fromXml() {
             var input = document.getElementById('importExport');
             var xml = Blockly.Xml.textToDom(input.value);
-            Blockly.Xml.domToWorkspace(workspace, xml);
+            Blockly.Xml.domToWorkspace(Scratch.workspace, xml);
           }
     </script>
 </body>
