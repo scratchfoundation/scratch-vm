@@ -56,7 +56,7 @@ var VirtualMachine = require('scratch-vm');
 var vm = new VirtualMachine();
 
 // Block events
-workspace.addChangeListener(vm.blockListener);
+Scratch.workspace.addChangeListener(vm.blockListener);
 
 // Run threads
 vm.start();
