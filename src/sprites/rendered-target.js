@@ -764,6 +764,7 @@ RenderedTarget.prototype.toJSON = function () {
         isStage: this.isStage,
         x: this.x,
         y: this.y,
+        size: this.size,
         direction: this.direction,
         draggable: this.draggable,
         costume: this.getCurrentCostume(),
