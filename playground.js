@@ -187,6 +187,7 @@ window.onload = function () {
         if (data.id !== selectedTarget.value) return; // Not the editingTarget
         document.getElementById('sinfo-x').value = data.x;
         document.getElementById('sinfo-y').value = data.y;
+        document.getElementById('sinfo-size').value = data.size;
         document.getElementById('sinfo-direction').value = data.direction;
         document.getElementById('sinfo-rotationstyle').value = data.rotationStyle;
         document.getElementById('sinfo-visible').value = data.visible;
