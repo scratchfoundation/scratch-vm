@@ -21,3 +21,33 @@ test('#stopAll clears graphics effects', function (t) {
     t.equals(a.effects[effectName], 0);
     t.end();
 });
+
+test('#getCostumes returns the costumes', function (t) {
+    var spr = new Sprite();
+    var a = new RenderedTarget(spr, null);
+    var costumes = [1, 2, 3];
+    a.sprite.costumes = costumes;
+    t.equals(a.getCostumes(), costumes);
+    t.end();
+});
+
+test('#getSounds returns the sounds', function (t) {
+    var spr = new Sprite();
+    var a = new RenderedTarget(spr, null);
+    var sounds = [1, 2, 3];
+    a.sprite.sounds = sounds;
+    t.equals(a.getSounds(), sounds);
+    t.end();
+});
+
+test('#toJSON returns the sounds and costumes', function (t) {
+    var spr = new Sprite();
+    var a = new RenderedTarget(spr, null);
+    var sounds = [1, 2, 3];
+    var costumes = ['a', 'b', 'c'];
+    a.sprite.sounds = sounds;
+    a.sprite.costumes = costumes;
+    t.same(a.toJSON().sounds, sounds);
+    t.same(a.toJSON().costumes, costumes);
+    t.end();
+});
