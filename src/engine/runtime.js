@@ -455,7 +455,9 @@ Runtime.prototype.startHats = function (requestedHatOpcode,
 
     // Consider all scripts, looking for hats with opcode `requestedHatOpcode`.
     this.allScriptsDo(function (topBlockId, target) {
-        var potentialHatOpcode = target.blocks.getBlock(topBlockId).opcode;
+        var blocks = target.blocks;
+        var block = blocks.getBlock(topBlockId);
+        var potentialHatOpcode = block.opcode;
         if (potentialHatOpcode !== requestedHatOpcode) {
             // Not the right hat.
             return;
@@ -466,15 +468,16 @@ Runtime.prototype.startHats = function (requestedHatOpcode,
         // This needs to happen before the block is evaluated
         // (i.e., before the predicate can be run) because "broadcast and wait"
         // needs to have a precise collection of started threads.
-        var hatFields = target.blocks.getFields(topBlockId);
+        var hatFields = blocks.getFields(block);
 
         // If no fields are present, check inputs (horizontal blocks)
         if (Object.keys(hatFields).length === 0) {
-            var hatInputs = target.blocks.getInputs(topBlockId);
+            var hatInputs = blocks.getInputs(block);
             for (var input in hatInputs) {
                 if (!hatInputs.hasOwnProperty(input)) continue;
                 var id = hatInputs[input].block;
-                var fields = target.blocks.getFields(id);
+                var inpBlock = blocks.getBlock(id);
+                var fields = blocks.getFields(inpBlock);
                 hatFields = Object.assign(fields, hatFields);
             }
         }
