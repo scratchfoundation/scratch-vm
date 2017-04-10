@@ -201,7 +201,7 @@ Scratch3LooksBlocks.prototype.goBackLayers = function (args, util) {
 };
 
 Scratch3LooksBlocks.prototype.getSize = function (args, util) {
-    return util.target.size;
+    return Math.round(util.target.size);
 };
 
 Scratch3LooksBlocks.prototype.getBackdropIndex = function () {
