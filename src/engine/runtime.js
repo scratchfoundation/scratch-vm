@@ -226,7 +226,7 @@ Runtime.THREAD_STEP_INTERVAL_COMPATIBILITY = 1000 / 30;
  * How many clones can be created at a time.
  * @const {number}
  */
-Runtime.MAX_CLONES = 300;
+Runtime.MAX_CLONES = 301;
 
 // -----------------------------------------------------------------------------
 // -----------------------------------------------------------------------------
