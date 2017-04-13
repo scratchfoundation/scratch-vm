@@ -181,8 +181,37 @@ var execute = function (sequencer, thread) {
         stopThisScript: function () {
             thread.stopThisScript();
         },
-        startProcedure: function (procedureCode) {
-            sequencer.stepToProcedure(thread, procedureCode);
+        startProcedure: function (procedureCode, threadNum) {
+            sequencer.stepToProcedure(thread, procedureCode, threadNum);
+        },
+        getProcedureReturn: function (threadNum) {
+            var i = 0;
+            for (; i < this.runtime.threads.length; i++) {
+                var k = 0;
+                for (; k < this.runtime.threads[k].stackFrames.length; k++) {
+                    if (this.runtime.threads[k].stackFrames[k].executionContext.hasOwnProperty('thread')) {
+                        if (this.runtime.threads[k].stackFrames[k].executionContext.thread === threadNum) {
+                            return this.runtime.threads[k].stackFrames[k].executionContext.return;
+                        }
+                    }
+                }
+            }
+            return 'undefined';
+        },
+        isProcedureDone: function (threadNum) {
+            var i = 0;
+            for (; i < this.runtime.threads.length; i++) {
+                var k = 0;
+                for (; k < this.runtime.threads[k].stackFrames.length; k++) {
+                    if (this.runtime.threads[k].stackFrames[k].executionContext.hasOwnProperty('thread')) {
+                        if (this.runtime.threads[k].stackFrames[k].executionContext.thread === threadNum) {
+                            if (this.runtime.threads[k].stackFrames[k].executionContext.done === true) {
+                                return true;
+                            }
+                        }
+                    }
+                }
+            }
         },
         getProcedureParamNames: function (procedureCode) {
             return blockContainer.getProcedureParamNames(procedureCode);
@@ -192,6 +221,9 @@ var execute = function (sequencer, thread) {
         },
         getParam: function (paramName) {
             return thread.getParam(paramName);
+        },
+        setProcedureReturn: function (value) {
+            thread.stackFrames[0].executionContext.return = value;
         },
         startHats: function (requestedHat, optMatchFields, optTarget) {
             return (

@@ -196,8 +196,9 @@ Sequencer.prototype.stepToBranch = function (thread, branchNum, isLoop) {
  * Step a procedure.
  * @param {!Thread} thread Thread object to step to procedure.
  * @param {!string} procedureCode Procedure code of procedure to step to.
+ * @param {!Number} threadNum Procedure ID.
  */
-Sequencer.prototype.stepToProcedure = function (thread, procedureCode) {
+Sequencer.prototype.stepToProcedure = function (thread, procedureCode, threadNum) {
     var definition = thread.target.blocks.getProcedureDefinition(procedureCode);
     if (!definition) {
         return;
@@ -211,6 +212,7 @@ Sequencer.prototype.stepToProcedure = function (thread, procedureCode) {
     // When that set of blocks finishes executing, it will be popped
     // from the stack by the sequencer, returning control to the caller.
     thread.pushStack(definition);
+    thread.peekStackFrame().thread = threadNum;
     // In known warp-mode threads, only yield when time is up.
     if (thread.peekStackFrame().warpMode &&
         thread.warpTimer.timeElapsed() > Sequencer.WARP_TIME) {
