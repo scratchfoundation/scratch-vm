@@ -48,7 +48,7 @@
     "stats.js": "^0.17.0",
     "tap": "^10.2.0",
     "travis-after-all": "^1.4.4",
-    "webpack": "2.2.1",
+    "webpack": "^2.4.1",
     "webpack-dev-server": "^2.4.1"
   }
 }
