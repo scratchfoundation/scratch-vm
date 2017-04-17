@@ -1,10 +1,7 @@
 module.exports = {
     root: true,
-    extends: 'scratch',
+    extends: ['scratch', 'scratch/es6'],
     env: {
         browser: true
-    },
-    globals: {
-        Promise: true
     }
 };
