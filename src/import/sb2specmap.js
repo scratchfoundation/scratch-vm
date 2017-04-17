@@ -21,7 +21,7 @@
  * properties. By hand, I matched the opcode name to the 3.0 opcode.
  * Finally, I filled in the expected arguments as below.
  */
-var specMap = {
+const specMap = {
     'forward:': {
         opcode: 'motion_movesteps',
         argMap: [

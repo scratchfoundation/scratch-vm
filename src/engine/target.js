@@ -1,10 +1,10 @@
-var EventEmitter = require('events');
-var util = require('util');
+const EventEmitter = require('events');
+const util = require('util');
 
-var Blocks = require('./blocks');
-var Variable = require('../engine/variable');
-var List = require('../engine/list');
-var uid = require('../util/uid');
+const Blocks = require('./blocks');
+const Variable = require('../engine/variable');
+const List = require('../engine/list');
+const uid = require('../util/uid');
 
 /**
  * @fileoverview
@@ -16,7 +16,7 @@ var uid = require('../util/uid');
  * @param {?Blocks} blocks Blocks instance for the blocks owned by this target.
  * @constructor
  */
-var Target = function (blocks) {
+const Target = function (blocks) {
     EventEmitter.call(this);
 
     if (!blocks) {
@@ -87,13 +87,13 @@ Target.prototype.lookupOrCreateVariable = function (name) {
     }
     // If the stage has a global copy, return it.
     if (this.runtime && !this.isStage) {
-        var stage = this.runtime.getTargetForStage();
+        const stage = this.runtime.getTargetForStage();
         if (stage.variables.hasOwnProperty(name)) {
             return stage.variables[name];
         }
     }
     // No variable with this name exists - create it locally.
-    var newVariable = new Variable(name, 0, false);
+    const newVariable = new Variable(name, 0, false);
     this.variables[name] = newVariable;
     return newVariable;
 };
@@ -111,13 +111,13 @@ Target.prototype.lookupOrCreateList = function (name) {
     }
     // If the stage has a global copy, return it.
     if (this.runtime && !this.isStage) {
-        var stage = this.runtime.getTargetForStage();
+        const stage = this.runtime.getTargetForStage();
         if (stage.lists.hasOwnProperty(name)) {
             return stage.lists[name];
         }
     }
     // No list with this name exists - create it locally.
-    var newList = new List(name, []);
+    const newList = new List(name, []);
     this.lists[name] = newList;
     return newList;
 };

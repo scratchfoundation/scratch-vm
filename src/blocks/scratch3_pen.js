@@ -1,8 +1,8 @@
-var Cast = require('../util/cast');
-var Clone = require('../util/clone');
-var Color = require('../util/color');
-var MathUtil = require('../util/math-util');
-var RenderedTarget = require('../sprites/rendered-target');
+const Cast = require('../util/cast');
+const Clone = require('../util/clone');
+const Color = require('../util/color');
+const MathUtil = require('../util/math-util');
+const RenderedTarget = require('../sprites/rendered-target');
 
 /**
  * @typedef {object} PenState - the pen state associated with a particular target.
@@ -18,7 +18,7 @@ var RenderedTarget = require('../sprites/rendered-target');
  * @param {Runtime} runtime - the runtime instantiating this block package.
  * @constructor
  */
-var Scratch3PenBlocks = function (runtime) {
+const Scratch3PenBlocks = function (runtime) {
     /**
      * The runtime instantiating this block package.
      * @type {Runtime}
@@ -107,7 +107,7 @@ Scratch3PenBlocks.prototype._getPenLayerID = function () {
  * @private
  */
 Scratch3PenBlocks.prototype._getPenState = function (target) {
-    var penState = target.getCustomState(Scratch3PenBlocks.STATE_KEY);
+    let penState = target.getCustomState(Scratch3PenBlocks.STATE_KEY);
     if (!penState) {
         penState = Clone.simple(Scratch3PenBlocks.DEFAULT_PEN_STATE);
         target.setCustomState(Scratch3PenBlocks.STATE_KEY, penState);
@@ -123,9 +123,9 @@ Scratch3PenBlocks.prototype._getPenState = function (target) {
  * @private
  */
 Scratch3PenBlocks.prototype._onTargetMoved = function (target, oldX, oldY) {
-    var penSkinId = this._getPenLayerID();
+    const penSkinId = this._getPenLayerID();
     if (penSkinId >= 0) {
-        var penState = this._getPenState(target);
+        const penState = this._getPenState(target);
         this.runtime.renderer.penLine(penSkinId, penState.penAttributes, oldX, oldY, target.x, target.y);
         this.runtime.requestRedraw();
     }
@@ -137,8 +137,8 @@ Scratch3PenBlocks.prototype._onTargetMoved = function (target, oldX, oldY) {
  * @private
  */
 Scratch3PenBlocks.prototype._updatePenColor = function (penState) {
-    var rgb = Color.hsvToRgb({h: penState.hue * 180 / 100, s: 1, v: 1});
-    var shade = (penState.shade > 100) ? 200 - penState.shade : penState.shade;
+    let rgb = Color.hsvToRgb({h: penState.hue * 180 / 100, s: 1, v: 1});
+    const shade = (penState.shade > 100) ? 200 - penState.shade : penState.shade;
     if (shade < 50) {
         rgb = Color.mixRgb(Color.RGB_BLACK, rgb, (10 + shade) / 60);
     } else {
@@ -186,7 +186,7 @@ Scratch3PenBlocks.prototype.getPrimitives = function () {
  * The pen "clear" block clears the pen layer's contents.
  */
 Scratch3PenBlocks.prototype.clear = function () {
-    var penSkinId = this._getPenLayerID();
+    const penSkinId = this._getPenLayerID();
     if (penSkinId >= 0) {
         this.runtime.renderer.penClear(penSkinId);
         this.runtime.requestRedraw();
@@ -199,9 +199,9 @@ Scratch3PenBlocks.prototype.clear = function () {
  * @param {object} util - utility object provided by the runtime.
  */
 Scratch3PenBlocks.prototype.stamp = function (args, util) {
-    var penSkinId = this._getPenLayerID();
+    const penSkinId = this._getPenLayerID();
     if (penSkinId >= 0) {
-        var target = util.target;
+        const target = util.target;
         this.runtime.renderer.penStamp(penSkinId, target.drawableID);
         this.runtime.requestRedraw();
     }
@@ -213,15 +213,15 @@ Scratch3PenBlocks.prototype.stamp = function (args, util) {
  * @param {object} util - utility object provided by the runtime.
  */
 Scratch3PenBlocks.prototype.penDown = function (args, util) {
-    var target = util.target;
-    var penState = this._getPenState(target);
+    const target = util.target;
+    const penState = this._getPenState(target);
 
     if (!penState.penDown) {
         penState.penDown = true;
         target.addListener(RenderedTarget.EVENT_TARGET_MOVED, this._onTargetMoved);
     }
 
-    var penSkinId = this._getPenLayerID();
+    const penSkinId = this._getPenLayerID();
     if (penSkinId >= 0) {
         this.runtime.renderer.penPoint(penSkinId, penState.penAttributes, target.x, target.y);
         this.runtime.requestRedraw();
@@ -234,8 +234,8 @@ Scratch3PenBlocks.prototype.penDown = function (args, util) {
  * @param {object} util - utility object provided by the runtime.
  */
 Scratch3PenBlocks.prototype.penUp = function (args, util) {
-    var target = util.target;
-    var penState = this._getPenState(target);
+    const target = util.target;
+    const penState = this._getPenState(target);
 
     if (penState.penDown) {
         penState.penDown = false;
@@ -250,9 +250,9 @@ Scratch3PenBlocks.prototype.penUp = function (args, util) {
  * @param {object} util - utility object provided by the runtime.
  */
 Scratch3PenBlocks.prototype.setPenColorToColor = function (args, util) {
-    var penState = this._getPenState(util.target);
-    var rgb = Cast.toRgbColorObject(args.COLOR);
-    var hsv = Color.rgbToHsv(rgb);
+    const penState = this._getPenState(util.target);
+    const rgb = Cast.toRgbColorObject(args.COLOR);
+    const hsv = Color.rgbToHsv(rgb);
 
     penState.hue = 200 * hsv.h / 360;
     penState.shade = 50 * hsv.v;
@@ -273,7 +273,7 @@ Scratch3PenBlocks.prototype.setPenColorToColor = function (args, util) {
  * @param {object} util - utility object provided by the runtime.
  */
 Scratch3PenBlocks.prototype.changePenHueBy = function (args, util) {
-    var penState = this._getPenState(util.target);
+    const penState = this._getPenState(util.target);
     penState.hue = this._wrapHueOrShade(penState.hue + Cast.toNumber(args.COLOR));
     this._updatePenColor(penState);
 };
@@ -285,7 +285,7 @@ Scratch3PenBlocks.prototype.changePenHueBy = function (args, util) {
  * @param {object} util - utility object provided by the runtime.
  */
 Scratch3PenBlocks.prototype.setPenHueToNumber = function (args, util) {
-    var penState = this._getPenState(util.target);
+    const penState = this._getPenState(util.target);
     penState.hue = this._wrapHueOrShade(Cast.toNumber(args.COLOR));
     this._updatePenColor(penState);
 };
@@ -297,7 +297,7 @@ Scratch3PenBlocks.prototype.setPenHueToNumber = function (args, util) {
  * @param {object} util - utility object provided by the runtime.
  */
 Scratch3PenBlocks.prototype.changePenShadeBy = function (args, util) {
-    var penState = this._getPenState(util.target);
+    const penState = this._getPenState(util.target);
     penState.shade = this._wrapHueOrShade(penState.shade + Cast.toNumber(args.SHADE));
     this._updatePenColor(penState);
 };
@@ -309,7 +309,7 @@ Scratch3PenBlocks.prototype.changePenShadeBy = function (args, util) {
  * @param {object} util - utility object provided by the runtime.
  */
 Scratch3PenBlocks.prototype.setPenShadeToNumber = function (args, util) {
-    var penState = this._getPenState(util.target);
+    const penState = this._getPenState(util.target);
     penState.shade = this._wrapHueOrShade(Cast.toNumber(args.SHADE));
     this._updatePenColor(penState);
 };
@@ -321,7 +321,7 @@ Scratch3PenBlocks.prototype.setPenShadeToNumber = function (args, util) {
  * @param {object} util - utility object provided by the runtime.
  */
 Scratch3PenBlocks.prototype.changePenSizeBy = function (args, util) {
-    var penAttributes = this._getPenState(util.target).penAttributes;
+    const penAttributes = this._getPenState(util.target).penAttributes;
     penAttributes.diameter = this._clampPenSize(penAttributes.diameter + Cast.toNumber(args.SIZE));
 };
 
@@ -332,7 +332,7 @@ Scratch3PenBlocks.prototype.changePenSizeBy = function (args, util) {
  * @param {object} util - utility object provided by the runtime.
  */
 Scratch3PenBlocks.prototype.setPenSizeTo = function (args, util) {
-    var penAttributes = this._getPenState(util.target).penAttributes;
+    const penAttributes = this._getPenState(util.target).penAttributes;
     penAttributes.diameter = this._clampPenSize(Cast.toNumber(args.SIZE));
 };
 

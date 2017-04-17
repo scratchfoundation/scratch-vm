@@ -8,7 +8,7 @@
   * @param {Array} contents Contents of the list, as an array.
   * @constructor
   */
-var List = function (name, contents) {
+const List = function (name, contents) {
     this.name = name;
     this.contents = contents;
 };

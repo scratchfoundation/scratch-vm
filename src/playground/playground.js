@@ -1,10 +1,10 @@
-var Scratch = window.Scratch = window.Scratch || {};
+const Scratch = window.Scratch = window.Scratch || {};
 
-var ASSET_SERVER = 'https://cdn.assets.scratch.mit.edu/';
-var PROJECT_SERVER = 'https://cdn.projects.scratch.mit.edu/';
+const ASSET_SERVER = 'https://cdn.assets.scratch.mit.edu/';
+const PROJECT_SERVER = 'https://cdn.projects.scratch.mit.edu/';
 
-var loadProject = function () {
-    var id = location.hash.substring(1);
+const loadProject = function () {
+    let id = location.hash.substring(1);
     if (id.length < 1 || !isFinite(id)) {
         id = '119615668';
     }
@@ -15,9 +15,9 @@ var loadProject = function () {
  * @param {Asset} asset - calculate a URL for this asset.
  * @returns {string} a URL to download a project file.
  */
-var getProjectUrl = function (asset) {
-    var assetIdParts = asset.assetId.split('.');
-    var assetUrlParts = [PROJECT_SERVER, 'internalapi/project/', assetIdParts[0], '/get/'];
+const getProjectUrl = function (asset) {
+    const assetIdParts = asset.assetId.split('.');
+    const assetUrlParts = [PROJECT_SERVER, 'internalapi/project/', assetIdParts[0], '/get/'];
     if (assetIdParts[1]) {
         assetUrlParts.push(assetIdParts[1]);
     }
@@ -28,8 +28,8 @@ var getProjectUrl = function (asset) {
  * @param {Asset} asset - calculate a URL for this asset.
  * @returns {string} a URL to download a project asset (PNG, WAV, etc.)
  */
-var getAssetUrl = function (asset) {
-    var assetUrlParts = [
+const getAssetUrl = function (asset) {
+    const assetUrlParts = [
         ASSET_SERVER,
         'internalapi/asset/',
         asset.assetId,
@@ -43,32 +43,32 @@ var getAssetUrl = function (asset) {
 window.onload = function () {
     // Lots of global variables to make debugging easier
     // Instantiate the VM.
-    var vm = new window.VirtualMachine();
+    const vm = new window.VirtualMachine();
     Scratch.vm = vm;
 
-    var storage = new Scratch.Storage();
-    var AssetType = Scratch.Storage.AssetType;
+    const storage = new Scratch.Storage();
+    const AssetType = Scratch.Storage.AssetType;
     storage.addWebSource([AssetType.Project], getProjectUrl);
     storage.addWebSource([AssetType.ImageVector, AssetType.ImageBitmap, AssetType.Sound], getAssetUrl);
     vm.attachStorage(storage);
 
     // Loading projects from the server.
     document.getElementById('projectLoadButton').onclick = function () {
-        document.location = '#' + document.getElementById('projectId').value;
+        document.location = `#${document.getElementById('projectId').value}`;
         location.reload();
     };
     loadProject();
 
     // Instantiate the renderer and connect it to the VM.
-    var canvas = document.getElementById('scratch-stage');
-    var renderer = new window.RenderWebGL(canvas);
+    const canvas = document.getElementById('scratch-stage');
+    const renderer = new window.RenderWebGL(canvas);
     Scratch.renderer = renderer;
     vm.attachRenderer(renderer);
-    var audioEngine = new window.AudioEngine();
+    const audioEngine = new window.AudioEngine();
     vm.attachAudioEngine(audioEngine);
 
     // Instantiate scratch-blocks and attach it to the DOM.
-    var workspace = window.Blockly.inject('blocks', {
+    const workspace = window.Blockly.inject('blocks', {
         media: './media/',
         zoom: {
             controls: true,
@@ -90,27 +90,27 @@ window.onload = function () {
 
     // Attach scratch-blocks events to VM.
     workspace.addChangeListener(vm.blockListener);
-    var flyoutWorkspace = workspace.getFlyout().getWorkspace();
+    const flyoutWorkspace = workspace.getFlyout().getWorkspace();
     flyoutWorkspace.addChangeListener(vm.flyoutBlockListener);
 
     // Create FPS counter.
-    var stats = new window.Stats();
+    const stats = new window.Stats();
     document.getElementById('tab-renderexplorer').appendChild(stats.dom);
     stats.dom.style.position = 'relative';
     stats.begin();
 
     // Playground data tabs.
     // Block representation tab.
-    var blockexplorer = document.getElementById('blockexplorer');
-    var updateBlockExplorer = function (blocks) {
+    const blockexplorer = document.getElementById('blockexplorer');
+    const updateBlockExplorer = function (blocks) {
         blockexplorer.innerHTML = JSON.stringify(blocks, null, 2);
         window.hljs.highlightBlock(blockexplorer);
     };
 
     // Thread representation tab.
-    var threadexplorer = document.getElementById('threadexplorer');
-    var cachedThreadJSON = '';
-    var updateThreadExplorer = function (newJSON) {
+    const threadexplorer = document.getElementById('threadexplorer');
+    let cachedThreadJSON = '';
+    const updateThreadExplorer = function (newJSON) {
         if (newJSON !== cachedThreadJSON) {
             cachedThreadJSON = newJSON;
             threadexplorer.innerHTML = cachedThreadJSON;
@@ -129,28 +129,28 @@ window.onload = function () {
 
     // VM handlers.
     // Receipt of new playground data (thread, block representations).
-    vm.on('playgroundData', function (data) {
+    vm.on('playgroundData', data => {
         updateThreadExplorer(data.threads);
         updateBlockExplorer(data.blocks);
     });
 
     // Receipt of new block XML for the selected target.
-    vm.on('workspaceUpdate', function (data) {
+    vm.on('workspaceUpdate', data => {
         workspace.clear();
-        var dom = window.Blockly.Xml.textToDom(data.xml);
+        const dom = window.Blockly.Xml.textToDom(data.xml);
         window.Blockly.Xml.domToWorkspace(dom, workspace);
     });
 
     // Receipt of new list of targets, selected target update.
-    var selectedTarget = document.getElementById('selectedTarget');
-    vm.on('targetsUpdate', function (data) {
+    const selectedTarget = document.getElementById('selectedTarget');
+    vm.on('targetsUpdate', data => {
         // Clear select box.
         while (selectedTarget.firstChild) {
             selectedTarget.removeChild(selectedTarget.firstChild);
         }
         // Generate new select box.
-        for (var i = 0; i < data.targetList.length; i++) {
-            var targetOption = document.createElement('option');
+        for (let i = 0; i < data.targetList.length; i++) {
+            const targetOption = document.createElement('option');
             targetOption.setAttribute('value', data.targetList[i].id);
             // If target id matches editingTarget id, select it.
             if (data.targetList[i].id === data.editingTarget) {
@@ -167,23 +167,23 @@ window.onload = function () {
     };
 
     // Feedback for stacks and blocks running.
-    vm.on('SCRIPT_GLOW_ON', function (data) {
+    vm.on('SCRIPT_GLOW_ON', data => {
         workspace.glowStack(data.id, true);
     });
-    vm.on('SCRIPT_GLOW_OFF', function (data) {
+    vm.on('SCRIPT_GLOW_OFF', data => {
         workspace.glowStack(data.id, false);
     });
-    vm.on('BLOCK_GLOW_ON', function (data) {
+    vm.on('BLOCK_GLOW_ON', data => {
         workspace.glowBlock(data.id, true);
     });
-    vm.on('BLOCK_GLOW_OFF', function (data) {
+    vm.on('BLOCK_GLOW_OFF', data => {
         workspace.glowBlock(data.id, false);
     });
-    vm.on('VISUAL_REPORT', function (data) {
+    vm.on('VISUAL_REPORT', data => {
         workspace.reportValue(data.id, data.value);
     });
 
-    vm.on('SPRITE_INFO_REPORT', function (data) {
+    vm.on('SPRITE_INFO_REPORT', data => {
         if (data.id !== selectedTarget.value) return; // Not the editingTarget
         document.getElementById('sinfo-x').value = data.x;
         document.getElementById('sinfo-y').value = data.y;
@@ -193,8 +193,8 @@ window.onload = function () {
         document.getElementById('sinfo-visible').value = data.visible;
     });
 
-    document.getElementById('sinfo-post').addEventListener('click', function () {
-        var data = {};
+    document.getElementById('sinfo-post').addEventListener('click', () => {
+        const data = {};
         data.x = document.getElementById('sinfo-x').value;
         data.y = document.getElementById('sinfo-y').value;
         data.direction = document.getElementById('sinfo-direction').value;
@@ -204,9 +204,9 @@ window.onload = function () {
     });
 
     // Feed mouse events as VM I/O events.
-    document.addEventListener('mousemove', function (e) {
-        var rect = canvas.getBoundingClientRect();
-        var coordinates = {
+    document.addEventListener('mousemove', e => {
+        const rect = canvas.getBoundingClientRect();
+        const coordinates = {
             x: e.clientX - rect.left,
             y: e.clientY - rect.top,
             canvasWidth: rect.width,
@@ -214,9 +214,9 @@ window.onload = function () {
         };
         Scratch.vm.postIOData('mouse', coordinates);
     });
-    canvas.addEventListener('mousedown', function (e) {
-        var rect = canvas.getBoundingClientRect();
-        var data = {
+    canvas.addEventListener('mousedown', e => {
+        const rect = canvas.getBoundingClientRect();
+        const data = {
             isDown: true,
             x: e.clientX - rect.left,
             y: e.clientY - rect.top,
@@ -226,9 +226,9 @@ window.onload = function () {
         Scratch.vm.postIOData('mouse', data);
         e.preventDefault();
     });
-    canvas.addEventListener('mouseup', function (e) {
-        var rect = canvas.getBoundingClientRect();
-        var data = {
+    canvas.addEventListener('mouseup', e => {
+        const rect = canvas.getBoundingClientRect();
+        const data = {
             isDown: false,
             x: e.clientX - rect.left,
             y: e.clientY - rect.top,
@@ -240,7 +240,7 @@ window.onload = function () {
     });
 
     // Feed keyboard events as VM I/O events.
-    document.addEventListener('keydown', function (e) {
+    document.addEventListener('keydown', e => {
         // Don't capture keys intended for Blockly inputs.
         if (e.target !== document && e.target !== document.body) {
             return;
@@ -251,7 +251,7 @@ window.onload = function () {
         });
         e.preventDefault();
     });
-    document.addEventListener('keyup', function (e) {
+    document.addEventListener('keyup', e => {
         // Always capture up events,
         // even those that have switched to other targets.
         Scratch.vm.postIOData('keyboard', {
@@ -275,29 +275,29 @@ window.onload = function () {
     requestAnimationFrame(animate);
 
     // Handlers for green flag and stop all.
-    document.getElementById('greenflag').addEventListener('click', function () {
+    document.getElementById('greenflag').addEventListener('click', () => {
         vm.greenFlag();
     });
-    document.getElementById('stopall').addEventListener('click', function () {
+    document.getElementById('stopall').addEventListener('click', () => {
         vm.stopAll();
     });
-    document.getElementById('turbomode').addEventListener('change', function () {
-        var turboOn = document.getElementById('turbomode').checked;
+    document.getElementById('turbomode').addEventListener('change', () => {
+        const turboOn = document.getElementById('turbomode').checked;
         vm.setTurboMode(turboOn);
     });
     document.getElementById('compatmode').addEventListener('change',
-    function () {
-        var compatibilityMode = document.getElementById('compatmode').checked;
+    () => {
+        const compatibilityMode = document.getElementById('compatmode').checked;
         vm.setCompatibilityMode(compatibilityMode);
     });
-    var tabBlockExplorer = document.getElementById('tab-blockexplorer');
-    var tabThreadExplorer = document.getElementById('tab-threadexplorer');
-    var tabRenderExplorer = document.getElementById('tab-renderexplorer');
-    var tabImportExport = document.getElementById('tab-importexport');
+    const tabBlockExplorer = document.getElementById('tab-blockexplorer');
+    const tabThreadExplorer = document.getElementById('tab-threadexplorer');
+    const tabRenderExplorer = document.getElementById('tab-renderexplorer');
+    const tabImportExport = document.getElementById('tab-importexport');
 
     // Handlers to show different explorers.
     document.getElementById('threadexplorer-link').addEventListener('click',
-        function () {
+        () => {
             Scratch.exploreTabOpen = true;
             getPlaygroundData();
             tabBlockExplorer.style.display = 'none';
@@ -306,7 +306,7 @@ window.onload = function () {
             tabImportExport.style.display = 'none';
         });
     document.getElementById('blockexplorer-link').addEventListener('click',
-        function () {
+        () => {
             Scratch.exploreTabOpen = true;
             getPlaygroundData();
             tabBlockExplorer.style.display = 'block';
@@ -315,7 +315,7 @@ window.onload = function () {
             tabImportExport.style.display = 'none';
         });
     document.getElementById('renderexplorer-link').addEventListener('click',
-        function () {
+        () => {
             Scratch.exploreTabOpen = false;
             tabBlockExplorer.style.display = 'none';
             tabRenderExplorer.style.display = 'block';
@@ -323,7 +323,7 @@ window.onload = function () {
             tabImportExport.style.display = 'none';
         });
     document.getElementById('importexport-link').addEventListener('click',
-        function () {
+        () => {
             Scratch.exploreTabOpen = false;
             tabBlockExplorer.style.display = 'none';
             tabRenderExplorer.style.display = 'none';

@@ -1,6 +1,6 @@
-var Cast = require('../util/cast');
+const Cast = require('../util/cast');
 
-var Scratch3EventBlocks = function (runtime) {
+const Scratch3EventBlocks = function (runtime) {
     /**
      * The runtime instantiating this block package.
      * @type {Runtime}
@@ -45,8 +45,8 @@ Scratch3EventBlocks.prototype.getHats = function () {
 };
 
 Scratch3EventBlocks.prototype.hatGreaterThanPredicate = function (args, util) {
-    var option = Cast.toString(args.WHENGREATERTHANMENU).toLowerCase();
-    var value = Cast.toNumber(args.VALUE);
+    const option = Cast.toString(args.WHENGREATERTHANMENU).toLowerCase();
+    const value = Cast.toNumber(args.VALUE);
     // @todo: Other cases :)
     if (option === 'timer') {
         return util.ioQuery('clock', 'projectTimer') > value;
@@ -55,14 +55,14 @@ Scratch3EventBlocks.prototype.hatGreaterThanPredicate = function (args, util) {
 };
 
 Scratch3EventBlocks.prototype.broadcast = function (args, util) {
-    var broadcastOption = Cast.toString(args.BROADCAST_OPTION);
+    const broadcastOption = Cast.toString(args.BROADCAST_OPTION);
     util.startHats('event_whenbroadcastreceived', {
         BROADCAST_OPTION: broadcastOption
     });
 };
 
 Scratch3EventBlocks.prototype.broadcastAndWait = function (args, util) {
-    var broadcastOption = Cast.toString(args.BROADCAST_OPTION);
+    const broadcastOption = Cast.toString(args.BROADCAST_OPTION);
     // Have we run before, starting threads?
     if (!util.stackFrame.startedThreads) {
         // No - start hats for this broadcast.
@@ -77,10 +77,8 @@ Scratch3EventBlocks.prototype.broadcastAndWait = function (args, util) {
         }
     }
     // We've run before; check if the wait is still going on.
-    var instance = this;
-    var waiting = util.stackFrame.startedThreads.some(function (thread) {
-        return instance.runtime.isActiveThread(thread);
-    });
+    const instance = this;
+    const waiting = util.stackFrame.startedThreads.some(thread => instance.runtime.isActiveThread(thread));
     if (waiting) {
         util.yield();
     }

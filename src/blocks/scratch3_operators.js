@@ -1,7 +1,7 @@
-var Cast = require('../util/cast.js');
-var MathUtil = require('../util/math-util.js');
+const Cast = require('../util/cast.js');
+const MathUtil = require('../util/math-util.js');
 
-var Scratch3OperatorsBlocks = function (runtime) {
+const Scratch3OperatorsBlocks = function (runtime) {
     /**
      * The runtime instantiating this block package.
      * @type {Runtime}
@@ -76,10 +76,10 @@ Scratch3OperatorsBlocks.prototype.not = function (args) {
 };
 
 Scratch3OperatorsBlocks.prototype.random = function (args) {
-    var nFrom = Cast.toNumber(args.FROM);
-    var nTo = Cast.toNumber(args.TO);
-    var low = nFrom <= nTo ? nFrom : nTo;
-    var high = nFrom <= nTo ? nTo : nFrom;
+    const nFrom = Cast.toNumber(args.FROM);
+    const nTo = Cast.toNumber(args.TO);
+    const low = nFrom <= nTo ? nFrom : nTo;
+    const high = nFrom <= nTo ? nTo : nFrom;
     if (low === high) return low;
     // If both arguments are ints, truncate the result to an int.
     if (Cast.isInt(args.FROM) && Cast.isInt(args.TO)) {
@@ -93,8 +93,8 @@ Scratch3OperatorsBlocks.prototype.join = function (args) {
 };
 
 Scratch3OperatorsBlocks.prototype.letterOf = function (args) {
-    var index = Cast.toNumber(args.LETTER) - 1;
-    var str = Cast.toString(args.STRING);
+    const index = Cast.toNumber(args.LETTER) - 1;
+    const str = Cast.toString(args.STRING);
     // Out of bounds?
     if (index < 0 || index >= str.length) {
         return '';
@@ -107,9 +107,9 @@ Scratch3OperatorsBlocks.prototype.length = function (args) {
 };
 
 Scratch3OperatorsBlocks.prototype.mod = function (args) {
-    var n = Cast.toNumber(args.NUM1);
-    var modulus = Cast.toNumber(args.NUM2);
-    var result = n % modulus;
+    const n = Cast.toNumber(args.NUM1);
+    const modulus = Cast.toNumber(args.NUM2);
+    let result = n % modulus;
     // Scratch mod is kept positive.
     if (result / modulus < 0) result += modulus;
     return result;
@@ -120,8 +120,8 @@ Scratch3OperatorsBlocks.prototype.round = function (args) {
 };
 
 Scratch3OperatorsBlocks.prototype.mathop = function (args) {
-    var operator = Cast.toString(args.OPERATOR).toLowerCase();
-    var n = Cast.toNumber(args.NUM);
+    const operator = Cast.toString(args.OPERATOR).toLowerCase();
+    const n = Cast.toNumber(args.NUM);
     switch (operator) {
     case 'abs': return Math.abs(n);
     case 'floor': return Math.floor(n);

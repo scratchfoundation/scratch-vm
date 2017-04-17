@@ -1,4 +1,4 @@
-var Scratch3ProcedureBlocks = function (runtime) {
+const Scratch3ProcedureBlocks = function (runtime) {
     /**
      * The runtime instantiating this block package.
      * @type {Runtime}
@@ -24,11 +24,11 @@ Scratch3ProcedureBlocks.prototype.defNoReturn = function () {
 
 Scratch3ProcedureBlocks.prototype.callNoReturn = function (args, util) {
     if (!util.stackFrame.executed) {
-        var procedureCode = args.mutation.proccode;
-        var paramNames = util.getProcedureParamNames(procedureCode);
-        for (var i = 0; i < paramNames.length; i++) {
-            if (args.hasOwnProperty('input' + i)) {
-                util.pushParam(paramNames[i], args['input' + i]);
+        const procedureCode = args.mutation.proccode;
+        const paramNames = util.getProcedureParamNames(procedureCode);
+        for (let i = 0; i < paramNames.length; i++) {
+            if (args.hasOwnProperty(`input${i}`)) {
+                util.pushParam(paramNames[i], args[`input${i}`]);
             }
         }
         util.stackFrame.executed = true;
@@ -37,7 +37,7 @@ Scratch3ProcedureBlocks.prototype.callNoReturn = function (args, util) {
 };
 
 Scratch3ProcedureBlocks.prototype.param = function (args, util) {
-    var value = util.getParam(args.mutation.paramname);
+    const value = util.getParam(args.mutation.paramname);
     return value;
 };
 

@@ -1,6 +1,6 @@
-var Cast = require('../util/cast');
+const Cast = require('../util/cast');
 
-var Keyboard = function (runtime) {
+const Keyboard = function (runtime) {
     /**
      * List of currently pressed keys.
      * @type{Array.<number>}
@@ -25,7 +25,7 @@ Keyboard.prototype._scratchKeyToKeyCode = function (keyName) {
         // Key codes placed in with number blocks.
         return keyName;
     }
-    var keyString = Cast.toString(keyName);
+    const keyString = Cast.toString(keyName);
     switch (keyString) {
     case 'space': return 32;
     case 'left arrow': return 37;
@@ -65,7 +65,7 @@ Keyboard.prototype._keyCodeToScratchKey = function (keyCode) {
  */
 Keyboard.prototype.postData = function (data) {
     if (data.keyCode) {
-        var index = this._keysPressed.indexOf(data.keyCode);
+        const index = this._keysPressed.indexOf(data.keyCode);
         if (data.isDown) {
             // If not already present, add to the list.
             if (index < 0) {
@@ -94,7 +94,7 @@ Keyboard.prototype.getKeyIsDown = function (key) {
     if (key === 'any') {
         return this._keysPressed.length > 0;
     }
-    var keyCode = this._scratchKeyToKeyCode(key);
+    const keyCode = this._scratchKeyToKeyCode(key);
     return this._keysPressed.indexOf(keyCode) > -1;
 };
 

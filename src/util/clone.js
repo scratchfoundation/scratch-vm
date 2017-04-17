@@ -2,7 +2,7 @@
  * Methods for cloning JavaScript objects.
  * @type {object}
  */
-var Clone = {};
+const Clone = {};
 
 /**
  * Deep-clone a "simple" object: one which can be fully expressed with JSON.

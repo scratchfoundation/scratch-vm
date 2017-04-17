@@ -1,4 +1,4 @@
-var Color = function () {};
+const Color = function () {};
 
 /**
  * @typedef {object} RGBObject - An object representing a color in RGB format.
@@ -29,8 +29,8 @@ Color.decimalToHex = function (decimal) {
     if (decimal < 0) {
         decimal += 0xFFFFFF + 1;
     }
-    var hex = Number(decimal).toString(16);
-    hex = '#' + '000000'.substr(0, 6 - hex.length) + hex;
+    let hex = Number(decimal).toString(16);
+    hex = `#${'000000'.substr(0, 6 - hex.length)}${hex}`;
     return hex;
 };
 
@@ -40,10 +40,10 @@ Color.decimalToHex = function (decimal) {
  * @return {RGBObject} rgb - {r: red [0,255], g: green [0,255], b: blue [0,255]}.
  */
 Color.decimalToRgb = function (decimal) {
-    var a = (decimal >> 24) & 0xFF;
-    var r = (decimal >> 16) & 0xFF;
-    var g = (decimal >> 8) & 0xFF;
-    var b = decimal & 0xFF;
+    const a = (decimal >> 24) & 0xFF;
+    const r = (decimal >> 16) & 0xFF;
+    const g = (decimal >> 8) & 0xFF;
+    const b = decimal & 0xFF;
     return {r: r, g: g, b: b, a: a > 0 ? a : 255};
 };
 
@@ -55,11 +55,9 @@ Color.decimalToRgb = function (decimal) {
  * @return {RGBObject} null on failure, or rgb: {r: red [0,255], g: green [0,255], b: blue [0,255]}.
  */
 Color.hexToRgb = function (hex) {
-    var shorthandRegex = /^#?([a-f\d])([a-f\d])([a-f\d])$/i;
-    hex = hex.replace(shorthandRegex, function (m, r, g, b) {
-        return r + r + g + g + b + b;
-    });
-    var result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+    const shorthandRegex = /^#?([a-f\d])([a-f\d])([a-f\d])$/i;
+    hex = hex.replace(shorthandRegex, (m, r, g, b) => r + r + g + g + b + b);
+    const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
     return result ? {
         r: parseInt(result[1], 16),
         g: parseInt(result[2], 16),
@@ -100,20 +98,20 @@ Color.hexToDecimal = function (hex) {
  * @return {RGBObject} rgb - {r: red [0,255], g: green [0,255], b: blue [0,255]}.
  */
 Color.hsvToRgb = function (hsv) {
-    var h = hsv.h % 360;
+    let h = hsv.h % 360;
     if (h < 0) h += 360;
-    var s = Math.max(0, Math.min(hsv.s, 1));
-    var v = Math.max(0, Math.min(hsv.v, 1));
+    const s = Math.max(0, Math.min(hsv.s, 1));
+    const v = Math.max(0, Math.min(hsv.v, 1));
 
-    var i = Math.floor(h / 60);
-    var f = (h / 60) - i;
-    var p = v * (1 - s);
-    var q = v * (1 - (s * f));
-    var t = v * (1 - (s * (1 - f)));
+    const i = Math.floor(h / 60);
+    const f = (h / 60) - i;
+    const p = v * (1 - s);
+    const q = v * (1 - (s * f));
+    const t = v * (1 - (s * (1 - f)));
 
-    var r;
-    var g;
-    var b;
+    let r;
+    let g;
+    let b;
 
     switch (i) {
     default:
@@ -162,18 +160,18 @@ Color.hsvToRgb = function (hsv) {
  * @return {HSVObject} hsv - {h: hue [0,360), s: saturation [0,1], v: value [0,1]}
  */
 Color.rgbToHsv = function (rgb) {
-    var r = rgb.r / 255;
-    var g = rgb.g / 255;
-    var b = rgb.b / 255;
-    var x = Math.min(Math.min(r, g), b);
-    var v = Math.max(Math.max(r, g), b);
+    const r = rgb.r / 255;
+    const g = rgb.g / 255;
+    const b = rgb.b / 255;
+    const x = Math.min(Math.min(r, g), b);
+    const v = Math.max(Math.max(r, g), b);
 
     // For grays, hue will be arbitrarily reported as zero. Otherwise, calculate
-    var h = 0;
-    var s = 0;
+    let h = 0;
+    let s = 0;
     if (x !== v) {
-        var f = (r === x) ? g - b : ((g === x) ? b - r : r - g);
-        var i = (r === x) ? 3 : ((g === x) ? 5 : 1);
+        const f = (r === x) ? g - b : ((g === x) ? b - r : r - g);
+        const i = (r === x) ? 3 : ((g === x) ? 5 : 1);
         h = ((i - (f / (v - x))) * 60) % 360;
         s = (v - x) / v;
     }
@@ -191,7 +189,7 @@ Color.rgbToHsv = function (rgb) {
 Color.mixRgb = function (rgb0, rgb1, fraction1) {
     if (fraction1 <= 0) return rgb0;
     if (fraction1 >= 1) return rgb1;
-    var fraction0 = 1 - fraction1;
+    const fraction0 = 1 - fraction1;
     return {
         r: (fraction0 * rgb0.r) + (fraction1 * rgb1.r),
         g: (fraction0 * rgb0.g) + (fraction1 * rgb1.g),

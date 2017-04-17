@@ -1,4 +1,4 @@
-var MathUtil = function () {};
+const MathUtil = function () {};
 
 /**
  * Convert a value from degrees to radians.
@@ -41,7 +41,7 @@ MathUtil.clamp = function (n, min, max) {
  * @return {!number} Value of n wrapped between min and max.
  */
 MathUtil.wrapClamp = function (n, min, max) {
-    var range = (max - min) + 1;
+    const range = (max - min) + 1;
     return n - (Math.floor((n - min) / range) * range);
 };
 

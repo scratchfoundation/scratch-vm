@@ -1,6 +1,6 @@
-var Cast = require('../util/cast');
+const Cast = require('../util/cast');
 
-var Scratch3SensingBlocks = function (runtime) {
+const Scratch3SensingBlocks = function (runtime) {
     /**
      * The runtime instantiating this block package.
      * @type {Runtime}
@@ -32,39 +32,39 @@ Scratch3SensingBlocks.prototype.getPrimitives = function () {
 };
 
 Scratch3SensingBlocks.prototype.touchingObject = function (args, util) {
-    var requestedObject = args.TOUCHINGOBJECTMENU;
+    const requestedObject = args.TOUCHINGOBJECTMENU;
     if (requestedObject === '_mouse_') {
-        var mouseX = util.ioQuery('mouse', 'getX');
-        var mouseY = util.ioQuery('mouse', 'getY');
+        const mouseX = util.ioQuery('mouse', 'getX');
+        const mouseY = util.ioQuery('mouse', 'getY');
         return util.target.isTouchingPoint(mouseX, mouseY);
     } else if (requestedObject === '_edge_') {
         return util.target.isTouchingEdge();
-    } else {
-        return util.target.isTouchingSprite(requestedObject);
     }
+    return util.target.isTouchingSprite(requestedObject);
+    
 };
 
 Scratch3SensingBlocks.prototype.touchingColor = function (args, util) {
-    var color = Cast.toRgbColorList(args.COLOR);
+    const color = Cast.toRgbColorList(args.COLOR);
     return util.target.isTouchingColor(color);
 };
 
 Scratch3SensingBlocks.prototype.colorTouchingColor = function (args, util) {
-    var maskColor = Cast.toRgbColorList(args.COLOR);
-    var targetColor = Cast.toRgbColorList(args.COLOR2);
+    const maskColor = Cast.toRgbColorList(args.COLOR);
+    const targetColor = Cast.toRgbColorList(args.COLOR2);
     return util.target.colorIsTouchingColor(targetColor, maskColor);
 };
 
 Scratch3SensingBlocks.prototype.distanceTo = function (args, util) {
     if (util.target.isStage) return 10000;
 
-    var targetX = 0;
-    var targetY = 0;
+    let targetX = 0;
+    let targetY = 0;
     if (args.DISTANCETOMENU === '_mouse_') {
         targetX = util.ioQuery('mouse', 'getX');
         targetY = util.ioQuery('mouse', 'getY');
     } else {
-        var distTarget = this.runtime.getSpriteTargetByName(
+        const distTarget = this.runtime.getSpriteTargetByName(
             args.DISTANCETOMENU
         );
         if (!distTarget) return 10000;
@@ -72,8 +72,8 @@ Scratch3SensingBlocks.prototype.distanceTo = function (args, util) {
         targetY = distTarget.y;
     }
 
-    var dx = util.target.x - targetX;
-    var dy = util.target.y - targetY;
+    const dx = util.target.x - targetX;
+    const dy = util.target.y - targetY;
     return Math.sqrt((dx * dx) + (dy * dy));
 };
 
@@ -98,8 +98,8 @@ Scratch3SensingBlocks.prototype.getMouseDown = function (args, util) {
 };
 
 Scratch3SensingBlocks.prototype.current = function (args) {
-    var menuOption = Cast.toString(args.CURRENTMENU).toLowerCase();
-    var date = new Date();
+    const menuOption = Cast.toString(args.CURRENTMENU).toLowerCase();
+    const date = new Date();
     switch (menuOption) {
     case 'year': return date.getFullYear();
     case 'month': return date.getMonth() + 1; // getMonth is zero-based
@@ -117,11 +117,11 @@ Scratch3SensingBlocks.prototype.getKeyPressed = function (args, util) {
 };
 
 Scratch3SensingBlocks.prototype.daysSince2000 = function () {
-    var msPerDay = 24 * 60 * 60 * 1000;
-    var start = new Date(2000, 0, 1); // Months are 0-indexed.
-    var today = new Date();
-    var dstAdjust = today.getTimezoneOffset() - start.getTimezoneOffset();
-    var mSecsSinceStart = today.valueOf() - start.valueOf();
+    const msPerDay = 24 * 60 * 60 * 1000;
+    const start = new Date(2000, 0, 1); // Months are 0-indexed.
+    const today = new Date();
+    const dstAdjust = today.getTimezoneOffset() - start.getTimezoneOffset();
+    let mSecsSinceStart = today.valueOf() - start.valueOf();
     mSecsSinceStart += ((today.getTimezoneOffset() - dstAdjust) * 60 * 1000);
     return mSecsSinceStart / msPerDay;
 };
@@ -132,7 +132,7 @@ Scratch3SensingBlocks.prototype.getLoudness = function () {
 };
 
 Scratch3SensingBlocks.prototype.getAttributeOf = function (args) {
-    var attrTarget;
+    let attrTarget;
 
     if (args.OBJECT === '_stage_') {
         attrTarget = this.runtime.getTargetForStage();
@@ -165,7 +165,7 @@ Scratch3SensingBlocks.prototype.getAttributeOf = function (args) {
     }
 
     // Variables
-    var varName = args.PROPERTY;
+    const varName = args.PROPERTY;
     if (attrTarget.variables.hasOwnProperty(varName)) {
         return attrTarget.variables[varName].value;
     }

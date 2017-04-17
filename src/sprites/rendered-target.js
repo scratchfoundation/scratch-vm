@@ -1,8 +1,8 @@
-var util = require('util');
+const util = require('util');
 
-var log = require('../util/log');
-var MathUtil = require('../util/math-util');
-var Target = require('../engine/target');
+const log = require('../util/log');
+const MathUtil = require('../util/math-util');
+const Target = require('../engine/target');
 
 /**
  * Rendered target: instance of a sprite (clone), or the stage.
@@ -10,7 +10,7 @@ var Target = require('../engine/target');
  * @param {Runtime} runtime Reference to the runtime.
  * @constructor
  */
-var RenderedTarget = function (sprite, runtime) {
+const RenderedTarget = function (sprite, runtime) {
     Target.call(this, sprite.blocks);
     this.runtime = runtime;
     /**
@@ -175,10 +175,10 @@ RenderedTarget.prototype.rotationStyle = (
 RenderedTarget.prototype.setXY = function (x, y, force) {
     if (this.isStage) return;
     if (this.dragging && !force) return;
-    var oldX = this.x;
-    var oldY = this.y;
+    const oldX = this.x;
+    const oldY = this.y;
     if (this.renderer) {
-        var position = this.renderer.getFencedPositionOfDrawable(this.drawableID, [x, y]);
+        const position = this.renderer.getFencedPositionOfDrawable(this.drawableID, [x, y]);
         this.x = position[0];
         this.y = position[1];
 
@@ -202,15 +202,15 @@ RenderedTarget.prototype.setXY = function (x, y, force) {
  */
 RenderedTarget.prototype._getRenderedDirectionAndScale = function () {
     // Default: no changes to `this.direction` or `this.scale`.
-    var finalDirection = this.direction;
-    var finalScale = [this.size, this.size];
+    let finalDirection = this.direction;
+    let finalScale = [this.size, this.size];
     if (this.rotationStyle === RenderedTarget.ROTATION_STYLE_NONE) {
         // Force rendered direction to be 90.
         finalDirection = 90;
     } else if (this.rotationStyle === RenderedTarget.ROTATION_STYLE_LEFT_RIGHT) {
         // Force rendered direction to be 90, and flip drawable if needed.
         finalDirection = 90;
-        var scaleFlip = (this.direction < 0) ? -1 : 1;
+        const scaleFlip = (this.direction < 0) ? -1 : 1;
         finalScale = [scaleFlip * this.size, this.size];
     }
     return {direction: finalDirection, scale: finalScale};
@@ -227,7 +227,7 @@ RenderedTarget.prototype.setDirection = function (direction) {
     // Keep direction between -179 and +180.
     this.direction = MathUtil.wrapClamp(direction, -179, 180);
     if (this.renderer) {
-        var renderedDirectionScale = this._getRenderedDirectionAndScale();
+        const renderedDirectionScale = this._getRenderedDirectionAndScale();
         this.renderer.updateDrawableProperties(this.drawableID, {
             direction: renderedDirectionScale.direction,
             scale: renderedDirectionScale.scale
@@ -297,16 +297,16 @@ RenderedTarget.prototype.setSize = function (size) {
     if (this.renderer) {
         // Clamp to scales relative to costume and stage size.
         // See original ScratchSprite.as:setSize.
-        var costumeSize = this.renderer.getSkinSize(this.drawableID);
-        var origW = costumeSize[0];
-        var origH = costumeSize[1];
-        var minScale = Math.min(1, Math.max(5 / origW, 5 / origH));
-        var maxScale = Math.min(
+        const costumeSize = this.renderer.getSkinSize(this.drawableID);
+        const origW = costumeSize[0];
+        const origH = costumeSize[1];
+        const minScale = Math.min(1, Math.max(5 / origW, 5 / origH));
+        const maxScale = Math.min(
             (1.5 * this.runtime.constructor.STAGE_WIDTH) / origW,
             (1.5 * this.runtime.constructor.STAGE_HEIGHT) / origH
         );
         this.size = MathUtil.clamp(size / 100, minScale, maxScale) * 100;
-        var renderedDirectionScale = this._getRenderedDirectionAndScale();
+        const renderedDirectionScale = this._getRenderedDirectionAndScale();
         this.renderer.updateDrawableProperties(this.drawableID, {
             direction: renderedDirectionScale.direction,
             scale: renderedDirectionScale.scale
@@ -326,7 +326,7 @@ RenderedTarget.prototype.setEffect = function (effectName, value) {
     if (!this.effects.hasOwnProperty(effectName)) return;
     this.effects[effectName] = value;
     if (this.renderer) {
-        var props = {};
+        const props = {};
         props[effectName] = this.effects[effectName];
         this.renderer.updateDrawableProperties(this.drawableID, props);
         if (this.visible) {
@@ -339,7 +339,7 @@ RenderedTarget.prototype.setEffect = function (effectName, value) {
  * Clear all graphic effects on this rendered target.
  */
 RenderedTarget.prototype.clearEffects = function () {
-    for (var effectName in this.effects) {
+    for (const effectName in this.effects) {
         if (!this.effects.hasOwnProperty(effectName)) continue;
         this.effects[effectName] = 0;
     }
@@ -362,8 +362,8 @@ RenderedTarget.prototype.setCostume = function (index) {
         index, 0, this.sprite.costumes.length - 1
     );
     if (this.renderer) {
-        var costume = this.sprite.costumes[this.currentCostume];
-        var drawableProperties = {
+        const costume = this.sprite.costumes[this.currentCostume];
+        const drawableProperties = {
             skinId: costume.skinId,
             costumeResolution: costume.bitmapResolution
         };
@@ -371,7 +371,7 @@ RenderedTarget.prototype.setCostume = function (index) {
             typeof costume.rotationCenterX !== 'undefined' &&
             typeof costume.rotationCenterY !== 'undefined'
         ) {
-            var scale = costume.bitmapResolution || 1;
+            const scale = costume.bitmapResolution || 1;
             drawableProperties.rotationCenter = [
                 costume.rotationCenterX / scale,
                 costume.rotationCenterY / scale
@@ -398,7 +398,7 @@ RenderedTarget.prototype.setRotationStyle = function (rotationStyle) {
         this.rotationStyle = RenderedTarget.ROTATION_STYLE_LEFT_RIGHT;
     }
     if (this.renderer) {
-        var renderedDirectionScale = this._getRenderedDirectionAndScale();
+        const renderedDirectionScale = this._getRenderedDirectionAndScale();
         this.renderer.updateDrawableProperties(this.drawableID, {
             direction: renderedDirectionScale.direction,
             scale: renderedDirectionScale.scale
@@ -416,7 +416,7 @@ RenderedTarget.prototype.setRotationStyle = function (rotationStyle) {
  * @return {number} Index of the named costume, or -1 if not present.
  */
 RenderedTarget.prototype.getCostumeIndexByName = function (costumeName) {
-    for (var i = 0; i < this.sprite.costumes.length; i++) {
+    for (let i = 0; i < this.sprite.costumes.length; i++) {
         if (this.sprite.costumes[i].name === costumeName) {
             return i;
         }
@@ -454,10 +454,10 @@ RenderedTarget.prototype.getSounds = function () {
  */
 RenderedTarget.prototype.updateAllDrawableProperties = function () {
     if (this.renderer) {
-        var renderedDirectionScale = this._getRenderedDirectionAndScale();
-        var costume = this.sprite.costumes[this.currentCostume];
-        var bitmapResolution = costume.bitmapResolution || 1;
-        var props = {
+        const renderedDirectionScale = this._getRenderedDirectionAndScale();
+        const costume = this.sprite.costumes[this.currentCostume];
+        const bitmapResolution = costume.bitmapResolution || 1;
+        const props = {
             position: [this.x, this.y],
             direction: renderedDirectionScale.direction,
             draggable: this.draggable,
@@ -470,7 +470,7 @@ RenderedTarget.prototype.updateAllDrawableProperties = function () {
                 costume.rotationCenterY / bitmapResolution
             ]
         };
-        for (var effectName in this.effects) {
+        for (const effectName in this.effects) {
             if (!this.effects.hasOwnProperty(effectName)) continue;
             props[effectName] = this.effects[effectName];
         }
@@ -522,7 +522,7 @@ RenderedTarget.prototype.isTouchingPoint = function (x, y) {
         // @todo: Update once pick is in Scratch coordinates.
         // Limits test to this Drawable, so this will return true
         // even if the clone is obscured by another Drawable.
-        var pickResult = this.runtime.renderer.pick(
+        const pickResult = this.runtime.renderer.pick(
             x + (this.runtime.constructor.STAGE_WIDTH / 2),
             -y + (this.runtime.constructor.STAGE_HEIGHT / 2),
             null, null,
@@ -539,9 +539,9 @@ RenderedTarget.prototype.isTouchingPoint = function (x, y) {
  */
 RenderedTarget.prototype.isTouchingEdge = function () {
     if (this.renderer) {
-        var stageWidth = this.runtime.constructor.STAGE_WIDTH;
-        var stageHeight = this.runtime.constructor.STAGE_HEIGHT;
-        var bounds = this.getBounds();
+        const stageWidth = this.runtime.constructor.STAGE_WIDTH;
+        const stageHeight = this.runtime.constructor.STAGE_HEIGHT;
+        const bounds = this.getBounds();
         if (bounds.left < -stageWidth / 2 ||
             bounds.right > stageWidth / 2 ||
             bounds.top > stageHeight / 2 ||
@@ -558,13 +558,11 @@ RenderedTarget.prototype.isTouchingEdge = function () {
  * @return {boolean} True iff touching a clone of the sprite.
  */
 RenderedTarget.prototype.isTouchingSprite = function (spriteName) {
-    var firstClone = this.runtime.getSpriteTargetByName(spriteName);
+    const firstClone = this.runtime.getSpriteTargetByName(spriteName);
     if (!firstClone || !this.renderer) {
         return false;
     }
-    var drawableCandidates = firstClone.sprite.clones.map(function (clone) {
-        return clone.drawableID;
-    });
+    const drawableCandidates = firstClone.sprite.clones.map(clone => clone.drawableID);
     return this.renderer.isTouchingDrawables(
         this.drawableID, drawableCandidates);
 };
@@ -623,7 +621,7 @@ RenderedTarget.prototype.goBackLayers = function (nLayers) {
  */
 RenderedTarget.prototype.goBehindOther = function (other) {
     if (this.renderer) {
-        var otherLayer = this.renderer.setDrawableOrder(
+        const otherLayer = this.renderer.setDrawableOrder(
             other.drawableID, 0, true);
         this.renderer.setDrawableOrder(this.drawableID, otherLayer);
     }
@@ -637,7 +635,7 @@ RenderedTarget.prototype.goBehindOther = function (other) {
  * @return {Array.<number>} Fenced X and Y coordinates.
  */
 RenderedTarget.prototype.keepInFence = function (newX, newY, optFence) {
-    var fence = optFence;
+    let fence = optFence;
     if (!fence) {
         fence = {
             left: -this.runtime.constructor.STAGE_WIDTH / 2,
@@ -646,7 +644,7 @@ RenderedTarget.prototype.keepInFence = function (newX, newY, optFence) {
             bottom: -this.runtime.constructor.STAGE_HEIGHT / 2
         };
     }
-    var bounds = this.getBounds();
+    const bounds = this.getBounds();
     if (!bounds) return;
     // Adjust the known bounds to the target position.
     bounds.left += (newX - this.x);
@@ -654,8 +652,8 @@ RenderedTarget.prototype.keepInFence = function (newX, newY, optFence) {
     bounds.top += (newY - this.y);
     bounds.bottom += (newY - this.y);
     // Find how far we need to move the target position.
-    var dx = 0;
-    var dy = 0;
+    let dx = 0;
+    let dy = 0;
     if (bounds.left < fence.left) {
         dx += fence.left - bounds.left;
     }
@@ -681,7 +679,7 @@ RenderedTarget.prototype.makeClone = function () {
         return null; // Hit max clone limit, or this is the stage.
     }
     this.runtime.changeCloneCounter(1);
-    var newClone = this.sprite.createClone();
+    const newClone = this.sprite.createClone();
     // Copy all properties.
     newClone.x = this.x;
     newClone.y = this.y;
@@ -726,7 +724,7 @@ RenderedTarget.prototype.onStopAll = function () {
  * @param {object} data An object with sprite info data to set.
  */
 RenderedTarget.prototype.postSpriteInfo = function (data) {
-    var force = data.hasOwnProperty('force') ? data.force : null;
+    const force = data.hasOwnProperty('force') ? data.force : null;
     if (data.hasOwnProperty('x')) {
         this.setXY(data.x, this.y, force);
     }

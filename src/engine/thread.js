@@ -3,7 +3,7 @@
  * @param {?string} firstBlock First block to execute in the thread.
  * @constructor
  */
-var Thread = function (firstBlock) {
+const Thread = function (firstBlock) {
     /**
      * ID of top block of the thread
      * @type {!string}
@@ -100,7 +100,7 @@ Thread.prototype.pushStack = function (blockId) {
     // Might not, if we just popped the stack.
     if (this.stack.length > this.stackFrames.length) {
         // Copy warp mode from any higher level.
-        var warpMode = false;
+        let warpMode = false;
         if (this.stackFrames.length > 0 && this.stackFrames[this.stackFrames.length - 1]) {
             warpMode = this.stackFrames[this.stackFrames.length - 1].warpMode;
         }
@@ -122,7 +122,7 @@ Thread.prototype.pushStack = function (blockId) {
  */
 Thread.prototype.reuseStackForNextBlock = function (blockId) {
     this.stack[this.stack.length - 1] = blockId;
-    var frame = this.stackFrames[this.stackFrames.length - 1];
+    const frame = this.stackFrames[this.stackFrames.length - 1];
     frame.isLoop = false;
     // frame.warpMode = warpMode;   // warp mode stays the same when reusing the stack frame.
     frame.reported = {};
@@ -144,9 +144,9 @@ Thread.prototype.popStack = function () {
  * Pop back down the stack frame until we hit a procedure call or the stack frame is emptied
  */
 Thread.prototype.stopThisScript = function () {
-    var blockID = this.peekStack();
+    let blockID = this.peekStack();
     while (blockID !== null) {
-        var block = this.target.blocks.getBlock(blockID);
+        const block = this.target.blocks.getBlock(blockID);
         if (typeof block !== 'undefined' && block.opcode === 'procedures_callnoreturn') {
             break;
         }
@@ -191,9 +191,9 @@ Thread.prototype.peekParentStackFrame = function () {
  * @param {*} value Reported value to push.
  */
 Thread.prototype.pushReportedValue = function (value) {
-    var parentStackFrame = this.peekParentStackFrame();
+    const parentStackFrame = this.peekParentStackFrame();
     if (parentStackFrame) {
-        var waitingReporter = parentStackFrame.waitingReporter;
+        const waitingReporter = parentStackFrame.waitingReporter;
         parentStackFrame.reported[waitingReporter] = value;
     }
 };
@@ -205,7 +205,7 @@ Thread.prototype.pushReportedValue = function (value) {
  * @param {*} value Value to set for parameter.
  */
 Thread.prototype.pushParam = function (paramName, value) {
-    var stackFrame = this.peekStackFrame();
+    const stackFrame = this.peekStackFrame();
     stackFrame.params[paramName] = value;
 };
 
@@ -215,8 +215,8 @@ Thread.prototype.pushParam = function (paramName, value) {
  * @return {*} value Value for parameter.
  */
 Thread.prototype.getParam = function (paramName) {
-    for (var i = this.stackFrames.length - 1; i >= 0; i--) {
-        var frame = this.stackFrames[i];
+    for (let i = this.stackFrames.length - 1; i >= 0; i--) {
+        const frame = this.stackFrames[i];
         if (frame.params.hasOwnProperty(paramName)) {
             return frame.params[paramName];
         }
@@ -239,7 +239,7 @@ Thread.prototype.atStackTop = function () {
  * where execution proceeds from one block to the next.
  */
 Thread.prototype.goToNextBlock = function () {
-    var nextBlockId = this.target.blocks.getNextBlock(this.peekStack());
+    const nextBlockId = this.target.blocks.getNextBlock(this.peekStack());
     this.reuseStackForNextBlock(nextBlockId);
 };
 
@@ -250,10 +250,10 @@ Thread.prototype.goToNextBlock = function () {
  * @return {boolean} True if the call appears recursive.
  */
 Thread.prototype.isRecursiveCall = function (procedureCode) {
-    var callCount = 5; // Max number of enclosing procedure calls to examine.
-    var sp = this.stack.length - 1;
-    for (var i = sp - 1; i >= 0; i--) {
-        var block = this.target.blocks.getBlock(this.stack[i]);
+    let callCount = 5; // Max number of enclosing procedure calls to examine.
+    const sp = this.stack.length - 1;
+    for (let i = sp - 1; i >= 0; i--) {
+        const block = this.target.blocks.getBlock(this.stack[i]);
         if (block.opcode === 'procedures_callnoreturn' &&
             block.mutation.proccode === procedureCode) {
             return true;

@@ -1,5 +1,5 @@
-var mutationAdapter = require('./mutation-adapter');
-var html = require('htmlparser2');
+const mutationAdapter = require('./mutation-adapter');
+const html = require('htmlparser2');
 
 /**
  * Convert outer blocks DOM from a Blockly CREATE event
@@ -8,22 +8,22 @@ var html = require('htmlparser2');
  * @param {Element} blocksDOM DOM tree for this event.
  * @return {Array.<object>} Usable list of blocks from this CREATE event.
  */
-var domToBlocks = function (blocksDOM) {
+const domToBlocks = function (blocksDOM) {
     // At this level, there could be multiple blocks adjacent in the DOM tree.
-    var blocks = {};
-    for (var i = 0; i < blocksDOM.length; i++) {
-        var block = blocksDOM[i];
+    const blocks = {};
+    for (let i = 0; i < blocksDOM.length; i++) {
+        const block = blocksDOM[i];
         if (!block.name || !block.attribs) {
             continue;
         }
-        var tagName = block.name.toLowerCase();
+        const tagName = block.name.toLowerCase();
         if (tagName === 'block' || tagName === 'shadow') {
             domToBlock(block, blocks, true, null);
         }
     }
     // Flatten blocks object into a list.
-    var blocksList = [];
-    for (var b in blocks) {
+    const blocksList = [];
+    for (const b in blocks) {
         if (!blocks.hasOwnProperty(b)) continue;
         blocksList.push(blocks[b]);
     }
@@ -36,7 +36,7 @@ var domToBlocks = function (blocksDOM) {
  * @param {object} e `Blockly.events.create`
  * @return {Array.<object>} List of blocks from this CREATE event.
  */
-var adapter = function (e) {
+const adapter = function (e) {
     // Validate input
     if (typeof e !== 'object') return;
     if (typeof e.xml !== 'object') return;
@@ -55,7 +55,7 @@ var adapter = function (e) {
  */
 var domToBlock = function (blockDOM, blocks, isTopBlock, parent) {
     // Block skeleton.
-    var block = {
+    const block = {
         id: blockDOM.attribs.id, // Block ID
         opcode: blockDOM.attribs.type, // For execution, "event_whengreenflag".
         inputs: {}, // Inputs to this block and the blocks they point to.
@@ -72,18 +72,18 @@ var domToBlock = function (blockDOM, blocks, isTopBlock, parent) {
     blocks[block.id] = block;
 
     // Process XML children and find enclosed blocks, fields, etc.
-    for (var i = 0; i < blockDOM.children.length; i++) {
-        var xmlChild = blockDOM.children[i];
+    for (let i = 0; i < blockDOM.children.length; i++) {
+        const xmlChild = blockDOM.children[i];
         // Enclosed blocks and shadows
-        var childBlockNode = null;
-        var childShadowNode = null;
-        for (var j = 0; j < xmlChild.children.length; j++) {
-            var grandChildNode = xmlChild.children[j];
+        let childBlockNode = null;
+        let childShadowNode = null;
+        for (let j = 0; j < xmlChild.children.length; j++) {
+            const grandChildNode = xmlChild.children[j];
             if (!grandChildNode.name) {
                 // Non-XML tag node.
                 continue;
             }
-            var grandChildNodeName = grandChildNode.name.toLowerCase();
+            const grandChildNodeName = grandChildNode.name.toLowerCase();
             if (grandChildNodeName === 'block') {
                 childBlockNode = grandChildNode;
             } else if (grandChildNodeName === 'shadow') {

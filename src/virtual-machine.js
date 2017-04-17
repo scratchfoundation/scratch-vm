@@ -1,25 +1,25 @@
-var EventEmitter = require('events');
-var util = require('util');
+const EventEmitter = require('events');
+const util = require('util');
 
-var log = require('./util/log');
-var Runtime = require('./engine/runtime');
-var ScratchStorage = require('scratch-storage');
-var sb2import = require('./import/sb2import');
-var StringUtil = require('./util/string-util');
+const log = require('./util/log');
+const Runtime = require('./engine/runtime');
+const ScratchStorage = require('scratch-storage');
+const sb2import = require('./import/sb2import');
+const StringUtil = require('./util/string-util');
 
-var loadCostume = require('./import/load-costume.js');
-var loadSound = require('./import/load-sound.js');
+const loadCostume = require('./import/load-costume.js');
+const loadSound = require('./import/load-sound.js');
 
-var RESERVED_NAMES = ['_mouse_', '_stage_', '_edge_', '_myself_', '_random_'];
+const RESERVED_NAMES = ['_mouse_', '_stage_', '_edge_', '_myself_', '_random_'];
 
-var AssetType = ScratchStorage.AssetType;
+const AssetType = ScratchStorage.AssetType;
 
 /**
  * Handles connections between blocks, stage, and extensions.
  * @constructor
  */
-var VirtualMachine = function () {
-    var instance = this;
+const VirtualMachine = function () {
+    const instance = this;
     // Bind event emitter and runtime to VM instance
     EventEmitter.call(instance);
     /**
@@ -34,28 +34,28 @@ var VirtualMachine = function () {
      */
     instance.editingTarget = null;
     // Runtime emits are passed along as VM emits.
-    instance.runtime.on(Runtime.SCRIPT_GLOW_ON, function (glowData) {
+    instance.runtime.on(Runtime.SCRIPT_GLOW_ON, glowData => {
         instance.emit(Runtime.SCRIPT_GLOW_ON, glowData);
     });
-    instance.runtime.on(Runtime.SCRIPT_GLOW_OFF, function (glowData) {
+    instance.runtime.on(Runtime.SCRIPT_GLOW_OFF, glowData => {
         instance.emit(Runtime.SCRIPT_GLOW_OFF, glowData);
     });
-    instance.runtime.on(Runtime.BLOCK_GLOW_ON, function (glowData) {
+    instance.runtime.on(Runtime.BLOCK_GLOW_ON, glowData => {
         instance.emit(Runtime.BLOCK_GLOW_ON, glowData);
     });
-    instance.runtime.on(Runtime.BLOCK_GLOW_OFF, function (glowData) {
+    instance.runtime.on(Runtime.BLOCK_GLOW_OFF, glowData => {
         instance.emit(Runtime.BLOCK_GLOW_OFF, glowData);
     });
-    instance.runtime.on(Runtime.PROJECT_RUN_START, function () {
+    instance.runtime.on(Runtime.PROJECT_RUN_START, () => {
         instance.emit(Runtime.PROJECT_RUN_START);
     });
-    instance.runtime.on(Runtime.PROJECT_RUN_STOP, function () {
+    instance.runtime.on(Runtime.PROJECT_RUN_STOP, () => {
         instance.emit(Runtime.PROJECT_RUN_STOP);
     });
-    instance.runtime.on(Runtime.VISUAL_REPORT, function (visualReport) {
+    instance.runtime.on(Runtime.VISUAL_REPORT, visualReport => {
         instance.emit(Runtime.VISUAL_REPORT, visualReport);
     });
-    instance.runtime.on(Runtime.SPRITE_INFO_REPORT, function (spriteInfo) {
+    instance.runtime.on(Runtime.SPRITE_INFO_REPORT, spriteInfo => {
         instance.emit(Runtime.SPRITE_INFO_REPORT, spriteInfo);
     });
 
@@ -120,13 +120,11 @@ VirtualMachine.prototype.clear = function () {
  * Get data for playground. Data comes back in an emitted event.
  */
 VirtualMachine.prototype.getPlaygroundData = function () {
-    var instance = this;
+    const instance = this;
     // Only send back thread data for the current editingTarget.
-    var threadData = this.runtime.threads.filter(function (thread) {
-        return thread.target === instance.editingTarget;
-    });
+    const threadData = this.runtime.threads.filter(thread => thread.target === instance.editingTarget);
     // Remove the target key, since it's a circular reference.
-    var filteredThreadData = JSON.stringify(threadData, function (key, value) {
+    const filteredThreadData = JSON.stringify(threadData, (key, value) => {
         if (key === 'target') return;
         return value;
     }, 2);
@@ -172,9 +170,9 @@ VirtualMachine.prototype.downloadProjectId = function (id) {
         log.error('No storage module present; cannot load project: ', id);
         return;
     }
-    var vm = this;
-    var promise = this.runtime.storage.load(AssetType.Project, id);
-    promise.then(function (projectAsset) {
+    const vm = this;
+    const promise = this.runtime.storage.load(AssetType.Project, id);
+    promise.then(projectAsset => {
         vm.loadProject(projectAsset.decodeText());
     });
 };
@@ -202,12 +200,12 @@ VirtualMachine.prototype.addSprite2 = function (json) {
  * @property {number} [bitmapResolution] - the resolution scale for a bitmap costume.
  */
 VirtualMachine.prototype.addCostume = function (md5ext, costumeObject) {
-    loadCostume(md5ext, costumeObject, this.runtime).then(function () {
+    loadCostume(md5ext, costumeObject, this.runtime).then(() => {
         this.editingTarget.sprite.costumes.push(costumeObject);
         this.editingTarget.setCostume(
             this.editingTarget.sprite.costumes.length - 1
         );
-    }.bind(this));
+    });
 };
 
 /**
@@ -216,10 +214,10 @@ VirtualMachine.prototype.addCostume = function (md5ext, costumeObject) {
  * @returns {?Promise} - a promise that resolves when the sound has been decoded and added
  */
 VirtualMachine.prototype.addSound = function (soundObject) {
-    return loadSound(soundObject, this.runtime).then(function () {
+    return loadSound(soundObject, this.runtime).then(() => {
         this.editingTarget.sprite.sounds.push(soundObject);
         this.emitTargetsUpdate();
-    }.bind(this));
+    });
 };
 
 /**
@@ -232,11 +230,11 @@ VirtualMachine.prototype.addSound = function (soundObject) {
  * @property {number} [bitmapResolution] - the resolution scale for a bitmap backdrop.
  */
 VirtualMachine.prototype.addBackdrop = function (md5ext, backdropObject) {
-    loadCostume(md5ext, backdropObject, this.runtime).then(function () {
-        var stage = this.runtime.getTargetForStage();
+    loadCostume(md5ext, backdropObject, this.runtime).then(() => {
+        const stage = this.runtime.getTargetForStage();
         stage.sprite.costumes.push(backdropObject);
         stage.setCostume(stage.sprite.costumes.length - 1);
-    }.bind(this));
+    });
 };
 
 /**
@@ -245,21 +243,17 @@ VirtualMachine.prototype.addBackdrop = function (md5ext, backdropObject) {
  * @param {string} newName New name of the sprite.
  */
 VirtualMachine.prototype.renameSprite = function (targetId, newName) {
-    var target = this.runtime.getTargetById(targetId);
+    const target = this.runtime.getTargetById(targetId);
     if (target) {
         if (!target.isSprite()) {
             throw new Error('Cannot rename non-sprite targets.');
         }
-        var sprite = target.sprite;
+        const sprite = target.sprite;
         if (!sprite) {
             throw new Error('No sprite associated with this target.');
         }
         if (newName && RESERVED_NAMES.indexOf(newName) === -1) {
-            var names = this.runtime.targets.filter(function (runtimeTarget) {
-                return runtimeTarget.isSprite();
-            }).map(function (runtimeTarget) {
-                return runtimeTarget.sprite.name;
-            });
+            const names = this.runtime.targets.filter(runtimeTarget => runtimeTarget.isSprite()).map(runtimeTarget => runtimeTarget.sprite.name);
 
             sprite.name = StringUtil.unusedName(newName, names);
         }
@@ -274,18 +268,18 @@ VirtualMachine.prototype.renameSprite = function (targetId, newName) {
  * @param {string} targetId ID of a target whose sprite to delete.
  */
 VirtualMachine.prototype.deleteSprite = function (targetId) {
-    var target = this.runtime.getTargetById(targetId);
+    const target = this.runtime.getTargetById(targetId);
     if (target) {
         if (!target.isSprite()) {
             throw new Error('Cannot delete non-sprite targets.');
         }
-        var sprite = target.sprite;
+        const sprite = target.sprite;
         if (!sprite) {
             throw new Error('No sprite associated with this target.');
         }
-        var currentEditingTarget = this.editingTarget;
-        for (var i = 0; i < sprite.clones.length; i++) {
-            var clone = sprite.clones[i];
+        const currentEditingTarget = this.editingTarget;
+        for (let i = 0; i < sprite.clones.length; i++) {
+            const clone = sprite.clones[i];
             this.runtime.stopForTarget(sprite.clones[i]);
             this.runtime.disposeTarget(sprite.clones[i]);
             // Ensure editing target is switched if we are deleting it.
@@ -355,7 +349,7 @@ VirtualMachine.prototype.setEditingTarget = function (targetId) {
     if (targetId === this.editingTarget.id) {
         return;
     }
-    var target = this.runtime.getTargetById(targetId);
+    const target = this.runtime.getTargetById(targetId);
     if (target) {
         this.editingTarget = target;
         // Emit appropriate UI updates.
@@ -373,12 +367,9 @@ VirtualMachine.prototype.setEditingTarget = function (targetId) {
 VirtualMachine.prototype.emitTargetsUpdate = function () {
     this.emit('targetsUpdate', {
         // [[target id, human readable target name], ...].
-        targetList: this.runtime.targets.filter(function (target) {
+        targetList: this.runtime.targets.filter(target =>
             // Don't report clones.
-            return !target.hasOwnProperty('isOriginal') || target.isOriginal;
-        }).map(function (target) {
-            return target.toJSON();
-        }),
+             !target.hasOwnProperty('isOriginal') || target.isOriginal).map(target => target.toJSON()),
         // Currently editing target id.
         editingTarget: this.editingTarget ? this.editingTarget.id : null
     });
@@ -400,7 +391,7 @@ VirtualMachine.prototype.emitWorkspaceUpdate = function () {
  * @returns {?string} The target id, if found. Will also be null if the target found is the stage.
  */
 VirtualMachine.prototype.getTargetIdForDrawableId = function (drawableId) {
-    var target = this.runtime.getTargetByDrawableId(drawableId);
+    const target = this.runtime.getTargetByDrawableId(drawableId);
     if (target && target.hasOwnProperty('id') && target.hasOwnProperty('isStage') && !target.isStage) {
         return target.id;
     }
@@ -413,7 +404,7 @@ VirtualMachine.prototype.getTargetIdForDrawableId = function (drawableId) {
  * @param {string} targetId The id for the target to put into a drag state
  */
 VirtualMachine.prototype.startDrag = function (targetId) {
-    var target = this.runtime.getTargetById(targetId);
+    const target = this.runtime.getTargetById(targetId);
     if (target) {
         target.startDrag();
         this.setEditingTarget(target.id);
@@ -425,7 +416,7 @@ VirtualMachine.prototype.startDrag = function (targetId) {
  * @param {string} targetId The id for the target to remove from the drag state
  */
 VirtualMachine.prototype.stopDrag = function (targetId) {
-    var target = this.runtime.getTargetById(targetId);
+    const target = this.runtime.getTargetById(targetId);
     if (target) target.stopDrag();
 };
 

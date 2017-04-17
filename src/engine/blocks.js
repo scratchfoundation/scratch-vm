@@ -1,6 +1,6 @@
-var adapter = require('./adapter');
-var mutationAdapter = require('./mutation-adapter');
-var xmlEscape = require('../util/xml-escape');
+const adapter = require('./adapter');
+const mutationAdapter = require('./mutation-adapter');
+const xmlEscape = require('../util/xml-escape');
 
 /**
  * @fileoverview
@@ -8,7 +8,7 @@ var xmlEscape = require('../util/xml-escape');
  * and handle updates from Scratch Blocks events.
  */
 
-var Blocks = function () {
+const Blocks = function () {
     /**
      * All blocks in the workspace.
      * Keys are block IDs, values are metadata about the block.
@@ -54,7 +54,7 @@ Blocks.prototype.getScripts = function () {
   * @return {?string} ID of next block in the sequence
   */
 Blocks.prototype.getNextBlock = function (id) {
-    var block = this._blocks[id];
+    const block = this._blocks[id];
     return (typeof block === 'undefined') ? null : block.next;
 };
 
@@ -65,17 +65,17 @@ Blocks.prototype.getNextBlock = function (id) {
  * @return {?string} ID of block in the branch.
  */
 Blocks.prototype.getBranch = function (id, branchNum) {
-    var block = this._blocks[id];
+    const block = this._blocks[id];
     if (typeof block === 'undefined') return null;
     if (!branchNum) branchNum = 1;
 
-    var inputName = Blocks.BRANCH_INPUT_PREFIX;
+    let inputName = Blocks.BRANCH_INPUT_PREFIX;
     if (branchNum > 1) {
         inputName += branchNum;
     }
 
     // Empty C-block?
-    var input = block.inputs[inputName];
+    const input = block.inputs[inputName];
     return (typeof input === 'undefined') ? null : input.block;
 };
 
@@ -104,8 +104,8 @@ Blocks.prototype.getFields = function (block) {
  */
 Blocks.prototype.getInputs = function (block) {
     if (typeof block === 'undefined') return null;
-    var inputs = {};
-    for (var input in block.inputs) {
+    const inputs = {};
+    for (const input in block.inputs) {
         // Ignore blocks prefixed with branch prefix.
         if (input.substring(0, Blocks.BRANCH_INPUT_PREFIX.length) !==
             Blocks.BRANCH_INPUT_PREFIX) {
@@ -130,7 +130,7 @@ Blocks.prototype.getMutation = function (block) {
  * @return {?string} ID of top-level script block.
  */
 Blocks.prototype.getTopLevelScript = function (id) {
-    var block = this._blocks[id];
+    let block = this._blocks[id];
     if (typeof block === 'undefined') return null;
     while (block.parent !== null) {
         block = this._blocks[block.parent];
@@ -144,9 +144,9 @@ Blocks.prototype.getTopLevelScript = function (id) {
  * @return {?string} ID of procedure definition.
  */
 Blocks.prototype.getProcedureDefinition = function (name) {
-    for (var id in this._blocks) {
+    for (const id in this._blocks) {
         if (!this._blocks.hasOwnProperty(id)) continue;
-        var block = this._blocks[id];
+        const block = this._blocks[id];
         if ((block.opcode === 'procedures_defnoreturn' ||
             block.opcode === 'procedures_defreturn') &&
             block.mutation.proccode === name) {
@@ -162,9 +162,9 @@ Blocks.prototype.getProcedureDefinition = function (name) {
  * @return {?string} ID of procedure definition.
  */
 Blocks.prototype.getProcedureParamNames = function (name) {
-    for (var id in this._blocks) {
+    for (const id in this._blocks) {
         if (!this._blocks.hasOwnProperty(id)) continue;
-        var block = this._blocks[id];
+        const block = this._blocks[id];
         if ((block.opcode === 'procedures_defnoreturn' ||
             block.opcode === 'procedures_defreturn') &&
             block.mutation.proccode === name) {
@@ -201,7 +201,7 @@ Blocks.prototype.blocklyListen = function (e, optRuntime) {
     case 'create':
         var newBlocks = adapter(e);
         // A create event can create many blocks. Add them all.
-        for (var i = 0; i < newBlocks.length; i++) {
+        for (let i = 0; i < newBlocks.length; i++) {
             this.createBlock(newBlocks[i]);
         }
         break;
@@ -270,7 +270,7 @@ Blocks.prototype.createBlock = function (block) {
 Blocks.prototype.changeBlock = function (args) {
     // Validate
     if (args.element !== 'field' && args.element !== 'mutation') return;
-    var block = this._blocks[args.id];
+    const block = this._blocks[args.id];
     if (typeof block === 'undefined') return;
 
     if (args.element === 'field') {
@@ -299,7 +299,7 @@ Blocks.prototype.moveBlock = function (e) {
 
     // Remove from any old parent.
     if (typeof e.oldParent !== 'undefined') {
-        var oldParent = this._blocks[e.oldParent];
+        const oldParent = this._blocks[e.oldParent];
         if (typeof e.oldInput !== 'undefined' &&
             oldParent.inputs[e.oldInput].block === e.id) {
             // This block was connected to the old parent's input.
@@ -324,7 +324,7 @@ Blocks.prototype.moveBlock = function (e) {
         } else {
             // Moved to the new parent's input.
             // Don't obscure the shadow block.
-            var oldShadow = null;
+            let oldShadow = null;
             if (this._blocks[e.newParent].inputs.hasOwnProperty(e.newInput)) {
                 oldShadow = this._blocks[e.newParent].inputs[e.newInput].shadow;
             }
@@ -346,7 +346,7 @@ Blocks.prototype.deleteBlock = function (e) {
     // @todo In runtime, stop threads running on this script.
 
     // Get block
-    var block = this._blocks[e.id];
+    const block = this._blocks[e.id];
 
     // Delete children
     if (block.next !== null) {
@@ -354,7 +354,7 @@ Blocks.prototype.deleteBlock = function (e) {
     }
 
     // Delete inputs (including branches)
-    for (var input in block.inputs) {
+    for (const input in block.inputs) {
         // If it's null, the block in this input moved away.
         if (block.inputs[input].block !== null) {
             this.deleteBlock({id: block.inputs[input].block});
@@ -381,11 +381,11 @@ Blocks.prototype.deleteBlock = function (e) {
  * @return {string} String of XML representing this object's blocks.
  */
 Blocks.prototype.toXML = function () {
-    var xmlString = '<xml xmlns="http://www.w3.org/1999/xhtml">';
-    for (var i = 0; i < this._scripts.length; i++) {
+    let xmlString = '<xml xmlns="http://www.w3.org/1999/xhtml">';
+    for (let i = 0; i < this._scripts.length; i++) {
         xmlString += this.blockToXML(this._scripts[i]);
     }
-    return xmlString + '</xml>';
+    return `${xmlString}</xml>`;
 };
 
 /**
@@ -395,29 +395,29 @@ Blocks.prototype.toXML = function () {
  * @return {string} String of XML representing this block and any children.
  */
 Blocks.prototype.blockToXML = function (blockId) {
-    var block = this._blocks[blockId];
+    const block = this._blocks[blockId];
     // Encode properties of this block.
-    var tagName = (block.shadow) ? 'shadow' : 'block';
-    var xy = (block.topLevel) ?
-        ' x="' + block.x + '" y="' + block.y + '"' :
+    const tagName = (block.shadow) ? 'shadow' : 'block';
+    const xy = (block.topLevel) ?
+        ` x="${block.x}" y="${block.y}"` :
         '';
-    var xmlString = '';
-    xmlString += '<' + tagName +
-        ' id="' + block.id + '"' +
-        ' type="' + block.opcode + '"' +
-        xy +
-        '>';
+    let xmlString = '';
+    xmlString += `<${tagName
+        } id="${block.id}"` +
+        ` type="${block.opcode}"${
+        xy
+        }>`;
     // Add any mutation. Must come before inputs.
     if (block.mutation) {
         xmlString += this.mutationToXML(block.mutation);
     }
     // Add any inputs on this block.
-    for (var input in block.inputs) {
+    for (const input in block.inputs) {
         if (!block.inputs.hasOwnProperty(input)) continue;
-        var blockInput = block.inputs[input];
+        const blockInput = block.inputs[input];
         // Only encode a value tag if the value input is occupied.
         if (blockInput.block || blockInput.shadow) {
-            xmlString += '<value name="' + blockInput.name + '">';
+            xmlString += `<value name="${blockInput.name}">`;
             if (blockInput.block) {
                 xmlString += this.blockToXML(blockInput.block);
             }
@@ -429,21 +429,21 @@ Blocks.prototype.blockToXML = function (blockId) {
         }
     }
     // Add any fields on this block.
-    for (var field in block.fields) {
+    for (const field in block.fields) {
         if (!block.fields.hasOwnProperty(field)) continue;
-        var blockField = block.fields[field];
-        var value = blockField.value;
+        const blockField = block.fields[field];
+        let value = blockField.value;
         if (typeof value === 'string') {
             value = xmlEscape(blockField.value);
         }
-        xmlString += '<field name="' + blockField.name + '">' +
-            value + '</field>';
+        xmlString += `<field name="${blockField.name}">${
+            value}</field>`;
     }
     // Add blocks connected to the next connection.
     if (block.next) {
-        xmlString += '<next>' + this.blockToXML(block.next) + '</next>';
+        xmlString += `<next>${this.blockToXML(block.next)}</next>`;
     }
-    xmlString += '</' + tagName + '>';
+    xmlString += `</${tagName}>`;
     return xmlString;
 };
 
@@ -453,18 +453,18 @@ Blocks.prototype.blockToXML = function (blockId) {
  * @return {string} XML string representing a mutation.
  */
 Blocks.prototype.mutationToXML = function (mutation) {
-    var mutationString = '<' + mutation.tagName;
-    for (var prop in mutation) {
+    let mutationString = `<${mutation.tagName}`;
+    for (const prop in mutation) {
         if (prop === 'children' || prop === 'tagName') continue;
-        var mutationValue = (typeof mutation[prop] === 'string') ?
+        const mutationValue = (typeof mutation[prop] === 'string') ?
             xmlEscape(mutation[prop]) : mutation[prop];
-        mutationString += ' ' + prop + '="' + mutationValue + '"';
+        mutationString += ` ${prop}="${mutationValue}"`;
     }
     mutationString += '>';
-    for (var i = 0; i < mutation.children.length; i++) {
+    for (let i = 0; i < mutation.children.length; i++) {
         mutationString += this.mutationToXML(mutation.children[i]);
     }
-    mutationString += '</' + mutation.tagName + '>';
+    mutationString += `</${mutation.tagName}>`;
     return mutationString;
 };
 
@@ -475,7 +475,7 @@ Blocks.prototype.mutationToXML = function (mutation) {
  * @param {?string} topBlockId ID of block that starts the script.
  */
 Blocks.prototype._addScript = function (topBlockId) {
-    var i = this._scripts.indexOf(topBlockId);
+    const i = this._scripts.indexOf(topBlockId);
     if (i > -1) return; // Already in scripts.
     this._scripts.push(topBlockId);
     // Update `topLevel` property on the top block.
@@ -487,7 +487,7 @@ Blocks.prototype._addScript = function (topBlockId) {
  * @param {?string} topBlockId ID of block that starts the script.
  */
 Blocks.prototype._deleteScript = function (topBlockId) {
-    var i = this._scripts.indexOf(topBlockId);
+    const i = this._scripts.indexOf(topBlockId);
     if (i > -1) this._scripts.splice(i, 1);
     // Update `topLevel` property on the top block.
     if (this._blocks[topBlockId]) this._blocks[topBlockId].topLevel = false;

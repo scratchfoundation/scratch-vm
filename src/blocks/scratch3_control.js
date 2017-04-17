@@ -1,7 +1,7 @@
-var Cast = require('../util/cast');
-var Timer = require('../util/timer');
+const Cast = require('../util/cast');
+const Timer = require('../util/timer');
 
-var Scratch3ControlBlocks = function (runtime) {
+const Scratch3ControlBlocks = function (runtime) {
     /**
      * The runtime instantiating this block package.
      * @type {Runtime}
@@ -37,7 +37,7 @@ Scratch3ControlBlocks.prototype.getHats = function () {
 };
 
 Scratch3ControlBlocks.prototype.repeat = function (args, util) {
-    var times = Math.floor(Cast.toNumber(args.TIMES));
+    const times = Math.floor(Cast.toNumber(args.TIMES));
     // Initialize loop
     if (typeof util.stackFrame.loopCounter === 'undefined') {
         util.stackFrame.loopCounter = times;
@@ -54,7 +54,7 @@ Scratch3ControlBlocks.prototype.repeat = function (args, util) {
 };
 
 Scratch3ControlBlocks.prototype.repeatUntil = function (args, util) {
-    var condition = Cast.toBoolean(args.CONDITION);
+    const condition = Cast.toBoolean(args.CONDITION);
     // If the condition is true, start the branch.
     if (!condition) {
         util.startBranch(1, true);
@@ -62,7 +62,7 @@ Scratch3ControlBlocks.prototype.repeatUntil = function (args, util) {
 };
 
 Scratch3ControlBlocks.prototype.waitUntil = function (args, util) {
-    var condition = Cast.toBoolean(args.CONDITION);
+    const condition = Cast.toBoolean(args.CONDITION);
     if (!condition) {
         util.yield();
     }
@@ -79,7 +79,7 @@ Scratch3ControlBlocks.prototype.wait = function (args, util) {
         util.yield();
         this.runtime.requestRedraw();
     } else {
-        var duration = Math.max(0, 1000 * Cast.toNumber(args.DURATION));
+        const duration = Math.max(0, 1000 * Cast.toNumber(args.DURATION));
         if (util.stackFrame.timer.timeElapsed() < duration) {
             util.yield();
         }
@@ -87,14 +87,14 @@ Scratch3ControlBlocks.prototype.wait = function (args, util) {
 };
 
 Scratch3ControlBlocks.prototype.if = function (args, util) {
-    var condition = Cast.toBoolean(args.CONDITION);
+    const condition = Cast.toBoolean(args.CONDITION);
     if (condition) {
         util.startBranch(1, false);
     }
 };
 
 Scratch3ControlBlocks.prototype.ifElse = function (args, util) {
-    var condition = Cast.toBoolean(args.CONDITION);
+    const condition = Cast.toBoolean(args.CONDITION);
     if (condition) {
         util.startBranch(1, false);
     } else {
@@ -103,7 +103,7 @@ Scratch3ControlBlocks.prototype.ifElse = function (args, util) {
 };
 
 Scratch3ControlBlocks.prototype.stop = function (args, util) {
-    var option = args.STOP_OPTION;
+    const option = args.STOP_OPTION;
     if (option === 'all') {
         util.stopAll();
     } else if (option === 'other scripts in sprite' ||
@@ -115,7 +115,7 @@ Scratch3ControlBlocks.prototype.stop = function (args, util) {
 };
 
 Scratch3ControlBlocks.prototype.createClone = function (args, util) {
-    var cloneTarget;
+    let cloneTarget;
     if (args.CLONE_OPTION === '_myself_') {
         cloneTarget = util.target;
     } else {
@@ -124,7 +124,7 @@ Scratch3ControlBlocks.prototype.createClone = function (args, util) {
     if (!cloneTarget) {
         return;
     }
-    var newClone = cloneTarget.makeClone();
+    const newClone = cloneTarget.makeClone();
     if (newClone) {
         this.runtime.targets.push(newClone);
     }

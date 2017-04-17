@@ -1,4 +1,4 @@
-var html = require('htmlparser2');
+const html = require('htmlparser2');
 
 /**
  * Convert a part of a mutation DOM to a mutation VM object, recursively.
@@ -6,14 +6,14 @@ var html = require('htmlparser2');
  * @return {object} Object representing useful parts of this mutation.
  */
 var mutatorTagToObject = function (dom) {
-    var obj = Object.create(null);
+    const obj = Object.create(null);
     obj.tagName = dom.name;
     obj.children = [];
-    for (var prop in dom.attribs) {
+    for (const prop in dom.attribs) {
         if (prop === 'xmlns') continue;
         obj[prop] = dom.attribs[prop];
     }
-    for (var i = 0; i < dom.children.length; i++) {
+    for (let i = 0; i < dom.children.length; i++) {
         obj.children.push(
             mutatorTagToObject(dom.children[i])
         );
@@ -27,8 +27,8 @@ var mutatorTagToObject = function (dom) {
  * @param {(object|string)} mutation Mutation XML string or DOM.
  * @return {object} Object representing the mutation.
  */
-var mutationAdpater = function (mutation) {
-    var mutationParsed;
+const mutationAdpater = function (mutation) {
+    let mutationParsed;
     // Check if the mutation is already parsed; if not, parse it.
     if (typeof mutation === 'object') {
         mutationParsed = mutation;

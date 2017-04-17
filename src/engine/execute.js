@@ -1,12 +1,12 @@
-var log = require('../util/log');
-var Thread = require('./thread');
+const log = require('../util/log');
+const Thread = require('./thread');
 
 /**
  * Utility function to determine if a value is a Promise.
  * @param {*} value Value to check for a Promise.
  * @return {boolean} True if the value appears to be a Promise.
  */
-var isPromise = function (value) {
+const isPromise = function (value) {
     return value && value.then && typeof value.then === 'function';
 };
 
@@ -16,8 +16,8 @@ var isPromise = function (value) {
  * @param {!Thread} thread Thread which to read and execute.
  */
 var execute = function (sequencer, thread) {
-    var runtime = sequencer.runtime;
-    var target = thread.target;
+    const runtime = sequencer.runtime;
+    const target = thread.target;
 
     // Stop if block or target no longer exists.
     if (target === null) {
@@ -27,11 +27,11 @@ var execute = function (sequencer, thread) {
     }
 
     // Current block to execute is the one on the top of the stack.
-    var currentBlockId = thread.peekStack();
-    var currentStackFrame = thread.peekStackFrame();
+    const currentBlockId = thread.peekStack();
+    const currentStackFrame = thread.peekStackFrame();
 
-    var blockContainer = target.blocks;
-    var block = blockContainer.getBlock(currentBlockId);
+    let blockContainer = target.blocks;
+    let block = blockContainer.getBlock(currentBlockId);
     if (typeof block === 'undefined') {
         blockContainer = runtime.flyoutBlocks;
         block = blockContainer.getBlock(currentBlockId);
@@ -43,15 +43,15 @@ var execute = function (sequencer, thread) {
         }
     }
 
-    var opcode = blockContainer.getOpcode(block);
-    var fields = blockContainer.getFields(block);
-    var inputs = blockContainer.getInputs(block);
-    var blockFunction = runtime.getOpcodeFunction(opcode);
-    var isHat = runtime.getIsHat(opcode);
+    const opcode = blockContainer.getOpcode(block);
+    const fields = blockContainer.getFields(block);
+    const inputs = blockContainer.getInputs(block);
+    const blockFunction = runtime.getOpcodeFunction(opcode);
+    const isHat = runtime.getIsHat(opcode);
 
 
     if (!opcode) {
-        log.warn('Could not get opcode for block: ' + currentBlockId);
+        log.warn(`Could not get opcode for block: ${currentBlockId}`);
         return;
     }
 
@@ -60,18 +60,18 @@ var execute = function (sequencer, thread) {
      * or after a promise resolves.
      * @param {*} resolvedValue Value eventually returned from the primitive.
      */
-    var handleReport = function (resolvedValue) {
+    const handleReport = function (resolvedValue) {
         thread.pushReportedValue(resolvedValue);
         if (isHat) {
             // Hat predicate was evaluated.
             if (runtime.getIsEdgeActivatedHat(opcode)) {
                 // If this is an edge-activated hat, only proceed if
                 // the value is true and used to be false.
-                var oldEdgeValue = runtime.updateEdgeActivatedValue(
+                const oldEdgeValue = runtime.updateEdgeActivatedValue(
                     currentBlockId,
                     resolvedValue
                 );
-                var edgeWasActivated = !oldEdgeValue && resolvedValue;
+                const edgeWasActivated = !oldEdgeValue && resolvedValue;
                 if (!edgeWasActivated) {
                     sequencer.retireThread(thread);
                 }
@@ -104,31 +104,31 @@ var execute = function (sequencer, thread) {
             // Skip through the block (hat with no predicate).
             return;
         }
-        var keys = Object.keys(fields);
+        const keys = Object.keys(fields);
         if (keys.length === 1 && Object.keys(inputs).length === 0) {
             // One field and no inputs - treat as arg.
             handleReport(fields[keys[0]].value);
         } else {
-            log.warn('Could not get implementation for opcode: ' + opcode);
+            log.warn(`Could not get implementation for opcode: ${opcode}`);
         }
         thread.requestScriptGlowInFrame = true;
         return;
     }
 
     // Generate values for arguments (inputs).
-    var argValues = {};
+    const argValues = {};
 
     // Add all fields on this block to the argValues.
-    for (var fieldName in fields) {
+    for (const fieldName in fields) {
         if (!fields.hasOwnProperty(fieldName)) continue;
         argValues[fieldName] = fields[fieldName].value;
     }
 
     // Recursively evaluate input blocks.
-    for (var inputName in inputs) {
+    for (const inputName in inputs) {
         if (!inputs.hasOwnProperty(inputName)) continue;
-        var input = inputs[inputName];
-        var inputBlockId = input.block;
+        const input = inputs[inputName];
+        const inputBlockId = input.block;
         // Is there no value for this input waiting in the stack frame?
         if (inputBlockId !== null && typeof currentStackFrame.reported[inputName] === 'undefined') {
             // If there's not, we need to evaluate the block.
@@ -151,7 +151,7 @@ var execute = function (sequencer, thread) {
     }
 
     // Add any mutation to args (e.g., for procedures).
-    var mutation = blockContainer.getMutation(block);
+    const mutation = blockContainer.getMutation(block);
     if (mutation !== null) {
         argValues.mutation = mutation;
     }
@@ -162,7 +162,7 @@ var execute = function (sequencer, thread) {
     // (e.g., on return from a branch) gets fresh inputs.
     currentStackFrame.reported = {};
 
-    var primitiveReportedValue = null;
+    let primitiveReportedValue = null;
     primitiveReportedValue = blockFunction(argValues, {
         stackFrame: currentStackFrame.executionContext,
         target: target,
@@ -201,7 +201,7 @@ var execute = function (sequencer, thread) {
         ioQuery: function (device, func, args) {
             // Find the I/O device and execute the query/function call.
             if (runtime.ioDevices[device] && runtime.ioDevices[device][func]) {
-                var devObject = runtime.ioDevices[device];
+                const devObject = runtime.ioDevices[device];
                 // @todo Figure out why eslint complains about no-useless-call
                 // no-useless-call can't tell if the call is useless for dynamic
                 // expressions... or something. Not exactly sure why it
@@ -225,13 +225,13 @@ var execute = function (sequencer, thread) {
             thread.status = Thread.STATUS_PROMISE_WAIT;
         }
         // Promise handlers
-        primitiveReportedValue.then(function (resolvedValue) {
+        primitiveReportedValue.then(resolvedValue => {
             handleReport(resolvedValue);
             if (typeof resolvedValue === 'undefined') {
                 do {
                     // In the case that the promise is the last block in the current thread stack
                     // We need to pop out repeatedly until we find the next block.
-                    var popped = thread.popStack();
+                    const popped = thread.popStack();
                     if (popped === null) {
                         return;
                     }
@@ -249,7 +249,7 @@ var execute = function (sequencer, thread) {
             } else {
                 thread.popStack();
             }
-        }, function (rejectionReason) {
+        }, rejectionReason => {
             // Promise rejected: the primitive had some error.
             // Log it and proceed.
             log.warn('Primitive rejected promise: ', rejectionReason);

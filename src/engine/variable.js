@@ -9,7 +9,7 @@
  * @param {boolean} isCloud Whether the variable is stored in the cloud.
  * @constructor
  */
-var Variable = function (name, value, isCloud) {
+const Variable = function (name, value, isCloud) {
     this.name = name;
     this.value = value;
     this.isCloud = isCloud;

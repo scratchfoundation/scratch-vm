@@ -1,6 +1,6 @@
-var Timer = require('../util/timer');
+const Timer = require('../util/timer');
 
-var Clock = function (runtime) {
+const Clock = function (runtime) {
     this._projectTimer = new Timer();
     this._projectTimer.start();
     this._pausedTime = null;
@@ -26,7 +26,7 @@ Clock.prototype.pause = function () {
 
 Clock.prototype.resume = function () {
     this._paused = false;
-    var dt = this._projectTimer.timeElapsed() - this._pausedTime;
+    const dt = this._projectTimer.timeElapsed() - this._pausedTime;
     this._projectTimer.startTime += dt;
 };
 

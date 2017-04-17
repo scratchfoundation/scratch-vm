@@ -1,15 +1,15 @@
-var EventEmitter = require('events');
-var Sequencer = require('./sequencer');
-var Blocks = require('./blocks');
-var Thread = require('./thread');
-var util = require('util');
+const EventEmitter = require('events');
+const Sequencer = require('./sequencer');
+const Blocks = require('./blocks');
+const Thread = require('./thread');
+const util = require('util');
 
 // Virtual I/O devices.
-var Clock = require('../io/clock');
-var Keyboard = require('../io/keyboard');
-var Mouse = require('../io/mouse');
+const Clock = require('../io/clock');
+const Keyboard = require('../io/keyboard');
+const Mouse = require('../io/mouse');
 
-var defaultBlockPackages = {
+const defaultBlockPackages = {
     scratch3_control: require('../blocks/scratch3_control'),
     scratch3_event: require('../blocks/scratch3_event'),
     scratch3_looks: require('../blocks/scratch3_looks'),
@@ -26,7 +26,7 @@ var defaultBlockPackages = {
  * Manages targets, scripts, and the sequencer.
  * @constructor
  */
-var Runtime = function () {
+const Runtime = function () {
     // Bind event emitter
     EventEmitter.call(this);
 
@@ -237,14 +237,14 @@ Runtime.MAX_CLONES = 300;
  * @private
  */
 Runtime.prototype._registerBlockPackages = function () {
-    for (var packageName in defaultBlockPackages) {
+    for (const packageName in defaultBlockPackages) {
         if (defaultBlockPackages.hasOwnProperty(packageName)) {
             // @todo pass a different runtime depending on package privilege?
-            var packageObject = new (defaultBlockPackages[packageName])(this);
+            const packageObject = new (defaultBlockPackages[packageName])(this);
             // Collect primitives from package.
             if (packageObject.getPrimitives) {
-                var packagePrimitives = packageObject.getPrimitives();
-                for (var op in packagePrimitives) {
+                const packagePrimitives = packageObject.getPrimitives();
+                for (const op in packagePrimitives) {
                     if (packagePrimitives.hasOwnProperty(op)) {
                         this._primitives[op] =
                             packagePrimitives[op].bind(packageObject);
@@ -253,8 +253,8 @@ Runtime.prototype._registerBlockPackages = function () {
             }
             // Collect hat metadata from package.
             if (packageObject.getHats) {
-                var packageHats = packageObject.getHats();
-                for (var hatName in packageHats) {
+                const packageHats = packageObject.getHats();
+                for (const hatName in packageHats) {
                     if (packageHats.hasOwnProperty(hatName)) {
                         this._hats[hatName] = packageHats[hatName];
                     }
@@ -299,7 +299,7 @@ Runtime.prototype.getIsEdgeActivatedHat = function (opcode) {
  * @return {*} The old value for the edge-activated hat.
  */
 Runtime.prototype.updateEdgeActivatedValue = function (blockId, newValue) {
-    var oldValue = this._edgeActivatedHatValues[blockId];
+    const oldValue = this._edgeActivatedHatValues[blockId];
     this._edgeActivatedHatValues[blockId] = newValue;
     return oldValue;
 };
@@ -345,7 +345,7 @@ Runtime.prototype.attachStorage = function (storage) {
  * @return {!Thread} The newly created thread.
  */
 Runtime.prototype._pushThread = function (id, target) {
-    var thread = new Thread(id);
+    const thread = new Thread(id);
     thread.target = target;
     thread.pushStack(id);
     this.threads.push(thread);
@@ -360,7 +360,7 @@ Runtime.prototype._removeThread = function (thread) {
     // Inform sequencer to stop executing that thread.
     this.sequencer.retireThread(thread);
     // Remove from the list.
-    var i = this.threads.indexOf(thread);
+    const i = this.threads.indexOf(thread);
     if (i > -1) {
         this.threads.splice(i, 1);
     }
@@ -373,10 +373,10 @@ Runtime.prototype._removeThread = function (thread) {
  * @param {!Thread} thread Thread object to restart.
  */
 Runtime.prototype._restartThread = function (thread) {
-    var newThread = new Thread(thread.topBlock);
+    const newThread = new Thread(thread.topBlock);
     newThread.target = thread.target;
     newThread.pushStack(thread.topBlock);
-    var i = this.threads.indexOf(thread);
+    const i = this.threads.indexOf(thread);
     if (i > -1) {
         this.threads[i] = newThread;
     } else {
@@ -399,7 +399,7 @@ Runtime.prototype.isActiveThread = function (thread) {
  */
 Runtime.prototype.toggleScript = function (topBlockId) {
     // Remove any existing thread.
-    for (var i = 0; i < this.threads.length; i++) {
+    for (let i = 0; i < this.threads.length; i++) {
         if (this.threads[i].topBlock === topBlockId) {
             this._removeThread(this.threads[i]);
             return;
@@ -418,15 +418,15 @@ Runtime.prototype.toggleScript = function (topBlockId) {
  * @param {Target=} optTarget Optionally, a target to restrict to.
  */
 Runtime.prototype.allScriptsDo = function (f, optTarget) {
-    var targets = this.targets;
+    let targets = this.targets;
     if (optTarget) {
         targets = [optTarget];
     }
-    for (var t = targets.length - 1; t >= 0; t--) {
-        var target = targets[t];
-        var scripts = target.blocks.getScripts();
-        for (var j = 0; j < scripts.length; j++) {
-            var topBlockId = scripts[j];
+    for (let t = targets.length - 1; t >= 0; t--) {
+        const target = targets[t];
+        const scripts = target.blocks.getScripts();
+        for (let j = 0; j < scripts.length; j++) {
+            const topBlockId = scripts[j];
             f(topBlockId, target);
         }
     }
@@ -445,19 +445,19 @@ Runtime.prototype.startHats = function (requestedHatOpcode,
         // No known hat with this opcode.
         return;
     }
-    var instance = this;
-    var newThreads = [];
+    const instance = this;
+    const newThreads = [];
 
-    for (var opts in optMatchFields) {
+    for (const opts in optMatchFields) {
         if (!optMatchFields.hasOwnProperty(opts)) continue;
         optMatchFields[opts] = optMatchFields[opts].toUpperCase();
     }
 
     // Consider all scripts, looking for hats with opcode `requestedHatOpcode`.
-    this.allScriptsDo(function (topBlockId, target) {
-        var blocks = target.blocks;
-        var block = blocks.getBlock(topBlockId);
-        var potentialHatOpcode = block.opcode;
+    this.allScriptsDo((topBlockId, target) => {
+        const blocks = target.blocks;
+        const block = blocks.getBlock(topBlockId);
+        const potentialHatOpcode = block.opcode;
         if (potentialHatOpcode !== requestedHatOpcode) {
             // Not the right hat.
             return;
@@ -468,22 +468,22 @@ Runtime.prototype.startHats = function (requestedHatOpcode,
         // This needs to happen before the block is evaluated
         // (i.e., before the predicate can be run) because "broadcast and wait"
         // needs to have a precise collection of started threads.
-        var hatFields = blocks.getFields(block);
+        let hatFields = blocks.getFields(block);
 
         // If no fields are present, check inputs (horizontal blocks)
         if (Object.keys(hatFields).length === 0) {
-            var hatInputs = blocks.getInputs(block);
-            for (var input in hatInputs) {
+            const hatInputs = blocks.getInputs(block);
+            for (const input in hatInputs) {
                 if (!hatInputs.hasOwnProperty(input)) continue;
-                var id = hatInputs[input].block;
-                var inpBlock = blocks.getBlock(id);
-                var fields = blocks.getFields(inpBlock);
+                const id = hatInputs[input].block;
+                const inpBlock = blocks.getBlock(id);
+                const fields = blocks.getFields(inpBlock);
                 hatFields = Object.assign(fields, hatFields);
             }
         }
 
         if (optMatchFields) {
-            for (var matchField in optMatchFields) {
+            for (const matchField in optMatchFields) {
                 if (hatFields[matchField].value.toUpperCase() !==
                     optMatchFields[matchField]) {
                     // Field mismatch.
@@ -493,11 +493,11 @@ Runtime.prototype.startHats = function (requestedHatOpcode,
         }
 
         // Look up metadata for the relevant hat.
-        var hatMeta = instance._hats[requestedHatOpcode];
+        const hatMeta = instance._hats[requestedHatOpcode];
         if (hatMeta.restartExistingThreads) {
             // If `restartExistingThreads` is true, we should stop
             // any existing threads starting with the top block.
-            for (var i = 0; i < instance.threads.length; i++) {
+            for (let i = 0; i < instance.threads.length; i++) {
                 if (instance.threads[i].topBlock === topBlockId &&
                     instance.threads[i].target === target) {
                     instance._restartThread(instance.threads[i]);
@@ -507,7 +507,7 @@ Runtime.prototype.startHats = function (requestedHatOpcode,
         } else {
             // If `restartExistingThreads` is false, we should
             // give up if any threads with the top block are running.
-            for (var j = 0; j < instance.threads.length; j++) {
+            for (let j = 0; j < instance.threads.length; j++) {
                 if (instance.threads[j].topBlock === topBlockId &&
                     instance.threads[j].target === target) {
                     // Some thread is already running.
@@ -534,7 +534,7 @@ Runtime.prototype.dispose = function () {
  * @param {!Target} disposingTarget Target to dispose of.
  */
 Runtime.prototype.disposeTarget = function (disposingTarget) {
-    this.targets = this.targets.filter(function (target) {
+    this.targets = this.targets.filter(target => {
         if (disposingTarget !== target) return true;
         // Allow target to do dispose actions.
         target.dispose();
@@ -550,7 +550,7 @@ Runtime.prototype.disposeTarget = function (disposingTarget) {
  */
 Runtime.prototype.stopForTarget = function (target, optThreadException) {
     // Stop any threads on the target.
-    for (var i = 0; i < this.threads.length; i++) {
+    for (let i = 0; i < this.threads.length; i++) {
         if (this.threads[i] === optThreadException) {
             continue;
         }
@@ -568,7 +568,7 @@ Runtime.prototype.greenFlag = function () {
     this.ioDevices.clock.resetProjectTimer();
     this.clearEdgeActivatedValues();
     // Inform all targets of the green flag.
-    for (var i = 0; i < this.targets.length; i++) {
+    for (let i = 0; i < this.targets.length; i++) {
         this.targets[i].onGreenFlag();
     }
     this.startHats('event_whenflagclicked');
@@ -579,8 +579,8 @@ Runtime.prototype.greenFlag = function () {
  */
 Runtime.prototype.stopAll = function () {
     // Dispose all clones.
-    var newTargets = [];
-    for (var i = 0; i < this.targets.length; i++) {
+    const newTargets = [];
+    for (let i = 0; i < this.targets.length; i++) {
         this.targets[i].onStopAll();
         if (this.targets[i].hasOwnProperty('isOriginal') &&
             !this.targets[i].isOriginal) {
@@ -591,9 +591,9 @@ Runtime.prototype.stopAll = function () {
     }
     this.targets = newTargets;
     // Dispose all threads.
-    var threadsCopy = this.threads.slice();
+    const threadsCopy = this.threads.slice();
     while (threadsCopy.length > 0) {
-        var poppedThread = threadsCopy.pop();
+        const poppedThread = threadsCopy.pop();
         this._removeThread(poppedThread);
     }
 };
@@ -604,15 +604,15 @@ Runtime.prototype.stopAll = function () {
  */
 Runtime.prototype._step = function () {
     // Find all edge-activated hats, and add them to threads to be evaluated.
-    for (var hatType in this._hats) {
+    for (const hatType in this._hats) {
         if (!this._hats.hasOwnProperty(hatType)) continue;
-        var hat = this._hats[hatType];
+        const hat = this._hats[hatType];
         if (hat.edgeActivated) {
             this.startHats(hatType);
         }
     }
     this.redrawRequested = false;
-    var doneThreads = this.sequencer.stepThreads();
+    const doneThreads = this.sequencer.stepThreads();
     this._updateGlows(doneThreads);
     this._setThreadCount(this.threads.length + doneThreads.length);
     if (this.renderer) {
@@ -651,23 +651,23 @@ Runtime.prototype.setCompatibilityMode = function (compatibilityModeOn) {
  * @param {Array.<Thread>=} optExtraThreads Optional list of inactive threads.
  */
 Runtime.prototype._updateGlows = function (optExtraThreads) {
-    var searchThreads = [];
+    const searchThreads = [];
     searchThreads.push.apply(searchThreads, this.threads);
     if (optExtraThreads) {
         searchThreads.push.apply(searchThreads, optExtraThreads);
     }
     // Set of scripts that request a glow this frame.
-    var requestedGlowsThisFrame = [];
+    const requestedGlowsThisFrame = [];
     // Final set of scripts glowing during this frame.
-    var finalScriptGlows = [];
+    const finalScriptGlows = [];
     // Find all scripts that should be glowing.
-    for (var i = 0; i < searchThreads.length; i++) {
-        var thread = searchThreads[i];
-        var target = thread.target;
+    for (let i = 0; i < searchThreads.length; i++) {
+        const thread = searchThreads[i];
+        const target = thread.target;
         if (target === this._editingTarget) {
-            var blockForThread = thread.blockGlowInFrame;
+            const blockForThread = thread.blockGlowInFrame;
             if (thread.requestScriptGlowInFrame) {
-                var script = target.blocks.getTopLevelScript(blockForThread);
+                let script = target.blocks.getTopLevelScript(blockForThread);
                 if (!script) {
                     // Attempt to find in flyout blocks.
                     script = this.flyoutBlocks.getTopLevelScript(
@@ -681,8 +681,8 @@ Runtime.prototype._updateGlows = function (optExtraThreads) {
         }
     }
     // Compare to previous frame.
-    for (var j = 0; j < this._scriptGlowsPreviousFrame.length; j++) {
-        var previousFrameGlow = this._scriptGlowsPreviousFrame[j];
+    for (let j = 0; j < this._scriptGlowsPreviousFrame.length; j++) {
+        const previousFrameGlow = this._scriptGlowsPreviousFrame[j];
         if (requestedGlowsThisFrame.indexOf(previousFrameGlow) < 0) {
             // Glow turned off.
             this.glowScript(previousFrameGlow, false);
@@ -691,8 +691,8 @@ Runtime.prototype._updateGlows = function (optExtraThreads) {
             finalScriptGlows.push(previousFrameGlow);
         }
     }
-    for (var k = 0; k < requestedGlowsThisFrame.length; k++) {
-        var currentFrameGlow = requestedGlowsThisFrame[k];
+    for (let k = 0; k < requestedGlowsThisFrame.length; k++) {
+        const currentFrameGlow = requestedGlowsThisFrame[k];
         if (this._scriptGlowsPreviousFrame.indexOf(currentFrameGlow) < 0) {
             // Glow turned on.
             this.glowScript(currentFrameGlow, true);
@@ -725,7 +725,7 @@ Runtime.prototype._setThreadCount = function (threadCount) {
  * @param {!string} scriptBlockId Id of top-level block in script to quiet.
  */
 Runtime.prototype.quietGlow = function (scriptBlockId) {
-    var index = this._scriptGlowsPreviousFrame.indexOf(scriptBlockId);
+    const index = this._scriptGlowsPreviousFrame.indexOf(scriptBlockId);
     if (index > -1) {
         this._scriptGlowsPreviousFrame.splice(index, 1);
     }
@@ -782,8 +782,8 @@ Runtime.prototype.spriteInfoReport = function (target) {
  * @return {?Target} The target, if found.
  */
 Runtime.prototype.getTargetById = function (targetId) {
-    for (var i = 0; i < this.targets.length; i++) {
-        var target = this.targets[i];
+    for (let i = 0; i < this.targets.length; i++) {
+        const target = this.targets[i];
         if (target.id === targetId) {
             return target;
         }
@@ -796,8 +796,8 @@ Runtime.prototype.getTargetById = function (targetId) {
  * @return {?Target} Target representing a sprite of the given name.
  */
 Runtime.prototype.getSpriteTargetByName = function (spriteName) {
-    for (var i = 0; i < this.targets.length; i++) {
-        var target = this.targets[i];
+    for (let i = 0; i < this.targets.length; i++) {
+        const target = this.targets[i];
         if (target.sprite && target.sprite.name === spriteName) {
             return target;
         }
@@ -810,8 +810,8 @@ Runtime.prototype.getSpriteTargetByName = function (spriteName) {
  * @return {?Target} The target, if found
  */
 Runtime.prototype.getTargetByDrawableId = function (drawableID) {
-    for (var i = 0; i < this.targets.length; i++) {
-        var target = this.targets[i];
+    for (let i = 0; i < this.targets.length; i++) {
+        const target = this.targets[i];
         if (target.drawableID === drawableID) return target;
     }
 };
@@ -837,8 +837,8 @@ Runtime.prototype.clonesAvailable = function () {
  * @return {?Target} The target, if found.
  */
 Runtime.prototype.getTargetForStage = function () {
-    for (var i = 0; i < this.targets.length; i++) {
-        var target = this.targets[i];
+    for (let i = 0; i < this.targets.length; i++) {
+        const target = this.targets[i];
         if (target.isStage) {
             return target;
         }
@@ -857,14 +857,14 @@ Runtime.prototype.requestRedraw = function () {
  * Set up timers to repeatedly step in a browser.
  */
 Runtime.prototype.start = function () {
-    var interval = Runtime.THREAD_STEP_INTERVAL;
+    let interval = Runtime.THREAD_STEP_INTERVAL;
     if (this.compatibilityMode) {
         interval = Runtime.THREAD_STEP_INTERVAL_COMPATIBILITY;
     }
     this.currentStepTime = interval;
-    this._steppingInterval = setInterval(function () {
+    this._steppingInterval = setInterval(() => {
         this._step();
-    }.bind(this), interval);
+    }, interval);
 };
 
 module.exports = Runtime;

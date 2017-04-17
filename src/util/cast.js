@@ -1,6 +1,6 @@
-var Color = require('../util/color');
+const Color = require('../util/color');
 
-var Cast = function () {};
+const Cast = function () {};
 
 /**
  * @fileoverview
@@ -21,7 +21,7 @@ var Cast = function () {};
  * @return {number} The Scratch-casted number value.
  */
 Cast.toNumber = function (value) {
-    var n = Number(value);
+    const n = Number(value);
     if (isNaN(n)) {
         // Scratch treats NaN as 0, when needed as a number.
         // E.g., 0 + NaN -> 0.
@@ -71,7 +71,7 @@ Cast.toString = function (value) {
  * @return {Array.<number>} [r,g,b], values between 0-255.
  */
 Cast.toRgbColorList = function (value) {
-    var color = Cast.toRgbColorObject(value);
+    const color = Cast.toRgbColorObject(value);
     return [color.r, color.g, color.b];
 };
 
@@ -81,7 +81,7 @@ Cast.toRgbColorList = function (value) {
  * @return {RGBOject} [r,g,b], values between 0-255.
  */
 Cast.toRgbColorObject = function (value) {
-    var color;
+    let color;
     if (typeof value === 'string' && value.substring(0, 1) === '#') {
         color = Color.hexToRgb(value);
     } else {
@@ -107,8 +107,8 @@ Cast.isWhiteSpace = function (val) {
  * @returns {number} Negative number if v1 < v2; 0 if equal; positive otherwise.
  */
 Cast.compare = function (v1, v2) {
-    var n1 = Number(v1);
-    var n2 = Number(v2);
+    let n1 = Number(v1);
+    let n2 = Number(v2);
     if (n1 === 0 && Cast.isWhiteSpace(v1)) {
         n1 = NaN;
     } else if (n2 === 0 && Cast.isWhiteSpace(v2)) {
@@ -117,13 +117,13 @@ Cast.compare = function (v1, v2) {
     if (isNaN(n1) || isNaN(n2)) {
         // At least one argument can't be converted to a number.
         // Scratch compares strings as case insensitive.
-        var s1 = String(v1).toLowerCase();
-        var s2 = String(v2).toLowerCase();
+        const s1 = String(v1).toLowerCase();
+        const s2 = String(v2).toLowerCase();
         return s1.localeCompare(s2);
-    } else {
-        // Compare as numbers.
-        return n1 - n2;
     }
+        // Compare as numbers.
+    return n1 - n2;
+    
 };
 
 /**

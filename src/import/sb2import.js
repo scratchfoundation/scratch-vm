@@ -5,18 +5,18 @@
  * scratch-vm runtime structures.
  */
 
-var Blocks = require('../engine/blocks');
-var RenderedTarget = require('../sprites/rendered-target');
-var Sprite = require('../sprites/sprite');
-var Color = require('../util/color');
-var log = require('../util/log');
-var uid = require('../util/uid');
-var specMap = require('./sb2specmap');
-var Variable = require('../engine/variable');
-var List = require('../engine/list');
+const Blocks = require('../engine/blocks');
+const RenderedTarget = require('../sprites/rendered-target');
+const Sprite = require('../sprites/sprite');
+const Color = require('../util/color');
+const log = require('../util/log');
+const uid = require('../util/uid');
+const specMap = require('./sb2specmap');
+const Variable = require('../engine/variable');
+const List = require('../engine/list');
 
-var loadCostume = require('./load-costume.js');
-var loadSound = require('./load-sound.js');
+const loadCostume = require('./load-costume.js');
+const loadSound = require('./load-sound.js');
 
 /**
  * Parse a single "Scratch object" and create all its in-memory VM objects.
@@ -32,19 +32,19 @@ var parseScratchObject = function (object, runtime, topLevel) {
         return null;
     }
     // Blocks container for this object.
-    var blocks = new Blocks();
+    const blocks = new Blocks();
     // @todo: For now, load all Scratch objects (stage/sprites) as a Sprite.
-    var sprite = new Sprite(blocks, runtime);
+    const sprite = new Sprite(blocks, runtime);
     // Sprite/stage name from JSON.
     if (object.hasOwnProperty('objName')) {
         sprite.name = object.objName;
     }
     // Costumes from JSON.
-    var costumePromises = [];
+    const costumePromises = [];
     if (object.hasOwnProperty('costumes')) {
-        for (var i = 0; i < object.costumes.length; i++) {
-            var costumeSource = object.costumes[i];
-            var costume = {
+        for (let i = 0; i < object.costumes.length; i++) {
+            const costumeSource = object.costumes[i];
+            const costume = {
                 name: costumeSource.costumeName,
                 bitmapResolution: costumeSource.bitmapResolution || 1,
                 rotationCenterX: costumeSource.rotationCenterX,
@@ -57,9 +57,9 @@ var parseScratchObject = function (object, runtime, topLevel) {
     }
     // Sounds from JSON
     if (object.hasOwnProperty('sounds')) {
-        for (var s = 0; s < object.sounds.length; s++) {
-            var soundSource = object.sounds[s];
-            var sound = {
+        for (let s = 0; s < object.sounds.length; s++) {
+            const soundSource = object.sounds[s];
+            const sound = {
                 name: soundSource.soundName,
                 format: soundSource.format,
                 rate: soundSource.rate,
@@ -77,13 +77,13 @@ var parseScratchObject = function (object, runtime, topLevel) {
         parseScripts(object.scripts, blocks);
     }
     // Create the first clone, and load its run-state from JSON.
-    var target = sprite.createClone();
+    const target = sprite.createClone();
     // Add it to the runtime's list of targets.
     runtime.targets.push(target);
     // Load target properties from JSON.
     if (object.hasOwnProperty('variables')) {
-        for (var j = 0; j < object.variables.length; j++) {
-            var variable = object.variables[j];
+        for (let j = 0; j < object.variables.length; j++) {
+            const variable = object.variables[j];
             target.variables[variable.name] = new Variable(
                 variable.name,
                 variable.value,
@@ -92,8 +92,8 @@ var parseScratchObject = function (object, runtime, topLevel) {
         }
     }
     if (object.hasOwnProperty('lists')) {
-        for (var k = 0; k < object.lists.length; k++) {
-            var list = object.lists[k];
+        for (let k = 0; k < object.lists.length; k++) {
+            const list = object.lists[k];
             // @todo: monitor properties.
             target.lists[list.listName] = new List(
                 list.listName,
@@ -133,13 +133,13 @@ var parseScratchObject = function (object, runtime, topLevel) {
         }
     }
     target.isStage = topLevel;
-    Promise.all(costumePromises).then(function (costumes) {
+    Promise.all(costumePromises).then(costumes => {
         sprite.costumes = costumes;
         target.updateAllDrawableProperties();
     });
     // The stage will have child objects; recursively process them.
     if (object.children) {
-        for (var m = 0; m < object.children.length; m++) {
+        for (let m = 0; m < object.children.length; m++) {
             parseScratchObject(object.children[m], runtime, false);
         }
     }
@@ -154,7 +154,7 @@ var parseScratchObject = function (object, runtime, topLevel) {
  * @param {boolean=} optForceSprite If set, treat as sprite (Sprite2).
  * @return {?Target} Top-level target created (stage or sprite).
  */
-var sb2import = function (json, runtime, optForceSprite) {
+const sb2import = function (json, runtime, optForceSprite) {
     return parseScratchObject(
         JSON.parse(json),
         runtime,
@@ -169,12 +169,12 @@ var sb2import = function (json, runtime, optForceSprite) {
  * @param {!Blocks} blocks Blocks object to load parsed blocks into.
  */
 var parseScripts = function (scripts, blocks) {
-    for (var i = 0; i < scripts.length; i++) {
-        var script = scripts[i];
-        var scriptX = script[0];
-        var scriptY = script[1];
-        var blockList = script[2];
-        var parsedBlockList = parseBlockList(blockList);
+    for (let i = 0; i < scripts.length; i++) {
+        const script = scripts[i];
+        const scriptX = script[0];
+        const scriptY = script[1];
+        const blockList = script[2];
+        const parsedBlockList = parseBlockList(blockList);
         if (parsedBlockList[0]) {
             // Adjust script coordinates to account for
             // larger block size in scratch-blocks.
@@ -185,8 +185,8 @@ var parseScripts = function (scripts, blocks) {
             parsedBlockList[0].parent = null;
         }
         // Flatten children and create add the blocks.
-        var convertedBlocks = flatten(parsedBlockList);
-        for (var j = 0; j < convertedBlocks.length; j++) {
+        const convertedBlocks = flatten(parsedBlockList);
+        for (let j = 0; j < convertedBlocks.length; j++) {
             blocks.createBlock(convertedBlocks[j]);
         }
     }
@@ -201,11 +201,11 @@ var parseScripts = function (scripts, blocks) {
  * @return {Array.<object>} Scratch VM-format block list.
  */
 var parseBlockList = function (blockList) {
-    var resultingList = [];
-    var previousBlock = null; // For setting next.
-    for (var i = 0; i < blockList.length; i++) {
-        var block = blockList[i];
-        var parsedBlock = parseBlock(block);
+    const resultingList = [];
+    let previousBlock = null; // For setting next.
+    for (let i = 0; i < blockList.length; i++) {
+        const block = blockList[i];
+        const parsedBlock = parseBlock(block);
         if (typeof parsedBlock === 'undefined') continue;
         if (previousBlock) {
             parsedBlock.parent = previousBlock.id;
@@ -224,9 +224,9 @@ var parseBlockList = function (blockList) {
  * @return {Array.<object>} Flattened list to be passed to `blocks.createBlock`.
  */
 var flatten = function (blocks) {
-    var finalBlocks = [];
-    for (var i = 0; i < blocks.length; i++) {
-        var block = blocks[i];
+    let finalBlocks = [];
+    for (let i = 0; i < blocks.length; i++) {
+        const block = blocks[i];
         finalBlocks.push(block);
         if (block.children) {
             finalBlocks = finalBlocks.concat(flatten(block.children));
@@ -243,19 +243,19 @@ var flatten = function (blocks) {
  * @param {string} procCode Scratch 2.0 procedure string.
  * @return {object} Argument map compatible with those in sb2specmap.
  */
-var parseProcedureArgMap = function (procCode) {
-    var argMap = [
+const parseProcedureArgMap = function (procCode) {
+    const argMap = [
         {} // First item in list is op string.
     ];
-    var INPUT_PREFIX = 'input';
-    var inputCount = 0;
+    const INPUT_PREFIX = 'input';
+    let inputCount = 0;
     // Split by %n, %b, %s.
-    var parts = procCode.split(/(?=[^\\]%[nbs])/);
-    for (var i = 0; i < parts.length; i++) {
-        var part = parts[i].trim();
+    const parts = procCode.split(/(?=[^\\]%[nbs])/);
+    for (let i = 0; i < parts.length; i++) {
+        const part = parts[i].trim();
         if (part.substring(0, 1) === '%') {
-            var argType = part.substring(1, 2);
-            var arg = {
+            const argType = part.substring(1, 2);
+            const arg = {
                 type: 'input',
                 inputName: INPUT_PREFIX + (inputCount++)
             };
@@ -277,15 +277,15 @@ var parseProcedureArgMap = function (procCode) {
  */
 var parseBlock = function (sb2block) {
     // First item in block object is the old opcode (e.g., 'forward:').
-    var oldOpcode = sb2block[0];
+    const oldOpcode = sb2block[0];
     // Convert the block using the specMap. See sb2specmap.js.
     if (!oldOpcode || !specMap[oldOpcode]) {
         log.warn('Couldn\'t find SB2 block: ', oldOpcode);
         return;
     }
-    var blockMetadata = specMap[oldOpcode];
+    const blockMetadata = specMap[oldOpcode];
     // Block skeleton.
-    var activeBlock = {
+    const activeBlock = {
         id: uid(), // Generate a new block unique ID.
         opcode: blockMetadata.opcode, // Converted, e.g. "motion_movesteps".
         inputs: {}, // Inputs to this block and the blocks they point to.
@@ -301,15 +301,15 @@ var parseBlock = function (sb2block) {
     // Look at the expected arguments in `blockMetadata.argMap.`
     // The basic problem here is to turn positional SB2 arguments into
     // non-positional named Scratch VM arguments.
-    for (var i = 0; i < blockMetadata.argMap.length; i++) {
-        var expectedArg = blockMetadata.argMap[i];
-        var providedArg = sb2block[i + 1]; // (i = 0 is opcode)
+    for (let i = 0; i < blockMetadata.argMap.length; i++) {
+        const expectedArg = blockMetadata.argMap[i];
+        const providedArg = sb2block[i + 1]; // (i = 0 is opcode)
         // Whether the input is obscuring a shadow.
-        var shadowObscured = false;
+        let shadowObscured = false;
         // Positional argument is an input.
         if (expectedArg.type === 'input') {
             // Create a new block and input metadata.
-            var inputUid = uid();
+            const inputUid = uid();
             activeBlock.inputs[expectedArg.inputName] = {
                 name: expectedArg.inputName,
                 block: null,
@@ -325,8 +325,8 @@ var parseBlock = function (sb2block) {
                     // Single block occupies the input.
                     innerBlocks = [parseBlock(providedArg)];
                 }
-                var previousBlock = null;
-                for (var j = 0; j < innerBlocks.length; j++) {
+                let previousBlock = null;
+                for (let j = 0; j < innerBlocks.length; j++) {
                     if (j === 0) {
                         innerBlocks[j].parent = activeBlock.id;
                     } else {
@@ -350,9 +350,9 @@ var parseBlock = function (sb2block) {
             }
             // Each shadow has a field generated for it automatically.
             // Value to be filled in the field.
-            var fieldValue = providedArg;
+            let fieldValue = providedArg;
             // Shadows' field names match the input name, except for these:
-            var fieldName = expectedArg.inputName;
+            let fieldName = expectedArg.inputName;
             if (expectedArg.inputOp === 'math_number' ||
                 expectedArg.inputOp === 'math_whole_number' ||
                 expectedArg.inputOp === 'math_positive_number' ||
@@ -379,7 +379,7 @@ var parseBlock = function (sb2block) {
                 // Filled drop-down menu.
                 fieldValue = '';
             }
-            var fields = {};
+            const fields = {};
             fields[fieldName] = {
                 name: fieldName,
                 value: fieldValue
@@ -422,7 +422,7 @@ var parseBlock = function (sb2block) {
     } else if (oldOpcode === 'procDef') {
         // Mutation for procedure definition:
         // store all 2.0 proc data.
-        var procData = sb2block.slice(1);
+        const procData = sb2block.slice(1);
         activeBlock.mutation = {
             tagName: 'mutation',
             proccode: procData[0], // e.g., "abc %n %b %s"

@@ -1,5 +1,5 @@
-var RenderedTarget = require('./rendered-target');
-var Blocks = require('../engine/blocks');
+const RenderedTarget = require('./rendered-target');
+const Blocks = require('../engine/blocks');
 
 /**
  * Sprite to be used on the Scratch stage.
@@ -8,7 +8,7 @@ var Blocks = require('../engine/blocks');
  * @param {Runtime} runtime Reference to the runtime.
  * @constructor
  */
-var Sprite = function (blocks, runtime) {
+const Sprite = function (blocks, runtime) {
     this.runtime = runtime;
     if (!blocks) {
         // Shared set of blocks for all clones.
@@ -49,7 +49,7 @@ var Sprite = function (blocks, runtime) {
  * @returns {!RenderedTarget} Newly created clone.
  */
 Sprite.prototype.createClone = function () {
-    var newClone = new RenderedTarget(this, this.runtime);
+    const newClone = new RenderedTarget(this, this.runtime);
     newClone.isOriginal = this.clones.length === 0;
     this.clones.push(newClone);
     if (newClone.isOriginal) {

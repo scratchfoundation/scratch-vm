@@ -1,3 +1,3 @@
-var VirtualMachine = require('./virtual-machine');
+const VirtualMachine = require('./virtual-machine');
 
 module.exports = VirtualMachine;

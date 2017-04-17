@@ -1,8 +1,8 @@
-var Cast = require('../util/cast');
-var MathUtil = require('../util/math-util');
-var Timer = require('../util/timer');
+const Cast = require('../util/cast');
+const MathUtil = require('../util/math-util');
+const Timer = require('../util/timer');
 
-var Scratch3MotionBlocks = function (runtime) {
+const Scratch3MotionBlocks = function (runtime) {
     /**
      * The runtime instantiating this block package.
      * @type {Runtime}
@@ -37,32 +37,32 @@ Scratch3MotionBlocks.prototype.getPrimitives = function () {
 };
 
 Scratch3MotionBlocks.prototype.moveSteps = function (args, util) {
-    var steps = Cast.toNumber(args.STEPS);
-    var radians = MathUtil.degToRad(90 - util.target.direction);
-    var dx = steps * Math.cos(radians);
-    var dy = steps * Math.sin(radians);
+    const steps = Cast.toNumber(args.STEPS);
+    const radians = MathUtil.degToRad(90 - util.target.direction);
+    const dx = steps * Math.cos(radians);
+    const dy = steps * Math.sin(radians);
     util.target.setXY(util.target.x + dx, util.target.y + dy);
 };
 
 Scratch3MotionBlocks.prototype.goToXY = function (args, util) {
-    var x = Cast.toNumber(args.X);
-    var y = Cast.toNumber(args.Y);
+    const x = Cast.toNumber(args.X);
+    const y = Cast.toNumber(args.Y);
     util.target.setXY(x, y);
 };
 
 Scratch3MotionBlocks.prototype.goTo = function (args, util) {
-    var targetX = 0;
-    var targetY = 0;
+    let targetX = 0;
+    let targetY = 0;
     if (args.TO === '_mouse_') {
         targetX = util.ioQuery('mouse', 'getX');
         targetY = util.ioQuery('mouse', 'getY');
     } else if (args.TO === '_random_') {
-        var stageWidth = this.runtime.constructor.STAGE_WIDTH;
-        var stageHeight = this.runtime.constructor.STAGE_HEIGHT;
+        const stageWidth = this.runtime.constructor.STAGE_WIDTH;
+        const stageHeight = this.runtime.constructor.STAGE_HEIGHT;
         targetX = Math.round(stageWidth * (Math.random() - 0.5));
         targetY = Math.round(stageHeight * (Math.random() - 0.5));
     } else {
-        var goToTarget = this.runtime.getSpriteTargetByName(args.TO);
+        const goToTarget = this.runtime.getSpriteTargetByName(args.TO);
         if (!goToTarget) return;
         targetX = goToTarget.x;
         targetY = goToTarget.y;
@@ -71,36 +71,36 @@ Scratch3MotionBlocks.prototype.goTo = function (args, util) {
 };
 
 Scratch3MotionBlocks.prototype.turnRight = function (args, util) {
-    var degrees = Cast.toNumber(args.DEGREES);
+    const degrees = Cast.toNumber(args.DEGREES);
     util.target.setDirection(util.target.direction + degrees);
 };
 
 Scratch3MotionBlocks.prototype.turnLeft = function (args, util) {
-    var degrees = Cast.toNumber(args.DEGREES);
+    const degrees = Cast.toNumber(args.DEGREES);
     util.target.setDirection(util.target.direction - degrees);
 };
 
 Scratch3MotionBlocks.prototype.pointInDirection = function (args, util) {
-    var direction = Cast.toNumber(args.DIRECTION);
+    const direction = Cast.toNumber(args.DIRECTION);
     util.target.setDirection(direction);
 };
 
 Scratch3MotionBlocks.prototype.pointTowards = function (args, util) {
-    var targetX = 0;
-    var targetY = 0;
+    let targetX = 0;
+    let targetY = 0;
     if (args.TOWARDS === '_mouse_') {
         targetX = util.ioQuery('mouse', 'getX');
         targetY = util.ioQuery('mouse', 'getY');
     } else {
-        var pointTarget = this.runtime.getSpriteTargetByName(args.TOWARDS);
+        const pointTarget = this.runtime.getSpriteTargetByName(args.TOWARDS);
         if (!pointTarget) return;
         targetX = pointTarget.x;
         targetY = pointTarget.y;
     }
 
-    var dx = targetX - util.target.x;
-    var dy = targetY - util.target.y;
-    var direction = 90 - MathUtil.radToDeg(Math.atan2(dy, dx));
+    const dx = targetX - util.target.x;
+    const dy = targetY - util.target.y;
+    const direction = 90 - MathUtil.radToDeg(Math.atan2(dy, dx));
     util.target.setDirection(direction);
 };
 
@@ -121,12 +121,12 @@ Scratch3MotionBlocks.prototype.glide = function (args, util) {
         }
         util.yield();
     } else {
-        var timeElapsed = util.stackFrame.timer.timeElapsed();
+        const timeElapsed = util.stackFrame.timer.timeElapsed();
         if (timeElapsed < util.stackFrame.duration * 1000) {
             // In progress: move to intermediate position.
-            var frac = timeElapsed / (util.stackFrame.duration * 1000);
-            var dx = frac * (util.stackFrame.endX - util.stackFrame.startX);
-            var dy = frac * (util.stackFrame.endY - util.stackFrame.startY);
+            const frac = timeElapsed / (util.stackFrame.duration * 1000);
+            const dx = frac * (util.stackFrame.endX - util.stackFrame.startX);
+            const dy = frac * (util.stackFrame.endY - util.stackFrame.startY);
             util.target.setXY(
                 util.stackFrame.startX + dx,
                 util.stackFrame.startY + dy
@@ -140,22 +140,22 @@ Scratch3MotionBlocks.prototype.glide = function (args, util) {
 };
 
 Scratch3MotionBlocks.prototype.ifOnEdgeBounce = function (args, util) {
-    var bounds = util.target.getBounds();
+    const bounds = util.target.getBounds();
     if (!bounds) {
         return;
     }
     // Measure distance to edges.
     // Values are positive when the sprite is far away,
     // and clamped to zero when the sprite is beyond.
-    var stageWidth = this.runtime.constructor.STAGE_WIDTH;
-    var stageHeight = this.runtime.constructor.STAGE_HEIGHT;
-    var distLeft = Math.max(0, (stageWidth / 2) + bounds.left);
-    var distTop = Math.max(0, (stageHeight / 2) - bounds.top);
-    var distRight = Math.max(0, (stageWidth / 2) - bounds.right);
-    var distBottom = Math.max(0, (stageHeight / 2) + bounds.bottom);
+    const stageWidth = this.runtime.constructor.STAGE_WIDTH;
+    const stageHeight = this.runtime.constructor.STAGE_HEIGHT;
+    const distLeft = Math.max(0, (stageWidth / 2) + bounds.left);
+    const distTop = Math.max(0, (stageHeight / 2) - bounds.top);
+    const distRight = Math.max(0, (stageWidth / 2) - bounds.right);
+    const distBottom = Math.max(0, (stageHeight / 2) + bounds.bottom);
     // Find the nearest edge.
-    var nearestEdge = '';
-    var minDist = Infinity;
+    let nearestEdge = '';
+    let minDist = Infinity;
     if (distLeft < minDist) {
         minDist = distLeft;
         nearestEdge = 'left';
@@ -176,9 +176,9 @@ Scratch3MotionBlocks.prototype.ifOnEdgeBounce = function (args, util) {
         return; // Not touching any edge.
     }
     // Point away from the nearest edge.
-    var radians = MathUtil.degToRad(90 - util.target.direction);
-    var dx = Math.cos(radians);
-    var dy = -Math.sin(radians);
+    const radians = MathUtil.degToRad(90 - util.target.direction);
+    let dx = Math.cos(radians);
+    let dy = -Math.sin(radians);
     if (nearestEdge === 'left') {
         dx = Math.max(0.2, Math.abs(dx));
     } else if (nearestEdge === 'top') {
@@ -188,10 +188,10 @@ Scratch3MotionBlocks.prototype.ifOnEdgeBounce = function (args, util) {
     } else if (nearestEdge === 'bottom') {
         dy = 0 - Math.max(0.2, Math.abs(dy));
     }
-    var newDirection = MathUtil.radToDeg(Math.atan2(dy, dx)) + 90;
+    const newDirection = MathUtil.radToDeg(Math.atan2(dy, dx)) + 90;
     util.target.setDirection(newDirection);
     // Keep within the stage.
-    var fencedPosition = util.target.keepInFence(util.target.x, util.target.y);
+    const fencedPosition = util.target.keepInFence(util.target.x, util.target.y);
     util.target.setXY(fencedPosition[0], fencedPosition[1]);
 };
 
@@ -200,22 +200,22 @@ Scratch3MotionBlocks.prototype.setRotationStyle = function (args, util) {
 };
 
 Scratch3MotionBlocks.prototype.changeX = function (args, util) {
-    var dx = Cast.toNumber(args.DX);
+    const dx = Cast.toNumber(args.DX);
     util.target.setXY(util.target.x + dx, util.target.y);
 };
 
 Scratch3MotionBlocks.prototype.setX = function (args, util) {
-    var x = Cast.toNumber(args.X);
+    const x = Cast.toNumber(args.X);
     util.target.setXY(x, util.target.y);
 };
 
 Scratch3MotionBlocks.prototype.changeY = function (args, util) {
-    var dy = Cast.toNumber(args.DY);
+    const dy = Cast.toNumber(args.DY);
     util.target.setXY(util.target.x, util.target.y + dy);
 };
 
 Scratch3MotionBlocks.prototype.setY = function (args, util) {
-    var y = Cast.toNumber(args.Y);
+    const y = Cast.toNumber(args.Y);
     util.target.setXY(util.target.x, y);
 };
 

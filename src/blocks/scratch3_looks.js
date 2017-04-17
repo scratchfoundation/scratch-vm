@@ -1,6 +1,6 @@
-var Cast = require('../util/cast');
+const Cast = require('../util/cast');
 
-var Scratch3LooksBlocks = function (runtime) {
+const Scratch3LooksBlocks = function (runtime) {
     /**
      * The runtime instantiating this block package.
      * @type {Runtime}
@@ -45,8 +45,8 @@ Scratch3LooksBlocks.prototype.say = function (args, util) {
 
 Scratch3LooksBlocks.prototype.sayforsecs = function (args, util) {
     util.target.setSay('say', args.MESSAGE);
-    return new Promise(function (resolve) {
-        setTimeout(function () {
+    return new Promise(resolve => {
+        setTimeout(() => {
             // Clear say bubble and proceed.
             util.target.setSay();
             resolve();
@@ -60,8 +60,8 @@ Scratch3LooksBlocks.prototype.think = function (args, util) {
 
 Scratch3LooksBlocks.prototype.thinkforsecs = function (args, util) {
     util.target.setSay('think', args.MESSAGE);
-    return new Promise(function (resolve) {
-        setTimeout(function () {
+    return new Promise(resolve => {
+        setTimeout(() => {
             // Clear say bubble and proceed.
             util.target.setSay();
             resolve();
@@ -91,7 +91,7 @@ Scratch3LooksBlocks.prototype._setCostumeOrBackdrop = function (target,
         target.setCostume(optZeroIndex ?
             requestedCostume : requestedCostume - 1);
     } else {
-        var costumeIndex = target.getCostumeIndexByName(requestedCostume);
+        const costumeIndex = target.getCostumeIndexByName(requestedCostume);
         if (costumeIndex > -1) {
             target.setCostume(costumeIndex);
         } else if (requestedCostume === 'previous costume' ||
@@ -101,7 +101,7 @@ Scratch3LooksBlocks.prototype._setCostumeOrBackdrop = function (target,
                    requestedCostume === 'next backdrop') {
             target.setCostume(target.currentCostume + 1);
         } else {
-            var forcedNumber = Number(requestedCostume);
+            const forcedNumber = Number(requestedCostume);
             if (!isNaN(forcedNumber)) {
                 target.setCostume(optZeroIndex ?
                     forcedNumber : forcedNumber - 1);
@@ -110,7 +110,7 @@ Scratch3LooksBlocks.prototype._setCostumeOrBackdrop = function (target,
     }
     if (target === this.runtime.getTargetForStage()) {
         // Target is the stage - start hats.
-        var newName = target.sprite.costumes[target.currentCostume].name;
+        const newName = target.sprite.costumes[target.currentCostume].name;
         return this.runtime.startHats('event_whenbackdropswitchesto', {
             BACKDROP: newName
         });
@@ -148,33 +148,31 @@ Scratch3LooksBlocks.prototype.switchBackdropAndWait = function (args, util) {
         }
     }
     // We've run before; check if the wait is still going on.
-    var instance = this;
-    var waiting = util.stackFrame.startedThreads.some(function (thread) {
-        return instance.runtime.isActiveThread(thread);
-    });
+    const instance = this;
+    const waiting = util.stackFrame.startedThreads.some(thread => instance.runtime.isActiveThread(thread));
     if (waiting) {
         util.yield();
     }
 };
 
 Scratch3LooksBlocks.prototype.nextBackdrop = function () {
-    var stage = this.runtime.getTargetForStage();
+    const stage = this.runtime.getTargetForStage();
     this._setCostumeOrBackdrop(
         stage, stage.currentCostume + 1, true
     );
 };
 
 Scratch3LooksBlocks.prototype.changeEffect = function (args, util) {
-    var effect = Cast.toString(args.EFFECT).toLowerCase();
-    var change = Cast.toNumber(args.CHANGE);
+    const effect = Cast.toString(args.EFFECT).toLowerCase();
+    const change = Cast.toNumber(args.CHANGE);
     if (!util.target.effects.hasOwnProperty(effect)) return;
-    var newValue = change + util.target.effects[effect];
+    const newValue = change + util.target.effects[effect];
     util.target.setEffect(effect, newValue);
 };
 
 Scratch3LooksBlocks.prototype.setEffect = function (args, util) {
-    var effect = Cast.toString(args.EFFECT).toLowerCase();
-    var value = Cast.toNumber(args.VALUE);
+    const effect = Cast.toString(args.EFFECT).toLowerCase();
+    const value = Cast.toNumber(args.VALUE);
     util.target.setEffect(effect, value);
 };
 
@@ -183,12 +181,12 @@ Scratch3LooksBlocks.prototype.clearEffects = function (args, util) {
 };
 
 Scratch3LooksBlocks.prototype.changeSize = function (args, util) {
-    var change = Cast.toNumber(args.CHANGE);
+    const change = Cast.toNumber(args.CHANGE);
     util.target.setSize(util.target.size + change);
 };
 
 Scratch3LooksBlocks.prototype.setSize = function (args, util) {
-    var size = Cast.toNumber(args.SIZE);
+    const size = Cast.toNumber(args.SIZE);
     util.target.setSize(size);
 };
 
@@ -205,12 +203,12 @@ Scratch3LooksBlocks.prototype.getSize = function (args, util) {
 };
 
 Scratch3LooksBlocks.prototype.getBackdropIndex = function () {
-    var stage = this.runtime.getTargetForStage();
+    const stage = this.runtime.getTargetForStage();
     return stage.currentCostume + 1;
 };
 
 Scratch3LooksBlocks.prototype.getBackdropName = function () {
-    var stage = this.runtime.getTargetForStage();
+    const stage = this.runtime.getTargetForStage();
     return stage.sprite.costumes[stage.currentCostume].name;
 };
 
