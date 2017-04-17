@@ -2,49 +2,6 @@ const mutationAdapter = require('./mutation-adapter');
 const html = require('htmlparser2');
 
 /**
- * Convert outer blocks DOM from a Blockly CREATE event
- * to a usable form for the Scratch runtime.
- * This structure is based on Blockly xml.js:`domToWorkspace` and `domToBlock`.
- * @param {Element} blocksDOM DOM tree for this event.
- * @return {Array.<object>} Usable list of blocks from this CREATE event.
- */
-const domToBlocks = function (blocksDOM) {
-    // At this level, there could be multiple blocks adjacent in the DOM tree.
-    const blocks = {};
-    for (let i = 0; i < blocksDOM.length; i++) {
-        const block = blocksDOM[i];
-        if (!block.name || !block.attribs) {
-            continue;
-        }
-        const tagName = block.name.toLowerCase();
-        if (tagName === 'block' || tagName === 'shadow') {
-            domToBlock(block, blocks, true, null);
-        }
-    }
-    // Flatten blocks object into a list.
-    const blocksList = [];
-    for (const b in blocks) {
-        if (!blocks.hasOwnProperty(b)) continue;
-        blocksList.push(blocks[b]);
-    }
-    return blocksList;
-};
-
-/**
- * Adapter between block creation events and block representation which can be
- * used by the Scratch runtime.
- * @param {object} e `Blockly.events.create`
- * @return {Array.<object>} List of blocks from this CREATE event.
- */
-const adapter = function (e) {
-    // Validate input
-    if (typeof e !== 'object') return;
-    if (typeof e.xml !== 'object') return;
-
-    return domToBlocks(html.parseDOM(e.xml.outerHTML));
-};
-
-/**
  * Convert and an individual block DOM to the representation tree.
  * Based on Blockly's `domToBlockHeadless_`.
  * @param {Element} blockDOM DOM tree for an individual block.
@@ -53,7 +10,7 @@ const adapter = function (e) {
  * @param {?string} parent Parent block ID.
  * @return {undefined}
  */
-var domToBlock = function (blockDOM, blocks, isTopBlock, parent) {
+const domToBlock = function (blockDOM, blocks, isTopBlock, parent) {
     // Block skeleton.
     const block = {
         id: blockDOM.attribs.id, // Block ID
@@ -100,52 +57,103 @@ var domToBlock = function (blockDOM, blocks, isTopBlock, parent) {
         // as we won't be using all of them for Scratch.
         switch (xmlChild.name.toLowerCase()) {
         case 'field':
-            // Add the field to this block.
-            var fieldName = xmlChild.attribs.name;
-            var fieldData = '';
-            if (xmlChild.children.length > 0 && xmlChild.children[0].data) {
-                fieldData = xmlChild.children[0].data;
-            } else {
-                // If the child of the field with a data property
-                // doesn't exist, set the data to an empty string.
-                fieldData = '';
+            {
+                // Add the field to this block.
+                const fieldName = xmlChild.attribs.name;
+                let fieldData = '';
+                if (xmlChild.children.length > 0 && xmlChild.children[0].data) {
+                    fieldData = xmlChild.children[0].data;
+                } else {
+                    // If the child of the field with a data property
+                    // doesn't exist, set the data to an empty string.
+                    fieldData = '';
+                }
+                block.fields[fieldName] = {
+                    name: fieldName,
+                    value: fieldData
+                };
+                break;
             }
-            block.fields[fieldName] = {
-                name: fieldName,
-                value: fieldData
-            };
-            break;
         case 'value':
         case 'statement':
-            // Recursively generate block structure for input block.
-            domToBlock(childBlockNode, blocks, false, block.id);
-            if (childShadowNode && childBlockNode !== childShadowNode) {
-                // Also generate the shadow block.
-                domToBlock(childShadowNode, blocks, false, block.id);
+            {
+                // Recursively generate block structure for input block.
+                domToBlock(childBlockNode, blocks, false, block.id);
+                if (childShadowNode && childBlockNode !== childShadowNode) {
+                    // Also generate the shadow block.
+                    domToBlock(childShadowNode, blocks, false, block.id);
+                }
+                // Link this block's input to the child block.
+                const inputName = xmlChild.attribs.name;
+                block.inputs[inputName] = {
+                    name: inputName,
+                    block: childBlockNode.attribs.id,
+                    shadow: childShadowNode ? childShadowNode.attribs.id : null
+                };
+                break;
             }
-            // Link this block's input to the child block.
-            var inputName = xmlChild.attribs.name;
-            block.inputs[inputName] = {
-                name: inputName,
-                block: childBlockNode.attribs.id,
-                shadow: childShadowNode ? childShadowNode.attribs.id : null
-            };
-            break;
         case 'next':
-            if (!childBlockNode || !childBlockNode.attribs) {
-                // Invalid child block.
-                continue;
+            {
+                if (!childBlockNode || !childBlockNode.attribs) {
+                    // Invalid child block.
+                    continue;
+                }
+                // Recursively generate block structure for next block.
+                domToBlock(childBlockNode, blocks, false, block.id);
+                // Link next block to this block.
+                block.next = childBlockNode.attribs.id;
+                break;
             }
-            // Recursively generate block structure for next block.
-            domToBlock(childBlockNode, blocks, false, block.id);
-            // Link next block to this block.
-            block.next = childBlockNode.attribs.id;
-            break;
         case 'mutation':
-            block.mutation = mutationAdapter(xmlChild);
-            break;
+            {
+                block.mutation = mutationAdapter(xmlChild);
+                break;
+            }
         }
     }
+};
+
+/**
+ * Convert outer blocks DOM from a Blockly CREATE event
+ * to a usable form for the Scratch runtime.
+ * This structure is based on Blockly xml.js:`domToWorkspace` and `domToBlock`.
+ * @param {Element} blocksDOM DOM tree for this event.
+ * @return {Array.<object>} Usable list of blocks from this CREATE event.
+ */
+const domToBlocks = function (blocksDOM) {
+    // At this level, there could be multiple blocks adjacent in the DOM tree.
+    const blocks = {};
+    for (let i = 0; i < blocksDOM.length; i++) {
+        const block = blocksDOM[i];
+        if (!block.name || !block.attribs) {
+            continue;
+        }
+        const tagName = block.name.toLowerCase();
+        if (tagName === 'block' || tagName === 'shadow') {
+            domToBlock(block, blocks, true, null);
+        }
+    }
+    // Flatten blocks object into a list.
+    const blocksList = [];
+    for (const b in blocks) {
+        if (!blocks.hasOwnProperty(b)) continue;
+        blocksList.push(blocks[b]);
+    }
+    return blocksList;
+};
+
+/**
+ * Adapter between block creation events and block representation which can be
+ * used by the Scratch runtime.
+ * @param {object} e `Blockly.events.create`
+ * @return {Array.<object>} List of blocks from this CREATE event.
+ */
+const adapter = function (e) {
+    // Validate input
+    if (typeof e !== 'object') return;
+    if (typeof e.xml !== 'object') return;
+
+    return domToBlocks(html.parseDOM(e.xml.outerHTML));
 };
 
 module.exports = adapter;

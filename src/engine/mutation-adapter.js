@@ -5,7 +5,7 @@ const html = require('htmlparser2');
  * @param {object} dom DOM object for mutation tag.
  * @return {object} Object representing useful parts of this mutation.
  */
-var mutatorTagToObject = function (dom) {
+const mutatorTagToObject = function (dom) {
     const obj = Object.create(null);
     obj.tagName = dom.name;
     obj.children = [];

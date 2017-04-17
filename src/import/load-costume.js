@@ -48,16 +48,17 @@ const loadCostume = function (md5ext, costume, runtime) {
     } else {
         promise = promise.then(costumeAsset => new Promise((resolve, reject) => {
             const imageElement = new Image();
-            let removeEventListeners; // fix no-use-before-define
             const onError = function () {
+                // eslint-disable-next-line no-use-before-define
                 removeEventListeners();
                 reject();
             };
             const onLoad = function () {
+                // eslint-disable-next-line no-use-before-define
                 removeEventListeners();
                 resolve(imageElement);
             };
-            removeEventListeners = function () {
+            const removeEventListeners = function () {
                 imageElement.removeEventListener('error', onError);
                 imageElement.removeEventListener('load', onLoad);
             };

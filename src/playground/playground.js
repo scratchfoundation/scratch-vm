@@ -120,7 +120,7 @@ window.onload = function () {
 
     // Only request data from the VM thread if the appropriate tab is open.
     Scratch.exploreTabOpen = false;
-    var getPlaygroundData = function () {
+    const getPlaygroundData = function () {
         vm.getPlaygroundData();
         if (Scratch.exploreTabOpen) {
             window.requestAnimationFrame(getPlaygroundData);
@@ -268,7 +268,7 @@ window.onload = function () {
     vm.start();
 
     // Inform VM of animation frames.
-    var animate = function () {
+    const animate = function () {
         stats.update();
         requestAnimationFrame(animate);
     };

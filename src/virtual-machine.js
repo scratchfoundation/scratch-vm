@@ -253,7 +253,9 @@ VirtualMachine.prototype.renameSprite = function (targetId, newName) {
             throw new Error('No sprite associated with this target.');
         }
         if (newName && RESERVED_NAMES.indexOf(newName) === -1) {
-            const names = this.runtime.targets.filter(runtimeTarget => runtimeTarget.isSprite()).map(runtimeTarget => runtimeTarget.sprite.name);
+            const names = this.runtime.targets
+                .filter(runtimeTarget => runtimeTarget.isSprite())
+                .map(runtimeTarget => runtimeTarget.sprite.name);
 
             sprite.name = StringUtil.unusedName(newName, names);
         }

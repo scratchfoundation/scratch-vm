@@ -198,13 +198,14 @@ Blocks.prototype.blocklyListen = function (e, optRuntime) {
 
     // Block create/update/destroy
     switch (e.type) {
-    case 'create':
-        var newBlocks = adapter(e);
+    case 'create': {
+        const newBlocks = adapter(e);
         // A create event can create many blocks. Add them all.
         for (let i = 0; i < newBlocks.length; i++) {
             this.createBlock(newBlocks[i]);
         }
         break;
+    }
     case 'change':
         this.changeBlock({
             id: e.blockId,
