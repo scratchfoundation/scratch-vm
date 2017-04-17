@@ -3,16 +3,18 @@
  * Object representing a Scratch variable.
  */
 
-/**
- * @param {!string} name Name of the variable.
- * @param {(string|number)} value Value of the variable.
- * @param {boolean} isCloud Whether the variable is stored in the cloud.
- * @constructor
- */
-const Variable = function (name, value, isCloud) {
-    this.name = name;
-    this.value = value;
-    this.isCloud = isCloud;
-};
+class Variable {
+    /**
+     * @param {!string} name Name of the variable.
+     * @param {(string|number)} value Value of the variable.
+     * @param {boolean} isCloud Whether the variable is stored in the cloud.
+     * @constructor
+     */
+    constructor (name, value, isCloud) {
+        this.name = name;
+        this.value = value;
+        this.isCloud = isCloud;
+    }
+}
 
 module.exports = Variable;
