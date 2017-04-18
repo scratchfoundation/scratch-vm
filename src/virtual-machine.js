@@ -150,15 +150,18 @@ VirtualMachine.prototype.postIOData = function (device, data) {
 /**
  * Load a project from a Scratch 2.0 JSON representation.
  * @param {?string} json JSON string representing the project.
+ * @return {!Promise} Promise that resolves after targets are installed.
  */
 VirtualMachine.prototype.loadProject = function (json) {
     var that = this;
     // @todo: Handle other formats, e.g., Scratch 1.4, Scratch 3.0.
-    sb2import(json, this.runtime).then(function (targets) {
+    return sb2import(json, this.runtime).then(function (targets) {
         that.clear();
         for (var n = 0; n < targets.length; n++) {
-            that.runtime.targets.push(targets[n]);
-            that.runtime.targets[n].updateAllDrawableProperties();
+            if (targets[n] !== null) {
+                that.runtime.targets.push(targets[n]);
+                targets[n].updateAllDrawableProperties();
+            }
         }
         // Select the first target for editing, e.g., the first sprite.
         that.editingTarget = that.runtime.targets[1];

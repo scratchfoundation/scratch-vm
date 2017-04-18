@@ -25,8 +25,9 @@ test('control', function (t) {
         vm.clear();
         vm.setCompatibilityMode(false);
         vm.setTurboMode(false);
-        vm.loadProject(project);
-        vm.greenFlag();
+        vm.loadProject(project).then(function () {
+            vm.greenFlag();
+        });
     });
 
     // After two seconds, get playground data and stop

@@ -29,7 +29,7 @@ var parseScratchObject = function (object, runtime, topLevel) {
     if (!object.hasOwnProperty('objName')) {
         // Watcher/monitor - skip this object until those are implemented in VM.
         // @todo
-        return null;
+        return Promise.resolve(null);
     }
     // Blocks container for this object.
     var blocks = new Blocks();
