@@ -152,15 +152,22 @@ VirtualMachine.prototype.postIOData = function (device, data) {
  * @param {?string} json JSON string representing the project.
  */
 VirtualMachine.prototype.loadProject = function (json) {
-    this.clear();
+    var that = this;
     // @todo: Handle other formats, e.g., Scratch 1.4, Scratch 3.0.
-    sb2import(json, this.runtime);
-    // Select the first target for editing, e.g., the first sprite.
-    this.editingTarget = this.runtime.targets[1];
-    // Update the VM user's knowledge of targets and blocks on the workspace.
-    this.emitTargetsUpdate();
-    this.emitWorkspaceUpdate();
-    this.runtime.setEditingTarget(this.editingTarget);
+    sb2import(json, this.runtime).then(function (targets) {
+        that.clear();
+        for (var n = 0; n < targets.length; n++) {
+            that.runtime.targets.push(targets[n]);
+            that.runtime.targets[n].updateAllDrawableProperties();
+        }
+        // Select the first target for editing, e.g., the first sprite.
+        that.editingTarget = that.runtime.targets[1];
+
+        // Update the VM user's knowledge of targets and blocks on the workspace.
+        that.emitTargetsUpdate();
+        that.emitWorkspaceUpdate();
+        that.runtime.setEditingTarget(that.editingTarget);
+    });
 };
 
 /**
@@ -185,11 +192,15 @@ VirtualMachine.prototype.downloadProjectId = function (id) {
  */
 VirtualMachine.prototype.addSprite2 = function (json) {
     // Select new sprite.
-    this.editingTarget = sb2import(json, this.runtime, true);
-    // Update the VM user's knowledge of targets and blocks on the workspace.
-    this.emitTargetsUpdate();
-    this.emitWorkspaceUpdate();
-    this.runtime.setEditingTarget(this.editingTarget);
+    var that = this;
+    sb2import(json, this.runtime, true).then(function (targets) {
+        that.runtime.targets.push(targets[0]);
+        that.editingTarget = targets[0];
+        // Update the VM user's knowledge of targets and blocks on the workspace.
+        that.emitTargetsUpdate();
+        that.emitWorkspaceUpdate();
+        that.runtime.setEditingTarget(that.editingTarget);
+    });
 };
 
 /**
