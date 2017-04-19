@@ -46,26 +46,28 @@ const loadCostume = function (md5ext, costume, runtime) {
             return costume;
         });
     } else {
-        promise = promise.then(costumeAsset => new Promise((resolve, reject) => {
-            const imageElement = new Image();
-            const onError = function () {
-                // eslint-disable-next-line no-use-before-define
-                removeEventListeners();
-                reject();
-            };
-            const onLoad = function () {
-                // eslint-disable-next-line no-use-before-define
-                removeEventListeners();
-                resolve(imageElement);
-            };
-            const removeEventListeners = function () {
-                imageElement.removeEventListener('error', onError);
-                imageElement.removeEventListener('load', onLoad);
-            };
-            imageElement.addEventListener('error', onError);
-            imageElement.addEventListener('load', onLoad);
-            imageElement.src = costumeAsset.encodeDataURI();
-        })).then(imageElement => {
+        promise = promise.then(costumeAsset => (
+            new Promise((resolve, reject) => {
+                const imageElement = new Image();
+                const onError = function () {
+                    // eslint-disable-next-line no-use-before-define
+                    removeEventListeners();
+                    reject();
+                };
+                const onLoad = function () {
+                    // eslint-disable-next-line no-use-before-define
+                    removeEventListeners();
+                    resolve(imageElement);
+                };
+                const removeEventListeners = function () {
+                    imageElement.removeEventListener('error', onError);
+                    imageElement.removeEventListener('load', onLoad);
+                };
+                imageElement.addEventListener('error', onError);
+                imageElement.addEventListener('load', onLoad);
+                imageElement.src = costumeAsset.encodeDataURI();
+            })
+        )).then(imageElement => {
             costume.skinId = runtime.renderer.createBitmapSkin(imageElement, costume.bitmapResolution, rotationCenter);
             return costume;
         });

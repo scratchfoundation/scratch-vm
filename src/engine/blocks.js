@@ -402,15 +402,15 @@ class Blocks {
         const block = this._blocks[blockId];
         // Encode properties of this block.
         const tagName = (block.shadow) ? 'shadow' : 'block';
-        const xy = (block.topLevel) ?
-            ` x="${block.x}" y="${block.y}"` :
-            '';
-        let xmlString = '';
-        xmlString += `<${tagName
-            } id="${block.id}"` +
-            ` type="${block.opcode}"${
-            xy
-            }>`;
+        let xmlString =
+            `<${tagName}
+                id="${block.id}"
+                type="${block.opcode}"
+                ${block.topLevel ?
+                    `x="${block.x} y="${block.y}` :
+                    ''
+                }
+            >`;
         // Add any mutation. Must come before inputs.
         if (block.mutation) {
             xmlString += this.mutationToXML(block.mutation);
@@ -440,8 +440,7 @@ class Blocks {
             if (typeof value === 'string') {
                 value = xmlEscape(blockField.value);
             }
-            xmlString += `<field name="${blockField.name}">${
-                value}</field>`;
+            xmlString += `<field name="${blockField.name}">${value}</field>`;
         }
         // Add blocks connected to the next connection.
         if (block.next) {

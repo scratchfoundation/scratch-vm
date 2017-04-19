@@ -364,9 +364,13 @@ class VirtualMachine extends EventEmitter {
     emitTargetsUpdate () {
         this.emit('targetsUpdate', {
             // [[target id, human readable target name], ...].
-            targetList: this.runtime.targets.filter(target =>
-                // Don't report clones.
-                 !target.hasOwnProperty('isOriginal') || target.isOriginal).map(target => target.toJSON()),
+            targetList: this.runtime.targets
+                .filter(
+                    // Don't report clones.
+                    target => !target.hasOwnProperty('isOriginal') || target.isOriginal
+                ).map(
+                    target => target.toJSON()
+                ),
             // Currently editing target id.
             editingTarget: this.editingTarget ? this.editingTarget.id : null
         });
