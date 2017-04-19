@@ -25,13 +25,14 @@ test('motion', function (t) {
         vm.clear();
         vm.setCompatibilityMode(false);
         vm.setTurboMode(false);
-        vm.loadProject(project);
-        vm.greenFlag();
-    });
+        vm.loadProject(project).then(function () {
+            vm.greenFlag();
 
-    // After two seconds, get playground data and stop
-    setTimeout(function () {
-        vm.getPlaygroundData();
-        vm.stopAll();
-    }, 2000);
+            // After two seconds, get playground data and stop
+            setTimeout(function () {
+                vm.getPlaygroundData();
+                vm.stopAll();
+            }, 2000);
+        });
+    });
 });

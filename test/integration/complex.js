@@ -60,38 +60,40 @@ test('complex', function (t) {
         vm.clear();
         vm.setCompatibilityMode(false);
         vm.setTurboMode(false);
-        vm.loadProject(project);
-        vm.greenFlag();
+        vm.loadProject(project).then(function () {
+            vm.greenFlag();
 
-        // Post IO data
-        vm.postIOData('mouse', {
-            isDown: true,
-            x: 0,
-            y: 10,
-            canvasWidth: 100,
-            canvasHeight: 100
+            // Post IO data
+            vm.postIOData('mouse', {
+                isDown: true,
+                x: 0,
+                y: 10,
+                canvasWidth: 100,
+                canvasHeight: 100
+            });
+
+            // Add sprite
+            vm.addSprite2(sprite);
+
+            // Add backdrop
+            vm.addBackdrop(
+                '6b3d87ba2a7f89be703163b6c1d4c964.png',
+                {
+                    costumeName: 'baseball-field',
+                    baseLayerID: 26,
+                    baseLayerMD5: '6b3d87ba2a7f89be703163b6c1d4c964.png',
+                    bitmapResolution: 2,
+                    rotationCenterX: 480,
+                    rotationCenterY: 360
+                }
+            );
+
+            // After two seconds, get playground data and stop
+            setTimeout(function () {
+                vm.getPlaygroundData();
+                vm.stopAll();
+            }, 2000);
         });
-
-        // Add sprite
-        vm.addSprite2(sprite);
-
-        // Add backdrop
-        vm.addBackdrop(
-            '6b3d87ba2a7f89be703163b6c1d4c964.png',
-            {
-                costumeName: 'baseball-field',
-                baseLayerID: 26,
-                baseLayerMD5: '6b3d87ba2a7f89be703163b6c1d4c964.png',
-                bitmapResolution: 2,
-                rotationCenterX: 480,
-                rotationCenterY: 360
-            }
-        );
     });
 
-    // After two seconds, get playground data and stop
-    setTimeout(function () {
-        vm.getPlaygroundData();
-        vm.stopAll();
-    }, 2000);
 });
