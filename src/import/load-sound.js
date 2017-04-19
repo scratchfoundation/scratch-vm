@@ -22,9 +22,7 @@ const loadSound = function (sound, runtime) {
     const md5 = idParts[0];
     return runtime.storage.load(AssetType.Sound, md5).then(soundAsset => {
         sound.data = soundAsset.data;
-        return runtime.audioEngine.decodeSound(sound).then(function () {
-            return sound;
-        });
+        return runtime.audioEngine.decodeSound(sound).then(() => sound);
     });
 };
 

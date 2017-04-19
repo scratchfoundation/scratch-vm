@@ -164,7 +164,7 @@ const parseScratchObject = function (object, runtime, topLevel) {
         }
     }
     // Sounds from JSON
-    var soundPromises = [];
+    const soundPromises = [];
     if (object.hasOwnProperty('sounds')) {
         for (let s = 0; s < object.sounds.length; s++) {
             const soundSource = object.sounds[s];
@@ -185,7 +185,7 @@ const parseScratchObject = function (object, runtime, topLevel) {
         parseScripts(object.scripts, blocks);
     }
     // Create the first clone, and load its run-state from JSON.
-    var target = sprite.createClone();
+    const target = sprite.createClone();
 
     // Load target properties from JSON.
     if (object.hasOwnProperty('variables')) {
@@ -242,31 +242,35 @@ const parseScratchObject = function (object, runtime, topLevel) {
 
     target.isStage = topLevel;
 
-    Promise.all(costumePromises).then(function (costumes) {
+    Promise.all(costumePromises).then(costumes => {
         sprite.costumes = costumes;
     });
 
-    Promise.all(soundPromises).then(function (sounds) {
+    Promise.all(soundPromises).then(sounds => {
         sprite.sounds = sounds;
     });
 
     // The stage will have child objects; recursively process them.
-    var childrenPromises = [];
+    const childrenPromises = [];
     if (object.children) {
-        for (var m = 0; m < object.children.length; m++) {
+        for (let m = 0; m < object.children.length; m++) {
             childrenPromises.push(parseScratchObject(object.children[m], runtime, false));
         }
     }
 
-    return Promise.all(costumePromises.concat(soundPromises)).then(function () {
-        return Promise.all(childrenPromises).then(function (children) {
-            var targets = [target];
-            for (var n = 0; n < children.length; n++) {
+    return Promise.all(
+        costumePromises.concat(soundPromises)
+    ).then(() =>
+        Promise.all(
+            childrenPromises
+        ).then(children => {
+            let targets = [target];
+            for (let n = 0; n < children.length; n++) {
                 targets = targets.concat(children[n]);
             }
             return targets;
-        });
-    });
+        })
+    );
 };
 
 /**

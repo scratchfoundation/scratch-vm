@@ -143,25 +143,26 @@ class VirtualMachine extends EventEmitter {
     /**
      * Load a project from a Scratch 2.0 JSON representation.
      * @param {?string} json JSON string representing the project.
+     * @return {!Promise} Promise that resolves after targets are installed.
      */
     loadProject (json) {
         // @todo: Handle other formats, e.g., Scratch 1.4, Scratch 3.0.
-        return sb2import(json, this.runtime).then(function (targets) {
-        this.clear();
-        for (var n = 0; n < targets.length; n++) {
-            if (targets[n] !== null) {
-                this.runtime.targets.push(targets[n]);
-                targets[n].updateAllDrawableProperties();
+        return sb2import(json, this.runtime).then(targets => {
+            this.clear();
+            for (let n = 0; n < targets.length; n++) {
+                if (targets[n] !== null) {
+                    this.runtime.targets.push(targets[n]);
+                    targets[n].updateAllDrawableProperties();
+                }
             }
-        }
         // Select the first target for editing, e.g., the first sprite.
-        this.editingTarget = this.runtime.targets[1];
+            this.editingTarget = this.runtime.targets[1];
 
         // Update the VM user's knowledge of targets and blocks on the workspace.
-        this.emitTargetsUpdate();
-        this.emitWorkspaceUpdate();
-        this.runtime.setEditingTarget(this.editingTarget);
-    }.bind(this));
+            this.emitTargetsUpdate();
+            this.emitWorkspaceUpdate();
+            this.runtime.setEditingTarget(this.editingTarget);
+        });
     }
 
     /**
@@ -186,14 +187,14 @@ class VirtualMachine extends EventEmitter {
      */
     addSprite2 (json) {
     // Select new sprite.
-    sb2import(json, this.runtime, true).then(function (targets) {
-        this.runtime.targets.push(targets[0]);
-        this.editingTarget = targets[0];
+        sb2import(json, this.runtime, true).then(targets => {
+            this.runtime.targets.push(targets[0]);
+            this.editingTarget = targets[0];
         // Update the VM user's knowledge of targets and blocks on the workspace.
-        this.emitTargetsUpdate();
-        this.emitWorkspaceUpdate();
-        this.runtime.setEditingTarget(this.editingTarget);
-    }.bind(this));
+            this.emitTargetsUpdate();
+            this.emitWorkspaceUpdate();
+            this.runtime.setEditingTarget(this.editingTarget);
+        });
     }
 
     /**
