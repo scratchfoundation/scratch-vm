@@ -9,7 +9,7 @@ var base = {
         host: '0.0.0.0',
         port: process.env.PORT || 8073
     },
-    devtool: 'source-map',
+    devtool: 'cheap-module-source-map',
     module: {
         rules: [{
             test: /\.js$/,

@@ -132,13 +132,13 @@ const parseScripts = function (scripts, blocks) {
  * @param {!object} object From-JSON "Scratch object:" sprite, stage, watcher.
  * @param {!Runtime} runtime Runtime object to load all structures into.
  * @param {boolean} topLevel Whether this is the top-level object (stage).
- * @return {?Target} Target created (stage or sprite).
+ * @return {?Promise} Promise that resolves to the loaded targets when ready.
  */
 const parseScratchObject = function (object, runtime, topLevel) {
     if (!object.hasOwnProperty('objName')) {
         // Watcher/monitor - skip this object until those are implemented in VM.
         // @todo
-        return null;
+        return Promise.resolve(null);
     }
     // Blocks container for this object.
     const blocks = new Blocks();
@@ -160,11 +160,11 @@ const parseScratchObject = function (object, runtime, topLevel) {
                 rotationCenterY: costumeSource.rotationCenterY,
                 skinId: null
             };
-            sprite.costumes.push(costume);
             costumePromises.push(loadCostume(costumeSource.baseLayerMD5, costume, runtime));
         }
     }
     // Sounds from JSON
+    var soundPromises = [];
     if (object.hasOwnProperty('sounds')) {
         for (let s = 0; s < object.sounds.length; s++) {
             const soundSource = object.sounds[s];
@@ -177,8 +177,7 @@ const parseScratchObject = function (object, runtime, topLevel) {
                 md5: soundSource.md5,
                 data: null
             };
-            loadSound(sound, runtime);
-            sprite.sounds.push(sound);
+            soundPromises.push(loadSound(sound, runtime));
         }
     }
     // If included, parse any and all scripts/blocks on the object.
@@ -186,9 +185,8 @@ const parseScratchObject = function (object, runtime, topLevel) {
         parseScripts(object.scripts, blocks);
     }
     // Create the first clone, and load its run-state from JSON.
-    const target = sprite.createClone();
-    // Add it to the runtime's list of targets.
-    runtime.targets.push(target);
+    var target = sprite.createClone();
+
     // Load target properties from JSON.
     if (object.hasOwnProperty('variables')) {
         for (let j = 0; j < object.variables.length; j++) {
@@ -241,18 +239,34 @@ const parseScratchObject = function (object, runtime, topLevel) {
             target.rotationStyle = RenderedTarget.ROTATION_STYLE_ALL_AROUND;
         }
     }
+
     target.isStage = topLevel;
-    Promise.all(costumePromises).then(costumes => {
+
+    Promise.all(costumePromises).then(function (costumes) {
         sprite.costumes = costumes;
-        target.updateAllDrawableProperties();
     });
+
+    Promise.all(soundPromises).then(function (sounds) {
+        sprite.sounds = sounds;
+    });
+
     // The stage will have child objects; recursively process them.
+    var childrenPromises = [];
     if (object.children) {
-        for (let m = 0; m < object.children.length; m++) {
-            parseScratchObject(object.children[m], runtime, false);
+        for (var m = 0; m < object.children.length; m++) {
+            childrenPromises.push(parseScratchObject(object.children[m], runtime, false));
         }
     }
-    return target;
+
+    return Promise.all(costumePromises.concat(soundPromises)).then(function () {
+        return Promise.all(childrenPromises).then(function (children) {
+            var targets = [target];
+            for (var n = 0; n < children.length; n++) {
+                targets = targets.concat(children[n]);
+            }
+            return targets;
+        });
+    });
 };
 
 /**
@@ -261,7 +275,7 @@ const parseScratchObject = function (object, runtime, topLevel) {
  * @param {!string} json SB2-format JSON to load.
  * @param {!Runtime} runtime Runtime object to load all structures into.
  * @param {boolean=} optForceSprite If set, treat as sprite (Sprite2).
- * @return {?Target} Top-level target created (stage or sprite).
+ * @return {?Promise} Promise that resolves to the loaded targets when ready.
  */
 const sb2import = function (json, runtime, optForceSprite) {
     return parseScratchObject(

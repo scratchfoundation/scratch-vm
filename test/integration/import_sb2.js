@@ -20,33 +20,33 @@ test('default', function (t) {
     // Create runtime instance & load SB2 into it
     var rt = new runtime();
     attachTestStorage(rt);
-    sb2(file, rt);
+    sb2(file, rt).then(function (targets) {
+        // Test
+        t.type(file, 'string');
+        t.type(rt, 'object');
+        t.type(targets, 'object');
 
-    // Test
-    t.type(file, 'string');
-    t.type(rt, 'object');
-    t.type(rt.targets, 'object');
+        t.ok(targets[0] instanceof renderedTarget);
+        t.type(targets[0].id, 'string');
+        t.type(targets[0].blocks, 'object');
+        t.type(targets[0].variables, 'object');
+        t.type(targets[0].lists, 'object');
 
-    t.ok(rt.targets[0] instanceof renderedTarget);
-    t.type(rt.targets[0].id, 'string');
-    t.type(rt.targets[0].blocks, 'object');
-    t.type(rt.targets[0].variables, 'object');
-    t.type(rt.targets[0].lists, 'object');
+        t.equal(targets[0].isOriginal, true);
+        t.equal(targets[0].currentCostume, 0);
+        t.equal(targets[0].isOriginal, true);
+        t.equal(targets[0].isStage, true);
 
-    t.equal(rt.targets[0].isOriginal, true);
-    t.equal(rt.targets[0].currentCostume, 0);
-    t.equal(rt.targets[0].isOriginal, true);
-    t.equal(rt.targets[0].isStage, true);
+        t.ok(targets[1] instanceof renderedTarget);
+        t.type(targets[1].id, 'string');
+        t.type(targets[1].blocks, 'object');
+        t.type(targets[1].variables, 'object');
+        t.type(targets[1].lists, 'object');
 
-    t.ok(rt.targets[1] instanceof renderedTarget);
-    t.type(rt.targets[1].id, 'string');
-    t.type(rt.targets[1].blocks, 'object');
-    t.type(rt.targets[1].variables, 'object');
-    t.type(rt.targets[1].lists, 'object');
-
-    t.equal(rt.targets[1].isOriginal, true);
-    t.equal(rt.targets[1].currentCostume, 0);
-    t.equal(rt.targets[1].isOriginal, true);
-    t.equal(rt.targets[1].isStage, false);
-    t.end();
+        t.equal(targets[1].isOriginal, true);
+        t.equal(targets[1].currentCostume, 0);
+        t.equal(targets[1].isOriginal, true);
+        t.equal(targets[1].isStage, false);
+        t.end();
+    });
 });
