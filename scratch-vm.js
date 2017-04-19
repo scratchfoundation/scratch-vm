@@ -70282,7 +70282,7 @@ var log = __webpack_require__(61);
  * @property {string} md5 - the MD5 and extension of the sound to be loaded.
  * @property {Buffer} data - sound data will be written here once loaded.
  * @param {!Runtime} runtime - Scratch runtime, used to access the storage module.
- * @returns {!Promise} - a promise which will resolve after sound is loaded
+ * @returns {!Promise} - a promise which will resolve to the sound when ready.
  */
 var loadSound = function (sound, runtime) {
     if (!runtime.storage) {
@@ -70297,7 +70297,9 @@ var loadSound = function (sound, runtime) {
     var md5 = idParts[0];
     return runtime.storage.load(AssetType.Sound, md5).then(function (soundAsset) {
         sound.data = soundAsset.data;
-        return runtime.audioEngine.decodeSound(sound);
+        return runtime.audioEngine.decodeSound(sound).then(function () {
+            return sound;
+        });
     });
 };
 
@@ -75828,13 +75830,13 @@ var loadSound = __webpack_require__(290);
  * @param {!object} object From-JSON "Scratch object:" sprite, stage, watcher.
  * @param {!Runtime} runtime Runtime object to load all structures into.
  * @param {boolean} topLevel Whether this is the top-level object (stage).
- * @return {?Target} Target created (stage or sprite).
+ * @return {?Promise} Promise that resolves to the loaded targets when ready.
  */
 var parseScratchObject = function (object, runtime, topLevel) {
     if (!object.hasOwnProperty('objName')) {
         // Watcher/monitor - skip this object until those are implemented in VM.
         // @todo
-        return null;
+        return Promise.resolve(null);
     }
     // Blocks container for this object.
     var blocks = new Blocks();
@@ -75856,11 +75858,11 @@ var parseScratchObject = function (object, runtime, topLevel) {
                 rotationCenterY: costumeSource.rotationCenterY,
                 skinId: null
             };
-            sprite.costumes.push(costume);
             costumePromises.push(loadCostume(costumeSource.baseLayerMD5, costume, runtime));
         }
     }
     // Sounds from JSON
+    var soundPromises = [];
     if (object.hasOwnProperty('sounds')) {
         for (var s = 0; s < object.sounds.length; s++) {
             var soundSource = object.sounds[s];
@@ -75873,8 +75875,7 @@ var parseScratchObject = function (object, runtime, topLevel) {
                 md5: soundSource.md5,
                 data: null
             };
-            loadSound(sound, runtime);
-            sprite.sounds.push(sound);
+            soundPromises.push(loadSound(sound, runtime));
         }
     }
     // If included, parse any and all scripts/blocks on the object.
@@ -75883,8 +75884,7 @@ var parseScratchObject = function (object, runtime, topLevel) {
     }
     // Create the first clone, and load its run-state from JSON.
     var target = sprite.createClone();
-    // Add it to the runtime's list of targets.
-    runtime.targets.push(target);
+
     // Load target properties from JSON.
     if (object.hasOwnProperty('variables')) {
         for (var j = 0; j < object.variables.length; j++) {
@@ -75937,18 +75937,34 @@ var parseScratchObject = function (object, runtime, topLevel) {
             target.rotationStyle = RenderedTarget.ROTATION_STYLE_ALL_AROUND;
         }
     }
+
     target.isStage = topLevel;
+
     Promise.all(costumePromises).then(function (costumes) {
         sprite.costumes = costumes;
-        target.updateAllDrawableProperties();
     });
+
+    Promise.all(soundPromises).then(function (sounds) {
+        sprite.sounds = sounds;
+    });
+
     // The stage will have child objects; recursively process them.
+    var childrenPromises = [];
     if (object.children) {
         for (var m = 0; m < object.children.length; m++) {
-            parseScratchObject(object.children[m], runtime, false);
+            childrenPromises.push(parseScratchObject(object.children[m], runtime, false));
         }
     }
-    return target;
+
+    return Promise.all(costumePromises.concat(soundPromises)).then(function () {
+        return Promise.all(childrenPromises).then(function (children) {
+            var targets = [target];
+            for (var n = 0; n < children.length; n++) {
+                targets = targets.concat(children[n]);
+            }
+            return targets;
+        });
+    });
 };
 
 /**
@@ -75957,7 +75973,7 @@ var parseScratchObject = function (object, runtime, topLevel) {
  * @param {!string} json SB2-format JSON to load.
  * @param {!Runtime} runtime Runtime object to load all structures into.
  * @param {boolean=} optForceSprite If set, treat as sprite (Sprite2).
- * @return {?Target} Top-level target created (stage or sprite).
+ * @return {?Promise} Promise that resolves to the loaded targets when ready.
  */
 var sb2import = function (json, runtime, optForceSprite) {
     return parseScratchObject(
@@ -78161,17 +78177,26 @@ VirtualMachine.prototype.postIOData = function (device, data) {
 /**
  * Load a project from a Scratch 2.0 JSON representation.
  * @param {?string} json JSON string representing the project.
+ * @return {!Promise} Promise that resolves after targets are installed.
  */
 VirtualMachine.prototype.loadProject = function (json) {
-    this.clear();
     // @todo: Handle other formats, e.g., Scratch 1.4, Scratch 3.0.
-    sb2import(json, this.runtime);
-    // Select the first target for editing, e.g., the first sprite.
-    this.editingTarget = this.runtime.targets[1];
-    // Update the VM user's knowledge of targets and blocks on the workspace.
-    this.emitTargetsUpdate();
-    this.emitWorkspaceUpdate();
-    this.runtime.setEditingTarget(this.editingTarget);
+    return sb2import(json, this.runtime).then(function (targets) {
+        this.clear();
+        for (var n = 0; n < targets.length; n++) {
+            if (targets[n] !== null) {
+                this.runtime.targets.push(targets[n]);
+                targets[n].updateAllDrawableProperties();
+            }
+        }
+        // Select the first target for editing, e.g., the first sprite.
+        this.editingTarget = this.runtime.targets[1];
+
+        // Update the VM user's knowledge of targets and blocks on the workspace.
+        this.emitTargetsUpdate();
+        this.emitWorkspaceUpdate();
+        this.runtime.setEditingTarget(this.editingTarget);
+    }.bind(this));
 };
 
 /**
@@ -78196,11 +78221,14 @@ VirtualMachine.prototype.downloadProjectId = function (id) {
  */
 VirtualMachine.prototype.addSprite2 = function (json) {
     // Select new sprite.
-    this.editingTarget = sb2import(json, this.runtime, true);
-    // Update the VM user's knowledge of targets and blocks on the workspace.
-    this.emitTargetsUpdate();
-    this.emitWorkspaceUpdate();
-    this.runtime.setEditingTarget(this.editingTarget);
+    sb2import(json, this.runtime, true).then(function (targets) {
+        this.runtime.targets.push(targets[0]);
+        this.editingTarget = targets[0];
+        // Update the VM user's knowledge of targets and blocks on the workspace.
+        this.emitTargetsUpdate();
+        this.emitWorkspaceUpdate();
+        this.runtime.setEditingTarget(this.editingTarget);
+    }.bind(this));
 };
 
 /**
