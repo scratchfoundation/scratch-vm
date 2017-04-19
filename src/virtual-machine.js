@@ -153,24 +153,23 @@ VirtualMachine.prototype.postIOData = function (device, data) {
  * @return {!Promise} Promise that resolves after targets are installed.
  */
 VirtualMachine.prototype.loadProject = function (json) {
-    var that = this;
     // @todo: Handle other formats, e.g., Scratch 1.4, Scratch 3.0.
     return sb2import(json, this.runtime).then(function (targets) {
-        that.clear();
+        this.clear();
         for (var n = 0; n < targets.length; n++) {
             if (targets[n] !== null) {
-                that.runtime.targets.push(targets[n]);
+                this.runtime.targets.push(targets[n]);
                 targets[n].updateAllDrawableProperties();
             }
         }
         // Select the first target for editing, e.g., the first sprite.
-        that.editingTarget = that.runtime.targets[1];
+        this.editingTarget = this.runtime.targets[1];
 
         // Update the VM user's knowledge of targets and blocks on the workspace.
-        that.emitTargetsUpdate();
-        that.emitWorkspaceUpdate();
-        that.runtime.setEditingTarget(that.editingTarget);
-    });
+        this.emitTargetsUpdate();
+        this.emitWorkspaceUpdate();
+        this.runtime.setEditingTarget(this.editingTarget);
+    }.bind(this));
 };
 
 /**
@@ -195,15 +194,14 @@ VirtualMachine.prototype.downloadProjectId = function (id) {
  */
 VirtualMachine.prototype.addSprite2 = function (json) {
     // Select new sprite.
-    var that = this;
     sb2import(json, this.runtime, true).then(function (targets) {
-        that.runtime.targets.push(targets[0]);
-        that.editingTarget = targets[0];
+        this.runtime.targets.push(targets[0]);
+        this.editingTarget = targets[0];
         // Update the VM user's knowledge of targets and blocks on the workspace.
-        that.emitTargetsUpdate();
-        that.emitWorkspaceUpdate();
-        that.runtime.setEditingTarget(that.editingTarget);
-    });
+        this.emitTargetsUpdate();
+        this.emitWorkspaceUpdate();
+        this.runtime.setEditingTarget(this.editingTarget);
+    }.bind(this));
 };
 
 /**

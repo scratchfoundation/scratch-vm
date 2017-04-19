@@ -7,7 +7,7 @@ var log = require('../util/log');
  * @property {string} md5 - the MD5 and extension of the sound to be loaded.
  * @property {Buffer} data - sound data will be written here once loaded.
  * @param {!Runtime} runtime - Scratch runtime, used to access the storage module.
- * @returns {!Promise} - a promise which will resolves to the sound when ready.
+ * @returns {!Promise} - a promise which will resolve to the sound when ready.
  */
 var loadSound = function (sound, runtime) {
     if (!runtime.storage) {
