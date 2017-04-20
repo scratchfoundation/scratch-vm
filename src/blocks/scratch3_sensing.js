@@ -117,7 +117,7 @@ Scratch3SensingBlocks.prototype.getKeyPressed = function (args, util) {
 };
 
 Scratch3SensingBlocks.prototype.daysSince2000 = function () {
-    var msPerDay = 24 * 60 * 60 * 1000;
+    var msPerDay = 86400000; // The amount of milliseconds in a day.
     var start = new Date(2000, 0, 1); // Months are 0-indexed.
     var today = new Date();
     var dstAdjust = today.getTimezoneOffset() - start.getTimezoneOffset();
