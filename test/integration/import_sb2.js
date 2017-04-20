@@ -1,26 +1,26 @@
-var path = require('path');
-var test = require('tap').test;
-var attachTestStorage = require('../fixtures/attach-test-storage');
-var extract = require('../fixtures/extract');
+const path = require('path');
+const test = require('tap').test;
+const attachTestStorage = require('../fixtures/attach-test-storage');
+const extract = require('../fixtures/extract');
 
-var renderedTarget = require('../../src/sprites/rendered-target');
-var runtime = require('../../src/engine/runtime');
-var sb2 = require('../../src/import/sb2import');
+const renderedTarget = require('../../src/sprites/rendered-target');
+const runtime = require('../../src/engine/runtime');
+const sb2 = require('../../src/import/sb2import');
 
-test('spec', function (t) {
+test('spec', t => {
     t.type(sb2, 'function');
     t.end();
 });
 
-test('default', function (t) {
+test('default', t => {
     // Get SB2 JSON (string)
-    var uri = path.resolve(__dirname, '../fixtures/default.sb2');
-    var file = extract(uri);
+    const uri = path.resolve(__dirname, '../fixtures/default.sb2');
+    const file = extract(uri);
 
     // Create runtime instance & load SB2 into it
-    var rt = new runtime();
+    const rt = new runtime();
     attachTestStorage(rt);
-    sb2(file, rt).then(function (targets) {
+    sb2(file, rt).then(targets => {
         // Test
         t.type(file, 'string');
         t.type(rt, 'object');

@@ -1,10 +1,10 @@
-var test = require('tap').test;
-var Keyboard = require('../../src/io/keyboard');
-var Runtime = require('../../src/engine/runtime');
+const test = require('tap').test;
+const Keyboard = require('../../src/io/keyboard');
+const Runtime = require('../../src/engine/runtime');
 
-test('spec', function (t) {
-    var rt = new Runtime();
-    var k = new Keyboard(rt);
+test('spec', t => {
+    const rt = new Runtime();
+    const k = new Keyboard(rt);
 
     t.type(k, 'object');
     t.type(k.postData, 'function');
@@ -12,9 +12,9 @@ test('spec', function (t) {
     t.end();
 });
 
-test('space', function (t) {
-    var rt = new Runtime();
-    var k = new Keyboard(rt);
+test('space', t => {
+    const rt = new Runtime();
+    const k = new Keyboard(rt);
 
     k.postData({
         keyCode: 32,
@@ -26,9 +26,9 @@ test('space', function (t) {
     t.end();
 });
 
-test('letter', function (t) {
-    var rt = new Runtime();
-    var k = new Keyboard(rt);
+test('letter', t => {
+    const rt = new Runtime();
+    const k = new Keyboard(rt);
 
     k.postData({
         keyCode: 65,
@@ -40,9 +40,9 @@ test('letter', function (t) {
     t.end();
 });
 
-test('number', function (t) {
-    var rt = new Runtime();
-    var k = new Keyboard(rt);
+test('number', t => {
+    const rt = new Runtime();
+    const k = new Keyboard(rt);
 
     k.postData({
         keyCode: 49,
@@ -54,9 +54,9 @@ test('number', function (t) {
     t.end();
 });
 
-test('keyup', function (t) {
-    var rt = new Runtime();
-    var k = new Keyboard(rt);
+test('keyup', t => {
+    const rt = new Runtime();
+    const k = new Keyboard(rt);
 
     k.postData({
         keyCode: 37,

@@ -1,12 +1,12 @@
-var test = require('tap').test;
-var Thread = require('../../src/engine/thread');
-var RenderedTarget = require('../../src/sprites/rendered-target');
-var Sprite = require('../../src/sprites/sprite');
+const test = require('tap').test;
+const Thread = require('../../src/engine/thread');
+const RenderedTarget = require('../../src/sprites/rendered-target');
+const Sprite = require('../../src/sprites/sprite');
 
-test('spec', function (t) {
+test('spec', t => {
     t.type(Thread, 'function');
     
-    var th = new Thread('arbitraryString');
+    const th = new Thread('arbitraryString');
     t.type(th, 'object');
     t.ok(th instanceof Thread);
     t.type(th.pushStack, 'function');
@@ -27,15 +27,15 @@ test('spec', function (t) {
     t.end();
 });
 
-test('pushStack', function (t) {
-    var th = new Thread('arbitraryString');
+test('pushStack', t => {
+    const th = new Thread('arbitraryString');
     th.pushStack('arbitraryString');
     
     t.end();
 });
 
-test('popStack', function (t) {
-    var th = new Thread('arbitraryString');
+test('popStack', t => {
+    const th = new Thread('arbitraryString');
     th.pushStack('arbitraryString');
     t.strictEquals(th.popStack(), 'arbitraryString');
     t.strictEquals(th.popStack(), undefined);
@@ -43,8 +43,8 @@ test('popStack', function (t) {
     t.end();
 });
 
-test('atStackTop', function (t) {
-    var th = new Thread('arbitraryString');
+test('atStackTop', t => {
+    const th = new Thread('arbitraryString');
     th.pushStack('arbitraryString');
     th.pushStack('secondString');
     t.strictEquals(th.atStackTop(), false);
@@ -54,8 +54,8 @@ test('atStackTop', function (t) {
     t.end();
 });
 
-test('reuseStackForNextBlock', function (t) {
-    var th = new Thread('arbitraryString');
+test('reuseStackForNextBlock', t => {
+    const th = new Thread('arbitraryString');
     th.pushStack('arbitraryString');
     th.reuseStackForNextBlock('secondString');
     t.strictEquals(th.popStack(), 'secondString');
@@ -63,8 +63,8 @@ test('reuseStackForNextBlock', function (t) {
     t.end();
 });
 
-test('peekStackFrame', function (t) {
-    var th = new Thread('arbitraryString');
+test('peekStackFrame', t => {
+    const th = new Thread('arbitraryString');
     th.pushStack('arbitraryString');
     t.strictEquals(th.peekStackFrame().warpMode, false);
     th.popStack();
@@ -73,8 +73,8 @@ test('peekStackFrame', function (t) {
     t.end();
 });
 
-test('peekParentStackFrame', function (t) {
-    var th = new Thread('arbitraryString');
+test('peekParentStackFrame', t => {
+    const th = new Thread('arbitraryString');
     th.pushStack('arbitraryString');
     th.peekStackFrame().warpMode = true;
     t.strictEquals(th.peekParentStackFrame(), null);
@@ -84,8 +84,8 @@ test('peekParentStackFrame', function (t) {
     t.end();
 });
 
-test('pushReportedValue', function (t) {
-    var th = new Thread('arbitraryString');
+test('pushReportedValue', t => {
+    const th = new Thread('arbitraryString');
     th.pushStack('arbitraryString');
     th.pushStack('secondString');
     th.pushReportedValue('value');
@@ -94,8 +94,8 @@ test('pushReportedValue', function (t) {
     t.end();
 });
 
-test('peekStack', function (t) {
-    var th = new Thread('arbitraryString');
+test('peekStack', t => {
+    const th = new Thread('arbitraryString');
     th.pushStack('arbitraryString');
     t.strictEquals(th.peekStack(), 'arbitraryString');
     th.popStack();
@@ -104,8 +104,8 @@ test('peekStack', function (t) {
     t.end();
 });
 
-test('PushGetParam', function (t) {
-    var th = new Thread('arbitraryString');
+test('PushGetParam', t => {
+    const th = new Thread('arbitraryString');
     th.pushStack('arbitraryString');
     th.pushParam('testParam', 'testValue');
     t.strictEquals(th.peekStackFrame().params.testParam, 'testValue');
@@ -114,11 +114,11 @@ test('PushGetParam', function (t) {
     t.end();
 });
 
-test('goToNextBlock', function (t) {
-    var th = new Thread('arbitraryString');
-    var s = new Sprite();
-    var rt = new RenderedTarget(s, null);
-    var block1 = {fields: Object,
+test('goToNextBlock', t => {
+    const th = new Thread('arbitraryString');
+    const s = new Sprite();
+    const rt = new RenderedTarget(s, null);
+    const block1 = {fields: Object,
         id: 'arbitraryString',
         inputs: Object,
         STEPS: Object,
@@ -132,7 +132,7 @@ test('goToNextBlock', function (t) {
         x: 0,
         y: 0
     };
-    var block2 = {fields: Object,
+    const block2 = {fields: Object,
         id: 'secondString',
         inputs: Object,
         STEPS: Object,
@@ -169,11 +169,11 @@ test('goToNextBlock', function (t) {
     t.end();
 });
 
-test('stopThisScript', function (t) {
-    var th = new Thread('arbitraryString');
-    var s = new Sprite();
-    var rt = new RenderedTarget(s, null);
-    var block1 = {fields: Object,
+test('stopThisScript', t => {
+    const th = new Thread('arbitraryString');
+    const s = new Sprite();
+    const rt = new RenderedTarget(s, null);
+    const block1 = {fields: Object,
         id: 'arbitraryString',
         inputs: Object,
         STEPS: Object,
@@ -187,7 +187,7 @@ test('stopThisScript', function (t) {
         x: 0,
         y: 0
     };
-    var block2 = {fields: Object,
+    const block2 = {fields: Object,
         id: 'secondString',
         inputs: Object,
         STEPS: Object,
@@ -221,11 +221,11 @@ test('stopThisScript', function (t) {
     t.end();
 });
 
-test('isRecursiveCall', function (t) {
-    var th = new Thread('arbitraryString');
-    var s = new Sprite();
-    var rt = new RenderedTarget(s, null);
-    var block1 = {fields: Object,
+test('isRecursiveCall', t => {
+    const th = new Thread('arbitraryString');
+    const s = new Sprite();
+    const rt = new RenderedTarget(s, null);
+    const block1 = {fields: Object,
         id: 'arbitraryString',
         inputs: Object,
         STEPS: Object,
@@ -239,7 +239,7 @@ test('isRecursiveCall', function (t) {
         x: 0,
         y: 0
     };
-    var block2 = {fields: Object,
+    const block2 = {fields: Object,
         id: 'secondString',
         inputs: Object,
         STEPS: Object,

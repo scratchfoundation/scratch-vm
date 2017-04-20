@@ -1,9 +1,9 @@
-var CopyWebpackPlugin = require('copy-webpack-plugin');
-var defaultsDeep = require('lodash.defaultsdeep');
-var path = require('path');
-var webpack = require('webpack');
+const CopyWebpackPlugin = require('copy-webpack-plugin');
+const defaultsDeep = require('lodash.defaultsdeep');
+const path = require('path');
+const webpack = require('webpack');
 
-var base = {
+const base = {
     devServer: {
         contentBase: false,
         host: '0.0.0.0',
