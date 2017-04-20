@@ -2,7 +2,6 @@ const EventEmitter = require('events');
 
 const log = require('./util/log');
 const Runtime = require('./engine/runtime');
-const ScratchStorage = require('scratch-storage');
 const sb2import = require('./import/sb2import');
 const StringUtil = require('./util/string-util');
 
@@ -10,8 +9,6 @@ const loadCostume = require('./import/load-costume.js');
 const loadSound = require('./import/load-sound.js');
 
 const RESERVED_NAMES = ['_mouse_', '_stage_', '_edge_', '_myself_', '_random_'];
-
-const AssetType = ScratchStorage.AssetType;
 
 /**
  * Handles connections between blocks, stage, and extensions.
@@ -170,12 +167,13 @@ class VirtualMachine extends EventEmitter {
      * @param {string} id - the ID of the project to download, as a string.
      */
     downloadProjectId (id) {
-        if (!this.runtime.storage) {
+        const storage = this.runtime.storage;
+        if (!storage) {
             log.error('No storage module present; cannot load project: ', id);
             return;
         }
         const vm = this;
-        const promise = this.runtime.storage.load(AssetType.Project, id);
+        const promise = storage.load(storage.AssetType.Project, id);
         promise.then(projectAsset => {
             vm.loadProject(projectAsset.decodeText());
         });

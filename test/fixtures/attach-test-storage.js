@@ -38,7 +38,7 @@ var getAssetUrl = function (asset) {
  */
 var attachTestStorage = function (vm) {
     var storage = new ScratchStorage();
-    var AssetType = ScratchStorage.AssetType;
+    var AssetType = storage.AssetType;
     storage.addWebSource([AssetType.Project], getProjectUrl);
     storage.addWebSource([AssetType.ImageVector, AssetType.ImageBitmap, AssetType.Sound], getAssetUrl);
     vm.attachStorage(storage);
