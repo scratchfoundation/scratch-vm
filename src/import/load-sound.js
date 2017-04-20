@@ -1,5 +1,5 @@
-var AssetType = require('scratch-storage').AssetType;
-var log = require('../util/log');
+const AssetType = require('scratch-storage').AssetType;
+const log = require('../util/log');
 
 /**
  * Load a sound's asset into memory asynchronously.
@@ -9,7 +9,7 @@ var log = require('../util/log');
  * @param {!Runtime} runtime - Scratch runtime, used to access the storage module.
  * @returns {!Promise} - a promise which will resolve to the sound when ready.
  */
-var loadSound = function (sound, runtime) {
+const loadSound = function (sound, runtime) {
     if (!runtime.storage) {
         log.error('No storage module present; cannot load sound asset: ', sound.md5);
         return Promise.resolve(sound);
@@ -18,13 +18,11 @@ var loadSound = function (sound, runtime) {
         log.error('No audio engine present; cannot load sound asset: ', sound.md5);
         return Promise.resolve(sound);
     }
-    var idParts = sound.md5.split('.');
-    var md5 = idParts[0];
-    return runtime.storage.load(AssetType.Sound, md5).then(function (soundAsset) {
+    const idParts = sound.md5.split('.');
+    const md5 = idParts[0];
+    return runtime.storage.load(AssetType.Sound, md5).then(soundAsset => {
         sound.data = soundAsset.data;
-        return runtime.audioEngine.decodeSound(sound).then(function () {
-            return sound;
-        });
+        return runtime.audioEngine.decodeSound(sound).then(() => sound);
     });
 };
 

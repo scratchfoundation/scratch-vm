@@ -10,6 +10,16 @@ var base = {
         port: process.env.PORT || 8073
     },
     devtool: 'cheap-module-source-map',
+    module: {
+        rules: [{
+            test: /\.js$/,
+            loader: 'babel-loader',
+            include: path.resolve(__dirname, 'src'),
+            query: {
+                presets: ['es2015']
+            }
+        }]
+    },
     plugins: [
         new webpack.optimize.UglifyJsPlugin({
             include: /\.min\.js$/,
@@ -31,12 +41,12 @@ module.exports = [
             filename: '[name].js'
         },
         module: {
-            rules: [
+            rules: base.module.rules.concat([
                 {
                     test: require.resolve('./src/index.js'),
                     loader: 'expose-loader?VirtualMachine'
                 }
-            ]
+            ])
         }
     }),
     // Node-compatible
@@ -77,7 +87,7 @@ module.exports = [
             filename: '[name].js'
         },
         module: {
-            loaders: [
+            rules: base.module.rules.concat([
                 {
                     test: require.resolve('./src/index.js'),
                     loader: 'expose-loader?VirtualMachine'
@@ -106,7 +116,7 @@ module.exports = [
                     test: require.resolve('scratch-storage'),
                     loader: 'expose-loader?Scratch.Storage'
                 }
-            ]
+            ])
         },
         plugins: base.plugins.concat([
             new CopyWebpackPlugin([{

@@ -8,7 +8,7 @@
  * Removed $ due to issue 251.
  * @private
  */
-var soup_ = '!#%()*+,-./:;=?@[]^_`{|}~' +
+const soup_ = '!#%()*+,-./:;=?@[]^_`{|}~' +
     'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
 
 /**
@@ -16,11 +16,11 @@ var soup_ = '!#%()*+,-./:;=?@[]^_`{|}~' +
  * 87 characters ^ 20 length > 128 bits (better than a UUID).
  * @return {string} A globally unique ID string.
  */
-var uid = function () {
-    var length = 20;
-    var soupLength = soup_.length;
-    var id = [];
-    for (var i = 0; i < length; i++) {
+const uid = function () {
+    const length = 20;
+    const soupLength = soup_.length;
+    const id = [];
+    for (let i = 0; i < length; i++) {
         id[i] = soup_.charAt(Math.random() * soupLength);
     }
     return id.join('');

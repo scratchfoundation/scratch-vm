@@ -1,6 +1,6 @@
-var adapter = require('./adapter');
-var mutationAdapter = require('./mutation-adapter');
-var xmlEscape = require('../util/xml-escape');
+const adapter = require('./adapter');
+const mutationAdapter = require('./mutation-adapter');
+const xmlEscape = require('../util/xml-escape');
 
 /**
  * @fileoverview
@@ -8,489 +8,493 @@ var xmlEscape = require('../util/xml-escape');
  * and handle updates from Scratch Blocks events.
  */
 
-var Blocks = function () {
+class Blocks {
+    constructor () {
+        /**
+         * All blocks in the workspace.
+         * Keys are block IDs, values are metadata about the block.
+         * @type {Object.<string, Object>}
+         */
+        this._blocks = {};
+
+        /**
+         * All top-level scripts in the workspace.
+         * A list of block IDs that represent scripts (i.e., first block in script).
+         * @type {Array.<String>}
+         */
+        this._scripts = [];
+    }
+
     /**
-     * All blocks in the workspace.
-     * Keys are block IDs, values are metadata about the block.
-     * @type {Object.<string, Object>}
+     * Blockly inputs that represent statements/branch.
+     * are prefixed with this string.
+     * @const{string}
      */
-    this._blocks = {};
+    static get BRANCH_INPUT_PREFIX () {
+        return 'SUBSTACK';
+    }
 
     /**
-     * All top-level scripts in the workspace.
-     * A list of block IDs that represent scripts (i.e., first block in script).
-     * @type {Array.<String>}
+     * Provide an object with metadata for the requested block ID.
+     * @param {!string} blockId ID of block we have stored.
+     * @return {?object} Metadata about the block, if it exists.
      */
-    this._scripts = [];
-};
-
-/**
- * Blockly inputs that represent statements/branch.
- * are prefixed with this string.
- * @const{string}
- */
-Blocks.BRANCH_INPUT_PREFIX = 'SUBSTACK';
-
-/**
- * Provide an object with metadata for the requested block ID.
- * @param {!string} blockId ID of block we have stored.
- * @return {?object} Metadata about the block, if it exists.
- */
-Blocks.prototype.getBlock = function (blockId) {
-    return this._blocks[blockId];
-};
-
-/**
- * Get all known top-level blocks that start scripts.
- * @return {Array.<string>} List of block IDs.
- */
-Blocks.prototype.getScripts = function () {
-    return this._scripts;
-};
-
- /**
-  * Get the next block for a particular block
-  * @param {?string} id ID of block to get the next block for
-  * @return {?string} ID of next block in the sequence
-  */
-Blocks.prototype.getNextBlock = function (id) {
-    var block = this._blocks[id];
-    return (typeof block === 'undefined') ? null : block.next;
-};
-
-/**
- * Get the branch for a particular C-shaped block.
- * @param {?string} id ID for block to get the branch for.
- * @param {?number} branchNum Which branch to select (e.g. for if-else).
- * @return {?string} ID of block in the branch.
- */
-Blocks.prototype.getBranch = function (id, branchNum) {
-    var block = this._blocks[id];
-    if (typeof block === 'undefined') return null;
-    if (!branchNum) branchNum = 1;
-
-    var inputName = Blocks.BRANCH_INPUT_PREFIX;
-    if (branchNum > 1) {
-        inputName += branchNum;
+    getBlock (blockId) {
+        return this._blocks[blockId];
     }
 
-    // Empty C-block?
-    var input = block.inputs[inputName];
-    return (typeof input === 'undefined') ? null : input.block;
-};
+    /**
+     * Get all known top-level blocks that start scripts.
+     * @return {Array.<string>} List of block IDs.
+     */
+    getScripts () {
+        return this._scripts;
+    }
 
-/**
- * Get the opcode for a particular block
- * @param {?object} block The block to query
- * @return {?string} the opcode corresponding to that block
- */
-Blocks.prototype.getOpcode = function (block) {
-    return (typeof block === 'undefined') ? null : block.opcode;
-};
+     /**
+      * Get the next block for a particular block
+      * @param {?string} id ID of block to get the next block for
+      * @return {?string} ID of next block in the sequence
+      */
+    getNextBlock (id) {
+        const block = this._blocks[id];
+        return (typeof block === 'undefined') ? null : block.next;
+    }
 
-/**
- * Get all fields and their values for a block.
- * @param {?object} block The block to query.
- * @return {?object} All fields and their values.
- */
-Blocks.prototype.getFields = function (block) {
-    return (typeof block === 'undefined') ? null : block.fields;
-};
+    /**
+     * Get the branch for a particular C-shaped block.
+     * @param {?string} id ID for block to get the branch for.
+     * @param {?number} branchNum Which branch to select (e.g. for if-else).
+     * @return {?string} ID of block in the branch.
+     */
+    getBranch (id, branchNum) {
+        const block = this._blocks[id];
+        if (typeof block === 'undefined') return null;
+        if (!branchNum) branchNum = 1;
 
-/**
- * Get all non-branch inputs for a block.
- * @param {?object} block the block to query.
- * @return {!object} All non-branch inputs and their associated blocks.
- */
-Blocks.prototype.getInputs = function (block) {
-    if (typeof block === 'undefined') return null;
-    var inputs = {};
-    for (var input in block.inputs) {
-        // Ignore blocks prefixed with branch prefix.
-        if (input.substring(0, Blocks.BRANCH_INPUT_PREFIX.length) !==
-            Blocks.BRANCH_INPUT_PREFIX) {
-            inputs[input] = block.inputs[input];
+        let inputName = Blocks.BRANCH_INPUT_PREFIX;
+        if (branchNum > 1) {
+            inputName += branchNum;
         }
+
+        // Empty C-block?
+        const input = block.inputs[inputName];
+        return (typeof input === 'undefined') ? null : input.block;
     }
-    return inputs;
-};
 
-/**
- * Get mutation data for a block.
- * @param {?object} block The block to query.
- * @return {?object} Mutation for the block.
- */
-Blocks.prototype.getMutation = function (block) {
-    return (typeof block === 'undefined') ? null : block.mutation;
-};
-
-/**
- * Get the top-level script for a given block.
- * @param {?string} id ID of block to query.
- * @return {?string} ID of top-level script block.
- */
-Blocks.prototype.getTopLevelScript = function (id) {
-    var block = this._blocks[id];
-    if (typeof block === 'undefined') return null;
-    while (block.parent !== null) {
-        block = this._blocks[block.parent];
+    /**
+     * Get the opcode for a particular block
+     * @param {?object} block The block to query
+     * @return {?string} the opcode corresponding to that block
+     */
+    getOpcode (block) {
+        return (typeof block === 'undefined') ? null : block.opcode;
     }
-    return block.id;
-};
 
-/**
- * Get the procedure definition for a given name.
- * @param {?string} name Name of procedure to query.
- * @return {?string} ID of procedure definition.
- */
-Blocks.prototype.getProcedureDefinition = function (name) {
-    for (var id in this._blocks) {
-        if (!this._blocks.hasOwnProperty(id)) continue;
-        var block = this._blocks[id];
-        if ((block.opcode === 'procedures_defnoreturn' ||
-            block.opcode === 'procedures_defreturn') &&
-            block.mutation.proccode === name) {
-            return id;
+    /**
+     * Get all fields and their values for a block.
+     * @param {?object} block The block to query.
+     * @return {?object} All fields and their values.
+     */
+    getFields (block) {
+        return (typeof block === 'undefined') ? null : block.fields;
+    }
+
+    /**
+     * Get all non-branch inputs for a block.
+     * @param {?object} block the block to query.
+     * @return {!object} All non-branch inputs and their associated blocks.
+     */
+    getInputs (block) {
+        if (typeof block === 'undefined') return null;
+        const inputs = {};
+        for (const input in block.inputs) {
+            // Ignore blocks prefixed with branch prefix.
+            if (input.substring(0, Blocks.BRANCH_INPUT_PREFIX.length) !==
+                Blocks.BRANCH_INPUT_PREFIX) {
+                inputs[input] = block.inputs[input];
+            }
         }
-    }
-    return null;
-};
-
-/**
- * Get the procedure definition for a given name.
- * @param {?string} name Name of procedure to query.
- * @return {?string} ID of procedure definition.
- */
-Blocks.prototype.getProcedureParamNames = function (name) {
-    for (var id in this._blocks) {
-        if (!this._blocks.hasOwnProperty(id)) continue;
-        var block = this._blocks[id];
-        if ((block.opcode === 'procedures_defnoreturn' ||
-            block.opcode === 'procedures_defreturn') &&
-            block.mutation.proccode === name) {
-            return JSON.parse(block.mutation.argumentnames);
-        }
-    }
-    return null;
-};
-
-// ---------------------------------------------------------------------
-
-/**
- * Create event listener for blocks. Handles validation and serves as a generic
- * adapter between the blocks and the runtime interface.
- * @param {Object} e Blockly "block" event
- * @param {?Runtime} optRuntime Optional runtime to forward click events to.
- */
-
-Blocks.prototype.blocklyListen = function (e, optRuntime) {
-    // Validate event
-    if (typeof e !== 'object') return;
-    if (typeof e.blockId !== 'string') return;
-
-    // UI event: clicked scripts toggle in the runtime.
-    if (e.element === 'stackclick') {
-        if (optRuntime) {
-            optRuntime.toggleScript(e.blockId);
-        }
-        return;
+        return inputs;
     }
 
-    // Block create/update/destroy
-    switch (e.type) {
-    case 'create':
-        var newBlocks = adapter(e);
-        // A create event can create many blocks. Add them all.
-        for (var i = 0; i < newBlocks.length; i++) {
-            this.createBlock(newBlocks[i]);
+    /**
+     * Get mutation data for a block.
+     * @param {?object} block The block to query.
+     * @return {?object} Mutation for the block.
+     */
+    getMutation (block) {
+        return (typeof block === 'undefined') ? null : block.mutation;
+    }
+
+    /**
+     * Get the top-level script for a given block.
+     * @param {?string} id ID of block to query.
+     * @return {?string} ID of top-level script block.
+     */
+    getTopLevelScript (id) {
+        let block = this._blocks[id];
+        if (typeof block === 'undefined') return null;
+        while (block.parent !== null) {
+            block = this._blocks[block.parent];
         }
-        break;
-    case 'change':
-        this.changeBlock({
-            id: e.blockId,
-            element: e.element,
-            name: e.name,
-            value: e.newValue
-        });
-        break;
-    case 'move':
-        this.moveBlock({
-            id: e.blockId,
-            oldParent: e.oldParentId,
-            oldInput: e.oldInputName,
-            newParent: e.newParentId,
-            newInput: e.newInputName,
-            newCoordinate: e.newCoordinate
-        });
-        break;
-    case 'delete':
-        // Don't accept delete events for missing blocks,
-        // or shadow blocks being obscured.
-        if (!this._blocks.hasOwnProperty(e.blockId) ||
-            this._blocks[e.blockId].shadow) {
+        return block.id;
+    }
+
+    /**
+     * Get the procedure definition for a given name.
+     * @param {?string} name Name of procedure to query.
+     * @return {?string} ID of procedure definition.
+     */
+    getProcedureDefinition (name) {
+        for (const id in this._blocks) {
+            if (!this._blocks.hasOwnProperty(id)) continue;
+            const block = this._blocks[id];
+            if ((block.opcode === 'procedures_defnoreturn' ||
+                block.opcode === 'procedures_defreturn') &&
+                block.mutation.proccode === name) {
+                return id;
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Get the procedure definition for a given name.
+     * @param {?string} name Name of procedure to query.
+     * @return {?string} ID of procedure definition.
+     */
+    getProcedureParamNames (name) {
+        for (const id in this._blocks) {
+            if (!this._blocks.hasOwnProperty(id)) continue;
+            const block = this._blocks[id];
+            if ((block.opcode === 'procedures_defnoreturn' ||
+                block.opcode === 'procedures_defreturn') &&
+                block.mutation.proccode === name) {
+                return JSON.parse(block.mutation.argumentnames);
+            }
+        }
+        return null;
+    }
+
+    // ---------------------------------------------------------------------
+
+    /**
+     * Create event listener for blocks. Handles validation and serves as a generic
+     * adapter between the blocks and the runtime interface.
+     * @param {Object} e Blockly "block" event
+     * @param {?Runtime} optRuntime Optional runtime to forward click events to.
+     */
+
+    blocklyListen (e, optRuntime) {
+        // Validate event
+        if (typeof e !== 'object') return;
+        if (typeof e.blockId !== 'string') return;
+
+        // UI event: clicked scripts toggle in the runtime.
+        if (e.element === 'stackclick') {
+            if (optRuntime) {
+                optRuntime.toggleScript(e.blockId);
+            }
             return;
         }
-        // Inform any runtime to forget about glows on this script.
-        if (optRuntime && this._blocks[e.blockId].topLevel) {
-            optRuntime.quietGlow(e.blockId);
+
+        // Block create/update/destroy
+        switch (e.type) {
+        case 'create': {
+            const newBlocks = adapter(e);
+            // A create event can create many blocks. Add them all.
+            for (let i = 0; i < newBlocks.length; i++) {
+                this.createBlock(newBlocks[i]);
+            }
+            break;
         }
-        this.deleteBlock({
-            id: e.blockId
-        });
-        break;
-    }
-};
-
-// ---------------------------------------------------------------------
-
-/**
- * Block management: create blocks and scripts from a `create` event
- * @param {!object} block Blockly create event to be processed
- */
-Blocks.prototype.createBlock = function (block) {
-    // Does the block already exist?
-    // Could happen, e.g., for an unobscured shadow.
-    if (this._blocks.hasOwnProperty(block.id)) {
-        return;
-    }
-    // Create new block.
-    this._blocks[block.id] = block;
-    // Push block id to scripts array.
-    // Blocks are added as a top-level stack if they are marked as a top-block
-    // (if they were top-level XML in the event).
-    if (block.topLevel) {
-        this._addScript(block.id);
-    }
-};
-
-/**
- * Block management: change block field values
- * @param {!object} args Blockly change event to be processed
- */
-Blocks.prototype.changeBlock = function (args) {
-    // Validate
-    if (args.element !== 'field' && args.element !== 'mutation') return;
-    var block = this._blocks[args.id];
-    if (typeof block === 'undefined') return;
-
-    if (args.element === 'field') {
-        // Update block value
-        if (!block.fields[args.name]) return;
-        block.fields[args.name].value = args.value;
-    } else if (args.element === 'mutation') {
-        block.mutation = mutationAdapter(args.value);
-    }
-};
-
-/**
- * Block management: move blocks from parent to parent
- * @param {!object} e Blockly move event to be processed
- */
-Blocks.prototype.moveBlock = function (e) {
-    if (!this._blocks.hasOwnProperty(e.id)) {
-        return;
-    }
-
-    // Move coordinate changes.
-    if (e.newCoordinate) {
-        this._blocks[e.id].x = e.newCoordinate.x;
-        this._blocks[e.id].y = e.newCoordinate.y;
-    }
-
-    // Remove from any old parent.
-    if (typeof e.oldParent !== 'undefined') {
-        var oldParent = this._blocks[e.oldParent];
-        if (typeof e.oldInput !== 'undefined' &&
-            oldParent.inputs[e.oldInput].block === e.id) {
-            // This block was connected to the old parent's input.
-            oldParent.inputs[e.oldInput].block = null;
-        } else if (oldParent.next === e.id) {
-            // This block was connected to the old parent's next connection.
-            oldParent.next = null;
+        case 'change':
+            this.changeBlock({
+                id: e.blockId,
+                element: e.element,
+                name: e.name,
+                value: e.newValue
+            });
+            break;
+        case 'move':
+            this.moveBlock({
+                id: e.blockId,
+                oldParent: e.oldParentId,
+                oldInput: e.oldInputName,
+                newParent: e.newParentId,
+                newInput: e.newInputName,
+                newCoordinate: e.newCoordinate
+            });
+            break;
+        case 'delete':
+            // Don't accept delete events for missing blocks,
+            // or shadow blocks being obscured.
+            if (!this._blocks.hasOwnProperty(e.blockId) ||
+                this._blocks[e.blockId].shadow) {
+                return;
+            }
+            // Inform any runtime to forget about glows on this script.
+            if (optRuntime && this._blocks[e.blockId].topLevel) {
+                optRuntime.quietGlow(e.blockId);
+            }
+            this.deleteBlock({
+                id: e.blockId
+            });
+            break;
         }
-        this._blocks[e.id].parent = null;
     }
 
-    // Has the block become a top-level block?
-    if (typeof e.newParent === 'undefined') {
-        this._addScript(e.id);
-    } else {
-        // Remove script, if one exists.
-        this._deleteScript(e.id);
-        // Otherwise, try to connect it in its new place.
-        if (typeof e.newInput === 'undefined') {
-            // Moved to the new parent's next connection.
-            this._blocks[e.newParent].next = e.id;
+    // ---------------------------------------------------------------------
+
+    /**
+     * Block management: create blocks and scripts from a `create` event
+     * @param {!object} block Blockly create event to be processed
+     */
+    createBlock (block) {
+        // Does the block already exist?
+        // Could happen, e.g., for an unobscured shadow.
+        if (this._blocks.hasOwnProperty(block.id)) {
+            return;
+        }
+        // Create new block.
+        this._blocks[block.id] = block;
+        // Push block id to scripts array.
+        // Blocks are added as a top-level stack if they are marked as a top-block
+        // (if they were top-level XML in the event).
+        if (block.topLevel) {
+            this._addScript(block.id);
+        }
+    }
+
+    /**
+     * Block management: change block field values
+     * @param {!object} args Blockly change event to be processed
+     */
+    changeBlock (args) {
+        // Validate
+        if (args.element !== 'field' && args.element !== 'mutation') return;
+        const block = this._blocks[args.id];
+        if (typeof block === 'undefined') return;
+
+        if (args.element === 'field') {
+            // Update block value
+            if (!block.fields[args.name]) return;
+            block.fields[args.name].value = args.value;
+        } else if (args.element === 'mutation') {
+            block.mutation = mutationAdapter(args.value);
+        }
+    }
+
+    /**
+     * Block management: move blocks from parent to parent
+     * @param {!object} e Blockly move event to be processed
+     */
+    moveBlock (e) {
+        if (!this._blocks.hasOwnProperty(e.id)) {
+            return;
+        }
+
+        // Move coordinate changes.
+        if (e.newCoordinate) {
+            this._blocks[e.id].x = e.newCoordinate.x;
+            this._blocks[e.id].y = e.newCoordinate.y;
+        }
+
+        // Remove from any old parent.
+        if (typeof e.oldParent !== 'undefined') {
+            const oldParent = this._blocks[e.oldParent];
+            if (typeof e.oldInput !== 'undefined' &&
+                oldParent.inputs[e.oldInput].block === e.id) {
+                // This block was connected to the old parent's input.
+                oldParent.inputs[e.oldInput].block = null;
+            } else if (oldParent.next === e.id) {
+                // This block was connected to the old parent's next connection.
+                oldParent.next = null;
+            }
+            this._blocks[e.id].parent = null;
+        }
+
+        // Has the block become a top-level block?
+        if (typeof e.newParent === 'undefined') {
+            this._addScript(e.id);
         } else {
-            // Moved to the new parent's input.
-            // Don't obscure the shadow block.
-            var oldShadow = null;
-            if (this._blocks[e.newParent].inputs.hasOwnProperty(e.newInput)) {
-                oldShadow = this._blocks[e.newParent].inputs[e.newInput].shadow;
+            // Remove script, if one exists.
+            this._deleteScript(e.id);
+            // Otherwise, try to connect it in its new place.
+            if (typeof e.newInput === 'undefined') {
+                // Moved to the new parent's next connection.
+                this._blocks[e.newParent].next = e.id;
+            } else {
+                // Moved to the new parent's input.
+                // Don't obscure the shadow block.
+                let oldShadow = null;
+                if (this._blocks[e.newParent].inputs.hasOwnProperty(e.newInput)) {
+                    oldShadow = this._blocks[e.newParent].inputs[e.newInput].shadow;
+                }
+                this._blocks[e.newParent].inputs[e.newInput] = {
+                    name: e.newInput,
+                    block: e.id,
+                    shadow: oldShadow
+                };
             }
-            this._blocks[e.newParent].inputs[e.newInput] = {
-                name: e.newInput,
-                block: e.id,
-                shadow: oldShadow
-            };
-        }
-        this._blocks[e.id].parent = e.newParent;
-    }
-};
-
-/**
- * Block management: delete blocks and their associated scripts.
- * @param {!object} e Blockly delete event to be processed.
- */
-Blocks.prototype.deleteBlock = function (e) {
-    // @todo In runtime, stop threads running on this script.
-
-    // Get block
-    var block = this._blocks[e.id];
-
-    // Delete children
-    if (block.next !== null) {
-        this.deleteBlock({id: block.next});
-    }
-
-    // Delete inputs (including branches)
-    for (var input in block.inputs) {
-        // If it's null, the block in this input moved away.
-        if (block.inputs[input].block !== null) {
-            this.deleteBlock({id: block.inputs[input].block});
-        }
-        // Delete obscured shadow blocks.
-        if (block.inputs[input].shadow !== null &&
-            block.inputs[input].shadow !== block.inputs[input].block) {
-            this.deleteBlock({id: block.inputs[input].shadow});
+            this._blocks[e.id].parent = e.newParent;
         }
     }
 
-    // Delete any script starting with this block.
-    this._deleteScript(e.id);
+    /**
+     * Block management: delete blocks and their associated scripts.
+     * @param {!object} e Blockly delete event to be processed.
+     */
+    deleteBlock (e) {
+        // @todo In runtime, stop threads running on this script.
 
-    // Delete block itself.
-    delete this._blocks[e.id];
-};
+        // Get block
+        const block = this._blocks[e.id];
 
-// ---------------------------------------------------------------------
+        // Delete children
+        if (block.next !== null) {
+            this.deleteBlock({id: block.next});
+        }
 
-/**
- * Encode all of `this._blocks` as an XML string usable
- * by a Blockly/scratch-blocks workspace.
- * @return {string} String of XML representing this object's blocks.
- */
-Blocks.prototype.toXML = function () {
-    var xmlString = '<xml xmlns="http://www.w3.org/1999/xhtml">';
-    for (var i = 0; i < this._scripts.length; i++) {
-        xmlString += this.blockToXML(this._scripts[i]);
-    }
-    return xmlString + '</xml>';
-};
-
-/**
- * Recursively encode an individual block and its children
- * into a Blockly/scratch-blocks XML string.
- * @param {!string} blockId ID of block to encode.
- * @return {string} String of XML representing this block and any children.
- */
-Blocks.prototype.blockToXML = function (blockId) {
-    var block = this._blocks[blockId];
-    // Encode properties of this block.
-    var tagName = (block.shadow) ? 'shadow' : 'block';
-    var xy = (block.topLevel) ?
-        ' x="' + block.x + '" y="' + block.y + '"' :
-        '';
-    var xmlString = '';
-    xmlString += '<' + tagName +
-        ' id="' + block.id + '"' +
-        ' type="' + block.opcode + '"' +
-        xy +
-        '>';
-    // Add any mutation. Must come before inputs.
-    if (block.mutation) {
-        xmlString += this.mutationToXML(block.mutation);
-    }
-    // Add any inputs on this block.
-    for (var input in block.inputs) {
-        if (!block.inputs.hasOwnProperty(input)) continue;
-        var blockInput = block.inputs[input];
-        // Only encode a value tag if the value input is occupied.
-        if (blockInput.block || blockInput.shadow) {
-            xmlString += '<value name="' + blockInput.name + '">';
-            if (blockInput.block) {
-                xmlString += this.blockToXML(blockInput.block);
+        // Delete inputs (including branches)
+        for (const input in block.inputs) {
+            // If it's null, the block in this input moved away.
+            if (block.inputs[input].block !== null) {
+                this.deleteBlock({id: block.inputs[input].block});
             }
-            if (blockInput.shadow && blockInput.shadow !== blockInput.block) {
-                // Obscured shadow.
-                xmlString += this.blockToXML(blockInput.shadow);
+            // Delete obscured shadow blocks.
+            if (block.inputs[input].shadow !== null &&
+                block.inputs[input].shadow !== block.inputs[input].block) {
+                this.deleteBlock({id: block.inputs[input].shadow});
             }
-            xmlString += '</value>';
         }
+
+        // Delete any script starting with this block.
+        this._deleteScript(e.id);
+
+        // Delete block itself.
+        delete this._blocks[e.id];
     }
-    // Add any fields on this block.
-    for (var field in block.fields) {
-        if (!block.fields.hasOwnProperty(field)) continue;
-        var blockField = block.fields[field];
-        var value = blockField.value;
-        if (typeof value === 'string') {
-            value = xmlEscape(blockField.value);
+
+    // ---------------------------------------------------------------------
+
+    /**
+     * Encode all of `this._blocks` as an XML string usable
+     * by a Blockly/scratch-blocks workspace.
+     * @return {string} String of XML representing this object's blocks.
+     */
+    toXML () {
+        let xmlString = '<xml xmlns="http://www.w3.org/1999/xhtml">';
+        for (let i = 0; i < this._scripts.length; i++) {
+            xmlString += this.blockToXML(this._scripts[i]);
         }
-        xmlString += '<field name="' + blockField.name + '">' +
-            value + '</field>';
+        return `${xmlString}</xml>`;
     }
-    // Add blocks connected to the next connection.
-    if (block.next) {
-        xmlString += '<next>' + this.blockToXML(block.next) + '</next>';
+
+    /**
+     * Recursively encode an individual block and its children
+     * into a Blockly/scratch-blocks XML string.
+     * @param {!string} blockId ID of block to encode.
+     * @return {string} String of XML representing this block and any children.
+     */
+    blockToXML (blockId) {
+        const block = this._blocks[blockId];
+        // Encode properties of this block.
+        const tagName = (block.shadow) ? 'shadow' : 'block';
+        let xmlString =
+            `<${tagName}
+                id="${block.id}"
+                type="${block.opcode}"
+                ${block.topLevel ?
+                    `x="${block.x} y="${block.y}` :
+                    ''
+                }
+            >`;
+        // Add any mutation. Must come before inputs.
+        if (block.mutation) {
+            xmlString += this.mutationToXML(block.mutation);
+        }
+        // Add any inputs on this block.
+        for (const input in block.inputs) {
+            if (!block.inputs.hasOwnProperty(input)) continue;
+            const blockInput = block.inputs[input];
+            // Only encode a value tag if the value input is occupied.
+            if (blockInput.block || blockInput.shadow) {
+                xmlString += `<value name="${blockInput.name}">`;
+                if (blockInput.block) {
+                    xmlString += this.blockToXML(blockInput.block);
+                }
+                if (blockInput.shadow && blockInput.shadow !== blockInput.block) {
+                    // Obscured shadow.
+                    xmlString += this.blockToXML(blockInput.shadow);
+                }
+                xmlString += '</value>';
+            }
+        }
+        // Add any fields on this block.
+        for (const field in block.fields) {
+            if (!block.fields.hasOwnProperty(field)) continue;
+            const blockField = block.fields[field];
+            let value = blockField.value;
+            if (typeof value === 'string') {
+                value = xmlEscape(blockField.value);
+            }
+            xmlString += `<field name="${blockField.name}">${value}</field>`;
+        }
+        // Add blocks connected to the next connection.
+        if (block.next) {
+            xmlString += `<next>${this.blockToXML(block.next)}</next>`;
+        }
+        xmlString += `</${tagName}>`;
+        return xmlString;
     }
-    xmlString += '</' + tagName + '>';
-    return xmlString;
-};
 
-/**
- * Recursively encode a mutation object to XML.
- * @param {!object} mutation Object representing a mutation.
- * @return {string} XML string representing a mutation.
- */
-Blocks.prototype.mutationToXML = function (mutation) {
-    var mutationString = '<' + mutation.tagName;
-    for (var prop in mutation) {
-        if (prop === 'children' || prop === 'tagName') continue;
-        var mutationValue = (typeof mutation[prop] === 'string') ?
-            xmlEscape(mutation[prop]) : mutation[prop];
-        mutationString += ' ' + prop + '="' + mutationValue + '"';
+    /**
+     * Recursively encode a mutation object to XML.
+     * @param {!object} mutation Object representing a mutation.
+     * @return {string} XML string representing a mutation.
+     */
+    mutationToXML (mutation) {
+        let mutationString = `<${mutation.tagName}`;
+        for (const prop in mutation) {
+            if (prop === 'children' || prop === 'tagName') continue;
+            const mutationValue = (typeof mutation[prop] === 'string') ?
+                xmlEscape(mutation[prop]) : mutation[prop];
+            mutationString += ` ${prop}="${mutationValue}"`;
+        }
+        mutationString += '>';
+        for (let i = 0; i < mutation.children.length; i++) {
+            mutationString += this.mutationToXML(mutation.children[i]);
+        }
+        mutationString += `</${mutation.tagName}>`;
+        return mutationString;
     }
-    mutationString += '>';
-    for (var i = 0; i < mutation.children.length; i++) {
-        mutationString += this.mutationToXML(mutation.children[i]);
+
+    // ---------------------------------------------------------------------
+
+    /**
+     * Helper to add a stack to `this._scripts`.
+     * @param {?string} topBlockId ID of block that starts the script.
+     */
+    _addScript (topBlockId) {
+        const i = this._scripts.indexOf(topBlockId);
+        if (i > -1) return; // Already in scripts.
+        this._scripts.push(topBlockId);
+        // Update `topLevel` property on the top block.
+        this._blocks[topBlockId].topLevel = true;
     }
-    mutationString += '</' + mutation.tagName + '>';
-    return mutationString;
-};
 
-// ---------------------------------------------------------------------
-
-/**
- * Helper to add a stack to `this._scripts`.
- * @param {?string} topBlockId ID of block that starts the script.
- */
-Blocks.prototype._addScript = function (topBlockId) {
-    var i = this._scripts.indexOf(topBlockId);
-    if (i > -1) return; // Already in scripts.
-    this._scripts.push(topBlockId);
-    // Update `topLevel` property on the top block.
-    this._blocks[topBlockId].topLevel = true;
-};
-
-/**
- * Helper to remove a script from `this._scripts`.
- * @param {?string} topBlockId ID of block that starts the script.
- */
-Blocks.prototype._deleteScript = function (topBlockId) {
-    var i = this._scripts.indexOf(topBlockId);
-    if (i > -1) this._scripts.splice(i, 1);
-    // Update `topLevel` property on the top block.
-    if (this._blocks[topBlockId]) this._blocks[topBlockId].topLevel = false;
-};
+    /**
+     * Helper to remove a script from `this._scripts`.
+     * @param {?string} topBlockId ID of block that starts the script.
+     */
+    _deleteScript (topBlockId) {
+        const i = this._scripts.indexOf(topBlockId);
+        if (i > -1) this._scripts.splice(i, 1);
+        // Update `topLevel` property on the top block.
+        if (this._blocks[topBlockId]) this._blocks[topBlockId].topLevel = false;
+    }
+}
 
 module.exports = Blocks;
