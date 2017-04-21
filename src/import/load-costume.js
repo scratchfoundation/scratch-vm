@@ -1,4 +1,3 @@
-const AssetType = require('scratch-storage').AssetType;
 const log = require('../util/log');
 
 /**
@@ -19,7 +18,7 @@ const loadCostume = function (md5ext, costume, runtime) {
         return Promise.resolve(costume);
     }
 
-
+    const AssetType = runtime.storage.AssetType;
     const idParts = md5ext.split('.');
     const md5 = idParts[0];
     const ext = idParts[1].toUpperCase();

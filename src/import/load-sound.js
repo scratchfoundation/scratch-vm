@@ -1,4 +1,3 @@
-const AssetType = require('scratch-storage').AssetType;
 const log = require('../util/log');
 
 /**
@@ -20,7 +19,7 @@ const loadSound = function (sound, runtime) {
     }
     const idParts = sound.md5.split('.');
     const md5 = idParts[0];
-    return runtime.storage.load(AssetType.Sound, md5).then(soundAsset => {
+    return runtime.storage.load(runtime.storage.AssetType.Sound, md5).then(soundAsset => {
         sound.data = soundAsset.data;
         return runtime.audioEngine.decodeSound(sound).then(() => sound);
     });
