@@ -47,7 +47,7 @@ window.onload = function () {
     Scratch.vm = vm;
 
     const storage = new Scratch.Storage();
-    const AssetType = Scratch.Storage.AssetType;
+    const AssetType = storage.AssetType;
     storage.addWebSource([AssetType.Project], getProjectUrl);
     storage.addWebSource([AssetType.ImageVector, AssetType.ImageBitmap, AssetType.Sound], getAssetUrl);
     vm.attachStorage(storage);
