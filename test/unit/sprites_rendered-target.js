@@ -2,65 +2,7 @@ var test = require('tap').test;
 var RenderedTarget = require('../../src/sprites/rendered-target');
 var Sprite = require('../../src/sprites/sprite');
 var Runtime = require('../../src/engine/runtime');
-
-
-var fakeRenderer = function (){
-    var renderer = new Object();
-    renderer.unused = '';
-    renderer.x = 0;
-    renderer.y = 0;
-    renderer.order = 0;
-    renderer.spriteCount = 5;
-    renderer.createDrawable = function () {
-        return true;
-    };
-    renderer.getFencedPositionOfDrawable = function (d, p) { // eslint-disable-line no-unused-vars
-        return [p[0], p[1]];
-    };
-    renderer.updateDrawableProperties = function (d, p) { // eslint-disable-line no-unused-vars
-        if (p.position) {
-            renderer.x = p.position[0];
-            renderer.y = p.position[1];
-        }
-        return true;
-    };
-    renderer.getSkinSize = function (d) { // eslint-disable-line no-unused-vars
-        return [0, 0];
-    };
-    renderer.pick = function (x, y, a, b, d) { // eslint-disable-line no-unused-vars
-        return true;
-    };
-    renderer.isTouchingColor = function (d, c) { // eslint-disable-line no-unused-vars
-        return true;
-    };
-    renderer.setDrawableOrder = function (d, l, optA, optB) { // eslint-disable-line no-unused-vars
-        return true;
-    };
-    renderer.getBounds = function (d) { // eslint-disable-line no-unused-vars
-        return {left: renderer.x, right: renderer.x, top: renderer.y, bottom: renderer.y};
-    };
-    renderer.setDrawableOrder = function (d, a, optA, optB){ // eslint-disable-line no-unused-vars
-        if (d === 999) return 1; // fake for test case
-        if (optA) {
-            a += renderer.order;
-        }
-        if (optB) {
-            a = Math.max(a, optB);
-        }
-        a = Math.max(a, 0);
-        renderer.order = Math.min(a, renderer.spriteCount);
-        return renderer.order;
-    };
-    renderer.pick = function (x, y, a, b, c){ // eslint-disable-line no-unused-vars
-        return c[0];
-    };
-    renderer.isTouchingColor = function (a, b){ // eslint-disable-line no-unused-vars
-        return false;
-    };
-        
-    return renderer;
-};
-
+var FakeRenderer = require('../fixtures/fake-renderer');
 
 test('clone effects', function (t) {
     // Create two clones and ensure they have different graphic effect objects.
@@ -76,7 +18,7 @@ test('setxy', function (t) {
     var s = new Sprite();
     var r = new Runtime();
     var a = new RenderedTarget(s, r);
-    var renderer = fakeRenderer();
+    var renderer = new FakeRenderer();
     a.renderer = renderer;
     a.setXY(123, 321, true);
     t.equals(a.x, 123);
@@ -88,7 +30,7 @@ test('direction', function (t) {
     var s = new Sprite();
     var r = new Runtime();
     var a = new RenderedTarget(s, r);
-    var renderer = fakeRenderer();
+    var renderer = new FakeRenderer();
     a.renderer = renderer;
     a.setDirection(123);
     t.equals(a._getRenderedDirectionAndScale().direction, 123);
@@ -99,7 +41,7 @@ test('setSay', function (t) {
     var s = new Sprite();
     var r = new Runtime();
     var a = new RenderedTarget(s, r);
-    var renderer = fakeRenderer();
+    var renderer = new FakeRenderer();
     a.renderer = renderer;
     a.setSay();
     a.setSay('types not specified', 'message');
@@ -110,7 +52,7 @@ test('setVisible', function (t) {
     var s = new Sprite();
     var r = new Runtime();
     var a = new RenderedTarget(s, r);
-    var renderer = fakeRenderer();
+    var renderer = new FakeRenderer();
     a.renderer = renderer;
     a.setVisible(true);
     t.end();
@@ -120,7 +62,7 @@ test('setSize', function (t) {
     var s = new Sprite();
     var r = new Runtime();
     var a = new RenderedTarget(s, r);
-    var renderer = fakeRenderer();
+    var renderer = new FakeRenderer();
     a.renderer = renderer;
     a.setSize(123);
     t.equals(a._getRenderedDirectionAndScale().scale[0], 123);
@@ -131,7 +73,7 @@ test('set and clear effects', function (t) {
     var s = new Sprite();
     var r = new Runtime();
     var a = new RenderedTarget(s, r);
-    var renderer = fakeRenderer();
+    var renderer = new FakeRenderer();
     a.renderer = renderer;
     for (var effect in a.effects) {
         a.setEffect(effect, 1);
@@ -150,7 +92,7 @@ test('setCostume', function (t) {
     var r = new Runtime();
     s.costumes = [o];
     var a = new RenderedTarget(s, r);
-    var renderer = fakeRenderer();
+    var renderer = new FakeRenderer();
     a.renderer = renderer;
     a.setCostume(0);
     t.end();
@@ -160,7 +102,7 @@ test('setRotationStyle', function (t) {
     var s = new Sprite();
     var r = new Runtime();
     var a = new RenderedTarget(s, r);
-    var renderer = fakeRenderer();
+    var renderer = new FakeRenderer();
     a.renderer = renderer;
     a.setRotationStyle(RenderedTarget.ROTATION_STYLE_NONE);
     t.end();
@@ -169,7 +111,7 @@ test('setRotationStyle', function (t) {
 test('getBounds', function (t) {
     var s = new Sprite();
     var r = new Runtime();
-    var renderer = fakeRenderer();
+    var renderer = new FakeRenderer();
     r.attachRenderer(renderer);
     var a = new RenderedTarget(s, r);
     a.renderer = renderer;
@@ -182,7 +124,7 @@ test('getBounds', function (t) {
 test('isTouchingPoint', function (t) {
     var s = new Sprite();
     var r = new Runtime();
-    var renderer = fakeRenderer();
+    var renderer = new FakeRenderer();
     r.attachRenderer(renderer);
     var a = new RenderedTarget(s, r);
     a.renderer = renderer;
@@ -193,7 +135,7 @@ test('isTouchingPoint', function (t) {
 test('isTouchingEdge', function (t) {
     var s = new Sprite();
     var r = new Runtime();
-    var renderer = fakeRenderer();
+    var renderer = new FakeRenderer();
     r.attachRenderer(renderer);
     var a = new RenderedTarget(s, r);
     a.renderer = renderer;
@@ -206,7 +148,7 @@ test('isTouchingEdge', function (t) {
 test('isTouchingSprite', function (t) {
     var s = new Sprite();
     var r = new Runtime();
-    var renderer = fakeRenderer();
+    var renderer = new FakeRenderer();
     r.attachRenderer(renderer);
     var a = new RenderedTarget(s, r);
     a.renderer = renderer;
@@ -217,7 +159,7 @@ test('isTouchingSprite', function (t) {
 test('isTouchingColor', function (t) {
     var s = new Sprite();
     var r = new Runtime();
-    var renderer = fakeRenderer();
+    var renderer = new FakeRenderer();
     r.attachRenderer(renderer);
     var a = new RenderedTarget(s, r);
     a.renderer = renderer;
@@ -228,7 +170,7 @@ test('isTouchingColor', function (t) {
 test('colorIsTouchingColor', function (t) {
     var s = new Sprite();
     var r = new Runtime();
-    var renderer = fakeRenderer();
+    var renderer = new FakeRenderer();
     r.attachRenderer(renderer);
     var a = new RenderedTarget(s, r);
     a.renderer = renderer;
@@ -239,7 +181,7 @@ test('colorIsTouchingColor', function (t) {
 test('layers', function (t) {
     var s = new Sprite();
     var r = new Runtime();
-    var renderer = fakeRenderer();
+    var renderer = new FakeRenderer();
     var o = new Object();
     r.attachRenderer(renderer);
     var a = new RenderedTarget(s, r);
@@ -257,7 +199,7 @@ test('layers', function (t) {
 test('keepInFence', function (t) {
     var s = new Sprite();
     var r = new Runtime();
-    var renderer = fakeRenderer();
+    var renderer = new FakeRenderer();
     r.attachRenderer(renderer);
     var a = new RenderedTarget(s, r);
     a.renderer = renderer;
