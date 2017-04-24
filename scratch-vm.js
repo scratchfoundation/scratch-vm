@@ -5847,7 +5847,7 @@ var Blocks = function () {
             var block = this._blocks[blockId];
             // Encode properties of this block.
             var tagName = block.shadow ? 'shadow' : 'block';
-            var xmlString = '<' + tagName + '\n                id="' + block.id + '"\n                type="' + block.opcode + '"\n                ' + (block.topLevel ? 'x="' + block.x + ' y="' + block.y : '') + '\n            >';
+            var xmlString = '<' + tagName + '\n                id="' + block.id + '"\n                type="' + block.opcode + '"\n                ' + (block.topLevel ? 'x="' + block.x + '" y="' + block.y + '"' : '') + '\n            >';
             // Add any mutation. Must come before inputs.
             if (block.mutation) {
                 xmlString += this.mutationToXML(block.mutation);
