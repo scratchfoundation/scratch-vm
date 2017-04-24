@@ -407,7 +407,7 @@ class Blocks {
                 id="${block.id}"
                 type="${block.opcode}"
                 ${block.topLevel ?
-                    `x="${block.x} y="${block.y}` :
+                    `x="${block.x}" y="${block.y}"` :
                     ''
                 }
             >`;
