@@ -765,7 +765,7 @@ class RenderedTarget extends Target {
 
     /**
      * Serialize sprite info, used when emitting events about the sprite
-     * @returns {object} sprite data as a simple object
+     * @returns {object} Sprite data as a simple object
      */
     toJSON () {
         return {
@@ -778,11 +778,14 @@ class RenderedTarget extends Target {
             direction: this.direction,
             draggable: this.draggable,
             costume: this.getCurrentCostume(),
-            costumes: this.getCostumes(),
-            sounds: this.getSounds(),
             costumeCount: this.getCostumes().length,
             visible: this.visible,
-            rotationStyle: this.rotationStyle
+            rotationStyle: this.rotationStyle,
+            blocks: this.blocks._blocks,
+            variables: this.variables,
+            lists: this.lists,
+            costumes: this.getCostumes(),
+            sounds: this.getSounds()
         };
     }
 
