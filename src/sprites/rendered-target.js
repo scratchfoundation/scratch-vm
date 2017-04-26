@@ -763,11 +763,23 @@ class RenderedTarget extends Target {
         this.dragging = false;
     }
 
+    assetListToJSON (assetList) {
+        const exclude = ['data', 'url'];
+        return assetList.map(asset =>
+            Object.keys(asset).reduce((rAsset, prop) => {
+                if (exclude.indexOf(prop) === -1) rAsset[prop] = asset[prop];
+                return rAsset;
+            }, {})
+        );
+    }
+
     /**
      * Serialize sprite info, used when emitting events about the sprite
      * @returns {object} Sprite data as a simple object
      */
     toJSON () {
+        const costumes = this.assetListToJSON(this.getCostumes());
+        const sounds = this.assetListToJSON(this.getSounds());
         return {
             id: this.id,
             name: this.getName(),
@@ -777,15 +789,15 @@ class RenderedTarget extends Target {
             size: this.size,
             direction: this.direction,
             draggable: this.draggable,
-            costume: this.getCurrentCostume(),
-            costumeCount: this.getCostumes().length,
+            costume: costumes[this.currentCostume],
+            costumeCount: costumes.length,
             visible: this.visible,
             rotationStyle: this.rotationStyle,
             blocks: this.blocks._blocks,
             variables: this.variables,
             lists: this.lists,
-            costumes: this.getCostumes(),
-            sounds: this.getSounds()
+            costumes: costumes,
+            sounds: sounds
         };
     }
 
