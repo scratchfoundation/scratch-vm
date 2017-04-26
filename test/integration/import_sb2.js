@@ -5,7 +5,7 @@ const extract = require('../fixtures/extract');
 
 const renderedTarget = require('../../src/sprites/rendered-target');
 const runtime = require('../../src/engine/runtime');
-const sb2 = require('../../src/import/sb2import');
+const sb2 = require('../../src/serialization/sb2');
 
 test('spec', t => {
     t.type(sb2, 'function');

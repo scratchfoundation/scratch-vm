@@ -145,22 +145,7 @@ class VirtualMachine extends EventEmitter {
      */
     loadProject (json) {
         // @todo: Handle other formats, e.g., Scratch 1.4, Scratch 3.0.
-        return this.fromJSON(json, this.runtime).then(targets => {
-            this.clear();
-            for (let n = 0; n < targets.length; n++) {
-                if (targets[n] !== null) {
-                    this.runtime.targets.push(targets[n]);
-                    targets[n].updateAllDrawableProperties();
-                }
-            }
-        // Select the first target for editing, e.g., the first sprite.
-            this.editingTarget = this.runtime.targets[1];
-
-        // Update the VM user's knowledge of targets and blocks on the workspace.
-            this.emitTargetsUpdate();
-            this.emitWorkspaceUpdate();
-            this.runtime.setEditingTarget(this.editingTarget);
-        });
+        return this.fromJSON(json);
     }
 
     /**
@@ -181,7 +166,7 @@ class VirtualMachine extends EventEmitter {
     }
 
     /**
-     * return a project in a Scratch 3.0 JSON representation.
+     * @returns {string} Project in a Scratch 3.0 JSON representation.
      */
     saveProjectSb3 () {
         // @todo: Handle other formats, e.g., Scratch 1.4, Scratch 2.0.
@@ -199,6 +184,7 @@ class VirtualMachine extends EventEmitter {
     /**
      * Load a project from a Scratch JSON representation.
      * @param {string} json JSON string representing a project.
+     * @returns {Promise} Promise that resolves after the project has loaded
      */
     fromJSON (json) {
         // Clear the current runtime
@@ -214,38 +200,46 @@ class VirtualMachine extends EventEmitter {
         // @todo This is an extremely naïve / dangerous way of determining version.
         //       See `scratch-parser` for a more sophisticated validation
         //       methodology that should be adapted for use here
-        if ((typeof json.meta !== 'undefined') && (typeof json.meta.semver !== 'undefined') ) {
-            sb3.deserialize(json, this.runtime);
+        let deserializer;
+        if ((typeof json.meta !== 'undefined') && (typeof json.meta.semver !== 'undefined')) {
+            deserializer = sb3;
         } else {
-            sb2.deserialize(json, this.runtime);
+            deserializer = sb2;
         }
 
-        // Select the first target for editing, e.g., the first sprite.
-        this.editingTarget = this.runtime.targets[1];
+        return deserializer.deserialize(json, this.runtime).then(targets => {
+            this.clear();
+            for (let n = 0; n < targets.length; n++) {
+                if (targets[n] !== null) {
+                    this.runtime.targets.push(targets[n]);
+                    targets[n].updateAllDrawableProperties();
+                }
+            }
+            // Select the first target for editing, e.g., the first sprite.
+            this.editingTarget = this.runtime.targets[1];
 
-        // Update the VM user's knowledge of targets and blocks on the workspace.
-        this.emitTargetsUpdate();
-        this.emitWorkspaceUpdate();
-        this.runtime.setEditingTarget(this.editingTarget);
+            // Update the VM user's knowledge of targets and blocks on the workspace.
+            this.emitTargetsUpdate();
+            this.emitWorkspaceUpdate();
+            this.runtime.setEditingTarget(this.editingTarget);
+        });
     }
 
     /**
      * Add a single sprite from the "Sprite2" (i.e., SB2 sprite) format.
      * @param {string} json JSON string representing the sprite.
+     * @returns {Promise} Promise that resolves after the sprite is added
      */
     addSprite2 (json) {
     // Select new sprite.
-        this.editingTarget = sb2.deserialize(json, this.runtime, true);
-        /* @todo Promisify this
-            .then(targets => {
-                this.runtime.targets.push(targets[0]);
-                this.editingTarget = targets[0];
-            })
-        */
-        // Update the VM user's knowledge of targets and blocks on the workspace.
-        this.emitTargetsUpdate();
-        this.emitWorkspaceUpdate();
-        this.runtime.setEditingTarget(this.editingTarget);
+        return sb2.deserialize(json, this.runtime, true).then(targets => {
+            this.runtime.targets.push(targets[0]);
+            this.editingTarget = targets[0];
+            // Update the VM user's knowledge of targets and blocks on the workspace.
+            this.emitTargetsUpdate();
+            this.emitWorkspaceUpdate();
+            this.runtime.setEditingTarget(this.editingTarget);
+        });
     }
 
     /**

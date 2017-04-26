@@ -73,7 +73,7 @@
     <script>
         function toJson() {
             var output = document.getElementById('importExport');
-            var json = window.vm.toPrettyJSON(Scratch.workspace);
+            var json = window.Scratch.vm.toJSON();
             output.value = json;
             output.focus();
             output.select();
@@ -81,7 +81,7 @@
 
           function fromJson() {
             var input = document.getElementById('importExport');
-            window.vm.fromJSON(input.value);
+            window.Scratch.vm.fromJSON(input.value);
           }
     </script>
 </body>
