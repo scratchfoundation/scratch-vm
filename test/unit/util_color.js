@@ -1,5 +1,5 @@
-var test = require('tap').test;
-var color = require('../../src/util/color');
+const test = require('tap').test;
+const color = require('../../src/util/color');
 
 /**
  * Assert that two HSV colors are similar to each other, within a tolerance.
@@ -7,7 +7,7 @@ var color = require('../../src/util/color');
  * @param {HSVObject} actual - the first HSV color to compare.
  * @param {HSVObject} expected - the other HSV color to compare.
  */
-var hsvSimilar = function (t, actual, expected) {
+const hsvSimilar = function (t, actual, expected) {
     if ((Math.abs(actual.h - expected.h) >= 1) ||
         (Math.abs(actual.s - expected.s) >= 0.01) ||
         (Math.abs(actual.v - expected.v) >= 0.01)
@@ -25,7 +25,7 @@ var hsvSimilar = function (t, actual, expected) {
  * @param {RGBObject} actual - the first RGB color to compare.
  * @param {RGBObject} expected - the other RGB color to compare.
  */
-var rgbSimilar = function (t, actual, expected) {
+const rgbSimilar = function (t, actual, expected) {
     if ((Math.abs(actual.r - expected.r) >= 1) ||
         (Math.abs(actual.g - expected.g) >= 1) ||
         (Math.abs(actual.b - expected.b) >= 1)
@@ -37,7 +37,7 @@ var rgbSimilar = function (t, actual, expected) {
     }
 };
 
-test('decimalToHex', function (t) {
+test('decimalToHex', t => {
     t.strictEqual(color.decimalToHex(0), '#000000');
     t.strictEqual(color.decimalToHex(1), '#000001');
     t.strictEqual(color.decimalToHex(16777215), '#ffffff');
@@ -46,7 +46,7 @@ test('decimalToHex', function (t) {
     t.end();
 });
 
-test('decimalToRgb', function (t) {
+test('decimalToRgb', t => {
     t.deepEqual(color.decimalToRgb(0), {a: 255, r: 0, g: 0, b: 0});
     t.deepEqual(color.decimalToRgb(1), {a: 255, r: 0, g: 0, b: 1});
     t.deepEqual(color.decimalToRgb(16777215), {a: 255, r: 255, g: 255, b: 255});
@@ -55,7 +55,7 @@ test('decimalToRgb', function (t) {
     t.end();
 });
 
-test('hexToRgb', function (t) {
+test('hexToRgb', t => {
     t.deepEqual(color.hexToRgb('#000'), {r: 0, g: 0, b: 0});
     t.deepEqual(color.hexToRgb('#000000'), {r: 0, g: 0, b: 0});
     t.deepEqual(color.hexToRgb('#fff'), {r: 255, g: 255, b: 255});
@@ -73,21 +73,21 @@ test('hexToRgb', function (t) {
     t.end();
 });
 
-test('rgbToHex', function (t) {
+test('rgbToHex', t => {
     t.strictEqual(color.rgbToHex({r: 0, g: 0, b: 0}), '#000000');
     t.strictEqual(color.rgbToHex({r: 255, g: 255, b: 255}), '#ffffff');
     t.strictEqual(color.rgbToHex({r: 0, g: 255, b: 170}), '#00ffaa');
     t.end();
 });
 
-test('rgbToDecimal', function (t) {
+test('rgbToDecimal', t => {
     t.strictEqual(color.rgbToDecimal({r: 0, g: 0, b: 0}), 0);
     t.strictEqual(color.rgbToDecimal({r: 255, g: 255, b: 255}), 16777215);
     t.strictEqual(color.rgbToDecimal({r: 0, g: 255, b: 170}), 65450);
     t.end();
 });
 
-test('hexToDecimal', function (t) {
+test('hexToDecimal', t => {
     t.strictEqual(color.hexToDecimal('#000'), 0);
     t.strictEqual(color.hexToDecimal('#000000'), 0);
     t.strictEqual(color.hexToDecimal('#fff'), 16777215);
@@ -97,7 +97,7 @@ test('hexToDecimal', function (t) {
     t.end();
 });
 
-test('hsvToRgb', function (t) {
+test('hsvToRgb', t => {
     rgbSimilar(t, color.hsvToRgb({h: 0, s: 0, v: 0}), {r: 0, g: 0, b: 0});
     rgbSimilar(t, color.hsvToRgb({h: 123, s: 0.1234, v: 0}), {r: 0, g: 0, b: 0});
     rgbSimilar(t, color.hsvToRgb({h: 0, s: 0, v: 1}), {r: 255, g: 255, b: 255});
@@ -108,7 +108,7 @@ test('hsvToRgb', function (t) {
     t.end();
 });
 
-test('rgbToHsv', function (t) {
+test('rgbToHsv', t => {
     hsvSimilar(t, color.rgbToHsv({r: 0, g: 0, b: 0}), {h: 0, s: 0, v: 0});
     hsvSimilar(t, color.rgbToHsv({r: 64, g: 64, b: 64}), {h: 0, s: 0, v: 0.25});
     hsvSimilar(t, color.rgbToHsv({r: 128, g: 128, b: 128}), {h: 0, s: 0, v: 0.5});
@@ -120,7 +120,7 @@ test('rgbToHsv', function (t) {
     t.end();
 });
 
-test('mixRgb', function (t) {
+test('mixRgb', t => {
     rgbSimilar(t, color.mixRgb({r: 10, g: 20, b: 30}, {r: 30, g: 40, b: 50}, -1), {r: 10, g: 20, b: 30});
     rgbSimilar(t, color.mixRgb({r: 10, g: 20, b: 30}, {r: 30, g: 40, b: 50}, 0), {r: 10, g: 20, b: 30});
     rgbSimilar(t, color.mixRgb({r: 10, g: 20, b: 30}, {r: 30, g: 40, b: 50}, 0.25), {r: 15, g: 25, b: 35});

@@ -1,8 +1,8 @@
-var test = require('tap').test;
-var VirtualMachine = require('../../src/virtual-machine.js');
+const test = require('tap').test;
+const VirtualMachine = require('../../src/virtual-machine.js');
 
-test('renameSprite throws when there is no sprite with that id', function (t) {
-    var vm = new VirtualMachine();
+test('renameSprite throws when there is no sprite with that id', t => {
+    const vm = new VirtualMachine();
     vm.runtime.getTargetById = () => null;
     t.throws(
         (() => vm.renameSprite('id', 'name')),
@@ -11,9 +11,9 @@ test('renameSprite throws when there is no sprite with that id', function (t) {
     t.end();
 });
 
-test('renameSprite throws when used on a non-sprite target', function (t) {
-    var vm = new VirtualMachine();
-    var fakeTarget = {
+test('renameSprite throws when used on a non-sprite target', t => {
+    const vm = new VirtualMachine();
+    const fakeTarget = {
         isSprite: () => false
     };
     vm.runtime.getTargetById = () => (fakeTarget);
@@ -24,9 +24,9 @@ test('renameSprite throws when used on a non-sprite target', function (t) {
     t.end();
 });
 
-test('renameSprite throws when there is no sprite for given target', function (t) {
-    var vm = new VirtualMachine();
-    var fakeTarget = {
+test('renameSprite throws when there is no sprite for given target', t => {
+    const vm = new VirtualMachine();
+    const fakeTarget = {
         sprite: null,
         isSprite: () => true
     };
@@ -38,9 +38,9 @@ test('renameSprite throws when there is no sprite for given target', function (t
     t.end();
 });
 
-test('renameSprite sets the sprite name', function (t) {
-    var vm = new VirtualMachine();
-    var fakeTarget = {
+test('renameSprite sets the sprite name', t => {
+    const vm = new VirtualMachine();
+    const fakeTarget = {
         sprite: {name: 'original'},
         isSprite: () => true
     };
@@ -50,9 +50,9 @@ test('renameSprite sets the sprite name', function (t) {
     t.end();
 });
 
-test('renameSprite does not set sprite names to an empty string', function (t) {
-    var vm = new VirtualMachine();
-    var fakeTarget = {
+test('renameSprite does not set sprite names to an empty string', t => {
+    const vm = new VirtualMachine();
+    const fakeTarget = {
         sprite: {name: 'original'},
         isSprite: () => true
     };
@@ -62,9 +62,9 @@ test('renameSprite does not set sprite names to an empty string', function (t) {
     t.end();
 });
 
-test('renameSprite does not set sprite names to reserved names', function (t) {
-    var vm = new VirtualMachine();
-    var fakeTarget = {
+test('renameSprite does not set sprite names to reserved names', t => {
+    const vm = new VirtualMachine();
+    const fakeTarget = {
         sprite: {name: 'original'},
         isSprite: () => true
     };
@@ -74,8 +74,8 @@ test('renameSprite does not set sprite names to reserved names', function (t) {
     t.end();
 });
 
-test('renameSprite increments from existing sprite names', function (t) {
-    var vm = new VirtualMachine();
+test('renameSprite increments from existing sprite names', t => {
+    const vm = new VirtualMachine();
     vm.emitTargetsUpdate = () => {};
     vm.runtime.targets = [{
         id: 'id1',

@@ -1,22 +1,22 @@
-var path = require('path');
-var test = require('tap').test;
-var attachTestStorage = require('../fixtures/attach-test-storage');
-var extract = require('../fixtures/extract');
-var VirtualMachine = require('../../src/index');
+const path = require('path');
+const test = require('tap').test;
+const attachTestStorage = require('../fixtures/attach-test-storage');
+const extract = require('../fixtures/extract');
+const VirtualMachine = require('../../src/index');
 
-var projectUri = path.resolve(__dirname, '../fixtures/hat-execution-order.sb2');
-var project = extract(projectUri);
+const projectUri = path.resolve(__dirname, '../fixtures/hat-execution-order.sb2');
+const project = extract(projectUri);
 
-test('complex', function (t) {
-    var vm = new VirtualMachine();
+test('complex', t => {
+    const vm = new VirtualMachine();
     attachTestStorage(vm);
 
     // Evaluate playground data and exit
-    vm.on('playgroundData', function (e) {
-        var threads = JSON.parse(e.threads);
+    vm.on('playgroundData', e => {
+        const threads = JSON.parse(e.threads);
         t.ok(threads.length === 0);
 
-        var results = vm.runtime.targets[0].lists.results.contents;
+        const results = vm.runtime.targets[0].lists.results.contents;
         t.deepEqual(results, ['3', '2', '1', 'stage']);
 
         t.end();
@@ -24,16 +24,16 @@ test('complex', function (t) {
     });
 
     // Start VM, load project, and run
-    t.doesNotThrow(function () {
+    t.doesNotThrow(() => {
         vm.start();
         vm.clear();
         vm.setCompatibilityMode(false);
         vm.setTurboMode(false);
-        vm.loadProject(project).then(function () {
+        vm.loadProject(project).then(() => {
             vm.greenFlag();
 
             // After two seconds, get playground data and stop
-            setTimeout(function () {
+            setTimeout(() => {
                 vm.getPlaygroundData();
                 vm.stopAll();
             }, 2000);

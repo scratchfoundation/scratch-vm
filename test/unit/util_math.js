@@ -1,7 +1,7 @@
-var test = require('tap').test;
-var math = require('../../src/util/math-util');
+const test = require('tap').test;
+const math = require('../../src/util/math-util');
 
-test('degToRad', function (t) {
+test('degToRad', t => {
     t.strictEqual(math.degToRad(0), 0);
     t.strictEqual(math.degToRad(1), 0.017453292519943295);
     t.strictEqual(math.degToRad(180), Math.PI);
@@ -10,7 +10,7 @@ test('degToRad', function (t) {
     t.end();
 });
 
-test('radToDeg', function (t) {
+test('radToDeg', t => {
     t.strictEqual(math.radToDeg(0), 0);
     t.strictEqual(math.radToDeg(1), 57.29577951308232);
     t.strictEqual(math.radToDeg(180), 10313.240312354817);
@@ -19,7 +19,7 @@ test('radToDeg', function (t) {
     t.end();
 });
 
-test('clamp', function (t) {
+test('clamp', t => {
     t.strictEqual(math.clamp(0, 0, 10), 0);
     t.strictEqual(math.clamp(1, 0, 10), 1);
     t.strictEqual(math.clamp(-10, 0, 10), 0);
@@ -27,7 +27,7 @@ test('clamp', function (t) {
     t.end();
 });
 
-test('wrapClamp', function (t) {
+test('wrapClamp', t => {
     t.strictEqual(math.wrapClamp(0, 0, 10), 0);
     t.strictEqual(math.wrapClamp(1, 0, 10), 1);
     t.strictEqual(math.wrapClamp(-10, 0, 10), 1);
@@ -35,7 +35,7 @@ test('wrapClamp', function (t) {
     t.end();
 });
 
-test('tan', function (t) {
+test('tan', t => {
     t.strictEqual(math.tan(90), Infinity);
     t.strictEqual(math.tan(180), 0);
     t.strictEqual(math.tan(-90), -Infinity);

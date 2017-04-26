@@ -1,4 +1,4 @@
-var FakeRenderer = function () {
+const FakeRenderer = function () {
     this.unused = '';
     this.x = 0;
     this.y = 0;

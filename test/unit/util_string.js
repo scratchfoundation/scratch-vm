@@ -1,7 +1,7 @@
-var test = require('tap').test;
-var StringUtil = require('../../src/util/string-util');
+const test = require('tap').test;
+const StringUtil = require('../../src/util/string-util');
 
-test('withoutTrailingDigits', function (t) {
+test('withoutTrailingDigits', t => {
     t.strictEqual(StringUtil.withoutTrailingDigits('boeing747'), 'boeing');
     t.strictEqual(StringUtil.withoutTrailingDigits('boeing747 '), 'boeing747 ');
     t.strictEqual(StringUtil.withoutTrailingDigits('boeing𝟨'), 'boeing𝟨');
@@ -10,7 +10,7 @@ test('withoutTrailingDigits', function (t) {
     t.end();
 });
 
-test('unusedName', function (t) {
+test('unusedName', t => {
     t.strictEqual(
         StringUtil.unusedName(
             'name',

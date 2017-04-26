@@ -1,8 +1,8 @@
-var test = require('tap').test;
-var Runtime = require('../../src/engine/runtime');
+const test = require('tap').test;
+const Runtime = require('../../src/engine/runtime');
 
-test('spec', function (t) {
-    var r = new Runtime();
+test('spec', t => {
+    const r = new Runtime();
 
     t.type(Runtime, 'function');
     t.type(r, 'object');
