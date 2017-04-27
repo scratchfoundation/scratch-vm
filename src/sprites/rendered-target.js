@@ -445,14 +445,6 @@ class RenderedTarget extends Target {
     }
 
     /**
-     * Get full sound list
-     * @return {object[]} list of sounds
-     */
-    getSounds () {
-        return this.sprite.sounds;
-    }
-
-    /**
      * Update all drawable properties for this rendered target.
      * Use when a batch has changed, e.g., when the drawable is first created.
      */
@@ -778,8 +770,6 @@ class RenderedTarget extends Target {
             direction: this.direction,
             draggable: this.draggable,
             costume: this.getCurrentCostume(),
-            costumes: this.getCostumes(),
-            sounds: this.getSounds(),
             costumeCount: this.getCostumes().length,
             visible: this.visible,
             rotationStyle: this.rotationStyle
