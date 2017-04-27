@@ -240,6 +240,8 @@ class VirtualMachine extends EventEmitter {
         return sb2.deserialize(json, this.runtime, true).then(targets => {
             this.runtime.targets.push(targets[0]);
             this.editingTarget = targets[0];
+            this.editingTarget.updateAllDrawableProperties();
+
             // Update the VM user's knowledge of targets and blocks on the workspace.
             this.emitTargetsUpdate();
             this.emitWorkspaceUpdate();
