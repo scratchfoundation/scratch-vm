@@ -10,6 +10,9 @@ const Sprite = require('../sprites/sprite');
 const Variable = require('../engine/variable');
 const List = require('../engine/list');
 
+const loadCostume = require('../import/load-costume.js');
+const loadSound = require('../import/load-sound.js');
+
 /**
  * Serializes the specified VM runtime.
  * @param  {!Runtime} runtime VM runtime instance to be serialized.
@@ -63,38 +66,33 @@ const parseScratchObject = function (object, runtime) {
         // console.log(blocks);
     }
     // Costumes from JSON.
-    if (object.hasOwnProperty('costumes') || object.hasOwnProperty('costume')) {
-        for (let i = 0; i < object.costumeCount; i++) {
-            const costume = object.costumes[i];
-            // @todo: Make sure all the relevant metadata is being pulled out.
-            sprite.costumes.push({
-                skin: costume.skin,
-                name: costume.name,
-                bitmapResolution: costume.bitmapResolution,
-                rotationCenterX: costume.rotationCenterX,
-                rotationCenterY: costume.rotationCenterY
-            });
-        }
-    }
+    const costumePromises = (object.costumes || []).map(costumeSource => {
+        // @todo: Make sure all the relevant metadata is being pulled out.
+        const costume = {
+            skinId: null,
+            name: costumeSource.name,
+            bitmapResolution: costumeSource.bitmapResolution,
+            rotationCenterX: costumeSource.rotationCenterX,
+            rotationCenterY: costumeSource.rotationCenterY
+        };
+        return loadCostume(costumeSource.md5ext, costume, runtime);
+    });
     // Sounds from JSON
-    if (object.hasOwnProperty('sounds')) {
-        for (let s = 0; s < object.sounds.length; s++) {
-            const sound = object.sounds[s];
-            sprite.sounds.push({
-                format: sound.format,
-                fileUrl: sound.fileUrl,
-                rate: sound.rate,
-                sampleCount: sound.sampleCount,
-                soundID: sound.soundID,
-                name: sound.name,
-                md5: sound.md5
-            });
-        }
-    }
+    const soundPromises = (object.sounds || []).map(soundSource => {
+        const sound = {
+            format: soundSource.format,
+            fileUrl: soundSource.fileUrl,
+            rate: soundSource.rate,
+            sampleCount: soundSource.sampleCount,
+            soundID: soundSource.soundID,
+            name: soundSource.name,
+            md5: soundSource.md5,
+            data: null
+        };
+        return loadSound(sound, runtime);
+    });
     // Create the first clone, and load its run-state from JSON.
     const target = sprite.createClone();
-    // Add it to the runtime's list of targets.
-    runtime.targets.push(target);
     // Load target properties from JSON.
     if (object.hasOwnProperty('variables')) {
         for (let j = 0; j < object.variables.length; j++) {
@@ -140,11 +138,13 @@ const parseScratchObject = function (object, runtime) {
     if (object.hasOwnProperty('isStage')) {
         target.isStage = object.isStage;
     }
-    target.updateAllDrawableProperties();
-
-    // console.log('returning target:');
-    // console.log(target);
-    return target;
+    Promise.all(costumePromises).then(costumes => {
+        sprite.costumes = costumes;
+    });
+    Promise.all(soundPromises).then(sounds => {
+        sprite.sounds = sounds;
+    });
+    return Promise.all(costumePromises.concat(soundPromises)).then(() => target);
 };
 
 /**
@@ -154,9 +154,7 @@ const parseScratchObject = function (object, runtime) {
  * @param  {Runtime} runtime Runtime instance
  */
 const deserialize = function (json, runtime) {
-    for (let i = 0; i < json.targets.length; i++) {
-        parseScratchObject(json.targets[i], runtime);
-    }
+    return Promise.all(json.targets.map(target => parseScratchObject(target, runtime)));
 };
 
 module.exports = {

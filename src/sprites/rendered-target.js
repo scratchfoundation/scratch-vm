@@ -789,6 +789,7 @@ class RenderedTarget extends Target {
             size: this.size,
             direction: this.direction,
             draggable: this.draggable,
+            currentCostume: this.currentCostume,
             costume: costumes[this.currentCostume],
             costumeCount: costumes.length,
             visible: this.visible,
