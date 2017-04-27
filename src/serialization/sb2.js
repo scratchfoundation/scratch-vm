@@ -276,7 +276,7 @@ const parseScratchObject = function (object, runtime, topLevel) {
 /**
  * Top-level handler. Parse provided JSON,
  * and process the top-level object (the stage object).
- * @param {!string} json SB2-format JSON to load.
+ * @param {!object} json SB2-format JSON to load.
  * @param {!Runtime} runtime Runtime object to load all structures into.
  * @param {boolean=} optForceSprite If set, treat as sprite (Sprite2).
  * @return {?Promise} Promise that resolves to the loaded targets when ready.

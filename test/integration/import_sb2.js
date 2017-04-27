@@ -8,7 +8,7 @@ const runtime = require('../../src/engine/runtime');
 const sb2 = require('../../src/serialization/sb2');
 
 test('spec', t => {
-    t.type(sb2, 'function');
+    t.type(sb2.deserialize, 'function');
     t.end();
 });
 
@@ -16,13 +16,15 @@ test('default', t => {
     // Get SB2 JSON (string)
     const uri = path.resolve(__dirname, '../fixtures/default.sb2');
     const file = extract(uri);
+    const json = JSON.parse(file);
 
     // Create runtime instance & load SB2 into it
     const rt = new runtime();
     attachTestStorage(rt);
-    sb2(file, rt).then(targets => {
+    sb2.deserialize(json, rt).then(targets => {
         // Test
         t.type(file, 'string');
+        t.type(json, 'object');
         t.type(rt, 'object');
         t.type(targets, 'object');
 

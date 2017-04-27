@@ -763,14 +763,21 @@ class RenderedTarget extends Target {
         this.dragging = false;
     }
 
+
+    /**
+     * Helper method to clean out data from each asset when serializing to JSON
+     * @param {Array<object>} assetList list of costumes or sounds
+     * @returns {Array<object>} list with raw data removed from each asset
+     */
     assetListToJSON (assetList) {
         const exclude = ['data', 'url'];
-        return assetList.map(asset =>
-            Object.keys(asset).reduce((rAsset, prop) => {
+        return assetList.map(asset => {
+            if (typeof asset !== 'object') return asset;
+            return Object.keys(asset).reduce((rAsset, prop) => {
                 if (exclude.indexOf(prop) === -1) rAsset[prop] = asset[prop];
                 return rAsset;
-            }, {})
-        );
+            }, {});
+        });
     }
 
     /**

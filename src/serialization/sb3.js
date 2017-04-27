@@ -16,7 +16,7 @@ const loadSound = require('../import/load-sound.js');
 /**
  * Serializes the specified VM runtime.
  * @param  {!Runtime} runtime VM runtime instance to be serialized.
- * @return {string}    Serialized runtime instance.
+ * @return {object}    Serialized runtime instance.
  */
 const serialize = function (runtime) {
     // Fetch targets
@@ -150,11 +150,12 @@ const parseScratchObject = function (object, runtime) {
 /**
  * Deserializes the specified representation of a VM runtime and loads it into
  * the provided runtime instance.
- * @param  {string}  json    Stringified JSON representation of a VM runtime.
+ * @param  {object}  json    JSON representation of a VM runtime.
  * @param  {Runtime} runtime Runtime instance
+ * @returns {Promise} Promise that resolves to the list of targets after the project is deserialized
  */
 const deserialize = function (json, runtime) {
-    return Promise.all(json.targets.map(target => parseScratchObject(target, runtime)));
+    return Promise.all((json.targets || []).map(target => parseScratchObject(target, runtime)));
 };
 
 module.exports = {

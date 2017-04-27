@@ -16,14 +16,14 @@ test('default', t => {
     // Get SB2 JSON (string)
     const uri = path.resolve(__dirname, '../fixtures/default.sb2');
     const file = extract(uri);
+    const json = JSON.parse(file);
 
     // Create runtime instance & load SB2 into it
     const rt = new Runtime();
-    sb2.deserialize(file, rt).then(targets => {
-        console.dir(targets);
-
+    sb2.deserialize(json, rt).then(targets => {
         // Test
         t.type(file, 'string');
+        t.type(json, 'object');
         t.type(rt, 'object');
         t.type(targets, 'object');
 

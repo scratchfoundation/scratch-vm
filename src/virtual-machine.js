@@ -231,7 +231,12 @@ class VirtualMachine extends EventEmitter {
      * @returns {Promise} Promise that resolves after the sprite is added
      */
     addSprite2 (json) {
-    // Select new sprite.
+        // Validate & parse
+        if (typeof json !== 'string') return;
+        json = JSON.parse(json);
+        if (typeof json !== 'object') return;
+
+        // Select new sprite.
         return sb2.deserialize(json, this.runtime, true).then(targets => {
             this.runtime.targets.push(targets[0]);
             this.editingTarget = targets[0];
