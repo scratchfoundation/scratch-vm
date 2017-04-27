@@ -18907,10 +18907,11 @@ var VirtualMachine = function (_EventEmitter) {
         value: function addSprite2(json) {
             var _this3 = this;
 
-            // Select new sprite.
             sb2import(json, this.runtime, true).then(function (targets) {
                 _this3.runtime.targets.push(targets[0]);
                 _this3.editingTarget = targets[0];
+                _this3.editingTarget.updateAllDrawableProperties();
+
                 // Update the VM user's knowledge of targets and blocks on the workspace.
                 _this3.emitTargetsUpdate();
                 _this3.emitWorkspaceUpdate();
