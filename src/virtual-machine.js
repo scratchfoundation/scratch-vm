@@ -184,11 +184,12 @@ class VirtualMachine extends EventEmitter {
      * @param {string} json JSON string representing the sprite.
      */
     addSprite2 (json) {
-    // Select new sprite.
         sb2import(json, this.runtime, true).then(targets => {
             this.runtime.targets.push(targets[0]);
             this.editingTarget = targets[0];
-        // Update the VM user's knowledge of targets and blocks on the workspace.
+            this.editingTarget.updateAllDrawableProperties();
+
+            // Update the VM user's knowledge of targets and blocks on the workspace.
             this.emitTargetsUpdate();
             this.emitWorkspaceUpdate();
             this.runtime.setEditingTarget(this.editingTarget);
