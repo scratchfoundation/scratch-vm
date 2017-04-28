@@ -1,21 +1,21 @@
-var test = require('tap').test;
-var Control = require('../../src/blocks/scratch3_control');
-var Runtime = require('../../src/engine/runtime');
+const test = require('tap').test;
+const Control = require('../../src/blocks/scratch3_control');
+const Runtime = require('../../src/engine/runtime');
 
-test('getPrimitives', function (t) {
-    var rt = new Runtime();
-    var c = new Control(rt);
+test('getPrimitives', t => {
+    const rt = new Runtime();
+    const c = new Control(rt);
     t.type(c.getPrimitives(), 'object');
     t.end();
 });
 
-test('repeat', function (t) {
-    var rt = new Runtime();
-    var c = new Control(rt);
+test('repeat', t => {
+    const rt = new Runtime();
+    const c = new Control(rt);
 
     // Test harness (mocks `util`)
-    var i = 0;
-    var repeat = 10;
+    let i = 0;
+    const repeat = 10;
     var util = {
         stackFrame: Object.create(null),
         startBranch: function () {
@@ -31,13 +31,13 @@ test('repeat', function (t) {
     t.end();
 });
 
-test('repeatUntil', function (t) {
-    var rt = new Runtime();
-    var c = new Control(rt);
+test('repeatUntil', t => {
+    const rt = new Runtime();
+    const c = new Control(rt);
 
     // Test harness (mocks `util`)
-    var i = 0;
-    var repeat = 10;
+    let i = 0;
+    const repeat = 10;
     var util = {
         stackFrame: Object.create(null),
         startBranch: function () {
@@ -52,13 +52,13 @@ test('repeatUntil', function (t) {
     t.end();
 });
 
-test('forever', function (t) {
-    var rt = new Runtime();
-    var c = new Control(rt);
+test('forever', t => {
+    const rt = new Runtime();
+    const c = new Control(rt);
 
     // Test harness (mocks `util`)
-    var i = 0;
-    var util = {
+    let i = 0;
+    const util = {
         startBranch: function (branchNum, isLoop) {
             i++;
             t.strictEqual(branchNum, 1);
@@ -72,13 +72,13 @@ test('forever', function (t) {
     t.end();
 });
 
-test('if / ifElse', function (t) {
-    var rt = new Runtime();
-    var c = new Control(rt);
+test('if / ifElse', t => {
+    const rt = new Runtime();
+    const c = new Control(rt);
 
     // Test harness (mocks `util`)
-    var i = 0;
-    var util = {
+    let i = 0;
+    const util = {
         startBranch: function (branchNum) {
             i += branchNum;
         }
@@ -96,17 +96,17 @@ test('if / ifElse', function (t) {
     t.end();
 });
 
-test('stop', function (t) {
-    var rt = new Runtime();
-    var c = new Control(rt);
+test('stop', t => {
+    const rt = new Runtime();
+    const c = new Control(rt);
 
     // Test harness (mocks `util`)
-    var state = {
+    const state = {
         stopAll: 0,
         stopOtherTargetThreads: 0,
         stopThisScript: 0
     };
-    var util = {
+    const util = {
         stopAll: function () {
             state.stopAll++;
         },

@@ -1,15 +1,15 @@
-var test = require('tap').test;
-var Sequencer = require('../../src/engine/sequencer');
-var Runtime = require('../../src/engine/runtime');
-var Thread = require('../../src/engine/thread');
-var RenderedTarget = require('../../src/sprites/rendered-target');
-var Sprite = require('../../src/sprites/sprite');
+const test = require('tap').test;
+const Sequencer = require('../../src/engine/sequencer');
+const Runtime = require('../../src/engine/runtime');
+const Thread = require('../../src/engine/thread');
+const RenderedTarget = require('../../src/sprites/rendered-target');
+const Sprite = require('../../src/sprites/sprite');
 
-test('spec', function (t) {
+test('spec', t => {
     t.type(Sequencer, 'function');
     
-    var r = new Runtime();
-    var s = new Sequencer(r);
+    const r = new Runtime();
+    const s = new Sequencer(r);
 
     t.type(s, 'object');
     t.ok(s instanceof Sequencer);
@@ -23,13 +23,13 @@ test('spec', function (t) {
     t.end();
 });
 
-var randomString = function () {
-    var top = Math.random().toString(36);
+const randomString = function () {
+    const top = Math.random().toString(36);
     return top.substring(7);
 };
 
-var generateBlock = function (id) {
-    var block = {fields: Object,
+const generateBlock = function (id) {
+    const block = {fields: Object,
         id: id,
         inputs: {},
         STEPS: Object,
@@ -47,8 +47,8 @@ var generateBlock = function (id) {
     return block;
 };
 
-var generateBlockInput = function (id, next, inp) {
-    var block = {fields: Object,
+const generateBlockInput = function (id, next, inp) {
+    const block = {fields: Object,
         id: id,
         inputs: {SUBSTACK: {block: inp, name: 'SUBSTACK'}},
         STEPS: Object,
@@ -66,20 +66,20 @@ var generateBlockInput = function (id, next, inp) {
     return block;
 };
 
-var generateThread = function (runtime) {
-    var s = new Sprite();
-    var rt = new RenderedTarget(s, runtime);
-    var th = new Thread(randomString());
+const generateThread = function (runtime) {
+    const s = new Sprite();
+    const rt = new RenderedTarget(s, runtime);
+    const th = new Thread(randomString());
     
-    var next = randomString();
-    var inp = randomString();
-    var name = th.topBlock;
+    let next = randomString();
+    let inp = randomString();
+    let name = th.topBlock;
     
     rt.blocks.createBlock(generateBlockInput(name, next, inp));
     th.pushStack(name);
     rt.blocks.createBlock(generateBlock(inp));
     
-    for (var i = 0; i < 10; i++) {
+    for (let i = 0; i < 10; i++) {
         name = next;
         next = randomString();
         inp = randomString();
@@ -97,10 +97,10 @@ var generateThread = function (runtime) {
     return th;
 };
 
-test('stepThread', function (t) {
-    var r = new Runtime();
-    var s = new Sequencer(r);
-    var th = generateThread(r);
+test('stepThread', t => {
+    const r = new Runtime();
+    const s = new Sequencer(r);
+    let th = generateThread(r);
     t.notEquals(th.status, Thread.STATUS_DONE);
     s.stepThread(th);
     t.strictEquals(th.status, Thread.STATUS_DONE);
@@ -115,10 +115,10 @@ test('stepThread', function (t) {
     t.end();
 });
 
-test('stepToBranch', function (t) {
-    var r = new Runtime();
-    var s = new Sequencer(r);
-    var th = generateThread(r);
+test('stepToBranch', t => {
+    const r = new Runtime();
+    const s = new Sequencer(r);
+    const th = generateThread(r);
     s.stepToBranch(th, 2, false);
     t.strictEquals(th.peekStack(), null);
     th.popStack();
@@ -132,10 +132,10 @@ test('stepToBranch', function (t) {
     t.end();
 });
 
-test('retireThread', function (t) {
-    var r = new Runtime();
-    var s = new Sequencer(r);
-    var th = generateThread(r);
+test('retireThread', t => {
+    const r = new Runtime();
+    const s = new Sequencer(r);
+    const th = generateThread(r);
     t.strictEquals(th.stack.length, 12);
     s.retireThread(th);
     t.strictEquals(th.stack.length, 0);
@@ -144,11 +144,11 @@ test('retireThread', function (t) {
     t.end();
 });
 
-test('stepToProcedure', function (t) {
-    var r = new Runtime();
-    var s = new Sequencer(r);
-    var th = generateThread(r);
-    var expectedBlock = th.peekStack();
+test('stepToProcedure', t => {
+    const r = new Runtime();
+    const s = new Sequencer(r);
+    const th = generateThread(r);
+    let expectedBlock = th.peekStack();
     s.stepToProcedure(th, '');
     t.strictEquals(th.peekStack(), expectedBlock);
     s.stepToProcedure(th, 'faceCode');
@@ -163,10 +163,10 @@ test('stepToProcedure', function (t) {
     t.end();
 });
 
-test('stepThreads', function (t) {
-    var r = new Runtime();
+test('stepThreads', t => {
+    const r = new Runtime();
     r.currentStepTime = Infinity;
-    var s = new Sequencer(r);
+    const s = new Sequencer(r);
     t.strictEquals(s.stepThreads().length, 0);
     generateThread(r);
     t.strictEquals(r.threads.length, 1);
