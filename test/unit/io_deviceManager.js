@@ -19,28 +19,3 @@ test('default connected', t => {
     t.strictEqual(deviceManager.isConnected, true);
     t.end();
 });
-
-test('cancel searchAndConnect', t => {
-    const deviceManager = new DeviceManager();
-
-    const finder = deviceManager.searchAndConnect('test extension', 'test device');
-
-    let resolved = false;
-    let rejected = false;
-    const testPromise = finder.promise
-        .then(
-            () => {
-                resolved = true;
-            },
-            () => {
-                rejected = true;
-            }
-        )
-        .then(() => {
-            t.strictEqual(resolved, false);
-            t.strictEqual(rejected, true);
-        });
-    finder.cancel();
-
-    return testPromise;
-});
