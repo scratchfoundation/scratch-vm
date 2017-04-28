@@ -638,8 +638,9 @@ const specMap = {
         opcode: 'event_whenbroadcastreceived',
         argMap: [
             {
-                type: 'field',
-                fieldName: 'BROADCAST_OPTION'
+                type: 'input',
+                inputOp: 'event_whenbroadcast_menu',
+                inputName: 'BROADCAST_OPTION'
             }
         ]
     },
