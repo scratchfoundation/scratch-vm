@@ -5,6 +5,7 @@ const Thread = require('./thread');
 
 // Virtual I/O devices.
 const Clock = require('../io/clock');
+const DeviceManager = require('../io/deviceManager');
 const Keyboard = require('../io/keyboard');
 const Mouse = require('../io/mouse');
 
@@ -141,6 +142,7 @@ class Runtime extends EventEmitter {
         /** @type {Object.<string, Object>} */
         this.ioDevices = {
             clock: new Clock(),
+            deviceManager: new DeviceManager(),
             keyboard: new Keyboard(this),
             mouse: new Mouse(this)
         };
