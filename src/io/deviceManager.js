@@ -161,7 +161,10 @@ class DeviceFinder {
     _getList () {
         this._deviceManager
             .list(this._extensionName, this._deviceType, this._deviceSpec)
-            .then(listResult => this._listResultHandler(listResult));
+            .then(
+                listResult => this._listResultHandler(listResult),
+                () => this._listResultHandler(null)
+            );
     }
 
     /**
