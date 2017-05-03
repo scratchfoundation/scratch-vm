@@ -20,9 +20,40 @@ class DeviceOpener {
      * @param {function} reject - callback to be called if an error or timeout is encountered.
      */
     constructor (deviceManager, resolve, reject) {
+        /**
+         * The DeviceManager client which wants to open a device.
+         * @type {DeviceManager}
+         * @private
+         */
         this._deviceManager = deviceManager;
+
+        /**
+         * Callback to be called if the device is successfully found, connected, and opened.
+         * @type {Function}
+         * @private
+         */
         this._resolve = resolve;
+
+        /**
+         * Callback to be called if an error or timeout is encountered.
+         * @type {Function}
+         * @private
+         */
         this._reject = reject;
+
+        /**
+         * The socket for the device being opened.
+         * @type {Socket}
+         * @private
+         */
+        this._socket = null;
+
+        /**
+         * If this timeout expires before a successful connection, the connection attempt will be canceled.
+         * @type {Object}
+         * @private
+         */
+        this._connectionTimeout = null;
     }
 
     /**
@@ -34,8 +65,7 @@ class DeviceOpener {
      * @param {string} deviceId - the ID of the particular device to open, usually from list results
      */
     open (extensionName, deviceType, deviceId) {
-        this._socket = /** @type {Socket} */ io(`${this._deviceManager._serverURL}/${deviceType}`);
-        this._deviceManager._sockets.push(this._socket);
+        this._socket = io(`${this._deviceManager._serverURL}/${deviceType}`);
 
         this._socket.on('deviceWasOpened', () => this.onDeviceWasOpened());
         this._socket.on('disconnect', () => this.onDisconnect());
@@ -86,16 +116,6 @@ class DeviceOpener {
             this._connectionTimeout = null;
         }
     }
-
-    /**
-     * Remove the socket we were using for a now-failed connection attempt.
-     */
-    removeSocket () {
-        const socketIndex = this._deviceManager._sockets.indexOf(this._socket);
-        if (socketIndex >= 0) {
-            this._deviceManager._sockets.splice(socketIndex, 1);
-        }
-    }
 }
 
 /**
@@ -115,16 +135,57 @@ class DeviceFinder {
      * Construct a DeviceFinder to help find and connect to a device satisfying specific conditions.
      * @param {DeviceManager} deviceManager - the Device Manager client which instigated this action.
      * @param {string} extensionName - human-readable name of the extension requesting the search
-     * @param {string} deviceType - the type of device to list, such as 'wedo2'
+     * @param {string} deviceType - the type of device to find, such as 'wedo2'.
      * @param {object} [deviceSpec] - optional additional information about the specific devices to list
      */
     constructor (deviceManager, extensionName, deviceType, deviceSpec) {
+        /**
+         * The Device Manager client which wants to find a device.
+         * @type {DeviceManager}
+         * @private
+         */
         this._deviceManager = deviceManager;
+
+        /**
+         * The human-readable name of the extension requesting the search.
+         * @type {string}
+         * @private
+         */
         this._extensionName = extensionName;
+
+        /**
+         * The type of device to find, such as 'wedo2'.
+         * @type {string}
+         * @private
+         */
         this._deviceType = deviceType;
+
+        /**
+         * Optional additional information about the specific devices to list.
+         * @type {Object}
+         * @private
+         */
         this._deviceSpec = deviceSpec;
+
+        /**
+         * Flag indicating that the search should be canceled.
+         * @type {boolean}
+         * @private
+         */
         this._cancel = false;
+
+        /**
+         * The promise representing this search's results.
+         * @type {Promise}
+         * @private
+         */
         this._promise = null;
+
+        /**
+         * The fulfillment function for `this._promise`.
+         * @type {Function}
+         * @private
+         */
         this._fulfill = null;
     }
 
@@ -202,9 +263,19 @@ class DeviceManager {
     }
 
     constructor () {
+        /**
+         * The URL this client will use for Device Manager communication both HTTP(S) and WS(S).
+         * @type {string}
+         * @private
+         */
         this._serverURL = DeviceManager.DEFAULT_SERVER_URL;
+
+        /**
+         * True if there is no known problem connecting to the Scratch Device Manager, false otherwise.
+         * @type {boolean}
+         * @private
+         */
         this._isConnected = true;
-        this._sockets = [];
     }
 
     /**
