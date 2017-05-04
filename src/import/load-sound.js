@@ -19,10 +19,17 @@ const loadSound = function (sound, runtime) {
     }
     const idParts = sound.md5.split('.');
     const md5 = idParts[0];
-    return runtime.storage.load(runtime.storage.AssetType.Sound, md5).then(soundAsset => {
-        sound.data = soundAsset.data;
-        return runtime.audioEngine.decodeSound(sound).then(() => sound);
-    });
+    return runtime.storage.load(runtime.storage.AssetType.Sound, md5)
+        .then(soundAsset => {
+            sound.assetId = soundAsset.assetId;
+            sound.assetType = runtime.storage.AssetType.Sound;
+            return runtime.audioEngine.decodeSound(Object.assign(
+                {},
+                sound,
+                {data: soundAsset.data}
+            ));
+        })
+        .then(() => sound);
 };
 
 module.exports = loadSound;
