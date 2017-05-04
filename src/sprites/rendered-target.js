@@ -765,28 +765,11 @@ class RenderedTarget extends Target {
 
 
     /**
-     * Helper method to clean out data from each asset when serializing to JSON
-     * @param {Array<object>} assetList list of costumes or sounds
-     * @returns {Array<object>} list with raw data removed from each asset
-     */
-    assetListToJSON (assetList) {
-        const exclude = ['data', 'url'];
-        return assetList.map(asset => {
-            if (typeof asset !== 'object') return asset;
-            return Object.keys(asset).reduce((rAsset, prop) => {
-                if (exclude.indexOf(prop) === -1) rAsset[prop] = asset[prop];
-                return rAsset;
-            }, {});
-        });
-    }
-
-    /**
      * Serialize sprite info, used when emitting events about the sprite
      * @returns {object} Sprite data as a simple object
      */
     toJSON () {
-        const costumes = this.assetListToJSON(this.getCostumes());
-        const sounds = this.assetListToJSON(this.getSounds());
+        const costumes = this.getCostumes();
         return {
             id: this.id,
             name: this.getName(),
@@ -805,7 +788,7 @@ class RenderedTarget extends Target {
             variables: this.variables,
             lists: this.lists,
             costumes: costumes,
-            sounds: sounds
+            sounds: this.getSounds()
         };
     }
 
