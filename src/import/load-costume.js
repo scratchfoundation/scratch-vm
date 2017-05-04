@@ -13,7 +13,6 @@ const log = require('../util/log');
  * @returns {?Promise} - a promise which will resolve after skinId is set, or null on error.
  */
 const loadCostume = function (md5ext, costume, runtime) {
-    costume.md5ext = md5ext;
     if (!runtime.storage) {
         log.error('No storage module present; cannot load costume asset: ', md5ext);
         return Promise.resolve(costume);
@@ -31,7 +30,8 @@ const loadCostume = function (md5ext, costume, runtime) {
     ];
 
     let promise = runtime.storage.load(assetType, md5).then(costumeAsset => {
-        costume.url = costumeAsset.encodeDataURI();
+        costume.assetId = costumeAsset.assetId;
+        costume.assetType = assetType;
         return costumeAsset;
     });
 
