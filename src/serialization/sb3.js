@@ -75,7 +75,8 @@ const parseScratchObject = function (object, runtime) {
             rotationCenterX: costumeSource.rotationCenterX,
             rotationCenterY: costumeSource.rotationCenterY
         };
-        return loadCostume(costumeSource.md5ext, costume, runtime);
+        const costumeMd5 = `${costumeSource.assetId}.${costumeSource.assetType.runtimeFormat}`;
+        return loadCostume(costumeMd5, costume, runtime);
     });
     // Sounds from JSON
     const soundPromises = (object.sounds || []).map(soundSource => {
