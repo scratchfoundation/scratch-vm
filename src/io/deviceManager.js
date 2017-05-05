@@ -86,7 +86,6 @@ class DeviceOpener {
      * React to the socket becoming disconnected.
      */
     onDisconnect () {
-        this.removeSocket();
         this.clearConnectionTimeout();
         this._reject('device disconnected');
     }
@@ -102,7 +101,6 @@ class DeviceOpener {
         if (this._socket.connected) {
             this._socket.disconnect();
         } else {
-            this.removeSocket();
             this._reject('connection attempt timed out');
         }
     }
