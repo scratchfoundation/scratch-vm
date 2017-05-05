@@ -1,3 +1,4 @@
+const color = require('../util/color');
 const log = require('../util/log');
 
 /**
@@ -329,6 +330,42 @@ class WeDo2 {
 }
 
 /**
+ * Enum for motor specification.
+ * @readonly
+ * @enum {string}
+ */
+const MotorID = {
+    DEFAULT: 'motor',
+    A: 'motor A',
+    B: 'motor B',
+    ALL: 'all motors'
+};
+
+/**
+ * Enum for motor direction specification.
+ * @readonly
+ * @enum {string}
+ */
+const MotorDirection = {
+    FORWARD: 'this way',
+    BACKWARD: 'that way',
+    REVERSE: 'reverse'
+};
+
+/**
+ * Enum for tilt sensor direction.
+ * @readonly
+ * @enum {string}
+ */
+const TiltDirection = {
+    UP: 'up',
+    DOWN: 'down',
+    LEFT: 'left',
+    RIGHT: 'right',
+    ANY: 'any'
+};
+
+/**
  * Scratch 3.0 blocks to interact with a LEGO WeDo 2.0 device.
  */
 class Scratch3WeDo2Blocks {
@@ -338,6 +375,13 @@ class Scratch3WeDo2Blocks {
      */
     static get EXTENSION_NAME () {
         return 'wedo2';
+    }
+
+    /**
+     * @return {number} - the tilt sensor counts as "tilted" if its tilt angle meets or exceeds this threshold.
+     */
+    static get TILT_THRESHOLD () {
+        return 15;
     }
 
     /**
@@ -381,6 +425,274 @@ class Scratch3WeDo2Blocks {
                     log.warn('Ignoring failure from stale WeDo 2.0 connection attempt');
                 }
             });
+    }
+
+    /**
+     * Retrieve the block primitives implemented by this package.
+     * @return {object.<string, Function>} Mapping of opcode to Function.
+     */
+    getPrimitives () {
+        return {
+            wedo2_motorOnFor: this.motorOnFor,
+            wedo2_motorOn: this.motorOn,
+            wedo2_motorOff: this.motorOff,
+            wedo2_startMotorPower: this.startMotorPower,
+            wedo2_setMotorDirection: this.setMotorDirection,
+            wedo2_setLightHue: this.setLightHue,
+            wedo2_playNoteFor: this.playNoteFor,
+            wedo2_whenDistance: this.whenDistance,
+            wedo2_whenTilted: this.whenTilted,
+            wedo2_getDistance: this.getDistance,
+            wedo2_isTilted: this.isTilted,
+            wedo2_getTiltAngle: this.getTiltAngle
+        };
+    }
+
+    /**
+     * Turn specified motor(s) on for a specified duration.
+     * @param {object} args - the block's arguments.
+     * @property {MotorID} MOTOR_ID - the motor(s) to activate.
+     * @property {int} DURATION - the amount of time to run the motors.
+     * @return {Promise} - a promise which will resolve at the end of the duration.
+     */
+    motorOnFor (args) {
+        return new Promise(resolve => {
+            this._forEachMotor(args.MOTOR_ID, motorIndex => {
+                this._device.motor(motorIndex).setMotorOnFor(args.DURATION);
+            });
+
+            // Ensure this block runs for a fixed amount of time even when no device is connected.
+            setTimeout(resolve, args.DURATION);
+        });
+    }
+
+    /**
+     * Turn specified motor(s) on indefinitely.
+     * @param {object} args - the block's arguments.
+     * @property {MotorID} MOTOR_ID - the motor(s) to activate.
+     */
+    motorOn (args) {
+        this._forEachMotor(args.MOTOR_ID, motorIndex => {
+            this._device.motor(motorIndex).setMotorOn();
+        });
+    }
+
+    /**
+     * Turn specified motor(s) off.
+     * @param {object} args - the block's arguments.
+     * @property {MotorID} MOTOR_ID - the motor(s) to deactivate.
+     */
+    motorOff (args) {
+        this._forEachMotor(args.MOTOR_ID, motorIndex => {
+            this._device.motor(motorIndex).setMotorOff();
+        });
+    }
+
+    /**
+     * Turn specified motor(s) off.
+     * @param {object} args - the block's arguments.
+     * @property {MotorID} MOTOR_ID - the motor(s) to be affected.
+     * @property {int} POWER - the new power level for the motor(s).
+     */
+    startMotorPower (args) {
+        this._forEachMotor(args.MOTOR_ID, motorIndex => {
+            const motor = this._device.motor(motorIndex);
+            motor.power = args.POWER;
+            motor.setMotorOn();
+        });
+    }
+
+    /**
+     * Set the direction of rotation for specified motor(s).
+     * If the direction is 'reverse' the motor(s) will be reversed individually.
+     * @param {object} args - the block's arguments.
+     * @property {MotorID} MOTOR_ID - the motor(s) to be affected.
+     * @property {MotorDirection} DIRECTION - the new direction for the motor(s).
+     */
+    setMotorDirection (args) {
+        this._forEachMotor(args.MOTOR_ID, motorIndex => {
+            const motor = this._device.motor(motorIndex);
+            switch (args.DIRECTION) {
+            case MotorDirection.FORWARD:
+                motor.direction = 1;
+                break;
+            case MotorDirection.BACKWARD:
+                motor.direction = -1;
+                break;
+            case MotorDirection.REVERSE:
+                motor.direction = -motor.direction;
+                break;
+            default:
+                log.warn(`Unknown motor direction in setMotorDirection: ${args.DIRECTION}`);
+                break;
+            }
+        });
+    }
+
+    /**
+     * Set the LED's hue.
+     * @param {object} args - the block's arguments.
+     * @property {number} HUE - the hue to set, in the range [0,100].
+     */
+    setLightHue (args) {
+        // Convert from [0,100] to [0,360]
+        const hue = args.HUE * 360 / 100;
+
+        const rgbObject = color.hsvToRgb({h: hue, s: 1, v: 1});
+
+        const rgbDecimal = color.rgbToDecimal(rgbObject);
+
+        this._device.setLED(rgbDecimal);
+    }
+
+    /**
+     * Make the WeDo 2.0 hub play a MIDI note for the specified duration.
+     * @param {object} args - the block's arguments.
+     * @property {number} NOTE - the MIDI note to play.
+     * @property {number} DURATION - the duration of the note, in seconds.
+     * @return {Promise} - a promise which will resolve at the end of the duration.
+     */
+    playNoteFor (args) {
+        return new Promise(resolve => {
+            const durationMS = args.DURATION * 1000;
+            const tone = this._noteToTone(args.NOTE);
+            this._device.playTone(tone, durationMS);
+
+            // Ensure this block runs for a fixed amount of time even when no device is connected.
+            setTimeout(resolve, durationMS);
+        });
+    }
+
+    /**
+     * Compare the distance sensor's value to a reference.
+     * @param {object} args - the block's arguments.
+     * @property {string} OP - the comparison operation: '<' or '>'.
+     * @property {number} REFERENCE - the value to compare against.
+     * @return {boolean} - the result of the comparison, or false on error.
+     */
+    whenDistance (args) {
+        switch (args.OP) {
+        case '<':
+            return this._device.distance < args.REFERENCE;
+        case '>':
+            return this._device.distance > args.REFERENCE;
+        default:
+            log.warn(`Unknown comparison operator in whenDistance: ${args.OP}`);
+            return false;
+        }
+    }
+
+    /**
+     * Test whether the tilt sensor is currently tilted.
+     * @param {object} args - the block's arguments.
+     * @property {TiltDirection} DIRECTION - the tilt direction to test (up, down, left, right, or any).
+     * @return {boolean} - true if the tilt sensor is tilted past a threshold in the specified direction.
+     */
+    whenTilted (args) {
+        return this._isTilted(args.DIRECTION);
+    }
+
+    /**
+     * @return {number} - the distance sensor's value, scaled to the [0,100] range.
+     */
+    getDistance () {
+        return this._device.distance * 10;
+    }
+
+    /**
+     * Test whether the tilt sensor is currently tilted.
+     * @param {object} args - the block's arguments.
+     * @property {TiltDirection} DIRECTION - the tilt direction to test (up, down, left, right, or any).
+     * @return {boolean} - true if the tilt sensor is tilted past a threshold in the specified direction.
+     */
+    isTilted (args) {
+        return this._isTilted(args.DIRECTION);
+    }
+
+    /**
+     * @param {object} args - the block's arguments.
+     * @property {TiltDirection} DIRECTION - the direction (up, down, left, right) to check.
+     * @return {number} - the tilt sensor's angle in the specified direction.
+     * Note that getTiltAngle(up) = -getTiltAngle(down) and getTiltAngle(left) = -getTiltAngle(right).
+     */
+    getTiltAngle (args) {
+        return this._getTiltAngle(args.DIRECTION);
+    }
+
+    /**
+     * Test whether the tilt sensor is currently tilted.
+     * @param {TiltDirection} direction - the tilt direction to test (up, down, left, right, or any).
+     * @return {boolean} - true if the tilt sensor is tilted past a threshold in the specified direction.
+     * @private
+     */
+    _isTilted (direction) {
+        switch (direction) {
+        case TiltDirection.ANY:
+            return (Math.abs(this._device.tiltX) >= Scratch3WeDo2Blocks.TILT_THRESHOLD) ||
+                (Math.abs(this._device.tiltY) >= Scratch3WeDo2Blocks.TILT_THRESHOLD);
+        default:
+            return this._getTiltAngle(direction) >= Scratch3WeDo2Blocks.TILT_THRESHOLD;
+        }
+    }
+
+    /**
+     * @param {TiltDirection} direction - the direction (up, down, left, right) to check.
+     * @return {number} - the tilt sensor's angle in the specified direction.
+     * Note that getTiltAngle(up) = -getTiltAngle(down) and getTiltAngle(left) = -getTiltAngle(right).
+     * @private
+     */
+    _getTiltAngle (direction) {
+        switch (direction) {
+        case TiltDirection.UP:
+            return -this._device.tiltY;
+        case TiltDirection.DOWN:
+            return this._device.tiltY;
+        case TiltDirection.LEFT:
+            return -this._device.tiltX;
+        case TiltDirection.RIGHT:
+            return this._device.tiltX;
+        default:
+            log.warn(`Unknown tilt direction in _getTiltAngle: ${direction}`);
+        }
+    }
+
+    /**
+     * Call a callback for each motor indexed by the provided motor ID.
+     * @param {MotorID} motorID - the ID specifier.
+     * @param {Function} callback - the function to call with the numeric motor index for each motor.
+     * @private
+     */
+    _forEachMotor (motorID, callback) {
+        let motors;
+        switch (motorID) {
+        case MotorID.A:
+            motors = [0];
+            break;
+        case MotorID.B:
+            motors = [1];
+            break;
+        case MotorID.ALL:
+        case MotorID.DEFAULT:
+            motors = [0, 1];
+            break;
+        default:
+            log.warn(`Invalid motor ID: ${motorID}`);
+            motors = [];
+            break;
+        }
+        for (const index of motors) {
+            callback(index);
+        }
+    }
+
+    /**
+     * @param {number} midiNote - the MIDI note value to convert.
+     * @return {number} - the frequency, in Hz, corresponding to that MIDI note value.
+     * @private
+     */
+    _noteToTone (midiNote) {
+        // Note that MIDI note 69 is A4, 440 Hz
+        return 440 * Math.pow(2, (midiNote - 69) / 12);
     }
 }
 
