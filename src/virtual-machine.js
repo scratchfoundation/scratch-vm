@@ -58,6 +58,7 @@ class VirtualMachine extends EventEmitter {
 
         this.blockListener = this.blockListener.bind(this);
         this.flyoutBlockListener = this.flyoutBlockListener.bind(this);
+        this.monitorBlockListener = this.monitorBlockListener.bind(this);
     }
 
     /**
@@ -342,6 +343,16 @@ class VirtualMachine extends EventEmitter {
      */
     flyoutBlockListener (e) {
         this.runtime.flyoutBlocks.blocklyListen(e, this.runtime);
+    }
+
+    /**
+     * Handle a Blockly event for the flyout to be passed to the monitor container.
+     * @param {!Blockly.Event} e Any Blockly event.
+     */
+    monitorBlockListener (e) {
+        if (['create', 'change'].indexOf(e.type) !== -1) {
+            this.runtime.monitorBlocks.blocklyListen(e, this.runtime);
+        }
     }
 
     /**
