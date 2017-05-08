@@ -85,7 +85,7 @@ const execute = function (sequencer, thread) {
         } else {
             // In a non-hat, report the value visually if necessary if
             // at the top of the thread stack.
-            if (typeof resolvedValue !== 'undefined' && thread.atStackTop()) {
+            if (typeof resolvedValue !== 'undefined' && thread.showVisualReport && thread.atStackTop()) {
                 runtime.visualReport(currentBlockId, resolvedValue);
             }
             // Finished any yields.

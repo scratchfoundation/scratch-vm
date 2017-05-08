@@ -194,7 +194,7 @@ class Blocks {
         // UI event: clicked scripts toggle in the runtime.
         if (e.element === 'stackclick') {
             if (optRuntime) {
-                optRuntime.toggleScript(e.blockId);
+                optRuntime.toggleScript(e.blockId, {showVisualReport: true});
             }
             return;
         }
