@@ -234,6 +234,14 @@ class Runtime extends EventEmitter {
     }
 
     /**
+     * Event name for monitors update.
+     * @const {string}
+     */
+    static get MONITORS_UPDATE () {
+        return 'MONITORS_UPDATE';
+    }
+
+    /**
      * How rapidly we try to step threads by default, in ms.
      */
     static get THREAD_STEP_INTERVAL () {
@@ -817,6 +825,14 @@ class Runtime extends EventEmitter {
         if (!target.isOriginal) return;
 
         this.emit(Runtime.SPRITE_INFO_REPORT, target.toJSON());
+    }
+
+    /**
+     * Emit a monitor update.
+     * @param {!Array} monitors Array of all monitors
+     */
+    monitorsUpdate (monitors) {
+        this.emit(Runtime.MONITORS_UPDATE, monitors);
     }
 
     /**
