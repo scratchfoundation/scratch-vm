@@ -60,6 +60,8 @@ const execute = function (sequencer, thread) {
      * or after a promise resolves.
      * @param {*} resolvedValue Value eventually returned from the primitive.
      */
+     // @todo move this to callback attached to the thread when we have performance
+     // metrics (dd)
     const handleReport = function (resolvedValue) {
         thread.pushReportedValue(resolvedValue);
         if (isHat) {
@@ -85,8 +87,22 @@ const execute = function (sequencer, thread) {
         } else {
             // In a non-hat, report the value visually if necessary if
             // at the top of the thread stack.
-            if (typeof resolvedValue !== 'undefined' && thread.showVisualReport && thread.atStackTop()) {
-                runtime.visualReport(currentBlockId, resolvedValue);
+
+            if (typeof resolvedValue !== 'undefined' && thread.atStackTop()) {
+                if (thread.showVisualReport) {
+                    runtime.visualReport(currentBlockId, resolvedValue);
+                }
+
+                if (thread.updateMonitor) {
+                    runtime.updateMonitors([{
+                        id: currentBlockId, // @todo(dd) this will collide if multiple sprites use same block
+                        category: 'data',
+                        label: blockContainer.getOpcode(blockContainer.getBlock(currentBlockId)), // @todo(dd) how to handle translation here?
+                        value: String(resolvedValue),
+                        x: 0, // @todo(dd) place below the last monitor instead
+                        y: 0
+                    }]);
+                }
             }
             // Finished any yields.
             thread.status = Thread.STATUS_RUNNING;

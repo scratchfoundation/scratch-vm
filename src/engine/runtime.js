@@ -377,13 +377,22 @@ class Runtime extends EventEmitter {
      * Create a thread and push it to the list of threads.
      * @param {!string} id ID of block that starts the stack.
      * @param {!Target} target Target to run thread on.
-     * @param {?boolean} optShowVisualReport true if the script should show speech bubble for its value
+     * @param {?object} opts optional arguments
+     * @param {?boolean} opts.optShowVisualReport true if the script should show speech bubble for its value
+     * @param {?boolean} opts.optUpdateMonitor true if the script should show and update a monitor with its value
      * @return {!Thread} The newly created thread.
      */
-    _pushThread (id, target, optShowVisualReport) {
+    _pushThread (id, target, opts) {
+        opts = Object.assign({
+            showVisualReport: false,
+            updateMonitor: false
+        }, opts);
+
         const thread = new Thread(id);
         thread.target = target;
-        thread.showVisualReport = optShowVisualReport;
+        thread.showVisualReport = opts.optShowVisualReport;
+        thread.updateMonitor = opts.updateMonitor;
+
         thread.pushStack(id);
         this.threads.push(thread);
         return thread;
@@ -436,8 +445,14 @@ class Runtime extends EventEmitter {
      * @param {?object} opts optional arguments to toggle script
      * @param {?string} opts.target target ID for target to run script on. If not supplied, uses editing target.
      * @param {?boolean} opts.showVisualReport true if the speech bubble should pop up on the block, false if not.
+     * @param {?boolean} opts.updateMonitor true if the monitor for this block should show and get updated.
      */
     toggleScript (topBlockId, opts) {
+        opts = Object.assign({
+            target: this._editingTarget,
+            showVisualReport: false,
+            updateMonitor: false
+        }, opts);
         // Remove any existing thread.
         for (let i = 0; i < this.threads.length; i++) {
             if (this.threads[i].topBlock === topBlockId) {
@@ -446,10 +461,7 @@ class Runtime extends EventEmitter {
             }
         }
         // Otherwise add it.
-        this._pushThread(
-            topBlockId,
-            opts && opts.target ? opts.target : this._editingTarget,
-            opts ? opts.showVisualReport : false);
+        this._pushThread(topBlockId, opts.target, opts);
     }
 
     /**
@@ -828,10 +840,10 @@ class Runtime extends EventEmitter {
     }
 
     /**
-     * Emit a monitor update.
+     * Emit a monitor update which adds or updates if exists the given monitors.
      * @param {!Array} monitors Array of all monitors
      */
-    monitorsUpdate (monitors) {
+    updateMonitors (monitors) {
         this.emit(Runtime.MONITORS_UPDATE, monitors);
     }
 
