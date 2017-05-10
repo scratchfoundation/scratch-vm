@@ -5627,7 +5627,7 @@ var Blocks = function () {
             // UI event: clicked scripts toggle in the runtime.
             if (e.element === 'stackclick') {
                 if (optRuntime) {
-                    optRuntime.toggleScript(e.blockId);
+                    optRuntime.toggleScript(e.blockId, { showVisualReport: true });
                 }
                 return;
             }
@@ -5712,16 +5712,22 @@ var Blocks = function () {
         key: 'changeBlock',
         value: function changeBlock(args) {
             // Validate
-            if (args.element !== 'field' && args.element !== 'mutation') return;
+            if (['field', 'mutation', 'checkbox'].indexOf(args.element) === -1) return;
             var block = this._blocks[args.id];
             if (typeof block === 'undefined') return;
 
-            if (args.element === 'field') {
-                // Update block value
-                if (!block.fields[args.name]) return;
-                block.fields[args.name].value = args.value;
-            } else if (args.element === 'mutation') {
-                block.mutation = mutationAdapter(args.value);
+            switch (args.element) {
+                case 'field':
+                    // Update block value
+                    if (!block.fields[args.name]) return;
+                    block.fields[args.name].value = args.value;
+                    break;
+                case 'mutation':
+                    block.mutation = mutationAdapter(args.value);
+                    break;
+                case 'checkbox':
+                    block.isMonitored = args.value;
+                    break;
             }
         }
 
@@ -5781,6 +5787,24 @@ var Blocks = function () {
                 }
                 this._blocks[e.id].parent = e.newParent;
             }
+        }
+
+        /**
+         * Block management: run all blocks.
+         * @param {!object} runtime Runtime to run all blocks in.
+         */
+
+    }, {
+        key: 'runAllMonitored',
+        value: function runAllMonitored(runtime) {
+            var _this = this;
+
+            Object.keys(this._blocks).forEach(function (blockId) {
+                if (_this.getBlock(blockId).isMonitored) {
+                    // @todo handle specific targets (e.g. apple x position)
+                    runtime.toggleScript(blockId);
+                }
+            });
         }
 
         /**
@@ -14892,7 +14916,7 @@ var execute = function execute(sequencer, thread) {
         } else {
             // In a non-hat, report the value visually if necessary if
             // at the top of the thread stack.
-            if (typeof resolvedValue !== 'undefined' && thread.atStackTop()) {
+            if (typeof resolvedValue !== 'undefined' && thread.showVisualReport && thread.atStackTop()) {
                 runtime.visualReport(currentBlockId, resolvedValue);
             }
             // Finished any yields.
@@ -15145,6 +15169,13 @@ var Runtime = function (_EventEmitter) {
         _this.flyoutBlocks = new Blocks();
 
         /**
+         * Storage container for monitor blocks.
+         * These will execute on a target maybe
+         * @type {!Blocks}
+         */
+        _this.monitorBlocks = new Blocks();
+
+        /**
          * Currently known editing target for the VM.
          * @type {?Target}
          */
@@ -15385,14 +15416,16 @@ var Runtime = function (_EventEmitter) {
          * Create a thread and push it to the list of threads.
          * @param {!string} id ID of block that starts the stack.
          * @param {!Target} target Target to run thread on.
+         * @param {?boolean} optShowVisualReport true if the script should show speech bubble for its value
          * @return {!Thread} The newly created thread.
          */
 
     }, {
         key: '_pushThread',
-        value: function _pushThread(id, target) {
+        value: function _pushThread(id, target, optShowVisualReport) {
             var thread = new Thread(id);
             thread.target = target;
+            thread.showVisualReport = optShowVisualReport;
             thread.pushStack(id);
             this.threads.push(thread);
             return thread;
@@ -15451,11 +15484,14 @@ var Runtime = function (_EventEmitter) {
         /**
          * Toggle a script.
          * @param {!string} topBlockId ID of block that starts the script.
+         * @param {?object} opts optional arguments to toggle script
+         * @param {?string} opts.target target ID for target to run script on. If not supplied, uses editing target.
+         * @param {?boolean} opts.showVisualReport true if the speech bubble should pop up on the block, false if not.
          */
 
     }, {
         key: 'toggleScript',
-        value: function toggleScript(topBlockId) {
+        value: function toggleScript(topBlockId, opts) {
             // Remove any existing thread.
             for (var i = 0; i < this.threads.length; i++) {
                 if (this.threads[i].topBlock === topBlockId) {
@@ -15464,7 +15500,7 @@ var Runtime = function (_EventEmitter) {
                 }
             }
             // Otherwise add it.
-            this._pushThread(topBlockId, this._editingTarget);
+            this._pushThread(topBlockId, opts && opts.target ? opts.target : this._editingTarget, opts ? opts.showVisualReport : false);
         }
 
         /**
@@ -15689,6 +15725,7 @@ var Runtime = function (_EventEmitter) {
                 }
             }
             this.redrawRequested = false;
+            this._pushMonitors();
             var doneThreads = this.sequencer.stepThreads();
             this._updateGlows(doneThreads);
             this._setThreadCount(this.threads.length + doneThreads.length);
@@ -15696,6 +15733,16 @@ var Runtime = function (_EventEmitter) {
                 // @todo: Only render when this.redrawRequested or clones rendered.
                 this.renderer.draw();
             }
+        }
+
+        /**
+         * Queue monitor blocks to sequencer to be run.
+         */
+
+    }, {
+        key: '_pushMonitors',
+        value: function _pushMonitors() {
+            this.monitorBlocks.runAllMonitored(this);
         }
 
         /**
@@ -16450,7 +16497,7 @@ var Target = function (_EventEmitter) {
     var _this = _possibleConstructorReturn(this, (Target.__proto__ || Object.getPrototypeOf(Target)).call(this));
 
     if (!blocks) {
-      blocks = new Blocks(_this);
+      blocks = new Blocks();
     }
     /**
      * A unique ID for this target.
@@ -18745,6 +18792,7 @@ var VirtualMachine = function (_EventEmitter) {
 
         _this.blockListener = _this.blockListener.bind(_this);
         _this.flyoutBlockListener = _this.flyoutBlockListener.bind(_this);
+        _this.monitorBlockListener = _this.monitorBlockListener.bind(_this);
         return _this;
     }
 
@@ -19106,6 +19154,21 @@ var VirtualMachine = function (_EventEmitter) {
         key: 'flyoutBlockListener',
         value: function flyoutBlockListener(e) {
             this.runtime.flyoutBlocks.blocklyListen(e, this.runtime);
+        }
+
+        /**
+         * Handle a Blockly event for the flyout to be passed to the monitor container.
+         * @param {!Blockly.Event} e Any Blockly event.
+         */
+
+    }, {
+        key: 'monitorBlockListener',
+        value: function monitorBlockListener(e) {
+            // Filter events by type, since monitor blocks only need to listen to these events.
+            // Monitor blocks shouldn't be destroyed when flyout blocks are deleted.
+            if (['create', 'change'].indexOf(e.type) !== -1) {
+                this.runtime.monitorBlocks.blocklyListen(e, this.runtime);
+            }
         }
 
         /**
