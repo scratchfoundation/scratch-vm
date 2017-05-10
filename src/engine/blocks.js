@@ -215,7 +215,7 @@ class Blocks {
                 element: e.element,
                 name: e.name,
                 value: e.newValue
-            });
+            }, optRuntime);
             break;
         case 'move':
             this.moveBlock({
@@ -270,11 +270,13 @@ class Blocks {
     /**
      * Block management: change block field values
      * @param {!object} args Blockly change event to be processed
+     * @param {?Runtime} optRuntime Optional runtime to allow changeBlock to emit actions.
      */
-    changeBlock (args) {
+    changeBlock (args, optRuntime) {
         // Validate
         if (['field', 'mutation', 'checkbox'].indexOf(args.element) === -1) return;
         const block = this._blocks[args.id];
+        let wasMonitored = block.isMonitored;
         if (typeof block === 'undefined') return;
 
         switch (args.element) {
@@ -288,6 +290,9 @@ class Blocks {
             break;
         case 'checkbox':
             block.isMonitored = args.value;
+            if (optRuntime && wasMonitored && !block.isMonitored) {
+                optRuntime.removeMonitors([{id: block.id}]);
+            }
             break;
         }
     }

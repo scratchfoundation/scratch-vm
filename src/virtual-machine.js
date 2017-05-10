@@ -55,8 +55,11 @@ class VirtualMachine extends EventEmitter {
         instance.runtime.on(Runtime.SPRITE_INFO_REPORT, spriteInfo => {
             instance.emit(Runtime.SPRITE_INFO_REPORT, spriteInfo);
         });
-        instance.runtime.on(Runtime.MONITORS_UPDATE, data => {
-            instance.emit(Runtime.MONITORS_UPDATE, data);
+        instance.runtime.on(Runtime.MONITORS_UPDATE, monitorList => {
+            instance.emit(Runtime.MONITORS_UPDATE, monitorList);
+        });
+        instance.runtime.on(Runtime.MONITORS_REMOVED, monitorList => {
+            instance.emit(Runtime.MONITORS_REMOVED, monitorList);
         });
 
         this.blockListener = this.blockListener.bind(this);
