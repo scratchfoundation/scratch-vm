@@ -61,6 +61,9 @@ class VirtualMachine extends EventEmitter {
         instance.runtime.on(Runtime.MONITORS_REMOVED, monitorList => {
             instance.emit(Runtime.MONITORS_REMOVED, monitorList);
         });
+        instance.runtime.on(Runtime.MONITORS_ADDED, monitorList => {
+            instance.emit(Runtime.MONITORS_ADDED, monitorList);
+        });
 
         this.blockListener = this.blockListener.bind(this);
         this.flyoutBlockListener = this.flyoutBlockListener.bind(this);

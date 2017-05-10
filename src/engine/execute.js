@@ -87,7 +87,6 @@ const execute = function (sequencer, thread) {
         } else {
             // In a non-hat, report the value visually if necessary if
             // at the top of the thread stack.
-
             if (typeof resolvedValue !== 'undefined' && thread.atStackTop()) {
                 if (thread.showVisualReport) {
                     runtime.visualReport(currentBlockId, resolvedValue);
@@ -95,15 +94,8 @@ const execute = function (sequencer, thread) {
 
                 if (thread.updateMonitor) {
                     runtime.updateMonitors([{
-                        // @todo(dd) this will collide if multiple sprites use same block
                         id: currentBlockId,
-                        category: 'data',
-                        // @todo(dd) how to handle translation here?
-                        label: blockContainer.getOpcode(blockContainer.getBlock(currentBlockId)),
-                        value: String(resolvedValue),
-                        x: 0,
-                        // @todo(dd) place below the last monitor instead
-                        y: 0
+                        value: String(resolvedValue)
                     }]);
                 }
             }

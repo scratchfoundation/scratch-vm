@@ -292,6 +292,21 @@ class Blocks {
             block.isMonitored = args.value;
             if (optRuntime && wasMonitored && !block.isMonitored) {
                 optRuntime.removeMonitors([{id: block.id}]);
+            } else if (optRuntime && !wasMonitored && block.isMonitored) {
+                optRuntime.addMonitors(
+                    // Ensure that value is not undefined, since React requires it
+                    [{
+                        // @todo(dd) this will collide if multiple sprites use same block
+                        id: block.id,
+                        category: 'data',
+                        // @todo(dd) how to handle translation here?
+                        label: block.opcode,
+                        value: '',
+                        x: 0,
+                        // @todo(dd) place below the last monitor instead
+                        y: 0
+                    }]
+                );
             }
             break;
         }

@@ -250,6 +250,14 @@ class Runtime extends EventEmitter {
     }
 
     /**
+     * Event name for monitors added.
+     * @const {string}
+     */
+    static get MONITORS_ADDED () {
+        return 'MONITORS_ADDED';
+    }
+
+    /**
      * How rapidly we try to step threads by default, in ms.
      */
     static get THREAD_STEP_INTERVAL () {
@@ -879,6 +887,14 @@ class Runtime extends EventEmitter {
      */
     removeMonitors (monitors) {
         this.emit(Runtime.MONITORS_REMOVED, monitors);
+    }
+
+    /**
+     * Emit a monitor update which adds if it doesn't already exist the given monitors.
+     * @param {!Array} monitors Array of monitors to add.
+     */
+    addMonitors (monitors) {
+        this.emit(Runtime.MONITORS_ADDED, monitors);
     }
 
     /**
