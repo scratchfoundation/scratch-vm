@@ -93,10 +93,10 @@ class Runtime extends EventEmitter {
         this._scriptGlowsPreviousFrame = [];
 
         /**
-         * Number of threads running during the previous frame
+         * Number of non-monitor threads running during the previous frame.
          * @type {number}
          */
-        this._threadCount = 0;
+        this._nonMonitorThreadCount = 0;
 
         /**
          * Currently known number of clones, used to enforce clone limit.
@@ -670,11 +670,29 @@ class Runtime extends EventEmitter {
         this._pushMonitors();
         const doneThreads = this.sequencer.stepThreads();
         this._updateGlows(doneThreads);
-        this._setThreadCount(this.threads.length + doneThreads.length);
+        // Add done threads so that even if a thread finishes within 1 frame, the green
+        // flag will still indicate that a script ran.
+        this._maybeEmitProjectRunStartOrStop(
+            this.threads.length - this._getMonitorThreadCount(this.threads) +
+                doneThreads.length - this._getMonitorThreadCount(doneThreads));
         if (this.renderer) {
             // @todo: Only render when this.redrawRequested or clones rendered.
             this.renderer.draw();
         }
+    }
+
+    /**
+     * Get the number of threads in the given array that are monitor threads (threads
+     * that update monitor values, and don't count as running a script).
+     * @param {!Array.<Thread>} threads The set of threads to look through.
+     * @return {number} The number of monitor threads in threads.
+     */
+    _getMonitorThreadCount (threads) {
+        let count = 0;
+        threads.forEach(thread => {
+            if (thread.updateMonitor) count++;
+        });
+        return count;
     }
 
     /**
@@ -769,16 +787,16 @@ class Runtime extends EventEmitter {
      * Emit run start/stop after each tick. Emits when `this.threads.length` goes
      * between non-zero and zero
      *
-     * @param {number} threadCount The new threadCount
+     * @param {number} nonMonitorThreadCount The new nonMonitorThreadCount
      */
-    _setThreadCount (threadCount) {
-        if (this._threadCount === 0 && threadCount > 0) {
+    _maybeEmitProjectRunStartOrStop (nonMonitorThreadCount) {
+        if (this._nonMonitorThreadCount === 0 && nonMonitorThreadCount > 0) {
             this.emit(Runtime.PROJECT_RUN_START);
         }
-        if (this._threadCount > 0 && threadCount === 0) {
+        if (this._nonMonitorThreadCount > 0 && nonMonitorThreadCount === 0) {
             this.emit(Runtime.PROJECT_RUN_STOP);
         }
-        this._threadCount = threadCount;
+        this._nonMonitorThreadCount = nonMonitorThreadCount;
     }
 
     /**

@@ -95,11 +95,14 @@ const execute = function (sequencer, thread) {
 
                 if (thread.updateMonitor) {
                     runtime.updateMonitors([{
-                        id: currentBlockId, // @todo(dd) this will collide if multiple sprites use same block
+                        // @todo(dd) this will collide if multiple sprites use same block
+                        id: currentBlockId,
                         category: 'data',
-                        label: blockContainer.getOpcode(blockContainer.getBlock(currentBlockId)), // @todo(dd) how to handle translation here?
+                        // @todo(dd) how to handle translation here?
+                        label: blockContainer.getOpcode(blockContainer.getBlock(currentBlockId)),
                         value: String(resolvedValue),
-                        x: 0, // @todo(dd) place below the last monitor instead
+                        x: 0,
+                        // @todo(dd) place below the last monitor instead
                         y: 0
                     }]);
                 }
