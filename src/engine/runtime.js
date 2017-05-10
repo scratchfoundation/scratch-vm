@@ -53,6 +53,13 @@ class Runtime extends EventEmitter {
         this.flyoutBlocks = new Blocks();
 
         /**
+         * Storage container for monitor blocks.
+         * These will execute on a target maybe
+         * @type {!Blocks}
+         */
+        this.monitorBlocks = new Blocks();
+
+        /**
          * Currently known editing target for the VM.
          * @type {?Target}
          */
@@ -362,11 +369,13 @@ class Runtime extends EventEmitter {
      * Create a thread and push it to the list of threads.
      * @param {!string} id ID of block that starts the stack.
      * @param {!Target} target Target to run thread on.
+     * @param {?boolean} optShowVisualReport true if the script should show speech bubble for its value
      * @return {!Thread} The newly created thread.
      */
-    _pushThread (id, target) {
+    _pushThread (id, target, optShowVisualReport) {
         const thread = new Thread(id);
         thread.target = target;
+        thread.showVisualReport = optShowVisualReport;
         thread.pushStack(id);
         this.threads.push(thread);
         return thread;
@@ -416,8 +425,11 @@ class Runtime extends EventEmitter {
     /**
      * Toggle a script.
      * @param {!string} topBlockId ID of block that starts the script.
+     * @param {?object} opts optional arguments to toggle script
+     * @param {?string} opts.target target ID for target to run script on. If not supplied, uses editing target.
+     * @param {?boolean} opts.showVisualReport true if the speech bubble should pop up on the block, false if not.
      */
-    toggleScript (topBlockId) {
+    toggleScript (topBlockId, opts) {
         // Remove any existing thread.
         for (let i = 0; i < this.threads.length; i++) {
             if (this.threads[i].topBlock === topBlockId) {
@@ -426,7 +438,10 @@ class Runtime extends EventEmitter {
             }
         }
         // Otherwise add it.
-        this._pushThread(topBlockId, this._editingTarget);
+        this._pushThread(
+            topBlockId,
+            opts && opts.target ? opts.target : this._editingTarget,
+            opts ? opts.showVisualReport : false);
     }
 
     /**
@@ -632,6 +647,7 @@ class Runtime extends EventEmitter {
             }
         }
         this.redrawRequested = false;
+        this._pushMonitors();
         const doneThreads = this.sequencer.stepThreads();
         this._updateGlows(doneThreads);
         this._setThreadCount(this.threads.length + doneThreads.length);
@@ -639,6 +655,13 @@ class Runtime extends EventEmitter {
             // @todo: Only render when this.redrawRequested or clones rendered.
             this.renderer.draw();
         }
+    }
+
+    /**
+     * Queue monitor blocks to sequencer to be run.
+     */
+    _pushMonitors () {
+        this.monitorBlocks.runAllMonitored(this);
     }
 
     /**

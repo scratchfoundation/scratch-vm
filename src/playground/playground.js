@@ -92,6 +92,7 @@ window.onload = function () {
     workspace.addChangeListener(vm.blockListener);
     const flyoutWorkspace = workspace.getFlyout().getWorkspace();
     flyoutWorkspace.addChangeListener(vm.flyoutBlockListener);
+    flyoutWorkspace.addChangeListener(vm.monitorBlockListener);
 
     // Create FPS counter.
     const stats = new window.Stats();
