@@ -222,7 +222,11 @@ class VirtualMachine extends EventEmitter {
                 }
             }
             // Select the first target for editing, e.g., the first sprite.
-            this.editingTarget = this.runtime.targets[1];
+            if (this.runtime.targets.length > 1) {
+                this.editingTarget = this.runtime.targets[1];
+            } else {
+                this.editingTarget = this.runtime.targets[0];
+            }
 
             // Update the VM user's knowledge of targets and blocks on the workspace.
             this.emitTargetsUpdate();
