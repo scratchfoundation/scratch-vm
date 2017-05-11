@@ -688,9 +688,9 @@ class Runtime extends EventEmitter {
         this._updateGlows(doneThreads);
         // Add done threads so that even if a thread finishes within 1 frame, the green
         // flag will still indicate that a script ran.
-        this._maybeEmitProjectRunStartOrStop(
-            this.threads.length - this._getMonitorThreadCount(this.threads) +
-                doneThreads.length - this._getMonitorThreadCount(doneThreads));
+        this._emitProjectRunStatus(
+            this.threads.length + doneThreads.length -
+                this._getMonitorThreadCount([...this.threads, ...doneThreads]));
         if (this.renderer) {
             // @todo: Only render when this.redrawRequested or clones rendered.
             this.renderer.draw();
@@ -805,7 +805,7 @@ class Runtime extends EventEmitter {
      *
      * @param {number} nonMonitorThreadCount The new nonMonitorThreadCount
      */
-    _maybeEmitProjectRunStartOrStop (nonMonitorThreadCount) {
+    _emitProjectRunStatus (nonMonitorThreadCount) {
         if (this._nonMonitorThreadCount === 0 && nonMonitorThreadCount > 0) {
             this.emit(Runtime.PROJECT_RUN_START);
         }
