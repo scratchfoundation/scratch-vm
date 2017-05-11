@@ -191,9 +191,15 @@ class VirtualMachine extends EventEmitter {
         this.clear();
 
         // Validate & parse
-        if (typeof json !== 'string') return;
+        if (typeof json !== 'string') {
+            log.error('Failed to parse project. Non-string supplied to fromJSON.');
+            return;
+        }
         json = JSON.parse(json);
-        if (typeof json !== 'object') return;
+        if (typeof json !== 'object') {
+            log.error('Failed to parse project. JSON supplied to fromJSON is not an object.');
+            return;
+        }
 
         // Establish version, deserialize, and load into runtime
         // @todo Support Scratch 1.4
@@ -232,9 +238,15 @@ class VirtualMachine extends EventEmitter {
      */
     addSprite2 (json) {
         // Validate & parse
-        if (typeof json !== 'string') return;
+        if (typeof json !== 'string') {
+            log.error('Failed to parse sprite. Non-string supplied to addSprite2.');
+            return;
+        }
         json = JSON.parse(json);
-        if (typeof json !== 'object') return;
+        if (typeof json !== 'object') {
+            log.error('Failed to parse sprite. JSON supplied to addSprite2 is not an object.');
+            return;
+        }
 
         // Select new sprite.
         return sb2.deserialize(json, this.runtime, true).then(targets => {
