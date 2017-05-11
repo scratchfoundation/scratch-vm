@@ -63,7 +63,7 @@
 /******/ 	__webpack_require__.p = "";
 /******/
 /******/ 	// Load entry module and return exports
-/******/ 	return __webpack_require__(__webpack_require__.s = 129);
+/******/ 	return __webpack_require__(__webpack_require__.s = 130);
 /******/ })
 /************************************************************************/
 /******/ ([
@@ -81,9 +81,9 @@
 
 
 
-var base64 = __webpack_require__(48)
-var ieee754 = __webpack_require__(55)
-var isArray = __webpack_require__(29)
+var base64 = __webpack_require__(52)
+var ieee754 = __webpack_require__(59)
+var isArray = __webpack_require__(30)
 
 exports.Buffer = Buffer
 exports.SlowBuffer = SlowBuffer
@@ -2143,7 +2143,7 @@ var util = __webpack_require__(8);
 util.inherits = __webpack_require__(1);
 /*</replacement>*/
 
-var Readable = __webpack_require__(31);
+var Readable = __webpack_require__(32);
 var Writable = __webpack_require__(17);
 
 util.inherits(Duplex, Readable);
@@ -2625,7 +2625,7 @@ var _createClass = function () { function defineProperties(target, props) { for 
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
-var Color = __webpack_require__(47);
+var Color = __webpack_require__(51);
 
 /**
  * @fileoverview
@@ -2857,20 +2857,20 @@ module.exports = Cast;
 /* 10 */
 /***/ (function(module, exports, __webpack_require__) {
 
-exports = module.exports = __webpack_require__(31);
+exports = module.exports = __webpack_require__(32);
 exports.Stream = exports;
 exports.Readable = exports;
 exports.Writable = __webpack_require__(17);
 exports.Duplex = __webpack_require__(5);
-exports.Transform = __webpack_require__(32);
-exports.PassThrough = __webpack_require__(57);
+exports.Transform = __webpack_require__(33);
+exports.PassThrough = __webpack_require__(61);
 
 
 /***/ }),
 /* 11 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var microee = __webpack_require__(219);
+var microee = __webpack_require__(220);
 
 // Implements a subset of Node's stream.Transform - in a cross-platform manner.
 function Transform() {}
@@ -3374,12 +3374,12 @@ util.inherits = __webpack_require__(1);
 
 /*<replacement>*/
 var internalUtil = {
-  deprecate: __webpack_require__(62)
+  deprecate: __webpack_require__(66)
 };
 /*</replacement>*/
 
 /*<replacement>*/
-var Stream = __webpack_require__(33);
+var Stream = __webpack_require__(34);
 /*</replacement>*/
 
 var Buffer = __webpack_require__(0).Buffer;
@@ -3898,7 +3898,7 @@ function CorkedRequest(state) {
 "use strict";
 
 
-var minilog = __webpack_require__(226);
+var minilog = __webpack_require__(227);
 minilog.enable();
 
 module.exports = minilog('vm');
@@ -4010,8 +4010,8 @@ module.exports = MathUtil;
 /* 22 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var Parser = __webpack_require__(92),
-    DomHandler = __webpack_require__(180);
+var Parser = __webpack_require__(93),
+    DomHandler = __webpack_require__(181);
 
 function defineProp(name, value){
 	delete module.exports[name];
@@ -4021,26 +4021,26 @@ function defineProp(name, value){
 
 module.exports = {
 	Parser: Parser,
-	Tokenizer: __webpack_require__(93),
-	ElementType: __webpack_require__(28),
+	Tokenizer: __webpack_require__(94),
+	ElementType: __webpack_require__(29),
 	DomHandler: DomHandler,
 	get FeedHandler(){
-		return defineProp("FeedHandler", __webpack_require__(214));
+		return defineProp("FeedHandler", __webpack_require__(215));
 	},
 	get Stream(){
-		return defineProp("Stream", __webpack_require__(216));
+		return defineProp("Stream", __webpack_require__(217));
 	},
 	get WritableStream(){
-		return defineProp("WritableStream", __webpack_require__(94));
+		return defineProp("WritableStream", __webpack_require__(95));
 	},
 	get ProxyHandler(){
-		return defineProp("ProxyHandler", __webpack_require__(215));
+		return defineProp("ProxyHandler", __webpack_require__(216));
 	},
 	get DomUtils(){
-		return defineProp("DomUtils", __webpack_require__(182));
+		return defineProp("DomUtils", __webpack_require__(183));
 	},
 	get CollectingHandler(){
-		return defineProp("CollectingHandler", __webpack_require__(213));
+		return defineProp("CollectingHandler", __webpack_require__(214));
 	},
 	// For legacy support
 	DefaultHandler: DomHandler,
@@ -4113,10 +4113,10 @@ var inherits = __webpack_require__(1);
 
 inherits(Stream, EE);
 Stream.Readable = __webpack_require__(10);
-Stream.Writable = __webpack_require__(60);
-Stream.Duplex = __webpack_require__(56);
+Stream.Writable = __webpack_require__(64);
+Stream.Duplex = __webpack_require__(60);
 Stream.Transform = __webpack_require__(43);
-Stream.PassThrough = __webpack_require__(59);
+Stream.PassThrough = __webpack_require__(63);
 
 // Backwards-compat with node 0.4.x
 Stream.Stream = Stream;
@@ -4217,8 +4217,601 @@ Stream.prototype.pipe = function(dest, options) {
 /***/ }),
 /* 25 */,
 /* 26 */,
-/* 27 */,
-/* 28 */
+/* 27 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
+
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+var adapter = __webpack_require__(141);
+var mutationAdapter = __webpack_require__(73);
+var xmlEscape = __webpack_require__(153);
+
+/**
+ * @fileoverview
+ * Store and mutate the VM block representation,
+ * and handle updates from Scratch Blocks events.
+ */
+
+var Blocks = function () {
+    function Blocks() {
+        _classCallCheck(this, Blocks);
+
+        /**
+         * All blocks in the workspace.
+         * Keys are block IDs, values are metadata about the block.
+         * @type {Object.<string, Object>}
+         */
+        this._blocks = {};
+
+        /**
+         * All top-level scripts in the workspace.
+         * A list of block IDs that represent scripts (i.e., first block in script).
+         * @type {Array.<String>}
+         */
+        this._scripts = [];
+    }
+
+    /**
+     * Blockly inputs that represent statements/branch.
+     * are prefixed with this string.
+     * @const{string}
+     */
+
+
+    _createClass(Blocks, [{
+        key: 'getBlock',
+
+
+        /**
+         * Provide an object with metadata for the requested block ID.
+         * @param {!string} blockId ID of block we have stored.
+         * @return {?object} Metadata about the block, if it exists.
+         */
+        value: function getBlock(blockId) {
+            return this._blocks[blockId];
+        }
+
+        /**
+         * Get all known top-level blocks that start scripts.
+         * @return {Array.<string>} List of block IDs.
+         */
+
+    }, {
+        key: 'getScripts',
+        value: function getScripts() {
+            return this._scripts;
+        }
+
+        /**
+         * Get the next block for a particular block
+         * @param {?string} id ID of block to get the next block for
+         * @return {?string} ID of next block in the sequence
+         */
+
+    }, {
+        key: 'getNextBlock',
+        value: function getNextBlock(id) {
+            var block = this._blocks[id];
+            return typeof block === 'undefined' ? null : block.next;
+        }
+
+        /**
+         * Get the branch for a particular C-shaped block.
+         * @param {?string} id ID for block to get the branch for.
+         * @param {?number} branchNum Which branch to select (e.g. for if-else).
+         * @return {?string} ID of block in the branch.
+         */
+
+    }, {
+        key: 'getBranch',
+        value: function getBranch(id, branchNum) {
+            var block = this._blocks[id];
+            if (typeof block === 'undefined') return null;
+            if (!branchNum) branchNum = 1;
+
+            var inputName = Blocks.BRANCH_INPUT_PREFIX;
+            if (branchNum > 1) {
+                inputName += branchNum;
+            }
+
+            // Empty C-block?
+            var input = block.inputs[inputName];
+            return typeof input === 'undefined' ? null : input.block;
+        }
+
+        /**
+         * Get the opcode for a particular block
+         * @param {?object} block The block to query
+         * @return {?string} the opcode corresponding to that block
+         */
+
+    }, {
+        key: 'getOpcode',
+        value: function getOpcode(block) {
+            return typeof block === 'undefined' ? null : block.opcode;
+        }
+
+        /**
+         * Get all fields and their values for a block.
+         * @param {?object} block The block to query.
+         * @return {?object} All fields and their values.
+         */
+
+    }, {
+        key: 'getFields',
+        value: function getFields(block) {
+            return typeof block === 'undefined' ? null : block.fields;
+        }
+
+        /**
+         * Get all non-branch inputs for a block.
+         * @param {?object} block the block to query.
+         * @return {!object} All non-branch inputs and their associated blocks.
+         */
+
+    }, {
+        key: 'getInputs',
+        value: function getInputs(block) {
+            if (typeof block === 'undefined') return null;
+            var inputs = {};
+            for (var input in block.inputs) {
+                // Ignore blocks prefixed with branch prefix.
+                if (input.substring(0, Blocks.BRANCH_INPUT_PREFIX.length) !== Blocks.BRANCH_INPUT_PREFIX) {
+                    inputs[input] = block.inputs[input];
+                }
+            }
+            return inputs;
+        }
+
+        /**
+         * Get mutation data for a block.
+         * @param {?object} block The block to query.
+         * @return {?object} Mutation for the block.
+         */
+
+    }, {
+        key: 'getMutation',
+        value: function getMutation(block) {
+            return typeof block === 'undefined' ? null : block.mutation;
+        }
+
+        /**
+         * Get the top-level script for a given block.
+         * @param {?string} id ID of block to query.
+         * @return {?string} ID of top-level script block.
+         */
+
+    }, {
+        key: 'getTopLevelScript',
+        value: function getTopLevelScript(id) {
+            var block = this._blocks[id];
+            if (typeof block === 'undefined') return null;
+            while (block.parent !== null) {
+                block = this._blocks[block.parent];
+            }
+            return block.id;
+        }
+
+        /**
+         * Get the procedure definition for a given name.
+         * @param {?string} name Name of procedure to query.
+         * @return {?string} ID of procedure definition.
+         */
+
+    }, {
+        key: 'getProcedureDefinition',
+        value: function getProcedureDefinition(name) {
+            for (var id in this._blocks) {
+                if (!this._blocks.hasOwnProperty(id)) continue;
+                var block = this._blocks[id];
+                if ((block.opcode === 'procedures_defnoreturn' || block.opcode === 'procedures_defreturn') && block.mutation.proccode === name) {
+                    return id;
+                }
+            }
+            return null;
+        }
+
+        /**
+         * Get the procedure definition for a given name.
+         * @param {?string} name Name of procedure to query.
+         * @return {?string} ID of procedure definition.
+         */
+
+    }, {
+        key: 'getProcedureParamNames',
+        value: function getProcedureParamNames(name) {
+            for (var id in this._blocks) {
+                if (!this._blocks.hasOwnProperty(id)) continue;
+                var block = this._blocks[id];
+                if ((block.opcode === 'procedures_defnoreturn' || block.opcode === 'procedures_defreturn') && block.mutation.proccode === name) {
+                    return JSON.parse(block.mutation.argumentnames);
+                }
+            }
+            return null;
+        }
+
+        // ---------------------------------------------------------------------
+
+        /**
+         * Create event listener for blocks. Handles validation and serves as a generic
+         * adapter between the blocks and the runtime interface.
+         * @param {Object} e Blockly "block" event
+         * @param {?Runtime} optRuntime Optional runtime to forward click events to.
+         */
+
+    }, {
+        key: 'blocklyListen',
+        value: function blocklyListen(e, optRuntime) {
+            // Validate event
+            if ((typeof e === 'undefined' ? 'undefined' : _typeof(e)) !== 'object') return;
+            if (typeof e.blockId !== 'string') return;
+
+            // UI event: clicked scripts toggle in the runtime.
+            if (e.element === 'stackclick') {
+                if (optRuntime) {
+                    optRuntime.toggleScript(e.blockId, { showVisualReport: true });
+                }
+                return;
+            }
+
+            // Block create/update/destroy
+            switch (e.type) {
+                case 'create':
+                    {
+                        var newBlocks = adapter(e);
+                        // A create event can create many blocks. Add them all.
+                        for (var i = 0; i < newBlocks.length; i++) {
+                            this.createBlock(newBlocks[i]);
+                        }
+                        break;
+                    }
+                case 'change':
+                    this.changeBlock({
+                        id: e.blockId,
+                        element: e.element,
+                        name: e.name,
+                        value: e.newValue
+                    });
+                    break;
+                case 'move':
+                    this.moveBlock({
+                        id: e.blockId,
+                        oldParent: e.oldParentId,
+                        oldInput: e.oldInputName,
+                        newParent: e.newParentId,
+                        newInput: e.newInputName,
+                        newCoordinate: e.newCoordinate
+                    });
+                    break;
+                case 'delete':
+                    // Don't accept delete events for missing blocks,
+                    // or shadow blocks being obscured.
+                    if (!this._blocks.hasOwnProperty(e.blockId) || this._blocks[e.blockId].shadow) {
+                        return;
+                    }
+                    // Inform any runtime to forget about glows on this script.
+                    if (optRuntime && this._blocks[e.blockId].topLevel) {
+                        optRuntime.quietGlow(e.blockId);
+                    }
+                    this.deleteBlock({
+                        id: e.blockId
+                    });
+                    break;
+            }
+        }
+
+        // ---------------------------------------------------------------------
+
+        /**
+         * Block management: create blocks and scripts from a `create` event
+         * @param {!object} block Blockly create event to be processed
+         */
+
+    }, {
+        key: 'createBlock',
+        value: function createBlock(block) {
+            // Does the block already exist?
+            // Could happen, e.g., for an unobscured shadow.
+            if (this._blocks.hasOwnProperty(block.id)) {
+                return;
+            }
+            // Create new block.
+            this._blocks[block.id] = block;
+            // Push block id to scripts array.
+            // Blocks are added as a top-level stack if they are marked as a top-block
+            // (if they were top-level XML in the event).
+            if (block.topLevel) {
+                this._addScript(block.id);
+            }
+        }
+
+        /**
+         * Block management: change block field values
+         * @param {!object} args Blockly change event to be processed
+         */
+
+    }, {
+        key: 'changeBlock',
+        value: function changeBlock(args) {
+            // Validate
+            if (['field', 'mutation', 'checkbox'].indexOf(args.element) === -1) return;
+            var block = this._blocks[args.id];
+            if (typeof block === 'undefined') return;
+
+            switch (args.element) {
+                case 'field':
+                    // Update block value
+                    if (!block.fields[args.name]) return;
+                    block.fields[args.name].value = args.value;
+                    break;
+                case 'mutation':
+                    block.mutation = mutationAdapter(args.value);
+                    break;
+                case 'checkbox':
+                    block.isMonitored = args.value;
+                    break;
+            }
+        }
+
+        /**
+         * Block management: move blocks from parent to parent
+         * @param {!object} e Blockly move event to be processed
+         */
+
+    }, {
+        key: 'moveBlock',
+        value: function moveBlock(e) {
+            if (!this._blocks.hasOwnProperty(e.id)) {
+                return;
+            }
+
+            // Move coordinate changes.
+            if (e.newCoordinate) {
+                this._blocks[e.id].x = e.newCoordinate.x;
+                this._blocks[e.id].y = e.newCoordinate.y;
+            }
+
+            // Remove from any old parent.
+            if (typeof e.oldParent !== 'undefined') {
+                var oldParent = this._blocks[e.oldParent];
+                if (typeof e.oldInput !== 'undefined' && oldParent.inputs[e.oldInput].block === e.id) {
+                    // This block was connected to the old parent's input.
+                    oldParent.inputs[e.oldInput].block = null;
+                } else if (oldParent.next === e.id) {
+                    // This block was connected to the old parent's next connection.
+                    oldParent.next = null;
+                }
+                this._blocks[e.id].parent = null;
+            }
+
+            // Has the block become a top-level block?
+            if (typeof e.newParent === 'undefined') {
+                this._addScript(e.id);
+            } else {
+                // Remove script, if one exists.
+                this._deleteScript(e.id);
+                // Otherwise, try to connect it in its new place.
+                if (typeof e.newInput === 'undefined') {
+                    // Moved to the new parent's next connection.
+                    this._blocks[e.newParent].next = e.id;
+                } else {
+                    // Moved to the new parent's input.
+                    // Don't obscure the shadow block.
+                    var oldShadow = null;
+                    if (this._blocks[e.newParent].inputs.hasOwnProperty(e.newInput)) {
+                        oldShadow = this._blocks[e.newParent].inputs[e.newInput].shadow;
+                    }
+                    this._blocks[e.newParent].inputs[e.newInput] = {
+                        name: e.newInput,
+                        block: e.id,
+                        shadow: oldShadow
+                    };
+                }
+                this._blocks[e.id].parent = e.newParent;
+            }
+        }
+
+        /**
+         * Block management: run all blocks.
+         * @param {!object} runtime Runtime to run all blocks in.
+         */
+
+    }, {
+        key: 'runAllMonitored',
+        value: function runAllMonitored(runtime) {
+            var _this = this;
+
+            Object.keys(this._blocks).forEach(function (blockId) {
+                if (_this.getBlock(blockId).isMonitored) {
+                    // @todo handle specific targets (e.g. apple x position)
+                    runtime.toggleScript(blockId);
+                }
+            });
+        }
+
+        /**
+         * Block management: delete blocks and their associated scripts.
+         * @param {!object} e Blockly delete event to be processed.
+         */
+
+    }, {
+        key: 'deleteBlock',
+        value: function deleteBlock(e) {
+            // @todo In runtime, stop threads running on this script.
+
+            // Get block
+            var block = this._blocks[e.id];
+
+            // Delete children
+            if (block.next !== null) {
+                this.deleteBlock({ id: block.next });
+            }
+
+            // Delete inputs (including branches)
+            for (var input in block.inputs) {
+                // If it's null, the block in this input moved away.
+                if (block.inputs[input].block !== null) {
+                    this.deleteBlock({ id: block.inputs[input].block });
+                }
+                // Delete obscured shadow blocks.
+                if (block.inputs[input].shadow !== null && block.inputs[input].shadow !== block.inputs[input].block) {
+                    this.deleteBlock({ id: block.inputs[input].shadow });
+                }
+            }
+
+            // Delete any script starting with this block.
+            this._deleteScript(e.id);
+
+            // Delete block itself.
+            delete this._blocks[e.id];
+        }
+
+        // ---------------------------------------------------------------------
+
+        /**
+         * Encode all of `this._blocks` as an XML string usable
+         * by a Blockly/scratch-blocks workspace.
+         * @return {string} String of XML representing this object's blocks.
+         */
+
+    }, {
+        key: 'toXML',
+        value: function toXML() {
+            var xmlString = '<xml xmlns="http://www.w3.org/1999/xhtml">';
+            for (var i = 0; i < this._scripts.length; i++) {
+                xmlString += this.blockToXML(this._scripts[i]);
+            }
+            return xmlString + '</xml>';
+        }
+
+        /**
+         * Recursively encode an individual block and its children
+         * into a Blockly/scratch-blocks XML string.
+         * @param {!string} blockId ID of block to encode.
+         * @return {string} String of XML representing this block and any children.
+         */
+
+    }, {
+        key: 'blockToXML',
+        value: function blockToXML(blockId) {
+            var block = this._blocks[blockId];
+            // Encode properties of this block.
+            var tagName = block.shadow ? 'shadow' : 'block';
+            var xmlString = '<' + tagName + '\n                id="' + block.id + '"\n                type="' + block.opcode + '"\n                ' + (block.topLevel ? 'x="' + block.x + '" y="' + block.y + '"' : '') + '\n            >';
+            // Add any mutation. Must come before inputs.
+            if (block.mutation) {
+                xmlString += this.mutationToXML(block.mutation);
+            }
+            // Add any inputs on this block.
+            for (var input in block.inputs) {
+                if (!block.inputs.hasOwnProperty(input)) continue;
+                var blockInput = block.inputs[input];
+                // Only encode a value tag if the value input is occupied.
+                if (blockInput.block || blockInput.shadow) {
+                    xmlString += '<value name="' + blockInput.name + '">';
+                    if (blockInput.block) {
+                        xmlString += this.blockToXML(blockInput.block);
+                    }
+                    if (blockInput.shadow && blockInput.shadow !== blockInput.block) {
+                        // Obscured shadow.
+                        xmlString += this.blockToXML(blockInput.shadow);
+                    }
+                    xmlString += '</value>';
+                }
+            }
+            // Add any fields on this block.
+            for (var field in block.fields) {
+                if (!block.fields.hasOwnProperty(field)) continue;
+                var blockField = block.fields[field];
+                var value = blockField.value;
+                if (typeof value === 'string') {
+                    value = xmlEscape(blockField.value);
+                }
+                xmlString += '<field name="' + blockField.name + '">' + value + '</field>';
+            }
+            // Add blocks connected to the next connection.
+            if (block.next) {
+                xmlString += '<next>' + this.blockToXML(block.next) + '</next>';
+            }
+            xmlString += '</' + tagName + '>';
+            return xmlString;
+        }
+
+        /**
+         * Recursively encode a mutation object to XML.
+         * @param {!object} mutation Object representing a mutation.
+         * @return {string} XML string representing a mutation.
+         */
+
+    }, {
+        key: 'mutationToXML',
+        value: function mutationToXML(mutation) {
+            var mutationString = '<' + mutation.tagName;
+            for (var prop in mutation) {
+                if (prop === 'children' || prop === 'tagName') continue;
+                var mutationValue = typeof mutation[prop] === 'string' ? xmlEscape(mutation[prop]) : mutation[prop];
+                mutationString += ' ' + prop + '="' + mutationValue + '"';
+            }
+            mutationString += '>';
+            for (var i = 0; i < mutation.children.length; i++) {
+                mutationString += this.mutationToXML(mutation.children[i]);
+            }
+            mutationString += '</' + mutation.tagName + '>';
+            return mutationString;
+        }
+
+        // ---------------------------------------------------------------------
+
+        /**
+         * Helper to add a stack to `this._scripts`.
+         * @param {?string} topBlockId ID of block that starts the script.
+         */
+
+    }, {
+        key: '_addScript',
+        value: function _addScript(topBlockId) {
+            var i = this._scripts.indexOf(topBlockId);
+            if (i > -1) return; // Already in scripts.
+            this._scripts.push(topBlockId);
+            // Update `topLevel` property on the top block.
+            this._blocks[topBlockId].topLevel = true;
+        }
+
+        /**
+         * Helper to remove a script from `this._scripts`.
+         * @param {?string} topBlockId ID of block that starts the script.
+         */
+
+    }, {
+        key: '_deleteScript',
+        value: function _deleteScript(topBlockId) {
+            var i = this._scripts.indexOf(topBlockId);
+            if (i > -1) this._scripts.splice(i, 1);
+            // Update `topLevel` property on the top block.
+            if (this._blocks[topBlockId]) this._blocks[topBlockId].topLevel = false;
+        }
+    }], [{
+        key: 'BRANCH_INPUT_PREFIX',
+        get: function get() {
+            return 'SUBSTACK';
+        }
+    }]);
+
+    return Blocks;
+}();
+
+module.exports = Blocks;
+
+/***/ }),
+/* 28 */,
+/* 29 */
 /***/ (function(module, exports) {
 
 //Types of elements found in the DOM
@@ -4239,7 +4832,7 @@ module.exports = {
 
 
 /***/ }),
-/* 29 */
+/* 30 */
 /***/ (function(module, exports) {
 
 var toString = {}.toString;
@@ -4250,8 +4843,8 @@ module.exports = Array.isArray || function (arr) {
 
 
 /***/ }),
-/* 30 */,
-/* 31 */
+/* 31 */,
+/* 32 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -4264,7 +4857,7 @@ var processNextTick = __webpack_require__(16);
 /*</replacement>*/
 
 /*<replacement>*/
-var isArray = __webpack_require__(29);
+var isArray = __webpack_require__(30);
 /*</replacement>*/
 
 /*<replacement>*/
@@ -4282,7 +4875,7 @@ var EElistenerCount = function (emitter, type) {
 /*</replacement>*/
 
 /*<replacement>*/
-var Stream = __webpack_require__(33);
+var Stream = __webpack_require__(34);
 /*</replacement>*/
 
 var Buffer = __webpack_require__(0).Buffer;
@@ -4296,7 +4889,7 @@ util.inherits = __webpack_require__(1);
 /*</replacement>*/
 
 /*<replacement>*/
-var debugUtil = __webpack_require__(64);
+var debugUtil = __webpack_require__(68);
 var debug = void 0;
 if (debugUtil && debugUtil.debuglog) {
   debug = debugUtil.debuglog('stream');
@@ -4305,7 +4898,7 @@ if (debugUtil && debugUtil.debuglog) {
 }
 /*</replacement>*/
 
-var BufferList = __webpack_require__(58);
+var BufferList = __webpack_require__(62);
 var StringDecoder;
 
 util.inherits(Readable, Stream);
@@ -5193,7 +5786,7 @@ function indexOf(xs, x) {
 /* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(4)))
 
 /***/ }),
-/* 32 */
+/* 33 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -5381,604 +5974,11 @@ function done(stream, er, data) {
 }
 
 /***/ }),
-/* 33 */
+/* 34 */
 /***/ (function(module, exports, __webpack_require__) {
 
 module.exports = __webpack_require__(7).EventEmitter;
 
-
-/***/ }),
-/* 34 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-
-var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
-
-var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
-
-function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
-
-var adapter = __webpack_require__(140);
-var mutationAdapter = __webpack_require__(70);
-var xmlEscape = __webpack_require__(152);
-
-/**
- * @fileoverview
- * Store and mutate the VM block representation,
- * and handle updates from Scratch Blocks events.
- */
-
-var Blocks = function () {
-    function Blocks() {
-        _classCallCheck(this, Blocks);
-
-        /**
-         * All blocks in the workspace.
-         * Keys are block IDs, values are metadata about the block.
-         * @type {Object.<string, Object>}
-         */
-        this._blocks = {};
-
-        /**
-         * All top-level scripts in the workspace.
-         * A list of block IDs that represent scripts (i.e., first block in script).
-         * @type {Array.<String>}
-         */
-        this._scripts = [];
-    }
-
-    /**
-     * Blockly inputs that represent statements/branch.
-     * are prefixed with this string.
-     * @const{string}
-     */
-
-
-    _createClass(Blocks, [{
-        key: 'getBlock',
-
-
-        /**
-         * Provide an object with metadata for the requested block ID.
-         * @param {!string} blockId ID of block we have stored.
-         * @return {?object} Metadata about the block, if it exists.
-         */
-        value: function getBlock(blockId) {
-            return this._blocks[blockId];
-        }
-
-        /**
-         * Get all known top-level blocks that start scripts.
-         * @return {Array.<string>} List of block IDs.
-         */
-
-    }, {
-        key: 'getScripts',
-        value: function getScripts() {
-            return this._scripts;
-        }
-
-        /**
-         * Get the next block for a particular block
-         * @param {?string} id ID of block to get the next block for
-         * @return {?string} ID of next block in the sequence
-         */
-
-    }, {
-        key: 'getNextBlock',
-        value: function getNextBlock(id) {
-            var block = this._blocks[id];
-            return typeof block === 'undefined' ? null : block.next;
-        }
-
-        /**
-         * Get the branch for a particular C-shaped block.
-         * @param {?string} id ID for block to get the branch for.
-         * @param {?number} branchNum Which branch to select (e.g. for if-else).
-         * @return {?string} ID of block in the branch.
-         */
-
-    }, {
-        key: 'getBranch',
-        value: function getBranch(id, branchNum) {
-            var block = this._blocks[id];
-            if (typeof block === 'undefined') return null;
-            if (!branchNum) branchNum = 1;
-
-            var inputName = Blocks.BRANCH_INPUT_PREFIX;
-            if (branchNum > 1) {
-                inputName += branchNum;
-            }
-
-            // Empty C-block?
-            var input = block.inputs[inputName];
-            return typeof input === 'undefined' ? null : input.block;
-        }
-
-        /**
-         * Get the opcode for a particular block
-         * @param {?object} block The block to query
-         * @return {?string} the opcode corresponding to that block
-         */
-
-    }, {
-        key: 'getOpcode',
-        value: function getOpcode(block) {
-            return typeof block === 'undefined' ? null : block.opcode;
-        }
-
-        /**
-         * Get all fields and their values for a block.
-         * @param {?object} block The block to query.
-         * @return {?object} All fields and their values.
-         */
-
-    }, {
-        key: 'getFields',
-        value: function getFields(block) {
-            return typeof block === 'undefined' ? null : block.fields;
-        }
-
-        /**
-         * Get all non-branch inputs for a block.
-         * @param {?object} block the block to query.
-         * @return {!object} All non-branch inputs and their associated blocks.
-         */
-
-    }, {
-        key: 'getInputs',
-        value: function getInputs(block) {
-            if (typeof block === 'undefined') return null;
-            var inputs = {};
-            for (var input in block.inputs) {
-                // Ignore blocks prefixed with branch prefix.
-                if (input.substring(0, Blocks.BRANCH_INPUT_PREFIX.length) !== Blocks.BRANCH_INPUT_PREFIX) {
-                    inputs[input] = block.inputs[input];
-                }
-            }
-            return inputs;
-        }
-
-        /**
-         * Get mutation data for a block.
-         * @param {?object} block The block to query.
-         * @return {?object} Mutation for the block.
-         */
-
-    }, {
-        key: 'getMutation',
-        value: function getMutation(block) {
-            return typeof block === 'undefined' ? null : block.mutation;
-        }
-
-        /**
-         * Get the top-level script for a given block.
-         * @param {?string} id ID of block to query.
-         * @return {?string} ID of top-level script block.
-         */
-
-    }, {
-        key: 'getTopLevelScript',
-        value: function getTopLevelScript(id) {
-            var block = this._blocks[id];
-            if (typeof block === 'undefined') return null;
-            while (block.parent !== null) {
-                block = this._blocks[block.parent];
-            }
-            return block.id;
-        }
-
-        /**
-         * Get the procedure definition for a given name.
-         * @param {?string} name Name of procedure to query.
-         * @return {?string} ID of procedure definition.
-         */
-
-    }, {
-        key: 'getProcedureDefinition',
-        value: function getProcedureDefinition(name) {
-            for (var id in this._blocks) {
-                if (!this._blocks.hasOwnProperty(id)) continue;
-                var block = this._blocks[id];
-                if ((block.opcode === 'procedures_defnoreturn' || block.opcode === 'procedures_defreturn') && block.mutation.proccode === name) {
-                    return id;
-                }
-            }
-            return null;
-        }
-
-        /**
-         * Get the procedure definition for a given name.
-         * @param {?string} name Name of procedure to query.
-         * @return {?string} ID of procedure definition.
-         */
-
-    }, {
-        key: 'getProcedureParamNames',
-        value: function getProcedureParamNames(name) {
-            for (var id in this._blocks) {
-                if (!this._blocks.hasOwnProperty(id)) continue;
-                var block = this._blocks[id];
-                if ((block.opcode === 'procedures_defnoreturn' || block.opcode === 'procedures_defreturn') && block.mutation.proccode === name) {
-                    return JSON.parse(block.mutation.argumentnames);
-                }
-            }
-            return null;
-        }
-
-        // ---------------------------------------------------------------------
-
-        /**
-         * Create event listener for blocks. Handles validation and serves as a generic
-         * adapter between the blocks and the runtime interface.
-         * @param {Object} e Blockly "block" event
-         * @param {?Runtime} optRuntime Optional runtime to forward click events to.
-         */
-
-    }, {
-        key: 'blocklyListen',
-        value: function blocklyListen(e, optRuntime) {
-            // Validate event
-            if ((typeof e === 'undefined' ? 'undefined' : _typeof(e)) !== 'object') return;
-            if (typeof e.blockId !== 'string') return;
-
-            // UI event: clicked scripts toggle in the runtime.
-            if (e.element === 'stackclick') {
-                if (optRuntime) {
-                    optRuntime.toggleScript(e.blockId, { showVisualReport: true });
-                }
-                return;
-            }
-
-            // Block create/update/destroy
-            switch (e.type) {
-                case 'create':
-                    {
-                        var newBlocks = adapter(e);
-                        // A create event can create many blocks. Add them all.
-                        for (var i = 0; i < newBlocks.length; i++) {
-                            this.createBlock(newBlocks[i]);
-                        }
-                        break;
-                    }
-                case 'change':
-                    this.changeBlock({
-                        id: e.blockId,
-                        element: e.element,
-                        name: e.name,
-                        value: e.newValue
-                    });
-                    break;
-                case 'move':
-                    this.moveBlock({
-                        id: e.blockId,
-                        oldParent: e.oldParentId,
-                        oldInput: e.oldInputName,
-                        newParent: e.newParentId,
-                        newInput: e.newInputName,
-                        newCoordinate: e.newCoordinate
-                    });
-                    break;
-                case 'delete':
-                    // Don't accept delete events for missing blocks,
-                    // or shadow blocks being obscured.
-                    if (!this._blocks.hasOwnProperty(e.blockId) || this._blocks[e.blockId].shadow) {
-                        return;
-                    }
-                    // Inform any runtime to forget about glows on this script.
-                    if (optRuntime && this._blocks[e.blockId].topLevel) {
-                        optRuntime.quietGlow(e.blockId);
-                    }
-                    this.deleteBlock({
-                        id: e.blockId
-                    });
-                    break;
-            }
-        }
-
-        // ---------------------------------------------------------------------
-
-        /**
-         * Block management: create blocks and scripts from a `create` event
-         * @param {!object} block Blockly create event to be processed
-         */
-
-    }, {
-        key: 'createBlock',
-        value: function createBlock(block) {
-            // Does the block already exist?
-            // Could happen, e.g., for an unobscured shadow.
-            if (this._blocks.hasOwnProperty(block.id)) {
-                return;
-            }
-            // Create new block.
-            this._blocks[block.id] = block;
-            // Push block id to scripts array.
-            // Blocks are added as a top-level stack if they are marked as a top-block
-            // (if they were top-level XML in the event).
-            if (block.topLevel) {
-                this._addScript(block.id);
-            }
-        }
-
-        /**
-         * Block management: change block field values
-         * @param {!object} args Blockly change event to be processed
-         */
-
-    }, {
-        key: 'changeBlock',
-        value: function changeBlock(args) {
-            // Validate
-            if (['field', 'mutation', 'checkbox'].indexOf(args.element) === -1) return;
-            var block = this._blocks[args.id];
-            if (typeof block === 'undefined') return;
-
-            switch (args.element) {
-                case 'field':
-                    // Update block value
-                    if (!block.fields[args.name]) return;
-                    block.fields[args.name].value = args.value;
-                    break;
-                case 'mutation':
-                    block.mutation = mutationAdapter(args.value);
-                    break;
-                case 'checkbox':
-                    block.isMonitored = args.value;
-                    break;
-            }
-        }
-
-        /**
-         * Block management: move blocks from parent to parent
-         * @param {!object} e Blockly move event to be processed
-         */
-
-    }, {
-        key: 'moveBlock',
-        value: function moveBlock(e) {
-            if (!this._blocks.hasOwnProperty(e.id)) {
-                return;
-            }
-
-            // Move coordinate changes.
-            if (e.newCoordinate) {
-                this._blocks[e.id].x = e.newCoordinate.x;
-                this._blocks[e.id].y = e.newCoordinate.y;
-            }
-
-            // Remove from any old parent.
-            if (typeof e.oldParent !== 'undefined') {
-                var oldParent = this._blocks[e.oldParent];
-                if (typeof e.oldInput !== 'undefined' && oldParent.inputs[e.oldInput].block === e.id) {
-                    // This block was connected to the old parent's input.
-                    oldParent.inputs[e.oldInput].block = null;
-                } else if (oldParent.next === e.id) {
-                    // This block was connected to the old parent's next connection.
-                    oldParent.next = null;
-                }
-                this._blocks[e.id].parent = null;
-            }
-
-            // Has the block become a top-level block?
-            if (typeof e.newParent === 'undefined') {
-                this._addScript(e.id);
-            } else {
-                // Remove script, if one exists.
-                this._deleteScript(e.id);
-                // Otherwise, try to connect it in its new place.
-                if (typeof e.newInput === 'undefined') {
-                    // Moved to the new parent's next connection.
-                    this._blocks[e.newParent].next = e.id;
-                } else {
-                    // Moved to the new parent's input.
-                    // Don't obscure the shadow block.
-                    var oldShadow = null;
-                    if (this._blocks[e.newParent].inputs.hasOwnProperty(e.newInput)) {
-                        oldShadow = this._blocks[e.newParent].inputs[e.newInput].shadow;
-                    }
-                    this._blocks[e.newParent].inputs[e.newInput] = {
-                        name: e.newInput,
-                        block: e.id,
-                        shadow: oldShadow
-                    };
-                }
-                this._blocks[e.id].parent = e.newParent;
-            }
-        }
-
-        /**
-         * Block management: run all blocks.
-         * @param {!object} runtime Runtime to run all blocks in.
-         */
-
-    }, {
-        key: 'runAllMonitored',
-        value: function runAllMonitored(runtime) {
-            var _this = this;
-
-            Object.keys(this._blocks).forEach(function (blockId) {
-                if (_this.getBlock(blockId).isMonitored) {
-                    // @todo handle specific targets (e.g. apple x position)
-                    runtime.toggleScript(blockId);
-                }
-            });
-        }
-
-        /**
-         * Block management: delete blocks and their associated scripts.
-         * @param {!object} e Blockly delete event to be processed.
-         */
-
-    }, {
-        key: 'deleteBlock',
-        value: function deleteBlock(e) {
-            // @todo In runtime, stop threads running on this script.
-
-            // Get block
-            var block = this._blocks[e.id];
-
-            // Delete children
-            if (block.next !== null) {
-                this.deleteBlock({ id: block.next });
-            }
-
-            // Delete inputs (including branches)
-            for (var input in block.inputs) {
-                // If it's null, the block in this input moved away.
-                if (block.inputs[input].block !== null) {
-                    this.deleteBlock({ id: block.inputs[input].block });
-                }
-                // Delete obscured shadow blocks.
-                if (block.inputs[input].shadow !== null && block.inputs[input].shadow !== block.inputs[input].block) {
-                    this.deleteBlock({ id: block.inputs[input].shadow });
-                }
-            }
-
-            // Delete any script starting with this block.
-            this._deleteScript(e.id);
-
-            // Delete block itself.
-            delete this._blocks[e.id];
-        }
-
-        // ---------------------------------------------------------------------
-
-        /**
-         * Encode all of `this._blocks` as an XML string usable
-         * by a Blockly/scratch-blocks workspace.
-         * @return {string} String of XML representing this object's blocks.
-         */
-
-    }, {
-        key: 'toXML',
-        value: function toXML() {
-            var xmlString = '<xml xmlns="http://www.w3.org/1999/xhtml">';
-            for (var i = 0; i < this._scripts.length; i++) {
-                xmlString += this.blockToXML(this._scripts[i]);
-            }
-            return xmlString + '</xml>';
-        }
-
-        /**
-         * Recursively encode an individual block and its children
-         * into a Blockly/scratch-blocks XML string.
-         * @param {!string} blockId ID of block to encode.
-         * @return {string} String of XML representing this block and any children.
-         */
-
-    }, {
-        key: 'blockToXML',
-        value: function blockToXML(blockId) {
-            var block = this._blocks[blockId];
-            // Encode properties of this block.
-            var tagName = block.shadow ? 'shadow' : 'block';
-            var xmlString = '<' + tagName + '\n                id="' + block.id + '"\n                type="' + block.opcode + '"\n                ' + (block.topLevel ? 'x="' + block.x + '" y="' + block.y + '"' : '') + '\n            >';
-            // Add any mutation. Must come before inputs.
-            if (block.mutation) {
-                xmlString += this.mutationToXML(block.mutation);
-            }
-            // Add any inputs on this block.
-            for (var input in block.inputs) {
-                if (!block.inputs.hasOwnProperty(input)) continue;
-                var blockInput = block.inputs[input];
-                // Only encode a value tag if the value input is occupied.
-                if (blockInput.block || blockInput.shadow) {
-                    xmlString += '<value name="' + blockInput.name + '">';
-                    if (blockInput.block) {
-                        xmlString += this.blockToXML(blockInput.block);
-                    }
-                    if (blockInput.shadow && blockInput.shadow !== blockInput.block) {
-                        // Obscured shadow.
-                        xmlString += this.blockToXML(blockInput.shadow);
-                    }
-                    xmlString += '</value>';
-                }
-            }
-            // Add any fields on this block.
-            for (var field in block.fields) {
-                if (!block.fields.hasOwnProperty(field)) continue;
-                var blockField = block.fields[field];
-                var value = blockField.value;
-                if (typeof value === 'string') {
-                    value = xmlEscape(blockField.value);
-                }
-                xmlString += '<field name="' + blockField.name + '">' + value + '</field>';
-            }
-            // Add blocks connected to the next connection.
-            if (block.next) {
-                xmlString += '<next>' + this.blockToXML(block.next) + '</next>';
-            }
-            xmlString += '</' + tagName + '>';
-            return xmlString;
-        }
-
-        /**
-         * Recursively encode a mutation object to XML.
-         * @param {!object} mutation Object representing a mutation.
-         * @return {string} XML string representing a mutation.
-         */
-
-    }, {
-        key: 'mutationToXML',
-        value: function mutationToXML(mutation) {
-            var mutationString = '<' + mutation.tagName;
-            for (var prop in mutation) {
-                if (prop === 'children' || prop === 'tagName') continue;
-                var mutationValue = typeof mutation[prop] === 'string' ? xmlEscape(mutation[prop]) : mutation[prop];
-                mutationString += ' ' + prop + '="' + mutationValue + '"';
-            }
-            mutationString += '>';
-            for (var i = 0; i < mutation.children.length; i++) {
-                mutationString += this.mutationToXML(mutation.children[i]);
-            }
-            mutationString += '</' + mutation.tagName + '>';
-            return mutationString;
-        }
-
-        // ---------------------------------------------------------------------
-
-        /**
-         * Helper to add a stack to `this._scripts`.
-         * @param {?string} topBlockId ID of block that starts the script.
-         */
-
-    }, {
-        key: '_addScript',
-        value: function _addScript(topBlockId) {
-            var i = this._scripts.indexOf(topBlockId);
-            if (i > -1) return; // Already in scripts.
-            this._scripts.push(topBlockId);
-            // Update `topLevel` property on the top block.
-            this._blocks[topBlockId].topLevel = true;
-        }
-
-        /**
-         * Helper to remove a script from `this._scripts`.
-         * @param {?string} topBlockId ID of block that starts the script.
-         */
-
-    }, {
-        key: '_deleteScript',
-        value: function _deleteScript(topBlockId) {
-            var i = this._scripts.indexOf(topBlockId);
-            if (i > -1) this._scripts.splice(i, 1);
-            // Update `topLevel` property on the top block.
-            if (this._blocks[topBlockId]) this._blocks[topBlockId].topLevel = false;
-        }
-    }], [{
-        key: 'BRANCH_INPUT_PREFIX',
-        get: function get() {
-            return 'SUBSTACK';
-        }
-    }]);
-
-    return Blocks;
-}();
-
-module.exports = Blocks;
 
 /***/ }),
 /* 35 */
@@ -6174,13 +6174,41 @@ exports._unrefActive = exports.active = function(item) {
 };
 
 // setimmediate attaches itself to the global object
-__webpack_require__(61);
+__webpack_require__(65);
 exports.setImmediate = setImmediate;
 exports.clearImmediate = clearImmediate;
 
 
 /***/ }),
 /* 45 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+/**
+ * @fileoverview
+ * Object representing a Scratch list.
+ */
+
+/**
+ * @param {!string} name Name of the list.
+ * @param {Array} contents Contents of the list, as an array.
+ * @constructor
+ */
+var List = function List(name, contents) {
+    _classCallCheck(this, List);
+
+    this.name = name;
+    this.contents = contents;
+};
+
+module.exports = List;
+
+/***/ }),
+/* 46 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -6527,7 +6555,162 @@ var Thread = function () {
 module.exports = Thread;
 
 /***/ }),
-/* 46 */
+/* 47 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+/**
+ * @fileoverview
+ * Object representing a Scratch variable.
+ */
+
+var Variable =
+/**
+ * @param {!string} name Name of the variable.
+ * @param {(string|number)} value Value of the variable.
+ * @param {boolean} isCloud Whether the variable is stored in the cloud.
+ * @constructor
+ */
+function Variable(name, value, isCloud) {
+  _classCallCheck(this, Variable);
+
+  this.name = name;
+  this.value = value;
+  this.isCloud = isCloud;
+};
+
+module.exports = Variable;
+
+/***/ }),
+/* 48 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+var log = __webpack_require__(18);
+
+/**
+ * Load a costume's asset into memory asynchronously.
+ * Do not call this unless there is a renderer attached.
+ * @param {string} md5ext - the MD5 and extension of the costume to be loaded.
+ * @param {!object} costume - the Scratch costume object.
+ * @property {int} skinId - the ID of the costume's render skin, once installed.
+ * @property {number} rotationCenterX - the X component of the costume's origin.
+ * @property {number} rotationCenterY - the Y component of the costume's origin.
+ * @property {number} [bitmapResolution] - the resolution scale for a bitmap costume.
+ * @param {!Runtime} runtime - Scratch runtime, used to access the storage module.
+ * @returns {?Promise} - a promise which will resolve after skinId is set, or null on error.
+ */
+var loadCostume = function loadCostume(md5ext, costume, runtime) {
+    if (!runtime.storage) {
+        log.error('No storage module present; cannot load costume asset: ', md5ext);
+        return Promise.resolve(costume);
+    }
+
+    var AssetType = runtime.storage.AssetType;
+    var idParts = md5ext.split('.');
+    var md5 = idParts[0];
+    var ext = idParts[1].toUpperCase();
+    var assetType = ext === 'SVG' ? AssetType.ImageVector : AssetType.ImageBitmap;
+
+    var rotationCenter = [costume.rotationCenterX / costume.bitmapResolution, costume.rotationCenterY / costume.bitmapResolution];
+
+    var promise = runtime.storage.load(assetType, md5).then(function (costumeAsset) {
+        costume.assetId = costumeAsset.assetId;
+        costume.assetType = assetType;
+        return costumeAsset;
+    });
+
+    if (!runtime.renderer) {
+        log.error('No rendering module present; cannot load costume asset: ', md5ext);
+        return promise.then(function () {
+            return costume;
+        });
+    }
+
+    if (assetType === AssetType.ImageVector) {
+        promise = promise.then(function (costumeAsset) {
+            costume.skinId = runtime.renderer.createSVGSkin(costumeAsset.decodeText(), rotationCenter);
+            return costume;
+        });
+    } else {
+        promise = promise.then(function (costumeAsset) {
+            return new Promise(function (resolve, reject) {
+                var imageElement = new Image();
+                var onError = function onError() {
+                    // eslint-disable-next-line no-use-before-define
+                    removeEventListeners();
+                    reject();
+                };
+                var onLoad = function onLoad() {
+                    // eslint-disable-next-line no-use-before-define
+                    removeEventListeners();
+                    resolve(imageElement);
+                };
+                var removeEventListeners = function removeEventListeners() {
+                    imageElement.removeEventListener('error', onError);
+                    imageElement.removeEventListener('load', onLoad);
+                };
+                imageElement.addEventListener('error', onError);
+                imageElement.addEventListener('load', onLoad);
+                imageElement.src = costumeAsset.encodeDataURI();
+            });
+        }).then(function (imageElement) {
+            costume.skinId = runtime.renderer.createBitmapSkin(imageElement, costume.bitmapResolution, rotationCenter);
+            return costume;
+        });
+    }
+    return promise;
+};
+
+module.exports = loadCostume;
+
+/***/ }),
+/* 49 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+var log = __webpack_require__(18);
+
+/**
+ * Load a sound's asset into memory asynchronously.
+ * @param {!object} sound - the Scratch sound object.
+ * @property {string} md5 - the MD5 and extension of the sound to be loaded.
+ * @property {Buffer} data - sound data will be written here once loaded.
+ * @param {!Runtime} runtime - Scratch runtime, used to access the storage module.
+ * @returns {!Promise} - a promise which will resolve to the sound when ready.
+ */
+var loadSound = function loadSound(sound, runtime) {
+    if (!runtime.storage) {
+        log.error('No storage module present; cannot load sound asset: ', sound.md5);
+        return Promise.resolve(sound);
+    }
+    if (!runtime.audioEngine) {
+        log.error('No audio engine present; cannot load sound asset: ', sound.md5);
+        return Promise.resolve(sound);
+    }
+    var idParts = sound.md5.split('.');
+    var md5 = idParts[0];
+    return runtime.storage.load(runtime.storage.AssetType.Sound, md5).then(function (soundAsset) {
+        sound.assetId = soundAsset.assetId;
+        sound.assetType = runtime.storage.AssetType.Sound;
+        return runtime.audioEngine.decodeSound(Object.assign({}, sound, { data: soundAsset.data }));
+    }).then(function () {
+        return sound;
+    });
+};
+
+module.exports = loadSound;
+
+/***/ }),
+/* 50 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -6543,7 +6726,7 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
 
 var log = __webpack_require__(18);
 var MathUtil = __webpack_require__(19);
-var Target = __webpack_require__(144);
+var Target = __webpack_require__(145);
 
 /**
  * Rendered target: instance of a sprite (clone), or the stage.
@@ -7368,12 +7551,13 @@ var RenderedTarget = function (_Target) {
 
         /**
          * Serialize sprite info, used when emitting events about the sprite
-         * @returns {object} sprite data as a simple object
+         * @returns {object} Sprite data as a simple object
          */
 
     }, {
         key: 'toJSON',
         value: function toJSON() {
+            var costumes = this.getCostumes();
             return {
                 id: this.id,
                 name: this.getName(),
@@ -7383,12 +7567,16 @@ var RenderedTarget = function (_Target) {
                 size: this.size,
                 direction: this.direction,
                 draggable: this.draggable,
-                costume: this.getCurrentCostume(),
-                costumes: this.getCostumes(),
-                sounds: this.getSounds(),
-                costumeCount: this.getCostumes().length,
+                currentCostume: this.currentCostume,
+                costume: costumes[this.currentCostume],
+                costumeCount: costumes.length,
                 visible: this.visible,
-                rotationStyle: this.rotationStyle
+                rotationStyle: this.rotationStyle,
+                blocks: this.blocks._blocks,
+                variables: this.variables,
+                lists: this.lists,
+                costumes: costumes,
+                sounds: this.getSounds()
             };
         }
 
@@ -7453,7 +7641,7 @@ var RenderedTarget = function (_Target) {
 module.exports = RenderedTarget;
 
 /***/ }),
-/* 47 */
+/* 51 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -7711,7 +7899,7 @@ var Color = function () {
 module.exports = Color;
 
 /***/ }),
-/* 48 */
+/* 52 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -7832,11 +8020,11 @@ function fromByteArray (uint8) {
 
 
 /***/ }),
-/* 49 */,
-/* 50 */,
-/* 51 */,
-/* 52 */,
-/* 53 */
+/* 53 */,
+/* 54 */,
+/* 55 */,
+/* 56 */,
+/* 57 */
 /***/ (function(module, exports) {
 
 module.exports = {
@@ -9968,7 +10156,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 54 */
+/* 58 */
 /***/ (function(module, exports) {
 
 module.exports = {
@@ -9980,7 +10168,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 55 */
+/* 59 */
 /***/ (function(module, exports) {
 
 exports.read = function (buffer, offset, isLE, mLen, nBytes) {
@@ -10070,14 +10258,14 @@ exports.write = function (buffer, value, offset, isLE, mLen, nBytes) {
 
 
 /***/ }),
-/* 56 */
+/* 60 */
 /***/ (function(module, exports, __webpack_require__) {
 
 module.exports = __webpack_require__(5);
 
 
 /***/ }),
-/* 57 */
+/* 61 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -10089,7 +10277,7 @@ module.exports = __webpack_require__(5);
 
 module.exports = PassThrough;
 
-var Transform = __webpack_require__(32);
+var Transform = __webpack_require__(33);
 
 /*<replacement>*/
 var util = __webpack_require__(8);
@@ -10109,7 +10297,7 @@ PassThrough.prototype._transform = function (chunk, encoding, cb) {
 };
 
 /***/ }),
-/* 58 */
+/* 62 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -10179,21 +10367,21 @@ BufferList.prototype.concat = function (n) {
 };
 
 /***/ }),
-/* 59 */
+/* 63 */
 /***/ (function(module, exports, __webpack_require__) {
 
 module.exports = __webpack_require__(10).PassThrough
 
 
 /***/ }),
-/* 60 */
+/* 64 */
 /***/ (function(module, exports, __webpack_require__) {
 
 module.exports = __webpack_require__(17);
 
 
 /***/ }),
-/* 61 */
+/* 65 */
 /***/ (function(module, exports, __webpack_require__) {
 
 /* WEBPACK VAR INJECTION */(function(global, process) {(function (global, undefined) {
@@ -10386,7 +10574,7 @@ module.exports = __webpack_require__(17);
 /* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(2), __webpack_require__(4)))
 
 /***/ }),
-/* 62 */
+/* 66 */
 /***/ (function(module, exports, __webpack_require__) {
 
 /* WEBPACK VAR INJECTION */(function(global) {
@@ -10460,46 +10648,18 @@ function config (name) {
 /* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(2)))
 
 /***/ }),
-/* 63 */,
-/* 64 */
+/* 67 */,
+/* 68 */
 /***/ (function(module, exports) {
 
 /* (ignored) */
 
 /***/ }),
-/* 65 */,
-/* 66 */,
-/* 67 */,
-/* 68 */,
-/* 69 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-
-function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
-
-/**
- * @fileoverview
- * Object representing a Scratch list.
- */
-
-/**
- * @param {!string} name Name of the list.
- * @param {Array} contents Contents of the list, as an array.
- * @constructor
- */
-var List = function List(name, contents) {
-    _classCallCheck(this, List);
-
-    this.name = name;
-    this.contents = contents;
-};
-
-module.exports = List;
-
-/***/ }),
-/* 70 */
+/* 69 */,
+/* 70 */,
+/* 71 */,
+/* 72 */,
+/* 73 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -10548,160 +10708,91 @@ var mutationAdpater = function mutationAdpater(mutation) {
 module.exports = mutationAdpater;
 
 /***/ }),
-/* 71 */
+/* 74 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
+
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
-/**
- * @fileoverview
- * Object representing a Scratch variable.
- */
+var RenderedTarget = __webpack_require__(50);
+var Blocks = __webpack_require__(27);
 
-var Variable =
-/**
- * @param {!string} name Name of the variable.
- * @param {(string|number)} value Value of the variable.
- * @param {boolean} isCloud Whether the variable is stored in the cloud.
- * @constructor
- */
-function Variable(name, value, isCloud) {
-  _classCallCheck(this, Variable);
+var Sprite = function () {
+  /**
+   * Sprite to be used on the Scratch stage.
+   * All clones of a sprite have shared blocks, shared costumes, shared variables.
+   * @param {?Blocks} blocks Shared blocks object for all clones of sprite.
+   * @param {Runtime} runtime Reference to the runtime.
+   * @constructor
+   */
+  function Sprite(blocks, runtime) {
+    _classCallCheck(this, Sprite);
 
-  this.name = name;
-  this.value = value;
-  this.isCloud = isCloud;
-};
+    this.runtime = runtime;
+    if (!blocks) {
+      // Shared set of blocks for all clones.
+      blocks = new Blocks();
+    }
+    this.blocks = blocks;
+    /**
+     * Human-readable name for this sprite (and all clones).
+     * @type {string}
+     */
+    this.name = '';
+    /**
+     * List of costumes for this sprite.
+     * Each entry is an object, e.g.,
+     * {
+     *      skinId: 1,
+     *      name: "Costume Name",
+     *      bitmapResolution: 2,
+     *      rotationCenterX: 0,
+     *      rotationCenterY: 0
+     * }
+     * @type {Array.<!Object>}
+     */
+    this.costumes = [];
+    /**
+     * List of sounds for this sprite.
+    */
+    this.sounds = [];
+    /**
+     * List of clones for this sprite, including the original.
+     * @type {Array.<!RenderedTarget>}
+     */
+    this.clones = [];
+  }
 
-module.exports = Variable;
+  /**
+   * Create a clone of this sprite.
+   * @returns {!RenderedTarget} Newly created clone.
+   */
+
+
+  _createClass(Sprite, [{
+    key: 'createClone',
+    value: function createClone() {
+      var newClone = new RenderedTarget(this, this.runtime);
+      newClone.isOriginal = this.clones.length === 0;
+      this.clones.push(newClone);
+      if (newClone.isOriginal) {
+        newClone.initDrawable();
+      }
+      return newClone;
+    }
+  }]);
+
+  return Sprite;
+}();
+
+module.exports = Sprite;
 
 /***/ }),
-/* 72 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-
-var log = __webpack_require__(18);
-
-/**
- * Load a costume's asset into memory asynchronously.
- * Do not call this unless there is a renderer attached.
- * @param {string} md5ext - the MD5 and extension of the costume to be loaded.
- * @param {!object} costume - the Scratch costume object.
- * @property {int} skinId - the ID of the costume's render skin, once installed.
- * @property {number} rotationCenterX - the X component of the costume's origin.
- * @property {number} rotationCenterY - the Y component of the costume's origin.
- * @property {number} [bitmapResolution] - the resolution scale for a bitmap costume.
- * @param {!Runtime} runtime - Scratch runtime, used to access the storage module.
- * @returns {?Promise} - a promise which will resolve after skinId is set, or null on error.
- */
-var loadCostume = function loadCostume(md5ext, costume, runtime) {
-    if (!runtime.storage) {
-        log.error('No storage module present; cannot load costume asset: ', md5ext);
-        return Promise.resolve(costume);
-    }
-
-    var AssetType = runtime.storage.AssetType;
-    var idParts = md5ext.split('.');
-    var md5 = idParts[0];
-    var ext = idParts[1].toUpperCase();
-    var assetType = ext === 'SVG' ? AssetType.ImageVector : AssetType.ImageBitmap;
-
-    var rotationCenter = [costume.rotationCenterX / costume.bitmapResolution, costume.rotationCenterY / costume.bitmapResolution];
-
-    var promise = runtime.storage.load(assetType, md5).then(function (costumeAsset) {
-        costume.url = costumeAsset.encodeDataURI();
-        return costumeAsset;
-    });
-
-    if (!runtime.renderer) {
-        log.error('No rendering module present; cannot load costume asset: ', md5ext);
-        return promise.then(function () {
-            return costume;
-        });
-    }
-
-    if (assetType === AssetType.ImageVector) {
-        promise = promise.then(function (costumeAsset) {
-            costume.skinId = runtime.renderer.createSVGSkin(costumeAsset.decodeText(), rotationCenter);
-            return costume;
-        });
-    } else {
-        promise = promise.then(function (costumeAsset) {
-            return new Promise(function (resolve, reject) {
-                var imageElement = new Image();
-                var onError = function onError() {
-                    // eslint-disable-next-line no-use-before-define
-                    removeEventListeners();
-                    reject();
-                };
-                var onLoad = function onLoad() {
-                    // eslint-disable-next-line no-use-before-define
-                    removeEventListeners();
-                    resolve(imageElement);
-                };
-                var removeEventListeners = function removeEventListeners() {
-                    imageElement.removeEventListener('error', onError);
-                    imageElement.removeEventListener('load', onLoad);
-                };
-                imageElement.addEventListener('error', onError);
-                imageElement.addEventListener('load', onLoad);
-                imageElement.src = costumeAsset.encodeDataURI();
-            });
-        }).then(function (imageElement) {
-            costume.skinId = runtime.renderer.createBitmapSkin(imageElement, costume.bitmapResolution, rotationCenter);
-            return costume;
-        });
-    }
-    return promise;
-};
-
-module.exports = loadCostume;
-
-/***/ }),
-/* 73 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-
-var log = __webpack_require__(18);
-
-/**
- * Load a sound's asset into memory asynchronously.
- * @param {!object} sound - the Scratch sound object.
- * @property {string} md5 - the MD5 and extension of the sound to be loaded.
- * @property {Buffer} data - sound data will be written here once loaded.
- * @param {!Runtime} runtime - Scratch runtime, used to access the storage module.
- * @returns {!Promise} - a promise which will resolve to the sound when ready.
- */
-var loadSound = function loadSound(sound, runtime) {
-    if (!runtime.storage) {
-        log.error('No storage module present; cannot load sound asset: ', sound.md5);
-        return Promise.resolve(sound);
-    }
-    if (!runtime.audioEngine) {
-        log.error('No audio engine present; cannot load sound asset: ', sound.md5);
-        return Promise.resolve(sound);
-    }
-    var idParts = sound.md5.split('.');
-    var md5 = idParts[0];
-    return runtime.storage.load(runtime.storage.AssetType.Sound, md5).then(function (soundAsset) {
-        sound.data = soundAsset.data;
-        return runtime.audioEngine.decodeSound(sound).then(function () {
-            return sound;
-        });
-    });
-};
-
-module.exports = loadSound;
-
-/***/ }),
-/* 74 */
+/* 75 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -10740,7 +10831,7 @@ var Clone = function () {
 module.exports = Clone;
 
 /***/ }),
-/* 75 */
+/* 76 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -10776,7 +10867,6 @@ var uid = function uid() {
 module.exports = uid;
 
 /***/ }),
-/* 76 */,
 /* 77 */,
 /* 78 */,
 /* 79 */,
@@ -10789,7 +10879,8 @@ module.exports = uid;
 /* 86 */,
 /* 87 */,
 /* 88 */,
-/* 89 */
+/* 89 */,
+/* 90 */
 /***/ (function(module, exports) {
 
 // This object will be used as the prototype for Nodes when creating a
@@ -10839,10 +10930,10 @@ Object.keys(domLvl1).forEach(function(key) {
 
 
 /***/ }),
-/* 90 */
+/* 91 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var decodeMap = __webpack_require__(206);
+var decodeMap = __webpack_require__(207);
 
 module.exports = decodeCodePoint;
 
@@ -10871,7 +10962,7 @@ function decodeCodePoint(codePoint){
 
 
 /***/ }),
-/* 91 */
+/* 92 */
 /***/ (function(module, exports) {
 
 module.exports = {
@@ -10984,10 +11075,10 @@ module.exports = {
 };
 
 /***/ }),
-/* 92 */
+/* 93 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var Tokenizer = __webpack_require__(93);
+var Tokenizer = __webpack_require__(94);
 
 /*
 	Options:
@@ -11343,15 +11434,15 @@ module.exports = Parser;
 
 
 /***/ }),
-/* 93 */
+/* 94 */
 /***/ (function(module, exports, __webpack_require__) {
 
 module.exports = Tokenizer;
 
-var decodeCodePoint = __webpack_require__(90),
-    entityMap = __webpack_require__(53),
-    legacyMap = __webpack_require__(91),
-    xmlMap    = __webpack_require__(54),
+var decodeCodePoint = __webpack_require__(91),
+    entityMap = __webpack_require__(57),
+    legacyMap = __webpack_require__(92),
+    xmlMap    = __webpack_require__(58),
 
     i = 0,
 
@@ -12255,13 +12346,13 @@ Tokenizer.prototype._emitPartial = function(value){
 
 
 /***/ }),
-/* 94 */
+/* 95 */
 /***/ (function(module, exports, __webpack_require__) {
 
 module.exports = Stream;
 
-var Parser = __webpack_require__(92),
-    WritableStream = __webpack_require__(24).Writable || __webpack_require__(268).Writable,
+var Parser = __webpack_require__(93),
+    WritableStream = __webpack_require__(24).Writable || __webpack_require__(270).Writable,
     StringDecoder = __webpack_require__(15).StringDecoder,
     Buffer = __webpack_require__(0).Buffer;
 
@@ -12285,8 +12376,8 @@ WritableStream.prototype._write = function(chunk, encoding, cb){
 };
 
 /***/ }),
-/* 95 */,
-/* 96 */
+/* 96 */,
+/* 97 */
 /***/ (function(module, exports) {
 
 var hex = {
@@ -12312,7 +12403,6 @@ module.exports = color;
 
 
 /***/ }),
-/* 97 */,
 /* 98 */,
 /* 99 */,
 /* 100 */,
@@ -12334,16 +12424,16 @@ module.exports = color;
 /* 116 */,
 /* 117 */,
 /* 118 */,
-/* 119 */
+/* 119 */,
+/* 120 */
 /***/ (function(module, exports, __webpack_require__) {
 
-const VirtualMachine = __webpack_require__(153);
+const VirtualMachine = __webpack_require__(154);
 
 module.exports = VirtualMachine;
 
 
 /***/ }),
-/* 120 */,
 /* 121 */,
 /* 122 */,
 /* 123 */,
@@ -12352,17 +12442,18 @@ module.exports = VirtualMachine;
 /* 126 */,
 /* 127 */,
 /* 128 */,
-/* 129 */
+/* 129 */,
+/* 130 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 /* WEBPACK VAR INJECTION */(function(global) {
 
-module.exports = global["VirtualMachine"] = __webpack_require__(119);
+module.exports = global["VirtualMachine"] = __webpack_require__(120);
 /* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(2)))
 
 /***/ }),
-/* 130 */
+/* 131 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -12534,7 +12625,7 @@ var Scratch3ControlBlocks = function () {
 module.exports = Scratch3ControlBlocks;
 
 /***/ }),
-/* 131 */
+/* 132 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -12702,7 +12793,7 @@ var Scratch3DataBlocks = function () {
 module.exports = Scratch3DataBlocks;
 
 /***/ }),
-/* 132 */
+/* 133 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -12816,7 +12907,7 @@ var Scratch3EventBlocks = function () {
 module.exports = Scratch3EventBlocks;
 
 /***/ }),
-/* 133 */
+/* 134 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -13071,7 +13162,7 @@ var Scratch3LooksBlocks = function () {
 module.exports = Scratch3LooksBlocks;
 
 /***/ }),
-/* 134 */
+/* 135 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -13342,7 +13433,7 @@ var Scratch3MotionBlocks = function () {
 module.exports = Scratch3MotionBlocks;
 
 /***/ }),
-/* 135 */
+/* 136 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -13540,7 +13631,7 @@ var Scratch3OperatorsBlocks = function () {
 module.exports = Scratch3OperatorsBlocks;
 
 /***/ }),
-/* 136 */
+/* 137 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -13551,10 +13642,10 @@ var _createClass = function () { function defineProperties(target, props) { for 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
 var Cast = __webpack_require__(9);
-var Clone = __webpack_require__(74);
-var Color = __webpack_require__(47);
+var Clone = __webpack_require__(75);
+var Color = __webpack_require__(51);
 var MathUtil = __webpack_require__(19);
-var RenderedTarget = __webpack_require__(46);
+var RenderedTarget = __webpack_require__(50);
 
 /**
  * @typedef {object} PenState - the pen state associated with a particular target.
@@ -13976,7 +14067,7 @@ var Scratch3PenBlocks = function () {
 module.exports = Scratch3PenBlocks;
 
 /***/ }),
-/* 137 */
+/* 138 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -14046,7 +14137,7 @@ var Scratch3ProcedureBlocks = function () {
 module.exports = Scratch3ProcedureBlocks;
 
 /***/ }),
-/* 138 */
+/* 139 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -14273,7 +14364,7 @@ var Scratch3SensingBlocks = function () {
 module.exports = Scratch3SensingBlocks;
 
 /***/ }),
-/* 139 */
+/* 140 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -14285,7 +14376,7 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
 
 var MathUtil = __webpack_require__(19);
 var Cast = __webpack_require__(9);
-var Clone = __webpack_require__(74);
+var Clone = __webpack_require__(75);
 
 var Scratch3SoundBlocks = function () {
     function Scratch3SoundBlocks(runtime) {
@@ -14658,7 +14749,7 @@ var Scratch3SoundBlocks = function () {
 module.exports = Scratch3SoundBlocks;
 
 /***/ }),
-/* 140 */
+/* 141 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -14666,7 +14757,7 @@ module.exports = Scratch3SoundBlocks;
 
 var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
 
-var mutationAdapter = __webpack_require__(70);
+var mutationAdapter = __webpack_require__(73);
 var html = __webpack_require__(22);
 
 /**
@@ -14827,14 +14918,14 @@ var adapter = function adapter(e) {
 module.exports = adapter;
 
 /***/ }),
-/* 141 */
+/* 142 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 
 var log = __webpack_require__(18);
-var Thread = __webpack_require__(45);
+var Thread = __webpack_require__(46);
 
 /**
  * Utility function to determine if a value is a Promise.
@@ -15095,7 +15186,7 @@ var execute = function execute(sequencer, thread) {
 module.exports = execute;
 
 /***/ }),
-/* 142 */
+/* 143 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -15110,26 +15201,26 @@ function _possibleConstructorReturn(self, call) { if (!self) { throw new Referen
 function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
 
 var EventEmitter = __webpack_require__(7);
-var Sequencer = __webpack_require__(143);
-var Blocks = __webpack_require__(34);
-var Thread = __webpack_require__(45);
+var Sequencer = __webpack_require__(144);
+var Blocks = __webpack_require__(27);
+var Thread = __webpack_require__(46);
 
 // Virtual I/O devices.
-var Clock = __webpack_require__(147);
-var Keyboard = __webpack_require__(148);
-var Mouse = __webpack_require__(149);
+var Clock = __webpack_require__(146);
+var Keyboard = __webpack_require__(147);
+var Mouse = __webpack_require__(148);
 
 var defaultBlockPackages = {
-    scratch3_control: __webpack_require__(130),
-    scratch3_event: __webpack_require__(132),
-    scratch3_looks: __webpack_require__(133),
-    scratch3_motion: __webpack_require__(134),
-    scratch3_operators: __webpack_require__(135),
-    scratch3_pen: __webpack_require__(136),
-    scratch3_sound: __webpack_require__(139),
-    scratch3_sensing: __webpack_require__(138),
-    scratch3_data: __webpack_require__(131),
-    scratch3_procedures: __webpack_require__(137)
+    scratch3_control: __webpack_require__(131),
+    scratch3_event: __webpack_require__(133),
+    scratch3_looks: __webpack_require__(134),
+    scratch3_motion: __webpack_require__(135),
+    scratch3_operators: __webpack_require__(136),
+    scratch3_pen: __webpack_require__(137),
+    scratch3_sound: __webpack_require__(140),
+    scratch3_sensing: __webpack_require__(139),
+    scratch3_data: __webpack_require__(132),
+    scratch3_procedures: __webpack_require__(138)
 };
 
 /**
@@ -16184,7 +16275,7 @@ var Runtime = function (_EventEmitter) {
 module.exports = Runtime;
 
 /***/ }),
-/* 143 */
+/* 144 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -16195,8 +16286,8 @@ var _createClass = function () { function defineProperties(target, props) { for 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
 var Timer = __webpack_require__(35);
-var Thread = __webpack_require__(45);
-var execute = __webpack_require__(141);
+var Thread = __webpack_require__(46);
+var execute = __webpack_require__(142);
 
 var Sequencer = function () {
     function Sequencer(runtime) {
@@ -16456,7 +16547,7 @@ var Sequencer = function () {
 module.exports = Sequencer;
 
 /***/ }),
-/* 144 */
+/* 145 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -16472,10 +16563,10 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
 
 var EventEmitter = __webpack_require__(7);
 
-var Blocks = __webpack_require__(34);
-var Variable = __webpack_require__(71);
-var List = __webpack_require__(69);
-var uid = __webpack_require__(75);
+var Blocks = __webpack_require__(27);
+var Variable = __webpack_require__(47);
+var List = __webpack_require__(45);
+var uid = __webpack_require__(76);
 
 /**
  * @fileoverview
@@ -16660,7 +16751,323 @@ var Target = function (_EventEmitter) {
 module.exports = Target;
 
 /***/ }),
-/* 145 */
+/* 146 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+var Timer = __webpack_require__(35);
+
+var Clock = function () {
+    function Clock(runtime) {
+        _classCallCheck(this, Clock);
+
+        this._projectTimer = new Timer();
+        this._projectTimer.start();
+        this._pausedTime = null;
+        this._paused = false;
+        /**
+         * Reference to the owning Runtime.
+         * @type{!Runtime}
+         */
+        this.runtime = runtime;
+    }
+
+    _createClass(Clock, [{
+        key: 'projectTimer',
+        value: function projectTimer() {
+            if (this._paused) {
+                return this._pausedTime / 1000;
+            }
+            return this._projectTimer.timeElapsed() / 1000;
+        }
+    }, {
+        key: 'pause',
+        value: function pause() {
+            this._paused = true;
+            this._pausedTime = this._projectTimer.timeElapsed();
+        }
+    }, {
+        key: 'resume',
+        value: function resume() {
+            this._paused = false;
+            var dt = this._projectTimer.timeElapsed() - this._pausedTime;
+            this._projectTimer.startTime += dt;
+        }
+    }, {
+        key: 'resetProjectTimer',
+        value: function resetProjectTimer() {
+            this._projectTimer.start();
+        }
+    }]);
+
+    return Clock;
+}();
+
+module.exports = Clock;
+
+/***/ }),
+/* 147 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+var Cast = __webpack_require__(9);
+
+var Keyboard = function () {
+    function Keyboard(runtime) {
+        _classCallCheck(this, Keyboard);
+
+        /**
+         * List of currently pressed keys.
+         * @type{Array.<number>}
+         */
+        this._keysPressed = [];
+        /**
+         * Reference to the owning Runtime.
+         * Can be used, for example, to activate hats.
+         * @type{!Runtime}
+         */
+        this.runtime = runtime;
+    }
+
+    /**
+     * Convert a Scratch key name to a DOM keyCode.
+     * @param {Any} keyName Scratch key argument.
+     * @return {number} Key code corresponding to a DOM event.
+     * @private
+     */
+
+
+    _createClass(Keyboard, [{
+        key: '_scratchKeyToKeyCode',
+        value: function _scratchKeyToKeyCode(keyName) {
+            if (typeof keyName === 'number') {
+                // Key codes placed in with number blocks.
+                return keyName;
+            }
+            var keyString = Cast.toString(keyName);
+            switch (keyString) {
+                case 'space':
+                    return 32;
+                case 'left arrow':
+                    return 37;
+                case 'up arrow':
+                    return 38;
+                case 'right arrow':
+                    return 39;
+                case 'down arrow':
+                    return 40;
+                // @todo: Consider adding other special keys here.
+            }
+            // Keys reported by DOM keyCode are upper case.
+            return keyString.toUpperCase().charCodeAt(0);
+        }
+
+        /**
+         * Convert a DOM keyCode into a Scratch key name.
+         * @param  {number} keyCode Key code from DOM event.
+         * @return {Any} Scratch key argument.
+         * @private
+         */
+
+    }, {
+        key: '_keyCodeToScratchKey',
+        value: function _keyCodeToScratchKey(keyCode) {
+            if (keyCode >= 48 && keyCode <= 90) {
+                // Standard letter.
+                return String.fromCharCode(keyCode).toLowerCase();
+            }
+            switch (keyCode) {
+                case 32:
+                    return 'space';
+                case 37:
+                    return 'left arrow';
+                case 38:
+                    return 'up arrow';
+                case 39:
+                    return 'right arrow';
+                case 40:
+                    return 'down arrow';
+            }
+            return '';
+        }
+
+        /**
+         * Keyboard DOM event handler.
+         * @param  {object} data Data from DOM event.
+         */
+
+    }, {
+        key: 'postData',
+        value: function postData(data) {
+            if (data.keyCode) {
+                var index = this._keysPressed.indexOf(data.keyCode);
+                if (data.isDown) {
+                    // If not already present, add to the list.
+                    if (index < 0) {
+                        this._keysPressed.push(data.keyCode);
+                    }
+                    // Always trigger hats, even if it was already pressed.
+                    this.runtime.startHats('event_whenkeypressed', {
+                        KEY_OPTION: this._keyCodeToScratchKey(data.keyCode)
+                    });
+                    this.runtime.startHats('event_whenkeypressed', {
+                        KEY_OPTION: 'any'
+                    });
+                } else if (index > -1) {
+                    // If already present, remove from the list.
+                    this._keysPressed.splice(index, 1);
+                }
+            }
+        }
+
+        /**
+         * Get key down state for a specified Scratch key name.
+         * @param  {Any} key Scratch key argument.
+         * @return {boolean} Is the specified key down?
+         */
+
+    }, {
+        key: 'getKeyIsDown',
+        value: function getKeyIsDown(key) {
+            if (key === 'any') {
+                return this._keysPressed.length > 0;
+            }
+            var keyCode = this._scratchKeyToKeyCode(key);
+            return this._keysPressed.indexOf(keyCode) > -1;
+        }
+    }]);
+
+    return Keyboard;
+}();
+
+module.exports = Keyboard;
+
+/***/ }),
+/* 148 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+var MathUtil = __webpack_require__(19);
+
+var Mouse = function () {
+    function Mouse(runtime) {
+        _classCallCheck(this, Mouse);
+
+        this._x = 0;
+        this._y = 0;
+        this._isDown = false;
+        /**
+         * Reference to the owning Runtime.
+         * Can be used, for example, to activate hats.
+         * @type{!Runtime}
+         */
+        this.runtime = runtime;
+    }
+
+    /**
+     * Activate "event_whenthisspriteclicked" hats if needed.
+     * @param  {number} x X position to be sent to the renderer.
+     * @param  {number} y Y position to be sent to the renderer.
+     * @private
+     */
+
+
+    _createClass(Mouse, [{
+        key: '_activateClickHats',
+        value: function _activateClickHats(x, y) {
+            if (this.runtime.renderer) {
+                var drawableID = this.runtime.renderer.pick(x, y);
+                for (var i = 0; i < this.runtime.targets.length; i++) {
+                    var target = this.runtime.targets[i];
+                    if (target.hasOwnProperty('drawableID') && target.drawableID === drawableID) {
+                        this.runtime.startHats('event_whenthisspriteclicked', null, target);
+                        return;
+                    }
+                }
+            }
+        }
+
+        /**
+         * Mouse DOM event handler.
+         * @param  {object} data Data from DOM event.
+         */
+
+    }, {
+        key: 'postData',
+        value: function postData(data) {
+            if (data.x) {
+                this._x = data.x - data.canvasWidth / 2;
+            }
+            if (data.y) {
+                this._y = data.y - data.canvasHeight / 2;
+            }
+            if (typeof data.isDown !== 'undefined') {
+                this._isDown = data.isDown;
+                if (!this._isDown) {
+                    this._activateClickHats(data.x, data.y);
+                }
+            }
+        }
+
+        /**
+         * Get the X position of the mouse.
+         * @return {number} Clamped X position of the mouse cursor.
+         */
+
+    }, {
+        key: 'getX',
+        value: function getX() {
+            return MathUtil.clamp(this._x, -240, 240);
+        }
+
+        /**
+         * Get the Y position of the mouse.
+         * @return {number} Clamped Y position of the mouse cursor.
+         */
+
+    }, {
+        key: 'getY',
+        value: function getY() {
+            return MathUtil.clamp(-this._y, -180, 180);
+        }
+
+        /**
+         * Get the down state of the mouse.
+         * @return {boolean} Is the mouse down?
+         */
+
+    }, {
+        key: 'getIsDown',
+        value: function getIsDown() {
+            return this._isDown;
+        }
+    }]);
+
+    return Mouse;
+}();
+
+module.exports = Mouse;
+
+/***/ }),
+/* 149 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -16675,18 +17082,18 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
  * scratch-vm runtime structures.
  */
 
-var Blocks = __webpack_require__(34);
-var RenderedTarget = __webpack_require__(46);
-var Sprite = __webpack_require__(150);
-var Color = __webpack_require__(47);
+var Blocks = __webpack_require__(27);
+var RenderedTarget = __webpack_require__(50);
+var Sprite = __webpack_require__(74);
+var Color = __webpack_require__(51);
 var log = __webpack_require__(18);
-var uid = __webpack_require__(75);
-var specMap = __webpack_require__(146);
-var Variable = __webpack_require__(71);
-var List = __webpack_require__(69);
+var uid = __webpack_require__(76);
+var specMap = __webpack_require__(150);
+var Variable = __webpack_require__(47);
+var List = __webpack_require__(45);
 
-var loadCostume = __webpack_require__(72);
-var loadSound = __webpack_require__(73);
+var loadCostume = __webpack_require__(48);
+var loadSound = __webpack_require__(49);
 
 /**
  * Convert a Scratch 2.0 procedure string (e.g., "my_procedure %s %b %n")
@@ -16934,13 +17341,13 @@ var parseScratchObject = function parseScratchObject(object, runtime, topLevel) 
 /**
  * Top-level handler. Parse provided JSON,
  * and process the top-level object (the stage object).
- * @param {!string} json SB2-format JSON to load.
+ * @param {!object} json SB2-format JSON to load.
  * @param {!Runtime} runtime Runtime object to load all structures into.
  * @param {boolean=} optForceSprite If set, treat as sprite (Sprite2).
  * @return {?Promise} Promise that resolves to the loaded targets when ready.
  */
 var sb2import = function sb2import(json, runtime, optForceSprite) {
-    return parseScratchObject(JSON.parse(json), runtime, !optForceSprite);
+    return parseScratchObject(json, runtime, !optForceSprite);
 };
 
 /**
@@ -17115,10 +17522,12 @@ var parseBlock = function parseBlock(sb2block) {
     return activeBlock;
 };
 
-module.exports = sb2import;
+module.exports = {
+    deserialize: sb2import
+};
 
 /***/ }),
-/* 146 */
+/* 150 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -18238,407 +18647,177 @@ var specMap = {
 module.exports = specMap;
 
 /***/ }),
-/* 147 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-
-var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
-
-function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
-
-var Timer = __webpack_require__(35);
-
-var Clock = function () {
-    function Clock(runtime) {
-        _classCallCheck(this, Clock);
-
-        this._projectTimer = new Timer();
-        this._projectTimer.start();
-        this._pausedTime = null;
-        this._paused = false;
-        /**
-         * Reference to the owning Runtime.
-         * @type{!Runtime}
-         */
-        this.runtime = runtime;
-    }
-
-    _createClass(Clock, [{
-        key: 'projectTimer',
-        value: function projectTimer() {
-            if (this._paused) {
-                return this._pausedTime / 1000;
-            }
-            return this._projectTimer.timeElapsed() / 1000;
-        }
-    }, {
-        key: 'pause',
-        value: function pause() {
-            this._paused = true;
-            this._pausedTime = this._projectTimer.timeElapsed();
-        }
-    }, {
-        key: 'resume',
-        value: function resume() {
-            this._paused = false;
-            var dt = this._projectTimer.timeElapsed() - this._pausedTime;
-            this._projectTimer.startTime += dt;
-        }
-    }, {
-        key: 'resetProjectTimer',
-        value: function resetProjectTimer() {
-            this._projectTimer.start();
-        }
-    }]);
-
-    return Clock;
-}();
-
-module.exports = Clock;
-
-/***/ }),
-/* 148 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-
-var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
-
-function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
-
-var Cast = __webpack_require__(9);
-
-var Keyboard = function () {
-    function Keyboard(runtime) {
-        _classCallCheck(this, Keyboard);
-
-        /**
-         * List of currently pressed keys.
-         * @type{Array.<number>}
-         */
-        this._keysPressed = [];
-        /**
-         * Reference to the owning Runtime.
-         * Can be used, for example, to activate hats.
-         * @type{!Runtime}
-         */
-        this.runtime = runtime;
-    }
-
-    /**
-     * Convert a Scratch key name to a DOM keyCode.
-     * @param {Any} keyName Scratch key argument.
-     * @return {number} Key code corresponding to a DOM event.
-     * @private
-     */
-
-
-    _createClass(Keyboard, [{
-        key: '_scratchKeyToKeyCode',
-        value: function _scratchKeyToKeyCode(keyName) {
-            if (typeof keyName === 'number') {
-                // Key codes placed in with number blocks.
-                return keyName;
-            }
-            var keyString = Cast.toString(keyName);
-            switch (keyString) {
-                case 'space':
-                    return 32;
-                case 'left arrow':
-                    return 37;
-                case 'up arrow':
-                    return 38;
-                case 'right arrow':
-                    return 39;
-                case 'down arrow':
-                    return 40;
-                // @todo: Consider adding other special keys here.
-            }
-            // Keys reported by DOM keyCode are upper case.
-            return keyString.toUpperCase().charCodeAt(0);
-        }
-
-        /**
-         * Convert a DOM keyCode into a Scratch key name.
-         * @param  {number} keyCode Key code from DOM event.
-         * @return {Any} Scratch key argument.
-         * @private
-         */
-
-    }, {
-        key: '_keyCodeToScratchKey',
-        value: function _keyCodeToScratchKey(keyCode) {
-            if (keyCode >= 48 && keyCode <= 90) {
-                // Standard letter.
-                return String.fromCharCode(keyCode).toLowerCase();
-            }
-            switch (keyCode) {
-                case 32:
-                    return 'space';
-                case 37:
-                    return 'left arrow';
-                case 38:
-                    return 'up arrow';
-                case 39:
-                    return 'right arrow';
-                case 40:
-                    return 'down arrow';
-            }
-            return '';
-        }
-
-        /**
-         * Keyboard DOM event handler.
-         * @param  {object} data Data from DOM event.
-         */
-
-    }, {
-        key: 'postData',
-        value: function postData(data) {
-            if (data.keyCode) {
-                var index = this._keysPressed.indexOf(data.keyCode);
-                if (data.isDown) {
-                    // If not already present, add to the list.
-                    if (index < 0) {
-                        this._keysPressed.push(data.keyCode);
-                    }
-                    // Always trigger hats, even if it was already pressed.
-                    this.runtime.startHats('event_whenkeypressed', {
-                        KEY_OPTION: this._keyCodeToScratchKey(data.keyCode)
-                    });
-                    this.runtime.startHats('event_whenkeypressed', {
-                        KEY_OPTION: 'any'
-                    });
-                } else if (index > -1) {
-                    // If already present, remove from the list.
-                    this._keysPressed.splice(index, 1);
-                }
-            }
-        }
-
-        /**
-         * Get key down state for a specified Scratch key name.
-         * @param  {Any} key Scratch key argument.
-         * @return {boolean} Is the specified key down?
-         */
-
-    }, {
-        key: 'getKeyIsDown',
-        value: function getKeyIsDown(key) {
-            if (key === 'any') {
-                return this._keysPressed.length > 0;
-            }
-            var keyCode = this._scratchKeyToKeyCode(key);
-            return this._keysPressed.indexOf(keyCode) > -1;
-        }
-    }]);
-
-    return Keyboard;
-}();
-
-module.exports = Keyboard;
-
-/***/ }),
-/* 149 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-
-var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
-
-function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
-
-var MathUtil = __webpack_require__(19);
-
-var Mouse = function () {
-    function Mouse(runtime) {
-        _classCallCheck(this, Mouse);
-
-        this._x = 0;
-        this._y = 0;
-        this._isDown = false;
-        /**
-         * Reference to the owning Runtime.
-         * Can be used, for example, to activate hats.
-         * @type{!Runtime}
-         */
-        this.runtime = runtime;
-    }
-
-    /**
-     * Activate "event_whenthisspriteclicked" hats if needed.
-     * @param  {number} x X position to be sent to the renderer.
-     * @param  {number} y Y position to be sent to the renderer.
-     * @private
-     */
-
-
-    _createClass(Mouse, [{
-        key: '_activateClickHats',
-        value: function _activateClickHats(x, y) {
-            if (this.runtime.renderer) {
-                var drawableID = this.runtime.renderer.pick(x, y);
-                for (var i = 0; i < this.runtime.targets.length; i++) {
-                    var target = this.runtime.targets[i];
-                    if (target.hasOwnProperty('drawableID') && target.drawableID === drawableID) {
-                        this.runtime.startHats('event_whenthisspriteclicked', null, target);
-                        return;
-                    }
-                }
-            }
-        }
-
-        /**
-         * Mouse DOM event handler.
-         * @param  {object} data Data from DOM event.
-         */
-
-    }, {
-        key: 'postData',
-        value: function postData(data) {
-            if (data.x) {
-                this._x = data.x - data.canvasWidth / 2;
-            }
-            if (data.y) {
-                this._y = data.y - data.canvasHeight / 2;
-            }
-            if (typeof data.isDown !== 'undefined') {
-                this._isDown = data.isDown;
-                if (!this._isDown) {
-                    this._activateClickHats(data.x, data.y);
-                }
-            }
-        }
-
-        /**
-         * Get the X position of the mouse.
-         * @return {number} Clamped X position of the mouse cursor.
-         */
-
-    }, {
-        key: 'getX',
-        value: function getX() {
-            return MathUtil.clamp(this._x, -240, 240);
-        }
-
-        /**
-         * Get the Y position of the mouse.
-         * @return {number} Clamped Y position of the mouse cursor.
-         */
-
-    }, {
-        key: 'getY',
-        value: function getY() {
-            return MathUtil.clamp(-this._y, -180, 180);
-        }
-
-        /**
-         * Get the down state of the mouse.
-         * @return {boolean} Is the mouse down?
-         */
-
-    }, {
-        key: 'getIsDown',
-        value: function getIsDown() {
-            return this._isDown;
-        }
-    }]);
-
-    return Mouse;
-}();
-
-module.exports = Mouse;
-
-/***/ }),
-/* 150 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-
-var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
-
-function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
-
-var RenderedTarget = __webpack_require__(46);
-var Blocks = __webpack_require__(34);
-
-var Sprite = function () {
-  /**
-   * Sprite to be used on the Scratch stage.
-   * All clones of a sprite have shared blocks, shared costumes, shared variables.
-   * @param {?Blocks} blocks Shared blocks object for all clones of sprite.
-   * @param {Runtime} runtime Reference to the runtime.
-   * @constructor
-   */
-  function Sprite(blocks, runtime) {
-    _classCallCheck(this, Sprite);
-
-    this.runtime = runtime;
-    if (!blocks) {
-      // Shared set of blocks for all clones.
-      blocks = new Blocks();
-    }
-    this.blocks = blocks;
-    /**
-     * Human-readable name for this sprite (and all clones).
-     * @type {string}
-     */
-    this.name = '';
-    /**
-     * List of costumes for this sprite.
-     * Each entry is an object, e.g.,
-     * {
-     *      skinId: 1,
-     *      name: "Costume Name",
-     *      bitmapResolution: 2,
-     *      rotationCenterX: 0,
-     *      rotationCenterY: 0
-     * }
-     * @type {Array.<!Object>}
-     */
-    this.costumes = [];
-    /**
-     * List of sounds for this sprite.
-    */
-    this.sounds = [];
-    /**
-     * List of clones for this sprite, including the original.
-     * @type {Array.<!RenderedTarget>}
-     */
-    this.clones = [];
-  }
-
-  /**
-   * Create a clone of this sprite.
-   * @returns {!RenderedTarget} Newly created clone.
-   */
-
-
-  _createClass(Sprite, [{
-    key: 'createClone',
-    value: function createClone() {
-      var newClone = new RenderedTarget(this, this.runtime);
-      newClone.isOriginal = this.clones.length === 0;
-      this.clones.push(newClone);
-      if (newClone.isOriginal) {
-        newClone.initDrawable();
-      }
-      return newClone;
-    }
-  }]);
-
-  return Sprite;
-}();
-
-module.exports = Sprite;
-
-/***/ }),
 /* 151 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+/**
+ * @fileoverview
+ * Partial implementation of a SB3 serializer and deserializer. Parses provided
+ * JSON and then generates all needed scratch-vm runtime structures.
+ */
+
+var vmPackage = __webpack_require__(268);
+var Blocks = __webpack_require__(27);
+var Sprite = __webpack_require__(74);
+var Variable = __webpack_require__(47);
+var List = __webpack_require__(45);
+
+var loadCostume = __webpack_require__(48);
+var loadSound = __webpack_require__(49);
+
+/**
+ * Serializes the specified VM runtime.
+ * @param  {!Runtime} runtime VM runtime instance to be serialized.
+ * @return {object}    Serialized runtime instance.
+ */
+var serialize = function serialize(runtime) {
+    // Fetch targets
+    var obj = Object.create(null);
+    obj.targets = runtime.targets;
+
+    // Assemble metadata
+    var meta = Object.create(null);
+    meta.semver = '3.0.0';
+    meta.vm = vmPackage.version;
+
+    // Attach full user agent string to metadata if available
+    meta.agent = null;
+    if (typeof navigator !== 'undefined') meta.agent = navigator.userAgent;
+
+    // Assemble payload and return
+    obj.meta = meta;
+    return obj;
+};
+
+/**
+ * Parse a single "Scratch object" and create all its in-memory VM objects.
+ * @param {!object} object From-JSON "Scratch object:" sprite, stage, watcher.
+ * @param {!Runtime} runtime Runtime object to load all structures into.
+ * @return {?Target} Target created (stage or sprite).
+ */
+var parseScratchObject = function parseScratchObject(object, runtime) {
+    if (!object.hasOwnProperty('name')) {
+        // Watcher/monitor - skip this object until those are implemented in VM.
+        // @todo
+        return;
+    }
+    // Blocks container for this object.
+    var blocks = new Blocks();
+
+    // @todo: For now, load all Scratch objects (stage/sprites) as a Sprite.
+    var sprite = new Sprite(blocks, runtime);
+
+    // Sprite/stage name from JSON.
+    if (object.hasOwnProperty('name')) {
+        sprite.name = object.name;
+    }
+    if (object.hasOwnProperty('blocks')) {
+        for (var blockId in object.blocks) {
+            blocks.createBlock(object.blocks[blockId]);
+        }
+        // console.log(blocks);
+    }
+    // Costumes from JSON.
+    var costumePromises = (object.costumes || []).map(function (costumeSource) {
+        // @todo: Make sure all the relevant metadata is being pulled out.
+        var costume = {
+            skinId: null,
+            name: costumeSource.name,
+            bitmapResolution: costumeSource.bitmapResolution,
+            rotationCenterX: costumeSource.rotationCenterX,
+            rotationCenterY: costumeSource.rotationCenterY
+        };
+        var costumeMd5 = costumeSource.assetId + '.' + costumeSource.assetType.runtimeFormat;
+        return loadCostume(costumeMd5, costume, runtime);
+    });
+    // Sounds from JSON
+    var soundPromises = (object.sounds || []).map(function (soundSource) {
+        var sound = {
+            format: soundSource.format,
+            fileUrl: soundSource.fileUrl,
+            rate: soundSource.rate,
+            sampleCount: soundSource.sampleCount,
+            soundID: soundSource.soundID,
+            name: soundSource.name,
+            md5: soundSource.md5,
+            data: null
+        };
+        return loadSound(sound, runtime);
+    });
+    // Create the first clone, and load its run-state from JSON.
+    var target = sprite.createClone();
+    // Load target properties from JSON.
+    if (object.hasOwnProperty('variables')) {
+        for (var j = 0; j < object.variables.length; j++) {
+            var variable = object.variables[j];
+            target.variables[variable.name] = new Variable(variable.name, variable.value, variable.isPersistent);
+        }
+    }
+    if (object.hasOwnProperty('lists')) {
+        for (var k = 0; k < object.lists.length; k++) {
+            var list = object.lists[k];
+            // @todo: monitor properties.
+            target.lists[list.listName] = new List(list.listName, list.contents);
+        }
+    }
+    if (object.hasOwnProperty('x')) {
+        target.x = object.x;
+    }
+    if (object.hasOwnProperty('y')) {
+        target.y = object.y;
+    }
+    if (object.hasOwnProperty('direction')) {
+        target.direction = object.direction;
+    }
+    if (object.hasOwnProperty('size')) {
+        target.size = object.size;
+    }
+    if (object.hasOwnProperty('visible')) {
+        target.visible = object.visible;
+    }
+    if (object.hasOwnProperty('currentCostume')) {
+        target.currentCostume = object.currentCostume;
+    }
+    if (object.hasOwnProperty('rotationStyle')) {
+        target.rotationStyle = object.rotationStyle;
+    }
+    if (object.hasOwnProperty('isStage')) {
+        target.isStage = object.isStage;
+    }
+    Promise.all(costumePromises).then(function (costumes) {
+        sprite.costumes = costumes;
+    });
+    Promise.all(soundPromises).then(function (sounds) {
+        sprite.sounds = sounds;
+    });
+    return Promise.all(costumePromises.concat(soundPromises)).then(function () {
+        return target;
+    });
+};
+
+/**
+ * Deserializes the specified representation of a VM runtime and loads it into
+ * the provided runtime instance.
+ * @param  {object}  json    JSON representation of a VM runtime.
+ * @param  {Runtime} runtime Runtime instance
+ * @returns {Promise} Promise that resolves to the list of targets after the project is deserialized
+ */
+var deserialize = function deserialize(json, runtime) {
+    return Promise.all((json.targets || []).map(function (target) {
+        return parseScratchObject(target, runtime);
+    }));
+};
+
+module.exports = {
+    serialize: serialize,
+    deserialize: deserialize
+};
+
+/***/ }),
+/* 152 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -18679,7 +18858,7 @@ var StringUtil = function () {
 module.exports = StringUtil;
 
 /***/ }),
-/* 152 */
+/* 153 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -18713,11 +18892,13 @@ var xmlEscape = function xmlEscape(unsafe) {
 module.exports = xmlEscape;
 
 /***/ }),
-/* 153 */
+/* 154 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
+
+var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
@@ -18730,12 +18911,13 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
 var EventEmitter = __webpack_require__(7);
 
 var log = __webpack_require__(18);
-var Runtime = __webpack_require__(142);
-var sb2import = __webpack_require__(145);
-var StringUtil = __webpack_require__(151);
+var Runtime = __webpack_require__(143);
+var sb2 = __webpack_require__(149);
+var sb3 = __webpack_require__(151);
+var StringUtil = __webpack_require__(152);
 
-var loadCostume = __webpack_require__(72);
-var loadSound = __webpack_require__(73);
+var loadCostume = __webpack_require__(48);
+var loadSound = __webpack_require__(49);
 
 var RESERVED_NAMES = ['_mouse_', '_stage_', '_edge_', '_myself_', '_random_'];
 
@@ -18909,25 +19091,8 @@ var VirtualMachine = function (_EventEmitter) {
     }, {
         key: 'loadProject',
         value: function loadProject(json) {
-            var _this2 = this;
-
             // @todo: Handle other formats, e.g., Scratch 1.4, Scratch 3.0.
-            return sb2import(json, this.runtime).then(function (targets) {
-                _this2.clear();
-                for (var n = 0; n < targets.length; n++) {
-                    if (targets[n] !== null) {
-                        _this2.runtime.targets.push(targets[n]);
-                        targets[n].updateAllDrawableProperties();
-                    }
-                }
-                // Select the first target for editing, e.g., the first sprite.
-                _this2.editingTarget = _this2.runtime.targets[1];
-
-                // Update the VM user's knowledge of targets and blocks on the workspace.
-                _this2.emitTargetsUpdate();
-                _this2.emitWorkspaceUpdate();
-                _this2.runtime.setEditingTarget(_this2.editingTarget);
-            });
+            return this.fromJSON(json);
         }
 
         /**
@@ -18951,8 +19116,90 @@ var VirtualMachine = function (_EventEmitter) {
         }
 
         /**
+         * @returns {string} Project in a Scratch 3.0 JSON representation.
+         */
+
+    }, {
+        key: 'saveProjectSb3',
+        value: function saveProjectSb3() {
+            // @todo: Handle other formats, e.g., Scratch 1.4, Scratch 2.0.
+            return this.toJSON();
+        }
+
+        /**
+         * Export project as a Scratch 3.0 JSON representation.
+         * @return {string} Serialized state of the runtime.
+         */
+
+    }, {
+        key: 'toJSON',
+        value: function toJSON() {
+            return JSON.stringify(sb3.serialize(this.runtime));
+        }
+
+        /**
+         * Load a project from a Scratch JSON representation.
+         * @param {string} json JSON string representing a project.
+         * @returns {Promise} Promise that resolves after the project has loaded
+         */
+
+    }, {
+        key: 'fromJSON',
+        value: function fromJSON(json) {
+            var _this2 = this;
+
+            // Clear the current runtime
+            this.clear();
+
+            // Validate & parse
+            if (typeof json !== 'string') {
+                log.error('Failed to parse project. Non-string supplied to fromJSON.');
+                return;
+            }
+            json = JSON.parse(json);
+            if ((typeof json === 'undefined' ? 'undefined' : _typeof(json)) !== 'object') {
+                log.error('Failed to parse project. JSON supplied to fromJSON is not an object.');
+                return;
+            }
+
+            // Establish version, deserialize, and load into runtime
+            // @todo Support Scratch 1.4
+            // @todo This is an extremely naïve / dangerous way of determining version.
+            //       See `scratch-parser` for a more sophisticated validation
+            //       methodology that should be adapted for use here
+            var deserializer = void 0;
+            if (typeof json.meta !== 'undefined' && typeof json.meta.semver !== 'undefined') {
+                deserializer = sb3;
+            } else {
+                deserializer = sb2;
+            }
+
+            return deserializer.deserialize(json, this.runtime).then(function (targets) {
+                _this2.clear();
+                for (var n = 0; n < targets.length; n++) {
+                    if (targets[n] !== null) {
+                        _this2.runtime.targets.push(targets[n]);
+                        targets[n].updateAllDrawableProperties();
+                    }
+                }
+                // Select the first target for editing, e.g., the first sprite.
+                if (_this2.runtime.targets.length > 1) {
+                    _this2.editingTarget = _this2.runtime.targets[1];
+                } else {
+                    _this2.editingTarget = _this2.runtime.targets[0];
+                }
+
+                // Update the VM user's knowledge of targets and blocks on the workspace.
+                _this2.emitTargetsUpdate();
+                _this2.emitWorkspaceUpdate();
+                _this2.runtime.setEditingTarget(_this2.editingTarget);
+            });
+        }
+
+        /**
          * Add a single sprite from the "Sprite2" (i.e., SB2 sprite) format.
          * @param {string} json JSON string representing the sprite.
+         * @returns {Promise} Promise that resolves after the sprite is added
          */
 
     }, {
@@ -18960,7 +19207,19 @@ var VirtualMachine = function (_EventEmitter) {
         value: function addSprite2(json) {
             var _this3 = this;
 
-            sb2import(json, this.runtime, true).then(function (targets) {
+            // Validate & parse
+            if (typeof json !== 'string') {
+                log.error('Failed to parse sprite. Non-string supplied to addSprite2.');
+                return;
+            }
+            json = JSON.parse(json);
+            if ((typeof json === 'undefined' ? 'undefined' : _typeof(json)) !== 'object') {
+                log.error('Failed to parse sprite. JSON supplied to addSprite2 is not an object.');
+                return;
+            }
+
+            // Select new sprite.
+            return sb2.deserialize(json, this.runtime, true).then(function (targets) {
                 _this3.runtime.targets.push(targets[0]);
                 _this3.editingTarget = targets[0];
                 _this3.editingTarget.updateAllDrawableProperties();
@@ -19295,7 +19554,6 @@ var VirtualMachine = function (_EventEmitter) {
 module.exports = VirtualMachine;
 
 /***/ }),
-/* 154 */,
 /* 155 */,
 /* 156 */,
 /* 157 */,
@@ -19319,14 +19577,15 @@ module.exports = VirtualMachine;
 /* 175 */,
 /* 176 */,
 /* 177 */,
-/* 178 */
+/* 178 */,
+/* 179 */
 /***/ (function(module, exports, __webpack_require__) {
 
 /*
   Module dependencies
 */
-var ElementType = __webpack_require__(179);
-var entities = __webpack_require__(203);
+var ElementType = __webpack_require__(180);
+var entities = __webpack_require__(204);
 
 /*
   Boolean Attributes
@@ -19503,7 +19762,7 @@ function renderComment(elem) {
 
 
 /***/ }),
-/* 179 */
+/* 180 */
 /***/ (function(module, exports) {
 
 //Types of elements found in the DOM
@@ -19522,14 +19781,14 @@ module.exports = {
 };
 
 /***/ }),
-/* 180 */
+/* 181 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var ElementType = __webpack_require__(28);
+var ElementType = __webpack_require__(29);
 
 var re_whitespace = /\s+/g;
-var NodePrototype = __webpack_require__(89);
-var ElementPrototype = __webpack_require__(181);
+var NodePrototype = __webpack_require__(90);
+var ElementPrototype = __webpack_require__(182);
 
 function DomHandler(callback, options, elementCB){
 	if(typeof callback === "object"){
@@ -19710,11 +19969,11 @@ module.exports = DomHandler;
 
 
 /***/ }),
-/* 181 */
+/* 182 */
 /***/ (function(module, exports, __webpack_require__) {
 
 // DOM-Level-1-compliant structure
-var NodePrototype = __webpack_require__(89);
+var NodePrototype = __webpack_require__(90);
 var ElementPrototype = module.exports = Object.create(NodePrototype);
 
 var domLvl1 = {
@@ -19736,18 +19995,18 @@ Object.keys(domLvl1).forEach(function(key) {
 
 
 /***/ }),
-/* 182 */
+/* 183 */
 /***/ (function(module, exports, __webpack_require__) {
 
 var DomUtils = module.exports;
 
 [
-	__webpack_require__(187),
 	__webpack_require__(188),
-	__webpack_require__(185),
+	__webpack_require__(189),
 	__webpack_require__(186),
-	__webpack_require__(184),
-	__webpack_require__(183)
+	__webpack_require__(187),
+	__webpack_require__(185),
+	__webpack_require__(184)
 ].forEach(function(ext){
 	Object.keys(ext).forEach(function(key){
 		DomUtils[key] = ext[key].bind(DomUtils);
@@ -19756,7 +20015,7 @@ var DomUtils = module.exports;
 
 
 /***/ }),
-/* 183 */
+/* 184 */
 /***/ (function(module, exports) {
 
 // removeSubsets
@@ -19903,10 +20162,10 @@ exports.uniqueSort = function(nodes) {
 
 
 /***/ }),
-/* 184 */
+/* 185 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var ElementType = __webpack_require__(28);
+var ElementType = __webpack_require__(29);
 var isTag = exports.isTag = ElementType.isTag;
 
 exports.testElement = function(options, element){
@@ -19996,7 +20255,7 @@ exports.getElementsByTagType = function(type, element, recurse, limit){
 
 
 /***/ }),
-/* 185 */
+/* 186 */
 /***/ (function(module, exports) {
 
 exports.removeElement = function(elem){
@@ -20079,10 +20338,10 @@ exports.prepend = function(elem, prev){
 
 
 /***/ }),
-/* 186 */
+/* 187 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var isTag = __webpack_require__(28).isTag;
+var isTag = __webpack_require__(29).isTag;
 
 module.exports = {
 	filter: filter,
@@ -20179,11 +20438,11 @@ function findAll(test, elems){
 
 
 /***/ }),
-/* 187 */
+/* 188 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var ElementType = __webpack_require__(28),
-    getOuterHTML = __webpack_require__(178),
+var ElementType = __webpack_require__(29),
+    getOuterHTML = __webpack_require__(179),
     isTag = ElementType.isTag;
 
 module.exports = {
@@ -20207,7 +20466,7 @@ function getText(elem){
 
 
 /***/ }),
-/* 188 */
+/* 189 */
 /***/ (function(module, exports) {
 
 var getChildren = exports.getChildren = function(elem){
@@ -20237,7 +20496,6 @@ exports.getName = function(elem){
 
 
 /***/ }),
-/* 189 */,
 /* 190 */,
 /* 191 */,
 /* 192 */,
@@ -20251,11 +20509,12 @@ exports.getName = function(elem){
 /* 200 */,
 /* 201 */,
 /* 202 */,
-/* 203 */
+/* 203 */,
+/* 204 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var encode = __webpack_require__(205),
-    decode = __webpack_require__(204);
+var encode = __webpack_require__(206),
+    decode = __webpack_require__(205);
 
 exports.decode = function(data, level){
 	return (!level || level <= 0 ? decode.XML : decode.HTML)(data);
@@ -20290,13 +20549,13 @@ exports.escape = encode.escape;
 
 
 /***/ }),
-/* 204 */
+/* 205 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var entityMap = __webpack_require__(53),
-    legacyMap = __webpack_require__(91),
-    xmlMap    = __webpack_require__(54),
-    decodeCodePoint = __webpack_require__(90);
+var entityMap = __webpack_require__(57),
+    legacyMap = __webpack_require__(92),
+    xmlMap    = __webpack_require__(58),
+    decodeCodePoint = __webpack_require__(91);
 
 var decodeXMLStrict  = getStrictDecoder(xmlMap),
     decodeHTMLStrict = getStrictDecoder(entityMap);
@@ -20367,15 +20626,15 @@ module.exports = {
 };
 
 /***/ }),
-/* 205 */
+/* 206 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var inverseXML = getInverseObj(__webpack_require__(54)),
+var inverseXML = getInverseObj(__webpack_require__(58)),
     xmlReplacer = getInverseReplacer(inverseXML);
 
 exports.XML = getInverse(inverseXML, xmlReplacer);
 
-var inverseHTML = getInverseObj(__webpack_require__(53)),
+var inverseHTML = getInverseObj(__webpack_require__(57)),
     htmlReplacer = getInverseReplacer(inverseHTML);
 
 exports.HTML = getInverse(inverseHTML, htmlReplacer);
@@ -20446,7 +20705,7 @@ exports.escape = escapeXML;
 
 
 /***/ }),
-/* 206 */
+/* 207 */
 /***/ (function(module, exports) {
 
 module.exports = {
@@ -20481,13 +20740,13 @@ module.exports = {
 };
 
 /***/ }),
-/* 207 */,
 /* 208 */,
 /* 209 */,
 /* 210 */,
 /* 211 */,
 /* 212 */,
-/* 213 */
+/* 213 */,
+/* 214 */
 /***/ (function(module, exports, __webpack_require__) {
 
 module.exports = CollectingHandler;
@@ -20548,7 +20807,7 @@ CollectingHandler.prototype.restart = function(){
 
 
 /***/ }),
-/* 214 */
+/* 215 */
 /***/ (function(module, exports, __webpack_require__) {
 
 var index = __webpack_require__(22),
@@ -20649,7 +20908,7 @@ module.exports = FeedHandler;
 
 
 /***/ }),
-/* 215 */
+/* 216 */
 /***/ (function(module, exports, __webpack_require__) {
 
 module.exports = ProxyHandler;
@@ -20681,12 +20940,12 @@ Object.keys(EVENTS).forEach(function(name){
 });
 
 /***/ }),
-/* 216 */
+/* 217 */
 /***/ (function(module, exports, __webpack_require__) {
 
 module.exports = Stream;
 
-var Parser = __webpack_require__(94);
+var Parser = __webpack_require__(95);
 
 function Stream(options){
 	Parser.call(this, new Cbs(this), options);
@@ -20721,9 +20980,9 @@ Object.keys(EVENTS).forEach(function(name){
 });
 
 /***/ }),
-/* 217 */,
 /* 218 */,
-/* 219 */
+/* 219 */,
+/* 220 */
 /***/ (function(module, exports) {
 
 function M() { this._events = {}; }
@@ -20779,7 +21038,7 @@ module.exports = M;
 
 
 /***/ }),
-/* 220 */
+/* 221 */
 /***/ (function(module, exports, __webpack_require__) {
 
 // default filter
@@ -20841,11 +21100,11 @@ module.exports = Filter;
 
 
 /***/ }),
-/* 221 */
+/* 222 */
 /***/ (function(module, exports, __webpack_require__) {
 
 var Transform = __webpack_require__(11),
-    Filter = __webpack_require__(220);
+    Filter = __webpack_require__(221);
 
 var log = new Transform(),
     slice = Array.prototype.slice;
@@ -20892,7 +21151,7 @@ exports.enable = function() {
 
 
 /***/ }),
-/* 222 */
+/* 223 */
 /***/ (function(module, exports, __webpack_require__) {
 
 var Transform = __webpack_require__(11),
@@ -20912,7 +21171,7 @@ module.exports = logger;
 
 
 /***/ }),
-/* 223 */
+/* 224 */
 /***/ (function(module, exports, __webpack_require__) {
 
 var Transform = __webpack_require__(11);
@@ -20943,18 +21202,18 @@ logger.write = function(name, level, args) {
 };
 
 logger.formatters = ['color', 'minilog'];
-logger.color = __webpack_require__(224);
-logger.minilog = __webpack_require__(225);
+logger.color = __webpack_require__(225);
+logger.minilog = __webpack_require__(226);
 
 module.exports = logger;
 
 
 /***/ }),
-/* 224 */
+/* 225 */
 /***/ (function(module, exports, __webpack_require__) {
 
 var Transform = __webpack_require__(11),
-    color = __webpack_require__(96);
+    color = __webpack_require__(97);
 
 var colors = { debug: ['cyan'], info: ['purple' ], warn: [ 'yellow', true ], error: [ 'red', true ] },
     logger = new Transform();
@@ -20974,11 +21233,11 @@ module.exports = logger;
 
 
 /***/ }),
-/* 225 */
+/* 226 */
 /***/ (function(module, exports, __webpack_require__) {
 
 var Transform = __webpack_require__(11),
-    color = __webpack_require__(96),
+    color = __webpack_require__(97),
     colors = { debug: ['gray'], info: ['purple' ], warn: [ 'yellow', true ], error: [ 'red', true ] },
     logger = new Transform();
 
@@ -21006,15 +21265,15 @@ module.exports = logger;
 
 
 /***/ }),
-/* 226 */
+/* 227 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var Minilog = __webpack_require__(221);
+var Minilog = __webpack_require__(222);
 
 var oldEnable = Minilog.enable,
     oldDisable = Minilog.disable,
     isChrome = (typeof navigator != 'undefined' && /chrome/i.test(navigator.userAgent)),
-    console = __webpack_require__(223);
+    console = __webpack_require__(224);
 
 // Use a more capable logging backend if on Chrome
 Minilog.defaultBackend = (isChrome ? console.minilog : console);
@@ -21046,15 +21305,15 @@ Minilog.disable = function() {
 exports = module.exports = Minilog;
 
 exports.backends = {
-  array: __webpack_require__(222),
+  array: __webpack_require__(223),
   browser: Minilog.defaultBackend,
-  localStorage: __webpack_require__(228),
-  jQuery: __webpack_require__(227)
+  localStorage: __webpack_require__(229),
+  jQuery: __webpack_require__(228)
 };
 
 
 /***/ }),
-/* 227 */
+/* 228 */
 /***/ (function(module, exports, __webpack_require__) {
 
 var Transform = __webpack_require__(11);
@@ -21134,7 +21393,7 @@ module.exports = AjaxLogger;
 
 
 /***/ }),
-/* 228 */
+/* 229 */
 /***/ (function(module, exports, __webpack_require__) {
 
 var Transform = __webpack_require__(11),
@@ -21154,7 +21413,6 @@ logger.write = function(name, level, args) {
 module.exports = logger;
 
 /***/ }),
-/* 229 */,
 /* 230 */,
 /* 231 */,
 /* 232 */,
@@ -21194,6 +21452,67 @@ module.exports = logger;
 /* 266 */,
 /* 267 */,
 /* 268 */
+/***/ (function(module, exports) {
+
+module.exports = {
+	"name": "scratch-vm",
+	"version": "0.1.0-prerelease.1494522633",
+	"description": "Virtual Machine for Scratch 3.0",
+	"author": "Massachusetts Institute of Technology",
+	"license": "BSD-3-Clause",
+	"homepage": "https://github.com/LLK/scratch-vm#readme",
+	"repository": {
+		"type": "git",
+		"url": "git+ssh://git@github.com/LLK/scratch-vm.git",
+		"sha": "312e15932e737d39c834951ea57b3e2efe181c29"
+	},
+	"main": "./dist/node/scratch-vm.js",
+	"scripts": {
+		"build": "./node_modules/.bin/webpack --progress --colors --bail",
+		"coverage": "./node_modules/.bin/tap ./test/{unit,integration}/*.js --coverage --coverage-report=lcov",
+		"deploy": "touch playground/.nojekyll && ./node_modules/.bin/gh-pages -t -d playground -m \"Build for $(git log --pretty=format:%H -n1)\"",
+		"lint": "./node_modules/.bin/eslint .",
+		"prepublish": "npm run build",
+		"prepublish-watch": "npm run watch",
+		"start": "./node_modules/.bin/webpack-dev-server",
+		"tap": "./node_modules/.bin/tap ./test/{unit,integration}/*.js",
+		"test": "npm run lint && npm run tap",
+		"watch": "./node_modules/.bin/webpack --progress --colors --watch",
+		"version": "./node_modules/.bin/json -f package.json -I -e \"this.repository.sha = '$(git log -n1 --pretty=format:%H)'\""
+	},
+	"devDependencies": {
+		"adm-zip": "0.4.7",
+		"babel-core": "^6.24.1",
+		"babel-eslint": "^7.1.1",
+		"babel-loader": "^7.0.0",
+		"babel-preset-es2015": "^6.24.1",
+		"copy-webpack-plugin": "4.0.1",
+		"eslint": "^3.16.0",
+		"eslint-config-scratch": "^3.1.0",
+		"expose-loader": "0.7.3",
+		"gh-pages": "^0.12.0",
+		"highlightjs": "^9.8.0",
+		"htmlparser2": "3.9.2",
+		"json": "^9.0.4",
+		"lodash.defaultsdeep": "4.6.0",
+		"minilog": "3.1.0",
+		"promise": "7.1.1",
+		"scratch-audio": "^0.1.0-prerelease.0",
+		"scratch-blocks": "^0.1.0-prerelease.0",
+		"scratch-render": "^0.1.0-prerelease.0",
+		"scratch-storage": "^0.1.0",
+		"script-loader": "0.7.0",
+		"stats.js": "^0.17.0",
+		"tap": "^10.2.0",
+		"travis-after-all": "^1.4.4",
+		"webpack": "^2.4.1",
+		"webpack-dev-server": "^2.4.1"
+	}
+};
+
+/***/ }),
+/* 269 */,
+/* 270 */
 /***/ (function(module, exports) {
 
 /* (ignored) */
