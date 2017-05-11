@@ -11,12 +11,12 @@ const Sprite = require('../sprites/sprite');
 const Color = require('../util/color');
 const log = require('../util/log');
 const uid = require('../util/uid');
-const specMap = require('./sb2specmap');
+const specMap = require('./sb2_specmap');
 const Variable = require('../engine/variable');
 const List = require('../engine/list');
 
-const loadCostume = require('./load-costume.js');
-const loadSound = require('./load-sound.js');
+const loadCostume = require('../import/load-costume.js');
+const loadSound = require('../import/load-sound.js');
 
 /**
  * Convert a Scratch 2.0 procedure string (e.g., "my_procedure %s %b %n")
@@ -276,14 +276,14 @@ const parseScratchObject = function (object, runtime, topLevel) {
 /**
  * Top-level handler. Parse provided JSON,
  * and process the top-level object (the stage object).
- * @param {!string} json SB2-format JSON to load.
+ * @param {!object} json SB2-format JSON to load.
  * @param {!Runtime} runtime Runtime object to load all structures into.
  * @param {boolean=} optForceSprite If set, treat as sprite (Sprite2).
  * @return {?Promise} Promise that resolves to the loaded targets when ready.
  */
 const sb2import = function (json, runtime, optForceSprite) {
     return parseScratchObject(
-        JSON.parse(json),
+        json,
         runtime,
         !optForceSprite
     );
@@ -470,4 +470,6 @@ const parseBlock = function (sb2block) {
     return activeBlock;
 };
 
-module.exports = sb2import;
+module.exports = {
+    deserialize: sb2import
+};

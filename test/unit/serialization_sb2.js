@@ -1,13 +1,13 @@
 const path = require('path');
 const test = require('tap').test;
-const attachTestStorage = require('../fixtures/attach-test-storage');
 const extract = require('../fixtures/extract');
 
-const renderedTarget = require('../../src/sprites/rendered-target');
-const runtime = require('../../src/engine/runtime');
+const RenderedTarget = require('../../src/sprites/rendered-target');
+const Runtime = require('../../src/engine/runtime');
 const sb2 = require('../../src/serialization/sb2');
 
 test('spec', t => {
+    t.type(sb2, 'object');
     t.type(sb2.deserialize, 'function');
     t.end();
 });
@@ -19,8 +19,7 @@ test('default', t => {
     const json = JSON.parse(file);
 
     // Create runtime instance & load SB2 into it
-    const rt = new runtime();
-    attachTestStorage(rt);
+    const rt = new Runtime();
     sb2.deserialize(json, rt).then(targets => {
         // Test
         t.type(file, 'string');
@@ -28,7 +27,7 @@ test('default', t => {
         t.type(rt, 'object');
         t.type(targets, 'object');
 
-        t.ok(targets[0] instanceof renderedTarget);
+        t.ok(targets[0] instanceof RenderedTarget);
         t.type(targets[0].id, 'string');
         t.type(targets[0].blocks, 'object');
         t.type(targets[0].variables, 'object');
@@ -39,7 +38,7 @@ test('default', t => {
         t.equal(targets[0].isOriginal, true);
         t.equal(targets[0].isStage, true);
 
-        t.ok(targets[1] instanceof renderedTarget);
+        t.ok(targets[1] instanceof RenderedTarget);
         t.type(targets[1].id, 'string');
         t.type(targets[1].blocks, 'object');
         t.type(targets[1].variables, 'object');

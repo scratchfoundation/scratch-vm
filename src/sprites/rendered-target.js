@@ -764,11 +764,13 @@ class RenderedTarget extends Target {
         this.dragging = false;
     }
 
+
     /**
      * Serialize sprite info, used when emitting events about the sprite
-     * @returns {object} sprite data as a simple object
+     * @returns {object} Sprite data as a simple object
      */
     toJSON () {
+        const costumes = this.getCostumes();
         return {
             id: this.id,
             name: this.getName(),
@@ -778,12 +780,16 @@ class RenderedTarget extends Target {
             size: this.size,
             direction: this.direction,
             draggable: this.draggable,
-            costume: this.getCurrentCostume(),
-            costumes: this.getCostumes(),
-            sounds: this.getSounds(),
-            costumeCount: this.getCostumes().length,
+            currentCostume: this.currentCostume,
+            costume: costumes[this.currentCostume],
+            costumeCount: costumes.length,
             visible: this.visible,
-            rotationStyle: this.rotationStyle
+            rotationStyle: this.rotationStyle,
+            blocks: this.blocks._blocks,
+            variables: this.variables,
+            lists: this.lists,
+            costumes: costumes,
+            sounds: this.getSounds()
         };
     }
 

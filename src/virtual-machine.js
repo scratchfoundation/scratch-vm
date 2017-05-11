@@ -2,7 +2,8 @@ const EventEmitter = require('events');
 
 const log = require('./util/log');
 const Runtime = require('./engine/runtime');
-const sb2import = require('./import/sb2import');
+const sb2 = require('./serialization/sb2');
+const sb3 = require('./serialization/sb3');
 const StringUtil = require('./util/string-util');
 
 const loadCostume = require('./import/load-costume.js');
@@ -145,22 +146,7 @@ class VirtualMachine extends EventEmitter {
      */
     loadProject (json) {
         // @todo: Handle other formats, e.g., Scratch 1.4, Scratch 3.0.
-        return sb2import(json, this.runtime).then(targets => {
-            this.clear();
-            for (let n = 0; n < targets.length; n++) {
-                if (targets[n] !== null) {
-                    this.runtime.targets.push(targets[n]);
-                    targets[n].updateAllDrawableProperties();
-                }
-            }
-        // Select the first target for editing, e.g., the first sprite.
-            this.editingTarget = this.runtime.targets[1];
-
-        // Update the VM user's knowledge of targets and blocks on the workspace.
-            this.emitTargetsUpdate();
-            this.emitWorkspaceUpdate();
-            this.runtime.setEditingTarget(this.editingTarget);
-        });
+        return this.fromJSON(json);
     }
 
     /**
@@ -181,11 +167,94 @@ class VirtualMachine extends EventEmitter {
     }
 
     /**
+     * @returns {string} Project in a Scratch 3.0 JSON representation.
+     */
+    saveProjectSb3 () {
+        // @todo: Handle other formats, e.g., Scratch 1.4, Scratch 2.0.
+        return this.toJSON();
+    }
+
+    /**
+     * Export project as a Scratch 3.0 JSON representation.
+     * @return {string} Serialized state of the runtime.
+     */
+    toJSON () {
+        return JSON.stringify(sb3.serialize(this.runtime));
+    }
+
+    /**
+     * Load a project from a Scratch JSON representation.
+     * @param {string} json JSON string representing a project.
+     * @returns {Promise} Promise that resolves after the project has loaded
+     */
+    fromJSON (json) {
+        // Clear the current runtime
+        this.clear();
+
+        // Validate & parse
+        if (typeof json !== 'string') {
+            log.error('Failed to parse project. Non-string supplied to fromJSON.');
+            return;
+        }
+        json = JSON.parse(json);
+        if (typeof json !== 'object') {
+            log.error('Failed to parse project. JSON supplied to fromJSON is not an object.');
+            return;
+        }
+
+        // Establish version, deserialize, and load into runtime
+        // @todo Support Scratch 1.4
+        // @todo This is an extremely naïve / dangerous way of determining version.
+        //       See `scratch-parser` for a more sophisticated validation
+        //       methodology that should be adapted for use here
+        let deserializer;
+        if ((typeof json.meta !== 'undefined') && (typeof json.meta.semver !== 'undefined')) {
+            deserializer = sb3;
+        } else {
+            deserializer = sb2;
+        }
+
+        return deserializer.deserialize(json, this.runtime).then(targets => {
+            this.clear();
+            for (let n = 0; n < targets.length; n++) {
+                if (targets[n] !== null) {
+                    this.runtime.targets.push(targets[n]);
+                    targets[n].updateAllDrawableProperties();
+                }
+            }
+            // Select the first target for editing, e.g., the first sprite.
+            if (this.runtime.targets.length > 1) {
+                this.editingTarget = this.runtime.targets[1];
+            } else {
+                this.editingTarget = this.runtime.targets[0];
+            }
+
+            // Update the VM user's knowledge of targets and blocks on the workspace.
+            this.emitTargetsUpdate();
+            this.emitWorkspaceUpdate();
+            this.runtime.setEditingTarget(this.editingTarget);
+        });
+    }
+
+    /**
      * Add a single sprite from the "Sprite2" (i.e., SB2 sprite) format.
      * @param {string} json JSON string representing the sprite.
+     * @returns {Promise} Promise that resolves after the sprite is added
      */
     addSprite2 (json) {
-        sb2import(json, this.runtime, true).then(targets => {
+        // Validate & parse
+        if (typeof json !== 'string') {
+            log.error('Failed to parse sprite. Non-string supplied to addSprite2.');
+            return;
+        }
+        json = JSON.parse(json);
+        if (typeof json !== 'object') {
+            log.error('Failed to parse sprite. JSON supplied to addSprite2 is not an object.');
+            return;
+        }
+
+        // Select new sprite.
+        return sb2.deserialize(json, this.runtime, true).then(targets => {
             this.runtime.targets.push(targets[0]);
             this.editingTarget = targets[0];
             this.editingTarget.updateAllDrawableProperties();
