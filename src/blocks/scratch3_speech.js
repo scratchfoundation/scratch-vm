@@ -6,6 +6,14 @@ var Scratch3SpeechBlocks = function (runtime) {
      * @type {Runtime}
      */
     this.runtime = runtime;
+
+    /**
+     * The most recent result from the speech recognizer, used for a reporter block.
+     * @type {String}
+     */
+    this.latest_speech = '';
+
+    this.startSpeechRecogntion();
 };
 
 /**
@@ -15,7 +23,8 @@ var Scratch3SpeechBlocks = function (runtime) {
 Scratch3SpeechBlocks.prototype.getPrimitives = function () {
     return {
         speech_whenihear: this.hatWhenIHear,
-        speech_speak: this.speak
+        speech_speak: this.speak,
+        speech_getlatestspeech: this.getLatestSpeech
     };
 };
 
@@ -28,11 +37,7 @@ Scratch3SpeechBlocks.prototype.getHats = function () {
     };
 };
 
-Scratch3SpeechBlocks.prototype.hatWhenIHear = function (args) {
-    var input = Cast.toString(args.STRING).toLowerCase();
-
-    if (input === '') return;
-
+Scratch3SpeechBlocks.prototype.startSpeechRecogntion = function () {
     if (!this.recognition) {
         console.log('starting speech recognition');
         this.recognition = new webkitSpeechRecognition();
@@ -40,14 +45,11 @@ Scratch3SpeechBlocks.prototype.hatWhenIHear = function (args) {
         // this.recognition.continuous = true;
         this.recognized_speech = '';
 
-        this.recognition.onresult = function(event) {
+        this.recognition.onresult = function (event) {
+            console.log(event.results);
             this.recognized_speech = event.results[0][0].transcript.toLowerCase();
-            // this. recognized_speech = '';
-            // for (var i=0; i<event.results.length; i++) {
-            //     this.recognized_speech += event.results[i][0].transcript.toLowerCase();
-            // }
             console.log('speech recognition result: ' + this.recognized_speech);
-            // console.log(event.results);
+            this.latest_speech = this.recognized_speech;
         }.bind(this);
 
         this.recognition.onend = function () {
@@ -58,6 +60,12 @@ Scratch3SpeechBlocks.prototype.hatWhenIHear = function (args) {
 
         this.recognition.start();
     }
+};
+
+Scratch3SpeechBlocks.prototype.hatWhenIHear = function (args) {
+    var input = Cast.toString(args.STRING).toLowerCase();
+
+    if (input === '') return false;
 
     if (this.recognized_speech.includes(input)) {
         console.log('detected: ' + input);
@@ -65,6 +73,10 @@ Scratch3SpeechBlocks.prototype.hatWhenIHear = function (args) {
         return true;
     }
     return false;
+};
+
+Scratch3SpeechBlocks.prototype.getLatestSpeech = function () {
+    return this.latest_speech;
 };
 
 Scratch3SpeechBlocks.prototype.speak = function (args, util) {
