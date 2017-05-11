@@ -43,7 +43,7 @@
     "scratch-audio": "latest",
     "scratch-blocks": "latest",
     "scratch-render": "latest",
-    "scratch-storage": "latest",
+    "scratch-storage": "^0.1.0",
     "script-loader": "0.7.0",
     "stats.js": "^0.17.0",
     "tap": "^10.2.0",
