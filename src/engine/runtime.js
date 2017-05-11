@@ -702,7 +702,9 @@ class Runtime extends EventEmitter {
             // @todo: Only render when this.redrawRequested or clones rendered.
             this.renderer.draw();
         }
-        this.emit(Runtime.MONITORS_UPDATE, Object.values(this._monitorState));
+        this.emit(Runtime.MONITORS_UPDATE,
+            Object.keys(this._monitorState).map(key => this._monitorState[key])
+        );
     }
 
     /**
