@@ -105,6 +105,11 @@ class Runtime extends EventEmitter {
         this._cloneCounter = 0;
 
         /**
+         * List of all monitors.
+         */
+        this._monitorState = {};
+
+        /**
          * Whether the project is in "turbo mode."
          * @type {Boolean}
          */
@@ -695,6 +700,7 @@ class Runtime extends EventEmitter {
             // @todo: Only render when this.redrawRequested or clones rendered.
             this.renderer.draw();
         }
+        this.emit(Runtime.MONITORS_UPDATE, Object.values(this._monitorState));
     }
 
     /**
@@ -874,27 +880,32 @@ class Runtime extends EventEmitter {
     }
 
     /**
-     * Emit a monitor update which adds or updates if exists the given monitors.
-     * @param {!Array} monitors Array of monitors to update.
+     * Add a monitor to the state. If the monitor already exists in the state,
+     * overwrites it.
+     * @param {!object} monitor Monitor to add.
      */
-    updateMonitors (monitors) {
-        this.emit(Runtime.MONITORS_UPDATE, monitors);
+    addMonitor (monitor) {
+        this._monitorState[monitor.id] = monitor;
     }
 
     /**
-     * Emit a monitor update which removes if exists the given monitors.
-     * @param {!Array} monitors Array of monitors to remove.
+     * Update a monitor in the state. Does nothing if the monitor does not already
+     * exist in the state.
+     * @param {!object} monitor Monitor to update.
      */
-    removeMonitors (monitors) {
-        this.emit(Runtime.MONITORS_REMOVED, monitors);
+    updateMonitor (monitor) {
+        if (this._monitorState.hasOwnProperty(monitor.id)) {
+            this._monitorState[monitor.id] = Object.assign({}, this._monitorState[monitor.id], monitor);
+        }
     }
 
     /**
-     * Emit a monitor update which adds if it doesn't already exist the given monitors.
-     * @param {!Array} monitors Array of monitors to add.
+     * Removes a monitor from the state. Does nothing if the monitor already does
+     * not exist in the state.
+     * @param {!object} monitorId ID of the monitor to remove.
      */
-    addMonitors (monitors) {
-        this.emit(Runtime.MONITORS_ADDED, monitors);
+    removeMonitor (monitorId) {
+        delete this._monitorState[monitorId];
     }
 
     /**

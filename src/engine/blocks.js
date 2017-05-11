@@ -270,7 +270,7 @@ class Blocks {
     /**
      * Block management: change block field values
      * @param {!object} args Blockly change event to be processed
-     * @param {?Runtime} optRuntime Optional runtime to allow changeBlock to emit actions.
+     * @param {?Runtime} optRuntime Optional runtime to allow changeBlock to change VM state.
      */
     changeBlock (args, optRuntime) {
         // Validate
@@ -291,21 +291,23 @@ class Blocks {
         case 'checkbox':
             block.isMonitored = args.value;
             if (optRuntime && wasMonitored && !block.isMonitored) {
-                optRuntime.removeMonitors([{id: block.id}]);
+                optRuntime.removeMonitor(block.id);
             } else if (optRuntime && !wasMonitored && block.isMonitored) {
-                optRuntime.addMonitors(
+                optRuntime.addMonitor(
                     // Ensure that value is not undefined, since React requires it
-                    [{
+                    {
                         // @todo(dd) this will collide if multiple sprites use same block
                         id: block.id,
                         category: 'data',
                         // @todo(dd) how to handle translation here?
                         label: block.opcode,
+                        // @todo(dd) for numerical values with decimals, some countries use comma
                         value: '',
                         x: 0,
-                        // @todo(dd) place below the last monitor instead
+                        // @todo(dd) Don't require sending x and y when instantiating a
+                        // monitor. If it's not preset the GUI should decide.
                         y: 0
-                    }]
+                    }
                 );
             }
             break;

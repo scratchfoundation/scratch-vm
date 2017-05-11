@@ -91,12 +91,11 @@ const execute = function (sequencer, thread) {
                 if (thread.showVisualReport) {
                     runtime.visualReport(currentBlockId, resolvedValue);
                 }
-
                 if (thread.updateMonitor) {
-                    runtime.updateMonitors([{
+                    runtime.updateMonitor({
                         id: currentBlockId,
                         value: String(resolvedValue)
-                    }]);
+                    });
                 }
             }
             // Finished any yields.
