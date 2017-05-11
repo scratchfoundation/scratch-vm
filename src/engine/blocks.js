@@ -276,9 +276,9 @@ class Blocks {
         // Validate
         if (['field', 'mutation', 'checkbox'].indexOf(args.element) === -1) return;
         const block = this._blocks[args.id];
-        let wasMonitored = block.isMonitored;
         if (typeof block === 'undefined') return;
 
+        let wasMonitored = block.isMonitored;
         switch (args.element) {
         case 'field':
             // Update block value
