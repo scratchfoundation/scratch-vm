@@ -399,8 +399,8 @@ class Runtime extends EventEmitter {
      * @param {!string} id ID of block that starts the stack.
      * @param {!Target} target Target to run thread on.
      * @param {?object} opts optional arguments
-     * @param {?boolean} opts.optShowVisualReport true if the script should show speech bubble for its value
-     * @param {?boolean} opts.optUpdateMonitor true if the script should show and update a monitor with its value
+     * @param {?boolean} opts.showVisualReport true if the script should show speech bubble for its value
+     * @param {?boolean} opts.updateMonitor true if the script should show and update a monitor with its value
      * @return {!Thread} The newly created thread.
      */
     _pushThread (id, target, opts) {
@@ -411,7 +411,7 @@ class Runtime extends EventEmitter {
 
         const thread = new Thread(id);
         thread.target = target;
-        thread.showVisualReport = opts.optShowVisualReport;
+        thread.showVisualReport = opts.showVisualReport;
         thread.updateMonitor = opts.updateMonitor;
 
         thread.pushStack(id);
@@ -442,6 +442,8 @@ class Runtime extends EventEmitter {
     _restartThread (thread) {
         const newThread = new Thread(thread.topBlock);
         newThread.target = thread.target;
+        newThread.showVisualReport = thread.showVisualReport;
+        newThread.updateMonitor = thread.updateMonitor;
         newThread.pushStack(thread.topBlock);
         const i = this.threads.indexOf(thread);
         if (i > -1) {

@@ -30,7 +30,12 @@ const execute = function (sequencer, thread) {
     const currentBlockId = thread.peekStack();
     const currentStackFrame = thread.peekStackFrame();
 
-    let blockContainer = target.blocks;
+    let blockContainer;
+    if (thread.updateMonitor) {
+        blockContainer = runtime.monitorBlocks;
+    } else {
+        blockContainer = target.blocks;
+    }
     let block = blockContainer.getBlock(currentBlockId);
     if (typeof block === 'undefined') {
         blockContainer = runtime.flyoutBlocks;
