@@ -19,42 +19,41 @@ class VirtualMachine extends EventEmitter {
     constructor () {
         super();
 
-        const instance = this;
         /**
          * VM runtime, to store blocks, I/O devices, sprites/targets, etc.
          * @type {!Runtime}
          */
-        instance.runtime = new Runtime();
+        this.runtime = new Runtime();
         /**
          * The "currently editing"/selected target ID for the VM.
          * Block events from any Blockly workspace are routed to this target.
          * @type {!string}
          */
-        instance.editingTarget = null;
+        this.editingTarget = null;
         // Runtime emits are passed along as VM emits.
-        instance.runtime.on(Runtime.SCRIPT_GLOW_ON, glowData => {
-            instance.emit(Runtime.SCRIPT_GLOW_ON, glowData);
+        this.runtime.on(Runtime.SCRIPT_GLOW_ON, glowData => {
+            this.emit(Runtime.SCRIPT_GLOW_ON, glowData);
         });
-        instance.runtime.on(Runtime.SCRIPT_GLOW_OFF, glowData => {
-            instance.emit(Runtime.SCRIPT_GLOW_OFF, glowData);
+        this.runtime.on(Runtime.SCRIPT_GLOW_OFF, glowData => {
+            this.emit(Runtime.SCRIPT_GLOW_OFF, glowData);
         });
-        instance.runtime.on(Runtime.BLOCK_GLOW_ON, glowData => {
-            instance.emit(Runtime.BLOCK_GLOW_ON, glowData);
+        this.runtime.on(Runtime.BLOCK_GLOW_ON, glowData => {
+            this.emit(Runtime.BLOCK_GLOW_ON, glowData);
         });
-        instance.runtime.on(Runtime.BLOCK_GLOW_OFF, glowData => {
-            instance.emit(Runtime.BLOCK_GLOW_OFF, glowData);
+        this.runtime.on(Runtime.BLOCK_GLOW_OFF, glowData => {
+            this.emit(Runtime.BLOCK_GLOW_OFF, glowData);
         });
-        instance.runtime.on(Runtime.PROJECT_RUN_START, () => {
-            instance.emit(Runtime.PROJECT_RUN_START);
+        this.runtime.on(Runtime.PROJECT_RUN_START, () => {
+            this.emit(Runtime.PROJECT_RUN_START);
         });
-        instance.runtime.on(Runtime.PROJECT_RUN_STOP, () => {
-            instance.emit(Runtime.PROJECT_RUN_STOP);
+        this.runtime.on(Runtime.PROJECT_RUN_STOP, () => {
+            this.emit(Runtime.PROJECT_RUN_STOP);
         });
-        instance.runtime.on(Runtime.VISUAL_REPORT, visualReport => {
-            instance.emit(Runtime.VISUAL_REPORT, visualReport);
+        this.runtime.on(Runtime.VISUAL_REPORT, visualReport => {
+            this.emit(Runtime.VISUAL_REPORT, visualReport);
         });
-        instance.runtime.on(Runtime.SPRITE_INFO_REPORT, spriteInfo => {
-            instance.emit(Runtime.SPRITE_INFO_REPORT, spriteInfo);
+        this.runtime.on(Runtime.TARGETS_UPDATE, () => {
+            this.emitTargetsUpdate();
         });
 
         this.blockListener = this.blockListener.bind(this);

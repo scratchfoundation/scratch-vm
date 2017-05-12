@@ -197,7 +197,7 @@ class RenderedTarget extends Target {
             this.y = y;
         }
         this.emit(RenderedTarget.EVENT_TARGET_MOVED, this, oldX, oldY);
-        this.runtime.spriteInfoReport(this);
+        this.runtime.requestTargetsUpdate(this);
     }
 
     /**
@@ -240,7 +240,7 @@ class RenderedTarget extends Target {
                 this.runtime.requestRedraw();
             }
         }
-        this.runtime.spriteInfoReport(this);
+        this.runtime.requestTargetsUpdate(this);
     }
 
     /**
@@ -250,7 +250,7 @@ class RenderedTarget extends Target {
     setDraggable (draggable) {
         if (this.isStage) return;
         this.draggable = !!draggable;
-        this.runtime.spriteInfoReport(this);
+        this.runtime.requestTargetsUpdate(this);
     }
 
     /**
@@ -287,7 +287,7 @@ class RenderedTarget extends Target {
                 this.runtime.requestRedraw();
             }
         }
-        this.runtime.spriteInfoReport(this);
+        this.runtime.requestTargetsUpdate(this);
     }
 
     /**
@@ -386,7 +386,7 @@ class RenderedTarget extends Target {
                 this.runtime.requestRedraw();
             }
         }
-        this.runtime.spriteInfoReport(this);
+        this.runtime.requestTargetsUpdate(this);
     }
 
     /**
@@ -411,7 +411,7 @@ class RenderedTarget extends Target {
                 this.runtime.requestRedraw();
             }
         }
-        this.runtime.spriteInfoReport(this);
+        this.runtime.requestTargetsUpdate(this);
     }
 
     /**
@@ -483,7 +483,7 @@ class RenderedTarget extends Target {
                 this.runtime.requestRedraw();
             }
         }
-        this.runtime.spriteInfoReport(this);
+        this.runtime.requestTargetsUpdate(this);
     }
 
     /**
