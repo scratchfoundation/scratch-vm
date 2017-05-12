@@ -456,13 +456,14 @@ class Scratch3WeDo2Blocks {
      * @return {Promise} - a promise which will resolve at the end of the duration.
      */
     motorOnFor (args) {
+        const durationMS = args.DURATION * 1000;
         return new Promise(resolve => {
             this._forEachMotor(args.MOTOR_ID, motorIndex => {
-                this._device.motor(motorIndex).setMotorOnFor(args.DURATION);
+                this._device.motor(motorIndex).setMotorOnFor(durationMS);
             });
 
             // Ensure this block runs for a fixed amount of time even when no device is connected.
-            setTimeout(resolve, args.DURATION);
+            setTimeout(resolve, durationMS);
         });
     }
 
