@@ -6909,7 +6909,7 @@ var RenderedTarget = function (_Target) {
                 this.y = y;
             }
             this.emit(RenderedTarget.EVENT_TARGET_MOVED, this, oldX, oldY);
-            this.runtime.spriteInfoReport(this);
+            this.runtime.requestTargetsUpdate(this);
         }
 
         /**
@@ -6958,7 +6958,7 @@ var RenderedTarget = function (_Target) {
                     this.runtime.requestRedraw();
                 }
             }
-            this.runtime.spriteInfoReport(this);
+            this.runtime.requestTargetsUpdate(this);
         }
 
         /**
@@ -6971,7 +6971,7 @@ var RenderedTarget = function (_Target) {
         value: function setDraggable(draggable) {
             if (this.isStage) return;
             this.draggable = !!draggable;
-            this.runtime.spriteInfoReport(this);
+            this.runtime.requestTargetsUpdate(this);
         }
 
         /**
@@ -7014,7 +7014,7 @@ var RenderedTarget = function (_Target) {
                     this.runtime.requestRedraw();
                 }
             }
-            this.runtime.spriteInfoReport(this);
+            this.runtime.requestTargetsUpdate(this);
         }
 
         /**
@@ -7114,7 +7114,7 @@ var RenderedTarget = function (_Target) {
                     this.runtime.requestRedraw();
                 }
             }
-            this.runtime.spriteInfoReport(this);
+            this.runtime.requestTargetsUpdate(this);
         }
 
         /**
@@ -7142,7 +7142,7 @@ var RenderedTarget = function (_Target) {
                     this.runtime.requestRedraw();
                 }
             }
-            this.runtime.spriteInfoReport(this);
+            this.runtime.requestTargetsUpdate(this);
         }
 
         /**
@@ -7226,7 +7226,7 @@ var RenderedTarget = function (_Target) {
                     this.runtime.requestRedraw();
                 }
             }
-            this.runtime.spriteInfoReport(this);
+            this.runtime.requestTargetsUpdate(this);
         }
 
         /**
@@ -15312,6 +15312,13 @@ var Runtime = function (_EventEmitter) {
         _this._cloneCounter = 0;
 
         /**
+         * Flag to emit a targets update at the end of a step. When target data
+         * changes, this flag is set to true.
+         * @type {boolean}
+         */
+        _this._refreshTargets = false;
+
+        /**
          * Whether the project is in "turbo mode."
          * @type {Boolean}
          */
@@ -15807,6 +15814,7 @@ var Runtime = function (_EventEmitter) {
     }, {
         key: '_step',
         value: function _step() {
+            this._refreshTargets = false;
             // Find all edge-activated hats, and add them to threads to be evaluated.
             for (var hatType in this._hats) {
                 if (!this._hats.hasOwnProperty(hatType)) continue;
@@ -15824,6 +15832,7 @@ var Runtime = function (_EventEmitter) {
                 // @todo: Only render when this.redrawRequested or clones rendered.
                 this.renderer.draw();
             }
+            if (this._refreshTargets) this.emit(Runtime.TARGETS_UPDATE);
         }
 
         /**
@@ -15848,7 +15857,7 @@ var Runtime = function (_EventEmitter) {
             // Script glows must be cleared.
             this._scriptGlowsPreviousFrame = [];
             this._updateGlows();
-            this.spriteInfoReport(editingTarget);
+            this.requestTargetsUpdate(editingTarget);
         }
 
         /**
@@ -16004,19 +16013,6 @@ var Runtime = function (_EventEmitter) {
         }
 
         /**
-         * Emit a sprite info report if the provided target is the original sprite
-         * @param {!Target} target Target to report sprite info for.
-         */
-
-    }, {
-        key: 'spriteInfoReport',
-        value: function spriteInfoReport(target) {
-            if (!target.isOriginal) return;
-
-            this.emit(Runtime.SPRITE_INFO_REPORT, target.toJSON());
-        }
-
-        /**
          * Get a target by its id.
          * @param {string} targetId Id of target to find.
          * @return {?Target} The target, if found.
@@ -16112,6 +16108,19 @@ var Runtime = function (_EventEmitter) {
         key: 'requestRedraw',
         value: function requestRedraw() {
             this.redrawRequested = true;
+        }
+
+        /**
+         * Emit a targets update at the end of the step if the provided target is
+         * the original sprite
+         * @param {!Target} target Target requesting the targets update
+         */
+
+    }, {
+        key: 'requestTargetsUpdate',
+        value: function requestTargetsUpdate(target) {
+            if (!target.isOriginal) return;
+            this._refreshTargets = true;
         }
 
         /**
@@ -16227,14 +16236,14 @@ var Runtime = function (_EventEmitter) {
         }
 
         /**
-         * Event name for sprite info report.
+         * Event name for targets update report.
          * @const {string}
          */
 
     }, {
-        key: 'SPRITE_INFO_REPORT',
+        key: 'TARGETS_UPDATE',
         get: function get() {
-            return 'SPRITE_INFO_REPORT';
+            return 'TARGETS_UPDATE';
         }
 
         /**
@@ -18932,44 +18941,43 @@ var VirtualMachine = function (_EventEmitter) {
     function VirtualMachine() {
         _classCallCheck(this, VirtualMachine);
 
-        var _this = _possibleConstructorReturn(this, (VirtualMachine.__proto__ || Object.getPrototypeOf(VirtualMachine)).call(this));
-
-        var instance = _this;
         /**
          * VM runtime, to store blocks, I/O devices, sprites/targets, etc.
          * @type {!Runtime}
          */
-        instance.runtime = new Runtime();
+        var _this = _possibleConstructorReturn(this, (VirtualMachine.__proto__ || Object.getPrototypeOf(VirtualMachine)).call(this));
+
+        _this.runtime = new Runtime();
         /**
          * The "currently editing"/selected target ID for the VM.
          * Block events from any Blockly workspace are routed to this target.
          * @type {!string}
          */
-        instance.editingTarget = null;
+        _this.editingTarget = null;
         // Runtime emits are passed along as VM emits.
-        instance.runtime.on(Runtime.SCRIPT_GLOW_ON, function (glowData) {
-            instance.emit(Runtime.SCRIPT_GLOW_ON, glowData);
+        _this.runtime.on(Runtime.SCRIPT_GLOW_ON, function (glowData) {
+            _this.emit(Runtime.SCRIPT_GLOW_ON, glowData);
         });
-        instance.runtime.on(Runtime.SCRIPT_GLOW_OFF, function (glowData) {
-            instance.emit(Runtime.SCRIPT_GLOW_OFF, glowData);
+        _this.runtime.on(Runtime.SCRIPT_GLOW_OFF, function (glowData) {
+            _this.emit(Runtime.SCRIPT_GLOW_OFF, glowData);
         });
-        instance.runtime.on(Runtime.BLOCK_GLOW_ON, function (glowData) {
-            instance.emit(Runtime.BLOCK_GLOW_ON, glowData);
+        _this.runtime.on(Runtime.BLOCK_GLOW_ON, function (glowData) {
+            _this.emit(Runtime.BLOCK_GLOW_ON, glowData);
         });
-        instance.runtime.on(Runtime.BLOCK_GLOW_OFF, function (glowData) {
-            instance.emit(Runtime.BLOCK_GLOW_OFF, glowData);
+        _this.runtime.on(Runtime.BLOCK_GLOW_OFF, function (glowData) {
+            _this.emit(Runtime.BLOCK_GLOW_OFF, glowData);
         });
-        instance.runtime.on(Runtime.PROJECT_RUN_START, function () {
-            instance.emit(Runtime.PROJECT_RUN_START);
+        _this.runtime.on(Runtime.PROJECT_RUN_START, function () {
+            _this.emit(Runtime.PROJECT_RUN_START);
         });
-        instance.runtime.on(Runtime.PROJECT_RUN_STOP, function () {
-            instance.emit(Runtime.PROJECT_RUN_STOP);
+        _this.runtime.on(Runtime.PROJECT_RUN_STOP, function () {
+            _this.emit(Runtime.PROJECT_RUN_STOP);
         });
-        instance.runtime.on(Runtime.VISUAL_REPORT, function (visualReport) {
-            instance.emit(Runtime.VISUAL_REPORT, visualReport);
+        _this.runtime.on(Runtime.VISUAL_REPORT, function (visualReport) {
+            _this.emit(Runtime.VISUAL_REPORT, visualReport);
         });
-        instance.runtime.on(Runtime.SPRITE_INFO_REPORT, function (spriteInfo) {
-            instance.emit(Runtime.SPRITE_INFO_REPORT, spriteInfo);
+        _this.runtime.on(Runtime.TARGETS_UPDATE, function () {
+            _this.emitTargetsUpdate();
         });
 
         _this.blockListener = _this.blockListener.bind(_this);
@@ -21456,7 +21464,7 @@ module.exports = logger;
 
 module.exports = {
 	"name": "scratch-vm",
-	"version": "0.1.0-prerelease.1494522633",
+	"version": "0.1.0-prerelease.1494625763",
 	"description": "Virtual Machine for Scratch 3.0",
 	"author": "Massachusetts Institute of Technology",
 	"license": "BSD-3-Clause",
@@ -21464,7 +21472,7 @@ module.exports = {
 	"repository": {
 		"type": "git",
 		"url": "git+ssh://git@github.com/LLK/scratch-vm.git",
-		"sha": "312e15932e737d39c834951ea57b3e2efe181c29"
+		"sha": "8f45045af0235fc4f1abb0bad8cd4d74796193bb"
 	},
 	"main": "./dist/node/scratch-vm.js",
 	"scripts": {
