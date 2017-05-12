@@ -1,5 +1,5 @@
 const got = require('got');
-const io = require('socket.io-client');
+const io = require('socket.io-client/dist/socket.io');
 const querystring = require('querystring');
 
 /**
