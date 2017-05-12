@@ -590,6 +590,7 @@ class Runtime extends EventEmitter {
                 continue;
             }
             if (this.threads[i].target === target) {
+                this.threads[i].isKilled = true;
                 this._removeThread(this.threads[i]);
             }
         }

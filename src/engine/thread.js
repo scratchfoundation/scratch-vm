@@ -31,6 +31,12 @@ class Thread {
         this.status = 0; /* Thread.STATUS_RUNNING */
 
         /**
+         * Whether the thread is killed in the middle of execution.
+         * @type {boolean}
+         */
+        this.isKilled = false;
+
+        /**
          * Target of this thread.
          * @type {?Target}
          */
