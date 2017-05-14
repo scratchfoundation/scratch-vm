@@ -24,6 +24,7 @@ jobs:
       deploy:
       - provider: script
         on:
+          all_branches: true
           condition: $RELEASE_BRANCHES =~ $TRAVIS_BRANCH
         skip_cleanup: true
         script:
@@ -32,5 +33,6 @@ jobs:
         - npm run --silent deploy -- -x -r $GH_PAGES_REPO
       - provider: npm
         on:
+          all_branches: true
           condition: $RELEASE_BRANCHES =~ $TRAVIS_BRANCH
         api_key: $NPM_TOKEN
