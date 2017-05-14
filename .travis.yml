@@ -3,8 +3,8 @@ node_js:
 - 6
 - node
 env:
-  - NPM_SCRIPT=tap:unit -- --jobs=4
-  - NPM_SCRIPT=tap:integration -- --jobs=4
+  - NPM_SCRIPT="tap:unit -- --jobs=4"
+  - NPM_SCRIPT="tap:integration -- --jobs=4"
 sudo: false
 cache:
   directories:
