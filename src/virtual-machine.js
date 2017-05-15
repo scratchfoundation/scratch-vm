@@ -287,6 +287,20 @@ class VirtualMachine extends EventEmitter {
     }
 
     /**
+     * Delete a costume from the current editing target.
+     * @param {int} costumeIndex - the index of the costume to be removed.
+     */
+    deleteCostume (costumeIndex) {
+        this.editingTarget.sprite.costumes = this.editingTarget.sprite.costumes
+            .slice(0, costumeIndex)
+            .concat(this.editingTarget.sprite.costumes.slice(costumeIndex + 1));
+        if (costumeIndex === this.editingTarget.currentCostume) {
+            this.editingTarget.setCostume(costumeIndex - 1);
+        }
+        this.emitTargetsUpdate();
+    }
+
+    /**
      * Add a sound to the current editing target.
      * @param {!object} soundObject Object representing the costume.
      * @returns {?Promise} - a promise that resolves when the sound has been decoded and added
@@ -296,6 +310,17 @@ class VirtualMachine extends EventEmitter {
             this.editingTarget.sprite.sounds.push(soundObject);
             this.emitTargetsUpdate();
         });
+    }
+
+    /**
+     * Delete a sound from the current editing target.
+     * @param {int} soundIndex - the index of the sound to be removed.
+     */
+    deleteSound (soundIndex) {
+        this.editingTarget.sprite.sounds = this.editingTarget.sprite.sounds
+            .slice(0, soundIndex)
+            .concat(this.editingTarget.sprite.sounds.slice(soundIndex + 1));
+        this.emitTargetsUpdate();
     }
 
     /**
