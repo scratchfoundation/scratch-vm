@@ -105,9 +105,17 @@ class Runtime extends EventEmitter {
         this._cloneCounter = 0;
 
         /**
+<<<<<<< HEAD
          * List of all monitors.
          */
         this._monitorState = {};
+=======
+         * Flag to emit a targets update at the end of a step. When target data
+         * changes, this flag is set to true.
+         * @type {boolean}
+         */
+        this._refreshTargets = false;
+>>>>>>> develop
 
         /**
          * Whether the project is in "turbo mode."
@@ -231,11 +239,11 @@ class Runtime extends EventEmitter {
     }
 
     /**
-     * Event name for sprite info report.
+     * Event name for targets update report.
      * @const {string}
      */
-    static get SPRITE_INFO_REPORT () {
-        return 'SPRITE_INFO_REPORT';
+    static get TARGETS_UPDATE () {
+        return 'TARGETS_UPDATE';
     }
 
     /**
@@ -665,6 +673,7 @@ class Runtime extends EventEmitter {
      * inactive threads after each iteration.
      */
     _step () {
+        this._refreshTargets = false;
         // Find all edge-activated hats, and add them to threads to be evaluated.
         for (const hatType in this._hats) {
             if (!this._hats.hasOwnProperty(hatType)) continue;
@@ -686,12 +695,9 @@ class Runtime extends EventEmitter {
             // @todo: Only render when this.redrawRequested or clones rendered.
             this.renderer.draw();
         }
-        // @todo only emit if monitors has changed since last time.
-        this.emit(Runtime.MONITORS_UPDATE,
-            Object.keys(this._monitorState).map(key => this._monitorState[key])
-        );
+        if (this._refreshTargets) this.emit(Runtime.TARGETS_UPDATE);
     }
-
+    
     /**
      * Get the number of threads in the given array that are monitor threads (threads
      * that update monitor values, and don't count as running a script).
@@ -722,7 +728,7 @@ class Runtime extends EventEmitter {
         // Script glows must be cleared.
         this._scriptGlowsPreviousFrame = [];
         this._updateGlows();
-        this.spriteInfoReport(editingTarget);
+        this.requestTargetsUpdate(editingTarget);
     }
 
     /**
@@ -859,6 +865,7 @@ class Runtime extends EventEmitter {
     }
 
     /**
+<<<<<<< HEAD
      * Emit a sprite info report if the provided target is the original sprite
      * @param {!Target} target Target to report sprite info for.
      */
@@ -898,6 +905,8 @@ class Runtime extends EventEmitter {
     }
 
     /**
+=======
+>>>>>>> develop
      * Get a target by its id.
      * @param {string} targetId Id of target to find.
      * @return {?Target} The target, if found.
@@ -972,6 +981,16 @@ class Runtime extends EventEmitter {
      */
     requestRedraw () {
         this.redrawRequested = true;
+    }
+
+    /**
+     * Emit a targets update at the end of the step if the provided target is
+     * the original sprite
+     * @param {!Target} target Target requesting the targets update
+     */
+    requestTargetsUpdate (target) {
+        if (!target.isOriginal) return;
+        this._refreshTargets = true;
     }
 
     /**

@@ -30,7 +30,8 @@ const loadCostume = function (md5ext, costume, runtime) {
     ];
 
     let promise = runtime.storage.load(assetType, md5).then(costumeAsset => {
-        costume.url = costumeAsset.encodeDataURI();
+        costume.assetId = costumeAsset.assetId;
+        costume.assetType = assetType;
         return costumeAsset;
     });
 
