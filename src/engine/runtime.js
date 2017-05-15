@@ -105,10 +105,16 @@ class Runtime extends EventEmitter {
         this._cloneCounter = 0;
 
         /**
+         * Flag to emit a targets update at the end of a step. When target data
+         * changes, this flag is set to true.
+         * @type {boolean}
+         */
+        this._refreshTargets = false;
+
+        /**
          * List of all monitors.
          */
         this._monitorState = {};
-
 
         /**
          * Whether the project is in "turbo mode."
@@ -688,6 +694,8 @@ class Runtime extends EventEmitter {
             // @todo: Only render when this.redrawRequested or clones rendered.
             this.renderer.draw();
         }
+        if (this._refreshTargets) this.emit(Runtime.TARGETS_UPDATE);
+
         // @todo(vm#570) only emit if monitors has changed since last time.
         this.emit(Runtime.MONITORS_UPDATE,
             Object.keys(this._monitorState).map(key => this._monitorState[key])
