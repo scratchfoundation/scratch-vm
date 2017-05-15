@@ -105,17 +105,10 @@ class Runtime extends EventEmitter {
         this._cloneCounter = 0;
 
         /**
-<<<<<<< HEAD
          * List of all monitors.
          */
         this._monitorState = {};
-=======
-         * Flag to emit a targets update at the end of a step. When target data
-         * changes, this flag is set to true.
-         * @type {boolean}
-         */
-        this._refreshTargets = false;
->>>>>>> develop
+
 
         /**
          * Whether the project is in "turbo mode."
@@ -697,7 +690,7 @@ class Runtime extends EventEmitter {
         }
         if (this._refreshTargets) this.emit(Runtime.TARGETS_UPDATE);
     }
-    
+
     /**
      * Get the number of threads in the given array that are monitor threads (threads
      * that update monitor values, and don't count as running a script).
@@ -865,17 +858,6 @@ class Runtime extends EventEmitter {
     }
 
     /**
-<<<<<<< HEAD
-     * Emit a sprite info report if the provided target is the original sprite
-     * @param {!Target} target Target to report sprite info for.
-     */
-    spriteInfoReport (target) {
-        if (!target.isOriginal) return;
-
-        this.emit(Runtime.SPRITE_INFO_REPORT, target.toJSON());
-    }
-
-    /**
      * Add a monitor to the state. If the monitor already exists in the state,
      * overwrites it.
      * @param {!object} monitor Monitor to add.
@@ -905,8 +887,6 @@ class Runtime extends EventEmitter {
     }
 
     /**
-=======
->>>>>>> develop
      * Get a target by its id.
      * @param {string} targetId Id of target to find.
      * @return {?Target} The target, if found.
