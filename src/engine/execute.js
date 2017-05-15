@@ -97,7 +97,7 @@ const execute = function (sequencer, thread) {
                     runtime.visualReport(currentBlockId, resolvedValue);
                 }
                 if (thread.updateMonitor) {
-                    runtime.updateMonitor({
+                    runtime.requestUpdateMonitor({
                         id: currentBlockId,
                         value: String(resolvedValue)
                     });

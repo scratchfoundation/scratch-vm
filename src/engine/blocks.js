@@ -291,20 +291,20 @@ class Blocks {
         case 'checkbox':
             block.isMonitored = args.value;
             if (optRuntime && wasMonitored && !block.isMonitored) {
-                optRuntime.removeMonitor(block.id);
+                optRuntime.requestRemoveMonitor(block.id);
             } else if (optRuntime && !wasMonitored && block.isMonitored) {
-                optRuntime.addMonitor(
+                optRuntime.requestAddMonitor(
                     // Ensure that value is not undefined, since React requires it
                     {
-                        // @todo(dd) this will collide if multiple sprites use same block
+                        // @todo(vm#564) this will collide if multiple sprites use same block
                         id: block.id,
                         category: 'data',
-                        // @todo(dd) how to handle translation here?
+                        // @todo(vm#565) how to handle translation here?
                         label: block.opcode,
-                        // @todo(dd) for numerical values with decimals, some countries use comma
+                        // @todo(vm#565) for numerical values with decimals, some countries use comma
                         value: '',
                         x: 0,
-                        // @todo(dd) Don't require sending x and y when instantiating a
+                        // @todo(vm#566) Don't require sending x and y when instantiating a
                         // monitor. If it's not preset the GUI should decide.
                         y: 0
                     }

@@ -247,22 +247,6 @@ class Runtime extends EventEmitter {
     }
 
     /**
-     * Event name for monitors removed.
-     * @const {string}
-     */
-    static get MONITORS_REMOVED () {
-        return 'MONITORS_REMOVED';
-    }
-
-    /**
-     * Event name for monitors added.
-     * @const {string}
-     */
-    static get MONITORS_ADDED () {
-        return 'MONITORS_ADDED';
-    }
-
-    /**
      * How rapidly we try to step threads by default, in ms.
      */
     static get THREAD_STEP_INTERVAL () {
@@ -400,7 +384,7 @@ class Runtime extends EventEmitter {
      * @param {!Target} target Target to run thread on.
      * @param {?object} opts optional arguments
      * @param {?boolean} opts.showVisualReport true if the script should show speech bubble for its value
-     * @param {?boolean} opts.updateMonitor true if the script should show and update a monitor with its value
+     * @param {?boolean} opts.updateMonitor true if the script should update a monitor value
      * @return {!Thread} The newly created thread.
      */
     _pushThread (id, target, opts) {
@@ -468,7 +452,7 @@ class Runtime extends EventEmitter {
      * @param {?object} opts optional arguments to toggle script
      * @param {?string} opts.target target ID for target to run script on. If not supplied, uses editing target.
      * @param {?boolean} opts.showVisualReport true if the speech bubble should pop up on the block, false if not.
-     * @param {?boolean} opts.updateMonitor true if the monitor for this block should show and get updated.
+     * @param {?boolean} opts.updateMonitor true if the monitor for this block should get updated.
      */
     toggleScript (topBlockId, opts) {
         opts = Object.assign({
@@ -702,6 +686,7 @@ class Runtime extends EventEmitter {
             // @todo: Only render when this.redrawRequested or clones rendered.
             this.renderer.draw();
         }
+        // @todo only emit if monitors has changed since last time.
         this.emit(Runtime.MONITORS_UPDATE,
             Object.keys(this._monitorState).map(key => this._monitorState[key])
         );
@@ -888,7 +873,7 @@ class Runtime extends EventEmitter {
      * overwrites it.
      * @param {!object} monitor Monitor to add.
      */
-    addMonitor (monitor) {
+    requestAddMonitor (monitor) {
         this._monitorState[monitor.id] = monitor;
     }
 
@@ -897,7 +882,7 @@ class Runtime extends EventEmitter {
      * exist in the state.
      * @param {!object} monitor Monitor to update.
      */
-    updateMonitor (monitor) {
+    requestUpdateMonitor (monitor) {
         if (this._monitorState.hasOwnProperty(monitor.id)) {
             this._monitorState[monitor.id] = Object.assign({}, this._monitorState[monitor.id], monitor);
         }
@@ -908,7 +893,7 @@ class Runtime extends EventEmitter {
      * not exist in the state.
      * @param {!object} monitorId ID of the monitor to remove.
      */
-    removeMonitor (monitorId) {
+    requestRemoveMonitor (monitorId) {
         delete this._monitorState[monitorId];
     }
 
