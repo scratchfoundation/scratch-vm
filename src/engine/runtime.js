@@ -688,7 +688,7 @@ class Runtime extends EventEmitter {
             // @todo: Only render when this.redrawRequested or clones rendered.
             this.renderer.draw();
         }
-        // @todo only emit if monitors has changed since last time.
+        // @todo(vm#570) only emit if monitors has changed since last time.
         this.emit(Runtime.MONITORS_UPDATE,
             Object.keys(this._monitorState).map(key => this._monitorState[key])
         );
