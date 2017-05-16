@@ -291,13 +291,7 @@ class VirtualMachine extends EventEmitter {
      * @param {int} costumeIndex - the index of the costume to be removed.
      */
     deleteCostume (costumeIndex) {
-        this.editingTarget.sprite.costumes = this.editingTarget.sprite.costumes
-            .slice(0, costumeIndex)
-            .concat(this.editingTarget.sprite.costumes.slice(costumeIndex + 1));
-        if (costumeIndex === this.editingTarget.currentCostume) {
-            this.editingTarget.setCostume(costumeIndex - 1);
-        }
-        this.emitTargetsUpdate();
+        this.editingTarget.deleteCostume(costumeIndex);
     }
 
     /**
@@ -317,10 +311,7 @@ class VirtualMachine extends EventEmitter {
      * @param {int} soundIndex - the index of the sound to be removed.
      */
     deleteSound (soundIndex) {
-        this.editingTarget.sprite.sounds = this.editingTarget.sprite.sounds
-            .slice(0, soundIndex)
-            .concat(this.editingTarget.sprite.sounds.slice(soundIndex + 1));
-        this.emitTargetsUpdate();
+        this.editingTarget.deleteSound(soundIndex);
     }
 
     /**

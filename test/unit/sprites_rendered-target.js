@@ -98,6 +98,71 @@ test('setCostume', t => {
     t.end();
 });
 
+test('deleteCostume', t => {
+    const o1 = {id: 1};
+    const o2 = {id: 2};
+    const o3 = {id: 3};
+
+    const s = new Sprite();
+    const r = new Runtime();
+    s.costumes = [o1, o2, o3];
+    const a = new RenderedTarget(s, r);
+    const renderer = new FakeRenderer();
+    a.renderer = renderer;
+
+    // Deleting costume keeps costume index at 0
+    a.setCostume(0);
+    a.deleteCostume(0);
+    t.deepEqual(a.sprite.costumes, [o2, o3]);
+    t.equals(a.currentCostume, 0);
+
+    // Deleting a costume in the middle maintains current costume index
+    a.sprite.costumes = [o1, o2, o3];
+    a.setCostume(1);
+    a.deleteCostume(1);
+    t.deepEqual(a.sprite.costumes, [o1, o3]);
+    t.equals(a.currentCostume, 1);
+
+    // Deleting last costume selects previous costume
+    a.sprite.costumes = [o1, o2, o3];
+    a.setCostume(2);
+    a.deleteCostume(2);
+    t.deepEqual(a.sprite.costumes, [o1, o2]);
+    t.equals(a.currentCostume, 1);
+
+    // Refuses to delete only costume
+    a.sprite.costumes = [o1];
+    a.setCostume(0);
+    a.deleteCostume(0);
+    t.deepEqual(a.sprite.costumes, [o1]);
+    t.equals(a.currentCostume, 0);
+
+    t.end();
+});
+
+test('deleteSound', t => {
+    const o1 = {id: 1};
+    const o2 = {id: 2};
+    const o3 = {id: 3};
+
+    const s = new Sprite();
+    const r = new Runtime();
+    s.sounds = [o1, o2, o3];
+    const a = new RenderedTarget(s, r);
+    const renderer = new FakeRenderer();
+    a.renderer = renderer;
+
+    a.deleteSound(0);
+    t.deepEqual(a.sprite.sounds, [o2, o3]);
+
+    // Refuses to delete only sound
+    a.sprite.sounds = [o1];
+    a.deleteSound(0);
+    t.deepEqual(a.sprite.sounds, [o1]);
+
+    t.end();
+});
+
 test('setRotationStyle', t => {
     const s = new Sprite();
     const r = new Runtime();
