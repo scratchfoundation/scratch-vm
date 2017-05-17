@@ -20,7 +20,7 @@ class Target extends EventEmitter {
         super();
 
         if (!blocks) {
-            blocks = new Blocks(this);
+            blocks = new Blocks();
         }
         /**
          * A unique ID for this target.

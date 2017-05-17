@@ -56,6 +56,13 @@ class Runtime extends EventEmitter {
         this.flyoutBlocks = new Blocks();
 
         /**
+         * Storage container for monitor blocks.
+         * These will execute on a target maybe
+         * @type {!Blocks}
+         */
+        this.monitorBlocks = new Blocks();
+
+        /**
          * Currently known editing target for the VM.
          * @type {?Target}
          */
@@ -99,6 +106,13 @@ class Runtime extends EventEmitter {
          * @type {number}
          */
         this._cloneCounter = 0;
+
+        /**
+         * Flag to emit a targets update at the end of a step. When target data
+         * changes, this flag is set to true.
+         * @type {boolean}
+         */
+        this._refreshTargets = false;
 
         /**
          * Whether the project is in "turbo mode."
@@ -223,11 +237,11 @@ class Runtime extends EventEmitter {
     }
 
     /**
-     * Event name for sprite info report.
+     * Event name for targets update report.
      * @const {string}
      */
-    static get SPRITE_INFO_REPORT () {
-        return 'SPRITE_INFO_REPORT';
+    static get TARGETS_UPDATE () {
+        return 'TARGETS_UPDATE';
     }
 
     /**
@@ -366,11 +380,13 @@ class Runtime extends EventEmitter {
      * Create a thread and push it to the list of threads.
      * @param {!string} id ID of block that starts the stack.
      * @param {!Target} target Target to run thread on.
+     * @param {?boolean} optShowVisualReport true if the script should show speech bubble for its value
      * @return {!Thread} The newly created thread.
      */
-    _pushThread (id, target) {
+    _pushThread (id, target, optShowVisualReport) {
         const thread = new Thread(id);
         thread.target = target;
+        thread.showVisualReport = optShowVisualReport;
         thread.pushStack(id);
         this.threads.push(thread);
         return thread;
@@ -420,8 +436,11 @@ class Runtime extends EventEmitter {
     /**
      * Toggle a script.
      * @param {!string} topBlockId ID of block that starts the script.
+     * @param {?object} opts optional arguments to toggle script
+     * @param {?string} opts.target target ID for target to run script on. If not supplied, uses editing target.
+     * @param {?boolean} opts.showVisualReport true if the speech bubble should pop up on the block, false if not.
      */
-    toggleScript (topBlockId) {
+    toggleScript (topBlockId, opts) {
         // Remove any existing thread.
         for (let i = 0; i < this.threads.length; i++) {
             if (this.threads[i].topBlock === topBlockId) {
@@ -430,7 +449,10 @@ class Runtime extends EventEmitter {
             }
         }
         // Otherwise add it.
-        this._pushThread(topBlockId, this._editingTarget);
+        this._pushThread(
+            topBlockId,
+            opts && opts.target ? opts.target : this._editingTarget,
+            opts ? opts.showVisualReport : false);
     }
 
     /**
@@ -627,6 +649,7 @@ class Runtime extends EventEmitter {
      * inactive threads after each iteration.
      */
     _step () {
+        this._refreshTargets = false;
         // Find all edge-activated hats, and add them to threads to be evaluated.
         for (const hatType in this._hats) {
             if (!this._hats.hasOwnProperty(hatType)) continue;
@@ -636,6 +659,7 @@ class Runtime extends EventEmitter {
             }
         }
         this.redrawRequested = false;
+        this._pushMonitors();
         const doneThreads = this.sequencer.stepThreads();
         this._updateGlows(doneThreads);
         this._setThreadCount(this.threads.length + doneThreads.length);
@@ -643,6 +667,14 @@ class Runtime extends EventEmitter {
             // @todo: Only render when this.redrawRequested or clones rendered.
             this.renderer.draw();
         }
+        if (this._refreshTargets) this.emit(Runtime.TARGETS_UPDATE);
+    }
+
+    /**
+     * Queue monitor blocks to sequencer to be run.
+     */
+    _pushMonitors () {
+        this.monitorBlocks.runAllMonitored(this);
     }
 
     /**
@@ -654,7 +686,7 @@ class Runtime extends EventEmitter {
         // Script glows must be cleared.
         this._scriptGlowsPreviousFrame = [];
         this._updateGlows();
-        this.spriteInfoReport(editingTarget);
+        this.requestTargetsUpdate(editingTarget);
     }
 
     /**
@@ -791,16 +823,6 @@ class Runtime extends EventEmitter {
     }
 
     /**
-     * Emit a sprite info report if the provided target is the original sprite
-     * @param {!Target} target Target to report sprite info for.
-     */
-    spriteInfoReport (target) {
-        if (!target.isOriginal) return;
-
-        this.emit(Runtime.SPRITE_INFO_REPORT, target.toJSON());
-    }
-
-    /**
      * Get a target by its id.
      * @param {string} targetId Id of target to find.
      * @return {?Target} The target, if found.
@@ -875,6 +897,16 @@ class Runtime extends EventEmitter {
      */
     requestRedraw () {
         this.redrawRequested = true;
+    }
+
+    /**
+     * Emit a targets update at the end of the step if the provided target is
+     * the original sprite
+     * @param {!Target} target Target requesting the targets update
+     */
+    requestTargetsUpdate (target) {
+        if (!target.isOriginal) return;
+        this._refreshTargets = true;
     }
 
     /**

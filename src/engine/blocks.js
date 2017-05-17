@@ -194,7 +194,7 @@ class Blocks {
         // UI event: clicked scripts toggle in the runtime.
         if (e.element === 'stackclick') {
             if (optRuntime) {
-                optRuntime.toggleScript(e.blockId);
+                optRuntime.toggleScript(e.blockId, {showVisualReport: true});
             }
             return;
         }
@@ -273,16 +273,22 @@ class Blocks {
      */
     changeBlock (args) {
         // Validate
-        if (args.element !== 'field' && args.element !== 'mutation') return;
+        if (['field', 'mutation', 'checkbox'].indexOf(args.element) === -1) return;
         const block = this._blocks[args.id];
         if (typeof block === 'undefined') return;
 
-        if (args.element === 'field') {
+        switch (args.element) {
+        case 'field':
             // Update block value
             if (!block.fields[args.name]) return;
             block.fields[args.name].value = args.value;
-        } else if (args.element === 'mutation') {
+            break;
+        case 'mutation':
             block.mutation = mutationAdapter(args.value);
+            break;
+        case 'checkbox':
+            block.isMonitored = args.value;
+            break;
         }
     }
 
@@ -340,6 +346,20 @@ class Blocks {
             }
             this._blocks[e.id].parent = e.newParent;
         }
+    }
+
+    
+    /**
+     * Block management: run all blocks.
+     * @param {!object} runtime Runtime to run all blocks in.
+     */
+    runAllMonitored (runtime) {
+        Object.keys(this._blocks).forEach(blockId => {
+            if (this.getBlock(blockId).isMonitored) {
+                // @todo handle specific targets (e.g. apple x position)
+                runtime.toggleScript(blockId);
+            }
+        });
     }
 
     /**
