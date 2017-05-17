@@ -471,29 +471,28 @@ class Scratch3WeDo2Blocks {
      * Turn specified motor(s) on indefinitely.
      * @param {object} args - the block's arguments.
      * @property {MotorID} MOTOR_ID - the motor(s) to activate.
-     * @return {Promise} - a promise which will resolve after a short delay
+     * @return {Promise} - a promise which will resolve after a short wait.
      */
     motorOn (args) {
         this._forEachMotor(args.MOTOR_ID, motorIndex => {
             this._device.motor(motorIndex).setMotorOn();
         });
 
-        // Add a short wait time to the block, to prevent crashes due to flooding
-        // the wedo with too many commands
-        return new Promise(resolve => {
-            setTimeout(resolve, 200);
-        });
+        return this._shortWait();
     }
 
     /**
      * Turn specified motor(s) off.
      * @param {object} args - the block's arguments.
      * @property {MotorID} MOTOR_ID - the motor(s) to deactivate.
+     * @return {Promise} - a promise which will resolve after a short wait.
      */
     motorOff (args) {
         this._forEachMotor(args.MOTOR_ID, motorIndex => {
             this._device.motor(motorIndex).setMotorOff();
         });
+
+        return this._shortWait();
     }
 
     /**
@@ -501,13 +500,16 @@ class Scratch3WeDo2Blocks {
      * @param {object} args - the block's arguments.
      * @property {MotorID} MOTOR_ID - the motor(s) to be affected.
      * @property {int} POWER - the new power level for the motor(s).
-     */
+     * @return {Promise} - a promise which will resolve after a short wait.
+    */
     startMotorPower (args) {
         this._forEachMotor(args.MOTOR_ID, motorIndex => {
             const motor = this._device.motor(motorIndex);
             motor.power = args.POWER;
             motor.setMotorOn();
         });
+
+        return this._shortWait();
     }
 
     /**
@@ -541,6 +543,7 @@ class Scratch3WeDo2Blocks {
      * Set the LED's hue.
      * @param {object} args - the block's arguments.
      * @property {number} HUE - the hue to set, in the range [0,100].
+     * @return {Promise} - a promise which will resolve at the end of a short wait.
      */
     setLightHue (args) {
         // Convert from [0,100] to [0,360]
@@ -551,6 +554,8 @@ class Scratch3WeDo2Blocks {
         const rgbDecimal = color.rgbToDecimal(rgbObject);
 
         this._device.setLED(rgbDecimal);
+
+        return this._shortWait();
     }
 
     /**
@@ -701,6 +706,16 @@ class Scratch3WeDo2Blocks {
     _noteToTone (midiNote) {
         // Note that MIDI note 69 is A4, 440 Hz
         return 440 * Math.pow(2, (midiNote - 69) / 12);
+    }
+
+    /**
+     * Wait for a short time, to prevent sending messages too fast.
+     * @return {Promise} - a promise which will resolve at the end of the wait time.
+      */
+    _shortWait () {
+        return new Promise(resolve => {
+            setTimeout(resolve, 200);
+        });
     }
 }
 
