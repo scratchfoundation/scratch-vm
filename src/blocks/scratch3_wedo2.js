@@ -471,10 +471,17 @@ class Scratch3WeDo2Blocks {
      * Turn specified motor(s) on indefinitely.
      * @param {object} args - the block's arguments.
      * @property {MotorID} MOTOR_ID - the motor(s) to activate.
+     * @return {Promise} - a promise which will resolve after a short delay
      */
     motorOn (args) {
         this._forEachMotor(args.MOTOR_ID, motorIndex => {
             this._device.motor(motorIndex).setMotorOn();
+        });
+
+        // Add a short wait time to the block, to prevent crashes due to flooding
+        // the wedo with too many commands
+        return new Promise(resolve => {
+            setTimeout(resolve, 200);
         });
     }
 
