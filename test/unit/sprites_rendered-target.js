@@ -155,10 +155,10 @@ test('deleteSound', t => {
     a.deleteSound(0);
     t.deepEqual(a.sprite.sounds, [o2, o3]);
 
-    // Refuses to delete only sound
+    // Allows deleting the only sound
     a.sprite.sounds = [o1];
     a.deleteSound(0);
-    t.deepEqual(a.sprite.sounds, [o1]);
+    t.deepEqual(a.sprite.sounds, []);
 
     t.end();
 });

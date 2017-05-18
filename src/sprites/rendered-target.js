@@ -415,7 +415,6 @@ class RenderedTarget extends Target {
      * @param {number} index Sound index to be deleted
      */
     deleteSound (index) {
-        if (this.sprite.sounds.length === 1) return;
         this.sprite.sounds = this.sprite.sounds
             .slice(0, index)
             .concat(this.sprite.sounds.slice(index + 1));
