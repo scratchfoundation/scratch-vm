@@ -13,7 +13,7 @@ var Scratch3SpeechBlocks = function (runtime) {
      */
     this.latest_speech = '';
 
-    this.startSpeechRecogntion();
+    this.runtime.HACK_SpeechBlocks = this;
 };
 
 /**
