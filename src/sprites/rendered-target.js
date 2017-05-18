@@ -401,10 +401,10 @@ class RenderedTarget extends Target {
             .slice(0, index)
             .concat(this.sprite.costumes.slice(index + 1));
 
-        if (index === originalCostumeCount - 1) {
+        if (index === this.currentCostume && index === originalCostumeCount - 1) {
             this.setCostume(index - 1);
-        } else {
-            this.setCostume(index);
+        } else if (index < this.currentCostume) {
+            this.setCostume(this.currentCostume - 1);
         }
 
         this.runtime.requestTargetsUpdate(this);
