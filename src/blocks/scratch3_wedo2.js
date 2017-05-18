@@ -471,10 +471,11 @@ class Scratch3WeDo2Blocks {
     motorOnFor (args) {
         const durationMS = args.DURATION * 1000;
         return new Promise(resolve => {
-            this._forEachMotor(args.MOTOR_ID, motorIndex => {
-                this._device.motor(motorIndex).setMotorOnFor(durationMS);
-            });
-
+            if (this._device) {
+                this._forEachMotor(args.MOTOR_ID, motorIndex => {
+                    this._device.motor(motorIndex).setMotorOnFor(durationMS);
+                });
+            }
             // Ensure this block runs for a fixed amount of time even when no device is connected.
             setTimeout(resolve, durationMS);
         });
@@ -487,10 +488,11 @@ class Scratch3WeDo2Blocks {
      * @return {Promise} - a promise which will resolve after a short wait.
      */
     motorOn (args) {
-        this._forEachMotor(args.MOTOR_ID, motorIndex => {
-            this._device.motor(motorIndex).setMotorOn();
-        });
-
+        if (this._device) {
+            this._forEachMotor(args.MOTOR_ID, motorIndex => {
+                this._device.motor(motorIndex).setMotorOn();
+            });
+        }
         return this._shortWait();
     }
 
@@ -501,10 +503,11 @@ class Scratch3WeDo2Blocks {
      * @return {Promise} - a promise which will resolve after a short wait.
      */
     motorOff (args) {
-        this._forEachMotor(args.MOTOR_ID, motorIndex => {
-            this._device.motor(motorIndex).setMotorOff();
-        });
-
+        if (this._device) {
+            this._forEachMotor(args.MOTOR_ID, motorIndex => {
+                this._device.motor(motorIndex).setMotorOff();
+            });
+        }
         return this._shortWait();
     }
 
@@ -516,12 +519,13 @@ class Scratch3WeDo2Blocks {
      * @return {Promise} - a promise which will resolve after a short wait.
     */
     startMotorPower (args) {
-        this._forEachMotor(args.MOTOR_ID, motorIndex => {
-            const motor = this._device.motor(motorIndex);
-            motor.power = args.POWER;
-            motor.setMotorOn();
-        });
-
+        if (this._device) {
+            this._forEachMotor(args.MOTOR_ID, motorIndex => {
+                const motor = this._device.motor(motorIndex);
+                motor.power = args.POWER;
+                motor.setMotorOn();
+            });
+        }
         return this._shortWait();
     }
 
@@ -533,6 +537,9 @@ class Scratch3WeDo2Blocks {
      * @property {MotorDirection} DIRECTION - the new direction for the motor(s).
      */
     setMotorDirection (args) {
+        if (!this._device) {
+            return;
+        }
         this._forEachMotor(args.MOTOR_ID, motorIndex => {
             const motor = this._device.motor(motorIndex);
             switch (args.DIRECTION) {
@@ -566,8 +573,9 @@ class Scratch3WeDo2Blocks {
 
         const rgbDecimal = color.rgbToDecimal(rgbObject);
 
-        this._device.setLED(rgbDecimal);
-
+        if (this._device) {
+            this._device.setLED(rgbDecimal);
+        }
         return this._shortWait();
     }
 
@@ -582,8 +590,9 @@ class Scratch3WeDo2Blocks {
         return new Promise(resolve => {
             const durationMS = args.DURATION * 1000;
             const tone = this._noteToTone(args.NOTE);
-            this._device.playTone(tone, durationMS);
-
+            if (this._device) {
+                this._device.playTone(tone, durationMS);
+            }
             // Ensure this block runs for a fixed amount of time even when no device is connected.
             setTimeout(resolve, durationMS);
         });
@@ -597,6 +606,9 @@ class Scratch3WeDo2Blocks {
      * @return {boolean} - the result of the comparison, or false on error.
      */
     whenDistance (args) {
+        if (!this._device) {
+            return false;
+        }
         switch (args.OP) {
         case '<':
             return this._device.distance < args.REFERENCE;
@@ -622,6 +634,9 @@ class Scratch3WeDo2Blocks {
      * @return {number} - the distance sensor's value, scaled to the [0,100] range.
      */
     getDistance () {
+        if (!this._device) {
+            return 0;
+        }
         return this._device.distance * 10;
     }
 
@@ -652,6 +667,9 @@ class Scratch3WeDo2Blocks {
      * @private
      */
     _isTilted (direction) {
+        if (!this._device) {
+            return false;
+        }
         switch (direction) {
         case TiltDirection.ANY:
             return (Math.abs(this._device.tiltX) >= Scratch3WeDo2Blocks.TILT_THRESHOLD) ||
@@ -668,6 +686,9 @@ class Scratch3WeDo2Blocks {
      * @private
      */
     _getTiltAngle (direction) {
+        if (!this._device) {
+            return 0;
+        }
         switch (direction) {
         case TiltDirection.UP:
             return -this._device.tiltY;
