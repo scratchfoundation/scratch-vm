@@ -15814,7 +15814,6 @@ var Runtime = function (_EventEmitter) {
     }, {
         key: '_step',
         value: function _step() {
-            this._refreshTargets = false;
             // Find all edge-activated hats, and add them to threads to be evaluated.
             for (var hatType in this._hats) {
                 if (!this._hats.hasOwnProperty(hatType)) continue;
@@ -15832,7 +15831,10 @@ var Runtime = function (_EventEmitter) {
                 // @todo: Only render when this.redrawRequested or clones rendered.
                 this.renderer.draw();
             }
-            if (this._refreshTargets) this.emit(Runtime.TARGETS_UPDATE);
+            if (this._refreshTargets) {
+                this.emit(Runtime.TARGETS_UPDATE);
+                this._refreshTargets = false;
+            }
         }
 
         /**
@@ -21464,7 +21466,7 @@ module.exports = logger;
 
 module.exports = {
 	"name": "scratch-vm",
-	"version": "0.1.0-prerelease.1494625763",
+	"version": "0.1.0-prerelease.1495120291",
 	"description": "Virtual Machine for Scratch 3.0",
 	"author": "Massachusetts Institute of Technology",
 	"license": "BSD-3-Clause",
@@ -21472,7 +21474,7 @@ module.exports = {
 	"repository": {
 		"type": "git",
 		"url": "git+ssh://git@github.com/LLK/scratch-vm.git",
-		"sha": "8f45045af0235fc4f1abb0bad8cd4d74796193bb"
+		"sha": "597de3b741a710bbea7098e2006c3c239994a024"
 	},
 	"main": "./dist/node/scratch-vm.js",
 	"scripts": {
