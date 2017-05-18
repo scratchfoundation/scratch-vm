@@ -94,3 +94,18 @@ test('renameSprite increments from existing sprite names', t => {
     t.equal(vm.runtime.targets[0].sprite.name, 'that name2');
     t.end();
 });
+
+test('renameSprite does not increment when renaming to the same name', t => {
+    const vm = new VirtualMachine();
+    vm.emitTargetsUpdate = () => {};
+    vm.runtime.targets = [{
+        id: 'id1',
+        isSprite: () => true,
+        sprite: {
+            name: 'this name'
+        }
+    }];
+    vm.renameSprite('id1', 'this name');
+    t.equal(vm.runtime.targets[0].sprite.name, 'this name');
+    t.end();
+});
