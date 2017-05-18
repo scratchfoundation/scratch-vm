@@ -30,7 +30,12 @@ const execute = function (sequencer, thread) {
     const currentBlockId = thread.peekStack();
     const currentStackFrame = thread.peekStackFrame();
 
-    let blockContainer = target.blocks;
+    let blockContainer;
+    if (thread.updateMonitor) {
+        blockContainer = runtime.monitorBlocks;
+    } else {
+        blockContainer = target.blocks;
+    }
     let block = blockContainer.getBlock(currentBlockId);
     if (typeof block === 'undefined') {
         blockContainer = runtime.flyoutBlocks;
@@ -60,6 +65,8 @@ const execute = function (sequencer, thread) {
      * or after a promise resolves.
      * @param {*} resolvedValue Value eventually returned from the primitive.
      */
+     // @todo move this to callback attached to the thread when we have performance
+     // metrics (dd)
     const handleReport = function (resolvedValue) {
         thread.pushReportedValue(resolvedValue);
         if (isHat) {
@@ -85,8 +92,16 @@ const execute = function (sequencer, thread) {
         } else {
             // In a non-hat, report the value visually if necessary if
             // at the top of the thread stack.
-            if (typeof resolvedValue !== 'undefined' && thread.showVisualReport && thread.atStackTop()) {
-                runtime.visualReport(currentBlockId, resolvedValue);
+            if (typeof resolvedValue !== 'undefined' && thread.atStackTop()) {
+                if (thread.showVisualReport) {
+                    runtime.visualReport(currentBlockId, resolvedValue);
+                }
+                if (thread.updateMonitor) {
+                    runtime.requestUpdateMonitor({
+                        id: currentBlockId,
+                        value: String(resolvedValue)
+                    });
+                }
             }
             // Finished any yields.
             thread.status = Thread.STATUS_RUNNING;

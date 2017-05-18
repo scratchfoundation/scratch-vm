@@ -215,7 +215,7 @@ class Blocks {
                 element: e.element,
                 name: e.name,
                 value: e.newValue
-            });
+            }, optRuntime);
             break;
         case 'move':
             this.moveBlock({
@@ -270,13 +270,15 @@ class Blocks {
     /**
      * Block management: change block field values
      * @param {!object} args Blockly change event to be processed
+     * @param {?Runtime} optRuntime Optional runtime to allow changeBlock to change VM state.
      */
-    changeBlock (args) {
+    changeBlock (args, optRuntime) {
         // Validate
         if (['field', 'mutation', 'checkbox'].indexOf(args.element) === -1) return;
         const block = this._blocks[args.id];
         if (typeof block === 'undefined') return;
 
+        let wasMonitored = block.isMonitored;
         switch (args.element) {
         case 'field':
             // Update block value
@@ -288,6 +290,26 @@ class Blocks {
             break;
         case 'checkbox':
             block.isMonitored = args.value;
+            if (optRuntime && wasMonitored && !block.isMonitored) {
+                optRuntime.requestRemoveMonitor(block.id);
+            } else if (optRuntime && !wasMonitored && block.isMonitored) {
+                optRuntime.requestAddMonitor(
+                    // Ensure that value is not undefined, since React requires it
+                    {
+                        // @todo(vm#564) this will collide if multiple sprites use same block
+                        id: block.id,
+                        category: 'data',
+                        // @todo(vm#565) how to handle translation here?
+                        label: block.opcode,
+                        // @todo(vm#565) for numerical values with decimals, some countries use comma
+                        value: '',
+                        x: 0,
+                        // @todo(vm#566) Don't require sending x and y when instantiating a
+                        // monitor. If it's not preset the GUI should decide.
+                        y: 0
+                    }
+                );
+            }
             break;
         }
     }
@@ -357,7 +379,7 @@ class Blocks {
         Object.keys(this._blocks).forEach(blockId => {
             if (this.getBlock(blockId).isMonitored) {
                 // @todo handle specific targets (e.g. apple x position)
-                runtime.toggleScript(blockId);
+                runtime.toggleScript(blockId, {updateMonitor: true});
             }
         });
     }
