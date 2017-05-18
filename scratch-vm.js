@@ -19321,11 +19321,10 @@ var VirtualMachine = function (_EventEmitter) {
                 }
                 if (newName && RESERVED_NAMES.indexOf(newName) === -1) {
                     var names = this.runtime.targets.filter(function (runtimeTarget) {
-                        return runtimeTarget.isSprite();
+                        return runtimeTarget.isSprite() && runtimeTarget.id !== target.id;
                     }).map(function (runtimeTarget) {
                         return runtimeTarget.sprite.name;
                     });
-
                     sprite.name = StringUtil.unusedName(newName, names);
                 }
                 this.emitTargetsUpdate();
@@ -21466,7 +21465,7 @@ module.exports = logger;
 
 module.exports = {
 	"name": "scratch-vm",
-	"version": "0.1.0-prerelease.1495120291",
+	"version": "0.1.0-prerelease.1495136567",
 	"description": "Virtual Machine for Scratch 3.0",
 	"author": "Massachusetts Institute of Technology",
 	"license": "BSD-3-Clause",
@@ -21474,7 +21473,7 @@ module.exports = {
 	"repository": {
 		"type": "git",
 		"url": "git+ssh://git@github.com/LLK/scratch-vm.git",
-		"sha": "597de3b741a710bbea7098e2006c3c239994a024"
+		"sha": "745a81ef96da6406bed4ad5922a3be3b608b660b"
 	},
 	"main": "./dist/node/scratch-vm.js",
 	"scripts": {
