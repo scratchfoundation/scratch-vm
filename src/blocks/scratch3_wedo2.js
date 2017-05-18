@@ -448,6 +448,19 @@ class Scratch3WeDo2Blocks {
         };
     }
 
+    getHats () {
+        return {
+            wedo2_whenDistance: {
+                restartExistingThreads: true,
+                edgeActivated: true
+            },
+            wedo2_whenTilted: {
+                restartExistingThreads: true,
+                edgeActivated: true
+            }
+        };
+    }
+
     /**
      * Turn specified motor(s) on for a specified duration.
      * @param {object} args - the block's arguments.
