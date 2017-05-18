@@ -610,8 +610,10 @@ class Scratch3WeDo2Blocks {
             return false;
         }
         switch (args.OP) {
+        case '&lt;': //@todo: prevent this arg from sometimes getting encoded
         case '<':
             return this.getDistance() < args.REFERENCE;
+        case '&gt;':
         case '>':
             return this.getDistance() > args.REFERENCE;
         default:
