@@ -672,7 +672,6 @@ class Runtime extends EventEmitter {
      * inactive threads after each iteration.
      */
     _step () {
-        this._refreshTargets = false;
         // Find all edge-activated hats, and add them to threads to be evaluated.
         for (const hatType in this._hats) {
             if (!this._hats.hasOwnProperty(hatType)) continue;
@@ -694,7 +693,11 @@ class Runtime extends EventEmitter {
             // @todo: Only render when this.redrawRequested or clones rendered.
             this.renderer.draw();
         }
-        if (this._refreshTargets) this.emit(Runtime.TARGETS_UPDATE);
+
+        if (this._refreshTargets) {
+            this.emit(Runtime.TARGETS_UPDATE);
+            this._refreshTargets = false;
+        }
 
         // @todo(vm#570) only emit if monitors has changed since last time.
         this.emit(Runtime.MONITORS_UPDATE,

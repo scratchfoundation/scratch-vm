@@ -332,9 +332,8 @@ class VirtualMachine extends EventEmitter {
             }
             if (newName && RESERVED_NAMES.indexOf(newName) === -1) {
                 const names = this.runtime.targets
-                    .filter(runtimeTarget => runtimeTarget.isSprite())
+                    .filter(runtimeTarget => runtimeTarget.isSprite() && runtimeTarget.id !== target.id)
                     .map(runtimeTarget => runtimeTarget.sprite.name);
-
                 sprite.name = StringUtil.unusedName(newName, names);
             }
             this.emitTargetsUpdate();
