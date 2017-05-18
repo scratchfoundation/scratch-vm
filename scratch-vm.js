@@ -4478,7 +4478,7 @@ var Blocks = function () {
                         element: e.element,
                         name: e.name,
                         value: e.newValue
-                    });
+                    }, optRuntime);
                     break;
                 case 'move':
                     this.moveBlock({
@@ -4535,16 +4535,18 @@ var Blocks = function () {
         /**
          * Block management: change block field values
          * @param {!object} args Blockly change event to be processed
+         * @param {?Runtime} optRuntime Optional runtime to allow changeBlock to change VM state.
          */
 
     }, {
         key: 'changeBlock',
-        value: function changeBlock(args) {
+        value: function changeBlock(args, optRuntime) {
             // Validate
             if (['field', 'mutation', 'checkbox'].indexOf(args.element) === -1) return;
             var block = this._blocks[args.id];
             if (typeof block === 'undefined') return;
 
+            var wasMonitored = block.isMonitored;
             switch (args.element) {
                 case 'field':
                     // Update block value
@@ -4556,6 +4558,25 @@ var Blocks = function () {
                     break;
                 case 'checkbox':
                     block.isMonitored = args.value;
+                    if (optRuntime && wasMonitored && !block.isMonitored) {
+                        optRuntime.requestRemoveMonitor(block.id);
+                    } else if (optRuntime && !wasMonitored && block.isMonitored) {
+                        optRuntime.requestAddMonitor(
+                        // Ensure that value is not undefined, since React requires it
+                        {
+                            // @todo(vm#564) this will collide if multiple sprites use same block
+                            id: block.id,
+                            category: 'data',
+                            // @todo(vm#565) how to handle translation here?
+                            label: block.opcode,
+                            // @todo(vm#565) for numerical values with decimals, some countries use comma
+                            value: '',
+                            x: 0,
+                            // @todo(vm#566) Don't require sending x and y when instantiating a
+                            // monitor. If it's not preset the GUI should decide.
+                            y: 0
+                        });
+                    }
                     break;
             }
         }
@@ -4631,7 +4652,7 @@ var Blocks = function () {
             Object.keys(this._blocks).forEach(function (blockId) {
                 if (_this.getBlock(blockId).isMonitored) {
                     // @todo handle specific targets (e.g. apple x position)
-                    runtime.toggleScript(blockId);
+                    runtime.toggleScript(blockId, { updateMonitor: true });
                 }
             });
         }
@@ -14956,7 +14977,12 @@ var execute = function execute(sequencer, thread) {
     var currentBlockId = thread.peekStack();
     var currentStackFrame = thread.peekStackFrame();
 
-    var blockContainer = target.blocks;
+    var blockContainer = void 0;
+    if (thread.updateMonitor) {
+        blockContainer = runtime.monitorBlocks;
+    } else {
+        blockContainer = target.blocks;
+    }
     var block = blockContainer.getBlock(currentBlockId);
     if (typeof block === 'undefined') {
         blockContainer = runtime.flyoutBlocks;
@@ -14985,6 +15011,8 @@ var execute = function execute(sequencer, thread) {
      * or after a promise resolves.
      * @param {*} resolvedValue Value eventually returned from the primitive.
      */
+    // @todo move this to callback attached to the thread when we have performance
+    // metrics (dd)
     var handleReport = function handleReport(resolvedValue) {
         thread.pushReportedValue(resolvedValue);
         if (isHat) {
@@ -15007,8 +15035,16 @@ var execute = function execute(sequencer, thread) {
         } else {
             // In a non-hat, report the value visually if necessary if
             // at the top of the thread stack.
-            if (typeof resolvedValue !== 'undefined' && thread.showVisualReport && thread.atStackTop()) {
-                runtime.visualReport(currentBlockId, resolvedValue);
+            if (typeof resolvedValue !== 'undefined' && thread.atStackTop()) {
+                if (thread.showVisualReport) {
+                    runtime.visualReport(currentBlockId, resolvedValue);
+                }
+                if (thread.updateMonitor) {
+                    runtime.requestUpdateMonitor({
+                        id: currentBlockId,
+                        value: String(resolvedValue)
+                    });
+                }
             }
             // Finished any yields.
             thread.status = Thread.STATUS_RUNNING;
@@ -15194,6 +15230,8 @@ module.exports = execute;
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
+function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr2 = Array(arr.length); i < arr.length; i++) { arr2[i] = arr[i]; } return arr2; } else { return Array.from(arr); } }
+
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
 function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
@@ -15300,10 +15338,10 @@ var Runtime = function (_EventEmitter) {
         _this._scriptGlowsPreviousFrame = [];
 
         /**
-         * Number of threads running during the previous frame
+         * Number of non-monitor threads running during the previous frame.
          * @type {number}
          */
-        _this._threadCount = 0;
+        _this._nonMonitorThreadCount = 0;
 
         /**
          * Currently known number of clones, used to enforce clone limit.
@@ -15317,6 +15355,11 @@ var Runtime = function (_EventEmitter) {
          * @type {boolean}
          */
         _this._refreshTargets = false;
+
+        /**
+         * List of all monitors.
+         */
+        _this._monitorState = {};
 
         /**
          * Whether the project is in "turbo mode."
@@ -15514,16 +15557,25 @@ var Runtime = function (_EventEmitter) {
          * Create a thread and push it to the list of threads.
          * @param {!string} id ID of block that starts the stack.
          * @param {!Target} target Target to run thread on.
-         * @param {?boolean} optShowVisualReport true if the script should show speech bubble for its value
+         * @param {?object} opts optional arguments
+         * @param {?boolean} opts.showVisualReport true if the script should show speech bubble for its value
+         * @param {?boolean} opts.updateMonitor true if the script should update a monitor value
          * @return {!Thread} The newly created thread.
          */
 
     }, {
         key: '_pushThread',
-        value: function _pushThread(id, target, optShowVisualReport) {
+        value: function _pushThread(id, target, opts) {
+            opts = Object.assign({
+                showVisualReport: false,
+                updateMonitor: false
+            }, opts);
+
             var thread = new Thread(id);
             thread.target = target;
-            thread.showVisualReport = optShowVisualReport;
+            thread.showVisualReport = opts.showVisualReport;
+            thread.updateMonitor = opts.updateMonitor;
+
             thread.pushStack(id);
             this.threads.push(thread);
             return thread;
@@ -15558,6 +15610,8 @@ var Runtime = function (_EventEmitter) {
         value: function _restartThread(thread) {
             var newThread = new Thread(thread.topBlock);
             newThread.target = thread.target;
+            newThread.showVisualReport = thread.showVisualReport;
+            newThread.updateMonitor = thread.updateMonitor;
             newThread.pushStack(thread.topBlock);
             var i = this.threads.indexOf(thread);
             if (i > -1) {
@@ -15585,11 +15639,17 @@ var Runtime = function (_EventEmitter) {
          * @param {?object} opts optional arguments to toggle script
          * @param {?string} opts.target target ID for target to run script on. If not supplied, uses editing target.
          * @param {?boolean} opts.showVisualReport true if the speech bubble should pop up on the block, false if not.
+         * @param {?boolean} opts.updateMonitor true if the monitor for this block should get updated.
          */
 
     }, {
         key: 'toggleScript',
         value: function toggleScript(topBlockId, opts) {
+            opts = Object.assign({
+                target: this._editingTarget,
+                showVisualReport: false,
+                updateMonitor: false
+            }, opts);
             // Remove any existing thread.
             for (var i = 0; i < this.threads.length; i++) {
                 if (this.threads[i].topBlock === topBlockId) {
@@ -15598,7 +15658,7 @@ var Runtime = function (_EventEmitter) {
                 }
             }
             // Otherwise add it.
-            this._pushThread(topBlockId, opts && opts.target ? opts.target : this._editingTarget, opts ? opts.showVisualReport : false);
+            this._pushThread(topBlockId, opts.target, opts);
         }
 
         /**
@@ -15814,6 +15874,8 @@ var Runtime = function (_EventEmitter) {
     }, {
         key: '_step',
         value: function _step() {
+            var _this2 = this;
+
             // Find all edge-activated hats, and add them to threads to be evaluated.
             for (var hatType in this._hats) {
                 if (!this._hats.hasOwnProperty(hatType)) continue;
@@ -15826,15 +15888,40 @@ var Runtime = function (_EventEmitter) {
             this._pushMonitors();
             var doneThreads = this.sequencer.stepThreads();
             this._updateGlows(doneThreads);
-            this._setThreadCount(this.threads.length + doneThreads.length);
+            // Add done threads so that even if a thread finishes within 1 frame, the green
+            // flag will still indicate that a script ran.
+            this._emitProjectRunStatus(this.threads.length + doneThreads.length - this._getMonitorThreadCount([].concat(_toConsumableArray(this.threads), _toConsumableArray(doneThreads))));
             if (this.renderer) {
                 // @todo: Only render when this.redrawRequested or clones rendered.
                 this.renderer.draw();
             }
+
             if (this._refreshTargets) {
                 this.emit(Runtime.TARGETS_UPDATE);
                 this._refreshTargets = false;
             }
+
+            // @todo(vm#570) only emit if monitors has changed since last time.
+            this.emit(Runtime.MONITORS_UPDATE, Object.keys(this._monitorState).map(function (key) {
+                return _this2._monitorState[key];
+            }));
+        }
+
+        /**
+         * Get the number of threads in the given array that are monitor threads (threads
+         * that update monitor values, and don't count as running a script).
+         * @param {!Array.<Thread>} threads The set of threads to look through.
+         * @return {number} The number of monitor threads in threads.
+         */
+
+    }, {
+        key: '_getMonitorThreadCount',
+        value: function _getMonitorThreadCount(threads) {
+            var count = 0;
+            threads.forEach(function (thread) {
+                if (thread.updateMonitor) count++;
+            });
+            return count;
         }
 
         /**
@@ -15939,19 +16026,19 @@ var Runtime = function (_EventEmitter) {
          * Emit run start/stop after each tick. Emits when `this.threads.length` goes
          * between non-zero and zero
          *
-         * @param {number} threadCount The new threadCount
+         * @param {number} nonMonitorThreadCount The new nonMonitorThreadCount
          */
 
     }, {
-        key: '_setThreadCount',
-        value: function _setThreadCount(threadCount) {
-            if (this._threadCount === 0 && threadCount > 0) {
+        key: '_emitProjectRunStatus',
+        value: function _emitProjectRunStatus(nonMonitorThreadCount) {
+            if (this._nonMonitorThreadCount === 0 && nonMonitorThreadCount > 0) {
                 this.emit(Runtime.PROJECT_RUN_START);
             }
-            if (this._threadCount > 0 && threadCount === 0) {
+            if (this._nonMonitorThreadCount > 0 && nonMonitorThreadCount === 0) {
                 this.emit(Runtime.PROJECT_RUN_STOP);
             }
-            this._threadCount = threadCount;
+            this._nonMonitorThreadCount = nonMonitorThreadCount;
         }
 
         /**
@@ -16012,6 +16099,44 @@ var Runtime = function (_EventEmitter) {
         key: 'visualReport',
         value: function visualReport(blockId, value) {
             this.emit(Runtime.VISUAL_REPORT, { id: blockId, value: String(value) });
+        }
+
+        /**
+         * Add a monitor to the state. If the monitor already exists in the state,
+         * overwrites it.
+         * @param {!object} monitor Monitor to add.
+         */
+
+    }, {
+        key: 'requestAddMonitor',
+        value: function requestAddMonitor(monitor) {
+            this._monitorState[monitor.id] = monitor;
+        }
+
+        /**
+         * Update a monitor in the state. Does nothing if the monitor does not already
+         * exist in the state.
+         * @param {!object} monitor Monitor to update.
+         */
+
+    }, {
+        key: 'requestUpdateMonitor',
+        value: function requestUpdateMonitor(monitor) {
+            if (this._monitorState.hasOwnProperty(monitor.id)) {
+                this._monitorState[monitor.id] = Object.assign({}, this._monitorState[monitor.id], monitor);
+            }
+        }
+
+        /**
+         * Removes a monitor from the state. Does nothing if the monitor already does
+         * not exist in the state.
+         * @param {!object} monitorId ID of the monitor to remove.
+         */
+
+    }, {
+        key: 'requestRemoveMonitor',
+        value: function requestRemoveMonitor(monitorId) {
+            delete this._monitorState[monitorId];
         }
 
         /**
@@ -16132,7 +16257,7 @@ var Runtime = function (_EventEmitter) {
     }, {
         key: 'start',
         value: function start() {
-            var _this2 = this;
+            var _this3 = this;
 
             var interval = Runtime.THREAD_STEP_INTERVAL;
             if (this.compatibilityMode) {
@@ -16140,7 +16265,7 @@ var Runtime = function (_EventEmitter) {
             }
             this.currentStepTime = interval;
             this._steppingInterval = setInterval(function () {
-                _this2._step();
+                _this3._step();
             }, interval);
         }
     }], [{
@@ -16246,6 +16371,17 @@ var Runtime = function (_EventEmitter) {
         key: 'TARGETS_UPDATE',
         get: function get() {
             return 'TARGETS_UPDATE';
+        }
+
+        /**
+         * Event name for monitors update.
+         * @const {string}
+         */
+
+    }, {
+        key: 'MONITORS_UPDATE',
+        get: function get() {
+            return 'MONITORS_UPDATE';
         }
 
         /**
@@ -18981,6 +19117,9 @@ var VirtualMachine = function (_EventEmitter) {
         _this.runtime.on(Runtime.TARGETS_UPDATE, function () {
             _this.emitTargetsUpdate();
         });
+        _this.runtime.on(Runtime.MONITORS_UPDATE, function (monitorList) {
+            _this.emit(Runtime.MONITORS_UPDATE, monitorList);
+        });
 
         _this.blockListener = _this.blockListener.bind(_this);
         _this.flyoutBlockListener = _this.flyoutBlockListener.bind(_this);
@@ -21465,7 +21604,7 @@ module.exports = logger;
 
 module.exports = {
 	"name": "scratch-vm",
-	"version": "0.1.0-prerelease.1495136567",
+	"version": "0.1.0-prerelease.1495141692",
 	"description": "Virtual Machine for Scratch 3.0",
 	"author": "Massachusetts Institute of Technology",
 	"license": "BSD-3-Clause",
@@ -21473,7 +21612,7 @@ module.exports = {
 	"repository": {
 		"type": "git",
 		"url": "git+ssh://git@github.com/LLK/scratch-vm.git",
-		"sha": "745a81ef96da6406bed4ad5922a3be3b608b660b"
+		"sha": "e9c48d250bccd88823d129930494a5011f645c0d"
 	},
 	"main": "./dist/node/scratch-vm.js",
 	"scripts": {
