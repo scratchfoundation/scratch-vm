@@ -2,6 +2,7 @@ const EventEmitter = require('events');
 const Sequencer = require('./sequencer');
 const Blocks = require('./blocks');
 const Thread = require('./thread');
+const {Map} = require('immutable');
 
 // Virtual I/O devices.
 const Clock = require('../io/clock');
@@ -114,7 +115,12 @@ class Runtime extends EventEmitter {
         /**
          * List of all monitors.
          */
-        this._monitorState = {};
+        this._monitorState = Map({});
+
+        /**
+         * Monitor state from last tick
+         */
+        this._prevMonitorState = Map({});
 
         /**
          * Whether the project is in "turbo mode."
@@ -699,10 +705,10 @@ class Runtime extends EventEmitter {
             this._refreshTargets = false;
         }
 
-        // @todo(vm#570) only emit if monitors has changed since last time.
-        this.emit(Runtime.MONITORS_UPDATE,
-            Object.keys(this._monitorState).map(key => this._monitorState[key])
-        );
+        if (!this._prevMonitorState.equals(this._monitorState)) {
+            this.emit(Runtime.MONITORS_UPDATE, this._monitorState.toArray());
+        }
+        this._prevMonitorState = this._monitorState;
     }
 
     /**
@@ -877,7 +883,7 @@ class Runtime extends EventEmitter {
      * @param {!object} monitor Monitor to add.
      */
     requestAddMonitor (monitor) {
-        this._monitorState[monitor.id] = monitor;
+        this._monitorState = this._monitorState.set(monitor.id, monitor);
     }
 
     /**
@@ -886,9 +892,33 @@ class Runtime extends EventEmitter {
      * @param {!object} monitor Monitor to update.
      */
     requestUpdateMonitor (monitor) {
-        if (this._monitorState.hasOwnProperty(monitor.id)) {
-            this._monitorState[monitor.id] = Object.assign({}, this._monitorState[monitor.id], monitor);
+        if (this._monitorState.has(monitor.id) &&
+                this._monitorWouldChange(this._monitorState.get(monitor.id), monitor)) {
+            this._monitorState =
+                this._monitorState.set(monitor.id, Object.assign({}, this._monitorState.get(monitor.id), monitor));
         }
+    }
+
+    /**
+     * Whether or not the monitor would change when the new state is applied. New state has its properties
+     * applied to the current state, it does not completely overwrite the current state. For this to return
+     * accurately, the changes being applied should be on primitive types, otherwise it may false-positive.
+     * @param {!object} currentMonitorState the state of a monitor, the values in this._monitorState
+     * @param {!object} newMonitorDelta the state to be applied to a monitor. The IDs of current and new monitor
+     * should match.
+     * @return {boolean} whether the new state, when applied to the current state, would change the current state.
+     */
+    _monitorWouldChange (currentMonitorState, newMonitorDelta) {
+        for (const prop in newMonitorDelta) {
+            if (currentMonitorState.hasOwnProperty(prop)) {
+                // Strict equals to check if properties change; switch this to deep equals if
+                // we expect monitors to have changing state that is not primative.
+                if (currentMonitorState[prop] !== newMonitorDelta[prop]) return true;
+            } else {
+                return true; // The new state would add a new property to the monitor
+            }
+        }
+        return false;
     }
 
     /**
@@ -897,7 +927,7 @@ class Runtime extends EventEmitter {
      * @param {!object} monitorId ID of the monitor to remove.
      */
     requestRemoveMonitor (monitorId) {
-        delete this._monitorState[monitorId];
+        this._monitorState = this._monitorState.delete(monitorId);
     }
 
     /**
