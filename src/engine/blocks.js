@@ -1,6 +1,7 @@
 const adapter = require('./adapter');
 const mutationAdapter = require('./mutation-adapter');
 const xmlEscape = require('../util/xml-escape');
+const {Map} = require('immutable');
 
 /**
  * @fileoverview
@@ -293,22 +294,19 @@ class Blocks {
             if (optRuntime && wasMonitored && !block.isMonitored) {
                 optRuntime.requestRemoveMonitor(block.id);
             } else if (optRuntime && !wasMonitored && block.isMonitored) {
-                optRuntime.requestAddMonitor(
-                    // Ensure that value is not undefined, since React requires it
-                    {
-                        // @todo(vm#564) this will collide if multiple sprites use same block
-                        id: block.id,
-                        category: 'data',
-                        // @todo(vm#565) how to handle translation here?
-                        label: block.opcode,
-                        // @todo(vm#565) for numerical values with decimals, some countries use comma
-                        value: '',
-                        x: 0,
-                        // @todo(vm#566) Don't require sending x and y when instantiating a
-                        // monitor. If it's not preset the GUI should decide.
-                        y: 0
-                    }
-                );
+                optRuntime.requestAddMonitor(Map({
+                    // @todo(vm#564) this will collide if multiple sprites use same block
+                    id: block.id,
+                    category: 'data',
+                    // @todo(vm#565) how to handle translation here?
+                    label: block.opcode,
+                    // @todo(vm#565) for numerical values with decimals, some countries use comma
+                    value: '', // Ensure that value is not undefined, since React requires it
+                    x: 0,
+                    // @todo(vm#566) Don't require sending x and y when instantiating a
+                    // monitor. If it's not preset the GUI should decide.
+                    y: 0
+                }));
             }
             break;
         }

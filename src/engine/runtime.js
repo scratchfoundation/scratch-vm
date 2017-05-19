@@ -706,7 +706,8 @@ class Runtime extends EventEmitter {
         }
 
         if (!this._prevMonitorState.equals(this._monitorState)) {
-            this.emit(Runtime.MONITORS_UPDATE, this._monitorState.toArray());
+            const monitorStateObj = this._monitorState.toJS();
+            this.emit(Runtime.MONITORS_UPDATE, Object.keys(monitorStateObj).map(key => monitorStateObj[key]));
         }
         this._prevMonitorState = this._monitorState;
     }
@@ -880,51 +881,28 @@ class Runtime extends EventEmitter {
     /**
      * Add a monitor to the state. If the monitor already exists in the state,
      * overwrites it.
-     * @param {!object} monitor Monitor to add.
+     * @param {!Map} monitor Monitor to add.
      */
     requestAddMonitor (monitor) {
-        this._monitorState = this._monitorState.set(monitor.id, monitor);
+        this._monitorState = this._monitorState.set(monitor.get('id'), monitor);
     }
 
     /**
      * Update a monitor in the state. Does nothing if the monitor does not already
      * exist in the state.
-     * @param {!object} monitor Monitor to update.
+     * @param {!Map} monitor Monitor to update.
      */
     requestUpdateMonitor (monitor) {
-        if (this._monitorState.has(monitor.id) &&
-                this._monitorWouldChange(this._monitorState.get(monitor.id), monitor)) {
+        if (this._monitorState.has(monitor.get('id'))) {
             this._monitorState =
-                this._monitorState.set(monitor.id, Object.assign({}, this._monitorState.get(monitor.id), monitor));
+                this._monitorState.set(monitor.get('id'), this._monitorState.get(monitor.get('id')).merge(monitor));
         }
-    }
-
-    /**
-     * Whether or not the monitor would change when the new state is applied. New state has its properties
-     * applied to the current state, it does not completely overwrite the current state. For this to return
-     * accurately, the changes being applied should be on primitive types, otherwise it may false-positive.
-     * @param {!object} currentMonitorState the state of a monitor, the values in this._monitorState
-     * @param {!object} newMonitorDelta the state to be applied to a monitor. The IDs of current and new monitor
-     * should match.
-     * @return {boolean} whether the new state, when applied to the current state, would change the current state.
-     */
-    _monitorWouldChange (currentMonitorState, newMonitorDelta) {
-        for (const prop in newMonitorDelta) {
-            if (currentMonitorState.hasOwnProperty(prop)) {
-                // Strict equals to check if properties change; switch this to deep equals if
-                // we expect monitors to have changing state that is not primative.
-                if (currentMonitorState[prop] !== newMonitorDelta[prop]) return true;
-            } else {
-                return true; // The new state would add a new property to the monitor
-            }
-        }
-        return false;
     }
 
     /**
      * Removes a monitor from the state. Does nothing if the monitor already does
      * not exist in the state.
-     * @param {!object} monitorId ID of the monitor to remove.
+     * @param {!string} monitorId ID of the monitor to remove.
      */
     requestRemoveMonitor (monitorId) {
         this._monitorState = this._monitorState.delete(monitorId);

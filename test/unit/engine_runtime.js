@@ -1,5 +1,6 @@
 const test = require('tap').test;
 const Runtime = require('../../src/engine/runtime');
+const {Map} = require('immutable');
 
 test('spec', t => {
     const r = new Runtime();
@@ -11,48 +12,62 @@ test('spec', t => {
     t.end();
 });
 
-test('monitorWouldChange_false', t => {
+test('monitorStateEquals', t => {
     const r = new Runtime();
-    const currentMonitorState = {
-        id: 'xklj4#!',
+    const id = 'xklj4#!';
+    const prevMonitorState = Map({
+        id,
         category: 'data',
         label: 'turtle whereabouts',
         value: '25',
         x: 0,
         y: 0
-    };
-    const newMonitorDelta = {
-        id: 'xklj4#!',
+    });
+    const newMonitorDelta = Map({
+        id,
         value: String(25)
-    };
-    t.equals(false, r._monitorWouldChange(currentMonitorState, newMonitorDelta));
+    });
+    r.requestAddMonitor(prevMonitorState);
+    r.requestUpdateMonitor(newMonitorDelta);
+
+    t.equals(true, prevMonitorState.equals(r._monitorState.get(id)));
+    t.equals(String(25), r._monitorState.get(id).get('value'));
     t.end();
 });
 
-test('monitorWouldChange_true', t => {
+test('monitorStateDoesNotEqual', t => {
     const r = new Runtime();
-    const currentMonitorState = {
-        id: 'xklj4#!',
+    const id = 'xklj4#!';
+    const prevMonitorState = Map({
+        id,
         category: 'data',
         label: 'turtle whereabouts',
         value: '25',
         x: 0,
         y: 0
-    };
+    });
 
     // Value change
-    let newMonitorDelta = {
-        id: 'xklj4#!',
+    let newMonitorDelta = Map({
+        id,
         value: String(24)
-    };
-    t.equal(true, r._monitorWouldChange(currentMonitorState, newMonitorDelta));
+    });
+    r.requestAddMonitor(prevMonitorState);
+    r.requestUpdateMonitor(newMonitorDelta);
+    
+    t.equals(false, prevMonitorState.equals(r._monitorState.get(id)));
+    t.equals(String(24), r._monitorState.get(id).get('value'));
 
     // Prop change
-    newMonitorDelta = {
+    newMonitorDelta = Map({
         id: 'xklj4#!',
         moose: 7
-    };
-    t.equal(true, r._monitorWouldChange(currentMonitorState, newMonitorDelta));
+    });
+    r.requestUpdateMonitor(newMonitorDelta);
+
+    t.equals(false, prevMonitorState.equals(r._monitorState.get(id)));
+    t.equals(String(24), r._monitorState.get(id).get('value'));
+    t.equals(7, r._monitorState.get(id).get('moose'));
 
     t.end();
 });
