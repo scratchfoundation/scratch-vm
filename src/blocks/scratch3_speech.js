@@ -13,6 +13,12 @@ var Scratch3SpeechBlocks = function (runtime) {
      */
     this.latest_speech = '';
 
+    /**
+     * The name of the selected voice for speech synthesis.
+     * @type {String}
+     */
+    this.current_voice = 'default';
+
     this.runtime.HACK_SpeechBlocks = this;
 };
 
@@ -24,6 +30,7 @@ Scratch3SpeechBlocks.prototype.getPrimitives = function () {
     return {
         speech_whenihear: this.hatWhenIHear,
         speech_speak: this.speak,
+        speech_setvoice: this.setVoice,
         speech_getlatestspeech: this.getLatestSpeech
     };
 };
@@ -61,6 +68,30 @@ Scratch3SpeechBlocks.prototype.startSpeechRecogntion = function () {
         this.recognition.start();
     }
 };
+Scratch3SpeechBlocks.prototype.setVoice = function (args) {
+    this.current_voice = args.VOICE;
+};
+
+Scratch3SpeechBlocks.prototype.getVoices = function () {
+    if(typeof speechSynthesis === 'undefined') {
+        return;
+    }
+
+    const voices = speechSynthesis.getVoices();
+
+    const scratchVoices = ['Alex', 'Samantha', 'Cellos', 'Whisper', 'Zarvox', 'Bells', 'Bad News',
+        'Daniel', 'Fiona', 'Junior', 'Pipe Organ'];
+
+    var availableVoices = [];
+
+    for (let i = 0; i < voices.length; i++) {
+        if (scratchVoices.includes(voices[i].name)) {
+            availableVoices.push(voices[i]);
+        }
+    }
+
+    return availableVoices;
+};
 
 Scratch3SpeechBlocks.prototype.hatWhenIHear = function (args) {
     var input = Cast.toString(args.STRING).toLowerCase();
@@ -83,6 +114,14 @@ Scratch3SpeechBlocks.prototype.speak = function (args, util) {
     var input = Cast.toString(args.STRING).toLowerCase();
 
     var utterance = new SpeechSynthesisUtterance(input);
+
+    const voices = this.getVoices();
+    for (let i = 0; i < voices.length; i++) {
+        if (this.current_voice === voices[i].name) {
+            utterance.voice = voices[i];
+        }
+    }
+
     speechSynthesis.speak(utterance);
 
     return new Promise(function (resolve) {
