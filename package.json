@@ -36,6 +36,7 @@
     "gh-pages": "^0.12.0",
     "highlightjs": "^9.8.0",
     "htmlparser2": "3.9.2",
+    "immutable": "3.8.1",
     "json": "^9.0.4",
     "lodash.defaultsdeep": "4.6.0",
     "minilog": "3.1.0",
