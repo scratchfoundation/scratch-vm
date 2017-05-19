@@ -19,6 +19,13 @@ var Scratch3SpeechBlocks = function (runtime) {
      */
     this.current_voice = 'default';
 
+    /**
+     * The current speech synthesis utterance object.
+     * Storing the utterance prevents a bug in which garbage collection causes the onend event to fail.
+     * @type {String}
+     */
+    this.current_utterance;
+
     this.runtime.HACK_SpeechBlocks = this;
 };
 
@@ -113,19 +120,19 @@ Scratch3SpeechBlocks.prototype.getLatestSpeech = function () {
 Scratch3SpeechBlocks.prototype.speak = function (args, util) {
     var input = Cast.toString(args.STRING).toLowerCase();
 
-    var utterance = new SpeechSynthesisUtterance(input);
+    this.current_utterance = new SpeechSynthesisUtterance(input);
 
     const voices = this.getVoices();
     for (let i = 0; i < voices.length; i++) {
         if (this.current_voice === voices[i].name) {
-            utterance.voice = voices[i];
+            this.current_utterance.voice = voices[i];
         }
     }
 
-    speechSynthesis.speak(utterance);
+    speechSynthesis.speak(this.current_utterance);
 
-    return new Promise(function (resolve) {
-        utterance.onend = function () {
+    return new Promise(resolve => {
+        this.current_utterance.onend = function () {
             resolve();
         };
     });
