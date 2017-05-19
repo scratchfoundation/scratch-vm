@@ -53,23 +53,19 @@ Scratch3SpeechBlocks.prototype.getHats = function () {
 
 Scratch3SpeechBlocks.prototype.startSpeechRecogntion = function () {
     if (!this.recognition) {
-        console.log('starting speech recognition');
         this.recognition = new webkitSpeechRecognition();
         this.recognition.interimResults = true;
         // this.recognition.continuous = true;
         this.recognized_speech = '';
 
         this.recognition.onresult = function (event) {
-            console.log(event.results);
             this.recognized_speech = event.results[0][0].transcript.toLowerCase();
-            console.log('speech recognition result: ' + this.recognized_speech);
             this.latest_speech = this.recognized_speech;
         }.bind(this);
 
         this.recognition.onend = function () {
             this.recognition.start();
             this.recognized_speech = '';
-            console.log('speech recognition restarting');
         }.bind(this);
 
         this.recognition.start();
@@ -106,7 +102,6 @@ Scratch3SpeechBlocks.prototype.hatWhenIHear = function (args) {
     if (input === '') return false;
 
     if (this.recognized_speech.includes(input)) {
-        console.log('detected: ' + input);
         this.recognized_speech = '';
         return true;
     }
