@@ -120,6 +120,9 @@ Scratch3SpeechBlocks.prototype.getLatestSpeech = function () {
 Scratch3SpeechBlocks.prototype.speak = function (args, util) {
     var input = Cast.toString(args.STRING).toLowerCase();
 
+    // Stop any currently playing utterances
+    speechSynthesis.cancel();
+
     this.current_utterance = new SpeechSynthesisUtterance(input);
 
     const voices = this.getVoices();
