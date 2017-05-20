@@ -82,10 +82,10 @@ Scratch3SpeechBlocks.prototype.getVoices = function () {
 
     const voices = speechSynthesis.getVoices();
 
-    const scratchVoices = ['Alex', 'Samantha', 'Cellos', 'Whisper', 'Zarvox', 'Bells', 'Bad News',
-        'Daniel', 'Fiona', 'Junior', 'Pipe Organ'];
+    const scratchVoices = ['Alex', 'Samantha', 'Whisper', 'Zarvox', 'Bells', 'Bad News',
+        'Daniel', 'Pipe Organ', 'Boing', 'Karen', 'Ralph', 'Trinoids'];
 
-    var availableVoices = [];
+    let availableVoices = [];
 
     for (let i = 0; i < voices.length; i++) {
         if (scratchVoices.includes(voices[i].name)) {
