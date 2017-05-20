@@ -17,7 +17,7 @@ var Scratch3SpeechBlocks = function (runtime) {
      * The name of the selected voice for speech synthesis.
      * @type {String}
      */
-    this.current_voice = 'default';
+    this.current_voice_name = 'default';
 
     /**
      * The current speech synthesis utterance object.
@@ -72,23 +72,29 @@ Scratch3SpeechBlocks.prototype.startSpeechRecogntion = function () {
     }
 };
 Scratch3SpeechBlocks.prototype.setVoice = function (args) {
-    this.current_voice = args.VOICE;
+    if (args.VOICE === 'Random') {
+        const voices = this.getVoices();
+        const index = Math.floor(Math.random() * voices.length);
+        this.current_voice_name = voices[index].name;
+    } else {
+        this.current_voice_name = args.VOICE;
+    }
 };
 
 Scratch3SpeechBlocks.prototype.getVoices = function () {
-    if(typeof speechSynthesis === 'undefined') {
+    if (typeof speechSynthesis === 'undefined') {
         return;
     }
 
     const voices = speechSynthesis.getVoices();
 
-    const scratchVoices = ['Alex', 'Samantha', 'Whisper', 'Zarvox', 'Bells', 'Bad News',
+    const scratchVoiceNames = ['Alex', 'Samantha', 'Whisper', 'Zarvox', 'Bad News',
         'Daniel', 'Pipe Organ', 'Boing', 'Karen', 'Ralph', 'Trinoids'];
 
     let availableVoices = [];
 
     for (let i = 0; i < voices.length; i++) {
-        if (scratchVoices.includes(voices[i].name)) {
+        if (scratchVoiceNames.includes(voices[i].name)) {
             availableVoices.push(voices[i]);
         }
     }
@@ -112,8 +118,8 @@ Scratch3SpeechBlocks.prototype.getLatestSpeech = function () {
     return this.latest_speech;
 };
 
-Scratch3SpeechBlocks.prototype.speak = function (args, util) {
-    var input = Cast.toString(args.STRING).toLowerCase();
+Scratch3SpeechBlocks.prototype.speak = function (args) {
+    const input = Cast.toString(args.STRING).toLowerCase();
 
     // Stop any currently playing utterances
     speechSynthesis.cancel();
@@ -122,7 +128,7 @@ Scratch3SpeechBlocks.prototype.speak = function (args, util) {
 
     const voices = this.getVoices();
     for (let i = 0; i < voices.length; i++) {
-        if (this.current_voice === voices[i].name) {
+        if (this.current_voice_name === voices[i].name) {
             this.current_utterance.voice = voices[i];
         }
     }
