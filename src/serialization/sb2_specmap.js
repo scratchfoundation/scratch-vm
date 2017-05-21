@@ -166,9 +166,8 @@ const specMap = {
         opcode: 'motion_setrotationstyle',
         argMap: [
             {
-                type: 'input',
-                inputOp: 'motion_setrotationstyle_menu',
-                inputName: 'STYLE'
+                type: 'field',
+                fieldName: 'STYLE'
             }
         ]
     },
@@ -276,9 +275,8 @@ const specMap = {
         opcode: 'looks_changeeffectby',
         argMap: [
             {
-                type: 'input',
-                inputOp: 'looks_effectmenu',
-                inputName: 'EFFECT'
+                type: 'field',
+                fieldName: 'EFFECT'
             },
             {
                 type: 'input',
@@ -291,9 +289,8 @@ const specMap = {
         opcode: 'looks_seteffectto',
         argMap: [
             {
-                type: 'input',
-                inputOp: 'looks_effectmenu',
-                inputName: 'EFFECT'
+                type: 'field',
+                fieldName: 'EFFECT'
             },
             {
                 type: 'input',
@@ -1171,9 +1168,8 @@ const specMap = {
         opcode: 'operator_mathop',
         argMap: [
             {
-                type: 'input',
-                inputOp: 'operator_mathop_menu',
-                inputName: 'OPERATOR'
+                type: 'field',
+                fieldName: 'OPERATOR'
             },
             {
                 type: 'input',
@@ -1186,9 +1182,8 @@ const specMap = {
         opcode: 'data_variable',
         argMap: [
             {
-                type: 'input',
-                inputOp: 'data_variablemenu',
-                inputName: 'VARIABLE'
+                type: 'field',
+                fieldName: 'VARIABLE'
             }
         ]
     },
