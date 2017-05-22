@@ -278,7 +278,7 @@ class Blocks {
         const block = this._blocks[args.id];
         if (typeof block === 'undefined') return;
 
-        let wasMonitored = block.isMonitored;
+        const wasMonitored = block.isMonitored;
         switch (args.element) {
         case 'field':
             // Update block value
@@ -293,22 +293,17 @@ class Blocks {
             if (optRuntime && wasMonitored && !block.isMonitored) {
                 optRuntime.requestRemoveMonitor(block.id);
             } else if (optRuntime && !wasMonitored && block.isMonitored) {
-                optRuntime.requestAddMonitor(
-                    // Ensure that value is not undefined, since React requires it
-                    {
-                        // @todo(vm#564) this will collide if multiple sprites use same block
-                        id: block.id,
-                        category: 'data',
-                        // @todo(vm#565) how to handle translation here?
-                        label: block.opcode,
-                        // @todo(vm#565) for numerical values with decimals, some countries use comma
-                        value: '',
-                        x: 0,
-                        // @todo(vm#566) Don't require sending x and y when instantiating a
-                        // monitor. If it's not preset the GUI should decide.
-                        y: 0
-                    }
-                );
+                optRuntime.requestAddMonitor({
+                    // @todo(vm#564) this will collide if multiple sprites use same block
+                    id: block.id,
+                    opcode: block.opcode,
+                    // @todo(vm#565) for numerical values with decimals, some countries use comma
+                    value: '',
+                    // @todo(vm#566) Don't require sending x and y when instantiating a
+                    // monitor. If it's not preset the GUI should decide.
+                    x: 0,
+                    y: 0
+                });
             }
             break;
         }
@@ -370,7 +365,7 @@ class Blocks {
         }
     }
 
-    
+
     /**
      * Block management: run all blocks.
      * @param {!object} runtime Runtime to run all blocks in.
