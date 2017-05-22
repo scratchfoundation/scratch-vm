@@ -706,10 +706,9 @@ class Runtime extends EventEmitter {
         }
 
         if (!this._prevMonitorState.equals(this._monitorState)) {
-            const monitorStateObj = this._monitorState.toJS();
-            this.emit(Runtime.MONITORS_UPDATE, Object.keys(monitorStateObj).map(key => monitorStateObj[key]));
+            this.emit(Runtime.MONITORS_UPDATE, this._monitorState);
+            this._prevMonitorState = this._monitorState;
         }
-        this._prevMonitorState = this._monitorState;
     }
 
     /**
