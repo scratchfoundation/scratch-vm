@@ -7139,6 +7139,42 @@ var RenderedTarget = function (_Target) {
         }
 
         /**
+         * Delete a costume by index.
+         * @param {number} index Costume index to be deleted
+         */
+
+    }, {
+        key: 'deleteCostume',
+        value: function deleteCostume(index) {
+            var originalCostumeCount = this.sprite.costumes.length;
+            if (originalCostumeCount === 1) return;
+
+            this.sprite.costumes = this.sprite.costumes.slice(0, index).concat(this.sprite.costumes.slice(index + 1));
+
+            if (index === this.currentCostume && index === originalCostumeCount - 1) {
+                this.setCostume(index - 1);
+            } else if (index < this.currentCostume) {
+                this.setCostume(this.currentCostume - 1);
+            } else {
+                this.setCostume(this.currentCostume);
+            }
+
+            this.runtime.requestTargetsUpdate(this);
+        }
+
+        /**
+         * Delete a sound by index.
+         * @param {number} index Sound index to be deleted
+         */
+
+    }, {
+        key: 'deleteSound',
+        value: function deleteSound(index) {
+            this.sprite.sounds = this.sprite.sounds.slice(0, index).concat(this.sprite.sounds.slice(index + 1));
+            this.runtime.requestTargetsUpdate(this);
+        }
+
+        /**
          * Update the rotation style.
          * @param {!string} rotationStyle New rotation style.
          */
@@ -19402,6 +19438,17 @@ var VirtualMachine = function (_EventEmitter) {
         }
 
         /**
+         * Delete a costume from the current editing target.
+         * @param {int} costumeIndex - the index of the costume to be removed.
+         */
+
+    }, {
+        key: 'deleteCostume',
+        value: function deleteCostume(costumeIndex) {
+            this.editingTarget.deleteCostume(costumeIndex);
+        }
+
+        /**
          * Add a sound to the current editing target.
          * @param {!object} soundObject Object representing the costume.
          * @returns {?Promise} - a promise that resolves when the sound has been decoded and added
@@ -19416,6 +19463,17 @@ var VirtualMachine = function (_EventEmitter) {
                 _this5.editingTarget.sprite.sounds.push(soundObject);
                 _this5.emitTargetsUpdate();
             });
+        }
+
+        /**
+         * Delete a sound from the current editing target.
+         * @param {int} soundIndex - the index of the sound to be removed.
+         */
+
+    }, {
+        key: 'deleteSound',
+        value: function deleteSound(soundIndex) {
+            this.editingTarget.deleteSound(soundIndex);
         }
 
         /**
@@ -21604,7 +21662,7 @@ module.exports = logger;
 
 module.exports = {
 	"name": "scratch-vm",
-	"version": "0.1.0-prerelease.1495141692",
+	"version": "0.1.0-prerelease.1495480921",
 	"description": "Virtual Machine for Scratch 3.0",
 	"author": "Massachusetts Institute of Technology",
 	"license": "BSD-3-Clause",
@@ -21612,7 +21670,7 @@ module.exports = {
 	"repository": {
 		"type": "git",
 		"url": "git+ssh://git@github.com/LLK/scratch-vm.git",
-		"sha": "e9c48d250bccd88823d129930494a5011f645c0d"
+		"sha": "a118ad1ac94d45da660974478fcb7afffbf2178c"
 	},
 	"main": "./dist/node/scratch-vm.js",
 	"scripts": {
