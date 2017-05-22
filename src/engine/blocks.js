@@ -298,11 +298,7 @@ class Blocks {
                     id: block.id,
                     opcode: block.opcode,
                     // @todo(vm#565) for numerical values with decimals, some countries use comma
-                    value: '',
-                    // @todo(vm#566) Don't require sending x and y when instantiating a
-                    // monitor. If it's not preset the GUI should decide.
-                    x: 0,
-                    y: 0
+                    value: ''
                 });
             }
             break;
