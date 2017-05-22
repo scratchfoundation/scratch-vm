@@ -109,7 +109,7 @@ Scratch3SpeechBlocks.prototype.getVoices = function () {
 };
 
 Scratch3SpeechBlocks.prototype.hatWhenIHear = function (args) {
-    var input = Cast.toString(args.STRING).toLowerCase();
+    const input = Cast.toString(args.STRING).toLowerCase();
 
     if (input === '') return false;
 
