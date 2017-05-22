@@ -30,7 +30,7 @@ var Scratch3SpeechBlocks = function (runtime) {
      * Storing the utterance prevents a bug in which garbage collection causes the onend event to fail.
      * @type {String}
      */
-    this.current_utterance;
+    this.current_utterance = null;
 
     this.runtime.HACK_SpeechBlocks = this;
 };
