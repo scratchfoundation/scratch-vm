@@ -98,6 +98,111 @@ test('setCostume', t => {
     t.end();
 });
 
+test('deleteCostume', t => {
+    const o1 = {id: 1};
+    const o2 = {id: 2};
+    const o3 = {id: 3};
+    const o4 = {id: 4};
+    const o5 = {id: 5};
+
+    const s = new Sprite();
+    const r = new Runtime();
+    s.costumes = [o1, o2, o3];
+    const a = new RenderedTarget(s, r);
+    const renderer = new FakeRenderer();
+    a.renderer = renderer;
+
+    // x* Costume 1        * Costume 2
+    //    Costume 2   =>     Costume 3
+    //    Costume 3
+    a.setCostume(0);
+    a.deleteCostume(0);
+    t.deepEqual(a.sprite.costumes, [o2, o3]);
+    t.equals(a.currentCostume, 0);
+
+    //    Costume 1          Costume 1
+    // x* Costume 2   =>   * Costume 3
+    //    Costume 3
+    a.sprite.costumes = [o1, o2, o3];
+    a.setCostume(1);
+    a.deleteCostume(1);
+    t.deepEqual(a.sprite.costumes, [o1, o3]);
+    t.equals(a.currentCostume, 1);
+
+    //    Costume 1          Costume 1
+    //    Costume 2   =>   * Costume 2
+    // x* Costume 3
+    a.sprite.costumes = [o1, o2, o3];
+    a.setCostume(2);
+    a.deleteCostume(2);
+    t.deepEqual(a.sprite.costumes, [o1, o2]);
+    t.equals(a.currentCostume, 1);
+
+    // Refuses to delete only costume
+    a.sprite.costumes = [o1];
+    a.setCostume(0);
+    a.deleteCostume(0);
+    t.deepEqual(a.sprite.costumes, [o1]);
+    t.equals(a.currentCostume, 0);
+
+    //   Costume 1          Costume 1
+    // x Costume 2          Costume 3
+    //   Costume 3   =>   * Costume 4
+    // * Costume 4          Costume 5
+    //   Costume 5
+    a.sprite.costumes = [o1, o2, o3, o4, o5];
+    a.setCostume(3);
+    a.deleteCostume(1);
+    t.deepEqual(a.sprite.costumes, [o1, o3, o4, o5]);
+    t.equals(a.currentCostume, 2);
+
+    //   Costume 1          Costume 1
+    // * Costume 2        * Costume 2
+    //   Costume 3   =>     Costume 3
+    // x Costume 4          Costume 5
+    //   Costume 5
+    a.sprite.costumes = [o1, o2, o3, o4, o5];
+    a.setCostume(1);
+    a.deleteCostume(3);
+    t.deepEqual(a.sprite.costumes, [o1, o2, o3, o5]);
+    t.equals(a.currentCostume, 1);
+
+    //   Costume 1          Costume 1
+    // * Costume 2        * Costume 2
+    //   Costume 3   =>     Costume 3
+    //   Costume 4          Costume 4
+    // x Costume 5
+    a.sprite.costumes = [o1, o2, o3, o4, o5];
+    a.setCostume(1);
+    a.deleteCostume(4);
+    t.deepEqual(a.sprite.costumes, [o1, o2, o3, o4]);
+    t.equals(a.currentCostume, 1);
+    t.end();
+});
+
+test('deleteSound', t => {
+    const o1 = {id: 1};
+    const o2 = {id: 2};
+    const o3 = {id: 3};
+
+    const s = new Sprite();
+    const r = new Runtime();
+    s.sounds = [o1, o2, o3];
+    const a = new RenderedTarget(s, r);
+    const renderer = new FakeRenderer();
+    a.renderer = renderer;
+
+    a.deleteSound(0);
+    t.deepEqual(a.sprite.sounds, [o2, o3]);
+
+    // Allows deleting the only sound
+    a.sprite.sounds = [o1];
+    a.deleteSound(0);
+    t.deepEqual(a.sprite.sounds, []);
+
+    t.end();
+});
+
 test('setRotationStyle', t => {
     const s = new Sprite();
     const r = new Runtime();
