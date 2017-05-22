@@ -7,6 +7,12 @@ var Scratch3SpeechBlocks = function (runtime) {
      */
     this.runtime = runtime;
 
+    this.SpeechRecognition = window.SpeechRecognition ||
+                          window.webkitSpeechRecognition ||
+                          window.mozSpeechRecognition ||
+                          window.msSpeechRecognition ||
+                          window.oSpeechRecognition;
+
     /**
      * The most recent result from the speech recognizer, used for a reporter block.
      * @type {String}
@@ -53,7 +59,7 @@ Scratch3SpeechBlocks.prototype.getHats = function () {
 
 Scratch3SpeechBlocks.prototype.startSpeechRecogntion = function () {
     if (!this.recognition) {
-        this.recognition = new webkitSpeechRecognition();
+        this.recognition = new this.SpeechRecognition();
         this.recognition.interimResults = true;
         // this.recognition.continuous = true;
         this.recognized_speech = '';
