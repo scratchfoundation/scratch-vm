@@ -405,6 +405,8 @@ class RenderedTarget extends Target {
             this.setCostume(index - 1);
         } else if (index < this.currentCostume) {
             this.setCostume(this.currentCostume - 1);
+        } else {
+            this.setCostume(this.currentCostume);
         }
 
         this.runtime.requestTargetsUpdate(this);
