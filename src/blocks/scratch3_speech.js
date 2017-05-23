@@ -61,17 +61,21 @@ Scratch3SpeechBlocks.prototype.startSpeechRecogntion = function () {
     if (!this.recognition) {
         this.recognition = new this.SpeechRecognition();
         this.recognition.interimResults = true;
-        // this.recognition.continuous = true;
-        this.recognized_speech = '';
+        this.recognized_speech = [];
 
         this.recognition.onresult = function (event) {
-            this.recognized_speech = event.results[0][0].transcript.toLowerCase();
-            this.latest_speech = this.recognized_speech;
+            const SpeechRecognitionResult = event.results[event.resultIndex];
+            const results = [];
+            for (let k = 0; k < SpeechRecognitionResult.length; k++) {
+                results[k] = SpeechRecognitionResult[k].transcript.toLowerCase();
+            }
+            this.recognized_speech = results;
+
+            this.latest_speech = this.recognized_speech[0];
         }.bind(this);
 
         this.recognition.onend = function () {
             this.recognition.start();
-            this.recognized_speech = '';
         }.bind(this);
 
         this.recognition.start();
@@ -113,9 +117,11 @@ Scratch3SpeechBlocks.prototype.hatWhenIHear = function (args) {
 
     if (input === '') return false;
 
-    if (this.recognized_speech.includes(input)) {
-        this.recognized_speech = '';
-        return true;
+    for (let i = 0; i < this.recognized_speech.length; i++) {
+        if (this.recognized_speech[i].includes(input)) {
+            this.recognized_speech = [];
+            return true;
+        }
     }
     return false;
 };
