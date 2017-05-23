@@ -674,11 +674,81 @@ class Scratch3WeDo2Blocks {
         }
         switch (direction) {
         case TiltDirection.ANY:
-            return (Math.abs(this._device.tiltX) >= Scratch3WeDo2Blocks.TILT_THRESHOLD) ||
-                (Math.abs(this._device.tiltY) >= Scratch3WeDo2Blocks.TILT_THRESHOLD);
+            // @todo: this code creates an improved behavior for "when tilted any", by comparing
+            // each tilt axis to its previous state, so that the hat will trigger when any tilt
+            // changes from false to true. Unfortunately this breaks the behavior of the boolean
+            // reporter block, which should have a different logic: it should be true if any of the
+            // tilt axes is currently over the threshold. I think the solution should be to make the
+            // boolean reporter call a different function from the hat block, maybe something like
+            // _isTiltedReporter
+            if (!this._getPrevTilted(TiltDirection.UP) && this._isTilted(TiltDirection.UP)) {
+                this._updatePrevTilted();
+                return true;
+            }
+            if (!this._getPrevTilted(TiltDirection.DOWN) && this._isTilted(TiltDirection.DOWN)) {
+                this._updatePrevTilted();
+                return true;
+            }
+            if (!this._getPrevTilted(TiltDirection.LEFT) && this._isTilted(TiltDirection.LEFT)) {
+                this._updatePrevTilted();
+                return true;
+            }
+            if (!this._getPrevTilted(TiltDirection.RIGHT) && this._isTilted(TiltDirection.RIGHT)) {
+                this._updatePrevTilted();
+                return true;
+            }
+            return false;
         default:
             return this._getTiltAngle(direction) >= Scratch3WeDo2Blocks.TILT_THRESHOLD;
         }
+    }
+
+    /**
+     * Get the previous state for whether the tilt sensor was tilted. This is used by the "when tilted
+     * block, with direction "any" selected.
+     * @param {TiltDirection} direction - the previous tilt direction (up, down, left, right).
+     * @return {boolean} - true if the tilt sensor is was previously tilted past a threshold in the specified direction.
+     * @private
+     */
+    _getPrevTilted (direction) {
+        if (!this._device) {
+            return false;
+        }
+        switch (direction) {
+        case TiltDirection.UP:
+            if (!this.prevTiltedUp) {
+                this.prevTiltedUp = false;
+            }
+            return this.prevTiltedUp;
+        case TiltDirection.DOWN:
+            if (!this.prevTiltedDown) {
+                this.prevTiltedDown = false;
+            }
+            return this.prevTiltedDown;
+        case TiltDirection.LEFT:
+            if (!this.prevTiltedLeft) {
+                this.prevTiltedLeft = false;
+            }
+            return this.prevTiltedLeft;
+        case TiltDirection.RIGHT:
+            if (!this.prevTiltedRight) {
+                this.prevTiltedRight = false;
+            }
+            return this.prevTiltedRight;
+        default:
+            return false;
+        }
+    }
+
+    /**
+     * Update the value of the variables storing previous tilt information.
+     * This is used by the "when tilted block, with direction "any" selected.
+     */
+    _updatePrevTilted () {
+        this.prevTiltedUp = this._isTilted(TiltDirection.UP);
+        this.prevTiltedDown = this._isTilted(TiltDirection.DOWN);
+        this.prevTiltedLeft = this._isTilted(TiltDirection.LEFT);
+        this.prevTiltedRight = this._isTilted(TiltDirection.RIGHT);
     }
 
     /**
