@@ -268,25 +268,6 @@ class Blocks {
     }
 
     /**
-     * Serialize block fields and input fields for reporting new monitors
-     * @param {!object} block Block to be paramified.
-     * @return {!object} object of param key/values.
-     */
-    getBlockParams (block) {
-        const params = {};
-        for (const key in block.fields) {
-            params[key] = block.fields[key].value;
-        }
-        for (const inputKey in block.inputs) {
-            const inputBlock = this._blocks[block.inputs[inputKey].block];
-            for (const key in inputBlock.fields) {
-                params[key] = inputBlock.fields[key].value;
-            }
-        }
-        return params;
-    }
-
-    /**
      * Block management: change block field values
      * @param {!object} args Blockly change event to be processed
      * @param {?Runtime} optRuntime Optional runtime to allow changeBlock to change VM state.
@@ -316,7 +297,7 @@ class Blocks {
                     // @todo(vm#564) this will collide if multiple sprites use same block
                     id: block.id,
                     opcode: block.opcode,
-                    params: this.getBlockParams(block),
+                    params: this._getBlockParams(block),
                     // @todo(vm#565) for numerical values with decimals, some countries use comma
                     value: ''
                 });
@@ -525,6 +506,24 @@ class Blocks {
     }
 
     // ---------------------------------------------------------------------
+    /**
+     * Helper to serialize block fields and input fields for reporting new monitors
+     * @param {!object} block Block to be paramified.
+     * @return {!object} object of param key/values.
+     */
+    _getBlockParams (block) {
+        const params = {};
+        for (const key in block.fields) {
+            params[key] = block.fields[key].value;
+        }
+        for (const inputKey in block.inputs) {
+            const inputBlock = this._blocks[block.inputs[inputKey].block];
+            for (const key in inputBlock.fields) {
+                params[key] = inputBlock.fields[key].value;
+            }
+        }
+        return params;
+    }
 
     /**
      * Helper to add a stack to `this._scripts`.
