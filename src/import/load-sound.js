@@ -1,3 +1,4 @@
+const StringUtil = require('../util/string-util');
 const log = require('../util/log');
 
 /**
@@ -17,9 +18,10 @@ const loadSound = function (sound, runtime) {
         log.error('No audio engine present; cannot load sound asset: ', sound.md5);
         return Promise.resolve(sound);
     }
-    const idParts = sound.md5.split('.');
+    const idParts = StringUtil.splitFirst(sound.md5, '.');
     const md5 = idParts[0];
-    return runtime.storage.load(runtime.storage.AssetType.Sound, md5)
+    const ext = idParts[1].toLowerCase();
+    return runtime.storage.load(runtime.storage.AssetType.Sound, md5, ext)
         .then(soundAsset => {
             sound.assetId = soundAsset.assetId;
             sound.assetType = runtime.storage.AssetType.Sound;

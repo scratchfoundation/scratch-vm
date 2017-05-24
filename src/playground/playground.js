@@ -34,7 +34,7 @@ const getAssetUrl = function (asset) {
         'internalapi/asset/',
         asset.assetId,
         '.',
-        asset.assetType.runtimeFormat,
+        asset.dataFormat,
         '/get/'
     ];
     return assetUrlParts.join('');
