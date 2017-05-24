@@ -883,7 +883,7 @@ class Runtime extends EventEmitter {
      * @param {!MonitorRecord} monitor Monitor to add.
      */
     requestAddMonitor (monitor) {
-        this._monitorState = this._monitorState.set(monitor.get('id'), monitor);
+        this._monitorState = this._monitorState.set(monitor.id, monitor);
     }
 
     /**
