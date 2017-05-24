@@ -390,6 +390,40 @@ class RenderedTarget extends Target {
     }
 
     /**
+     * Delete a costume by index.
+     * @param {number} index Costume index to be deleted
+     */
+    deleteCostume (index) {
+        const originalCostumeCount = this.sprite.costumes.length;
+        if (originalCostumeCount === 1) return;
+
+        this.sprite.costumes = this.sprite.costumes
+            .slice(0, index)
+            .concat(this.sprite.costumes.slice(index + 1));
+
+        if (index === this.currentCostume && index === originalCostumeCount - 1) {
+            this.setCostume(index - 1);
+        } else if (index < this.currentCostume) {
+            this.setCostume(this.currentCostume - 1);
+        } else {
+            this.setCostume(this.currentCostume);
+        }
+
+        this.runtime.requestTargetsUpdate(this);
+    }
+
+    /**
+     * Delete a sound by index.
+     * @param {number} index Sound index to be deleted
+     */
+    deleteSound (index) {
+        this.sprite.sounds = this.sprite.sounds
+            .slice(0, index)
+            .concat(this.sprite.sounds.slice(index + 1));
+        this.runtime.requestTargetsUpdate(this);
+    }
+
+    /**
      * Update the rotation style.
      * @param {!string} rotationStyle New rotation style.
      */
