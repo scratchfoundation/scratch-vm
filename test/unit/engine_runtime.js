@@ -1,5 +1,6 @@
 const test = require('tap').test;
 const Runtime = require('../../src/engine/runtime');
+const MonitorRecord = require('../../src/engine/records');
 const {Map} = require('immutable');
 
 test('spec', t => {
@@ -15,7 +16,7 @@ test('spec', t => {
 test('monitorStateEquals', t => {
     const r = new Runtime();
     const id = 'xklj4#!';
-    const prevMonitorState = Map({
+    const prevMonitorState = MonitorRecord({
         id,
         category: 'data',
         label: 'turtle whereabouts',
@@ -38,13 +39,11 @@ test('monitorStateEquals', t => {
 test('monitorStateDoesNotEqual', t => {
     const r = new Runtime();
     const id = 'xklj4#!';
-    const prevMonitorState = Map({
+    const prevMonitorState = MonitorRecord({
         id,
         category: 'data',
         label: 'turtle whereabouts',
-        value: '25',
-        x: 0,
-        y: 0
+        value: '25'
     });
 
     // Value change
@@ -61,13 +60,13 @@ test('monitorStateDoesNotEqual', t => {
     // Prop change
     newMonitorDelta = Map({
         id: 'xklj4#!',
-        moose: 7
+        x: 7
     });
     r.requestUpdateMonitor(newMonitorDelta);
 
     t.equals(false, prevMonitorState.equals(r._monitorState.get(id)));
     t.equals(String(24), r._monitorState.get(id).get('value'));
-    t.equals(7, r._monitorState.get(id).get('moose'));
+    t.equals(7, r._monitorState.get(id).get('x'));
 
     t.end();
 });

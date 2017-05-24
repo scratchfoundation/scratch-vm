@@ -2,7 +2,7 @@ const EventEmitter = require('events');
 const Sequencer = require('./sequencer');
 const Blocks = require('./blocks');
 const Thread = require('./thread');
-const {Map} = require('immutable');
+const {OrderedMap} = require('immutable');
 
 // Virtual I/O devices.
 const Clock = require('../io/clock');
@@ -113,14 +113,14 @@ class Runtime extends EventEmitter {
         this._refreshTargets = false;
 
         /**
-         * List of all monitors.
+         * Ordered map of all monitors, which are MonitorReporter objects.
          */
-        this._monitorState = Map({});
+        this._monitorState = OrderedMap({});
 
         /**
          * Monitor state from last tick
          */
-        this._prevMonitorState = Map({});
+        this._prevMonitorState = OrderedMap({});
 
         /**
          * Whether the project is in "turbo mode."
@@ -880,7 +880,7 @@ class Runtime extends EventEmitter {
     /**
      * Add a monitor to the state. If the monitor already exists in the state,
      * overwrites it.
-     * @param {!Map} monitor Monitor to add.
+     * @param {!MonitorRecord} monitor Monitor to add.
      */
     requestAddMonitor (monitor) {
         this._monitorState = this._monitorState.set(monitor.get('id'), monitor);
@@ -889,7 +889,9 @@ class Runtime extends EventEmitter {
     /**
      * Update a monitor in the state. Does nothing if the monitor does not already
      * exist in the state.
-     * @param {!Map} monitor Monitor to update.
+     * @param {!Map} monitor Monitor values to update. Values on the monitor with overwrite
+     *     values on the old monitor with the same ID. If a value isn't defined on the new monitor,
+     *     the old monitor will keep its old value.
      */
     requestUpdateMonitor (monitor) {
         if (this._monitorState.has(monitor.get('id'))) {

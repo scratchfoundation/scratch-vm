@@ -1,7 +1,7 @@
 const adapter = require('./adapter');
 const mutationAdapter = require('./mutation-adapter');
 const xmlEscape = require('../util/xml-escape');
-const {Map} = require('immutable');
+const MonitorRecord = require('./records');
 
 /**
  * @fileoverview
@@ -294,7 +294,7 @@ class Blocks {
             if (optRuntime && wasMonitored && !block.isMonitored) {
                 optRuntime.requestRemoveMonitor(block.id);
             } else if (optRuntime && !wasMonitored && block.isMonitored) {
-                optRuntime.requestAddMonitor(Map({
+                optRuntime.requestAddMonitor(MonitorRecord({
                     // @todo(vm#564) this will collide if multiple sprites use same block
                     id: block.id,
                     category: 'data',
