@@ -427,11 +427,7 @@ class Blocks {
      * @return {string} String of XML representing this object's blocks.
      */
     toXML () {
-        let xmlString = '<xml xmlns="http://www.w3.org/1999/xhtml">';
-        for (let i = 0; i < this._scripts.length; i++) {
-            xmlString += this.blockToXML(this._scripts[i]);
-        }
-        return `${xmlString}</xml>`;
+        return this._scripts.map(script => this.blockToXML(script)).join();
     }
 
     /**
