@@ -18,11 +18,8 @@ test('monitorStateEquals', t => {
     const id = 'xklj4#!';
     const prevMonitorState = MonitorRecord({
         id,
-        category: 'data',
-        label: 'turtle whereabouts',
-        value: '25',
-        x: 0,
-        y: 0
+        opcode: 'turtle whereabouts',
+        value: '25'
     });
     const newMonitorDelta = Map({
         id,
@@ -31,7 +28,7 @@ test('monitorStateEquals', t => {
     r.requestAddMonitor(prevMonitorState);
     r.requestUpdateMonitor(newMonitorDelta);
 
-    t.equals(true, prevMonitorState.equals(r._monitorState.get(id)));
+    t.equals(true, prevMonitorState === r._monitorState.get(id));
     t.equals(String(25), r._monitorState.get(id).get('value'));
     t.end();
 });
@@ -39,10 +36,10 @@ test('monitorStateEquals', t => {
 test('monitorStateDoesNotEqual', t => {
     const r = new Runtime();
     const id = 'xklj4#!';
+    const params = {seven: 7};
     const prevMonitorState = MonitorRecord({
         id,
-        category: 'data',
-        label: 'turtle whereabouts',
+        opcode: 'turtle whereabouts',
         value: '25'
     });
 
@@ -60,13 +57,13 @@ test('monitorStateDoesNotEqual', t => {
     // Prop change
     newMonitorDelta = Map({
         id: 'xklj4#!',
-        x: 7
+        params: params
     });
     r.requestUpdateMonitor(newMonitorDelta);
 
     t.equals(false, prevMonitorState.equals(r._monitorState.get(id)));
-    t.equals(String(24), r._monitorState.get(id).get('value'));
-    t.equals(7, r._monitorState.get(id).get('x'));
+    t.equals(String(24), r._monitorState.get(id).value);
+    t.equals(params, r._monitorState.get(id).params);
 
     t.end();
 });
