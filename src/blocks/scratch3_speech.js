@@ -1,4 +1,5 @@
 var Cast = require('../util/cast');
+const log = require('../util/log');
 
 var Scratch3SpeechBlocks = function (runtime) {
     /**
@@ -15,6 +16,14 @@ var Scratch3SpeechBlocks = function (runtime) {
                           window.mozSpeechRecognition ||
                           window.msSpeechRecognition ||
                           window.oSpeechRecognition;
+
+    /**
+     * A flag to indicate that speech recognition is paused during a speech synthesis utterance
+     * to avoid feedback. This is used to avoid stopping and re-starting the speech recognition
+     * engine.
+     * @type {Boolean}
+     */
+    this.speechRecognitionPaused = false;
 
     /**
      * The most recent result from the speech recognizer, used for a reporter block.
@@ -67,6 +76,10 @@ Scratch3SpeechBlocks.prototype.startSpeechRecogntion = function () {
         this.recognized_speech = [];
 
         this.recognition.onresult = function (event) {
+            if (this.speechRecognitionPaused) {
+                return;
+            }
+
             const SpeechRecognitionResult = event.results[event.resultIndex];
             const results = [];
             for (let k = 0; k < SpeechRecognitionResult.length; k++) {
@@ -78,6 +91,9 @@ Scratch3SpeechBlocks.prototype.startSpeechRecogntion = function () {
         }.bind(this);
 
         this.recognition.onend = function () {
+            if (this.speechRecognitionPaused) {
+                return;
+            }
             this.recognition.start();
         }.bind(this);
 
@@ -148,10 +164,26 @@ Scratch3SpeechBlocks.prototype.speak = function (args) {
         }
     }
 
+    // Pause speech recognition during speech synthesis
+    this.speechRecognitionPaused = true;
+    if (this.recognition) {
+        this.recognition.stop();
+    }
+
     speechSynthesis.speak(this.current_utterance);
 
     return new Promise(resolve => {
-        this.current_utterance.onend = function () {
+        this.current_utterance.onend = () => {
+            if (this.speechRecognitionPaused) {
+                this.speechRecognitionPaused = false;
+                if (this.recognition) {
+                    try {
+                        this.recognition.start();
+                    } catch (e) {
+                        log.warn(e);
+                    }
+                }
+            }
             resolve();
         };
     });
