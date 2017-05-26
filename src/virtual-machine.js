@@ -235,6 +235,18 @@ class VirtualMachine extends EventEmitter {
             this.emitTargetsUpdate();
             this.emitWorkspaceUpdate();
             this.runtime.setEditingTarget(this.editingTarget);
+
+            // Start extension code when extension sprite loads
+            for (let i = 0; i < this.runtime.targets.length; i++) {
+                const name = this.runtime.targets[i].sprite.name;
+                if (name === 'LEGO WeDo') {
+                    this.runtime.HACK_WeDo2Blocks.connect();
+                }
+                if (name === 'Speech') {
+                    this.runtime.HACK_SpeechBlocks.startSpeechRecogntion();
+                }
+            }
+
         });
     }
 
