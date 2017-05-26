@@ -132,7 +132,15 @@ Scratch3SpeechBlocks.prototype.getVoices = function () {
 };
 
 Scratch3SpeechBlocks.prototype.hatWhenIHear = function (args) {
-    const input = Cast.toString(args.STRING).toLowerCase();
+    if (!this.recognition) {
+        return;
+    }
+
+    let input = Cast.toString(args.STRING).toLowerCase();
+    // facilitate matches by removing some punctuation: . ? !
+    input = input.replace(/[.?!]/g, '');
+    // trim off any white space
+    input = input.trim();
 
     if (input === '') return false;
 
