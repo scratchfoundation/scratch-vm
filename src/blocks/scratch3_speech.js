@@ -7,6 +7,9 @@ var Scratch3SpeechBlocks = function (runtime) {
      */
     this.runtime = runtime;
 
+    /**
+     * Try to correctly prefix the speech recognition object across browsers.
+     */
     this.SpeechRecognition = window.SpeechRecognition ||
                           window.webkitSpeechRecognition ||
                           window.mozSpeechRecognition ||
