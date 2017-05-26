@@ -5962,20 +5962,13 @@ var Blocks = function () {
                     if (optRuntime && wasMonitored && !block.isMonitored) {
                         optRuntime.requestRemoveMonitor(block.id);
                     } else if (optRuntime && !wasMonitored && block.isMonitored) {
-                        optRuntime.requestAddMonitor(
-                        // Ensure that value is not undefined, since React requires it
-                        {
+                        optRuntime.requestAddMonitor({
                             // @todo(vm#564) this will collide if multiple sprites use same block
                             id: block.id,
-                            category: 'data',
-                            // @todo(vm#565) how to handle translation here?
-                            label: block.opcode,
+                            opcode: block.opcode,
+                            params: this._getBlockParams(block),
                             // @todo(vm#565) for numerical values with decimals, some countries use comma
-                            value: '',
-                            x: 0,
-                            // @todo(vm#566) Don't require sending x and y when instantiating a
-                            // monitor. If it's not preset the GUI should decide.
-                            y: 0
+                            value: ''
                         });
                     }
                     break;
@@ -6190,6 +6183,27 @@ var Blocks = function () {
         }
 
         // ---------------------------------------------------------------------
+        /**
+         * Helper to serialize block fields and input fields for reporting new monitors
+         * @param {!object} block Block to be paramified.
+         * @return {!object} object of param key/values.
+         */
+
+    }, {
+        key: '_getBlockParams',
+        value: function _getBlockParams(block) {
+            var params = {};
+            for (var key in block.fields) {
+                params[key] = block.fields[key].value;
+            }
+            for (var inputKey in block.inputs) {
+                var inputBlock = this._blocks[block.inputs[inputKey].block];
+                for (var _key in inputBlock.fields) {
+                    params[_key] = inputBlock.fields[_key].value;
+                }
+            }
+            return params;
+        }
 
         /**
          * Helper to add a stack to `this._scripts`.
@@ -35832,7 +35846,7 @@ module.exports = function (x) {
 
 module.exports = {
 	"name": "scratch-vm",
-	"version": "0.1.0-prerelease.1495662420",
+	"version": "0.1.0-prerelease.1495811565",
 	"description": "Virtual Machine for Scratch 3.0",
 	"author": "Massachusetts Institute of Technology",
 	"license": "BSD-3-Clause",
@@ -35840,7 +35854,7 @@ module.exports = {
 	"repository": {
 		"type": "git",
 		"url": "git+ssh://git@github.com/LLK/scratch-vm.git",
-		"sha": "3970883e45810fe6163ffd8213077df321fb817c"
+		"sha": "3e9dfde43f7e11f5e24bc34aec0624cd3327694d"
 	},
 	"main": "./dist/node/scratch-vm.js",
 	"scripts": {
