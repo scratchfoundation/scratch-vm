@@ -491,9 +491,18 @@ class VirtualMachine extends EventEmitter {
      * of the current editing target's blocks.
      */
     emitWorkspaceUpdate () {
-        this.emit('workspaceUpdate', {
-            xml: this.editingTarget.blocks.toXML()
-        });
+        // @todo Include variables scoped to editing target also.
+        const variableMap = this.runtime.getTargetForStage().variables;
+        const variables = Object.keys(variableMap).map(k => variableMap[k]);
+
+        const xmlString = `<xml xmlns="http://www.w3.org/1999/xhtml">
+                            <variables>
+                                ${variables.map(v => v.toXML()).join()}
+                            </variables>
+                            ${this.editingTarget.blocks.toXML()}
+                        </xml>`;
+
+        this.emit('workspaceUpdate', {xml: xmlString});
     }
 
     /**
@@ -537,6 +546,15 @@ class VirtualMachine extends EventEmitter {
      */
     postSpriteInfo (data) {
         this.editingTarget.postSpriteInfo(data);
+    }
+
+    /**
+     * Create a variable by name.
+     * @todo this only creates global variables by putting them on the stage
+     * @param {string} name The name of the variable
+     */
+    createVariable (name) {
+        this.runtime.getTargetForStage().lookupOrCreateVariable(name);
     }
 }
 

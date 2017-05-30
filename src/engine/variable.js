@@ -15,6 +15,10 @@ class Variable {
         this.value = value;
         this.isCloud = isCloud;
     }
+
+    toXML () {
+        return `<variable type="">${this.name}</variable>`;
+    }
 }
 
 module.exports = Variable;
