@@ -22325,7 +22325,9 @@ var loadSound = __webpack_require__(57);
 var serialize = function serialize(runtime) {
     // Fetch targets
     var obj = Object.create(null);
-    obj.targets = runtime.targets;
+    obj.targets = runtime.targets.filter(function (target) {
+        return target.isOriginal;
+    });
 
     // Assemble metadata
     var meta = Object.create(null);
@@ -35878,7 +35880,7 @@ module.exports = function (x) {
 
 module.exports = {
 	"name": "scratch-vm",
-	"version": "0.1.0-prerelease.1496151099",
+	"version": "0.1.0-prerelease.1496154530",
 	"description": "Virtual Machine for Scratch 3.0",
 	"author": "Massachusetts Institute of Technology",
 	"license": "BSD-3-Clause",
@@ -35886,7 +35888,7 @@ module.exports = {
 	"repository": {
 		"type": "git",
 		"url": "git+ssh://git@github.com/LLK/scratch-vm.git",
-		"sha": "51928bac65c579f56645cb824ae62cb8f681b77f"
+		"sha": "b810b7be0a59b32d8524848a08952f3b77ab9cd9"
 	},
 	"main": "./dist/node/scratch-vm.js",
 	"scripts": {
