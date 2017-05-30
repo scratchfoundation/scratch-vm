@@ -6099,11 +6099,11 @@ var Blocks = function () {
     }, {
         key: 'toXML',
         value: function toXML() {
-            var xmlString = '<xml xmlns="http://www.w3.org/1999/xhtml">';
-            for (var i = 0; i < this._scripts.length; i++) {
-                xmlString += this.blockToXML(this._scripts[i]);
-            }
-            return xmlString + '</xml>';
+            var _this2 = this;
+
+            return this._scripts.map(function (script) {
+                return _this2.blockToXML(script);
+            }).join();
         }
 
         /**
@@ -8130,6 +8130,8 @@ module.exports = Thread;
 "use strict";
 
 
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
 /**
@@ -8137,20 +8139,30 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
  * Object representing a Scratch variable.
  */
 
-var Variable =
-/**
- * @param {!string} name Name of the variable.
- * @param {(string|number)} value Value of the variable.
- * @param {boolean} isCloud Whether the variable is stored in the cloud.
- * @constructor
- */
-function Variable(name, value, isCloud) {
-  _classCallCheck(this, Variable);
+var Variable = function () {
+    /**
+     * @param {!string} name Name of the variable.
+     * @param {(string|number)} value Value of the variable.
+     * @param {boolean} isCloud Whether the variable is stored in the cloud.
+     * @constructor
+     */
+    function Variable(name, value, isCloud) {
+        _classCallCheck(this, Variable);
 
-  this.name = name;
-  this.value = value;
-  this.isCloud = isCloud;
-};
+        this.name = name;
+        this.value = value;
+        this.isCloud = isCloud;
+    }
+
+    _createClass(Variable, [{
+        key: "toXML",
+        value: function toXML() {
+            return "<variable type=\"\">" + this.name + "</variable>";
+        }
+    }]);
+
+    return Variable;
+}();
 
 module.exports = Variable;
 
@@ -23147,9 +23159,17 @@ var VirtualMachine = function (_EventEmitter) {
     }, {
         key: 'emitWorkspaceUpdate',
         value: function emitWorkspaceUpdate() {
-            this.emit('workspaceUpdate', {
-                xml: this.editingTarget.blocks.toXML()
+            // @todo Include variables scoped to editing target also.
+            var variableMap = this.runtime.getTargetForStage().variables;
+            var variables = Object.keys(variableMap).map(function (k) {
+                return variableMap[k];
             });
+
+            var xmlString = '<xml xmlns="http://www.w3.org/1999/xhtml">\n                            <variables>\n                                ' + variables.map(function (v) {
+                return v.toXML();
+            }).join() + '\n                            </variables>\n                            ' + this.editingTarget.blocks.toXML() + '\n                        </xml>';
+
+            this.emit('workspaceUpdate', { xml: xmlString });
         }
 
         /**
@@ -23205,6 +23225,18 @@ var VirtualMachine = function (_EventEmitter) {
         key: 'postSpriteInfo',
         value: function postSpriteInfo(data) {
             this.editingTarget.postSpriteInfo(data);
+        }
+
+        /**
+         * Create a variable by name.
+         * @todo this only creates global variables by putting them on the stage
+         * @param {string} name The name of the variable
+         */
+
+    }, {
+        key: 'createVariable',
+        value: function createVariable(name) {
+            this.runtime.getTargetForStage().lookupOrCreateVariable(name);
         }
     }]);
 
@@ -35846,7 +35878,7 @@ module.exports = function (x) {
 
 module.exports = {
 	"name": "scratch-vm",
-	"version": "0.1.0-prerelease.1495811565",
+	"version": "0.1.0-prerelease.1496151099",
 	"description": "Virtual Machine for Scratch 3.0",
 	"author": "Massachusetts Institute of Technology",
 	"license": "BSD-3-Clause",
@@ -35854,7 +35886,7 @@ module.exports = {
 	"repository": {
 		"type": "git",
 		"url": "git+ssh://git@github.com/LLK/scratch-vm.git",
-		"sha": "3e9dfde43f7e11f5e24bc34aec0624cd3327694d"
+		"sha": "51928bac65c579f56645cb824ae62cb8f681b77f"
 	},
 	"main": "./dist/node/scratch-vm.js",
 	"scripts": {
