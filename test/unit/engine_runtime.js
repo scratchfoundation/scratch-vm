@@ -1,6 +1,6 @@
 const test = require('tap').test;
 const Runtime = require('../../src/engine/runtime');
-const MonitorRecord = require('../../src/engine/records');
+const MonitorRecord = require('../../src/engine/monitor-record');
 const {Map} = require('immutable');
 
 test('spec', t => {
