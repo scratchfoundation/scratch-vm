@@ -2,6 +2,7 @@ const EventEmitter = require('events');
 const Sequencer = require('./sequencer');
 const Blocks = require('./blocks');
 const Thread = require('./thread');
+const {OrderedMap} = require('immutable');
 
 // Virtual I/O devices.
 const Clock = require('../io/clock');
@@ -113,9 +114,14 @@ class Runtime extends EventEmitter {
         this._refreshTargets = false;
 
         /**
-         * List of all monitors.
+         * Ordered map of all monitors, which are MonitorReporter objects.
          */
-        this._monitorState = {};
+        this._monitorState = OrderedMap({});
+
+        /**
+         * Monitor state from last tick
+         */
+        this._prevMonitorState = OrderedMap({});
 
         /**
          * Whether the project is in "turbo mode."
@@ -701,10 +707,10 @@ class Runtime extends EventEmitter {
             this._refreshTargets = false;
         }
 
-        // @todo(vm#570) only emit if monitors has changed since last time.
-        this.emit(Runtime.MONITORS_UPDATE,
-            Object.keys(this._monitorState).map(key => this._monitorState[key])
-        );
+        if (!this._prevMonitorState.equals(this._monitorState)) {
+            this.emit(Runtime.MONITORS_UPDATE, this._monitorState);
+            this._prevMonitorState = this._monitorState;
+        }
     }
 
     /**
@@ -876,30 +882,33 @@ class Runtime extends EventEmitter {
     /**
      * Add a monitor to the state. If the monitor already exists in the state,
      * overwrites it.
-     * @param {!object} monitor Monitor to add.
+     * @param {!MonitorRecord} monitor Monitor to add.
      */
     requestAddMonitor (monitor) {
-        this._monitorState[monitor.id] = monitor;
+        this._monitorState = this._monitorState.set(monitor.id, monitor);
     }
 
     /**
      * Update a monitor in the state. Does nothing if the monitor does not already
      * exist in the state.
-     * @param {!object} monitor Monitor to update.
+     * @param {!Map} monitor Monitor values to update. Values on the monitor with overwrite
+     *     values on the old monitor with the same ID. If a value isn't defined on the new monitor,
+     *     the old monitor will keep its old value.
      */
     requestUpdateMonitor (monitor) {
-        if (this._monitorState.hasOwnProperty(monitor.id)) {
-            this._monitorState[monitor.id] = Object.assign({}, this._monitorState[monitor.id], monitor);
+        if (this._monitorState.has(monitor.get('id'))) {
+            this._monitorState =
+                this._monitorState.set(monitor.get('id'), this._monitorState.get(monitor.get('id')).merge(monitor));
         }
     }
 
     /**
      * Removes a monitor from the state. Does nothing if the monitor already does
      * not exist in the state.
-     * @param {!object} monitorId ID of the monitor to remove.
+     * @param {!string} monitorId ID of the monitor to remove.
      */
     requestRemoveMonitor (monitorId) {
-        delete this._monitorState[monitorId];
+        this._monitorState = this._monitorState.delete(monitorId);
     }
 
     /**

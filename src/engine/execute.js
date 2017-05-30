@@ -1,5 +1,6 @@
 const log = require('../util/log');
 const Thread = require('./thread');
+const {Map} = require('immutable');
 
 /**
  * Utility function to determine if a value is a Promise.
@@ -97,10 +98,10 @@ const execute = function (sequencer, thread) {
                     runtime.visualReport(currentBlockId, resolvedValue);
                 }
                 if (thread.updateMonitor) {
-                    runtime.requestUpdateMonitor({
+                    runtime.requestUpdateMonitor(Map({
                         id: currentBlockId,
                         value: String(resolvedValue)
-                    });
+                    }));
                 }
             }
             // Finished any yields.

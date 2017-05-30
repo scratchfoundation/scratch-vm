@@ -1,6 +1,7 @@
 const adapter = require('./adapter');
 const mutationAdapter = require('./mutation-adapter');
 const xmlEscape = require('../util/xml-escape');
+const MonitorRecord = require('./monitor-record');
 
 /**
  * @fileoverview
@@ -293,14 +294,14 @@ class Blocks {
             if (optRuntime && wasMonitored && !block.isMonitored) {
                 optRuntime.requestRemoveMonitor(block.id);
             } else if (optRuntime && !wasMonitored && block.isMonitored) {
-                optRuntime.requestAddMonitor({
+                optRuntime.requestAddMonitor(MonitorRecord({
                     // @todo(vm#564) this will collide if multiple sprites use same block
                     id: block.id,
                     opcode: block.opcode,
                     params: this._getBlockParams(block),
                     // @todo(vm#565) for numerical values with decimals, some countries use comma
                     value: ''
-                });
+                }));
             }
             break;
         }
