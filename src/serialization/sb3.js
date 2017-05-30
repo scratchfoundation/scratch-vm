@@ -21,7 +21,7 @@ const loadSound = require('../import/load-sound.js');
 const serialize = function (runtime) {
     // Fetch targets
     const obj = Object.create(null);
-    obj.targets = runtime.targets;
+    obj.targets = runtime.targets.filter(target => target.isOriginal);
 
     // Assemble metadata
     const meta = Object.create(null);
