@@ -22329,7 +22329,7 @@ var Scratch3SensingBlocks = function () {
     }, {
         key: 'getKeyPressed',
         value: function getKeyPressed(args, util) {
-            return util.ioQuery('keyboard', 'getKeyIsDown', args.KEY_OPTION);
+            return util.ioQuery('keyboard', 'getKeyIsDown', [args.KEY_OPTION]);
         }
     }, {
         key: 'daysSince2000',
@@ -23187,12 +23187,7 @@ var execute = function execute(sequencer, thread) {
             // Find the I/O device and execute the query/function call.
             if (runtime.ioDevices[device] && runtime.ioDevices[device][func]) {
                 var devObject = runtime.ioDevices[device];
-                // @todo Figure out why eslint complains about no-useless-call
-                // no-useless-call can't tell if the call is useless for dynamic
-                // expressions... or something. Not exactly sure why it
-                // complains here.
-                // eslint-disable-next-line no-useless-call
-                return devObject[func].call(devObject, args);
+                return devObject[func].apply(devObject, args);
             }
         }
     });
@@ -40899,7 +40894,7 @@ module.exports = function (x) {
 
 module.exports = {
 	"name": "scratch-vm",
-	"version": "0.1.0-prerelease.1496162464",
+	"version": "0.1.0-prerelease.1496325170",
 	"description": "Virtual Machine for Scratch 3.0",
 	"author": "Massachusetts Institute of Technology",
 	"license": "BSD-3-Clause",
@@ -40907,7 +40902,7 @@ module.exports = {
 	"repository": {
 		"type": "git",
 		"url": "git+ssh://git@github.com/LLK/scratch-vm.git",
-		"sha": "d3d82bae69aa8ea6bc80560d953180f58f853e47"
+		"sha": "adcd225598bba1810e0688d7680a271c21d75899"
 	},
 	"main": "./dist/node/scratch-vm.js",
 	"scripts": {
