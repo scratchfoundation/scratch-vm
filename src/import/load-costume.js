@@ -1,3 +1,4 @@
+const StringUtil = require('../util/string-util');
 const log = require('../util/log');
 
 /**
@@ -19,17 +20,17 @@ const loadCostume = function (md5ext, costume, runtime) {
     }
 
     const AssetType = runtime.storage.AssetType;
-    const idParts = md5ext.split('.');
+    const idParts = StringUtil.splitFirst(md5ext, '.');
     const md5 = idParts[0];
-    const ext = idParts[1].toUpperCase();
-    const assetType = (ext === 'SVG') ? AssetType.ImageVector : AssetType.ImageBitmap;
+    const ext = idParts[1].toLowerCase();
+    const assetType = (ext === 'svg') ? AssetType.ImageVector : AssetType.ImageBitmap;
 
     const rotationCenter = [
         costume.rotationCenterX / costume.bitmapResolution,
         costume.rotationCenterY / costume.bitmapResolution
     ];
 
-    let promise = runtime.storage.load(assetType, md5).then(costumeAsset => {
+    let promise = runtime.storage.load(assetType, md5, ext).then(costumeAsset => {
         costume.assetId = costumeAsset.assetId;
         costume.assetType = assetType;
         return costumeAsset;
