@@ -1,5 +1,4 @@
 const Cast = require('../util/cast');
-const Timer = require('../util/timer');
 
 class Scratch3ControlBlocks {
     constructor (runtime) {
