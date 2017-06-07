@@ -2135,7 +2135,7 @@ var objectKeys = Object.keys || function (obj) {
 module.exports = Duplex;
 
 /*<replacement>*/
-var processNextTick = __webpack_require__(17);
+var processNextTick = __webpack_require__(18);
 /*</replacement>*/
 
 /*<replacement>*/
@@ -2144,7 +2144,7 @@ util.inherits = __webpack_require__(1);
 /*</replacement>*/
 
 var Readable = __webpack_require__(36);
-var Writable = __webpack_require__(18);
+var Writable = __webpack_require__(19);
 
 util.inherits(Duplex, Readable);
 
@@ -2507,7 +2507,7 @@ function isUndefined(arg) {
 exports = module.exports = __webpack_require__(36);
 exports.Stream = exports;
 exports.Readable = exports;
-exports.Writable = __webpack_require__(18);
+exports.Writable = __webpack_require__(19);
 exports.Duplex = __webpack_require__(5);
 exports.Transform = __webpack_require__(37);
 exports.PassThrough = __webpack_require__(75);
@@ -2638,7 +2638,7 @@ var _createClass = function () { function defineProperties(target, props) { for 
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
-var Color = __webpack_require__(59);
+var Color = __webpack_require__(41);
 
 /**
  * @fileoverview
@@ -2871,7 +2871,7 @@ module.exports = Cast;
 /* 12 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var microee = __webpack_require__(253);
+var microee = __webpack_require__(254);
 
 // Implements a subset of Node's stream.Transform - in a cross-platform manner.
 function Transform() {}
@@ -2947,6 +2947,18 @@ module.exports = Transform;
 
 /***/ }),
 /* 13 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+var minilog = __webpack_require__(261);
+minilog.enable();
+
+module.exports = minilog('vm');
+
+/***/ }),
+/* 14 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -3062,9 +3074,9 @@ exports.allocUnsafeSlow = function allocUnsafeSlow(size) {
 /* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(2)))
 
 /***/ }),
-/* 14 */,
 /* 15 */,
-/* 16 */
+/* 16 */,
+/* 17 */
 /***/ (function(module, exports, __webpack_require__) {
 
 // Copyright Joyent, Inc. and other Node contributors.
@@ -3291,7 +3303,7 @@ function base64DetectIncompleteChar(buffer) {
 
 
 /***/ }),
-/* 17 */
+/* 18 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -3342,7 +3354,7 @@ function nextTick(fn, arg1, arg2, arg3) {
 /* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(3)))
 
 /***/ }),
-/* 18 */
+/* 19 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -3355,7 +3367,7 @@ function nextTick(fn, arg1, arg2, arg3) {
 module.exports = Writable;
 
 /*<replacement>*/
-var processNextTick = __webpack_require__(17);
+var processNextTick = __webpack_require__(18);
 /*</replacement>*/
 
 /*<replacement>*/
@@ -3385,7 +3397,7 @@ var Stream = __webpack_require__(38);
 
 var Buffer = __webpack_require__(0).Buffer;
 /*<replacement>*/
-var bufferShim = __webpack_require__(13);
+var bufferShim = __webpack_require__(14);
 /*</replacement>*/
 
 util.inherits(Writable, Stream);
@@ -3893,18 +3905,6 @@ function CorkedRequest(state) {
 /* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(3), __webpack_require__(25).setImmediate))
 
 /***/ }),
-/* 19 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-
-var minilog = __webpack_require__(260);
-minilog.enable();
-
-module.exports = minilog('vm');
-
-/***/ }),
 /* 20 */
 /***/ (function(module, exports, __webpack_require__) {
 
@@ -4010,7 +4010,7 @@ module.exports = MathUtil;
 /***/ (function(module, exports, __webpack_require__) {
 
 var Parser = __webpack_require__(115),
-    DomHandler = __webpack_require__(205);
+    DomHandler = __webpack_require__(206);
 
 function defineProp(name, value){
 	delete module.exports[name];
@@ -4024,22 +4024,22 @@ module.exports = {
 	ElementType: __webpack_require__(33),
 	DomHandler: DomHandler,
 	get FeedHandler(){
-		return defineProp("FeedHandler", __webpack_require__(244));
+		return defineProp("FeedHandler", __webpack_require__(245));
 	},
 	get Stream(){
-		return defineProp("Stream", __webpack_require__(246));
+		return defineProp("Stream", __webpack_require__(247));
 	},
 	get WritableStream(){
 		return defineProp("WritableStream", __webpack_require__(117));
 	},
 	get ProxyHandler(){
-		return defineProp("ProxyHandler", __webpack_require__(245));
+		return defineProp("ProxyHandler", __webpack_require__(246));
 	},
 	get DomUtils(){
-		return defineProp("DomUtils", __webpack_require__(207));
+		return defineProp("DomUtils", __webpack_require__(208));
 	},
 	get CollectingHandler(){
-		return defineProp("CollectingHandler", __webpack_require__(243));
+		return defineProp("CollectingHandler", __webpack_require__(244));
 	},
 	// For legacy support
 	DefaultHandler: DomHandler,
@@ -4125,7 +4125,7 @@ inherits(Stream, EE);
 Stream.Readable = __webpack_require__(8);
 Stream.Writable = __webpack_require__(78);
 Stream.Duplex = __webpack_require__(74);
-Stream.Transform = __webpack_require__(50);
+Stream.Transform = __webpack_require__(51);
 Stream.PassThrough = __webpack_require__(77);
 
 // Backwards-compat with node 0.4.x
@@ -5630,10 +5630,10 @@ var _createClass = function () { function defineProperties(target, props) { for 
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
-var adapter = __webpack_require__(162);
+var adapter = __webpack_require__(163);
 var mutationAdapter = __webpack_require__(95);
-var xmlEscape = __webpack_require__(175);
-var MonitorRecord = __webpack_require__(164);
+var xmlEscape = __webpack_require__(176);
+var MonitorRecord = __webpack_require__(165);
 
 /**
  * @fileoverview
@@ -6291,7 +6291,7 @@ module.exports = Array.isArray || function (arr) {
 module.exports = Readable;
 
 /*<replacement>*/
-var processNextTick = __webpack_require__(17);
+var processNextTick = __webpack_require__(18);
 /*</replacement>*/
 
 /*<replacement>*/
@@ -6318,7 +6318,7 @@ var Stream = __webpack_require__(38);
 
 var Buffer = __webpack_require__(0).Buffer;
 /*<replacement>*/
-var bufferShim = __webpack_require__(13);
+var bufferShim = __webpack_require__(14);
 /*</replacement>*/
 
 /*<replacement>*/
@@ -6420,7 +6420,7 @@ function ReadableState(options, stream) {
   this.decoder = null;
   this.encoding = null;
   if (options.encoding) {
-    if (!StringDecoder) StringDecoder = __webpack_require__(16).StringDecoder;
+    if (!StringDecoder) StringDecoder = __webpack_require__(17).StringDecoder;
     this.decoder = new StringDecoder(options.encoding);
     this.encoding = options.encoding;
   }
@@ -6530,7 +6530,7 @@ function needMoreData(state) {
 
 // backwards compatibility.
 Readable.prototype.setEncoding = function (enc) {
-  if (!StringDecoder) StringDecoder = __webpack_require__(16).StringDecoder;
+  if (!StringDecoder) StringDecoder = __webpack_require__(17).StringDecoder;
   this._readableState.decoder = new StringDecoder(enc);
   this._readableState.encoding = enc;
   return this;
@@ -7590,6 +7590,264 @@ var _createClass = function () { function defineProperties(target, props) { for 
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
+var Color = function () {
+    function Color() {
+        _classCallCheck(this, Color);
+    }
+
+    _createClass(Color, null, [{
+        key: 'decimalToHex',
+
+
+        /**
+         * Convert a Scratch decimal color to a hex string, #RRGGBB.
+         * @param {number} decimal RGB color as a decimal.
+         * @return {string} RGB color as #RRGGBB hex string.
+         */
+        value: function decimalToHex(decimal) {
+            if (decimal < 0) {
+                decimal += 0xFFFFFF + 1;
+            }
+            var hex = Number(decimal).toString(16);
+            hex = '#' + '000000'.substr(0, 6 - hex.length) + hex;
+            return hex;
+        }
+
+        /**
+         * Convert a Scratch decimal color to an RGB color object.
+         * @param {number} decimal RGB color as decimal.
+         * @return {RGBObject} rgb - {r: red [0,255], g: green [0,255], b: blue [0,255]}.
+         */
+
+    }, {
+        key: 'decimalToRgb',
+        value: function decimalToRgb(decimal) {
+            var a = decimal >> 24 & 0xFF;
+            var r = decimal >> 16 & 0xFF;
+            var g = decimal >> 8 & 0xFF;
+            var b = decimal & 0xFF;
+            return { r: r, g: g, b: b, a: a > 0 ? a : 255 };
+        }
+
+        /**
+         * Convert a hex color (e.g., F00, #03F, #0033FF) to an RGB color object.
+         * CC-BY-SA Tim Down:
+         * https://stackoverflow.com/questions/5623838/rgb-to-hex-and-hex-to-rgb
+         * @param {!string} hex Hex representation of the color.
+         * @return {RGBObject} null on failure, or rgb: {r: red [0,255], g: green [0,255], b: blue [0,255]}.
+         */
+
+    }, {
+        key: 'hexToRgb',
+        value: function hexToRgb(hex) {
+            var shorthandRegex = /^#?([a-f\d])([a-f\d])([a-f\d])$/i;
+            hex = hex.replace(shorthandRegex, function (m, r, g, b) {
+                return r + r + g + g + b + b;
+            });
+            var result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+            return result ? {
+                r: parseInt(result[1], 16),
+                g: parseInt(result[2], 16),
+                b: parseInt(result[3], 16)
+            } : null;
+        }
+
+        /**
+         * Convert an RGB color object to a hex color.
+         * @param {RGBObject} rgb - {r: red [0,255], g: green [0,255], b: blue [0,255]}.
+         * @return {!string} Hex representation of the color.
+         */
+
+    }, {
+        key: 'rgbToHex',
+        value: function rgbToHex(rgb) {
+            return Color.decimalToHex(Color.rgbToDecimal(rgb));
+        }
+
+        /**
+         * Convert an RGB color object to a Scratch decimal color.
+         * @param {RGBObject} rgb - {r: red [0,255], g: green [0,255], b: blue [0,255]}.
+         * @return {!number} Number representing the color.
+         */
+
+    }, {
+        key: 'rgbToDecimal',
+        value: function rgbToDecimal(rgb) {
+            return (rgb.r << 16) + (rgb.g << 8) + rgb.b;
+        }
+
+        /**
+        * Convert a hex color (e.g., F00, #03F, #0033FF) to a decimal color number.
+        * @param {!string} hex Hex representation of the color.
+        * @return {!number} Number representing the color.
+        */
+
+    }, {
+        key: 'hexToDecimal',
+        value: function hexToDecimal(hex) {
+            return Color.rgbToDecimal(Color.hexToRgb(hex));
+        }
+
+        /**
+         * Convert an HSV color to RGB format.
+         * @param {HSVObject} hsv - {h: hue [0,360), s: saturation [0,1], v: value [0,1]}
+         * @return {RGBObject} rgb - {r: red [0,255], g: green [0,255], b: blue [0,255]}.
+         */
+
+    }, {
+        key: 'hsvToRgb',
+        value: function hsvToRgb(hsv) {
+            var h = hsv.h % 360;
+            if (h < 0) h += 360;
+            var s = Math.max(0, Math.min(hsv.s, 1));
+            var v = Math.max(0, Math.min(hsv.v, 1));
+
+            var i = Math.floor(h / 60);
+            var f = h / 60 - i;
+            var p = v * (1 - s);
+            var q = v * (1 - s * f);
+            var t = v * (1 - s * (1 - f));
+
+            var r = void 0;
+            var g = void 0;
+            var b = void 0;
+
+            switch (i) {
+                default:
+                case 0:
+                    r = v;
+                    g = t;
+                    b = p;
+                    break;
+                case 1:
+                    r = q;
+                    g = v;
+                    b = p;
+                    break;
+                case 2:
+                    r = p;
+                    g = v;
+                    b = t;
+                    break;
+                case 3:
+                    r = p;
+                    g = q;
+                    b = v;
+                    break;
+                case 4:
+                    r = t;
+                    g = p;
+                    b = v;
+                    break;
+                case 5:
+                    r = v;
+                    g = p;
+                    b = q;
+                    break;
+            }
+
+            return {
+                r: Math.floor(r * 255),
+                g: Math.floor(g * 255),
+                b: Math.floor(b * 255)
+            };
+        }
+
+        /**
+         * Convert an RGB color to HSV format.
+         * @param {RGBObject} rgb - {r: red [0,255], g: green [0,255], b: blue [0,255]}.
+         * @return {HSVObject} hsv - {h: hue [0,360), s: saturation [0,1], v: value [0,1]}
+         */
+
+    }, {
+        key: 'rgbToHsv',
+        value: function rgbToHsv(rgb) {
+            var r = rgb.r / 255;
+            var g = rgb.g / 255;
+            var b = rgb.b / 255;
+            var x = Math.min(Math.min(r, g), b);
+            var v = Math.max(Math.max(r, g), b);
+
+            // For grays, hue will be arbitrarily reported as zero. Otherwise, calculate
+            var h = 0;
+            var s = 0;
+            if (x !== v) {
+                var f = r === x ? g - b : g === x ? b - r : r - g;
+                var i = r === x ? 3 : g === x ? 5 : 1;
+                h = (i - f / (v - x)) * 60 % 360;
+                s = (v - x) / v;
+            }
+
+            return { h: h, s: s, v: v };
+        }
+
+        /**
+         * Linear interpolation between rgb0 and rgb1.
+         * @param {RGBObject} rgb0 - the color corresponding to fraction1 <= 0.
+         * @param {RGBObject} rgb1 - the color corresponding to fraction1 >= 1.
+         * @param {number} fraction1 - the interpolation parameter. If this is 0.5, for example, mix the two colors equally.
+         * @return {RGBObject} the interpolated color.
+         */
+
+    }, {
+        key: 'mixRgb',
+        value: function mixRgb(rgb0, rgb1, fraction1) {
+            if (fraction1 <= 0) return rgb0;
+            if (fraction1 >= 1) return rgb1;
+            var fraction0 = 1 - fraction1;
+            return {
+                r: fraction0 * rgb0.r + fraction1 * rgb1.r,
+                g: fraction0 * rgb0.g + fraction1 * rgb1.g,
+                b: fraction0 * rgb0.b + fraction1 * rgb1.b
+            };
+        }
+    }, {
+        key: 'RGB_BLACK',
+
+        /**
+         * @typedef {object} RGBObject - An object representing a color in RGB format.
+         * @property {number} r - the red component, in the range [0, 255].
+         * @property {number} g - the green component, in the range [0, 255].
+         * @property {number} b - the blue component, in the range [0, 255].
+         */
+
+        /**
+         * @typedef {object} HSVObject - An object representing a color in HSV format.
+         * @property {number} h - hue, in the range [0-359).
+         * @property {number} s - saturation, in the range [0,1].
+         * @property {number} v - value, in the range [0,1].
+         */
+
+        /** @type {RGBObject} */
+        get: function get() {
+            return { r: 0, g: 0, b: 0 };
+        }
+
+        /** @type {RGBObject} */
+
+    }, {
+        key: 'RGB_WHITE',
+        get: function get() {
+            return { r: 255, g: 255, b: 255 };
+        }
+    }]);
+
+    return Color;
+}();
+
+module.exports = Color;
+
+/***/ }),
+/* 42 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
 /**
  * @fileoverview
  * A utility for accurately measuring time.
@@ -7706,7 +7964,6 @@ var Timer = function () {
 module.exports = Timer;
 
 /***/ }),
-/* 42 */,
 /* 43 */,
 /* 44 */,
 /* 45 */,
@@ -7714,15 +7971,16 @@ module.exports = Timer;
 /* 47 */,
 /* 48 */,
 /* 49 */,
-/* 50 */
+/* 50 */,
+/* 51 */
 /***/ (function(module, exports, __webpack_require__) {
 
 module.exports = __webpack_require__(8).Transform
 
 
 /***/ }),
-/* 51 */,
-/* 52 */
+/* 52 */,
+/* 53 */
 /***/ (function(module, exports) {
 
 module.exports = function(module) {
@@ -7750,7 +8008,7 @@ module.exports = function(module) {
 
 
 /***/ }),
-/* 53 */
+/* 54 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -7778,7 +8036,7 @@ var List = function List(name, contents) {
 module.exports = List;
 
 /***/ }),
-/* 54 */
+/* 55 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -8125,7 +8383,7 @@ var Thread = function () {
 module.exports = Thread;
 
 /***/ }),
-/* 55 */
+/* 56 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -8168,14 +8426,14 @@ var Variable = function () {
 module.exports = Variable;
 
 /***/ }),
-/* 56 */
+/* 57 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 
 var StringUtil = __webpack_require__(60);
-var log = __webpack_require__(19);
+var log = __webpack_require__(13);
 
 /**
  * Load a costume's asset into memory asynchronously.
@@ -8254,14 +8512,14 @@ var loadCostume = function loadCostume(md5ext, costume, runtime) {
 module.exports = loadCostume;
 
 /***/ }),
-/* 57 */
+/* 58 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 
 var StringUtil = __webpack_require__(60);
-var log = __webpack_require__(19);
+var log = __webpack_require__(13);
 
 /**
  * Load a sound's asset into memory asynchronously.
@@ -8295,7 +8553,7 @@ var loadSound = function loadSound(sound, runtime) {
 module.exports = loadSound;
 
 /***/ }),
-/* 58 */
+/* 59 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -8309,9 +8567,9 @@ function _possibleConstructorReturn(self, call) { if (!self) { throw new Referen
 
 function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
 
-var log = __webpack_require__(19);
+var log = __webpack_require__(13);
 var MathUtil = __webpack_require__(20);
-var Target = __webpack_require__(167);
+var Target = __webpack_require__(168);
 
 /**
  * Rendered target: instance of a sprite (clone), or the stage.
@@ -9260,264 +9518,6 @@ var RenderedTarget = function (_Target) {
 }(Target);
 
 module.exports = RenderedTarget;
-
-/***/ }),
-/* 59 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-
-var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
-
-function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
-
-var Color = function () {
-    function Color() {
-        _classCallCheck(this, Color);
-    }
-
-    _createClass(Color, null, [{
-        key: 'decimalToHex',
-
-
-        /**
-         * Convert a Scratch decimal color to a hex string, #RRGGBB.
-         * @param {number} decimal RGB color as a decimal.
-         * @return {string} RGB color as #RRGGBB hex string.
-         */
-        value: function decimalToHex(decimal) {
-            if (decimal < 0) {
-                decimal += 0xFFFFFF + 1;
-            }
-            var hex = Number(decimal).toString(16);
-            hex = '#' + '000000'.substr(0, 6 - hex.length) + hex;
-            return hex;
-        }
-
-        /**
-         * Convert a Scratch decimal color to an RGB color object.
-         * @param {number} decimal RGB color as decimal.
-         * @return {RGBObject} rgb - {r: red [0,255], g: green [0,255], b: blue [0,255]}.
-         */
-
-    }, {
-        key: 'decimalToRgb',
-        value: function decimalToRgb(decimal) {
-            var a = decimal >> 24 & 0xFF;
-            var r = decimal >> 16 & 0xFF;
-            var g = decimal >> 8 & 0xFF;
-            var b = decimal & 0xFF;
-            return { r: r, g: g, b: b, a: a > 0 ? a : 255 };
-        }
-
-        /**
-         * Convert a hex color (e.g., F00, #03F, #0033FF) to an RGB color object.
-         * CC-BY-SA Tim Down:
-         * https://stackoverflow.com/questions/5623838/rgb-to-hex-and-hex-to-rgb
-         * @param {!string} hex Hex representation of the color.
-         * @return {RGBObject} null on failure, or rgb: {r: red [0,255], g: green [0,255], b: blue [0,255]}.
-         */
-
-    }, {
-        key: 'hexToRgb',
-        value: function hexToRgb(hex) {
-            var shorthandRegex = /^#?([a-f\d])([a-f\d])([a-f\d])$/i;
-            hex = hex.replace(shorthandRegex, function (m, r, g, b) {
-                return r + r + g + g + b + b;
-            });
-            var result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
-            return result ? {
-                r: parseInt(result[1], 16),
-                g: parseInt(result[2], 16),
-                b: parseInt(result[3], 16)
-            } : null;
-        }
-
-        /**
-         * Convert an RGB color object to a hex color.
-         * @param {RGBObject} rgb - {r: red [0,255], g: green [0,255], b: blue [0,255]}.
-         * @return {!string} Hex representation of the color.
-         */
-
-    }, {
-        key: 'rgbToHex',
-        value: function rgbToHex(rgb) {
-            return Color.decimalToHex(Color.rgbToDecimal(rgb));
-        }
-
-        /**
-         * Convert an RGB color object to a Scratch decimal color.
-         * @param {RGBObject} rgb - {r: red [0,255], g: green [0,255], b: blue [0,255]}.
-         * @return {!number} Number representing the color.
-         */
-
-    }, {
-        key: 'rgbToDecimal',
-        value: function rgbToDecimal(rgb) {
-            return (rgb.r << 16) + (rgb.g << 8) + rgb.b;
-        }
-
-        /**
-        * Convert a hex color (e.g., F00, #03F, #0033FF) to a decimal color number.
-        * @param {!string} hex Hex representation of the color.
-        * @return {!number} Number representing the color.
-        */
-
-    }, {
-        key: 'hexToDecimal',
-        value: function hexToDecimal(hex) {
-            return Color.rgbToDecimal(Color.hexToRgb(hex));
-        }
-
-        /**
-         * Convert an HSV color to RGB format.
-         * @param {HSVObject} hsv - {h: hue [0,360), s: saturation [0,1], v: value [0,1]}
-         * @return {RGBObject} rgb - {r: red [0,255], g: green [0,255], b: blue [0,255]}.
-         */
-
-    }, {
-        key: 'hsvToRgb',
-        value: function hsvToRgb(hsv) {
-            var h = hsv.h % 360;
-            if (h < 0) h += 360;
-            var s = Math.max(0, Math.min(hsv.s, 1));
-            var v = Math.max(0, Math.min(hsv.v, 1));
-
-            var i = Math.floor(h / 60);
-            var f = h / 60 - i;
-            var p = v * (1 - s);
-            var q = v * (1 - s * f);
-            var t = v * (1 - s * (1 - f));
-
-            var r = void 0;
-            var g = void 0;
-            var b = void 0;
-
-            switch (i) {
-                default:
-                case 0:
-                    r = v;
-                    g = t;
-                    b = p;
-                    break;
-                case 1:
-                    r = q;
-                    g = v;
-                    b = p;
-                    break;
-                case 2:
-                    r = p;
-                    g = v;
-                    b = t;
-                    break;
-                case 3:
-                    r = p;
-                    g = q;
-                    b = v;
-                    break;
-                case 4:
-                    r = t;
-                    g = p;
-                    b = v;
-                    break;
-                case 5:
-                    r = v;
-                    g = p;
-                    b = q;
-                    break;
-            }
-
-            return {
-                r: Math.floor(r * 255),
-                g: Math.floor(g * 255),
-                b: Math.floor(b * 255)
-            };
-        }
-
-        /**
-         * Convert an RGB color to HSV format.
-         * @param {RGBObject} rgb - {r: red [0,255], g: green [0,255], b: blue [0,255]}.
-         * @return {HSVObject} hsv - {h: hue [0,360), s: saturation [0,1], v: value [0,1]}
-         */
-
-    }, {
-        key: 'rgbToHsv',
-        value: function rgbToHsv(rgb) {
-            var r = rgb.r / 255;
-            var g = rgb.g / 255;
-            var b = rgb.b / 255;
-            var x = Math.min(Math.min(r, g), b);
-            var v = Math.max(Math.max(r, g), b);
-
-            // For grays, hue will be arbitrarily reported as zero. Otherwise, calculate
-            var h = 0;
-            var s = 0;
-            if (x !== v) {
-                var f = r === x ? g - b : g === x ? b - r : r - g;
-                var i = r === x ? 3 : g === x ? 5 : 1;
-                h = (i - f / (v - x)) * 60 % 360;
-                s = (v - x) / v;
-            }
-
-            return { h: h, s: s, v: v };
-        }
-
-        /**
-         * Linear interpolation between rgb0 and rgb1.
-         * @param {RGBObject} rgb0 - the color corresponding to fraction1 <= 0.
-         * @param {RGBObject} rgb1 - the color corresponding to fraction1 >= 1.
-         * @param {number} fraction1 - the interpolation parameter. If this is 0.5, for example, mix the two colors equally.
-         * @return {RGBObject} the interpolated color.
-         */
-
-    }, {
-        key: 'mixRgb',
-        value: function mixRgb(rgb0, rgb1, fraction1) {
-            if (fraction1 <= 0) return rgb0;
-            if (fraction1 >= 1) return rgb1;
-            var fraction0 = 1 - fraction1;
-            return {
-                r: fraction0 * rgb0.r + fraction1 * rgb1.r,
-                g: fraction0 * rgb0.g + fraction1 * rgb1.g,
-                b: fraction0 * rgb0.b + fraction1 * rgb1.b
-            };
-        }
-    }, {
-        key: 'RGB_BLACK',
-
-        /**
-         * @typedef {object} RGBObject - An object representing a color in RGB format.
-         * @property {number} r - the red component, in the range [0, 255].
-         * @property {number} g - the green component, in the range [0, 255].
-         * @property {number} b - the blue component, in the range [0, 255].
-         */
-
-        /**
-         * @typedef {object} HSVObject - An object representing a color in HSV format.
-         * @property {number} h - hue, in the range [0-359).
-         * @property {number} s - saturation, in the range [0,1].
-         * @property {number} v - value, in the range [0,1].
-         */
-
-        /** @type {RGBObject} */
-        get: function get() {
-            return { r: 0, g: 0, b: 0 };
-        }
-
-        /** @type {RGBObject} */
-
-    }, {
-        key: 'RGB_WHITE',
-        get: function get() {
-            return { r: 255, g: 255, b: 255 };
-        }
-    }]);
-
-    return Color;
-}();
-
-module.exports = Color;
 
 /***/ }),
 /* 60 */
@@ -17556,7 +17556,7 @@ exports.write = function (buffer, value, offset, isLE, mLen, nBytes) {
 
 }(this));
 
-/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(52)(module), __webpack_require__(2)))
+/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(53)(module), __webpack_require__(2)))
 
 /***/ }),
 /* 72 */
@@ -17789,7 +17789,7 @@ PassThrough.prototype._transform = function (chunk, encoding, cb) {
 
 var Buffer = __webpack_require__(0).Buffer;
 /*<replacement>*/
-var bufferShim = __webpack_require__(13);
+var bufferShim = __webpack_require__(14);
 /*</replacement>*/
 
 module.exports = BufferList;
@@ -17861,7 +17861,7 @@ module.exports = __webpack_require__(8).PassThrough
 /* 78 */
 /***/ (function(module, exports, __webpack_require__) {
 
-module.exports = __webpack_require__(18);
+module.exports = __webpack_require__(19);
 
 
 /***/ }),
@@ -18826,7 +18826,7 @@ var _createClass = function () { function defineProperties(target, props) { for 
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
-var RenderedTarget = __webpack_require__(58);
+var RenderedTarget = __webpack_require__(59);
 var Blocks = __webpack_require__(30);
 
 var Sprite = function () {
@@ -19041,7 +19041,7 @@ Object.keys(domLvl1).forEach(function(key) {
 /* 113 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var decodeMap = __webpack_require__(232);
+var decodeMap = __webpack_require__(233);
 
 module.exports = decodeCodePoint;
 
@@ -20460,8 +20460,8 @@ Tokenizer.prototype._emitPartial = function(value){
 module.exports = Stream;
 
 var Parser = __webpack_require__(115),
-    WritableStream = __webpack_require__(24).Writable || __webpack_require__(303).Writable,
-    StringDecoder = __webpack_require__(16).StringDecoder,
+    WritableStream = __webpack_require__(24).Writable || __webpack_require__(304).Writable,
+    StringDecoder = __webpack_require__(17).StringDecoder,
     Buffer = __webpack_require__(0).Buffer;
 
 function Stream(cbs, options){
@@ -20525,7 +20525,7 @@ module.exports = color;
 "use strict";
 
 
-module.exports = typeof Promise === 'function' ? Promise : __webpack_require__(280);
+module.exports = typeof Promise === 'function' ? Promise : __webpack_require__(281);
 
 
 /***/ }),
@@ -20544,7 +20544,7 @@ module.exports = typeof Promise === 'function' ? Promise : __webpack_require__(2
 /* 141 */
 /***/ (function(module, exports, __webpack_require__) {
 
-const VirtualMachine = __webpack_require__(176);
+const VirtualMachine = __webpack_require__(177);
 
 module.exports = VirtualMachine;
 
@@ -20580,7 +20580,7 @@ var _createClass = function () { function defineProperties(target, props) { for 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
 var Cast = __webpack_require__(10);
-var Timer = __webpack_require__(41);
+var Timer = __webpack_require__(42);
 
 var Scratch3ControlBlocks = function () {
     function Scratch3ControlBlocks(runtime) {
@@ -21290,7 +21290,7 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
 
 var Cast = __webpack_require__(10);
 var MathUtil = __webpack_require__(20);
-var Timer = __webpack_require__(41);
+var Timer = __webpack_require__(42);
 
 var Scratch3MotionBlocks = function () {
     function Scratch3MotionBlocks(runtime) {
@@ -21759,9 +21759,9 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
 
 var Cast = __webpack_require__(10);
 var Clone = __webpack_require__(97);
-var Color = __webpack_require__(59);
+var Color = __webpack_require__(41);
 var MathUtil = __webpack_require__(20);
-var RenderedTarget = __webpack_require__(58);
+var RenderedTarget = __webpack_require__(59);
 
 /**
  * @typedef {object} PenState - the pen state associated with a particular target.
@@ -22871,6 +22871,915 @@ module.exports = Scratch3SoundBlocks;
 "use strict";
 
 
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+var color = __webpack_require__(41);
+var log = __webpack_require__(13);
+
+/**
+ * Manage power, direction, and timers for one WeDo 2.0 motor.
+ */
+
+var WeDo2Motor = function () {
+    /**
+     * Construct a WeDo2Motor instance.
+     * @param {WeDo2} parent - the WeDo 2.0 device which owns this motor.
+     * @param {int} index - the zero-based index of this motor on its parent device.
+     */
+    function WeDo2Motor(parent, index) {
+        _classCallCheck(this, WeDo2Motor);
+
+        /**
+         * The WeDo 2.0 device which owns this motor.
+         * @type {WeDo2}
+         * @private
+         */
+        this._parent = parent;
+
+        /**
+         * The zero-based index of this motor on its parent device.
+         * @type {int}
+         * @private
+         */
+        this._index = index;
+
+        /**
+         * This motor's current direction: 1 for "this way" or -1 for "that way"
+         * @type {number}
+         * @private
+         */
+        this._direction = 1;
+
+        /**
+         * This motor's current power level, in the range [0,100].
+         * @type {number}
+         * @private
+         */
+        this._power = 100;
+
+        /**
+         * Is this motor currently moving?
+         * @type {boolean}
+         * @private
+         */
+        this._isOn = false;
+
+        /**
+         * If the motor has been turned on or is actively braking for a specific duration, this is the timeout ID for
+         * the end-of-action handler. Cancel this when changing plans.
+         * @type {Object}
+         * @private
+         */
+        this._pendingTimeoutId = null;
+
+        this.startBraking = this.startBraking.bind(this);
+        this.setMotorOff = this.setMotorOff.bind(this);
+    }
+
+    /**
+     * @return {number} - the duration of active braking after a call to startBraking(). Afterward, turn the motor off.
+     * @constructor
+     */
+
+
+    _createClass(WeDo2Motor, [{
+        key: 'setMotorOn',
+
+
+        /**
+         * Turn this motor on indefinitely.
+         */
+        value: function setMotorOn() {
+            this._parent._send('motorOn', { motorIndex: this._index, power: this._direction * this._power });
+            this._isOn = true;
+            this._clearTimeout();
+        }
+
+        /**
+         * Turn this motor on for a specific duration.
+         * @param {number} milliseconds - run the motor for this long.
+         */
+
+    }, {
+        key: 'setMotorOnFor',
+        value: function setMotorOnFor(milliseconds) {
+            milliseconds = Math.max(0, milliseconds);
+            this.setMotorOn();
+            this._setNewTimeout(this.startBraking, milliseconds);
+        }
+
+        /**
+         * Start active braking on this motor. After a short time, the motor will turn off.
+         */
+
+    }, {
+        key: 'startBraking',
+        value: function startBraking() {
+            this._parent._send('motorBrake', { motorIndex: this._index });
+            this._isOn = false;
+            this._setNewTimeout(this.setMotorOff, WeDo2Motor.BRAKE_TIME_MS);
+        }
+
+        /**
+         * Turn this motor off.
+         */
+
+    }, {
+        key: 'setMotorOff',
+        value: function setMotorOff() {
+            this._parent._send('motorOff', { motorIndex: this._index });
+            this._isOn = false;
+        }
+
+        /**
+         * Clear the motor action timeout, if any. Safe to call even when there is no pending timeout.
+         * @private
+         */
+
+    }, {
+        key: '_clearTimeout',
+        value: function _clearTimeout() {
+            if (this._pendingTimeoutId !== null) {
+                clearTimeout(this._pendingTimeoutId);
+                this._pendingTimeoutId = null;
+            }
+        }
+
+        /**
+         * Set a new motor action timeout, after clearing an existing one if necessary.
+         * @param {Function} callback - to be called at the end of the timeout.
+         * @param {int} delay - wait this many milliseconds before calling the callback.
+         * @private
+         */
+
+    }, {
+        key: '_setNewTimeout',
+        value: function _setNewTimeout(callback, delay) {
+            var _this = this;
+
+            this._clearTimeout();
+            var timeoutID = setTimeout(function () {
+                if (_this._pendingTimeoutId === timeoutID) {
+                    _this._pendingTimeoutId = null;
+                }
+                callback();
+            }, delay);
+            this._pendingTimeoutId = timeoutID;
+        }
+    }, {
+        key: 'direction',
+
+
+        /**
+         * @return {int} - this motor's current direction: 1 for "this way" or -1 for "that way"
+         */
+        get: function get() {
+            return this._direction;
+        }
+
+        /**
+         * @param {int} value - this motor's new direction: 1 for "this way" or -1 for "that way"
+         */
+        ,
+        set: function set(value) {
+            if (value < 0) {
+                this._direction = -1;
+            } else {
+                this._direction = 1;
+            }
+        }
+
+        /**
+         * @return {int} - this motor's current power level, in the range [0,100].
+         */
+
+    }, {
+        key: 'power',
+        get: function get() {
+            return this._power;
+        }
+
+        /**
+         * @param {int} value - this motor's new power level, in the range [0,100].
+         */
+        ,
+        set: function set(value) {
+            this._power = Math.max(0, Math.min(value, 100));
+        }
+
+        /**
+         * @return {boolean} - true if this motor is currently moving, false if this motor is off or braking.
+         */
+
+    }, {
+        key: 'isOn',
+        get: function get() {
+            return this._isOn;
+        }
+    }], [{
+        key: 'BRAKE_TIME_MS',
+        get: function get() {
+            return 1000;
+        }
+    }]);
+
+    return WeDo2Motor;
+}();
+
+/**
+ * Manage communication with a WeDo 2.0 device over a Device Manager client socket.
+ */
+
+
+var WeDo2 = function () {
+    _createClass(WeDo2, null, [{
+        key: 'DEVICE_TYPE',
+
+
+        /**
+         * @return {string} - the type of Device Manager device socket that this class will handle.
+         */
+        get: function get() {
+            return 'wedo2';
+        }
+
+        /**
+         * Construct a WeDo2 communication object.
+         * @param {Socket} socket - the socket for a WeDo 2.0 device, as provided by a Device Manager client.
+         */
+
+    }]);
+
+    function WeDo2(socket) {
+        _classCallCheck(this, WeDo2);
+
+        /**
+         * The socket-IO socket used to communicate with the Device Manager about this device.
+         * @type {Socket}
+         * @private
+         */
+        this._socket = socket;
+
+        /**
+         * The motors which this WeDo 2.0 could possibly have.
+         * @type {[WeDo2Motor]}
+         * @private
+         */
+        this._motors = [new WeDo2Motor(this, 0), new WeDo2Motor(this, 1)];
+
+        /**
+         * The most recently received value for each sensor.
+         * @type {Object.<string, number>}
+         * @private
+         */
+        this._sensors = {
+            tiltX: 0,
+            tiltY: 0,
+            distance: 0
+        };
+
+        this._onSensorChanged = this._onSensorChanged.bind(this);
+        this._onDisconnect = this._onDisconnect.bind(this);
+
+        this._connectEvents();
+    }
+
+    /**
+     * Manually dispose of this object.
+     */
+
+
+    _createClass(WeDo2, [{
+        key: 'dispose',
+        value: function dispose() {
+            this._disconnectEvents();
+        }
+
+        /**
+         * @return {number} - the latest value received for the tilt sensor's tilt about the X axis.
+         */
+
+    }, {
+        key: 'motor',
+
+
+        /**
+         * Access a particular motor on this device.
+         * @param {int} index - the zero-based index of the desired motor.
+         * @return {WeDo2Motor} - the WeDo2Motor instance, if any, at that index.
+         */
+        value: function motor(index) {
+            return this._motors[index];
+        }
+
+        /**
+         * Set the WeDo 2.0 hub's LED to a specific color.
+         * @param {int} rgb - a 24-bit RGB color in 0xRRGGBB format.
+         */
+
+    }, {
+        key: 'setLED',
+        value: function setLED(rgb) {
+            this._send('setLED', { rgb: rgb });
+        }
+
+        /**
+         * Play a tone from the WeDo 2.0 hub for a specific amount of time.
+         * @param {int} tone - the pitch of the tone, in Hz.
+         * @param {int} milliseconds - the duration of the note, in milliseconds.
+         */
+
+    }, {
+        key: 'playTone',
+        value: function playTone(tone, milliseconds) {
+            this._send('playTone', { tone: tone, ms: milliseconds });
+        }
+
+        /**
+         * Stop the tone playing from the WeDo 2.0 hub, if any.
+         */
+
+    }, {
+        key: 'stopTone',
+        value: function stopTone() {
+            this._send('stopTone');
+        }
+
+        /**
+         * Attach event handlers to the device socket.
+         * @private
+         */
+
+    }, {
+        key: '_connectEvents',
+        value: function _connectEvents() {
+            this._socket.on('sensorChanged', this._onSensorChanged);
+            this._socket.on('deviceWasClosed', this._onDisconnect);
+            this._socket.on('disconnect', this._onDisconnect);
+        }
+
+        /**
+         * Detach event handlers from the device socket.
+         * @private
+         */
+
+    }, {
+        key: '_disconnectEvents',
+        value: function _disconnectEvents() {
+            this._socket.off('sensorChanged', this._onSensorChanged);
+            this._socket.off('deviceWasClosed', this._onDisconnect);
+            this._socket.off('disconnect', this._onDisconnect);
+        }
+
+        /**
+         * Store the sensor value from an incoming 'sensorChanged' event.
+         * @param {object} event - the 'sensorChanged' event.
+         * @property {string} sensorName - the name of the sensor which changed.
+         * @property {number} sensorValue - the new value of the sensor.
+         * @private
+         */
+
+    }, {
+        key: '_onSensorChanged',
+        value: function _onSensorChanged(event) {
+            this._sensors[event.sensorName] = event.sensorValue;
+        }
+
+        /**
+         * React to device disconnection. May be called more than once.
+         * @private
+         */
+
+    }, {
+        key: '_onDisconnect',
+        value: function _onDisconnect() {
+            this._disconnectEvents();
+        }
+
+        /**
+         * Send a message to the device socket.
+         * @param {string} message - the name of the message, such as 'playTone'.
+         * @param {object} [details] - optional additional details for the message, such as tone duration and pitch.
+         * @private
+         */
+
+    }, {
+        key: '_send',
+        value: function _send(message, details) {
+            this._socket.emit(message, details);
+        }
+    }, {
+        key: 'tiltX',
+        get: function get() {
+            return this._sensors.tiltX;
+        }
+
+        /**
+         * @return {number} - the latest value received for the tilt sensor's tilt about the Y axis.
+         */
+
+    }, {
+        key: 'tiltY',
+        get: function get() {
+            return this._sensors.tiltY;
+        }
+
+        /**
+         * @return {number} - the latest value received from the distance sensor.
+         */
+
+    }, {
+        key: 'distance',
+        get: function get() {
+            return this._sensors.distance;
+        }
+    }]);
+
+    return WeDo2;
+}();
+
+/**
+ * Enum for motor specification.
+ * @readonly
+ * @enum {string}
+ */
+
+
+var MotorID = {
+    DEFAULT: 'motor',
+    A: 'motor A',
+    B: 'motor B',
+    ALL: 'all motors'
+};
+
+/**
+ * Enum for motor direction specification.
+ * @readonly
+ * @enum {string}
+ */
+var MotorDirection = {
+    FORWARD: 'this way',
+    BACKWARD: 'that way',
+    REVERSE: 'reverse'
+};
+
+/**
+ * Enum for tilt sensor direction.
+ * @readonly
+ * @enum {string}
+ */
+var TiltDirection = {
+    UP: 'up',
+    DOWN: 'down',
+    LEFT: 'left',
+    RIGHT: 'right',
+    ANY: 'any'
+};
+
+/**
+ * Scratch 3.0 blocks to interact with a LEGO WeDo 2.0 device.
+ */
+
+var Scratch3WeDo2Blocks = function () {
+    _createClass(Scratch3WeDo2Blocks, null, [{
+        key: 'EXTENSION_NAME',
+
+
+        /**
+         * @return {string} - the name of this extension.
+         */
+        get: function get() {
+            return 'wedo2';
+        }
+
+        /**
+         * @return {number} - the tilt sensor counts as "tilted" if its tilt angle meets or exceeds this threshold.
+         */
+
+    }, {
+        key: 'TILT_THRESHOLD',
+        get: function get() {
+            return 15;
+        }
+
+        /**
+         * Construct a set of WeDo 2.0 blocks.
+         * @param {Runtime} runtime - the Scratch 3.0 runtime.
+         */
+
+    }]);
+
+    function Scratch3WeDo2Blocks(runtime) {
+        _classCallCheck(this, Scratch3WeDo2Blocks);
+
+        /**
+         * The Scratch 3.0 runtime.
+         * @type {Runtime}
+         */
+        this.runtime = runtime;
+
+        this.runtime.HACK_WeDo2Blocks = this;
+    }
+
+    /**
+     * Use the Device Manager client to attempt to connect to a WeDo 2.0 device.
+     */
+
+
+    _createClass(Scratch3WeDo2Blocks, [{
+        key: 'connect',
+        value: function connect() {
+            var _this2 = this;
+
+            if (this._device || this._finder) {
+                return;
+            }
+            var deviceManager = this.runtime.ioDevices.deviceManager;
+            var finder = this._finder = deviceManager.searchAndConnect(Scratch3WeDo2Blocks.EXTENSION_NAME, WeDo2.DEVICE_TYPE);
+            this._finder.promise.then(function (socket) {
+                if (_this2._finder === finder) {
+                    _this2._finder = null;
+                    _this2._device = new WeDo2(socket);
+                } else {
+                    log.warn('Ignoring success from stale WeDo 2.0 connection attempt');
+                }
+            }, function (reason) {
+                if (_this2._finder === finder) {
+                    _this2._finder = null;
+                    log.warn('WeDo 2.0 connection failed: ' + reason);
+                } else {
+                    log.warn('Ignoring failure from stale WeDo 2.0 connection attempt');
+                }
+            });
+        }
+
+        /**
+         * Retrieve the block primitives implemented by this package.
+         * @return {object.<string, Function>} Mapping of opcode to Function.
+         */
+
+    }, {
+        key: 'getPrimitives',
+        value: function getPrimitives() {
+            return {
+                wedo2_motorOnFor: this.motorOnFor,
+                wedo2_motorOn: this.motorOn,
+                wedo2_motorOff: this.motorOff,
+                wedo2_startMotorPower: this.startMotorPower,
+                wedo2_setMotorDirection: this.setMotorDirection,
+                wedo2_setLightHue: this.setLightHue,
+                wedo2_playNoteFor: this.playNoteFor,
+                wedo2_whenDistance: this.whenDistance,
+                wedo2_whenTilted: this.whenTilted,
+                wedo2_getDistance: this.getDistance,
+                wedo2_isTilted: this.isTilted,
+                wedo2_getTiltAngle: this.getTiltAngle
+            };
+        }
+
+        /**
+         * Turn specified motor(s) on for a specified duration.
+         * @param {object} args - the block's arguments.
+         * @property {MotorID} MOTOR_ID - the motor(s) to activate.
+         * @property {int} DURATION - the amount of time to run the motors.
+         * @return {Promise} - a promise which will resolve at the end of the duration.
+         */
+
+    }, {
+        key: 'motorOnFor',
+        value: function motorOnFor(args) {
+            var _this3 = this;
+
+            var durationMS = args.DURATION * 1000;
+            return new Promise(function (resolve) {
+                _this3._forEachMotor(args.MOTOR_ID, function (motorIndex) {
+                    _this3._device.motor(motorIndex).setMotorOnFor(durationMS);
+                });
+
+                // Ensure this block runs for a fixed amount of time even when no device is connected.
+                setTimeout(resolve, durationMS);
+            });
+        }
+
+        /**
+         * Turn specified motor(s) on indefinitely.
+         * @param {object} args - the block's arguments.
+         * @property {MotorID} MOTOR_ID - the motor(s) to activate.
+         */
+
+    }, {
+        key: 'motorOn',
+        value: function motorOn(args) {
+            var _this4 = this;
+
+            this._forEachMotor(args.MOTOR_ID, function (motorIndex) {
+                _this4._device.motor(motorIndex).setMotorOn();
+            });
+        }
+
+        /**
+         * Turn specified motor(s) off.
+         * @param {object} args - the block's arguments.
+         * @property {MotorID} MOTOR_ID - the motor(s) to deactivate.
+         */
+
+    }, {
+        key: 'motorOff',
+        value: function motorOff(args) {
+            var _this5 = this;
+
+            this._forEachMotor(args.MOTOR_ID, function (motorIndex) {
+                _this5._device.motor(motorIndex).setMotorOff();
+            });
+        }
+
+        /**
+         * Turn specified motor(s) off.
+         * @param {object} args - the block's arguments.
+         * @property {MotorID} MOTOR_ID - the motor(s) to be affected.
+         * @property {int} POWER - the new power level for the motor(s).
+         */
+
+    }, {
+        key: 'startMotorPower',
+        value: function startMotorPower(args) {
+            var _this6 = this;
+
+            this._forEachMotor(args.MOTOR_ID, function (motorIndex) {
+                var motor = _this6._device.motor(motorIndex);
+                motor.power = args.POWER;
+                motor.setMotorOn();
+            });
+        }
+
+        /**
+         * Set the direction of rotation for specified motor(s).
+         * If the direction is 'reverse' the motor(s) will be reversed individually.
+         * @param {object} args - the block's arguments.
+         * @property {MotorID} MOTOR_ID - the motor(s) to be affected.
+         * @property {MotorDirection} DIRECTION - the new direction for the motor(s).
+         */
+
+    }, {
+        key: 'setMotorDirection',
+        value: function setMotorDirection(args) {
+            var _this7 = this;
+
+            this._forEachMotor(args.MOTOR_ID, function (motorIndex) {
+                var motor = _this7._device.motor(motorIndex);
+                switch (args.DIRECTION) {
+                    case MotorDirection.FORWARD:
+                        motor.direction = 1;
+                        break;
+                    case MotorDirection.BACKWARD:
+                        motor.direction = -1;
+                        break;
+                    case MotorDirection.REVERSE:
+                        motor.direction = -motor.direction;
+                        break;
+                    default:
+                        log.warn('Unknown motor direction in setMotorDirection: ' + args.DIRECTION);
+                        break;
+                }
+            });
+        }
+
+        /**
+         * Set the LED's hue.
+         * @param {object} args - the block's arguments.
+         * @property {number} HUE - the hue to set, in the range [0,100].
+         */
+
+    }, {
+        key: 'setLightHue',
+        value: function setLightHue(args) {
+            // Convert from [0,100] to [0,360]
+            var hue = args.HUE * 360 / 100;
+
+            var rgbObject = color.hsvToRgb({ h: hue, s: 1, v: 1 });
+
+            var rgbDecimal = color.rgbToDecimal(rgbObject);
+
+            this._device.setLED(rgbDecimal);
+        }
+
+        /**
+         * Make the WeDo 2.0 hub play a MIDI note for the specified duration.
+         * @param {object} args - the block's arguments.
+         * @property {number} NOTE - the MIDI note to play.
+         * @property {number} DURATION - the duration of the note, in seconds.
+         * @return {Promise} - a promise which will resolve at the end of the duration.
+         */
+
+    }, {
+        key: 'playNoteFor',
+        value: function playNoteFor(args) {
+            var _this8 = this;
+
+            return new Promise(function (resolve) {
+                var durationMS = args.DURATION * 1000;
+                var tone = _this8._noteToTone(args.NOTE);
+                _this8._device.playTone(tone, durationMS);
+
+                // Ensure this block runs for a fixed amount of time even when no device is connected.
+                setTimeout(resolve, durationMS);
+            });
+        }
+
+        /**
+         * Compare the distance sensor's value to a reference.
+         * @param {object} args - the block's arguments.
+         * @property {string} OP - the comparison operation: '<' or '>'.
+         * @property {number} REFERENCE - the value to compare against.
+         * @return {boolean} - the result of the comparison, or false on error.
+         */
+
+    }, {
+        key: 'whenDistance',
+        value: function whenDistance(args) {
+            switch (args.OP) {
+                case '<':
+                    return this._device.distance < args.REFERENCE;
+                case '>':
+                    return this._device.distance > args.REFERENCE;
+                default:
+                    log.warn('Unknown comparison operator in whenDistance: ' + args.OP);
+                    return false;
+            }
+        }
+
+        /**
+         * Test whether the tilt sensor is currently tilted.
+         * @param {object} args - the block's arguments.
+         * @property {TiltDirection} DIRECTION - the tilt direction to test (up, down, left, right, or any).
+         * @return {boolean} - true if the tilt sensor is tilted past a threshold in the specified direction.
+         */
+
+    }, {
+        key: 'whenTilted',
+        value: function whenTilted(args) {
+            return this._isTilted(args.DIRECTION);
+        }
+
+        /**
+         * @return {number} - the distance sensor's value, scaled to the [0,100] range.
+         */
+
+    }, {
+        key: 'getDistance',
+        value: function getDistance() {
+            return this._device.distance * 10;
+        }
+
+        /**
+         * Test whether the tilt sensor is currently tilted.
+         * @param {object} args - the block's arguments.
+         * @property {TiltDirection} DIRECTION - the tilt direction to test (up, down, left, right, or any).
+         * @return {boolean} - true if the tilt sensor is tilted past a threshold in the specified direction.
+         */
+
+    }, {
+        key: 'isTilted',
+        value: function isTilted(args) {
+            return this._isTilted(args.DIRECTION);
+        }
+
+        /**
+         * @param {object} args - the block's arguments.
+         * @property {TiltDirection} DIRECTION - the direction (up, down, left, right) to check.
+         * @return {number} - the tilt sensor's angle in the specified direction.
+         * Note that getTiltAngle(up) = -getTiltAngle(down) and getTiltAngle(left) = -getTiltAngle(right).
+         */
+
+    }, {
+        key: 'getTiltAngle',
+        value: function getTiltAngle(args) {
+            return this._getTiltAngle(args.DIRECTION);
+        }
+
+        /**
+         * Test whether the tilt sensor is currently tilted.
+         * @param {TiltDirection} direction - the tilt direction to test (up, down, left, right, or any).
+         * @return {boolean} - true if the tilt sensor is tilted past a threshold in the specified direction.
+         * @private
+         */
+
+    }, {
+        key: '_isTilted',
+        value: function _isTilted(direction) {
+            switch (direction) {
+                case TiltDirection.ANY:
+                    return Math.abs(this._device.tiltX) >= Scratch3WeDo2Blocks.TILT_THRESHOLD || Math.abs(this._device.tiltY) >= Scratch3WeDo2Blocks.TILT_THRESHOLD;
+                default:
+                    return this._getTiltAngle(direction) >= Scratch3WeDo2Blocks.TILT_THRESHOLD;
+            }
+        }
+
+        /**
+         * @param {TiltDirection} direction - the direction (up, down, left, right) to check.
+         * @return {number} - the tilt sensor's angle in the specified direction.
+         * Note that getTiltAngle(up) = -getTiltAngle(down) and getTiltAngle(left) = -getTiltAngle(right).
+         * @private
+         */
+
+    }, {
+        key: '_getTiltAngle',
+        value: function _getTiltAngle(direction) {
+            switch (direction) {
+                case TiltDirection.UP:
+                    return -this._device.tiltY;
+                case TiltDirection.DOWN:
+                    return this._device.tiltY;
+                case TiltDirection.LEFT:
+                    return -this._device.tiltX;
+                case TiltDirection.RIGHT:
+                    return this._device.tiltX;
+                default:
+                    log.warn('Unknown tilt direction in _getTiltAngle: ' + direction);
+            }
+        }
+
+        /**
+         * Call a callback for each motor indexed by the provided motor ID.
+         * @param {MotorID} motorID - the ID specifier.
+         * @param {Function} callback - the function to call with the numeric motor index for each motor.
+         * @private
+         */
+
+    }, {
+        key: '_forEachMotor',
+        value: function _forEachMotor(motorID, callback) {
+            var motors = void 0;
+            switch (motorID) {
+                case MotorID.A:
+                    motors = [0];
+                    break;
+                case MotorID.B:
+                    motors = [1];
+                    break;
+                case MotorID.ALL:
+                case MotorID.DEFAULT:
+                    motors = [0, 1];
+                    break;
+                default:
+                    log.warn('Invalid motor ID: ' + motorID);
+                    motors = [];
+                    break;
+            }
+            var _iteratorNormalCompletion = true;
+            var _didIteratorError = false;
+            var _iteratorError = undefined;
+
+            try {
+                for (var _iterator = motors[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
+                    var index = _step.value;
+
+                    callback(index);
+                }
+            } catch (err) {
+                _didIteratorError = true;
+                _iteratorError = err;
+            } finally {
+                try {
+                    if (!_iteratorNormalCompletion && _iterator.return) {
+                        _iterator.return();
+                    }
+                } finally {
+                    if (_didIteratorError) {
+                        throw _iteratorError;
+                    }
+                }
+            }
+        }
+
+        /**
+         * @param {number} midiNote - the MIDI note value to convert.
+         * @return {number} - the frequency, in Hz, corresponding to that MIDI note value.
+         * @private
+         */
+
+    }, {
+        key: '_noteToTone',
+        value: function _noteToTone(midiNote) {
+            // Note that MIDI note 69 is A4, 440 Hz
+            return 440 * Math.pow(2, (midiNote - 69) / 12);
+        }
+    }]);
+
+    return Scratch3WeDo2Blocks;
+}();
+
+module.exports = Scratch3WeDo2Blocks;
+
+/***/ }),
+/* 163 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
 var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
 
 var mutationAdapter = __webpack_require__(95);
@@ -23034,14 +23943,14 @@ var adapter = function adapter(e) {
 module.exports = adapter;
 
 /***/ }),
-/* 163 */
+/* 164 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 
-var log = __webpack_require__(19);
-var Thread = __webpack_require__(54);
+var log = __webpack_require__(13);
+var Thread = __webpack_require__(55);
 
 var _require = __webpack_require__(70),
     Map = _require.Map;
@@ -23317,7 +24226,7 @@ var execute = function execute(sequencer, thread) {
 module.exports = execute;
 
 /***/ }),
-/* 164 */
+/* 165 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -23336,7 +24245,7 @@ var MonitorRecord = Record({
 module.exports = MonitorRecord;
 
 /***/ }),
-/* 165 */
+/* 166 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -23353,9 +24262,9 @@ function _possibleConstructorReturn(self, call) { if (!self) { throw new Referen
 function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
 
 var EventEmitter = __webpack_require__(7);
-var Sequencer = __webpack_require__(166);
+var Sequencer = __webpack_require__(167);
 var Blocks = __webpack_require__(30);
-var Thread = __webpack_require__(54);
+var Thread = __webpack_require__(55);
 
 var _require = __webpack_require__(70),
     OrderedMap = _require.OrderedMap;
@@ -23363,10 +24272,10 @@ var _require = __webpack_require__(70),
 // Virtual I/O devices.
 
 
-var Clock = __webpack_require__(168);
-var DeviceManager = __webpack_require__(169);
-var Keyboard = __webpack_require__(170);
-var Mouse = __webpack_require__(171);
+var Clock = __webpack_require__(169);
+var DeviceManager = __webpack_require__(170);
+var Keyboard = __webpack_require__(171);
+var Mouse = __webpack_require__(172);
 
 var defaultBlockPackages = {
     scratch3_control: __webpack_require__(152),
@@ -23378,7 +24287,8 @@ var defaultBlockPackages = {
     scratch3_sound: __webpack_require__(161),
     scratch3_sensing: __webpack_require__(160),
     scratch3_data: __webpack_require__(153),
-    scratch3_procedures: __webpack_require__(159)
+    scratch3_procedures: __webpack_require__(159),
+    scratch3_wedo2: __webpack_require__(162)
 };
 
 /**
@@ -24548,7 +25458,7 @@ var Runtime = function (_EventEmitter) {
 module.exports = Runtime;
 
 /***/ }),
-/* 166 */
+/* 167 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -24558,9 +25468,9 @@ var _createClass = function () { function defineProperties(target, props) { for 
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
-var Timer = __webpack_require__(41);
-var Thread = __webpack_require__(54);
-var execute = __webpack_require__(163);
+var Timer = __webpack_require__(42);
+var Thread = __webpack_require__(55);
+var execute = __webpack_require__(164);
 
 var Sequencer = function () {
     function Sequencer(runtime) {
@@ -24820,7 +25730,7 @@ var Sequencer = function () {
 module.exports = Sequencer;
 
 /***/ }),
-/* 167 */
+/* 168 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -24837,8 +25747,8 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
 var EventEmitter = __webpack_require__(7);
 
 var Blocks = __webpack_require__(30);
-var Variable = __webpack_require__(55);
-var List = __webpack_require__(53);
+var Variable = __webpack_require__(56);
+var List = __webpack_require__(54);
 var uid = __webpack_require__(98);
 
 /**
@@ -25024,7 +25934,7 @@ var Target = function (_EventEmitter) {
 module.exports = Target;
 
 /***/ }),
-/* 168 */
+/* 169 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -25034,7 +25944,7 @@ var _createClass = function () { function defineProperties(target, props) { for 
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
-var Timer = __webpack_require__(41);
+var Timer = __webpack_require__(42);
 
 var Clock = function () {
     function Clock(runtime) {
@@ -25085,7 +25995,7 @@ var Clock = function () {
 module.exports = Clock;
 
 /***/ }),
-/* 169 */
+/* 170 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -25095,8 +26005,8 @@ var _createClass = function () { function defineProperties(target, props) { for 
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
-var got = __webpack_require__(234);
-var io = __webpack_require__(296);
+var got = __webpack_require__(235);
+var io = __webpack_require__(297);
 var querystring = __webpack_require__(22);
 
 /**
@@ -25551,7 +26461,7 @@ var DeviceManager = function () {
 module.exports = DeviceManager;
 
 /***/ }),
-/* 170 */
+/* 171 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -25694,7 +26604,7 @@ var Keyboard = function () {
 module.exports = Keyboard;
 
 /***/ }),
-/* 171 */
+/* 172 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -25806,7 +26716,7 @@ var Mouse = function () {
 module.exports = Mouse;
 
 /***/ }),
-/* 172 */
+/* 173 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -25822,17 +26732,17 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
  */
 
 var Blocks = __webpack_require__(30);
-var RenderedTarget = __webpack_require__(58);
+var RenderedTarget = __webpack_require__(59);
 var Sprite = __webpack_require__(96);
-var Color = __webpack_require__(59);
-var log = __webpack_require__(19);
+var Color = __webpack_require__(41);
+var log = __webpack_require__(13);
 var uid = __webpack_require__(98);
-var specMap = __webpack_require__(173);
-var Variable = __webpack_require__(55);
-var List = __webpack_require__(53);
+var specMap = __webpack_require__(174);
+var Variable = __webpack_require__(56);
+var List = __webpack_require__(54);
 
-var loadCostume = __webpack_require__(56);
-var loadSound = __webpack_require__(57);
+var loadCostume = __webpack_require__(57);
+var loadSound = __webpack_require__(58);
 
 /**
  * Convert a Scratch 2.0 procedure string (e.g., "my_procedure %s %b %n")
@@ -26266,7 +27176,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 173 */
+/* 174 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -27381,7 +28291,7 @@ var specMap = {
 module.exports = specMap;
 
 /***/ }),
-/* 174 */
+/* 175 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -27393,14 +28303,14 @@ module.exports = specMap;
  * JSON and then generates all needed scratch-vm runtime structures.
  */
 
-var vmPackage = __webpack_require__(300);
+var vmPackage = __webpack_require__(301);
 var Blocks = __webpack_require__(30);
 var Sprite = __webpack_require__(96);
-var Variable = __webpack_require__(55);
-var List = __webpack_require__(53);
+var Variable = __webpack_require__(56);
+var List = __webpack_require__(54);
 
-var loadCostume = __webpack_require__(56);
-var loadSound = __webpack_require__(57);
+var loadCostume = __webpack_require__(57);
+var loadSound = __webpack_require__(58);
 
 /**
  * Serializes the specified VM runtime.
@@ -27553,7 +28463,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 175 */
+/* 176 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -27587,7 +28497,7 @@ var xmlEscape = function xmlEscape(unsafe) {
 module.exports = xmlEscape;
 
 /***/ }),
-/* 176 */
+/* 177 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -27605,14 +28515,14 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
 
 var EventEmitter = __webpack_require__(7);
 
-var log = __webpack_require__(19);
-var Runtime = __webpack_require__(165);
-var sb2 = __webpack_require__(172);
-var sb3 = __webpack_require__(174);
+var log = __webpack_require__(13);
+var Runtime = __webpack_require__(166);
+var sb2 = __webpack_require__(173);
+var sb3 = __webpack_require__(175);
 var StringUtil = __webpack_require__(60);
 
-var loadCostume = __webpack_require__(56);
-var loadSound = __webpack_require__(57);
+var loadCostume = __webpack_require__(57);
+var loadSound = __webpack_require__(58);
 
 var RESERVED_NAMES = ['_mouse_', '_stage_', '_edge_', '_myself_', '_random_'];
 
@@ -28292,7 +29202,6 @@ var VirtualMachine = function (_EventEmitter) {
 module.exports = VirtualMachine;
 
 /***/ }),
-/* 177 */,
 /* 178 */,
 /* 179 */,
 /* 180 */,
@@ -28304,7 +29213,8 @@ module.exports = VirtualMachine;
 /* 186 */,
 /* 187 */,
 /* 188 */,
-/* 189 */
+/* 189 */,
+/* 190 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -28329,13 +29239,13 @@ module.exports = Error.captureStackTrace || function (error) {
 
 
 /***/ }),
-/* 190 */,
-/* 191 */
+/* 191 */,
+/* 192 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
-var captureStackTrace = __webpack_require__(189);
+var captureStackTrace = __webpack_require__(190);
 
 function inherits(ctor, superCtor) {
 	ctor.super_ = superCtor;
@@ -28381,7 +29291,6 @@ module.exports = function createErrorClass(className, setup) {
 
 
 /***/ }),
-/* 192 */,
 /* 193 */,
 /* 194 */,
 /* 195 */,
@@ -28392,14 +29301,15 @@ module.exports = function createErrorClass(className, setup) {
 /* 200 */,
 /* 201 */,
 /* 202 */,
-/* 203 */
+/* 203 */,
+/* 204 */
 /***/ (function(module, exports, __webpack_require__) {
 
 /*
   Module dependencies
 */
-var ElementType = __webpack_require__(204);
-var entities = __webpack_require__(229);
+var ElementType = __webpack_require__(205);
+var entities = __webpack_require__(230);
 
 /*
   Boolean Attributes
@@ -28576,7 +29486,7 @@ function renderComment(elem) {
 
 
 /***/ }),
-/* 204 */
+/* 205 */
 /***/ (function(module, exports) {
 
 //Types of elements found in the DOM
@@ -28595,14 +29505,14 @@ module.exports = {
 };
 
 /***/ }),
-/* 205 */
+/* 206 */
 /***/ (function(module, exports, __webpack_require__) {
 
 var ElementType = __webpack_require__(33);
 
 var re_whitespace = /\s+/g;
 var NodePrototype = __webpack_require__(112);
-var ElementPrototype = __webpack_require__(206);
+var ElementPrototype = __webpack_require__(207);
 
 function DomHandler(callback, options, elementCB){
 	if(typeof callback === "object"){
@@ -28783,7 +29693,7 @@ module.exports = DomHandler;
 
 
 /***/ }),
-/* 206 */
+/* 207 */
 /***/ (function(module, exports, __webpack_require__) {
 
 // DOM-Level-1-compliant structure
@@ -28809,18 +29719,18 @@ Object.keys(domLvl1).forEach(function(key) {
 
 
 /***/ }),
-/* 207 */
+/* 208 */
 /***/ (function(module, exports, __webpack_require__) {
 
 var DomUtils = module.exports;
 
 [
-	__webpack_require__(212),
 	__webpack_require__(213),
-	__webpack_require__(210),
+	__webpack_require__(214),
 	__webpack_require__(211),
-	__webpack_require__(209),
-	__webpack_require__(208)
+	__webpack_require__(212),
+	__webpack_require__(210),
+	__webpack_require__(209)
 ].forEach(function(ext){
 	Object.keys(ext).forEach(function(key){
 		DomUtils[key] = ext[key].bind(DomUtils);
@@ -28829,7 +29739,7 @@ var DomUtils = module.exports;
 
 
 /***/ }),
-/* 208 */
+/* 209 */
 /***/ (function(module, exports) {
 
 // removeSubsets
@@ -28976,7 +29886,7 @@ exports.uniqueSort = function(nodes) {
 
 
 /***/ }),
-/* 209 */
+/* 210 */
 /***/ (function(module, exports, __webpack_require__) {
 
 var ElementType = __webpack_require__(33);
@@ -29069,7 +29979,7 @@ exports.getElementsByTagType = function(type, element, recurse, limit){
 
 
 /***/ }),
-/* 210 */
+/* 211 */
 /***/ (function(module, exports) {
 
 exports.removeElement = function(elem){
@@ -29152,7 +30062,7 @@ exports.prepend = function(elem, prev){
 
 
 /***/ }),
-/* 211 */
+/* 212 */
 /***/ (function(module, exports, __webpack_require__) {
 
 var isTag = __webpack_require__(33).isTag;
@@ -29252,11 +30162,11 @@ function findAll(test, elems){
 
 
 /***/ }),
-/* 212 */
+/* 213 */
 /***/ (function(module, exports, __webpack_require__) {
 
 var ElementType = __webpack_require__(33),
-    getOuterHTML = __webpack_require__(203),
+    getOuterHTML = __webpack_require__(204),
     isTag = ElementType.isTag;
 
 module.exports = {
@@ -29280,7 +30190,7 @@ function getText(elem){
 
 
 /***/ }),
-/* 213 */
+/* 214 */
 /***/ (function(module, exports) {
 
 var getChildren = exports.getChildren = function(elem){
@@ -29310,7 +30220,7 @@ exports.getName = function(elem){
 
 
 /***/ }),
-/* 214 */
+/* 215 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -29393,7 +30303,6 @@ module.exports.DuplexWrapper = DuplexWrapper;
 
 
 /***/ }),
-/* 215 */,
 /* 216 */,
 /* 217 */,
 /* 218 */,
@@ -29407,11 +30316,12 @@ module.exports.DuplexWrapper = DuplexWrapper;
 /* 226 */,
 /* 227 */,
 /* 228 */,
-/* 229 */
+/* 229 */,
+/* 230 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var encode = __webpack_require__(231),
-    decode = __webpack_require__(230);
+var encode = __webpack_require__(232),
+    decode = __webpack_require__(231);
 
 exports.decode = function(data, level){
 	return (!level || level <= 0 ? decode.XML : decode.HTML)(data);
@@ -29446,7 +30356,7 @@ exports.escape = encode.escape;
 
 
 /***/ }),
-/* 230 */
+/* 231 */
 /***/ (function(module, exports, __webpack_require__) {
 
 var entityMap = __webpack_require__(66),
@@ -29523,7 +30433,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 231 */
+/* 232 */
 /***/ (function(module, exports, __webpack_require__) {
 
 var inverseXML = getInverseObj(__webpack_require__(67)),
@@ -29602,7 +30512,7 @@ exports.escape = escapeXML;
 
 
 /***/ }),
-/* 232 */
+/* 233 */
 /***/ (function(module, exports) {
 
 module.exports = {
@@ -29637,14 +30547,14 @@ module.exports = {
 };
 
 /***/ }),
-/* 233 */
+/* 234 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 
 var util = __webpack_require__(27);
-var isArrayish = __webpack_require__(248);
+var isArrayish = __webpack_require__(249);
 
 var errorEx = function errorEx(name, properties) {
 	if (!name || name.constructor !== String) {
@@ -29777,7 +30687,7 @@ module.exports = errorEx;
 
 
 /***/ }),
-/* 234 */
+/* 235 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -29788,22 +30698,22 @@ var http = __webpack_require__(39);
 var https = __webpack_require__(68);
 var urlLib = __webpack_require__(26);
 var querystring = __webpack_require__(22);
-var objectAssign = __webpack_require__(264);
+var objectAssign = __webpack_require__(265);
 var PassThrough = __webpack_require__(8).PassThrough;
-var duplexer2 = __webpack_require__(214);
-var isStream = __webpack_require__(251);
-var readAllStream = __webpack_require__(287);
-var timedOut = __webpack_require__(297);
-var urlParseLax = __webpack_require__(298);
-var lowercaseKeys = __webpack_require__(252);
-var isRedirect = __webpack_require__(249);
+var duplexer2 = __webpack_require__(215);
+var isStream = __webpack_require__(252);
+var readAllStream = __webpack_require__(288);
+var timedOut = __webpack_require__(298);
+var urlParseLax = __webpack_require__(299);
+var lowercaseKeys = __webpack_require__(253);
+var isRedirect = __webpack_require__(250);
 var PinkiePromise = __webpack_require__(128);
-var unzipResponse = __webpack_require__(302);
-var createErrorClass = __webpack_require__(191);
-var nodeStatusCodes = __webpack_require__(263);
-var parseJson = __webpack_require__(276);
-var isRetryAllowed = __webpack_require__(250);
-var pkg = __webpack_require__(235);
+var unzipResponse = __webpack_require__(303);
+var createErrorClass = __webpack_require__(192);
+var nodeStatusCodes = __webpack_require__(264);
+var parseJson = __webpack_require__(277);
+var isRetryAllowed = __webpack_require__(251);
+var pkg = __webpack_require__(236);
 
 function requestAsEventEmitter(opts) {
 	opts = opts || {};
@@ -30186,7 +31096,7 @@ module.exports = got;
 /* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(25).setImmediate, __webpack_require__(0).Buffer))
 
 /***/ }),
-/* 235 */
+/* 236 */
 /***/ (function(module, exports) {
 
 module.exports = {
@@ -30336,14 +31246,14 @@ module.exports = {
 };
 
 /***/ }),
-/* 236 */,
 /* 237 */,
 /* 238 */,
 /* 239 */,
 /* 240 */,
 /* 241 */,
 /* 242 */,
-/* 243 */
+/* 243 */,
+/* 244 */
 /***/ (function(module, exports, __webpack_require__) {
 
 module.exports = CollectingHandler;
@@ -30404,7 +31314,7 @@ CollectingHandler.prototype.restart = function(){
 
 
 /***/ }),
-/* 244 */
+/* 245 */
 /***/ (function(module, exports, __webpack_require__) {
 
 var index = __webpack_require__(21),
@@ -30505,7 +31415,7 @@ module.exports = FeedHandler;
 
 
 /***/ }),
-/* 245 */
+/* 246 */
 /***/ (function(module, exports, __webpack_require__) {
 
 module.exports = ProxyHandler;
@@ -30537,7 +31447,7 @@ Object.keys(EVENTS).forEach(function(name){
 });
 
 /***/ }),
-/* 246 */
+/* 247 */
 /***/ (function(module, exports, __webpack_require__) {
 
 module.exports = Stream;
@@ -30577,8 +31487,8 @@ Object.keys(EVENTS).forEach(function(name){
 });
 
 /***/ }),
-/* 247 */,
-/* 248 */
+/* 248 */,
+/* 249 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -30595,7 +31505,7 @@ module.exports = function isArrayish(obj) {
 
 
 /***/ }),
-/* 249 */
+/* 250 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -30616,7 +31526,7 @@ module.exports = function (x) {
 
 
 /***/ }),
-/* 250 */
+/* 251 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -30683,7 +31593,7 @@ module.exports = function (err) {
 
 
 /***/ }),
-/* 251 */
+/* 252 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -30711,7 +31621,7 @@ isStream.transform = function (stream) {
 
 
 /***/ }),
-/* 252 */
+/* 253 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -30729,7 +31639,7 @@ module.exports = function (obj) {
 
 
 /***/ }),
-/* 253 */
+/* 254 */
 /***/ (function(module, exports) {
 
 function M() { this._events = {}; }
@@ -30785,7 +31695,7 @@ module.exports = M;
 
 
 /***/ }),
-/* 254 */
+/* 255 */
 /***/ (function(module, exports, __webpack_require__) {
 
 // default filter
@@ -30847,11 +31757,11 @@ module.exports = Filter;
 
 
 /***/ }),
-/* 255 */
+/* 256 */
 /***/ (function(module, exports, __webpack_require__) {
 
 var Transform = __webpack_require__(12),
-    Filter = __webpack_require__(254);
+    Filter = __webpack_require__(255);
 
 var log = new Transform(),
     slice = Array.prototype.slice;
@@ -30898,7 +31808,7 @@ exports.enable = function() {
 
 
 /***/ }),
-/* 256 */
+/* 257 */
 /***/ (function(module, exports, __webpack_require__) {
 
 var Transform = __webpack_require__(12),
@@ -30918,7 +31828,7 @@ module.exports = logger;
 
 
 /***/ }),
-/* 257 */
+/* 258 */
 /***/ (function(module, exports, __webpack_require__) {
 
 var Transform = __webpack_require__(12);
@@ -30949,14 +31859,14 @@ logger.write = function(name, level, args) {
 };
 
 logger.formatters = ['color', 'minilog'];
-logger.color = __webpack_require__(258);
-logger.minilog = __webpack_require__(259);
+logger.color = __webpack_require__(259);
+logger.minilog = __webpack_require__(260);
 
 module.exports = logger;
 
 
 /***/ }),
-/* 258 */
+/* 259 */
 /***/ (function(module, exports, __webpack_require__) {
 
 var Transform = __webpack_require__(12),
@@ -30980,7 +31890,7 @@ module.exports = logger;
 
 
 /***/ }),
-/* 259 */
+/* 260 */
 /***/ (function(module, exports, __webpack_require__) {
 
 var Transform = __webpack_require__(12),
@@ -31012,15 +31922,15 @@ module.exports = logger;
 
 
 /***/ }),
-/* 260 */
+/* 261 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var Minilog = __webpack_require__(255);
+var Minilog = __webpack_require__(256);
 
 var oldEnable = Minilog.enable,
     oldDisable = Minilog.disable,
     isChrome = (typeof navigator != 'undefined' && /chrome/i.test(navigator.userAgent)),
-    console = __webpack_require__(257);
+    console = __webpack_require__(258);
 
 // Use a more capable logging backend if on Chrome
 Minilog.defaultBackend = (isChrome ? console.minilog : console);
@@ -31052,15 +31962,15 @@ Minilog.disable = function() {
 exports = module.exports = Minilog;
 
 exports.backends = {
-  array: __webpack_require__(256),
+  array: __webpack_require__(257),
   browser: Minilog.defaultBackend,
-  localStorage: __webpack_require__(262),
-  jQuery: __webpack_require__(261)
+  localStorage: __webpack_require__(263),
+  jQuery: __webpack_require__(262)
 };
 
 
 /***/ }),
-/* 261 */
+/* 262 */
 /***/ (function(module, exports, __webpack_require__) {
 
 var Transform = __webpack_require__(12);
@@ -31140,7 +32050,7 @@ module.exports = AjaxLogger;
 
 
 /***/ }),
-/* 262 */
+/* 263 */
 /***/ (function(module, exports, __webpack_require__) {
 
 var Transform = __webpack_require__(12),
@@ -31160,7 +32070,7 @@ logger.write = function(name, level, args) {
 module.exports = logger;
 
 /***/ }),
-/* 263 */
+/* 264 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -31229,7 +32139,7 @@ module.exports = {
 
 
 /***/ }),
-/* 264 */
+/* 265 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -31326,7 +32236,6 @@ module.exports = shouldUseNative() ? Object.assign : function (target, source) {
 
 
 /***/ }),
-/* 265 */,
 /* 266 */,
 /* 267 */,
 /* 268 */,
@@ -31337,13 +32246,14 @@ module.exports = shouldUseNative() ? Object.assign : function (target, source) {
 /* 273 */,
 /* 274 */,
 /* 275 */,
-/* 276 */
+/* 276 */,
+/* 277 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
-var errorEx = __webpack_require__(233);
-var fallback = __webpack_require__(277);
+var errorEx = __webpack_require__(234);
+var fallback = __webpack_require__(278);
 
 var JSONError = errorEx('JSONError', {
 	fileName: errorEx.append('in %s')
@@ -31379,7 +32289,7 @@ module.exports = function (x, reviver, filename) {
 
 
 /***/ }),
-/* 277 */
+/* 278 */
 /***/ (function(module, exports, __webpack_require__) {
 
 /*
@@ -31390,7 +32300,7 @@ module.exports = function (x, reviver, filename) {
 
 // RTFM: http://www.ecma-international.org/publications/files/ECMA-ST/Ecma-262.pdf
 
-var Uni = __webpack_require__(278)
+var Uni = __webpack_require__(279)
 
 function isHexDigit(x) {
   return (x >= '0' && x <= '9')
@@ -32137,7 +33047,7 @@ module.exports.tokenize = function tokenizeJSON(input, options) {
 
 
 /***/ }),
-/* 278 */
+/* 279 */
 /***/ (function(module, exports) {
 
 
@@ -32214,8 +33124,8 @@ module.exports.NonAsciiIdentifierPart = /[\xAA\xB5\xBA\xC0-\xD6\xD8-\xF6\xF8-\u0
 
 
 /***/ }),
-/* 279 */,
-/* 280 */
+/* 280 */,
+/* 281 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -32515,7 +33425,7 @@ module.exports = Promise;
 /* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(2), __webpack_require__(25).setImmediate))
 
 /***/ }),
-/* 281 */
+/* 282 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -32536,12 +33446,12 @@ module.exports = function (url) {
 
 
 /***/ }),
-/* 282 */,
 /* 283 */,
 /* 284 */,
 /* 285 */,
 /* 286 */,
-/* 287 */
+/* 287 */,
+/* 288 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -32621,7 +33531,6 @@ module.exports = function read(stream, options, cb) {
 /* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(0).Buffer))
 
 /***/ }),
-/* 288 */,
 /* 289 */,
 /* 290 */,
 /* 291 */,
@@ -32629,7 +33538,8 @@ module.exports = function read(stream, options, cb) {
 /* 293 */,
 /* 294 */,
 /* 295 */,
-/* 296 */
+/* 296 */,
+/* 297 */
 /***/ (function(module, exports, __webpack_require__) {
 
 (function webpackUniversalModuleDefinition(root, factory) {
@@ -40835,7 +41745,7 @@ return /******/ (function(modules) { // webpackBootstrap
 //# sourceMappingURL=socket.io.js.map
 
 /***/ }),
-/* 297 */
+/* 298 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -40897,13 +41807,13 @@ module.exports = function (req, time) {
 
 
 /***/ }),
-/* 298 */
+/* 299 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 var url = __webpack_require__(26);
-var prependHttp = __webpack_require__(281);
+var prependHttp = __webpack_require__(282);
 
 module.exports = function (x) {
 	var withProtocol = prependHttp(x);
@@ -40918,13 +41828,13 @@ module.exports = function (x) {
 
 
 /***/ }),
-/* 299 */,
-/* 300 */
+/* 300 */,
+/* 301 */
 /***/ (function(module, exports) {
 
 module.exports = {
 	"name": "scratch-vm",
-	"version": "0.1.0-prerelease.1496409237",
+	"version": "0.1.0-prerelease.1496854853",
 	"description": "Virtual Machine for Scratch 3.0",
 	"author": "Massachusetts Institute of Technology",
 	"license": "BSD-3-Clause",
@@ -40932,7 +41842,7 @@ module.exports = {
 	"repository": {
 		"type": "git",
 		"url": "git+ssh://git@github.com/LLK/scratch-vm.git",
-		"sha": "ecf535f4c3d4f5820ea969bb23a24ff4f6f4770b"
+		"sha": "d41997b58b5cc2cc94282b00ef70c60d2bdc36f5"
 	},
 	"main": "./dist/node/scratch-vm.js",
 	"scripts": {
@@ -40982,14 +41892,14 @@ module.exports = {
 };
 
 /***/ }),
-/* 301 */,
-/* 302 */
+/* 302 */,
+/* 303 */
 /***/ (function(module, exports) {
 
 /* (ignored) */
 
 /***/ }),
-/* 303 */
+/* 304 */
 /***/ (function(module, exports) {
 
 /* (ignored) */
