@@ -379,7 +379,8 @@ class VirtualMachine extends EventEmitter {
                 this.runtime.disposeTarget(sprite.clones[i]);
                 // Ensure editing target is switched if we are deleting it.
                 if (clone === currentEditingTarget) {
-                    this.setEditingTarget(this.runtime.targets[0].id);
+                    const lastTargetIndex = this.runtime.targets.length - 1;
+                    this.setEditingTarget(this.runtime.targets[lastTargetIndex].id);
                 }
             }
             // Sprite object should be deleted by GC.
