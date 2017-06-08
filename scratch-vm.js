@@ -4125,7 +4125,7 @@ inherits(Stream, EE);
 Stream.Readable = __webpack_require__(8);
 Stream.Writable = __webpack_require__(78);
 Stream.Duplex = __webpack_require__(74);
-Stream.Transform = __webpack_require__(51);
+Stream.Transform = __webpack_require__(50);
 Stream.PassThrough = __webpack_require__(77);
 
 // Backwards-compat with node 0.4.x
@@ -7838,132 +7838,7 @@ var Color = function () {
 module.exports = Color;
 
 /***/ }),
-/* 42 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-
-var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
-
-function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
-
-/**
- * @fileoverview
- * A utility for accurately measuring time.
- * To use:
- * ---
- * var timer = new Timer();
- * timer.start();
- * ... pass some time ...
- * var timeDifference = timer.timeElapsed();
- * ---
- * Or, you can use the `time` and `relativeTime`
- * to do some measurement yourself.
- */
-
-var Timer = function () {
-    function Timer() {
-        _classCallCheck(this, Timer);
-
-        /**
-         * Used to store the start time of a timer action.
-         * Updated when calling `timer.start`.
-         */
-        this.startTime = 0;
-    }
-
-    /**
-     * Disable use of self.performance for now as it results in lower performance
-     * However, instancing it like below (caching the self.performance to a local variable) negates most of the issues.
-     * @type {boolean}
-     */
-
-
-    _createClass(Timer, [{
-        key: 'time',
-
-
-        /**
-         * Return the currently known absolute time, in ms precision.
-         * @returns {number} ms elapsed since 1 January 1970 00:00:00 UTC.
-         */
-        value: function time() {
-            return Timer.nowObj.now();
-        }
-
-        /**
-         * Returns a time accurate relative to other times produced by this function.
-         * If possible, will use sub-millisecond precision.
-         * If not, will use millisecond precision.
-         * Not guaranteed to produce the same absolute values per-system.
-         * @returns {number} ms-scale accurate time relative to other relative times.
-         */
-
-    }, {
-        key: 'relativeTime',
-        value: function relativeTime() {
-            return Timer.nowObj.now();
-        }
-
-        /**
-         * Start a timer for measuring elapsed time,
-         * at the most accurate precision possible.
-         */
-
-    }, {
-        key: 'start',
-        value: function start() {
-            this.startTime = Timer.nowObj.now();
-        }
-    }, {
-        key: 'timeElapsed',
-        value: function timeElapsed() {
-            return Timer.nowObj.now() - this.startTime;
-        }
-    }], [{
-        key: 'USE_PERFORMANCE',
-        get: function get() {
-            return false;
-        }
-
-        /**
-         * Legacy object to allow for us to call now to get the old style date time (for backwards compatibility)
-         * @deprecated This is only called via the nowObj.now() if no other means is possible...
-         */
-
-    }, {
-        key: 'legacyDateCode',
-        get: function get() {
-            return {
-                now: function now() {
-                    return new Date().getTime();
-                }
-            };
-        }
-
-        /**
-         * Use this object to route all time functions through single access points.
-         */
-
-    }, {
-        key: 'nowObj',
-        get: function get() {
-            if (Timer.USE_PERFORMANCE && typeof self !== 'undefined' && self.performance && 'now' in self.performance) {
-                return self.performance;
-            } else if (Date.now) {
-                return Date;
-            }
-            return Timer.legacyDateCode;
-        }
-    }]);
-
-    return Timer;
-}();
-
-module.exports = Timer;
-
-/***/ }),
+/* 42 */,
 /* 43 */,
 /* 44 */,
 /* 45 */,
@@ -7971,16 +7846,15 @@ module.exports = Timer;
 /* 47 */,
 /* 48 */,
 /* 49 */,
-/* 50 */,
-/* 51 */
+/* 50 */
 /***/ (function(module, exports, __webpack_require__) {
 
 module.exports = __webpack_require__(8).Transform
 
 
 /***/ }),
-/* 52 */,
-/* 53 */
+/* 51 */,
+/* 52 */
 /***/ (function(module, exports) {
 
 module.exports = function(module) {
@@ -8008,7 +7882,7 @@ module.exports = function(module) {
 
 
 /***/ }),
-/* 54 */
+/* 53 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -8036,7 +7910,7 @@ var List = function List(name, contents) {
 module.exports = List;
 
 /***/ }),
-/* 55 */
+/* 54 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -8383,7 +8257,7 @@ var Thread = function () {
 module.exports = Thread;
 
 /***/ }),
-/* 56 */
+/* 55 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -8426,13 +8300,13 @@ var Variable = function () {
 module.exports = Variable;
 
 /***/ }),
-/* 57 */
+/* 56 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 
-var StringUtil = __webpack_require__(60);
+var StringUtil = __webpack_require__(59);
 var log = __webpack_require__(13);
 
 /**
@@ -8512,13 +8386,13 @@ var loadCostume = function loadCostume(md5ext, costume, runtime) {
 module.exports = loadCostume;
 
 /***/ }),
-/* 58 */
+/* 57 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 
-var StringUtil = __webpack_require__(60);
+var StringUtil = __webpack_require__(59);
 var log = __webpack_require__(13);
 
 /**
@@ -8553,7 +8427,7 @@ var loadSound = function loadSound(sound, runtime) {
 module.exports = loadSound;
 
 /***/ }),
-/* 59 */
+/* 58 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -9520,7 +9394,7 @@ var RenderedTarget = function (_Target) {
 module.exports = RenderedTarget;
 
 /***/ }),
-/* 60 */
+/* 59 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -9586,6 +9460,132 @@ var StringUtil = function () {
 }();
 
 module.exports = StringUtil;
+
+/***/ }),
+/* 60 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+/**
+ * @fileoverview
+ * A utility for accurately measuring time.
+ * To use:
+ * ---
+ * var timer = new Timer();
+ * timer.start();
+ * ... pass some time ...
+ * var timeDifference = timer.timeElapsed();
+ * ---
+ * Or, you can use the `time` and `relativeTime`
+ * to do some measurement yourself.
+ */
+
+var Timer = function () {
+    function Timer() {
+        _classCallCheck(this, Timer);
+
+        /**
+         * Used to store the start time of a timer action.
+         * Updated when calling `timer.start`.
+         */
+        this.startTime = 0;
+    }
+
+    /**
+     * Disable use of self.performance for now as it results in lower performance
+     * However, instancing it like below (caching the self.performance to a local variable) negates most of the issues.
+     * @type {boolean}
+     */
+
+
+    _createClass(Timer, [{
+        key: 'time',
+
+
+        /**
+         * Return the currently known absolute time, in ms precision.
+         * @returns {number} ms elapsed since 1 January 1970 00:00:00 UTC.
+         */
+        value: function time() {
+            return Timer.nowObj.now();
+        }
+
+        /**
+         * Returns a time accurate relative to other times produced by this function.
+         * If possible, will use sub-millisecond precision.
+         * If not, will use millisecond precision.
+         * Not guaranteed to produce the same absolute values per-system.
+         * @returns {number} ms-scale accurate time relative to other relative times.
+         */
+
+    }, {
+        key: 'relativeTime',
+        value: function relativeTime() {
+            return Timer.nowObj.now();
+        }
+
+        /**
+         * Start a timer for measuring elapsed time,
+         * at the most accurate precision possible.
+         */
+
+    }, {
+        key: 'start',
+        value: function start() {
+            this.startTime = Timer.nowObj.now();
+        }
+    }, {
+        key: 'timeElapsed',
+        value: function timeElapsed() {
+            return Timer.nowObj.now() - this.startTime;
+        }
+    }], [{
+        key: 'USE_PERFORMANCE',
+        get: function get() {
+            return false;
+        }
+
+        /**
+         * Legacy object to allow for us to call now to get the old style date time (for backwards compatibility)
+         * @deprecated This is only called via the nowObj.now() if no other means is possible...
+         */
+
+    }, {
+        key: 'legacyDateCode',
+        get: function get() {
+            return {
+                now: function now() {
+                    return new Date().getTime();
+                }
+            };
+        }
+
+        /**
+         * Use this object to route all time functions through single access points.
+         */
+
+    }, {
+        key: 'nowObj',
+        get: function get() {
+            if (Timer.USE_PERFORMANCE && typeof self !== 'undefined' && self.performance && 'now' in self.performance) {
+                return self.performance;
+            } else if (Date.now) {
+                return Date;
+            }
+            return Timer.legacyDateCode;
+        }
+    }]);
+
+    return Timer;
+}();
+
+module.exports = Timer;
 
 /***/ }),
 /* 61 */
@@ -17556,7 +17556,7 @@ exports.write = function (buffer, value, offset, isLE, mLen, nBytes) {
 
 }(this));
 
-/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(53)(module), __webpack_require__(2)))
+/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(52)(module), __webpack_require__(2)))
 
 /***/ }),
 /* 72 */
@@ -18826,7 +18826,7 @@ var _createClass = function () { function defineProperties(target, props) { for 
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
-var RenderedTarget = __webpack_require__(59);
+var RenderedTarget = __webpack_require__(58);
 var Blocks = __webpack_require__(30);
 
 var Sprite = function () {
@@ -20580,7 +20580,6 @@ var _createClass = function () { function defineProperties(target, props) { for 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
 var Cast = __webpack_require__(10);
-var Timer = __webpack_require__(42);
 
 var Scratch3ControlBlocks = function () {
     function Scratch3ControlBlocks(runtime) {
@@ -20666,18 +20665,13 @@ var Scratch3ControlBlocks = function () {
         }
     }, {
         key: 'wait',
-        value: function wait(args, util) {
-            if (!util.stackFrame.timer) {
-                util.stackFrame.timer = new Timer();
-                util.stackFrame.timer.start();
-                util.yield();
-                this.runtime.requestRedraw();
-            } else {
-                var duration = Math.max(0, 1000 * Cast.toNumber(args.DURATION));
-                if (util.stackFrame.timer.timeElapsed() < duration) {
-                    util.yield();
-                }
-            }
+        value: function wait(args) {
+            var duration = Math.max(0, 1000 * Cast.toNumber(args.DURATION));
+            return new Promise(function (resolve) {
+                setTimeout(function () {
+                    resolve();
+                }, duration);
+            });
         }
     }, {
         key: 'if',
@@ -21290,7 +21284,7 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
 
 var Cast = __webpack_require__(10);
 var MathUtil = __webpack_require__(20);
-var Timer = __webpack_require__(42);
+var Timer = __webpack_require__(60);
 
 var Scratch3MotionBlocks = function () {
     function Scratch3MotionBlocks(runtime) {
@@ -21761,7 +21755,7 @@ var Cast = __webpack_require__(10);
 var Clone = __webpack_require__(97);
 var Color = __webpack_require__(41);
 var MathUtil = __webpack_require__(20);
-var RenderedTarget = __webpack_require__(59);
+var RenderedTarget = __webpack_require__(58);
 
 /**
  * @typedef {object} PenState - the pen state associated with a particular target.
@@ -23950,7 +23944,7 @@ module.exports = adapter;
 
 
 var log = __webpack_require__(13);
-var Thread = __webpack_require__(55);
+var Thread = __webpack_require__(54);
 
 var _require = __webpack_require__(70),
     Map = _require.Map;
@@ -24264,7 +24258,7 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
 var EventEmitter = __webpack_require__(7);
 var Sequencer = __webpack_require__(167);
 var Blocks = __webpack_require__(30);
-var Thread = __webpack_require__(55);
+var Thread = __webpack_require__(54);
 
 var _require = __webpack_require__(70),
     OrderedMap = _require.OrderedMap;
@@ -25468,8 +25462,8 @@ var _createClass = function () { function defineProperties(target, props) { for 
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
-var Timer = __webpack_require__(42);
-var Thread = __webpack_require__(55);
+var Timer = __webpack_require__(60);
+var Thread = __webpack_require__(54);
 var execute = __webpack_require__(164);
 
 var Sequencer = function () {
@@ -25747,8 +25741,8 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
 var EventEmitter = __webpack_require__(7);
 
 var Blocks = __webpack_require__(30);
-var Variable = __webpack_require__(56);
-var List = __webpack_require__(54);
+var Variable = __webpack_require__(55);
+var List = __webpack_require__(53);
 var uid = __webpack_require__(98);
 
 /**
@@ -25944,7 +25938,7 @@ var _createClass = function () { function defineProperties(target, props) { for 
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
-var Timer = __webpack_require__(42);
+var Timer = __webpack_require__(60);
 
 var Clock = function () {
     function Clock(runtime) {
@@ -26732,17 +26726,17 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
  */
 
 var Blocks = __webpack_require__(30);
-var RenderedTarget = __webpack_require__(59);
+var RenderedTarget = __webpack_require__(58);
 var Sprite = __webpack_require__(96);
 var Color = __webpack_require__(41);
 var log = __webpack_require__(13);
 var uid = __webpack_require__(98);
 var specMap = __webpack_require__(174);
-var Variable = __webpack_require__(56);
-var List = __webpack_require__(54);
+var Variable = __webpack_require__(55);
+var List = __webpack_require__(53);
 
-var loadCostume = __webpack_require__(57);
-var loadSound = __webpack_require__(58);
+var loadCostume = __webpack_require__(56);
+var loadSound = __webpack_require__(57);
 
 /**
  * Convert a Scratch 2.0 procedure string (e.g., "my_procedure %s %b %n")
@@ -28306,11 +28300,11 @@ module.exports = specMap;
 var vmPackage = __webpack_require__(301);
 var Blocks = __webpack_require__(30);
 var Sprite = __webpack_require__(96);
-var Variable = __webpack_require__(56);
-var List = __webpack_require__(54);
+var Variable = __webpack_require__(55);
+var List = __webpack_require__(53);
 
-var loadCostume = __webpack_require__(57);
-var loadSound = __webpack_require__(58);
+var loadCostume = __webpack_require__(56);
+var loadSound = __webpack_require__(57);
 
 /**
  * Serializes the specified VM runtime.
@@ -28519,10 +28513,10 @@ var log = __webpack_require__(13);
 var Runtime = __webpack_require__(166);
 var sb2 = __webpack_require__(173);
 var sb3 = __webpack_require__(175);
-var StringUtil = __webpack_require__(60);
+var StringUtil = __webpack_require__(59);
 
-var loadCostume = __webpack_require__(57);
-var loadSound = __webpack_require__(58);
+var loadCostume = __webpack_require__(56);
+var loadSound = __webpack_require__(57);
 
 var RESERVED_NAMES = ['_mouse_', '_stage_', '_edge_', '_myself_', '_random_'];
 
@@ -41834,7 +41828,7 @@ module.exports = function (x) {
 
 module.exports = {
 	"name": "scratch-vm",
-	"version": "0.1.0-prerelease.1496854853",
+	"version": "0.1.0-prerelease.1496950827",
 	"description": "Virtual Machine for Scratch 3.0",
 	"author": "Massachusetts Institute of Technology",
 	"license": "BSD-3-Clause",
@@ -41842,7 +41836,7 @@ module.exports = {
 	"repository": {
 		"type": "git",
 		"url": "git+ssh://git@github.com/LLK/scratch-vm.git",
-		"sha": "d41997b58b5cc2cc94282b00ef70c60d2bdc36f5"
+		"sha": "fb986effe60064f3317a4e973369caa8134dd122"
 	},
 	"main": "./dist/node/scratch-vm.js",
 	"scripts": {
