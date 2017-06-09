@@ -33,15 +33,15 @@ const getAssetUrl = function (asset) {
 };
 
 /**
- * Construct a new instance of ScratchStorage, provide it with default web sources, and attach it to the provided VM.
- * @param {VirtualMachine} vm - the VM which will own the new ScratchStorage instance.
+ * Construct a new instance of ScratchStorage and provide it with default web sources.
+ * @returns {ScratchStorage} - an instance of ScratchStorage, ready to be used for tests.
  */
-const attachTestStorage = function (vm) {
+const makeTestStorage = function () {
     const storage = new ScratchStorage();
     const AssetType = storage.AssetType;
     storage.addWebSource([AssetType.Project], getProjectUrl);
     storage.addWebSource([AssetType.ImageVector, AssetType.ImageBitmap, AssetType.Sound], getAssetUrl);
-    vm.attachStorage(storage);
+    return storage;
 };
 
-module.exports = attachTestStorage;
+module.exports = makeTestStorage;

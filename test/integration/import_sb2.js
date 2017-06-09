@@ -1,6 +1,6 @@
 const path = require('path');
 const test = require('tap').test;
-const attachTestStorage = require('../fixtures/attach-test-storage');
+const makeTestStorage = require('../fixtures/make-test-storage');
 const extract = require('../fixtures/extract');
 
 const renderedTarget = require('../../src/sprites/rendered-target');
@@ -20,7 +20,7 @@ test('default', t => {
 
     // Create runtime instance & load SB2 into it
     const rt = new runtime();
-    attachTestStorage(rt);
+    rt.attachStorage(makeTestStorage());
     sb2.deserialize(json, rt).then(targets => {
         // Test
         t.type(file, 'string');
