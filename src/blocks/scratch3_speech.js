@@ -69,6 +69,8 @@ Scratch3SpeechBlocks.prototype.getHats = function () {
     };
 };
 
+/* //////////////// Speech Recognition ///////////////// */
+
 Scratch3SpeechBlocks.prototype.startSpeechRecogntion = function () {
     if (!this.recognition) {
         this.recognition = new this.SpeechRecognition();
@@ -100,6 +102,35 @@ Scratch3SpeechBlocks.prototype.startSpeechRecogntion = function () {
         this.recognition.start();
     }
 };
+
+Scratch3SpeechBlocks.prototype.hatWhenIHear = function (args) {
+    if (!this.recognition) {
+        return;
+    }
+
+    let input = Cast.toString(args.STRING).toLowerCase();
+    // facilitate matches by removing some punctuation: . ? !
+    input = input.replace(/[.?!]/g, '');
+    // trim off any white space
+    input = input.trim();
+
+    if (input === '') return false;
+
+    for (let i = 0; i < this.recognized_speech.length; i++) {
+        if (this.recognized_speech[i].includes(input)) {
+            this.recognized_speech = [];
+            return true;
+        }
+    }
+    return false;
+};
+
+Scratch3SpeechBlocks.prototype.getLatestSpeech = function () {
+    return this.latest_speech;
+};
+
+/* //////////////// Speech Synthesis ///////////////// */
+
 Scratch3SpeechBlocks.prototype.setVoice = function (args) {
     if (args.VOICE === 'Random') {
         const voices = this.getVoices();
@@ -129,32 +160,6 @@ Scratch3SpeechBlocks.prototype.getVoices = function () {
     }
 
     return availableVoices;
-};
-
-Scratch3SpeechBlocks.prototype.hatWhenIHear = function (args) {
-    if (!this.recognition) {
-        return;
-    }
-
-    let input = Cast.toString(args.STRING).toLowerCase();
-    // facilitate matches by removing some punctuation: . ? !
-    input = input.replace(/[.?!]/g, '');
-    // trim off any white space
-    input = input.trim();
-
-    if (input === '') return false;
-
-    for (let i = 0; i < this.recognized_speech.length; i++) {
-        if (this.recognized_speech[i].includes(input)) {
-            this.recognized_speech = [];
-            return true;
-        }
-    }
-    return false;
-};
-
-Scratch3SpeechBlocks.prototype.getLatestSpeech = function () {
-    return this.latest_speech;
 };
 
 Scratch3SpeechBlocks.prototype.speak = function (args) {
