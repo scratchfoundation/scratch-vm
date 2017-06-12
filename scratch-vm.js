@@ -9341,6 +9341,8 @@ var RenderedTarget = function (_Target) {
         key: 'dispose',
         value: function dispose() {
             this.runtime.changeCloneCounter(-1);
+            this.runtime.stopForTarget(this);
+            this.sprite.removeClone(this);
             if (this.renderer && this.drawableID !== null) {
                 this.renderer.destroyDrawable(this.drawableID);
                 if (this.visible) {
@@ -18891,6 +18893,21 @@ var Sprite = function () {
         newClone.initDrawable();
       }
       return newClone;
+    }
+
+    /**
+     * Disconnect a clone from this sprite. The clone is unmodified.
+     * In particular, the clone's dispose() method is not called.
+     * @param {!RenderedTarget} clone - the clone to be removed.
+     */
+
+  }, {
+    key: 'removeClone',
+    value: function removeClone(clone) {
+      var cloneIndex = this.clones.indexOf(clone);
+      if (cloneIndex >= 0) {
+        this.clones.splice(cloneIndex, 1);
+      }
     }
   }]);
 
@@ -41833,7 +41850,7 @@ module.exports = function (x) {
 
 module.exports = {
 	"name": "scratch-vm",
-	"version": "0.1.0-prerelease.1497271582",
+	"version": "0.1.0-prerelease.1497275410",
 	"description": "Virtual Machine for Scratch 3.0",
 	"author": "Massachusetts Institute of Technology",
 	"license": "BSD-3-Clause",
@@ -41841,7 +41858,7 @@ module.exports = {
 	"repository": {
 		"type": "git",
 		"url": "git+ssh://git@github.com/LLK/scratch-vm.git",
-		"sha": "f968edec54c0648dbfe4f425da30f72123269cfb"
+		"sha": "d9704b23c3e20af3b3e71e718107a0803b5340e9"
 	},
 	"main": "./dist/node/scratch-vm.js",
 	"scripts": {
