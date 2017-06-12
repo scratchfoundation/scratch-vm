@@ -364,6 +364,8 @@ class VirtualMachine extends EventEmitter {
      */
     deleteSprite (targetId) {
         const target = this.runtime.getTargetById(targetId);
+        const targetIndexBeforeDelete = this.runtime.targets.map(t => t.id).indexOf(target.id);
+
         if (target) {
             if (!target.isSprite()) {
                 throw new Error('Cannot delete non-sprite targets.');
@@ -379,8 +381,8 @@ class VirtualMachine extends EventEmitter {
                 this.runtime.disposeTarget(sprite.clones[i]);
                 // Ensure editing target is switched if we are deleting it.
                 if (clone === currentEditingTarget) {
-                    const lastTargetIndex = this.runtime.targets.length - 1;
-                    this.setEditingTarget(this.runtime.targets[lastTargetIndex].id);
+                    const nextTargetIndex = Math.min(this.runtime.targets.length - 1, targetIndexBeforeDelete);
+                    this.setEditingTarget(this.runtime.targets[nextTargetIndex].id);
                 }
             }
             // Sprite object should be deleted by GC.
