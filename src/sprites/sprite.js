@@ -58,6 +58,18 @@ class Sprite {
         }
         return newClone;
     }
+
+    /**
+     * Disconnect a clone from this sprite. The clone is unmodified.
+     * In particular, the clone's dispose() method is not called.
+     * @param {!RenderedTarget} clone - the clone to be removed.
+     */
+    removeClone (clone) {
+        const cloneIndex = this.clones.indexOf(clone);
+        if (cloneIndex >= 0) {
+            this.clones.splice(cloneIndex, 1);
+        }
+    }
 }
 
 module.exports = Sprite;
