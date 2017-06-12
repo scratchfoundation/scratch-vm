@@ -22848,8 +22848,8 @@ var Scratch3SoundBlocks = function () {
                 echo: { min: 0, max: 100 }, // 0 to max (75%) feedback
                 reverb: { min: 0, max: 100 }, // wet/dry: 0 to 100% wet
                 fuzz: { min: 0, max: 100 }, // wed/dry: 0 to 100% wet
-                robot: { min: 0, max: 600 } // 0 to 5 octaves
-            };
+                robot: { min: 0, max: 600 // 0 to 5 octaves
+                } };
         }
     }]);
 
@@ -28955,6 +28955,10 @@ var VirtualMachine = function (_EventEmitter) {
         key: 'deleteSprite',
         value: function deleteSprite(targetId) {
             var target = this.runtime.getTargetById(targetId);
+            var targetIndexBeforeDelete = this.runtime.targets.map(function (t) {
+                return t.id;
+            }).indexOf(target.id);
+
             if (target) {
                 if (!target.isSprite()) {
                     throw new Error('Cannot delete non-sprite targets.');
@@ -28970,7 +28974,8 @@ var VirtualMachine = function (_EventEmitter) {
                     this.runtime.disposeTarget(sprite.clones[i]);
                     // Ensure editing target is switched if we are deleting it.
                     if (clone === currentEditingTarget) {
-                        this.setEditingTarget(this.runtime.targets[0].id);
+                        var nextTargetIndex = Math.min(this.runtime.targets.length - 1, targetIndexBeforeDelete);
+                        this.setEditingTarget(this.runtime.targets[nextTargetIndex].id);
                     }
                 }
                 // Sprite object should be deleted by GC.
@@ -41828,7 +41833,7 @@ module.exports = function (x) {
 
 module.exports = {
 	"name": "scratch-vm",
-	"version": "0.1.0-prerelease.1496950827",
+	"version": "0.1.0-prerelease.1497271582",
 	"description": "Virtual Machine for Scratch 3.0",
 	"author": "Massachusetts Institute of Technology",
 	"license": "BSD-3-Clause",
@@ -41836,7 +41841,7 @@ module.exports = {
 	"repository": {
 		"type": "git",
 		"url": "git+ssh://git@github.com/LLK/scratch-vm.git",
-		"sha": "fb986effe60064f3317a4e973369caa8134dd122"
+		"sha": "f968edec54c0648dbfe4f425da30f72123269cfb"
 	},
 	"main": "./dist/node/scratch-vm.js",
 	"scripts": {
