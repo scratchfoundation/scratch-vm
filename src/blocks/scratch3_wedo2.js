@@ -443,7 +443,7 @@ class Scratch3WeDo2Blocks {
             wedo2_whenDistance: this.whenDistance,
             wedo2_whenTilted: this.whenTilted,
             wedo2_getDistance: this.getDistance,
-            wedo2_isTilted: this.isTilted,
+            wedo2_isTilted: this.isTiltedReporter,
             wedo2_getTiltAngle: this.getTiltAngle
         };
     }
@@ -643,13 +643,20 @@ class Scratch3WeDo2Blocks {
     }
 
     /**
-     * Test whether the tilt sensor is currently tilted.
+     * For the boolean reporter, test whether the tilt sensor is currently tilted.
+     * If the "any" direction is selected, return true if at least one of the directions is tilted.
      * @param {object} args - the block's arguments.
      * @property {TiltDirection} DIRECTION - the tilt direction to test (up, down, left, right, or any).
      * @return {boolean} - true if the tilt sensor is tilted past a threshold in the specified direction.
      */
-    isTilted (args) {
-        return this._isTilted(args.DIRECTION);
+    isTiltedReporter (args) {
+        switch (args.DIRECTION) {
+        case TiltDirection.ANY:
+            return (Math.abs(this._device.tiltX) >= Scratch3WeDo2Blocks.TILT_THRESHOLD) ||
+                (Math.abs(this._device.tiltY) >= Scratch3WeDo2Blocks.TILT_THRESHOLD);
+        default:
+            return this._getTiltAngle(args.DIRECTION) >= Scratch3WeDo2Blocks.TILT_THRESHOLD;
+        }
     }
 
     /**
@@ -674,13 +681,6 @@ class Scratch3WeDo2Blocks {
         }
         switch (direction) {
         case TiltDirection.ANY:
-            // @todo: this code creates an improved behavior for "when tilted any", by comparing
-            // each tilt axis to its previous state, so that the hat will trigger when any tilt
-            // changes from false to true. Unfortunately this breaks the behavior of the boolean
-            // reporter block, which should have a different logic: it should be true if any of the
-            // tilt axes is currently over the threshold. I think the solution should be to make the
-            // boolean reporter call a different function from the hat block, maybe something like
-            // _isTiltedReporter
             if (!this._getPrevTilted(TiltDirection.UP) && this._isTilted(TiltDirection.UP)) {
                 this._updatePrevTilted();
                 return true;
