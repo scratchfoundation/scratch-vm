@@ -95,11 +95,11 @@ test('sb3-roundtrip', t => {
     });
 
     const serializeAndDeserialize = installThings.then(() => {
-        // `Clone.simple` here helps in two ways:
+        // Doing a JSON `stringify` and `parse` here more accurately simulate a save/load cycle. In particular:
         // 1. it ensures that any non-serializable data is thrown away, and
-        // 2. `sb3.deserialize` does some `hasOwnProperty` checks which fail on the object returned by `sb3.serialize`
-        //    due to its inheritance structure.
-        const serializedState = Clone.simple(sb3.serialize(runtime1));
+        // 2. `sb3.deserialize` and its helpers do some `hasOwnProperty` checks which fail on the object returned by
+        //    `sb3.serialize` but succeed if that object is "flattened" in this way.
+        const serializedState = JSON.parse(JSON.stringify(sb3.serialize(runtime1)));
         return sb3.deserialize(serializedState, runtime2);
     });
 
