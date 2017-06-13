@@ -756,6 +756,9 @@ class RenderedTarget extends Target {
             this.audioPlayer.stopAllSounds();
             this.audioPlayer.clearEffects();
         }
+        if (this.runtime.HACK_SpeechBlocks) {
+            this.runtime.HACK_SpeechBlocks.stopSpeaking();
+        }
     }
 
     /**
