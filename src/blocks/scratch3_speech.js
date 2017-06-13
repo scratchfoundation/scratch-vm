@@ -118,7 +118,11 @@ Scratch3SpeechBlocks.prototype.hatWhenIHear = function (args) {
 
     for (let i = 0; i < this.recognized_speech.length; i++) {
         if (this.recognized_speech[i].includes(input)) {
-            this.recognized_speech = [];
+            // This timeout gives time for other hats
+            // to fire before we clear the speech array
+            window.setTimeout(() => {
+                this.recognized_speech = [];
+            }, 60);
             return true;
         }
     }
