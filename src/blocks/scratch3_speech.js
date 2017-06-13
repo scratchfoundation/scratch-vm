@@ -165,8 +165,7 @@ Scratch3SpeechBlocks.prototype.getVoices = function () {
 Scratch3SpeechBlocks.prototype.speak = function (args) {
     const input = Cast.toString(args.STRING).toLowerCase();
 
-    // Stop any currently playing utterances
-    speechSynthesis.cancel();
+    this.stopSpeaking();
 
     this.current_utterance = new SpeechSynthesisUtterance(input);
 
@@ -200,6 +199,11 @@ Scratch3SpeechBlocks.prototype.speak = function (args) {
             resolve();
         };
     });
+};
+
+Scratch3SpeechBlocks.prototype.stopSpeaking = function () {
+    // Stop any currently playing utterances
+    speechSynthesis.cancel();
 };
 
 module.exports = Scratch3SpeechBlocks;
