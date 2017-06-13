@@ -21,7 +21,7 @@ const loadSound = require('../import/load-sound.js');
 const serialize = function (runtime) {
     // Fetch targets
     const obj = Object.create(null);
-    obj.targets = runtime.targets;
+    obj.targets = runtime.targets.filter(target => target.isOriginal);
 
     // Assemble metadata
     const meta = Object.create(null);
@@ -75,7 +75,7 @@ const parseScratchObject = function (object, runtime) {
             rotationCenterX: costumeSource.rotationCenterX,
             rotationCenterY: costumeSource.rotationCenterY
         };
-        const costumeMd5 = `${costumeSource.assetId}.${costumeSource.assetType.runtimeFormat}`;
+        const costumeMd5 = `${costumeSource.assetId}.${costumeSource.dataFormat}`;
         return loadCostume(costumeMd5, costume, runtime);
     });
     // Sounds from JSON

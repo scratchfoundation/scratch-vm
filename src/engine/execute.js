@@ -1,5 +1,6 @@
 const log = require('../util/log');
 const Thread = require('./thread');
+const {Map} = require('immutable');
 
 /**
  * Utility function to determine if a value is a Promise.
@@ -97,10 +98,10 @@ const execute = function (sequencer, thread) {
                     runtime.visualReport(currentBlockId, resolvedValue);
                 }
                 if (thread.updateMonitor) {
-                    runtime.requestUpdateMonitor({
+                    runtime.requestUpdateMonitor(Map({
                         id: currentBlockId,
                         value: String(resolvedValue)
-                    });
+                    }));
                 }
             }
             // Finished any yields.
@@ -217,12 +218,7 @@ const execute = function (sequencer, thread) {
             // Find the I/O device and execute the query/function call.
             if (runtime.ioDevices[device] && runtime.ioDevices[device][func]) {
                 const devObject = runtime.ioDevices[device];
-                // @todo Figure out why eslint complains about no-useless-call
-                // no-useless-call can't tell if the call is useless for dynamic
-                // expressions... or something. Not exactly sure why it
-                // complains here.
-                // eslint-disable-next-line no-useless-call
-                return devObject[func].call(devObject, args);
+                return devObject[func].apply(devObject, args);
             }
         }
     });

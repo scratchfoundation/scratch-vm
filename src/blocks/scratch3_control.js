@@ -1,5 +1,4 @@
 const Cast = require('../util/cast');
-const Timer = require('../util/timer');
 
 class Scratch3ControlBlocks {
     constructor (runtime) {
@@ -73,18 +72,13 @@ class Scratch3ControlBlocks {
         util.startBranch(1, true);
     }
 
-    wait (args, util) {
-        if (!util.stackFrame.timer) {
-            util.stackFrame.timer = new Timer();
-            util.stackFrame.timer.start();
-            util.yield();
-            this.runtime.requestRedraw();
-        } else {
-            const duration = Math.max(0, 1000 * Cast.toNumber(args.DURATION));
-            if (util.stackFrame.timer.timeElapsed() < duration) {
-                util.yield();
-            }
-        }
+    wait (args) {
+        const duration = Math.max(0, 1000 * Cast.toNumber(args.DURATION));
+        return new Promise(resolve => {
+            setTimeout(() => {
+                resolve();
+            }, duration);
+        });
     }
 
     if (args, util) {
