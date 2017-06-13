@@ -759,6 +759,9 @@ class RenderedTarget extends Target {
         if (this.runtime.HACK_SpeechBlocks) {
             this.runtime.HACK_SpeechBlocks.stopSpeaking();
         }
+        if (this.runtime.HACK_WeDo2Blocks) {
+            this.runtime.HACK_WeDo2Blocks.allMotorsOff();
+        }
     }
 
     /**

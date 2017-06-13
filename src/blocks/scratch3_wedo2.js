@@ -512,6 +512,17 @@ class Scratch3WeDo2Blocks {
     }
 
     /**
+     * Turn all motors off.
+     */
+    allMotorsOff () {
+        if (this._device) {
+            this._forEachMotor(MotorID.ALL, motorIndex => {
+                this._device.motor(motorIndex).setMotorOff();
+            });
+        }
+    }
+
+    /**
      * Set the power level of the specified motor(s).
      * @param {object} args - the block's arguments.
      * @property {MotorID} MOTOR_ID - the motor(s) to be affected.
