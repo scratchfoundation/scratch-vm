@@ -8337,7 +8337,7 @@ var loadCostume = function loadCostume(md5ext, costume, runtime) {
 
     var promise = runtime.storage.load(assetType, md5, ext).then(function (costumeAsset) {
         costume.assetId = costumeAsset.assetId;
-        costume.assetType = assetType;
+        costume.dataFormat = ext;
         return costumeAsset;
     });
 
@@ -8417,7 +8417,7 @@ var loadSound = function loadSound(sound, runtime) {
     var ext = idParts[1].toLowerCase();
     return runtime.storage.load(runtime.storage.AssetType.Sound, md5, ext).then(function (soundAsset) {
         sound.assetId = soundAsset.assetId;
-        sound.assetType = runtime.storage.AssetType.Sound;
+        sound.dataFormat = ext;
         return runtime.audioEngine.decodeSound(Object.assign({}, sound, { data: soundAsset.data }));
     }).then(function () {
         return sound;
@@ -28387,7 +28387,9 @@ var parseScratchObject = function parseScratchObject(object, runtime) {
             rotationCenterX: costumeSource.rotationCenterX,
             rotationCenterY: costumeSource.rotationCenterY
         };
-        var costumeMd5 = costumeSource.assetId + '.' + costumeSource.dataFormat;
+        var dataFormat = costumeSource.dataFormat || costumeSource.assetType && costumeSource.assetType.runtimeFormat || // older format
+        'png'; // if all else fails, guess that it might be a PNG
+        var costumeMd5 = costumeSource.assetId + '.' + dataFormat;
         return loadCostume(costumeMd5, costume, runtime);
     });
     // Sounds from JSON
@@ -41850,7 +41852,7 @@ module.exports = function (x) {
 
 module.exports = {
 	"name": "scratch-vm",
-	"version": "0.1.0-prerelease.1497474586",
+	"version": "0.1.0-prerelease.1497474904",
 	"description": "Virtual Machine for Scratch 3.0",
 	"author": "Massachusetts Institute of Technology",
 	"license": "BSD-3-Clause",
@@ -41858,7 +41860,7 @@ module.exports = {
 	"repository": {
 		"type": "git",
 		"url": "git+ssh://git@github.com/LLK/scratch-vm.git",
-		"sha": "f3cb892df853b613cf395d45265e1701e9d74211"
+		"sha": "89db8d3d23c5e7710f04a4143ed1adcdb8363814"
 	},
 	"main": "./dist/node/scratch-vm.js",
 	"scripts": {
