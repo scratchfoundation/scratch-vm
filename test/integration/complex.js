@@ -1,7 +1,7 @@
 const fs = require('fs');
 const path = require('path');
 const test = require('tap').test;
-const attachTestStorage = require('../fixtures/attach-test-storage');
+const makeTestStorage = require('../fixtures/make-test-storage');
 const extract = require('../fixtures/extract');
 const VirtualMachine = require('../../src/index');
 
@@ -13,7 +13,7 @@ const sprite = fs.readFileSync(spriteUri, 'utf8');
 
 test('complex', t => {
     const vm = new VirtualMachine();
-    attachTestStorage(vm);
+    vm.attachStorage(makeTestStorage());
 
     // Evaluate playground data and exit
     vm.on('playgroundData', e => {

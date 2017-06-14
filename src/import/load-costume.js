@@ -32,7 +32,7 @@ const loadCostume = function (md5ext, costume, runtime) {
 
     let promise = runtime.storage.load(assetType, md5, ext).then(costumeAsset => {
         costume.assetId = costumeAsset.assetId;
-        costume.assetType = assetType;
+        costume.dataFormat = ext;
         return costumeAsset;
     });
 
