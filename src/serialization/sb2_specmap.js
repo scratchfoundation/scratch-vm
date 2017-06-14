@@ -1191,9 +1191,8 @@ const specMap = {
         opcode: 'data_setvariableto',
         argMap: [
             {
-                type: 'input',
-                inputOp: 'data_variablemenu',
-                inputName: 'VARIABLE'
+                type: 'field',
+                fieldName: 'VARIABLE'
             },
             {
                 type: 'input',
@@ -1206,9 +1205,8 @@ const specMap = {
         opcode: 'data_changevariableby',
         argMap: [
             {
-                type: 'input',
-                inputOp: 'data_variablemenu',
-                inputName: 'VARIABLE'
+                type: 'field',
+                fieldName: 'VARIABLE'
             },
             {
                 type: 'input',
@@ -1221,9 +1219,8 @@ const specMap = {
         opcode: 'data_showvariable',
         argMap: [
             {
-                type: 'input',
-                inputOp: 'data_variablemenu',
-                inputName: 'VARIABLE'
+                type: 'field',
+                fieldName: 'VARIABLE'
             }
         ]
     },
@@ -1231,9 +1228,8 @@ const specMap = {
         opcode: 'data_hidevariable',
         argMap: [
             {
-                type: 'input',
-                inputOp: 'data_variablemenu',
-                inputName: 'VARIABLE'
+                type: 'field',
+                fieldName: 'VARIABLE'
             }
         ]
     },
