@@ -41850,7 +41850,7 @@ module.exports = function (x) {
 
 module.exports = {
 	"name": "scratch-vm",
-	"version": "0.1.0-prerelease.1497275410",
+	"version": "0.1.0-prerelease.1497474586",
 	"description": "Virtual Machine for Scratch 3.0",
 	"author": "Massachusetts Institute of Technology",
 	"license": "BSD-3-Clause",
@@ -41858,7 +41858,7 @@ module.exports = {
 	"repository": {
 		"type": "git",
 		"url": "git+ssh://git@github.com/LLK/scratch-vm.git",
-		"sha": "d9704b23c3e20af3b3e71e718107a0803b5340e9"
+		"sha": "f3cb892df853b613cf395d45265e1701e9d74211"
 	},
 	"main": "./dist/node/scratch-vm.js",
 	"scripts": {
@@ -41893,9 +41893,9 @@ module.exports = {
 		"lodash.defaultsdeep": "4.6.0",
 		"minilog": "3.1.0",
 		"promise": "7.1.1",
-		"scratch-audio": "^0.1.0-prerelease.0",
-		"scratch-blocks": "^0.1.0-prerelease.0",
-		"scratch-render": "^0.1.0-prerelease.0",
+		"scratch-audio": "latest",
+		"scratch-blocks": "latest",
+		"scratch-render": "latest",
 		"scratch-storage": "^0.2.0",
 		"script-loader": "0.7.0",
 		"socket.io-client": "1.7.3",
