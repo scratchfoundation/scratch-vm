@@ -451,11 +451,11 @@ class Scratch3WeDo2Blocks {
     getHats () {
         return {
             wedo2_whenDistance: {
-                restartExistingThreads: true,
+                restartExistingThreads: false,
                 edgeActivated: true
             },
             wedo2_whenTilted: {
-                restartExistingThreads: true,
+                restartExistingThreads: false,
                 edgeActivated: true
             }
         };
