@@ -84,6 +84,7 @@ class WeDo2Motor {
         } else {
             this._direction = 1;
         }
+        this._refreshMotorState();
     }
 
     /**
@@ -111,8 +112,8 @@ class WeDo2Motor {
      * Turn this motor on indefinitely.
      */
     setMotorOn () {
-        this._parent._send('motorOn', {motorIndex: this._index, power: this._direction * this._power});
         this._isOn = true;
+        this._refreshMotorState();
         this._clearTimeout();
     }
 
@@ -139,8 +140,8 @@ class WeDo2Motor {
      * Turn this motor off.
      */
     setMotorOff () {
-        this._parent._send('motorOff', {motorIndex: this._index});
         this._isOn = false;
+        this._refreshMotorState();
     }
 
     /**
@@ -169,6 +170,18 @@ class WeDo2Motor {
             callback();
         }, delay);
         this._pendingTimeoutId = timeoutID;
+    }
+
+    /**
+     * Send the current motor state (on/off, power, direction) to the device.
+     * @private
+     */
+    _refreshMotorState () {
+        if (this._isOn) {
+            this._parent._send('motorOn', {motorIndex: this._index, power: this._direction * this._power});
+        } else {
+            this._parent._send('motorOff', {motorIndex: this._index});
+        }
     }
 }
 
