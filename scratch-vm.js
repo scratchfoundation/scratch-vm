@@ -29099,6 +29099,20 @@ var VirtualMachine = function (_EventEmitter) {
         }
 
         /**
+         * Repopulate the workspace with the blocks of the current editingTarget. This
+         * allows us to get around bugs like gui#413.
+         */
+
+    }, {
+        key: 'refreshWorkspace',
+        value: function refreshWorkspace() {
+            if (this.editingTarget) {
+                this.emitWorkspaceUpdate();
+                this.runtime.setEditingTarget(this.editingTarget);
+            }
+        }
+
+        /**
          * Emit metadata about available targets.
          * An editor UI could use this to display a list of targets and show
          * the currently editing one.
@@ -41848,7 +41862,7 @@ module.exports = function (x) {
 
 module.exports = {
 	"name": "scratch-vm",
-	"version": "0.1.0-prerelease.1497540826",
+	"version": "0.1.0-prerelease.1497559505",
 	"description": "Virtual Machine for Scratch 3.0",
 	"author": "Massachusetts Institute of Technology",
 	"license": "BSD-3-Clause",
@@ -41856,7 +41870,7 @@ module.exports = {
 	"repository": {
 		"type": "git",
 		"url": "git+ssh://git@github.com/LLK/scratch-vm.git",
-		"sha": "55b4b3fca7392fa3611393b3b38e9f2aeae3174b"
+		"sha": "b9aefa780f40f2bdc1c44dca34683aadf044cc6e"
 	},
 	"main": "./dist/node/scratch-vm.js",
 	"scripts": {
