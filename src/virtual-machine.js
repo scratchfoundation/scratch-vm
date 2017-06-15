@@ -470,6 +470,17 @@ class VirtualMachine extends EventEmitter {
     }
 
     /**
+     * Repopulate the workspace with the blocks of the current editingTarget. This
+     * allows us to get around bugs like gui#413.
+     */
+    refreshWorkspace () {
+        if (this.editingTarget) {
+            this.emitWorkspaceUpdate();
+            this.runtime.setEditingTarget(this.editingTarget);
+        }
+    }
+
+    /**
      * Emit metadata about available targets.
      * An editor UI could use this to display a list of targets and show
      * the currently editing one.
