@@ -72,24 +72,25 @@ class Target extends EventEmitter {
     /**
      * Look up a variable object, and create it if one doesn't exist.
      * Search begins for local variables; then look for globals.
-     * @param {!string} name Name of the variable.
+     * @param {string} id Id of the variable.
+     * @param {string} name Name of the variable.
      * @return {!Variable} Variable object.
      */
-    lookupOrCreateVariable (name) {
+    lookupOrCreateVariable (id, name) {
         // If we have a local copy, return it.
-        if (this.variables.hasOwnProperty(name)) {
-            return this.variables[name];
+        if (this.variables.hasOwnProperty(id)) {
+            return this.variables[id];
         }
         // If the stage has a global copy, return it.
         if (this.runtime && !this.isStage) {
             const stage = this.runtime.getTargetForStage();
-            if (stage.variables.hasOwnProperty(name)) {
-                return stage.variables[name];
+            if (stage.variables.hasOwnProperty(id)) {
+                return stage.variables[id];
             }
         }
         // No variable with this name exists - create it locally.
-        const newVariable = new Variable(name, 0, false);
-        this.variables[name] = newVariable;
+        const newVariable = new Variable(id, name, 0, false);
+        this.variables[id] = newVariable;
         return newVariable;
     }
 
@@ -115,6 +116,44 @@ class Target extends EventEmitter {
         const newList = new List(name, []);
         this.lists[name] = newList;
         return newList;
+    }
+
+    /**
+     * Creates a variable with the given id and name and adds it to the
+     * dictionary of variables.
+     * @param {string} id Id of variable
+     * @param {string} name Name of variable.
+     */
+    createVariable (id, name) {
+        if (!this.variables.hasOwnProperty(id)) {
+            const newVariable = new Variable(id, name, 0,
+                false);
+            this.variables[id] = newVariable;
+        }
+    }
+
+    /**
+     * Renames the variable with the given id to newName.
+     * @param {string} id Id of renamed variable.
+     * @param {string} newName New name for the variable.
+     */
+    renameVariable (id, newName) {
+        if (this.variables.hasOwnProperty(id)) {
+            const variable = this.variables[id];
+            if (variable.id === id) {
+                variable.name = newName;
+            }
+        }
+    }
+
+    /**
+     * Removes the variable with the given id from the dictionary of variables.
+     * @param {string} id Id of renamed variable.
+     */
+    deleteVariable (id) {
+        if (this.variables.hasOwnProperty(id)) {
+            delete this.variables[id];
+        }
     }
 
     /**
