@@ -28147,9 +28147,8 @@ var specMap = {
     'setVar:to:': {
         opcode: 'data_setvariableto',
         argMap: [{
-            type: 'input',
-            inputOp: 'data_variablemenu',
-            inputName: 'VARIABLE'
+            type: 'field',
+            fieldName: 'VARIABLE'
         }, {
             type: 'input',
             inputOp: 'text',
@@ -28159,9 +28158,8 @@ var specMap = {
     'changeVar:by:': {
         opcode: 'data_changevariableby',
         argMap: [{
-            type: 'input',
-            inputOp: 'data_variablemenu',
-            inputName: 'VARIABLE'
+            type: 'field',
+            fieldName: 'VARIABLE'
         }, {
             type: 'input',
             inputOp: 'math_number',
@@ -28171,17 +28169,15 @@ var specMap = {
     'showVariable:': {
         opcode: 'data_showvariable',
         argMap: [{
-            type: 'input',
-            inputOp: 'data_variablemenu',
-            inputName: 'VARIABLE'
+            type: 'field',
+            fieldName: 'VARIABLE'
         }]
     },
     'hideVariable:': {
         opcode: 'data_hidevariable',
         argMap: [{
-            type: 'input',
-            inputOp: 'data_variablemenu',
-            inputName: 'VARIABLE'
+            type: 'field',
+            fieldName: 'VARIABLE'
         }]
     },
     'contentsOfList:': {
@@ -41852,7 +41848,7 @@ module.exports = function (x) {
 
 module.exports = {
 	"name": "scratch-vm",
-	"version": "0.1.0-prerelease.1497474904",
+	"version": "0.1.0-prerelease.1497535668",
 	"description": "Virtual Machine for Scratch 3.0",
 	"author": "Massachusetts Institute of Technology",
 	"license": "BSD-3-Clause",
@@ -41860,7 +41856,7 @@ module.exports = {
 	"repository": {
 		"type": "git",
 		"url": "git+ssh://git@github.com/LLK/scratch-vm.git",
-		"sha": "89db8d3d23c5e7710f04a4143ed1adcdb8363814"
+		"sha": "93bac9ad850b792f7cc9a08dfec563f90aec293e"
 	},
 	"main": "./dist/node/scratch-vm.js",
 	"scripts": {
