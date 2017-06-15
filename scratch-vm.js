@@ -41848,7 +41848,7 @@ module.exports = function (x) {
 
 module.exports = {
 	"name": "scratch-vm",
-	"version": "0.1.0-prerelease.1497535668",
+	"version": "0.1.0-prerelease.1497540826",
 	"description": "Virtual Machine for Scratch 3.0",
 	"author": "Massachusetts Institute of Technology",
 	"license": "BSD-3-Clause",
@@ -41856,7 +41856,7 @@ module.exports = {
 	"repository": {
 		"type": "git",
 		"url": "git+ssh://git@github.com/LLK/scratch-vm.git",
-		"sha": "93bac9ad850b792f7cc9a08dfec563f90aec293e"
+		"sha": "55b4b3fca7392fa3611393b3b38e9f2aeae3174b"
 	},
 	"main": "./dist/node/scratch-vm.js",
 	"scripts": {
