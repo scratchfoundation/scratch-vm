@@ -98,9 +98,11 @@ Scratch3SpeechBlocks.prototype.startSpeechRecogntion = function () {
             }
             this.recognition.start();
         }.bind(this);
-
-        this.recognition.start();
     }
+
+    // start the speech recognizer
+    // or restart if necessary when adding a new speech sprite
+    this.recognition.start();
 };
 
 Scratch3SpeechBlocks.prototype.hatWhenIHear = function (args) {
