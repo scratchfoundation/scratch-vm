@@ -62,6 +62,7 @@ class VirtualMachine extends EventEmitter {
         this.blockListener = this.blockListener.bind(this);
         this.flyoutBlockListener = this.flyoutBlockListener.bind(this);
         this.monitorBlockListener = this.monitorBlockListener.bind(this);
+        this.variableListener = this.variableListener.bind(this);
     }
 
     /**
@@ -447,6 +448,19 @@ class VirtualMachine extends EventEmitter {
     }
 
     /**
+     * Handle a Blockly event for the variable map.
+     * @param {!Blockly.Event} e Any Blockly event.
+     */
+    variableListener (e) {
+        // Filter events by type, since blocks only needs to listen to these
+        // var events.
+        if (['var_create', 'var_rename', 'var_delete'].indexOf(e.type) !== -1) {
+            this.runtime.getTargetForStage().blocks.blocklyListen(e,
+                this.runtime);
+        }
+    }
+
+    /**
      * Set an editing target. An editor UI can use this function to switch
      * between editing different targets, sprites, etc.
      * After switching the editing target, the VM may emit updates
@@ -549,15 +563,6 @@ class VirtualMachine extends EventEmitter {
      */
     postSpriteInfo (data) {
         this.editingTarget.postSpriteInfo(data);
-    }
-
-    /**
-     * Create a variable by name.
-     * @todo this only creates global variables by putting them on the stage
-     * @param {string} name The name of the variable
-     */
-    createVariable (name) {
-        this.runtime.getTargetForStage().lookupOrCreateVariable(name);
     }
 }
 
