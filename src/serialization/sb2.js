@@ -191,11 +191,13 @@ const parseScratchObject = function (object, runtime, topLevel) {
     if (object.hasOwnProperty('variables')) {
         for (let j = 0; j < object.variables.length; j++) {
             const variable = object.variables[j];
-            target.variables[variable.name] = new Variable(
+            const newVariable = new Variable(
+                null,
                 variable.name,
                 variable.value,
                 variable.isPersistent
             );
+            target.variables[newVariable.id] = newVariable;
         }
     }
     if (object.hasOwnProperty('lists')) {

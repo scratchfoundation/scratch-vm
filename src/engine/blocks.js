@@ -181,16 +181,19 @@ class Blocks {
     // ---------------------------------------------------------------------
 
     /**
-     * Create event listener for blocks. Handles validation and serves as a generic
-     * adapter between the blocks and the runtime interface.
-     * @param {Object} e Blockly "block" event
+     * Create event listener for blocks and variables. Handles validation and
+     * serves as a generic adapter between the blocks, variables, and the
+     * runtime interface.
+     * @param {object} e Blockly "block" or "variable" event
      * @param {?Runtime} optRuntime Optional runtime to forward click events to.
      */
-
     blocklyListen (e, optRuntime) {
         // Validate event
         if (typeof e !== 'object') return;
-        if (typeof e.blockId !== 'string') return;
+        if (typeof e.blockId !== 'string' && typeof e.varId !== 'string') {
+            return;
+        }
+        const stage = optRuntime.getTargetForStage();
 
         // UI event: clicked scripts toggle in the runtime.
         if (e.element === 'stackclick') {
@@ -242,6 +245,15 @@ class Blocks {
             this.deleteBlock({
                 id: e.blockId
             });
+            break;
+        case 'var_create':
+            stage.createVariable(e.varId, e.varName);
+            break;
+        case 'var_rename':
+            stage.renameVariable(e.varId, e.newName);
+            break;
+        case 'var_delete':
+            stage.deleteVariable(e.varId);
             break;
         }
     }
@@ -511,7 +523,11 @@ class Blocks {
     _getBlockParams (block) {
         const params = {};
         for (const key in block.fields) {
-            params[key] = block.fields[key].value;
+            if (key === 'VARIABLE'){
+                params[key] = block.fields[key].id;
+            } else {
+                params[key] = block.fields[key].value;
+            }
         }
         for (const inputKey in block.inputs) {
             const inputBlock = this._blocks[block.inputs[inputKey].block];

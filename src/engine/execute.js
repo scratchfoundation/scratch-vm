@@ -137,7 +137,11 @@ const execute = function (sequencer, thread) {
     // Add all fields on this block to the argValues.
     for (const fieldName in fields) {
         if (!fields.hasOwnProperty(fieldName)) continue;
-        argValues[fieldName] = fields[fieldName].value;
+        if (fieldName === 'VARIABLE') {
+            argValues[fieldName] = fields[fieldName].id;
+        } else {
+            argValues[fieldName] = fields[fieldName].value;
+        }
     }
 
     // Recursively evaluate input blocks.
