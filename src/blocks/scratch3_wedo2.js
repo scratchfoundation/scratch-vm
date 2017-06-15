@@ -1,3 +1,5 @@
+const EventEmitter = require('events');
+
 const color = require('../util/color');
 const log = require('../util/log');
 
@@ -173,7 +175,7 @@ class WeDo2Motor {
 /**
  * Manage communication with a WeDo 2.0 device over a Device Manager client socket.
  */
-class WeDo2 {
+class WeDo2 extends EventEmitter {
 
     /**
      * @return {string} - the type of Device Manager device socket that this class will handle.
@@ -187,6 +189,8 @@ class WeDo2 {
      * @param {Socket} socket - the socket for a WeDo 2.0 device, as provided by a Device Manager client.
      */
     constructor (socket) {
+        super();
+
         /**
          * The socket-IO socket used to communicate with the Device Manager about this device.
          * @type {Socket}
@@ -316,6 +320,7 @@ class WeDo2 {
      */
     _onDisconnect () {
         this._disconnectEvents();
+        this.emit('disconnect');
     }
 
     /**
@@ -412,7 +417,9 @@ class Scratch3WeDo2Blocks {
             socket => {
                 if (this._finder === finder) {
                     this._finder = null;
-                    this._device = new WeDo2(socket);
+                    const device = new WeDo2(socket);
+                    device.on('disconnect', () => this._onDeviceDisconnect(device));
+                    this._device = device;
                 } else {
                     log.warn('Ignoring success from stale WeDo 2.0 connection attempt');
                 }
@@ -420,7 +427,8 @@ class Scratch3WeDo2Blocks {
             reason => {
                 if (this._finder === finder) {
                     this._finder = null;
-                    log.warn(`WeDo 2.0 connection failed: ${reason}`);
+                    log.warn(`WeDo 2.0 connection failed: ${reason}. Retrying...`);
+                    this.connect();
                 } else {
                     log.warn('Ignoring failure from stale WeDo 2.0 connection attempt');
                 }
@@ -621,7 +629,7 @@ class Scratch3WeDo2Blocks {
             return false;
         }
         switch (args.OP) {
-        case '&lt;': //@todo: prevent this arg from sometimes getting encoded
+        case '&lt;': // @todo: prevent this arg from sometimes getting encoded
         case '<':
             return this.getDistance() < args.REFERENCE;
         case '&gt;':
@@ -833,6 +841,21 @@ class Scratch3WeDo2Blocks {
         return new Promise(resolve => {
             setTimeout(resolve, 200);
         });
+    }
+
+    /**
+     * React to a device becoming disconnected.
+     * @param {WeDo2} device - the device which has become disconnected.
+     * @private
+     */
+    _onDeviceDisconnect (device) {
+        if (this._device === device) {
+            this._device = null;
+
+            log.warn('WeDo 2.0 disconnected. Attempting to reconnect...');
+
+            this.connect();
+        }
     }
 }
 
