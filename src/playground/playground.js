@@ -90,6 +90,7 @@ window.onload = function () {
 
     // Attach scratch-blocks events to VM.
     workspace.addChangeListener(vm.blockListener);
+    workspace.addChangeListener(vm.variableListener);
     const flyoutWorkspace = workspace.getFlyout().getWorkspace();
     flyoutWorkspace.addChangeListener(vm.flyoutBlockListener);
     flyoutWorkspace.addChangeListener(vm.monitorBlockListener);
