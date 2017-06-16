@@ -4,14 +4,16 @@ const Target = require('../engine/target');
 
 /**
  * Rendered target: instance of a sprite (clone), or the stage.
- * @param {!Sprite} sprite Reference to the parent sprite.
- * @param {Runtime} runtime Reference to the runtime.
- * @constructor
  */
 class RenderedTarget extends Target {
+    /**
+     * @param {!Sprite} sprite Reference to the parent sprite.
+     * @param {Runtime} runtime Reference to the runtime.
+     * @constructor
+     */
     constructor (sprite, runtime) {
-        super(sprite.blocks);
-        this.runtime = runtime;
+        super(runtime, sprite.blocks);
+
         /**
          * Reference to the sprite that this is a render of.
          * @type {!Sprite}
@@ -19,7 +21,7 @@ class RenderedTarget extends Target {
         this.sprite = sprite;
         /**
          * Reference to the global renderer for this VM, if one exists.
-         * @type {?RenderWebGLWorker}
+         * @type {?RenderWebGL}
          */
         this.renderer = null;
         if (this.runtime) {
