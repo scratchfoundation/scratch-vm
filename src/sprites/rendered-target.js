@@ -732,7 +732,6 @@ class RenderedTarget extends Target {
         newClone.effects = JSON.parse(JSON.stringify(this.effects));
         newClone.variables = JSON.parse(JSON.stringify(this.variables));
         newClone.lists = JSON.parse(JSON.stringify(this.lists));
-        newClone._customState = JSON.parse(JSON.stringify(this._customState));
         newClone.initDrawable();
         newClone.updateAllDrawableProperties();
         // Place behind the current target.
