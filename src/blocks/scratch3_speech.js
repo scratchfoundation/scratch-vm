@@ -72,41 +72,39 @@ Scratch3SpeechBlocks.prototype.getHats = function () {
 /* //////////////// Speech Recognition ///////////////// */
 
 Scratch3SpeechBlocks.prototype.startSpeechRecogntion = function () {
-    if (!this.recognition) {
-        this.recognition = new this.SpeechRecognition();
-        this.recognition.interimResults = true;
-        this.recognized_speech = [];
+    this.recognition = new this.SpeechRecognition();
+    this.recognition.interimResults = true;
+    this.recognized_speech = [];
 
-        this.recognition.onresult = function (event) {
-            if (this.speechRecognitionPaused) {
-                return;
-            }
+    this.recognition.onresult = function (event) {
+        if (this.speechRecognitionPaused) {
+            return;
+        }
 
-            const SpeechRecognitionResult = event.results[event.resultIndex];
-            const results = [];
-            for (let k = 0; k < SpeechRecognitionResult.length; k++) {
-                results[k] = SpeechRecognitionResult[k].transcript.toLowerCase();
-            }
-            this.recognized_speech = results;
+        const SpeechRecognitionResult = event.results[event.resultIndex];
+        const results = [];
+        for (let k = 0; k < SpeechRecognitionResult.length; k++) {
+            results[k] = SpeechRecognitionResult[k].transcript.toLowerCase();
+        }
+        this.recognized_speech = results;
 
-            this.latest_speech = this.recognized_speech[0];
-        }.bind(this);
+        this.latest_speech = this.recognized_speech[0];
+    }.bind(this);
 
-        this.recognition.onend = function () {
-            if (this.speechRecognitionPaused) {
-                return;
-            }
-            this.recognition.start();
-        }.bind(this);
-    }
-
-    // start the speech recognizer
-    // or restart if necessary when adding a new speech sprite
-    try {
+    this.recognition.onend = function () {
+        if (this.speechRecognitionPaused) {
+            return;
+        }
         this.recognition.start();
-    } catch (e) {
-        log.warn(e);
-    }
+    }.bind(this);
+
+    this.recognition.onerror = function (event) {
+        log.warn(event.error);
+    };
+
+    this.recognition.onnomatch = function () {
+        log.warn('No match');
+    };
 };
 
 Scratch3SpeechBlocks.prototype.hatWhenIHear = function (args) {
