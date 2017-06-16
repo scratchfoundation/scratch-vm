@@ -589,6 +589,7 @@ class Scratch3WeDo2Blocks {
                 break;
             }
         });
+        return this._shortWait();
     }
 
     /**
