@@ -103,11 +103,11 @@ Scratch3SpeechBlocks.prototype.startSpeechRecogntion = function () {
     };
 
     this.recognition.onerror = function (event) {
-        log.warn(event.error);
+        log.warn('Speech recognition error', event.error);
     };
 
     this.recognition.onnomatch = function () {
-        log.warn('No match');
+        log.warn('Speech recognition: no match');
     };
 };
 
