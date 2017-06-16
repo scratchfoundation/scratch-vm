@@ -98,6 +98,10 @@ Scratch3SpeechBlocks.prototype.startSpeechRecogntion = function () {
         this.recognition.start();
     }.bind(this);
 
+    this.recognition.onstart = function () {
+        log.warn('Speech recognition started');
+    };
+
     this.recognition.onerror = function (event) {
         log.warn(event.error);
     };
