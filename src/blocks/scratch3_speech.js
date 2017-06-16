@@ -109,6 +109,12 @@ Scratch3SpeechBlocks.prototype.startSpeechRecogntion = function () {
     this.recognition.onnomatch = function () {
         log.warn('Speech recognition: no match');
     };
+
+    try {
+        this.recognition.start();
+    } catch (e) {
+        log.warn(e);
+    }
 };
 
 Scratch3SpeechBlocks.prototype.hatWhenIHear = function (args) {
