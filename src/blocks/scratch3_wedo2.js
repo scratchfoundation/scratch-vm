@@ -567,6 +567,7 @@ class Scratch3WeDo2Blocks {
      * @param {object} args - the block's arguments.
      * @property {MotorID} MOTOR_ID - the motor(s) to be affected.
      * @property {MotorDirection} DIRECTION - the new direction for the motor(s).
+     * @return {Promise} - a promise which will resolve after a short wait.
      */
     setMotorDirection (args) {
         if (!this._device) {
