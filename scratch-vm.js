@@ -22810,11 +22810,7 @@ var Scratch3SoundBlocks = function () {
                 currentInstrument: 0,
                 effects: {
                     pitch: 0,
-                    pan: 0,
-                    echo: 0,
-                    reverb: 0,
-                    fuzz: 0,
-                    robot: 0
+                    pan: 0
                 }
             };
         }
@@ -22861,11 +22857,7 @@ var Scratch3SoundBlocks = function () {
         get: function get() {
             return {
                 pitch: { min: -600, max: 600 }, // -5 to 5 octaves
-                pan: { min: -100, max: 100 }, // 100% left to 100% right
-                echo: { min: 0, max: 100 }, // 0 to max (75%) feedback
-                reverb: { min: 0, max: 100 }, // wet/dry: 0 to 100% wet
-                fuzz: { min: 0, max: 100 }, // wed/dry: 0 to 100% wet
-                robot: { min: 0, max: 600 // 0 to 5 octaves
+                pan: { min: -100, max: 100 // 100% left to 100% right
                 } };
         }
     }]);
@@ -41862,7 +41854,7 @@ module.exports = function (x) {
 
 module.exports = {
 	"name": "scratch-vm",
-	"version": "0.1.0-prerelease.1497559505",
+	"version": "0.1.0-prerelease.1497906992",
 	"description": "Virtual Machine for Scratch 3.0",
 	"author": "Massachusetts Institute of Technology",
 	"license": "BSD-3-Clause",
@@ -41870,7 +41862,7 @@ module.exports = {
 	"repository": {
 		"type": "git",
 		"url": "git+ssh://git@github.com/LLK/scratch-vm.git",
-		"sha": "b9aefa780f40f2bdc1c44dca34683aadf044cc6e"
+		"sha": "524d99db65470ef44fb03e4708e0cf4376e81bf1"
 	},
 	"main": "./dist/node/scratch-vm.js",
 	"scripts": {
