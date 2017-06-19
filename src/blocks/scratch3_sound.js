@@ -29,11 +29,7 @@ class Scratch3SoundBlocks {
             currentInstrument: 0,
             effects: {
                 pitch: 0,
-                pan: 0,
-                echo: 0,
-                reverb: 0,
-                fuzz: 0,
-                robot: 0
+                pan: 0
             }
         };
     }
@@ -68,11 +64,7 @@ class Scratch3SoundBlocks {
     static get EFFECT_RANGE () {
         return {
             pitch: {min: -600, max: 600},       // -5 to 5 octaves
-            pan: {min: -100, max: 100},         // 100% left to 100% right
-            echo: {min: 0, max: 100},           // 0 to max (75%) feedback
-            reverb: {min: 0, max: 100},         // wet/dry: 0 to 100% wet
-            fuzz: {min: 0, max: 100},           // wed/dry: 0 to 100% wet
-            robot: {min: 0, max: 600}           // 0 to 5 octaves
+            pan: {min: -100, max: 100}          // 100% left to 100% right
         };
     }
 
