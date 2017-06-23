@@ -81,8 +81,8 @@
 
 
 
-var base64 = __webpack_require__(61)
-var ieee754 = __webpack_require__(69)
+var base64 = __webpack_require__(62)
+var ieee754 = __webpack_require__(70)
 var isArray = __webpack_require__(34)
 
 exports.Buffer = Buffer
@@ -2510,7 +2510,7 @@ exports.Readable = exports;
 exports.Writable = __webpack_require__(19);
 exports.Duplex = __webpack_require__(5);
 exports.Transform = __webpack_require__(37);
-exports.PassThrough = __webpack_require__(75);
+exports.PassThrough = __webpack_require__(76);
 
 
 /***/ }),
@@ -3387,7 +3387,7 @@ util.inherits = __webpack_require__(1);
 
 /*<replacement>*/
 var internalUtil = {
-  deprecate: __webpack_require__(86)
+  deprecate: __webpack_require__(87)
 };
 /*</replacement>*/
 
@@ -4086,8 +4086,8 @@ module.exports = {
 "use strict";
 
 
-exports.decode = exports.parse = __webpack_require__(72);
-exports.encode = exports.stringify = __webpack_require__(73);
+exports.decode = exports.parse = __webpack_require__(73);
+exports.encode = exports.stringify = __webpack_require__(74);
 
 
 /***/ }),
@@ -4123,10 +4123,10 @@ var inherits = __webpack_require__(1);
 
 inherits(Stream, EE);
 Stream.Readable = __webpack_require__(8);
-Stream.Writable = __webpack_require__(78);
-Stream.Duplex = __webpack_require__(74);
+Stream.Writable = __webpack_require__(79);
+Stream.Duplex = __webpack_require__(75);
 Stream.Transform = __webpack_require__(50);
-Stream.PassThrough = __webpack_require__(77);
+Stream.PassThrough = __webpack_require__(78);
 
 // Backwards-compat with node 0.4.x
 Stream.Stream = Stream;
@@ -4278,7 +4278,7 @@ exports._unrefActive = exports.active = function(item) {
 };
 
 // setimmediate attaches itself to the global object
-__webpack_require__(80);
+__webpack_require__(81);
 exports.setImmediate = setImmediate;
 exports.clearImmediate = clearImmediate;
 
@@ -4311,8 +4311,8 @@ exports.clearImmediate = clearImmediate;
 
 
 
-var punycode = __webpack_require__(71);
-var util = __webpack_require__(85);
+var punycode = __webpack_require__(72);
+var util = __webpack_require__(86);
 
 exports.parse = urlParse;
 exports.resolve = urlResolve;
@@ -5551,7 +5551,7 @@ function isPrimitive(arg) {
 }
 exports.isPrimitive = isPrimitive;
 
-exports.isBuffer = __webpack_require__(88);
+exports.isBuffer = __webpack_require__(89);
 
 function objectToString(o) {
   return Object.prototype.toString.call(o);
@@ -5595,7 +5595,7 @@ exports.log = function() {
  *     prototype.
  * @param {function} superCtor Constructor function to inherit prototype from.
  */
-exports.inherits = __webpack_require__(87);
+exports.inherits = __webpack_require__(88);
 
 exports._extend = function(origin, add) {
   // Don't do anything if add isn't an object
@@ -5631,7 +5631,7 @@ var _createClass = function () { function defineProperties(target, props) { for 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
 var adapter = __webpack_require__(163);
-var mutationAdapter = __webpack_require__(95);
+var mutationAdapter = __webpack_require__(96);
 var xmlEscape = __webpack_require__(176);
 var MonitorRecord = __webpack_require__(165);
 
@@ -5842,9 +5842,10 @@ var Blocks = function () {
         // ---------------------------------------------------------------------
 
         /**
-         * Create event listener for blocks. Handles validation and serves as a generic
-         * adapter between the blocks and the runtime interface.
-         * @param {Object} e Blockly "block" event
+         * Create event listener for blocks and variables. Handles validation and
+         * serves as a generic adapter between the blocks, variables, and the
+         * runtime interface.
+         * @param {object} e Blockly "block" or "variable" event
          * @param {?Runtime} optRuntime Optional runtime to forward click events to.
          */
 
@@ -5853,7 +5854,10 @@ var Blocks = function () {
         value: function blocklyListen(e, optRuntime) {
             // Validate event
             if ((typeof e === 'undefined' ? 'undefined' : _typeof(e)) !== 'object') return;
-            if (typeof e.blockId !== 'string') return;
+            if (typeof e.blockId !== 'string' && typeof e.varId !== 'string') {
+                return;
+            }
+            var stage = optRuntime.getTargetForStage();
 
             // UI event: clicked scripts toggle in the runtime.
             if (e.element === 'stackclick') {
@@ -5905,6 +5909,15 @@ var Blocks = function () {
                     this.deleteBlock({
                         id: e.blockId
                     });
+                    break;
+                case 'var_create':
+                    stage.createVariable(e.varId, e.varName);
+                    break;
+                case 'var_rename':
+                    stage.renameVariable(e.varId, e.newName);
+                    break;
+                case 'var_delete':
+                    stage.deleteVariable(e.varId);
                     break;
             }
         }
@@ -6327,7 +6340,7 @@ util.inherits = __webpack_require__(1);
 /*</replacement>*/
 
 /*<replacement>*/
-var debugUtil = __webpack_require__(90);
+var debugUtil = __webpack_require__(91);
 var debug = void 0;
 if (debugUtil && debugUtil.debuglog) {
   debug = debugUtil.debuglog('stream');
@@ -6336,7 +6349,7 @@ if (debugUtil && debugUtil.debuglog) {
 }
 /*</replacement>*/
 
-var BufferList = __webpack_require__(76);
+var BufferList = __webpack_require__(77);
 var StringDecoder;
 
 util.inherits(Readable, Stream);
@@ -7422,9 +7435,9 @@ module.exports = __webpack_require__(7).EventEmitter;
 /* 39 */
 /***/ (function(module, exports, __webpack_require__) {
 
-/* WEBPACK VAR INJECTION */(function(global) {var ClientRequest = __webpack_require__(82)
-var extend = __webpack_require__(89)
-var statusCodes = __webpack_require__(64)
+/* WEBPACK VAR INJECTION */(function(global) {var ClientRequest = __webpack_require__(83)
+var extend = __webpack_require__(90)
+var statusCodes = __webpack_require__(65)
 var url = __webpack_require__(26)
 
 var http = exports
@@ -8272,25 +8285,29 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
  * Object representing a Scratch variable.
  */
 
+var uid = __webpack_require__(61);
+
 var Variable = function () {
     /**
-     * @param {!string} name Name of the variable.
+     * @param {string} id Id of the variable.
+     * @param {string} name Name of the variable.
      * @param {(string|number)} value Value of the variable.
      * @param {boolean} isCloud Whether the variable is stored in the cloud.
      * @constructor
      */
-    function Variable(name, value, isCloud) {
+    function Variable(id, name, value, isCloud) {
         _classCallCheck(this, Variable);
 
+        this.id = id || uid();
         this.name = name;
         this.value = value;
         this.isCloud = isCloud;
     }
 
     _createClass(Variable, [{
-        key: "toXML",
+        key: 'toXML',
         value: function toXML() {
-            return "<variable type=\"\">" + this.name + "</variable>";
+            return '<variable type="" id="' + this.id + '">' + this.name + '</variable>';
         }
     }]);
 
@@ -9596,6 +9613,42 @@ module.exports = Timer;
 "use strict";
 
 
+/**
+ * @fileoverview UID generator, from Blockly.
+ */
+
+/**
+ * Legal characters for the unique ID.
+ * Should be all on a US keyboard.  No XML special characters or control codes.
+ * Removed $ due to issue 251.
+ * @private
+ */
+var soup_ = '!#%()*+,-./:;=?@[]^_`{|}~' + 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+
+/**
+ * Generate a unique ID, from Blockly.  This should be globally unique.
+ * 87 characters ^ 20 length > 128 bits (better than a UUID).
+ * @return {string} A globally unique ID string.
+ */
+var uid = function uid() {
+  var length = 20;
+  var soupLength = soup_.length;
+  var id = [];
+  for (var i = 0; i < length; i++) {
+    id[i] = soup_.charAt(Math.random() * soupLength);
+  }
+  return id.join('');
+};
+
+module.exports = uid;
+
+/***/ }),
+/* 62 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
 exports.byteLength = byteLength
 exports.toByteArray = toByteArray
 exports.fromByteArray = fromByteArray
@@ -9711,9 +9764,9 @@ function fromByteArray (uint8) {
 
 
 /***/ }),
-/* 62 */,
 /* 63 */,
-/* 64 */
+/* 64 */,
+/* 65 */
 /***/ (function(module, exports) {
 
 module.exports = {
@@ -9783,8 +9836,8 @@ module.exports = {
 
 
 /***/ }),
-/* 65 */,
-/* 66 */
+/* 66 */,
+/* 67 */
 /***/ (function(module, exports) {
 
 module.exports = {
@@ -11916,7 +11969,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 67 */
+/* 68 */
 /***/ (function(module, exports) {
 
 module.exports = {
@@ -11928,7 +11981,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 68 */
+/* 69 */
 /***/ (function(module, exports, __webpack_require__) {
 
 var http = __webpack_require__(39);
@@ -11948,7 +12001,7 @@ https.request = function (params, cb) {
 
 
 /***/ }),
-/* 69 */
+/* 70 */
 /***/ (function(module, exports) {
 
 exports.read = function (buffer, offset, isLE, mLen, nBytes) {
@@ -12038,7 +12091,7 @@ exports.write = function (buffer, value, offset, isLE, mLen, nBytes) {
 
 
 /***/ }),
-/* 70 */
+/* 71 */
 /***/ (function(module, exports, __webpack_require__) {
 
 /**
@@ -17022,7 +17075,7 @@ exports.write = function (buffer, value, offset, isLE, mLen, nBytes) {
 }));
 
 /***/ }),
-/* 71 */
+/* 72 */
 /***/ (function(module, exports, __webpack_require__) {
 
 /* WEBPACK VAR INJECTION */(function(module, global) {var __WEBPACK_AMD_DEFINE_RESULT__;/*! https://mths.be/punycode v1.4.1 by @mathias */
@@ -17561,7 +17614,7 @@ exports.write = function (buffer, value, offset, isLE, mLen, nBytes) {
 /* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(52)(module), __webpack_require__(2)))
 
 /***/ }),
-/* 72 */
+/* 73 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -17652,7 +17705,7 @@ var isArray = Array.isArray || function (xs) {
 
 
 /***/ }),
-/* 73 */
+/* 74 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -17744,14 +17797,14 @@ var objectKeys = Object.keys || function (obj) {
 
 
 /***/ }),
-/* 74 */
+/* 75 */
 /***/ (function(module, exports, __webpack_require__) {
 
 module.exports = __webpack_require__(5);
 
 
 /***/ }),
-/* 75 */
+/* 76 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -17783,7 +17836,7 @@ PassThrough.prototype._transform = function (chunk, encoding, cb) {
 };
 
 /***/ }),
-/* 76 */
+/* 77 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -17853,22 +17906,22 @@ BufferList.prototype.concat = function (n) {
 };
 
 /***/ }),
-/* 77 */
+/* 78 */
 /***/ (function(module, exports, __webpack_require__) {
 
 module.exports = __webpack_require__(8).PassThrough
 
 
 /***/ }),
-/* 78 */
+/* 79 */
 /***/ (function(module, exports, __webpack_require__) {
 
 module.exports = __webpack_require__(19);
 
 
 /***/ }),
-/* 79 */,
-/* 80 */
+/* 80 */,
+/* 81 */
 /***/ (function(module, exports, __webpack_require__) {
 
 /* WEBPACK VAR INJECTION */(function(global, process) {(function (global, undefined) {
@@ -18061,15 +18114,15 @@ module.exports = __webpack_require__(19);
 /* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(2), __webpack_require__(3)))
 
 /***/ }),
-/* 81 */,
-/* 82 */
+/* 82 */,
+/* 83 */
 /***/ (function(module, exports, __webpack_require__) {
 
 /* WEBPACK VAR INJECTION */(function(Buffer, global, process) {var capability = __webpack_require__(40)
 var inherits = __webpack_require__(1)
-var response = __webpack_require__(83)
+var response = __webpack_require__(84)
 var stream = __webpack_require__(8)
-var toArrayBuffer = __webpack_require__(84)
+var toArrayBuffer = __webpack_require__(85)
 
 var IncomingMessage = response.IncomingMessage
 var rStates = response.readyStates
@@ -18375,7 +18428,7 @@ var unsafeHeaders = [
 /* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(0).Buffer, __webpack_require__(2), __webpack_require__(3)))
 
 /***/ }),
-/* 83 */
+/* 84 */
 /***/ (function(module, exports, __webpack_require__) {
 
 /* WEBPACK VAR INJECTION */(function(process, Buffer, global) {var capability = __webpack_require__(40)
@@ -18564,7 +18617,7 @@ IncomingMessage.prototype._onXHRProgress = function () {
 /* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(3), __webpack_require__(0).Buffer, __webpack_require__(2)))
 
 /***/ }),
-/* 84 */
+/* 85 */
 /***/ (function(module, exports, __webpack_require__) {
 
 var Buffer = __webpack_require__(0).Buffer
@@ -18597,7 +18650,7 @@ module.exports = function (buf) {
 
 
 /***/ }),
-/* 85 */
+/* 86 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -18620,7 +18673,7 @@ module.exports = {
 
 
 /***/ }),
-/* 86 */
+/* 87 */
 /***/ (function(module, exports, __webpack_require__) {
 
 /* WEBPACK VAR INJECTION */(function(global) {
@@ -18694,7 +18747,7 @@ function config (name) {
 /* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(2)))
 
 /***/ }),
-/* 87 */
+/* 88 */
 /***/ (function(module, exports) {
 
 if (typeof Object.create === 'function') {
@@ -18723,7 +18776,7 @@ if (typeof Object.create === 'function') {
 
 
 /***/ }),
-/* 88 */
+/* 89 */
 /***/ (function(module, exports) {
 
 module.exports = function isBuffer(arg) {
@@ -18734,7 +18787,7 @@ module.exports = function isBuffer(arg) {
 }
 
 /***/ }),
-/* 89 */
+/* 90 */
 /***/ (function(module, exports) {
 
 module.exports = extend
@@ -18759,17 +18812,17 @@ function extend() {
 
 
 /***/ }),
-/* 90 */
+/* 91 */
 /***/ (function(module, exports) {
 
 /* (ignored) */
 
 /***/ }),
-/* 91 */,
 /* 92 */,
 /* 93 */,
 /* 94 */,
-/* 95 */
+/* 95 */,
+/* 96 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -18818,7 +18871,7 @@ var mutationAdpater = function mutationAdpater(mutation) {
 module.exports = mutationAdpater;
 
 /***/ }),
-/* 96 */
+/* 97 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -18917,7 +18970,7 @@ var Sprite = function () {
 module.exports = Sprite;
 
 /***/ }),
-/* 97 */
+/* 98 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -18954,42 +19007,6 @@ var Clone = function () {
 }();
 
 module.exports = Clone;
-
-/***/ }),
-/* 98 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-
-/**
- * @fileoverview UID generator, from Blockly.
- */
-
-/**
- * Legal characters for the unique ID.
- * Should be all on a US keyboard.  No XML special characters or control codes.
- * Removed $ due to issue 251.
- * @private
- */
-var soup_ = '!#%()*+,-./:;=?@[]^_`{|}~' + 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-
-/**
- * Generate a unique ID, from Blockly.  This should be globally unique.
- * 87 characters ^ 20 length > 128 bits (better than a UUID).
- * @return {string} A globally unique ID string.
- */
-var uid = function uid() {
-  var length = 20;
-  var soupLength = soup_.length;
-  var id = [];
-  for (var i = 0; i < length; i++) {
-    id[i] = soup_.charAt(Math.random() * soupLength);
-  }
-  return id.join('');
-};
-
-module.exports = uid;
 
 /***/ }),
 /* 99 */,
@@ -19565,9 +19582,9 @@ module.exports = Parser;
 module.exports = Tokenizer;
 
 var decodeCodePoint = __webpack_require__(113),
-    entityMap = __webpack_require__(66),
+    entityMap = __webpack_require__(67),
     legacyMap = __webpack_require__(114),
-    xmlMap    = __webpack_require__(67),
+    xmlMap    = __webpack_require__(68),
 
     i = 0,
 
@@ -21769,7 +21786,7 @@ var _createClass = function () { function defineProperties(target, props) { for 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
 var Cast = __webpack_require__(10);
-var Clone = __webpack_require__(97);
+var Clone = __webpack_require__(98);
 var Color = __webpack_require__(41);
 var MathUtil = __webpack_require__(20);
 var RenderedTarget = __webpack_require__(58);
@@ -22503,7 +22520,7 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
 
 var MathUtil = __webpack_require__(20);
 var Cast = __webpack_require__(10);
-var Clone = __webpack_require__(97);
+var Clone = __webpack_require__(98);
 
 var Scratch3SoundBlocks = function () {
     function Scratch3SoundBlocks(runtime) {
@@ -23785,7 +23802,7 @@ module.exports = Scratch3WeDo2Blocks;
 
 var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
 
-var mutationAdapter = __webpack_require__(95);
+var mutationAdapter = __webpack_require__(96);
 var html = __webpack_require__(21);
 
 /**
@@ -23847,6 +23864,8 @@ var domToBlock = function domToBlock(blockDOM, blocks, isTopBlock, parent) {
                 {
                     // Add the field to this block.
                     var fieldName = xmlChild.attribs.name;
+                    // Add id in case it is a variable field
+                    var fieldId = xmlChild.attribs.id;
                     var fieldData = '';
                     if (xmlChild.children.length > 0 && xmlChild.children[0].data) {
                         fieldData = xmlChild.children[0].data;
@@ -23857,6 +23876,7 @@ var domToBlock = function domToBlock(blockDOM, blocks, isTopBlock, parent) {
                     }
                     block.fields[fieldName] = {
                         name: fieldName,
+                        id: fieldId,
                         value: fieldData
                     };
                     break;
@@ -23955,7 +23975,7 @@ module.exports = adapter;
 var log = __webpack_require__(13);
 var Thread = __webpack_require__(54);
 
-var _require = __webpack_require__(70),
+var _require = __webpack_require__(71),
     Map = _require.Map;
 
 /**
@@ -24091,7 +24111,11 @@ var execute = function execute(sequencer, thread) {
     // Add all fields on this block to the argValues.
     for (var fieldName in fields) {
         if (!fields.hasOwnProperty(fieldName)) continue;
-        argValues[fieldName] = fields[fieldName].value;
+        if (fieldName === 'VARIABLE') {
+            argValues[fieldName] = fields[fieldName].id;
+        } else {
+            argValues[fieldName] = fields[fieldName].value;
+        }
     }
 
     // Recursively evaluate input blocks.
@@ -24235,7 +24259,7 @@ module.exports = execute;
 "use strict";
 
 
-var _require = __webpack_require__(70),
+var _require = __webpack_require__(71),
     Record = _require.Record;
 
 var MonitorRecord = Record({
@@ -24269,7 +24293,7 @@ var Sequencer = __webpack_require__(167);
 var Blocks = __webpack_require__(30);
 var Thread = __webpack_require__(54);
 
-var _require = __webpack_require__(70),
+var _require = __webpack_require__(71),
     OrderedMap = _require.OrderedMap;
 
 // Virtual I/O devices.
@@ -25752,7 +25776,7 @@ var EventEmitter = __webpack_require__(7);
 var Blocks = __webpack_require__(30);
 var Variable = __webpack_require__(55);
 var List = __webpack_require__(53);
-var uid = __webpack_require__(98);
+var uid = __webpack_require__(61);
 
 /**
  * @fileoverview
@@ -25766,172 +25790,219 @@ var uid = __webpack_require__(98);
  */
 
 var Target = function (_EventEmitter) {
-  _inherits(Target, _EventEmitter);
+    _inherits(Target, _EventEmitter);
 
-  function Target(blocks) {
-    _classCallCheck(this, Target);
+    function Target(blocks) {
+        _classCallCheck(this, Target);
 
-    var _this = _possibleConstructorReturn(this, (Target.__proto__ || Object.getPrototypeOf(Target)).call(this));
+        var _this = _possibleConstructorReturn(this, (Target.__proto__ || Object.getPrototypeOf(Target)).call(this));
 
-    if (!blocks) {
-      blocks = new Blocks();
-    }
-    /**
-     * A unique ID for this target.
-     * @type {string}
-     */
-    _this.id = uid();
-    /**
-     * Blocks run as code for this target.
-     * @type {!Blocks}
-     */
-    _this.blocks = blocks;
-    /**
-     * Dictionary of variables and their values for this target.
-     * Key is the variable name.
-     * @type {Object.<string,*>}
-     */
-    _this.variables = {};
-    /**
-     * Dictionary of lists and their contents for this target.
-     * Key is the list name.
-     * @type {Object.<string,*>}
-     */
-    _this.lists = {};
-    /**
-     * Dictionary of custom state for this target.
-     * This can be used to store target-specific custom state for blocks which need it.
-     * TODO: do we want to persist this in SB3 files?
-     * @type {Object.<string,*>}
-     */
-    _this._customState = {};
-    return _this;
-  }
-
-  /**
-   * Called when the project receives a "green flag."
-   * @abstract
-   */
-
-
-  _createClass(Target, [{
-    key: 'onGreenFlag',
-    value: function onGreenFlag() {}
-
-    /**
-     * Return a human-readable name for this target.
-     * Target implementations should override this.
-     * @abstract
-     * @returns {string} Human-readable name for the target.
-     */
-
-  }, {
-    key: 'getName',
-    value: function getName() {
-      return this.id;
-    }
-
-    /**
-     * Look up a variable object, and create it if one doesn't exist.
-     * Search begins for local variables; then look for globals.
-     * @param {!string} name Name of the variable.
-     * @return {!Variable} Variable object.
-     */
-
-  }, {
-    key: 'lookupOrCreateVariable',
-    value: function lookupOrCreateVariable(name) {
-      // If we have a local copy, return it.
-      if (this.variables.hasOwnProperty(name)) {
-        return this.variables[name];
-      }
-      // If the stage has a global copy, return it.
-      if (this.runtime && !this.isStage) {
-        var stage = this.runtime.getTargetForStage();
-        if (stage.variables.hasOwnProperty(name)) {
-          return stage.variables[name];
+        if (!blocks) {
+            blocks = new Blocks();
         }
-      }
-      // No variable with this name exists - create it locally.
-      var newVariable = new Variable(name, 0, false);
-      this.variables[name] = newVariable;
-      return newVariable;
+        /**
+         * A unique ID for this target.
+         * @type {string}
+         */
+        _this.id = uid();
+        /**
+         * Blocks run as code for this target.
+         * @type {!Blocks}
+         */
+        _this.blocks = blocks;
+        /**
+         * Dictionary of variables and their values for this target.
+         * Key is the variable name.
+         * @type {Object.<string,*>}
+         */
+        _this.variables = {};
+        /**
+         * Dictionary of lists and their contents for this target.
+         * Key is the list name.
+         * @type {Object.<string,*>}
+         */
+        _this.lists = {};
+        /**
+         * Dictionary of custom state for this target.
+         * This can be used to store target-specific custom state for blocks which need it.
+         * TODO: do we want to persist this in SB3 files?
+         * @type {Object.<string,*>}
+         */
+        _this._customState = {};
+        return _this;
     }
 
     /**
-    * Look up a list object for this target, and create it if one doesn't exist.
-    * Search begins for local lists; then look for globals.
-    * @param {!string} name Name of the list.
-    * @return {!List} List object.
+     * Called when the project receives a "green flag."
+     * @abstract
      */
 
-  }, {
-    key: 'lookupOrCreateList',
-    value: function lookupOrCreateList(name) {
-      // If we have a local copy, return it.
-      if (this.lists.hasOwnProperty(name)) {
-        return this.lists[name];
-      }
-      // If the stage has a global copy, return it.
-      if (this.runtime && !this.isStage) {
-        var stage = this.runtime.getTargetForStage();
-        if (stage.lists.hasOwnProperty(name)) {
-          return stage.lists[name];
+
+    _createClass(Target, [{
+        key: 'onGreenFlag',
+        value: function onGreenFlag() {}
+
+        /**
+         * Return a human-readable name for this target.
+         * Target implementations should override this.
+         * @abstract
+         * @returns {string} Human-readable name for the target.
+         */
+
+    }, {
+        key: 'getName',
+        value: function getName() {
+            return this.id;
         }
-      }
-      // No list with this name exists - create it locally.
-      var newList = new List(name, []);
-      this.lists[name] = newList;
-      return newList;
-    }
 
-    /**
-     * Post/edit sprite info.
-     * @param {object} data An object with sprite info data to set.
-     * @abstract
-     */
+        /**
+         * Look up a variable object, and create it if one doesn't exist.
+         * Search begins for local variables; then look for globals.
+         * @param {string} id Id of the variable.
+         * @param {string} name Name of the variable.
+         * @return {!Variable} Variable object.
+         */
 
-  }, {
-    key: 'postSpriteInfo',
-    value: function postSpriteInfo() {}
+    }, {
+        key: 'lookupOrCreateVariable',
+        value: function lookupOrCreateVariable(id, name) {
+            // If we have a local copy, return it.
+            if (this.variables.hasOwnProperty(id)) {
+                return this.variables[id];
+            }
+            // If the stage has a global copy, return it.
+            if (this.runtime && !this.isStage) {
+                var stage = this.runtime.getTargetForStage();
+                if (stage.variables.hasOwnProperty(id)) {
+                    return stage.variables[id];
+                }
+            }
+            // No variable with this name exists - create it locally.
+            var newVariable = new Variable(id, name, 0, false);
+            this.variables[id] = newVariable;
+            return newVariable;
+        }
 
-    /**
-     * Retrieve custom state associated with this target and the provided state ID.
-     * @param {string} stateId - specify which piece of state to retrieve.
-     * @returns {*} the associated state, if any was found.
-     */
+        /**
+        * Look up a list object for this target, and create it if one doesn't exist.
+        * Search begins for local lists; then look for globals.
+        * @param {!string} name Name of the list.
+        * @return {!List} List object.
+         */
 
-  }, {
-    key: 'getCustomState',
-    value: function getCustomState(stateId) {
-      return this._customState[stateId];
-    }
+    }, {
+        key: 'lookupOrCreateList',
+        value: function lookupOrCreateList(name) {
+            // If we have a local copy, return it.
+            if (this.lists.hasOwnProperty(name)) {
+                return this.lists[name];
+            }
+            // If the stage has a global copy, return it.
+            if (this.runtime && !this.isStage) {
+                var stage = this.runtime.getTargetForStage();
+                if (stage.lists.hasOwnProperty(name)) {
+                    return stage.lists[name];
+                }
+            }
+            // No list with this name exists - create it locally.
+            var newList = new List(name, []);
+            this.lists[name] = newList;
+            return newList;
+        }
 
-    /**
-     * Store custom state associated with this target and the provided state ID.
-     * @param {string} stateId - specify which piece of state to store on this target.
-     * @param {*} newValue - the state value to store.
-     */
+        /**
+         * Creates a variable with the given id and name and adds it to the
+         * dictionary of variables.
+         * @param {string} id Id of variable
+         * @param {string} name Name of variable.
+         */
 
-  }, {
-    key: 'setCustomState',
-    value: function setCustomState(stateId, newValue) {
-      this._customState[stateId] = newValue;
-    }
+    }, {
+        key: 'createVariable',
+        value: function createVariable(id, name) {
+            if (!this.variables.hasOwnProperty(id)) {
+                var newVariable = new Variable(id, name, 0, false);
+                this.variables[id] = newVariable;
+            }
+        }
 
-    /**
-     * Call to destroy a target.
-     * @abstract
-     */
+        /**
+         * Renames the variable with the given id to newName.
+         * @param {string} id Id of renamed variable.
+         * @param {string} newName New name for the variable.
+         */
 
-  }, {
-    key: 'dispose',
-    value: function dispose() {
-      this._customState = {};
-    }
-  }]);
+    }, {
+        key: 'renameVariable',
+        value: function renameVariable(id, newName) {
+            if (this.variables.hasOwnProperty(id)) {
+                var variable = this.variables[id];
+                if (variable.id === id) {
+                    variable.name = newName;
+                }
+            }
+        }
 
-  return Target;
+        /**
+         * Removes the variable with the given id from the dictionary of variables.
+         * @param {string} id Id of renamed variable.
+         */
+
+    }, {
+        key: 'deleteVariable',
+        value: function deleteVariable(id) {
+            if (this.variables.hasOwnProperty(id)) {
+                delete this.variables[id];
+            }
+        }
+
+        /**
+         * Post/edit sprite info.
+         * @param {object} data An object with sprite info data to set.
+         * @abstract
+         */
+
+    }, {
+        key: 'postSpriteInfo',
+        value: function postSpriteInfo() {}
+
+        /**
+         * Retrieve custom state associated with this target and the provided state ID.
+         * @param {string} stateId - specify which piece of state to retrieve.
+         * @returns {*} the associated state, if any was found.
+         */
+
+    }, {
+        key: 'getCustomState',
+        value: function getCustomState(stateId) {
+            return this._customState[stateId];
+        }
+
+        /**
+         * Store custom state associated with this target and the provided state ID.
+         * @param {string} stateId - specify which piece of state to store on this target.
+         * @param {*} newValue - the state value to store.
+         */
+
+    }, {
+        key: 'setCustomState',
+        value: function setCustomState(stateId, newValue) {
+            this._customState[stateId] = newValue;
+        }
+
+        /**
+         * Call to destroy a target.
+         * @abstract
+         */
+
+    }, {
+        key: 'dispose',
+        value: function dispose() {
+            this._customState = {};
+        }
+    }]);
+
+    return Target;
 }(EventEmitter);
 
 module.exports = Target;
@@ -26736,10 +26807,10 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 
 var Blocks = __webpack_require__(30);
 var RenderedTarget = __webpack_require__(58);
-var Sprite = __webpack_require__(96);
+var Sprite = __webpack_require__(97);
 var Color = __webpack_require__(41);
 var log = __webpack_require__(13);
-var uid = __webpack_require__(98);
+var uid = __webpack_require__(61);
 var specMap = __webpack_require__(174);
 var Variable = __webpack_require__(55);
 var List = __webpack_require__(53);
@@ -26919,7 +26990,8 @@ var parseScratchObject = function parseScratchObject(object, runtime, topLevel) 
     if (object.hasOwnProperty('variables')) {
         for (var j = 0; j < object.variables.length; j++) {
             var variable = object.variables[j];
-            target.variables[variable.name] = new Variable(variable.name, variable.value, variable.isPersistent);
+            var newVariable = new Variable(null, variable.name, variable.value, variable.isPersistent);
+            target.variables[newVariable.id] = newVariable;
         }
     }
     if (object.hasOwnProperty('lists')) {
@@ -28304,7 +28376,7 @@ module.exports = specMap;
 
 var vmPackage = __webpack_require__(301);
 var Blocks = __webpack_require__(30);
-var Sprite = __webpack_require__(96);
+var Sprite = __webpack_require__(97);
 var Variable = __webpack_require__(55);
 var List = __webpack_require__(53);
 
@@ -28400,7 +28472,8 @@ var parseScratchObject = function parseScratchObject(object, runtime) {
     if (object.hasOwnProperty('variables')) {
         for (var j = 0; j < object.variables.length; j++) {
             var variable = object.variables[j];
-            target.variables[variable.name] = new Variable(variable.name, variable.value, variable.isPersistent);
+            var newVariable = new Variable(variable.id, variable.name, variable.value, variable.isPersistent);
+            target.variables[newVariable.id] = newVariable;
         }
     }
     if (object.hasOwnProperty('lists')) {
@@ -28583,6 +28656,7 @@ var VirtualMachine = function (_EventEmitter) {
         _this.blockListener = _this.blockListener.bind(_this);
         _this.flyoutBlockListener = _this.flyoutBlockListener.bind(_this);
         _this.monitorBlockListener = _this.monitorBlockListener.bind(_this);
+        _this.variableListener = _this.variableListener.bind(_this);
         return _this;
     }
 
@@ -29065,6 +29139,21 @@ var VirtualMachine = function (_EventEmitter) {
         }
 
         /**
+         * Handle a Blockly event for the variable map.
+         * @param {!Blockly.Event} e Any Blockly event.
+         */
+
+    }, {
+        key: 'variableListener',
+        value: function variableListener(e) {
+            // Filter events by type, since blocks only needs to listen to these
+            // var events.
+            if (['var_create', 'var_rename', 'var_delete'].indexOf(e.type) !== -1) {
+                this.runtime.getTargetForStage().blocks.blocklyListen(e, this.runtime);
+            }
+        }
+
+        /**
          * Set an editing target. An editor UI can use this function to switch
          * between editing different targets, sprites, etc.
          * After switching the editing target, the VM may emit updates
@@ -29201,18 +29290,6 @@ var VirtualMachine = function (_EventEmitter) {
         key: 'postSpriteInfo',
         value: function postSpriteInfo(data) {
             this.editingTarget.postSpriteInfo(data);
-        }
-
-        /**
-         * Create a variable by name.
-         * @todo this only creates global variables by putting them on the stage
-         * @param {string} name The name of the variable
-         */
-
-    }, {
-        key: 'createVariable',
-        value: function createVariable(name) {
-            this.runtime.getTargetForStage().lookupOrCreateVariable(name);
         }
     }]);
 
@@ -30379,9 +30456,9 @@ exports.escape = encode.escape;
 /* 231 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var entityMap = __webpack_require__(66),
+var entityMap = __webpack_require__(67),
     legacyMap = __webpack_require__(114),
-    xmlMap    = __webpack_require__(67),
+    xmlMap    = __webpack_require__(68),
     decodeCodePoint = __webpack_require__(113);
 
 var decodeXMLStrict  = getStrictDecoder(xmlMap),
@@ -30456,12 +30533,12 @@ module.exports = {
 /* 232 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var inverseXML = getInverseObj(__webpack_require__(67)),
+var inverseXML = getInverseObj(__webpack_require__(68)),
     xmlReplacer = getInverseReplacer(inverseXML);
 
 exports.XML = getInverse(inverseXML, xmlReplacer);
 
-var inverseHTML = getInverseObj(__webpack_require__(66)),
+var inverseHTML = getInverseObj(__webpack_require__(67)),
     htmlReplacer = getInverseReplacer(inverseHTML);
 
 exports.HTML = getInverse(inverseHTML, htmlReplacer);
@@ -30715,7 +30792,7 @@ module.exports = errorEx;
 
 var EventEmitter = __webpack_require__(7).EventEmitter;
 var http = __webpack_require__(39);
-var https = __webpack_require__(68);
+var https = __webpack_require__(69);
 var urlLib = __webpack_require__(26);
 var querystring = __webpack_require__(22);
 var objectAssign = __webpack_require__(265);
@@ -41854,7 +41931,7 @@ module.exports = function (x) {
 
 module.exports = {
 	"name": "scratch-vm",
-	"version": "0.1.0-prerelease.1497906992",
+	"version": "0.1.0-prerelease.1498237822",
 	"description": "Virtual Machine for Scratch 3.0",
 	"author": "Massachusetts Institute of Technology",
 	"license": "BSD-3-Clause",
@@ -41862,7 +41939,7 @@ module.exports = {
 	"repository": {
 		"type": "git",
 		"url": "git+ssh://git@github.com/LLK/scratch-vm.git",
-		"sha": "524d99db65470ef44fb03e4708e0cf4376e81bf1"
+		"sha": "b0fb4f0b5560952f1affae799b533a6354a3e50a"
 	},
 	"main": "./dist/node/scratch-vm.js",
 	"scripts": {
