@@ -8464,28 +8464,29 @@ var Target = __webpack_require__(168);
 
 /**
  * Rendered target: instance of a sprite (clone), or the stage.
- * @param {!Sprite} sprite Reference to the parent sprite.
- * @param {Runtime} runtime Reference to the runtime.
- * @constructor
  */
 
 var RenderedTarget = function (_Target) {
     _inherits(RenderedTarget, _Target);
 
+    /**
+     * @param {!Sprite} sprite Reference to the parent sprite.
+     * @param {Runtime} runtime Reference to the runtime.
+     * @constructor
+     */
     function RenderedTarget(sprite, runtime) {
         _classCallCheck(this, RenderedTarget);
 
-        var _this = _possibleConstructorReturn(this, (RenderedTarget.__proto__ || Object.getPrototypeOf(RenderedTarget)).call(this, sprite.blocks));
-
-        _this.runtime = runtime;
         /**
          * Reference to the sprite that this is a render of.
          * @type {!Sprite}
          */
+        var _this = _possibleConstructorReturn(this, (RenderedTarget.__proto__ || Object.getPrototypeOf(RenderedTarget)).call(this, runtime, sprite.blocks));
+
         _this.sprite = sprite;
         /**
          * Reference to the global renderer for this VM, if one exists.
-         * @type {?RenderWebGLWorker}
+         * @type {?RenderWebGL}
          */
         _this.renderer = null;
         if (_this.runtime) {
@@ -9236,7 +9237,6 @@ var RenderedTarget = function (_Target) {
             newClone.effects = JSON.parse(JSON.stringify(this.effects));
             newClone.variables = JSON.parse(JSON.stringify(this.variables));
             newClone.lists = JSON.parse(JSON.stringify(this.lists));
-            newClone._customState = JSON.parse(JSON.stringify(this._customState));
             newClone.initDrawable();
             newClone.updateAllDrawableProperties();
             // Place behind the current target.
@@ -18885,86 +18885,89 @@ var RenderedTarget = __webpack_require__(58);
 var Blocks = __webpack_require__(30);
 
 var Sprite = function () {
-  /**
-   * Sprite to be used on the Scratch stage.
-   * All clones of a sprite have shared blocks, shared costumes, shared variables.
-   * @param {?Blocks} blocks Shared blocks object for all clones of sprite.
-   * @param {Runtime} runtime Reference to the runtime.
-   * @constructor
-   */
-  function Sprite(blocks, runtime) {
-    _classCallCheck(this, Sprite);
-
-    this.runtime = runtime;
-    if (!blocks) {
-      // Shared set of blocks for all clones.
-      blocks = new Blocks();
-    }
-    this.blocks = blocks;
     /**
-     * Human-readable name for this sprite (and all clones).
-     * @type {string}
+     * Sprite to be used on the Scratch stage.
+     * All clones of a sprite have shared blocks, shared costumes, shared variables.
+     * @param {?Blocks} blocks Shared blocks object for all clones of sprite.
+     * @param {Runtime} runtime Reference to the runtime.
+     * @constructor
      */
-    this.name = '';
-    /**
-     * List of costumes for this sprite.
-     * Each entry is an object, e.g.,
-     * {
-     *      skinId: 1,
-     *      name: "Costume Name",
-     *      bitmapResolution: 2,
-     *      rotationCenterX: 0,
-     *      rotationCenterY: 0
-     * }
-     * @type {Array.<!Object>}
-     */
-    this.costumes = [];
-    /**
-     * List of sounds for this sprite.
-    */
-    this.sounds = [];
-    /**
-     * List of clones for this sprite, including the original.
-     * @type {Array.<!RenderedTarget>}
-     */
-    this.clones = [];
-  }
+    function Sprite(blocks, runtime) {
+        _classCallCheck(this, Sprite);
 
-  /**
-   * Create a clone of this sprite.
-   * @returns {!RenderedTarget} Newly created clone.
-   */
-
-
-  _createClass(Sprite, [{
-    key: 'createClone',
-    value: function createClone() {
-      var newClone = new RenderedTarget(this, this.runtime);
-      newClone.isOriginal = this.clones.length === 0;
-      this.clones.push(newClone);
-      if (newClone.isOriginal) {
-        newClone.initDrawable();
-      }
-      return newClone;
+        this.runtime = runtime;
+        if (!blocks) {
+            // Shared set of blocks for all clones.
+            blocks = new Blocks();
+        }
+        this.blocks = blocks;
+        /**
+         * Human-readable name for this sprite (and all clones).
+         * @type {string}
+         */
+        this.name = '';
+        /**
+         * List of costumes for this sprite.
+         * Each entry is an object, e.g.,
+         * {
+         *      skinId: 1,
+         *      name: "Costume Name",
+         *      bitmapResolution: 2,
+         *      rotationCenterX: 0,
+         *      rotationCenterY: 0
+         * }
+         * @type {Array.<!Object>}
+         */
+        this.costumes = [];
+        /**
+         * List of sounds for this sprite.
+        */
+        this.sounds = [];
+        /**
+         * List of clones for this sprite, including the original.
+         * @type {Array.<!RenderedTarget>}
+         */
+        this.clones = [];
     }
 
     /**
-     * Disconnect a clone from this sprite. The clone is unmodified.
-     * In particular, the clone's dispose() method is not called.
-     * @param {!RenderedTarget} clone - the clone to be removed.
+     * Create a clone of this sprite.
+     * @returns {!RenderedTarget} Newly created clone.
      */
 
-  }, {
-    key: 'removeClone',
-    value: function removeClone(clone) {
-      var cloneIndex = this.clones.indexOf(clone);
-      if (cloneIndex >= 0) {
-        this.clones.splice(cloneIndex, 1);
-      }
-    }
-  }]);
 
-  return Sprite;
+    _createClass(Sprite, [{
+        key: 'createClone',
+        value: function createClone() {
+            var newClone = new RenderedTarget(this, this.runtime);
+            newClone.isOriginal = this.clones.length === 0;
+            this.clones.push(newClone);
+            if (newClone.isOriginal) {
+                newClone.initDrawable();
+                this.runtime.fireTargetWasCreated(newClone);
+            } else {
+                this.runtime.fireTargetWasCreated(newClone, this.clones[0]);
+            }
+            return newClone;
+        }
+
+        /**
+         * Disconnect a clone from this sprite. The clone is unmodified.
+         * In particular, the clone's dispose() method is not called.
+         * @param {!RenderedTarget} clone - the clone to be removed.
+         */
+
+    }, {
+        key: 'removeClone',
+        value: function removeClone(clone) {
+            var cloneIndex = this.clones.indexOf(clone);
+            if (cloneIndex >= 0) {
+                this.clones.splice(cloneIndex, 1);
+            }
+        }
+    }]);
+
+    return Sprite;
 }();
 
 module.exports = Sprite;
@@ -21830,7 +21833,10 @@ var Scratch3PenBlocks = function () {
          */
         this._penSkinId = -1;
 
+        this._onTargetCreated = this._onTargetCreated.bind(this);
         this._onTargetMoved = this._onTargetMoved.bind(this);
+
+        runtime.on('targetWasCreated', this._onTargetCreated);
     }
 
     /**
@@ -21887,6 +21893,28 @@ var Scratch3PenBlocks = function () {
                 target.setCustomState(Scratch3PenBlocks.STATE_KEY, penState);
             }
             return penState;
+        }
+
+        /**
+         * When a pen-using Target is cloned, clone the pen state.
+         * @param {Target} newTarget - the newly created target.
+         * @param {Target} [sourceTarget] - the target used as a source for the new clone, if any.
+         * @listens Runtime#event:targetWasCreated
+         * @private
+         */
+
+    }, {
+        key: '_onTargetCreated',
+        value: function _onTargetCreated(newTarget, sourceTarget) {
+            if (sourceTarget) {
+                var penState = sourceTarget.getCustomState(Scratch3PenBlocks.STATE_KEY);
+                if (penState) {
+                    newTarget.setCustomState(Scratch3PenBlocks.STATE_KEY, Clone.simple(penState));
+                    if (penState.penDown) {
+                        newTarget.addListener(RenderedTarget.EVENT_TARGET_MOVED, this._onTargetMoved);
+                    }
+                }
+            }
         }
 
         /**
@@ -25274,6 +25302,19 @@ var Runtime = function (_EventEmitter) {
         }
 
         /**
+         * Report that a new target has been created, possibly by cloning an existing target.
+         * @param {Target} newTarget - the newly created target.
+         * @param {Target} [sourceTarget] - the target used as a source for the new clone, if any.
+         * @fires Runtime#targetWasCreated
+         */
+
+    }, {
+        key: 'fireTargetWasCreated',
+        value: function fireTargetWasCreated(newTarget, sourceTarget) {
+            this.emit('targetWasCreated', newTarget, sourceTarget);
+        }
+
+        /**
          * Get a target representing the Scratch stage, if one exists.
          * @return {?Target} The target, if found.
          */
@@ -25481,6 +25522,14 @@ var Runtime = function (_EventEmitter) {
 
     return Runtime;
 }(EventEmitter);
+
+/**
+ * Event fired after a new target has been created, possibly by cloning an existing target.
+ *
+ * @event Runtime#targetWasCreated
+ * @param {Target} newTarget - the newly created target.
+ * @param {Target} [sourceTarget] - the target used as a source for the new clone, if any.
+ */
 
 module.exports = Runtime;
 
@@ -25784,15 +25833,15 @@ var uid = __webpack_require__(61);
  * Examples include sprites/clones or potentially physical-world devices.
  */
 
-/**
- * @param {?Blocks} blocks Blocks instance for the blocks owned by this target.
- * @constructor
- */
-
 var Target = function (_EventEmitter) {
     _inherits(Target, _EventEmitter);
 
-    function Target(blocks) {
+    /**
+     * @param {Runtime} runtime Reference to the runtime.
+     * @param {?Blocks} blocks Blocks instance for the blocks owned by this target.
+     * @constructor
+     */
+    function Target(runtime, blocks) {
         _classCallCheck(this, Target);
 
         var _this = _possibleConstructorReturn(this, (Target.__proto__ || Object.getPrototypeOf(Target)).call(this));
@@ -25800,6 +25849,12 @@ var Target = function (_EventEmitter) {
         if (!blocks) {
             blocks = new Blocks();
         }
+
+        /**
+         * Reference to the runtime.
+         * @type {Runtime}
+         */
+        _this.runtime = runtime;
         /**
          * A unique ID for this target.
          * @type {string}
@@ -41931,7 +41986,7 @@ module.exports = function (x) {
 
 module.exports = {
 	"name": "scratch-vm",
-	"version": "0.1.0-prerelease.1498237822",
+	"version": "0.1.0-prerelease.1498628609",
 	"description": "Virtual Machine for Scratch 3.0",
 	"author": "Massachusetts Institute of Technology",
 	"license": "BSD-3-Clause",
@@ -41939,7 +41994,7 @@ module.exports = {
 	"repository": {
 		"type": "git",
 		"url": "git+ssh://git@github.com/LLK/scratch-vm.git",
-		"sha": "b0fb4f0b5560952f1affae799b533a6354a3e50a"
+		"sha": "47fc38fd9a74955b9f0cb972654def010969886d"
 	},
 	"main": "./dist/node/scratch-vm.js",
 	"scripts": {
