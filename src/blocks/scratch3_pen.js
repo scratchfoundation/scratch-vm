@@ -40,7 +40,10 @@ class Scratch3PenBlocks {
          */
         this._penSkinId = -1;
 
+        this._onTargetCreated = this._onTargetCreated.bind(this);
         this._onTargetMoved = this._onTargetMoved.bind(this);
+
+        runtime.on('targetWasCreated', this._onTargetCreated);
     }
 
     /**
@@ -127,6 +130,25 @@ class Scratch3PenBlocks {
             target.setCustomState(Scratch3PenBlocks.STATE_KEY, penState);
         }
         return penState;
+    }
+
+    /**
+     * When a pen-using Target is cloned, clone the pen state.
+     * @param {Target} newTarget - the newly created target.
+     * @param {Target} [sourceTarget] - the target used as a source for the new clone, if any.
+     * @listens Runtime#event:targetWasCreated
+     * @private
+     */
+    _onTargetCreated (newTarget, sourceTarget) {
+        if (sourceTarget) {
+            const penState = sourceTarget.getCustomState(Scratch3PenBlocks.STATE_KEY);
+            if (penState) {
+                newTarget.setCustomState(Scratch3PenBlocks.STATE_KEY, Clone.simple(penState));
+                if (penState.penDown) {
+                    newTarget.addListener(RenderedTarget.EVENT_TARGET_MOVED, this._onTargetMoved);
+                }
+            }
+        }
     }
 
     /**

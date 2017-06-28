@@ -11,17 +11,25 @@ const uid = require('../util/uid');
  * Examples include sprites/clones or potentially physical-world devices.
  */
 
-/**
- * @param {?Blocks} blocks Blocks instance for the blocks owned by this target.
- * @constructor
- */
 class Target extends EventEmitter {
-    constructor (blocks) {
+
+    /**
+     * @param {Runtime} runtime Reference to the runtime.
+     * @param {?Blocks} blocks Blocks instance for the blocks owned by this target.
+     * @constructor
+     */
+    constructor (runtime, blocks) {
         super();
 
         if (!blocks) {
             blocks = new Blocks();
         }
+
+        /**
+         * Reference to the runtime.
+         * @type {Runtime}
+         */
+        this.runtime = runtime;
         /**
          * A unique ID for this target.
          * @type {string}

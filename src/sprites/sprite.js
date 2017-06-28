@@ -55,6 +55,9 @@ class Sprite {
         this.clones.push(newClone);
         if (newClone.isOriginal) {
             newClone.initDrawable();
+            this.runtime.fireTargetWasCreated(newClone);
+        } else {
+            this.runtime.fireTargetWasCreated(newClone, this.clones[0]);
         }
         return newClone;
     }
