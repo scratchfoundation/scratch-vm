@@ -5966,7 +5966,16 @@ var Blocks = function () {
                 case 'field':
                     // Update block value
                     if (!block.fields[args.name]) return;
-                    block.fields[args.name].value = args.value;
+                    if (args.name === 'VARIABLE') {
+                        // Get variable name using the id in args.value.
+                        var variable = optRuntime.getEditingTarget().lookupVariableById(args.value);
+                        if (variable) {
+                            block.fields[args.name].value = variable.name;
+                            block.fields[args.name].id = args.value;
+                        }
+                    } else {
+                        block.fields[args.name].value = args.value;
+                    }
                     break;
                 case 'mutation':
                     block.mutation = mutationAdapter(args.value);
@@ -25331,6 +25340,17 @@ var Runtime = function (_EventEmitter) {
         }
 
         /**
+         * Get the editing target.
+         * @return {?Target} The editing target.
+         */
+
+    }, {
+        key: 'getEditingTarget',
+        value: function getEditingTarget() {
+            return this._editingTarget;
+        }
+
+        /**
          * Tell the runtime to request a redraw.
          * Use after a clone/sprite has completed some visible operation on the stage.
          */
@@ -25912,7 +25932,6 @@ var Target = function (_EventEmitter) {
 
         /**
          * Look up a variable object, and create it if one doesn't exist.
-         * Search begins for local variables; then look for globals.
          * @param {string} id Id of the variable.
          * @param {string} name Name of the variable.
          * @return {!Variable} Variable object.
@@ -25921,6 +25940,25 @@ var Target = function (_EventEmitter) {
     }, {
         key: 'lookupOrCreateVariable',
         value: function lookupOrCreateVariable(id, name) {
+            var variable = this.lookupVariableById(id);
+            if (variable) return variable;
+            // No variable with this name exists - create it locally.
+            var newVariable = new Variable(id, name, 0, false);
+            this.variables[id] = newVariable;
+            return newVariable;
+        }
+
+        /**
+         * Look up a variable object.
+         * Search begins for local variables; then look for globals.
+         * @param {string} id Id of the variable.
+         * @param {string} name Name of the variable.
+         * @return {!Variable} Variable object.
+         */
+
+    }, {
+        key: 'lookupVariableById',
+        value: function lookupVariableById(id) {
             // If we have a local copy, return it.
             if (this.variables.hasOwnProperty(id)) {
                 return this.variables[id];
@@ -25932,10 +25970,6 @@ var Target = function (_EventEmitter) {
                     return stage.variables[id];
                 }
             }
-            // No variable with this name exists - create it locally.
-            var newVariable = new Variable(id, name, 0, false);
-            this.variables[id] = newVariable;
-            return newVariable;
         }
 
         /**
@@ -41986,7 +42020,7 @@ module.exports = function (x) {
 
 module.exports = {
 	"name": "scratch-vm",
-	"version": "0.1.0-prerelease.1498628609",
+	"version": "0.1.0-prerelease.1498824935",
 	"description": "Virtual Machine for Scratch 3.0",
 	"author": "Massachusetts Institute of Technology",
 	"license": "BSD-3-Clause",
@@ -41994,7 +42028,7 @@ module.exports = {
 	"repository": {
 		"type": "git",
 		"url": "git+ssh://git@github.com/LLK/scratch-vm.git",
-		"sha": "47fc38fd9a74955b9f0cb972654def010969886d"
+		"sha": "6fa49b1e7add8b367299e5a8bd60767de3ab023f"
 	},
 	"main": "./dist/node/scratch-vm.js",
 	"scripts": {
