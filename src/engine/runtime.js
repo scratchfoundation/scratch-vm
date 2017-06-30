@@ -992,6 +992,14 @@ class Runtime extends EventEmitter {
     }
 
     /**
+     * Get the editing target.
+     * @return {?Target} The editing target.
+     */
+    getEditingTarget () {
+        return this._editingTarget;
+    }
+
+    /**
      * Tell the runtime to request a redraw.
      * Use after a clone/sprite has completed some visible operation on the stage.
      */

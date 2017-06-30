@@ -79,12 +79,27 @@ class Target extends EventEmitter {
 
     /**
      * Look up a variable object, and create it if one doesn't exist.
-     * Search begins for local variables; then look for globals.
      * @param {string} id Id of the variable.
      * @param {string} name Name of the variable.
      * @return {!Variable} Variable object.
      */
     lookupOrCreateVariable (id, name) {
+        const variable = this.lookupVariableById(id);
+        if (variable) return variable;
+        // No variable with this name exists - create it locally.
+        const newVariable = new Variable(id, name, 0, false);
+        this.variables[id] = newVariable;
+        return newVariable;
+    }
+
+    /**
+     * Look up a variable object.
+     * Search begins for local variables; then look for globals.
+     * @param {string} id Id of the variable.
+     * @param {string} name Name of the variable.
+     * @return {!Variable} Variable object.
+     */
+    lookupVariableById (id) {
         // If we have a local copy, return it.
         if (this.variables.hasOwnProperty(id)) {
             return this.variables[id];
@@ -96,10 +111,6 @@ class Target extends EventEmitter {
                 return stage.variables[id];
             }
         }
-        // No variable with this name exists - create it locally.
-        const newVariable = new Variable(id, name, 0, false);
-        this.variables[id] = newVariable;
-        return newVariable;
     }
 
     /**

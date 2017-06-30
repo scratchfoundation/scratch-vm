@@ -296,7 +296,16 @@ class Blocks {
         case 'field':
             // Update block value
             if (!block.fields[args.name]) return;
-            block.fields[args.name].value = args.value;
+            if (args.name === 'VARIABLE') {
+                // Get variable name using the id in args.value.
+                const variable = optRuntime.getEditingTarget().lookupVariableById(args.value);
+                if (variable) {
+                    block.fields[args.name].value = variable.name;
+                    block.fields[args.name].id = args.value;
+                }
+            } else {
+                block.fields[args.name].value = args.value;
+            }
             break;
         case 'mutation':
             block.mutation = mutationAdapter(args.value);
