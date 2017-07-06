@@ -135,18 +135,20 @@ class Scratch3SoundBlocks {
             return -1;
         }
 
-        let index;
-
-        // try to convert to a number and use that as an index
-        const num = parseInt(soundName, 10);
-        if (!isNaN(num)) {
-            index = MathUtil.wrapClamp(num, 0, len - 1);
+        // look up by name first
+        const index = this.getSoundIndexByName(soundName, util);
+        if (index !== -1) {
             return index;
         }
 
-        // return the index for the sound of that name
-        index = this.getSoundIndexByName(soundName, util);
-        return index;
+        // then try using the sound name as a 1-indexed index
+        const oneIndexedIndex = parseInt(soundName, 10);
+        if (!isNaN(oneIndexedIndex)) {
+            return MathUtil.wrapClamp(oneIndexedIndex - 1, 0, len - 1);
+        }
+
+        // could not be found as a name or converted to index, return -1
+        return -1;
     }
 
     getSoundIndexByName (soundName, util) {
