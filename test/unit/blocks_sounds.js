@@ -1,6 +1,8 @@
 const test = require('tap').test;
 const Sound = require('../../src/blocks/scratch3_sound');
-let playedSound, playedDrum, playedInstrument;
+let playedSound;
+let playedDrum;
+let playedInstrument;
 const runtime = {
     audioEngine: {
         numDrums: 3,
@@ -95,7 +97,7 @@ test('playDrum uses 1-indexing and wrap clamps', t => {
 
 test('setInstrument uses 1-indexing and wrap clamps', t => {
     // Stub getSoundState
-    blocks._getSoundState = () => ({})
+    blocks._getSoundState = () => ({});
 
     let args = {INSTRUMENT: 1};
     blocks.setInstrument(args, util);
