@@ -1,7 +1,16 @@
 const test = require('tap').test;
 const Sound = require('../../src/blocks/scratch3_sound');
-const blocks = new Sound(null);
-let playedSound = null;
+let playedSound, playedDrum, playedInstrument;
+const runtime = {
+    audioEngine: {
+        numDrums: 3,
+        numInstruments: 3,
+        instrumentPlayer: {
+            loadInstrument: instrument => (playedInstrument = instrument)
+        }
+    }
+};
+const blocks = new Sound(runtime);
 const util = {
     target: {
         sprite: {
@@ -13,7 +22,8 @@ const util = {
             ]
         },
         audioPlayer: {
-            playSound: md5 => (playedSound = md5)
+            playSound: md5 => (playedSound = md5),
+            playDrumForBeats: drum => (playedDrum = drum)
         }
     }
 };
@@ -68,5 +78,32 @@ test('playSound prioritizes sound name if given a string', t => {
     blocks.playSound(args, util);
     // Use the sound named '6', which is the fourth
     t.strictEqual(playedSound, 'fourth md5');
+    t.end();
+});
+
+test('playDrum uses 1-indexing and wrap clamps', t => {
+    let args = {DRUM: 1};
+    blocks.playDrumForBeats(args, util);
+    t.strictEqual(playedDrum, 0);
+
+    args = {DRUM: runtime.audioEngine.numDrums + 1};
+    blocks.playDrumForBeats(args, util);
+    t.strictEqual(playedDrum, 0);
+
+    t.end();
+});
+
+test('setInstrument uses 1-indexing and wrap clamps', t => {
+    // Stub getSoundState
+    blocks._getSoundState = () => ({})
+
+    let args = {INSTRUMENT: 1};
+    blocks.setInstrument(args, util);
+    t.strictEqual(playedInstrument, 0);
+
+    args = {INSTRUMENT: runtime.audioEngine.numInstruments + 1};
+    blocks.setInstrument(args, util);
+    t.strictEqual(playedInstrument, 0);
+
     t.end();
 });

@@ -183,7 +183,7 @@ class Scratch3SoundBlocks {
         let drum = Cast.toNumber(args.DRUM);
         drum -= 1; // drums are one-indexed
         if (typeof this.runtime.audioEngine === 'undefined') return;
-        drum = MathUtil.wrapClamp(drum, 0, this.runtime.audioEngine.numDrums);
+        drum = MathUtil.wrapClamp(drum, 0, this.runtime.audioEngine.numDrums - 1);
         let beats = Cast.toNumber(args.BEATS);
         beats = this._clampBeats(beats);
         if (util.target.audioPlayer === null) return;
@@ -206,7 +206,7 @@ class Scratch3SoundBlocks {
         let instNum = Cast.toNumber(args.INSTRUMENT);
         instNum -= 1; // instruments are one-indexed
         if (typeof this.runtime.audioEngine === 'undefined') return;
-        instNum = MathUtil.wrapClamp(instNum, 0, this.runtime.audioEngine.numInstruments);
+        instNum = MathUtil.wrapClamp(instNum, 0, this.runtime.audioEngine.numInstruments - 1);
         soundState.currentInstrument = instNum;
         return this.runtime.audioEngine.instrumentPlayer.loadInstrument(soundState.currentInstrument);
     }
