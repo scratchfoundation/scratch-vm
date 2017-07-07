@@ -109,3 +109,41 @@ test('renameSprite does not increment when renaming to the same name', t => {
     t.equal(vm.runtime.targets[0].sprite.name, 'this name');
     t.end();
 });
+
+test('renameSound sets the sound name', t => {
+    const vm = new VirtualMachine();
+    vm.editingTarget = {
+        sprite: {
+            sounds: [{name: 'first'}, {name: 'second'}]
+        }
+    };
+    vm.renameSound(0, 'hello');
+    t.equal(vm.editingTarget.sprite.sounds[0].name, 'hello');
+    t.equal(vm.editingTarget.sprite.sounds[1].name, 'second');
+    // Make sure renaming to same name doesn't increment
+    vm.renameSound(0, 'hello');
+    t.equal(vm.editingTarget.sprite.sounds[0].name, 'hello');
+    // But renaming to used name does increment
+    vm.renameSound(1, 'hello');
+    t.equal(vm.editingTarget.sprite.sounds[1].name, 'hello2');
+    t.end();
+});
+
+test('renameCostume sets the costume name', t => {
+    const vm = new VirtualMachine();
+    vm.editingTarget = {
+        sprite: {
+            costumes: [{name: 'first'}, {name: 'second'}]
+        }
+    };
+    vm.renameCostume(0, 'hello');
+    t.equal(vm.editingTarget.sprite.costumes[0].name, 'hello');
+    t.equal(vm.editingTarget.sprite.costumes[1].name, 'second');
+    // Make sure renaming to same name doesn't increment
+    vm.renameCostume(0, 'hello');
+    t.equal(vm.editingTarget.sprite.costumes[0].name, 'hello');
+    // But renaming to used name does increment
+    vm.renameCostume(1, 'hello');
+    t.equal(vm.editingTarget.sprite.costumes[1].name, 'hello2');
+    t.end();
+});
