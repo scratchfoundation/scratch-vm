@@ -298,7 +298,7 @@ class Blocks {
             if (!block.fields[args.name]) return;
             if (args.name === 'VARIABLE') {
                 // Get variable name using the id in args.value.
-                const variable = optRuntime.getEditingTarget().lookupVariableById(args.id);
+                const variable = optRuntime.getEditingTarget().lookupVariableById(args.value);
                 if (variable) {
                     block.fields[args.name].value = variable.name;
                     block.fields[args.name].id = args.value;

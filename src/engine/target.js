@@ -169,7 +169,7 @@ class Target extends EventEmitter {
                         id: id,
                         element: 'field',
                         name: 'VARIABLE',
-                        value: newName
+                        value: id
                     }, this.runtime);
                     this.runtime.requestUpdateMonitor(Map({
                         id: id,
