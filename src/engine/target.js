@@ -162,17 +162,21 @@ class Target extends EventEmitter {
             const variable = this.variables[id];
             if (variable.id === id) {
                 variable.name = newName;
-                const blocks = this.runtime.monitorBlocks;
-                blocks.changeBlock({
-                    id: id,
-                    element: 'field',
-                    name: 'VARIABLE',
-                    value: newName
-                }, this.runtime);
-                this.runtime.requestUpdateMonitor(Map({
-                    id: id,
-                    params: blocks._getBlockParams(blocks.getBlock(variable.id))
-                }));
+
+                if (this.runtime) {
+                    const blocks = this.runtime.monitorBlocks;
+                    blocks.changeBlock({
+                        id: id,
+                        element: 'field',
+                        name: 'VARIABLE',
+                        value: newName
+                    }, this.runtime);
+                    this.runtime.requestUpdateMonitor(Map({
+                        id: id,
+                        params: blocks._getBlockParams(blocks.getBlock(variable.id))
+                    }));
+                }
+
             }
         }
     }
@@ -184,7 +188,9 @@ class Target extends EventEmitter {
     deleteVariable (id) {
         if (this.variables.hasOwnProperty(id)) {
             delete this.variables[id];
-            this.runtime.requestRemoveMonitor(id);
+            if (this.runtime) {
+                this.runtime.requestRemoveMonitor(id);
+            }
         }
     }
 
