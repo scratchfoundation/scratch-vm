@@ -41,7 +41,7 @@
     "json": "^9.0.4",
     "lodash.defaultsdeep": "4.6.0",
     "minilog": "3.1.0",
-    "promise": "7.1.1",
+    "promise": "8.0.1",
     "scratch-audio": "latest",
     "scratch-blocks": "latest",
     "scratch-render": "latest",
