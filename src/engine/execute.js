@@ -74,14 +74,17 @@ const execute = function (sequencer, thread) {
             // Hat predicate was evaluated.
             if (runtime.getIsEdgeActivatedHat(opcode)) {
                 // If this is an edge-activated hat, only proceed if
-                // the value is true and used to be false.
-                const oldEdgeValue = runtime.updateEdgeActivatedValue(
-                    currentBlockId,
-                    resolvedValue
-                );
-                const edgeWasActivated = !oldEdgeValue && resolvedValue;
-                if (!edgeWasActivated) {
-                    sequencer.retireThread(thread);
+                // the value is true and used to be false, or the stack was activated
+                // explicitly via stack click
+                if (!thread.stackClick) {
+                    const oldEdgeValue = runtime.updateEdgeActivatedValue(
+                        currentBlockId,
+                        resolvedValue
+                    );
+                    const edgeWasActivated = !oldEdgeValue && resolvedValue;
+                    if (!edgeWasActivated) {
+                        sequencer.retireThread(thread);
+                    }
                 }
             } else {
                 // Not an edge-activated hat: retire the thread
@@ -94,7 +97,7 @@ const execute = function (sequencer, thread) {
             // In a non-hat, report the value visually if necessary if
             // at the top of the thread stack.
             if (typeof resolvedValue !== 'undefined' && thread.atStackTop()) {
-                if (thread.showVisualReport) {
+                if (thread.stackClick) {
                     runtime.visualReport(currentBlockId, resolvedValue);
                 }
                 if (thread.updateMonitor) {
