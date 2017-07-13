@@ -22658,18 +22658,20 @@ var Scratch3SoundBlocks = function () {
                 return -1;
             }
 
-            var index = void 0;
-
-            // try to convert to a number and use that as an index
-            var num = parseInt(soundName, 10);
-            if (!isNaN(num)) {
-                index = MathUtil.wrapClamp(num, 0, len - 1);
+            // look up by name first
+            var index = this.getSoundIndexByName(soundName, util);
+            if (index !== -1) {
                 return index;
             }
 
-            // return the index for the sound of that name
-            index = this.getSoundIndexByName(soundName, util);
-            return index;
+            // then try using the sound name as a 1-indexed index
+            var oneIndexedIndex = parseInt(soundName, 10);
+            if (!isNaN(oneIndexedIndex)) {
+                return MathUtil.wrapClamp(oneIndexedIndex - 1, 0, len - 1);
+            }
+
+            // could not be found as a name or converted to index, return -1
+            return -1;
         }
     }, {
         key: 'getSoundIndexByName',
@@ -22708,7 +22710,7 @@ var Scratch3SoundBlocks = function () {
             var drum = Cast.toNumber(args.DRUM);
             drum -= 1; // drums are one-indexed
             if (typeof this.runtime.audioEngine === 'undefined') return;
-            drum = MathUtil.wrapClamp(drum, 0, this.runtime.audioEngine.numDrums);
+            drum = MathUtil.wrapClamp(drum, 0, this.runtime.audioEngine.numDrums - 1);
             var beats = Cast.toNumber(args.BEATS);
             beats = this._clampBeats(beats);
             if (util.target.audioPlayer === null) return;
@@ -22734,7 +22736,7 @@ var Scratch3SoundBlocks = function () {
             var instNum = Cast.toNumber(args.INSTRUMENT);
             instNum -= 1; // instruments are one-indexed
             if (typeof this.runtime.audioEngine === 'undefined') return;
-            instNum = MathUtil.wrapClamp(instNum, 0, this.runtime.audioEngine.numInstruments);
+            instNum = MathUtil.wrapClamp(instNum, 0, this.runtime.audioEngine.numInstruments - 1);
             soundState.currentInstrument = instNum;
             return this.runtime.audioEngine.instrumentPlayer.loadInstrument(soundState.currentInstrument);
         }
@@ -42062,7 +42064,7 @@ module.exports = function (x) {
 
 module.exports = {
 	"name": "scratch-vm",
-	"version": "0.1.0-prerelease.1499951255",
+	"version": "0.1.0-prerelease.1499973159",
 	"description": "Virtual Machine for Scratch 3.0",
 	"author": "Massachusetts Institute of Technology",
 	"license": "BSD-3-Clause",
@@ -42070,7 +42072,7 @@ module.exports = {
 	"repository": {
 		"type": "git",
 		"url": "git+ssh://git@github.com/LLK/scratch-vm.git",
-		"sha": "eb04fcab579c350bb80f7d38cc71fb2884f89413"
+		"sha": "0e33d061fef74eabf6c641f13ae352f95d39aee2"
 	},
 	"main": "./dist/node/scratch-vm.js",
 	"scripts": {
