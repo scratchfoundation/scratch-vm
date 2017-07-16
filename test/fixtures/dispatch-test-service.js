@@ -8,7 +8,7 @@ class DispatchTestService {
     }
 
     throwException () {
-        throw new Error('This is a test exception thrown by LocalDispatchTest');
+        throw new Error('This is a test exception thrown by DispatchTest');
     }
 
     close () {
