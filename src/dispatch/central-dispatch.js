@@ -12,7 +12,7 @@ class CentralDispatch {
         /**
          * List of callback registrations for promises waiting for a response from a call to a service on another
          * worker. A callback registration is an array of [resolve,reject] Promise functions.
-         * Calls to services on this worker don't enter this list.
+         * Calls to local services don't enter this list.
          * @type {Array.<[Function,Function]>}
          */
         this.callbacks = [];
@@ -31,6 +31,12 @@ class CentralDispatch {
          * @type {object.<Worker|object>}
          */
         this.services = {};
+
+        /**
+         * The constructor we will use to recognize workers.
+         * @type {Function}
+         */
+        this.workerClass = (typeof Worker === 'undefined' ? null : Worker);
 
         /**
          * List of workers attached to this dispatcher.
@@ -74,22 +80,26 @@ class CentralDispatch {
      */
     transferCall (service, method, transfer, ...args) {
         return new Promise((resolve, reject) => {
-            if (this.services.hasOwnProperty(service)) {
-                const provider = this.services[service];
-                if (provider instanceof Worker) {
-                    const callbackId = this.nextCallback++;
-                    this.callbacks[callbackId] = [resolve, reject];
-                    if (transfer) {
-                        provider.postMessage([service, method, callbackId, args], transfer);
+            try {
+                if (this.services.hasOwnProperty(service)) {
+                    const provider = this.services[service];
+                    if (provider instanceof this.workerClass) {
+                        const callbackId = this.nextCallback++;
+                        this.callbacks[callbackId] = [resolve, reject];
+                        if (transfer) {
+                            provider.postMessage([service, method, callbackId, args], transfer);
+                        } else {
+                            provider.postMessage([service, method, callbackId, args]);
+                        }
                     } else {
-                        provider.postMessage([service, method, callbackId, args]);
+                        const result = provider[method].apply(provider, args);
+                        resolve(result);
                     }
                 } else {
-                    const result = provider[method].apply(provider, args);
-                    resolve(result);
+                    reject(new Error(`Service not found: ${service}`));
                 }
-            } else {
-                reject(new Error(`Service not found: ${service}`));
+            } catch (e) {
+                reject(e);
             }
         });
     }
@@ -115,8 +125,8 @@ class CentralDispatch {
     addWorker (worker) {
         if (this.workers.indexOf(worker) === -1) {
             this.workers.push(worker);
-            worker.onmessage = this._onMessage.bind(this);
-            worker.postMessage('dispatch-handshake');
+            worker.onmessage = this._onMessage.bind(this, worker);
+            worker.postMessage(['dispatch', '_handshake']);
         } else {
             log.warn('Ignoring attempt to add duplicate worker');
         }
@@ -124,11 +134,11 @@ class CentralDispatch {
 
     /**
      * Handle a message event received from a connected worker.
+     * @param {Worker} worker - the worker which sent the message.
      * @param {MessageEvent} event - the message event to be handled.
      * @private
      */
-    _onMessage (event) {
-        const worker = event.target;
+    _onMessage (worker, event) {
         const [service, method, callbackId, ...args] = /** @type {[string, string, *]} */ event.data;
         if (service === 'dispatch') {
             switch (method) {
@@ -167,7 +177,4 @@ class CentralDispatch {
     }
 }
 
-const dispatch = new CentralDispatch();
-module.exports = dispatch;
-self.Scratch = self.Scratch || {};
-self.Scratch.dispatch = dispatch;
+module.exports = new CentralDispatch();

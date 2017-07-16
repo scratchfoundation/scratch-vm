@@ -12,7 +12,7 @@ class WorkerDispatch {
         /**
          * List of callback registrations for promises waiting for a response from a call to a service on another
          * worker. A callback registration is an array of [resolve,reject] Promise functions.
-         * Calls to services on this worker don't enter this list.
+         * Calls to local services don't enter this list.
          * @type {Array.<[Function,Function]>}
          */
         this.callbacks = [];
@@ -25,8 +25,6 @@ class WorkerDispatch {
          */
         this._connectionPromise = new Promise(resolve => {
             this._onConnect = resolve;
-        }).then(() => {
-            self.onmessage = this._onMessage.bind(this);
         });
 
         /**
@@ -44,7 +42,10 @@ class WorkerDispatch {
          */
         this.services = {};
 
-        self.onmessage = this._onHandshake.bind(this);
+        this._onMessage = this._onMessage.bind(this);
+        if (typeof self !== 'undefined') {
+            self.onmessage = this._onMessage;
+        }
     }
 
     /**
@@ -94,18 +95,22 @@ class WorkerDispatch {
      */
     transferCall (service, method, transfer, ...args) {
         return new Promise((resolve, reject) => {
-            if (this.services.hasOwnProperty(service)) {
-                const provider = this.services[service];
-                const result = provider[method].apply(provider, args);
-                resolve(result);
-            } else {
-                const callbackId = this.nextCallback++;
-                this.callbacks[callbackId] = [resolve, reject];
-                if (transfer) {
-                    self.postMessage([service, method, callbackId, ...args], transfer);
+            try {
+                if (this.services.hasOwnProperty(service)) {
+                    const provider = this.services[service];
+                    const result = provider[method].apply(provider, args);
+                    resolve(result);
                 } else {
-                    self.postMessage([service, method, callbackId, ...args]);
+                    const callbackId = this.nextCallback++;
+                    this.callbacks[callbackId] = [resolve, reject];
+                    if (transfer) {
+                        self.postMessage([service, method, callbackId, ...args], transfer);
+                    } else {
+                        self.postMessage([service, method, callbackId, ...args]);
+                    }
                 }
+            } catch (e) {
+                reject(e);
             }
         });
     }
@@ -127,20 +132,6 @@ class WorkerDispatch {
     }
 
     /**
-     * Message handler active until the dispatcher handshake arrives.
-     * @param {MessageEvent} event - the message event to be handled.
-     * @private
-     */
-    _onHandshake (event) {
-        const message = event.data;
-        if (message === 'dispatch-handshake') {
-            this._onConnect();
-        } else {
-            log.error(`WorkerDispatch received unexpected message before handshake: ${JSON.stringify(message)}`);
-        }
-    }
-
-    /**
      * Message handler active after the dispatcher handshake. This only handles method calls.
      * @param {MessageEvent} event - the message event to be handled.
      * @private
@@ -149,6 +140,9 @@ class WorkerDispatch {
         const [service, method, callbackId, ...args] = /** @type {[string, string, *]} */ event.data;
         if (service === 'dispatch') {
             switch (method) {
+            case '_handshake':
+                this._onConnect();
+                break;
             case '_callback':
                 this._callback(callbackId, ...args);
                 break;
@@ -184,7 +178,4 @@ class WorkerDispatch {
     }
 }
 
-const dispatch = new WorkerDispatch();
-module.exports = dispatch;
-self.Scratch = self.Scratch || {};
-self.Scratch.dispatch = dispatch;
+module.exports = new WorkerDispatch();
