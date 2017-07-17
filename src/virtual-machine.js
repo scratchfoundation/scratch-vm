@@ -545,8 +545,11 @@ class VirtualMachine extends EventEmitter {
      * of the current editing target's blocks.
      */
     emitWorkspaceUpdate () {
-        // @todo Include variables scoped to editing target also.
-        const variableMap = this.runtime.getTargetForStage().variables;
+        const variableMap = Object.assign({},
+            this.runtime.getTargetForStage().variables,
+            this.editingTarget.variables
+        );
+
         const variables = Object.keys(variableMap).map(k => variableMap[k]);
 
         const xmlString = `<xml xmlns="http://www.w3.org/1999/xhtml">
