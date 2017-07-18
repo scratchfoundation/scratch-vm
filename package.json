@@ -15,10 +15,11 @@
     "coverage": "./node_modules/.bin/tap ./test/{unit,integration}/*.js --coverage --coverage-report=lcov",
     "deploy": "touch playground/.nojekyll && ./node_modules/.bin/gh-pages -t -d playground -m \"Build for $(git log --pretty=format:%H -n1)\"",
     "lint": "./node_modules/.bin/eslint .",
-    "prepublish": "npm run build",
-    "prepublish-watch": "npm run watch",
+    "prepublish": "in-publish && npm run build || not-in-publish",
     "start": "./node_modules/.bin/webpack-dev-server",
     "tap": "./node_modules/.bin/tap ./test/{unit,integration}/*.js",
+    "tap:unit": "./node_modules/.bin/tap ./test/unit/*.js",
+    "tap:integration": "./node_modules/.bin/tap ./test/integration/*.js",
     "test": "npm run lint && npm run tap",
     "watch": "./node_modules/.bin/webpack --progress --colors --watch",
     "version": "./node_modules/.bin/json -f package.json -I -e \"this.repository.sha = '$(git log -n1 --pretty=format:%H)'\""
@@ -38,6 +39,7 @@
     "highlightjs": "^9.8.0",
     "htmlparser2": "3.9.2",
     "immutable": "3.8.1",
+    "in-publish": "^2.0.0",
     "json": "^9.0.4",
     "lodash.defaultsdeep": "4.6.0",
     "minilog": "3.1.0",
@@ -50,7 +52,6 @@
     "socket.io-client": "1.7.3",
     "stats.js": "^0.17.0",
     "tap": "^10.2.0",
-    "travis-after-all": "^1.4.4",
     "webpack": "^2.4.1",
     "webpack-dev-server": "^2.4.1"
   }
