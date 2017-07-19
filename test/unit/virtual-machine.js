@@ -147,3 +147,42 @@ test('renameCostume sets the costume name', t => {
     t.equal(vm.editingTarget.sprite.costumes[1].name, 'hello2');
     t.end();
 });
+
+test('emitWorkspaceUpdate', t => {
+    const vm = new VirtualMachine();
+    vm.runtime.targets = [
+        {
+            isStage: true,
+            variables: {
+                global: {
+                    toXML: () => 'global'
+                }
+            }
+        }, {
+            variables: {
+                unused: {
+                    toXML: () => 'unused'
+                }
+            }
+        }, {
+            variables: {
+                local: {
+                    toXML: () => 'local'
+                }
+            },
+            blocks: {
+                toXML: () => 'blocks'
+            }
+        }
+    ];
+    vm.editingTarget = vm.runtime.targets[2];
+
+    let xml = null;
+    vm.emit = (event, data) => (xml = data.xml);
+    vm.emitWorkspaceUpdate();
+    t.notEqual(xml.indexOf('global'), -1);
+    t.notEqual(xml.indexOf('local'), -1);
+    t.equal(xml.indexOf('unused'), -1);
+    t.notEqual(xml.indexOf('blocks'), -1);
+    t.end();
+});

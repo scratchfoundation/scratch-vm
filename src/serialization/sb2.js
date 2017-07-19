@@ -77,15 +77,16 @@ const flatten = function (blocks) {
  * a list of blocks in a branch (e.g., in forever),
  * or a list of blocks in an argument (e.g., move [pick random...]).
  * @param {Array.<object>} blockList SB2 JSON-format block list.
+ * @param {Function} getVariableId function to retreive a variable's ID based on name
  * @return {Array.<object>} Scratch VM-format block list.
  */
-const parseBlockList = function (blockList) {
+const parseBlockList = function (blockList, getVariableId) {
     const resultingList = [];
     let previousBlock = null; // For setting next.
     for (let i = 0; i < blockList.length; i++) {
         const block = blockList[i];
         // eslint-disable-next-line no-use-before-define
-        const parsedBlock = parseBlock(block);
+        const parsedBlock = parseBlock(block, getVariableId);
         if (typeof parsedBlock === 'undefined') continue;
         if (previousBlock) {
             parsedBlock.parent = previousBlock.id;
@@ -102,14 +103,15 @@ const parseBlockList = function (blockList) {
  * This should only handle top-level scripts that include X, Y coordinates.
  * @param {!object} scripts Scripts object from SB2 JSON.
  * @param {!Blocks} blocks Blocks object to load parsed blocks into.
+ * @param {Function} getVariableId function to retreive a variable's ID based on name
  */
-const parseScripts = function (scripts, blocks) {
+const parseScripts = function (scripts, blocks, getVariableId) {
     for (let i = 0; i < scripts.length; i++) {
         const script = scripts[i];
         const scriptX = script[0];
         const scriptY = script[1];
         const blockList = script[2];
-        const parsedBlockList = parseBlockList(blockList);
+        const parsedBlockList = parseBlockList(blockList, getVariableId);
         if (parsedBlockList[0]) {
             // Adjust script coordinates to account for
             // larger block size in scratch-blocks.
@@ -126,6 +128,30 @@ const parseScripts = function (scripts, blocks) {
         }
     }
 };
+
+/**
+ * Create a callback for assigning fixed IDs to imported variables
+ * Generator stores the global variable mapping in a closure
+ * @param {!string} targetId the id of the target to scope the variable to
+ * @return {string} variable ID
+ */
+const generateVariableIdGetter = (function () {
+    let globalVariableNameMap = {};
+    const namer = (targetId, name) => `${targetId}-${name}`;
+    return function (targetId, topLevel) {
+        // Reset the global variable map if topLevel
+        if (topLevel) globalVariableNameMap = {};
+        return function (name) {
+            if (topLevel) { // Store the name/id pair in the globalVariableNameMap
+                globalVariableNameMap[name] = namer(targetId, name);
+                return globalVariableNameMap[name];
+            }
+            // Not top-level, so first check the global name map
+            if (globalVariableNameMap[name]) return globalVariableNameMap[name];
+            return namer(targetId, name);
+        };
+    };
+}());
 
 /**
  * Parse a single "Scratch object" and create all its in-memory VM objects.
@@ -180,19 +206,18 @@ const parseScratchObject = function (object, runtime, topLevel) {
             soundPromises.push(loadSound(sound, runtime));
         }
     }
-    // If included, parse any and all scripts/blocks on the object.
-    if (object.hasOwnProperty('scripts')) {
-        parseScripts(object.scripts, blocks);
-    }
+
     // Create the first clone, and load its run-state from JSON.
     const target = sprite.createClone();
+
+    const getVariableId = generateVariableIdGetter(target.id, topLevel);
 
     // Load target properties from JSON.
     if (object.hasOwnProperty('variables')) {
         for (let j = 0; j < object.variables.length; j++) {
             const variable = object.variables[j];
             const newVariable = new Variable(
-                null,
+                getVariableId(variable.name),
                 variable.name,
                 variable.value,
                 variable.isPersistent
@@ -200,6 +225,12 @@ const parseScratchObject = function (object, runtime, topLevel) {
             target.variables[newVariable.id] = newVariable;
         }
     }
+
+    // If included, parse any and all scripts/blocks on the object.
+    if (object.hasOwnProperty('scripts')) {
+        parseScripts(object.scripts, blocks, getVariableId);
+    }
+
     if (object.hasOwnProperty('lists')) {
         for (let k = 0; k < object.lists.length; k++) {
             const list = object.lists[k];
@@ -294,9 +325,10 @@ const sb2import = function (json, runtime, optForceSprite) {
 /**
  * Parse a single SB2 JSON-formatted block and its children.
  * @param {!object} sb2block SB2 JSON-formatted block.
+ * @param {Function} getVariableId function to retreive a variable's ID based on name
  * @return {object} Scratch VM format block.
  */
-const parseBlock = function (sb2block) {
+const parseBlock = function (sb2block, getVariableId) {
     // First item in block object is the old opcode (e.g., 'forward:').
     const oldOpcode = sb2block[0];
     // Convert the block using the specMap. See sb2specmap.js.
@@ -341,10 +373,10 @@ const parseBlock = function (sb2block) {
                 let innerBlocks;
                 if (typeof providedArg[0] === 'object' && providedArg[0]) {
                     // Block list occupies the input.
-                    innerBlocks = parseBlockList(providedArg);
+                    innerBlocks = parseBlockList(providedArg, getVariableId);
                 } else {
                     // Single block occupies the input.
-                    innerBlocks = [parseBlock(providedArg)];
+                    innerBlocks = [parseBlock(providedArg, getVariableId)];
                 }
                 let previousBlock = null;
                 for (let j = 0; j < innerBlocks.length; j++) {
@@ -426,6 +458,11 @@ const parseBlock = function (sb2block) {
                 name: expectedArg.fieldName,
                 value: providedArg
             };
+
+            if (expectedArg.fieldName === 'VARIABLE') {
+                // Add `id` property to variable fields
+                activeBlock.fields[expectedArg.fieldName].id = getVariableId(providedArg);
+            }
         }
     }
     // Special cases to generate mutations.
