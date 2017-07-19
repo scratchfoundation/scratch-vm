@@ -83,7 +83,7 @@
 
 var base64 = __webpack_require__(64)
 var ieee754 = __webpack_require__(73)
-var isArray = __webpack_require__(36)
+var isArray = __webpack_require__(35)
 
 exports.Buffer = Buffer
 exports.SlowBuffer = SlowBuffer
@@ -5549,6 +5549,27 @@ process.umask = function() { return 0; };
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
+// Copyright Joyent, Inc. and other Node contributors.
+//
+// Permission is hereby granted, free of charge, to any person obtaining a
+// copy of this software and associated documentation files (the
+// "Software"), to deal in the Software without restriction, including
+// without limitation the rights to use, copy, modify, merge, publish,
+// distribute, sublicense, and/or sell copies of the Software, and to permit
+// persons to whom the Software is furnished to do so, subject to the
+// following conditions:
+//
+// The above copyright notice and this permission notice shall be included
+// in all copies or substantial portions of the Software.
+//
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+// OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+// MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN
+// NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,
+// DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
+// OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
+// USE OR OTHER DEALINGS IN THE SOFTWARE.
+
 // a duplex stream is just a stream that is both readable and writable.
 // Since JS doesn't have multiple prototypal inheritance, this class
 // prototypally inherits from Readable, and then parasitically from
@@ -5558,6 +5579,10 @@ process.umask = function() { return 0; };
 
 /*<replacement>*/
 
+var processNextTick = __webpack_require__(14);
+/*</replacement>*/
+
+/*<replacement>*/
 var objectKeys = Object.keys || function (obj) {
   var keys = [];
   for (var key in obj) {
@@ -5569,15 +5594,11 @@ var objectKeys = Object.keys || function (obj) {
 module.exports = Duplex;
 
 /*<replacement>*/
-var processNextTick = __webpack_require__(18);
-/*</replacement>*/
-
-/*<replacement>*/
-var util = __webpack_require__(10);
+var util = __webpack_require__(11);
 util.inherits = __webpack_require__(1);
 /*</replacement>*/
 
-var Readable = __webpack_require__(38);
+var Readable = __webpack_require__(37);
 var Writable = __webpack_require__(19);
 
 util.inherits(Duplex, Readable);
@@ -5618,6 +5639,34 @@ function onend() {
 function onEndNT(self) {
   self.end();
 }
+
+Object.defineProperty(Duplex.prototype, 'destroyed', {
+  get: function () {
+    if (this._readableState === undefined || this._writableState === undefined) {
+      return false;
+    }
+    return this._readableState.destroyed && this._writableState.destroyed;
+  },
+  set: function (value) {
+    // we ignore the value if the stream
+    // has not been initialized yet
+    if (this._readableState === undefined || this._writableState === undefined) {
+      return;
+    }
+
+    // backward compatibility, the user is explicitly
+    // managing destroyed
+    this._readableState.destroyed = value;
+    this._writableState.destroyed = value;
+  }
+});
+
+Duplex.prototype._destroy = function (err, cb) {
+  this.push(null);
+  this.end();
+
+  processNextTick(cb, err);
+};
 
 function forEach(xs, f) {
   for (var i = 0, l = xs.length; i < l; i++) {
@@ -5957,17 +6006,85 @@ function isUndefined(arg) {
 /* 8 */
 /***/ (function(module, exports, __webpack_require__) {
 
-exports = module.exports = __webpack_require__(38);
+exports = module.exports = __webpack_require__(37);
 exports.Stream = exports;
 exports.Readable = exports;
 exports.Writable = __webpack_require__(19);
 exports.Duplex = __webpack_require__(5);
-exports.Transform = __webpack_require__(39);
+exports.Transform = __webpack_require__(38);
 exports.PassThrough = __webpack_require__(78);
 
 
 /***/ }),
 /* 9 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/* eslint-disable node/no-deprecated-api */
+var buffer = __webpack_require__(0)
+var Buffer = buffer.Buffer
+
+// alternative to using Object.keys for old browsers
+function copyProps (src, dst) {
+  for (var key in src) {
+    dst[key] = src[key]
+  }
+}
+if (Buffer.from && Buffer.alloc && Buffer.allocUnsafe && Buffer.allocUnsafeSlow) {
+  module.exports = buffer
+} else {
+  // Copy properties from require('buffer')
+  copyProps(buffer, exports)
+  exports.Buffer = SafeBuffer
+}
+
+function SafeBuffer (arg, encodingOrOffset, length) {
+  return Buffer(arg, encodingOrOffset, length)
+}
+
+// Copy static methods from Buffer
+copyProps(Buffer, SafeBuffer)
+
+SafeBuffer.from = function (arg, encodingOrOffset, length) {
+  if (typeof arg === 'number') {
+    throw new TypeError('Argument must not be a number')
+  }
+  return Buffer(arg, encodingOrOffset, length)
+}
+
+SafeBuffer.alloc = function (size, fill, encoding) {
+  if (typeof size !== 'number') {
+    throw new TypeError('Argument must be a number')
+  }
+  var buf = Buffer(size)
+  if (fill !== undefined) {
+    if (typeof encoding === 'string') {
+      buf.fill(fill, encoding)
+    } else {
+      buf.fill(fill)
+    }
+  } else {
+    buf.fill(0)
+  }
+  return buf
+}
+
+SafeBuffer.allocUnsafe = function (size) {
+  if (typeof size !== 'number') {
+    throw new TypeError('Argument must be a number')
+  }
+  return Buffer(size)
+}
+
+SafeBuffer.allocUnsafeSlow = function (size) {
+  if (typeof size !== 'number') {
+    throw new TypeError('Argument must be a number')
+  }
+  return buffer.SlowBuffer(size)
+}
+
+
+/***/ }),
+/* 10 */
 /***/ (function(module, exports) {
 
 module.exports = assert;
@@ -5984,7 +6101,7 @@ assert.equal = function assertEqual(l, r, msg) {
 
 
 /***/ }),
-/* 10 */
+/* 11 */
 /***/ (function(module, exports, __webpack_require__) {
 
 /* WEBPACK VAR INJECTION */(function(Buffer) {// Copyright Joyent, Inc. and other Node contributors.
@@ -6098,14 +6215,14 @@ function objectToString(o) {
 /* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(0).Buffer))
 
 /***/ }),
-/* 11 */,
-/* 12 */
+/* 12 */,
+/* 13 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 
-var assert = __webpack_require__(9);
+var assert = __webpack_require__(10);
 var inherits = __webpack_require__(1);
 
 exports.inherits = inherits;
@@ -6359,12 +6476,63 @@ exports.shr64_lo = shr64_lo;
 
 
 /***/ }),
-/* 13 */
+/* 14 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var Buffer = __webpack_require__(23).Buffer
-var Transform = __webpack_require__(25).Transform
-var StringDecoder = __webpack_require__(17).StringDecoder
+"use strict";
+/* WEBPACK VAR INJECTION */(function(process) {
+
+if (!process.version ||
+    process.version.indexOf('v0.') === 0 ||
+    process.version.indexOf('v1.') === 0 && process.version.indexOf('v1.8.') !== 0) {
+  module.exports = nextTick;
+} else {
+  module.exports = process.nextTick;
+}
+
+function nextTick(fn, arg1, arg2, arg3) {
+  if (typeof fn !== 'function') {
+    throw new TypeError('"callback" argument must be a function');
+  }
+  var len = arguments.length;
+  var args, i;
+  switch (len) {
+  case 0:
+  case 1:
+    return process.nextTick(fn);
+  case 2:
+    return process.nextTick(function afterTickOne() {
+      fn.call(null, arg1);
+    });
+  case 3:
+    return process.nextTick(function afterTickTwo() {
+      fn.call(null, arg1, arg2);
+    });
+  case 4:
+    return process.nextTick(function afterTickThree() {
+      fn.call(null, arg1, arg2, arg3);
+    });
+  default:
+    args = new Array(len - 1);
+    i = 0;
+    while (i < args.length) {
+      args[i++] = arguments[i];
+    }
+    return process.nextTick(function afterTick() {
+      fn.apply(null, args);
+    });
+  }
+}
+
+/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(3)))
+
+/***/ }),
+/* 15 */
+/***/ (function(module, exports, __webpack_require__) {
+
+var Buffer = __webpack_require__(9).Buffer
+var Transform = __webpack_require__(24).Transform
+var StringDecoder = __webpack_require__(18).StringDecoder
 var inherits = __webpack_require__(1)
 
 function CipherBase (hashMode) {
@@ -6464,125 +6632,9 @@ module.exports = CipherBase
 
 
 /***/ }),
-/* 14 */,
-/* 15 */,
-/* 16 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-/* WEBPACK VAR INJECTION */(function(global) {
-
-var buffer = __webpack_require__(0);
-var Buffer = buffer.Buffer;
-var SlowBuffer = buffer.SlowBuffer;
-var MAX_LEN = buffer.kMaxLength || 2147483647;
-exports.alloc = function alloc(size, fill, encoding) {
-  if (typeof Buffer.alloc === 'function') {
-    return Buffer.alloc(size, fill, encoding);
-  }
-  if (typeof encoding === 'number') {
-    throw new TypeError('encoding must not be number');
-  }
-  if (typeof size !== 'number') {
-    throw new TypeError('size must be a number');
-  }
-  if (size > MAX_LEN) {
-    throw new RangeError('size is too large');
-  }
-  var enc = encoding;
-  var _fill = fill;
-  if (_fill === undefined) {
-    enc = undefined;
-    _fill = 0;
-  }
-  var buf = new Buffer(size);
-  if (typeof _fill === 'string') {
-    var fillBuf = new Buffer(_fill, enc);
-    var flen = fillBuf.length;
-    var i = -1;
-    while (++i < size) {
-      buf[i] = fillBuf[i % flen];
-    }
-  } else {
-    buf.fill(_fill);
-  }
-  return buf;
-}
-exports.allocUnsafe = function allocUnsafe(size) {
-  if (typeof Buffer.allocUnsafe === 'function') {
-    return Buffer.allocUnsafe(size);
-  }
-  if (typeof size !== 'number') {
-    throw new TypeError('size must be a number');
-  }
-  if (size > MAX_LEN) {
-    throw new RangeError('size is too large');
-  }
-  return new Buffer(size);
-}
-exports.from = function from(value, encodingOrOffset, length) {
-  if (typeof Buffer.from === 'function' && (!global.Uint8Array || Uint8Array.from !== Buffer.from)) {
-    return Buffer.from(value, encodingOrOffset, length);
-  }
-  if (typeof value === 'number') {
-    throw new TypeError('"value" argument must not be a number');
-  }
-  if (typeof value === 'string') {
-    return new Buffer(value, encodingOrOffset);
-  }
-  if (typeof ArrayBuffer !== 'undefined' && value instanceof ArrayBuffer) {
-    var offset = encodingOrOffset;
-    if (arguments.length === 1) {
-      return new Buffer(value);
-    }
-    if (typeof offset === 'undefined') {
-      offset = 0;
-    }
-    var len = length;
-    if (typeof len === 'undefined') {
-      len = value.byteLength - offset;
-    }
-    if (offset >= value.byteLength) {
-      throw new RangeError('\'offset\' is out of bounds');
-    }
-    if (len > value.byteLength - offset) {
-      throw new RangeError('\'length\' is out of bounds');
-    }
-    return new Buffer(value.slice(offset, offset + len));
-  }
-  if (Buffer.isBuffer(value)) {
-    var out = new Buffer(value.length);
-    value.copy(out, 0, 0, value.length);
-    return out;
-  }
-  if (value) {
-    if (Array.isArray(value) || (typeof ArrayBuffer !== 'undefined' && value.buffer instanceof ArrayBuffer) || 'length' in value) {
-      return new Buffer(value);
-    }
-    if (value.type === 'Buffer' && Array.isArray(value.data)) {
-      return new Buffer(value.data);
-    }
-  }
-
-  throw new TypeError('First argument must be a string, Buffer, ' + 'ArrayBuffer, Array, or array-like object.');
-}
-exports.allocUnsafeSlow = function allocUnsafeSlow(size) {
-  if (typeof Buffer.allocUnsafeSlow === 'function') {
-    return Buffer.allocUnsafeSlow(size);
-  }
-  if (typeof size !== 'number') {
-    throw new TypeError('size must be a number');
-  }
-  if (size >= MAX_LEN) {
-    throw new RangeError('size is too large');
-  }
-  return new SlowBuffer(size);
-}
-
-/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(2)))
-
-/***/ }),
-/* 17 */
+/* 16 */,
+/* 17 */,
+/* 18 */
 /***/ (function(module, exports, __webpack_require__) {
 
 // Copyright Joyent, Inc. and other Node contributors.
@@ -6809,72 +6861,64 @@ function base64DetectIncompleteChar(buffer) {
 
 
 /***/ }),
-/* 18 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-/* WEBPACK VAR INJECTION */(function(process) {
-
-if (!process.version ||
-    process.version.indexOf('v0.') === 0 ||
-    process.version.indexOf('v1.') === 0 && process.version.indexOf('v1.8.') !== 0) {
-  module.exports = nextTick;
-} else {
-  module.exports = process.nextTick;
-}
-
-function nextTick(fn, arg1, arg2, arg3) {
-  if (typeof fn !== 'function') {
-    throw new TypeError('"callback" argument must be a function');
-  }
-  var len = arguments.length;
-  var args, i;
-  switch (len) {
-  case 0:
-  case 1:
-    return process.nextTick(fn);
-  case 2:
-    return process.nextTick(function afterTickOne() {
-      fn.call(null, arg1);
-    });
-  case 3:
-    return process.nextTick(function afterTickTwo() {
-      fn.call(null, arg1, arg2);
-    });
-  case 4:
-    return process.nextTick(function afterTickThree() {
-      fn.call(null, arg1, arg2, arg3);
-    });
-  default:
-    args = new Array(len - 1);
-    i = 0;
-    while (i < args.length) {
-      args[i++] = arguments[i];
-    }
-    return process.nextTick(function afterTick() {
-      fn.apply(null, args);
-    });
-  }
-}
-
-/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(3)))
-
-/***/ }),
 /* 19 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
-/* WEBPACK VAR INJECTION */(function(process, setImmediate) {// A bit simpler than readable streams.
+/* WEBPACK VAR INJECTION */(function(process, setImmediate, global) {// Copyright Joyent, Inc. and other Node contributors.
+//
+// Permission is hereby granted, free of charge, to any person obtaining a
+// copy of this software and associated documentation files (the
+// "Software"), to deal in the Software without restriction, including
+// without limitation the rights to use, copy, modify, merge, publish,
+// distribute, sublicense, and/or sell copies of the Software, and to permit
+// persons to whom the Software is furnished to do so, subject to the
+// following conditions:
+//
+// The above copyright notice and this permission notice shall be included
+// in all copies or substantial portions of the Software.
+//
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+// OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+// MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN
+// NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,
+// DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
+// OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
+// USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+// A bit simpler than readable streams.
 // Implement an async ._write(chunk, encoding, cb), and it'll handle all
 // the drain event emission and buffering.
 
 
 
+/*<replacement>*/
+
+var processNextTick = __webpack_require__(14);
+/*</replacement>*/
+
 module.exports = Writable;
 
-/*<replacement>*/
-var processNextTick = __webpack_require__(18);
-/*</replacement>*/
+/* <replacement> */
+function WriteReq(chunk, encoding, cb) {
+  this.chunk = chunk;
+  this.encoding = encoding;
+  this.callback = cb;
+  this.next = null;
+}
+
+// It seems a linked list but it is not
+// there will be only 2 of these for each stream
+function CorkedRequest(state) {
+  var _this = this;
+
+  this.next = null;
+  this.entry = null;
+  this.finish = function () {
+    onCorkedFinish(_this, state);
+  };
+}
+/* </replacement> */
 
 /*<replacement>*/
 var asyncWrite = !process.browser && ['v0.10', 'v0.9.'].indexOf(process.version.slice(0, 5)) > -1 ? setImmediate : processNextTick;
@@ -6887,7 +6931,7 @@ var Duplex;
 Writable.WritableState = WritableState;
 
 /*<replacement>*/
-var util = __webpack_require__(10);
+var util = __webpack_require__(11);
 util.inherits = __webpack_require__(1);
 /*</replacement>*/
 
@@ -6901,21 +6945,22 @@ var internalUtil = {
 var Stream = __webpack_require__(40);
 /*</replacement>*/
 
-var Buffer = __webpack_require__(0).Buffer;
 /*<replacement>*/
-var bufferShim = __webpack_require__(16);
+var Buffer = __webpack_require__(9).Buffer;
+var OurUint8Array = global.Uint8Array || function () {};
+function _uint8ArrayToBuffer(chunk) {
+  return Buffer.from(chunk);
+}
+function _isUint8Array(obj) {
+  return Buffer.isBuffer(obj) || obj instanceof OurUint8Array;
+}
 /*</replacement>*/
+
+var destroyImpl = __webpack_require__(39);
 
 util.inherits(Writable, Stream);
 
 function nop() {}
-
-function WriteReq(chunk, encoding, cb) {
-  this.chunk = chunk;
-  this.encoding = encoding;
-  this.callback = cb;
-  this.next = null;
-}
 
 function WritableState(options, stream) {
   Duplex = Duplex || __webpack_require__(5);
@@ -6936,7 +6981,10 @@ function WritableState(options, stream) {
   this.highWaterMark = hwm || hwm === 0 ? hwm : defaultHwm;
 
   // cast to ints.
-  this.highWaterMark = ~~this.highWaterMark;
+  this.highWaterMark = Math.floor(this.highWaterMark);
+
+  // if _final has been called
+  this.finalCalled = false;
 
   // drain event flag.
   this.needDrain = false;
@@ -6946,6 +6994,9 @@ function WritableState(options, stream) {
   this.ended = false;
   // when 'finish' is emitted
   this.finished = false;
+
+  // has it been destroyed
+  this.destroyed = false;
 
   // should we decode strings into buffers before passing to _write?
   // this is here so that some node-core streams can optimize string
@@ -7028,7 +7079,7 @@ WritableState.prototype.getBuffer = function getBuffer() {
     Object.defineProperty(WritableState.prototype, 'buffer', {
       get: internalUtil.deprecate(function () {
         return this.getBuffer();
-      }, '_writableState.buffer is deprecated. Use _writableState.getBuffer ' + 'instead.')
+      }, '_writableState.buffer is deprecated. Use _writableState.getBuffer ' + 'instead.', 'DEP0003')
     });
   } catch (_) {}
 })();
@@ -7074,6 +7125,10 @@ function Writable(options) {
     if (typeof options.write === 'function') this._write = options.write;
 
     if (typeof options.writev === 'function') this._writev = options.writev;
+
+    if (typeof options.destroy === 'function') this._destroy = options.destroy;
+
+    if (typeof options.final === 'function') this._final = options.final;
   }
 
   Stream.call(this);
@@ -7114,7 +7169,11 @@ function validChunk(stream, state, chunk, cb) {
 Writable.prototype.write = function (chunk, encoding, cb) {
   var state = this._writableState;
   var ret = false;
-  var isBuf = Buffer.isBuffer(chunk);
+  var isBuf = _isUint8Array(chunk) && !state.objectMode;
+
+  if (isBuf && !Buffer.isBuffer(chunk)) {
+    chunk = _uint8ArrayToBuffer(chunk);
+  }
 
   if (typeof encoding === 'function') {
     cb = encoding;
@@ -7159,7 +7218,7 @@ Writable.prototype.setDefaultEncoding = function setDefaultEncoding(encoding) {
 
 function decodeChunk(state, chunk, encoding) {
   if (!state.objectMode && state.decodeStrings !== false && typeof chunk === 'string') {
-    chunk = bufferShim.from(chunk, encoding);
+    chunk = Buffer.from(chunk, encoding);
   }
   return chunk;
 }
@@ -7169,8 +7228,12 @@ function decodeChunk(state, chunk, encoding) {
 // If we return false, then we need a drain event, so set that flag.
 function writeOrBuffer(stream, state, isBuf, chunk, encoding, cb) {
   if (!isBuf) {
-    chunk = decodeChunk(state, chunk, encoding);
-    if (Buffer.isBuffer(chunk)) encoding = 'buffer';
+    var newChunk = decodeChunk(state, chunk, encoding);
+    if (chunk !== newChunk) {
+      isBuf = true;
+      encoding = 'buffer';
+      chunk = newChunk;
+    }
   }
   var len = state.objectMode ? 1 : chunk.length;
 
@@ -7182,7 +7245,13 @@ function writeOrBuffer(stream, state, isBuf, chunk, encoding, cb) {
 
   if (state.writing || state.corked) {
     var last = state.lastBufferedRequest;
-    state.lastBufferedRequest = new WriteReq(chunk, encoding, cb);
+    state.lastBufferedRequest = {
+      chunk: chunk,
+      encoding: encoding,
+      isBuf: isBuf,
+      callback: cb,
+      next: null
+    };
     if (last) {
       last.next = state.lastBufferedRequest;
     } else {
@@ -7207,10 +7276,26 @@ function doWrite(stream, state, writev, len, chunk, encoding, cb) {
 
 function onwriteError(stream, state, sync, er, cb) {
   --state.pendingcb;
-  if (sync) processNextTick(cb, er);else cb(er);
 
-  stream._writableState.errorEmitted = true;
-  stream.emit('error', er);
+  if (sync) {
+    // defer the callback if we are being called synchronously
+    // to avoid piling up things on the stack
+    processNextTick(cb, er);
+    // this can emit finish, and it will always happen
+    // after error
+    processNextTick(finishMaybe, stream, state);
+    stream._writableState.errorEmitted = true;
+    stream.emit('error', er);
+  } else {
+    // the caller expect this to happen before if
+    // it is async
+    cb(er);
+    stream._writableState.errorEmitted = true;
+    stream.emit('error', er);
+    // this can emit finish, but finish must
+    // always follow error
+    finishMaybe(stream, state);
+  }
 }
 
 function onwriteStateUpdate(state) {
@@ -7275,11 +7360,14 @@ function clearBuffer(stream, state) {
     holder.entry = entry;
 
     var count = 0;
+    var allBuffers = true;
     while (entry) {
       buffer[count] = entry;
+      if (!entry.isBuf) allBuffers = false;
       entry = entry.next;
       count += 1;
     }
+    buffer.allBuffers = allBuffers;
 
     doWrite(stream, state, true, state.length, buffer, '', holder.finish);
 
@@ -7353,23 +7441,37 @@ Writable.prototype.end = function (chunk, encoding, cb) {
 function needFinish(state) {
   return state.ending && state.length === 0 && state.bufferedRequest === null && !state.finished && !state.writing;
 }
-
-function prefinish(stream, state) {
-  if (!state.prefinished) {
+function callFinal(stream, state) {
+  stream._final(function (err) {
+    state.pendingcb--;
+    if (err) {
+      stream.emit('error', err);
+    }
     state.prefinished = true;
     stream.emit('prefinish');
+    finishMaybe(stream, state);
+  });
+}
+function prefinish(stream, state) {
+  if (!state.prefinished && !state.finalCalled) {
+    if (typeof stream._final === 'function') {
+      state.pendingcb++;
+      state.finalCalled = true;
+      processNextTick(callFinal, stream, state);
+    } else {
+      state.prefinished = true;
+      stream.emit('prefinish');
+    }
   }
 }
 
 function finishMaybe(stream, state) {
   var need = needFinish(state);
   if (need) {
+    prefinish(stream, state);
     if (state.pendingcb === 0) {
-      prefinish(stream, state);
       state.finished = true;
       stream.emit('finish');
-    } else {
-      prefinish(stream, state);
     }
   }
   return need;
@@ -7385,30 +7487,49 @@ function endWritable(stream, state, cb) {
   stream.writable = false;
 }
 
-// It seems a linked list but it is not
-// there will be only 2 of these for each stream
-function CorkedRequest(state) {
-  var _this = this;
-
-  this.next = null;
-  this.entry = null;
-  this.finish = function (err) {
-    var entry = _this.entry;
-    _this.entry = null;
-    while (entry) {
-      var cb = entry.callback;
-      state.pendingcb--;
-      cb(err);
-      entry = entry.next;
-    }
-    if (state.corkedRequestsFree) {
-      state.corkedRequestsFree.next = _this;
-    } else {
-      state.corkedRequestsFree = _this;
-    }
-  };
+function onCorkedFinish(corkReq, state, err) {
+  var entry = corkReq.entry;
+  corkReq.entry = null;
+  while (entry) {
+    var cb = entry.callback;
+    state.pendingcb--;
+    cb(err);
+    entry = entry.next;
+  }
+  if (state.corkedRequestsFree) {
+    state.corkedRequestsFree.next = corkReq;
+  } else {
+    state.corkedRequestsFree = corkReq;
+  }
 }
-/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(3), __webpack_require__(26).setImmediate))
+
+Object.defineProperty(Writable.prototype, 'destroyed', {
+  get: function () {
+    if (this._writableState === undefined) {
+      return false;
+    }
+    return this._writableState.destroyed;
+  },
+  set: function (value) {
+    // we ignore the value if the stream
+    // has not been initialized yet
+    if (!this._writableState) {
+      return;
+    }
+
+    // backward compatibility, the user is explicitly
+    // managing destroyed
+    this._writableState.destroyed = value;
+  }
+});
+
+Writable.prototype.destroy = destroyImpl.destroy;
+Writable.prototype._undestroy = destroyImpl.undestroy;
+Writable.prototype._destroy = function (err, cb) {
+  this.end();
+  cb(err);
+};
+/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(3), __webpack_require__(25).setImmediate, __webpack_require__(2)))
 
 /***/ }),
 /* 20 */,
@@ -7425,74 +7546,6 @@ exports.encode = exports.stringify = __webpack_require__(76);
 
 /***/ }),
 /* 23 */
-/***/ (function(module, exports, __webpack_require__) {
-
-/* eslint-disable node/no-deprecated-api */
-var buffer = __webpack_require__(0)
-var Buffer = buffer.Buffer
-
-// alternative to using Object.keys for old browsers
-function copyProps (src, dst) {
-  for (var key in src) {
-    dst[key] = src[key]
-  }
-}
-if (Buffer.from && Buffer.alloc && Buffer.allocUnsafe && Buffer.allocUnsafeSlow) {
-  module.exports = buffer
-} else {
-  // Copy properties from require('buffer')
-  copyProps(buffer, exports)
-  exports.Buffer = SafeBuffer
-}
-
-function SafeBuffer (arg, encodingOrOffset, length) {
-  return Buffer(arg, encodingOrOffset, length)
-}
-
-// Copy static methods from Buffer
-copyProps(Buffer, SafeBuffer)
-
-SafeBuffer.from = function (arg, encodingOrOffset, length) {
-  if (typeof arg === 'number') {
-    throw new TypeError('Argument must not be a number')
-  }
-  return Buffer(arg, encodingOrOffset, length)
-}
-
-SafeBuffer.alloc = function (size, fill, encoding) {
-  if (typeof size !== 'number') {
-    throw new TypeError('Argument must be a number')
-  }
-  var buf = Buffer(size)
-  if (fill !== undefined) {
-    if (typeof encoding === 'string') {
-      buf.fill(fill, encoding)
-    } else {
-      buf.fill(fill)
-    }
-  } else {
-    buf.fill(0)
-  }
-  return buf
-}
-
-SafeBuffer.allocUnsafe = function (size) {
-  if (typeof size !== 'number') {
-    throw new TypeError('Argument must be a number')
-  }
-  return Buffer(size)
-}
-
-SafeBuffer.allocUnsafeSlow = function (size) {
-  if (typeof size !== 'number') {
-    throw new TypeError('Argument must be a number')
-  }
-  return buffer.SlowBuffer(size)
-}
-
-
-/***/ }),
-/* 24 */
 /***/ (function(module, exports, __webpack_require__) {
 
 /* WEBPACK VAR INJECTION */(function(Buffer) {// prototype class for hash functions
@@ -7568,7 +7621,7 @@ module.exports = Hash
 /* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(0).Buffer))
 
 /***/ }),
-/* 25 */
+/* 24 */
 /***/ (function(module, exports, __webpack_require__) {
 
 // Copyright Joyent, Inc. and other Node contributors.
@@ -7701,7 +7754,7 @@ Stream.prototype.pipe = function(dest, options) {
 
 
 /***/ }),
-/* 26 */
+/* 25 */
 /***/ (function(module, exports, __webpack_require__) {
 
 var apply = Function.prototype.apply;
@@ -7760,7 +7813,7 @@ exports.clearImmediate = clearImmediate;
 
 
 /***/ }),
-/* 27 */
+/* 26 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -8499,7 +8552,7 @@ Url.prototype.parseHost = function() {
 
 
 /***/ }),
-/* 28 */
+/* 27 */
 /***/ (function(module, exports, __webpack_require__) {
 
 /* WEBPACK VAR INJECTION */(function(global, process) {// Copyright Joyent, Inc. and other Node contributors.
@@ -9092,7 +9145,7 @@ function hasOwnProperty(obj, prop) {
 /* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(2), __webpack_require__(3)))
 
 /***/ }),
-/* 29 */
+/* 28 */
 /***/ (function(module, exports, __webpack_require__) {
 
 var asn1 = exports;
@@ -9100,14 +9153,14 @@ var asn1 = exports;
 asn1.bignum = __webpack_require__(4);
 
 asn1.define = __webpack_require__(147).define;
-asn1.base = __webpack_require__(30);
+asn1.base = __webpack_require__(29);
 asn1.constants = __webpack_require__(95);
 asn1.decoders = __webpack_require__(151);
 asn1.encoders = __webpack_require__(153);
 
 
 /***/ }),
-/* 30 */
+/* 29 */
 /***/ (function(module, exports, __webpack_require__) {
 
 var base = exports;
@@ -9119,8 +9172,8 @@ base.Node = __webpack_require__(148);
 
 
 /***/ }),
-/* 31 */,
-/* 32 */
+/* 30 */,
+/* 31 */
 /***/ (function(module, exports, __webpack_require__) {
 
 /* WEBPACK VAR INJECTION */(function(Buffer) {module.exports = function xor (a, b) {
@@ -9137,7 +9190,7 @@ base.Node = __webpack_require__(148);
 /* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(0).Buffer))
 
 /***/ }),
-/* 33 */
+/* 32 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -9147,7 +9200,7 @@ var md5 = __webpack_require__(47)
 var RIPEMD160 = __webpack_require__(82)
 var sha = __webpack_require__(84)
 
-var Base = __webpack_require__(13)
+var Base = __webpack_require__(15)
 
 function HashNoConstructor (hash) {
   Base.call(this, 'digest')
@@ -9197,15 +9250,15 @@ module.exports = function createHash (alg) {
 /* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(0).Buffer))
 
 /***/ }),
-/* 34 */,
-/* 35 */
+/* 33 */,
+/* 34 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 
-var utils = __webpack_require__(12);
-var assert = __webpack_require__(9);
+var utils = __webpack_require__(13);
+var assert = __webpack_require__(10);
 
 function BlockHash() {
   this.pending = null;
@@ -9297,7 +9350,7 @@ BlockHash.prototype._pad = function pad() {
 
 
 /***/ }),
-/* 36 */
+/* 35 */
 /***/ (function(module, exports) {
 
 var toString = {}.toString;
@@ -9308,7 +9361,7 @@ module.exports = Array.isArray || function (arr) {
 
 
 /***/ }),
-/* 37 */
+/* 36 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -9318,7 +9371,7 @@ function oldBrowser () {
   throw new Error('secure random number generation not supported by this browser\nuse chrome, FireFox or Internet Explorer 11')
 }
 
-var Buffer = __webpack_require__(23).Buffer
+var Buffer = __webpack_require__(9).Buffer
 var crypto = global.crypto || global.msCrypto
 
 if (crypto && crypto.getRandomValues) {
@@ -9354,20 +9407,42 @@ function randomBytes (size, cb) {
 /* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(2), __webpack_require__(3)))
 
 /***/ }),
-/* 38 */
+/* 37 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
-/* WEBPACK VAR INJECTION */(function(process) {
+/* WEBPACK VAR INJECTION */(function(global, process) {// Copyright Joyent, Inc. and other Node contributors.
+//
+// Permission is hereby granted, free of charge, to any person obtaining a
+// copy of this software and associated documentation files (the
+// "Software"), to deal in the Software without restriction, including
+// without limitation the rights to use, copy, modify, merge, publish,
+// distribute, sublicense, and/or sell copies of the Software, and to permit
+// persons to whom the Software is furnished to do so, subject to the
+// following conditions:
+//
+// The above copyright notice and this permission notice shall be included
+// in all copies or substantial portions of the Software.
+//
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+// OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+// MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN
+// NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,
+// DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
+// OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
+// USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+
+
+/*<replacement>*/
+
+var processNextTick = __webpack_require__(14);
+/*</replacement>*/
 
 module.exports = Readable;
 
 /*<replacement>*/
-var processNextTick = __webpack_require__(18);
-/*</replacement>*/
-
-/*<replacement>*/
-var isArray = __webpack_require__(36);
+var isArray = __webpack_require__(35);
 /*</replacement>*/
 
 /*<replacement>*/
@@ -9388,13 +9463,21 @@ var EElistenerCount = function (emitter, type) {
 var Stream = __webpack_require__(40);
 /*</replacement>*/
 
-var Buffer = __webpack_require__(0).Buffer;
+// TODO(bmeurer): Change this back to const once hole checks are
+// properly optimized away early in Ignition+TurboFan.
 /*<replacement>*/
-var bufferShim = __webpack_require__(16);
+var Buffer = __webpack_require__(9).Buffer;
+var OurUint8Array = global.Uint8Array || function () {};
+function _uint8ArrayToBuffer(chunk) {
+  return Buffer.from(chunk);
+}
+function _isUint8Array(obj) {
+  return Buffer.isBuffer(obj) || obj instanceof OurUint8Array;
+}
 /*</replacement>*/
 
 /*<replacement>*/
-var util = __webpack_require__(10);
+var util = __webpack_require__(11);
 util.inherits = __webpack_require__(1);
 /*</replacement>*/
 
@@ -9409,6 +9492,7 @@ if (debugUtil && debugUtil.debuglog) {
 /*</replacement>*/
 
 var BufferList = __webpack_require__(79);
+var destroyImpl = __webpack_require__(39);
 var StringDecoder;
 
 util.inherits(Readable, Stream);
@@ -9447,7 +9531,7 @@ function ReadableState(options, stream) {
   this.highWaterMark = hwm || hwm === 0 ? hwm : defaultHwm;
 
   // cast to ints.
-  this.highWaterMark = ~~this.highWaterMark;
+  this.highWaterMark = Math.floor(this.highWaterMark);
 
   // A linked list is used to store data chunks instead of an array because the
   // linked list can remove elements from the beginning faster than
@@ -9461,10 +9545,10 @@ function ReadableState(options, stream) {
   this.endEmitted = false;
   this.reading = false;
 
-  // a flag to be able to tell if the onwrite cb is called immediately,
-  // or on a later tick.  We set this to true at first, because any
-  // actions that shouldn't happen until "later" should generally also
-  // not happen before the first write call.
+  // a flag to be able to tell if the event 'readable'/'data' is emitted
+  // immediately, or on a later tick.  We set this to true at first, because
+  // any actions that shouldn't happen until "later" should generally also
+  // not happen before the first read call.
   this.sync = true;
 
   // whenever we return null, then we set a flag to say
@@ -9474,14 +9558,13 @@ function ReadableState(options, stream) {
   this.readableListening = false;
   this.resumeScheduled = false;
 
+  // has it been destroyed
+  this.destroyed = false;
+
   // Crypto is kind of old and crusty.  Historically, its default string
   // encoding is 'binary' so we have to make this configurable.
   // Everything else in the universe uses 'utf8', though.
   this.defaultEncoding = options.defaultEncoding || 'utf8';
-
-  // when piping, we only care about 'readable' events that happen
-  // after read()ing all the bytes and not getting any pushback.
-  this.ranOut = false;
 
   // the number of writers that are awaiting a drain event in .pipe()s
   this.awaitDrain = 0;
@@ -9492,7 +9575,7 @@ function ReadableState(options, stream) {
   this.decoder = null;
   this.encoding = null;
   if (options.encoding) {
-    if (!StringDecoder) StringDecoder = __webpack_require__(17).StringDecoder;
+    if (!StringDecoder) StringDecoder = __webpack_require__(18).StringDecoder;
     this.decoder = new StringDecoder(options.encoding);
     this.encoding = options.encoding;
   }
@@ -9508,10 +9591,41 @@ function Readable(options) {
   // legacy
   this.readable = true;
 
-  if (options && typeof options.read === 'function') this._read = options.read;
+  if (options) {
+    if (typeof options.read === 'function') this._read = options.read;
+
+    if (typeof options.destroy === 'function') this._destroy = options.destroy;
+  }
 
   Stream.call(this);
 }
+
+Object.defineProperty(Readable.prototype, 'destroyed', {
+  get: function () {
+    if (this._readableState === undefined) {
+      return false;
+    }
+    return this._readableState.destroyed;
+  },
+  set: function (value) {
+    // we ignore the value if the stream
+    // has not been initialized yet
+    if (!this._readableState) {
+      return;
+    }
+
+    // backward compatibility, the user is explicitly
+    // managing destroyed
+    this._readableState.destroyed = value;
+  }
+});
+
+Readable.prototype.destroy = destroyImpl.destroy;
+Readable.prototype._undestroy = destroyImpl.undestroy;
+Readable.prototype._destroy = function (err, cb) {
+  this.push(null);
+  cb(err);
+};
 
 // Manually shove something into the read() buffer.
 // This returns true if the highWaterMark has not been hit yet,
@@ -9519,74 +9633,85 @@ function Readable(options) {
 // write() some more.
 Readable.prototype.push = function (chunk, encoding) {
   var state = this._readableState;
+  var skipChunkCheck;
 
-  if (!state.objectMode && typeof chunk === 'string') {
-    encoding = encoding || state.defaultEncoding;
-    if (encoding !== state.encoding) {
-      chunk = bufferShim.from(chunk, encoding);
-      encoding = '';
+  if (!state.objectMode) {
+    if (typeof chunk === 'string') {
+      encoding = encoding || state.defaultEncoding;
+      if (encoding !== state.encoding) {
+        chunk = Buffer.from(chunk, encoding);
+        encoding = '';
+      }
+      skipChunkCheck = true;
     }
+  } else {
+    skipChunkCheck = true;
   }
 
-  return readableAddChunk(this, state, chunk, encoding, false);
+  return readableAddChunk(this, chunk, encoding, false, skipChunkCheck);
 };
 
 // Unshift should *always* be something directly out of read()
 Readable.prototype.unshift = function (chunk) {
-  var state = this._readableState;
-  return readableAddChunk(this, state, chunk, '', true);
+  return readableAddChunk(this, chunk, null, true, false);
 };
 
-Readable.prototype.isPaused = function () {
-  return this._readableState.flowing === false;
-};
-
-function readableAddChunk(stream, state, chunk, encoding, addToFront) {
-  var er = chunkInvalid(state, chunk);
-  if (er) {
-    stream.emit('error', er);
-  } else if (chunk === null) {
+function readableAddChunk(stream, chunk, encoding, addToFront, skipChunkCheck) {
+  var state = stream._readableState;
+  if (chunk === null) {
     state.reading = false;
     onEofChunk(stream, state);
-  } else if (state.objectMode || chunk && chunk.length > 0) {
-    if (state.ended && !addToFront) {
-      var e = new Error('stream.push() after EOF');
-      stream.emit('error', e);
-    } else if (state.endEmitted && addToFront) {
-      var _e = new Error('stream.unshift() after end event');
-      stream.emit('error', _e);
-    } else {
-      var skipAdd;
-      if (state.decoder && !addToFront && !encoding) {
-        chunk = state.decoder.write(chunk);
-        skipAdd = !state.objectMode && chunk.length === 0;
+  } else {
+    var er;
+    if (!skipChunkCheck) er = chunkInvalid(state, chunk);
+    if (er) {
+      stream.emit('error', er);
+    } else if (state.objectMode || chunk && chunk.length > 0) {
+      if (typeof chunk !== 'string' && !state.objectMode && Object.getPrototypeOf(chunk) !== Buffer.prototype) {
+        chunk = _uint8ArrayToBuffer(chunk);
       }
 
-      if (!addToFront) state.reading = false;
-
-      // Don't add to the buffer if we've decoded to an empty string chunk and
-      // we're not in object mode
-      if (!skipAdd) {
-        // if we want the data now, just emit it.
-        if (state.flowing && state.length === 0 && !state.sync) {
-          stream.emit('data', chunk);
-          stream.read(0);
+      if (addToFront) {
+        if (state.endEmitted) stream.emit('error', new Error('stream.unshift() after end event'));else addChunk(stream, state, chunk, true);
+      } else if (state.ended) {
+        stream.emit('error', new Error('stream.push() after EOF'));
+      } else {
+        state.reading = false;
+        if (state.decoder && !encoding) {
+          chunk = state.decoder.write(chunk);
+          if (state.objectMode || chunk.length !== 0) addChunk(stream, state, chunk, false);else maybeReadMore(stream, state);
         } else {
-          // update the buffer info.
-          state.length += state.objectMode ? 1 : chunk.length;
-          if (addToFront) state.buffer.unshift(chunk);else state.buffer.push(chunk);
-
-          if (state.needReadable) emitReadable(stream);
+          addChunk(stream, state, chunk, false);
         }
       }
-
-      maybeReadMore(stream, state);
+    } else if (!addToFront) {
+      state.reading = false;
     }
-  } else if (!addToFront) {
-    state.reading = false;
   }
 
   return needMoreData(state);
+}
+
+function addChunk(stream, state, chunk, addToFront) {
+  if (state.flowing && state.length === 0 && !state.sync) {
+    stream.emit('data', chunk);
+    stream.read(0);
+  } else {
+    // update the buffer info.
+    state.length += state.objectMode ? 1 : chunk.length;
+    if (addToFront) state.buffer.unshift(chunk);else state.buffer.push(chunk);
+
+    if (state.needReadable) emitReadable(stream);
+  }
+  maybeReadMore(stream, state);
+}
+
+function chunkInvalid(state, chunk) {
+  var er;
+  if (!_isUint8Array(chunk) && typeof chunk !== 'string' && chunk !== undefined && !state.objectMode) {
+    er = new TypeError('Invalid non-string/buffer chunk');
+  }
+  return er;
 }
 
 // if it's past the high water mark, we can push in some more.
@@ -9600,9 +9725,13 @@ function needMoreData(state) {
   return !state.ended && (state.needReadable || state.length < state.highWaterMark || state.length === 0);
 }
 
+Readable.prototype.isPaused = function () {
+  return this._readableState.flowing === false;
+};
+
 // backwards compatibility.
 Readable.prototype.setEncoding = function (enc) {
-  if (!StringDecoder) StringDecoder = __webpack_require__(17).StringDecoder;
+  if (!StringDecoder) StringDecoder = __webpack_require__(18).StringDecoder;
   this._readableState.decoder = new StringDecoder(enc);
   this._readableState.encoding = enc;
   return this;
@@ -9748,14 +9877,6 @@ Readable.prototype.read = function (n) {
   return ret;
 };
 
-function chunkInvalid(state, chunk) {
-  var er = null;
-  if (!Buffer.isBuffer(chunk) && typeof chunk !== 'string' && chunk !== null && chunk !== undefined && !state.objectMode) {
-    er = new TypeError('Invalid non-string/buffer chunk');
-  }
-  return er;
-}
-
 function onEofChunk(stream, state) {
   if (state.ended) return;
   if (state.decoder) {
@@ -9843,14 +9964,17 @@ Readable.prototype.pipe = function (dest, pipeOpts) {
 
   var doEnd = (!pipeOpts || pipeOpts.end !== false) && dest !== process.stdout && dest !== process.stderr;
 
-  var endFn = doEnd ? onend : cleanup;
+  var endFn = doEnd ? onend : unpipe;
   if (state.endEmitted) processNextTick(endFn);else src.once('end', endFn);
 
   dest.on('unpipe', onunpipe);
-  function onunpipe(readable) {
+  function onunpipe(readable, unpipeInfo) {
     debug('onunpipe');
     if (readable === src) {
-      cleanup();
+      if (unpipeInfo && unpipeInfo.hasUnpiped === false) {
+        unpipeInfo.hasUnpiped = true;
+        cleanup();
+      }
     }
   }
 
@@ -9876,7 +10000,7 @@ Readable.prototype.pipe = function (dest, pipeOpts) {
     dest.removeListener('error', onerror);
     dest.removeListener('unpipe', onunpipe);
     src.removeListener('end', onend);
-    src.removeListener('end', cleanup);
+    src.removeListener('end', unpipe);
     src.removeListener('data', ondata);
 
     cleanedUp = true;
@@ -9969,6 +10093,7 @@ function pipeOnDrain(src) {
 
 Readable.prototype.unpipe = function (dest) {
   var state = this._readableState;
+  var unpipeInfo = { hasUnpiped: false };
 
   // if we're not piping anywhere, then do nothing.
   if (state.pipesCount === 0) return this;
@@ -9984,7 +10109,7 @@ Readable.prototype.unpipe = function (dest) {
     state.pipes = null;
     state.pipesCount = 0;
     state.flowing = false;
-    if (dest) dest.emit('unpipe', this);
+    if (dest) dest.emit('unpipe', this, unpipeInfo);
     return this;
   }
 
@@ -9999,7 +10124,7 @@ Readable.prototype.unpipe = function (dest) {
     state.flowing = false;
 
     for (var i = 0; i < len; i++) {
-      dests[i].emit('unpipe', this);
+      dests[i].emit('unpipe', this, unpipeInfo);
     }return this;
   }
 
@@ -10011,7 +10136,7 @@ Readable.prototype.unpipe = function (dest) {
   state.pipesCount -= 1;
   if (state.pipesCount === 1) state.pipes = state.pipes[0];
 
-  dest.emit('unpipe', this);
+  dest.emit('unpipe', this, unpipeInfo);
 
   return this;
 };
@@ -10032,7 +10157,7 @@ Readable.prototype.on = function (ev, fn) {
       if (!state.reading) {
         processNextTick(nReadingNextTick, this);
       } else if (state.length) {
-        emitReadable(this, state);
+        emitReadable(this);
       }
     }
   }
@@ -10233,7 +10358,7 @@ function copyFromBufferString(n, list) {
 // This function is designed to be inlinable, so please take care when making
 // changes to the function body.
 function copyFromBuffer(n, list) {
-  var ret = bufferShim.allocUnsafe(n);
+  var ret = Buffer.allocUnsafe(n);
   var p = list.head;
   var c = 1;
   p.data.copy(ret);
@@ -10293,13 +10418,34 @@ function indexOf(xs, x) {
   }
   return -1;
 }
-/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(3)))
+/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(2), __webpack_require__(3)))
 
 /***/ }),
-/* 39 */
+/* 38 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
+// Copyright Joyent, Inc. and other Node contributors.
+//
+// Permission is hereby granted, free of charge, to any person obtaining a
+// copy of this software and associated documentation files (the
+// "Software"), to deal in the Software without restriction, including
+// without limitation the rights to use, copy, modify, merge, publish,
+// distribute, sublicense, and/or sell copies of the Software, and to permit
+// persons to whom the Software is furnished to do so, subject to the
+// following conditions:
+//
+// The above copyright notice and this permission notice shall be included
+// in all copies or substantial portions of the Software.
+//
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+// OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+// MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN
+// NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,
+// DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
+// OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
+// USE OR OTHER DEALINGS IN THE SOFTWARE.
+
 // a transform stream is a readable/writable stream where you do
 // something with the data.  Sometimes it's called a "filter",
 // but that's not a great name for it, since that implies a thing where
@@ -10349,7 +10495,7 @@ module.exports = Transform;
 var Duplex = __webpack_require__(5);
 
 /*<replacement>*/
-var util = __webpack_require__(10);
+var util = __webpack_require__(11);
 util.inherits = __webpack_require__(1);
 /*</replacement>*/
 
@@ -10373,7 +10519,9 @@ function afterTransform(stream, er, data) {
 
   var cb = ts.writecb;
 
-  if (!cb) return stream.emit('error', new Error('no writecb in Transform class'));
+  if (!cb) {
+    return stream.emit('error', new Error('write callback called multiple times'));
+  }
 
   ts.writechunk = null;
   ts.writecb = null;
@@ -10466,6 +10614,15 @@ Transform.prototype._read = function (n) {
   }
 };
 
+Transform.prototype._destroy = function (err, cb) {
+  var _this = this;
+
+  Duplex.prototype._destroy.call(this, err, function (err2) {
+    cb(err2);
+    _this.emit('close');
+  });
+};
+
 function done(stream, er, data) {
   if (er) return stream.emit('error', er);
 
@@ -10484,6 +10641,84 @@ function done(stream, er, data) {
 }
 
 /***/ }),
+/* 39 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+/*<replacement>*/
+
+var processNextTick = __webpack_require__(14);
+/*</replacement>*/
+
+// undocumented cb() API, needed for core, not for public API
+function destroy(err, cb) {
+  var _this = this;
+
+  var readableDestroyed = this._readableState && this._readableState.destroyed;
+  var writableDestroyed = this._writableState && this._writableState.destroyed;
+
+  if (readableDestroyed || writableDestroyed) {
+    if (cb) {
+      cb(err);
+    } else if (err && (!this._writableState || !this._writableState.errorEmitted)) {
+      processNextTick(emitErrorNT, this, err);
+    }
+    return;
+  }
+
+  // we set destroyed to true before firing error callbacks in order
+  // to make it re-entrance safe in case destroy() is called within callbacks
+
+  if (this._readableState) {
+    this._readableState.destroyed = true;
+  }
+
+  // if this is a duplex stream mark the writable part as destroyed as well
+  if (this._writableState) {
+    this._writableState.destroyed = true;
+  }
+
+  this._destroy(err || null, function (err) {
+    if (!cb && err) {
+      processNextTick(emitErrorNT, _this, err);
+      if (_this._writableState) {
+        _this._writableState.errorEmitted = true;
+      }
+    } else if (cb) {
+      cb(err);
+    }
+  });
+}
+
+function undestroy() {
+  if (this._readableState) {
+    this._readableState.destroyed = false;
+    this._readableState.reading = false;
+    this._readableState.ended = false;
+    this._readableState.endEmitted = false;
+  }
+
+  if (this._writableState) {
+    this._writableState.destroyed = false;
+    this._writableState.ended = false;
+    this._writableState.ending = false;
+    this._writableState.finished = false;
+    this._writableState.errorEmitted = false;
+  }
+}
+
+function emitErrorNT(self, err) {
+  self.emit('error', err);
+}
+
+module.exports = {
+  destroy: destroy,
+  undestroy: undestroy
+};
+
+/***/ }),
 /* 40 */
 /***/ (function(module, exports, __webpack_require__) {
 
@@ -10497,7 +10732,7 @@ module.exports = __webpack_require__(7).EventEmitter;
 /* WEBPACK VAR INJECTION */(function(global) {var ClientRequest = __webpack_require__(85)
 var extend = __webpack_require__(92)
 var statusCodes = __webpack_require__(67)
-var url = __webpack_require__(27)
+var url = __webpack_require__(26)
 
 var http = exports
 
@@ -11017,7 +11252,7 @@ exports['aes-256-gcm'] = {
 /* 46 */
 /***/ (function(module, exports, __webpack_require__) {
 
-/* WEBPACK VAR INJECTION */(function(Buffer) {var xor = __webpack_require__(32)
+/* WEBPACK VAR INJECTION */(function(Buffer) {var xor = __webpack_require__(31)
 
 function incr32 (iv) {
   var len = iv.length
@@ -11709,7 +11944,7 @@ exports.listCiphers = exports.getCiphers = getCiphers
 /***/ (function(module, exports, __webpack_require__) {
 
 /* WEBPACK VAR INJECTION */(function(Buffer) {var bn = __webpack_require__(4);
-var randomBytes = __webpack_require__(37);
+var randomBytes = __webpack_require__(36);
 module.exports = crt;
 function blind(priv) {
   var r = getr(priv);
@@ -11843,8 +12078,8 @@ exports.EDE = __webpack_require__(204);
 
 var hash = exports;
 
-hash.utils = __webpack_require__(12);
-hash.common = __webpack_require__(35);
+hash.utils = __webpack_require__(13);
+hash.common = __webpack_require__(34);
 hash.sha = __webpack_require__(245);
 hash.ripemd = __webpack_require__(244);
 hash.hmac = __webpack_require__(243);
@@ -12702,6 +12937,27 @@ module.exports = __webpack_require__(5);
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
+// Copyright Joyent, Inc. and other Node contributors.
+//
+// Permission is hereby granted, free of charge, to any person obtaining a
+// copy of this software and associated documentation files (the
+// "Software"), to deal in the Software without restriction, including
+// without limitation the rights to use, copy, modify, merge, publish,
+// distribute, sublicense, and/or sell copies of the Software, and to permit
+// persons to whom the Software is furnished to do so, subject to the
+// following conditions:
+//
+// The above copyright notice and this permission notice shall be included
+// in all copies or substantial portions of the Software.
+//
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+// OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+// MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN
+// NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,
+// DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
+// OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
+// USE OR OTHER DEALINGS IN THE SOFTWARE.
+
 // a passthrough stream.
 // basically just the most minimal sort of Transform stream.
 // Every written chunk gets output as-is.
@@ -12710,10 +12966,10 @@ module.exports = __webpack_require__(5);
 
 module.exports = PassThrough;
 
-var Transform = __webpack_require__(39);
+var Transform = __webpack_require__(38);
 
 /*<replacement>*/
-var util = __webpack_require__(10);
+var util = __webpack_require__(11);
 util.inherits = __webpack_require__(1);
 /*</replacement>*/
 
@@ -12736,68 +12992,78 @@ PassThrough.prototype._transform = function (chunk, encoding, cb) {
 "use strict";
 
 
-var Buffer = __webpack_require__(0).Buffer;
 /*<replacement>*/
-var bufferShim = __webpack_require__(16);
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+var Buffer = __webpack_require__(9).Buffer;
 /*</replacement>*/
 
-module.exports = BufferList;
-
-function BufferList() {
-  this.head = null;
-  this.tail = null;
-  this.length = 0;
+function copyBuffer(src, target, offset) {
+  src.copy(target, offset);
 }
 
-BufferList.prototype.push = function (v) {
-  var entry = { data: v, next: null };
-  if (this.length > 0) this.tail.next = entry;else this.head = entry;
-  this.tail = entry;
-  ++this.length;
-};
+module.exports = function () {
+  function BufferList() {
+    _classCallCheck(this, BufferList);
 
-BufferList.prototype.unshift = function (v) {
-  var entry = { data: v, next: this.head };
-  if (this.length === 0) this.tail = entry;
-  this.head = entry;
-  ++this.length;
-};
-
-BufferList.prototype.shift = function () {
-  if (this.length === 0) return;
-  var ret = this.head.data;
-  if (this.length === 1) this.head = this.tail = null;else this.head = this.head.next;
-  --this.length;
-  return ret;
-};
-
-BufferList.prototype.clear = function () {
-  this.head = this.tail = null;
-  this.length = 0;
-};
-
-BufferList.prototype.join = function (s) {
-  if (this.length === 0) return '';
-  var p = this.head;
-  var ret = '' + p.data;
-  while (p = p.next) {
-    ret += s + p.data;
-  }return ret;
-};
-
-BufferList.prototype.concat = function (n) {
-  if (this.length === 0) return bufferShim.alloc(0);
-  if (this.length === 1) return this.head.data;
-  var ret = bufferShim.allocUnsafe(n >>> 0);
-  var p = this.head;
-  var i = 0;
-  while (p) {
-    p.data.copy(ret, i);
-    i += p.data.length;
-    p = p.next;
+    this.head = null;
+    this.tail = null;
+    this.length = 0;
   }
-  return ret;
-};
+
+  BufferList.prototype.push = function push(v) {
+    var entry = { data: v, next: null };
+    if (this.length > 0) this.tail.next = entry;else this.head = entry;
+    this.tail = entry;
+    ++this.length;
+  };
+
+  BufferList.prototype.unshift = function unshift(v) {
+    var entry = { data: v, next: this.head };
+    if (this.length === 0) this.tail = entry;
+    this.head = entry;
+    ++this.length;
+  };
+
+  BufferList.prototype.shift = function shift() {
+    if (this.length === 0) return;
+    var ret = this.head.data;
+    if (this.length === 1) this.head = this.tail = null;else this.head = this.head.next;
+    --this.length;
+    return ret;
+  };
+
+  BufferList.prototype.clear = function clear() {
+    this.head = this.tail = null;
+    this.length = 0;
+  };
+
+  BufferList.prototype.join = function join(s) {
+    if (this.length === 0) return '';
+    var p = this.head;
+    var ret = '' + p.data;
+    while (p = p.next) {
+      ret += s + p.data;
+    }return ret;
+  };
+
+  BufferList.prototype.concat = function concat(n) {
+    if (this.length === 0) return Buffer.alloc(0);
+    if (this.length === 1) return this.head.data;
+    var ret = Buffer.allocUnsafe(n >>> 0);
+    var p = this.head;
+    var i = 0;
+    while (p) {
+      copyBuffer(p.data, ret, i);
+      i += p.data.length;
+      p = p.next;
+    }
+    return ret;
+  };
+
+  return BufferList;
+}();
 
 /***/ }),
 /* 80 */
@@ -14034,7 +14300,7 @@ function extend() {
 /***/ (function(module, exports, __webpack_require__) {
 
 var inherits = __webpack_require__(1);
-var Reporter = __webpack_require__(30).Reporter;
+var Reporter = __webpack_require__(29).Reporter;
 var Buffer = __webpack_require__(0).Buffer;
 
 function DecoderBuffer(base, options) {
@@ -14182,7 +14448,7 @@ constants.der = __webpack_require__(150);
 
 var inherits = __webpack_require__(1);
 
-var asn1 = __webpack_require__(29);
+var asn1 = __webpack_require__(28);
 var base = asn1.base;
 var bignum = asn1.bignum;
 
@@ -14513,7 +14779,7 @@ function derDecodeLen(buf, primitive, fail) {
 var inherits = __webpack_require__(1);
 var Buffer = __webpack_require__(0).Buffer;
 
-var asn1 = __webpack_require__(29);
+var asn1 = __webpack_require__(28);
 var base = asn1.base;
 
 // Import DER constants
@@ -14886,10 +15152,10 @@ if (typeof self === 'object') {
 /***/ (function(module, exports, __webpack_require__) {
 
 /* WEBPACK VAR INJECTION */(function(Buffer) {var aes = __webpack_require__(44)
-var Transform = __webpack_require__(13)
+var Transform = __webpack_require__(15)
 var inherits = __webpack_require__(1)
 var GHASH = __webpack_require__(185)
-var xor = __webpack_require__(32)
+var xor = __webpack_require__(31)
 inherits(StreamCipher, Transform)
 module.exports = StreamCipher
 
@@ -14989,7 +15255,7 @@ function xorTest (a, b) {
 /* 103 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var xor = __webpack_require__(32)
+var xor = __webpack_require__(31)
 
 exports.encrypt = function (self, block) {
   var data = xor(block, self._prev)
@@ -15012,7 +15278,7 @@ exports.decrypt = function (self, block) {
 /* 104 */
 /***/ (function(module, exports, __webpack_require__) {
 
-/* WEBPACK VAR INJECTION */(function(Buffer) {var xor = __webpack_require__(32)
+/* WEBPACK VAR INJECTION */(function(Buffer) {var xor = __webpack_require__(31)
 
 exports.encrypt = function (self, data, decrypt) {
   var out = new Buffer('')
@@ -15125,7 +15391,7 @@ exports.decrypt = function (self, block) {
 /* 108 */
 /***/ (function(module, exports, __webpack_require__) {
 
-/* WEBPACK VAR INJECTION */(function(Buffer) {var xor = __webpack_require__(32)
+/* WEBPACK VAR INJECTION */(function(Buffer) {var xor = __webpack_require__(31)
 
 function getBlock (self) {
   self._prev = self._cipher.encryptBlock(self._prev)
@@ -15149,7 +15415,7 @@ exports.encrypt = function (self, chunk) {
 /***/ (function(module, exports, __webpack_require__) {
 
 /* WEBPACK VAR INJECTION */(function(Buffer) {var aes = __webpack_require__(44)
-var Transform = __webpack_require__(13)
+var Transform = __webpack_require__(15)
 var inherits = __webpack_require__(1)
 
 inherits(StreamCipher, Transform)
@@ -15354,8 +15620,8 @@ module.exports = {
 
 var inherits = __webpack_require__(1)
 var Legacy = __webpack_require__(199)
-var Base = __webpack_require__(13)
-var Buffer = __webpack_require__(23).Buffer
+var Base = __webpack_require__(15)
+var Buffer = __webpack_require__(9).Buffer
 var md5 = __webpack_require__(47)
 var RIPEMD160 = __webpack_require__(82)
 
@@ -15419,7 +15685,7 @@ module.exports = function createHmac (alg, key) {
 /* 113 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var randomBytes = __webpack_require__(37);
+var randomBytes = __webpack_require__(36);
 module.exports = findPrime;
 findPrime.simpleSieve = simpleSieve;
 findPrime.fermatTest = fermatTest;
@@ -15536,10 +15802,10 @@ function findPrime(bits, gen) {
 "use strict";
 
 
-var utils = __webpack_require__(12);
-var common = __webpack_require__(35);
+var utils = __webpack_require__(13);
+var common = __webpack_require__(34);
 var shaCommon = __webpack_require__(119);
-var assert = __webpack_require__(9);
+var assert = __webpack_require__(10);
 
 var sum32 = utils.sum32;
 var sum32_4 = utils.sum32_4;
@@ -15648,9 +15914,9 @@ SHA256.prototype._digest = function digest(enc) {
 "use strict";
 
 
-var utils = __webpack_require__(12);
-var common = __webpack_require__(35);
-var assert = __webpack_require__(9);
+var utils = __webpack_require__(13);
+var common = __webpack_require__(34);
+var assert = __webpack_require__(10);
 
 var rotr64_hi = utils.rotr64_hi;
 var rotr64_lo = utils.rotr64_lo;
@@ -15985,7 +16251,7 @@ function g1_512_lo(xh, xl) {
 "use strict";
 
 
-var utils = __webpack_require__(12);
+var utils = __webpack_require__(13);
 var rotr32 = utils.rotr32;
 
 function ft_1(s, x, y, z) {
@@ -16390,7 +16656,7 @@ var sha = __webpack_require__(84)
 
 var checkParameters = __webpack_require__(131)
 var defaultEncoding = __webpack_require__(130)
-var Buffer = __webpack_require__(23).Buffer
+var Buffer = __webpack_require__(9).Buffer
 var ZEROS = Buffer.alloc(128)
 var sizes = {
   md5: 16,
@@ -16493,7 +16759,7 @@ module.exports = function (password, salt, iterations, keylen, digest) {
 /* 134 */
 /***/ (function(module, exports, __webpack_require__) {
 
-/* WEBPACK VAR INJECTION */(function(Buffer) {var createHash = __webpack_require__(33);
+/* WEBPACK VAR INJECTION */(function(Buffer) {var createHash = __webpack_require__(32);
 module.exports = function (seed, len) {
   var t = new Buffer('');
   var  i = 0, c;
@@ -16569,7 +16835,7 @@ module.exports = function(src) {
  */
 
 var inherits = __webpack_require__(1)
-var Hash = __webpack_require__(24)
+var Hash = __webpack_require__(23)
 
 var K = [
   0x428A2F98, 0x71374491, 0xB5C0FBCF, 0xE9B5DBA5,
@@ -16702,7 +16968,7 @@ module.exports = Sha256
 /***/ (function(module, exports, __webpack_require__) {
 
 /* WEBPACK VAR INJECTION */(function(Buffer) {var inherits = __webpack_require__(1)
-var Hash = __webpack_require__(24)
+var Hash = __webpack_require__(23)
 
 var K = [
   0x428a2f98, 0xd728ae22, 0x71374491, 0x23ef65cd,
@@ -17009,7 +17275,7 @@ __webpack_require__(137)(__webpack_require__(293))
 /* 147 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var asn1 = __webpack_require__(29);
+var asn1 = __webpack_require__(28);
 var inherits = __webpack_require__(1);
 
 var api = exports;
@@ -17076,10 +17342,10 @@ Entity.prototype.encode = function encode(data, enc, /* internal */ reporter) {
 /* 148 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var Reporter = __webpack_require__(30).Reporter;
-var EncoderBuffer = __webpack_require__(30).EncoderBuffer;
-var DecoderBuffer = __webpack_require__(30).DecoderBuffer;
-var assert = __webpack_require__(9);
+var Reporter = __webpack_require__(29).Reporter;
+var EncoderBuffer = __webpack_require__(29).EncoderBuffer;
+var DecoderBuffer = __webpack_require__(29).DecoderBuffer;
+var assert = __webpack_require__(10);
 
 // Supported tags
 var tags = [
@@ -18062,7 +18328,7 @@ function isBuffer(b) {
 // ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
 // WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-var util = __webpack_require__(28);
+var util = __webpack_require__(27);
 var hasOwn = Object.prototype.hasOwnProperty;
 var pSlice = Array.prototype.slice;
 var functionsHaveNames = (function () {
@@ -18519,7 +18785,7 @@ var objectKeys = Object.keys || function (obj) {
 /***/ (function(module, exports, __webpack_require__) {
 
 /* WEBPACK VAR INJECTION */(function(Buffer) {var aes = __webpack_require__(44)
-var Transform = __webpack_require__(13)
+var Transform = __webpack_require__(15)
 var inherits = __webpack_require__(1)
 var modes = __webpack_require__(45)
 var StreamCipher = __webpack_require__(109)
@@ -18663,7 +18929,7 @@ exports.createDecipheriv = createDecipheriv
 /***/ (function(module, exports, __webpack_require__) {
 
 /* WEBPACK VAR INJECTION */(function(Buffer) {var aes = __webpack_require__(44)
-var Transform = __webpack_require__(13)
+var Transform = __webpack_require__(15)
 var inherits = __webpack_require__(1)
 var modes = __webpack_require__(45)
 var ebtk = __webpack_require__(49)
@@ -18975,7 +19241,7 @@ exports.listCiphers = exports.getCiphers = getCiphers
 /* 187 */
 /***/ (function(module, exports, __webpack_require__) {
 
-/* WEBPACK VAR INJECTION */(function(Buffer) {var CipherBase = __webpack_require__(13)
+/* WEBPACK VAR INJECTION */(function(Buffer) {var CipherBase = __webpack_require__(15)
 var des = __webpack_require__(68)
 var inherits = __webpack_require__(1)
 
@@ -19062,8 +19328,8 @@ module.exports = __webpack_require__(110)
 /* 190 */
 /***/ (function(module, exports, __webpack_require__) {
 
-/* WEBPACK VAR INJECTION */(function(Buffer) {var createHash = __webpack_require__(33)
-var stream = __webpack_require__(25)
+/* WEBPACK VAR INJECTION */(function(Buffer) {var createHash = __webpack_require__(32)
+var stream = __webpack_require__(24)
 var inherits = __webpack_require__(1)
 var sign = __webpack_require__(191)
 var verify = __webpack_require__(192)
@@ -19669,7 +19935,7 @@ exports.Zlib = Zlib;
 var Transform = __webpack_require__(53);
 
 var binding = __webpack_require__(193);
-var util = __webpack_require__(28);
+var util = __webpack_require__(27);
 var assert = __webpack_require__(155).ok;
 
 // zlib doesn't provide these, so kludge them in following the same
@@ -20434,9 +20700,9 @@ module.exports = function hash (buf, fn) {
 "use strict";
 
 var inherits = __webpack_require__(1)
-var Buffer = __webpack_require__(23).Buffer
+var Buffer = __webpack_require__(9).Buffer
 
-var Base = __webpack_require__(13)
+var Base = __webpack_require__(15)
 
 var ZEROS = Buffer.alloc(128)
 var blocksize = 64
@@ -20487,8 +20753,8 @@ module.exports = Hmac
 "use strict";
 
 
-exports.randomBytes = exports.rng = exports.pseudoRandomBytes = exports.prng = __webpack_require__(37)
-exports.createHash = exports.Hash = __webpack_require__(33)
+exports.randomBytes = exports.rng = exports.pseudoRandomBytes = exports.prng = __webpack_require__(36)
+exports.createHash = exports.Hash = __webpack_require__(32)
 exports.createHmac = exports.Hmac = __webpack_require__(112)
 
 var algos = __webpack_require__(189)
@@ -20586,7 +20852,7 @@ exports.constants = {
 "use strict";
 
 
-var assert = __webpack_require__(9);
+var assert = __webpack_require__(10);
 var inherits = __webpack_require__(1);
 
 var proto = {};
@@ -20658,7 +20924,7 @@ proto._update = function _update(inp, inOff, out, outOff) {
 "use strict";
 
 
-var assert = __webpack_require__(9);
+var assert = __webpack_require__(10);
 
 function Cipher(options) {
   this.options = options;
@@ -20806,7 +21072,7 @@ Cipher.prototype._finalDecrypt = function _finalDecrypt() {
 "use strict";
 
 
-var assert = __webpack_require__(9);
+var assert = __webpack_require__(10);
 var inherits = __webpack_require__(1);
 
 var des = __webpack_require__(68);
@@ -20956,7 +21222,7 @@ DES.prototype._decrypt = function _decrypt(state, lStart, rStart, out, off) {
 "use strict";
 
 
-var assert = __webpack_require__(9);
+var assert = __webpack_require__(10);
 var inherits = __webpack_require__(1);
 
 var des = __webpack_require__(68);
@@ -21336,7 +21602,7 @@ var TEN = new BN(10);
 var THREE = new BN(3);
 var SEVEN = new BN(7);
 var primes = __webpack_require__(113);
-var randomBytes = __webpack_require__(37);
+var randomBytes = __webpack_require__(36);
 module.exports = DH;
 
 function setPublicKey(pub, enc) {
@@ -25322,7 +25588,7 @@ module.exports = {
 
 var utils = exports;
 var BN = __webpack_require__(4);
-var minAssert = __webpack_require__(9);
+var minAssert = __webpack_require__(10);
 var minUtils = __webpack_require__(125);
 
 utils.assert = minAssert;
@@ -25580,7 +25846,7 @@ module.exports = {
 
 "use strict";
 /* WEBPACK VAR INJECTION */(function(Buffer) {
-var Transform = __webpack_require__(25).Transform
+var Transform = __webpack_require__(24).Transform
 var inherits = __webpack_require__(1)
 
 function HashBase (blockSize) {
@@ -25672,8 +25938,8 @@ module.exports = HashBase
 "use strict";
 
 
-var utils = __webpack_require__(12);
-var assert = __webpack_require__(9);
+var utils = __webpack_require__(13);
+var assert = __webpack_require__(10);
 
 function Hmac(hash, key, enc) {
   if (!(this instanceof Hmac))
@@ -25726,8 +25992,8 @@ Hmac.prototype.digest = function digest(enc) {
 "use strict";
 
 
-var utils = __webpack_require__(12);
-var common = __webpack_require__(35);
+var utils = __webpack_require__(13);
+var common = __webpack_require__(34);
 
 var rotl32 = utils.rotl32;
 var sum32 = utils.sum32;
@@ -25893,8 +26159,8 @@ exports.sha512 = __webpack_require__(118);
 "use strict";
 
 
-var utils = __webpack_require__(12);
-var common = __webpack_require__(35);
+var utils = __webpack_require__(13);
+var common = __webpack_require__(34);
 var shaCommon = __webpack_require__(119);
 
 var rotl32 = utils.rotl32;
@@ -25974,7 +26240,7 @@ SHA1.prototype._digest = function digest(enc) {
 "use strict";
 
 
-var utils = __webpack_require__(12);
+var utils = __webpack_require__(13);
 var SHA256 = __webpack_require__(117);
 
 function SHA224() {
@@ -26011,7 +26277,7 @@ SHA224.prototype._digest = function digest(enc) {
 "use strict";
 
 
-var utils = __webpack_require__(12);
+var utils = __webpack_require__(13);
 
 var SHA512 = __webpack_require__(118);
 
@@ -26055,7 +26321,7 @@ SHA384.prototype._digest = function digest(enc) {
 
 var hash = __webpack_require__(71);
 var utils = __webpack_require__(125);
-var assert = __webpack_require__(9);
+var assert = __webpack_require__(10);
 
 function HmacDRBG(options) {
   if (!(this instanceof HmacDRBG))
@@ -31606,7 +31872,7 @@ module.exports = {
 // Fedor, you are amazing.
 
 
-var asn1 = __webpack_require__(29)
+var asn1 = __webpack_require__(28)
 
 exports.certificate = __webpack_require__(281)
 
@@ -31736,7 +32002,7 @@ exports.signature = asn1.define('signature', function () {
 
 
 
-var asn = __webpack_require__(29)
+var asn = __webpack_require__(28)
 
 var Time = asn.define('Time', function () {
   this.choice({
@@ -31868,7 +32134,7 @@ module.exports = function (okey, password) {
 /* WEBPACK VAR INJECTION */(function(global, process) {var checkParameters = __webpack_require__(131)
 var defaultEncoding = __webpack_require__(130)
 var sync = __webpack_require__(132)
-var Buffer = __webpack_require__(23).Buffer
+var Buffer = __webpack_require__(9).Buffer
 
 var ZERO_BUF
 var subtle = global.crypto && global.crypto.subtle
@@ -31992,7 +32258,7 @@ var mgf = __webpack_require__(134);
 var xor = __webpack_require__(136);
 var bn = __webpack_require__(4);
 var crt = __webpack_require__(66);
-var createHash = __webpack_require__(33);
+var createHash = __webpack_require__(32);
 var withPublic = __webpack_require__(135);
 module.exports = function privateDecrypt(private_key, enc, reverse) {
   var padding;
@@ -32102,8 +32368,8 @@ function compare(a, b){
 /***/ (function(module, exports, __webpack_require__) {
 
 /* WEBPACK VAR INJECTION */(function(Buffer) {var parseKeys = __webpack_require__(52);
-var randomBytes = __webpack_require__(37);
-var createHash = __webpack_require__(33);
+var randomBytes = __webpack_require__(36);
+var createHash = __webpack_require__(32);
 var mgf = __webpack_require__(134);
 var xor = __webpack_require__(136);
 var bn = __webpack_require__(4);
@@ -36912,8 +37178,9 @@ module.exports =
 	Blockly.Blocks.data_itemoflist={init:function(){this.jsonInit({message0:"item %1 of %2",args0:[{type:"input_value",name:"INDEX"},{type:"field_variable",name:"LIST"}],output:null,category:Blockly.Categories.data,extensions:["colours_data"],outputShape:Blockly.OUTPUT_SHAPE_ROUND})}};Blockly.Blocks.data_lengthoflist={init:function(){this.jsonInit({message0:"length of %1",args0:[{type:"field_variable",name:"LIST"}],category:Blockly.Categories.data,extensions:["colours_data","output_number"]})}};
 	Blockly.Blocks.data_listcontainsitem={init:function(){this.jsonInit({message0:"%1 contains %2?",args0:[{type:"field_variable",name:"LIST"},{type:"input_value",name:"ITEM"}],category:Blockly.Categories.data,extensions:["colours_data","output_boolean"]})}};Blockly.Blocks.data_showlist={init:function(){this.jsonInit({message0:"show list %1",args0:[{type:"field_variable",name:"LIST"}],category:Blockly.Categories.data,extensions:["colours_data","shape_statement"]})}};
 	Blockly.Blocks.data_hidelist={init:function(){this.jsonInit({message0:"hide list %1",args0:[{type:"field_variable",name:"LIST"}],category:Blockly.Categories.data,extensions:["colours_data","shape_statement"]})}};
-	Blockly.Constants.Data.CUSTOM_CONTEXT_MENU_GET_VARIABLE_MIXIN={customContextMenu:function(a){if(!this.isCollapsed())for(var b=this.workspace.getVariablesOfType(""),d=0;d<b.length;d++){var c={enabled:!0};c.text=b[d].name;c.callback=Blockly.Constants.Data.VARIABLE_OPTION_CALLBACK_FACTORY(this,c.text);a.push(c)}}};Blockly.Extensions.registerMixin("contextMenu_getVariableBlock",Blockly.Constants.Data.CUSTOM_CONTEXT_MENU_GET_VARIABLE_MIXIN);
-	Blockly.Constants.Data.VARIABLE_OPTION_CALLBACK_FACTORY=function(a,b){return function(){var d=a.getField("VARIABLE");d||console.log("Tried to get a variable field on the wrong type of block.");d.setText(b)}};Blockly.Blocks.defaultToolbox='<xml id="toolbox-categories" style="display: none"><category name="Motion" colour="#4C97FF" secondaryColour="#3373CC"><block type="motion_movesteps" id="motion_movesteps"><value name="STEPS"><shadow type="math_number"><field name="NUM">10</field></shadow></value></block><block type="motion_turnright" id="motion_turnright"><value name="DEGREES"><shadow type="math_number"><field name="NUM">15</field></shadow></value></block><block type="motion_turnleft" id="motion_turnleft"><value name="DEGREES"><shadow type="math_number"><field name="NUM">15</field></shadow></value></block><block type="motion_pointindirection" id="motion_pointindirection"><value name="DIRECTION"><shadow type="math_angle"><field name="NUM">90</field></shadow></value></block><block type="motion_pointtowards" id="motion_pointtowards"><value name="TOWARDS"><shadow type="motion_pointtowards_menu"></shadow></value></block><block type="motion_gotoxy" id="motion_gotoxy"><value name="X"><shadow id="movex" type="math_number"><field name="NUM">0</field></shadow></value><value name="Y"><shadow id="movey" type="math_number"><field name="NUM">0</field></shadow></value></block><block type="motion_goto" id="motion_goto"><value name="TO"><shadow type="motion_goto_menu"></shadow></value></block><block type="motion_glidesecstoxy" id="motion_glidesecstoxy"><value name="SECS"><shadow type="math_number"><field name="NUM">1</field></shadow></value><value name="X"><shadow id="glidex" type="math_number"><field name="NUM">0</field></shadow></value><value name="Y"><shadow id="glidey" type="math_number"><field name="NUM">0</field></shadow></value></block><block type="motion_changexby" id="motion_changexby"><value name="DX"><shadow type="math_number"><field name="NUM">10</field></shadow></value></block><block type="motion_setx" id="motion_setx"><value name="X"><shadow id="setx" type="math_number"><field name="NUM">0</field></shadow></value></block><block type="motion_changeyby" id="motion_changeyby"><value name="DY"><shadow type="math_number"><field name="NUM">10</field></shadow></value></block><block type="motion_sety" id="motion_sety"><value name="Y"><shadow id="sety" type="math_number"><field name="NUM">0</field></shadow></value></block><block type="motion_ifonedgebounce" id="motion_ifonedgebounce"></block><block type="motion_setrotationstyle" id="motion_setrotationstyle"></block><block type="motion_xposition" id="motion_xposition"></block><block type="motion_yposition" id="motion_yposition"></block><block type="motion_direction" id="motion_direction"></block></category><category name="Looks" colour="#9966FF" secondaryColour="#774DCB"><block type="looks_show" id="looks_show"></block><block type="looks_hide" id="looks_hide"></block><block type="looks_switchcostumeto" id="looks_switchcostumeto"><value name="COSTUME"><shadow type="looks_costume"></shadow></value></block><block type="looks_nextcostume" id="looks_nextcostume"></block><block type="looks_nextbackdrop" id="looks_nextbackdrop"></block><block type="looks_switchbackdropto" id="looks_switchbackdropto"><value name="BACKDROP"><shadow type="looks_backdrops"></shadow></value></block><block type="looks_switchbackdroptoandwait" id="looks_switchbackdroptoandwait"><value name="BACKDROP"><shadow type="looks_backdrops"></shadow></value></block><block type="looks_changeeffectby" id="looks_changeeffectby"><value name="CHANGE"><shadow type="math_number"><field name="NUM">10</field></shadow></value></block><block type="looks_seteffectto" id="looks_seteffectto"><value name="VALUE"><shadow type="math_number"><field name="NUM">10</field></shadow></value></block><block type="looks_cleargraphiceffects" id="looks_cleargraphiceffects"></block><block type="looks_changesizeby" id="looks_changesizeby"><value name="CHANGE"><shadow type="math_number"><field name="NUM">10</field></shadow></value></block><block type="looks_setsizeto" id="looks_setsizeto"><value name="SIZE"><shadow type="math_number"><field name="NUM">100</field></shadow></value></block><block type="looks_gotofront" id="looks_gotofront"></block><block type="looks_gobacklayers" id="looks_gobacklayers"><value name="NUM"><shadow type="math_integer"><field name="NUM">1</field></shadow></value></block><block type="looks_costumeorder" id="looks_costumeorder"></block><block type="looks_backdroporder" id="looks_backdroporder"></block><block type="looks_backdropname" id="looks_backdropname"></block><block type="looks_size" id="looks_size"></block></category><category name="Sound" colour="#D65CD6" secondaryColour="#BD42BD"><block type="sound_play" id="sound_play"><value name="SOUND_MENU"><shadow type="sound_sounds_menu"></shadow></value></block><block type="sound_playuntildone" id="sound_playuntildone"><value name="SOUND_MENU"><shadow type="sound_sounds_menu"></shadow></value></block><block type="sound_stopallsounds" id="sound_stopallsounds"></block><block type="sound_playdrumforbeats" id="sound_playdrumforbeats"><value name="DRUM"><shadow type="sound_drums_menu"></shadow></value><value name="BEATS"><shadow type="math_number"><field name="NUM">0.25</field></shadow></value></block><block type="sound_restforbeats" id="sound_restforbeats"><value name="BEATS"><shadow type="math_number"><field name="NUM">0.25</field></shadow></value></block><block type="sound_playnoteforbeats" id="sound_playnoteforbeats"><value name="NOTE"><shadow type="math_number"><field name="NUM">60</field></shadow></value><value name="BEATS"><shadow type="math_number"><field name="NUM">0.5</field></shadow></value></block><block type="sound_setinstrumentto" id="sound_setinstrumentto"><value name="INSTRUMENT"><shadow type="sound_instruments_menu"></shadow></value></block><block type="sound_changeeffectby" id="sound_changeeffectby"><value name="VALUE"><shadow type="math_number"><field name="NUM">10</field></shadow></value></block><block type="sound_seteffectto" id="sound_seteffectto"><value name="VALUE"><shadow type="math_number"><field name="NUM">100</field></shadow></value></block><block type="sound_cleareffects" id="sound_cleareffects"></block><block type="sound_changevolumeby" id="sound_changevolumeby"><value name="VOLUME"><shadow type="math_number"><field name="NUM">-10</field></shadow></value></block><block type="sound_setvolumeto" id="sound_setvolumeto"><value name="VOLUME"><shadow type="math_number"><field name="NUM">100</field></shadow></value></block><block type="sound_volume" id="sound_volume"></block><block type="sound_changetempoby" id="sound_changetempoby"><value name="TEMPO"><shadow type="math_number"><field name="NUM">20</field></shadow></value></block><block type="sound_settempotobpm" id="sound_settempotobpm"><value name="TEMPO"><shadow type="math_number"><field name="NUM">60</field></shadow></value></block><block type="sound_tempo" id="sound_tempo"></block></category><category name="Pen" colour="#00B295" secondaryColour="#0B8E69"><block type="pen_clear" id="pen_clear"></block><block type="pen_stamp" id="pen_stamp"></block><block type="pen_pendown" id="pen_pendown"></block><block type="pen_penup" id="pen_penup"></block><block type="pen_setpencolortocolor" id="pen_setpencolortocolor"><value name="COLOR"><shadow type="colour_picker"></shadow></value></block><block type="pen_changepencolorby" id="pen_changepencolorby"><value name="COLOR"><shadow type="math_number"><field name="NUM">10</field></shadow></value></block><block type="pen_setpencolortonum" id="pen_setpencolortonum"><value name="COLOR"><shadow type="math_number"><field name="NUM">0</field></shadow></value></block><block type="pen_changepenshadeby" id="pen_changepenshadeby"><value name="SHADE"><shadow type="math_number"><field name="NUM">10</field></shadow></value></block><block type="pen_setpenshadeto" id="pen_setpenshadeto"><value name="SHADE"><shadow type="math_number"><field name="NUM">50</field></shadow></value></block><block type="pen_changepensizeby" id="pen_changepensizeby"><value name="SIZE"><shadow type="math_number"><field name="NUM">1</field></shadow></value></block><block type="pen_setpensizeto" id="pen_setpensizeto"><value name="SIZE"><shadow type="math_number"><field name="NUM">1</field></shadow></value></block></category><category name="Data" colour="#FF8C1A" secondaryColour="#DB6E00" custom="VARIABLE"></category><category name="Events" colour="#FFD500" secondaryColour="#CC9900"><block type="event_whenflagclicked" id="event_whenflagclicked"></block><block type="event_whenkeypressed" id="event_whenkeypressed"></block><block type="event_whenthisspriteclicked" id="event_whenthisspriteclicked"></block><block type="event_whenbackdropswitchesto" id="event_whenbackdropswitchesto"></block><block type="event_whengreaterthan" id="event_whengreaterthan"><value name="VALUE"><shadow type="math_number"><field name="NUM">10</field></shadow></value></block><block type="event_whenbroadcastreceived" id="event_whenbroadcastreceived"></block><block type="event_broadcast" id="event_broadcast"><value name="BROADCAST_OPTION"><shadow type="event_broadcast_menu"></shadow></value></block><block type="event_broadcastandwait" id="event_broadcastandwait"><value name="BROADCAST_OPTION"><shadow type="event_broadcast_menu"></shadow></value></block></category><category name="Control" colour="#FFAB19" secondaryColour="#CF8B17"><block type="control_wait" id="control_wait"><value name="DURATION"><shadow type="math_positive_number"><field name="NUM">1</field></shadow></value></block><block type="control_repeat" id="control_repeat"><value name="TIMES"><shadow type="math_whole_number"><field name="NUM">10</field></shadow></value></block><block type="control_forever" id="control_forever"></block><block type="control_if" id="control_if"></block><block type="control_if_else" id="control_if_else"></block><block type="control_wait_until" id="control_wait_until"></block><block type="control_repeat_until" id="control_repeat_until"></block><block type="control_stop" id="control_stop"></block><block type="control_start_as_clone" id="control_start_as_clone"></block><block type="control_create_clone_of" id="control_create_clone_of"><value name="CLONE_OPTION"><shadow type="control_create_clone_of_menu"></shadow></value></block><block type="control_delete_this_clone" id="control_delete_this_clone"></block></category><category name="Sensing" colour="#4CBFE6" secondaryColour="#2E8EB8"><block type="sensing_touchingobject" id="sensing_touchingobject"><value name="TOUCHINGOBJECTMENU"><shadow type="sensing_touchingobjectmenu"></shadow></value></block><block type="sensing_touchingcolor" id="sensing_touchingcolor"><value name="COLOR"><shadow type="colour_picker"></shadow></value></block><block type="sensing_coloristouchingcolor" id="sensing_coloristouchingcolor"><value name="COLOR"><shadow type="colour_picker"></shadow></value><value name="COLOR2"><shadow type="colour_picker"></shadow></value></block><block type="sensing_distanceto" id="sensing_distanceto"><value name="DISTANCETOMENU"><shadow type="sensing_distancetomenu"></shadow></value></block><block type="sensing_keypressed" id="sensing_keypressed"><value name="KEY_OPTION"><shadow type="sensing_keyoptions"></shadow></value></block><block type="sensing_mousedown" id="sensing_mousedown"></block><block type="sensing_mousex" id="sensing_mousex"></block><block type="sensing_mousey" id="sensing_mousey"></block><block type="sensing_loudness" id="sensing_loudness"></block><block type="sensing_timer" id="sensing_timer"></block><block type="sensing_resettimer" id="sensing_resettimer"></block><block type="sensing_of" id="sensing_of"><value name="PROPERTY"><shadow type="sensing_of_property_menu"></shadow></value><value name="OBJECT"><shadow type="sensing_of_object_menu"></shadow></value></block><block type="sensing_current" id="sensing_current"><value name="CURRENTMENU"><shadow type="sensing_currentmenu"></shadow></value></block><block type="sensing_dayssince2000" id="sensing_dayssince2000"></block></category><category name="Operators" colour="#40BF4A" secondaryColour="#389438"><block type="operator_add" id="operator_add"><value name="NUM1"><shadow type="math_number"><field name="NUM"></field></shadow></value><value name="NUM2"><shadow type="math_number"><field name="NUM"></field></shadow></value></block><block type="operator_subtract" id="operator_subtract"><value name="NUM1"><shadow type="math_number"><field name="NUM"></field></shadow></value><value name="NUM2"><shadow type="math_number"><field name="NUM"></field></shadow></value></block><block type="operator_multiply" id="operator_multiply"><value name="NUM1"><shadow type="math_number"><field name="NUM"></field></shadow></value><value name="NUM2"><shadow type="math_number"><field name="NUM"></field></shadow></value></block><block type="operator_divide" id="operator_divide"><value name="NUM1"><shadow type="math_number"><field name="NUM"></field></shadow></value><value name="NUM2"><shadow type="math_number"><field name="NUM"></field></shadow></value></block><block type="operator_random" id="operator_random"><value name="FROM"><shadow type="math_number"><field name="NUM">1</field></shadow></value><value name="TO"><shadow type="math_number"><field name="NUM">10</field></shadow></value></block><block type="operator_lt" id="operator_lt"><value name="OPERAND1"><shadow type="text"><field name="TEXT"></field></shadow></value><value name="OPERAND2"><shadow type="text"><field name="TEXT"></field></shadow></value></block><block type="operator_equals" id="operator_equals"><value name="OPERAND1"><shadow type="text"><field name="TEXT"></field></shadow></value><value name="OPERAND2"><shadow type="text"><field name="TEXT"></field></shadow></value></block><block type="operator_gt" id="operator_gt"><value name="OPERAND1"><shadow type="text"><field name="TEXT"></field></shadow></value><value name="OPERAND2"><shadow type="text"><field name="TEXT"></field></shadow></value></block><block type="operator_and" id="operator_and"></block><block type="operator_or" id="operator_or"></block><block type="operator_not" id="operator_not"></block><block type="operator_join" id="operator_join"><value name="STRING1"><shadow type="text"><field name="TEXT">hello</field></shadow></value><value name="STRING2"><shadow type="text"><field name="TEXT">world</field></shadow></value></block><block type="operator_letter_of" id="operator_letter_of"><value name="LETTER"><shadow type="math_whole_number"><field name="NUM">1</field></shadow></value><value name="STRING"><shadow type="text"><field name="TEXT">world</field></shadow></value></block><block type="operator_length" id="operator_length"><value name="STRING"><shadow type="text"><field name="TEXT">world</field></shadow></value></block><block type="operator_mod" id="operator_mod"><value name="NUM1"><shadow type="math_number"><field name="NUM"></field></shadow></value><value name="NUM2"><shadow type="math_number"><field name="NUM"></field></shadow></value></block><block type="operator_round" id="operator_round"><value name="NUM"><shadow type="math_number"><field name="NUM"></field></shadow></value></block><block type="operator_mathop" id="operator_mathop"><value name="NUM"><shadow type="math_number"><field name="NUM"></field></shadow></value></block></category></xml>';Blockly.Blocks.event={};Blockly.Blocks.event_whenflagclicked={init:function(){this.jsonInit({id:"event_whenflagclicked",message0:"when %1 clicked",args0:[{type:"field_image",src:Blockly.mainWorkspace.options.pathToMedia+"icons/event_whenflagclicked.svg",width:24,height:24,alt:"flag",flip_rtl:!0}],category:Blockly.Categories.event,extensions:["colours_event","shape_hat"]})}};
+	Blockly.Constants.Data.CUSTOM_CONTEXT_MENU_GET_VARIABLE_MIXIN={customContextMenu:function(a){if(!this.isCollapsed())if(this.isInFlyout){var b={text:Blockly.Msg.RENAME_VARIABLE,enabled:!0,callback:Blockly.Constants.Data.RENAME_OPTION_CALLBACK_FACTORY(this)},c=this.getField("VARIABLE").text_,c={text:Blockly.Msg.DELETE_VARIABLE.replace("%1",c),enabled:!0,callback:Blockly.Constants.Data.DELETE_OPTION_CALLBACK_FACTORY(this)};a.push(b);a.push(c)}else for(b=this.workspace.getVariablesOfType(""),c=0;c<b.length;c++){var d=
+	{enabled:!0};d.text=b[c].name;d.callback=Blockly.Constants.Data.VARIABLE_OPTION_CALLBACK_FACTORY(this,d.text);a.push(d)}}};Blockly.Extensions.registerMixin("contextMenu_getVariableBlock",Blockly.Constants.Data.CUSTOM_CONTEXT_MENU_GET_VARIABLE_MIXIN);Blockly.Constants.Data.VARIABLE_OPTION_CALLBACK_FACTORY=function(a,b){return function(){var c=a.getField("VARIABLE");c||console.log("Tried to get a variable field on the wrong type of block.");c.setText(b)}};
+	Blockly.Constants.Data.RENAME_OPTION_CALLBACK_FACTORY=function(a){return function(){var b=a.workspace,c=a.getField("VARIABLE").text_;Blockly.FieldVariable.renameVariablePrompt(b,c)}};Blockly.Constants.Data.DELETE_OPTION_CALLBACK_FACTORY=function(a){return function(){var b=a.workspace,c=a.getField("VARIABLE").text_;b.deleteVariable(c)}};Blockly.Blocks.defaultToolbox='<xml id="toolbox-categories" style="display: none"><category name="Motion" colour="#4C97FF" secondaryColour="#3373CC"><block type="motion_movesteps" id="motion_movesteps"><value name="STEPS"><shadow type="math_number"><field name="NUM">10</field></shadow></value></block><block type="motion_turnright" id="motion_turnright"><value name="DEGREES"><shadow type="math_number"><field name="NUM">15</field></shadow></value></block><block type="motion_turnleft" id="motion_turnleft"><value name="DEGREES"><shadow type="math_number"><field name="NUM">15</field></shadow></value></block><block type="motion_pointindirection" id="motion_pointindirection"><value name="DIRECTION"><shadow type="math_angle"><field name="NUM">90</field></shadow></value></block><block type="motion_pointtowards" id="motion_pointtowards"><value name="TOWARDS"><shadow type="motion_pointtowards_menu"></shadow></value></block><block type="motion_gotoxy" id="motion_gotoxy"><value name="X"><shadow id="movex" type="math_number"><field name="NUM">0</field></shadow></value><value name="Y"><shadow id="movey" type="math_number"><field name="NUM">0</field></shadow></value></block><block type="motion_goto" id="motion_goto"><value name="TO"><shadow type="motion_goto_menu"></shadow></value></block><block type="motion_glidesecstoxy" id="motion_glidesecstoxy"><value name="SECS"><shadow type="math_number"><field name="NUM">1</field></shadow></value><value name="X"><shadow id="glidex" type="math_number"><field name="NUM">0</field></shadow></value><value name="Y"><shadow id="glidey" type="math_number"><field name="NUM">0</field></shadow></value></block><block type="motion_changexby" id="motion_changexby"><value name="DX"><shadow type="math_number"><field name="NUM">10</field></shadow></value></block><block type="motion_setx" id="motion_setx"><value name="X"><shadow id="setx" type="math_number"><field name="NUM">0</field></shadow></value></block><block type="motion_changeyby" id="motion_changeyby"><value name="DY"><shadow type="math_number"><field name="NUM">10</field></shadow></value></block><block type="motion_sety" id="motion_sety"><value name="Y"><shadow id="sety" type="math_number"><field name="NUM">0</field></shadow></value></block><block type="motion_ifonedgebounce" id="motion_ifonedgebounce"></block><block type="motion_setrotationstyle" id="motion_setrotationstyle"></block><block type="motion_xposition" id="motion_xposition"></block><block type="motion_yposition" id="motion_yposition"></block><block type="motion_direction" id="motion_direction"></block></category><category name="Looks" colour="#9966FF" secondaryColour="#774DCB"><block type="looks_show" id="looks_show"></block><block type="looks_hide" id="looks_hide"></block><block type="looks_switchcostumeto" id="looks_switchcostumeto"><value name="COSTUME"><shadow type="looks_costume"></shadow></value></block><block type="looks_nextcostume" id="looks_nextcostume"></block><block type="looks_nextbackdrop" id="looks_nextbackdrop"></block><block type="looks_switchbackdropto" id="looks_switchbackdropto"><value name="BACKDROP"><shadow type="looks_backdrops"></shadow></value></block><block type="looks_switchbackdroptoandwait" id="looks_switchbackdroptoandwait"><value name="BACKDROP"><shadow type="looks_backdrops"></shadow></value></block><block type="looks_changeeffectby" id="looks_changeeffectby"><value name="CHANGE"><shadow type="math_number"><field name="NUM">10</field></shadow></value></block><block type="looks_seteffectto" id="looks_seteffectto"><value name="VALUE"><shadow type="math_number"><field name="NUM">10</field></shadow></value></block><block type="looks_cleargraphiceffects" id="looks_cleargraphiceffects"></block><block type="looks_changesizeby" id="looks_changesizeby"><value name="CHANGE"><shadow type="math_number"><field name="NUM">10</field></shadow></value></block><block type="looks_setsizeto" id="looks_setsizeto"><value name="SIZE"><shadow type="math_number"><field name="NUM">100</field></shadow></value></block><block type="looks_gotofront" id="looks_gotofront"></block><block type="looks_gobacklayers" id="looks_gobacklayers"><value name="NUM"><shadow type="math_integer"><field name="NUM">1</field></shadow></value></block><block type="looks_costumeorder" id="looks_costumeorder"></block><block type="looks_backdroporder" id="looks_backdroporder"></block><block type="looks_backdropname" id="looks_backdropname"></block><block type="looks_size" id="looks_size"></block></category><category name="Sound" colour="#D65CD6" secondaryColour="#BD42BD"><block type="sound_play" id="sound_play"><value name="SOUND_MENU"><shadow type="sound_sounds_menu"></shadow></value></block><block type="sound_playuntildone" id="sound_playuntildone"><value name="SOUND_MENU"><shadow type="sound_sounds_menu"></shadow></value></block><block type="sound_stopallsounds" id="sound_stopallsounds"></block><block type="sound_playdrumforbeats" id="sound_playdrumforbeats"><value name="DRUM"><shadow type="sound_drums_menu"></shadow></value><value name="BEATS"><shadow type="math_number"><field name="NUM">0.25</field></shadow></value></block><block type="sound_restforbeats" id="sound_restforbeats"><value name="BEATS"><shadow type="math_number"><field name="NUM">0.25</field></shadow></value></block><block type="sound_playnoteforbeats" id="sound_playnoteforbeats"><value name="NOTE"><shadow type="math_number"><field name="NUM">60</field></shadow></value><value name="BEATS"><shadow type="math_number"><field name="NUM">0.5</field></shadow></value></block><block type="sound_setinstrumentto" id="sound_setinstrumentto"><value name="INSTRUMENT"><shadow type="sound_instruments_menu"></shadow></value></block><block type="sound_changeeffectby" id="sound_changeeffectby"><value name="VALUE"><shadow type="math_number"><field name="NUM">10</field></shadow></value></block><block type="sound_seteffectto" id="sound_seteffectto"><value name="VALUE"><shadow type="math_number"><field name="NUM">100</field></shadow></value></block><block type="sound_cleareffects" id="sound_cleareffects"></block><block type="sound_changevolumeby" id="sound_changevolumeby"><value name="VOLUME"><shadow type="math_number"><field name="NUM">-10</field></shadow></value></block><block type="sound_setvolumeto" id="sound_setvolumeto"><value name="VOLUME"><shadow type="math_number"><field name="NUM">100</field></shadow></value></block><block type="sound_volume" id="sound_volume"></block><block type="sound_changetempoby" id="sound_changetempoby"><value name="TEMPO"><shadow type="math_number"><field name="NUM">20</field></shadow></value></block><block type="sound_settempotobpm" id="sound_settempotobpm"><value name="TEMPO"><shadow type="math_number"><field name="NUM">60</field></shadow></value></block><block type="sound_tempo" id="sound_tempo"></block></category><category name="Pen" colour="#00B295" secondaryColour="#0B8E69"><block type="pen_clear" id="pen_clear"></block><block type="pen_stamp" id="pen_stamp"></block><block type="pen_pendown" id="pen_pendown"></block><block type="pen_penup" id="pen_penup"></block><block type="pen_setpencolortocolor" id="pen_setpencolortocolor"><value name="COLOR"><shadow type="colour_picker"></shadow></value></block><block type="pen_changepencolorby" id="pen_changepencolorby"><value name="COLOR"><shadow type="math_number"><field name="NUM">10</field></shadow></value></block><block type="pen_setpencolortonum" id="pen_setpencolortonum"><value name="COLOR"><shadow type="math_number"><field name="NUM">0</field></shadow></value></block><block type="pen_changepenshadeby" id="pen_changepenshadeby"><value name="SHADE"><shadow type="math_number"><field name="NUM">10</field></shadow></value></block><block type="pen_setpenshadeto" id="pen_setpenshadeto"><value name="SHADE"><shadow type="math_number"><field name="NUM">50</field></shadow></value></block><block type="pen_changepensizeby" id="pen_changepensizeby"><value name="SIZE"><shadow type="math_number"><field name="NUM">1</field></shadow></value></block><block type="pen_setpensizeto" id="pen_setpensizeto"><value name="SIZE"><shadow type="math_number"><field name="NUM">1</field></shadow></value></block></category><category name="Data" colour="#FF8C1A" secondaryColour="#DB6E00" custom="VARIABLE"></category><category name="Events" colour="#FFD500" secondaryColour="#CC9900"><block type="event_whenflagclicked" id="event_whenflagclicked"></block><block type="event_whenkeypressed" id="event_whenkeypressed"></block><block type="event_whenthisspriteclicked" id="event_whenthisspriteclicked"></block><block type="event_whenbackdropswitchesto" id="event_whenbackdropswitchesto"></block><block type="event_whengreaterthan" id="event_whengreaterthan"><value name="VALUE"><shadow type="math_number"><field name="NUM">10</field></shadow></value></block><block type="event_whenbroadcastreceived" id="event_whenbroadcastreceived"></block><block type="event_broadcast" id="event_broadcast"><value name="BROADCAST_OPTION"><shadow type="event_broadcast_menu"></shadow></value></block><block type="event_broadcastandwait" id="event_broadcastandwait"><value name="BROADCAST_OPTION"><shadow type="event_broadcast_menu"></shadow></value></block></category><category name="Control" colour="#FFAB19" secondaryColour="#CF8B17"><block type="control_wait" id="control_wait"><value name="DURATION"><shadow type="math_positive_number"><field name="NUM">1</field></shadow></value></block><block type="control_repeat" id="control_repeat"><value name="TIMES"><shadow type="math_whole_number"><field name="NUM">10</field></shadow></value></block><block type="control_forever" id="control_forever"></block><block type="control_if" id="control_if"></block><block type="control_if_else" id="control_if_else"></block><block type="control_wait_until" id="control_wait_until"></block><block type="control_repeat_until" id="control_repeat_until"></block><block type="control_stop" id="control_stop"></block><block type="control_start_as_clone" id="control_start_as_clone"></block><block type="control_create_clone_of" id="control_create_clone_of"><value name="CLONE_OPTION"><shadow type="control_create_clone_of_menu"></shadow></value></block><block type="control_delete_this_clone" id="control_delete_this_clone"></block></category><category name="Sensing" colour="#4CBFE6" secondaryColour="#2E8EB8"><block type="sensing_touchingobject" id="sensing_touchingobject"><value name="TOUCHINGOBJECTMENU"><shadow type="sensing_touchingobjectmenu"></shadow></value></block><block type="sensing_touchingcolor" id="sensing_touchingcolor"><value name="COLOR"><shadow type="colour_picker"></shadow></value></block><block type="sensing_coloristouchingcolor" id="sensing_coloristouchingcolor"><value name="COLOR"><shadow type="colour_picker"></shadow></value><value name="COLOR2"><shadow type="colour_picker"></shadow></value></block><block type="sensing_distanceto" id="sensing_distanceto"><value name="DISTANCETOMENU"><shadow type="sensing_distancetomenu"></shadow></value></block><block type="sensing_keypressed" id="sensing_keypressed"><value name="KEY_OPTION"><shadow type="sensing_keyoptions"></shadow></value></block><block type="sensing_mousedown" id="sensing_mousedown"></block><block type="sensing_mousex" id="sensing_mousex"></block><block type="sensing_mousey" id="sensing_mousey"></block><block type="sensing_loudness" id="sensing_loudness"></block><block type="sensing_timer" id="sensing_timer"></block><block type="sensing_resettimer" id="sensing_resettimer"></block><block type="sensing_of" id="sensing_of"><value name="PROPERTY"><shadow type="sensing_of_property_menu"></shadow></value><value name="OBJECT"><shadow type="sensing_of_object_menu"></shadow></value></block><block type="sensing_current" id="sensing_current"><value name="CURRENTMENU"><shadow type="sensing_currentmenu"></shadow></value></block><block type="sensing_dayssince2000" id="sensing_dayssince2000"></block></category><category name="Operators" colour="#40BF4A" secondaryColour="#389438"><block type="operator_add" id="operator_add"><value name="NUM1"><shadow type="math_number"><field name="NUM"></field></shadow></value><value name="NUM2"><shadow type="math_number"><field name="NUM"></field></shadow></value></block><block type="operator_subtract" id="operator_subtract"><value name="NUM1"><shadow type="math_number"><field name="NUM"></field></shadow></value><value name="NUM2"><shadow type="math_number"><field name="NUM"></field></shadow></value></block><block type="operator_multiply" id="operator_multiply"><value name="NUM1"><shadow type="math_number"><field name="NUM"></field></shadow></value><value name="NUM2"><shadow type="math_number"><field name="NUM"></field></shadow></value></block><block type="operator_divide" id="operator_divide"><value name="NUM1"><shadow type="math_number"><field name="NUM"></field></shadow></value><value name="NUM2"><shadow type="math_number"><field name="NUM"></field></shadow></value></block><block type="operator_random" id="operator_random"><value name="FROM"><shadow type="math_number"><field name="NUM">1</field></shadow></value><value name="TO"><shadow type="math_number"><field name="NUM">10</field></shadow></value></block><block type="operator_lt" id="operator_lt"><value name="OPERAND1"><shadow type="text"><field name="TEXT"></field></shadow></value><value name="OPERAND2"><shadow type="text"><field name="TEXT"></field></shadow></value></block><block type="operator_equals" id="operator_equals"><value name="OPERAND1"><shadow type="text"><field name="TEXT"></field></shadow></value><value name="OPERAND2"><shadow type="text"><field name="TEXT"></field></shadow></value></block><block type="operator_gt" id="operator_gt"><value name="OPERAND1"><shadow type="text"><field name="TEXT"></field></shadow></value><value name="OPERAND2"><shadow type="text"><field name="TEXT"></field></shadow></value></block><block type="operator_and" id="operator_and"></block><block type="operator_or" id="operator_or"></block><block type="operator_not" id="operator_not"></block><block type="operator_join" id="operator_join"><value name="STRING1"><shadow type="text"><field name="TEXT">hello</field></shadow></value><value name="STRING2"><shadow type="text"><field name="TEXT">world</field></shadow></value></block><block type="operator_letter_of" id="operator_letter_of"><value name="LETTER"><shadow type="math_whole_number"><field name="NUM">1</field></shadow></value><value name="STRING"><shadow type="text"><field name="TEXT">world</field></shadow></value></block><block type="operator_length" id="operator_length"><value name="STRING"><shadow type="text"><field name="TEXT">world</field></shadow></value></block><block type="operator_mod" id="operator_mod"><value name="NUM1"><shadow type="math_number"><field name="NUM"></field></shadow></value><value name="NUM2"><shadow type="math_number"><field name="NUM"></field></shadow></value></block><block type="operator_round" id="operator_round"><value name="NUM"><shadow type="math_number"><field name="NUM"></field></shadow></value></block><block type="operator_mathop" id="operator_mathop"><value name="NUM"><shadow type="math_number"><field name="NUM"></field></shadow></value></block></category></xml>';Blockly.Blocks.event={};Blockly.Blocks.event_whenflagclicked={init:function(){this.jsonInit({id:"event_whenflagclicked",message0:"when %1 clicked",args0:[{type:"field_image",src:Blockly.mainWorkspace.options.pathToMedia+"icons/event_whenflagclicked.svg",width:24,height:24,alt:"flag",flip_rtl:!0}],category:Blockly.Categories.event,extensions:["colours_event","shape_hat"]})}};
 	Blockly.Blocks.event_whenthisspriteclicked={init:function(){this.jsonInit({message0:"when this sprite clicked",category:Blockly.Categories.event,extensions:["colours_event","shape_hat"]})}};
 	Blockly.Blocks.event_whenbroadcastreceived={init:function(){this.jsonInit({id:"event_whenbroadcastreceived",message0:"when I receive %1",args0:[{type:"field_dropdown",name:"BROADCAST_OPTION",options:[["message1","message1"],["message2","message2"],["new message","new message"]]}],category:Blockly.Categories.event,extensions:["colours_event","shape_hat"]})}};
 	Blockly.Blocks.event_whenbackdropswitchesto={init:function(){this.jsonInit({message0:"when backdrop switches to %1",args0:[{type:"field_dropdown",name:"BACKDROP",options:[["backdrop1","BACKDROP1"]]}],category:Blockly.Categories.event,extensions:["colours_event","shape_hat"]})}};
@@ -36967,32 +37234,27 @@ module.exports =
 	b.setAttribute("value",this._warp);a.appendChild(b);return a},domToMutation:function(a){this._procCode=a.getAttribute("proccode");this._argumentNames=JSON.parse(a.getAttribute("argumentnames"));this._argumentValues=JSON.parse(a.getAttribute("argumentvalues"));this._warp=a.getAttribute("warp");this._updateDisplay()},_updateDisplay:function(){this.setFieldValue(this._procCode,"procCode");this.setFieldValue(this._argumentNames,"argumentNames");this.setFieldValue(this._argumentDefaults,"argumentDefaults");
 	this.setFieldValue(this._warp,"warp")}};
 	Blockly.Blocks.procedures_callnoreturn={init:function(){this.setPreviousStatement(!0);this.setNextStatement(!0);this.setCategory(Blockly.Categories.more);this.setColour(Blockly.Colours.more.primary,Blockly.Colours.more.secondary,Blockly.Colours.more.tertiary);this._procCode=""},mutationToDom:function(){var a=document.createElement("mutation");a.setAttribute("proccode",this._procCode);return a},domToMutation:function(a){this._procCode=a.getAttribute("proccode");this._updateDisplay()},_updateDisplay:function(){for(var a=
-	this._procCode.split(/(?=[^\\]\%[nbs])/),a=a.map(function(a){return a.trim()}),b=0,d=0,c;c=a[d];d++){if("%"==c.substring(0,1)){var f=c.substring(1,2);c=c.substring(2).trim();var e="input"+b++;switch(f){case "n":f=this.appendValueInput(e);e=this.workspace.newBlock("math_number");e.setShadow(!0);e.outputConnection.connect(f.connection);break;case "b":f=this.appendValueInput(e);f.setCheck("Boolean");break;case "s":f=this.appendValueInput(e),e=this.workspace.newBlock("text"),e.setShadow(!0),e.outputConnection.connect(f.connection)}}else c=
-	c.trim();this.appendDummyInput().appendField(c.replace(/\\%/,"%"))}}};
+	this._procCode.split(/(?=[^\\]\%[nbs])/),a=a.map(function(a){return a.trim()}),b=0,c=0,d;d=a[c];c++){if("%"==d.substring(0,1)){var f=d.substring(1,2);d=d.substring(2).trim();var e="input"+b++;switch(f){case "n":f=this.appendValueInput(e);e=this.workspace.newBlock("math_number");e.setShadow(!0);e.outputConnection.connect(f.connection);break;case "b":f=this.appendValueInput(e);f.setCheck("Boolean");break;case "s":f=this.appendValueInput(e),e=this.workspace.newBlock("text"),e.setShadow(!0),e.outputConnection.connect(f.connection)}}else d=
+	d.trim();this.appendDummyInput().appendField(d.replace(/\\%/,"%"))}}};
 	Blockly.Blocks.procedures_param={init:function(){this.appendDummyInput().appendField(new Blockly.FieldLabel,"paramName");this.setPreviousStatement(!1);this.setNextStatement(!1);this.setOutput(!0);this.setCategory(Blockly.Categories.more);this.setColour(Blockly.Colours.more.primary,Blockly.Colours.more.secondary,Blockly.Colours.more.tertiary);this._paramName="undefined";this._shape="r"},mutationToDom:function(){var a=document.createElement("mutation");a.setAttribute("paramname",this._paramName);a.setAttribute("shape",
-	this._shape);return a},domToMutation:function(a){this._paramName=a.getAttribute("paramname");this._shape=a.getAttribute("shape");this._updateDisplay()},_updateDisplay:function(){this.setFieldValue(this._paramName,"paramName");switch(this._shape){case "b":this.setOutputShape(Blockly.OUTPUT_SHAPE_HEXAGONAL);this.setOutput(!0,"Boolean");break;default:this.setOutputShape(Blockly.OUTPUT_SHAPE_ROUND),this.setOutput(!0,"String")}}};Blockly.Blocks.sensing={};Blockly.Blocks.sensing_touchingobject={init:function(){this.jsonInit({message0:"touching %1?",args0:[{type:"input_value",name:"TOUCHINGOBJECTMENU"}],category:Blockly.Categories.sensing,extensions:["colours_sensing","output_boolean"]})}};
-	Blockly.Blocks.sensing_touchingobjectmenu={init:function(){this.jsonInit({message0:"%1",args0:[{type:"field_dropdown",name:"TOUCHINGOBJECTMENU",options:[["mouse-pointer","_mouse_"],["edge","_edge_"]]}],colour:Blockly.Colours.sensing.secondary,colourSecondary:Blockly.Colours.sensing.secondary,colourTertiary:Blockly.Colours.sensing.tertiary,extensions:["output_string"]})}};
+	this._shape);return a},domToMutation:function(a){this._paramName=a.getAttribute("paramname");this._shape=a.getAttribute("shape");this._updateDisplay()},_updateDisplay:function(){this.setFieldValue(this._paramName,"paramName");switch(this._shape){case "b":this.setOutputShape(Blockly.OUTPUT_SHAPE_HEXAGONAL);this.setOutput(!0,"Boolean");break;default:this.setOutputShape(Blockly.OUTPUT_SHAPE_ROUND),this.setOutput(!0,"String")}}};Blockly.Blocks.sensing={};Blockly.Blocks.sensing_touchingobject={init:function(){this.jsonInit({message0:"touching %1?",args0:[{type:"input_value",name:"TOUCHINGOBJECTMENU"}],category:Blockly.Categories.sensing,extensions:["colours_sensing","output_boolean"]})}};Blockly.Blocks.sensing_touchingobjectmenu={init:function(){this.jsonInit({message0:"%1",args0:[{type:"field_dropdown",name:"TOUCHINGOBJECTMENU",options:[["mouse-pointer","_mouse_"],["edge","_edge_"]]}],extensions:["colours_sensing","output_string"]})}};
 	Blockly.Blocks.sensing_touchingcolor={init:function(){this.jsonInit({message0:"touching color %1?",args0:[{type:"input_value",name:"COLOR"}],category:Blockly.Categories.sensing,extensions:["colours_sensing","output_boolean"]})}};Blockly.Blocks.sensing_coloristouchingcolor={init:function(){this.jsonInit({message0:"color %1 is touching %2?",args0:[{type:"input_value",name:"COLOR"},{type:"input_value",name:"COLOR2"}],category:Blockly.Categories.sensing,extensions:["colours_sensing","output_boolean"]})}};
-	Blockly.Blocks.sensing_distanceto={init:function(){this.jsonInit({message0:"distance to %1",args0:[{type:"input_value",name:"DISTANCETOMENU"}],category:Blockly.Categories.sensing,extensions:["colours_sensing","output_number"]})}};
-	Blockly.Blocks.sensing_distancetomenu={init:function(){this.jsonInit({message0:"%1",args0:[{type:"field_dropdown",name:"DISTANCETOMENU",options:[["mouse-pointer","_mouse_"]]}],inputsInline:!0,output:"String",colour:Blockly.Colours.sensing.secondary,colourSecondary:Blockly.Colours.sensing.secondary,colourTertiary:Blockly.Colours.sensing.tertiary,outputShape:Blockly.OUTPUT_SHAPE_ROUND})}};
-	Blockly.Blocks.sensing_askandwait={init:function(){this.jsonInit({message0:"ask %1 and wait",args0:[{type:"input_value",name:"QUESTION"}],previousStatement:null,nextStatement:null,category:Blockly.Categories.sensing,extensions:["colours_sensing"]})}};Blockly.Blocks.sensing_answer={init:function(){this.jsonInit({message0:"answer",category:Blockly.Categories.sensing,output:"Number",outputShape:Blockly.OUTPUT_SHAPE_ROUND,checkboxInFlyout:!0,extensions:["colours_sensing"]})}};
+	Blockly.Blocks.sensing_distanceto={init:function(){this.jsonInit({message0:"distance to %1",args0:[{type:"input_value",name:"DISTANCETOMENU"}],category:Blockly.Categories.sensing,extensions:["colours_sensing","output_number"]})}};Blockly.Blocks.sensing_distancetomenu={init:function(){this.jsonInit({message0:"%1",args0:[{type:"field_dropdown",name:"DISTANCETOMENU",options:[["mouse-pointer","_mouse_"]]}],extensions:["colours_sensing","output_string"]})}};
+	Blockly.Blocks.sensing_askandwait={init:function(){this.jsonInit({message0:"ask %1 and wait",args0:[{type:"input_value",name:"QUESTION"}],category:Blockly.Categories.sensing,extensions:["colours_sensing","shape_statement"]})}};Blockly.Blocks.sensing_answer={init:function(){this.jsonInit({message0:"answer",category:Blockly.Categories.sensing,checkboxInFlyout:!0,extensions:["colours_sensing","output_number"]})}};
 	Blockly.Blocks.sensing_keypressed={init:function(){this.jsonInit({message0:"key %1 pressed?",args0:[{type:"input_value",name:"KEY_OPTION"}],category:Blockly.Categories.sensing,extensions:["colours_sensing","output_boolean"]})}};
 	Blockly.Blocks.sensing_keyoptions={init:function(){this.jsonInit({message0:"%1",args0:[{type:"field_dropdown",name:"KEY_OPTION",options:[["space","space"],["left arrow","left arrow"],["right arrow","right arrow"],["down arrow","down arrow"],["up arrow","up arrow"],["any","any"],["a","a"],["b","b"],["c","c"],["d","d"],["e","e"],["f","f"],["g","g"],["h","h"],["i","i"],["j","j"],["k","k"],["l","l"],["m","m"],["n","n"],["o","o"],["p","p"],["q","q"],["r","r"],["s","s"],["t","t"],["u","u"],["v","v"],["w",
-	"w"],["x","x"],["y","y"],["z","z"],["0","0"],["1","1"],["2","2"],["3","3"],["4","4"],["5","5"],["6","6"],["7","7"],["8","8"],["9","9"]]}],inputsInline:!0,output:"String",colour:Blockly.Colours.sensing.secondary,colourSecondary:Blockly.Colours.sensing.secondary,colourTertiary:Blockly.Colours.sensing.tertiary,outputShape:Blockly.OUTPUT_SHAPE_ROUND})}};
-	Blockly.Blocks.sensing_mousedown={init:function(){this.jsonInit({message0:"mouse down?",category:Blockly.Categories.sensing,extensions:["colours_sensing","output_boolean"]})}};Blockly.Blocks.sensing_mousex={init:function(){this.jsonInit({message0:"mouse x",category:Blockly.Categories.sensing,extensions:["colours_sensing","output_number"]})}};Blockly.Blocks.sensing_mousey={init:function(){this.jsonInit({message0:"mouse y",category:Blockly.Categories.sensing,extensions:["colours_sensing","output_number"]})}};
-	Blockly.Blocks.sensing_loudness={init:function(){this.jsonInit({message0:"loudness",category:Blockly.Categories.sensing,checkboxInFlyout:!0,extensions:["colours_sensing","output_number"]})}};Blockly.Blocks.sensing_videoon={init:function(){this.jsonInit({message0:"video %1 on %2",args0:[{type:"input_value",name:"VIDEOONMENU1"},{type:"input_value",name:"VIDEOONMENU2"}],inputsInline:!0,output:"Number",category:Blockly.Categories.sensing,outputShape:Blockly.OUTPUT_SHAPE_ROUND,checkboxInFlyout:!0,extensions:["colours_sensing"]})}};
-	Blockly.Blocks.sensing_videoonmenuone={init:function(){this.jsonInit({message0:"%1",args0:[{type:"field_dropdown",name:"VIDEOONMENU1",options:[["motion","MOTION"],["direction","DIRECTION"]]}],inputsInline:!0,output:"String",colour:Blockly.Colours.sensing.secondary,colourSecondary:Blockly.Colours.sensing.secondary,colourTertiary:Blockly.Colours.sensing.tertiary,outputShape:Blockly.OUTPUT_SHAPE_ROUND})}};
-	Blockly.Blocks.sensing_videoonmenutwo={init:function(){this.jsonInit({message0:"%1",args0:[{type:"field_dropdown",name:"VIDEOONMENU2",options:[["stage","STAGE"]]}],inputsInline:!0,output:"String",colour:Blockly.Colours.sensing.secondary,colourSecondary:Blockly.Colours.sensing.secondary,colourTertiary:Blockly.Colours.sensing.tertiary,outputShape:Blockly.OUTPUT_SHAPE_ROUND})}};
-	Blockly.Blocks.sensing_videotoggle={init:function(){this.jsonInit({message0:"turn video %1",args0:[{type:"input_value",name:"VIDEOTOGGLEMENU"}],previousStatement:null,nextStatement:null,category:Blockly.Categories.sensing,extensions:["colours_sensing"]})}};
-	Blockly.Blocks.sensing_videotogglemenu={init:function(){this.jsonInit({message0:"%1",args0:[{type:"field_dropdown",name:"VIDEOTOGGLEMENU",options:[["on","ON"],["off","OFF"],["on-flipped","ONFLIPPED"]]}],inputsInline:!0,output:"String",colour:Blockly.Colours.sensing.secondary,colourSecondary:Blockly.Colours.sensing.secondary,colourTertiary:Blockly.Colours.sensing.tertiary,outputShape:Blockly.OUTPUT_SHAPE_ROUND})}};
-	Blockly.Blocks.sensing_setvideotransparency={init:function(){this.jsonInit({message0:"set video transparency to %1%",args0:[{type:"input_value",name:"TRANSPARENCY"}],previousStatement:null,nextStatement:null,category:Blockly.Categories.sensing,extensions:["colours_sensing"]})}};Blockly.Blocks.sensing_timer={init:function(){this.jsonInit({message0:"timer",category:Blockly.Categories.sensing,output:"Number",outputShape:Blockly.OUTPUT_SHAPE_ROUND,checkboxInFlyout:!0,extensions:["colours_sensing"]})}};
-	Blockly.Blocks.sensing_resettimer={init:function(){this.jsonInit({message0:"reset timer",previousStatement:null,nextStatement:null,category:Blockly.Categories.sensing,extensions:["colours_sensing"]})}};
-	Blockly.Blocks.sensing_of_property_menu={init:function(){this.jsonInit({message0:"%1",args0:[{type:"field_dropdown",name:"PROPERTY",options:[["x position","x position"],["y position","y position"],["direction","direction"],["costume #","costume #"],["costume name","costume name"],["size","size"],["volume","volume"],["backdrop #","backdrop #"],["backdrop name","backdrop name"]]}],inputsInline:!0,output:"String",colour:Blockly.Colours.sensing.secondary,colourSecondary:Blockly.Colours.sensing.secondary,
-	colourTertiary:Blockly.Colours.sensing.tertiary,outputShape:Blockly.OUTPUT_SHAPE_ROUND})}};Blockly.Blocks.sensing_of_object_menu={init:function(){this.jsonInit({message0:"%1",args0:[{type:"field_dropdown",name:"OBJECT",options:[["Sprite1","Sprite1"],["Stage","_stage_"]]}],inputsInline:!0,output:"String",colour:Blockly.Colours.sensing.secondary,colourSecondary:Blockly.Colours.sensing.secondary,colourTertiary:Blockly.Colours.sensing.tertiary,outputShape:Blockly.OUTPUT_SHAPE_ROUND})}};
-	Blockly.Blocks.sensing_of={init:function(){this.jsonInit({message0:"%1 of %2",args0:[{type:"input_value",name:"PROPERTY"},{type:"input_value",name:"OBJECT"}],output:!0,category:Blockly.Categories.sensing,outputShape:Blockly.OUTPUT_SHAPE_ROUND,checkboxInFlyout:!0,extensions:["colours_sensing"]})}};
-	Blockly.Blocks.sensing_current={init:function(){this.jsonInit({message0:"current %1",args0:[{type:"input_value",name:"CURRENTMENU"}],inputsInline:!0,output:"Number",category:Blockly.Categories.sensing,outputShape:Blockly.OUTPUT_SHAPE_ROUND,checkboxInFlyout:!0,extensions:["colours_sensing"]})}};
-	Blockly.Blocks.sensing_currentmenu={init:function(){this.jsonInit({message0:"%1",args0:[{type:"field_dropdown",name:"CURRENTMENU",options:[["year","YEAR"],["month","MONTH"],["date","DATE"],["day of week","DAYOFWEEK"],["hour","HOUR"],["minute","MINUTE"],["second","SECOND"]]}],inputsInline:!0,output:"String",colour:Blockly.Colours.sensing.secondary,colourSecondary:Blockly.Colours.sensing.secondary,colourTertiary:Blockly.Colours.sensing.tertiary,outputShape:Blockly.OUTPUT_SHAPE_ROUND})}};
-	Blockly.Blocks.sensing_dayssince2000={init:function(){this.jsonInit({message0:"days since 2000",category:Blockly.Categories.sensing,output:"Number",outputShape:Blockly.OUTPUT_SHAPE_ROUND,extensions:["colours_sensing"]})}};Blockly.Blocks.sensing_username={init:function(){this.jsonInit({message0:"username",category:Blockly.Categories.sensing,output:"Number",outputShape:Blockly.OUTPUT_SHAPE_ROUND,checkboxInFlyout:!0,extensions:["colours_sensing"]})}};Blockly.Blocks.sound={};Blockly.Blocks.sound_sounds_menu={init:function(){this.jsonInit({message0:"%1",args0:[{type:"field_dropdown",name:"SOUND_MENU",options:[["1","0"],["2","1"],["3","2"],["4","3"],["5","4"],["6","5"],["7","6"],["8","7"],["9","8"],["10","9"]]}],colour:Blockly.Colours.sounds.secondary,colourSecondary:Blockly.Colours.sounds.secondary,colourTertiary:Blockly.Colours.sounds.tertiary,extensions:["output_string"]})}};
+	"w"],["x","x"],["y","y"],["z","z"],["0","0"],["1","1"],["2","2"],["3","3"],["4","4"],["5","5"],["6","6"],["7","7"],["8","8"],["9","9"]]}],extensions:["colours_sensing","output_string"]})}};Blockly.Blocks.sensing_mousedown={init:function(){this.jsonInit({message0:"mouse down?",category:Blockly.Categories.sensing,extensions:["colours_sensing","output_boolean"]})}};
+	Blockly.Blocks.sensing_mousex={init:function(){this.jsonInit({message0:"mouse x",category:Blockly.Categories.sensing,extensions:["colours_sensing","output_number"]})}};Blockly.Blocks.sensing_mousey={init:function(){this.jsonInit({message0:"mouse y",category:Blockly.Categories.sensing,extensions:["colours_sensing","output_number"]})}};
+	Blockly.Blocks.sensing_loudness={init:function(){this.jsonInit({message0:"loudness",category:Blockly.Categories.sensing,checkboxInFlyout:!0,extensions:["colours_sensing","output_number"]})}};Blockly.Blocks.sensing_videoon={init:function(){this.jsonInit({message0:"video %1 on %2",args0:[{type:"input_value",name:"VIDEOONMENU1"},{type:"input_value",name:"VIDEOONMENU2"}],category:Blockly.Categories.sensing,checkboxInFlyout:!0,extensions:["colours_sensing","output_number"]})}};
+	Blockly.Blocks.sensing_videoonmenuone={init:function(){this.jsonInit({message0:"%1",args0:[{type:"field_dropdown",name:"VIDEOONMENU1",options:[["motion","MOTION"],["direction","DIRECTION"]]}],extensions:["colours_sensing","output_string"]})}};Blockly.Blocks.sensing_videoonmenutwo={init:function(){this.jsonInit({message0:"%1",args0:[{type:"field_dropdown",name:"VIDEOONMENU2",options:[["stage","STAGE"]]}],extensions:["colours_sensing","output_string"]})}};
+	Blockly.Blocks.sensing_videotoggle={init:function(){this.jsonInit({message0:"turn video %1",args0:[{type:"input_value",name:"VIDEOTOGGLEMENU"}],category:Blockly.Categories.sensing,extensions:["colours_sensing","shape_statement"]})}};Blockly.Blocks.sensing_videotogglemenu={init:function(){this.jsonInit({message0:"%1",args0:[{type:"field_dropdown",name:"VIDEOTOGGLEMENU",options:[["on","ON"],["off","OFF"],["on-flipped","ONFLIPPED"]]}],extensions:["colours_sensing","output_string"]})}};
+	Blockly.Blocks.sensing_setvideotransparency={init:function(){this.jsonInit({message0:"set video transparency to %1%",args0:[{type:"input_value",name:"TRANSPARENCY"}],category:Blockly.Categories.sensing,extensions:["colours_sensing","shape_statement"]})}};Blockly.Blocks.sensing_timer={init:function(){this.jsonInit({message0:"timer",category:Blockly.Categories.sensing,checkboxInFlyout:!0,extensions:["colours_sensing","output_number"]})}};
+	Blockly.Blocks.sensing_resettimer={init:function(){this.jsonInit({message0:"reset timer",category:Blockly.Categories.sensing,extensions:["colours_sensing","shape_statement"]})}};
+	Blockly.Blocks.sensing_of_property_menu={init:function(){this.jsonInit({message0:"%1",args0:[{type:"field_dropdown",name:"PROPERTY",options:[["x position","x position"],["y position","y position"],["direction","direction"],["costume #","costume #"],["costume name","costume name"],["size","size"],["volume","volume"],["backdrop #","backdrop #"],["backdrop name","backdrop name"]]}],extensions:["colours_sensing","output_string"]})}};
+	Blockly.Blocks.sensing_of_object_menu={init:function(){this.jsonInit({message0:"%1",args0:[{type:"field_dropdown",name:"OBJECT",options:[["Sprite1","Sprite1"],["Stage","_stage_"]]}],extensions:["colours_sensing","output_string"]})}};Blockly.Blocks.sensing_of={init:function(){this.jsonInit({message0:"%1 of %2",args0:[{type:"input_value",name:"PROPERTY"},{type:"input_value",name:"OBJECT"}],output:!0,category:Blockly.Categories.sensing,outputShape:Blockly.OUTPUT_SHAPE_ROUND,checkboxInFlyout:!0,extensions:["colours_sensing"]})}};
+	Blockly.Blocks.sensing_current={init:function(){this.jsonInit({message0:"current %1",args0:[{type:"input_value",name:"CURRENTMENU"}],category:Blockly.Categories.sensing,checkboxInFlyout:!0,extensions:["colours_sensing","output_number"]})}};
+	Blockly.Blocks.sensing_currentmenu={init:function(){this.jsonInit({message0:"%1",args0:[{type:"field_dropdown",name:"CURRENTMENU",options:[["year","YEAR"],["month","MONTH"],["date","DATE"],["day of week","DAYOFWEEK"],["hour","HOUR"],["minute","MINUTE"],["second","SECOND"]]}],extensions:["colours_sensing","output_string"]})}};Blockly.Blocks.sensing_dayssince2000={init:function(){this.jsonInit({message0:"days since 2000",category:Blockly.Categories.sensing,extensions:["colours_sensing","output_number"]})}};
+	Blockly.Blocks.sensing_username={init:function(){this.jsonInit({message0:"username",category:Blockly.Categories.sensing,checkboxInFlyout:!0,extensions:["colours_sensing","output_number"]})}};Blockly.Blocks.sound={};Blockly.Blocks.sound_sounds_menu={init:function(){this.jsonInit({message0:"%1",args0:[{type:"field_dropdown",name:"SOUND_MENU",options:[["1","0"],["2","1"],["3","2"],["4","3"],["5","4"],["6","5"],["7","6"],["8","7"],["9","8"],["10","9"]]}],colour:Blockly.Colours.sounds.secondary,colourSecondary:Blockly.Colours.sounds.secondary,colourTertiary:Blockly.Colours.sounds.tertiary,extensions:["output_string"]})}};
 	Blockly.Blocks.sound_play={init:function(){this.jsonInit({message0:"start sound %1",args0:[{type:"input_value",name:"SOUND_MENU"}],category:Blockly.Categories.sound,extensions:["colours_sounds","shape_statement"]})}};Blockly.Blocks.sound_playuntildone={init:function(){this.jsonInit({message0:"play sound %1 until done",args0:[{type:"input_value",name:"SOUND_MENU"}],extensions:["colours_sounds","shape_statement"]})}};
 	Blockly.Blocks.sound_stopallsounds={init:function(){this.jsonInit({message0:"stop all sounds",category:Blockly.Categories.sound,extensions:["colours_sounds","shape_statement"]})}};
 	Blockly.Blocks.sound_drums_menu={init:function(){this.jsonInit({message0:"%1",args0:[{type:"field_dropdown",name:"DRUM",options:[["(1) Snare Drum","1"],["(2) Bass Drum","2"],["(3) Side Stick","3"],["(4) Crash Cymbal","4"],["(5) Open Hi-Hat","5"],["(6) Closed Hi-Hat","6"],["(7) Tambourine","7"],["(8) Hand Clap","8"],["(9) Claves","9"],["(10) Wood Block","10"],["(11) Cowbell","11"],["(12) Triangle","12"],["(13) Bongo","13"],["(14) Conga","14"],["(15) Cabasa","15"],["(16) Guiro","16"],["(17) Vibraslap",
@@ -38110,7 +38372,7 @@ module.exports =
 	setTimeout(Blockly.Tooltip.show_,Blockly.Tooltip.HOVER_MS))};Blockly.Tooltip.hide=function(){Blockly.Tooltip.visible&&(Blockly.Tooltip.visible=!1,Blockly.Tooltip.DIV&&(Blockly.Tooltip.DIV.style.display="none"));clearTimeout(Blockly.Tooltip.showPid_)};Blockly.Tooltip.block=function(){Blockly.Tooltip.hide();Blockly.Tooltip.blocked_=!0};Blockly.Tooltip.unblock=function(){Blockly.Tooltip.blocked_=!1};
 	Blockly.Tooltip.show_=function(){if(!Blockly.Tooltip.blocked_&&(Blockly.Tooltip.poisonedElement_=Blockly.Tooltip.element_,Blockly.Tooltip.DIV)){goog.dom.removeChildren(Blockly.Tooltip.DIV);for(var a=Blockly.Tooltip.element_.tooltip;goog.isFunction(a);)a=a();for(var a=Blockly.utils.wrap(a,Blockly.Tooltip.LIMIT),a=a.split("\n"),b=0;b<a.length;b++){var c=document.createElement("div");c.appendChild(document.createTextNode(a[b]));Blockly.Tooltip.DIV.appendChild(c)}a=Blockly.Tooltip.element_.RTL;b=goog.dom.getViewportSize();
 	Blockly.Tooltip.DIV.style.direction=a?"rtl":"ltr";Blockly.Tooltip.DIV.style.display="block";Blockly.Tooltip.visible=!0;var c=Blockly.Tooltip.lastX_,c=a?c-(Blockly.Tooltip.OFFSET_X+Blockly.Tooltip.DIV.offsetWidth):c+Blockly.Tooltip.OFFSET_X,d=Blockly.Tooltip.lastY_+Blockly.Tooltip.OFFSET_Y;d+Blockly.Tooltip.DIV.offsetHeight>b.height+window.scrollY&&(d-=Blockly.Tooltip.DIV.offsetHeight+2*Blockly.Tooltip.OFFSET_Y);a?c=Math.max(Blockly.Tooltip.MARGINS-window.scrollX,c):c+Blockly.Tooltip.DIV.offsetWidth>
-	b.width+window.scrollX-2*Blockly.Tooltip.MARGINS&&(c=b.width-Blockly.Tooltip.DIV.offsetWidth-2*Blockly.Tooltip.MARGINS);Blockly.Tooltip.DIV.style.top=d+"px";Blockly.Tooltip.DIV.style.left=c+"px"}};Blockly.Gesture=function(a,b){this.mouseDownXY_=null;this.currentDragDeltaXY_=0;this.startWorkspace_=this.targetBlock_=this.startBlock_=this.startField_=null;this.creatorWorkspace_=b;this.isDraggingBlock_=this.isDraggingWorkspace_=this.hasExceededDragRadius_=!1;this.mostRecentEvent_=a;this.flyout_=this.workspaceDragger_=this.blockDragger_=this.onUpWrapper_=this.onMoveWrapper_=null;this.isEnding_=this.hasStarted_=this.calledUpdateIsDragging_=!1};
+	b.width+window.scrollX-2*Blockly.Tooltip.MARGINS&&(c=b.width-Blockly.Tooltip.DIV.offsetWidth-2*Blockly.Tooltip.MARGINS);Blockly.Tooltip.DIV.style.top=d+"px";Blockly.Tooltip.DIV.style.left=c+"px"}};Blockly.Gesture=function(a,b){this.mouseDownXY_=null;this.currentDragDeltaXY_=new goog.math.Coordinate(0,0);this.startWorkspace_=this.targetBlock_=this.startBlock_=this.startField_=null;this.creatorWorkspace_=b;this.isDraggingBlock_=this.isDraggingWorkspace_=this.hasExceededDragRadius_=!1;this.mostRecentEvent_=a;this.flyout_=this.workspaceDragger_=this.blockDragger_=this.onUpWrapper_=this.onMoveWrapper_=null;this.isEnding_=this.hasStarted_=this.calledUpdateIsDragging_=!1};
 	Blockly.Gesture.prototype.dispose=function(){Blockly.Touch.clearTouchIdentifier();Blockly.Tooltip.unblock();this.creatorWorkspace_.clearGesture();this.onMoveWrapper_&&Blockly.unbindEvent_(this.onMoveWrapper_);this.onUpWrapper_&&Blockly.unbindEvent_(this.onUpWrapper_);this.flyout_=this.startWorkspace_=this.targetBlock_=this.startBlock_=this.startField_=null;this.blockDragger_&&(this.blockDragger_.dispose(),this.blockDragger_=null);this.workspaceDragger_&&(this.workspaceDragger_.dispose(),this.workspaceDragger_=
 	null)};Blockly.Gesture.prototype.updateFromEvent_=function(a){var b=new goog.math.Coordinate(a.clientX,a.clientY);this.updateDragDelta_(b)&&(this.updateIsDragging_(),Blockly.longStop_());this.mostRecentEvent_=a};
 	Blockly.Gesture.prototype.updateDragDelta_=function(a){this.currentDragDeltaXY_=goog.math.Coordinate.difference(a,this.mouseDownXY_);return this.hasExceededDragRadius_?!1:this.hasExceededDragRadius_=goog.math.Coordinate.magnitude(this.currentDragDeltaXY_)>(this.flyout_?Blockly.FLYOUT_DRAG_RADIUS:Blockly.DRAG_RADIUS)};
@@ -38131,7 +38393,7 @@ module.exports =
 	Blockly.Events.setGroup(!1)};Blockly.Gesture.prototype.doWorkspaceClick_=function(){Blockly.selected&&Blockly.selected.unselect()};Blockly.Gesture.prototype.bringBlockToFront_=function(){this.targetBlock_&&!this.flyout_&&this.targetBlock_.bringToFront()};Blockly.Gesture.prototype.setStartField=function(a){goog.asserts.assert(!this.hasStarted_,"Tried to call gesture.setStartField, but the gesture had already been started.");this.startField_||(this.startField_=a)};
 	Blockly.Gesture.prototype.setStartBlock=function(a){this.startBlock_||(this.startBlock_=a,a.isInFlyout&&a!=a.getRootBlock()?this.setTargetBlock_(a.getRootBlock()):this.setTargetBlock_(a))};Blockly.Gesture.prototype.setTargetBlock_=function(a){a.isShadow()?this.setTargetBlock_(a.getParent()):this.targetBlock_=a};Blockly.Gesture.prototype.setStartWorkspace_=function(a){this.startWorkspace_||(this.startWorkspace_=a)};Blockly.Gesture.prototype.setStartFlyout_=function(a){this.flyout_||(this.flyout_=a)};
 	Blockly.Gesture.prototype.isBlockClick_=function(){return!!this.startBlock_&&!this.hasExceededDragRadius_&&!this.isFieldClick_()};Blockly.Gesture.prototype.isFieldClick_=function(){return(this.startField_?this.startField_.isCurrentlyEditable():!1)&&!this.hasExceededDragRadius_};Blockly.Gesture.prototype.isWorkspaceClick_=function(){return!this.startBlock_&&!this.startField_&&!this.hasExceededDragRadius_};Blockly.Gesture.prototype.isDragging=function(){return this.isDraggingWorkspace_||this.isDraggingBlock_};
-	Blockly.Gesture.prototype.hasStarted=function(){return this.hasStarted_};Blockly.utils={};Blockly.utils.removeAttribute=function(a,b){goog.userAgent.IE&&goog.userAgent.isVersion("10.0")?a.setAttribute(b,null):a.removeAttribute(b)};Blockly.utils.addClass=function(a,b){var c=a.getAttribute("class")||"";if(-1!=(" "+c+" ").indexOf(" "+b+" "))return!1;c&&(c+=" ");a.setAttribute("class",c+b);return!0};
+	Blockly.Gesture.prototype.hasStarted=function(){return this.hasStarted_};Blockly.Gesture.prototype.forceStartBlockDrag=function(a,b){this.handleBlockStart(a,b);this.handleWsStart(a,b.workspace);this.hasExceededDragRadius_=this.isDraggingBlock_=!0;this.startDraggingBlock_()};Blockly.utils={};Blockly.utils.removeAttribute=function(a,b){goog.userAgent.IE&&goog.userAgent.isVersion("10.0")?a.setAttribute(b,null):a.removeAttribute(b)};Blockly.utils.addClass=function(a,b){var c=a.getAttribute("class")||"";if(-1!=(" "+c+" ").indexOf(" "+b+" "))return!1;c&&(c+=" ");a.setAttribute("class",c+b);return!0};
 	Blockly.utils.removeClass=function(a,b){var c=a.getAttribute("class");if(-1==(" "+c+" ").indexOf(" "+b+" "))return!1;for(var c=c.split(/\s+/),d=0;d<c.length;d++)c[d]&&c[d]!=b||(c.splice(d,1),d--);c.length?a.setAttribute("class",c.join(" ")):Blockly.utils.removeAttribute(a,"class");return!0};Blockly.utils.hasClass=function(a,b){return-1!=(" "+a.getAttribute("class")+" ").indexOf(" "+b+" ")};Blockly.utils.noEvent=function(a){a.preventDefault();a.stopPropagation()};
 	Blockly.utils.isTargetInput=function(a){return"textarea"==a.target.type||"text"==a.target.type||"number"==a.target.type||"email"==a.target.type||"password"==a.target.type||"search"==a.target.type||"tel"==a.target.type||"url"==a.target.type||a.target.isContentEditable};
 	Blockly.utils.getRelativeXY=function(a){var b=new goog.math.Coordinate(0,0),c=a.getAttribute("x");c&&(b.x=parseInt(c,10));if(c=a.getAttribute("y"))b.y=parseInt(c,10);if(c=(c=a.getAttribute("transform"))&&c.match(Blockly.utils.getRelativeXY.XY_REGEX_))b.x+=parseFloat(c[1]),c[3]&&(b.y+=parseFloat(c[3]));(a=a.getAttribute("style"))&&-1<a.indexOf("translate")&&((c=a.match(Blockly.utils.getRelativeXY.XY_2D_REGEX_))||(c=a.match(Blockly.utils.getRelativeXY.XY_3D_REGEX_)),c&&(b.x+=parseFloat(c[1]),c[3]&&
@@ -38236,10 +38498,10 @@ module.exports =
 	Blockly.WorkspaceSvg=function(a,b,c){Blockly.WorkspaceSvg.superClass_.constructor.call(this,a);this.getMetrics=a.getMetrics||Blockly.WorkspaceSvg.getTopLevelWorkspaceMetrics_;this.setMetrics=a.setMetrics||Blockly.WorkspaceSvg.setTopLevelWorkspaceMetrics_;Blockly.ConnectionDB.init(this);b&&(this.blockDragSurface_=b);c&&(this.workspaceDragSurface_=c);this.useWorkspaceDragSurface_=this.workspaceDragSurface_&&Blockly.utils.is3dSupported();this.highlightedBlocks_=[];this.audioManager_=new Blockly.WorkspaceAudio(a.parentWorkspace);
 	this.grid_=this.options.gridPattern?new Blockly.Grid(a.gridPattern,a.gridOptions):null;this.registerToolboxCategoryCallback(Blockly.VARIABLE_CATEGORY_NAME,Blockly.Variables.flyoutCategory);this.registerToolboxCategoryCallback(Blockly.PROCEDURE_CATEGORY_NAME,Blockly.Procedures.flyoutCategory)};goog.inherits(Blockly.WorkspaceSvg,Blockly.Workspace);Blockly.WorkspaceSvg.prototype.resizeHandlerWrapper_=null;Blockly.WorkspaceSvg.prototype.rendered=!0;Blockly.WorkspaceSvg.prototype.isFlyout=!1;
 	Blockly.WorkspaceSvg.prototype.isMutator=!1;Blockly.WorkspaceSvg.prototype.resizesEnabled_=!0;Blockly.WorkspaceSvg.prototype.scrollX=0;Blockly.WorkspaceSvg.prototype.scrollY=0;Blockly.WorkspaceSvg.prototype.startScrollX=0;Blockly.WorkspaceSvg.prototype.startScrollY=0;Blockly.WorkspaceSvg.prototype.dragDeltaXY_=null;Blockly.WorkspaceSvg.prototype.scale=1;Blockly.WorkspaceSvg.prototype.trashcan=null;Blockly.WorkspaceSvg.prototype.scrollbar=null;Blockly.WorkspaceSvg.prototype.currentGesture_=null;
-	Blockly.WorkspaceSvg.prototype.blockDragSurface_=null;Blockly.WorkspaceSvg.prototype.workspaceDragSurface_=null;Blockly.WorkspaceSvg.prototype.useWorkspaceDragSurface_=!1;Blockly.WorkspaceSvg.prototype.isDragSurfaceActive_=!1;Blockly.WorkspaceSvg.prototype.lastRecordedPageScroll_=null;Blockly.WorkspaceSvg.prototype.flyoutButtonCallbacks_={};Blockly.WorkspaceSvg.prototype.toolboxCategoryCallbacks_={};Blockly.WorkspaceSvg.prototype.inverseScreenCTM_=null;
-	Blockly.WorkspaceSvg.prototype.getInverseScreenCTM=function(){return this.inverseScreenCTM_};Blockly.WorkspaceSvg.prototype.updateInverseScreenCTM=function(){var a=this.getParentSvg().getScreenCTM();a&&(this.inverseScreenCTM_=a.inverse())};
+	Blockly.WorkspaceSvg.prototype.blockDragSurface_=null;Blockly.WorkspaceSvg.prototype.workspaceDragSurface_=null;Blockly.WorkspaceSvg.prototype.useWorkspaceDragSurface_=!1;Blockly.WorkspaceSvg.prototype.isDragSurfaceActive_=!1;Blockly.WorkspaceSvg.prototype.lastRecordedPageScroll_=null;Blockly.WorkspaceSvg.prototype.injectionDiv_=null;Blockly.WorkspaceSvg.prototype.flyoutButtonCallbacks_={};Blockly.WorkspaceSvg.prototype.toolboxCategoryCallbacks_={};
+	Blockly.WorkspaceSvg.prototype.inverseScreenCTM_=null;Blockly.WorkspaceSvg.prototype.getInverseScreenCTM=function(){return this.inverseScreenCTM_};Blockly.WorkspaceSvg.prototype.updateInverseScreenCTM=function(){var a=this.getParentSvg().getScreenCTM();a&&(this.inverseScreenCTM_=a.inverse())};
 	Blockly.WorkspaceSvg.prototype.getSvgXY=function(a){var b=0,c=0,d=1;if(goog.dom.contains(this.getCanvas(),a)||goog.dom.contains(this.getBubbleCanvas(),a))d=this.scale;do{var e=Blockly.utils.getRelativeXY(a);if(a==this.getCanvas()||a==this.getBubbleCanvas())d=1;b+=e.x*d;c+=e.y*d;a=a.parentNode}while(a&&a!=this.getParentSvg());return new goog.math.Coordinate(b,c)};Blockly.WorkspaceSvg.prototype.getOriginOffsetInPixels=function(){return Blockly.utils.getInjectionDivXY_(this.svgBlockCanvas_)};
-	Blockly.WorkspaceSvg.prototype.setResizeHandlerWrapper=function(a){this.resizeHandlerWrapper_=a};
+	Blockly.WorkspaceSvg.prototype.getInjectionDiv=function(){if(!this.injectionDiv_)for(var a=this.svgGroup_;a;){if(-1!=(" "+(a.getAttribute("class")||"")+" ").indexOf(" injectionDiv ")){this.injectionDiv_=a;break}a=a.parentNode}return this.injectionDiv_};Blockly.WorkspaceSvg.prototype.setResizeHandlerWrapper=function(a){this.resizeHandlerWrapper_=a};
 	Blockly.WorkspaceSvg.prototype.createDom=function(a){this.svgGroup_=Blockly.utils.createSvgElement("g",{"class":"blocklyWorkspace"},null);a&&(this.svgBackground_=Blockly.utils.createSvgElement("rect",{height:"100%",width:"100%","class":a},this.svgGroup_),"blocklyMainBackground"==a&&this.grid_&&(this.svgBackground_.style.fill="url(#"+this.grid_.getPatternId()+")"));this.svgBlockCanvas_=Blockly.utils.createSvgElement("g",{"class":"blocklyBlockCanvas"},this.svgGroup_,this);this.svgBubbleCanvas_=Blockly.utils.createSvgElement("g",
 	{"class":"blocklyBubbleCanvas"},this.svgGroup_,this);a=Blockly.Scrollbar.scrollbarThickness;this.options.hasTrashcan&&(a=this.addTrashcan_(a));this.options.zoomOptions&&this.options.zoomOptions.controls&&this.addZoomControls_(a);this.isFlyout||(Blockly.bindEventWithChecks_(this.svgGroup_,"mousedown",this,this.onMouseDown_),this.options.zoomOptions&&this.options.zoomOptions.wheel&&Blockly.bindEventWithChecks_(this.svgGroup_,"wheel",this,this.onMouseWheel_));this.options.hasCategories&&(this.toolbox_=
 	new Blockly.Toolbox(this));this.grid_&&this.grid_.update(this.scale);this.recordDeleteAreas();return this.svgGroup_};
@@ -38292,7 +38554,7 @@ module.exports =
 	Blockly.WorkspaceSvg.prototype.getButtonCallback=function(a){return(a=this.flyoutButtonCallbacks_[a])?a:null};Blockly.WorkspaceSvg.prototype.removeButtonCallback=function(a){this.flyoutButtonCallbacks_[a]=null};Blockly.WorkspaceSvg.prototype.registerToolboxCategoryCallback=function(a,b){goog.asserts.assert(goog.isFunction(b),"Toolbox category callbacks must be functions.");this.toolboxCategoryCallbacks_[a]=b};
 	Blockly.WorkspaceSvg.prototype.getToolboxCategoryCallback=function(a){return(a=this.toolboxCategoryCallbacks_[a])?a:null};Blockly.WorkspaceSvg.prototype.removeToolboxCategoryCallback=function(a){this.toolboxCategoryCallbacks_[a]=null};
 	Blockly.WorkspaceSvg.prototype.getGesture=function(a){var b="mousedown"==a.type||"touchstart"==a.type,c=this.currentGesture_;return c?b&&c.hasStarted()?(console.warn("tried to start the same gesture twice"),c.cancel(),null):c:b?this.currentGesture_=new Blockly.Gesture(a,this):null};Blockly.WorkspaceSvg.prototype.clearGesture=function(){this.currentGesture_=null};Blockly.WorkspaceSvg.prototype.cancelCurrentGesture=function(){this.currentGesture_&&this.currentGesture_.cancel()};
-	Blockly.WorkspaceSvg.prototype.getAudioManager=function(){return this.audioManager_};Blockly.WorkspaceSvg.prototype.getGrid=function(){return this.grid_};Blockly.WorkspaceSvg.prototype.setVisible=Blockly.WorkspaceSvg.prototype.setVisible;Blockly.Mutator=function(a){Blockly.Mutator.superClass_.constructor.call(this,null);this.quarkNames_=a};goog.inherits(Blockly.Mutator,Blockly.Icon);Blockly.Mutator.prototype.workspaceWidth_=0;Blockly.Mutator.prototype.workspaceHeight_=0;
+	Blockly.WorkspaceSvg.prototype.startDragWithFakeEvent=function(a,b){Blockly.Touch.clearTouchIdentifier();Blockly.Touch.checkTouchIdentifier(a);b.workspace.getGesture(a).forceStartBlockDrag(a,b)};Blockly.WorkspaceSvg.prototype.getAudioManager=function(){return this.audioManager_};Blockly.WorkspaceSvg.prototype.getGrid=function(){return this.grid_};Blockly.WorkspaceSvg.prototype.setVisible=Blockly.WorkspaceSvg.prototype.setVisible;Blockly.Mutator=function(a){Blockly.Mutator.superClass_.constructor.call(this,null);this.quarkNames_=a};goog.inherits(Blockly.Mutator,Blockly.Icon);Blockly.Mutator.prototype.workspaceWidth_=0;Blockly.Mutator.prototype.workspaceHeight_=0;
 	Blockly.Mutator.prototype.drawIcon_=function(a){Blockly.utils.createSvgElement("rect",{"class":"blocklyIconShape",rx:"4",ry:"4",height:"16",width:"16"},a);Blockly.utils.createSvgElement("path",{"class":"blocklyIconSymbol",d:"m4.203,7.296 0,1.368 -0.92,0.677 -0.11,0.41 0.9,1.559 0.41,0.11 1.043,-0.457 1.187,0.683 0.127,1.134 0.3,0.3 1.8,0 0.3,-0.299 0.127,-1.138 1.185,-0.682 1.046,0.458 0.409,-0.11 0.9,-1.559 -0.11,-0.41 -0.92,-0.677 0,-1.366 0.92,-0.677 0.11,-0.41 -0.9,-1.559 -0.409,-0.109 -1.046,0.458 -1.185,-0.682 -0.127,-1.138 -0.3,-0.299 -1.8,0 -0.3,0.3 -0.126,1.135 -1.187,0.682 -1.043,-0.457 -0.41,0.11 -0.899,1.559 0.108,0.409z"},a);
 	Blockly.utils.createSvgElement("circle",{"class":"blocklyIconShape",r:"2.7",cx:"8",cy:"8"},a)};Blockly.Mutator.prototype.iconClick_=function(a){this.block_.isEditable()&&Blockly.Icon.prototype.iconClick_.call(this,a)};
 	Blockly.Mutator.prototype.createEditor_=function(){this.svgDialog_=Blockly.utils.createSvgElement("svg",{x:Blockly.Bubble.BORDER_WIDTH,y:Blockly.Bubble.BORDER_WIDTH},null);if(this.quarkNames_.length){var a=goog.dom.createDom("xml");for(var b=0,c;c=this.quarkNames_[b];b++)a.appendChild(goog.dom.createDom("block",{type:c}))}else a=null;a={languageTree:a,parentWorkspace:this.block_.workspace,pathToMedia:this.block_.workspace.options.pathToMedia,RTL:this.block_.RTL,toolboxPosition:this.block_.RTL?Blockly.TOOLBOX_AT_RIGHT:
@@ -38420,10 +38682,11 @@ module.exports =
 	Blockly.BlockSvg.prototype.setCollapsed=function(a){if(this.collapsed_!=a){for(var b=[],c=0,d;d=this.inputList[c];c++)b.push.apply(b,d.setVisible(!a));if(a){d=this.getIcons();for(c=0;c<d.length;c++)d[c].setVisible(!1);c=this.toString(Blockly.COLLAPSE_CHARS);this.appendDummyInput("_TEMP_COLLAPSED_INPUT").appendField(c).init()}else this.removeInput("_TEMP_COLLAPSED_INPUT"),this.setWarningText(null);Blockly.BlockSvg.superClass_.setCollapsed.call(this,a);b.length||(b[0]=this);if(this.rendered)for(c=0;a=
 	b[c];c++)a.render()}};Blockly.BlockSvg.prototype.tab=function(a,b){for(var c=[],d=0,e;e=this.inputList[d];d++){for(var f=0,g;g=e.fieldRow[f];f++)g instanceof Blockly.FieldTextInput&&c.push(g);e.connection&&(e=e.connection.targetBlock())&&c.push(e)}d=c.indexOf(a);-1==d&&(d=b?-1:c.length);(c=c[b?d+1:d-1])?c instanceof Blockly.Field?c.showEditor_():c.tab(null,b):(c=this.getParent())&&c.tab(this,b)};
 	Blockly.BlockSvg.prototype.onMouseDown_=function(a){var b=this.workspace.getGesture(a);b&&b.handleBlockStart(a,this)};Blockly.BlockSvg.prototype.showHelp_=function(){var a=goog.isFunction(this.helpUrl)?this.helpUrl():this.helpUrl;a&&alert(a)};
-	Blockly.BlockSvg.prototype.showContextMenu_=function(a){if(!this.workspace.options.readOnly&&this.contextMenu){var b=this,c=[];if(this.isDeletable()&&this.isMovable()&&!b.isInFlyout){c.push({text:Blockly.Msg.DUPLICATE_BLOCK,enabled:!0,callback:function(){Blockly.duplicate_(b)}});if(this.isEditable()&&this.workspace.options.comments){var d={enabled:!goog.userAgent.IE};this.comment?(d.text=Blockly.Msg.REMOVE_COMMENT,d.callback=function(){b.setCommentText(null)}):(d.text=Blockly.Msg.ADD_COMMENT,d.callback=
-	function(){b.setCommentText("")});c.push(d)}var d=this.getDescendants(!0).length,e=this.getNextBlock();e&&(d-=e.getDescendants(!0).length);d={text:1==d?Blockly.Msg.DELETE_BLOCK:Blockly.Msg.DELETE_X_BLOCKS.replace("%1",String(d)),enabled:!0,callback:function(){Blockly.Events.setGroup(!0);b.dispose(!0,!0);Blockly.Events.setGroup(!1)}};c.push(d)}else if(this.parentBlock_&&this.isShadow_){this.parentBlock_.showContextMenu_(a);return}d={enabled:!(goog.isFunction(this.helpUrl)?!this.helpUrl():!this.helpUrl)};
-	d.text=Blockly.Msg.HELP;d.callback=function(){b.showHelp_()};c.push(d);this.customContextMenu&&!b.isInFlyout&&this.customContextMenu(c);Blockly.ContextMenu.show(a,c,this.RTL);Blockly.ContextMenu.currentBlock=this}};
-	Blockly.BlockSvg.prototype.moveConnections_=function(a,b){if(this.rendered){for(var c=this.getConnections_(!1),d=0;d<c.length;d++)c[d].moveBy(a,b);c=this.getIcons();for(d=0;d<c.length;d++)c[d].computeIconLocation();for(d=0;d<this.childBlocks_.length;d++)this.childBlocks_[d].moveConnections_(a,b)}};
+	Blockly.BlockSvg.prototype.duplicateAndDragCallback_=function(){var a=this;return function(b){setTimeout(function(){var c=a.workspace;if(!a.getSvgRoot())throw Error("oldBlock is not rendered.");var d=Blockly.Xml.blockToDom(a);c.setResizesEnabled(!1);d=Blockly.Xml.domToBlock(d,c);if(!d.getSvgRoot())throw Error("newBlock is not rendered.");var e=a.getRelativeToSurfaceXY();d.moveBy(e.x,e.y);var e=e.scale(c.scale),f=c.getOriginOffsetInPixels(),e=goog.math.Coordinate.sum(f,e),f=c.getInjectionDiv().getBoundingClientRect();
+	c.startDragWithFakeEvent({clientX:e.x+f.left,clientY:e.y+f.top,type:"mousedown",preventDefault:function(){b.preventDefault()},stopPropagation:function(){b.stopPropagation()},target:b.target},d)},0)}};
+	Blockly.BlockSvg.prototype.showContextMenu_=function(a){if(!this.workspace.options.readOnly&&this.contextMenu){var b=this,c=[];if(this.isDeletable()&&this.isMovable()&&!b.isInFlyout){var d={text:Blockly.Msg.DUPLICATE_BLOCK,enabled:!0,callback:b.duplicateAndDragCallback_()};c.push(d);this.isEditable()&&this.workspace.options.comments&&(d={enabled:!goog.userAgent.IE},this.comment?(d.text=Blockly.Msg.REMOVE_COMMENT,d.callback=function(){b.setCommentText(null)}):(d.text=Blockly.Msg.ADD_COMMENT,d.callback=
+	function(){b.setCommentText("")}),c.push(d));var d=this.getDescendants(!0).length,e=this.getNextBlock();e&&(d-=e.getDescendants(!0).length);d={text:1==d?Blockly.Msg.DELETE_BLOCK:Blockly.Msg.DELETE_X_BLOCKS.replace("%1",String(d)),enabled:!0,callback:function(){Blockly.Events.setGroup(!0);b.dispose(!0,!0);Blockly.Events.setGroup(!1)}};c.push(d)}else if(this.parentBlock_&&this.isShadow_){this.parentBlock_.showContextMenu_(a);return}d={enabled:!(goog.isFunction(this.helpUrl)?!this.helpUrl():!this.helpUrl)};
+	d.text=Blockly.Msg.HELP;d.callback=function(){b.showHelp_()};c.push(d);this.customContextMenu&&this.customContextMenu(c);Blockly.ContextMenu.show(a,c,this.RTL);Blockly.ContextMenu.currentBlock=this}};Blockly.BlockSvg.prototype.moveConnections_=function(a,b){if(this.rendered){for(var c=this.getConnections_(!1),d=0;d<c.length;d++)c[d].moveBy(a,b);c=this.getIcons();for(d=0;d<c.length;d++)c[d].computeIconLocation();for(d=0;d<this.childBlocks_.length;d++)this.childBlocks_[d].moveConnections_(a,b)}};
 	Blockly.BlockSvg.prototype.setDragging=function(a){if(a){var b=this.getSvgRoot();b.translate_="";b.skew_="";Blockly.draggingConnections_=Blockly.draggingConnections_.concat(this.getConnections_(!0));Blockly.utils.addClass(this.svgGroup_,"blocklyDragging")}else Blockly.draggingConnections_=[],Blockly.utils.removeClass(this.svgGroup_,"blocklyDragging");for(b=0;b<this.childBlocks_.length;b++)this.childBlocks_[b].setDragging(a)};
 	Blockly.BlockSvg.prototype.updateMovable=function(){this.isMovable()?Blockly.utils.addClass(this.svgGroup_,"blocklyDraggable"):Blockly.utils.removeClass(this.svgGroup_,"blocklyDraggable")};Blockly.BlockSvg.prototype.setMovable=function(a){Blockly.BlockSvg.superClass_.setMovable.call(this,a);this.updateMovable()};Blockly.BlockSvg.prototype.setEditable=function(a){Blockly.BlockSvg.superClass_.setEditable.call(this,a);a=this.getIcons();for(var b=0;b<a.length;b++)a[b].updateEditable()};
 	Blockly.BlockSvg.prototype.setShadow=function(a){Blockly.BlockSvg.superClass_.setShadow.call(this,a);this.updateColour()};Blockly.BlockSvg.prototype.setInsertionMarker=function(a,b){Blockly.BlockSvg.superClass_.setInsertionMarker.call(this,a);this.insertionMarkerMinWidth_=b;this.updateColour()};Blockly.BlockSvg.prototype.getSvgRoot=function(){return this.svgGroup_};
@@ -38583,9 +38846,8 @@ module.exports =
 	Blockly.FieldVariable.prototype.setSourceBlock=function(a){goog.asserts.assert(!a.isShadow(),"Variable fields are not allowed to exist on shadow blocks.");Blockly.FieldVariable.superClass_.setSourceBlock.call(this,a)};Blockly.FieldVariable.prototype.getValue=function(){return this.getText()};
 	Blockly.FieldVariable.prototype.setValue=function(a){var b=a,c=a;if(this.sourceBlock_){var d=this.sourceBlock_.workspace.getVariableById(a);if(d)c=d.name;else if(d=this.sourceBlock_.workspace.getVariable(a))b=d.getId();Blockly.Events.isEnabled()&&Blockly.Events.fire(new Blockly.Events.BlockChange(this.sourceBlock_,"field",this.name,this.value_,b))}this.value_=b;this.setText(c)};
 	Blockly.FieldVariable.dropdownCreate=function(){var a=[],b=this.getText(),c=b?!0:!1,d=null;this.sourceBlock_&&(d=this.sourceBlock_.workspace);if(d)for(var a=d.getVariablesOfType(""),e=0;e<a.length;e++)if(c&&goog.string.caseInsensitiveEquals(a[e].name,b)){c=!1;break}c&&d&&(e=d.createVariable(b),a.push(e));a.sort(Blockly.VariableModel.compareByName);c=[];for(e=0;e<a.length;e++)c[e]=[a[e].name,a[e].getId()];c.push([Blockly.Msg.RENAME_VARIABLE,Blockly.RENAME_VARIABLE_ID]);c.push([Blockly.Msg.DELETE_VARIABLE.replace("%1",
-	b),Blockly.DELETE_VARIABLE_ID]);return c};
-	Blockly.FieldVariable.prototype.onItemSelected=function(a,b){var c=b.getValue();if(this.sourceBlock_&&this.sourceBlock_.workspace){var d=this.sourceBlock_.workspace,e=d.getVariableById(c);if(e)var f=e.name;else{if(c==Blockly.RENAME_VARIABLE_ID){var g=this.getText();Blockly.hideChaff();Blockly.Variables.promptName(Blockly.Msg.RENAME_VARIABLE_TITLE.replace("%1",g),g,function(a){a&&d.renameVariable(g,a)});return}if(c==Blockly.DELETE_VARIABLE_ID){d.deleteVariable(this.getText());return}}f=this.callValidator(f)}null!==
-	f&&this.setValue(f)};Blockly.Generator=function(a){this.name_=a;this.FUNCTION_NAME_PLACEHOLDER_REGEXP_=new RegExp(this.FUNCTION_NAME_PLACEHOLDER_,"g")};Blockly.Generator.NAME_TYPE="generated_function";Blockly.Generator.prototype.INFINITE_LOOP_TRAP=null;Blockly.Generator.prototype.STATEMENT_PREFIX=null;Blockly.Generator.prototype.INDENT="  ";Blockly.Generator.prototype.COMMENT_WRAP=60;Blockly.Generator.prototype.ORDER_OVERRIDES=[];
+	b),Blockly.DELETE_VARIABLE_ID]);return c};Blockly.FieldVariable.prototype.onItemSelected=function(a,b){var c=b.getValue();if(this.sourceBlock_&&this.sourceBlock_.workspace){var d=this.sourceBlock_.workspace,e=d.getVariableById(c);if(e)var f=e.name;else{if(c==Blockly.RENAME_VARIABLE_ID){c=this.getText();Blockly.FieldVariable.renameVariablePrompt(d,c);return}if(c==Blockly.DELETE_VARIABLE_ID){d.deleteVariable(this.getText());return}}f=this.callValidator(f)}null!==f&&this.setValue(f)};
+	Blockly.FieldVariable.renameVariablePrompt=function(a,b){Blockly.hideChaff();Blockly.Variables.promptName(Blockly.Msg.RENAME_VARIABLE_TITLE.replace("%1",b),b,function(c){c&&a.renameVariable(b,c)})};Blockly.Generator=function(a){this.name_=a;this.FUNCTION_NAME_PLACEHOLDER_REGEXP_=new RegExp(this.FUNCTION_NAME_PLACEHOLDER_,"g")};Blockly.Generator.NAME_TYPE="generated_function";Blockly.Generator.prototype.INFINITE_LOOP_TRAP=null;Blockly.Generator.prototype.STATEMENT_PREFIX=null;Blockly.Generator.prototype.INDENT="  ";Blockly.Generator.prototype.COMMENT_WRAP=60;Blockly.Generator.prototype.ORDER_OVERRIDES=[];
 	Blockly.Generator.prototype.workspaceToCode=function(a){a||(console.warn("No workspace specified in workspaceToCode call.  Guessing."),a=Blockly.getMainWorkspace());var b=[];this.init(a);a=a.getTopBlocks(!0);for(var c=0,d;d=a[c];c++){var e=this.blockToCode(d);goog.isArray(e)&&(e=e[0]);e&&(d.outputConnection&&this.scrubNakedValue&&(e=this.scrubNakedValue(e)),b.push(e))}b=b.join("\n");b=this.finish(b);b=b.replace(/^\s+\n/,"");b=b.replace(/\n\s+$/,"\n");return b=b.replace(/[ \t]+\n/g,"\n")};
 	Blockly.Generator.prototype.prefixLines=function(a,b){return b+a.replace(/(?!\n$)\n/g,"\n"+b)};Blockly.Generator.prototype.allNestedComments=function(a){var b=[];a=a.getDescendants();for(var c=0;c<a.length;c++){var d=a[c].getCommentText();d&&b.push(d)}b.length&&b.push("");return b.join("\n")};
 	Blockly.Generator.prototype.blockToCode=function(a){if(!a)return"";if(a.disabled)return this.blockToCode(a.getNextBlock());var b=this[a.type];goog.asserts.assertFunction(b,'Language "%s" does not know how to generate code for block type "%s".',this.name_,a.type);b=b.call(a,a);if(goog.isArray(b))return goog.asserts.assert(a.outputConnection,'Expecting string from statement block "%s".',a.type),[this.scrub_(a,b[0]),b[1]];if(goog.isString(b)){var c=a.id.replace(/\$/g,"$$$$");this.STATEMENT_PREFIX&&(b=
@@ -51548,7 +51810,7 @@ try {
 /* 3 */
 /***/ (function(module, exports) {
 
-module.exports = __webpack_require__(28);
+module.exports = __webpack_require__(27);
 
 /***/ }),
 /* 4 */
@@ -51847,7 +52109,7 @@ if (process.env.READABLE_STREAM === 'disable' && Stream) {
 /* 10 */
 /***/ (function(module, exports) {
 
-module.exports = __webpack_require__(25);
+module.exports = __webpack_require__(24);
 
 /***/ }),
 /* 11 */
@@ -53885,7 +54147,7 @@ module.exports = __webpack_require__(7);
 /* 19 */
 /***/ (function(module, exports) {
 
-module.exports = __webpack_require__(27);
+module.exports = __webpack_require__(26);
 
 /***/ }),
 /* 20 */
@@ -62923,7 +63185,7 @@ module.exports = ScratchStorage;
 /***/ })
 /******/ ]);
 //# sourceMappingURL=scratch-storage.js.map
-/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(0).Buffer, __webpack_require__(3), __webpack_require__(26).setImmediate, __webpack_require__(2)))
+/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(0).Buffer, __webpack_require__(3), __webpack_require__(25).setImmediate, __webpack_require__(2)))
 
 /***/ }),
 /* 299 */
@@ -62938,7 +63200,7 @@ module.exports = ScratchStorage;
  */
 
 var inherits = __webpack_require__(1)
-var Hash = __webpack_require__(24)
+var Hash = __webpack_require__(23)
 
 var K = [
   0x5a827999, 0x6ed9eba1, 0x8f1bbcdc | 0, 0xca62c1d6 | 0
@@ -63039,7 +63301,7 @@ module.exports = Sha
  */
 
 var inherits = __webpack_require__(1)
-var Hash = __webpack_require__(24)
+var Hash = __webpack_require__(23)
 
 var K = [
   0x5a827999, 0x6ed9eba1, 0x8f1bbcdc | 0, 0xca62c1d6 | 0
@@ -63144,7 +63406,7 @@ module.exports = Sha1
 
 var inherits = __webpack_require__(1)
 var Sha256 = __webpack_require__(138)
-var Hash = __webpack_require__(24)
+var Hash = __webpack_require__(23)
 
 var W = new Array(64)
 
@@ -63195,7 +63457,7 @@ module.exports = Sha224
 
 /* WEBPACK VAR INJECTION */(function(Buffer) {var inherits = __webpack_require__(1)
 var SHA512 = __webpack_require__(139)
-var Hash = __webpack_require__(24)
+var Hash = __webpack_require__(23)
 
 var W = new Array(160)
 
