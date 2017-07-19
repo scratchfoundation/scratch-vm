@@ -23,7 +23,7 @@ jobs:
       before_deploy: npm --no-git-tag-version version $($(npm bin)/json -f package.json version)-prerelease.$(date +%s)
       deploy:
       - provider: script
-        on:
+        "on":
           all_branches: true
           condition: $RELEASE_BRANCHES =~ $TRAVIS_BRANCH
         skip_cleanup: true
@@ -32,7 +32,7 @@ jobs:
         - git config --global user.name $(git log --pretty=format:"%an" -n1)
         - npm run --silent deploy -- -x -r $GH_PAGES_REPO
       - provider: npm
-        on:
+        "on":
           all_branches: true
           condition: $RELEASE_BRANCHES =~ $TRAVIS_BRANCH
         api_key: $NPM_TOKEN
