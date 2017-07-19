@@ -35,4 +35,6 @@ jobs:
         "on":
           all_branches: true
           condition: $RELEASE_BRANCHES =~ $TRAVIS_BRANCH
+        skip_cleanup: true
+        email: $NPM_EMAIL
         api_key: $NPM_TOKEN
