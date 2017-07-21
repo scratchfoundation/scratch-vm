@@ -117,18 +117,17 @@ class WorkerDispatch {
 
     /**
      * Set a local object as the global provider of the specified service.
+     * WARNING: Any method on the provider can be called from any worker within the dispatch system.
      * @param {string} service - a globally unique string identifying this service. Examples: 'vm', 'gui', 'extension9'.
      * @param {object} provider - a local object which provides this service.
-     * WARNING: Any method on the provider can be called from any worker within the dispatch system.
+     * @returns {Promise} - a promise which will resolve once the service is registered.
      */
     setService (service, provider) {
         if (this.services.hasOwnProperty(service)) {
             log.warn(`Replacing existing service provider for ${service}`);
         }
         this.services[service] = provider;
-        this.waitForConnection.then(() => {
-            this.call('dispatch', 'setService', service);
-        });
+        return this.waitForConnection.then(() => this.call('dispatch', 'setService', service));
     }
 
     /**

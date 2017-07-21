@@ -106,15 +106,19 @@ class CentralDispatch {
 
     /**
      * Set a local object as the global provider of the specified service.
+     * WARNING: Any method on the provider can be called from any worker within the dispatch system.
      * @param {string} service - a globally unique string identifying this service. Examples: 'vm', 'gui', 'extension9'.
      * @param {object} provider - a local object which provides this service.
-     * WARNING: Any method on the provider can be called from any worker within the dispatch system.
+     * @returns {Promise} - a promise which will resolve once the service is registered.
      */
     setService (service, provider) {
-        if (this.services.hasOwnProperty(service)) {
-            log.warn(`Replacing existing service provider for ${service}`);
-        }
-        this.services[service] = provider;
+        return new Promise(resolve => {
+            if (this.services.hasOwnProperty(service)) {
+                log.warn(`Replacing existing service provider for ${service}`);
+            }
+            this.services[service] = provider;
+            resolve();
+        });
     }
 
     /**
@@ -140,17 +144,21 @@ class CentralDispatch {
      */
     _onMessage (worker, event) {
         const [service, method, callbackId, ...args] = /** @type {[string, string, *]} */ event.data;
+        let promise;
         if (service === 'dispatch') {
             switch (method) {
             case '_callback':
                 this._callback(callbackId, ...args);
                 break;
             case 'setService':
-                this.setService(args[0], worker);
+                promise = this.setService(args[0], worker);
                 break;
             }
         } else {
-            this.call(service, method, ...args).then(
+            promise = this.call(service, method, ...args);
+        }
+        if (promise) {
+            promise.then(
                 result => {
                     worker.postMessage(['dispatch', '_callback', callbackId, result]);
                 },
