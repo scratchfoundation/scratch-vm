@@ -1,5 +1,7 @@
 /* eslint-env worker */
 
+const ArgumentType = require('../extension-support/argument-type');
+const BlockType = require('../extension-support/block-type');
 const dispatch = require('../dispatch/worker-dispatch');
 
 class ExtensionWorker {
@@ -22,17 +24,20 @@ class ExtensionWorker {
     register (extensionObject) {
         const extensionId = this.nextExtensionId++;
         this.extensions.push(extensionObject);
-        dispatch.setService(`extension.${this.workerId}.${extensionId}`, extensionObject);
+        const serviceName = `extension.${this.workerId}.${extensionId}`;
+        return dispatch.setService(serviceName, extensionObject)
+            .then(() => dispatch.call('extensions', 'registerExtensionService', serviceName));
     }
 }
 
-const extensionWorker = new ExtensionWorker();
-
 global.Scratch = global.Scratch || {};
+global.Scratch.ArgumentType = ArgumentType;
+global.Scratch.BlockType = BlockType;
 
 /**
  * Expose only specific parts of the worker to extensions.
  */
+const extensionWorker = new ExtensionWorker();
 global.Scratch.extensions = {
     register: extensionWorker.register.bind(extensionWorker)
 };

@@ -53,7 +53,7 @@ class ExampleExtension {
                     // TODO: Consider Blockly-like nextStatement, previousStatement, and
                     // output attributes as an alternative. Those are more flexible, but
                     // allow bad combinations.
-                    blockType: 'reporter',
+                    blockType: Scratch.BlockType.REPORTER,
 
                     // Required for conditional blocks, ignored for others: the number of
                     // child branches this block controls. An "if" or "repeat" block would
@@ -64,7 +64,7 @@ class ExampleExtension {
 
                     // Optional, default false: whether or not this block ends a stack.
                     // The "forever" and "stop all" blocks would specify true here.
-                    terminal: true,
+                    isTerminal: true,
 
                     // Optional, default false: whether or not to block all threads while
                     // this block is busy. This is for things like the "touching color"
@@ -84,25 +84,26 @@ class ExampleExtension {
                         // args object passed to the implementation function.
                         LETTER_NUM: {
                             // Required: type of the argument / shape of the block input
-                            type: 'number',
+                            type: Scratch.ArgumentType.NUMBER,
 
                             // Optional: the default value of the argument
-                            default: 1
+                            defaultValue: 1
                         },
 
                         // Required: the ID of the argument, which will be the name in the
                         // args object passed to the implementation function.
                         TEXT: {
                             // Required: type of the argument / shape of the block input
-                            type: 'string',
+                            type: Scratch.ArgumentType.STRING,
 
                             // Optional: the default value of the argument
-                            default: 'text'
+                            defaultValue: 'text'
                         }
                     },
 
-                    // Required: the function implementing this block.
-                    func: this.myReporter,
+                    // Optional: a string naming the function implementing this block.
+                    // If this is omitted, use the opcode string.
+                    func: 'myReporter',
 
                     // Optional: list of target types for which this block should appear.
                     // If absent, assume it applies to all builtin targets -- that is:
@@ -133,9 +134,9 @@ class ExampleExtension {
                     'itemId2'
                 ],
 
-                // Dynamic menu: returns an array as above.
+                // Dynamic menu: a string naming a function which returns an array as above.
                 // Called each time the menu is opened.
-                menuB: this.getItemsForMenuB
+                menuB: 'getItemsForMenuB'
             },
 
             // Optional: translations
