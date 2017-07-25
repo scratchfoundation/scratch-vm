@@ -334,6 +334,32 @@ class VirtualMachine extends EventEmitter {
     }
 
     /**
+     * Get a sound buffer from the audio engine.
+     * @param {int} soundIndex - the index of the sound to be got.
+     * @return {AudioBuffer} the sound's audio buffer.
+     */
+    getSoundBuffer (soundIndex) {
+        const id = this.editingTarget.sprite.sounds[soundIndex].soundId;
+        if (id && this.runtime && this.runtime.audioEngine) {
+            return this.runtime.audioEngine.getSoundBuffer(id);
+        }
+        return null;
+    }
+
+    /**
+     * Update a sound buffer.
+     * @param {int} soundIndex - the index of the sound to be updated.
+     * @param {AudioBuffer} newBuffer - new audio buffer for the audio engine.
+     */
+    updateSoundBuffer (soundIndex, newBuffer) {
+        const id = this.editingTarget.sprite.sounds[soundIndex].soundId;
+        if (id && this.runtime && this.runtime.audioEngine) {
+            this.runtime.audioEngine.updateSoundBuffer(id, newBuffer);
+        }
+        this.emitTargetsUpdate();
+    }
+
+    /**
      * Delete a sound from the current editing target.
      * @param {int} soundIndex - the index of the sound to be removed.
      */
