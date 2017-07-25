@@ -280,7 +280,7 @@ class VirtualMachine extends EventEmitter {
      */
     addCostume (md5ext, costumeObject) {
         loadCostume(md5ext, costumeObject, this.runtime).then(() => {
-            this.editingTarget.sprite.costumes.push(costumeObject);
+            this.editingTarget.addCostume(costumeObject);
             this.editingTarget.setCostume(
                 this.editingTarget.sprite.costumes.length - 1
             );
@@ -293,10 +293,7 @@ class VirtualMachine extends EventEmitter {
      * @param {string} newName - the desired new name of the costume (will be modified if already in use).
      */
     renameCostume (costumeIndex, newName) {
-        const usedNames = this.editingTarget.sprite.costumes
-            .filter((costume, index) => costumeIndex !== index)
-            .map(costume => costume.name);
-        this.editingTarget.sprite.costumes[costumeIndex].name = StringUtil.unusedName(newName, usedNames);
+        this.editingTarget.renameCostume(costumeIndex, newName);
         this.emitTargetsUpdate();
     }
 
@@ -315,7 +312,7 @@ class VirtualMachine extends EventEmitter {
      */
     addSound (soundObject) {
         return loadSound(soundObject, this.runtime).then(() => {
-            this.editingTarget.sprite.sounds.push(soundObject);
+            this.editingTarget.addSound(soundObject);
             this.emitTargetsUpdate();
         });
     }
@@ -326,10 +323,7 @@ class VirtualMachine extends EventEmitter {
      * @param {string} newName - the desired new name of the sound (will be modified if already in use).
      */
     renameSound (soundIndex, newName) {
-        const usedNames = this.editingTarget.sprite.sounds
-            .filter((sound, index) => soundIndex !== index)
-            .map(sound => sound.name);
-        this.editingTarget.sprite.sounds[soundIndex].name = StringUtil.unusedName(newName, usedNames);
+        this.editingTarget.renameSound(soundIndex, newName);
         this.emitTargetsUpdate();
     }
 

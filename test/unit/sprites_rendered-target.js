@@ -355,3 +355,43 @@ test('#toJSON returns the sounds and costumes', t => {
     t.same(a.toJSON().costumes, costumes);
     t.end();
 });
+
+test('#addSound does not duplicate names', t => {
+    const spr = new Sprite();
+    const a = new RenderedTarget(spr, null);
+    a.sprite.sounds = [{name: 'first'}];
+    a.addSound({name: 'first'});
+    t.deepEqual(a.sprite.sounds, [{name: 'first'}, {name: 'first2'}]);
+    t.end();
+});
+
+test('#addCostume does not duplicate names', t => {
+    const spr = new Sprite();
+    const a = new RenderedTarget(spr, null);
+    a.sprite.costumes = [{name: 'first'}];
+    a.addCostume({name: 'first'});
+    t.deepEqual(a.sprite.costumes, [{name: 'first'}, {name: 'first2'}]);
+    t.end();
+});
+
+test('#renameSound does not duplicate names', t => {
+    const spr = new Sprite();
+    const a = new RenderedTarget(spr, null);
+    a.sprite.sounds = [{name: 'first'}, {name: 'second'}];
+    a.renameSound(0, 'first'); // Shouldn't increment the name, noop
+    t.deepEqual(a.sprite.sounds, [{name: 'first'}, {name: 'second'}]);
+    a.renameSound(1, 'first');
+    t.deepEqual(a.sprite.sounds, [{name: 'first'}, {name: 'first2'}]);
+    t.end();
+});
+
+test('#renameCostume does not duplicate names', t => {
+    const spr = new Sprite();
+    const a = new RenderedTarget(spr, null);
+    a.sprite.costumes = [{name: 'first'}, {name: 'second'}];
+    a.renameCostume(0, 'first'); // Shouldn't increment the name, noop
+    t.deepEqual(a.sprite.costumes, [{name: 'first'}, {name: 'second'}]);
+    a.renameCostume(1, 'first');
+    t.deepEqual(a.sprite.costumes, [{name: 'first'}, {name: 'first2'}]);
+    t.end();
+});
