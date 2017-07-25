@@ -109,3 +109,42 @@ test('renameSprite does not increment when renaming to the same name', t => {
     t.equal(vm.runtime.targets[0].sprite.name, 'this name');
     t.end();
 });
+
+test('emitWorkspaceUpdate', t => {
+    const vm = new VirtualMachine();
+    vm.runtime.targets = [
+        {
+            isStage: true,
+            variables: {
+                global: {
+                    toXML: () => 'global'
+                }
+            }
+        }, {
+            variables: {
+                unused: {
+                    toXML: () => 'unused'
+                }
+            }
+        }, {
+            variables: {
+                local: {
+                    toXML: () => 'local'
+                }
+            },
+            blocks: {
+                toXML: () => 'blocks'
+            }
+        }
+    ];
+    vm.editingTarget = vm.runtime.targets[2];
+
+    let xml = null;
+    vm.emit = (event, data) => (xml = data.xml);
+    vm.emitWorkspaceUpdate();
+    t.notEqual(xml.indexOf('global'), -1);
+    t.notEqual(xml.indexOf('local'), -1);
+    t.equal(xml.indexOf('unused'), -1);
+    t.notEqual(xml.indexOf('blocks'), -1);
+    t.end();
+});

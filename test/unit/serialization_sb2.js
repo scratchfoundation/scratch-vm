@@ -51,3 +51,20 @@ test('default', t => {
         t.end();
     });
 });
+
+test('data scoping', t => {
+    // Get SB2 JSON (string)
+    const uri = path.resolve(__dirname, '../fixtures/data.sb2');
+    const file = extract(uri);
+    const json = JSON.parse(file);
+
+    // Create runtime instance & load SB2 into it
+    const rt = new Runtime();
+    sb2.deserialize(json, rt).then(targets => {
+        const globalVariableIds = Object.keys(targets[0].variables);
+        const localVariableIds = Object.keys(targets[1].variables);
+        t.equal(targets[0].variables[globalVariableIds[0]].name, 'foo');
+        t.equal(targets[1].variables[localVariableIds[0]].name, 'local');
+        t.end();
+    });
+});
