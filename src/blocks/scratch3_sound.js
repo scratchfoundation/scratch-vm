@@ -113,18 +113,18 @@ class Scratch3SoundBlocks {
     playSound (args, util) {
         const index = this._getSoundIndex(args.SOUND_MENU, util);
         if (index >= 0) {
-            const md5 = util.target.sprite.sounds[index].md5;
+            const soundId = util.target.sprite.sounds[index].soundId;
             if (util.target.audioPlayer === null) return;
-            util.target.audioPlayer.playSound(md5);
+            util.target.audioPlayer.playSound(soundId);
         }
     }
 
     playSoundAndWait (args, util) {
         const index = this._getSoundIndex(args.SOUND_MENU, util);
         if (index >= 0) {
-            const md5 = util.target.sprite.sounds[index].md5;
+            const soundId = util.target.sprite.sounds[index].soundId;
             if (util.target.audioPlayer === null) return;
-            return util.target.audioPlayer.playSound(md5);
+            return util.target.audioPlayer.playSound(soundId);
         }
     }
 
