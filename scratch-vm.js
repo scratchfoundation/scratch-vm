@@ -4246,7 +4246,7 @@ inherits(Stream, EE);
 Stream.Readable = __webpack_require__(8);
 Stream.Writable = __webpack_require__(81);
 Stream.Duplex = __webpack_require__(77);
-Stream.Transform = __webpack_require__(53);
+Stream.Transform = __webpack_require__(54);
 Stream.PassThrough = __webpack_require__(80);
 
 // Backwards-compat with node 0.4.x
@@ -8164,13 +8164,81 @@ var Color = function () {
 module.exports = Color;
 
 /***/ }),
-/* 44 */,
+/* 44 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+var StringUtil = function () {
+    function StringUtil() {
+        _classCallCheck(this, StringUtil);
+    }
+
+    _createClass(StringUtil, null, [{
+        key: 'withoutTrailingDigits',
+        value: function withoutTrailingDigits(s) {
+            var i = s.length - 1;
+            while (i >= 0 && '0123456789'.indexOf(s.charAt(i)) > -1) {
+                i--;
+            }return s.slice(0, i + 1);
+        }
+    }, {
+        key: 'unusedName',
+        value: function unusedName(name, existingNames) {
+            if (existingNames.indexOf(name) < 0) return name;
+            name = StringUtil.withoutTrailingDigits(name);
+            var i = 2;
+            while (existingNames.indexOf(name + i) >= 0) {
+                i++;
+            }return name + i;
+        }
+
+        /**
+         * Split a string on the first occurrence of a split character.
+         * @param {string} text - the string to split.
+         * @param {string} separator - split the text on this character.
+         * @returns {[string, string]} - the two parts of the split string, or [text, null] if no split character found.
+         * @example
+         * // returns ['foo', 'tar.gz']
+         * splitFirst('foo.tar.gz', '.');
+         * @example
+         * // returns ['foo', null]
+         * splitFirst('foo', '.');
+         * @example
+         * // returns ['foo', '']
+         * splitFirst('foo.', '.');
+         */
+
+    }, {
+        key: 'splitFirst',
+        value: function splitFirst(text, separator) {
+            var index = text.indexOf(separator);
+            if (index >= 0) {
+                return [text.substring(0, index), text.substring(index + 1)];
+            } else {
+                return [text, null];
+            }
+        }
+    }]);
+
+    return StringUtil;
+}();
+
+module.exports = StringUtil;
+
+/***/ }),
 /* 45 */,
 /* 46 */,
 /* 47 */,
 /* 48 */,
 /* 49 */,
-/* 50 */
+/* 50 */,
+/* 51 */
 /***/ (function(module, exports, __webpack_require__) {
 
 /**
@@ -13154,16 +13222,16 @@ module.exports = Color;
 }));
 
 /***/ }),
-/* 51 */,
 /* 52 */,
-/* 53 */
+/* 53 */,
+/* 54 */
 /***/ (function(module, exports, __webpack_require__) {
 
 module.exports = __webpack_require__(8).Transform
 
 
 /***/ }),
-/* 54 */
+/* 55 */
 /***/ (function(module, exports) {
 
 module.exports = function(module) {
@@ -13191,7 +13259,7 @@ module.exports = function(module) {
 
 
 /***/ }),
-/* 55 */
+/* 56 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -13219,7 +13287,7 @@ var List = function List(name, contents) {
 module.exports = List;
 
 /***/ }),
-/* 56 */
+/* 57 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -13566,7 +13634,7 @@ var Thread = function () {
 module.exports = Thread;
 
 /***/ }),
-/* 57 */
+/* 58 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -13613,13 +13681,13 @@ var Variable = function () {
 module.exports = Variable;
 
 /***/ }),
-/* 58 */
+/* 59 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 
-var StringUtil = __webpack_require__(61);
+var StringUtil = __webpack_require__(44);
 var log = __webpack_require__(17);
 
 /**
@@ -13699,13 +13767,13 @@ var loadCostume = function loadCostume(md5ext, costume, runtime) {
 module.exports = loadCostume;
 
 /***/ }),
-/* 59 */
+/* 60 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 
-var StringUtil = __webpack_require__(61);
+var StringUtil = __webpack_require__(44);
 var log = __webpack_require__(17);
 
 /**
@@ -13740,7 +13808,7 @@ var loadSound = function loadSound(sound, runtime) {
 module.exports = loadSound;
 
 /***/ }),
-/* 60 */
+/* 61 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -13756,6 +13824,7 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
 
 var log = __webpack_require__(17);
 var MathUtil = __webpack_require__(20);
+var StringUtil = __webpack_require__(44);
 var Target = __webpack_require__(173);
 
 /**
@@ -14149,6 +14218,38 @@ var RenderedTarget = function (_Target) {
         }
 
         /**
+         * Add a costume, taking care to avoid duplicate names.
+         * @param {!object} costumeObject Object representing the costume.
+         */
+
+    }, {
+        key: 'addCostume',
+        value: function addCostume(costumeObject) {
+            var usedNames = this.sprite.costumes.map(function (costume) {
+                return costume.name;
+            });
+            costumeObject.name = StringUtil.unusedName(costumeObject.name, usedNames);
+            this.sprite.costumes.push(costumeObject);
+        }
+
+        /**
+         * Rename a costume, taking care to avoid duplicate names.
+         * @param {int} costumeIndex - the index of the costume to be renamed.
+         * @param {string} newName - the desired new name of the costume (will be modified if already in use).
+         */
+
+    }, {
+        key: 'renameCostume',
+        value: function renameCostume(costumeIndex, newName) {
+            var usedNames = this.sprite.costumes.filter(function (costume, index) {
+                return costumeIndex !== index;
+            }).map(function (costume) {
+                return costume.name;
+            });
+            this.sprite.costumes[costumeIndex].name = StringUtil.unusedName(newName, usedNames);
+        }
+
+        /**
          * Delete a costume by index.
          * @param {number} index Costume index to be deleted
          */
@@ -14170,6 +14271,38 @@ var RenderedTarget = function (_Target) {
             }
 
             this.runtime.requestTargetsUpdate(this);
+        }
+
+        /**
+         * Add a sound, taking care to avoid duplicate names.
+         * @param {!object} soundObject Object representing the sound.
+         */
+
+    }, {
+        key: 'addSound',
+        value: function addSound(soundObject) {
+            var usedNames = this.sprite.sounds.map(function (sound) {
+                return sound.name;
+            });
+            soundObject.name = StringUtil.unusedName(soundObject.name, usedNames);
+            this.sprite.sounds.push(soundObject);
+        }
+
+        /**
+         * Rename a sound, taking care to avoid duplicate names.
+         * @param {int} soundIndex - the index of the sound to be renamed.
+         * @param {string} newName - the desired new name of the sound (will be modified if already in use).
+         */
+
+    }, {
+        key: 'renameSound',
+        value: function renameSound(soundIndex, newName) {
+            var usedNames = this.sprite.sounds.filter(function (sound, index) {
+                return soundIndex !== index;
+            }).map(function (sound) {
+                return sound.name;
+            });
+            this.sprite.sounds[soundIndex].name = StringUtil.unusedName(newName, usedNames);
         }
 
         /**
@@ -14707,74 +14840,6 @@ var RenderedTarget = function (_Target) {
 }(Target);
 
 module.exports = RenderedTarget;
-
-/***/ }),
-/* 61 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-
-var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
-
-function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
-
-var StringUtil = function () {
-    function StringUtil() {
-        _classCallCheck(this, StringUtil);
-    }
-
-    _createClass(StringUtil, null, [{
-        key: 'withoutTrailingDigits',
-        value: function withoutTrailingDigits(s) {
-            var i = s.length - 1;
-            while (i >= 0 && '0123456789'.indexOf(s.charAt(i)) > -1) {
-                i--;
-            }return s.slice(0, i + 1);
-        }
-    }, {
-        key: 'unusedName',
-        value: function unusedName(name, existingNames) {
-            if (existingNames.indexOf(name) < 0) return name;
-            name = StringUtil.withoutTrailingDigits(name);
-            var i = 2;
-            while (existingNames.indexOf(name + i) >= 0) {
-                i++;
-            }return name + i;
-        }
-
-        /**
-         * Split a string on the first occurrence of a split character.
-         * @param {string} text - the string to split.
-         * @param {string} separator - split the text on this character.
-         * @returns {[string, string]} - the two parts of the split string, or [text, null] if no split character found.
-         * @example
-         * // returns ['foo', 'tar.gz']
-         * splitFirst('foo.tar.gz', '.');
-         * @example
-         * // returns ['foo', null]
-         * splitFirst('foo', '.');
-         * @example
-         * // returns ['foo', '']
-         * splitFirst('foo.', '.');
-         */
-
-    }, {
-        key: 'splitFirst',
-        value: function splitFirst(text, separator) {
-            var index = text.indexOf(separator);
-            if (index >= 0) {
-                return [text.substring(0, index), text.substring(index + 1)];
-            } else {
-                return [text, null];
-            }
-        }
-    }]);
-
-    return StringUtil;
-}();
-
-module.exports = StringUtil;
 
 /***/ }),
 /* 62 */
@@ -17924,7 +17989,7 @@ exports.write = function (buffer, value, offset, isLE, mLen, nBytes) {
 
 }(this));
 
-/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(54)(module), __webpack_require__(2)))
+/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(55)(module), __webpack_require__(2)))
 
 /***/ }),
 /* 75 */
@@ -19225,7 +19290,7 @@ var _createClass = function () { function defineProperties(target, props) { for 
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
-var RenderedTarget = __webpack_require__(60);
+var RenderedTarget = __webpack_require__(61);
 var Blocks = __webpack_require__(30);
 
 var Sprite = function () {
@@ -22139,7 +22204,7 @@ var Cast = __webpack_require__(12);
 var Clone = __webpack_require__(100);
 var Color = __webpack_require__(43);
 var MathUtil = __webpack_require__(20);
-var RenderedTarget = __webpack_require__(60);
+var RenderedTarget = __webpack_require__(61);
 
 /**
  * @typedef {object} PenState - the pen state associated with a particular target.
@@ -24350,9 +24415,9 @@ module.exports = adapter;
 
 
 var log = __webpack_require__(17);
-var Thread = __webpack_require__(56);
+var Thread = __webpack_require__(57);
 
-var _require = __webpack_require__(50),
+var _require = __webpack_require__(51),
     Map = _require.Map;
 
 /**
@@ -24636,7 +24701,7 @@ module.exports = execute;
 "use strict";
 
 
-var _require = __webpack_require__(50),
+var _require = __webpack_require__(51),
     Record = _require.Record;
 
 var MonitorRecord = Record({
@@ -24668,9 +24733,9 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
 var EventEmitter = __webpack_require__(7);
 var Sequencer = __webpack_require__(172);
 var Blocks = __webpack_require__(30);
-var Thread = __webpack_require__(56);
+var Thread = __webpack_require__(57);
 
-var _require = __webpack_require__(50),
+var _require = __webpack_require__(51),
     OrderedMap = _require.OrderedMap;
 
 // Virtual I/O devices.
@@ -25905,7 +25970,7 @@ var _createClass = function () { function defineProperties(target, props) { for 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
 var Timer = __webpack_require__(62);
-var Thread = __webpack_require__(56);
+var Thread = __webpack_require__(57);
 var execute = __webpack_require__(169);
 
 var Sequencer = function () {
@@ -26183,11 +26248,11 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
 var EventEmitter = __webpack_require__(7);
 
 var Blocks = __webpack_require__(30);
-var Variable = __webpack_require__(57);
-var List = __webpack_require__(55);
+var Variable = __webpack_require__(58);
+var List = __webpack_require__(56);
 var uid = __webpack_require__(63);
 
-var _require = __webpack_require__(50),
+var _require = __webpack_require__(51),
     Map = _require.Map;
 
 /**
@@ -27255,17 +27320,17 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
  */
 
 var Blocks = __webpack_require__(30);
-var RenderedTarget = __webpack_require__(60);
+var RenderedTarget = __webpack_require__(61);
 var Sprite = __webpack_require__(99);
 var Color = __webpack_require__(43);
 var log = __webpack_require__(17);
 var uid = __webpack_require__(63);
 var specMap = __webpack_require__(179);
-var Variable = __webpack_require__(57);
-var List = __webpack_require__(55);
+var Variable = __webpack_require__(58);
+var List = __webpack_require__(56);
 
-var loadCostume = __webpack_require__(58);
-var loadSound = __webpack_require__(59);
+var loadCostume = __webpack_require__(59);
+var loadSound = __webpack_require__(60);
 
 /**
  * Convert a Scratch 2.0 procedure string (e.g., "my_procedure %s %b %n")
@@ -28866,11 +28931,11 @@ module.exports = specMap;
 var vmPackage = __webpack_require__(307);
 var Blocks = __webpack_require__(30);
 var Sprite = __webpack_require__(99);
-var Variable = __webpack_require__(57);
-var List = __webpack_require__(55);
+var Variable = __webpack_require__(58);
+var List = __webpack_require__(56);
 
-var loadCostume = __webpack_require__(58);
-var loadSound = __webpack_require__(59);
+var loadCostume = __webpack_require__(59);
+var loadSound = __webpack_require__(60);
 
 /**
  * Serializes the specified VM runtime.
@@ -29082,10 +29147,10 @@ var log = __webpack_require__(17);
 var Runtime = __webpack_require__(171);
 var sb2 = __webpack_require__(178);
 var sb3 = __webpack_require__(180);
-var StringUtil = __webpack_require__(61);
+var StringUtil = __webpack_require__(44);
 
-var loadCostume = __webpack_require__(58);
-var loadSound = __webpack_require__(59);
+var loadCostume = __webpack_require__(59);
+var loadSound = __webpack_require__(60);
 
 var RESERVED_NAMES = ['_mouse_', '_stage_', '_edge_', '_myself_', '_random_'];
 
@@ -29418,7 +29483,7 @@ var VirtualMachine = function (_EventEmitter) {
             var _this4 = this;
 
             loadCostume(md5ext, costumeObject, this.runtime).then(function () {
-                _this4.editingTarget.sprite.costumes.push(costumeObject);
+                _this4.editingTarget.addCostume(costumeObject);
                 _this4.editingTarget.setCostume(_this4.editingTarget.sprite.costumes.length - 1);
             });
         }
@@ -29432,12 +29497,7 @@ var VirtualMachine = function (_EventEmitter) {
     }, {
         key: 'renameCostume',
         value: function renameCostume(costumeIndex, newName) {
-            var usedNames = this.editingTarget.sprite.costumes.filter(function (costume, index) {
-                return costumeIndex !== index;
-            }).map(function (costume) {
-                return costume.name;
-            });
-            this.editingTarget.sprite.costumes[costumeIndex].name = StringUtil.unusedName(newName, usedNames);
+            this.editingTarget.renameCostume(costumeIndex, newName);
             this.emitTargetsUpdate();
         }
 
@@ -29464,7 +29524,7 @@ var VirtualMachine = function (_EventEmitter) {
             var _this5 = this;
 
             return loadSound(soundObject, this.runtime).then(function () {
-                _this5.editingTarget.sprite.sounds.push(soundObject);
+                _this5.editingTarget.addSound(soundObject);
                 _this5.emitTargetsUpdate();
             });
         }
@@ -29478,12 +29538,7 @@ var VirtualMachine = function (_EventEmitter) {
     }, {
         key: 'renameSound',
         value: function renameSound(soundIndex, newName) {
-            var usedNames = this.editingTarget.sprite.sounds.filter(function (sound, index) {
-                return soundIndex !== index;
-            }).map(function (sound) {
-                return sound.name;
-            });
-            this.editingTarget.sprite.sounds[soundIndex].name = StringUtil.unusedName(newName, usedNames);
+            this.editingTarget.renameSound(soundIndex, newName);
             this.emitTargetsUpdate();
         }
 
