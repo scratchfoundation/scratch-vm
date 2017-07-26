@@ -31,7 +31,10 @@ const loadSound = function (sound, runtime) {
                 {data: soundAsset.data}
             ));
         })
-        .then(() => sound);
+        .then(soundId => {
+            sound.soundId = soundId;
+            return sound;
+        });
 };
 
 module.exports = loadSound;
