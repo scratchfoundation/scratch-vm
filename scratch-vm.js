@@ -14047,6 +14047,9 @@ var RenderedTarget = function (_Target) {
             if (this.isStage) {
                 return;
             }
+            if (!isFinite(direction)) {
+                return;
+            }
             // Keep direction between -179 and +180.
             this.direction = MathUtil.wrapClamp(direction, -179, 180);
             if (this.renderer) {
