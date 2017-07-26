@@ -13800,7 +13800,8 @@ var loadSound = function loadSound(sound, runtime) {
         sound.assetId = soundAsset.assetId;
         sound.dataFormat = ext;
         return runtime.audioEngine.decodeSound(Object.assign({}, sound, { data: soundAsset.data }));
-    }).then(function () {
+    }).then(function (soundId) {
+        sound.soundId = soundId;
         return sound;
     });
 };
@@ -23032,9 +23033,9 @@ var Scratch3SoundBlocks = function () {
         value: function playSound(args, util) {
             var index = this._getSoundIndex(args.SOUND_MENU, util);
             if (index >= 0) {
-                var md5 = util.target.sprite.sounds[index].md5;
+                var soundId = util.target.sprite.sounds[index].soundId;
                 if (util.target.audioPlayer === null) return;
-                util.target.audioPlayer.playSound(md5);
+                util.target.audioPlayer.playSound(soundId);
             }
         }
     }, {
@@ -23042,9 +23043,9 @@ var Scratch3SoundBlocks = function () {
         value: function playSoundAndWait(args, util) {
             var index = this._getSoundIndex(args.SOUND_MENU, util);
             if (index >= 0) {
-                var md5 = util.target.sprite.sounds[index].md5;
+                var soundId = util.target.sprite.sounds[index].soundId;
                 if (util.target.audioPlayer === null) return;
-                return util.target.audioPlayer.playSound(md5);
+                return util.target.audioPlayer.playSound(soundId);
             }
         }
     }, {
@@ -29539,6 +29540,38 @@ var VirtualMachine = function (_EventEmitter) {
         key: 'renameSound',
         value: function renameSound(soundIndex, newName) {
             this.editingTarget.renameSound(soundIndex, newName);
+            this.emitTargetsUpdate();
+        }
+
+        /**
+         * Get a sound buffer from the audio engine.
+         * @param {int} soundIndex - the index of the sound to be got.
+         * @return {AudioBuffer} the sound's audio buffer.
+         */
+
+    }, {
+        key: 'getSoundBuffer',
+        value: function getSoundBuffer(soundIndex) {
+            var id = this.editingTarget.sprite.sounds[soundIndex].soundId;
+            if (id && this.runtime && this.runtime.audioEngine) {
+                return this.runtime.audioEngine.getSoundBuffer(id);
+            }
+            return null;
+        }
+
+        /**
+         * Update a sound buffer.
+         * @param {int} soundIndex - the index of the sound to be updated.
+         * @param {AudioBuffer} newBuffer - new audio buffer for the audio engine.
+         */
+
+    }, {
+        key: 'updateSoundBuffer',
+        value: function updateSoundBuffer(soundIndex, newBuffer) {
+            var id = this.editingTarget.sprite.sounds[soundIndex].soundId;
+            if (id && this.runtime && this.runtime.audioEngine) {
+                this.runtime.audioEngine.updateSoundBuffer(id, newBuffer);
+            }
             this.emitTargetsUpdate();
         }
 

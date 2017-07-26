@@ -32547,14 +32547,14 @@ module.exports =
 /******/ 	__webpack_require__.p = "";
 /******/
 /******/ 	// Load entry module and return exports
-/******/ 	return __webpack_require__(__webpack_require__.s = 15);
+/******/ 	return __webpack_require__(__webpack_require__.s = 16);
 /******/ })
 /************************************************************************/
 /******/ ([
 /* 0 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var microee = __webpack_require__(17);
+var microee = __webpack_require__(18);
 
 // Implements a subset of Node's stream.Transform - in a cross-platform manner.
 function Transform() {}
@@ -32635,7 +32635,7 @@ module.exports = Transform;
 "use strict";
 
 
-var minilog = __webpack_require__(25);
+var minilog = __webpack_require__(26);
 minilog.enable();
 
 module.exports = minilog('scratch-audioengine');
@@ -32803,7 +32803,7 @@ module.exports = color;
 "use strict";
 
 
-var window = __webpack_require__(16)
+var window = __webpack_require__(17)
 
 var OfflineContext = window.OfflineAudioContext || window.webkitOfflineAudioContext
 var Context = window.AudioContext || window.webkitAudioContext
@@ -32858,7 +32858,7 @@ var _createClass = function () { function defineProperties(target, props) { for 
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
-var ArrayBufferStream = __webpack_require__(14);
+var ArrayBufferStream = __webpack_require__(15);
 var log = __webpack_require__(1);
 
 /**
@@ -33094,7 +33094,21 @@ var DrumPlayer = function () {
             request.responseType = 'arraybuffer';
             request.onload = function () {
                 var audioData = request.response;
-                _this.audioContext.decodeAudioData(audioData).then(function (buffer) {
+                // Check for newer promise-based API
+                var loaderPromise = void 0;
+                if (_this.audioContext.decodeAudioData.length === 1) {
+                    loaderPromise = _this.audioContext.decodeAudioData(audioData);
+                } else {
+                    // Fall back to callback API
+                    loaderPromise = new Promise(function (resolve, reject) {
+                        _this.audioContext.decodeAudioData(audioData, function (decodedAudio) {
+                            return resolve(decodedAudio);
+                        }, function (error) {
+                            return reject(error);
+                        });
+                    });
+                }
+                loaderPromise.then(function (buffer) {
                     _this.drumSounds[i].setBuffer(buffer);
                 });
             };
@@ -33151,7 +33165,7 @@ var _createClass = function () { function defineProperties(target, props) { for 
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
-var Soundfont = __webpack_require__(36);
+var Soundfont = __webpack_require__(37);
 
 var InstrumentPlayer = function () {
     /**
@@ -33436,6 +33450,42 @@ module.exports = PitchEffect;
 
 /***/ }),
 /* 10 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+/**
+ * @fileoverview UID generator, from Blockly.
+ */
+
+/**
+ * Legal characters for the unique ID.
+ * Should be all on a US keyboard.  No XML special characters or control codes.
+ * Removed $ due to issue 251.
+ * @private
+ */
+var soup_ = '!#%()*+,-./:;=?@[]^_`{|}~' + 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+
+/**
+ * Generate a unique ID, from Blockly.  This should be globally unique.
+ * 87 characters ^ 20 length > 128 bits (better than a UUID).
+ * @return {string} A globally unique ID string.
+ */
+var uid = function uid() {
+  var length = 20;
+  var soupLength = soup_.length;
+  var id = [];
+  for (var i = 0; i < length; i++) {
+    id[i] = soup_.charAt(Math.random() * soupLength);
+  }
+  return id.join('');
+};
+
+module.exports = uid;
+
+/***/ }),
+/* 11 */
 /***/ (function(module, exports) {
 
 module.exports = ADSR
@@ -33601,7 +33651,7 @@ function getValue(start, end, fromTime, toTime, at){
 
 
 /***/ }),
-/* 11 */
+/* 12 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -33644,7 +33694,7 @@ module.exports = { decode: decode }
 
 
 /***/ }),
-/* 12 */
+/* 13 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -33675,14 +33725,14 @@ module.exports = function (url, type) {
 
 
 /***/ }),
-/* 13 */
+/* 14 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 
-var base64 = __webpack_require__(11)
-var fetch = __webpack_require__(12)
+var base64 = __webpack_require__(12)
+var fetch = __webpack_require__(13)
 
 // Given a regex, return a function that test if against a string
 function fromRegex (r) {
@@ -33829,7 +33879,7 @@ if (typeof window !== 'undefined') window.loadAudio = load
 
 
 /***/ }),
-/* 14 */
+/* 15 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -33983,7 +34033,7 @@ var ArrayBufferStream = function () {
 module.exports = ArrayBufferStream;
 
 /***/ }),
-/* 15 */
+/* 16 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -33993,9 +34043,10 @@ var _createClass = function () { function defineProperties(target, props) { for 
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
-var log = __webpack_require__(1);
-
 var AudioContext = __webpack_require__(4);
+
+var log = __webpack_require__(1);
+var uid = __webpack_require__(10);
 
 var PitchEffect = __webpack_require__(9);
 var PanEffect = __webpack_require__(8);
@@ -34036,39 +34087,39 @@ var AudioPlayer = function () {
         // reset effects to their default parameters
         this.clearEffects();
 
-        // sound players that are currently playing, indexed by the sound's md5
+        // sound players that are currently playing, indexed by the sound's soundId
         this.activeSoundPlayers = {};
     }
 
     /**
      * Play a sound
-     * @param  {string} md5 - the md5 id of a sound file
+     * @param  {string} soundId - the soundId id of a sound file
      * @return {Promise} a Promise that resolves when the sound finishes playing
      */
 
 
     _createClass(AudioPlayer, [{
         key: 'playSound',
-        value: function playSound(md5) {
+        value: function playSound(soundId) {
             // if this sound is not in the audio engine, return
-            if (!this.audioEngine.audioBuffers[md5]) {
+            if (!this.audioEngine.audioBuffers[soundId]) {
                 return;
             }
 
             // if this sprite or clone is already playing this sound, stop it first
-            if (this.activeSoundPlayers[md5]) {
-                this.activeSoundPlayers[md5].stop();
+            if (this.activeSoundPlayers[soundId]) {
+                this.activeSoundPlayers[soundId].stop();
             }
 
             // create a new soundplayer to play the sound
             var player = new SoundPlayer(this.audioEngine.audioContext);
-            player.setBuffer(this.audioEngine.audioBuffers[md5]);
+            player.setBuffer(this.audioEngine.audioBuffers[soundId]);
             player.connect(this.effectsNode);
             this.pitchEffect.updatePlayer(player);
             player.start();
 
             // add it to the list of active sound players
-            this.activeSoundPlayers[md5] = player;
+            this.activeSoundPlayers[soundId] = player;
 
             // remove sounds that are not playing from the active sound players array
             for (var id in this.activeSoundPlayers) {
@@ -34105,8 +34156,8 @@ var AudioPlayer = function () {
         key: 'stopAllSounds',
         value: function stopAllSounds() {
             // stop all active sound players
-            for (var md5 in this.activeSoundPlayers) {
-                this.activeSoundPlayers[md5].stop();
+            for (var soundId in this.activeSoundPlayers) {
+                this.activeSoundPlayers[soundId].stop();
             }
 
             // stop all instruments
@@ -34190,7 +34241,7 @@ var AudioEngine = function () {
         this.drumPlayer = new DrumPlayer(this.audioContext);
         this.numDrums = this.drumPlayer.drumSounds.length;
 
-        // a map of md5s to audio buffers, holding sounds for all sprites
+        // a map of soundIds to audio buffers, holding sounds for all sprites
         this.audioBuffers = {};
 
         // microphone, for measuring loudness, with a level meter analyzer
@@ -34209,15 +34260,16 @@ var AudioEngine = function () {
 
         /**
          * Decode a sound, decompressing it into audio samples.
-         * Store a reference to it the sound in the audioBuffers dictionary, indexed by md5
+         * Store a reference to it the sound in the audioBuffers dictionary, indexed by soundId
          * @param  {object} sound - an object containing audio data and metadata for a sound
          * @property {Buffer} data - sound data loaded from scratch-storage.
          * @property {string} format - format type, either empty or adpcm.
-         * @property {string} md5 - the MD5 and extension of the sound.
-         * @returns {?Promise} - a promise which will resolve after the audio buffer is stored, or null on error.
+         * @returns {?Promise} - a promise which will resolve to the soundId if decoded and stored.
          */
         value: function decodeSound(sound) {
+            var _this = this;
 
+            var soundId = uid();
             var loaderPromise = null;
 
             // Make a copy of the buffer because decoding detaches the original buffer
@@ -34225,7 +34277,19 @@ var AudioEngine = function () {
 
             switch (sound.format) {
                 case '':
-                    loaderPromise = this.audioContext.decodeAudioData(bufferCopy);
+                    // Check for newer promise-based API
+                    if (this.audioContext.decodeAudioData.length === 1) {
+                        loaderPromise = this.audioContext.decodeAudioData(bufferCopy);
+                    } else {
+                        // Fall back to callback API
+                        loaderPromise = new Promise(function (resolve, reject) {
+                            _this.audioContext.decodeAudioData(bufferCopy, function (decodedAudio) {
+                                return resolve(decodedAudio);
+                            }, function (error) {
+                                return reject(error);
+                            });
+                        });
+                    }
                     break;
                 case 'adpcm':
                     loaderPromise = new ADPCMSoundDecoder(this.audioContext).decode(bufferCopy);
@@ -34236,10 +34300,35 @@ var AudioEngine = function () {
 
             var storedContext = this;
             return loaderPromise.then(function (decodedAudio) {
-                storedContext.audioBuffers[sound.md5] = decodedAudio;
+                storedContext.audioBuffers[soundId] = decodedAudio;
+                return soundId;
             }, function (error) {
                 log.warn('audio data could not be decoded', error);
             });
+        }
+
+        /**
+         * Retrieve the audio buffer as held in memory for a given sound id.
+         * @param {!string} soundId - the id of the sound buffer to get
+         * @return {AudioBuffer} the buffer corresponding to the given sound id.
+         */
+
+    }, {
+        key: 'getSoundBuffer',
+        value: function getSoundBuffer(soundId) {
+            return this.audioBuffers[soundId];
+        }
+
+        /**
+         * Update the in-memory audio buffer to a new one by soundId.
+         * @param {!string} soundId - the id of the sound buffer to update.
+         * @param {AudioBuffer} newBuffer - the new buffer to swap in.
+         */
+
+    }, {
+        key: 'updateSoundBuffer',
+        value: function updateSoundBuffer(soundId, newBuffer) {
+            this.audioBuffers[soundId] = newBuffer;
         }
 
         /**
@@ -34332,16 +34421,16 @@ var AudioEngine = function () {
     }, {
         key: 'getLoudness',
         value: function getLoudness() {
-            var _this = this;
+            var _this2 = this;
 
             // The microphone has not been set up, so try to connect to it
             if (!this.mic && !this.connectingToMic) {
                 this.connectingToMic = true; // prevent multiple connection attempts
                 navigator.mediaDevices.getUserMedia({ audio: true }).then(function (stream) {
-                    _this.mic = _this.audioContext.createMediaStreamSource(stream);
-                    _this.analyser = _this.audioContext.createAnalyser();
-                    _this.mic.connect(_this.analyser);
-                    _this.micDataArray = new Float32Array(_this.analyser.fftSize);
+                    _this2.mic = _this2.audioContext.createMediaStreamSource(stream);
+                    _this2.analyser = _this2.audioContext.createAnalyser();
+                    _this2.mic.connect(_this2.analyser);
+                    _this2.micDataArray = new Float32Array(_this2.analyser.fftSize);
                 }).catch(function (err) {
                     log.warn(err);
                 });
@@ -34404,7 +34493,7 @@ var AudioEngine = function () {
 module.exports = AudioEngine;
 
 /***/ }),
-/* 16 */
+/* 17 */
 /***/ (function(module, exports, __webpack_require__) {
 
 /* WEBPACK VAR INJECTION */(function(global) {var win;
@@ -34421,10 +34510,10 @@ if (typeof window !== "undefined") {
 
 module.exports = win;
 
-/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(38)))
+/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(39)))
 
 /***/ }),
-/* 17 */
+/* 18 */
 /***/ (function(module, exports) {
 
 function M() { this._events = {}; }
@@ -34480,14 +34569,14 @@ module.exports = M;
 
 
 /***/ }),
-/* 18 */
+/* 19 */
 /***/ (function(module, exports, __webpack_require__) {
 
 var require;(function(e){if(true){module.exports=e()}else if(typeof define==="function"&&define.amd){define([],e)}else{var t;if(typeof window!=="undefined"){t=window}else if(typeof global!=="undefined"){t=global}else if(typeof self!=="undefined"){t=self}else{t=this}t.midimessage=e()}})(function(){var e,t,s;return function o(e,t,s){function a(n,i){if(!t[n]){if(!e[n]){var l=typeof require=="function"&&require;if(!i&&l)return l(n,!0);if(r)return require(n,!0);var h=new Error("Cannot find module '"+n+"'");throw h.code="MODULE_NOT_FOUND",h}var c=t[n]={exports:{}};e[n][0].call(c.exports,function(t){var s=e[n][1][t];return a(s?s:t)},c,c.exports,o,e,t,s)}return t[n].exports}var r=typeof require=="function"&&require;for(var n=0;n<s.length;n++)a(s[n]);return a}({1:[function(e,t,s){"use strict";Object.defineProperty(s,"__esModule",{value:true});s["default"]=function(e){function t(e){this._event=e;this._data=e.data;this.receivedTime=e.receivedTime;if(this._data&&this._data.length<2){console.warn("Illegal MIDI message of length",this._data.length);return}this._messageCode=e.data[0]&240;this.channel=e.data[0]&15;switch(this._messageCode){case 128:this.messageType="noteoff";this.key=e.data[1]&127;this.velocity=e.data[2]&127;break;case 144:this.messageType="noteon";this.key=e.data[1]&127;this.velocity=e.data[2]&127;break;case 160:this.messageType="keypressure";this.key=e.data[1]&127;this.pressure=e.data[2]&127;break;case 176:this.messageType="controlchange";this.controllerNumber=e.data[1]&127;this.controllerValue=e.data[2]&127;if(this.controllerNumber===120&&this.controllerValue===0){this.channelModeMessage="allsoundoff"}else if(this.controllerNumber===121){this.channelModeMessage="resetallcontrollers"}else if(this.controllerNumber===122){if(this.controllerValue===0){this.channelModeMessage="localcontroloff"}else{this.channelModeMessage="localcontrolon"}}else if(this.controllerNumber===123&&this.controllerValue===0){this.channelModeMessage="allnotesoff"}else if(this.controllerNumber===124&&this.controllerValue===0){this.channelModeMessage="omnimodeoff"}else if(this.controllerNumber===125&&this.controllerValue===0){this.channelModeMessage="omnimodeon"}else if(this.controllerNumber===126){this.channelModeMessage="monomodeon"}else if(this.controllerNumber===127){this.channelModeMessage="polymodeon"}break;case 192:this.messageType="programchange";this.program=e.data[1];break;case 208:this.messageType="channelpressure";this.pressure=e.data[1]&127;break;case 224:this.messageType="pitchbendchange";var t=e.data[2]&127;var s=e.data[1]&127;this.pitchBend=(t<<8)+s;break}}return new t(e)};t.exports=s["default"]},{}]},{},[1])(1)});
 //# sourceMappingURL=dist/index.js.map
 
 /***/ }),
-/* 19 */
+/* 20 */
 /***/ (function(module, exports, __webpack_require__) {
 
 // default filter
@@ -34549,11 +34638,11 @@ module.exports = Filter;
 
 
 /***/ }),
-/* 20 */
+/* 21 */
 /***/ (function(module, exports, __webpack_require__) {
 
 var Transform = __webpack_require__(0),
-    Filter = __webpack_require__(19);
+    Filter = __webpack_require__(20);
 
 var log = new Transform(),
     slice = Array.prototype.slice;
@@ -34600,7 +34689,7 @@ exports.enable = function() {
 
 
 /***/ }),
-/* 21 */
+/* 22 */
 /***/ (function(module, exports, __webpack_require__) {
 
 var Transform = __webpack_require__(0),
@@ -34620,7 +34709,7 @@ module.exports = logger;
 
 
 /***/ }),
-/* 22 */
+/* 23 */
 /***/ (function(module, exports, __webpack_require__) {
 
 var Transform = __webpack_require__(0);
@@ -34651,14 +34740,14 @@ logger.write = function(name, level, args) {
 };
 
 logger.formatters = ['color', 'minilog'];
-logger.color = __webpack_require__(23);
-logger.minilog = __webpack_require__(24);
+logger.color = __webpack_require__(24);
+logger.minilog = __webpack_require__(25);
 
 module.exports = logger;
 
 
 /***/ }),
-/* 23 */
+/* 24 */
 /***/ (function(module, exports, __webpack_require__) {
 
 var Transform = __webpack_require__(0),
@@ -34682,7 +34771,7 @@ module.exports = logger;
 
 
 /***/ }),
-/* 24 */
+/* 25 */
 /***/ (function(module, exports, __webpack_require__) {
 
 var Transform = __webpack_require__(0),
@@ -34714,15 +34803,15 @@ module.exports = logger;
 
 
 /***/ }),
-/* 25 */
+/* 26 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var Minilog = __webpack_require__(20);
+var Minilog = __webpack_require__(21);
 
 var oldEnable = Minilog.enable,
     oldDisable = Minilog.disable,
     isChrome = (typeof navigator != 'undefined' && /chrome/i.test(navigator.userAgent)),
-    console = __webpack_require__(22);
+    console = __webpack_require__(23);
 
 // Use a more capable logging backend if on Chrome
 Minilog.defaultBackend = (isChrome ? console.minilog : console);
@@ -34754,15 +34843,15 @@ Minilog.disable = function() {
 exports = module.exports = Minilog;
 
 exports.backends = {
-  array: __webpack_require__(21),
+  array: __webpack_require__(22),
   browser: Minilog.defaultBackend,
-  localStorage: __webpack_require__(27),
-  jQuery: __webpack_require__(26)
+  localStorage: __webpack_require__(28),
+  jQuery: __webpack_require__(27)
 };
 
 
 /***/ }),
-/* 26 */
+/* 27 */
 /***/ (function(module, exports, __webpack_require__) {
 
 var Transform = __webpack_require__(0);
@@ -34842,7 +34931,7 @@ module.exports = AjaxLogger;
 
 
 /***/ }),
-/* 27 */
+/* 28 */
 /***/ (function(module, exports, __webpack_require__) {
 
 var Transform = __webpack_require__(0),
@@ -34862,7 +34951,7 @@ logger.write = function(name, level, args) {
 module.exports = logger;
 
 /***/ }),
-/* 28 */
+/* 29 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -35075,7 +35164,7 @@ function oct (src) { return (parse(src) || {}).oct }
 
 
 /***/ }),
-/* 29 */
+/* 30 */
 /***/ (function(module, exports) {
 
 
@@ -35107,17 +35196,17 @@ function chain (fn1, fn2) {
 
 
 /***/ }),
-/* 30 */
+/* 31 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 
-var player = __webpack_require__(33)
-var events = __webpack_require__(29)
-var notes = __webpack_require__(32)
-var scheduler = __webpack_require__(34)
-var midi = __webpack_require__(31)
+var player = __webpack_require__(34)
+var events = __webpack_require__(30)
+var notes = __webpack_require__(33)
+var scheduler = __webpack_require__(35)
+var midi = __webpack_require__(32)
 
 function SamplePlayer (ac, source, options) {
   return midi(scheduler(notes(events(player(ac, source, options)))))
@@ -35128,10 +35217,10 @@ if (typeof window !== 'undefined') window.SamplePlayer = SamplePlayer
 
 
 /***/ }),
-/* 31 */
+/* 32 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var midimessage = __webpack_require__(18)
+var midimessage = __webpack_require__(19)
 
 module.exports = function (player) {
   /**
@@ -35183,13 +35272,13 @@ module.exports = function (player) {
 
 
 /***/ }),
-/* 32 */
+/* 33 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 
-var note = __webpack_require__(35)
+var note = __webpack_require__(36)
 var isMidi = function (n) { return n !== null && n !== [] && n >= 0 && n < 129 }
 var toMidi = function (n) { return isMidi(n) ? +n : note.midi(n) }
 
@@ -35226,14 +35315,14 @@ function mapBuffers (buffers, toKey) {
 
 
 /***/ }),
-/* 33 */
+/* 34 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 /* global AudioBuffer */
 
 
-var ADSR = __webpack_require__(10)
+var ADSR = __webpack_require__(11)
 
 var EMPTY = {}
 var DEFAULTS = {
@@ -35445,7 +35534,7 @@ module.exports = SamplePlayer
 
 
 /***/ }),
-/* 34 */
+/* 35 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -35514,7 +35603,7 @@ module.exports = function (player) {
 
 
 /***/ }),
-/* 35 */
+/* 36 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -35670,14 +35759,14 @@ module.exports = parser
 
 
 /***/ }),
-/* 36 */
+/* 37 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 
-var load = __webpack_require__(13)
-var player = __webpack_require__(30)
+var load = __webpack_require__(14)
+var player = __webpack_require__(31)
 
 /**
  * Load a soundfont instrument. It returns a promise that resolves to a
@@ -35753,7 +35842,7 @@ function nameToUrl (name, sf, format) {
 
 // In the 1.0.0 release it will be:
 // var Soundfont = {}
-var Soundfont = __webpack_require__(37)
+var Soundfont = __webpack_require__(38)
 Soundfont.instrument = instrument
 Soundfont.nameToUrl = nameToUrl
 
@@ -35762,13 +35851,13 @@ if (typeof window !== 'undefined') window.Soundfont = Soundfont
 
 
 /***/ }),
-/* 37 */
+/* 38 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 
-var parser = __webpack_require__(28)
+var parser = __webpack_require__(29)
 
 /**
  * Create a Soundfont object
@@ -35909,7 +35998,7 @@ module.exports = Soundfont
 
 
 /***/ }),
-/* 38 */
+/* 39 */
 /***/ (function(module, exports) {
 
 var g;
