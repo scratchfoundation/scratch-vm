@@ -41,6 +41,9 @@ class MathUtil {
      */
     static wrapClamp (n, min, max) {
         const range = (max - min) + 1;
+        if (!isFinite(n)) {
+            return min;
+        }
         return n - (Math.floor((n - min) / range) * range);
     }
 
