@@ -280,11 +280,21 @@ class VirtualMachine extends EventEmitter {
      */
     addCostume (md5ext, costumeObject) {
         loadCostume(md5ext, costumeObject, this.runtime).then(() => {
-            this.editingTarget.sprite.costumes.push(costumeObject);
+            this.editingTarget.addCostume(costumeObject);
             this.editingTarget.setCostume(
                 this.editingTarget.sprite.costumes.length - 1
             );
         });
+    }
+
+    /**
+     * Rename a costume on the current editing target.
+     * @param {int} costumeIndex - the index of the costume to be renamed.
+     * @param {string} newName - the desired new name of the costume (will be modified if already in use).
+     */
+    renameCostume (costumeIndex, newName) {
+        this.editingTarget.renameCostume(costumeIndex, newName);
+        this.emitTargetsUpdate();
     }
 
     /**
@@ -302,9 +312,45 @@ class VirtualMachine extends EventEmitter {
      */
     addSound (soundObject) {
         return loadSound(soundObject, this.runtime).then(() => {
-            this.editingTarget.sprite.sounds.push(soundObject);
+            this.editingTarget.addSound(soundObject);
             this.emitTargetsUpdate();
         });
+    }
+
+    /**
+     * Rename a sound on the current editing target.
+     * @param {int} soundIndex - the index of the sound to be renamed.
+     * @param {string} newName - the desired new name of the sound (will be modified if already in use).
+     */
+    renameSound (soundIndex, newName) {
+        this.editingTarget.renameSound(soundIndex, newName);
+        this.emitTargetsUpdate();
+    }
+
+    /**
+     * Get a sound buffer from the audio engine.
+     * @param {int} soundIndex - the index of the sound to be got.
+     * @return {AudioBuffer} the sound's audio buffer.
+     */
+    getSoundBuffer (soundIndex) {
+        const id = this.editingTarget.sprite.sounds[soundIndex].soundId;
+        if (id && this.runtime && this.runtime.audioEngine) {
+            return this.runtime.audioEngine.getSoundBuffer(id);
+        }
+        return null;
+    }
+
+    /**
+     * Update a sound buffer.
+     * @param {int} soundIndex - the index of the sound to be updated.
+     * @param {AudioBuffer} newBuffer - new audio buffer for the audio engine.
+     */
+    updateSoundBuffer (soundIndex, newBuffer) {
+        const id = this.editingTarget.sprite.sounds[soundIndex].soundId;
+        if (id && this.runtime && this.runtime.audioEngine) {
+            this.runtime.audioEngine.updateSoundBuffer(id, newBuffer);
+        }
+        this.emitTargetsUpdate();
     }
 
     /**
@@ -519,8 +565,11 @@ class VirtualMachine extends EventEmitter {
      * of the current editing target's blocks.
      */
     emitWorkspaceUpdate () {
-        // @todo Include variables scoped to editing target also.
-        const variableMap = this.runtime.getTargetForStage().variables;
+        const variableMap = Object.assign({},
+            this.runtime.getTargetForStage().variables,
+            this.editingTarget.variables
+        );
+
         const variables = Object.keys(variableMap).map(k => variableMap[k]);
 
         const xmlString = `<xml xmlns="http://www.w3.org/1999/xhtml">

@@ -43,7 +43,7 @@ test('complex', t => {
             vm.addCostume(
                 'f9a1c175dbe2e5dee472858dd30d16bb.svg',
                 {
-                    costumeName: 'costume1',
+                    name: 'costume1',
                     baseLayerID: 0,
                     baseLayerMD5: 'f9a1c175dbe2e5dee472858dd30d16bb.svg',
                     bitmapResolution: 1,
@@ -79,7 +79,7 @@ test('complex', t => {
             vm.addBackdrop(
                 '6b3d87ba2a7f89be703163b6c1d4c964.png',
                 {
-                    costumeName: 'baseball-field',
+                    name: 'baseball-field',
                     baseLayerID: 26,
                     baseLayerMD5: '6b3d87ba2a7f89be703163b6c1d4c964.png',
                     bitmapResolution: 2,
