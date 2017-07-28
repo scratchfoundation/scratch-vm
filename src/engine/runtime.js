@@ -478,7 +478,8 @@ class Runtime extends EventEmitter {
         }, opts);
         // Remove any existing thread.
         for (let i = 0; i < this.threads.length; i++) {
-            if (this.threads[i].topBlock === topBlockId) {
+            // Toggling a script that's already running turns it off
+            if (this.threads[i].topBlock === topBlockId && this.threads[i].status !== Thread.STATUS_DONE) {
                 const blockContainer = opts.target.blocks;
                 const opcode = blockContainer.getOpcode(blockContainer.getBlock(topBlockId));
                 
@@ -487,7 +488,6 @@ class Runtime extends EventEmitter {
                     // edge activated hat thread that runs every frame
                     continue;
                 }
-
                 this._removeThread(this.threads[i]);
                 return;
             }
