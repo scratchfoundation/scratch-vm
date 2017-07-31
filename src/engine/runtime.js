@@ -467,14 +467,13 @@ class Runtime extends EventEmitter {
      * @param {!string} topBlockId ID of block that starts the script.
      * @param {?object} opts optional arguments to toggle script
      * @param {?string} opts.target target ID for target to run script on. If not supplied, uses editing target.
-     * @param {?boolean} opts.stackClick true if the user activated the stack by clicking, false if not.
-     * @param {?boolean} opts.updateMonitor true if the monitor for this block should get updated.
+     * @param {?boolean} opts.stackClick true if the user activated the stack by clicking, false if not. This
+     *     determines whether we show a visual report when turning on the script.
      */
     toggleScript (topBlockId, opts) {
         opts = Object.assign({
             target: this._editingTarget,
-            stackClick: false,
-            updateMonitor: false
+            stackClick: false
         }, opts);
         // Remove any existing thread.
         for (let i = 0; i < this.threads.length; i++) {
@@ -496,6 +495,23 @@ class Runtime extends EventEmitter {
         this._pushThread(topBlockId, opts.target, opts);
     }
 
+    /**
+     * Enqueue a script that when finished will update the monitor for the block.
+     * @param {!string} topBlockId ID of block that starts the script.
+     * @param {?string} optTarget target ID for target to run script on. If not supplied, uses editing target.
+     */
+    addMonitorScript (topBlockId, optTarget) {
+        if (!optTarget) optTarget = this._editingTarget;
+        for (let i = 0; i < this.threads.length; i++) {
+            // Don't re-add the script if it's already running
+            if (this.threads[i].topBlock === topBlockId && this.threads[i].status !== Thread.STATUS_DONE &&
+                    this.threads[i].updateMonitor) {
+                return;
+            }
+        }
+        // Otherwise add it.
+        this._pushThread(topBlockId, optTarget, {updateMonitor: true});
+    }
 
     /**
      * Run a function `f` for all scripts in a workspace.
@@ -587,6 +603,7 @@ class Runtime extends EventEmitter {
                 // any existing threads starting with the top block.
                 for (let i = 0; i < instance.threads.length; i++) {
                     if (instance.threads[i].topBlock === topBlockId &&
+                        !instance.threads[i].stackClick && // stack click threads and hat threads can coexist
                         instance.threads[i].target === target) {
                         instance._restartThread(instance.threads[i]);
                         return;
@@ -598,7 +615,8 @@ class Runtime extends EventEmitter {
                 for (let j = 0; j < instance.threads.length; j++) {
                     if (instance.threads[j].topBlock === topBlockId &&
                         instance.threads[j].target === target &&
-                        !instance.threads[j].status === Thread.STATUS_DONE) {
+                        !instance.threads[j].stackClick && // stack click threads and hat threads can coexist
+                        instance.threads[j].status !== Thread.STATUS_DONE) {
                         // Some thread is already running.
                         return;
                     }
