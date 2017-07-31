@@ -102,7 +102,6 @@ test('monitor thread not added twice', t => {
         vm.loadProject(project).then(() => {
             t.equal(vm.runtime.threads.length, 0);
 
-            debugger;
             vm.runtime._step();
             checkMonitorThreadPresent(t, vm.runtime.threads);
             t.assert(vm.runtime.threads[0].status === Thread.STATUS_RUNNING);
