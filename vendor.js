@@ -32547,14 +32547,14 @@ module.exports =
 /******/ 	__webpack_require__.p = "";
 /******/
 /******/ 	// Load entry module and return exports
-/******/ 	return __webpack_require__(__webpack_require__.s = 16);
+/******/ 	return __webpack_require__(__webpack_require__.s = 17);
 /******/ })
 /************************************************************************/
 /******/ ([
 /* 0 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var microee = __webpack_require__(18);
+var microee = __webpack_require__(19);
 
 // Implements a subset of Node's stream.Transform - in a cross-platform manner.
 function Transform() {}
@@ -32635,7 +32635,7 @@ module.exports = Transform;
 "use strict";
 
 
-var minilog = __webpack_require__(26);
+var minilog = __webpack_require__(27);
 minilog.enable();
 
 module.exports = minilog('scratch-audioengine');
@@ -32803,7 +32803,7 @@ module.exports = color;
 "use strict";
 
 
-var window = __webpack_require__(17)
+var window = __webpack_require__(18)
 
 var OfflineContext = window.OfflineAudioContext || window.webkitOfflineAudioContext
 var Context = window.AudioContext || window.webkitAudioContext
@@ -32858,7 +32858,7 @@ var _createClass = function () { function defineProperties(target, props) { for 
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
-var ArrayBufferStream = __webpack_require__(15);
+var ArrayBufferStream = __webpack_require__(16);
 var log = __webpack_require__(1);
 
 /**
@@ -33165,7 +33165,7 @@ var _createClass = function () { function defineProperties(target, props) { for 
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
-var Soundfont = __webpack_require__(37);
+var Soundfont = __webpack_require__(38);
 
 var InstrumentPlayer = function () {
     /**
@@ -33486,6 +33486,204 @@ module.exports = uid;
 
 /***/ }),
 /* 11 */
+/***/ (function(module, exports, __webpack_require__) {
+
+var __WEBPACK_AMD_DEFINE_FACTORY__, __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;/**
+ *  StartAudioContext.js
+ *  @author Yotam Mann
+ *  @license http://opensource.org/licenses/MIT MIT License
+ *  @copyright 2016 Yotam Mann
+ */
+(function (root, factory) {
+	if (true) {
+		!(__WEBPACK_AMD_DEFINE_ARRAY__ = [], __WEBPACK_AMD_DEFINE_FACTORY__ = (factory),
+				__WEBPACK_AMD_DEFINE_RESULT__ = (typeof __WEBPACK_AMD_DEFINE_FACTORY__ === 'function' ?
+				(__WEBPACK_AMD_DEFINE_FACTORY__.apply(exports, __WEBPACK_AMD_DEFINE_ARRAY__)) : __WEBPACK_AMD_DEFINE_FACTORY__),
+				__WEBPACK_AMD_DEFINE_RESULT__ !== undefined && (module.exports = __WEBPACK_AMD_DEFINE_RESULT__))
+	 } else if (typeof module === "object" && module.exports) {
+        module.exports = factory()
+	} else {
+		root.StartAudioContext = factory()
+  }
+}(this, function () {
+
+	//TAP LISTENER/////////////////////////////////////////////////////////////
+
+	/**
+	 * @class  Listens for non-dragging tap ends on the given element
+	 * @param {Element} element
+	 * @internal
+	 */
+	var TapListener = function(element, context){
+
+		this._dragged = false
+
+		this._element = element
+
+		this._bindedMove = this._moved.bind(this)
+		this._bindedEnd = this._ended.bind(this, context)
+
+		element.addEventListener("touchstart", this._bindedEnd)
+		element.addEventListener("touchmove", this._bindedMove)
+		element.addEventListener("touchend", this._bindedEnd)
+		element.addEventListener("mouseup", this._bindedEnd)
+	}
+
+	/**
+	 * drag move event
+	 */
+	TapListener.prototype._moved = function(e){
+		this._dragged = true
+	};
+
+	/**
+	 * tap ended listener
+	 */
+	TapListener.prototype._ended = function(context){
+		if (!this._dragged){
+			startContext(context)
+		}
+		this._dragged = false
+	};
+
+	/**
+	 * remove all the bound events
+	 */
+	TapListener.prototype.dispose = function(){
+		this._element.removeEventListener("touchstart", this._bindedEnd)
+		this._element.removeEventListener("touchmove", this._bindedMove)
+		this._element.removeEventListener("touchend", this._bindedEnd)
+		this._element.removeEventListener("mouseup", this._bindedEnd)
+		this._bindedMove = null
+		this._bindedEnd = null
+		this._element = null
+	};
+
+	//END TAP LISTENER/////////////////////////////////////////////////////////
+
+	/**
+	 * Plays a silent sound and also invoke the "resume" method
+	 * @param {AudioContext} context
+	 * @private
+	 */
+	function startContext(context){
+		// this accomplishes the iOS specific requirement
+		var buffer = context.createBuffer(1, 1, context.sampleRate)
+		var source = context.createBufferSource()
+		source.buffer = buffer
+		source.connect(context.destination)
+		source.start(0)
+
+		// resume the audio context
+		if (context.resume){
+			context.resume()
+		}
+	}
+
+	/**
+	 * Returns true if the audio context is started
+	 * @param  {AudioContext}  context
+	 * @return {Boolean}
+	 * @private
+	 */
+	function isStarted(context){
+		 return context.state === "running"
+	}
+
+	/**
+	 * Invokes the callback as soon as the AudioContext
+	 * is started
+	 * @param  {AudioContext}   context
+	 * @param  {Function} callback
+	 */
+	function onStarted(context, callback){
+
+		function checkLoop(){
+			if (isStarted(context)){
+				callback()
+			} else {
+				requestAnimationFrame(checkLoop)
+				if (context.resume){
+					context.resume()
+				}
+			}
+		}
+
+		if (isStarted(context)){
+			callback()
+		} else {
+			checkLoop()
+		}
+	}
+
+	/**
+	 * Add a tap listener to the audio context
+	 * @param  {Array|Element|String|jQuery} element
+	 * @param {Array} tapListeners
+	 */
+	function bindTapListener(element, tapListeners, context){
+		if (Array.isArray(element) || (NodeList && element instanceof NodeList)){
+			for (var i = 0; i < element.length; i++){
+				bindTapListener(element[i], tapListeners, context)
+			}
+		} else if (typeof element === "string"){
+			bindTapListener(document.querySelectorAll(element), tapListeners, context)
+		} else if (element.jquery && typeof element.toArray === "function"){
+			bindTapListener(element.toArray(), tapListeners, context)
+		} else if (Element && element instanceof Element){
+			//if it's an element, create a TapListener
+			var tap = new TapListener(element, context)
+			tapListeners.push(tap)
+		} 
+	}
+
+	/**
+	 * @param {AudioContext} context The AudioContext to start.
+	 * @param {Array|String|Element|jQuery=} elements For iOS, the list of elements
+	 *                                               to bind tap event listeners
+	 *                                               which will start the AudioContext. If
+	 *                                               no elements are given, it will bind
+	 *                                               to the document.body.
+	 * @param {Function=} callback The callback to invoke when the AudioContext is started.
+	 * @return {Promise} The promise is invoked when the AudioContext
+	 *                       is started.
+	 */
+	function StartAudioContext(context, elements, callback){
+
+		//the promise is invoked when the AudioContext is started
+		var promise = new Promise(function(success) {
+			onStarted(context, success)
+		})
+
+		// The TapListeners bound to the elements
+		var tapListeners = []
+
+		// add all the tap listeners
+		if (!elements){
+			elements = document.body
+		}
+		bindTapListener(elements, tapListeners, context)
+
+		//dispose all these tap listeners when the context is started
+		promise.then(function(){
+			for (var i = 0; i < tapListeners.length; i++){
+				tapListeners[i].dispose()
+			}
+			tapListeners = null
+
+			if (callback){
+				callback()
+			}
+		})
+
+		return promise
+	}
+
+	return StartAudioContext
+}))
+
+/***/ }),
+/* 12 */
 /***/ (function(module, exports) {
 
 module.exports = ADSR
@@ -33651,7 +33849,7 @@ function getValue(start, end, fromTime, toTime, at){
 
 
 /***/ }),
-/* 12 */
+/* 13 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -33694,7 +33892,7 @@ module.exports = { decode: decode }
 
 
 /***/ }),
-/* 13 */
+/* 14 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -33725,14 +33923,14 @@ module.exports = function (url, type) {
 
 
 /***/ }),
-/* 14 */
+/* 15 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 
-var base64 = __webpack_require__(12)
-var fetch = __webpack_require__(13)
+var base64 = __webpack_require__(13)
+var fetch = __webpack_require__(14)
 
 // Given a regex, return a function that test if against a string
 function fromRegex (r) {
@@ -33879,7 +34077,7 @@ if (typeof window !== 'undefined') window.loadAudio = load
 
 
 /***/ }),
-/* 15 */
+/* 16 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -34033,7 +34231,7 @@ var ArrayBufferStream = function () {
 module.exports = ArrayBufferStream;
 
 /***/ }),
-/* 16 */
+/* 17 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -34043,6 +34241,7 @@ var _createClass = function () { function defineProperties(target, props) { for 
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
+var StartAudioContext = __webpack_require__(11);
 var AudioContext = __webpack_require__(4);
 
 var log = __webpack_require__(1);
@@ -34225,6 +34424,7 @@ var AudioEngine = function () {
         _classCallCheck(this, AudioEngine);
 
         this.audioContext = new AudioContext();
+        StartAudioContext(this.audioContext);
 
         this.input = this.audioContext.createGain();
         this.input.connect(this.audioContext.destination);
@@ -34493,7 +34693,7 @@ var AudioEngine = function () {
 module.exports = AudioEngine;
 
 /***/ }),
-/* 17 */
+/* 18 */
 /***/ (function(module, exports, __webpack_require__) {
 
 /* WEBPACK VAR INJECTION */(function(global) {var win;
@@ -34510,10 +34710,10 @@ if (typeof window !== "undefined") {
 
 module.exports = win;
 
-/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(39)))
+/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(40)))
 
 /***/ }),
-/* 18 */
+/* 19 */
 /***/ (function(module, exports) {
 
 function M() { this._events = {}; }
@@ -34569,14 +34769,14 @@ module.exports = M;
 
 
 /***/ }),
-/* 19 */
+/* 20 */
 /***/ (function(module, exports, __webpack_require__) {
 
 var require;(function(e){if(true){module.exports=e()}else if(typeof define==="function"&&define.amd){define([],e)}else{var t;if(typeof window!=="undefined"){t=window}else if(typeof global!=="undefined"){t=global}else if(typeof self!=="undefined"){t=self}else{t=this}t.midimessage=e()}})(function(){var e,t,s;return function o(e,t,s){function a(n,i){if(!t[n]){if(!e[n]){var l=typeof require=="function"&&require;if(!i&&l)return l(n,!0);if(r)return require(n,!0);var h=new Error("Cannot find module '"+n+"'");throw h.code="MODULE_NOT_FOUND",h}var c=t[n]={exports:{}};e[n][0].call(c.exports,function(t){var s=e[n][1][t];return a(s?s:t)},c,c.exports,o,e,t,s)}return t[n].exports}var r=typeof require=="function"&&require;for(var n=0;n<s.length;n++)a(s[n]);return a}({1:[function(e,t,s){"use strict";Object.defineProperty(s,"__esModule",{value:true});s["default"]=function(e){function t(e){this._event=e;this._data=e.data;this.receivedTime=e.receivedTime;if(this._data&&this._data.length<2){console.warn("Illegal MIDI message of length",this._data.length);return}this._messageCode=e.data[0]&240;this.channel=e.data[0]&15;switch(this._messageCode){case 128:this.messageType="noteoff";this.key=e.data[1]&127;this.velocity=e.data[2]&127;break;case 144:this.messageType="noteon";this.key=e.data[1]&127;this.velocity=e.data[2]&127;break;case 160:this.messageType="keypressure";this.key=e.data[1]&127;this.pressure=e.data[2]&127;break;case 176:this.messageType="controlchange";this.controllerNumber=e.data[1]&127;this.controllerValue=e.data[2]&127;if(this.controllerNumber===120&&this.controllerValue===0){this.channelModeMessage="allsoundoff"}else if(this.controllerNumber===121){this.channelModeMessage="resetallcontrollers"}else if(this.controllerNumber===122){if(this.controllerValue===0){this.channelModeMessage="localcontroloff"}else{this.channelModeMessage="localcontrolon"}}else if(this.controllerNumber===123&&this.controllerValue===0){this.channelModeMessage="allnotesoff"}else if(this.controllerNumber===124&&this.controllerValue===0){this.channelModeMessage="omnimodeoff"}else if(this.controllerNumber===125&&this.controllerValue===0){this.channelModeMessage="omnimodeon"}else if(this.controllerNumber===126){this.channelModeMessage="monomodeon"}else if(this.controllerNumber===127){this.channelModeMessage="polymodeon"}break;case 192:this.messageType="programchange";this.program=e.data[1];break;case 208:this.messageType="channelpressure";this.pressure=e.data[1]&127;break;case 224:this.messageType="pitchbendchange";var t=e.data[2]&127;var s=e.data[1]&127;this.pitchBend=(t<<8)+s;break}}return new t(e)};t.exports=s["default"]},{}]},{},[1])(1)});
 //# sourceMappingURL=dist/index.js.map
 
 /***/ }),
-/* 20 */
+/* 21 */
 /***/ (function(module, exports, __webpack_require__) {
 
 // default filter
@@ -34638,11 +34838,11 @@ module.exports = Filter;
 
 
 /***/ }),
-/* 21 */
+/* 22 */
 /***/ (function(module, exports, __webpack_require__) {
 
 var Transform = __webpack_require__(0),
-    Filter = __webpack_require__(20);
+    Filter = __webpack_require__(21);
 
 var log = new Transform(),
     slice = Array.prototype.slice;
@@ -34689,7 +34889,7 @@ exports.enable = function() {
 
 
 /***/ }),
-/* 22 */
+/* 23 */
 /***/ (function(module, exports, __webpack_require__) {
 
 var Transform = __webpack_require__(0),
@@ -34709,7 +34909,7 @@ module.exports = logger;
 
 
 /***/ }),
-/* 23 */
+/* 24 */
 /***/ (function(module, exports, __webpack_require__) {
 
 var Transform = __webpack_require__(0);
@@ -34740,14 +34940,14 @@ logger.write = function(name, level, args) {
 };
 
 logger.formatters = ['color', 'minilog'];
-logger.color = __webpack_require__(24);
-logger.minilog = __webpack_require__(25);
+logger.color = __webpack_require__(25);
+logger.minilog = __webpack_require__(26);
 
 module.exports = logger;
 
 
 /***/ }),
-/* 24 */
+/* 25 */
 /***/ (function(module, exports, __webpack_require__) {
 
 var Transform = __webpack_require__(0),
@@ -34771,7 +34971,7 @@ module.exports = logger;
 
 
 /***/ }),
-/* 25 */
+/* 26 */
 /***/ (function(module, exports, __webpack_require__) {
 
 var Transform = __webpack_require__(0),
@@ -34803,15 +35003,15 @@ module.exports = logger;
 
 
 /***/ }),
-/* 26 */
+/* 27 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var Minilog = __webpack_require__(21);
+var Minilog = __webpack_require__(22);
 
 var oldEnable = Minilog.enable,
     oldDisable = Minilog.disable,
     isChrome = (typeof navigator != 'undefined' && /chrome/i.test(navigator.userAgent)),
-    console = __webpack_require__(23);
+    console = __webpack_require__(24);
 
 // Use a more capable logging backend if on Chrome
 Minilog.defaultBackend = (isChrome ? console.minilog : console);
@@ -34843,15 +35043,15 @@ Minilog.disable = function() {
 exports = module.exports = Minilog;
 
 exports.backends = {
-  array: __webpack_require__(22),
+  array: __webpack_require__(23),
   browser: Minilog.defaultBackend,
-  localStorage: __webpack_require__(28),
-  jQuery: __webpack_require__(27)
+  localStorage: __webpack_require__(29),
+  jQuery: __webpack_require__(28)
 };
 
 
 /***/ }),
-/* 27 */
+/* 28 */
 /***/ (function(module, exports, __webpack_require__) {
 
 var Transform = __webpack_require__(0);
@@ -34931,7 +35131,7 @@ module.exports = AjaxLogger;
 
 
 /***/ }),
-/* 28 */
+/* 29 */
 /***/ (function(module, exports, __webpack_require__) {
 
 var Transform = __webpack_require__(0),
@@ -34951,7 +35151,7 @@ logger.write = function(name, level, args) {
 module.exports = logger;
 
 /***/ }),
-/* 29 */
+/* 30 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -35164,7 +35364,7 @@ function oct (src) { return (parse(src) || {}).oct }
 
 
 /***/ }),
-/* 30 */
+/* 31 */
 /***/ (function(module, exports) {
 
 
@@ -35196,17 +35396,17 @@ function chain (fn1, fn2) {
 
 
 /***/ }),
-/* 31 */
+/* 32 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 
-var player = __webpack_require__(34)
-var events = __webpack_require__(30)
-var notes = __webpack_require__(33)
-var scheduler = __webpack_require__(35)
-var midi = __webpack_require__(32)
+var player = __webpack_require__(35)
+var events = __webpack_require__(31)
+var notes = __webpack_require__(34)
+var scheduler = __webpack_require__(36)
+var midi = __webpack_require__(33)
 
 function SamplePlayer (ac, source, options) {
   return midi(scheduler(notes(events(player(ac, source, options)))))
@@ -35217,10 +35417,10 @@ if (typeof window !== 'undefined') window.SamplePlayer = SamplePlayer
 
 
 /***/ }),
-/* 32 */
+/* 33 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var midimessage = __webpack_require__(19)
+var midimessage = __webpack_require__(20)
 
 module.exports = function (player) {
   /**
@@ -35272,13 +35472,13 @@ module.exports = function (player) {
 
 
 /***/ }),
-/* 33 */
+/* 34 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 
-var note = __webpack_require__(36)
+var note = __webpack_require__(37)
 var isMidi = function (n) { return n !== null && n !== [] && n >= 0 && n < 129 }
 var toMidi = function (n) { return isMidi(n) ? +n : note.midi(n) }
 
@@ -35315,14 +35515,14 @@ function mapBuffers (buffers, toKey) {
 
 
 /***/ }),
-/* 34 */
+/* 35 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 /* global AudioBuffer */
 
 
-var ADSR = __webpack_require__(11)
+var ADSR = __webpack_require__(12)
 
 var EMPTY = {}
 var DEFAULTS = {
@@ -35534,7 +35734,7 @@ module.exports = SamplePlayer
 
 
 /***/ }),
-/* 35 */
+/* 36 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -35603,7 +35803,7 @@ module.exports = function (player) {
 
 
 /***/ }),
-/* 36 */
+/* 37 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -35759,14 +35959,14 @@ module.exports = parser
 
 
 /***/ }),
-/* 37 */
+/* 38 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 
-var load = __webpack_require__(14)
-var player = __webpack_require__(31)
+var load = __webpack_require__(15)
+var player = __webpack_require__(32)
 
 /**
  * Load a soundfont instrument. It returns a promise that resolves to a
@@ -35842,7 +36042,7 @@ function nameToUrl (name, sf, format) {
 
 // In the 1.0.0 release it will be:
 // var Soundfont = {}
-var Soundfont = __webpack_require__(38)
+var Soundfont = __webpack_require__(39)
 Soundfont.instrument = instrument
 Soundfont.nameToUrl = nameToUrl
 
@@ -35851,13 +36051,13 @@ if (typeof window !== 'undefined') window.Soundfont = Soundfont
 
 
 /***/ }),
-/* 38 */
+/* 39 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 
-var parser = __webpack_require__(29)
+var parser = __webpack_require__(30)
 
 /**
  * Create a Soundfont object
@@ -35998,7 +36198,7 @@ module.exports = Soundfont
 
 
 /***/ }),
-/* 39 */
+/* 40 */
 /***/ (function(module, exports) {
 
 var g;
@@ -37353,7 +37553,7 @@ module.exports =
 	Blockly.Blocks.control_wait={init:function(){this.jsonInit({id:"control_wait",message0:"wait %1 secs",args0:[{type:"input_value",name:"DURATION"}],category:Blockly.Categories.control,extensions:["colours_control","shape_statement"]})}};Blockly.Blocks.control_wait_until={init:function(){this.jsonInit({message0:"wait until %1",args0:[{type:"input_value",name:"CONDITION",check:"Boolean"}],category:Blockly.Categories.control,extensions:["colours_control","shape_statement"]})}};
 	Blockly.Blocks.control_repeat_until={init:function(){this.jsonInit({message0:"repeat until %1",message1:"%1",message2:"%1",lastDummyAlign2:"RIGHT",args0:[{type:"input_value",name:"CONDITION",check:"Boolean"}],args1:[{type:"input_statement",name:"SUBSTACK"}],args2:[{type:"field_image",src:Blockly.mainWorkspace.options.pathToMedia+"/repeat.svg",width:24,height:24,alt:"*",flip_rtl:!0}],category:Blockly.Categories.control,extensions:["colours_control","shape_statement"]})}};
 	Blockly.Blocks.control_start_as_clone={init:function(){this.jsonInit({id:"control_start_as_clone",message0:"when I start as a clone",args0:[],category:Blockly.Categories.control,extensions:["colours_control","shape_hat"]})}};Blockly.Blocks.control_create_clone_of_menu={init:function(){this.jsonInit({message0:"%1",args0:[{type:"field_dropdown",name:"CLONE_OPTION",options:[["myself","_myself_"]]}],extensions:["colours_control","output_string"]})}};
-	Blockly.Blocks.control_create_clone_of={init:function(){this.jsonInit({id:"control_start_as_clone",message0:"create clone of %1",args0:[{type:"input_value",name:"CLONE_OPTION"}],category:Blockly.Categories.control,extensions:["colours_control","shape_statement"]})}};Blockly.Blocks.control_delete_this_clone={init:function(){this.jsonInit({message0:"delete this clone",args0:[],category:Blockly.Categories.control,extensions:["colours_control","shape_end"]})}};Blockly.Blocks.data={};Blockly.Constants={};Blockly.Constants.Data={};Blockly.Blocks.data_variable={init:function(){this.jsonInit({message0:"%1",args0:[{type:"field_variable_getter",text:"",name:"VARIABLE"}],category:Blockly.Categories.data,checkboxInFlyout:!0,extensions:["contextMenu_getVariableBlock","colours_data","output_string"]})}};
+	Blockly.Blocks.control_create_clone_of={init:function(){this.jsonInit({id:"control_start_as_clone",message0:"create clone of %1",args0:[{type:"input_value",name:"CLONE_OPTION"}],category:Blockly.Categories.control,extensions:["colours_control","shape_statement"]})}};Blockly.Blocks.control_delete_this_clone={init:function(){this.jsonInit({message0:"delete this clone",args0:[],category:Blockly.Categories.control,extensions:["colours_control","shape_end"]})}};Blockly.Blocks.data={};Blockly.Constants={};Blockly.Constants.Data={};Blockly.Blocks.data_variable={init:function(){this.jsonInit({message0:"%1",lastDummyAlign0:"CENTRE",args0:[{type:"field_variable_getter",text:"",name:"VARIABLE"}],category:Blockly.Categories.data,checkboxInFlyout:!0,extensions:["contextMenu_getVariableBlock","colours_data","output_string"]})}};
 	Blockly.Blocks.data_setvariableto={init:function(){this.jsonInit({message0:"set %1 to %2",args0:[{type:"field_variable",name:"VARIABLE"},{type:"input_value",name:"VALUE"}],category:Blockly.Categories.data,extensions:["colours_data","shape_statement"]})}};Blockly.Blocks.data_changevariableby={init:function(){this.jsonInit({message0:"change %1 by %2",args0:[{type:"field_variable",name:"VARIABLE"},{type:"input_value",name:"VALUE"}],category:Blockly.Categories.data,extensions:["colours_data","shape_statement"]})}};
 	Blockly.Blocks.data_listcontents={init:function(){this.jsonInit({message0:"%1",args0:[{type:"field_variable_getter",text:"",name:"LIST"}],category:Blockly.Categories.data,extensions:["colours_data","output_string"],checkboxInFlyout:!0})}};
 	Blockly.Blocks.data_listindexall={init:function(){this.jsonInit({message0:"%1",args0:[{type:"field_numberdropdown",name:"INDEX",value:"1",min:1,precision:1,options:[["1","1"],["last","last"],["all","all"]]}],category:Blockly.Categories.data,extensions:["colours_textfield","output_string"]})}};
@@ -38845,9 +39045,11 @@ module.exports =
 	Blockly.Block.prototype.getInputTargetBlock=function(a){return(a=this.getInput(a))&&a.connection&&a.connection.targetBlock()};Blockly.Block.prototype.getCommentText=function(){return this.comment||""};Blockly.Block.prototype.setCommentText=function(a){this.comment!=a&&(Blockly.Events.fire(new Blockly.Events.BlockChange(this,"comment",null,this.comment,a||"")),this.comment=a)};Blockly.Block.prototype.setOutputShape=function(a){this.outputShape_=a};Blockly.Block.prototype.getOutputShape=function(){return this.outputShape_};
 	Blockly.Block.prototype.setCategory=function(a){this.category_=a};Blockly.Block.prototype.getCategory=function(){return this.category_};Blockly.Block.prototype.setCheckboxInFlyout=function(a){this.checkboxInFlyout_=a};Blockly.Block.prototype.hasCheckboxInFlyout=function(){return this.checkboxInFlyout_};Blockly.Block.prototype.setWarningText=function(){};Blockly.Block.prototype.setMutator=function(){};Blockly.Block.prototype.getRelativeToSurfaceXY=function(){return this.xy_};
 	Blockly.Block.prototype.moveBy=function(a,b){goog.asserts.assert(!this.parentBlock_,"Block has parent.");var c=new Blockly.Events.BlockMove(this);this.xy_.translate(a,b);c.recordNew();Blockly.Events.fire(c)};Blockly.Block.prototype.makeConnection_=function(a){return new Blockly.Connection(this,a)};
-	Blockly.Block.prototype.allInputsFilled=function(a){void 0===a&&(a=!0);if(!a&&this.isShadow())return!1;for(var b=0,c;c=this.inputList[b];b++)if(c.connection&&(c=c.connection.targetBlock(),!c||!c.allInputsFilled(a)))return!1;return(b=this.getNextBlock())?b.allInputsFilled(a):!0};Blockly.Block.prototype.toDevString=function(){var a=this.type?'"'+this.type+'" block':"Block";this.id&&(a+=' (id="'+this.id+'")');return a};Blockly.BlockDragSurfaceSvg=function(a){this.container_=a;this.createDom()};Blockly.BlockDragSurfaceSvg.prototype.SVG_=null;Blockly.BlockDragSurfaceSvg.prototype.dragGroup_=null;Blockly.BlockDragSurfaceSvg.prototype.container_=null;Blockly.BlockDragSurfaceSvg.prototype.scale_=1;Blockly.BlockDragSurfaceSvg.prototype.surfaceXY_=null;
-	Blockly.BlockDragSurfaceSvg.prototype.createDom=function(){this.SVG_||(this.SVG_=Blockly.utils.createSvgElement("svg",{xmlns:Blockly.SVG_NS,"xmlns:html":Blockly.HTML_NS,"xmlns:xlink":"http://www.w3.org/1999/xlink",version:"1.1","class":"blocklyBlockDragSurface"},this.container_),this.dragGroup_=Blockly.utils.createSvgElement("g",{},this.SVG_))};
-	Blockly.BlockDragSurfaceSvg.prototype.setBlocksAndShow=function(a){goog.asserts.assert(0==this.dragGroup_.childNodes.length,"Already dragging a block.");this.dragGroup_.appendChild(a);this.SVG_.style.display="block";this.surfaceXY_=new goog.math.Coordinate(0,0);document.getElementsByClassName("injectionDiv")[0].style.overflow="visible"};
+	Blockly.Block.prototype.allInputsFilled=function(a){void 0===a&&(a=!0);if(!a&&this.isShadow())return!1;for(var b=0,c;c=this.inputList[b];b++)if(c.connection&&(c=c.connection.targetBlock(),!c||!c.allInputsFilled(a)))return!1;return(b=this.getNextBlock())?b.allInputsFilled(a):!0};Blockly.Block.prototype.toDevString=function(){var a=this.type?'"'+this.type+'" block':"Block";this.id&&(a+=' (id="'+this.id+'")');return a};Blockly.BlockDragSurfaceSvg=function(a){this.container_=a;this.createDom()};Blockly.BlockDragSurfaceSvg.prototype.SVG_=null;Blockly.BlockDragSurfaceSvg.prototype.dragGroup_=null;Blockly.BlockDragSurfaceSvg.prototype.container_=null;Blockly.BlockDragSurfaceSvg.prototype.scale_=1;Blockly.BlockDragSurfaceSvg.prototype.surfaceXY_=null;Blockly.BlockDragSurfaceSvg.prototype.dragShadowFilterId_="";Blockly.BlockDragSurfaceSvg.SHADOW_STD_DEVIATION=6;
+	Blockly.BlockDragSurfaceSvg.prototype.createDom=function(){if(!this.SVG_){this.SVG_=Blockly.utils.createSvgElement("svg",{xmlns:Blockly.SVG_NS,"xmlns:html":Blockly.HTML_NS,"xmlns:xlink":"http://www.w3.org/1999/xlink",version:"1.1","class":"blocklyBlockDragSurface"},this.container_);var a=Blockly.utils.createSvgElement("defs",{},this.SVG_);this.dragShadowFilterId_=this.createDropShadowDom_(a);this.dragGroup_=Blockly.utils.createSvgElement("g",{},this.SVG_);this.dragGroup_.setAttribute("filter","url(#"+
+	this.dragShadowFilterId_+")")}};
+	Blockly.BlockDragSurfaceSvg.prototype.createDropShadowDom_=function(a){var b=String(Math.random()).substring(2);a=Blockly.utils.createSvgElement("filter",{id:"blocklyDragShadowFilter"+b,height:"140%",width:"140%",y:"-20%",x:"-20%"},a);Blockly.utils.createSvgElement("feGaussianBlur",{"in":"SourceAlpha",stdDeviation:Blockly.BlockDragSurfaceSvg.SHADOW_STD_DEVIATION},a);b=Blockly.utils.createSvgElement("feComponentTransfer",{result:"offsetBlur"},a);Blockly.utils.createSvgElement("feFuncA",{type:"linear",
+	slope:Blockly.Colours.dragShadowOpacity},b);Blockly.utils.createSvgElement("feComposite",{"in":"SourceGraphic",in2:"offsetBlur",operator:"over"},a);return a.id};Blockly.BlockDragSurfaceSvg.prototype.setBlocksAndShow=function(a){goog.asserts.assert(0==this.dragGroup_.childNodes.length,"Already dragging a block.");this.dragGroup_.appendChild(a);this.SVG_.style.display="block";this.surfaceXY_=new goog.math.Coordinate(0,0);document.getElementsByClassName("injectionDiv")[0].style.overflow="visible"};
 	Blockly.BlockDragSurfaceSvg.prototype.translateAndScaleGroup=function(a,b,c){this.scale_=c;a=a.toFixed(0);b=b.toFixed(0);this.dragGroup_.setAttribute("transform","translate("+a+","+b+") scale("+c+")")};Blockly.BlockDragSurfaceSvg.prototype.translateSurfaceInternal_=function(){var a=this.surfaceXY_.x,b=this.surfaceXY_.y,a=a.toFixed(0),b=b.toFixed(0);this.SVG_.style.display="block";Blockly.utils.setCssTransform(this.SVG_,"translate3d("+a+"px, "+b+"px, 0px)")};
 	Blockly.BlockDragSurfaceSvg.prototype.translateSurface=function(a,b){this.surfaceXY_=new goog.math.Coordinate(a*this.scale_,b*this.scale_);this.translateSurfaceInternal_()};Blockly.BlockDragSurfaceSvg.prototype.getSurfaceTranslation=function(){var a=Blockly.utils.getRelativeXY(this.SVG_);return new goog.math.Coordinate(a.x/this.scale_,a.y/this.scale_)};Blockly.BlockDragSurfaceSvg.prototype.getGroup=function(){return this.dragGroup_};Blockly.BlockDragSurfaceSvg.prototype.getCurrentBlock=function(){return this.dragGroup_.firstChild};
 	Blockly.BlockDragSurfaceSvg.prototype.clearAndHide=function(a){a?a.appendChild(this.getCurrentBlock()):this.dragGroup_.removeChild(this.getCurrentBlock());this.SVG_.style.display="none";goog.asserts.assert(0==this.dragGroup_.childNodes.length,"Drag group was not cleared.");this.surfaceXY_=null;document.getElementsByClassName("injectionDiv")[0].style.overflow="hidden"};Blockly.ContextMenu={};Blockly.ContextMenu.currentBlock=null;Blockly.ContextMenu.eventWrapper_=null;Blockly.ContextMenu.show=function(a,b,c){Blockly.WidgetDiv.show(Blockly.ContextMenu,c,null);if(b.length){var d=Blockly.ContextMenu.populate_(b,c);goog.events.listen(d,goog.ui.Component.EventType.ACTION,Blockly.ContextMenu.hide);Blockly.ContextMenu.position_(d,a,c);setTimeout(function(){d.getElement().focus()},1);Blockly.ContextMenu.currentBlock=null}else Blockly.ContextMenu.hide()};
@@ -38871,7 +39073,8 @@ module.exports =
 	Blockly.BlockSvg.prototype.snapToGrid=function(){if(this.workspace&&!this.workspace.isDragging()&&!this.getParent()&&!this.isInFlyout){var a=this.workspace.getGrid();if(a&&a.shouldSnap()){var b=a.getSpacing(),c=b/2,d=this.getRelativeToSurfaceXY(),a=Math.round((d.x-c)/b)*b+c-d.x,b=Math.round((d.y-c)/b)*b+c-d.y,a=Math.round(a),b=Math.round(b);0==a&&0==b||this.moveBy(a,b)}}};
 	Blockly.BlockSvg.prototype.getBoundingRectangle=function(){var a=this.getRelativeToSurfaceXY(this),b=this.getHeightWidth();if(this.RTL){var c=new goog.math.Coordinate(a.x-b.width,a.y);a=new goog.math.Coordinate(a.x,a.y+b.height)}else c=new goog.math.Coordinate(a.x,a.y),a=new goog.math.Coordinate(a.x+b.width,a.y+b.height);return{topLeft:c,bottomRight:a}};Blockly.BlockSvg.prototype.setOpacity=function(a){this.opacity_=a;this.rendered&&this.updateColour()};Blockly.BlockSvg.prototype.getOpacity=function(){return this.opacity_};
 	Blockly.BlockSvg.prototype.setCollapsed=function(a){if(this.collapsed_!=a){for(var b=[],c=0,d;d=this.inputList[c];c++)b.push.apply(b,d.setVisible(!a));if(a){d=this.getIcons();for(c=0;c<d.length;c++)d[c].setVisible(!1);c=this.toString(Blockly.COLLAPSE_CHARS);this.appendDummyInput("_TEMP_COLLAPSED_INPUT").appendField(c).init()}else this.removeInput("_TEMP_COLLAPSED_INPUT"),this.setWarningText(null);Blockly.BlockSvg.superClass_.setCollapsed.call(this,a);b.length||(b[0]=this);if(this.rendered)for(c=0;a=
-	b[c];c++)a.render()}};Blockly.BlockSvg.prototype.tab=function(a,b){for(var c=[],d=0,e;e=this.inputList[d];d++){for(var f=0,g;g=e.fieldRow[f];f++)g instanceof Blockly.FieldTextInput&&c.push(g);e.connection&&(e=e.connection.targetBlock())&&c.push(e)}d=c.indexOf(a);-1==d&&(d=b?-1:c.length);(c=c[b?d+1:d-1])?c instanceof Blockly.Field?c.showEditor_():c.tab(null,b):(c=this.getParent())&&c.tab(this,b)};
+	b[c];c++)a.render()}};
+	Blockly.BlockSvg.prototype.tab=function(a,b){for(var c,d=[],e=0;c=this.inputList[e];e++){for(var f=0,g;g=c.fieldRow[f];f++)g instanceof Blockly.FieldTextInput&&d.push(g);c.connection&&(c=c.connection.targetBlock())&&d.push(c)}e=d.indexOf(a);-1==e&&(e=b?-1:d.length);(d=d[b?e+1:e-1])?d instanceof Blockly.Field?d.showEditor_():d.tab(null,b):(d=this.outputConnection&&this.outputConnection.targetBlock())?d.tab(this,b):(c=b?this.getNextBlock():this.getPreviousBlock())&&c.tab(this,b)};
 	Blockly.BlockSvg.prototype.onMouseDown_=function(a){var b=this.workspace.getGesture(a);b&&b.handleBlockStart(a,this)};Blockly.BlockSvg.prototype.showHelp_=function(){var a=goog.isFunction(this.helpUrl)?this.helpUrl():this.helpUrl;a&&alert(a)};
 	Blockly.BlockSvg.prototype.duplicateAndDragCallback_=function(){var a=this;return function(b){setTimeout(function(){var c=a.workspace;if(!a.getSvgRoot())throw Error("oldBlock is not rendered.");var d=Blockly.Xml.blockToDom(a);c.setResizesEnabled(!1);d=Blockly.Xml.domToBlock(d,c);if(!d.getSvgRoot())throw Error("newBlock is not rendered.");var e=a.getRelativeToSurfaceXY();d.moveBy(e.x,e.y);var e=e.scale(c.scale),f=c.getOriginOffsetInPixels(),e=goog.math.Coordinate.sum(f,e),f=c.getInjectionDiv().getBoundingClientRect();
 	c.startDragWithFakeEvent({clientX:e.x+f.left,clientY:e.y+f.top,type:"mousedown",preventDefault:function(){b.preventDefault()},stopPropagation:function(){b.stopPropagation()},target:b.target},d)},0)}};
@@ -38931,7 +39134,7 @@ module.exports =
 	a.join(" "));this.getCategory()&&this.svgGroup_.setAttribute("data-category",this.getCategory())};
 	Blockly.BlockSvg.prototype.renderDrawTop_=function(a,b,c){this.squareTopLeftCorner_?(a.push("m 0,0"),this.startHat_&&a.push(Blockly.BlockSvg.START_HAT_PATH),this.edgeShapeWidth_&&a.push("m "+this.edgeShapeWidth_+",0")):(a.push(Blockly.BlockSvg.TOP_LEFT_CORNER_START),a.push(Blockly.BlockSvg.TOP_LEFT_CORNER));this.previousConnection&&(a.push("H",Blockly.BlockSvg.NOTCH_START_PADDING),a.push(Blockly.BlockSvg.NOTCH_PATH_LEFT),this.previousConnection.moveTo(b.x+(this.RTL?-Blockly.BlockSvg.NOTCH_WIDTH:Blockly.BlockSvg.NOTCH_WIDTH),
 	b.y));this.width=c};
-	Blockly.BlockSvg.prototype.renderDrawRight_=function(a,b,c,d){for(var e,f,g,h=0,k,m=0,l;l=c[m];m++){e=l.paddingStart;0==m&&(e+=this.RTL?-d:d);if(l.type==Blockly.BlockSvg.INLINE){for(var n=0;g=l[n];n++)if(f=e,e=h,e+=l.height/2,g.align!=Blockly.ALIGN_LEFT&&(k=c.rightEdge-g.fieldWidth-2*Blockly.BlockSvg.SEP_SPACE_X,g.align==Blockly.ALIGN_RIGHT?f+=k:g.align==Blockly.ALIGN_CENTRE&&(f+=k/2)),e=this.renderFields_(g.fieldRow,f,e),g.type==Blockly.INPUT_VALUE){this.previousConnection&&(e=Math.max(e,Blockly.BlockSvg.INPUT_AND_FIELD_MIN_X));
+	Blockly.BlockSvg.prototype.renderDrawRight_=function(a,b,c,d){for(var e,f,g,h=0,k,m=0,l;l=c[m];m++){e=l.paddingStart;0==m&&(e+=this.RTL?-d:d);if(l.type==Blockly.BlockSvg.INLINE){for(var n=0;g=l[n];n++)if(f=e,e=h,e+=l.height/2,g.align===Blockly.ALIGN_RIGHT?f+=c.rightEdge-g.fieldWidth-2*Blockly.BlockSvg.SEP_SPACE_X:g.align===Blockly.ALIGN_CENTRE&&(f=Math.max(c.rightEdge/2-g.fieldWidth/2,f)),e=this.renderFields_(g.fieldRow,f,e),g.type==Blockly.INPUT_VALUE){this.previousConnection&&(e=Math.max(e,Blockly.BlockSvg.INPUT_AND_FIELD_MIN_X));
 	f=this.RTL?b.x-e:b.x+e;var p=l.height/2;k=b.y+h+p;g.connection.moveTo(f,k);g.connection.isConnected()&&g.connection.tighten_();this.renderInputShape_(g,e,h+p);e+=g.renderWidth+Blockly.BlockSvg.SEP_SPACE_X}e-=Blockly.BlockSvg.SEP_SPACE_X;e+=l.paddingEnd;c.rightEdge=Math.max(e,c.rightEdge);e=Math.max(e,c.rightEdge);this.width=Math.max(this.width,e);this.edgeShape_?a.push("H",e-this.edgeShapeWidth_):(a.push("H",e-Blockly.BlockSvg.CORNER_RADIUS-this.edgeShapeWidth_),a.push(Blockly.BlockSvg.TOP_RIGHT_CORNER));
 	this.edgeShape_||a.push("v",l.height-2*Blockly.BlockSvg.CORNER_RADIUS)}else l.type==Blockly.NEXT_STATEMENT&&(g=l[0],f=e,e=h,this.renderFields_(g.fieldRow,f,e),a.push(Blockly.BlockSvg.BOTTOM_RIGHT_CORNER),e=c.statementEdge+Blockly.BlockSvg.NOTCH_WIDTH,a.push("H",e+Blockly.BlockSvg.STATEMENT_INPUT_INNER_SPACE+2*Blockly.BlockSvg.CORNER_RADIUS),a.push(Blockly.BlockSvg.NOTCH_PATH_RIGHT),a.push("h","-"+Blockly.BlockSvg.STATEMENT_INPUT_INNER_SPACE),a.push(Blockly.BlockSvg.INNER_TOP_LEFT_CORNER),a.push("v",
 	l.height-2*Blockly.BlockSvg.CORNER_RADIUS),a.push(Blockly.BlockSvg.INNER_BOTTOM_LEFT_CORNER),l.statementNotchAtBottom&&(a.push("h ",Blockly.BlockSvg.STATEMENT_INPUT_INNER_SPACE),a.push(Blockly.BlockSvg.NOTCH_PATH_LEFT)),a.push("H",c.rightEdge-Blockly.BlockSvg.CORNER_RADIUS),f=b.x+(this.RTL?-e:e),k=b.y+h,g.connection.moveTo(f,k),g.connection.isConnected()&&(g.connection.tighten_(),this.width=Math.max(this.width,c.statementEdge+g.connection.targetBlock().getHeightWidth().width)),m==c.length-1||c[m+
@@ -38951,7 +39154,7 @@ module.exports =
 	c.style.left="11px":c.style.right="11px",d&&(f.dropDownArrowMouseWrapper_=Blockly.bindEvent_(c,"mousedown",this,d)),b.appendChild(c));f.value=f.defaultValue=this.text_;f.oldValue_=null;this.validate_();this.resizeEditor_();a||(f.focus(),f.select(),f.setSelectionRange(0,99999));f.onKeyDownWrapper_=Blockly.bindEventWithChecks_(f,"keydown",this,this.onHtmlInputKeyDown_);f.onKeyUpWrapper_=Blockly.bindEventWithChecks_(f,"keyup",this,this.onHtmlInputChange_);f.onKeyPressWrapper_=Blockly.bindEventWithChecks_(f,
 	"keypress",this,this.onHtmlInputChange_);f.onInputWrapper_=Blockly.bindEvent_(f,"input",this,this.onHtmlInputChange_);f.onWorkspaceChangeWrapper_=this.resizeEditor_.bind(this);this.workspace_.addChangeListener(f.onWorkspaceChangeWrapper_);d="box-shadow "+Blockly.FieldTextInput.ANIMATION_TIME+"s";Blockly.BlockSvg.FIELD_TEXTINPUT_ANIMATE_POSITIONING&&(b.style.transition+=",padding "+Blockly.FieldTextInput.ANIMATION_TIME+"s,width "+Blockly.FieldTextInput.ANIMATION_TIME+"s,height "+Blockly.FieldTextInput.ANIMATION_TIME+
 	"s,margin-left "+Blockly.FieldTextInput.ANIMATION_TIME+"s");b.style.transition=d;f.style.transition="font-size "+Blockly.FieldTextInput.ANIMATION_TIME+"s";f.style.fontSize=Blockly.BlockSvg.FIELD_TEXTINPUT_FONTSIZE_FINAL+"pt";b.style.boxShadow="0px 0px 0px 4px "+Blockly.Colours.fieldShadow};
-	Blockly.FieldTextInput.prototype.onHtmlInputKeyDown_=function(a){var b=Blockly.FieldTextInput.htmlInput_;13==a.keyCode?Blockly.WidgetDiv.hide():27==a.keyCode?(b.value=b.defaultValue,Blockly.WidgetDiv.hide()):9==a.keyCode&&(Blockly.WidgetDiv.hide(),this.sourceBlock_.tab(this,!a.shiftKey),a.preventDefault())};Blockly.FieldTextInput.GECKO_KEYCODE_WHITELIST=[97,99,118,120];
+	Blockly.FieldTextInput.prototype.onHtmlInputKeyDown_=function(a){var b=Blockly.FieldTextInput.htmlInput_;13==a.keyCode?(Blockly.WidgetDiv.hide(),Blockly.DropDownDiv.hideWithoutAnimation()):27==a.keyCode?(b.value=b.defaultValue,Blockly.WidgetDiv.hide(),Blockly.DropDownDiv.hideWithoutAnimation()):9==a.keyCode&&(Blockly.WidgetDiv.hide(),Blockly.DropDownDiv.hideWithoutAnimation(),this.sourceBlock_.tab(this,!a.shiftKey),a.preventDefault())};Blockly.FieldTextInput.GECKO_KEYCODE_WHITELIST=[97,99,118,120];
 	Blockly.FieldTextInput.prototype.onHtmlInputChange_=function(a){if("keypress"===a.type&&this.restrictor_){var b=!1;if(goog.userAgent.GECKO){var c=a.charCode;if(32>c||127==c)b=!0;else if(a.metaKey||a.ctrlKey)b=-1<Blockly.FieldTextInput.GECKO_KEYCODE_WHITELIST.indexOf(c)}else c=a.keyCode;c=String.fromCharCode(c);if(!b&&!this.restrictor_.test(c)&&a.preventDefault){a.preventDefault();return}}a=Blockly.FieldTextInput.htmlInput_;b=a.value;b!==a.oldValue_?(a.oldValue_=b,this.setText(b),this.validate_()):
 	goog.userAgent.WEBKIT&&this.sourceBlock_.render();this.resizeEditor_()};Blockly.FieldTextInput.prototype.validate_=function(){var a=!0;goog.asserts.assertObject(Blockly.FieldTextInput.htmlInput_);var b=Blockly.FieldTextInput.htmlInput_;this.sourceBlock_&&(a=this.callValidator(b.value));null===a?Blockly.utils.addClass(b,"blocklyInvalidInput"):Blockly.utils.removeClass(b,"blocklyInvalidInput")};
 	Blockly.FieldTextInput.prototype.resizeEditor_=function(){var a=this.sourceBlock_.workspace.scale,b=Blockly.WidgetDiv.DIV;if(Blockly.BlockSvg.FIELD_TEXTINPUT_EXPAND_PAST_TRUNCATION){var c=Blockly.utils.measureText(Blockly.FieldTextInput.htmlInput_.style.fontSize,Blockly.FieldTextInput.htmlInput_.style.fontFamily,Blockly.FieldTextInput.htmlInput_.style.fontWeight,Blockly.FieldTextInput.htmlInput_.value);c+=Blockly.FieldTextInput.TEXT_MEASURE_PADDING_MAGIC;c*=a}else c=this.sourceBlock_.getHeightWidth().width*
@@ -39140,7 +39343,7 @@ module.exports =
 	"}",".blocklyNumPadButton > img {","margin-top: 10%;","width: 80%;","height: 80%;","}",".blocklyNumPadButton:active {","background: $colour_numPadActiveBackground;","-webkit-tap-highlight-color: rgba(0,0,0,0);","}",".arrowTop {","border-top: 1px solid;","border-left: 1px solid;","border-top-left-radius: 4px;","border-color: inherit;","}",".arrowBottom {","border-bottom: 1px solid;","border-right: 1px solid;","border-bottom-right-radius: 4px;","border-color: inherit;","}",".valueReportBox {","min-width: 50px;",
 	"max-width: 300px;","max-height: 200px;","overflow: auto;","word-wrap: break-word;","text-align: center;",'font-family: "Helvetica Neue", Helvetica, sans-serif;',"font-size: .8em;","}",".blocklyResizeSE {","cursor: se-resize;","fill: #aaa;","}",".blocklyResizeSW {","cursor: sw-resize;","fill: #aaa;","}",".blocklyResizeLine {","stroke: #888;","stroke-width: 1;","}",".blocklyHighlightedConnectionPath {","fill: none;","stroke: #fc3;","stroke-width: 4px;","}",".blocklyPath {","stroke-width: 1px;","}",
 	".blocklySelected>.blocklyPath {","}",".blocklySelected>.blocklyPathLight {","display: none;","}",".blocklyDraggable {",'cursor: url("<<<PATH>>>/handopen.cur"), auto;',"cursor: grab;","cursor: -webkit-grab;","cursor: -moz-grab;","}",".blocklyDragging {",'cursor: url("<<<PATH>>>/handclosed.cur"), auto;',"cursor: grabbing;","cursor: -webkit-grabbing;","cursor: -moz-grabbing;","}",".blocklyDraggable:active {",'cursor: url("<<<PATH>>>/handclosed.cur"), auto;',"cursor: grabbing;","cursor: -webkit-grabbing;",
-	"cursor: -moz-grabbing;","}",".blocklyBlockDragSurface .blocklyDraggable {",'cursor: url("<<<PATH>>>/handclosed.cur"), auto;',"cursor: grabbing;","cursor: -webkit-grabbing;","cursor: -moz-grabbing;","}",".blocklyDragging.blocklyDraggingDelete {",'cursor: url("<<<PATH>>>/handdelete.cur"), auto;',"}",".blocklyToolboxDelete {",'cursor: url("<<<PATH>>>/handdelete.cur"), auto;',"}",".blocklyDragging>.blocklyPath,",".blocklyDragging>.blocklyPathLight {","fill-opacity: .8;","stroke-opacity: .8;","}",".blocklyDragging>.blocklyPath {",
+	"cursor: -moz-grabbing;","}",".blocklyBlockDragSurface .blocklyDraggable {",'cursor: url("<<<PATH>>>/handclosed.cur"), auto;',"cursor: grabbing;","cursor: -webkit-grabbing;","cursor: -moz-grabbing;","}",".blocklyDragging.blocklyDraggingDelete {",'cursor: url("<<<PATH>>>/handdelete.cur"), auto;',"}",".blocklyToolboxDelete {",'cursor: url("<<<PATH>>>/handdelete.cur"), auto;',"}",".blocklyDragging>.blocklyPath,",".blocklyDragging>.blocklyPathLight {","fill-opacity: 1.0;","stroke-opacity: 1.0;","}",".blocklyDragging>.blocklyPath {",
 	"}",".blocklyDisabled>.blocklyPath {","fill-opacity: .5;","stroke-opacity: .5;","}",".blocklyInsertionMarker>.blocklyPath {","stroke: none;","}",".blocklyText {","fill: #fff;",'font-family: "Helvetica Neue", Helvetica, sans-serif;',"font-size: 12pt;","font-weight: 500;","}",".blocklyTextTruncated {","font-size: 11pt;","}",".blocklyNonEditableText>text {","pointer-events: none;","}",".blocklyNonEditableText>text,",".blocklyEditableText>text {","fill: $colour_text;","}",".blocklyDropdownText {","fill: #fff !important;",
 	"}",".blocklyBubbleText {","fill: $colour_text;","}",".blocklyFlyout {","position: absolute;","z-index: 20;","}",".blocklyFlyout {","position: absolute;","z-index: 20;","}",".blocklyFlyoutButton {","fill: none;","}",".blocklyFlyoutButtonBackground {","stroke: #c6c6c6;","}",".blocklyFlyoutButton .blocklyText {","fill: $colour_text;","}",".blocklyFlyoutButtonShadow {","fill: none;","}",".blocklyFlyoutButton:hover {","fill: white;","cursor: pointer;","}",".blocklyFlyoutLabel {","cursor: default;","}",
 	".blocklyFlyoutLabelBackground {","opacity: 0;","}",".blocklyFlyoutLabelText {","fill: #000;","}",".blocklySvg text, .blocklyBlockDragSurface text, .blocklyFlyout text, .blocklyToolboxDiv text {","user-select: none;","-moz-user-select: none;","-webkit-user-select: none;","cursor: inherit;","}",".blocklyHidden {","display: none;","}",".blocklyFieldDropdown:not(.blocklyHidden) {","display: block;","}",".blocklyIconGroup {","cursor: default;","}",".blocklyIconGroup:not(:hover),",".blocklyIconGroupReadonly {",
