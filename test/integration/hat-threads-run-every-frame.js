@@ -49,9 +49,8 @@ test('edge activated hat thread runs once every frame', t => {
             checkIsHatThread(t, vm, vm.runtime.threads[0]);
             t.assert(vm.runtime.threads[0].status === Thread.STATUS_DONE);
 
-            // Check that the hat thread is again when another step is taken
+            // Check that the hat thread is added again when another step is taken
             vm.runtime._step();
-            // There should now be one done hat thread and one new hat thread to run
             t.equal(vm.runtime.threads.length, 1);
             checkIsHatThread(t, vm, vm.runtime.threads[0]);
             t.assert(vm.runtime.threads[0].status === Thread.STATUS_DONE);
@@ -123,9 +122,8 @@ test('edge activated hat thread does not interrupt stack click thread', t => {
             // Add stack click thread on this hat
             vm.runtime.toggleScript(vm.runtime.threads[0].topBlock, {stackClick: true});
 
-            // Check that the hat thread is again when another step is taken
+            // Check that the hat thread is added again when another step is taken
             vm.runtime._step();
-            // There should now be one done hat thread and one new hat thread to run
             t.equal(vm.runtime.threads.length, 2);
             let hatThread;
             let stackClickThread;
@@ -174,9 +172,8 @@ test('edge activated hat thread does not interrupt stack click thread', t => {
             // Add stack click thread on this hat
             vm.runtime.toggleScript(vm.runtime.threads[0].topBlock, {stackClick: true});
 
-            // Check that the hat thread is again when another step is taken
+            // Check that the hat thread is added again when another step is taken
             vm.runtime._step();
-            // There should now be one done hat thread and one new hat thread to run
             t.equal(vm.runtime.threads.length, 2);
             let hatThread;
             let stackClickThread;
