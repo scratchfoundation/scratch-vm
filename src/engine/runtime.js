@@ -399,19 +399,19 @@ class Runtime extends EventEmitter {
      * @param {!string} id ID of block that starts the stack.
      * @param {!Target} target Target to run thread on.
      * @param {?object} opts optional arguments
-     * @param {?boolean} opts.showVisualReport true if the script should show speech bubble for its value
+     * @param {?boolean} opts.stackClick true if the script was activated by clicking on the stack
      * @param {?boolean} opts.updateMonitor true if the script should update a monitor value
      * @return {!Thread} The newly created thread.
      */
     _pushThread (id, target, opts) {
         opts = Object.assign({
-            showVisualReport: false,
+            stackClick: false,
             updateMonitor: false
         }, opts);
 
         const thread = new Thread(id);
         thread.target = target;
-        thread.showVisualReport = opts.showVisualReport;
+        thread.stackClick = opts.stackClick;
         thread.updateMonitor = opts.updateMonitor;
 
         thread.pushStack(id);
@@ -442,7 +442,7 @@ class Runtime extends EventEmitter {
     _restartThread (thread) {
         const newThread = new Thread(thread.topBlock);
         newThread.target = thread.target;
-        newThread.showVisualReport = thread.showVisualReport;
+        newThread.stackClick = thread.stackClick;
         newThread.updateMonitor = thread.updateMonitor;
         newThread.pushStack(thread.topBlock);
         const i = this.threads.indexOf(thread);
@@ -467,18 +467,28 @@ class Runtime extends EventEmitter {
      * @param {!string} topBlockId ID of block that starts the script.
      * @param {?object} opts optional arguments to toggle script
      * @param {?string} opts.target target ID for target to run script on. If not supplied, uses editing target.
-     * @param {?boolean} opts.showVisualReport true if the speech bubble should pop up on the block, false if not.
      * @param {?boolean} opts.updateMonitor true if the monitor for this block should get updated.
+     * @param {?boolean} opts.stackClick true if the user activated the stack by clicking, false if not. This
+     *     determines whether we show a visual report when turning on the script.
      */
     toggleScript (topBlockId, opts) {
         opts = Object.assign({
             target: this._editingTarget,
-            showVisualReport: false,
-            updateMonitor: false
+            updateMonitor: false,
+            stackClick: false
         }, opts);
         // Remove any existing thread.
         for (let i = 0; i < this.threads.length; i++) {
-            if (this.threads[i].topBlock === topBlockId) {
+            // Toggling a script that's already running turns it off
+            if (this.threads[i].topBlock === topBlockId && this.threads[i].status !== Thread.STATUS_DONE) {
+                const blockContainer = opts.target.blocks;
+                const opcode = blockContainer.getOpcode(blockContainer.getBlock(topBlockId));
+                
+                if (this.getIsEdgeActivatedHat(opcode) && this.threads[i].stackClick !== opts.stackClick) {
+                    // Allow edge activated hat thread stack click to coexist with
+                    // edge activated hat thread that runs every frame
+                    continue;
+                }
                 this._removeThread(this.threads[i]);
                 return;
             }
@@ -577,6 +587,7 @@ class Runtime extends EventEmitter {
                 // any existing threads starting with the top block.
                 for (let i = 0; i < instance.threads.length; i++) {
                     if (instance.threads[i].topBlock === topBlockId &&
+                        !instance.threads[i].stackClick && // stack click threads and hat threads can coexist
                         instance.threads[i].target === target) {
                         instance._restartThread(instance.threads[i]);
                         return;
@@ -587,7 +598,9 @@ class Runtime extends EventEmitter {
                 // give up if any threads with the top block are running.
                 for (let j = 0; j < instance.threads.length; j++) {
                     if (instance.threads[j].topBlock === topBlockId &&
-                        instance.threads[j].target === target) {
+                        instance.threads[j].target === target &&
+                        !instance.threads[j].stackClick && // stack click threads and hat threads can coexist
+                        instance.threads[j].status !== Thread.STATUS_DONE) {
                         // Some thread is already running.
                         return;
                     }
