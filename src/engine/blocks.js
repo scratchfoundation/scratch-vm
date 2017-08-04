@@ -393,7 +393,7 @@ class Blocks {
         Object.keys(this._blocks).forEach(blockId => {
             if (this.getBlock(blockId).isMonitored) {
                 // @todo handle specific targets (e.g. apple x position)
-                runtime.toggleScript(blockId, {updateMonitor: true});
+                runtime.addMonitorScript(blockId);
             }
         });
     }

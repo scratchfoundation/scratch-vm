@@ -467,14 +467,12 @@ class Runtime extends EventEmitter {
      * @param {!string} topBlockId ID of block that starts the script.
      * @param {?object} opts optional arguments to toggle script
      * @param {?string} opts.target target ID for target to run script on. If not supplied, uses editing target.
-     * @param {?boolean} opts.updateMonitor true if the monitor for this block should get updated.
      * @param {?boolean} opts.stackClick true if the user activated the stack by clicking, false if not. This
      *     determines whether we show a visual report when turning on the script.
      */
     toggleScript (topBlockId, opts) {
         opts = Object.assign({
             target: this._editingTarget,
-            updateMonitor: false,
             stackClick: false
         }, opts);
         // Remove any existing thread.
@@ -495,6 +493,24 @@ class Runtime extends EventEmitter {
         }
         // Otherwise add it.
         this._pushThread(topBlockId, opts.target, opts);
+    }
+
+    /**
+     * Enqueue a script that when finished will update the monitor for the block.
+     * @param {!string} topBlockId ID of block that starts the script.
+     * @param {?string} optTarget target ID for target to run script on. If not supplied, uses editing target.
+     */
+    addMonitorScript (topBlockId, optTarget) {
+        if (!optTarget) optTarget = this._editingTarget;
+        for (let i = 0; i < this.threads.length; i++) {
+            // Don't re-add the script if it's already running
+            if (this.threads[i].topBlock === topBlockId && this.threads[i].status !== Thread.STATUS_DONE &&
+                    this.threads[i].updateMonitor) {
+                return;
+            }
+        }
+        // Otherwise add it.
+        this._pushThread(topBlockId, optTarget, {updateMonitor: true});
     }
 
     /**
