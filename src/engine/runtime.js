@@ -1,8 +1,13 @@
 const EventEmitter = require('events');
-const Sequencer = require('./sequencer');
-const Blocks = require('./blocks');
-const Thread = require('./thread');
 const {OrderedMap} = require('immutable');
+
+const ScratchBlocks = require('scratch-blocks');
+
+const ArgumentType = require('../extension-support/argument-type');
+const Blocks = require('./blocks');
+const BlockType = require('../extension-support/block-type');
+const Sequencer = require('./sequencer');
+const Thread = require('./thread');
 
 // Virtual I/O devices.
 const Clock = require('../io/clock');
@@ -23,6 +28,26 @@ const defaultBlockPackages = {
     scratch3_procedures: require('../blocks/scratch3_procedures'),
     scratch3_wedo2: require('../blocks/scratch3_wedo2')
 };
+
+/**
+ * Information used for converting Scratch argument types into scratch-blocks data.
+ * @type {object.<ArgumentType, {shadowType: string, fieldType: string}>}}
+ */
+const ArgumentTypeMap = (() => {
+    const map = {};
+    map[ArgumentType.NUMBER] = {
+        shadowType: 'math_number',
+        fieldType: 'NUM'
+    };
+    map[ArgumentType.STRING] = {
+        shadowType: 'text',
+        fieldType: 'TEXT'
+    };
+    map[ArgumentType.BOOLEAN] = {
+        shadowType: ''
+    };
+    return map;
+})();
 
 /**
  * Manages targets, scripts, and the sequencer.
@@ -74,6 +99,13 @@ class Runtime extends EventEmitter {
          * @type {Object.<string, Function>}
          */
         this._primitives = {};
+
+        /**
+         * Map to look up all block information by extended opcode.
+         * @type {Object.<string, {info:BlockInfo, json:object, xml:string}>}
+         * @private
+         */
+        this._blockInfo = {};
 
         /**
          * Map to look up hat blocks' metadata.
@@ -318,6 +350,125 @@ class Runtime extends EventEmitter {
                 }
             }
         }
+    }
+
+    /**
+     * Register the primitives provided by an extension.
+     * @param {ExtensionInfo} extensionInfo - information about the extension (id, blocks, etc.)
+     * @private
+     */
+    _registerExtensionPrimitives (extensionInfo) {
+        const categoryInfo = {
+            id: extensionInfo.id,
+            name: extensionInfo.name,
+            color1: '#FF6680',
+            color2: '#FF4D6A',
+            color3: '#FF3355'
+        };
+
+        for (const blockInfo of extensionInfo.blocks) {
+            const convertedBlock = this._convertForScratchBlocks(blockInfo, categoryInfo);
+            const opcode = convertedBlock.json.id;
+            this._blockInfo[opcode] = convertedBlock;
+            this._primitives[opcode] = convertedBlock.info.func;
+        }
+    }
+
+    /**
+     * Convert BlockInfo into scratch-blocks JSON & XML, and generate a proxy function.
+     * @param {BlockInfo} blockInfo - the block to convert
+     * @param {CategoryInfo} categoryInfo - the category for this block
+     * @returns {{info: BlockInfo, json: object, xml: string}} - the converted & original block information
+     * @private
+     */
+    _convertForScratchBlocks (blockInfo, categoryInfo) {
+        const extendedOpcode = `${categoryInfo.id}.${blockInfo.opcode}`;
+        const blockJSON = {
+            id: extendedOpcode,
+            inputsInline: true,
+            previousStatement: null, // null = available connection; undefined = hat block
+            nextStatement: null, // null = available connection; undefined = terminal
+            category: categoryInfo.name,
+            colour: categoryInfo.color1,
+            colourSecondary: categoryInfo.color2,
+            colorTertiary: categoryInfo.color3,
+            args0: []
+        };
+
+        const inputList = [];
+
+        // TODO: store this somewhere so that we can map args appropriately after translation.
+        // This maps an arg name to its relative position in the original (usually English) block text.
+        // When displaying a block in another language we'll need to run a `replace` action similar to the one below,
+        // but each `[ARG]` will need to be replaced with the number in this map instead of `args0.length`.
+        const argsMap = {};
+
+        blockJSON.message0 = blockInfo.text.replace(/\[(.+?)]/g, (match, placeholder) => {
+
+            // Sanitize the placeholder to ensure valid XML
+            placeholder = placeholder.replace(/[<"&]/, '_');
+
+            blockJSON.args0.push({
+                type: 'input_value',
+                name: placeholder
+            });
+
+            // scratch-blocks uses 1-based argument indexing
+            const argNum = blockJSON.args0.length;
+            argsMap[placeholder] = argNum;
+
+            const argInfo = blockInfo.arguments[placeholder] || {};
+            const argTypeInfo = ArgumentTypeMap[argInfo.type] || {};
+            const defaultValue = (typeof argInfo.defaultValue === 'undefined' ? '' : argInfo.defaultValue.toString());
+            inputList.push(`<value name="${placeholder
+                }"><shadow type="${argTypeInfo.shadowType
+                }"><field name="${argTypeInfo.fieldType
+                }">${defaultValue
+                }</field></shadow></value>`
+            );
+
+            return `%${argNum}`;
+        });
+
+        switch (blockInfo.blockType) {
+        case BlockType.COMMAND:
+            blockJSON.outputShape = ScratchBlocks.OUTPUT_SHAPE_SQUARE;
+            break;
+        case BlockType.REPORTER:
+            blockJSON.output = 'String'; // TODO: distinguish number & string here?
+            blockJSON.outputShape = ScratchBlocks.OUTPUT_SHAPE_ROUND;
+            break;
+        case BlockType.BOOLEAN:
+            blockJSON.output = 'Boolean';
+            blockJSON.outputShape = ScratchBlocks.OUTPUT_SHAPE_HEXAGONAL;
+            break;
+        case BlockType.HAT:
+            blockJSON.outputShape = ScratchBlocks.OUTPUT_SHAPE_SQUARE;
+            delete blockJSON.previousStatement;
+            break;
+        case BlockType.CONDITIONAL:
+            // Statement inputs get names like 'SUBSTACK', 'SUBSTACK2', 'SUBSTACK3', ...
+            for (let branchNum = 1; branchNum <= blockInfo.branchCount; ++branchNum) {
+                blockJSON[`args${branchNum}`] = {
+                    type: 'input_statement',
+                    name: `SUBSTACK${branchNum > 1 ? branchNum : ''}`
+                };
+            }
+            blockJSON.outputShape = ScratchBlocks.OUTPUT_SHAPE_SQUARE;
+            break;
+        }
+
+        if (blockInfo.isTerminal) {
+            delete blockJSON.nextStatement;
+        }
+
+        const blockXML = `<block type="${extendedOpcode}">${inputList.join('')}</block>`;
+
+        return {
+            info: blockInfo,
+            json: blockJSON,
+            xml: blockXML
+        };
     }
 
     /**

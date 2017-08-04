@@ -1,5 +1,6 @@
 const EventEmitter = require('events');
 
+const centralDispatch = require('./dispatch/central-dispatch');
 const log = require('./util/log');
 const Runtime = require('./engine/runtime');
 const sb2 = require('./serialization/sb2');
@@ -24,6 +25,10 @@ class VirtualMachine extends EventEmitter {
          * @type {!Runtime}
          */
         this.runtime = new Runtime();
+        centralDispatch.setService('runtime', this.runtime).catch(e => {
+            log.error(`Failed to register runtime service: ${JSON.stringify(e)}`);
+        });
+
         /**
          * The "currently editing"/selected target ID for the VM.
          * Block events from any Blockly workspace are routed to this target.
@@ -129,6 +134,13 @@ class VirtualMachine extends EventEmitter {
             blocks: this.editingTarget.blocks,
             threads: filteredThreadData
         });
+    }
+
+    /**
+     * Get the categorized list of all blocks currently available in the VM.
+     */
+    getBlocks () {
+
     }
 
     /**

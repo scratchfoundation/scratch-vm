@@ -5,7 +5,7 @@ class ExampleExtension {
     getInfo () {
         return {
             // Required: the machine-readable name of this extension.
-            // Will be used as the extension's namespace.
+            // Will be used as the extension's namespace. Must not contain a '.' character.
             id: 'someBlocks',
 
             // Optional: the human-readable name of this extension as string.
@@ -35,7 +35,7 @@ class ExampleExtension {
             blocks: [
                 {
                     // Required: the machine-readable name of this operation.
-                    // This will appear in project JSON.
+                    // This will appear in project JSON. Must not contain a '.' character.
                     opcode: 'myReporter', // becomes 'someBlocks.myReporter'
 
                     // Required: the kind of block we're defining, from a predefined list:
