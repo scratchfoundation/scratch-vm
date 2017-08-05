@@ -1,3 +1,5 @@
+const SharedDispatch = require('./shared-dispatch');
+
 const log = require('../util/log');
 
 /**
@@ -7,15 +9,9 @@ const log = require('../util/log');
  * worker boundaries as needed.
  * @see {CentralDispatch}
  */
-class WorkerDispatch {
+class WorkerDispatch extends SharedDispatch {
     constructor () {
-        /**
-         * List of callback registrations for promises waiting for a response from a call to a service on another
-         * worker. A callback registration is an array of [resolve,reject] Promise functions.
-         * Calls to local services don't enter this list.
-         * @type {Array.<[Function,Function]>}
-         */
-        this.callbacks = [];
+        super();
 
         /**
          * This promise will be resolved when we have successfully connected to central dispatch.
@@ -28,12 +24,6 @@ class WorkerDispatch {
         });
 
         /**
-         * The next callback ID to be used.
-         * @type {int}
-         */
-        this.nextCallback = 0;
-
-        /**
          * Map of service name to local service provider.
          * If a service is not listed here, it is assumed to be provided by another context (another Worker or the main
          * thread).
@@ -42,7 +32,7 @@ class WorkerDispatch {
          */
         this.services = {};
 
-        this._onMessage = this._onMessage.bind(this);
+        this._onMessage = this._onMessage.bind(this, self);
         if (typeof self !== 'undefined') {
             self.onmessage = this._onMessage;
         }
@@ -61,61 +51,6 @@ class WorkerDispatch {
     }
 
     /**
-     * Call a particular method on a particular service, regardless of whether that service is provided locally or on
-     * a worker. If the service is provided by a worker, the `args` will be copied using the Structured Clone
-     * algorithm, except for any items which are also in the `transfer` list. Ownership of those items will be
-     * transferred to the worker, and they should not be used after this call.
-     * @example
-     *      dispatcher.call('vm', 'setData', 'cat', 42);
-     *      // this finds the worker for the 'vm' service, then on that worker calls:
-     *      vm.setData('cat', 42);
-     * @param {string} service - the name of the service.
-     * @param {string} method - the name of the method.
-     * @param {*} [args] - the arguments to be copied to the method, if any.
-     * @returns {Promise} - a promise for the return value of the service method.
-     */
-    call (service, method, ...args) {
-        return this.transferCall(service, method, null, ...args);
-    }
-
-    /**
-     * Call a particular method on a particular service, regardless of whether that service is provided locally or on
-     * a worker. If the service is provided by a worker, the `args` will be copied using the Structured Clone
-     * algorithm, except for any items which are also in the `transfer` list. Ownership of those items will be
-     * transferred to the worker, and they should not be used after this call.
-     * @example
-     *      dispatcher.transferCall('vm', 'setData', [myArrayBuffer], 'cat', myArrayBuffer);
-     *      // this finds the worker for the 'vm' service, transfers `myArrayBuffer` to it, then on that worker calls:
-     *      vm.setData('cat', myArrayBuffer);
-     * @param {string} service - the name of the service.
-     * @param {string} method - the name of the method.
-     * @param {Array} [transfer] - objects to be transferred instead of copied. Must be present in `args` to be useful.
-     * @param {*} [args] - the arguments to be copied to the method, if any.
-     * @returns {Promise} - a promise for the return value of the service method.
-     */
-    transferCall (service, method, transfer, ...args) {
-        return new Promise((resolve, reject) => {
-            try {
-                if (this.services.hasOwnProperty(service)) {
-                    const provider = this.services[service];
-                    const result = provider[method].apply(provider, args);
-                    resolve(result);
-                } else {
-                    const callbackId = this.nextCallback++;
-                    this.callbacks[callbackId] = [resolve, reject];
-                    if (transfer) {
-                        self.postMessage([service, method, callbackId, ...args], transfer);
-                    } else {
-                        self.postMessage([service, method, callbackId, ...args]);
-                    }
-                }
-            } catch (e) {
-                reject(e);
-            }
-        });
-    }
-
-    /**
      * Set a local object as the global provider of the specified service.
      * WARNING: Any method on the provider can be called from any worker within the dispatch system.
      * @param {string} service - a globally unique string identifying this service. Examples: 'vm', 'gui', 'extension9'.
@@ -124,56 +59,51 @@ class WorkerDispatch {
      */
     setService (service, provider) {
         if (this.services.hasOwnProperty(service)) {
-            log.warn(`Replacing existing service provider for ${service}`);
+            log.warn(`Worker dispatch replacing existing service provider for ${service}`);
         }
         this.services[service] = provider;
-        return this.waitForConnection.then(() => this.call('dispatch', 'setService', service));
+        return this.waitForConnection.then(() => this._remoteCall(self, 'dispatch', 'setService', service));
     }
 
     /**
-     * Message handler active after the dispatcher handshake. This only handles method calls.
-     * @param {MessageEvent} event - the message event to be handled.
-     * @private
+     * Fetch the service provider object for a particular service name.
+     * @override
+     * @param {string} service - the name of the service to look up
+     * @returns {{provider:(object|Worker), isRemote:boolean}} - the means to contact the service, if found
+     * @protected
      */
-    _onMessage (event) {
-        const [service, method, callbackId, ...args] = /** @type {[string, string, *]} */ event.data;
-        if (service === 'dispatch') {
-            switch (method) {
-            case '_handshake':
-                this._onConnect();
-                break;
-            case '_callback':
-                this._callback(callbackId, ...args);
-                break;
-            case '_terminate':
-                self.close();
-                break;
-            }
-        } else {
-            this.call(service, method, ...args).then(
-                result => {
-                    self.postMessage(['dispatch', '_callback', callbackId, result]);
-                },
-                error => {
-                    self.postMessage(['dispatch', '_callback', callbackId, null, error]);
-                });
-        }
+    _getServiceProvider (service) {
+        // if we don't have a local service by this name, contact central dispatch by calling `postMessage` on self
+        const provider = this.services[service];
+        return {
+            provider: provider || self,
+            isRemote: !provider
+        };
     }
 
     /**
-     * Handle a callback from a worker. This should only be called as the result of a message from a worker.
-     * @param {int} callbackId - the ID of the callback to call.
-     * @param {*} result - if `error` is not truthy, resolve the callback promise with this value.
-     * @param {*} [error] - if this is truthy, reject the callback promise with this value.
-     * @private
+     * Handle a call message sent to the dispatch service itself
+     * @override
+     * @param {Worker} worker - the worker which sent the message.
+     * @param {DispatchCallMessage} message - the message to be handled.
+     * @returns {Promise|undefined} - a promise for the results of this operation, if appropriate
+     * @protected
      */
-    _callback (callbackId, result, error) {
-        const [resolve, reject] = this.callbacks[callbackId];
-        if (error) {
-            reject(error);
-        } else {
-            resolve(result);
+    _onDispatchMessage (worker, message) {
+        let promise;
+        switch (message.method) {
+        case 'handshake':
+            promise = this._onConnect();
+            break;
+        case 'terminate':
+            // Don't close until next tick, after sending confirmation back
+            setTimeout(() => self.close(), 0);
+            promise = Promise.resolve();
+            break;
+        default:
+            log.error(`Worker dispatch received message for unknown method: ${message.method}`);
         }
+        return promise;
     }
 }
 

@@ -10,11 +10,6 @@ class DispatchTestService {
     throwException () {
         throw new Error('This is a test exception thrown by DispatchTest');
     }
-
-    close () {
-        // eslint-disable-next-line no-undef
-        self.close();
-    }
 }
 
 module.exports = DispatchTestService;
