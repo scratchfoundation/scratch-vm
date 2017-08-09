@@ -100,7 +100,7 @@ const parseScratchObject = function (object, runtime) {
     const target = sprite.createClone();
     // Load target properties from JSON.
     if (object.hasOwnProperty('variables')) {
-        for (let j = 0; j < object.variables.length; j++) {
+        for (let j in object.variables) {
             const variable = object.variables[j];
             const newVariable = new Variable(
                 variable.id,
