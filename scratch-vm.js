@@ -63,7 +63,7 @@
 /******/ 	__webpack_require__.p = "";
 /******/
 /******/ 	// Load entry module and return exports
-/******/ 	return __webpack_require__(__webpack_require__.s = 156);
+/******/ 	return __webpack_require__(__webpack_require__.s = 157);
 /******/ })
 /************************************************************************/
 /******/ ([
@@ -82,7 +82,7 @@
 
 
 var base64 = __webpack_require__(64)
-var ieee754 = __webpack_require__(73)
+var ieee754 = __webpack_require__(74)
 var isArray = __webpack_require__(35)
 
 exports.Buffer = Buffer
@@ -2559,7 +2559,7 @@ exports.Readable = exports;
 exports.Writable = __webpack_require__(19);
 exports.Duplex = __webpack_require__(5);
 exports.Transform = __webpack_require__(38);
-exports.PassThrough = __webpack_require__(78);
+exports.PassThrough = __webpack_require__(79);
 
 
 /***/ }),
@@ -3041,7 +3041,7 @@ function nextTick(fn, arg1, arg2, arg3) {
 /* 16 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var microee = __webpack_require__(260);
+var microee = __webpack_require__(261);
 
 // Implements a subset of Node's stream.Transform - in a cross-platform manner.
 function Transform() {}
@@ -3122,7 +3122,7 @@ module.exports = Transform;
 "use strict";
 
 
-var minilog = __webpack_require__(267);
+var minilog = __webpack_require__(268);
 minilog.enable();
 
 module.exports = minilog('vm');
@@ -3431,7 +3431,7 @@ util.inherits = __webpack_require__(1);
 
 /*<replacement>*/
 var internalUtil = {
-  deprecate: __webpack_require__(89)
+  deprecate: __webpack_require__(90)
 };
 /*</replacement>*/
 
@@ -4130,8 +4130,8 @@ module.exports = MathUtil;
 /* 21 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var Parser = __webpack_require__(120),
-    DomHandler = __webpack_require__(211);
+var Parser = __webpack_require__(121),
+    DomHandler = __webpack_require__(212);
 
 function defineProp(name, value){
 	delete module.exports[name];
@@ -4141,26 +4141,26 @@ function defineProp(name, value){
 
 module.exports = {
 	Parser: Parser,
-	Tokenizer: __webpack_require__(121),
+	Tokenizer: __webpack_require__(122),
 	ElementType: __webpack_require__(33),
 	DomHandler: DomHandler,
 	get FeedHandler(){
-		return defineProp("FeedHandler", __webpack_require__(251));
+		return defineProp("FeedHandler", __webpack_require__(252));
 	},
 	get Stream(){
-		return defineProp("Stream", __webpack_require__(253));
+		return defineProp("Stream", __webpack_require__(254));
 	},
 	get WritableStream(){
-		return defineProp("WritableStream", __webpack_require__(122));
+		return defineProp("WritableStream", __webpack_require__(123));
 	},
 	get ProxyHandler(){
-		return defineProp("ProxyHandler", __webpack_require__(252));
+		return defineProp("ProxyHandler", __webpack_require__(253));
 	},
 	get DomUtils(){
-		return defineProp("DomUtils", __webpack_require__(213));
+		return defineProp("DomUtils", __webpack_require__(214));
 	},
 	get CollectingHandler(){
-		return defineProp("CollectingHandler", __webpack_require__(250));
+		return defineProp("CollectingHandler", __webpack_require__(251));
 	},
 	// For legacy support
 	DefaultHandler: DomHandler,
@@ -4207,8 +4207,8 @@ module.exports = {
 "use strict";
 
 
-exports.decode = exports.parse = __webpack_require__(75);
-exports.encode = exports.stringify = __webpack_require__(76);
+exports.decode = exports.parse = __webpack_require__(76);
+exports.encode = exports.stringify = __webpack_require__(77);
 
 
 /***/ }),
@@ -4244,10 +4244,10 @@ var inherits = __webpack_require__(1);
 
 inherits(Stream, EE);
 Stream.Readable = __webpack_require__(8);
-Stream.Writable = __webpack_require__(81);
-Stream.Duplex = __webpack_require__(77);
+Stream.Writable = __webpack_require__(82);
+Stream.Duplex = __webpack_require__(78);
 Stream.Transform = __webpack_require__(54);
-Stream.PassThrough = __webpack_require__(80);
+Stream.PassThrough = __webpack_require__(81);
 
 // Backwards-compat with node 0.4.x
 Stream.Stream = Stream;
@@ -4399,9 +4399,10 @@ exports._unrefActive = exports.active = function(item) {
 };
 
 // setimmediate attaches itself to the global object
-__webpack_require__(83);
-exports.setImmediate = setImmediate;
-exports.clearImmediate = clearImmediate;
+__webpack_require__(84);
+var global = __webpack_require__(71);
+exports.setImmediate = global.setImmediate;
+exports.clearImmediate = global.clearImmediate;
 
 
 /***/ }),
@@ -4432,8 +4433,8 @@ exports.clearImmediate = clearImmediate;
 
 
 
-var punycode = __webpack_require__(74);
-var util = __webpack_require__(88);
+var punycode = __webpack_require__(75);
+var util = __webpack_require__(89);
 
 exports.parse = urlParse;
 exports.resolve = urlResolve;
@@ -5672,7 +5673,7 @@ function isPrimitive(arg) {
 }
 exports.isPrimitive = isPrimitive;
 
-exports.isBuffer = __webpack_require__(91);
+exports.isBuffer = __webpack_require__(92);
 
 function objectToString(o) {
   return Object.prototype.toString.call(o);
@@ -5716,7 +5717,7 @@ exports.log = function() {
  *     prototype.
  * @param {function} superCtor Constructor function to inherit prototype from.
  */
-exports.inherits = __webpack_require__(90);
+exports.inherits = __webpack_require__(91);
 
 exports._extend = function(origin, add) {
   // Don't do anything if add isn't an object
@@ -5751,10 +5752,10 @@ var _createClass = function () { function defineProperties(target, props) { for 
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
-var adapter = __webpack_require__(168);
-var mutationAdapter = __webpack_require__(98);
-var xmlEscape = __webpack_require__(181);
-var MonitorRecord = __webpack_require__(170);
+var adapter = __webpack_require__(169);
+var mutationAdapter = __webpack_require__(99);
+var xmlEscape = __webpack_require__(182);
+var MonitorRecord = __webpack_require__(171);
 
 /**
  * @fileoverview
@@ -6501,7 +6502,7 @@ util.inherits = __webpack_require__(1);
 /*</replacement>*/
 
 /*<replacement>*/
-var debugUtil = __webpack_require__(93);
+var debugUtil = __webpack_require__(94);
 var debug = void 0;
 if (debugUtil && debugUtil.debuglog) {
   debug = debugUtil.debuglog('stream');
@@ -6510,7 +6511,7 @@ if (debugUtil && debugUtil.debuglog) {
 }
 /*</replacement>*/
 
-var BufferList = __webpack_require__(79);
+var BufferList = __webpack_require__(80);
 var destroyImpl = __webpack_require__(39);
 var StringDecoder;
 
@@ -7748,8 +7749,8 @@ module.exports = __webpack_require__(7).EventEmitter;
 /* 41 */
 /***/ (function(module, exports, __webpack_require__) {
 
-/* WEBPACK VAR INJECTION */(function(global) {var ClientRequest = __webpack_require__(85)
-var extend = __webpack_require__(92)
+/* WEBPACK VAR INJECTION */(function(global) {var ClientRequest = __webpack_require__(86)
+var extend = __webpack_require__(93)
 var statusCodes = __webpack_require__(67)
 var url = __webpack_require__(26)
 
@@ -13826,7 +13827,7 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
 var log = __webpack_require__(17);
 var MathUtil = __webpack_require__(20);
 var StringUtil = __webpack_require__(44);
-var Target = __webpack_require__(173);
+var Target = __webpack_require__(174);
 
 /**
  * Rendered target: instance of a sprite (clone), or the stage.
@@ -15205,2149 +15206,37 @@ module.exports = {
 /* 69 */
 /***/ (function(module, exports) {
 
-module.exports = {
-	"Aacute": "Á",
-	"aacute": "á",
-	"Abreve": "Ă",
-	"abreve": "ă",
-	"ac": "∾",
-	"acd": "∿",
-	"acE": "∾̳",
-	"Acirc": "Â",
-	"acirc": "â",
-	"acute": "´",
-	"Acy": "А",
-	"acy": "а",
-	"AElig": "Æ",
-	"aelig": "æ",
-	"af": "⁡",
-	"Afr": "𝔄",
-	"afr": "𝔞",
-	"Agrave": "À",
-	"agrave": "à",
-	"alefsym": "ℵ",
-	"aleph": "ℵ",
-	"Alpha": "Α",
-	"alpha": "α",
-	"Amacr": "Ā",
-	"amacr": "ā",
-	"amalg": "⨿",
-	"amp": "&",
-	"AMP": "&",
-	"andand": "⩕",
-	"And": "⩓",
-	"and": "∧",
-	"andd": "⩜",
-	"andslope": "⩘",
-	"andv": "⩚",
-	"ang": "∠",
-	"ange": "⦤",
-	"angle": "∠",
-	"angmsdaa": "⦨",
-	"angmsdab": "⦩",
-	"angmsdac": "⦪",
-	"angmsdad": "⦫",
-	"angmsdae": "⦬",
-	"angmsdaf": "⦭",
-	"angmsdag": "⦮",
-	"angmsdah": "⦯",
-	"angmsd": "∡",
-	"angrt": "∟",
-	"angrtvb": "⊾",
-	"angrtvbd": "⦝",
-	"angsph": "∢",
-	"angst": "Å",
-	"angzarr": "⍼",
-	"Aogon": "Ą",
-	"aogon": "ą",
-	"Aopf": "𝔸",
-	"aopf": "𝕒",
-	"apacir": "⩯",
-	"ap": "≈",
-	"apE": "⩰",
-	"ape": "≊",
-	"apid": "≋",
-	"apos": "'",
-	"ApplyFunction": "⁡",
-	"approx": "≈",
-	"approxeq": "≊",
-	"Aring": "Å",
-	"aring": "å",
-	"Ascr": "𝒜",
-	"ascr": "𝒶",
-	"Assign": "≔",
-	"ast": "*",
-	"asymp": "≈",
-	"asympeq": "≍",
-	"Atilde": "Ã",
-	"atilde": "ã",
-	"Auml": "Ä",
-	"auml": "ä",
-	"awconint": "∳",
-	"awint": "⨑",
-	"backcong": "≌",
-	"backepsilon": "϶",
-	"backprime": "‵",
-	"backsim": "∽",
-	"backsimeq": "⋍",
-	"Backslash": "∖",
-	"Barv": "⫧",
-	"barvee": "⊽",
-	"barwed": "⌅",
-	"Barwed": "⌆",
-	"barwedge": "⌅",
-	"bbrk": "⎵",
-	"bbrktbrk": "⎶",
-	"bcong": "≌",
-	"Bcy": "Б",
-	"bcy": "б",
-	"bdquo": "„",
-	"becaus": "∵",
-	"because": "∵",
-	"Because": "∵",
-	"bemptyv": "⦰",
-	"bepsi": "϶",
-	"bernou": "ℬ",
-	"Bernoullis": "ℬ",
-	"Beta": "Β",
-	"beta": "β",
-	"beth": "ℶ",
-	"between": "≬",
-	"Bfr": "𝔅",
-	"bfr": "𝔟",
-	"bigcap": "⋂",
-	"bigcirc": "◯",
-	"bigcup": "⋃",
-	"bigodot": "⨀",
-	"bigoplus": "⨁",
-	"bigotimes": "⨂",
-	"bigsqcup": "⨆",
-	"bigstar": "★",
-	"bigtriangledown": "▽",
-	"bigtriangleup": "△",
-	"biguplus": "⨄",
-	"bigvee": "⋁",
-	"bigwedge": "⋀",
-	"bkarow": "⤍",
-	"blacklozenge": "⧫",
-	"blacksquare": "▪",
-	"blacktriangle": "▴",
-	"blacktriangledown": "▾",
-	"blacktriangleleft": "◂",
-	"blacktriangleright": "▸",
-	"blank": "␣",
-	"blk12": "▒",
-	"blk14": "░",
-	"blk34": "▓",
-	"block": "█",
-	"bne": "=⃥",
-	"bnequiv": "≡⃥",
-	"bNot": "⫭",
-	"bnot": "⌐",
-	"Bopf": "𝔹",
-	"bopf": "𝕓",
-	"bot": "⊥",
-	"bottom": "⊥",
-	"bowtie": "⋈",
-	"boxbox": "⧉",
-	"boxdl": "┐",
-	"boxdL": "╕",
-	"boxDl": "╖",
-	"boxDL": "╗",
-	"boxdr": "┌",
-	"boxdR": "╒",
-	"boxDr": "╓",
-	"boxDR": "╔",
-	"boxh": "─",
-	"boxH": "═",
-	"boxhd": "┬",
-	"boxHd": "╤",
-	"boxhD": "╥",
-	"boxHD": "╦",
-	"boxhu": "┴",
-	"boxHu": "╧",
-	"boxhU": "╨",
-	"boxHU": "╩",
-	"boxminus": "⊟",
-	"boxplus": "⊞",
-	"boxtimes": "⊠",
-	"boxul": "┘",
-	"boxuL": "╛",
-	"boxUl": "╜",
-	"boxUL": "╝",
-	"boxur": "└",
-	"boxuR": "╘",
-	"boxUr": "╙",
-	"boxUR": "╚",
-	"boxv": "│",
-	"boxV": "║",
-	"boxvh": "┼",
-	"boxvH": "╪",
-	"boxVh": "╫",
-	"boxVH": "╬",
-	"boxvl": "┤",
-	"boxvL": "╡",
-	"boxVl": "╢",
-	"boxVL": "╣",
-	"boxvr": "├",
-	"boxvR": "╞",
-	"boxVr": "╟",
-	"boxVR": "╠",
-	"bprime": "‵",
-	"breve": "˘",
-	"Breve": "˘",
-	"brvbar": "¦",
-	"bscr": "𝒷",
-	"Bscr": "ℬ",
-	"bsemi": "⁏",
-	"bsim": "∽",
-	"bsime": "⋍",
-	"bsolb": "⧅",
-	"bsol": "\\",
-	"bsolhsub": "⟈",
-	"bull": "•",
-	"bullet": "•",
-	"bump": "≎",
-	"bumpE": "⪮",
-	"bumpe": "≏",
-	"Bumpeq": "≎",
-	"bumpeq": "≏",
-	"Cacute": "Ć",
-	"cacute": "ć",
-	"capand": "⩄",
-	"capbrcup": "⩉",
-	"capcap": "⩋",
-	"cap": "∩",
-	"Cap": "⋒",
-	"capcup": "⩇",
-	"capdot": "⩀",
-	"CapitalDifferentialD": "ⅅ",
-	"caps": "∩︀",
-	"caret": "⁁",
-	"caron": "ˇ",
-	"Cayleys": "ℭ",
-	"ccaps": "⩍",
-	"Ccaron": "Č",
-	"ccaron": "č",
-	"Ccedil": "Ç",
-	"ccedil": "ç",
-	"Ccirc": "Ĉ",
-	"ccirc": "ĉ",
-	"Cconint": "∰",
-	"ccups": "⩌",
-	"ccupssm": "⩐",
-	"Cdot": "Ċ",
-	"cdot": "ċ",
-	"cedil": "¸",
-	"Cedilla": "¸",
-	"cemptyv": "⦲",
-	"cent": "¢",
-	"centerdot": "·",
-	"CenterDot": "·",
-	"cfr": "𝔠",
-	"Cfr": "ℭ",
-	"CHcy": "Ч",
-	"chcy": "ч",
-	"check": "✓",
-	"checkmark": "✓",
-	"Chi": "Χ",
-	"chi": "χ",
-	"circ": "ˆ",
-	"circeq": "≗",
-	"circlearrowleft": "↺",
-	"circlearrowright": "↻",
-	"circledast": "⊛",
-	"circledcirc": "⊚",
-	"circleddash": "⊝",
-	"CircleDot": "⊙",
-	"circledR": "®",
-	"circledS": "Ⓢ",
-	"CircleMinus": "⊖",
-	"CirclePlus": "⊕",
-	"CircleTimes": "⊗",
-	"cir": "○",
-	"cirE": "⧃",
-	"cire": "≗",
-	"cirfnint": "⨐",
-	"cirmid": "⫯",
-	"cirscir": "⧂",
-	"ClockwiseContourIntegral": "∲",
-	"CloseCurlyDoubleQuote": "”",
-	"CloseCurlyQuote": "’",
-	"clubs": "♣",
-	"clubsuit": "♣",
-	"colon": ":",
-	"Colon": "∷",
-	"Colone": "⩴",
-	"colone": "≔",
-	"coloneq": "≔",
-	"comma": ",",
-	"commat": "@",
-	"comp": "∁",
-	"compfn": "∘",
-	"complement": "∁",
-	"complexes": "ℂ",
-	"cong": "≅",
-	"congdot": "⩭",
-	"Congruent": "≡",
-	"conint": "∮",
-	"Conint": "∯",
-	"ContourIntegral": "∮",
-	"copf": "𝕔",
-	"Copf": "ℂ",
-	"coprod": "∐",
-	"Coproduct": "∐",
-	"copy": "©",
-	"COPY": "©",
-	"copysr": "℗",
-	"CounterClockwiseContourIntegral": "∳",
-	"crarr": "↵",
-	"cross": "✗",
-	"Cross": "⨯",
-	"Cscr": "𝒞",
-	"cscr": "𝒸",
-	"csub": "⫏",
-	"csube": "⫑",
-	"csup": "⫐",
-	"csupe": "⫒",
-	"ctdot": "⋯",
-	"cudarrl": "⤸",
-	"cudarrr": "⤵",
-	"cuepr": "⋞",
-	"cuesc": "⋟",
-	"cularr": "↶",
-	"cularrp": "⤽",
-	"cupbrcap": "⩈",
-	"cupcap": "⩆",
-	"CupCap": "≍",
-	"cup": "∪",
-	"Cup": "⋓",
-	"cupcup": "⩊",
-	"cupdot": "⊍",
-	"cupor": "⩅",
-	"cups": "∪︀",
-	"curarr": "↷",
-	"curarrm": "⤼",
-	"curlyeqprec": "⋞",
-	"curlyeqsucc": "⋟",
-	"curlyvee": "⋎",
-	"curlywedge": "⋏",
-	"curren": "¤",
-	"curvearrowleft": "↶",
-	"curvearrowright": "↷",
-	"cuvee": "⋎",
-	"cuwed": "⋏",
-	"cwconint": "∲",
-	"cwint": "∱",
-	"cylcty": "⌭",
-	"dagger": "†",
-	"Dagger": "‡",
-	"daleth": "ℸ",
-	"darr": "↓",
-	"Darr": "↡",
-	"dArr": "⇓",
-	"dash": "‐",
-	"Dashv": "⫤",
-	"dashv": "⊣",
-	"dbkarow": "⤏",
-	"dblac": "˝",
-	"Dcaron": "Ď",
-	"dcaron": "ď",
-	"Dcy": "Д",
-	"dcy": "д",
-	"ddagger": "‡",
-	"ddarr": "⇊",
-	"DD": "ⅅ",
-	"dd": "ⅆ",
-	"DDotrahd": "⤑",
-	"ddotseq": "⩷",
-	"deg": "°",
-	"Del": "∇",
-	"Delta": "Δ",
-	"delta": "δ",
-	"demptyv": "⦱",
-	"dfisht": "⥿",
-	"Dfr": "𝔇",
-	"dfr": "𝔡",
-	"dHar": "⥥",
-	"dharl": "⇃",
-	"dharr": "⇂",
-	"DiacriticalAcute": "´",
-	"DiacriticalDot": "˙",
-	"DiacriticalDoubleAcute": "˝",
-	"DiacriticalGrave": "`",
-	"DiacriticalTilde": "˜",
-	"diam": "⋄",
-	"diamond": "⋄",
-	"Diamond": "⋄",
-	"diamondsuit": "♦",
-	"diams": "♦",
-	"die": "¨",
-	"DifferentialD": "ⅆ",
-	"digamma": "ϝ",
-	"disin": "⋲",
-	"div": "÷",
-	"divide": "÷",
-	"divideontimes": "⋇",
-	"divonx": "⋇",
-	"DJcy": "Ђ",
-	"djcy": "ђ",
-	"dlcorn": "⌞",
-	"dlcrop": "⌍",
-	"dollar": "$",
-	"Dopf": "𝔻",
-	"dopf": "𝕕",
-	"Dot": "¨",
-	"dot": "˙",
-	"DotDot": "⃜",
-	"doteq": "≐",
-	"doteqdot": "≑",
-	"DotEqual": "≐",
-	"dotminus": "∸",
-	"dotplus": "∔",
-	"dotsquare": "⊡",
-	"doublebarwedge": "⌆",
-	"DoubleContourIntegral": "∯",
-	"DoubleDot": "¨",
-	"DoubleDownArrow": "⇓",
-	"DoubleLeftArrow": "⇐",
-	"DoubleLeftRightArrow": "⇔",
-	"DoubleLeftTee": "⫤",
-	"DoubleLongLeftArrow": "⟸",
-	"DoubleLongLeftRightArrow": "⟺",
-	"DoubleLongRightArrow": "⟹",
-	"DoubleRightArrow": "⇒",
-	"DoubleRightTee": "⊨",
-	"DoubleUpArrow": "⇑",
-	"DoubleUpDownArrow": "⇕",
-	"DoubleVerticalBar": "∥",
-	"DownArrowBar": "⤓",
-	"downarrow": "↓",
-	"DownArrow": "↓",
-	"Downarrow": "⇓",
-	"DownArrowUpArrow": "⇵",
-	"DownBreve": "̑",
-	"downdownarrows": "⇊",
-	"downharpoonleft": "⇃",
-	"downharpoonright": "⇂",
-	"DownLeftRightVector": "⥐",
-	"DownLeftTeeVector": "⥞",
-	"DownLeftVectorBar": "⥖",
-	"DownLeftVector": "↽",
-	"DownRightTeeVector": "⥟",
-	"DownRightVectorBar": "⥗",
-	"DownRightVector": "⇁",
-	"DownTeeArrow": "↧",
-	"DownTee": "⊤",
-	"drbkarow": "⤐",
-	"drcorn": "⌟",
-	"drcrop": "⌌",
-	"Dscr": "𝒟",
-	"dscr": "𝒹",
-	"DScy": "Ѕ",
-	"dscy": "ѕ",
-	"dsol": "⧶",
-	"Dstrok": "Đ",
-	"dstrok": "đ",
-	"dtdot": "⋱",
-	"dtri": "▿",
-	"dtrif": "▾",
-	"duarr": "⇵",
-	"duhar": "⥯",
-	"dwangle": "⦦",
-	"DZcy": "Џ",
-	"dzcy": "џ",
-	"dzigrarr": "⟿",
-	"Eacute": "É",
-	"eacute": "é",
-	"easter": "⩮",
-	"Ecaron": "Ě",
-	"ecaron": "ě",
-	"Ecirc": "Ê",
-	"ecirc": "ê",
-	"ecir": "≖",
-	"ecolon": "≕",
-	"Ecy": "Э",
-	"ecy": "э",
-	"eDDot": "⩷",
-	"Edot": "Ė",
-	"edot": "ė",
-	"eDot": "≑",
-	"ee": "ⅇ",
-	"efDot": "≒",
-	"Efr": "𝔈",
-	"efr": "𝔢",
-	"eg": "⪚",
-	"Egrave": "È",
-	"egrave": "è",
-	"egs": "⪖",
-	"egsdot": "⪘",
-	"el": "⪙",
-	"Element": "∈",
-	"elinters": "⏧",
-	"ell": "ℓ",
-	"els": "⪕",
-	"elsdot": "⪗",
-	"Emacr": "Ē",
-	"emacr": "ē",
-	"empty": "∅",
-	"emptyset": "∅",
-	"EmptySmallSquare": "◻",
-	"emptyv": "∅",
-	"EmptyVerySmallSquare": "▫",
-	"emsp13": " ",
-	"emsp14": " ",
-	"emsp": " ",
-	"ENG": "Ŋ",
-	"eng": "ŋ",
-	"ensp": " ",
-	"Eogon": "Ę",
-	"eogon": "ę",
-	"Eopf": "𝔼",
-	"eopf": "𝕖",
-	"epar": "⋕",
-	"eparsl": "⧣",
-	"eplus": "⩱",
-	"epsi": "ε",
-	"Epsilon": "Ε",
-	"epsilon": "ε",
-	"epsiv": "ϵ",
-	"eqcirc": "≖",
-	"eqcolon": "≕",
-	"eqsim": "≂",
-	"eqslantgtr": "⪖",
-	"eqslantless": "⪕",
-	"Equal": "⩵",
-	"equals": "=",
-	"EqualTilde": "≂",
-	"equest": "≟",
-	"Equilibrium": "⇌",
-	"equiv": "≡",
-	"equivDD": "⩸",
-	"eqvparsl": "⧥",
-	"erarr": "⥱",
-	"erDot": "≓",
-	"escr": "ℯ",
-	"Escr": "ℰ",
-	"esdot": "≐",
-	"Esim": "⩳",
-	"esim": "≂",
-	"Eta": "Η",
-	"eta": "η",
-	"ETH": "Ð",
-	"eth": "ð",
-	"Euml": "Ë",
-	"euml": "ë",
-	"euro": "€",
-	"excl": "!",
-	"exist": "∃",
-	"Exists": "∃",
-	"expectation": "ℰ",
-	"exponentiale": "ⅇ",
-	"ExponentialE": "ⅇ",
-	"fallingdotseq": "≒",
-	"Fcy": "Ф",
-	"fcy": "ф",
-	"female": "♀",
-	"ffilig": "ﬃ",
-	"fflig": "ﬀ",
-	"ffllig": "ﬄ",
-	"Ffr": "𝔉",
-	"ffr": "𝔣",
-	"filig": "ﬁ",
-	"FilledSmallSquare": "◼",
-	"FilledVerySmallSquare": "▪",
-	"fjlig": "fj",
-	"flat": "♭",
-	"fllig": "ﬂ",
-	"fltns": "▱",
-	"fnof": "ƒ",
-	"Fopf": "𝔽",
-	"fopf": "𝕗",
-	"forall": "∀",
-	"ForAll": "∀",
-	"fork": "⋔",
-	"forkv": "⫙",
-	"Fouriertrf": "ℱ",
-	"fpartint": "⨍",
-	"frac12": "½",
-	"frac13": "⅓",
-	"frac14": "¼",
-	"frac15": "⅕",
-	"frac16": "⅙",
-	"frac18": "⅛",
-	"frac23": "⅔",
-	"frac25": "⅖",
-	"frac34": "¾",
-	"frac35": "⅗",
-	"frac38": "⅜",
-	"frac45": "⅘",
-	"frac56": "⅚",
-	"frac58": "⅝",
-	"frac78": "⅞",
-	"frasl": "⁄",
-	"frown": "⌢",
-	"fscr": "𝒻",
-	"Fscr": "ℱ",
-	"gacute": "ǵ",
-	"Gamma": "Γ",
-	"gamma": "γ",
-	"Gammad": "Ϝ",
-	"gammad": "ϝ",
-	"gap": "⪆",
-	"Gbreve": "Ğ",
-	"gbreve": "ğ",
-	"Gcedil": "Ģ",
-	"Gcirc": "Ĝ",
-	"gcirc": "ĝ",
-	"Gcy": "Г",
-	"gcy": "г",
-	"Gdot": "Ġ",
-	"gdot": "ġ",
-	"ge": "≥",
-	"gE": "≧",
-	"gEl": "⪌",
-	"gel": "⋛",
-	"geq": "≥",
-	"geqq": "≧",
-	"geqslant": "⩾",
-	"gescc": "⪩",
-	"ges": "⩾",
-	"gesdot": "⪀",
-	"gesdoto": "⪂",
-	"gesdotol": "⪄",
-	"gesl": "⋛︀",
-	"gesles": "⪔",
-	"Gfr": "𝔊",
-	"gfr": "𝔤",
-	"gg": "≫",
-	"Gg": "⋙",
-	"ggg": "⋙",
-	"gimel": "ℷ",
-	"GJcy": "Ѓ",
-	"gjcy": "ѓ",
-	"gla": "⪥",
-	"gl": "≷",
-	"glE": "⪒",
-	"glj": "⪤",
-	"gnap": "⪊",
-	"gnapprox": "⪊",
-	"gne": "⪈",
-	"gnE": "≩",
-	"gneq": "⪈",
-	"gneqq": "≩",
-	"gnsim": "⋧",
-	"Gopf": "𝔾",
-	"gopf": "𝕘",
-	"grave": "`",
-	"GreaterEqual": "≥",
-	"GreaterEqualLess": "⋛",
-	"GreaterFullEqual": "≧",
-	"GreaterGreater": "⪢",
-	"GreaterLess": "≷",
-	"GreaterSlantEqual": "⩾",
-	"GreaterTilde": "≳",
-	"Gscr": "𝒢",
-	"gscr": "ℊ",
-	"gsim": "≳",
-	"gsime": "⪎",
-	"gsiml": "⪐",
-	"gtcc": "⪧",
-	"gtcir": "⩺",
-	"gt": ">",
-	"GT": ">",
-	"Gt": "≫",
-	"gtdot": "⋗",
-	"gtlPar": "⦕",
-	"gtquest": "⩼",
-	"gtrapprox": "⪆",
-	"gtrarr": "⥸",
-	"gtrdot": "⋗",
-	"gtreqless": "⋛",
-	"gtreqqless": "⪌",
-	"gtrless": "≷",
-	"gtrsim": "≳",
-	"gvertneqq": "≩︀",
-	"gvnE": "≩︀",
-	"Hacek": "ˇ",
-	"hairsp": " ",
-	"half": "½",
-	"hamilt": "ℋ",
-	"HARDcy": "Ъ",
-	"hardcy": "ъ",
-	"harrcir": "⥈",
-	"harr": "↔",
-	"hArr": "⇔",
-	"harrw": "↭",
-	"Hat": "^",
-	"hbar": "ℏ",
-	"Hcirc": "Ĥ",
-	"hcirc": "ĥ",
-	"hearts": "♥",
-	"heartsuit": "♥",
-	"hellip": "…",
-	"hercon": "⊹",
-	"hfr": "𝔥",
-	"Hfr": "ℌ",
-	"HilbertSpace": "ℋ",
-	"hksearow": "⤥",
-	"hkswarow": "⤦",
-	"hoarr": "⇿",
-	"homtht": "∻",
-	"hookleftarrow": "↩",
-	"hookrightarrow": "↪",
-	"hopf": "𝕙",
-	"Hopf": "ℍ",
-	"horbar": "―",
-	"HorizontalLine": "─",
-	"hscr": "𝒽",
-	"Hscr": "ℋ",
-	"hslash": "ℏ",
-	"Hstrok": "Ħ",
-	"hstrok": "ħ",
-	"HumpDownHump": "≎",
-	"HumpEqual": "≏",
-	"hybull": "⁃",
-	"hyphen": "‐",
-	"Iacute": "Í",
-	"iacute": "í",
-	"ic": "⁣",
-	"Icirc": "Î",
-	"icirc": "î",
-	"Icy": "И",
-	"icy": "и",
-	"Idot": "İ",
-	"IEcy": "Е",
-	"iecy": "е",
-	"iexcl": "¡",
-	"iff": "⇔",
-	"ifr": "𝔦",
-	"Ifr": "ℑ",
-	"Igrave": "Ì",
-	"igrave": "ì",
-	"ii": "ⅈ",
-	"iiiint": "⨌",
-	"iiint": "∭",
-	"iinfin": "⧜",
-	"iiota": "℩",
-	"IJlig": "Ĳ",
-	"ijlig": "ĳ",
-	"Imacr": "Ī",
-	"imacr": "ī",
-	"image": "ℑ",
-	"ImaginaryI": "ⅈ",
-	"imagline": "ℐ",
-	"imagpart": "ℑ",
-	"imath": "ı",
-	"Im": "ℑ",
-	"imof": "⊷",
-	"imped": "Ƶ",
-	"Implies": "⇒",
-	"incare": "℅",
-	"in": "∈",
-	"infin": "∞",
-	"infintie": "⧝",
-	"inodot": "ı",
-	"intcal": "⊺",
-	"int": "∫",
-	"Int": "∬",
-	"integers": "ℤ",
-	"Integral": "∫",
-	"intercal": "⊺",
-	"Intersection": "⋂",
-	"intlarhk": "⨗",
-	"intprod": "⨼",
-	"InvisibleComma": "⁣",
-	"InvisibleTimes": "⁢",
-	"IOcy": "Ё",
-	"iocy": "ё",
-	"Iogon": "Į",
-	"iogon": "į",
-	"Iopf": "𝕀",
-	"iopf": "𝕚",
-	"Iota": "Ι",
-	"iota": "ι",
-	"iprod": "⨼",
-	"iquest": "¿",
-	"iscr": "𝒾",
-	"Iscr": "ℐ",
-	"isin": "∈",
-	"isindot": "⋵",
-	"isinE": "⋹",
-	"isins": "⋴",
-	"isinsv": "⋳",
-	"isinv": "∈",
-	"it": "⁢",
-	"Itilde": "Ĩ",
-	"itilde": "ĩ",
-	"Iukcy": "І",
-	"iukcy": "і",
-	"Iuml": "Ï",
-	"iuml": "ï",
-	"Jcirc": "Ĵ",
-	"jcirc": "ĵ",
-	"Jcy": "Й",
-	"jcy": "й",
-	"Jfr": "𝔍",
-	"jfr": "𝔧",
-	"jmath": "ȷ",
-	"Jopf": "𝕁",
-	"jopf": "𝕛",
-	"Jscr": "𝒥",
-	"jscr": "𝒿",
-	"Jsercy": "Ј",
-	"jsercy": "ј",
-	"Jukcy": "Є",
-	"jukcy": "є",
-	"Kappa": "Κ",
-	"kappa": "κ",
-	"kappav": "ϰ",
-	"Kcedil": "Ķ",
-	"kcedil": "ķ",
-	"Kcy": "К",
-	"kcy": "к",
-	"Kfr": "𝔎",
-	"kfr": "𝔨",
-	"kgreen": "ĸ",
-	"KHcy": "Х",
-	"khcy": "х",
-	"KJcy": "Ќ",
-	"kjcy": "ќ",
-	"Kopf": "𝕂",
-	"kopf": "𝕜",
-	"Kscr": "𝒦",
-	"kscr": "𝓀",
-	"lAarr": "⇚",
-	"Lacute": "Ĺ",
-	"lacute": "ĺ",
-	"laemptyv": "⦴",
-	"lagran": "ℒ",
-	"Lambda": "Λ",
-	"lambda": "λ",
-	"lang": "⟨",
-	"Lang": "⟪",
-	"langd": "⦑",
-	"langle": "⟨",
-	"lap": "⪅",
-	"Laplacetrf": "ℒ",
-	"laquo": "«",
-	"larrb": "⇤",
-	"larrbfs": "⤟",
-	"larr": "←",
-	"Larr": "↞",
-	"lArr": "⇐",
-	"larrfs": "⤝",
-	"larrhk": "↩",
-	"larrlp": "↫",
-	"larrpl": "⤹",
-	"larrsim": "⥳",
-	"larrtl": "↢",
-	"latail": "⤙",
-	"lAtail": "⤛",
-	"lat": "⪫",
-	"late": "⪭",
-	"lates": "⪭︀",
-	"lbarr": "⤌",
-	"lBarr": "⤎",
-	"lbbrk": "❲",
-	"lbrace": "{",
-	"lbrack": "[",
-	"lbrke": "⦋",
-	"lbrksld": "⦏",
-	"lbrkslu": "⦍",
-	"Lcaron": "Ľ",
-	"lcaron": "ľ",
-	"Lcedil": "Ļ",
-	"lcedil": "ļ",
-	"lceil": "⌈",
-	"lcub": "{",
-	"Lcy": "Л",
-	"lcy": "л",
-	"ldca": "⤶",
-	"ldquo": "“",
-	"ldquor": "„",
-	"ldrdhar": "⥧",
-	"ldrushar": "⥋",
-	"ldsh": "↲",
-	"le": "≤",
-	"lE": "≦",
-	"LeftAngleBracket": "⟨",
-	"LeftArrowBar": "⇤",
-	"leftarrow": "←",
-	"LeftArrow": "←",
-	"Leftarrow": "⇐",
-	"LeftArrowRightArrow": "⇆",
-	"leftarrowtail": "↢",
-	"LeftCeiling": "⌈",
-	"LeftDoubleBracket": "⟦",
-	"LeftDownTeeVector": "⥡",
-	"LeftDownVectorBar": "⥙",
-	"LeftDownVector": "⇃",
-	"LeftFloor": "⌊",
-	"leftharpoondown": "↽",
-	"leftharpoonup": "↼",
-	"leftleftarrows": "⇇",
-	"leftrightarrow": "↔",
-	"LeftRightArrow": "↔",
-	"Leftrightarrow": "⇔",
-	"leftrightarrows": "⇆",
-	"leftrightharpoons": "⇋",
-	"leftrightsquigarrow": "↭",
-	"LeftRightVector": "⥎",
-	"LeftTeeArrow": "↤",
-	"LeftTee": "⊣",
-	"LeftTeeVector": "⥚",
-	"leftthreetimes": "⋋",
-	"LeftTriangleBar": "⧏",
-	"LeftTriangle": "⊲",
-	"LeftTriangleEqual": "⊴",
-	"LeftUpDownVector": "⥑",
-	"LeftUpTeeVector": "⥠",
-	"LeftUpVectorBar": "⥘",
-	"LeftUpVector": "↿",
-	"LeftVectorBar": "⥒",
-	"LeftVector": "↼",
-	"lEg": "⪋",
-	"leg": "⋚",
-	"leq": "≤",
-	"leqq": "≦",
-	"leqslant": "⩽",
-	"lescc": "⪨",
-	"les": "⩽",
-	"lesdot": "⩿",
-	"lesdoto": "⪁",
-	"lesdotor": "⪃",
-	"lesg": "⋚︀",
-	"lesges": "⪓",
-	"lessapprox": "⪅",
-	"lessdot": "⋖",
-	"lesseqgtr": "⋚",
-	"lesseqqgtr": "⪋",
-	"LessEqualGreater": "⋚",
-	"LessFullEqual": "≦",
-	"LessGreater": "≶",
-	"lessgtr": "≶",
-	"LessLess": "⪡",
-	"lesssim": "≲",
-	"LessSlantEqual": "⩽",
-	"LessTilde": "≲",
-	"lfisht": "⥼",
-	"lfloor": "⌊",
-	"Lfr": "𝔏",
-	"lfr": "𝔩",
-	"lg": "≶",
-	"lgE": "⪑",
-	"lHar": "⥢",
-	"lhard": "↽",
-	"lharu": "↼",
-	"lharul": "⥪",
-	"lhblk": "▄",
-	"LJcy": "Љ",
-	"ljcy": "љ",
-	"llarr": "⇇",
-	"ll": "≪",
-	"Ll": "⋘",
-	"llcorner": "⌞",
-	"Lleftarrow": "⇚",
-	"llhard": "⥫",
-	"lltri": "◺",
-	"Lmidot": "Ŀ",
-	"lmidot": "ŀ",
-	"lmoustache": "⎰",
-	"lmoust": "⎰",
-	"lnap": "⪉",
-	"lnapprox": "⪉",
-	"lne": "⪇",
-	"lnE": "≨",
-	"lneq": "⪇",
-	"lneqq": "≨",
-	"lnsim": "⋦",
-	"loang": "⟬",
-	"loarr": "⇽",
-	"lobrk": "⟦",
-	"longleftarrow": "⟵",
-	"LongLeftArrow": "⟵",
-	"Longleftarrow": "⟸",
-	"longleftrightarrow": "⟷",
-	"LongLeftRightArrow": "⟷",
-	"Longleftrightarrow": "⟺",
-	"longmapsto": "⟼",
-	"longrightarrow": "⟶",
-	"LongRightArrow": "⟶",
-	"Longrightarrow": "⟹",
-	"looparrowleft": "↫",
-	"looparrowright": "↬",
-	"lopar": "⦅",
-	"Lopf": "𝕃",
-	"lopf": "𝕝",
-	"loplus": "⨭",
-	"lotimes": "⨴",
-	"lowast": "∗",
-	"lowbar": "_",
-	"LowerLeftArrow": "↙",
-	"LowerRightArrow": "↘",
-	"loz": "◊",
-	"lozenge": "◊",
-	"lozf": "⧫",
-	"lpar": "(",
-	"lparlt": "⦓",
-	"lrarr": "⇆",
-	"lrcorner": "⌟",
-	"lrhar": "⇋",
-	"lrhard": "⥭",
-	"lrm": "‎",
-	"lrtri": "⊿",
-	"lsaquo": "‹",
-	"lscr": "𝓁",
-	"Lscr": "ℒ",
-	"lsh": "↰",
-	"Lsh": "↰",
-	"lsim": "≲",
-	"lsime": "⪍",
-	"lsimg": "⪏",
-	"lsqb": "[",
-	"lsquo": "‘",
-	"lsquor": "‚",
-	"Lstrok": "Ł",
-	"lstrok": "ł",
-	"ltcc": "⪦",
-	"ltcir": "⩹",
-	"lt": "<",
-	"LT": "<",
-	"Lt": "≪",
-	"ltdot": "⋖",
-	"lthree": "⋋",
-	"ltimes": "⋉",
-	"ltlarr": "⥶",
-	"ltquest": "⩻",
-	"ltri": "◃",
-	"ltrie": "⊴",
-	"ltrif": "◂",
-	"ltrPar": "⦖",
-	"lurdshar": "⥊",
-	"luruhar": "⥦",
-	"lvertneqq": "≨︀",
-	"lvnE": "≨︀",
-	"macr": "¯",
-	"male": "♂",
-	"malt": "✠",
-	"maltese": "✠",
-	"Map": "⤅",
-	"map": "↦",
-	"mapsto": "↦",
-	"mapstodown": "↧",
-	"mapstoleft": "↤",
-	"mapstoup": "↥",
-	"marker": "▮",
-	"mcomma": "⨩",
-	"Mcy": "М",
-	"mcy": "м",
-	"mdash": "—",
-	"mDDot": "∺",
-	"measuredangle": "∡",
-	"MediumSpace": " ",
-	"Mellintrf": "ℳ",
-	"Mfr": "𝔐",
-	"mfr": "𝔪",
-	"mho": "℧",
-	"micro": "µ",
-	"midast": "*",
-	"midcir": "⫰",
-	"mid": "∣",
-	"middot": "·",
-	"minusb": "⊟",
-	"minus": "−",
-	"minusd": "∸",
-	"minusdu": "⨪",
-	"MinusPlus": "∓",
-	"mlcp": "⫛",
-	"mldr": "…",
-	"mnplus": "∓",
-	"models": "⊧",
-	"Mopf": "𝕄",
-	"mopf": "𝕞",
-	"mp": "∓",
-	"mscr": "𝓂",
-	"Mscr": "ℳ",
-	"mstpos": "∾",
-	"Mu": "Μ",
-	"mu": "μ",
-	"multimap": "⊸",
-	"mumap": "⊸",
-	"nabla": "∇",
-	"Nacute": "Ń",
-	"nacute": "ń",
-	"nang": "∠⃒",
-	"nap": "≉",
-	"napE": "⩰̸",
-	"napid": "≋̸",
-	"napos": "ŉ",
-	"napprox": "≉",
-	"natural": "♮",
-	"naturals": "ℕ",
-	"natur": "♮",
-	"nbsp": " ",
-	"nbump": "≎̸",
-	"nbumpe": "≏̸",
-	"ncap": "⩃",
-	"Ncaron": "Ň",
-	"ncaron": "ň",
-	"Ncedil": "Ņ",
-	"ncedil": "ņ",
-	"ncong": "≇",
-	"ncongdot": "⩭̸",
-	"ncup": "⩂",
-	"Ncy": "Н",
-	"ncy": "н",
-	"ndash": "–",
-	"nearhk": "⤤",
-	"nearr": "↗",
-	"neArr": "⇗",
-	"nearrow": "↗",
-	"ne": "≠",
-	"nedot": "≐̸",
-	"NegativeMediumSpace": "​",
-	"NegativeThickSpace": "​",
-	"NegativeThinSpace": "​",
-	"NegativeVeryThinSpace": "​",
-	"nequiv": "≢",
-	"nesear": "⤨",
-	"nesim": "≂̸",
-	"NestedGreaterGreater": "≫",
-	"NestedLessLess": "≪",
-	"NewLine": "\n",
-	"nexist": "∄",
-	"nexists": "∄",
-	"Nfr": "𝔑",
-	"nfr": "𝔫",
-	"ngE": "≧̸",
-	"nge": "≱",
-	"ngeq": "≱",
-	"ngeqq": "≧̸",
-	"ngeqslant": "⩾̸",
-	"nges": "⩾̸",
-	"nGg": "⋙̸",
-	"ngsim": "≵",
-	"nGt": "≫⃒",
-	"ngt": "≯",
-	"ngtr": "≯",
-	"nGtv": "≫̸",
-	"nharr": "↮",
-	"nhArr": "⇎",
-	"nhpar": "⫲",
-	"ni": "∋",
-	"nis": "⋼",
-	"nisd": "⋺",
-	"niv": "∋",
-	"NJcy": "Њ",
-	"njcy": "њ",
-	"nlarr": "↚",
-	"nlArr": "⇍",
-	"nldr": "‥",
-	"nlE": "≦̸",
-	"nle": "≰",
-	"nleftarrow": "↚",
-	"nLeftarrow": "⇍",
-	"nleftrightarrow": "↮",
-	"nLeftrightarrow": "⇎",
-	"nleq": "≰",
-	"nleqq": "≦̸",
-	"nleqslant": "⩽̸",
-	"nles": "⩽̸",
-	"nless": "≮",
-	"nLl": "⋘̸",
-	"nlsim": "≴",
-	"nLt": "≪⃒",
-	"nlt": "≮",
-	"nltri": "⋪",
-	"nltrie": "⋬",
-	"nLtv": "≪̸",
-	"nmid": "∤",
-	"NoBreak": "⁠",
-	"NonBreakingSpace": " ",
-	"nopf": "𝕟",
-	"Nopf": "ℕ",
-	"Not": "⫬",
-	"not": "¬",
-	"NotCongruent": "≢",
-	"NotCupCap": "≭",
-	"NotDoubleVerticalBar": "∦",
-	"NotElement": "∉",
-	"NotEqual": "≠",
-	"NotEqualTilde": "≂̸",
-	"NotExists": "∄",
-	"NotGreater": "≯",
-	"NotGreaterEqual": "≱",
-	"NotGreaterFullEqual": "≧̸",
-	"NotGreaterGreater": "≫̸",
-	"NotGreaterLess": "≹",
-	"NotGreaterSlantEqual": "⩾̸",
-	"NotGreaterTilde": "≵",
-	"NotHumpDownHump": "≎̸",
-	"NotHumpEqual": "≏̸",
-	"notin": "∉",
-	"notindot": "⋵̸",
-	"notinE": "⋹̸",
-	"notinva": "∉",
-	"notinvb": "⋷",
-	"notinvc": "⋶",
-	"NotLeftTriangleBar": "⧏̸",
-	"NotLeftTriangle": "⋪",
-	"NotLeftTriangleEqual": "⋬",
-	"NotLess": "≮",
-	"NotLessEqual": "≰",
-	"NotLessGreater": "≸",
-	"NotLessLess": "≪̸",
-	"NotLessSlantEqual": "⩽̸",
-	"NotLessTilde": "≴",
-	"NotNestedGreaterGreater": "⪢̸",
-	"NotNestedLessLess": "⪡̸",
-	"notni": "∌",
-	"notniva": "∌",
-	"notnivb": "⋾",
-	"notnivc": "⋽",
-	"NotPrecedes": "⊀",
-	"NotPrecedesEqual": "⪯̸",
-	"NotPrecedesSlantEqual": "⋠",
-	"NotReverseElement": "∌",
-	"NotRightTriangleBar": "⧐̸",
-	"NotRightTriangle": "⋫",
-	"NotRightTriangleEqual": "⋭",
-	"NotSquareSubset": "⊏̸",
-	"NotSquareSubsetEqual": "⋢",
-	"NotSquareSuperset": "⊐̸",
-	"NotSquareSupersetEqual": "⋣",
-	"NotSubset": "⊂⃒",
-	"NotSubsetEqual": "⊈",
-	"NotSucceeds": "⊁",
-	"NotSucceedsEqual": "⪰̸",
-	"NotSucceedsSlantEqual": "⋡",
-	"NotSucceedsTilde": "≿̸",
-	"NotSuperset": "⊃⃒",
-	"NotSupersetEqual": "⊉",
-	"NotTilde": "≁",
-	"NotTildeEqual": "≄",
-	"NotTildeFullEqual": "≇",
-	"NotTildeTilde": "≉",
-	"NotVerticalBar": "∤",
-	"nparallel": "∦",
-	"npar": "∦",
-	"nparsl": "⫽⃥",
-	"npart": "∂̸",
-	"npolint": "⨔",
-	"npr": "⊀",
-	"nprcue": "⋠",
-	"nprec": "⊀",
-	"npreceq": "⪯̸",
-	"npre": "⪯̸",
-	"nrarrc": "⤳̸",
-	"nrarr": "↛",
-	"nrArr": "⇏",
-	"nrarrw": "↝̸",
-	"nrightarrow": "↛",
-	"nRightarrow": "⇏",
-	"nrtri": "⋫",
-	"nrtrie": "⋭",
-	"nsc": "⊁",
-	"nsccue": "⋡",
-	"nsce": "⪰̸",
-	"Nscr": "𝒩",
-	"nscr": "𝓃",
-	"nshortmid": "∤",
-	"nshortparallel": "∦",
-	"nsim": "≁",
-	"nsime": "≄",
-	"nsimeq": "≄",
-	"nsmid": "∤",
-	"nspar": "∦",
-	"nsqsube": "⋢",
-	"nsqsupe": "⋣",
-	"nsub": "⊄",
-	"nsubE": "⫅̸",
-	"nsube": "⊈",
-	"nsubset": "⊂⃒",
-	"nsubseteq": "⊈",
-	"nsubseteqq": "⫅̸",
-	"nsucc": "⊁",
-	"nsucceq": "⪰̸",
-	"nsup": "⊅",
-	"nsupE": "⫆̸",
-	"nsupe": "⊉",
-	"nsupset": "⊃⃒",
-	"nsupseteq": "⊉",
-	"nsupseteqq": "⫆̸",
-	"ntgl": "≹",
-	"Ntilde": "Ñ",
-	"ntilde": "ñ",
-	"ntlg": "≸",
-	"ntriangleleft": "⋪",
-	"ntrianglelefteq": "⋬",
-	"ntriangleright": "⋫",
-	"ntrianglerighteq": "⋭",
-	"Nu": "Ν",
-	"nu": "ν",
-	"num": "#",
-	"numero": "№",
-	"numsp": " ",
-	"nvap": "≍⃒",
-	"nvdash": "⊬",
-	"nvDash": "⊭",
-	"nVdash": "⊮",
-	"nVDash": "⊯",
-	"nvge": "≥⃒",
-	"nvgt": ">⃒",
-	"nvHarr": "⤄",
-	"nvinfin": "⧞",
-	"nvlArr": "⤂",
-	"nvle": "≤⃒",
-	"nvlt": "<⃒",
-	"nvltrie": "⊴⃒",
-	"nvrArr": "⤃",
-	"nvrtrie": "⊵⃒",
-	"nvsim": "∼⃒",
-	"nwarhk": "⤣",
-	"nwarr": "↖",
-	"nwArr": "⇖",
-	"nwarrow": "↖",
-	"nwnear": "⤧",
-	"Oacute": "Ó",
-	"oacute": "ó",
-	"oast": "⊛",
-	"Ocirc": "Ô",
-	"ocirc": "ô",
-	"ocir": "⊚",
-	"Ocy": "О",
-	"ocy": "о",
-	"odash": "⊝",
-	"Odblac": "Ő",
-	"odblac": "ő",
-	"odiv": "⨸",
-	"odot": "⊙",
-	"odsold": "⦼",
-	"OElig": "Œ",
-	"oelig": "œ",
-	"ofcir": "⦿",
-	"Ofr": "𝔒",
-	"ofr": "𝔬",
-	"ogon": "˛",
-	"Ograve": "Ò",
-	"ograve": "ò",
-	"ogt": "⧁",
-	"ohbar": "⦵",
-	"ohm": "Ω",
-	"oint": "∮",
-	"olarr": "↺",
-	"olcir": "⦾",
-	"olcross": "⦻",
-	"oline": "‾",
-	"olt": "⧀",
-	"Omacr": "Ō",
-	"omacr": "ō",
-	"Omega": "Ω",
-	"omega": "ω",
-	"Omicron": "Ο",
-	"omicron": "ο",
-	"omid": "⦶",
-	"ominus": "⊖",
-	"Oopf": "𝕆",
-	"oopf": "𝕠",
-	"opar": "⦷",
-	"OpenCurlyDoubleQuote": "“",
-	"OpenCurlyQuote": "‘",
-	"operp": "⦹",
-	"oplus": "⊕",
-	"orarr": "↻",
-	"Or": "⩔",
-	"or": "∨",
-	"ord": "⩝",
-	"order": "ℴ",
-	"orderof": "ℴ",
-	"ordf": "ª",
-	"ordm": "º",
-	"origof": "⊶",
-	"oror": "⩖",
-	"orslope": "⩗",
-	"orv": "⩛",
-	"oS": "Ⓢ",
-	"Oscr": "𝒪",
-	"oscr": "ℴ",
-	"Oslash": "Ø",
-	"oslash": "ø",
-	"osol": "⊘",
-	"Otilde": "Õ",
-	"otilde": "õ",
-	"otimesas": "⨶",
-	"Otimes": "⨷",
-	"otimes": "⊗",
-	"Ouml": "Ö",
-	"ouml": "ö",
-	"ovbar": "⌽",
-	"OverBar": "‾",
-	"OverBrace": "⏞",
-	"OverBracket": "⎴",
-	"OverParenthesis": "⏜",
-	"para": "¶",
-	"parallel": "∥",
-	"par": "∥",
-	"parsim": "⫳",
-	"parsl": "⫽",
-	"part": "∂",
-	"PartialD": "∂",
-	"Pcy": "П",
-	"pcy": "п",
-	"percnt": "%",
-	"period": ".",
-	"permil": "‰",
-	"perp": "⊥",
-	"pertenk": "‱",
-	"Pfr": "𝔓",
-	"pfr": "𝔭",
-	"Phi": "Φ",
-	"phi": "φ",
-	"phiv": "ϕ",
-	"phmmat": "ℳ",
-	"phone": "☎",
-	"Pi": "Π",
-	"pi": "π",
-	"pitchfork": "⋔",
-	"piv": "ϖ",
-	"planck": "ℏ",
-	"planckh": "ℎ",
-	"plankv": "ℏ",
-	"plusacir": "⨣",
-	"plusb": "⊞",
-	"pluscir": "⨢",
-	"plus": "+",
-	"plusdo": "∔",
-	"plusdu": "⨥",
-	"pluse": "⩲",
-	"PlusMinus": "±",
-	"plusmn": "±",
-	"plussim": "⨦",
-	"plustwo": "⨧",
-	"pm": "±",
-	"Poincareplane": "ℌ",
-	"pointint": "⨕",
-	"popf": "𝕡",
-	"Popf": "ℙ",
-	"pound": "£",
-	"prap": "⪷",
-	"Pr": "⪻",
-	"pr": "≺",
-	"prcue": "≼",
-	"precapprox": "⪷",
-	"prec": "≺",
-	"preccurlyeq": "≼",
-	"Precedes": "≺",
-	"PrecedesEqual": "⪯",
-	"PrecedesSlantEqual": "≼",
-	"PrecedesTilde": "≾",
-	"preceq": "⪯",
-	"precnapprox": "⪹",
-	"precneqq": "⪵",
-	"precnsim": "⋨",
-	"pre": "⪯",
-	"prE": "⪳",
-	"precsim": "≾",
-	"prime": "′",
-	"Prime": "″",
-	"primes": "ℙ",
-	"prnap": "⪹",
-	"prnE": "⪵",
-	"prnsim": "⋨",
-	"prod": "∏",
-	"Product": "∏",
-	"profalar": "⌮",
-	"profline": "⌒",
-	"profsurf": "⌓",
-	"prop": "∝",
-	"Proportional": "∝",
-	"Proportion": "∷",
-	"propto": "∝",
-	"prsim": "≾",
-	"prurel": "⊰",
-	"Pscr": "𝒫",
-	"pscr": "𝓅",
-	"Psi": "Ψ",
-	"psi": "ψ",
-	"puncsp": " ",
-	"Qfr": "𝔔",
-	"qfr": "𝔮",
-	"qint": "⨌",
-	"qopf": "𝕢",
-	"Qopf": "ℚ",
-	"qprime": "⁗",
-	"Qscr": "𝒬",
-	"qscr": "𝓆",
-	"quaternions": "ℍ",
-	"quatint": "⨖",
-	"quest": "?",
-	"questeq": "≟",
-	"quot": "\"",
-	"QUOT": "\"",
-	"rAarr": "⇛",
-	"race": "∽̱",
-	"Racute": "Ŕ",
-	"racute": "ŕ",
-	"radic": "√",
-	"raemptyv": "⦳",
-	"rang": "⟩",
-	"Rang": "⟫",
-	"rangd": "⦒",
-	"range": "⦥",
-	"rangle": "⟩",
-	"raquo": "»",
-	"rarrap": "⥵",
-	"rarrb": "⇥",
-	"rarrbfs": "⤠",
-	"rarrc": "⤳",
-	"rarr": "→",
-	"Rarr": "↠",
-	"rArr": "⇒",
-	"rarrfs": "⤞",
-	"rarrhk": "↪",
-	"rarrlp": "↬",
-	"rarrpl": "⥅",
-	"rarrsim": "⥴",
-	"Rarrtl": "⤖",
-	"rarrtl": "↣",
-	"rarrw": "↝",
-	"ratail": "⤚",
-	"rAtail": "⤜",
-	"ratio": "∶",
-	"rationals": "ℚ",
-	"rbarr": "⤍",
-	"rBarr": "⤏",
-	"RBarr": "⤐",
-	"rbbrk": "❳",
-	"rbrace": "}",
-	"rbrack": "]",
-	"rbrke": "⦌",
-	"rbrksld": "⦎",
-	"rbrkslu": "⦐",
-	"Rcaron": "Ř",
-	"rcaron": "ř",
-	"Rcedil": "Ŗ",
-	"rcedil": "ŗ",
-	"rceil": "⌉",
-	"rcub": "}",
-	"Rcy": "Р",
-	"rcy": "р",
-	"rdca": "⤷",
-	"rdldhar": "⥩",
-	"rdquo": "”",
-	"rdquor": "”",
-	"rdsh": "↳",
-	"real": "ℜ",
-	"realine": "ℛ",
-	"realpart": "ℜ",
-	"reals": "ℝ",
-	"Re": "ℜ",
-	"rect": "▭",
-	"reg": "®",
-	"REG": "®",
-	"ReverseElement": "∋",
-	"ReverseEquilibrium": "⇋",
-	"ReverseUpEquilibrium": "⥯",
-	"rfisht": "⥽",
-	"rfloor": "⌋",
-	"rfr": "𝔯",
-	"Rfr": "ℜ",
-	"rHar": "⥤",
-	"rhard": "⇁",
-	"rharu": "⇀",
-	"rharul": "⥬",
-	"Rho": "Ρ",
-	"rho": "ρ",
-	"rhov": "ϱ",
-	"RightAngleBracket": "⟩",
-	"RightArrowBar": "⇥",
-	"rightarrow": "→",
-	"RightArrow": "→",
-	"Rightarrow": "⇒",
-	"RightArrowLeftArrow": "⇄",
-	"rightarrowtail": "↣",
-	"RightCeiling": "⌉",
-	"RightDoubleBracket": "⟧",
-	"RightDownTeeVector": "⥝",
-	"RightDownVectorBar": "⥕",
-	"RightDownVector": "⇂",
-	"RightFloor": "⌋",
-	"rightharpoondown": "⇁",
-	"rightharpoonup": "⇀",
-	"rightleftarrows": "⇄",
-	"rightleftharpoons": "⇌",
-	"rightrightarrows": "⇉",
-	"rightsquigarrow": "↝",
-	"RightTeeArrow": "↦",
-	"RightTee": "⊢",
-	"RightTeeVector": "⥛",
-	"rightthreetimes": "⋌",
-	"RightTriangleBar": "⧐",
-	"RightTriangle": "⊳",
-	"RightTriangleEqual": "⊵",
-	"RightUpDownVector": "⥏",
-	"RightUpTeeVector": "⥜",
-	"RightUpVectorBar": "⥔",
-	"RightUpVector": "↾",
-	"RightVectorBar": "⥓",
-	"RightVector": "⇀",
-	"ring": "˚",
-	"risingdotseq": "≓",
-	"rlarr": "⇄",
-	"rlhar": "⇌",
-	"rlm": "‏",
-	"rmoustache": "⎱",
-	"rmoust": "⎱",
-	"rnmid": "⫮",
-	"roang": "⟭",
-	"roarr": "⇾",
-	"robrk": "⟧",
-	"ropar": "⦆",
-	"ropf": "𝕣",
-	"Ropf": "ℝ",
-	"roplus": "⨮",
-	"rotimes": "⨵",
-	"RoundImplies": "⥰",
-	"rpar": ")",
-	"rpargt": "⦔",
-	"rppolint": "⨒",
-	"rrarr": "⇉",
-	"Rrightarrow": "⇛",
-	"rsaquo": "›",
-	"rscr": "𝓇",
-	"Rscr": "ℛ",
-	"rsh": "↱",
-	"Rsh": "↱",
-	"rsqb": "]",
-	"rsquo": "’",
-	"rsquor": "’",
-	"rthree": "⋌",
-	"rtimes": "⋊",
-	"rtri": "▹",
-	"rtrie": "⊵",
-	"rtrif": "▸",
-	"rtriltri": "⧎",
-	"RuleDelayed": "⧴",
-	"ruluhar": "⥨",
-	"rx": "℞",
-	"Sacute": "Ś",
-	"sacute": "ś",
-	"sbquo": "‚",
-	"scap": "⪸",
-	"Scaron": "Š",
-	"scaron": "š",
-	"Sc": "⪼",
-	"sc": "≻",
-	"sccue": "≽",
-	"sce": "⪰",
-	"scE": "⪴",
-	"Scedil": "Ş",
-	"scedil": "ş",
-	"Scirc": "Ŝ",
-	"scirc": "ŝ",
-	"scnap": "⪺",
-	"scnE": "⪶",
-	"scnsim": "⋩",
-	"scpolint": "⨓",
-	"scsim": "≿",
-	"Scy": "С",
-	"scy": "с",
-	"sdotb": "⊡",
-	"sdot": "⋅",
-	"sdote": "⩦",
-	"searhk": "⤥",
-	"searr": "↘",
-	"seArr": "⇘",
-	"searrow": "↘",
-	"sect": "§",
-	"semi": ";",
-	"seswar": "⤩",
-	"setminus": "∖",
-	"setmn": "∖",
-	"sext": "✶",
-	"Sfr": "𝔖",
-	"sfr": "𝔰",
-	"sfrown": "⌢",
-	"sharp": "♯",
-	"SHCHcy": "Щ",
-	"shchcy": "щ",
-	"SHcy": "Ш",
-	"shcy": "ш",
-	"ShortDownArrow": "↓",
-	"ShortLeftArrow": "←",
-	"shortmid": "∣",
-	"shortparallel": "∥",
-	"ShortRightArrow": "→",
-	"ShortUpArrow": "↑",
-	"shy": "­",
-	"Sigma": "Σ",
-	"sigma": "σ",
-	"sigmaf": "ς",
-	"sigmav": "ς",
-	"sim": "∼",
-	"simdot": "⩪",
-	"sime": "≃",
-	"simeq": "≃",
-	"simg": "⪞",
-	"simgE": "⪠",
-	"siml": "⪝",
-	"simlE": "⪟",
-	"simne": "≆",
-	"simplus": "⨤",
-	"simrarr": "⥲",
-	"slarr": "←",
-	"SmallCircle": "∘",
-	"smallsetminus": "∖",
-	"smashp": "⨳",
-	"smeparsl": "⧤",
-	"smid": "∣",
-	"smile": "⌣",
-	"smt": "⪪",
-	"smte": "⪬",
-	"smtes": "⪬︀",
-	"SOFTcy": "Ь",
-	"softcy": "ь",
-	"solbar": "⌿",
-	"solb": "⧄",
-	"sol": "/",
-	"Sopf": "𝕊",
-	"sopf": "𝕤",
-	"spades": "♠",
-	"spadesuit": "♠",
-	"spar": "∥",
-	"sqcap": "⊓",
-	"sqcaps": "⊓︀",
-	"sqcup": "⊔",
-	"sqcups": "⊔︀",
-	"Sqrt": "√",
-	"sqsub": "⊏",
-	"sqsube": "⊑",
-	"sqsubset": "⊏",
-	"sqsubseteq": "⊑",
-	"sqsup": "⊐",
-	"sqsupe": "⊒",
-	"sqsupset": "⊐",
-	"sqsupseteq": "⊒",
-	"square": "□",
-	"Square": "□",
-	"SquareIntersection": "⊓",
-	"SquareSubset": "⊏",
-	"SquareSubsetEqual": "⊑",
-	"SquareSuperset": "⊐",
-	"SquareSupersetEqual": "⊒",
-	"SquareUnion": "⊔",
-	"squarf": "▪",
-	"squ": "□",
-	"squf": "▪",
-	"srarr": "→",
-	"Sscr": "𝒮",
-	"sscr": "𝓈",
-	"ssetmn": "∖",
-	"ssmile": "⌣",
-	"sstarf": "⋆",
-	"Star": "⋆",
-	"star": "☆",
-	"starf": "★",
-	"straightepsilon": "ϵ",
-	"straightphi": "ϕ",
-	"strns": "¯",
-	"sub": "⊂",
-	"Sub": "⋐",
-	"subdot": "⪽",
-	"subE": "⫅",
-	"sube": "⊆",
-	"subedot": "⫃",
-	"submult": "⫁",
-	"subnE": "⫋",
-	"subne": "⊊",
-	"subplus": "⪿",
-	"subrarr": "⥹",
-	"subset": "⊂",
-	"Subset": "⋐",
-	"subseteq": "⊆",
-	"subseteqq": "⫅",
-	"SubsetEqual": "⊆",
-	"subsetneq": "⊊",
-	"subsetneqq": "⫋",
-	"subsim": "⫇",
-	"subsub": "⫕",
-	"subsup": "⫓",
-	"succapprox": "⪸",
-	"succ": "≻",
-	"succcurlyeq": "≽",
-	"Succeeds": "≻",
-	"SucceedsEqual": "⪰",
-	"SucceedsSlantEqual": "≽",
-	"SucceedsTilde": "≿",
-	"succeq": "⪰",
-	"succnapprox": "⪺",
-	"succneqq": "⪶",
-	"succnsim": "⋩",
-	"succsim": "≿",
-	"SuchThat": "∋",
-	"sum": "∑",
-	"Sum": "∑",
-	"sung": "♪",
-	"sup1": "¹",
-	"sup2": "²",
-	"sup3": "³",
-	"sup": "⊃",
-	"Sup": "⋑",
-	"supdot": "⪾",
-	"supdsub": "⫘",
-	"supE": "⫆",
-	"supe": "⊇",
-	"supedot": "⫄",
-	"Superset": "⊃",
-	"SupersetEqual": "⊇",
-	"suphsol": "⟉",
-	"suphsub": "⫗",
-	"suplarr": "⥻",
-	"supmult": "⫂",
-	"supnE": "⫌",
-	"supne": "⊋",
-	"supplus": "⫀",
-	"supset": "⊃",
-	"Supset": "⋑",
-	"supseteq": "⊇",
-	"supseteqq": "⫆",
-	"supsetneq": "⊋",
-	"supsetneqq": "⫌",
-	"supsim": "⫈",
-	"supsub": "⫔",
-	"supsup": "⫖",
-	"swarhk": "⤦",
-	"swarr": "↙",
-	"swArr": "⇙",
-	"swarrow": "↙",
-	"swnwar": "⤪",
-	"szlig": "ß",
-	"Tab": "\t",
-	"target": "⌖",
-	"Tau": "Τ",
-	"tau": "τ",
-	"tbrk": "⎴",
-	"Tcaron": "Ť",
-	"tcaron": "ť",
-	"Tcedil": "Ţ",
-	"tcedil": "ţ",
-	"Tcy": "Т",
-	"tcy": "т",
-	"tdot": "⃛",
-	"telrec": "⌕",
-	"Tfr": "𝔗",
-	"tfr": "𝔱",
-	"there4": "∴",
-	"therefore": "∴",
-	"Therefore": "∴",
-	"Theta": "Θ",
-	"theta": "θ",
-	"thetasym": "ϑ",
-	"thetav": "ϑ",
-	"thickapprox": "≈",
-	"thicksim": "∼",
-	"ThickSpace": "  ",
-	"ThinSpace": " ",
-	"thinsp": " ",
-	"thkap": "≈",
-	"thksim": "∼",
-	"THORN": "Þ",
-	"thorn": "þ",
-	"tilde": "˜",
-	"Tilde": "∼",
-	"TildeEqual": "≃",
-	"TildeFullEqual": "≅",
-	"TildeTilde": "≈",
-	"timesbar": "⨱",
-	"timesb": "⊠",
-	"times": "×",
-	"timesd": "⨰",
-	"tint": "∭",
-	"toea": "⤨",
-	"topbot": "⌶",
-	"topcir": "⫱",
-	"top": "⊤",
-	"Topf": "𝕋",
-	"topf": "𝕥",
-	"topfork": "⫚",
-	"tosa": "⤩",
-	"tprime": "‴",
-	"trade": "™",
-	"TRADE": "™",
-	"triangle": "▵",
-	"triangledown": "▿",
-	"triangleleft": "◃",
-	"trianglelefteq": "⊴",
-	"triangleq": "≜",
-	"triangleright": "▹",
-	"trianglerighteq": "⊵",
-	"tridot": "◬",
-	"trie": "≜",
-	"triminus": "⨺",
-	"TripleDot": "⃛",
-	"triplus": "⨹",
-	"trisb": "⧍",
-	"tritime": "⨻",
-	"trpezium": "⏢",
-	"Tscr": "𝒯",
-	"tscr": "𝓉",
-	"TScy": "Ц",
-	"tscy": "ц",
-	"TSHcy": "Ћ",
-	"tshcy": "ћ",
-	"Tstrok": "Ŧ",
-	"tstrok": "ŧ",
-	"twixt": "≬",
-	"twoheadleftarrow": "↞",
-	"twoheadrightarrow": "↠",
-	"Uacute": "Ú",
-	"uacute": "ú",
-	"uarr": "↑",
-	"Uarr": "↟",
-	"uArr": "⇑",
-	"Uarrocir": "⥉",
-	"Ubrcy": "Ў",
-	"ubrcy": "ў",
-	"Ubreve": "Ŭ",
-	"ubreve": "ŭ",
-	"Ucirc": "Û",
-	"ucirc": "û",
-	"Ucy": "У",
-	"ucy": "у",
-	"udarr": "⇅",
-	"Udblac": "Ű",
-	"udblac": "ű",
-	"udhar": "⥮",
-	"ufisht": "⥾",
-	"Ufr": "𝔘",
-	"ufr": "𝔲",
-	"Ugrave": "Ù",
-	"ugrave": "ù",
-	"uHar": "⥣",
-	"uharl": "↿",
-	"uharr": "↾",
-	"uhblk": "▀",
-	"ulcorn": "⌜",
-	"ulcorner": "⌜",
-	"ulcrop": "⌏",
-	"ultri": "◸",
-	"Umacr": "Ū",
-	"umacr": "ū",
-	"uml": "¨",
-	"UnderBar": "_",
-	"UnderBrace": "⏟",
-	"UnderBracket": "⎵",
-	"UnderParenthesis": "⏝",
-	"Union": "⋃",
-	"UnionPlus": "⊎",
-	"Uogon": "Ų",
-	"uogon": "ų",
-	"Uopf": "𝕌",
-	"uopf": "𝕦",
-	"UpArrowBar": "⤒",
-	"uparrow": "↑",
-	"UpArrow": "↑",
-	"Uparrow": "⇑",
-	"UpArrowDownArrow": "⇅",
-	"updownarrow": "↕",
-	"UpDownArrow": "↕",
-	"Updownarrow": "⇕",
-	"UpEquilibrium": "⥮",
-	"upharpoonleft": "↿",
-	"upharpoonright": "↾",
-	"uplus": "⊎",
-	"UpperLeftArrow": "↖",
-	"UpperRightArrow": "↗",
-	"upsi": "υ",
-	"Upsi": "ϒ",
-	"upsih": "ϒ",
-	"Upsilon": "Υ",
-	"upsilon": "υ",
-	"UpTeeArrow": "↥",
-	"UpTee": "⊥",
-	"upuparrows": "⇈",
-	"urcorn": "⌝",
-	"urcorner": "⌝",
-	"urcrop": "⌎",
-	"Uring": "Ů",
-	"uring": "ů",
-	"urtri": "◹",
-	"Uscr": "𝒰",
-	"uscr": "𝓊",
-	"utdot": "⋰",
-	"Utilde": "Ũ",
-	"utilde": "ũ",
-	"utri": "▵",
-	"utrif": "▴",
-	"uuarr": "⇈",
-	"Uuml": "Ü",
-	"uuml": "ü",
-	"uwangle": "⦧",
-	"vangrt": "⦜",
-	"varepsilon": "ϵ",
-	"varkappa": "ϰ",
-	"varnothing": "∅",
-	"varphi": "ϕ",
-	"varpi": "ϖ",
-	"varpropto": "∝",
-	"varr": "↕",
-	"vArr": "⇕",
-	"varrho": "ϱ",
-	"varsigma": "ς",
-	"varsubsetneq": "⊊︀",
-	"varsubsetneqq": "⫋︀",
-	"varsupsetneq": "⊋︀",
-	"varsupsetneqq": "⫌︀",
-	"vartheta": "ϑ",
-	"vartriangleleft": "⊲",
-	"vartriangleright": "⊳",
-	"vBar": "⫨",
-	"Vbar": "⫫",
-	"vBarv": "⫩",
-	"Vcy": "В",
-	"vcy": "в",
-	"vdash": "⊢",
-	"vDash": "⊨",
-	"Vdash": "⊩",
-	"VDash": "⊫",
-	"Vdashl": "⫦",
-	"veebar": "⊻",
-	"vee": "∨",
-	"Vee": "⋁",
-	"veeeq": "≚",
-	"vellip": "⋮",
-	"verbar": "|",
-	"Verbar": "‖",
-	"vert": "|",
-	"Vert": "‖",
-	"VerticalBar": "∣",
-	"VerticalLine": "|",
-	"VerticalSeparator": "❘",
-	"VerticalTilde": "≀",
-	"VeryThinSpace": " ",
-	"Vfr": "𝔙",
-	"vfr": "𝔳",
-	"vltri": "⊲",
-	"vnsub": "⊂⃒",
-	"vnsup": "⊃⃒",
-	"Vopf": "𝕍",
-	"vopf": "𝕧",
-	"vprop": "∝",
-	"vrtri": "⊳",
-	"Vscr": "𝒱",
-	"vscr": "𝓋",
-	"vsubnE": "⫋︀",
-	"vsubne": "⊊︀",
-	"vsupnE": "⫌︀",
-	"vsupne": "⊋︀",
-	"Vvdash": "⊪",
-	"vzigzag": "⦚",
-	"Wcirc": "Ŵ",
-	"wcirc": "ŵ",
-	"wedbar": "⩟",
-	"wedge": "∧",
-	"Wedge": "⋀",
-	"wedgeq": "≙",
-	"weierp": "℘",
-	"Wfr": "𝔚",
-	"wfr": "𝔴",
-	"Wopf": "𝕎",
-	"wopf": "𝕨",
-	"wp": "℘",
-	"wr": "≀",
-	"wreath": "≀",
-	"Wscr": "𝒲",
-	"wscr": "𝓌",
-	"xcap": "⋂",
-	"xcirc": "◯",
-	"xcup": "⋃",
-	"xdtri": "▽",
-	"Xfr": "𝔛",
-	"xfr": "𝔵",
-	"xharr": "⟷",
-	"xhArr": "⟺",
-	"Xi": "Ξ",
-	"xi": "ξ",
-	"xlarr": "⟵",
-	"xlArr": "⟸",
-	"xmap": "⟼",
-	"xnis": "⋻",
-	"xodot": "⨀",
-	"Xopf": "𝕏",
-	"xopf": "𝕩",
-	"xoplus": "⨁",
-	"xotime": "⨂",
-	"xrarr": "⟶",
-	"xrArr": "⟹",
-	"Xscr": "𝒳",
-	"xscr": "𝓍",
-	"xsqcup": "⨆",
-	"xuplus": "⨄",
-	"xutri": "△",
-	"xvee": "⋁",
-	"xwedge": "⋀",
-	"Yacute": "Ý",
-	"yacute": "ý",
-	"YAcy": "Я",
-	"yacy": "я",
-	"Ycirc": "Ŷ",
-	"ycirc": "ŷ",
-	"Ycy": "Ы",
-	"ycy": "ы",
-	"yen": "¥",
-	"Yfr": "𝔜",
-	"yfr": "𝔶",
-	"YIcy": "Ї",
-	"yicy": "ї",
-	"Yopf": "𝕐",
-	"yopf": "𝕪",
-	"Yscr": "𝒴",
-	"yscr": "𝓎",
-	"YUcy": "Ю",
-	"yucy": "ю",
-	"yuml": "ÿ",
-	"Yuml": "Ÿ",
-	"Zacute": "Ź",
-	"zacute": "ź",
-	"Zcaron": "Ž",
-	"zcaron": "ž",
-	"Zcy": "З",
-	"zcy": "з",
-	"Zdot": "Ż",
-	"zdot": "ż",
-	"zeetrf": "ℨ",
-	"ZeroWidthSpace": "​",
-	"Zeta": "Ζ",
-	"zeta": "ζ",
-	"zfr": "𝔷",
-	"Zfr": "ℨ",
-	"ZHcy": "Ж",
-	"zhcy": "ж",
-	"zigrarr": "⇝",
-	"zopf": "𝕫",
-	"Zopf": "ℤ",
-	"Zscr": "𝒵",
-	"zscr": "𝓏",
-	"zwj": "‍",
-	"zwnj": "‌"
-};
+module.exports = {"Aacute":"Á","aacute":"á","Abreve":"Ă","abreve":"ă","ac":"∾","acd":"∿","acE":"∾̳","Acirc":"Â","acirc":"â","acute":"´","Acy":"А","acy":"а","AElig":"Æ","aelig":"æ","af":"⁡","Afr":"𝔄","afr":"𝔞","Agrave":"À","agrave":"à","alefsym":"ℵ","aleph":"ℵ","Alpha":"Α","alpha":"α","Amacr":"Ā","amacr":"ā","amalg":"⨿","amp":"&","AMP":"&","andand":"⩕","And":"⩓","and":"∧","andd":"⩜","andslope":"⩘","andv":"⩚","ang":"∠","ange":"⦤","angle":"∠","angmsdaa":"⦨","angmsdab":"⦩","angmsdac":"⦪","angmsdad":"⦫","angmsdae":"⦬","angmsdaf":"⦭","angmsdag":"⦮","angmsdah":"⦯","angmsd":"∡","angrt":"∟","angrtvb":"⊾","angrtvbd":"⦝","angsph":"∢","angst":"Å","angzarr":"⍼","Aogon":"Ą","aogon":"ą","Aopf":"𝔸","aopf":"𝕒","apacir":"⩯","ap":"≈","apE":"⩰","ape":"≊","apid":"≋","apos":"'","ApplyFunction":"⁡","approx":"≈","approxeq":"≊","Aring":"Å","aring":"å","Ascr":"𝒜","ascr":"𝒶","Assign":"≔","ast":"*","asymp":"≈","asympeq":"≍","Atilde":"Ã","atilde":"ã","Auml":"Ä","auml":"ä","awconint":"∳","awint":"⨑","backcong":"≌","backepsilon":"϶","backprime":"‵","backsim":"∽","backsimeq":"⋍","Backslash":"∖","Barv":"⫧","barvee":"⊽","barwed":"⌅","Barwed":"⌆","barwedge":"⌅","bbrk":"⎵","bbrktbrk":"⎶","bcong":"≌","Bcy":"Б","bcy":"б","bdquo":"„","becaus":"∵","because":"∵","Because":"∵","bemptyv":"⦰","bepsi":"϶","bernou":"ℬ","Bernoullis":"ℬ","Beta":"Β","beta":"β","beth":"ℶ","between":"≬","Bfr":"𝔅","bfr":"𝔟","bigcap":"⋂","bigcirc":"◯","bigcup":"⋃","bigodot":"⨀","bigoplus":"⨁","bigotimes":"⨂","bigsqcup":"⨆","bigstar":"★","bigtriangledown":"▽","bigtriangleup":"△","biguplus":"⨄","bigvee":"⋁","bigwedge":"⋀","bkarow":"⤍","blacklozenge":"⧫","blacksquare":"▪","blacktriangle":"▴","blacktriangledown":"▾","blacktriangleleft":"◂","blacktriangleright":"▸","blank":"␣","blk12":"▒","blk14":"░","blk34":"▓","block":"█","bne":"=⃥","bnequiv":"≡⃥","bNot":"⫭","bnot":"⌐","Bopf":"𝔹","bopf":"𝕓","bot":"⊥","bottom":"⊥","bowtie":"⋈","boxbox":"⧉","boxdl":"┐","boxdL":"╕","boxDl":"╖","boxDL":"╗","boxdr":"┌","boxdR":"╒","boxDr":"╓","boxDR":"╔","boxh":"─","boxH":"═","boxhd":"┬","boxHd":"╤","boxhD":"╥","boxHD":"╦","boxhu":"┴","boxHu":"╧","boxhU":"╨","boxHU":"╩","boxminus":"⊟","boxplus":"⊞","boxtimes":"⊠","boxul":"┘","boxuL":"╛","boxUl":"╜","boxUL":"╝","boxur":"└","boxuR":"╘","boxUr":"╙","boxUR":"╚","boxv":"│","boxV":"║","boxvh":"┼","boxvH":"╪","boxVh":"╫","boxVH":"╬","boxvl":"┤","boxvL":"╡","boxVl":"╢","boxVL":"╣","boxvr":"├","boxvR":"╞","boxVr":"╟","boxVR":"╠","bprime":"‵","breve":"˘","Breve":"˘","brvbar":"¦","bscr":"𝒷","Bscr":"ℬ","bsemi":"⁏","bsim":"∽","bsime":"⋍","bsolb":"⧅","bsol":"\\","bsolhsub":"⟈","bull":"•","bullet":"•","bump":"≎","bumpE":"⪮","bumpe":"≏","Bumpeq":"≎","bumpeq":"≏","Cacute":"Ć","cacute":"ć","capand":"⩄","capbrcup":"⩉","capcap":"⩋","cap":"∩","Cap":"⋒","capcup":"⩇","capdot":"⩀","CapitalDifferentialD":"ⅅ","caps":"∩︀","caret":"⁁","caron":"ˇ","Cayleys":"ℭ","ccaps":"⩍","Ccaron":"Č","ccaron":"č","Ccedil":"Ç","ccedil":"ç","Ccirc":"Ĉ","ccirc":"ĉ","Cconint":"∰","ccups":"⩌","ccupssm":"⩐","Cdot":"Ċ","cdot":"ċ","cedil":"¸","Cedilla":"¸","cemptyv":"⦲","cent":"¢","centerdot":"·","CenterDot":"·","cfr":"𝔠","Cfr":"ℭ","CHcy":"Ч","chcy":"ч","check":"✓","checkmark":"✓","Chi":"Χ","chi":"χ","circ":"ˆ","circeq":"≗","circlearrowleft":"↺","circlearrowright":"↻","circledast":"⊛","circledcirc":"⊚","circleddash":"⊝","CircleDot":"⊙","circledR":"®","circledS":"Ⓢ","CircleMinus":"⊖","CirclePlus":"⊕","CircleTimes":"⊗","cir":"○","cirE":"⧃","cire":"≗","cirfnint":"⨐","cirmid":"⫯","cirscir":"⧂","ClockwiseContourIntegral":"∲","CloseCurlyDoubleQuote":"”","CloseCurlyQuote":"’","clubs":"♣","clubsuit":"♣","colon":":","Colon":"∷","Colone":"⩴","colone":"≔","coloneq":"≔","comma":",","commat":"@","comp":"∁","compfn":"∘","complement":"∁","complexes":"ℂ","cong":"≅","congdot":"⩭","Congruent":"≡","conint":"∮","Conint":"∯","ContourIntegral":"∮","copf":"𝕔","Copf":"ℂ","coprod":"∐","Coproduct":"∐","copy":"©","COPY":"©","copysr":"℗","CounterClockwiseContourIntegral":"∳","crarr":"↵","cross":"✗","Cross":"⨯","Cscr":"𝒞","cscr":"𝒸","csub":"⫏","csube":"⫑","csup":"⫐","csupe":"⫒","ctdot":"⋯","cudarrl":"⤸","cudarrr":"⤵","cuepr":"⋞","cuesc":"⋟","cularr":"↶","cularrp":"⤽","cupbrcap":"⩈","cupcap":"⩆","CupCap":"≍","cup":"∪","Cup":"⋓","cupcup":"⩊","cupdot":"⊍","cupor":"⩅","cups":"∪︀","curarr":"↷","curarrm":"⤼","curlyeqprec":"⋞","curlyeqsucc":"⋟","curlyvee":"⋎","curlywedge":"⋏","curren":"¤","curvearrowleft":"↶","curvearrowright":"↷","cuvee":"⋎","cuwed":"⋏","cwconint":"∲","cwint":"∱","cylcty":"⌭","dagger":"†","Dagger":"‡","daleth":"ℸ","darr":"↓","Darr":"↡","dArr":"⇓","dash":"‐","Dashv":"⫤","dashv":"⊣","dbkarow":"⤏","dblac":"˝","Dcaron":"Ď","dcaron":"ď","Dcy":"Д","dcy":"д","ddagger":"‡","ddarr":"⇊","DD":"ⅅ","dd":"ⅆ","DDotrahd":"⤑","ddotseq":"⩷","deg":"°","Del":"∇","Delta":"Δ","delta":"δ","demptyv":"⦱","dfisht":"⥿","Dfr":"𝔇","dfr":"𝔡","dHar":"⥥","dharl":"⇃","dharr":"⇂","DiacriticalAcute":"´","DiacriticalDot":"˙","DiacriticalDoubleAcute":"˝","DiacriticalGrave":"`","DiacriticalTilde":"˜","diam":"⋄","diamond":"⋄","Diamond":"⋄","diamondsuit":"♦","diams":"♦","die":"¨","DifferentialD":"ⅆ","digamma":"ϝ","disin":"⋲","div":"÷","divide":"÷","divideontimes":"⋇","divonx":"⋇","DJcy":"Ђ","djcy":"ђ","dlcorn":"⌞","dlcrop":"⌍","dollar":"$","Dopf":"𝔻","dopf":"𝕕","Dot":"¨","dot":"˙","DotDot":"⃜","doteq":"≐","doteqdot":"≑","DotEqual":"≐","dotminus":"∸","dotplus":"∔","dotsquare":"⊡","doublebarwedge":"⌆","DoubleContourIntegral":"∯","DoubleDot":"¨","DoubleDownArrow":"⇓","DoubleLeftArrow":"⇐","DoubleLeftRightArrow":"⇔","DoubleLeftTee":"⫤","DoubleLongLeftArrow":"⟸","DoubleLongLeftRightArrow":"⟺","DoubleLongRightArrow":"⟹","DoubleRightArrow":"⇒","DoubleRightTee":"⊨","DoubleUpArrow":"⇑","DoubleUpDownArrow":"⇕","DoubleVerticalBar":"∥","DownArrowBar":"⤓","downarrow":"↓","DownArrow":"↓","Downarrow":"⇓","DownArrowUpArrow":"⇵","DownBreve":"̑","downdownarrows":"⇊","downharpoonleft":"⇃","downharpoonright":"⇂","DownLeftRightVector":"⥐","DownLeftTeeVector":"⥞","DownLeftVectorBar":"⥖","DownLeftVector":"↽","DownRightTeeVector":"⥟","DownRightVectorBar":"⥗","DownRightVector":"⇁","DownTeeArrow":"↧","DownTee":"⊤","drbkarow":"⤐","drcorn":"⌟","drcrop":"⌌","Dscr":"𝒟","dscr":"𝒹","DScy":"Ѕ","dscy":"ѕ","dsol":"⧶","Dstrok":"Đ","dstrok":"đ","dtdot":"⋱","dtri":"▿","dtrif":"▾","duarr":"⇵","duhar":"⥯","dwangle":"⦦","DZcy":"Џ","dzcy":"џ","dzigrarr":"⟿","Eacute":"É","eacute":"é","easter":"⩮","Ecaron":"Ě","ecaron":"ě","Ecirc":"Ê","ecirc":"ê","ecir":"≖","ecolon":"≕","Ecy":"Э","ecy":"э","eDDot":"⩷","Edot":"Ė","edot":"ė","eDot":"≑","ee":"ⅇ","efDot":"≒","Efr":"𝔈","efr":"𝔢","eg":"⪚","Egrave":"È","egrave":"è","egs":"⪖","egsdot":"⪘","el":"⪙","Element":"∈","elinters":"⏧","ell":"ℓ","els":"⪕","elsdot":"⪗","Emacr":"Ē","emacr":"ē","empty":"∅","emptyset":"∅","EmptySmallSquare":"◻","emptyv":"∅","EmptyVerySmallSquare":"▫","emsp13":" ","emsp14":" ","emsp":" ","ENG":"Ŋ","eng":"ŋ","ensp":" ","Eogon":"Ę","eogon":"ę","Eopf":"𝔼","eopf":"𝕖","epar":"⋕","eparsl":"⧣","eplus":"⩱","epsi":"ε","Epsilon":"Ε","epsilon":"ε","epsiv":"ϵ","eqcirc":"≖","eqcolon":"≕","eqsim":"≂","eqslantgtr":"⪖","eqslantless":"⪕","Equal":"⩵","equals":"=","EqualTilde":"≂","equest":"≟","Equilibrium":"⇌","equiv":"≡","equivDD":"⩸","eqvparsl":"⧥","erarr":"⥱","erDot":"≓","escr":"ℯ","Escr":"ℰ","esdot":"≐","Esim":"⩳","esim":"≂","Eta":"Η","eta":"η","ETH":"Ð","eth":"ð","Euml":"Ë","euml":"ë","euro":"€","excl":"!","exist":"∃","Exists":"∃","expectation":"ℰ","exponentiale":"ⅇ","ExponentialE":"ⅇ","fallingdotseq":"≒","Fcy":"Ф","fcy":"ф","female":"♀","ffilig":"ﬃ","fflig":"ﬀ","ffllig":"ﬄ","Ffr":"𝔉","ffr":"𝔣","filig":"ﬁ","FilledSmallSquare":"◼","FilledVerySmallSquare":"▪","fjlig":"fj","flat":"♭","fllig":"ﬂ","fltns":"▱","fnof":"ƒ","Fopf":"𝔽","fopf":"𝕗","forall":"∀","ForAll":"∀","fork":"⋔","forkv":"⫙","Fouriertrf":"ℱ","fpartint":"⨍","frac12":"½","frac13":"⅓","frac14":"¼","frac15":"⅕","frac16":"⅙","frac18":"⅛","frac23":"⅔","frac25":"⅖","frac34":"¾","frac35":"⅗","frac38":"⅜","frac45":"⅘","frac56":"⅚","frac58":"⅝","frac78":"⅞","frasl":"⁄","frown":"⌢","fscr":"𝒻","Fscr":"ℱ","gacute":"ǵ","Gamma":"Γ","gamma":"γ","Gammad":"Ϝ","gammad":"ϝ","gap":"⪆","Gbreve":"Ğ","gbreve":"ğ","Gcedil":"Ģ","Gcirc":"Ĝ","gcirc":"ĝ","Gcy":"Г","gcy":"г","Gdot":"Ġ","gdot":"ġ","ge":"≥","gE":"≧","gEl":"⪌","gel":"⋛","geq":"≥","geqq":"≧","geqslant":"⩾","gescc":"⪩","ges":"⩾","gesdot":"⪀","gesdoto":"⪂","gesdotol":"⪄","gesl":"⋛︀","gesles":"⪔","Gfr":"𝔊","gfr":"𝔤","gg":"≫","Gg":"⋙","ggg":"⋙","gimel":"ℷ","GJcy":"Ѓ","gjcy":"ѓ","gla":"⪥","gl":"≷","glE":"⪒","glj":"⪤","gnap":"⪊","gnapprox":"⪊","gne":"⪈","gnE":"≩","gneq":"⪈","gneqq":"≩","gnsim":"⋧","Gopf":"𝔾","gopf":"𝕘","grave":"`","GreaterEqual":"≥","GreaterEqualLess":"⋛","GreaterFullEqual":"≧","GreaterGreater":"⪢","GreaterLess":"≷","GreaterSlantEqual":"⩾","GreaterTilde":"≳","Gscr":"𝒢","gscr":"ℊ","gsim":"≳","gsime":"⪎","gsiml":"⪐","gtcc":"⪧","gtcir":"⩺","gt":">","GT":">","Gt":"≫","gtdot":"⋗","gtlPar":"⦕","gtquest":"⩼","gtrapprox":"⪆","gtrarr":"⥸","gtrdot":"⋗","gtreqless":"⋛","gtreqqless":"⪌","gtrless":"≷","gtrsim":"≳","gvertneqq":"≩︀","gvnE":"≩︀","Hacek":"ˇ","hairsp":" ","half":"½","hamilt":"ℋ","HARDcy":"Ъ","hardcy":"ъ","harrcir":"⥈","harr":"↔","hArr":"⇔","harrw":"↭","Hat":"^","hbar":"ℏ","Hcirc":"Ĥ","hcirc":"ĥ","hearts":"♥","heartsuit":"♥","hellip":"…","hercon":"⊹","hfr":"𝔥","Hfr":"ℌ","HilbertSpace":"ℋ","hksearow":"⤥","hkswarow":"⤦","hoarr":"⇿","homtht":"∻","hookleftarrow":"↩","hookrightarrow":"↪","hopf":"𝕙","Hopf":"ℍ","horbar":"―","HorizontalLine":"─","hscr":"𝒽","Hscr":"ℋ","hslash":"ℏ","Hstrok":"Ħ","hstrok":"ħ","HumpDownHump":"≎","HumpEqual":"≏","hybull":"⁃","hyphen":"‐","Iacute":"Í","iacute":"í","ic":"⁣","Icirc":"Î","icirc":"î","Icy":"И","icy":"и","Idot":"İ","IEcy":"Е","iecy":"е","iexcl":"¡","iff":"⇔","ifr":"𝔦","Ifr":"ℑ","Igrave":"Ì","igrave":"ì","ii":"ⅈ","iiiint":"⨌","iiint":"∭","iinfin":"⧜","iiota":"℩","IJlig":"Ĳ","ijlig":"ĳ","Imacr":"Ī","imacr":"ī","image":"ℑ","ImaginaryI":"ⅈ","imagline":"ℐ","imagpart":"ℑ","imath":"ı","Im":"ℑ","imof":"⊷","imped":"Ƶ","Implies":"⇒","incare":"℅","in":"∈","infin":"∞","infintie":"⧝","inodot":"ı","intcal":"⊺","int":"∫","Int":"∬","integers":"ℤ","Integral":"∫","intercal":"⊺","Intersection":"⋂","intlarhk":"⨗","intprod":"⨼","InvisibleComma":"⁣","InvisibleTimes":"⁢","IOcy":"Ё","iocy":"ё","Iogon":"Į","iogon":"į","Iopf":"𝕀","iopf":"𝕚","Iota":"Ι","iota":"ι","iprod":"⨼","iquest":"¿","iscr":"𝒾","Iscr":"ℐ","isin":"∈","isindot":"⋵","isinE":"⋹","isins":"⋴","isinsv":"⋳","isinv":"∈","it":"⁢","Itilde":"Ĩ","itilde":"ĩ","Iukcy":"І","iukcy":"і","Iuml":"Ï","iuml":"ï","Jcirc":"Ĵ","jcirc":"ĵ","Jcy":"Й","jcy":"й","Jfr":"𝔍","jfr":"𝔧","jmath":"ȷ","Jopf":"𝕁","jopf":"𝕛","Jscr":"𝒥","jscr":"𝒿","Jsercy":"Ј","jsercy":"ј","Jukcy":"Є","jukcy":"є","Kappa":"Κ","kappa":"κ","kappav":"ϰ","Kcedil":"Ķ","kcedil":"ķ","Kcy":"К","kcy":"к","Kfr":"𝔎","kfr":"𝔨","kgreen":"ĸ","KHcy":"Х","khcy":"х","KJcy":"Ќ","kjcy":"ќ","Kopf":"𝕂","kopf":"𝕜","Kscr":"𝒦","kscr":"𝓀","lAarr":"⇚","Lacute":"Ĺ","lacute":"ĺ","laemptyv":"⦴","lagran":"ℒ","Lambda":"Λ","lambda":"λ","lang":"⟨","Lang":"⟪","langd":"⦑","langle":"⟨","lap":"⪅","Laplacetrf":"ℒ","laquo":"«","larrb":"⇤","larrbfs":"⤟","larr":"←","Larr":"↞","lArr":"⇐","larrfs":"⤝","larrhk":"↩","larrlp":"↫","larrpl":"⤹","larrsim":"⥳","larrtl":"↢","latail":"⤙","lAtail":"⤛","lat":"⪫","late":"⪭","lates":"⪭︀","lbarr":"⤌","lBarr":"⤎","lbbrk":"❲","lbrace":"{","lbrack":"[","lbrke":"⦋","lbrksld":"⦏","lbrkslu":"⦍","Lcaron":"Ľ","lcaron":"ľ","Lcedil":"Ļ","lcedil":"ļ","lceil":"⌈","lcub":"{","Lcy":"Л","lcy":"л","ldca":"⤶","ldquo":"“","ldquor":"„","ldrdhar":"⥧","ldrushar":"⥋","ldsh":"↲","le":"≤","lE":"≦","LeftAngleBracket":"⟨","LeftArrowBar":"⇤","leftarrow":"←","LeftArrow":"←","Leftarrow":"⇐","LeftArrowRightArrow":"⇆","leftarrowtail":"↢","LeftCeiling":"⌈","LeftDoubleBracket":"⟦","LeftDownTeeVector":"⥡","LeftDownVectorBar":"⥙","LeftDownVector":"⇃","LeftFloor":"⌊","leftharpoondown":"↽","leftharpoonup":"↼","leftleftarrows":"⇇","leftrightarrow":"↔","LeftRightArrow":"↔","Leftrightarrow":"⇔","leftrightarrows":"⇆","leftrightharpoons":"⇋","leftrightsquigarrow":"↭","LeftRightVector":"⥎","LeftTeeArrow":"↤","LeftTee":"⊣","LeftTeeVector":"⥚","leftthreetimes":"⋋","LeftTriangleBar":"⧏","LeftTriangle":"⊲","LeftTriangleEqual":"⊴","LeftUpDownVector":"⥑","LeftUpTeeVector":"⥠","LeftUpVectorBar":"⥘","LeftUpVector":"↿","LeftVectorBar":"⥒","LeftVector":"↼","lEg":"⪋","leg":"⋚","leq":"≤","leqq":"≦","leqslant":"⩽","lescc":"⪨","les":"⩽","lesdot":"⩿","lesdoto":"⪁","lesdotor":"⪃","lesg":"⋚︀","lesges":"⪓","lessapprox":"⪅","lessdot":"⋖","lesseqgtr":"⋚","lesseqqgtr":"⪋","LessEqualGreater":"⋚","LessFullEqual":"≦","LessGreater":"≶","lessgtr":"≶","LessLess":"⪡","lesssim":"≲","LessSlantEqual":"⩽","LessTilde":"≲","lfisht":"⥼","lfloor":"⌊","Lfr":"𝔏","lfr":"𝔩","lg":"≶","lgE":"⪑","lHar":"⥢","lhard":"↽","lharu":"↼","lharul":"⥪","lhblk":"▄","LJcy":"Љ","ljcy":"љ","llarr":"⇇","ll":"≪","Ll":"⋘","llcorner":"⌞","Lleftarrow":"⇚","llhard":"⥫","lltri":"◺","Lmidot":"Ŀ","lmidot":"ŀ","lmoustache":"⎰","lmoust":"⎰","lnap":"⪉","lnapprox":"⪉","lne":"⪇","lnE":"≨","lneq":"⪇","lneqq":"≨","lnsim":"⋦","loang":"⟬","loarr":"⇽","lobrk":"⟦","longleftarrow":"⟵","LongLeftArrow":"⟵","Longleftarrow":"⟸","longleftrightarrow":"⟷","LongLeftRightArrow":"⟷","Longleftrightarrow":"⟺","longmapsto":"⟼","longrightarrow":"⟶","LongRightArrow":"⟶","Longrightarrow":"⟹","looparrowleft":"↫","looparrowright":"↬","lopar":"⦅","Lopf":"𝕃","lopf":"𝕝","loplus":"⨭","lotimes":"⨴","lowast":"∗","lowbar":"_","LowerLeftArrow":"↙","LowerRightArrow":"↘","loz":"◊","lozenge":"◊","lozf":"⧫","lpar":"(","lparlt":"⦓","lrarr":"⇆","lrcorner":"⌟","lrhar":"⇋","lrhard":"⥭","lrm":"‎","lrtri":"⊿","lsaquo":"‹","lscr":"𝓁","Lscr":"ℒ","lsh":"↰","Lsh":"↰","lsim":"≲","lsime":"⪍","lsimg":"⪏","lsqb":"[","lsquo":"‘","lsquor":"‚","Lstrok":"Ł","lstrok":"ł","ltcc":"⪦","ltcir":"⩹","lt":"<","LT":"<","Lt":"≪","ltdot":"⋖","lthree":"⋋","ltimes":"⋉","ltlarr":"⥶","ltquest":"⩻","ltri":"◃","ltrie":"⊴","ltrif":"◂","ltrPar":"⦖","lurdshar":"⥊","luruhar":"⥦","lvertneqq":"≨︀","lvnE":"≨︀","macr":"¯","male":"♂","malt":"✠","maltese":"✠","Map":"⤅","map":"↦","mapsto":"↦","mapstodown":"↧","mapstoleft":"↤","mapstoup":"↥","marker":"▮","mcomma":"⨩","Mcy":"М","mcy":"м","mdash":"—","mDDot":"∺","measuredangle":"∡","MediumSpace":" ","Mellintrf":"ℳ","Mfr":"𝔐","mfr":"𝔪","mho":"℧","micro":"µ","midast":"*","midcir":"⫰","mid":"∣","middot":"·","minusb":"⊟","minus":"−","minusd":"∸","minusdu":"⨪","MinusPlus":"∓","mlcp":"⫛","mldr":"…","mnplus":"∓","models":"⊧","Mopf":"𝕄","mopf":"𝕞","mp":"∓","mscr":"𝓂","Mscr":"ℳ","mstpos":"∾","Mu":"Μ","mu":"μ","multimap":"⊸","mumap":"⊸","nabla":"∇","Nacute":"Ń","nacute":"ń","nang":"∠⃒","nap":"≉","napE":"⩰̸","napid":"≋̸","napos":"ŉ","napprox":"≉","natural":"♮","naturals":"ℕ","natur":"♮","nbsp":" ","nbump":"≎̸","nbumpe":"≏̸","ncap":"⩃","Ncaron":"Ň","ncaron":"ň","Ncedil":"Ņ","ncedil":"ņ","ncong":"≇","ncongdot":"⩭̸","ncup":"⩂","Ncy":"Н","ncy":"н","ndash":"–","nearhk":"⤤","nearr":"↗","neArr":"⇗","nearrow":"↗","ne":"≠","nedot":"≐̸","NegativeMediumSpace":"​","NegativeThickSpace":"​","NegativeThinSpace":"​","NegativeVeryThinSpace":"​","nequiv":"≢","nesear":"⤨","nesim":"≂̸","NestedGreaterGreater":"≫","NestedLessLess":"≪","NewLine":"\n","nexist":"∄","nexists":"∄","Nfr":"𝔑","nfr":"𝔫","ngE":"≧̸","nge":"≱","ngeq":"≱","ngeqq":"≧̸","ngeqslant":"⩾̸","nges":"⩾̸","nGg":"⋙̸","ngsim":"≵","nGt":"≫⃒","ngt":"≯","ngtr":"≯","nGtv":"≫̸","nharr":"↮","nhArr":"⇎","nhpar":"⫲","ni":"∋","nis":"⋼","nisd":"⋺","niv":"∋","NJcy":"Њ","njcy":"њ","nlarr":"↚","nlArr":"⇍","nldr":"‥","nlE":"≦̸","nle":"≰","nleftarrow":"↚","nLeftarrow":"⇍","nleftrightarrow":"↮","nLeftrightarrow":"⇎","nleq":"≰","nleqq":"≦̸","nleqslant":"⩽̸","nles":"⩽̸","nless":"≮","nLl":"⋘̸","nlsim":"≴","nLt":"≪⃒","nlt":"≮","nltri":"⋪","nltrie":"⋬","nLtv":"≪̸","nmid":"∤","NoBreak":"⁠","NonBreakingSpace":" ","nopf":"𝕟","Nopf":"ℕ","Not":"⫬","not":"¬","NotCongruent":"≢","NotCupCap":"≭","NotDoubleVerticalBar":"∦","NotElement":"∉","NotEqual":"≠","NotEqualTilde":"≂̸","NotExists":"∄","NotGreater":"≯","NotGreaterEqual":"≱","NotGreaterFullEqual":"≧̸","NotGreaterGreater":"≫̸","NotGreaterLess":"≹","NotGreaterSlantEqual":"⩾̸","NotGreaterTilde":"≵","NotHumpDownHump":"≎̸","NotHumpEqual":"≏̸","notin":"∉","notindot":"⋵̸","notinE":"⋹̸","notinva":"∉","notinvb":"⋷","notinvc":"⋶","NotLeftTriangleBar":"⧏̸","NotLeftTriangle":"⋪","NotLeftTriangleEqual":"⋬","NotLess":"≮","NotLessEqual":"≰","NotLessGreater":"≸","NotLessLess":"≪̸","NotLessSlantEqual":"⩽̸","NotLessTilde":"≴","NotNestedGreaterGreater":"⪢̸","NotNestedLessLess":"⪡̸","notni":"∌","notniva":"∌","notnivb":"⋾","notnivc":"⋽","NotPrecedes":"⊀","NotPrecedesEqual":"⪯̸","NotPrecedesSlantEqual":"⋠","NotReverseElement":"∌","NotRightTriangleBar":"⧐̸","NotRightTriangle":"⋫","NotRightTriangleEqual":"⋭","NotSquareSubset":"⊏̸","NotSquareSubsetEqual":"⋢","NotSquareSuperset":"⊐̸","NotSquareSupersetEqual":"⋣","NotSubset":"⊂⃒","NotSubsetEqual":"⊈","NotSucceeds":"⊁","NotSucceedsEqual":"⪰̸","NotSucceedsSlantEqual":"⋡","NotSucceedsTilde":"≿̸","NotSuperset":"⊃⃒","NotSupersetEqual":"⊉","NotTilde":"≁","NotTildeEqual":"≄","NotTildeFullEqual":"≇","NotTildeTilde":"≉","NotVerticalBar":"∤","nparallel":"∦","npar":"∦","nparsl":"⫽⃥","npart":"∂̸","npolint":"⨔","npr":"⊀","nprcue":"⋠","nprec":"⊀","npreceq":"⪯̸","npre":"⪯̸","nrarrc":"⤳̸","nrarr":"↛","nrArr":"⇏","nrarrw":"↝̸","nrightarrow":"↛","nRightarrow":"⇏","nrtri":"⋫","nrtrie":"⋭","nsc":"⊁","nsccue":"⋡","nsce":"⪰̸","Nscr":"𝒩","nscr":"𝓃","nshortmid":"∤","nshortparallel":"∦","nsim":"≁","nsime":"≄","nsimeq":"≄","nsmid":"∤","nspar":"∦","nsqsube":"⋢","nsqsupe":"⋣","nsub":"⊄","nsubE":"⫅̸","nsube":"⊈","nsubset":"⊂⃒","nsubseteq":"⊈","nsubseteqq":"⫅̸","nsucc":"⊁","nsucceq":"⪰̸","nsup":"⊅","nsupE":"⫆̸","nsupe":"⊉","nsupset":"⊃⃒","nsupseteq":"⊉","nsupseteqq":"⫆̸","ntgl":"≹","Ntilde":"Ñ","ntilde":"ñ","ntlg":"≸","ntriangleleft":"⋪","ntrianglelefteq":"⋬","ntriangleright":"⋫","ntrianglerighteq":"⋭","Nu":"Ν","nu":"ν","num":"#","numero":"№","numsp":" ","nvap":"≍⃒","nvdash":"⊬","nvDash":"⊭","nVdash":"⊮","nVDash":"⊯","nvge":"≥⃒","nvgt":">⃒","nvHarr":"⤄","nvinfin":"⧞","nvlArr":"⤂","nvle":"≤⃒","nvlt":"<⃒","nvltrie":"⊴⃒","nvrArr":"⤃","nvrtrie":"⊵⃒","nvsim":"∼⃒","nwarhk":"⤣","nwarr":"↖","nwArr":"⇖","nwarrow":"↖","nwnear":"⤧","Oacute":"Ó","oacute":"ó","oast":"⊛","Ocirc":"Ô","ocirc":"ô","ocir":"⊚","Ocy":"О","ocy":"о","odash":"⊝","Odblac":"Ő","odblac":"ő","odiv":"⨸","odot":"⊙","odsold":"⦼","OElig":"Œ","oelig":"œ","ofcir":"⦿","Ofr":"𝔒","ofr":"𝔬","ogon":"˛","Ograve":"Ò","ograve":"ò","ogt":"⧁","ohbar":"⦵","ohm":"Ω","oint":"∮","olarr":"↺","olcir":"⦾","olcross":"⦻","oline":"‾","olt":"⧀","Omacr":"Ō","omacr":"ō","Omega":"Ω","omega":"ω","Omicron":"Ο","omicron":"ο","omid":"⦶","ominus":"⊖","Oopf":"𝕆","oopf":"𝕠","opar":"⦷","OpenCurlyDoubleQuote":"“","OpenCurlyQuote":"‘","operp":"⦹","oplus":"⊕","orarr":"↻","Or":"⩔","or":"∨","ord":"⩝","order":"ℴ","orderof":"ℴ","ordf":"ª","ordm":"º","origof":"⊶","oror":"⩖","orslope":"⩗","orv":"⩛","oS":"Ⓢ","Oscr":"𝒪","oscr":"ℴ","Oslash":"Ø","oslash":"ø","osol":"⊘","Otilde":"Õ","otilde":"õ","otimesas":"⨶","Otimes":"⨷","otimes":"⊗","Ouml":"Ö","ouml":"ö","ovbar":"⌽","OverBar":"‾","OverBrace":"⏞","OverBracket":"⎴","OverParenthesis":"⏜","para":"¶","parallel":"∥","par":"∥","parsim":"⫳","parsl":"⫽","part":"∂","PartialD":"∂","Pcy":"П","pcy":"п","percnt":"%","period":".","permil":"‰","perp":"⊥","pertenk":"‱","Pfr":"𝔓","pfr":"𝔭","Phi":"Φ","phi":"φ","phiv":"ϕ","phmmat":"ℳ","phone":"☎","Pi":"Π","pi":"π","pitchfork":"⋔","piv":"ϖ","planck":"ℏ","planckh":"ℎ","plankv":"ℏ","plusacir":"⨣","plusb":"⊞","pluscir":"⨢","plus":"+","plusdo":"∔","plusdu":"⨥","pluse":"⩲","PlusMinus":"±","plusmn":"±","plussim":"⨦","plustwo":"⨧","pm":"±","Poincareplane":"ℌ","pointint":"⨕","popf":"𝕡","Popf":"ℙ","pound":"£","prap":"⪷","Pr":"⪻","pr":"≺","prcue":"≼","precapprox":"⪷","prec":"≺","preccurlyeq":"≼","Precedes":"≺","PrecedesEqual":"⪯","PrecedesSlantEqual":"≼","PrecedesTilde":"≾","preceq":"⪯","precnapprox":"⪹","precneqq":"⪵","precnsim":"⋨","pre":"⪯","prE":"⪳","precsim":"≾","prime":"′","Prime":"″","primes":"ℙ","prnap":"⪹","prnE":"⪵","prnsim":"⋨","prod":"∏","Product":"∏","profalar":"⌮","profline":"⌒","profsurf":"⌓","prop":"∝","Proportional":"∝","Proportion":"∷","propto":"∝","prsim":"≾","prurel":"⊰","Pscr":"𝒫","pscr":"𝓅","Psi":"Ψ","psi":"ψ","puncsp":" ","Qfr":"𝔔","qfr":"𝔮","qint":"⨌","qopf":"𝕢","Qopf":"ℚ","qprime":"⁗","Qscr":"𝒬","qscr":"𝓆","quaternions":"ℍ","quatint":"⨖","quest":"?","questeq":"≟","quot":"\"","QUOT":"\"","rAarr":"⇛","race":"∽̱","Racute":"Ŕ","racute":"ŕ","radic":"√","raemptyv":"⦳","rang":"⟩","Rang":"⟫","rangd":"⦒","range":"⦥","rangle":"⟩","raquo":"»","rarrap":"⥵","rarrb":"⇥","rarrbfs":"⤠","rarrc":"⤳","rarr":"→","Rarr":"↠","rArr":"⇒","rarrfs":"⤞","rarrhk":"↪","rarrlp":"↬","rarrpl":"⥅","rarrsim":"⥴","Rarrtl":"⤖","rarrtl":"↣","rarrw":"↝","ratail":"⤚","rAtail":"⤜","ratio":"∶","rationals":"ℚ","rbarr":"⤍","rBarr":"⤏","RBarr":"⤐","rbbrk":"❳","rbrace":"}","rbrack":"]","rbrke":"⦌","rbrksld":"⦎","rbrkslu":"⦐","Rcaron":"Ř","rcaron":"ř","Rcedil":"Ŗ","rcedil":"ŗ","rceil":"⌉","rcub":"}","Rcy":"Р","rcy":"р","rdca":"⤷","rdldhar":"⥩","rdquo":"”","rdquor":"”","rdsh":"↳","real":"ℜ","realine":"ℛ","realpart":"ℜ","reals":"ℝ","Re":"ℜ","rect":"▭","reg":"®","REG":"®","ReverseElement":"∋","ReverseEquilibrium":"⇋","ReverseUpEquilibrium":"⥯","rfisht":"⥽","rfloor":"⌋","rfr":"𝔯","Rfr":"ℜ","rHar":"⥤","rhard":"⇁","rharu":"⇀","rharul":"⥬","Rho":"Ρ","rho":"ρ","rhov":"ϱ","RightAngleBracket":"⟩","RightArrowBar":"⇥","rightarrow":"→","RightArrow":"→","Rightarrow":"⇒","RightArrowLeftArrow":"⇄","rightarrowtail":"↣","RightCeiling":"⌉","RightDoubleBracket":"⟧","RightDownTeeVector":"⥝","RightDownVectorBar":"⥕","RightDownVector":"⇂","RightFloor":"⌋","rightharpoondown":"⇁","rightharpoonup":"⇀","rightleftarrows":"⇄","rightleftharpoons":"⇌","rightrightarrows":"⇉","rightsquigarrow":"↝","RightTeeArrow":"↦","RightTee":"⊢","RightTeeVector":"⥛","rightthreetimes":"⋌","RightTriangleBar":"⧐","RightTriangle":"⊳","RightTriangleEqual":"⊵","RightUpDownVector":"⥏","RightUpTeeVector":"⥜","RightUpVectorBar":"⥔","RightUpVector":"↾","RightVectorBar":"⥓","RightVector":"⇀","ring":"˚","risingdotseq":"≓","rlarr":"⇄","rlhar":"⇌","rlm":"‏","rmoustache":"⎱","rmoust":"⎱","rnmid":"⫮","roang":"⟭","roarr":"⇾","robrk":"⟧","ropar":"⦆","ropf":"𝕣","Ropf":"ℝ","roplus":"⨮","rotimes":"⨵","RoundImplies":"⥰","rpar":")","rpargt":"⦔","rppolint":"⨒","rrarr":"⇉","Rrightarrow":"⇛","rsaquo":"›","rscr":"𝓇","Rscr":"ℛ","rsh":"↱","Rsh":"↱","rsqb":"]","rsquo":"’","rsquor":"’","rthree":"⋌","rtimes":"⋊","rtri":"▹","rtrie":"⊵","rtrif":"▸","rtriltri":"⧎","RuleDelayed":"⧴","ruluhar":"⥨","rx":"℞","Sacute":"Ś","sacute":"ś","sbquo":"‚","scap":"⪸","Scaron":"Š","scaron":"š","Sc":"⪼","sc":"≻","sccue":"≽","sce":"⪰","scE":"⪴","Scedil":"Ş","scedil":"ş","Scirc":"Ŝ","scirc":"ŝ","scnap":"⪺","scnE":"⪶","scnsim":"⋩","scpolint":"⨓","scsim":"≿","Scy":"С","scy":"с","sdotb":"⊡","sdot":"⋅","sdote":"⩦","searhk":"⤥","searr":"↘","seArr":"⇘","searrow":"↘","sect":"§","semi":";","seswar":"⤩","setminus":"∖","setmn":"∖","sext":"✶","Sfr":"𝔖","sfr":"𝔰","sfrown":"⌢","sharp":"♯","SHCHcy":"Щ","shchcy":"щ","SHcy":"Ш","shcy":"ш","ShortDownArrow":"↓","ShortLeftArrow":"←","shortmid":"∣","shortparallel":"∥","ShortRightArrow":"→","ShortUpArrow":"↑","shy":"­","Sigma":"Σ","sigma":"σ","sigmaf":"ς","sigmav":"ς","sim":"∼","simdot":"⩪","sime":"≃","simeq":"≃","simg":"⪞","simgE":"⪠","siml":"⪝","simlE":"⪟","simne":"≆","simplus":"⨤","simrarr":"⥲","slarr":"←","SmallCircle":"∘","smallsetminus":"∖","smashp":"⨳","smeparsl":"⧤","smid":"∣","smile":"⌣","smt":"⪪","smte":"⪬","smtes":"⪬︀","SOFTcy":"Ь","softcy":"ь","solbar":"⌿","solb":"⧄","sol":"/","Sopf":"𝕊","sopf":"𝕤","spades":"♠","spadesuit":"♠","spar":"∥","sqcap":"⊓","sqcaps":"⊓︀","sqcup":"⊔","sqcups":"⊔︀","Sqrt":"√","sqsub":"⊏","sqsube":"⊑","sqsubset":"⊏","sqsubseteq":"⊑","sqsup":"⊐","sqsupe":"⊒","sqsupset":"⊐","sqsupseteq":"⊒","square":"□","Square":"□","SquareIntersection":"⊓","SquareSubset":"⊏","SquareSubsetEqual":"⊑","SquareSuperset":"⊐","SquareSupersetEqual":"⊒","SquareUnion":"⊔","squarf":"▪","squ":"□","squf":"▪","srarr":"→","Sscr":"𝒮","sscr":"𝓈","ssetmn":"∖","ssmile":"⌣","sstarf":"⋆","Star":"⋆","star":"☆","starf":"★","straightepsilon":"ϵ","straightphi":"ϕ","strns":"¯","sub":"⊂","Sub":"⋐","subdot":"⪽","subE":"⫅","sube":"⊆","subedot":"⫃","submult":"⫁","subnE":"⫋","subne":"⊊","subplus":"⪿","subrarr":"⥹","subset":"⊂","Subset":"⋐","subseteq":"⊆","subseteqq":"⫅","SubsetEqual":"⊆","subsetneq":"⊊","subsetneqq":"⫋","subsim":"⫇","subsub":"⫕","subsup":"⫓","succapprox":"⪸","succ":"≻","succcurlyeq":"≽","Succeeds":"≻","SucceedsEqual":"⪰","SucceedsSlantEqual":"≽","SucceedsTilde":"≿","succeq":"⪰","succnapprox":"⪺","succneqq":"⪶","succnsim":"⋩","succsim":"≿","SuchThat":"∋","sum":"∑","Sum":"∑","sung":"♪","sup1":"¹","sup2":"²","sup3":"³","sup":"⊃","Sup":"⋑","supdot":"⪾","supdsub":"⫘","supE":"⫆","supe":"⊇","supedot":"⫄","Superset":"⊃","SupersetEqual":"⊇","suphsol":"⟉","suphsub":"⫗","suplarr":"⥻","supmult":"⫂","supnE":"⫌","supne":"⊋","supplus":"⫀","supset":"⊃","Supset":"⋑","supseteq":"⊇","supseteqq":"⫆","supsetneq":"⊋","supsetneqq":"⫌","supsim":"⫈","supsub":"⫔","supsup":"⫖","swarhk":"⤦","swarr":"↙","swArr":"⇙","swarrow":"↙","swnwar":"⤪","szlig":"ß","Tab":"\t","target":"⌖","Tau":"Τ","tau":"τ","tbrk":"⎴","Tcaron":"Ť","tcaron":"ť","Tcedil":"Ţ","tcedil":"ţ","Tcy":"Т","tcy":"т","tdot":"⃛","telrec":"⌕","Tfr":"𝔗","tfr":"𝔱","there4":"∴","therefore":"∴","Therefore":"∴","Theta":"Θ","theta":"θ","thetasym":"ϑ","thetav":"ϑ","thickapprox":"≈","thicksim":"∼","ThickSpace":"  ","ThinSpace":" ","thinsp":" ","thkap":"≈","thksim":"∼","THORN":"Þ","thorn":"þ","tilde":"˜","Tilde":"∼","TildeEqual":"≃","TildeFullEqual":"≅","TildeTilde":"≈","timesbar":"⨱","timesb":"⊠","times":"×","timesd":"⨰","tint":"∭","toea":"⤨","topbot":"⌶","topcir":"⫱","top":"⊤","Topf":"𝕋","topf":"𝕥","topfork":"⫚","tosa":"⤩","tprime":"‴","trade":"™","TRADE":"™","triangle":"▵","triangledown":"▿","triangleleft":"◃","trianglelefteq":"⊴","triangleq":"≜","triangleright":"▹","trianglerighteq":"⊵","tridot":"◬","trie":"≜","triminus":"⨺","TripleDot":"⃛","triplus":"⨹","trisb":"⧍","tritime":"⨻","trpezium":"⏢","Tscr":"𝒯","tscr":"𝓉","TScy":"Ц","tscy":"ц","TSHcy":"Ћ","tshcy":"ћ","Tstrok":"Ŧ","tstrok":"ŧ","twixt":"≬","twoheadleftarrow":"↞","twoheadrightarrow":"↠","Uacute":"Ú","uacute":"ú","uarr":"↑","Uarr":"↟","uArr":"⇑","Uarrocir":"⥉","Ubrcy":"Ў","ubrcy":"ў","Ubreve":"Ŭ","ubreve":"ŭ","Ucirc":"Û","ucirc":"û","Ucy":"У","ucy":"у","udarr":"⇅","Udblac":"Ű","udblac":"ű","udhar":"⥮","ufisht":"⥾","Ufr":"𝔘","ufr":"𝔲","Ugrave":"Ù","ugrave":"ù","uHar":"⥣","uharl":"↿","uharr":"↾","uhblk":"▀","ulcorn":"⌜","ulcorner":"⌜","ulcrop":"⌏","ultri":"◸","Umacr":"Ū","umacr":"ū","uml":"¨","UnderBar":"_","UnderBrace":"⏟","UnderBracket":"⎵","UnderParenthesis":"⏝","Union":"⋃","UnionPlus":"⊎","Uogon":"Ų","uogon":"ų","Uopf":"𝕌","uopf":"𝕦","UpArrowBar":"⤒","uparrow":"↑","UpArrow":"↑","Uparrow":"⇑","UpArrowDownArrow":"⇅","updownarrow":"↕","UpDownArrow":"↕","Updownarrow":"⇕","UpEquilibrium":"⥮","upharpoonleft":"↿","upharpoonright":"↾","uplus":"⊎","UpperLeftArrow":"↖","UpperRightArrow":"↗","upsi":"υ","Upsi":"ϒ","upsih":"ϒ","Upsilon":"Υ","upsilon":"υ","UpTeeArrow":"↥","UpTee":"⊥","upuparrows":"⇈","urcorn":"⌝","urcorner":"⌝","urcrop":"⌎","Uring":"Ů","uring":"ů","urtri":"◹","Uscr":"𝒰","uscr":"𝓊","utdot":"⋰","Utilde":"Ũ","utilde":"ũ","utri":"▵","utrif":"▴","uuarr":"⇈","Uuml":"Ü","uuml":"ü","uwangle":"⦧","vangrt":"⦜","varepsilon":"ϵ","varkappa":"ϰ","varnothing":"∅","varphi":"ϕ","varpi":"ϖ","varpropto":"∝","varr":"↕","vArr":"⇕","varrho":"ϱ","varsigma":"ς","varsubsetneq":"⊊︀","varsubsetneqq":"⫋︀","varsupsetneq":"⊋︀","varsupsetneqq":"⫌︀","vartheta":"ϑ","vartriangleleft":"⊲","vartriangleright":"⊳","vBar":"⫨","Vbar":"⫫","vBarv":"⫩","Vcy":"В","vcy":"в","vdash":"⊢","vDash":"⊨","Vdash":"⊩","VDash":"⊫","Vdashl":"⫦","veebar":"⊻","vee":"∨","Vee":"⋁","veeeq":"≚","vellip":"⋮","verbar":"|","Verbar":"‖","vert":"|","Vert":"‖","VerticalBar":"∣","VerticalLine":"|","VerticalSeparator":"❘","VerticalTilde":"≀","VeryThinSpace":" ","Vfr":"𝔙","vfr":"𝔳","vltri":"⊲","vnsub":"⊂⃒","vnsup":"⊃⃒","Vopf":"𝕍","vopf":"𝕧","vprop":"∝","vrtri":"⊳","Vscr":"𝒱","vscr":"𝓋","vsubnE":"⫋︀","vsubne":"⊊︀","vsupnE":"⫌︀","vsupne":"⊋︀","Vvdash":"⊪","vzigzag":"⦚","Wcirc":"Ŵ","wcirc":"ŵ","wedbar":"⩟","wedge":"∧","Wedge":"⋀","wedgeq":"≙","weierp":"℘","Wfr":"𝔚","wfr":"𝔴","Wopf":"𝕎","wopf":"𝕨","wp":"℘","wr":"≀","wreath":"≀","Wscr":"𝒲","wscr":"𝓌","xcap":"⋂","xcirc":"◯","xcup":"⋃","xdtri":"▽","Xfr":"𝔛","xfr":"𝔵","xharr":"⟷","xhArr":"⟺","Xi":"Ξ","xi":"ξ","xlarr":"⟵","xlArr":"⟸","xmap":"⟼","xnis":"⋻","xodot":"⨀","Xopf":"𝕏","xopf":"𝕩","xoplus":"⨁","xotime":"⨂","xrarr":"⟶","xrArr":"⟹","Xscr":"𝒳","xscr":"𝓍","xsqcup":"⨆","xuplus":"⨄","xutri":"△","xvee":"⋁","xwedge":"⋀","Yacute":"Ý","yacute":"ý","YAcy":"Я","yacy":"я","Ycirc":"Ŷ","ycirc":"ŷ","Ycy":"Ы","ycy":"ы","yen":"¥","Yfr":"𝔜","yfr":"𝔶","YIcy":"Ї","yicy":"ї","Yopf":"𝕐","yopf":"𝕪","Yscr":"𝒴","yscr":"𝓎","YUcy":"Ю","yucy":"ю","yuml":"ÿ","Yuml":"Ÿ","Zacute":"Ź","zacute":"ź","Zcaron":"Ž","zcaron":"ž","Zcy":"З","zcy":"з","Zdot":"Ż","zdot":"ż","zeetrf":"ℨ","ZeroWidthSpace":"​","Zeta":"Ζ","zeta":"ζ","zfr":"𝔷","Zfr":"ℨ","ZHcy":"Ж","zhcy":"ж","zigrarr":"⇝","zopf":"𝕫","Zopf":"ℤ","Zscr":"𝒵","zscr":"𝓏","zwj":"‍","zwnj":"‌"}
 
 /***/ }),
 /* 70 */
 /***/ (function(module, exports) {
 
-module.exports = {
-	"amp": "&",
-	"apos": "'",
-	"gt": ">",
-	"lt": "<",
-	"quot": "\""
-};
+module.exports = {"amp":"&","apos":"'","gt":">","lt":"<","quot":"\""}
 
 /***/ }),
-/* 71 */,
-/* 72 */
+/* 71 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/* WEBPACK VAR INJECTION */(function(global) {var win;
+
+if (typeof window !== "undefined") {
+    win = window;
+} else if (typeof global !== "undefined") {
+    win = global;
+} else if (typeof self !== "undefined"){
+    win = self;
+} else {
+    win = {};
+}
+
+module.exports = win;
+
+/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(2)))
+
+/***/ }),
+/* 72 */,
+/* 73 */
 /***/ (function(module, exports, __webpack_require__) {
 
 var http = __webpack_require__(41);
@@ -17367,7 +15256,7 @@ https.request = function (params, cb) {
 
 
 /***/ }),
-/* 73 */
+/* 74 */
 /***/ (function(module, exports) {
 
 exports.read = function (buffer, offset, isLE, mLen, nBytes) {
@@ -17457,7 +15346,7 @@ exports.write = function (buffer, value, offset, isLE, mLen, nBytes) {
 
 
 /***/ }),
-/* 74 */
+/* 75 */
 /***/ (function(module, exports, __webpack_require__) {
 
 /* WEBPACK VAR INJECTION */(function(module, global) {var __WEBPACK_AMD_DEFINE_RESULT__;/*! https://mths.be/punycode v1.4.1 by @mathias */
@@ -17996,7 +15885,7 @@ exports.write = function (buffer, value, offset, isLE, mLen, nBytes) {
 /* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(55)(module), __webpack_require__(2)))
 
 /***/ }),
-/* 75 */
+/* 76 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -18087,7 +15976,7 @@ var isArray = Array.isArray || function (xs) {
 
 
 /***/ }),
-/* 76 */
+/* 77 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -18179,14 +16068,14 @@ var objectKeys = Object.keys || function (obj) {
 
 
 /***/ }),
-/* 77 */
+/* 78 */
 /***/ (function(module, exports, __webpack_require__) {
 
 module.exports = __webpack_require__(5);
 
 
 /***/ }),
-/* 78 */
+/* 79 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -18239,7 +16128,7 @@ PassThrough.prototype._transform = function (chunk, encoding, cb) {
 };
 
 /***/ }),
-/* 79 */
+/* 80 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -18319,22 +16208,22 @@ module.exports = function () {
 }();
 
 /***/ }),
-/* 80 */
+/* 81 */
 /***/ (function(module, exports, __webpack_require__) {
 
 module.exports = __webpack_require__(8).PassThrough
 
 
 /***/ }),
-/* 81 */
+/* 82 */
 /***/ (function(module, exports, __webpack_require__) {
 
 module.exports = __webpack_require__(19);
 
 
 /***/ }),
-/* 82 */,
-/* 83 */
+/* 83 */,
+/* 84 */
 /***/ (function(module, exports, __webpack_require__) {
 
 /* WEBPACK VAR INJECTION */(function(global, process) {(function (global, undefined) {
@@ -18527,15 +16416,15 @@ module.exports = __webpack_require__(19);
 /* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(2), __webpack_require__(3)))
 
 /***/ }),
-/* 84 */,
-/* 85 */
+/* 85 */,
+/* 86 */
 /***/ (function(module, exports, __webpack_require__) {
 
 /* WEBPACK VAR INJECTION */(function(Buffer, global, process) {var capability = __webpack_require__(42)
 var inherits = __webpack_require__(1)
-var response = __webpack_require__(86)
+var response = __webpack_require__(87)
 var stream = __webpack_require__(8)
-var toArrayBuffer = __webpack_require__(87)
+var toArrayBuffer = __webpack_require__(88)
 
 var IncomingMessage = response.IncomingMessage
 var rStates = response.readyStates
@@ -18841,7 +16730,7 @@ var unsafeHeaders = [
 /* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(0).Buffer, __webpack_require__(2), __webpack_require__(3)))
 
 /***/ }),
-/* 86 */
+/* 87 */
 /***/ (function(module, exports, __webpack_require__) {
 
 /* WEBPACK VAR INJECTION */(function(process, Buffer, global) {var capability = __webpack_require__(42)
@@ -19030,7 +16919,7 @@ IncomingMessage.prototype._onXHRProgress = function () {
 /* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(3), __webpack_require__(0).Buffer, __webpack_require__(2)))
 
 /***/ }),
-/* 87 */
+/* 88 */
 /***/ (function(module, exports, __webpack_require__) {
 
 var Buffer = __webpack_require__(0).Buffer
@@ -19063,7 +16952,7 @@ module.exports = function (buf) {
 
 
 /***/ }),
-/* 88 */
+/* 89 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -19086,7 +16975,7 @@ module.exports = {
 
 
 /***/ }),
-/* 89 */
+/* 90 */
 /***/ (function(module, exports, __webpack_require__) {
 
 /* WEBPACK VAR INJECTION */(function(global) {
@@ -19160,7 +17049,7 @@ function config (name) {
 /* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(2)))
 
 /***/ }),
-/* 90 */
+/* 91 */
 /***/ (function(module, exports) {
 
 if (typeof Object.create === 'function') {
@@ -19189,7 +17078,7 @@ if (typeof Object.create === 'function') {
 
 
 /***/ }),
-/* 91 */
+/* 92 */
 /***/ (function(module, exports) {
 
 module.exports = function isBuffer(arg) {
@@ -19200,7 +17089,7 @@ module.exports = function isBuffer(arg) {
 }
 
 /***/ }),
-/* 92 */
+/* 93 */
 /***/ (function(module, exports) {
 
 module.exports = extend
@@ -19225,17 +17114,17 @@ function extend() {
 
 
 /***/ }),
-/* 93 */
+/* 94 */
 /***/ (function(module, exports) {
 
 /* (ignored) */
 
 /***/ }),
-/* 94 */,
 /* 95 */,
 /* 96 */,
 /* 97 */,
-/* 98 */
+/* 98 */,
+/* 99 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -19284,7 +17173,7 @@ var mutationAdpater = function mutationAdpater(mutation) {
 module.exports = mutationAdpater;
 
 /***/ }),
-/* 99 */
+/* 100 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -19386,7 +17275,7 @@ var Sprite = function () {
 module.exports = Sprite;
 
 /***/ }),
-/* 100 */
+/* 101 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -19425,7 +17314,6 @@ var Clone = function () {
 module.exports = Clone;
 
 /***/ }),
-/* 101 */,
 /* 102 */,
 /* 103 */,
 /* 104 */,
@@ -19438,7 +17326,8 @@ module.exports = Clone;
 /* 111 */,
 /* 112 */,
 /* 113 */,
-/* 114 */
+/* 114 */,
+/* 115 */
 /***/ (function(module, exports) {
 
 // This object will be used as the prototype for Nodes when creating a
@@ -19488,10 +17377,10 @@ Object.keys(domLvl1).forEach(function(key) {
 
 
 /***/ }),
-/* 115 */
+/* 116 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var decodeMap = __webpack_require__(238);
+var decodeMap = __webpack_require__(239);
 
 module.exports = decodeCodePoint;
 
@@ -19520,126 +17409,19 @@ function decodeCodePoint(codePoint){
 
 
 /***/ }),
-/* 116 */
+/* 117 */
 /***/ (function(module, exports) {
 
-module.exports = {
-	"Aacute": "Á",
-	"aacute": "á",
-	"Acirc": "Â",
-	"acirc": "â",
-	"acute": "´",
-	"AElig": "Æ",
-	"aelig": "æ",
-	"Agrave": "À",
-	"agrave": "à",
-	"amp": "&",
-	"AMP": "&",
-	"Aring": "Å",
-	"aring": "å",
-	"Atilde": "Ã",
-	"atilde": "ã",
-	"Auml": "Ä",
-	"auml": "ä",
-	"brvbar": "¦",
-	"Ccedil": "Ç",
-	"ccedil": "ç",
-	"cedil": "¸",
-	"cent": "¢",
-	"copy": "©",
-	"COPY": "©",
-	"curren": "¤",
-	"deg": "°",
-	"divide": "÷",
-	"Eacute": "É",
-	"eacute": "é",
-	"Ecirc": "Ê",
-	"ecirc": "ê",
-	"Egrave": "È",
-	"egrave": "è",
-	"ETH": "Ð",
-	"eth": "ð",
-	"Euml": "Ë",
-	"euml": "ë",
-	"frac12": "½",
-	"frac14": "¼",
-	"frac34": "¾",
-	"gt": ">",
-	"GT": ">",
-	"Iacute": "Í",
-	"iacute": "í",
-	"Icirc": "Î",
-	"icirc": "î",
-	"iexcl": "¡",
-	"Igrave": "Ì",
-	"igrave": "ì",
-	"iquest": "¿",
-	"Iuml": "Ï",
-	"iuml": "ï",
-	"laquo": "«",
-	"lt": "<",
-	"LT": "<",
-	"macr": "¯",
-	"micro": "µ",
-	"middot": "·",
-	"nbsp": " ",
-	"not": "¬",
-	"Ntilde": "Ñ",
-	"ntilde": "ñ",
-	"Oacute": "Ó",
-	"oacute": "ó",
-	"Ocirc": "Ô",
-	"ocirc": "ô",
-	"Ograve": "Ò",
-	"ograve": "ò",
-	"ordf": "ª",
-	"ordm": "º",
-	"Oslash": "Ø",
-	"oslash": "ø",
-	"Otilde": "Õ",
-	"otilde": "õ",
-	"Ouml": "Ö",
-	"ouml": "ö",
-	"para": "¶",
-	"plusmn": "±",
-	"pound": "£",
-	"quot": "\"",
-	"QUOT": "\"",
-	"raquo": "»",
-	"reg": "®",
-	"REG": "®",
-	"sect": "§",
-	"shy": "­",
-	"sup1": "¹",
-	"sup2": "²",
-	"sup3": "³",
-	"szlig": "ß",
-	"THORN": "Þ",
-	"thorn": "þ",
-	"times": "×",
-	"Uacute": "Ú",
-	"uacute": "ú",
-	"Ucirc": "Û",
-	"ucirc": "û",
-	"Ugrave": "Ù",
-	"ugrave": "ù",
-	"uml": "¨",
-	"Uuml": "Ü",
-	"uuml": "ü",
-	"Yacute": "Ý",
-	"yacute": "ý",
-	"yen": "¥",
-	"yuml": "ÿ"
-};
+module.exports = {"Aacute":"Á","aacute":"á","Acirc":"Â","acirc":"â","acute":"´","AElig":"Æ","aelig":"æ","Agrave":"À","agrave":"à","amp":"&","AMP":"&","Aring":"Å","aring":"å","Atilde":"Ã","atilde":"ã","Auml":"Ä","auml":"ä","brvbar":"¦","Ccedil":"Ç","ccedil":"ç","cedil":"¸","cent":"¢","copy":"©","COPY":"©","curren":"¤","deg":"°","divide":"÷","Eacute":"É","eacute":"é","Ecirc":"Ê","ecirc":"ê","Egrave":"È","egrave":"è","ETH":"Ð","eth":"ð","Euml":"Ë","euml":"ë","frac12":"½","frac14":"¼","frac34":"¾","gt":">","GT":">","Iacute":"Í","iacute":"í","Icirc":"Î","icirc":"î","iexcl":"¡","Igrave":"Ì","igrave":"ì","iquest":"¿","Iuml":"Ï","iuml":"ï","laquo":"«","lt":"<","LT":"<","macr":"¯","micro":"µ","middot":"·","nbsp":" ","not":"¬","Ntilde":"Ñ","ntilde":"ñ","Oacute":"Ó","oacute":"ó","Ocirc":"Ô","ocirc":"ô","Ograve":"Ò","ograve":"ò","ordf":"ª","ordm":"º","Oslash":"Ø","oslash":"ø","Otilde":"Õ","otilde":"õ","Ouml":"Ö","ouml":"ö","para":"¶","plusmn":"±","pound":"£","quot":"\"","QUOT":"\"","raquo":"»","reg":"®","REG":"®","sect":"§","shy":"­","sup1":"¹","sup2":"²","sup3":"³","szlig":"ß","THORN":"Þ","thorn":"þ","times":"×","Uacute":"Ú","uacute":"ú","Ucirc":"Û","ucirc":"û","Ugrave":"Ù","ugrave":"ù","uml":"¨","Uuml":"Ü","uuml":"ü","Yacute":"Ý","yacute":"ý","yen":"¥","yuml":"ÿ"}
 
 /***/ }),
-/* 117 */,
 /* 118 */,
 /* 119 */,
-/* 120 */
+/* 120 */,
+/* 121 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var Tokenizer = __webpack_require__(121);
+var Tokenizer = __webpack_require__(122);
 
 /*
 	Options:
@@ -19995,14 +17777,14 @@ module.exports = Parser;
 
 
 /***/ }),
-/* 121 */
+/* 122 */
 /***/ (function(module, exports, __webpack_require__) {
 
 module.exports = Tokenizer;
 
-var decodeCodePoint = __webpack_require__(115),
+var decodeCodePoint = __webpack_require__(116),
     entityMap = __webpack_require__(69),
-    legacyMap = __webpack_require__(116),
+    legacyMap = __webpack_require__(117),
     xmlMap    = __webpack_require__(70),
 
     i = 0,
@@ -20907,13 +18689,13 @@ Tokenizer.prototype._emitPartial = function(value){
 
 
 /***/ }),
-/* 122 */
+/* 123 */
 /***/ (function(module, exports, __webpack_require__) {
 
 module.exports = Stream;
 
-var Parser = __webpack_require__(120),
-    WritableStream = __webpack_require__(24).Writable || __webpack_require__(310).Writable,
+var Parser = __webpack_require__(121),
+    WritableStream = __webpack_require__(24).Writable || __webpack_require__(312).Writable,
     StringDecoder = __webpack_require__(18).StringDecoder,
     Buffer = __webpack_require__(0).Buffer;
 
@@ -20937,8 +18719,8 @@ WritableStream.prototype._write = function(chunk, encoding, cb){
 };
 
 /***/ }),
-/* 123 */,
-/* 124 */
+/* 124 */,
+/* 125 */
 /***/ (function(module, exports) {
 
 var hex = {
@@ -20964,7 +18746,6 @@ module.exports = color;
 
 
 /***/ }),
-/* 125 */,
 /* 126 */,
 /* 127 */,
 /* 128 */,
@@ -20972,17 +18753,17 @@ module.exports = color;
 /* 130 */,
 /* 131 */,
 /* 132 */,
-/* 133 */
+/* 133 */,
+/* 134 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 
-module.exports = typeof Promise === 'function' ? Promise : __webpack_require__(287);
+module.exports = typeof Promise === 'function' ? Promise : __webpack_require__(288);
 
 
 /***/ }),
-/* 134 */,
 /* 135 */,
 /* 136 */,
 /* 137 */,
@@ -20994,16 +18775,16 @@ module.exports = typeof Promise === 'function' ? Promise : __webpack_require__(2
 /* 143 */,
 /* 144 */,
 /* 145 */,
-/* 146 */
+/* 146 */,
+/* 147 */
 /***/ (function(module, exports, __webpack_require__) {
 
-const VirtualMachine = __webpack_require__(182);
+const VirtualMachine = __webpack_require__(183);
 
 module.exports = VirtualMachine;
 
 
 /***/ }),
-/* 147 */,
 /* 148 */,
 /* 149 */,
 /* 150 */,
@@ -21012,17 +18793,18 @@ module.exports = VirtualMachine;
 /* 153 */,
 /* 154 */,
 /* 155 */,
-/* 156 */
+/* 156 */,
+/* 157 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 /* WEBPACK VAR INJECTION */(function(global) {
 
-module.exports = global["VirtualMachine"] = __webpack_require__(146);
+module.exports = global["VirtualMachine"] = __webpack_require__(147);
 /* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(2)))
 
 /***/ }),
-/* 157 */
+/* 158 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -21188,7 +18970,7 @@ var Scratch3ControlBlocks = function () {
 module.exports = Scratch3ControlBlocks;
 
 /***/ }),
-/* 158 */
+/* 159 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -21356,7 +19138,7 @@ var Scratch3DataBlocks = function () {
 module.exports = Scratch3DataBlocks;
 
 /***/ }),
-/* 159 */
+/* 160 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -21470,7 +19252,7 @@ var Scratch3EventBlocks = function () {
 module.exports = Scratch3EventBlocks;
 
 /***/ }),
-/* 160 */
+/* 161 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -21725,7 +19507,7 @@ var Scratch3LooksBlocks = function () {
 module.exports = Scratch3LooksBlocks;
 
 /***/ }),
-/* 161 */
+/* 162 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -21996,7 +19778,7 @@ var Scratch3MotionBlocks = function () {
 module.exports = Scratch3MotionBlocks;
 
 /***/ }),
-/* 162 */
+/* 163 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -22194,7 +19976,7 @@ var Scratch3OperatorsBlocks = function () {
 module.exports = Scratch3OperatorsBlocks;
 
 /***/ }),
-/* 163 */
+/* 164 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -22205,7 +19987,7 @@ var _createClass = function () { function defineProperties(target, props) { for 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
 var Cast = __webpack_require__(12);
-var Clone = __webpack_require__(100);
+var Clone = __webpack_require__(101);
 var Color = __webpack_require__(43);
 var MathUtil = __webpack_require__(20);
 var RenderedTarget = __webpack_require__(61);
@@ -22655,7 +20437,7 @@ var Scratch3PenBlocks = function () {
 module.exports = Scratch3PenBlocks;
 
 /***/ }),
-/* 164 */
+/* 165 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -22725,7 +20507,7 @@ var Scratch3ProcedureBlocks = function () {
 module.exports = Scratch3ProcedureBlocks;
 
 /***/ }),
-/* 165 */
+/* 166 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -22952,7 +20734,7 @@ var Scratch3SensingBlocks = function () {
 module.exports = Scratch3SensingBlocks;
 
 /***/ }),
-/* 166 */
+/* 167 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -22964,7 +20746,7 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
 
 var MathUtil = __webpack_require__(20);
 var Cast = __webpack_require__(12);
-var Clone = __webpack_require__(100);
+var Clone = __webpack_require__(101);
 
 var Scratch3SoundBlocks = function () {
     function Scratch3SoundBlocks(runtime) {
@@ -23331,7 +21113,7 @@ var Scratch3SoundBlocks = function () {
 module.exports = Scratch3SoundBlocks;
 
 /***/ }),
-/* 167 */
+/* 168 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -24240,7 +22022,7 @@ var Scratch3WeDo2Blocks = function () {
 module.exports = Scratch3WeDo2Blocks;
 
 /***/ }),
-/* 168 */
+/* 169 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -24248,7 +22030,7 @@ module.exports = Scratch3WeDo2Blocks;
 
 var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
 
-var mutationAdapter = __webpack_require__(98);
+var mutationAdapter = __webpack_require__(99);
 var html = __webpack_require__(21);
 
 /**
@@ -24412,7 +22194,7 @@ var adapter = function adapter(e) {
 module.exports = adapter;
 
 /***/ }),
-/* 169 */
+/* 170 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -24702,7 +22484,7 @@ var execute = function execute(sequencer, thread) {
 module.exports = execute;
 
 /***/ }),
-/* 170 */
+/* 171 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -24721,7 +22503,7 @@ var MonitorRecord = Record({
 module.exports = MonitorRecord;
 
 /***/ }),
-/* 171 */
+/* 172 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -24738,7 +22520,7 @@ function _possibleConstructorReturn(self, call) { if (!self) { throw new Referen
 function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
 
 var EventEmitter = __webpack_require__(7);
-var Sequencer = __webpack_require__(172);
+var Sequencer = __webpack_require__(173);
 var Blocks = __webpack_require__(30);
 var Thread = __webpack_require__(57);
 
@@ -24748,23 +22530,23 @@ var _require = __webpack_require__(51),
 // Virtual I/O devices.
 
 
-var Clock = __webpack_require__(174);
-var DeviceManager = __webpack_require__(175);
-var Keyboard = __webpack_require__(176);
-var Mouse = __webpack_require__(177);
+var Clock = __webpack_require__(175);
+var DeviceManager = __webpack_require__(176);
+var Keyboard = __webpack_require__(177);
+var Mouse = __webpack_require__(178);
 
 var defaultBlockPackages = {
-    scratch3_control: __webpack_require__(157),
-    scratch3_event: __webpack_require__(159),
-    scratch3_looks: __webpack_require__(160),
-    scratch3_motion: __webpack_require__(161),
-    scratch3_operators: __webpack_require__(162),
-    scratch3_pen: __webpack_require__(163),
-    scratch3_sound: __webpack_require__(166),
-    scratch3_sensing: __webpack_require__(165),
-    scratch3_data: __webpack_require__(158),
-    scratch3_procedures: __webpack_require__(164),
-    scratch3_wedo2: __webpack_require__(167)
+    scratch3_control: __webpack_require__(158),
+    scratch3_event: __webpack_require__(160),
+    scratch3_looks: __webpack_require__(161),
+    scratch3_motion: __webpack_require__(162),
+    scratch3_operators: __webpack_require__(163),
+    scratch3_pen: __webpack_require__(164),
+    scratch3_sound: __webpack_require__(167),
+    scratch3_sensing: __webpack_require__(166),
+    scratch3_data: __webpack_require__(159),
+    scratch3_procedures: __webpack_require__(165),
+    scratch3_wedo2: __webpack_require__(168)
 };
 
 /**
@@ -25996,7 +23778,7 @@ var Runtime = function (_EventEmitter) {
 module.exports = Runtime;
 
 /***/ }),
-/* 172 */
+/* 173 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -26008,7 +23790,7 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
 
 var Timer = __webpack_require__(62);
 var Thread = __webpack_require__(57);
-var execute = __webpack_require__(169);
+var execute = __webpack_require__(170);
 
 var Sequencer = function () {
     function Sequencer(runtime) {
@@ -26268,7 +24050,7 @@ var Sequencer = function () {
 module.exports = Sequencer;
 
 /***/ }),
-/* 173 */
+/* 174 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -26559,7 +24341,7 @@ var Target = function (_EventEmitter) {
 module.exports = Target;
 
 /***/ }),
-/* 174 */
+/* 175 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -26620,7 +24402,7 @@ var Clock = function () {
 module.exports = Clock;
 
 /***/ }),
-/* 175 */
+/* 176 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -26630,8 +24412,8 @@ var _createClass = function () { function defineProperties(target, props) { for 
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
-var got = __webpack_require__(240);
-var io = __webpack_require__(303);
+var got = __webpack_require__(241);
+var io = __webpack_require__(304);
 var querystring = __webpack_require__(22);
 
 /**
@@ -27086,7 +24868,7 @@ var DeviceManager = function () {
 module.exports = DeviceManager;
 
 /***/ }),
-/* 176 */
+/* 177 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -27229,7 +25011,7 @@ var Keyboard = function () {
 module.exports = Keyboard;
 
 /***/ }),
-/* 177 */
+/* 178 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -27341,7 +25123,7 @@ var Mouse = function () {
 module.exports = Mouse;
 
 /***/ }),
-/* 178 */
+/* 179 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -27358,11 +25140,11 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 
 var Blocks = __webpack_require__(30);
 var RenderedTarget = __webpack_require__(61);
-var Sprite = __webpack_require__(99);
+var Sprite = __webpack_require__(100);
 var Color = __webpack_require__(43);
 var log = __webpack_require__(17);
 var uid = __webpack_require__(63);
-var specMap = __webpack_require__(179);
+var specMap = __webpack_require__(180);
 var Variable = __webpack_require__(58);
 var List = __webpack_require__(56);
 
@@ -27842,7 +25624,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 179 */
+/* 180 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -28953,7 +26735,7 @@ var specMap = {
 module.exports = specMap;
 
 /***/ }),
-/* 180 */
+/* 181 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -28965,9 +26747,9 @@ module.exports = specMap;
  * JSON and then generates all needed scratch-vm runtime structures.
  */
 
-var vmPackage = __webpack_require__(307);
+var vmPackage = __webpack_require__(308);
 var Blocks = __webpack_require__(30);
-var Sprite = __webpack_require__(99);
+var Sprite = __webpack_require__(100);
 var Variable = __webpack_require__(58);
 var List = __webpack_require__(56);
 
@@ -29061,7 +26843,7 @@ var parseScratchObject = function parseScratchObject(object, runtime) {
     var target = sprite.createClone();
     // Load target properties from JSON.
     if (object.hasOwnProperty('variables')) {
-        for (var j = 0; j < object.variables.length; j++) {
+        for (var j in object.variables) {
             var variable = object.variables[j];
             var newVariable = new Variable(variable.id, variable.name, variable.value, variable.isPersistent);
             target.variables[newVariable.id] = newVariable;
@@ -29128,7 +26910,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 181 */
+/* 182 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -29162,7 +26944,7 @@ var xmlEscape = function xmlEscape(unsafe) {
 module.exports = xmlEscape;
 
 /***/ }),
-/* 182 */
+/* 183 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -29181,9 +26963,9 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
 var EventEmitter = __webpack_require__(7);
 
 var log = __webpack_require__(17);
-var Runtime = __webpack_require__(171);
-var sb2 = __webpack_require__(178);
-var sb3 = __webpack_require__(180);
+var Runtime = __webpack_require__(172);
+var sb2 = __webpack_require__(179);
+var sb3 = __webpack_require__(181);
 var StringUtil = __webpack_require__(44);
 
 var loadCostume = __webpack_require__(59);
@@ -29948,7 +27730,6 @@ var VirtualMachine = function (_EventEmitter) {
 module.exports = VirtualMachine;
 
 /***/ }),
-/* 183 */,
 /* 184 */,
 /* 185 */,
 /* 186 */,
@@ -29960,7 +27741,8 @@ module.exports = VirtualMachine;
 /* 192 */,
 /* 193 */,
 /* 194 */,
-/* 195 */
+/* 195 */,
+/* 196 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -29985,13 +27767,13 @@ module.exports = Error.captureStackTrace || function (error) {
 
 
 /***/ }),
-/* 196 */,
-/* 197 */
+/* 197 */,
+/* 198 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
-var captureStackTrace = __webpack_require__(195);
+var captureStackTrace = __webpack_require__(196);
 
 function inherits(ctor, superCtor) {
 	ctor.super_ = superCtor;
@@ -30037,7 +27819,6 @@ module.exports = function createErrorClass(className, setup) {
 
 
 /***/ }),
-/* 198 */,
 /* 199 */,
 /* 200 */,
 /* 201 */,
@@ -30048,14 +27829,15 @@ module.exports = function createErrorClass(className, setup) {
 /* 206 */,
 /* 207 */,
 /* 208 */,
-/* 209 */
+/* 209 */,
+/* 210 */
 /***/ (function(module, exports, __webpack_require__) {
 
 /*
   Module dependencies
 */
-var ElementType = __webpack_require__(210);
-var entities = __webpack_require__(235);
+var ElementType = __webpack_require__(211);
+var entities = __webpack_require__(236);
 
 /*
   Boolean Attributes
@@ -30232,7 +28014,7 @@ function renderComment(elem) {
 
 
 /***/ }),
-/* 210 */
+/* 211 */
 /***/ (function(module, exports) {
 
 //Types of elements found in the DOM
@@ -30251,14 +28033,14 @@ module.exports = {
 };
 
 /***/ }),
-/* 211 */
+/* 212 */
 /***/ (function(module, exports, __webpack_require__) {
 
 var ElementType = __webpack_require__(33);
 
 var re_whitespace = /\s+/g;
-var NodePrototype = __webpack_require__(114);
-var ElementPrototype = __webpack_require__(212);
+var NodePrototype = __webpack_require__(115);
+var ElementPrototype = __webpack_require__(213);
 
 function DomHandler(callback, options, elementCB){
 	if(typeof callback === "object"){
@@ -30474,11 +28256,11 @@ module.exports = DomHandler;
 
 
 /***/ }),
-/* 212 */
+/* 213 */
 /***/ (function(module, exports, __webpack_require__) {
 
 // DOM-Level-1-compliant structure
-var NodePrototype = __webpack_require__(114);
+var NodePrototype = __webpack_require__(115);
 var ElementPrototype = module.exports = Object.create(NodePrototype);
 
 var domLvl1 = {
@@ -30500,18 +28282,18 @@ Object.keys(domLvl1).forEach(function(key) {
 
 
 /***/ }),
-/* 213 */
+/* 214 */
 /***/ (function(module, exports, __webpack_require__) {
 
 var DomUtils = module.exports;
 
 [
-	__webpack_require__(218),
 	__webpack_require__(219),
-	__webpack_require__(216),
+	__webpack_require__(220),
 	__webpack_require__(217),
-	__webpack_require__(215),
-	__webpack_require__(214)
+	__webpack_require__(218),
+	__webpack_require__(216),
+	__webpack_require__(215)
 ].forEach(function(ext){
 	Object.keys(ext).forEach(function(key){
 		DomUtils[key] = ext[key].bind(DomUtils);
@@ -30520,7 +28302,7 @@ var DomUtils = module.exports;
 
 
 /***/ }),
-/* 214 */
+/* 215 */
 /***/ (function(module, exports) {
 
 // removeSubsets
@@ -30667,7 +28449,7 @@ exports.uniqueSort = function(nodes) {
 
 
 /***/ }),
-/* 215 */
+/* 216 */
 /***/ (function(module, exports, __webpack_require__) {
 
 var ElementType = __webpack_require__(33);
@@ -30760,7 +28542,7 @@ exports.getElementsByTagType = function(type, element, recurse, limit){
 
 
 /***/ }),
-/* 216 */
+/* 217 */
 /***/ (function(module, exports) {
 
 exports.removeElement = function(elem){
@@ -30843,7 +28625,7 @@ exports.prepend = function(elem, prev){
 
 
 /***/ }),
-/* 217 */
+/* 218 */
 /***/ (function(module, exports, __webpack_require__) {
 
 var isTag = __webpack_require__(33).isTag;
@@ -30948,11 +28730,11 @@ function findAll(test, rootElems){
 
 
 /***/ }),
-/* 218 */
+/* 219 */
 /***/ (function(module, exports, __webpack_require__) {
 
 var ElementType = __webpack_require__(33),
-    getOuterHTML = __webpack_require__(209),
+    getOuterHTML = __webpack_require__(210),
     isTag = ElementType.isTag;
 
 module.exports = {
@@ -30977,7 +28759,7 @@ function getText(elem){
 
 
 /***/ }),
-/* 219 */
+/* 220 */
 /***/ (function(module, exports) {
 
 var getChildren = exports.getChildren = function(elem){
@@ -31007,7 +28789,7 @@ exports.getName = function(elem){
 
 
 /***/ }),
-/* 220 */
+/* 221 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -31090,7 +28872,6 @@ module.exports.DuplexWrapper = DuplexWrapper;
 
 
 /***/ }),
-/* 221 */,
 /* 222 */,
 /* 223 */,
 /* 224 */,
@@ -31104,11 +28885,12 @@ module.exports.DuplexWrapper = DuplexWrapper;
 /* 232 */,
 /* 233 */,
 /* 234 */,
-/* 235 */
+/* 235 */,
+/* 236 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var encode = __webpack_require__(237),
-    decode = __webpack_require__(236);
+var encode = __webpack_require__(238),
+    decode = __webpack_require__(237);
 
 exports.decode = function(data, level){
 	return (!level || level <= 0 ? decode.XML : decode.HTML)(data);
@@ -31143,13 +28925,13 @@ exports.escape = encode.escape;
 
 
 /***/ }),
-/* 236 */
+/* 237 */
 /***/ (function(module, exports, __webpack_require__) {
 
 var entityMap = __webpack_require__(69),
-    legacyMap = __webpack_require__(116),
+    legacyMap = __webpack_require__(117),
     xmlMap    = __webpack_require__(70),
-    decodeCodePoint = __webpack_require__(115);
+    decodeCodePoint = __webpack_require__(116);
 
 var decodeXMLStrict  = getStrictDecoder(xmlMap),
     decodeHTMLStrict = getStrictDecoder(entityMap);
@@ -31220,7 +29002,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 237 */
+/* 238 */
 /***/ (function(module, exports, __webpack_require__) {
 
 var inverseXML = getInverseObj(__webpack_require__(70)),
@@ -31299,49 +29081,20 @@ exports.escape = escapeXML;
 
 
 /***/ }),
-/* 238 */
+/* 239 */
 /***/ (function(module, exports) {
 
-module.exports = {
-	"0": 65533,
-	"128": 8364,
-	"130": 8218,
-	"131": 402,
-	"132": 8222,
-	"133": 8230,
-	"134": 8224,
-	"135": 8225,
-	"136": 710,
-	"137": 8240,
-	"138": 352,
-	"139": 8249,
-	"140": 338,
-	"142": 381,
-	"145": 8216,
-	"146": 8217,
-	"147": 8220,
-	"148": 8221,
-	"149": 8226,
-	"150": 8211,
-	"151": 8212,
-	"152": 732,
-	"153": 8482,
-	"154": 353,
-	"155": 8250,
-	"156": 339,
-	"158": 382,
-	"159": 376
-};
+module.exports = {"0":65533,"128":8364,"130":8218,"131":402,"132":8222,"133":8230,"134":8224,"135":8225,"136":710,"137":8240,"138":352,"139":8249,"140":338,"142":381,"145":8216,"146":8217,"147":8220,"148":8221,"149":8226,"150":8211,"151":8212,"152":732,"153":8482,"154":353,"155":8250,"156":339,"158":382,"159":376}
 
 /***/ }),
-/* 239 */
+/* 240 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 
 var util = __webpack_require__(27);
-var isArrayish = __webpack_require__(255);
+var isArrayish = __webpack_require__(256);
 
 var errorEx = function errorEx(name, properties) {
 	if (!name || name.constructor !== String) {
@@ -31474,7 +29227,7 @@ module.exports = errorEx;
 
 
 /***/ }),
-/* 240 */
+/* 241 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -31482,25 +29235,25 @@ module.exports = errorEx;
 
 var EventEmitter = __webpack_require__(7).EventEmitter;
 var http = __webpack_require__(41);
-var https = __webpack_require__(72);
+var https = __webpack_require__(73);
 var urlLib = __webpack_require__(26);
 var querystring = __webpack_require__(22);
-var objectAssign = __webpack_require__(271);
+var objectAssign = __webpack_require__(272);
 var PassThrough = __webpack_require__(8).PassThrough;
-var duplexer2 = __webpack_require__(220);
-var isStream = __webpack_require__(258);
-var readAllStream = __webpack_require__(294);
-var timedOut = __webpack_require__(304);
-var urlParseLax = __webpack_require__(305);
-var lowercaseKeys = __webpack_require__(259);
-var isRedirect = __webpack_require__(256);
-var PinkiePromise = __webpack_require__(133);
-var unzipResponse = __webpack_require__(309);
-var createErrorClass = __webpack_require__(197);
-var nodeStatusCodes = __webpack_require__(270);
-var parseJson = __webpack_require__(283);
-var isRetryAllowed = __webpack_require__(257);
-var pkg = __webpack_require__(241);
+var duplexer2 = __webpack_require__(221);
+var isStream = __webpack_require__(259);
+var readAllStream = __webpack_require__(295);
+var timedOut = __webpack_require__(305);
+var urlParseLax = __webpack_require__(306);
+var lowercaseKeys = __webpack_require__(260);
+var isRedirect = __webpack_require__(257);
+var PinkiePromise = __webpack_require__(134);
+var unzipResponse = __webpack_require__(311);
+var createErrorClass = __webpack_require__(198);
+var nodeStatusCodes = __webpack_require__(271);
+var parseJson = __webpack_require__(284);
+var isRetryAllowed = __webpack_require__(258);
+var pkg = __webpack_require__(242);
 
 function requestAsEventEmitter(opts) {
 	opts = opts || {};
@@ -31883,157 +29636,12 @@ module.exports = got;
 /* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(25).setImmediate, __webpack_require__(0).Buffer))
 
 /***/ }),
-/* 241 */
+/* 242 */
 /***/ (function(module, exports) {
 
-module.exports = {
-	"_args": [
-		[
-			{
-				"raw": "got@5.7.1",
-				"scope": null,
-				"escapedName": "got",
-				"name": "got",
-				"rawSpec": "5.7.1",
-				"spec": "5.7.1",
-				"type": "version"
-			},
-			"/home/travis/build/LLK/scratch-vm"
-		]
-	],
-	"_from": "got@5.7.1",
-	"_id": "got@5.7.1",
-	"_inCache": true,
-	"_location": "/got",
-	"_nodeVersion": "0.10.48",
-	"_npmOperationalInternal": {
-		"host": "packages-18-east.internal.npmjs.com",
-		"tmp": "tmp/got-5.7.1.tgz_1478113400687_0.6078383799176663"
-	},
-	"_npmUser": {
-		"name": "floatdrop",
-		"email": "floatdrop@gmail.com"
-	},
-	"_npmVersion": "2.15.1",
-	"_phantomChildren": {},
-	"_requested": {
-		"raw": "got@5.7.1",
-		"scope": null,
-		"escapedName": "got",
-		"name": "got",
-		"rawSpec": "5.7.1",
-		"spec": "5.7.1",
-		"type": "version"
-	},
-	"_requiredBy": [
-		"#DEV:/"
-	],
-	"_resolved": "https://registry.npmjs.org/got/-/got-5.7.1.tgz",
-	"_shasum": "5f81635a61e4a6589f180569ea4e381680a51f35",
-	"_shrinkwrap": null,
-	"_spec": "got@5.7.1",
-	"_where": "/home/travis/build/LLK/scratch-vm",
-	"browser": {
-		"unzip-response": false
-	},
-	"bugs": {
-		"url": "https://github.com/sindresorhus/got/issues"
-	},
-	"dependencies": {
-		"create-error-class": "^3.0.1",
-		"duplexer2": "^0.1.4",
-		"is-redirect": "^1.0.0",
-		"is-retry-allowed": "^1.0.0",
-		"is-stream": "^1.0.0",
-		"lowercase-keys": "^1.0.0",
-		"node-status-codes": "^1.0.0",
-		"object-assign": "^4.0.1",
-		"parse-json": "^2.1.0",
-		"pinkie-promise": "^2.0.0",
-		"read-all-stream": "^3.0.0",
-		"readable-stream": "^2.0.5",
-		"timed-out": "^3.0.0",
-		"unzip-response": "^1.0.2",
-		"url-parse-lax": "^1.0.0"
-	},
-	"description": "Simplified HTTP/HTTPS requests",
-	"devDependencies": {
-		"ava": "^0.16.0",
-		"coveralls": "^2.11.4",
-		"form-data": "^2.1.1",
-		"get-port": "^2.0.0",
-		"get-stream": "^2.3.0",
-		"into-stream": "^2.0.0",
-		"nyc": "^8.1.0",
-		"pem": "^1.4.4",
-		"pify": "^2.3.0",
-		"tempfile": "^1.1.1",
-		"xo": "0.16.x"
-	},
-	"directories": {},
-	"dist": {
-		"shasum": "5f81635a61e4a6589f180569ea4e381680a51f35",
-		"tarball": "https://registry.npmjs.org/got/-/got-5.7.1.tgz"
-	},
-	"engines": {
-		"node": ">=0.10.0 <7"
-	},
-	"files": [
-		"index.js"
-	],
-	"gitHead": "856b4caf16b02ce28ef0d92e83cf434a50b71e84",
-	"homepage": "https://github.com/sindresorhus/got#readme",
-	"keywords": [
-		"http",
-		"https",
-		"get",
-		"got",
-		"url",
-		"uri",
-		"request",
-		"util",
-		"utility",
-		"simple",
-		"curl",
-		"wget",
-		"fetch"
-	],
-	"license": "MIT",
-	"maintainers": [
-		{
-			"name": "sindresorhus",
-			"email": "sindresorhus@gmail.com"
-		},
-		{
-			"name": "floatdrop",
-			"email": "floatdrop@gmail.com"
-		},
-		{
-			"name": "kevva",
-			"email": "kevinmartensson@gmail.com"
-		}
-	],
-	"name": "got",
-	"optionalDependencies": {},
-	"readme": "ERROR: No README data found!",
-	"repository": {
-		"type": "git",
-		"url": "git+https://github.com/sindresorhus/got.git"
-	},
-	"scripts": {
-		"coveralls": "nyc report --reporter=text-lcov | coveralls",
-		"test": "xo && nyc ava"
-	},
-	"version": "5.7.1",
-	"xo": {
-		"ignores": [
-			"test/**"
-		]
-	}
-};
+module.exports = {"_args":[[{"raw":"got@5.7.1","scope":null,"escapedName":"got","name":"got","rawSpec":"5.7.1","spec":"5.7.1","type":"version"},"/home/travis/build/LLK/scratch-vm"]],"_from":"got@5.7.1","_id":"got@5.7.1","_inCache":true,"_location":"/got","_nodeVersion":"0.10.48","_npmOperationalInternal":{"host":"packages-18-east.internal.npmjs.com","tmp":"tmp/got-5.7.1.tgz_1478113400687_0.6078383799176663"},"_npmUser":{"name":"floatdrop","email":"floatdrop@gmail.com"},"_npmVersion":"2.15.1","_phantomChildren":{},"_requested":{"raw":"got@5.7.1","scope":null,"escapedName":"got","name":"got","rawSpec":"5.7.1","spec":"5.7.1","type":"version"},"_requiredBy":["#DEV:/"],"_resolved":"https://registry.npmjs.org/got/-/got-5.7.1.tgz","_shasum":"5f81635a61e4a6589f180569ea4e381680a51f35","_shrinkwrap":null,"_spec":"got@5.7.1","_where":"/home/travis/build/LLK/scratch-vm","browser":{"unzip-response":false},"bugs":{"url":"https://github.com/sindresorhus/got/issues"},"dependencies":{"create-error-class":"^3.0.1","duplexer2":"^0.1.4","is-redirect":"^1.0.0","is-retry-allowed":"^1.0.0","is-stream":"^1.0.0","lowercase-keys":"^1.0.0","node-status-codes":"^1.0.0","object-assign":"^4.0.1","parse-json":"^2.1.0","pinkie-promise":"^2.0.0","read-all-stream":"^3.0.0","readable-stream":"^2.0.5","timed-out":"^3.0.0","unzip-response":"^1.0.2","url-parse-lax":"^1.0.0"},"description":"Simplified HTTP/HTTPS requests","devDependencies":{"ava":"^0.16.0","coveralls":"^2.11.4","form-data":"^2.1.1","get-port":"^2.0.0","get-stream":"^2.3.0","into-stream":"^2.0.0","nyc":"^8.1.0","pem":"^1.4.4","pify":"^2.3.0","tempfile":"^1.1.1","xo":"0.16.x"},"directories":{},"dist":{"shasum":"5f81635a61e4a6589f180569ea4e381680a51f35","tarball":"https://registry.npmjs.org/got/-/got-5.7.1.tgz"},"engines":{"node":">=0.10.0 <7"},"files":["index.js"],"gitHead":"856b4caf16b02ce28ef0d92e83cf434a50b71e84","homepage":"https://github.com/sindresorhus/got#readme","keywords":["http","https","get","got","url","uri","request","util","utility","simple","curl","wget","fetch"],"license":"MIT","maintainers":[{"name":"sindresorhus","email":"sindresorhus@gmail.com"},{"name":"floatdrop","email":"floatdrop@gmail.com"},{"name":"kevva","email":"kevinmartensson@gmail.com"}],"name":"got","optionalDependencies":{},"readme":"ERROR: No README data found!","repository":{"type":"git","url":"git+https://github.com/sindresorhus/got.git"},"scripts":{"coveralls":"nyc report --reporter=text-lcov | coveralls","test":"xo && nyc ava"},"version":"5.7.1","xo":{"ignores":["test/**"]}}
 
 /***/ }),
-/* 242 */,
 /* 243 */,
 /* 244 */,
 /* 245 */,
@@ -32041,7 +29649,8 @@ module.exports = {
 /* 247 */,
 /* 248 */,
 /* 249 */,
-/* 250 */
+/* 250 */,
+/* 251 */
 /***/ (function(module, exports, __webpack_require__) {
 
 module.exports = CollectingHandler;
@@ -32102,7 +29711,7 @@ CollectingHandler.prototype.restart = function(){
 
 
 /***/ }),
-/* 251 */
+/* 252 */
 /***/ (function(module, exports, __webpack_require__) {
 
 var index = __webpack_require__(21),
@@ -32203,7 +29812,7 @@ module.exports = FeedHandler;
 
 
 /***/ }),
-/* 252 */
+/* 253 */
 /***/ (function(module, exports, __webpack_require__) {
 
 module.exports = ProxyHandler;
@@ -32235,12 +29844,12 @@ Object.keys(EVENTS).forEach(function(name){
 });
 
 /***/ }),
-/* 253 */
+/* 254 */
 /***/ (function(module, exports, __webpack_require__) {
 
 module.exports = Stream;
 
-var Parser = __webpack_require__(122);
+var Parser = __webpack_require__(123);
 
 function Stream(options){
 	Parser.call(this, new Cbs(this), options);
@@ -32275,8 +29884,8 @@ Object.keys(EVENTS).forEach(function(name){
 });
 
 /***/ }),
-/* 254 */,
-/* 255 */
+/* 255 */,
+/* 256 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -32293,7 +29902,7 @@ module.exports = function isArrayish(obj) {
 
 
 /***/ }),
-/* 256 */
+/* 257 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -32314,7 +29923,7 @@ module.exports = function (x) {
 
 
 /***/ }),
-/* 257 */
+/* 258 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -32381,7 +29990,7 @@ module.exports = function (err) {
 
 
 /***/ }),
-/* 258 */
+/* 259 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -32409,7 +30018,7 @@ isStream.transform = function (stream) {
 
 
 /***/ }),
-/* 259 */
+/* 260 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -32427,7 +30036,7 @@ module.exports = function (obj) {
 
 
 /***/ }),
-/* 260 */
+/* 261 */
 /***/ (function(module, exports) {
 
 function M() { this._events = {}; }
@@ -32483,7 +30092,7 @@ module.exports = M;
 
 
 /***/ }),
-/* 261 */
+/* 262 */
 /***/ (function(module, exports, __webpack_require__) {
 
 // default filter
@@ -32545,11 +30154,11 @@ module.exports = Filter;
 
 
 /***/ }),
-/* 262 */
+/* 263 */
 /***/ (function(module, exports, __webpack_require__) {
 
 var Transform = __webpack_require__(16),
-    Filter = __webpack_require__(261);
+    Filter = __webpack_require__(262);
 
 var log = new Transform(),
     slice = Array.prototype.slice;
@@ -32596,7 +30205,7 @@ exports.enable = function() {
 
 
 /***/ }),
-/* 263 */
+/* 264 */
 /***/ (function(module, exports, __webpack_require__) {
 
 var Transform = __webpack_require__(16),
@@ -32616,7 +30225,7 @@ module.exports = logger;
 
 
 /***/ }),
-/* 264 */
+/* 265 */
 /***/ (function(module, exports, __webpack_require__) {
 
 var Transform = __webpack_require__(16);
@@ -32647,18 +30256,18 @@ logger.write = function(name, level, args) {
 };
 
 logger.formatters = ['color', 'minilog'];
-logger.color = __webpack_require__(265);
-logger.minilog = __webpack_require__(266);
+logger.color = __webpack_require__(266);
+logger.minilog = __webpack_require__(267);
 
 module.exports = logger;
 
 
 /***/ }),
-/* 265 */
+/* 266 */
 /***/ (function(module, exports, __webpack_require__) {
 
 var Transform = __webpack_require__(16),
-    color = __webpack_require__(124);
+    color = __webpack_require__(125);
 
 var colors = { debug: ['cyan'], info: ['purple' ], warn: [ 'yellow', true ], error: [ 'red', true ] },
     logger = new Transform();
@@ -32678,11 +30287,11 @@ module.exports = logger;
 
 
 /***/ }),
-/* 266 */
+/* 267 */
 /***/ (function(module, exports, __webpack_require__) {
 
 var Transform = __webpack_require__(16),
-    color = __webpack_require__(124),
+    color = __webpack_require__(125),
     colors = { debug: ['gray'], info: ['purple' ], warn: [ 'yellow', true ], error: [ 'red', true ] },
     logger = new Transform();
 
@@ -32710,15 +30319,15 @@ module.exports = logger;
 
 
 /***/ }),
-/* 267 */
+/* 268 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var Minilog = __webpack_require__(262);
+var Minilog = __webpack_require__(263);
 
 var oldEnable = Minilog.enable,
     oldDisable = Minilog.disable,
     isChrome = (typeof navigator != 'undefined' && /chrome/i.test(navigator.userAgent)),
-    console = __webpack_require__(264);
+    console = __webpack_require__(265);
 
 // Use a more capable logging backend if on Chrome
 Minilog.defaultBackend = (isChrome ? console.minilog : console);
@@ -32750,15 +30359,15 @@ Minilog.disable = function() {
 exports = module.exports = Minilog;
 
 exports.backends = {
-  array: __webpack_require__(263),
+  array: __webpack_require__(264),
   browser: Minilog.defaultBackend,
-  localStorage: __webpack_require__(269),
-  jQuery: __webpack_require__(268)
+  localStorage: __webpack_require__(270),
+  jQuery: __webpack_require__(269)
 };
 
 
 /***/ }),
-/* 268 */
+/* 269 */
 /***/ (function(module, exports, __webpack_require__) {
 
 var Transform = __webpack_require__(16);
@@ -32838,7 +30447,7 @@ module.exports = AjaxLogger;
 
 
 /***/ }),
-/* 269 */
+/* 270 */
 /***/ (function(module, exports, __webpack_require__) {
 
 var Transform = __webpack_require__(16),
@@ -32858,7 +30467,7 @@ logger.write = function(name, level, args) {
 module.exports = logger;
 
 /***/ }),
-/* 270 */
+/* 271 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -32927,7 +30536,7 @@ module.exports = {
 
 
 /***/ }),
-/* 271 */
+/* 272 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -33024,7 +30633,6 @@ module.exports = shouldUseNative() ? Object.assign : function (target, source) {
 
 
 /***/ }),
-/* 272 */,
 /* 273 */,
 /* 274 */,
 /* 275 */,
@@ -33035,13 +30643,14 @@ module.exports = shouldUseNative() ? Object.assign : function (target, source) {
 /* 280 */,
 /* 281 */,
 /* 282 */,
-/* 283 */
+/* 283 */,
+/* 284 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
-var errorEx = __webpack_require__(239);
-var fallback = __webpack_require__(284);
+var errorEx = __webpack_require__(240);
+var fallback = __webpack_require__(285);
 
 var JSONError = errorEx('JSONError', {
 	fileName: errorEx.append('in %s')
@@ -33077,7 +30686,7 @@ module.exports = function (x, reviver, filename) {
 
 
 /***/ }),
-/* 284 */
+/* 285 */
 /***/ (function(module, exports, __webpack_require__) {
 
 /*
@@ -33088,7 +30697,7 @@ module.exports = function (x, reviver, filename) {
 
 // RTFM: http://www.ecma-international.org/publications/files/ECMA-ST/Ecma-262.pdf
 
-var Uni = __webpack_require__(285)
+var Uni = __webpack_require__(286)
 
 function isHexDigit(x) {
   return (x >= '0' && x <= '9')
@@ -33835,7 +31444,7 @@ module.exports.tokenize = function tokenizeJSON(input, options) {
 
 
 /***/ }),
-/* 285 */
+/* 286 */
 /***/ (function(module, exports) {
 
 
@@ -33912,8 +31521,8 @@ module.exports.NonAsciiIdentifierPart = /[\xAA\xB5\xBA\xC0-\xD6\xD8-\xF6\xF8-\u0
 
 
 /***/ }),
-/* 286 */,
-/* 287 */
+/* 287 */,
+/* 288 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -34213,7 +31822,7 @@ module.exports = Promise;
 /* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(2), __webpack_require__(25).setImmediate))
 
 /***/ }),
-/* 288 */
+/* 289 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -34234,12 +31843,12 @@ module.exports = function (url) {
 
 
 /***/ }),
-/* 289 */,
 /* 290 */,
 /* 291 */,
 /* 292 */,
 /* 293 */,
-/* 294 */
+/* 294 */,
+/* 295 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -34247,7 +31856,7 @@ module.exports = function (url) {
 
 var Writable = __webpack_require__(8).Writable;
 var inherits = __webpack_require__(27).inherits;
-var Promise = __webpack_require__(133);
+var Promise = __webpack_require__(134);
 
 function BufferStream() {
 	Writable.call(this, { objectMode: true });
@@ -34319,7 +31928,6 @@ module.exports = function read(stream, options, cb) {
 /* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(0).Buffer))
 
 /***/ }),
-/* 295 */,
 /* 296 */,
 /* 297 */,
 /* 298 */,
@@ -34327,7 +31935,8 @@ module.exports = function read(stream, options, cb) {
 /* 300 */,
 /* 301 */,
 /* 302 */,
-/* 303 */
+/* 303 */,
+/* 304 */
 /***/ (function(module, exports, __webpack_require__) {
 
 (function webpackUniversalModuleDefinition(root, factory) {
@@ -42533,7 +40142,7 @@ return /******/ (function(modules) { // webpackBootstrap
 //# sourceMappingURL=socket.io.js.map
 
 /***/ }),
-/* 304 */
+/* 305 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -42595,13 +40204,13 @@ module.exports = function (req, time) {
 
 
 /***/ }),
-/* 305 */
+/* 306 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 var url = __webpack_require__(26);
-var prependHttp = __webpack_require__(288);
+var prependHttp = __webpack_require__(289);
 
 module.exports = function (x) {
 	var withProtocol = prependHttp(x);
@@ -42616,78 +40225,22 @@ module.exports = function (x) {
 
 
 /***/ }),
-/* 306 */,
-/* 307 */
+/* 307 */,
+/* 308 */
 /***/ (function(module, exports) {
 
-module.exports = {
-	"name": "scratch-vm",
-	"version": "0.1.0",
-	"description": "Virtual Machine for Scratch 3.0",
-	"author": "Massachusetts Institute of Technology",
-	"license": "BSD-3-Clause",
-	"homepage": "https://github.com/LLK/scratch-vm#readme",
-	"repository": {
-		"type": "git",
-		"url": "git+ssh://git@github.com/LLK/scratch-vm.git"
-	},
-	"main": "./dist/node/scratch-vm.js",
-	"scripts": {
-		"build": "./node_modules/.bin/webpack --progress --colors --bail",
-		"coverage": "./node_modules/.bin/tap ./test/{unit,integration}/*.js --coverage --coverage-report=lcov",
-		"deploy": "touch playground/.nojekyll && ./node_modules/.bin/gh-pages -t -d playground -m \"Build for $(git log --pretty=format:%H -n1)\"",
-		"lint": "./node_modules/.bin/eslint .",
-		"prepublish": "in-publish && npm run build || not-in-publish",
-		"start": "./node_modules/.bin/webpack-dev-server",
-		"tap": "./node_modules/.bin/tap ./test/{unit,integration}/*.js",
-		"tap:unit": "./node_modules/.bin/tap ./test/unit/*.js",
-		"tap:integration": "./node_modules/.bin/tap ./test/integration/*.js",
-		"test": "npm run lint && npm run tap",
-		"watch": "./node_modules/.bin/webpack --progress --colors --watch",
-		"version": "./node_modules/.bin/json -f package.json -I -e \"this.repository.sha = '$(git log -n1 --pretty=format:%H)'\""
-	},
-	"devDependencies": {
-		"adm-zip": "0.4.7",
-		"babel-core": "^6.24.1",
-		"babel-eslint": "^7.1.1",
-		"babel-loader": "^7.0.0",
-		"babel-preset-es2015": "^6.24.1",
-		"copy-webpack-plugin": "4.0.1",
-		"eslint": "^3.16.0",
-		"eslint-config-scratch": "^3.1.0",
-		"expose-loader": "0.7.3",
-		"gh-pages": "^0.12.0",
-		"got": "5.7.1",
-		"highlightjs": "^9.8.0",
-		"htmlparser2": "3.9.2",
-		"immutable": "3.8.1",
-		"in-publish": "^2.0.0",
-		"json": "^9.0.4",
-		"lodash.defaultsdeep": "4.6.0",
-		"minilog": "3.1.0",
-		"promise": "7.1.1",
-		"scratch-audio": "latest",
-		"scratch-blocks": "latest",
-		"scratch-render": "latest",
-		"scratch-storage": "^0.2.0",
-		"script-loader": "0.7.0",
-		"socket.io-client": "1.7.3",
-		"stats.js": "^0.17.0",
-		"tap": "^10.2.0",
-		"webpack": "^2.4.1",
-		"webpack-dev-server": "^2.4.1"
-	}
-};
+module.exports = {"name":"scratch-vm","version":"0.1.0","description":"Virtual Machine for Scratch 3.0","author":"Massachusetts Institute of Technology","license":"BSD-3-Clause","homepage":"https://github.com/LLK/scratch-vm#readme","repository":{"type":"git","url":"git+ssh://git@github.com/LLK/scratch-vm.git"},"main":"./dist/node/scratch-vm.js","scripts":{"build":"./node_modules/.bin/webpack --progress --colors --bail","coverage":"./node_modules/.bin/tap ./test/{unit,integration}/*.js --coverage --coverage-report=lcov","deploy":"touch playground/.nojekyll && ./node_modules/.bin/gh-pages -t -d playground -m \"Build for $(git log --pretty=format:%H -n1)\"","lint":"./node_modules/.bin/eslint .","prepublish":"in-publish && npm run build || not-in-publish","start":"./node_modules/.bin/webpack-dev-server","tap":"./node_modules/.bin/tap ./test/{unit,integration}/*.js","tap:unit":"./node_modules/.bin/tap ./test/unit/*.js","tap:integration":"./node_modules/.bin/tap ./test/integration/*.js","test":"npm run lint && npm run tap","watch":"./node_modules/.bin/webpack --progress --colors --watch","version":"./node_modules/.bin/json -f package.json -I -e \"this.repository.sha = '$(git log -n1 --pretty=format:%H)'\""},"devDependencies":{"adm-zip":"0.4.7","babel-core":"^6.24.1","babel-eslint":"^7.1.1","babel-loader":"^7.0.0","babel-preset-es2015":"^6.24.1","copy-webpack-plugin":"4.0.1","eslint":"^3.16.0","eslint-config-scratch":"^3.1.0","expose-loader":"0.7.3","gh-pages":"^0.12.0","got":"5.7.1","highlightjs":"^9.8.0","htmlparser2":"3.9.2","immutable":"3.8.1","in-publish":"^2.0.0","json":"^9.0.4","lodash.defaultsdeep":"4.6.0","minilog":"3.1.0","promise":"7.1.1","scratch-audio":"latest","scratch-blocks":"latest","scratch-render":"latest","scratch-storage":"^0.2.0","script-loader":"0.7.0","socket.io-client":"1.7.3","stats.js":"^0.17.0","tap":"^10.2.0","webpack":"^2.4.1","webpack-dev-server":"^2.4.1"}}
 
 /***/ }),
-/* 308 */,
-/* 309 */
+/* 309 */,
+/* 310 */,
+/* 311 */
 /***/ (function(module, exports) {
 
 /* (ignored) */
 
 /***/ }),
-/* 310 */
+/* 312 */
 /***/ (function(module, exports) {
 
 /* (ignored) */
