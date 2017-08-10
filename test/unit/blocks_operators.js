@@ -141,6 +141,13 @@ test('length', t => {
     t.end();
 });
 
+test('contains', t => {
+    t.strictEqual(blocks.contains({STRING1: 'hello world', STRING2: 'hello'}), true);
+    t.strictEqual(blocks.contains({STRING1: 'foo', STRING2: 'bar'}), false);
+    t.strictEqual(blocks.contains({STRING1: 'HeLLo world', STRING2: 'hello'}), true);
+    t.end();
+});
+
 test('mod', t => {
     t.strictEqual(blocks.mod({NUM1: 1, NUM2: 1}), 0);
     t.strictEqual(blocks.mod({NUM1: 3, NUM2: 6}), 3);
