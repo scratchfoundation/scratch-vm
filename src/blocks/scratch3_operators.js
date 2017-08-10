@@ -109,8 +109,10 @@ class Scratch3OperatorsBlocks {
     }
     
     contains (args) {
-        return Cast.toString(args.STRING1).toLowerCase()
-            .includes(Cast.toString(args.STRING2).toLowerCase());
+        const format = function (string) {
+            return Cast.toString(string).toLowerCase()
+        }
+        return format(args.STRING1).includes(format(args.STRING2))
     }
 
     mod (args) {
