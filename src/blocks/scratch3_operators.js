@@ -109,7 +109,8 @@ class Scratch3OperatorsBlocks {
     }
     
     contains (args) {
-        return Cast.toString(args.STRING1).toLowerCase().includes(Cast.toString(args.STRING2).toLowerCase());
+        return Cast.toString(args.STRING1).toLowerCase()
+            .includes(Cast.toString(args.STRING2).toLowerCase());
     }
 
     mod (args) {
