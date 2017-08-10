@@ -30,6 +30,7 @@ class Scratch3OperatorsBlocks {
             operator_join: this.join,
             operator_letter_of: this.letterOf,
             operator_length: this.length,
+            operator_contains: this.contains,
             operator_mod: this.mod,
             operator_round: this.round,
             operator_mathop: this.mathop
@@ -105,6 +106,10 @@ class Scratch3OperatorsBlocks {
 
     length (args) {
         return Cast.toString(args.STRING).length;
+    }
+    
+    contains (args) {
+        return Cast.toString(args.STRING1).includes(Cast.toString(args.STRING2));
     }
 
     mod (args) {
