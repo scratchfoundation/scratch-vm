@@ -52,24 +52,29 @@ class Scratch3MotionBlocks {
         util.target.setXY(x, y);
     }
 
-    goTo (args, util) {
+    getTarget (TO, util) {
         let targetX = 0;
         let targetY = 0;
-        if (args.TO === '_mouse_') {
+        if (TO === '_mouse_') {
             targetX = util.ioQuery('mouse', 'getX');
             targetY = util.ioQuery('mouse', 'getY');
-        } else if (args.TO === '_random_') {
+        } else if (TO === '_random_') {
             const stageWidth = this.runtime.constructor.STAGE_WIDTH;
             const stageHeight = this.runtime.constructor.STAGE_HEIGHT;
             targetX = Math.round(stageWidth * (Math.random() - 0.5));
             targetY = Math.round(stageHeight * (Math.random() - 0.5));
         } else {
-            const goToTarget = this.runtime.getSpriteTargetByName(args.TO);
+            const goToTarget = this.runtime.getSpriteTargetByName(TO);
             if (!goToTarget) return;
             targetX = goToTarget.x;
             targetY = goToTarget.y;
         }
-        util.target.setXY(targetX, targetY);
+        return (targetX, targetY);
+    }
+
+    goTo (args, util) {
+        let targetXY = getTarget(args.TO, util);
+        util.target.setXY(targetXY[0], targetXY[1]);
     }
 
     turnRight (args, util) {
@@ -142,54 +147,8 @@ class Scratch3MotionBlocks {
     }
     
     glideTo (args, util) {
-        let targetX = 0;
-        let targetY = 0;
-        if (args.TO === '_mouse_') {
-            targetX = util.ioQuery('mouse', 'getX');
-            targetY = util.ioQuery('mouse', 'getY');
-        } else if (args.TO === '_random_') {
-            const stageWidth = this.runtime.constructor.STAGE_WIDTH;
-            const stageHeight = this.runtime.constructor.STAGE_HEIGHT;
-            targetX = Math.round(stageWidth * (Math.random() - 0.5));
-            targetY = Math.round(stageHeight * (Math.random() - 0.5));
-        } else {
-            const goToTarget = this.runtime.getSpriteTargetByName(args.TO);
-            if (!goToTarget) return;
-            targetX = goToTarget.x;
-            targetY = goToTarget.y;
-        }
-        if (!util.stackFrame.timer) {
-            // First time: save data for future use.
-            util.stackFrame.timer = new Timer();
-            util.stackFrame.timer.start();
-            util.stackFrame.duration = Cast.toNumber(args.SECS);
-            util.stackFrame.startX = util.target.x;
-            util.stackFrame.startY = util.target.y;
-            util.stackFrame.endX = targetX;
-            util.stackFrame.endY = targetY;
-            if (util.stackFrame.duration <= 0) {
-                // Duration too short to glide.
-                util.target.setXY(util.stackFrame.endX, util.stackFrame.endY);
-                return;
-            }
-            util.yield();
-        } else {
-            const timeElapsed = util.stackFrame.timer.timeElapsed();
-            if (timeElapsed < util.stackFrame.duration * 1000) {
-                // In progress: move to intermediate position.
-                const frac = timeElapsed / (util.stackFrame.duration * 1000);
-                const dx = frac * (util.stackFrame.endX - util.stackFrame.startX);
-                const dy = frac * (util.stackFrame.endY - util.stackFrame.startY);
-                util.target.setXY(
-                    util.stackFrame.startX + dx,
-                    util.stackFrame.startY + dy
-                );
-                util.yield();
-            } else {
-                // Finished: move to final position.
-                util.target.setXY(util.stackFrame.endX, util.stackFrame.endY);
-            }
-        }
+        let targetXY = getTarget(args.TO, util);
+        glide({SECS:args.SECS, X:targetXY[0], Y:targetXY[1]}, util);
     }
 
     ifOnEdgeBounce (args, util) {
