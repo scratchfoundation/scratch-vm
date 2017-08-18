@@ -69,7 +69,7 @@ class Scratch3MotionBlocks {
             targetX = goToTarget.x;
             targetY = goToTarget.y;
         }
-        return (targetX, targetY);
+        return [targetX, targetY];
     }
 
     goTo (args, util) {
