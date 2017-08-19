@@ -74,7 +74,7 @@ class Scratch3MotionBlocks {
 
     goTo (args, util) {
         let targetXY = getTarget(args.TO, util);
-        util.target.setXY(targetXY[0], targetXY[1]);
+        if (targetXY) {util.target.setXY(targetXY[0], targetXY[1]);}
     }
 
     turnRight (args, util) {
@@ -148,7 +148,7 @@ class Scratch3MotionBlocks {
     
     glideTo (args, util) {
         let targetXY = getTarget(args.TO, util);
-        glide({SECS:args.SECS, X:targetXY[0], Y:targetXY[1]}, util);
+        if (targetXY) {glide({SECS:args.SECS, X:targetXY[0], Y:targetXY[1]}, util);}
     }
 
     ifOnEdgeBounce (args, util) {
