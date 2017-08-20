@@ -151,7 +151,7 @@ class Scratch3MotionBlocks {
     glideTo (args, util) {
         const targetXY = this.getTarget(args.TO, util);
         if (targetXY) {
-            this.glide({SECS:args.SECS, X:targetXY[0], Y:targetXY[1]}, util);
+            this.glide({SECS: args.SECS, X: targetXY[0], Y: targetXY[1]}, util);
         }
     }
 
