@@ -28,16 +28,18 @@ const BlockType = require('./block-type');
  * @property {string} color1 - the primary color for this category, in '#rrggbb' format
  * @property {string} color2 - the secondary color for this category, in '#rrggbb' format
  * @property {string} color3 - the tertiary color for this category, in '#rrggbb' format
+ * @property {Array.<BlockInfo> block - the blocks in this category
+ */
+
+/**
+ * @typedef {object} PendingExtensionWorker - Information about an extension worker still initializing
+ * @property {string} extensionURL - the URL of the extension to be loaded by this worker
+ * @property {Function} resolve - function to call on successful worker startup
+ * @property {Function} reject - function to call on failed worker startup
  */
 
 class ExtensionManager {
     constructor () {
-        /**
-         * The list of current active extension workers.
-         * @type {Array.<ExtensionWorker>}
-         */
-        this.workers = [];
-
         /**
          * The ID number to provide to the next extension worker.
          * @type {int}
@@ -45,10 +47,18 @@ class ExtensionManager {
         this.nextExtensionWorker = 0;
 
         /**
-         * The list of extension URLs which have been requested but not yet loaded in a worker.
-         * @type {Array}
+         * FIFO queue of extensions which have been requested but not yet loaded in a worker,
+         * along with promise resolution functions to call once the worker is ready or failed.
+         *
+         * @type {Array.<PendingExtensionWorker>}
          */
-        this.pendingExtensionURLs = [];
+        this.pendingExtensions = [];
+
+        /**
+         * Map of worker ID to workers which have been allocated but have not yet finished initialization.
+         * @type {Array.<PendingExtensionWorker>}
+         */
+        this.pendingWorkers = [];
 
         dispatch.setService('extensions', this).catch(e => {
             log.error(`ExtensionManager was unable to register extension service: ${JSON.stringify(e)}`);
@@ -56,27 +66,45 @@ class ExtensionManager {
     }
 
     foo () {
-        this.loadExtensionURL('extensions/example-extension.js');
+        return this.loadExtensionURL('extensions/example-extension.js');
     }
 
+    /**
+     * Load an extension by URL
+     * @param {string} extensionURL - the URL for the extension to load
+     * @returns {Promise} resolved once the extension is loaded and initialized or rejected on failure
+     */
     loadExtensionURL (extensionURL) {
-        // If we `require` this at the global level it breaks non-webpack targets, including tests
-        const ExtensionWorker = require('worker-loader!./extension-worker');
+        return new Promise((resolve, reject) => {
+            // If we `require` this at the global level it breaks non-webpack targets, including tests
+            const ExtensionWorker = require('worker-loader!./extension-worker');
 
-        this.pendingExtensionURLs.push(extensionURL);
-        dispatch.addWorker(new ExtensionWorker());
+            this.pendingExtensions.push({extensionURL, resolve, reject});
+            dispatch.addWorker(new ExtensionWorker());
+        });
     }
 
     allocateWorker () {
         const id = this.nextExtensionWorker++;
-        const extFile = this.pendingExtensionURLs.shift();
-        return [id, extFile];
+        const workerInfo = this.pendingExtensions.shift();
+        this.pendingWorkers[id] = workerInfo;
+        return [id, workerInfo.extensionURL];
     }
 
     registerExtensionService (serviceName) {
         dispatch.call(serviceName, 'getInfo').then(info => {
             this._registerExtensionInfo(serviceName, info);
         });
+    }
+
+    onWorkerInit (id, e) {
+        const workerInfo = this.pendingWorkers[id];
+        delete this.pendingWorkers[id];
+        if (e) {
+            workerInfo.reject(e);
+        } else {
+            workerInfo.resolve(id);
+        }
     }
 
     _registerExtensionInfo (serviceName, extensionInfo) {
@@ -115,7 +143,7 @@ class ExtensionManager {
                 result.push(this._prepareBlockInfo(serviceName, blockInfo));
             } catch (e) {
                 // TODO: more meaningful error reporting
-                log.error(`Skipping malformed block: ${e}`);
+                log.error(`Skipping malformed block: ${JSON.stringify(e)}`);
             }
             return result;
         }, []);

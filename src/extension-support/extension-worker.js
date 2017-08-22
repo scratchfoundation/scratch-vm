@@ -8,13 +8,23 @@ class ExtensionWorker {
     constructor () {
         this.nextExtensionId = 0;
 
+        this.initialRegistrations = [];
+
         dispatch.waitForConnection.then(() => {
             dispatch.call('extensions', 'allocateWorker').then(x => {
                 const [id, extension] = x;
                 this.workerId = id;
 
-                // TODO: catch and report any exceptions here
-                importScripts(extension);
+                try {
+                    importScripts(extension);
+
+                    const initialRegistrations = this.initialRegistrations;
+                    this.initialRegistrations = null;
+
+                    Promise.all(initialRegistrations).then(() => dispatch.call('extensions', 'onWorkerInit', id));
+                } catch (e) {
+                    dispatch.call('extensions', 'onWorkerInit', id, e);
+                }
             });
         });
 
@@ -25,8 +35,12 @@ class ExtensionWorker {
         const extensionId = this.nextExtensionId++;
         this.extensions.push(extensionObject);
         const serviceName = `extension.${this.workerId}.${extensionId}`;
-        return dispatch.setService(serviceName, extensionObject)
+        const promise = dispatch.setService(serviceName, extensionObject)
             .then(() => dispatch.call('extensions', 'registerExtensionService', serviceName));
+        if (this.initialRegistrations) {
+            this.initialRegistrations.push(promise);
+        }
+        return promise;
     }
 }
 
