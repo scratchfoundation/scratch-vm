@@ -13333,6 +13333,12 @@ var Thread = function () {
         this.status = 0; /* Thread.STATUS_RUNNING */
 
         /**
+         * Whether the thread is killed in the middle of execution.
+         * @type {boolean}
+         */
+        this.isKilled = false;
+
+        /**
          * Target of this thread.
          * @type {?Target}
          */
@@ -23151,6 +23157,7 @@ var Runtime = function (_EventEmitter) {
                     continue;
                 }
                 if (this.threads[i].target === target) {
+                    this.threads[i].isKilled = true;
                     this._removeThread(this.threads[i]);
                 }
             }
@@ -23866,6 +23873,9 @@ var Sequencer = function () {
                         // Normal-mode thread: step.
                         this.stepThread(activeThread);
                         activeThread.warpTimer = null;
+                        if (activeThread.isKilled) {
+                            i--; // if the thread is removed from the list (killed), do not increase index
+                        }
                     }
                     if (activeThread.status === Thread.STATUS_RUNNING) {
                         numActiveThreads++;
