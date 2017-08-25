@@ -102,10 +102,10 @@ class Runtime extends EventEmitter {
 
         /**
          * Map to look up all block information by extended opcode.
-         * @type {Object.<string, {info:BlockInfo, json:object, xml:string}>}
+         * @type {Array.<CategoryInfo>}
          * @private
          */
-        this._blockInfo = {};
+        this._blockInfo = [];
 
         /**
          * Map to look up hat blocks' metadata.
@@ -363,13 +363,16 @@ class Runtime extends EventEmitter {
             name: extensionInfo.name,
             color1: '#FF6680',
             color2: '#FF4D6A',
-            color3: '#FF3355'
+            color3: '#FF3355',
+            blocks: []
         };
+
+        this._blockInfo.push(categoryInfo);
 
         for (const blockInfo of extensionInfo.blocks) {
             const convertedBlock = this._convertForScratchBlocks(blockInfo, categoryInfo);
             const opcode = convertedBlock.json.id;
-            this._blockInfo[opcode] = convertedBlock;
+            categoryInfo.blocks.push(convertedBlock);
             this._primitives[opcode] = convertedBlock.info.func;
         }
     }
@@ -469,6 +472,30 @@ class Runtime extends EventEmitter {
             json: blockJSON,
             xml: blockXML
         };
+    }
+
+    /**
+     * @returns {string} scratch-blocks XML description for all dynamic blocks, wrapped in <category> elements.
+     */
+    getBlocksXML () {
+        const xmlParts = [];
+        for (const categoryInfo of this._blockInfo) {
+            const {name, color1, color2} = categoryInfo;
+            xmlParts.push(`<category name="${name}" colour="${color1}" secondaryColour="${color2}">`);
+            // @todo only add this label for user-loaded extensions?
+            xmlParts.push(`<label text="${name}" web-class="extensionLabel"/>`);
+            xmlParts.push.apply(xmlParts, categoryInfo.blocks.map(blockInfo => blockInfo.xml));
+            xmlParts.push('</category>');
+        }
+        return xmlParts.join('\n');
+    }
+
+    /**
+     * @returns {Array.<string>} - an array containing the scratch-blocks JSON information for each dynamic block.
+     */
+    getBlocksJSON () {
+        return this._blockInfo.reduce(
+            (result, categoryInfo) => result.concat(categoryInfo.blocks.map(blockInfo => blockInfo.json)), []);
     }
 
     /**
