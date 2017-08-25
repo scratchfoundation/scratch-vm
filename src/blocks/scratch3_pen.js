@@ -214,7 +214,9 @@ class Scratch3PenBlocks {
             pen_changepenshadeby: this.changePenShadeBy,
             pen_setpenshadeto: this.setPenShadeToNumber,
             pen_changepensizeby: this.changePenSizeBy,
-            pen_setpensizeto: this.setPenSizeTo
+            pen_setpensizeto: this.setPenSizeTo,
+            pen_changepentransparencyby: this.changePenTransparencyBy,
+            pen_setpentransparencyto: this.setPenTransparencyTo
         };
     }
 
@@ -370,6 +372,32 @@ class Scratch3PenBlocks {
     setPenSizeTo (args, util) {
         const penAttributes = this._getPenState(util.target).penAttributes;
         penAttributes.diameter = this._clampPenSize(Cast.toNumber(args.SIZE));
+    }
+    
+    /**
+     * The pen "change pen transparency by {number}" block changes the "transparency" of the pen, related to the RGB value.
+     * @param {object} args - the block arguments.
+     *  @property {number} TRANSPARENCY - the amount of desired transparency change.
+     * @param {object} util - utility object provided by the runtime.
+     */
+    changePenTransparencyBy (args, util) {
+        const penState = this._getPenState(util.target);
+        
+        penState.penAttributes.color4f[3] = penState.penAttributes.color4f[3] + (args.TRANSPARENCY / 255);
+        this._updatePenColor(penState);
+    }
+    
+    /**
+     * The pen "set pen transparency to {number}" block sets the "transparency" of the pen, related to the RGB value.
+     * @param {object} args - the block arguments.
+     *  @property {number} TRANSPARENCY - the amount of desired transparency change.
+     * @param {object} util - utility object provided by the runtime.
+     */
+    setPenTransparencyTo (args, util) {
+        const penState = this._getPenState(util.target);
+        
+        penState.penAttributes.color4f[3] = args.TRANSPARENCY / 255;
+        this._updatePenColor(penState);
     }
 }
 
