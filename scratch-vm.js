@@ -5814,10 +5814,10 @@ var Blocks = function () {
         }
 
         /**
-         * Get the next block for a particular block
-         * @param {?string} id ID of block to get the next block for
-         * @return {?string} ID of next block in the sequence
-         */
+          * Get the next block for a particular block
+          * @param {?string} id ID of block to get the next block for
+          * @return {?string} ID of next block in the sequence
+          */
 
     }, {
         key: 'getNextBlock',
@@ -8221,9 +8221,8 @@ var StringUtil = function () {
             var index = text.indexOf(separator);
             if (index >= 0) {
                 return [text.substring(0, index), text.substring(index + 1)];
-            } else {
-                return [text, null];
             }
+            return [text, null];
         }
     }]);
 
@@ -13274,10 +13273,10 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
  */
 
 /**
- * @param {!string} name Name of the list.
- * @param {Array} contents Contents of the list, as an array.
- * @constructor
- */
+  * @param {!string} name Name of the list.
+  * @param {Array} contents Contents of the list, as an array.
+  * @constructor
+  */
 var List = function List(name, contents) {
     _classCallCheck(this, List);
 
@@ -19645,7 +19644,20 @@ var Scratch3MotionBlocks = function () {
     }, {
         key: 'glide',
         value: function glide(args, util) {
-            if (!util.stackFrame.timer) {
+            if (util.stackFrame.timer) {
+                var timeElapsed = util.stackFrame.timer.timeElapsed();
+                if (timeElapsed < util.stackFrame.duration * 1000) {
+                    // In progress: move to intermediate position.
+                    var frac = timeElapsed / (util.stackFrame.duration * 1000);
+                    var dx = frac * (util.stackFrame.endX - util.stackFrame.startX);
+                    var dy = frac * (util.stackFrame.endY - util.stackFrame.startY);
+                    util.target.setXY(util.stackFrame.startX + dx, util.stackFrame.startY + dy);
+                    util.yield();
+                } else {
+                    // Finished: move to final position.
+                    util.target.setXY(util.stackFrame.endX, util.stackFrame.endY);
+                }
+            } else {
                 // First time: save data for future use.
                 util.stackFrame.timer = new Timer();
                 util.stackFrame.timer.start();
@@ -19660,19 +19672,6 @@ var Scratch3MotionBlocks = function () {
                     return;
                 }
                 util.yield();
-            } else {
-                var timeElapsed = util.stackFrame.timer.timeElapsed();
-                if (timeElapsed < util.stackFrame.duration * 1000) {
-                    // In progress: move to intermediate position.
-                    var frac = timeElapsed / (util.stackFrame.duration * 1000);
-                    var dx = frac * (util.stackFrame.endX - util.stackFrame.startX);
-                    var dy = frac * (util.stackFrame.endY - util.stackFrame.startY);
-                    util.target.setXY(util.stackFrame.startX + dx, util.stackFrame.startY + dy);
-                    util.yield();
-                } else {
-                    // Finished: move to final position.
-                    util.target.setXY(util.stackFrame.endX, util.stackFrame.endY);
-                }
             }
         }
     }, {
@@ -21099,8 +21098,8 @@ var Scratch3SoundBlocks = function () {
         }
 
         /** The minimum and maximum tempo values, in bpm.
-        * @type {{min: number, max: number}}
-        */
+         * @type {{min: number, max: number}}
+         */
 
     }, {
         key: 'TEMPO_RANGE',
@@ -21109,8 +21108,8 @@ var Scratch3SoundBlocks = function () {
         }
 
         /** The minimum and maximum values for each sound effect.
-        * @type {{effect:{min: number, max: number}}}
-        */
+         * @type {{effect:{min: number, max: number}}}
+         */
 
     }, {
         key: 'EFFECT_RANGE',
@@ -22303,12 +22302,10 @@ var execute = function execute(sequencer, thread) {
                         sequencer.retireThread(thread);
                     }
                 }
-            } else {
+            } else if (!resolvedValue) {
                 // Not an edge-activated hat: retire the thread
                 // if predicate was false.
-                if (!resolvedValue) {
-                    sequencer.retireThread(thread);
-                }
+                sequencer.retireThread(thread);
             }
         } else {
             // In a non-hat, report the value visually if necessary if
@@ -24034,11 +24031,9 @@ var Sequencer = function () {
                 var doWarp = definitionBlock.mutation.warp;
                 if (doWarp) {
                     thread.peekStackFrame().warpMode = true;
-                } else {
+                } else if (isRecursive) {
                     // In normal-mode threads, yield any time we have a recursive call.
-                    if (isRecursive) {
-                        thread.status = Thread.STATUS_YIELD;
-                    }
+                    thread.status = Thread.STATUS_YIELD;
                 }
             }
         }
@@ -40248,7 +40243,7 @@ module.exports = function (x) {
 /* 308 */
 /***/ (function(module, exports) {
 
-module.exports = {"name":"scratch-vm","version":"0.1.0","description":"Virtual Machine for Scratch 3.0","author":"Massachusetts Institute of Technology","license":"BSD-3-Clause","homepage":"https://github.com/LLK/scratch-vm#readme","repository":{"type":"git","url":"git+ssh://git@github.com/LLK/scratch-vm.git"},"main":"./dist/node/scratch-vm.js","scripts":{"build":"./node_modules/.bin/webpack --progress --colors --bail","coverage":"./node_modules/.bin/tap ./test/{unit,integration}/*.js --coverage --coverage-report=lcov","deploy":"touch playground/.nojekyll && ./node_modules/.bin/gh-pages -t -d playground -m \"Build for $(git log --pretty=format:%H -n1)\"","lint":"./node_modules/.bin/eslint .","prepublish":"in-publish && npm run build || not-in-publish","start":"./node_modules/.bin/webpack-dev-server","tap":"./node_modules/.bin/tap ./test/{unit,integration}/*.js","tap:unit":"./node_modules/.bin/tap ./test/unit/*.js","tap:integration":"./node_modules/.bin/tap ./test/integration/*.js","test":"npm run lint && npm run tap","watch":"./node_modules/.bin/webpack --progress --colors --watch","version":"./node_modules/.bin/json -f package.json -I -e \"this.repository.sha = '$(git log -n1 --pretty=format:%H)'\""},"devDependencies":{"adm-zip":"0.4.7","babel-core":"^6.24.1","babel-eslint":"^7.1.1","babel-loader":"^7.0.0","babel-preset-es2015":"^6.24.1","copy-webpack-plugin":"4.0.1","eslint":"^3.16.0","eslint-config-scratch":"^3.1.0","expose-loader":"0.7.3","gh-pages":"^0.12.0","got":"5.7.1","highlightjs":"^9.8.0","htmlparser2":"3.9.2","immutable":"3.8.1","in-publish":"^2.0.0","json":"^9.0.4","lodash.defaultsdeep":"4.6.0","minilog":"3.1.0","promise":"7.1.1","scratch-audio":"latest","scratch-blocks":"latest","scratch-render":"latest","scratch-storage":"^0.2.0","script-loader":"0.7.0","socket.io-client":"1.7.3","stats.js":"^0.17.0","tap":"^10.2.0","tiny-worker":"^2.1.1","webpack":"^2.4.1","webpack-dev-server":"^2.4.1"}}
+module.exports = {"name":"scratch-vm","version":"0.1.0","description":"Virtual Machine for Scratch 3.0","author":"Massachusetts Institute of Technology","license":"BSD-3-Clause","homepage":"https://github.com/LLK/scratch-vm#readme","repository":{"type":"git","url":"git+ssh://git@github.com/LLK/scratch-vm.git"},"main":"./dist/node/scratch-vm.js","scripts":{"build":"./node_modules/.bin/webpack --progress --colors --bail","coverage":"./node_modules/.bin/tap ./test/{unit,integration}/*.js --coverage --coverage-report=lcov","deploy":"touch playground/.nojekyll && ./node_modules/.bin/gh-pages -t -d playground -m \"Build for $(git log --pretty=format:%H -n1)\"","lint":"./node_modules/.bin/eslint .","prepublish":"in-publish && npm run build || not-in-publish","start":"./node_modules/.bin/webpack-dev-server","tap":"./node_modules/.bin/tap ./test/{unit,integration}/*.js","tap:unit":"./node_modules/.bin/tap ./test/unit/*.js","tap:integration":"./node_modules/.bin/tap ./test/integration/*.js","test":"npm run lint && npm run tap","watch":"./node_modules/.bin/webpack --progress --colors --watch","version":"./node_modules/.bin/json -f package.json -I -e \"this.repository.sha = '$(git log -n1 --pretty=format:%H)'\""},"devDependencies":{"adm-zip":"0.4.7","babel-core":"^6.24.1","babel-eslint":"^7.1.1","babel-loader":"^7.0.0","babel-preset-es2015":"^6.24.1","copy-webpack-plugin":"4.0.1","eslint":"^4.5.0","eslint-config-scratch":"^4.0.0","expose-loader":"0.7.3","gh-pages":"^0.12.0","got":"5.7.1","highlightjs":"^9.8.0","htmlparser2":"3.9.2","immutable":"3.8.1","in-publish":"^2.0.0","json":"^9.0.4","lodash.defaultsdeep":"4.6.0","minilog":"3.1.0","promise":"7.1.1","scratch-audio":"latest","scratch-blocks":"latest","scratch-render":"latest","scratch-storage":"^0.2.0","script-loader":"0.7.0","socket.io-client":"1.7.3","stats.js":"^0.17.0","tap":"^10.2.0","tiny-worker":"^2.1.1","webpack":"^2.4.1","webpack-dev-server":"^2.4.1"}}
 
 /***/ }),
 /* 309 */,

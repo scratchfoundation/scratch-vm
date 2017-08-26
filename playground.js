@@ -288,10 +288,10 @@ window.onload = function () {
         vm.setTurboMode(turboOn);
     });
     document.getElementById('compatmode').addEventListener('change',
-    () => {
-        const compatibilityMode = document.getElementById('compatmode').checked;
-        vm.setCompatibilityMode(compatibilityMode);
-    });
+        () => {
+            const compatibilityMode = document.getElementById('compatmode').checked;
+            vm.setCompatibilityMode(compatibilityMode);
+        });
     const tabBlockExplorer = document.getElementById('tab-blockexplorer');
     const tabThreadExplorer = document.getElementById('tab-threadexplorer');
     const tabRenderExplorer = document.getElementById('tab-renderexplorer');
