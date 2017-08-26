@@ -228,11 +228,9 @@ class Sequencer {
             const doWarp = definitionBlock.mutation.warp;
             if (doWarp) {
                 thread.peekStackFrame().warpMode = true;
-            } else {
+            } else if (isRecursive) {
                 // In normal-mode threads, yield any time we have a recursive call.
-                if (isRecursive) {
-                    thread.status = Thread.STATUS_YIELD;
-                }
+                thread.status = Thread.STATUS_YIELD;
             }
         }
     }

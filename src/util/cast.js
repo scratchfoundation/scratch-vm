@@ -95,7 +95,7 @@ class Cast {
      * @return {boolean} True if the argument is all white spaces or null / empty.
      */
     static isWhiteSpace (val) {
-        return val === null || typeof val === 'string' && val.trim().length === 0;
+        return val === null || (typeof val === 'string' && val.trim().length === 0);
     }
 
     /**

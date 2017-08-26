@@ -75,12 +75,12 @@ test('set and clear effects', t => {
     const a = new RenderedTarget(s, r);
     const renderer = new FakeRenderer();
     a.renderer = renderer;
-    for (var effect in a.effects) {
+    for (const effect in a.effects) {
         a.setEffect(effect, 1);
         t.equals(a.effects[effect], 1);
     }
     a.clearEffects();
-    for (effect in a.effects) {
+    for (const effect in a.effects) {
         t.equals(a.effects[effect], 0);
     }
     t.end();

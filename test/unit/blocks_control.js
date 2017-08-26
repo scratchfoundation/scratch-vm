@@ -16,7 +16,7 @@ test('repeat', t => {
     // Test harness (mocks `util`)
     let i = 0;
     const repeat = 10;
-    var util = {
+    const util = {
         stackFrame: Object.create(null),
         startBranch: function () {
             i++;
@@ -38,7 +38,7 @@ test('repeatUntil', t => {
     // Test harness (mocks `util`)
     let i = 0;
     const repeat = 10;
-    var util = {
+    const util = {
         stackFrame: Object.create(null),
         startBranch: function () {
             i++;
