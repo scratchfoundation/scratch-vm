@@ -26,7 +26,7 @@ test('time', t => {
 test('start / timeElapsed', t => {
     const timer = new Timer();
     const delay = 100;
-    const threshold = 1000 / 60;  // 60 hz
+    const threshold = 1000 / 60; // 60 hz
 
     // Start timer
     timer.start();

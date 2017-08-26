@@ -51,20 +51,20 @@ class Scratch3SoundBlocks {
         return {min: 0, max: 100};
     }
 
-     /** The minimum and maximum tempo values, in bpm.
+    /** The minimum and maximum tempo values, in bpm.
      * @type {{min: number, max: number}}
      */
     static get TEMPO_RANGE () {
         return {min: 20, max: 500};
     }
 
-     /** The minimum and maximum values for each sound effect.
+    /** The minimum and maximum values for each sound effect.
      * @type {{effect:{min: number, max: number}}}
      */
     static get EFFECT_RANGE () {
         return {
-            pitch: {min: -600, max: 600},       // -5 to 5 octaves
-            pan: {min: -100, max: 100}          // 100% left to 100% right
+            pitch: {min: -600, max: 600}, // -5 to 5 octaves
+            pan: {min: -100, max: 100} // 100% left to 100% right
         };
     }
 

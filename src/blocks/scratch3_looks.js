@@ -87,7 +87,7 @@ class Scratch3LooksBlocks {
      * @return {Array.<!Thread>} Any threads started by this switch.
      */
     _setCostumeOrBackdrop (target,
-            requestedCostume, optZeroIndex) {
+        requestedCostume, optZeroIndex) {
         if (typeof requestedCostume === 'number') {
             target.setCostume(optZeroIndex ?
                 requestedCostume : requestedCostume - 1);

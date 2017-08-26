@@ -40,10 +40,10 @@ class Mouse {
      */
     postData (data) {
         if (data.x) {
-            this._x = data.x - data.canvasWidth / 2;
+            this._x = data.x - (data.canvasWidth / 2);
         }
         if (data.y) {
-            this._y = data.y - data.canvasHeight / 2;
+            this._y = data.y - (data.canvasHeight / 2);
         }
         if (typeof data.isDown !== 'undefined') {
             this._isDown = data.isDown;

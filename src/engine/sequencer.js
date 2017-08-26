@@ -70,7 +70,7 @@ class Sequencer {
                     this.stepThread(activeThread);
                     activeThread.warpTimer = null;
                     if (activeThread.isKilled) {
-                        i--;    // if the thread is removed from the list (killed), do not increase index
+                        i--; // if the thread is removed from the list (killed), do not increase index
                     }
                 }
                 if (activeThread.status === Thread.STATUS_RUNNING) {
@@ -158,8 +158,8 @@ class Sequencer {
                         // to be re-executed.
                         return;
                     }
-                        // Don't go to the next block for this level of the stack,
-                        // since loops need to be re-executed.
+                    // Don't go to the next block for this level of the stack,
+                    // since loops need to be re-executed.
                     continue;
 
                 } else if (stackFrame.waitingReporter) {
@@ -228,11 +228,9 @@ class Sequencer {
             const doWarp = definitionBlock.mutation.warp;
             if (doWarp) {
                 thread.peekStackFrame().warpMode = true;
-            } else {
+            } else if (isRecursive) {
                 // In normal-mode threads, yield any time we have a recursive call.
-                if (isRecursive) {
-                    thread.status = Thread.STATUS_YIELD;
-                }
+                thread.status = Thread.STATUS_YIELD;
             }
         }
     }

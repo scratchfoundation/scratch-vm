@@ -95,7 +95,7 @@ class Cast {
      * @return {boolean} True if the argument is all white spaces or null / empty.
      */
     static isWhiteSpace (val) {
-        return val === null || typeof val === 'string' && val.trim().length === 0;
+        return val === null || (typeof val === 'string' && val.trim().length === 0);
     }
 
     /**
@@ -120,7 +120,7 @@ class Cast {
             const s2 = String(v2).toLowerCase();
             return s1.localeCompare(s2);
         }
-            // Compare as numbers.
+        // Compare as numbers.
         return n1 - n2;
 
     }

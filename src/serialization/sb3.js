@@ -60,7 +60,7 @@ const parseScratchObject = function (object, runtime) {
         sprite.name = object.name;
     }
     if (object.hasOwnProperty('blocks')) {
-        for (let blockId in object.blocks) {
+        for (const blockId in object.blocks) {
             blocks.createBlock(object.blocks[blockId]);
         }
         // console.log(blocks);
@@ -100,7 +100,7 @@ const parseScratchObject = function (object, runtime) {
     const target = sprite.createClone();
     // Load target properties from JSON.
     if (object.hasOwnProperty('variables')) {
-        for (let j in object.variables) {
+        for (const j in object.variables) {
             const variable = object.variables[j];
             const newVariable = new Variable(
                 variable.id,

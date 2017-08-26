@@ -66,8 +66,8 @@ const execute = function (sequencer, thread) {
      * or after a promise resolves.
      * @param {*} resolvedValue Value eventually returned from the primitive.
      */
-     // @todo move this to callback attached to the thread when we have performance
-     // metrics (dd)
+    // @todo move this to callback attached to the thread when we have performance
+    // metrics (dd)
     const handleReport = function (resolvedValue) {
         thread.pushReportedValue(resolvedValue);
         if (isHat) {
@@ -86,12 +86,10 @@ const execute = function (sequencer, thread) {
                         sequencer.retireThread(thread);
                     }
                 }
-            } else {
+            } else if (!resolvedValue) {
                 // Not an edge-activated hat: retire the thread
                 // if predicate was false.
-                if (!resolvedValue) {
-                    sequencer.retireThread(thread);
-                }
+                sequencer.retireThread(thread);
             }
         } else {
             // In a non-hat, report the value visually if necessary if

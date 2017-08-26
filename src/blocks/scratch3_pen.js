@@ -295,7 +295,7 @@ class Scratch3PenBlocks {
         penState.penAttributes.color4f[0] = rgb.r / 255.0;
         penState.penAttributes.color4f[1] = rgb.g / 255.0;
         penState.penAttributes.color4f[2] = rgb.b / 255.0;
-        if (rgb.hasOwnProperty('a')) {  // Will there always be an 'a'?
+        if (rgb.hasOwnProperty('a')) { // Will there always be an 'a'?
             penState.penAttributes.color4f[3] = rgb.a / 255.0;
         } else {
             penState.penAttributes.color4f[3] = 1;
