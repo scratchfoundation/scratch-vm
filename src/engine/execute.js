@@ -66,8 +66,8 @@ const execute = function (sequencer, thread) {
      * or after a promise resolves.
      * @param {*} resolvedValue Value eventually returned from the primitive.
      */
-     // @todo move this to callback attached to the thread when we have performance
-     // metrics (dd)
+    // @todo move this to callback attached to the thread when we have performance
+    // metrics (dd)
     const handleReport = function (resolvedValue) {
         thread.pushReportedValue(resolvedValue);
         if (isHat) {

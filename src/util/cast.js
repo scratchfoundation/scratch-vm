@@ -120,7 +120,7 @@ class Cast {
             const s2 = String(v2).toLowerCase();
             return s1.localeCompare(s2);
         }
-            // Compare as numbers.
+        // Compare as numbers.
         return n1 - n2;
 
     }

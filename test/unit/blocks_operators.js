@@ -28,8 +28,8 @@ test('multiply', t => {
 
 test('divide', t => {
     t.strictEqual(blocks.divide({NUM1: '2', NUM2: '2'}), 1);
-    t.strictEqual(blocks.divide({NUM1: '1', NUM2: '0'}), Infinity);   // @todo
-    t.ok(isNaN(blocks.divide({NUM1: 'foo', NUM2: 'bar'})));           // @todo
+    t.strictEqual(blocks.divide({NUM1: '1', NUM2: '0'}), Infinity); // @todo
+    t.ok(isNaN(blocks.divide({NUM1: 'foo', NUM2: 'bar'}))); // @todo
     t.end();
 });
 

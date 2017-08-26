@@ -52,7 +52,7 @@ class Blocks {
         return this._scripts;
     }
 
-     /**
+    /**
       * Get the next block for a particular block
       * @param {?string} id ID of block to get the next block for
       * @return {?string} ID of next block in the sequence
@@ -458,10 +458,7 @@ class Blocks {
             `<${tagName}
                 id="${block.id}"
                 type="${block.opcode}"
-                ${block.topLevel ?
-                    `x="${block.x}" y="${block.y}"` :
-                    ''
-                }
+                ${block.topLevel ? `x="${block.x}" y="${block.y}"` : ''}
             >`;
         // Add any mutation. Must come before inputs.
         if (block.mutation) {
