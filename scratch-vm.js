@@ -19555,6 +19555,7 @@ var Scratch3MotionBlocks = function () {
                 motion_pointindirection: this.pointInDirection,
                 motion_pointtowards: this.pointTowards,
                 motion_glidesecstoxy: this.glide,
+                motion_glideto: this.glideTo,
                 motion_ifonedgebounce: this.ifOnEdgeBounce,
                 motion_setrotationstyle: this.setRotationStyle,
                 motion_changexby: this.changeX,
@@ -19583,25 +19584,33 @@ var Scratch3MotionBlocks = function () {
             util.target.setXY(x, y);
         }
     }, {
-        key: 'goTo',
-        value: function goTo(args, util) {
+        key: 'getTargetXY',
+        value: function getTargetXY(targetName, util) {
             var targetX = 0;
             var targetY = 0;
-            if (args.TO === '_mouse_') {
+            if (targetName === '_mouse_') {
                 targetX = util.ioQuery('mouse', 'getX');
                 targetY = util.ioQuery('mouse', 'getY');
-            } else if (args.TO === '_random_') {
+            } else if (targetName === '_random_') {
                 var stageWidth = this.runtime.constructor.STAGE_WIDTH;
                 var stageHeight = this.runtime.constructor.STAGE_HEIGHT;
                 targetX = Math.round(stageWidth * (Math.random() - 0.5));
                 targetY = Math.round(stageHeight * (Math.random() - 0.5));
             } else {
-                var goToTarget = this.runtime.getSpriteTargetByName(args.TO);
+                var goToTarget = this.runtime.getSpriteTargetByName(targetName);
                 if (!goToTarget) return;
                 targetX = goToTarget.x;
                 targetY = goToTarget.y;
             }
-            util.target.setXY(targetX, targetY);
+            return [targetX, targetY];
+        }
+    }, {
+        key: 'goTo',
+        value: function goTo(args, util) {
+            var targetXY = this.getTargetXY(args.TO, util);
+            if (targetXY) {
+                util.target.setXY(targetXY[0], targetXY[1]);
+            }
         }
     }, {
         key: 'turnRight',
@@ -19672,6 +19681,14 @@ var Scratch3MotionBlocks = function () {
                     return;
                 }
                 util.yield();
+            }
+        }
+    }, {
+        key: 'glideTo',
+        value: function glideTo(args, util) {
+            var targetXY = this.getTargetXY(args.TO, util);
+            if (targetXY) {
+                this.glide({ SECS: args.SECS, X: targetXY[0], Y: targetXY[1] }, util);
             }
         }
     }, {
