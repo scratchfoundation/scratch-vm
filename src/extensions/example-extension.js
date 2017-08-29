@@ -34,6 +34,28 @@ class ExampleExtension {
             // in the order intended for display.
             blocks: [
                 {
+                    opcode: 'example-noop',
+                    blockType: Scratch.BlockType.COMMAND,
+                    blockAllThreads: false,
+                    text: 'do nothing',
+                    func: 'noop'
+                },
+                {
+                    opcode: 'example-conditional',
+                    blockType: Scratch.BlockType.CONDITIONAL,
+                    branchCount: 4,
+                    isTerminal: true,
+                    blockAllThreads: false,
+                    text: 'choose [BRANCH]',
+                    arguments: {
+                        BRANCH: {
+                            type: Scratch.ArgumentType.NUMBER,
+                            defaultValue: 1
+                        }
+                    },
+                    func: 'noop'
+                },
+                {
                     // Required: the machine-readable name of this operation.
                     // This will appear in project JSON. Must not contain a '.' character.
                     opcode: 'myReporter', // becomes 'someBlocks.myReporter'
@@ -111,6 +133,18 @@ class ExampleExtension {
                     filter: ['someBlocks.wedo2', 'sprite', 'stage']
                 },
                 {
+                    opcode: 'example-Boolean',
+                    blockType: Scratch.BlockType.BOOLEAN,
+                    text: 'return true',
+                    func: 'returnTrue'
+                },
+                {
+                    opcode: 'example-hat',
+                    blockType: Scratch.BlockType.HAT,
+                    text: 'after forever',
+                    func: 'returnFalse'
+                },
+                {
                     // Another block...
                 }
             ],
@@ -178,6 +212,17 @@ class ExampleExtension {
         const result = args.TEXT.charAt(args.LETTER_NUM);
 
         return ['Letter ', args.LETTER_NUM, ' of ', args.TEXT, ' is ', result, '.'].join('');
+    }
+
+    noop () {
+    }
+
+    returnTrue () {
+        return true;
+    }
+
+    returnFalse () {
+        return false;
     }
 }
 

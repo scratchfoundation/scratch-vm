@@ -295,6 +295,14 @@ class Runtime extends EventEmitter {
     }
 
     /**
+     * Event name for reporting that an extension was added.
+     * @const {string}
+     */
+    static get EXTENSION_WAS_ADDED () {
+        return 'EXTENSION_WAS_ADDED';
+    }
+
+    /**
      * How rapidly we try to step threads by default, in ms.
      */
     static get THREAD_STEP_INTERVAL () {
@@ -371,10 +379,12 @@ class Runtime extends EventEmitter {
 
         for (const blockInfo of extensionInfo.blocks) {
             const convertedBlock = this._convertForScratchBlocks(blockInfo, categoryInfo);
-            const opcode = convertedBlock.json.id;
+            const opcode = convertedBlock.json.type;
             categoryInfo.blocks.push(convertedBlock);
             this._primitives[opcode] = convertedBlock.info.func;
         }
+
+        this.emit(Runtime.EXTENSION_WAS_ADDED, categoryInfo.blocks);
     }
 
     /**
@@ -387,10 +397,8 @@ class Runtime extends EventEmitter {
     _convertForScratchBlocks (blockInfo, categoryInfo) {
         const extendedOpcode = `${categoryInfo.id}.${blockInfo.opcode}`;
         const blockJSON = {
-            id: extendedOpcode,
+            type: extendedOpcode,
             inputsInline: true,
-            previousStatement: null, // null = available connection; undefined = hat block
-            nextStatement: null, // null = available connection; undefined = terminal
             category: categoryInfo.name,
             colour: categoryInfo.color1,
             colourSecondary: categoryInfo.color2,
@@ -436,6 +444,10 @@ class Runtime extends EventEmitter {
         switch (blockInfo.blockType) {
         case BlockType.COMMAND:
             blockJSON.outputShape = ScratchBlocks.OUTPUT_SHAPE_SQUARE;
+            blockJSON.previousStatement = null; // null = available connection; undefined = hat
+            if (!blockInfo.isTerminal) {
+                blockJSON.nextStatement = null; // null = available connection; undefined = terminal
+            }
             break;
         case BlockType.REPORTER:
             blockJSON.output = 'String'; // TODO: distinguish number & string here?
@@ -447,7 +459,7 @@ class Runtime extends EventEmitter {
             break;
         case BlockType.HAT:
             blockJSON.outputShape = ScratchBlocks.OUTPUT_SHAPE_SQUARE;
-            delete blockJSON.previousStatement;
+            blockJSON.nextStatement = null; // null = available connection; undefined = terminal
             break;
         case BlockType.CONDITIONAL:
             // Statement inputs get names like 'SUBSTACK', 'SUBSTACK2', 'SUBSTACK3', ...
@@ -458,6 +470,8 @@ class Runtime extends EventEmitter {
                 };
             }
             blockJSON.outputShape = ScratchBlocks.OUTPUT_SHAPE_SQUARE;
+            blockJSON.previousStatement = null; // null = available connection; undefined = hat
+            blockJSON.nextStatement = null; // null = available connection; undefined = terminal
             break;
         }
 
@@ -659,7 +673,7 @@ class Runtime extends EventEmitter {
             if (this.threads[i].topBlock === topBlockId && this.threads[i].status !== Thread.STATUS_DONE) {
                 const blockContainer = opts.target.blocks;
                 const opcode = blockContainer.getOpcode(blockContainer.getBlock(topBlockId));
-                
+
                 if (this.getIsEdgeActivatedHat(opcode) && this.threads[i].stackClick !== opts.stackClick) {
                     // Allow edge activated hat thread stack click to coexist with
                     // edge activated hat thread that runs every frame

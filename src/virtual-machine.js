@@ -1,6 +1,7 @@
 const EventEmitter = require('events');
 
 const centralDispatch = require('./dispatch/central-dispatch');
+const ExtensionManager = require('./extension-support/extension-manager');
 const log = require('./util/log');
 const Runtime = require('./engine/runtime');
 const sb2 = require('./serialization/sb2');
@@ -63,6 +64,11 @@ class VirtualMachine extends EventEmitter {
         this.runtime.on(Runtime.MONITORS_UPDATE, monitorList => {
             this.emit(Runtime.MONITORS_UPDATE, monitorList);
         });
+        this.runtime.on(Runtime.EXTENSION_WAS_ADDED, blocksInfo => {
+            this.emit(Runtime.EXTENSION_WAS_ADDED, blocksInfo);
+        });
+
+        this.extensionManager = new ExtensionManager();
 
         this.blockListener = this.blockListener.bind(this);
         this.flyoutBlockListener = this.flyoutBlockListener.bind(this);

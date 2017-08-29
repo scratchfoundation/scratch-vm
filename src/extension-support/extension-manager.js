@@ -65,10 +65,6 @@ class ExtensionManager {
         });
     }
 
-    foo () {
-        return this.loadExtensionURL('extensions/example-extension.js');
-    }
-
     /**
      * Load an extension by URL
      * @param {string} extensionURL - the URL for the extension to load
@@ -77,7 +73,7 @@ class ExtensionManager {
     loadExtensionURL (extensionURL) {
         return new Promise((resolve, reject) => {
             // If we `require` this at the global level it breaks non-webpack targets, including tests
-            const ExtensionWorker = require('worker-loader!./extension-worker');
+            const ExtensionWorker = require('worker-loader?name=extension-worker.js!./extension-worker');
 
             this.pendingExtensions.push({extensionURL, resolve, reject});
             dispatch.addWorker(new ExtensionWorker());
