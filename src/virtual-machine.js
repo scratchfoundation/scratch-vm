@@ -341,20 +341,6 @@ class VirtualMachine extends EventEmitter {
     }
 
     /**
-     * Get an SVG string from the renderer.
-     * @param {int} costumeIndex - the index of the sound to be got.
-     * @return {string} the costume's SVG string, or null if it's not an SVG costume.
-     */
-    getCostumeSVG (costumeIndex) {
-        const id = this.editingTarget.sprite.costumes[costumeIndex].assetId;
-        if (id && this.runtime && this.runtime.storage &&
-                this.runtime.storage.get(id).dataFormat === 'svg') {
-            return this.runtime.storage.get(id).decodeText();
-        }
-        return null;
-    }
-
-    /**
      * Update a sound buffer.
      * @param {int} soundIndex - the index of the sound to be updated.
      * @param {AudioBuffer} newBuffer - new audio buffer for the audio engine.
@@ -373,6 +359,40 @@ class VirtualMachine extends EventEmitter {
      */
     deleteSound (soundIndex) {
         this.editingTarget.deleteSound(soundIndex);
+    }
+
+    /**
+     * Get an SVG string from the renderer.
+     * @param {int} costumeIndex - the index of the sound to be got.
+     * @return {string} the costume's SVG string, or null if it's not an SVG costume.
+     */
+    getCostumeSvg (costumeIndex) {
+        const id = this.editingTarget.sprite.costumes[costumeIndex].assetId;
+        if (id && this.runtime && this.runtime.storage &&
+                this.runtime.storage.get(id).dataFormat === 'svg') {
+            return this.runtime.storage.get(id).decodeText();
+        }
+        return null;
+    }
+
+    /**
+     * Update a costume with the given SVG
+     * @param {int} costumeIndex - the index of the costume to be updated.
+     * @param {string} svg - new SVG for the renderer.
+     */
+    updateSvg (costumeIndex, svg) {
+        const costume = this.editingTarget.sprite.costumes[costumeIndex];
+        if (costume && this.runtime && this.runtime.renderer) {
+            const rotationCenter = [
+                costume.rotationCenterX / costume.bitmapResolution,
+                costume.rotationCenterY / costume.bitmapResolution
+            ];
+
+            this.runtime.renderer.updateSVGSkin(costume.skinId, svg, rotationCenter);
+        }
+        // TODO: Also update storage in addition to renderer. Without storage, if you switch
+        // costumes and switch back, you will lose your changes in the paint editor.
+        // TODO: emitTargetsUpdate if we need to update the storage ID on the updated costume;
     }
 
     /**
