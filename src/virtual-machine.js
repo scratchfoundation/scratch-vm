@@ -362,7 +362,7 @@ class VirtualMachine extends EventEmitter {
     }
 
     /**
-     * Get an SVG string from the renderer.
+     * Get an SVG string from storage.
      * @param {int} costumeIndex - the index of the sound to be got.
      * @return {string} the costume's SVG string, or null if it's not an SVG costume.
      */
@@ -392,7 +392,7 @@ class VirtualMachine extends EventEmitter {
         }
         // TODO: Also update storage in addition to renderer. Without storage, if you switch
         // costumes and switch back, you will lose your changes in the paint editor.
-        // TODO: emitTargetsUpdate if we need to update the storage ID on the updated costume;
+        // TODO: emitTargetsUpdate if we need to update the storage ID on the updated costume.
     }
 
     /**
