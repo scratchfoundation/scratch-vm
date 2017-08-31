@@ -382,8 +382,8 @@ class Scratch3PenBlocks {
      */
     changePenTransparencyBy (args, util) {
         const penState = this._getPenState(util.target);
-        
-        penState.penAttributes.color4f[3] = penState.penAttributes.color4f[3] + (args.TRANSPARENCY / 100);
+        const TRANSPARENCY = args.TRANSPARENCY / 100;
+        penState.penAttributes.color4f[3] = penState.penAttributes.color4f[3] + TRANSPARENCY;
         this._updatePenColor(penState);
     }
     
@@ -395,8 +395,8 @@ class Scratch3PenBlocks {
      */
     setPenTransparencyTo (args, util) {
         const penState = this._getPenState(util.target);
-        
-        penState.penAttributes.color4f[3] = args.TRANSPARENCY / 100;
+        const TRANSPARENCY = MathUtil.clamp(args.TRANSPARENCY, 0, 100) / 100;
+        penState.penAttributes.color4f[3] = TRANSPARENCY;
         this._updatePenColor(penState);
     }
 }
