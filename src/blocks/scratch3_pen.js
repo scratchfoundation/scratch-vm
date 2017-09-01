@@ -55,6 +55,7 @@ class Scratch3PenBlocks {
             penDown: false,
             hue: 120,
             shade: 50,
+            transparency: 100,
             penAttributes: {
                 color4f: [0, 0, 1, 1],
                 diameter: 1
@@ -183,11 +184,11 @@ class Scratch3PenBlocks {
         penState.penAttributes.color4f[0] = rgb.r / 255.0;
         penState.penAttributes.color4f[1] = rgb.g / 255.0;
         penState.penAttributes.color4f[2] = rgb.b / 255.0;
-        penState.penAttributes.color4f[3] = 1;
+        penState.penAttributes.color4f[3] = penState.transparency / 100.0;
     }
 
     /**
-     * Wrap a pen hue or shade values to the range [0,200).
+     * Wrap a pen hue or shade values to the range (0,200).
      * @param {number} value - the pen hue or shade value to the proper range.
      * @returns {number} the wrapped value.
      * @private
@@ -195,6 +196,18 @@ class Scratch3PenBlocks {
     _wrapHueOrShade (value) {
         value = value % 200;
         if (value < 0) value += 200;
+        return value;
+    }
+    
+    /**
+     * Wrap a pen transparency value to the range (0, 100).
+     * @param {number} value - the pen transparency value to the proper range.
+     * @returns {number} the wrapped value.
+     * @private
+     */
+    _wrapTransparency (value) {
+        value = value % 100;
+        if (value < 0) value += 100;
         return value;
     }
 
@@ -382,8 +395,7 @@ class Scratch3PenBlocks {
      */
     changePenTransparencyBy (args, util) {
         const penState = this._getPenState(util.target);
-        const TRANSPARENCY = args.TRANSPARENCY / 100;
-        penState.penAttributes.color4f[3] = penState.penAttributes.color4f[3] + TRANSPARENCY;
+        penState.transparency = this._wrapTransparency(penState.transparency + Cast.toNumber(args.TRANSPARENCY));
         this._updatePenColor(penState);
     }
     
@@ -395,8 +407,7 @@ class Scratch3PenBlocks {
      */
     setPenTransparencyTo (args, util) {
         const penState = this._getPenState(util.target);
-        const TRANSPARENCY = MathUtil.clamp(args.TRANSPARENCY, 0, 100) / 100;
-        penState.penAttributes.color4f[3] = TRANSPARENCY;
+        penState.transparency = this._wrapTransparency(Cast.toNumber(args.TRANSPARENCY));
         this._updatePenColor(penState);
     }
 }
