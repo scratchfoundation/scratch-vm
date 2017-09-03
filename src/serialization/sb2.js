@@ -16,6 +16,7 @@ const Variable = require('../engine/variable');
 const List = require('../engine/list');
 
 const loadCostume = require('../import/load-costume.js');
+const loadOldTextCostume = require('../import/load-old-text-costume.js');
 const loadSound = require('../import/load-sound.js');
 
 /**
@@ -186,7 +187,12 @@ const parseScratchObject = function (object, runtime, topLevel) {
                 rotationCenterY: costumeSource.rotationCenterY,
                 skinId: null
             };
-            costumePromises.push(loadCostume(costumeSource.baseLayerMD5, costume, runtime));
+
+            if ('textLayerMD5' in costumeSource) {
+                costumePromises.push(loadOldTextCostume(costumeSource.baseLayerMD5, costumeSource.textLayerMD5, costume, runtime));
+            } else {
+                costumePromises.push(loadCostume(costumeSource.baseLayerMD5, costume, runtime));
+            }
         }
     }
     // Sounds from JSON
