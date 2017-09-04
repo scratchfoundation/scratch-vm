@@ -1,14 +1,7 @@
 const CopyWebpackPlugin = require('copy-webpack-plugin');
 const defaultsDeep = require('lodash.defaultsdeep');
-const glob = require('glob');
 const path = require('path');
 const webpack = require('webpack');
-
-const extensionEntries = glob.sync('./src/extensions/*.js').reduce((bag, extensionPath) => {
-    const nameWithoutExtension = path.basename(extensionPath).replace(/\.[^/.]+$/, '');
-    bag[`extensions/${nameWithoutExtension}`] = extensionPath;
-    return bag;
-}, {});
 
 const base = {
     devServer: {
@@ -39,10 +32,10 @@ module.exports = [
     // Web-compatible
     defaultsDeep({}, base, {
         target: 'web',
-        entry: defaultsDeep({}, extensionEntries, {
+        entry: {
             'scratch-vm': './src/index.js',
             'scratch-vm.min': './src/index.js'
-        }),
+        },
         output: {
             path: path.resolve(__dirname, 'dist/web'),
             filename: '[name].js'
@@ -59,9 +52,9 @@ module.exports = [
     // Node-compatible
     defaultsDeep({}, base, {
         target: 'node',
-        entry: defaultsDeep({}, extensionEntries, {
+        entry: {
             'scratch-vm': './src/index.js'
-        }),
+        },
         output: {
             library: 'VirtualMachine',
             libraryTarget: 'commonjs2',
@@ -72,7 +65,7 @@ module.exports = [
     // Playground
     defaultsDeep({}, base, {
         target: 'web',
-        entry: defaultsDeep({}, extensionEntries, {
+        entry: {
             'scratch-vm': './src/index.js',
             'vendor': [
                 // FPS counter
@@ -88,7 +81,7 @@ module.exports = [
                 // Storage
                 'scratch-storage'
             ]
-        }),
+        },
         output: {
             path: path.resolve(__dirname, 'playground'),
             filename: '[name].js'

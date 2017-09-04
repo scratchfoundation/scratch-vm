@@ -28,7 +28,7 @@ const BlockType = require('./block-type');
  * @property {string} color1 - the primary color for this category, in '#rrggbb' format
  * @property {string} color2 - the secondary color for this category, in '#rrggbb' format
  * @property {string} color3 - the tertiary color for this category, in '#rrggbb' format
- * @property {Array.<BlockInfo> block - the blocks in this category
+ * @property {Array.<BlockInfo>} block - the blocks in this category
  */
 
 /**

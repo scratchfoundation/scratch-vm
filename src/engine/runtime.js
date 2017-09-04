@@ -43,6 +43,7 @@ const ArgumentTypeMap = (() => {
         shadowType: 'text',
         fieldType: 'TEXT'
     };
+    // @TODO: talk to Rachel & co. to figure out what goes here. Make it OK to not have a field. Add `check` support.
     map[ArgumentType.BOOLEAN] = {
         shadowType: ''
     };
@@ -431,11 +432,12 @@ class Runtime extends EventEmitter {
             const argInfo = blockInfo.arguments[placeholder] || {};
             const argTypeInfo = ArgumentTypeMap[argInfo.type] || {};
             const defaultValue = (typeof argInfo.defaultValue === 'undefined' ? '' : argInfo.defaultValue.toString());
-            inputList.push(`<value name="${placeholder
-                }"><shadow type="${argTypeInfo.shadowType
-                }"><field name="${argTypeInfo.fieldType
-                }">${defaultValue
-                }</field></shadow></value>`
+            inputList.push(
+                `<value name="${placeholder}">` +
+                  `<shadow type="${argTypeInfo.shadowType}">` +
+                    `<field name="${argTypeInfo.fieldType}">${defaultValue}</field>` +
+                  '</shadow>' +
+                '</value>'
             );
 
             return `%${argNum}`;
