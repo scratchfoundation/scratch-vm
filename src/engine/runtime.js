@@ -464,10 +464,11 @@ class Runtime extends EventEmitter {
         case BlockType.CONDITIONAL:
             // Statement inputs get names like 'SUBSTACK', 'SUBSTACK2', 'SUBSTACK3', ...
             for (let branchNum = 1; branchNum <= blockInfo.branchCount; ++branchNum) {
-                blockJSON[`args${branchNum}`] = {
+                blockJSON[`message${branchNum}`] = '%1';
+                blockJSON[`args${branchNum}`] = [{
                     type: 'input_statement',
                     name: `SUBSTACK${branchNum > 1 ? branchNum : ''}`
-                };
+                }];
             }
             blockJSON.outputShape = ScratchBlocks.OUTPUT_SHAPE_SQUARE;
             blockJSON.previousStatement = null; // null = available connection; undefined = hat
