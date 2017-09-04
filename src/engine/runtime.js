@@ -298,8 +298,8 @@ class Runtime extends EventEmitter {
      * Event name for reporting that an extension was added.
      * @const {string}
      */
-    static get EXTENSION_WAS_ADDED () {
-        return 'EXTENSION_WAS_ADDED';
+    static get EXTENSION_ADDED () {
+        return 'EXTENSION_ADDED';
     }
 
     /**
@@ -384,7 +384,7 @@ class Runtime extends EventEmitter {
             this._primitives[opcode] = convertedBlock.info.func;
         }
 
-        this.emit(Runtime.EXTENSION_WAS_ADDED, categoryInfo.blocks);
+        this.emit(Runtime.EXTENSION_ADDED, categoryInfo.blocks);
     }
 
     /**

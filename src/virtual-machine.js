@@ -64,8 +64,8 @@ class VirtualMachine extends EventEmitter {
         this.runtime.on(Runtime.MONITORS_UPDATE, monitorList => {
             this.emit(Runtime.MONITORS_UPDATE, monitorList);
         });
-        this.runtime.on(Runtime.EXTENSION_WAS_ADDED, blocksInfo => {
-            this.emit(Runtime.EXTENSION_WAS_ADDED, blocksInfo);
+        this.runtime.on(Runtime.EXTENSION_ADDED, blocksInfo => {
+            this.emit(Runtime.EXTENSION_ADDED, blocksInfo);
         });
 
         this.extensionManager = new ExtensionManager();
