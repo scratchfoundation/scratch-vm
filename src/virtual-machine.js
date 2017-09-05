@@ -379,6 +379,8 @@ class VirtualMachine extends EventEmitter {
      * Update a costume with the given SVG
      * @param {int} costumeIndex - the index of the costume to be updated.
      * @param {string} svg - new SVG for the renderer.
+     * @param {number} rotationCenterX x of point about which the costume rotates, relative to its upper left corner
+     * @param {number} rotationCenterY y of point about which the costume rotates, relative to its upper left corner
      */
     updateSvg (costumeIndex, svg, rotationCenterX, rotationCenterY) {
         const costume = this.editingTarget.sprite.costumes[costumeIndex];
