@@ -384,9 +384,9 @@ class VirtualMachine extends EventEmitter {
      */
     updateSvg (costumeIndex, svg, rotationCenterX, rotationCenterY) {
         const costume = this.editingTarget.sprite.costumes[costumeIndex];
-        costume.rotationCenterX = rotationCenterX;
-        costume.rotationCenterY = rotationCenterY;
         if (costume && this.runtime && this.runtime.renderer) {
+            costume.rotationCenterX = rotationCenterX;
+            costume.rotationCenterY = rotationCenterY;
             this.runtime.renderer.updateSVGSkin(costume.skinId, svg, [rotationCenterX, rotationCenterY]);
         }
         // @todo: Also update storage in addition to renderer. Without storage, if you switch
