@@ -1,8 +1,6 @@
 const EventEmitter = require('events');
 const {OrderedMap} = require('immutable');
 
-const ScratchBlocks = require('scratch-blocks');
-
 const ArgumentType = require('../extension-support/argument-type');
 const Blocks = require('./blocks');
 const BlockType = require('../extension-support/block-type');
@@ -49,6 +47,32 @@ const ArgumentTypeMap = (() => {
     };
     return map;
 })();
+
+/**
+ * These constants are copied from scratch-blocks/core/constants.js
+ * @TODO find a way to require() these... maybe make a scratch-blocks/dist/constants.js or something like that?
+ * @readonly
+ * @enum {int}
+ */
+const ScratchBlocksConstants = {
+    /**
+     * ENUM for output shape: hexagonal (booleans/predicates).
+     * @const
+     */
+    OUTPUT_SHAPE_HEXAGONAL: 1,
+
+    /**
+     * ENUM for output shape: rounded (numbers).
+     * @const
+     */
+    OUTPUT_SHAPE_ROUND: 2,
+
+    /**
+     * ENUM for output shape: squared (any/all values; strings).
+     * @const
+     */
+    OUTPUT_SHAPE_SQUARE: 3
+};
 
 /**
  * Manages targets, scripts, and the sequencer.
@@ -445,7 +469,7 @@ class Runtime extends EventEmitter {
 
         switch (blockInfo.blockType) {
         case BlockType.COMMAND:
-            blockJSON.outputShape = ScratchBlocks.OUTPUT_SHAPE_SQUARE;
+            blockJSON.outputShape = ScratchBlocksConstants.OUTPUT_SHAPE_SQUARE;
             blockJSON.previousStatement = null; // null = available connection; undefined = hat
             if (!blockInfo.isTerminal) {
                 blockJSON.nextStatement = null; // null = available connection; undefined = terminal
@@ -453,14 +477,14 @@ class Runtime extends EventEmitter {
             break;
         case BlockType.REPORTER:
             blockJSON.output = 'String'; // TODO: distinguish number & string here?
-            blockJSON.outputShape = ScratchBlocks.OUTPUT_SHAPE_ROUND;
+            blockJSON.outputShape = ScratchBlocksConstants.OUTPUT_SHAPE_ROUND;
             break;
         case BlockType.BOOLEAN:
             blockJSON.output = 'Boolean';
-            blockJSON.outputShape = ScratchBlocks.OUTPUT_SHAPE_HEXAGONAL;
+            blockJSON.outputShape = ScratchBlocksConstants.OUTPUT_SHAPE_HEXAGONAL;
             break;
         case BlockType.HAT:
-            blockJSON.outputShape = ScratchBlocks.OUTPUT_SHAPE_SQUARE;
+            blockJSON.outputShape = ScratchBlocksConstants.OUTPUT_SHAPE_SQUARE;
             blockJSON.nextStatement = null; // null = available connection; undefined = terminal
             break;
         case BlockType.CONDITIONAL:
@@ -472,7 +496,7 @@ class Runtime extends EventEmitter {
                     name: `SUBSTACK${branchNum > 1 ? branchNum : ''}`
                 }];
             }
-            blockJSON.outputShape = ScratchBlocks.OUTPUT_SHAPE_SQUARE;
+            blockJSON.outputShape = ScratchBlocksConstants.OUTPUT_SHAPE_SQUARE;
             blockJSON.previousStatement = null; // null = available connection; undefined = hat
             blockJSON.nextStatement = null; // null = available connection; undefined = terminal
             break;
