@@ -379,16 +379,15 @@ class VirtualMachine extends EventEmitter {
      * Update a costume with the given SVG
      * @param {int} costumeIndex - the index of the costume to be updated.
      * @param {string} svg - new SVG for the renderer.
+     * @param {number} rotationCenterX x of point about which the costume rotates, relative to its upper left corner
+     * @param {number} rotationCenterY y of point about which the costume rotates, relative to its upper left corner
      */
-    updateSvg (costumeIndex, svg) {
+    updateSvg (costumeIndex, svg, rotationCenterX, rotationCenterY) {
         const costume = this.editingTarget.sprite.costumes[costumeIndex];
         if (costume && this.runtime && this.runtime.renderer) {
-            const rotationCenter = [
-                costume.rotationCenterX / costume.bitmapResolution,
-                costume.rotationCenterY / costume.bitmapResolution
-            ];
-
-            this.runtime.renderer.updateSVGSkin(costume.skinId, svg, rotationCenter);
+            costume.rotationCenterX = rotationCenterX;
+            costume.rotationCenterY = rotationCenterY;
+            this.runtime.renderer.updateSVGSkin(costume.skinId, svg, [rotationCenterX, rotationCenterY]);
         }
         // @todo: Also update storage in addition to renderer. Without storage, if you switch
         // costumes and switch back, you will lose your changes in the paint editor.
