@@ -440,6 +440,31 @@ class VirtualMachine extends EventEmitter {
     }
 
     /**
+     * Duplicate a sprite.
+     * @param {string} targetId ID of a target whose sprite to duplicate.
+     */
+    duplicateSprite (targetId) {
+        const target = this.runtime.getTargetById(targetId);
+
+        if (target) {
+            if (!target.isSprite()) {
+                throw new Error('Cannot duplicate non-sprite targets.');
+            }
+            const sprite = target.sprite;
+            if (!sprite) {
+                throw new Error('No sprite associated with this target.');
+            }
+
+            target.duplicate().then(newTarget => {
+                this.runtime.targets.push(newTarget);
+                this.setEditingTarget(newTarget.id);
+            });
+        } else {
+            throw new Error('No target with the provided id.');
+        }
+    }
+
+    /**
      * Set the audio engine for the VM/runtime
      * @param {!AudioEngine} audioEngine The audio engine to attach
      */

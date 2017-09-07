@@ -23,18 +23,22 @@ const loadSound = function (sound, runtime) {
     const ext = idParts[1].toLowerCase();
     return runtime.storage.load(runtime.storage.AssetType.Sound, md5, ext)
         .then(soundAsset => {
-            sound.assetId = soundAsset.assetId;
             sound.dataFormat = ext;
-            return runtime.audioEngine.decodeSound(Object.assign(
-                {},
-                sound,
-                {data: soundAsset.data}
-            ));
-        })
-        .then(soundId => {
-            sound.soundId = soundId;
-            return sound;
+            return loadSoundFromAsset(sound, soundAsset, runtime);
         });
 };
 
+const loadSoundFromAsset = function (sound, soundAsset, runtime) {
+    sound.assetId = soundAsset.assetId;
+    return runtime.audioEngine.decodeSound(Object.assign(
+        {},
+        sound,
+        {data: soundAsset.data}
+    )).then(soundId => {
+        sound.soundId = soundId;
+        return sound;
+    });
+};
+
+loadSound.loadSoundFromAsset = loadSoundFromAsset;
 module.exports = loadSound;

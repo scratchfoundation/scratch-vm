@@ -25,55 +25,54 @@ const loadCostume = function (md5ext, costume, runtime) {
     const ext = idParts[1].toLowerCase();
     const assetType = (ext === 'svg') ? AssetType.ImageVector : AssetType.ImageBitmap;
 
+    return runtime.storage.load(assetType, md5, ext).then(costumeAsset => {
+        costume.dataFormat = ext;
+        return loadCostumeFromAsset(costume, costumeAsset, runtime);
+    });
+};
+
+const loadCostumeFromAsset = function (costume, costumeAsset, runtime) {
     const rotationCenter = [
         costume.rotationCenterX / costume.bitmapResolution,
         costume.rotationCenterY / costume.bitmapResolution
     ];
 
-    let promise = runtime.storage.load(assetType, md5, ext).then(costumeAsset => {
-        costume.assetId = costumeAsset.assetId;
-        costume.dataFormat = ext;
-        return costumeAsset;
-    });
-
     if (!runtime.renderer) {
         log.error('No rendering module present; cannot load costume asset: ', md5ext);
-        return promise.then(() => costume);
+        return costume;
+    }
+    const AssetType = runtime.storage.AssetType;
+    costume.assetId = costumeAsset.assetId;
+    if (costumeAsset.assetType === AssetType.ImageVector) {
+        costume.skinId = runtime.renderer.createSVGSkin(costumeAsset.decodeText(), rotationCenter);
+        return costume;
     }
 
-    if (assetType === AssetType.ImageVector) {
-        promise = promise.then(costumeAsset => {
-            costume.skinId = runtime.renderer.createSVGSkin(costumeAsset.decodeText(), rotationCenter);
-            return costume;
-        });
-    } else {
-        promise = promise.then(costumeAsset => (
-            new Promise((resolve, reject) => {
-                const imageElement = new Image();
-                const onError = function () {
+    return new Promise((resolve, reject) => {
+        const imageElement = new Image();
+        const onError = function () {
                     // eslint-disable-next-line no-use-before-define
-                    removeEventListeners();
-                    reject();
-                };
-                const onLoad = function () {
+            removeEventListeners();
+            reject();
+        };
+        const onLoad = function () {
                     // eslint-disable-next-line no-use-before-define
-                    removeEventListeners();
-                    resolve(imageElement);
-                };
-                const removeEventListeners = function () {
-                    imageElement.removeEventListener('error', onError);
-                    imageElement.removeEventListener('load', onLoad);
-                };
-                imageElement.addEventListener('error', onError);
-                imageElement.addEventListener('load', onLoad);
-                imageElement.src = costumeAsset.encodeDataURI();
-            })
-        )).then(imageElement => {
-            costume.skinId = runtime.renderer.createBitmapSkin(imageElement, costume.bitmapResolution, rotationCenter);
-            return costume;
-        });
-    }
-    return promise;
+            removeEventListeners();
+            resolve(imageElement);
+        };
+        const removeEventListeners = function () {
+            imageElement.removeEventListener('error', onError);
+            imageElement.removeEventListener('load', onLoad);
+        };
+        imageElement.addEventListener('error', onError);
+        imageElement.addEventListener('load', onLoad);
+        imageElement.src = costumeAsset.encodeDataURI();
+    }).then(imageElement => {
+        costume.skinId = runtime.renderer.createBitmapSkin(imageElement, costume.bitmapResolution, rotationCenter);
+        return costume;
+    });
 };
+
+loadCostume.loadCostumeFromAsset = loadCostumeFromAsset;
 
 module.exports = loadCostume;

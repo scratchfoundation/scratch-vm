@@ -788,6 +788,33 @@ class RenderedTarget extends Target {
     }
 
     /**
+     * Make a duplicate using a duplicate sprite.
+     * @return {RenderedTarget} New clone.
+     */
+    duplicate () {
+        return this.sprite.duplicate().then(newSprite => {
+            const newTarget = newSprite.createClone();
+            // Copy all properties.
+            // @todo refactor with clone methods
+            newTarget.x = Math.random() * 400 / 2;
+            newTarget.y = Math.random() * 300 / 2;
+            newTarget.direction = this.direction;
+            newTarget.draggable = this.draggable;
+            newTarget.visible = this.visible;
+            newTarget.size = this.size;
+            newTarget.currentCostume = this.currentCostume;
+            newTarget.rotationStyle = this.rotationStyle;
+            newTarget.effects = JSON.parse(JSON.stringify(this.effects));
+            newTarget.variables = JSON.parse(JSON.stringify(this.variables));
+            newTarget.lists = JSON.parse(JSON.stringify(this.lists));
+            newTarget.initDrawable();
+            newTarget.updateAllDrawableProperties();
+            newTarget.goBehindOther(this);
+            return newTarget;
+        });
+    }
+
+    /**
      * Called when the project receives a "green flag."
      * For a rendered target, this clears graphic effects.
      */
