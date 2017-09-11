@@ -32,12 +32,12 @@ const loadCostumeFromAsset = function (costume, costumeAsset, runtime) {
     return new Promise((resolve, reject) => {
         const imageElement = new Image();
         const onError = function () {
-                    // eslint-disable-next-line no-use-before-define
+            // eslint-disable-next-line no-use-before-define
             removeEventListeners();
             reject();
         };
         const onLoad = function () {
-                    // eslint-disable-next-line no-use-before-define
+            // eslint-disable-next-line no-use-before-define
             removeEventListeners();
             resolve(imageElement);
         };
