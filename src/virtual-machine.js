@@ -6,8 +6,8 @@ const sb2 = require('./serialization/sb2');
 const sb3 = require('./serialization/sb3');
 const StringUtil = require('./util/string-util');
 
-const loadCostume = require('./import/load-costume.js');
-const loadSound = require('./import/load-sound.js');
+const {loadCostume} = require('./import/load-costume.js');
+const {loadSound} = require('./import/load-sound.js');
 
 const RESERVED_NAMES = ['_mouse_', '_stage_', '_edge_', '_myself_', '_random_'];
 
