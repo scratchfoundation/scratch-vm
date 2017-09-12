@@ -445,23 +445,17 @@ class VirtualMachine extends EventEmitter {
      */
     duplicateSprite (targetId) {
         const target = this.runtime.getTargetById(targetId);
-
-        if (target) {
-            if (!target.isSprite()) {
-                throw new Error('Cannot duplicate non-sprite targets.');
-            }
-            const sprite = target.sprite;
-            if (!sprite) {
-                throw new Error('No sprite associated with this target.');
-            }
-
-            target.duplicate().then(newTarget => {
-                this.runtime.targets.push(newTarget);
-                this.setEditingTarget(newTarget.id);
-            });
-        } else {
+        if (!target) {
             throw new Error('No target with the provided id.');
+        } else if (!target.isSprite()) {
+            throw new Error('Cannot duplicate non-sprite targets.');
+        } else if (!target.sprite) {
+            throw new Error('No sprite associated with this target.');
         }
+        target.duplicate().then(newTarget => {
+            this.runtime.targets.push(newTarget);
+            this.setEditingTarget(newTarget.id);
+        });
     }
 
     /**
