@@ -15,8 +15,8 @@ const specMap = require('./sb2_specmap');
 const Variable = require('../engine/variable');
 const List = require('../engine/list');
 
-const loadCostume = require('../import/load-costume.js');
-const loadSound = require('../import/load-sound.js');
+const {loadCostume} = require('../import/load-costume.js');
+const {loadSound} = require('../import/load-sound.js');
 
 /**
  * Convert a Scratch 2.0 procedure string (e.g., "my_procedure %s %b %n")

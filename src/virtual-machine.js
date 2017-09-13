@@ -6,8 +6,8 @@ const sb2 = require('./serialization/sb2');
 const sb3 = require('./serialization/sb3');
 const StringUtil = require('./util/string-util');
 
-const loadCostume = require('./import/load-costume.js');
-const loadSound = require('./import/load-sound.js');
+const {loadCostume} = require('./import/load-costume.js');
+const {loadSound} = require('./import/load-sound.js');
 
 const RESERVED_NAMES = ['_mouse_', '_stage_', '_edge_', '_myself_', '_random_'];
 
@@ -470,6 +470,25 @@ class VirtualMachine extends EventEmitter {
         } else {
             throw new Error('No target with the provided id.');
         }
+    }
+
+    /**
+     * Duplicate a sprite.
+     * @param {string} targetId ID of a target whose sprite to duplicate.
+     */
+    duplicateSprite (targetId) {
+        const target = this.runtime.getTargetById(targetId);
+        if (!target) {
+            throw new Error('No target with the provided id.');
+        } else if (!target.isSprite()) {
+            throw new Error('Cannot duplicate non-sprite targets.');
+        } else if (!target.sprite) {
+            throw new Error('No sprite associated with this target.');
+        }
+        target.duplicate().then(newTarget => {
+            this.runtime.targets.push(newTarget);
+            this.setEditingTarget(newTarget.id);
+        });
     }
 
     /**

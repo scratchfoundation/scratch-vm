@@ -2,6 +2,7 @@ const adapter = require('./adapter');
 const mutationAdapter = require('./mutation-adapter');
 const xmlEscape = require('../util/xml-escape');
 const MonitorRecord = require('./monitor-record');
+const Clone = require('../util/clone');
 
 /**
  * @fileoverview
@@ -178,6 +179,12 @@ class Blocks {
         return null;
     }
 
+    duplicate () {
+        const newBlocks = new Blocks();
+        newBlocks._blocks = Clone.simple(this._blocks);
+        newBlocks._scripts = Clone.simple(this._scripts);
+        return newBlocks;
+    }
     // ---------------------------------------------------------------------
 
     /**

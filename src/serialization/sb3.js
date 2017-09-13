@@ -10,8 +10,8 @@ const Sprite = require('../sprites/sprite');
 const Variable = require('../engine/variable');
 const List = require('../engine/list');
 
-const loadCostume = require('../import/load-costume.js');
-const loadSound = require('../import/load-sound.js');
+const {loadCostume} = require('../import/load-costume.js');
+const {loadSound} = require('../import/load-sound.js');
 
 /**
  * Serializes the specified VM runtime.
