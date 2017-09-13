@@ -81,9 +81,9 @@
 
 
 
-var base64 = __webpack_require__(64)
-var ieee754 = __webpack_require__(74)
-var isArray = __webpack_require__(35)
+var base64 = __webpack_require__(65)
+var ieee754 = __webpack_require__(75)
+var isArray = __webpack_require__(36)
 
 exports.Buffer = Buffer
 exports.SlowBuffer = SlowBuffer
@@ -2164,7 +2164,7 @@ var util = __webpack_require__(11);
 util.inherits = __webpack_require__(1);
 /*</replacement>*/
 
-var Readable = __webpack_require__(37);
+var Readable = __webpack_require__(38);
 var Writable = __webpack_require__(19);
 
 util.inherits(Duplex, Readable);
@@ -2553,13 +2553,13 @@ function isUndefined(arg) {
 /* 8 */
 /***/ (function(module, exports, __webpack_require__) {
 
-exports = module.exports = __webpack_require__(37);
+exports = module.exports = __webpack_require__(38);
 exports.Stream = exports;
 exports.Readable = exports;
 exports.Writable = __webpack_require__(19);
 exports.Duplex = __webpack_require__(5);
-exports.Transform = __webpack_require__(38);
-exports.PassThrough = __webpack_require__(79);
+exports.Transform = __webpack_require__(39);
+exports.PassThrough = __webpack_require__(80);
 
 
 /***/ }),
@@ -2756,7 +2756,7 @@ var _createClass = function () { function defineProperties(target, props) { for 
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
-var Color = __webpack_require__(43);
+var Color = __webpack_require__(46);
 
 /**
  * @fileoverview
@@ -3431,12 +3431,12 @@ util.inherits = __webpack_require__(1);
 
 /*<replacement>*/
 var internalUtil = {
-  deprecate: __webpack_require__(90)
+  deprecate: __webpack_require__(91)
 };
 /*</replacement>*/
 
 /*<replacement>*/
-var Stream = __webpack_require__(40);
+var Stream = __webpack_require__(41);
 /*</replacement>*/
 
 /*<replacement>*/
@@ -3450,7 +3450,7 @@ function _isUint8Array(obj) {
 }
 /*</replacement>*/
 
-var destroyImpl = __webpack_require__(39);
+var destroyImpl = __webpack_require__(40);
 
 util.inherits(Writable, Stream);
 
@@ -4142,7 +4142,7 @@ function defineProp(name, value){
 module.exports = {
 	Parser: Parser,
 	Tokenizer: __webpack_require__(122),
-	ElementType: __webpack_require__(33),
+	ElementType: __webpack_require__(34),
 	DomHandler: DomHandler,
 	get FeedHandler(){
 		return defineProp("FeedHandler", __webpack_require__(252));
@@ -4207,8 +4207,8 @@ module.exports = {
 "use strict";
 
 
-exports.decode = exports.parse = __webpack_require__(76);
-exports.encode = exports.stringify = __webpack_require__(77);
+exports.decode = exports.parse = __webpack_require__(77);
+exports.encode = exports.stringify = __webpack_require__(78);
 
 
 /***/ }),
@@ -4244,10 +4244,10 @@ var inherits = __webpack_require__(1);
 
 inherits(Stream, EE);
 Stream.Readable = __webpack_require__(8);
-Stream.Writable = __webpack_require__(82);
-Stream.Duplex = __webpack_require__(78);
-Stream.Transform = __webpack_require__(54);
-Stream.PassThrough = __webpack_require__(81);
+Stream.Writable = __webpack_require__(83);
+Stream.Duplex = __webpack_require__(79);
+Stream.Transform = __webpack_require__(56);
+Stream.PassThrough = __webpack_require__(82);
 
 // Backwards-compat with node 0.4.x
 Stream.Stream = Stream;
@@ -4399,8 +4399,8 @@ exports._unrefActive = exports.active = function(item) {
 };
 
 // setimmediate attaches itself to the global object
-__webpack_require__(84);
-var global = __webpack_require__(71);
+__webpack_require__(85);
+var global = __webpack_require__(72);
 exports.setImmediate = global.setImmediate;
 exports.clearImmediate = global.clearImmediate;
 
@@ -4433,8 +4433,8 @@ exports.clearImmediate = global.clearImmediate;
 
 
 
-var punycode = __webpack_require__(75);
-var util = __webpack_require__(89);
+var punycode = __webpack_require__(76);
+var util = __webpack_require__(90);
 
 exports.parse = urlParse;
 exports.resolve = urlResolve;
@@ -5673,7 +5673,7 @@ function isPrimitive(arg) {
 }
 exports.isPrimitive = isPrimitive;
 
-exports.isBuffer = __webpack_require__(92);
+exports.isBuffer = __webpack_require__(93);
 
 function objectToString(o) {
   return Object.prototype.toString.call(o);
@@ -5717,7 +5717,7 @@ exports.log = function() {
  *     prototype.
  * @param {function} superCtor Constructor function to inherit prototype from.
  */
-exports.inherits = __webpack_require__(91);
+exports.inherits = __webpack_require__(92);
 
 exports._extend = function(origin, add) {
   // Don't do anything if add isn't an object
@@ -5753,9 +5753,10 @@ var _createClass = function () { function defineProperties(target, props) { for 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
 var adapter = __webpack_require__(169);
-var mutationAdapter = __webpack_require__(99);
+var mutationAdapter = __webpack_require__(100);
 var xmlEscape = __webpack_require__(182);
 var MonitorRecord = __webpack_require__(171);
+var Clone = __webpack_require__(62);
 
 /**
  * @fileoverview
@@ -5960,7 +5961,14 @@ var Blocks = function () {
             }
             return null;
         }
-
+    }, {
+        key: 'duplicate',
+        value: function duplicate() {
+            var newBlocks = new Blocks();
+            newBlocks._blocks = Clone.simple(this._blocks);
+            newBlocks._scripts = Clone.simple(this._scripts);
+            return newBlocks;
+        }
         // ---------------------------------------------------------------------
 
         /**
@@ -6391,9 +6399,76 @@ var Blocks = function () {
 module.exports = Blocks;
 
 /***/ }),
-/* 31 */,
+/* 31 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+var StringUtil = function () {
+    function StringUtil() {
+        _classCallCheck(this, StringUtil);
+    }
+
+    _createClass(StringUtil, null, [{
+        key: 'withoutTrailingDigits',
+        value: function withoutTrailingDigits(s) {
+            var i = s.length - 1;
+            while (i >= 0 && '0123456789'.indexOf(s.charAt(i)) > -1) {
+                i--;
+            }return s.slice(0, i + 1);
+        }
+    }, {
+        key: 'unusedName',
+        value: function unusedName(name, existingNames) {
+            if (existingNames.indexOf(name) < 0) return name;
+            name = StringUtil.withoutTrailingDigits(name);
+            var i = 2;
+            while (existingNames.indexOf(name + i) >= 0) {
+                i++;
+            }return name + i;
+        }
+
+        /**
+         * Split a string on the first occurrence of a split character.
+         * @param {string} text - the string to split.
+         * @param {string} separator - split the text on this character.
+         * @returns {[string, string]} - the two parts of the split string, or [text, null] if no split character found.
+         * @example
+         * // returns ['foo', 'tar.gz']
+         * splitFirst('foo.tar.gz', '.');
+         * @example
+         * // returns ['foo', null]
+         * splitFirst('foo', '.');
+         * @example
+         * // returns ['foo', '']
+         * splitFirst('foo.', '.');
+         */
+
+    }, {
+        key: 'splitFirst',
+        value: function splitFirst(text, separator) {
+            var index = text.indexOf(separator);
+            if (index >= 0) {
+                return [text.substring(0, index), text.substring(index + 1)];
+            }
+            return [text, null];
+        }
+    }]);
+
+    return StringUtil;
+}();
+
+module.exports = StringUtil;
+
+/***/ }),
 /* 32 */,
-/* 33 */
+/* 33 */,
+/* 34 */
 /***/ (function(module, exports) {
 
 //Types of elements found in the DOM
@@ -6414,8 +6489,8 @@ module.exports = {
 
 
 /***/ }),
-/* 34 */,
-/* 35 */
+/* 35 */,
+/* 36 */
 /***/ (function(module, exports) {
 
 var toString = {}.toString;
@@ -6426,8 +6501,8 @@ module.exports = Array.isArray || function (arr) {
 
 
 /***/ }),
-/* 36 */,
-/* 37 */
+/* 37 */,
+/* 38 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -6462,7 +6537,7 @@ var processNextTick = __webpack_require__(14);
 module.exports = Readable;
 
 /*<replacement>*/
-var isArray = __webpack_require__(35);
+var isArray = __webpack_require__(36);
 /*</replacement>*/
 
 /*<replacement>*/
@@ -6480,7 +6555,7 @@ var EElistenerCount = function (emitter, type) {
 /*</replacement>*/
 
 /*<replacement>*/
-var Stream = __webpack_require__(40);
+var Stream = __webpack_require__(41);
 /*</replacement>*/
 
 // TODO(bmeurer): Change this back to const once hole checks are
@@ -6502,7 +6577,7 @@ util.inherits = __webpack_require__(1);
 /*</replacement>*/
 
 /*<replacement>*/
-var debugUtil = __webpack_require__(94);
+var debugUtil = __webpack_require__(95);
 var debug = void 0;
 if (debugUtil && debugUtil.debuglog) {
   debug = debugUtil.debuglog('stream');
@@ -6511,8 +6586,8 @@ if (debugUtil && debugUtil.debuglog) {
 }
 /*</replacement>*/
 
-var BufferList = __webpack_require__(80);
-var destroyImpl = __webpack_require__(39);
+var BufferList = __webpack_require__(81);
+var destroyImpl = __webpack_require__(40);
 var StringDecoder;
 
 util.inherits(Readable, Stream);
@@ -7441,7 +7516,7 @@ function indexOf(xs, x) {
 /* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(2), __webpack_require__(3)))
 
 /***/ }),
-/* 38 */
+/* 39 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -7661,7 +7736,7 @@ function done(stream, er, data) {
 }
 
 /***/ }),
-/* 39 */
+/* 40 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -7739,19 +7814,19 @@ module.exports = {
 };
 
 /***/ }),
-/* 40 */
+/* 41 */
 /***/ (function(module, exports, __webpack_require__) {
 
 module.exports = __webpack_require__(7).EventEmitter;
 
 
 /***/ }),
-/* 41 */
+/* 42 */
 /***/ (function(module, exports, __webpack_require__) {
 
-/* WEBPACK VAR INJECTION */(function(global) {var ClientRequest = __webpack_require__(86)
-var extend = __webpack_require__(93)
-var statusCodes = __webpack_require__(67)
+/* WEBPACK VAR INJECTION */(function(global) {var ClientRequest = __webpack_require__(87)
+var extend = __webpack_require__(94)
+var statusCodes = __webpack_require__(68)
 var url = __webpack_require__(26)
 
 var http = exports
@@ -7831,7 +7906,7 @@ http.METHODS = [
 /* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(2)))
 
 /***/ }),
-/* 42 */
+/* 43 */
 /***/ (function(module, exports, __webpack_require__) {
 
 /* WEBPACK VAR INJECTION */(function(global) {exports.fetch = isFunction(global.fetch) && isFunction(global.ReadableStream)
@@ -7907,7 +7982,160 @@ xhr = null // Help gc
 /* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(2)))
 
 /***/ }),
-/* 43 */
+/* 44 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+var StringUtil = __webpack_require__(31);
+var log = __webpack_require__(17);
+
+/**
+ * Initialize a costume from an asset asynchronously.
+ * Do not call this unless there is a renderer attached.
+ * @param {!object} costume - the Scratch costume object.
+ * @property {int} skinId - the ID of the costume's render skin, once installed.
+ * @property {number} rotationCenterX - the X component of the costume's origin.
+ * @property {number} rotationCenterY - the Y component of the costume's origin.
+ * @property {number} [bitmapResolution] - the resolution scale for a bitmap costume.
+ * @param {!Asset} costumeAsset - the asset of the costume loaded from storage.
+ * @param {!Runtime} runtime - Scratch runtime, used to access the storage module.
+ * @returns {?Promise} - a promise which will resolve after skinId is set, or null on error.
+ */
+var loadCostumeFromAsset = function loadCostumeFromAsset(costume, costumeAsset, runtime) {
+    costume.assetId = costumeAsset.assetId;
+    if (!runtime.renderer) {
+        log.error('No rendering module present; cannot load costume: ', costume.name);
+        return costume;
+    }
+    var AssetType = runtime.storage.AssetType;
+    var rotationCenter = [costume.rotationCenterX / costume.bitmapResolution, costume.rotationCenterY / costume.bitmapResolution];
+    if (costumeAsset.assetType === AssetType.ImageVector) {
+        costume.skinId = runtime.renderer.createSVGSkin(costumeAsset.decodeText(), rotationCenter);
+        return costume;
+    }
+
+    return new Promise(function (resolve, reject) {
+        var imageElement = new Image();
+        var onError = function onError() {
+            // eslint-disable-next-line no-use-before-define
+            removeEventListeners();
+            reject();
+        };
+        var onLoad = function onLoad() {
+            // eslint-disable-next-line no-use-before-define
+            removeEventListeners();
+            resolve(imageElement);
+        };
+        var removeEventListeners = function removeEventListeners() {
+            imageElement.removeEventListener('error', onError);
+            imageElement.removeEventListener('load', onLoad);
+        };
+        imageElement.addEventListener('error', onError);
+        imageElement.addEventListener('load', onLoad);
+        imageElement.src = costumeAsset.encodeDataURI();
+    }).then(function (imageElement) {
+        costume.skinId = runtime.renderer.createBitmapSkin(imageElement, costume.bitmapResolution, rotationCenter);
+        return costume;
+    });
+};
+
+/**
+ * Load a costume's asset into memory asynchronously.
+ * Do not call this unless there is a renderer attached.
+ * @param {string} md5ext - the MD5 and extension of the costume to be loaded.
+ * @param {!object} costume - the Scratch costume object.
+ * @property {int} skinId - the ID of the costume's render skin, once installed.
+ * @property {number} rotationCenterX - the X component of the costume's origin.
+ * @property {number} rotationCenterY - the Y component of the costume's origin.
+ * @property {number} [bitmapResolution] - the resolution scale for a bitmap costume.
+ * @param {!Runtime} runtime - Scratch runtime, used to access the storage module.
+ * @returns {?Promise} - a promise which will resolve after skinId is set, or null on error.
+ */
+var loadCostume = function loadCostume(md5ext, costume, runtime) {
+    if (!runtime.storage) {
+        log.error('No storage module present; cannot load costume asset: ', md5ext);
+        return Promise.resolve(costume);
+    }
+
+    var AssetType = runtime.storage.AssetType;
+    var idParts = StringUtil.splitFirst(md5ext, '.');
+    var md5 = idParts[0];
+    var ext = idParts[1].toLowerCase();
+    var assetType = ext === 'svg' ? AssetType.ImageVector : AssetType.ImageBitmap;
+
+    return runtime.storage.load(assetType, md5, ext).then(function (costumeAsset) {
+        costume.dataFormat = ext;
+        return loadCostumeFromAsset(costume, costumeAsset, runtime);
+    });
+};
+
+module.exports = {
+    loadCostume: loadCostume,
+    loadCostumeFromAsset: loadCostumeFromAsset
+};
+
+/***/ }),
+/* 45 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+var StringUtil = __webpack_require__(31);
+var log = __webpack_require__(17);
+
+/**
+ * Initialize a sound from an asset asynchronously.
+ * @param {!object} sound - the Scratch sound object.
+ * @property {string} md5 - the MD5 and extension of the sound to be loaded.
+ * @property {Buffer} data - sound data will be written here once loaded.
+ * @param {!Asset} soundAsset - the asset loaded from storage.
+ * @param {!Runtime} runtime - Scratch runtime, used to access the storage module.
+ * @returns {!Promise} - a promise which will resolve to the sound when ready.
+ */
+var loadSoundFromAsset = function loadSoundFromAsset(sound, soundAsset, runtime) {
+    sound.assetId = soundAsset.assetId;
+    return runtime.audioEngine.decodeSound(Object.assign({}, sound, { data: soundAsset.data })).then(function (soundId) {
+        sound.soundId = soundId;
+        return sound;
+    });
+};
+
+/**
+ * Load a sound's asset into memory asynchronously.
+ * @param {!object} sound - the Scratch sound object.
+ * @property {string} md5 - the MD5 and extension of the sound to be loaded.
+ * @property {Buffer} data - sound data will be written here once loaded.
+ * @param {!Runtime} runtime - Scratch runtime, used to access the storage module.
+ * @returns {!Promise} - a promise which will resolve to the sound when ready.
+ */
+var loadSound = function loadSound(sound, runtime) {
+    if (!runtime.storage) {
+        log.error('No storage module present; cannot load sound asset: ', sound.md5);
+        return Promise.resolve(sound);
+    }
+    if (!runtime.audioEngine) {
+        log.error('No audio engine present; cannot load sound asset: ', sound.md5);
+        return Promise.resolve(sound);
+    }
+    var idParts = StringUtil.splitFirst(sound.md5, '.');
+    var md5 = idParts[0];
+    var ext = idParts[1].toLowerCase();
+    return runtime.storage.load(runtime.storage.AssetType.Sound, md5, ext).then(function (soundAsset) {
+        sound.dataFormat = ext;
+        return loadSoundFromAsset(sound, soundAsset, runtime);
+    });
+};
+
+module.exports = {
+    loadSound: loadSound,
+    loadSoundFromAsset: loadSoundFromAsset
+};
+
+/***/ }),
+/* 46 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -8165,80 +8393,13 @@ var Color = function () {
 module.exports = Color;
 
 /***/ }),
-/* 44 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-
-var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
-
-function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
-
-var StringUtil = function () {
-    function StringUtil() {
-        _classCallCheck(this, StringUtil);
-    }
-
-    _createClass(StringUtil, null, [{
-        key: 'withoutTrailingDigits',
-        value: function withoutTrailingDigits(s) {
-            var i = s.length - 1;
-            while (i >= 0 && '0123456789'.indexOf(s.charAt(i)) > -1) {
-                i--;
-            }return s.slice(0, i + 1);
-        }
-    }, {
-        key: 'unusedName',
-        value: function unusedName(name, existingNames) {
-            if (existingNames.indexOf(name) < 0) return name;
-            name = StringUtil.withoutTrailingDigits(name);
-            var i = 2;
-            while (existingNames.indexOf(name + i) >= 0) {
-                i++;
-            }return name + i;
-        }
-
-        /**
-         * Split a string on the first occurrence of a split character.
-         * @param {string} text - the string to split.
-         * @param {string} separator - split the text on this character.
-         * @returns {[string, string]} - the two parts of the split string, or [text, null] if no split character found.
-         * @example
-         * // returns ['foo', 'tar.gz']
-         * splitFirst('foo.tar.gz', '.');
-         * @example
-         * // returns ['foo', null]
-         * splitFirst('foo', '.');
-         * @example
-         * // returns ['foo', '']
-         * splitFirst('foo.', '.');
-         */
-
-    }, {
-        key: 'splitFirst',
-        value: function splitFirst(text, separator) {
-            var index = text.indexOf(separator);
-            if (index >= 0) {
-                return [text.substring(0, index), text.substring(index + 1)];
-            }
-            return [text, null];
-        }
-    }]);
-
-    return StringUtil;
-}();
-
-module.exports = StringUtil;
-
-/***/ }),
-/* 45 */,
-/* 46 */,
 /* 47 */,
 /* 48 */,
 /* 49 */,
 /* 50 */,
-/* 51 */
+/* 51 */,
+/* 52 */,
+/* 53 */
 /***/ (function(module, exports, __webpack_require__) {
 
 /**
@@ -13222,16 +13383,16 @@ module.exports = StringUtil;
 }));
 
 /***/ }),
-/* 52 */,
-/* 53 */,
-/* 54 */
+/* 54 */,
+/* 55 */,
+/* 56 */
 /***/ (function(module, exports, __webpack_require__) {
 
 module.exports = __webpack_require__(8).Transform
 
 
 /***/ }),
-/* 55 */
+/* 57 */
 /***/ (function(module, exports) {
 
 module.exports = function(module) {
@@ -13259,7 +13420,7 @@ module.exports = function(module) {
 
 
 /***/ }),
-/* 56 */
+/* 58 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -13287,7 +13448,7 @@ var List = function List(name, contents) {
 module.exports = List;
 
 /***/ }),
-/* 57 */
+/* 59 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -13640,7 +13801,7 @@ var Thread = function () {
 module.exports = Thread;
 
 /***/ }),
-/* 58 */
+/* 60 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -13655,7 +13816,7 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
  * Object representing a Scratch variable.
  */
 
-var uid = __webpack_require__(63);
+var uid = __webpack_require__(64);
 
 var Variable = function () {
     /**
@@ -13687,134 +13848,6 @@ var Variable = function () {
 module.exports = Variable;
 
 /***/ }),
-/* 59 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-
-var StringUtil = __webpack_require__(44);
-var log = __webpack_require__(17);
-
-/**
- * Load a costume's asset into memory asynchronously.
- * Do not call this unless there is a renderer attached.
- * @param {string} md5ext - the MD5 and extension of the costume to be loaded.
- * @param {!object} costume - the Scratch costume object.
- * @property {int} skinId - the ID of the costume's render skin, once installed.
- * @property {number} rotationCenterX - the X component of the costume's origin.
- * @property {number} rotationCenterY - the Y component of the costume's origin.
- * @property {number} [bitmapResolution] - the resolution scale for a bitmap costume.
- * @param {!Runtime} runtime - Scratch runtime, used to access the storage module.
- * @returns {?Promise} - a promise which will resolve after skinId is set, or null on error.
- */
-var loadCostume = function loadCostume(md5ext, costume, runtime) {
-    if (!runtime.storage) {
-        log.error('No storage module present; cannot load costume asset: ', md5ext);
-        return Promise.resolve(costume);
-    }
-
-    var AssetType = runtime.storage.AssetType;
-    var idParts = StringUtil.splitFirst(md5ext, '.');
-    var md5 = idParts[0];
-    var ext = idParts[1].toLowerCase();
-    var assetType = ext === 'svg' ? AssetType.ImageVector : AssetType.ImageBitmap;
-
-    var rotationCenter = [costume.rotationCenterX / costume.bitmapResolution, costume.rotationCenterY / costume.bitmapResolution];
-
-    var promise = runtime.storage.load(assetType, md5, ext).then(function (costumeAsset) {
-        costume.assetId = costumeAsset.assetId;
-        costume.dataFormat = ext;
-        return costumeAsset;
-    });
-
-    if (!runtime.renderer) {
-        log.error('No rendering module present; cannot load costume asset: ', md5ext);
-        return promise.then(function () {
-            return costume;
-        });
-    }
-
-    if (assetType === AssetType.ImageVector) {
-        promise = promise.then(function (costumeAsset) {
-            costume.skinId = runtime.renderer.createSVGSkin(costumeAsset.decodeText(), rotationCenter);
-            return costume;
-        });
-    } else {
-        promise = promise.then(function (costumeAsset) {
-            return new Promise(function (resolve, reject) {
-                var imageElement = new Image();
-                var onError = function onError() {
-                    // eslint-disable-next-line no-use-before-define
-                    removeEventListeners();
-                    reject();
-                };
-                var onLoad = function onLoad() {
-                    // eslint-disable-next-line no-use-before-define
-                    removeEventListeners();
-                    resolve(imageElement);
-                };
-                var removeEventListeners = function removeEventListeners() {
-                    imageElement.removeEventListener('error', onError);
-                    imageElement.removeEventListener('load', onLoad);
-                };
-                imageElement.addEventListener('error', onError);
-                imageElement.addEventListener('load', onLoad);
-                imageElement.src = costumeAsset.encodeDataURI();
-            });
-        }).then(function (imageElement) {
-            costume.skinId = runtime.renderer.createBitmapSkin(imageElement, costume.bitmapResolution, rotationCenter);
-            return costume;
-        });
-    }
-    return promise;
-};
-
-module.exports = loadCostume;
-
-/***/ }),
-/* 60 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-
-var StringUtil = __webpack_require__(44);
-var log = __webpack_require__(17);
-
-/**
- * Load a sound's asset into memory asynchronously.
- * @param {!object} sound - the Scratch sound object.
- * @property {string} md5 - the MD5 and extension of the sound to be loaded.
- * @property {Buffer} data - sound data will be written here once loaded.
- * @param {!Runtime} runtime - Scratch runtime, used to access the storage module.
- * @returns {!Promise} - a promise which will resolve to the sound when ready.
- */
-var loadSound = function loadSound(sound, runtime) {
-    if (!runtime.storage) {
-        log.error('No storage module present; cannot load sound asset: ', sound.md5);
-        return Promise.resolve(sound);
-    }
-    if (!runtime.audioEngine) {
-        log.error('No audio engine present; cannot load sound asset: ', sound.md5);
-        return Promise.resolve(sound);
-    }
-    var idParts = StringUtil.splitFirst(sound.md5, '.');
-    var md5 = idParts[0];
-    var ext = idParts[1].toLowerCase();
-    return runtime.storage.load(runtime.storage.AssetType.Sound, md5, ext).then(function (soundAsset) {
-        sound.assetId = soundAsset.assetId;
-        sound.dataFormat = ext;
-        return runtime.audioEngine.decodeSound(Object.assign({}, sound, { data: soundAsset.data }));
-    }).then(function (soundId) {
-        sound.soundId = soundId;
-        return sound;
-    });
-};
-
-module.exports = loadSound;
-
-/***/ }),
 /* 61 */
 /***/ (function(module, exports, __webpack_require__) {
 
@@ -13831,7 +13864,7 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
 
 var log = __webpack_require__(17);
 var MathUtil = __webpack_require__(20);
-var StringUtil = __webpack_require__(44);
+var StringUtil = __webpack_require__(31);
 var Target = __webpack_require__(174);
 
 /**
@@ -14684,6 +14717,38 @@ var RenderedTarget = function (_Target) {
         }
 
         /**
+         * Make a duplicate using a duplicate sprite.
+         * @return {RenderedTarget} New clone.
+         */
+
+    }, {
+        key: 'duplicate',
+        value: function duplicate() {
+            var _this2 = this;
+
+            return this.sprite.duplicate().then(function (newSprite) {
+                var newTarget = newSprite.createClone();
+                // Copy all properties.
+                // @todo refactor with clone methods
+                newTarget.x = Math.random() * 400 / 2;
+                newTarget.y = Math.random() * 300 / 2;
+                newTarget.direction = _this2.direction;
+                newTarget.draggable = _this2.draggable;
+                newTarget.visible = _this2.visible;
+                newTarget.size = _this2.size;
+                newTarget.currentCostume = _this2.currentCostume;
+                newTarget.rotationStyle = _this2.rotationStyle;
+                newTarget.effects = JSON.parse(JSON.stringify(_this2.effects));
+                newTarget.variables = JSON.parse(JSON.stringify(_this2.variables));
+                newTarget.lists = JSON.parse(JSON.stringify(_this2.lists));
+                newTarget.initDrawable();
+                newTarget.updateAllDrawableProperties();
+                newTarget.goBehindOther(_this2);
+                return newTarget;
+            });
+        }
+
+        /**
          * Called when the project receives a "green flag."
          * For a rendered target, this clears graphic effects.
          */
@@ -14863,6 +14928,45 @@ var _createClass = function () { function defineProperties(target, props) { for 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
 /**
+ * Methods for cloning JavaScript objects.
+ * @type {object}
+ */
+var Clone = function () {
+  function Clone() {
+    _classCallCheck(this, Clone);
+  }
+
+  _createClass(Clone, null, [{
+    key: "simple",
+
+    /**
+     * Deep-clone a "simple" object: one which can be fully expressed with JSON.
+     * Non-JSON values, such as functions, will be stripped from the clone.
+     * @param {object} original - the object to be cloned.
+     * @returns {object} a deep clone of the original object.
+     */
+    value: function simple(original) {
+      return JSON.parse(JSON.stringify(original));
+    }
+  }]);
+
+  return Clone;
+}();
+
+module.exports = Clone;
+
+/***/ }),
+/* 63 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+/**
  * @fileoverview
  * A utility for accurately measuring time.
  * To use:
@@ -14978,7 +15082,7 @@ var Timer = function () {
 module.exports = Timer;
 
 /***/ }),
-/* 63 */
+/* 64 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -15014,7 +15118,7 @@ var uid = function uid() {
 module.exports = uid;
 
 /***/ }),
-/* 64 */
+/* 65 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -15135,9 +15239,9 @@ function fromByteArray (uint8) {
 
 
 /***/ }),
-/* 65 */,
 /* 66 */,
-/* 67 */
+/* 67 */,
+/* 68 */
 /***/ (function(module, exports) {
 
 module.exports = {
@@ -15207,20 +15311,20 @@ module.exports = {
 
 
 /***/ }),
-/* 68 */,
-/* 69 */
+/* 69 */,
+/* 70 */
 /***/ (function(module, exports) {
 
 module.exports = {"Aacute":"Á","aacute":"á","Abreve":"Ă","abreve":"ă","ac":"∾","acd":"∿","acE":"∾̳","Acirc":"Â","acirc":"â","acute":"´","Acy":"А","acy":"а","AElig":"Æ","aelig":"æ","af":"⁡","Afr":"𝔄","afr":"𝔞","Agrave":"À","agrave":"à","alefsym":"ℵ","aleph":"ℵ","Alpha":"Α","alpha":"α","Amacr":"Ā","amacr":"ā","amalg":"⨿","amp":"&","AMP":"&","andand":"⩕","And":"⩓","and":"∧","andd":"⩜","andslope":"⩘","andv":"⩚","ang":"∠","ange":"⦤","angle":"∠","angmsdaa":"⦨","angmsdab":"⦩","angmsdac":"⦪","angmsdad":"⦫","angmsdae":"⦬","angmsdaf":"⦭","angmsdag":"⦮","angmsdah":"⦯","angmsd":"∡","angrt":"∟","angrtvb":"⊾","angrtvbd":"⦝","angsph":"∢","angst":"Å","angzarr":"⍼","Aogon":"Ą","aogon":"ą","Aopf":"𝔸","aopf":"𝕒","apacir":"⩯","ap":"≈","apE":"⩰","ape":"≊","apid":"≋","apos":"'","ApplyFunction":"⁡","approx":"≈","approxeq":"≊","Aring":"Å","aring":"å","Ascr":"𝒜","ascr":"𝒶","Assign":"≔","ast":"*","asymp":"≈","asympeq":"≍","Atilde":"Ã","atilde":"ã","Auml":"Ä","auml":"ä","awconint":"∳","awint":"⨑","backcong":"≌","backepsilon":"϶","backprime":"‵","backsim":"∽","backsimeq":"⋍","Backslash":"∖","Barv":"⫧","barvee":"⊽","barwed":"⌅","Barwed":"⌆","barwedge":"⌅","bbrk":"⎵","bbrktbrk":"⎶","bcong":"≌","Bcy":"Б","bcy":"б","bdquo":"„","becaus":"∵","because":"∵","Because":"∵","bemptyv":"⦰","bepsi":"϶","bernou":"ℬ","Bernoullis":"ℬ","Beta":"Β","beta":"β","beth":"ℶ","between":"≬","Bfr":"𝔅","bfr":"𝔟","bigcap":"⋂","bigcirc":"◯","bigcup":"⋃","bigodot":"⨀","bigoplus":"⨁","bigotimes":"⨂","bigsqcup":"⨆","bigstar":"★","bigtriangledown":"▽","bigtriangleup":"△","biguplus":"⨄","bigvee":"⋁","bigwedge":"⋀","bkarow":"⤍","blacklozenge":"⧫","blacksquare":"▪","blacktriangle":"▴","blacktriangledown":"▾","blacktriangleleft":"◂","blacktriangleright":"▸","blank":"␣","blk12":"▒","blk14":"░","blk34":"▓","block":"█","bne":"=⃥","bnequiv":"≡⃥","bNot":"⫭","bnot":"⌐","Bopf":"𝔹","bopf":"𝕓","bot":"⊥","bottom":"⊥","bowtie":"⋈","boxbox":"⧉","boxdl":"┐","boxdL":"╕","boxDl":"╖","boxDL":"╗","boxdr":"┌","boxdR":"╒","boxDr":"╓","boxDR":"╔","boxh":"─","boxH":"═","boxhd":"┬","boxHd":"╤","boxhD":"╥","boxHD":"╦","boxhu":"┴","boxHu":"╧","boxhU":"╨","boxHU":"╩","boxminus":"⊟","boxplus":"⊞","boxtimes":"⊠","boxul":"┘","boxuL":"╛","boxUl":"╜","boxUL":"╝","boxur":"└","boxuR":"╘","boxUr":"╙","boxUR":"╚","boxv":"│","boxV":"║","boxvh":"┼","boxvH":"╪","boxVh":"╫","boxVH":"╬","boxvl":"┤","boxvL":"╡","boxVl":"╢","boxVL":"╣","boxvr":"├","boxvR":"╞","boxVr":"╟","boxVR":"╠","bprime":"‵","breve":"˘","Breve":"˘","brvbar":"¦","bscr":"𝒷","Bscr":"ℬ","bsemi":"⁏","bsim":"∽","bsime":"⋍","bsolb":"⧅","bsol":"\\","bsolhsub":"⟈","bull":"•","bullet":"•","bump":"≎","bumpE":"⪮","bumpe":"≏","Bumpeq":"≎","bumpeq":"≏","Cacute":"Ć","cacute":"ć","capand":"⩄","capbrcup":"⩉","capcap":"⩋","cap":"∩","Cap":"⋒","capcup":"⩇","capdot":"⩀","CapitalDifferentialD":"ⅅ","caps":"∩︀","caret":"⁁","caron":"ˇ","Cayleys":"ℭ","ccaps":"⩍","Ccaron":"Č","ccaron":"č","Ccedil":"Ç","ccedil":"ç","Ccirc":"Ĉ","ccirc":"ĉ","Cconint":"∰","ccups":"⩌","ccupssm":"⩐","Cdot":"Ċ","cdot":"ċ","cedil":"¸","Cedilla":"¸","cemptyv":"⦲","cent":"¢","centerdot":"·","CenterDot":"·","cfr":"𝔠","Cfr":"ℭ","CHcy":"Ч","chcy":"ч","check":"✓","checkmark":"✓","Chi":"Χ","chi":"χ","circ":"ˆ","circeq":"≗","circlearrowleft":"↺","circlearrowright":"↻","circledast":"⊛","circledcirc":"⊚","circleddash":"⊝","CircleDot":"⊙","circledR":"®","circledS":"Ⓢ","CircleMinus":"⊖","CirclePlus":"⊕","CircleTimes":"⊗","cir":"○","cirE":"⧃","cire":"≗","cirfnint":"⨐","cirmid":"⫯","cirscir":"⧂","ClockwiseContourIntegral":"∲","CloseCurlyDoubleQuote":"”","CloseCurlyQuote":"’","clubs":"♣","clubsuit":"♣","colon":":","Colon":"∷","Colone":"⩴","colone":"≔","coloneq":"≔","comma":",","commat":"@","comp":"∁","compfn":"∘","complement":"∁","complexes":"ℂ","cong":"≅","congdot":"⩭","Congruent":"≡","conint":"∮","Conint":"∯","ContourIntegral":"∮","copf":"𝕔","Copf":"ℂ","coprod":"∐","Coproduct":"∐","copy":"©","COPY":"©","copysr":"℗","CounterClockwiseContourIntegral":"∳","crarr":"↵","cross":"✗","Cross":"⨯","Cscr":"𝒞","cscr":"𝒸","csub":"⫏","csube":"⫑","csup":"⫐","csupe":"⫒","ctdot":"⋯","cudarrl":"⤸","cudarrr":"⤵","cuepr":"⋞","cuesc":"⋟","cularr":"↶","cularrp":"⤽","cupbrcap":"⩈","cupcap":"⩆","CupCap":"≍","cup":"∪","Cup":"⋓","cupcup":"⩊","cupdot":"⊍","cupor":"⩅","cups":"∪︀","curarr":"↷","curarrm":"⤼","curlyeqprec":"⋞","curlyeqsucc":"⋟","curlyvee":"⋎","curlywedge":"⋏","curren":"¤","curvearrowleft":"↶","curvearrowright":"↷","cuvee":"⋎","cuwed":"⋏","cwconint":"∲","cwint":"∱","cylcty":"⌭","dagger":"†","Dagger":"‡","daleth":"ℸ","darr":"↓","Darr":"↡","dArr":"⇓","dash":"‐","Dashv":"⫤","dashv":"⊣","dbkarow":"⤏","dblac":"˝","Dcaron":"Ď","dcaron":"ď","Dcy":"Д","dcy":"д","ddagger":"‡","ddarr":"⇊","DD":"ⅅ","dd":"ⅆ","DDotrahd":"⤑","ddotseq":"⩷","deg":"°","Del":"∇","Delta":"Δ","delta":"δ","demptyv":"⦱","dfisht":"⥿","Dfr":"𝔇","dfr":"𝔡","dHar":"⥥","dharl":"⇃","dharr":"⇂","DiacriticalAcute":"´","DiacriticalDot":"˙","DiacriticalDoubleAcute":"˝","DiacriticalGrave":"`","DiacriticalTilde":"˜","diam":"⋄","diamond":"⋄","Diamond":"⋄","diamondsuit":"♦","diams":"♦","die":"¨","DifferentialD":"ⅆ","digamma":"ϝ","disin":"⋲","div":"÷","divide":"÷","divideontimes":"⋇","divonx":"⋇","DJcy":"Ђ","djcy":"ђ","dlcorn":"⌞","dlcrop":"⌍","dollar":"$","Dopf":"𝔻","dopf":"𝕕","Dot":"¨","dot":"˙","DotDot":"⃜","doteq":"≐","doteqdot":"≑","DotEqual":"≐","dotminus":"∸","dotplus":"∔","dotsquare":"⊡","doublebarwedge":"⌆","DoubleContourIntegral":"∯","DoubleDot":"¨","DoubleDownArrow":"⇓","DoubleLeftArrow":"⇐","DoubleLeftRightArrow":"⇔","DoubleLeftTee":"⫤","DoubleLongLeftArrow":"⟸","DoubleLongLeftRightArrow":"⟺","DoubleLongRightArrow":"⟹","DoubleRightArrow":"⇒","DoubleRightTee":"⊨","DoubleUpArrow":"⇑","DoubleUpDownArrow":"⇕","DoubleVerticalBar":"∥","DownArrowBar":"⤓","downarrow":"↓","DownArrow":"↓","Downarrow":"⇓","DownArrowUpArrow":"⇵","DownBreve":"̑","downdownarrows":"⇊","downharpoonleft":"⇃","downharpoonright":"⇂","DownLeftRightVector":"⥐","DownLeftTeeVector":"⥞","DownLeftVectorBar":"⥖","DownLeftVector":"↽","DownRightTeeVector":"⥟","DownRightVectorBar":"⥗","DownRightVector":"⇁","DownTeeArrow":"↧","DownTee":"⊤","drbkarow":"⤐","drcorn":"⌟","drcrop":"⌌","Dscr":"𝒟","dscr":"𝒹","DScy":"Ѕ","dscy":"ѕ","dsol":"⧶","Dstrok":"Đ","dstrok":"đ","dtdot":"⋱","dtri":"▿","dtrif":"▾","duarr":"⇵","duhar":"⥯","dwangle":"⦦","DZcy":"Џ","dzcy":"џ","dzigrarr":"⟿","Eacute":"É","eacute":"é","easter":"⩮","Ecaron":"Ě","ecaron":"ě","Ecirc":"Ê","ecirc":"ê","ecir":"≖","ecolon":"≕","Ecy":"Э","ecy":"э","eDDot":"⩷","Edot":"Ė","edot":"ė","eDot":"≑","ee":"ⅇ","efDot":"≒","Efr":"𝔈","efr":"𝔢","eg":"⪚","Egrave":"È","egrave":"è","egs":"⪖","egsdot":"⪘","el":"⪙","Element":"∈","elinters":"⏧","ell":"ℓ","els":"⪕","elsdot":"⪗","Emacr":"Ē","emacr":"ē","empty":"∅","emptyset":"∅","EmptySmallSquare":"◻","emptyv":"∅","EmptyVerySmallSquare":"▫","emsp13":" ","emsp14":" ","emsp":" ","ENG":"Ŋ","eng":"ŋ","ensp":" ","Eogon":"Ę","eogon":"ę","Eopf":"𝔼","eopf":"𝕖","epar":"⋕","eparsl":"⧣","eplus":"⩱","epsi":"ε","Epsilon":"Ε","epsilon":"ε","epsiv":"ϵ","eqcirc":"≖","eqcolon":"≕","eqsim":"≂","eqslantgtr":"⪖","eqslantless":"⪕","Equal":"⩵","equals":"=","EqualTilde":"≂","equest":"≟","Equilibrium":"⇌","equiv":"≡","equivDD":"⩸","eqvparsl":"⧥","erarr":"⥱","erDot":"≓","escr":"ℯ","Escr":"ℰ","esdot":"≐","Esim":"⩳","esim":"≂","Eta":"Η","eta":"η","ETH":"Ð","eth":"ð","Euml":"Ë","euml":"ë","euro":"€","excl":"!","exist":"∃","Exists":"∃","expectation":"ℰ","exponentiale":"ⅇ","ExponentialE":"ⅇ","fallingdotseq":"≒","Fcy":"Ф","fcy":"ф","female":"♀","ffilig":"ﬃ","fflig":"ﬀ","ffllig":"ﬄ","Ffr":"𝔉","ffr":"𝔣","filig":"ﬁ","FilledSmallSquare":"◼","FilledVerySmallSquare":"▪","fjlig":"fj","flat":"♭","fllig":"ﬂ","fltns":"▱","fnof":"ƒ","Fopf":"𝔽","fopf":"𝕗","forall":"∀","ForAll":"∀","fork":"⋔","forkv":"⫙","Fouriertrf":"ℱ","fpartint":"⨍","frac12":"½","frac13":"⅓","frac14":"¼","frac15":"⅕","frac16":"⅙","frac18":"⅛","frac23":"⅔","frac25":"⅖","frac34":"¾","frac35":"⅗","frac38":"⅜","frac45":"⅘","frac56":"⅚","frac58":"⅝","frac78":"⅞","frasl":"⁄","frown":"⌢","fscr":"𝒻","Fscr":"ℱ","gacute":"ǵ","Gamma":"Γ","gamma":"γ","Gammad":"Ϝ","gammad":"ϝ","gap":"⪆","Gbreve":"Ğ","gbreve":"ğ","Gcedil":"Ģ","Gcirc":"Ĝ","gcirc":"ĝ","Gcy":"Г","gcy":"г","Gdot":"Ġ","gdot":"ġ","ge":"≥","gE":"≧","gEl":"⪌","gel":"⋛","geq":"≥","geqq":"≧","geqslant":"⩾","gescc":"⪩","ges":"⩾","gesdot":"⪀","gesdoto":"⪂","gesdotol":"⪄","gesl":"⋛︀","gesles":"⪔","Gfr":"𝔊","gfr":"𝔤","gg":"≫","Gg":"⋙","ggg":"⋙","gimel":"ℷ","GJcy":"Ѓ","gjcy":"ѓ","gla":"⪥","gl":"≷","glE":"⪒","glj":"⪤","gnap":"⪊","gnapprox":"⪊","gne":"⪈","gnE":"≩","gneq":"⪈","gneqq":"≩","gnsim":"⋧","Gopf":"𝔾","gopf":"𝕘","grave":"`","GreaterEqual":"≥","GreaterEqualLess":"⋛","GreaterFullEqual":"≧","GreaterGreater":"⪢","GreaterLess":"≷","GreaterSlantEqual":"⩾","GreaterTilde":"≳","Gscr":"𝒢","gscr":"ℊ","gsim":"≳","gsime":"⪎","gsiml":"⪐","gtcc":"⪧","gtcir":"⩺","gt":">","GT":">","Gt":"≫","gtdot":"⋗","gtlPar":"⦕","gtquest":"⩼","gtrapprox":"⪆","gtrarr":"⥸","gtrdot":"⋗","gtreqless":"⋛","gtreqqless":"⪌","gtrless":"≷","gtrsim":"≳","gvertneqq":"≩︀","gvnE":"≩︀","Hacek":"ˇ","hairsp":" ","half":"½","hamilt":"ℋ","HARDcy":"Ъ","hardcy":"ъ","harrcir":"⥈","harr":"↔","hArr":"⇔","harrw":"↭","Hat":"^","hbar":"ℏ","Hcirc":"Ĥ","hcirc":"ĥ","hearts":"♥","heartsuit":"♥","hellip":"…","hercon":"⊹","hfr":"𝔥","Hfr":"ℌ","HilbertSpace":"ℋ","hksearow":"⤥","hkswarow":"⤦","hoarr":"⇿","homtht":"∻","hookleftarrow":"↩","hookrightarrow":"↪","hopf":"𝕙","Hopf":"ℍ","horbar":"―","HorizontalLine":"─","hscr":"𝒽","Hscr":"ℋ","hslash":"ℏ","Hstrok":"Ħ","hstrok":"ħ","HumpDownHump":"≎","HumpEqual":"≏","hybull":"⁃","hyphen":"‐","Iacute":"Í","iacute":"í","ic":"⁣","Icirc":"Î","icirc":"î","Icy":"И","icy":"и","Idot":"İ","IEcy":"Е","iecy":"е","iexcl":"¡","iff":"⇔","ifr":"𝔦","Ifr":"ℑ","Igrave":"Ì","igrave":"ì","ii":"ⅈ","iiiint":"⨌","iiint":"∭","iinfin":"⧜","iiota":"℩","IJlig":"Ĳ","ijlig":"ĳ","Imacr":"Ī","imacr":"ī","image":"ℑ","ImaginaryI":"ⅈ","imagline":"ℐ","imagpart":"ℑ","imath":"ı","Im":"ℑ","imof":"⊷","imped":"Ƶ","Implies":"⇒","incare":"℅","in":"∈","infin":"∞","infintie":"⧝","inodot":"ı","intcal":"⊺","int":"∫","Int":"∬","integers":"ℤ","Integral":"∫","intercal":"⊺","Intersection":"⋂","intlarhk":"⨗","intprod":"⨼","InvisibleComma":"⁣","InvisibleTimes":"⁢","IOcy":"Ё","iocy":"ё","Iogon":"Į","iogon":"į","Iopf":"𝕀","iopf":"𝕚","Iota":"Ι","iota":"ι","iprod":"⨼","iquest":"¿","iscr":"𝒾","Iscr":"ℐ","isin":"∈","isindot":"⋵","isinE":"⋹","isins":"⋴","isinsv":"⋳","isinv":"∈","it":"⁢","Itilde":"Ĩ","itilde":"ĩ","Iukcy":"І","iukcy":"і","Iuml":"Ï","iuml":"ï","Jcirc":"Ĵ","jcirc":"ĵ","Jcy":"Й","jcy":"й","Jfr":"𝔍","jfr":"𝔧","jmath":"ȷ","Jopf":"𝕁","jopf":"𝕛","Jscr":"𝒥","jscr":"𝒿","Jsercy":"Ј","jsercy":"ј","Jukcy":"Є","jukcy":"є","Kappa":"Κ","kappa":"κ","kappav":"ϰ","Kcedil":"Ķ","kcedil":"ķ","Kcy":"К","kcy":"к","Kfr":"𝔎","kfr":"𝔨","kgreen":"ĸ","KHcy":"Х","khcy":"х","KJcy":"Ќ","kjcy":"ќ","Kopf":"𝕂","kopf":"𝕜","Kscr":"𝒦","kscr":"𝓀","lAarr":"⇚","Lacute":"Ĺ","lacute":"ĺ","laemptyv":"⦴","lagran":"ℒ","Lambda":"Λ","lambda":"λ","lang":"⟨","Lang":"⟪","langd":"⦑","langle":"⟨","lap":"⪅","Laplacetrf":"ℒ","laquo":"«","larrb":"⇤","larrbfs":"⤟","larr":"←","Larr":"↞","lArr":"⇐","larrfs":"⤝","larrhk":"↩","larrlp":"↫","larrpl":"⤹","larrsim":"⥳","larrtl":"↢","latail":"⤙","lAtail":"⤛","lat":"⪫","late":"⪭","lates":"⪭︀","lbarr":"⤌","lBarr":"⤎","lbbrk":"❲","lbrace":"{","lbrack":"[","lbrke":"⦋","lbrksld":"⦏","lbrkslu":"⦍","Lcaron":"Ľ","lcaron":"ľ","Lcedil":"Ļ","lcedil":"ļ","lceil":"⌈","lcub":"{","Lcy":"Л","lcy":"л","ldca":"⤶","ldquo":"“","ldquor":"„","ldrdhar":"⥧","ldrushar":"⥋","ldsh":"↲","le":"≤","lE":"≦","LeftAngleBracket":"⟨","LeftArrowBar":"⇤","leftarrow":"←","LeftArrow":"←","Leftarrow":"⇐","LeftArrowRightArrow":"⇆","leftarrowtail":"↢","LeftCeiling":"⌈","LeftDoubleBracket":"⟦","LeftDownTeeVector":"⥡","LeftDownVectorBar":"⥙","LeftDownVector":"⇃","LeftFloor":"⌊","leftharpoondown":"↽","leftharpoonup":"↼","leftleftarrows":"⇇","leftrightarrow":"↔","LeftRightArrow":"↔","Leftrightarrow":"⇔","leftrightarrows":"⇆","leftrightharpoons":"⇋","leftrightsquigarrow":"↭","LeftRightVector":"⥎","LeftTeeArrow":"↤","LeftTee":"⊣","LeftTeeVector":"⥚","leftthreetimes":"⋋","LeftTriangleBar":"⧏","LeftTriangle":"⊲","LeftTriangleEqual":"⊴","LeftUpDownVector":"⥑","LeftUpTeeVector":"⥠","LeftUpVectorBar":"⥘","LeftUpVector":"↿","LeftVectorBar":"⥒","LeftVector":"↼","lEg":"⪋","leg":"⋚","leq":"≤","leqq":"≦","leqslant":"⩽","lescc":"⪨","les":"⩽","lesdot":"⩿","lesdoto":"⪁","lesdotor":"⪃","lesg":"⋚︀","lesges":"⪓","lessapprox":"⪅","lessdot":"⋖","lesseqgtr":"⋚","lesseqqgtr":"⪋","LessEqualGreater":"⋚","LessFullEqual":"≦","LessGreater":"≶","lessgtr":"≶","LessLess":"⪡","lesssim":"≲","LessSlantEqual":"⩽","LessTilde":"≲","lfisht":"⥼","lfloor":"⌊","Lfr":"𝔏","lfr":"𝔩","lg":"≶","lgE":"⪑","lHar":"⥢","lhard":"↽","lharu":"↼","lharul":"⥪","lhblk":"▄","LJcy":"Љ","ljcy":"љ","llarr":"⇇","ll":"≪","Ll":"⋘","llcorner":"⌞","Lleftarrow":"⇚","llhard":"⥫","lltri":"◺","Lmidot":"Ŀ","lmidot":"ŀ","lmoustache":"⎰","lmoust":"⎰","lnap":"⪉","lnapprox":"⪉","lne":"⪇","lnE":"≨","lneq":"⪇","lneqq":"≨","lnsim":"⋦","loang":"⟬","loarr":"⇽","lobrk":"⟦","longleftarrow":"⟵","LongLeftArrow":"⟵","Longleftarrow":"⟸","longleftrightarrow":"⟷","LongLeftRightArrow":"⟷","Longleftrightarrow":"⟺","longmapsto":"⟼","longrightarrow":"⟶","LongRightArrow":"⟶","Longrightarrow":"⟹","looparrowleft":"↫","looparrowright":"↬","lopar":"⦅","Lopf":"𝕃","lopf":"𝕝","loplus":"⨭","lotimes":"⨴","lowast":"∗","lowbar":"_","LowerLeftArrow":"↙","LowerRightArrow":"↘","loz":"◊","lozenge":"◊","lozf":"⧫","lpar":"(","lparlt":"⦓","lrarr":"⇆","lrcorner":"⌟","lrhar":"⇋","lrhard":"⥭","lrm":"‎","lrtri":"⊿","lsaquo":"‹","lscr":"𝓁","Lscr":"ℒ","lsh":"↰","Lsh":"↰","lsim":"≲","lsime":"⪍","lsimg":"⪏","lsqb":"[","lsquo":"‘","lsquor":"‚","Lstrok":"Ł","lstrok":"ł","ltcc":"⪦","ltcir":"⩹","lt":"<","LT":"<","Lt":"≪","ltdot":"⋖","lthree":"⋋","ltimes":"⋉","ltlarr":"⥶","ltquest":"⩻","ltri":"◃","ltrie":"⊴","ltrif":"◂","ltrPar":"⦖","lurdshar":"⥊","luruhar":"⥦","lvertneqq":"≨︀","lvnE":"≨︀","macr":"¯","male":"♂","malt":"✠","maltese":"✠","Map":"⤅","map":"↦","mapsto":"↦","mapstodown":"↧","mapstoleft":"↤","mapstoup":"↥","marker":"▮","mcomma":"⨩","Mcy":"М","mcy":"м","mdash":"—","mDDot":"∺","measuredangle":"∡","MediumSpace":" ","Mellintrf":"ℳ","Mfr":"𝔐","mfr":"𝔪","mho":"℧","micro":"µ","midast":"*","midcir":"⫰","mid":"∣","middot":"·","minusb":"⊟","minus":"−","minusd":"∸","minusdu":"⨪","MinusPlus":"∓","mlcp":"⫛","mldr":"…","mnplus":"∓","models":"⊧","Mopf":"𝕄","mopf":"𝕞","mp":"∓","mscr":"𝓂","Mscr":"ℳ","mstpos":"∾","Mu":"Μ","mu":"μ","multimap":"⊸","mumap":"⊸","nabla":"∇","Nacute":"Ń","nacute":"ń","nang":"∠⃒","nap":"≉","napE":"⩰̸","napid":"≋̸","napos":"ŉ","napprox":"≉","natural":"♮","naturals":"ℕ","natur":"♮","nbsp":" ","nbump":"≎̸","nbumpe":"≏̸","ncap":"⩃","Ncaron":"Ň","ncaron":"ň","Ncedil":"Ņ","ncedil":"ņ","ncong":"≇","ncongdot":"⩭̸","ncup":"⩂","Ncy":"Н","ncy":"н","ndash":"–","nearhk":"⤤","nearr":"↗","neArr":"⇗","nearrow":"↗","ne":"≠","nedot":"≐̸","NegativeMediumSpace":"​","NegativeThickSpace":"​","NegativeThinSpace":"​","NegativeVeryThinSpace":"​","nequiv":"≢","nesear":"⤨","nesim":"≂̸","NestedGreaterGreater":"≫","NestedLessLess":"≪","NewLine":"\n","nexist":"∄","nexists":"∄","Nfr":"𝔑","nfr":"𝔫","ngE":"≧̸","nge":"≱","ngeq":"≱","ngeqq":"≧̸","ngeqslant":"⩾̸","nges":"⩾̸","nGg":"⋙̸","ngsim":"≵","nGt":"≫⃒","ngt":"≯","ngtr":"≯","nGtv":"≫̸","nharr":"↮","nhArr":"⇎","nhpar":"⫲","ni":"∋","nis":"⋼","nisd":"⋺","niv":"∋","NJcy":"Њ","njcy":"њ","nlarr":"↚","nlArr":"⇍","nldr":"‥","nlE":"≦̸","nle":"≰","nleftarrow":"↚","nLeftarrow":"⇍","nleftrightarrow":"↮","nLeftrightarrow":"⇎","nleq":"≰","nleqq":"≦̸","nleqslant":"⩽̸","nles":"⩽̸","nless":"≮","nLl":"⋘̸","nlsim":"≴","nLt":"≪⃒","nlt":"≮","nltri":"⋪","nltrie":"⋬","nLtv":"≪̸","nmid":"∤","NoBreak":"⁠","NonBreakingSpace":" ","nopf":"𝕟","Nopf":"ℕ","Not":"⫬","not":"¬","NotCongruent":"≢","NotCupCap":"≭","NotDoubleVerticalBar":"∦","NotElement":"∉","NotEqual":"≠","NotEqualTilde":"≂̸","NotExists":"∄","NotGreater":"≯","NotGreaterEqual":"≱","NotGreaterFullEqual":"≧̸","NotGreaterGreater":"≫̸","NotGreaterLess":"≹","NotGreaterSlantEqual":"⩾̸","NotGreaterTilde":"≵","NotHumpDownHump":"≎̸","NotHumpEqual":"≏̸","notin":"∉","notindot":"⋵̸","notinE":"⋹̸","notinva":"∉","notinvb":"⋷","notinvc":"⋶","NotLeftTriangleBar":"⧏̸","NotLeftTriangle":"⋪","NotLeftTriangleEqual":"⋬","NotLess":"≮","NotLessEqual":"≰","NotLessGreater":"≸","NotLessLess":"≪̸","NotLessSlantEqual":"⩽̸","NotLessTilde":"≴","NotNestedGreaterGreater":"⪢̸","NotNestedLessLess":"⪡̸","notni":"∌","notniva":"∌","notnivb":"⋾","notnivc":"⋽","NotPrecedes":"⊀","NotPrecedesEqual":"⪯̸","NotPrecedesSlantEqual":"⋠","NotReverseElement":"∌","NotRightTriangleBar":"⧐̸","NotRightTriangle":"⋫","NotRightTriangleEqual":"⋭","NotSquareSubset":"⊏̸","NotSquareSubsetEqual":"⋢","NotSquareSuperset":"⊐̸","NotSquareSupersetEqual":"⋣","NotSubset":"⊂⃒","NotSubsetEqual":"⊈","NotSucceeds":"⊁","NotSucceedsEqual":"⪰̸","NotSucceedsSlantEqual":"⋡","NotSucceedsTilde":"≿̸","NotSuperset":"⊃⃒","NotSupersetEqual":"⊉","NotTilde":"≁","NotTildeEqual":"≄","NotTildeFullEqual":"≇","NotTildeTilde":"≉","NotVerticalBar":"∤","nparallel":"∦","npar":"∦","nparsl":"⫽⃥","npart":"∂̸","npolint":"⨔","npr":"⊀","nprcue":"⋠","nprec":"⊀","npreceq":"⪯̸","npre":"⪯̸","nrarrc":"⤳̸","nrarr":"↛","nrArr":"⇏","nrarrw":"↝̸","nrightarrow":"↛","nRightarrow":"⇏","nrtri":"⋫","nrtrie":"⋭","nsc":"⊁","nsccue":"⋡","nsce":"⪰̸","Nscr":"𝒩","nscr":"𝓃","nshortmid":"∤","nshortparallel":"∦","nsim":"≁","nsime":"≄","nsimeq":"≄","nsmid":"∤","nspar":"∦","nsqsube":"⋢","nsqsupe":"⋣","nsub":"⊄","nsubE":"⫅̸","nsube":"⊈","nsubset":"⊂⃒","nsubseteq":"⊈","nsubseteqq":"⫅̸","nsucc":"⊁","nsucceq":"⪰̸","nsup":"⊅","nsupE":"⫆̸","nsupe":"⊉","nsupset":"⊃⃒","nsupseteq":"⊉","nsupseteqq":"⫆̸","ntgl":"≹","Ntilde":"Ñ","ntilde":"ñ","ntlg":"≸","ntriangleleft":"⋪","ntrianglelefteq":"⋬","ntriangleright":"⋫","ntrianglerighteq":"⋭","Nu":"Ν","nu":"ν","num":"#","numero":"№","numsp":" ","nvap":"≍⃒","nvdash":"⊬","nvDash":"⊭","nVdash":"⊮","nVDash":"⊯","nvge":"≥⃒","nvgt":">⃒","nvHarr":"⤄","nvinfin":"⧞","nvlArr":"⤂","nvle":"≤⃒","nvlt":"<⃒","nvltrie":"⊴⃒","nvrArr":"⤃","nvrtrie":"⊵⃒","nvsim":"∼⃒","nwarhk":"⤣","nwarr":"↖","nwArr":"⇖","nwarrow":"↖","nwnear":"⤧","Oacute":"Ó","oacute":"ó","oast":"⊛","Ocirc":"Ô","ocirc":"ô","ocir":"⊚","Ocy":"О","ocy":"о","odash":"⊝","Odblac":"Ő","odblac":"ő","odiv":"⨸","odot":"⊙","odsold":"⦼","OElig":"Œ","oelig":"œ","ofcir":"⦿","Ofr":"𝔒","ofr":"𝔬","ogon":"˛","Ograve":"Ò","ograve":"ò","ogt":"⧁","ohbar":"⦵","ohm":"Ω","oint":"∮","olarr":"↺","olcir":"⦾","olcross":"⦻","oline":"‾","olt":"⧀","Omacr":"Ō","omacr":"ō","Omega":"Ω","omega":"ω","Omicron":"Ο","omicron":"ο","omid":"⦶","ominus":"⊖","Oopf":"𝕆","oopf":"𝕠","opar":"⦷","OpenCurlyDoubleQuote":"“","OpenCurlyQuote":"‘","operp":"⦹","oplus":"⊕","orarr":"↻","Or":"⩔","or":"∨","ord":"⩝","order":"ℴ","orderof":"ℴ","ordf":"ª","ordm":"º","origof":"⊶","oror":"⩖","orslope":"⩗","orv":"⩛","oS":"Ⓢ","Oscr":"𝒪","oscr":"ℴ","Oslash":"Ø","oslash":"ø","osol":"⊘","Otilde":"Õ","otilde":"õ","otimesas":"⨶","Otimes":"⨷","otimes":"⊗","Ouml":"Ö","ouml":"ö","ovbar":"⌽","OverBar":"‾","OverBrace":"⏞","OverBracket":"⎴","OverParenthesis":"⏜","para":"¶","parallel":"∥","par":"∥","parsim":"⫳","parsl":"⫽","part":"∂","PartialD":"∂","Pcy":"П","pcy":"п","percnt":"%","period":".","permil":"‰","perp":"⊥","pertenk":"‱","Pfr":"𝔓","pfr":"𝔭","Phi":"Φ","phi":"φ","phiv":"ϕ","phmmat":"ℳ","phone":"☎","Pi":"Π","pi":"π","pitchfork":"⋔","piv":"ϖ","planck":"ℏ","planckh":"ℎ","plankv":"ℏ","plusacir":"⨣","plusb":"⊞","pluscir":"⨢","plus":"+","plusdo":"∔","plusdu":"⨥","pluse":"⩲","PlusMinus":"±","plusmn":"±","plussim":"⨦","plustwo":"⨧","pm":"±","Poincareplane":"ℌ","pointint":"⨕","popf":"𝕡","Popf":"ℙ","pound":"£","prap":"⪷","Pr":"⪻","pr":"≺","prcue":"≼","precapprox":"⪷","prec":"≺","preccurlyeq":"≼","Precedes":"≺","PrecedesEqual":"⪯","PrecedesSlantEqual":"≼","PrecedesTilde":"≾","preceq":"⪯","precnapprox":"⪹","precneqq":"⪵","precnsim":"⋨","pre":"⪯","prE":"⪳","precsim":"≾","prime":"′","Prime":"″","primes":"ℙ","prnap":"⪹","prnE":"⪵","prnsim":"⋨","prod":"∏","Product":"∏","profalar":"⌮","profline":"⌒","profsurf":"⌓","prop":"∝","Proportional":"∝","Proportion":"∷","propto":"∝","prsim":"≾","prurel":"⊰","Pscr":"𝒫","pscr":"𝓅","Psi":"Ψ","psi":"ψ","puncsp":" ","Qfr":"𝔔","qfr":"𝔮","qint":"⨌","qopf":"𝕢","Qopf":"ℚ","qprime":"⁗","Qscr":"𝒬","qscr":"𝓆","quaternions":"ℍ","quatint":"⨖","quest":"?","questeq":"≟","quot":"\"","QUOT":"\"","rAarr":"⇛","race":"∽̱","Racute":"Ŕ","racute":"ŕ","radic":"√","raemptyv":"⦳","rang":"⟩","Rang":"⟫","rangd":"⦒","range":"⦥","rangle":"⟩","raquo":"»","rarrap":"⥵","rarrb":"⇥","rarrbfs":"⤠","rarrc":"⤳","rarr":"→","Rarr":"↠","rArr":"⇒","rarrfs":"⤞","rarrhk":"↪","rarrlp":"↬","rarrpl":"⥅","rarrsim":"⥴","Rarrtl":"⤖","rarrtl":"↣","rarrw":"↝","ratail":"⤚","rAtail":"⤜","ratio":"∶","rationals":"ℚ","rbarr":"⤍","rBarr":"⤏","RBarr":"⤐","rbbrk":"❳","rbrace":"}","rbrack":"]","rbrke":"⦌","rbrksld":"⦎","rbrkslu":"⦐","Rcaron":"Ř","rcaron":"ř","Rcedil":"Ŗ","rcedil":"ŗ","rceil":"⌉","rcub":"}","Rcy":"Р","rcy":"р","rdca":"⤷","rdldhar":"⥩","rdquo":"”","rdquor":"”","rdsh":"↳","real":"ℜ","realine":"ℛ","realpart":"ℜ","reals":"ℝ","Re":"ℜ","rect":"▭","reg":"®","REG":"®","ReverseElement":"∋","ReverseEquilibrium":"⇋","ReverseUpEquilibrium":"⥯","rfisht":"⥽","rfloor":"⌋","rfr":"𝔯","Rfr":"ℜ","rHar":"⥤","rhard":"⇁","rharu":"⇀","rharul":"⥬","Rho":"Ρ","rho":"ρ","rhov":"ϱ","RightAngleBracket":"⟩","RightArrowBar":"⇥","rightarrow":"→","RightArrow":"→","Rightarrow":"⇒","RightArrowLeftArrow":"⇄","rightarrowtail":"↣","RightCeiling":"⌉","RightDoubleBracket":"⟧","RightDownTeeVector":"⥝","RightDownVectorBar":"⥕","RightDownVector":"⇂","RightFloor":"⌋","rightharpoondown":"⇁","rightharpoonup":"⇀","rightleftarrows":"⇄","rightleftharpoons":"⇌","rightrightarrows":"⇉","rightsquigarrow":"↝","RightTeeArrow":"↦","RightTee":"⊢","RightTeeVector":"⥛","rightthreetimes":"⋌","RightTriangleBar":"⧐","RightTriangle":"⊳","RightTriangleEqual":"⊵","RightUpDownVector":"⥏","RightUpTeeVector":"⥜","RightUpVectorBar":"⥔","RightUpVector":"↾","RightVectorBar":"⥓","RightVector":"⇀","ring":"˚","risingdotseq":"≓","rlarr":"⇄","rlhar":"⇌","rlm":"‏","rmoustache":"⎱","rmoust":"⎱","rnmid":"⫮","roang":"⟭","roarr":"⇾","robrk":"⟧","ropar":"⦆","ropf":"𝕣","Ropf":"ℝ","roplus":"⨮","rotimes":"⨵","RoundImplies":"⥰","rpar":")","rpargt":"⦔","rppolint":"⨒","rrarr":"⇉","Rrightarrow":"⇛","rsaquo":"›","rscr":"𝓇","Rscr":"ℛ","rsh":"↱","Rsh":"↱","rsqb":"]","rsquo":"’","rsquor":"’","rthree":"⋌","rtimes":"⋊","rtri":"▹","rtrie":"⊵","rtrif":"▸","rtriltri":"⧎","RuleDelayed":"⧴","ruluhar":"⥨","rx":"℞","Sacute":"Ś","sacute":"ś","sbquo":"‚","scap":"⪸","Scaron":"Š","scaron":"š","Sc":"⪼","sc":"≻","sccue":"≽","sce":"⪰","scE":"⪴","Scedil":"Ş","scedil":"ş","Scirc":"Ŝ","scirc":"ŝ","scnap":"⪺","scnE":"⪶","scnsim":"⋩","scpolint":"⨓","scsim":"≿","Scy":"С","scy":"с","sdotb":"⊡","sdot":"⋅","sdote":"⩦","searhk":"⤥","searr":"↘","seArr":"⇘","searrow":"↘","sect":"§","semi":";","seswar":"⤩","setminus":"∖","setmn":"∖","sext":"✶","Sfr":"𝔖","sfr":"𝔰","sfrown":"⌢","sharp":"♯","SHCHcy":"Щ","shchcy":"щ","SHcy":"Ш","shcy":"ш","ShortDownArrow":"↓","ShortLeftArrow":"←","shortmid":"∣","shortparallel":"∥","ShortRightArrow":"→","ShortUpArrow":"↑","shy":"­","Sigma":"Σ","sigma":"σ","sigmaf":"ς","sigmav":"ς","sim":"∼","simdot":"⩪","sime":"≃","simeq":"≃","simg":"⪞","simgE":"⪠","siml":"⪝","simlE":"⪟","simne":"≆","simplus":"⨤","simrarr":"⥲","slarr":"←","SmallCircle":"∘","smallsetminus":"∖","smashp":"⨳","smeparsl":"⧤","smid":"∣","smile":"⌣","smt":"⪪","smte":"⪬","smtes":"⪬︀","SOFTcy":"Ь","softcy":"ь","solbar":"⌿","solb":"⧄","sol":"/","Sopf":"𝕊","sopf":"𝕤","spades":"♠","spadesuit":"♠","spar":"∥","sqcap":"⊓","sqcaps":"⊓︀","sqcup":"⊔","sqcups":"⊔︀","Sqrt":"√","sqsub":"⊏","sqsube":"⊑","sqsubset":"⊏","sqsubseteq":"⊑","sqsup":"⊐","sqsupe":"⊒","sqsupset":"⊐","sqsupseteq":"⊒","square":"□","Square":"□","SquareIntersection":"⊓","SquareSubset":"⊏","SquareSubsetEqual":"⊑","SquareSuperset":"⊐","SquareSupersetEqual":"⊒","SquareUnion":"⊔","squarf":"▪","squ":"□","squf":"▪","srarr":"→","Sscr":"𝒮","sscr":"𝓈","ssetmn":"∖","ssmile":"⌣","sstarf":"⋆","Star":"⋆","star":"☆","starf":"★","straightepsilon":"ϵ","straightphi":"ϕ","strns":"¯","sub":"⊂","Sub":"⋐","subdot":"⪽","subE":"⫅","sube":"⊆","subedot":"⫃","submult":"⫁","subnE":"⫋","subne":"⊊","subplus":"⪿","subrarr":"⥹","subset":"⊂","Subset":"⋐","subseteq":"⊆","subseteqq":"⫅","SubsetEqual":"⊆","subsetneq":"⊊","subsetneqq":"⫋","subsim":"⫇","subsub":"⫕","subsup":"⫓","succapprox":"⪸","succ":"≻","succcurlyeq":"≽","Succeeds":"≻","SucceedsEqual":"⪰","SucceedsSlantEqual":"≽","SucceedsTilde":"≿","succeq":"⪰","succnapprox":"⪺","succneqq":"⪶","succnsim":"⋩","succsim":"≿","SuchThat":"∋","sum":"∑","Sum":"∑","sung":"♪","sup1":"¹","sup2":"²","sup3":"³","sup":"⊃","Sup":"⋑","supdot":"⪾","supdsub":"⫘","supE":"⫆","supe":"⊇","supedot":"⫄","Superset":"⊃","SupersetEqual":"⊇","suphsol":"⟉","suphsub":"⫗","suplarr":"⥻","supmult":"⫂","supnE":"⫌","supne":"⊋","supplus":"⫀","supset":"⊃","Supset":"⋑","supseteq":"⊇","supseteqq":"⫆","supsetneq":"⊋","supsetneqq":"⫌","supsim":"⫈","supsub":"⫔","supsup":"⫖","swarhk":"⤦","swarr":"↙","swArr":"⇙","swarrow":"↙","swnwar":"⤪","szlig":"ß","Tab":"\t","target":"⌖","Tau":"Τ","tau":"τ","tbrk":"⎴","Tcaron":"Ť","tcaron":"ť","Tcedil":"Ţ","tcedil":"ţ","Tcy":"Т","tcy":"т","tdot":"⃛","telrec":"⌕","Tfr":"𝔗","tfr":"𝔱","there4":"∴","therefore":"∴","Therefore":"∴","Theta":"Θ","theta":"θ","thetasym":"ϑ","thetav":"ϑ","thickapprox":"≈","thicksim":"∼","ThickSpace":"  ","ThinSpace":" ","thinsp":" ","thkap":"≈","thksim":"∼","THORN":"Þ","thorn":"þ","tilde":"˜","Tilde":"∼","TildeEqual":"≃","TildeFullEqual":"≅","TildeTilde":"≈","timesbar":"⨱","timesb":"⊠","times":"×","timesd":"⨰","tint":"∭","toea":"⤨","topbot":"⌶","topcir":"⫱","top":"⊤","Topf":"𝕋","topf":"𝕥","topfork":"⫚","tosa":"⤩","tprime":"‴","trade":"™","TRADE":"™","triangle":"▵","triangledown":"▿","triangleleft":"◃","trianglelefteq":"⊴","triangleq":"≜","triangleright":"▹","trianglerighteq":"⊵","tridot":"◬","trie":"≜","triminus":"⨺","TripleDot":"⃛","triplus":"⨹","trisb":"⧍","tritime":"⨻","trpezium":"⏢","Tscr":"𝒯","tscr":"𝓉","TScy":"Ц","tscy":"ц","TSHcy":"Ћ","tshcy":"ћ","Tstrok":"Ŧ","tstrok":"ŧ","twixt":"≬","twoheadleftarrow":"↞","twoheadrightarrow":"↠","Uacute":"Ú","uacute":"ú","uarr":"↑","Uarr":"↟","uArr":"⇑","Uarrocir":"⥉","Ubrcy":"Ў","ubrcy":"ў","Ubreve":"Ŭ","ubreve":"ŭ","Ucirc":"Û","ucirc":"û","Ucy":"У","ucy":"у","udarr":"⇅","Udblac":"Ű","udblac":"ű","udhar":"⥮","ufisht":"⥾","Ufr":"𝔘","ufr":"𝔲","Ugrave":"Ù","ugrave":"ù","uHar":"⥣","uharl":"↿","uharr":"↾","uhblk":"▀","ulcorn":"⌜","ulcorner":"⌜","ulcrop":"⌏","ultri":"◸","Umacr":"Ū","umacr":"ū","uml":"¨","UnderBar":"_","UnderBrace":"⏟","UnderBracket":"⎵","UnderParenthesis":"⏝","Union":"⋃","UnionPlus":"⊎","Uogon":"Ų","uogon":"ų","Uopf":"𝕌","uopf":"𝕦","UpArrowBar":"⤒","uparrow":"↑","UpArrow":"↑","Uparrow":"⇑","UpArrowDownArrow":"⇅","updownarrow":"↕","UpDownArrow":"↕","Updownarrow":"⇕","UpEquilibrium":"⥮","upharpoonleft":"↿","upharpoonright":"↾","uplus":"⊎","UpperLeftArrow":"↖","UpperRightArrow":"↗","upsi":"υ","Upsi":"ϒ","upsih":"ϒ","Upsilon":"Υ","upsilon":"υ","UpTeeArrow":"↥","UpTee":"⊥","upuparrows":"⇈","urcorn":"⌝","urcorner":"⌝","urcrop":"⌎","Uring":"Ů","uring":"ů","urtri":"◹","Uscr":"𝒰","uscr":"𝓊","utdot":"⋰","Utilde":"Ũ","utilde":"ũ","utri":"▵","utrif":"▴","uuarr":"⇈","Uuml":"Ü","uuml":"ü","uwangle":"⦧","vangrt":"⦜","varepsilon":"ϵ","varkappa":"ϰ","varnothing":"∅","varphi":"ϕ","varpi":"ϖ","varpropto":"∝","varr":"↕","vArr":"⇕","varrho":"ϱ","varsigma":"ς","varsubsetneq":"⊊︀","varsubsetneqq":"⫋︀","varsupsetneq":"⊋︀","varsupsetneqq":"⫌︀","vartheta":"ϑ","vartriangleleft":"⊲","vartriangleright":"⊳","vBar":"⫨","Vbar":"⫫","vBarv":"⫩","Vcy":"В","vcy":"в","vdash":"⊢","vDash":"⊨","Vdash":"⊩","VDash":"⊫","Vdashl":"⫦","veebar":"⊻","vee":"∨","Vee":"⋁","veeeq":"≚","vellip":"⋮","verbar":"|","Verbar":"‖","vert":"|","Vert":"‖","VerticalBar":"∣","VerticalLine":"|","VerticalSeparator":"❘","VerticalTilde":"≀","VeryThinSpace":" ","Vfr":"𝔙","vfr":"𝔳","vltri":"⊲","vnsub":"⊂⃒","vnsup":"⊃⃒","Vopf":"𝕍","vopf":"𝕧","vprop":"∝","vrtri":"⊳","Vscr":"𝒱","vscr":"𝓋","vsubnE":"⫋︀","vsubne":"⊊︀","vsupnE":"⫌︀","vsupne":"⊋︀","Vvdash":"⊪","vzigzag":"⦚","Wcirc":"Ŵ","wcirc":"ŵ","wedbar":"⩟","wedge":"∧","Wedge":"⋀","wedgeq":"≙","weierp":"℘","Wfr":"𝔚","wfr":"𝔴","Wopf":"𝕎","wopf":"𝕨","wp":"℘","wr":"≀","wreath":"≀","Wscr":"𝒲","wscr":"𝓌","xcap":"⋂","xcirc":"◯","xcup":"⋃","xdtri":"▽","Xfr":"𝔛","xfr":"𝔵","xharr":"⟷","xhArr":"⟺","Xi":"Ξ","xi":"ξ","xlarr":"⟵","xlArr":"⟸","xmap":"⟼","xnis":"⋻","xodot":"⨀","Xopf":"𝕏","xopf":"𝕩","xoplus":"⨁","xotime":"⨂","xrarr":"⟶","xrArr":"⟹","Xscr":"𝒳","xscr":"𝓍","xsqcup":"⨆","xuplus":"⨄","xutri":"△","xvee":"⋁","xwedge":"⋀","Yacute":"Ý","yacute":"ý","YAcy":"Я","yacy":"я","Ycirc":"Ŷ","ycirc":"ŷ","Ycy":"Ы","ycy":"ы","yen":"¥","Yfr":"𝔜","yfr":"𝔶","YIcy":"Ї","yicy":"ї","Yopf":"𝕐","yopf":"𝕪","Yscr":"𝒴","yscr":"𝓎","YUcy":"Ю","yucy":"ю","yuml":"ÿ","Yuml":"Ÿ","Zacute":"Ź","zacute":"ź","Zcaron":"Ž","zcaron":"ž","Zcy":"З","zcy":"з","Zdot":"Ż","zdot":"ż","zeetrf":"ℨ","ZeroWidthSpace":"​","Zeta":"Ζ","zeta":"ζ","zfr":"𝔷","Zfr":"ℨ","ZHcy":"Ж","zhcy":"ж","zigrarr":"⇝","zopf":"𝕫","Zopf":"ℤ","Zscr":"𝒵","zscr":"𝓏","zwj":"‍","zwnj":"‌"}
 
 /***/ }),
-/* 70 */
+/* 71 */
 /***/ (function(module, exports) {
 
 module.exports = {"amp":"&","apos":"'","gt":">","lt":"<","quot":"\""}
 
 /***/ }),
-/* 71 */
+/* 72 */
 /***/ (function(module, exports, __webpack_require__) {
 
 /* WEBPACK VAR INJECTION */(function(global) {var win;
@@ -15240,11 +15344,11 @@ module.exports = win;
 /* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(2)))
 
 /***/ }),
-/* 72 */,
-/* 73 */
+/* 73 */,
+/* 74 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var http = __webpack_require__(41);
+var http = __webpack_require__(42);
 
 var https = module.exports;
 
@@ -15261,7 +15365,7 @@ https.request = function (params, cb) {
 
 
 /***/ }),
-/* 74 */
+/* 75 */
 /***/ (function(module, exports) {
 
 exports.read = function (buffer, offset, isLE, mLen, nBytes) {
@@ -15351,7 +15455,7 @@ exports.write = function (buffer, value, offset, isLE, mLen, nBytes) {
 
 
 /***/ }),
-/* 75 */
+/* 76 */
 /***/ (function(module, exports, __webpack_require__) {
 
 /* WEBPACK VAR INJECTION */(function(module, global) {var __WEBPACK_AMD_DEFINE_RESULT__;/*! https://mths.be/punycode v1.4.1 by @mathias */
@@ -15887,10 +15991,10 @@ exports.write = function (buffer, value, offset, isLE, mLen, nBytes) {
 
 }(this));
 
-/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(55)(module), __webpack_require__(2)))
+/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(57)(module), __webpack_require__(2)))
 
 /***/ }),
-/* 76 */
+/* 77 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -15981,7 +16085,7 @@ var isArray = Array.isArray || function (xs) {
 
 
 /***/ }),
-/* 77 */
+/* 78 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -16073,14 +16177,14 @@ var objectKeys = Object.keys || function (obj) {
 
 
 /***/ }),
-/* 78 */
+/* 79 */
 /***/ (function(module, exports, __webpack_require__) {
 
 module.exports = __webpack_require__(5);
 
 
 /***/ }),
-/* 79 */
+/* 80 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -16113,7 +16217,7 @@ module.exports = __webpack_require__(5);
 
 module.exports = PassThrough;
 
-var Transform = __webpack_require__(38);
+var Transform = __webpack_require__(39);
 
 /*<replacement>*/
 var util = __webpack_require__(11);
@@ -16133,7 +16237,7 @@ PassThrough.prototype._transform = function (chunk, encoding, cb) {
 };
 
 /***/ }),
-/* 80 */
+/* 81 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -16213,22 +16317,22 @@ module.exports = function () {
 }();
 
 /***/ }),
-/* 81 */
+/* 82 */
 /***/ (function(module, exports, __webpack_require__) {
 
 module.exports = __webpack_require__(8).PassThrough
 
 
 /***/ }),
-/* 82 */
+/* 83 */
 /***/ (function(module, exports, __webpack_require__) {
 
 module.exports = __webpack_require__(19);
 
 
 /***/ }),
-/* 83 */,
-/* 84 */
+/* 84 */,
+/* 85 */
 /***/ (function(module, exports, __webpack_require__) {
 
 /* WEBPACK VAR INJECTION */(function(global, process) {(function (global, undefined) {
@@ -16421,15 +16525,15 @@ module.exports = __webpack_require__(19);
 /* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(2), __webpack_require__(3)))
 
 /***/ }),
-/* 85 */,
-/* 86 */
+/* 86 */,
+/* 87 */
 /***/ (function(module, exports, __webpack_require__) {
 
-/* WEBPACK VAR INJECTION */(function(Buffer, global, process) {var capability = __webpack_require__(42)
+/* WEBPACK VAR INJECTION */(function(Buffer, global, process) {var capability = __webpack_require__(43)
 var inherits = __webpack_require__(1)
-var response = __webpack_require__(87)
+var response = __webpack_require__(88)
 var stream = __webpack_require__(8)
-var toArrayBuffer = __webpack_require__(88)
+var toArrayBuffer = __webpack_require__(89)
 
 var IncomingMessage = response.IncomingMessage
 var rStates = response.readyStates
@@ -16735,10 +16839,10 @@ var unsafeHeaders = [
 /* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(0).Buffer, __webpack_require__(2), __webpack_require__(3)))
 
 /***/ }),
-/* 87 */
+/* 88 */
 /***/ (function(module, exports, __webpack_require__) {
 
-/* WEBPACK VAR INJECTION */(function(process, Buffer, global) {var capability = __webpack_require__(42)
+/* WEBPACK VAR INJECTION */(function(process, Buffer, global) {var capability = __webpack_require__(43)
 var inherits = __webpack_require__(1)
 var stream = __webpack_require__(8)
 
@@ -16924,7 +17028,7 @@ IncomingMessage.prototype._onXHRProgress = function () {
 /* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(3), __webpack_require__(0).Buffer, __webpack_require__(2)))
 
 /***/ }),
-/* 88 */
+/* 89 */
 /***/ (function(module, exports, __webpack_require__) {
 
 var Buffer = __webpack_require__(0).Buffer
@@ -16957,7 +17061,7 @@ module.exports = function (buf) {
 
 
 /***/ }),
-/* 89 */
+/* 90 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -16980,7 +17084,7 @@ module.exports = {
 
 
 /***/ }),
-/* 90 */
+/* 91 */
 /***/ (function(module, exports, __webpack_require__) {
 
 /* WEBPACK VAR INJECTION */(function(global) {
@@ -17054,7 +17158,7 @@ function config (name) {
 /* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(2)))
 
 /***/ }),
-/* 91 */
+/* 92 */
 /***/ (function(module, exports) {
 
 if (typeof Object.create === 'function') {
@@ -17083,7 +17187,7 @@ if (typeof Object.create === 'function') {
 
 
 /***/ }),
-/* 92 */
+/* 93 */
 /***/ (function(module, exports) {
 
 module.exports = function isBuffer(arg) {
@@ -17094,7 +17198,7 @@ module.exports = function isBuffer(arg) {
 }
 
 /***/ }),
-/* 93 */
+/* 94 */
 /***/ (function(module, exports) {
 
 module.exports = extend
@@ -17119,17 +17223,17 @@ function extend() {
 
 
 /***/ }),
-/* 94 */
+/* 95 */
 /***/ (function(module, exports) {
 
 /* (ignored) */
 
 /***/ }),
-/* 95 */,
 /* 96 */,
 /* 97 */,
 /* 98 */,
-/* 99 */
+/* 99 */,
+/* 100 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -17178,7 +17282,7 @@ var mutationAdpater = function mutationAdpater(mutation) {
 module.exports = mutationAdpater;
 
 /***/ }),
-/* 100 */
+/* 101 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -17190,6 +17294,14 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
 
 var RenderedTarget = __webpack_require__(61);
 var Blocks = __webpack_require__(30);
+
+var _require = __webpack_require__(45),
+    loadSoundFromAsset = _require.loadSoundFromAsset;
+
+var _require2 = __webpack_require__(44),
+    loadCostumeFromAsset = _require2.loadCostumeFromAsset;
+
+var StringUtil = __webpack_require__(31);
 
 var Sprite = function () {
     /**
@@ -17272,51 +17384,46 @@ var Sprite = function () {
                 this.clones.splice(cloneIndex, 1);
             }
         }
+    }, {
+        key: 'duplicate',
+        value: function duplicate() {
+            var _this = this;
+
+            var newSprite = new Sprite(null, this.runtime);
+
+            newSprite.blocks = this.blocks.duplicate();
+
+            var allNames = this.runtime.targets.map(function (t) {
+                return t.name;
+            });
+            newSprite.name = StringUtil.unusedName(this.name, allNames);
+
+            var assetPromises = [];
+
+            newSprite.costumes = this.costumes.map(function (costume) {
+                var newCostume = Object.assign({}, costume);
+                var costumeAsset = _this.runtime.storage.get(costume.assetId);
+                assetPromises.push(loadCostumeFromAsset(newCostume, costumeAsset, _this.runtime));
+                return newCostume;
+            });
+
+            newSprite.sounds = this.sounds.map(function (sound) {
+                var newSound = Object.assign({}, sound);
+                var soundAsset = _this.runtime.storage.get(sound.assetId);
+                assetPromises.push(loadSoundFromAsset(newSound, soundAsset, _this.runtime));
+                return newSound;
+            });
+
+            return Promise.all(assetPromises).then(function () {
+                return newSprite;
+            });
+        }
     }]);
 
     return Sprite;
 }();
 
 module.exports = Sprite;
-
-/***/ }),
-/* 101 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-
-var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
-
-function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
-
-/**
- * Methods for cloning JavaScript objects.
- * @type {object}
- */
-var Clone = function () {
-  function Clone() {
-    _classCallCheck(this, Clone);
-  }
-
-  _createClass(Clone, null, [{
-    key: "simple",
-
-    /**
-     * Deep-clone a "simple" object: one which can be fully expressed with JSON.
-     * Non-JSON values, such as functions, will be stripped from the clone.
-     * @param {object} original - the object to be cloned.
-     * @returns {object} a deep clone of the original object.
-     */
-    value: function simple(original) {
-      return JSON.parse(JSON.stringify(original));
-    }
-  }]);
-
-  return Clone;
-}();
-
-module.exports = Clone;
 
 /***/ }),
 /* 102 */,
@@ -17788,9 +17895,9 @@ module.exports = Parser;
 module.exports = Tokenizer;
 
 var decodeCodePoint = __webpack_require__(116),
-    entityMap = __webpack_require__(69),
+    entityMap = __webpack_require__(70),
     legacyMap = __webpack_require__(117),
-    xmlMap    = __webpack_require__(70),
+    xmlMap    = __webpack_require__(71),
 
     i = 0,
 
@@ -19524,7 +19631,7 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
 
 var Cast = __webpack_require__(12);
 var MathUtil = __webpack_require__(20);
-var Timer = __webpack_require__(62);
+var Timer = __webpack_require__(63);
 
 var Scratch3MotionBlocks = function () {
     function Scratch3MotionBlocks(runtime) {
@@ -20018,8 +20125,8 @@ var _createClass = function () { function defineProperties(target, props) { for 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
 var Cast = __webpack_require__(12);
-var Clone = __webpack_require__(101);
-var Color = __webpack_require__(43);
+var Clone = __webpack_require__(62);
+var Color = __webpack_require__(46);
 var MathUtil = __webpack_require__(20);
 var RenderedTarget = __webpack_require__(61);
 
@@ -20855,7 +20962,7 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
 
 var MathUtil = __webpack_require__(20);
 var Cast = __webpack_require__(12);
-var Clone = __webpack_require__(101);
+var Clone = __webpack_require__(62);
 
 var Scratch3SoundBlocks = function () {
     function Scratch3SoundBlocks(runtime) {
@@ -21232,7 +21339,7 @@ var _createClass = function () { function defineProperties(target, props) { for 
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
-var color = __webpack_require__(43);
+var color = __webpack_require__(46);
 var log = __webpack_require__(17);
 
 /**
@@ -22139,7 +22246,7 @@ module.exports = Scratch3WeDo2Blocks;
 
 var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
 
-var mutationAdapter = __webpack_require__(99);
+var mutationAdapter = __webpack_require__(100);
 var html = __webpack_require__(21);
 
 /**
@@ -22310,9 +22417,9 @@ module.exports = adapter;
 
 
 var log = __webpack_require__(17);
-var Thread = __webpack_require__(57);
+var Thread = __webpack_require__(59);
 
-var _require = __webpack_require__(51),
+var _require = __webpack_require__(53),
     Map = _require.Map;
 
 /**
@@ -22597,7 +22704,7 @@ module.exports = execute;
 "use strict";
 
 
-var _require = __webpack_require__(51),
+var _require = __webpack_require__(53),
     Record = _require.Record;
 
 var MonitorRecord = Record({
@@ -22629,9 +22736,9 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
 var EventEmitter = __webpack_require__(7);
 var Sequencer = __webpack_require__(173);
 var Blocks = __webpack_require__(30);
-var Thread = __webpack_require__(57);
+var Thread = __webpack_require__(59);
 
-var _require = __webpack_require__(51),
+var _require = __webpack_require__(53),
     OrderedMap = _require.OrderedMap;
 
 // Virtual I/O devices.
@@ -23896,8 +24003,8 @@ var _createClass = function () { function defineProperties(target, props) { for 
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
-var Timer = __webpack_require__(62);
-var Thread = __webpack_require__(57);
+var Timer = __webpack_require__(63);
+var Thread = __webpack_require__(59);
 var execute = __webpack_require__(170);
 
 var Sequencer = function () {
@@ -24176,11 +24283,11 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
 var EventEmitter = __webpack_require__(7);
 
 var Blocks = __webpack_require__(30);
-var Variable = __webpack_require__(58);
-var List = __webpack_require__(56);
-var uid = __webpack_require__(63);
+var Variable = __webpack_require__(60);
+var List = __webpack_require__(58);
+var uid = __webpack_require__(64);
 
-var _require = __webpack_require__(51),
+var _require = __webpack_require__(53),
     Map = _require.Map;
 
 /**
@@ -24460,7 +24567,7 @@ var _createClass = function () { function defineProperties(target, props) { for 
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
-var Timer = __webpack_require__(62);
+var Timer = __webpack_require__(63);
 
 var Clock = function () {
     function Clock(runtime) {
@@ -25249,16 +25356,19 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 
 var Blocks = __webpack_require__(30);
 var RenderedTarget = __webpack_require__(61);
-var Sprite = __webpack_require__(100);
-var Color = __webpack_require__(43);
+var Sprite = __webpack_require__(101);
+var Color = __webpack_require__(46);
 var log = __webpack_require__(17);
-var uid = __webpack_require__(63);
+var uid = __webpack_require__(64);
 var specMap = __webpack_require__(180);
-var Variable = __webpack_require__(58);
-var List = __webpack_require__(56);
+var Variable = __webpack_require__(60);
+var List = __webpack_require__(58);
 
-var loadCostume = __webpack_require__(59);
-var loadSound = __webpack_require__(60);
+var _require = __webpack_require__(44),
+    loadCostume = _require.loadCostume;
+
+var _require2 = __webpack_require__(45),
+    loadSound = _require2.loadSound;
 
 /**
  * Convert a Scratch 2.0 procedure string (e.g., "my_procedure %s %b %n")
@@ -25267,6 +25377,8 @@ var loadSound = __webpack_require__(60);
  * @param {string} procCode Scratch 2.0 procedure string.
  * @return {object} Argument map compatible with those in sb2specmap.
  */
+
+
 var parseProcedureArgMap = function parseProcedureArgMap(procCode) {
     var argMap = [{} // First item in list is op string.
     ];
@@ -26858,18 +26970,23 @@ module.exports = specMap;
 
 var vmPackage = __webpack_require__(308);
 var Blocks = __webpack_require__(30);
-var Sprite = __webpack_require__(100);
-var Variable = __webpack_require__(58);
-var List = __webpack_require__(56);
+var Sprite = __webpack_require__(101);
+var Variable = __webpack_require__(60);
+var List = __webpack_require__(58);
 
-var loadCostume = __webpack_require__(59);
-var loadSound = __webpack_require__(60);
+var _require = __webpack_require__(44),
+    loadCostume = _require.loadCostume;
+
+var _require2 = __webpack_require__(45),
+    loadSound = _require2.loadSound;
 
 /**
  * Serializes the specified VM runtime.
  * @param  {!Runtime} runtime VM runtime instance to be serialized.
  * @return {object}    Serialized runtime instance.
  */
+
+
 var serialize = function serialize(runtime) {
     // Fetch targets
     var obj = Object.create(null);
@@ -27075,10 +27192,13 @@ var log = __webpack_require__(17);
 var Runtime = __webpack_require__(172);
 var sb2 = __webpack_require__(179);
 var sb3 = __webpack_require__(181);
-var StringUtil = __webpack_require__(44);
+var StringUtil = __webpack_require__(31);
 
-var loadCostume = __webpack_require__(59);
-var loadSound = __webpack_require__(60);
+var _require = __webpack_require__(44),
+    loadCostume = _require.loadCostume;
+
+var _require2 = __webpack_require__(45),
+    loadSound = _require2.loadSound;
 
 var RESERVED_NAMES = ['_mouse_', '_stage_', '_edge_', '_myself_', '_random_'];
 
@@ -27645,6 +27765,30 @@ var VirtualMachine = function (_EventEmitter) {
         }
 
         /**
+         * Duplicate a sprite.
+         * @param {string} targetId ID of a target whose sprite to duplicate.
+         */
+
+    }, {
+        key: 'duplicateSprite',
+        value: function duplicateSprite(targetId) {
+            var _this7 = this;
+
+            var target = this.runtime.getTargetById(targetId);
+            if (!target) {
+                throw new Error('No target with the provided id.');
+            } else if (!target.isSprite()) {
+                throw new Error('Cannot duplicate non-sprite targets.');
+            } else if (!target.sprite) {
+                throw new Error('No sprite associated with this target.');
+            }
+            target.duplicate().then(function (newTarget) {
+                _this7.runtime.targets.push(newTarget);
+                _this7.setEditingTarget(newTarget.id);
+            });
+        }
+
+        /**
          * Set the audio engine for the VM/runtime
          * @param {!AudioEngine} audioEngine The audio engine to attach
          */
@@ -28183,7 +28327,7 @@ module.exports = {
 /* 212 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var ElementType = __webpack_require__(33);
+var ElementType = __webpack_require__(34);
 
 var re_whitespace = /\s+/g;
 var NodePrototype = __webpack_require__(115);
@@ -28599,7 +28743,7 @@ exports.uniqueSort = function(nodes) {
 /* 216 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var ElementType = __webpack_require__(33);
+var ElementType = __webpack_require__(34);
 var isTag = exports.isTag = ElementType.isTag;
 
 exports.testElement = function(options, element){
@@ -28775,7 +28919,7 @@ exports.prepend = function(elem, prev){
 /* 218 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var isTag = __webpack_require__(33).isTag;
+var isTag = __webpack_require__(34).isTag;
 
 module.exports = {
 	filter: filter,
@@ -28880,7 +29024,7 @@ function findAll(test, rootElems){
 /* 219 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var ElementType = __webpack_require__(33),
+var ElementType = __webpack_require__(34),
     getOuterHTML = __webpack_require__(210),
     isTag = ElementType.isTag;
 
@@ -29075,9 +29219,9 @@ exports.escape = encode.escape;
 /* 237 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var entityMap = __webpack_require__(69),
+var entityMap = __webpack_require__(70),
     legacyMap = __webpack_require__(117),
-    xmlMap    = __webpack_require__(70),
+    xmlMap    = __webpack_require__(71),
     decodeCodePoint = __webpack_require__(116);
 
 var decodeXMLStrict  = getStrictDecoder(xmlMap),
@@ -29152,12 +29296,12 @@ module.exports = {
 /* 238 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var inverseXML = getInverseObj(__webpack_require__(70)),
+var inverseXML = getInverseObj(__webpack_require__(71)),
     xmlReplacer = getInverseReplacer(inverseXML);
 
 exports.XML = getInverse(inverseXML, xmlReplacer);
 
-var inverseHTML = getInverseObj(__webpack_require__(69)),
+var inverseHTML = getInverseObj(__webpack_require__(70)),
     htmlReplacer = getInverseReplacer(inverseHTML);
 
 exports.HTML = getInverse(inverseHTML, htmlReplacer);
@@ -29381,8 +29525,8 @@ module.exports = errorEx;
 /* WEBPACK VAR INJECTION */(function(setImmediate, Buffer) {
 
 var EventEmitter = __webpack_require__(7).EventEmitter;
-var http = __webpack_require__(41);
-var https = __webpack_require__(73);
+var http = __webpack_require__(42);
+var https = __webpack_require__(74);
 var urlLib = __webpack_require__(26);
 var querystring = __webpack_require__(22);
 var objectAssign = __webpack_require__(272);
