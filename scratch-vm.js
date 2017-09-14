@@ -63,7 +63,7 @@
 /******/ 	__webpack_require__.p = "";
 /******/
 /******/ 	// Load entry module and return exports
-/******/ 	return __webpack_require__(__webpack_require__.s = 157);
+/******/ 	return __webpack_require__(__webpack_require__.s = 159);
 /******/ })
 /************************************************************************/
 /******/ ([
@@ -2145,7 +2145,7 @@ process.umask = function() { return 0; };
 
 /*<replacement>*/
 
-var processNextTick = __webpack_require__(14);
+var processNextTick = __webpack_require__(15);
 /*</replacement>*/
 
 /*<replacement>*/
@@ -2985,8 +2985,20 @@ var Cast = function () {
 module.exports = Cast;
 
 /***/ }),
-/* 13 */,
-/* 14 */
+/* 13 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+var minilog = __webpack_require__(273);
+minilog.enable();
+
+module.exports = minilog('vm');
+
+/***/ }),
+/* 14 */,
+/* 15 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -3037,11 +3049,11 @@ function nextTick(fn, arg1, arg2, arg3) {
 /* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(3)))
 
 /***/ }),
-/* 15 */,
-/* 16 */
+/* 16 */,
+/* 17 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var microee = __webpack_require__(261);
+var microee = __webpack_require__(266);
 
 // Implements a subset of Node's stream.Transform - in a cross-platform manner.
 function Transform() {}
@@ -3114,18 +3126,6 @@ Transform.mixin = function(dest) {
 
 module.exports = Transform;
 
-
-/***/ }),
-/* 17 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-
-var minilog = __webpack_require__(268);
-minilog.enable();
-
-module.exports = minilog('vm');
 
 /***/ }),
 /* 18 */
@@ -3388,7 +3388,7 @@ function base64DetectIncompleteChar(buffer) {
 
 /*<replacement>*/
 
-var processNextTick = __webpack_require__(14);
+var processNextTick = __webpack_require__(15);
 /*</replacement>*/
 
 module.exports = Writable;
@@ -4130,8 +4130,8 @@ module.exports = MathUtil;
 /* 21 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var Parser = __webpack_require__(121),
-    DomHandler = __webpack_require__(212);
+var Parser = __webpack_require__(123),
+    DomHandler = __webpack_require__(217);
 
 function defineProp(name, value){
 	delete module.exports[name];
@@ -4141,26 +4141,26 @@ function defineProp(name, value){
 
 module.exports = {
 	Parser: Parser,
-	Tokenizer: __webpack_require__(122),
+	Tokenizer: __webpack_require__(124),
 	ElementType: __webpack_require__(34),
 	DomHandler: DomHandler,
 	get FeedHandler(){
-		return defineProp("FeedHandler", __webpack_require__(252));
+		return defineProp("FeedHandler", __webpack_require__(257));
 	},
 	get Stream(){
-		return defineProp("Stream", __webpack_require__(254));
+		return defineProp("Stream", __webpack_require__(259));
 	},
 	get WritableStream(){
-		return defineProp("WritableStream", __webpack_require__(123));
+		return defineProp("WritableStream", __webpack_require__(125));
 	},
 	get ProxyHandler(){
-		return defineProp("ProxyHandler", __webpack_require__(253));
+		return defineProp("ProxyHandler", __webpack_require__(258));
 	},
 	get DomUtils(){
-		return defineProp("DomUtils", __webpack_require__(214));
+		return defineProp("DomUtils", __webpack_require__(219));
 	},
 	get CollectingHandler(){
-		return defineProp("CollectingHandler", __webpack_require__(251));
+		return defineProp("CollectingHandler", __webpack_require__(256));
 	},
 	// For legacy support
 	DefaultHandler: DomHandler,
@@ -5752,10 +5752,10 @@ var _createClass = function () { function defineProperties(target, props) { for 
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
-var adapter = __webpack_require__(169);
-var mutationAdapter = __webpack_require__(100);
-var xmlEscape = __webpack_require__(182);
-var MonitorRecord = __webpack_require__(171);
+var adapter = __webpack_require__(172);
+var mutationAdapter = __webpack_require__(101);
+var xmlEscape = __webpack_require__(187);
+var MonitorRecord = __webpack_require__(174);
 var Clone = __webpack_require__(62);
 
 /**
@@ -6531,7 +6531,7 @@ module.exports = Array.isArray || function (arr) {
 
 /*<replacement>*/
 
-var processNextTick = __webpack_require__(14);
+var processNextTick = __webpack_require__(15);
 /*</replacement>*/
 
 module.exports = Readable;
@@ -7744,7 +7744,7 @@ function done(stream, er, data) {
 
 /*<replacement>*/
 
-var processNextTick = __webpack_require__(14);
+var processNextTick = __webpack_require__(15);
 /*</replacement>*/
 
 // undocumented cb() API, needed for core, not for public API
@@ -7989,7 +7989,7 @@ xhr = null // Help gc
 
 
 var StringUtil = __webpack_require__(31);
-var log = __webpack_require__(17);
+var log = __webpack_require__(13);
 
 /**
  * Initialize a costume from an asset asynchronously.
@@ -8084,7 +8084,7 @@ module.exports = {
 
 
 var StringUtil = __webpack_require__(31);
-var log = __webpack_require__(17);
+var log = __webpack_require__(13);
 
 /**
  * Initialize a sound from an asset asynchronously.
@@ -13862,10 +13862,10 @@ function _possibleConstructorReturn(self, call) { if (!self) { throw new Referen
 
 function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
 
-var log = __webpack_require__(17);
+var log = __webpack_require__(13);
 var MathUtil = __webpack_require__(20);
 var StringUtil = __webpack_require__(31);
-var Target = __webpack_require__(174);
+var Target = __webpack_require__(177);
 
 /**
  * Rendered target: instance of a sprite (clone), or the stage.
@@ -17239,6 +17239,155 @@ function extend() {
 "use strict";
 
 
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
+
+function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
+
+var SharedDispatch = __webpack_require__(171);
+
+var log = __webpack_require__(13);
+
+/**
+ * This class serves as the central broker for message dispatch. It expects to operate on the main thread / Window and
+ * it must be informed of any Worker threads which will participate in the messaging system. From any context in the
+ * messaging system, the dispatcher's "call" method can call any method on any "service" provided in any participating
+ * context. The dispatch system will forward function arguments and return values across worker boundaries as needed.
+ * @see {WorkerDispatch}
+ */
+
+var CentralDispatch = function (_SharedDispatch) {
+    _inherits(CentralDispatch, _SharedDispatch);
+
+    function CentralDispatch() {
+        _classCallCheck(this, CentralDispatch);
+
+        /**
+         * Map of channel name to worker or local service provider.
+         * If the entry is a Worker, the service is provided by an object on that worker.
+         * Otherwise, the service is provided locally and methods on the service will be called directly.
+         * @see {setService}
+         * @type {object.<Worker|object>}
+         */
+        var _this = _possibleConstructorReturn(this, (CentralDispatch.__proto__ || Object.getPrototypeOf(CentralDispatch)).call(this));
+
+        _this.services = {};
+
+        /**
+         * The constructor we will use to recognize workers.
+         * @type {Function}
+         */
+        _this.workerClass = typeof Worker === 'undefined' ? null : Worker;
+
+        /**
+         * List of workers attached to this dispatcher.
+         * @type {Array}
+         */
+        _this.workers = [];
+        return _this;
+    }
+
+    /**
+     * Set a local object as the global provider of the specified service.
+     * WARNING: Any method on the provider can be called from any worker within the dispatch system.
+     * @param {string} service - a globally unique string identifying this service. Examples: 'vm', 'gui', 'extension9'.
+     * @param {object} provider - a local object which provides this service.
+     * @returns {Promise} - a promise which will resolve once the service is registered.
+     */
+
+
+    _createClass(CentralDispatch, [{
+        key: 'setService',
+        value: function setService(service, provider) {
+            /** Return a promise for consistency with {@link WorkerDispatch#setService} */
+            try {
+                if (this.services.hasOwnProperty(service)) {
+                    log.warn('Central dispatch replacing existing service provider for ' + service);
+                }
+                this.services[service] = provider;
+                return Promise.resolve();
+            } catch (e) {
+                return Promise.reject(e);
+            }
+        }
+
+        /**
+         * Add a worker to the message dispatch system. The worker must implement a compatible message dispatch framework.
+         * The dispatcher will immediately attempt to "handshake" with the worker.
+         * @param {Worker} worker - the worker to add into the dispatch system.
+         */
+
+    }, {
+        key: 'addWorker',
+        value: function addWorker(worker) {
+            if (this.workers.indexOf(worker) === -1) {
+                this.workers.push(worker);
+                worker.onmessage = this._onMessage.bind(this, worker);
+                this._remoteCall(worker, 'dispatch', 'handshake').catch(function (e) {
+                    log.error('Could not handshake with worker: ' + JSON.stringify(e));
+                });
+            } else {
+                log.warn('Central dispatch ignoring attempt to add duplicate worker');
+            }
+        }
+
+        /**
+         * Fetch the service provider object for a particular service name.
+         * @override
+         * @param {string} service - the name of the service to look up
+         * @returns {{provider:(object|Worker), isRemote:boolean}} - the means to contact the service, if found
+         * @protected
+         */
+
+    }, {
+        key: '_getServiceProvider',
+        value: function _getServiceProvider(service) {
+            var provider = this.services[service];
+            return provider && {
+                provider: provider,
+                isRemote: provider instanceof this.workerClass
+            };
+        }
+
+        /**
+         * Handle a call message sent to the dispatch service itself
+         * @override
+         * @param {Worker} worker - the worker which sent the message.
+         * @param {DispatchCallMessage} message - the message to be handled.
+         * @returns {Promise|undefined} - a promise for the results of this operation, if appropriate
+         * @protected
+         */
+
+    }, {
+        key: '_onDispatchMessage',
+        value: function _onDispatchMessage(worker, message) {
+            var promise = void 0;
+            switch (message.method) {
+                case 'setService':
+                    promise = this.setService(message.args[0], worker);
+                    break;
+                default:
+                    log.error('Central dispatch received message for unknown method: ' + message.method);
+            }
+            return promise;
+        }
+    }]);
+
+    return CentralDispatch;
+}(SharedDispatch);
+
+module.exports = new CentralDispatch();
+
+/***/ }),
+/* 101 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
 var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
 
 var html = __webpack_require__(21);
@@ -17282,7 +17431,24 @@ var mutationAdpater = function mutationAdpater(mutation) {
 module.exports = mutationAdpater;
 
 /***/ }),
-/* 101 */
+/* 102 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+var BlockType = {
+    COMMAND: 'command',
+    REPORTER: 'reporter',
+    BOOLEAN: 'Boolean',
+    HAT: 'hat',
+    CONDITIONAL: 'conditional'
+};
+
+module.exports = BlockType;
+
+/***/ }),
+/* 103 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -17426,8 +17592,6 @@ var Sprite = function () {
 module.exports = Sprite;
 
 /***/ }),
-/* 102 */,
-/* 103 */,
 /* 104 */,
 /* 105 */,
 /* 106 */,
@@ -17439,7 +17603,9 @@ module.exports = Sprite;
 /* 112 */,
 /* 113 */,
 /* 114 */,
-/* 115 */
+/* 115 */,
+/* 116 */,
+/* 117 */
 /***/ (function(module, exports) {
 
 // This object will be used as the prototype for Nodes when creating a
@@ -17489,10 +17655,10 @@ Object.keys(domLvl1).forEach(function(key) {
 
 
 /***/ }),
-/* 116 */
+/* 118 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var decodeMap = __webpack_require__(239);
+var decodeMap = __webpack_require__(244);
 
 module.exports = decodeCodePoint;
 
@@ -17521,19 +17687,19 @@ function decodeCodePoint(codePoint){
 
 
 /***/ }),
-/* 117 */
+/* 119 */
 /***/ (function(module, exports) {
 
 module.exports = {"Aacute":"Á","aacute":"á","Acirc":"Â","acirc":"â","acute":"´","AElig":"Æ","aelig":"æ","Agrave":"À","agrave":"à","amp":"&","AMP":"&","Aring":"Å","aring":"å","Atilde":"Ã","atilde":"ã","Auml":"Ä","auml":"ä","brvbar":"¦","Ccedil":"Ç","ccedil":"ç","cedil":"¸","cent":"¢","copy":"©","COPY":"©","curren":"¤","deg":"°","divide":"÷","Eacute":"É","eacute":"é","Ecirc":"Ê","ecirc":"ê","Egrave":"È","egrave":"è","ETH":"Ð","eth":"ð","Euml":"Ë","euml":"ë","frac12":"½","frac14":"¼","frac34":"¾","gt":">","GT":">","Iacute":"Í","iacute":"í","Icirc":"Î","icirc":"î","iexcl":"¡","Igrave":"Ì","igrave":"ì","iquest":"¿","Iuml":"Ï","iuml":"ï","laquo":"«","lt":"<","LT":"<","macr":"¯","micro":"µ","middot":"·","nbsp":" ","not":"¬","Ntilde":"Ñ","ntilde":"ñ","Oacute":"Ó","oacute":"ó","Ocirc":"Ô","ocirc":"ô","Ograve":"Ò","ograve":"ò","ordf":"ª","ordm":"º","Oslash":"Ø","oslash":"ø","Otilde":"Õ","otilde":"õ","Ouml":"Ö","ouml":"ö","para":"¶","plusmn":"±","pound":"£","quot":"\"","QUOT":"\"","raquo":"»","reg":"®","REG":"®","sect":"§","shy":"­","sup1":"¹","sup2":"²","sup3":"³","szlig":"ß","THORN":"Þ","thorn":"þ","times":"×","Uacute":"Ú","uacute":"ú","Ucirc":"Û","ucirc":"û","Ugrave":"Ù","ugrave":"ù","uml":"¨","Uuml":"Ü","uuml":"ü","Yacute":"Ý","yacute":"ý","yen":"¥","yuml":"ÿ"}
 
 /***/ }),
-/* 118 */,
-/* 119 */,
 /* 120 */,
-/* 121 */
+/* 121 */,
+/* 122 */,
+/* 123 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var Tokenizer = __webpack_require__(122);
+var Tokenizer = __webpack_require__(124);
 
 /*
 	Options:
@@ -17889,14 +18055,14 @@ module.exports = Parser;
 
 
 /***/ }),
-/* 122 */
+/* 124 */
 /***/ (function(module, exports, __webpack_require__) {
 
 module.exports = Tokenizer;
 
-var decodeCodePoint = __webpack_require__(116),
+var decodeCodePoint = __webpack_require__(118),
     entityMap = __webpack_require__(70),
-    legacyMap = __webpack_require__(117),
+    legacyMap = __webpack_require__(119),
     xmlMap    = __webpack_require__(71),
 
     i = 0,
@@ -18801,13 +18967,13 @@ Tokenizer.prototype._emitPartial = function(value){
 
 
 /***/ }),
-/* 123 */
+/* 125 */
 /***/ (function(module, exports, __webpack_require__) {
 
 module.exports = Stream;
 
-var Parser = __webpack_require__(121),
-    WritableStream = __webpack_require__(24).Writable || __webpack_require__(312).Writable,
+var Parser = __webpack_require__(123),
+    WritableStream = __webpack_require__(24).Writable || __webpack_require__(318).Writable,
     StringDecoder = __webpack_require__(18).StringDecoder,
     Buffer = __webpack_require__(0).Buffer;
 
@@ -18831,8 +18997,8 @@ WritableStream.prototype._write = function(chunk, encoding, cb){
 };
 
 /***/ }),
-/* 124 */,
-/* 125 */
+/* 126 */,
+/* 127 */
 /***/ (function(module, exports) {
 
 var hex = {
@@ -18858,26 +19024,24 @@ module.exports = color;
 
 
 /***/ }),
-/* 126 */,
-/* 127 */,
 /* 128 */,
 /* 129 */,
 /* 130 */,
 /* 131 */,
 /* 132 */,
 /* 133 */,
-/* 134 */
+/* 134 */,
+/* 135 */,
+/* 136 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 
-module.exports = typeof Promise === 'function' ? Promise : __webpack_require__(288);
+module.exports = typeof Promise === 'function' ? Promise : __webpack_require__(293);
 
 
 /***/ }),
-/* 135 */,
-/* 136 */,
 /* 137 */,
 /* 138 */,
 /* 139 */,
@@ -18888,17 +19052,17 @@ module.exports = typeof Promise === 'function' ? Promise : __webpack_require__(2
 /* 144 */,
 /* 145 */,
 /* 146 */,
-/* 147 */
+/* 147 */,
+/* 148 */,
+/* 149 */
 /***/ (function(module, exports, __webpack_require__) {
 
-const VirtualMachine = __webpack_require__(183);
+const VirtualMachine = __webpack_require__(188);
 
 module.exports = VirtualMachine;
 
 
 /***/ }),
-/* 148 */,
-/* 149 */,
 /* 150 */,
 /* 151 */,
 /* 152 */,
@@ -18906,17 +19070,19 @@ module.exports = VirtualMachine;
 /* 154 */,
 /* 155 */,
 /* 156 */,
-/* 157 */
+/* 157 */,
+/* 158 */,
+/* 159 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 /* WEBPACK VAR INJECTION */(function(global) {
 
-module.exports = global["VirtualMachine"] = __webpack_require__(147);
+module.exports = global["VirtualMachine"] = __webpack_require__(149);
 /* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(2)))
 
 /***/ }),
-/* 158 */
+/* 160 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -19082,7 +19248,7 @@ var Scratch3ControlBlocks = function () {
 module.exports = Scratch3ControlBlocks;
 
 /***/ }),
-/* 159 */
+/* 161 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -19250,7 +19416,7 @@ var Scratch3DataBlocks = function () {
 module.exports = Scratch3DataBlocks;
 
 /***/ }),
-/* 160 */
+/* 162 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -19364,7 +19530,7 @@ var Scratch3EventBlocks = function () {
 module.exports = Scratch3EventBlocks;
 
 /***/ }),
-/* 161 */
+/* 163 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -19619,7 +19785,7 @@ var Scratch3LooksBlocks = function () {
 module.exports = Scratch3LooksBlocks;
 
 /***/ }),
-/* 162 */
+/* 164 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -19907,7 +20073,7 @@ var Scratch3MotionBlocks = function () {
 module.exports = Scratch3MotionBlocks;
 
 /***/ }),
-/* 163 */
+/* 165 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -20114,7 +20280,7 @@ var Scratch3OperatorsBlocks = function () {
 module.exports = Scratch3OperatorsBlocks;
 
 /***/ }),
-/* 164 */
+/* 166 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -20653,7 +20819,7 @@ var Scratch3PenBlocks = function () {
 module.exports = Scratch3PenBlocks;
 
 /***/ }),
-/* 165 */
+/* 167 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -20723,7 +20889,7 @@ var Scratch3ProcedureBlocks = function () {
 module.exports = Scratch3ProcedureBlocks;
 
 /***/ }),
-/* 166 */
+/* 168 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -20950,7 +21116,7 @@ var Scratch3SensingBlocks = function () {
 module.exports = Scratch3SensingBlocks;
 
 /***/ }),
-/* 167 */
+/* 169 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -21329,7 +21495,7 @@ var Scratch3SoundBlocks = function () {
 module.exports = Scratch3SoundBlocks;
 
 /***/ }),
-/* 168 */
+/* 170 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -21340,7 +21506,7 @@ var _createClass = function () { function defineProperties(target, props) { for 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
 var color = __webpack_require__(46);
-var log = __webpack_require__(17);
+var log = __webpack_require__(13);
 
 /**
  * Manage power, direction, and timers for one WeDo 2.0 motor.
@@ -22238,7 +22404,305 @@ var Scratch3WeDo2Blocks = function () {
 module.exports = Scratch3WeDo2Blocks;
 
 /***/ }),
-/* 169 */
+/* 171 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+var _slicedToArray = function () { function sliceIterator(arr, i) { var _arr = []; var _n = true; var _d = false; var _e = undefined; try { for (var _i = arr[Symbol.iterator](), _s; !(_n = (_s = _i.next()).done); _n = true) { _arr.push(_s.value); if (i && _arr.length === i) break; } } catch (err) { _d = true; _e = err; } finally { try { if (!_n && _i["return"]) _i["return"](); } finally { if (_d) throw _e; } } return _arr; } return function (arr, i) { if (Array.isArray(arr)) { return arr; } else if (Symbol.iterator in Object(arr)) { return sliceIterator(arr, i); } else { throw new TypeError("Invalid attempt to destructure non-iterable instance"); } }; }();
+
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr2 = Array(arr.length); i < arr.length; i++) { arr2[i] = arr[i]; } return arr2; } else { return Array.from(arr); } }
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+var log = __webpack_require__(13);
+
+/**
+ * @typedef {object} DispatchCallMessage - a message to the dispatch system representing a service method call
+ * @property {*} responseId - send a response message with this response ID. See {@link DispatchResponseMessage}
+ * @property {string} service - the name of the service to be called
+ * @property {string} method - the name of the method to be called
+ * @property {Array|undefined} args - the arguments to be passed to the method
+ */
+
+/**
+ * @typedef {object} DispatchResponseMessage - a message to the dispatch system representing the results of a call
+ * @property {*} responseId - a copy of the response ID from the call which generated this response
+ * @property {*|undefined} error - if this is truthy, then it contains results from a failed call (such as an exception)
+ * @property {*|undefined} result - if error is not truthy, then this contains the return value of the call (if any)
+ */
+
+/**
+ * @typedef {DispatchCallMessage|DispatchResponseMessage} DispatchMessage
+ * Any message to the dispatch system.
+ */
+
+/**
+ * The SharedDispatch class is responsible for dispatch features shared by
+ * {@link CentralDispatch} and {@link WorkerDispatch}.
+ */
+
+var SharedDispatch = function () {
+    function SharedDispatch() {
+        _classCallCheck(this, SharedDispatch);
+
+        /**
+         * List of callback registrations for promises waiting for a response from a call to a service on another
+         * worker. A callback registration is an array of [resolve,reject] Promise functions.
+         * Calls to local services don't enter this list.
+         * @type {Array.<[Function,Function]>}
+         */
+        this.callbacks = [];
+
+        /**
+         * The next response ID to be used.
+         * @type {int}
+         */
+        this.nextResponseId = 0;
+    }
+
+    /**
+     * Call a particular method on a particular service, regardless of whether that service is provided locally or on
+     * a worker. If the service is provided by a worker, the `args` will be copied using the Structured Clone
+     * algorithm, except for any items which are also in the `transfer` list. Ownership of those items will be
+     * transferred to the worker, and they should not be used after this call.
+     * @example
+     *      dispatcher.call('vm', 'setData', 'cat', 42);
+     *      // this finds the worker for the 'vm' service, then on that worker calls:
+     *      vm.setData('cat', 42);
+     * @param {string} service - the name of the service.
+     * @param {string} method - the name of the method.
+     * @param {*} [args] - the arguments to be copied to the method, if any.
+     * @returns {Promise} - a promise for the return value of the service method.
+     */
+
+
+    _createClass(SharedDispatch, [{
+        key: 'call',
+        value: function call(service, method) {
+            for (var _len = arguments.length, args = Array(_len > 2 ? _len - 2 : 0), _key = 2; _key < _len; _key++) {
+                args[_key - 2] = arguments[_key];
+            }
+
+            return this.transferCall.apply(this, [service, method, null].concat(args));
+        }
+
+        /**
+         * Call a particular method on a particular service, regardless of whether that service is provided locally or on
+         * a worker. If the service is provided by a worker, the `args` will be copied using the Structured Clone
+         * algorithm, except for any items which are also in the `transfer` list. Ownership of those items will be
+         * transferred to the worker, and they should not be used after this call.
+         * @example
+         *      dispatcher.transferCall('vm', 'setData', [myArrayBuffer], 'cat', myArrayBuffer);
+         *      // this finds the worker for the 'vm' service, transfers `myArrayBuffer` to it, then on that worker calls:
+         *      vm.setData('cat', myArrayBuffer);
+         * @param {string} service - the name of the service.
+         * @param {string} method - the name of the method.
+         * @param {Array} [transfer] - objects to be transferred instead of copied. Must be present in `args` to be useful.
+         * @param {*} [args] - the arguments to be copied to the method, if any.
+         * @returns {Promise} - a promise for the return value of the service method.
+         */
+
+    }, {
+        key: 'transferCall',
+        value: function transferCall(service, method, transfer) {
+            try {
+                var _getServiceProvider2 = this._getServiceProvider(service),
+                    provider = _getServiceProvider2.provider,
+                    isRemote = _getServiceProvider2.isRemote;
+
+                if (provider) {
+                    for (var _len2 = arguments.length, args = Array(_len2 > 3 ? _len2 - 3 : 0), _key2 = 3; _key2 < _len2; _key2++) {
+                        args[_key2 - 3] = arguments[_key2];
+                    }
+
+                    if (isRemote) {
+                        return this._remoteTransferCall.apply(this, [provider, service, method, transfer].concat(args));
+                    }
+
+                    var result = provider[method].apply(provider, args);
+                    return Promise.resolve(result);
+                }
+                return Promise.reject(new Error('Service not found: ' + service));
+            } catch (e) {
+                return Promise.reject(e);
+            }
+        }
+
+        /**
+         * Like {@link call}, but force the call to be posted through a particular communication channel.
+         * @param {object} provider - send the call through this object's `postMessage` function.
+         * @param {string} service - the name of the service.
+         * @param {string} method - the name of the method.
+         * @param {*} [args] - the arguments to be copied to the method, if any.
+         * @returns {Promise} - a promise for the return value of the service method.
+         */
+
+    }, {
+        key: '_remoteCall',
+        value: function _remoteCall(provider, service, method) {
+            for (var _len3 = arguments.length, args = Array(_len3 > 3 ? _len3 - 3 : 0), _key3 = 3; _key3 < _len3; _key3++) {
+                args[_key3 - 3] = arguments[_key3];
+            }
+
+            return this._remoteTransferCall.apply(this, [provider, service, method, null].concat(args));
+        }
+
+        /**
+         * Like {@link transferCall}, but force the call to be posted through a particular communication channel.
+         * @param {object} provider - send the call through this object's `postMessage` function.
+         * @param {string} service - the name of the service.
+         * @param {string} method - the name of the method.
+         * @param {Array} [transfer] - objects to be transferred instead of copied. Must be present in `args` to be useful.
+         * @param {*} [args] - the arguments to be copied to the method, if any.
+         * @returns {Promise} - a promise for the return value of the service method.
+         */
+
+    }, {
+        key: '_remoteTransferCall',
+        value: function _remoteTransferCall(provider, service, method, transfer) {
+            for (var _len4 = arguments.length, args = Array(_len4 > 4 ? _len4 - 4 : 0), _key4 = 4; _key4 < _len4; _key4++) {
+                args[_key4 - 4] = arguments[_key4];
+            }
+
+            var _this = this;
+
+            return new Promise(function (resolve, reject) {
+                var responseId = _this._storeCallbacks(resolve, reject);
+
+                /** @TODO: remove this hack! this is just here so we don't try to send `util` to a worker */
+                if (args.length > 0 && typeof args[args.length - 1].yield === 'function') {
+                    args.pop();
+                }
+
+                if (transfer) {
+                    provider.postMessage({ service: service, method: method, responseId: responseId, args: args }, transfer);
+                } else {
+                    provider.postMessage({ service: service, method: method, responseId: responseId, args: args });
+                }
+            });
+        }
+
+        /**
+         * Store callback functions pending a response message.
+         * @param {Function} resolve - function to call if the service method returns.
+         * @param {Function} reject - function to call if the service method throws.
+         * @returns {*} - a unique response ID for this set of callbacks. See {@link _deliverResponse}.
+         * @protected
+         */
+
+    }, {
+        key: '_storeCallbacks',
+        value: function _storeCallbacks(resolve, reject) {
+            var responseId = this.nextResponseId++;
+            this.callbacks[responseId] = [resolve, reject];
+            return responseId;
+        }
+
+        /**
+         * Deliver call response from a worker. This should only be called as the result of a message from a worker.
+         * @param {int} responseId - the response ID of the callback set to call.
+         * @param {DispatchResponseMessage} message - the message containing the response value(s).
+         * @protected
+         */
+
+    }, {
+        key: '_deliverResponse',
+        value: function _deliverResponse(responseId, message) {
+            try {
+                var _callbacks$responseId = _slicedToArray(this.callbacks[responseId], 2),
+                    resolve = _callbacks$responseId[0],
+                    reject = _callbacks$responseId[1];
+
+                delete this.callbacks[responseId];
+                if (message.error) {
+                    reject(message.error);
+                } else {
+                    resolve(message.result);
+                }
+            } catch (e) {
+                log.error('Dispatch callback failed: ' + JSON.stringify(e));
+            }
+        }
+
+        /**
+         * Handle a message event received from a connected worker.
+         * @param {Worker} worker - the worker which sent the message, or the global object if running in a worker.
+         * @param {MessageEvent} event - the message event to be handled.
+         * @protected
+         */
+
+    }, {
+        key: '_onMessage',
+        value: function _onMessage(worker, event) {
+            /** @type {DispatchMessage} */
+            var message = event.data;
+            message.args = message.args || [];
+            var promise = void 0;
+            if (message.service) {
+                if (message.service === 'dispatch') {
+                    promise = this._onDispatchMessage(worker, message);
+                } else {
+                    promise = this.call.apply(this, [message.service, message.method].concat(_toConsumableArray(message.args)));
+                }
+            } else if (typeof message.responseId === 'undefined') {
+                log.error('Dispatch caught malformed message from a worker: ' + JSON.stringify(event));
+            } else {
+                this._deliverResponse(message.responseId, message);
+            }
+            if (promise) {
+                if (typeof message.responseId === 'undefined') {
+                    log.error('Dispatch message missing required response ID: ' + JSON.stringify(event));
+                } else {
+                    promise.then(function (result) {
+                        return worker.postMessage({ responseId: message.responseId, result: result });
+                    }, function (error) {
+                        return worker.postMessage({ responseId: message.responseId, error: error });
+                    });
+                }
+            }
+        }
+
+        /**
+         * Fetch the service provider object for a particular service name.
+         * @abstract
+         * @param {string} service - the name of the service to look up
+         * @returns {{provider:(object|Worker), isRemote:boolean}} - the means to contact the service, if found
+         * @protected
+         */
+
+    }, {
+        key: '_getServiceProvider',
+        value: function _getServiceProvider(service) {
+            throw new Error('Could not get provider for ' + service + ': _getServiceProvider not implemented');
+        }
+
+        /**
+         * Handle a call message sent to the dispatch service itself
+         * @abstract
+         * @param {Worker} worker - the worker which sent the message.
+         * @param {DispatchCallMessage} message - the message to be handled.
+         * @returns {Promise|undefined} - a promise for the results of this operation, if appropriate
+         * @private
+         */
+
+    }, {
+        key: '_onDispatchMessage',
+        value: function _onDispatchMessage(worker, message) {
+            throw new Error('Unimplemented dispatch message handler cannot handle ' + message.method + ' method');
+        }
+    }]);
+
+    return SharedDispatch;
+}();
+
+module.exports = SharedDispatch;
+
+/***/ }),
+/* 172 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -22246,7 +22710,7 @@ module.exports = Scratch3WeDo2Blocks;
 
 var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
 
-var mutationAdapter = __webpack_require__(100);
+var mutationAdapter = __webpack_require__(101);
 var html = __webpack_require__(21);
 
 /**
@@ -22410,13 +22874,13 @@ var adapter = function adapter(e) {
 module.exports = adapter;
 
 /***/ }),
-/* 170 */
+/* 173 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 
-var log = __webpack_require__(17);
+var log = __webpack_require__(13);
 var Thread = __webpack_require__(59);
 
 var _require = __webpack_require__(53),
@@ -22698,7 +23162,7 @@ var execute = function execute(sequencer, thread) {
 module.exports = execute;
 
 /***/ }),
-/* 171 */
+/* 174 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -22717,7 +23181,7 @@ var MonitorRecord = Record({
 module.exports = MonitorRecord;
 
 /***/ }),
-/* 172 */
+/* 175 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -22734,33 +23198,81 @@ function _possibleConstructorReturn(self, call) { if (!self) { throw new Referen
 function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
 
 var EventEmitter = __webpack_require__(7);
-var Sequencer = __webpack_require__(173);
-var Blocks = __webpack_require__(30);
-var Thread = __webpack_require__(59);
 
 var _require = __webpack_require__(53),
     OrderedMap = _require.OrderedMap;
 
+var ArgumentType = __webpack_require__(178);
+var Blocks = __webpack_require__(30);
+var BlockType = __webpack_require__(102);
+var Sequencer = __webpack_require__(176);
+var Thread = __webpack_require__(59);
+
 // Virtual I/O devices.
-
-
-var Clock = __webpack_require__(175);
-var DeviceManager = __webpack_require__(176);
-var Keyboard = __webpack_require__(177);
-var Mouse = __webpack_require__(178);
+var Clock = __webpack_require__(180);
+var DeviceManager = __webpack_require__(181);
+var Keyboard = __webpack_require__(182);
+var Mouse = __webpack_require__(183);
 
 var defaultBlockPackages = {
-    scratch3_control: __webpack_require__(158),
-    scratch3_event: __webpack_require__(160),
-    scratch3_looks: __webpack_require__(161),
-    scratch3_motion: __webpack_require__(162),
-    scratch3_operators: __webpack_require__(163),
-    scratch3_pen: __webpack_require__(164),
-    scratch3_sound: __webpack_require__(167),
-    scratch3_sensing: __webpack_require__(166),
-    scratch3_data: __webpack_require__(159),
-    scratch3_procedures: __webpack_require__(165),
-    scratch3_wedo2: __webpack_require__(168)
+    scratch3_control: __webpack_require__(160),
+    scratch3_event: __webpack_require__(162),
+    scratch3_looks: __webpack_require__(163),
+    scratch3_motion: __webpack_require__(164),
+    scratch3_operators: __webpack_require__(165),
+    scratch3_pen: __webpack_require__(166),
+    scratch3_sound: __webpack_require__(169),
+    scratch3_sensing: __webpack_require__(168),
+    scratch3_data: __webpack_require__(161),
+    scratch3_procedures: __webpack_require__(167),
+    scratch3_wedo2: __webpack_require__(170)
+};
+
+/**
+ * Information used for converting Scratch argument types into scratch-blocks data.
+ * @type {object.<ArgumentType, {shadowType: string, fieldType: string}>}}
+ */
+var ArgumentTypeMap = function () {
+    var map = {};
+    map[ArgumentType.NUMBER] = {
+        shadowType: 'math_number',
+        fieldType: 'NUM'
+    };
+    map[ArgumentType.STRING] = {
+        shadowType: 'text',
+        fieldType: 'TEXT'
+    };
+    // @TODO: talk to Rachel & co. to figure out what goes here. Make it OK to not have a field. Add `check` support.
+    map[ArgumentType.BOOLEAN] = {
+        shadowType: ''
+    };
+    return map;
+}();
+
+/**
+ * These constants are copied from scratch-blocks/core/constants.js
+ * @TODO find a way to require() these... maybe make a scratch-blocks/dist/constants.js or something like that?
+ * @readonly
+ * @enum {int}
+ */
+var ScratchBlocksConstants = {
+    /**
+     * ENUM for output shape: hexagonal (booleans/predicates).
+     * @const
+     */
+    OUTPUT_SHAPE_HEXAGONAL: 1,
+
+    /**
+     * ENUM for output shape: rounded (numbers).
+     * @const
+     */
+    OUTPUT_SHAPE_ROUND: 2,
+
+    /**
+     * ENUM for output shape: squared (any/all values; strings).
+     * @const
+     */
+    OUTPUT_SHAPE_SQUARE: 3
 };
 
 /**
@@ -22818,6 +23330,13 @@ var Runtime = function (_EventEmitter) {
          * @type {Object.<string, Function>}
          */
         _this._primitives = {};
+
+        /**
+         * Map to look up all block information by extended opcode.
+         * @type {Array.<CategoryInfo>}
+         * @private
+         */
+        _this._blockInfo = [];
 
         /**
          * Map to look up hat blocks' metadata.
@@ -22962,6 +23481,216 @@ var Runtime = function (_EventEmitter) {
                     }
                 }
             }
+        }
+
+        /**
+         * Register the primitives provided by an extension.
+         * @param {ExtensionInfo} extensionInfo - information about the extension (id, blocks, etc.)
+         * @private
+         */
+
+    }, {
+        key: '_registerExtensionPrimitives',
+        value: function _registerExtensionPrimitives(extensionInfo) {
+            var categoryInfo = {
+                id: extensionInfo.id,
+                name: extensionInfo.name,
+                color1: '#FF6680',
+                color2: '#FF4D6A',
+                color3: '#FF3355',
+                blocks: []
+            };
+
+            this._blockInfo.push(categoryInfo);
+
+            var _iteratorNormalCompletion = true;
+            var _didIteratorError = false;
+            var _iteratorError = undefined;
+
+            try {
+                for (var _iterator = extensionInfo.blocks[Symbol.iterator](), _step2; !(_iteratorNormalCompletion = (_step2 = _iterator.next()).done); _iteratorNormalCompletion = true) {
+                    var blockInfo = _step2.value;
+
+                    var convertedBlock = this._convertForScratchBlocks(blockInfo, categoryInfo);
+                    var opcode = convertedBlock.json.type;
+                    categoryInfo.blocks.push(convertedBlock);
+                    this._primitives[opcode] = convertedBlock.info.func;
+                }
+            } catch (err) {
+                _didIteratorError = true;
+                _iteratorError = err;
+            } finally {
+                try {
+                    if (!_iteratorNormalCompletion && _iterator.return) {
+                        _iterator.return();
+                    }
+                } finally {
+                    if (_didIteratorError) {
+                        throw _iteratorError;
+                    }
+                }
+            }
+
+            this.emit(Runtime.EXTENSION_ADDED, categoryInfo.blocks);
+        }
+
+        /**
+         * Convert BlockInfo into scratch-blocks JSON & XML, and generate a proxy function.
+         * @param {BlockInfo} blockInfo - the block to convert
+         * @param {CategoryInfo} categoryInfo - the category for this block
+         * @returns {{info: BlockInfo, json: object, xml: string}} - the converted & original block information
+         * @private
+         */
+
+    }, {
+        key: '_convertForScratchBlocks',
+        value: function _convertForScratchBlocks(blockInfo, categoryInfo) {
+            var extendedOpcode = categoryInfo.id + '.' + blockInfo.opcode;
+            var blockJSON = {
+                type: extendedOpcode,
+                inputsInline: true,
+                category: categoryInfo.name,
+                colour: categoryInfo.color1,
+                colourSecondary: categoryInfo.color2,
+                colorTertiary: categoryInfo.color3,
+                args0: []
+            };
+
+            var inputList = [];
+
+            // TODO: store this somewhere so that we can map args appropriately after translation.
+            // This maps an arg name to its relative position in the original (usually English) block text.
+            // When displaying a block in another language we'll need to run a `replace` action similar to the one below,
+            // but each `[ARG]` will need to be replaced with the number in this map instead of `args0.length`.
+            var argsMap = {};
+
+            blockJSON.message0 = blockInfo.text.replace(/\[(.+?)]/g, function (match, placeholder) {
+
+                // Sanitize the placeholder to ensure valid XML
+                placeholder = placeholder.replace(/[<"&]/, '_');
+
+                blockJSON.args0.push({
+                    type: 'input_value',
+                    name: placeholder
+                });
+
+                // scratch-blocks uses 1-based argument indexing
+                var argNum = blockJSON.args0.length;
+                argsMap[placeholder] = argNum;
+
+                var argInfo = blockInfo.arguments[placeholder] || {};
+                var argTypeInfo = ArgumentTypeMap[argInfo.type] || {};
+                var defaultValue = typeof argInfo.defaultValue === 'undefined' ? '' : argInfo.defaultValue.toString();
+                inputList.push('<value name="' + placeholder + '">' + ('<shadow type="' + argTypeInfo.shadowType + '">') + ('<field name="' + argTypeInfo.fieldType + '">' + defaultValue + '</field>') + '</shadow>' + '</value>');
+
+                return '%' + argNum;
+            });
+
+            switch (blockInfo.blockType) {
+                case BlockType.COMMAND:
+                    blockJSON.outputShape = ScratchBlocksConstants.OUTPUT_SHAPE_SQUARE;
+                    blockJSON.previousStatement = null; // null = available connection; undefined = hat
+                    if (!blockInfo.isTerminal) {
+                        blockJSON.nextStatement = null; // null = available connection; undefined = terminal
+                    }
+                    break;
+                case BlockType.REPORTER:
+                    blockJSON.output = 'String'; // TODO: distinguish number & string here?
+                    blockJSON.outputShape = ScratchBlocksConstants.OUTPUT_SHAPE_ROUND;
+                    break;
+                case BlockType.BOOLEAN:
+                    blockJSON.output = 'Boolean';
+                    blockJSON.outputShape = ScratchBlocksConstants.OUTPUT_SHAPE_HEXAGONAL;
+                    break;
+                case BlockType.HAT:
+                    blockJSON.outputShape = ScratchBlocksConstants.OUTPUT_SHAPE_SQUARE;
+                    blockJSON.nextStatement = null; // null = available connection; undefined = terminal
+                    break;
+                case BlockType.CONDITIONAL:
+                    // Statement inputs get names like 'SUBSTACK', 'SUBSTACK2', 'SUBSTACK3', ...
+                    for (var branchNum = 1; branchNum <= blockInfo.branchCount; ++branchNum) {
+                        blockJSON['message' + branchNum] = '%1';
+                        blockJSON['args' + branchNum] = [{
+                            type: 'input_statement',
+                            name: 'SUBSTACK' + (branchNum > 1 ? branchNum : '')
+                        }];
+                    }
+                    blockJSON.outputShape = ScratchBlocksConstants.OUTPUT_SHAPE_SQUARE;
+                    blockJSON.previousStatement = null; // null = available connection; undefined = hat
+                    blockJSON.nextStatement = null; // null = available connection; undefined = terminal
+                    break;
+            }
+
+            if (blockInfo.isTerminal) {
+                delete blockJSON.nextStatement;
+            }
+
+            var blockXML = '<block type="' + extendedOpcode + '">' + inputList.join('') + '</block>';
+
+            return {
+                info: blockInfo,
+                json: blockJSON,
+                xml: blockXML
+            };
+        }
+
+        /**
+         * @returns {string} scratch-blocks XML description for all dynamic blocks, wrapped in <category> elements.
+         */
+
+    }, {
+        key: 'getBlocksXML',
+        value: function getBlocksXML() {
+            var xmlParts = [];
+            var _iteratorNormalCompletion2 = true;
+            var _didIteratorError2 = false;
+            var _iteratorError2 = undefined;
+
+            try {
+                for (var _iterator2 = this._blockInfo[Symbol.iterator](), _step3; !(_iteratorNormalCompletion2 = (_step3 = _iterator2.next()).done); _iteratorNormalCompletion2 = true) {
+                    var categoryInfo = _step3.value;
+                    var name = categoryInfo.name,
+                        color1 = categoryInfo.color1,
+                        color2 = categoryInfo.color2;
+
+                    xmlParts.push('<category name="' + name + '" colour="' + color1 + '" secondaryColour="' + color2 + '">');
+                    // @todo only add this label for user-loaded extensions?
+                    xmlParts.push('<label text="' + name + '" web-class="extensionLabel"/>');
+                    xmlParts.push.apply(xmlParts, categoryInfo.blocks.map(function (blockInfo) {
+                        return blockInfo.xml;
+                    }));
+                    xmlParts.push('</category>');
+                }
+            } catch (err) {
+                _didIteratorError2 = true;
+                _iteratorError2 = err;
+            } finally {
+                try {
+                    if (!_iteratorNormalCompletion2 && _iterator2.return) {
+                        _iterator2.return();
+                    }
+                } finally {
+                    if (_didIteratorError2) {
+                        throw _iteratorError2;
+                    }
+                }
+            }
+
+            return xmlParts.join('\n');
+        }
+
+        /**
+         * @returns {Array.<string>} - an array containing the scratch-blocks JSON information for each dynamic block.
+         */
+
+    }, {
+        key: 'getBlocksJSON',
+        value: function getBlocksJSON() {
+            return this._blockInfo.reduce(function (result, categoryInfo) {
+                return result.concat(categoryInfo.blocks.map(function (blockInfo) {
+                    return blockInfo.json;
+                }));
+            }, []);
         }
 
         /**
@@ -23948,6 +24677,17 @@ var Runtime = function (_EventEmitter) {
         }
 
         /**
+         * Event name for reporting that an extension was added.
+         * @const {string}
+         */
+
+    }, {
+        key: 'EXTENSION_ADDED',
+        get: function get() {
+            return 'EXTENSION_ADDED';
+        }
+
+        /**
          * How rapidly we try to step threads by default, in ms.
          */
 
@@ -23993,7 +24733,7 @@ var Runtime = function (_EventEmitter) {
 module.exports = Runtime;
 
 /***/ }),
-/* 173 */
+/* 176 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -24005,7 +24745,7 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
 
 var Timer = __webpack_require__(63);
 var Thread = __webpack_require__(59);
-var execute = __webpack_require__(170);
+var execute = __webpack_require__(173);
 
 var Sequencer = function () {
     function Sequencer(runtime) {
@@ -24266,7 +25006,7 @@ var Sequencer = function () {
 module.exports = Sequencer;
 
 /***/ }),
-/* 174 */
+/* 177 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -24557,7 +25297,232 @@ var Target = function (_EventEmitter) {
 module.exports = Target;
 
 /***/ }),
-/* 175 */
+/* 178 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+var ArgumentType = {
+    NUMBER: 'number',
+    STRING: 'string',
+    BOOLEAN: 'Boolean'
+};
+
+module.exports = ArgumentType;
+
+/***/ }),
+/* 179 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+var dispatch = __webpack_require__(100);
+var log = __webpack_require__(13);
+
+var BlockType = __webpack_require__(102);
+
+/**
+ * @typedef {object} ArgumentInfo - Information about an extension block argument
+ * @property {ArgumentType} type - the type of value this argument can take
+ * @property {*|undefined} default - the default value of this argument (default: blank)
+ */
+
+/**
+ * @typedef {object} BlockInfo - Information about an extension block
+ * @property {string} opcode - the block opcode
+ * @property {string|object} text - the human-readable text on this block
+ * @property {BlockType|undefined} blockType - the type of block (default: BlockType.COMMAND)
+ * @property {int|undefined} branchCount - the number of branches this block controls, if conditional (default: 0)
+ * @property {Boolean|undefined} isTerminal - true if this block ends a stack (default: false)
+ * @property {Boolean|undefined} blockAllThreads - true if all threads must wait for this block to run (default: false)
+ * @property {object.<string,ArgumentInfo>|undefined} arguments - information about this block's arguments, if any
+ * @property {string|Function|undefined} func - the method for this block on the extension service (default: opcode)
+ * @property {Array.<string>|undefined} filter - the list of targets for which this block should appear (default: all)
+ */
+
+/**
+ * @typedef {object} CategoryInfo - Information about a block category
+ * @property {string} id - the unique ID of this category
+ * @property {string} color1 - the primary color for this category, in '#rrggbb' format
+ * @property {string} color2 - the secondary color for this category, in '#rrggbb' format
+ * @property {string} color3 - the tertiary color for this category, in '#rrggbb' format
+ * @property {Array.<BlockInfo>} block - the blocks in this category
+ */
+
+/**
+ * @typedef {object} PendingExtensionWorker - Information about an extension worker still initializing
+ * @property {string} extensionURL - the URL of the extension to be loaded by this worker
+ * @property {Function} resolve - function to call on successful worker startup
+ * @property {Function} reject - function to call on failed worker startup
+ */
+
+var ExtensionManager = function () {
+    function ExtensionManager() {
+        _classCallCheck(this, ExtensionManager);
+
+        /**
+         * The ID number to provide to the next extension worker.
+         * @type {int}
+         */
+        this.nextExtensionWorker = 0;
+
+        /**
+         * FIFO queue of extensions which have been requested but not yet loaded in a worker,
+         * along with promise resolution functions to call once the worker is ready or failed.
+         *
+         * @type {Array.<PendingExtensionWorker>}
+         */
+        this.pendingExtensions = [];
+
+        /**
+         * Map of worker ID to workers which have been allocated but have not yet finished initialization.
+         * @type {Array.<PendingExtensionWorker>}
+         */
+        this.pendingWorkers = [];
+
+        dispatch.setService('extensions', this).catch(function (e) {
+            log.error('ExtensionManager was unable to register extension service: ' + JSON.stringify(e));
+        });
+    }
+
+    /**
+     * Load an extension by URL
+     * @param {string} extensionURL - the URL for the extension to load
+     * @returns {Promise} resolved once the extension is loaded and initialized or rejected on failure
+     */
+
+
+    _createClass(ExtensionManager, [{
+        key: 'loadExtensionURL',
+        value: function loadExtensionURL(extensionURL) {
+            var _this = this;
+
+            return new Promise(function (resolve, reject) {
+                // If we `require` this at the global level it breaks non-webpack targets, including tests
+                var ExtensionWorker = __webpack_require__(313);
+
+                _this.pendingExtensions.push({ extensionURL: extensionURL, resolve: resolve, reject: reject });
+                dispatch.addWorker(new ExtensionWorker());
+            });
+        }
+    }, {
+        key: 'allocateWorker',
+        value: function allocateWorker() {
+            var id = this.nextExtensionWorker++;
+            var workerInfo = this.pendingExtensions.shift();
+            this.pendingWorkers[id] = workerInfo;
+            return [id, workerInfo.extensionURL];
+        }
+    }, {
+        key: 'registerExtensionService',
+        value: function registerExtensionService(serviceName) {
+            var _this2 = this;
+
+            dispatch.call(serviceName, 'getInfo').then(function (info) {
+                _this2._registerExtensionInfo(serviceName, info);
+            });
+        }
+    }, {
+        key: 'onWorkerInit',
+        value: function onWorkerInit(id, e) {
+            var workerInfo = this.pendingWorkers[id];
+            delete this.pendingWorkers[id];
+            if (e) {
+                workerInfo.reject(e);
+            } else {
+                workerInfo.resolve(id);
+            }
+        }
+    }, {
+        key: '_registerExtensionInfo',
+        value: function _registerExtensionInfo(serviceName, extensionInfo) {
+            extensionInfo = this._prepareExtensionInfo(serviceName, extensionInfo);
+            dispatch.call('runtime', '_registerExtensionPrimitives', extensionInfo).catch(function (e) {
+                log.error('Failed to register primitives for extension on service ' + serviceName + ': ' + JSON.stringify(e));
+            });
+        }
+
+        /**
+         * Modify the provided text as necessary to ensure that it may be used as an attribute value in valid XML.
+         * @param {string} text - the text to be sanitized
+         * @returns {string} - the sanitized text
+         * @private
+         */
+
+    }, {
+        key: '_sanitizeID',
+        value: function _sanitizeID(text) {
+            return text.toString().replace(/[<"&]/, '_');
+        }
+
+        /**
+         * Apply minor cleanup and defaults for optional extension fields.
+         * TODO: make the ID unique in cases where two copies of the same extension are loaded.
+         * @param {string} serviceName - the name of the service hosting this extension block
+         * @param {ExtensionInfo} extensionInfo - the extension info to be sanitized
+         * @returns {ExtensionInfo} - a new extension info object with cleaned-up values
+         * @private
+         */
+
+    }, {
+        key: '_prepareExtensionInfo',
+        value: function _prepareExtensionInfo(serviceName, extensionInfo) {
+            var _this3 = this;
+
+            extensionInfo = Object.assign({}, extensionInfo);
+            extensionInfo.id = this._sanitizeID(extensionInfo.id);
+            extensionInfo.name = extensionInfo.name || extensionInfo.id;
+            extensionInfo.blocks = extensionInfo.blocks || [];
+            extensionInfo.targetTypes = extensionInfo.targetTypes || [];
+            extensionInfo.blocks = extensionInfo.blocks.reduce(function (result, blockInfo) {
+                try {
+                    result.push(_this3._prepareBlockInfo(serviceName, blockInfo));
+                } catch (e) {
+                    // TODO: more meaningful error reporting
+                    log.error('Skipping malformed block: ' + JSON.stringify(e));
+                }
+                return result;
+            }, []);
+            return extensionInfo;
+        }
+
+        /**
+         * Apply defaults for optional block fields.
+         * @param {string} serviceName - the name of the service hosting this extension block
+         * @param {BlockInfo} blockInfo - the block info from the extension
+         * @returns {BlockInfo} - a new block info object which has values for all relevant optional fields.
+         * @private
+         */
+
+    }, {
+        key: '_prepareBlockInfo',
+        value: function _prepareBlockInfo(serviceName, blockInfo) {
+            blockInfo = Object.assign({}, {
+                blockType: BlockType.COMMAND,
+                terminal: false,
+                blockAllThreads: false,
+                arguments: {}
+            }, blockInfo);
+            blockInfo.opcode = this._sanitizeID(blockInfo.opcode);
+            blockInfo.func = blockInfo.func ? this._sanitizeID(blockInfo.func) : blockInfo.opcode;
+            blockInfo.func = dispatch.call.bind(dispatch, serviceName, blockInfo.func);
+            return blockInfo;
+        }
+    }]);
+
+    return ExtensionManager;
+}();
+
+module.exports = ExtensionManager;
+
+/***/ }),
+/* 180 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -24618,7 +25583,7 @@ var Clock = function () {
 module.exports = Clock;
 
 /***/ }),
-/* 176 */
+/* 181 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -24628,8 +25593,8 @@ var _createClass = function () { function defineProperties(target, props) { for 
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
-var got = __webpack_require__(241);
-var io = __webpack_require__(304);
+var got = __webpack_require__(246);
+var io = __webpack_require__(309);
 var querystring = __webpack_require__(22);
 
 /**
@@ -25084,7 +26049,7 @@ var DeviceManager = function () {
 module.exports = DeviceManager;
 
 /***/ }),
-/* 177 */
+/* 182 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -25227,7 +26192,7 @@ var Keyboard = function () {
 module.exports = Keyboard;
 
 /***/ }),
-/* 178 */
+/* 183 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -25339,7 +26304,7 @@ var Mouse = function () {
 module.exports = Mouse;
 
 /***/ }),
-/* 179 */
+/* 184 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -25356,11 +26321,11 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 
 var Blocks = __webpack_require__(30);
 var RenderedTarget = __webpack_require__(61);
-var Sprite = __webpack_require__(101);
+var Sprite = __webpack_require__(103);
 var Color = __webpack_require__(46);
-var log = __webpack_require__(17);
+var log = __webpack_require__(13);
 var uid = __webpack_require__(64);
-var specMap = __webpack_require__(180);
+var specMap = __webpack_require__(185);
 var Variable = __webpack_require__(60);
 var List = __webpack_require__(58);
 
@@ -25845,7 +26810,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 180 */
+/* 185 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -26956,7 +27921,7 @@ var specMap = {
 module.exports = specMap;
 
 /***/ }),
-/* 181 */
+/* 186 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -26968,9 +27933,9 @@ module.exports = specMap;
  * JSON and then generates all needed scratch-vm runtime structures.
  */
 
-var vmPackage = __webpack_require__(308);
+var vmPackage = __webpack_require__(314);
 var Blocks = __webpack_require__(30);
-var Sprite = __webpack_require__(101);
+var Sprite = __webpack_require__(103);
 var Variable = __webpack_require__(60);
 var List = __webpack_require__(58);
 
@@ -27136,7 +28101,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 182 */
+/* 187 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -27170,7 +28135,7 @@ var xmlEscape = function xmlEscape(unsafe) {
 module.exports = xmlEscape;
 
 /***/ }),
-/* 183 */
+/* 188 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -27188,10 +28153,12 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
 
 var EventEmitter = __webpack_require__(7);
 
-var log = __webpack_require__(17);
-var Runtime = __webpack_require__(172);
-var sb2 = __webpack_require__(179);
-var sb3 = __webpack_require__(181);
+var centralDispatch = __webpack_require__(100);
+var ExtensionManager = __webpack_require__(179);
+var log = __webpack_require__(13);
+var Runtime = __webpack_require__(175);
+var sb2 = __webpack_require__(184);
+var sb3 = __webpack_require__(186);
 var StringUtil = __webpack_require__(31);
 
 var _require = __webpack_require__(44),
@@ -27220,6 +28187,10 @@ var VirtualMachine = function (_EventEmitter) {
         var _this = _possibleConstructorReturn(this, (VirtualMachine.__proto__ || Object.getPrototypeOf(VirtualMachine)).call(this));
 
         _this.runtime = new Runtime();
+        centralDispatch.setService('runtime', _this.runtime).catch(function (e) {
+            log.error('Failed to register runtime service: ' + JSON.stringify(e));
+        });
+
         /**
          * The "currently editing"/selected target ID for the VM.
          * Block events from any Blockly workspace are routed to this target.
@@ -27254,6 +28225,11 @@ var VirtualMachine = function (_EventEmitter) {
         _this.runtime.on(Runtime.MONITORS_UPDATE, function (monitorList) {
             _this.emit(Runtime.MONITORS_UPDATE, monitorList);
         });
+        _this.runtime.on(Runtime.EXTENSION_ADDED, function (blocksInfo) {
+            _this.emit(Runtime.EXTENSION_ADDED, blocksInfo);
+        });
+
+        _this.extensionManager = new ExtensionManager();
 
         _this.blockListener = _this.blockListener.bind(_this);
         _this.flyoutBlockListener = _this.flyoutBlockListener.bind(_this);
@@ -28021,11 +28997,6 @@ var VirtualMachine = function (_EventEmitter) {
 module.exports = VirtualMachine;
 
 /***/ }),
-/* 184 */,
-/* 185 */,
-/* 186 */,
-/* 187 */,
-/* 188 */,
 /* 189 */,
 /* 190 */,
 /* 191 */,
@@ -28033,7 +29004,12 @@ module.exports = VirtualMachine;
 /* 193 */,
 /* 194 */,
 /* 195 */,
-/* 196 */
+/* 196 */,
+/* 197 */,
+/* 198 */,
+/* 199 */,
+/* 200 */,
+/* 201 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -28058,13 +29034,13 @@ module.exports = Error.captureStackTrace || function (error) {
 
 
 /***/ }),
-/* 197 */,
-/* 198 */
+/* 202 */,
+/* 203 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
-var captureStackTrace = __webpack_require__(196);
+var captureStackTrace = __webpack_require__(201);
 
 function inherits(ctor, superCtor) {
 	ctor.super_ = superCtor;
@@ -28110,25 +29086,25 @@ module.exports = function createErrorClass(className, setup) {
 
 
 /***/ }),
-/* 199 */,
-/* 200 */,
-/* 201 */,
-/* 202 */,
-/* 203 */,
 /* 204 */,
 /* 205 */,
 /* 206 */,
 /* 207 */,
 /* 208 */,
 /* 209 */,
-/* 210 */
+/* 210 */,
+/* 211 */,
+/* 212 */,
+/* 213 */,
+/* 214 */,
+/* 215 */
 /***/ (function(module, exports, __webpack_require__) {
 
 /*
   Module dependencies
 */
-var ElementType = __webpack_require__(211);
-var entities = __webpack_require__(236);
+var ElementType = __webpack_require__(216);
+var entities = __webpack_require__(241);
 
 /*
   Boolean Attributes
@@ -28305,7 +29281,7 @@ function renderComment(elem) {
 
 
 /***/ }),
-/* 211 */
+/* 216 */
 /***/ (function(module, exports) {
 
 //Types of elements found in the DOM
@@ -28324,14 +29300,14 @@ module.exports = {
 };
 
 /***/ }),
-/* 212 */
+/* 217 */
 /***/ (function(module, exports, __webpack_require__) {
 
 var ElementType = __webpack_require__(34);
 
 var re_whitespace = /\s+/g;
-var NodePrototype = __webpack_require__(115);
-var ElementPrototype = __webpack_require__(213);
+var NodePrototype = __webpack_require__(117);
+var ElementPrototype = __webpack_require__(218);
 
 function DomHandler(callback, options, elementCB){
 	if(typeof callback === "object"){
@@ -28547,11 +29523,11 @@ module.exports = DomHandler;
 
 
 /***/ }),
-/* 213 */
+/* 218 */
 /***/ (function(module, exports, __webpack_require__) {
 
 // DOM-Level-1-compliant structure
-var NodePrototype = __webpack_require__(115);
+var NodePrototype = __webpack_require__(117);
 var ElementPrototype = module.exports = Object.create(NodePrototype);
 
 var domLvl1 = {
@@ -28573,18 +29549,18 @@ Object.keys(domLvl1).forEach(function(key) {
 
 
 /***/ }),
-/* 214 */
+/* 219 */
 /***/ (function(module, exports, __webpack_require__) {
 
 var DomUtils = module.exports;
 
 [
-	__webpack_require__(219),
-	__webpack_require__(220),
-	__webpack_require__(217),
-	__webpack_require__(218),
-	__webpack_require__(216),
-	__webpack_require__(215)
+	__webpack_require__(224),
+	__webpack_require__(225),
+	__webpack_require__(222),
+	__webpack_require__(223),
+	__webpack_require__(221),
+	__webpack_require__(220)
 ].forEach(function(ext){
 	Object.keys(ext).forEach(function(key){
 		DomUtils[key] = ext[key].bind(DomUtils);
@@ -28593,7 +29569,7 @@ var DomUtils = module.exports;
 
 
 /***/ }),
-/* 215 */
+/* 220 */
 /***/ (function(module, exports) {
 
 // removeSubsets
@@ -28740,7 +29716,7 @@ exports.uniqueSort = function(nodes) {
 
 
 /***/ }),
-/* 216 */
+/* 221 */
 /***/ (function(module, exports, __webpack_require__) {
 
 var ElementType = __webpack_require__(34);
@@ -28833,7 +29809,7 @@ exports.getElementsByTagType = function(type, element, recurse, limit){
 
 
 /***/ }),
-/* 217 */
+/* 222 */
 /***/ (function(module, exports) {
 
 exports.removeElement = function(elem){
@@ -28916,7 +29892,7 @@ exports.prepend = function(elem, prev){
 
 
 /***/ }),
-/* 218 */
+/* 223 */
 /***/ (function(module, exports, __webpack_require__) {
 
 var isTag = __webpack_require__(34).isTag;
@@ -29021,11 +29997,11 @@ function findAll(test, rootElems){
 
 
 /***/ }),
-/* 219 */
+/* 224 */
 /***/ (function(module, exports, __webpack_require__) {
 
 var ElementType = __webpack_require__(34),
-    getOuterHTML = __webpack_require__(210),
+    getOuterHTML = __webpack_require__(215),
     isTag = ElementType.isTag;
 
 module.exports = {
@@ -29050,7 +30026,7 @@ function getText(elem){
 
 
 /***/ }),
-/* 220 */
+/* 225 */
 /***/ (function(module, exports) {
 
 var getChildren = exports.getChildren = function(elem){
@@ -29080,7 +30056,7 @@ exports.getName = function(elem){
 
 
 /***/ }),
-/* 221 */
+/* 226 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -29163,11 +30139,6 @@ module.exports.DuplexWrapper = DuplexWrapper;
 
 
 /***/ }),
-/* 222 */,
-/* 223 */,
-/* 224 */,
-/* 225 */,
-/* 226 */,
 /* 227 */,
 /* 228 */,
 /* 229 */,
@@ -29177,11 +30148,16 @@ module.exports.DuplexWrapper = DuplexWrapper;
 /* 233 */,
 /* 234 */,
 /* 235 */,
-/* 236 */
+/* 236 */,
+/* 237 */,
+/* 238 */,
+/* 239 */,
+/* 240 */,
+/* 241 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var encode = __webpack_require__(238),
-    decode = __webpack_require__(237);
+var encode = __webpack_require__(243),
+    decode = __webpack_require__(242);
 
 exports.decode = function(data, level){
 	return (!level || level <= 0 ? decode.XML : decode.HTML)(data);
@@ -29216,13 +30192,13 @@ exports.escape = encode.escape;
 
 
 /***/ }),
-/* 237 */
+/* 242 */
 /***/ (function(module, exports, __webpack_require__) {
 
 var entityMap = __webpack_require__(70),
-    legacyMap = __webpack_require__(117),
+    legacyMap = __webpack_require__(119),
     xmlMap    = __webpack_require__(71),
-    decodeCodePoint = __webpack_require__(116);
+    decodeCodePoint = __webpack_require__(118);
 
 var decodeXMLStrict  = getStrictDecoder(xmlMap),
     decodeHTMLStrict = getStrictDecoder(entityMap);
@@ -29293,7 +30269,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 238 */
+/* 243 */
 /***/ (function(module, exports, __webpack_require__) {
 
 var inverseXML = getInverseObj(__webpack_require__(71)),
@@ -29372,20 +30348,20 @@ exports.escape = escapeXML;
 
 
 /***/ }),
-/* 239 */
+/* 244 */
 /***/ (function(module, exports) {
 
 module.exports = {"0":65533,"128":8364,"130":8218,"131":402,"132":8222,"133":8230,"134":8224,"135":8225,"136":710,"137":8240,"138":352,"139":8249,"140":338,"142":381,"145":8216,"146":8217,"147":8220,"148":8221,"149":8226,"150":8211,"151":8212,"152":732,"153":8482,"154":353,"155":8250,"156":339,"158":382,"159":376}
 
 /***/ }),
-/* 240 */
+/* 245 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 
 var util = __webpack_require__(27);
-var isArrayish = __webpack_require__(256);
+var isArrayish = __webpack_require__(261);
 
 var errorEx = function errorEx(name, properties) {
 	if (!name || name.constructor !== String) {
@@ -29518,7 +30494,7 @@ module.exports = errorEx;
 
 
 /***/ }),
-/* 241 */
+/* 246 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -29529,22 +30505,22 @@ var http = __webpack_require__(42);
 var https = __webpack_require__(74);
 var urlLib = __webpack_require__(26);
 var querystring = __webpack_require__(22);
-var objectAssign = __webpack_require__(272);
+var objectAssign = __webpack_require__(277);
 var PassThrough = __webpack_require__(8).PassThrough;
-var duplexer2 = __webpack_require__(221);
-var isStream = __webpack_require__(259);
-var readAllStream = __webpack_require__(295);
-var timedOut = __webpack_require__(305);
-var urlParseLax = __webpack_require__(306);
-var lowercaseKeys = __webpack_require__(260);
-var isRedirect = __webpack_require__(257);
-var PinkiePromise = __webpack_require__(134);
-var unzipResponse = __webpack_require__(311);
-var createErrorClass = __webpack_require__(198);
-var nodeStatusCodes = __webpack_require__(271);
-var parseJson = __webpack_require__(284);
-var isRetryAllowed = __webpack_require__(258);
-var pkg = __webpack_require__(242);
+var duplexer2 = __webpack_require__(226);
+var isStream = __webpack_require__(264);
+var readAllStream = __webpack_require__(300);
+var timedOut = __webpack_require__(310);
+var urlParseLax = __webpack_require__(311);
+var lowercaseKeys = __webpack_require__(265);
+var isRedirect = __webpack_require__(262);
+var PinkiePromise = __webpack_require__(136);
+var unzipResponse = __webpack_require__(317);
+var createErrorClass = __webpack_require__(203);
+var nodeStatusCodes = __webpack_require__(276);
+var parseJson = __webpack_require__(289);
+var isRetryAllowed = __webpack_require__(263);
+var pkg = __webpack_require__(247);
 
 function requestAsEventEmitter(opts) {
 	opts = opts || {};
@@ -29927,21 +30903,21 @@ module.exports = got;
 /* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(25).setImmediate, __webpack_require__(0).Buffer))
 
 /***/ }),
-/* 242 */
+/* 247 */
 /***/ (function(module, exports) {
 
 module.exports = {"_args":[[{"raw":"got@5.7.1","scope":null,"escapedName":"got","name":"got","rawSpec":"5.7.1","spec":"5.7.1","type":"version"},"/home/travis/build/LLK/scratch-vm"]],"_from":"got@5.7.1","_id":"got@5.7.1","_inCache":true,"_location":"/got","_nodeVersion":"0.10.48","_npmOperationalInternal":{"host":"packages-18-east.internal.npmjs.com","tmp":"tmp/got-5.7.1.tgz_1478113400687_0.6078383799176663"},"_npmUser":{"name":"floatdrop","email":"floatdrop@gmail.com"},"_npmVersion":"2.15.1","_phantomChildren":{},"_requested":{"raw":"got@5.7.1","scope":null,"escapedName":"got","name":"got","rawSpec":"5.7.1","spec":"5.7.1","type":"version"},"_requiredBy":["#DEV:/"],"_resolved":"https://registry.npmjs.org/got/-/got-5.7.1.tgz","_shasum":"5f81635a61e4a6589f180569ea4e381680a51f35","_shrinkwrap":null,"_spec":"got@5.7.1","_where":"/home/travis/build/LLK/scratch-vm","browser":{"unzip-response":false},"bugs":{"url":"https://github.com/sindresorhus/got/issues"},"dependencies":{"create-error-class":"^3.0.1","duplexer2":"^0.1.4","is-redirect":"^1.0.0","is-retry-allowed":"^1.0.0","is-stream":"^1.0.0","lowercase-keys":"^1.0.0","node-status-codes":"^1.0.0","object-assign":"^4.0.1","parse-json":"^2.1.0","pinkie-promise":"^2.0.0","read-all-stream":"^3.0.0","readable-stream":"^2.0.5","timed-out":"^3.0.0","unzip-response":"^1.0.2","url-parse-lax":"^1.0.0"},"description":"Simplified HTTP/HTTPS requests","devDependencies":{"ava":"^0.16.0","coveralls":"^2.11.4","form-data":"^2.1.1","get-port":"^2.0.0","get-stream":"^2.3.0","into-stream":"^2.0.0","nyc":"^8.1.0","pem":"^1.4.4","pify":"^2.3.0","tempfile":"^1.1.1","xo":"0.16.x"},"directories":{},"dist":{"shasum":"5f81635a61e4a6589f180569ea4e381680a51f35","tarball":"https://registry.npmjs.org/got/-/got-5.7.1.tgz"},"engines":{"node":">=0.10.0 <7"},"files":["index.js"],"gitHead":"856b4caf16b02ce28ef0d92e83cf434a50b71e84","homepage":"https://github.com/sindresorhus/got#readme","keywords":["http","https","get","got","url","uri","request","util","utility","simple","curl","wget","fetch"],"license":"MIT","maintainers":[{"name":"sindresorhus","email":"sindresorhus@gmail.com"},{"name":"floatdrop","email":"floatdrop@gmail.com"},{"name":"kevva","email":"kevinmartensson@gmail.com"}],"name":"got","optionalDependencies":{},"readme":"ERROR: No README data found!","repository":{"type":"git","url":"git+https://github.com/sindresorhus/got.git"},"scripts":{"coveralls":"nyc report --reporter=text-lcov | coveralls","test":"xo && nyc ava"},"version":"5.7.1","xo":{"ignores":["test/**"]}}
 
 /***/ }),
-/* 243 */,
-/* 244 */,
-/* 245 */,
-/* 246 */,
-/* 247 */,
 /* 248 */,
 /* 249 */,
 /* 250 */,
-/* 251 */
+/* 251 */,
+/* 252 */,
+/* 253 */,
+/* 254 */,
+/* 255 */,
+/* 256 */
 /***/ (function(module, exports, __webpack_require__) {
 
 module.exports = CollectingHandler;
@@ -30002,7 +30978,7 @@ CollectingHandler.prototype.restart = function(){
 
 
 /***/ }),
-/* 252 */
+/* 257 */
 /***/ (function(module, exports, __webpack_require__) {
 
 var index = __webpack_require__(21),
@@ -30103,7 +31079,7 @@ module.exports = FeedHandler;
 
 
 /***/ }),
-/* 253 */
+/* 258 */
 /***/ (function(module, exports, __webpack_require__) {
 
 module.exports = ProxyHandler;
@@ -30135,12 +31111,12 @@ Object.keys(EVENTS).forEach(function(name){
 });
 
 /***/ }),
-/* 254 */
+/* 259 */
 /***/ (function(module, exports, __webpack_require__) {
 
 module.exports = Stream;
 
-var Parser = __webpack_require__(123);
+var Parser = __webpack_require__(125);
 
 function Stream(options){
 	Parser.call(this, new Cbs(this), options);
@@ -30175,8 +31151,8 @@ Object.keys(EVENTS).forEach(function(name){
 });
 
 /***/ }),
-/* 255 */,
-/* 256 */
+/* 260 */,
+/* 261 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -30193,7 +31169,7 @@ module.exports = function isArrayish(obj) {
 
 
 /***/ }),
-/* 257 */
+/* 262 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -30214,7 +31190,7 @@ module.exports = function (x) {
 
 
 /***/ }),
-/* 258 */
+/* 263 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -30281,7 +31257,7 @@ module.exports = function (err) {
 
 
 /***/ }),
-/* 259 */
+/* 264 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -30309,7 +31285,7 @@ isStream.transform = function (stream) {
 
 
 /***/ }),
-/* 260 */
+/* 265 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -30327,7 +31303,7 @@ module.exports = function (obj) {
 
 
 /***/ }),
-/* 261 */
+/* 266 */
 /***/ (function(module, exports) {
 
 function M() { this._events = {}; }
@@ -30383,11 +31359,11 @@ module.exports = M;
 
 
 /***/ }),
-/* 262 */
+/* 267 */
 /***/ (function(module, exports, __webpack_require__) {
 
 // default filter
-var Transform = __webpack_require__(16);
+var Transform = __webpack_require__(17);
 
 var levelMap = { debug: 1, info: 2, warn: 3, error: 4 };
 
@@ -30445,11 +31421,11 @@ module.exports = Filter;
 
 
 /***/ }),
-/* 263 */
+/* 268 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var Transform = __webpack_require__(16),
-    Filter = __webpack_require__(262);
+var Transform = __webpack_require__(17),
+    Filter = __webpack_require__(267);
 
 var log = new Transform(),
     slice = Array.prototype.slice;
@@ -30496,10 +31472,10 @@ exports.enable = function() {
 
 
 /***/ }),
-/* 264 */
+/* 269 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var Transform = __webpack_require__(16),
+var Transform = __webpack_require__(17),
     cache = [ ];
 
 var logger = new Transform();
@@ -30516,10 +31492,10 @@ module.exports = logger;
 
 
 /***/ }),
-/* 265 */
+/* 270 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var Transform = __webpack_require__(16);
+var Transform = __webpack_require__(17);
 
 var newlines = /\n+$/,
     logger = new Transform();
@@ -30547,18 +31523,18 @@ logger.write = function(name, level, args) {
 };
 
 logger.formatters = ['color', 'minilog'];
-logger.color = __webpack_require__(266);
-logger.minilog = __webpack_require__(267);
+logger.color = __webpack_require__(271);
+logger.minilog = __webpack_require__(272);
 
 module.exports = logger;
 
 
 /***/ }),
-/* 266 */
+/* 271 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var Transform = __webpack_require__(16),
-    color = __webpack_require__(125);
+var Transform = __webpack_require__(17),
+    color = __webpack_require__(127);
 
 var colors = { debug: ['cyan'], info: ['purple' ], warn: [ 'yellow', true ], error: [ 'red', true ] },
     logger = new Transform();
@@ -30578,11 +31554,11 @@ module.exports = logger;
 
 
 /***/ }),
-/* 267 */
+/* 272 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var Transform = __webpack_require__(16),
-    color = __webpack_require__(125),
+var Transform = __webpack_require__(17),
+    color = __webpack_require__(127),
     colors = { debug: ['gray'], info: ['purple' ], warn: [ 'yellow', true ], error: [ 'red', true ] },
     logger = new Transform();
 
@@ -30610,15 +31586,15 @@ module.exports = logger;
 
 
 /***/ }),
-/* 268 */
+/* 273 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var Minilog = __webpack_require__(263);
+var Minilog = __webpack_require__(268);
 
 var oldEnable = Minilog.enable,
     oldDisable = Minilog.disable,
     isChrome = (typeof navigator != 'undefined' && /chrome/i.test(navigator.userAgent)),
-    console = __webpack_require__(265);
+    console = __webpack_require__(270);
 
 // Use a more capable logging backend if on Chrome
 Minilog.defaultBackend = (isChrome ? console.minilog : console);
@@ -30650,18 +31626,18 @@ Minilog.disable = function() {
 exports = module.exports = Minilog;
 
 exports.backends = {
-  array: __webpack_require__(264),
+  array: __webpack_require__(269),
   browser: Minilog.defaultBackend,
-  localStorage: __webpack_require__(270),
-  jQuery: __webpack_require__(269)
+  localStorage: __webpack_require__(275),
+  jQuery: __webpack_require__(274)
 };
 
 
 /***/ }),
-/* 269 */
+/* 274 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var Transform = __webpack_require__(16);
+var Transform = __webpack_require__(17);
 
 var cid = new Date().valueOf().toString(36);
 
@@ -30738,10 +31714,10 @@ module.exports = AjaxLogger;
 
 
 /***/ }),
-/* 270 */
+/* 275 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var Transform = __webpack_require__(16),
+var Transform = __webpack_require__(17),
     cache = false;
 
 var logger = new Transform();
@@ -30758,7 +31734,7 @@ logger.write = function(name, level, args) {
 module.exports = logger;
 
 /***/ }),
-/* 271 */
+/* 276 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -30827,7 +31803,7 @@ module.exports = {
 
 
 /***/ }),
-/* 272 */
+/* 277 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -30924,24 +31900,24 @@ module.exports = shouldUseNative() ? Object.assign : function (target, source) {
 
 
 /***/ }),
-/* 273 */,
-/* 274 */,
-/* 275 */,
-/* 276 */,
-/* 277 */,
 /* 278 */,
 /* 279 */,
 /* 280 */,
 /* 281 */,
 /* 282 */,
 /* 283 */,
-/* 284 */
+/* 284 */,
+/* 285 */,
+/* 286 */,
+/* 287 */,
+/* 288 */,
+/* 289 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
-var errorEx = __webpack_require__(240);
-var fallback = __webpack_require__(285);
+var errorEx = __webpack_require__(245);
+var fallback = __webpack_require__(290);
 
 var JSONError = errorEx('JSONError', {
 	fileName: errorEx.append('in %s')
@@ -30977,7 +31953,7 @@ module.exports = function (x, reviver, filename) {
 
 
 /***/ }),
-/* 285 */
+/* 290 */
 /***/ (function(module, exports, __webpack_require__) {
 
 /*
@@ -30988,7 +31964,7 @@ module.exports = function (x, reviver, filename) {
 
 // RTFM: http://www.ecma-international.org/publications/files/ECMA-ST/Ecma-262.pdf
 
-var Uni = __webpack_require__(286)
+var Uni = __webpack_require__(291)
 
 function isHexDigit(x) {
   return (x >= '0' && x <= '9')
@@ -31735,7 +32711,7 @@ module.exports.tokenize = function tokenizeJSON(input, options) {
 
 
 /***/ }),
-/* 286 */
+/* 291 */
 /***/ (function(module, exports) {
 
 
@@ -31812,8 +32788,8 @@ module.exports.NonAsciiIdentifierPart = /[\xAA\xB5\xBA\xC0-\xD6\xD8-\xF6\xF8-\u0
 
 
 /***/ }),
-/* 287 */,
-/* 288 */
+/* 292 */,
+/* 293 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -32113,7 +33089,7 @@ module.exports = Promise;
 /* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(2), __webpack_require__(25).setImmediate))
 
 /***/ }),
-/* 289 */
+/* 294 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -32134,12 +33110,12 @@ module.exports = function (url) {
 
 
 /***/ }),
-/* 290 */,
-/* 291 */,
-/* 292 */,
-/* 293 */,
-/* 294 */,
-/* 295 */
+/* 295 */,
+/* 296 */,
+/* 297 */,
+/* 298 */,
+/* 299 */,
+/* 300 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -32147,7 +33123,7 @@ module.exports = function (url) {
 
 var Writable = __webpack_require__(8).Writable;
 var inherits = __webpack_require__(27).inherits;
-var Promise = __webpack_require__(134);
+var Promise = __webpack_require__(136);
 
 function BufferStream() {
 	Writable.call(this, { objectMode: true });
@@ -32219,15 +33195,15 @@ module.exports = function read(stream, options, cb) {
 /* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(0).Buffer))
 
 /***/ }),
-/* 296 */,
-/* 297 */,
-/* 298 */,
-/* 299 */,
-/* 300 */,
 /* 301 */,
 /* 302 */,
 /* 303 */,
-/* 304 */
+/* 304 */,
+/* 305 */,
+/* 306 */,
+/* 307 */,
+/* 308 */,
+/* 309 */
 /***/ (function(module, exports, __webpack_require__) {
 
 (function webpackUniversalModuleDefinition(root, factory) {
@@ -40433,7 +41409,7 @@ return /******/ (function(modules) { // webpackBootstrap
 //# sourceMappingURL=socket.io.js.map
 
 /***/ }),
-/* 305 */
+/* 310 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -40495,13 +41471,13 @@ module.exports = function (req, time) {
 
 
 /***/ }),
-/* 306 */
+/* 311 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 var url = __webpack_require__(26);
-var prependHttp = __webpack_require__(289);
+var prependHttp = __webpack_require__(294);
 
 module.exports = function (x) {
 	var withProtocol = prependHttp(x);
@@ -40516,22 +41492,30 @@ module.exports = function (x) {
 
 
 /***/ }),
-/* 307 */,
-/* 308 */
-/***/ (function(module, exports) {
+/* 312 */,
+/* 313 */
+/***/ (function(module, exports, __webpack_require__) {
 
-module.exports = {"name":"scratch-vm","version":"0.1.0","description":"Virtual Machine for Scratch 3.0","author":"Massachusetts Institute of Technology","license":"BSD-3-Clause","homepage":"https://github.com/LLK/scratch-vm#readme","repository":{"type":"git","url":"git+ssh://git@github.com/LLK/scratch-vm.git"},"main":"./dist/node/scratch-vm.js","scripts":{"build":"./node_modules/.bin/webpack --progress --colors --bail","coverage":"./node_modules/.bin/tap ./test/{unit,integration}/*.js --coverage --coverage-report=lcov","deploy":"touch playground/.nojekyll && ./node_modules/.bin/gh-pages -t -d playground -m \"Build for $(git log --pretty=format:%H -n1)\"","lint":"./node_modules/.bin/eslint .","prepublish":"in-publish && npm run build || not-in-publish","start":"./node_modules/.bin/webpack-dev-server","tap":"./node_modules/.bin/tap ./test/{unit,integration}/*.js","tap:unit":"./node_modules/.bin/tap ./test/unit/*.js","tap:integration":"./node_modules/.bin/tap ./test/integration/*.js","test":"npm run lint && npm run tap","watch":"./node_modules/.bin/webpack --progress --colors --watch","version":"./node_modules/.bin/json -f package.json -I -e \"this.repository.sha = '$(git log -n1 --pretty=format:%H)'\""},"devDependencies":{"adm-zip":"0.4.7","babel-core":"^6.24.1","babel-eslint":"^7.1.1","babel-loader":"^7.0.0","babel-preset-es2015":"^6.24.1","copy-webpack-plugin":"4.0.1","eslint":"^4.5.0","eslint-config-scratch":"^4.0.0","expose-loader":"0.7.3","gh-pages":"^0.12.0","got":"5.7.1","highlightjs":"^9.8.0","htmlparser2":"3.9.2","immutable":"3.8.1","in-publish":"^2.0.0","json":"^9.0.4","lodash.defaultsdeep":"4.6.0","minilog":"3.1.0","promise":"7.1.1","scratch-audio":"latest","scratch-blocks":"latest","scratch-render":"latest","scratch-storage":"^0.2.0","script-loader":"0.7.0","socket.io-client":"1.7.3","stats.js":"^0.17.0","tap":"^10.2.0","tiny-worker":"^2.1.1","webpack":"^2.4.1","webpack-dev-server":"^2.4.1"}}
+module.exports = function() {
+	return new Worker(__webpack_require__.p + "extension-worker.js");
+};
 
 /***/ }),
-/* 309 */,
-/* 310 */,
-/* 311 */
+/* 314 */
+/***/ (function(module, exports) {
+
+module.exports = {"name":"scratch-vm","version":"0.1.0","description":"Virtual Machine for Scratch 3.0","author":"Massachusetts Institute of Technology","license":"BSD-3-Clause","homepage":"https://github.com/LLK/scratch-vm#readme","repository":{"type":"git","url":"git+ssh://git@github.com/LLK/scratch-vm.git"},"main":"./dist/node/scratch-vm.js","scripts":{"build":"./node_modules/.bin/webpack --progress --colors --bail","coverage":"./node_modules/.bin/tap ./test/{unit,integration}/*.js --coverage --coverage-report=lcov","deploy":"touch playground/.nojekyll && ./node_modules/.bin/gh-pages -t -d playground -m \"Build for $(git log --pretty=format:%H -n1)\"","lint":"./node_modules/.bin/eslint .","prepublish":"in-publish && npm run build || not-in-publish","start":"./node_modules/.bin/webpack-dev-server","tap":"./node_modules/.bin/tap ./test/{unit,integration}/*.js","tap:unit":"./node_modules/.bin/tap ./test/unit/*.js","tap:integration":"./node_modules/.bin/tap ./test/integration/*.js","test":"npm run lint && npm run tap","watch":"./node_modules/.bin/webpack --progress --colors --watch","version":"./node_modules/.bin/json -f package.json -I -e \"this.repository.sha = '$(git log -n1 --pretty=format:%H)'\""},"devDependencies":{"adm-zip":"0.4.7","babel-core":"^6.24.1","babel-eslint":"^7.1.1","babel-loader":"^7.0.0","babel-preset-es2015":"^6.24.1","copy-webpack-plugin":"4.0.1","eslint":"^4.5.0","eslint-config-scratch":"^4.0.0","expose-loader":"0.7.3","gh-pages":"^0.12.0","got":"5.7.1","highlightjs":"^9.8.0","htmlparser2":"3.9.2","immutable":"3.8.1","in-publish":"^2.0.0","json":"^9.0.4","lodash.defaultsdeep":"4.6.0","minilog":"3.1.0","promise":"7.1.1","scratch-audio":"latest","scratch-blocks":"latest","scratch-render":"latest","scratch-storage":"^0.2.0","script-loader":"0.7.0","socket.io-client":"1.7.3","stats.js":"^0.17.0","tap":"^10.2.0","tiny-worker":"^2.1.1","webpack":"^2.4.1","webpack-dev-server":"^2.4.1","worker-loader":"0.8.1"}}
+
+/***/ }),
+/* 315 */,
+/* 316 */,
+/* 317 */
 /***/ (function(module, exports) {
 
 /* (ignored) */
 
 /***/ }),
-/* 312 */
+/* 318 */
 /***/ (function(module, exports) {
 
 /* (ignored) */
