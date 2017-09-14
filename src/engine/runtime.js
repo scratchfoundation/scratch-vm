@@ -1,8 +1,11 @@
 const EventEmitter = require('events');
-const Sequencer = require('./sequencer');
-const Blocks = require('./blocks');
-const Thread = require('./thread');
 const {OrderedMap} = require('immutable');
+
+const ArgumentType = require('../extension-support/argument-type');
+const Blocks = require('./blocks');
+const BlockType = require('../extension-support/block-type');
+const Sequencer = require('./sequencer');
+const Thread = require('./thread');
 
 // Virtual I/O devices.
 const Clock = require('../io/clock');
@@ -22,6 +25,53 @@ const defaultBlockPackages = {
     scratch3_data: require('../blocks/scratch3_data'),
     scratch3_procedures: require('../blocks/scratch3_procedures'),
     scratch3_wedo2: require('../blocks/scratch3_wedo2')
+};
+
+/**
+ * Information used for converting Scratch argument types into scratch-blocks data.
+ * @type {object.<ArgumentType, {shadowType: string, fieldType: string}>}}
+ */
+const ArgumentTypeMap = (() => {
+    const map = {};
+    map[ArgumentType.NUMBER] = {
+        shadowType: 'math_number',
+        fieldType: 'NUM'
+    };
+    map[ArgumentType.STRING] = {
+        shadowType: 'text',
+        fieldType: 'TEXT'
+    };
+    // @TODO: talk to Rachel & co. to figure out what goes here. Make it OK to not have a field. Add `check` support.
+    map[ArgumentType.BOOLEAN] = {
+        shadowType: ''
+    };
+    return map;
+})();
+
+/**
+ * These constants are copied from scratch-blocks/core/constants.js
+ * @TODO find a way to require() these... maybe make a scratch-blocks/dist/constants.js or something like that?
+ * @readonly
+ * @enum {int}
+ */
+const ScratchBlocksConstants = {
+    /**
+     * ENUM for output shape: hexagonal (booleans/predicates).
+     * @const
+     */
+    OUTPUT_SHAPE_HEXAGONAL: 1,
+
+    /**
+     * ENUM for output shape: rounded (numbers).
+     * @const
+     */
+    OUTPUT_SHAPE_ROUND: 2,
+
+    /**
+     * ENUM for output shape: squared (any/all values; strings).
+     * @const
+     */
+    OUTPUT_SHAPE_SQUARE: 3
 };
 
 /**
@@ -74,6 +124,13 @@ class Runtime extends EventEmitter {
          * @type {Object.<string, Function>}
          */
         this._primitives = {};
+
+        /**
+         * Map to look up all block information by extended opcode.
+         * @type {Array.<CategoryInfo>}
+         * @private
+         */
+        this._blockInfo = [];
 
         /**
          * Map to look up hat blocks' metadata.
@@ -263,6 +320,14 @@ class Runtime extends EventEmitter {
     }
 
     /**
+     * Event name for reporting that an extension was added.
+     * @const {string}
+     */
+    static get EXTENSION_ADDED () {
+        return 'EXTENSION_ADDED';
+    }
+
+    /**
      * How rapidly we try to step threads by default, in ms.
      */
     static get THREAD_STEP_INTERVAL () {
@@ -318,6 +383,160 @@ class Runtime extends EventEmitter {
                 }
             }
         }
+    }
+
+    /**
+     * Register the primitives provided by an extension.
+     * @param {ExtensionInfo} extensionInfo - information about the extension (id, blocks, etc.)
+     * @private
+     */
+    _registerExtensionPrimitives (extensionInfo) {
+        const categoryInfo = {
+            id: extensionInfo.id,
+            name: extensionInfo.name,
+            color1: '#FF6680',
+            color2: '#FF4D6A',
+            color3: '#FF3355',
+            blocks: []
+        };
+
+        this._blockInfo.push(categoryInfo);
+
+        for (const blockInfo of extensionInfo.blocks) {
+            const convertedBlock = this._convertForScratchBlocks(blockInfo, categoryInfo);
+            const opcode = convertedBlock.json.type;
+            categoryInfo.blocks.push(convertedBlock);
+            this._primitives[opcode] = convertedBlock.info.func;
+        }
+
+        this.emit(Runtime.EXTENSION_ADDED, categoryInfo.blocks);
+    }
+
+    /**
+     * Convert BlockInfo into scratch-blocks JSON & XML, and generate a proxy function.
+     * @param {BlockInfo} blockInfo - the block to convert
+     * @param {CategoryInfo} categoryInfo - the category for this block
+     * @returns {{info: BlockInfo, json: object, xml: string}} - the converted & original block information
+     * @private
+     */
+    _convertForScratchBlocks (blockInfo, categoryInfo) {
+        const extendedOpcode = `${categoryInfo.id}.${blockInfo.opcode}`;
+        const blockJSON = {
+            type: extendedOpcode,
+            inputsInline: true,
+            category: categoryInfo.name,
+            colour: categoryInfo.color1,
+            colourSecondary: categoryInfo.color2,
+            colorTertiary: categoryInfo.color3,
+            args0: []
+        };
+
+        const inputList = [];
+
+        // TODO: store this somewhere so that we can map args appropriately after translation.
+        // This maps an arg name to its relative position in the original (usually English) block text.
+        // When displaying a block in another language we'll need to run a `replace` action similar to the one below,
+        // but each `[ARG]` will need to be replaced with the number in this map instead of `args0.length`.
+        const argsMap = {};
+
+        blockJSON.message0 = blockInfo.text.replace(/\[(.+?)]/g, (match, placeholder) => {
+
+            // Sanitize the placeholder to ensure valid XML
+            placeholder = placeholder.replace(/[<"&]/, '_');
+
+            blockJSON.args0.push({
+                type: 'input_value',
+                name: placeholder
+            });
+
+            // scratch-blocks uses 1-based argument indexing
+            const argNum = blockJSON.args0.length;
+            argsMap[placeholder] = argNum;
+
+            const argInfo = blockInfo.arguments[placeholder] || {};
+            const argTypeInfo = ArgumentTypeMap[argInfo.type] || {};
+            const defaultValue = (typeof argInfo.defaultValue === 'undefined' ? '' : argInfo.defaultValue.toString());
+            inputList.push(
+                `<value name="${placeholder}">` +
+                  `<shadow type="${argTypeInfo.shadowType}">` +
+                    `<field name="${argTypeInfo.fieldType}">${defaultValue}</field>` +
+                  '</shadow>' +
+                '</value>'
+            );
+
+            return `%${argNum}`;
+        });
+
+        switch (blockInfo.blockType) {
+        case BlockType.COMMAND:
+            blockJSON.outputShape = ScratchBlocksConstants.OUTPUT_SHAPE_SQUARE;
+            blockJSON.previousStatement = null; // null = available connection; undefined = hat
+            if (!blockInfo.isTerminal) {
+                blockJSON.nextStatement = null; // null = available connection; undefined = terminal
+            }
+            break;
+        case BlockType.REPORTER:
+            blockJSON.output = 'String'; // TODO: distinguish number & string here?
+            blockJSON.outputShape = ScratchBlocksConstants.OUTPUT_SHAPE_ROUND;
+            break;
+        case BlockType.BOOLEAN:
+            blockJSON.output = 'Boolean';
+            blockJSON.outputShape = ScratchBlocksConstants.OUTPUT_SHAPE_HEXAGONAL;
+            break;
+        case BlockType.HAT:
+            blockJSON.outputShape = ScratchBlocksConstants.OUTPUT_SHAPE_SQUARE;
+            blockJSON.nextStatement = null; // null = available connection; undefined = terminal
+            break;
+        case BlockType.CONDITIONAL:
+            // Statement inputs get names like 'SUBSTACK', 'SUBSTACK2', 'SUBSTACK3', ...
+            for (let branchNum = 1; branchNum <= blockInfo.branchCount; ++branchNum) {
+                blockJSON[`message${branchNum}`] = '%1';
+                blockJSON[`args${branchNum}`] = [{
+                    type: 'input_statement',
+                    name: `SUBSTACK${branchNum > 1 ? branchNum : ''}`
+                }];
+            }
+            blockJSON.outputShape = ScratchBlocksConstants.OUTPUT_SHAPE_SQUARE;
+            blockJSON.previousStatement = null; // null = available connection; undefined = hat
+            blockJSON.nextStatement = null; // null = available connection; undefined = terminal
+            break;
+        }
+
+        if (blockInfo.isTerminal) {
+            delete blockJSON.nextStatement;
+        }
+
+        const blockXML = `<block type="${extendedOpcode}">${inputList.join('')}</block>`;
+
+        return {
+            info: blockInfo,
+            json: blockJSON,
+            xml: blockXML
+        };
+    }
+
+    /**
+     * @returns {string} scratch-blocks XML description for all dynamic blocks, wrapped in <category> elements.
+     */
+    getBlocksXML () {
+        const xmlParts = [];
+        for (const categoryInfo of this._blockInfo) {
+            const {name, color1, color2} = categoryInfo;
+            xmlParts.push(`<category name="${name}" colour="${color1}" secondaryColour="${color2}">`);
+            // @todo only add this label for user-loaded extensions?
+            xmlParts.push(`<label text="${name}" web-class="extensionLabel"/>`);
+            xmlParts.push.apply(xmlParts, categoryInfo.blocks.map(blockInfo => blockInfo.xml));
+            xmlParts.push('</category>');
+        }
+        return xmlParts.join('\n');
+    }
+
+    /**
+     * @returns {Array.<string>} - an array containing the scratch-blocks JSON information for each dynamic block.
+     */
+    getBlocksJSON () {
+        return this._blockInfo.reduce(
+            (result, categoryInfo) => result.concat(categoryInfo.blocks.map(blockInfo => blockInfo.json)), []);
     }
 
     /**
@@ -481,7 +700,7 @@ class Runtime extends EventEmitter {
             if (this.threads[i].topBlock === topBlockId && this.threads[i].status !== Thread.STATUS_DONE) {
                 const blockContainer = opts.target.blocks;
                 const opcode = blockContainer.getOpcode(blockContainer.getBlock(topBlockId));
-                
+
                 if (this.getIsEdgeActivatedHat(opcode) && this.threads[i].stackClick !== opts.stackClick) {
                     // Allow edge activated hat thread stack click to coexist with
                     // edge activated hat thread that runs every frame

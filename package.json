@@ -54,6 +54,7 @@
     "tap": "^10.2.0",
     "tiny-worker": "^2.1.1",
     "webpack": "^2.4.1",
-    "webpack-dev-server": "^2.4.1"
+    "webpack-dev-server": "^2.4.1",
+    "worker-loader": "0.8.1"
   }
 }

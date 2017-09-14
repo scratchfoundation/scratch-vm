@@ -115,6 +115,12 @@ class SharedDispatch {
     _remoteTransferCall (provider, service, method, transfer, ...args) {
         return new Promise((resolve, reject) => {
             const responseId = this._storeCallbacks(resolve, reject);
+
+            /** @TODO: remove this hack! this is just here so we don't try to send `util` to a worker */
+            if ((args.length > 0) && (typeof args[args.length - 1].yield === 'function')) {
+                args.pop();
+            }
+
             if (transfer) {
                 provider.postMessage({service, method, responseId, args}, transfer);
             } else {
