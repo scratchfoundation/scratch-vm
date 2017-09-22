@@ -11,18 +11,18 @@
   },
   "main": "./dist/node/scratch-vm.js",
   "scripts": {
-    "build": "./node_modules/.bin/webpack --progress --colors --bail",
-    "coverage": "./node_modules/.bin/tap ./test/{unit,integration}/*.js --coverage --coverage-report=lcov",
-    "deploy": "touch playground/.nojekyll && ./node_modules/.bin/gh-pages -t -d playground -m \"Build for $(git log --pretty=format:%H -n1)\"",
-    "lint": "./node_modules/.bin/eslint .",
+    "build": "webpack --progress --colors --bail",
+    "coverage": "tap ./test/{unit,integration}/*.js --coverage --coverage-report=lcov",
+    "deploy": "touch playground/.nojekyll && gh-pages -t -d playground -m \"Build for $(git log --pretty=format:%H -n1)\"",
+    "lint": "eslint .",
     "prepublish": "in-publish && npm run build || not-in-publish",
-    "start": "./node_modules/.bin/webpack-dev-server",
-    "tap": "./node_modules/.bin/tap ./test/{unit,integration}/*.js",
-    "tap:unit": "./node_modules/.bin/tap ./test/unit/*.js",
-    "tap:integration": "./node_modules/.bin/tap ./test/integration/*.js",
+    "start": "webpack-dev-server",
+    "tap": "tap ./test/{unit,integration}/*.js",
+    "tap:unit": "tap ./test/unit/*.js",
+    "tap:integration": "tap ./test/integration/*.js",
     "test": "npm run lint && npm run tap",
-    "watch": "./node_modules/.bin/webpack --progress --colors --watch",
-    "version": "./node_modules/.bin/json -f package.json -I -e \"this.repository.sha = '$(git log -n1 --pretty=format:%H)'\""
+    "watch": "webpack --progress --colors --watch",
+    "version": "json -f package.json -I -e \"this.repository.sha = '$(git log -n1 --pretty=format:%H)'\""
   },
   "devDependencies": {
     "adm-zip": "0.4.7",
