@@ -1,3 +1,5 @@
+const ArgumentType = require('../extension-support/argument-type');
+const BlockType = require('../extension-support/block-type');
 const Cast = require('../util/cast');
 const Clone = require('../util/clone');
 const Color = require('../util/color');
@@ -235,24 +237,116 @@ class Scratch3PenBlocks {
     }
 
     /**
-     * Retrieve the block primitives implemented by this package.
-     * @return {object.<string, Function>} Mapping of opcode to Function.
+     * @returns {{id: string, name: string, blocks: []}} metadata for this extension and its blocks.
      */
-    getPrimitives () {
+    getInfo () {
         return {
-            pen_clear: this.clear,
-            pen_stamp: this.stamp,
-            pen_pendown: this.penDown,
-            pen_penup: this.penUp,
-            pen_setpencolortocolor: this.setPenColorToColor,
-            pen_changepencolorby: this.changePenHueBy,
-            pen_setpencolortonum: this.setPenHueToNumber,
-            pen_changepenshadeby: this.changePenShadeBy,
-            pen_setpenshadeto: this.setPenShadeToNumber,
-            pen_changepensizeby: this.changePenSizeBy,
-            pen_setpensizeto: this.setPenSizeTo,
-            pen_changepentransparencyby: this.changePenTransparencyBy,
-            pen_setpentransparencyto: this.setPenTransparencyTo
+            id: 'pen',
+            name: 'Pen',
+            blocks: [
+                {
+                    opcode: 'clear',
+                    blockType: BlockType.COMMAND,
+                    arguments: {
+                        NUM1: {
+                            type: ArgumentType.NUMBER
+                        },
+                        NUM2: {
+                            type: ArgumentType.NUMBER
+                        }
+                    }
+                },
+                {
+                    opcode: 'stamp',
+                    blockType: BlockType.COMMAND
+                },
+                {
+                    opcode: 'penDown',
+                    blockType: BlockType.COMMAND,
+                    text: 'pen down'
+                },
+                {
+                    opcode: 'penUp',
+                    blockType: BlockType.COMMAND,
+                    text: 'pen up'
+                },
+                {
+                    opcode: 'setPenColorToColor',
+                    blockType: BlockType.COMMAND,
+                    text: 'set pen color to [COLOR]',
+                    arguments: {
+                        COLOR: {
+                            type: ArgumentType.COLOR
+                        }
+                    }
+                },
+                {
+                    opcode: 'changePenHueBy',
+                    blockType: BlockType.COMMAND,
+                    text: 'change pen color by [COLOR]',
+                    arguments: {
+                        COLOR: {
+                            type: ArgumentType.NUMBER,
+                            defaultValue: 10
+                        }
+                    }
+                },
+                {
+                    opcode: 'setPenHueToNumber',
+                    blockType: BlockType.COMMAND,
+                    text: 'set pen color to [COLOR]',
+                    arguments: {
+                        COLOR: {
+                            type: ArgumentType.NUMBER,
+                            defaultValue: 0
+                        }
+                    }
+                },
+                {
+                    opcode: 'changePenShadeBy',
+                    blockType: BlockType.COMMAND,
+                    text: 'change pen shade by [SHADE]',
+                    arguments: {
+                        SHADE: {
+                            type: ArgumentType.NUMBER,
+                            defaultValue: 10
+                        }
+                    }
+                },
+                {
+                    opcode: 'setPenShadeToNumber',
+                    blockType: BlockType.COMMAND,
+                    text: 'set pen shade to [SHADE]',
+                    arguments: {
+                        SHADE: {
+                            type: ArgumentType.NUMBER,
+                            defaultValue: 50
+                        }
+                    }
+                },
+                {
+                    opcode: 'changePenSizeBy',
+                    blockType: BlockType.COMMAND,
+                    text: 'change pen size by [SIZE]',
+                    arguments: {
+                        SIZE: {
+                            type: ArgumentType.NUMBER,
+                            defaultValue: 1
+                        }
+                    }
+                },
+                {
+                    opcode: 'setPenSizeTo',
+                    blockType: BlockType.COMMAND,
+                    text: 'set pen size to [SIZE]',
+                    arguments: {
+                        SIZE: {
+                            type: ArgumentType.NUMBER,
+                            defaultValue: 1
+                        }
+                    }
+                }
+            ]
         };
     }
 
