@@ -33,6 +33,9 @@ const defaultBlockPackages = {
  */
 const ArgumentTypeMap = (() => {
     const map = {};
+    map[ArgumentType.COLOR] = {
+        shadowType: 'colour_picker'
+    };
     map[ArgumentType.NUMBER] = {
         shadowType: 'math_number',
         fieldType: 'NUM'
@@ -456,13 +459,11 @@ class Runtime extends EventEmitter {
             const argInfo = blockInfo.arguments[placeholder] || {};
             const argTypeInfo = ArgumentTypeMap[argInfo.type] || {};
             const defaultValue = (typeof argInfo.defaultValue === 'undefined' ? '' : argInfo.defaultValue.toString());
-            inputList.push(
-                `<value name="${placeholder}">` +
-                  `<shadow type="${argTypeInfo.shadowType}">` +
-                    `<field name="${argTypeInfo.fieldType}">${defaultValue}</field>` +
-                  '</shadow>' +
-                '</value>'
-            );
+            inputList.push(`<value name="${placeholder}"><shadow type="${argTypeInfo.shadowType}">`);
+            if (argTypeInfo.fieldType) {
+                inputList.push(`<field name="${argTypeInfo.fieldType}">${defaultValue}</field>`);
+            }
+            inputList.push('</shadow></value>');
 
             return `%${argNum}`;
         });
