@@ -48,7 +48,7 @@
     "scratch-blocks": "latest",
     "scratch-render": "latest",
     "scratch-storage": "^0.2.0",
-    "script-loader": "0.7.0",
+    "script-loader": "0.7.2",
     "socket.io-client": "1.7.3",
     "stats.js": "^0.17.0",
     "tap": "^10.2.0",
