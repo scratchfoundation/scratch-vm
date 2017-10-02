@@ -459,10 +459,17 @@ class Runtime extends EventEmitter {
             const argInfo = blockInfo.arguments[placeholder] || {};
             const argTypeInfo = ArgumentTypeMap[argInfo.type] || {};
             const defaultValue = (typeof argInfo.defaultValue === 'undefined' ? '' : argInfo.defaultValue.toString());
+
+            // <value> is the ScratchBlocks name for a block input.
+            // The <shadow> is a placeholder for a reporter and is visible when there's no reporter in this input.
             inputList.push(`<value name="${placeholder}"><shadow type="${argTypeInfo.shadowType}">`);
+
+            // <field> is a text field that the user can type into. Some shadows, like the color picker, don't allow
+            // text input and therefore don't need a field element.
             if (argTypeInfo.fieldType) {
                 inputList.push(`<field name="${argTypeInfo.fieldType}">${defaultValue}</field>`);
             }
+
             inputList.push('</shadow></value>');
 
             return `%${argNum}`;

@@ -1,8 +1,8 @@
 const ArgumentType = {
-    NUMBER: 'number',
-    STRING: 'string',
     BOOLEAN: 'Boolean',
-    COLOR: 'color'
+    COLOR: 'color',
+    NUMBER: 'number',
+    STRING: 'string'
 };
 
 module.exports = ArgumentType;

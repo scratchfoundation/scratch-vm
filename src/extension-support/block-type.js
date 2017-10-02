@@ -1,9 +1,9 @@
 const BlockType = {
-    COMMAND: 'command',
-    REPORTER: 'reporter',
     BOOLEAN: 'Boolean',
+    COMMAND: 'command',
+    CONDITIONAL: 'conditional',
     HAT: 'hat',
-    CONDITIONAL: 'conditional'
+    REPORTER: 'reporter'
 };
 
 module.exports = BlockType;
