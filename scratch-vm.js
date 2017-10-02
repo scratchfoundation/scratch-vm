@@ -17438,11 +17438,11 @@ module.exports = mutationAdpater;
 
 
 var BlockType = {
-    COMMAND: 'command',
-    REPORTER: 'reporter',
     BOOLEAN: 'Boolean',
+    COMMAND: 'command',
+    CONDITIONAL: 'conditional',
     HAT: 'hat',
-    CONDITIONAL: 'conditional'
+    REPORTER: 'reporter'
 };
 
 module.exports = BlockType;
@@ -23234,6 +23234,9 @@ var defaultBlockPackages = {
  */
 var ArgumentTypeMap = function () {
     var map = {};
+    map[ArgumentType.COLOR] = {
+        shadowType: 'colour_picker'
+    };
     map[ArgumentType.NUMBER] = {
         shadowType: 'math_number',
         fieldType: 'NUM'
@@ -23581,7 +23584,18 @@ var Runtime = function (_EventEmitter) {
                 var argInfo = blockInfo.arguments[placeholder] || {};
                 var argTypeInfo = ArgumentTypeMap[argInfo.type] || {};
                 var defaultValue = typeof argInfo.defaultValue === 'undefined' ? '' : argInfo.defaultValue.toString();
-                inputList.push('<value name="' + placeholder + '">' + ('<shadow type="' + argTypeInfo.shadowType + '">') + ('<field name="' + argTypeInfo.fieldType + '">' + defaultValue + '</field>') + '</shadow>' + '</value>');
+
+                // <value> is the ScratchBlocks name for a block input.
+                // The <shadow> is a placeholder for a reporter and is visible when there's no reporter in this input.
+                inputList.push('<value name="' + placeholder + '"><shadow type="' + argTypeInfo.shadowType + '">');
+
+                // <field> is a text field that the user can type into. Some shadows, like the color picker, don't allow
+                // text input and therefore don't need a field element.
+                if (argTypeInfo.fieldType) {
+                    inputList.push('<field name="' + argTypeInfo.fieldType + '">' + defaultValue + '</field>');
+                }
+
+                inputList.push('</shadow></value>');
 
                 return '%' + argNum;
             });
@@ -25304,9 +25318,10 @@ module.exports = Target;
 
 
 var ArgumentType = {
+    BOOLEAN: 'Boolean',
+    COLOR: 'color',
     NUMBER: 'number',
-    STRING: 'string',
-    BOOLEAN: 'Boolean'
+    STRING: 'string'
 };
 
 module.exports = ArgumentType;
@@ -25439,6 +25454,22 @@ var ExtensionManager = function () {
                 workerInfo.resolve(id);
             }
         }
+
+        /**
+         * Register an internal (non-Worker) extension object
+         * @param {object} extensionObject - the extension object to register
+         * @returns {Promise} resolved once the extension is fully registered or rejected on failure
+         */
+
+    }, {
+        key: '_registerInternalExtension',
+        value: function _registerInternalExtension(extensionObject) {
+            var extensionInfo = extensionObject.getInfo();
+            var serviceName = 'extension.internal.' + extensionInfo.id;
+            return dispatch.setService(serviceName, extensionObject).then(function () {
+                return dispatch.call('extensions', 'registerExtensionService', serviceName);
+            });
+        }
     }, {
         key: '_registerExtensionInfo',
         value: function _registerExtensionInfo(serviceName, extensionInfo) {
@@ -25511,6 +25542,7 @@ var ExtensionManager = function () {
             }, blockInfo);
             blockInfo.opcode = this._sanitizeID(blockInfo.opcode);
             blockInfo.func = blockInfo.func ? this._sanitizeID(blockInfo.func) : blockInfo.opcode;
+            blockInfo.text = blockInfo.text || blockInfo.opcode;
             blockInfo.func = dispatch.call.bind(dispatch, serviceName, blockInfo.func);
             return blockInfo;
         }
