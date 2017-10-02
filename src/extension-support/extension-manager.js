@@ -103,6 +103,18 @@ class ExtensionManager {
         }
     }
 
+    /**
+     * Register an internal (non-Worker) extension object
+     * @param {object} extensionObject - the extension object to register
+     * @returns {Promise} resolved once the extension is fully registered or rejected on failure
+     */
+    _registerInternalExtension (extensionObject) {
+        const extensionInfo = extensionObject.getInfo();
+        const serviceName = `extension.internal.${extensionInfo.id}`;
+        return dispatch.setService(serviceName, extensionObject)
+            .then(() => dispatch.call('extensions', 'registerExtensionService', serviceName));
+    }
+
     _registerExtensionInfo (serviceName, extensionInfo) {
         extensionInfo = this._prepareExtensionInfo(serviceName, extensionInfo);
         dispatch.call('runtime', '_registerExtensionPrimitives', extensionInfo).catch(e => {
@@ -162,6 +174,7 @@ class ExtensionManager {
         }, blockInfo);
         blockInfo.opcode = this._sanitizeID(blockInfo.opcode);
         blockInfo.func = blockInfo.func ? this._sanitizeID(blockInfo.func) : blockInfo.opcode;
+        blockInfo.text = blockInfo.text || blockInfo.opcode;
         blockInfo.func = dispatch.call.bind(dispatch, serviceName, blockInfo.func);
         return blockInfo;
     }
