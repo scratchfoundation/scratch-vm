@@ -106,11 +106,12 @@ class ExtensionManager {
     /**
      * Register an internal (non-Worker) extension object
      * @param {object} extensionObject - the extension object to register
+     * @returns {Promise} resolved once the extension is fully registered or rejected on failure
      */
     _registerInternalExtension (extensionObject) {
         const extensionInfo = extensionObject.getInfo();
         const serviceName = `extension.internal.${extensionInfo.id}`;
-        dispatch.setService(serviceName, extensionObject)
+        return dispatch.setService(serviceName, extensionObject)
             .then(() => dispatch.call('extensions', 'registerExtensionService', serviceName));
     }
 
