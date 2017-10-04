@@ -523,8 +523,6 @@ class Runtime extends EventEmitter {
         for (const categoryInfo of this._blockInfo) {
             const {name, color1, color2} = categoryInfo;
             xmlParts.push(`<category name="${name}" colour="${color1}" secondaryColour="${color2}">`);
-            // @todo only add this label for user-loaded extensions?
-            xmlParts.push(`<label text="${name}" web-class="extensionLabel"/>`);
             xmlParts.push.apply(xmlParts, categoryInfo.blocks.map(blockInfo => blockInfo.xml));
             xmlParts.push('</category>');
         }
