@@ -23668,8 +23668,6 @@ var Runtime = function (_EventEmitter) {
                         color2 = categoryInfo.color2;
 
                     xmlParts.push('<category name="' + name + '" colour="' + color1 + '" secondaryColour="' + color2 + '">');
-                    // @todo only add this label for user-loaded extensions?
-                    xmlParts.push('<label text="' + name + '" web-class="extensionLabel"/>');
                     xmlParts.push.apply(xmlParts, categoryInfo.blocks.map(function (blockInfo) {
                         return blockInfo.xml;
                     }));
