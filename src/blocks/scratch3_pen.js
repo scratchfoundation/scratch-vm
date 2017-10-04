@@ -237,7 +237,7 @@ class Scratch3PenBlocks {
     }
 
     /**
-     * @returns {{id: string, name: string, blocks: []}} metadata for this extension and its blocks.
+     * @returns {object} metadata for this extension and its blocks.
      */
     getInfo () {
         return {

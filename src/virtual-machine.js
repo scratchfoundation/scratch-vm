@@ -68,7 +68,7 @@ class VirtualMachine extends EventEmitter {
             this.emit(Runtime.EXTENSION_ADDED, blocksInfo);
         });
 
-        this.extensionManager = new ExtensionManager();
+        this.extensionManager = new ExtensionManager(this.runtime);
 
         this.blockListener = this.blockListener.bind(this);
         this.flyoutBlockListener = this.flyoutBlockListener.bind(this);

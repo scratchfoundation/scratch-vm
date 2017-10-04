@@ -3,6 +3,16 @@ const log = require('../util/log');
 
 const BlockType = require('./block-type');
 
+// These extensions are currently built into the VM repository but should not be loaded at startup.
+// TODO: move these out into a separate repository?
+// TODO: change extension spec so that library info, including extension ID, can be collected through static methods
+const Scratch3PenBlocks = require('../blocks/scratch3_pen');
+const Scratch3WeDo2Blocks = require('../blocks/scratch3_wedo2');
+const builtinExtensions = {
+    pen: Scratch3PenBlocks,
+    wedo2: Scratch3WeDo2Blocks
+};
+
 /**
  * @typedef {object} ArgumentInfo - Information about an extension block argument
  * @property {ArgumentType} type - the type of value this argument can take
@@ -39,7 +49,7 @@ const BlockType = require('./block-type');
  */
 
 class ExtensionManager {
-    constructor () {
+    constructor (runtime) {
         /**
          * The ID number to provide to the next extension worker.
          * @type {int}
@@ -60,17 +70,30 @@ class ExtensionManager {
          */
         this.pendingWorkers = [];
 
+        /**
+         * Keep a reference to the runtime so we can construct internal extension objects.
+         * TODO: remove this in favor of extensions accessing the runtime as a service.
+         * @type {Runtime}
+         */
+        this.runtime = runtime;
+
         dispatch.setService('extensions', this).catch(e => {
             log.error(`ExtensionManager was unable to register extension service: ${JSON.stringify(e)}`);
         });
     }
 
     /**
-     * Load an extension by URL
-     * @param {string} extensionURL - the URL for the extension to load
+     * Load an extension by URL or internal extension ID
+     * @param {string} extensionURL - the URL for the extension to load OR the ID of an internal extension
      * @returns {Promise} resolved once the extension is loaded and initialized or rejected on failure
      */
     loadExtensionURL (extensionURL) {
+        if (builtinExtensions.hasOwnProperty(extensionURL)) {
+            const extension = builtinExtensions[extensionURL];
+            const extensionInstance = new extension(this.runtime);
+            return this._registerInternalExtension(extensionInstance);
+        }
+
         return new Promise((resolve, reject) => {
             // If we `require` this at the global level it breaks non-webpack targets, including tests
             const ExtensionWorker = require('worker-loader?name=extension-worker.js!./extension-worker');
