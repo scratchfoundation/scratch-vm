@@ -198,7 +198,17 @@ class ExtensionManager {
         blockInfo.opcode = this._sanitizeID(blockInfo.opcode);
         blockInfo.func = blockInfo.func ? this._sanitizeID(blockInfo.func) : blockInfo.opcode;
         blockInfo.text = blockInfo.text || blockInfo.opcode;
-        blockInfo.func = dispatch.call.bind(dispatch, serviceName, blockInfo.func);
+
+        /**
+         * This is only here because the VM performs poorly when blocks return promises.
+         * @TODO make it possible for the VM to resolve a promise and continue during the same frame.
+         */
+        if (dispatch._isRemoteService(serviceName)) {
+            blockInfo.func = dispatch.call.bind(dispatch, serviceName, blockInfo.func);
+        } else {
+            const serviceObject = dispatch.services[serviceName];
+            blockInfo.func = serviceObject[blockInfo.func].bind(serviceObject);
+        }
         return blockInfo;
     }
 }

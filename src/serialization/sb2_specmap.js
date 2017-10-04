@@ -500,27 +500,27 @@ const specMap = {
         ]
     },
     'clearPenTrails': {
-        opcode: 'pen_clear',
+        opcode: 'pen.clear',
         argMap: [
         ]
     },
     'stampCostume': {
-        opcode: 'pen_stamp',
+        opcode: 'pen.stamp',
         argMap: [
         ]
     },
     'putPenDown': {
-        opcode: 'pen_pendown',
+        opcode: 'pen.penDown',
         argMap: [
         ]
     },
     'putPenUp': {
-        opcode: 'pen_penup',
+        opcode: 'pen.penUp',
         argMap: [
         ]
     },
     'penColor:': {
-        opcode: 'pen_setpencolortocolor',
+        opcode: 'pen.setPenColorToColor',
         argMap: [
             {
                 type: 'input',
@@ -530,7 +530,7 @@ const specMap = {
         ]
     },
     'changePenHueBy:': {
-        opcode: 'pen_changepencolorby',
+        opcode: 'pen.changePenHueBy',
         argMap: [
             {
                 type: 'input',
@@ -540,7 +540,7 @@ const specMap = {
         ]
     },
     'setPenHueTo:': {
-        opcode: 'pen_setpencolortonum',
+        opcode: 'pen.setPenHueToNumber',
         argMap: [
             {
                 type: 'input',
@@ -550,7 +550,7 @@ const specMap = {
         ]
     },
     'changePenShadeBy:': {
-        opcode: 'pen_changepenshadeby',
+        opcode: 'pen.changePenShadeBy',
         argMap: [
             {
                 type: 'input',
@@ -560,7 +560,7 @@ const specMap = {
         ]
     },
     'setPenShadeTo:': {
-        opcode: 'pen_setpenshadeto',
+        opcode: 'pen.setPenShadeToNumber',
         argMap: [
             {
                 type: 'input',
@@ -570,7 +570,7 @@ const specMap = {
         ]
     },
     'changePenSizeBy:': {
-        opcode: 'pen_changepensizeby',
+        opcode: 'pen.changePenSizeBy',
         argMap: [
             {
                 type: 'input',
@@ -580,7 +580,7 @@ const specMap = {
         ]
     },
     'penSize:': {
-        opcode: 'pen_setpensizeto',
+        opcode: 'pen.setPenSizeTo',
         argMap: [
             {
                 type: 'input',
