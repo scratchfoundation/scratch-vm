@@ -1,5 +1,6 @@
 const EventEmitter = require('events');
 const {OrderedMap} = require('immutable');
+const escapeHtml = require('escape-html');
 
 const ArgumentType = require('../extension-support/argument-type');
 const Blocks = require('./blocks');
@@ -457,7 +458,9 @@ class Runtime extends EventEmitter {
 
             const argInfo = blockInfo.arguments[placeholder] || {};
             const argTypeInfo = ArgumentTypeMap[argInfo.type] || {};
-            const defaultValue = (typeof argInfo.defaultValue === 'undefined' ? '' : argInfo.defaultValue.toString());
+            const defaultValue = (typeof argInfo.defaultValue === 'undefined' ?
+                '' :
+                escapeHtml(argInfo.defaultValue.toString()));
 
             // <value> is the ScratchBlocks name for a block input.
             // The <shadow> is a placeholder for a reporter and is visible when there's no reporter in this input.
