@@ -1,4 +1,15 @@
 const Cast = require('../util/cast');
+const Clone = require('../util/clone');
+
+const RenderedTarget = require('../sprites/rendered-target');
+
+/**
+ * @typedef {object} BubbleState - the bubble state associated with a particular target.
+ * @property {Boolean} onSpriteRight - tracks whether the bubble is right or left of the sprite.
+ * @property {?int} drawableId - the ID of the associated bubble Drawable, null if none.
+ * @property {string} text - the text of the bubble.
+ * @property {string} type - the type of the bubble, "say" or "think"
+ */
 
 class Scratch3LooksBlocks {
     constructor (runtime) {
@@ -7,6 +18,144 @@ class Scratch3LooksBlocks {
          * @type {Runtime}
          */
         this.runtime = runtime;
+
+        this._onTargetMoved = this._onTargetMoved.bind(this);
+    }
+
+    /**
+     * The default bubble state, to be used when a target has no existing bubble state.
+     * @type {BubbleState}
+     */
+    static get DEFAULT_BUBBLE_STATE () {
+        return {
+            drawableId: null,
+            onSpriteRight: true,
+            skinId: null,
+            text: '',
+            type: 'say'
+        };
+    }
+
+    /**
+     * The key to load & store a target's bubble-related state.
+     * @type {string}
+     */
+    static get STATE_KEY () {
+        return 'Scratch.looks';
+    }
+
+    /**
+     * @param {Target} target - collect bubble state for this target. Probably, but not necessarily, a RenderedTarget.
+     * @returns {BubbleState} the mutable bubble state associated with that target. This will be created if necessary.
+     * @private
+     */
+    _getBubbleState (target) {
+        let bubbleState = target.getCustomState(Scratch3LooksBlocks.STATE_KEY);
+        if (!bubbleState) {
+            bubbleState = Clone.simple(Scratch3LooksBlocks.DEFAULT_BUBBLE_STATE);
+            target.setCustomState(Scratch3LooksBlocks.STATE_KEY, bubbleState);
+        }
+        return bubbleState;
+    }
+
+    /**
+     * @param {Target} target - collect bubble state for this target. Probably, but not necessarily, a RenderedTarget.
+     * @private
+     */
+    _resetBubbleState (target) {
+        const defaultBubbleState = Clone.simple(Scratch3LooksBlocks.DEFAULT_BUBBLE_STATE);
+        target.setCustomState(Scratch3LooksBlocks.STATE_KEY, defaultBubbleState);
+    }
+
+    /**
+     * Handle a target which has moved. This only fires when the bubble is visible.
+     * @param {RenderedTarget} target - the target which has moved.
+     * @private
+     */
+    _onTargetMoved (target) {
+        const bubbleState = this._getBubbleState(target);
+
+        if (bubbleState.drawableId) {
+            this._checkBubbleBounds(target);
+            this._positionBubble(target);
+        }
+    }
+
+    _positionBubble (target) {
+        const bubbleState = this._getBubbleState(target);
+        const [bubbleWidth, bubbleHeight] = this.runtime.renderer.getSkinSize(bubbleState.drawableId);
+        const targetBounds = target.getBounds();
+        const stageBounds = this.runtime.getTargetForStage().getBounds();
+
+        this.runtime.renderer.updateDrawableProperties(bubbleState.drawableId, {
+            position: [
+                bubbleState.onSpriteRight ? targetBounds.right : targetBounds.left - bubbleWidth,
+                Math.min(stageBounds.top, targetBounds.top + bubbleHeight)
+            ]
+        });
+
+        this.runtime.requestRedraw();
+    }
+
+    _checkBubbleBounds (target) {
+        const bubbleState = this._getBubbleState(target);
+        const [bubbleWidth, _] = this.runtime.renderer.getSkinSize(bubbleState.drawableId);
+        const targetBounds = target.getBounds();
+        const stageBounds = this.runtime.getTargetForStage().getBounds();
+        if (bubbleState.onSpriteRight && bubbleWidth + targetBounds.right > stageBounds.right) {
+            bubbleState.onSpriteRight = false;
+            this._renderBubble(target);
+        } else if (!bubbleState.onSpriteRight && targetBounds.left - bubbleWidth < stageBounds.left) {
+            bubbleState.onSpriteRight = true;
+            this._renderBubble(target);
+        }
+    }
+
+    _renderBubble (target) {
+        const bubbleState = this._getBubbleState(target);
+        const {type, text, onSpriteRight} = bubbleState;
+
+        if (bubbleState.skinId) {
+            this.runtime.renderer.updateTextSkin(bubbleState.skinId, type, text, onSpriteRight, [0, 0]);
+        } else {
+            target.addListener(RenderedTarget.EVENT_TARGET_MOVED, this._onTargetMoved);
+
+            bubbleState.drawableId = this.runtime.renderer.createDrawable();
+            bubbleState.skinId = this.runtime.renderer.createTextSkin(type, text, bubbleState.onSpriteRight, [0, 0]);
+
+            const order = this.runtime.renderer.getDrawableOrder(target.drawableID);
+            this.runtime.renderer.setDrawableOrder(bubbleState.drawableId, order + 1);
+            this.runtime.renderer.updateDrawableProperties(bubbleState.drawableId, {
+                skinId: bubbleState.skinId
+            });
+
+            this._checkBubbleBounds(target);
+        }
+
+        this._positionBubble(target);
+    }
+    _updateBubble (target, type, text) {
+        const bubbleState = this._getBubbleState(target);
+        bubbleState.type = type;
+        bubbleState.text = text;
+
+        this._renderBubble(target);
+    }
+
+    _clearBubble (target) {
+        const bubbleState = this._getBubbleState(target);
+        if (bubbleState.drawableId) {
+            this.runtime.renderer.destroyDrawable(bubbleState.drawableId);
+        }
+        if (bubbleState.drawableId) {
+            this.runtime.renderer.destroySkin(bubbleState.skinId);
+        }
+        this._resetBubbleState(target);
+
+        // @TODO is this safe? It could have been already removed?
+        target.removeListener(RenderedTarget.EVENT_TARGET_MOVED, this._onTargetMoved);
+
+        this.runtime.requestRedraw();
     }
 
     /**
@@ -18,7 +167,7 @@ class Scratch3LooksBlocks {
             looks_say: this.say,
             looks_sayforsecs: this.sayforsecs,
             looks_think: this.think,
-            looks_thinkforsecs: this.sayforsecs,
+            looks_thinkforsecs: this.thinkforsecs,
             looks_show: this.show,
             looks_hide: this.hide,
             looks_switchcostumeto: this.switchCostume,
@@ -41,30 +190,31 @@ class Scratch3LooksBlocks {
     }
 
     say (args, util) {
-        util.target.setSay('say', args.MESSAGE);
+        // @TODO in 2.0 calling say/think resets the right/left bias of the bubble
+        this._updateBubble(util.target, 'say', args.MESSAGE);
     }
 
     sayforsecs (args, util) {
-        util.target.setSay('say', args.MESSAGE);
+        this.say(args, util);
         return new Promise(resolve => {
             setTimeout(() => {
                 // Clear say bubble and proceed.
-                util.target.setSay();
+                this._clearBubble(util.target);
                 resolve();
             }, 1000 * args.SECS);
         });
     }
 
     think (args, util) {
-        util.target.setSay('think', args.MESSAGE);
+        this._updateBubble(util.target, 'think', args.MESSAGE);
     }
 
     thinkforsecs (args, util) {
-        util.target.setSay('think', args.MESSAGE);
+        this.think(args, util);
         return new Promise(resolve => {
             setTimeout(() => {
                 // Clear say bubble and proceed.
-                util.target.setSay();
+                this._clearBubble(util.target);
                 resolve();
             }, 1000 * args.SECS);
         });
