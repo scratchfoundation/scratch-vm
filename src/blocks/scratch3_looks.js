@@ -1,6 +1,6 @@
 const Cast = require('../util/cast');
 const Clone = require('../util/clone');
-
+const Runtime = require('../engine/runtime');
 const RenderedTarget = require('../sprites/rendered-target');
 
 /**
@@ -20,6 +20,11 @@ class Scratch3LooksBlocks {
         this.runtime = runtime;
 
         this._onTargetMoved = this._onTargetMoved.bind(this);
+        this._onResetBubbles = this._onResetBubbles.bind(this);
+
+        // Reset all bubbles on start/stop
+        this.runtime.on('PROJECT_RUN_START', this._onResetBubbles);
+        this.runtime.on('PROJECT_RUN_STOP', this._onResetBubbles);
     }
 
     /**
@@ -32,7 +37,8 @@ class Scratch3LooksBlocks {
             onSpriteRight: true,
             skinId: null,
             text: '',
-            type: 'say'
+            type: 'say',
+            visible: true
         };
     }
 
@@ -81,6 +87,16 @@ class Scratch3LooksBlocks {
         }
     }
 
+    _onResetBubbles () {
+        // for (let n = 0; n < this.runtime.targets.length; n++) {
+        //     const target = this.runtime.targets[n];
+        //     const bubbleState = this._getBubbleState(target);
+        //     if (bubbleState.drawableId) {
+        //         this._clearBubble(target);
+        //     }
+        // }
+    }
+
     _positionBubble (target) {
         const bubbleState = this._getBubbleState(target);
         const [bubbleWidth, bubbleHeight] = this.runtime.renderer.getSkinSize(bubbleState.drawableId);
@@ -116,15 +132,27 @@ class Scratch3LooksBlocks {
         const {type, text, onSpriteRight} = bubbleState;
 
         if (bubbleState.skinId) {
+            if (!bubbleState.visible) {
+                bubbleState.visible = true;
+                this.runtime.renderer.updateDrawableProperties(bubbleState.drawableId, {
+                    visible: bubbleState.visible
+                });
+            }
             this.runtime.renderer.updateTextSkin(bubbleState.skinId, type, text, onSpriteRight, [0, 0]);
         } else {
             target.addListener(RenderedTarget.EVENT_TARGET_MOVED, this._onTargetMoved);
 
+            // TODO is there a way to figure out before rendering whether to default left or right?
+            const targetBounds = target.getBounds();
+            const stageBounds = this.runtime.getTargetForStage().getBounds();
+            if (targetBounds.right + 170 > stageBounds.right) {
+                bubbleState.onSpriteRight = false;
+            }
+
             bubbleState.drawableId = this.runtime.renderer.createDrawable();
             bubbleState.skinId = this.runtime.renderer.createTextSkin(type, text, bubbleState.onSpriteRight, [0, 0]);
 
-            const order = this.runtime.renderer.getDrawableOrder(target.drawableID);
-            this.runtime.renderer.setDrawableOrder(bubbleState.drawableId, order + 1);
+            this.runtime.renderer.setDrawableOrder(bubbleState.drawableId, Infinity);
             this.runtime.renderer.updateDrawableProperties(bubbleState.drawableId, {
                 skinId: bubbleState.skinId
             });
@@ -134,23 +162,26 @@ class Scratch3LooksBlocks {
 
         this._positionBubble(target);
     }
-    _updateBubble (target, type, text) {
-        const bubbleState = this._getBubbleState(target);
-        bubbleState.type = type;
-        bubbleState.text = text;
 
-        this._renderBubble(target);
+    _updateBubble (target, type, text) {
+        // Say/think empty string should clear any bubble
+        if (text === '') {
+            this._clearBubble(target);
+        } else {
+            const bubbleState = this._getBubbleState(target);
+            bubbleState.type = type;
+            bubbleState.text = text;
+
+            this._renderBubble(target);
+        }
     }
 
     _clearBubble (target) {
         const bubbleState = this._getBubbleState(target);
-        if (bubbleState.drawableId) {
-            this.runtime.renderer.destroyDrawable(bubbleState.drawableId);
-        }
-        if (bubbleState.drawableId) {
-            this.runtime.renderer.destroySkin(bubbleState.skinId);
-        }
-        this._resetBubbleState(target);
+        bubbleState.visible = false;
+        this.runtime.renderer.updateDrawableProperties(bubbleState.drawableId, {
+            visible: bubbleState.visible
+        });
 
         // @TODO is this safe? It could have been already removed?
         target.removeListener(RenderedTarget.EVENT_TARGET_MOVED, this._onTargetMoved);
