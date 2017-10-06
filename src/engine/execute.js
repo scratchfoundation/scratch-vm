@@ -148,6 +148,8 @@ const execute = function (sequencer, thread) {
     // Recursively evaluate input blocks.
     for (const inputName in inputs) {
         if (!inputs.hasOwnProperty(inputName)) continue;
+        // Do not evaluate the internal custom command block within definition
+        if (inputName === 'custom_block') continue;
         const input = inputs[inputName];
         const inputBlockId = input.block;
         // Is there no value for this input waiting in the stack frame?

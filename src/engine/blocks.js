@@ -154,7 +154,7 @@ class Blocks {
             const block = this._blocks[id];
             if ((block.opcode === 'procedures_defnoreturn' ||
                 block.opcode === 'procedures_defreturn') &&
-                block.mutation.proccode === name) {
+                this._blocks[block.inputs.custom_block.block].mutation.proccode === name) {
                 return id;
             }
         }
@@ -170,8 +170,7 @@ class Blocks {
         for (const id in this._blocks) {
             if (!this._blocks.hasOwnProperty(id)) continue;
             const block = this._blocks[id];
-            if ((block.opcode === 'procedures_defnoreturn' ||
-                block.opcode === 'procedures_defreturn') &&
+            if (block.opcode === 'procedures_callnoreturn_internal' &&
                 block.mutation.proccode === name) {
                 return JSON.parse(block.mutation.argumentnames);
             }
