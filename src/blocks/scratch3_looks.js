@@ -1,6 +1,5 @@
 const Cast = require('../util/cast');
 const Clone = require('../util/clone');
-const Runtime = require('../engine/runtime');
 const RenderedTarget = require('../sprites/rendered-target');
 
 /**
@@ -9,6 +8,7 @@ const RenderedTarget = require('../sprites/rendered-target');
  * @property {?int} drawableId - the ID of the associated bubble Drawable, null if none.
  * @property {string} text - the text of the bubble.
  * @property {string} type - the type of the bubble, "say" or "think"
+ * @property {Boolean} visible - whether the bubble is hidden along with its sprite.
  */
 
 class Scratch3LooksBlocks {
@@ -66,42 +66,32 @@ class Scratch3LooksBlocks {
     }
 
     /**
-     * @param {Target} target - collect bubble state for this target. Probably, but not necessarily, a RenderedTarget.
-     * @private
-     */
-    _resetBubbleState (target) {
-        const defaultBubbleState = Clone.simple(Scratch3LooksBlocks.DEFAULT_BUBBLE_STATE);
-        target.setCustomState(Scratch3LooksBlocks.STATE_KEY, defaultBubbleState);
-    }
-
-    /**
      * Handle a target which has moved.
      * @param {RenderedTarget} target - the target which has moved.
      * @private
      */
     _onTargetMoved (target) {
         const bubbleState = this._getBubbleState(target);
-
         if (bubbleState.drawableId && bubbleState.visible) {
-            this._checkBubbleBounds(target);
             this._positionBubble(target);
         }
     }
 
     /**
-     * Handle a target which has moved.
-     * @param {RenderedTarget} target - the target which has moved.
+     * Handle a target which is exiting.
+     * @param {RenderedTarget} target - the target.
      * @private
      */
     _onTargetWillExit (target) {
         const bubbleState = this._getBubbleState(target);
         if (bubbleState.drawableId) {
             this.runtime.renderer.destroyDrawable(bubbleState.drawableId);
+            bubbleState.drawableId = null;
         }
         if (bubbleState.skinId) {
             this.runtime.renderer.destroySkin(bubbleState.skinId);
+            bubbleState.skinId = null;
         }
-
     }
 
     /**
@@ -110,16 +100,12 @@ class Scratch3LooksBlocks {
      */
     _onResetBubbles () {
         for (let n = 0; n < this.runtime.targets.length; n++) {
-            const target = this.runtime.targets[n];
-            const bubbleState = this._getBubbleState(target);
-            if (bubbleState.drawableId) {
-                this._clearBubble(target);
-            }
+            this._onTargetWillExit(this.runtime.targets[n]);
         }
     }
 
     /**
-     * Position the bubble of a target.
+     * Position the bubble of a target. If it doesn't fit on the specified side, flip and rerender.
      * @param {!Target} target Target whose bubble needs positioning.
      * @private
      */
@@ -128,34 +114,20 @@ class Scratch3LooksBlocks {
         const [bubbleWidth, bubbleHeight] = this.runtime.renderer.getSkinSize(bubbleState.drawableId);
         const targetBounds = target.getBounds();
         const stageBounds = this.runtime.getTargetForStage().getBounds();
-
-        this.runtime.renderer.updateDrawableProperties(bubbleState.drawableId, {
-            position: [
-                bubbleState.onSpriteRight ? targetBounds.right : targetBounds.left - bubbleWidth,
-                Math.min(stageBounds.top, targetBounds.top + bubbleHeight)
-            ]
-        });
-
-        this.runtime.requestRedraw();
-    }
-
-    /**
-     * Check whether a bubble needs to be flipped. If so, flip the `onSpriteRight` state
-     * and call the bubble render again.
-     * @param {!Target} target Target whose bubble needs positioning.
-     * @private
-     */
-    _checkBubbleBounds (target) {
-        const bubbleState = this._getBubbleState(target);
-        const [bubbleWidth, _] = this.runtime.renderer.getSkinSize(bubbleState.drawableId);
-        const targetBounds = target.getBounds();
-        const stageBounds = this.runtime.getTargetForStage().getBounds();
         if (bubbleState.onSpriteRight && bubbleWidth + targetBounds.right > stageBounds.right) {
             bubbleState.onSpriteRight = false;
             this._renderBubble(target);
         } else if (!bubbleState.onSpriteRight && targetBounds.left - bubbleWidth < stageBounds.left) {
             bubbleState.onSpriteRight = true;
             this._renderBubble(target);
+        } else {
+            this.runtime.renderer.updateDrawableProperties(bubbleState.drawableId, {
+                position: [
+                    bubbleState.onSpriteRight ? targetBounds.right : targetBounds.left - bubbleWidth,
+                    Math.min(stageBounds.top, targetBounds.top + bubbleHeight)
+                ]
+            });
+            this.runtime.requestRedraw();
         }
     }
 
@@ -164,11 +136,15 @@ class Scratch3LooksBlocks {
      * just set it to visible and update the type/text. Otherwise create a new
      * bubble and update the relevant custom state.
      * @param {!Target} target Target who needs a bubble.
+     * @return {undefined} Early return if text is empty string.
      * @private
      */
     _renderBubble (target) {
         const bubbleState = this._getBubbleState(target);
         const {type, text, onSpriteRight} = bubbleState;
+        if (text === '') {
+            return this._setBubbleVisibility(target, false);
+        }
 
         if (bubbleState.skinId) {
             if (!bubbleState.visible) {
@@ -195,8 +171,6 @@ class Scratch3LooksBlocks {
             this.runtime.renderer.updateDrawableProperties(bubbleState.drawableId, {
                 skinId: bubbleState.skinId
             });
-
-            this._checkBubbleBounds(target);
         }
 
         this._positionBubble(target);
@@ -211,24 +185,21 @@ class Scratch3LooksBlocks {
      * @private
      */
     _updateBubble (target, type, text) {
-        if (text === '') {
-            this._clearBubble(target);
-        } else {
-            const bubbleState = this._getBubbleState(target);
-            bubbleState.type = type;
-            bubbleState.text = text;
-            this._renderBubble(target);
-        }
+        const bubbleState = this._getBubbleState(target);
+        bubbleState.type = type;
+        bubbleState.text = text;
+        this._renderBubble(target);
     }
 
     /**
      * Hide the bubble for a given target.
      * @param {!Target} target Target that say/think blocks are being called on.
+     * @param {!boolean} visibility Visible or not.
      * @private
      */
-    _clearBubble (target) {
+    _setBubbleVisibility (target, visibility) {
         const bubbleState = this._getBubbleState(target);
-        bubbleState.visible = false;
+        bubbleState.visible = visibility;
         if (bubbleState.drawableId) {
             this.runtime.renderer.updateDrawableProperties(bubbleState.drawableId, {
                 visible: bubbleState.visible
@@ -278,7 +249,7 @@ class Scratch3LooksBlocks {
         return new Promise(resolve => {
             setTimeout(() => {
                 // Clear say bubble and proceed.
-                this._clearBubble(util.target);
+                this._updateBubble(util.target, 'say', '');
                 resolve();
             }, 1000 * args.SECS);
         });
@@ -293,7 +264,7 @@ class Scratch3LooksBlocks {
         return new Promise(resolve => {
             setTimeout(() => {
                 // Clear say bubble and proceed.
-                this._clearBubble(util.target);
+                this._updateBubble(util.target, 'think', '');
                 resolve();
             }, 1000 * args.SECS);
         });
@@ -301,10 +272,12 @@ class Scratch3LooksBlocks {
 
     show (args, util) {
         util.target.setVisible(true);
+        this._renderBubble(util.target);
     }
 
     hide (args, util) {
         util.target.setVisible(false);
+        this._setBubbleVisibility(util.target, false);
     }
 
     /**
