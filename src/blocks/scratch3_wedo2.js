@@ -465,7 +465,7 @@ class Scratch3WeDo2Blocks {
                     }
                 },
                 {
-                    opcode: 'startMotorDirection',
+                    opcode: 'setMotorDirection',
                     text: 'set [MOTOR_ID] direction to [DIRECTION]',
                     blockType: BlockType.COMMAND,
                     arguments: {
