@@ -280,7 +280,8 @@ class Runtime extends EventEmitter {
     }
 
     /**
-     * Event name for glowing the green flag
+     * Event name when threads start running.
+     * Used by the UI to indicate running status.
      * @const {string}
      */
     static get PROJECT_RUN_START () {
@@ -288,11 +289,21 @@ class Runtime extends EventEmitter {
     }
 
     /**
-     * Event name for unglowing the green flag
+     * Event name when threads stop running
+     * Used by the UI to indicate not-running status.
      * @const {string}
      */
     static get PROJECT_RUN_STOP () {
         return 'PROJECT_RUN_STOP';
+    }
+
+    /**
+     * Event name for project being stopped or restarted by the user.
+     * Used by blocks that need to reset state.
+     * @const {string}
+     */
+    static get PROJECT_STOP_ALL () {
+        return 'PROJECT_STOP_ALL';
     }
 
     /**
@@ -905,6 +916,9 @@ class Runtime extends EventEmitter {
      * Stop "everything."
      */
     stopAll () {
+        // Emit stop event to allow blocks to clean up any state.
+        this.emit(Runtime.PROJECT_STOP_ALL);
+
         // Dispose all clones.
         const newTargets = [];
         for (let i = 0; i < this.targets.length; i++) {
@@ -1225,6 +1239,16 @@ class Runtime extends EventEmitter {
      */
     fireTargetWasCreated (newTarget, sourceTarget) {
         this.emit('targetWasCreated', newTarget, sourceTarget);
+    }
+
+    /**
+     * Report that a new target has been created, possibly by cloning an existing target.
+     * @param {Target} newTarget - the newly created target.
+     * @param {Target} [sourceTarget] - the target used as a source for the new clone, if any.
+     * @fires Runtime#targetWasCreated
+     */
+    fireTargetWasRemoved (newTarget, sourceTarget) {
+        this.emit('targetWasRemoved', newTarget, sourceTarget);
     }
 
     /**

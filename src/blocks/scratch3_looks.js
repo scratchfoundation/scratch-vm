@@ -21,10 +21,11 @@ class Scratch3LooksBlocks {
 
         this._onTargetMoved = this._onTargetMoved.bind(this);
         this._onResetBubbles = this._onResetBubbles.bind(this);
+        this._onTargetWillExit = this._onTargetWillExit.bind(this);
 
         // Reset all bubbles on start/stop
-        this.runtime.on('PROJECT_RUN_START', this._onResetBubbles);
-        this.runtime.on('PROJECT_RUN_STOP', this._onResetBubbles);
+        this.runtime.on('PROJECT_STOP_ALL', this._onResetBubbles);
+        this.runtime.on('targetWasRemoved', this._onTargetWillExit);
     }
 
     /**
@@ -74,29 +75,54 @@ class Scratch3LooksBlocks {
     }
 
     /**
-     * Handle a target which has moved. This only fires when the bubble is visible.
+     * Handle a target which has moved.
      * @param {RenderedTarget} target - the target which has moved.
      * @private
      */
     _onTargetMoved (target) {
         const bubbleState = this._getBubbleState(target);
 
-        if (bubbleState.drawableId) {
+        if (bubbleState.drawableId && bubbleState.visible) {
             this._checkBubbleBounds(target);
             this._positionBubble(target);
         }
     }
 
-    _onResetBubbles () {
-        // for (let n = 0; n < this.runtime.targets.length; n++) {
-        //     const target = this.runtime.targets[n];
-        //     const bubbleState = this._getBubbleState(target);
-        //     if (bubbleState.drawableId) {
-        //         this._clearBubble(target);
-        //     }
-        // }
+    /**
+     * Handle a target which has moved.
+     * @param {RenderedTarget} target - the target which has moved.
+     * @private
+     */
+    _onTargetWillExit (target) {
+        const bubbleState = this._getBubbleState(target);
+        if (bubbleState.drawableId) {
+            this.runtime.renderer.destroyDrawable(bubbleState.drawableId);
+        }
+        if (bubbleState.skinId) {
+            this.runtime.renderer.destroySkin(bubbleState.skinId);
+        }
+
     }
 
+    /**
+     * Handle project start/stop by clearing all visible bubbles.
+     * @private
+     */
+    _onResetBubbles () {
+        for (let n = 0; n < this.runtime.targets.length; n++) {
+            const target = this.runtime.targets[n];
+            const bubbleState = this._getBubbleState(target);
+            if (bubbleState.drawableId) {
+                this._clearBubble(target);
+            }
+        }
+    }
+
+    /**
+     * Position the bubble of a target.
+     * @param {!Target} target Target whose bubble needs positioning.
+     * @private
+     */
     _positionBubble (target) {
         const bubbleState = this._getBubbleState(target);
         const [bubbleWidth, bubbleHeight] = this.runtime.renderer.getSkinSize(bubbleState.drawableId);
@@ -113,6 +139,12 @@ class Scratch3LooksBlocks {
         this.runtime.requestRedraw();
     }
 
+    /**
+     * Check whether a bubble needs to be flipped. If so, flip the `onSpriteRight` state
+     * and call the bubble render again.
+     * @param {!Target} target Target whose bubble needs positioning.
+     * @private
+     */
     _checkBubbleBounds (target) {
         const bubbleState = this._getBubbleState(target);
         const [bubbleWidth, _] = this.runtime.renderer.getSkinSize(bubbleState.drawableId);
@@ -127,6 +159,13 @@ class Scratch3LooksBlocks {
         }
     }
 
+    /**
+     * Create a visible bubble for a target. If a bubble exists for the target,
+     * just set it to visible and update the type/text. Otherwise create a new
+     * bubble and update the relevant custom state.
+     * @param {!Target} target Target who needs a bubble.
+     * @private
+     */
     _renderBubble (target) {
         const bubbleState = this._getBubbleState(target);
         const {type, text, onSpriteRight} = bubbleState;
@@ -163,29 +202,38 @@ class Scratch3LooksBlocks {
         this._positionBubble(target);
     }
 
+    /**
+     * The entry point for say/think blocks. Clears existing bubble if the text is empty.
+     * Set the bubble custom state and then call _renderBubble.
+     * @param {!Target} target Target that say/think blocks are being called on.
+     * @param {!string} type Either "say" or "think"
+     * @param {!string} text The text for the bubble, empty string clears the bubble.
+     * @private
+     */
     _updateBubble (target, type, text) {
-        // Say/think empty string should clear any bubble
         if (text === '') {
             this._clearBubble(target);
         } else {
             const bubbleState = this._getBubbleState(target);
             bubbleState.type = type;
             bubbleState.text = text;
-
             this._renderBubble(target);
         }
     }
 
+    /**
+     * Hide the bubble for a given target.
+     * @param {!Target} target Target that say/think blocks are being called on.
+     * @private
+     */
     _clearBubble (target) {
         const bubbleState = this._getBubbleState(target);
         bubbleState.visible = false;
-        this.runtime.renderer.updateDrawableProperties(bubbleState.drawableId, {
-            visible: bubbleState.visible
-        });
-
-        // @TODO is this safe? It could have been already removed?
-        target.removeListener(RenderedTarget.EVENT_TARGET_MOVED, this._onTargetMoved);
-
+        if (bubbleState.drawableId) {
+            this.runtime.renderer.updateDrawableProperties(bubbleState.drawableId, {
+                visible: bubbleState.visible
+            });
+        }
         this.runtime.requestRedraw();
     }
 
