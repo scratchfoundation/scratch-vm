@@ -151,7 +151,7 @@ class ExtensionManager {
                 result.push(this._prepareBlockInfo(serviceName, blockInfo));
             } catch (e) {
                 // TODO: more meaningful error reporting
-                log.error(`Skipping malformed block: ${JSON.stringify(e)}`);
+                log.error(`Error processing block: ${e.message}, Block:\n${JSON.stringify(blockInfo)}`);
             }
             return result;
         }, []);
