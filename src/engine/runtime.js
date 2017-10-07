@@ -1,5 +1,6 @@
 const EventEmitter = require('events');
 const {OrderedMap} = require('immutable');
+const escapeHtml = require('escape-html');
 
 const ArgumentType = require('../extension-support/argument-type');
 const Blocks = require('./blocks');
