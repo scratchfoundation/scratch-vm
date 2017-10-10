@@ -152,10 +152,12 @@ class Blocks {
         for (const id in this._blocks) {
             if (!this._blocks.hasOwnProperty(id)) continue;
             const block = this._blocks[id];
-            if ((block.opcode === 'procedures_defnoreturn' ||
-                block.opcode === 'procedures_defreturn') &&
-                this._blocks[block.inputs.custom_block.block].mutation.proccode === name) {
-                return id;
+            if (block.opcode === 'procedures_defnoreturn' ||
+                block.opcode === 'procedures_defreturn') {
+                const internal = this._getCustomBlockInternal(block);
+                if (internal && internal.mutation.proccode === name) {
+                    return id; // The outer define block id
+                }
             }
         }
         return null;
@@ -544,6 +546,17 @@ class Blocks {
             }
         }
         return params;
+    }
+
+    /**
+     * Helper to get the corresponding internal procedure definition block
+     * @param {!object} defineBlock Outer define block.
+     * @return {!object} internal definition block which has the mutation.
+     */
+    _getCustomBlockInternal (defineBlock) {
+        if (defineBlock.inputs && defineBlock.inputs.custom_block) {
+            return this._blocks[defineBlock.inputs.custom_block.block];
+        }
     }
 
     /**
