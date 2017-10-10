@@ -156,7 +156,7 @@ test('stepToProcedure', t => {
 
     th.target.blocks.createBlock({
         id: 'internalId',
-        opcode: 'procedures_defnoreturn_internal',
+        opcode: 'procedures_callnoreturn_internal',
         mutation: {
             proccode: 'othercode'
         }
