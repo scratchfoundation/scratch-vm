@@ -153,9 +153,19 @@ test('stepToProcedure', t => {
     t.strictEquals(th.peekStack(), expectedBlock);
     s.stepToProcedure(th, 'faceCode');
     t.strictEquals(th.peekStack(), expectedBlock);
-    s.stepToProcedure(th, 'faceCode');
-    th.target.blocks.getBlock(th.stack[th.stack.length - 4]).mutation.proccode = 'othercode';
+
+    th.target.blocks.createBlock({
+        id: 'internalId',
+        opcode: 'procedures_callnoreturn_internal',
+        mutation: {
+            proccode: 'othercode'
+        }
+    });
     expectedBlock = th.stack[th.stack.length - 4];
+    th.target.blocks.getBlock(expectedBlock).inputs.custom_block = {
+        type: 'custom_block',
+        block: 'internalId'
+    };
     s.stepToProcedure(th, 'othercode');
     t.strictEquals(th.peekStack(), expectedBlock);
     

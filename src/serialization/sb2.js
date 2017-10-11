@@ -481,14 +481,31 @@ const parseBlock = function (sb2block, getVariableId) {
         // Mutation for procedure definition:
         // store all 2.0 proc data.
         const procData = sb2block.slice(1);
-        activeBlock.mutation = {
-            tagName: 'mutation',
-            proccode: procData[0], // e.g., "abc %n %b %s"
-            argumentnames: JSON.stringify(procData[1]), // e.g. ['arg1', 'arg2']
-            argumentdefaults: JSON.stringify(procData[2]), // e.g., [1, 'abc']
-            warp: procData[3], // Warp mode, e.g., true/false.
-            children: []
+        // Create a new block and input metadata.
+        const inputUid = uid();
+        const inputName = 'custom_block';
+        activeBlock.inputs[inputName] = {
+            name: inputName,
+            block: inputUid,
+            shadow: inputUid
         };
+        activeBlock.children = [{
+            id: inputUid,
+            opcode: 'procedures_callnoreturn_internal',
+            inputs: {},
+            fields: {},
+            next: null,
+            shadow: true,
+            children: [],
+            mutation: {
+                tagName: 'mutation',
+                proccode: procData[0], // e.g., "abc %n %b %s"
+                argumentnames: JSON.stringify(procData[1]), // e.g. ['arg1', 'arg2']
+                argumentdefaults: JSON.stringify(procData[2]), // e.g., [1, 'abc']
+                warp: procData[3], // Warp mode, e.g., true/false.
+                children: []
+            }
+        }];
     } else if (oldOpcode === 'call') {
         // Mutation for procedure call:
         // string for proc code (e.g., "abc %n %b %s").
