@@ -1,4 +1,15 @@
 const Cast = require('../util/cast');
+const Clone = require('../util/clone');
+const RenderedTarget = require('../sprites/rendered-target');
+
+/**
+ * @typedef {object} BubbleState - the bubble state associated with a particular target.
+ * @property {Boolean} onSpriteRight - tracks whether the bubble is right or left of the sprite.
+ * @property {?int} drawableId - the ID of the associated bubble Drawable, null if none.
+ * @property {string} text - the text of the bubble.
+ * @property {string} type - the type of the bubble, "say" or "think"
+ * @property {Boolean} visible - whether the bubble is hidden along with its sprite.
+ */
 
 class Scratch3LooksBlocks {
     constructor (runtime) {
@@ -7,6 +18,194 @@ class Scratch3LooksBlocks {
          * @type {Runtime}
          */
         this.runtime = runtime;
+
+        this._onTargetMoved = this._onTargetMoved.bind(this);
+        this._onResetBubbles = this._onResetBubbles.bind(this);
+        this._onTargetWillExit = this._onTargetWillExit.bind(this);
+
+        // Reset all bubbles on start/stop
+        this.runtime.on('PROJECT_STOP_ALL', this._onResetBubbles);
+        this.runtime.on('targetWasRemoved', this._onTargetWillExit);
+    }
+
+    /**
+     * The default bubble state, to be used when a target has no existing bubble state.
+     * @type {BubbleState}
+     */
+    static get DEFAULT_BUBBLE_STATE () {
+        return {
+            drawableId: null,
+            onSpriteRight: true,
+            skinId: null,
+            text: '',
+            type: 'say',
+            visible: true
+        };
+    }
+
+    /**
+     * The key to load & store a target's bubble-related state.
+     * @type {string}
+     */
+    static get STATE_KEY () {
+        return 'Scratch.looks';
+    }
+
+    /**
+     * @param {Target} target - collect bubble state for this target. Probably, but not necessarily, a RenderedTarget.
+     * @returns {BubbleState} the mutable bubble state associated with that target. This will be created if necessary.
+     * @private
+     */
+    _getBubbleState (target) {
+        let bubbleState = target.getCustomState(Scratch3LooksBlocks.STATE_KEY);
+        if (!bubbleState) {
+            bubbleState = Clone.simple(Scratch3LooksBlocks.DEFAULT_BUBBLE_STATE);
+            target.setCustomState(Scratch3LooksBlocks.STATE_KEY, bubbleState);
+        }
+        return bubbleState;
+    }
+
+    /**
+     * Handle a target which has moved.
+     * @param {RenderedTarget} target - the target which has moved.
+     * @private
+     */
+    _onTargetMoved (target) {
+        const bubbleState = this._getBubbleState(target);
+        if (bubbleState.drawableId && bubbleState.visible) {
+            this._positionBubble(target);
+        }
+    }
+
+    /**
+     * Handle a target which is exiting.
+     * @param {RenderedTarget} target - the target.
+     * @private
+     */
+    _onTargetWillExit (target) {
+        const bubbleState = this._getBubbleState(target);
+        if (bubbleState.drawableId) {
+            this.runtime.renderer.destroyDrawable(bubbleState.drawableId);
+            bubbleState.drawableId = null;
+        }
+        if (bubbleState.skinId) {
+            this.runtime.renderer.destroySkin(bubbleState.skinId);
+            bubbleState.skinId = null;
+        }
+    }
+
+    /**
+     * Handle project start/stop by clearing all visible bubbles.
+     * @private
+     */
+    _onResetBubbles () {
+        for (let n = 0; n < this.runtime.targets.length; n++) {
+            this._onTargetWillExit(this.runtime.targets[n]);
+        }
+    }
+
+    /**
+     * Position the bubble of a target. If it doesn't fit on the specified side, flip and rerender.
+     * @param {!Target} target Target whose bubble needs positioning.
+     * @private
+     */
+    _positionBubble (target) {
+        const bubbleState = this._getBubbleState(target);
+        const [bubbleWidth, bubbleHeight] = this.runtime.renderer.getSkinSize(bubbleState.drawableId);
+        const targetBounds = target.getBounds();
+        const stageBounds = this.runtime.getTargetForStage().getBounds();
+        if (bubbleState.onSpriteRight && bubbleWidth + targetBounds.right > stageBounds.right) {
+            bubbleState.onSpriteRight = false;
+            this._renderBubble(target);
+        } else if (!bubbleState.onSpriteRight && targetBounds.left - bubbleWidth < stageBounds.left) {
+            bubbleState.onSpriteRight = true;
+            this._renderBubble(target);
+        } else {
+            this.runtime.renderer.updateDrawableProperties(bubbleState.drawableId, {
+                position: [
+                    bubbleState.onSpriteRight ? targetBounds.right : targetBounds.left - bubbleWidth,
+                    Math.min(stageBounds.top, targetBounds.top + bubbleHeight)
+                ]
+            });
+            this.runtime.requestRedraw();
+        }
+    }
+
+    /**
+     * Create a visible bubble for a target. If a bubble exists for the target,
+     * just set it to visible and update the type/text. Otherwise create a new
+     * bubble and update the relevant custom state.
+     * @param {!Target} target Target who needs a bubble.
+     * @return {undefined} Early return if text is empty string.
+     * @private
+     */
+    _renderBubble (target) {
+        const bubbleState = this._getBubbleState(target);
+        const {type, text, onSpriteRight} = bubbleState;
+        if (text === '') {
+            return this._setBubbleVisibility(target, false);
+        }
+
+        if (bubbleState.skinId) {
+            if (!bubbleState.visible) {
+                bubbleState.visible = true;
+                this.runtime.renderer.updateDrawableProperties(bubbleState.drawableId, {
+                    visible: bubbleState.visible
+                });
+            }
+            this.runtime.renderer.updateTextSkin(bubbleState.skinId, type, text, onSpriteRight, [0, 0]);
+        } else {
+            target.addListener(RenderedTarget.EVENT_TARGET_MOVED, this._onTargetMoved);
+
+            // TODO is there a way to figure out before rendering whether to default left or right?
+            const targetBounds = target.getBounds();
+            const stageBounds = this.runtime.getTargetForStage().getBounds();
+            if (targetBounds.right + 170 > stageBounds.right) {
+                bubbleState.onSpriteRight = false;
+            }
+
+            bubbleState.drawableId = this.runtime.renderer.createDrawable();
+            bubbleState.skinId = this.runtime.renderer.createTextSkin(type, text, bubbleState.onSpriteRight, [0, 0]);
+
+            this.runtime.renderer.setDrawableOrder(bubbleState.drawableId, Infinity);
+            this.runtime.renderer.updateDrawableProperties(bubbleState.drawableId, {
+                skinId: bubbleState.skinId
+            });
+        }
+
+        this._positionBubble(target);
+    }
+
+    /**
+     * The entry point for say/think blocks. Clears existing bubble if the text is empty.
+     * Set the bubble custom state and then call _renderBubble.
+     * @param {!Target} target Target that say/think blocks are being called on.
+     * @param {!string} type Either "say" or "think"
+     * @param {!string} text The text for the bubble, empty string clears the bubble.
+     * @private
+     */
+    _updateBubble (target, type, text) {
+        const bubbleState = this._getBubbleState(target);
+        bubbleState.type = type;
+        bubbleState.text = text;
+        this._renderBubble(target);
+    }
+
+    /**
+     * Hide the bubble for a given target.
+     * @param {!Target} target Target that say/think blocks are being called on.
+     * @param {!boolean} visibility Visible or not.
+     * @private
+     */
+    _setBubbleVisibility (target, visibility) {
+        const bubbleState = this._getBubbleState(target);
+        bubbleState.visible = visibility;
+        if (bubbleState.drawableId) {
+            this.runtime.renderer.updateDrawableProperties(bubbleState.drawableId, {
+                visible: bubbleState.visible
+            });
+        }
+        this.runtime.requestRedraw();
     }
 
     /**
@@ -18,7 +217,7 @@ class Scratch3LooksBlocks {
             looks_say: this.say,
             looks_sayforsecs: this.sayforsecs,
             looks_think: this.think,
-            looks_thinkforsecs: this.sayforsecs,
+            looks_thinkforsecs: this.thinkforsecs,
             looks_show: this.show,
             looks_hide: this.hide,
             looks_switchcostumeto: this.switchCostume,
@@ -41,30 +240,31 @@ class Scratch3LooksBlocks {
     }
 
     say (args, util) {
-        util.target.setSay('say', args.MESSAGE);
+        // @TODO in 2.0 calling say/think resets the right/left bias of the bubble
+        this._updateBubble(util.target, 'say', args.MESSAGE);
     }
 
     sayforsecs (args, util) {
-        util.target.setSay('say', args.MESSAGE);
+        this.say(args, util);
         return new Promise(resolve => {
             setTimeout(() => {
                 // Clear say bubble and proceed.
-                util.target.setSay();
+                this._updateBubble(util.target, 'say', '');
                 resolve();
             }, 1000 * args.SECS);
         });
     }
 
     think (args, util) {
-        util.target.setSay('think', args.MESSAGE);
+        this._updateBubble(util.target, 'think', args.MESSAGE);
     }
 
     thinkforsecs (args, util) {
-        util.target.setSay('think', args.MESSAGE);
+        this.think(args, util);
         return new Promise(resolve => {
             setTimeout(() => {
                 // Clear say bubble and proceed.
-                util.target.setSay();
+                this._updateBubble(util.target, 'think', '');
                 resolve();
             }, 1000 * args.SECS);
         });
@@ -72,10 +272,12 @@ class Scratch3LooksBlocks {
 
     show (args, util) {
         util.target.setVisible(true);
+        this._renderBubble(util.target);
     }
 
     hide (args, util) {
         util.target.setVisible(false);
+        this._setBubbleVisibility(util.target, false);
     }
 
     /**
