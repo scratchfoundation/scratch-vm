@@ -125,7 +125,11 @@ class Scratch3LooksBlocks {
         } else {
             this.runtime.renderer.updateDrawableProperties(bubbleState.drawableId, {
                 position: [
-                    bubbleState.onSpriteRight ? targetBounds.right : targetBounds.left - bubbleWidth,
+                    bubbleState.onSpriteRight ? (
+                        Math.min(stageBounds.right - bubbleWidth, targetBounds.right)
+                    ) : (
+                        Math.max(stageBounds.left, targetBounds.left - bubbleWidth)
+                    ),
                     Math.min(stageBounds.top, targetBounds.top + bubbleHeight)
                 ]
             });
