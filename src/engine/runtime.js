@@ -441,7 +441,7 @@ class Runtime extends EventEmitter {
     /**
      * Build the scratch-blocks JSON for a menu. Note that scratch-blocks treats menus as a special kind of block.
      * @param {string} menuName - the name of the menu
-     * @param {array|string} menuItems - the list of menu items, or the name of an extension method to collect them.
+     * @param {array} menuItems - the list of items for this menu
      * @param {CategoryInfo} categoryInfo - the category for this block
      * @returns {object} - a JSON-esque object ready for scratch-blocks' consumption
      * @private
@@ -450,6 +450,9 @@ class Runtime extends EventEmitter {
         const menuId = this._makeExtensionMenuId(menuName, categoryInfo.id);
 
         /** @TODO: support dynamic menus when 'menuItems' is a method name string (see extension spec) */
+        if (typeof menuItems === 'string') {
+            throw new Error(`Dynamic extension menus are not yet supported. Menu name: ${menuName}`);
+        }
         const options = menuItems.map(item => {
             switch (typeof item) {
             case 'string':
