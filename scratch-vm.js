@@ -2756,7 +2756,7 @@ var _createClass = function () { function defineProperties(target, props) { for 
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
-var Color = __webpack_require__(46);
+var Color = __webpack_require__(48);
 
 /**
  * @fileoverview
@@ -4246,7 +4246,7 @@ inherits(Stream, EE);
 Stream.Readable = __webpack_require__(8);
 Stream.Writable = __webpack_require__(83);
 Stream.Duplex = __webpack_require__(79);
-Stream.Transform = __webpack_require__(56);
+Stream.Transform = __webpack_require__(58);
 Stream.PassThrough = __webpack_require__(82);
 
 // Backwards-compat with node 0.4.x
@@ -5756,7 +5756,7 @@ var adapter = __webpack_require__(172);
 var mutationAdapter = __webpack_require__(101);
 var xmlEscape = __webpack_require__(187);
 var MonitorRecord = __webpack_require__(174);
-var Clone = __webpack_require__(62);
+var Clone = __webpack_require__(47);
 
 /**
  * @fileoverview
@@ -8162,6 +8162,1114 @@ var _createClass = function () { function defineProperties(target, props) { for 
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
+function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
+
+function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
+
+var log = __webpack_require__(13);
+var MathUtil = __webpack_require__(20);
+var StringUtil = __webpack_require__(31);
+var Target = __webpack_require__(177);
+
+/**
+ * Rendered target: instance of a sprite (clone), or the stage.
+ */
+
+var RenderedTarget = function (_Target) {
+    _inherits(RenderedTarget, _Target);
+
+    /**
+     * @param {!Sprite} sprite Reference to the parent sprite.
+     * @param {Runtime} runtime Reference to the runtime.
+     * @constructor
+     */
+    function RenderedTarget(sprite, runtime) {
+        _classCallCheck(this, RenderedTarget);
+
+        /**
+         * Reference to the sprite that this is a render of.
+         * @type {!Sprite}
+         */
+        var _this = _possibleConstructorReturn(this, (RenderedTarget.__proto__ || Object.getPrototypeOf(RenderedTarget)).call(this, runtime, sprite.blocks));
+
+        _this.sprite = sprite;
+        /**
+         * Reference to the global renderer for this VM, if one exists.
+         * @type {?RenderWebGL}
+         */
+        _this.renderer = null;
+        if (_this.runtime) {
+            _this.renderer = _this.runtime.renderer;
+        }
+        /**
+         * ID of the drawable for this rendered target,
+         * returned by the renderer, if rendered.
+         * @type {?Number}
+         */
+        _this.drawableID = null;
+
+        /**
+         * Drag state of this rendered target. If true, x/y position can't be
+         * changed by blocks.
+         * @type {boolean}
+         */
+        _this.dragging = false;
+
+        /**
+         * Map of current graphic effect values.
+         * @type {!Object.<string, number>}
+         */
+        _this.effects = {
+            color: 0,
+            fisheye: 0,
+            whirl: 0,
+            pixelate: 0,
+            mosaic: 0,
+            brightness: 0,
+            ghost: 0
+        };
+
+        /**
+         * Whether this represents an "original" non-clone rendered-target for a sprite,
+         * i.e., created by the editor and not clone blocks.
+         * @type {boolean}
+         */
+        _this.isOriginal = true;
+
+        /**
+         * Whether this rendered target represents the Scratch stage.
+         * @type {boolean}
+         */
+        _this.isStage = false;
+
+        /**
+         * Scratch X coordinate. Currently should range from -240 to 240.
+         * @type {Number}
+         */
+        _this.x = 0;
+
+        /**
+         * Scratch Y coordinate. Currently should range from -180 to 180.
+         * @type {number}
+         */
+        _this.y = 0;
+
+        /**
+         * Scratch direction. Currently should range from -179 to 180.
+         * @type {number}
+         */
+        _this.direction = 90;
+
+        /**
+         * Whether the rendered target is draggable on the stage
+         * @type {boolean}
+         */
+        _this.draggable = false;
+
+        /**
+         * Whether the rendered target is currently visible.
+         * @type {boolean}
+         */
+        _this.visible = true;
+
+        /**
+         * Size of rendered target as a percent of costume size.
+         * @type {number}
+         */
+        _this.size = 100;
+
+        /**
+         * Currently selected costume index.
+         * @type {number}
+         */
+        _this.currentCostume = 0;
+
+        /**
+         * Current rotation style.
+         * @type {!string}
+         */
+        _this.rotationStyle = RenderedTarget.ROTATION_STYLE_ALL_AROUND;
+        return _this;
+    }
+
+    /**
+     * Create a drawable with the this.renderer.
+     */
+
+
+    _createClass(RenderedTarget, [{
+        key: 'initDrawable',
+        value: function initDrawable() {
+            if (this.renderer) {
+                this.drawableID = this.renderer.createDrawable();
+            }
+            // If we're a clone, start the hats.
+            if (!this.isOriginal) {
+                this.runtime.startHats('control_start_as_clone', null, this);
+            }
+
+            /**
+            * Audio player
+            */
+            this.audioPlayer = null;
+            if (this.runtime && this.runtime.audioEngine) {
+                this.audioPlayer = this.runtime.audioEngine.createPlayer();
+            }
+        }
+
+        /**
+         * Event which fires when a target moves.
+         * @type {string}
+         */
+
+    }, {
+        key: 'setXY',
+
+
+        /**
+         * Set the X and Y coordinates.
+         * @param {!number} x New X coordinate, in Scratch coordinates.
+         * @param {!number} y New Y coordinate, in Scratch coordinates.
+         * @param {?boolean} force Force setting X/Y, in case of dragging
+         */
+        value: function setXY(x, y, force) {
+            if (this.isStage) return;
+            if (this.dragging && !force) return;
+            var oldX = this.x;
+            var oldY = this.y;
+            if (this.renderer) {
+                var position = this.renderer.getFencedPositionOfDrawable(this.drawableID, [x, y]);
+                this.x = position[0];
+                this.y = position[1];
+
+                this.renderer.updateDrawableProperties(this.drawableID, {
+                    position: position
+                });
+                if (this.visible) {
+                    this.runtime.requestRedraw();
+                }
+            } else {
+                this.x = x;
+                this.y = y;
+            }
+            this.emit(RenderedTarget.EVENT_TARGET_MOVED, this, oldX, oldY);
+            this.runtime.requestTargetsUpdate(this);
+        }
+
+        /**
+         * Get the rendered direction and scale, after applying rotation style.
+         * @return {object<string, number>} Direction and scale to render.
+         */
+
+    }, {
+        key: '_getRenderedDirectionAndScale',
+        value: function _getRenderedDirectionAndScale() {
+            // Default: no changes to `this.direction` or `this.scale`.
+            var finalDirection = this.direction;
+            var finalScale = [this.size, this.size];
+            if (this.rotationStyle === RenderedTarget.ROTATION_STYLE_NONE) {
+                // Force rendered direction to be 90.
+                finalDirection = 90;
+            } else if (this.rotationStyle === RenderedTarget.ROTATION_STYLE_LEFT_RIGHT) {
+                // Force rendered direction to be 90, and flip drawable if needed.
+                finalDirection = 90;
+                var scaleFlip = this.direction < 0 ? -1 : 1;
+                finalScale = [scaleFlip * this.size, this.size];
+            }
+            return { direction: finalDirection, scale: finalScale };
+        }
+
+        /**
+         * Set the direction.
+         * @param {!number} direction New direction.
+         */
+
+    }, {
+        key: 'setDirection',
+        value: function setDirection(direction) {
+            if (this.isStage) {
+                return;
+            }
+            if (!isFinite(direction)) {
+                return;
+            }
+            // Keep direction between -179 and +180.
+            this.direction = MathUtil.wrapClamp(direction, -179, 180);
+            if (this.renderer) {
+                var renderedDirectionScale = this._getRenderedDirectionAndScale();
+                this.renderer.updateDrawableProperties(this.drawableID, {
+                    direction: renderedDirectionScale.direction,
+                    scale: renderedDirectionScale.scale
+                });
+                if (this.visible) {
+                    this.runtime.requestRedraw();
+                }
+            }
+            this.runtime.requestTargetsUpdate(this);
+        }
+
+        /**
+         * Set draggability; i.e., whether it's able to be dragged in the player
+         * @param {!boolean} draggable True if should be draggable.
+         */
+
+    }, {
+        key: 'setDraggable',
+        value: function setDraggable(draggable) {
+            if (this.isStage) return;
+            this.draggable = !!draggable;
+            this.runtime.requestTargetsUpdate(this);
+        }
+
+        /**
+         * Set a say bubble.
+         * @param {?string} type Type of say bubble: "say", "think", or null.
+         * @param {?string} message Message to put in say bubble.
+         */
+
+    }, {
+        key: 'setSay',
+        value: function setSay(type, message) {
+            if (this.isStage) {
+                return;
+            }
+            // @todo: Render to stage.
+            if (!type || !message) {
+                log.info('Clearing say bubble');
+                return;
+            }
+            log.info('Setting say bubble:', type, message);
+        }
+
+        /**
+         * Set visibility; i.e., whether it's shown or hidden.
+         * @param {!boolean} visible True if should be shown.
+         */
+
+    }, {
+        key: 'setVisible',
+        value: function setVisible(visible) {
+            if (this.isStage) {
+                return;
+            }
+            this.visible = !!visible;
+            if (this.renderer) {
+                this.renderer.updateDrawableProperties(this.drawableID, {
+                    visible: this.visible
+                });
+                if (this.visible) {
+                    this.runtime.requestRedraw();
+                }
+            }
+            this.runtime.requestTargetsUpdate(this);
+        }
+
+        /**
+         * Set size, as a percentage of the costume size.
+         * @param {!number} size Size of rendered target, as % of costume size.
+         */
+
+    }, {
+        key: 'setSize',
+        value: function setSize(size) {
+            if (this.isStage) {
+                return;
+            }
+            if (this.renderer) {
+                // Clamp to scales relative to costume and stage size.
+                // See original ScratchSprite.as:setSize.
+                var costumeSize = this.renderer.getSkinSize(this.drawableID);
+                var origW = costumeSize[0];
+                var origH = costumeSize[1];
+                var minScale = Math.min(1, Math.max(5 / origW, 5 / origH));
+                var maxScale = Math.min(1.5 * this.runtime.constructor.STAGE_WIDTH / origW, 1.5 * this.runtime.constructor.STAGE_HEIGHT / origH);
+                this.size = MathUtil.clamp(size / 100, minScale, maxScale) * 100;
+                var renderedDirectionScale = this._getRenderedDirectionAndScale();
+                this.renderer.updateDrawableProperties(this.drawableID, {
+                    direction: renderedDirectionScale.direction,
+                    scale: renderedDirectionScale.scale
+                });
+                if (this.visible) {
+                    this.runtime.requestRedraw();
+                }
+            }
+        }
+
+        /**
+         * Set a particular graphic effect value.
+         * @param {!string} effectName Name of effect (see `RenderedTarget.prototype.effects`).
+         * @param {!number} value Numerical magnitude of effect.
+         */
+
+    }, {
+        key: 'setEffect',
+        value: function setEffect(effectName, value) {
+            if (!this.effects.hasOwnProperty(effectName)) return;
+            this.effects[effectName] = value;
+            if (this.renderer) {
+                var props = {};
+                props[effectName] = this.effects[effectName];
+                this.renderer.updateDrawableProperties(this.drawableID, props);
+                if (this.visible) {
+                    this.runtime.requestRedraw();
+                }
+            }
+        }
+
+        /**
+         * Clear all graphic effects on this rendered target.
+         */
+
+    }, {
+        key: 'clearEffects',
+        value: function clearEffects() {
+            for (var effectName in this.effects) {
+                if (!this.effects.hasOwnProperty(effectName)) continue;
+                this.effects[effectName] = 0;
+            }
+            if (this.renderer) {
+                this.renderer.updateDrawableProperties(this.drawableID, this.effects);
+                if (this.visible) {
+                    this.runtime.requestRedraw();
+                }
+            }
+        }
+
+        /**
+         * Set the current costume.
+         * @param {number} index New index of costume.
+         */
+
+    }, {
+        key: 'setCostume',
+        value: function setCostume(index) {
+            // Keep the costume index within possible values.
+            index = Math.round(index);
+            this.currentCostume = MathUtil.wrapClamp(index, 0, this.sprite.costumes.length - 1);
+            if (this.renderer) {
+                var costume = this.sprite.costumes[this.currentCostume];
+                var drawableProperties = {
+                    skinId: costume.skinId,
+                    costumeResolution: costume.bitmapResolution
+                };
+                if (typeof costume.rotationCenterX !== 'undefined' && typeof costume.rotationCenterY !== 'undefined') {
+                    var scale = costume.bitmapResolution || 1;
+                    drawableProperties.rotationCenter = [costume.rotationCenterX / scale, costume.rotationCenterY / scale];
+                }
+                this.renderer.updateDrawableProperties(this.drawableID, drawableProperties);
+                if (this.visible) {
+                    this.runtime.requestRedraw();
+                }
+            }
+            this.runtime.requestTargetsUpdate(this);
+        }
+
+        /**
+         * Add a costume, taking care to avoid duplicate names.
+         * @param {!object} costumeObject Object representing the costume.
+         */
+
+    }, {
+        key: 'addCostume',
+        value: function addCostume(costumeObject) {
+            var usedNames = this.sprite.costumes.map(function (costume) {
+                return costume.name;
+            });
+            costumeObject.name = StringUtil.unusedName(costumeObject.name, usedNames);
+            this.sprite.costumes.push(costumeObject);
+        }
+
+        /**
+         * Rename a costume, taking care to avoid duplicate names.
+         * @param {int} costumeIndex - the index of the costume to be renamed.
+         * @param {string} newName - the desired new name of the costume (will be modified if already in use).
+         */
+
+    }, {
+        key: 'renameCostume',
+        value: function renameCostume(costumeIndex, newName) {
+            var usedNames = this.sprite.costumes.filter(function (costume, index) {
+                return costumeIndex !== index;
+            }).map(function (costume) {
+                return costume.name;
+            });
+            this.sprite.costumes[costumeIndex].name = StringUtil.unusedName(newName, usedNames);
+        }
+
+        /**
+         * Delete a costume by index.
+         * @param {number} index Costume index to be deleted
+         */
+
+    }, {
+        key: 'deleteCostume',
+        value: function deleteCostume(index) {
+            var originalCostumeCount = this.sprite.costumes.length;
+            if (originalCostumeCount === 1) return;
+
+            this.sprite.costumes = this.sprite.costumes.slice(0, index).concat(this.sprite.costumes.slice(index + 1));
+
+            if (index === this.currentCostume && index === originalCostumeCount - 1) {
+                this.setCostume(index - 1);
+            } else if (index < this.currentCostume) {
+                this.setCostume(this.currentCostume - 1);
+            } else {
+                this.setCostume(this.currentCostume);
+            }
+
+            this.runtime.requestTargetsUpdate(this);
+        }
+
+        /**
+         * Add a sound, taking care to avoid duplicate names.
+         * @param {!object} soundObject Object representing the sound.
+         */
+
+    }, {
+        key: 'addSound',
+        value: function addSound(soundObject) {
+            var usedNames = this.sprite.sounds.map(function (sound) {
+                return sound.name;
+            });
+            soundObject.name = StringUtil.unusedName(soundObject.name, usedNames);
+            this.sprite.sounds.push(soundObject);
+        }
+
+        /**
+         * Rename a sound, taking care to avoid duplicate names.
+         * @param {int} soundIndex - the index of the sound to be renamed.
+         * @param {string} newName - the desired new name of the sound (will be modified if already in use).
+         */
+
+    }, {
+        key: 'renameSound',
+        value: function renameSound(soundIndex, newName) {
+            var usedNames = this.sprite.sounds.filter(function (sound, index) {
+                return soundIndex !== index;
+            }).map(function (sound) {
+                return sound.name;
+            });
+            this.sprite.sounds[soundIndex].name = StringUtil.unusedName(newName, usedNames);
+        }
+
+        /**
+         * Delete a sound by index.
+         * @param {number} index Sound index to be deleted
+         */
+
+    }, {
+        key: 'deleteSound',
+        value: function deleteSound(index) {
+            this.sprite.sounds = this.sprite.sounds.slice(0, index).concat(this.sprite.sounds.slice(index + 1));
+            this.runtime.requestTargetsUpdate(this);
+        }
+
+        /**
+         * Update the rotation style.
+         * @param {!string} rotationStyle New rotation style.
+         */
+
+    }, {
+        key: 'setRotationStyle',
+        value: function setRotationStyle(rotationStyle) {
+            if (rotationStyle === RenderedTarget.ROTATION_STYLE_NONE) {
+                this.rotationStyle = RenderedTarget.ROTATION_STYLE_NONE;
+            } else if (rotationStyle === RenderedTarget.ROTATION_STYLE_ALL_AROUND) {
+                this.rotationStyle = RenderedTarget.ROTATION_STYLE_ALL_AROUND;
+            } else if (rotationStyle === RenderedTarget.ROTATION_STYLE_LEFT_RIGHT) {
+                this.rotationStyle = RenderedTarget.ROTATION_STYLE_LEFT_RIGHT;
+            }
+            if (this.renderer) {
+                var renderedDirectionScale = this._getRenderedDirectionAndScale();
+                this.renderer.updateDrawableProperties(this.drawableID, {
+                    direction: renderedDirectionScale.direction,
+                    scale: renderedDirectionScale.scale
+                });
+                if (this.visible) {
+                    this.runtime.requestRedraw();
+                }
+            }
+            this.runtime.requestTargetsUpdate(this);
+        }
+
+        /**
+         * Get a costume index of this rendered target, by name of the costume.
+         * @param {?string} costumeName Name of a costume.
+         * @return {number} Index of the named costume, or -1 if not present.
+         */
+
+    }, {
+        key: 'getCostumeIndexByName',
+        value: function getCostumeIndexByName(costumeName) {
+            for (var i = 0; i < this.sprite.costumes.length; i++) {
+                if (this.sprite.costumes[i].name === costumeName) {
+                    return i;
+                }
+            }
+            return -1;
+        }
+
+        /**
+         * Get a costume of this rendered target by id.
+         * @return {object} current costume
+         */
+
+    }, {
+        key: 'getCurrentCostume',
+        value: function getCurrentCostume() {
+            return this.sprite.costumes[this.currentCostume];
+        }
+
+        /**
+         * Get full costume list
+         * @return {object[]} list of costumes
+         */
+
+    }, {
+        key: 'getCostumes',
+        value: function getCostumes() {
+            return this.sprite.costumes;
+        }
+
+        /**
+         * Get full sound list
+         * @return {object[]} list of sounds
+         */
+
+    }, {
+        key: 'getSounds',
+        value: function getSounds() {
+            return this.sprite.sounds;
+        }
+
+        /**
+         * Update all drawable properties for this rendered target.
+         * Use when a batch has changed, e.g., when the drawable is first created.
+         */
+
+    }, {
+        key: 'updateAllDrawableProperties',
+        value: function updateAllDrawableProperties() {
+            if (this.renderer) {
+                var renderedDirectionScale = this._getRenderedDirectionAndScale();
+                var costume = this.sprite.costumes[this.currentCostume];
+                var bitmapResolution = costume.bitmapResolution || 1;
+                var props = {
+                    position: [this.x, this.y],
+                    direction: renderedDirectionScale.direction,
+                    draggable: this.draggable,
+                    scale: renderedDirectionScale.scale,
+                    visible: this.visible,
+                    skinId: costume.skinId,
+                    costumeResolution: bitmapResolution,
+                    rotationCenter: [costume.rotationCenterX / bitmapResolution, costume.rotationCenterY / bitmapResolution]
+                };
+                for (var effectName in this.effects) {
+                    if (!this.effects.hasOwnProperty(effectName)) continue;
+                    props[effectName] = this.effects[effectName];
+                }
+                this.renderer.updateDrawableProperties(this.drawableID, props);
+                if (this.visible) {
+                    this.runtime.requestRedraw();
+                }
+            }
+            this.runtime.requestTargetsUpdate(this);
+        }
+
+        /**
+         * Return the human-readable name for this rendered target, e.g., the sprite's name.
+         * @override
+         * @returns {string} Human-readable name.
+         */
+
+    }, {
+        key: 'getName',
+        value: function getName() {
+            return this.sprite.name;
+        }
+
+        /**
+         * Return whether this rendered target is a sprite (not a clone, not the stage).
+         * @return {boolean} True if not a clone and not the stage.
+         */
+
+    }, {
+        key: 'isSprite',
+        value: function isSprite() {
+            return !this.isStage && this.isOriginal;
+        }
+
+        /**
+         * Return the rendered target's tight bounding box.
+         * Includes top, left, bottom, right attributes in Scratch coordinates.
+         * @return {?object} Tight bounding box, or null.
+         */
+
+    }, {
+        key: 'getBounds',
+        value: function getBounds() {
+            if (this.renderer) {
+                return this.runtime.renderer.getBounds(this.drawableID);
+            }
+            return null;
+        }
+
+        /**
+         * Return whether touching a point.
+         * @param {number} x X coordinate of test point.
+         * @param {number} y Y coordinate of test point.
+         * @return {boolean} True iff the rendered target is touching the point.
+         */
+
+    }, {
+        key: 'isTouchingPoint',
+        value: function isTouchingPoint(x, y) {
+            if (this.renderer) {
+                // @todo: Update once pick is in Scratch coordinates.
+                // Limits test to this Drawable, so this will return true
+                // even if the clone is obscured by another Drawable.
+                var pickResult = this.runtime.renderer.pick(x + this.runtime.constructor.STAGE_WIDTH / 2, -y + this.runtime.constructor.STAGE_HEIGHT / 2, null, null, [this.drawableID]);
+                return pickResult === this.drawableID;
+            }
+            return false;
+        }
+
+        /**
+         * Return whether touching a stage edge.
+         * @return {boolean} True iff the rendered target is touching the stage edge.
+         */
+
+    }, {
+        key: 'isTouchingEdge',
+        value: function isTouchingEdge() {
+            if (this.renderer) {
+                var stageWidth = this.runtime.constructor.STAGE_WIDTH;
+                var stageHeight = this.runtime.constructor.STAGE_HEIGHT;
+                var bounds = this.getBounds();
+                if (bounds.left < -stageWidth / 2 || bounds.right > stageWidth / 2 || bounds.top > stageHeight / 2 || bounds.bottom < -stageHeight / 2) {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        /**
+         * Return whether touching any of a named sprite's clones.
+         * @param {string} spriteName Name of the sprite.
+         * @return {boolean} True iff touching a clone of the sprite.
+         */
+
+    }, {
+        key: 'isTouchingSprite',
+        value: function isTouchingSprite(spriteName) {
+            var firstClone = this.runtime.getSpriteTargetByName(spriteName);
+            if (!firstClone || !this.renderer) {
+                return false;
+            }
+            var drawableCandidates = firstClone.sprite.clones.map(function (clone) {
+                return clone.drawableID;
+            });
+            return this.renderer.isTouchingDrawables(this.drawableID, drawableCandidates);
+        }
+
+        /**
+         * Return whether touching a color.
+         * @param {Array.<number>} rgb [r,g,b], values between 0-255.
+         * @return {Promise.<boolean>} True iff the rendered target is touching the color.
+         */
+
+    }, {
+        key: 'isTouchingColor',
+        value: function isTouchingColor(rgb) {
+            if (this.renderer) {
+                return this.renderer.isTouchingColor(this.drawableID, rgb);
+            }
+            return false;
+        }
+
+        /**
+         * Return whether rendered target's color is touching a color.
+         * @param {object} targetRgb {Array.<number>} [r,g,b], values between 0-255.
+         * @param {object} maskRgb {Array.<number>} [r,g,b], values between 0-255.
+         * @return {Promise.<boolean>} True iff the color is touching the color.
+         */
+
+    }, {
+        key: 'colorIsTouchingColor',
+        value: function colorIsTouchingColor(targetRgb, maskRgb) {
+            if (this.renderer) {
+                return this.renderer.isTouchingColor(this.drawableID, targetRgb, maskRgb);
+            }
+            return false;
+        }
+
+        /**
+         * Move to the front layer.
+         */
+
+    }, {
+        key: 'goToFront',
+        value: function goToFront() {
+            if (this.renderer) {
+                this.renderer.setDrawableOrder(this.drawableID, Infinity);
+            }
+        }
+
+        /**
+         * Move back a number of layers.
+         * @param {number} nLayers How many layers to go back.
+         */
+
+    }, {
+        key: 'goBackLayers',
+        value: function goBackLayers(nLayers) {
+            if (this.renderer) {
+                this.renderer.setDrawableOrder(this.drawableID, -nLayers, true, 1);
+            }
+        }
+
+        /**
+         * Move behind some other rendered target.
+         * @param {!RenderedTarget} other Other rendered target to move behind.
+         */
+
+    }, {
+        key: 'goBehindOther',
+        value: function goBehindOther(other) {
+            if (this.renderer) {
+                var otherLayer = this.renderer.setDrawableOrder(other.drawableID, 0, true);
+                this.renderer.setDrawableOrder(this.drawableID, otherLayer);
+            }
+        }
+
+        /**
+         * Keep a desired position within a fence.
+         * @param {number} newX New desired X position.
+         * @param {number} newY New desired Y position.
+         * @param {object=} optFence Optional fence with left, right, top bottom.
+         * @return {Array.<number>} Fenced X and Y coordinates.
+         */
+
+    }, {
+        key: 'keepInFence',
+        value: function keepInFence(newX, newY, optFence) {
+            var fence = optFence;
+            if (!fence) {
+                fence = {
+                    left: -this.runtime.constructor.STAGE_WIDTH / 2,
+                    right: this.runtime.constructor.STAGE_WIDTH / 2,
+                    top: this.runtime.constructor.STAGE_HEIGHT / 2,
+                    bottom: -this.runtime.constructor.STAGE_HEIGHT / 2
+                };
+            }
+            var bounds = this.getBounds();
+            if (!bounds) return;
+            // Adjust the known bounds to the target position.
+            bounds.left += newX - this.x;
+            bounds.right += newX - this.x;
+            bounds.top += newY - this.y;
+            bounds.bottom += newY - this.y;
+            // Find how far we need to move the target position.
+            var dx = 0;
+            var dy = 0;
+            if (bounds.left < fence.left) {
+                dx += fence.left - bounds.left;
+            }
+            if (bounds.right > fence.right) {
+                dx += fence.right - bounds.right;
+            }
+            if (bounds.top > fence.top) {
+                dy += fence.top - bounds.top;
+            }
+            if (bounds.bottom < fence.bottom) {
+                dy += fence.bottom - bounds.bottom;
+            }
+            return [newX + dx, newY + dy];
+        }
+
+        /**
+         * Make a clone, copying any run-time properties.
+         * If we've hit the global clone limit, returns null.
+         * @return {RenderedTarget} New clone.
+         */
+
+    }, {
+        key: 'makeClone',
+        value: function makeClone() {
+            if (!this.runtime.clonesAvailable() || this.isStage) {
+                return null; // Hit max clone limit, or this is the stage.
+            }
+            this.runtime.changeCloneCounter(1);
+            var newClone = this.sprite.createClone();
+            // Copy all properties.
+            newClone.x = this.x;
+            newClone.y = this.y;
+            newClone.direction = this.direction;
+            newClone.draggable = this.draggable;
+            newClone.visible = this.visible;
+            newClone.size = this.size;
+            newClone.currentCostume = this.currentCostume;
+            newClone.rotationStyle = this.rotationStyle;
+            newClone.effects = JSON.parse(JSON.stringify(this.effects));
+            newClone.variables = JSON.parse(JSON.stringify(this.variables));
+            newClone.lists = JSON.parse(JSON.stringify(this.lists));
+            newClone.initDrawable();
+            newClone.updateAllDrawableProperties();
+            // Place behind the current target.
+            newClone.goBehindOther(this);
+            return newClone;
+        }
+
+        /**
+         * Make a duplicate using a duplicate sprite.
+         * @return {RenderedTarget} New clone.
+         */
+
+    }, {
+        key: 'duplicate',
+        value: function duplicate() {
+            var _this2 = this;
+
+            return this.sprite.duplicate().then(function (newSprite) {
+                var newTarget = newSprite.createClone();
+                // Copy all properties.
+                // @todo refactor with clone methods
+                newTarget.x = Math.random() * 400 / 2;
+                newTarget.y = Math.random() * 300 / 2;
+                newTarget.direction = _this2.direction;
+                newTarget.draggable = _this2.draggable;
+                newTarget.visible = _this2.visible;
+                newTarget.size = _this2.size;
+                newTarget.currentCostume = _this2.currentCostume;
+                newTarget.rotationStyle = _this2.rotationStyle;
+                newTarget.effects = JSON.parse(JSON.stringify(_this2.effects));
+                newTarget.variables = JSON.parse(JSON.stringify(_this2.variables));
+                newTarget.lists = JSON.parse(JSON.stringify(_this2.lists));
+                newTarget.initDrawable();
+                newTarget.updateAllDrawableProperties();
+                newTarget.goBehindOther(_this2);
+                return newTarget;
+            });
+        }
+
+        /**
+         * Called when the project receives a "green flag."
+         * For a rendered target, this clears graphic effects.
+         */
+
+    }, {
+        key: 'onGreenFlag',
+        value: function onGreenFlag() {
+            this.clearEffects();
+        }
+
+        /**
+         * Called when the project receives a "stop all"
+         * Stop all sounds and clear graphic effects.
+         */
+
+    }, {
+        key: 'onStopAll',
+        value: function onStopAll() {
+            this.clearEffects();
+            if (this.audioPlayer) {
+                this.audioPlayer.stopAllSounds();
+                this.audioPlayer.clearEffects();
+            }
+        }
+
+        /**
+         * Post/edit sprite info.
+         * @param {object} data An object with sprite info data to set.
+         */
+
+    }, {
+        key: 'postSpriteInfo',
+        value: function postSpriteInfo(data) {
+            var force = data.hasOwnProperty('force') ? data.force : null;
+            if (data.hasOwnProperty('x')) {
+                this.setXY(data.x, this.y, force);
+            }
+            if (data.hasOwnProperty('y')) {
+                this.setXY(this.x, data.y, force);
+            }
+            if (data.hasOwnProperty('direction')) {
+                this.setDirection(data.direction);
+            }
+            if (data.hasOwnProperty('draggable')) {
+                this.setDraggable(data.draggable);
+            }
+            if (data.hasOwnProperty('rotationStyle')) {
+                this.setRotationStyle(data.rotationStyle);
+            }
+            if (data.hasOwnProperty('visible')) {
+                this.setVisible(data.visible);
+            }
+        }
+
+        /**
+         * Put the sprite into the drag state. While in effect, setXY must be forced
+         */
+
+    }, {
+        key: 'startDrag',
+        value: function startDrag() {
+            this.dragging = true;
+        }
+
+        /**
+         * Remove the sprite from the drag state.
+         */
+
+    }, {
+        key: 'stopDrag',
+        value: function stopDrag() {
+            this.dragging = false;
+        }
+
+        /**
+         * Serialize sprite info, used when emitting events about the sprite
+         * @returns {object} Sprite data as a simple object
+         */
+
+    }, {
+        key: 'toJSON',
+        value: function toJSON() {
+            var costumes = this.getCostumes();
+            return {
+                id: this.id,
+                name: this.getName(),
+                isStage: this.isStage,
+                x: this.x,
+                y: this.y,
+                size: this.size,
+                direction: this.direction,
+                draggable: this.draggable,
+                currentCostume: this.currentCostume,
+                costume: costumes[this.currentCostume],
+                costumeCount: costumes.length,
+                visible: this.visible,
+                rotationStyle: this.rotationStyle,
+                blocks: this.blocks._blocks,
+                variables: this.variables,
+                lists: this.lists,
+                costumes: costumes,
+                sounds: this.getSounds()
+            };
+        }
+
+        /**
+         * Dispose, destroying any run-time properties.
+         */
+
+    }, {
+        key: 'dispose',
+        value: function dispose() {
+            this.runtime.changeCloneCounter(-1);
+            this.runtime.stopForTarget(this);
+            this.sprite.removeClone(this);
+            if (this.renderer && this.drawableID !== null) {
+                this.renderer.destroyDrawable(this.drawableID);
+                if (this.visible) {
+                    this.runtime.requestRedraw();
+                }
+            }
+        }
+    }], [{
+        key: 'EVENT_TARGET_MOVED',
+        get: function get() {
+            return 'TARGET_MOVED';
+        }
+
+        /**
+         * Rotation style for "all around"/spinning.
+         * @type {string}
+         */
+
+    }, {
+        key: 'ROTATION_STYLE_ALL_AROUND',
+        get: function get() {
+            return 'all around';
+        }
+
+        /**
+         * Rotation style for "left-right"/flipping.
+         * @type {string}
+         */
+
+    }, {
+        key: 'ROTATION_STYLE_LEFT_RIGHT',
+        get: function get() {
+            return 'left-right';
+        }
+
+        /**
+         * Rotation style for "no rotation."
+         * @type {string}
+         */
+
+    }, {
+        key: 'ROTATION_STYLE_NONE',
+        get: function get() {
+            return "don't rotate";
+        }
+    }]);
+
+    return RenderedTarget;
+}(Target);
+
+module.exports = RenderedTarget;
+
+/***/ }),
+/* 47 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+/**
+ * Methods for cloning JavaScript objects.
+ * @type {object}
+ */
+var Clone = function () {
+  function Clone() {
+    _classCallCheck(this, Clone);
+  }
+
+  _createClass(Clone, null, [{
+    key: "simple",
+
+    /**
+     * Deep-clone a "simple" object: one which can be fully expressed with JSON.
+     * Non-JSON values, such as functions, will be stripped from the clone.
+     * @param {object} original - the object to be cloned.
+     * @returns {object} a deep clone of the original object.
+     */
+    value: function simple(original) {
+      return JSON.parse(JSON.stringify(original));
+    }
+  }]);
+
+  return Clone;
+}();
+
+module.exports = Clone;
+
+/***/ }),
+/* 48 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
 var Color = function () {
     function Color() {
         _classCallCheck(this, Color);
@@ -8410,13 +9518,13 @@ var Color = function () {
 module.exports = Color;
 
 /***/ }),
-/* 47 */,
-/* 48 */,
 /* 49 */,
 /* 50 */,
 /* 51 */,
 /* 52 */,
-/* 53 */
+/* 53 */,
+/* 54 */,
+/* 55 */
 /***/ (function(module, exports, __webpack_require__) {
 
 /**
@@ -13400,16 +14508,16 @@ module.exports = Color;
 }));
 
 /***/ }),
-/* 54 */,
-/* 55 */,
-/* 56 */
+/* 56 */,
+/* 57 */,
+/* 58 */
 /***/ (function(module, exports, __webpack_require__) {
 
 module.exports = __webpack_require__(8).Transform
 
 
 /***/ }),
-/* 57 */
+/* 59 */
 /***/ (function(module, exports) {
 
 module.exports = function(module) {
@@ -13437,7 +14545,7 @@ module.exports = function(module) {
 
 
 /***/ }),
-/* 58 */
+/* 60 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -13465,7 +14573,7 @@ var List = function List(name, contents) {
 module.exports = List;
 
 /***/ }),
-/* 59 */
+/* 61 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -13818,7 +14926,7 @@ var Thread = function () {
 module.exports = Thread;
 
 /***/ }),
-/* 60 */
+/* 62 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -13863,1114 +14971,6 @@ var Variable = function () {
 }();
 
 module.exports = Variable;
-
-/***/ }),
-/* 61 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-
-var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
-
-function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
-
-function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
-
-function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
-
-var log = __webpack_require__(13);
-var MathUtil = __webpack_require__(20);
-var StringUtil = __webpack_require__(31);
-var Target = __webpack_require__(177);
-
-/**
- * Rendered target: instance of a sprite (clone), or the stage.
- */
-
-var RenderedTarget = function (_Target) {
-    _inherits(RenderedTarget, _Target);
-
-    /**
-     * @param {!Sprite} sprite Reference to the parent sprite.
-     * @param {Runtime} runtime Reference to the runtime.
-     * @constructor
-     */
-    function RenderedTarget(sprite, runtime) {
-        _classCallCheck(this, RenderedTarget);
-
-        /**
-         * Reference to the sprite that this is a render of.
-         * @type {!Sprite}
-         */
-        var _this = _possibleConstructorReturn(this, (RenderedTarget.__proto__ || Object.getPrototypeOf(RenderedTarget)).call(this, runtime, sprite.blocks));
-
-        _this.sprite = sprite;
-        /**
-         * Reference to the global renderer for this VM, if one exists.
-         * @type {?RenderWebGL}
-         */
-        _this.renderer = null;
-        if (_this.runtime) {
-            _this.renderer = _this.runtime.renderer;
-        }
-        /**
-         * ID of the drawable for this rendered target,
-         * returned by the renderer, if rendered.
-         * @type {?Number}
-         */
-        _this.drawableID = null;
-
-        /**
-         * Drag state of this rendered target. If true, x/y position can't be
-         * changed by blocks.
-         * @type {boolean}
-         */
-        _this.dragging = false;
-
-        /**
-         * Map of current graphic effect values.
-         * @type {!Object.<string, number>}
-         */
-        _this.effects = {
-            color: 0,
-            fisheye: 0,
-            whirl: 0,
-            pixelate: 0,
-            mosaic: 0,
-            brightness: 0,
-            ghost: 0
-        };
-
-        /**
-         * Whether this represents an "original" non-clone rendered-target for a sprite,
-         * i.e., created by the editor and not clone blocks.
-         * @type {boolean}
-         */
-        _this.isOriginal = true;
-
-        /**
-         * Whether this rendered target represents the Scratch stage.
-         * @type {boolean}
-         */
-        _this.isStage = false;
-
-        /**
-         * Scratch X coordinate. Currently should range from -240 to 240.
-         * @type {Number}
-         */
-        _this.x = 0;
-
-        /**
-         * Scratch Y coordinate. Currently should range from -180 to 180.
-         * @type {number}
-         */
-        _this.y = 0;
-
-        /**
-         * Scratch direction. Currently should range from -179 to 180.
-         * @type {number}
-         */
-        _this.direction = 90;
-
-        /**
-         * Whether the rendered target is draggable on the stage
-         * @type {boolean}
-         */
-        _this.draggable = false;
-
-        /**
-         * Whether the rendered target is currently visible.
-         * @type {boolean}
-         */
-        _this.visible = true;
-
-        /**
-         * Size of rendered target as a percent of costume size.
-         * @type {number}
-         */
-        _this.size = 100;
-
-        /**
-         * Currently selected costume index.
-         * @type {number}
-         */
-        _this.currentCostume = 0;
-
-        /**
-         * Current rotation style.
-         * @type {!string}
-         */
-        _this.rotationStyle = RenderedTarget.ROTATION_STYLE_ALL_AROUND;
-        return _this;
-    }
-
-    /**
-     * Create a drawable with the this.renderer.
-     */
-
-
-    _createClass(RenderedTarget, [{
-        key: 'initDrawable',
-        value: function initDrawable() {
-            if (this.renderer) {
-                this.drawableID = this.renderer.createDrawable();
-            }
-            // If we're a clone, start the hats.
-            if (!this.isOriginal) {
-                this.runtime.startHats('control_start_as_clone', null, this);
-            }
-
-            /**
-            * Audio player
-            */
-            this.audioPlayer = null;
-            if (this.runtime && this.runtime.audioEngine) {
-                this.audioPlayer = this.runtime.audioEngine.createPlayer();
-            }
-        }
-
-        /**
-         * Event which fires when a target moves.
-         * @type {string}
-         */
-
-    }, {
-        key: 'setXY',
-
-
-        /**
-         * Set the X and Y coordinates.
-         * @param {!number} x New X coordinate, in Scratch coordinates.
-         * @param {!number} y New Y coordinate, in Scratch coordinates.
-         * @param {?boolean} force Force setting X/Y, in case of dragging
-         */
-        value: function setXY(x, y, force) {
-            if (this.isStage) return;
-            if (this.dragging && !force) return;
-            var oldX = this.x;
-            var oldY = this.y;
-            if (this.renderer) {
-                var position = this.renderer.getFencedPositionOfDrawable(this.drawableID, [x, y]);
-                this.x = position[0];
-                this.y = position[1];
-
-                this.renderer.updateDrawableProperties(this.drawableID, {
-                    position: position
-                });
-                if (this.visible) {
-                    this.runtime.requestRedraw();
-                }
-            } else {
-                this.x = x;
-                this.y = y;
-            }
-            this.emit(RenderedTarget.EVENT_TARGET_MOVED, this, oldX, oldY);
-            this.runtime.requestTargetsUpdate(this);
-        }
-
-        /**
-         * Get the rendered direction and scale, after applying rotation style.
-         * @return {object<string, number>} Direction and scale to render.
-         */
-
-    }, {
-        key: '_getRenderedDirectionAndScale',
-        value: function _getRenderedDirectionAndScale() {
-            // Default: no changes to `this.direction` or `this.scale`.
-            var finalDirection = this.direction;
-            var finalScale = [this.size, this.size];
-            if (this.rotationStyle === RenderedTarget.ROTATION_STYLE_NONE) {
-                // Force rendered direction to be 90.
-                finalDirection = 90;
-            } else if (this.rotationStyle === RenderedTarget.ROTATION_STYLE_LEFT_RIGHT) {
-                // Force rendered direction to be 90, and flip drawable if needed.
-                finalDirection = 90;
-                var scaleFlip = this.direction < 0 ? -1 : 1;
-                finalScale = [scaleFlip * this.size, this.size];
-            }
-            return { direction: finalDirection, scale: finalScale };
-        }
-
-        /**
-         * Set the direction.
-         * @param {!number} direction New direction.
-         */
-
-    }, {
-        key: 'setDirection',
-        value: function setDirection(direction) {
-            if (this.isStage) {
-                return;
-            }
-            if (!isFinite(direction)) {
-                return;
-            }
-            // Keep direction between -179 and +180.
-            this.direction = MathUtil.wrapClamp(direction, -179, 180);
-            if (this.renderer) {
-                var renderedDirectionScale = this._getRenderedDirectionAndScale();
-                this.renderer.updateDrawableProperties(this.drawableID, {
-                    direction: renderedDirectionScale.direction,
-                    scale: renderedDirectionScale.scale
-                });
-                if (this.visible) {
-                    this.runtime.requestRedraw();
-                }
-            }
-            this.runtime.requestTargetsUpdate(this);
-        }
-
-        /**
-         * Set draggability; i.e., whether it's able to be dragged in the player
-         * @param {!boolean} draggable True if should be draggable.
-         */
-
-    }, {
-        key: 'setDraggable',
-        value: function setDraggable(draggable) {
-            if (this.isStage) return;
-            this.draggable = !!draggable;
-            this.runtime.requestTargetsUpdate(this);
-        }
-
-        /**
-         * Set a say bubble.
-         * @param {?string} type Type of say bubble: "say", "think", or null.
-         * @param {?string} message Message to put in say bubble.
-         */
-
-    }, {
-        key: 'setSay',
-        value: function setSay(type, message) {
-            if (this.isStage) {
-                return;
-            }
-            // @todo: Render to stage.
-            if (!type || !message) {
-                log.info('Clearing say bubble');
-                return;
-            }
-            log.info('Setting say bubble:', type, message);
-        }
-
-        /**
-         * Set visibility; i.e., whether it's shown or hidden.
-         * @param {!boolean} visible True if should be shown.
-         */
-
-    }, {
-        key: 'setVisible',
-        value: function setVisible(visible) {
-            if (this.isStage) {
-                return;
-            }
-            this.visible = !!visible;
-            if (this.renderer) {
-                this.renderer.updateDrawableProperties(this.drawableID, {
-                    visible: this.visible
-                });
-                if (this.visible) {
-                    this.runtime.requestRedraw();
-                }
-            }
-            this.runtime.requestTargetsUpdate(this);
-        }
-
-        /**
-         * Set size, as a percentage of the costume size.
-         * @param {!number} size Size of rendered target, as % of costume size.
-         */
-
-    }, {
-        key: 'setSize',
-        value: function setSize(size) {
-            if (this.isStage) {
-                return;
-            }
-            if (this.renderer) {
-                // Clamp to scales relative to costume and stage size.
-                // See original ScratchSprite.as:setSize.
-                var costumeSize = this.renderer.getSkinSize(this.drawableID);
-                var origW = costumeSize[0];
-                var origH = costumeSize[1];
-                var minScale = Math.min(1, Math.max(5 / origW, 5 / origH));
-                var maxScale = Math.min(1.5 * this.runtime.constructor.STAGE_WIDTH / origW, 1.5 * this.runtime.constructor.STAGE_HEIGHT / origH);
-                this.size = MathUtil.clamp(size / 100, minScale, maxScale) * 100;
-                var renderedDirectionScale = this._getRenderedDirectionAndScale();
-                this.renderer.updateDrawableProperties(this.drawableID, {
-                    direction: renderedDirectionScale.direction,
-                    scale: renderedDirectionScale.scale
-                });
-                if (this.visible) {
-                    this.runtime.requestRedraw();
-                }
-            }
-        }
-
-        /**
-         * Set a particular graphic effect value.
-         * @param {!string} effectName Name of effect (see `RenderedTarget.prototype.effects`).
-         * @param {!number} value Numerical magnitude of effect.
-         */
-
-    }, {
-        key: 'setEffect',
-        value: function setEffect(effectName, value) {
-            if (!this.effects.hasOwnProperty(effectName)) return;
-            this.effects[effectName] = value;
-            if (this.renderer) {
-                var props = {};
-                props[effectName] = this.effects[effectName];
-                this.renderer.updateDrawableProperties(this.drawableID, props);
-                if (this.visible) {
-                    this.runtime.requestRedraw();
-                }
-            }
-        }
-
-        /**
-         * Clear all graphic effects on this rendered target.
-         */
-
-    }, {
-        key: 'clearEffects',
-        value: function clearEffects() {
-            for (var effectName in this.effects) {
-                if (!this.effects.hasOwnProperty(effectName)) continue;
-                this.effects[effectName] = 0;
-            }
-            if (this.renderer) {
-                this.renderer.updateDrawableProperties(this.drawableID, this.effects);
-                if (this.visible) {
-                    this.runtime.requestRedraw();
-                }
-            }
-        }
-
-        /**
-         * Set the current costume.
-         * @param {number} index New index of costume.
-         */
-
-    }, {
-        key: 'setCostume',
-        value: function setCostume(index) {
-            // Keep the costume index within possible values.
-            index = Math.round(index);
-            this.currentCostume = MathUtil.wrapClamp(index, 0, this.sprite.costumes.length - 1);
-            if (this.renderer) {
-                var costume = this.sprite.costumes[this.currentCostume];
-                var drawableProperties = {
-                    skinId: costume.skinId,
-                    costumeResolution: costume.bitmapResolution
-                };
-                if (typeof costume.rotationCenterX !== 'undefined' && typeof costume.rotationCenterY !== 'undefined') {
-                    var scale = costume.bitmapResolution || 1;
-                    drawableProperties.rotationCenter = [costume.rotationCenterX / scale, costume.rotationCenterY / scale];
-                }
-                this.renderer.updateDrawableProperties(this.drawableID, drawableProperties);
-                if (this.visible) {
-                    this.runtime.requestRedraw();
-                }
-            }
-            this.runtime.requestTargetsUpdate(this);
-        }
-
-        /**
-         * Add a costume, taking care to avoid duplicate names.
-         * @param {!object} costumeObject Object representing the costume.
-         */
-
-    }, {
-        key: 'addCostume',
-        value: function addCostume(costumeObject) {
-            var usedNames = this.sprite.costumes.map(function (costume) {
-                return costume.name;
-            });
-            costumeObject.name = StringUtil.unusedName(costumeObject.name, usedNames);
-            this.sprite.costumes.push(costumeObject);
-        }
-
-        /**
-         * Rename a costume, taking care to avoid duplicate names.
-         * @param {int} costumeIndex - the index of the costume to be renamed.
-         * @param {string} newName - the desired new name of the costume (will be modified if already in use).
-         */
-
-    }, {
-        key: 'renameCostume',
-        value: function renameCostume(costumeIndex, newName) {
-            var usedNames = this.sprite.costumes.filter(function (costume, index) {
-                return costumeIndex !== index;
-            }).map(function (costume) {
-                return costume.name;
-            });
-            this.sprite.costumes[costumeIndex].name = StringUtil.unusedName(newName, usedNames);
-        }
-
-        /**
-         * Delete a costume by index.
-         * @param {number} index Costume index to be deleted
-         */
-
-    }, {
-        key: 'deleteCostume',
-        value: function deleteCostume(index) {
-            var originalCostumeCount = this.sprite.costumes.length;
-            if (originalCostumeCount === 1) return;
-
-            this.sprite.costumes = this.sprite.costumes.slice(0, index).concat(this.sprite.costumes.slice(index + 1));
-
-            if (index === this.currentCostume && index === originalCostumeCount - 1) {
-                this.setCostume(index - 1);
-            } else if (index < this.currentCostume) {
-                this.setCostume(this.currentCostume - 1);
-            } else {
-                this.setCostume(this.currentCostume);
-            }
-
-            this.runtime.requestTargetsUpdate(this);
-        }
-
-        /**
-         * Add a sound, taking care to avoid duplicate names.
-         * @param {!object} soundObject Object representing the sound.
-         */
-
-    }, {
-        key: 'addSound',
-        value: function addSound(soundObject) {
-            var usedNames = this.sprite.sounds.map(function (sound) {
-                return sound.name;
-            });
-            soundObject.name = StringUtil.unusedName(soundObject.name, usedNames);
-            this.sprite.sounds.push(soundObject);
-        }
-
-        /**
-         * Rename a sound, taking care to avoid duplicate names.
-         * @param {int} soundIndex - the index of the sound to be renamed.
-         * @param {string} newName - the desired new name of the sound (will be modified if already in use).
-         */
-
-    }, {
-        key: 'renameSound',
-        value: function renameSound(soundIndex, newName) {
-            var usedNames = this.sprite.sounds.filter(function (sound, index) {
-                return soundIndex !== index;
-            }).map(function (sound) {
-                return sound.name;
-            });
-            this.sprite.sounds[soundIndex].name = StringUtil.unusedName(newName, usedNames);
-        }
-
-        /**
-         * Delete a sound by index.
-         * @param {number} index Sound index to be deleted
-         */
-
-    }, {
-        key: 'deleteSound',
-        value: function deleteSound(index) {
-            this.sprite.sounds = this.sprite.sounds.slice(0, index).concat(this.sprite.sounds.slice(index + 1));
-            this.runtime.requestTargetsUpdate(this);
-        }
-
-        /**
-         * Update the rotation style.
-         * @param {!string} rotationStyle New rotation style.
-         */
-
-    }, {
-        key: 'setRotationStyle',
-        value: function setRotationStyle(rotationStyle) {
-            if (rotationStyle === RenderedTarget.ROTATION_STYLE_NONE) {
-                this.rotationStyle = RenderedTarget.ROTATION_STYLE_NONE;
-            } else if (rotationStyle === RenderedTarget.ROTATION_STYLE_ALL_AROUND) {
-                this.rotationStyle = RenderedTarget.ROTATION_STYLE_ALL_AROUND;
-            } else if (rotationStyle === RenderedTarget.ROTATION_STYLE_LEFT_RIGHT) {
-                this.rotationStyle = RenderedTarget.ROTATION_STYLE_LEFT_RIGHT;
-            }
-            if (this.renderer) {
-                var renderedDirectionScale = this._getRenderedDirectionAndScale();
-                this.renderer.updateDrawableProperties(this.drawableID, {
-                    direction: renderedDirectionScale.direction,
-                    scale: renderedDirectionScale.scale
-                });
-                if (this.visible) {
-                    this.runtime.requestRedraw();
-                }
-            }
-            this.runtime.requestTargetsUpdate(this);
-        }
-
-        /**
-         * Get a costume index of this rendered target, by name of the costume.
-         * @param {?string} costumeName Name of a costume.
-         * @return {number} Index of the named costume, or -1 if not present.
-         */
-
-    }, {
-        key: 'getCostumeIndexByName',
-        value: function getCostumeIndexByName(costumeName) {
-            for (var i = 0; i < this.sprite.costumes.length; i++) {
-                if (this.sprite.costumes[i].name === costumeName) {
-                    return i;
-                }
-            }
-            return -1;
-        }
-
-        /**
-         * Get a costume of this rendered target by id.
-         * @return {object} current costume
-         */
-
-    }, {
-        key: 'getCurrentCostume',
-        value: function getCurrentCostume() {
-            return this.sprite.costumes[this.currentCostume];
-        }
-
-        /**
-         * Get full costume list
-         * @return {object[]} list of costumes
-         */
-
-    }, {
-        key: 'getCostumes',
-        value: function getCostumes() {
-            return this.sprite.costumes;
-        }
-
-        /**
-         * Get full sound list
-         * @return {object[]} list of sounds
-         */
-
-    }, {
-        key: 'getSounds',
-        value: function getSounds() {
-            return this.sprite.sounds;
-        }
-
-        /**
-         * Update all drawable properties for this rendered target.
-         * Use when a batch has changed, e.g., when the drawable is first created.
-         */
-
-    }, {
-        key: 'updateAllDrawableProperties',
-        value: function updateAllDrawableProperties() {
-            if (this.renderer) {
-                var renderedDirectionScale = this._getRenderedDirectionAndScale();
-                var costume = this.sprite.costumes[this.currentCostume];
-                var bitmapResolution = costume.bitmapResolution || 1;
-                var props = {
-                    position: [this.x, this.y],
-                    direction: renderedDirectionScale.direction,
-                    draggable: this.draggable,
-                    scale: renderedDirectionScale.scale,
-                    visible: this.visible,
-                    skinId: costume.skinId,
-                    costumeResolution: bitmapResolution,
-                    rotationCenter: [costume.rotationCenterX / bitmapResolution, costume.rotationCenterY / bitmapResolution]
-                };
-                for (var effectName in this.effects) {
-                    if (!this.effects.hasOwnProperty(effectName)) continue;
-                    props[effectName] = this.effects[effectName];
-                }
-                this.renderer.updateDrawableProperties(this.drawableID, props);
-                if (this.visible) {
-                    this.runtime.requestRedraw();
-                }
-            }
-            this.runtime.requestTargetsUpdate(this);
-        }
-
-        /**
-         * Return the human-readable name for this rendered target, e.g., the sprite's name.
-         * @override
-         * @returns {string} Human-readable name.
-         */
-
-    }, {
-        key: 'getName',
-        value: function getName() {
-            return this.sprite.name;
-        }
-
-        /**
-         * Return whether this rendered target is a sprite (not a clone, not the stage).
-         * @return {boolean} True if not a clone and not the stage.
-         */
-
-    }, {
-        key: 'isSprite',
-        value: function isSprite() {
-            return !this.isStage && this.isOriginal;
-        }
-
-        /**
-         * Return the rendered target's tight bounding box.
-         * Includes top, left, bottom, right attributes in Scratch coordinates.
-         * @return {?object} Tight bounding box, or null.
-         */
-
-    }, {
-        key: 'getBounds',
-        value: function getBounds() {
-            if (this.renderer) {
-                return this.runtime.renderer.getBounds(this.drawableID);
-            }
-            return null;
-        }
-
-        /**
-         * Return whether touching a point.
-         * @param {number} x X coordinate of test point.
-         * @param {number} y Y coordinate of test point.
-         * @return {boolean} True iff the rendered target is touching the point.
-         */
-
-    }, {
-        key: 'isTouchingPoint',
-        value: function isTouchingPoint(x, y) {
-            if (this.renderer) {
-                // @todo: Update once pick is in Scratch coordinates.
-                // Limits test to this Drawable, so this will return true
-                // even if the clone is obscured by another Drawable.
-                var pickResult = this.runtime.renderer.pick(x + this.runtime.constructor.STAGE_WIDTH / 2, -y + this.runtime.constructor.STAGE_HEIGHT / 2, null, null, [this.drawableID]);
-                return pickResult === this.drawableID;
-            }
-            return false;
-        }
-
-        /**
-         * Return whether touching a stage edge.
-         * @return {boolean} True iff the rendered target is touching the stage edge.
-         */
-
-    }, {
-        key: 'isTouchingEdge',
-        value: function isTouchingEdge() {
-            if (this.renderer) {
-                var stageWidth = this.runtime.constructor.STAGE_WIDTH;
-                var stageHeight = this.runtime.constructor.STAGE_HEIGHT;
-                var bounds = this.getBounds();
-                if (bounds.left < -stageWidth / 2 || bounds.right > stageWidth / 2 || bounds.top > stageHeight / 2 || bounds.bottom < -stageHeight / 2) {
-                    return true;
-                }
-            }
-            return false;
-        }
-
-        /**
-         * Return whether touching any of a named sprite's clones.
-         * @param {string} spriteName Name of the sprite.
-         * @return {boolean} True iff touching a clone of the sprite.
-         */
-
-    }, {
-        key: 'isTouchingSprite',
-        value: function isTouchingSprite(spriteName) {
-            var firstClone = this.runtime.getSpriteTargetByName(spriteName);
-            if (!firstClone || !this.renderer) {
-                return false;
-            }
-            var drawableCandidates = firstClone.sprite.clones.map(function (clone) {
-                return clone.drawableID;
-            });
-            return this.renderer.isTouchingDrawables(this.drawableID, drawableCandidates);
-        }
-
-        /**
-         * Return whether touching a color.
-         * @param {Array.<number>} rgb [r,g,b], values between 0-255.
-         * @return {Promise.<boolean>} True iff the rendered target is touching the color.
-         */
-
-    }, {
-        key: 'isTouchingColor',
-        value: function isTouchingColor(rgb) {
-            if (this.renderer) {
-                return this.renderer.isTouchingColor(this.drawableID, rgb);
-            }
-            return false;
-        }
-
-        /**
-         * Return whether rendered target's color is touching a color.
-         * @param {object} targetRgb {Array.<number>} [r,g,b], values between 0-255.
-         * @param {object} maskRgb {Array.<number>} [r,g,b], values between 0-255.
-         * @return {Promise.<boolean>} True iff the color is touching the color.
-         */
-
-    }, {
-        key: 'colorIsTouchingColor',
-        value: function colorIsTouchingColor(targetRgb, maskRgb) {
-            if (this.renderer) {
-                return this.renderer.isTouchingColor(this.drawableID, targetRgb, maskRgb);
-            }
-            return false;
-        }
-
-        /**
-         * Move to the front layer.
-         */
-
-    }, {
-        key: 'goToFront',
-        value: function goToFront() {
-            if (this.renderer) {
-                this.renderer.setDrawableOrder(this.drawableID, Infinity);
-            }
-        }
-
-        /**
-         * Move back a number of layers.
-         * @param {number} nLayers How many layers to go back.
-         */
-
-    }, {
-        key: 'goBackLayers',
-        value: function goBackLayers(nLayers) {
-            if (this.renderer) {
-                this.renderer.setDrawableOrder(this.drawableID, -nLayers, true, 1);
-            }
-        }
-
-        /**
-         * Move behind some other rendered target.
-         * @param {!RenderedTarget} other Other rendered target to move behind.
-         */
-
-    }, {
-        key: 'goBehindOther',
-        value: function goBehindOther(other) {
-            if (this.renderer) {
-                var otherLayer = this.renderer.setDrawableOrder(other.drawableID, 0, true);
-                this.renderer.setDrawableOrder(this.drawableID, otherLayer);
-            }
-        }
-
-        /**
-         * Keep a desired position within a fence.
-         * @param {number} newX New desired X position.
-         * @param {number} newY New desired Y position.
-         * @param {object=} optFence Optional fence with left, right, top bottom.
-         * @return {Array.<number>} Fenced X and Y coordinates.
-         */
-
-    }, {
-        key: 'keepInFence',
-        value: function keepInFence(newX, newY, optFence) {
-            var fence = optFence;
-            if (!fence) {
-                fence = {
-                    left: -this.runtime.constructor.STAGE_WIDTH / 2,
-                    right: this.runtime.constructor.STAGE_WIDTH / 2,
-                    top: this.runtime.constructor.STAGE_HEIGHT / 2,
-                    bottom: -this.runtime.constructor.STAGE_HEIGHT / 2
-                };
-            }
-            var bounds = this.getBounds();
-            if (!bounds) return;
-            // Adjust the known bounds to the target position.
-            bounds.left += newX - this.x;
-            bounds.right += newX - this.x;
-            bounds.top += newY - this.y;
-            bounds.bottom += newY - this.y;
-            // Find how far we need to move the target position.
-            var dx = 0;
-            var dy = 0;
-            if (bounds.left < fence.left) {
-                dx += fence.left - bounds.left;
-            }
-            if (bounds.right > fence.right) {
-                dx += fence.right - bounds.right;
-            }
-            if (bounds.top > fence.top) {
-                dy += fence.top - bounds.top;
-            }
-            if (bounds.bottom < fence.bottom) {
-                dy += fence.bottom - bounds.bottom;
-            }
-            return [newX + dx, newY + dy];
-        }
-
-        /**
-         * Make a clone, copying any run-time properties.
-         * If we've hit the global clone limit, returns null.
-         * @return {RenderedTarget} New clone.
-         */
-
-    }, {
-        key: 'makeClone',
-        value: function makeClone() {
-            if (!this.runtime.clonesAvailable() || this.isStage) {
-                return null; // Hit max clone limit, or this is the stage.
-            }
-            this.runtime.changeCloneCounter(1);
-            var newClone = this.sprite.createClone();
-            // Copy all properties.
-            newClone.x = this.x;
-            newClone.y = this.y;
-            newClone.direction = this.direction;
-            newClone.draggable = this.draggable;
-            newClone.visible = this.visible;
-            newClone.size = this.size;
-            newClone.currentCostume = this.currentCostume;
-            newClone.rotationStyle = this.rotationStyle;
-            newClone.effects = JSON.parse(JSON.stringify(this.effects));
-            newClone.variables = JSON.parse(JSON.stringify(this.variables));
-            newClone.lists = JSON.parse(JSON.stringify(this.lists));
-            newClone.initDrawable();
-            newClone.updateAllDrawableProperties();
-            // Place behind the current target.
-            newClone.goBehindOther(this);
-            return newClone;
-        }
-
-        /**
-         * Make a duplicate using a duplicate sprite.
-         * @return {RenderedTarget} New clone.
-         */
-
-    }, {
-        key: 'duplicate',
-        value: function duplicate() {
-            var _this2 = this;
-
-            return this.sprite.duplicate().then(function (newSprite) {
-                var newTarget = newSprite.createClone();
-                // Copy all properties.
-                // @todo refactor with clone methods
-                newTarget.x = Math.random() * 400 / 2;
-                newTarget.y = Math.random() * 300 / 2;
-                newTarget.direction = _this2.direction;
-                newTarget.draggable = _this2.draggable;
-                newTarget.visible = _this2.visible;
-                newTarget.size = _this2.size;
-                newTarget.currentCostume = _this2.currentCostume;
-                newTarget.rotationStyle = _this2.rotationStyle;
-                newTarget.effects = JSON.parse(JSON.stringify(_this2.effects));
-                newTarget.variables = JSON.parse(JSON.stringify(_this2.variables));
-                newTarget.lists = JSON.parse(JSON.stringify(_this2.lists));
-                newTarget.initDrawable();
-                newTarget.updateAllDrawableProperties();
-                newTarget.goBehindOther(_this2);
-                return newTarget;
-            });
-        }
-
-        /**
-         * Called when the project receives a "green flag."
-         * For a rendered target, this clears graphic effects.
-         */
-
-    }, {
-        key: 'onGreenFlag',
-        value: function onGreenFlag() {
-            this.clearEffects();
-        }
-
-        /**
-         * Called when the project receives a "stop all"
-         * Stop all sounds and clear graphic effects.
-         */
-
-    }, {
-        key: 'onStopAll',
-        value: function onStopAll() {
-            this.clearEffects();
-            if (this.audioPlayer) {
-                this.audioPlayer.stopAllSounds();
-                this.audioPlayer.clearEffects();
-            }
-        }
-
-        /**
-         * Post/edit sprite info.
-         * @param {object} data An object with sprite info data to set.
-         */
-
-    }, {
-        key: 'postSpriteInfo',
-        value: function postSpriteInfo(data) {
-            var force = data.hasOwnProperty('force') ? data.force : null;
-            if (data.hasOwnProperty('x')) {
-                this.setXY(data.x, this.y, force);
-            }
-            if (data.hasOwnProperty('y')) {
-                this.setXY(this.x, data.y, force);
-            }
-            if (data.hasOwnProperty('direction')) {
-                this.setDirection(data.direction);
-            }
-            if (data.hasOwnProperty('draggable')) {
-                this.setDraggable(data.draggable);
-            }
-            if (data.hasOwnProperty('rotationStyle')) {
-                this.setRotationStyle(data.rotationStyle);
-            }
-            if (data.hasOwnProperty('visible')) {
-                this.setVisible(data.visible);
-            }
-        }
-
-        /**
-         * Put the sprite into the drag state. While in effect, setXY must be forced
-         */
-
-    }, {
-        key: 'startDrag',
-        value: function startDrag() {
-            this.dragging = true;
-        }
-
-        /**
-         * Remove the sprite from the drag state.
-         */
-
-    }, {
-        key: 'stopDrag',
-        value: function stopDrag() {
-            this.dragging = false;
-        }
-
-        /**
-         * Serialize sprite info, used when emitting events about the sprite
-         * @returns {object} Sprite data as a simple object
-         */
-
-    }, {
-        key: 'toJSON',
-        value: function toJSON() {
-            var costumes = this.getCostumes();
-            return {
-                id: this.id,
-                name: this.getName(),
-                isStage: this.isStage,
-                x: this.x,
-                y: this.y,
-                size: this.size,
-                direction: this.direction,
-                draggable: this.draggable,
-                currentCostume: this.currentCostume,
-                costume: costumes[this.currentCostume],
-                costumeCount: costumes.length,
-                visible: this.visible,
-                rotationStyle: this.rotationStyle,
-                blocks: this.blocks._blocks,
-                variables: this.variables,
-                lists: this.lists,
-                costumes: costumes,
-                sounds: this.getSounds()
-            };
-        }
-
-        /**
-         * Dispose, destroying any run-time properties.
-         */
-
-    }, {
-        key: 'dispose',
-        value: function dispose() {
-            this.runtime.changeCloneCounter(-1);
-            this.runtime.stopForTarget(this);
-            this.sprite.removeClone(this);
-            if (this.renderer && this.drawableID !== null) {
-                this.renderer.destroyDrawable(this.drawableID);
-                if (this.visible) {
-                    this.runtime.requestRedraw();
-                }
-            }
-        }
-    }], [{
-        key: 'EVENT_TARGET_MOVED',
-        get: function get() {
-            return 'TARGET_MOVED';
-        }
-
-        /**
-         * Rotation style for "all around"/spinning.
-         * @type {string}
-         */
-
-    }, {
-        key: 'ROTATION_STYLE_ALL_AROUND',
-        get: function get() {
-            return 'all around';
-        }
-
-        /**
-         * Rotation style for "left-right"/flipping.
-         * @type {string}
-         */
-
-    }, {
-        key: 'ROTATION_STYLE_LEFT_RIGHT',
-        get: function get() {
-            return 'left-right';
-        }
-
-        /**
-         * Rotation style for "no rotation."
-         * @type {string}
-         */
-
-    }, {
-        key: 'ROTATION_STYLE_NONE',
-        get: function get() {
-            return "don't rotate";
-        }
-    }]);
-
-    return RenderedTarget;
-}(Target);
-
-module.exports = RenderedTarget;
-
-/***/ }),
-/* 62 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-
-var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
-
-function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
-
-/**
- * Methods for cloning JavaScript objects.
- * @type {object}
- */
-var Clone = function () {
-  function Clone() {
-    _classCallCheck(this, Clone);
-  }
-
-  _createClass(Clone, null, [{
-    key: "simple",
-
-    /**
-     * Deep-clone a "simple" object: one which can be fully expressed with JSON.
-     * Non-JSON values, such as functions, will be stripped from the clone.
-     * @param {object} original - the object to be cloned.
-     * @returns {object} a deep clone of the original object.
-     */
-    value: function simple(original) {
-      return JSON.parse(JSON.stringify(original));
-    }
-  }]);
-
-  return Clone;
-}();
-
-module.exports = Clone;
 
 /***/ }),
 /* 63 */
@@ -16008,7 +16008,7 @@ exports.write = function (buffer, value, offset, isLE, mLen, nBytes) {
 
 }(this));
 
-/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(57)(module), __webpack_require__(2)))
+/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(59)(module), __webpack_require__(2)))
 
 /***/ }),
 /* 77 */
@@ -17475,7 +17475,7 @@ var _createClass = function () { function defineProperties(target, props) { for 
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
-var RenderedTarget = __webpack_require__(61);
+var RenderedTarget = __webpack_require__(46);
 var Blocks = __webpack_require__(30);
 
 var _require = __webpack_require__(45),
@@ -17562,6 +17562,7 @@ var Sprite = function () {
     }, {
         key: 'removeClone',
         value: function removeClone(clone) {
+            this.runtime.fireTargetWasRemoved(clone);
             var cloneIndex = this.clones.indexOf(clone);
             if (cloneIndex >= 0) {
                 this.clones.splice(cloneIndex, 1);
@@ -19553,11 +19554,24 @@ module.exports = Scratch3EventBlocks;
 "use strict";
 
 
+var _slicedToArray = function () { function sliceIterator(arr, i) { var _arr = []; var _n = true; var _d = false; var _e = undefined; try { for (var _i = arr[Symbol.iterator](), _s; !(_n = (_s = _i.next()).done); _n = true) { _arr.push(_s.value); if (i && _arr.length === i) break; } } catch (err) { _d = true; _e = err; } finally { try { if (!_n && _i["return"]) _i["return"](); } finally { if (_d) throw _e; } } return _arr; } return function (arr, i) { if (Array.isArray(arr)) { return arr; } else if (Symbol.iterator in Object(arr)) { return sliceIterator(arr, i); } else { throw new TypeError("Invalid attempt to destructure non-iterable instance"); } }; }();
+
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
 var Cast = __webpack_require__(12);
+var Clone = __webpack_require__(47);
+var RenderedTarget = __webpack_require__(46);
+
+/**
+ * @typedef {object} BubbleState - the bubble state associated with a particular target.
+ * @property {Boolean} onSpriteRight - tracks whether the bubble is right or left of the sprite.
+ * @property {?int} drawableId - the ID of the associated bubble Drawable, null if none.
+ * @property {string} text - the text of the bubble.
+ * @property {string} type - the type of the bubble, "say" or "think"
+ * @property {Boolean} visible - whether the bubble is hidden along with its sprite.
+ */
 
 var Scratch3LooksBlocks = function () {
     function Scratch3LooksBlocks(runtime) {
@@ -19568,22 +19582,222 @@ var Scratch3LooksBlocks = function () {
          * @type {Runtime}
          */
         this.runtime = runtime;
+
+        this._onTargetMoved = this._onTargetMoved.bind(this);
+        this._onResetBubbles = this._onResetBubbles.bind(this);
+        this._onTargetWillExit = this._onTargetWillExit.bind(this);
+
+        // Reset all bubbles on start/stop
+        this.runtime.on('PROJECT_STOP_ALL', this._onResetBubbles);
+        this.runtime.on('targetWasRemoved', this._onTargetWillExit);
     }
 
     /**
-     * Retrieve the block primitives implemented by this package.
-     * @return {object.<string, Function>} Mapping of opcode to Function.
+     * The default bubble state, to be used when a target has no existing bubble state.
+     * @type {BubbleState}
      */
 
 
     _createClass(Scratch3LooksBlocks, [{
+        key: '_getBubbleState',
+
+
+        /**
+         * @param {Target} target - collect bubble state for this target. Probably, but not necessarily, a RenderedTarget.
+         * @returns {BubbleState} the mutable bubble state associated with that target. This will be created if necessary.
+         * @private
+         */
+        value: function _getBubbleState(target) {
+            var bubbleState = target.getCustomState(Scratch3LooksBlocks.STATE_KEY);
+            if (!bubbleState) {
+                bubbleState = Clone.simple(Scratch3LooksBlocks.DEFAULT_BUBBLE_STATE);
+                target.setCustomState(Scratch3LooksBlocks.STATE_KEY, bubbleState);
+            }
+            return bubbleState;
+        }
+
+        /**
+         * Handle a target which has moved.
+         * @param {RenderedTarget} target - the target which has moved.
+         * @private
+         */
+
+    }, {
+        key: '_onTargetMoved',
+        value: function _onTargetMoved(target) {
+            var bubbleState = this._getBubbleState(target);
+            if (bubbleState.drawableId && bubbleState.visible) {
+                this._positionBubble(target);
+            }
+        }
+
+        /**
+         * Handle a target which is exiting.
+         * @param {RenderedTarget} target - the target.
+         * @private
+         */
+
+    }, {
+        key: '_onTargetWillExit',
+        value: function _onTargetWillExit(target) {
+            var bubbleState = this._getBubbleState(target);
+            if (bubbleState.drawableId) {
+                this.runtime.renderer.destroyDrawable(bubbleState.drawableId);
+                bubbleState.drawableId = null;
+            }
+            if (bubbleState.skinId) {
+                this.runtime.renderer.destroySkin(bubbleState.skinId);
+                bubbleState.skinId = null;
+            }
+        }
+
+        /**
+         * Handle project start/stop by clearing all visible bubbles.
+         * @private
+         */
+
+    }, {
+        key: '_onResetBubbles',
+        value: function _onResetBubbles() {
+            for (var n = 0; n < this.runtime.targets.length; n++) {
+                this._onTargetWillExit(this.runtime.targets[n]);
+            }
+        }
+
+        /**
+         * Position the bubble of a target. If it doesn't fit on the specified side, flip and rerender.
+         * @param {!Target} target Target whose bubble needs positioning.
+         * @private
+         */
+
+    }, {
+        key: '_positionBubble',
+        value: function _positionBubble(target) {
+            var bubbleState = this._getBubbleState(target);
+
+            var _runtime$renderer$get = this.runtime.renderer.getSkinSize(bubbleState.drawableId),
+                _runtime$renderer$get2 = _slicedToArray(_runtime$renderer$get, 2),
+                bubbleWidth = _runtime$renderer$get2[0],
+                bubbleHeight = _runtime$renderer$get2[1];
+
+            var targetBounds = target.getBounds();
+            var stageBounds = this.runtime.getTargetForStage().getBounds();
+            if (bubbleState.onSpriteRight && bubbleWidth + targetBounds.right > stageBounds.right) {
+                bubbleState.onSpriteRight = false;
+                this._renderBubble(target);
+            } else if (!bubbleState.onSpriteRight && targetBounds.left - bubbleWidth < stageBounds.left) {
+                bubbleState.onSpriteRight = true;
+                this._renderBubble(target);
+            } else {
+                this.runtime.renderer.updateDrawableProperties(bubbleState.drawableId, {
+                    position: [bubbleState.onSpriteRight ? targetBounds.right : targetBounds.left - bubbleWidth, Math.min(stageBounds.top, targetBounds.top + bubbleHeight)]
+                });
+                this.runtime.requestRedraw();
+            }
+        }
+
+        /**
+         * Create a visible bubble for a target. If a bubble exists for the target,
+         * just set it to visible and update the type/text. Otherwise create a new
+         * bubble and update the relevant custom state.
+         * @param {!Target} target Target who needs a bubble.
+         * @return {undefined} Early return if text is empty string.
+         * @private
+         */
+
+    }, {
+        key: '_renderBubble',
+        value: function _renderBubble(target) {
+            var bubbleState = this._getBubbleState(target);
+            var type = bubbleState.type,
+                text = bubbleState.text,
+                onSpriteRight = bubbleState.onSpriteRight;
+
+            if (text === '') {
+                return this._setBubbleVisibility(target, false);
+            }
+
+            if (bubbleState.skinId) {
+                if (!bubbleState.visible) {
+                    bubbleState.visible = true;
+                    this.runtime.renderer.updateDrawableProperties(bubbleState.drawableId, {
+                        visible: bubbleState.visible
+                    });
+                }
+                this.runtime.renderer.updateTextSkin(bubbleState.skinId, type, text, onSpriteRight, [0, 0]);
+            } else {
+                target.addListener(RenderedTarget.EVENT_TARGET_MOVED, this._onTargetMoved);
+
+                // TODO is there a way to figure out before rendering whether to default left or right?
+                var targetBounds = target.getBounds();
+                var stageBounds = this.runtime.getTargetForStage().getBounds();
+                if (targetBounds.right + 170 > stageBounds.right) {
+                    bubbleState.onSpriteRight = false;
+                }
+
+                bubbleState.drawableId = this.runtime.renderer.createDrawable();
+                bubbleState.skinId = this.runtime.renderer.createTextSkin(type, text, bubbleState.onSpriteRight, [0, 0]);
+
+                this.runtime.renderer.setDrawableOrder(bubbleState.drawableId, Infinity);
+                this.runtime.renderer.updateDrawableProperties(bubbleState.drawableId, {
+                    skinId: bubbleState.skinId
+                });
+            }
+
+            this._positionBubble(target);
+        }
+
+        /**
+         * The entry point for say/think blocks. Clears existing bubble if the text is empty.
+         * Set the bubble custom state and then call _renderBubble.
+         * @param {!Target} target Target that say/think blocks are being called on.
+         * @param {!string} type Either "say" or "think"
+         * @param {!string} text The text for the bubble, empty string clears the bubble.
+         * @private
+         */
+
+    }, {
+        key: '_updateBubble',
+        value: function _updateBubble(target, type, text) {
+            var bubbleState = this._getBubbleState(target);
+            bubbleState.type = type;
+            bubbleState.text = text;
+            this._renderBubble(target);
+        }
+
+        /**
+         * Hide the bubble for a given target.
+         * @param {!Target} target Target that say/think blocks are being called on.
+         * @param {!boolean} visibility Visible or not.
+         * @private
+         */
+
+    }, {
+        key: '_setBubbleVisibility',
+        value: function _setBubbleVisibility(target, visibility) {
+            var bubbleState = this._getBubbleState(target);
+            bubbleState.visible = visibility;
+            if (bubbleState.drawableId) {
+                this.runtime.renderer.updateDrawableProperties(bubbleState.drawableId, {
+                    visible: bubbleState.visible
+                });
+            }
+            this.runtime.requestRedraw();
+        }
+
+        /**
+         * Retrieve the block primitives implemented by this package.
+         * @return {object.<string, Function>} Mapping of opcode to Function.
+         */
+
+    }, {
         key: 'getPrimitives',
         value: function getPrimitives() {
             return {
                 looks_say: this.say,
                 looks_sayforsecs: this.sayforsecs,
                 looks_think: this.think,
-                looks_thinkforsecs: this.sayforsecs,
+                looks_thinkforsecs: this.thinkforsecs,
                 looks_show: this.show,
                 looks_hide: this.hide,
                 looks_switchcostumeto: this.switchCostume,
@@ -19607,16 +19821,19 @@ var Scratch3LooksBlocks = function () {
     }, {
         key: 'say',
         value: function say(args, util) {
-            util.target.setSay('say', args.MESSAGE);
+            // @TODO in 2.0 calling say/think resets the right/left bias of the bubble
+            this._updateBubble(util.target, 'say', args.MESSAGE);
         }
     }, {
         key: 'sayforsecs',
         value: function sayforsecs(args, util) {
-            util.target.setSay('say', args.MESSAGE);
+            var _this = this;
+
+            this.say(args, util);
             return new Promise(function (resolve) {
                 setTimeout(function () {
                     // Clear say bubble and proceed.
-                    util.target.setSay();
+                    _this._updateBubble(util.target, 'say', '');
                     resolve();
                 }, 1000 * args.SECS);
             });
@@ -19624,16 +19841,18 @@ var Scratch3LooksBlocks = function () {
     }, {
         key: 'think',
         value: function think(args, util) {
-            util.target.setSay('think', args.MESSAGE);
+            this._updateBubble(util.target, 'think', args.MESSAGE);
         }
     }, {
         key: 'thinkforsecs',
         value: function thinkforsecs(args, util) {
-            util.target.setSay('think', args.MESSAGE);
+            var _this2 = this;
+
+            this.think(args, util);
             return new Promise(function (resolve) {
                 setTimeout(function () {
                     // Clear say bubble and proceed.
-                    util.target.setSay();
+                    _this2._updateBubble(util.target, 'think', '');
                     resolve();
                 }, 1000 * args.SECS);
             });
@@ -19642,11 +19861,13 @@ var Scratch3LooksBlocks = function () {
         key: 'show',
         value: function show(args, util) {
             util.target.setVisible(true);
+            this._renderBubble(util.target);
         }
     }, {
         key: 'hide',
         value: function hide(args, util) {
             util.target.setVisible(false);
+            this._setBubbleVisibility(util.target, false);
         }
 
         /**
@@ -19793,6 +20014,29 @@ var Scratch3LooksBlocks = function () {
         key: 'getCostumeIndex',
         value: function getCostumeIndex(args, util) {
             return util.target.currentCostume + 1;
+        }
+    }], [{
+        key: 'DEFAULT_BUBBLE_STATE',
+        get: function get() {
+            return {
+                drawableId: null,
+                onSpriteRight: true,
+                skinId: null,
+                text: '',
+                type: 'say',
+                visible: true
+            };
+        }
+
+        /**
+         * The key to load & store a target's bubble-related state.
+         * @type {string}
+         */
+
+    }, {
+        key: 'STATE_KEY',
+        get: function get() {
+            return 'Scratch.looks';
         }
     }]);
 
@@ -20308,10 +20552,10 @@ var _createClass = function () { function defineProperties(target, props) { for 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
 var Cast = __webpack_require__(12);
-var Clone = __webpack_require__(62);
-var Color = __webpack_require__(46);
+var Clone = __webpack_require__(47);
+var Color = __webpack_require__(48);
 var MathUtil = __webpack_require__(20);
-var RenderedTarget = __webpack_require__(61);
+var RenderedTarget = __webpack_require__(46);
 
 /**
  * @typedef {object} PenState - the pen state associated with a particular target.
@@ -21145,7 +21389,7 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
 
 var MathUtil = __webpack_require__(20);
 var Cast = __webpack_require__(12);
-var Clone = __webpack_require__(62);
+var Clone = __webpack_require__(47);
 
 var Scratch3SoundBlocks = function () {
     function Scratch3SoundBlocks(runtime) {
@@ -21522,7 +21766,7 @@ var _createClass = function () { function defineProperties(target, props) { for 
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
-var color = __webpack_require__(46);
+var color = __webpack_require__(48);
 var log = __webpack_require__(13);
 
 /**
@@ -22898,9 +23142,9 @@ module.exports = adapter;
 
 
 var log = __webpack_require__(13);
-var Thread = __webpack_require__(59);
+var Thread = __webpack_require__(61);
 
-var _require = __webpack_require__(53),
+var _require = __webpack_require__(55),
     Map = _require.Map;
 
 /**
@@ -23187,7 +23431,7 @@ module.exports = execute;
 "use strict";
 
 
-var _require = __webpack_require__(53),
+var _require = __webpack_require__(55),
     Record = _require.Record;
 
 var MonitorRecord = Record({
@@ -23218,14 +23462,14 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
 
 var EventEmitter = __webpack_require__(7);
 
-var _require = __webpack_require__(53),
+var _require = __webpack_require__(55),
     OrderedMap = _require.OrderedMap;
 
 var ArgumentType = __webpack_require__(178);
 var Blocks = __webpack_require__(30);
 var BlockType = __webpack_require__(102);
 var Sequencer = __webpack_require__(176);
-var Thread = __webpack_require__(59);
+var Thread = __webpack_require__(61);
 
 // Virtual I/O devices.
 var Clock = __webpack_require__(180);
@@ -24146,6 +24390,9 @@ var Runtime = function (_EventEmitter) {
     }, {
         key: 'stopAll',
         value: function stopAll() {
+            // Emit stop event to allow blocks to clean up any state.
+            this.emit(Runtime.PROJECT_STOP_ALL);
+
             // Dispose all clones.
             var newTargets = [];
             for (var i = 0; i < this.targets.length; i++) {
@@ -24523,6 +24770,18 @@ var Runtime = function (_EventEmitter) {
         }
 
         /**
+         * Report that a clone target is being removed.
+         * @param {Target} target - the target being removed
+         * @fires Runtime#targetWasRemoved
+         */
+
+    }, {
+        key: 'fireTargetWasRemoved',
+        value: function fireTargetWasRemoved(target) {
+            this.emit('targetWasRemoved', target);
+        }
+
+        /**
          * Get a target representing the Scratch stage, if one exists.
          * @return {?Target} The target, if found.
          */
@@ -24653,7 +24912,8 @@ var Runtime = function (_EventEmitter) {
         }
 
         /**
-         * Event name for glowing the green flag
+         * Event name when threads start running.
+         * Used by the UI to indicate running status.
          * @const {string}
          */
 
@@ -24664,7 +24924,8 @@ var Runtime = function (_EventEmitter) {
         }
 
         /**
-         * Event name for unglowing the green flag
+         * Event name when threads stop running
+         * Used by the UI to indicate not-running status.
          * @const {string}
          */
 
@@ -24672,6 +24933,18 @@ var Runtime = function (_EventEmitter) {
         key: 'PROJECT_RUN_STOP',
         get: function get() {
             return 'PROJECT_RUN_STOP';
+        }
+
+        /**
+         * Event name for project being stopped or restarted by the user.
+         * Used by blocks that need to reset state.
+         * @const {string}
+         */
+
+    }, {
+        key: 'PROJECT_STOP_ALL',
+        get: function get() {
+            return 'PROJECT_STOP_ALL';
         }
 
         /**
@@ -24775,7 +25048,7 @@ var _createClass = function () { function defineProperties(target, props) { for 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
 var Timer = __webpack_require__(63);
-var Thread = __webpack_require__(59);
+var Thread = __webpack_require__(61);
 var execute = __webpack_require__(173);
 
 var Sequencer = function () {
@@ -25055,11 +25328,11 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
 var EventEmitter = __webpack_require__(7);
 
 var Blocks = __webpack_require__(30);
-var Variable = __webpack_require__(60);
-var List = __webpack_require__(58);
+var Variable = __webpack_require__(62);
+var List = __webpack_require__(60);
 var uid = __webpack_require__(64);
 
-var _require = __webpack_require__(53),
+var _require = __webpack_require__(55),
     Map = _require.Map;
 
 /**
@@ -26370,14 +26643,14 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
  */
 
 var Blocks = __webpack_require__(30);
-var RenderedTarget = __webpack_require__(61);
+var RenderedTarget = __webpack_require__(46);
 var Sprite = __webpack_require__(103);
-var Color = __webpack_require__(46);
+var Color = __webpack_require__(48);
 var log = __webpack_require__(13);
 var uid = __webpack_require__(64);
 var specMap = __webpack_require__(185);
-var Variable = __webpack_require__(60);
-var List = __webpack_require__(58);
+var Variable = __webpack_require__(62);
+var List = __webpack_require__(60);
 
 var _require = __webpack_require__(44),
     loadCostume = _require.loadCostume;
@@ -28003,8 +28276,8 @@ module.exports = specMap;
 var vmPackage = __webpack_require__(314);
 var Blocks = __webpack_require__(30);
 var Sprite = __webpack_require__(103);
-var Variable = __webpack_require__(60);
-var List = __webpack_require__(58);
+var Variable = __webpack_require__(62);
+var List = __webpack_require__(60);
 
 var _require = __webpack_require__(44),
     loadCostume = _require.loadCostume;
