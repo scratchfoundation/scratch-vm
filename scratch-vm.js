@@ -5936,8 +5936,11 @@ var Blocks = function () {
             for (var id in this._blocks) {
                 if (!this._blocks.hasOwnProperty(id)) continue;
                 var block = this._blocks[id];
-                if ((block.opcode === 'procedures_defnoreturn' || block.opcode === 'procedures_defreturn') && block.mutation.proccode === name) {
-                    return id;
+                if (block.opcode === 'procedures_defnoreturn' || block.opcode === 'procedures_defreturn') {
+                    var internal = this._getCustomBlockInternal(block);
+                    if (internal && internal.mutation.proccode === name) {
+                        return id; // The outer define block id
+                    }
                 }
             }
             return null;
@@ -5955,7 +5958,7 @@ var Blocks = function () {
             for (var id in this._blocks) {
                 if (!this._blocks.hasOwnProperty(id)) continue;
                 var block = this._blocks[id];
-                if ((block.opcode === 'procedures_defnoreturn' || block.opcode === 'procedures_defreturn') && block.mutation.proccode === name) {
+                if (block.opcode === 'procedures_callnoreturn_internal' && block.mutation.proccode === name) {
                     return JSON.parse(block.mutation.argumentnames);
                 }
             }
@@ -6356,6 +6359,20 @@ var Blocks = function () {
                 }
             }
             return params;
+        }
+
+        /**
+         * Helper to get the corresponding internal procedure definition block
+         * @param {!object} defineBlock Outer define block.
+         * @return {!object} internal definition block which has the mutation.
+         */
+
+    }, {
+        key: '_getCustomBlockInternal',
+        value: function _getCustomBlockInternal(defineBlock) {
+            if (defineBlock.inputs && defineBlock.inputs.custom_block) {
+                return this._blocks[defineBlock.inputs.custom_block.block];
+            }
         }
 
         /**
@@ -23030,6 +23047,8 @@ var execute = function execute(sequencer, thread) {
     // Recursively evaluate input blocks.
     for (var inputName in inputs) {
         if (!inputs.hasOwnProperty(inputName)) continue;
+        // Do not evaluate the internal custom command block within definition
+        if (inputName === 'custom_block') continue;
         var input = inputs[inputName];
         var inputBlockId = input.block;
         // Is there no value for this input waiting in the stack frame?
@@ -24982,7 +25001,8 @@ var Sequencer = function () {
                 // Look for warp-mode flag on definition, and set the thread
                 // to warp-mode if needed.
                 var definitionBlock = thread.target.blocks.getBlock(definition);
-                var doWarp = definitionBlock.mutation.warp;
+                var innerBlock = thread.target.blocks.getBlock(definitionBlock.inputs.custom_block.block);
+                var doWarp = innerBlock.mutation.warp;
                 if (doWarp) {
                     thread.peekStackFrame().warpMode = true;
                 } else if (isRecursive) {
@@ -26807,14 +26827,31 @@ var parseBlock = function parseBlock(sb2block, getVariableId) {
         // Mutation for procedure definition:
         // store all 2.0 proc data.
         var procData = sb2block.slice(1);
-        activeBlock.mutation = {
-            tagName: 'mutation',
-            proccode: procData[0], // e.g., "abc %n %b %s"
-            argumentnames: JSON.stringify(procData[1]), // e.g. ['arg1', 'arg2']
-            argumentdefaults: JSON.stringify(procData[2]), // e.g., [1, 'abc']
-            warp: procData[3], // Warp mode, e.g., true/false.
-            children: []
+        // Create a new block and input metadata.
+        var _inputUid = uid();
+        var inputName = 'custom_block';
+        activeBlock.inputs[inputName] = {
+            name: inputName,
+            block: _inputUid,
+            shadow: _inputUid
         };
+        activeBlock.children = [{
+            id: _inputUid,
+            opcode: 'procedures_callnoreturn_internal',
+            inputs: {},
+            fields: {},
+            next: null,
+            shadow: true,
+            children: [],
+            mutation: {
+                tagName: 'mutation',
+                proccode: procData[0], // e.g., "abc %n %b %s"
+                argumentnames: JSON.stringify(procData[1]), // e.g. ['arg1', 'arg2']
+                argumentdefaults: JSON.stringify(procData[2]), // e.g., [1, 'abc']
+                warp: procData[3], // Warp mode, e.g., true/false.
+                children: []
+            }
+        }];
     } else if (oldOpcode === 'call') {
         // Mutation for procedure call:
         // string for proc code (e.g., "abc %n %b %s").
