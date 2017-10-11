@@ -1242,13 +1242,12 @@ class Runtime extends EventEmitter {
     }
 
     /**
-     * Report that a new target has been created, possibly by cloning an existing target.
-     * @param {Target} newTarget - the newly created target.
-     * @param {Target} [sourceTarget] - the target used as a source for the new clone, if any.
-     * @fires Runtime#targetWasCreated
+     * Report that a clone target is being removed.
+     * @param {Target} target - the target being removed
+     * @fires Runtime#targetWasRemoved
      */
-    fireTargetWasRemoved (newTarget, sourceTarget) {
-        this.emit('targetWasRemoved', newTarget, sourceTarget);
+    fireTargetWasRemoved (target) {
+        this.emit('targetWasRemoved', target);
     }
 
     /**
