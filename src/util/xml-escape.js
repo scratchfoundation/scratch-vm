@@ -6,8 +6,8 @@
  * @param {!string} unsafe Unsafe string.
  * @return {string} XML-escaped string, for use within an XML tag.
  */
-var xmlEscape = function (unsafe) {
-    return unsafe.replace(/[<>&'"]/g, function (c) {
+const xmlEscape = function (unsafe) {
+    return unsafe.replace(/[<>&'"]/g, c => {
         switch (c) {
         case '<': return '&lt;';
         case '>': return '&gt;';

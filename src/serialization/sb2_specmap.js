@@ -21,7 +21,7 @@
  * properties. By hand, I matched the opcode name to the 3.0 opcode.
  * Finally, I filled in the expected arguments as below.
  */
-var specMap = {
+const specMap = {
     'forward:': {
         opcode: 'motion_movesteps',
         argMap: [
@@ -166,9 +166,8 @@ var specMap = {
         opcode: 'motion_setrotationstyle',
         argMap: [
             {
-                type: 'input',
-                inputOp: 'motion_setrotationstyle_menu',
-                inputName: 'STYLE'
+                type: 'field',
+                fieldName: 'STYLE'
             }
         ]
     },
@@ -276,9 +275,8 @@ var specMap = {
         opcode: 'looks_changeeffectby',
         argMap: [
             {
-                type: 'input',
-                inputOp: 'looks_effectmenu',
-                inputName: 'EFFECT'
+                type: 'field',
+                fieldName: 'EFFECT'
             },
             {
                 type: 'input',
@@ -291,9 +289,8 @@ var specMap = {
         opcode: 'looks_seteffectto',
         argMap: [
             {
-                type: 'input',
-                inputOp: 'looks_effectmenu',
-                inputName: 'EFFECT'
+                type: 'field',
+                fieldName: 'EFFECT'
             },
             {
                 type: 'input',
@@ -1171,9 +1168,8 @@ var specMap = {
         opcode: 'operator_mathop',
         argMap: [
             {
-                type: 'input',
-                inputOp: 'operator_mathop_menu',
-                inputName: 'OPERATOR'
+                type: 'field',
+                fieldName: 'OPERATOR'
             },
             {
                 type: 'input',
@@ -1186,9 +1182,8 @@ var specMap = {
         opcode: 'data_variable',
         argMap: [
             {
-                type: 'input',
-                inputOp: 'data_variablemenu',
-                inputName: 'VARIABLE'
+                type: 'field',
+                fieldName: 'VARIABLE'
             }
         ]
     },
@@ -1196,9 +1191,8 @@ var specMap = {
         opcode: 'data_setvariableto',
         argMap: [
             {
-                type: 'input',
-                inputOp: 'data_variablemenu',
-                inputName: 'VARIABLE'
+                type: 'field',
+                fieldName: 'VARIABLE'
             },
             {
                 type: 'input',
@@ -1211,9 +1205,8 @@ var specMap = {
         opcode: 'data_changevariableby',
         argMap: [
             {
-                type: 'input',
-                inputOp: 'data_variablemenu',
-                inputName: 'VARIABLE'
+                type: 'field',
+                fieldName: 'VARIABLE'
             },
             {
                 type: 'input',
@@ -1226,9 +1219,8 @@ var specMap = {
         opcode: 'data_showvariable',
         argMap: [
             {
-                type: 'input',
-                inputOp: 'data_variablemenu',
-                inputName: 'VARIABLE'
+                type: 'field',
+                fieldName: 'VARIABLE'
             }
         ]
     },
@@ -1236,9 +1228,8 @@ var specMap = {
         opcode: 'data_hidevariable',
         argMap: [
             {
-                type: 'input',
-                inputOp: 'data_variablemenu',
-                inputName: 'VARIABLE'
+                type: 'field',
+                fieldName: 'VARIABLE'
             }
         ]
     },

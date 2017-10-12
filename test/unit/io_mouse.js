@@ -1,10 +1,10 @@
-var test = require('tap').test;
-var Mouse = require('../../src/io/mouse');
-var Runtime = require('../../src/engine/runtime');
+const test = require('tap').test;
+const Mouse = require('../../src/io/mouse');
+const Runtime = require('../../src/engine/runtime');
 
-test('spec', function (t) {
-    var rt = new Runtime();
-    var m = new Mouse(rt);
+test('spec', t => {
+    const rt = new Runtime();
+    const m = new Mouse(rt);
 
     t.type(m, 'object');
     t.type(m.postData, 'function');
@@ -14,9 +14,9 @@ test('spec', function (t) {
     t.end();
 });
 
-test('mouseUp', function (t) {
-    var rt = new Runtime();
-    var m = new Mouse(rt);
+test('mouseUp', t => {
+    const rt = new Runtime();
+    const m = new Mouse(rt);
 
     m.postData({
         x: 1,
@@ -31,9 +31,9 @@ test('mouseUp', function (t) {
     t.end();
 });
 
-test('mouseDown', function (t) {
-    var rt = new Runtime();
-    var m = new Mouse(rt);
+test('mouseDown', t => {
+    const rt = new Runtime();
+    const m = new Mouse(rt);
 
     m.postData({
         x: 10,

@@ -53,9 +53,9 @@
             <button id="projectLoadButton">Load</button>
             <button id="createEmptyProject">New Project</button><br />
             <p>
-                <input type="button" value="Export to XML" onclick="toXml()">
+                <input type="button" value="Export to JSON" onclick="toJson()">
                 &nbsp;
-                <input type="button" value="Import from XML" onclick="fromXml()" id="import">
+                <input type="button" value="Import from JSON" onclick="fromJson()" id="import">
                 <br /><br />
                 <textarea id="importExport"></textarea>
             </p>
@@ -71,18 +71,17 @@
     <!-- Playground -->
     <script src="./playground.js"></script>
     <script>
-        function toXml() {
+        function toJson() {
             var output = document.getElementById('importExport');
-            var xml = Blockly.Xml.workspaceToDom(Scratch.workspace);
-            output.value = Blockly.Xml.domToPrettyText(xml);
+            var json = window.Scratch.vm.toJSON();
+            output.value = json;
             output.focus();
             output.select();
           }
 
-          function fromXml() {
+          function fromJson() {
             var input = document.getElementById('importExport');
-            var xml = Blockly.Xml.textToDom(input.value);
-            Blockly.Xml.domToWorkspace(Scratch.workspace, xml);
+            window.Scratch.vm.fromJSON(input.value);
           }
     </script>
 </body>

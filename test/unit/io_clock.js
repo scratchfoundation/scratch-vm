@@ -1,10 +1,10 @@
-var test = require('tap').test;
-var Clock = require('../../src/io/clock');
-var Runtime = require('../../src/engine/runtime');
+const test = require('tap').test;
+const Clock = require('../../src/io/clock');
+const Runtime = require('../../src/engine/runtime');
 
-test('spec', function (t) {
-    var rt = new Runtime();
-    var c = new Clock(rt);
+test('spec', t => {
+    const rt = new Runtime();
+    const c = new Clock(rt);
 
     t.type(Clock, 'function');
     t.type(c, 'object');
@@ -15,14 +15,14 @@ test('spec', function (t) {
     t.end();
 });
 
-test('cycle', function (t) {
-    var rt = new Runtime();
-    var c = new Clock(rt);
+test('cycle', t => {
+    const rt = new Runtime();
+    const c = new Clock(rt);
 
     t.ok(c.projectTimer() <= 0.1);
-    setTimeout(function () {
+    setTimeout(() => {
         c.resetProjectTimer();
-        setTimeout(function () {
+        setTimeout(() => {
             t.ok(c.projectTimer() > 0);
             c.pause();
             t.ok(c.projectTimer() > 0);
