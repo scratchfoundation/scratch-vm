@@ -19682,15 +19682,17 @@ var Scratch3LooksBlocks = function () {
 
             var targetBounds = target.getBounds();
             var stageBounds = this.runtime.getTargetForStage().getBounds();
-            if (bubbleState.onSpriteRight && bubbleWidth + targetBounds.right > stageBounds.right) {
+            if (bubbleState.onSpriteRight && bubbleWidth + targetBounds.right > stageBounds.right && targetBounds.left - bubbleWidth > stageBounds.left) {
+                // Only flip if it would fit
                 bubbleState.onSpriteRight = false;
                 this._renderBubble(target);
-            } else if (!bubbleState.onSpriteRight && targetBounds.left - bubbleWidth < stageBounds.left) {
+            } else if (!bubbleState.onSpriteRight && targetBounds.left - bubbleWidth < stageBounds.left && bubbleWidth + targetBounds.right < stageBounds.right) {
+                // Only flip if it would fit
                 bubbleState.onSpriteRight = true;
                 this._renderBubble(target);
             } else {
                 this.runtime.renderer.updateDrawableProperties(bubbleState.drawableId, {
-                    position: [bubbleState.onSpriteRight ? targetBounds.right : targetBounds.left - bubbleWidth, Math.min(stageBounds.top, targetBounds.top + bubbleHeight)]
+                    position: [bubbleState.onSpriteRight ? Math.min(stageBounds.right - bubbleWidth, targetBounds.right) : Math.max(stageBounds.left, targetBounds.left - bubbleWidth), Math.min(stageBounds.top, targetBounds.top + bubbleHeight)]
                 });
                 this.runtime.requestRedraw();
             }
