@@ -246,15 +246,7 @@ class Scratch3PenBlocks {
             blocks: [
                 {
                     opcode: 'clear',
-                    blockType: BlockType.COMMAND,
-                    arguments: {
-                        NUM1: {
-                            type: ArgumentType.NUMBER
-                        },
-                        NUM2: {
-                            type: ArgumentType.NUMBER
-                        }
-                    }
+                    blockType: BlockType.COMMAND
                 },
                 {
                     opcode: 'stamp',
