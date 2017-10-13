@@ -1,4 +1,5 @@
 const ArgumentType = {
+    ANGLE: 'angle',
     BOOLEAN: 'Boolean',
     COLOR: 'color',
     NUMBER: 'number',
