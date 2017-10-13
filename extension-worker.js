@@ -344,6 +344,7 @@ module.exports = new WorkerDispatch();
 
 
 var ArgumentType = {
+    ANGLE: 'angle',
     BOOLEAN: 'Boolean',
     COLOR: 'color',
     NUMBER: 'number',

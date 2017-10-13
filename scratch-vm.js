@@ -10960,6 +10960,7 @@ module.exports = Variable;
 
 
 var ArgumentType = {
+    ANGLE: 'angle',
     BOOLEAN: 'Boolean',
     COLOR: 'color',
     NUMBER: 'number',
@@ -21588,6 +21589,8 @@ module.exports = MonitorRecord;
 "use strict";
 
 
+var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
+
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
 function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr2 = Array(arr.length); i < arr.length; i++) { arr2[i] = arr[i]; } return arr2; } else { return Array.from(arr); } }
@@ -21635,6 +21638,10 @@ var defaultBlockPackages = {
  */
 var ArgumentTypeMap = function () {
     var map = {};
+    map[ArgumentType.ANGLE] = {
+        shadowType: 'math_angle',
+        fieldType: 'NUM'
+    };
     map[ArgumentType.COLOR] = {
         shadowType: 'colour_picker'
     };
@@ -21646,9 +21653,8 @@ var ArgumentTypeMap = function () {
         shadowType: 'text',
         fieldType: 'TEXT'
     };
-    // @TODO: talk to Rachel & co. to figure out what goes here. Make it OK to not have a field. Add `check` support.
     map[ArgumentType.BOOLEAN] = {
-        shadowType: ''
+        check: 'Boolean'
     };
     return map;
 }();
@@ -21888,6 +21894,20 @@ var Runtime = function (_EventEmitter) {
         }
 
         /**
+         * Generate an extension-specific menu ID.
+         * @param {string} menuName - the name of the menu.
+         * @param {string} extensionId - the ID of the extension hosting the menu.
+         * @returns {string} - the constructed ID.
+         * @private
+         */
+
+    }, {
+        key: '_makeExtensionMenuId',
+        value: function _makeExtensionMenuId(menuName, extensionId) {
+            return extensionId + '.menu.' + escapeHtml(menuName);
+        }
+
+        /**
          * Register the primitives provided by an extension.
          * @param {ExtensionInfo} extensionInfo - information about the extension (id, blocks, etc.)
          * @private
@@ -21902,11 +21922,19 @@ var Runtime = function (_EventEmitter) {
                 color1: '#FF6680',
                 color2: '#FF4D6A',
                 color3: '#FF3355',
-                blocks: []
+                blocks: [],
+                menus: []
             };
 
             this._blockInfo.push(categoryInfo);
 
+            for (var menuName in extensionInfo.menus) {
+                if (extensionInfo.menus.hasOwnProperty(menuName)) {
+                    var menuItems = extensionInfo.menus[menuName];
+                    var convertedMenu = this._buildMenuForScratchBlocks(menuName, menuItems, extensionInfo);
+                    categoryInfo.menus.push(convertedMenu);
+                }
+            }
             var _iteratorNormalCompletion = true;
             var _didIteratorError = false;
             var _iteratorError = undefined;
@@ -21935,7 +21963,55 @@ var Runtime = function (_EventEmitter) {
                 }
             }
 
-            this.emit(Runtime.EXTENSION_ADDED, categoryInfo.blocks);
+            this.emit(Runtime.EXTENSION_ADDED, categoryInfo.blocks.concat(categoryInfo.menus));
+        }
+
+        /**
+         * Build the scratch-blocks JSON for a menu. Note that scratch-blocks treats menus as a special kind of block.
+         * @param {string} menuName - the name of the menu
+         * @param {array} menuItems - the list of items for this menu
+         * @param {CategoryInfo} categoryInfo - the category for this block
+         * @returns {object} - a JSON-esque object ready for scratch-blocks' consumption
+         * @private
+         */
+
+    }, {
+        key: '_buildMenuForScratchBlocks',
+        value: function _buildMenuForScratchBlocks(menuName, menuItems, categoryInfo) {
+            var menuId = this._makeExtensionMenuId(menuName, categoryInfo.id);
+
+            /** @TODO: support dynamic menus when 'menuItems' is a method name string (see extension spec) */
+            if (typeof menuItems === 'string') {
+                throw new Error('Dynamic extension menus are not yet supported. Menu name: ' + menuName);
+            }
+            var options = menuItems.map(function (item) {
+                switch (typeof item === 'undefined' ? 'undefined' : _typeof(item)) {
+                    case 'string':
+                        return [item, item];
+                    case 'object':
+                        return [item.text, item.value];
+                    default:
+                        throw new Error('Can\'t interpret menu item: ' + item);
+                }
+            });
+
+            return {
+                json: {
+                    message0: '%1',
+                    type: menuId,
+                    inputsInline: true,
+                    output: 'String',
+                    colour: categoryInfo.color1,
+                    colourSecondary: categoryInfo.color2,
+                    colourTertiary: categoryInfo.color3,
+                    outputShape: ScratchBlocksConstants.OUTPUT_SHAPE_ROUND,
+                    args0: [{
+                        type: 'field_dropdown',
+                        name: menuName,
+                        options: options
+                    }]
+                }
+            };
         }
 
         /**
@@ -21949,6 +22025,8 @@ var Runtime = function (_EventEmitter) {
     }, {
         key: '_convertForScratchBlocks',
         value: function _convertForScratchBlocks(blockInfo, categoryInfo) {
+            var _this2 = this;
+
             var extendedOpcode = categoryInfo.id + '.' + blockInfo.opcode;
             var blockJSON = {
                 type: extendedOpcode,
@@ -21973,31 +22051,45 @@ var Runtime = function (_EventEmitter) {
                 // Sanitize the placeholder to ensure valid XML
                 placeholder = placeholder.replace(/[<"&]/, '_');
 
-                blockJSON.args0.push({
+                var argJSON = {
                     type: 'input_value',
                     name: placeholder
-                });
-
-                // scratch-blocks uses 1-based argument indexing
-                var argNum = blockJSON.args0.length;
-                argsMap[placeholder] = argNum;
+                };
 
                 var argInfo = blockInfo.arguments[placeholder] || {};
                 var argTypeInfo = ArgumentTypeMap[argInfo.type] || {};
                 var defaultValue = typeof argInfo.defaultValue === 'undefined' ? '' : escapeHtml(argInfo.defaultValue.toString());
 
-                // <value> is the ScratchBlocks name for a block input.
-                // The <shadow> is a placeholder for a reporter and is visible when there's no reporter in this input.
-                inputList.push('<value name="' + placeholder + '"><shadow type="' + argTypeInfo.shadowType + '">');
-
-                // <field> is a text field that the user can type into. Some shadows, like the color picker, don't allow
-                // text input and therefore don't need a field element.
-                if (argTypeInfo.fieldType) {
-                    inputList.push('<field name="' + argTypeInfo.fieldType + '">' + defaultValue + '</field>');
+                if (argTypeInfo.check) {
+                    argJSON.check = argTypeInfo.check;
                 }
 
-                inputList.push('</shadow></value>');
+                var shadowType = argInfo.menu ? _this2._makeExtensionMenuId(argInfo.menu, categoryInfo.id) : argTypeInfo.shadowType;
+                var fieldType = argInfo.menu || argTypeInfo.fieldType;
 
+                // <value> is the ScratchBlocks name for a block input.
+                inputList.push('<value name="' + placeholder + '">');
+
+                // The <shadow> is a placeholder for a reporter and is visible when there's no reporter in this input.
+                // Boolean inputs don't need to specify a shadow in the XML.
+                if (shadowType) {
+                    inputList.push('<shadow type="' + shadowType + '">');
+
+                    // <field> is a text field that the user can type into. Some shadows, like the color picker, don't allow
+                    // text input and therefore don't need a field element.
+                    if (fieldType) {
+                        inputList.push('<field name="' + fieldType + '">' + defaultValue + '</field>');
+                    }
+
+                    inputList.push('</shadow>');
+                }
+
+                inputList.push('</value>');
+
+                // scratch-blocks uses 1-based argument indexing
+                blockJSON.args0.push(argJSON);
+                var argNum = blockJSON.args0.length;
+                argsMap[placeholder] = argNum;
                 return '%' + argNum;
             });
 
@@ -22977,7 +23069,7 @@ var Runtime = function (_EventEmitter) {
     }, {
         key: 'start',
         value: function start() {
-            var _this2 = this;
+            var _this3 = this;
 
             var interval = Runtime.THREAD_STEP_INTERVAL;
             if (this.compatibilityMode) {
@@ -22985,7 +23077,7 @@ var Runtime = function (_EventEmitter) {
             }
             this.currentStepTime = interval;
             this._steppingInterval = setInterval(function () {
-                _this2._step();
+                _this3._step();
             }, interval);
         }
     }], [{
@@ -23952,7 +24044,7 @@ var ExtensionManager = function () {
                     result.push(_this3._prepareBlockInfo(serviceName, blockInfo));
                 } catch (e) {
                     // TODO: more meaningful error reporting
-                    log.error('Skipping malformed block: ' + JSON.stringify(e));
+                    log.error('Error processing block: ' + e.message + ', Block:\n' + JSON.stringify(blockInfo));
                 }
                 return result;
             }, []);
