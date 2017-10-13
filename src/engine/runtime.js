@@ -409,6 +409,9 @@ class Runtime extends EventEmitter {
             const opcode = convertedBlock.json.type;
             categoryInfo.blocks.push(convertedBlock);
             this._primitives[opcode] = convertedBlock.info.func;
+            if (blockInfo.blockType === BlockType.HAT) {
+                this._hats[opcode] = {edgeActivated: true}; /** @TODO let extension specify this */
+            }
         }
 
         this.emit(Runtime.EXTENSION_ADDED, categoryInfo.blocks);
@@ -802,13 +805,14 @@ class Runtime extends EventEmitter {
 
             // If no fields are present, check inputs (horizontal blocks)
             if (Object.keys(hatFields).length === 0) {
+                hatFields = {}; // don't overwrite the block's actual fields list
                 const hatInputs = blocks.getInputs(block);
                 for (const input in hatInputs) {
                     if (!hatInputs.hasOwnProperty(input)) continue;
                     const id = hatInputs[input].block;
                     const inpBlock = blocks.getBlock(id);
                     const fields = blocks.getFields(inpBlock);
-                    hatFields = Object.assign(fields, hatFields);
+                    Object.assign(hatFields, fields);
                 }
             }
 
