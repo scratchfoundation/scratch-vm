@@ -20168,7 +20168,7 @@ var WeDo2 = function () {
     }, {
         key: 'distance',
         get: function get() {
-            return this._sensors.distance;
+            return this._sensors.distance * 10;
         }
     }]);
 
@@ -20618,8 +20618,10 @@ var Scratch3WeDo2Blocks = function () {
         value: function whenDistance(args) {
             switch (args.OP) {
                 case '<':
+                case '&lt;':
                     return this._device.distance < args.REFERENCE;
                 case '>':
+                case '&gt;':
                     return this._device.distance > args.REFERENCE;
                 default:
                     log.warn('Unknown comparison operator in whenDistance: ' + args.OP);
@@ -20647,7 +20649,7 @@ var Scratch3WeDo2Blocks = function () {
     }, {
         key: 'getDistance',
         value: function getDistance() {
-            return this._device.distance * 10;
+            return this._device.distance;
         }
 
         /**
@@ -21947,6 +21949,9 @@ var Runtime = function (_EventEmitter) {
                     var opcode = convertedBlock.json.type;
                     categoryInfo.blocks.push(convertedBlock);
                     this._primitives[opcode] = convertedBlock.info.func;
+                    if (blockInfo.blockType === BlockType.HAT) {
+                        this._hats[opcode] = { edgeActivated: true }; /** @TODO let extension specify this */
+                    }
                 }
             } catch (err) {
                 _didIteratorError = true;
@@ -22499,13 +22504,14 @@ var Runtime = function (_EventEmitter) {
 
                 // If no fields are present, check inputs (horizontal blocks)
                 if (Object.keys(hatFields).length === 0) {
+                    hatFields = {}; // don't overwrite the block's actual fields list
                     var hatInputs = blocks.getInputs(block);
                     for (var input in hatInputs) {
                         if (!hatInputs.hasOwnProperty(input)) continue;
                         var id = hatInputs[input].block;
                         var inpBlock = blocks.getBlock(id);
                         var fields = blocks.getFields(inpBlock);
-                        hatFields = Object.assign(fields, hatFields);
+                        Object.assign(hatFields, fields);
                     }
                 }
 
