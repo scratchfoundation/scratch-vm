@@ -1,3 +1,5 @@
+const ArgumentType = require('../extension-support/argument-type');
+const BlockType = require('../extension-support/block-type');
 const color = require('../util/color');
 const log = require('../util/log');
 
@@ -371,9 +373,9 @@ const TiltDirection = {
 class Scratch3WeDo2Blocks {
 
     /**
-     * @return {string} - the name of this extension.
+     * @return {string} - the ID of this extension.
      */
-    static get EXTENSION_NAME () {
+    static get EXTENSION_ID () {
         return 'wedo2';
     }
 
@@ -395,7 +397,184 @@ class Scratch3WeDo2Blocks {
          */
         this.runtime = runtime;
 
-        this.runtime.HACK_WeDo2Blocks = this;
+        this.connect();
+    }
+
+    /**
+     * @returns {object} metadata for this extension and its blocks.
+     */
+    getInfo () {
+        return {
+            id: Scratch3WeDo2Blocks.EXTENSION_ID,
+            name: 'WeDo 2.0',
+            blocks: [
+                {
+                    opcode: 'motorOnFor',
+                    text: 'turn [MOTOR_ID] on for [DURATION] seconds',
+                    blockType: BlockType.COMMAND,
+                    arguments: {
+                        MOTOR_ID: {
+                            type: ArgumentType.STRING,
+                            menu: 'motorID',
+                            defaultValue: MotorID.DEFAULT
+                        },
+                        DURATION: {
+                            type: ArgumentType.NUMBER,
+                            defaultValue: 1
+                        }
+                    }
+                },
+                {
+                    opcode: 'motorOn',
+                    text: 'turn [MOTOR_ID] on',
+                    blockType: BlockType.COMMAND,
+                    arguments: {
+                        MOTOR_ID: {
+                            type: ArgumentType.STRING,
+                            menu: 'motorID',
+                            defaultValue: MotorID.DEFAULT
+                        }
+                    }
+                },
+                {
+                    opcode: 'motorOff',
+                    text: 'turn [MOTOR_ID] off',
+                    blockType: BlockType.COMMAND,
+                    arguments: {
+                        MOTOR_ID: {
+                            type: ArgumentType.STRING,
+                            menu: 'motorID',
+                            defaultValue: MotorID.DEFAULT
+                        }
+                    }
+                },
+                {
+                    opcode: 'startMotorPower',
+                    text: 'set [MOTOR_ID] power to [POWER]',
+                    blockType: BlockType.COMMAND,
+                    arguments: {
+                        MOTOR_ID: {
+                            type: ArgumentType.STRING,
+                            menu: 'motorID',
+                            defaultValue: MotorID.DEFAULT
+                        },
+                        POWER: {
+                            type: ArgumentType.NUMBER,
+                            defaultValue: 100
+                        }
+                    }
+                },
+                {
+                    opcode: 'setMotorDirection',
+                    text: 'set [MOTOR_ID] direction to [DIRECTION]',
+                    blockType: BlockType.COMMAND,
+                    arguments: {
+                        MOTOR_ID: {
+                            type: ArgumentType.STRING,
+                            menu: 'motorID',
+                            defaultValue: MotorID.DEFAULT
+                        },
+                        DIRECTION: {
+                            type: ArgumentType.STRING,
+                            menu: 'motorDirection',
+                            defaultValue: MotorDirection.FORWARD
+                        }
+                    }
+                },
+                {
+                    opcode: 'setLightHue',
+                    text: 'set light color to [HUE]',
+                    blockType: BlockType.COMMAND,
+                    arguments: {
+                        HUE: {
+                            type: ArgumentType.NUMBER,
+                            defaultValue: 50
+                        }
+                    }
+                },
+                {
+                    opcode: 'playNoteFor',
+                    text: 'play note [NOTE] for [DURATION] seconds',
+                    blockType: BlockType.COMMAND,
+                    arguments: {
+                        NOTE: {
+                            type: ArgumentType.NUMBER, // TODO: ArgumentType.MIDI_NOTE?
+                            defaultValue: 60
+                        },
+                        DURATION: {
+                            type: ArgumentType.NUMBER,
+                            defaultValue: 0.5
+                        }
+                    }
+                },
+                {
+                    opcode: 'whenDistance',
+                    text: 'when distance [OP] [REFERENCE]',
+                    blockType: BlockType.HAT,
+                    arguments: {
+                        OP: {
+                            type: ArgumentType.STRING,
+                            menu: 'lessMore',
+                            defaultValue: '<'
+                        },
+                        REFERENCE: {
+                            type: ArgumentType.NUMBER,
+                            defaultValue: 50
+                        }
+                    }
+                },
+                {
+                    opcode: 'whenTilted',
+                    text: 'when tilted [DIRECTION]',
+                    func: 'isTilted',
+                    blockType: BlockType.HAT,
+                    arguments: {
+                        DIRECTION: {
+                            type: ArgumentType.STRING,
+                            menu: 'tiltDirectionAny',
+                            defaultValue: TiltDirection.ANY
+                        }
+                    }
+                },
+                {
+                    opcode: 'getDistance',
+                    text: 'distance',
+                    blockType: BlockType.REPORTER
+                },
+                {
+                    opcode: 'isTilted',
+                    text: 'tilted [DIRECTION]?',
+                    blockType: BlockType.REPORTER,
+                    arguments: {
+                        DIRECTION: {
+                            type: ArgumentType.STRING,
+                            menu: 'tiltDirectionAny',
+                            defaultValue: TiltDirection.ANY
+                        }
+                    }
+                },
+                {
+                    opcode: 'getTiltAngle',
+                    text: 'tilt angle [DIRECTION]',
+                    blockType: BlockType.REPORTER,
+                    arguments: {
+                        DIRECTION: {
+                            type: ArgumentType.STRING,
+                            menu: 'tiltDirection',
+                            defaultValue: TiltDirection.UP
+                        }
+                    }
+                }
+            ],
+            menus: {
+                motorID: [MotorID.DEFAULT, MotorID.A, MotorID.B, MotorID.ALL],
+                motorDirection: [MotorDirection.FORWARD, MotorDirection.BACKWARD, MotorDirection.REVERSE],
+                tiltDirection: [TiltDirection.UP, TiltDirection.DOWN, TiltDirection.LEFT, TiltDirection.RIGHT],
+                tiltDirectionAny:
+                    [TiltDirection.UP, TiltDirection.DOWN, TiltDirection.LEFT, TiltDirection.RIGHT, TiltDirection.ANY],
+                lessMore: ['<', '>']
+            }
+        };
     }
 
     /**
@@ -407,7 +586,7 @@ class Scratch3WeDo2Blocks {
         }
         const deviceManager = this.runtime.ioDevices.deviceManager;
         const finder = this._finder =
-            deviceManager.searchAndConnect(Scratch3WeDo2Blocks.EXTENSION_NAME, WeDo2.DEVICE_TYPE);
+            deviceManager.searchAndConnect(Scratch3WeDo2Blocks.EXTENSION_ID, WeDo2.DEVICE_TYPE);
         this._finder.promise.then(
             socket => {
                 if (this._finder === finder) {
@@ -425,27 +604,6 @@ class Scratch3WeDo2Blocks {
                     log.warn('Ignoring failure from stale WeDo 2.0 connection attempt');
                 }
             });
-    }
-
-    /**
-     * Retrieve the block primitives implemented by this package.
-     * @return {object.<string, Function>} Mapping of opcode to Function.
-     */
-    getPrimitives () {
-        return {
-            wedo2_motorOnFor: this.motorOnFor,
-            wedo2_motorOn: this.motorOn,
-            wedo2_motorOff: this.motorOff,
-            wedo2_startMotorPower: this.startMotorPower,
-            wedo2_setMotorDirection: this.setMotorDirection,
-            wedo2_setLightHue: this.setLightHue,
-            wedo2_playNoteFor: this.playNoteFor,
-            wedo2_whenDistance: this.whenDistance,
-            wedo2_whenTilted: this.whenTilted,
-            wedo2_getDistance: this.getDistance,
-            wedo2_isTilted: this.isTilted,
-            wedo2_getTiltAngle: this.getTiltAngle
-        };
     }
 
     /**
