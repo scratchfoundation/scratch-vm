@@ -245,7 +245,7 @@ class WeDo2 {
      * @return {number} - the latest value received from the distance sensor.
      */
     get distance () {
-        return this._sensors.distance;
+        return this._sensors.distance * 10;
     }
 
     /**
@@ -732,8 +732,10 @@ class Scratch3WeDo2Blocks {
     whenDistance (args) {
         switch (args.OP) {
         case '<':
+        case '&lt;':
             return this._device.distance < args.REFERENCE;
         case '>':
+        case '&gt;':
             return this._device.distance > args.REFERENCE;
         default:
             log.warn(`Unknown comparison operator in whenDistance: ${args.OP}`);
@@ -755,7 +757,7 @@ class Scratch3WeDo2Blocks {
      * @return {number} - the distance sensor's value, scaled to the [0,100] range.
      */
     getDistance () {
-        return this._device.distance * 10;
+        return this._device.distance;
     }
 
     /**
