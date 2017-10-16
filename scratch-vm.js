@@ -27235,9 +27235,9 @@ var VirtualMachine = function (_EventEmitter) {
                 costume.rotationCenterY = rotationCenterY;
                 this.runtime.renderer.updateSVGSkin(costume.skinId, svg, [rotationCenterX, rotationCenterY]);
             }
-            // @todo: Also update storage in addition to renderer. Without storage, if you switch
-            // costumes and switch back, you will lose your changes in the paint editor.
-            // @todo: emitTargetsUpdate if we need to update the storage ID on the updated costume.
+            var storage = this.runtime.storage;
+            costume.assetId = storage.builtinHelper.cache(storage.AssetType.ImageVector, storage.DataFormat.SVG, new TextEncoder().encode(svg));
+            this.emitTargetsUpdate();
         }
 
         /**
