@@ -23,7 +23,6 @@ const ColorParam = {
  * @typedef {object} PenState - the pen state associated with a particular target.
  * @property {Boolean} penDown - tracks whether the pen should draw for this target.
  * @property {number} color - the current color (hue) of the pen.
- * @property {number} shade - the current shade of the pen.
  * @property {PenAttributes} penAttributes - cached pen attributes for the renderer. This is the authoritative value for
  *   diameter but not for pen color.
  */
@@ -71,7 +70,6 @@ class Scratch3PenBlocks {
             color: 33,
             saturation: 100,
             brightness: 100,
-            shade: 50,
             transparency: 0,
             penAttributes: {
                 color4f: [0, 0, 1, 1],
