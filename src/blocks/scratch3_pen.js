@@ -13,7 +13,7 @@ const RenderedTarget = require('../sprites/rendered-target');
  * @enum {string}
  */
 const ColorParam = {
-    HUE: 'hue',
+    COLOR: 'color',
     SATURATION: 'saturation',
     BRIGHTNESS: 'brightness',
     TRANSPARENCY: 'transparency'
@@ -22,7 +22,7 @@ const ColorParam = {
 /**
  * @typedef {object} PenState - the pen state associated with a particular target.
  * @property {Boolean} penDown - tracks whether the pen should draw for this target.
- * @property {number} hue - the current hue of the pen.
+ * @property {number} color - the current color (hue) of the pen.
  * @property {number} shade - the current shade of the pen.
  * @property {PenAttributes} penAttributes - cached pen attributes for the renderer. This is the authoritative value for
  *   diameter but not for pen color.
@@ -68,7 +68,7 @@ class Scratch3PenBlocks {
     static get DEFAULT_PEN_STATE () {
         return {
             penDown: false,
-            hue: 33,
+            color: 33,
             saturation: 100,
             brightness: 100,
             shade: 50,
@@ -185,7 +185,7 @@ class Scratch3PenBlocks {
         }
     }
 
-    _wrapHue (value) {
+    _wrapColor (value) {
         return MathUtil.wrapClamp(value, 0, 100);
     }
 
@@ -267,7 +267,7 @@ class Scratch3PenBlocks {
                         COLOR_PARAM: {
                             type: ArgumentType.STRING,
                             menu: 'colorParam',
-                            defaultValue: ColorParam.HUE
+                            defaultValue: ColorParam.COLOR
                         },
                         VALUE: {
                             type: ArgumentType.NUMBER,
@@ -283,7 +283,7 @@ class Scratch3PenBlocks {
                         COLOR_PARAM: {
                             type: ArgumentType.STRING,
                             menu: 'colorParam',
-                            defaultValue: ColorParam.HUE
+                            defaultValue: ColorParam.COLOR
                         },
                         VALUE: {
                             type: ArgumentType.NUMBER,
@@ -316,7 +316,7 @@ class Scratch3PenBlocks {
             ],
             menus: {
                 colorParam:
-                    [ColorParam.HUE, ColorParam.SATURATION,
+                    [ColorParam.COLOR, ColorParam.SATURATION,
                     ColorParam.BRIGHTNESS, ColorParam.TRANSPARENCY]
             }
         };
@@ -393,21 +393,21 @@ class Scratch3PenBlocks {
         const penState = this._getPenState(util.target);
         const rgb = Cast.toRgbColorObject(args.COLOR);
         const hsv = Color.rgbToHsv(rgb);
-        penState.hue = (hsv.h / 360) * 100;
+        penState.color = (hsv.h / 360) * 100;
         penState.saturation = hsv.s * 100;
         penState.brightness = hsv.v * 100;
         this._updatePenColor(penState);
     }
 
     /**
-     * Update the cached color from the hue, saturation, brightness and transparency values
+     * Update the cached color from the color, saturation, brightness and transparency values
      * in the provided PenState object.
      * @param {PenState} penState - the pen state to update.
      * @private
      */
     _updatePenColor (penState) {
         let rgb = Color.hsvToRgb({
-            h: penState.hue * 360 / 100,
+            h: penState.color * 360 / 100,
             s: penState.saturation / 100,
             v: penState.brightness / 100
         });
@@ -420,8 +420,8 @@ class Scratch3PenBlocks {
     changePenColorParamBy (args, util) {
         const penState = this._getPenState(util.target);
         switch (args.COLOR_PARAM) {
-            case ColorParam.HUE:
-                penState.hue = this._wrapHue(penState.hue + Cast.toNumber(args.VALUE));
+            case ColorParam.COLOR:
+                penState.color = this._wrapColor(penState.color + Cast.toNumber(args.VALUE));
                 break;
             case ColorParam.SATURATION:
                 penState.saturation = this._clampColorParam(penState.saturation + Cast.toNumber(args.VALUE));
@@ -439,8 +439,8 @@ class Scratch3PenBlocks {
     setPenColorParamTo (args, util) {
         const penState = this._getPenState(util.target);
         switch (args.COLOR_PARAM) {
-            case ColorParam.HUE:
-                penState.hue = this._wrapHue(Cast.toNumber(args.VALUE));
+            case ColorParam.COLOR:
+                penState.color = this._wrapColor(Cast.toNumber(args.VALUE));
                 break;
             case ColorParam.SATURATION:
                 penState.saturation = this._clampColorParam(Cast.toNumber(args.VALUE));
