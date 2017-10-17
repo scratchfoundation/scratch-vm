@@ -415,42 +415,32 @@ class Scratch3PenBlocks {
         penState.penAttributes.color4f[3] = this._transparencyToAlpha(penState.transparency);
     }
 
-    changePenColorParamBy (args, util) {
-        const penState = this._getPenState(util.target);
-        switch (args.COLOR_PARAM) {
+    _setOrChangeColorParam (param, value, penState, change) {
+        switch (param) {
             case ColorParam.COLOR:
-                penState.color = this._wrapColor(penState.color + Cast.toNumber(args.VALUE));
+                penState.color = this._wrapColor(value + (change ? penState.color : 0));
                 break;
             case ColorParam.SATURATION:
-                penState.saturation = this._clampColorParam(penState.saturation + Cast.toNumber(args.VALUE));
+                penState.saturation = this._clampColorParam(value + (change ? penState.saturation : 0));
                 break;
             case ColorParam.BRIGHTNESS:
-                penState.brightness = this._clampColorParam(penState.brightness + Cast.toNumber(args.VALUE));
+                penState.brightness = this._clampColorParam(value + (change ? penState.brightness : 0));
                 break;
             case ColorParam.TRANSPARENCY:
-                penState.transparency = this._clampColorParam(penState.transparency + Cast.toNumber(args.VALUE));
+                penState.transparency = this._clampColorParam(value + (change ? penState.transparency : 0));
                 break;
         }
         this._updatePenColor(penState);
     }
 
+    changePenColorParamBy (args, util) {
+        const penState = this._getPenState(util.target);
+        this._setOrChangeColorParam(args.COLOR_PARAM, Cast.toNumber(args.VALUE), penState, true);
+    }
+
     setPenColorParamTo (args, util) {
         const penState = this._getPenState(util.target);
-        switch (args.COLOR_PARAM) {
-            case ColorParam.COLOR:
-                penState.color = this._wrapColor(Cast.toNumber(args.VALUE));
-                break;
-            case ColorParam.SATURATION:
-                penState.saturation = this._clampColorParam(Cast.toNumber(args.VALUE));
-                break;
-            case ColorParam.BRIGHTNESS:
-                penState.brightness = this._clampColorParam(Cast.toNumber(args.VALUE));
-                break;
-            case ColorParam.TRANSPARENCY:
-                penState.transparency = this._clampColorParam(Cast.toNumber(args.VALUE));
-                break;
-        }
-        this._updatePenColor(penState);
+        this._setOrChangeColorParam(args.COLOR_PARAM, Cast.toNumber(args.VALUE), penState, false);
     }
 
     /**
