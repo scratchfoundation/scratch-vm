@@ -185,18 +185,6 @@ class Scratch3PenBlocks {
         }
     }
 
-    /**
-     * Wrap a pen hue or shade values to the range (0,200).
-     * @param {number} value - the pen hue or shade value to the proper range.
-     * @returns {number} the wrapped value.
-     * @private
-     */
-    _wrapHueOrShade (value) {
-        value = value % 200;
-        if (value < 0) value += 200;
-        return value;
-    }
-
     _wrapHue (value) {
         return MathUtil.wrapClamp(value, 0, 100);
     }
