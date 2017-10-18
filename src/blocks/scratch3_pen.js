@@ -321,7 +321,7 @@ class Scratch3PenBlocks {
             menus: {
                 colorParam:
                     [ColorParam.COLOR, ColorParam.SATURATION,
-                    ColorParam.BRIGHTNESS, ColorParam.TRANSPARENCY]
+                        ColorParam.BRIGHTNESS, ColorParam.TRANSPARENCY]
             }
         };
     }
@@ -412,7 +412,7 @@ class Scratch3PenBlocks {
      * @private
      */
     _updatePenColor (penState) {
-        let rgb = Color.hsvToRgb({
+        const rgb = Color.hsvToRgb({
             h: penState.color * 360 / 100,
             s: penState.saturation / 100,
             v: penState.brightness / 100
@@ -433,21 +433,20 @@ class Scratch3PenBlocks {
      */
     _setOrChangeColorParam (param, value, penState, change) {
         switch (param) {
-            case ColorParam.COLOR:
-                penState.color = this._wrapColor(value + (change ? penState.color : 0));
-                break;
-            case ColorParam.SATURATION:
-                penState.saturation = this._clampColorParam(value + (change ? penState.saturation : 0));
-                break;
-            case ColorParam.BRIGHTNESS:
-                penState.brightness = this._clampColorParam(value + (change ? penState.brightness : 0));
-                break;
-            case ColorParam.TRANSPARENCY:
-                penState.transparency = this._clampColorParam(value + (change ? penState.transparency : 0));
-                break;
-            default:
-                log.warn(`Tried to set or change unknown color parameter: ${param}`);
-
+        case ColorParam.COLOR:
+            penState.color = this._wrapColor(value + (change ? penState.color : 0));
+            break;
+        case ColorParam.SATURATION:
+            penState.saturation = this._clampColorParam(value + (change ? penState.saturation : 0));
+            break;
+        case ColorParam.BRIGHTNESS:
+            penState.brightness = this._clampColorParam(value + (change ? penState.brightness : 0));
+            break;
+        case ColorParam.TRANSPARENCY:
+            penState.transparency = this._clampColorParam(value + (change ? penState.transparency : 0));
+            break;
+        default:
+            log.warn(`Tried to set or change unknown color parameter: ${param}`);
         }
         this._updatePenColor(penState);
     }
