@@ -5,7 +5,7 @@ const Clone = require('../util/clone');
 const Color = require('../util/color');
 const MathUtil = require('../util/math-util');
 const RenderedTarget = require('../sprites/rendered-target');
-
+const log = require('../util/log');
 
 /**
  * Enum for pen color parameters.
@@ -431,6 +431,9 @@ class Scratch3PenBlocks {
             case ColorParam.TRANSPARENCY:
                 penState.transparency = this._clampColorParam(value + (change ? penState.transparency : 0));
                 break;
+            default:
+                log.warn(`Tried to set or change unknown color parameter: ${param}`);
+
         }
         this._updatePenColor(penState);
     }
