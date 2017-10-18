@@ -383,6 +383,7 @@ class Scratch3PenBlocks {
 
     /**
      * The pen "set pen color to {color}" block sets the pen to a particular RGB color.
+     * The transparency is reset to 0.
      * @param {object} args - the block arguments.
      *  @property {int} COLOR - the color to set, expressed as a 24-bit RGB value (0xRRGGBB).
      * @param {object} util - utility object provided by the runtime.
@@ -394,6 +395,7 @@ class Scratch3PenBlocks {
         penState.color = (hsv.h / 360) * 100;
         penState.saturation = hsv.s * 100;
         penState.brightness = hsv.v * 100;
+        penState.transparency = 0;
         this._updatePenColor(penState);
     }
 
