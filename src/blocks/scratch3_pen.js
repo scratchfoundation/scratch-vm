@@ -67,7 +67,7 @@ class Scratch3PenBlocks {
     static get DEFAULT_PEN_STATE () {
         return {
             penDown: false,
-            color: 33,
+            color: 66.66,
             saturation: 100,
             brightness: 100,
             transparency: 0,
