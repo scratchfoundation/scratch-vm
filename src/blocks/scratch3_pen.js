@@ -183,6 +183,12 @@ class Scratch3PenBlocks {
         }
     }
 
+    /**
+     * Wrap a color input into the range (0,100).
+     * @param {number} value - the value to be wrapped.
+     * @returns {number} the wrapped value.
+     * @private
+     */
     _wrapColor (value) {
         return MathUtil.wrapClamp(value, 0, 100);
     }
@@ -417,6 +423,14 @@ class Scratch3PenBlocks {
         penState.penAttributes.color4f[3] = this._transparencyToAlpha(penState.transparency);
     }
 
+    /**
+     * Set or change a single color parameter on the pen state, and update the pen color.
+     * @param {ColorParam} param - the name of the color parameter to set or change.
+     * @param {number} value - the value to set or change the param by.
+     * @param {PenState} penState - the pen state to update.
+     * @param {boolean} change - if true change param by value, if false set param to value.
+     * @private
+     */
     _setOrChangeColorParam (param, value, penState, change) {
         switch (param) {
             case ColorParam.COLOR:
@@ -438,11 +452,27 @@ class Scratch3PenBlocks {
         this._updatePenColor(penState);
     }
 
+    /**
+     * The "change pen {ColorParam} by {number}" block changes one of the pen's color parameters
+     * by a given amound.
+     * @param {object} args - the block arguments.
+     *  @property {ColorParam} COLOR_PARAM - the name of the selected color parameter.
+     *  @property {number} VALUE - the amount to change the selected parameter by.
+     * @param {object} util - utility object provided by the runtime.
+     */
     changePenColorParamBy (args, util) {
         const penState = this._getPenState(util.target);
         this._setOrChangeColorParam(args.COLOR_PARAM, Cast.toNumber(args.VALUE), penState, true);
     }
 
+    /**
+     * The "set pen {ColorParam} to {number}" block sets one of the pen's color parameters
+     * to a given amound.
+     * @param {object} args - the block arguments.
+     *  @property {ColorParam} COLOR_PARAM - the name of the selected color parameter.
+     *  @property {number} VALUE - the amount to set the selected parameter to.
+     * @param {object} util - utility object provided by the runtime.
+     */
     setPenColorParamTo (args, util) {
         const penState = this._getPenState(util.target);
         this._setOrChangeColorParam(args.COLOR_PARAM, Cast.toNumber(args.VALUE), penState, false);
