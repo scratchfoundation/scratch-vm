@@ -93,6 +93,7 @@ class Scratch3LooksBlocks {
             bubbleState.skinId = null;
         }
         target.removeListener(RenderedTarget.EVENT_TARGET_MOVED, this._onTargetMoved);
+        clearTimeout(this._bubbleTimeout);
     }
 
     /**
@@ -254,7 +255,8 @@ class Scratch3LooksBlocks {
     sayforsecs (args, util) {
         this.say(args, util);
         return new Promise(resolve => {
-            setTimeout(() => {
+            this._bubbleTimeout = setTimeout(() => {
+                this._bubbleTimeout = null;
                 // Clear say bubble and proceed.
                 this._updateBubble(util.target, 'say', '');
                 resolve();
@@ -269,7 +271,8 @@ class Scratch3LooksBlocks {
     thinkforsecs (args, util) {
         this.think(args, util);
         return new Promise(resolve => {
-            setTimeout(() => {
+            this._bubbleTimeout = setTimeout(() => {
+                this._bubbleTimeout = null;
                 // Clear say bubble and proceed.
                 this._updateBubble(util.target, 'think', '');
                 resolve();
