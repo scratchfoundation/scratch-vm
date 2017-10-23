@@ -6,6 +6,8 @@ const RenderedTarget = require('../sprites/rendered-target');
  * @typedef {object} BubbleState - the bubble state associated with a particular target.
  * @property {Boolean} onSpriteRight - tracks whether the bubble is right or left of the sprite.
  * @property {?int} drawableId - the ID of the associated bubble Drawable, null if none.
+ * @property {Boolean} drawableVisible - if drawable has been hidden by blank text.
+ *      See _renderBubble for explanation of this optimization.
  * @property {string} text - the text of the bubble.
  * @property {string} type - the type of the bubble, "say" or "think"
  */
@@ -34,6 +36,7 @@ class Scratch3LooksBlocks {
     static get DEFAULT_BUBBLE_STATE () {
         return {
             drawableId: null,
+            drawableVisible: true,
             onSpriteRight: true,
             skinId: null,
             text: '',
@@ -87,6 +90,7 @@ class Scratch3LooksBlocks {
             this.runtime.renderer.destroySkin(bubbleState.skinId);
             bubbleState.drawableId = null;
             bubbleState.skinId = null;
+            bubbleState.drawableVisible = true; // Reset back to default value
             this.runtime.requestRedraw();
         }
         target.removeListener(RenderedTarget.EVENT_TARGET_MOVED, this._onTargetMoved);
@@ -146,14 +150,26 @@ class Scratch3LooksBlocks {
      */
     _renderBubble (target) {
         const bubbleState = this._getBubbleState(target);
-        const {type, text, onSpriteRight} = bubbleState;
-        // Remove the bubble if empty text or sprite is not visible
-        if (text === '' || !target.visible) {
+        const {drawableVisible, type, text, onSpriteRight} = bubbleState;
+
+        // Remove the bubble if target is not visible, or text is being set to blank
+        // without being initialized. See comment below about blank text optimization.
+        if (!target.visible || (text === '' && !bubbleState.skinId)) {
             return this._onTargetWillExit(target);
         }
 
         if (bubbleState.skinId) {
-            this.runtime.renderer.updateTextSkin(bubbleState.skinId, type, text, onSpriteRight, [0, 0]);
+            // Optimization: if text is set to blank, hide the drawable instead of
+            // getting rid of it. This prevents flickering in "typewriter" projects
+            if ((text === '' && drawableVisible) || (text !== '' && !drawableVisible)) {
+                bubbleState.drawableVisible = text !== '';
+                this.runtime.renderer.updateDrawableProperties(bubbleState.drawableId, {
+                    visible: bubbleState.drawableVisible
+                });
+            }
+            if (bubbleState.drawableVisible) {
+                this.runtime.renderer.updateTextSkin(bubbleState.skinId, type, text, onSpriteRight, [0, 0]);
+            }
         } else {
             target.addListener(RenderedTarget.EVENT_TARGET_MOVED, this._onTargetMoved);
 
