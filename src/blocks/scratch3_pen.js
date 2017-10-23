@@ -5,12 +5,24 @@ const Clone = require('../util/clone');
 const Color = require('../util/color');
 const MathUtil = require('../util/math-util');
 const RenderedTarget = require('../sprites/rendered-target');
+const log = require('../util/log');
+
+/**
+ * Enum for pen color parameters.
+ * @readonly
+ * @enum {string}
+ */
+const ColorParam = {
+    COLOR: 'color',
+    SATURATION: 'saturation',
+    BRIGHTNESS: 'brightness',
+    TRANSPARENCY: 'transparency'
+};
 
 /**
  * @typedef {object} PenState - the pen state associated with a particular target.
  * @property {Boolean} penDown - tracks whether the pen should draw for this target.
- * @property {number} hue - the current hue of the pen.
- * @property {number} shade - the current shade of the pen.
+ * @property {number} color - the current color (hue) of the pen.
  * @property {PenAttributes} penAttributes - cached pen attributes for the renderer. This is the authoritative value for
  *   diameter but not for pen color.
  */
@@ -55,8 +67,9 @@ class Scratch3PenBlocks {
     static get DEFAULT_PEN_STATE () {
         return {
             penDown: false,
-            hue: 120,
-            shade: 50,
+            color: 66.66,
+            saturation: 100,
+            brightness: 100,
             transparency: 0,
             penAttributes: {
                 color4f: [0, 0, 1, 1],
@@ -171,44 +184,22 @@ class Scratch3PenBlocks {
     }
 
     /**
-     * Update the cached color from the hue, shade and transparency values in the provided
-     * PenState object.
-     * @param {PenState} penState - the pen state to update.
-     * @private
-     */
-    _updatePenColor (penState) {
-        let rgb = Color.hsvToRgb({h: penState.hue * 180 / 100, s: 1, v: 1});
-        const shade = (penState.shade > 100) ? 200 - penState.shade : penState.shade;
-        if (shade < 50) {
-            rgb = Color.mixRgb(Color.RGB_BLACK, rgb, (10 + shade) / 60);
-        } else {
-            rgb = Color.mixRgb(rgb, Color.RGB_WHITE, (shade - 50) / 60);
-        }
-        penState.penAttributes.color4f[0] = rgb.r / 255.0;
-        penState.penAttributes.color4f[1] = rgb.g / 255.0;
-        penState.penAttributes.color4f[2] = rgb.b / 255.0;
-        penState.penAttributes.color4f[3] = this._transparencyToAlpha(penState.transparency);
-    }
-
-    /**
-     * Wrap a pen hue or shade values to the range (0,200).
-     * @param {number} value - the pen hue or shade value to the proper range.
+     * Wrap a color input into the range (0,100).
+     * @param {number} value - the value to be wrapped.
      * @returns {number} the wrapped value.
      * @private
      */
-    _wrapHueOrShade (value) {
-        value = value % 200;
-        if (value < 0) value += 200;
-        return value;
+    _wrapColor (value) {
+        return MathUtil.wrapClamp(value, 0, 100);
     }
 
     /**
-     * Clamp a pen transparency value to the range (0,100).
-     * @param {number} value - the pen transparency value to be clamped.
+     * Clamp a pen color parameter to the range (0,100).
+     * @param {number} value - the value to be clamped.
      * @returns {number} the clamped value.
      * @private
      */
-    _clampTransparency (value) {
+    _clampColorParam (value) {
         return MathUtil.clamp(value, 0, 100);
     }
 
@@ -246,15 +237,7 @@ class Scratch3PenBlocks {
             blocks: [
                 {
                     opcode: 'clear',
-                    blockType: BlockType.COMMAND,
-                    arguments: {
-                        NUM1: {
-                            type: ArgumentType.NUMBER
-                        },
-                        NUM2: {
-                            type: ArgumentType.NUMBER
-                        }
-                    }
+                    blockType: BlockType.COMMAND
                 },
                 {
                     opcode: 'stamp',
@@ -281,44 +264,32 @@ class Scratch3PenBlocks {
                     }
                 },
                 {
-                    opcode: 'changePenHueBy',
+                    opcode: 'changePenColorParamBy',
                     blockType: BlockType.COMMAND,
-                    text: 'change pen color by [COLOR]',
+                    text: 'change pen [COLOR_PARAM] by [VALUE]',
                     arguments: {
-                        COLOR: {
+                        COLOR_PARAM: {
+                            type: ArgumentType.STRING,
+                            menu: 'colorParam',
+                            defaultValue: ColorParam.COLOR
+                        },
+                        VALUE: {
                             type: ArgumentType.NUMBER,
                             defaultValue: 10
                         }
                     }
                 },
                 {
-                    opcode: 'setPenHueToNumber',
+                    opcode: 'setPenColorParamTo',
                     blockType: BlockType.COMMAND,
-                    text: 'set pen color to [COLOR]',
+                    text: 'set pen [COLOR_PARAM] to [VALUE]',
                     arguments: {
-                        COLOR: {
-                            type: ArgumentType.NUMBER,
-                            defaultValue: 0
-                        }
-                    }
-                },
-                {
-                    opcode: 'changePenShadeBy',
-                    blockType: BlockType.COMMAND,
-                    text: 'change pen shade by [SHADE]',
-                    arguments: {
-                        SHADE: {
-                            type: ArgumentType.NUMBER,
-                            defaultValue: 10
-                        }
-                    }
-                },
-                {
-                    opcode: 'setPenShadeToNumber',
-                    blockType: BlockType.COMMAND,
-                    text: 'set pen shade to [SHADE]',
-                    arguments: {
-                        SHADE: {
+                        COLOR_PARAM: {
+                            type: ArgumentType.STRING,
+                            menu: 'colorParam',
+                            defaultValue: ColorParam.COLOR
+                        },
+                        VALUE: {
                             type: ArgumentType.NUMBER,
                             defaultValue: 50
                         }
@@ -346,7 +317,12 @@ class Scratch3PenBlocks {
                         }
                     }
                 }
-            ]
+            ],
+            menus: {
+                colorParam:
+                    [ColorParam.COLOR, ColorParam.SATURATION,
+                        ColorParam.BRIGHTNESS, ColorParam.TRANSPARENCY]
+            }
         };
     }
 
@@ -413,6 +389,7 @@ class Scratch3PenBlocks {
 
     /**
      * The pen "set pen color to {color}" block sets the pen to a particular RGB color.
+     * The transparency is reset to 0.
      * @param {object} args - the block arguments.
      *  @property {int} COLOR - the color to set, expressed as a 24-bit RGB value (0xRRGGBB).
      * @param {object} util - utility object provided by the runtime.
@@ -421,66 +398,83 @@ class Scratch3PenBlocks {
         const penState = this._getPenState(util.target);
         const rgb = Cast.toRgbColorObject(args.COLOR);
         const hsv = Color.rgbToHsv(rgb);
+        penState.color = (hsv.h / 360) * 100;
+        penState.saturation = hsv.s * 100;
+        penState.brightness = hsv.v * 100;
+        penState.transparency = 0;
+        this._updatePenColor(penState);
+    }
 
-        penState.hue = 200 * hsv.h / 360;
-        penState.shade = 50 * hsv.v;
+    /**
+     * Update the cached color from the color, saturation, brightness and transparency values
+     * in the provided PenState object.
+     * @param {PenState} penState - the pen state to update.
+     * @private
+     */
+    _updatePenColor (penState) {
+        const rgb = Color.hsvToRgb({
+            h: penState.color * 360 / 100,
+            s: penState.saturation / 100,
+            v: penState.brightness / 100
+        });
         penState.penAttributes.color4f[0] = rgb.r / 255.0;
         penState.penAttributes.color4f[1] = rgb.g / 255.0;
         penState.penAttributes.color4f[2] = rgb.b / 255.0;
-        if (rgb.hasOwnProperty('a')) { // Will there always be an 'a'?
-            penState.penAttributes.color4f[3] = rgb.a / 255.0;
-        } else {
-            penState.penAttributes.color4f[3] = 1;
+        penState.penAttributes.color4f[3] = this._transparencyToAlpha(penState.transparency);
+    }
+
+    /**
+     * Set or change a single color parameter on the pen state, and update the pen color.
+     * @param {ColorParam} param - the name of the color parameter to set or change.
+     * @param {number} value - the value to set or change the param by.
+     * @param {PenState} penState - the pen state to update.
+     * @param {boolean} change - if true change param by value, if false set param to value.
+     * @private
+     */
+    _setOrChangeColorParam (param, value, penState, change) {
+        switch (param) {
+        case ColorParam.COLOR:
+            penState.color = this._wrapColor(value + (change ? penState.color : 0));
+            break;
+        case ColorParam.SATURATION:
+            penState.saturation = this._clampColorParam(value + (change ? penState.saturation : 0));
+            break;
+        case ColorParam.BRIGHTNESS:
+            penState.brightness = this._clampColorParam(value + (change ? penState.brightness : 0));
+            break;
+        case ColorParam.TRANSPARENCY:
+            penState.transparency = this._clampColorParam(value + (change ? penState.transparency : 0));
+            break;
+        default:
+            log.warn(`Tried to set or change unknown color parameter: ${param}`);
         }
-        penState.transparency = this._alphaToTransparency(penState.penAttributes.color4f[3]);
-    }
-
-    /**
-     * The pen "change pen color by {number}" block rotates the hue of the pen by the given amount.
-     * @param {object} args - the block arguments.
-     *  @property {number} COLOR - the amount of desired hue rotation.
-     * @param {object} util - utility object provided by the runtime.
-     */
-    changePenHueBy (args, util) {
-        const penState = this._getPenState(util.target);
-        penState.hue = this._wrapHueOrShade(penState.hue + Cast.toNumber(args.COLOR));
         this._updatePenColor(penState);
     }
 
     /**
-     * The pen "set pen color to {number}" block sets the hue of the pen.
+     * The "change pen {ColorParam} by {number}" block changes one of the pen's color parameters
+     * by a given amound.
      * @param {object} args - the block arguments.
-     *  @property {number} COLOR - the desired hue.
+     *  @property {ColorParam} COLOR_PARAM - the name of the selected color parameter.
+     *  @property {number} VALUE - the amount to change the selected parameter by.
      * @param {object} util - utility object provided by the runtime.
      */
-    setPenHueToNumber (args, util) {
+    changePenColorParamBy (args, util) {
         const penState = this._getPenState(util.target);
-        penState.hue = this._wrapHueOrShade(Cast.toNumber(args.COLOR));
-        this._updatePenColor(penState);
+        this._setOrChangeColorParam(args.COLOR_PARAM, Cast.toNumber(args.VALUE), penState, true);
     }
 
     /**
-     * The pen "change pen shade by {number}" block changes the "shade" of the pen, related to the HSV value.
+     * The "set pen {ColorParam} to {number}" block sets one of the pen's color parameters
+     * to a given amound.
      * @param {object} args - the block arguments.
-     *  @property {number} SHADE - the amount of desired shade change.
+     *  @property {ColorParam} COLOR_PARAM - the name of the selected color parameter.
+     *  @property {number} VALUE - the amount to set the selected parameter to.
      * @param {object} util - utility object provided by the runtime.
      */
-    changePenShadeBy (args, util) {
+    setPenColorParamTo (args, util) {
         const penState = this._getPenState(util.target);
-        penState.shade = this._wrapHueOrShade(penState.shade + Cast.toNumber(args.SHADE));
-        this._updatePenColor(penState);
-    }
-
-    /**
-     * The pen "set pen shade to {number}" block sets the "shade" of the pen, related to the HSV value.
-     * @param {object} args - the block arguments.
-     *  @property {number} SHADE - the amount of desired shade change.
-     * @param {object} util - utility object provided by the runtime.
-     */
-    setPenShadeToNumber (args, util) {
-        const penState = this._getPenState(util.target);
-        penState.shade = this._wrapHueOrShade(Cast.toNumber(args.SHADE));
-        this._updatePenColor(penState);
+        this._setOrChangeColorParam(args.COLOR_PARAM, Cast.toNumber(args.VALUE), penState, false);
     }
 
     /**
@@ -503,30 +497,6 @@ class Scratch3PenBlocks {
     setPenSizeTo (args, util) {
         const penAttributes = this._getPenState(util.target).penAttributes;
         penAttributes.diameter = this._clampPenSize(Cast.toNumber(args.SIZE));
-    }
-
-    /**
-     * The pen "change pen transparency by {number}" block changes the RGBA "transparency" of the pen.
-     * @param {object} args - the block arguments.
-     *  @property {number} TRANSPARENCY - the amount of desired transparency change.
-     * @param {object} util - utility object provided by the runtime.
-     */
-    changePenTransparencyBy (args, util) {
-        const penState = this._getPenState(util.target);
-        penState.transparency = this._clampTransparency(penState.transparency + Cast.toNumber(args.TRANSPARENCY));
-        this._updatePenColor(penState);
-    }
-
-    /**
-     * The pen "set pen transparency to {number}" block sets the RGBA "transparency" of the pen.
-     * @param {object} args - the block arguments.
-     *  @property {number} TRANSPARENCY - the amount of desired transparency change.
-     * @param {object} util - utility object provided by the runtime.
-     */
-    setPenTransparencyTo (args, util) {
-        const penState = this._getPenState(util.target);
-        penState.transparency = this._clampTransparency(Cast.toNumber(args.TRANSPARENCY));
-        this._updatePenColor(penState);
     }
 }
 
