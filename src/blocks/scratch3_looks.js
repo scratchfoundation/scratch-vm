@@ -92,6 +92,7 @@ class Scratch3LooksBlocks {
             this.runtime.renderer.destroySkin(bubbleState.skinId);
             bubbleState.skinId = null;
         }
+        target.removeListener(RenderedTarget.EVENT_TARGET_MOVED, this._onTargetMoved);
     }
 
     /**
