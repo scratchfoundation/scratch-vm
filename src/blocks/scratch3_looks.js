@@ -174,6 +174,7 @@ class Scratch3LooksBlocks {
 
             bubbleState.drawableId = this.runtime.renderer.createDrawable();
             bubbleState.skinId = this.runtime.renderer.createTextSkin(type, text, bubbleState.onSpriteRight, [0, 0]);
+            bubbleState.visible = true;
 
             this.runtime.renderer.setDrawableOrder(bubbleState.drawableId, Infinity);
             this.runtime.renderer.updateDrawableProperties(bubbleState.drawableId, {
