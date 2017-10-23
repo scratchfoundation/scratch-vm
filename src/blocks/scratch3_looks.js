@@ -8,7 +8,6 @@ const RenderedTarget = require('../sprites/rendered-target');
  * @property {?int} drawableId - the ID of the associated bubble Drawable, null if none.
  * @property {string} text - the text of the bubble.
  * @property {string} type - the type of the bubble, "say" or "think"
- * @property {Boolean} visible - whether the bubble is hidden along with its sprite.
  */
 
 class Scratch3LooksBlocks {
@@ -38,8 +37,7 @@ class Scratch3LooksBlocks {
             onSpriteRight: true,
             skinId: null,
             text: '',
-            type: 'say',
-            visible: true
+            type: 'say'
         };
     }
 
@@ -72,7 +70,7 @@ class Scratch3LooksBlocks {
      */
     _onTargetMoved (target) {
         const bubbleState = this._getBubbleState(target);
-        if (bubbleState.drawableId && bubbleState.visible) {
+        if (bubbleState.drawableId) {
             this._positionBubble(target);
         }
     }
@@ -84,16 +82,14 @@ class Scratch3LooksBlocks {
      */
     _onTargetWillExit (target) {
         const bubbleState = this._getBubbleState(target);
-        if (bubbleState.drawableId) {
+        if (bubbleState.drawableId && bubbleState.skinId) {
             this.runtime.renderer.destroyDrawable(bubbleState.drawableId);
-            bubbleState.drawableId = null;
-        }
-        if (bubbleState.skinId) {
             this.runtime.renderer.destroySkin(bubbleState.skinId);
+            bubbleState.drawableId = null;
             bubbleState.skinId = null;
+            this.runtime.requestRedraw();
         }
         target.removeListener(RenderedTarget.EVENT_TARGET_MOVED, this._onTargetMoved);
-        clearTimeout(this._bubbleTimeout);
     }
 
     /**
@@ -104,6 +100,7 @@ class Scratch3LooksBlocks {
         for (let n = 0; n < this.runtime.targets.length; n++) {
             this._onTargetWillExit(this.runtime.targets[n]);
         }
+        clearTimeout(this._bubbleTimeout);
     }
 
     /**
@@ -150,17 +147,12 @@ class Scratch3LooksBlocks {
     _renderBubble (target) {
         const bubbleState = this._getBubbleState(target);
         const {type, text, onSpriteRight} = bubbleState;
-        if (text === '') {
-            return this._setBubbleVisibility(target, false);
+        // Remove the bubble if empty text or sprite is not visible
+        if (text === '' || !target.visible) {
+            return this._onTargetWillExit(target);
         }
 
         if (bubbleState.skinId) {
-            if (!bubbleState.visible) {
-                bubbleState.visible = true;
-                this.runtime.renderer.updateDrawableProperties(bubbleState.drawableId, {
-                    visible: bubbleState.visible
-                });
-            }
             this.runtime.renderer.updateTextSkin(bubbleState.skinId, type, text, onSpriteRight, [0, 0]);
         } else {
             target.addListener(RenderedTarget.EVENT_TARGET_MOVED, this._onTargetMoved);
@@ -174,7 +166,6 @@ class Scratch3LooksBlocks {
 
             bubbleState.drawableId = this.runtime.renderer.createDrawable();
             bubbleState.skinId = this.runtime.renderer.createTextSkin(type, text, bubbleState.onSpriteRight, [0, 0]);
-            bubbleState.visible = true;
 
             this.runtime.renderer.setDrawableOrder(bubbleState.drawableId, Infinity);
             this.runtime.renderer.updateDrawableProperties(bubbleState.drawableId, {
@@ -198,23 +189,6 @@ class Scratch3LooksBlocks {
         bubbleState.type = type;
         bubbleState.text = text;
         this._renderBubble(target);
-    }
-
-    /**
-     * Hide the bubble for a given target.
-     * @param {!Target} target Target that say/think blocks are being called on.
-     * @param {!boolean} visibility Visible or not.
-     * @private
-     */
-    _setBubbleVisibility (target, visibility) {
-        const bubbleState = this._getBubbleState(target);
-        bubbleState.visible = visibility;
-        if (bubbleState.drawableId) {
-            this.runtime.renderer.updateDrawableProperties(bubbleState.drawableId, {
-                visible: bubbleState.visible
-            });
-        }
-        this.runtime.requestRedraw();
     }
 
     /**
@@ -288,7 +262,7 @@ class Scratch3LooksBlocks {
 
     hide (args, util) {
         util.target.setVisible(false);
-        this._setBubbleVisibility(util.target, false);
+        this._renderBubble(util.target);
     }
 
     /**
