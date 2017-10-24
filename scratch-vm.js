@@ -17465,9 +17465,10 @@ var RenderedTarget = __webpack_require__(19);
  * @typedef {object} BubbleState - the bubble state associated with a particular target.
  * @property {Boolean} onSpriteRight - tracks whether the bubble is right or left of the sprite.
  * @property {?int} drawableId - the ID of the associated bubble Drawable, null if none.
+ * @property {Boolean} drawableVisible - false if drawable has been hidden by blank text.
+ *      See _renderBubble for explanation of this optimization.
  * @property {string} text - the text of the bubble.
  * @property {string} type - the type of the bubble, "say" or "think"
- * @property {Boolean} visible - whether the bubble is hidden along with its sprite.
  */
 
 var Scratch3LooksBlocks = function () {
@@ -17523,7 +17524,7 @@ var Scratch3LooksBlocks = function () {
         key: '_onTargetMoved',
         value: function _onTargetMoved(target) {
             var bubbleState = this._getBubbleState(target);
-            if (bubbleState.drawableId && bubbleState.visible) {
+            if (bubbleState.drawableId) {
                 this._positionBubble(target);
             }
         }
@@ -17538,14 +17539,15 @@ var Scratch3LooksBlocks = function () {
         key: '_onTargetWillExit',
         value: function _onTargetWillExit(target) {
             var bubbleState = this._getBubbleState(target);
-            if (bubbleState.drawableId) {
+            if (bubbleState.drawableId && bubbleState.skinId) {
                 this.runtime.renderer.destroyDrawable(bubbleState.drawableId);
-                bubbleState.drawableId = null;
-            }
-            if (bubbleState.skinId) {
                 this.runtime.renderer.destroySkin(bubbleState.skinId);
+                bubbleState.drawableId = null;
                 bubbleState.skinId = null;
+                bubbleState.drawableVisible = true; // Reset back to default value
+                this.runtime.requestRedraw();
             }
+            target.removeListener(RenderedTarget.EVENT_TARGET_MOVED, this._onTargetMoved);
         }
 
         /**
@@ -17559,6 +17561,7 @@ var Scratch3LooksBlocks = function () {
             for (var n = 0; n < this.runtime.targets.length; n++) {
                 this._onTargetWillExit(this.runtime.targets[n]);
             }
+            clearTimeout(this._bubbleTimeout);
         }
 
         /**
@@ -17608,22 +17611,30 @@ var Scratch3LooksBlocks = function () {
         key: '_renderBubble',
         value: function _renderBubble(target) {
             var bubbleState = this._getBubbleState(target);
-            var type = bubbleState.type,
+            var drawableVisible = bubbleState.drawableVisible,
+                type = bubbleState.type,
                 text = bubbleState.text,
                 onSpriteRight = bubbleState.onSpriteRight;
 
-            if (text === '') {
-                return this._setBubbleVisibility(target, false);
+            // Remove the bubble if target is not visible, or text is being set to blank
+            // without being initialized. See comment below about blank text optimization.
+
+            if (!target.visible || text === '' && !bubbleState.skinId) {
+                return this._onTargetWillExit(target);
             }
 
             if (bubbleState.skinId) {
-                if (!bubbleState.visible) {
-                    bubbleState.visible = true;
+                // Optimization: if text is set to blank, hide the drawable instead of
+                // getting rid of it. This prevents flickering in "typewriter" projects
+                if (text === '' && drawableVisible || text !== '' && !drawableVisible) {
+                    bubbleState.drawableVisible = text !== '';
                     this.runtime.renderer.updateDrawableProperties(bubbleState.drawableId, {
-                        visible: bubbleState.visible
+                        visible: bubbleState.drawableVisible
                     });
                 }
-                this.runtime.renderer.updateTextSkin(bubbleState.skinId, type, text, onSpriteRight, [0, 0]);
+                if (bubbleState.drawableVisible) {
+                    this.runtime.renderer.updateTextSkin(bubbleState.skinId, type, text, onSpriteRight, [0, 0]);
+                }
             } else {
                 target.addListener(RenderedTarget.EVENT_TARGET_MOVED, this._onTargetMoved);
 
@@ -17662,26 +17673,6 @@ var Scratch3LooksBlocks = function () {
             bubbleState.type = type;
             bubbleState.text = text;
             this._renderBubble(target);
-        }
-
-        /**
-         * Hide the bubble for a given target.
-         * @param {!Target} target Target that say/think blocks are being called on.
-         * @param {!boolean} visibility Visible or not.
-         * @private
-         */
-
-    }, {
-        key: '_setBubbleVisibility',
-        value: function _setBubbleVisibility(target, visibility) {
-            var bubbleState = this._getBubbleState(target);
-            bubbleState.visible = visibility;
-            if (bubbleState.drawableId) {
-                this.runtime.renderer.updateDrawableProperties(bubbleState.drawableId, {
-                    visible: bubbleState.visible
-                });
-            }
-            this.runtime.requestRedraw();
         }
 
         /**
@@ -17730,7 +17721,8 @@ var Scratch3LooksBlocks = function () {
 
             this.say(args, util);
             return new Promise(function (resolve) {
-                setTimeout(function () {
+                _this._bubbleTimeout = setTimeout(function () {
+                    _this._bubbleTimeout = null;
                     // Clear say bubble and proceed.
                     _this._updateBubble(util.target, 'say', '');
                     resolve();
@@ -17749,7 +17741,8 @@ var Scratch3LooksBlocks = function () {
 
             this.think(args, util);
             return new Promise(function (resolve) {
-                setTimeout(function () {
+                _this2._bubbleTimeout = setTimeout(function () {
+                    _this2._bubbleTimeout = null;
                     // Clear say bubble and proceed.
                     _this2._updateBubble(util.target, 'think', '');
                     resolve();
@@ -17766,7 +17759,7 @@ var Scratch3LooksBlocks = function () {
         key: 'hide',
         value: function hide(args, util) {
             util.target.setVisible(false);
-            this._setBubbleVisibility(util.target, false);
+            this._renderBubble(util.target);
         }
 
         /**
@@ -17919,11 +17912,11 @@ var Scratch3LooksBlocks = function () {
         get: function get() {
             return {
                 drawableId: null,
+                drawableVisible: true,
                 onSpriteRight: true,
                 skinId: null,
                 text: '',
-                type: 'say',
-                visible: true
+                type: 'say'
             };
         }
 
