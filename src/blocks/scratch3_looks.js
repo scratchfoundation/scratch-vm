@@ -6,7 +6,7 @@ const RenderedTarget = require('../sprites/rendered-target');
  * @typedef {object} BubbleState - the bubble state associated with a particular target.
  * @property {Boolean} onSpriteRight - tracks whether the bubble is right or left of the sprite.
  * @property {?int} drawableId - the ID of the associated bubble Drawable, null if none.
- * @property {Boolean} drawableVisible - if drawable has been hidden by blank text.
+ * @property {Boolean} drawableVisible - false if drawable has been hidden by blank text.
  *      See _renderBubble for explanation of this optimization.
  * @property {string} text - the text of the bubble.
  * @property {string} type - the type of the bubble, "say" or "think"
