@@ -907,6 +907,9 @@ class RenderedTarget extends Target {
      * Dispose, destroying any run-time properties.
      */
     dispose () {
+        for (let key in this.variables) {
+            this.deleteVariable(key);
+        }
         this.runtime.changeCloneCounter(-1);
         this.runtime.stopForTarget(this);
         this.sprite.removeClone(this);

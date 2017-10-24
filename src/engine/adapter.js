@@ -62,6 +62,7 @@ const domToBlock = function (blockDOM, blocks, isTopBlock, parent) {
             const fieldName = xmlChild.attribs.name;
             // Add id in case it is a variable field
             const fieldId = xmlChild.attribs.id;
+            const variabletype = xmlChild.attribs.variabletype;
             let fieldData = '';
             if (xmlChild.children.length > 0 && xmlChild.children[0].data) {
                 fieldData = xmlChild.children[0].data;
@@ -73,7 +74,8 @@ const domToBlock = function (blockDOM, blocks, isTopBlock, parent) {
             block.fields[fieldName] = {
                 name: fieldName,
                 id: fieldId,
-                value: fieldData
+                value: fieldData,
+                variabletype
             };
             break;
         }

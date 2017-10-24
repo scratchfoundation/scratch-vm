@@ -632,6 +632,12 @@ class VirtualMachine extends EventEmitter {
      * of the current editing target's blocks.
      */
     emitWorkspaceUpdate () {
+        // modefied by Kane, 修复删除变量后切换角色出现undefined变量的bug
+        for (let variable in this.editingTarget.variables) {
+            if (this.editingTarget.variables[variable].name === undefined) {
+                delete this.editingTarget.variables[variable];
+            }
+        }
         const variableMap = Object.assign({},
             this.runtime.getTargetForStage().variables,
             this.editingTarget.variables

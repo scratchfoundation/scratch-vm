@@ -13,15 +13,16 @@ class Variable {
      * @param {boolean} isCloud Whether the variable is stored in the cloud.
      * @constructor
      */
-    constructor (id, name, value, isCloud) {
+    constructor (id, name, value, isCloud, type) {
         this.id = id || uid();
         this.name = name;
         this.value = value;
         this.isCloud = isCloud;
+        this.type = type || '';
     }
 
     toXML () {
-        return `<variable type="" id="${this.id}">${this.name}</variable>`;
+        return `<variable type="${this.type}" id="${this.id}">${this.name}</variable>`;
     }
 }
 

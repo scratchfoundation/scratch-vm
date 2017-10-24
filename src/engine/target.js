@@ -144,10 +144,10 @@ class Target extends EventEmitter {
      * @param {string} id Id of variable
      * @param {string} name Name of variable.
      */
-    createVariable (id, name) {
+    createVariable (id, name, type = '') {
         if (!this.variables.hasOwnProperty(id)) {
             const newVariable = new Variable(id, name, 0,
-                false);
+                false, type);
             this.variables[id] = newVariable;
         }
     }

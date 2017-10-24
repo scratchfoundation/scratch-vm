@@ -255,15 +255,29 @@ class Blocks {
             });
             break;
         case 'var_create':
-            stage.createVariable(e.varId, e.varName);
+            stage.createVariable(e.varId, e.varName, e.varType);
             break;
         case 'var_rename':
             stage.renameVariable(e.varId, e.newName);
             break;
         case 'var_delete':
             stage.deleteVariable(e.varId);
+            this.deleteVariable({id: e.varId, name: e.varName}, optRuntime);
             break;
         }
+    }
+
+    deleteVariable (e, optRuntime) {
+        // Modified by Kane
+        const targets = optRuntime.targets;
+        targets.forEach(target => {
+            const blocks = target.blocks._blocks;
+            for (let id in blocks) {
+                if (blocks[id].fields.VARIABLE && blocks[id].fields.VARIABLE.value === e.name) {
+                    blocks[id].deleted = true;
+                }
+            }
+        });
     }
 
     // ---------------------------------------------------------------------
@@ -307,9 +321,21 @@ class Blocks {
             if (args.name === 'VARIABLE') {
                 // Get variable name using the id in args.value.
                 const variable = optRuntime.getEditingTarget().lookupVariableById(args.value);
+                const targets = optRuntime.targets;
+                const prevValue = block.fields[args.name].value;
                 if (variable) {
                     block.fields[args.name].value = variable.name;
                     block.fields[args.name].id = args.value;
+                } else {
+                    // Modified by Kane
+                    targets.forEach(target => {
+                        const blocks = target.blocks._blocks;
+                        for (let id in blocks) {
+                            if (blocks[id].fields[args.name] && blocks[id].fields[args.name].value === prevValue) {
+                                blocks[id].fields[args.name].value = args.value;
+                            }
+                        }
+                    });
                 }
             } else {
                 block.fields[args.name].value = args.value;
@@ -460,6 +486,10 @@ class Blocks {
      */
     blockToXML (blockId) {
         const block = this._blocks[blockId];
+        // Modified by Kane: 删除变量
+        if (block.deleted) {
+            return block.next ? this.blockToXML(block.next) : '';
+        }
         // Encode properties of this block.
         const tagName = (block.shadow) ? 'shadow' : 'block';
         let xmlString =
@@ -497,7 +527,7 @@ class Blocks {
             if (typeof value === 'string') {
                 value = xmlEscape(blockField.value);
             }
-            xmlString += `<field name="${blockField.name}">${value}</field>`;
+            xmlString += `<field variableType="${blockField.variabletype}" name="${blockField.name}">${value}</field>`;
         }
         // Add blocks connected to the next connection.
         if (block.next) {

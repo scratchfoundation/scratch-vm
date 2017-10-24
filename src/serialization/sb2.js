@@ -220,7 +220,8 @@ const parseScratchObject = function (object, runtime, topLevel) {
                 getVariableId(variable.name),
                 variable.name,
                 variable.value,
-                variable.isPersistent
+                variable.isPersistent,
+                variable.type
             );
             target.variables[newVariable.id] = newVariable;
         }
