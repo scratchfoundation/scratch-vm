@@ -13,5 +13,7 @@ npm-*
 /.idea
 
 # Build
-/dist
 /playground
+
+#yarn
+yarn.lock
