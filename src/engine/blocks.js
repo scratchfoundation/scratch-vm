@@ -255,7 +255,13 @@ class Blocks {
             });
             break;
         case 'var_create':
-            stage.createVariable(e.varId, e.varName);
+            // New variables being created by the user are all global.
+            // Check if this variable exists on the current target or stage.
+            // If not, create it on the stage.
+            // TODO create global and local variables when UI provides a way.
+            if (!optRuntime.getEditingTarget().lookupVariableById(e.varId)) {
+                stage.createVariable(e.varId, e.varName);
+            }
             break;
         case 'var_rename':
             stage.renameVariable(e.varId, e.newName);
