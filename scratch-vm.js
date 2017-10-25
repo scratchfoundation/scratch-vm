@@ -19061,11 +19061,20 @@ var Scratch3ProcedureBlocks = function () {
             if (!util.stackFrame.executed) {
                 var procedureCode = args.mutation.proccode;
                 var paramNames = util.getProcedureParamNames(procedureCode);
+
+                // If null, procedure could not be found, which can happen if custom
+                // block is dragged between sprites without the definition.
+                // Match Scratch 2.0 behavior and noop.
+                if (paramNames === null) {
+                    return;
+                }
+
                 for (var i = 0; i < paramNames.length; i++) {
                     if (args.hasOwnProperty("input" + i)) {
                         util.pushParam(paramNames[i], args["input" + i]);
                     }
                 }
+
                 util.stackFrame.executed = true;
                 util.startProcedure(procedureCode);
             }
