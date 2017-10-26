@@ -17951,8 +17951,8 @@ var Scratch3MotionBlocks = function () {
             // Measure distance to edges.
             // Values are positive when the sprite is far away,
             // and clamped to zero when the sprite is beyond.
-            var stageWidth = this.runtime.constructor.STAGE_WIDTH;
-            var stageHeight = this.runtime.constructor.STAGE_HEIGHT;
+            var stageWidth = this.runtime.STAGE_WIDTH;
+            var stageHeight = this.runtime.STAGE_HEIGHT;
             var distLeft = Math.max(0, stageWidth / 2 + bounds.left);
             var distTop = Math.max(0, stageHeight / 2 - bounds.top);
             var distRight = Math.max(0, stageWidth / 2 - bounds.right);
@@ -21665,16 +21665,29 @@ var Runtime = function (_EventEmitter) {
             keyboard: new Keyboard(_this),
             mouse: new Mouse(_this)
         };
+
+        _this.stageWith = 480;
+        _this.stageHeight = 360;
         return _this;
     }
 
-    /**
-     * Width of the stage, in pixels.
-     * @const {number}
-     */
-
-
     _createClass(Runtime, [{
+        key: 'setStageSize',
+        value: function setStageSize(width, height) {
+            if (width) {
+                this.stageWith = width;
+            }
+            if (height) {
+                this.stageHeight = height;
+            }
+        }
+
+        /**
+         * Width of the stage, in pixels.
+         * @const {number}
+         */
+
+    }, {
         key: '_registerBlockPackages',
 
 
@@ -22904,10 +22917,10 @@ var Runtime = function (_EventEmitter) {
                 _this3._step();
             }, interval);
         }
-    }], [{
+    }, {
         key: 'STAGE_WIDTH',
         get: function get() {
-            return 480;
+            return this.stageWith;
         }
 
         /**
@@ -22918,7 +22931,7 @@ var Runtime = function (_EventEmitter) {
     }, {
         key: 'STAGE_HEIGHT',
         get: function get() {
-            return 360;
+            return this.stageHeight;
         }
 
         /**
@@ -22926,7 +22939,7 @@ var Runtime = function (_EventEmitter) {
          * @const {string}
          */
 
-    }, {
+    }], [{
         key: 'SCRIPT_GLOW_ON',
         get: function get() {
             return 'SCRIPT_GLOW_ON';

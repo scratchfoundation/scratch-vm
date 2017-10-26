@@ -163,8 +163,8 @@ class Scratch3MotionBlocks {
         // Measure distance to edges.
         // Values are positive when the sprite is far away,
         // and clamped to zero when the sprite is beyond.
-        const stageWidth = this.runtime.constructor.STAGE_WIDTH;
-        const stageHeight = this.runtime.constructor.STAGE_HEIGHT;
+        const stageWidth = this.runtime.STAGE_WIDTH;
+        const stageHeight = this.runtime.STAGE_HEIGHT;
         const distLeft = Math.max(0, (stageWidth / 2) + bounds.left);
         const distTop = Math.max(0, (stageHeight / 2) - bounds.top);
         const distRight = Math.max(0, (stageWidth / 2) - bounds.right);

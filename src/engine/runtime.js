@@ -234,22 +234,34 @@ class Runtime extends EventEmitter {
             keyboard: new Keyboard(this),
             mouse: new Mouse(this)
         };
+
+        this.stageWith = 480;
+        this.stageHeight = 360;
+    }
+
+    setStageSize (width, height) {
+        if (width) {
+            this.stageWith = width;
+        }
+        if (height) {
+            this.stageHeight = height;
+        }
     }
 
     /**
      * Width of the stage, in pixels.
      * @const {number}
      */
-    static get STAGE_WIDTH () {
-        return 480;
+    get STAGE_WIDTH () {
+        return this.stageWith;
     }
 
     /**
      * Height of the stage, in pixels.
      * @const {number}
      */
-    static get STAGE_HEIGHT () {
-        return 360;
+    get STAGE_HEIGHT () {
+        return this.stageHeight;
     }
 
     /**
