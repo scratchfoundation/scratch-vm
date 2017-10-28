@@ -15447,8 +15447,10 @@ var Scratch3PenBlocks = function () {
 
         this._onTargetCreated = this._onTargetCreated.bind(this);
         this._onTargetMoved = this._onTargetMoved.bind(this);
+        this._disposePenSkinId = this._disposePenSkinId.bind(this);
 
         runtime.on('targetWasCreated', this._onTargetCreated);
+        runtime.on('stageSizeChanged', this._disposePenSkinId);
     }
 
     /**
@@ -15627,6 +15629,20 @@ var Scratch3PenBlocks = function () {
         key: '_transparencyToAlpha',
         value: function _transparencyToAlpha(transparency) {
             return 1.0 - transparency / 100.0;
+        }
+
+        /**
+         * while stage size changed, need destroy old pen
+         * Add by Kane
+         */
+
+    }, {
+        key: '_disposePenSkinId',
+        value: function _disposePenSkinId() {
+            if (this._penSkinId > 0) {
+                this.runtime.renderer.destroySkin(this._penSkinId);
+                this._penSkinId = -1;
+            }
         }
 
         /**
@@ -18811,6 +18827,7 @@ var Runtime = function (_EventEmitter) {
             if (height) {
                 this.stageHeight = height;
             }
+            this.emit('stageSizeChanged');
         }
 
         /**

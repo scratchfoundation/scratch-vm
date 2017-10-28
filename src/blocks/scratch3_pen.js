@@ -44,8 +44,10 @@ class Scratch3PenBlocks {
 
         this._onTargetCreated = this._onTargetCreated.bind(this);
         this._onTargetMoved = this._onTargetMoved.bind(this);
+        this._disposePenSkinId = this._disposePenSkinId.bind(this);
 
         runtime.on('targetWasCreated', this._onTargetCreated);
+        runtime.on('stageSizeChanged', this._disposePenSkinId);
     }
 
     /**
@@ -234,6 +236,17 @@ class Scratch3PenBlocks {
      */
     _transparencyToAlpha (transparency) {
         return 1.0 - (transparency / 100.0);
+    }
+
+    /**
+     * while stage size changed, need destroy old pen
+     * Add by Kane
+     */
+    _disposePenSkinId () {
+        if (this._penSkinId > 0) {
+            this.runtime.renderer.destroySkin(this._penSkinId);
+            this._penSkinId = -1;
+        }
     }
 
     /**

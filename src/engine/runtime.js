@@ -246,6 +246,7 @@ class Runtime extends EventEmitter {
         if (height) {
             this.stageHeight = height;
         }
+        this.emit('stageSizeChanged');
     }
 
     /**
