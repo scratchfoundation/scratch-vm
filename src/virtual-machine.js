@@ -236,8 +236,15 @@ class VirtualMachine extends EventEmitter {
                     targets[n].updateAllDrawableProperties();
                 }
             }
-            // Select the first target for editing, e.g., the first sprite.
-            if (this.runtime.targets.length > 1) {
+            
+            // Select the first device sprite for editing, by Kane
+            const firstDevice = this.runtime.targets.find(target => (
+                target.sprite.costumes[0].assetId === 'mscratchDevice'
+            ));
+            if (firstDevice) {
+                this.editingTarget = firstDevice;
+            } else if (this.runtime.targets.length > 1) {
+                // Select the first target for editing, e.g., the first sprite.
                 this.editingTarget = this.runtime.targets[1];
             } else {
                 this.editingTarget = this.runtime.targets[0];

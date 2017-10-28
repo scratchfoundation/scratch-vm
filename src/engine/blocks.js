@@ -442,6 +442,10 @@ class Blocks {
         // Get block
         const block = this._blocks[e.id];
 
+        // TODO: 未知块处理
+        if (!block) {
+            return;
+        }
         // Delete children
         if (block.next !== null) {
             this.deleteBlock({id: block.next});
@@ -486,6 +490,11 @@ class Blocks {
      */
     blockToXML (blockId) {
         const block = this._blocks[blockId];
+
+        // TODO: 未知块处理
+        if (!block) {
+            return '';
+        }
         // Modified by Kane: 删除变量
         if (block.deleted) {
             return block.next ? this.blockToXML(block.next) : '';

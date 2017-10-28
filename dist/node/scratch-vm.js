@@ -1265,6 +1265,10 @@ var Blocks = function () {
             // Get block
             var block = this._blocks[e.id];
 
+            // TODO: 未知块处理
+            if (!block) {
+                return;
+            }
             // Delete children
             if (block.next !== null) {
                 this.deleteBlock({ id: block.next });
@@ -1318,6 +1322,11 @@ var Blocks = function () {
         key: 'blockToXML',
         value: function blockToXML(blockId) {
             var block = this._blocks[blockId];
+
+            // TODO: 未知块处理
+            if (!block) {
+                return '';
+            }
             // Modified by Kane: 删除变量
             if (block.deleted) {
                 return block.next ? this.blockToXML(block.next) : '';
@@ -13368,8 +13377,15 @@ var VirtualMachine = function (_EventEmitter) {
                         targets[n].updateAllDrawableProperties();
                     }
                 }
-                // Select the first target for editing, e.g., the first sprite.
-                if (_this2.runtime.targets.length > 1) {
+
+                // Select the first device sprite for editing, by Kane
+                var firstDevice = _this2.runtime.targets.find(function (target) {
+                    return target.sprite.costumes[0].assetId === 'mscratchDevice';
+                });
+                if (firstDevice) {
+                    _this2.editingTarget = firstDevice;
+                } else if (_this2.runtime.targets.length > 1) {
+                    // Select the first target for editing, e.g., the first sprite.
                     _this2.editingTarget = _this2.runtime.targets[1];
                 } else {
                     _this2.editingTarget = _this2.runtime.targets[0];
