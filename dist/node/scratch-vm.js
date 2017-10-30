@@ -152,6 +152,18 @@ module.exports = Transform;
 "use strict";
 
 
+var minilog = __webpack_require__(118);
+minilog.enable();
+
+module.exports = minilog('vm');
+
+/***/ }),
+/* 2 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
@@ -383,18 +395,6 @@ var Cast = function () {
 }();
 
 module.exports = Cast;
-
-/***/ }),
-/* 2 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-
-var minilog = __webpack_require__(118);
-minilog.enable();
-
-module.exports = minilog('vm');
 
 /***/ }),
 /* 3 */
@@ -1062,7 +1062,13 @@ var Blocks = function () {
                     });
                     break;
                 case 'var_create':
-                    stage.createVariable(e.varId, e.varName, e.varType);
+                    // New variables being created by the user are all global.
+                    // Check if this variable exists on the current target or stage.
+                    // If not, create it on the stage.
+                    // TODO create global and local variables when UI provides a way.
+                    if (!optRuntime.getEditingTarget().lookupVariableById(e.varId)) {
+                        stage.createVariable(e.varId, e.varName, e.varType);
+                    }
                     break;
                 case 'var_rename':
                     stage.renameVariable(e.varId, e.newName);
@@ -1705,7 +1711,7 @@ module.exports = BlockType;
 
 
 var StringUtil = __webpack_require__(11);
-var log = __webpack_require__(2);
+var log = __webpack_require__(1);
 
 /**
  * Initialize a costume from an asset asynchronously.
@@ -1800,7 +1806,7 @@ module.exports = {
 
 
 var StringUtil = __webpack_require__(11);
-var log = __webpack_require__(2);
+var log = __webpack_require__(1);
 
 /**
  * Initialize a sound from an asset asynchronously.
@@ -1865,7 +1871,7 @@ function _possibleConstructorReturn(self, call) { if (!self) { throw new Referen
 
 function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
 
-var log = __webpack_require__(2);
+var log = __webpack_require__(1);
 var MathUtil = __webpack_require__(5);
 var StringUtil = __webpack_require__(11);
 var Target = __webpack_require__(72);
@@ -8983,7 +8989,7 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
 
 var SharedDispatch = __webpack_require__(66);
 
-var log = __webpack_require__(2);
+var log = __webpack_require__(1);
 
 /**
  * This class serves as the central broker for message dispatch. It expects to operate on the main thread / Window and
@@ -13090,7 +13096,7 @@ var EventEmitter = __webpack_require__(9);
 
 var centralDispatch = __webpack_require__(33);
 var ExtensionManager = __webpack_require__(73);
-var log = __webpack_require__(2);
+var log = __webpack_require__(1);
 var Runtime = __webpack_require__(70);
 var sb2 = __webpack_require__(79);
 var sb3 = __webpack_require__(81);
@@ -13955,7 +13961,7 @@ var _createClass = function () { function defineProperties(target, props) { for 
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
-var Cast = __webpack_require__(1);
+var Cast = __webpack_require__(2);
 
 var Scratch3ControlBlocks = function () {
     function Scratch3ControlBlocks(runtime) {
@@ -14121,7 +14127,7 @@ var _createClass = function () { function defineProperties(target, props) { for 
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
-var Cast = __webpack_require__(1);
+var Cast = __webpack_require__(2);
 
 var Scratch3DataBlocks = function () {
     function Scratch3DataBlocks(runtime) {
@@ -14289,7 +14295,7 @@ var _createClass = function () { function defineProperties(target, props) { for 
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
-var Cast = __webpack_require__(1);
+var Cast = __webpack_require__(2);
 
 var Scratch3EventBlocks = function () {
     function Scratch3EventBlocks(runtime) {
@@ -14405,7 +14411,7 @@ var _createClass = function () { function defineProperties(target, props) { for 
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
-var Cast = __webpack_require__(1);
+var Cast = __webpack_require__(2);
 var Clone = __webpack_require__(19);
 var RenderedTarget = __webpack_require__(18);
 
@@ -14413,9 +14419,10 @@ var RenderedTarget = __webpack_require__(18);
  * @typedef {object} BubbleState - the bubble state associated with a particular target.
  * @property {Boolean} onSpriteRight - tracks whether the bubble is right or left of the sprite.
  * @property {?int} drawableId - the ID of the associated bubble Drawable, null if none.
+ * @property {Boolean} drawableVisible - false if drawable has been hidden by blank text.
+ *      See _renderBubble for explanation of this optimization.
  * @property {string} text - the text of the bubble.
  * @property {string} type - the type of the bubble, "say" or "think"
- * @property {Boolean} visible - whether the bubble is hidden along with its sprite.
  */
 
 var Scratch3LooksBlocks = function () {
@@ -14471,7 +14478,7 @@ var Scratch3LooksBlocks = function () {
         key: '_onTargetMoved',
         value: function _onTargetMoved(target) {
             var bubbleState = this._getBubbleState(target);
-            if (bubbleState.drawableId && bubbleState.visible) {
+            if (bubbleState.drawableId) {
                 this._positionBubble(target);
             }
         }
@@ -14486,14 +14493,15 @@ var Scratch3LooksBlocks = function () {
         key: '_onTargetWillExit',
         value: function _onTargetWillExit(target) {
             var bubbleState = this._getBubbleState(target);
-            if (bubbleState.drawableId) {
+            if (bubbleState.drawableId && bubbleState.skinId) {
                 this.runtime.renderer.destroyDrawable(bubbleState.drawableId);
-                bubbleState.drawableId = null;
-            }
-            if (bubbleState.skinId) {
                 this.runtime.renderer.destroySkin(bubbleState.skinId);
+                bubbleState.drawableId = null;
                 bubbleState.skinId = null;
+                bubbleState.drawableVisible = true; // Reset back to default value
+                this.runtime.requestRedraw();
             }
+            target.removeListener(RenderedTarget.EVENT_TARGET_MOVED, this._onTargetMoved);
         }
 
         /**
@@ -14507,6 +14515,7 @@ var Scratch3LooksBlocks = function () {
             for (var n = 0; n < this.runtime.targets.length; n++) {
                 this._onTargetWillExit(this.runtime.targets[n]);
             }
+            clearTimeout(this._bubbleTimeout);
         }
 
         /**
@@ -14556,22 +14565,30 @@ var Scratch3LooksBlocks = function () {
         key: '_renderBubble',
         value: function _renderBubble(target) {
             var bubbleState = this._getBubbleState(target);
-            var type = bubbleState.type,
+            var drawableVisible = bubbleState.drawableVisible,
+                type = bubbleState.type,
                 text = bubbleState.text,
                 onSpriteRight = bubbleState.onSpriteRight;
 
-            if (text === '') {
-                return this._setBubbleVisibility(target, false);
+            // Remove the bubble if target is not visible, or text is being set to blank
+            // without being initialized. See comment below about blank text optimization.
+
+            if (!target.visible || text === '' && !bubbleState.skinId) {
+                return this._onTargetWillExit(target);
             }
 
             if (bubbleState.skinId) {
-                if (!bubbleState.visible) {
-                    bubbleState.visible = true;
+                // Optimization: if text is set to blank, hide the drawable instead of
+                // getting rid of it. This prevents flickering in "typewriter" projects
+                if (text === '' && drawableVisible || text !== '' && !drawableVisible) {
+                    bubbleState.drawableVisible = text !== '';
                     this.runtime.renderer.updateDrawableProperties(bubbleState.drawableId, {
-                        visible: bubbleState.visible
+                        visible: bubbleState.drawableVisible
                     });
                 }
-                this.runtime.renderer.updateTextSkin(bubbleState.skinId, type, text, onSpriteRight, [0, 0]);
+                if (bubbleState.drawableVisible) {
+                    this.runtime.renderer.updateTextSkin(bubbleState.skinId, type, text, onSpriteRight, [0, 0]);
+                }
             } else {
                 target.addListener(RenderedTarget.EVENT_TARGET_MOVED, this._onTargetMoved);
 
@@ -14610,26 +14627,6 @@ var Scratch3LooksBlocks = function () {
             bubbleState.type = type;
             bubbleState.text = text;
             this._renderBubble(target);
-        }
-
-        /**
-         * Hide the bubble for a given target.
-         * @param {!Target} target Target that say/think blocks are being called on.
-         * @param {!boolean} visibility Visible or not.
-         * @private
-         */
-
-    }, {
-        key: '_setBubbleVisibility',
-        value: function _setBubbleVisibility(target, visibility) {
-            var bubbleState = this._getBubbleState(target);
-            bubbleState.visible = visibility;
-            if (bubbleState.drawableId) {
-                this.runtime.renderer.updateDrawableProperties(bubbleState.drawableId, {
-                    visible: bubbleState.visible
-                });
-            }
-            this.runtime.requestRedraw();
         }
 
         /**
@@ -14678,7 +14675,8 @@ var Scratch3LooksBlocks = function () {
 
             this.say(args, util);
             return new Promise(function (resolve) {
-                setTimeout(function () {
+                _this._bubbleTimeout = setTimeout(function () {
+                    _this._bubbleTimeout = null;
                     // Clear say bubble and proceed.
                     _this._updateBubble(util.target, 'say', '');
                     resolve();
@@ -14697,7 +14695,8 @@ var Scratch3LooksBlocks = function () {
 
             this.think(args, util);
             return new Promise(function (resolve) {
-                setTimeout(function () {
+                _this2._bubbleTimeout = setTimeout(function () {
+                    _this2._bubbleTimeout = null;
                     // Clear say bubble and proceed.
                     _this2._updateBubble(util.target, 'think', '');
                     resolve();
@@ -14714,7 +14713,7 @@ var Scratch3LooksBlocks = function () {
         key: 'hide',
         value: function hide(args, util) {
             util.target.setVisible(false);
-            this._setBubbleVisibility(util.target, false);
+            this._renderBubble(util.target);
         }
 
         /**
@@ -14867,11 +14866,11 @@ var Scratch3LooksBlocks = function () {
         get: function get() {
             return {
                 drawableId: null,
+                drawableVisible: true,
                 onSpriteRight: true,
                 skinId: null,
                 text: '',
-                type: 'say',
-                visible: true
+                type: 'say'
             };
         }
 
@@ -14903,7 +14902,7 @@ var _createClass = function () { function defineProperties(target, props) { for 
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
-var Cast = __webpack_require__(1);
+var Cast = __webpack_require__(2);
 var MathUtil = __webpack_require__(5);
 var Timer = __webpack_require__(29);
 
@@ -15191,7 +15190,7 @@ var _createClass = function () { function defineProperties(target, props) { for 
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
-var Cast = __webpack_require__(1);
+var Cast = __webpack_require__(2);
 var MathUtil = __webpack_require__(5);
 
 var Scratch3OperatorsBlocks = function () {
@@ -15400,17 +15399,29 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
 
 var ArgumentType = __webpack_require__(28);
 var BlockType = __webpack_require__(15);
-var Cast = __webpack_require__(1);
+var Cast = __webpack_require__(2);
 var Clone = __webpack_require__(19);
 var Color = __webpack_require__(20);
 var MathUtil = __webpack_require__(5);
 var RenderedTarget = __webpack_require__(18);
+var log = __webpack_require__(1);
+
+/**
+ * Enum for pen color parameters.
+ * @readonly
+ * @enum {string}
+ */
+var ColorParam = {
+    COLOR: 'color',
+    SATURATION: 'saturation',
+    BRIGHTNESS: 'brightness',
+    TRANSPARENCY: 'transparency'
+};
 
 /**
  * @typedef {object} PenState - the pen state associated with a particular target.
  * @property {Boolean} penDown - tracks whether the pen should draw for this target.
- * @property {number} hue - the current hue of the pen.
- * @property {number} shade - the current shade of the pen.
+ * @property {number} color - the current color (hue) of the pen.
  * @property {PenAttributes} penAttributes - cached pen attributes for the renderer. This is the authoritative value for
  *   diameter but not for pen color.
  */
@@ -15551,53 +15562,28 @@ var Scratch3PenBlocks = function () {
         }
 
         /**
-         * Update the cached color from the hue, shade and transparency values in the provided
-         * PenState object.
-         * @param {PenState} penState - the pen state to update.
-         * @private
-         */
-
-    }, {
-        key: '_updatePenColor',
-        value: function _updatePenColor(penState) {
-            var rgb = Color.hsvToRgb({ h: penState.hue * 180 / 100, s: 1, v: 1 });
-            var shade = penState.shade > 100 ? 200 - penState.shade : penState.shade;
-            if (shade < 50) {
-                rgb = Color.mixRgb(Color.RGB_BLACK, rgb, (10 + shade) / 60);
-            } else {
-                rgb = Color.mixRgb(rgb, Color.RGB_WHITE, (shade - 50) / 60);
-            }
-            penState.penAttributes.color4f[0] = rgb.r / 255.0;
-            penState.penAttributes.color4f[1] = rgb.g / 255.0;
-            penState.penAttributes.color4f[2] = rgb.b / 255.0;
-            penState.penAttributes.color4f[3] = this._transparencyToAlpha(penState.transparency);
-        }
-
-        /**
-         * Wrap a pen hue or shade values to the range (0,200).
-         * @param {number} value - the pen hue or shade value to the proper range.
+         * Wrap a color input into the range (0,100).
+         * @param {number} value - the value to be wrapped.
          * @returns {number} the wrapped value.
          * @private
          */
 
     }, {
-        key: '_wrapHueOrShade',
-        value: function _wrapHueOrShade(value) {
-            value = value % 200;
-            if (value < 0) value += 200;
-            return value;
+        key: '_wrapColor',
+        value: function _wrapColor(value) {
+            return MathUtil.wrapClamp(value, 0, 100);
         }
 
         /**
-         * Clamp a pen transparency value to the range (0,100).
-         * @param {number} value - the pen transparency value to be clamped.
+         * Clamp a pen color parameter to the range (0,100).
+         * @param {number} value - the value to be clamped.
          * @returns {number} the clamped value.
          * @private
          */
 
     }, {
-        key: '_clampTransparency',
-        value: function _clampTransparency(value) {
+        key: '_clampColorParam',
+        value: function _clampColorParam(value) {
             return MathUtil.clamp(value, 0, 100);
         }
 
@@ -15657,15 +15643,7 @@ var Scratch3PenBlocks = function () {
                 name: 'Pen',
                 blocks: [{
                     opcode: 'clear',
-                    blockType: BlockType.COMMAND,
-                    arguments: {
-                        NUM1: {
-                            type: ArgumentType.NUMBER
-                        },
-                        NUM2: {
-                            type: ArgumentType.NUMBER
-                        }
-                    }
+                    blockType: BlockType.COMMAND
                 }, {
                     opcode: 'stamp',
                     blockType: BlockType.COMMAND
@@ -15687,41 +15665,31 @@ var Scratch3PenBlocks = function () {
                         }
                     }
                 }, {
-                    opcode: 'changePenHueBy',
+                    opcode: 'changePenColorParamBy',
                     blockType: BlockType.COMMAND,
-                    text: 'change pen color by [COLOR]',
+                    text: 'change pen [COLOR_PARAM] by [VALUE]',
                     arguments: {
-                        COLOR: {
+                        COLOR_PARAM: {
+                            type: ArgumentType.STRING,
+                            menu: 'colorParam',
+                            defaultValue: ColorParam.COLOR
+                        },
+                        VALUE: {
                             type: ArgumentType.NUMBER,
                             defaultValue: 10
                         }
                     }
                 }, {
-                    opcode: 'setPenHueToNumber',
+                    opcode: 'setPenColorParamTo',
                     blockType: BlockType.COMMAND,
-                    text: 'set pen color to [COLOR]',
+                    text: 'set pen [COLOR_PARAM] to [VALUE]',
                     arguments: {
-                        COLOR: {
-                            type: ArgumentType.NUMBER,
-                            defaultValue: 0
-                        }
-                    }
-                }, {
-                    opcode: 'changePenShadeBy',
-                    blockType: BlockType.COMMAND,
-                    text: 'change pen shade by [SHADE]',
-                    arguments: {
-                        SHADE: {
-                            type: ArgumentType.NUMBER,
-                            defaultValue: 10
-                        }
-                    }
-                }, {
-                    opcode: 'setPenShadeToNumber',
-                    blockType: BlockType.COMMAND,
-                    text: 'set pen shade to [SHADE]',
-                    arguments: {
-                        SHADE: {
+                        COLOR_PARAM: {
+                            type: ArgumentType.STRING,
+                            menu: 'colorParam',
+                            defaultValue: ColorParam.COLOR
+                        },
+                        VALUE: {
                             type: ArgumentType.NUMBER,
                             defaultValue: 50
                         }
@@ -15746,7 +15714,10 @@ var Scratch3PenBlocks = function () {
                             defaultValue: 1
                         }
                     }
-                }]
+                }],
+                menus: {
+                    colorParam: [ColorParam.COLOR, ColorParam.SATURATION, ColorParam.BRIGHTNESS, ColorParam.TRANSPARENCY]
+                }
             };
         }
 
@@ -15825,6 +15796,7 @@ var Scratch3PenBlocks = function () {
 
         /**
          * The pen "set pen color to {color}" block sets the pen to a particular RGB color.
+         * The transparency is reset to 0.
          * @param {object} args - the block arguments.
          *  @property {int} COLOR - the color to set, expressed as a 24-bit RGB value (0xRRGGBB).
          * @param {object} util - utility object provided by the runtime.
@@ -15836,79 +15808,95 @@ var Scratch3PenBlocks = function () {
             var penState = this._getPenState(util.target);
             var rgb = Cast.toRgbColorObject(args.COLOR);
             var hsv = Color.rgbToHsv(rgb);
+            penState.color = hsv.h / 360 * 100;
+            penState.saturation = hsv.s * 100;
+            penState.brightness = hsv.v * 100;
+            penState.transparency = 0;
+            this._updatePenColor(penState);
+        }
 
-            penState.hue = 200 * hsv.h / 360;
-            penState.shade = 50 * hsv.v;
+        /**
+         * Update the cached color from the color, saturation, brightness and transparency values
+         * in the provided PenState object.
+         * @param {PenState} penState - the pen state to update.
+         * @private
+         */
+
+    }, {
+        key: '_updatePenColor',
+        value: function _updatePenColor(penState) {
+            var rgb = Color.hsvToRgb({
+                h: penState.color * 360 / 100,
+                s: penState.saturation / 100,
+                v: penState.brightness / 100
+            });
             penState.penAttributes.color4f[0] = rgb.r / 255.0;
             penState.penAttributes.color4f[1] = rgb.g / 255.0;
             penState.penAttributes.color4f[2] = rgb.b / 255.0;
-            if (rgb.hasOwnProperty('a')) {
-                // Will there always be an 'a'?
-                penState.penAttributes.color4f[3] = rgb.a / 255.0;
-            } else {
-                penState.penAttributes.color4f[3] = 1;
+            penState.penAttributes.color4f[3] = this._transparencyToAlpha(penState.transparency);
+        }
+
+        /**
+         * Set or change a single color parameter on the pen state, and update the pen color.
+         * @param {ColorParam} param - the name of the color parameter to set or change.
+         * @param {number} value - the value to set or change the param by.
+         * @param {PenState} penState - the pen state to update.
+         * @param {boolean} change - if true change param by value, if false set param to value.
+         * @private
+         */
+
+    }, {
+        key: '_setOrChangeColorParam',
+        value: function _setOrChangeColorParam(param, value, penState, change) {
+            switch (param) {
+                case ColorParam.COLOR:
+                    penState.color = this._wrapColor(value + (change ? penState.color : 0));
+                    break;
+                case ColorParam.SATURATION:
+                    penState.saturation = this._clampColorParam(value + (change ? penState.saturation : 0));
+                    break;
+                case ColorParam.BRIGHTNESS:
+                    penState.brightness = this._clampColorParam(value + (change ? penState.brightness : 0));
+                    break;
+                case ColorParam.TRANSPARENCY:
+                    penState.transparency = this._clampColorParam(value + (change ? penState.transparency : 0));
+                    break;
+                default:
+                    log.warn('Tried to set or change unknown color parameter: ' + param);
             }
-            penState.transparency = this._alphaToTransparency(penState.penAttributes.color4f[3]);
-        }
-
-        /**
-         * The pen "change pen color by {number}" block rotates the hue of the pen by the given amount.
-         * @param {object} args - the block arguments.
-         *  @property {number} COLOR - the amount of desired hue rotation.
-         * @param {object} util - utility object provided by the runtime.
-         */
-
-    }, {
-        key: 'changePenHueBy',
-        value: function changePenHueBy(args, util) {
-            var penState = this._getPenState(util.target);
-            penState.hue = this._wrapHueOrShade(penState.hue + Cast.toNumber(args.COLOR));
             this._updatePenColor(penState);
         }
 
         /**
-         * The pen "set pen color to {number}" block sets the hue of the pen.
+         * The "change pen {ColorParam} by {number}" block changes one of the pen's color parameters
+         * by a given amound.
          * @param {object} args - the block arguments.
-         *  @property {number} COLOR - the desired hue.
+         *  @property {ColorParam} COLOR_PARAM - the name of the selected color parameter.
+         *  @property {number} VALUE - the amount to change the selected parameter by.
          * @param {object} util - utility object provided by the runtime.
          */
 
     }, {
-        key: 'setPenHueToNumber',
-        value: function setPenHueToNumber(args, util) {
+        key: 'changePenColorParamBy',
+        value: function changePenColorParamBy(args, util) {
             var penState = this._getPenState(util.target);
-            penState.hue = this._wrapHueOrShade(Cast.toNumber(args.COLOR));
-            this._updatePenColor(penState);
+            this._setOrChangeColorParam(args.COLOR_PARAM, Cast.toNumber(args.VALUE), penState, true);
         }
 
         /**
-         * The pen "change pen shade by {number}" block changes the "shade" of the pen, related to the HSV value.
+         * The "set pen {ColorParam} to {number}" block sets one of the pen's color parameters
+         * to a given amound.
          * @param {object} args - the block arguments.
-         *  @property {number} SHADE - the amount of desired shade change.
+         *  @property {ColorParam} COLOR_PARAM - the name of the selected color parameter.
+         *  @property {number} VALUE - the amount to set the selected parameter to.
          * @param {object} util - utility object provided by the runtime.
          */
 
     }, {
-        key: 'changePenShadeBy',
-        value: function changePenShadeBy(args, util) {
+        key: 'setPenColorParamTo',
+        value: function setPenColorParamTo(args, util) {
             var penState = this._getPenState(util.target);
-            penState.shade = this._wrapHueOrShade(penState.shade + Cast.toNumber(args.SHADE));
-            this._updatePenColor(penState);
-        }
-
-        /**
-         * The pen "set pen shade to {number}" block sets the "shade" of the pen, related to the HSV value.
-         * @param {object} args - the block arguments.
-         *  @property {number} SHADE - the amount of desired shade change.
-         * @param {object} util - utility object provided by the runtime.
-         */
-
-    }, {
-        key: 'setPenShadeToNumber',
-        value: function setPenShadeToNumber(args, util) {
-            var penState = this._getPenState(util.target);
-            penState.shade = this._wrapHueOrShade(Cast.toNumber(args.SHADE));
-            this._updatePenColor(penState);
+            this._setOrChangeColorParam(args.COLOR_PARAM, Cast.toNumber(args.VALUE), penState, false);
         }
 
         /**
@@ -15938,43 +15926,14 @@ var Scratch3PenBlocks = function () {
             var penAttributes = this._getPenState(util.target).penAttributes;
             penAttributes.diameter = this._clampPenSize(Cast.toNumber(args.SIZE));
         }
-
-        /**
-         * The pen "change pen transparency by {number}" block changes the RGBA "transparency" of the pen.
-         * @param {object} args - the block arguments.
-         *  @property {number} TRANSPARENCY - the amount of desired transparency change.
-         * @param {object} util - utility object provided by the runtime.
-         */
-
-    }, {
-        key: 'changePenTransparencyBy',
-        value: function changePenTransparencyBy(args, util) {
-            var penState = this._getPenState(util.target);
-            penState.transparency = this._clampTransparency(penState.transparency + Cast.toNumber(args.TRANSPARENCY));
-            this._updatePenColor(penState);
-        }
-
-        /**
-         * The pen "set pen transparency to {number}" block sets the RGBA "transparency" of the pen.
-         * @param {object} args - the block arguments.
-         *  @property {number} TRANSPARENCY - the amount of desired transparency change.
-         * @param {object} util - utility object provided by the runtime.
-         */
-
-    }, {
-        key: 'setPenTransparencyTo',
-        value: function setPenTransparencyTo(args, util) {
-            var penState = this._getPenState(util.target);
-            penState.transparency = this._clampTransparency(Cast.toNumber(args.TRANSPARENCY));
-            this._updatePenColor(penState);
-        }
     }], [{
         key: 'DEFAULT_PEN_STATE',
         get: function get() {
             return {
                 penDown: false,
-                hue: 120,
-                shade: 50,
+                color: 66.66,
+                saturation: 100,
+                brightness: 100,
                 transparency: 0,
                 penAttributes: {
                     color4f: [0, 0, 1, 1],
@@ -16072,11 +16031,20 @@ var Scratch3ProcedureBlocks = function () {
             if (!util.stackFrame.executed) {
                 var procedureCode = args.mutation.proccode;
                 var paramNames = util.getProcedureParamNames(procedureCode);
+
+                // If null, procedure could not be found, which can happen if custom
+                // block is dragged between sprites without the definition.
+                // Match Scratch 2.0 behavior and noop.
+                if (paramNames === null) {
+                    return;
+                }
+
                 for (var i = 0; i < paramNames.length; i++) {
                     if (args.hasOwnProperty("input" + i)) {
                         util.pushParam(paramNames[i], args["input" + i]);
                     }
                 }
+
                 util.stackFrame.executed = true;
                 util.startProcedure(procedureCode);
             }
@@ -16105,7 +16073,7 @@ var _createClass = function () { function defineProperties(target, props) { for 
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
-var Cast = __webpack_require__(1);
+var Cast = __webpack_require__(2);
 
 var Scratch3SensingBlocks = function () {
     function Scratch3SensingBlocks(runtime) {
@@ -16333,7 +16301,7 @@ var _createClass = function () { function defineProperties(target, props) { for 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
 var MathUtil = __webpack_require__(5);
-var Cast = __webpack_require__(1);
+var Cast = __webpack_require__(2);
 var Clone = __webpack_require__(19);
 
 var Scratch3SoundBlocks = function () {
@@ -16714,7 +16682,7 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
 var ArgumentType = __webpack_require__(28);
 var BlockType = __webpack_require__(15);
 var color = __webpack_require__(20);
-var log = __webpack_require__(2);
+var log = __webpack_require__(1);
 
 /**
  * Manage power, direction, and timers for one WeDo 2.0 motor.
@@ -17770,7 +17738,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
-var log = __webpack_require__(2);
+var log = __webpack_require__(1);
 
 /**
  * @typedef {object} DispatchCallMessage - a message to the dispatch system representing a service method call
@@ -18247,7 +18215,7 @@ module.exports = adapter;
 "use strict";
 
 
-var log = __webpack_require__(2);
+var log = __webpack_require__(1);
 var Thread = __webpack_require__(26);
 
 var _require = __webpack_require__(21),
@@ -20830,7 +20798,7 @@ var _createClass = function () { function defineProperties(target, props) { for 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
 var dispatch = __webpack_require__(33);
-var log = __webpack_require__(2);
+var log = __webpack_require__(1);
 
 var BlockType = __webpack_require__(15);
 
@@ -21627,7 +21595,7 @@ var _createClass = function () { function defineProperties(target, props) { for 
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
-var Cast = __webpack_require__(1);
+var Cast = __webpack_require__(2);
 
 var Keyboard = function () {
     function Keyboard(runtime) {
@@ -21891,7 +21859,7 @@ var Blocks = __webpack_require__(10);
 var RenderedTarget = __webpack_require__(18);
 var Sprite = __webpack_require__(35);
 var Color = __webpack_require__(20);
-var log = __webpack_require__(2);
+var log = __webpack_require__(1);
 var uid = __webpack_require__(30);
 var specMap = __webpack_require__(80);
 var Variable = __webpack_require__(27);
@@ -36587,7 +36555,7 @@ module.exports = function() {
 /* 148 */
 /***/ (function(module, exports) {
 
-module.exports = {"name":"scratch-vm","version":"0.1.0","description":"Virtual Machine for Scratch 3.0","author":"Massachusetts Institute of Technology","license":"BSD-3-Clause","homepage":"https://github.com/LLK/scratch-vm#readme","repository":{"type":"git","url":"git+ssh://git@github.com/LLK/scratch-vm.git"},"main":"./dist/node/scratch-vm.js","scripts":{"build":"./node_modules/.bin/webpack --progress --colors --bail","coverage":"./node_modules/.bin/tap ./test/{unit,integration}/*.js --coverage --coverage-report=lcov","deploy":"touch playground/.nojekyll && ./node_modules/.bin/gh-pages -t -d playground -m \"Build for $(git log --pretty=format:%H -n1)\"","lint":"./node_modules/.bin/eslint .","prepublish":"in-publish && npm run build || not-in-publish","start":"./node_modules/.bin/webpack-dev-server","tap":"./node_modules/.bin/tap ./test/{unit,integration}/*.js","tap:unit":"./node_modules/.bin/tap ./test/unit/*.js","tap:integration":"./node_modules/.bin/tap ./test/integration/*.js","test":"npm run lint && npm run tap","watch":"./node_modules/.bin/webpack --progress --colors --watch","version":"./node_modules/.bin/json -f package.json -I -e \"this.repository.sha = '$(git log -n1 --pretty=format:%H)'\""},"devDependencies":{"adm-zip":"0.4.7","babel-core":"^6.24.1","babel-eslint":"^7.1.1","babel-loader":"^7.0.0","babel-preset-es2015":"^6.24.1","copy-webpack-plugin":"4.0.1","escape-html":"1.0.3","eslint":"^4.5.0","eslint-config-scratch":"^4.0.0","expose-loader":"0.7.3","gh-pages":"^0.12.0","got":"5.7.1","highlightjs":"^9.8.0","htmlparser2":"3.9.2","immutable":"3.8.1","in-publish":"^2.0.0","json":"^9.0.4","lodash.defaultsdeep":"4.6.0","minilog":"3.1.0","promise":"7.1.1","scratch-audio":"latest","scratch-blocks":"latest","scratch-render":"latest","scratch-storage":"^0.2.0","script-loader":"0.7.0","socket.io-client":"1.7.3","stats.js":"^0.17.0","tap":"^10.2.0","tiny-worker":"^2.1.1","webpack":"^2.4.1","webpack-dev-server":"^2.4.1","worker-loader":"0.8.1"}}
+module.exports = {"name":"scratch-vm","version":"0.1.0","description":"Virtual Machine for Scratch 3.0","author":"Massachusetts Institute of Technology","license":"BSD-3-Clause","homepage":"https://github.com/LLK/scratch-vm#readme","repository":{"type":"git","url":"git+ssh://git@github.com/LLK/scratch-vm.git"},"main":"./dist/node/scratch-vm.js","scripts":{"build":"webpack --progress --colors --bail","coverage":"tap ./test/{unit,integration}/*.js --coverage --coverage-report=lcov","deploy":"touch playground/.nojekyll && gh-pages -t -d playground -m \"Build for $(git log --pretty=format:%H -n1)\"","lint":"eslint .","prepublish":"in-publish && npm run build || not-in-publish","start":"webpack-dev-server","tap":"tap ./test/{unit,integration}/*.js","tap:unit":"tap ./test/unit/*.js","tap:integration":"tap ./test/integration/*.js","test":"npm run lint && npm run tap","watch":"webpack --progress --colors --watch","version":"json -f package.json -I -e \"this.repository.sha = '$(git log -n1 --pretty=format:%H)'\""},"devDependencies":{"adm-zip":"0.4.7","babel-core":"^6.24.1","babel-eslint":"^7.1.1","babel-loader":"^7.0.0","babel-preset-es2015":"^6.24.1","copy-webpack-plugin":"4.0.1","escape-html":"1.0.3","eslint":"^4.5.0","eslint-config-scratch":"^4.0.0","expose-loader":"0.7.3","gh-pages":"^0.12.0","got":"5.7.1","highlightjs":"^9.8.0","htmlparser2":"3.9.2","immutable":"3.8.1","in-publish":"^2.0.0","json":"^9.0.4","lodash.defaultsdeep":"4.6.0","minilog":"3.1.0","promise":"7.1.1","scratch-audio":"latest","scratch-blocks":"latest","scratch-render":"latest","scratch-storage":"^0.2.0","script-loader":"0.7.0","socket.io-client":"1.7.3","stats.js":"^0.17.0","tap":"^10.2.0","tiny-worker":"^2.1.1","webpack":"^2.4.1","webpack-dev-server":"^2.4.1","worker-loader":"0.8.1"}}
 
 /***/ }),
 /* 149 */
