@@ -38,7 +38,7 @@ class CentralDispatch extends SharedDispatch {
     /**
      * Set a local object as the global provider of the specified service.
      * WARNING: Any method on the provider can be called from any worker within the dispatch system.
-     * @param {string} service - a globally unique string identifying this service. Examples: 'vm', 'gui'.
+     * @param {string} service - a globally unique string identifying this service. Examples: 'vm', 'gui', 'extension9'.
      * @param {object} provider - a local object which provides this service.
      * @returns {Promise} - a promise which will resolve once the service is registered.
      */
@@ -56,19 +56,6 @@ class CentralDispatch extends SharedDispatch {
     }
 
     /**
-     * Unregister a service without regard to which object or worker might provide it.
-     * @param {string} service - the globally unique string provided to `setService` when the service was registered.
-     * @see {setService}
-     */
-    clearService (service) {
-        if (this.services.hasOwnProperty(service)) {
-            delete this.services[service];
-        } else {
-            log.warn(`Central dispatch can't clear unknown service ${service}`);
-        }
-    }
-
-    /**
      * Add a worker to the message dispatch system. The worker must implement a compatible message dispatch framework.
      * The dispatcher will immediately attempt to "handshake" with the worker.
      * @param {Worker} worker - the worker to add into the dispatch system.
@@ -82,25 +69,6 @@ class CentralDispatch extends SharedDispatch {
             });
         } else {
             log.warn('Central dispatch ignoring attempt to add duplicate worker');
-        }
-    }
-
-    /**
-     * Remove a service provider from the central dispatch service, un-registering any services it provides.
-     * If the provider is a worker its dispatch service will be shut down.
-     * The worker itself will NOT be terminated by this call.
-     * @param {Worker|object} provider - the worker or object instance to be removed.
-     */
-    removeProvider (provider) {
-        const workerIndex = this.workers.indexOf(provider);
-        if (workerIndex !== -1) {
-            /** @TODO Should we ask the worker to shut down? If so, owner must wait before terminating the worker. */
-            this.workers.splice(workerIndex, 1);
-        }
-        for (const serviceName in Object.keys(this.services)) {
-            if (this.services[serviceName] === provider) {
-                delete this.services[serviceName];
-            }
         }
     }
 

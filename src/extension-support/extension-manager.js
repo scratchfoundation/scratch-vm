@@ -71,19 +71,11 @@ class ExtensionManager {
         this.pendingWorkers = [];
 
         /**
-         * Set of loaded extension IDs. For built-in extensions the "URL" is the same as the ID; they differ in general.
+         * Set of loaded extension URLs/IDs (equivalent for built-in extensions).
          * @type {Set.<string>}
          * @private
          */
         this._loadedExtensions = new Set();
-
-        /**
-         * Set of workers currently being monitored by `_startWorkerWatchdog`.
-         * @see {_startWorkerWatchdog}
-         * @type {Set.<object>}
-         * @private
-         */
-        this._activeWatchdogs = new Set();
 
         /**
          * Keep a reference to the runtime so we can construct internal extension objects.
@@ -101,7 +93,7 @@ class ExtensionManager {
      * Check whether an extension is registered or is in the process of loading. This is intended to control loading or
      * adding extensions so it may return `true` before the extension is ready to be used. Use the promise returned by
      * `loadExtensionURL` if you need to wait until the extension is truly ready.
-     * @param {string} extensionID - the ID (not URL) of the extension.
+     * @param {string} extensionID - the ID of the extension.
      * @returns {boolean} - true if loaded, false otherwise.
      */
     isExtensionLoaded (extensionID) {
@@ -115,6 +107,13 @@ class ExtensionManager {
      */
     loadExtensionURL (extensionURL) {
         if (builtinExtensions.hasOwnProperty(extensionURL)) {
+            /** @TODO dupe handling for non-builtin extensions. See commit 670e51d33580e8a2e852b3b038bb3afc282f81b9 */
+            if (this.isExtensionLoaded(extensionURL)) {
+                const message = `Rejecting attempt to load a second extension with ID ${extensionURL}`;
+                log.warn(message);
+                return Promise.reject(new Error(message));
+            }
+
             const extension = builtinExtensions[extensionURL];
             const extensionInstance = new extension(this.runtime);
             return this._registerInternalExtension(extensionInstance);
@@ -125,10 +124,7 @@ class ExtensionManager {
             const ExtensionWorker = require('worker-loader?name=extension-worker.js!./extension-worker');
 
             this.pendingExtensions.push({extensionURL, resolve, reject});
-
-            const worker = new ExtensionWorker();
-            dispatch.addWorker(worker);
-            this._startWorkerWatchdog(worker);
+            dispatch.addWorker(new ExtensionWorker());
         });
     }
 
@@ -158,9 +154,6 @@ class ExtensionManager {
         const workerInfo = this.pendingWorkers[id];
         delete this.pendingWorkers[id];
         if (e) {
-            log.warn(`Extension manager forcibly terminating worker for extension with ID ${id}, URL ${
-                workerInfo.extensionURL} due to error during initialization`);
-            workerInfo.worker.terminate();
             workerInfo.reject(e);
         } else {
             workerInfo.resolve(id);
@@ -188,22 +181,9 @@ class ExtensionManager {
      */
     _registerExtensionInfo (serviceName, extensionInfo) {
         extensionInfo = this._prepareExtensionInfo(serviceName, extensionInfo);
-        if (this.isExtensionLoaded(extensionInfo.id)) {
-            const message = `Ignoring attempt to load a second extension with ID ${extensionInfo.id}`;
-            log.warn(message);
-            dispatch.clearService(serviceName);
-        } else {
-            dispatch.call('runtime', '_registerExtensionPrimitives', extensionInfo).then(
-                () => {
-                    this._loadedExtensions.add(extensionInfo.id);
-                    if (dispatch.callingWorker) {
-                        this._stopWorkerWatchdog(dispatch.callingWorker);
-                    }
-                },
-                e => {
-                    log.error(`Failed to register primitives for extension "${extensionInfo.id}": ${e.message}`);
-                });
-        }
+        dispatch.call('runtime', '_registerExtensionPrimitives', extensionInfo).catch(e => {
+            log.error(`Failed to register primitives for extension on service ${serviceName}: ${JSON.stringify(e)}`);
+        });
     }
 
     /**
@@ -271,35 +251,6 @@ class ExtensionManager {
             blockInfo.func = serviceObject[blockInfo.func].bind(serviceObject);
         }
         return blockInfo;
-    }
-
-    /**
-     * Start a watchdog to terminate this worker unless it registers an extension before the timeout.
-     * @param {object} worker - the worker to watch.
-     * @private
-     */
-    _startWorkerWatchdog (worker) {
-        const timeout = 5 * 1000; // 5 seconds
-
-        this._activeWatchdogs.add(worker);
-        setTimeout(() => {
-            if (this._activeWatchdogs.has(worker)) {
-                this._activeWatchdogs.delete(worker);
-                log.warn(`Worker watchdog timed out. Terminating worker.`);
-                dispatch.removeProvider(worker);
-                worker.terminate();
-            }
-        }, timeout);
-    }
-
-    /**
-     * Mark this worker as "safe" from the watchdog.
-     * @param {object} worker - the worker to mark as safe.
-     * @see {_startWorkerWatchdog}
-     * @private
-     */
-    _stopWorkerWatchdog (worker) {
-        this._activeWatchdogs.delete(worker);
     }
 }
 
