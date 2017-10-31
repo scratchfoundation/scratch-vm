@@ -71,6 +71,13 @@ class ExtensionManager {
         this.pendingWorkers = [];
 
         /**
+         * Set of loaded extension IDs. For built-in extensions the "URL" is the same as the ID; they differ in general.
+         * @type {Set.<string>}
+         * @private
+         */
+        this._loadedExtensions = new Set();
+
+        /**
          * Set of workers currently being monitored by `_startWorkerWatchdog`.
          * @see {_startWorkerWatchdog}
          * @type {Set.<object>}
@@ -88,6 +95,17 @@ class ExtensionManager {
         dispatch.setService('extensions', this).catch(e => {
             log.error(`ExtensionManager was unable to register extension service: ${JSON.stringify(e)}`);
         });
+    }
+
+    /**
+     * Check whether an extension is registered or is in the process of loading. This is intended to control loading or
+     * adding extensions so it may return `true` before the extension is ready to be used. Use the promise returned by
+     * `loadExtensionURL` if you need to wait until the extension is truly ready.
+     * @param {string} extensionID - the ID (not URL) of the extension.
+     * @returns {boolean} - true if loaded, false otherwise.
+     */
+    isExtensionLoaded (extensionID) {
+        return this._loadedExtensions.has(extensionID);
     }
 
     /**
@@ -170,15 +188,22 @@ class ExtensionManager {
      */
     _registerExtensionInfo (serviceName, extensionInfo) {
         extensionInfo = this._prepareExtensionInfo(serviceName, extensionInfo);
-        dispatch.call('runtime', '_registerExtensionPrimitives', extensionInfo).then(
-            () => {
-                if (dispatch.callingWorker) {
-                    this._stopWorkerWatchdog(dispatch.callingWorker);
-                }
-            },
-            e => {
-                log.error(`Failed to register primitives for extension "${extensionInfo.id}": ${e.message}`);
-            });
+        if (this.isExtensionLoaded(extensionInfo.id)) {
+            const message = `Ignoring attempt to load a second extension with ID ${extensionInfo.id}`;
+            log.warn(message);
+            dispatch.clearService(serviceName);
+        } else {
+            dispatch.call('runtime', '_registerExtensionPrimitives', extensionInfo).then(
+                () => {
+                    this._loadedExtensions.add(extensionInfo.id);
+                    if (dispatch.callingWorker) {
+                        this._stopWorkerWatchdog(dispatch.callingWorker);
+                    }
+                },
+                e => {
+                    log.error(`Failed to register primitives for extension "${extensionInfo.id}": ${e.message}`);
+                });
+        }
     }
 
     /**

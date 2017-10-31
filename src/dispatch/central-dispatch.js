@@ -56,6 +56,19 @@ class CentralDispatch extends SharedDispatch {
     }
 
     /**
+     * Unregister a service without regard to which object or worker might provide it.
+     * @param {string} service - the globally unique string provided to `setService` when the service was registered.
+     * @see {setService}
+     */
+    clearService (service) {
+        if (this.services.hasOwnProperty(service)) {
+            delete this.services[service];
+        } else {
+            log.warn(`Central dispatch can't clear unknown service ${service}`);
+        }
+    }
+
+    /**
      * Add a worker to the message dispatch system. The worker must implement a compatible message dispatch framework.
      * The dispatcher will immediately attempt to "handshake" with the worker.
      * @param {Worker} worker - the worker to add into the dispatch system.
