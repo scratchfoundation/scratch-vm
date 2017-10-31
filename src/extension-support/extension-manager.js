@@ -116,7 +116,9 @@ class ExtensionManager {
 
             const extension = builtinExtensions[extensionURL];
             const extensionInstance = new extension(this.runtime);
-            return this._registerInternalExtension(extensionInstance);
+            return this._registerInternalExtension(extensionInstance).then(() => {
+                this._loadedExtensions.add(extensionURL);
+            });
         }
 
         return new Promise((resolve, reject) => {
