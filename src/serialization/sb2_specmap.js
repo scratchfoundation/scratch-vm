@@ -535,7 +535,7 @@ const specMap = {
             {
                 type: 'input',
                 inputOp: 'math_number',
-                inputName: 'COLOR'
+                inputName: 'HUE'
             }
         ]
     },
@@ -545,7 +545,7 @@ const specMap = {
             {
                 type: 'input',
                 inputOp: 'math_number',
-                inputName: 'COLOR'
+                inputName: 'HUE'
             }
         ]
     },

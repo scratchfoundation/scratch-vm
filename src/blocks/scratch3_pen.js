@@ -71,6 +71,7 @@ class Scratch3PenBlocks {
             saturation: 100,
             brightness: 100,
             transparency: 0,
+            _shade: 50, // Used only for legacy `change shade by` blocks
             penAttributes: {
                 color4f: [0, 0, 1, 1],
                 diameter: 1
@@ -316,6 +317,51 @@ class Scratch3PenBlocks {
                             defaultValue: 1
                         }
                     }
+                },
+                /* Legacy blocks, should not be shown in flyout */
+                {
+                    opcode: 'setPenShadeToNumber',
+                    blockType: BlockType.COMMAND,
+                    text: 'set pen shade to [SHADE]',
+                    arguments: {
+                        SHADE: {
+                            type: ArgumentType.NUMBER,
+                            defaultValue: 1
+                        }
+                    }
+                },
+                {
+                    opcode: 'changePenShadeBy',
+                    blockType: BlockType.COMMAND,
+                    text: 'change pen shade by [SHADE]',
+                    arguments: {
+                        SHADE: {
+                            type: ArgumentType.NUMBER,
+                            defaultValue: 1
+                        }
+                    }
+                },
+                {
+                    opcode: 'setPenHueToNumber',
+                    blockType: BlockType.COMMAND,
+                    text: 'set pen hue to [HUE]',
+                    arguments: {
+                        HUE: {
+                            type: ArgumentType.NUMBER,
+                            defaultValue: 1
+                        }
+                    }
+                },
+                {
+                    opcode: 'changePenHueBy',
+                    blockType: BlockType.COMMAND,
+                    text: 'change pen hue by [HUE]',
+                    arguments: {
+                        HUE: {
+                            type: ArgumentType.NUMBER,
+                            defaultValue: 1
+                        }
+                    }
                 }
             ],
             menus: {
@@ -402,6 +448,10 @@ class Scratch3PenBlocks {
         penState.saturation = hsv.s * 100;
         penState.brightness = hsv.v * 100;
         penState.transparency = 0;
+
+        // Set the legacy "shade" value the same way scratch 2 did.
+        penState._shade = penState.brightness / 2;
+
         this._updatePenColor(penState);
     }
 
@@ -498,6 +548,85 @@ class Scratch3PenBlocks {
         const penAttributes = this._getPenState(util.target).penAttributes;
         penAttributes.diameter = this._clampPenSize(Cast.toNumber(args.SIZE));
     }
+
+    /* LEGACY OPCODES */
+    /**
+     * Scratch 2 "hue" param is equivelant to twice the new "color" param.
+     * @param {object} args - the block arguments.
+     *  @property {number} HUE - the amount to set the hue to.
+     * @param {object} util - utility object provided by the runtime.
+     */
+    setPenHueToNumber (args, util) {
+        const penState = this._getPenState(util.target);
+        const hueValue = Cast.toNumber(args.HUE);
+        const colorValue = hueValue / 2;
+        this._setOrChangeColorParam(ColorParam.COLOR, colorValue, penState, false);
+    }
+
+    /**
+     * Scratch 2 "hue" param is equivelant to twice the new "color" param.
+     * @param {object} args - the block arguments.
+     *  @property {number} HUE - the amount of desired hue change.
+     * @param {object} util - utility object provided by the runtime.
+     */
+    changePenHueBy (args, util) {
+        const penState = this._getPenState(util.target);
+        const hueChange = Cast.toNumber(args.HUE);
+        const colorChange = hueChange / 2;
+        this._setOrChangeColorParam(ColorParam.COLOR, colorChange, penState, true);
+    }
+
+    /**
+     * Use legacy "set shade" code to calculate RGB value for shade,
+     * then convert back to HSV and store those components.
+     * It is important to also track the given shade in penState._shade
+     * because it cannot be accurately backed out of the new HSV later.
+     * @param {object} args - the block arguments.
+     *  @property {number} SHADE - the amount to set the shade to.
+     * @param {object} util - utility object provided by the runtime.
+     */
+    setPenShadeToNumber (args, util) {
+        const penState = this._getPenState(util.target);
+        let newShade = Cast.toNumber(args.SHADE);
+
+        // Wrap clamp the new shade value the way scratch 2 did.
+        newShade = newShade % 200;
+        if (newShade < 0) newShade += 200;
+
+        // Create the new color in RGB using the scratch 2 "shade" model
+        let rgb = Color.hsvToRgb({h: penState.color * 360 / 100, s: 1, v: 1});
+        const shade = (newShade > 100) ? 200 - newShade : newShade;
+        if (shade < 50) {
+            rgb = Color.mixRgb(Color.RGB_BLACK, rgb, (10 + shade) / 60);
+        } else {
+            rgb = Color.mixRgb(rgb, Color.RGB_WHITE, (shade - 50) / 60);
+        }
+
+        // Update the pen state according to new color
+        const hsv = Color.rgbToHsv(rgb);
+        penState.color = 100 * hsv.h / 360;
+        penState.saturation = 100 * hsv.s;
+        penState.brightness = 100 * hsv.v;
+
+        // And store the shade that was used to compute this new color for later use.
+        penState._shade = newShade;
+
+        this._updatePenColor(penState);
+    }
+
+    /**
+     * Because "shade" cannot be backed out of hsv consistently, use the previously
+     * stored penState._shade to make the shade change.
+     * @param {object} args - the block arguments.
+     *  @property {number} SHADE - the amount of desired shade change.
+     * @param {object} util - utility object provided by the runtime.
+     */
+    changePenShadeBy (args, util) {
+        const penState = this._getPenState(util.target);
+        const shadeChange = Cast.toNumber(args.SHADE);
+        this.setPenShadeToNumber({SHADE: penState._shade + shadeChange}, util);
+    }
+
 }
 
 module.exports = Scratch3PenBlocks;
