@@ -39,6 +39,24 @@ class SharedDispatch {
          * @type {int}
          */
         this.nextResponseId = 0;
+
+        /**
+         * While processing a call in _onMessage, this will be set to the originating object.
+         * At all other times it will be null.
+         * @type {object}
+         * @private
+         */
+        this._callingWorker = null;
+    }
+
+    /**
+     * Central dispatch: while processing a call from a worker, this will be set to the worker originating that call.
+     * Worker dispatch: while processing a call from the main thread, this will be set to the global object.
+     * At all other times it will be null.
+     * @returns {object} - the worker originating the current call, if any.
+     */
+    get callingWorker () {
+        return this._callingWorker;
     }
 
     /**
@@ -184,10 +202,15 @@ class SharedDispatch {
         message.args = message.args || [];
         let promise;
         if (message.service) {
-            if (message.service === 'dispatch') {
-                promise = this._onDispatchMessage(worker, message);
-            } else {
-                promise = this.call(message.service, message.method, ...message.args);
+            try {
+                this._callingWorker = worker;
+                if (message.service === 'dispatch') {
+                    promise = this._onDispatchMessage(worker, message);
+                } else {
+                    promise = this.call(message.service, message.method, ...message.args);
+                }
+            } finally {
+                this._callingWorker = null;
             }
         } else if (typeof message.responseId === 'undefined') {
             log.error(`Dispatch caught malformed message from a worker: ${JSON.stringify(event)}`);

@@ -71,6 +71,14 @@ class ExtensionManager {
         this.pendingWorkers = [];
 
         /**
+         * Set of workers currently being monitored by `_startWorkerWatchdog`.
+         * @see {_startWorkerWatchdog}
+         * @type {Set.<object>}
+         * @private
+         */
+        this._activeWatchdogs = new Set();
+
+        /**
          * Keep a reference to the runtime so we can construct internal extension objects.
          * TODO: remove this in favor of extensions accessing the runtime as a service.
          * @type {Runtime}
@@ -99,7 +107,10 @@ class ExtensionManager {
             const ExtensionWorker = require('worker-loader?name=extension-worker.js!./extension-worker');
 
             this.pendingExtensions.push({extensionURL, resolve, reject});
-            dispatch.addWorker(new ExtensionWorker());
+
+            const worker = new ExtensionWorker();
+            dispatch.addWorker(worker);
+            this._startWorkerWatchdog(worker);
         });
     }
 
@@ -110,16 +121,28 @@ class ExtensionManager {
         return [id, workerInfo.extensionURL];
     }
 
+    /**
+     * Collect extension metadata from the specified service and begin the extension registration process.
+     * @param {string} serviceName - the name of the service hosting the extension.
+     */
     registerExtensionService (serviceName) {
         dispatch.call(serviceName, 'getInfo').then(info => {
             this._registerExtensionInfo(serviceName, info);
         });
     }
 
+    /**
+     * Called by an extension worker to indicate that the worker has finished initialization.
+     * @param {int} id - the worker ID.
+     * @param {*?} e - the error encountered during initialization, if any.
+     */
     onWorkerInit (id, e) {
         const workerInfo = this.pendingWorkers[id];
         delete this.pendingWorkers[id];
         if (e) {
+            log.warn(`Extension manager forcibly terminating worker for extension with ID ${id}, URL ${
+                workerInfo.extensionURL} due to error during initialization`);
+            workerInfo.worker.terminate();
             workerInfo.reject(e);
         } else {
             workerInfo.resolve(id);
@@ -133,16 +156,29 @@ class ExtensionManager {
      */
     _registerInternalExtension (extensionObject) {
         const extensionInfo = extensionObject.getInfo();
-        const serviceName = `extension.internal.${extensionInfo.id}`;
+        const fakeWorkerId = this.nextExtensionWorker++;
+        const serviceName = `extension.${fakeWorkerId}.${extensionInfo.id}`;
         return dispatch.setService(serviceName, extensionObject)
             .then(() => dispatch.call('extensions', 'registerExtensionService', serviceName));
     }
 
+    /**
+     * Sanitize extension info then register its primitives with the VM.
+     * @param {string} serviceName - the name of the service hosting the extension
+     * @param {ExtensionInfo} extensionInfo - the extension's metadata
+     * @private
+     */
     _registerExtensionInfo (serviceName, extensionInfo) {
         extensionInfo = this._prepareExtensionInfo(serviceName, extensionInfo);
-        dispatch.call('runtime', '_registerExtensionPrimitives', extensionInfo).catch(e => {
-            log.error(`Failed to register primitives for extension on service ${serviceName}: ${JSON.stringify(e)}`);
-        });
+        dispatch.call('runtime', '_registerExtensionPrimitives', extensionInfo).then(
+            () => {
+                if (dispatch.callingWorker) {
+                    this._stopWorkerWatchdog(dispatch.callingWorker);
+                }
+            },
+            e => {
+                log.error(`Failed to register primitives for extension "${extensionInfo.id}": ${e.message}`);
+            });
     }
 
     /**
@@ -210,6 +246,35 @@ class ExtensionManager {
             blockInfo.func = serviceObject[blockInfo.func].bind(serviceObject);
         }
         return blockInfo;
+    }
+
+    /**
+     * Start a watchdog to terminate this worker unless it registers an extension before the timeout.
+     * @param {object} worker - the worker to watch.
+     * @private
+     */
+    _startWorkerWatchdog (worker) {
+        const timeout = 5 * 1000; // 5 seconds
+
+        this._activeWatchdogs.add(worker);
+        setTimeout(() => {
+            if (this._activeWatchdogs.has(worker)) {
+                this._activeWatchdogs.delete(worker);
+                log.warn(`Worker watchdog timed out. Terminating worker.`);
+                dispatch.removeProvider(worker);
+                worker.terminate();
+            }
+        }, timeout);
+    }
+
+    /**
+     * Mark this worker as "safe" from the watchdog.
+     * @param {object} worker - the worker to mark as safe.
+     * @see {_startWorkerWatchdog}
+     * @private
+     */
+    _stopWorkerWatchdog (worker) {
+        this._activeWatchdogs.delete(worker);
     }
 }
 

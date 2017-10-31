@@ -38,7 +38,7 @@ class CentralDispatch extends SharedDispatch {
     /**
      * Set a local object as the global provider of the specified service.
      * WARNING: Any method on the provider can be called from any worker within the dispatch system.
-     * @param {string} service - a globally unique string identifying this service. Examples: 'vm', 'gui', 'extension9'.
+     * @param {string} service - a globally unique string identifying this service. Examples: 'vm', 'gui'.
      * @param {object} provider - a local object which provides this service.
      * @returns {Promise} - a promise which will resolve once the service is registered.
      */
@@ -69,6 +69,25 @@ class CentralDispatch extends SharedDispatch {
             });
         } else {
             log.warn('Central dispatch ignoring attempt to add duplicate worker');
+        }
+    }
+
+    /**
+     * Remove a service provider from the central dispatch service, un-registering any services it provides.
+     * If the provider is a worker its dispatch service will be shut down.
+     * The worker itself will NOT be terminated by this call.
+     * @param {Worker|object} provider - the worker or object instance to be removed.
+     */
+    removeProvider (provider) {
+        const workerIndex = this.workers.indexOf(provider);
+        if (workerIndex !== -1) {
+            /** @TODO Should we ask the worker to shut down? If so, owner must wait before terminating the worker. */
+            this.workers.splice(workerIndex, 1);
+        }
+        for (const serviceName in Object.keys(this.services)) {
+            if (this.services[serviceName] === provider) {
+                delete this.services[serviceName];
+            }
         }
     }
 
