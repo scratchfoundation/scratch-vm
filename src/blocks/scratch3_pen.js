@@ -328,7 +328,8 @@ class Scratch3PenBlocks {
                             type: ArgumentType.NUMBER,
                             defaultValue: 1
                         }
-                    }
+                    },
+                    hideFromPalette: true
                 },
                 {
                     opcode: 'changePenShadeBy',
@@ -339,7 +340,8 @@ class Scratch3PenBlocks {
                             type: ArgumentType.NUMBER,
                             defaultValue: 1
                         }
-                    }
+                    },
+                    hideFromPalette: true
                 },
                 {
                     opcode: 'setPenHueToNumber',
@@ -350,7 +352,8 @@ class Scratch3PenBlocks {
                             type: ArgumentType.NUMBER,
                             defaultValue: 1
                         }
-                    }
+                    },
+                    hideFromPalette: true
                 },
                 {
                     opcode: 'changePenHueBy',
@@ -361,7 +364,8 @@ class Scratch3PenBlocks {
                             type: ArgumentType.NUMBER,
                             defaultValue: 1
                         }
-                    }
+                    },
+                    hideFromPalette: true
                 }
             ],
             menus: {
