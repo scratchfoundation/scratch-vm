@@ -19,6 +19,8 @@ const ColorParam = {
     TRANSPARENCY: 'transparency'
 };
 
+const penIcon = require('./pen-icon.svg');
+
 /**
  * @typedef {object} PenState - the pen state associated with a particular target.
  * @property {Boolean} penDown - tracks whether the pen should draw for this target.
@@ -235,6 +237,7 @@ class Scratch3PenBlocks {
         return {
             id: 'pen',
             name: 'Pen',
+            iconURI: penIcon,
             blocks: [
                 {
                     opcode: 'clear',
