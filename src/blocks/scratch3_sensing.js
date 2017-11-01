@@ -167,8 +167,10 @@ class Scratch3SensingBlocks {
 
         // Variables
         const varName = args.PROPERTY;
-        if (attrTarget.variables.hasOwnProperty(varName)) {
-            return attrTarget.variables[varName].value;
+        for (const id in attrTarget.variables) {
+            if (attrTarget.variables[id].name === varName) {
+                return attrTarget.variables[id].value;
+            }
         }
 
         // Otherwise, 0
