@@ -421,6 +421,7 @@ class Runtime extends EventEmitter {
         const categoryInfo = {
             id: extensionInfo.id,
             name: extensionInfo.name,
+            icon: extensionInfo.iconURI,
             color1: '#FF6680',
             color2: '#FF4D6A',
             color3: '#FF3355',
@@ -524,7 +525,21 @@ class Runtime extends EventEmitter {
         // but each `[ARG]` will need to be replaced with the number in this map instead of `args0.length`.
         const argsMap = {};
 
-        blockJSON.message0 = blockInfo.text.replace(/\[(.+?)]/g, (match, placeholder) => {
+        blockJSON.message0 = '';
+
+        // If an icon for the extension exists, prepend it to each block
+        if (categoryInfo.icon) {
+            blockJSON.message0 = '%1';
+            const iconJSON = {
+                type: 'field_image',
+                src: categoryInfo.icon,
+                width: 24,
+                height: 24
+            };
+            blockJSON.args0.push(iconJSON);
+        }
+
+        blockJSON.message0 += blockInfo.text.replace(/\[(.+?)]/g, (match, placeholder) => {
 
             // Sanitize the placeholder to ensure valid XML
             placeholder = placeholder.replace(/[<"&]/, '_');
