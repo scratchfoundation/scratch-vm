@@ -630,8 +630,9 @@ class Runtime extends EventEmitter {
         const xmlParts = [];
         for (const categoryInfo of this._blockInfo) {
             const {name, color1, color2} = categoryInfo;
+            const paletteBlocks = categoryInfo.blocks.filter(block => !block.info.hideFromPalette);
             xmlParts.push(`<category name="${name}" colour="${color1}" secondaryColour="${color2}">`);
-            xmlParts.push.apply(xmlParts, categoryInfo.blocks.map(blockInfo => blockInfo.xml));
+            xmlParts.push.apply(xmlParts, paletteBlocks.map(block => block.xml));
             xmlParts.push('</category>');
         }
         return xmlParts.join('\n');

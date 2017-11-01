@@ -30,6 +30,7 @@ const builtinExtensions = {
  * @property {object.<string,ArgumentInfo>|undefined} arguments - information about this block's arguments, if any
  * @property {string|Function|undefined} func - the method for this block on the extension service (default: opcode)
  * @property {Array.<string>|undefined} filter - the list of targets for which this block should appear (default: all)
+ * @property {Boolean|undefined} hideFromPalette - true if should not be appear in the palette. (default false)
  */
 
 /**
