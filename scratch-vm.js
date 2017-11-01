@@ -17718,7 +17718,7 @@ var Scratch3LooksBlocks = function () {
         key: 'say',
         value: function say(args, util) {
             // @TODO in 2.0 calling say/think resets the right/left bias of the bubble
-            this._updateBubble(util.target, 'say', args.MESSAGE);
+            this._updateBubble(util.target, 'say', String(args.MESSAGE));
         }
     }, {
         key: 'sayforsecs',
@@ -17738,7 +17738,7 @@ var Scratch3LooksBlocks = function () {
     }, {
         key: 'think',
         value: function think(args, util) {
-            this._updateBubble(util.target, 'think', args.MESSAGE);
+            this._updateBubble(util.target, 'think', String(args.MESSAGE));
         }
     }, {
         key: 'thinkforsecs',
@@ -18750,6 +18750,52 @@ var Scratch3PenBlocks = function () {
                             defaultValue: 1
                         }
                     }
+                },
+                /* Legacy blocks, should not be shown in flyout */
+                {
+                    opcode: 'setPenShadeToNumber',
+                    blockType: BlockType.COMMAND,
+                    text: 'set pen shade to [SHADE]',
+                    arguments: {
+                        SHADE: {
+                            type: ArgumentType.NUMBER,
+                            defaultValue: 1
+                        }
+                    },
+                    hideFromPalette: true
+                }, {
+                    opcode: 'changePenShadeBy',
+                    blockType: BlockType.COMMAND,
+                    text: 'change pen shade by [SHADE]',
+                    arguments: {
+                        SHADE: {
+                            type: ArgumentType.NUMBER,
+                            defaultValue: 1
+                        }
+                    },
+                    hideFromPalette: true
+                }, {
+                    opcode: 'setPenHueToNumber',
+                    blockType: BlockType.COMMAND,
+                    text: 'set pen hue to [HUE]',
+                    arguments: {
+                        HUE: {
+                            type: ArgumentType.NUMBER,
+                            defaultValue: 1
+                        }
+                    },
+                    hideFromPalette: true
+                }, {
+                    opcode: 'changePenHueBy',
+                    blockType: BlockType.COMMAND,
+                    text: 'change pen hue by [HUE]',
+                    arguments: {
+                        HUE: {
+                            type: ArgumentType.NUMBER,
+                            defaultValue: 1
+                        }
+                    },
+                    hideFromPalette: true
                 }],
                 menus: {
                     colorParam: [ColorParam.COLOR, ColorParam.SATURATION, ColorParam.BRIGHTNESS, ColorParam.TRANSPARENCY]
@@ -18848,6 +18894,10 @@ var Scratch3PenBlocks = function () {
             penState.saturation = hsv.s * 100;
             penState.brightness = hsv.v * 100;
             penState.transparency = 0;
+
+            // Set the legacy "shade" value the same way scratch 2 did.
+            penState._shade = penState.brightness / 2;
+
             this._updatePenColor(penState);
         }
 
@@ -18962,6 +19012,96 @@ var Scratch3PenBlocks = function () {
             var penAttributes = this._getPenState(util.target).penAttributes;
             penAttributes.diameter = this._clampPenSize(Cast.toNumber(args.SIZE));
         }
+
+        /* LEGACY OPCODES */
+        /**
+         * Scratch 2 "hue" param is equivelant to twice the new "color" param.
+         * @param {object} args - the block arguments.
+         *  @property {number} HUE - the amount to set the hue to.
+         * @param {object} util - utility object provided by the runtime.
+         */
+
+    }, {
+        key: 'setPenHueToNumber',
+        value: function setPenHueToNumber(args, util) {
+            var penState = this._getPenState(util.target);
+            var hueValue = Cast.toNumber(args.HUE);
+            var colorValue = hueValue / 2;
+            this._setOrChangeColorParam(ColorParam.COLOR, colorValue, penState, false);
+        }
+
+        /**
+         * Scratch 2 "hue" param is equivelant to twice the new "color" param.
+         * @param {object} args - the block arguments.
+         *  @property {number} HUE - the amount of desired hue change.
+         * @param {object} util - utility object provided by the runtime.
+         */
+
+    }, {
+        key: 'changePenHueBy',
+        value: function changePenHueBy(args, util) {
+            var penState = this._getPenState(util.target);
+            var hueChange = Cast.toNumber(args.HUE);
+            var colorChange = hueChange / 2;
+            this._setOrChangeColorParam(ColorParam.COLOR, colorChange, penState, true);
+        }
+
+        /**
+         * Use legacy "set shade" code to calculate RGB value for shade,
+         * then convert back to HSV and store those components.
+         * It is important to also track the given shade in penState._shade
+         * because it cannot be accurately backed out of the new HSV later.
+         * @param {object} args - the block arguments.
+         *  @property {number} SHADE - the amount to set the shade to.
+         * @param {object} util - utility object provided by the runtime.
+         */
+
+    }, {
+        key: 'setPenShadeToNumber',
+        value: function setPenShadeToNumber(args, util) {
+            var penState = this._getPenState(util.target);
+            var newShade = Cast.toNumber(args.SHADE);
+
+            // Wrap clamp the new shade value the way scratch 2 did.
+            newShade = newShade % 200;
+            if (newShade < 0) newShade += 200;
+
+            // Create the new color in RGB using the scratch 2 "shade" model
+            var rgb = Color.hsvToRgb({ h: penState.color * 360 / 100, s: 1, v: 1 });
+            var shade = newShade > 100 ? 200 - newShade : newShade;
+            if (shade < 50) {
+                rgb = Color.mixRgb(Color.RGB_BLACK, rgb, (10 + shade) / 60);
+            } else {
+                rgb = Color.mixRgb(rgb, Color.RGB_WHITE, (shade - 50) / 60);
+            }
+
+            // Update the pen state according to new color
+            var hsv = Color.rgbToHsv(rgb);
+            penState.color = 100 * hsv.h / 360;
+            penState.saturation = 100 * hsv.s;
+            penState.brightness = 100 * hsv.v;
+
+            // And store the shade that was used to compute this new color for later use.
+            penState._shade = newShade;
+
+            this._updatePenColor(penState);
+        }
+
+        /**
+         * Because "shade" cannot be backed out of hsv consistently, use the previously
+         * stored penState._shade to make the shade change.
+         * @param {object} args - the block arguments.
+         *  @property {number} SHADE - the amount of desired shade change.
+         * @param {object} util - utility object provided by the runtime.
+         */
+
+    }, {
+        key: 'changePenShadeBy',
+        value: function changePenShadeBy(args, util) {
+            var penState = this._getPenState(util.target);
+            var shadeChange = Cast.toNumber(args.SHADE);
+            this.setPenShadeToNumber({ SHADE: penState._shade + shadeChange }, util);
+        }
     }], [{
         key: 'DEFAULT_PEN_STATE',
         get: function get() {
@@ -18971,6 +19111,7 @@ var Scratch3PenBlocks = function () {
                 saturation: 100,
                 brightness: 100,
                 transparency: 0,
+                _shade: 50, // Used only for legacy `change shade by` blocks
                 penAttributes: {
                     color4f: [0, 0, 1, 1],
                     diameter: 1
@@ -22132,9 +22273,12 @@ var Runtime = function (_EventEmitter) {
                         color1 = categoryInfo.color1,
                         color2 = categoryInfo.color2;
 
+                    var paletteBlocks = categoryInfo.blocks.filter(function (block) {
+                        return !block.info.hideFromPalette;
+                    });
                     xmlParts.push('<category name="' + name + '" colour="' + color1 + '" secondaryColour="' + color2 + '">');
-                    xmlParts.push.apply(xmlParts, categoryInfo.blocks.map(function (blockInfo) {
-                        return blockInfo.xml;
+                    xmlParts.push.apply(xmlParts, paletteBlocks.map(function (block) {
+                        return block.xml;
                     }));
                     xmlParts.push('</category>');
                 }
@@ -23847,6 +23991,7 @@ var builtinExtensions = {
  * @property {object.<string,ArgumentInfo>|undefined} arguments - information about this block's arguments, if any
  * @property {string|Function|undefined} func - the method for this block on the extension service (default: opcode)
  * @property {Array.<string>|undefined} filter - the list of targets for which this block should appear (default: all)
+ * @property {Boolean|undefined} hideFromPalette - true if should not be appear in the palette. (default false)
  */
 
 /**
@@ -25810,7 +25955,7 @@ var specMap = {
         argMap: [{
             type: 'input',
             inputOp: 'math_number',
-            inputName: 'COLOR'
+            inputName: 'HUE'
         }]
     },
     'setPenHueTo:': {
@@ -25818,7 +25963,7 @@ var specMap = {
         argMap: [{
             type: 'input',
             inputOp: 'math_number',
-            inputName: 'COLOR'
+            inputName: 'HUE'
         }]
     },
     'changePenShadeBy:': {
@@ -42125,7 +42270,7 @@ function extend() {
 /* 176 */
 /***/ (function(module, exports) {
 
-module.exports = {"name":"scratch-vm","version":"0.1.0","description":"Virtual Machine for Scratch 3.0","author":"Massachusetts Institute of Technology","license":"BSD-3-Clause","homepage":"https://github.com/LLK/scratch-vm#readme","repository":{"type":"git","url":"git+ssh://git@github.com/LLK/scratch-vm.git"},"main":"./dist/node/scratch-vm.js","scripts":{"build":"./node_modules/.bin/webpack --progress --colors --bail","coverage":"./node_modules/.bin/tap ./test/{unit,integration}/*.js --coverage --coverage-report=lcov","deploy":"touch playground/.nojekyll && ./node_modules/.bin/gh-pages -t -d playground -m \"Build for $(git log --pretty=format:%H -n1)\"","lint":"./node_modules/.bin/eslint .","prepublish":"in-publish && npm run build || not-in-publish","start":"./node_modules/.bin/webpack-dev-server","tap":"./node_modules/.bin/tap ./test/{unit,integration}/*.js","tap:unit":"./node_modules/.bin/tap ./test/unit/*.js","tap:integration":"./node_modules/.bin/tap ./test/integration/*.js","test":"npm run lint && npm run tap","watch":"./node_modules/.bin/webpack --progress --colors --watch","version":"./node_modules/.bin/json -f package.json -I -e \"this.repository.sha = '$(git log -n1 --pretty=format:%H)'\""},"devDependencies":{"adm-zip":"0.4.7","babel-core":"^6.24.1","babel-eslint":"^7.1.1","babel-loader":"^7.0.0","babel-preset-es2015":"^6.24.1","copy-webpack-plugin":"4.0.1","escape-html":"1.0.3","eslint":"^4.5.0","eslint-config-scratch":"^4.0.0","expose-loader":"0.7.3","gh-pages":"^0.12.0","got":"5.7.1","highlightjs":"^9.8.0","htmlparser2":"3.9.2","immutable":"3.8.1","in-publish":"^2.0.0","json":"^9.0.4","lodash.defaultsdeep":"4.6.0","minilog":"3.1.0","promise":"7.1.1","scratch-audio":"latest","scratch-blocks":"latest","scratch-render":"latest","scratch-storage":"^0.2.0","script-loader":"0.7.0","socket.io-client":"1.7.3","stats.js":"^0.17.0","tap":"^10.2.0","tiny-worker":"^2.1.1","webpack":"^2.4.1","webpack-dev-server":"^2.4.1","worker-loader":"0.8.1"}}
+module.exports = {"name":"scratch-vm","version":"0.1.0","description":"Virtual Machine for Scratch 3.0","author":"Massachusetts Institute of Technology","license":"BSD-3-Clause","homepage":"https://github.com/LLK/scratch-vm#readme","repository":{"type":"git","url":"git+ssh://git@github.com/LLK/scratch-vm.git"},"main":"./dist/node/scratch-vm.js","scripts":{"build":"webpack --progress --colors --bail","coverage":"tap ./test/{unit,integration}/*.js --coverage --coverage-report=lcov","deploy":"touch playground/.nojekyll && gh-pages -t -d playground -m \"Build for $(git log --pretty=format:%H -n1)\"","lint":"eslint .","prepublish":"in-publish && npm run build || not-in-publish","start":"webpack-dev-server","tap":"tap ./test/{unit,integration}/*.js","tap:unit":"tap ./test/unit/*.js","tap:integration":"tap ./test/integration/*.js","test":"npm run lint && npm run tap","watch":"webpack --progress --colors --watch","version":"json -f package.json -I -e \"this.repository.sha = '$(git log -n1 --pretty=format:%H)'\""},"devDependencies":{"adm-zip":"0.4.7","babel-core":"^6.24.1","babel-eslint":"^7.1.1","babel-loader":"^7.0.0","babel-preset-es2015":"^6.24.1","copy-webpack-plugin":"4.0.1","escape-html":"1.0.3","eslint":"^4.5.0","eslint-config-scratch":"^4.0.0","expose-loader":"0.7.3","gh-pages":"^0.12.0","got":"5.7.1","highlightjs":"^9.8.0","htmlparser2":"3.9.2","immutable":"3.8.1","in-publish":"^2.0.0","json":"^9.0.4","lodash.defaultsdeep":"4.6.0","minilog":"3.1.0","promise":"7.1.1","scratch-audio":"latest","scratch-blocks":"latest","scratch-render":"latest","scratch-storage":"^0.2.0","script-loader":"0.7.0","socket.io-client":"1.7.3","stats.js":"^0.17.0","tap":"^10.2.0","tiny-worker":"^2.1.1","webpack":"^2.4.1","webpack-dev-server":"^2.4.1","worker-loader":"0.8.1"}}
 
 /***/ }),
 /* 177 */
