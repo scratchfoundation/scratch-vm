@@ -19452,8 +19452,10 @@ var Scratch3SensingBlocks = function () {
 
             // Variables
             var varName = args.PROPERTY;
-            if (attrTarget.variables.hasOwnProperty(varName)) {
-                return attrTarget.variables[varName].value;
+            for (var id in attrTarget.variables) {
+                if (attrTarget.variables[id].name === varName) {
+                    return attrTarget.variables[id].value;
+                }
             }
 
             // Otherwise, 0
