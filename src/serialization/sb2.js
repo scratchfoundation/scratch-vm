@@ -62,7 +62,7 @@ const parseProcedureArgIds = function (procCode) {
     return parseProcedureArgMap(procCode)
         .map(arg => arg.inputName)
         .filter(name => name); // Filter out unnamed inputs which are labels
-}
+};
 
 /**
  * Flatten a block tree into a block list.
