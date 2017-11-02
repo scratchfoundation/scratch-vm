@@ -533,8 +533,8 @@ class Runtime extends EventEmitter {
             const iconJSON = {
                 type: 'field_image',
                 src: categoryInfo.icon,
-                width: 24,
-                height: 24
+                width: 40,
+                height: 40
             };
             blockJSON.args0.push(iconJSON);
         }
