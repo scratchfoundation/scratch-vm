@@ -68,7 +68,7 @@ const execute = function (sequencer, thread) {
      */
     // @todo move this to callback attached to the thread when we have performance
     // metrics (dd)
-    const handleReport = function (resolvedValue) {
+    const handleReport = function (resolvedValue, argValues) {
         thread.pushReportedValue(resolvedValue);
         if (isHat) {
             // Hat predicate was evaluated.
@@ -99,10 +99,15 @@ const execute = function (sequencer, thread) {
                     runtime.visualReport(currentBlockId, resolvedValue);
                 }
                 if (thread.updateMonitor) {
-                    runtime.requestUpdateMonitor(Map({
+                    // 
+                    const params = {};
+                    if (argValues) {
+                        params.params = argValues;
+                    }
+                    runtime.requestUpdateMonitor(Map(Object.assign({
                         id: currentBlockId,
                         value: String(resolvedValue)
-                    }));
+                    }, params)));
                 }
             }
             // Finished any yields.
@@ -277,7 +282,7 @@ const execute = function (sequencer, thread) {
             thread.popStack();
         });
     } else if (thread.status === Thread.STATUS_RUNNING) {
-        handleReport(primitiveReportedValue);
+        handleReport(primitiveReportedValue, argValues);
     }
 };
 

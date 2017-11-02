@@ -21166,7 +21166,7 @@ var execute = function execute(sequencer, thread) {
      */
     // @todo move this to callback attached to the thread when we have performance
     // metrics (dd)
-    var handleReport = function handleReport(resolvedValue) {
+    var handleReport = function handleReport(resolvedValue, argValues) {
         thread.pushReportedValue(resolvedValue);
         if (isHat) {
             // Hat predicate was evaluated.
@@ -21194,10 +21194,15 @@ var execute = function execute(sequencer, thread) {
                     runtime.visualReport(currentBlockId, resolvedValue);
                 }
                 if (thread.updateMonitor) {
-                    runtime.requestUpdateMonitor(Map({
+                    // 
+                    var params = {};
+                    if (argValues) {
+                        params.params = argValues;
+                    }
+                    runtime.requestUpdateMonitor(Map(Object.assign({
                         id: currentBlockId,
                         value: String(resolvedValue)
-                    }));
+                    }, params)));
                 }
             }
             // Finished any yields.
@@ -21370,7 +21375,7 @@ var execute = function execute(sequencer, thread) {
             thread.popStack();
         });
     } else if (thread.status === Thread.STATUS_RUNNING) {
-        handleReport(primitiveReportedValue);
+        handleReport(primitiveReportedValue, argValues);
     }
 };
 
