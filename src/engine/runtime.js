@@ -433,7 +433,7 @@ class Runtime extends EventEmitter {
         for (const menuName in extensionInfo.menus) {
             if (extensionInfo.menus.hasOwnProperty(menuName)) {
                 const menuItems = extensionInfo.menus[menuName];
-                const convertedMenu = this._buildMenuForScratchBlocks(menuName, menuItems, extensionInfo);
+                const convertedMenu = this._buildMenuForScratchBlocks(menuName, menuItems, categoryInfo);
                 categoryInfo.menus.push(convertedMenu);
             }
         }
