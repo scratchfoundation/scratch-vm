@@ -8,7 +8,11 @@ const {Map} = require('immutable');
  * @return {boolean} True if the value appears to be a Promise.
  */
 const isPromise = function (value) {
-    return value && value.then && typeof value.then === 'function';
+    return (
+        value !== null &&
+        typeof value === 'object' &&
+        typeof value.then === 'function'
+    );
 };
 
 /**
