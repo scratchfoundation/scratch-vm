@@ -18,6 +18,12 @@ const base = {
             query: {
                 presets: ['es2015']
             }
+        }, {
+            test: /\.svg$/,
+            loader: 'url-loader',
+            options: {
+                limit: 8192
+            }
         }]
     },
     plugins: [
