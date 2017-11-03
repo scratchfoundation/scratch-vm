@@ -1424,7 +1424,7 @@ addExtensionOp(weDo2, 'motorOnFor', {
     argMap: [
         {
             type: 'input',
-            inputOp: 'text',
+            inputOp: 'wedo2.menu.motorID',
             inputName: 'MOTOR_ID'
         },
         {
@@ -1440,7 +1440,7 @@ addExtensionOp(weDo2, 'motorOn', {
     argMap: [
         {
             type: 'input',
-            inputOp: 'text',
+            inputOp: 'wedo2.menu.motorID',
             inputName: 'MOTOR_ID'
         }
     ]
@@ -1451,7 +1451,7 @@ addExtensionOp(weDo2, 'motorOff', {
     argMap: [
         {
             type: 'input',
-            inputOp: 'text',
+            inputOp: 'wedo2.menu.motorID',
             inputName: 'MOTOR_ID'
         }
     ]
@@ -1462,7 +1462,7 @@ addExtensionOp(weDo2, 'startMotorPower', {
     argMap: [
         {
             type: 'input',
-            inputOp: 'text',
+            inputOp: 'wedo2.menu.motorID',
             inputName: 'MOTOR_ID'
         },
         {
@@ -1478,12 +1478,12 @@ addExtensionOp(weDo2, 'setMotorDirection', {
     argMap: [
         {
             type: 'input',
-            inputOp: 'text',
+            inputOp: 'wedo2.menu.motorID',
             inputName: 'MOTOR_ID'
         },
         {
             type: 'input',
-            inputOp: 'text',
+            inputOp: 'wedo2.menu.motorDirection',
             inputName: 'DIRECTION'
         }
     ]
@@ -1521,7 +1521,7 @@ addExtensionOp(weDo2, 'whenDistance', {
     argMap: [
         {
             type: 'input',
-            inputOp: 'text',
+            inputOp: 'wedo2.menu.lessMore',
             inputName: 'OP'
         },
         {
@@ -1537,33 +1537,34 @@ addExtensionOp(weDo2, 'whenTilted', {
     argMap: [
         {
             type: 'input',
-            inputOp: 'text',
+            inputOp: 'wedo2.menu.tiltDirectionAny',
             inputName: 'DIRECTION'
         }
     ]
 });
 
 addExtensionOp(weDo2, 'getDistance', {
-    opcode: 'wedo2.motorOn'
+    opcode: 'wedo2.getDistance',
+    argMap: []
 });
 
 addExtensionOp(weDo2, 'isTilted', {
-    opcode: 'wedo2.motorOn',
+    opcode: 'wedo2.isTilted',
     argMap: [
         {
             type: 'input',
-            inputOp: 'text',
+            inputOp: 'wedo2.menu.tiltDirectionAny',
             inputName: 'DIRECTION'
         }
     ]
 });
 
 addExtensionOp(weDo2, 'getTilt', {
-    opcode: 'getTiltAngle',
+    opcode: 'wedo2.getTiltAngle',
     argMap: [
         {
             type: 'input',
-            inputOp: 'text',
+            inputOp: 'wedo2.menu.tiltDirection',
             inputName: 'DIRECTION'
         }
     ]
