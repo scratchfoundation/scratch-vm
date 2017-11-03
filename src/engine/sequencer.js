@@ -38,7 +38,7 @@ class Sequencer {
         let numActiveThreads = Infinity;
         // Whether `stepThreads` has run through a full single tick.
         let ranFirstTick = false;
-        const doneThreads = [];
+        const doneThreads = this.runtime.threads.map(() => null);
         // Conditions for continuing to stepping threads:
         // 1. We must have threads in the list, and some must be active.
         // 2. Time elapsed must be less than WORK_TIME.
@@ -54,10 +54,12 @@ class Sequencer {
                 if (activeThread.stack.length === 0 ||
                     activeThread.status === Thread.STATUS_DONE) {
                     // Finished with this thread.
-                    if (doneThreads.indexOf(activeThread) < 0) {
-                        doneThreads.push(activeThread);
-                    }
+                    doneThreads[i] = activeThread;
                     continue;
+                }
+                // A thread was removed, added or this thread was restarted.
+                if (doneThreads[i] !== null) {
+                    doneThreads[i] = null;
                 }
                 if (activeThread.status === Thread.STATUS_YIELD_TICK &&
                     !ranFirstTick) {
@@ -82,13 +84,13 @@ class Sequencer {
             ranFirstTick = true;
         }
         // Filter inactive threads from `this.runtime.threads`.
-        this.runtime.threads = this.runtime.threads.filter(thread => {
-            if (doneThreads.indexOf(thread) > -1) {
+        this.runtime.threads = this.runtime.threads.filter((thread, i) => {
+            if (doneThreads[i] === null) {
                 return false;
             }
             return true;
         });
-        return doneThreads;
+        return doneThreads.filter(Boolean);
     }
 
     /**
