@@ -74,7 +74,7 @@ const parseScratchObject = function (object, runtime, extensions) {
     }
     if (object.hasOwnProperty('blocks')) {
         for (const blockId in object.blocks) {
-            const blockJSON = object.blockType[blockId];
+            const blockJSON = object.blocks[blockId];
             blocks.createBlock(blockJSON);
 
             const dotIndex = blockJSON.opcode.indexOf('.');
