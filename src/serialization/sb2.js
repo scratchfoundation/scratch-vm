@@ -90,15 +90,16 @@ const flatten = function (blocks) {
  * or a list of blocks in an argument (e.g., move [pick random...]).
  * @param {Array.<object>} blockList SB2 JSON-format block list.
  * @param {Function} getVariableId function to retreive a variable's ID based on name
+ * @param {ImportedExtensionsInfo} extensions - (in/out) parsed extension information will be stored here.
  * @return {Array.<object>} Scratch VM-format block list.
  */
-const parseBlockList = function (blockList, getVariableId) {
+const parseBlockList = function (blockList, getVariableId, extensions) {
     const resultingList = [];
     let previousBlock = null; // For setting next.
     for (let i = 0; i < blockList.length; i++) {
         const block = blockList[i];
         // eslint-disable-next-line no-use-before-define
-        const parsedBlock = parseBlock(block, getVariableId);
+        const parsedBlock = parseBlock(block, getVariableId, extensions);
         if (typeof parsedBlock === 'undefined') continue;
         if (previousBlock) {
             parsedBlock.parent = previousBlock.id;
@@ -116,14 +117,15 @@ const parseBlockList = function (blockList, getVariableId) {
  * @param {!object} scripts Scripts object from SB2 JSON.
  * @param {!Blocks} blocks Blocks object to load parsed blocks into.
  * @param {Function} getVariableId function to retreive a variable's ID based on name
+ * @param {ImportedExtensionsInfo} extensions - (in/out) parsed extension information will be stored here.
  */
-const parseScripts = function (scripts, blocks, getVariableId) {
+const parseScripts = function (scripts, blocks, getVariableId, extensions) {
     for (let i = 0; i < scripts.length; i++) {
         const script = scripts[i];
         const scriptX = script[0];
         const scriptY = script[1];
         const blockList = script[2];
-        const parsedBlockList = parseBlockList(blockList, getVariableId);
+        const parsedBlockList = parseBlockList(blockList, getVariableId, extensions);
         if (parsedBlockList[0]) {
             // Adjust script coordinates to account for
             // larger block size in scratch-blocks.
@@ -167,12 +169,14 @@ const generateVariableIdGetter = (function () {
 
 /**
  * Parse a single "Scratch object" and create all its in-memory VM objects.
- * @param {!object} object From-JSON "Scratch object:" sprite, stage, watcher.
- * @param {!Runtime} runtime Runtime object to load all structures into.
- * @param {boolean} topLevel Whether this is the top-level object (stage).
- * @return {?Promise} Promise that resolves to the loaded targets when ready.
+ * TODO: parse the "info" section, especially "savedExtensions"
+ * @param {!object} object - From-JSON "Scratch object:" sprite, stage, watcher.
+ * @param {!Runtime} runtime - Runtime object to load all structures into.
+ * @param {ImportedExtensionsInfo} extensions - (in/out) parsed extension information will be stored here.
+ * @param {boolean} topLevel - Whether this is the top-level object (stage).
+ * @return {!Promise.<Array.<Target>>} Promise for the loaded targets when ready, or null for unsupported objects.
  */
-const parseScratchObject = function (object, runtime, topLevel) {
+const parseScratchObject = function (object, runtime, extensions, topLevel) {
     if (!object.hasOwnProperty('objName')) {
         // Watcher/monitor - skip this object until those are implemented in VM.
         // @todo
@@ -240,7 +244,7 @@ const parseScratchObject = function (object, runtime, topLevel) {
 
     // If included, parse any and all scripts/blocks on the object.
     if (object.hasOwnProperty('scripts')) {
-        parseScripts(object.scripts, blocks, getVariableId);
+        parseScripts(object.scripts, blocks, getVariableId, extensions);
     }
 
     if (object.hasOwnProperty('lists')) {
@@ -299,7 +303,7 @@ const parseScratchObject = function (object, runtime, topLevel) {
     const childrenPromises = [];
     if (object.children) {
         for (let m = 0; m < object.children.length; m++) {
-            childrenPromises.push(parseScratchObject(object.children[m], runtime, false));
+            childrenPromises.push(parseScratchObject(object.children[m], runtime, extensions, false));
         }
     }
 
@@ -324,31 +328,42 @@ const parseScratchObject = function (object, runtime, topLevel) {
  * @param {!object} json SB2-format JSON to load.
  * @param {!Runtime} runtime Runtime object to load all structures into.
  * @param {boolean=} optForceSprite If set, treat as sprite (Sprite2).
- * @return {?Promise} Promise that resolves to the loaded targets when ready.
+ * @return {Promise.<ImportedProject>} Promise that resolves to the loaded targets when ready.
  */
 const sb2import = function (json, runtime, optForceSprite) {
-    return parseScratchObject(
-        json,
-        runtime,
-        !optForceSprite
-    );
+    const extensions = {
+        extensionIDs: new Set(),
+        extensionURLs: new Map()
+    };
+    return parseScratchObject(json, runtime, extensions, !optForceSprite)
+        .then(targets => ({
+            targets,
+            extensions
+        }));
 };
 
 /**
  * Parse a single SB2 JSON-formatted block and its children.
  * @param {!object} sb2block SB2 JSON-formatted block.
- * @param {Function} getVariableId function to retreive a variable's ID based on name
- * @return {object} Scratch VM format block.
+ * @param {Function} getVariableId function to retrieve a variable's ID based on name
+ * @param {ImportedExtensionsInfo} extensions - (in/out) parsed extension information will be stored here.
+ * @return {object} Scratch VM format block, or null if unsupported object.
  */
-const parseBlock = function (sb2block, getVariableId) {
+const parseBlock = function (sb2block, getVariableId, extensions) {
     // First item in block object is the old opcode (e.g., 'forward:').
     const oldOpcode = sb2block[0];
     // Convert the block using the specMap. See sb2specmap.js.
     if (!oldOpcode || !specMap[oldOpcode]) {
         log.warn('Couldn\'t find SB2 block: ', oldOpcode);
-        return;
+        return null;
     }
     const blockMetadata = specMap[oldOpcode];
+    // If the block is from an extension, record it.
+    const dotIndex = blockMetadata.opcode.indexOf('.');
+    if (dotIndex >= 0) {
+        const extension = blockMetadata.opcode.substring(0, dotIndex);
+        extensions.extensionIDs.add(extension);
+    }
     // Block skeleton.
     const activeBlock = {
         id: uid(), // Generate a new block unique ID.
@@ -385,10 +400,10 @@ const parseBlock = function (sb2block, getVariableId) {
                 let innerBlocks;
                 if (typeof providedArg[0] === 'object' && providedArg[0]) {
                     // Block list occupies the input.
-                    innerBlocks = parseBlockList(providedArg, getVariableId);
+                    innerBlocks = parseBlockList(providedArg, getVariableId, extensions);
                 } else {
                     // Single block occupies the input.
-                    innerBlocks = [parseBlock(providedArg, getVariableId)];
+                    innerBlocks = [parseBlock(providedArg, getVariableId, extensions)];
                 }
                 let previousBlock = null;
                 for (let j = 0; j < innerBlocks.length; j++) {
