@@ -447,7 +447,11 @@ class Runtime extends EventEmitter {
             }
         }
 
-        this.emit(Runtime.EXTENSION_ADDED, categoryInfo.blocks.concat(categoryInfo.menus));
+        const blocksInfo = categoryInfo.blocks.concat(categoryInfo.menus);
+        blocksInfo.extensionURL = extensionInfo.id;
+        blocksInfo.categoryName = extensionInfo.name;
+
+        this.emit(Runtime.EXTENSION_ADDED, blocksInfo);
     }
 
     /**
