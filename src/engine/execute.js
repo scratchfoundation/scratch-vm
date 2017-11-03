@@ -1,6 +1,13 @@
+const BlockUtility = require('./block-utility');
 const log = require('../util/log');
 const Thread = require('./thread');
 const {Map} = require('immutable');
+
+/**
+ * Single BlockUtility instance reused by execute for every pritimive ran.
+ * @const
+ */
+const blockUtility = new BlockUtility();
 
 /**
  * Utility function to determine if a value is a Promise.
@@ -20,12 +27,13 @@ const isPromise = function (value) {
  * @param {!Thread} thread Thread containing the primitive.
  * @param {!string} currentBlockId Id of the block in its thread for value from
  * the primitive.
+ * @param {!string} opcode opcode used to identify a block function primitive.
  * @param {!boolean} isHat Is the current block a hat?
  */
 // @todo move this to callback attached to the thread when we have performance
 // metrics (dd)
 const handleReport = function (
-    resolvedValue, sequencer, thread, currentBlockId, isHat) {
+    resolvedValue, sequencer, thread, currentBlockId, opcode, isHat) {
     thread.pushReportedValue(resolvedValue);
     if (isHat) {
         // Hat predicate was evaluated.
@@ -131,7 +139,7 @@ const execute = function (sequencer, thread) {
         const keys = Object.keys(fields);
         if (keys.length === 1 && Object.keys(inputs).length === 0) {
             // One field and no inputs - treat as arg.
-            handleReport(fields[keys[0]].value, sequencer, thread, currentBlockId, isHat);
+            handleReport(fields[keys[0]].value, sequencer, thread, currentBlockId, opcode, isHat);
         } else {
             log.warn(`Could not get implementation for opcode: ${opcode}`);
         }
@@ -193,49 +201,9 @@ const execute = function (sequencer, thread) {
     currentStackFrame.reported = {};
 
     let primitiveReportedValue = null;
-    primitiveReportedValue = blockFunction(argValues, {
-        stackFrame: currentStackFrame.executionContext,
-        target: target,
-        yield: function () {
-            thread.status = Thread.STATUS_YIELD;
-        },
-        startBranch: function (branchNum, isLoop) {
-            sequencer.stepToBranch(thread, branchNum, isLoop);
-        },
-        stopAll: function () {
-            runtime.stopAll();
-        },
-        stopOtherTargetThreads: function () {
-            runtime.stopForTarget(target, thread);
-        },
-        stopThisScript: function () {
-            thread.stopThisScript();
-        },
-        startProcedure: function (procedureCode) {
-            sequencer.stepToProcedure(thread, procedureCode);
-        },
-        getProcedureParamNames: function (procedureCode) {
-            return blockContainer.getProcedureParamNames(procedureCode);
-        },
-        pushParam: function (paramName, paramValue) {
-            thread.pushParam(paramName, paramValue);
-        },
-        getParam: function (paramName) {
-            return thread.getParam(paramName);
-        },
-        startHats: function (requestedHat, optMatchFields, optTarget) {
-            return (
-                runtime.startHats(requestedHat, optMatchFields, optTarget)
-            );
-        },
-        ioQuery: function (device, func, args) {
-            // Find the I/O device and execute the query/function call.
-            if (runtime.ioDevices[device] && runtime.ioDevices[device][func]) {
-                const devObject = runtime.ioDevices[device];
-                return devObject[func].apply(devObject, args);
-            }
-        }
-    });
+    blockUtility.sequencer = sequencer;
+    blockUtility.thread = thread;
+    primitiveReportedValue = blockFunction(argValues, blockUtility);
 
     if (typeof primitiveReportedValue === 'undefined') {
         // No value reported - potentially a command block.
@@ -251,7 +219,7 @@ const execute = function (sequencer, thread) {
         }
         // Promise handlers
         primitiveReportedValue.then(resolvedValue => {
-            handleReport(resolvedValue, sequencer, thread, currentBlockId, isHat);
+            handleReport(resolvedValue, sequencer, thread, currentBlockId, opcode, isHat);
             if (typeof resolvedValue === 'undefined') {
                 let stackFrame;
                 let nextBlockId;
@@ -284,7 +252,7 @@ const execute = function (sequencer, thread) {
             thread.popStack();
         });
     } else if (thread.status === Thread.STATUS_RUNNING) {
-        handleReport(primitiveReportedValue, sequencer, thread, currentBlockId, isHat);
+        handleReport(primitiveReportedValue, sequencer, thread, currentBlockId, opcode, isHat);
     }
 };
 
