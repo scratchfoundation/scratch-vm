@@ -238,6 +238,7 @@ class VirtualMachine extends EventEmitter {
      * @param {Array.<Target>} targets - the targets to be installed
      * @param {ImportedExtensionsInfo} extensions - metadata about extensions used by these targets
      * @param {boolean} wholeProject - set to true if installing a whole project, as opposed to a single sprite.
+     * @returns {Promise} resolved once targets have been installed
      */
     installTargets (targets, extensions, wholeProject) {
         const extensionPromises = [];
@@ -250,7 +251,7 @@ class VirtualMachine extends EventEmitter {
 
         targets = targets.filter(target => !!target);
 
-        Promise.all(extensionPromises).then(() => {
+        return Promise.all(extensionPromises).then(() => {
             if (wholeProject) {
                 this.clear();
             }

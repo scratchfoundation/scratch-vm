@@ -48,7 +48,6 @@ test('pen', t => {
         vm.setCompatibilityMode(false);
         vm.setTurboMode(false);
         vm.loadProject(project)
-            .then(() => vm.extensionManager.loadExtensionURL('pen')) /** @TODO: loadProject should load extensions */
             .then(() => {
                 vm.greenFlag();
 
