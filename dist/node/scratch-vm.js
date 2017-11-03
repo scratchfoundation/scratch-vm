@@ -2187,7 +2187,7 @@ var RenderedTarget = function (_Target) {
                 var origW = costumeSize[0];
                 var origH = costumeSize[1];
                 var minScale = Math.min(1, Math.max(5 / origW, 5 / origH));
-                var maxScale = Math.min(1.5 * this.runtime.constructor.STAGE_WIDTH / origW, 1.5 * this.runtime.constructor.STAGE_HEIGHT / origH);
+                var maxScale = Math.min(1.5 * this.runtime.STAGE_WIDTH / origW, 1.5 * this.runtime.STAGE_HEIGHT / origH);
                 this.size = MathUtil.clamp(size / 100, minScale, maxScale) * 100;
                 var renderedDirectionScale = this._getRenderedDirectionAndScale();
                 this.renderer.updateDrawableProperties(this.drawableID, {
@@ -2533,7 +2533,7 @@ var RenderedTarget = function (_Target) {
                 // @todo: Update once pick is in Scratch coordinates.
                 // Limits test to this Drawable, so this will return true
                 // even if the clone is obscured by another Drawable.
-                var pickResult = this.runtime.renderer.pick(x + this.runtime.constructor.STAGE_WIDTH / 2, -y + this.runtime.constructor.STAGE_HEIGHT / 2, null, null, [this.drawableID]);
+                var pickResult = this.runtime.renderer.pick(x + this.runtime.STAGE_WIDTH / 2, -y + this.runtime.STAGE_HEIGHT / 2, null, null, [this.drawableID]);
                 return pickResult === this.drawableID;
             }
             return false;
@@ -2661,10 +2661,10 @@ var RenderedTarget = function (_Target) {
             var fence = optFence;
             if (!fence) {
                 fence = {
-                    left: -this.runtime.constructor.STAGE_WIDTH / 2,
-                    right: this.runtime.constructor.STAGE_WIDTH / 2,
-                    top: this.runtime.constructor.STAGE_HEIGHT / 2,
-                    bottom: -this.runtime.constructor.STAGE_HEIGHT / 2
+                    left: -this.runtime.STAGE_WIDTH / 2,
+                    right: this.runtime.STAGE_WIDTH / 2,
+                    top: this.runtime.STAGE_HEIGHT / 2,
+                    bottom: -this.runtime.STAGE_HEIGHT / 2
                 };
             }
             var bounds = this.getBounds();
@@ -14972,8 +14972,8 @@ var Scratch3MotionBlocks = function () {
                 targetX = util.ioQuery('mouse', 'getX');
                 targetY = util.ioQuery('mouse', 'getY');
             } else if (targetName === '_random_') {
-                var stageWidth = this.runtime.constructor.STAGE_WIDTH;
-                var stageHeight = this.runtime.constructor.STAGE_HEIGHT;
+                var stageWidth = this.runtime.STAGE_WIDTH;
+                var stageHeight = this.runtime.STAGE_HEIGHT;
                 targetX = Math.round(stageWidth * (Math.random() - 0.5));
                 targetY = Math.round(stageHeight * (Math.random() - 0.5));
             } else {
