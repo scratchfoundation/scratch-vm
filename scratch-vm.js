@@ -22043,7 +22043,7 @@ var Runtime = function (_EventEmitter) {
             for (var menuName in extensionInfo.menus) {
                 if (extensionInfo.menus.hasOwnProperty(menuName)) {
                     var menuItems = extensionInfo.menus[menuName];
-                    var convertedMenu = this._buildMenuForScratchBlocks(menuName, menuItems, extensionInfo);
+                    var convertedMenu = this._buildMenuForScratchBlocks(menuName, menuItems, categoryInfo);
                     categoryInfo.menus.push(convertedMenu);
                 }
             }
