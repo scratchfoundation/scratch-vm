@@ -84,13 +84,28 @@ class Sequencer {
             ranFirstTick = true;
         }
         // Filter inactive threads from `this.runtime.threads`.
-        this.runtime.threads = this.runtime.threads.filter((thread, i) => {
+        numActiveThreads = 0;
+        for (let i = 0; i < this.runtime.threads.length; i++) {
+            const thread = this.runtime.threads[i];
             if (doneThreads[i] === null) {
-                return false;
+                this.runtime.threads[numActiveThreads] = thread;
+                numActiveThreads++;
             }
-            return true;
-        });
-        return doneThreads.filter(Boolean);
+        }
+        this.runtime.threads.length = numActiveThreads;
+
+        // Filter undefined and null values from `doneThreads`.
+        let numDoneThreads = 0;
+        for (let i = 0; i < doneThreads.length; i++) {
+            const maybeThread = doneThreads[i];
+            if (maybeThread !== null) {
+                doneThreads[numDoneThreads] = maybeThread;
+                numDoneThreads++;
+            }
+        }
+        doneThreads.length = numDoneThreads;
+
+        return doneThreads;
     }
 
     /**
