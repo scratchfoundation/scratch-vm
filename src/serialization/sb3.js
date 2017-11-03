@@ -14,6 +14,18 @@ const {loadCostume} = require('../import/load-costume.js');
 const {loadSound} = require('../import/load-sound.js');
 
 /**
+ * @typedef {object} ImportedProject
+ * @property {Array.<Target>} targets - the imported Scratch 3.0 target objects.
+ * @property {ImportedExtensionsInfo} extensionsInfo - the ID of each extension actually used by this project.
+ */
+
+/**
+ * @typedef {object} ImportedExtensionsInfo
+ * @property {Set.<string>} extensionIDs - the ID of each extension actually in use by blocks in this project.
+ * @property {Map.<string, string>} extensionURLs - map of ID => URL from project metadata. May not match extensionIDs.
+ */
+
+/**
  * Serializes the specified VM runtime.
  * @param  {!Runtime} runtime VM runtime instance to be serialized.
  * @return {object}    Serialized runtime instance.
@@ -41,13 +53,14 @@ const serialize = function (runtime) {
  * Parse a single "Scratch object" and create all its in-memory VM objects.
  * @param {!object} object From-JSON "Scratch object:" sprite, stage, watcher.
  * @param {!Runtime} runtime Runtime object to load all structures into.
- * @return {?Target} Target created (stage or sprite).
+ * @param {ImportedExtensionsInfo} extensions - (in/out) parsed extension information will be stored here.
+ * @return {!Promise.<Target>} Promise for the target created (stage or sprite), or null for unsupported objects.
  */
-const parseScratchObject = function (object, runtime) {
+const parseScratchObject = function (object, runtime, extensions) {
     if (!object.hasOwnProperty('name')) {
         // Watcher/monitor - skip this object until those are implemented in VM.
         // @todo
-        return;
+        return Promise.resolve(null);
     }
     // Blocks container for this object.
     const blocks = new Blocks();
@@ -61,7 +74,14 @@ const parseScratchObject = function (object, runtime) {
     }
     if (object.hasOwnProperty('blocks')) {
         for (const blockId in object.blocks) {
-            blocks.createBlock(object.blocks[blockId]);
+            const blockJSON = object.blockType[blockId];
+            blocks.createBlock(blockJSON);
+
+            const dotIndex = blockJSON.opcode.indexOf('.');
+            if (dotIndex >= 0) {
+                const extensionId = blockJSON.opcode.substring(0, dotIndex);
+                extensions.extensionIDs.add(extensionId);
+            }
         }
         // console.log(blocks);
     }
@@ -155,14 +175,23 @@ const parseScratchObject = function (object, runtime) {
 };
 
 /**
- * Deserializes the specified representation of a VM runtime and loads it into
- * the provided runtime instance.
- * @param  {object}  json    JSON representation of a VM runtime.
- * @param  {Runtime} runtime Runtime instance
- * @returns {Promise} Promise that resolves to the list of targets after the project is deserialized
+ * Deserialize the specified representation of a VM runtime and loads it into the provided runtime instance.
+ * TODO: parse extension info (also, design extension info storage...)
+ * @param  {object} json - JSON representation of a VM runtime.
+ * @param  {Runtime} runtime - Runtime instance
+ * @returns {Promise.<ImportedProject>} Promise that resolves to the list of targets after the project is deserialized
  */
 const deserialize = function (json, runtime) {
-    return Promise.all((json.targets || []).map(target => parseScratchObject(target, runtime)));
+    const extensions = {
+        extensionIDs: new Set(),
+        extensionURLs: new Map()
+    };
+    return Promise.all(
+        (json.targets || []).map(target => parseScratchObject(target, runtime, extensions))
+    ).then(targets => ({
+        targets,
+        extensions
+    }));
 };
 
 module.exports = {
