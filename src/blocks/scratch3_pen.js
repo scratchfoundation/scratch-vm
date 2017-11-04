@@ -452,7 +452,7 @@ class Scratch3PenBlocks {
         penState.saturation = hsv.s * 100;
         penState.brightness = hsv.v * 100;
         if (rgb.hasOwnProperty('a')) {
-            penState.transparency = 100 * (1 - rgb.a / 255.0);
+            penState.transparency = 100 * (1 - (rgb.a / 255.0));
         } else {
             penState.transparency = 0;
         }
