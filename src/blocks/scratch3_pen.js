@@ -451,7 +451,11 @@ class Scratch3PenBlocks {
         penState.color = (hsv.h / 360) * 100;
         penState.saturation = hsv.s * 100;
         penState.brightness = hsv.v * 100;
-        penState.transparency = 0;
+        if (rgb.hasOwnProperty('a')) {
+            penState.transparency = 100 * (1 - rgb.a / 255.0);
+        } else {
+            penState.transparency = 0;
+        }
 
         // Set the legacy "shade" value the same way scratch 2 did.
         penState._shade = penState.brightness / 2;
