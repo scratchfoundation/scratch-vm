@@ -18288,7 +18288,7 @@ var execute = function execute(sequencer, thread) {
      */
     // @todo move this to callback attached to the thread when we have performance
     // metrics (dd)
-    var handleReport = function handleReport(resolvedValue, argValues) {
+    var handleReport = function handleReport(resolvedValue, params) {
         thread.pushReportedValue(resolvedValue);
         if (isHat) {
             // Hat predicate was evaluated.
@@ -18316,15 +18316,14 @@ var execute = function execute(sequencer, thread) {
                     runtime.visualReport(currentBlockId, resolvedValue);
                 }
                 if (thread.updateMonitor) {
-                    // 
-                    var params = {};
-                    if (argValues) {
-                        params.params = argValues;
+                    var monitorParams = null;
+                    if (params && Object.keys(params) > 0) {
+                        monitorParams = { params: params };
                     }
                     runtime.requestUpdateMonitor(Map(Object.assign({
                         id: currentBlockId,
                         value: String(resolvedValue)
-                    }, params)));
+                    }, monitorParams)));
                 }
             }
             // Finished any yields.
@@ -18356,6 +18355,8 @@ var execute = function execute(sequencer, thread) {
 
     // Generate values for arguments (inputs).
     var argValues = {};
+    // 监听arguments值变化 by Kane
+    var params = {};
 
     // Add all fields on this block to the argValues.
     for (var fieldName in fields) {
@@ -18365,6 +18366,7 @@ var execute = function execute(sequencer, thread) {
         } else {
             argValues[fieldName] = fields[fieldName].value;
         }
+        params[fieldName] = fields[fieldName].value;
     }
 
     // Recursively evaluate input blocks.
@@ -18497,7 +18499,7 @@ var execute = function execute(sequencer, thread) {
             thread.popStack();
         });
     } else if (thread.status === Thread.STATUS_RUNNING) {
-        handleReport(primitiveReportedValue, argValues);
+        handleReport(primitiveReportedValue, params);
     }
 };
 

@@ -68,7 +68,7 @@ const execute = function (sequencer, thread) {
      */
     // @todo move this to callback attached to the thread when we have performance
     // metrics (dd)
-    const handleReport = function (resolvedValue, argValues) {
+    const handleReport = function (resolvedValue, params) {
         thread.pushReportedValue(resolvedValue);
         if (isHat) {
             // Hat predicate was evaluated.
@@ -99,15 +99,14 @@ const execute = function (sequencer, thread) {
                     runtime.visualReport(currentBlockId, resolvedValue);
                 }
                 if (thread.updateMonitor) {
-                    // 
-                    const params = {};
-                    if (argValues) {
-                        params.params = argValues;
+                    let monitorParams = null;
+                    if (params && Object.keys(params).length > 0) {
+                        monitorParams = {params};
                     }
                     runtime.requestUpdateMonitor(Map(Object.assign({
                         id: currentBlockId,
                         value: String(resolvedValue)
-                    }, params)));
+                    }, monitorParams)));
                 }
             }
             // Finished any yields.
@@ -139,6 +138,8 @@ const execute = function (sequencer, thread) {
 
     // Generate values for arguments (inputs).
     const argValues = {};
+    // 监听arguments值变化 by Kane
+    const params = {};
 
     // Add all fields on this block to the argValues.
     for (const fieldName in fields) {
@@ -148,6 +149,7 @@ const execute = function (sequencer, thread) {
         } else {
             argValues[fieldName] = fields[fieldName].value;
         }
+        params[fieldName] = fields[fieldName].value;
     }
 
     // Recursively evaluate input blocks.
@@ -176,6 +178,7 @@ const execute = function (sequencer, thread) {
             thread.popStack();
         }
         argValues[inputName] = currentStackFrame.reported[inputName];
+        params[inputName] = currentStackFrame.reported[inputName];
     }
 
     // Add any mutation to args (e.g., for procedures).
@@ -282,7 +285,8 @@ const execute = function (sequencer, thread) {
             thread.popStack();
         });
     } else if (thread.status === Thread.STATUS_RUNNING) {
-        handleReport(primitiveReportedValue, argValues);
+        // 通过添加params动态更新monitor block参数
+        handleReport(primitiveReportedValue, params);
     }
 };
 
