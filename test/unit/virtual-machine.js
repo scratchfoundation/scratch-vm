@@ -110,6 +110,50 @@ test('renameSprite does not increment when renaming to the same name', t => {
     t.end();
 });
 
+test('deleteSprite throws when used on a non-sprite target', t => {
+    const vm = new VirtualMachine();
+    vm.runtime.targets = [{
+        id: 'id',
+        isSprite: () => false
+    }];
+    t.throws(
+        (() => vm.deleteSprite('id')),
+        new Error ('Cannot delete non-sprite targets.')
+    );
+    t.end();
+});
+
+test('deleteSprite throws when there is no sprite for the given target', t => {
+    const vm = new VirtualMachine();
+    vm.runtime.targets = [{
+        id: 'id',
+        isSprite: () => true,
+        sprite: null
+    }];
+    t.throws(
+        (() => vm.deleteSprite('id')),
+        new Error ('No sprite associated with this target.')
+    );
+    t.end();
+});
+
+test('deleteSprite throws when there is no target with given id', t => {
+    const vm = new VirtualMachine();
+    vm.runtime.targets = [{
+        id: 'id',
+        isSprite: () => true,
+        sprite: {
+            name: 'this name'
+        }
+    }];
+    vm.runtime.getTargetById = () => null;
+    t.throws(
+        (() => vm.deleteSprite('id')),
+        new Error ('No target with the provided id.')
+    );
+    t.end();
+});
+
 test('emitWorkspaceUpdate', t => {
     const vm = new VirtualMachine();
     vm.runtime.targets = [
