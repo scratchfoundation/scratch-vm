@@ -20525,7 +20525,7 @@ var Scratch3WeDo2Blocks = function () {
                 }, {
                     opcode: 'isTilted',
                     text: 'tilted [DIRECTION]?',
-                    blockType: BlockType.BOOLEAN,
+                    blockType: BlockType.REPORTER,
                     arguments: {
                         DIRECTION: {
                             type: ArgumentType.STRING,
