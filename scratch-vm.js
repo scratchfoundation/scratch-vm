@@ -21690,6 +21690,8 @@ module.exports = BlockUtility;
 "use strict";
 
 
+var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
+
 var BlockUtility = __webpack_require__(80);
 var log = __webpack_require__(2);
 var Thread = __webpack_require__(16);
@@ -21711,7 +21713,7 @@ var blockUtility = new BlockUtility();
  * @return {boolean} True if the value appears to be a Promise.
  */
 var isPromise = function isPromise(value) {
-    return value && value.then && typeof value.then === 'function';
+    return value !== null && (typeof value === 'undefined' ? 'undefined' : _typeof(value)) === 'object' && typeof value.then === 'function';
 };
 
 /**
