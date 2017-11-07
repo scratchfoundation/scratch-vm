@@ -129,7 +129,7 @@ if (typeof Object.create === 'function') {
 "use strict";
 
 
-var minilog = __webpack_require__(136);
+var minilog = __webpack_require__(137);
 minilog.enable();
 
 module.exports = minilog('vm');
@@ -151,7 +151,7 @@ module.exports = minilog('vm');
 
 var base64 = __webpack_require__(31)
 var ieee754 = __webpack_require__(34)
-var isArray = __webpack_require__(23)
+var isArray = __webpack_require__(24)
 
 exports.Buffer = Buffer
 exports.SlowBuffer = SlowBuffer
@@ -1942,7 +1942,7 @@ var _createClass = function () { function defineProperties(target, props) { for 
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
-var Color = __webpack_require__(21);
+var Color = __webpack_require__(22);
 
 /**
  * @fileoverview
@@ -2482,7 +2482,7 @@ function isUndefined(arg) {
 /* 6 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var microee = __webpack_require__(129);
+var microee = __webpack_require__(130);
 
 // Implements a subset of Node's stream.Transform - in a cross-platform manner.
 function Transform() {}
@@ -2566,7 +2566,7 @@ exports.Readable = exports;
 exports.Writable = __webpack_require__(37);
 exports.Duplex = __webpack_require__(9);
 exports.Transform = __webpack_require__(53);
-exports.PassThrough = __webpack_require__(153);
+exports.PassThrough = __webpack_require__(154);
 
 
 /***/ }),
@@ -2794,7 +2794,7 @@ process.umask = function() { return 0; };
 
 /*<replacement>*/
 
-var processNextTick = __webpack_require__(24);
+var processNextTick = __webpack_require__(25);
 /*</replacement>*/
 
 /*<replacement>*/
@@ -2995,7 +2995,7 @@ module.exports = MathUtil;
 /***/ (function(module, exports, __webpack_require__) {
 
 var Parser = __webpack_require__(47),
-    DomHandler = __webpack_require__(100);
+    DomHandler = __webpack_require__(101);
 
 function defineProp(name, value){
 	delete module.exports[name];
@@ -3009,22 +3009,22 @@ module.exports = {
 	ElementType: __webpack_require__(15),
 	DomHandler: DomHandler,
 	get FeedHandler(){
-		return defineProp("FeedHandler", __webpack_require__(120));
+		return defineProp("FeedHandler", __webpack_require__(121));
 	},
 	get Stream(){
-		return defineProp("Stream", __webpack_require__(122));
+		return defineProp("Stream", __webpack_require__(123));
 	},
 	get WritableStream(){
 		return defineProp("WritableStream", __webpack_require__(49));
 	},
 	get ProxyHandler(){
-		return defineProp("ProxyHandler", __webpack_require__(121));
+		return defineProp("ProxyHandler", __webpack_require__(122));
 	},
 	get DomUtils(){
-		return defineProp("DomUtils", __webpack_require__(102));
+		return defineProp("DomUtils", __webpack_require__(103));
 	},
 	get CollectingHandler(){
-		return defineProp("CollectingHandler", __webpack_require__(119));
+		return defineProp("CollectingHandler", __webpack_require__(120));
 	},
 	// For legacy support
 	DefaultHandler: DomHandler,
@@ -3079,9 +3079,9 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
 
 var adapter = __webpack_require__(79);
 var mutationAdapter = __webpack_require__(42);
-var xmlEscape = __webpack_require__(93);
-var MonitorRecord = __webpack_require__(81);
-var Clone = __webpack_require__(20);
+var xmlEscape = __webpack_require__(94);
+var MonitorRecord = __webpack_require__(82);
+var Clone = __webpack_require__(21);
 
 /**
  * @fileoverview
@@ -3955,6 +3955,359 @@ module.exports = {
 "use strict";
 
 
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+/**
+ * A thread is a running stack context and all the metadata needed.
+ * @param {?string} firstBlock First block to execute in the thread.
+ * @constructor
+ */
+var Thread = function () {
+    function Thread(firstBlock) {
+        _classCallCheck(this, Thread);
+
+        /**
+         * ID of top block of the thread
+         * @type {!string}
+         */
+        this.topBlock = firstBlock;
+
+        /**
+         * Stack for the thread. When the sequencer enters a control structure,
+         * the block is pushed onto the stack so we know where to exit.
+         * @type {Array.<string>}
+         */
+        this.stack = [];
+
+        /**
+         * Stack frames for the thread. Store metadata for the executing blocks.
+         * @type {Array.<Object>}
+         */
+        this.stackFrames = [];
+
+        /**
+         * Status of the thread, one of three states (below)
+         * @type {number}
+         */
+        this.status = 0; /* Thread.STATUS_RUNNING */
+
+        /**
+         * Whether the thread is killed in the middle of execution.
+         * @type {boolean}
+         */
+        this.isKilled = false;
+
+        /**
+         * Target of this thread.
+         * @type {?Target}
+         */
+        this.target = null;
+
+        /**
+         * Whether the thread requests its script to glow during this frame.
+         * @type {boolean}
+         */
+        this.requestScriptGlowInFrame = false;
+
+        /**
+         * Which block ID should glow during this frame, if any.
+         * @type {?string}
+         */
+        this.blockGlowInFrame = null;
+
+        /**
+         * A timer for when the thread enters warp mode.
+         * Substitutes the sequencer's count toward WORK_TIME on a per-thread basis.
+         * @type {?Timer}
+         */
+        this.warpTimer = null;
+    }
+
+    /**
+     * Thread status for initialized or running thread.
+     * This is the default state for a thread - execution should run normally,
+     * stepping from block to block.
+     * @const
+     */
+
+
+    _createClass(Thread, [{
+        key: 'pushStack',
+
+
+        /**
+         * Push stack and update stack frames appropriately.
+         * @param {string} blockId Block ID to push to stack.
+         */
+        value: function pushStack(blockId) {
+            this.stack.push(blockId);
+            // Push an empty stack frame, if we need one.
+            // Might not, if we just popped the stack.
+            if (this.stack.length > this.stackFrames.length) {
+                // Copy warp mode from any higher level.
+                var warpMode = false;
+                if (this.stackFrames.length > 0 && this.stackFrames[this.stackFrames.length - 1]) {
+                    warpMode = this.stackFrames[this.stackFrames.length - 1].warpMode;
+                }
+                this.stackFrames.push({
+                    isLoop: false, // Whether this level of the stack is a loop.
+                    warpMode: warpMode, // Whether this level is in warp mode.
+                    reported: {}, // Collects reported input values.
+                    waitingReporter: null, // Name of waiting reporter.
+                    params: {}, // Procedure parameters.
+                    executionContext: {} // A context passed to block implementations.
+                });
+            }
+        }
+
+        /**
+         * Reset the stack frame for use by the next block.
+         * (avoids popping and re-pushing a new stack frame - keeps the warpmode the same
+         * @param {string} blockId Block ID to push to stack.
+         */
+
+    }, {
+        key: 'reuseStackForNextBlock',
+        value: function reuseStackForNextBlock(blockId) {
+            this.stack[this.stack.length - 1] = blockId;
+            var frame = this.stackFrames[this.stackFrames.length - 1];
+            frame.isLoop = false;
+            // frame.warpMode = warpMode;   // warp mode stays the same when reusing the stack frame.
+            frame.reported = {};
+            frame.waitingReporter = null;
+            frame.params = {};
+            frame.executionContext = {};
+        }
+
+        /**
+         * Pop last block on the stack and its stack frame.
+         * @return {string} Block ID popped from the stack.
+         */
+
+    }, {
+        key: 'popStack',
+        value: function popStack() {
+            this.stackFrames.pop();
+            return this.stack.pop();
+        }
+
+        /**
+         * Pop back down the stack frame until we hit a procedure call or the stack frame is emptied
+         */
+
+    }, {
+        key: 'stopThisScript',
+        value: function stopThisScript() {
+            var blockID = this.peekStack();
+            while (blockID !== null) {
+                var block = this.target.blocks.getBlock(blockID);
+                if (typeof block !== 'undefined' && block.opcode === 'procedures_callnoreturn') {
+                    break;
+                }
+                this.popStack();
+                blockID = this.peekStack();
+            }
+
+            if (this.stack.length === 0) {
+                // Clean up!
+                this.requestScriptGlowInFrame = false;
+                this.status = Thread.STATUS_DONE;
+            }
+        }
+
+        /**
+         * Get top stack item.
+         * @return {?string} Block ID on top of stack.
+         */
+
+    }, {
+        key: 'peekStack',
+        value: function peekStack() {
+            return this.stack.length > 0 ? this.stack[this.stack.length - 1] : null;
+        }
+
+        /**
+         * Get top stack frame.
+         * @return {?object} Last stack frame stored on this thread.
+         */
+
+    }, {
+        key: 'peekStackFrame',
+        value: function peekStackFrame() {
+            return this.stackFrames.length > 0 ? this.stackFrames[this.stackFrames.length - 1] : null;
+        }
+
+        /**
+         * Get stack frame above the current top.
+         * @return {?object} Second to last stack frame stored on this thread.
+         */
+
+    }, {
+        key: 'peekParentStackFrame',
+        value: function peekParentStackFrame() {
+            return this.stackFrames.length > 1 ? this.stackFrames[this.stackFrames.length - 2] : null;
+        }
+
+        /**
+         * Push a reported value to the parent of the current stack frame.
+         * @param {*} value Reported value to push.
+         */
+
+    }, {
+        key: 'pushReportedValue',
+        value: function pushReportedValue(value) {
+            var parentStackFrame = this.peekParentStackFrame();
+            if (parentStackFrame) {
+                var waitingReporter = parentStackFrame.waitingReporter;
+                parentStackFrame.reported[waitingReporter] = value;
+            }
+        }
+
+        /**
+         * Add a parameter to the stack frame.
+         * Use when calling a procedure with parameter values.
+         * @param {!string} paramName Name of parameter.
+         * @param {*} value Value to set for parameter.
+         */
+
+    }, {
+        key: 'pushParam',
+        value: function pushParam(paramName, value) {
+            var stackFrame = this.peekStackFrame();
+            stackFrame.params[paramName] = value;
+        }
+
+        /**
+         * Get a parameter at the lowest possible level of the stack.
+         * @param {!string} paramName Name of parameter.
+         * @return {*} value Value for parameter.
+         */
+
+    }, {
+        key: 'getParam',
+        value: function getParam(paramName) {
+            for (var i = this.stackFrames.length - 1; i >= 0; i--) {
+                var frame = this.stackFrames[i];
+                if (frame.params.hasOwnProperty(paramName)) {
+                    return frame.params[paramName];
+                }
+            }
+            return null;
+        }
+
+        /**
+         * Whether the current execution of a thread is at the top of the stack.
+         * @return {boolean} True if execution is at top of the stack.
+         */
+
+    }, {
+        key: 'atStackTop',
+        value: function atStackTop() {
+            return this.peekStack() === this.topBlock;
+        }
+
+        /**
+         * Switch the thread to the next block at the current level of the stack.
+         * For example, this is used in a standard sequence of blocks,
+         * where execution proceeds from one block to the next.
+         */
+
+    }, {
+        key: 'goToNextBlock',
+        value: function goToNextBlock() {
+            var nextBlockId = this.target.blocks.getNextBlock(this.peekStack());
+            this.reuseStackForNextBlock(nextBlockId);
+        }
+
+        /**
+         * Attempt to determine whether a procedure call is recursive,
+         * by examining the stack.
+         * @param {!string} procedureCode Procedure code of procedure being called.
+         * @return {boolean} True if the call appears recursive.
+         */
+
+    }, {
+        key: 'isRecursiveCall',
+        value: function isRecursiveCall(procedureCode) {
+            var callCount = 5; // Max number of enclosing procedure calls to examine.
+            var sp = this.stack.length - 1;
+            for (var i = sp - 1; i >= 0; i--) {
+                var block = this.target.blocks.getBlock(this.stack[i]);
+                if (block.opcode === 'procedures_callnoreturn' && block.mutation.proccode === procedureCode) {
+                    return true;
+                }
+                if (--callCount < 0) return false;
+            }
+            return false;
+        }
+    }], [{
+        key: 'STATUS_RUNNING',
+        get: function get() {
+            return 0;
+        }
+
+        /**
+         * Threads are in this state when a primitive is waiting on a promise;
+         * execution is paused until the promise changes thread status.
+         * @const
+         */
+
+    }, {
+        key: 'STATUS_PROMISE_WAIT',
+        get: function get() {
+            return 1;
+        }
+
+        /**
+         * Thread status for yield.
+         * @const
+         */
+
+    }, {
+        key: 'STATUS_YIELD',
+        get: function get() {
+            return 2;
+        }
+
+        /**
+         * Thread status for a single-tick yield. This will be cleared when the
+         * thread is resumed.
+         * @const
+         */
+
+    }, {
+        key: 'STATUS_YIELD_TICK',
+        get: function get() {
+            return 3;
+        }
+
+        /**
+         * Thread status for a finished/done thread.
+         * Thread is in this state when there are no more blocks to execute.
+         * @const
+         */
+
+    }, {
+        key: 'STATUS_DONE',
+        get: function get() {
+            return 4;
+        }
+    }]);
+
+    return Thread;
+}();
+
+module.exports = Thread;
+
+/***/ }),
+/* 17 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
 var BlockType = {
     BOOLEAN: 'Boolean',
     COMMAND: 'command',
@@ -3966,7 +4319,7 @@ var BlockType = {
 module.exports = BlockType;
 
 /***/ }),
-/* 17 */
+/* 18 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -4061,7 +4414,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 18 */
+/* 19 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -4119,7 +4472,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 19 */
+/* 20 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -4136,7 +4489,7 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
 var log = __webpack_require__(2);
 var MathUtil = __webpack_require__(10);
 var StringUtil = __webpack_require__(13);
-var Target = __webpack_require__(84);
+var Target = __webpack_require__(85);
 
 /**
  * Rendered target: instance of a sprite (clone), or the stage.
@@ -5188,7 +5541,7 @@ var RenderedTarget = function (_Target) {
 module.exports = RenderedTarget;
 
 /***/ }),
-/* 20 */
+/* 21 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -5227,7 +5580,7 @@ var Clone = function () {
 module.exports = Clone;
 
 /***/ }),
-/* 21 */
+/* 22 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -5485,7 +5838,7 @@ var Color = function () {
 module.exports = Color;
 
 /***/ }),
-/* 22 */
+/* 23 */
 /***/ (function(module, exports, __webpack_require__) {
 
 /**
@@ -10469,7 +10822,7 @@ module.exports = Color;
 }));
 
 /***/ }),
-/* 23 */
+/* 24 */
 /***/ (function(module, exports) {
 
 var toString = {}.toString;
@@ -10480,7 +10833,7 @@ module.exports = Array.isArray || function (arr) {
 
 
 /***/ }),
-/* 24 */
+/* 25 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -10531,7 +10884,7 @@ function nextTick(fn, arg1, arg2, arg3) {
 /* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(8)))
 
 /***/ }),
-/* 25 */
+/* 26 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -10557,359 +10910,6 @@ var List = function List(name, contents) {
 };
 
 module.exports = List;
-
-/***/ }),
-/* 26 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-
-var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
-
-function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
-
-/**
- * A thread is a running stack context and all the metadata needed.
- * @param {?string} firstBlock First block to execute in the thread.
- * @constructor
- */
-var Thread = function () {
-    function Thread(firstBlock) {
-        _classCallCheck(this, Thread);
-
-        /**
-         * ID of top block of the thread
-         * @type {!string}
-         */
-        this.topBlock = firstBlock;
-
-        /**
-         * Stack for the thread. When the sequencer enters a control structure,
-         * the block is pushed onto the stack so we know where to exit.
-         * @type {Array.<string>}
-         */
-        this.stack = [];
-
-        /**
-         * Stack frames for the thread. Store metadata for the executing blocks.
-         * @type {Array.<Object>}
-         */
-        this.stackFrames = [];
-
-        /**
-         * Status of the thread, one of three states (below)
-         * @type {number}
-         */
-        this.status = 0; /* Thread.STATUS_RUNNING */
-
-        /**
-         * Whether the thread is killed in the middle of execution.
-         * @type {boolean}
-         */
-        this.isKilled = false;
-
-        /**
-         * Target of this thread.
-         * @type {?Target}
-         */
-        this.target = null;
-
-        /**
-         * Whether the thread requests its script to glow during this frame.
-         * @type {boolean}
-         */
-        this.requestScriptGlowInFrame = false;
-
-        /**
-         * Which block ID should glow during this frame, if any.
-         * @type {?string}
-         */
-        this.blockGlowInFrame = null;
-
-        /**
-         * A timer for when the thread enters warp mode.
-         * Substitutes the sequencer's count toward WORK_TIME on a per-thread basis.
-         * @type {?Timer}
-         */
-        this.warpTimer = null;
-    }
-
-    /**
-     * Thread status for initialized or running thread.
-     * This is the default state for a thread - execution should run normally,
-     * stepping from block to block.
-     * @const
-     */
-
-
-    _createClass(Thread, [{
-        key: 'pushStack',
-
-
-        /**
-         * Push stack and update stack frames appropriately.
-         * @param {string} blockId Block ID to push to stack.
-         */
-        value: function pushStack(blockId) {
-            this.stack.push(blockId);
-            // Push an empty stack frame, if we need one.
-            // Might not, if we just popped the stack.
-            if (this.stack.length > this.stackFrames.length) {
-                // Copy warp mode from any higher level.
-                var warpMode = false;
-                if (this.stackFrames.length > 0 && this.stackFrames[this.stackFrames.length - 1]) {
-                    warpMode = this.stackFrames[this.stackFrames.length - 1].warpMode;
-                }
-                this.stackFrames.push({
-                    isLoop: false, // Whether this level of the stack is a loop.
-                    warpMode: warpMode, // Whether this level is in warp mode.
-                    reported: {}, // Collects reported input values.
-                    waitingReporter: null, // Name of waiting reporter.
-                    params: {}, // Procedure parameters.
-                    executionContext: {} // A context passed to block implementations.
-                });
-            }
-        }
-
-        /**
-         * Reset the stack frame for use by the next block.
-         * (avoids popping and re-pushing a new stack frame - keeps the warpmode the same
-         * @param {string} blockId Block ID to push to stack.
-         */
-
-    }, {
-        key: 'reuseStackForNextBlock',
-        value: function reuseStackForNextBlock(blockId) {
-            this.stack[this.stack.length - 1] = blockId;
-            var frame = this.stackFrames[this.stackFrames.length - 1];
-            frame.isLoop = false;
-            // frame.warpMode = warpMode;   // warp mode stays the same when reusing the stack frame.
-            frame.reported = {};
-            frame.waitingReporter = null;
-            frame.params = {};
-            frame.executionContext = {};
-        }
-
-        /**
-         * Pop last block on the stack and its stack frame.
-         * @return {string} Block ID popped from the stack.
-         */
-
-    }, {
-        key: 'popStack',
-        value: function popStack() {
-            this.stackFrames.pop();
-            return this.stack.pop();
-        }
-
-        /**
-         * Pop back down the stack frame until we hit a procedure call or the stack frame is emptied
-         */
-
-    }, {
-        key: 'stopThisScript',
-        value: function stopThisScript() {
-            var blockID = this.peekStack();
-            while (blockID !== null) {
-                var block = this.target.blocks.getBlock(blockID);
-                if (typeof block !== 'undefined' && block.opcode === 'procedures_callnoreturn') {
-                    break;
-                }
-                this.popStack();
-                blockID = this.peekStack();
-            }
-
-            if (this.stack.length === 0) {
-                // Clean up!
-                this.requestScriptGlowInFrame = false;
-                this.status = Thread.STATUS_DONE;
-            }
-        }
-
-        /**
-         * Get top stack item.
-         * @return {?string} Block ID on top of stack.
-         */
-
-    }, {
-        key: 'peekStack',
-        value: function peekStack() {
-            return this.stack.length > 0 ? this.stack[this.stack.length - 1] : null;
-        }
-
-        /**
-         * Get top stack frame.
-         * @return {?object} Last stack frame stored on this thread.
-         */
-
-    }, {
-        key: 'peekStackFrame',
-        value: function peekStackFrame() {
-            return this.stackFrames.length > 0 ? this.stackFrames[this.stackFrames.length - 1] : null;
-        }
-
-        /**
-         * Get stack frame above the current top.
-         * @return {?object} Second to last stack frame stored on this thread.
-         */
-
-    }, {
-        key: 'peekParentStackFrame',
-        value: function peekParentStackFrame() {
-            return this.stackFrames.length > 1 ? this.stackFrames[this.stackFrames.length - 2] : null;
-        }
-
-        /**
-         * Push a reported value to the parent of the current stack frame.
-         * @param {*} value Reported value to push.
-         */
-
-    }, {
-        key: 'pushReportedValue',
-        value: function pushReportedValue(value) {
-            var parentStackFrame = this.peekParentStackFrame();
-            if (parentStackFrame) {
-                var waitingReporter = parentStackFrame.waitingReporter;
-                parentStackFrame.reported[waitingReporter] = value;
-            }
-        }
-
-        /**
-         * Add a parameter to the stack frame.
-         * Use when calling a procedure with parameter values.
-         * @param {!string} paramName Name of parameter.
-         * @param {*} value Value to set for parameter.
-         */
-
-    }, {
-        key: 'pushParam',
-        value: function pushParam(paramName, value) {
-            var stackFrame = this.peekStackFrame();
-            stackFrame.params[paramName] = value;
-        }
-
-        /**
-         * Get a parameter at the lowest possible level of the stack.
-         * @param {!string} paramName Name of parameter.
-         * @return {*} value Value for parameter.
-         */
-
-    }, {
-        key: 'getParam',
-        value: function getParam(paramName) {
-            for (var i = this.stackFrames.length - 1; i >= 0; i--) {
-                var frame = this.stackFrames[i];
-                if (frame.params.hasOwnProperty(paramName)) {
-                    return frame.params[paramName];
-                }
-            }
-            return null;
-        }
-
-        /**
-         * Whether the current execution of a thread is at the top of the stack.
-         * @return {boolean} True if execution is at top of the stack.
-         */
-
-    }, {
-        key: 'atStackTop',
-        value: function atStackTop() {
-            return this.peekStack() === this.topBlock;
-        }
-
-        /**
-         * Switch the thread to the next block at the current level of the stack.
-         * For example, this is used in a standard sequence of blocks,
-         * where execution proceeds from one block to the next.
-         */
-
-    }, {
-        key: 'goToNextBlock',
-        value: function goToNextBlock() {
-            var nextBlockId = this.target.blocks.getNextBlock(this.peekStack());
-            this.reuseStackForNextBlock(nextBlockId);
-        }
-
-        /**
-         * Attempt to determine whether a procedure call is recursive,
-         * by examining the stack.
-         * @param {!string} procedureCode Procedure code of procedure being called.
-         * @return {boolean} True if the call appears recursive.
-         */
-
-    }, {
-        key: 'isRecursiveCall',
-        value: function isRecursiveCall(procedureCode) {
-            var callCount = 5; // Max number of enclosing procedure calls to examine.
-            var sp = this.stack.length - 1;
-            for (var i = sp - 1; i >= 0; i--) {
-                var block = this.target.blocks.getBlock(this.stack[i]);
-                if (block.opcode === 'procedures_callnoreturn' && block.mutation.proccode === procedureCode) {
-                    return true;
-                }
-                if (--callCount < 0) return false;
-            }
-            return false;
-        }
-    }], [{
-        key: 'STATUS_RUNNING',
-        get: function get() {
-            return 0;
-        }
-
-        /**
-         * Threads are in this state when a primitive is waiting on a promise;
-         * execution is paused until the promise changes thread status.
-         * @const
-         */
-
-    }, {
-        key: 'STATUS_PROMISE_WAIT',
-        get: function get() {
-            return 1;
-        }
-
-        /**
-         * Thread status for yield.
-         * @const
-         */
-
-    }, {
-        key: 'STATUS_YIELD',
-        get: function get() {
-            return 2;
-        }
-
-        /**
-         * Thread status for a single-tick yield. This will be cleared when the
-         * thread is resumed.
-         * @const
-         */
-
-    }, {
-        key: 'STATUS_YIELD_TICK',
-        get: function get() {
-            return 3;
-        }
-
-        /**
-         * Thread status for a finished/done thread.
-         * Thread is in this state when there are no more blocks to execute.
-         * @const
-         */
-
-    }, {
-        key: 'STATUS_DONE',
-        get: function get() {
-            return 4;
-        }
-    }]);
-
-    return Thread;
-}();
-
-module.exports = Thread;
 
 /***/ }),
 /* 27 */
@@ -11594,8 +11594,8 @@ function base64DetectIncompleteChar(buffer) {
 "use strict";
 
 
-exports.decode = exports.parse = __webpack_require__(147);
-exports.encode = exports.stringify = __webpack_require__(148);
+exports.decode = exports.parse = __webpack_require__(148);
+exports.encode = exports.stringify = __webpack_require__(149);
 
 
 /***/ }),
@@ -11632,7 +11632,7 @@ exports.encode = exports.stringify = __webpack_require__(148);
 
 /*<replacement>*/
 
-var processNextTick = __webpack_require__(24);
+var processNextTick = __webpack_require__(25);
 /*</replacement>*/
 
 module.exports = Writable;
@@ -11675,7 +11675,7 @@ util.inherits = __webpack_require__(1);
 
 /*<replacement>*/
 var internalUtil = {
-  deprecate: __webpack_require__(170)
+  deprecate: __webpack_require__(171)
 };
 /*</replacement>*/
 
@@ -12391,8 +12391,8 @@ exports._unrefActive = exports.active = function(item) {
 };
 
 // setimmediate attaches itself to the global object
-__webpack_require__(161);
-var global = __webpack_require__(116);
+__webpack_require__(162);
+var global = __webpack_require__(117);
 exports.setImmediate = global.setImmediate;
 exports.clearImmediate = global.clearImmediate;
 
@@ -12425,8 +12425,8 @@ exports.clearImmediate = global.clearImmediate;
 
 
 
-var punycode = __webpack_require__(146);
-var util = __webpack_require__(169);
+var punycode = __webpack_require__(147);
+var util = __webpack_require__(170);
 
 exports.parse = urlParse;
 exports.resolve = urlResolve;
@@ -13345,13 +13345,13 @@ var _createClass = function () { function defineProperties(target, props) { for 
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
-var RenderedTarget = __webpack_require__(19);
+var RenderedTarget = __webpack_require__(20);
 var Blocks = __webpack_require__(12);
 
-var _require = __webpack_require__(18),
+var _require = __webpack_require__(19),
     loadSoundFromAsset = _require.loadSoundFromAsset;
 
-var _require2 = __webpack_require__(17),
+var _require2 = __webpack_require__(18),
     loadCostumeFromAsset = _require2.loadCostumeFromAsset;
 
 var StringUtil = __webpack_require__(13);
@@ -13533,7 +13533,7 @@ Object.keys(domLvl1).forEach(function(key) {
 /* 45 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var decodeMap = __webpack_require__(113);
+var decodeMap = __webpack_require__(114);
 
 module.exports = decodeCodePoint;
 
@@ -14845,7 +14845,7 @@ Tokenizer.prototype._emitPartial = function(value){
 module.exports = Stream;
 
 var Parser = __webpack_require__(47),
-    WritableStream = __webpack_require__(163).Writable || __webpack_require__(178).Writable,
+    WritableStream = __webpack_require__(164).Writable || __webpack_require__(179).Writable,
     StringDecoder = __webpack_require__(35).StringDecoder,
     Buffer = __webpack_require__(3).Buffer;
 
@@ -14901,7 +14901,7 @@ module.exports = color;
 "use strict";
 
 
-module.exports = typeof Promise === 'function' ? Promise : __webpack_require__(144);
+module.exports = typeof Promise === 'function' ? Promise : __webpack_require__(145);
 
 
 /***/ }),
@@ -14934,13 +14934,13 @@ module.exports = typeof Promise === 'function' ? Promise : __webpack_require__(1
 
 /*<replacement>*/
 
-var processNextTick = __webpack_require__(24);
+var processNextTick = __webpack_require__(25);
 /*</replacement>*/
 
 module.exports = Readable;
 
 /*<replacement>*/
-var isArray = __webpack_require__(23);
+var isArray = __webpack_require__(24);
 /*</replacement>*/
 
 /*<replacement>*/
@@ -14980,7 +14980,7 @@ util.inherits = __webpack_require__(1);
 /*</replacement>*/
 
 /*<replacement>*/
-var debugUtil = __webpack_require__(179);
+var debugUtil = __webpack_require__(180);
 var debug = void 0;
 if (debugUtil && debugUtil.debuglog) {
   debug = debugUtil.debuglog('stream');
@@ -14989,7 +14989,7 @@ if (debugUtil && debugUtil.debuglog) {
 }
 /*</replacement>*/
 
-var BufferList = __webpack_require__(154);
+var BufferList = __webpack_require__(155);
 var destroyImpl = __webpack_require__(54);
 var StringDecoder;
 
@@ -16147,7 +16147,7 @@ function done(stream, er, data) {
 
 /*<replacement>*/
 
-var processNextTick = __webpack_require__(24);
+var processNextTick = __webpack_require__(25);
 /*</replacement>*/
 
 // undocumented cb() API, needed for core, not for public API
@@ -16228,9 +16228,9 @@ module.exports = __webpack_require__(5).EventEmitter;
 /* 57 */
 /***/ (function(module, exports, __webpack_require__) {
 
-/* WEBPACK VAR INJECTION */(function(global) {var ClientRequest = __webpack_require__(164)
-var extend = __webpack_require__(175)
-var statusCodes = __webpack_require__(95)
+/* WEBPACK VAR INJECTION */(function(global) {var ClientRequest = __webpack_require__(165)
+var extend = __webpack_require__(176)
+var statusCodes = __webpack_require__(96)
 var url = __webpack_require__(40)
 
 var http = exports
@@ -16914,7 +16914,7 @@ function isPrimitive(arg) {
 }
 exports.isPrimitive = isPrimitive;
 
-exports.isBuffer = __webpack_require__(172);
+exports.isBuffer = __webpack_require__(173);
 
 function objectToString(o) {
   return Object.prototype.toString.call(o);
@@ -16958,7 +16958,7 @@ exports.log = function() {
  *     prototype.
  * @param {function} superCtor Constructor function to inherit prototype from.
  */
-exports.inherits = __webpack_require__(171);
+exports.inherits = __webpack_require__(172);
 
 exports._extend = function(origin, add) {
   // Don't do anything if add isn't an object
@@ -16987,7 +16987,7 @@ function hasOwnProperty(obj, prop) {
 /* 65 */
 /***/ (function(module, exports, __webpack_require__) {
 
-const VirtualMachine = __webpack_require__(94);
+const VirtualMachine = __webpack_require__(95);
 
 module.exports = VirtualMachine;
 
@@ -17464,8 +17464,8 @@ var _createClass = function () { function defineProperties(target, props) { for 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
 var Cast = __webpack_require__(4);
-var Clone = __webpack_require__(20);
-var RenderedTarget = __webpack_require__(19);
+var Clone = __webpack_require__(21);
+var RenderedTarget = __webpack_require__(20);
 
 /**
  * @typedef {object} BubbleState - the bubble state associated with a particular target.
@@ -17726,11 +17726,12 @@ var Scratch3LooksBlocks = function () {
             var _this = this;
 
             this.say(args, util);
+            var _target = util.target;
             return new Promise(function (resolve) {
                 _this._bubbleTimeout = setTimeout(function () {
                     _this._bubbleTimeout = null;
                     // Clear say bubble and proceed.
-                    _this._updateBubble(util.target, 'say', '');
+                    _this._updateBubble(_target, 'say', '');
                     resolve();
                 }, 1000 * args.SECS);
             });
@@ -17746,11 +17747,12 @@ var Scratch3LooksBlocks = function () {
             var _this2 = this;
 
             this.think(args, util);
+            var _target = util.target;
             return new Promise(function (resolve) {
                 _this2._bubbleTimeout = setTimeout(function () {
                     _this2._bubbleTimeout = null;
                     // Clear say bubble and proceed.
-                    _this2._updateBubble(util.target, 'think', '');
+                    _this2._updateBubble(_target, 'think', '');
                     resolve();
                 }, 1000 * args.SECS);
             });
@@ -18450,12 +18452,12 @@ var _createClass = function () { function defineProperties(target, props) { for 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
 var ArgumentType = __webpack_require__(28);
-var BlockType = __webpack_require__(16);
+var BlockType = __webpack_require__(17);
 var Cast = __webpack_require__(4);
-var Clone = __webpack_require__(20);
-var Color = __webpack_require__(21);
+var Clone = __webpack_require__(21);
+var Color = __webpack_require__(22);
 var MathUtil = __webpack_require__(10);
-var RenderedTarget = __webpack_require__(19);
+var RenderedTarget = __webpack_require__(20);
 var log = __webpack_require__(2);
 
 /**
@@ -19557,7 +19559,7 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
 
 var MathUtil = __webpack_require__(10);
 var Cast = __webpack_require__(4);
-var Clone = __webpack_require__(20);
+var Clone = __webpack_require__(21);
 
 var Scratch3SoundBlocks = function () {
     function Scratch3SoundBlocks(runtime) {
@@ -19935,8 +19937,8 @@ var _createClass = function () { function defineProperties(target, props) { for 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
 var ArgumentType = __webpack_require__(28);
-var BlockType = __webpack_require__(16);
-var color = __webpack_require__(21);
+var BlockType = __webpack_require__(17);
+var color = __webpack_require__(22);
 var log = __webpack_require__(2);
 
 /**
@@ -21476,21 +21478,293 @@ module.exports = adapter;
 "use strict";
 
 
-var log = __webpack_require__(2);
-var Thread = __webpack_require__(26);
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
-var _require = __webpack_require__(22),
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+var Thread = __webpack_require__(16);
+
+/**
+ * @fileoverview
+ * Interface provided to block primitive functions for interacting with the
+ * runtime, thread, target, and convenient methods.
+ */
+
+var BlockUtility = function () {
+    function BlockUtility() {
+        var sequencer = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : null;
+        var thread = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : null;
+
+        _classCallCheck(this, BlockUtility);
+
+        /**
+         * A sequencer block primitives use to branch or start procedures with
+         * @type {?Sequencer}
+         */
+        this.sequencer = sequencer;
+
+        /**
+         * The block primitives thread with the block's target, stackFrame and
+         * modifiable status.
+         * @type {?Thread}
+         */
+        this.thread = thread;
+    }
+
+    /**
+     * The target the primitive is working on.
+     * @type {Target}
+     */
+
+
+    _createClass(BlockUtility, [{
+        key: 'yield',
+
+
+        /**
+         * Set the thread to yield.
+         */
+        value: function _yield() {
+            this.thread.status = Thread.STATUS_YIELD;
+        }
+
+        /**
+         * Start a branch in the current block.
+         * @param {number} branchNum Which branch to step to (i.e., 1, 2).
+         * @param {boolean} isLoop Whether this block is a loop.
+         */
+
+    }, {
+        key: 'startBranch',
+        value: function startBranch(branchNum, isLoop) {
+            this.sequencer.stepToBranch(this.thread, branchNum, isLoop);
+        }
+
+        /**
+         * Stop all threads.
+         */
+
+    }, {
+        key: 'stopAll',
+        value: function stopAll() {
+            this.sequencer.runtime.stopAll();
+        }
+
+        /**
+         * Stop threads other on this target other than the thread holding the
+         * executed block.
+         */
+
+    }, {
+        key: 'stopOtherTargetThreads',
+        value: function stopOtherTargetThreads() {
+            this.sequencer.runtime.stopForTarget(this.thread.target, this.thread);
+        }
+
+        /**
+         * Stop this thread.
+         */
+
+    }, {
+        key: 'stopThisScript',
+        value: function stopThisScript() {
+            this.thread.stopThisScript();
+        }
+
+        /**
+         * Start a specified procedure on this thread.
+         * @param {string} procedureCode Procedure code for procedure to start.
+         */
+
+    }, {
+        key: 'startProcedure',
+        value: function startProcedure(procedureCode) {
+            this.sequencer.stepToProcedure(this.thread, procedureCode);
+        }
+
+        /**
+         * Get names for parameters for the given procedure.
+         * @param {string} procedureCode Procedure code for procedure to query.
+         * @return {Array.<string>} List of param names for a procedure.
+         */
+
+    }, {
+        key: 'getProcedureParamNames',
+        value: function getProcedureParamNames(procedureCode) {
+            return this.thread.target.blocks.getProcedureParamNames(procedureCode);
+        }
+
+        /**
+         * Store a procedure parameter value by its name.
+         * @param {string} paramName The procedure's parameter name.
+         * @param {*} paramValue The procedure's parameter value.
+         */
+
+    }, {
+        key: 'pushParam',
+        value: function pushParam(paramName, paramValue) {
+            this.thread.pushParam(paramName, paramValue);
+        }
+
+        /**
+         * Retrieve the stored parameter value for a given parameter name.
+         * @param {string} paramName The procedure's parameter name.
+         * @return {*} The parameter's current stored value.
+         */
+
+    }, {
+        key: 'getParam',
+        value: function getParam(paramName) {
+            return this.thread.getParam(paramName);
+        }
+
+        /**
+         * Start all relevant hats.
+         * @param {!string} requestedHat Opcode of hats to start.
+         * @param {object=} optMatchFields Optionally, fields to match on the hat.
+         * @param {Target=} optTarget Optionally, a target to restrict to.
+         * @return {Array.<Thread>} List of threads started by this function.
+         */
+
+    }, {
+        key: 'startHats',
+        value: function startHats(requestedHat, optMatchFields, optTarget) {
+            return this.sequencer.runtime.startHats(requestedHat, optMatchFields, optTarget);
+        }
+
+        /**
+         * Query a named IO device.
+         * @param {string} device The name of like the device, like keyboard.
+         * @param {string} func The name of the device's function to query.
+         * @param {Array.<*>} args Arguments to pass to the device's function.
+         * @return {*} The expected output for the device's function.
+         */
+
+    }, {
+        key: 'ioQuery',
+        value: function ioQuery(device, func, args) {
+            // Find the I/O device and execute the query/function call.
+            if (this.sequencer.runtime.ioDevices[device] && this.sequencer.runtime.ioDevices[device][func]) {
+                var devObject = this.sequencer.runtime.ioDevices[device];
+                return devObject[func].apply(devObject, args);
+            }
+        }
+    }, {
+        key: 'target',
+        get: function get() {
+            return this.thread.target;
+        }
+
+        /**
+         * The runtime the block primitive is running in.
+         * @type {Runtime}
+         */
+
+    }, {
+        key: 'runtime',
+        get: function get() {
+            return this.sequencer.runtime;
+        }
+
+        /**
+         * The stack frame used by loop and other blocks to track internal state.
+         * @type {object}
+         */
+
+    }, {
+        key: 'stackFrame',
+        get: function get() {
+            return this.thread.peekStackFrame().executionContext;
+        }
+    }]);
+
+    return BlockUtility;
+}();
+
+module.exports = BlockUtility;
+
+/***/ }),
+/* 81 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+var BlockUtility = __webpack_require__(80);
+var log = __webpack_require__(2);
+var Thread = __webpack_require__(16);
+
+var _require = __webpack_require__(23),
     Map = _require.Map;
+
+/**
+ * Single BlockUtility instance reused by execute for every pritimive ran.
+ * @const
+ */
+
+
+var blockUtility = new BlockUtility();
 
 /**
  * Utility function to determine if a value is a Promise.
  * @param {*} value Value to check for a Promise.
  * @return {boolean} True if the value appears to be a Promise.
  */
-
-
 var isPromise = function isPromise(value) {
     return value && value.then && typeof value.then === 'function';
+};
+
+/**
+ * Handle any reported value from the primitive, either directly returned
+ * or after a promise resolves.
+ * @param {*} resolvedValue Value eventually returned from the primitive.
+ * @param {!Sequencer} sequencer Sequencer stepping the thread for the ran
+ * primitive.
+ * @param {!Thread} thread Thread containing the primitive.
+ * @param {!string} currentBlockId Id of the block in its thread for value from
+ * the primitive.
+ * @param {!string} opcode opcode used to identify a block function primitive.
+ * @param {!boolean} isHat Is the current block a hat?
+ */
+// @todo move this to callback attached to the thread when we have performance
+// metrics (dd)
+var handleReport = function handleReport(resolvedValue, sequencer, thread, currentBlockId, opcode, isHat) {
+    thread.pushReportedValue(resolvedValue);
+    if (isHat) {
+        // Hat predicate was evaluated.
+        if (sequencer.runtime.getIsEdgeActivatedHat(opcode)) {
+            // If this is an edge-activated hat, only proceed if the value is
+            // true and used to be false, or the stack was activated explicitly
+            // via stack click
+            if (!thread.stackClick) {
+                var oldEdgeValue = sequencer.runtime.updateEdgeActivatedValue(currentBlockId, resolvedValue);
+                var edgeWasActivated = !oldEdgeValue && resolvedValue;
+                if (!edgeWasActivated) {
+                    sequencer.retireThread(thread);
+                }
+            }
+        } else if (!resolvedValue) {
+            // Not an edge-activated hat: retire the thread
+            // if predicate was false.
+            sequencer.retireThread(thread);
+        }
+    } else {
+        // In a non-hat, report the value visually if necessary if
+        // at the top of the thread stack.
+        if (typeof resolvedValue !== 'undefined' && thread.atStackTop()) {
+            if (thread.stackClick) {
+                sequencer.runtime.visualReport(currentBlockId, resolvedValue);
+            }
+            if (thread.updateMonitor) {
+                sequencer.runtime.requestUpdateMonitor(Map({
+                    id: currentBlockId,
+                    value: String(resolvedValue)
+                }));
+            }
+        }
+        // Finished any yields.
+        thread.status = Thread.STATUS_RUNNING;
+    }
 };
 
 /**
@@ -21542,52 +21816,6 @@ var execute = function execute(sequencer, thread) {
         return;
     }
 
-    /**
-     * Handle any reported value from the primitive, either directly returned
-     * or after a promise resolves.
-     * @param {*} resolvedValue Value eventually returned from the primitive.
-     */
-    // @todo move this to callback attached to the thread when we have performance
-    // metrics (dd)
-    var handleReport = function handleReport(resolvedValue) {
-        thread.pushReportedValue(resolvedValue);
-        if (isHat) {
-            // Hat predicate was evaluated.
-            if (runtime.getIsEdgeActivatedHat(opcode)) {
-                // If this is an edge-activated hat, only proceed if
-                // the value is true and used to be false, or the stack was activated
-                // explicitly via stack click
-                if (!thread.stackClick) {
-                    var oldEdgeValue = runtime.updateEdgeActivatedValue(currentBlockId, resolvedValue);
-                    var edgeWasActivated = !oldEdgeValue && resolvedValue;
-                    if (!edgeWasActivated) {
-                        sequencer.retireThread(thread);
-                    }
-                }
-            } else if (!resolvedValue) {
-                // Not an edge-activated hat: retire the thread
-                // if predicate was false.
-                sequencer.retireThread(thread);
-            }
-        } else {
-            // In a non-hat, report the value visually if necessary if
-            // at the top of the thread stack.
-            if (typeof resolvedValue !== 'undefined' && thread.atStackTop()) {
-                if (thread.stackClick) {
-                    runtime.visualReport(currentBlockId, resolvedValue);
-                }
-                if (thread.updateMonitor) {
-                    runtime.requestUpdateMonitor(Map({
-                        id: currentBlockId,
-                        value: String(resolvedValue)
-                    }));
-                }
-            }
-            // Finished any yields.
-            thread.status = Thread.STATUS_RUNNING;
-        }
-    };
-
     // Hats and single-field shadows are implemented slightly differently
     // from regular blocks.
     // For hats: if they have an associated block function,
@@ -21602,7 +21830,7 @@ var execute = function execute(sequencer, thread) {
         var keys = Object.keys(fields);
         if (keys.length === 1 && Object.keys(inputs).length === 0) {
             // One field and no inputs - treat as arg.
-            handleReport(fields[keys[0]].value);
+            handleReport(fields[keys[0]].value, sequencer, thread, currentBlockId, opcode, isHat);
         } else {
             log.warn('Could not get implementation for opcode: ' + opcode);
         }
@@ -21664,47 +21892,9 @@ var execute = function execute(sequencer, thread) {
     currentStackFrame.reported = {};
 
     var primitiveReportedValue = null;
-    primitiveReportedValue = blockFunction(argValues, {
-        stackFrame: currentStackFrame.executionContext,
-        target: target,
-        yield: function _yield() {
-            thread.status = Thread.STATUS_YIELD;
-        },
-        startBranch: function startBranch(branchNum, isLoop) {
-            sequencer.stepToBranch(thread, branchNum, isLoop);
-        },
-        stopAll: function stopAll() {
-            runtime.stopAll();
-        },
-        stopOtherTargetThreads: function stopOtherTargetThreads() {
-            runtime.stopForTarget(target, thread);
-        },
-        stopThisScript: function stopThisScript() {
-            thread.stopThisScript();
-        },
-        startProcedure: function startProcedure(procedureCode) {
-            sequencer.stepToProcedure(thread, procedureCode);
-        },
-        getProcedureParamNames: function getProcedureParamNames(procedureCode) {
-            return blockContainer.getProcedureParamNames(procedureCode);
-        },
-        pushParam: function pushParam(paramName, paramValue) {
-            thread.pushParam(paramName, paramValue);
-        },
-        getParam: function getParam(paramName) {
-            return thread.getParam(paramName);
-        },
-        startHats: function startHats(requestedHat, optMatchFields, optTarget) {
-            return runtime.startHats(requestedHat, optMatchFields, optTarget);
-        },
-        ioQuery: function ioQuery(device, func, args) {
-            // Find the I/O device and execute the query/function call.
-            if (runtime.ioDevices[device] && runtime.ioDevices[device][func]) {
-                var devObject = runtime.ioDevices[device];
-                return devObject[func].apply(devObject, args);
-            }
-        }
-    });
+    blockUtility.sequencer = sequencer;
+    blockUtility.thread = thread;
+    primitiveReportedValue = blockFunction(argValues, blockUtility);
 
     if (typeof primitiveReportedValue === 'undefined') {
         // No value reported - potentially a command block.
@@ -21720,7 +21910,7 @@ var execute = function execute(sequencer, thread) {
         }
         // Promise handlers
         primitiveReportedValue.then(function (resolvedValue) {
-            handleReport(resolvedValue);
+            handleReport(resolvedValue, sequencer, thread, currentBlockId, opcode, isHat);
             if (typeof resolvedValue === 'undefined') {
                 var stackFrame = void 0;
                 var nextBlockId = void 0;
@@ -21753,20 +21943,20 @@ var execute = function execute(sequencer, thread) {
             thread.popStack();
         });
     } else if (thread.status === Thread.STATUS_RUNNING) {
-        handleReport(primitiveReportedValue);
+        handleReport(primitiveReportedValue, sequencer, thread, currentBlockId, opcode, isHat);
     }
 };
 
 module.exports = execute;
 
 /***/ }),
-/* 81 */
+/* 82 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 
-var _require = __webpack_require__(22),
+var _require = __webpack_require__(23),
     Record = _require.Record;
 
 var MonitorRecord = Record({
@@ -21779,7 +21969,7 @@ var MonitorRecord = Record({
 module.exports = MonitorRecord;
 
 /***/ }),
-/* 82 */
+/* 83 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -21799,22 +21989,22 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
 
 var EventEmitter = __webpack_require__(5);
 
-var _require = __webpack_require__(22),
+var _require = __webpack_require__(23),
     OrderedMap = _require.OrderedMap;
 
-var escapeHtml = __webpack_require__(115);
+var escapeHtml = __webpack_require__(116);
 
 var ArgumentType = __webpack_require__(28);
 var Blocks = __webpack_require__(12);
-var BlockType = __webpack_require__(16);
-var Sequencer = __webpack_require__(83);
-var Thread = __webpack_require__(26);
+var BlockType = __webpack_require__(17);
+var Sequencer = __webpack_require__(84);
+var Thread = __webpack_require__(16);
 
 // Virtual I/O devices.
-var Clock = __webpack_require__(86);
-var DeviceManager = __webpack_require__(87);
-var Keyboard = __webpack_require__(88);
-var Mouse = __webpack_require__(89);
+var Clock = __webpack_require__(87);
+var DeviceManager = __webpack_require__(88);
+var Keyboard = __webpack_require__(89);
+var Mouse = __webpack_require__(90);
 
 var defaultBlockPackages = {
     scratch3_control: __webpack_require__(67),
@@ -23484,7 +23674,7 @@ var Runtime = function (_EventEmitter) {
 module.exports = Runtime;
 
 /***/ }),
-/* 83 */
+/* 84 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -23495,8 +23685,8 @@ var _createClass = function () { function defineProperties(target, props) { for 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
 var Timer = __webpack_require__(29);
-var Thread = __webpack_require__(26);
-var execute = __webpack_require__(80);
+var Thread = __webpack_require__(16);
+var execute = __webpack_require__(81);
 
 var Sequencer = function () {
     function Sequencer(runtime) {
@@ -23777,7 +23967,7 @@ var Sequencer = function () {
 module.exports = Sequencer;
 
 /***/ }),
-/* 84 */
+/* 85 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -23795,10 +23985,10 @@ var EventEmitter = __webpack_require__(5);
 
 var Blocks = __webpack_require__(12);
 var Variable = __webpack_require__(27);
-var List = __webpack_require__(25);
+var List = __webpack_require__(26);
 var uid = __webpack_require__(30);
 
-var _require = __webpack_require__(22),
+var _require = __webpack_require__(23),
     Map = _require.Map;
 
 /**
@@ -24068,7 +24258,7 @@ var Target = function (_EventEmitter) {
 module.exports = Target;
 
 /***/ }),
-/* 85 */
+/* 86 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -24081,7 +24271,7 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
 var dispatch = __webpack_require__(41);
 var log = __webpack_require__(2);
 
-var BlockType = __webpack_require__(16);
+var BlockType = __webpack_require__(17);
 
 // These extensions are currently built into the VM repository but should not be loaded at startup.
 // TODO: move these out into a separate repository?
@@ -24215,7 +24405,7 @@ var ExtensionManager = function () {
 
             return new Promise(function (resolve, reject) {
                 // If we `require` this at the global level it breaks non-webpack targets, including tests
-                var ExtensionWorker = __webpack_require__(174);
+                var ExtensionWorker = __webpack_require__(175);
 
                 _this.pendingExtensions.push({ extensionURL: extensionURL, resolve: resolve, reject: reject });
                 dispatch.addWorker(new ExtensionWorker());
@@ -24381,7 +24571,7 @@ var ExtensionManager = function () {
 module.exports = ExtensionManager;
 
 /***/ }),
-/* 86 */
+/* 87 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -24442,7 +24632,7 @@ var Clock = function () {
 module.exports = Clock;
 
 /***/ }),
-/* 87 */
+/* 88 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -24452,8 +24642,8 @@ var _createClass = function () { function defineProperties(target, props) { for 
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
-var got = __webpack_require__(117);
-var io = __webpack_require__(162);
+var got = __webpack_require__(118);
+var io = __webpack_require__(163);
 var querystring = __webpack_require__(36);
 
 /**
@@ -24908,7 +25098,7 @@ var DeviceManager = function () {
 module.exports = DeviceManager;
 
 /***/ }),
-/* 88 */
+/* 89 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -25051,7 +25241,7 @@ var Keyboard = function () {
 module.exports = Keyboard;
 
 /***/ }),
-/* 89 */
+/* 90 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -25163,7 +25353,7 @@ var Mouse = function () {
 module.exports = Mouse;
 
 /***/ }),
-/* 90 */
+/* 91 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -25179,19 +25369,19 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
  */
 
 var Blocks = __webpack_require__(12);
-var RenderedTarget = __webpack_require__(19);
+var RenderedTarget = __webpack_require__(20);
 var Sprite = __webpack_require__(43);
-var Color = __webpack_require__(21);
+var Color = __webpack_require__(22);
 var log = __webpack_require__(2);
 var uid = __webpack_require__(30);
-var specMap = __webpack_require__(91);
+var specMap = __webpack_require__(92);
 var Variable = __webpack_require__(27);
-var List = __webpack_require__(25);
+var List = __webpack_require__(26);
 
-var _require = __webpack_require__(17),
+var _require = __webpack_require__(18),
     loadCostume = _require.loadCostume;
 
-var _require2 = __webpack_require__(18),
+var _require2 = __webpack_require__(19),
     loadSound = _require2.loadSound;
 
 /**
@@ -25722,7 +25912,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 91 */
+/* 92 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -27000,7 +27190,7 @@ addExtensionOp(weDo2, 'getTilt', {
 module.exports = specMap;
 
 /***/ }),
-/* 92 */
+/* 93 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -27012,16 +27202,16 @@ module.exports = specMap;
  * JSON and then generates all needed scratch-vm runtime structures.
  */
 
-var vmPackage = __webpack_require__(176);
+var vmPackage = __webpack_require__(177);
 var Blocks = __webpack_require__(12);
 var Sprite = __webpack_require__(43);
 var Variable = __webpack_require__(27);
-var List = __webpack_require__(25);
+var List = __webpack_require__(26);
 
-var _require = __webpack_require__(17),
+var _require = __webpack_require__(18),
     loadCostume = _require.loadCostume;
 
-var _require2 = __webpack_require__(18),
+var _require2 = __webpack_require__(19),
     loadSound = _require2.loadSound;
 
 /**
@@ -27209,7 +27399,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 93 */
+/* 94 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -27243,7 +27433,7 @@ var xmlEscape = function xmlEscape(unsafe) {
 module.exports = xmlEscape;
 
 /***/ }),
-/* 94 */
+/* 95 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -27262,17 +27452,17 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
 var EventEmitter = __webpack_require__(5);
 
 var centralDispatch = __webpack_require__(41);
-var ExtensionManager = __webpack_require__(85);
+var ExtensionManager = __webpack_require__(86);
 var log = __webpack_require__(2);
-var Runtime = __webpack_require__(82);
-var sb2 = __webpack_require__(90);
-var sb3 = __webpack_require__(92);
+var Runtime = __webpack_require__(83);
+var sb2 = __webpack_require__(91);
+var sb3 = __webpack_require__(93);
 var StringUtil = __webpack_require__(13);
 
-var _require = __webpack_require__(17),
+var _require = __webpack_require__(18),
     loadCostume = _require.loadCostume;
 
-var _require2 = __webpack_require__(18),
+var _require2 = __webpack_require__(19),
     loadSound = _require2.loadSound;
 
 var RESERVED_NAMES = ['_mouse_', '_stage_', '_edge_', '_myself_', '_random_'];
@@ -28131,7 +28321,7 @@ var VirtualMachine = function (_EventEmitter) {
 module.exports = VirtualMachine;
 
 /***/ }),
-/* 95 */
+/* 96 */
 /***/ (function(module, exports) {
 
 module.exports = {
@@ -28201,7 +28391,7 @@ module.exports = {
 
 
 /***/ }),
-/* 96 */
+/* 97 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -28226,12 +28416,12 @@ module.exports = Error.captureStackTrace || function (error) {
 
 
 /***/ }),
-/* 97 */
+/* 98 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
-var captureStackTrace = __webpack_require__(96);
+var captureStackTrace = __webpack_require__(97);
 
 function inherits(ctor, superCtor) {
 	ctor.super_ = superCtor;
@@ -28277,14 +28467,14 @@ module.exports = function createErrorClass(className, setup) {
 
 
 /***/ }),
-/* 98 */
+/* 99 */
 /***/ (function(module, exports, __webpack_require__) {
 
 /*
   Module dependencies
 */
-var ElementType = __webpack_require__(99);
-var entities = __webpack_require__(110);
+var ElementType = __webpack_require__(100);
+var entities = __webpack_require__(111);
 
 /*
   Boolean Attributes
@@ -28461,7 +28651,7 @@ function renderComment(elem) {
 
 
 /***/ }),
-/* 99 */
+/* 100 */
 /***/ (function(module, exports) {
 
 //Types of elements found in the DOM
@@ -28480,14 +28670,14 @@ module.exports = {
 };
 
 /***/ }),
-/* 100 */
+/* 101 */
 /***/ (function(module, exports, __webpack_require__) {
 
 var ElementType = __webpack_require__(15);
 
 var re_whitespace = /\s+/g;
 var NodePrototype = __webpack_require__(44);
-var ElementPrototype = __webpack_require__(101);
+var ElementPrototype = __webpack_require__(102);
 
 function DomHandler(callback, options, elementCB){
 	if(typeof callback === "object"){
@@ -28703,7 +28893,7 @@ module.exports = DomHandler;
 
 
 /***/ }),
-/* 101 */
+/* 102 */
 /***/ (function(module, exports, __webpack_require__) {
 
 // DOM-Level-1-compliant structure
@@ -28729,18 +28919,18 @@ Object.keys(domLvl1).forEach(function(key) {
 
 
 /***/ }),
-/* 102 */
+/* 103 */
 /***/ (function(module, exports, __webpack_require__) {
 
 var DomUtils = module.exports;
 
 [
-	__webpack_require__(107),
 	__webpack_require__(108),
-	__webpack_require__(105),
+	__webpack_require__(109),
 	__webpack_require__(106),
-	__webpack_require__(104),
-	__webpack_require__(103)
+	__webpack_require__(107),
+	__webpack_require__(105),
+	__webpack_require__(104)
 ].forEach(function(ext){
 	Object.keys(ext).forEach(function(key){
 		DomUtils[key] = ext[key].bind(DomUtils);
@@ -28749,7 +28939,7 @@ var DomUtils = module.exports;
 
 
 /***/ }),
-/* 103 */
+/* 104 */
 /***/ (function(module, exports) {
 
 // removeSubsets
@@ -28896,7 +29086,7 @@ exports.uniqueSort = function(nodes) {
 
 
 /***/ }),
-/* 104 */
+/* 105 */
 /***/ (function(module, exports, __webpack_require__) {
 
 var ElementType = __webpack_require__(15);
@@ -28989,7 +29179,7 @@ exports.getElementsByTagType = function(type, element, recurse, limit){
 
 
 /***/ }),
-/* 105 */
+/* 106 */
 /***/ (function(module, exports) {
 
 exports.removeElement = function(elem){
@@ -29072,7 +29262,7 @@ exports.prepend = function(elem, prev){
 
 
 /***/ }),
-/* 106 */
+/* 107 */
 /***/ (function(module, exports, __webpack_require__) {
 
 var isTag = __webpack_require__(15).isTag;
@@ -29177,11 +29367,11 @@ function findAll(test, rootElems){
 
 
 /***/ }),
-/* 107 */
+/* 108 */
 /***/ (function(module, exports, __webpack_require__) {
 
 var ElementType = __webpack_require__(15),
-    getOuterHTML = __webpack_require__(98),
+    getOuterHTML = __webpack_require__(99),
     isTag = ElementType.isTag;
 
 module.exports = {
@@ -29206,7 +29396,7 @@ function getText(elem){
 
 
 /***/ }),
-/* 108 */
+/* 109 */
 /***/ (function(module, exports) {
 
 var getChildren = exports.getChildren = function(elem){
@@ -29236,7 +29426,7 @@ exports.getName = function(elem){
 
 
 /***/ }),
-/* 109 */
+/* 110 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -29319,11 +29509,11 @@ module.exports.DuplexWrapper = DuplexWrapper;
 
 
 /***/ }),
-/* 110 */
+/* 111 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var encode = __webpack_require__(112),
-    decode = __webpack_require__(111);
+var encode = __webpack_require__(113),
+    decode = __webpack_require__(112);
 
 exports.decode = function(data, level){
 	return (!level || level <= 0 ? decode.XML : decode.HTML)(data);
@@ -29358,7 +29548,7 @@ exports.escape = encode.escape;
 
 
 /***/ }),
-/* 111 */
+/* 112 */
 /***/ (function(module, exports, __webpack_require__) {
 
 var entityMap = __webpack_require__(32),
@@ -29435,7 +29625,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 112 */
+/* 113 */
 /***/ (function(module, exports, __webpack_require__) {
 
 var inverseXML = getInverseObj(__webpack_require__(33)),
@@ -29514,20 +29704,20 @@ exports.escape = escapeXML;
 
 
 /***/ }),
-/* 113 */
+/* 114 */
 /***/ (function(module, exports) {
 
 module.exports = {"0":65533,"128":8364,"130":8218,"131":402,"132":8222,"133":8230,"134":8224,"135":8225,"136":710,"137":8240,"138":352,"139":8249,"140":338,"142":381,"145":8216,"146":8217,"147":8220,"148":8221,"149":8226,"150":8211,"151":8212,"152":732,"153":8482,"154":353,"155":8250,"156":339,"158":382,"159":376}
 
 /***/ }),
-/* 114 */
+/* 115 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 
 var util = __webpack_require__(59);
-var isArrayish = __webpack_require__(124);
+var isArrayish = __webpack_require__(125);
 
 var errorEx = function errorEx(name, properties) {
 	if (!name || name.constructor !== String) {
@@ -29660,7 +29850,7 @@ module.exports = errorEx;
 
 
 /***/ }),
-/* 115 */
+/* 116 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -29745,7 +29935,7 @@ function escapeHtml(string) {
 
 
 /***/ }),
-/* 116 */
+/* 117 */
 /***/ (function(module, exports, __webpack_require__) {
 
 /* WEBPACK VAR INJECTION */(function(global) {var win;
@@ -29765,7 +29955,7 @@ module.exports = win;
 /* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(0)))
 
 /***/ }),
-/* 117 */
+/* 118 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -29773,25 +29963,25 @@ module.exports = win;
 
 var EventEmitter = __webpack_require__(5).EventEmitter;
 var http = __webpack_require__(57);
-var https = __webpack_require__(123);
+var https = __webpack_require__(124);
 var urlLib = __webpack_require__(40);
 var querystring = __webpack_require__(36);
-var objectAssign = __webpack_require__(140);
+var objectAssign = __webpack_require__(141);
 var PassThrough = __webpack_require__(7).PassThrough;
-var duplexer2 = __webpack_require__(109);
-var isStream = __webpack_require__(127);
-var readAllStream = __webpack_require__(151);
-var timedOut = __webpack_require__(166);
-var urlParseLax = __webpack_require__(168);
-var lowercaseKeys = __webpack_require__(128);
-var isRedirect = __webpack_require__(125);
+var duplexer2 = __webpack_require__(110);
+var isStream = __webpack_require__(128);
+var readAllStream = __webpack_require__(152);
+var timedOut = __webpack_require__(167);
+var urlParseLax = __webpack_require__(169);
+var lowercaseKeys = __webpack_require__(129);
+var isRedirect = __webpack_require__(126);
 var PinkiePromise = __webpack_require__(51);
-var unzipResponse = __webpack_require__(177);
-var createErrorClass = __webpack_require__(97);
-var nodeStatusCodes = __webpack_require__(139);
-var parseJson = __webpack_require__(141);
-var isRetryAllowed = __webpack_require__(126);
-var pkg = __webpack_require__(118);
+var unzipResponse = __webpack_require__(178);
+var createErrorClass = __webpack_require__(98);
+var nodeStatusCodes = __webpack_require__(140);
+var parseJson = __webpack_require__(142);
+var isRetryAllowed = __webpack_require__(127);
+var pkg = __webpack_require__(119);
 
 function requestAsEventEmitter(opts) {
 	opts = opts || {};
@@ -30174,13 +30364,13 @@ module.exports = got;
 /* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(39).setImmediate, __webpack_require__(3).Buffer))
 
 /***/ }),
-/* 118 */
+/* 119 */
 /***/ (function(module, exports) {
 
 module.exports = {"_args":[[{"raw":"got@5.7.1","scope":null,"escapedName":"got","name":"got","rawSpec":"5.7.1","spec":"5.7.1","type":"version"},"/home/travis/build/LLK/scratch-vm"]],"_from":"got@5.7.1","_id":"got@5.7.1","_inCache":true,"_location":"/got","_nodeVersion":"0.10.48","_npmOperationalInternal":{"host":"packages-18-east.internal.npmjs.com","tmp":"tmp/got-5.7.1.tgz_1478113400687_0.6078383799176663"},"_npmUser":{"name":"floatdrop","email":"floatdrop@gmail.com"},"_npmVersion":"2.15.1","_phantomChildren":{},"_requested":{"raw":"got@5.7.1","scope":null,"escapedName":"got","name":"got","rawSpec":"5.7.1","spec":"5.7.1","type":"version"},"_requiredBy":["#DEV:/"],"_resolved":"https://registry.npmjs.org/got/-/got-5.7.1.tgz","_shasum":"5f81635a61e4a6589f180569ea4e381680a51f35","_shrinkwrap":null,"_spec":"got@5.7.1","_where":"/home/travis/build/LLK/scratch-vm","browser":{"unzip-response":false},"bugs":{"url":"https://github.com/sindresorhus/got/issues"},"dependencies":{"create-error-class":"^3.0.1","duplexer2":"^0.1.4","is-redirect":"^1.0.0","is-retry-allowed":"^1.0.0","is-stream":"^1.0.0","lowercase-keys":"^1.0.0","node-status-codes":"^1.0.0","object-assign":"^4.0.1","parse-json":"^2.1.0","pinkie-promise":"^2.0.0","read-all-stream":"^3.0.0","readable-stream":"^2.0.5","timed-out":"^3.0.0","unzip-response":"^1.0.2","url-parse-lax":"^1.0.0"},"description":"Simplified HTTP/HTTPS requests","devDependencies":{"ava":"^0.16.0","coveralls":"^2.11.4","form-data":"^2.1.1","get-port":"^2.0.0","get-stream":"^2.3.0","into-stream":"^2.0.0","nyc":"^8.1.0","pem":"^1.4.4","pify":"^2.3.0","tempfile":"^1.1.1","xo":"0.16.x"},"directories":{},"dist":{"shasum":"5f81635a61e4a6589f180569ea4e381680a51f35","tarball":"https://registry.npmjs.org/got/-/got-5.7.1.tgz"},"engines":{"node":">=0.10.0 <7"},"files":["index.js"],"gitHead":"856b4caf16b02ce28ef0d92e83cf434a50b71e84","homepage":"https://github.com/sindresorhus/got#readme","keywords":["http","https","get","got","url","uri","request","util","utility","simple","curl","wget","fetch"],"license":"MIT","maintainers":[{"name":"sindresorhus","email":"sindresorhus@gmail.com"},{"name":"floatdrop","email":"floatdrop@gmail.com"},{"name":"kevva","email":"kevinmartensson@gmail.com"}],"name":"got","optionalDependencies":{},"readme":"ERROR: No README data found!","repository":{"type":"git","url":"git+https://github.com/sindresorhus/got.git"},"scripts":{"coveralls":"nyc report --reporter=text-lcov | coveralls","test":"xo && nyc ava"},"version":"5.7.1","xo":{"ignores":["test/**"]}}
 
 /***/ }),
-/* 119 */
+/* 120 */
 /***/ (function(module, exports, __webpack_require__) {
 
 module.exports = CollectingHandler;
@@ -30241,7 +30431,7 @@ CollectingHandler.prototype.restart = function(){
 
 
 /***/ }),
-/* 120 */
+/* 121 */
 /***/ (function(module, exports, __webpack_require__) {
 
 var index = __webpack_require__(11),
@@ -30342,7 +30532,7 @@ module.exports = FeedHandler;
 
 
 /***/ }),
-/* 121 */
+/* 122 */
 /***/ (function(module, exports, __webpack_require__) {
 
 module.exports = ProxyHandler;
@@ -30374,7 +30564,7 @@ Object.keys(EVENTS).forEach(function(name){
 });
 
 /***/ }),
-/* 122 */
+/* 123 */
 /***/ (function(module, exports, __webpack_require__) {
 
 module.exports = Stream;
@@ -30414,7 +30604,7 @@ Object.keys(EVENTS).forEach(function(name){
 });
 
 /***/ }),
-/* 123 */
+/* 124 */
 /***/ (function(module, exports, __webpack_require__) {
 
 var http = __webpack_require__(57);
@@ -30434,7 +30624,7 @@ https.request = function (params, cb) {
 
 
 /***/ }),
-/* 124 */
+/* 125 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -30451,7 +30641,7 @@ module.exports = function isArrayish(obj) {
 
 
 /***/ }),
-/* 125 */
+/* 126 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -30472,7 +30662,7 @@ module.exports = function (x) {
 
 
 /***/ }),
-/* 126 */
+/* 127 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -30539,7 +30729,7 @@ module.exports = function (err) {
 
 
 /***/ }),
-/* 127 */
+/* 128 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -30567,7 +30757,7 @@ isStream.transform = function (stream) {
 
 
 /***/ }),
-/* 128 */
+/* 129 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -30585,7 +30775,7 @@ module.exports = function (obj) {
 
 
 /***/ }),
-/* 129 */
+/* 130 */
 /***/ (function(module, exports) {
 
 function M() { this._events = {}; }
@@ -30641,7 +30831,7 @@ module.exports = M;
 
 
 /***/ }),
-/* 130 */
+/* 131 */
 /***/ (function(module, exports, __webpack_require__) {
 
 // default filter
@@ -30703,11 +30893,11 @@ module.exports = Filter;
 
 
 /***/ }),
-/* 131 */
+/* 132 */
 /***/ (function(module, exports, __webpack_require__) {
 
 var Transform = __webpack_require__(6),
-    Filter = __webpack_require__(130);
+    Filter = __webpack_require__(131);
 
 var log = new Transform(),
     slice = Array.prototype.slice;
@@ -30754,7 +30944,7 @@ exports.enable = function() {
 
 
 /***/ }),
-/* 132 */
+/* 133 */
 /***/ (function(module, exports, __webpack_require__) {
 
 var Transform = __webpack_require__(6),
@@ -30774,7 +30964,7 @@ module.exports = logger;
 
 
 /***/ }),
-/* 133 */
+/* 134 */
 /***/ (function(module, exports, __webpack_require__) {
 
 var Transform = __webpack_require__(6);
@@ -30805,14 +30995,14 @@ logger.write = function(name, level, args) {
 };
 
 logger.formatters = ['color', 'minilog'];
-logger.color = __webpack_require__(134);
-logger.minilog = __webpack_require__(135);
+logger.color = __webpack_require__(135);
+logger.minilog = __webpack_require__(136);
 
 module.exports = logger;
 
 
 /***/ }),
-/* 134 */
+/* 135 */
 /***/ (function(module, exports, __webpack_require__) {
 
 var Transform = __webpack_require__(6),
@@ -30836,7 +31026,7 @@ module.exports = logger;
 
 
 /***/ }),
-/* 135 */
+/* 136 */
 /***/ (function(module, exports, __webpack_require__) {
 
 var Transform = __webpack_require__(6),
@@ -30868,15 +31058,15 @@ module.exports = logger;
 
 
 /***/ }),
-/* 136 */
+/* 137 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var Minilog = __webpack_require__(131);
+var Minilog = __webpack_require__(132);
 
 var oldEnable = Minilog.enable,
     oldDisable = Minilog.disable,
     isChrome = (typeof navigator != 'undefined' && /chrome/i.test(navigator.userAgent)),
-    console = __webpack_require__(133);
+    console = __webpack_require__(134);
 
 // Use a more capable logging backend if on Chrome
 Minilog.defaultBackend = (isChrome ? console.minilog : console);
@@ -30908,15 +31098,15 @@ Minilog.disable = function() {
 exports = module.exports = Minilog;
 
 exports.backends = {
-  array: __webpack_require__(132),
+  array: __webpack_require__(133),
   browser: Minilog.defaultBackend,
-  localStorage: __webpack_require__(138),
-  jQuery: __webpack_require__(137)
+  localStorage: __webpack_require__(139),
+  jQuery: __webpack_require__(138)
 };
 
 
 /***/ }),
-/* 137 */
+/* 138 */
 /***/ (function(module, exports, __webpack_require__) {
 
 var Transform = __webpack_require__(6);
@@ -30996,7 +31186,7 @@ module.exports = AjaxLogger;
 
 
 /***/ }),
-/* 138 */
+/* 139 */
 /***/ (function(module, exports, __webpack_require__) {
 
 var Transform = __webpack_require__(6),
@@ -31016,7 +31206,7 @@ logger.write = function(name, level, args) {
 module.exports = logger;
 
 /***/ }),
-/* 139 */
+/* 140 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -31085,7 +31275,7 @@ module.exports = {
 
 
 /***/ }),
-/* 140 */
+/* 141 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -31182,13 +31372,13 @@ module.exports = shouldUseNative() ? Object.assign : function (target, source) {
 
 
 /***/ }),
-/* 141 */
+/* 142 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
-var errorEx = __webpack_require__(114);
-var fallback = __webpack_require__(142);
+var errorEx = __webpack_require__(115);
+var fallback = __webpack_require__(143);
 
 var JSONError = errorEx('JSONError', {
 	fileName: errorEx.append('in %s')
@@ -31224,7 +31414,7 @@ module.exports = function (x, reviver, filename) {
 
 
 /***/ }),
-/* 142 */
+/* 143 */
 /***/ (function(module, exports, __webpack_require__) {
 
 /*
@@ -31235,7 +31425,7 @@ module.exports = function (x, reviver, filename) {
 
 // RTFM: http://www.ecma-international.org/publications/files/ECMA-ST/Ecma-262.pdf
 
-var Uni = __webpack_require__(143)
+var Uni = __webpack_require__(144)
 
 function isHexDigit(x) {
   return (x >= '0' && x <= '9')
@@ -31982,7 +32172,7 @@ module.exports.tokenize = function tokenizeJSON(input, options) {
 
 
 /***/ }),
-/* 143 */
+/* 144 */
 /***/ (function(module, exports) {
 
 
@@ -32059,7 +32249,7 @@ module.exports.NonAsciiIdentifierPart = /[\xAA\xB5\xBA\xC0-\xD6\xD8-\xF6\xF8-\u0
 
 
 /***/ }),
-/* 144 */
+/* 145 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -32359,7 +32549,7 @@ module.exports = Promise;
 /* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(0), __webpack_require__(39).setImmediate))
 
 /***/ }),
-/* 145 */
+/* 146 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -32380,7 +32570,7 @@ module.exports = function (url) {
 
 
 /***/ }),
-/* 146 */
+/* 147 */
 /***/ (function(module, exports, __webpack_require__) {
 
 /* WEBPACK VAR INJECTION */(function(module, global) {var __WEBPACK_AMD_DEFINE_RESULT__;/*! https://mths.be/punycode v1.4.1 by @mathias */
@@ -32916,10 +33106,10 @@ module.exports = function (url) {
 
 }(this));
 
-/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(173)(module), __webpack_require__(0)))
+/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(174)(module), __webpack_require__(0)))
 
 /***/ }),
-/* 147 */
+/* 148 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -33010,7 +33200,7 @@ var isArray = Array.isArray || function (xs) {
 
 
 /***/ }),
-/* 148 */
+/* 149 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -33102,9 +33292,9 @@ var objectKeys = Object.keys || function (obj) {
 
 
 /***/ }),
-/* 149 */,
 /* 150 */,
-/* 151 */
+/* 151 */,
+/* 152 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -33184,14 +33374,14 @@ module.exports = function read(stream, options, cb) {
 /* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(3).Buffer))
 
 /***/ }),
-/* 152 */
+/* 153 */
 /***/ (function(module, exports, __webpack_require__) {
 
 module.exports = __webpack_require__(9);
 
 
 /***/ }),
-/* 153 */
+/* 154 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -33244,7 +33434,7 @@ PassThrough.prototype._transform = function (chunk, encoding, cb) {
 };
 
 /***/ }),
-/* 154 */
+/* 155 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -33324,31 +33514,31 @@ module.exports = function () {
 }();
 
 /***/ }),
-/* 155 */
+/* 156 */
 /***/ (function(module, exports, __webpack_require__) {
 
 module.exports = __webpack_require__(7).PassThrough
 
 
 /***/ }),
-/* 156 */
+/* 157 */
 /***/ (function(module, exports, __webpack_require__) {
 
 module.exports = __webpack_require__(7).Transform
 
 
 /***/ }),
-/* 157 */
+/* 158 */
 /***/ (function(module, exports, __webpack_require__) {
 
 module.exports = __webpack_require__(37);
 
 
 /***/ }),
-/* 158 */,
 /* 159 */,
 /* 160 */,
-/* 161 */
+/* 161 */,
+/* 162 */
 /***/ (function(module, exports, __webpack_require__) {
 
 /* WEBPACK VAR INJECTION */(function(global, process) {(function (global, undefined) {
@@ -33541,7 +33731,7 @@ module.exports = __webpack_require__(37);
 /* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(0), __webpack_require__(8)))
 
 /***/ }),
-/* 162 */
+/* 163 */
 /***/ (function(module, exports, __webpack_require__) {
 
 (function webpackUniversalModuleDefinition(root, factory) {
@@ -41747,7 +41937,7 @@ return /******/ (function(modules) { // webpackBootstrap
 //# sourceMappingURL=socket.io.js.map
 
 /***/ }),
-/* 163 */
+/* 164 */
 /***/ (function(module, exports, __webpack_require__) {
 
 // Copyright Joyent, Inc. and other Node contributors.
@@ -41778,10 +41968,10 @@ var inherits = __webpack_require__(1);
 
 inherits(Stream, EE);
 Stream.Readable = __webpack_require__(7);
-Stream.Writable = __webpack_require__(157);
-Stream.Duplex = __webpack_require__(152);
-Stream.Transform = __webpack_require__(156);
-Stream.PassThrough = __webpack_require__(155);
+Stream.Writable = __webpack_require__(158);
+Stream.Duplex = __webpack_require__(153);
+Stream.Transform = __webpack_require__(157);
+Stream.PassThrough = __webpack_require__(156);
 
 // Backwards-compat with node 0.4.x
 Stream.Stream = Stream;
@@ -41880,14 +42070,14 @@ Stream.prototype.pipe = function(dest, options) {
 
 
 /***/ }),
-/* 164 */
+/* 165 */
 /***/ (function(module, exports, __webpack_require__) {
 
 /* WEBPACK VAR INJECTION */(function(Buffer, global, process) {var capability = __webpack_require__(58)
 var inherits = __webpack_require__(1)
-var response = __webpack_require__(165)
+var response = __webpack_require__(166)
 var stream = __webpack_require__(7)
-var toArrayBuffer = __webpack_require__(167)
+var toArrayBuffer = __webpack_require__(168)
 
 var IncomingMessage = response.IncomingMessage
 var rStates = response.readyStates
@@ -42193,7 +42383,7 @@ var unsafeHeaders = [
 /* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(3).Buffer, __webpack_require__(0), __webpack_require__(8)))
 
 /***/ }),
-/* 165 */
+/* 166 */
 /***/ (function(module, exports, __webpack_require__) {
 
 /* WEBPACK VAR INJECTION */(function(process, Buffer, global) {var capability = __webpack_require__(58)
@@ -42382,7 +42572,7 @@ IncomingMessage.prototype._onXHRProgress = function () {
 /* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(8), __webpack_require__(3).Buffer, __webpack_require__(0)))
 
 /***/ }),
-/* 166 */
+/* 167 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -42444,7 +42634,7 @@ module.exports = function (req, time) {
 
 
 /***/ }),
-/* 167 */
+/* 168 */
 /***/ (function(module, exports, __webpack_require__) {
 
 var Buffer = __webpack_require__(3).Buffer
@@ -42477,13 +42667,13 @@ module.exports = function (buf) {
 
 
 /***/ }),
-/* 168 */
+/* 169 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 var url = __webpack_require__(40);
-var prependHttp = __webpack_require__(145);
+var prependHttp = __webpack_require__(146);
 
 module.exports = function (x) {
 	var withProtocol = prependHttp(x);
@@ -42498,7 +42688,7 @@ module.exports = function (x) {
 
 
 /***/ }),
-/* 169 */
+/* 170 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -42521,7 +42711,7 @@ module.exports = {
 
 
 /***/ }),
-/* 170 */
+/* 171 */
 /***/ (function(module, exports, __webpack_require__) {
 
 /* WEBPACK VAR INJECTION */(function(global) {
@@ -42595,7 +42785,7 @@ function config (name) {
 /* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(0)))
 
 /***/ }),
-/* 171 */
+/* 172 */
 /***/ (function(module, exports) {
 
 if (typeof Object.create === 'function') {
@@ -42624,7 +42814,7 @@ if (typeof Object.create === 'function') {
 
 
 /***/ }),
-/* 172 */
+/* 173 */
 /***/ (function(module, exports) {
 
 module.exports = function isBuffer(arg) {
@@ -42635,7 +42825,7 @@ module.exports = function isBuffer(arg) {
 }
 
 /***/ }),
-/* 173 */
+/* 174 */
 /***/ (function(module, exports) {
 
 module.exports = function(module) {
@@ -42663,7 +42853,7 @@ module.exports = function(module) {
 
 
 /***/ }),
-/* 174 */
+/* 175 */
 /***/ (function(module, exports, __webpack_require__) {
 
 module.exports = function() {
@@ -42671,7 +42861,7 @@ module.exports = function() {
 };
 
 /***/ }),
-/* 175 */
+/* 176 */
 /***/ (function(module, exports) {
 
 module.exports = extend
@@ -42696,16 +42886,10 @@ function extend() {
 
 
 /***/ }),
-/* 176 */
-/***/ (function(module, exports) {
-
-module.exports = {"name":"scratch-vm","version":"0.1.0","description":"Virtual Machine for Scratch 3.0","author":"Massachusetts Institute of Technology","license":"BSD-3-Clause","homepage":"https://github.com/LLK/scratch-vm#readme","repository":{"type":"git","url":"git+ssh://git@github.com/LLK/scratch-vm.git"},"main":"./dist/node/scratch-vm.js","scripts":{"build":"webpack --progress --colors --bail","coverage":"tap ./test/{unit,integration}/*.js --coverage --coverage-report=lcov","deploy":"touch playground/.nojekyll && gh-pages -t -d playground -m \"Build for $(git log --pretty=format:%H -n1)\"","lint":"eslint .","prepublish":"in-publish && npm run build || not-in-publish","start":"webpack-dev-server","tap":"tap ./test/{unit,integration}/*.js","tap:unit":"tap ./test/unit/*.js","tap:integration":"tap ./test/integration/*.js","test":"npm run lint && npm run tap","watch":"webpack --progress --colors --watch","version":"json -f package.json -I -e \"this.repository.sha = '$(git log -n1 --pretty=format:%H)'\""},"devDependencies":{"adm-zip":"0.4.7","babel-core":"^6.24.1","babel-eslint":"^7.1.1","babel-loader":"^7.0.0","babel-preset-es2015":"^6.24.1","copy-webpack-plugin":"4.0.1","escape-html":"1.0.3","eslint":"^4.5.0","eslint-config-scratch":"^4.0.0","expose-loader":"0.7.3","gh-pages":"^0.12.0","got":"5.7.1","highlightjs":"^9.8.0","htmlparser2":"3.9.2","immutable":"3.8.1","in-publish":"^2.0.0","json":"^9.0.4","lodash.defaultsdeep":"4.6.0","minilog":"3.1.0","promise":"7.1.1","scratch-audio":"latest","scratch-blocks":"latest","scratch-render":"latest","scratch-storage":"^0.2.0","script-loader":"0.7.0","socket.io-client":"1.7.3","stats.js":"^0.17.0","tap":"^10.2.0","tiny-worker":"^2.1.1","webpack":"^2.4.1","webpack-dev-server":"^2.4.1","worker-loader":"0.8.1"}}
-
-/***/ }),
 /* 177 */
 /***/ (function(module, exports) {
 
-/* (ignored) */
+module.exports = {"name":"scratch-vm","version":"0.1.0","description":"Virtual Machine for Scratch 3.0","author":"Massachusetts Institute of Technology","license":"BSD-3-Clause","homepage":"https://github.com/LLK/scratch-vm#readme","repository":{"type":"git","url":"git+ssh://git@github.com/LLK/scratch-vm.git"},"main":"./dist/node/scratch-vm.js","scripts":{"build":"webpack --progress --colors --bail","coverage":"tap ./test/{unit,integration}/*.js --coverage --coverage-report=lcov","deploy":"touch playground/.nojekyll && gh-pages -t -d playground -m \"Build for $(git log --pretty=format:%H -n1)\"","lint":"eslint .","prepublish":"in-publish && npm run build || not-in-publish","start":"webpack-dev-server","tap":"tap ./test/{unit,integration}/*.js","tap:unit":"tap ./test/unit/*.js","tap:integration":"tap ./test/integration/*.js","test":"npm run lint && npm run tap","watch":"webpack --progress --colors --watch","version":"json -f package.json -I -e \"this.repository.sha = '$(git log -n1 --pretty=format:%H)'\""},"devDependencies":{"adm-zip":"0.4.7","babel-core":"^6.24.1","babel-eslint":"^7.1.1","babel-loader":"^7.0.0","babel-preset-es2015":"^6.24.1","copy-webpack-plugin":"4.0.1","escape-html":"1.0.3","eslint":"^4.5.0","eslint-config-scratch":"^4.0.0","expose-loader":"0.7.3","gh-pages":"^0.12.0","got":"5.7.1","highlightjs":"^9.8.0","htmlparser2":"3.9.2","immutable":"3.8.1","in-publish":"^2.0.0","json":"^9.0.4","lodash.defaultsdeep":"4.6.0","minilog":"3.1.0","promise":"7.1.1","scratch-audio":"latest","scratch-blocks":"latest","scratch-render":"latest","scratch-storage":"^0.2.0","script-loader":"0.7.0","socket.io-client":"1.7.3","stats.js":"^0.17.0","tap":"^10.2.0","tiny-worker":"^2.1.1","webpack":"^2.4.1","webpack-dev-server":"^2.4.1","worker-loader":"0.8.1"}}
 
 /***/ }),
 /* 178 */
@@ -42715,6 +42899,12 @@ module.exports = {"name":"scratch-vm","version":"0.1.0","description":"Virtual M
 
 /***/ }),
 /* 179 */
+/***/ (function(module, exports) {
+
+/* (ignored) */
+
+/***/ }),
+/* 180 */
 /***/ (function(module, exports) {
 
 /* (ignored) */
