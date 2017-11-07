@@ -696,6 +696,21 @@ var ScratchStorage = function () {
         }
 
         /**
+         * Cache an asset for future lookups by ID.
+         * @param {AssetType} assetType - The type of the asset to cache.
+         * @param {DataFormat} dataFormat - The dataFormat of the data for the cached asset.
+         * @param {Buffer} data - The data for the cached asset.
+         * @param {string} id - The id for the cached asset.
+         * @returns {string} The calculated id of the cached asset, or the supplied id if the asset is mutable.
+         */
+
+    }, {
+        key: 'cache',
+        value: function cache(assetType, dataFormat, data, id) {
+            return this.builtinHelper.cache(assetType, dataFormat, data, id);
+        }
+
+        /**
          * Register a web-based source for assets. Sources will be checked in order of registration.
          * @param {Array.<AssetType>} types - The types of asset provided by this source.
          * @param {UrlFunction} urlFunction - A function which computes a URL from an Asset.
