@@ -62,11 +62,12 @@ class Scratch3MusicBlocks {
          */
         this.runtime = runtime;
 
-        this.drumMenu = this.buildMenu(drumNames);
-        this.instrumentMenu = this.buildMenu(instrumentNames);
+        this.drumMenu = this._buildMenu(drumNames);
+        this.instrumentMenu = this._buildMenu(instrumentNames);
     }
 
     buildMenu (names) {
+    _buildMenu (names) {
         const menu = [];
         for (let i = 0; i < names.length; i++) {
             const entry = {};
