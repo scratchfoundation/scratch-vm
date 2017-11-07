@@ -23474,7 +23474,9 @@ var Sequencer = function () {
             var numActiveThreads = Infinity;
             // Whether `stepThreads` has run through a full single tick.
             var ranFirstTick = false;
-            var doneThreads = [];
+            var doneThreads = this.runtime.threads.map(function () {
+                return null;
+            });
             // Conditions for continuing to stepping threads:
             // 1. We must have threads in the list, and some must be active.
             // 2. Time elapsed must be less than WORK_TIME.
@@ -23486,10 +23488,12 @@ var Sequencer = function () {
                     var activeThread = this.runtime.threads[i];
                     if (activeThread.stack.length === 0 || activeThread.status === Thread.STATUS_DONE) {
                         // Finished with this thread.
-                        if (doneThreads.indexOf(activeThread) < 0) {
-                            doneThreads.push(activeThread);
-                        }
+                        doneThreads[i] = activeThread;
                         continue;
+                    }
+                    // A thread was removed, added or this thread was restarted.
+                    if (doneThreads[i] !== null) {
+                        doneThreads[i] = null;
                     }
                     if (activeThread.status === Thread.STATUS_YIELD_TICK && !ranFirstTick) {
                         // Clear single-tick yield from the last call of `stepThreads`.
@@ -23512,12 +23516,27 @@ var Sequencer = function () {
                 ranFirstTick = true;
             }
             // Filter inactive threads from `this.runtime.threads`.
-            this.runtime.threads = this.runtime.threads.filter(function (thread) {
-                if (doneThreads.indexOf(thread) > -1) {
-                    return false;
+            numActiveThreads = 0;
+            for (var _i = 0; _i < this.runtime.threads.length; _i++) {
+                var thread = this.runtime.threads[_i];
+                if (doneThreads[_i] === null) {
+                    this.runtime.threads[numActiveThreads] = thread;
+                    numActiveThreads++;
                 }
-                return true;
-            });
+            }
+            this.runtime.threads.length = numActiveThreads;
+
+            // Filter undefined and null values from `doneThreads`.
+            var numDoneThreads = 0;
+            for (var _i2 = 0; _i2 < doneThreads.length; _i2++) {
+                var maybeThread = doneThreads[_i2];
+                if (maybeThread !== null) {
+                    doneThreads[numDoneThreads] = maybeThread;
+                    numDoneThreads++;
+                }
+            }
+            doneThreads.length = numDoneThreads;
+
             return doneThreads;
         }
 
