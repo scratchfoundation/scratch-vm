@@ -825,7 +825,11 @@ class Runtime extends EventEmitter {
      * @return {boolean} True if the thread is active/running.
      */
     isActiveThread (thread) {
-        return this.threads.indexOf(thread) > -1;
+        return (
+            (
+                thread.stack.length > 0 &&
+                thread.status !== Thread.STATUS_DONE) &&
+            this.threads.indexOf(thread) > -1);
     }
 
     /**
