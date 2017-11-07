@@ -3272,9 +3272,9 @@ var Blocks = function () {
         }
 
         /**
-         * Get the procedure definition for a given name.
+         * Get names of parameters for the given procedure.
          * @param {?string} name Name of procedure to query.
-         * @return {?string} ID of procedure definition.
+         * @return {?Array.<string>} List of param names for a procedure.
          */
 
     }, {
@@ -20525,7 +20525,7 @@ var Scratch3WeDo2Blocks = function () {
                 }, {
                     opcode: 'isTilted',
                     text: 'tilted [DIRECTION]?',
-                    blockType: BlockType.REPORTER,
+                    blockType: BlockType.BOOLEAN,
                     arguments: {
                         DIRECTION: {
                             type: ArgumentType.STRING,
