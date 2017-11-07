@@ -4,6 +4,10 @@ const Clone = require('../util/clone');
 const Cast = require('../util/cast');
 const MathUtil = require('../util/math-util');
 
+/**
+ * An array of drum names, used in the play drum block.
+ * @type {string[]}
+ */
 const drumNames = [
     'Snare Drum',
     'Bass Drum',
@@ -25,6 +29,10 @@ const drumNames = [
     'Open Cuica'
 ];
 
+/**
+ * An array of instrument names, used in the set instrument block.
+ * @type {string[]}
+ */
 const instrumentNames = [
     'Piano',
     'Electric Piano',
@@ -66,7 +74,13 @@ class Scratch3MusicBlocks {
         this.instrumentMenu = this._buildMenu(instrumentNames);
     }
 
-    buildMenu (names) {
+    /**
+     * Build a menu using an array of strings.
+     * Used for creating the drum and instrument menus.
+     * @param  {string[]} names - An array of names.
+     * @return {array} - An array of objects with text and value properties, for constructing a block menu.
+     * @private
+     */
     _buildMenu (names) {
         const menu = [];
         for (let i = 0; i < names.length; i++) {
@@ -232,6 +246,14 @@ class Scratch3MusicBlocks {
         };
     }
 
+    /**
+     * Play a drum sound for some number of beats.
+     * @param {object} args - the block arguments.
+     * @param {object} util - utility object provided by the runtime.
+     * @property {int} DRUM - the number of the drum to play.
+     * @property {number} BEATS - the duration in beats of the drum sound.
+     * @return {Promise} - a promise which will resolve at the end of the duration.
+     */
     playDrumForBeats (args, util) {
         let drum = Cast.toNumber(args.DRUM);
         drum -= 1; // drums are one-indexed
@@ -243,6 +265,13 @@ class Scratch3MusicBlocks {
         return util.target.audioPlayer.playDrumForBeats(drum, beats);
     }
 
+    /**
+     * Rest for some number of beats.
+     * @param {object} args - the block arguments.
+     * @param {object} util - utility object provided by the runtime.
+     * @property {number} BEATS - the duration in beats of the rest.
+     * @return {Promise} - a promise which will resolve at the end of the duration.
+     */
     restForBeats (args) {
         let beats = Cast.toNumber(args.BEATS);
         beats = this._clampBeats(beats);
@@ -250,6 +279,14 @@ class Scratch3MusicBlocks {
         return this.runtime.audioEngine.waitForBeats(beats);
     }
 
+    /**
+     * Play a note using the current musical instrument for some number of beats.
+     * @param {object} args - the block arguments.
+     * @param {object} util - utility object provided by the runtime.
+     * @property {number} NOTE - the pitch of the note to play, interpreted as a MIDI note number.
+     * @property {number} BEATS - the duration in beats of the note.
+     * @return {Promise} - a promise which will resolve at the end of the duration.
+     */
     playNoteForBeats (args, util) {
         let note = Cast.toNumber(args.NOTE);
         note = MathUtil.clamp(note, Scratch3MusicBlocks.MIDI_NOTE_RANGE.min, Scratch3MusicBlocks.MIDI_NOTE_RANGE.max);
@@ -261,6 +298,13 @@ class Scratch3MusicBlocks {
         return this.runtime.audioEngine.playNoteForBeatsWithInstAndVol(note, beats, inst, 100);
     }
 
+    /**
+     * Select an instrument for playing notes.
+     * @param {object} args - the block arguments.
+     * @param {object} util - utility object provided by the runtime.
+     * @property {int} INSTRUMENT - the number of the instrument to select.
+     * @return {Promise} - a promise which will resolve once the instrument has loaded.
+     */
     setInstrument (args, util) {
         const musicState = this._getMusicState(util.target);
         let instNum = Cast.toNumber(args.INSTRUMENT);
@@ -271,15 +315,31 @@ class Scratch3MusicBlocks {
         return this.runtime.audioEngine.instrumentPlayer.loadInstrument(musicState.currentInstrument);
     }
 
+    /**
+     * Clamp a duration in beats to the allowed min and max duration.
+     * @param  {number} beats - a duration in beats.
+     * @return {number} - the clamped duration.
+     * @private
+     */
     _clampBeats (beats) {
         return MathUtil.clamp(beats, Scratch3MusicBlocks.BEAT_RANGE.min, Scratch3MusicBlocks.BEAT_RANGE.max);
     }
 
+    /**
+     * Set the current tempo to a new value.
+     * @param {object} args - the block arguments.
+     * @property {number} TEMPO - the tempo, in beats per minute.
+     */
     setTempo (args) {
         const tempo = Cast.toNumber(args.TEMPO);
         this._updateTempo(tempo);
     }
 
+    /**
+     * Change the current tempo by some amount.
+     * @param {object} args - the block arguments.
+     * @property {number} TEMPO - the amount to change the tempo, in beats per minute.
+     */
     changeTempo (args) {
         const change = Cast.toNumber(args.TEMPO);
         if (typeof this.runtime.audioEngine === 'undefined') return;
@@ -287,12 +347,21 @@ class Scratch3MusicBlocks {
         this._updateTempo(tempo);
     }
 
+    /**
+     * Update the current tempo, clamping it to the min and max allowable range.
+     * @param {number} tempo - the tempo to set, in beats per minute.
+     * @private
+     */
     _updateTempo (tempo) {
         tempo = MathUtil.clamp(tempo, Scratch3MusicBlocks.TEMPO_RANGE.min, Scratch3MusicBlocks.TEMPO_RANGE.max);
         if (typeof this.runtime.audioEngine === 'undefined') return;
         this.runtime.audioEngine.setTempo(tempo);
     }
 
+    /**
+     * Get the current tempo.
+     * @return {number} - the current tempo, in beats per minute.
+     */
     getTempo () {
         if (typeof this.runtime.audioEngine === 'undefined') return;
         return this.runtime.audioEngine.currentTempo;
