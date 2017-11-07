@@ -38,7 +38,7 @@ class Sequencer {
         let numActiveThreads = Infinity;
         // Whether `stepThreads` has run through a full single tick.
         let ranFirstTick = false;
-        const doneThreads = [];
+        const doneThreads = this.runtime.threads.map(() => null);
         // Conditions for continuing to stepping threads:
         // 1. We must have threads in the list, and some must be active.
         // 2. Time elapsed must be less than WORK_TIME.
@@ -54,10 +54,12 @@ class Sequencer {
                 if (activeThread.stack.length === 0 ||
                     activeThread.status === Thread.STATUS_DONE) {
                     // Finished with this thread.
-                    if (doneThreads.indexOf(activeThread) < 0) {
-                        doneThreads.push(activeThread);
-                    }
+                    doneThreads[i] = activeThread;
                     continue;
+                }
+                // A thread was removed, added or this thread was restarted.
+                if (doneThreads[i] !== null) {
+                    doneThreads[i] = null;
                 }
                 if (activeThread.status === Thread.STATUS_YIELD_TICK &&
                     !ranFirstTick) {
@@ -82,12 +84,27 @@ class Sequencer {
             ranFirstTick = true;
         }
         // Filter inactive threads from `this.runtime.threads`.
-        this.runtime.threads = this.runtime.threads.filter(thread => {
-            if (doneThreads.indexOf(thread) > -1) {
-                return false;
+        numActiveThreads = 0;
+        for (let i = 0; i < this.runtime.threads.length; i++) {
+            const thread = this.runtime.threads[i];
+            if (doneThreads[i] === null) {
+                this.runtime.threads[numActiveThreads] = thread;
+                numActiveThreads++;
             }
-            return true;
-        });
+        }
+        this.runtime.threads.length = numActiveThreads;
+
+        // Filter undefined and null values from `doneThreads`.
+        let numDoneThreads = 0;
+        for (let i = 0; i < doneThreads.length; i++) {
+            const maybeThread = doneThreads[i];
+            if (maybeThread !== null) {
+                doneThreads[numDoneThreads] = maybeThread;
+                numDoneThreads++;
+            }
+        }
+        doneThreads.length = numDoneThreads;
+
         return doneThreads;
     }
 
