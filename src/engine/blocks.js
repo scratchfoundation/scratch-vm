@@ -164,9 +164,9 @@ class Blocks {
     }
 
     /**
-     * Get the procedure definition for a given name.
+     * Get names of parameters for the given procedure.
      * @param {?string} name Name of procedure to query.
-     * @return {?string} ID of procedure definition.
+     * @return {?Array.<string>} List of param names for a procedure.
      */
     getProcedureParamNames (name) {
         for (const id in this._blocks) {
