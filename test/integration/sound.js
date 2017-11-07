@@ -1,11 +1,16 @@
+const Worker = require('tiny-worker');
 const path = require('path');
 const test = require('tap').test;
 const makeTestStorage = require('../fixtures/make-test-storage');
 const extract = require('../fixtures/extract');
 const VirtualMachine = require('../../src/index');
+const dispatch = require('../../src/dispatch/central-dispatch');
 
 const uri = path.resolve(__dirname, '../fixtures/sound.sb2');
 const project = extract(uri);
+
+// By default Central Dispatch works with the Worker class built into the browser. Tell it to use TinyWorker instead.
+dispatch.workerClass = Worker;
 
 test('sound', t => {
     const vm = new VirtualMachine();
