@@ -804,6 +804,7 @@ class Runtime extends EventEmitter {
      * This is used by `startHats` to and is necessary to ensure 2.0-like execution order.
      * Test project: https://scratch.mit.edu/projects/130183108/
      * @param {!Thread} thread Thread object to restart.
+     * @return {Thread} The restarted thread.
      */
     _restartThread (thread) {
         const newThread = new Thread(thread.topBlock);
@@ -814,9 +815,10 @@ class Runtime extends EventEmitter {
         const i = this.threads.indexOf(thread);
         if (i > -1) {
             this.threads[i] = newThread;
-        } else {
-            this.threads.push(thread);
+            return newThread;
         }
+        this.threads.push(thread);
+        return thread;
     }
 
     /**
@@ -976,7 +978,7 @@ class Runtime extends EventEmitter {
                     if (instance.threads[i].topBlock === topBlockId &&
                         !instance.threads[i].stackClick && // stack click threads and hat threads can coexist
                         instance.threads[i].target === target) {
-                        instance._restartThread(instance.threads[i]);
+                        newThreads.push(instance._restartThread(instance.threads[i]));
                         return;
                     }
                 }
