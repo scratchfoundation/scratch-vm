@@ -19273,6 +19273,21 @@ var Scratch3SensingBlocks = function () {
          * @type {Runtime}
          */
         this.runtime = runtime;
+
+        /**
+         * The "answer" block value.
+         * @type {string}
+         */
+        this._answer = '';
+
+        /**
+         * The list of queued questions and respective `resolve` callbacks.
+         * @type {!Array}
+         */
+        this._questionList = [];
+
+        this.runtime.on('ANSWER', this._onAnswer.bind(this));
+        this.runtime.on('PROJECT_STOP_ALL', this._clearAllQuestions.bind(this));
     }
 
     /**
@@ -19298,8 +19313,57 @@ var Scratch3SensingBlocks = function () {
                 sensing_keypressed: this.getKeyPressed,
                 sensing_current: this.current,
                 sensing_dayssince2000: this.daysSince2000,
-                sensing_loudness: this.getLoudness
+                sensing_loudness: this.getLoudness,
+                sensing_askandwait: this.askAndWait,
+                sensing_answer: this.getAnswer
             };
+        }
+    }, {
+        key: '_onAnswer',
+        value: function _onAnswer(answer) {
+            this._answer = answer;
+            var questionObj = this._questionList.shift();
+            if (questionObj) {
+                var resolve = questionObj[1];
+                resolve();
+                this._askNextQuestion();
+            }
+        }
+    }, {
+        key: '_enqueueAsk',
+        value: function _enqueueAsk(question, resolve) {
+            this._questionList.push([question, resolve]);
+        }
+    }, {
+        key: '_askNextQuestion',
+        value: function _askNextQuestion() {
+            if (this._questionList.length > 0) {
+                this.runtime.emit('QUESTION', this._questionList[0][0]);
+            }
+        }
+    }, {
+        key: '_clearAllQuestions',
+        value: function _clearAllQuestions() {
+            this._questionList = [];
+            this.runtime.emit('QUESTION', null);
+        }
+    }, {
+        key: 'askAndWait',
+        value: function askAndWait(args) {
+            var _this = this;
+
+            return new Promise(function (resolve) {
+                var isQuestionAsked = _this._questionList.length > 0;
+                _this._enqueueAsk(args.QUESTION, resolve);
+                if (!isQuestionAsked) {
+                    _this._askNextQuestion();
+                }
+            });
+        }
+    }, {
+        key: 'getAnswer',
+        value: function getAnswer() {
+            return this._answer;
         }
     }, {
         key: 'touchingObject',
