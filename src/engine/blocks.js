@@ -25,6 +25,20 @@ class Blocks {
          * @type {Array.<String>}
          */
         this._scripts = [];
+
+        /**
+         * Cache procedure Param Names by block id
+         * @type {object.<string, ?Array.<string>>}
+         * @private
+         */
+        this._procedureParamNames = {};
+
+        /**
+         * Cache procedure definitions by block id
+         * @type {object.<string, ?string>}
+         * @private
+         */
+        this._procedureDefinitions = {};
     }
 
     /**
@@ -105,10 +119,14 @@ class Blocks {
     /**
      * Get all non-branch inputs for a block.
      * @param {?object} block the block to query.
-     * @return {!object} All non-branch inputs and their associated blocks.
+     * @return {?object} All non-branch inputs and their associated blocks.
      */
     getInputs (block) {
         if (typeof block === 'undefined') return null;
+        const cachedInputs = block._inputs;
+        if (typeof cachedInputs !== 'undefined') {
+            return cachedInputs;
+        }
         const inputs = {};
         for (const input in block.inputs) {
             // Ignore blocks prefixed with branch prefix.
@@ -117,6 +135,7 @@ class Blocks {
                 inputs[input] = block.inputs[input];
             }
         }
+        block._inputs = inputs;
         return inputs;
     }
 
@@ -149,6 +168,9 @@ class Blocks {
      * @return {?string} ID of procedure definition.
      */
     getProcedureDefinition (name) {
+        if (this._procedureDefinitions.hasOwnProperty(name)) {
+            return this._procedureDefinitions[name];
+        }
         for (const id in this._blocks) {
             if (!this._blocks.hasOwnProperty(id)) continue;
             const block = this._blocks[id];
@@ -156,10 +178,12 @@ class Blocks {
                 block.opcode === 'procedures_defreturn') {
                 const internal = this._getCustomBlockInternal(block);
                 if (internal && internal.mutation.proccode === name) {
-                    return id; // The outer define block id
+                    this._procedureDefinitions[name] = id; // The outer define block id
+                    return id;
                 }
             }
         }
+        this._procedureDefinitions[name] = null; // This is not the same as undefined
         return null;
     }
 
@@ -169,14 +193,20 @@ class Blocks {
      * @return {?Array.<string>} List of param names for a procedure.
      */
     getProcedureParamNames (name) {
+        if (this._procedureParamNames.hasOwnProperty(name)) {
+            return this._procedureParamNames[name];
+        }
         for (const id in this._blocks) {
             if (!this._blocks.hasOwnProperty(id)) continue;
             const block = this._blocks[id];
             if (block.opcode === 'procedures_callnoreturn_internal' &&
                 block.mutation.proccode === name) {
-                return JSON.parse(block.mutation.argumentnames);
+                const paramNames = JSON.parse(block.mutation.argumentnames);
+                this._procedureParamNames[name] = paramNames;
+                return paramNames;
             }
         }
+        this._procedureParamNames[name] = null; // This is not the same as undefined
         return null;
     }
 
@@ -275,6 +305,25 @@ class Blocks {
     // ---------------------------------------------------------------------
 
     /**
+     * Recurse up the block tree clearing the cached inputs until we hit something that is 'not' an argument.
+     * @param {string} blockId The blockId of the block to be invalidated from the cache
+     */
+    invalidateInputCacheForBlock (blockId) {
+        if (this._blocks.hasOwnProperty(blockId)) {
+            const block = this._blocks[blockId];
+            if (typeof block !== 'undefined') {
+                if (typeof block._inputs !== 'undefined') {
+                    block._inputs = void 0;
+                }
+
+                if (block.parent && block.next === null) {
+                    this.invalidateInputCacheForBlock(block.parent);
+                }
+            }
+        }
+    }
+
+    /**
      * Block management: create blocks and scripts from a `create` event
      * @param {!object} block Blockly create event to be processed
      */
@@ -292,6 +341,7 @@ class Blocks {
         if (block.topLevel) {
             this._addScript(block.id);
         }
+        this.invalidateInputCacheForBlock(block.id);
     }
 
     /**
@@ -300,11 +350,13 @@ class Blocks {
      * @param {?Runtime} optRuntime Optional runtime to allow changeBlock to change VM state.
      */
     changeBlock (args, optRuntime) {
+        this._procedureParamNames = {}; // For now... reset cache of procedures at every change
+        this._procedureDefinitions = {}; // For now... reset cache of procedures at every change
         // Validate
         if (['field', 'mutation', 'checkbox'].indexOf(args.element) === -1) return;
         const block = this._blocks[args.id];
         if (typeof block === 'undefined') return;
-
+        this.invalidateInputCacheForBlock(args.id);
         const wasMonitored = block.isMonitored;
         switch (args.element) {
         case 'field':
@@ -359,6 +411,7 @@ class Blocks {
 
         // Remove from any old parent.
         if (typeof e.oldParent !== 'undefined') {
+            this.invalidateInputCacheForBlock(e.oldParent);
             const oldParent = this._blocks[e.oldParent];
             if (typeof e.oldInput !== 'undefined' &&
                 oldParent.inputs[e.oldInput].block === e.id) {
@@ -395,6 +448,7 @@ class Blocks {
                 };
             }
             this._blocks[e.id].parent = e.newParent;
+            this.invalidateInputCacheForBlock(e.id);
         }
     }
 
