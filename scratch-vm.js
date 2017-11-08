@@ -21775,7 +21775,7 @@ var adapter = function adapter(e) {
     if ((typeof e === 'undefined' ? 'undefined' : _typeof(e)) !== 'object') return;
     if (_typeof(e.xml) !== 'object') return;
 
-    return domToBlocks(html.parseDOM(e.xml.outerHTML));
+    return domToBlocks(html.parseDOM(e.xml.outerHTML, { decodeEntities: true }));
 };
 
 module.exports = adapter;
