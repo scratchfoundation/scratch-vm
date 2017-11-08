@@ -155,6 +155,24 @@ test('create with obscured shadow', t => {
     t.end();
 });
 
+test('create variable with entity in name', t => {
+    const result = adapter(events.createvariablewithentity);
+
+    t.ok(Array.isArray(result));
+    t.equal(result.length, 1);
+
+    t.type(result[0].id, 'string');
+    t.type(result[0].opcode, 'string');
+    t.type(result[0].fields, 'object');
+    t.type(result[0].fields.VARIABLE, 'object');
+    t.type(result[0].fields.VARIABLE.value, 'string');
+    t.equal(result[0].fields.VARIABLE.value, 'this & that');
+    t.type(result[0].inputs, 'object');
+    t.type(result[0].topLevel, 'boolean');
+    t.equal(result[0].topLevel, true);
+    t.end();
+});
+
 test('create with invalid block xml', t => {
     // Entirely invalid block XML
     const result = adapter(events.createinvalid);
