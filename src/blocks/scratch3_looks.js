@@ -245,11 +245,12 @@ class Scratch3LooksBlocks {
 
     sayforsecs (args, util) {
         this.say(args, util);
+        const _target = util.target;
         return new Promise(resolve => {
             this._bubbleTimeout = setTimeout(() => {
                 this._bubbleTimeout = null;
                 // Clear say bubble and proceed.
-                this._updateBubble(util.target, 'say', '');
+                this._updateBubble(_target, 'say', '');
                 resolve();
             }, 1000 * args.SECS);
         });
@@ -261,11 +262,12 @@ class Scratch3LooksBlocks {
 
     thinkforsecs (args, util) {
         this.think(args, util);
+        const _target = util.target;
         return new Promise(resolve => {
             this._bubbleTimeout = setTimeout(() => {
                 this._bubbleTimeout = null;
                 // Clear say bubble and proceed.
-                this._updateBubble(util.target, 'think', '');
+                this._updateBubble(_target, 'think', '');
                 resolve();
             }, 1000 * args.SECS);
         });

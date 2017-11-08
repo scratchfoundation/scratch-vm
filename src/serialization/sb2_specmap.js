@@ -418,7 +418,7 @@ const specMap = {
         ]
     },
     'playDrum': {
-        opcode: 'sound_playdrumforbeats',
+        opcode: 'music.playDrumForBeats',
         argMap: [
             {
                 type: 'input',
@@ -433,7 +433,7 @@ const specMap = {
         ]
     },
     'rest:elapsed:from:': {
-        opcode: 'sound_restforbeats',
+        opcode: 'music.restForBeats',
         argMap: [
             {
                 type: 'input',
@@ -443,7 +443,7 @@ const specMap = {
         ]
     },
     'noteOn:duration:elapsed:from:': {
-        opcode: 'sound_playnoteforbeats',
+        opcode: 'music.playNoteForBeats',
         argMap: [
             {
                 type: 'input',
@@ -458,7 +458,7 @@ const specMap = {
         ]
     },
     'instrument:': {
-        opcode: 'sound_setinstrumentto',
+        opcode: 'music.setInstrument',
         argMap: [
             {
                 type: 'input',
@@ -493,7 +493,7 @@ const specMap = {
         ]
     },
     'changeTempoBy:': {
-        opcode: 'sound_changetempoby',
+        opcode: 'music.changeTempo',
         argMap: [
             {
                 type: 'input',
@@ -503,7 +503,7 @@ const specMap = {
         ]
     },
     'setTempoTo:': {
-        opcode: 'sound_settempotobpm',
+        opcode: 'music.setTempo',
         argMap: [
             {
                 type: 'input',
@@ -513,7 +513,7 @@ const specMap = {
         ]
     },
     'tempo': {
-        opcode: 'sound_tempo',
+        opcode: 'music.getTempo',
         argMap: [
         ]
     },

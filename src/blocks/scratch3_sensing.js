@@ -7,6 +7,21 @@ class Scratch3SensingBlocks {
          * @type {Runtime}
          */
         this.runtime = runtime;
+
+        /**
+         * The "answer" block value.
+         * @type {string}
+         */
+        this._answer = '';
+
+        /**
+         * The list of queued questions and respective `resolve` callbacks.
+         * @type {!Array}
+         */
+        this._questionList = [];
+
+        this.runtime.on('ANSWER', this._onAnswer.bind(this));
+        this.runtime.on('PROJECT_STOP_ALL', this._clearAllQuestions.bind(this));
     }
 
     /**
@@ -28,8 +43,49 @@ class Scratch3SensingBlocks {
             sensing_keypressed: this.getKeyPressed,
             sensing_current: this.current,
             sensing_dayssince2000: this.daysSince2000,
-            sensing_loudness: this.getLoudness
+            sensing_loudness: this.getLoudness,
+            sensing_askandwait: this.askAndWait,
+            sensing_answer: this.getAnswer
         };
+    }
+
+    _onAnswer (answer) {
+        this._answer = answer;
+        const questionObj = this._questionList.shift();
+        if (questionObj) {
+            const resolve = questionObj[1];
+            resolve();
+            this._askNextQuestion();
+        }
+    }
+
+    _enqueueAsk (question, resolve) {
+        this._questionList.push([question, resolve]);
+    }
+
+    _askNextQuestion () {
+        if (this._questionList.length > 0) {
+            this.runtime.emit('QUESTION', this._questionList[0][0]);
+        }
+    }
+
+    _clearAllQuestions () {
+        this._questionList = [];
+        this.runtime.emit('QUESTION', null);
+    }
+
+    askAndWait (args) {
+        return new Promise(resolve => {
+            const isQuestionAsked = this._questionList.length > 0;
+            this._enqueueAsk(args.QUESTION, resolve);
+            if (!isQuestionAsked) {
+                this._askNextQuestion();
+            }
+        });
+    }
+
+    getAnswer () {
+        return this._answer;
     }
 
     touchingObject (args, util) {

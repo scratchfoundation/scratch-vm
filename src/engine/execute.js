@@ -1,6 +1,13 @@
+const BlockUtility = require('./block-utility');
 const log = require('../util/log');
 const Thread = require('./thread');
 const {Map} = require('immutable');
+
+/**
+ * Single BlockUtility instance reused by execute for every pritimive ran.
+ * @const
+ */
+const blockUtility = new BlockUtility();
 
 /**
  * Utility function to determine if a value is a Promise.
@@ -8,7 +15,68 @@ const {Map} = require('immutable');
  * @return {boolean} True if the value appears to be a Promise.
  */
 const isPromise = function (value) {
-    return value && value.then && typeof value.then === 'function';
+    return (
+        value !== null &&
+        typeof value === 'object' &&
+        typeof value.then === 'function'
+    );
+};
+
+/**
+ * Handle any reported value from the primitive, either directly returned
+ * or after a promise resolves.
+ * @param {*} resolvedValue Value eventually returned from the primitive.
+ * @param {!Sequencer} sequencer Sequencer stepping the thread for the ran
+ * primitive.
+ * @param {!Thread} thread Thread containing the primitive.
+ * @param {!string} currentBlockId Id of the block in its thread for value from
+ * the primitive.
+ * @param {!string} opcode opcode used to identify a block function primitive.
+ * @param {!boolean} isHat Is the current block a hat?
+ */
+// @todo move this to callback attached to the thread when we have performance
+// metrics (dd)
+const handleReport = function (
+    resolvedValue, sequencer, thread, currentBlockId, opcode, isHat) {
+    thread.pushReportedValue(resolvedValue);
+    if (isHat) {
+        // Hat predicate was evaluated.
+        if (sequencer.runtime.getIsEdgeActivatedHat(opcode)) {
+            // If this is an edge-activated hat, only proceed if the value is
+            // true and used to be false, or the stack was activated explicitly
+            // via stack click
+            if (!thread.stackClick) {
+                const oldEdgeValue = sequencer.runtime.updateEdgeActivatedValue(
+                    currentBlockId,
+                    resolvedValue
+                );
+                const edgeWasActivated = !oldEdgeValue && resolvedValue;
+                if (!edgeWasActivated) {
+                    sequencer.retireThread(thread);
+                }
+            }
+        } else if (!resolvedValue) {
+            // Not an edge-activated hat: retire the thread
+            // if predicate was false.
+            sequencer.retireThread(thread);
+        }
+    } else {
+        // In a non-hat, report the value visually if necessary if
+        // at the top of the thread stack.
+        if (typeof resolvedValue !== 'undefined' && thread.atStackTop()) {
+            if (thread.stackClick) {
+                sequencer.runtime.visualReport(currentBlockId, resolvedValue);
+            }
+            if (thread.updateMonitor) {
+                sequencer.runtime.requestUpdateMonitor(Map({
+                    id: currentBlockId,
+                    value: String(resolvedValue)
+                }));
+            }
+        }
+        // Finished any yields.
+        thread.status = Thread.STATUS_RUNNING;
+    }
 };
 
 /**
@@ -61,55 +129,6 @@ const execute = function (sequencer, thread) {
         return;
     }
 
-    /**
-     * Handle any reported value from the primitive, either directly returned
-     * or after a promise resolves.
-     * @param {*} resolvedValue Value eventually returned from the primitive.
-     */
-    // @todo move this to callback attached to the thread when we have performance
-    // metrics (dd)
-    const handleReport = function (resolvedValue) {
-        thread.pushReportedValue(resolvedValue);
-        if (isHat) {
-            // Hat predicate was evaluated.
-            if (runtime.getIsEdgeActivatedHat(opcode)) {
-                // If this is an edge-activated hat, only proceed if
-                // the value is true and used to be false, or the stack was activated
-                // explicitly via stack click
-                if (!thread.stackClick) {
-                    const oldEdgeValue = runtime.updateEdgeActivatedValue(
-                        currentBlockId,
-                        resolvedValue
-                    );
-                    const edgeWasActivated = !oldEdgeValue && resolvedValue;
-                    if (!edgeWasActivated) {
-                        sequencer.retireThread(thread);
-                    }
-                }
-            } else if (!resolvedValue) {
-                // Not an edge-activated hat: retire the thread
-                // if predicate was false.
-                sequencer.retireThread(thread);
-            }
-        } else {
-            // In a non-hat, report the value visually if necessary if
-            // at the top of the thread stack.
-            if (typeof resolvedValue !== 'undefined' && thread.atStackTop()) {
-                if (thread.stackClick) {
-                    runtime.visualReport(currentBlockId, resolvedValue);
-                }
-                if (thread.updateMonitor) {
-                    runtime.requestUpdateMonitor(Map({
-                        id: currentBlockId,
-                        value: String(resolvedValue)
-                    }));
-                }
-            }
-            // Finished any yields.
-            thread.status = Thread.STATUS_RUNNING;
-        }
-    };
-
     // Hats and single-field shadows are implemented slightly differently
     // from regular blocks.
     // For hats: if they have an associated block function,
@@ -124,7 +143,7 @@ const execute = function (sequencer, thread) {
         const keys = Object.keys(fields);
         if (keys.length === 1 && Object.keys(inputs).length === 0) {
             // One field and no inputs - treat as arg.
-            handleReport(fields[keys[0]].value);
+            handleReport(fields[keys[0]].value, sequencer, thread, currentBlockId, opcode, isHat);
         } else {
             log.warn(`Could not get implementation for opcode: ${opcode}`);
         }
@@ -186,49 +205,9 @@ const execute = function (sequencer, thread) {
     currentStackFrame.reported = {};
 
     let primitiveReportedValue = null;
-    primitiveReportedValue = blockFunction(argValues, {
-        stackFrame: currentStackFrame.executionContext,
-        target: target,
-        yield: function () {
-            thread.status = Thread.STATUS_YIELD;
-        },
-        startBranch: function (branchNum, isLoop) {
-            sequencer.stepToBranch(thread, branchNum, isLoop);
-        },
-        stopAll: function () {
-            runtime.stopAll();
-        },
-        stopOtherTargetThreads: function () {
-            runtime.stopForTarget(target, thread);
-        },
-        stopThisScript: function () {
-            thread.stopThisScript();
-        },
-        startProcedure: function (procedureCode) {
-            sequencer.stepToProcedure(thread, procedureCode);
-        },
-        getProcedureParamNames: function (procedureCode) {
-            return blockContainer.getProcedureParamNames(procedureCode);
-        },
-        pushParam: function (paramName, paramValue) {
-            thread.pushParam(paramName, paramValue);
-        },
-        getParam: function (paramName) {
-            return thread.getParam(paramName);
-        },
-        startHats: function (requestedHat, optMatchFields, optTarget) {
-            return (
-                runtime.startHats(requestedHat, optMatchFields, optTarget)
-            );
-        },
-        ioQuery: function (device, func, args) {
-            // Find the I/O device and execute the query/function call.
-            if (runtime.ioDevices[device] && runtime.ioDevices[device][func]) {
-                const devObject = runtime.ioDevices[device];
-                return devObject[func].apply(devObject, args);
-            }
-        }
-    });
+    blockUtility.sequencer = sequencer;
+    blockUtility.thread = thread;
+    primitiveReportedValue = blockFunction(argValues, blockUtility);
 
     if (typeof primitiveReportedValue === 'undefined') {
         // No value reported - potentially a command block.
@@ -244,7 +223,7 @@ const execute = function (sequencer, thread) {
         }
         // Promise handlers
         primitiveReportedValue.then(resolvedValue => {
-            handleReport(resolvedValue);
+            handleReport(resolvedValue, sequencer, thread, currentBlockId, opcode, isHat);
             if (typeof resolvedValue === 'undefined') {
                 let stackFrame;
                 let nextBlockId;
@@ -277,7 +256,7 @@ const execute = function (sequencer, thread) {
             thread.popStack();
         });
     } else if (thread.status === Thread.STATUS_RUNNING) {
-        handleReport(primitiveReportedValue);
+        handleReport(primitiveReportedValue, sequencer, thread, currentBlockId, opcode, isHat);
     }
 };
 
