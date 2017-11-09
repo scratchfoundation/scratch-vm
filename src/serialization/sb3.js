@@ -8,7 +8,6 @@ const vmPackage = require('../../package.json');
 const Blocks = require('../engine/blocks');
 const Sprite = require('../sprites/sprite');
 const Variable = require('../engine/variable');
-const List = require('../engine/list');
 
 const {loadCostume} = require('../import/load-costume.js');
 const {loadSound} = require('../import/load-sound.js');
@@ -125,20 +124,11 @@ const parseScratchObject = function (object, runtime, extensions) {
             const newVariable = new Variable(
                 variable.id,
                 variable.name,
-                variable.value,
+                variable.type,
                 variable.isPersistent
             );
+            newVariable.value = variable.value;
             target.variables[newVariable.id] = newVariable;
-        }
-    }
-    if (object.hasOwnProperty('lists')) {
-        for (let k = 0; k < object.lists.length; k++) {
-            const list = object.lists[k];
-            // @todo: monitor properties.
-            target.lists[list.listName] = new List(
-                list.listName,
-                list.contents
-            );
         }
     }
     if (object.hasOwnProperty('x')) {

@@ -13,7 +13,6 @@ const log = require('../util/log');
 const uid = require('../util/uid');
 const specMap = require('./sb2_specmap');
 const Variable = require('../engine/variable');
-const List = require('../engine/list');
 
 const {loadCostume} = require('../import/load-costume.js');
 const {loadSound} = require('../import/load-sound.js');
@@ -235,9 +234,10 @@ const parseScratchObject = function (object, runtime, extensions, topLevel) {
             const newVariable = new Variable(
                 getVariableId(variable.name),
                 variable.name,
-                variable.value,
+                "",
                 variable.isPersistent
             );
+            newVariable.value = variable.value;
             target.variables[newVariable.id] = newVariable;
         }
     }
@@ -251,10 +251,14 @@ const parseScratchObject = function (object, runtime, extensions, topLevel) {
         for (let k = 0; k < object.lists.length; k++) {
             const list = object.lists[k];
             // @todo: monitor properties.
-            target.lists[list.listName] = new List(
+            const newVariable = new Variable(
+                getVariableId(list.listName),
                 list.listName,
-                list.contents
+                "list",
+                list.isPersistent
             );
+            newVariable.value = list.contents;
+            target.variables[newVariable.id] = newVariable;
         }
     }
     if (object.hasOwnProperty('scratchX')) {

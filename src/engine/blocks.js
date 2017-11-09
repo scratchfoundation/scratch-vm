@@ -260,7 +260,7 @@ class Blocks {
             // If not, create it on the stage.
             // TODO create global and local variables when UI provides a way.
             if (!optRuntime.getEditingTarget().lookupVariableById(e.varId)) {
-                stage.createVariable(e.varId, e.varName);
+                stage.createVariable(e.varId, e.varName, e.varType);
             }
             break;
         case 'var_rename':
@@ -310,7 +310,7 @@ class Blocks {
         case 'field':
             // Update block value
             if (!block.fields[args.name]) return;
-            if (args.name === 'VARIABLE') {
+            if (args.name === 'VARIABLE' || args.name === 'LIST') {
                 // Get variable name using the id in args.value.
                 const variable = optRuntime.getEditingTarget().lookupVariableById(args.value);
                 if (variable) {

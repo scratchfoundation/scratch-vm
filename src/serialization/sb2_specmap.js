@@ -1252,7 +1252,7 @@ const specMap = {
         ]
     },
     'contentsOfList:': {
-        opcode: 'data_list',
+        opcode: 'data_listcontents',
         argMap: [
             {
                 type: 'field',
