@@ -80,6 +80,24 @@ const ScratchBlocksConstants = {
 };
 
 /**
+ * Numeric ID for Runtime._step in Profiler instances.
+ * @type {number}
+ */
+let stepProfilerId = -1;
+
+/**
+ * Numeric ID for Sequencer.stepThreads in Profiler instances.
+ * @type {number}
+ */
+let stepThreadsProfilerId = -1;
+
+/**
+ * Numeric ID for RenderWebGL.draw in Profiler instances.
+ * @type {number}
+ */
+let rendererDrawProfilerId = -1;
+
+/**
  * Manages targets, scripts, and the sequencer.
  * @constructor
  */
@@ -234,6 +252,13 @@ class Runtime extends EventEmitter {
             keyboard: new Keyboard(this),
             mouse: new Mouse(this)
         };
+
+        /**
+         * A runtime profiler that records timed events for later playback to
+         * diagnose Scratch performance.
+         * @type {Profiler}
+         */
+        this.profiler = null;
     }
 
     /**
@@ -1055,6 +1080,12 @@ class Runtime extends EventEmitter {
      * inactive threads after each iteration.
      */
     _step () {
+        if (this.profiler !== null) {
+            if (stepProfilerId === -1) {
+                stepProfilerId = this.profiler.idByName('Runtime._step');
+            }
+            this.profiler.start(stepProfilerId);
+        }
         // Find all edge-activated hats, and add them to threads to be evaluated.
         for (const hatType in this._hats) {
             if (!this._hats.hasOwnProperty(hatType)) continue;
@@ -1065,7 +1096,16 @@ class Runtime extends EventEmitter {
         }
         this.redrawRequested = false;
         this._pushMonitors();
+        if (this.profiler !== null) {
+            if (stepThreadsProfilerId === -1) {
+                stepThreadsProfilerId = this.profiler.idByName('Sequencer.stepThreads');
+            }
+            this.profiler.start(stepThreadsProfilerId);
+        }
         const doneThreads = this.sequencer.stepThreads();
+        if (this.profiler !== null) {
+            this.profiler.stop();
+        }
         this._updateGlows(doneThreads);
         // Add done threads so that even if a thread finishes within 1 frame, the green
         // flag will still indicate that a script ran.
@@ -1074,7 +1114,16 @@ class Runtime extends EventEmitter {
                 this._getMonitorThreadCount([...this.threads, ...doneThreads]));
         if (this.renderer) {
             // @todo: Only render when this.redrawRequested or clones rendered.
+            if (this.profiler !== null) {
+                if (rendererDrawProfilerId === -1) {
+                    rendererDrawProfilerId = this.profiler.idByName('RenderWebGL.draw');
+                }
+                this.profiler.start(rendererDrawProfilerId);
+            }
             this.renderer.draw();
+            if (this.profiler !== null) {
+                this.profiler.stop();
+            }
         }
 
         if (this._refreshTargets) {
@@ -1085,6 +1134,11 @@ class Runtime extends EventEmitter {
         if (!this._prevMonitorState.equals(this._monitorState)) {
             this.emit(Runtime.MONITORS_UPDATE, this._monitorState);
             this._prevMonitorState = this._monitorState;
+        }
+
+        if (this.profiler !== null) {
+            this.profiler.stop();
+            this.profiler.reportFrames();
         }
     }
 
