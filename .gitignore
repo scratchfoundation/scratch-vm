@@ -16,3 +16,6 @@ npm-*
 # Build
 /dist
 /playground
+
+# Localization
+/translations
