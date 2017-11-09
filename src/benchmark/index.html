@@ -1,0 +1,69 @@
+<!doctype html>
+
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>Scratch VM Benchmark</title>
+    <style>
+        canvas {
+          border: 5px solid black;
+        }
+    </style>
+    <link rel="stylesheet" href="./benchmark.css" type="text/css" media="screen">
+</head>
+<body>
+    <h2>Scratch VM Benchmark</h2>
+    <canvas id="scratch-stage" style="width: 480px; height: 360px;"></canvas><br />
+  <div class="loading">
+    <label>Loading:</label>
+    <span class="loading-complete">0</span> / <span class="loading-total">0</span>
+  </div>
+  <div class="profile-count-group">
+    <div class="profile-count">
+      <label>Percent of time worked:</label>
+      <span class="profile-count-value profile-count-amount-recorded">...</span>
+    </div>
+    <div class="profile-count">
+      <label>Steps looped:</label>
+      <span class="profile-count-value profile-count-steps-looped">...</span>
+    </div>
+    <div class="profile-count">
+      <label>Blocks executed:</label>
+      <span class="profile-count-value profile-count-blocks-executed">...</span>
+    </div>
+  </div>
+
+  <div class="profile-tables">
+  <table class="profile-count-frame-table" cellspacing="0">
+    <thead>
+    <tr class="profile-count-frame-head"><th>Frame</th><th>Self Time</th><th>Total Time</th><th>Executions</th></tr>
+    </thead>
+    <tbody>
+    <tr class="profiler-count-running"><td colspan="4"></td></tr>
+    </tbody>
+  </table>
+
+  <table class="profile-count-opcode-table" cellspacing="0">
+    <thead>
+    <tr class="profile-count-opcode-head">
+      <th>opcode</th><th>Self Time</th><th>Total Time</th><th>Executions</th>
+    </tr>
+    </thead>
+    <tbody>
+    <tr class="profiler-count-running"><td colspan="4"></td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <div id="blocks"></div>
+
+  <!-- FPS counter, Syntax highlighter, Blocks, Renderer -->
+  <script src="../playground/vendor.js"></script>
+  <!-- Storage module -->
+  <script src="../playground/scratch-storage.js"></script>
+  <!-- VM -->
+  <script src="../playground/scratch-vm.js"></script>
+  <!-- Playground -->
+  <script src="./benchmark.js"></script>
+</body>
+</html>

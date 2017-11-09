@@ -1,0 +1,7 @@
+@media (min-width: 960px) {
+    .profile-tables {
+        position: absolute;
+        top: 0;
+        left: 520px;
+    }
+}
