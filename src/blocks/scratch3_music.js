@@ -3,6 +3,7 @@ const BlockType = require('../extension-support/block-type');
 const Clone = require('../util/clone');
 const Cast = require('../util/cast');
 const MathUtil = require('../util/math-util');
+const Timer = require('../util/timer');
 
 /**
  * An array of drum names, used in the play drum block.
@@ -69,6 +70,13 @@ class Scratch3MusicBlocks {
          * @type {Runtime}
          */
         this.runtime = runtime;
+
+        /**
+         * The current tempo in beats per minute. The tempo is a global property of the project,
+         * not a property of each sprite, so it is not stored in the MusicState object.
+         * @type {number}
+         */
+        this.tempo = 60;
 
         this.drumMenu = this._buildMenu(drumNames);
         this.instrumentMenu = this._buildMenu(instrumentNames);
@@ -272,11 +280,10 @@ class Scratch3MusicBlocks {
      * @property {number} BEATS - the duration in beats of the rest.
      * @return {Promise} - a promise which will resolve at the end of the duration.
      */
-    restForBeats (args) {
+    restForBeats (args, util) {
         let beats = Cast.toNumber(args.BEATS);
         beats = this._clampBeats(beats);
-        if (typeof this.runtime.audioEngine === 'undefined') return;
-        return this.runtime.audioEngine.waitForBeats(beats);
+        this._waitForBeats(beats, util);
     }
 
     /**
@@ -316,6 +323,39 @@ class Scratch3MusicBlocks {
     }
 
     /**
+     * Convert a number of beats to a number of seconds, using the current tempo.
+     * @param  {number} beats - number of beats to convert to secs.
+     * @return {number} seconds - number of seconds `beats` will last.
+     * @private
+     */
+    _beatsToSec (beats) {
+        return (60 / this.tempo) * beats;
+    }
+
+    /**
+     * Wait for some number of beats.
+     * @param  {number} beats - number of beats to wait for.
+     * @param {object} util - utility object provided by the runtime.
+     * @private
+     */
+    _waitForBeats (beats, util) {
+        if (util.stackFrame.timer) {
+            const timeElapsed = util.stackFrame.timer.timeElapsed();
+            if (timeElapsed < util.stackFrame.duration * 1000) {
+                util.yield();
+            }
+        } else {
+            util.stackFrame.timer = new Timer();
+            util.stackFrame.timer.start();
+            util.stackFrame.duration = this._beatsToSec(beats);
+            if (util.stackFrame.duration <= 0) {
+                return;
+            }
+            util.yield();
+        }
+    }
+
+    /**
      * Clamp a duration in beats to the allowed min and max duration.
      * @param  {number} beats - a duration in beats.
      * @return {number} - the clamped duration.
@@ -342,8 +382,7 @@ class Scratch3MusicBlocks {
      */
     changeTempo (args) {
         const change = Cast.toNumber(args.TEMPO);
-        if (typeof this.runtime.audioEngine === 'undefined') return;
-        const tempo = change + this.runtime.audioEngine.currentTempo;
+        const tempo = change + this.tempo;
         this._updateTempo(tempo);
     }
 
@@ -354,8 +393,7 @@ class Scratch3MusicBlocks {
      */
     _updateTempo (tempo) {
         tempo = MathUtil.clamp(tempo, Scratch3MusicBlocks.TEMPO_RANGE.min, Scratch3MusicBlocks.TEMPO_RANGE.max);
-        if (typeof this.runtime.audioEngine === 'undefined') return;
-        this.runtime.audioEngine.setTempo(tempo);
+        this.tempo = tempo;
     }
 
     /**
@@ -363,8 +401,7 @@ class Scratch3MusicBlocks {
      * @return {number} - the current tempo, in beats per minute.
      */
     getTempo () {
-        if (typeof this.runtime.audioEngine === 'undefined') return;
-        return this.runtime.audioEngine.currentTempo;
+        return this.tempo;
     }
 }
 
