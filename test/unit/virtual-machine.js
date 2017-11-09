@@ -1,8 +1,6 @@
 const test = require('tap').test;
 const VirtualMachine = require('../../src/virtual-machine.js');
-const Target = require('../../src/engine/target.js');
 const Sprite = require('../../src/sprites/sprite.js');
-const RenderedTarget = require('../../src/sprites/rendered-target');
 
 test('renameSprite throws when there is no sprite with that id', t => {
     const vm = new VirtualMachine();
@@ -121,7 +119,7 @@ test('deleteSprite throws when used on a non-sprite target', t => {
     }];
     t.throws(
         (() => vm.deleteSprite('id')),
-        new Error ('Cannot delete non-sprite targets.')
+        new Error('Cannot delete non-sprite targets.')
     );
     t.end();
 });
@@ -135,7 +133,7 @@ test('deleteSprite throws when there is no sprite for the given target', t => {
     }];
     t.throws(
         (() => vm.deleteSprite('id')),
-        new Error ('No sprite associated with this target.')
+        new Error('No sprite associated with this target.')
     );
     t.end();
 });
@@ -151,7 +149,7 @@ test('deleteSprite throws when there is no target with given id', t => {
     }];
     t.throws(
         (() => vm.deleteSprite('id1')),
-        new Error ('No target with the provided id.')
+        new Error('No target with the provided id.')
     );
     t.end();
 });
@@ -169,7 +167,8 @@ test('deleteSprite deletes a sprite when given id is associated with a known spr
     t.end();
 });
 
-test('deleteSprite sets editing target as null when sprite being deleted is current editing target, and the only target in the runtime', t => {
+// eslint-disable-next-line max-len
+test('deleteSprite sets editing target as null when given sprite is current editing target, and the only target in the runtime', t => {
     const vm = new VirtualMachine();
     const spr = new Sprite(null, vm.runtime);
     const currTarget = spr.createClone();
@@ -184,6 +183,7 @@ test('deleteSprite sets editing target as null when sprite being deleted is curr
     t.end();
 });
 
+// eslint-disable-next-line max-len
 test('deleteSprite updates editingTarget when sprite being deleted is current editing target, and there is another target in the runtime', t => {
     const vm = new VirtualMachine();
     const spr1 = new Sprite(null, vm.runtime);
@@ -217,8 +217,6 @@ test('deleteSprite updates editingTarget when sprite being deleted is current ed
 
     t.end();
 });
-
-
 
 test('duplicateSprite throws when there is no target with given id', t => {
     const vm = new VirtualMachine();
@@ -258,7 +256,7 @@ test('duplicateSprite throws when there is no sprite for the given target', t =>
     }];
     t.throws(
         (() => vm.duplicateSprite('id')),
-        new Error ('No sprite associated with this target.')
+        new Error('No sprite associated with this target.')
     );
     t.end();
 });

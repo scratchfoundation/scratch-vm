@@ -509,6 +509,8 @@ class VirtualMachine extends EventEmitter {
     /**
      * Duplicate a sprite.
      * @param {string} targetId ID of a target whose sprite to duplicate.
+     * @returns {Promise} Promise that resolves when duplicated target has
+     *     been added to the runtime.
      */
     duplicateSprite (targetId) {
         const target = this.runtime.getTargetById(targetId);
