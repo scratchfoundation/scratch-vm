@@ -7,6 +7,7 @@ const Blocks = require('./blocks');
 const BlockType = require('../extension-support/block-type');
 const Sequencer = require('./sequencer');
 const Thread = require('./thread');
+const Profiler = require('./profiler');
 
 // Virtual I/O devices.
 const Clock = require('../io/clock');
@@ -1466,6 +1467,24 @@ class Runtime extends EventEmitter {
         this._steppingInterval = setInterval(() => {
             this._step();
         }, interval);
+    }
+
+    /**
+     * Turn on profiling.
+     * @param {Profiler/FrameCallback} onFrame A callback handle passed a
+     * profiling frame when the profiler reports its collected data.
+     */
+    enableProfiling (onFrame) {
+        if (Profiler.available()) {
+            this.profiler = new Profiler(onFrame);
+        }
+    }
+
+    /**
+     * Turn off profiling.
+     */
+    disableProfiling () {
+        this.profiler = null;
     }
 }
 
