@@ -17490,10 +17490,14 @@ var Scratch3LooksBlocks = function () {
         this._onTargetMoved = this._onTargetMoved.bind(this);
         this._onResetBubbles = this._onResetBubbles.bind(this);
         this._onTargetWillExit = this._onTargetWillExit.bind(this);
+        this._updateBubble = this._updateBubble.bind(this);
 
         // Reset all bubbles on start/stop
         this.runtime.on('PROJECT_STOP_ALL', this._onResetBubbles);
         this.runtime.on('targetWasRemoved', this._onTargetWillExit);
+
+        // Enable other blocks to use bubbles like ask/answer
+        this.runtime.on('SAY', this._updateBubble);
     }
 
     /**
@@ -19652,6 +19656,8 @@ module.exports = Scratch3ProcedureBlocks;
 "use strict";
 
 
+var _slicedToArray = function () { function sliceIterator(arr, i) { var _arr = []; var _n = true; var _d = false; var _e = undefined; try { for (var _i = arr[Symbol.iterator](), _s; !(_n = (_s = _i.next()).done); _n = true) { _arr.push(_s.value); if (i && _arr.length === i) break; } } catch (err) { _d = true; _e = err; } finally { try { if (!_n && _i["return"]) _i["return"](); } finally { if (_d) throw _e; } } return _arr; } return function (arr, i) { if (Array.isArray(arr)) { return arr; } else if (Symbol.iterator in Object(arr)) { return sliceIterator(arr, i); } else { throw new TypeError("Invalid attempt to destructure non-iterable instance"); } }; }();
+
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
@@ -19718,21 +19724,45 @@ var Scratch3SensingBlocks = function () {
             this._answer = answer;
             var questionObj = this._questionList.shift();
             if (questionObj) {
-                var resolve = questionObj[1];
+                var _questionObj = _slicedToArray(questionObj, 4),
+                    _question = _questionObj[0],
+                    resolve = _questionObj[1],
+                    target = _questionObj[2],
+                    wasVisible = _questionObj[3];
+                // If the target was visible when asked, hide the say bubble.
+
+
+                if (wasVisible) {
+                    this.runtime.emit('SAY', target, 'say', '');
+                }
                 resolve();
                 this._askNextQuestion();
             }
         }
     }, {
         key: '_enqueueAsk',
-        value: function _enqueueAsk(question, resolve) {
-            this._questionList.push([question, resolve]);
+        value: function _enqueueAsk(question, resolve, target, wasVisible) {
+            this._questionList.push([question, resolve, target, wasVisible]);
         }
     }, {
         key: '_askNextQuestion',
         value: function _askNextQuestion() {
             if (this._questionList.length > 0) {
-                this.runtime.emit('QUESTION', this._questionList[0][0]);
+                var _questionList$ = _slicedToArray(this._questionList[0], 4),
+                    question = _questionList$[0],
+                    _resolve = _questionList$[1],
+                    target = _questionList$[2],
+                    wasVisible = _questionList$[3];
+                // If the target is visible, emit a blank question and use the
+                // say event to trigger a bubble.
+
+
+                if (wasVisible) {
+                    this.runtime.emit('SAY', target, 'say', question);
+                    this.runtime.emit('QUESTION', '');
+                } else {
+                    this.runtime.emit('QUESTION', question);
+                }
             }
         }
     }, {
@@ -19743,12 +19773,13 @@ var Scratch3SensingBlocks = function () {
         }
     }, {
         key: 'askAndWait',
-        value: function askAndWait(args) {
+        value: function askAndWait(args, util) {
             var _this = this;
 
+            var _target = util.target;
             return new Promise(function (resolve) {
                 var isQuestionAsked = _this._questionList.length > 0;
-                _this._enqueueAsk(args.QUESTION, resolve);
+                _this._enqueueAsk(args.QUESTION, resolve, _target, _target.visible);
                 if (!isQuestionAsked) {
                     _this._askNextQuestion();
                 }
