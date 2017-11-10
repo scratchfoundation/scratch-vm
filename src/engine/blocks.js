@@ -27,18 +27,28 @@ class Blocks {
         this._scripts = [];
 
         /**
-         * Cache procedure Param Names by block id
-         * @type {object.<string, ?Array.<string>>}
+         * Runtime Cache
+         * @type {{inputs: {}, procedureParamNames: {}, procedureDefinitions: {}}}
          * @private
          */
-        this._procedureParamNames = {};
+        this._cache = {
+            /**
+             * Cache block inputs by block id
+             * @type {object.<string, !Array.<object>>}
+             */
+            inputs: {},
+            /**
+             * Cache procedure Param Names by block id
+             * @type {object.<string, ?Array.<string>>}
+             */
+            procedureParamNames: {},
+            /**
+             * Cache procedure definitions by block id
+             * @type {object.<string, ?string>}
+             */
+            procedureDefinitions: {}
+        };
 
-        /**
-         * Cache procedure definitions by block id
-         * @type {object.<string, ?string>}
-         * @private
-         */
-        this._procedureDefinitions = {};
     }
 
     /**
@@ -119,15 +129,16 @@ class Blocks {
     /**
      * Get all non-branch inputs for a block.
      * @param {?object} block the block to query.
-     * @return {?object} All non-branch inputs and their associated blocks.
+     * @return {?Array.<object>} All non-branch inputs and their associated blocks.
      */
     getInputs (block) {
         if (typeof block === 'undefined') return null;
-        const cachedInputs = block._inputs;
-        if (typeof cachedInputs !== 'undefined') {
-            return cachedInputs;
+        let inputs = this._cache.inputs[block.id];
+        if (typeof inputs !== 'undefined') {
+            return inputs;
         }
-        const inputs = {};
+
+        inputs = {};
         for (const input in block.inputs) {
             // Ignore blocks prefixed with branch prefix.
             if (input.substring(0, Blocks.BRANCH_INPUT_PREFIX.length) !==
@@ -135,7 +146,8 @@ class Blocks {
                 inputs[input] = block.inputs[input];
             }
         }
-        block._inputs = inputs;
+
+        this._cache.inputs[block.id] = inputs;
         return inputs;
     }
 
@@ -168,9 +180,11 @@ class Blocks {
      * @return {?string} ID of procedure definition.
      */
     getProcedureDefinition (name) {
-        if (this._procedureDefinitions.hasOwnProperty(name)) {
-            return this._procedureDefinitions[name];
+        const blockID = this._cache.procedureDefinitions[name];
+        if (typeof blockID !== 'undefined') {
+            return blockID;
         }
+
         for (const id in this._blocks) {
             if (!this._blocks.hasOwnProperty(id)) continue;
             const block = this._blocks[id];
@@ -178,12 +192,13 @@ class Blocks {
                 block.opcode === 'procedures_defreturn') {
                 const internal = this._getCustomBlockInternal(block);
                 if (internal && internal.mutation.proccode === name) {
-                    this._procedureDefinitions[name] = id; // The outer define block id
+                    this._cache.procedureDefinitions[name] = id; // The outer define block id
                     return id;
                 }
             }
         }
-        this._procedureDefinitions[name] = null; // This is not the same as undefined
+
+        this._cache.procedureDefinitions[name] = null;
         return null;
     }
 
@@ -193,20 +208,23 @@ class Blocks {
      * @return {?Array.<string>} List of param names for a procedure.
      */
     getProcedureParamNames (name) {
-        if (this._procedureParamNames.hasOwnProperty(name)) {
-            return this._procedureParamNames[name];
+        const cachedNames = this._cache.procedureParamNames[name];
+        if (typeof cachedNames !== 'undefined') {
+            return cachedNames;
         }
+
         for (const id in this._blocks) {
             if (!this._blocks.hasOwnProperty(id)) continue;
             const block = this._blocks[id];
             if (block.opcode === 'procedures_callnoreturn_internal' &&
                 block.mutation.proccode === name) {
                 const paramNames = JSON.parse(block.mutation.argumentnames);
-                this._procedureParamNames[name] = paramNames;
+                this._cache.procedureParamNames[name] = paramNames;
                 return paramNames;
             }
         }
-        this._procedureParamNames[name] = null; // This is not the same as undefined
+
+        this._cache.procedureParamNames[name] = null;
         return null;
     }
 
@@ -305,22 +323,12 @@ class Blocks {
     // ---------------------------------------------------------------------
 
     /**
-     * Recurse up the block tree clearing the cached inputs until we hit something that is 'not' an argument.
-     * @param {string} blockId The blockId of the block to be invalidated from the cache
+     * Reset all runtime caches.
      */
-    invalidateInputCacheForBlock (blockId) {
-        if (this._blocks.hasOwnProperty(blockId)) {
-            const block = this._blocks[blockId];
-            if (typeof block !== 'undefined') {
-                if (typeof block._inputs !== 'undefined') {
-                    block._inputs = void 0;
-                }
-
-                if (block.parent && block.next === null) {
-                    this.invalidateInputCacheForBlock(block.parent);
-                }
-            }
-        }
+    resetCache () {
+        this._cache.inputs = {};
+        this._cache.procedureParamNames = {};
+        this._cache.procedureDefinitions = {};
     }
 
     /**
@@ -341,7 +349,8 @@ class Blocks {
         if (block.topLevel) {
             this._addScript(block.id);
         }
-        this.invalidateInputCacheForBlock(block.id);
+
+        this.resetCache();
     }
 
     /**
@@ -350,13 +359,10 @@ class Blocks {
      * @param {?Runtime} optRuntime Optional runtime to allow changeBlock to change VM state.
      */
     changeBlock (args, optRuntime) {
-        this._procedureParamNames = {}; // For now... reset cache of procedures at every change
-        this._procedureDefinitions = {}; // For now... reset cache of procedures at every change
         // Validate
         if (['field', 'mutation', 'checkbox'].indexOf(args.element) === -1) return;
         const block = this._blocks[args.id];
         if (typeof block === 'undefined') return;
-        this.invalidateInputCacheForBlock(args.id);
         const wasMonitored = block.isMonitored;
         switch (args.element) {
         case 'field':
@@ -392,6 +398,8 @@ class Blocks {
             }
             break;
         }
+
+        this.resetCache();
     }
 
     /**
@@ -411,7 +419,6 @@ class Blocks {
 
         // Remove from any old parent.
         if (typeof e.oldParent !== 'undefined') {
-            this.invalidateInputCacheForBlock(e.oldParent);
             const oldParent = this._blocks[e.oldParent];
             if (typeof e.oldInput !== 'undefined' &&
                 oldParent.inputs[e.oldInput].block === e.id) {
@@ -448,8 +455,8 @@ class Blocks {
                 };
             }
             this._blocks[e.id].parent = e.newParent;
-            this.invalidateInputCacheForBlock(e.id);
         }
+        this.resetCache();
     }
 
 
@@ -499,6 +506,8 @@ class Blocks {
 
         // Delete block itself.
         delete this._blocks[e.id];
+
+        this.resetCache();
     }
 
     // ---------------------------------------------------------------------
