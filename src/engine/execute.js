@@ -68,8 +68,10 @@ const handleReport = function (
                 sequencer.runtime.visualReport(currentBlockId, resolvedValue);
             }
             if (thread.updateMonitor) {
+                const targetId = sequencer.runtime.monitorBlocks.getBlock(currentBlockId).targetId;
                 sequencer.runtime.requestUpdateMonitor(Map({
                     id: currentBlockId,
+                    spriteName: targetId ? sequencer.runtime.getTargetById(targetId).getName() : null,
                     value: String(resolvedValue)
                 }));
             }
