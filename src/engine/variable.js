@@ -19,10 +19,10 @@ class Variable {
         this.type = type;
         this.isCloud = isCloud;
         switch (this.type) {
-        case "":
+        case '':
             this.value = 0;
             break;
-        case "list":
+        case 'list':
             this.value = [];
             break;
         }
