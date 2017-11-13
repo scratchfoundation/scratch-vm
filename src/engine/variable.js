@@ -9,7 +9,7 @@ class Variable {
     /**
      * @param {string} id Id of the variable.
      * @param {string} name Name of the variable.
-     * @param {(string|number)} type Type of the variable, one of "" or "list"
+     * @param {string} type Type of the variable, one of '' or 'list'
      * @param {boolean} isCloud Whether the variable is stored in the cloud.
      * @constructor
      */

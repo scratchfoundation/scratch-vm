@@ -234,7 +234,7 @@ const parseScratchObject = function (object, runtime, extensions, topLevel) {
             const newVariable = new Variable(
                 getVariableId(variable.name),
                 variable.name,
-                '',
+                Variable.SCALAR_TYPE,
                 variable.isPersistent
             );
             newVariable.value = variable.value;
@@ -254,7 +254,7 @@ const parseScratchObject = function (object, runtime, extensions, topLevel) {
             const newVariable = new Variable(
                 getVariableId(list.listName),
                 list.listName,
-                'list',
+                Variable.LIST_TYPE,
                 list.isPersistent
             );
             newVariable.value = list.contents;

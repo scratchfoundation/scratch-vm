@@ -87,7 +87,7 @@ class Target extends EventEmitter {
         const variable = this.lookupVariableById(id);
         if (variable) return variable;
         // No variable with this name exists - create it locally.
-        const newVariable = new Variable(id, name, '', false);
+        const newVariable = new Variable(id, name, Variable.SCALAR_TYPE, false);
         this.variables[id] = newVariable;
         return newVariable;
     }
