@@ -23,13 +23,14 @@ test('spec', t => {
 // Create Variable tests.
 test('createVariable', t => {
     const target = new Target();
-    target.createVariable('foo', 'bar');
+    target.createVariable('foo', 'bar', '');
 
     const variables = target.variables;
     t.equal(Object.keys(variables).length, 1);
     const variable = variables[Object.keys(variables)[0]];
     t.equal(variable.id, 'foo');
     t.equal(variable.name, 'bar');
+    t.equal(variable.type, '');
     t.equal(variable.value, 0);
     t.equal(variable.isCloud, false);
 
@@ -39,8 +40,8 @@ test('createVariable', t => {
 // Create Same Variable twice.
 test('createVariable2', t => {
     const target = new Target();
-    target.createVariable('foo', 'bar');
-    target.createVariable('foo', 'bar');
+    target.createVariable('foo', 'bar', '');
+    target.createVariable('foo', 'bar', '');
 
     const variables = target.variables;
     t.equal(Object.keys(variables).length, 1);
@@ -48,10 +49,28 @@ test('createVariable2', t => {
     t.end();
 });
 
+// Create a list
+test('createVariable creates a list', t => {
+    const target = new Target();
+    target.createVariable('foo', 'bar', 'list');
+
+    const variables = target.variables;
+    t.equal(Object.keys(variables).length, 1);
+    const variable = variables[Object.keys(variables)[0]];
+    t.equal(variable.id, 'foo');
+    t.equal(variable.name, 'bar');
+    t.equal(variable.type, 'list');
+    t.assert(variable.value instanceof Array, true);
+    t.equal(variable.value.length, 0);
+    t.equal(variable.isCloud, false);
+
+    t.end();
+});
+
 // Rename Variable tests.
 test('renameVariable', t => {
     const target = new Target();
-    target.createVariable('foo', 'bar');
+    target.createVariable('foo', 'bar', '');
     target.renameVariable('foo', 'bar2');
 
     const variables = target.variables;
@@ -80,7 +99,7 @@ test('renameVariable2', t => {
 // Expect no change.
 test('renameVariable3', t => {
     const target = new Target();
-    target.createVariable('foo1', 'foo');
+    target.createVariable('foo1', 'foo', '');
     target.renameVariable('foo', 'bar2');
 
     const variables = target.variables;
@@ -95,7 +114,7 @@ test('renameVariable3', t => {
 // Delete Variable tests.
 test('deleteVariable', t => {
     const target = new Target();
-    target.createVariable('foo', 'bar');
+    target.createVariable('foo', 'bar', '');
     target.deleteVariable('foo');
 
     const variables = target.variables;
