@@ -260,17 +260,22 @@ class Scratch3MusicBlocks {
      * @param {object} util - utility object provided by the runtime.
      * @property {int} DRUM - the number of the drum to play.
      * @property {number} BEATS - the duration in beats of the drum sound.
-     * @return {Promise} - a promise which will resolve at the end of the duration.
      */
     playDrumForBeats (args, util) {
-        let drum = Cast.toNumber(args.DRUM);
-        drum -= 1; // drums are one-indexed
-        if (typeof this.runtime.audioEngine === 'undefined') return;
-        drum = MathUtil.wrapClamp(drum, 0, this.runtime.audioEngine.numDrums - 1);
-        let beats = Cast.toNumber(args.BEATS);
-        beats = this._clampBeats(beats);
-        if (util.target.audioPlayer === null) return;
-        return util.target.audioPlayer.playDrumForBeats(drum, beats);
+        if (this._stackTimerNeedsInit(util)) {
+            let drum = Cast.toNumber(args.DRUM);
+            drum -= 1; // drums are one-indexed
+            if (typeof this.runtime.audioEngine === 'undefined') return;
+            drum = MathUtil.wrapClamp(drum, 0, this.runtime.audioEngine.numDrums - 1);
+            let beats = Cast.toNumber(args.BEATS);
+            beats = this._clampBeats(beats);
+            if (util.target.audioPlayer !== null) {
+                util.target.audioPlayer.playDrumForBeats(drum, beats);
+            }
+            this._startStackTimer(util, this._beatsToSec(beats));
+        } else {
+            this._checkStackTimer(util);
+        }
     }
 
     /**
@@ -278,12 +283,15 @@ class Scratch3MusicBlocks {
      * @param {object} args - the block arguments.
      * @param {object} util - utility object provided by the runtime.
      * @property {number} BEATS - the duration in beats of the rest.
-     * @return {Promise} - a promise which will resolve at the end of the duration.
      */
     restForBeats (args, util) {
-        let beats = Cast.toNumber(args.BEATS);
-        beats = this._clampBeats(beats);
-        this._waitForBeats(beats, util);
+        if (this._stackTimerNeedsInit(util)) {
+            let beats = Cast.toNumber(args.BEATS);
+            beats = this._clampBeats(beats);
+            this._startStackTimer(util, this._beatsToSec(beats));
+        } else {
+            this._checkStackTimer(util);
+        }
     }
 
     /**
@@ -292,17 +300,80 @@ class Scratch3MusicBlocks {
      * @param {object} util - utility object provided by the runtime.
      * @property {number} NOTE - the pitch of the note to play, interpreted as a MIDI note number.
      * @property {number} BEATS - the duration in beats of the note.
-     * @return {Promise} - a promise which will resolve at the end of the duration.
      */
     playNoteForBeats (args, util) {
-        let note = Cast.toNumber(args.NOTE);
-        note = MathUtil.clamp(note, Scratch3MusicBlocks.MIDI_NOTE_RANGE.min, Scratch3MusicBlocks.MIDI_NOTE_RANGE.max);
-        let beats = Cast.toNumber(args.BEATS);
-        beats = this._clampBeats(beats);
-        const musicState = this._getMusicState(util.target);
-        const inst = musicState.currentInstrument;
-        if (typeof this.runtime.audioEngine === 'undefined') return;
-        return this.runtime.audioEngine.playNoteForBeatsWithInstAndVol(note, beats, inst, 100);
+        if (this._stackTimerNeedsInit(util)) {
+            let note = Cast.toNumber(args.NOTE);
+            note = MathUtil.clamp(note,
+                Scratch3MusicBlocks.MIDI_NOTE_RANGE.min, Scratch3MusicBlocks.MIDI_NOTE_RANGE.max);
+            let beats = Cast.toNumber(args.BEATS);
+            beats = this._clampBeats(beats);
+            const musicState = this._getMusicState(util.target);
+            const inst = musicState.currentInstrument;
+            if (typeof this.runtime.audioEngine !== 'undefined') {
+                this.runtime.audioEngine.playNoteForBeatsWithInstAndVol(note, beats, inst, 100);
+            }
+            this._startStackTimer(util, this._beatsToSec(beats));
+        } else {
+            this._checkStackTimer(util);
+        }
+    }
+
+    /**
+     * Clamp a duration in beats to the allowed min and max duration.
+     * @param  {number} beats - a duration in beats.
+     * @return {number} - the clamped duration.
+     * @private
+     */
+    _clampBeats (beats) {
+        return MathUtil.clamp(beats, Scratch3MusicBlocks.BEAT_RANGE.min, Scratch3MusicBlocks.BEAT_RANGE.max);
+    }
+
+    /**
+     * Convert a number of beats to a number of seconds, using the current tempo.
+     * @param  {number} beats - number of beats to convert to secs.
+     * @return {number} seconds - number of seconds `beats` will last.
+     * @private
+     */
+    _beatsToSec (beats) {
+        return (60 / this.tempo) * beats;
+    }
+
+    /**
+     * Check if the stack timer needs initialization.
+     * @param {object} util - utility object provided by the runtime.
+     * @return {boolean} - true if the stack timer needs to be initialized.
+     * @private
+     */
+    _stackTimerNeedsInit (util) {
+        return !util.stackFrame.timer;
+    }
+
+    /**
+     * Start the stack timer and the yield the thread if necessary.
+     * @param {object} util - utility object provided by the runtime.
+     * @param {number} duration - a duration in seconds to set the timer for.
+     * @private
+     */
+    _startStackTimer (util, duration) {
+        util.stackFrame.timer = new Timer();
+        util.stackFrame.timer.start();
+        util.stackFrame.duration = duration;
+        if (util.stackFrame.duration > 0) {
+            util.yield();
+        }
+    }
+
+    /**
+     * Check the stack timer, and if its time is not up yet, yield the thread.
+     * @param {object} util - utility object provided by the runtime.
+     * @private
+     */
+    _checkStackTimer (util) {
+        const timeElapsed = util.stackFrame.timer.timeElapsed();
+        if (timeElapsed < util.stackFrame.duration * 1000) {
+            util.yield();
+        }
     }
 
     /**
@@ -320,49 +391,6 @@ class Scratch3MusicBlocks {
         instNum = MathUtil.wrapClamp(instNum, 0, this.runtime.audioEngine.numInstruments - 1);
         musicState.currentInstrument = instNum;
         return this.runtime.audioEngine.instrumentPlayer.loadInstrument(musicState.currentInstrument);
-    }
-
-    /**
-     * Convert a number of beats to a number of seconds, using the current tempo.
-     * @param  {number} beats - number of beats to convert to secs.
-     * @return {number} seconds - number of seconds `beats` will last.
-     * @private
-     */
-    _beatsToSec (beats) {
-        return (60 / this.tempo) * beats;
-    }
-
-    /**
-     * Wait for some number of beats.
-     * @param  {number} beats - number of beats to wait for.
-     * @param {object} util - utility object provided by the runtime.
-     * @private
-     */
-    _waitForBeats (beats, util) {
-        if (util.stackFrame.timer) {
-            const timeElapsed = util.stackFrame.timer.timeElapsed();
-            if (timeElapsed < util.stackFrame.duration * 1000) {
-                util.yield();
-            }
-        } else {
-            util.stackFrame.timer = new Timer();
-            util.stackFrame.timer.start();
-            util.stackFrame.duration = this._beatsToSec(beats);
-            if (util.stackFrame.duration <= 0) {
-                return;
-            }
-            util.yield();
-        }
-    }
-
-    /**
-     * Clamp a duration in beats to the allowed min and max duration.
-     * @param  {number} beats - a duration in beats.
-     * @return {number} - the clamped duration.
-     * @private
-     */
-    _clampBeats (beats) {
-        return MathUtil.clamp(beats, Scratch3MusicBlocks.BEAT_RANGE.min, Scratch3MusicBlocks.BEAT_RANGE.max);
     }
 
     /**
