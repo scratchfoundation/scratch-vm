@@ -3,9 +3,9 @@ const BlockType = require('../../extension-support/block-type');
 const Cast = require('../../util/cast');
 const Clone = require('../../util/clone');
 const Color = require('../../util/color');
+const formatMessage = require('format-message');
 const MathUtil = require('../../util/math-util');
 const RenderedTarget = require('../../sprites/rendered-target');
-const formatMessage = require('format-message');
 const log = require('../../util/log');
 
 /**
@@ -26,11 +26,6 @@ const ColorParam = {
     BRIGHTNESS: 'brightness',
     TRANSPARENCY: 'transparency'
 };
-
-formatMessage.setup({
-    locale: 'de',
-    translations: translations
-});
 
 /**
  * @typedef {object} PenState - the pen state associated with a particular target.
