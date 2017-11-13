@@ -1,9 +1,9 @@
-const ArgumentType = require('../extension-support/argument-type');
-const BlockType = require('../extension-support/block-type');
-const Clone = require('../util/clone');
-const Cast = require('../util/cast');
-const MathUtil = require('../util/math-util');
-const Timer = require('../util/timer');
+const ArgumentType = require('../../extension-support/argument-type');
+const BlockType = require('../../extension-support/block-type');
+const Clone = require('../../util/clone');
+const Cast = require('../../util/cast');
+const MathUtil = require('../../util/math-util');
+const Timer = require('../../util/timer');
 
 /**
  * An array of drum names, used in the play drum block.
