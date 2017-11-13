@@ -124,7 +124,7 @@ class Target extends EventEmitter {
         const list = this.lookupVariableById(id);
         if (list) return list;
         // No variable with this name exists - create it locally.
-        const newList = new Variable(id, name, 'list', false);
+        const newList = new Variable(id, name, Variable.LIST_TYPE, false);
         this.variables[id] = newList;
         return newList;
     }
@@ -134,7 +134,7 @@ class Target extends EventEmitter {
      * dictionary of variables.
      * @param {string} id Id of variable
      * @param {string} name Name of variable.
-     * @param {string} type Type of variable, one of string, number, list
+     * @param {string} type Type of variable, '' or 'list'
      */
     createVariable (id, name, type) {
         if (!this.variables.hasOwnProperty(id)) {

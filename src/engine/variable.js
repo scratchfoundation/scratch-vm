@@ -19,17 +19,35 @@ class Variable {
         this.type = type;
         this.isCloud = isCloud;
         switch (this.type) {
-        case '':
+        case Variable.SCALAR_TYPE:
             this.value = 0;
             break;
-        case 'list':
+        case Variable.LIST_TYPE:
             this.value = [];
             break;
+        default:
+            throw new Error(`Invalid variable type: ${this.type}`);
         }
     }
 
     toXML () {
         return `<variable type="${this.type}" id="${this.id}">${this.name}</variable>`;
+    }
+
+    /**
+     * Type representation for scalar variables.
+     * @const {string}
+     */
+    static get SCALAR_TYPE () {
+        return '';
+    }
+
+    /**
+     * Type representation for list variables.
+     * @const {string}
+     */
+    static get LIST_TYPE () {
+        return 'list';
     }
 }
 
