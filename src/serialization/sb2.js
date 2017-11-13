@@ -234,7 +234,7 @@ const parseScratchObject = function (object, runtime, extensions, topLevel) {
             const newVariable = new Variable(
                 getVariableId(variable.name),
                 variable.name,
-                "",
+                '',
                 variable.isPersistent
             );
             newVariable.value = variable.value;
@@ -254,7 +254,7 @@ const parseScratchObject = function (object, runtime, extensions, topLevel) {
             const newVariable = new Variable(
                 getVariableId(list.listName),
                 list.listName,
-                "list",
+                'list',
                 list.isPersistent
             );
             newVariable.value = list.contents;
@@ -490,9 +490,13 @@ const parseBlock = function (sb2block, getVariableId, extensions) {
                 value: providedArg
             };
 
-            if (expectedArg.fieldName === 'VARIABLE') {
+            if (expectedArg.fieldName === 'VARIABLE' || expectedArg.fieldName === 'LIST') {
                 // Add `id` property to variable fields
                 activeBlock.fields[expectedArg.fieldName].id = getVariableId(providedArg);
+            }
+            const varType = expectedArg.variableType;
+            if (typeof varType === 'string') {
+                activeBlock.fields[expectedArg.fieldName].variableType = varType;
             }
         }
     }

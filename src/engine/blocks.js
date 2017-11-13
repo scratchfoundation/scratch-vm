@@ -499,11 +499,20 @@ class Blocks {
         for (const field in block.fields) {
             if (!block.fields.hasOwnProperty(field)) continue;
             const blockField = block.fields[field];
+            xmlString += `<field name="${blockField.name}"`;
+            const fieldId = blockField.id;
+            if (fieldId) {
+                xmlString += ` id="${fieldId}"`;
+            }
+            const varType = blockField.variableType;
+            if (typeof varType === 'string') {
+                xmlString += ` variabletype="${varType}"`;
+            }
             let value = blockField.value;
             if (typeof value === 'string') {
                 value = xmlEscape(blockField.value);
             }
-            xmlString += `<field name="${blockField.name}">${value}</field>`;
+            xmlString += `>${value}</field>`;
         }
         // Add blocks connected to the next connection.
         if (block.next) {

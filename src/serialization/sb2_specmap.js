@@ -1201,7 +1201,8 @@ const specMap = {
         argMap: [
             {
                 type: 'field',
-                fieldName: 'VARIABLE'
+                fieldName: 'VARIABLE',
+                variableType: ''
             }
         ]
     },
@@ -1210,7 +1211,8 @@ const specMap = {
         argMap: [
             {
                 type: 'field',
-                fieldName: 'VARIABLE'
+                fieldName: 'VARIABLE',
+                variableType: ''
             },
             {
                 type: 'input',
@@ -1224,7 +1226,8 @@ const specMap = {
         argMap: [
             {
                 type: 'field',
-                fieldName: 'VARIABLE'
+                fieldName: 'VARIABLE',
+                variableType: ''
             },
             {
                 type: 'input',
@@ -1238,7 +1241,8 @@ const specMap = {
         argMap: [
             {
                 type: 'field',
-                fieldName: 'VARIABLE'
+                fieldName: 'VARIABLE',
+                variableType: ''
             }
         ]
     },
@@ -1247,7 +1251,8 @@ const specMap = {
         argMap: [
             {
                 type: 'field',
-                fieldName: 'VARIABLE'
+                fieldName: 'VARIABLE',
+                variableType: ''
             }
         ]
     },
@@ -1256,7 +1261,8 @@ const specMap = {
         argMap: [
             {
                 type: 'field',
-                fieldName: 'LIST'
+                fieldName: 'LIST',
+                variableType: 'list'
             }
         ]
     },
@@ -1270,7 +1276,8 @@ const specMap = {
             },
             {
                 type: 'field',
-                fieldName: 'LIST'
+                fieldName: 'LIST',
+                variableType: 'list'
             }
         ]
     },
@@ -1284,7 +1291,8 @@ const specMap = {
             },
             {
                 type: 'field',
-                fieldName: 'LIST'
+                fieldName: 'LIST',
+                variableType: 'list'
             }
         ]
     },
@@ -1303,7 +1311,8 @@ const specMap = {
             },
             {
                 type: 'field',
-                fieldName: 'LIST'
+                fieldName: 'LIST',
+                variableType: 'list'
             }
         ]
     },
@@ -1317,7 +1326,8 @@ const specMap = {
             },
             {
                 type: 'field',
-                fieldName: 'LIST'
+                fieldName: 'LIST',
+                variableType: 'list'
             },
             {
                 type: 'input',
@@ -1336,7 +1346,8 @@ const specMap = {
             },
             {
                 type: 'field',
-                fieldName: 'LIST'
+                fieldName: 'LIST',
+                variableType: 'list'
             }
         ]
     },
@@ -1345,7 +1356,8 @@ const specMap = {
         argMap: [
             {
                 type: 'field',
-                fieldName: 'LIST'
+                fieldName: 'LIST',
+                variableType: 'list'
             }
         ]
     },
@@ -1354,7 +1366,8 @@ const specMap = {
         argMap: [
             {
                 type: 'field',
-                fieldName: 'LIST'
+                fieldName: 'LIST',
+                variableType: 'list'
             },
             {
                 type: 'input',
@@ -1368,7 +1381,8 @@ const specMap = {
         argMap: [
             {
                 type: 'field',
-                fieldName: 'LIST'
+                fieldName: 'LIST',
+                variableType: 'list'
             }
         ]
     },
@@ -1377,7 +1391,8 @@ const specMap = {
         argMap: [
             {
                 type: 'field',
-                fieldName: 'LIST'
+                fieldName: 'LIST',
+                variableType: 'list'
             }
         ]
     },
