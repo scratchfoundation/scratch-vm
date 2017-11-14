@@ -25,27 +25,24 @@ class Scratch3MusicBlocks {
          */
         this.tempo = 60;
 
-        this.drumMenu = this._buildMenu(drumNames);
-        this.instrumentMenu = this._buildMenu(instrumentNames);
     }
 
     /**
-     * Build a menu using an array of strings.
-     * Used for creating the drum and instrument menus.
-     * @param  {string[]} names - An array of names.
-     * @return {array} - An array of objects with text and value properties, for constructing a block menu.
+     * Create data for a menu in scratch-blocks format, consisting of an array of objects with text and
+     * value properties. The text is a translated string, and the value is one-indexed.
+     * @param  {object[]} info - An array of info objects each having a name property.
+     * @return {array} - An array of objects with text and value properties.
      * @private
      */
-    _buildMenu (names) {
-        const menu = [];
-        for (let i = 0; i < names.length; i++) {
-            const entry = {};
-            const num = i + 1; // Menu numbers are one-indexed
-            entry.text = `(${num}) ${names[i]}`;
-            entry.value = String(num);
-            menu.push(entry);
-        }
-        return menu;
+    _buildMenu (info) {
+        return info.map((entry, index) => {
+            const obj = {};
+            obj.text = entry.name;
+            obj.value = index + 1;
+            return obj;
+        });
+    }
+
     /**
      * An array of translatable drum names and corresponding audio file names.
      * @type {array}
@@ -367,8 +364,8 @@ class Scratch3MusicBlocks {
                 }
             ],
             menus: {
-                drums: this.drumMenu,
-                instruments: this.instrumentMenu
+                drums: this._buildMenu(this.DRUM_INFO),
+                instruments: this._buildMenu(this.INSTRUMENT_INFO)
             }
         };
     }
