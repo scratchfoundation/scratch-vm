@@ -26,6 +26,13 @@ class Scratch3MusicBlocks {
         this.tempo = 60;
 
         /**
+         * The number of drum sounds currently being played simultaneously.
+         * @type {number}
+         * @private
+         */
+        this._drumConcurrencyCounter = 0;
+
+        /**
          * An array of audio buffers, one for each drum sound.
          * @type {Array}
          * @private
@@ -303,6 +310,14 @@ class Scratch3MusicBlocks {
     }
 
     /**
+     * The maximum number of sounds to allow to play simultaneously.
+     * @type {number}
+     */
+    static get CONCURRENCY_LIMIT () {
+        return 30;
+    }
+
+    /**
      * @param {Target} target - collect music state for this target.
      * @returns {MusicState} the mutable music state associated with that target. This will be created if necessary.
      * @private
@@ -437,11 +452,18 @@ class Scratch3MusicBlocks {
 
     _playDrumNum (util, drumNum) {
         if (util.target.audioPlayer === null) return;
+        if (this._drumConcurrencyCounter > Scratch3MusicBlocks.CONCURRENCY_LIMIT) {
+            return;
+        }
         const outputNode = util.target.audioPlayer.getInputNode();
         const bufferSource = this.runtime.audioEngine.audioContext.createBufferSource();
         bufferSource.buffer = this._drumBuffers[drumNum];
         bufferSource.connect(outputNode);
         bufferSource.start();
+        this._drumConcurrencyCounter++;
+        bufferSource.onended = () => {
+            this._drumConcurrencyCounter--;
+        };
     }
 
     /**
