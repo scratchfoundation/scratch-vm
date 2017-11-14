@@ -425,8 +425,7 @@ class Scratch3MusicBlocks {
             let drum = Cast.toNumber(args.DRUM);
             drum = Math.round(drum);
             drum -= 1; // drums are one-indexed
-            if (typeof this.runtime.audioEngine === 'undefined') return;
-            drum = MathUtil.wrapClamp(drum, 0, this.runtime.audioEngine.numDrums - 1);
+            drum = MathUtil.wrapClamp(drum, 0, this.DRUM_INFO.length - 1);
             let beats = Cast.toNumber(args.BEATS);
             beats = this._clampBeats(beats);
             if (util.target.audioPlayer !== null) {
