@@ -28378,11 +28378,11 @@ var VirtualMachine = function (_EventEmitter) {
         key: 'deleteSprite',
         value: function deleteSprite(targetId) {
             var target = this.runtime.getTargetById(targetId);
-            var targetIndexBeforeDelete = this.runtime.targets.map(function (t) {
-                return t.id;
-            }).indexOf(target.id);
 
             if (target) {
+                var targetIndexBeforeDelete = this.runtime.targets.map(function (t) {
+                    return t.id;
+                }).indexOf(target.id);
                 if (!target.isSprite()) {
                     throw new Error('Cannot delete non-sprite targets.');
                 }
@@ -28398,7 +28398,11 @@ var VirtualMachine = function (_EventEmitter) {
                     // Ensure editing target is switched if we are deleting it.
                     if (clone === currentEditingTarget) {
                         var nextTargetIndex = Math.min(this.runtime.targets.length - 1, targetIndexBeforeDelete);
-                        this.setEditingTarget(this.runtime.targets[nextTargetIndex].id);
+                        if (this.runtime.targets.length > 0) {
+                            this.setEditingTarget(this.runtime.targets[nextTargetIndex].id);
+                        } else {
+                            this.editingTarget = null;
+                        }
                     }
                 }
                 // Sprite object should be deleted by GC.
@@ -28411,6 +28415,8 @@ var VirtualMachine = function (_EventEmitter) {
         /**
          * Duplicate a sprite.
          * @param {string} targetId ID of a target whose sprite to duplicate.
+         * @returns {Promise} Promise that resolves when duplicated target has
+         *     been added to the runtime.
          */
 
     }, {
@@ -28426,7 +28432,7 @@ var VirtualMachine = function (_EventEmitter) {
             } else if (!target.sprite) {
                 throw new Error('No sprite associated with this target.');
             }
-            target.duplicate().then(function (newTarget) {
+            return target.duplicate().then(function (newTarget) {
                 _this8.runtime.targets.push(newTarget);
                 _this8.setEditingTarget(newTarget.id);
             });
