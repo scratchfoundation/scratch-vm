@@ -25,6 +25,49 @@ class Scratch3MusicBlocks {
          */
         this.tempo = 60;
 
+        /**
+         * An array of audio buffers, one for each drum sound.
+         * @type {Array}
+         * @private
+         */
+        this._drumBuffers = [];
+
+        this._loadAllDrumSounds();
+    }
+
+    /**
+     * Download and decode the full set of drum sounds, and store the audio buffers
+     * in the drum buffers array.
+     * @TODO: Also load the instrument sounds here (rename this fn), and use Promise.all
+     * to detect that all the assets have loaded in order to update the extension status
+     * indicator.
+     */
+    _loadAllDrumSounds () {
+        const loadingPromises = [];
+        this.DRUM_INFO.forEach((drumInfo, index) => {
+            const promise = this._loadSound(drumInfo.fileName, index, this._drumBuffers);
+            loadingPromises.push(promise);
+        });
+        Promise.all(loadingPromises).then(() => {
+            // done!
+        });
+    }
+
+    /**
+     * Download and decode a sound, and store the buffer in an array.
+     * @param {string} fileName - the audio file name.
+     * @param {number} index - the index at which to store the audio buffer.
+     * @param {array} bufferArray - the array of buffers in which to store it.
+     * @return {Promise} - a promise which will resolve once the sound has loaded.
+     */
+    _loadSound (fileName, index, bufferArray) {
+        return this.runtime.storage.load(this.runtime.storage.AssetType.Sound, fileName, 'mp3')
+            .then(soundAsset =>
+                this.runtime.audioEngine.audioContext.decodeAudioData(soundAsset.data.buffer)
+            )
+            .then(buffer => {
+                bufferArray[index] = buffer;
+            });
     }
 
     /**
