@@ -452,6 +452,12 @@ class Scratch3MusicBlocks {
         }
     }
 
+    /**
+     * Play a drum sound using its 0-indexed number.
+     * @param {object} util - utility object provided by the runtime.
+     * @param  {number} drumNum - the number of the drum to play.
+     * @private
+     */
     _playDrumNum (util, drumNum) {
         if (util.target.audioPlayer === null) return;
         if (this._drumConcurrencyCounter > Scratch3MusicBlocks.CONCURRENCY_LIMIT) {
