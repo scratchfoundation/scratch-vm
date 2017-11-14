@@ -9,10 +9,12 @@ const BlockType = require('./block-type');
 const Scratch3PenBlocks = require('../blocks/scratch3_pen');
 const Scratch3WeDo2Blocks = require('../blocks/scratch3_wedo2');
 const Scratch3MusicBlocks = require('../blocks/scratch3_music');
+const Scratch3KOOVBlocks = require('../blocks/scratch3_koov');
 const builtinExtensions = {
     pen: Scratch3PenBlocks,
     wedo2: Scratch3WeDo2Blocks,
-    music: Scratch3MusicBlocks
+    music: Scratch3MusicBlocks,
+    koov: Scratch3KOOVBlocks
 };
 
 /**
