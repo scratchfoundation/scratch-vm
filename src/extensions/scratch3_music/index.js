@@ -547,9 +547,7 @@ class Scratch3MusicBlocks {
         util.stackFrame.timer = new Timer();
         util.stackFrame.timer.start();
         util.stackFrame.duration = duration;
-        if (util.stackFrame.duration > 0) {
-            util.yield();
-        }
+        util.yield();
     }
 
     /**
