@@ -6,59 +6,6 @@ const MathUtil = require('../../util/math-util');
 const Timer = require('../../util/timer');
 
 /**
- * An array of drum names, used in the play drum block.
- * @type {string[]}
- */
-const drumNames = [
-    'Snare Drum',
-    'Bass Drum',
-    'Side Stick',
-    'Crash Cymbal',
-    'Open Hi-Hat',
-    'Closed Hi-Hat',
-    'Tambourine',
-    'Hand Clap',
-    'Claves',
-    'Wood Block',
-    'Cowbell',
-    'Triangle',
-    'Bongo',
-    'Conga',
-    'Cabasa',
-    'Guiro',
-    'Vibraslap',
-    'Open Cuica'
-];
-
-/**
- * An array of instrument names, used in the set instrument block.
- * @type {string[]}
- */
-const instrumentNames = [
-    'Piano',
-    'Electric Piano',
-    'Organ',
-    'Guitar',
-    'Electric Guitar',
-    'Bass',
-    'Pizzicato',
-    'Cello',
-    'Trombone',
-    'Clarinet',
-    'Saxophone',
-    'Flute',
-    'Wooden Flute',
-    'Bassoon',
-    'Choir',
-    'Vibraphone',
-    'Music Box',
-    'Steel Drum',
-    'Marimba',
-    'Synth Lead',
-    'Synth Pad'
-];
-
-/**
  * Class for the music-related blocks in Scratch 3.0
  * @param {Runtime} runtime - the runtime instantiating this block package.
  * @constructor
@@ -99,6 +46,178 @@ class Scratch3MusicBlocks {
             menu.push(entry);
         }
         return menu;
+    /**
+     * An array of translatable drum names and corresponding audio file names.
+     * @type {array}
+     */
+    get DRUM_INFO () {
+        return [
+            {
+                name: '(1) Snare Drum',
+                fileName: '1-snare'
+            },
+            {
+                name: '(2) Bass Drum',
+                fileName: '2-bass-drum'
+            },
+            {
+                name: '(3) Side Stick',
+                fileName: '3-side-stick'
+            },
+            {
+                name: '(4) Crash Cymbal',
+                fileName: '4-crash-cymbal'
+            },
+            {
+                name: '(5) Open Hi-Hat',
+                fileName: '5-open-hi-hat'
+            },
+            {
+                name: '(6) Closed Hi-Hat',
+                fileName: '6-closed-hi-hat'
+            },
+            {
+                name: '(7) Tambourine',
+                fileName: '7-tambourine'
+            },
+            {
+                name: '(8) Hand Clap',
+                fileName: '8-hand-clap'
+            },
+            {
+                name: '(9) Claves',
+                fileName: '9-claves'
+            },
+            {
+                name: '(10) Wood Block',
+                fileName: '10-wood-block'
+            },
+            {
+                name: '(11) Cowbell',
+                fileName: '11-cowbell'
+            },
+            {
+                name: '(12) Triangle',
+                fileName: '12-triangle'
+            },
+            {
+                name: '(13) Bongo',
+                fileName: '13-bongo'
+            },
+            {
+                name: '(14) Conga',
+                fileName: '14-conga'
+            },
+            {
+                name: '(15) Cabasa',
+                fileName: '15-cabasa'
+            },
+            {
+                name: '(16) Guiro',
+                fileName: '16-guiro'
+            },
+            {
+                name: '(17) Vibraslap',
+                fileName: '17-vibraslap'
+            },
+            {
+                name: '(18) Cuica',
+                fileName: '18-cuica'
+            }
+        ];
+    }
+
+    /**
+     * An array of translatable instrument names and corresponding audio file names.
+     * @type {array}
+     */
+    get INSTRUMENT_INFO () {
+        return [
+            {
+                name: '(1) Piano',
+                fileName: '1-piano'
+            },
+            {
+                name: '(2) Electric Piano',
+                fileName: '2-electric-piano'
+            },
+            {
+                name: '(3) Organ',
+                fileName: '3-organ'
+            },
+            {
+                name: '(4) Guitar',
+                fileName: '4-guitar'
+            },
+            {
+                name: '(5) Electric Guitar',
+                fileName: '5-electric-guitar'
+            },
+            {
+                name: '(6) Bass',
+                fileName: '6-bass'
+            },
+            {
+                name: '(7) Pizzicato',
+                fileName: '7-pizzicato'
+            },
+            {
+                name: '(8) Cello',
+                fileName: '8-cello'
+            },
+            {
+                name: '(9) Trombone',
+                fileName: '9-trombone'
+            },
+            {
+                name: '(10) Clarinet',
+                fileName: '10-clarinet'
+            },
+            {
+                name: '(11) Saxophone',
+                fileName: '11-saxophone'
+            },
+            {
+                name: '(12) Flute',
+                fileName: '12-flute'
+            },
+            {
+                name: '(13) Wooden Flute',
+                fileName: '13-wooden-flute'
+            },
+            {
+                name: '(14) Bassoon',
+                fileName: '14-bassoon'
+            },
+            {
+                name: '(15) Choir',
+                fileName: '15-choir'
+            },
+            {
+                name: '(16) Vibraphone',
+                fileName: '16-vibraphone'
+            },
+            {
+                name: '(17) Music Box',
+                fileName: '17-music-box'
+            },
+            {
+                name: '(18) Steel Drum',
+                fileName: '18-steel-drum'
+            },
+            {
+                name: '(19) Marimba',
+                fileName: '19-marimba'
+            },
+            {
+                name: '(20) Synth Lead',
+                fileName: '20-synth-lead'
+            },
+            {
+                name: '(21) Synth Pad',
+                fileName: '21-synth-pad'
+            }
+        ];
     }
 
     /**
