@@ -69,6 +69,10 @@ const handleReport = function (
             }
             if (thread.updateMonitor) {
                 const targetId = sequencer.runtime.monitorBlocks.getBlock(currentBlockId).targetId;
+                if (targetId && !sequencer.runtime.getTargetById(targetId)) {
+                    // Target no longer exists
+                    return;
+                }
                 sequencer.runtime.requestUpdateMonitor(Map({
                     id: currentBlockId,
                     spriteName: targetId ? sequencer.runtime.getTargetById(targetId).getName() : null,

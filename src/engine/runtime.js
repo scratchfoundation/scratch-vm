@@ -1288,6 +1288,15 @@ class Runtime extends EventEmitter {
     }
 
     /**
+     * Removes all monitors with the given target ID from the state. Does nothing if
+     * the monitor already does not exist in the state.
+     * @param {!string} targetId Remove all monitors with given target ID.
+     */
+    requestRemoveMonitorByTargetId (targetId) {
+        this._monitorState = this._monitorState.filterNot(value => value.targetId === targetId);
+    }
+
+    /**
      * Get a target by its id.
      * @param {string} targetId Id of target to find.
      * @return {?Target} The target, if found.

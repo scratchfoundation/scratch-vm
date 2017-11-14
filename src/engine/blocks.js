@@ -334,6 +334,7 @@ class Blocks {
                 optRuntime.requestAddMonitor(MonitorRecord({
                     // @todo(vm#564) this will collide if multiple sprites use same block
                     id: block.id,
+                    targetId: block.targetId,
                     spriteName: block.targetId ? optRuntime.getTargetById(block.targetId).getName() : null,
                     opcode: block.opcode,
                     params: this._getBlockParams(block),

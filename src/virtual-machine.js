@@ -484,6 +484,7 @@ class VirtualMachine extends EventEmitter {
             if (!sprite) {
                 throw new Error('No sprite associated with this target.');
             }
+            this.runtime.requestRemoveMonitorByTargetId(targetId);
             const currentEditingTarget = this.editingTarget;
             for (let i = 0; i < sprite.clones.length; i++) {
                 const clone = sprite.clones[i];
@@ -574,9 +575,44 @@ class VirtualMachine extends EventEmitter {
      * @param {!Blockly.Event} e Any Blockly event.
      */
     monitorBlockListener (e) {
+        const tempMonitoredBlocks = [
+            'volume',
+            'tempo',
+            'answer',
+            'loudness',
+            'videoon',
+            'timer',
+            'of',
+            'current',
+            'username',
+            'xposition',
+            'yposition',
+            'direction',
+            'size',
+            'backdropname',
+            'costumeorder',
+            'backdroporder'
+        ];
+        const tempMonitoredPerSpriteBlocks = [
+            'xposition',
+            'yposition',
+            'direction',
+            'size',
+            'costumeorder'
+        ];
         // Filter events by type, since monitor blocks only need to listen to these events.
         // Monitor blocks shouldn't be destroyed when flyout blocks are deleted.
         if (['create', 'change'].indexOf(e.type) !== -1) {
+            // TEMPORARY ----
+            let blockType = e.blockId.split('_');
+            blockType = blockType[blockType.length - 1];
+            if (tempMonitoredBlocks.indexOf(blockType) === -1) {
+                return;
+            }
+            if (tempMonitoredPerSpriteBlocks.indexOf(blockType) !== -1) {
+                e.isSpriteSpecific = true;
+            }
+            // -----
             this.runtime.monitorBlocks.blocklyListen(e, this.runtime);
         }
     }
