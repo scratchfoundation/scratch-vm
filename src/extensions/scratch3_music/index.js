@@ -68,6 +68,8 @@ class Scratch3MusicBlocks {
      * @return {Promise} - a promise which will resolve once the sound has loaded.
      */
     _loadSound (fileName, index, bufferArray) {
+        if (!this.runtime.storage) return;
+        if (!this.runtime.audioEngine) return;
         return this.runtime.storage.load(this.runtime.storage.AssetType.Sound, fileName, 'mp3')
             .then(soundAsset =>
                 this.runtime.audioEngine.audioContext.decodeAudioData(soundAsset.data.buffer)

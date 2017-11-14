@@ -1,5 +1,5 @@
 const test = require('tap').test;
-const Music = require('../../src/blocks/scratch3_music');
+const Music = require('../../src/extensions/scratch3_music/index.js');
 let playedDrum;
 let playedInstrument;
 const runtime = {
