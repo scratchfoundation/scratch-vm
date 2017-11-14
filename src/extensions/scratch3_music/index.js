@@ -423,6 +423,7 @@ class Scratch3MusicBlocks {
     playDrumForBeats (args, util) {
         if (this._stackTimerNeedsInit(util)) {
             let drum = Cast.toNumber(args.DRUM);
+            drum = Math.round(drum);
             drum -= 1; // drums are one-indexed
             if (typeof this.runtime.audioEngine === 'undefined') return;
             drum = MathUtil.wrapClamp(drum, 0, this.runtime.audioEngine.numDrums - 1);
