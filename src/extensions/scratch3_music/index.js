@@ -428,13 +428,20 @@ class Scratch3MusicBlocks {
             drum = MathUtil.wrapClamp(drum, 0, this.DRUM_INFO.length - 1);
             let beats = Cast.toNumber(args.BEATS);
             beats = this._clampBeats(beats);
-            if (util.target.audioPlayer !== null) {
-                util.target.audioPlayer.playDrumForBeats(drum, beats);
-            }
+            this._playDrumNum(util, drum);
             this._startStackTimer(util, this._beatsToSec(beats));
         } else {
             this._checkStackTimer(util);
         }
+    }
+
+    _playDrumNum (util, drumNum) {
+        if (util.target.audioPlayer === null) return;
+        const outputNode = util.target.audioPlayer.getInputNode();
+        const bufferSource = this.runtime.audioEngine.audioContext.createBufferSource();
+        bufferSource.buffer = this._drumBuffers[drumNum];
+        bufferSource.connect(outputNode);
+        bufferSource.start();
     }
 
     /**
