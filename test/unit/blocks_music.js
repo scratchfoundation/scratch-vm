@@ -17,7 +17,8 @@ const util = {
         audioPlayer: {
             playDrumForBeats: drum => (playedDrum = drum)
         }
-    }
+    },
+    stackFrame: Object.create(null)
 };
 
 test('playDrum uses 1-indexing and wrap clamps', t => {
