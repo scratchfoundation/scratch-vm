@@ -16,7 +16,8 @@ test('complex', t => {
         const threads = JSON.parse(e.threads);
         t.ok(threads.length === 0);
 
-        const results = vm.runtime.targets[0].lists.results.contents;
+        const resultKey = Object.keys(vm.runtime.targets[0].variables)[0];
+        const results = vm.runtime.targets[0].variables[resultKey].value;
         t.deepEqual(results, ['3', '2', '1', 'stage']);
 
         t.end();

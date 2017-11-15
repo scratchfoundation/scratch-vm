@@ -157,7 +157,7 @@ const execute = function (sequencer, thread) {
     // Add all fields on this block to the argValues.
     for (const fieldName in fields) {
         if (!fields.hasOwnProperty(fieldName)) continue;
-        if (fieldName === 'VARIABLE') {
+        if (fieldName === 'VARIABLE' || fieldName === 'LIST') {
             argValues[fieldName] = fields[fieldName].id;
         } else {
             argValues[fieldName] = fields[fieldName].value;

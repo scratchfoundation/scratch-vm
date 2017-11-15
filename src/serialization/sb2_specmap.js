@@ -22,6 +22,8 @@
  * Finally, I filled in the expected arguments as below.
  */
 
+const Variable = require('../engine/variable');
+
 /**
  * @typedef {object} SB2SpecMap_blockInfo
  * @property {string} opcode - the Scratch 3.0 block opcode. Use 'extensionID.opcode' for extension opcodes.
@@ -1201,7 +1203,8 @@ const specMap = {
         argMap: [
             {
                 type: 'field',
-                fieldName: 'VARIABLE'
+                fieldName: 'VARIABLE',
+                variableType: Variable.SCALAR_TYPE
             }
         ]
     },
@@ -1210,7 +1213,8 @@ const specMap = {
         argMap: [
             {
                 type: 'field',
-                fieldName: 'VARIABLE'
+                fieldName: 'VARIABLE',
+                variableType: Variable.SCALAR_TYPE
             },
             {
                 type: 'input',
@@ -1224,7 +1228,8 @@ const specMap = {
         argMap: [
             {
                 type: 'field',
-                fieldName: 'VARIABLE'
+                fieldName: 'VARIABLE',
+                variableType: Variable.SCALAR_TYPE
             },
             {
                 type: 'input',
@@ -1238,7 +1243,8 @@ const specMap = {
         argMap: [
             {
                 type: 'field',
-                fieldName: 'VARIABLE'
+                fieldName: 'VARIABLE',
+                variableType: Variable.SCALAR_TYPE
             }
         ]
     },
@@ -1247,16 +1253,18 @@ const specMap = {
         argMap: [
             {
                 type: 'field',
-                fieldName: 'VARIABLE'
+                fieldName: 'VARIABLE',
+                variableType: Variable.SCALAR_TYPE
             }
         ]
     },
     'contentsOfList:': {
-        opcode: 'data_list',
+        opcode: 'data_listcontents',
         argMap: [
             {
                 type: 'field',
-                fieldName: 'LIST'
+                fieldName: 'LIST',
+                variableType: Variable.LIST_TYPE
             }
         ]
     },
@@ -1270,7 +1278,8 @@ const specMap = {
             },
             {
                 type: 'field',
-                fieldName: 'LIST'
+                fieldName: 'LIST',
+                variableType: Variable.LIST_TYPE
             }
         ]
     },
@@ -1284,7 +1293,8 @@ const specMap = {
             },
             {
                 type: 'field',
-                fieldName: 'LIST'
+                fieldName: 'LIST',
+                variableType: Variable.LIST_TYPE
             }
         ]
     },
@@ -1303,7 +1313,8 @@ const specMap = {
             },
             {
                 type: 'field',
-                fieldName: 'LIST'
+                fieldName: 'LIST',
+                variableType: Variable.LIST_TYPE
             }
         ]
     },
@@ -1317,7 +1328,8 @@ const specMap = {
             },
             {
                 type: 'field',
-                fieldName: 'LIST'
+                fieldName: 'LIST',
+                variableType: Variable.LIST_TYPE
             },
             {
                 type: 'input',
@@ -1336,7 +1348,8 @@ const specMap = {
             },
             {
                 type: 'field',
-                fieldName: 'LIST'
+                fieldName: 'LIST',
+                variableType: Variable.LIST_TYPE
             }
         ]
     },
@@ -1345,7 +1358,8 @@ const specMap = {
         argMap: [
             {
                 type: 'field',
-                fieldName: 'LIST'
+                fieldName: 'LIST',
+                variableType: Variable.LIST_TYPE
             }
         ]
     },
@@ -1354,7 +1368,8 @@ const specMap = {
         argMap: [
             {
                 type: 'field',
-                fieldName: 'LIST'
+                fieldName: 'LIST',
+                variableType: Variable.LIST_TYPE
             },
             {
                 type: 'input',
@@ -1368,7 +1383,8 @@ const specMap = {
         argMap: [
             {
                 type: 'field',
-                fieldName: 'LIST'
+                fieldName: 'LIST',
+                variableType: Variable.LIST_TYPE
             }
         ]
     },
@@ -1377,7 +1393,8 @@ const specMap = {
         argMap: [
             {
                 type: 'field',
-                fieldName: 'LIST'
+                fieldName: 'LIST',
+                variableType: Variable.LIST_TYPE
             }
         ]
     },
