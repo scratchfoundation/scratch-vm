@@ -189,6 +189,7 @@ class Target extends EventEmitter {
         if (this.variables.hasOwnProperty(id)) {
             delete this.variables[id];
             if (this.runtime) {
+                this.runtime.monitorBlocks.deleteBlock(id);
                 this.runtime.requestRemoveMonitor(id);
             }
         }
