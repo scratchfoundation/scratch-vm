@@ -411,7 +411,8 @@ class Blocks {
     }
 
     /**
-     * Block management: delete blocks and their associated scripts.
+     * Block management: delete blocks and their associated scripts. Does nothing if a block
+     * with the given ID does not exist.
      * @param {!string} blockId Id of block to delete
      */
     deleteBlock (blockId) {
@@ -419,6 +420,10 @@ class Blocks {
 
         // Get block
         const block = this._blocks[blockId];
+        if (!block) {
+            // No block with the given ID exists
+            return;
+        }
 
         // Delete children
         if (block.next !== null) {
