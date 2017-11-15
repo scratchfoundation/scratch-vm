@@ -52,7 +52,8 @@ class Scratch3MusicBlocks {
     _loadAllDrumSounds () {
         const loadingPromises = [];
         this.DRUM_INFO.forEach((drumInfo, index) => {
-            const promise = this._loadSound(drumInfo.fileName, index, this._drumBuffers);
+            const fileName = `drums/${drumInfo.fileName}`;
+            const promise = this._loadSound(fileName, index, this._drumBuffers);
             loadingPromises.push(promise);
         });
         Promise.all(loadingPromises).then(() => {
