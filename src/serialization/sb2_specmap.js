@@ -22,6 +22,8 @@
  * Finally, I filled in the expected arguments as below.
  */
 
+const Variable = require('../engine/variable');
+
 /**
  * @typedef {object} SB2SpecMap_blockInfo
  * @property {string} opcode - the Scratch 3.0 block opcode. Use 'extensionID.opcode' for extension opcodes.
@@ -1202,7 +1204,7 @@ const specMap = {
             {
                 type: 'field',
                 fieldName: 'VARIABLE',
-                variableType: ''
+                variableType: Variable.SCALAR_TYPE
             }
         ]
     },
@@ -1212,7 +1214,7 @@ const specMap = {
             {
                 type: 'field',
                 fieldName: 'VARIABLE',
-                variableType: ''
+                variableType: Variable.SCALAR_TYPE
             },
             {
                 type: 'input',
@@ -1227,7 +1229,7 @@ const specMap = {
             {
                 type: 'field',
                 fieldName: 'VARIABLE',
-                variableType: ''
+                variableType: Variable.SCALAR_TYPE
             },
             {
                 type: 'input',
@@ -1242,7 +1244,7 @@ const specMap = {
             {
                 type: 'field',
                 fieldName: 'VARIABLE',
-                variableType: ''
+                variableType: Variable.SCALAR_TYPE
             }
         ]
     },
@@ -1252,7 +1254,7 @@ const specMap = {
             {
                 type: 'field',
                 fieldName: 'VARIABLE',
-                variableType: ''
+                variableType: Variable.SCALAR_TYPE
             }
         ]
     },
@@ -1262,7 +1264,7 @@ const specMap = {
             {
                 type: 'field',
                 fieldName: 'LIST',
-                variableType: 'list'
+                variableType: Variable.LIST_TYPE
             }
         ]
     },
@@ -1277,7 +1279,7 @@ const specMap = {
             {
                 type: 'field',
                 fieldName: 'LIST',
-                variableType: 'list'
+                variableType: Variable.LIST_TYPE
             }
         ]
     },
@@ -1292,7 +1294,7 @@ const specMap = {
             {
                 type: 'field',
                 fieldName: 'LIST',
-                variableType: 'list'
+                variableType: Variable.LIST_TYPE
             }
         ]
     },
@@ -1312,7 +1314,7 @@ const specMap = {
             {
                 type: 'field',
                 fieldName: 'LIST',
-                variableType: 'list'
+                variableType: Variable.LIST_TYPE
             }
         ]
     },
@@ -1327,7 +1329,7 @@ const specMap = {
             {
                 type: 'field',
                 fieldName: 'LIST',
-                variableType: 'list'
+                variableType: Variable.LIST_TYPE
             },
             {
                 type: 'input',
@@ -1347,7 +1349,7 @@ const specMap = {
             {
                 type: 'field',
                 fieldName: 'LIST',
-                variableType: 'list'
+                variableType: Variable.LIST_TYPE
             }
         ]
     },
@@ -1357,7 +1359,7 @@ const specMap = {
             {
                 type: 'field',
                 fieldName: 'LIST',
-                variableType: 'list'
+                variableType: Variable.LIST_TYPE
             }
         ]
     },
@@ -1367,7 +1369,7 @@ const specMap = {
             {
                 type: 'field',
                 fieldName: 'LIST',
-                variableType: 'list'
+                variableType: Variable.LIST_TYPE
             },
             {
                 type: 'input',
@@ -1382,7 +1384,7 @@ const specMap = {
             {
                 type: 'field',
                 fieldName: 'LIST',
-                variableType: 'list'
+                variableType: Variable.LIST_TYPE
             }
         ]
     },
@@ -1392,7 +1394,7 @@ const specMap = {
             {
                 type: 'field',
                 fieldName: 'LIST',
-                variableType: 'list'
+                variableType: Variable.LIST_TYPE
             }
         ]
     },

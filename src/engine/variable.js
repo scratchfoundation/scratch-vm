@@ -36,6 +36,8 @@ class Variable {
 
     /**
      * Type representation for scalar variables.
+     * This is currently represented as ''
+     * for compatibility with blockly.
      * @const {string}
      */
     static get SCALAR_TYPE () {
