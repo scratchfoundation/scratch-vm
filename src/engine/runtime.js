@@ -177,6 +177,13 @@ class Runtime extends EventEmitter {
         this._refreshTargets = false;
 
         /**
+         * Map to look up all monitor block information by opcode.
+         * @type {object}
+         * @private
+         */
+        this.monitorBlockInfo = {};
+
+        /**
          * Ordered map of all monitors, which are MonitorReporter objects.
          */
         this._monitorState = OrderedMap({});
@@ -224,6 +231,9 @@ class Runtime extends EventEmitter {
 
         // Register all given block packages.
         this._registerBlockPackages();
+
+        // Populate monitorBlockInfo
+        this._registerMonitorInfo();
 
         // Register and initialize "IO devices", containers for processing
         // I/O related data.
@@ -449,6 +459,22 @@ class Runtime extends EventEmitter {
         }
 
         this.emit(Runtime.EXTENSION_ADDED, categoryInfo.blocks.concat(categoryInfo.menus));
+    }
+
+    /**
+     * Populate this.monitorBlockInfo
+     */
+    _registerMonitorInfo () {
+        for (const packageName in defaultBlockPackages) {
+            if (defaultBlockPackages.hasOwnProperty(packageName)) {
+                // @todo pass a different runtime depending on package privilege?
+                const packageObject = new (defaultBlockPackages[packageName])(this);
+                // Collect monitored from package.
+                if (packageObject.getMonitored) {
+                    this.monitorBlockInfo = Object.assign({}, this.monitorBlockInfo, packageObject.getMonitored());
+                }
+            }
+        }
     }
 
     /**

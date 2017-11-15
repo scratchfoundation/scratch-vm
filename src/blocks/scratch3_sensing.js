@@ -49,6 +49,16 @@ class Scratch3SensingBlocks {
         };
     }
 
+    getMonitored () {
+        return {
+            answer: {},
+            loudness: {},
+            timer: {},
+            of: {},
+            current: {}
+        };
+    }
+
     _onAnswer (answer) {
         this._answer = answer;
         const questionObj = this._questionList.shift();

@@ -38,6 +38,14 @@ class Scratch3MotionBlocks {
         };
     }
 
+    getMonitored () {
+        return {
+            xposition: {isSpriteSpecific: true},
+            yposition: {isSpriteSpecific: true},
+            direction: {isSpriteSpecific: true}
+        };
+    }
+
     moveSteps (args, util) {
         const steps = Cast.toNumber(args.STEPS);
         const radians = MathUtil.degToRad(90 - util.target.direction);

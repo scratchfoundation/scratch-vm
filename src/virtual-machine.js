@@ -575,44 +575,18 @@ class VirtualMachine extends EventEmitter {
      * @param {!Blockly.Event} e Any Blockly event.
      */
     monitorBlockListener (e) {
-        const tempMonitoredBlocks = [
-            'volume',
-            'tempo',
-            'answer',
-            'loudness',
-            'videoon',
-            'timer',
-            'of',
-            'current',
-            'username',
-            'xposition',
-            'yposition',
-            'direction',
-            'size',
-            'backdropname',
-            'costumeorder',
-            'backdroporder'
-        ];
-        const tempMonitoredPerSpriteBlocks = [
-            'xposition',
-            'yposition',
-            'direction',
-            'size',
-            'costumeorder'
-        ];
         // Filter events by type, since monitor blocks only need to listen to these events.
         // Monitor blocks shouldn't be destroyed when flyout blocks are deleted.
         if (['create', 'change'].indexOf(e.type) !== -1) {
-            // TEMPORARY ----
             let blockType = e.blockId.split('_');
             blockType = blockType[blockType.length - 1];
-            if (tempMonitoredBlocks.indexOf(blockType) === -1) {
+            if (!this.runtime.monitorBlockInfo.hasOwnProperty(blockType)) {
                 return;
             }
-            if (tempMonitoredPerSpriteBlocks.indexOf(blockType) !== -1) {
+            if (!this.runtime.monitorBlockInfo.hasOwnProperty(blockType) ||
+                this.runtime.monitorBlockInfo[blockType].isSpriteSpecific) {
                 e.isSpriteSpecific = true;
             }
-            // -----
             this.runtime.monitorBlocks.blocklyListen(e, this.runtime);
         }
     }
