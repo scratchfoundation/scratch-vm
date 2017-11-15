@@ -390,7 +390,7 @@ module.exports = minilog('vm');
 
 var base64 = __webpack_require__(30)
 var ieee754 = __webpack_require__(33)
-var isArray = __webpack_require__(26)
+var isArray = __webpack_require__(27)
 
 exports.Buffer = Buffer
 exports.SlowBuffer = SlowBuffer
@@ -2895,7 +2895,7 @@ process.umask = function() { return 0; };
 
 /*<replacement>*/
 
-var processNextTick = __webpack_require__(27);
+var processNextTick = __webpack_require__(28);
 /*</replacement>*/
 
 /*<replacement>*/
@@ -5946,6 +5946,132 @@ module.exports = Color;
 
 /***/ }),
 /* 25 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+/**
+ * @fileoverview
+ * A utility for accurately measuring time.
+ * To use:
+ * ---
+ * var timer = new Timer();
+ * timer.start();
+ * ... pass some time ...
+ * var timeDifference = timer.timeElapsed();
+ * ---
+ * Or, you can use the `time` and `relativeTime`
+ * to do some measurement yourself.
+ */
+
+var Timer = function () {
+    function Timer() {
+        _classCallCheck(this, Timer);
+
+        /**
+         * Used to store the start time of a timer action.
+         * Updated when calling `timer.start`.
+         */
+        this.startTime = 0;
+    }
+
+    /**
+     * Disable use of self.performance for now as it results in lower performance
+     * However, instancing it like below (caching the self.performance to a local variable) negates most of the issues.
+     * @type {boolean}
+     */
+
+
+    _createClass(Timer, [{
+        key: 'time',
+
+
+        /**
+         * Return the currently known absolute time, in ms precision.
+         * @returns {number} ms elapsed since 1 January 1970 00:00:00 UTC.
+         */
+        value: function time() {
+            return Timer.nowObj.now();
+        }
+
+        /**
+         * Returns a time accurate relative to other times produced by this function.
+         * If possible, will use sub-millisecond precision.
+         * If not, will use millisecond precision.
+         * Not guaranteed to produce the same absolute values per-system.
+         * @returns {number} ms-scale accurate time relative to other relative times.
+         */
+
+    }, {
+        key: 'relativeTime',
+        value: function relativeTime() {
+            return Timer.nowObj.now();
+        }
+
+        /**
+         * Start a timer for measuring elapsed time,
+         * at the most accurate precision possible.
+         */
+
+    }, {
+        key: 'start',
+        value: function start() {
+            this.startTime = Timer.nowObj.now();
+        }
+    }, {
+        key: 'timeElapsed',
+        value: function timeElapsed() {
+            return Timer.nowObj.now() - this.startTime;
+        }
+    }], [{
+        key: 'USE_PERFORMANCE',
+        get: function get() {
+            return false;
+        }
+
+        /**
+         * Legacy object to allow for us to call now to get the old style date time (for backwards compatibility)
+         * @deprecated This is only called via the nowObj.now() if no other means is possible...
+         */
+
+    }, {
+        key: 'legacyDateCode',
+        get: function get() {
+            return {
+                now: function now() {
+                    return new Date().getTime();
+                }
+            };
+        }
+
+        /**
+         * Use this object to route all time functions through single access points.
+         */
+
+    }, {
+        key: 'nowObj',
+        get: function get() {
+            if (Timer.USE_PERFORMANCE && typeof self !== 'undefined' && self.performance && 'now' in self.performance) {
+                return self.performance;
+            } else if (Date.now) {
+                return Date;
+            }
+            return Timer.legacyDateCode;
+        }
+    }]);
+
+    return Timer;
+}();
+
+module.exports = Timer;
+
+/***/ }),
+/* 26 */
 /***/ (function(module, exports, __webpack_require__) {
 
 /**
@@ -10929,7 +11055,7 @@ module.exports = Color;
 }));
 
 /***/ }),
-/* 26 */
+/* 27 */
 /***/ (function(module, exports) {
 
 var toString = {}.toString;
@@ -10940,7 +11066,7 @@ module.exports = Array.isArray || function (arr) {
 
 
 /***/ }),
-/* 27 */
+/* 28 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -10989,132 +11115,6 @@ function nextTick(fn, arg1, arg2, arg3) {
 }
 
 /* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(9)))
-
-/***/ }),
-/* 28 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-
-var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
-
-function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
-
-/**
- * @fileoverview
- * A utility for accurately measuring time.
- * To use:
- * ---
- * var timer = new Timer();
- * timer.start();
- * ... pass some time ...
- * var timeDifference = timer.timeElapsed();
- * ---
- * Or, you can use the `time` and `relativeTime`
- * to do some measurement yourself.
- */
-
-var Timer = function () {
-    function Timer() {
-        _classCallCheck(this, Timer);
-
-        /**
-         * Used to store the start time of a timer action.
-         * Updated when calling `timer.start`.
-         */
-        this.startTime = 0;
-    }
-
-    /**
-     * Disable use of self.performance for now as it results in lower performance
-     * However, instancing it like below (caching the self.performance to a local variable) negates most of the issues.
-     * @type {boolean}
-     */
-
-
-    _createClass(Timer, [{
-        key: 'time',
-
-
-        /**
-         * Return the currently known absolute time, in ms precision.
-         * @returns {number} ms elapsed since 1 January 1970 00:00:00 UTC.
-         */
-        value: function time() {
-            return Timer.nowObj.now();
-        }
-
-        /**
-         * Returns a time accurate relative to other times produced by this function.
-         * If possible, will use sub-millisecond precision.
-         * If not, will use millisecond precision.
-         * Not guaranteed to produce the same absolute values per-system.
-         * @returns {number} ms-scale accurate time relative to other relative times.
-         */
-
-    }, {
-        key: 'relativeTime',
-        value: function relativeTime() {
-            return Timer.nowObj.now();
-        }
-
-        /**
-         * Start a timer for measuring elapsed time,
-         * at the most accurate precision possible.
-         */
-
-    }, {
-        key: 'start',
-        value: function start() {
-            this.startTime = Timer.nowObj.now();
-        }
-    }, {
-        key: 'timeElapsed',
-        value: function timeElapsed() {
-            return Timer.nowObj.now() - this.startTime;
-        }
-    }], [{
-        key: 'USE_PERFORMANCE',
-        get: function get() {
-            return false;
-        }
-
-        /**
-         * Legacy object to allow for us to call now to get the old style date time (for backwards compatibility)
-         * @deprecated This is only called via the nowObj.now() if no other means is possible...
-         */
-
-    }, {
-        key: 'legacyDateCode',
-        get: function get() {
-            return {
-                now: function now() {
-                    return new Date().getTime();
-                }
-            };
-        }
-
-        /**
-         * Use this object to route all time functions through single access points.
-         */
-
-    }, {
-        key: 'nowObj',
-        get: function get() {
-            if (Timer.USE_PERFORMANCE && typeof self !== 'undefined' && self.performance && 'now' in self.performance) {
-                return self.performance;
-            } else if (Date.now) {
-                return Date;
-            }
-            return Timer.legacyDateCode;
-        }
-    }]);
-
-    return Timer;
-}();
-
-module.exports = Timer;
 
 /***/ }),
 /* 29 */
@@ -11647,7 +11647,7 @@ exports.encode = exports.stringify = __webpack_require__(149);
 
 /*<replacement>*/
 
-var processNextTick = __webpack_require__(27);
+var processNextTick = __webpack_require__(28);
 /*</replacement>*/
 
 module.exports = Writable;
@@ -14949,13 +14949,13 @@ module.exports = typeof Promise === 'function' ? Promise : __webpack_require__(1
 
 /*<replacement>*/
 
-var processNextTick = __webpack_require__(27);
+var processNextTick = __webpack_require__(28);
 /*</replacement>*/
 
 module.exports = Readable;
 
 /*<replacement>*/
-var isArray = __webpack_require__(26);
+var isArray = __webpack_require__(27);
 /*</replacement>*/
 
 /*<replacement>*/
@@ -16162,7 +16162,7 @@ function done(stream, er, data) {
 
 /*<replacement>*/
 
-var processNextTick = __webpack_require__(27);
+var processNextTick = __webpack_require__(28);
 /*</replacement>*/
 
 // undocumented cb() API, needed for core, not for public API
@@ -17977,7 +17977,7 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
 
 var Cast = __webpack_require__(2);
 var MathUtil = __webpack_require__(8);
-var Timer = __webpack_require__(28);
+var Timer = __webpack_require__(25);
 
 var Scratch3MotionBlocks = function () {
     function Scratch3MotionBlocks(runtime) {
@@ -18268,6 +18268,7 @@ var BlockType = __webpack_require__(13);
 var Clone = __webpack_require__(14);
 var Cast = __webpack_require__(2);
 var MathUtil = __webpack_require__(8);
+var Timer = __webpack_require__(25);
 
 /**
  * An array of drum names, used in the play drum block.
@@ -18296,6 +18297,13 @@ var Scratch3MusicBlocks = function () {
          * @type {Runtime}
          */
         this.runtime = runtime;
+
+        /**
+         * The current tempo in beats per minute. The tempo is a global property of the project,
+         * not a property of each sprite, so it is not stored in the MusicState object.
+         * @type {number}
+         */
+        this.tempo = 60;
 
         this.drumMenu = this._buildMenu(drumNames);
         this.instrumentMenu = this._buildMenu(instrumentNames);
@@ -18445,20 +18453,25 @@ var Scratch3MusicBlocks = function () {
          * @param {object} util - utility object provided by the runtime.
          * @property {int} DRUM - the number of the drum to play.
          * @property {number} BEATS - the duration in beats of the drum sound.
-         * @return {Promise} - a promise which will resolve at the end of the duration.
          */
 
     }, {
         key: 'playDrumForBeats',
         value: function playDrumForBeats(args, util) {
-            var drum = Cast.toNumber(args.DRUM);
-            drum -= 1; // drums are one-indexed
-            if (typeof this.runtime.audioEngine === 'undefined') return;
-            drum = MathUtil.wrapClamp(drum, 0, this.runtime.audioEngine.numDrums - 1);
-            var beats = Cast.toNumber(args.BEATS);
-            beats = this._clampBeats(beats);
-            if (util.target.audioPlayer === null) return;
-            return util.target.audioPlayer.playDrumForBeats(drum, beats);
+            if (this._stackTimerNeedsInit(util)) {
+                var drum = Cast.toNumber(args.DRUM);
+                drum -= 1; // drums are one-indexed
+                if (typeof this.runtime.audioEngine === 'undefined') return;
+                drum = MathUtil.wrapClamp(drum, 0, this.runtime.audioEngine.numDrums - 1);
+                var beats = Cast.toNumber(args.BEATS);
+                beats = this._clampBeats(beats);
+                if (util.target.audioPlayer !== null) {
+                    util.target.audioPlayer.playDrumForBeats(drum, beats);
+                }
+                this._startStackTimer(util, this._beatsToSec(beats));
+            } else {
+                this._checkStackTimer(util);
+            }
         }
 
         /**
@@ -18466,16 +18479,18 @@ var Scratch3MusicBlocks = function () {
          * @param {object} args - the block arguments.
          * @param {object} util - utility object provided by the runtime.
          * @property {number} BEATS - the duration in beats of the rest.
-         * @return {Promise} - a promise which will resolve at the end of the duration.
          */
 
     }, {
         key: 'restForBeats',
-        value: function restForBeats(args) {
-            var beats = Cast.toNumber(args.BEATS);
-            beats = this._clampBeats(beats);
-            if (typeof this.runtime.audioEngine === 'undefined') return;
-            return this.runtime.audioEngine.waitForBeats(beats);
+        value: function restForBeats(args, util) {
+            if (this._stackTimerNeedsInit(util)) {
+                var beats = Cast.toNumber(args.BEATS);
+                beats = this._clampBeats(beats);
+                this._startStackTimer(util, this._beatsToSec(beats));
+            } else {
+                this._checkStackTimer(util);
+            }
         }
 
         /**
@@ -18484,20 +18499,97 @@ var Scratch3MusicBlocks = function () {
          * @param {object} util - utility object provided by the runtime.
          * @property {number} NOTE - the pitch of the note to play, interpreted as a MIDI note number.
          * @property {number} BEATS - the duration in beats of the note.
-         * @return {Promise} - a promise which will resolve at the end of the duration.
          */
 
     }, {
         key: 'playNoteForBeats',
         value: function playNoteForBeats(args, util) {
-            var note = Cast.toNumber(args.NOTE);
-            note = MathUtil.clamp(note, Scratch3MusicBlocks.MIDI_NOTE_RANGE.min, Scratch3MusicBlocks.MIDI_NOTE_RANGE.max);
-            var beats = Cast.toNumber(args.BEATS);
-            beats = this._clampBeats(beats);
-            var musicState = this._getMusicState(util.target);
-            var inst = musicState.currentInstrument;
-            if (typeof this.runtime.audioEngine === 'undefined') return;
-            return this.runtime.audioEngine.playNoteForBeatsWithInstAndVol(note, beats, inst, 100);
+            if (this._stackTimerNeedsInit(util)) {
+                var note = Cast.toNumber(args.NOTE);
+                note = MathUtil.clamp(note, Scratch3MusicBlocks.MIDI_NOTE_RANGE.min, Scratch3MusicBlocks.MIDI_NOTE_RANGE.max);
+                var beats = Cast.toNumber(args.BEATS);
+                beats = this._clampBeats(beats);
+                var musicState = this._getMusicState(util.target);
+                var inst = musicState.currentInstrument;
+                if (typeof this.runtime.audioEngine !== 'undefined') {
+                    this.runtime.audioEngine.playNoteForBeatsWithInstAndVol(note, beats, inst, 100);
+                }
+                this._startStackTimer(util, this._beatsToSec(beats));
+            } else {
+                this._checkStackTimer(util);
+            }
+        }
+
+        /**
+         * Clamp a duration in beats to the allowed min and max duration.
+         * @param  {number} beats - a duration in beats.
+         * @return {number} - the clamped duration.
+         * @private
+         */
+
+    }, {
+        key: '_clampBeats',
+        value: function _clampBeats(beats) {
+            return MathUtil.clamp(beats, Scratch3MusicBlocks.BEAT_RANGE.min, Scratch3MusicBlocks.BEAT_RANGE.max);
+        }
+
+        /**
+         * Convert a number of beats to a number of seconds, using the current tempo.
+         * @param  {number} beats - number of beats to convert to secs.
+         * @return {number} seconds - number of seconds `beats` will last.
+         * @private
+         */
+
+    }, {
+        key: '_beatsToSec',
+        value: function _beatsToSec(beats) {
+            return 60 / this.tempo * beats;
+        }
+
+        /**
+         * Check if the stack timer needs initialization.
+         * @param {object} util - utility object provided by the runtime.
+         * @return {boolean} - true if the stack timer needs to be initialized.
+         * @private
+         */
+
+    }, {
+        key: '_stackTimerNeedsInit',
+        value: function _stackTimerNeedsInit(util) {
+            return !util.stackFrame.timer;
+        }
+
+        /**
+         * Start the stack timer and the yield the thread if necessary.
+         * @param {object} util - utility object provided by the runtime.
+         * @param {number} duration - a duration in seconds to set the timer for.
+         * @private
+         */
+
+    }, {
+        key: '_startStackTimer',
+        value: function _startStackTimer(util, duration) {
+            util.stackFrame.timer = new Timer();
+            util.stackFrame.timer.start();
+            util.stackFrame.duration = duration;
+            if (util.stackFrame.duration > 0) {
+                util.yield();
+            }
+        }
+
+        /**
+         * Check the stack timer, and if its time is not up yet, yield the thread.
+         * @param {object} util - utility object provided by the runtime.
+         * @private
+         */
+
+    }, {
+        key: '_checkStackTimer',
+        value: function _checkStackTimer(util) {
+            var timeElapsed = util.stackFrame.timer.timeElapsed();
+            if (timeElapsed < util.stackFrame.duration * 1000) {
+                util.yield();
+            }
         }
 
         /**
@@ -18518,19 +18610,6 @@ var Scratch3MusicBlocks = function () {
             instNum = MathUtil.wrapClamp(instNum, 0, this.runtime.audioEngine.numInstruments - 1);
             musicState.currentInstrument = instNum;
             return this.runtime.audioEngine.instrumentPlayer.loadInstrument(musicState.currentInstrument);
-        }
-
-        /**
-         * Clamp a duration in beats to the allowed min and max duration.
-         * @param  {number} beats - a duration in beats.
-         * @return {number} - the clamped duration.
-         * @private
-         */
-
-    }, {
-        key: '_clampBeats',
-        value: function _clampBeats(beats) {
-            return MathUtil.clamp(beats, Scratch3MusicBlocks.BEAT_RANGE.min, Scratch3MusicBlocks.BEAT_RANGE.max);
         }
 
         /**
@@ -18556,8 +18635,7 @@ var Scratch3MusicBlocks = function () {
         key: 'changeTempo',
         value: function changeTempo(args) {
             var change = Cast.toNumber(args.TEMPO);
-            if (typeof this.runtime.audioEngine === 'undefined') return;
-            var tempo = change + this.runtime.audioEngine.currentTempo;
+            var tempo = change + this.tempo;
             this._updateTempo(tempo);
         }
 
@@ -18571,8 +18649,7 @@ var Scratch3MusicBlocks = function () {
         key: '_updateTempo',
         value: function _updateTempo(tempo) {
             tempo = MathUtil.clamp(tempo, Scratch3MusicBlocks.TEMPO_RANGE.min, Scratch3MusicBlocks.TEMPO_RANGE.max);
-            if (typeof this.runtime.audioEngine === 'undefined') return;
-            this.runtime.audioEngine.setTempo(tempo);
+            this.tempo = tempo;
         }
 
         /**
@@ -18583,8 +18660,7 @@ var Scratch3MusicBlocks = function () {
     }, {
         key: 'getTempo',
         value: function getTempo() {
-            if (typeof this.runtime.audioEngine === 'undefined') return;
-            return this.runtime.audioEngine.currentTempo;
+            return this.tempo;
         }
     }], [{
         key: 'STATE_KEY',
@@ -22055,7 +22131,7 @@ var BlockUtility = __webpack_require__(80);
 var log = __webpack_require__(3);
 var Thread = __webpack_require__(18);
 
-var _require = __webpack_require__(25),
+var _require = __webpack_require__(26),
     Map = _require.Map;
 
 /**
@@ -22317,7 +22393,7 @@ module.exports = execute;
 "use strict";
 
 
-var _require = __webpack_require__(25),
+var _require = __webpack_require__(26),
     Record = _require.Record;
 
 var MonitorRecord = Record({
@@ -22350,7 +22426,7 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
 
 var EventEmitter = __webpack_require__(5);
 
-var _require = __webpack_require__(25),
+var _require = __webpack_require__(26),
     OrderedMap = _require.OrderedMap;
 
 var escapeHtml = __webpack_require__(116);
@@ -24045,7 +24121,7 @@ var _createClass = function () { function defineProperties(target, props) { for 
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
-var Timer = __webpack_require__(28);
+var Timer = __webpack_require__(25);
 var Thread = __webpack_require__(18);
 var execute = __webpack_require__(81);
 
@@ -24348,7 +24424,7 @@ var Blocks = __webpack_require__(12);
 var Variable = __webpack_require__(19);
 var uid = __webpack_require__(29);
 
-var _require = __webpack_require__(25),
+var _require = __webpack_require__(26),
     Map = _require.Map;
 
 /**
@@ -24936,7 +25012,7 @@ var _createClass = function () { function defineProperties(target, props) { for 
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
-var Timer = __webpack_require__(28);
+var Timer = __webpack_require__(25);
 
 var Clock = function () {
     function Clock(runtime) {
