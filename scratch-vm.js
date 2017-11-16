@@ -23598,6 +23598,7 @@ var Runtime = function (_EventEmitter) {
          * This is used by `startHats` to and is necessary to ensure 2.0-like execution order.
          * Test project: https://scratch.mit.edu/projects/130183108/
          * @param {!Thread} thread Thread object to restart.
+         * @return {Thread} The restarted thread.
          */
 
     }, {
@@ -23611,9 +23612,10 @@ var Runtime = function (_EventEmitter) {
             var i = this.threads.indexOf(thread);
             if (i > -1) {
                 this.threads[i] = newThread;
-            } else {
-                this.threads.push(thread);
+                return newThread;
             }
+            this.threads.push(thread);
+            return thread;
         }
 
         /**
@@ -23625,7 +23627,7 @@ var Runtime = function (_EventEmitter) {
     }, {
         key: 'isActiveThread',
         value: function isActiveThread(thread) {
-            return this.threads.indexOf(thread) > -1;
+            return thread.stack.length > 0 && thread.status !== Thread.STATUS_DONE && this.threads.indexOf(thread) > -1;
         }
 
         /**
@@ -23780,7 +23782,7 @@ var Runtime = function (_EventEmitter) {
                     for (var i = 0; i < instance.threads.length; i++) {
                         if (instance.threads[i].topBlock === topBlockId && !instance.threads[i].stackClick && // stack click threads and hat threads can coexist
                         instance.threads[i].target === target) {
-                            instance._restartThread(instance.threads[i]);
+                            newThreads.push(instance._restartThread(instance.threads[i]));
                             return;
                         }
                     }
