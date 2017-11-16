@@ -10,6 +10,18 @@ const {Map} = require('immutable');
 const blockUtility = new BlockUtility();
 
 /**
+ * Profiler frame name for block functions.
+ * @const {string}
+ */
+const blockFunctionProfilerFrame = 'blockFunction';
+
+/**
+ * Profiler frame ID for 'blockFunction'.
+ * @type {number}
+ */
+let blockFunctionProfilerId = -1;
+
+/**
  * Utility function to determine if a value is a Promise.
  * @param {*} value Value to check for a Promise.
  * @return {boolean} True if the value appears to be a Promise.
@@ -207,7 +219,23 @@ const execute = function (sequencer, thread) {
     let primitiveReportedValue = null;
     blockUtility.sequencer = sequencer;
     blockUtility.thread = thread;
+    if (runtime.profiler !== null) {
+        if (blockFunctionProfilerId === -1) {
+            blockFunctionProfilerId = runtime.profiler.idByName(blockFunctionProfilerFrame);
+        }
+        // The method commented below has its code inlined underneath to reduce
+        // the bias recorded for the profiler's calls in this time sensitive
+        // execute function.
+        //
+        // runtime.profiler.start(blockFunctionProfilerId, opcode);
+        runtime.profiler.records.push(
+            runtime.profiler.START, blockFunctionProfilerId, opcode, performance.now());
+    }
     primitiveReportedValue = blockFunction(argValues, blockUtility);
+    if (runtime.profiler !== null) {
+        // runtime.profiler.stop(blockFunctionProfilerId);
+        runtime.profiler.records.push(runtime.profiler.STOP, performance.now());
+    }
 
     if (typeof primitiveReportedValue === 'undefined') {
         // No value reported - potentially a command block.
