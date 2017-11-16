@@ -4,16 +4,28 @@
 <head>
     <meta charset="utf-8">
     <title>Scratch VM Benchmark</title>
-    <style>
-        canvas {
-          border: 5px solid black;
-        }
-    </style>
     <link rel="stylesheet" href="./benchmark.css" type="text/css" media="screen">
 </head>
 <body>
-    <h2>Scratch VM Benchmark</h2>
-    <canvas id="scratch-stage" style="width: 480px; height: 360px;"></canvas><br />
+  <h2>Scratch VM Benchmark</h2>
+  <p>
+    Welcome to the scratch-vm benchmark. This tool helps you profile a scratch
+    project. When you load the page, it:
+    <ol>
+      <li>loads the default project
+      <li>runs the project for 4 seconds to warm up
+      <li>profiles for 6 seconds
+      <li>stops and reports
+    </ol>
+  </p>
+  <input type="text" value="119615668">
+  <button class="run">run</button>
+  <p>
+    <i>Try a different project, like `130041250`</i>
+  </p>
+
+  <canvas id="scratch-stage"></canvas><br />
+
   <div class="loading">
     <label>Loading:</label>
     <span class="loading-complete">0</span> / <span class="loading-total">0</span>

@@ -5,10 +5,18 @@ const PROJECT_SERVER = 'https://cdn.projects.scratch.mit.edu/';
 
 const SLOW = .1;
 
+const projectInput = document.querySelector('input');
+
+document.querySelector('.run')
+    .addEventListener('click', () => {
+        window.location.hash = projectInput.value;
+        location.reload();
+    }, false);
+
 const loadProject = function () {
     let id = location.hash.substring(1);
     if (id.length < 1 || !isFinite(id)) {
-        id = '119615668';
+        id = projectInput.value;
     }
     Scratch.vm.downloadProjectId(id);
 };
