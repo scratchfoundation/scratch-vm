@@ -526,7 +526,7 @@ const parseBlock = function (sb2block, getVariableId, extensions) {
         };
         activeBlock.children = [{
             id: inputUid,
-            opcode: 'procedures_callnoreturn_internal',
+            opcode: 'procedures_prototype',
             inputs: {},
             fields: {},
             next: null,
@@ -552,13 +552,15 @@ const parseBlock = function (sb2block, getVariableId, extensions) {
             argumentids: JSON.stringify(parseProcedureArgIds(sb2block[1]))
         };
     } else if (oldOpcode === 'getParam') {
-        // Mutation for procedure parameter.
-        activeBlock.mutation = {
-            tagName: 'mutation',
-            children: [],
-            paramname: sb2block[1], // Name of parameter.
-            shape: sb2block[2] // Shape - in 2.0, 'r' or 'b'.
-        };
+        // Assign correct opcode based on the block shape.
+        switch (sb2block[2]) {
+        case 'r':
+            activeBlock.opcode = 'argument_reporter_string_number';
+            break;
+        case 'b':
+            activeBlock.opcode = 'argument_reporter_boolean';
+            break;
+        }
     }
     return activeBlock;
 };
