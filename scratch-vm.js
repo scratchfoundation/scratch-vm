@@ -3364,9 +3364,7 @@ var Blocks = function () {
                     if (optRuntime && this._blocks[e.blockId].topLevel) {
                         optRuntime.quietGlow(e.blockId);
                     }
-                    this.deleteBlock({
-                        id: e.blockId
-                    });
+                    this.deleteBlock(e.blockId);
                     break;
                 case 'var_create':
                     // New variables being created by the user are all global.
@@ -3539,40 +3537,45 @@ var Blocks = function () {
         }
 
         /**
-         * Block management: delete blocks and their associated scripts.
-         * @param {!object} e Blockly delete event to be processed.
+         * Block management: delete blocks and their associated scripts. Does nothing if a block
+         * with the given ID does not exist.
+         * @param {!string} blockId Id of block to delete
          */
 
     }, {
         key: 'deleteBlock',
-        value: function deleteBlock(e) {
+        value: function deleteBlock(blockId) {
             // @todo In runtime, stop threads running on this script.
 
             // Get block
-            var block = this._blocks[e.id];
+            var block = this._blocks[blockId];
+            if (!block) {
+                // No block with the given ID exists
+                return;
+            }
 
             // Delete children
             if (block.next !== null) {
-                this.deleteBlock({ id: block.next });
+                this.deleteBlock(block.next);
             }
 
             // Delete inputs (including branches)
             for (var input in block.inputs) {
                 // If it's null, the block in this input moved away.
                 if (block.inputs[input].block !== null) {
-                    this.deleteBlock({ id: block.inputs[input].block });
+                    this.deleteBlock(block.inputs[input].block);
                 }
                 // Delete obscured shadow blocks.
                 if (block.inputs[input].shadow !== null && block.inputs[input].shadow !== block.inputs[input].block) {
-                    this.deleteBlock({ id: block.inputs[input].shadow });
+                    this.deleteBlock(block.inputs[input].shadow);
                 }
             }
 
             // Delete any script starting with this block.
-            this._deleteScript(e.id);
+            this._deleteScript(blockId);
 
             // Delete block itself.
-            delete this._blocks[e.id];
+            delete this._blocks[blockId];
         }
 
         // ---------------------------------------------------------------------
@@ -25167,6 +25170,7 @@ var Target = function (_EventEmitter) {
             if (this.variables.hasOwnProperty(id)) {
                 delete this.variables[id];
                 if (this.runtime) {
+                    this.runtime.monitorBlocks.deleteBlock(id);
                     this.runtime.requestRemoveMonitor(id);
                 }
             }
