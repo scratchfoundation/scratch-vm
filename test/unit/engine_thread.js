@@ -139,7 +139,7 @@ test('goToNextBlock', t => {
         block: 'fakeBlock',
         name: 'STEPS',
         next: null,
-        opcode: 'procedures_callnoreturn',
+        opcode: 'procedures_call',
         mutation: {proccode: 'fakeCode'},
         parent: null,
         shadow: false,
