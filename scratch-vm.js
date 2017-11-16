@@ -3261,7 +3261,7 @@ var Blocks = function () {
             for (var id in this._blocks) {
                 if (!this._blocks.hasOwnProperty(id)) continue;
                 var block = this._blocks[id];
-                if (block.opcode === 'procedures_defnoreturn' || block.opcode === 'procedures_defreturn') {
+                if (block.opcode === 'procedures_definition') {
                     var internal = this._getCustomBlockInternal(block);
                     if (internal && internal.mutation.proccode === name) {
                         return id; // The outer define block id
@@ -3283,7 +3283,7 @@ var Blocks = function () {
             for (var id in this._blocks) {
                 if (!this._blocks.hasOwnProperty(id)) continue;
                 var block = this._blocks[id];
-                if (block.opcode === 'procedures_callnoreturn_internal' && block.mutation.proccode === name) {
+                if (block.opcode === 'procedures_prototype' && block.mutation.proccode === name) {
                     return JSON.parse(block.mutation.argumentnames);
                 }
             }
@@ -4168,7 +4168,7 @@ var Thread = function () {
             var blockID = this.peekStack();
             while (blockID !== null) {
                 var block = this.target.blocks.getBlock(blockID);
-                if (typeof block !== 'undefined' && block.opcode === 'procedures_callnoreturn') {
+                if (typeof block !== 'undefined' && block.opcode === 'procedures_call') {
                     break;
                 }
                 this.popStack();
@@ -4300,7 +4300,7 @@ var Thread = function () {
             var sp = this.stack.length - 1;
             for (var i = sp - 1; i >= 0; i--) {
                 var block = this.target.blocks.getBlock(this.stack[i]);
-                if (block.opcode === 'procedures_callnoreturn' && block.mutation.proccode === procedureCode) {
+                if (block.opcode === 'procedures_call' && block.mutation.proccode === procedureCode) {
                     return true;
                 }
                 if (--callCount < 0) return false;
@@ -19693,19 +19693,20 @@ var Scratch3ProcedureBlocks = function () {
         key: "getPrimitives",
         value: function getPrimitives() {
             return {
-                procedures_defnoreturn: this.defNoReturn,
-                procedures_callnoreturn: this.callNoReturn,
-                procedures_param: this.param
+                procedures_definition: this.definition,
+                procedures_call: this.call,
+                argument_reporter_string_number: this.param,
+                argument_reporter_boolean: this.param
             };
         }
     }, {
-        key: "defNoReturn",
-        value: function defNoReturn() {
+        key: "definition",
+        value: function definition() {
             // No-op: execute the blocks.
         }
     }, {
-        key: "callNoReturn",
-        value: function callNoReturn(args, util) {
+        key: "call",
+        value: function call(args, util) {
             if (!util.stackFrame.executed) {
                 var procedureCode = args.mutation.proccode;
                 var paramNames = util.getProcedureParamNames(procedureCode);
@@ -19730,7 +19731,7 @@ var Scratch3ProcedureBlocks = function () {
     }, {
         key: "param",
         value: function param(args, util) {
-            var value = util.getParam(args.mutation.paramname);
+            var value = util.getParam(args.VALUE);
             return value;
         }
     }]);
@@ -26843,7 +26844,7 @@ var parseBlock = function parseBlock(sb2block, getVariableId, extensions) {
         };
         activeBlock.children = [{
             id: _inputUid,
-            opcode: 'procedures_callnoreturn_internal',
+            opcode: 'procedures_prototype',
             inputs: {},
             fields: {},
             next: null,
@@ -26869,13 +26870,15 @@ var parseBlock = function parseBlock(sb2block, getVariableId, extensions) {
             argumentids: JSON.stringify(parseProcedureArgIds(sb2block[1]))
         };
     } else if (oldOpcode === 'getParam') {
-        // Mutation for procedure parameter.
-        activeBlock.mutation = {
-            tagName: 'mutation',
-            children: [],
-            paramname: sb2block[1], // Name of parameter.
-            shape: sb2block[2] // Shape - in 2.0, 'r' or 'b'.
-        };
+        // Assign correct opcode based on the block shape.
+        switch (sb2block[2]) {
+            case 'r':
+                activeBlock.opcode = 'argument_reporter_string_number';
+                break;
+            case 'b':
+                activeBlock.opcode = 'argument_reporter_boolean';
+                break;
+        }
     }
     return activeBlock;
 };
@@ -28016,15 +28019,19 @@ var specMap = {
         }]
     },
     'procDef': {
-        opcode: 'procedures_defnoreturn',
+        opcode: 'procedures_definition',
         argMap: []
     },
     'getParam': {
-        opcode: 'procedures_param',
-        argMap: []
+        // Doesn't map to single opcode. Import step assigns final correct opcode.
+        opcode: 'argument_reporter_string_number',
+        argMap: [{
+            type: 'field',
+            fieldName: 'VALUE'
+        }]
     },
     'call': {
-        opcode: 'procedures_callnoreturn',
+        opcode: 'procedures_call',
         argMap: []
     }
 };
