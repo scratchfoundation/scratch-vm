@@ -244,10 +244,10 @@ class Scratch3LooksBlocks {
 
     getMonitored () {
         return {
-            size: {isSpriteSpecific: true},
-            costumeorder: {isSpriteSpecific: true},
-            backdroporder: {},
-            backdropname: {}
+            looks_size: {isSpriteSpecific: true},
+            looks_costumeorder: {isSpriteSpecific: true},
+            looks_backdroporder: {},
+            looks_backdropname: {}
         };
     }
 

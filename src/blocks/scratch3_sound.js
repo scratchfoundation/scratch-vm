@@ -105,7 +105,7 @@ class Scratch3SoundBlocks {
 
     getMonitored () {
         return {
-            volume: {}
+            sound_volume: {}
         };
     }
 

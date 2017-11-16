@@ -327,7 +327,11 @@ class Blocks {
             break;
         case 'checkbox':
             block.isMonitored = args.value;
-            block.targetId = args.isSpriteSpecific ? this._getTargetIdFromBlockId(block.id) : null;
+            if (optRuntime) {
+                const isSpriteSpecific = optRuntime.monitorBlockInfo.hasOwnProperty(block.opcode) &&
+                    optRuntime.monitorBlockInfo[block.opcode].isSpriteSpecific;
+                block.targetId = isSpriteSpecific ? optRuntime.getEditingTarget().id : null;
+            }
             if (optRuntime && wasMonitored && !block.isMonitored) {
                 optRuntime.requestRemoveMonitor(block.id);
             } else if (optRuntime && !wasMonitored && block.isMonitored) {
@@ -414,11 +418,6 @@ class Blocks {
                 runtime.addMonitorScript(blockId, targetId ? runtime.getTargetById(targetId) : null);
             }
         });
-    }
-
-    _getTargetIdFromBlockId (blockId) {
-        // First word of block ID. See makeToolboxXML in scratch-gui
-        return blockId.split('_')[0];
     }
 
     /**
