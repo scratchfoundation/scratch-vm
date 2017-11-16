@@ -1382,15 +1382,21 @@ const specMap = {
         ]
     },
     'procDef': {
-        opcode: 'procedures_defnoreturn',
+        opcode: 'procedures_definition',
         argMap: []
     },
     'getParam': {
-        opcode: 'procedures_param',
-        argMap: []
+        // Doesn't map to single opcode. Import step assigns final correct opcode.
+        opcode: 'argument_reporter_string_number',
+        argMap: [
+            {
+                type: 'field',
+                fieldName: 'VALUE'
+            }
+        ]
     },
     'call': {
-        opcode: 'procedures_callnoreturn',
+        opcode: 'procedures_call',
         argMap: []
     }
 };
