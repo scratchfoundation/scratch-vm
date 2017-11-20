@@ -6,10 +6,9 @@
  * Legal characters for the unique ID.
  * Should be all on a US keyboard.  No XML special characters or control codes.
  * Removed $ due to issue 251.
- * Removed _ which denotes word separation in XML.
  * @private
  */
-const soup_ = '!#%()*+,-./:;=?@[]^`{|}~' +
+const soup_ = '!#%()*+,-./:;=?@[]^_`{|}~' +
     'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
 
 /**

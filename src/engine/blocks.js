@@ -226,8 +226,7 @@ class Blocks {
                 id: e.blockId,
                 element: e.element,
                 name: e.name,
-                value: e.newValue,
-                isSpriteSpecific: e.isSpriteSpecific
+                value: e.newValue
             }, optRuntime);
             break;
         case 'move':
