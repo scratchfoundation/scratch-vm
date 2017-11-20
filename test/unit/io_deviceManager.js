@@ -19,3 +19,16 @@ test('default connected', t => {
     t.strictEqual(deviceManager.isConnected, true);
     t.end();
 });
+
+test('list', t => {
+    const deviceManager = new DeviceManager();
+    deviceManager
+        .list('test', 'test', null)
+        .catch(err => {
+            t.true((typeof err === 'undefined') || (typeof err === 'object'));
+        })
+        .then(body => {
+            t.true((typeof body === 'undefined') || (typeof body === 'object'));
+            t.end();
+        });
+});
