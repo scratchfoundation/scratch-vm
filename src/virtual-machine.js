@@ -474,9 +474,9 @@ class VirtualMachine extends EventEmitter {
      */
     deleteSprite (targetId) {
         const target = this.runtime.getTargetById(targetId);
-        const targetIndexBeforeDelete = this.runtime.targets.map(t => t.id).indexOf(target.id);
 
         if (target) {
+            const targetIndexBeforeDelete = this.runtime.targets.map(t => t.id).indexOf(target.id);
             if (!target.isSprite()) {
                 throw new Error('Cannot delete non-sprite targets.');
             }
@@ -492,7 +492,11 @@ class VirtualMachine extends EventEmitter {
                 // Ensure editing target is switched if we are deleting it.
                 if (clone === currentEditingTarget) {
                     const nextTargetIndex = Math.min(this.runtime.targets.length - 1, targetIndexBeforeDelete);
-                    this.setEditingTarget(this.runtime.targets[nextTargetIndex].id);
+                    if (this.runtime.targets.length > 0){
+                        this.setEditingTarget(this.runtime.targets[nextTargetIndex].id);
+                    } else {
+                        this.editingTarget = null;
+                    }
                 }
             }
             // Sprite object should be deleted by GC.
@@ -505,6 +509,8 @@ class VirtualMachine extends EventEmitter {
     /**
      * Duplicate a sprite.
      * @param {string} targetId ID of a target whose sprite to duplicate.
+     * @returns {Promise} Promise that resolves when duplicated target has
+     *     been added to the runtime.
      */
     duplicateSprite (targetId) {
         const target = this.runtime.getTargetById(targetId);
@@ -515,7 +521,7 @@ class VirtualMachine extends EventEmitter {
         } else if (!target.sprite) {
             throw new Error('No sprite associated with this target.');
         }
-        target.duplicate().then(newTarget => {
+        return target.duplicate().then(newTarget => {
             this.runtime.targets.push(newTarget);
             this.setEditingTarget(newTarget.id);
         });

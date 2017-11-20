@@ -53,19 +53,31 @@ class Scratch3SensingBlocks {
         this._answer = answer;
         const questionObj = this._questionList.shift();
         if (questionObj) {
-            const resolve = questionObj[1];
+            const [_question, resolve, target, wasVisible] = questionObj;
+            // If the target was visible when asked, hide the say bubble.
+            if (wasVisible) {
+                this.runtime.emit('SAY', target, 'say', '');
+            }
             resolve();
             this._askNextQuestion();
         }
     }
 
-    _enqueueAsk (question, resolve) {
-        this._questionList.push([question, resolve]);
+    _enqueueAsk (question, resolve, target, wasVisible) {
+        this._questionList.push([question, resolve, target, wasVisible]);
     }
 
     _askNextQuestion () {
         if (this._questionList.length > 0) {
-            this.runtime.emit('QUESTION', this._questionList[0][0]);
+            const [question, _resolve, target, wasVisible] = this._questionList[0];
+            // If the target is visible, emit a blank question and use the
+            // say event to trigger a bubble.
+            if (wasVisible) {
+                this.runtime.emit('SAY', target, 'say', question);
+                this.runtime.emit('QUESTION', '');
+            } else {
+                this.runtime.emit('QUESTION', question);
+            }
         }
     }
 
@@ -74,10 +86,11 @@ class Scratch3SensingBlocks {
         this.runtime.emit('QUESTION', null);
     }
 
-    askAndWait (args) {
+    askAndWait (args, util) {
+        const _target = util.target;
         return new Promise(resolve => {
             const isQuestionAsked = this._questionList.length > 0;
-            this._enqueueAsk(args.QUESTION, resolve);
+            this._enqueueAsk(args.QUESTION, resolve, _target, _target.visible);
             if (!isQuestionAsked) {
                 this._askNextQuestion();
             }

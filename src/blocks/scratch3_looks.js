@@ -23,10 +23,14 @@ class Scratch3LooksBlocks {
         this._onTargetMoved = this._onTargetMoved.bind(this);
         this._onResetBubbles = this._onResetBubbles.bind(this);
         this._onTargetWillExit = this._onTargetWillExit.bind(this);
+        this._updateBubble = this._updateBubble.bind(this);
 
         // Reset all bubbles on start/stop
         this.runtime.on('PROJECT_STOP_ALL', this._onResetBubbles);
         this.runtime.on('targetWasRemoved', this._onTargetWillExit);
+
+        // Enable other blocks to use bubbles like ask/answer
+        this.runtime.on('SAY', this._updateBubble);
     }
 
     /**

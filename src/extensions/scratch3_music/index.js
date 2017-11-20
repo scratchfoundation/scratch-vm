@@ -50,10 +50,8 @@ class Scratch3MusicBlocks {
     }
 
     /**
-     * Download and decode the full set of drum sounds, and store the audio buffers
-     * in the drum buffers array.
-     * @TODO: Use Promise.all to detect that all the assets have loaded in order to update
-     * the extension status indicator.
+     * Download and decode the full set of drum and instrument sounds, and
+     * store the audio buffers in arrays.
      */
     _loadAllSounds () {
         const loadingPromises = [];
@@ -62,16 +60,16 @@ class Scratch3MusicBlocks {
             const promise = this._loadSound(fileName, index, this._drumBuffers);
             loadingPromises.push(promise);
         });
-        this.INSTRUMENT_INFO.forEach((instrumentInfo, index) => {
-            this._instrumentBufferArrays[index] = [];
+        this.INSTRUMENT_INFO.forEach((instrumentInfo, instrumentIndex) => {
+            this._instrumentBufferArrays[instrumentIndex] = [];
             instrumentInfo.samples.forEach((sample, noteIndex) => {
                 const fileName = `instruments/${instrumentInfo.dirName}/${sample}`;
-                const promise = this._loadSound(fileName, noteIndex, this._instrumentBufferArrays[index]);
+                const promise = this._loadSound(fileName, noteIndex, this._instrumentBufferArrays[instrumentIndex]);
                 loadingPromises.push(promise);
             });
         });
         Promise.all(loadingPromises).then(() => {
-            // done!
+            // @TODO: Update the extension status indicator.
         });
     }
 
@@ -510,6 +508,7 @@ class Scratch3MusicBlocks {
      */
     _playDrumNum (util, drumNum) {
         if (util.target.audioPlayer === null) return;
+        // If we're playing too many sounds, do not play the drum sound.
         if (this._concurrencyCounter > Scratch3MusicBlocks.CONCURRENCY_LIMIT) {
             return;
         }

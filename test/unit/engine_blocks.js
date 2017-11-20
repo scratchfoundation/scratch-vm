@@ -421,9 +421,7 @@ test('delete', t => {
         inputs: {},
         topLevel: true
     });
-    b.deleteBlock({
-        id: 'foo'
-    });
+    b.deleteBlock('foo');
 
     t.type(b._blocks.foo, 'undefined');
     t.equal(b._scripts.indexOf('foo'), -1);
@@ -458,9 +456,7 @@ test('delete chain', t => {
         inputs: {},
         topLevel: false
     });
-    b.deleteBlock({
-        id: 'foo'
-    });
+    b.deleteBlock('foo');
     t.type(b._blocks.foo, 'undefined');
     t.type(b._blocks.foo2, 'undefined');
     t.type(b._blocks.foo3, 'undefined');
@@ -531,9 +527,7 @@ test('delete inputs', t => {
         inputs: {},
         topLevel: false
     });
-    b.deleteBlock({
-        id: 'foo'
-    });
+    b.deleteBlock('foo');
     t.type(b._blocks.foo, 'undefined');
     t.type(b._blocks.foo2, 'undefined');
     t.type(b._blocks.foo3, 'undefined');
