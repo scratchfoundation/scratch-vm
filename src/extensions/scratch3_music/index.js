@@ -514,6 +514,7 @@ class Scratch3MusicBlocks {
      * @private
      */
     _playDrumNum (util, drumNum) {
+        if (util.runtime.audioEngine === null) return;
         if (util.target.audioPlayer === null) return;
         // If we're playing too many sounds, do not play the drum sound.
         if (this._concurrencyCounter > Scratch3MusicBlocks.CONCURRENCY_LIMIT) {
