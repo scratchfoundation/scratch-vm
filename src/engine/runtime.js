@@ -232,9 +232,6 @@ class Runtime extends EventEmitter {
         // Register all given block packages.
         this._registerBlockPackages();
 
-        // Populate monitorBlockInfo
-        this._registerMonitorInfo();
-
         // Register and initialize "IO devices", containers for processing
         // I/O related data.
         /** @type {Object.<string, Object>} */
@@ -407,6 +404,10 @@ class Runtime extends EventEmitter {
                         }
                     }
                 }
+                // Collect monitored from package.
+                if (packageObject.getMonitored) {
+                    this.monitorBlockInfo = Object.assign({}, this.monitorBlockInfo, packageObject.getMonitored());
+                }
             }
         }
     }
@@ -459,22 +460,6 @@ class Runtime extends EventEmitter {
         }
 
         this.emit(Runtime.EXTENSION_ADDED, categoryInfo.blocks.concat(categoryInfo.menus));
-    }
-
-    /**
-     * Populate this.monitorBlockInfo
-     */
-    _registerMonitorInfo () {
-        for (const packageName in defaultBlockPackages) {
-            if (defaultBlockPackages.hasOwnProperty(packageName)) {
-                // @todo pass a different runtime depending on package privilege?
-                const packageObject = new (defaultBlockPackages[packageName])(this);
-                // Collect monitored from package.
-                if (packageObject.getMonitored) {
-                    this.monitorBlockInfo = Object.assign({}, this.monitorBlockInfo, packageObject.getMonitored());
-                }
-            }
-        }
     }
 
     /**
@@ -864,7 +849,7 @@ class Runtime extends EventEmitter {
     /**
      * Enqueue a script that when finished will update the monitor for the block.
      * @param {!string} topBlockId ID of block that starts the script.
-     * @param {?string} optTarget target Target to run script on. If not supplied, uses editing target.
+     * @param {?Target} optTarget target Target to run script on. If not supplied, uses editing target.
      */
     addMonitorScript (topBlockId, optTarget) {
         if (!optTarget) optTarget = this._editingTarget;
