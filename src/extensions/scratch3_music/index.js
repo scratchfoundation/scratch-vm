@@ -520,7 +520,8 @@ class Scratch3MusicBlocks {
             return;
         }
         const outputNode = util.target.audioPlayer.getInputNode();
-        const bufferSource = this.runtime.audioEngine.audioContext.createBufferSource();
+        const context = util.runtime.audioEngine.audioContext;
+        const bufferSource = context.createBufferSource();
         bufferSource.buffer = this._drumBuffers[drumNum];
         bufferSource.connect(outputNode);
         bufferSource.start();
