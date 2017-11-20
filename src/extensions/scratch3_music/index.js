@@ -548,6 +548,7 @@ class Scratch3MusicBlocks {
 
     /**
      * Play a note using the current musical instrument for some number of beats.
+     * This function processes the arguments, and handles the timing of the block's execution.
      * @param {object} args - the block arguments.
      * @param {object} util - utility object provided by the runtime.
      * @property {number} NOTE - the pitch of the note to play, interpreted as a MIDI note number.
@@ -560,9 +561,12 @@ class Scratch3MusicBlocks {
                 Scratch3MusicBlocks.MIDI_NOTE_RANGE.min, Scratch3MusicBlocks.MIDI_NOTE_RANGE.max);
             let beats = Cast.toNumber(args.BEATS);
             beats = this._clampBeats(beats);
+            // If the duration is 0, do not play the note.
+            // In Scratch 2.0, "play drum for 0 beats" plays the drum, but "play note for 0 beats" is silent.
             if (beats === 0) {
                 return;
             }
+
             const durationSec = this._beatsToSec(beats);
 
             this._playNote(util, note, durationSec);
@@ -573,37 +577,59 @@ class Scratch3MusicBlocks {
         }
     }
 
-    _playNote (util, note, duration) {
+    /**
+     * Play a note using the current instrument for a duration in seconds.
+     * This function actually plays the sound, and handles the timing of the sound, including the
+     * "release" portion of the sound, which continues briefly after the block execution has finished.
+     * @param {object} util - utility object provided by the runtime.
+     * @param {number} note - the pitch of the note to play, interpreted as a MIDI note number.
+     * @param {number} durationSec - the duration in seconds to play the note.
+     */
+    _playNote (util, note, durationSec) {
+        if (util.runtime.audioEngine === null) return;
         if (util.target.audioPlayer === null) return;
+
+        // If we're playing too many sounds, do not play the note.
         if (this._concurrencyCounter > Scratch3MusicBlocks.CONCURRENCY_LIMIT) {
             return;
         }
 
+        // Determine which of the audio samples for this instrument to play
         const musicState = this._getMusicState(util.target);
         const inst = musicState.currentInstrument;
         const instrumentInfo = this.INSTRUMENT_INFO[inst];
         const sampleArray = instrumentInfo.samples;
         const sampleIndex = this._selectSampleIndexForNote(note, sampleArray);
-        const sampleNote = sampleArray[sampleIndex];
 
+        // Create the audio buffer to play the note, and set its pitch
         const context = util.runtime.audioEngine.audioContext;
         const bufferSource = context.createBufferSource();
         bufferSource.buffer = this._instrumentBufferArrays[inst][sampleIndex];
+        const sampleNote = sampleArray[sampleIndex];
         bufferSource.playbackRate.value = this._ratioForPitchInterval(note - sampleNote);
 
+        // Create a gain node for this note, and connect it to the sprite's audioPlayer.
         const gainNode = context.createGain();
         bufferSource.connect(gainNode);
         const outputNode = util.target.audioPlayer.getInputNode();
         gainNode.connect(outputNode);
 
+        // Start playing the note
         bufferSource.start();
 
-        const releaseTime = this.INSTRUMENT_INFO[inst].releaseTime ? this.INSTRUMENT_INFO[inst].releaseTime : 0.01;
-        gainNode.gain.setValueAtTime(1, context.currentTime + duration);
-        gainNode.gain.linearRampToValueAtTime(0.0001, context.currentTime + duration + releaseTime);
+        // Schedule the release of the note, ramping its gain down to zero,
+        // and then stopping the sound.
+        let releaseDuration = this.INSTRUMENT_INFO[inst].releaseTime;
+        if (typeof releaseDuration === 'undefined') {
+            releaseDuration = 0.01;
+        }
+        const releaseStart = context.currentTime + durationSec;
+        const releaseEnd = releaseStart + releaseDuration;
+        gainNode.gain.setValueAtTime(1, releaseStart);
+        gainNode.gain.linearRampToValueAtTime(0.0001, releaseEnd);
+        bufferSource.stop(releaseEnd);
 
-        bufferSource.stop(context.currentTime + duration + releaseTime);
-
+        // Update the concurrency counter
         this._concurrencyCounter++;
         bufferSource.onended = () => {
             this._concurrencyCounter--;
