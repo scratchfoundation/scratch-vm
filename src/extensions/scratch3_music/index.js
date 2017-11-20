@@ -554,15 +554,68 @@ class Scratch3MusicBlocks {
                 Scratch3MusicBlocks.MIDI_NOTE_RANGE.min, Scratch3MusicBlocks.MIDI_NOTE_RANGE.max);
             let beats = Cast.toNumber(args.BEATS);
             beats = this._clampBeats(beats);
-            const musicState = this._getMusicState(util.target);
-            const inst = musicState.currentInstrument;
-            if (typeof this.runtime.audioEngine !== 'undefined') {
-                this.runtime.audioEngine.playNoteForBeatsWithInstAndVol(note, beats, inst, 100);
+            if (beats === 0) {
+                return;
             }
-            this._startStackTimer(util, this._beatsToSec(beats));
+            const durationSec = this._beatsToSec(beats);
+
+            this._playNote(util, note, durationSec);
+
+            this._startStackTimer(util, durationSec);
         } else {
             this._checkStackTimer(util);
         }
+    }
+
+    _playNote (util, note, duration) {
+        if (util.target.audioPlayer === null) return;
+        if (this._concurrencyCounter > Scratch3MusicBlocks.CONCURRENCY_LIMIT) {
+            return;
+        }
+
+        const musicState = this._getMusicState(util.target);
+        const inst = musicState.currentInstrument;
+        const instrumentInfo = this.INSTRUMENT_INFO[inst];
+        const sampleArray = instrumentInfo.samples;
+        const sampleIndex = this._selectSampleIndexForNote(note, sampleArray);
+        const sampleNote = sampleArray[sampleIndex];
+
+        const context = util.runtime.audioEngine.audioContext;
+        const bufferSource = context.createBufferSource();
+        bufferSource.buffer = this._instrumentBufferArrays[inst][sampleIndex];
+        bufferSource.playbackRate.value = this._ratioForPitchInterval(note - sampleNote);
+
+        const gainNode = context.createGain();
+        bufferSource.connect(gainNode);
+        const outputNode = util.target.audioPlayer.getInputNode();
+        gainNode.connect(outputNode);
+
+        bufferSource.start();
+
+        const releaseTime = this.INSTRUMENT_INFO[inst].releaseTime ? this.INSTRUMENT_INFO[inst].releaseTime : 0.01;
+        gainNode.gain.setValueAtTime(1, context.currentTime + duration);
+        gainNode.gain.linearRampToValueAtTime(0.0001, context.currentTime + duration + releaseTime);
+
+        bufferSource.stop(context.currentTime + duration + releaseTime);
+
+        this._concurrencyCounter++;
+        bufferSource.onended = () => {
+            this._concurrencyCounter--;
+        };
+    }
+
+    _selectSampleIndexForNote (note, samples) {
+        for (let i = samples.length - 1; i >= 0; i--) {
+            if (note >= samples[i]) {
+                return i;
+            }
+        }
+        return 0;
+    }
+
+    // Convert the musical interval in semitones to a frequency ratio
+    _ratioForPitchInterval (interval) {
+        return Math.pow(2, (interval / 12));
     }
 
     /**
