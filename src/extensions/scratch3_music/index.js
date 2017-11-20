@@ -684,10 +684,8 @@ class Scratch3MusicBlocks {
         const musicState = this._getMusicState(util.target);
         let instNum = Cast.toNumber(args.INSTRUMENT);
         instNum -= 1; // instruments are one-indexed
-        if (typeof this.runtime.audioEngine === 'undefined') return;
-        instNum = MathUtil.wrapClamp(instNum, 0, this.runtime.audioEngine.numInstruments - 1);
+        instNum = MathUtil.wrapClamp(instNum, 0, this.INSTRUMENT_INFO.length - 1);
         musicState.currentInstrument = instNum;
-        return this.runtime.audioEngine.instrumentPlayer.loadInstrument(musicState.currentInstrument);
     }
 
     /**
