@@ -26,11 +26,11 @@ class Scratch3MusicBlocks {
         this.tempo = 60;
 
         /**
-         * The number of drum sounds currently being played simultaneously.
+         * The number of drum or instrument sounds currently being played simultaneously.
          * @type {number}
          * @private
          */
-        this._drumConcurrencyCounter = 0;
+        this._concurrencyCounter = 0;
 
         /**
          * An array of audio buffers, one for each drum sound.
@@ -510,7 +510,7 @@ class Scratch3MusicBlocks {
      */
     _playDrumNum (util, drumNum) {
         if (util.target.audioPlayer === null) return;
-        if (this._drumConcurrencyCounter > Scratch3MusicBlocks.CONCURRENCY_LIMIT) {
+        if (this._concurrencyCounter > Scratch3MusicBlocks.CONCURRENCY_LIMIT) {
             return;
         }
         const outputNode = util.target.audioPlayer.getInputNode();
@@ -518,9 +518,9 @@ class Scratch3MusicBlocks {
         bufferSource.buffer = this._drumBuffers[drumNum];
         bufferSource.connect(outputNode);
         bufferSource.start();
-        this._drumConcurrencyCounter++;
+        this._concurrencyCounter++;
         bufferSource.onended = () => {
-            this._drumConcurrencyCounter--;
+            this._concurrencyCounter--;
         };
     }
 
