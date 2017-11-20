@@ -586,6 +586,7 @@ class Scratch3MusicBlocks {
      * @param {object} util - utility object provided by the runtime.
      * @param {number} note - the pitch of the note to play, interpreted as a MIDI note number.
      * @param {number} durationSec - the duration in seconds to play the note.
+     * @private
      */
     _playNote (util, note, durationSec) {
         if (util.runtime.audioEngine === null) return;
@@ -638,7 +639,18 @@ class Scratch3MusicBlocks {
         };
     }
 
+    /**
+     * The samples array for each instrument is the set of pitches of the available audio samples.
+     * This function selects the best one to use to play a given input note, and returns its index
+     * in the samples array.
+     * @param  {number} note - the input note to select a sample for.
+     * @param  {number[]} samples - an array of the pitches of the available samples.
+     * @return {index} the index of the selected sample in the samples array.
+     * @private
+     */
     _selectSampleIndexForNote (note, samples) {
+        // Step backwards through the array of samples, i.e. in descending pitch, in order to find
+        // the sample that is the closest one below (or matching) the pitch of the input note.
         for (let i = samples.length - 1; i >= 0; i--) {
             if (note >= samples[i]) {
                 return i;
@@ -647,7 +659,12 @@ class Scratch3MusicBlocks {
         return 0;
     }
 
-    // Convert the musical interval in semitones to a frequency ratio
+    /**
+     * Calcuate the frequency ratio for a given musical interval.
+     * @param  {number} interval - the pitch interval to convert.
+     * @return {number} a ratio corresponding to the input interval.
+     * @private
+     */
     _ratioForPitchInterval (interval) {
         return Math.pow(2, (interval / 12));
     }
@@ -712,7 +729,6 @@ class Scratch3MusicBlocks {
      * @param {object} args - the block arguments.
      * @param {object} util - utility object provided by the runtime.
      * @property {int} INSTRUMENT - the number of the instrument to select.
-     * @return {Promise} - a promise which will resolve once the instrument has loaded.
      */
     setInstrument (args, util) {
         const musicState = this._getMusicState(util.target);
