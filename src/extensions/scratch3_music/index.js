@@ -45,9 +45,7 @@ class Scratch3MusicBlocks {
     /**
      * Download and decode the full set of drum sounds, and store the audio buffers
      * in the drum buffers array.
-     * @TODO: Also load the instrument sounds here (rename this fn), and use Promise.all
-     * to detect that all the assets have loaded in order to update the extension status
-     * indicator.
+     * @TODO: Also load the instrument sounds here (rename this fn)
      */
     _loadAllDrumSounds () {
         const loadingPromises = [];
@@ -56,7 +54,7 @@ class Scratch3MusicBlocks {
             loadingPromises.push(promise);
         });
         Promise.all(loadingPromises).then(() => {
-            // done!
+            // @TODO: Update the extension status indicator.
         });
     }
 
