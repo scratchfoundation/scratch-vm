@@ -1,10 +1,9 @@
 const test = require('tap').test;
-const Music = require('../../src/blocks/scratch3_music');
+const Music = require('../../src/extensions/scratch3_music/index.js');
 let playedDrum;
 let playedInstrument;
 const runtime = {
     audioEngine: {
-        numDrums: 3,
         numInstruments: 3,
         instrumentPlayer: {
             loadInstrument: instrument => (playedInstrument = instrument)
@@ -12,13 +11,14 @@ const runtime = {
     }
 };
 const blocks = new Music(runtime);
+blocks._playDrumNum = (util, drum) => (playedDrum = drum);
+
 const util = {
+    stackFrame: Object.create(null),
     target: {
-        audioPlayer: {
-            playDrumForBeats: drum => (playedDrum = drum)
-        }
+        audioPlayer: null
     },
-    stackFrame: Object.create(null)
+    yield: () => null
 };
 
 test('playDrum uses 1-indexing and wrap clamps', t => {
@@ -26,7 +26,7 @@ test('playDrum uses 1-indexing and wrap clamps', t => {
     blocks.playDrumForBeats(args, util);
     t.strictEqual(playedDrum, 0);
 
-    args = {DRUM: runtime.audioEngine.numDrums + 1};
+    args = {DRUM: blocks.DRUM_INFO.length + 1};
     blocks.playDrumForBeats(args, util);
     t.strictEqual(playedDrum, 0);
 

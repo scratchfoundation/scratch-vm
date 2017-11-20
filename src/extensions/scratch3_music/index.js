@@ -1,62 +1,9 @@
-const ArgumentType = require('../extension-support/argument-type');
-const BlockType = require('../extension-support/block-type');
-const Clone = require('../util/clone');
-const Cast = require('../util/cast');
-const MathUtil = require('../util/math-util');
-const Timer = require('../util/timer');
-
-/**
- * An array of drum names, used in the play drum block.
- * @type {string[]}
- */
-const drumNames = [
-    'Snare Drum',
-    'Bass Drum',
-    'Side Stick',
-    'Crash Cymbal',
-    'Open Hi-Hat',
-    'Closed Hi-Hat',
-    'Tambourine',
-    'Hand Clap',
-    'Claves',
-    'Wood Block',
-    'Cowbell',
-    'Triangle',
-    'Bongo',
-    'Conga',
-    'Cabasa',
-    'Guiro',
-    'Vibraslap',
-    'Open Cuica'
-];
-
-/**
- * An array of instrument names, used in the set instrument block.
- * @type {string[]}
- */
-const instrumentNames = [
-    'Piano',
-    'Electric Piano',
-    'Organ',
-    'Guitar',
-    'Electric Guitar',
-    'Bass',
-    'Pizzicato',
-    'Cello',
-    'Trombone',
-    'Clarinet',
-    'Saxophone',
-    'Flute',
-    'Wooden Flute',
-    'Bassoon',
-    'Choir',
-    'Vibraphone',
-    'Music Box',
-    'Steel Drum',
-    'Marimba',
-    'Synth Lead',
-    'Synth Pad'
-];
+const ArgumentType = require('../../extension-support/argument-type');
+const BlockType = require('../../extension-support/block-type');
+const Clone = require('../../util/clone');
+const Cast = require('../../util/cast');
+const MathUtil = require('../../util/math-util');
+const Timer = require('../../util/timer');
 
 /**
  * Class for the music-related blocks in Scratch 3.0
@@ -78,27 +25,246 @@ class Scratch3MusicBlocks {
          */
         this.tempo = 60;
 
-        this.drumMenu = this._buildMenu(drumNames);
-        this.instrumentMenu = this._buildMenu(instrumentNames);
+        /**
+         * The number of drum sounds currently being played simultaneously.
+         * @type {number}
+         * @private
+         */
+        this._drumConcurrencyCounter = 0;
+
+        /**
+         * An array of audio buffers, one for each drum sound.
+         * @type {Array}
+         * @private
+         */
+        this._drumBuffers = [];
+
+        this._loadAllDrumSounds();
     }
 
     /**
-     * Build a menu using an array of strings.
-     * Used for creating the drum and instrument menus.
-     * @param  {string[]} names - An array of names.
-     * @return {array} - An array of objects with text and value properties, for constructing a block menu.
+     * Download and decode the full set of drum sounds, and store the audio buffers
+     * in the drum buffers array.
+     * @TODO: Also load the instrument sounds here (rename this fn)
+     */
+    _loadAllDrumSounds () {
+        const loadingPromises = [];
+        this.DRUM_INFO.forEach((drumInfo, index) => {
+            const promise = this._loadSound(drumInfo.fileName, index, this._drumBuffers);
+            loadingPromises.push(promise);
+        });
+        Promise.all(loadingPromises).then(() => {
+            // @TODO: Update the extension status indicator.
+        });
+    }
+
+    /**
+     * Download and decode a sound, and store the buffer in an array.
+     * @param {string} fileName - the audio file name.
+     * @param {number} index - the index at which to store the audio buffer.
+     * @param {array} bufferArray - the array of buffers in which to store it.
+     * @return {Promise} - a promise which will resolve once the sound has loaded.
+     */
+    _loadSound (fileName, index, bufferArray) {
+        if (!this.runtime.storage) return;
+        if (!this.runtime.audioEngine) return;
+        return this.runtime.storage.load(this.runtime.storage.AssetType.Sound, fileName, 'mp3')
+            .then(soundAsset =>
+                this.runtime.audioEngine.audioContext.decodeAudioData(soundAsset.data.buffer)
+            )
+            .then(buffer => {
+                bufferArray[index] = buffer;
+            });
+    }
+
+    /**
+     * Create data for a menu in scratch-blocks format, consisting of an array of objects with text and
+     * value properties. The text is a translated string, and the value is one-indexed.
+     * @param  {object[]} info - An array of info objects each having a name property.
+     * @return {array} - An array of objects with text and value properties.
      * @private
      */
-    _buildMenu (names) {
-        const menu = [];
-        for (let i = 0; i < names.length; i++) {
-            const entry = {};
-            const num = i + 1; // Menu numbers are one-indexed
-            entry.text = `(${num}) ${names[i]}`;
-            entry.value = String(num);
-            menu.push(entry);
-        }
-        return menu;
+    _buildMenu (info) {
+        return info.map((entry, index) => {
+            const obj = {};
+            obj.text = entry.name;
+            obj.value = index + 1;
+            return obj;
+        });
+    }
+
+    /**
+     * An array of translatable drum names and corresponding audio file names.
+     * @type {array}
+     */
+    get DRUM_INFO () {
+        return [
+            {
+                name: '(1) Snare Drum',
+                fileName: '1-snare'
+            },
+            {
+                name: '(2) Bass Drum',
+                fileName: '2-bass-drum'
+            },
+            {
+                name: '(3) Side Stick',
+                fileName: '3-side-stick'
+            },
+            {
+                name: '(4) Crash Cymbal',
+                fileName: '4-crash-cymbal'
+            },
+            {
+                name: '(5) Open Hi-Hat',
+                fileName: '5-open-hi-hat'
+            },
+            {
+                name: '(6) Closed Hi-Hat',
+                fileName: '6-closed-hi-hat'
+            },
+            {
+                name: '(7) Tambourine',
+                fileName: '7-tambourine'
+            },
+            {
+                name: '(8) Hand Clap',
+                fileName: '8-hand-clap'
+            },
+            {
+                name: '(9) Claves',
+                fileName: '9-claves'
+            },
+            {
+                name: '(10) Wood Block',
+                fileName: '10-wood-block'
+            },
+            {
+                name: '(11) Cowbell',
+                fileName: '11-cowbell'
+            },
+            {
+                name: '(12) Triangle',
+                fileName: '12-triangle'
+            },
+            {
+                name: '(13) Bongo',
+                fileName: '13-bongo'
+            },
+            {
+                name: '(14) Conga',
+                fileName: '14-conga'
+            },
+            {
+                name: '(15) Cabasa',
+                fileName: '15-cabasa'
+            },
+            {
+                name: '(16) Guiro',
+                fileName: '16-guiro'
+            },
+            {
+                name: '(17) Vibraslap',
+                fileName: '17-vibraslap'
+            },
+            {
+                name: '(18) Cuica',
+                fileName: '18-cuica'
+            }
+        ];
+    }
+
+    /**
+     * An array of translatable instrument names and corresponding audio file names.
+     * @type {array}
+     */
+    get INSTRUMENT_INFO () {
+        return [
+            {
+                name: '(1) Piano',
+                fileName: '1-piano'
+            },
+            {
+                name: '(2) Electric Piano',
+                fileName: '2-electric-piano'
+            },
+            {
+                name: '(3) Organ',
+                fileName: '3-organ'
+            },
+            {
+                name: '(4) Guitar',
+                fileName: '4-guitar'
+            },
+            {
+                name: '(5) Electric Guitar',
+                fileName: '5-electric-guitar'
+            },
+            {
+                name: '(6) Bass',
+                fileName: '6-bass'
+            },
+            {
+                name: '(7) Pizzicato',
+                fileName: '7-pizzicato'
+            },
+            {
+                name: '(8) Cello',
+                fileName: '8-cello'
+            },
+            {
+                name: '(9) Trombone',
+                fileName: '9-trombone'
+            },
+            {
+                name: '(10) Clarinet',
+                fileName: '10-clarinet'
+            },
+            {
+                name: '(11) Saxophone',
+                fileName: '11-saxophone'
+            },
+            {
+                name: '(12) Flute',
+                fileName: '12-flute'
+            },
+            {
+                name: '(13) Wooden Flute',
+                fileName: '13-wooden-flute'
+            },
+            {
+                name: '(14) Bassoon',
+                fileName: '14-bassoon'
+            },
+            {
+                name: '(15) Choir',
+                fileName: '15-choir'
+            },
+            {
+                name: '(16) Vibraphone',
+                fileName: '16-vibraphone'
+            },
+            {
+                name: '(17) Music Box',
+                fileName: '17-music-box'
+            },
+            {
+                name: '(18) Steel Drum',
+                fileName: '18-steel-drum'
+            },
+            {
+                name: '(19) Marimba',
+                fileName: '19-marimba'
+            },
+            {
+                name: '(20) Synth Lead',
+                fileName: '20-synth-lead'
+            },
+            {
+                name: '(21) Synth Pad',
+                fileName: '21-synth-pad'
+            }
+        ];
     }
 
     /**
@@ -141,6 +307,14 @@ class Scratch3MusicBlocks {
      */
     static get TEMPO_RANGE () {
         return {min: 20, max: 500};
+    }
+
+    /**
+     * The maximum number of sounds to allow to play simultaneously.
+     * @type {number}
+     */
+    static get CONCURRENCY_LIMIT () {
+        return 30;
     }
 
     /**
@@ -248,8 +422,8 @@ class Scratch3MusicBlocks {
                 }
             ],
             menus: {
-                drums: this.drumMenu,
-                instruments: this.instrumentMenu
+                drums: this._buildMenu(this.DRUM_INFO),
+                instruments: this._buildMenu(this.INSTRUMENT_INFO)
             }
         };
     }
@@ -264,18 +438,39 @@ class Scratch3MusicBlocks {
     playDrumForBeats (args, util) {
         if (this._stackTimerNeedsInit(util)) {
             let drum = Cast.toNumber(args.DRUM);
+            drum = Math.round(drum);
             drum -= 1; // drums are one-indexed
-            if (typeof this.runtime.audioEngine === 'undefined') return;
-            drum = MathUtil.wrapClamp(drum, 0, this.runtime.audioEngine.numDrums - 1);
+            drum = MathUtil.wrapClamp(drum, 0, this.DRUM_INFO.length - 1);
             let beats = Cast.toNumber(args.BEATS);
             beats = this._clampBeats(beats);
-            if (util.target.audioPlayer !== null) {
-                util.target.audioPlayer.playDrumForBeats(drum, beats);
-            }
+            this._playDrumNum(util, drum);
             this._startStackTimer(util, this._beatsToSec(beats));
         } else {
             this._checkStackTimer(util);
         }
+    }
+
+    /**
+     * Play a drum sound using its 0-indexed number.
+     * @param {object} util - utility object provided by the runtime.
+     * @param  {number} drumNum - the number of the drum to play.
+     * @private
+     */
+    _playDrumNum (util, drumNum) {
+        if (util.target.audioPlayer === null) return;
+        // If we're playing too many sounds, do not play the drum sound.
+        if (this._drumConcurrencyCounter > Scratch3MusicBlocks.CONCURRENCY_LIMIT) {
+            return;
+        }
+        const outputNode = util.target.audioPlayer.getInputNode();
+        const bufferSource = this.runtime.audioEngine.audioContext.createBufferSource();
+        bufferSource.buffer = this._drumBuffers[drumNum];
+        bufferSource.connect(outputNode);
+        bufferSource.start();
+        this._drumConcurrencyCounter++;
+        bufferSource.onended = () => {
+            this._drumConcurrencyCounter--;
+        };
     }
 
     /**
@@ -359,9 +554,7 @@ class Scratch3MusicBlocks {
         util.stackFrame.timer = new Timer();
         util.stackFrame.timer.start();
         util.stackFrame.duration = duration;
-        if (util.stackFrame.duration > 0) {
-            util.yield();
-        }
+        util.yield();
     }
 
     /**
