@@ -17,7 +17,7 @@ class Clock {
         if (this._paused) {
             return this._pausedTime / 1000;
         }
-        return this._projectTimer.timeElapsed() / 1000;
+        return parseFloat((this._projectTimer.timeElapsed() / 1000).toFixed(1));
     }
 
     pause () {
