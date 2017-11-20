@@ -39,22 +39,36 @@ class Scratch3MusicBlocks {
          */
         this._drumBuffers = [];
 
-        this._loadAllDrumSounds();
+        /**
+         * An array of arrays of audio buffers. Each instrument has one or more audio buffers.
+         * @type {Array[]}
+         * @private
+         */
+        this._instrumentBufferArrays = [];
+
+        this._loadAllSounds();
     }
 
     /**
      * Download and decode the full set of drum sounds, and store the audio buffers
      * in the drum buffers array.
-     * @TODO: Also load the instrument sounds here (rename this fn), and use Promise.all
-     * to detect that all the assets have loaded in order to update the extension status
-     * indicator.
+     * @TODO: Use Promise.all to detect that all the assets have loaded in order to update
+     * the extension status indicator.
      */
-    _loadAllDrumSounds () {
+    _loadAllSounds () {
         const loadingPromises = [];
         this.DRUM_INFO.forEach((drumInfo, index) => {
             const fileName = `drums/${drumInfo.fileName}`;
             const promise = this._loadSound(fileName, index, this._drumBuffers);
             loadingPromises.push(promise);
+        });
+        this.INSTRUMENT_INFO.forEach((instrumentInfo, index) => {
+            this._instrumentBufferArrays[index] = [];
+            instrumentInfo.samples.forEach((sample, noteIndex) => {
+                const fileName = `instruments/${instrumentInfo.dirName}/${sample}`;
+                const promise = this._loadSound(fileName, noteIndex, this._instrumentBufferArrays[index]);
+                loadingPromises.push(promise);
+            });
         });
         Promise.all(loadingPromises).then(() => {
             // done!
@@ -178,94 +192,129 @@ class Scratch3MusicBlocks {
     }
 
     /**
-     * An array of translatable instrument names and corresponding audio file names.
+     * An array of translatable instrument names and metadata.
      * @type {array}
      */
     get INSTRUMENT_INFO () {
         return [
             {
                 name: '(1) Piano',
-                fileName: '1-piano'
+                dirName: '1-piano',
+                releaseTime: 0.5,
+                samples: [24, 36, 48, 60, 72, 84, 96, 108]
             },
             {
                 name: '(2) Electric Piano',
-                fileName: '2-electric-piano'
+                dirName: '2-electric-piano',
+                releaseTime: 0.5,
+                samples: [60]
             },
             {
                 name: '(3) Organ',
-                fileName: '3-organ'
+                dirName: '3-organ',
+                releaseTime: 0.5,
+                samples: [60]
             },
             {
                 name: '(4) Guitar',
-                fileName: '4-guitar'
+                dirName: '4-guitar',
+                releaseTime: 0.5,
+                samples: [60]
             },
             {
                 name: '(5) Electric Guitar',
-                fileName: '5-electric-guitar'
+                dirName: '5-electric-guitar',
+                releaseTime: 0.5,
+                samples: [60]
             },
             {
                 name: '(6) Bass',
-                fileName: '6-bass'
+                dirName: '6-bass',
+                releaseTime: 0.25,
+                samples: [36, 48]
             },
             {
                 name: '(7) Pizzicato',
-                fileName: '7-pizzicato'
+                dirName: '7-pizzicato',
+                releaseTime: 0.25,
+                samples: [60]
             },
             {
                 name: '(8) Cello',
-                fileName: '8-cello'
+                dirName: '8-cello',
+                releaseTime: 0.1,
+                samples: [36, 48, 60]
             },
             {
                 name: '(9) Trombone',
-                fileName: '9-trombone'
+                dirName: '9-trombone',
+                samples: [36, 48, 60]
             },
             {
                 name: '(10) Clarinet',
-                fileName: '10-clarinet'
+                dirName: '10-clarinet',
+                samples: [48, 60]
             },
             {
                 name: '(11) Saxophone',
-                fileName: '11-saxophone'
+                dirName: '11-saxophone',
+                samples: [36, 60, 84]
             },
             {
                 name: '(12) Flute',
-                fileName: '12-flute'
+                dirName: '12-flute',
+                samples: [60, 72]
             },
             {
                 name: '(13) Wooden Flute',
-                fileName: '13-wooden-flute'
+                dirName: '13-wooden-flute',
+                samples: [60, 72]
             },
             {
                 name: '(14) Bassoon',
-                fileName: '14-bassoon'
+                dirName: '14-bassoon',
+                samples: [36, 48, 60]
             },
             {
                 name: '(15) Choir',
-                fileName: '15-choir'
+                dirName: '15-choir',
+                releaseTime: 0.25,
+                samples: [48, 60, 72]
             },
             {
                 name: '(16) Vibraphone',
-                fileName: '16-vibraphone'
+                dirName: '16-vibraphone',
+                releaseTime: 0.5,
+                samples: [60, 72]
             },
             {
                 name: '(17) Music Box',
-                fileName: '17-music-box'
+                dirName: '17-music-box',
+                releaseTime: 0.25,
+                samples: [60]
             },
             {
                 name: '(18) Steel Drum',
-                fileName: '18-steel-drum'
+                dirName: '18-steel-drum',
+                releaseTime: 0.5,
+                samples: [60]
             },
             {
                 name: '(19) Marimba',
-                fileName: '19-marimba'
+                dirName: '19-marimba',
+                samples: [60]
             },
             {
                 name: '(20) Synth Lead',
-                fileName: '20-synth-lead'
+                dirName: '20-synth-lead',
+                releaseTime: 0.1,
+                samples: [60]
             },
             {
                 name: '(21) Synth Pad',
-                fileName: '21-synth-pad'
+                dirName: '21-synth-pad',
+                releaseTime: 0.25,
+                samples: [60]
             }
         ];
     }
