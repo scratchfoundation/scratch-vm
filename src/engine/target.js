@@ -2,7 +2,6 @@ const EventEmitter = require('events');
 
 const Blocks = require('./blocks');
 const Variable = require('../engine/variable');
-const List = require('../engine/list');
 const uid = require('../util/uid');
 const {Map} = require('immutable');
 
@@ -88,7 +87,7 @@ class Target extends EventEmitter {
         const variable = this.lookupVariableById(id);
         if (variable) return variable;
         // No variable with this name exists - create it locally.
-        const newVariable = new Variable(id, name, 0, false);
+        const newVariable = new Variable(id, name, Variable.SCALAR_TYPE, false);
         this.variables[id] = newVariable;
         return newVariable;
     }
@@ -117,24 +116,16 @@ class Target extends EventEmitter {
     /**
     * Look up a list object for this target, and create it if one doesn't exist.
     * Search begins for local lists; then look for globals.
+    * @param {!string} id Id of the list.
     * @param {!string} name Name of the list.
     * @return {!List} List object.
      */
-    lookupOrCreateList (name) {
-        // If we have a local copy, return it.
-        if (this.lists.hasOwnProperty(name)) {
-            return this.lists[name];
-        }
-        // If the stage has a global copy, return it.
-        if (this.runtime && !this.isStage) {
-            const stage = this.runtime.getTargetForStage();
-            if (stage.lists.hasOwnProperty(name)) {
-                return stage.lists[name];
-            }
-        }
-        // No list with this name exists - create it locally.
-        const newList = new List(name, []);
-        this.lists[name] = newList;
+    lookupOrCreateList (id, name) {
+        const list = this.lookupVariableById(id);
+        if (list) return list;
+        // No variable with this name exists - create it locally.
+        const newList = new Variable(id, name, Variable.LIST_TYPE, false);
+        this.variables[id] = newList;
         return newList;
     }
 
@@ -143,11 +134,11 @@ class Target extends EventEmitter {
      * dictionary of variables.
      * @param {string} id Id of variable
      * @param {string} name Name of variable.
+     * @param {string} type Type of variable, '' or 'list'
      */
-    createVariable (id, name) {
+    createVariable (id, name, type) {
         if (!this.variables.hasOwnProperty(id)) {
-            const newVariable = new Variable(id, name, 0,
-                false);
+            const newVariable = new Variable(id, name, type, false);
             this.variables[id] = newVariable;
         }
     }
@@ -189,6 +180,7 @@ class Target extends EventEmitter {
         if (this.variables.hasOwnProperty(id)) {
             delete this.variables[id];
             if (this.runtime) {
+                this.runtime.monitorBlocks.deleteBlock(id);
                 this.runtime.requestRemoveMonitor(id);
             }
         }

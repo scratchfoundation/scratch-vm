@@ -13,7 +13,6 @@ const log = require('../util/log');
 const uid = require('../util/uid');
 const specMap = require('./sb2_specmap');
 const Variable = require('../engine/variable');
-const List = require('../engine/list');
 
 const {loadCostume} = require('../import/load-costume.js');
 const {loadSound} = require('../import/load-sound.js');
@@ -235,9 +234,10 @@ const parseScratchObject = function (object, runtime, extensions, topLevel) {
             const newVariable = new Variable(
                 getVariableId(variable.name),
                 variable.name,
-                variable.value,
+                Variable.SCALAR_TYPE,
                 variable.isPersistent
             );
+            newVariable.value = variable.value;
             target.variables[newVariable.id] = newVariable;
         }
     }
@@ -251,10 +251,14 @@ const parseScratchObject = function (object, runtime, extensions, topLevel) {
         for (let k = 0; k < object.lists.length; k++) {
             const list = object.lists[k];
             // @todo: monitor properties.
-            target.lists[list.listName] = new List(
+            const newVariable = new Variable(
+                getVariableId(list.listName),
                 list.listName,
-                list.contents
+                Variable.LIST_TYPE,
+                false
             );
+            newVariable.value = list.contents;
+            target.variables[newVariable.id] = newVariable;
         }
     }
     if (object.hasOwnProperty('scratchX')) {
@@ -486,9 +490,13 @@ const parseBlock = function (sb2block, getVariableId, extensions) {
                 value: providedArg
             };
 
-            if (expectedArg.fieldName === 'VARIABLE') {
+            if (expectedArg.fieldName === 'VARIABLE' || expectedArg.fieldName === 'LIST') {
                 // Add `id` property to variable fields
                 activeBlock.fields[expectedArg.fieldName].id = getVariableId(providedArg);
+            }
+            const varType = expectedArg.variableType;
+            if (typeof varType === 'string') {
+                activeBlock.fields[expectedArg.fieldName].variableType = varType;
             }
         }
     }
@@ -518,7 +526,7 @@ const parseBlock = function (sb2block, getVariableId, extensions) {
         };
         activeBlock.children = [{
             id: inputUid,
-            opcode: 'procedures_callnoreturn_internal',
+            opcode: 'procedures_prototype',
             inputs: {},
             fields: {},
             next: null,
@@ -544,13 +552,15 @@ const parseBlock = function (sb2block, getVariableId, extensions) {
             argumentids: JSON.stringify(parseProcedureArgIds(sb2block[1]))
         };
     } else if (oldOpcode === 'getParam') {
-        // Mutation for procedure parameter.
-        activeBlock.mutation = {
-            tagName: 'mutation',
-            children: [],
-            paramname: sb2block[1], // Name of parameter.
-            shape: sb2block[2] // Shape - in 2.0, 'r' or 'b'.
-        };
+        // Assign correct opcode based on the block shape.
+        switch (sb2block[2]) {
+        case 'r':
+            activeBlock.opcode = 'argument_reporter_string_number';
+            break;
+        case 'b':
+            activeBlock.opcode = 'argument_reporter_boolean';
+            break;
+        }
     }
     return activeBlock;
 };

@@ -188,8 +188,7 @@ class Blocks {
         for (const id in this._blocks) {
             if (!this._blocks.hasOwnProperty(id)) continue;
             const block = this._blocks[id];
-            if (block.opcode === 'procedures_defnoreturn' ||
-                block.opcode === 'procedures_defreturn') {
+            if (block.opcode === 'procedures_definition') {
                 const internal = this._getCustomBlockInternal(block);
                 if (internal && internal.mutation.proccode === name) {
                     this._cache.procedureDefinitions[name] = id; // The outer define block id
@@ -216,7 +215,7 @@ class Blocks {
         for (const id in this._blocks) {
             if (!this._blocks.hasOwnProperty(id)) continue;
             const block = this._blocks[id];
-            if (block.opcode === 'procedures_callnoreturn_internal' &&
+            if (block.opcode === 'procedures_prototype' &&
                 block.mutation.proccode === name) {
                 const paramNames = JSON.parse(block.mutation.argumentnames);
                 this._cache.procedureParamNames[name] = paramNames;
@@ -298,9 +297,7 @@ class Blocks {
             if (optRuntime && this._blocks[e.blockId].topLevel) {
                 optRuntime.quietGlow(e.blockId);
             }
-            this.deleteBlock({
-                id: e.blockId
-            });
+            this.deleteBlock(e.blockId);
             break;
         case 'var_create':
             // New variables being created by the user are all global.
@@ -308,7 +305,7 @@ class Blocks {
             // If not, create it on the stage.
             // TODO create global and local variables when UI provides a way.
             if (!optRuntime.getEditingTarget().lookupVariableById(e.varId)) {
-                stage.createVariable(e.varId, e.varName);
+                stage.createVariable(e.varId, e.varName, e.varType);
             }
             break;
         case 'var_rename':
@@ -368,7 +365,7 @@ class Blocks {
         case 'field':
             // Update block value
             if (!block.fields[args.name]) return;
-            if (args.name === 'VARIABLE') {
+            if (args.name === 'VARIABLE' || args.name === 'LIST') {
                 // Get variable name using the id in args.value.
                 const variable = optRuntime.getEditingTarget().lookupVariableById(args.value);
                 if (variable) {
@@ -474,38 +471,43 @@ class Blocks {
     }
 
     /**
-     * Block management: delete blocks and their associated scripts.
-     * @param {!object} e Blockly delete event to be processed.
+     * Block management: delete blocks and their associated scripts. Does nothing if a block
+     * with the given ID does not exist.
+     * @param {!string} blockId Id of block to delete
      */
-    deleteBlock (e) {
+    deleteBlock (blockId) {
         // @todo In runtime, stop threads running on this script.
 
         // Get block
-        const block = this._blocks[e.id];
+        const block = this._blocks[blockId];
+        if (!block) {
+            // No block with the given ID exists
+            return;
+        }
 
         // Delete children
         if (block.next !== null) {
-            this.deleteBlock({id: block.next});
+            this.deleteBlock(block.next);
         }
 
         // Delete inputs (including branches)
         for (const input in block.inputs) {
             // If it's null, the block in this input moved away.
             if (block.inputs[input].block !== null) {
-                this.deleteBlock({id: block.inputs[input].block});
+                this.deleteBlock(block.inputs[input].block);
             }
             // Delete obscured shadow blocks.
             if (block.inputs[input].shadow !== null &&
                 block.inputs[input].shadow !== block.inputs[input].block) {
-                this.deleteBlock({id: block.inputs[input].shadow});
+                this.deleteBlock(block.inputs[input].shadow);
             }
         }
 
         // Delete any script starting with this block.
-        this._deleteScript(e.id);
+        this._deleteScript(blockId);
 
         // Delete block itself.
-        delete this._blocks[e.id];
+        delete this._blocks[blockId];
 
         this.resetCache();
     }
@@ -562,11 +564,20 @@ class Blocks {
         for (const field in block.fields) {
             if (!block.fields.hasOwnProperty(field)) continue;
             const blockField = block.fields[field];
+            xmlString += `<field name="${blockField.name}"`;
+            const fieldId = blockField.id;
+            if (fieldId) {
+                xmlString += ` id="${fieldId}"`;
+            }
+            const varType = blockField.variableType;
+            if (typeof varType === 'string') {
+                xmlString += ` variabletype="${varType}"`;
+            }
             let value = blockField.value;
             if (typeof value === 'string') {
                 value = xmlEscape(blockField.value);
             }
-            xmlString += `<field name="${blockField.name}">${value}</field>`;
+            xmlString += `>${value}</field>`;
         }
         // Add blocks connected to the next connection.
         if (block.next) {
