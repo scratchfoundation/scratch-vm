@@ -75,6 +75,10 @@ const domToBlock = function (blockDOM, blocks, isTopBlock, parent) {
                 id: fieldId,
                 value: fieldData
             };
+            const fieldVarType = xmlChild.attribs.variabletype;
+            if (typeof fieldVarType === 'string') {
+                block.fields[fieldName].variableType = fieldVarType;
+            }
             break;
         }
         case 'value':
@@ -156,7 +160,7 @@ const adapter = function (e) {
     if (typeof e !== 'object') return;
     if (typeof e.xml !== 'object') return;
 
-    return domToBlocks(html.parseDOM(e.xml.outerHTML));
+    return domToBlocks(html.parseDOM(e.xml.outerHTML, {decodeEntities: true}));
 };
 
 module.exports = adapter;

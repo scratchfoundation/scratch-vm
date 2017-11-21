@@ -71,6 +71,7 @@ class Sprite {
      * @param {!RenderedTarget} clone - the clone to be removed.
      */
     removeClone (clone) {
+        this.runtime.fireTargetWasRemoved(clone);
         const cloneIndex = this.clones.indexOf(clone);
         if (cloneIndex >= 0) {
             this.clones.splice(cloneIndex, 1);

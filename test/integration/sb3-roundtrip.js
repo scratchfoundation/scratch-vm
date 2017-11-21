@@ -103,7 +103,7 @@ test('sb3-roundtrip', t => {
         return sb3.deserialize(serializedState, runtime2);
     });
 
-    return serializeAndDeserialize.then(targets => {
+    return serializeAndDeserialize.then(({targets}) => {
         runtime2.targets = targets;
         testRuntimeState('copy', runtime2);
     });

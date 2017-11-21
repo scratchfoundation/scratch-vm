@@ -20,12 +20,12 @@ const base = {
             }
         }]
     },
-    plugins: [
+    plugins: process.env.NODE_ENV === 'production' ? [
         new webpack.optimize.UglifyJsPlugin({
             include: /\.min\.js$/,
             minimize: true
         })
-    ]
+    ] : []
 };
 
 module.exports = [
@@ -60,7 +60,13 @@ module.exports = [
             libraryTarget: 'commonjs2',
             path: path.resolve(__dirname, 'dist/node'),
             filename: '[name].js'
-        }
+        },
+        plugins: base.plugins.concat([
+            new CopyWebpackPlugin([{
+                from: './src/extensions/scratch3_music/assets',
+                to: 'assets/scratch3_music'
+            }])
+        ])
     }),
     // Playground
     defaultsDeep({}, base, {
@@ -77,9 +83,7 @@ module.exports = [
                 // Audio
                 'scratch-audio',
                 // Renderer
-                'scratch-render',
-                // Storage
-                'scratch-storage'
+                'scratch-render'
             ]
         },
         output: {
@@ -111,10 +115,6 @@ module.exports = [
                 {
                     test: require.resolve('scratch-render'),
                     loader: 'expose-loader?RenderWebGL'
-                },
-                {
-                    test: require.resolve('scratch-storage'),
-                    loader: 'expose-loader?Scratch.Storage'
                 }
             ])
         },
@@ -124,6 +124,8 @@ module.exports = [
                 to: 'media'
             }, {
                 from: 'node_modules/highlightjs/styles/zenburn.css'
+            }, {
+                from: 'node_modules/scratch-storage/dist/web'
             }, {
                 from: 'src/playground'
             }])

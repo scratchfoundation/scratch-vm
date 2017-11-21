@@ -92,6 +92,16 @@ class SharedDispatch {
     }
 
     /**
+     * Check if a particular service lives on another worker.
+     * @param {string} service - the service to check.
+     * @returns {boolean} - true if the service is remote (calls must cross a Worker boundary), false otherwise.
+     * @private
+     */
+    _isRemoteService (service) {
+        return this._getServiceProvider(service).isRemote;
+    }
+
+    /**
      * Like {@link call}, but force the call to be posted through a particular communication channel.
      * @param {object} provider - send the call through this object's `postMessage` function.
      * @param {string} service - the name of the service.

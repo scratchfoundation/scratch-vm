@@ -20,7 +20,7 @@ test('default', t => {
 
     // Create runtime instance & load SB2 into it
     const rt = new Runtime();
-    sb2.deserialize(json, rt).then(targets => {
+    sb2.deserialize(json, rt).then(({targets}) => {
         // Test
         t.type(file, 'string');
         t.type(json, 'object');
@@ -60,7 +60,7 @@ test('data scoping', t => {
 
     // Create runtime instance & load SB2 into it
     const rt = new Runtime();
-    sb2.deserialize(json, rt).then(targets => {
+    sb2.deserialize(json, rt).then(({targets}) => {
         const globalVariableIds = Object.keys(targets[0].variables);
         const localVariableIds = Object.keys(targets[1].variables);
         t.equal(targets[0].variables[globalVariableIds[0]].name, 'foo');

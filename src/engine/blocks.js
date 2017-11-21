@@ -25,6 +25,30 @@ class Blocks {
          * @type {Array.<String>}
          */
         this._scripts = [];
+
+        /**
+         * Runtime Cache
+         * @type {{inputs: {}, procedureParamNames: {}, procedureDefinitions: {}}}
+         * @private
+         */
+        this._cache = {
+            /**
+             * Cache block inputs by block id
+             * @type {object.<string, !Array.<object>>}
+             */
+            inputs: {},
+            /**
+             * Cache procedure Param Names by block id
+             * @type {object.<string, ?Array.<string>>}
+             */
+            procedureParamNames: {},
+            /**
+             * Cache procedure definitions by block id
+             * @type {object.<string, ?string>}
+             */
+            procedureDefinitions: {}
+        };
+
     }
 
     /**
@@ -105,11 +129,16 @@ class Blocks {
     /**
      * Get all non-branch inputs for a block.
      * @param {?object} block the block to query.
-     * @return {!object} All non-branch inputs and their associated blocks.
+     * @return {?Array.<object>} All non-branch inputs and their associated blocks.
      */
     getInputs (block) {
         if (typeof block === 'undefined') return null;
-        const inputs = {};
+        let inputs = this._cache.inputs[block.id];
+        if (typeof inputs !== 'undefined') {
+            return inputs;
+        }
+
+        inputs = {};
         for (const input in block.inputs) {
             // Ignore blocks prefixed with branch prefix.
             if (input.substring(0, Blocks.BRANCH_INPUT_PREFIX.length) !==
@@ -117,6 +146,8 @@ class Blocks {
                 inputs[input] = block.inputs[input];
             }
         }
+
+        this._cache.inputs[block.id] = inputs;
         return inputs;
     }
 
@@ -149,33 +180,50 @@ class Blocks {
      * @return {?string} ID of procedure definition.
      */
     getProcedureDefinition (name) {
+        const blockID = this._cache.procedureDefinitions[name];
+        if (typeof blockID !== 'undefined') {
+            return blockID;
+        }
+
         for (const id in this._blocks) {
             if (!this._blocks.hasOwnProperty(id)) continue;
             const block = this._blocks[id];
-            if ((block.opcode === 'procedures_defnoreturn' ||
-                block.opcode === 'procedures_defreturn') &&
-                block.mutation.proccode === name) {
-                return id;
+            if (block.opcode === 'procedures_definition') {
+                const internal = this._getCustomBlockInternal(block);
+                if (internal && internal.mutation.proccode === name) {
+                    this._cache.procedureDefinitions[name] = id; // The outer define block id
+                    return id;
+                }
             }
         }
+
+        this._cache.procedureDefinitions[name] = null;
         return null;
     }
 
     /**
-     * Get the procedure definition for a given name.
+     * Get names of parameters for the given procedure.
      * @param {?string} name Name of procedure to query.
-     * @return {?string} ID of procedure definition.
+     * @return {?Array.<string>} List of param names for a procedure.
      */
     getProcedureParamNames (name) {
+        const cachedNames = this._cache.procedureParamNames[name];
+        if (typeof cachedNames !== 'undefined') {
+            return cachedNames;
+        }
+
         for (const id in this._blocks) {
             if (!this._blocks.hasOwnProperty(id)) continue;
             const block = this._blocks[id];
-            if ((block.opcode === 'procedures_defnoreturn' ||
-                block.opcode === 'procedures_defreturn') &&
+            if (block.opcode === 'procedures_prototype' &&
                 block.mutation.proccode === name) {
-                return JSON.parse(block.mutation.argumentnames);
+                const paramNames = JSON.parse(block.mutation.argumentnames);
+                this._cache.procedureParamNames[name] = paramNames;
+                return paramNames;
             }
         }
+
+        this._cache.procedureParamNames[name] = null;
         return null;
     }
 
@@ -249,12 +297,16 @@ class Blocks {
             if (optRuntime && this._blocks[e.blockId].topLevel) {
                 optRuntime.quietGlow(e.blockId);
             }
-            this.deleteBlock({
-                id: e.blockId
-            });
+            this.deleteBlock(e.blockId);
             break;
         case 'var_create':
-            stage.createVariable(e.varId, e.varName);
+            // New variables being created by the user are all global.
+            // Check if this variable exists on the current target or stage.
+            // If not, create it on the stage.
+            // TODO create global and local variables when UI provides a way.
+            if (!optRuntime.getEditingTarget().lookupVariableById(e.varId)) {
+                stage.createVariable(e.varId, e.varName, e.varType);
+            }
             break;
         case 'var_rename':
             stage.renameVariable(e.varId, e.newName);
@@ -266,6 +318,15 @@ class Blocks {
     }
 
     // ---------------------------------------------------------------------
+
+    /**
+     * Reset all runtime caches.
+     */
+    resetCache () {
+        this._cache.inputs = {};
+        this._cache.procedureParamNames = {};
+        this._cache.procedureDefinitions = {};
+    }
 
     /**
      * Block management: create blocks and scripts from a `create` event
@@ -285,6 +346,8 @@ class Blocks {
         if (block.topLevel) {
             this._addScript(block.id);
         }
+
+        this.resetCache();
     }
 
     /**
@@ -297,13 +360,12 @@ class Blocks {
         if (['field', 'mutation', 'checkbox'].indexOf(args.element) === -1) return;
         const block = this._blocks[args.id];
         if (typeof block === 'undefined') return;
-
         const wasMonitored = block.isMonitored;
         switch (args.element) {
         case 'field':
             // Update block value
             if (!block.fields[args.name]) return;
-            if (args.name === 'VARIABLE') {
+            if (args.name === 'VARIABLE' || args.name === 'LIST') {
                 // Get variable name using the id in args.value.
                 const variable = optRuntime.getEditingTarget().lookupVariableById(args.value);
                 if (variable) {
@@ -333,6 +395,8 @@ class Blocks {
             }
             break;
         }
+
+        this.resetCache();
     }
 
     /**
@@ -389,6 +453,7 @@ class Blocks {
             }
             this._blocks[e.id].parent = e.newParent;
         }
+        this.resetCache();
     }
 
 
@@ -406,38 +471,45 @@ class Blocks {
     }
 
     /**
-     * Block management: delete blocks and their associated scripts.
-     * @param {!object} e Blockly delete event to be processed.
+     * Block management: delete blocks and their associated scripts. Does nothing if a block
+     * with the given ID does not exist.
+     * @param {!string} blockId Id of block to delete
      */
-    deleteBlock (e) {
+    deleteBlock (blockId) {
         // @todo In runtime, stop threads running on this script.
 
         // Get block
-        const block = this._blocks[e.id];
+        const block = this._blocks[blockId];
+        if (!block) {
+            // No block with the given ID exists
+            return;
+        }
 
         // Delete children
         if (block.next !== null) {
-            this.deleteBlock({id: block.next});
+            this.deleteBlock(block.next);
         }
 
         // Delete inputs (including branches)
         for (const input in block.inputs) {
             // If it's null, the block in this input moved away.
             if (block.inputs[input].block !== null) {
-                this.deleteBlock({id: block.inputs[input].block});
+                this.deleteBlock(block.inputs[input].block);
             }
             // Delete obscured shadow blocks.
             if (block.inputs[input].shadow !== null &&
                 block.inputs[input].shadow !== block.inputs[input].block) {
-                this.deleteBlock({id: block.inputs[input].shadow});
+                this.deleteBlock(block.inputs[input].shadow);
             }
         }
 
         // Delete any script starting with this block.
-        this._deleteScript(e.id);
+        this._deleteScript(blockId);
 
         // Delete block itself.
-        delete this._blocks[e.id];
+        delete this._blocks[blockId];
+
+        this.resetCache();
     }
 
     // ---------------------------------------------------------------------
@@ -492,11 +564,20 @@ class Blocks {
         for (const field in block.fields) {
             if (!block.fields.hasOwnProperty(field)) continue;
             const blockField = block.fields[field];
+            xmlString += `<field name="${blockField.name}"`;
+            const fieldId = blockField.id;
+            if (fieldId) {
+                xmlString += ` id="${fieldId}"`;
+            }
+            const varType = blockField.variableType;
+            if (typeof varType === 'string') {
+                xmlString += ` variabletype="${varType}"`;
+            }
             let value = blockField.value;
             if (typeof value === 'string') {
                 value = xmlEscape(blockField.value);
             }
-            xmlString += `<field name="${blockField.name}">${value}</field>`;
+            xmlString += `>${value}</field>`;
         }
         // Add blocks connected to the next connection.
         if (block.next) {
@@ -545,6 +626,17 @@ class Blocks {
             }
         }
         return params;
+    }
+
+    /**
+     * Helper to get the corresponding internal procedure definition block
+     * @param {!object} defineBlock Outer define block.
+     * @return {!object} internal definition block which has the mutation.
+     */
+    _getCustomBlockInternal (defineBlock) {
+        if (defineBlock.inputs && defineBlock.inputs.custom_block) {
+            return this._blocks[defineBlock.inputs.custom_block.block];
+        }
     }
 
     /**

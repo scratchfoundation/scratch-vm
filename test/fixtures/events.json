@@ -60,6 +60,12 @@
             "outerHTML":  "<block type='operator_equals' id='l^H_{8[DDyDW?m)HIt@b' x='100' y='362'><value name='OPERAND1'><shadow type='text' id='Ud@4y]bc./]uv~te?brb'><field name='TEXT'></field></shadow></value><value name='OPERAND2'><shadow type='text' id='p8[y..,[K;~G,k7]N;08'><field name='TEXT'></field></shadow></value></block>"
         }
     },
+    "createvariablewithentity": {
+        "name": "block",
+        "xml": {
+            "outerHTML":  "<block type='data_variable' id='/b?}ZGt/N5FmS2yw5GHZ' x='0' y='0'><field name='VARIABLE' id='k-q!YMpHim*lrSX)v(8t' variabletype=''>this &amp; that</field></block>"
+        }
+    },
     "createobscuredshadow": {
         "name": "block",
         "xml": {
