@@ -365,7 +365,8 @@ class Blocks {
         case 'field':
             // Update block value
             if (!block.fields[args.name]) return;
-            if (args.name === 'VARIABLE' || args.name === 'LIST') {
+            if (args.name === 'VARIABLE' || args.name === 'LIST' ||
+                args.name === 'BROADCAST_OPTION') {
                 // Get variable name using the id in args.value.
                 const variable = optRuntime.getEditingTarget().lookupVariableById(args.value);
                 if (variable) {

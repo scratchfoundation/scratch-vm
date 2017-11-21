@@ -25,6 +25,9 @@ class Variable {
         case Variable.LIST_TYPE:
             this.value = [];
             break;
+        case Variable.BROADCAST_MESSAGE_TYPE:
+            this.value = this.name;
+            break;
         default:
             throw new Error(`Invalid variable type: ${this.type}`);
         }
@@ -50,6 +53,14 @@ class Variable {
      */
     static get LIST_TYPE () {
         return 'list';
+    }
+
+    /**
+     * Type representation for list variables.
+     * @const {string}
+     */
+    static get BROADCAST_MESSAGE_TYPE () {
+        return 'broadcast_msg';
     }
 }
 

@@ -93,6 +93,23 @@ class Target extends EventEmitter {
     }
 
     /**
+     * Look up a broadcast message object, and create it if one doesn't exist.
+     * @param {string} id Id of the variable.
+     * @param {string} name Name of the variable.
+     * @return {!Variable} Variable object.
+     */
+    lookupOrCreateBroadcastMsg (id, name) {
+        debugger;
+        const broadcastMsg = this.lookupVariableById(id);
+        if (broadcastMsg) return broadcastMsg;
+        // No variable with this name exists - create it locally.
+        const newBroadcastMsg = new Variable(id, name,
+            Variable.BROADCAST_MESSAGE_TYPE, false);
+        this.variables[id] = newBroadcastMsg;
+        return newBroadcastMsg;
+    }
+
+    /**
      * Look up a variable object.
      * Search begins for local variables; then look for globals.
      * @param {string} id Id of the variable.
@@ -134,7 +151,7 @@ class Target extends EventEmitter {
      * dictionary of variables.
      * @param {string} id Id of variable
      * @param {string} name Name of variable.
-     * @param {string} type Type of variable, '' or 'list'
+     * @param {string} type Type of variable, '', 'broadcast_msg', or 'list'
      */
     createVariable (id, name, type) {
         if (!this.variables.hasOwnProperty(id)) {

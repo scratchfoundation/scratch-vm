@@ -171,6 +171,19 @@ const execute = function (sequencer, thread) {
         if (!fields.hasOwnProperty(fieldName)) continue;
         if (fieldName === 'VARIABLE' || fieldName === 'LIST') {
             argValues[fieldName] = fields[fieldName].id;
+        } else if (fieldName === 'BROADCAST_OPTION') {
+            // TODO KARISHMA (scratch-blocks #1258) this will change when we
+            // upstream blockly issue #1395 is fixed.
+
+            // we need both the id and the name here, because
+            // this object eventually gets passed to scratch3_event.broadcast
+            // which will create the message for the first time if one with the
+            // given id doesn't exist
+            // (e.g. default broadcast message, 'message1')
+            argValues[fieldName] = {
+                id: fields[fieldName].id,
+                name: fields[fieldName].value
+            };
         } else {
             argValues[fieldName] = fields[fieldName].value;
         }

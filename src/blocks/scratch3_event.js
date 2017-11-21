@@ -56,14 +56,20 @@ class Scratch3EventBlocks {
     }
 
     broadcast (args, util) {
-        const broadcastOption = Cast.toString(args.BROADCAST_OPTION);
+        // TODO KARISHMA adding lookupOrCreate here temporarily (LLK/scratch-blocks#1258)
+        util.target.lookupOrCreateBroadcastMsg(args.BROADCAST_OPTION.id,
+            args.BROADCAST_OPTION.name);
+        const broadcastOption = Cast.toString(args.BROADCAST_OPTION.name);
         util.startHats('event_whenbroadcastreceived', {
             BROADCAST_OPTION: broadcastOption
         });
     }
 
     broadcastAndWait (args, util) {
-        const broadcastOption = Cast.toString(args.BROADCAST_OPTION);
+        // TODO KARISHMA adding lookupOrCreate here temporarily (LLK/scratch-blocks#1258)
+        util.target.lookupOrCreateBroadcastMsg(args.BROADCAST_OPTION.id,
+            args.BROADCAST_OPTION.name);
+        const broadcastOption = Cast.toString(args.BROADCAST_OPTION.name);
         // Have we run before, starting threads?
         if (!util.stackFrame.startedThreads) {
             // No - start hats for this broadcast.
