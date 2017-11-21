@@ -3504,12 +3504,18 @@ var Blocks = function () {
                     break;
                 case 'checkbox':
                     block.isMonitored = args.value;
+                    if (optRuntime) {
+                        var isSpriteSpecific = optRuntime.monitorBlockInfo.hasOwnProperty(block.opcode) && optRuntime.monitorBlockInfo[block.opcode].isSpriteSpecific;
+                        block.targetId = isSpriteSpecific ? optRuntime.getEditingTarget().id : null;
+                    }
                     if (optRuntime && wasMonitored && !block.isMonitored) {
                         optRuntime.requestRemoveMonitor(block.id);
                     } else if (optRuntime && !wasMonitored && block.isMonitored) {
                         optRuntime.requestAddMonitor(MonitorRecord({
                             // @todo(vm#564) this will collide if multiple sprites use same block
                             id: block.id,
+                            targetId: block.targetId,
+                            spriteName: block.targetId ? optRuntime.getTargetById(block.targetId).getName() : null,
                             opcode: block.opcode,
                             params: this._getBlockParams(block),
                             // @todo(vm#565) for numerical values with decimals, some countries use comma
@@ -3593,8 +3599,8 @@ var Blocks = function () {
 
             Object.keys(this._blocks).forEach(function (blockId) {
                 if (_this.getBlock(blockId).isMonitored) {
-                    // @todo handle specific targets (e.g. apple x position)
-                    runtime.addMonitorScript(blockId);
+                    var targetId = _this.getBlock(blockId).targetId;
+                    runtime.addMonitorScript(blockId, targetId ? runtime.getTargetById(targetId) : null);
                 }
             });
         }
@@ -17802,6 +17808,16 @@ var Scratch3LooksBlocks = function () {
             };
         }
     }, {
+        key: 'getMonitored',
+        value: function getMonitored() {
+            return {
+                looks_size: { isSpriteSpecific: true },
+                looks_costumeorder: { isSpriteSpecific: true },
+                looks_backdroporder: {},
+                looks_backdropname: {}
+            };
+        }
+    }, {
         key: 'say',
         value: function say(args, util) {
             // @TODO in 2.0 calling say/think resets the right/left bias of the bubble
@@ -18086,6 +18102,15 @@ var Scratch3MotionBlocks = function () {
                 motion_xposition: this.getX,
                 motion_yposition: this.getY,
                 motion_direction: this.getDirection
+            };
+        }
+    }, {
+        key: 'getMonitored',
+        value: function getMonitored() {
+            return {
+                motion_xposition: { isSpriteSpecific: true },
+                motion_yposition: { isSpriteSpecific: true },
+                motion_direction: { isSpriteSpecific: true }
             };
         }
     }, {
@@ -19411,6 +19436,17 @@ var Scratch3SensingBlocks = function () {
             };
         }
     }, {
+        key: 'getMonitored',
+        value: function getMonitored() {
+            return {
+                sensing_answer: {},
+                sensing_loudness: {},
+                sensing_timer: {},
+                sensing_of: {},
+                sensing_current: {}
+            };
+        }
+    }, {
         key: '_onAnswer',
         value: function _onAnswer(answer) {
             this._answer = answer;
@@ -19732,6 +19768,13 @@ var Scratch3SoundBlocks = function () {
                 sound_setvolumeto: this.setVolume,
                 sound_changevolumeby: this.changeVolume,
                 sound_volume: this.getVolume
+            };
+        }
+    }, {
+        key: 'getMonitored',
+        value: function getMonitored() {
+            return {
+                sound_volume: {}
             };
         }
     }, {
@@ -21806,8 +21849,14 @@ var handleReport = function handleReport(resolvedValue, sequencer, thread, curre
                 sequencer.runtime.visualReport(currentBlockId, resolvedValue);
             }
             if (thread.updateMonitor) {
+                var targetId = sequencer.runtime.monitorBlocks.getBlock(currentBlockId).targetId;
+                if (targetId && !sequencer.runtime.getTargetById(targetId)) {
+                    // Target no longer exists
+                    return;
+                }
                 sequencer.runtime.requestUpdateMonitor(Map({
                     id: currentBlockId,
+                    spriteName: targetId ? sequencer.runtime.getTargetById(targetId).getName() : null,
                     value: String(resolvedValue)
                 }));
             }
@@ -22026,6 +22075,10 @@ var _require = __webpack_require__(26),
 
 var MonitorRecord = Record({
     id: null,
+    /** Present only if the monitor is sprite-specific, such as x position */
+    spriteName: null,
+    /** Present only if the monitor is sprite-specific, such as x position */
+    targetId: null,
     opcode: null,
     value: null,
     params: null
@@ -22615,6 +22668,13 @@ var Runtime = function (_EventEmitter) {
         _this._refreshTargets = false;
 
         /**
+         * Map to look up all monitor block information by opcode.
+         * @type {object}
+         * @private
+         */
+        _this.monitorBlockInfo = {};
+
+        /**
          * Ordered map of all monitors, which are MonitorReporter objects.
          */
         _this._monitorState = OrderedMap({});
@@ -22722,6 +22782,10 @@ var Runtime = function (_EventEmitter) {
                                 this._hats[hatName] = packageHats[hatName];
                             }
                         }
+                    }
+                    // Collect monitored from package.
+                    if (packageObject.getMonitored) {
+                        this.monitorBlockInfo = Object.assign({}, this.monitorBlockInfo, packageObject.getMonitored());
                     }
                 }
             }
@@ -23270,7 +23334,7 @@ var Runtime = function (_EventEmitter) {
         /**
          * Enqueue a script that when finished will update the monitor for the block.
          * @param {!string} topBlockId ID of block that starts the script.
-         * @param {?string} optTarget target ID for target to run script on. If not supplied, uses editing target.
+         * @param {?Target} optTarget target Target to run script on. If not supplied, uses editing target.
          */
 
     }, {
@@ -23770,7 +23834,7 @@ var Runtime = function (_EventEmitter) {
     }, {
         key: 'requestAddMonitor',
         value: function requestAddMonitor(monitor) {
-            this._monitorState = this._monitorState.set(monitor.id, monitor);
+            this._monitorState = this._monitorState.set(monitor.get('id'), monitor);
         }
 
         /**
@@ -23784,8 +23848,9 @@ var Runtime = function (_EventEmitter) {
     }, {
         key: 'requestUpdateMonitor',
         value: function requestUpdateMonitor(monitor) {
-            if (this._monitorState.has(monitor.get('id'))) {
-                this._monitorState = this._monitorState.set(monitor.get('id'), this._monitorState.get(monitor.get('id')).merge(monitor));
+            var id = monitor.get('id');
+            if (this._monitorState.has(id)) {
+                this._monitorState = this._monitorState.set(id, this._monitorState.get(id).merge(monitor));
             }
         }
 
@@ -23799,6 +23864,20 @@ var Runtime = function (_EventEmitter) {
         key: 'requestRemoveMonitor',
         value: function requestRemoveMonitor(monitorId) {
             this._monitorState = this._monitorState.delete(monitorId);
+        }
+
+        /**
+         * Removes all monitors with the given target ID from the state. Does nothing if
+         * the monitor already does not exist in the state.
+         * @param {!string} targetId Remove all monitors with given target ID.
+         */
+
+    }, {
+        key: 'requestRemoveMonitorByTargetId',
+        value: function requestRemoveMonitorByTargetId(targetId) {
+            this._monitorState = this._monitorState.filterNot(function (value) {
+                return value.targetId === targetId;
+            });
         }
 
         /**
@@ -29320,6 +29399,7 @@ var VirtualMachine = function (_EventEmitter) {
                 if (!sprite) {
                     throw new Error('No sprite associated with this target.');
                 }
+                this.runtime.requestRemoveMonitorByTargetId(targetId);
                 var currentEditingTarget = this.editingTarget;
                 for (var i = 0; i < sprite.clones.length; i++) {
                     var clone = sprite.clones[i];
