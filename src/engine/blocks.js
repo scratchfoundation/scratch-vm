@@ -381,12 +381,19 @@ class Blocks {
             break;
         case 'checkbox':
             block.isMonitored = args.value;
+            if (optRuntime) {
+                const isSpriteSpecific = optRuntime.monitorBlockInfo.hasOwnProperty(block.opcode) &&
+                    optRuntime.monitorBlockInfo[block.opcode].isSpriteSpecific;
+                block.targetId = isSpriteSpecific ? optRuntime.getEditingTarget().id : null;
+            }
             if (optRuntime && wasMonitored && !block.isMonitored) {
                 optRuntime.requestRemoveMonitor(block.id);
             } else if (optRuntime && !wasMonitored && block.isMonitored) {
                 optRuntime.requestAddMonitor(MonitorRecord({
                     // @todo(vm#564) this will collide if multiple sprites use same block
                     id: block.id,
+                    targetId: block.targetId,
+                    spriteName: block.targetId ? optRuntime.getTargetById(block.targetId).getName() : null,
                     opcode: block.opcode,
                     params: this._getBlockParams(block),
                     // @todo(vm#565) for numerical values with decimals, some countries use comma
@@ -464,8 +471,8 @@ class Blocks {
     runAllMonitored (runtime) {
         Object.keys(this._blocks).forEach(blockId => {
             if (this.getBlock(blockId).isMonitored) {
-                // @todo handle specific targets (e.g. apple x position)
-                runtime.addMonitorScript(blockId);
+                const targetId = this.getBlock(blockId).targetId;
+                runtime.addMonitorScript(blockId, targetId ? runtime.getTargetById(targetId) : null);
             }
         });
     }

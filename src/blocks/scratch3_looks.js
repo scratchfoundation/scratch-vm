@@ -242,6 +242,15 @@ class Scratch3LooksBlocks {
         };
     }
 
+    getMonitored () {
+        return {
+            looks_size: {isSpriteSpecific: true},
+            looks_costumeorder: {isSpriteSpecific: true},
+            looks_backdroporder: {},
+            looks_backdropname: {}
+        };
+    }
+
     say (args, util) {
         // @TODO in 2.0 calling say/think resets the right/left bias of the bubble
         this._updateBubble(util.target, 'say', String(args.MESSAGE));

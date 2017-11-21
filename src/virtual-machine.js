@@ -484,6 +484,7 @@ class VirtualMachine extends EventEmitter {
             if (!sprite) {
                 throw new Error('No sprite associated with this target.');
             }
+            this.runtime.requestRemoveMonitorByTargetId(targetId);
             const currentEditingTarget = this.editingTarget;
             for (let i = 0; i < sprite.clones.length; i++) {
                 const clone = sprite.clones[i];

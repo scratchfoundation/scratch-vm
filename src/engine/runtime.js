@@ -196,6 +196,13 @@ class Runtime extends EventEmitter {
         this._refreshTargets = false;
 
         /**
+         * Map to look up all monitor block information by opcode.
+         * @type {object}
+         * @private
+         */
+        this.monitorBlockInfo = {};
+
+        /**
          * Ordered map of all monitors, which are MonitorReporter objects.
          */
         this._monitorState = OrderedMap({});
@@ -422,6 +429,10 @@ class Runtime extends EventEmitter {
                             this._hats[hatName] = packageHats[hatName];
                         }
                     }
+                }
+                // Collect monitored from package.
+                if (packageObject.getMonitored) {
+                    this.monitorBlockInfo = Object.assign({}, this.monitorBlockInfo, packageObject.getMonitored());
                 }
             }
         }
@@ -870,7 +881,7 @@ class Runtime extends EventEmitter {
     /**
      * Enqueue a script that when finished will update the monitor for the block.
      * @param {!string} topBlockId ID of block that starts the script.
-     * @param {?string} optTarget target ID for target to run script on. If not supplied, uses editing target.
+     * @param {?Target} optTarget target Target to run script on. If not supplied, uses editing target.
      */
     addMonitorScript (topBlockId, optTarget) {
         if (!optTarget) optTarget = this._editingTarget;
@@ -1321,7 +1332,7 @@ class Runtime extends EventEmitter {
      * @param {!MonitorRecord} monitor Monitor to add.
      */
     requestAddMonitor (monitor) {
-        this._monitorState = this._monitorState.set(monitor.id, monitor);
+        this._monitorState = this._monitorState.set(monitor.get('id'), monitor);
     }
 
     /**
@@ -1332,9 +1343,10 @@ class Runtime extends EventEmitter {
      *     the old monitor will keep its old value.
      */
     requestUpdateMonitor (monitor) {
-        if (this._monitorState.has(monitor.get('id'))) {
+        const id = monitor.get('id');
+        if (this._monitorState.has(id)) {
             this._monitorState =
-                this._monitorState.set(monitor.get('id'), this._monitorState.get(monitor.get('id')).merge(monitor));
+                this._monitorState.set(id, this._monitorState.get(id).merge(monitor));
         }
     }
 
@@ -1345,6 +1357,15 @@ class Runtime extends EventEmitter {
      */
     requestRemoveMonitor (monitorId) {
         this._monitorState = this._monitorState.delete(monitorId);
+    }
+
+    /**
+     * Removes all monitors with the given target ID from the state. Does nothing if
+     * the monitor already does not exist in the state.
+     * @param {!string} targetId Remove all monitors with given target ID.
+     */
+    requestRemoveMonitorByTargetId (targetId) {
+        this._monitorState = this._monitorState.filterNot(value => value.targetId === targetId);
     }
 
     /**

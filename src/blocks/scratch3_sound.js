@@ -103,6 +103,12 @@ class Scratch3SoundBlocks {
         };
     }
 
+    getMonitored () {
+        return {
+            sound_volume: {}
+        };
+    }
+
     playSound (args, util) {
         const index = this._getSoundIndex(args.SOUND_MENU, util);
         if (index >= 0) {
