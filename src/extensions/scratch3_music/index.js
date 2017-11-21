@@ -733,6 +733,7 @@ class Scratch3MusicBlocks {
     setInstrument (args, util) {
         const musicState = this._getMusicState(util.target);
         let instNum = Cast.toNumber(args.INSTRUMENT);
+        instNum = Math.round(instNum);
         instNum -= 1; // instruments are one-indexed
         instNum = MathUtil.wrapClamp(instNum, 0, this.INSTRUMENT_INFO.length - 1);
         musicState.currentInstrument = instNum;
