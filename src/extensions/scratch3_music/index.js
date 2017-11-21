@@ -26,7 +26,7 @@ class Scratch3MusicBlocks {
         this.tempo = 60;
 
         /**
-         * The number of drum or instrument sounds currently being played simultaneously.
+         * The number of drum and instrument sounds currently being played simultaneously.
          * @type {number}
          * @private
          */
@@ -563,8 +563,8 @@ class Scratch3MusicBlocks {
                 Scratch3MusicBlocks.MIDI_NOTE_RANGE.min, Scratch3MusicBlocks.MIDI_NOTE_RANGE.max);
             let beats = Cast.toNumber(args.BEATS);
             beats = this._clampBeats(beats);
-            // If the duration is 0, do not play the note.
-            // In Scratch 2.0, "play drum for 0 beats" plays the drum, but "play note for 0 beats" is silent.
+            // If the duration is 0, do not play the note. In Scratch 2.0, "play drum for 0 beats" plays the drum,
+            // but "play note for 0 beats" is silent.
             if (beats === 0) {
                 return;
             }
