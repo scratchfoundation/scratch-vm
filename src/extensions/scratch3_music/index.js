@@ -565,9 +565,7 @@ class Scratch3MusicBlocks {
             beats = this._clampBeats(beats);
             // If the duration is 0, do not play the note. In Scratch 2.0, "play drum for 0 beats" plays the drum,
             // but "play note for 0 beats" is silent.
-            if (beats === 0) {
-                return;
-            }
+            if (beats === 0) return;
 
             const durationSec = this._beatsToSec(beats);
 
