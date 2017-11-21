@@ -34,7 +34,7 @@
     "escape-html": "1.0.3",
     "eslint": "^4.5.0",
     "eslint-config-scratch": "^5.0.0",
-    "expose-loader": "0.7.3",
+    "expose-loader": "0.7.4",
     "gh-pages": "^1.1.0",
     "got": "5.7.1",
     "highlightjs": "^9.8.0",
