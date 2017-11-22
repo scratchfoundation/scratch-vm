@@ -21195,7 +21195,7 @@ var execute = function execute(sequencer, thread) {
                 }
                 if (thread.updateMonitor) {
                     var monitorParams = null;
-                    if (params && Object.keys(params) > 0) {
+                    if (params && Object.keys(params).length > 0) {
                         monitorParams = { params: params };
                     }
                     runtime.requestUpdateMonitor(Map(Object.assign({
@@ -21273,6 +21273,7 @@ var execute = function execute(sequencer, thread) {
             thread.popStack();
         }
         argValues[inputName] = currentStackFrame.reported[inputName];
+        params[inputName] = currentStackFrame.reported[inputName];
     }
 
     // Add any mutation to args (e.g., for procedures).
@@ -21377,6 +21378,7 @@ var execute = function execute(sequencer, thread) {
             thread.popStack();
         });
     } else if (thread.status === Thread.STATUS_RUNNING) {
+        // 通过添加params动态更新monitor block参数
         handleReport(primitiveReportedValue, params);
     }
 };
@@ -22349,7 +22351,9 @@ var Runtime = function (_EventEmitter) {
 
                 if (optMatchFields) {
                     for (var matchField in optMatchFields) {
-                        if (hatFields[matchField].value.toUpperCase() !== optMatchFields[matchField]) {
+                        // modified by Hyman: 为帽子块增加输入参数
+                        var val = hatFields[matchField] ? hatFields[matchField].value : hatFields.TEXT.value;
+                        if (val.toUpperCase() !== optMatchFields[matchField]) {
                             // Field mismatch.
                             return;
                         }
@@ -27362,7 +27366,9 @@ var VirtualMachine = function (_EventEmitter) {
                     delete this.editingTarget.variables[variable];
                 }
             }
-            var variableMap = Object.assign({}, this.runtime.getTargetForStage().variables, this.editingTarget.variables);
+            // 角色有可能在stage加载前加载 by Kane
+            var stageVariables = this.runtime.getTargetForStage() ? this.runtime.getTargetForStage().variables : {};
+            var variableMap = Object.assign({}, stageVariables, this.editingTarget.variables);
 
             var variables = Object.keys(variableMap).map(function (k) {
                 return variableMap[k];

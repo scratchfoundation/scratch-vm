@@ -927,8 +927,9 @@ class Runtime extends EventEmitter {
 
             if (optMatchFields) {
                 for (const matchField in optMatchFields) {
-                    if (hatFields[matchField].value.toUpperCase() !==
-                        optMatchFields[matchField]) {
+                    // modified by Hyman: 为帽子块增加输入参数
+                    let val = hatFields[matchField] ? hatFields[matchField].value : hatFields.TEXT.value;
+                    if (val.toUpperCase() !== optMatchFields[matchField]) {
                         // Field mismatch.
                         return;
                     }

@@ -645,8 +645,10 @@ class VirtualMachine extends EventEmitter {
                 delete this.editingTarget.variables[variable];
             }
         }
+        // 角色有可能在stage加载前加载 by Kane
+        const stageVariables = this.runtime.getTargetForStage() ? this.runtime.getTargetForStage().variables : {};
         const variableMap = Object.assign({},
-            this.runtime.getTargetForStage().variables,
+            stageVariables,
             this.editingTarget.variables
         );
 
