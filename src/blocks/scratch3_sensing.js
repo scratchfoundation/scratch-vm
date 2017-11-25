@@ -63,9 +63,9 @@ class Scratch3SensingBlocks {
         this._answer = answer;
         const questionObj = this._questionList.shift();
         if (questionObj) {
-            const [_question, resolve, target, wasVisible] = questionObj;
-            // If the target was visible when asked, hide the say bubble.
-            if (wasVisible) {
+            const [_question, resolve, target, wasVisible, wasStage] = questionObj;
+            // If the target was visible when asked, hide the say bubble unless the target was the stage.
+            if (wasVisible && !wasStage) {
                 this.runtime.emit('SAY', target, 'say', '');
             }
             resolve();
@@ -73,16 +73,16 @@ class Scratch3SensingBlocks {
         }
     }
 
-    _enqueueAsk (question, resolve, target, wasVisible) {
-        this._questionList.push([question, resolve, target, wasVisible]);
+    _enqueueAsk (question, resolve, target, wasVisible, wasStage) {
+        this._questionList.push([question, resolve, target, wasVisible, wasStage]);
     }
 
     _askNextQuestion () {
         if (this._questionList.length > 0) {
-            const [question, _resolve, target, wasVisible] = this._questionList[0];
+            const [question, _resolve, target, wasVisible, wasStage] = this._questionList[0];
             // If the target is visible, emit a blank question and use the
-            // say event to trigger a bubble.
-            if (wasVisible) {
+            // say event to trigger a bubble unless the target was the stage.
+            if (wasVisible && !wasStage) {
                 this.runtime.emit('SAY', target, 'say', question);
                 this.runtime.emit('QUESTION', '');
             } else {
@@ -100,7 +100,7 @@ class Scratch3SensingBlocks {
         const _target = util.target;
         return new Promise(resolve => {
             const isQuestionAsked = this._questionList.length > 0;
-            this._enqueueAsk(args.QUESTION, resolve, _target, _target.visible);
+            this._enqueueAsk(args.QUESTION, resolve, _target, _target.visible, _target.isStage);
             if (!isQuestionAsked) {
                 this._askNextQuestion();
             }
