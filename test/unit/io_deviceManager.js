@@ -24,11 +24,16 @@ test('list', t => {
     const deviceManager = new DeviceManager();
     deviceManager
         .list('test', 'test', null)
-        .catch(err => {
-            t.true((typeof err === 'undefined') || (typeof err === 'object'));
-        })
-        .then(body => {
-            t.true((typeof body === 'undefined') || (typeof body === 'object'));
-            t.end();
-        });
+        .then(
+            body => {
+                // SDM is running
+                t.type(body, 'object');
+                t.end();
+            },
+            err => {
+                // If SDM is not running error is expected, continue
+                t.true(typeof err === 'object' || typeof err === 'undefined');
+                t.end();
+            }
+        );
 });

@@ -319,7 +319,7 @@ class DeviceManager {
                 json: {}
             }, (err, res, body) => {
                 if (err) return reject(err);
-                if (res.statusCode !== 200) reject(body);
+                if (res.statusCode !== 200) return reject(body);
                 resolve(body);
             });
         });
