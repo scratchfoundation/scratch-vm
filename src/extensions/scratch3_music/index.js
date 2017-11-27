@@ -103,7 +103,7 @@ class Scratch3MusicBlocks {
         return info.map((entry, index) => {
             const obj = {};
             obj.text = entry.name;
-            obj.value = index + 1;
+            obj.value = String(index + 1);
             return obj;
         });
     }
