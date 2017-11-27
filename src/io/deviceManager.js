@@ -1,4 +1,4 @@
-const got = require('got');
+const nets = require('nets');
 const io = require('socket.io-client/dist/socket.io');
 const querystring = require('querystring');
 
@@ -312,7 +312,17 @@ class DeviceManager {
         };
         if (deviceSpec) queryObject.spec = deviceSpec;
         const url = `${this._serverURL}/${encodeURIComponent(deviceType)}/list?${querystring.stringify(queryObject)}`;
-        return got(url).then(response => JSON.parse(response.body));
+        return new Promise((resolve, reject) => {
+            nets({
+                method: 'GET',
+                url: url,
+                json: {}
+            }, (err, res, body) => {
+                if (err) return reject(err);
+                if (res.statusCode !== 200) return reject(body);
+                resolve(body);
+            });
+        });
     }
 
     /**
