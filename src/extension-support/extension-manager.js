@@ -1,6 +1,5 @@
 const dispatch = require('../dispatch/central-dispatch');
 const log = require('../util/log');
-const formatMessage = require('format-message');
 
 const BlockType = require('./block-type');
 
@@ -118,7 +117,6 @@ class ExtensionManager {
                 log.warn(message);
                 return Promise.reject(new Error(message));
             }
-            formatMessage.setup(opts);
             const extension = builtinExtensions[extensionURL];
             const extensionInstance = new extension(this.runtime);
             return this._registerInternalExtension(extensionInstance).then(() => {
