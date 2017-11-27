@@ -23816,7 +23816,7 @@ var Scratch3MusicBlocks = function () {
             return info.map(function (entry, index) {
                 var obj = {};
                 obj.text = entry.name;
-                obj.value = index + 1;
+                obj.value = String(index + 1);
                 return obj;
             });
         }
