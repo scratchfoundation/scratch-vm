@@ -602,6 +602,10 @@ class Scratch3MusicBlocks {
         const sampleArray = instrumentInfo.samples;
         const sampleIndex = this._selectSampleIndexForNote(note, sampleArray);
 
+        // If the audio sample has not loaded yet, bail out
+        if (typeof this._instrumentBufferArrays[inst] === 'undefined') return;
+        if (typeof this._instrumentBufferArrays[inst][sampleIndex] === 'undefined') return;
+
         // Create the audio buffer to play the note, and set its pitch
         const context = util.runtime.audioEngine.audioContext;
         const bufferSource = context.createBufferSource();
