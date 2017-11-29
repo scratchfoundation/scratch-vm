@@ -99,7 +99,6 @@ class Target extends EventEmitter {
      * @return {!Variable} Variable object.
      */
     lookupOrCreateBroadcastMsg (id, name) {
-        debugger;
         const broadcastMsg = this.lookupVariableById(id);
         if (broadcastMsg) return broadcastMsg;
         // No variable with this name exists - create it locally.
