@@ -97,8 +97,8 @@ class BlockUtility {
      * @param {string} procedureCode Procedure code for procedure to query.
      * @return {Array.<string>} List of param names for a procedure.
      */
-    getProcedureParamNames (procedureCode) {
-        return this.thread.target.blocks.getProcedureParamNames(procedureCode);
+    getProcedureParamNamesAndIds (procedureCode) {
+        return this.thread.target.blocks.getProcedureParamNamesAndIds(procedureCode);
     }
 
     /**
