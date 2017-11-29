@@ -16,7 +16,7 @@ test('calling a custom block with no definition does not throw', t => {
         }
     };
     const util = {
-        getProcedureParamNamesAndIds: () => null,
+        getProcedureParamNamesAndIds: () => [null, null],
         stackFrame: {
             executed: false
         }
