@@ -7,7 +7,9 @@ const VirtualMachine = require('../../src/index');
 const uri = path.resolve(__dirname, '../fixtures/event.sb2');
 const project = extract(uri);
 
-test('event', t => {
+// TODO (#828) Need to re-activate this test after sb2 import works for broadcast
+// blocks
+test('event', {todo: true}, t => {
     const vm = new VirtualMachine();
     vm.attachStorage(makeTestStorage());
 

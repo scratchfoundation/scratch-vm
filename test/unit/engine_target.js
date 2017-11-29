@@ -173,3 +173,32 @@ test('lookupOrCreateList returns list if one with given id exists', t => {
 
     t.end();
 });
+
+test('lookupOrCreateBroadcastMsg creates a var if one does not exist', t => {
+    const target = new Target();
+    const variables = target.variables;
+
+    t.equal(Object.keys(variables).length, 0);
+    const broadcastVar = target.lookupOrCreateBroadcastMsg('foo', 'bar');
+    t.equal(Object.keys(variables).length, 1);
+    t.equal(broadcastVar.id, 'foo');
+    t.equal(broadcastVar.name, 'bar');
+
+    t.end();
+});
+
+test('lookupOrCreateBroadcastMsg returns the var with given id if exists', t => {
+    const target = new Target();
+    const variables = target.variables;
+
+    t.equal(Object.keys(variables).length, 0);
+    target.createVariable('foo', 'bar', Variable.BROADCAST_MESSAGE_TYPE);
+    t.equal(Object.keys(variables).length, 1);
+
+    const broadcastMsg = target.lookupOrCreateBroadcastMsg('foo', 'bar');
+    t.equal(Object.keys(variables).length, 1);
+    t.equal(broadcastMsg.id, 'foo');
+    t.equal(broadcastMsg.name, 'bar');
+
+    t.end();
+});
