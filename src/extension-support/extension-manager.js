@@ -108,7 +108,7 @@ class ExtensionManager {
      * @param {string} extensionURL - the URL for the extension to load OR the ID of an internal extension
      * @returns {Promise} resolved once the extension is loaded and initialized or rejected on failure
      */
-    loadExtensionURL (extensionURL, opts = {locale: 'en', translations: {}}) {
+    loadExtensionURL (extensionURL) {
 
         if (builtinExtensions.hasOwnProperty(extensionURL)) {
             /** @TODO dupe handling for non-builtin extensions. See commit 670e51d33580e8a2e852b3b038bb3afc282f81b9 */
@@ -131,6 +131,22 @@ class ExtensionManager {
             this.pendingExtensions.push({extensionURL, resolve, reject});
             dispatch.addWorker(new ExtensionWorker());
         });
+    }
+
+    refreshBlocks () {
+        const extensionsInfo = {};
+        this._loadedExtensions.forEach(extensionURL => {
+            if (builtinExtensions.hasOwnProperty(extensionURL)) {
+                const extension = builtinExtensions[extensionURL];
+                const extensionInstance = new extension(this.runtime);
+                extensionsInfo[extensionURL] = extensionInstance.getInfo();
+            }
+        });
+        if (Object.keys(extensionsInfo).length !== 0) {
+            dispatch.call('runtime', '_refreshExtensionPrimitives', extensionsInfo).catch(e => {
+                log.error(`Failed to refresh buildtin extension primitives: ${JSON.stringify(e)}`);
+            });
+        }
     }
 
     allocateWorker () {
