@@ -3225,7 +3225,14 @@ var Blocks = function () {
                     // Check if this variable exists on the current target or stage.
                     // If not, create it on the stage.
                     // TODO create global and local variables when UI provides a way.
-                    if (!optRuntime.getEditingTarget().lookupVariableById(e.varId)) {
+                    if (optRuntime.getEditingTarget()) {
+                        if (!optRuntime.getEditingTarget().lookupVariableById(e.varId)) {
+                            stage.createVariable(e.varId, e.varName, e.varType);
+                        }
+                    } else if (!stage.lookupVariableById(e.varId)) {
+                        // Since getEditingTarget returned null, we now need to
+                        // explicitly check if the stage has the variable, and
+                        // create one if not.
                         stage.createVariable(e.varId, e.varName, e.varType);
                     }
                     break;
@@ -3295,7 +3302,7 @@ var Blocks = function () {
                 case 'field':
                     // Update block value
                     if (!block.fields[args.name]) return;
-                    if (args.name === 'VARIABLE' || args.name === 'LIST') {
+                    if (args.name === 'VARIABLE' || args.name === 'LIST' || args.name === 'BROADCAST_OPTION') {
                         // Get variable name using the id in args.value.
                         var variable = optRuntime.getEditingTarget().lookupVariableById(args.value);
                         if (variable) {
@@ -4477,6 +4484,9 @@ var Variable = function () {
             case Variable.LIST_TYPE:
                 this.value = [];
                 break;
+            case Variable.BROADCAST_MESSAGE_TYPE:
+                this.value = this.name;
+                break;
             default:
                 throw new Error('Invalid variable type: ' + this.type);
         }
@@ -4510,6 +4520,17 @@ var Variable = function () {
         key: 'LIST_TYPE',
         get: function get() {
             return 'list';
+        }
+
+        /**
+         * Type representation for list variables.
+         * @const {string}
+         */
+
+    }, {
+        key: 'BROADCAST_MESSAGE_TYPE',
+        get: function get() {
+            return 'broadcast_msg';
         }
     }]);
 
@@ -15784,19 +15805,19 @@ var Scratch3DataBlocks = function () {
     }, {
         key: 'getVariable',
         value: function getVariable(args, util) {
-            var variable = util.target.lookupOrCreateVariable(args.VARIABLE);
+            var variable = util.target.lookupOrCreateVariable(args.VARIABLE.id, args.VARIABLE.name);
             return variable.value;
         }
     }, {
         key: 'setVariableTo',
         value: function setVariableTo(args, util) {
-            var variable = util.target.lookupOrCreateVariable(args.VARIABLE);
+            var variable = util.target.lookupOrCreateVariable(args.VARIABLE.id, args.VARIABLE.name);
             variable.value = args.VALUE;
         }
     }, {
         key: 'changeVariableBy',
         value: function changeVariableBy(args, util) {
-            var variable = util.target.lookupOrCreateVariable(args.VARIABLE);
+            var variable = util.target.lookupOrCreateVariable(args.VARIABLE.id, args.VARIABLE.name);
             var castedValue = Cast.toNumber(variable.value);
             var dValue = Cast.toNumber(args.VALUE);
             variable.value = castedValue + dValue;
@@ -15804,7 +15825,7 @@ var Scratch3DataBlocks = function () {
     }, {
         key: 'getListContents',
         value: function getListContents(args, util) {
-            var list = util.target.lookupOrCreateList(args.LIST);
+            var list = util.target.lookupOrCreateList(args.LIST.id, args.LIST.name);
             // Determine if the list is all single letters.
             // If it is, report contents joined together with no separator.
             // If it's not, report contents joined together with a space.
@@ -15824,13 +15845,13 @@ var Scratch3DataBlocks = function () {
     }, {
         key: 'addToList',
         value: function addToList(args, util) {
-            var list = util.target.lookupOrCreateList(args.LIST);
+            var list = util.target.lookupOrCreateList(args.LIST.id, args.LIST.name);
             list.value.push(args.ITEM);
         }
     }, {
         key: 'deleteOfList',
         value: function deleteOfList(args, util) {
-            var list = util.target.lookupOrCreateList(args.LIST);
+            var list = util.target.lookupOrCreateList(args.LIST.id, args.LIST.name);
             var index = Cast.toListIndex(args.INDEX, list.value.length);
             if (index === Cast.LIST_INVALID) {
                 return;
@@ -15844,7 +15865,7 @@ var Scratch3DataBlocks = function () {
         key: 'insertAtList',
         value: function insertAtList(args, util) {
             var item = args.ITEM;
-            var list = util.target.lookupOrCreateList(args.LIST);
+            var list = util.target.lookupOrCreateList(args.LIST.id, args.LIST.name);
             var index = Cast.toListIndex(args.INDEX, list.value.length + 1);
             if (index === Cast.LIST_INVALID) {
                 return;
@@ -15855,7 +15876,7 @@ var Scratch3DataBlocks = function () {
         key: 'replaceItemOfList',
         value: function replaceItemOfList(args, util) {
             var item = args.ITEM;
-            var list = util.target.lookupOrCreateList(args.LIST);
+            var list = util.target.lookupOrCreateList(args.LIST.id, args.LIST.name);
             var index = Cast.toListIndex(args.INDEX, list.value.length);
             if (index === Cast.LIST_INVALID) {
                 return;
@@ -15865,7 +15886,7 @@ var Scratch3DataBlocks = function () {
     }, {
         key: 'getItemOfList',
         value: function getItemOfList(args, util) {
-            var list = util.target.lookupOrCreateList(args.LIST);
+            var list = util.target.lookupOrCreateList(args.LIST.id, args.LIST.name);
             var index = Cast.toListIndex(args.INDEX, list.value.length);
             if (index === Cast.LIST_INVALID) {
                 return '';
@@ -15875,14 +15896,14 @@ var Scratch3DataBlocks = function () {
     }, {
         key: 'lengthOfList',
         value: function lengthOfList(args, util) {
-            var list = util.target.lookupOrCreateList(args.LIST);
+            var list = util.target.lookupOrCreateList(args.LIST.id, args.LIST.name);
             return list.value.length;
         }
     }, {
         key: 'listContainsItem',
         value: function listContainsItem(args, util) {
             var item = args.ITEM;
-            var list = util.target.lookupOrCreateList(args.LIST);
+            var list = util.target.lookupOrCreateList(args.LIST.id, args.LIST.name);
             if (list.value.indexOf(item) >= 0) {
                 return true;
             }
@@ -15980,7 +16001,8 @@ var Scratch3EventBlocks = function () {
     }, {
         key: 'broadcast',
         value: function broadcast(args, util) {
-            var broadcastOption = Cast.toString(args.BROADCAST_OPTION);
+            var broadcastVar = util.runtime.getTargetForStage().lookupOrCreateBroadcastMsg(args.BROADCAST_OPTION.id, args.BROADCAST_OPTION.name);
+            var broadcastOption = broadcastVar.name;
             util.startHats('event_whenbroadcastreceived', {
                 BROADCAST_OPTION: broadcastOption
             });
@@ -15988,7 +16010,8 @@ var Scratch3EventBlocks = function () {
     }, {
         key: 'broadcastAndWait',
         value: function broadcastAndWait(args, util) {
-            var broadcastOption = Cast.toString(args.BROADCAST_OPTION);
+            var broadcastVar = util.runtime.getTargetForStage().lookupOrCreateBroadcastMsg(args.BROADCAST_OPTION.id, args.BROADCAST_OPTION.name);
+            var broadcastOption = broadcastVar.name;
             // Have we run before, starting threads?
             if (!util.stackFrame.startedThreads) {
                 // No - start hats for this broadcast.
@@ -20420,8 +20443,11 @@ var execute = function execute(sequencer, thread) {
     // Add all fields on this block to the argValues.
     for (var fieldName in fields) {
         if (!fields.hasOwnProperty(fieldName)) continue;
-        if (fieldName === 'VARIABLE' || fieldName === 'LIST') {
-            argValues[fieldName] = fields[fieldName].id;
+        if (fieldName === 'VARIABLE' || fieldName === 'LIST' || fieldName === 'BROADCAST_OPTION') {
+            argValues[fieldName] = {
+                id: fields[fieldName].id,
+                name: fields[fieldName].value
+            };
         } else {
             argValues[fieldName] = fields[fieldName].value;
         }
@@ -23222,6 +23248,24 @@ var Target = function (_EventEmitter) {
         }
 
         /**
+         * Look up a broadcast message object, and create it if one doesn't exist.
+         * @param {string} id Id of the variable.
+         * @param {string} name Name of the variable.
+         * @return {!Variable} Variable object.
+         */
+
+    }, {
+        key: 'lookupOrCreateBroadcastMsg',
+        value: function lookupOrCreateBroadcastMsg(id, name) {
+            var broadcastMsg = this.lookupVariableById(id);
+            if (broadcastMsg) return broadcastMsg;
+            // No variable with this name exists - create it locally.
+            var newBroadcastMsg = new Variable(id, name, Variable.BROADCAST_MESSAGE_TYPE, false);
+            this.variables[id] = newBroadcastMsg;
+            return newBroadcastMsg;
+        }
+
+        /**
          * Look up a variable object.
          * Search begins for local variables; then look for globals.
          * @param {string} id Id of the variable.
@@ -23269,7 +23313,7 @@ var Target = function (_EventEmitter) {
          * dictionary of variables.
          * @param {string} id Id of variable
          * @param {string} name Name of variable.
-         * @param {string} type Type of variable, '' or 'list'
+         * @param {string} type Type of variable, '', 'broadcast_msg', or 'list'
          */
 
     }, {
@@ -25439,17 +25483,18 @@ var flatten = function flatten(blocks) {
  * a list of blocks in a branch (e.g., in forever),
  * or a list of blocks in an argument (e.g., move [pick random...]).
  * @param {Array.<object>} blockList SB2 JSON-format block list.
+ * @param {Function} addBroadcastMsg function to update broadcast message name map
  * @param {Function} getVariableId function to retreive a variable's ID based on name
  * @param {ImportedExtensionsInfo} extensions - (in/out) parsed extension information will be stored here.
  * @return {Array.<object>} Scratch VM-format block list.
  */
-var parseBlockList = function parseBlockList(blockList, getVariableId, extensions) {
+var parseBlockList = function parseBlockList(blockList, addBroadcastMsg, getVariableId, extensions) {
     var resultingList = [];
     var previousBlock = null; // For setting next.
     for (var i = 0; i < blockList.length; i++) {
         var block = blockList[i];
         // eslint-disable-next-line no-use-before-define
-        var parsedBlock = parseBlock(block, getVariableId, extensions);
+        var parsedBlock = parseBlock(block, addBroadcastMsg, getVariableId, extensions);
         if (typeof parsedBlock === 'undefined') continue;
         if (previousBlock) {
             parsedBlock.parent = previousBlock.id;
@@ -25466,16 +25511,17 @@ var parseBlockList = function parseBlockList(blockList, getVariableId, extension
  * This should only handle top-level scripts that include X, Y coordinates.
  * @param {!object} scripts Scripts object from SB2 JSON.
  * @param {!Blocks} blocks Blocks object to load parsed blocks into.
+ * @param {Function} addBroadcastMsg function to update broadcast message name map
  * @param {Function} getVariableId function to retreive a variable's ID based on name
  * @param {ImportedExtensionsInfo} extensions - (in/out) parsed extension information will be stored here.
  */
-var parseScripts = function parseScripts(scripts, blocks, getVariableId, extensions) {
+var parseScripts = function parseScripts(scripts, blocks, addBroadcastMsg, getVariableId, extensions) {
     for (var i = 0; i < scripts.length; i++) {
         var script = scripts[i];
         var scriptX = script[0];
         var scriptY = script[1];
         var blockList = script[2];
-        var parsedBlockList = parseBlockList(blockList, getVariableId, extensions);
+        var parsedBlockList = parseBlockList(blockList, addBroadcastMsg, getVariableId, extensions);
         if (parsedBlockList[0]) {
             // Adjust script coordinates to account for
             // larger block size in scratch-blocks.
@@ -25516,6 +25562,20 @@ var generateVariableIdGetter = function () {
             // Not top-level, so first check the global name map
             if (globalVariableNameMap[name]) return globalVariableNameMap[name];
             return namer(targetId, name);
+        };
+    };
+}();
+
+var globalBroadcastMsgStateGenerator = function () {
+    var broadcastMsgNameMap = {};
+    return function (topLevel) {
+        if (topLevel) broadcastMsgNameMap = {};
+        return {
+            broadcastMsgMapUpdater: function broadcastMsgMapUpdater(name) {
+                broadcastMsgNameMap[name] = 'broadcastMsgId-' + name;
+                return broadcastMsgNameMap[name];
+            },
+            globalBroadcastMsgs: broadcastMsgNameMap
         };
     };
 }();
@@ -25581,6 +25641,9 @@ var parseScratchObject = function parseScratchObject(object, runtime, extensions
 
     var getVariableId = generateVariableIdGetter(target.id, topLevel);
 
+    var globalBroadcastMsgObj = globalBroadcastMsgStateGenerator(topLevel);
+    var addBroadcastMsg = globalBroadcastMsgObj.broadcastMsgMapUpdater;
+
     // Load target properties from JSON.
     if (object.hasOwnProperty('variables')) {
         for (var j = 0; j < object.variables.length; j++) {
@@ -25593,7 +25656,7 @@ var parseScratchObject = function parseScratchObject(object, runtime, extensions
 
     // If included, parse any and all scripts/blocks on the object.
     if (object.hasOwnProperty('scripts')) {
-        parseScripts(object.scripts, blocks, getVariableId, extensions);
+        parseScripts(object.scripts, blocks, addBroadcastMsg, getVariableId, extensions);
     }
 
     if (object.hasOwnProperty('lists')) {
@@ -25657,6 +25720,16 @@ var parseScratchObject = function parseScratchObject(object, runtime, extensions
 
     return Promise.all(costumePromises.concat(soundPromises)).then(function () {
         return Promise.all(childrenPromises).then(function (children) {
+            // Need create broadcast msgs as variables after
+            // all other targets have finished processing.
+            if (target.isStage) {
+                var allBroadcastMsgs = globalBroadcastMsgObj.globalBroadcastMsgs;
+                for (var msgName in allBroadcastMsgs) {
+                    var msgId = allBroadcastMsgs[msgName];
+                    var newMsg = new Variable(msgId, msgName, Variable.BROADCAST_MESSAGE_TYPE, false);
+                    target.variables[newMsg.id] = newMsg;
+                }
+            }
             var targets = [target];
             for (var n = 0; n < children.length; n++) {
                 targets = targets.concat(children[n]);
@@ -25690,11 +25763,12 @@ var sb2import = function sb2import(json, runtime, optForceSprite) {
 /**
  * Parse a single SB2 JSON-formatted block and its children.
  * @param {!object} sb2block SB2 JSON-formatted block.
+ * @param {Function} addBroadcastMsg function to update broadcast message name map
  * @param {Function} getVariableId function to retrieve a variable's ID based on name
  * @param {ImportedExtensionsInfo} extensions - (in/out) parsed extension information will be stored here.
  * @return {object} Scratch VM format block, or null if unsupported object.
  */
-var parseBlock = function parseBlock(sb2block, getVariableId, extensions) {
+var parseBlock = function parseBlock(sb2block, addBroadcastMsg, getVariableId, extensions) {
     // First item in block object is the old opcode (e.g., 'forward:').
     var oldOpcode = sb2block[0];
     // Convert the block using the specMap. See sb2specmap.js.
@@ -25745,10 +25819,10 @@ var parseBlock = function parseBlock(sb2block, getVariableId, extensions) {
                 var innerBlocks = void 0;
                 if (_typeof(providedArg[0]) === 'object' && providedArg[0]) {
                     // Block list occupies the input.
-                    innerBlocks = parseBlockList(providedArg, getVariableId, extensions);
+                    innerBlocks = parseBlockList(providedArg, addBroadcastMsg, getVariableId, extensions);
                 } else {
                     // Single block occupies the input.
-                    innerBlocks = [parseBlock(providedArg, getVariableId, extensions)];
+                    innerBlocks = [parseBlock(providedArg, addBroadcastMsg, getVariableId, extensions)];
                 }
                 var previousBlock = null;
                 for (var j = 0; j < innerBlocks.length; j++) {
@@ -25826,6 +25900,10 @@ var parseBlock = function parseBlock(sb2block, getVariableId, extensions) {
             if (expectedArg.fieldName === 'VARIABLE' || expectedArg.fieldName === 'LIST') {
                 // Add `id` property to variable fields
                 activeBlock.fields[expectedArg.fieldName].id = getVariableId(providedArg);
+            } else if (expectedArg.fieldName === 'BROADCAST_OPTION') {
+                // add the name in this field to the broadcast msg name map
+                var broadcastId = addBroadcastMsg(providedArg);
+                activeBlock.fields[expectedArg.fieldName].id = broadcastId;
             }
             var varType = expectedArg.variableType;
             if (typeof varType === 'string') {
@@ -26442,23 +26520,24 @@ var specMap = {
         opcode: 'event_whenbroadcastreceived',
         argMap: [{
             type: 'field',
-            fieldName: 'BROADCAST_OPTION'
+            fieldName: 'BROADCAST_OPTION',
+            variableType: Variable.BROADCAST_MESSAGE_TYPE
         }]
     },
     'broadcast:': {
         opcode: 'event_broadcast',
         argMap: [{
-            type: 'input',
-            inputOp: 'event_broadcast_menu',
-            inputName: 'BROADCAST_OPTION'
+            type: 'field',
+            fieldName: 'BROADCAST_OPTION',
+            variableType: Variable.BROADCAST_MESSAGE_TYPE
         }]
     },
     'doBroadcastAndWait': {
         opcode: 'event_broadcastandwait',
         argMap: [{
-            type: 'input',
-            inputOp: 'event_broadcast_menu',
-            inputName: 'BROADCAST_OPTION'
+            type: 'field',
+            fieldName: 'BROADCAST_OPTION',
+            variableType: Variable.BROADCAST_MESSAGE_TYPE
         }]
     },
     'wait:elapsed:from:': {
