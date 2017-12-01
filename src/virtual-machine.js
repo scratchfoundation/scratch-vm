@@ -562,8 +562,10 @@ class VirtualMachine extends EventEmitter {
      * @param {[type]} messages     builtin messages map for current locale
      */
     setLocale (locale, messages) {
-        formatMessage.setup({locale: locale, translations: {[locale]: messages}});
-        this.extensionManager.refreshBlocks();
+        if (locale !== formatMessage.setup().locale) {
+            formatMessage.setup({locale: locale, translations: {[locale]: messages}});
+            this.extensionManager.refreshBlocks();
+        }
     }
 
     /**
