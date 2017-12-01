@@ -88,17 +88,18 @@ const flatten = function (blocks) {
  * a list of blocks in a branch (e.g., in forever),
  * or a list of blocks in an argument (e.g., move [pick random...]).
  * @param {Array.<object>} blockList SB2 JSON-format block list.
+ * @param {Function} addBroadcastMsg function to update broadcast message name map
  * @param {Function} getVariableId function to retreive a variable's ID based on name
  * @param {ImportedExtensionsInfo} extensions - (in/out) parsed extension information will be stored here.
  * @return {Array.<object>} Scratch VM-format block list.
  */
-const parseBlockList = function (blockList, getVariableId, extensions) {
+const parseBlockList = function (blockList, addBroadcastMsg, getVariableId, extensions) {
     const resultingList = [];
     let previousBlock = null; // For setting next.
     for (let i = 0; i < blockList.length; i++) {
         const block = blockList[i];
         // eslint-disable-next-line no-use-before-define
-        const parsedBlock = parseBlock(block, getVariableId, extensions);
+        const parsedBlock = parseBlock(block, addBroadcastMsg, getVariableId, extensions);
         if (typeof parsedBlock === 'undefined') continue;
         if (previousBlock) {
             parsedBlock.parent = previousBlock.id;
@@ -115,16 +116,17 @@ const parseBlockList = function (blockList, getVariableId, extensions) {
  * This should only handle top-level scripts that include X, Y coordinates.
  * @param {!object} scripts Scripts object from SB2 JSON.
  * @param {!Blocks} blocks Blocks object to load parsed blocks into.
+ * @param {Function} addBroadcastMsg function to update broadcast message name map
  * @param {Function} getVariableId function to retreive a variable's ID based on name
  * @param {ImportedExtensionsInfo} extensions - (in/out) parsed extension information will be stored here.
  */
-const parseScripts = function (scripts, blocks, getVariableId, extensions) {
+const parseScripts = function (scripts, blocks, addBroadcastMsg, getVariableId, extensions) {
     for (let i = 0; i < scripts.length; i++) {
         const script = scripts[i];
         const scriptX = script[0];
         const scriptY = script[1];
         const blockList = script[2];
-        const parsedBlockList = parseBlockList(blockList, getVariableId, extensions);
+        const parsedBlockList = parseBlockList(blockList, addBroadcastMsg, getVariableId, extensions);
         if (parsedBlockList[0]) {
             // Adjust script coordinates to account for
             // larger block size in scratch-blocks.
@@ -162,6 +164,20 @@ const generateVariableIdGetter = (function () {
             // Not top-level, so first check the global name map
             if (globalVariableNameMap[name]) return globalVariableNameMap[name];
             return namer(targetId, name);
+        };
+    };
+}());
+
+const globalBroadcastMsgStateGenerator = (function () {
+    let broadcastMsgNameMap = {};
+    return function (topLevel) {
+        if (topLevel) broadcastMsgNameMap = {};
+        return {
+            broadcastMsgMapUpdater: function (name) {
+                broadcastMsgNameMap[name] = `broadcastMsgId-${name}`;
+                return broadcastMsgNameMap[name];
+            },
+            globalBroadcastMsgs: broadcastMsgNameMap
         };
     };
 }());
@@ -227,6 +243,9 @@ const parseScratchObject = function (object, runtime, extensions, topLevel) {
 
     const getVariableId = generateVariableIdGetter(target.id, topLevel);
 
+    const globalBroadcastMsgObj = globalBroadcastMsgStateGenerator(topLevel);
+    const addBroadcastMsg = globalBroadcastMsgObj.broadcastMsgMapUpdater;
+
     // Load target properties from JSON.
     if (object.hasOwnProperty('variables')) {
         for (let j = 0; j < object.variables.length; j++) {
@@ -244,7 +263,7 @@ const parseScratchObject = function (object, runtime, extensions, topLevel) {
 
     // If included, parse any and all scripts/blocks on the object.
     if (object.hasOwnProperty('scripts')) {
-        parseScripts(object.scripts, blocks, getVariableId, extensions);
+        parseScripts(object.scripts, blocks, addBroadcastMsg, getVariableId, extensions);
     }
 
     if (object.hasOwnProperty('lists')) {
@@ -317,6 +336,21 @@ const parseScratchObject = function (object, runtime, extensions, topLevel) {
         Promise.all(
             childrenPromises
         ).then(children => {
+            // Need create broadcast msgs as variables after
+            // all other targets have finished processing.
+            if (target.isStage) {
+                const allBroadcastMsgs = globalBroadcastMsgObj.globalBroadcastMsgs;
+                for (const msgName in allBroadcastMsgs) {
+                    const msgId = allBroadcastMsgs[msgName];
+                    const newMsg = new Variable(
+                        msgId,
+                        msgName,
+                        Variable.BROADCAST_MESSAGE_TYPE,
+                        false
+                    );
+                    target.variables[newMsg.id] = newMsg;
+                }
+            }
             let targets = [target];
             for (let n = 0; n < children.length; n++) {
                 targets = targets.concat(children[n]);
@@ -349,11 +383,12 @@ const sb2import = function (json, runtime, optForceSprite) {
 /**
  * Parse a single SB2 JSON-formatted block and its children.
  * @param {!object} sb2block SB2 JSON-formatted block.
+ * @param {Function} addBroadcastMsg function to update broadcast message name map
  * @param {Function} getVariableId function to retrieve a variable's ID based on name
  * @param {ImportedExtensionsInfo} extensions - (in/out) parsed extension information will be stored here.
  * @return {object} Scratch VM format block, or null if unsupported object.
  */
-const parseBlock = function (sb2block, getVariableId, extensions) {
+const parseBlock = function (sb2block, addBroadcastMsg, getVariableId, extensions) {
     // First item in block object is the old opcode (e.g., 'forward:').
     const oldOpcode = sb2block[0];
     // Convert the block using the specMap. See sb2specmap.js.
@@ -404,10 +439,10 @@ const parseBlock = function (sb2block, getVariableId, extensions) {
                 let innerBlocks;
                 if (typeof providedArg[0] === 'object' && providedArg[0]) {
                     // Block list occupies the input.
-                    innerBlocks = parseBlockList(providedArg, getVariableId, extensions);
+                    innerBlocks = parseBlockList(providedArg, addBroadcastMsg, getVariableId, extensions);
                 } else {
                     // Single block occupies the input.
-                    innerBlocks = [parseBlock(providedArg, getVariableId, extensions)];
+                    innerBlocks = [parseBlock(providedArg, addBroadcastMsg, getVariableId, extensions)];
                 }
                 let previousBlock = null;
                 for (let j = 0; j < innerBlocks.length; j++) {
@@ -493,6 +528,10 @@ const parseBlock = function (sb2block, getVariableId, extensions) {
             if (expectedArg.fieldName === 'VARIABLE' || expectedArg.fieldName === 'LIST') {
                 // Add `id` property to variable fields
                 activeBlock.fields[expectedArg.fieldName].id = getVariableId(providedArg);
+            } else if (expectedArg.fieldName === 'BROADCAST_OPTION') {
+                // add the name in this field to the broadcast msg name map
+                const broadcastId = addBroadcastMsg(providedArg);
+                activeBlock.fields[expectedArg.fieldName].id = broadcastId;
             }
             const varType = expectedArg.variableType;
             if (typeof varType === 'string') {

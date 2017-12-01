@@ -656,7 +656,8 @@ const specMap = {
         argMap: [
             {
                 type: 'field',
-                fieldName: 'BROADCAST_OPTION'
+                fieldName: 'BROADCAST_OPTION',
+                variableType: Variable.BROADCAST_MESSAGE_TYPE
             }
         ]
     },
@@ -664,9 +665,9 @@ const specMap = {
         opcode: 'event_broadcast',
         argMap: [
             {
-                type: 'input',
-                inputOp: 'event_broadcast_menu',
-                inputName: 'BROADCAST_OPTION'
+                type: 'field',
+                fieldName: 'BROADCAST_OPTION',
+                variableType: Variable.BROADCAST_MESSAGE_TYPE
             }
         ]
     },
@@ -674,9 +675,9 @@ const specMap = {
         opcode: 'event_broadcastandwait',
         argMap: [
             {
-                type: 'input',
-                inputOp: 'event_broadcast_menu',
-                inputName: 'BROADCAST_OPTION'
+                type: 'field',
+                fieldName: 'BROADCAST_OPTION',
+                variableType: Variable.BROADCAST_MESSAGE_TYPE
             }
         ]
     },
