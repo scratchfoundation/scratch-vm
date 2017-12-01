@@ -17952,15 +17952,16 @@ var Scratch3SensingBlocks = function () {
             this._answer = answer;
             var questionObj = this._questionList.shift();
             if (questionObj) {
-                var _questionObj = _slicedToArray(questionObj, 4),
+                var _questionObj = _slicedToArray(questionObj, 5),
                     _question = _questionObj[0],
                     resolve = _questionObj[1],
                     target = _questionObj[2],
-                    wasVisible = _questionObj[3];
-                // If the target was visible when asked, hide the say bubble.
+                    wasVisible = _questionObj[3],
+                    wasStage = _questionObj[4];
+                // If the target was visible when asked, hide the say bubble unless the target was the stage.
 
 
-                if (wasVisible) {
+                if (wasVisible && !wasStage) {
                     this.runtime.emit('SAY', target, 'say', '');
                 }
                 resolve();
@@ -17969,23 +17970,24 @@ var Scratch3SensingBlocks = function () {
         }
     }, {
         key: '_enqueueAsk',
-        value: function _enqueueAsk(question, resolve, target, wasVisible) {
-            this._questionList.push([question, resolve, target, wasVisible]);
+        value: function _enqueueAsk(question, resolve, target, wasVisible, wasStage) {
+            this._questionList.push([question, resolve, target, wasVisible, wasStage]);
         }
     }, {
         key: '_askNextQuestion',
         value: function _askNextQuestion() {
             if (this._questionList.length > 0) {
-                var _questionList$ = _slicedToArray(this._questionList[0], 4),
+                var _questionList$ = _slicedToArray(this._questionList[0], 5),
                     question = _questionList$[0],
                     _resolve = _questionList$[1],
                     target = _questionList$[2],
-                    wasVisible = _questionList$[3];
+                    wasVisible = _questionList$[3],
+                    wasStage = _questionList$[4];
                 // If the target is visible, emit a blank question and use the
-                // say event to trigger a bubble.
+                // say event to trigger a bubble unless the target was the stage.
 
 
-                if (wasVisible) {
+                if (wasVisible && !wasStage) {
                     this.runtime.emit('SAY', target, 'say', question);
                     this.runtime.emit('QUESTION', '');
                 } else {
@@ -18007,7 +18009,7 @@ var Scratch3SensingBlocks = function () {
             var _target = util.target;
             return new Promise(function (resolve) {
                 var isQuestionAsked = _this._questionList.length > 0;
-                _this._enqueueAsk(args.QUESTION, resolve, _target, _target.visible);
+                _this._enqueueAsk(args.QUESTION, resolve, _target, _target.visible, _target.isStage);
                 if (!isQuestionAsked) {
                     _this._askNextQuestion();
                 }
