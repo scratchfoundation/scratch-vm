@@ -168,17 +168,14 @@ const generateVariableIdGetter = (function () {
     };
 }());
 
-const generateBroadcastMsgId = function (name) {
-    return `broadcastMsgId-${name}`;
-};
-
 const globalBroadcastMsgStateGenerator = (function () {
     let broadcastMsgNameMap = {};
     return function (topLevel) {
         if (topLevel) broadcastMsgNameMap = {};
         return {
             broadcastMsgMapUpdater: function (name) {
-                broadcastMsgNameMap[name] = generateBroadcastMsgId(name);
+                broadcastMsgNameMap[name] = `broadcastMsgId-${name}`;
+                return broadcastMsgNameMap[name];
             },
             globalBroadcastMsgs: broadcastMsgNameMap
         };
@@ -533,8 +530,7 @@ const parseBlock = function (sb2block, addBroadcastMsg, getVariableId, extension
                 activeBlock.fields[expectedArg.fieldName].id = getVariableId(providedArg);
             } else if (expectedArg.fieldName === 'BROADCAST_OPTION') {
                 // add the name in this field to the broadcast msg name map
-                addBroadcastMsg(providedArg);
-                const broadcastId = generateBroadcastMsgId(providedArg);
+                const broadcastId = addBroadcastMsg(providedArg);
                 activeBlock.fields[expectedArg.fieldName].id = broadcastId;
             }
             const varType = expectedArg.variableType;
