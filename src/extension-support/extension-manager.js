@@ -109,7 +109,6 @@ class ExtensionManager {
      * @returns {Promise} resolved once the extension is loaded and initialized or rejected on failure
      */
     loadExtensionURL (extensionURL) {
-
         if (builtinExtensions.hasOwnProperty(extensionURL)) {
             /** @TODO dupe handling for non-builtin extensions. See commit 670e51d33580e8a2e852b3b038bb3afc282f81b9 */
             if (this.isExtensionLoaded(extensionURL)) {
@@ -117,6 +116,7 @@ class ExtensionManager {
                 log.warn(message);
                 return Promise.reject(new Error(message));
             }
+
             const extension = builtinExtensions[extensionURL];
             const extensionInstance = new extension(this.runtime);
             return this._registerInternalExtension(extensionInstance).then(() => {
@@ -133,6 +133,9 @@ class ExtensionManager {
         });
     }
 
+    /**
+    * regenerate blockinfo for any loaded extensions
+    */
     refreshBlocks () {
         const extensionsInfo = {};
         this._loadedExtensions.forEach(extensionURL => {

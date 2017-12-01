@@ -505,6 +505,11 @@ class Runtime extends EventEmitter {
         this.emit(Runtime.EXTENSION_ADDED, categoryInfo.blocks.concat(categoryInfo.menus));
     }
 
+    /**
+     * Iterate over the currently loaded extensions regenerating the blocksInfo for blockly
+     * @param  {ExtensionInfoMap} extensionsInfo - new info (results of running getInfo) for each currently loaded extension
+     * @private
+     */
     _refreshExtensionPrimitives (extensionsInfo) {
         let extensionBlocks = [];
         for (const categoryInfo of this._blockInfo) {
