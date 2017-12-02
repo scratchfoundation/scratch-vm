@@ -318,6 +318,15 @@ class Runtime extends EventEmitter {
     }
 
     /**
+     * Event name when the project is started (threads may not necessarily be
+     * running).
+     * @const {string}
+     */
+    static get PROJECT_START () {
+        return 'PROJECT_START';
+    }
+
+    /**
      * Event name when threads start running.
      * Used by the UI to indicate running status.
      * @const {string}
@@ -1057,6 +1066,7 @@ class Runtime extends EventEmitter {
      */
     greenFlag () {
         this.stopAll();
+        this.emit(Runtime.PROJECT_START);
         this.ioDevices.clock.resetProjectTimer();
         this.clearEdgeActivatedValues();
         // Inform all targets of the green flag.
