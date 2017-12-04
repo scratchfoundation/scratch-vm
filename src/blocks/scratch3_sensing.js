@@ -21,6 +21,7 @@ class Scratch3SensingBlocks {
         this._questionList = [];
 
         this.runtime.on('ANSWER', this._onAnswer.bind(this));
+        this.runtime.on('PROJECT_START', this._resetAnswer.bind(this));
         this.runtime.on('PROJECT_STOP_ALL', this._clearAllQuestions.bind(this));
     }
 
@@ -71,6 +72,10 @@ class Scratch3SensingBlocks {
             resolve();
             this._askNextQuestion();
         }
+    }
+
+    _resetAnswer () {
+        this._answer = '';
     }
 
     _enqueueAsk (question, resolve, target, wasVisible, wasStage) {
