@@ -17906,6 +17906,7 @@ var Scratch3SensingBlocks = function () {
         this._questionList = [];
 
         this.runtime.on('ANSWER', this._onAnswer.bind(this));
+        this.runtime.on('PROJECT_START', this._resetAnswer.bind(this));
         this.runtime.on('PROJECT_STOP_ALL', this._clearAllQuestions.bind(this));
     }
 
@@ -17969,6 +17970,11 @@ var Scratch3SensingBlocks = function () {
                 resolve();
                 this._askNextQuestion();
             }
+        }
+    }, {
+        key: '_resetAnswer',
+        value: function _resetAnswer() {
+            this._answer = '';
         }
     }, {
         key: '_enqueueAsk',
@@ -22032,6 +22038,7 @@ var Runtime = function (_EventEmitter) {
         key: 'greenFlag',
         value: function greenFlag() {
             this.stopAll();
+            this.emit(Runtime.PROJECT_START);
             this.ioDevices.clock.resetProjectTimer();
             this.clearEdgeActivatedValues();
             // Inform all targets of the green flag.
@@ -22635,6 +22642,18 @@ var Runtime = function (_EventEmitter) {
         key: 'BLOCK_GLOW_OFF',
         get: function get() {
             return 'BLOCK_GLOW_OFF';
+        }
+
+        /**
+         * Event name when the project is started (threads may not necessarily be
+         * running).
+         * @const {string}
+         */
+
+    }, {
+        key: 'PROJECT_START',
+        get: function get() {
+            return 'PROJECT_START';
         }
 
         /**
