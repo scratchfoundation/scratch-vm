@@ -16489,7 +16489,9 @@ var Scratch3LooksBlocks = function () {
     }, {
         key: 'goToFront',
         value: function goToFront(args, util) {
-            util.target.goToFront();
+            if (!util.target.isStage) {
+                util.target.goToFront();
+            }
         }
     }, {
         key: 'goBackLayers',
