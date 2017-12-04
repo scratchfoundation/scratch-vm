@@ -410,7 +410,9 @@ class Scratch3LooksBlocks {
     }
 
     goToFront (args, util) {
-        util.target.goToFront();
+        if (!util.target.isStage) {
+            util.target.goToFront();
+        }
     }
 
     goBackLayers (args, util) {
