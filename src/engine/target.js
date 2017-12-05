@@ -4,6 +4,7 @@ const Blocks = require('./blocks');
 const Variable = require('../engine/variable');
 const uid = require('../util/uid');
 const {Map} = require('immutable');
+const log = require('../util/log');
 
 /**
  * @fileoverview
@@ -93,19 +94,25 @@ class Target extends EventEmitter {
     }
 
     /**
-     * Look up a broadcast message object, and create it if one doesn't exist.
+     * Look up a broadcast message object with the given id and return it
+     * if it exists.
      * @param {string} id Id of the variable.
      * @param {string} name Name of the variable.
      * @return {!Variable} Variable object.
      */
-    lookupOrCreateBroadcastMsg (id, name) {
+    lookupBroadcastMsg (id, name) {
         const broadcastMsg = this.lookupVariableById(id);
-        if (broadcastMsg) return broadcastMsg;
-        // No variable with this name exists - create it locally.
-        const newBroadcastMsg = new Variable(id, name,
-            Variable.BROADCAST_MESSAGE_TYPE, false);
-        this.variables[id] = newBroadcastMsg;
-        return newBroadcastMsg;
+        if (broadcastMsg) {
+            if (broadcastMsg.name !== name) {
+                log.error(`Found broadcast message with id: ${id}, but` +
+                    `its name, ${broadcastMsg.name} did not match expected name ${name}.`);
+            }
+            if (broadcastMsg.type !== Variable.BROADCAST_MESSAGE_TYPE) {
+                log.error(`Found variable with id: ${id}, but its type ${broadcastMsg.type}` +
+                    `did not match expected type ${Variable.BROADCAST_MESSAGE_TYPE}`);
+            }
+            return broadcastMsg;
+        }
     }
 
     /**
