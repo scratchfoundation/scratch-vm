@@ -507,7 +507,8 @@ class Runtime extends EventEmitter {
 
     /**
      * Iterate over the currently loaded extensions regenerating the blocksInfo for blockly
-     * @param  {ExtensionInfoMap} extensionsInfo - new info (results of running getInfo) for each currently loaded extension
+     * @param  {ExtensionInfoMap} extensionsInfo - new info (results of running getInfo)
+     *                                           for each currently loaded extension
      * @private
      */
     _refreshExtensionPrimitives (extensionsInfo) {
