@@ -2884,10 +2884,10 @@ var _createClass = function () { function defineProperties(target, props) { for 
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
-var adapter = __webpack_require__(73);
+var adapter = __webpack_require__(71);
 var mutationAdapter = __webpack_require__(38);
 var xmlEscape = __webpack_require__(90);
-var MonitorRecord = __webpack_require__(76);
+var MonitorRecord = __webpack_require__(74);
 var Clone = __webpack_require__(12);
 
 /**
@@ -4728,7 +4728,7 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
 var log = __webpack_require__(1);
 var MathUtil = __webpack_require__(6);
 var StringUtil = __webpack_require__(13);
-var Target = __webpack_require__(80);
+var Target = __webpack_require__(78);
 
 /**
  * Rendered target: instance of a sprite (clone), or the stage.
@@ -12462,7 +12462,7 @@ function _possibleConstructorReturn(self, call) { if (!self) { throw new Referen
 
 function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
 
-var SharedDispatch = __webpack_require__(72);
+var SharedDispatch = __webpack_require__(70);
 
 var log = __webpack_require__(1);
 
@@ -17067,740 +17067,6 @@ module.exports = Scratch3OperatorsBlocks;
 "use strict";
 
 
-var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
-
-function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
-
-var ArgumentType = __webpack_require__(19);
-var BlockType = __webpack_require__(11);
-var Cast = __webpack_require__(2);
-var Clone = __webpack_require__(12);
-var Color = __webpack_require__(23);
-var MathUtil = __webpack_require__(6);
-var RenderedTarget = __webpack_require__(22);
-var log = __webpack_require__(1);
-
-/**
- * Icon svg to be displayed at the left edge of each extension block, encoded as a data URI.
- * @type {string}
- */
-// eslint-disable-next-line max-len
-var iconURI = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHZpZXdCb3g9IjAgMCA0MCA0MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48dGl0bGU+cGVuLWljb248L3RpdGxlPjxnIHN0cm9rZT0iIzU3NUU3NSIgZmlsbD0ibm9uZSIgZmlsbC1ydWxlPSJldmVub2RkIiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiPjxwYXRoIGQ9Ik04Ljc1MyAzNC42MDJsLTQuMjUgMS43OCAxLjc4My00LjIzN2MxLjIxOC0yLjg5MiAyLjkwNy01LjQyMyA1LjAzLTcuNTM4TDMxLjA2NiA0LjkzYy44NDYtLjg0MiAyLjY1LS40MSA0LjAzMi45NjcgMS4zOCAxLjM3NSAxLjgxNiAzLjE3My45NyA0LjAxNUwxNi4zMTggMjkuNTljLTIuMTIzIDIuMTE2LTQuNjY0IDMuOC03LjU2NSA1LjAxMiIgZmlsbD0iI0ZGRiIvPjxwYXRoIGQ9Ik0yOS40MSA2LjExcy00LjQ1LTIuMzc4LTguMjAyIDUuNzcyYy0xLjczNCAzLjc2Ni00LjM1IDEuNTQ2LTQuMzUgMS41NDYiLz48cGF0aCBkPSJNMzYuNDIgOC44MjVjMCAuNDYzLS4xNC44NzMtLjQzMiAxLjE2NGwtOS4zMzUgOS4zYy4yODItLjI5LjQxLS42NjguNDEtMS4xMiAwLS44NzQtLjUwNy0xLjk2My0xLjQwNi0yLjg2OC0xLjM2Mi0xLjM1OC0zLjE0Ny0xLjgtNC4wMDItLjk5TDMwLjk5IDUuMDFjLjg0NC0uODQgMi42NS0uNDEgNC4wMzUuOTYuODk4LjkwNCAxLjM5NiAxLjk4MiAxLjM5NiAyLjg1NU0xMC41MTUgMzMuNzc0Yy0uNTczLjMwMi0xLjE1Ny41Ny0xLjc2NC44M0w0LjUgMzYuMzgybDEuNzg2LTQuMjM1Yy4yNTgtLjYwNC41My0xLjE4Ni44MzMtMS43NTcuNjkuMTgzIDEuNDQ4LjYyNSAyLjEwOCAxLjI4Mi42Ni42NTggMS4xMDIgMS40MTIgMS4yODcgMi4xMDIiIGZpbGw9IiM0Qzk3RkYiLz48cGF0aCBkPSJNMzYuNDk4IDguNzQ4YzAgLjQ2NC0uMTQuODc0LS40MzMgMS4xNjVsLTE5Ljc0MiAxOS42OGMtMi4xMyAyLjExLTQuNjczIDMuNzkzLTcuNTcyIDUuMDFMNC41IDM2LjM4bC45NzQtMi4zMTYgMS45MjUtLjgwOGMyLjg5OC0xLjIxOCA1LjQ0LTIuOSA3LjU3LTUuMDFsMTkuNzQzLTE5LjY4Yy4yOTItLjI5Mi40MzItLjcwMi40MzItMS4xNjUgMC0uNjQ2LS4yNy0xLjQtLjc4LTIuMTIyLjI1LjE3Mi41LjM3Ny43MzcuNjE0Ljg5OC45MDUgMS4zOTYgMS45ODMgMS4zOTYgMi44NTYiIGZpbGw9IiM1NzVFNzUiIG9wYWNpdHk9Ii4xNSIvPjxwYXRoIGQ9Ik0xOC40NSAxMi44M2MwIC41LS40MDQuOTA1LS45MDQuOTA1cy0uOTA1LS40MDUtLjkwNS0uOTA0YzAtLjUuNDA3LS45MDMuOTA2LS45MDMuNSAwIC45MDQuNDA0LjkwNC45MDR6IiBmaWxsPSIjNTc1RTc1Ii8+PC9nPjwvc3ZnPg==';
-
-/**
- * Enum for pen color parameters.
- * @readonly
- * @enum {string}
- */
-var ColorParam = {
-    COLOR: 'color',
-    SATURATION: 'saturation',
-    BRIGHTNESS: 'brightness',
-    TRANSPARENCY: 'transparency'
-};
-
-/**
- * @typedef {object} PenState - the pen state associated with a particular target.
- * @property {Boolean} penDown - tracks whether the pen should draw for this target.
- * @property {number} color - the current color (hue) of the pen.
- * @property {PenAttributes} penAttributes - cached pen attributes for the renderer. This is the authoritative value for
- *   diameter but not for pen color.
- */
-
-/**
- * Host for the Pen-related blocks in Scratch 3.0
- * @param {Runtime} runtime - the runtime instantiating this block package.
- * @constructor
- */
-
-var Scratch3PenBlocks = function () {
-    function Scratch3PenBlocks(runtime) {
-        _classCallCheck(this, Scratch3PenBlocks);
-
-        /**
-         * The runtime instantiating this block package.
-         * @type {Runtime}
-         */
-        this.runtime = runtime;
-
-        /**
-         * The ID of the renderer Drawable corresponding to the pen layer.
-         * @type {int}
-         * @private
-         */
-        this._penDrawableId = -1;
-
-        /**
-         * The ID of the renderer Skin corresponding to the pen layer.
-         * @type {int}
-         * @private
-         */
-        this._penSkinId = -1;
-
-        this._onTargetCreated = this._onTargetCreated.bind(this);
-        this._onTargetMoved = this._onTargetMoved.bind(this);
-
-        runtime.on('targetWasCreated', this._onTargetCreated);
-    }
-
-    /**
-     * The default pen state, to be used when a target has no existing pen state.
-     * @type {PenState}
-     */
-
-
-    _createClass(Scratch3PenBlocks, [{
-        key: '_clampPenSize',
-
-
-        /**
-         * Clamp a pen size value to the range allowed by the pen.
-         * @param {number} requestedSize - the requested pen size.
-         * @returns {number} the clamped size.
-         * @private
-         */
-        value: function _clampPenSize(requestedSize) {
-            return MathUtil.clamp(requestedSize, Scratch3PenBlocks.PEN_SIZE_RANGE.min, Scratch3PenBlocks.PEN_SIZE_RANGE.max);
-        }
-
-        /**
-         * Retrieve the ID of the renderer "Skin" corresponding to the pen layer. If
-         * the pen Skin doesn't yet exist, create it.
-         * @returns {int} the Skin ID of the pen layer, or -1 on failure.
-         * @private
-         */
-
-    }, {
-        key: '_getPenLayerID',
-        value: function _getPenLayerID() {
-            if (this._penSkinId < 0 && this.runtime.renderer) {
-                this._penSkinId = this.runtime.renderer.createPenSkin();
-                this._penDrawableId = this.runtime.renderer.createDrawable();
-                this.runtime.renderer.setDrawableOrder(this._penDrawableId, Scratch3PenBlocks.PEN_ORDER);
-                this.runtime.renderer.updateDrawableProperties(this._penDrawableId, { skinId: this._penSkinId });
-            }
-            return this._penSkinId;
-        }
-
-        /**
-         * @param {Target} target - collect pen state for this target. Probably, but not necessarily, a RenderedTarget.
-         * @returns {PenState} the mutable pen state associated with that target. This will be created if necessary.
-         * @private
-         */
-
-    }, {
-        key: '_getPenState',
-        value: function _getPenState(target) {
-            var penState = target.getCustomState(Scratch3PenBlocks.STATE_KEY);
-            if (!penState) {
-                penState = Clone.simple(Scratch3PenBlocks.DEFAULT_PEN_STATE);
-                target.setCustomState(Scratch3PenBlocks.STATE_KEY, penState);
-            }
-            return penState;
-        }
-
-        /**
-         * When a pen-using Target is cloned, clone the pen state.
-         * @param {Target} newTarget - the newly created target.
-         * @param {Target} [sourceTarget] - the target used as a source for the new clone, if any.
-         * @listens Runtime#event:targetWasCreated
-         * @private
-         */
-
-    }, {
-        key: '_onTargetCreated',
-        value: function _onTargetCreated(newTarget, sourceTarget) {
-            if (sourceTarget) {
-                var penState = sourceTarget.getCustomState(Scratch3PenBlocks.STATE_KEY);
-                if (penState) {
-                    newTarget.setCustomState(Scratch3PenBlocks.STATE_KEY, Clone.simple(penState));
-                    if (penState.penDown) {
-                        newTarget.addListener(RenderedTarget.EVENT_TARGET_MOVED, this._onTargetMoved);
-                    }
-                }
-            }
-        }
-
-        /**
-         * Handle a target which has moved. This only fires when the pen is down.
-         * @param {RenderedTarget} target - the target which has moved.
-         * @param {number} oldX - the previous X position.
-         * @param {number} oldY - the previous Y position.
-         * @private
-         */
-
-    }, {
-        key: '_onTargetMoved',
-        value: function _onTargetMoved(target, oldX, oldY) {
-            var penSkinId = this._getPenLayerID();
-            if (penSkinId >= 0) {
-                var penState = this._getPenState(target);
-                this.runtime.renderer.penLine(penSkinId, penState.penAttributes, oldX, oldY, target.x, target.y);
-                this.runtime.requestRedraw();
-            }
-        }
-
-        /**
-         * Wrap a color input into the range (0,100).
-         * @param {number} value - the value to be wrapped.
-         * @returns {number} the wrapped value.
-         * @private
-         */
-
-    }, {
-        key: '_wrapColor',
-        value: function _wrapColor(value) {
-            return MathUtil.wrapClamp(value, 0, 100);
-        }
-
-        /**
-         * Clamp a pen color parameter to the range (0,100).
-         * @param {number} value - the value to be clamped.
-         * @returns {number} the clamped value.
-         * @private
-         */
-
-    }, {
-        key: '_clampColorParam',
-        value: function _clampColorParam(value) {
-            return MathUtil.clamp(value, 0, 100);
-        }
-
-        /**
-         * Convert an alpha value to a pen transparency value.
-         * Alpha ranges from 0 to 1, where 0 is transparent and 1 is opaque.
-         * Transparency ranges from 0 to 100, where 0 is opaque and 100 is transparent.
-         * @param {number} alpha - the input alpha value.
-         * @returns {number} the transparency value.
-         * @private
-         */
-
-    }, {
-        key: '_alphaToTransparency',
-        value: function _alphaToTransparency(alpha) {
-            return (1.0 - alpha) * 100.0;
-        }
-
-        /**
-         * Convert a pen transparency value to an alpha value.
-         * Alpha ranges from 0 to 1, where 0 is transparent and 1 is opaque.
-         * Transparency ranges from 0 to 100, where 0 is opaque and 100 is transparent.
-         * @param {number} transparency - the input transparency value.
-         * @returns {number} the alpha value.
-         * @private
-         */
-
-    }, {
-        key: '_transparencyToAlpha',
-        value: function _transparencyToAlpha(transparency) {
-            return 1.0 - transparency / 100.0;
-        }
-
-        /**
-         * @returns {object} metadata for this extension and its blocks.
-         */
-
-    }, {
-        key: 'getInfo',
-        value: function getInfo() {
-            return {
-                id: 'pen',
-                name: 'Pen',
-                iconURI: iconURI,
-                blocks: [{
-                    opcode: 'clear',
-                    blockType: BlockType.COMMAND
-                }, {
-                    opcode: 'stamp',
-                    blockType: BlockType.COMMAND
-                }, {
-                    opcode: 'penDown',
-                    blockType: BlockType.COMMAND,
-                    text: 'pen down'
-                }, {
-                    opcode: 'penUp',
-                    blockType: BlockType.COMMAND,
-                    text: 'pen up'
-                }, {
-                    opcode: 'setPenColorToColor',
-                    blockType: BlockType.COMMAND,
-                    text: 'set pen color to [COLOR]',
-                    arguments: {
-                        COLOR: {
-                            type: ArgumentType.COLOR
-                        }
-                    }
-                }, {
-                    opcode: 'changePenColorParamBy',
-                    blockType: BlockType.COMMAND,
-                    text: 'change pen [COLOR_PARAM] by [VALUE]',
-                    arguments: {
-                        COLOR_PARAM: {
-                            type: ArgumentType.STRING,
-                            menu: 'colorParam',
-                            defaultValue: ColorParam.COLOR
-                        },
-                        VALUE: {
-                            type: ArgumentType.NUMBER,
-                            defaultValue: 10
-                        }
-                    }
-                }, {
-                    opcode: 'setPenColorParamTo',
-                    blockType: BlockType.COMMAND,
-                    text: 'set pen [COLOR_PARAM] to [VALUE]',
-                    arguments: {
-                        COLOR_PARAM: {
-                            type: ArgumentType.STRING,
-                            menu: 'colorParam',
-                            defaultValue: ColorParam.COLOR
-                        },
-                        VALUE: {
-                            type: ArgumentType.NUMBER,
-                            defaultValue: 50
-                        }
-                    }
-                }, {
-                    opcode: 'changePenSizeBy',
-                    blockType: BlockType.COMMAND,
-                    text: 'change pen size by [SIZE]',
-                    arguments: {
-                        SIZE: {
-                            type: ArgumentType.NUMBER,
-                            defaultValue: 1
-                        }
-                    }
-                }, {
-                    opcode: 'setPenSizeTo',
-                    blockType: BlockType.COMMAND,
-                    text: 'set pen size to [SIZE]',
-                    arguments: {
-                        SIZE: {
-                            type: ArgumentType.NUMBER,
-                            defaultValue: 1
-                        }
-                    }
-                },
-                /* Legacy blocks, should not be shown in flyout */
-                {
-                    opcode: 'setPenShadeToNumber',
-                    blockType: BlockType.COMMAND,
-                    text: 'set pen shade to [SHADE]',
-                    arguments: {
-                        SHADE: {
-                            type: ArgumentType.NUMBER,
-                            defaultValue: 1
-                        }
-                    },
-                    hideFromPalette: true
-                }, {
-                    opcode: 'changePenShadeBy',
-                    blockType: BlockType.COMMAND,
-                    text: 'change pen shade by [SHADE]',
-                    arguments: {
-                        SHADE: {
-                            type: ArgumentType.NUMBER,
-                            defaultValue: 1
-                        }
-                    },
-                    hideFromPalette: true
-                }, {
-                    opcode: 'setPenHueToNumber',
-                    blockType: BlockType.COMMAND,
-                    text: 'set pen hue to [HUE]',
-                    arguments: {
-                        HUE: {
-                            type: ArgumentType.NUMBER,
-                            defaultValue: 1
-                        }
-                    },
-                    hideFromPalette: true
-                }, {
-                    opcode: 'changePenHueBy',
-                    blockType: BlockType.COMMAND,
-                    text: 'change pen hue by [HUE]',
-                    arguments: {
-                        HUE: {
-                            type: ArgumentType.NUMBER,
-                            defaultValue: 1
-                        }
-                    },
-                    hideFromPalette: true
-                }],
-                menus: {
-                    colorParam: [ColorParam.COLOR, ColorParam.SATURATION, ColorParam.BRIGHTNESS, ColorParam.TRANSPARENCY]
-                }
-            };
-        }
-
-        /**
-         * The pen "clear" block clears the pen layer's contents.
-         */
-
-    }, {
-        key: 'clear',
-        value: function clear() {
-            var penSkinId = this._getPenLayerID();
-            if (penSkinId >= 0) {
-                this.runtime.renderer.penClear(penSkinId);
-                this.runtime.requestRedraw();
-            }
-        }
-
-        /**
-         * The pen "stamp" block stamps the current drawable's image onto the pen layer.
-         * @param {object} args - the block arguments.
-         * @param {object} util - utility object provided by the runtime.
-         */
-
-    }, {
-        key: 'stamp',
-        value: function stamp(args, util) {
-            var penSkinId = this._getPenLayerID();
-            if (penSkinId >= 0) {
-                var target = util.target;
-                this.runtime.renderer.penStamp(penSkinId, target.drawableID);
-                this.runtime.requestRedraw();
-            }
-        }
-
-        /**
-         * The pen "pen down" block causes the target to leave pen trails on future motion.
-         * @param {object} args - the block arguments.
-         * @param {object} util - utility object provided by the runtime.
-         */
-
-    }, {
-        key: 'penDown',
-        value: function penDown(args, util) {
-            var target = util.target;
-            var penState = this._getPenState(target);
-
-            if (!penState.penDown) {
-                penState.penDown = true;
-                target.addListener(RenderedTarget.EVENT_TARGET_MOVED, this._onTargetMoved);
-            }
-
-            var penSkinId = this._getPenLayerID();
-            if (penSkinId >= 0) {
-                this.runtime.renderer.penPoint(penSkinId, penState.penAttributes, target.x, target.y);
-                this.runtime.requestRedraw();
-            }
-        }
-
-        /**
-         * The pen "pen up" block stops the target from leaving pen trails.
-         * @param {object} args - the block arguments.
-         * @param {object} util - utility object provided by the runtime.
-         */
-
-    }, {
-        key: 'penUp',
-        value: function penUp(args, util) {
-            var target = util.target;
-            var penState = this._getPenState(target);
-
-            if (penState.penDown) {
-                penState.penDown = false;
-                target.removeListener(RenderedTarget.EVENT_TARGET_MOVED, this._onTargetMoved);
-            }
-        }
-
-        /**
-         * The pen "set pen color to {color}" block sets the pen to a particular RGB color.
-         * The transparency is reset to 0.
-         * @param {object} args - the block arguments.
-         *  @property {int} COLOR - the color to set, expressed as a 24-bit RGB value (0xRRGGBB).
-         * @param {object} util - utility object provided by the runtime.
-         */
-
-    }, {
-        key: 'setPenColorToColor',
-        value: function setPenColorToColor(args, util) {
-            var penState = this._getPenState(util.target);
-            var rgb = Cast.toRgbColorObject(args.COLOR);
-            var hsv = Color.rgbToHsv(rgb);
-            penState.color = hsv.h / 360 * 100;
-            penState.saturation = hsv.s * 100;
-            penState.brightness = hsv.v * 100;
-            if (rgb.hasOwnProperty('a')) {
-                penState.transparency = 100 * (1 - rgb.a / 255.0);
-            } else {
-                penState.transparency = 0;
-            }
-
-            // Set the legacy "shade" value the same way scratch 2 did.
-            penState._shade = penState.brightness / 2;
-
-            this._updatePenColor(penState);
-        }
-
-        /**
-         * Update the cached color from the color, saturation, brightness and transparency values
-         * in the provided PenState object.
-         * @param {PenState} penState - the pen state to update.
-         * @private
-         */
-
-    }, {
-        key: '_updatePenColor',
-        value: function _updatePenColor(penState) {
-            var rgb = Color.hsvToRgb({
-                h: penState.color * 360 / 100,
-                s: penState.saturation / 100,
-                v: penState.brightness / 100
-            });
-            penState.penAttributes.color4f[0] = rgb.r / 255.0;
-            penState.penAttributes.color4f[1] = rgb.g / 255.0;
-            penState.penAttributes.color4f[2] = rgb.b / 255.0;
-            penState.penAttributes.color4f[3] = this._transparencyToAlpha(penState.transparency);
-        }
-
-        /**
-         * Set or change a single color parameter on the pen state, and update the pen color.
-         * @param {ColorParam} param - the name of the color parameter to set or change.
-         * @param {number} value - the value to set or change the param by.
-         * @param {PenState} penState - the pen state to update.
-         * @param {boolean} change - if true change param by value, if false set param to value.
-         * @private
-         */
-
-    }, {
-        key: '_setOrChangeColorParam',
-        value: function _setOrChangeColorParam(param, value, penState, change) {
-            switch (param) {
-                case ColorParam.COLOR:
-                    penState.color = this._wrapColor(value + (change ? penState.color : 0));
-                    break;
-                case ColorParam.SATURATION:
-                    penState.saturation = this._clampColorParam(value + (change ? penState.saturation : 0));
-                    break;
-                case ColorParam.BRIGHTNESS:
-                    penState.brightness = this._clampColorParam(value + (change ? penState.brightness : 0));
-                    break;
-                case ColorParam.TRANSPARENCY:
-                    penState.transparency = this._clampColorParam(value + (change ? penState.transparency : 0));
-                    break;
-                default:
-                    log.warn('Tried to set or change unknown color parameter: ' + param);
-            }
-            this._updatePenColor(penState);
-        }
-
-        /**
-         * The "change pen {ColorParam} by {number}" block changes one of the pen's color parameters
-         * by a given amound.
-         * @param {object} args - the block arguments.
-         *  @property {ColorParam} COLOR_PARAM - the name of the selected color parameter.
-         *  @property {number} VALUE - the amount to change the selected parameter by.
-         * @param {object} util - utility object provided by the runtime.
-         */
-
-    }, {
-        key: 'changePenColorParamBy',
-        value: function changePenColorParamBy(args, util) {
-            var penState = this._getPenState(util.target);
-            this._setOrChangeColorParam(args.COLOR_PARAM, Cast.toNumber(args.VALUE), penState, true);
-        }
-
-        /**
-         * The "set pen {ColorParam} to {number}" block sets one of the pen's color parameters
-         * to a given amound.
-         * @param {object} args - the block arguments.
-         *  @property {ColorParam} COLOR_PARAM - the name of the selected color parameter.
-         *  @property {number} VALUE - the amount to set the selected parameter to.
-         * @param {object} util - utility object provided by the runtime.
-         */
-
-    }, {
-        key: 'setPenColorParamTo',
-        value: function setPenColorParamTo(args, util) {
-            var penState = this._getPenState(util.target);
-            this._setOrChangeColorParam(args.COLOR_PARAM, Cast.toNumber(args.VALUE), penState, false);
-        }
-
-        /**
-         * The pen "change pen size by {number}" block changes the pen size by the given amount.
-         * @param {object} args - the block arguments.
-         *  @property {number} SIZE - the amount of desired size change.
-         * @param {object} util - utility object provided by the runtime.
-         */
-
-    }, {
-        key: 'changePenSizeBy',
-        value: function changePenSizeBy(args, util) {
-            var penAttributes = this._getPenState(util.target).penAttributes;
-            penAttributes.diameter = this._clampPenSize(penAttributes.diameter + Cast.toNumber(args.SIZE));
-        }
-
-        /**
-         * The pen "set pen size to {number}" block sets the pen size to the given amount.
-         * @param {object} args - the block arguments.
-         *  @property {number} SIZE - the amount of desired size change.
-         * @param {object} util - utility object provided by the runtime.
-         */
-
-    }, {
-        key: 'setPenSizeTo',
-        value: function setPenSizeTo(args, util) {
-            var penAttributes = this._getPenState(util.target).penAttributes;
-            penAttributes.diameter = this._clampPenSize(Cast.toNumber(args.SIZE));
-        }
-
-        /* LEGACY OPCODES */
-        /**
-         * Scratch 2 "hue" param is equivelant to twice the new "color" param.
-         * @param {object} args - the block arguments.
-         *  @property {number} HUE - the amount to set the hue to.
-         * @param {object} util - utility object provided by the runtime.
-         */
-
-    }, {
-        key: 'setPenHueToNumber',
-        value: function setPenHueToNumber(args, util) {
-            var penState = this._getPenState(util.target);
-            var hueValue = Cast.toNumber(args.HUE);
-            var colorValue = hueValue / 2;
-            this._setOrChangeColorParam(ColorParam.COLOR, colorValue, penState, false);
-        }
-
-        /**
-         * Scratch 2 "hue" param is equivelant to twice the new "color" param.
-         * @param {object} args - the block arguments.
-         *  @property {number} HUE - the amount of desired hue change.
-         * @param {object} util - utility object provided by the runtime.
-         */
-
-    }, {
-        key: 'changePenHueBy',
-        value: function changePenHueBy(args, util) {
-            var penState = this._getPenState(util.target);
-            var hueChange = Cast.toNumber(args.HUE);
-            var colorChange = hueChange / 2;
-            this._setOrChangeColorParam(ColorParam.COLOR, colorChange, penState, true);
-        }
-
-        /**
-         * Use legacy "set shade" code to calculate RGB value for shade,
-         * then convert back to HSV and store those components.
-         * It is important to also track the given shade in penState._shade
-         * because it cannot be accurately backed out of the new HSV later.
-         * @param {object} args - the block arguments.
-         *  @property {number} SHADE - the amount to set the shade to.
-         * @param {object} util - utility object provided by the runtime.
-         */
-
-    }, {
-        key: 'setPenShadeToNumber',
-        value: function setPenShadeToNumber(args, util) {
-            var penState = this._getPenState(util.target);
-            var newShade = Cast.toNumber(args.SHADE);
-
-            // Wrap clamp the new shade value the way scratch 2 did.
-            newShade = newShade % 200;
-            if (newShade < 0) newShade += 200;
-
-            // Create the new color in RGB using the scratch 2 "shade" model
-            var rgb = Color.hsvToRgb({ h: penState.color * 360 / 100, s: 1, v: 1 });
-            var shade = newShade > 100 ? 200 - newShade : newShade;
-            if (shade < 50) {
-                rgb = Color.mixRgb(Color.RGB_BLACK, rgb, (10 + shade) / 60);
-            } else {
-                rgb = Color.mixRgb(rgb, Color.RGB_WHITE, (shade - 50) / 60);
-            }
-
-            // Update the pen state according to new color
-            var hsv = Color.rgbToHsv(rgb);
-            penState.color = 100 * hsv.h / 360;
-            penState.saturation = 100 * hsv.s;
-            penState.brightness = 100 * hsv.v;
-
-            // And store the shade that was used to compute this new color for later use.
-            penState._shade = newShade;
-
-            this._updatePenColor(penState);
-        }
-
-        /**
-         * Because "shade" cannot be backed out of hsv consistently, use the previously
-         * stored penState._shade to make the shade change.
-         * @param {object} args - the block arguments.
-         *  @property {number} SHADE - the amount of desired shade change.
-         * @param {object} util - utility object provided by the runtime.
-         */
-
-    }, {
-        key: 'changePenShadeBy',
-        value: function changePenShadeBy(args, util) {
-            var penState = this._getPenState(util.target);
-            var shadeChange = Cast.toNumber(args.SHADE);
-            this.setPenShadeToNumber({ SHADE: penState._shade + shadeChange }, util);
-        }
-    }], [{
-        key: 'DEFAULT_PEN_STATE',
-        get: function get() {
-            return {
-                penDown: false,
-                color: 66.66,
-                saturation: 100,
-                brightness: 100,
-                transparency: 0,
-                _shade: 50, // Used only for legacy `change shade by` blocks
-                penAttributes: {
-                    color4f: [0, 0, 1, 1],
-                    diameter: 1
-                }
-            };
-        }
-
-        /**
-         * Place the pen layer in front of the backdrop but behind everything else.
-         * We should probably handle this somewhere else... somewhere central that knows about pen, backdrop, video, etc.
-         * Maybe it should be in the GUI?
-         * @type {int}
-         */
-
-    }, {
-        key: 'PEN_ORDER',
-        get: function get() {
-            return 1;
-        }
-
-        /**
-         * The minimum and maximum allowed pen size.
-         * @type {{min: number, max: number}}
-         */
-
-    }, {
-        key: 'PEN_SIZE_RANGE',
-        get: function get() {
-            return { min: 1, max: 255 };
-        }
-
-        /**
-         * The key to load & store a target's pen-related state.
-         * @type {string}
-         */
-
-    }, {
-        key: 'STATE_KEY',
-        get: function get() {
-            return 'Scratch.pen';
-        }
-    }]);
-
-    return Scratch3PenBlocks;
-}();
-
-module.exports = Scratch3PenBlocks;
-
-/***/ }),
-/* 68 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-
 var _slicedToArray = function () { function sliceIterator(arr, i) { var _arr = []; var _n = true; var _d = false; var _e = undefined; try { for (var _i = arr[Symbol.iterator](), _s; !(_n = (_s = _i.next()).done); _n = true) { _arr.push(_s.value); if (i && _arr.length === i) break; } } catch (err) { _d = true; _e = err; } finally { try { if (!_n && _i["return"]) _i["return"](); } finally { if (_d) throw _e; } } return _arr; } return function (arr, i) { if (Array.isArray(arr)) { return arr; } else if (Symbol.iterator in Object(arr)) { return sliceIterator(arr, i); } else { throw new TypeError("Invalid attempt to destructure non-iterable instance"); } }; }();
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
@@ -17883,7 +17149,7 @@ var Scratch3ProcedureBlocks = function () {
 module.exports = Scratch3ProcedureBlocks;
 
 /***/ }),
-/* 69 */
+/* 68 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -18222,7 +17488,7 @@ var Scratch3SensingBlocks = function () {
 module.exports = Scratch3SensingBlocks;
 
 /***/ }),
-/* 70 */
+/* 69 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -18525,1070 +17791,7 @@ var Scratch3SoundBlocks = function () {
 module.exports = Scratch3SoundBlocks;
 
 /***/ }),
-/* 71 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-
-var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
-
-function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
-
-var ArgumentType = __webpack_require__(19);
-var BlockType = __webpack_require__(11);
-var color = __webpack_require__(23);
-var log = __webpack_require__(1);
-
-/**
- * Icon svg to be displayed at the left edge of each extension block, encoded as a data URI.
- * @type {string}
- */
-// eslint-disable-next-line max-len
-var iconURI = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHZpZXdCb3g9IjAgMCA0MCA0MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48dGl0bGU+d2VkbzItYmxvY2staWNvbjwvdGl0bGU+PGcgZmlsbD0ibm9uZSIgZmlsbC1ydWxlPSJldmVub2RkIj48cGF0aCBkPSJNMzUuMzEzIDEwLjQ2N0gzMi4wOVY4Ljg2NWMwLS4yMjMuMTgtLjQwNC40MDUtLjQwNGgyLjQxMmMuMjI0IDAgLjQwNi4xODIuNDA2LjQwNXYxLjYwMnpNMzAuNDc3IDEwLjQ2N2gtMy4yMjRWOC44NjVjMC0uMjIzLjE4My0uNDA0LjQwNy0uNDA0aDIuNDFjLjIyNiAwIC40MDcuMTgyLjQwNy40MDV2MS42MDJ6TTI1LjY0IDEwLjQ2N0gyMi40MlY4Ljg2NWMwLS4yMjMuMTgyLS40MDQuNDA2LS40MDRoMi40MWMuMjI2IDAgLjQwNy4xODIuNDA3LjQwNXYxLjYwMnpNMjAuODA2IDEwLjQ2N2gtMy4yMjRWOC44NjVjMC0uMjIzLjE4Mi0uNDA0LjQwNi0uNDA0SDIwLjRjLjIyNCAwIC40MDYuMTgyLjQwNi40MDV2MS42MDJ6TTE1Ljk3IDEwLjQ2N2gtMy4yMjRWOC44NjVjMC0uMjIzLjE4Mi0uNDA0LjQwNy0uNDA0aDIuNDFjLjIyNiAwIC40MDcuMTgyLjQwNy40MDV2MS42MDJ6TTExLjEzNSAxMC40NjdINy45MVY4Ljg2NWMwLS4yMjMuMTgzLS40MDQuNDA3LS40MDRoMi40MTJjLjIyMyAwIC40MDUuMTgyLjQwNS40MDV2MS42MDJ6IiBzdHJva2U9IiM2Rjc4OTMiIGZpbGw9IiNGRkYiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCIvPjxwYXRoIGQ9Ik0zNy43MyAxMC40NjdINi4zYy0yLjY3IDAtNC44MzYgMi4xNTMtNC44MzYgNC44MDh2My4yMDVoMzcuMDczdi03LjIxYzAtLjQ0NC0uMzYyLS44MDMtLjgwNy0uODAzeiIgc3Ryb2tlPSIjNkY3ODkzIiBmaWxsPSIjRkZGIiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiLz48cGF0aCBkPSJNMzguMTM0IDMwLjk4SDEuODY3Yy0uMjI0IDAtLjQwMy0uMTgtLjQwMy0uNFYxNi4yMzZoMzIuNzFjLjczIDAgMS40My4yODcgMS45NDUuOC41MTUuNTE0IDEuMjE1LjgwMiAxLjk0NC44MDJoLjQ3M3YxMi43NGMwIC4yMi0uMTguNC0uNDAzLjR6IiBzdHJva2U9IiM2Rjc4OTMiIGZpbGw9IiNFNkU3RTgiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCIvPjxwYXRoIHN0cm9rZT0iIzZGNzg5MyIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIiBkPSJNMzQuODMgMTYuMjM3bC40ODMtMi41NjVoMy4yMjMiLz48cGF0aCBkPSJNMzguNTM2IDExLjI2OFYzMC41OGMwIC4yMi0uMTguNC0uNDAzLjRIMS44NjZjLS4yMiAwLS40MDMtLjE4LS40MDMtLjR2LTEuMjAzaDM0LjI4MmMuNjUgMCAxLjE4LS41MjQgMS4xOC0xLjE3M1YxMC40NjdoLjgwNWMuNDQ2IDAgLjgwNi4zNi44MDYuOHoiIHN0cm9rZT0iIzZGNzg5MyIgZmlsbD0iIzZGNzg5MyIgb3BhY2l0eT0iLjE1IiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiLz48cGF0aCBkPSJNMTEuNTM4IDE2LjI4aDIwLjE0OGMuMjIyIDAgLjQwMy4xOC40MDMuNHY2LjUyN2MwIC4yMjItLjE4Mi40LS40MDQuNEgxMS41MzhjLS4yMjMgMC0uNDA0LS4xNzgtLjQwNC0uNFYxNi42OGMwLS4yMi4xOC0uNC40MDQtLjQiIGZpbGw9IiNFNkU3RTgiLz48cGF0aCBkPSJNMTEuNTM4IDE2LjI4aDIwLjE0OGMuMjIyIDAgLjQwMy4xOC40MDMuNHY2LjUyN2MwIC4yMjItLjE4Mi40LS40MDQuNEgxMS41MzhjLS4yMjMgMC0uNDA0LS4xNzgtLjQwNC0uNFYxNi42OGMwLS4yMi4xOC0uNC40MDQtLjR6IiBzdHJva2U9IiM2Rjc4OTMiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCIvPjxwYXRoIGQ9Ik0zMi4wOSAxNi4yOHY2LjkyN2MwIC4yMjItLjE4LjQtLjQwNC40aC0yMC4xNWMtLjIyIDAtLjQtLjE4LS40LS40di0xLjJoMTguMTZjLjY1MyAwIDEuMTgtLjUyNiAxLjE4LTEuMTc0VjE2LjI4aDEuNjEzeiIgc3Ryb2tlPSIjNkY3ODkzIiBmaWxsPSIjNkU3NzkyIiBvcGFjaXR5PSIuMTUiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCIvPjxwYXRoIGQ9Ik0zMC40NzcgMTYuMjhoLTMuMjI0di0xLjYwNGMwLS4yMjMuMTgzLS40MDQuNDA3LS40MDRoMi40MWMuMjI2IDAgLjQwNy4xOC40MDcuNDA0djEuNjAzek0xNS45NyAxNi4yOGgtMy4yMjR2LTEuNjA0YzAtLjIyMy4xODItLjQwNC40MDctLjQwNGgyLjQxYy4yMjYgMCAuNDA3LjE4LjQwNy40MDR2MS42MDN6TTI1LjY0IDE2LjI4SDIyLjQydi0xLjYwNGMwLS4yMjMuMTgyLS40MDQuNDA2LS40MDRoMi40MWMuMjI2IDAgLjQwNy4xOC40MDcuNDA0djEuNjAzek0yMC44MDYgMTYuMjhoLTMuMjI0di0xLjYwNGMwLS4yMjMuMTgyLS40MDQuNDA2LS40MDRIMjAuNGMuMjI0IDAgLjQwNi4xOC40MDYuNDA0djEuNjAzeiIgc3Ryb2tlPSIjNkY3ODkzIiBmaWxsPSIjRTZFN0U4IiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiLz48cGF0aCBkPSJNMTguNTU3IDE5LjkxYzAgMS4wMjUtLjgzNyAxLjg1Ny0xLjg3IDEuODU3LTEuMDMgMC0xLjg2Ny0uODMyLTEuODY3LTEuODU4IDAtMS4wMjcuODM3LTEuODU4IDEuODY4LTEuODU4IDEuMDMyIDAgMS44Ny44MyAxLjg3IDEuODU3ek0yMy40OCAxOS45MWMwIDEuMDI1LS44MzYgMS44NTctMS44NjggMS44NTdzLTEuODctLjgzMi0xLjg3LTEuODU4YzAtMS4wMjcuODM4LTEuODU4IDEuODctMS44NThzMS44NjguODMgMS44NjggMS44NTd6TTI4LjQwNCAxOS45MWMwIDEuMDI1LS44MzcgMS44NTctMS44NjggMS44NTctMS4wMzIgMC0xLjg3LS44MzItMS44Ny0xLjg1OCAwLTEuMDI3LjgzOC0xLjg1OCAxLjg3LTEuODU4IDEuMDMgMCAxLjg2OC44MyAxLjg2OCAxLjg1N3oiIHN0cm9rZT0iIzZGNzg5MyIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIi8+PHBhdGggZD0iTTE4LjU1NyAxOS45MjJjMCAxLjAyNi0uODM3IDEuODU4LTEuODcgMS44NTgtMS4wMyAwLTEuODY3LS44MzItMS44NjctMS44NTggMC0xLjAyNS44MzctMS44NTcgMS44NjgtMS44NTcgMS4wMzIgMCAxLjg3LjgzMiAxLjg3IDEuODU3TTIzLjQ4IDE5LjkyMmMwIDEuMDI2LS44MzYgMS44NTgtMS44NjggMS44NThzLTEuODctLjgzMi0xLjg3LTEuODU4YzAtMS4wMjUuODM4LTEuODU3IDEuODctMS44NTdzMS44NjguODMyIDEuODY4IDEuODU3TTI4LjQwNCAxOS45MjJjMCAxLjAyNi0uODM3IDEuODU4LTEuODY4IDEuODU4LTEuMDMyIDAtMS44Ny0uODMyLTEuODctMS44NTggMC0xLjAyNS44MzgtMS44NTcgMS44Ny0xLjg1NyAxLjAzIDAgMS44NjguODMyIDEuODY4IDEuODU3IiBmaWxsPSIjNkY3ODkzIiBvcGFjaXR5PSIuNSIvPjwvZz48L3N2Zz4=';
-
-/**
- * Manage power, direction, and timers for one WeDo 2.0 motor.
- */
-
-var WeDo2Motor = function () {
-    /**
-     * Construct a WeDo2Motor instance.
-     * @param {WeDo2} parent - the WeDo 2.0 device which owns this motor.
-     * @param {int} index - the zero-based index of this motor on its parent device.
-     */
-    function WeDo2Motor(parent, index) {
-        _classCallCheck(this, WeDo2Motor);
-
-        /**
-         * The WeDo 2.0 device which owns this motor.
-         * @type {WeDo2}
-         * @private
-         */
-        this._parent = parent;
-
-        /**
-         * The zero-based index of this motor on its parent device.
-         * @type {int}
-         * @private
-         */
-        this._index = index;
-
-        /**
-         * This motor's current direction: 1 for "this way" or -1 for "that way"
-         * @type {number}
-         * @private
-         */
-        this._direction = 1;
-
-        /**
-         * This motor's current power level, in the range [0,100].
-         * @type {number}
-         * @private
-         */
-        this._power = 100;
-
-        /**
-         * Is this motor currently moving?
-         * @type {boolean}
-         * @private
-         */
-        this._isOn = false;
-
-        /**
-         * If the motor has been turned on or is actively braking for a specific duration, this is the timeout ID for
-         * the end-of-action handler. Cancel this when changing plans.
-         * @type {Object}
-         * @private
-         */
-        this._pendingTimeoutId = null;
-
-        this.startBraking = this.startBraking.bind(this);
-        this.setMotorOff = this.setMotorOff.bind(this);
-    }
-
-    /**
-     * @return {number} - the duration of active braking after a call to startBraking(). Afterward, turn the motor off.
-     * @constructor
-     */
-
-
-    _createClass(WeDo2Motor, [{
-        key: 'setMotorOn',
-
-
-        /**
-         * Turn this motor on indefinitely.
-         */
-        value: function setMotorOn() {
-            this._parent._send('motorOn', { motorIndex: this._index, power: this._direction * this._power });
-            this._isOn = true;
-            this._clearTimeout();
-        }
-
-        /**
-         * Turn this motor on for a specific duration.
-         * @param {number} milliseconds - run the motor for this long.
-         */
-
-    }, {
-        key: 'setMotorOnFor',
-        value: function setMotorOnFor(milliseconds) {
-            milliseconds = Math.max(0, milliseconds);
-            this.setMotorOn();
-            this._setNewTimeout(this.startBraking, milliseconds);
-        }
-
-        /**
-         * Start active braking on this motor. After a short time, the motor will turn off.
-         */
-
-    }, {
-        key: 'startBraking',
-        value: function startBraking() {
-            this._parent._send('motorBrake', { motorIndex: this._index });
-            this._isOn = false;
-            this._setNewTimeout(this.setMotorOff, WeDo2Motor.BRAKE_TIME_MS);
-        }
-
-        /**
-         * Turn this motor off.
-         */
-
-    }, {
-        key: 'setMotorOff',
-        value: function setMotorOff() {
-            this._parent._send('motorOff', { motorIndex: this._index });
-            this._isOn = false;
-        }
-
-        /**
-         * Clear the motor action timeout, if any. Safe to call even when there is no pending timeout.
-         * @private
-         */
-
-    }, {
-        key: '_clearTimeout',
-        value: function _clearTimeout() {
-            if (this._pendingTimeoutId !== null) {
-                clearTimeout(this._pendingTimeoutId);
-                this._pendingTimeoutId = null;
-            }
-        }
-
-        /**
-         * Set a new motor action timeout, after clearing an existing one if necessary.
-         * @param {Function} callback - to be called at the end of the timeout.
-         * @param {int} delay - wait this many milliseconds before calling the callback.
-         * @private
-         */
-
-    }, {
-        key: '_setNewTimeout',
-        value: function _setNewTimeout(callback, delay) {
-            var _this = this;
-
-            this._clearTimeout();
-            var timeoutID = setTimeout(function () {
-                if (_this._pendingTimeoutId === timeoutID) {
-                    _this._pendingTimeoutId = null;
-                }
-                callback();
-            }, delay);
-            this._pendingTimeoutId = timeoutID;
-        }
-    }, {
-        key: 'direction',
-
-
-        /**
-         * @return {int} - this motor's current direction: 1 for "this way" or -1 for "that way"
-         */
-        get: function get() {
-            return this._direction;
-        }
-
-        /**
-         * @param {int} value - this motor's new direction: 1 for "this way" or -1 for "that way"
-         */
-        ,
-        set: function set(value) {
-            if (value < 0) {
-                this._direction = -1;
-            } else {
-                this._direction = 1;
-            }
-        }
-
-        /**
-         * @return {int} - this motor's current power level, in the range [0,100].
-         */
-
-    }, {
-        key: 'power',
-        get: function get() {
-            return this._power;
-        }
-
-        /**
-         * @param {int} value - this motor's new power level, in the range [0,100].
-         */
-        ,
-        set: function set(value) {
-            this._power = Math.max(0, Math.min(value, 100));
-        }
-
-        /**
-         * @return {boolean} - true if this motor is currently moving, false if this motor is off or braking.
-         */
-
-    }, {
-        key: 'isOn',
-        get: function get() {
-            return this._isOn;
-        }
-    }], [{
-        key: 'BRAKE_TIME_MS',
-        get: function get() {
-            return 1000;
-        }
-    }]);
-
-    return WeDo2Motor;
-}();
-
-/**
- * Manage communication with a WeDo 2.0 device over a Device Manager client socket.
- */
-
-
-var WeDo2 = function () {
-    _createClass(WeDo2, null, [{
-        key: 'DEVICE_TYPE',
-
-
-        /**
-         * @return {string} - the type of Device Manager device socket that this class will handle.
-         */
-        get: function get() {
-            return 'wedo2';
-        }
-
-        /**
-         * Construct a WeDo2 communication object.
-         * @param {Socket} socket - the socket for a WeDo 2.0 device, as provided by a Device Manager client.
-         */
-
-    }]);
-
-    function WeDo2(socket) {
-        _classCallCheck(this, WeDo2);
-
-        /**
-         * The socket-IO socket used to communicate with the Device Manager about this device.
-         * @type {Socket}
-         * @private
-         */
-        this._socket = socket;
-
-        /**
-         * The motors which this WeDo 2.0 could possibly have.
-         * @type {[WeDo2Motor]}
-         * @private
-         */
-        this._motors = [new WeDo2Motor(this, 0), new WeDo2Motor(this, 1)];
-
-        /**
-         * The most recently received value for each sensor.
-         * @type {Object.<string, number>}
-         * @private
-         */
-        this._sensors = {
-            tiltX: 0,
-            tiltY: 0,
-            distance: 0
-        };
-
-        this._onSensorChanged = this._onSensorChanged.bind(this);
-        this._onDisconnect = this._onDisconnect.bind(this);
-
-        this._connectEvents();
-    }
-
-    /**
-     * Manually dispose of this object.
-     */
-
-
-    _createClass(WeDo2, [{
-        key: 'dispose',
-        value: function dispose() {
-            this._disconnectEvents();
-        }
-
-        /**
-         * @return {number} - the latest value received for the tilt sensor's tilt about the X axis.
-         */
-
-    }, {
-        key: 'motor',
-
-
-        /**
-         * Access a particular motor on this device.
-         * @param {int} index - the zero-based index of the desired motor.
-         * @return {WeDo2Motor} - the WeDo2Motor instance, if any, at that index.
-         */
-        value: function motor(index) {
-            return this._motors[index];
-        }
-
-        /**
-         * Set the WeDo 2.0 hub's LED to a specific color.
-         * @param {int} rgb - a 24-bit RGB color in 0xRRGGBB format.
-         */
-
-    }, {
-        key: 'setLED',
-        value: function setLED(rgb) {
-            this._send('setLED', { rgb: rgb });
-        }
-
-        /**
-         * Play a tone from the WeDo 2.0 hub for a specific amount of time.
-         * @param {int} tone - the pitch of the tone, in Hz.
-         * @param {int} milliseconds - the duration of the note, in milliseconds.
-         */
-
-    }, {
-        key: 'playTone',
-        value: function playTone(tone, milliseconds) {
-            this._send('playTone', { tone: tone, ms: milliseconds });
-        }
-
-        /**
-         * Stop the tone playing from the WeDo 2.0 hub, if any.
-         */
-
-    }, {
-        key: 'stopTone',
-        value: function stopTone() {
-            this._send('stopTone');
-        }
-
-        /**
-         * Attach event handlers to the device socket.
-         * @private
-         */
-
-    }, {
-        key: '_connectEvents',
-        value: function _connectEvents() {
-            this._socket.on('sensorChanged', this._onSensorChanged);
-            this._socket.on('deviceWasClosed', this._onDisconnect);
-            this._socket.on('disconnect', this._onDisconnect);
-        }
-
-        /**
-         * Detach event handlers from the device socket.
-         * @private
-         */
-
-    }, {
-        key: '_disconnectEvents',
-        value: function _disconnectEvents() {
-            this._socket.off('sensorChanged', this._onSensorChanged);
-            this._socket.off('deviceWasClosed', this._onDisconnect);
-            this._socket.off('disconnect', this._onDisconnect);
-        }
-
-        /**
-         * Store the sensor value from an incoming 'sensorChanged' event.
-         * @param {object} event - the 'sensorChanged' event.
-         * @property {string} sensorName - the name of the sensor which changed.
-         * @property {number} sensorValue - the new value of the sensor.
-         * @private
-         */
-
-    }, {
-        key: '_onSensorChanged',
-        value: function _onSensorChanged(event) {
-            this._sensors[event.sensorName] = event.sensorValue;
-        }
-
-        /**
-         * React to device disconnection. May be called more than once.
-         * @private
-         */
-
-    }, {
-        key: '_onDisconnect',
-        value: function _onDisconnect() {
-            this._disconnectEvents();
-        }
-
-        /**
-         * Send a message to the device socket.
-         * @param {string} message - the name of the message, such as 'playTone'.
-         * @param {object} [details] - optional additional details for the message, such as tone duration and pitch.
-         * @private
-         */
-
-    }, {
-        key: '_send',
-        value: function _send(message, details) {
-            this._socket.emit(message, details);
-        }
-    }, {
-        key: 'tiltX',
-        get: function get() {
-            return this._sensors.tiltX;
-        }
-
-        /**
-         * @return {number} - the latest value received for the tilt sensor's tilt about the Y axis.
-         */
-
-    }, {
-        key: 'tiltY',
-        get: function get() {
-            return this._sensors.tiltY;
-        }
-
-        /**
-         * @return {number} - the latest value received from the distance sensor.
-         */
-
-    }, {
-        key: 'distance',
-        get: function get() {
-            return this._sensors.distance * 10;
-        }
-    }]);
-
-    return WeDo2;
-}();
-
-/**
- * Enum for motor specification.
- * @readonly
- * @enum {string}
- */
-
-
-var MotorID = {
-    DEFAULT: 'motor',
-    A: 'motor A',
-    B: 'motor B',
-    ALL: 'all motors'
-};
-
-/**
- * Enum for motor direction specification.
- * @readonly
- * @enum {string}
- */
-var MotorDirection = {
-    FORWARD: 'this way',
-    BACKWARD: 'that way',
-    REVERSE: 'reverse'
-};
-
-/**
- * Enum for tilt sensor direction.
- * @readonly
- * @enum {string}
- */
-var TiltDirection = {
-    UP: 'up',
-    DOWN: 'down',
-    LEFT: 'left',
-    RIGHT: 'right',
-    ANY: 'any'
-};
-
-/**
- * Scratch 3.0 blocks to interact with a LEGO WeDo 2.0 device.
- */
-
-var Scratch3WeDo2Blocks = function () {
-    _createClass(Scratch3WeDo2Blocks, null, [{
-        key: 'EXTENSION_ID',
-
-
-        /**
-         * @return {string} - the ID of this extension.
-         */
-        get: function get() {
-            return 'wedo2';
-        }
-
-        /**
-         * @return {number} - the tilt sensor counts as "tilted" if its tilt angle meets or exceeds this threshold.
-         */
-
-    }, {
-        key: 'TILT_THRESHOLD',
-        get: function get() {
-            return 15;
-        }
-
-        /**
-         * Construct a set of WeDo 2.0 blocks.
-         * @param {Runtime} runtime - the Scratch 3.0 runtime.
-         */
-
-    }]);
-
-    function Scratch3WeDo2Blocks(runtime) {
-        _classCallCheck(this, Scratch3WeDo2Blocks);
-
-        /**
-         * The Scratch 3.0 runtime.
-         * @type {Runtime}
-         */
-        this.runtime = runtime;
-
-        this.connect();
-    }
-
-    /**
-     * @returns {object} metadata for this extension and its blocks.
-     */
-
-
-    _createClass(Scratch3WeDo2Blocks, [{
-        key: 'getInfo',
-        value: function getInfo() {
-            return {
-                id: Scratch3WeDo2Blocks.EXTENSION_ID,
-                name: 'WeDo 2.0',
-                iconURI: iconURI,
-                blocks: [{
-                    opcode: 'motorOnFor',
-                    text: 'turn [MOTOR_ID] on for [DURATION] seconds',
-                    blockType: BlockType.COMMAND,
-                    arguments: {
-                        MOTOR_ID: {
-                            type: ArgumentType.STRING,
-                            menu: 'motorID',
-                            defaultValue: MotorID.DEFAULT
-                        },
-                        DURATION: {
-                            type: ArgumentType.NUMBER,
-                            defaultValue: 1
-                        }
-                    }
-                }, {
-                    opcode: 'motorOn',
-                    text: 'turn [MOTOR_ID] on',
-                    blockType: BlockType.COMMAND,
-                    arguments: {
-                        MOTOR_ID: {
-                            type: ArgumentType.STRING,
-                            menu: 'motorID',
-                            defaultValue: MotorID.DEFAULT
-                        }
-                    }
-                }, {
-                    opcode: 'motorOff',
-                    text: 'turn [MOTOR_ID] off',
-                    blockType: BlockType.COMMAND,
-                    arguments: {
-                        MOTOR_ID: {
-                            type: ArgumentType.STRING,
-                            menu: 'motorID',
-                            defaultValue: MotorID.DEFAULT
-                        }
-                    }
-                }, {
-                    opcode: 'startMotorPower',
-                    text: 'set [MOTOR_ID] power to [POWER]',
-                    blockType: BlockType.COMMAND,
-                    arguments: {
-                        MOTOR_ID: {
-                            type: ArgumentType.STRING,
-                            menu: 'motorID',
-                            defaultValue: MotorID.DEFAULT
-                        },
-                        POWER: {
-                            type: ArgumentType.NUMBER,
-                            defaultValue: 100
-                        }
-                    }
-                }, {
-                    opcode: 'setMotorDirection',
-                    text: 'set [MOTOR_ID] direction to [DIRECTION]',
-                    blockType: BlockType.COMMAND,
-                    arguments: {
-                        MOTOR_ID: {
-                            type: ArgumentType.STRING,
-                            menu: 'motorID',
-                            defaultValue: MotorID.DEFAULT
-                        },
-                        DIRECTION: {
-                            type: ArgumentType.STRING,
-                            menu: 'motorDirection',
-                            defaultValue: MotorDirection.FORWARD
-                        }
-                    }
-                }, {
-                    opcode: 'setLightHue',
-                    text: 'set light color to [HUE]',
-                    blockType: BlockType.COMMAND,
-                    arguments: {
-                        HUE: {
-                            type: ArgumentType.NUMBER,
-                            defaultValue: 50
-                        }
-                    }
-                }, {
-                    opcode: 'playNoteFor',
-                    text: 'play note [NOTE] for [DURATION] seconds',
-                    blockType: BlockType.COMMAND,
-                    arguments: {
-                        NOTE: {
-                            type: ArgumentType.NUMBER, // TODO: ArgumentType.MIDI_NOTE?
-                            defaultValue: 60
-                        },
-                        DURATION: {
-                            type: ArgumentType.NUMBER,
-                            defaultValue: 0.5
-                        }
-                    }
-                }, {
-                    opcode: 'whenDistance',
-                    text: 'when distance [OP] [REFERENCE]',
-                    blockType: BlockType.HAT,
-                    arguments: {
-                        OP: {
-                            type: ArgumentType.STRING,
-                            menu: 'lessMore',
-                            defaultValue: '<'
-                        },
-                        REFERENCE: {
-                            type: ArgumentType.NUMBER,
-                            defaultValue: 50
-                        }
-                    }
-                }, {
-                    opcode: 'whenTilted',
-                    text: 'when tilted [DIRECTION]',
-                    func: 'isTilted',
-                    blockType: BlockType.HAT,
-                    arguments: {
-                        DIRECTION: {
-                            type: ArgumentType.STRING,
-                            menu: 'tiltDirectionAny',
-                            defaultValue: TiltDirection.ANY
-                        }
-                    }
-                }, {
-                    opcode: 'getDistance',
-                    text: 'distance',
-                    blockType: BlockType.REPORTER
-                }, {
-                    opcode: 'isTilted',
-                    text: 'tilted [DIRECTION]?',
-                    blockType: BlockType.BOOLEAN,
-                    arguments: {
-                        DIRECTION: {
-                            type: ArgumentType.STRING,
-                            menu: 'tiltDirectionAny',
-                            defaultValue: TiltDirection.ANY
-                        }
-                    }
-                }, {
-                    opcode: 'getTiltAngle',
-                    text: 'tilt angle [DIRECTION]',
-                    blockType: BlockType.REPORTER,
-                    arguments: {
-                        DIRECTION: {
-                            type: ArgumentType.STRING,
-                            menu: 'tiltDirection',
-                            defaultValue: TiltDirection.UP
-                        }
-                    }
-                }],
-                menus: {
-                    motorID: [MotorID.DEFAULT, MotorID.A, MotorID.B, MotorID.ALL],
-                    motorDirection: [MotorDirection.FORWARD, MotorDirection.BACKWARD, MotorDirection.REVERSE],
-                    tiltDirection: [TiltDirection.UP, TiltDirection.DOWN, TiltDirection.LEFT, TiltDirection.RIGHT],
-                    tiltDirectionAny: [TiltDirection.UP, TiltDirection.DOWN, TiltDirection.LEFT, TiltDirection.RIGHT, TiltDirection.ANY],
-                    lessMore: ['<', '>']
-                }
-            };
-        }
-
-        /**
-         * Use the Device Manager client to attempt to connect to a WeDo 2.0 device.
-         */
-
-    }, {
-        key: 'connect',
-        value: function connect() {
-            var _this2 = this;
-
-            if (this._device || this._finder) {
-                return;
-            }
-            var deviceManager = this.runtime.ioDevices.deviceManager;
-            var finder = this._finder = deviceManager.searchAndConnect(Scratch3WeDo2Blocks.EXTENSION_ID, WeDo2.DEVICE_TYPE);
-            this._finder.promise.then(function (socket) {
-                if (_this2._finder === finder) {
-                    _this2._finder = null;
-                    _this2._device = new WeDo2(socket);
-                } else {
-                    log.warn('Ignoring success from stale WeDo 2.0 connection attempt');
-                }
-            }, function (reason) {
-                if (_this2._finder === finder) {
-                    _this2._finder = null;
-                    log.warn('WeDo 2.0 connection failed: ' + reason);
-                } else {
-                    log.warn('Ignoring failure from stale WeDo 2.0 connection attempt');
-                }
-            });
-        }
-
-        /**
-         * Turn specified motor(s) on for a specified duration.
-         * @param {object} args - the block's arguments.
-         * @property {MotorID} MOTOR_ID - the motor(s) to activate.
-         * @property {int} DURATION - the amount of time to run the motors.
-         * @return {Promise} - a promise which will resolve at the end of the duration.
-         */
-
-    }, {
-        key: 'motorOnFor',
-        value: function motorOnFor(args) {
-            var _this3 = this;
-
-            var durationMS = args.DURATION * 1000;
-            return new Promise(function (resolve) {
-                _this3._forEachMotor(args.MOTOR_ID, function (motorIndex) {
-                    _this3._device.motor(motorIndex).setMotorOnFor(durationMS);
-                });
-
-                // Ensure this block runs for a fixed amount of time even when no device is connected.
-                setTimeout(resolve, durationMS);
-            });
-        }
-
-        /**
-         * Turn specified motor(s) on indefinitely.
-         * @param {object} args - the block's arguments.
-         * @property {MotorID} MOTOR_ID - the motor(s) to activate.
-         */
-
-    }, {
-        key: 'motorOn',
-        value: function motorOn(args) {
-            var _this4 = this;
-
-            this._forEachMotor(args.MOTOR_ID, function (motorIndex) {
-                _this4._device.motor(motorIndex).setMotorOn();
-            });
-        }
-
-        /**
-         * Turn specified motor(s) off.
-         * @param {object} args - the block's arguments.
-         * @property {MotorID} MOTOR_ID - the motor(s) to deactivate.
-         */
-
-    }, {
-        key: 'motorOff',
-        value: function motorOff(args) {
-            var _this5 = this;
-
-            this._forEachMotor(args.MOTOR_ID, function (motorIndex) {
-                _this5._device.motor(motorIndex).setMotorOff();
-            });
-        }
-
-        /**
-         * Turn specified motor(s) off.
-         * @param {object} args - the block's arguments.
-         * @property {MotorID} MOTOR_ID - the motor(s) to be affected.
-         * @property {int} POWER - the new power level for the motor(s).
-         */
-
-    }, {
-        key: 'startMotorPower',
-        value: function startMotorPower(args) {
-            var _this6 = this;
-
-            this._forEachMotor(args.MOTOR_ID, function (motorIndex) {
-                var motor = _this6._device.motor(motorIndex);
-                motor.power = args.POWER;
-                motor.setMotorOn();
-            });
-        }
-
-        /**
-         * Set the direction of rotation for specified motor(s).
-         * If the direction is 'reverse' the motor(s) will be reversed individually.
-         * @param {object} args - the block's arguments.
-         * @property {MotorID} MOTOR_ID - the motor(s) to be affected.
-         * @property {MotorDirection} DIRECTION - the new direction for the motor(s).
-         */
-
-    }, {
-        key: 'setMotorDirection',
-        value: function setMotorDirection(args) {
-            var _this7 = this;
-
-            this._forEachMotor(args.MOTOR_ID, function (motorIndex) {
-                var motor = _this7._device.motor(motorIndex);
-                switch (args.DIRECTION) {
-                    case MotorDirection.FORWARD:
-                        motor.direction = 1;
-                        break;
-                    case MotorDirection.BACKWARD:
-                        motor.direction = -1;
-                        break;
-                    case MotorDirection.REVERSE:
-                        motor.direction = -motor.direction;
-                        break;
-                    default:
-                        log.warn('Unknown motor direction in setMotorDirection: ' + args.DIRECTION);
-                        break;
-                }
-            });
-        }
-
-        /**
-         * Set the LED's hue.
-         * @param {object} args - the block's arguments.
-         * @property {number} HUE - the hue to set, in the range [0,100].
-         */
-
-    }, {
-        key: 'setLightHue',
-        value: function setLightHue(args) {
-            // Convert from [0,100] to [0,360]
-            var hue = args.HUE * 360 / 100;
-
-            var rgbObject = color.hsvToRgb({ h: hue, s: 1, v: 1 });
-
-            var rgbDecimal = color.rgbToDecimal(rgbObject);
-
-            this._device.setLED(rgbDecimal);
-        }
-
-        /**
-         * Make the WeDo 2.0 hub play a MIDI note for the specified duration.
-         * @param {object} args - the block's arguments.
-         * @property {number} NOTE - the MIDI note to play.
-         * @property {number} DURATION - the duration of the note, in seconds.
-         * @return {Promise} - a promise which will resolve at the end of the duration.
-         */
-
-    }, {
-        key: 'playNoteFor',
-        value: function playNoteFor(args) {
-            var _this8 = this;
-
-            return new Promise(function (resolve) {
-                var durationMS = args.DURATION * 1000;
-                var tone = _this8._noteToTone(args.NOTE);
-                _this8._device.playTone(tone, durationMS);
-
-                // Ensure this block runs for a fixed amount of time even when no device is connected.
-                setTimeout(resolve, durationMS);
-            });
-        }
-
-        /**
-         * Compare the distance sensor's value to a reference.
-         * @param {object} args - the block's arguments.
-         * @property {string} OP - the comparison operation: '<' or '>'.
-         * @property {number} REFERENCE - the value to compare against.
-         * @return {boolean} - the result of the comparison, or false on error.
-         */
-
-    }, {
-        key: 'whenDistance',
-        value: function whenDistance(args) {
-            switch (args.OP) {
-                case '<':
-                case '&lt;':
-                    return this._device.distance < args.REFERENCE;
-                case '>':
-                case '&gt;':
-                    return this._device.distance > args.REFERENCE;
-                default:
-                    log.warn('Unknown comparison operator in whenDistance: ' + args.OP);
-                    return false;
-            }
-        }
-
-        /**
-         * Test whether the tilt sensor is currently tilted.
-         * @param {object} args - the block's arguments.
-         * @property {TiltDirection} DIRECTION - the tilt direction to test (up, down, left, right, or any).
-         * @return {boolean} - true if the tilt sensor is tilted past a threshold in the specified direction.
-         */
-
-    }, {
-        key: 'whenTilted',
-        value: function whenTilted(args) {
-            return this._isTilted(args.DIRECTION);
-        }
-
-        /**
-         * @return {number} - the distance sensor's value, scaled to the [0,100] range.
-         */
-
-    }, {
-        key: 'getDistance',
-        value: function getDistance() {
-            return this._device.distance;
-        }
-
-        /**
-         * Test whether the tilt sensor is currently tilted.
-         * @param {object} args - the block's arguments.
-         * @property {TiltDirection} DIRECTION - the tilt direction to test (up, down, left, right, or any).
-         * @return {boolean} - true if the tilt sensor is tilted past a threshold in the specified direction.
-         */
-
-    }, {
-        key: 'isTilted',
-        value: function isTilted(args) {
-            return this._isTilted(args.DIRECTION);
-        }
-
-        /**
-         * @param {object} args - the block's arguments.
-         * @property {TiltDirection} DIRECTION - the direction (up, down, left, right) to check.
-         * @return {number} - the tilt sensor's angle in the specified direction.
-         * Note that getTiltAngle(up) = -getTiltAngle(down) and getTiltAngle(left) = -getTiltAngle(right).
-         */
-
-    }, {
-        key: 'getTiltAngle',
-        value: function getTiltAngle(args) {
-            return this._getTiltAngle(args.DIRECTION);
-        }
-
-        /**
-         * Test whether the tilt sensor is currently tilted.
-         * @param {TiltDirection} direction - the tilt direction to test (up, down, left, right, or any).
-         * @return {boolean} - true if the tilt sensor is tilted past a threshold in the specified direction.
-         * @private
-         */
-
-    }, {
-        key: '_isTilted',
-        value: function _isTilted(direction) {
-            switch (direction) {
-                case TiltDirection.ANY:
-                    return Math.abs(this._device.tiltX) >= Scratch3WeDo2Blocks.TILT_THRESHOLD || Math.abs(this._device.tiltY) >= Scratch3WeDo2Blocks.TILT_THRESHOLD;
-                default:
-                    return this._getTiltAngle(direction) >= Scratch3WeDo2Blocks.TILT_THRESHOLD;
-            }
-        }
-
-        /**
-         * @param {TiltDirection} direction - the direction (up, down, left, right) to check.
-         * @return {number} - the tilt sensor's angle in the specified direction.
-         * Note that getTiltAngle(up) = -getTiltAngle(down) and getTiltAngle(left) = -getTiltAngle(right).
-         * @private
-         */
-
-    }, {
-        key: '_getTiltAngle',
-        value: function _getTiltAngle(direction) {
-            switch (direction) {
-                case TiltDirection.UP:
-                    return -this._device.tiltY;
-                case TiltDirection.DOWN:
-                    return this._device.tiltY;
-                case TiltDirection.LEFT:
-                    return -this._device.tiltX;
-                case TiltDirection.RIGHT:
-                    return this._device.tiltX;
-                default:
-                    log.warn('Unknown tilt direction in _getTiltAngle: ' + direction);
-            }
-        }
-
-        /**
-         * Call a callback for each motor indexed by the provided motor ID.
-         * @param {MotorID} motorID - the ID specifier.
-         * @param {Function} callback - the function to call with the numeric motor index for each motor.
-         * @private
-         */
-
-    }, {
-        key: '_forEachMotor',
-        value: function _forEachMotor(motorID, callback) {
-            var motors = void 0;
-            switch (motorID) {
-                case MotorID.A:
-                    motors = [0];
-                    break;
-                case MotorID.B:
-                    motors = [1];
-                    break;
-                case MotorID.ALL:
-                case MotorID.DEFAULT:
-                    motors = [0, 1];
-                    break;
-                default:
-                    log.warn('Invalid motor ID: ' + motorID);
-                    motors = [];
-                    break;
-            }
-            var _iteratorNormalCompletion = true;
-            var _didIteratorError = false;
-            var _iteratorError = undefined;
-
-            try {
-                for (var _iterator = motors[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
-                    var index = _step.value;
-
-                    callback(index);
-                }
-            } catch (err) {
-                _didIteratorError = true;
-                _iteratorError = err;
-            } finally {
-                try {
-                    if (!_iteratorNormalCompletion && _iterator.return) {
-                        _iterator.return();
-                    }
-                } finally {
-                    if (_didIteratorError) {
-                        throw _iteratorError;
-                    }
-                }
-            }
-        }
-
-        /**
-         * @param {number} midiNote - the MIDI note value to convert.
-         * @return {number} - the frequency, in Hz, corresponding to that MIDI note value.
-         * @private
-         */
-
-    }, {
-        key: '_noteToTone',
-        value: function _noteToTone(midiNote) {
-            // Note that MIDI note 69 is A4, 440 Hz
-            return 440 * Math.pow(2, (midiNote - 69) / 12);
-        }
-    }]);
-
-    return Scratch3WeDo2Blocks;
-}();
-
-module.exports = Scratch3WeDo2Blocks;
-
-/***/ }),
-/* 72 */
+/* 70 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -19899,7 +18102,7 @@ var SharedDispatch = function () {
 module.exports = SharedDispatch;
 
 /***/ }),
-/* 73 */
+/* 71 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -20075,7 +18278,7 @@ var adapter = function adapter(e) {
 module.exports = adapter;
 
 /***/ }),
-/* 74 */
+/* 72 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -20287,7 +18490,7 @@ var BlockUtility = function () {
 module.exports = BlockUtility;
 
 /***/ }),
-/* 75 */
+/* 73 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -20295,7 +18498,7 @@ module.exports = BlockUtility;
 
 var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
 
-var BlockUtility = __webpack_require__(74);
+var BlockUtility = __webpack_require__(72);
 var log = __webpack_require__(1);
 var Thread = __webpack_require__(17);
 
@@ -20591,7 +18794,7 @@ var execute = function execute(sequencer, thread) {
 module.exports = execute;
 
 /***/ }),
-/* 76 */
+/* 74 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -20614,7 +18817,7 @@ var MonitorRecord = Record({
 module.exports = MonitorRecord;
 
 /***/ }),
-/* 77 */
+/* 75 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -20971,7 +19174,7 @@ Profiler.STOP = STOP;
 module.exports = Profiler;
 
 /***/ }),
-/* 78 */
+/* 76 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -20999,9 +19202,9 @@ var escapeHtml = __webpack_require__(108);
 var ArgumentType = __webpack_require__(19);
 var Blocks = __webpack_require__(10);
 var BlockType = __webpack_require__(11);
-var Sequencer = __webpack_require__(79);
+var Sequencer = __webpack_require__(77);
 var Thread = __webpack_require__(17);
-var Profiler = __webpack_require__(77);
+var Profiler = __webpack_require__(75);
 
 // Virtual I/O devices.
 var Clock = __webpack_require__(83);
@@ -21015,10 +19218,10 @@ var defaultBlockPackages = {
     scratch3_looks: __webpack_require__(64),
     scratch3_motion: __webpack_require__(65),
     scratch3_operators: __webpack_require__(66),
-    scratch3_sound: __webpack_require__(70),
-    scratch3_sensing: __webpack_require__(69),
+    scratch3_sound: __webpack_require__(69),
+    scratch3_sensing: __webpack_require__(68),
     scratch3_data: __webpack_require__(62),
-    scratch3_procedures: __webpack_require__(68)
+    scratch3_procedures: __webpack_require__(67)
 };
 
 /**
@@ -22796,7 +20999,7 @@ var Runtime = function (_EventEmitter) {
 module.exports = Runtime;
 
 /***/ }),
-/* 79 */
+/* 77 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -22808,7 +21011,7 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
 
 var Timer = __webpack_require__(24);
 var Thread = __webpack_require__(17);
-var execute = __webpack_require__(75);
+var execute = __webpack_require__(73);
 
 /**
  * Profiler frame name for stepping a single thread.
@@ -23160,7 +21363,7 @@ var Sequencer = function () {
 module.exports = Sequencer;
 
 /***/ }),
-/* 80 */
+/* 78 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -23469,7 +21672,7 @@ var Target = function (_EventEmitter) {
 module.exports = Target;
 
 /***/ }),
-/* 81 */
+/* 79 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -23487,9 +21690,9 @@ var BlockType = __webpack_require__(11);
 // These extensions are currently built into the VM repository but should not be loaded at startup.
 // TODO: move these out into a separate repository?
 // TODO: change extension spec so that library info, including extension ID, can be collected through static methods
-var Scratch3PenBlocks = __webpack_require__(67);
-var Scratch3WeDo2Blocks = __webpack_require__(71);
-var Scratch3MusicBlocks = __webpack_require__(82);
+var Scratch3PenBlocks = __webpack_require__(81);
+var Scratch3WeDo2Blocks = __webpack_require__(82);
+var Scratch3MusicBlocks = __webpack_require__(80);
 var builtinExtensions = {
     pen: Scratch3PenBlocks,
     wedo2: Scratch3WeDo2Blocks,
@@ -23784,7 +21987,7 @@ var ExtensionManager = function () {
 module.exports = ExtensionManager;
 
 /***/ }),
-/* 82 */
+/* 80 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -24631,6 +22834,1803 @@ var Scratch3MusicBlocks = function () {
 }();
 
 module.exports = Scratch3MusicBlocks;
+
+/***/ }),
+/* 81 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+var ArgumentType = __webpack_require__(19);
+var BlockType = __webpack_require__(11);
+var Cast = __webpack_require__(2);
+var Clone = __webpack_require__(12);
+var Color = __webpack_require__(23);
+var MathUtil = __webpack_require__(6);
+var RenderedTarget = __webpack_require__(22);
+var log = __webpack_require__(1);
+
+/**
+ * Icon svg to be displayed at the left edge of each extension block, encoded as a data URI.
+ * @type {string}
+ */
+// eslint-disable-next-line max-len
+var iconURI = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHZpZXdCb3g9IjAgMCA0MCA0MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48dGl0bGU+cGVuLWljb248L3RpdGxlPjxnIHN0cm9rZT0iIzU3NUU3NSIgZmlsbD0ibm9uZSIgZmlsbC1ydWxlPSJldmVub2RkIiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiPjxwYXRoIGQ9Ik04Ljc1MyAzNC42MDJsLTQuMjUgMS43OCAxLjc4My00LjIzN2MxLjIxOC0yLjg5MiAyLjkwNy01LjQyMyA1LjAzLTcuNTM4TDMxLjA2NiA0LjkzYy44NDYtLjg0MiAyLjY1LS40MSA0LjAzMi45NjcgMS4zOCAxLjM3NSAxLjgxNiAzLjE3My45NyA0LjAxNUwxNi4zMTggMjkuNTljLTIuMTIzIDIuMTE2LTQuNjY0IDMuOC03LjU2NSA1LjAxMiIgZmlsbD0iI0ZGRiIvPjxwYXRoIGQ9Ik0yOS40MSA2LjExcy00LjQ1LTIuMzc4LTguMjAyIDUuNzcyYy0xLjczNCAzLjc2Ni00LjM1IDEuNTQ2LTQuMzUgMS41NDYiLz48cGF0aCBkPSJNMzYuNDIgOC44MjVjMCAuNDYzLS4xNC44NzMtLjQzMiAxLjE2NGwtOS4zMzUgOS4zYy4yODItLjI5LjQxLS42NjguNDEtMS4xMiAwLS44NzQtLjUwNy0xLjk2My0xLjQwNi0yLjg2OC0xLjM2Mi0xLjM1OC0zLjE0Ny0xLjgtNC4wMDItLjk5TDMwLjk5IDUuMDFjLjg0NC0uODQgMi42NS0uNDEgNC4wMzUuOTYuODk4LjkwNCAxLjM5NiAxLjk4MiAxLjM5NiAyLjg1NU0xMC41MTUgMzMuNzc0Yy0uNTczLjMwMi0xLjE1Ny41Ny0xLjc2NC44M0w0LjUgMzYuMzgybDEuNzg2LTQuMjM1Yy4yNTgtLjYwNC41My0xLjE4Ni44MzMtMS43NTcuNjkuMTgzIDEuNDQ4LjYyNSAyLjEwOCAxLjI4Mi42Ni42NTggMS4xMDIgMS40MTIgMS4yODcgMi4xMDIiIGZpbGw9IiM0Qzk3RkYiLz48cGF0aCBkPSJNMzYuNDk4IDguNzQ4YzAgLjQ2NC0uMTQuODc0LS40MzMgMS4xNjVsLTE5Ljc0MiAxOS42OGMtMi4xMyAyLjExLTQuNjczIDMuNzkzLTcuNTcyIDUuMDFMNC41IDM2LjM4bC45NzQtMi4zMTYgMS45MjUtLjgwOGMyLjg5OC0xLjIxOCA1LjQ0LTIuOSA3LjU3LTUuMDFsMTkuNzQzLTE5LjY4Yy4yOTItLjI5Mi40MzItLjcwMi40MzItMS4xNjUgMC0uNjQ2LS4yNy0xLjQtLjc4LTIuMTIyLjI1LjE3Mi41LjM3Ny43MzcuNjE0Ljg5OC45MDUgMS4zOTYgMS45ODMgMS4zOTYgMi44NTYiIGZpbGw9IiM1NzVFNzUiIG9wYWNpdHk9Ii4xNSIvPjxwYXRoIGQ9Ik0xOC40NSAxMi44M2MwIC41LS40MDQuOTA1LS45MDQuOTA1cy0uOTA1LS40MDUtLjkwNS0uOTA0YzAtLjUuNDA3LS45MDMuOTA2LS45MDMuNSAwIC45MDQuNDA0LjkwNC45MDR6IiBmaWxsPSIjNTc1RTc1Ii8+PC9nPjwvc3ZnPg==';
+
+/**
+ * Enum for pen color parameters.
+ * @readonly
+ * @enum {string}
+ */
+var ColorParam = {
+    COLOR: 'color',
+    SATURATION: 'saturation',
+    BRIGHTNESS: 'brightness',
+    TRANSPARENCY: 'transparency'
+};
+
+/**
+ * @typedef {object} PenState - the pen state associated with a particular target.
+ * @property {Boolean} penDown - tracks whether the pen should draw for this target.
+ * @property {number} color - the current color (hue) of the pen.
+ * @property {PenAttributes} penAttributes - cached pen attributes for the renderer. This is the authoritative value for
+ *   diameter but not for pen color.
+ */
+
+/**
+ * Host for the Pen-related blocks in Scratch 3.0
+ * @param {Runtime} runtime - the runtime instantiating this block package.
+ * @constructor
+ */
+
+var Scratch3PenBlocks = function () {
+    function Scratch3PenBlocks(runtime) {
+        _classCallCheck(this, Scratch3PenBlocks);
+
+        /**
+         * The runtime instantiating this block package.
+         * @type {Runtime}
+         */
+        this.runtime = runtime;
+
+        /**
+         * The ID of the renderer Drawable corresponding to the pen layer.
+         * @type {int}
+         * @private
+         */
+        this._penDrawableId = -1;
+
+        /**
+         * The ID of the renderer Skin corresponding to the pen layer.
+         * @type {int}
+         * @private
+         */
+        this._penSkinId = -1;
+
+        this._onTargetCreated = this._onTargetCreated.bind(this);
+        this._onTargetMoved = this._onTargetMoved.bind(this);
+
+        runtime.on('targetWasCreated', this._onTargetCreated);
+    }
+
+    /**
+     * The default pen state, to be used when a target has no existing pen state.
+     * @type {PenState}
+     */
+
+
+    _createClass(Scratch3PenBlocks, [{
+        key: '_clampPenSize',
+
+
+        /**
+         * Clamp a pen size value to the range allowed by the pen.
+         * @param {number} requestedSize - the requested pen size.
+         * @returns {number} the clamped size.
+         * @private
+         */
+        value: function _clampPenSize(requestedSize) {
+            return MathUtil.clamp(requestedSize, Scratch3PenBlocks.PEN_SIZE_RANGE.min, Scratch3PenBlocks.PEN_SIZE_RANGE.max);
+        }
+
+        /**
+         * Retrieve the ID of the renderer "Skin" corresponding to the pen layer. If
+         * the pen Skin doesn't yet exist, create it.
+         * @returns {int} the Skin ID of the pen layer, or -1 on failure.
+         * @private
+         */
+
+    }, {
+        key: '_getPenLayerID',
+        value: function _getPenLayerID() {
+            if (this._penSkinId < 0 && this.runtime.renderer) {
+                this._penSkinId = this.runtime.renderer.createPenSkin();
+                this._penDrawableId = this.runtime.renderer.createDrawable();
+                this.runtime.renderer.setDrawableOrder(this._penDrawableId, Scratch3PenBlocks.PEN_ORDER);
+                this.runtime.renderer.updateDrawableProperties(this._penDrawableId, { skinId: this._penSkinId });
+            }
+            return this._penSkinId;
+        }
+
+        /**
+         * @param {Target} target - collect pen state for this target. Probably, but not necessarily, a RenderedTarget.
+         * @returns {PenState} the mutable pen state associated with that target. This will be created if necessary.
+         * @private
+         */
+
+    }, {
+        key: '_getPenState',
+        value: function _getPenState(target) {
+            var penState = target.getCustomState(Scratch3PenBlocks.STATE_KEY);
+            if (!penState) {
+                penState = Clone.simple(Scratch3PenBlocks.DEFAULT_PEN_STATE);
+                target.setCustomState(Scratch3PenBlocks.STATE_KEY, penState);
+            }
+            return penState;
+        }
+
+        /**
+         * When a pen-using Target is cloned, clone the pen state.
+         * @param {Target} newTarget - the newly created target.
+         * @param {Target} [sourceTarget] - the target used as a source for the new clone, if any.
+         * @listens Runtime#event:targetWasCreated
+         * @private
+         */
+
+    }, {
+        key: '_onTargetCreated',
+        value: function _onTargetCreated(newTarget, sourceTarget) {
+            if (sourceTarget) {
+                var penState = sourceTarget.getCustomState(Scratch3PenBlocks.STATE_KEY);
+                if (penState) {
+                    newTarget.setCustomState(Scratch3PenBlocks.STATE_KEY, Clone.simple(penState));
+                    if (penState.penDown) {
+                        newTarget.addListener(RenderedTarget.EVENT_TARGET_MOVED, this._onTargetMoved);
+                    }
+                }
+            }
+        }
+
+        /**
+         * Handle a target which has moved. This only fires when the pen is down.
+         * @param {RenderedTarget} target - the target which has moved.
+         * @param {number} oldX - the previous X position.
+         * @param {number} oldY - the previous Y position.
+         * @private
+         */
+
+    }, {
+        key: '_onTargetMoved',
+        value: function _onTargetMoved(target, oldX, oldY) {
+            var penSkinId = this._getPenLayerID();
+            if (penSkinId >= 0) {
+                var penState = this._getPenState(target);
+                this.runtime.renderer.penLine(penSkinId, penState.penAttributes, oldX, oldY, target.x, target.y);
+                this.runtime.requestRedraw();
+            }
+        }
+
+        /**
+         * Wrap a color input into the range (0,100).
+         * @param {number} value - the value to be wrapped.
+         * @returns {number} the wrapped value.
+         * @private
+         */
+
+    }, {
+        key: '_wrapColor',
+        value: function _wrapColor(value) {
+            return MathUtil.wrapClamp(value, 0, 100);
+        }
+
+        /**
+         * Clamp a pen color parameter to the range (0,100).
+         * @param {number} value - the value to be clamped.
+         * @returns {number} the clamped value.
+         * @private
+         */
+
+    }, {
+        key: '_clampColorParam',
+        value: function _clampColorParam(value) {
+            return MathUtil.clamp(value, 0, 100);
+        }
+
+        /**
+         * Convert an alpha value to a pen transparency value.
+         * Alpha ranges from 0 to 1, where 0 is transparent and 1 is opaque.
+         * Transparency ranges from 0 to 100, where 0 is opaque and 100 is transparent.
+         * @param {number} alpha - the input alpha value.
+         * @returns {number} the transparency value.
+         * @private
+         */
+
+    }, {
+        key: '_alphaToTransparency',
+        value: function _alphaToTransparency(alpha) {
+            return (1.0 - alpha) * 100.0;
+        }
+
+        /**
+         * Convert a pen transparency value to an alpha value.
+         * Alpha ranges from 0 to 1, where 0 is transparent and 1 is opaque.
+         * Transparency ranges from 0 to 100, where 0 is opaque and 100 is transparent.
+         * @param {number} transparency - the input transparency value.
+         * @returns {number} the alpha value.
+         * @private
+         */
+
+    }, {
+        key: '_transparencyToAlpha',
+        value: function _transparencyToAlpha(transparency) {
+            return 1.0 - transparency / 100.0;
+        }
+
+        /**
+         * @returns {object} metadata for this extension and its blocks.
+         */
+
+    }, {
+        key: 'getInfo',
+        value: function getInfo() {
+            return {
+                id: 'pen',
+                name: 'Pen',
+                iconURI: iconURI,
+                blocks: [{
+                    opcode: 'clear',
+                    blockType: BlockType.COMMAND
+                }, {
+                    opcode: 'stamp',
+                    blockType: BlockType.COMMAND
+                }, {
+                    opcode: 'penDown',
+                    blockType: BlockType.COMMAND,
+                    text: 'pen down'
+                }, {
+                    opcode: 'penUp',
+                    blockType: BlockType.COMMAND,
+                    text: 'pen up'
+                }, {
+                    opcode: 'setPenColorToColor',
+                    blockType: BlockType.COMMAND,
+                    text: 'set pen color to [COLOR]',
+                    arguments: {
+                        COLOR: {
+                            type: ArgumentType.COLOR
+                        }
+                    }
+                }, {
+                    opcode: 'changePenColorParamBy',
+                    blockType: BlockType.COMMAND,
+                    text: 'change pen [COLOR_PARAM] by [VALUE]',
+                    arguments: {
+                        COLOR_PARAM: {
+                            type: ArgumentType.STRING,
+                            menu: 'colorParam',
+                            defaultValue: ColorParam.COLOR
+                        },
+                        VALUE: {
+                            type: ArgumentType.NUMBER,
+                            defaultValue: 10
+                        }
+                    }
+                }, {
+                    opcode: 'setPenColorParamTo',
+                    blockType: BlockType.COMMAND,
+                    text: 'set pen [COLOR_PARAM] to [VALUE]',
+                    arguments: {
+                        COLOR_PARAM: {
+                            type: ArgumentType.STRING,
+                            menu: 'colorParam',
+                            defaultValue: ColorParam.COLOR
+                        },
+                        VALUE: {
+                            type: ArgumentType.NUMBER,
+                            defaultValue: 50
+                        }
+                    }
+                }, {
+                    opcode: 'changePenSizeBy',
+                    blockType: BlockType.COMMAND,
+                    text: 'change pen size by [SIZE]',
+                    arguments: {
+                        SIZE: {
+                            type: ArgumentType.NUMBER,
+                            defaultValue: 1
+                        }
+                    }
+                }, {
+                    opcode: 'setPenSizeTo',
+                    blockType: BlockType.COMMAND,
+                    text: 'set pen size to [SIZE]',
+                    arguments: {
+                        SIZE: {
+                            type: ArgumentType.NUMBER,
+                            defaultValue: 1
+                        }
+                    }
+                },
+                /* Legacy blocks, should not be shown in flyout */
+                {
+                    opcode: 'setPenShadeToNumber',
+                    blockType: BlockType.COMMAND,
+                    text: 'set pen shade to [SHADE]',
+                    arguments: {
+                        SHADE: {
+                            type: ArgumentType.NUMBER,
+                            defaultValue: 1
+                        }
+                    },
+                    hideFromPalette: true
+                }, {
+                    opcode: 'changePenShadeBy',
+                    blockType: BlockType.COMMAND,
+                    text: 'change pen shade by [SHADE]',
+                    arguments: {
+                        SHADE: {
+                            type: ArgumentType.NUMBER,
+                            defaultValue: 1
+                        }
+                    },
+                    hideFromPalette: true
+                }, {
+                    opcode: 'setPenHueToNumber',
+                    blockType: BlockType.COMMAND,
+                    text: 'set pen hue to [HUE]',
+                    arguments: {
+                        HUE: {
+                            type: ArgumentType.NUMBER,
+                            defaultValue: 1
+                        }
+                    },
+                    hideFromPalette: true
+                }, {
+                    opcode: 'changePenHueBy',
+                    blockType: BlockType.COMMAND,
+                    text: 'change pen hue by [HUE]',
+                    arguments: {
+                        HUE: {
+                            type: ArgumentType.NUMBER,
+                            defaultValue: 1
+                        }
+                    },
+                    hideFromPalette: true
+                }],
+                menus: {
+                    colorParam: [ColorParam.COLOR, ColorParam.SATURATION, ColorParam.BRIGHTNESS, ColorParam.TRANSPARENCY]
+                }
+            };
+        }
+
+        /**
+         * The pen "clear" block clears the pen layer's contents.
+         */
+
+    }, {
+        key: 'clear',
+        value: function clear() {
+            var penSkinId = this._getPenLayerID();
+            if (penSkinId >= 0) {
+                this.runtime.renderer.penClear(penSkinId);
+                this.runtime.requestRedraw();
+            }
+        }
+
+        /**
+         * The pen "stamp" block stamps the current drawable's image onto the pen layer.
+         * @param {object} args - the block arguments.
+         * @param {object} util - utility object provided by the runtime.
+         */
+
+    }, {
+        key: 'stamp',
+        value: function stamp(args, util) {
+            var penSkinId = this._getPenLayerID();
+            if (penSkinId >= 0) {
+                var target = util.target;
+                this.runtime.renderer.penStamp(penSkinId, target.drawableID);
+                this.runtime.requestRedraw();
+            }
+        }
+
+        /**
+         * The pen "pen down" block causes the target to leave pen trails on future motion.
+         * @param {object} args - the block arguments.
+         * @param {object} util - utility object provided by the runtime.
+         */
+
+    }, {
+        key: 'penDown',
+        value: function penDown(args, util) {
+            var target = util.target;
+            var penState = this._getPenState(target);
+
+            if (!penState.penDown) {
+                penState.penDown = true;
+                target.addListener(RenderedTarget.EVENT_TARGET_MOVED, this._onTargetMoved);
+            }
+
+            var penSkinId = this._getPenLayerID();
+            if (penSkinId >= 0) {
+                this.runtime.renderer.penPoint(penSkinId, penState.penAttributes, target.x, target.y);
+                this.runtime.requestRedraw();
+            }
+        }
+
+        /**
+         * The pen "pen up" block stops the target from leaving pen trails.
+         * @param {object} args - the block arguments.
+         * @param {object} util - utility object provided by the runtime.
+         */
+
+    }, {
+        key: 'penUp',
+        value: function penUp(args, util) {
+            var target = util.target;
+            var penState = this._getPenState(target);
+
+            if (penState.penDown) {
+                penState.penDown = false;
+                target.removeListener(RenderedTarget.EVENT_TARGET_MOVED, this._onTargetMoved);
+            }
+        }
+
+        /**
+         * The pen "set pen color to {color}" block sets the pen to a particular RGB color.
+         * The transparency is reset to 0.
+         * @param {object} args - the block arguments.
+         *  @property {int} COLOR - the color to set, expressed as a 24-bit RGB value (0xRRGGBB).
+         * @param {object} util - utility object provided by the runtime.
+         */
+
+    }, {
+        key: 'setPenColorToColor',
+        value: function setPenColorToColor(args, util) {
+            var penState = this._getPenState(util.target);
+            var rgb = Cast.toRgbColorObject(args.COLOR);
+            var hsv = Color.rgbToHsv(rgb);
+            penState.color = hsv.h / 360 * 100;
+            penState.saturation = hsv.s * 100;
+            penState.brightness = hsv.v * 100;
+            if (rgb.hasOwnProperty('a')) {
+                penState.transparency = 100 * (1 - rgb.a / 255.0);
+            } else {
+                penState.transparency = 0;
+            }
+
+            // Set the legacy "shade" value the same way scratch 2 did.
+            penState._shade = penState.brightness / 2;
+
+            this._updatePenColor(penState);
+        }
+
+        /**
+         * Update the cached color from the color, saturation, brightness and transparency values
+         * in the provided PenState object.
+         * @param {PenState} penState - the pen state to update.
+         * @private
+         */
+
+    }, {
+        key: '_updatePenColor',
+        value: function _updatePenColor(penState) {
+            var rgb = Color.hsvToRgb({
+                h: penState.color * 360 / 100,
+                s: penState.saturation / 100,
+                v: penState.brightness / 100
+            });
+            penState.penAttributes.color4f[0] = rgb.r / 255.0;
+            penState.penAttributes.color4f[1] = rgb.g / 255.0;
+            penState.penAttributes.color4f[2] = rgb.b / 255.0;
+            penState.penAttributes.color4f[3] = this._transparencyToAlpha(penState.transparency);
+        }
+
+        /**
+         * Set or change a single color parameter on the pen state, and update the pen color.
+         * @param {ColorParam} param - the name of the color parameter to set or change.
+         * @param {number} value - the value to set or change the param by.
+         * @param {PenState} penState - the pen state to update.
+         * @param {boolean} change - if true change param by value, if false set param to value.
+         * @private
+         */
+
+    }, {
+        key: '_setOrChangeColorParam',
+        value: function _setOrChangeColorParam(param, value, penState, change) {
+            switch (param) {
+                case ColorParam.COLOR:
+                    penState.color = this._wrapColor(value + (change ? penState.color : 0));
+                    break;
+                case ColorParam.SATURATION:
+                    penState.saturation = this._clampColorParam(value + (change ? penState.saturation : 0));
+                    break;
+                case ColorParam.BRIGHTNESS:
+                    penState.brightness = this._clampColorParam(value + (change ? penState.brightness : 0));
+                    break;
+                case ColorParam.TRANSPARENCY:
+                    penState.transparency = this._clampColorParam(value + (change ? penState.transparency : 0));
+                    break;
+                default:
+                    log.warn('Tried to set or change unknown color parameter: ' + param);
+            }
+            this._updatePenColor(penState);
+        }
+
+        /**
+         * The "change pen {ColorParam} by {number}" block changes one of the pen's color parameters
+         * by a given amound.
+         * @param {object} args - the block arguments.
+         *  @property {ColorParam} COLOR_PARAM - the name of the selected color parameter.
+         *  @property {number} VALUE - the amount to change the selected parameter by.
+         * @param {object} util - utility object provided by the runtime.
+         */
+
+    }, {
+        key: 'changePenColorParamBy',
+        value: function changePenColorParamBy(args, util) {
+            var penState = this._getPenState(util.target);
+            this._setOrChangeColorParam(args.COLOR_PARAM, Cast.toNumber(args.VALUE), penState, true);
+        }
+
+        /**
+         * The "set pen {ColorParam} to {number}" block sets one of the pen's color parameters
+         * to a given amound.
+         * @param {object} args - the block arguments.
+         *  @property {ColorParam} COLOR_PARAM - the name of the selected color parameter.
+         *  @property {number} VALUE - the amount to set the selected parameter to.
+         * @param {object} util - utility object provided by the runtime.
+         */
+
+    }, {
+        key: 'setPenColorParamTo',
+        value: function setPenColorParamTo(args, util) {
+            var penState = this._getPenState(util.target);
+            this._setOrChangeColorParam(args.COLOR_PARAM, Cast.toNumber(args.VALUE), penState, false);
+        }
+
+        /**
+         * The pen "change pen size by {number}" block changes the pen size by the given amount.
+         * @param {object} args - the block arguments.
+         *  @property {number} SIZE - the amount of desired size change.
+         * @param {object} util - utility object provided by the runtime.
+         */
+
+    }, {
+        key: 'changePenSizeBy',
+        value: function changePenSizeBy(args, util) {
+            var penAttributes = this._getPenState(util.target).penAttributes;
+            penAttributes.diameter = this._clampPenSize(penAttributes.diameter + Cast.toNumber(args.SIZE));
+        }
+
+        /**
+         * The pen "set pen size to {number}" block sets the pen size to the given amount.
+         * @param {object} args - the block arguments.
+         *  @property {number} SIZE - the amount of desired size change.
+         * @param {object} util - utility object provided by the runtime.
+         */
+
+    }, {
+        key: 'setPenSizeTo',
+        value: function setPenSizeTo(args, util) {
+            var penAttributes = this._getPenState(util.target).penAttributes;
+            penAttributes.diameter = this._clampPenSize(Cast.toNumber(args.SIZE));
+        }
+
+        /* LEGACY OPCODES */
+        /**
+         * Scratch 2 "hue" param is equivelant to twice the new "color" param.
+         * @param {object} args - the block arguments.
+         *  @property {number} HUE - the amount to set the hue to.
+         * @param {object} util - utility object provided by the runtime.
+         */
+
+    }, {
+        key: 'setPenHueToNumber',
+        value: function setPenHueToNumber(args, util) {
+            var penState = this._getPenState(util.target);
+            var hueValue = Cast.toNumber(args.HUE);
+            var colorValue = hueValue / 2;
+            this._setOrChangeColorParam(ColorParam.COLOR, colorValue, penState, false);
+        }
+
+        /**
+         * Scratch 2 "hue" param is equivelant to twice the new "color" param.
+         * @param {object} args - the block arguments.
+         *  @property {number} HUE - the amount of desired hue change.
+         * @param {object} util - utility object provided by the runtime.
+         */
+
+    }, {
+        key: 'changePenHueBy',
+        value: function changePenHueBy(args, util) {
+            var penState = this._getPenState(util.target);
+            var hueChange = Cast.toNumber(args.HUE);
+            var colorChange = hueChange / 2;
+            this._setOrChangeColorParam(ColorParam.COLOR, colorChange, penState, true);
+        }
+
+        /**
+         * Use legacy "set shade" code to calculate RGB value for shade,
+         * then convert back to HSV and store those components.
+         * It is important to also track the given shade in penState._shade
+         * because it cannot be accurately backed out of the new HSV later.
+         * @param {object} args - the block arguments.
+         *  @property {number} SHADE - the amount to set the shade to.
+         * @param {object} util - utility object provided by the runtime.
+         */
+
+    }, {
+        key: 'setPenShadeToNumber',
+        value: function setPenShadeToNumber(args, util) {
+            var penState = this._getPenState(util.target);
+            var newShade = Cast.toNumber(args.SHADE);
+
+            // Wrap clamp the new shade value the way scratch 2 did.
+            newShade = newShade % 200;
+            if (newShade < 0) newShade += 200;
+
+            // Create the new color in RGB using the scratch 2 "shade" model
+            var rgb = Color.hsvToRgb({ h: penState.color * 360 / 100, s: 1, v: 1 });
+            var shade = newShade > 100 ? 200 - newShade : newShade;
+            if (shade < 50) {
+                rgb = Color.mixRgb(Color.RGB_BLACK, rgb, (10 + shade) / 60);
+            } else {
+                rgb = Color.mixRgb(rgb, Color.RGB_WHITE, (shade - 50) / 60);
+            }
+
+            // Update the pen state according to new color
+            var hsv = Color.rgbToHsv(rgb);
+            penState.color = 100 * hsv.h / 360;
+            penState.saturation = 100 * hsv.s;
+            penState.brightness = 100 * hsv.v;
+
+            // And store the shade that was used to compute this new color for later use.
+            penState._shade = newShade;
+
+            this._updatePenColor(penState);
+        }
+
+        /**
+         * Because "shade" cannot be backed out of hsv consistently, use the previously
+         * stored penState._shade to make the shade change.
+         * @param {object} args - the block arguments.
+         *  @property {number} SHADE - the amount of desired shade change.
+         * @param {object} util - utility object provided by the runtime.
+         */
+
+    }, {
+        key: 'changePenShadeBy',
+        value: function changePenShadeBy(args, util) {
+            var penState = this._getPenState(util.target);
+            var shadeChange = Cast.toNumber(args.SHADE);
+            this.setPenShadeToNumber({ SHADE: penState._shade + shadeChange }, util);
+        }
+    }], [{
+        key: 'DEFAULT_PEN_STATE',
+        get: function get() {
+            return {
+                penDown: false,
+                color: 66.66,
+                saturation: 100,
+                brightness: 100,
+                transparency: 0,
+                _shade: 50, // Used only for legacy `change shade by` blocks
+                penAttributes: {
+                    color4f: [0, 0, 1, 1],
+                    diameter: 1
+                }
+            };
+        }
+
+        /**
+         * Place the pen layer in front of the backdrop but behind everything else.
+         * We should probably handle this somewhere else... somewhere central that knows about pen, backdrop, video, etc.
+         * Maybe it should be in the GUI?
+         * @type {int}
+         */
+
+    }, {
+        key: 'PEN_ORDER',
+        get: function get() {
+            return 1;
+        }
+
+        /**
+         * The minimum and maximum allowed pen size.
+         * @type {{min: number, max: number}}
+         */
+
+    }, {
+        key: 'PEN_SIZE_RANGE',
+        get: function get() {
+            return { min: 1, max: 255 };
+        }
+
+        /**
+         * The key to load & store a target's pen-related state.
+         * @type {string}
+         */
+
+    }, {
+        key: 'STATE_KEY',
+        get: function get() {
+            return 'Scratch.pen';
+        }
+    }]);
+
+    return Scratch3PenBlocks;
+}();
+
+module.exports = Scratch3PenBlocks;
+
+/***/ }),
+/* 82 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+var ArgumentType = __webpack_require__(19);
+var BlockType = __webpack_require__(11);
+var color = __webpack_require__(23);
+var log = __webpack_require__(1);
+
+/**
+ * Icon svg to be displayed at the left edge of each extension block, encoded as a data URI.
+ * @type {string}
+ */
+// eslint-disable-next-line max-len
+var iconURI = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHZpZXdCb3g9IjAgMCA0MCA0MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48dGl0bGU+d2VkbzItYmxvY2staWNvbjwvdGl0bGU+PGcgZmlsbD0ibm9uZSIgZmlsbC1ydWxlPSJldmVub2RkIj48cGF0aCBkPSJNMzUuMzEzIDEwLjQ2N0gzMi4wOVY4Ljg2NWMwLS4yMjMuMTgtLjQwNC40MDUtLjQwNGgyLjQxMmMuMjI0IDAgLjQwNi4xODIuNDA2LjQwNXYxLjYwMnpNMzAuNDc3IDEwLjQ2N2gtMy4yMjRWOC44NjVjMC0uMjIzLjE4My0uNDA0LjQwNy0uNDA0aDIuNDFjLjIyNiAwIC40MDcuMTgyLjQwNy40MDV2MS42MDJ6TTI1LjY0IDEwLjQ2N0gyMi40MlY4Ljg2NWMwLS4yMjMuMTgyLS40MDQuNDA2LS40MDRoMi40MWMuMjI2IDAgLjQwNy4xODIuNDA3LjQwNXYxLjYwMnpNMjAuODA2IDEwLjQ2N2gtMy4yMjRWOC44NjVjMC0uMjIzLjE4Mi0uNDA0LjQwNi0uNDA0SDIwLjRjLjIyNCAwIC40MDYuMTgyLjQwNi40MDV2MS42MDJ6TTE1Ljk3IDEwLjQ2N2gtMy4yMjRWOC44NjVjMC0uMjIzLjE4Mi0uNDA0LjQwNy0uNDA0aDIuNDFjLjIyNiAwIC40MDcuMTgyLjQwNy40MDV2MS42MDJ6TTExLjEzNSAxMC40NjdINy45MVY4Ljg2NWMwLS4yMjMuMTgzLS40MDQuNDA3LS40MDRoMi40MTJjLjIyMyAwIC40MDUuMTgyLjQwNS40MDV2MS42MDJ6IiBzdHJva2U9IiM2Rjc4OTMiIGZpbGw9IiNGRkYiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCIvPjxwYXRoIGQ9Ik0zNy43MyAxMC40NjdINi4zYy0yLjY3IDAtNC44MzYgMi4xNTMtNC44MzYgNC44MDh2My4yMDVoMzcuMDczdi03LjIxYzAtLjQ0NC0uMzYyLS44MDMtLjgwNy0uODAzeiIgc3Ryb2tlPSIjNkY3ODkzIiBmaWxsPSIjRkZGIiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiLz48cGF0aCBkPSJNMzguMTM0IDMwLjk4SDEuODY3Yy0uMjI0IDAtLjQwMy0uMTgtLjQwMy0uNFYxNi4yMzZoMzIuNzFjLjczIDAgMS40My4yODcgMS45NDUuOC41MTUuNTE0IDEuMjE1LjgwMiAxLjk0NC44MDJoLjQ3M3YxMi43NGMwIC4yMi0uMTguNC0uNDAzLjR6IiBzdHJva2U9IiM2Rjc4OTMiIGZpbGw9IiNFNkU3RTgiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCIvPjxwYXRoIHN0cm9rZT0iIzZGNzg5MyIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIiBkPSJNMzQuODMgMTYuMjM3bC40ODMtMi41NjVoMy4yMjMiLz48cGF0aCBkPSJNMzguNTM2IDExLjI2OFYzMC41OGMwIC4yMi0uMTguNC0uNDAzLjRIMS44NjZjLS4yMiAwLS40MDMtLjE4LS40MDMtLjR2LTEuMjAzaDM0LjI4MmMuNjUgMCAxLjE4LS41MjQgMS4xOC0xLjE3M1YxMC40NjdoLjgwNWMuNDQ2IDAgLjgwNi4zNi44MDYuOHoiIHN0cm9rZT0iIzZGNzg5MyIgZmlsbD0iIzZGNzg5MyIgb3BhY2l0eT0iLjE1IiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiLz48cGF0aCBkPSJNMTEuNTM4IDE2LjI4aDIwLjE0OGMuMjIyIDAgLjQwMy4xOC40MDMuNHY2LjUyN2MwIC4yMjItLjE4Mi40LS40MDQuNEgxMS41MzhjLS4yMjMgMC0uNDA0LS4xNzgtLjQwNC0uNFYxNi42OGMwLS4yMi4xOC0uNC40MDQtLjQiIGZpbGw9IiNFNkU3RTgiLz48cGF0aCBkPSJNMTEuNTM4IDE2LjI4aDIwLjE0OGMuMjIyIDAgLjQwMy4xOC40MDMuNHY2LjUyN2MwIC4yMjItLjE4Mi40LS40MDQuNEgxMS41MzhjLS4yMjMgMC0uNDA0LS4xNzgtLjQwNC0uNFYxNi42OGMwLS4yMi4xOC0uNC40MDQtLjR6IiBzdHJva2U9IiM2Rjc4OTMiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCIvPjxwYXRoIGQ9Ik0zMi4wOSAxNi4yOHY2LjkyN2MwIC4yMjItLjE4LjQtLjQwNC40aC0yMC4xNWMtLjIyIDAtLjQtLjE4LS40LS40di0xLjJoMTguMTZjLjY1MyAwIDEuMTgtLjUyNiAxLjE4LTEuMTc0VjE2LjI4aDEuNjEzeiIgc3Ryb2tlPSIjNkY3ODkzIiBmaWxsPSIjNkU3NzkyIiBvcGFjaXR5PSIuMTUiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCIvPjxwYXRoIGQ9Ik0zMC40NzcgMTYuMjhoLTMuMjI0di0xLjYwNGMwLS4yMjMuMTgzLS40MDQuNDA3LS40MDRoMi40MWMuMjI2IDAgLjQwNy4xOC40MDcuNDA0djEuNjAzek0xNS45NyAxNi4yOGgtMy4yMjR2LTEuNjA0YzAtLjIyMy4xODItLjQwNC40MDctLjQwNGgyLjQxYy4yMjYgMCAuNDA3LjE4LjQwNy40MDR2MS42MDN6TTI1LjY0IDE2LjI4SDIyLjQydi0xLjYwNGMwLS4yMjMuMTgyLS40MDQuNDA2LS40MDRoMi40MWMuMjI2IDAgLjQwNy4xOC40MDcuNDA0djEuNjAzek0yMC44MDYgMTYuMjhoLTMuMjI0di0xLjYwNGMwLS4yMjMuMTgyLS40MDQuNDA2LS40MDRIMjAuNGMuMjI0IDAgLjQwNi4xOC40MDYuNDA0djEuNjAzeiIgc3Ryb2tlPSIjNkY3ODkzIiBmaWxsPSIjRTZFN0U4IiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiLz48cGF0aCBkPSJNMTguNTU3IDE5LjkxYzAgMS4wMjUtLjgzNyAxLjg1Ny0xLjg3IDEuODU3LTEuMDMgMC0xLjg2Ny0uODMyLTEuODY3LTEuODU4IDAtMS4wMjcuODM3LTEuODU4IDEuODY4LTEuODU4IDEuMDMyIDAgMS44Ny44MyAxLjg3IDEuODU3ek0yMy40OCAxOS45MWMwIDEuMDI1LS44MzYgMS44NTctMS44NjggMS44NTdzLTEuODctLjgzMi0xLjg3LTEuODU4YzAtMS4wMjcuODM4LTEuODU4IDEuODctMS44NThzMS44NjguODMgMS44NjggMS44NTd6TTI4LjQwNCAxOS45MWMwIDEuMDI1LS44MzcgMS44NTctMS44NjggMS44NTctMS4wMzIgMC0xLjg3LS44MzItMS44Ny0xLjg1OCAwLTEuMDI3LjgzOC0xLjg1OCAxLjg3LTEuODU4IDEuMDMgMCAxLjg2OC44MyAxLjg2OCAxLjg1N3oiIHN0cm9rZT0iIzZGNzg5MyIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIi8+PHBhdGggZD0iTTE4LjU1NyAxOS45MjJjMCAxLjAyNi0uODM3IDEuODU4LTEuODcgMS44NTgtMS4wMyAwLTEuODY3LS44MzItMS44NjctMS44NTggMC0xLjAyNS44MzctMS44NTcgMS44NjgtMS44NTcgMS4wMzIgMCAxLjg3LjgzMiAxLjg3IDEuODU3TTIzLjQ4IDE5LjkyMmMwIDEuMDI2LS44MzYgMS44NTgtMS44NjggMS44NThzLTEuODctLjgzMi0xLjg3LTEuODU4YzAtMS4wMjUuODM4LTEuODU3IDEuODctMS44NTdzMS44NjguODMyIDEuODY4IDEuODU3TTI4LjQwNCAxOS45MjJjMCAxLjAyNi0uODM3IDEuODU4LTEuODY4IDEuODU4LTEuMDMyIDAtMS44Ny0uODMyLTEuODctMS44NTggMC0xLjAyNS44MzgtMS44NTcgMS44Ny0xLjg1NyAxLjAzIDAgMS44NjguODMyIDEuODY4IDEuODU3IiBmaWxsPSIjNkY3ODkzIiBvcGFjaXR5PSIuNSIvPjwvZz48L3N2Zz4=';
+
+/**
+ * Manage power, direction, and timers for one WeDo 2.0 motor.
+ */
+
+var WeDo2Motor = function () {
+    /**
+     * Construct a WeDo2Motor instance.
+     * @param {WeDo2} parent - the WeDo 2.0 device which owns this motor.
+     * @param {int} index - the zero-based index of this motor on its parent device.
+     */
+    function WeDo2Motor(parent, index) {
+        _classCallCheck(this, WeDo2Motor);
+
+        /**
+         * The WeDo 2.0 device which owns this motor.
+         * @type {WeDo2}
+         * @private
+         */
+        this._parent = parent;
+
+        /**
+         * The zero-based index of this motor on its parent device.
+         * @type {int}
+         * @private
+         */
+        this._index = index;
+
+        /**
+         * This motor's current direction: 1 for "this way" or -1 for "that way"
+         * @type {number}
+         * @private
+         */
+        this._direction = 1;
+
+        /**
+         * This motor's current power level, in the range [0,100].
+         * @type {number}
+         * @private
+         */
+        this._power = 100;
+
+        /**
+         * Is this motor currently moving?
+         * @type {boolean}
+         * @private
+         */
+        this._isOn = false;
+
+        /**
+         * If the motor has been turned on or is actively braking for a specific duration, this is the timeout ID for
+         * the end-of-action handler. Cancel this when changing plans.
+         * @type {Object}
+         * @private
+         */
+        this._pendingTimeoutId = null;
+
+        this.startBraking = this.startBraking.bind(this);
+        this.setMotorOff = this.setMotorOff.bind(this);
+    }
+
+    /**
+     * @return {number} - the duration of active braking after a call to startBraking(). Afterward, turn the motor off.
+     * @constructor
+     */
+
+
+    _createClass(WeDo2Motor, [{
+        key: 'setMotorOn',
+
+
+        /**
+         * Turn this motor on indefinitely.
+         */
+        value: function setMotorOn() {
+            this._parent._send('motorOn', { motorIndex: this._index, power: this._direction * this._power });
+            this._isOn = true;
+            this._clearTimeout();
+        }
+
+        /**
+         * Turn this motor on for a specific duration.
+         * @param {number} milliseconds - run the motor for this long.
+         */
+
+    }, {
+        key: 'setMotorOnFor',
+        value: function setMotorOnFor(milliseconds) {
+            milliseconds = Math.max(0, milliseconds);
+            this.setMotorOn();
+            this._setNewTimeout(this.startBraking, milliseconds);
+        }
+
+        /**
+         * Start active braking on this motor. After a short time, the motor will turn off.
+         */
+
+    }, {
+        key: 'startBraking',
+        value: function startBraking() {
+            this._parent._send('motorBrake', { motorIndex: this._index });
+            this._isOn = false;
+            this._setNewTimeout(this.setMotorOff, WeDo2Motor.BRAKE_TIME_MS);
+        }
+
+        /**
+         * Turn this motor off.
+         */
+
+    }, {
+        key: 'setMotorOff',
+        value: function setMotorOff() {
+            this._parent._send('motorOff', { motorIndex: this._index });
+            this._isOn = false;
+        }
+
+        /**
+         * Clear the motor action timeout, if any. Safe to call even when there is no pending timeout.
+         * @private
+         */
+
+    }, {
+        key: '_clearTimeout',
+        value: function _clearTimeout() {
+            if (this._pendingTimeoutId !== null) {
+                clearTimeout(this._pendingTimeoutId);
+                this._pendingTimeoutId = null;
+            }
+        }
+
+        /**
+         * Set a new motor action timeout, after clearing an existing one if necessary.
+         * @param {Function} callback - to be called at the end of the timeout.
+         * @param {int} delay - wait this many milliseconds before calling the callback.
+         * @private
+         */
+
+    }, {
+        key: '_setNewTimeout',
+        value: function _setNewTimeout(callback, delay) {
+            var _this = this;
+
+            this._clearTimeout();
+            var timeoutID = setTimeout(function () {
+                if (_this._pendingTimeoutId === timeoutID) {
+                    _this._pendingTimeoutId = null;
+                }
+                callback();
+            }, delay);
+            this._pendingTimeoutId = timeoutID;
+        }
+    }, {
+        key: 'direction',
+
+
+        /**
+         * @return {int} - this motor's current direction: 1 for "this way" or -1 for "that way"
+         */
+        get: function get() {
+            return this._direction;
+        }
+
+        /**
+         * @param {int} value - this motor's new direction: 1 for "this way" or -1 for "that way"
+         */
+        ,
+        set: function set(value) {
+            if (value < 0) {
+                this._direction = -1;
+            } else {
+                this._direction = 1;
+            }
+        }
+
+        /**
+         * @return {int} - this motor's current power level, in the range [0,100].
+         */
+
+    }, {
+        key: 'power',
+        get: function get() {
+            return this._power;
+        }
+
+        /**
+         * @param {int} value - this motor's new power level, in the range [0,100].
+         */
+        ,
+        set: function set(value) {
+            this._power = Math.max(0, Math.min(value, 100));
+        }
+
+        /**
+         * @return {boolean} - true if this motor is currently moving, false if this motor is off or braking.
+         */
+
+    }, {
+        key: 'isOn',
+        get: function get() {
+            return this._isOn;
+        }
+    }], [{
+        key: 'BRAKE_TIME_MS',
+        get: function get() {
+            return 1000;
+        }
+    }]);
+
+    return WeDo2Motor;
+}();
+
+/**
+ * Manage communication with a WeDo 2.0 device over a Device Manager client socket.
+ */
+
+
+var WeDo2 = function () {
+    _createClass(WeDo2, null, [{
+        key: 'DEVICE_TYPE',
+
+
+        /**
+         * @return {string} - the type of Device Manager device socket that this class will handle.
+         */
+        get: function get() {
+            return 'wedo2';
+        }
+
+        /**
+         * Construct a WeDo2 communication object.
+         * @param {Socket} socket - the socket for a WeDo 2.0 device, as provided by a Device Manager client.
+         */
+
+    }]);
+
+    function WeDo2(socket) {
+        _classCallCheck(this, WeDo2);
+
+        /**
+         * The socket-IO socket used to communicate with the Device Manager about this device.
+         * @type {Socket}
+         * @private
+         */
+        this._socket = socket;
+
+        /**
+         * The motors which this WeDo 2.0 could possibly have.
+         * @type {[WeDo2Motor]}
+         * @private
+         */
+        this._motors = [new WeDo2Motor(this, 0), new WeDo2Motor(this, 1)];
+
+        /**
+         * The most recently received value for each sensor.
+         * @type {Object.<string, number>}
+         * @private
+         */
+        this._sensors = {
+            tiltX: 0,
+            tiltY: 0,
+            distance: 0
+        };
+
+        this._onSensorChanged = this._onSensorChanged.bind(this);
+        this._onDisconnect = this._onDisconnect.bind(this);
+
+        this._connectEvents();
+    }
+
+    /**
+     * Manually dispose of this object.
+     */
+
+
+    _createClass(WeDo2, [{
+        key: 'dispose',
+        value: function dispose() {
+            this._disconnectEvents();
+        }
+
+        /**
+         * @return {number} - the latest value received for the tilt sensor's tilt about the X axis.
+         */
+
+    }, {
+        key: 'motor',
+
+
+        /**
+         * Access a particular motor on this device.
+         * @param {int} index - the zero-based index of the desired motor.
+         * @return {WeDo2Motor} - the WeDo2Motor instance, if any, at that index.
+         */
+        value: function motor(index) {
+            return this._motors[index];
+        }
+
+        /**
+         * Set the WeDo 2.0 hub's LED to a specific color.
+         * @param {int} rgb - a 24-bit RGB color in 0xRRGGBB format.
+         */
+
+    }, {
+        key: 'setLED',
+        value: function setLED(rgb) {
+            this._send('setLED', { rgb: rgb });
+        }
+
+        /**
+         * Play a tone from the WeDo 2.0 hub for a specific amount of time.
+         * @param {int} tone - the pitch of the tone, in Hz.
+         * @param {int} milliseconds - the duration of the note, in milliseconds.
+         */
+
+    }, {
+        key: 'playTone',
+        value: function playTone(tone, milliseconds) {
+            this._send('playTone', { tone: tone, ms: milliseconds });
+        }
+
+        /**
+         * Stop the tone playing from the WeDo 2.0 hub, if any.
+         */
+
+    }, {
+        key: 'stopTone',
+        value: function stopTone() {
+            this._send('stopTone');
+        }
+
+        /**
+         * Attach event handlers to the device socket.
+         * @private
+         */
+
+    }, {
+        key: '_connectEvents',
+        value: function _connectEvents() {
+            this._socket.on('sensorChanged', this._onSensorChanged);
+            this._socket.on('deviceWasClosed', this._onDisconnect);
+            this._socket.on('disconnect', this._onDisconnect);
+        }
+
+        /**
+         * Detach event handlers from the device socket.
+         * @private
+         */
+
+    }, {
+        key: '_disconnectEvents',
+        value: function _disconnectEvents() {
+            this._socket.off('sensorChanged', this._onSensorChanged);
+            this._socket.off('deviceWasClosed', this._onDisconnect);
+            this._socket.off('disconnect', this._onDisconnect);
+        }
+
+        /**
+         * Store the sensor value from an incoming 'sensorChanged' event.
+         * @param {object} event - the 'sensorChanged' event.
+         * @property {string} sensorName - the name of the sensor which changed.
+         * @property {number} sensorValue - the new value of the sensor.
+         * @private
+         */
+
+    }, {
+        key: '_onSensorChanged',
+        value: function _onSensorChanged(event) {
+            this._sensors[event.sensorName] = event.sensorValue;
+        }
+
+        /**
+         * React to device disconnection. May be called more than once.
+         * @private
+         */
+
+    }, {
+        key: '_onDisconnect',
+        value: function _onDisconnect() {
+            this._disconnectEvents();
+        }
+
+        /**
+         * Send a message to the device socket.
+         * @param {string} message - the name of the message, such as 'playTone'.
+         * @param {object} [details] - optional additional details for the message, such as tone duration and pitch.
+         * @private
+         */
+
+    }, {
+        key: '_send',
+        value: function _send(message, details) {
+            this._socket.emit(message, details);
+        }
+    }, {
+        key: 'tiltX',
+        get: function get() {
+            return this._sensors.tiltX;
+        }
+
+        /**
+         * @return {number} - the latest value received for the tilt sensor's tilt about the Y axis.
+         */
+
+    }, {
+        key: 'tiltY',
+        get: function get() {
+            return this._sensors.tiltY;
+        }
+
+        /**
+         * @return {number} - the latest value received from the distance sensor.
+         */
+
+    }, {
+        key: 'distance',
+        get: function get() {
+            return this._sensors.distance * 10;
+        }
+    }]);
+
+    return WeDo2;
+}();
+
+/**
+ * Enum for motor specification.
+ * @readonly
+ * @enum {string}
+ */
+
+
+var MotorID = {
+    DEFAULT: 'motor',
+    A: 'motor A',
+    B: 'motor B',
+    ALL: 'all motors'
+};
+
+/**
+ * Enum for motor direction specification.
+ * @readonly
+ * @enum {string}
+ */
+var MotorDirection = {
+    FORWARD: 'this way',
+    BACKWARD: 'that way',
+    REVERSE: 'reverse'
+};
+
+/**
+ * Enum for tilt sensor direction.
+ * @readonly
+ * @enum {string}
+ */
+var TiltDirection = {
+    UP: 'up',
+    DOWN: 'down',
+    LEFT: 'left',
+    RIGHT: 'right',
+    ANY: 'any'
+};
+
+/**
+ * Scratch 3.0 blocks to interact with a LEGO WeDo 2.0 device.
+ */
+
+var Scratch3WeDo2Blocks = function () {
+    _createClass(Scratch3WeDo2Blocks, null, [{
+        key: 'EXTENSION_ID',
+
+
+        /**
+         * @return {string} - the ID of this extension.
+         */
+        get: function get() {
+            return 'wedo2';
+        }
+
+        /**
+         * @return {number} - the tilt sensor counts as "tilted" if its tilt angle meets or exceeds this threshold.
+         */
+
+    }, {
+        key: 'TILT_THRESHOLD',
+        get: function get() {
+            return 15;
+        }
+
+        /**
+         * Construct a set of WeDo 2.0 blocks.
+         * @param {Runtime} runtime - the Scratch 3.0 runtime.
+         */
+
+    }]);
+
+    function Scratch3WeDo2Blocks(runtime) {
+        _classCallCheck(this, Scratch3WeDo2Blocks);
+
+        /**
+         * The Scratch 3.0 runtime.
+         * @type {Runtime}
+         */
+        this.runtime = runtime;
+
+        this.connect();
+    }
+
+    /**
+     * @returns {object} metadata for this extension and its blocks.
+     */
+
+
+    _createClass(Scratch3WeDo2Blocks, [{
+        key: 'getInfo',
+        value: function getInfo() {
+            return {
+                id: Scratch3WeDo2Blocks.EXTENSION_ID,
+                name: 'WeDo 2.0',
+                iconURI: iconURI,
+                blocks: [{
+                    opcode: 'motorOnFor',
+                    text: 'turn [MOTOR_ID] on for [DURATION] seconds',
+                    blockType: BlockType.COMMAND,
+                    arguments: {
+                        MOTOR_ID: {
+                            type: ArgumentType.STRING,
+                            menu: 'motorID',
+                            defaultValue: MotorID.DEFAULT
+                        },
+                        DURATION: {
+                            type: ArgumentType.NUMBER,
+                            defaultValue: 1
+                        }
+                    }
+                }, {
+                    opcode: 'motorOn',
+                    text: 'turn [MOTOR_ID] on',
+                    blockType: BlockType.COMMAND,
+                    arguments: {
+                        MOTOR_ID: {
+                            type: ArgumentType.STRING,
+                            menu: 'motorID',
+                            defaultValue: MotorID.DEFAULT
+                        }
+                    }
+                }, {
+                    opcode: 'motorOff',
+                    text: 'turn [MOTOR_ID] off',
+                    blockType: BlockType.COMMAND,
+                    arguments: {
+                        MOTOR_ID: {
+                            type: ArgumentType.STRING,
+                            menu: 'motorID',
+                            defaultValue: MotorID.DEFAULT
+                        }
+                    }
+                }, {
+                    opcode: 'startMotorPower',
+                    text: 'set [MOTOR_ID] power to [POWER]',
+                    blockType: BlockType.COMMAND,
+                    arguments: {
+                        MOTOR_ID: {
+                            type: ArgumentType.STRING,
+                            menu: 'motorID',
+                            defaultValue: MotorID.DEFAULT
+                        },
+                        POWER: {
+                            type: ArgumentType.NUMBER,
+                            defaultValue: 100
+                        }
+                    }
+                }, {
+                    opcode: 'setMotorDirection',
+                    text: 'set [MOTOR_ID] direction to [DIRECTION]',
+                    blockType: BlockType.COMMAND,
+                    arguments: {
+                        MOTOR_ID: {
+                            type: ArgumentType.STRING,
+                            menu: 'motorID',
+                            defaultValue: MotorID.DEFAULT
+                        },
+                        DIRECTION: {
+                            type: ArgumentType.STRING,
+                            menu: 'motorDirection',
+                            defaultValue: MotorDirection.FORWARD
+                        }
+                    }
+                }, {
+                    opcode: 'setLightHue',
+                    text: 'set light color to [HUE]',
+                    blockType: BlockType.COMMAND,
+                    arguments: {
+                        HUE: {
+                            type: ArgumentType.NUMBER,
+                            defaultValue: 50
+                        }
+                    }
+                }, {
+                    opcode: 'playNoteFor',
+                    text: 'play note [NOTE] for [DURATION] seconds',
+                    blockType: BlockType.COMMAND,
+                    arguments: {
+                        NOTE: {
+                            type: ArgumentType.NUMBER, // TODO: ArgumentType.MIDI_NOTE?
+                            defaultValue: 60
+                        },
+                        DURATION: {
+                            type: ArgumentType.NUMBER,
+                            defaultValue: 0.5
+                        }
+                    }
+                }, {
+                    opcode: 'whenDistance',
+                    text: 'when distance [OP] [REFERENCE]',
+                    blockType: BlockType.HAT,
+                    arguments: {
+                        OP: {
+                            type: ArgumentType.STRING,
+                            menu: 'lessMore',
+                            defaultValue: '<'
+                        },
+                        REFERENCE: {
+                            type: ArgumentType.NUMBER,
+                            defaultValue: 50
+                        }
+                    }
+                }, {
+                    opcode: 'whenTilted',
+                    text: 'when tilted [DIRECTION]',
+                    func: 'isTilted',
+                    blockType: BlockType.HAT,
+                    arguments: {
+                        DIRECTION: {
+                            type: ArgumentType.STRING,
+                            menu: 'tiltDirectionAny',
+                            defaultValue: TiltDirection.ANY
+                        }
+                    }
+                }, {
+                    opcode: 'getDistance',
+                    text: 'distance',
+                    blockType: BlockType.REPORTER
+                }, {
+                    opcode: 'isTilted',
+                    text: 'tilted [DIRECTION]?',
+                    blockType: BlockType.BOOLEAN,
+                    arguments: {
+                        DIRECTION: {
+                            type: ArgumentType.STRING,
+                            menu: 'tiltDirectionAny',
+                            defaultValue: TiltDirection.ANY
+                        }
+                    }
+                }, {
+                    opcode: 'getTiltAngle',
+                    text: 'tilt angle [DIRECTION]',
+                    blockType: BlockType.REPORTER,
+                    arguments: {
+                        DIRECTION: {
+                            type: ArgumentType.STRING,
+                            menu: 'tiltDirection',
+                            defaultValue: TiltDirection.UP
+                        }
+                    }
+                }],
+                menus: {
+                    motorID: [MotorID.DEFAULT, MotorID.A, MotorID.B, MotorID.ALL],
+                    motorDirection: [MotorDirection.FORWARD, MotorDirection.BACKWARD, MotorDirection.REVERSE],
+                    tiltDirection: [TiltDirection.UP, TiltDirection.DOWN, TiltDirection.LEFT, TiltDirection.RIGHT],
+                    tiltDirectionAny: [TiltDirection.UP, TiltDirection.DOWN, TiltDirection.LEFT, TiltDirection.RIGHT, TiltDirection.ANY],
+                    lessMore: ['<', '>']
+                }
+            };
+        }
+
+        /**
+         * Use the Device Manager client to attempt to connect to a WeDo 2.0 device.
+         */
+
+    }, {
+        key: 'connect',
+        value: function connect() {
+            var _this2 = this;
+
+            if (this._device || this._finder) {
+                return;
+            }
+            var deviceManager = this.runtime.ioDevices.deviceManager;
+            var finder = this._finder = deviceManager.searchAndConnect(Scratch3WeDo2Blocks.EXTENSION_ID, WeDo2.DEVICE_TYPE);
+            this._finder.promise.then(function (socket) {
+                if (_this2._finder === finder) {
+                    _this2._finder = null;
+                    _this2._device = new WeDo2(socket);
+                } else {
+                    log.warn('Ignoring success from stale WeDo 2.0 connection attempt');
+                }
+            }, function (reason) {
+                if (_this2._finder === finder) {
+                    _this2._finder = null;
+                    log.warn('WeDo 2.0 connection failed: ' + reason);
+                } else {
+                    log.warn('Ignoring failure from stale WeDo 2.0 connection attempt');
+                }
+            });
+        }
+
+        /**
+         * Turn specified motor(s) on for a specified duration.
+         * @param {object} args - the block's arguments.
+         * @property {MotorID} MOTOR_ID - the motor(s) to activate.
+         * @property {int} DURATION - the amount of time to run the motors.
+         * @return {Promise} - a promise which will resolve at the end of the duration.
+         */
+
+    }, {
+        key: 'motorOnFor',
+        value: function motorOnFor(args) {
+            var _this3 = this;
+
+            var durationMS = args.DURATION * 1000;
+            return new Promise(function (resolve) {
+                _this3._forEachMotor(args.MOTOR_ID, function (motorIndex) {
+                    _this3._device.motor(motorIndex).setMotorOnFor(durationMS);
+                });
+
+                // Ensure this block runs for a fixed amount of time even when no device is connected.
+                setTimeout(resolve, durationMS);
+            });
+        }
+
+        /**
+         * Turn specified motor(s) on indefinitely.
+         * @param {object} args - the block's arguments.
+         * @property {MotorID} MOTOR_ID - the motor(s) to activate.
+         */
+
+    }, {
+        key: 'motorOn',
+        value: function motorOn(args) {
+            var _this4 = this;
+
+            this._forEachMotor(args.MOTOR_ID, function (motorIndex) {
+                _this4._device.motor(motorIndex).setMotorOn();
+            });
+        }
+
+        /**
+         * Turn specified motor(s) off.
+         * @param {object} args - the block's arguments.
+         * @property {MotorID} MOTOR_ID - the motor(s) to deactivate.
+         */
+
+    }, {
+        key: 'motorOff',
+        value: function motorOff(args) {
+            var _this5 = this;
+
+            this._forEachMotor(args.MOTOR_ID, function (motorIndex) {
+                _this5._device.motor(motorIndex).setMotorOff();
+            });
+        }
+
+        /**
+         * Turn specified motor(s) off.
+         * @param {object} args - the block's arguments.
+         * @property {MotorID} MOTOR_ID - the motor(s) to be affected.
+         * @property {int} POWER - the new power level for the motor(s).
+         */
+
+    }, {
+        key: 'startMotorPower',
+        value: function startMotorPower(args) {
+            var _this6 = this;
+
+            this._forEachMotor(args.MOTOR_ID, function (motorIndex) {
+                var motor = _this6._device.motor(motorIndex);
+                motor.power = args.POWER;
+                motor.setMotorOn();
+            });
+        }
+
+        /**
+         * Set the direction of rotation for specified motor(s).
+         * If the direction is 'reverse' the motor(s) will be reversed individually.
+         * @param {object} args - the block's arguments.
+         * @property {MotorID} MOTOR_ID - the motor(s) to be affected.
+         * @property {MotorDirection} DIRECTION - the new direction for the motor(s).
+         */
+
+    }, {
+        key: 'setMotorDirection',
+        value: function setMotorDirection(args) {
+            var _this7 = this;
+
+            this._forEachMotor(args.MOTOR_ID, function (motorIndex) {
+                var motor = _this7._device.motor(motorIndex);
+                switch (args.DIRECTION) {
+                    case MotorDirection.FORWARD:
+                        motor.direction = 1;
+                        break;
+                    case MotorDirection.BACKWARD:
+                        motor.direction = -1;
+                        break;
+                    case MotorDirection.REVERSE:
+                        motor.direction = -motor.direction;
+                        break;
+                    default:
+                        log.warn('Unknown motor direction in setMotorDirection: ' + args.DIRECTION);
+                        break;
+                }
+            });
+        }
+
+        /**
+         * Set the LED's hue.
+         * @param {object} args - the block's arguments.
+         * @property {number} HUE - the hue to set, in the range [0,100].
+         */
+
+    }, {
+        key: 'setLightHue',
+        value: function setLightHue(args) {
+            // Convert from [0,100] to [0,360]
+            var hue = args.HUE * 360 / 100;
+
+            var rgbObject = color.hsvToRgb({ h: hue, s: 1, v: 1 });
+
+            var rgbDecimal = color.rgbToDecimal(rgbObject);
+
+            this._device.setLED(rgbDecimal);
+        }
+
+        /**
+         * Make the WeDo 2.0 hub play a MIDI note for the specified duration.
+         * @param {object} args - the block's arguments.
+         * @property {number} NOTE - the MIDI note to play.
+         * @property {number} DURATION - the duration of the note, in seconds.
+         * @return {Promise} - a promise which will resolve at the end of the duration.
+         */
+
+    }, {
+        key: 'playNoteFor',
+        value: function playNoteFor(args) {
+            var _this8 = this;
+
+            return new Promise(function (resolve) {
+                var durationMS = args.DURATION * 1000;
+                var tone = _this8._noteToTone(args.NOTE);
+                _this8._device.playTone(tone, durationMS);
+
+                // Ensure this block runs for a fixed amount of time even when no device is connected.
+                setTimeout(resolve, durationMS);
+            });
+        }
+
+        /**
+         * Compare the distance sensor's value to a reference.
+         * @param {object} args - the block's arguments.
+         * @property {string} OP - the comparison operation: '<' or '>'.
+         * @property {number} REFERENCE - the value to compare against.
+         * @return {boolean} - the result of the comparison, or false on error.
+         */
+
+    }, {
+        key: 'whenDistance',
+        value: function whenDistance(args) {
+            switch (args.OP) {
+                case '<':
+                case '&lt;':
+                    return this._device.distance < args.REFERENCE;
+                case '>':
+                case '&gt;':
+                    return this._device.distance > args.REFERENCE;
+                default:
+                    log.warn('Unknown comparison operator in whenDistance: ' + args.OP);
+                    return false;
+            }
+        }
+
+        /**
+         * Test whether the tilt sensor is currently tilted.
+         * @param {object} args - the block's arguments.
+         * @property {TiltDirection} DIRECTION - the tilt direction to test (up, down, left, right, or any).
+         * @return {boolean} - true if the tilt sensor is tilted past a threshold in the specified direction.
+         */
+
+    }, {
+        key: 'whenTilted',
+        value: function whenTilted(args) {
+            return this._isTilted(args.DIRECTION);
+        }
+
+        /**
+         * @return {number} - the distance sensor's value, scaled to the [0,100] range.
+         */
+
+    }, {
+        key: 'getDistance',
+        value: function getDistance() {
+            return this._device.distance;
+        }
+
+        /**
+         * Test whether the tilt sensor is currently tilted.
+         * @param {object} args - the block's arguments.
+         * @property {TiltDirection} DIRECTION - the tilt direction to test (up, down, left, right, or any).
+         * @return {boolean} - true if the tilt sensor is tilted past a threshold in the specified direction.
+         */
+
+    }, {
+        key: 'isTilted',
+        value: function isTilted(args) {
+            return this._isTilted(args.DIRECTION);
+        }
+
+        /**
+         * @param {object} args - the block's arguments.
+         * @property {TiltDirection} DIRECTION - the direction (up, down, left, right) to check.
+         * @return {number} - the tilt sensor's angle in the specified direction.
+         * Note that getTiltAngle(up) = -getTiltAngle(down) and getTiltAngle(left) = -getTiltAngle(right).
+         */
+
+    }, {
+        key: 'getTiltAngle',
+        value: function getTiltAngle(args) {
+            return this._getTiltAngle(args.DIRECTION);
+        }
+
+        /**
+         * Test whether the tilt sensor is currently tilted.
+         * @param {TiltDirection} direction - the tilt direction to test (up, down, left, right, or any).
+         * @return {boolean} - true if the tilt sensor is tilted past a threshold in the specified direction.
+         * @private
+         */
+
+    }, {
+        key: '_isTilted',
+        value: function _isTilted(direction) {
+            switch (direction) {
+                case TiltDirection.ANY:
+                    return Math.abs(this._device.tiltX) >= Scratch3WeDo2Blocks.TILT_THRESHOLD || Math.abs(this._device.tiltY) >= Scratch3WeDo2Blocks.TILT_THRESHOLD;
+                default:
+                    return this._getTiltAngle(direction) >= Scratch3WeDo2Blocks.TILT_THRESHOLD;
+            }
+        }
+
+        /**
+         * @param {TiltDirection} direction - the direction (up, down, left, right) to check.
+         * @return {number} - the tilt sensor's angle in the specified direction.
+         * Note that getTiltAngle(up) = -getTiltAngle(down) and getTiltAngle(left) = -getTiltAngle(right).
+         * @private
+         */
+
+    }, {
+        key: '_getTiltAngle',
+        value: function _getTiltAngle(direction) {
+            switch (direction) {
+                case TiltDirection.UP:
+                    return -this._device.tiltY;
+                case TiltDirection.DOWN:
+                    return this._device.tiltY;
+                case TiltDirection.LEFT:
+                    return -this._device.tiltX;
+                case TiltDirection.RIGHT:
+                    return this._device.tiltX;
+                default:
+                    log.warn('Unknown tilt direction in _getTiltAngle: ' + direction);
+            }
+        }
+
+        /**
+         * Call a callback for each motor indexed by the provided motor ID.
+         * @param {MotorID} motorID - the ID specifier.
+         * @param {Function} callback - the function to call with the numeric motor index for each motor.
+         * @private
+         */
+
+    }, {
+        key: '_forEachMotor',
+        value: function _forEachMotor(motorID, callback) {
+            var motors = void 0;
+            switch (motorID) {
+                case MotorID.A:
+                    motors = [0];
+                    break;
+                case MotorID.B:
+                    motors = [1];
+                    break;
+                case MotorID.ALL:
+                case MotorID.DEFAULT:
+                    motors = [0, 1];
+                    break;
+                default:
+                    log.warn('Invalid motor ID: ' + motorID);
+                    motors = [];
+                    break;
+            }
+            var _iteratorNormalCompletion = true;
+            var _didIteratorError = false;
+            var _iteratorError = undefined;
+
+            try {
+                for (var _iterator = motors[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
+                    var index = _step.value;
+
+                    callback(index);
+                }
+            } catch (err) {
+                _didIteratorError = true;
+                _iteratorError = err;
+            } finally {
+                try {
+                    if (!_iteratorNormalCompletion && _iterator.return) {
+                        _iterator.return();
+                    }
+                } finally {
+                    if (_didIteratorError) {
+                        throw _iteratorError;
+                    }
+                }
+            }
+        }
+
+        /**
+         * @param {number} midiNote - the MIDI note value to convert.
+         * @return {number} - the frequency, in Hz, corresponding to that MIDI note value.
+         * @private
+         */
+
+    }, {
+        key: '_noteToTone',
+        value: function _noteToTone(midiNote) {
+            // Note that MIDI note 69 is A4, 440 Hz
+            return 440 * Math.pow(2, (midiNote - 69) / 12);
+        }
+    }]);
+
+    return Scratch3WeDo2Blocks;
+}();
+
+module.exports = Scratch3WeDo2Blocks;
 
 /***/ }),
 /* 83 */
@@ -27579,9 +27579,9 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
 var EventEmitter = __webpack_require__(4);
 
 var centralDispatch = __webpack_require__(37);
-var ExtensionManager = __webpack_require__(81);
+var ExtensionManager = __webpack_require__(79);
 var log = __webpack_require__(1);
-var Runtime = __webpack_require__(78);
+var Runtime = __webpack_require__(76);
 var sb2 = __webpack_require__(87);
 var sb3 = __webpack_require__(89);
 var StringUtil = __webpack_require__(13);
