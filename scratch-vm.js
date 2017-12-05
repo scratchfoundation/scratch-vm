@@ -110,6 +110,18 @@ module.exports = g;
 "use strict";
 
 
+var minilog = __webpack_require__(121);
+minilog.enable();
+
+module.exports = minilog('vm');
+
+/***/ }),
+/* 2 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
@@ -341,18 +353,6 @@ var Cast = function () {
 }();
 
 module.exports = Cast;
-
-/***/ }),
-/* 2 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-
-var minilog = __webpack_require__(121);
-minilog.enable();
-
-module.exports = minilog('vm');
 
 /***/ }),
 /* 3 */
@@ -4565,7 +4565,7 @@ module.exports = ArgumentType;
 
 
 var StringUtil = __webpack_require__(13);
-var log = __webpack_require__(2);
+var log = __webpack_require__(1);
 
 /**
  * Initialize a costume from an asset asynchronously.
@@ -4660,7 +4660,7 @@ module.exports = {
 
 
 var StringUtil = __webpack_require__(13);
-var log = __webpack_require__(2);
+var log = __webpack_require__(1);
 
 /**
  * Initialize a sound from an asset asynchronously.
@@ -4725,7 +4725,7 @@ function _possibleConstructorReturn(self, call) { if (!self) { throw new Referen
 
 function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
 
-var log = __webpack_require__(2);
+var log = __webpack_require__(1);
 var MathUtil = __webpack_require__(6);
 var StringUtil = __webpack_require__(13);
 var Target = __webpack_require__(80);
@@ -12464,7 +12464,7 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
 
 var SharedDispatch = __webpack_require__(72);
 
-var log = __webpack_require__(2);
+var log = __webpack_require__(1);
 
 /**
  * This class serves as the central broker for message dispatch. It expects to operate on the main thread / Window and
@@ -15602,7 +15602,7 @@ var _createClass = function () { function defineProperties(target, props) { for 
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
-var Cast = __webpack_require__(1);
+var Cast = __webpack_require__(2);
 
 var Scratch3ControlBlocks = function () {
     function Scratch3ControlBlocks(runtime) {
@@ -15768,7 +15768,7 @@ var _createClass = function () { function defineProperties(target, props) { for 
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
-var Cast = __webpack_require__(1);
+var Cast = __webpack_require__(2);
 
 var Scratch3DataBlocks = function () {
     function Scratch3DataBlocks(runtime) {
@@ -15936,7 +15936,7 @@ var _createClass = function () { function defineProperties(target, props) { for 
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
-var Cast = __webpack_require__(1);
+var Cast = __webpack_require__(2);
 
 var Scratch3EventBlocks = function () {
     function Scratch3EventBlocks(runtime) {
@@ -16003,35 +16003,39 @@ var Scratch3EventBlocks = function () {
     }, {
         key: 'broadcast',
         value: function broadcast(args, util) {
-            var broadcastVar = util.runtime.getTargetForStage().lookupOrCreateBroadcastMsg(args.BROADCAST_OPTION.id, args.BROADCAST_OPTION.name);
-            var broadcastOption = broadcastVar.name;
-            util.startHats('event_whenbroadcastreceived', {
-                BROADCAST_OPTION: broadcastOption
-            });
+            var broadcastVar = util.runtime.getTargetForStage().lookupBroadcastMsg(args.BROADCAST_OPTION.id, args.BROADCAST_OPTION.name);
+            if (broadcastVar) {
+                var broadcastOption = broadcastVar.name;
+                util.startHats('event_whenbroadcastreceived', {
+                    BROADCAST_OPTION: broadcastOption
+                });
+            }
         }
     }, {
         key: 'broadcastAndWait',
         value: function broadcastAndWait(args, util) {
-            var broadcastVar = util.runtime.getTargetForStage().lookupOrCreateBroadcastMsg(args.BROADCAST_OPTION.id, args.BROADCAST_OPTION.name);
-            var broadcastOption = broadcastVar.name;
-            // Have we run before, starting threads?
-            if (!util.stackFrame.startedThreads) {
-                // No - start hats for this broadcast.
-                util.stackFrame.startedThreads = util.startHats('event_whenbroadcastreceived', {
-                    BROADCAST_OPTION: broadcastOption
-                });
-                if (util.stackFrame.startedThreads.length === 0) {
-                    // Nothing was started.
-                    return;
+            var broadcastVar = util.runtime.getTargetForStage().lookupBroadcastMsg(args.BROADCAST_OPTION.id, args.BROADCAST_OPTION.name);
+            if (broadcastVar) {
+                var broadcastOption = broadcastVar.name;
+                // Have we run before, starting threads?
+                if (!util.stackFrame.startedThreads) {
+                    // No - start hats for this broadcast.
+                    util.stackFrame.startedThreads = util.startHats('event_whenbroadcastreceived', {
+                        BROADCAST_OPTION: broadcastOption
+                    });
+                    if (util.stackFrame.startedThreads.length === 0) {
+                        // Nothing was started.
+                        return;
+                    }
                 }
-            }
-            // We've run before; check if the wait is still going on.
-            var instance = this;
-            var waiting = util.stackFrame.startedThreads.some(function (thread) {
-                return instance.runtime.isActiveThread(thread);
-            });
-            if (waiting) {
-                util.yield();
+                // We've run before; check if the wait is still going on.
+                var instance = this;
+                var waiting = util.stackFrame.startedThreads.some(function (thread) {
+                    return instance.runtime.isActiveThread(thread);
+                });
+                if (waiting) {
+                    util.yield();
+                }
             }
         }
     }]);
@@ -16054,7 +16058,7 @@ var _createClass = function () { function defineProperties(target, props) { for 
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
-var Cast = __webpack_require__(1);
+var Cast = __webpack_require__(2);
 var Clone = __webpack_require__(12);
 var RenderedTarget = __webpack_require__(22);
 
@@ -16563,7 +16567,7 @@ var _createClass = function () { function defineProperties(target, props) { for 
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
-var Cast = __webpack_require__(1);
+var Cast = __webpack_require__(2);
 var MathUtil = __webpack_require__(6);
 var Timer = __webpack_require__(24);
 
@@ -16860,7 +16864,7 @@ var _createClass = function () { function defineProperties(target, props) { for 
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
-var Cast = __webpack_require__(1);
+var Cast = __webpack_require__(2);
 var MathUtil = __webpack_require__(6);
 
 var Scratch3OperatorsBlocks = function () {
@@ -17069,12 +17073,12 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
 
 var ArgumentType = __webpack_require__(19);
 var BlockType = __webpack_require__(11);
-var Cast = __webpack_require__(1);
+var Cast = __webpack_require__(2);
 var Clone = __webpack_require__(12);
 var Color = __webpack_require__(23);
 var MathUtil = __webpack_require__(6);
 var RenderedTarget = __webpack_require__(22);
-var log = __webpack_require__(2);
+var log = __webpack_require__(1);
 
 /**
  * Icon svg to be displayed at the left edge of each extension block, encoded as a data URI.
@@ -17891,7 +17895,7 @@ var _createClass = function () { function defineProperties(target, props) { for 
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
-var Cast = __webpack_require__(1);
+var Cast = __webpack_require__(2);
 
 var Scratch3SensingBlocks = function () {
     function Scratch3SensingBlocks(runtime) {
@@ -18229,7 +18233,7 @@ var _createClass = function () { function defineProperties(target, props) { for 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
 var MathUtil = __webpack_require__(6);
-var Cast = __webpack_require__(1);
+var Cast = __webpack_require__(2);
 var Clone = __webpack_require__(12);
 
 var Scratch3SoundBlocks = function () {
@@ -18534,7 +18538,7 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
 var ArgumentType = __webpack_require__(19);
 var BlockType = __webpack_require__(11);
 var color = __webpack_require__(23);
-var log = __webpack_require__(2);
+var log = __webpack_require__(1);
 
 /**
  * Icon svg to be displayed at the left edge of each extension block, encoded as a data URI.
@@ -19598,7 +19602,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
-var log = __webpack_require__(2);
+var log = __webpack_require__(1);
 
 /**
  * @typedef {object} DispatchCallMessage - a message to the dispatch system representing a service method call
@@ -20292,7 +20296,7 @@ module.exports = BlockUtility;
 var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
 
 var BlockUtility = __webpack_require__(74);
-var log = __webpack_require__(2);
+var log = __webpack_require__(1);
 var Thread = __webpack_require__(17);
 
 var _require = __webpack_require__(25),
@@ -23179,6 +23183,8 @@ var uid = __webpack_require__(28);
 var _require = __webpack_require__(25),
     Map = _require.Map;
 
+var log = __webpack_require__(1);
+
 /**
  * @fileoverview
  * A Target is an abstract "code-running" object for the Scratch VM.
@@ -23281,21 +23287,26 @@ var Target = function (_EventEmitter) {
         }
 
         /**
-         * Look up a broadcast message object, and create it if one doesn't exist.
+         * Look up a broadcast message object with the given id and return it
+         * if it exists.
          * @param {string} id Id of the variable.
          * @param {string} name Name of the variable.
          * @return {!Variable} Variable object.
          */
 
     }, {
-        key: 'lookupOrCreateBroadcastMsg',
-        value: function lookupOrCreateBroadcastMsg(id, name) {
+        key: 'lookupBroadcastMsg',
+        value: function lookupBroadcastMsg(id, name) {
             var broadcastMsg = this.lookupVariableById(id);
-            if (broadcastMsg) return broadcastMsg;
-            // No variable with this name exists - create it locally.
-            var newBroadcastMsg = new Variable(id, name, Variable.BROADCAST_MESSAGE_TYPE, false);
-            this.variables[id] = newBroadcastMsg;
-            return newBroadcastMsg;
+            if (broadcastMsg) {
+                if (broadcastMsg.name !== name) {
+                    log.error('Found broadcast message with id: ' + id + ', but' + ('its name, ' + broadcastMsg.name + ' did not match expected name ' + name + '.'));
+                }
+                if (broadcastMsg.type !== Variable.BROADCAST_MESSAGE_TYPE) {
+                    log.error('Found variable with id: ' + id + ', but its type ' + broadcastMsg.type + ('did not match expected type ' + Variable.BROADCAST_MESSAGE_TYPE));
+                }
+                return broadcastMsg;
+            }
         }
 
         /**
@@ -23469,7 +23480,7 @@ var _createClass = function () { function defineProperties(target, props) { for 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
 var dispatch = __webpack_require__(37);
-var log = __webpack_require__(2);
+var log = __webpack_require__(1);
 
 var BlockType = __webpack_require__(11);
 
@@ -23786,7 +23797,7 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
 var ArgumentType = __webpack_require__(19);
 var BlockType = __webpack_require__(11);
 var Clone = __webpack_require__(12);
-var Cast = __webpack_require__(1);
+var Cast = __webpack_require__(2);
 var MathUtil = __webpack_require__(6);
 var Timer = __webpack_require__(24);
 
@@ -25167,7 +25178,7 @@ var _createClass = function () { function defineProperties(target, props) { for 
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
-var Cast = __webpack_require__(1);
+var Cast = __webpack_require__(2);
 
 var Keyboard = function () {
     function Keyboard(runtime) {
@@ -25431,7 +25442,7 @@ var Blocks = __webpack_require__(10);
 var RenderedTarget = __webpack_require__(22);
 var Sprite = __webpack_require__(39);
 var Color = __webpack_require__(23);
-var log = __webpack_require__(2);
+var log = __webpack_require__(1);
 var uid = __webpack_require__(28);
 var specMap = __webpack_require__(88);
 var Variable = __webpack_require__(18);
@@ -27569,7 +27580,7 @@ var EventEmitter = __webpack_require__(4);
 
 var centralDispatch = __webpack_require__(37);
 var ExtensionManager = __webpack_require__(81);
-var log = __webpack_require__(2);
+var log = __webpack_require__(1);
 var Runtime = __webpack_require__(78);
 var sb2 = __webpack_require__(87);
 var sb3 = __webpack_require__(89);
