@@ -15,8 +15,8 @@ class Scratch3ProcedureBlocks {
         return {
             procedures_definition: this.definition,
             procedures_call: this.call,
-            argument_reporter_string_number: this.param,
-            argument_reporter_boolean: this.param
+            argument_reporter_string_number: this.argumentReporterStringNumber,
+            argument_reporter_boolean: this.argumentReporterBoolean
         };
     }
 
@@ -47,8 +47,19 @@ class Scratch3ProcedureBlocks {
         }
     }
 
-    param (args, util) {
+    argumentReporterStringNumber (args, util) {
         const value = util.getParam(args.VALUE);
+        if (value === null) {
+            return '';
+        }
+        return value;
+    }
+
+    argumentReporterBoolean (args, util) {
+        const value = util.getParam(args.VALUE);
+        if (value === null) {
+            return false;
+        }
         return value;
     }
 }
