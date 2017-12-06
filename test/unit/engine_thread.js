@@ -110,7 +110,9 @@ test('PushGetParam', t => {
     th.pushParam('testParam', 'testValue');
     t.strictEquals(th.peekStackFrame().params.testParam, 'testValue');
     t.strictEquals(th.getParam('testParam'), 'testValue');
-    
+    // Params outside of define stack always evaluate to null
+    t.strictEquals(th.getParam('nonExistentParam'), null);
+
     t.end();
 });
 
