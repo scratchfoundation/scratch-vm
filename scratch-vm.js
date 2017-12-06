@@ -17091,22 +17091,22 @@ var Scratch3ProcedureBlocks = function () {
 
 
     _createClass(Scratch3ProcedureBlocks, [{
-        key: "getPrimitives",
+        key: 'getPrimitives',
         value: function getPrimitives() {
             return {
                 procedures_definition: this.definition,
                 procedures_call: this.call,
-                argument_reporter_string_number: this.param,
-                argument_reporter_boolean: this.param
+                argument_reporter_string_number: this.argumentReporterStringNumber,
+                argument_reporter_boolean: this.argumentReporterBoolean
             };
         }
     }, {
-        key: "definition",
+        key: 'definition',
         value: function definition() {
             // No-op: execute the blocks.
         }
     }, {
-        key: "call",
+        key: 'call',
         value: function call(args, util) {
             if (!util.stackFrame.executed) {
                 var procedureCode = args.mutation.proccode;
@@ -17136,9 +17136,21 @@ var Scratch3ProcedureBlocks = function () {
             }
         }
     }, {
-        key: "param",
-        value: function param(args, util) {
+        key: 'argumentReporterStringNumber',
+        value: function argumentReporterStringNumber(args, util) {
             var value = util.getParam(args.VALUE);
+            if (value === null) {
+                return '';
+            }
+            return value;
+        }
+    }, {
+        key: 'argumentReporterBoolean',
+        value: function argumentReporterBoolean(args, util) {
+            var value = util.getParam(args.VALUE);
+            if (value === null) {
+                return false;
+            }
             return value;
         }
     }]);
