@@ -806,17 +806,14 @@ class Runtime extends EventEmitter {
     }
 
     /**
-     * Remove a thread from the list of threads.
-     * @param {?Thread} thread Thread object to remove from actives
+     * Stop a thread: stop running it immediately, and remove it from the thread list later.
+     * @param {!Thread} thread Thread object to remove from actives
      */
-    _removeThread (thread) {
+    _stopThread (thread) {
+        // Mark the thread for later removal
+        thread.isKilled = true;
         // Inform sequencer to stop executing that thread.
         this.sequencer.retireThread(thread);
-        // Remove from the list.
-        const i = this.threads.indexOf(thread);
-        if (i > -1) {
-            this.threads.splice(i, 1);
-        }
     }
 
     /**
@@ -879,7 +876,7 @@ class Runtime extends EventEmitter {
                     // edge activated hat thread that runs every frame
                     continue;
                 }
-                this._removeThread(this.threads[i]);
+                this._stopThread(this.threads[i]);
                 return;
             }
         }
@@ -1055,8 +1052,7 @@ class Runtime extends EventEmitter {
                 continue;
             }
             if (this.threads[i].target === target) {
-                this.threads[i].isKilled = true;
-                this._removeThread(this.threads[i]);
+                this._stopThread(this.threads[i]);
             }
         }
     }
@@ -1096,11 +1092,7 @@ class Runtime extends EventEmitter {
         }
         this.targets = newTargets;
         // Dispose all threads.
-        const threadsCopy = this.threads.slice();
-        while (threadsCopy.length > 0) {
-            const poppedThread = threadsCopy.pop();
-            this._removeThread(poppedThread);
-        }
+        this.threads.forEach(thread => this._stopThread(thread));
     }
 
     /**
@@ -1114,6 +1106,10 @@ class Runtime extends EventEmitter {
             }
             this.profiler.start(stepProfilerId);
         }
+
+        // Clean up threads that were told to stop during or since the last step
+        this.threads = this.threads.filter(thread => !thread.isKilled);
+
         // Find all edge-activated hats, and add them to threads to be evaluated.
         for (const hatType in this._hats) {
             if (!this._hats.hasOwnProperty(hatType)) continue;
