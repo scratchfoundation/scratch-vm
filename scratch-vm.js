@@ -19984,20 +19984,17 @@ var Runtime = function (_EventEmitter) {
         }
 
         /**
-         * Remove a thread from the list of threads.
-         * @param {?Thread} thread Thread object to remove from actives
+         * Stop a thread: stop running it immediately, and remove it from the thread list later.
+         * @param {!Thread} thread Thread object to remove from actives
          */
 
     }, {
-        key: '_removeThread',
-        value: function _removeThread(thread) {
+        key: '_stopThread',
+        value: function _stopThread(thread) {
+            // Mark the thread for later removal
+            thread.isKilled = true;
             // Inform sequencer to stop executing that thread.
             this.sequencer.retireThread(thread);
-            // Remove from the list.
-            var i = this.threads.indexOf(thread);
-            if (i > -1) {
-                this.threads.splice(i, 1);
-            }
         }
 
         /**
@@ -20065,7 +20062,7 @@ var Runtime = function (_EventEmitter) {
                         // edge activated hat thread that runs every frame
                         continue;
                     }
-                    this._removeThread(this.threads[i]);
+                    this._stopThread(this.threads[i]);
                     return;
                 }
             }
@@ -20253,8 +20250,7 @@ var Runtime = function (_EventEmitter) {
                     continue;
                 }
                 if (this.threads[i].target === target) {
-                    this.threads[i].isKilled = true;
-                    this._removeThread(this.threads[i]);
+                    this._stopThread(this.threads[i]);
                 }
             }
         }
@@ -20284,6 +20280,8 @@ var Runtime = function (_EventEmitter) {
     }, {
         key: 'stopAll',
         value: function stopAll() {
+            var _this3 = this;
+
             // Emit stop event to allow blocks to clean up any state.
             this.emit(Runtime.PROJECT_STOP_ALL);
 
@@ -20299,11 +20297,9 @@ var Runtime = function (_EventEmitter) {
             }
             this.targets = newTargets;
             // Dispose all threads.
-            var threadsCopy = this.threads.slice();
-            while (threadsCopy.length > 0) {
-                var poppedThread = threadsCopy.pop();
-                this._removeThread(poppedThread);
-            }
+            this.threads.forEach(function (thread) {
+                return _this3._stopThread(thread);
+            });
         }
 
         /**
@@ -20320,6 +20316,12 @@ var Runtime = function (_EventEmitter) {
                 }
                 this.profiler.start(stepProfilerId);
             }
+
+            // Clean up threads that were told to stop during or since the last step
+            this.threads = this.threads.filter(function (thread) {
+                return !thread.isKilled;
+            });
+
             // Find all edge-activated hats, and add them to threads to be evaluated.
             for (var hatType in this._hats) {
                 if (!this._hats.hasOwnProperty(hatType)) continue;
@@ -20777,7 +20779,7 @@ var Runtime = function (_EventEmitter) {
     }, {
         key: 'start',
         value: function start() {
-            var _this3 = this;
+            var _this4 = this;
 
             var interval = Runtime.THREAD_STEP_INTERVAL;
             if (this.compatibilityMode) {
@@ -20785,7 +20787,7 @@ var Runtime = function (_EventEmitter) {
             }
             this.currentStepTime = interval;
             this._steppingInterval = setInterval(function () {
-                _this3._step();
+                _this4._step();
             }, interval);
         }
 
