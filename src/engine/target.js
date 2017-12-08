@@ -116,6 +116,23 @@ class Target extends EventEmitter {
     }
 
     /**
+     * Look up a broadcast message with the given name and return the variable
+     * if it exists. Does not create a new broadcast message variable if
+     * it doesn't exist.
+     * @param {string} name Name of the variable.
+     * @return {?Variable} Variable object.
+     */
+    lookupBroadcastByInputValue (name) {
+        const vars = this.variables;
+        for (const propName in vars) {
+            if ((vars[propName].type === Variable.BROADCAST_MESSAGE_TYPE) &&
+                (vars[propName].name.toLowerCase() === name.toLowerCase())) {
+                return vars[propName];
+            }
+        }
+    }
+
+    /**
      * Look up a variable object.
      * Search begins for local variables; then look for globals.
      * @param {string} id Id of the variable.
@@ -141,7 +158,7 @@ class Target extends EventEmitter {
     * Search begins for local lists; then look for globals.
     * @param {!string} id Id of the list.
     * @param {!string} name Name of the list.
-    * @return {!List} List object.
+    * @return {!Varible} Variable object representing the found/created list.
      */
     lookupOrCreateList (id, name) {
         const list = this.lookupVariableById(id);
