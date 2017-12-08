@@ -4872,7 +4872,11 @@ var RenderedTarget = function (_Target) {
             */
             this.audioPlayer = null;
             if (this.runtime && this.runtime.audioEngine) {
-                this.audioPlayer = this.runtime.audioEngine.createPlayer();
+                if (this.isOriginal) {
+                    this.audioPlayer = this.runtime.audioEngine.createPlayer();
+                } else {
+                    this.audioPlayer = this.sprite.clones[0].audioPlayer;
+                }
             }
         }
 
