@@ -3,6 +3,7 @@ const BlockType = require('../../extension-support/block-type');
 const Cast = require('../../util/cast');
 const Clone = require('../../util/clone');
 const Color = require('../../util/color');
+const formatMessage = require('format-message');
 const MathUtil = require('../../util/math-util');
 const RenderedTarget = require('../../sprites/rendered-target');
 const log = require('../../util/log');
@@ -15,7 +16,7 @@ const log = require('../../util/log');
 const iconURI = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHZpZXdCb3g9IjAgMCA0MCA0MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48dGl0bGU+cGVuLWljb248L3RpdGxlPjxnIHN0cm9rZT0iIzU3NUU3NSIgZmlsbD0ibm9uZSIgZmlsbC1ydWxlPSJldmVub2RkIiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiPjxwYXRoIGQ9Ik04Ljc1MyAzNC42MDJsLTQuMjUgMS43OCAxLjc4My00LjIzN2MxLjIxOC0yLjg5MiAyLjkwNy01LjQyMyA1LjAzLTcuNTM4TDMxLjA2NiA0LjkzYy44NDYtLjg0MiAyLjY1LS40MSA0LjAzMi45NjcgMS4zOCAxLjM3NSAxLjgxNiAzLjE3My45NyA0LjAxNUwxNi4zMTggMjkuNTljLTIuMTIzIDIuMTE2LTQuNjY0IDMuOC03LjU2NSA1LjAxMiIgZmlsbD0iI0ZGRiIvPjxwYXRoIGQ9Ik0yOS40MSA2LjExcy00LjQ1LTIuMzc4LTguMjAyIDUuNzcyYy0xLjczNCAzLjc2Ni00LjM1IDEuNTQ2LTQuMzUgMS41NDYiLz48cGF0aCBkPSJNMzYuNDIgOC44MjVjMCAuNDYzLS4xNC44NzMtLjQzMiAxLjE2NGwtOS4zMzUgOS4zYy4yODItLjI5LjQxLS42NjguNDEtMS4xMiAwLS44NzQtLjUwNy0xLjk2My0xLjQwNi0yLjg2OC0xLjM2Mi0xLjM1OC0zLjE0Ny0xLjgtNC4wMDItLjk5TDMwLjk5IDUuMDFjLjg0NC0uODQgMi42NS0uNDEgNC4wMzUuOTYuODk4LjkwNCAxLjM5NiAxLjk4MiAxLjM5NiAyLjg1NU0xMC41MTUgMzMuNzc0Yy0uNTczLjMwMi0xLjE1Ny41Ny0xLjc2NC44M0w0LjUgMzYuMzgybDEuNzg2LTQuMjM1Yy4yNTgtLjYwNC41My0xLjE4Ni44MzMtMS43NTcuNjkuMTgzIDEuNDQ4LjYyNSAyLjEwOCAxLjI4Mi42Ni42NTggMS4xMDIgMS40MTIgMS4yODcgMi4xMDIiIGZpbGw9IiM0Qzk3RkYiLz48cGF0aCBkPSJNMzYuNDk4IDguNzQ4YzAgLjQ2NC0uMTQuODc0LS40MzMgMS4xNjVsLTE5Ljc0MiAxOS42OGMtMi4xMyAyLjExLTQuNjczIDMuNzkzLTcuNTcyIDUuMDFMNC41IDM2LjM4bC45NzQtMi4zMTYgMS45MjUtLjgwOGMyLjg5OC0xLjIxOCA1LjQ0LTIuOSA3LjU3LTUuMDFsMTkuNzQzLTE5LjY4Yy4yOTItLjI5Mi40MzItLjcwMi40MzItMS4xNjUgMC0uNjQ2LS4yNy0xLjQtLjc4LTIuMTIyLjI1LjE3Mi41LjM3Ny43MzcuNjE0Ljg5OC45MDUgMS4zOTYgMS45ODMgMS4zOTYgMi44NTYiIGZpbGw9IiM1NzVFNzUiIG9wYWNpdHk9Ii4xNSIvPjxwYXRoIGQ9Ik0xOC40NSAxMi44M2MwIC41LS40MDQuOTA1LS45MDQuOTA1cy0uOTA1LS40MDUtLjkwNS0uOTA0YzAtLjUuNDA3LS45MDMuOTA2LS45MDMuNSAwIC45MDQuNDA0LjkwNC45MDR6IiBmaWxsPSIjNTc1RTc1Ii8+PC9nPjwvc3ZnPg==';
 
 /**
- * Enum for pen color parameters.
+ * Enum for pen color parameter values.
  * @readonly
  * @enum {string}
  */
@@ -202,6 +203,49 @@ class Scratch3PenBlocks {
     }
 
     /**
+     * Initialize color parameters menu with localized strings
+     * @returns {array} of the localized text and values for each menu element
+     * @private
+     */
+    _initColorParam () {
+        return [
+            {
+                text: formatMessage({
+                    id: 'pen.colorMenu.color',
+                    default: 'color',
+                    description: 'label for color element in color picker for pen extension'
+                }),
+                value: ColorParam.COLOR
+            },
+            {
+                text: formatMessage({
+                    id: 'pen.colorMenu.saturation',
+                    default: 'saturation',
+                    description: 'label for saturation element in color picker for pen extension'
+                }),
+                value: ColorParam.SATURATION
+            },
+            {
+                text: formatMessage({
+                    id: 'pen.colorMenu.brightness',
+                    default: 'brightness',
+                    description: 'label for brightness element in color picker for pen extension'
+                }),
+                value: ColorParam.BRIGHTNESS
+            },
+            {
+                text: formatMessage({
+                    id: 'pen.colorMenu.transparency',
+                    default: 'transparency',
+                    description: 'label for transparency element in color picker for pen extension'
+                }),
+                value: ColorParam.TRANSPARENCY
+
+            }
+        ];
+    }
+
+    /**
      * Clamp a pen color parameter to the range (0,100).
      * @param {number} value - the value to be clamped.
      * @returns {number} the clamped value.
@@ -246,26 +290,48 @@ class Scratch3PenBlocks {
             blocks: [
                 {
                     opcode: 'clear',
-                    blockType: BlockType.COMMAND
+                    blockType: BlockType.COMMAND,
+                    text: formatMessage({
+                        id: 'pen.clear',
+                        default: 'clear',
+                        description: 'erase all pen trails and stamps'
+                    })
                 },
                 {
                     opcode: 'stamp',
-                    blockType: BlockType.COMMAND
+                    blockType: BlockType.COMMAND,
+                    text: formatMessage({
+                        id: 'pen.stamp',
+                        default: 'stamp',
+                        description: 'render current costume on the background'
+                    })
                 },
                 {
                     opcode: 'penDown',
                     blockType: BlockType.COMMAND,
-                    text: 'pen down'
+                    text: formatMessage({
+                        id: 'pen.penDown',
+                        default: 'pen down',
+                        description: 'start leaving a trail when the sprite moves'
+                    })
                 },
                 {
                     opcode: 'penUp',
                     blockType: BlockType.COMMAND,
-                    text: 'pen up'
+                    text: formatMessage({
+                        id: 'pen.penUp',
+                        default: 'pen up',
+                        description: 'stop leaving a trail behind the sprite'
+                    })
                 },
                 {
                     opcode: 'setPenColorToColor',
                     blockType: BlockType.COMMAND,
-                    text: 'set pen color to [COLOR]',
+                    text: formatMessage({
+                        id: 'pen.setColor',
+                        default: 'set pen color to [COLOR]',
+                        description: 'set the pen color to a particular (RGB) value'
+                    }),
                     arguments: {
                         COLOR: {
                             type: ArgumentType.COLOR
@@ -275,7 +341,11 @@ class Scratch3PenBlocks {
                 {
                     opcode: 'changePenColorParamBy',
                     blockType: BlockType.COMMAND,
-                    text: 'change pen [COLOR_PARAM] by [VALUE]',
+                    text: formatMessage({
+                        id: 'pen.changeColorParam',
+                        default: 'change pen [COLOR_PARAM] by [VALUE]',
+                        description: 'change the state of a pen color parameter'
+                    }),
                     arguments: {
                         COLOR_PARAM: {
                             type: ArgumentType.STRING,
@@ -291,7 +361,11 @@ class Scratch3PenBlocks {
                 {
                     opcode: 'setPenColorParamTo',
                     blockType: BlockType.COMMAND,
-                    text: 'set pen [COLOR_PARAM] to [VALUE]',
+                    text: formatMessage({
+                        id: 'pen.setColorParam',
+                        default: 'set pen [COLOR_PARAM] to [VALUE]',
+                        description: 'set the state for a pen color parameter e.g. saturation'
+                    }),
                     arguments: {
                         COLOR_PARAM: {
                             type: ArgumentType.STRING,
@@ -307,7 +381,11 @@ class Scratch3PenBlocks {
                 {
                     opcode: 'changePenSizeBy',
                     blockType: BlockType.COMMAND,
-                    text: 'change pen size by [SIZE]',
+                    text: formatMessage({
+                        id: 'pen.changeSize',
+                        default: 'change pen size by [SIZE]',
+                        description: 'change the diameter of the trail left by a sprite'
+                    }),
                     arguments: {
                         SIZE: {
                             type: ArgumentType.NUMBER,
@@ -318,7 +396,11 @@ class Scratch3PenBlocks {
                 {
                     opcode: 'setPenSizeTo',
                     blockType: BlockType.COMMAND,
-                    text: 'set pen size to [SIZE]',
+                    text: formatMessage({
+                        id: 'pen.setSize',
+                        default: 'set pen size to [SIZE]',
+                        description: 'set the diameter of a trail left by a sprite'
+                    }),
                     arguments: {
                         SIZE: {
                             type: ArgumentType.NUMBER,
@@ -330,7 +412,11 @@ class Scratch3PenBlocks {
                 {
                     opcode: 'setPenShadeToNumber',
                     blockType: BlockType.COMMAND,
-                    text: 'set pen shade to [SHADE]',
+                    text: formatMessage({
+                        id: 'pen.setShade',
+                        default: 'set pen shade to [SHADE]',
+                        description: 'legacy pen blocks - set pen shade'
+                    }),
                     arguments: {
                         SHADE: {
                             type: ArgumentType.NUMBER,
@@ -342,7 +428,11 @@ class Scratch3PenBlocks {
                 {
                     opcode: 'changePenShadeBy',
                     blockType: BlockType.COMMAND,
-                    text: 'change pen shade by [SHADE]',
+                    text: formatMessage({
+                        id: 'pen.changeShade',
+                        default: 'change pen shade by [SHADE]',
+                        description: 'legacy pen blocks - change pen shade'
+                    }),
                     arguments: {
                         SHADE: {
                             type: ArgumentType.NUMBER,
@@ -354,7 +444,11 @@ class Scratch3PenBlocks {
                 {
                     opcode: 'setPenHueToNumber',
                     blockType: BlockType.COMMAND,
-                    text: 'set pen hue to [HUE]',
+                    text: formatMessage({
+                        id: 'pen.setHue',
+                        default: 'set pen hue to [HUE]',
+                        description: 'legacy pen blocks - set pen color to number'
+                    }),
                     arguments: {
                         HUE: {
                             type: ArgumentType.NUMBER,
@@ -366,7 +460,11 @@ class Scratch3PenBlocks {
                 {
                     opcode: 'changePenHueBy',
                     blockType: BlockType.COMMAND,
-                    text: 'change pen hue by [HUE]',
+                    text: formatMessage({
+                        id: 'pen.changeHue',
+                        default: 'change pen hue by [HUE]',
+                        description: 'legacy pen blocks - change pen color'
+                    }),
                     arguments: {
                         HUE: {
                             type: ArgumentType.NUMBER,
@@ -377,9 +475,7 @@ class Scratch3PenBlocks {
                 }
             ],
             menus: {
-                colorParam:
-                    [ColorParam.COLOR, ColorParam.SATURATION,
-                        ColorParam.BRIGHTNESS, ColorParam.TRANSPARENCY]
+                colorParam: this._initColorParam()
             }
         };
     }

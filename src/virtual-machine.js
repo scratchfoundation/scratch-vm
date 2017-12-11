@@ -7,6 +7,7 @@ const Runtime = require('./engine/runtime');
 const sb2 = require('./serialization/sb2');
 const sb3 = require('./serialization/sb3');
 const StringUtil = require('./util/string-util');
+const formatMessage = require('format-message');
 
 const {loadCostume} = require('./import/load-costume.js');
 const {loadSound} = require('./import/load-sound.js');
@@ -66,6 +67,9 @@ class VirtualMachine extends EventEmitter {
         });
         this.runtime.on(Runtime.EXTENSION_ADDED, blocksInfo => {
             this.emit(Runtime.EXTENSION_ADDED, blocksInfo);
+        });
+        this.runtime.on(Runtime.BLOCKSINFO_UPDATE, blocksInfo => {
+            this.emit(Runtime.BLOCKSINFO_UPDATE, blocksInfo);
         });
 
         this.extensionManager = new ExtensionManager(this.runtime);
@@ -550,6 +554,18 @@ class VirtualMachine extends EventEmitter {
      */
     attachStorage (storage) {
         this.runtime.attachStorage(storage);
+    }
+
+    /**
+     * set the current locale and builtin messages for the VM
+     * @param {[type]} locale       current locale
+     * @param {[type]} messages     builtin messages map for current locale
+     */
+    setLocale (locale, messages) {
+        if (locale !== formatMessage.setup().locale) {
+            formatMessage.setup({locale: locale, translations: {[locale]: messages}});
+            this.extensionManager.refreshBlocks();
+        }
     }
 
     /**

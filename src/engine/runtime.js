@@ -386,6 +386,14 @@ class Runtime extends EventEmitter {
     }
 
     /**
+     * Event name for reporting that blocksInfo was updated.
+     * @const {string}
+     */
+    static get BLOCKSINFO_UPDATE () {
+        return 'BLOCKSINFO_UPDATE';
+    }
+
+    /**
      * How rapidly we try to step threads by default, in ms.
      */
     static get THREAD_STEP_INTERVAL () {
@@ -495,6 +503,41 @@ class Runtime extends EventEmitter {
         }
 
         this.emit(Runtime.EXTENSION_ADDED, categoryInfo.blocks.concat(categoryInfo.menus));
+    }
+
+    /**
+     * Reregister the primitives for an extension
+     * @param  {ExtensionInfo} extensionInfo - new info (results of running getInfo)
+     *                                         for an extension
+     * @private
+     */
+    _refreshExtensionPrimitives (extensionInfo) {
+        let extensionBlocks = [];
+        for (const categoryInfo of this._blockInfo) {
+            if (extensionInfo.id === categoryInfo.id) {
+                categoryInfo.blocks = [];
+                categoryInfo.menus = [];
+                for (const menuName in extensionInfo.menus) {
+                    if (extensionInfo.menus.hasOwnProperty(menuName)) {
+                        const menuItems = extensionInfo.menus[menuName];
+                        const convertedMenu = this._buildMenuForScratchBlocks(menuName, menuItems, categoryInfo);
+                        categoryInfo.menus.push(convertedMenu);
+                    }
+                }
+                for (const blockInfo of extensionInfo.blocks) {
+                    const convertedBlock = this._convertForScratchBlocks(blockInfo, categoryInfo);
+                    const opcode = convertedBlock.json.type;
+                    categoryInfo.blocks.push(convertedBlock);
+                    this._primitives[opcode] = convertedBlock.info.func;
+                    if (blockInfo.blockType === BlockType.HAT) {
+                        this._hats[opcode] = {edgeActivated: true}; /** @TODO let extension specify this */
+                    }
+                }
+                extensionBlocks = extensionBlocks.concat(categoryInfo.blocks, categoryInfo.menus);
+            }
+        }
+
+        this.emit(Runtime.BLOCKSINFO_UPDATE, extensionBlocks);
     }
 
     /**
