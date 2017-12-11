@@ -506,16 +506,15 @@ class Runtime extends EventEmitter {
     }
 
     /**
-     * Iterate over the currently loaded extensions regenerating the blocksInfo for blockly
-     * @param  {ExtensionInfoMap} extensionsInfo - new info (results of running getInfo)
-     *                                           for each currently loaded extension
+     * Reregister the primitives for an extension
+     * @param  {ExtensionInfo} extensionInfo - new info (results of running getInfo)
+     *                                         for an extension
      * @private
      */
-    _refreshExtensionPrimitives (extensionsInfo) {
+    _refreshExtensionPrimitives (extensionInfo) {
         let extensionBlocks = [];
         for (const categoryInfo of this._blockInfo) {
-            if (extensionsInfo[categoryInfo.id] !== 'undefined') {
-                const extensionInfo = extensionsInfo[categoryInfo.id];
+            if (extensionInfo.id === categoryInfo.id) {
                 categoryInfo.blocks = [];
                 categoryInfo.menus = [];
                 for (const menuName in extensionInfo.menus) {
