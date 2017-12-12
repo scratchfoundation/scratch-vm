@@ -28650,6 +28650,13 @@ var VirtualMachine = function (_EventEmitter) {
          * @type {Target}
          */
         _this.editingTarget = null;
+
+        /**
+         * The currently dragging target, for redirecting IO data.
+         * @type {Target}
+         */
+        _this._dragTarget = null;
+
         // Runtime emits are passed along as VM emits.
         _this.runtime.on(Runtime.SCRIPT_GLOW_ON, function (glowData) {
             _this.emit(Runtime.SCRIPT_GLOW_ON, glowData);
@@ -29466,8 +29473,8 @@ var VirtualMachine = function (_EventEmitter) {
         value: function startDrag(targetId) {
             var target = this.runtime.getTargetById(targetId);
             if (target) {
+                this._dragTarget = target;
                 target.startDrag();
-                this.setEditingTarget(target.id);
             }
         }
 
@@ -29480,18 +29487,26 @@ var VirtualMachine = function (_EventEmitter) {
         key: 'stopDrag',
         value: function stopDrag(targetId) {
             var target = this.runtime.getTargetById(targetId);
-            if (target) target.stopDrag();
+            if (target) {
+                this._dragTarget = null;
+                target.stopDrag();
+                this.setEditingTarget(target.id);
+            }
         }
 
         /**
-         * Post/edit sprite info for the current editing target.
+         * Post/edit sprite info for the current editing target or the drag target.
          * @param {object} data An object with sprite info data to set.
          */
 
     }, {
         key: 'postSpriteInfo',
         value: function postSpriteInfo(data) {
-            this.editingTarget.postSpriteInfo(data);
+            if (this._dragTarget) {
+                this._dragTarget.postSpriteInfo(data);
+            } else {
+                this.editingTarget.postSpriteInfo(data);
+            }
         }
     }]);
 
