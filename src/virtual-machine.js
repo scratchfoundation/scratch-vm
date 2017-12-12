@@ -37,6 +37,13 @@ class VirtualMachine extends EventEmitter {
          * @type {Target}
          */
         this.editingTarget = null;
+
+        /**
+         * The currently dragging target, for redirecting IO data.
+         * @type {Target}
+         */
+        this._dragTarget = null;
+
         // Runtime emits are passed along as VM emits.
         this.runtime.on(Runtime.SCRIPT_GLOW_ON, glowData => {
             this.emit(Runtime.SCRIPT_GLOW_ON, glowData);
@@ -708,8 +715,8 @@ class VirtualMachine extends EventEmitter {
     startDrag (targetId) {
         const target = this.runtime.getTargetById(targetId);
         if (target) {
+            this._dragTarget = target;
             target.startDrag();
-            this.setEditingTarget(target.id);
         }
     }
 
@@ -719,15 +726,23 @@ class VirtualMachine extends EventEmitter {
      */
     stopDrag (targetId) {
         const target = this.runtime.getTargetById(targetId);
-        if (target) target.stopDrag();
+        if (target) {
+            this._dragTarget = null;
+            target.stopDrag();
+            this.setEditingTarget(target.id);
+        }
     }
 
     /**
-     * Post/edit sprite info for the current editing target.
+     * Post/edit sprite info for the current editing target or the drag target.
      * @param {object} data An object with sprite info data to set.
      */
     postSpriteInfo (data) {
-        this.editingTarget.postSpriteInfo(data);
+        if (this._dragTarget) {
+            this._dragTarget.postSpriteInfo(data);
+        } else {
+            this.editingTarget.postSpriteInfo(data);
+        }
     }
 }
 
