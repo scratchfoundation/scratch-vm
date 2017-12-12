@@ -16,6 +16,7 @@ npm-*
 # Build
 /dist
 /playground
+/benchmark
 
 # Localization
 /translations

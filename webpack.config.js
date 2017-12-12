@@ -132,5 +132,68 @@ module.exports = [
                 from: 'src/playground'
             }])
         ])
+    }),
+    // Benchmark
+    defaultsDeep({}, base, {
+        target: 'web',
+        entry: {
+            'scratch-vm': './src/index.js',
+            'vendor': [
+                // FPS counter
+                'stats.js/build/stats.min.js',
+                // Syntax highlighter
+                'highlightjs/highlight.pack.min.js',
+                // Scratch Blocks
+                'scratch-blocks/dist/vertical.js',
+                // Audio
+                'scratch-audio',
+                // Renderer
+                'scratch-render'
+            ]
+        },
+        output: {
+            path: path.resolve(__dirname, 'benchmark'),
+            filename: '[name].js'
+        },
+        module: {
+            rules: base.module.rules.concat([
+                {
+                    test: require.resolve('./src/index.js'),
+                    loader: 'expose-loader?VirtualMachine'
+                },
+                {
+                    test: require.resolve('stats.js/build/stats.min.js'),
+                    loader: 'script-loader'
+                },
+                {
+                    test: require.resolve('highlightjs/highlight.pack.min.js'),
+                    loader: 'script-loader'
+                },
+                {
+                    test: require.resolve('scratch-blocks/dist/vertical.js'),
+                    loader: 'expose-loader?Blockly'
+                },
+                {
+                    test: require.resolve('scratch-audio'),
+                    loader: 'expose-loader?AudioEngine'
+                },
+                {
+                    test: require.resolve('scratch-render'),
+                    loader: 'expose-loader?RenderWebGL'
+                }
+            ])
+        },
+        plugins: base.plugins.concat([
+            new CopyWebpackPlugin([{
+                from: 'node_modules/scratch-blocks/media',
+                to: 'media'
+            }, {
+                from: 'node_modules/highlightjs/styles/zenburn.css'
+            }, {
+                from: 'node_modules/scratch-storage/dist/web'
+            }, {
+                from: 'src/benchmark'
+            }])
+        ])
     })
 ];
