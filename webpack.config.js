@@ -84,13 +84,15 @@ module.exports = [
                 'scratch-blocks/dist/vertical.js',
                 // Audio
                 'scratch-audio',
+                // Storage
+                'scratch-storage',
                 // Renderer
                 'scratch-render'
             ]
         },
         output: {
-            libraryTarget: 'umd',
-            path: path.resolve('playground')
+            path: path.resolve(__dirname, 'playground'),
+            filename: '[name].js'
         },
         module: {
             rules: base.module.rules.concat([
@@ -113,6 +115,10 @@ module.exports = [
                 {
                     test: require.resolve('scratch-audio'),
                     loader: 'expose-loader?AudioEngine'
+                },
+                {
+                    test: require.resolve('scratch-storage'),
+                    loader: 'expose-loader?ScratchStorage'
                 },
                 {
                     test: require.resolve('scratch-render'),
