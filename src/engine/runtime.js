@@ -602,7 +602,7 @@ class Runtime extends EventEmitter {
             category: categoryInfo.name,
             colour: categoryInfo.color1,
             colourSecondary: categoryInfo.color2,
-            colorTertiary: categoryInfo.color3,
+            colourTertiary: categoryInfo.color3,
             args0: []
         };
 
