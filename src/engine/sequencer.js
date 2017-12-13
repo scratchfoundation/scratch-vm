@@ -316,7 +316,7 @@ class Sequencer {
             const definitionBlock = thread.target.blocks.getBlock(definition);
             const innerBlock = thread.target.blocks.getBlock(
                 definitionBlock.inputs.custom_block.block);
-            const doWarp = innerBlock.mutation.warp;
+            const doWarp = JSON.parse(innerBlock.mutation.warp);
             if (doWarp) {
                 thread.peekStackFrame().warpMode = true;
             } else if (isRecursive) {
