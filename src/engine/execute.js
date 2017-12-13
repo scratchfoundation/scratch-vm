@@ -217,9 +217,6 @@ const execute = function (sequencer, thread) {
             const broadcastInput = inputs[inputName];
             // Check if something is plugged into the broadcast block, or
             // if the shadow dropdown menu is being used.
-            // Differentiate between these two cases by giving argValues
-            // a 'BROADCAST_INPUT' field or a 'BROADCAST_OPTION' field
-            // respectively.
             if (broadcastInput.block === broadcastInput.shadow) {
                 // Shadow dropdown menu is being used.
                 // Get the appropriate information out of it.
@@ -232,7 +229,7 @@ const execute = function (sequencer, thread) {
             } else {
                 // Something is plugged into the broadcast input.
                 // Cast it to a string. We don't need an id here.
-                argValues.BROADCAST_INPUT = {
+                argValues.BROADCAST_OPTION = {
                     name: cast.toString(inputValue)
                 };
             }

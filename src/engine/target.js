@@ -98,12 +98,19 @@ class Target extends EventEmitter {
      * if it exists.
      * @param {string} id Id of the variable.
      * @param {string} name Name of the variable.
-     * @return {!Variable} Variable object.
+     * @return {?Variable} Variable object.
      */
     lookupBroadcastMsg (id, name) {
-        const broadcastMsg = this.lookupVariableById(id);
+        let broadcastMsg;
+        if (id) {
+            broadcastMsg = this.lookupVariableById(id);
+        } else if (name) {
+            broadcastMsg = this.lookupBroadcastByInputValue(name);
+        } else {
+            log.error('Cannot find broadcast message if neither id nor name are provided.');
+        }
         if (broadcastMsg) {
-            if (broadcastMsg.name !== name) {
+            if (name && (broadcastMsg.name.toLowerCase() !== name.toLowerCase())) {
                 log.error(`Found broadcast message with id: ${id}, but` +
                     `its name, ${broadcastMsg.name} did not match expected name ${name}.`);
             }

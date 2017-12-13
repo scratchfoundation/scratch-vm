@@ -55,27 +55,9 @@ class Scratch3EventBlocks {
         return false;
     }
 
-    /**
-     * Helper function to process broadcast block input (whether it's
-     * input from the dropdown menu or from a plugged in input block)
-     * @param {object} args The given arguments for the broadcast blocks
-     * @param {object} util The utility associated with this block.
-     * @return {?Variable} The broadcast message variable that matches
-     *  the provided input.
-     */
-    processBroadcastInput_ (args, util) {
-        let broadcastInput;
-        if (args.BROADCAST_OPTION) {
-            broadcastInput = util.runtime.getTargetForStage().lookupBroadcastMsg(
-                args.BROADCAST_OPTION.id, args.BROADCAST_OPTION.name);
-        } else {
-            broadcastInput = util.runtime.getTargetForStage().lookupBroadcastByInputValue(args.BROADCAST_INPUT.name);
-        }
-        return broadcastInput;
-    }
-
     broadcast (args, util) {
-        const broadcastVar = this.processBroadcastInput_(args, util);
+        const broadcastVar = util.runtime.getTargetForStage().lookupBroadcastMsg(
+            args.BROADCAST_OPTION.id, args.BROADCAST_OPTION.name);
         if (broadcastVar) {
             const broadcastOption = broadcastVar.name;
             util.startHats('event_whenbroadcastreceived', {
@@ -85,7 +67,8 @@ class Scratch3EventBlocks {
     }
 
     broadcastAndWait (args, util) {
-        const broadcastVar = this.processBroadcastInput_(args, util);
+        const broadcastVar = util.runtime.getTargetForStage().lookupBroadcastMsg(
+            args.BROADCAST_OPTION.id, args.BROADCAST_OPTION.name);
         if (broadcastVar) {
             const broadcastOption = broadcastVar.name;
             // Have we run before, starting threads?
