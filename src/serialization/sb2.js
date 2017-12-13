@@ -170,12 +170,17 @@ const generateVariableIdGetter = (function () {
 
 const globalBroadcastMsgStateGenerator = (function () {
     let broadcastMsgNameMap = {};
+    const emptyStringName = uid();
     return function (topLevel) {
         if (topLevel) broadcastMsgNameMap = {};
         return {
             broadcastMsgMapUpdater: function (name) {
+                name = name.toLowerCase();
+                if (name === '') {
+                    name = emptyStringName;
+                }
                 broadcastMsgNameMap[name] = `broadcastMsgId-${name}`;
-                return broadcastMsgNameMap[name];
+                return {name: name, id: broadcastMsgNameMap[name]};
             },
             globalBroadcastMsgs: broadcastMsgNameMap
         };
@@ -494,15 +499,33 @@ const parseBlock = function (sb2block, addBroadcastMsg, getVariableId, extension
                 if (shadowObscured) {
                     fieldValue = '#990000';
                 }
+            } else if (expectedArg.inputOp === 'event_broadcast_menu') {
+                fieldName = 'BROADCAST_OPTION';
+                if (shadowObscured) {
+                    fieldValue = '';
+                }
             } else if (shadowObscured) {
                 // Filled drop-down menu.
                 fieldValue = '';
             }
             const fields = {};
             fields[fieldName] = {
-                name: fieldName,
-                value: fieldValue
+                name: fieldName
             };
+            // event_broadcast_menus have some extra properties to add to the
+            // field and a different value than the rest
+            if (expectedArg.inputOp === 'event_broadcast_menu') {
+                if (!shadowObscured) {
+                    const broadcastInfo = addBroadcastMsg(fieldValue);
+                    fields[fieldName].id = broadcastInfo.id;
+                    // Re-assign the value, because the name could have changed
+                    // if the scratch2 message was an empty string
+                    fields[fieldName].value = broadcastInfo.name;
+                }
+                fields[fieldName].variableType = expectedArg.variableType;
+            } else {
+                fields[fieldName].value = fieldValue;
+            }
             activeBlock.children.push({
                 id: inputUid,
                 opcode: expectedArg.inputOp,
@@ -530,8 +553,12 @@ const parseBlock = function (sb2block, addBroadcastMsg, getVariableId, extension
                 activeBlock.fields[expectedArg.fieldName].id = getVariableId(providedArg);
             } else if (expectedArg.fieldName === 'BROADCAST_OPTION') {
                 // add the name in this field to the broadcast msg name map
-                const broadcastId = addBroadcastMsg(providedArg);
-                activeBlock.fields[expectedArg.fieldName].id = broadcastId;
+                const broadcastInfo = addBroadcastMsg(providedArg);
+                activeBlock.fields[expectedArg.fieldName].id = broadcastInfo.id;
+                // Need to reassign field value using the sb3 name from broadcastInfo
+                // because the sb2 message name (e.g. providedArg) could have changed
+                // if the original (providedArg) was an empty string
+                activeBlock.fields[expectedArg.fieldName].value = broadcastInfo.name;
             }
             const varType = expectedArg.variableType;
             if (typeof varType === 'string') {
