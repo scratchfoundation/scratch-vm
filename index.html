@@ -3,88 +3,79 @@
 <html lang="en">
 <head>
     <meta charset="utf-8">
-    <title>Scratch VM Playground</title>
-    <link rel="stylesheet" href="playground.css">
-    <link rel="stylesheet" href="zenburn.css">
+    <title>Scratch VM Benchmark</title>
+    <link rel="stylesheet" href="./benchmark.css" type="text/css" media="screen">
 </head>
 <body>
-    <div id="vm-devtools">
-        <h2>Scratch VM Playground</h2>
-        <select id="selectedTarget" multiple></select>
-        <div id="projectButtons">
-            <button id="greenflag">Green flag</button>
-            <button id="stopall">Stop</button>
-        </div>
-        <div>
-            Turbo: <input id='turbomode' type='checkbox' />
-        </div>
-        <div>
-            Compatibility (30 TPS):  <input id='compatmode' type='checkbox' />
-        </div>
-        <br />
-        <ul id="playgroundLinks">
-            <li><a id="renderexplorer-link" href="#">Renderer</a></li>
-            <li><a id="threadexplorer-link" href="#">Threads</a></li>
-            <li><a id="blockexplorer-link" href="#">Block Representation</a></li>
-            <li><a id="importexport-link" href="#">Import/Export</a></li>
-        </ul><br />
-        <div id="tab-renderexplorer">
-            Renderer<br />
-            <canvas id="scratch-stage" style="width: 480px; height: 360px;"></canvas><br />
-            x: <input id='sinfo-x' />
-            y: <input id='sinfo-y' /><br />
-            size: <input id='sinfo-size' /><br />
-            dir: <input id='sinfo-direction' />
-            rotation style: <input id='sinfo-rotationstyle' /><br />
-            visible: <input id='sinfo-visible' />
-            <button id='sinfo-post'>Post</button>
-        </div>
-        <div id="tab-threadexplorer">
-            Thread explorer
-            <pre id="threadexplorer"></pre>
-        </div>
-        <div id="tab-blockexplorer">
-            Block explorer
-            <pre id="blockexplorer"></pre>
-        </div>
-        <div id="tab-importexport">
-            Import/Export<br />
-            Project ID: <input id="projectId" value="119615668" />
-            <button id="projectLoadButton">Load</button>
-            <button id="createEmptyProject">New Project</button><br />
-            <p>
-                <input type="button" value="Export to JSON" onclick="toJson()">
-                &nbsp;
-                <input type="button" value="Import from JSON" onclick="fromJson()" id="import">
-                <br /><br />
-                <textarea id="importExport"></textarea>
-            </p>
-        </div>
+  <h2>Scratch VM Benchmark</h2>
+  <p>
+    Welcome to the scratch-vm benchmark. This tool helps you profile a scratch
+    project. When you load the page, it:
+    <ol>
+      <li>loads the default project and enables turbo mode
+      <li>runs the project for 4 seconds to warm up
+      <li>profiles for 6 seconds
+      <li>stops and reports
+    </ol>
+  </p>
+  <input type="text" value="119615668">
+  <button class="run">run</button>
+  <p>
+    <i>Try a different project, like `130041250`</i>
+  </p>
+
+  <canvas id="scratch-stage"></canvas><br />
+
+  <div class="loading">
+    <label>Loading:</label>
+    <span class="loading-complete">0</span> / <span class="loading-total">0</span>
+  </div>
+  <div class="profile-count-group">
+    <div class="profile-count">
+      <label>Percent of time worked:</label>
+      <span class="profile-count-value profile-count-amount-recorded">...</span>
     </div>
+    <div class="profile-count">
+      <label>Steps looped:</label>
+      <span class="profile-count-value profile-count-steps-looped">...</span>
+    </div>
+    <div class="profile-count">
+      <label>Blocks executed:</label>
+      <span class="profile-count-value profile-count-blocks-executed">...</span>
+    </div>
+  </div>
 
-    <div id="blocks"></div>
+  <div class="profile-tables">
+  <table class="profile-count-frame-table" cellspacing="0">
+    <thead>
+    <tr class="profile-count-frame-head"><th>Frame</th><th>Self Time</th><th>Total Time</th><th>Executions</th></tr>
+    </thead>
+    <tbody>
+    <tr class="profiler-count-running"><td colspan="4"></td></tr>
+    </tbody>
+  </table>
 
-    <!-- FPS counter, Syntax highlighter, Blocks, Renderer -->
-    <script src="./vendor.js"></script>
-    <!-- Storage module -->
-    <script src="./scratch-storage.js"></script>
-    <!-- VM -->
-    <script src="./scratch-vm.js"></script>
-    <!-- Playground -->
-    <script src="./playground.js"></script>
-    <script>
-        function toJson() {
-            var output = document.getElementById('importExport');
-            var json = window.Scratch.vm.toJSON();
-            output.value = json;
-            output.focus();
-            output.select();
-          }
+  <table class="profile-count-opcode-table" cellspacing="0">
+    <thead>
+    <tr class="profile-count-opcode-head">
+      <th>opcode</th><th>Self Time</th><th>Total Time</th><th>Executions</th>
+    </tr>
+    </thead>
+    <tbody>
+    <tr class="profiler-count-running"><td colspan="4"></td></tr>
+    </tbody>
+  </table>
+  </div>
 
-          function fromJson() {
-            var input = document.getElementById('importExport');
-            window.Scratch.vm.fromJSON(input.value);
-          }
-    </script>
+  <div id="blocks"></div>
+
+  <!-- FPS counter, Syntax highlighter, Blocks, Renderer -->
+  <script src="./vendor.js"></script>
+  <!-- Storage module -->
+  <script src="./scratch-storage.js"></script>
+  <!-- VM -->
+  <script src="./scratch-vm.js"></script>
+  <!-- Playground -->
+  <script src="./benchmark.js"></script>
 </body>
 </html>
