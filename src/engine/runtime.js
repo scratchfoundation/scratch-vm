@@ -603,7 +603,8 @@ class Runtime extends EventEmitter {
             colour: categoryInfo.color1,
             colourSecondary: categoryInfo.color2,
             colourTertiary: categoryInfo.color3,
-            args0: []
+            args0: [],
+            extensions: ['scratch_extension']
         };
 
         const inputList = [];
