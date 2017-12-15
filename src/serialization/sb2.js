@@ -170,19 +170,23 @@ const generateVariableIdGetter = (function () {
 
 const globalBroadcastMsgStateGenerator = (function () {
     let broadcastMsgNameMap = {};
+    const allBroadcastInputsAndFields = [];
     const emptyStringName = uid();
     return function (topLevel) {
         if (topLevel) broadcastMsgNameMap = {};
         return {
-            broadcastMsgMapUpdater: function (name) {
+            broadcastMsgMapUpdater: function (name, block) {
                 name = name.toLowerCase();
                 if (name === '') {
                     name = emptyStringName;
                 }
                 broadcastMsgNameMap[name] = `broadcastMsgId-${name}`;
+                allBroadcastInputsAndFields.push(block);
                 return {name: name, id: broadcastMsgNameMap[name]};
             },
-            globalBroadcastMsgs: broadcastMsgNameMap
+            globalBroadcastMsgs: broadcastMsgNameMap,
+            allBroadcastInputsAndFields: allBroadcastInputsAndFields,
+            emptyMsgName: emptyStringName
         };
     };
 }());
@@ -345,6 +349,23 @@ const parseScratchObject = function (object, runtime, extensions, topLevel) {
             // all other targets have finished processing.
             if (target.isStage) {
                 const allBroadcastMsgs = globalBroadcastMsgObj.globalBroadcastMsgs;
+                const allBroadcastMsgInputsAndFields = globalBroadcastMsgObj.allBroadcastInputsAndFields;
+                const emptyName = globalBroadcastMsgObj.emptyMsgName;
+                if (allBroadcastMsgs[emptyName]) {
+                    // look through allBroadcastMsgs to see if 'messageN' is used
+                    let currIndex = 1;
+                    while (allBroadcastMsgs[`message${currIndex}`]) {
+                        currIndex += 1;
+                    }
+                    const newEmptyMsgName = `message${currIndex}`;
+                    allBroadcastMsgs[newEmptyMsgName] = allBroadcastMsgs[emptyName];
+                    delete allBroadcastMsgs[emptyName];
+                    for (let i = 0; i < allBroadcastMsgInputsAndFields.length; i++) {
+                        if (allBroadcastMsgInputsAndFields[i].value === emptyName) {
+                            allBroadcastMsgInputsAndFields[i].value = newEmptyMsgName;
+                        }
+                    }
+                }
                 for (const msgName in allBroadcastMsgs) {
                     const msgId = allBroadcastMsgs[msgName];
                     const newMsg = new Variable(
@@ -516,7 +537,7 @@ const parseBlock = function (sb2block, addBroadcastMsg, getVariableId, extension
             // field and a different value than the rest
             if (expectedArg.inputOp === 'event_broadcast_menu') {
                 if (!shadowObscured) {
-                    const broadcastInfo = addBroadcastMsg(fieldValue);
+                    const broadcastInfo = addBroadcastMsg(fieldValue, fields[fieldName]);
                     fields[fieldName].id = broadcastInfo.id;
                     // Re-assign the value, because the name could have changed
                     // if the scratch2 message was an empty string
@@ -553,7 +574,7 @@ const parseBlock = function (sb2block, addBroadcastMsg, getVariableId, extension
                 activeBlock.fields[expectedArg.fieldName].id = getVariableId(providedArg);
             } else if (expectedArg.fieldName === 'BROADCAST_OPTION') {
                 // add the name in this field to the broadcast msg name map
-                const broadcastInfo = addBroadcastMsg(providedArg);
+                const broadcastInfo = addBroadcastMsg(providedArg, activeBlock.fields[expectedArg.fieldName]);
                 activeBlock.fields[expectedArg.fieldName].id = broadcastInfo.id;
                 // Need to reassign field value using the sb3 name from broadcastInfo
                 // because the sb2 message name (e.g. providedArg) could have changed
