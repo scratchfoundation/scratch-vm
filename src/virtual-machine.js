@@ -314,9 +314,10 @@ class VirtualMachine extends EventEmitter {
      * @property {number} rotationCenterX - the X component of the costume's origin.
      * @property {number} rotationCenterY - the Y component of the costume's origin.
      * @property {number} [bitmapResolution] - the resolution scale for a bitmap costume.
+     * @returns {?Promise} - a promise that resolves when the costume has been added
      */
     addCostume (md5ext, costumeObject) {
-        loadCostume(md5ext, costumeObject, this.runtime).then(() => {
+        return loadCostume(md5ext, costumeObject, this.runtime).then(() => {
             this.editingTarget.addCostume(costumeObject);
             this.editingTarget.setCostume(
                 this.editingTarget.sprite.costumes.length - 1
