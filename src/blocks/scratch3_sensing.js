@@ -105,7 +105,7 @@ class Scratch3SensingBlocks {
         const _target = util.target;
         return new Promise(resolve => {
             const isQuestionAsked = this._questionList.length > 0;
-            this._enqueueAsk(args.QUESTION, resolve, _target, _target.visible, _target.isStage);
+            this._enqueueAsk(String(args.QUESTION), resolve, _target, _target.visible, _target.isStage);
             if (!isQuestionAsked) {
                 this._askNextQuestion();
             }
