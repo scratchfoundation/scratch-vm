@@ -28978,6 +28978,7 @@ var VirtualMachine = function (_EventEmitter) {
          * @property {number} rotationCenterX - the X component of the costume's origin.
          * @property {number} rotationCenterY - the Y component of the costume's origin.
          * @property {number} [bitmapResolution] - the resolution scale for a bitmap costume.
+         * @returns {?Promise} - a promise that resolves when the costume has been added
          */
 
     }, {
@@ -28985,7 +28986,7 @@ var VirtualMachine = function (_EventEmitter) {
         value: function addCostume(md5ext, costumeObject) {
             var _this5 = this;
 
-            loadCostume(md5ext, costumeObject, this.runtime).then(function () {
+            return loadCostume(md5ext, costumeObject, this.runtime).then(function () {
                 _this5.editingTarget.addCostume(costumeObject);
                 _this5.editingTarget.setCostume(_this5.editingTarget.sprite.costumes.length - 1);
             });
