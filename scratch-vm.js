@@ -22221,7 +22221,15 @@ var Sequencer = function () {
                 // to warp-mode if needed.
                 var definitionBlock = thread.target.blocks.getBlock(definition);
                 var innerBlock = thread.target.blocks.getBlock(definitionBlock.inputs.custom_block.block);
-                var doWarp = innerBlock.mutation.warp;
+                var doWarp = false;
+                if (innerBlock && innerBlock.mutation) {
+                    var warp = innerBlock.mutation.warp;
+                    if (typeof warp === 'boolean') {
+                        doWarp = warp;
+                    } else if (typeof warp === 'string') {
+                        doWarp = JSON.parse(warp);
+                    }
+                }
                 if (doWarp) {
                     thread.peekStackFrame().warpMode = true;
                 } else if (isRecursive) {
