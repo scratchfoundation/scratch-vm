@@ -18097,7 +18097,7 @@ var Scratch3SensingBlocks = function () {
             var _target = util.target;
             return new Promise(function (resolve) {
                 var isQuestionAsked = _this._questionList.length > 0;
-                _this._enqueueAsk(args.QUESTION, resolve, _target, _target.visible, _target.isStage);
+                _this._enqueueAsk(String(args.QUESTION), resolve, _target, _target.visible, _target.isStage);
                 if (!isQuestionAsked) {
                     _this._askNextQuestion();
                 }
@@ -20548,7 +20548,8 @@ var Runtime = function (_EventEmitter) {
                 colour: categoryInfo.color1,
                 colourSecondary: categoryInfo.color2,
                 colourTertiary: categoryInfo.color3,
-                args0: []
+                args0: [],
+                extensions: ['scratch_extension']
             };
 
             var inputList = [];
