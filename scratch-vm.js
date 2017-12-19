@@ -25006,16 +25006,20 @@ var Runtime = function (_EventEmitter) {
 
             blockJSON.message0 = '';
 
-            // If an icon for the extension exists, prepend it to each block
+            // If an icon for the extension exists, prepend it to each block, with a vertical separator.
             if (categoryInfo.iconURI) {
-                blockJSON.message0 = '%1';
+                blockJSON.message0 = '%1 %2';
                 var iconJSON = {
                     type: 'field_image',
                     src: categoryInfo.iconURI,
                     width: 40,
                     height: 40
                 };
+                var separatorJSON = {
+                    type: 'field_vertical_separator'
+                };
                 blockJSON.args0.push(iconJSON);
+                blockJSON.args0.push(separatorJSON);
             }
 
             blockJSON.message0 += blockInfo.text.replace(/\[(.+?)]/g, function (match, placeholder) {
