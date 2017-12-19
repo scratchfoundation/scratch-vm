@@ -26,7 +26,6 @@ class Scratch3SoundBlocks {
     static get DEFAULT_SOUND_STATE () {
         return {
             volume: 100,
-            currentInstrument: 0,
             effects: {
                 pitch: 0,
                 pan: 0
