@@ -475,7 +475,8 @@ class Runtime extends EventEmitter {
         const categoryInfo = {
             id: extensionInfo.id,
             name: extensionInfo.name,
-            iconURI: extensionInfo.iconURI,
+            blockIconURI: extensionInfo.blockIconURI,
+            menuIconURI: extensionInfo.menuIconURI,
             color1: '#FF6680',
             color2: '#FF4D6A',
             color3: '#FF3355',
@@ -618,11 +619,11 @@ class Runtime extends EventEmitter {
         blockJSON.message0 = '';
 
         // If an icon for the extension exists, prepend it to each block, with a vertical separator.
-        if (categoryInfo.iconURI) {
+        if (categoryInfo.blockIconURI) {
             blockJSON.message0 = '%1 %2';
             const iconJSON = {
                 type: 'field_image',
-                src: categoryInfo.iconURI,
+                src: categoryInfo.blockIconURI,
                 width: 40,
                 height: 40
             };
@@ -739,7 +740,20 @@ class Runtime extends EventEmitter {
         for (const categoryInfo of this._blockInfo) {
             const {name, color1, color2} = categoryInfo;
             const paletteBlocks = categoryInfo.blocks.filter(block => !block.info.hideFromPalette);
-            xmlParts.push(`<category name="${name}" colour="${color1}" secondaryColour="${color2}">`);
+            const colorXML = `colour="${color1}" secondaryColour="${color2}"`;
+
+            // Use a menu icon if there is one. Otherwise, use the block icon. If there's no icon,
+            // the category menu will show its default colored circle.
+            let menuIconURI = '';
+            if (categoryInfo.menuIconURI) {
+                menuIconURI = categoryInfo.menuIconURI;
+            } else if (categoryInfo.blockIconURI) {
+                menuIconURI = categoryInfo.blockIconURI;
+            }
+            const menuIconXML = menuIconURI ?
+                `iconURI="${menuIconURI}"` : '';
+
+            xmlParts.push(`<category name="${name}" ${colorXML} ${menuIconXML}>`);
             xmlParts.push.apply(xmlParts, paletteBlocks.map(block => block.xml));
             xmlParts.push('</category>');
         }
