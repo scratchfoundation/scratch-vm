@@ -444,9 +444,10 @@ class VirtualMachine extends EventEmitter {
      * @property {number} rotationCenterX - the X component of the backdrop's origin.
      * @property {number} rotationCenterY - the Y component of the backdrop's origin.
      * @property {number} [bitmapResolution] - the resolution scale for a bitmap backdrop.
+     * @returns {?Promise} - a promise that resolves when the backdrop has been added
      */
     addBackdrop (md5ext, backdropObject) {
-        loadCostume(md5ext, backdropObject, this.runtime).then(() => {
+        return loadCostume(md5ext, backdropObject, this.runtime).then(() => {
             const stage = this.runtime.getTargetForStage();
             stage.sprite.costumes.push(backdropObject);
             stage.setCostume(stage.sprite.costumes.length - 1);
