@@ -30639,7 +30639,6 @@ var Scratch3SoundBlocks = function () {
         get: function get() {
             return {
                 volume: 100,
-                currentInstrument: 0,
                 effects: {
                     pitch: 0,
                     pan: 0
