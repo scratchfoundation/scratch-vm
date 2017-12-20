@@ -30561,9 +30561,18 @@ var Scratch3SoundBlocks = function () {
         }
     }, {
         key: 'stopAllSounds',
-        value: function stopAllSounds(args, util) {
-            if (util.target.audioPlayer === null) return;
-            util.target.audioPlayer.stopAllSounds();
+        value: function stopAllSounds() {
+            if (this.runtime.targets === null) return;
+            var allTargets = this.runtime.targets;
+            for (var i = 0; i < allTargets.length; i++) {
+                this._stopAllSoundsForTarget(allTargets[i]);
+            }
+        }
+    }, {
+        key: '_stopAllSoundsForTarget',
+        value: function _stopAllSoundsForTarget(target) {
+            if (target.audioPlayer === null) return;
+            target.audioPlayer.stopAllSounds();
         }
     }, {
         key: 'setEffect',
