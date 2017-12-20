@@ -217,15 +217,13 @@ class VirtualMachine extends EventEmitter {
         this.clear();
 
         // Validate & parse
-        if (typeof json !== 'string') {
-            log.error('Failed to parse project. Non-string supplied to fromJSON.');
+        if (typeof json !== 'string' && typeof json !== 'object') {
+            log.error('Failed to parse project. Invalid type supplied to fromJSON.');
             return;
         }
-        json = JSON.parse(json);
-        if (typeof json !== 'object') {
-            log.error('Failed to parse project. JSON supplied to fromJSON is not an object.');
-            return;
-        }
+
+        // Attempt to parse JSON if string is supplied
+        if (typeof json === 'string') json = JSON.parse(json);
 
         // Establish version, deserialize, and load into runtime
         // @todo Support Scratch 1.4
