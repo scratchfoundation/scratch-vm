@@ -329,6 +329,7 @@ class RenderedTarget extends Target {
                 this.runtime.requestRedraw();
             }
         }
+        this.runtime.requestTargetsUpdate(this);
     }
 
     /**
@@ -861,6 +862,9 @@ class RenderedTarget extends Target {
         }
         if (data.hasOwnProperty('visible')) {
             this.setVisible(data.visible);
+        }
+        if (data.hasOwnProperty('size')) {
+            this.setSize(data.size);
         }
     }
 
