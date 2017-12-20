@@ -167,9 +167,17 @@ class Scratch3SoundBlocks {
         return -1;
     }
 
-    stopAllSounds (args, util) {
-        if (util.target.audioPlayer === null) return;
-        util.target.audioPlayer.stopAllSounds();
+    stopAllSounds () {
+        if (this.runtime.targets === null) return;
+        const allTargets = this.runtime.targets;
+        for (let i = 0; i < allTargets.length; i++) {
+            this._stopAllSoundsForTarget(allTargets[i]);
+        }
+    }
+
+    _stopAllSoundsForTarget (target) {
+        if (target.audioPlayer === null) return;
+        target.audioPlayer.stopAllSounds();
     }
 
     setEffect (args, util) {
