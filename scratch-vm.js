@@ -30442,6 +30442,13 @@ var Scratch3SoundBlocks = function () {
          * @type {Runtime}
          */
         this.runtime = runtime;
+
+        // Clear sound effects on green flag and stop button events.
+        this._clearEffectsForAllTargets = this._clearEffectsForAllTargets.bind(this);
+        if (this.runtime) {
+            this.runtime.on('PROJECT_STOP_ALL', this._clearEffectsForAllTargets);
+            this.runtime.on('PROJECT_START', this._clearEffectsForAllTargets);
+        }
     }
 
     /**
@@ -30594,13 +30601,27 @@ var Scratch3SoundBlocks = function () {
     }, {
         key: 'clearEffects',
         value: function clearEffects(args, util) {
-            var soundState = this._getSoundState(util.target);
+            this._clearEffectsForTarget(util.target);
+        }
+    }, {
+        key: '_clearEffectsForTarget',
+        value: function _clearEffectsForTarget(target) {
+            var soundState = this._getSoundState(target);
             for (var effect in soundState.effects) {
                 if (!soundState.effects.hasOwnProperty(effect)) continue;
                 soundState.effects[effect] = 0;
             }
-            if (util.target.audioPlayer === null) return;
-            util.target.audioPlayer.clearEffects();
+            if (target.audioPlayer === null) return;
+            target.audioPlayer.clearEffects();
+        }
+    }, {
+        key: '_clearEffectsForAllTargets',
+        value: function _clearEffectsForAllTargets() {
+            if (this.runtime.targets === null) return;
+            var allTargets = this.runtime.targets;
+            for (var i = 0; i < allTargets.length; i++) {
+                this._clearEffectsForTarget(allTargets[i]);
+            }
         }
     }, {
         key: 'setVolume',
