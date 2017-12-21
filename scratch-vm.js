@@ -4701,6 +4701,7 @@ var RenderedTarget = function (_Target) {
                     this.runtime.requestRedraw();
                 }
             }
+            this.runtime.requestTargetsUpdate(this);
         }
 
         /**
@@ -5312,6 +5313,9 @@ var RenderedTarget = function (_Target) {
             }
             if (data.hasOwnProperty('visible')) {
                 this.setVisible(data.visible);
+            }
+            if (data.hasOwnProperty('size')) {
+                this.setSize(data.size);
             }
         }
 

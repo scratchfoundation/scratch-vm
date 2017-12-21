@@ -334,13 +334,13 @@ module.exports =
 	/// prompt - This message is only seen in the Opera browser.  With most browsers, users can edit numeric values in blocks by just clicking and typing.  Opera does not allows this, so we have to open a new window and prompt users with this message to chanage a value.
 	Blockly.Msg.CHANGE_VALUE_TITLE = 'Change value:';
 	/// dropdown choice - When the user clicks on a variable block, this is one of the dropdown menu choices.  It is used to rename the current variable.  See [https://github.com/google/blockly/wiki/Variables#dropdown-menu https://github.com/google/blockly/wiki/Variables#dropdown-menu].
-	Blockly.Msg.RENAME_VARIABLE = 'Rename variable...';
+	Blockly.Msg.RENAME_VARIABLE = 'Rename variable';
 	/// prompt - Prompts the user to enter the new name for the selected variable.  See [https://github.com/google/blockly/wiki/Variables#dropdown-menu https://github.com/google/blockly/wiki/Variables#dropdown-menu].\n\nParameters:\n* %1 - the name of the variable to be renamed.
 	Blockly.Msg.RENAME_VARIABLE_TITLE = 'Rename all "%1" variables to:';
 
 	// Variable creation
 	/// button text - Text on the button used to launch the variable creation dialogue.
-	Blockly.Msg.NEW_VARIABLE = 'Create variable...';
+	Blockly.Msg.NEW_VARIABLE = 'Make a Variable';
 	/// prompt - Prompts the user to enter the name for a new variable.  See [https://github.com/google/blockly/wiki/Variables#dropdown-menu https://github.com/google/blockly/wiki/Variables#dropdown-menu].
 	Blockly.Msg.NEW_VARIABLE_TITLE = 'New variable name:';
 	/// alert - Tells the user that the name they entered is already in use.
@@ -352,17 +352,17 @@ module.exports =
 
 	// Custom procedure creation
 	/// button text - Text on the button used to launch the procedure creation dialogue.
-	Blockly.Msg.NEW_PROCEDURE = 'Make a Block...';
+	Blockly.Msg.NEW_PROCEDURE = 'Make a Block';
 
 	// List creation
 	/// button text - Text on the button used to launch the list creation dialogue.
-	Blockly.Msg.NEW_LIST = 'Create list...';
+	Blockly.Msg.NEW_LIST = 'Make a List';
 	/// prompt - Prompts the user to enter the name for a new list
 	Blockly.Msg.NEW_LIST_TITLE = 'New list name:';
 
 	// Broadcast Message creation
 	/// dropdown choice - Create a new message.
-	Blockly.Msg.NEW_BROADCAST_MESSAGE = 'New message...';
+	Blockly.Msg.NEW_BROADCAST_MESSAGE = 'New message';
 	/// prompt - Prompts the user to enter the name for a new broadcast message
 	Blockly.Msg.NEW_BROADCAST_MESSAGE_TITLE = 'New message name:';
 	/// default broadcast message name
@@ -1490,7 +1490,7 @@ module.exports =
 	Blockly.ScratchBlocks.VerticalExtensions.SHAPE_STATEMENT=function(){this.setInputsInline(!0);this.setPreviousStatement(!0,null);this.setNextStatement(!0,null)};Blockly.ScratchBlocks.VerticalExtensions.SHAPE_HAT=function(){this.setInputsInline(!0);this.setNextStatement(!0,null)};Blockly.ScratchBlocks.VerticalExtensions.SHAPE_END=function(){this.setInputsInline(!0);this.setPreviousStatement(!0,null)};
 	Blockly.ScratchBlocks.VerticalExtensions.OUTPUT_NUMBER=function(){this.setInputsInline(!0);this.setOutputShape(Blockly.OUTPUT_SHAPE_ROUND);this.setOutput(!0,"Number")};Blockly.ScratchBlocks.VerticalExtensions.OUTPUT_STRING=function(){this.setInputsInline(!0);this.setOutputShape(Blockly.OUTPUT_SHAPE_ROUND);this.setOutput(!0,"String")};Blockly.ScratchBlocks.VerticalExtensions.OUTPUT_BOOLEAN=function(){this.setInputsInline(!0);this.setOutputShape(Blockly.OUTPUT_SHAPE_HEXAGONAL);this.setOutput(!0,"Boolean")};
 	Blockly.ScratchBlocks.VerticalExtensions.PROCEDURE_DEF_CONTEXTMENU={customContextMenu:function(a){a.push(Blockly.Procedures.makeEditOption(this));for(var b=0,c;c=a[b];b++)if(c.text==Blockly.Msg.DELETE_BLOCK){var d=this.getInput("custom_block");if(d&&d.connection&&d.connection.targetBlock())var e=d.connection.targetBlock().getProcCode();else return;var f=this;c.callback=function(){Blockly.Procedures.deleteProcedureDefCallback(e,f)||alert("To delete a block definition, first remove all uses of the block")}}for(b=
-	0;c=a[b];b++)if(c.text==Blockly.Msg.DUPLICATE_BLOCK){a.splice(b,1);break}}};Blockly.ScratchBlocks.VerticalExtensions.PROCEDURE_CALL_CONTEXTMENU={customContextMenu:function(a){a.push(Blockly.Procedures.makeEditOption(this));a.push(Blockly.Procedures.makeShowDefinitionOption(this))}};Blockly.ScratchBlocks.VerticalExtensions.SCRATCH_EXTENSION=function(){this.isScratchExtension=!0};
+	0;c=a[b];b++)if(c.text==Blockly.Msg.DUPLICATE_BLOCK){a.splice(b,1);break}}};Blockly.ScratchBlocks.VerticalExtensions.PROCEDURE_CALL_CONTEXTMENU={customContextMenu:function(a){a.push(Blockly.Procedures.makeEditOption(this))}};Blockly.ScratchBlocks.VerticalExtensions.SCRATCH_EXTENSION=function(){this.isScratchExtension=!0};
 	Blockly.ScratchBlocks.VerticalExtensions.registerAll=function(){for(var a="control data data_lists sounds motion looks event sensing pen operators more".split(" "),b=0;b<a.length;b++)name=a[b],Blockly.Extensions.register("colours_"+name,Blockly.ScratchBlocks.VerticalExtensions.colourHelper(name));Blockly.Extensions.register("colours_textfield",Blockly.ScratchBlocks.VerticalExtensions.COLOUR_TEXTFIELD);Blockly.Extensions.register("shape_statement",Blockly.ScratchBlocks.VerticalExtensions.SHAPE_STATEMENT);
 	Blockly.Extensions.register("shape_hat",Blockly.ScratchBlocks.VerticalExtensions.SHAPE_HAT);Blockly.Extensions.register("shape_end",Blockly.ScratchBlocks.VerticalExtensions.SHAPE_END);Blockly.Extensions.register("output_number",Blockly.ScratchBlocks.VerticalExtensions.OUTPUT_NUMBER);Blockly.Extensions.register("output_string",Blockly.ScratchBlocks.VerticalExtensions.OUTPUT_STRING);Blockly.Extensions.register("output_boolean",Blockly.ScratchBlocks.VerticalExtensions.OUTPUT_BOOLEAN);Blockly.Extensions.registerMixin("procedure_def_contextmenu",
 	Blockly.ScratchBlocks.VerticalExtensions.PROCEDURE_DEF_CONTEXTMENU);Blockly.Extensions.registerMixin("procedure_call_contextmenu",Blockly.ScratchBlocks.VerticalExtensions.PROCEDURE_CALL_CONTEXTMENU);Blockly.Extensions.register("scratch_extension",Blockly.ScratchBlocks.VerticalExtensions.SCRATCH_EXTENSION)};Blockly.ScratchBlocks.VerticalExtensions.registerAll();
@@ -1503,10 +1503,10 @@ module.exports =
 	Blockly.Blocks.operator_join={init:function(){this.jsonInit({message0:"join %1 %2",args0:[{type:"input_value",name:"STRING1"},{type:"input_value",name:"STRING2"}],category:Blockly.Categories.operators,extensions:["colours_operators","output_string"]})}};Blockly.Blocks.operator_letter_of={init:function(){this.jsonInit({message0:"letter %1 of %2",args0:[{type:"input_value",name:"LETTER"},{type:"input_value",name:"STRING"}],category:Blockly.Categories.operators,extensions:["colours_operators","output_string"]})}};
 	Blockly.Blocks.operator_length={init:function(){this.jsonInit({message0:"length of %1",args0:[{type:"input_value",name:"STRING"}],category:Blockly.Categories.operators,extensions:["colours_operators","output_string"]})}};Blockly.Blocks.operator_contains={init:function(){this.jsonInit({message0:"%1 contains %2?",args0:[{type:"input_value",name:"STRING1"},{type:"input_value",name:"STRING2"}],category:Blockly.Categories.operators,extensions:["colours_operators","output_boolean"]})}};
 	Blockly.Blocks.operator_mod={init:function(){this.jsonInit({message0:"%1 mod %2",args0:[{type:"input_value",name:"NUM1"},{type:"input_value",name:"NUM2"}],category:Blockly.Categories.operators,extensions:["colours_operators","output_number"]})}};Blockly.Blocks.operator_round={init:function(){this.jsonInit({message0:"round %1",args0:[{type:"input_value",name:"NUM"}],category:Blockly.Categories.operators,extensions:["colours_operators","output_number"]})}};
-	Blockly.Blocks.operator_mathop={init:function(){this.jsonInit({message0:"%1 of %2",args0:[{type:"field_dropdown",name:"OPERATOR",options:[["abs","abs"],["floor","floor"],["ceiling","ceiling"],["sqrt","sqrt"],["sin","sin"],["cos","cos"],["tan","tan"],["asin","asin"],["acos","acos"],["atan","atan"],["ln","ln"],["log","log"],["e ^","e ^"],["10 ^","10 ^"]]},{type:"input_value",name:"NUM"}],category:Blockly.Categories.operators,extensions:["colours_operators","output_number"]})}};Blockly.Blocks.procedures={};Blockly.ScratchBlocks.ProcedureUtils={};Blockly.ScratchBlocks.ProcedureUtils.callerMutationToDom=function(){var a=document.createElement("mutation");a.setAttribute("proccode",this.procCode_);a.setAttribute("argumentids",JSON.stringify(this.argumentIds_));a.setAttribute("warp",this.warp_);return a};
-	Blockly.ScratchBlocks.ProcedureUtils.callerDomToMutation=function(a){this.procCode_=a.getAttribute("proccode");this.argumentIds_=JSON.parse(a.getAttribute("argumentids"));this.warp_=a.getAttribute("warp");this.updateDisplay_()};
-	Blockly.ScratchBlocks.ProcedureUtils.definitionMutationToDom=function(){var a=document.createElement("mutation");a.setAttribute("proccode",this.procCode_);a.setAttribute("argumentids",JSON.stringify(this.argumentIds_));a.setAttribute("argumentnames",JSON.stringify(this.displayNames_));a.setAttribute("argumentdefaults",JSON.stringify(this.argumentDefaults_));a.setAttribute("warp",this.warp_);return a};
-	Blockly.ScratchBlocks.ProcedureUtils.definitionDomToMutation=function(a){this.procCode_=a.getAttribute("proccode");this.warp_=a.getAttribute("warp");this.argumentIds_=JSON.parse(a.getAttribute("argumentids"));this.displayNames_=JSON.parse(a.getAttribute("argumentnames"));this.argumentDefaults_=JSON.parse(a.getAttribute("argumentdefaults"));this.updateDisplay_()};Blockly.ScratchBlocks.ProcedureUtils.getProcCode=function(){return this.procCode_};
+	Blockly.Blocks.operator_mathop={init:function(){this.jsonInit({message0:"%1 of %2",args0:[{type:"field_dropdown",name:"OPERATOR",options:[["abs","abs"],["floor","floor"],["ceiling","ceiling"],["sqrt","sqrt"],["sin","sin"],["cos","cos"],["tan","tan"],["asin","asin"],["acos","acos"],["atan","atan"],["ln","ln"],["log","log"],["e ^","e ^"],["10 ^","10 ^"]]},{type:"input_value",name:"NUM"}],category:Blockly.Categories.operators,extensions:["colours_operators","output_number"]})}};Blockly.Blocks.procedures={};Blockly.ScratchBlocks.ProcedureUtils={};Blockly.ScratchBlocks.ProcedureUtils.callerMutationToDom=function(){var a=document.createElement("mutation");a.setAttribute("proccode",this.procCode_);a.setAttribute("argumentids",JSON.stringify(this.argumentIds_));a.setAttribute("warp",JSON.stringify(this.warp_));return a};
+	Blockly.ScratchBlocks.ProcedureUtils.callerDomToMutation=function(a){this.procCode_=a.getAttribute("proccode");this.argumentIds_=JSON.parse(a.getAttribute("argumentids"));this.warp_=JSON.parse(a.getAttribute("warp"));this.updateDisplay_()};
+	Blockly.ScratchBlocks.ProcedureUtils.definitionMutationToDom=function(){var a=document.createElement("mutation");a.setAttribute("proccode",this.procCode_);a.setAttribute("argumentids",JSON.stringify(this.argumentIds_));a.setAttribute("argumentnames",JSON.stringify(this.displayNames_));a.setAttribute("argumentdefaults",JSON.stringify(this.argumentDefaults_));a.setAttribute("warp",JSON.stringify(this.warp_));return a};
+	Blockly.ScratchBlocks.ProcedureUtils.definitionDomToMutation=function(a){this.procCode_=a.getAttribute("proccode");this.warp_=JSON.parse(a.getAttribute("warp"));this.argumentIds_=JSON.parse(a.getAttribute("argumentids"));this.displayNames_=JSON.parse(a.getAttribute("argumentnames"));this.argumentDefaults_=JSON.parse(a.getAttribute("argumentdefaults"));this.updateDisplay_()};Blockly.ScratchBlocks.ProcedureUtils.getProcCode=function(){return this.procCode_};
 	Blockly.ScratchBlocks.ProcedureUtils.updateDisplay_=function(){var a=this.rendered;this.rendered=!1;var b=this.disconnectOldBlocks_();this.removeAllInputs_();this.createAllInputs_(b);this.deleteShadows_(b);(this.rendered=a)&&!this.isInsertionMarker()&&(this.initSvg(),this.render())};Blockly.ScratchBlocks.ProcedureUtils.disconnectOldBlocks_=function(){for(var a={},b=0,c;c=this.inputList[b];b++)if(c.connection){c.connection.setShadowDom(null);var d=c.connection.targetBlock();(a[c.name]=d)&&c.connection.disconnect()}return a};
 	Blockly.ScratchBlocks.ProcedureUtils.removeAllInputs_=function(){for(var a=0,b;b=this.inputList[a];a++)b.dispose();this.inputList=[]};
 	Blockly.ScratchBlocks.ProcedureUtils.createAllInputs_=function(a){var b=this.procCode_.split(/(?=[^\\]%[nbs])/);b=b.map(function(a){return a.trim()});for(var c=0,d=0,e;e=b[d];d++){if("%"==e.substring(0,1)){var f=e.substring(1,2);if("n"!=f&&"b"!=f&&"s"!=f)throw Error("Found an custom procedure with an invalid type: "+f);e=e.substring(2).trim();var g=this.argumentIds_[c],h=null;a&&g in a&&(h=a[g]);g=this.appendValueInput(g);"b"==f&&g.setCheck("Boolean");this.populateArgument_(f,c,a,h,g);c++}else e=
@@ -1522,7 +1522,7 @@ module.exports =
 	Blockly.ScratchBlocks.ProcedureUtils.updateDeclarationProcCode_=function(){this.procCode_="";this.displayNames_=[];this.argumentIds_=[];for(var a=0;a<this.inputList.length;a++){0!=a&&(this.procCode_+=" ");var b=this.inputList[a];if(b.type==Blockly.DUMMY_INPUT)this.procCode_+=b.fieldRow[0].getValue();else if(b.type==Blockly.INPUT_VALUE){var c=b.connection.targetBlock();this.displayNames_.push(c.getFieldValue("TEXT"));this.argumentIds_.push(b.name);this.procCode_="argument_editor_boolean"==c.type?this.procCode_+
 	"%b":this.procCode_+"%s"}else throw Error("Unexpected input type on a procedure mutator root: "+b.type);}};Blockly.ScratchBlocks.ProcedureUtils.focusLastEditor_=function(){if(0<this.inputList.length){var a=this.inputList[this.inputList.length-1];a.type==Blockly.DUMMY_INPUT?a.fieldRow[0].showEditor_():a.type==Blockly.INPUT_VALUE&&a.connection.targetBlock().getField("TEXT").showEditor_()}};
 	Blockly.ScratchBlocks.ProcedureUtils.addLabelExternal=function(){Blockly.WidgetDiv.hide(!0);this.procCode_+=" label text";this.updateDisplay_();this.focusLastEditor_()};Blockly.ScratchBlocks.ProcedureUtils.addBooleanExternal=function(){Blockly.WidgetDiv.hide(!0);this.procCode_+=" %b";this.displayNames_.push("boolean");this.argumentIds_.push(Blockly.utils.genUid());this.argumentDefaults_.push("todo");this.updateDisplay_();this.focusLastEditor_()};
-	Blockly.ScratchBlocks.ProcedureUtils.addStringNumberExternal=function(){Blockly.WidgetDiv.hide(!0);this.procCode_+=" %s";this.displayNames_.push("string or number");this.argumentIds_.push(Blockly.utils.genUid());this.argumentDefaults_.push("todo");this.updateDisplay_();this.focusLastEditor_()};
+	Blockly.ScratchBlocks.ProcedureUtils.addStringNumberExternal=function(){Blockly.WidgetDiv.hide(!0);this.procCode_+=" %s";this.displayNames_.push("string or number");this.argumentIds_.push(Blockly.utils.genUid());this.argumentDefaults_.push("todo");this.updateDisplay_();this.focusLastEditor_()};Blockly.ScratchBlocks.ProcedureUtils.getWarp=function(){return this.warp_};Blockly.ScratchBlocks.ProcedureUtils.setWarp=function(a){this.warp_=a};
 	Blockly.ScratchBlocks.ProcedureUtils.removeFieldCallback=function(a){if(1!==this.inputList.length){for(var b=null,c=0;c<this.inputList.length;c++){var d=this.inputList[c];if(d.connection)d.connection.targetBlock().getField(a.name)==a&&(b=d.name);else for(var e=0;e<d.fieldRow.length;e++)d.fieldRow[e]==a&&(b=d.name)}b&&(Blockly.WidgetDiv.hide(!0),this.removeInput(b),this.onChangeFn(),this.updateDisplay_())}};
 	Blockly.ScratchBlocks.ProcedureUtils.removeArgumentCallback_=function(a){this.parentBlock_&&this.parentBlock_.removeFieldCallback&&this.parentBlock_.removeFieldCallback(a)};Blockly.Blocks.procedures_definition={init:function(){this.jsonInit({message0:"define %1",args0:[{type:"input_statement",name:"custom_block"}],extensions:["colours_more","shape_hat","procedure_def_contextmenu"]})}};
 	Blockly.Blocks.procedures_call={init:function(){this.jsonInit({extensions:["colours_more","shape_statement","procedure_call_contextmenu"]});this.procCode_="";this.argumentIds_=[];this.warp_=!1},getProcCode:Blockly.ScratchBlocks.ProcedureUtils.getProcCode,removeAllInputs_:Blockly.ScratchBlocks.ProcedureUtils.removeAllInputs_,disconnectOldBlocks_:Blockly.ScratchBlocks.ProcedureUtils.disconnectOldBlocks_,deleteShadows_:Blockly.ScratchBlocks.ProcedureUtils.deleteShadows_,createAllInputs_:Blockly.ScratchBlocks.ProcedureUtils.createAllInputs_,
@@ -1531,7 +1531,7 @@ module.exports =
 	updateDisplay_:Blockly.ScratchBlocks.ProcedureUtils.updateDisplay_,mutationToDom:Blockly.ScratchBlocks.ProcedureUtils.definitionMutationToDom,domToMutation:Blockly.ScratchBlocks.ProcedureUtils.definitionDomToMutation,populateArgument_:Blockly.ScratchBlocks.ProcedureUtils.populateArgumentOnPrototype_,addProcedureLabel_:Blockly.ScratchBlocks.ProcedureUtils.addLabelField_,createArgumentReporter_:Blockly.ScratchBlocks.ProcedureUtils.createArgumentReporter_};
 	Blockly.Blocks.procedures_declaration={init:function(){this.jsonInit({extensions:["colours_more","shape_statement"]});this.procCode_="";this.displayNames_=[];this.argumentIds_=[];this.argumentDefaults_=[];this.warp_=!1},getProcCode:Blockly.ScratchBlocks.ProcedureUtils.getProcCode,removeAllInputs_:Blockly.ScratchBlocks.ProcedureUtils.removeAllInputs_,disconnectOldBlocks_:Blockly.ScratchBlocks.ProcedureUtils.disconnectOldBlocks_,deleteShadows_:Blockly.ScratchBlocks.ProcedureUtils.deleteShadows_,createAllInputs_:Blockly.ScratchBlocks.ProcedureUtils.createAllInputs_,
 	updateDisplay_:Blockly.ScratchBlocks.ProcedureUtils.updateDisplay_,mutationToDom:Blockly.ScratchBlocks.ProcedureUtils.definitionMutationToDom,domToMutation:Blockly.ScratchBlocks.ProcedureUtils.definitionDomToMutation,populateArgument_:Blockly.ScratchBlocks.ProcedureUtils.populateArgumentOnDeclaration_,addProcedureLabel_:Blockly.ScratchBlocks.ProcedureUtils.addLabelEditor_,removeFieldCallback:Blockly.ScratchBlocks.ProcedureUtils.removeFieldCallback,createArgumentEditor_:Blockly.ScratchBlocks.ProcedureUtils.createArgumentEditor_,
-	focusLastEditor_:Blockly.ScratchBlocks.ProcedureUtils.focusLastEditor_,addLabelExternal:Blockly.ScratchBlocks.ProcedureUtils.addLabelExternal,addBooleanExternal:Blockly.ScratchBlocks.ProcedureUtils.addBooleanExternal,addStringNumberExternal:Blockly.ScratchBlocks.ProcedureUtils.addStringNumberExternal,onChangeFn:Blockly.ScratchBlocks.ProcedureUtils.updateDeclarationProcCode_};
+	focusLastEditor_:Blockly.ScratchBlocks.ProcedureUtils.focusLastEditor_,getWarp:Blockly.ScratchBlocks.ProcedureUtils.getWarp,setWarp:Blockly.ScratchBlocks.ProcedureUtils.setWarp,addLabelExternal:Blockly.ScratchBlocks.ProcedureUtils.addLabelExternal,addBooleanExternal:Blockly.ScratchBlocks.ProcedureUtils.addBooleanExternal,addStringNumberExternal:Blockly.ScratchBlocks.ProcedureUtils.addStringNumberExternal,onChangeFn:Blockly.ScratchBlocks.ProcedureUtils.updateDeclarationProcCode_};
 	Blockly.Blocks.argument_reporter_boolean={init:function(){this.jsonInit({message0:" %1",args0:[{type:"field_label_serializable",name:"VALUE",text:""}],extensions:["colours_more","output_boolean"]})}};Blockly.Blocks.argument_reporter_string_number={init:function(){this.jsonInit({message0:" %1",args0:[{type:"field_label_serializable",name:"VALUE",text:""}],extensions:["colours_more","output_number","output_string"]})}};
 	Blockly.Blocks.argument_editor_boolean={init:function(){this.jsonInit({message0:" %1",args0:[{type:"field_input_removable",name:"TEXT",text:"foo"}],colour:Blockly.Colours.textField,colourSecondary:Blockly.Colours.textField,colourTertiary:Blockly.Colours.textField,extensions:["output_boolean"]})},removeFieldCallback:Blockly.ScratchBlocks.ProcedureUtils.removeArgumentCallback_};
 	Blockly.Blocks.argument_editor_string_number={init:function(){this.jsonInit({message0:" %1",args0:[{type:"field_input_removable",name:"TEXT",text:"foo"}],colour:Blockly.Colours.textField,colourSecondary:Blockly.Colours.textField,colourTertiary:Blockly.Colours.textField,extensions:["output_number","output_string"]})},removeFieldCallback:Blockly.ScratchBlocks.ProcedureUtils.removeArgumentCallback_};Blockly.Blocks.control={};Blockly.Blocks.control_forever={init:function(){this.jsonInit({id:"control_forever",message0:"forever",message1:"%1",message2:"%1",lastDummyAlign2:"RIGHT",args1:[{type:"input_statement",name:"SUBSTACK"}],args2:[{type:"field_image",src:Blockly.mainWorkspace.options.pathToMedia+"repeat.svg",width:24,height:24,alt:"*",flip_rtl:!0}],category:Blockly.Categories.control,extensions:["colours_control","shape_end"]})}};
@@ -1540,7 +1540,7 @@ module.exports =
 	Blockly.Blocks.control_if_else={init:function(){this.jsonInit({type:"control_if_else",message0:"if %1 then",message1:"%1",message2:"else",message3:"%1",args0:[{type:"input_value",name:"CONDITION",check:"Boolean"}],args1:[{type:"input_statement",name:"SUBSTACK"}],args3:[{type:"input_statement",name:"SUBSTACK2"}],category:Blockly.Categories.control,extensions:["colours_control","shape_statement"]})}};
 	Blockly.Blocks.control_stop={init:function(){var a=new Blockly.FieldDropdown(function(){return this.sourceBlock_&&this.sourceBlock_.nextConnection&&this.sourceBlock_.nextConnection.isConnected()?[["other scripts in sprite","other scripts in sprite"]]:[["all","all"],["this script","this script"],["other scripts in sprite","other scripts in sprite"]]},function(a){this.sourceBlock_.setNextStatement("other scripts in sprite"==a)});this.appendDummyInput().appendField("stop").appendField(a,"STOP_OPTION");
 	this.setCategory(Blockly.Categories.control);this.setColour(Blockly.Colours.control.primary,Blockly.Colours.control.secondary,Blockly.Colours.control.tertiary);this.setPreviousStatement(!0)},mutationToDom:function(){var a=document.createElement("mutation"),b="other scripts in sprite"==this.getFieldValue("STOP_OPTION");a.setAttribute("hasnext",b);return a},domToMutation:function(a){a="true"==a.getAttribute("hasnext");this.setNextStatement(a)}};
-	Blockly.Blocks.control_wait={init:function(){this.jsonInit({id:"control_wait",message0:"wait %1 secs",args0:[{type:"input_value",name:"DURATION"}],category:Blockly.Categories.control,extensions:["colours_control","shape_statement"]})}};Blockly.Blocks.control_wait_until={init:function(){this.jsonInit({message0:"wait until %1",args0:[{type:"input_value",name:"CONDITION",check:"Boolean"}],category:Blockly.Categories.control,extensions:["colours_control","shape_statement"]})}};
+	Blockly.Blocks.control_wait={init:function(){this.jsonInit({id:"control_wait",message0:"wait %1 seconds",args0:[{type:"input_value",name:"DURATION"}],category:Blockly.Categories.control,extensions:["colours_control","shape_statement"]})}};Blockly.Blocks.control_wait_until={init:function(){this.jsonInit({message0:"wait until %1",args0:[{type:"input_value",name:"CONDITION",check:"Boolean"}],category:Blockly.Categories.control,extensions:["colours_control","shape_statement"]})}};
 	Blockly.Blocks.control_repeat_until={init:function(){this.jsonInit({message0:"repeat until %1",message1:"%1",message2:"%1",lastDummyAlign2:"RIGHT",args0:[{type:"input_value",name:"CONDITION",check:"Boolean"}],args1:[{type:"input_statement",name:"SUBSTACK"}],args2:[{type:"field_image",src:Blockly.mainWorkspace.options.pathToMedia+"repeat.svg",width:24,height:24,alt:"*",flip_rtl:!0}],category:Blockly.Categories.control,extensions:["colours_control","shape_statement"]})}};
 	Blockly.Blocks.control_start_as_clone={init:function(){this.jsonInit({id:"control_start_as_clone",message0:"when I start as a clone",args0:[],category:Blockly.Categories.control,extensions:["colours_control","shape_hat"]})}};Blockly.Blocks.control_create_clone_of_menu={init:function(){this.jsonInit({message0:"%1",args0:[{type:"field_dropdown",name:"CLONE_OPTION",options:[["myself","_myself_"]]}],extensions:["colours_control","output_string"]})}};
 	Blockly.Blocks.control_create_clone_of={init:function(){this.jsonInit({id:"control_start_as_clone",message0:"create clone of %1",args0:[{type:"input_value",name:"CLONE_OPTION"}],category:Blockly.Categories.control,extensions:["colours_control","shape_statement"]})}};Blockly.Blocks.control_delete_this_clone={init:function(){this.jsonInit({message0:"delete this clone",args0:[],category:Blockly.Categories.control,extensions:["colours_control","shape_end"]})}};Blockly.Blocks.sensing={};Blockly.Blocks.sensing_touchingobject={init:function(){this.jsonInit({message0:"touching %1?",args0:[{type:"input_value",name:"TOUCHINGOBJECTMENU"}],category:Blockly.Categories.sensing,extensions:["colours_sensing","output_boolean"]})}};Blockly.Blocks.sensing_touchingobjectmenu={init:function(){this.jsonInit({message0:"%1",args0:[{type:"field_dropdown",name:"TOUCHINGOBJECTMENU",options:[["mouse-pointer","_mouse_"],["edge","_edge_"]]}],extensions:["colours_sensing","output_string"]})}};
@@ -1592,8 +1592,8 @@ module.exports =
 	Blockly.Blocks.motion_sety={init:function(){this.jsonInit({message0:"set y to %1",args0:[{type:"input_value",name:"Y"}],category:Blockly.Categories.motion,extensions:["colours_motion","shape_statement"]})}};Blockly.Blocks.motion_ifonedgebounce={init:function(){this.jsonInit({message0:"if on edge, bounce",category:Blockly.Categories.motion,extensions:["colours_motion","shape_statement"]})}};
 	Blockly.Blocks.motion_setrotationstyle={init:function(){this.jsonInit({message0:"set rotation style %1",args0:[{type:"field_dropdown",name:"STYLE",options:[["left-right","left-right"],["don't rotate","don't rotate"],["all around","all around"]]}],category:Blockly.Categories.motion,extensions:["colours_motion","shape_statement"]})}};
 	Blockly.Blocks.motion_xposition={init:function(){this.jsonInit({message0:"x position",category:Blockly.Categories.motion,checkboxInFlyout:!0,extensions:["colours_motion","output_number"]})}};Blockly.Blocks.motion_yposition={init:function(){this.jsonInit({message0:"y position",category:Blockly.Categories.motion,checkboxInFlyout:!0,extensions:["colours_motion","output_number"]})}};
-	Blockly.Blocks.motion_direction={init:function(){this.jsonInit({message0:"direction",category:Blockly.Categories.motion,checkboxInFlyout:!0,extensions:["colours_motion","output_number"]})}};Blockly.Blocks.looks={};Blockly.Blocks.looks_sayforsecs={init:function(){this.jsonInit({message0:"say %1 for %2 secs",args0:[{type:"input_value",name:"MESSAGE"},{type:"input_value",name:"SECS"}],category:Blockly.Categories.looks,extensions:["colours_looks","shape_statement"]})}};Blockly.Blocks.looks_say={init:function(){this.jsonInit({message0:"say %1",args0:[{type:"input_value",name:"MESSAGE"}],category:Blockly.Categories.looks,extensions:["colours_looks","shape_statement"]})}};
-	Blockly.Blocks.looks_thinkforsecs={init:function(){this.jsonInit({message0:"think %1 for %2 secs",args0:[{type:"input_value",name:"MESSAGE"},{type:"input_value",name:"SECS"}],category:Blockly.Categories.looks,extensions:["colours_looks","shape_statement"]})}};Blockly.Blocks.looks_think={init:function(){this.jsonInit({message0:"think %1",args0:[{type:"input_value",name:"MESSAGE"}],category:Blockly.Categories.looks,extensions:["colours_looks","shape_statement"]})}};
+	Blockly.Blocks.motion_direction={init:function(){this.jsonInit({message0:"direction",category:Blockly.Categories.motion,checkboxInFlyout:!0,extensions:["colours_motion","output_number"]})}};Blockly.Blocks.looks={};Blockly.Blocks.looks_sayforsecs={init:function(){this.jsonInit({message0:"say %1 for %2 seconds",args0:[{type:"input_value",name:"MESSAGE"},{type:"input_value",name:"SECS"}],category:Blockly.Categories.looks,extensions:["colours_looks","shape_statement"]})}};Blockly.Blocks.looks_say={init:function(){this.jsonInit({message0:"say %1",args0:[{type:"input_value",name:"MESSAGE"}],category:Blockly.Categories.looks,extensions:["colours_looks","shape_statement"]})}};
+	Blockly.Blocks.looks_thinkforsecs={init:function(){this.jsonInit({message0:"think %1 for %2 seconds",args0:[{type:"input_value",name:"MESSAGE"},{type:"input_value",name:"SECS"}],category:Blockly.Categories.looks,extensions:["colours_looks","shape_statement"]})}};Blockly.Blocks.looks_think={init:function(){this.jsonInit({message0:"think %1",args0:[{type:"input_value",name:"MESSAGE"}],category:Blockly.Categories.looks,extensions:["colours_looks","shape_statement"]})}};
 	Blockly.Blocks.looks_show={init:function(){this.jsonInit({message0:"show",category:Blockly.Categories.looks,extensions:["colours_looks","shape_statement"]})}};Blockly.Blocks.looks_hide={init:function(){this.jsonInit({message0:"hide",category:Blockly.Categories.looks,extensions:["colours_looks","shape_statement"]})}};Blockly.Blocks.looks_effect_menu_options=[["color","COLOR"],["fisheye","FISHEYE"],["whirl","WHIRL"],["pixelate","PIXELATE"],["mosaic","MOSAIC"],["brightness","BRIGHTNESS"],["ghost","GHOST"]];
 	Blockly.Blocks.looks_changeeffectby={init:function(){this.jsonInit({message0:"change %1 effect by %2",args0:[{type:"field_dropdown",name:"EFFECT",options:Blockly.Blocks.looks_effect_menu_options},{type:"input_value",name:"CHANGE"}],category:Blockly.Categories.looks,extensions:["colours_looks","shape_statement"]})}};
 	Blockly.Blocks.looks_seteffectto={init:function(){this.jsonInit({message0:"set %1 effect to %2",args0:[{type:"field_dropdown",name:"EFFECT",options:Blockly.Blocks.looks_effect_menu_options},{type:"input_value",name:"VALUE"}],category:Blockly.Categories.looks,extensions:["colours_looks","shape_statement"]})}};Blockly.Blocks.looks_cleargraphiceffects={init:function(){this.jsonInit({message0:"clear graphic effects",category:Blockly.Categories.looks,extensions:["colours_looks","shape_statement"]})}};
@@ -4294,13 +4294,14 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
 */
 var PanEffect = function () {
     /**
-    * @param {AudioContext} audioContext - a webAudio context
+    * @param {AudioEngine} audioEngine - the audio engine.
     * @constructor
     */
-    function PanEffect(audioContext) {
+    function PanEffect(audioEngine) {
         _classCallCheck(this, PanEffect);
 
-        this.audioContext = audioContext;
+        this.audioEngine = audioEngine;
+        this.audioContext = this.audioEngine.audioContext;
         this.value = 0;
 
         this.input = this.audioContext.createGain();
@@ -4332,8 +4333,11 @@ var PanEffect = function () {
 
             // Use trig functions for equal-loudness panning
             // See e.g. https://docs.cycling74.com/max7/tutorials/13_panningchapter01
-            this.leftGain.gain.value = Math.cos(p * Math.PI / 2);
-            this.rightGain.gain.value = Math.sin(p * Math.PI / 2);
+            var leftVal = Math.cos(p * Math.PI / 2);
+            var rightVal = Math.sin(p * Math.PI / 2);
+
+            this.leftGain.gain.setTargetAtTime(leftVal, 0, this.audioEngine.DECAY_TIME);
+            this.rightGain.gain.setTargetAtTime(rightVal, 0, this.audioEngine.DECAY_TIME);
         }
 
         /**
@@ -4897,7 +4901,7 @@ var AudioPlayer = function () {
 
         // Create the audio effects
         this.pitchEffect = new PitchEffect();
-        this.panEffect = new PanEffect(this.audioEngine.audioContext);
+        this.panEffect = new PanEffect(this.audioEngine);
 
         // Chain the audio effects together
         // effectsNode -> panEffect -> audioEngine.input
@@ -5006,7 +5010,8 @@ var AudioPlayer = function () {
         value: function clearEffects() {
             this.panEffect.set(0);
             this.pitchEffect.set(0, this.activeSoundPlayers);
-            this.effectsNode.gain.value = 1;
+            if (this.audioEngine === null) return;
+            this.effectsNode.gain.setTargetAtTime(1.0, 0, this.audioEngine.DECAY_TIME);
         }
 
         /**
@@ -5017,7 +5022,8 @@ var AudioPlayer = function () {
     }, {
         key: 'setVolume',
         value: function setVolume(value) {
-            this.effectsNode.gain.value = value / 100;
+            if (this.audioEngine === null) return;
+            this.effectsNode.gain.setTargetAtTime(value / 100, 0, this.audioEngine.DECAY_TIME);
         }
     }]);
 
@@ -5215,6 +5221,19 @@ var AudioEngine = function () {
                 pitch: 'pitch',
                 pan: 'pan'
             };
+        }
+
+        /**
+         * A short duration, for use as a time constant for exponential audio parameter transitions.
+         * See:
+         * https://developer.mozilla.org/en-US/docs/Web/API/AudioParam/setTargetAtTime
+         * @const {number}
+         */
+
+    }, {
+        key: 'DECAY_TIME',
+        get: function get() {
+            return 0.001;
         }
     }]);
 
