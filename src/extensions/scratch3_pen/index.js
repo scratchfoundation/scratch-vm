@@ -446,7 +446,7 @@ class Scratch3PenBlocks {
                     blockType: BlockType.COMMAND,
                     text: formatMessage({
                         id: 'pen.setHue',
-                        default: 'set pen hue to [HUE]',
+                        default: 'set pen color to [HUE]',
                         description: 'legacy pen blocks - set pen color to number'
                     }),
                     arguments: {
@@ -462,7 +462,7 @@ class Scratch3PenBlocks {
                     blockType: BlockType.COMMAND,
                     text: formatMessage({
                         id: 'pen.changeHue',
-                        default: 'change pen hue by [HUE]',
+                        default: 'change pen color by [HUE]',
                         description: 'legacy pen blocks - change pen color'
                     }),
                     arguments: {
