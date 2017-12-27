@@ -114,7 +114,7 @@ var _createClass = function () { function defineProperties(target, props) { for 
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
-var Color = __webpack_require__(18);
+var Color = __webpack_require__(19);
 
 /**
  * @fileoverview
@@ -893,7 +893,7 @@ module.exports = MathUtil;
 
 /*<replacement>*/
 
-var processNextTick = __webpack_require__(20);
+var processNextTick = __webpack_require__(21);
 /*</replacement>*/
 
 /*<replacement>*/
@@ -1079,7 +1079,7 @@ module.exports = {
 
 var base64 = __webpack_require__(32)
 var ieee754 = __webpack_require__(33)
-var isArray = __webpack_require__(21)
+var isArray = __webpack_require__(22)
 
 exports.Buffer = Buffer
 exports.SlowBuffer = SlowBuffer
@@ -4087,6 +4087,101 @@ function objectToString(o) {
 "use strict";
 
 
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+/**
+ * @fileoverview
+ * Object representing a Scratch variable.
+ */
+
+var uid = __webpack_require__(36);
+
+var Variable = function () {
+    /**
+     * @param {string} id Id of the variable.
+     * @param {string} name Name of the variable.
+     * @param {string} type Type of the variable, one of '' or 'list'
+     * @param {boolean} isCloud Whether the variable is stored in the cloud.
+     * @constructor
+     */
+    function Variable(id, name, type, isCloud) {
+        _classCallCheck(this, Variable);
+
+        this.id = id || uid();
+        this.name = name;
+        this.type = type;
+        this.isCloud = isCloud;
+        switch (this.type) {
+            case Variable.SCALAR_TYPE:
+                this.value = 0;
+                break;
+            case Variable.LIST_TYPE:
+                this.value = [];
+                break;
+            case Variable.BROADCAST_MESSAGE_TYPE:
+                this.value = this.name;
+                break;
+            default:
+                throw new Error('Invalid variable type: ' + this.type);
+        }
+    }
+
+    _createClass(Variable, [{
+        key: 'toXML',
+        value: function toXML() {
+            return '<variable type="' + this.type + '" id="' + this.id + '">' + this.name + '</variable>';
+        }
+
+        /**
+         * Type representation for scalar variables.
+         * This is currently represented as ''
+         * for compatibility with blockly.
+         * @const {string}
+         */
+
+    }], [{
+        key: 'SCALAR_TYPE',
+        get: function get() {
+            return '';
+        }
+
+        /**
+         * Type representation for list variables.
+         * @const {string}
+         */
+
+    }, {
+        key: 'LIST_TYPE',
+        get: function get() {
+            return 'list';
+        }
+
+        /**
+         * Type representation for list variables.
+         * @const {string}
+         */
+
+    }, {
+        key: 'BROADCAST_MESSAGE_TYPE',
+        get: function get() {
+            return 'broadcast_msg';
+        }
+    }]);
+
+    return Variable;
+}();
+
+module.exports = Variable;
+
+/***/ }),
+/* 18 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
 var ArgumentType = {
     ANGLE: 'angle',
     BOOLEAN: 'Boolean',
@@ -4098,7 +4193,7 @@ var ArgumentType = {
 module.exports = ArgumentType;
 
 /***/ }),
-/* 18 */
+/* 19 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -4356,7 +4451,7 @@ var Color = function () {
 module.exports = Color;
 
 /***/ }),
-/* 19 */
+/* 20 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -5433,7 +5528,7 @@ var RenderedTarget = function (_Target) {
 module.exports = RenderedTarget;
 
 /***/ }),
-/* 20 */
+/* 21 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -5484,7 +5579,7 @@ function nextTick(fn, arg1, arg2, arg3) {
 /* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(15)))
 
 /***/ }),
-/* 21 */
+/* 22 */
 /***/ (function(module, exports) {
 
 var toString = {}.toString;
@@ -5495,7 +5590,7 @@ module.exports = Array.isArray || function (arr) {
 
 
 /***/ }),
-/* 22 */
+/* 23 */
 /***/ (function(module, exports, __webpack_require__) {
 
 /* eslint-disable node/no-deprecated-api */
@@ -5563,7 +5658,7 @@ SafeBuffer.allocUnsafeSlow = function (size) {
 
 
 /***/ }),
-/* 23 */
+/* 24 */
 /***/ (function(module, exports, __webpack_require__) {
 
 /**
@@ -10547,101 +10642,6 @@ SafeBuffer.allocUnsafeSlow = function (size) {
 }));
 
 /***/ }),
-/* 24 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-
-var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
-
-function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
-
-/**
- * @fileoverview
- * Object representing a Scratch variable.
- */
-
-var uid = __webpack_require__(36);
-
-var Variable = function () {
-    /**
-     * @param {string} id Id of the variable.
-     * @param {string} name Name of the variable.
-     * @param {string} type Type of the variable, one of '' or 'list'
-     * @param {boolean} isCloud Whether the variable is stored in the cloud.
-     * @constructor
-     */
-    function Variable(id, name, type, isCloud) {
-        _classCallCheck(this, Variable);
-
-        this.id = id || uid();
-        this.name = name;
-        this.type = type;
-        this.isCloud = isCloud;
-        switch (this.type) {
-            case Variable.SCALAR_TYPE:
-                this.value = 0;
-                break;
-            case Variable.LIST_TYPE:
-                this.value = [];
-                break;
-            case Variable.BROADCAST_MESSAGE_TYPE:
-                this.value = this.name;
-                break;
-            default:
-                throw new Error('Invalid variable type: ' + this.type);
-        }
-    }
-
-    _createClass(Variable, [{
-        key: 'toXML',
-        value: function toXML() {
-            return '<variable type="' + this.type + '" id="' + this.id + '">' + this.name + '</variable>';
-        }
-
-        /**
-         * Type representation for scalar variables.
-         * This is currently represented as ''
-         * for compatibility with blockly.
-         * @const {string}
-         */
-
-    }], [{
-        key: 'SCALAR_TYPE',
-        get: function get() {
-            return '';
-        }
-
-        /**
-         * Type representation for list variables.
-         * @const {string}
-         */
-
-    }, {
-        key: 'LIST_TYPE',
-        get: function get() {
-            return 'list';
-        }
-
-        /**
-         * Type representation for list variables.
-         * @const {string}
-         */
-
-    }, {
-        key: 'BROADCAST_MESSAGE_TYPE',
-        get: function get() {
-            return 'broadcast_msg';
-        }
-    }]);
-
-    return Variable;
-}();
-
-module.exports = Variable;
-
-/***/ }),
 /* 25 */
 /***/ (function(module, exports, __webpack_require__) {
 
@@ -11543,7 +11543,7 @@ exports.write = function (buffer, value, offset, isLE, mLen, nBytes) {
 
 /*<replacement>*/
 
-var processNextTick = __webpack_require__(20);
+var processNextTick = __webpack_require__(21);
 /*</replacement>*/
 
 module.exports = Writable;
@@ -11595,7 +11595,7 @@ var Stream = __webpack_require__(51);
 /*</replacement>*/
 
 /*<replacement>*/
-var Buffer = __webpack_require__(22).Buffer;
+var Buffer = __webpack_require__(23).Buffer;
 var OurUint8Array = global.Uint8Array || function () {};
 function _uint8ArrayToBuffer(chunk) {
   return Buffer.from(chunk);
@@ -12187,7 +12187,7 @@ Writable.prototype._destroy = function (err, cb) {
 "use strict";
 
 
-var Buffer = __webpack_require__(22).Buffer;
+var Buffer = __webpack_require__(23).Buffer;
 
 var isEncoding = Buffer.isEncoding || function (encoding) {
   encoding = '' + encoding;
@@ -14932,13 +14932,13 @@ WritableStream.prototype._write = function(chunk, encoding, cb){
 
 /*<replacement>*/
 
-var processNextTick = __webpack_require__(20);
+var processNextTick = __webpack_require__(21);
 /*</replacement>*/
 
 module.exports = Readable;
 
 /*<replacement>*/
-var isArray = __webpack_require__(21);
+var isArray = __webpack_require__(22);
 /*</replacement>*/
 
 /*<replacement>*/
@@ -14962,7 +14962,7 @@ var Stream = __webpack_require__(51);
 // TODO(bmeurer): Change this back to const once hole checks are
 // properly optimized away early in Ignition+TurboFan.
 /*<replacement>*/
-var Buffer = __webpack_require__(22).Buffer;
+var Buffer = __webpack_require__(23).Buffer;
 var OurUint8Array = global.Uint8Array || function () {};
 function _uint8ArrayToBuffer(chunk) {
   return Buffer.from(chunk);
@@ -15932,7 +15932,7 @@ module.exports = __webpack_require__(4).EventEmitter;
 
 /*<replacement>*/
 
-var processNextTick = __webpack_require__(20);
+var processNextTick = __webpack_require__(21);
 /*</replacement>*/
 
 // undocumented cb() API, needed for core, not for public API
@@ -16253,7 +16253,7 @@ var _createClass = function () { function defineProperties(target, props) { for 
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
-var RenderedTarget = __webpack_require__(19);
+var RenderedTarget = __webpack_require__(20);
 var Blocks = __webpack_require__(13);
 
 var _require = __webpack_require__(27),
@@ -16436,6 +16436,7 @@ var sb2 = __webpack_require__(145);
 var sb3 = __webpack_require__(147);
 var StringUtil = __webpack_require__(12);
 var formatMessage = __webpack_require__(39);
+var Variable = __webpack_require__(17);
 
 var _require = __webpack_require__(28),
     loadCostume = _require.loadCostume;
@@ -17256,6 +17257,34 @@ var VirtualMachine = function (_EventEmitter) {
     }, {
         key: 'emitWorkspaceUpdate',
         value: function emitWorkspaceUpdate() {
+            // Create a list of broadcast message Ids according to the stage variables
+            var stageVariables = this.runtime.getTargetForStage().variables;
+            var messageIds = [];
+            for (var varId in stageVariables) {
+                if (stageVariables[varId].type === Variable.BROADCAST_MESSAGE_TYPE) {
+                    messageIds.push(varId);
+                }
+            }
+            // Go through all blocks on all targets, removing referenced
+            // broadcast ids from the list.
+            for (var i = 0; i < this.runtime.targets.length; i++) {
+                var currTarget = this.runtime.targets[i];
+                var currBlocks = currTarget.blocks._blocks;
+                for (var blockId in currBlocks) {
+                    if (currBlocks[blockId].fields.BROADCAST_OPTION) {
+                        var id = currBlocks[blockId].fields.BROADCAST_OPTION.id;
+                        var index = messageIds.indexOf(id);
+                        if (index !== -1) {
+                            messageIds = messageIds.slice(0, index).concat(messageIds.slice(index + 1));
+                        }
+                    }
+                }
+            }
+            // Anything left in messageIds is not referenced by a block, so delete it.
+            for (var _i = 0; _i < messageIds.length; _i++) {
+                var _id = messageIds[_i];
+                delete this.runtime.getTargetForStage().variables[_id];
+            }
             var variableMap = Object.assign({}, this.runtime.getTargetForStage().variables, this.editingTarget.variables);
 
             var variables = Object.keys(variableMap).map(function (k) {
@@ -18423,14 +18452,14 @@ var _createClass = function () { function defineProperties(target, props) { for 
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
-var ArgumentType = __webpack_require__(17);
+var ArgumentType = __webpack_require__(18);
 var BlockType = __webpack_require__(10);
 var Cast = __webpack_require__(2);
 var Clone = __webpack_require__(11);
-var Color = __webpack_require__(18);
+var Color = __webpack_require__(19);
 var formatMessage = __webpack_require__(39);
 var MathUtil = __webpack_require__(6);
-var RenderedTarget = __webpack_require__(19);
+var RenderedTarget = __webpack_require__(20);
 var log = __webpack_require__(1);
 
 /**
@@ -19929,10 +19958,10 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
 var EventEmitter = __webpack_require__(4);
 
 var Blocks = __webpack_require__(13);
-var Variable = __webpack_require__(24);
+var Variable = __webpack_require__(17);
 var uid = __webpack_require__(36);
 
-var _require = __webpack_require__(23),
+var _require = __webpack_require__(24),
     Map = _require.Map;
 
 var log = __webpack_require__(1);
@@ -20043,21 +20072,47 @@ var Target = function (_EventEmitter) {
          * if it exists.
          * @param {string} id Id of the variable.
          * @param {string} name Name of the variable.
-         * @return {!Variable} Variable object.
+         * @return {?Variable} Variable object.
          */
 
     }, {
         key: 'lookupBroadcastMsg',
         value: function lookupBroadcastMsg(id, name) {
-            var broadcastMsg = this.lookupVariableById(id);
+            var broadcastMsg = void 0;
+            if (id) {
+                broadcastMsg = this.lookupVariableById(id);
+            } else if (name) {
+                broadcastMsg = this.lookupBroadcastByInputValue(name);
+            } else {
+                log.error('Cannot find broadcast message if neither id nor name are provided.');
+            }
             if (broadcastMsg) {
-                if (broadcastMsg.name !== name) {
+                if (name && broadcastMsg.name.toLowerCase() !== name.toLowerCase()) {
                     log.error('Found broadcast message with id: ' + id + ', but' + ('its name, ' + broadcastMsg.name + ' did not match expected name ' + name + '.'));
                 }
                 if (broadcastMsg.type !== Variable.BROADCAST_MESSAGE_TYPE) {
                     log.error('Found variable with id: ' + id + ', but its type ' + broadcastMsg.type + ('did not match expected type ' + Variable.BROADCAST_MESSAGE_TYPE));
                 }
                 return broadcastMsg;
+            }
+        }
+
+        /**
+         * Look up a broadcast message with the given name and return the variable
+         * if it exists. Does not create a new broadcast message variable if
+         * it doesn't exist.
+         * @param {string} name Name of the variable.
+         * @return {?Variable} Variable object.
+         */
+
+    }, {
+        key: 'lookupBroadcastByInputValue',
+        value: function lookupBroadcastByInputValue(name) {
+            var vars = this.variables;
+            for (var propName in vars) {
+                if (vars[propName].type === Variable.BROADCAST_MESSAGE_TYPE && vars[propName].name.toLowerCase() === name.toLowerCase()) {
+                    return vars[propName];
+                }
             }
         }
 
@@ -20090,7 +20145,7 @@ var Target = function (_EventEmitter) {
         * Search begins for local lists; then look for globals.
         * @param {!string} id Id of the list.
         * @param {!string} name Name of the list.
-        * @return {!List} List object.
+        * @return {!Varible} Variable object representing the found/created list.
          */
 
     }, {
@@ -20942,7 +20997,7 @@ Stream.prototype.pipe = function(dest, options) {
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
-var Buffer = __webpack_require__(22).Buffer;
+var Buffer = __webpack_require__(23).Buffer;
 /*</replacement>*/
 
 function copyBuffer(src, target, offset) {
@@ -22492,7 +22547,7 @@ module.exports = xmlEscape;
 "use strict";
 
 
-var _require = __webpack_require__(23),
+var _require = __webpack_require__(24),
     Record = _require.Record;
 
 var MonitorRecord = Record({
@@ -22519,9 +22574,9 @@ var _createClass = function () { function defineProperties(target, props) { for 
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
-var ArgumentType = __webpack_require__(17);
+var ArgumentType = __webpack_require__(18);
 var BlockType = __webpack_require__(10);
-var color = __webpack_require__(18);
+var color = __webpack_require__(19);
 var log = __webpack_require__(1);
 
 /**
@@ -23582,7 +23637,7 @@ var _createClass = function () { function defineProperties(target, props) { for 
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
-var ArgumentType = __webpack_require__(17);
+var ArgumentType = __webpack_require__(18);
 var BlockType = __webpack_require__(10);
 var Clone = __webpack_require__(11);
 var Cast = __webpack_require__(2);
@@ -24465,12 +24520,12 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
 
 var EventEmitter = __webpack_require__(4);
 
-var _require = __webpack_require__(23),
+var _require = __webpack_require__(24),
     OrderedMap = _require.OrderedMap;
 
 var escapeHtml = __webpack_require__(116);
 
-var ArgumentType = __webpack_require__(17);
+var ArgumentType = __webpack_require__(18);
 var Blocks = __webpack_require__(13);
 var BlockType = __webpack_require__(10);
 var Sequencer = __webpack_require__(117);
@@ -26851,15 +26906,15 @@ var BlockUtility = __webpack_require__(119);
 var log = __webpack_require__(1);
 var Thread = __webpack_require__(26);
 
-var _require = __webpack_require__(23),
+var _require = __webpack_require__(24),
     Map = _require.Map;
+
+var cast = __webpack_require__(2);
 
 /**
  * Single BlockUtility instance reused by execute for every pritimive ran.
  * @const
  */
-
-
 var blockUtility = new BlockUtility();
 
 /**
@@ -27054,7 +27109,30 @@ var execute = function execute(sequencer, thread) {
             currentStackFrame.waitingReporter = null;
             thread.popStack();
         }
-        argValues[inputName] = currentStackFrame.reported[inputName];
+        var inputValue = currentStackFrame.reported[inputName];
+        if (inputName === 'BROADCAST_INPUT') {
+            var broadcastInput = inputs[inputName];
+            // Check if something is plugged into the broadcast block, or
+            // if the shadow dropdown menu is being used.
+            if (broadcastInput.block === broadcastInput.shadow) {
+                // Shadow dropdown menu is being used.
+                // Get the appropriate information out of it.
+                var shadow = blockContainer.getBlock(broadcastInput.shadow);
+                var broadcastField = shadow.fields.BROADCAST_OPTION;
+                argValues.BROADCAST_OPTION = {
+                    id: broadcastField.id,
+                    name: broadcastField.value
+                };
+            } else {
+                // Something is plugged into the broadcast input.
+                // Cast it to a string. We don't need an id here.
+                argValues.BROADCAST_OPTION = {
+                    name: cast.toString(inputValue)
+                };
+            }
+        } else {
+            argValues[inputName] = inputValue;
+        }
     }
 
     // Add any mutation to args (e.g., for procedures).
@@ -29436,7 +29514,7 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
 
 var Cast = __webpack_require__(2);
 var Clone = __webpack_require__(11);
-var RenderedTarget = __webpack_require__(19);
+var RenderedTarget = __webpack_require__(20);
 
 /**
  * @typedef {object} BubbleState - the bubble state associated with a particular target.
@@ -31390,13 +31468,13 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
  */
 
 var Blocks = __webpack_require__(13);
-var RenderedTarget = __webpack_require__(19);
+var RenderedTarget = __webpack_require__(20);
 var Sprite = __webpack_require__(55);
-var Color = __webpack_require__(18);
+var Color = __webpack_require__(19);
 var log = __webpack_require__(1);
 var uid = __webpack_require__(36);
 var specMap = __webpack_require__(146);
-var Variable = __webpack_require__(24);
+var Variable = __webpack_require__(17);
 
 var _require = __webpack_require__(28),
     loadCostume = _require.loadCostume;
@@ -31563,14 +31641,23 @@ var generateVariableIdGetter = function () {
 
 var globalBroadcastMsgStateGenerator = function () {
     var broadcastMsgNameMap = {};
+    var allBroadcastFields = [];
+    var emptyStringName = uid();
     return function (topLevel) {
         if (topLevel) broadcastMsgNameMap = {};
         return {
-            broadcastMsgMapUpdater: function broadcastMsgMapUpdater(name) {
+            broadcastMsgMapUpdater: function broadcastMsgMapUpdater(name, field) {
+                name = name.toLowerCase();
+                if (name === '') {
+                    name = emptyStringName;
+                }
                 broadcastMsgNameMap[name] = 'broadcastMsgId-' + name;
+                allBroadcastFields.push(field);
                 return broadcastMsgNameMap[name];
             },
-            globalBroadcastMsgs: broadcastMsgNameMap
+            globalBroadcastMsgs: broadcastMsgNameMap,
+            allBroadcastFields: allBroadcastFields,
+            emptyMsgName: emptyStringName
         };
     };
 }();
@@ -31719,6 +31806,31 @@ var parseScratchObject = function parseScratchObject(object, runtime, extensions
             // all other targets have finished processing.
             if (target.isStage) {
                 var allBroadcastMsgs = globalBroadcastMsgObj.globalBroadcastMsgs;
+                var allBroadcastMsgFields = globalBroadcastMsgObj.allBroadcastFields;
+                var oldEmptyMsgName = globalBroadcastMsgObj.emptyMsgName;
+                if (allBroadcastMsgs[oldEmptyMsgName]) {
+                    // Find a fresh 'messageN'
+                    var currIndex = 1;
+                    while (allBroadcastMsgs['message' + currIndex]) {
+                        currIndex += 1;
+                    }
+                    var newEmptyMsgName = 'message' + currIndex;
+                    // Add the new empty message name to the broadcast message
+                    // name map, and assign it the old id.
+                    // Then, delete the old entry in map.
+                    allBroadcastMsgs[newEmptyMsgName] = allBroadcastMsgs[oldEmptyMsgName];
+                    delete allBroadcastMsgs[oldEmptyMsgName];
+                    // Now update all the broadcast message fields with
+                    // the new empty message name.
+                    for (var _i = 0; _i < allBroadcastMsgFields.length; _i++) {
+                        if (allBroadcastMsgFields[_i].value === '') {
+                            allBroadcastMsgFields[_i].value = newEmptyMsgName;
+                        }
+                    }
+                }
+                // Traverse the broadcast message name map and create
+                // broadcast messages as variables on the stage (which is this
+                // target).
                 for (var msgName in allBroadcastMsgs) {
                     var msgId = allBroadcastMsgs[msgName];
                     var newMsg = new Variable(msgId, msgName, Variable.BROADCAST_MESSAGE_TYPE, false);
@@ -31861,6 +31973,11 @@ var parseBlock = function parseBlock(sb2block, addBroadcastMsg, getVariableId, e
                 if (shadowObscured) {
                     fieldValue = '#990000';
                 }
+            } else if (expectedArg.inputOp === 'event_broadcast_menu') {
+                fieldName = 'BROADCAST_OPTION';
+                if (shadowObscured) {
+                    fieldValue = '';
+                }
             } else if (shadowObscured) {
                 // Filled drop-down menu.
                 fieldValue = '';
@@ -31870,6 +31987,23 @@ var parseBlock = function parseBlock(sb2block, addBroadcastMsg, getVariableId, e
                 name: fieldName,
                 value: fieldValue
             };
+            // event_broadcast_menus have some extra properties to add to the
+            // field and a different value than the rest
+            if (expectedArg.inputOp === 'event_broadcast_menu') {
+                if (!shadowObscured) {
+                    // Need to update the broadcast message name map with
+                    // the value of this field.
+                    // Also need to provide the fields[fieldName] object,
+                    // so that we can later update its value property, e.g.
+                    // if sb2 message name is empty string, we will later
+                    // replace this field's value with messageN
+                    // once we can traverse through all the existing message names
+                    // and come up with a fresh messageN.
+                    var broadcastId = addBroadcastMsg(fieldValue, fields[fieldName]);
+                    fields[fieldName].id = broadcastId;
+                }
+                fields[fieldName].variableType = expectedArg.variableType;
+            }
             activeBlock.children.push({
                 id: inputUid,
                 opcode: expectedArg.inputOp,
@@ -31896,9 +32030,15 @@ var parseBlock = function parseBlock(sb2block, addBroadcastMsg, getVariableId, e
                 // Add `id` property to variable fields
                 activeBlock.fields[expectedArg.fieldName].id = getVariableId(providedArg);
             } else if (expectedArg.fieldName === 'BROADCAST_OPTION') {
-                // add the name in this field to the broadcast msg name map
-                var broadcastId = addBroadcastMsg(providedArg);
-                activeBlock.fields[expectedArg.fieldName].id = broadcastId;
+                // Add the name in this field to the broadcast msg name map.
+                // Also need to provide the fields[fieldName] object,
+                // so that we can later update its value property, e.g.
+                // if sb2 message name is empty string, we will later
+                // replace this field's value with messageN
+                // once we can traverse through all the existing message names
+                // and come up with a fresh messageN.
+                var _broadcastId = addBroadcastMsg(providedArg, activeBlock.fields[expectedArg.fieldName]);
+                activeBlock.fields[expectedArg.fieldName].id = _broadcastId;
             }
             var varType = expectedArg.variableType;
             if (typeof varType === 'string') {
@@ -32005,7 +32145,7 @@ module.exports = {
  * Finally, I filled in the expected arguments as below.
  */
 
-var Variable = __webpack_require__(24);
+var Variable = __webpack_require__(17);
 
 /**
  * @typedef {object} SB2SpecMap_blockInfo
@@ -32522,16 +32662,18 @@ var specMap = {
     'broadcast:': {
         opcode: 'event_broadcast',
         argMap: [{
-            type: 'field',
-            fieldName: 'BROADCAST_OPTION',
+            type: 'input',
+            inputOp: 'event_broadcast_menu',
+            inputName: 'BROADCAST_INPUT',
             variableType: Variable.BROADCAST_MESSAGE_TYPE
         }]
     },
     'doBroadcastAndWait': {
         opcode: 'event_broadcastandwait',
         argMap: [{
-            type: 'field',
-            fieldName: 'BROADCAST_OPTION',
+            type: 'input',
+            inputOp: 'event_broadcast_menu',
+            inputName: 'BROADCAST_INPUT',
             variableType: Variable.BROADCAST_MESSAGE_TYPE
         }]
     },
@@ -33290,7 +33432,7 @@ module.exports = specMap;
 var vmPackage = __webpack_require__(148);
 var Blocks = __webpack_require__(13);
 var Sprite = __webpack_require__(55);
-var Variable = __webpack_require__(24);
+var Variable = __webpack_require__(17);
 
 var _require = __webpack_require__(28),
     loadCostume = _require.loadCostume;
