@@ -18849,7 +18849,7 @@ var Scratch3PenBlocks = function () {
                     blockType: BlockType.COMMAND,
                     text: formatMessage({
                         id: 'pen.setHue',
-                        default: 'set pen hue to [HUE]',
+                        default: 'set pen color to [HUE]',
                         description: 'legacy pen blocks - set pen color to number'
                     }),
                     arguments: {
@@ -18864,7 +18864,7 @@ var Scratch3PenBlocks = function () {
                     blockType: BlockType.COMMAND,
                     text: formatMessage({
                         id: 'pen.changeHue',
-                        default: 'change pen hue by [HUE]',
+                        default: 'change pen color by [HUE]',
                         description: 'legacy pen blocks - change pen color'
                     }),
                     arguments: {
@@ -19110,6 +19110,8 @@ var Scratch3PenBlocks = function () {
             var hueValue = Cast.toNumber(args.HUE);
             var colorValue = hueValue / 2;
             this._setOrChangeColorParam(ColorParam.COLOR, colorValue, penState, false);
+
+            this._legacyUpdatePenColor(penState);
         }
 
         /**
@@ -19126,6 +19128,8 @@ var Scratch3PenBlocks = function () {
             var hueChange = Cast.toNumber(args.HUE);
             var colorChange = hueChange / 2;
             this._setOrChangeColorParam(ColorParam.COLOR, colorChange, penState, true);
+
+            this._legacyUpdatePenColor(penState);
         }
 
         /**
@@ -19148,25 +19152,10 @@ var Scratch3PenBlocks = function () {
             newShade = newShade % 200;
             if (newShade < 0) newShade += 200;
 
-            // Create the new color in RGB using the scratch 2 "shade" model
-            var rgb = Color.hsvToRgb({ h: penState.color * 360 / 100, s: 1, v: 1 });
-            var shade = newShade > 100 ? 200 - newShade : newShade;
-            if (shade < 50) {
-                rgb = Color.mixRgb(Color.RGB_BLACK, rgb, (10 + shade) / 60);
-            } else {
-                rgb = Color.mixRgb(rgb, Color.RGB_WHITE, (shade - 50) / 60);
-            }
-
-            // Update the pen state according to new color
-            var hsv = Color.rgbToHsv(rgb);
-            penState.color = 100 * hsv.h / 360;
-            penState.saturation = 100 * hsv.s;
-            penState.brightness = 100 * hsv.v;
-
             // And store the shade that was used to compute this new color for later use.
             penState._shade = newShade;
 
-            this._updatePenColor(penState);
+            this._legacyUpdatePenColor(penState);
         }
 
         /**
@@ -19183,6 +19172,33 @@ var Scratch3PenBlocks = function () {
             var penState = this._getPenState(util.target);
             var shadeChange = Cast.toNumber(args.SHADE);
             this.setPenShadeToNumber({ SHADE: penState._shade + shadeChange }, util);
+        }
+
+        /**
+         * Update the pen state's color from its hue & shade values, Scratch 2.0 style.
+         * @param {object} penState - update the HSV & RGB values in this pen state from its hue & shade values.
+         * @private
+         */
+
+    }, {
+        key: '_legacyUpdatePenColor',
+        value: function _legacyUpdatePenColor(penState) {
+            // Create the new color in RGB using the scratch 2 "shade" model
+            var rgb = Color.hsvToRgb({ h: penState.color * 360 / 100, s: 1, v: 1 });
+            var shade = penState._shade > 100 ? 200 - penState._shade : penState._shade;
+            if (shade < 50) {
+                rgb = Color.mixRgb(Color.RGB_BLACK, rgb, (10 + shade) / 60);
+            } else {
+                rgb = Color.mixRgb(rgb, Color.RGB_WHITE, (shade - 50) / 60);
+            }
+
+            // Update the pen state according to new color
+            var hsv = Color.rgbToHsv(rgb);
+            penState.color = 100 * hsv.h / 360;
+            penState.saturation = 100 * hsv.s;
+            penState.brightness = 100 * hsv.v;
+
+            this._updatePenColor(penState);
         }
     }], [{
         key: 'DEFAULT_PEN_STATE',
