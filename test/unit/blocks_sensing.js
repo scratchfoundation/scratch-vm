@@ -65,3 +65,17 @@ test('ask and answer with a visible target', t => {
 
     s.askAndWait({QUESTION: expectedQuestion}, util);
 });
+
+test('set drag mode', t => {
+    const rt = new Runtime();
+    const s = new Sensing(rt);
+    const util = {target: {draggable: true}};
+
+    s.setDragMode({DRAG_MODE: 'not draggable'}, util);
+    t.strictEqual(util.target.draggable, false);
+
+    s.setDragMode({DRAG_MODE: 'draggable'}, util);
+    t.strictEqual(util.target.draggable, true);
+
+    t.end();
+});
