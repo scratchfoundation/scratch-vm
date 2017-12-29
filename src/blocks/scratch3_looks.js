@@ -313,11 +313,11 @@ class Scratch3LooksBlocks {
             const costumeIndex = target.getCostumeIndexByName(requestedCostume);
             if (costumeIndex > -1) {
                 target.setCostume(costumeIndex);
-            } else if (requestedCostume === 'previous costume' ||
-                       requestedCostume === 'previous backdrop') {
+            } else if (requestedCostume === '_prevCostume_' ||
+                       requestedCostume === '_prevBackdrop_') {
                 target.setCostume(target.currentCostume - 1);
-            } else if (requestedCostume === 'next costume' ||
-                       requestedCostume === 'next backdrop') {
+            } else if (requestedCostume === '_nextCostume_' ||
+                       requestedCostume === '_nextBackdrop_') {
                 target.setCostume(target.currentCostume + 1);
             } else {
                 const forcedNumber = Number(requestedCostume);
