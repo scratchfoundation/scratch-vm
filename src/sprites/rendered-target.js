@@ -845,11 +845,10 @@ class RenderedTarget extends Target {
      */
     postSpriteInfo (data) {
         const force = data.hasOwnProperty('force') ? data.force : null;
-        if (data.hasOwnProperty('x')) {
-            this.setXY(data.x, this.y, force);
-        }
-        if (data.hasOwnProperty('y')) {
-            this.setXY(this.x, data.y, force);
+        let isXChanged = data.hasOwnProperty('x');
+        let isYChanged = data.hasOwnProperty('y');
+        if (isXChanged || isYChanged) {
+            this.setXY(isXChanged ? data.x : this.x, isYChanged ? data.y : this.y, force);
         }
         if (data.hasOwnProperty('direction')) {
             this.setDirection(data.direction);
