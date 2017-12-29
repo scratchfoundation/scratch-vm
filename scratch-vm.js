@@ -4655,7 +4655,7 @@ var RenderedTarget = function (_Target) {
                 this.x = x;
                 this.y = y;
             }
-            this.emit(RenderedTarget.EVENT_TARGET_MOVED, this, oldX, oldY);
+            this.emit(RenderedTarget.EVENT_TARGET_MOVED, this, oldX, oldY, force);
             this.runtime.requestTargetsUpdate(this);
         }
 
@@ -5416,11 +5416,10 @@ var RenderedTarget = function (_Target) {
         key: 'postSpriteInfo',
         value: function postSpriteInfo(data) {
             var force = data.hasOwnProperty('force') ? data.force : null;
-            if (data.hasOwnProperty('x')) {
-                this.setXY(data.x, this.y, force);
-            }
-            if (data.hasOwnProperty('y')) {
-                this.setXY(this.x, data.y, force);
+            var isXChanged = data.hasOwnProperty('x');
+            var isYChanged = data.hasOwnProperty('y');
+            if (isXChanged || isYChanged) {
+                this.setXY(isXChanged ? data.x : this.x, isYChanged ? data.y : this.y, force);
             }
             if (data.hasOwnProperty('direction')) {
                 this.setDirection(data.direction);
@@ -18633,17 +18632,21 @@ var Scratch3PenBlocks = function () {
          * @param {RenderedTarget} target - the target which has moved.
          * @param {number} oldX - the previous X position.
          * @param {number} oldY - the previous Y position.
+         * @param {boolean} isForce - whether the movement was forced.
          * @private
          */
 
     }, {
         key: '_onTargetMoved',
-        value: function _onTargetMoved(target, oldX, oldY) {
-            var penSkinId = this._getPenLayerID();
-            if (penSkinId >= 0) {
-                var penState = this._getPenState(target);
-                this.runtime.renderer.penLine(penSkinId, penState.penAttributes, oldX, oldY, target.x, target.y);
-                this.runtime.requestRedraw();
+        value: function _onTargetMoved(target, oldX, oldY, isForce) {
+            // Only move the pen if the movement isn't forced (ie. dragged).
+            if (!isForce) {
+                var penSkinId = this._getPenLayerID();
+                if (penSkinId >= 0) {
+                    var penState = this._getPenState(target);
+                    this.runtime.renderer.penLine(penSkinId, penState.penAttributes, oldX, oldY, target.x, target.y);
+                    this.runtime.requestRedraw();
+                }
             }
         }
 
