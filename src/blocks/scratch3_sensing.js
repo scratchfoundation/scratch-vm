@@ -164,7 +164,7 @@ class Scratch3SensingBlocks {
     }
 
     setDragMode (args, util) {
-        util.target.draggable = args.DRAG_MODE === 'draggable';
+        util.target.setDraggable(args.DRAG_MODE === 'draggable');
     }
 
     getTimer (args, util) {
