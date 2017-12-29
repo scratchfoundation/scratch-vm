@@ -233,8 +233,8 @@ class Scratch3LooksBlocks {
             looks_cleargraphiceffects: this.clearEffects,
             looks_changesizeby: this.changeSize,
             looks_setsizeto: this.setSize,
-            looks_gotofront: this.goToFront,
-            looks_gobacklayers: this.goBackLayers,
+            looks_gotofrontback: this.goToFrontBack,
+            looks_goforwardbackwardlayers: this.goForwardBackwardLayers,
             looks_size: this.getSize,
             looks_costumeorder: this.getCostumeIndex,
             looks_backdroporder: this.getBackdropIndex,
@@ -409,14 +409,24 @@ class Scratch3LooksBlocks {
         util.target.setSize(size);
     }
 
-    goToFront (args, util) {
+    goToFrontBack (args, util) {
         if (!util.target.isStage) {
-            util.target.goToFront();
+            if (args.FRONT_BACK === 'front') {
+                util.target.goToFront();
+            } else {
+                util.target.goToBack();
+            }
         }
     }
 
-    goBackLayers (args, util) {
-        util.target.goBackLayers(args.NUM);
+    goForwardBackwardLayers (args, util) {
+        if (!util.target.isStage) {
+            if (args.FORWARD_BACKWARD === 'forward') {
+                util.target.goForwardLayers(Cast.toNumber(args.NUM));
+            } else {
+                util.target.goBackwardLayers(Cast.toNumber(args.NUM));
+            }
+        }
     }
 
     getSize (args, util) {

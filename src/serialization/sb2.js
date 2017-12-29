@@ -601,6 +601,20 @@ const parseBlock = function (sb2block, addBroadcastMsg, getVariableId, extension
             }
         }
     }
+
+    // Updated layering blocks
+    if (oldOpcode === 'comeToFront') {
+        activeBlock.fields.FRONT_BACK = {
+            name: 'FRONT_BACK',
+            value: 'front'
+        };
+    } else if (oldOpcode === 'goBackByLayers:') {
+        activeBlock.fields.FORWARD_BACKWARD = {
+            name: 'FORWARD_BACKWARD',
+            value: 'backward'
+        };
+    }
+
     // Special cases to generate mutations.
     if (oldOpcode === 'stopScripts') {
         // Mutation for stop block: if the argument is 'other scripts',

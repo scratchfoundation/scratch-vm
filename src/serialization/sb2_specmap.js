@@ -345,12 +345,12 @@ const specMap = {
         ]
     },
     'comeToFront': {
-        opcode: 'looks_gotofront',
+        opcode: 'looks_gotofrontback',
         argMap: [
         ]
     },
     'goBackByLayers:': {
-        opcode: 'looks_gobacklayers',
+        opcode: 'looks_goforwardbackwardlayers',
         argMap: [
             {
                 type: 'input',

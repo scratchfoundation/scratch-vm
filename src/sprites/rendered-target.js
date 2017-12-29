@@ -699,10 +699,29 @@ class RenderedTarget extends Target {
     }
 
     /**
-     * Move back a number of layers.
-     * @param {number} nLayers How many layers to go back.
+     * Move to the back layer.
      */
-    goBackLayers (nLayers) {
+    goToBack () {
+        if (this.renderer) {
+            this.renderer.setDrawableOrder(this.drawableID, -Infinity, false, 1);
+        }
+    }
+
+    /**
+     * Move forward a number of layers.
+     * @param {number} nLayers How many layers to go forward.
+     */
+    goForwardLayers (nLayers) {
+        if (this.renderer) {
+            this.renderer.setDrawableOrder(this.drawableID, nLayers, true, 1);
+        }
+    }
+
+    /**
+     * Move backward a number of layers.
+     * @param {number} nLayers How many layers to go backward.
+     */
+    goBackwardLayers (nLayers) {
         if (this.renderer) {
             this.renderer.setDrawableOrder(this.drawableID, -nLayers, true, 1);
         }

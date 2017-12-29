@@ -40,6 +40,7 @@ class Scratch3SensingBlocks {
             sensing_of: this.getAttributeOf,
             sensing_mousex: this.getMouseX,
             sensing_mousey: this.getMouseY,
+            sensing_setdragmode: this.setDragMode,
             sensing_mousedown: this.getMouseDown,
             sensing_keypressed: this.getKeyPressed,
             sensing_current: this.current,
@@ -160,6 +161,10 @@ class Scratch3SensingBlocks {
         const dx = util.target.x - targetX;
         const dy = util.target.y - targetY;
         return Math.sqrt((dx * dx) + (dy * dy));
+    }
+
+    setDragMode (args, util) {
+        util.target.draggable = args.DRAG_MODE === 'draggable';
     }
 
     getTimer (args, util) {
