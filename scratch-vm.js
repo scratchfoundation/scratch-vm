@@ -5220,13 +5220,38 @@ var RenderedTarget = function (_Target) {
         }
 
         /**
-         * Move back a number of layers.
-         * @param {number} nLayers How many layers to go back.
+         * Move to the back layer.
          */
 
     }, {
-        key: 'goBackLayers',
-        value: function goBackLayers(nLayers) {
+        key: 'goToBack',
+        value: function goToBack() {
+            if (this.renderer) {
+                this.renderer.setDrawableOrder(this.drawableID, -Infinity, false, 1);
+            }
+        }
+
+        /**
+         * Move forward a number of layers.
+         * @param {number} nLayers How many layers to go forward.
+         */
+
+    }, {
+        key: 'goForwardLayers',
+        value: function goForwardLayers(nLayers) {
+            if (this.renderer) {
+                this.renderer.setDrawableOrder(this.drawableID, nLayers, true, 1);
+            }
+        }
+
+        /**
+         * Move backward a number of layers.
+         * @param {number} nLayers How many layers to go backward.
+         */
+
+    }, {
+        key: 'goBackwardLayers',
+        value: function goBackwardLayers(nLayers) {
             if (this.renderer) {
                 this.renderer.setDrawableOrder(this.drawableID, -nLayers, true, 1);
             }
@@ -29759,8 +29784,8 @@ var Scratch3LooksBlocks = function () {
                 looks_cleargraphiceffects: this.clearEffects,
                 looks_changesizeby: this.changeSize,
                 looks_setsizeto: this.setSize,
-                looks_gotofront: this.goToFront,
-                looks_gobacklayers: this.goBackLayers,
+                looks_gotofrontback: this.goToFrontBack,
+                looks_goforwardbackwardlayers: this.goForwardBackwardLayers,
                 looks_size: this.getSize,
                 looks_costumeorder: this.getCostumeIndex,
                 looks_backdroporder: this.getBackdropIndex,
@@ -29947,16 +29972,26 @@ var Scratch3LooksBlocks = function () {
             util.target.setSize(size);
         }
     }, {
-        key: 'goToFront',
-        value: function goToFront(args, util) {
+        key: 'goToFrontBack',
+        value: function goToFrontBack(args, util) {
             if (!util.target.isStage) {
-                util.target.goToFront();
+                if (args.FRONT_BACK === 'front') {
+                    util.target.goToFront();
+                } else {
+                    util.target.goToBack();
+                }
             }
         }
     }, {
-        key: 'goBackLayers',
-        value: function goBackLayers(args, util) {
-            util.target.goBackLayers(args.NUM);
+        key: 'goForwardBackwardLayers',
+        value: function goForwardBackwardLayers(args, util) {
+            if (!util.target.isStage) {
+                if (args.FORWARD_BACKWARD === 'forward') {
+                    util.target.goForwardLayers(Cast.toNumber(args.NUM));
+                } else {
+                    util.target.goBackwardLayers(Cast.toNumber(args.NUM));
+                }
+            }
         }
     }, {
         key: 'getSize',
@@ -30907,6 +30942,7 @@ var Scratch3SensingBlocks = function () {
                 sensing_of: this.getAttributeOf,
                 sensing_mousex: this.getMouseX,
                 sensing_mousey: this.getMouseY,
+                sensing_setdragmode: this.setDragMode,
                 sensing_mousedown: this.getMouseDown,
                 sensing_keypressed: this.getKeyPressed,
                 sensing_current: this.current,
@@ -31052,6 +31088,11 @@ var Scratch3SensingBlocks = function () {
             var dx = util.target.x - targetX;
             var dy = util.target.y - targetY;
             return Math.sqrt(dx * dx + dy * dy);
+        }
+    }, {
+        key: 'setDragMode',
+        value: function setDragMode(args, util) {
+            util.target.draggable = args.DRAG_MODE === 'draggable';
         }
     }, {
         key: 'getTimer',
@@ -32046,6 +32087,20 @@ var parseBlock = function parseBlock(sb2block, addBroadcastMsg, getVariableId, e
             }
         }
     }
+
+    // Updated layering blocks
+    if (oldOpcode === 'comeToFront') {
+        activeBlock.fields.FRONT_BACK = {
+            name: 'FRONT_BACK',
+            value: 'front'
+        };
+    } else if (oldOpcode === 'goBackByLayers:') {
+        activeBlock.fields.FORWARD_BACKWARD = {
+            name: 'FORWARD_BACKWARD',
+            value: 'backward'
+        };
+    }
+
     // Special cases to generate mutations.
     if (oldOpcode === 'stopScripts') {
         // Mutation for stop block: if the argument is 'other scripts',
@@ -32407,11 +32462,11 @@ var specMap = {
         }]
     },
     'comeToFront': {
-        opcode: 'looks_gotofront',
+        opcode: 'looks_gotofrontback',
         argMap: []
     },
     'goBackByLayers:': {
-        opcode: 'looks_gobacklayers',
+        opcode: 'looks_goforwardbackwardlayers',
         argMap: [{
             type: 'input',
             inputOp: 'math_integer',
