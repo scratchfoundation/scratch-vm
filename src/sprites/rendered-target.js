@@ -203,7 +203,7 @@ class RenderedTarget extends Target {
             this.x = x;
             this.y = y;
         }
-        this.emit(RenderedTarget.EVENT_TARGET_MOVED, this, oldX, oldY);
+        this.emit(RenderedTarget.EVENT_TARGET_MOVED, this, oldX, oldY, force);
         this.runtime.requestTargetsUpdate(this);
     }
 
