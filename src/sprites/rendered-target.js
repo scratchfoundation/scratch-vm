@@ -203,7 +203,7 @@ class RenderedTarget extends Target {
             this.x = x;
             this.y = y;
         }
-        this.emit(RenderedTarget.EVENT_TARGET_MOVED, this, oldX, oldY);
+        this.emit(RenderedTarget.EVENT_TARGET_MOVED, this, oldX, oldY, force);
         this.runtime.requestTargetsUpdate(this);
     }
 
@@ -864,11 +864,10 @@ class RenderedTarget extends Target {
      */
     postSpriteInfo (data) {
         const force = data.hasOwnProperty('force') ? data.force : null;
-        if (data.hasOwnProperty('x')) {
-            this.setXY(data.x, this.y, force);
-        }
-        if (data.hasOwnProperty('y')) {
-            this.setXY(this.x, data.y, force);
+        const isXChanged = data.hasOwnProperty('x');
+        const isYChanged = data.hasOwnProperty('y');
+        if (isXChanged || isYChanged) {
+            this.setXY(isXChanged ? data.x : this.x, isYChanged ? data.y : this.y, force);
         }
         if (data.hasOwnProperty('direction')) {
             this.setDirection(data.direction);

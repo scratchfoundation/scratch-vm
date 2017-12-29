@@ -181,14 +181,18 @@ class Scratch3PenBlocks {
      * @param {RenderedTarget} target - the target which has moved.
      * @param {number} oldX - the previous X position.
      * @param {number} oldY - the previous Y position.
+     * @param {boolean} isForce - whether the movement was forced.
      * @private
      */
-    _onTargetMoved (target, oldX, oldY) {
-        const penSkinId = this._getPenLayerID();
-        if (penSkinId >= 0) {
-            const penState = this._getPenState(target);
-            this.runtime.renderer.penLine(penSkinId, penState.penAttributes, oldX, oldY, target.x, target.y);
-            this.runtime.requestRedraw();
+    _onTargetMoved (target, oldX, oldY, isForce) {
+        // Only move the pen if the movement isn't forced (ie. dragged).
+        if (!isForce) {
+            const penSkinId = this._getPenLayerID();
+            if (penSkinId >= 0) {
+                const penState = this._getPenState(target);
+                this.runtime.renderer.penLine(penSkinId, penState.penAttributes, oldX, oldY, target.x, target.y);
+                this.runtime.requestRedraw();
+            }
         }
     }
 
