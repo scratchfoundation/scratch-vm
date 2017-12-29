@@ -31092,7 +31092,7 @@ var Scratch3SensingBlocks = function () {
     }, {
         key: 'setDragMode',
         value: function setDragMode(args, util) {
-            util.target.draggable = args.DRAG_MODE === 'draggable';
+            util.target.setDraggable(args.DRAG_MODE === 'draggable');
         }
     }, {
         key: 'getTimer',
