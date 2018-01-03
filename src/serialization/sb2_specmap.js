@@ -469,7 +469,7 @@ const specMap = {
             }
         ]
     },
-    'midiInstrument:':{
+    'midiInstrument:': {
         opcode: 'music.setInstrument',
         argMap: [
             {
