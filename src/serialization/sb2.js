@@ -602,17 +602,38 @@ const parseBlock = function (sb2block, addBroadcastMsg, getVariableId, extension
         }
     }
 
-    // Updated layering blocks
-    if (oldOpcode === 'comeToFront') {
+    // Updates for blocks that have new menus (e.g. in Looks)
+    switch (oldOpcode) {
+    case 'comeToFront':
         activeBlock.fields.FRONT_BACK = {
             name: 'FRONT_BACK',
             value: 'front'
         };
-    } else if (oldOpcode === 'goBackByLayers:') {
+        break;
+    case 'goBackByLayers:':
         activeBlock.fields.FORWARD_BACKWARD = {
             name: 'FORWARD_BACKWARD',
             value: 'backward'
         };
+        break;
+    case 'backgroundIndex':
+        activeBlock.fields.NUMBER_NAME = {
+            name: 'NUMBER_NAME',
+            value: 'number'
+        };
+        break;
+    case 'sceneName':
+        activeBlock.fields.NUMBER_NAME = {
+            name: 'NUMBER_NAME',
+            value: 'name'
+        };
+        break;
+    case 'costumeIndex':
+        activeBlock.fields.NUMBER_NAME = {
+            name: 'NUMBER_NAME',
+            value: 'number'
+        };
+        break;
     }
 
     // Special cases to generate mutations.
