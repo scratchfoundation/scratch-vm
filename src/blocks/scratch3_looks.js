@@ -236,9 +236,8 @@ class Scratch3LooksBlocks {
             looks_gotofrontback: this.goToFrontBack,
             looks_goforwardbackwardlayers: this.goForwardBackwardLayers,
             looks_size: this.getSize,
-            looks_costumeorder: this.getCostumeIndex,
-            looks_backdroporder: this.getBackdropIndex,
-            looks_backdropname: this.getBackdropName
+            looks_costumenumbername: this.getCostumeNumberName,
+            looks_backdropnumbername: this.getBackdropNumberName
         };
     }
 
@@ -433,18 +432,21 @@ class Scratch3LooksBlocks {
         return Math.round(util.target.size);
     }
 
-    getBackdropIndex () {
+    getBackdropNumberName (args) {
         const stage = this.runtime.getTargetForStage();
-        return stage.currentCostume + 1;
-    }
-
-    getBackdropName () {
-        const stage = this.runtime.getTargetForStage();
+        if (args.NUMBER_NAME === 'number') {
+            return stage.currentCostume + 1;
+        }
+        // Else return name
         return stage.sprite.costumes[stage.currentCostume].name;
     }
 
-    getCostumeIndex (args, util) {
-        return util.target.currentCostume + 1;
+    getCostumeNumberName (args, util) {
+        if (args.NUMBER_NAME === 'number') {
+            return util.target.currentCostume + 1;
+        }
+        // Else return name
+        return util.target.sprite.costumes[util.target.currentCostume].name;
     }
 }
 
