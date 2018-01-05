@@ -29790,9 +29790,8 @@ var Scratch3LooksBlocks = function () {
                 looks_gotofrontback: this.goToFrontBack,
                 looks_goforwardbackwardlayers: this.goForwardBackwardLayers,
                 looks_size: this.getSize,
-                looks_costumeorder: this.getCostumeIndex,
-                looks_backdroporder: this.getBackdropIndex,
-                looks_backdropname: this.getBackdropName
+                looks_costumenumbername: this.getCostumeNumberName,
+                looks_backdropnumbername: this.getBackdropNumberName
             };
         }
     }, {
@@ -30002,21 +30001,23 @@ var Scratch3LooksBlocks = function () {
             return Math.round(util.target.size);
         }
     }, {
-        key: 'getBackdropIndex',
-        value: function getBackdropIndex() {
+        key: 'getBackdropNumberName',
+        value: function getBackdropNumberName(args) {
             var stage = this.runtime.getTargetForStage();
-            return stage.currentCostume + 1;
-        }
-    }, {
-        key: 'getBackdropName',
-        value: function getBackdropName() {
-            var stage = this.runtime.getTargetForStage();
+            if (args.NUMBER_NAME === 'number') {
+                return stage.currentCostume + 1;
+            }
+            // Else return name
             return stage.sprite.costumes[stage.currentCostume].name;
         }
     }, {
-        key: 'getCostumeIndex',
-        value: function getCostumeIndex(args, util) {
-            return util.target.currentCostume + 1;
+        key: 'getCostumeNumberName',
+        value: function getCostumeNumberName(args, util) {
+            if (args.NUMBER_NAME === 'number') {
+                return util.target.currentCostume + 1;
+            }
+            // Else return name
+            return util.target.sprite.costumes[util.target.currentCostume].name;
         }
     }], [{
         key: 'DEFAULT_BUBBLE_STATE',
@@ -32091,17 +32092,38 @@ var parseBlock = function parseBlock(sb2block, addBroadcastMsg, getVariableId, e
         }
     }
 
-    // Updated layering blocks
-    if (oldOpcode === 'comeToFront') {
-        activeBlock.fields.FRONT_BACK = {
-            name: 'FRONT_BACK',
-            value: 'front'
-        };
-    } else if (oldOpcode === 'goBackByLayers:') {
-        activeBlock.fields.FORWARD_BACKWARD = {
-            name: 'FORWARD_BACKWARD',
-            value: 'backward'
-        };
+    // Updates for blocks that have new menus (e.g. in Looks)
+    switch (oldOpcode) {
+        case 'comeToFront':
+            activeBlock.fields.FRONT_BACK = {
+                name: 'FRONT_BACK',
+                value: 'front'
+            };
+            break;
+        case 'goBackByLayers:':
+            activeBlock.fields.FORWARD_BACKWARD = {
+                name: 'FORWARD_BACKWARD',
+                value: 'backward'
+            };
+            break;
+        case 'backgroundIndex':
+            activeBlock.fields.NUMBER_NAME = {
+                name: 'NUMBER_NAME',
+                value: 'number'
+            };
+            break;
+        case 'sceneName':
+            activeBlock.fields.NUMBER_NAME = {
+                name: 'NUMBER_NAME',
+                value: 'name'
+            };
+            break;
+        case 'costumeIndex':
+            activeBlock.fields.NUMBER_NAME = {
+                name: 'NUMBER_NAME',
+                value: 'number'
+            };
+            break;
     }
 
     // Special cases to generate mutations.
@@ -32477,11 +32499,11 @@ var specMap = {
         }]
     },
     'costumeIndex': {
-        opcode: 'looks_costumeorder',
+        opcode: 'looks_costumenumbername',
         argMap: []
     },
     'sceneName': {
-        opcode: 'looks_backdropname',
+        opcode: 'looks_backdropnumbername',
         argMap: []
     },
     'scale': {
@@ -32501,7 +32523,7 @@ var specMap = {
         argMap: []
     },
     'backgroundIndex': {
-        opcode: 'looks_backdroporder',
+        opcode: 'looks_backdropnumbername',
         argMap: []
     },
     'playSound:': {
