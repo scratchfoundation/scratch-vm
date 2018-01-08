@@ -14,7 +14,7 @@ document.querySelector('.run')
     }, false);
 
 const loadProject = function () {
-    let id = location.hash.substring(1);
+    let id = location.hash.substring(1).split(',')[0];
     if (id.length < 1 || !isFinite(id)) {
         id = projectInput.value;
     }
@@ -310,7 +310,7 @@ class ProfilerRun {
             dom: document.getElementsByClassName('profile-count-group')[0],
 
             runningStats,
-            maxRecordedTime: 6000
+            maxRecordedTime
         });
 
         const frames = this.frames = new Frames(profiler);
@@ -388,10 +388,21 @@ window.onload = function () {
             .innerText = progress.complete;
     }).on(storage);
 
+    let warmUpTime = 4000;
+    let maxRecordedTime = 6000;
+
+    if (location.hash) {
+        const split = location.hash.substring(1).split(',');
+        if (split[1] && split[1].length > 0) {
+            warmUpTime = Number(split[1]);
+        }
+        maxRecordedTime = Number(split[2] || '0') || 6000;
+    }
+
     new ProfilerRun({
         vm,
-        warmUpTime: 4000,
-        maxRecordedTime: 6000
+        warmUpTime,
+        maxRecordedTime
     }).run();
 
     // Instantiate the renderer and connect it to the VM.
