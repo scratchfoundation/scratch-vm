@@ -348,11 +348,21 @@ class ProfilerRun {
     run () {
         loadProject();
 
+        window.parent.postMessage({
+            type: 'BENCH_MESSAGE_LOADING'
+        }, '*');
+
         this.vm.on('workspaceUpdate', () => {
             setTimeout(() => {
+                window.parent.postMessage({
+                    type: 'BENCH_MESSAGE_WARMING_UP'
+                }, '*');
                 this.vm.greenFlag();
             }, 100);
             setTimeout(() => {
+                window.parent.postMessage({
+                    type: 'BENCH_MESSAGE_ACTIVE'
+                }, '*');
                 this.vm.runtime.profiler = this.profiler;
             }, 100 + this.warmUpTime);
             setTimeout(() => {
@@ -362,6 +372,12 @@ class ProfilerRun {
 
                 this.frameTable.render();
                 this.opcodeTable.render();
+
+                window.parent.postMessage({
+                    type: 'BENCH_MESSAGE_COMPLETE',
+                    frames: this.frames.frames,
+                    opcodes: this.opcodes.opcodes
+                }, '*');
             }, 100 + this.warmUpTime + this.maxRecordedTime);
         });
     }
