@@ -40,10 +40,20 @@ class Mouse {
      */
     postData (data) {
         if (data.x) {
-            this._x = data.x - (data.canvasWidth / 2);
+            this._clientX = data.x;
+            this._scratchX = MathUtil.clamp(
+                480 * ((data.x / data.canvasWidth) - 0.5),
+                -240,
+                240
+            );
         }
         if (data.y) {
-            this._y = data.y - (data.canvasHeight / 2);
+            this._clientY = data.y;
+            this._scratchY = MathUtil.clamp(
+                -360 * ((data.y / data.canvasHeight) - 0.5),
+                -180,
+                180
+            );
         }
         if (typeof data.isDown !== 'undefined') {
             this._isDown = data.isDown;
@@ -54,35 +64,35 @@ class Mouse {
     }
 
     /**
-     * Get the X position of the mouse.
+     * Get the X position of the mouse in client coordinates.
      * @return {number} Non-clamped X position of the mouse cursor.
      */
-    getX () {
-        return this._x;
+    getClientX () {
+        return this._clientX;
     }
 
     /**
-     * Get the Y position of the mouse.
+     * Get the Y position of the mouse in client coordinates.
      * @return {number} Non-clamped Y position of the mouse cursor.
      */
-    getY () {
-        return -this._y;
+    getClientY () {
+        return this._clientY;
     }
 
     /**
-     * Get the stage-clamped X position of the mouse.
+     * Get the X position of the mouse in scratch coordinates.
      * @return {number} Clamped X position of the mouse cursor.
      */
-    getClampedX () {
-        return MathUtil.clamp(this._x, -240, 240);
+    getScratchX () {
+        return this._scratchX;
     }
 
     /**
-     * Get the stage-clamped Y position of the mouse.
+     * Get the Y position of the mouse in scratch coordinates.
      * @return {number} Clamped Y position of the mouse cursor.
      */
-    getClampedY () {
-        return MathUtil.clamp(-this._y, -180, 180);
+    getScratchY () {
+        return this._scratchY;
     }
 
     /**
