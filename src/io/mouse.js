@@ -55,17 +55,33 @@ class Mouse {
 
     /**
      * Get the X position of the mouse.
-     * @return {number} Clamped X position of the mouse cursor.
+     * @return {number} Non-clamped X position of the mouse cursor.
      */
     getX () {
-        return MathUtil.clamp(this._x, -240, 240);
+        return this._x;
     }
 
     /**
      * Get the Y position of the mouse.
-     * @return {number} Clamped Y position of the mouse cursor.
+     * @return {number} Non-clamped Y position of the mouse cursor.
      */
     getY () {
+        return -this._y;
+    }
+
+    /**
+     * Get the stage-clamped X position of the mouse.
+     * @return {number} Clamped X position of the mouse cursor.
+     */
+    getClampedX () {
+        return MathUtil.clamp(this._x, -240, 240);
+    }
+
+    /**
+     * Get the stage-clamped Y position of the mouse.
+     * @return {number} Clamped Y position of the mouse cursor.
+     */
+    getClampedY () {
         return MathUtil.clamp(-this._y, -180, 180);
     }
 
