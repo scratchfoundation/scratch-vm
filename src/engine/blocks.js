@@ -3,6 +3,7 @@ const mutationAdapter = require('./mutation-adapter');
 const xmlEscape = require('../util/xml-escape');
 const MonitorRecord = require('./monitor-record');
 const Clone = require('../util/clone');
+const {Map} = require('immutable');
 
 /**
  * @fileoverview
@@ -382,7 +383,20 @@ class Blocks {
                     block.fields[args.name].id = args.value;
                 }
             } else {
+                // Changing the value in a dropdown
                 block.fields[args.name].value = args.value;
+
+                if (!optRuntime || !block.parent){
+                    break;
+                }
+
+                const parent = this._blocks[block.parent];
+                if (parent.isMonitored) {
+                    optRuntime.requestUpdateMonitor(Map({
+                        id: parent.id,
+                        params: this._getBlockParams(parent)
+                    }));
+                }
             }
             break;
         case 'mutation':
@@ -390,14 +404,17 @@ class Blocks {
             break;
         case 'checkbox':
             block.isMonitored = args.value;
-            if (optRuntime) {
-                const isSpriteSpecific = optRuntime.monitorBlockInfo.hasOwnProperty(block.opcode) &&
-                    optRuntime.monitorBlockInfo[block.opcode].isSpriteSpecific;
-                block.targetId = isSpriteSpecific ? optRuntime.getEditingTarget().id : null;
+            if (!optRuntime) {
+                break;
             }
-            if (optRuntime && wasMonitored && !block.isMonitored) {
+
+            const isSpriteSpecific = optRuntime.monitorBlockInfo.hasOwnProperty(block.opcode) &&
+                optRuntime.monitorBlockInfo[block.opcode].isSpriteSpecific;
+            block.targetId = isSpriteSpecific ? optRuntime.getEditingTarget().id : null;
+            
+            if (wasMonitored && !block.isMonitored) {
                 optRuntime.requestRemoveMonitor(block.id);
-            } else if (optRuntime && !wasMonitored && block.isMonitored) {
+            } else if (!wasMonitored && block.isMonitored) {
                 optRuntime.requestAddMonitor(MonitorRecord({
                     // @todo(vm#564) this will collide if multiple sprites use same block
                     id: block.id,
