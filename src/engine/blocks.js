@@ -402,7 +402,7 @@ class Blocks {
         case 'mutation':
             block.mutation = mutationAdapter(args.value);
             break;
-        case 'checkbox':
+        case 'checkbox': {
             block.isMonitored = args.value;
             if (!optRuntime) {
                 break;
@@ -427,6 +427,7 @@ class Blocks {
                 }));
             }
             break;
+        }
         }
 
         this.resetCache();
