@@ -56,6 +56,7 @@ class Sprite {
         const newClone = new RenderedTarget(this, this.runtime);
         newClone.isOriginal = this.clones.length === 0;
         this.clones.push(newClone);
+        newClone.initAudio();
         if (newClone.isOriginal) {
             newClone.initDrawable();
             this.runtime.fireTargetWasCreated(newClone);
