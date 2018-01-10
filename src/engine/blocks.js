@@ -386,15 +386,15 @@ class Blocks {
                 // Changing the value in a dropdown
                 block.fields[args.name].value = args.value;
 
-                if (!optRuntime || !block.parent){
+                if (!optRuntime){
                     break;
                 }
 
-                const parent = this._blocks[block.parent];
-                if (parent.isMonitored) {
+                const flyoutBlock = block.shadow && block.parent ? this._blocks[block.parent] : block;
+                if (flyoutBlock.isMonitored) {
                     optRuntime.requestUpdateMonitor(Map({
-                        id: parent.id,
-                        params: this._getBlockParams(parent)
+                        id: flyoutBlock.id,
+                        params: this._getBlockParams(flyoutBlock)
                     }));
                 }
             }
