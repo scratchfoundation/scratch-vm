@@ -18,7 +18,9 @@ class Scratch3SoundBlocks {
         }
 
         this._onTargetCreated = this._onTargetCreated.bind(this);
-        runtime.on('targetWasCreated', this._onTargetCreated);
+        if (this.runtime) {
+            runtime.on('targetWasCreated', this._onTargetCreated);
+        }
     }
 
     /**
