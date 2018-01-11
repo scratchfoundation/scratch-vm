@@ -631,7 +631,7 @@ class VirtualMachine extends EventEmitter {
      */
     setEditingTarget (targetId) {
         // Has the target id changed? If not, exit.
-        if (targetId === this.editingTarget.id) {
+        if (this.editingTarget && targetId === this.editingTarget.id) {
             return;
         }
         const target = this.runtime.getTargetById(targetId);
