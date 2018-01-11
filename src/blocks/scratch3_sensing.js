@@ -56,7 +56,6 @@ class Scratch3SensingBlocks {
             sensing_answer: {},
             sensing_loudness: {},
             sensing_timer: {},
-            sensing_of: {},
             sensing_current: {}
         };
     }
