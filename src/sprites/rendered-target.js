@@ -831,7 +831,6 @@ class RenderedTarget extends Target {
             newTarget.effects = JSON.parse(JSON.stringify(this.effects));
             newTarget.variables = JSON.parse(JSON.stringify(this.variables));
             newTarget.lists = JSON.parse(JSON.stringify(this.lists));
-            newTarget.initDrawable();
             newTarget.updateAllDrawableProperties();
             newTarget.goBehindOther(this);
             return newTarget;
