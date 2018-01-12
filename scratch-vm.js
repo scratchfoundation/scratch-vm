@@ -16803,6 +16803,8 @@ var VirtualMachine = function (_EventEmitter) {
                 targets.forEach(function (target) {
                     _this3.runtime.targets.push(target);
                     /** @type RenderedTarget */target.updateAllDrawableProperties();
+                    // Ensure unique sprite name
+                    if (target.isSprite()) _this3.renameSprite(target.id, target.getName());
                 });
                 // Select the first target for editing, e.g., the first sprite.
                 if (wholeProject && targets.length > 1) {
@@ -17022,7 +17024,7 @@ var VirtualMachine = function (_EventEmitter) {
 
             return loadCostume(md5ext, backdropObject, this.runtime).then(function () {
                 var stage = _this7.runtime.getTargetForStage();
-                stage.sprite.costumes.push(backdropObject);
+                stage.addCostume(backdropObject);
                 stage.setCostume(stage.sprite.costumes.length - 1);
             });
         }
@@ -17244,7 +17246,7 @@ var VirtualMachine = function (_EventEmitter) {
         key: 'setEditingTarget',
         value: function setEditingTarget(targetId) {
             // Has the target id changed? If not, exit.
-            if (targetId === this.editingTarget.id) {
+            if (this.editingTarget && targetId === this.editingTarget.id) {
                 return;
             }
             var target = this.runtime.getTargetById(targetId);
