@@ -134,10 +134,16 @@ class StatView {
         }
 
         cell = document.createElement('td');
+        // Truncate selfTime. Value past the microsecond are floating point
+        // noise.
+        this.selfTime = Math.floor(this.selfTime * 1000) / 1000;
         cell.innerText = (this.selfTime / 1000).toPrecision(3);
         row.appendChild(cell);
 
         cell = document.createElement('td');
+        // Truncate totalTime. Value past the microsecond are floating point
+        // noise.
+        this.totalTime = Math.floor(this.totalTime * 1000) / 1000;
         cell.innerText = (this.totalTime / 1000).toPrecision(3);
         row.appendChild(cell);
 
