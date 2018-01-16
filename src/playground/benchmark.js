@@ -13,12 +13,20 @@ document.querySelector('.run')
         location.reload();
     }, false);
 
+const setShareLink = function (json) {
+    document.querySelector('.share')
+        .href = `#view/${btoa(JSON.stringify(json))}`;
+    document.querySelectorAll('.share')[1]
+        .href = `suite.html`;
+};
+
 const loadProject = function () {
     let id = location.hash.substring(1).split(',')[0];
     if (id.length < 1 || !isFinite(id)) {
         id = projectInput.value;
     }
     Scratch.vm.downloadProjectId(id);
+    return id;
 };
 
 /**
@@ -221,6 +229,13 @@ const frameOrder = [
     'Runtime._step'
 ];
 
+const trackSlowFrames = [
+    'Sequencer.stepThreads',
+    'Sequencer.stepThreads#inner',
+    'Sequencer.stepThread',
+    'execute'
+];
+
 class FramesTable extends StatTable {
     constructor (options) {
         super(options);
@@ -241,12 +256,7 @@ class FramesTable extends StatTable {
     }
 
     isSlow (key, frame) {
-        return ([
-            'Sequencer.stepThreads',
-            'Sequencer.stepThreads#inner',
-            'Sequencer.stepThread',
-            'execute'
-        ].indexOf(key) > 0 &&
+        return (trackSlowFrames.indexOf(key) > 0 &&
         frame.selfTime / frame.totalTime > SLOW);
     }
 }
@@ -346,7 +356,7 @@ class ProfilerRun {
     }
 
     run () {
-        loadProject();
+        this.projectId = loadProject();
 
         window.parent.postMessage({
             type: 'BENCH_MESSAGE_LOADING'
@@ -378,12 +388,49 @@ class ProfilerRun {
                     frames: this.frames.frames,
                     opcodes: this.opcodes.opcodes
                 }, '*');
+
+                setShareLink({
+                    fixture: {
+                        projectId: this.projectId,
+                        warmUpTime: this.warmUpTime,
+                        recordingTime: this.maxRecordedTime
+                    },
+                    frames: this.frames.frames,
+                    opcodes: this.opcodes.opcodes
+                });
             }, 100 + this.warmUpTime + this.maxRecordedTime);
         });
     }
+
+    render (json) {
+        const {fixture} = json;
+        document.querySelector('[type=text]').value = [
+            fixture.projectId,
+            fixture.warmUpTime,
+            fixture.recordingTime
+        ].join(',');
+
+        this.frames.frames = json.frames.map(
+            frame => Object.assign(new StatView(), frame, {
+                name: this.profiler.nameById(this.profiler.idByName(frame.name))
+            })
+        );
+
+        this.opcodes.opcodes = {};
+        Object.entries(json.opcodes).forEach(([opcode, data]) => {
+            this.opcodes.opcodes[opcode] = Object.assign(new StatView(), data);
+        });
+
+        this.frameTable.render();
+        this.opcodeTable.render();
+    }
 }
 
-window.onload = function () {
+/**
+ * Run the benchmark with given parameters in the location's hash field or
+ * using defaults.
+ */
+const runBenchmark = function () {
     // Lots of global variables to make debugging easier
     // Instantiate the VM.
     const vm = new window.VirtualMachine();
@@ -492,4 +539,30 @@ window.onload = function () {
 
     // Run threads
     vm.start();
+};
+
+/**
+ * Render previously run benchmark data.
+ * @param {object} json data from a previous benchmark run.
+ */
+const renderBenchmarkData = function (json) {
+    const vm = new window.VirtualMachine();
+    new ProfilerRun({vm}).render(json);
+    setShareLink(json);
+};
+
+window.onload = function () {
+    if (location.hash.substring(1).startsWith('view')) {
+        document.body.className = 'render';
+        const data = location.hash.substring(6);
+        const frozen = atob(data);
+        const json = JSON.parse(frozen);
+        renderBenchmarkData(json);
+    } else {
+        runBenchmark();
+    }
+};
+
+window.onhashchange = function () {
+    location.reload();
 };
