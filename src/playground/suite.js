@@ -70,7 +70,16 @@ class BenchFrameStream extends Emitter {
     }
 }
 
+const benchmarkUrlArgs = args => (
+    [
+        args.projectId,
+        args.warmUpTime,
+        args.recordingTime
+    ].join(',')
+);
+
 const BENCH_MESSAGE_TYPE = {
+    INACTIVE: 'BENCH_MESSAGE_INACTIVE',
     LOAD: 'BENCH_MESSAGE_LOAD',
     LOADING: 'BENCH_MESSAGE_LOADING',
     WARMING_UP: 'BENCH_MESSAGE_WARMING_UP',
@@ -84,22 +93,38 @@ class BenchUtil {
         this.benchStream = new BenchFrameStream(frame);
     }
 
+    setFrameLocation (url) {
+        this.frame.contentWindow.location.assign(url);
+    }
+
     startBench (args) {
-        Promise.resolve()
-            .then(() => new Promise(resolve => setTimeout(resolve, 100)))
+        this.benchArgs = args;
+        this.setFrameLocation(`index.html#${benchmarkUrlArgs(args)}`);
+    }
+
+    pauseBench () {
+        new Promise(resolve => setTimeout(resolve, 1000))
             .then(() => {
-                this.frame.contentWindow.location.assign('about:blank');
-            })
-            .then(() => new Promise(resolve => setTimeout(resolve, 100)))
-            .then(() => {
-                this.frame.contentWindow.location.assign(
-                    `/benchmark/#${args.projectId},${args.warmUpTime},${args.recordingTime}`);
+                this.benchStream.emit('message', {
+                    type: BENCH_MESSAGE_TYPE.INACTIVE
+                });
             });
+    }
+
+    resumeBench () {
+        this.startBench(this.benchArgs);
+    }
+
+    renderResults (results) {
+        this.setFrameLocation(
+            `index.html#view/${btoa(JSON.stringify(results))}`
+        );
     }
 }
 
 const BENCH_STATUS = {
     INACTIVE: 'BENCH_STATUS_INACTIVE',
+    RESUME: 'BENCH_STATUS_RESUME',
     STARTING: 'BENCH_STATUS_STARTING',
     LOADING: 'BENCH_STATUS_LOADING',
     WARMING_UP: 'BENCH_STATUS_WARMING_UP',
@@ -142,7 +167,9 @@ class BenchFixture extends Emitter {
                     frames: null,
                     opcodes: null
                 };
-                if (message.type === BENCH_MESSAGE_TYPE.LOADING) {
+                if (message.type === BENCH_MESSAGE_TYPE.INACTIVE) {
+                    result.status = BENCH_STATUS.RESUME;
+                } else if (message.type === BENCH_MESSAGE_TYPE.LOADING) {
                     result.status = BENCH_STATUS.LOADING;
                 } else if (message.type === BENCH_MESSAGE_TYPE.WARMING_UP) {
                     result.status = BENCH_STATUS.WARMING_UP;
@@ -232,6 +259,7 @@ class BenchRunner extends Emitter {
 
 const viewNames = {
     [BENCH_STATUS.INACTIVE]: 'Inactive',
+    [BENCH_STATUS.RESUME]: 'Resume',
     [BENCH_STATUS.STARTING]: 'Starting',
     [BENCH_STATUS.LOADING]: 'Loading',
     [BENCH_STATUS.WARMING_UP]: 'Warming Up',
@@ -240,8 +268,10 @@ const viewNames = {
 };
 
 class BenchResultView {
-    constructor ({result}) {
+    constructor ({result, benchUtil}) {
         this.result = result;
+        this.compare = null;
+        this.benchUtil = benchUtil;
         this.dom = document.createElement('div');
     }
 
@@ -249,26 +279,114 @@ class BenchResultView {
         soon().then(() => this.render(result));
     }
 
-    render (newResult = this.result) {
-        const blockFunctionFrame = (newResult.frames ? newResult.frames : [])
+    resume () {
+        this.benchUtil.resumeBench();
+    }
+
+    setFrameLocation (loc) {
+        this.benchUtil.pauseBench();
+        this.benchUtil.setFrameLocation(loc);
+    }
+
+    act (ev) {
+        if (
+            ev.type === 'click' &&
+            ev.button === 0 &&
+            !(ev.altKey || ev.ctrlKey || ev.shiftKey || ev.metaKey)
+        ) {
+            let target = ev.target;
+            while (target && target.tagName.toLowerCase() !== 'a') {
+                target = target.parentElement;
+            }
+            if (target && target.tagName.toLowerCase() === 'a') {
+                if (target.href) {
+                    this.setFrameLocation(target.href);
+                    ev.preventDefault();
+                }
+            } else if (ev.currentTarget.classList.contains('resume')) {
+                this.resume();
+            }
+        }
+    }
+
+    render (newResult = this.result, compareResult = this.compare) {
+        const newResultFrames = (newResult.frames ? newResult.frames : []);
+        const blockFunctionFrame = newResultFrames
             .find(frame => frame.name === 'blockFunction');
-        const stepThreadsInnerFrame = (newResult.frames ? newResult.frames : [])
+        const stepThreadsInnerFrame = newResultFrames
             .find(frame => frame.name === 'Sequencer.stepThreads#inner');
 
         const blocksPerSecond = blockFunctionFrame ?
-            (blockFunctionFrame.executions / (stepThreadsInnerFrame.totalTime / 1000)) | 0 :
+            (blockFunctionFrame.executions /
+                (stepThreadsInnerFrame.totalTime / 1000)) | 0 :
+            0;
+        const stepsPerSecond = stepThreadsInnerFrame ?
+            (stepThreadsInnerFrame.executions /
+                (stepThreadsInnerFrame.totalTime / 1000)) | 0 :
             0;
 
+        const compareResultFrames = (
+            compareResult && compareResult.frames ?
+                compareResult.frames :
+                []
+        );
+        const blockFunctionCompareFrame = compareResultFrames
+            .find(frame => frame.name === 'blockFunction');
+        const stepThreadsInnerCompareFrame = compareResultFrames
+            .find(frame => frame.name === 'Sequencer.stepThreads#inner');
+
+        const compareBlocksPerSecond = blockFunctionCompareFrame ?
+            (blockFunctionCompareFrame.executions /
+                (stepThreadsInnerCompareFrame.totalTime / 1000)) | 0 :
+            0;
+        const compareStepsPerSecond = stepThreadsInnerCompareFrame ?
+            (stepThreadsInnerCompareFrame.executions /
+                (stepThreadsInnerCompareFrame.totalTime / 1000)) | 0 :
+            0;
+
+        const statusName = viewNames[newResult.status];
+
+        this.dom.className = `result-view ${
+            viewNames[newResult.status].toLowerCase()
+        }`;
+        this.dom.onclick = this.act.bind(this);
+        let url = `index.html#${benchmarkUrlArgs(newResult.fixture)}`;
+        if (newResult.status === BENCH_STATUS.COMPLETE) {
+            url = `index.html#view/${btoa(JSON.stringify(newResult))}`;
+        }
+        let compareUrl = url;
+        if (compareResult && compareResult) {
+            compareUrl =
+                `index.html#view/${btoa(JSON.stringify(compareResult))}`;
+        }
+        let compareHTML = '';
+        if (stepThreadsInnerFrame && stepThreadsInnerCompareFrame) {
+            compareHTML = `<a href="${compareUrl}" target="_blank">
+                <div class="result-status">
+                <div>${compareStepsPerSecond}</div>
+                <div>${compareBlocksPerSecond}</div>
+                </div>
+            </a>`;
+        }
         this.dom.innerHTML = `
             <div class="fixture-project">
-                <label>Project ID</label> <a
-                    href="/playground/#${newResult.fixture.projectId}"
+                <a href="${url}" target="bench_frame"
                     >${newResult.fixture.projectId}</a>
             </div>
-            (<span class="fixture-warm-up">${newResult.fixture.warmUpTime / 1000}s</span>
-            <span class="fixture-recording">${newResult.fixture.recordingTime / 1000}s</span>)
             <div class="result-status">
-                ${blockFunctionFrame ? `${blocksPerSecond} blocks/s` : viewNames[newResult.status]}
+                <div>${stepThreadsInnerFrame ? `steps/s` : ''}</div>
+                <div>${blockFunctionFrame ? `blocks/s` : statusName}</div>
+            </div>
+            <a href="${stepThreadsInnerFrame ? url : ''}" target="_blank">
+                <div class="result-status">
+                <div>${stepThreadsInnerFrame ? `${stepsPerSecond}` : ''}</div>
+                <div>${blockFunctionFrame ? `${blocksPerSecond}` : ''}</div>
+                </div>
+            </a>
+            ${compareHTML}
+            <div class="">
+            Run for ${newResult.fixture.recordingTime / 1000} seconds after
+            ${newResult.fixture.warmUpTime / 1000} seconds
             </div>
         `;
 
@@ -279,15 +397,18 @@ class BenchResultView {
 
 class BenchSuiteResultView {
     constructor ({runner}) {
+        const {suite, util} = runner;
+
         this.runner = runner;
-        this.suite = runner.suite;
+        this.suite = suite;
         this.views = {};
         this.dom = document.createElement('div');
 
-        const {suite} = runner;
         for (const fixture of suite.fixtures) {
-            this.views[fixture.id] = new BenchResultView({result: new BenchResult({fixture})});
-            this.dom.appendChild(this.views[fixture.id].render().dom);
+            this.views[fixture.id] = new BenchResultView({
+                result: new BenchResult({fixture}),
+                benchUtil: util
+            });
         }
 
         suite.on('result', result => {
@@ -296,12 +417,93 @@ class BenchSuiteResultView {
     }
 
     render () {
+        this.dom.innerHTML = `<div class="legend">
+            <span>Project ID</span>
+            <div class="result-status">
+                <div>steps per second</div>
+                <div>blocks per second</div>
+            </div>
+            <div>Description</div>
+        </div>
+
+        <div class="legend">
+            <span>&nbsp;</span>
+            <div class="result-status">
+                <div><a href="#" onclick="window.download(this)">
+                    Save Reports
+                </a></div>
+            </div>
+            <div class="result-status">
+                <a href="#"><label for="compare-file">Compare Reports<input
+                    id="compare-file" type="file"
+                    class="compare-file"
+                    accept="application/json"
+                    onchange="window.upload(this)" />
+                </label></a>
+            </div>
+        </div>`;
+
+        for (const fixture of this.suite.fixtures) {
+            this.dom.appendChild(this.views[fixture.id].render().dom);
+        }
+
         return this;
     }
 }
 
+let suite;
+let suiteView;
+
+window.upload = function (_this) {
+    if (!_this.files.length) {
+        return;
+    }
+    const reader = new FileReader();
+    reader.onload = function () {
+        const report = JSON.parse(reader.result);
+        Object.values(suiteView.views)
+            .forEach(view => {
+                const sameFixture = report.results.find(result => (
+                    result.fixture.projectId ===
+                        view.result.fixture.projectId &&
+                    result.fixture.warmUpTime ===
+                        view.result.fixture.warmUpTime &&
+                    result.fixture.recordingTime ===
+                        view.result.fixture.recordingTime
+                ));
+
+                if (sameFixture) {
+                    if (
+                        view.result && view.result.frames &&
+                        view.result.frames.length > 0
+                    ) {
+                        view.render(view.result, sameFixture);
+                    } else {
+                        view.compare = sameFixture;
+                    }
+                }
+            });
+    };
+    reader.readAsText(_this.files[0]);
+};
+
+window.download = function (_this) {
+    const blob = new Blob([JSON.stringify({
+        meta: {
+            source: 'Scratch VM Benchmark Suite',
+            version: 1
+        },
+        results: Object.values(suiteView.views)
+            .map(view => view.result)
+            .filter(view => view.status === BENCH_STATUS.COMPLETE)
+    })], {type: 'application/json'});
+
+    _this.download = 'scratch-vm-benchmark.json';
+    _this.href = URL.createObjectURL(blob);
+};
+
 window.onload = function () {
-    const suite = new BenchSuite();
+    suite = new BenchSuite();
 
     suite.add(new BenchFixture({
         projectId: 130041250,
@@ -375,11 +577,24 @@ window.onload = function () {
         recordingTime: 5000
     }));
 
+    suite.add(new BenchFixture({
+        projectId: 187694931,
+        warmUpTime: 0,
+        recordingTime: 5000
+    }));
+
+    suite.add(new BenchFixture({
+        projectId: 187694931,
+        warmUpTime: 5000,
+        recordingTime: 5000
+    }));
+
     const frame = document.getElementsByTagName('iframe')[0];
     const runner = new BenchRunner({frame, suite});
-    const resultsView = new BenchSuiteResultView({runner});
+    const resultsView = suiteView = new BenchSuiteResultView({runner}).render();
 
-    document.getElementsByClassName('suite-results')[0].appendChild(resultsView.dom);
+    document.getElementsByClassName('suite-results')[0]
+        .appendChild(resultsView.dom);
 
     runner.run();
 };

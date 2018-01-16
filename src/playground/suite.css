@@ -5,6 +5,10 @@ html, body {
     overflow: hidden;
 }
 
+iframe {
+    border: none;
+}
+
 .runner-controls {
     position: absolute;
     width: 30em;
@@ -15,6 +19,7 @@ html, body {
     bottom: 0;
     overflow: scroll;
     padding: 1em;
+    padding-top: 0;
     box-sizing: border-box;
 }
 
@@ -28,8 +33,24 @@ html, body {
     bottom: 0;
 }
 
+.controls {
+    margin-bottom: 1em;
+}
+
+.legend {
+    margin: 1em 0;
+}
+
+.result-view {
+    border-bottom: 1px solid #ccc;
+    border-spacing: 0;
+    border-collapse: collapse;
+    padding: 5px;
+}
+
 .fixture-project {
     display: inline-block;
+    clear: both;
 }
 
 .fixture-warm-up {
@@ -40,6 +61,18 @@ html, body {
     display: inline-block;
 }
 
+.result-view.resume {
+    cursor: pointer;
+}
+
 .result-status {
     float: right;
+    text-align: right;
+    margin-left: 0.3em;
+}
+
+.compare-file {
+    cursor: pointer;
+    visibility: hidden;
+    width: 0;
 }
