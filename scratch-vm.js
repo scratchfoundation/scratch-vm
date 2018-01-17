@@ -10137,7 +10137,7 @@ var RenderedTarget = function (_Target) {
                 // @todo: Update once pick is in Scratch coordinates.
                 // Limits test to this Drawable, so this will return true
                 // even if the clone is obscured by another Drawable.
-                var pickResult = this.runtime.renderer.pick(x + this.runtime.constructor.STAGE_WIDTH / 2, -y + this.runtime.constructor.STAGE_HEIGHT / 2, null, null, [this.drawableID]);
+                var pickResult = this.runtime.renderer.pick(x, y, null, null, [this.drawableID]);
                 return pickResult === this.drawableID;
             }
             return false;
@@ -32597,10 +32597,12 @@ var Mouse = function () {
         key: 'postData',
         value: function postData(data) {
             if (data.x) {
-                this._x = data.x - data.canvasWidth / 2;
+                this._clientX = data.x;
+                this._scratchX = MathUtil.clamp(480 * (data.x / data.canvasWidth - 0.5), -240, 240);
             }
             if (data.y) {
-                this._y = data.y - data.canvasHeight / 2;
+                this._clientY = data.y;
+                this._scratchY = MathUtil.clamp(-360 * (data.y / data.canvasHeight - 0.5), -180, 180);
             }
             if (typeof data.isDown !== 'undefined') {
                 this._isDown = data.isDown;
@@ -32611,25 +32613,47 @@ var Mouse = function () {
         }
 
         /**
-         * Get the X position of the mouse.
+         * Get the X position of the mouse in client coordinates.
+         * @return {number} Non-clamped X position of the mouse cursor.
+         */
+
+    }, {
+        key: 'getClientX',
+        value: function getClientX() {
+            return this._clientX;
+        }
+
+        /**
+         * Get the Y position of the mouse in client coordinates.
+         * @return {number} Non-clamped Y position of the mouse cursor.
+         */
+
+    }, {
+        key: 'getClientY',
+        value: function getClientY() {
+            return this._clientY;
+        }
+
+        /**
+         * Get the X position of the mouse in scratch coordinates.
          * @return {number} Clamped X position of the mouse cursor.
          */
 
     }, {
-        key: 'getX',
-        value: function getX() {
-            return MathUtil.clamp(this._x, -240, 240);
+        key: 'getScratchX',
+        value: function getScratchX() {
+            return this._scratchX;
         }
 
         /**
-         * Get the Y position of the mouse.
+         * Get the Y position of the mouse in scratch coordinates.
          * @return {number} Clamped Y position of the mouse cursor.
          */
 
     }, {
-        key: 'getY',
-        value: function getY() {
-            return MathUtil.clamp(-this._y, -180, 180);
+        key: 'getScratchY',
+        value: function getScratchY() {
+            return this._scratchY;
         }
 
         /**
@@ -33543,8 +33567,8 @@ var Scratch3MotionBlocks = function () {
             var targetX = 0;
             var targetY = 0;
             if (targetName === '_mouse_') {
-                targetX = util.ioQuery('mouse', 'getX');
-                targetY = util.ioQuery('mouse', 'getY');
+                targetX = util.ioQuery('mouse', 'getScratchX');
+                targetY = util.ioQuery('mouse', 'getScratchY');
             } else if (targetName === '_random_') {
                 var stageWidth = this.runtime.constructor.STAGE_WIDTH;
                 var stageHeight = this.runtime.constructor.STAGE_HEIGHT;
@@ -33590,8 +33614,8 @@ var Scratch3MotionBlocks = function () {
             var targetX = 0;
             var targetY = 0;
             if (args.TOWARDS === '_mouse_') {
-                targetX = util.ioQuery('mouse', 'getX');
-                targetY = util.ioQuery('mouse', 'getY');
+                targetX = util.ioQuery('mouse', 'getScratchX');
+                targetY = util.ioQuery('mouse', 'getScratchY');
             } else {
                 var pointTarget = this.runtime.getSpriteTargetByName(args.TOWARDS);
                 if (!pointTarget) return;
@@ -34457,8 +34481,8 @@ var Scratch3SensingBlocks = function () {
         value: function touchingObject(args, util) {
             var requestedObject = args.TOUCHINGOBJECTMENU;
             if (requestedObject === '_mouse_') {
-                var mouseX = util.ioQuery('mouse', 'getX');
-                var mouseY = util.ioQuery('mouse', 'getY');
+                var mouseX = util.ioQuery('mouse', 'getClientX');
+                var mouseY = util.ioQuery('mouse', 'getClientY');
                 return util.target.isTouchingPoint(mouseX, mouseY);
             } else if (requestedObject === '_edge_') {
                 return util.target.isTouchingEdge();
@@ -34486,8 +34510,8 @@ var Scratch3SensingBlocks = function () {
             var targetX = 0;
             var targetY = 0;
             if (args.DISTANCETOMENU === '_mouse_') {
-                targetX = util.ioQuery('mouse', 'getX');
-                targetY = util.ioQuery('mouse', 'getY');
+                targetX = util.ioQuery('mouse', 'getScratchX');
+                targetY = util.ioQuery('mouse', 'getScratchY');
             } else {
                 var distTarget = this.runtime.getSpriteTargetByName(args.DISTANCETOMENU);
                 if (!distTarget) return 10000;
@@ -34517,12 +34541,12 @@ var Scratch3SensingBlocks = function () {
     }, {
         key: 'getMouseX',
         value: function getMouseX(args, util) {
-            return util.ioQuery('mouse', 'getX');
+            return util.ioQuery('mouse', 'getScratchX');
         }
     }, {
         key: 'getMouseY',
         value: function getMouseY(args, util) {
-            return util.ioQuery('mouse', 'getY');
+            return util.ioQuery('mouse', 'getScratchY');
         }
     }, {
         key: 'getMouseDown',
