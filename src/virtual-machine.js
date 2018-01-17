@@ -1,4 +1,3 @@
-const TextEncoder = require('text-encoding');
 const EventEmitter = require('events');
 
 const centralDispatch = require('./dispatch/central-dispatch');
