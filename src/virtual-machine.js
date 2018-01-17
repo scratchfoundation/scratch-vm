@@ -1,3 +1,4 @@
+const TextEncoder = require('text-encoding').TextEncoder;
 const EventEmitter = require('events');
 
 const centralDispatch = require('./dispatch/central-dispatch');
