@@ -10379,7 +10379,6 @@ var RenderedTarget = function (_Target) {
                 newTarget.effects = JSON.parse(JSON.stringify(_this2.effects));
                 newTarget.variables = JSON.parse(JSON.stringify(_this2.variables));
                 newTarget.lists = JSON.parse(JSON.stringify(_this2.lists));
-                newTarget.initDrawable();
                 newTarget.updateAllDrawableProperties();
                 newTarget.goBehindOther(_this2);
                 return newTarget;
@@ -32918,9 +32917,8 @@ var specMap = {
     'keyPressed:': {
         opcode: 'sensing_keypressed',
         argMap: [{
-            type: 'input',
-            inputOp: 'sensing_keyoptions',
-            inputName: 'KEY_OPTION'
+            type: 'field',
+            fieldName: 'KEY_OPTION'
         }]
     },
     'mousePressed': {
@@ -32978,9 +32976,8 @@ var specMap = {
     'getAttribute:of:': {
         opcode: 'sensing_of',
         argMap: [{
-            type: 'input',
-            inputOp: 'sensing_of_property_menu',
-            inputName: 'PROPERTY'
+            type: 'field',
+            fieldName: 'PROPERTY'
         }, {
             type: 'input',
             inputOp: 'sensing_of_object_menu',
