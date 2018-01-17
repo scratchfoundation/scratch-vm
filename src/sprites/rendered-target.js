@@ -616,8 +616,7 @@ class RenderedTarget extends Target {
             // Limits test to this Drawable, so this will return true
             // even if the clone is obscured by another Drawable.
             const pickResult = this.runtime.renderer.pick(
-                x + (this.runtime.constructor.STAGE_WIDTH / 2),
-                -y + (this.runtime.constructor.STAGE_HEIGHT / 2),
+                x, y,
                 null, null,
                 [this.drawableID]
             );
