@@ -181,14 +181,18 @@ class Scratch3PenBlocks {
      * @param {RenderedTarget} target - the target which has moved.
      * @param {number} oldX - the previous X position.
      * @param {number} oldY - the previous Y position.
+     * @param {boolean} isForce - whether the movement was forced.
      * @private
      */
-    _onTargetMoved (target, oldX, oldY) {
-        const penSkinId = this._getPenLayerID();
-        if (penSkinId >= 0) {
-            const penState = this._getPenState(target);
-            this.runtime.renderer.penLine(penSkinId, penState.penAttributes, oldX, oldY, target.x, target.y);
-            this.runtime.requestRedraw();
+    _onTargetMoved (target, oldX, oldY, isForce) {
+        // Only move the pen if the movement isn't forced (ie. dragged).
+        if (!isForce) {
+            const penSkinId = this._getPenLayerID();
+            if (penSkinId >= 0) {
+                const penState = this._getPenState(target);
+                this.runtime.renderer.penLine(penSkinId, penState.penAttributes, oldX, oldY, target.x, target.y);
+                this.runtime.requestRedraw();
+            }
         }
     }
 
@@ -446,7 +450,7 @@ class Scratch3PenBlocks {
                     blockType: BlockType.COMMAND,
                     text: formatMessage({
                         id: 'pen.setHue',
-                        default: 'set pen hue to [HUE]',
+                        default: 'set pen color to [HUE]',
                         description: 'legacy pen blocks - set pen color to number'
                     }),
                     arguments: {
@@ -462,7 +466,7 @@ class Scratch3PenBlocks {
                     blockType: BlockType.COMMAND,
                     text: formatMessage({
                         id: 'pen.changeHue',
-                        default: 'change pen hue by [HUE]',
+                        default: 'change pen color by [HUE]',
                         description: 'legacy pen blocks - change pen color'
                     }),
                     arguments: {
@@ -673,6 +677,8 @@ class Scratch3PenBlocks {
         const hueValue = Cast.toNumber(args.HUE);
         const colorValue = hueValue / 2;
         this._setOrChangeColorParam(ColorParam.COLOR, colorValue, penState, false);
+
+        this._legacyUpdatePenColor(penState);
     }
 
     /**
@@ -686,6 +692,8 @@ class Scratch3PenBlocks {
         const hueChange = Cast.toNumber(args.HUE);
         const colorChange = hueChange / 2;
         this._setOrChangeColorParam(ColorParam.COLOR, colorChange, penState, true);
+
+        this._legacyUpdatePenColor(penState);
     }
 
     /**
@@ -705,25 +713,10 @@ class Scratch3PenBlocks {
         newShade = newShade % 200;
         if (newShade < 0) newShade += 200;
 
-        // Create the new color in RGB using the scratch 2 "shade" model
-        let rgb = Color.hsvToRgb({h: penState.color * 360 / 100, s: 1, v: 1});
-        const shade = (newShade > 100) ? 200 - newShade : newShade;
-        if (shade < 50) {
-            rgb = Color.mixRgb(Color.RGB_BLACK, rgb, (10 + shade) / 60);
-        } else {
-            rgb = Color.mixRgb(rgb, Color.RGB_WHITE, (shade - 50) / 60);
-        }
-
-        // Update the pen state according to new color
-        const hsv = Color.rgbToHsv(rgb);
-        penState.color = 100 * hsv.h / 360;
-        penState.saturation = 100 * hsv.s;
-        penState.brightness = 100 * hsv.v;
-
         // And store the shade that was used to compute this new color for later use.
         penState._shade = newShade;
 
-        this._updatePenColor(penState);
+        this._legacyUpdatePenColor(penState);
     }
 
     /**
@@ -739,6 +732,29 @@ class Scratch3PenBlocks {
         this.setPenShadeToNumber({SHADE: penState._shade + shadeChange}, util);
     }
 
+    /**
+     * Update the pen state's color from its hue & shade values, Scratch 2.0 style.
+     * @param {object} penState - update the HSV & RGB values in this pen state from its hue & shade values.
+     * @private
+     */
+    _legacyUpdatePenColor (penState) {
+        // Create the new color in RGB using the scratch 2 "shade" model
+        let rgb = Color.hsvToRgb({h: penState.color * 360 / 100, s: 1, v: 1});
+        const shade = (penState._shade > 100) ? 200 - penState._shade : penState._shade;
+        if (shade < 50) {
+            rgb = Color.mixRgb(Color.RGB_BLACK, rgb, (10 + shade) / 60);
+        } else {
+            rgb = Color.mixRgb(rgb, Color.RGB_WHITE, (shade - 50) / 60);
+        }
+
+        // Update the pen state according to new color
+        const hsv = Color.rgbToHsv(rgb);
+        penState.color = 100 * hsv.h / 360;
+        penState.saturation = 100 * hsv.s;
+        penState.brightness = 100 * hsv.v;
+
+        this._updatePenColor(penState);
+    }
 }
 
 module.exports = Scratch3PenBlocks;

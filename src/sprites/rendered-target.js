@@ -203,7 +203,7 @@ class RenderedTarget extends Target {
             this.x = x;
             this.y = y;
         }
-        this.emit(RenderedTarget.EVENT_TARGET_MOVED, this, oldX, oldY);
+        this.emit(RenderedTarget.EVENT_TARGET_MOVED, this, oldX, oldY, force);
         this.runtime.requestTargetsUpdate(this);
     }
 
@@ -616,8 +616,7 @@ class RenderedTarget extends Target {
             // Limits test to this Drawable, so this will return true
             // even if the clone is obscured by another Drawable.
             const pickResult = this.runtime.renderer.pick(
-                x + (this.runtime.constructor.STAGE_WIDTH / 2),
-                -y + (this.runtime.constructor.STAGE_HEIGHT / 2),
+                x, y,
                 null, null,
                 [this.drawableID]
             );
@@ -699,10 +698,29 @@ class RenderedTarget extends Target {
     }
 
     /**
-     * Move back a number of layers.
-     * @param {number} nLayers How many layers to go back.
+     * Move to the back layer.
      */
-    goBackLayers (nLayers) {
+    goToBack () {
+        if (this.renderer) {
+            this.renderer.setDrawableOrder(this.drawableID, -Infinity, false, 1);
+        }
+    }
+
+    /**
+     * Move forward a number of layers.
+     * @param {number} nLayers How many layers to go forward.
+     */
+    goForwardLayers (nLayers) {
+        if (this.renderer) {
+            this.renderer.setDrawableOrder(this.drawableID, nLayers, true, 1);
+        }
+    }
+
+    /**
+     * Move backward a number of layers.
+     * @param {number} nLayers How many layers to go backward.
+     */
+    goBackwardLayers (nLayers) {
         if (this.renderer) {
             this.renderer.setDrawableOrder(this.drawableID, -nLayers, true, 1);
         }
@@ -812,7 +830,6 @@ class RenderedTarget extends Target {
             newTarget.effects = JSON.parse(JSON.stringify(this.effects));
             newTarget.variables = JSON.parse(JSON.stringify(this.variables));
             newTarget.lists = JSON.parse(JSON.stringify(this.lists));
-            newTarget.initDrawable();
             newTarget.updateAllDrawableProperties();
             newTarget.goBehindOther(this);
             return newTarget;
@@ -845,11 +862,10 @@ class RenderedTarget extends Target {
      */
     postSpriteInfo (data) {
         const force = data.hasOwnProperty('force') ? data.force : null;
-        if (data.hasOwnProperty('x')) {
-            this.setXY(data.x, this.y, force);
-        }
-        if (data.hasOwnProperty('y')) {
-            this.setXY(this.x, data.y, force);
+        const isXChanged = data.hasOwnProperty('x');
+        const isYChanged = data.hasOwnProperty('y');
+        if (isXChanged || isYChanged) {
+            this.setXY(isXChanged ? data.x : this.x, isYChanged ? data.y : this.y, force);
         }
         if (data.hasOwnProperty('direction')) {
             this.setDirection(data.direction);

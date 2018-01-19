@@ -2,6 +2,7 @@ const BlockUtility = require('./block-utility');
 const log = require('../util/log');
 const Thread = require('./thread');
 const {Map} = require('immutable');
+const cast = require('../util/cast');
 
 /**
  * Single BlockUtility instance reused by execute for every pritimive ran.
@@ -211,7 +212,30 @@ const execute = function (sequencer, thread) {
             currentStackFrame.waitingReporter = null;
             thread.popStack();
         }
-        argValues[inputName] = currentStackFrame.reported[inputName];
+        const inputValue = currentStackFrame.reported[inputName];
+        if (inputName === 'BROADCAST_INPUT') {
+            const broadcastInput = inputs[inputName];
+            // Check if something is plugged into the broadcast block, or
+            // if the shadow dropdown menu is being used.
+            if (broadcastInput.block === broadcastInput.shadow) {
+                // Shadow dropdown menu is being used.
+                // Get the appropriate information out of it.
+                const shadow = blockContainer.getBlock(broadcastInput.shadow);
+                const broadcastField = shadow.fields.BROADCAST_OPTION;
+                argValues.BROADCAST_OPTION = {
+                    id: broadcastField.id,
+                    name: broadcastField.value
+                };
+            } else {
+                // Something is plugged into the broadcast input.
+                // Cast it to a string. We don't need an id here.
+                argValues.BROADCAST_OPTION = {
+                    name: cast.toString(inputValue)
+                };
+            }
+        } else {
+            argValues[inputName] = inputValue;
+        }
     }
 
     // Add any mutation to args (e.g., for procedures).

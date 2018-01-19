@@ -1,6 +1,8 @@
 const test = require('tap').test;
 const Sensing = require('../../src/blocks/scratch3_sensing');
 const Runtime = require('../../src/engine/runtime');
+const Sprite = require('../../src/sprites/sprite');
+const RenderedTarget = require('../../src/sprites/rendered-target');
 
 test('getPrimitives', t => {
     const rt = new Runtime();
@@ -64,4 +66,20 @@ test('ask and answer with a visible target', t => {
     });
 
     s.askAndWait({QUESTION: expectedQuestion}, util);
+});
+
+test('set drag mode', t => {
+    const runtime = new Runtime();
+    runtime.requestTargetsUpdate = () => {}; // noop for testing
+    const sensing = new Sensing(runtime);
+    const s = new Sprite();
+    const rt = new RenderedTarget(s, runtime);
+
+    sensing.setDragMode({DRAG_MODE: 'not draggable'}, {target: rt});
+    t.strictEqual(rt.draggable, false);
+
+    sensing.setDragMode({DRAG_MODE: 'draggable'}, {target: rt});
+    t.strictEqual(rt.draggable, true);
+
+    t.end();
 });

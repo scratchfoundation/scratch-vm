@@ -287,12 +287,18 @@ test('emitWorkspaceUpdate', t => {
                 global: {
                     toXML: () => 'global'
                 }
+            },
+            blocks: {
+                toXML: () => 'blocks'
             }
         }, {
             variables: {
                 unused: {
                     toXML: () => 'unused'
                 }
+            },
+            blocks: {
+                toXML: () => 'blocks'
             }
         }, {
             variables: {

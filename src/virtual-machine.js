@@ -1,3 +1,4 @@
+const TextEncoder = require('text-encoding').TextEncoder;
 const EventEmitter = require('events');
 
 const centralDispatch = require('./dispatch/central-dispatch');
@@ -8,6 +9,7 @@ const sb2 = require('./serialization/sb2');
 const sb3 = require('./serialization/sb3');
 const StringUtil = require('./util/string-util');
 const formatMessage = require('format-message');
+const Variable = require('./engine/variable');
 
 const {loadCostume} = require('./import/load-costume.js');
 const {loadSound} = require('./import/load-sound.js');
@@ -267,6 +269,8 @@ class VirtualMachine extends EventEmitter {
             targets.forEach(target => {
                 this.runtime.targets.push(target);
                 (/** @type RenderedTarget */ target).updateAllDrawableProperties();
+                // Ensure unique sprite name
+                if (target.isSprite()) this.renameSprite(target.id, target.getName());
             });
             // Select the first target for editing, e.g., the first sprite.
             if (wholeProject && (targets.length > 1)) {
@@ -447,7 +451,7 @@ class VirtualMachine extends EventEmitter {
     addBackdrop (md5ext, backdropObject) {
         return loadCostume(md5ext, backdropObject, this.runtime).then(() => {
             const stage = this.runtime.getTargetForStage();
-            stage.sprite.costumes.push(backdropObject);
+            stage.addCostume(backdropObject);
             stage.setCostume(stage.sprite.costumes.length - 1);
         });
     }
@@ -628,7 +632,7 @@ class VirtualMachine extends EventEmitter {
      */
     setEditingTarget (targetId) {
         // Has the target id changed? If not, exit.
-        if (targetId === this.editingTarget.id) {
+        if (this.editingTarget && targetId === this.editingTarget.id) {
             return;
         }
         const target = this.runtime.getTargetById(targetId);
@@ -677,6 +681,35 @@ class VirtualMachine extends EventEmitter {
      * of the current editing target's blocks.
      */
     emitWorkspaceUpdate () {
+        // Create a list of broadcast message Ids according to the stage variables
+        const stageVariables = this.runtime.getTargetForStage().variables;
+        let messageIds = [];
+        for (const varId in stageVariables) {
+            if (stageVariables[varId].type === Variable.BROADCAST_MESSAGE_TYPE) {
+                messageIds.push(varId);
+            }
+        }
+        // Go through all blocks on all targets, removing referenced
+        // broadcast ids from the list.
+        for (let i = 0; i < this.runtime.targets.length; i++) {
+            const currTarget = this.runtime.targets[i];
+            const currBlocks = currTarget.blocks._blocks;
+            for (const blockId in currBlocks) {
+                if (currBlocks[blockId].fields.BROADCAST_OPTION) {
+                    const id = currBlocks[blockId].fields.BROADCAST_OPTION.id;
+                    const index = messageIds.indexOf(id);
+                    if (index !== -1) {
+                        messageIds = messageIds.slice(0, index)
+                            .concat(messageIds.slice(index + 1));
+                    }
+                }
+            }
+        }
+        // Anything left in messageIds is not referenced by a block, so delete it.
+        for (let i = 0; i < messageIds.length; i++) {
+            const id = messageIds[i];
+            delete this.runtime.getTargetForStage().variables[id];
+        }
         const variableMap = Object.assign({},
             this.runtime.getTargetForStage().variables,
             this.editingTarget.variables

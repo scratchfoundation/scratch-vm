@@ -170,14 +170,23 @@ const generateVariableIdGetter = (function () {
 
 const globalBroadcastMsgStateGenerator = (function () {
     let broadcastMsgNameMap = {};
+    const allBroadcastFields = [];
+    const emptyStringName = uid();
     return function (topLevel) {
         if (topLevel) broadcastMsgNameMap = {};
         return {
-            broadcastMsgMapUpdater: function (name) {
+            broadcastMsgMapUpdater: function (name, field) {
+                name = name.toLowerCase();
+                if (name === '') {
+                    name = emptyStringName;
+                }
                 broadcastMsgNameMap[name] = `broadcastMsgId-${name}`;
+                allBroadcastFields.push(field);
                 return broadcastMsgNameMap[name];
             },
-            globalBroadcastMsgs: broadcastMsgNameMap
+            globalBroadcastMsgs: broadcastMsgNameMap,
+            allBroadcastFields: allBroadcastFields,
+            emptyMsgName: emptyStringName
         };
     };
 }());
@@ -340,6 +349,31 @@ const parseScratchObject = function (object, runtime, extensions, topLevel) {
             // all other targets have finished processing.
             if (target.isStage) {
                 const allBroadcastMsgs = globalBroadcastMsgObj.globalBroadcastMsgs;
+                const allBroadcastMsgFields = globalBroadcastMsgObj.allBroadcastFields;
+                const oldEmptyMsgName = globalBroadcastMsgObj.emptyMsgName;
+                if (allBroadcastMsgs[oldEmptyMsgName]) {
+                    // Find a fresh 'messageN'
+                    let currIndex = 1;
+                    while (allBroadcastMsgs[`message${currIndex}`]) {
+                        currIndex += 1;
+                    }
+                    const newEmptyMsgName = `message${currIndex}`;
+                    // Add the new empty message name to the broadcast message
+                    // name map, and assign it the old id.
+                    // Then, delete the old entry in map.
+                    allBroadcastMsgs[newEmptyMsgName] = allBroadcastMsgs[oldEmptyMsgName];
+                    delete allBroadcastMsgs[oldEmptyMsgName];
+                    // Now update all the broadcast message fields with
+                    // the new empty message name.
+                    for (let i = 0; i < allBroadcastMsgFields.length; i++) {
+                        if (allBroadcastMsgFields[i].value === '') {
+                            allBroadcastMsgFields[i].value = newEmptyMsgName;
+                        }
+                    }
+                }
+                // Traverse the broadcast message name map and create
+                // broadcast messages as variables on the stage (which is this
+                // target).
                 for (const msgName in allBroadcastMsgs) {
                     const msgId = allBroadcastMsgs[msgName];
                     const newMsg = new Variable(
@@ -494,6 +528,11 @@ const parseBlock = function (sb2block, addBroadcastMsg, getVariableId, extension
                 if (shadowObscured) {
                     fieldValue = '#990000';
                 }
+            } else if (expectedArg.inputOp === 'event_broadcast_menu') {
+                fieldName = 'BROADCAST_OPTION';
+                if (shadowObscured) {
+                    fieldValue = '';
+                }
             } else if (shadowObscured) {
                 // Filled drop-down menu.
                 fieldValue = '';
@@ -503,6 +542,23 @@ const parseBlock = function (sb2block, addBroadcastMsg, getVariableId, extension
                 name: fieldName,
                 value: fieldValue
             };
+            // event_broadcast_menus have some extra properties to add to the
+            // field and a different value than the rest
+            if (expectedArg.inputOp === 'event_broadcast_menu') {
+                if (!shadowObscured) {
+                    // Need to update the broadcast message name map with
+                    // the value of this field.
+                    // Also need to provide the fields[fieldName] object,
+                    // so that we can later update its value property, e.g.
+                    // if sb2 message name is empty string, we will later
+                    // replace this field's value with messageN
+                    // once we can traverse through all the existing message names
+                    // and come up with a fresh messageN.
+                    const broadcastId = addBroadcastMsg(fieldValue, fields[fieldName]);
+                    fields[fieldName].id = broadcastId;
+                }
+                fields[fieldName].variableType = expectedArg.variableType;
+            }
             activeBlock.children.push({
                 id: inputUid,
                 opcode: expectedArg.inputOp,
@@ -529,8 +585,14 @@ const parseBlock = function (sb2block, addBroadcastMsg, getVariableId, extension
                 // Add `id` property to variable fields
                 activeBlock.fields[expectedArg.fieldName].id = getVariableId(providedArg);
             } else if (expectedArg.fieldName === 'BROADCAST_OPTION') {
-                // add the name in this field to the broadcast msg name map
-                const broadcastId = addBroadcastMsg(providedArg);
+                // Add the name in this field to the broadcast msg name map.
+                // Also need to provide the fields[fieldName] object,
+                // so that we can later update its value property, e.g.
+                // if sb2 message name is empty string, we will later
+                // replace this field's value with messageN
+                // once we can traverse through all the existing message names
+                // and come up with a fresh messageN.
+                const broadcastId = addBroadcastMsg(providedArg, activeBlock.fields[expectedArg.fieldName]);
                 activeBlock.fields[expectedArg.fieldName].id = broadcastId;
             }
             const varType = expectedArg.variableType;
@@ -539,6 +601,41 @@ const parseBlock = function (sb2block, addBroadcastMsg, getVariableId, extension
             }
         }
     }
+
+    // Updates for blocks that have new menus (e.g. in Looks)
+    switch (oldOpcode) {
+    case 'comeToFront':
+        activeBlock.fields.FRONT_BACK = {
+            name: 'FRONT_BACK',
+            value: 'front'
+        };
+        break;
+    case 'goBackByLayers:':
+        activeBlock.fields.FORWARD_BACKWARD = {
+            name: 'FORWARD_BACKWARD',
+            value: 'backward'
+        };
+        break;
+    case 'backgroundIndex':
+        activeBlock.fields.NUMBER_NAME = {
+            name: 'NUMBER_NAME',
+            value: 'number'
+        };
+        break;
+    case 'sceneName':
+        activeBlock.fields.NUMBER_NAME = {
+            name: 'NUMBER_NAME',
+            value: 'name'
+        };
+        break;
+    case 'costumeIndex':
+        activeBlock.fields.NUMBER_NAME = {
+            name: 'NUMBER_NAME',
+            value: 'number'
+        };
+        break;
+    }
+
     // Special cases to generate mutations.
     if (oldOpcode === 'stopScripts') {
         // Mutation for stop block: if the argument is 'other scripts',

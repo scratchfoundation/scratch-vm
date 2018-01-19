@@ -98,12 +98,19 @@ class Target extends EventEmitter {
      * if it exists.
      * @param {string} id Id of the variable.
      * @param {string} name Name of the variable.
-     * @return {!Variable} Variable object.
+     * @return {?Variable} Variable object.
      */
     lookupBroadcastMsg (id, name) {
-        const broadcastMsg = this.lookupVariableById(id);
+        let broadcastMsg;
+        if (id) {
+            broadcastMsg = this.lookupVariableById(id);
+        } else if (name) {
+            broadcastMsg = this.lookupBroadcastByInputValue(name);
+        } else {
+            log.error('Cannot find broadcast message if neither id nor name are provided.');
+        }
         if (broadcastMsg) {
-            if (broadcastMsg.name !== name) {
+            if (name && (broadcastMsg.name.toLowerCase() !== name.toLowerCase())) {
                 log.error(`Found broadcast message with id: ${id}, but` +
                     `its name, ${broadcastMsg.name} did not match expected name ${name}.`);
             }
@@ -112,6 +119,23 @@ class Target extends EventEmitter {
                     `did not match expected type ${Variable.BROADCAST_MESSAGE_TYPE}`);
             }
             return broadcastMsg;
+        }
+    }
+
+    /**
+     * Look up a broadcast message with the given name and return the variable
+     * if it exists. Does not create a new broadcast message variable if
+     * it doesn't exist.
+     * @param {string} name Name of the variable.
+     * @return {?Variable} Variable object.
+     */
+    lookupBroadcastByInputValue (name) {
+        const vars = this.variables;
+        for (const propName in vars) {
+            if ((vars[propName].type === Variable.BROADCAST_MESSAGE_TYPE) &&
+                (vars[propName].name.toLowerCase() === name.toLowerCase())) {
+                return vars[propName];
+            }
         }
     }
 
@@ -141,7 +165,7 @@ class Target extends EventEmitter {
     * Search begins for local lists; then look for globals.
     * @param {!string} id Id of the list.
     * @param {!string} name Name of the list.
-    * @return {!List} List object.
+    * @return {!Varible} Variable object representing the found/created list.
      */
     lookupOrCreateList (id, name) {
         const list = this.lookupVariableById(id);
