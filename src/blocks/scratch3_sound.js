@@ -102,7 +102,7 @@ class Scratch3SoundBlocks {
      */
     _onTargetCreated (newTarget, sourceTarget) {
         if (sourceTarget) {
-            const soundState = this._getSoundState(sourceTarget);
+            const soundState = sourceTarget.getCustomState(Scratch3SoundBlocks.STATE_KEY);
             if (soundState && newTarget) {
                 newTarget.setCustomState(Scratch3SoundBlocks.STATE_KEY, Clone.simple(soundState));
                 this._syncEffectsForTarget(newTarget);
