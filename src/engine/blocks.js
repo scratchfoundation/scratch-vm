@@ -319,6 +319,10 @@ class Blocks {
             break;
         case 'var_rename':
             stage.renameVariable(e.varId, e.newName);
+            // Update all the blocks that use the renamed variable.
+            if (optRuntime) {
+                optRuntime.updateBlocksAfterVarRename(e.varId, e.newName);
+            }
             break;
         case 'var_delete':
             stage.deleteVariable(e.varId);

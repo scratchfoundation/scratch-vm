@@ -1581,6 +1581,33 @@ class Runtime extends EventEmitter {
     disableProfiling () {
         this.profiler = null;
     }
+
+    /**
+     * Keep blocks up to date after a variable gets renamed.
+     * @param {string} varId The id of the variable that was renamed
+     * @param {string} newName The new name of the variable that was renamed
+     */
+    updateBlocksAfterVarRename (varId, newName) {
+        const allTargets = this.targets;
+        for (let i = 0; i < allTargets.length; i++) {
+            const currTarget = allTargets[i];
+            const currBlocks = currTarget.blocks._blocks;
+            for (const blockId in currBlocks) {
+                let varOrListField = null;
+                if (currBlocks[blockId].fields.VARIABLE) {
+                    varOrListField = currBlocks[blockId].fields.VARIABLE;
+                } else if (currBlocks[blockId].fields.LIST) {
+                    varOrListField = currBlocks[blockId].fields.LIST;
+                }
+                if (varOrListField) {
+                    const currFieldId = varOrListField.id;
+                    if (varId === currFieldId) {
+                        varOrListField.value = newName;
+                    }
+                }
+            }
+        }
+    }
 }
 
 /**
