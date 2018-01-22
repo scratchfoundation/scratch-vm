@@ -97,10 +97,23 @@ class Scratch3MusicBlocks {
     _loadSound (fileName, index, bufferArray) {
         if (!this.runtime.storage) return;
         if (!this.runtime.audioEngine) return;
+        if (!this.runtime.audioEngine.audioContext) return;
         return this.runtime.storage.load(this.runtime.storage.AssetType.Sound, fileName, 'mp3')
-            .then(soundAsset =>
-                this.runtime.audioEngine.audioContext.decodeAudioData(soundAsset.data.buffer)
-            )
+            .then(soundAsset => {
+                const context = this.runtime.audioEngine.audioContext;
+                // Check for newer promise-based API
+                if (context.decodeAudioData.length === 1) {
+                    return context.decodeAudioData(soundAsset.data.buffer);
+                } else { // eslint-disable-line no-else-return
+                    // Fall back to callback API
+                    return new Promise((resolve, reject) =>
+                        context.decodeAudioData(soundAsset.data.buffer,
+                            buffer => resolve(buffer),
+                            error => reject(error)
+                        )
+                    );
+                }
+            })
             .then(buffer => {
                 bufferArray[index] = buffer;
             });
