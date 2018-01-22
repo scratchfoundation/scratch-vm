@@ -104,7 +104,7 @@ class Scratch3MusicBlocks {
                 // Check for newer promise-based API
                 if (context.decodeAudioData.length === 1) {
                     return context.decodeAudioData(soundAsset.data.buffer);
-                } else { // eslint-disable no-else-return
+                } else { // eslint-disable-line no-else-return
                     // Fall back to callback API
                     return new Promise((resolve, reject) =>
                         context.decodeAudioData(soundAsset.data.buffer,
