@@ -9611,17 +9611,18 @@ var RenderedTarget = function (_Target) {
             if (!this.isOriginal) {
                 this.runtime.startHats('control_start_as_clone', null, this);
             }
+        }
 
-            /**
-            * Audio player
-            */
+        /**
+         * Initialize the audio player for this sprite or clone.
+         */
+
+    }, {
+        key: 'initAudio',
+        value: function initAudio() {
             this.audioPlayer = null;
             if (this.runtime && this.runtime.audioEngine) {
-                if (this.isOriginal) {
-                    this.audioPlayer = this.runtime.audioEngine.createPlayer();
-                } else {
-                    this.audioPlayer = this.sprite.clones[0].audioPlayer;
-                }
+                this.audioPlayer = this.runtime.audioEngine.createPlayer();
             }
         }
 
@@ -10508,6 +10509,10 @@ var RenderedTarget = function (_Target) {
                 if (this.visible) {
                     this.runtime.requestRedraw();
                 }
+            }
+            if (this.audioPlayer) {
+                this.audioPlayer.stopAllSounds();
+                this.audioPlayer.dispose();
             }
         }
     }], [{
@@ -16366,6 +16371,7 @@ var Sprite = function () {
             var newClone = new RenderedTarget(this, this.runtime);
             newClone.isOriginal = this.clones.length === 0;
             this.clones.push(newClone);
+            newClone.initAudio();
             if (newClone.isOriginal) {
                 newClone.initDrawable();
                 this.runtime.fireTargetWasCreated(newClone);
@@ -27186,8 +27192,23 @@ var Scratch3MusicBlocks = function () {
 
             if (!this.runtime.storage) return;
             if (!this.runtime.audioEngine) return;
+            if (!this.runtime.audioEngine.audioContext) return;
             return this.runtime.storage.load(this.runtime.storage.AssetType.Sound, fileName, 'mp3').then(function (soundAsset) {
-                return _this2.runtime.audioEngine.audioContext.decodeAudioData(soundAsset.data.buffer);
+                var context = _this2.runtime.audioEngine.audioContext;
+                // Check for newer promise-based API
+                if (context.decodeAudioData.length === 1) {
+                    return context.decodeAudioData(soundAsset.data.buffer);
+                } else {
+                    // eslint-disable-line no-else-return
+                    // Fall back to callback API
+                    return new Promise(function (resolve, reject) {
+                        return context.decodeAudioData(soundAsset.data.buffer, function (buffer) {
+                            return resolve(buffer);
+                        }, function (error) {
+                            return reject(error);
+                        });
+                    });
+                }
             }).then(function (buffer) {
                 bufferArray[index] = buffer;
             });
@@ -34015,6 +34036,11 @@ var Scratch3SoundBlocks = function () {
             this.runtime.on('PROJECT_STOP_ALL', this._clearEffectsForAllTargets);
             this.runtime.on('PROJECT_START', this._clearEffectsForAllTargets);
         }
+
+        this._onTargetCreated = this._onTargetCreated.bind(this);
+        if (this.runtime) {
+            runtime.on('targetWasCreated', this._onTargetCreated);
+        }
     }
 
     /**
@@ -34039,6 +34065,26 @@ var Scratch3SoundBlocks = function () {
                 target.setCustomState(Scratch3SoundBlocks.STATE_KEY, soundState);
             }
             return soundState;
+        }
+
+        /**
+         * When a Target is cloned, clone the sound state.
+         * @param {Target} newTarget - the newly created target.
+         * @param {Target} [sourceTarget] - the target used as a source for the new clone, if any.
+         * @listens Runtime#event:targetWasCreated
+         * @private
+         */
+
+    }, {
+        key: '_onTargetCreated',
+        value: function _onTargetCreated(newTarget, sourceTarget) {
+            if (sourceTarget) {
+                var soundState = sourceTarget.getCustomState(Scratch3SoundBlocks.STATE_KEY);
+                if (soundState && newTarget) {
+                    newTarget.setCustomState(Scratch3SoundBlocks.STATE_KEY, Clone.simple(soundState));
+                    this._syncEffectsForTarget(newTarget);
+                }
+            }
         }
 
         /**
@@ -34172,6 +34218,16 @@ var Scratch3SoundBlocks = function () {
 
             if (util.target.audioPlayer === null) return;
             util.target.audioPlayer.setEffect(effect, soundState.effects[effect]);
+        }
+    }, {
+        key: '_syncEffectsForTarget',
+        value: function _syncEffectsForTarget(target) {
+            if (!target || !target.audioPlayer) return;
+            var soundState = this._getSoundState(target);
+            for (var effect in soundState.effects) {
+                if (!soundState.effects.hasOwnProperty(effect)) continue;
+                target.audioPlayer.setEffect(effect, soundState.effects[effect]);
+            }
         }
     }, {
         key: 'clearEffects',

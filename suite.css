@@ -1,0 +1,78 @@
+html, body {
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    overflow: hidden;
+}
+
+iframe {
+    border: none;
+}
+
+.runner-controls {
+    position: absolute;
+    width: 30em;
+    height: 100%;
+    left: 0;
+    right: 30em;
+    top: 0;
+    bottom: 0;
+    overflow: scroll;
+    padding: 1em;
+    padding-top: 0;
+    box-sizing: border-box;
+}
+
+.bench-frame-owner {
+    position: absolute;
+    width: calc(100% - 30em);
+    height: 100%;
+    left: 30em;
+    right: 100%;
+    top: 0;
+    bottom: 0;
+}
+
+.controls {
+    margin-bottom: 1em;
+}
+
+.legend {
+    margin: 1em 0;
+}
+
+.result-view {
+    border-bottom: 1px solid #ccc;
+    border-spacing: 0;
+    border-collapse: collapse;
+    padding: 5px;
+}
+
+.fixture-project {
+    display: inline-block;
+    clear: both;
+}
+
+.fixture-warm-up {
+    display: inline-block;
+}
+
+.fixture-recording {
+    display: inline-block;
+}
+
+.result-view.resume {
+    cursor: pointer;
+}
+
+.result-status {
+    float: right;
+    text-align: right;
+    margin-left: 0.3em;
+}
+
+.compare-file {
+    cursor: pointer;
+    visibility: hidden;
+    width: 0;
+}
