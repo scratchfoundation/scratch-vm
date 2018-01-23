@@ -228,7 +228,9 @@ const parseScratchObject = function (object, runtime, extensions, topLevel) {
             };
 
             if ('textLayerMD5' in costumeSource) {
-                costumePromises.push(loadOldTextCostume(costumeSource.baseLayerMD5, costumeSource.textLayerMD5, costume, runtime));
+                costumePromises.push(
+                    loadOldTextCostume(costumeSource.baseLayerMD5, costumeSource.textLayerMD5, costume, runtime)
+                );
             } else {
                 costumePromises.push(loadCostume(costumeSource.baseLayerMD5, costume, runtime));
             }

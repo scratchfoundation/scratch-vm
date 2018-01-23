@@ -99,8 +99,9 @@ const loadCostume = function (md5ext, costume, runtime) {
  * @param {!Runtime} runtime - Scratch runtime, used to access the storage module.
  * @returns {?Promise} - a promise which will resolve after skinId is set, or null on error.
  */
-const loadOldTextCostume = function(baseMD5ext, textMD5ext, costume, runtime) {
-    // @todo should [bitmapResolution] (in the documentation comment) not be optional? After all, the resulting image is always a bitmap.
+const loadOldTextCostume = function (baseMD5ext, textMD5ext, costume, runtime) {
+    // @todo should [bitmapResolution] (in the documentation comment) not be optional? After all, the resulting image
+    // is always a bitmap.
 
     if (!runtime.storage) {
         log.error('No storage module present; cannot load costume asset: ', baseMD5ext, textMD5ext);
@@ -123,64 +124,69 @@ const loadOldTextCostume = function(baseMD5ext, textMD5ext, costume, runtime) {
         costume.rotationCenterY / costume.bitmapResolution
     ];
 
-    // @todo what should the assetId be? Probably unset, since we'll be doing image processing (which will produce a completely new image)?
+    // @todo what should the assetId be? Probably unset, since we'll be doing image processing (which will produce
+    // a completely new image)?
     // @todo what about the dataFormat? This depends on how the image processing is implemented.
 
     return Promise.all([
         runtime.storage.load(assetType, baseMD5, baseExt),
         runtime.storage.load(assetType, textMD5, textExt)
-    ]).then(costumeAssets => (
-        new Promise((resolve, reject) => {
-            const baseImageElement = new Image();
-            const textImageElement = new Image();
+    ])
+        .then(costumeAssets => (
+            new Promise((resolve, reject) => {
+                const baseImageElement = new Image();
+                const textImageElement = new Image();
 
-            let loadedOne = false;
+                let loadedOne = false;
 
-            const onError = function () {
-                // eslint-disable-next-line no-use-before-define
-                removeEventListeners();
-                reject();
-            };
-            const onLoad = function () {
-                if (loadedOne) {
+                const onError = function () {
+                    // eslint-disable-next-line no-use-before-define
                     removeEventListeners();
-                    resolve([baseImageElement, textImageElement]);
-                } else {
-                    loadedOne = true;
-                }
-            };
-            const removeEventListeners = function () {
-                baseImageElement.removeEventListener('error', onError);
-                textImageElement.removeEventListener('error', onError);
-                baseImageElement.removeEventListener('load', onLoad);
-                textImageElement.removeEventListener('load', onLoad);
-            };
+                    reject();
+                };
+                const onLoad = function () {
+                    if (loadedOne) {
+                        // eslint-disable-next-line no-use-before-define
+                        removeEventListeners();
+                        resolve([baseImageElement, textImageElement]);
+                    } else {
+                        loadedOne = true;
+                    }
+                };
+          
+                const removeEventListeners = function () {
+                    baseImageElement.removeEventListener('error', onError);
+                    textImageElement.removeEventListener('error', onError);
+                    baseImageElement.removeEventListener('load', onLoad);
+                    textImageElement.removeEventListener('load', onLoad);
+                };
 
-            baseImageElement.addEventListener('error', onError);
-            textImageElement.addEventListener('error', onError);
-            baseImageElement.addEventListener('load', onLoad);
-            textImageElement.addEventListener('load', onLoad);
+                baseImageElement.addEventListener('error', onError);
+                textImageElement.addEventListener('error', onError);
+                baseImageElement.addEventListener('load', onLoad);
+                textImageElement.addEventListener('load', onLoad);
 
-            const [baseAsset, textAsset] = costumeAssets;
+                const [baseAsset, textAsset] = costumeAssets;
 
-            baseImageElement.src = baseAsset.encodeDataURI();
-            textImageElement.src = textAsset.encodeDataURI();
-        })
-    )).then(imageElements => {
-        const [baseImageElement, textImageElement] = imageElements;
+                baseImageElement.src = baseAsset.encodeDataURI();
+                textImageElement.src = textAsset.encodeDataURI();
+            })
+        ))
+        .then(imageElements => {
+            const [baseImageElement, textImageElement] = imageElements;
 
-        const canvas = document.createElement('canvas');
-        canvas.width = baseImageElement.width;
-        canvas.height = baseImageElement.height;
+            const canvas = document.createElement('canvas');
+            canvas.width = baseImageElement.width;
+            canvas.height = baseImageElement.height;
 
-        const ctx = canvas.getContext('2d')
-        ctx.drawImage(baseImageElement, 0, 0);
-        ctx.drawImage(textImageElement, 0, 0);
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(baseImageElement, 0, 0);
+            ctx.drawImage(textImageElement, 0, 0);
 
-        costume.skinId = runtime.renderer.createBitmapSkin(canvas, costume.bitmapResolution, rotationCenter);
+            costume.skinId = runtime.renderer.createBitmapSkin(canvas, costume.bitmapResolution, rotationCenter);
 
-        return costume;
-    });
+            return costume;
+        });
 };
 
 module.exports = {
