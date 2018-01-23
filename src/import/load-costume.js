@@ -97,7 +97,7 @@ const loadCostume = function (md5ext, costume, runtime) {
  * @property {number} rotationCenterY - the Y component of the costume's origin.
  * @property {number} [bitmapResolution] - the resolution scale for a bitmap costume.
  * @param {!Runtime} runtime - Scratch runtime, used to access the storage module.
- * @returns {?Promise} - a promsie which will resolve after skinId is set, or null on error.
+ * @returns {?Promise} - a promise which will resolve after skinId is set, or null on error.
  */
 const loadOldTextCostume = function(baseMD5ext, textMD5ext, costume, runtime) {
     // @todo should [bitmapResolution] (in the documentation comment) not be optional? After all, the resulting image is always a bitmap.
