@@ -169,9 +169,15 @@ const loadOldTextCostume = function(baseMD5ext, textMD5ext, costume, runtime) {
     )).then(imageElements => {
         const [baseImageElement, textImageElement] = imageElements;
 
-        // @todo flatten the base and text images. The renderer should probably do the image processing that'll be needed here.
-        // The text part is currently displayed only for debugging.
-        costume.skinId = runtime.renderer.createBitmapSkin(textImageElement, costume.bitmapResolution, rotationCenter);
+        const canvas = document.createElement('canvas');
+        canvas.width = baseImageElement.width;
+        canvas.height = baseImageElement.height;
+
+        const ctx = canvas.getContext('2d')
+        ctx.drawImage(baseImageElement, 0, 0);
+        ctx.drawImage(textImageElement, 0, 0);
+
+        costume.skinId = runtime.renderer.createBitmapSkin(canvas, costume.bitmapResolution, rotationCenter);
 
         return costume;
     });
