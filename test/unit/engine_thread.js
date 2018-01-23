@@ -110,7 +110,9 @@ test('PushGetParam', t => {
     th.pushParam('testParam', 'testValue');
     t.strictEquals(th.peekStackFrame().params.testParam, 'testValue');
     t.strictEquals(th.getParam('testParam'), 'testValue');
-    
+    // Params outside of define stack always evaluate to null
+    t.strictEquals(th.getParam('nonExistentParam'), null);
+
     t.end();
 });
 
@@ -139,7 +141,7 @@ test('goToNextBlock', t => {
         block: 'fakeBlock',
         name: 'STEPS',
         next: null,
-        opcode: 'procedures_callnoreturn',
+        opcode: 'procedures_call',
         mutation: {proccode: 'fakeCode'},
         parent: null,
         shadow: false,
@@ -194,7 +196,7 @@ test('stopThisScript', t => {
         block: 'fakeBlock',
         name: 'STEPS',
         next: null,
-        opcode: 'procedures_callnoreturn',
+        opcode: 'procedures_call',
         mutation: {proccode: 'fakeCode'},
         parent: null,
         shadow: false,
@@ -246,7 +248,7 @@ test('isRecursiveCall', t => {
         block: 'fakeBlock',
         name: 'STEPS',
         next: null,
-        opcode: 'procedures_callnoreturn',
+        opcode: 'procedures_call',
         mutation: {proccode: 'fakeCode'},
         parent: null,
         shadow: false,

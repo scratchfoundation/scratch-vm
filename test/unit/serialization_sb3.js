@@ -14,8 +14,8 @@ test('serialize', t => {
 
 test('deserialize', t => {
     const vm = new VirtualMachine();
-    sb3.deserialize('', vm.runtime).then(targets => {
-        // @todo Analyize
+    sb3.deserialize('', vm.runtime).then(({targets}) => {
+        // @todo Analyze
         t.type(targets, 'object');
         t.end();
     });

@@ -1,8 +1,13 @@
 const EventEmitter = require('events');
-const Sequencer = require('./sequencer');
-const Blocks = require('./blocks');
-const Thread = require('./thread');
 const {OrderedMap} = require('immutable');
+const escapeHtml = require('escape-html');
+
+const ArgumentType = require('../extension-support/argument-type');
+const Blocks = require('./blocks');
+const BlockType = require('../extension-support/block-type');
+const Sequencer = require('./sequencer');
+const Thread = require('./thread');
+const Profiler = require('./profiler');
 
 // Virtual I/O devices.
 const Clock = require('../io/clock');
@@ -16,13 +21,82 @@ const defaultBlockPackages = {
     scratch3_looks: require('../blocks/scratch3_looks'),
     scratch3_motion: require('../blocks/scratch3_motion'),
     scratch3_operators: require('../blocks/scratch3_operators'),
-    scratch3_pen: require('../blocks/scratch3_pen'),
     scratch3_sound: require('../blocks/scratch3_sound'),
     scratch3_sensing: require('../blocks/scratch3_sensing'),
     scratch3_data: require('../blocks/scratch3_data'),
-    scratch3_procedures: require('../blocks/scratch3_procedures'),
-    scratch3_wedo2: require('../blocks/scratch3_wedo2')
+    scratch3_procedures: require('../blocks/scratch3_procedures')
 };
+
+/**
+ * Information used for converting Scratch argument types into scratch-blocks data.
+ * @type {object.<ArgumentType, {shadowType: string, fieldType: string}>}}
+ */
+const ArgumentTypeMap = (() => {
+    const map = {};
+    map[ArgumentType.ANGLE] = {
+        shadowType: 'math_angle',
+        fieldType: 'NUM'
+    };
+    map[ArgumentType.COLOR] = {
+        shadowType: 'colour_picker'
+    };
+    map[ArgumentType.NUMBER] = {
+        shadowType: 'math_number',
+        fieldType: 'NUM'
+    };
+    map[ArgumentType.STRING] = {
+        shadowType: 'text',
+        fieldType: 'TEXT'
+    };
+    map[ArgumentType.BOOLEAN] = {
+        check: 'Boolean'
+    };
+    return map;
+})();
+
+/**
+ * These constants are copied from scratch-blocks/core/constants.js
+ * @TODO find a way to require() these... maybe make a scratch-blocks/dist/constants.js or something like that?
+ * @readonly
+ * @enum {int}
+ */
+const ScratchBlocksConstants = {
+    /**
+     * ENUM for output shape: hexagonal (booleans/predicates).
+     * @const
+     */
+    OUTPUT_SHAPE_HEXAGONAL: 1,
+
+    /**
+     * ENUM for output shape: rounded (numbers).
+     * @const
+     */
+    OUTPUT_SHAPE_ROUND: 2,
+
+    /**
+     * ENUM for output shape: squared (any/all values; strings).
+     * @const
+     */
+    OUTPUT_SHAPE_SQUARE: 3
+};
+
+/**
+ * Numeric ID for Runtime._step in Profiler instances.
+ * @type {number}
+ */
+let stepProfilerId = -1;
+
+/**
+ * Numeric ID for Sequencer.stepThreads in Profiler instances.
+ * @type {number}
+ */
+let stepThreadsProfilerId = -1;
+
+/**
+ * Numeric ID for RenderWebGL.draw in Profiler instances.
+ * @type {number}
+ */
+let rendererDrawProfilerId = -1;
 
 /**
  * Manages targets, scripts, and the sequencer.
@@ -76,6 +150,13 @@ class Runtime extends EventEmitter {
         this._primitives = {};
 
         /**
+         * Map to look up all block information by extended opcode.
+         * @type {Array.<CategoryInfo>}
+         * @private
+         */
+        this._blockInfo = [];
+
+        /**
          * Map to look up hat blocks' metadata.
          * Keys are opcode for hat, values are metadata objects.
          * @type {Object.<string, Object>}
@@ -113,6 +194,13 @@ class Runtime extends EventEmitter {
          * @type {boolean}
          */
         this._refreshTargets = false;
+
+        /**
+         * Map to look up all monitor block information by opcode.
+         * @type {object}
+         * @private
+         */
+        this.monitorBlockInfo = {};
 
         /**
          * Ordered map of all monitors, which are MonitorReporter objects.
@@ -172,6 +260,13 @@ class Runtime extends EventEmitter {
             keyboard: new Keyboard(this),
             mouse: new Mouse(this)
         };
+
+        /**
+         * A runtime profiler that records timed events for later playback to
+         * diagnose Scratch performance.
+         * @type {Profiler}
+         */
+        this.profiler = null;
     }
 
     /**
@@ -223,7 +318,17 @@ class Runtime extends EventEmitter {
     }
 
     /**
-     * Event name for glowing the green flag
+     * Event name when the project is started (threads may not necessarily be
+     * running).
+     * @const {string}
+     */
+    static get PROJECT_START () {
+        return 'PROJECT_START';
+    }
+
+    /**
+     * Event name when threads start running.
+     * Used by the UI to indicate running status.
      * @const {string}
      */
     static get PROJECT_RUN_START () {
@@ -231,11 +336,21 @@ class Runtime extends EventEmitter {
     }
 
     /**
-     * Event name for unglowing the green flag
+     * Event name when threads stop running
+     * Used by the UI to indicate not-running status.
      * @const {string}
      */
     static get PROJECT_RUN_STOP () {
         return 'PROJECT_RUN_STOP';
+    }
+
+    /**
+     * Event name for project being stopped or restarted by the user.
+     * Used by blocks that need to reset state.
+     * @const {string}
+     */
+    static get PROJECT_STOP_ALL () {
+        return 'PROJECT_STOP_ALL';
     }
 
     /**
@@ -260,6 +375,22 @@ class Runtime extends EventEmitter {
      */
     static get MONITORS_UPDATE () {
         return 'MONITORS_UPDATE';
+    }
+
+    /**
+     * Event name for reporting that an extension was added.
+     * @const {string}
+     */
+    static get EXTENSION_ADDED () {
+        return 'EXTENSION_ADDED';
+    }
+
+    /**
+     * Event name for reporting that blocksInfo was updated.
+     * @const {string}
+     */
+    static get BLOCKSINFO_UPDATE () {
+        return 'BLOCKSINFO_UPDATE';
     }
 
     /**
@@ -316,8 +447,325 @@ class Runtime extends EventEmitter {
                         }
                     }
                 }
+                // Collect monitored from package.
+                if (packageObject.getMonitored) {
+                    this.monitorBlockInfo = Object.assign({}, this.monitorBlockInfo, packageObject.getMonitored());
+                }
             }
         }
+    }
+
+    /**
+     * Generate an extension-specific menu ID.
+     * @param {string} menuName - the name of the menu.
+     * @param {string} extensionId - the ID of the extension hosting the menu.
+     * @returns {string} - the constructed ID.
+     * @private
+     */
+    _makeExtensionMenuId (menuName, extensionId) {
+        return `${extensionId}.menu.${escapeHtml(menuName)}`;
+    }
+
+    /**
+     * Register the primitives provided by an extension.
+     * @param {ExtensionInfo} extensionInfo - information about the extension (id, blocks, etc.)
+     * @private
+     */
+    _registerExtensionPrimitives (extensionInfo) {
+        const categoryInfo = {
+            id: extensionInfo.id,
+            name: extensionInfo.name,
+            blockIconURI: extensionInfo.blockIconURI,
+            menuIconURI: extensionInfo.menuIconURI,
+            color1: '#FF6680',
+            color2: '#FF4D6A',
+            color3: '#FF3355',
+            blocks: [],
+            menus: []
+        };
+
+        this._blockInfo.push(categoryInfo);
+
+        for (const menuName in extensionInfo.menus) {
+            if (extensionInfo.menus.hasOwnProperty(menuName)) {
+                const menuItems = extensionInfo.menus[menuName];
+                const convertedMenu = this._buildMenuForScratchBlocks(menuName, menuItems, categoryInfo);
+                categoryInfo.menus.push(convertedMenu);
+            }
+        }
+        for (const blockInfo of extensionInfo.blocks) {
+            const convertedBlock = this._convertForScratchBlocks(blockInfo, categoryInfo);
+            const opcode = convertedBlock.json.type;
+            categoryInfo.blocks.push(convertedBlock);
+            this._primitives[opcode] = convertedBlock.info.func;
+            if (blockInfo.blockType === BlockType.HAT) {
+                this._hats[opcode] = {edgeActivated: true}; /** @TODO let extension specify this */
+            }
+        }
+
+        this.emit(Runtime.EXTENSION_ADDED, categoryInfo.blocks.concat(categoryInfo.menus));
+    }
+
+    /**
+     * Reregister the primitives for an extension
+     * @param  {ExtensionInfo} extensionInfo - new info (results of running getInfo)
+     *                                         for an extension
+     * @private
+     */
+    _refreshExtensionPrimitives (extensionInfo) {
+        let extensionBlocks = [];
+        for (const categoryInfo of this._blockInfo) {
+            if (extensionInfo.id === categoryInfo.id) {
+                categoryInfo.blocks = [];
+                categoryInfo.menus = [];
+                for (const menuName in extensionInfo.menus) {
+                    if (extensionInfo.menus.hasOwnProperty(menuName)) {
+                        const menuItems = extensionInfo.menus[menuName];
+                        const convertedMenu = this._buildMenuForScratchBlocks(menuName, menuItems, categoryInfo);
+                        categoryInfo.menus.push(convertedMenu);
+                    }
+                }
+                for (const blockInfo of extensionInfo.blocks) {
+                    const convertedBlock = this._convertForScratchBlocks(blockInfo, categoryInfo);
+                    const opcode = convertedBlock.json.type;
+                    categoryInfo.blocks.push(convertedBlock);
+                    this._primitives[opcode] = convertedBlock.info.func;
+                    if (blockInfo.blockType === BlockType.HAT) {
+                        this._hats[opcode] = {edgeActivated: true}; /** @TODO let extension specify this */
+                    }
+                }
+                extensionBlocks = extensionBlocks.concat(categoryInfo.blocks, categoryInfo.menus);
+            }
+        }
+
+        this.emit(Runtime.BLOCKSINFO_UPDATE, extensionBlocks);
+    }
+
+    /**
+     * Build the scratch-blocks JSON for a menu. Note that scratch-blocks treats menus as a special kind of block.
+     * @param {string} menuName - the name of the menu
+     * @param {array} menuItems - the list of items for this menu
+     * @param {CategoryInfo} categoryInfo - the category for this block
+     * @returns {object} - a JSON-esque object ready for scratch-blocks' consumption
+     * @private
+     */
+    _buildMenuForScratchBlocks (menuName, menuItems, categoryInfo) {
+        const menuId = this._makeExtensionMenuId(menuName, categoryInfo.id);
+
+        /** @TODO: support dynamic menus when 'menuItems' is a method name string (see extension spec) */
+        if (typeof menuItems === 'string') {
+            throw new Error(`Dynamic extension menus are not yet supported. Menu name: ${menuName}`);
+        }
+        const options = menuItems.map(item => {
+            switch (typeof item) {
+            case 'string':
+                return [item, item];
+            case 'object':
+                return [item.text, item.value];
+            default:
+                throw new Error(`Can't interpret menu item: ${item}`);
+            }
+        });
+
+        return {
+            json: {
+                message0: '%1',
+                type: menuId,
+                inputsInline: true,
+                output: 'String',
+                colour: categoryInfo.color1,
+                colourSecondary: categoryInfo.color2,
+                colourTertiary: categoryInfo.color3,
+                outputShape: ScratchBlocksConstants.OUTPUT_SHAPE_ROUND,
+                args0: [
+                    {
+                        type: 'field_dropdown',
+                        name: menuName,
+                        options: options
+                    }
+                ]
+            }
+        };
+    }
+
+    /**
+     * Convert BlockInfo into scratch-blocks JSON & XML, and generate a proxy function.
+     * @param {BlockInfo} blockInfo - the block to convert
+     * @param {CategoryInfo} categoryInfo - the category for this block
+     * @returns {{info: BlockInfo, json: object, xml: string}} - the converted & original block information
+     * @private
+     */
+    _convertForScratchBlocks (blockInfo, categoryInfo) {
+        const extendedOpcode = `${categoryInfo.id}.${blockInfo.opcode}`;
+        const blockJSON = {
+            type: extendedOpcode,
+            inputsInline: true,
+            category: categoryInfo.name,
+            colour: categoryInfo.color1,
+            colourSecondary: categoryInfo.color2,
+            colourTertiary: categoryInfo.color3,
+            args0: [],
+            extensions: ['scratch_extension']
+        };
+
+        const inputList = [];
+
+        // TODO: store this somewhere so that we can map args appropriately after translation.
+        // This maps an arg name to its relative position in the original (usually English) block text.
+        // When displaying a block in another language we'll need to run a `replace` action similar to the one below,
+        // but each `[ARG]` will need to be replaced with the number in this map instead of `args0.length`.
+        const argsMap = {};
+
+        blockJSON.message0 = '';
+
+        // If an icon for the extension exists, prepend it to each block, with a vertical separator.
+        if (categoryInfo.blockIconURI) {
+            blockJSON.message0 = '%1 %2';
+            const iconJSON = {
+                type: 'field_image',
+                src: categoryInfo.blockIconURI,
+                width: 40,
+                height: 40
+            };
+            const separatorJSON = {
+                type: 'field_vertical_separator'
+            };
+            blockJSON.args0.push(iconJSON);
+            blockJSON.args0.push(separatorJSON);
+        }
+
+        blockJSON.message0 += blockInfo.text.replace(/\[(.+?)]/g, (match, placeholder) => {
+            // Sanitize the placeholder to ensure valid XML
+            placeholder = placeholder.replace(/[<"&]/, '_');
+
+            const argJSON = {
+                type: 'input_value',
+                name: placeholder
+            };
+
+            const argInfo = blockInfo.arguments[placeholder] || {};
+            const argTypeInfo = ArgumentTypeMap[argInfo.type] || {};
+            const defaultValue = (typeof argInfo.defaultValue === 'undefined' ?
+                '' :
+                escapeHtml(argInfo.defaultValue.toString()));
+
+            if (argTypeInfo.check) {
+                argJSON.check = argTypeInfo.check;
+            }
+
+            const shadowType = (argInfo.menu ?
+                this._makeExtensionMenuId(argInfo.menu, categoryInfo.id) :
+                argTypeInfo.shadowType);
+            const fieldType = argInfo.menu || argTypeInfo.fieldType;
+
+            // <value> is the ScratchBlocks name for a block input.
+            inputList.push(`<value name="${placeholder}">`);
+
+            // The <shadow> is a placeholder for a reporter and is visible when there's no reporter in this input.
+            // Boolean inputs don't need to specify a shadow in the XML.
+            if (shadowType) {
+                inputList.push(`<shadow type="${shadowType}">`);
+
+                // <field> is a text field that the user can type into. Some shadows, like the color picker, don't allow
+                // text input and therefore don't need a field element.
+                if (fieldType) {
+                    inputList.push(`<field name="${fieldType}">${defaultValue}</field>`);
+                }
+
+                inputList.push('</shadow>');
+            }
+
+            inputList.push('</value>');
+
+            // scratch-blocks uses 1-based argument indexing
+            blockJSON.args0.push(argJSON);
+            const argNum = blockJSON.args0.length;
+            argsMap[placeholder] = argNum;
+            return `%${argNum}`;
+        });
+
+        switch (blockInfo.blockType) {
+        case BlockType.COMMAND:
+            blockJSON.outputShape = ScratchBlocksConstants.OUTPUT_SHAPE_SQUARE;
+            blockJSON.previousStatement = null; // null = available connection; undefined = hat
+            if (!blockInfo.isTerminal) {
+                blockJSON.nextStatement = null; // null = available connection; undefined = terminal
+            }
+            break;
+        case BlockType.REPORTER:
+            blockJSON.output = 'String'; // TODO: distinguish number & string here?
+            blockJSON.outputShape = ScratchBlocksConstants.OUTPUT_SHAPE_ROUND;
+            break;
+        case BlockType.BOOLEAN:
+            blockJSON.output = 'Boolean';
+            blockJSON.outputShape = ScratchBlocksConstants.OUTPUT_SHAPE_HEXAGONAL;
+            break;
+        case BlockType.HAT:
+            blockJSON.outputShape = ScratchBlocksConstants.OUTPUT_SHAPE_SQUARE;
+            blockJSON.nextStatement = null; // null = available connection; undefined = terminal
+            break;
+        case BlockType.CONDITIONAL:
+            // Statement inputs get names like 'SUBSTACK', 'SUBSTACK2', 'SUBSTACK3', ...
+            for (let branchNum = 1; branchNum <= blockInfo.branchCount; ++branchNum) {
+                blockJSON[`message${branchNum}`] = '%1';
+                blockJSON[`args${branchNum}`] = [{
+                    type: 'input_statement',
+                    name: `SUBSTACK${branchNum > 1 ? branchNum : ''}`
+                }];
+            }
+            blockJSON.outputShape = ScratchBlocksConstants.OUTPUT_SHAPE_SQUARE;
+            blockJSON.previousStatement = null; // null = available connection; undefined = hat
+            blockJSON.nextStatement = null; // null = available connection; undefined = terminal
+            break;
+        }
+
+        if (blockInfo.isTerminal) {
+            delete blockJSON.nextStatement;
+        }
+
+        const blockXML = `<block type="${extendedOpcode}">${inputList.join('')}</block>`;
+
+        return {
+            info: blockInfo,
+            json: blockJSON,
+            xml: blockXML
+        };
+    }
+
+    /**
+     * @returns {string} scratch-blocks XML description for all dynamic blocks, wrapped in <category> elements.
+     */
+    getBlocksXML () {
+        const xmlParts = [];
+        for (const categoryInfo of this._blockInfo) {
+            const {name, color1, color2} = categoryInfo;
+            const paletteBlocks = categoryInfo.blocks.filter(block => !block.info.hideFromPalette);
+            const colorXML = `colour="${color1}" secondaryColour="${color2}"`;
+
+            // Use a menu icon if there is one. Otherwise, use the block icon. If there's no icon,
+            // the category menu will show its default colored circle.
+            let menuIconURI = '';
+            if (categoryInfo.menuIconURI) {
+                menuIconURI = categoryInfo.menuIconURI;
+            } else if (categoryInfo.blockIconURI) {
+                menuIconURI = categoryInfo.blockIconURI;
+            }
+            const menuIconXML = menuIconURI ?
+                `iconURI="${menuIconURI}"` : '';
+
+            xmlParts.push(`<category name="${name}" ${colorXML} ${menuIconXML}>`);
+            xmlParts.push.apply(xmlParts, paletteBlocks.map(block => block.xml));
+            xmlParts.push('</category>');
+        }
+        return xmlParts.join('\n');
+    }
+
+    /**
+     * @returns {Array.<string>} - an array containing the scratch-blocks JSON information for each dynamic block.
+     */
+    getBlocksJSON () {
+        return this._blockInfo.reduce(
+            (result, categoryInfo) => result.concat(categoryInfo.blocks.map(blockInfo => blockInfo.json)), []);
     }
 
     /**
@@ -420,17 +868,14 @@ class Runtime extends EventEmitter {
     }
 
     /**
-     * Remove a thread from the list of threads.
-     * @param {?Thread} thread Thread object to remove from actives
+     * Stop a thread: stop running it immediately, and remove it from the thread list later.
+     * @param {!Thread} thread Thread object to remove from actives
      */
-    _removeThread (thread) {
+    _stopThread (thread) {
+        // Mark the thread for later removal
+        thread.isKilled = true;
         // Inform sequencer to stop executing that thread.
         this.sequencer.retireThread(thread);
-        // Remove from the list.
-        const i = this.threads.indexOf(thread);
-        if (i > -1) {
-            this.threads.splice(i, 1);
-        }
     }
 
     /**
@@ -438,6 +883,7 @@ class Runtime extends EventEmitter {
      * This is used by `startHats` to and is necessary to ensure 2.0-like execution order.
      * Test project: https://scratch.mit.edu/projects/130183108/
      * @param {!Thread} thread Thread object to restart.
+     * @return {Thread} The restarted thread.
      */
     _restartThread (thread) {
         const newThread = new Thread(thread.topBlock);
@@ -448,9 +894,10 @@ class Runtime extends EventEmitter {
         const i = this.threads.indexOf(thread);
         if (i > -1) {
             this.threads[i] = newThread;
-        } else {
-            this.threads.push(thread);
+            return newThread;
         }
+        this.threads.push(thread);
+        return thread;
     }
 
     /**
@@ -459,7 +906,11 @@ class Runtime extends EventEmitter {
      * @return {boolean} True if the thread is active/running.
      */
     isActiveThread (thread) {
-        return this.threads.indexOf(thread) > -1;
+        return (
+            (
+                thread.stack.length > 0 &&
+                thread.status !== Thread.STATUS_DONE) &&
+            this.threads.indexOf(thread) > -1);
     }
 
     /**
@@ -481,13 +932,13 @@ class Runtime extends EventEmitter {
             if (this.threads[i].topBlock === topBlockId && this.threads[i].status !== Thread.STATUS_DONE) {
                 const blockContainer = opts.target.blocks;
                 const opcode = blockContainer.getOpcode(blockContainer.getBlock(topBlockId));
-                
+
                 if (this.getIsEdgeActivatedHat(opcode) && this.threads[i].stackClick !== opts.stackClick) {
                     // Allow edge activated hat thread stack click to coexist with
                     // edge activated hat thread that runs every frame
                     continue;
                 }
-                this._removeThread(this.threads[i]);
+                this._stopThread(this.threads[i]);
                 return;
             }
         }
@@ -498,7 +949,7 @@ class Runtime extends EventEmitter {
     /**
      * Enqueue a script that when finished will update the monitor for the block.
      * @param {!string} topBlockId ID of block that starts the script.
-     * @param {?string} optTarget target ID for target to run script on. If not supplied, uses editing target.
+     * @param {?Target} optTarget target Target to run script on. If not supplied, uses editing target.
      */
     addMonitorScript (topBlockId, optTarget) {
         if (!optTarget) optTarget = this._editingTarget;
@@ -576,13 +1027,14 @@ class Runtime extends EventEmitter {
 
             // If no fields are present, check inputs (horizontal blocks)
             if (Object.keys(hatFields).length === 0) {
+                hatFields = {}; // don't overwrite the block's actual fields list
                 const hatInputs = blocks.getInputs(block);
                 for (const input in hatInputs) {
                     if (!hatInputs.hasOwnProperty(input)) continue;
                     const id = hatInputs[input].block;
                     const inpBlock = blocks.getBlock(id);
                     const fields = blocks.getFields(inpBlock);
-                    hatFields = Object.assign(fields, hatFields);
+                    Object.assign(hatFields, fields);
                 }
             }
 
@@ -605,7 +1057,7 @@ class Runtime extends EventEmitter {
                     if (instance.threads[i].topBlock === topBlockId &&
                         !instance.threads[i].stackClick && // stack click threads and hat threads can coexist
                         instance.threads[i].target === target) {
-                        instance._restartThread(instance.threads[i]);
+                        newThreads.push(instance._restartThread(instance.threads[i]));
                         return;
                     }
                 }
@@ -662,8 +1114,7 @@ class Runtime extends EventEmitter {
                 continue;
             }
             if (this.threads[i].target === target) {
-                this.threads[i].isKilled = true;
-                this._removeThread(this.threads[i]);
+                this._stopThread(this.threads[i]);
             }
         }
     }
@@ -673,6 +1124,7 @@ class Runtime extends EventEmitter {
      */
     greenFlag () {
         this.stopAll();
+        this.emit(Runtime.PROJECT_START);
         this.ioDevices.clock.resetProjectTimer();
         this.clearEdgeActivatedValues();
         // Inform all targets of the green flag.
@@ -686,6 +1138,9 @@ class Runtime extends EventEmitter {
      * Stop "everything."
      */
     stopAll () {
+        // Emit stop event to allow blocks to clean up any state.
+        this.emit(Runtime.PROJECT_STOP_ALL);
+
         // Dispose all clones.
         const newTargets = [];
         for (let i = 0; i < this.targets.length; i++) {
@@ -699,11 +1154,7 @@ class Runtime extends EventEmitter {
         }
         this.targets = newTargets;
         // Dispose all threads.
-        const threadsCopy = this.threads.slice();
-        while (threadsCopy.length > 0) {
-            const poppedThread = threadsCopy.pop();
-            this._removeThread(poppedThread);
-        }
+        this.threads.forEach(thread => this._stopThread(thread));
     }
 
     /**
@@ -711,6 +1162,16 @@ class Runtime extends EventEmitter {
      * inactive threads after each iteration.
      */
     _step () {
+        if (this.profiler !== null) {
+            if (stepProfilerId === -1) {
+                stepProfilerId = this.profiler.idByName('Runtime._step');
+            }
+            this.profiler.start(stepProfilerId);
+        }
+
+        // Clean up threads that were told to stop during or since the last step
+        this.threads = this.threads.filter(thread => !thread.isKilled);
+
         // Find all edge-activated hats, and add them to threads to be evaluated.
         for (const hatType in this._hats) {
             if (!this._hats.hasOwnProperty(hatType)) continue;
@@ -721,7 +1182,16 @@ class Runtime extends EventEmitter {
         }
         this.redrawRequested = false;
         this._pushMonitors();
+        if (this.profiler !== null) {
+            if (stepThreadsProfilerId === -1) {
+                stepThreadsProfilerId = this.profiler.idByName('Sequencer.stepThreads');
+            }
+            this.profiler.start(stepThreadsProfilerId);
+        }
         const doneThreads = this.sequencer.stepThreads();
+        if (this.profiler !== null) {
+            this.profiler.stop();
+        }
         this._updateGlows(doneThreads);
         // Add done threads so that even if a thread finishes within 1 frame, the green
         // flag will still indicate that a script ran.
@@ -730,7 +1200,16 @@ class Runtime extends EventEmitter {
                 this._getMonitorThreadCount([...this.threads, ...doneThreads]));
         if (this.renderer) {
             // @todo: Only render when this.redrawRequested or clones rendered.
+            if (this.profiler !== null) {
+                if (rendererDrawProfilerId === -1) {
+                    rendererDrawProfilerId = this.profiler.idByName('RenderWebGL.draw');
+                }
+                this.profiler.start(rendererDrawProfilerId);
+            }
             this.renderer.draw();
+            if (this.profiler !== null) {
+                this.profiler.stop();
+            }
         }
 
         if (this._refreshTargets) {
@@ -741,6 +1220,11 @@ class Runtime extends EventEmitter {
         if (!this._prevMonitorState.equals(this._monitorState)) {
             this.emit(Runtime.MONITORS_UPDATE, this._monitorState);
             this._prevMonitorState = this._monitorState;
+        }
+
+        if (this.profiler !== null) {
+            this.profiler.stop();
+            this.profiler.reportFrames();
         }
     }
 
@@ -916,7 +1400,7 @@ class Runtime extends EventEmitter {
      * @param {!MonitorRecord} monitor Monitor to add.
      */
     requestAddMonitor (monitor) {
-        this._monitorState = this._monitorState.set(monitor.id, monitor);
+        this._monitorState = this._monitorState.set(monitor.get('id'), monitor);
     }
 
     /**
@@ -927,9 +1411,10 @@ class Runtime extends EventEmitter {
      *     the old monitor will keep its old value.
      */
     requestUpdateMonitor (monitor) {
-        if (this._monitorState.has(monitor.get('id'))) {
+        const id = monitor.get('id');
+        if (this._monitorState.has(id)) {
             this._monitorState =
-                this._monitorState.set(monitor.get('id'), this._monitorState.get(monitor.get('id')).merge(monitor));
+                this._monitorState.set(id, this._monitorState.get(id).merge(monitor));
         }
     }
 
@@ -940,6 +1425,15 @@ class Runtime extends EventEmitter {
      */
     requestRemoveMonitor (monitorId) {
         this._monitorState = this._monitorState.delete(monitorId);
+    }
+
+    /**
+     * Removes all monitors with the given target ID from the state. Does nothing if
+     * the monitor already does not exist in the state.
+     * @param {!string} targetId Remove all monitors with given target ID.
+     */
+    requestRemoveMonitorByTargetId (targetId) {
+        this._monitorState = this._monitorState.filterNot(value => value.targetId === targetId);
     }
 
     /**
@@ -1009,6 +1503,15 @@ class Runtime extends EventEmitter {
     }
 
     /**
+     * Report that a clone target is being removed.
+     * @param {Target} target - the target being removed
+     * @fires Runtime#targetWasRemoved
+     */
+    fireTargetWasRemoved (target) {
+        this.emit('targetWasRemoved', target);
+    }
+
+    /**
      * Get a target representing the Scratch stage, if one exists.
      * @return {?Target} The target, if found.
      */
@@ -1059,6 +1562,24 @@ class Runtime extends EventEmitter {
         this._steppingInterval = setInterval(() => {
             this._step();
         }, interval);
+    }
+
+    /**
+     * Turn on profiling.
+     * @param {Profiler/FrameCallback} onFrame A callback handle passed a
+     * profiling frame when the profiler reports its collected data.
+     */
+    enableProfiling (onFrame) {
+        if (Profiler.available()) {
+            this.profiler = new Profiler(onFrame);
+        }
+    }
+
+    /**
+     * Turn off profiling.
+     */
+    disableProfiling () {
+        this.profiler = null;
     }
 }
 

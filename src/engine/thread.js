@@ -164,7 +164,7 @@ class Thread {
         let blockID = this.peekStack();
         while (blockID !== null) {
             const block = this.target.blocks.getBlock(blockID);
-            if (typeof block !== 'undefined' && block.opcode === 'procedures_callnoreturn') {
+            if (typeof block !== 'undefined' && block.opcode === 'procedures_call') {
                 break;
             }
             this.popStack();
@@ -271,7 +271,7 @@ class Thread {
         const sp = this.stack.length - 1;
         for (let i = sp - 1; i >= 0; i--) {
             const block = this.target.blocks.getBlock(this.stack[i]);
-            if (block.opcode === 'procedures_callnoreturn' &&
+            if (block.opcode === 'procedures_call' &&
                 block.mutation.proccode === procedureCode) {
                 return true;
             }

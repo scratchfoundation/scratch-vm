@@ -56,32 +56,40 @@ class Scratch3EventBlocks {
     }
 
     broadcast (args, util) {
-        const broadcastOption = Cast.toString(args.BROADCAST_OPTION);
-        util.startHats('event_whenbroadcastreceived', {
-            BROADCAST_OPTION: broadcastOption
-        });
+        const broadcastVar = util.runtime.getTargetForStage().lookupBroadcastMsg(
+            args.BROADCAST_OPTION.id, args.BROADCAST_OPTION.name);
+        if (broadcastVar) {
+            const broadcastOption = broadcastVar.name;
+            util.startHats('event_whenbroadcastreceived', {
+                BROADCAST_OPTION: broadcastOption
+            });
+        }
     }
 
     broadcastAndWait (args, util) {
-        const broadcastOption = Cast.toString(args.BROADCAST_OPTION);
-        // Have we run before, starting threads?
-        if (!util.stackFrame.startedThreads) {
-            // No - start hats for this broadcast.
-            util.stackFrame.startedThreads = util.startHats(
-                'event_whenbroadcastreceived', {
-                    BROADCAST_OPTION: broadcastOption
+        const broadcastVar = util.runtime.getTargetForStage().lookupBroadcastMsg(
+            args.BROADCAST_OPTION.id, args.BROADCAST_OPTION.name);
+        if (broadcastVar) {
+            const broadcastOption = broadcastVar.name;
+            // Have we run before, starting threads?
+            if (!util.stackFrame.startedThreads) {
+                // No - start hats for this broadcast.
+                util.stackFrame.startedThreads = util.startHats(
+                    'event_whenbroadcastreceived', {
+                        BROADCAST_OPTION: broadcastOption
+                    }
+                );
+                if (util.stackFrame.startedThreads.length === 0) {
+                    // Nothing was started.
+                    return;
                 }
-            );
-            if (util.stackFrame.startedThreads.length === 0) {
-                // Nothing was started.
-                return;
             }
-        }
-        // We've run before; check if the wait is still going on.
-        const instance = this;
-        const waiting = util.stackFrame.startedThreads.some(thread => instance.runtime.isActiveThread(thread));
-        if (waiting) {
-            util.yield();
+            // We've run before; check if the wait is still going on.
+            const instance = this;
+            const waiting = util.stackFrame.startedThreads.some(thread => instance.runtime.isActiveThread(thread));
+            if (waiting) {
+                util.yield();
+            }
         }
     }
 }

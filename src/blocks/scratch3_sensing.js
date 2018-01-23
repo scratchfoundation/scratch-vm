@@ -7,6 +7,22 @@ class Scratch3SensingBlocks {
          * @type {Runtime}
          */
         this.runtime = runtime;
+
+        /**
+         * The "answer" block value.
+         * @type {string}
+         */
+        this._answer = '';
+
+        /**
+         * The list of queued questions and respective `resolve` callbacks.
+         * @type {!Array}
+         */
+        this._questionList = [];
+
+        this.runtime.on('ANSWER', this._onAnswer.bind(this));
+        this.runtime.on('PROJECT_START', this._resetAnswer.bind(this));
+        this.runtime.on('PROJECT_STOP_ALL', this._clearAllQuestions.bind(this));
     }
 
     /**
@@ -24,19 +40,87 @@ class Scratch3SensingBlocks {
             sensing_of: this.getAttributeOf,
             sensing_mousex: this.getMouseX,
             sensing_mousey: this.getMouseY,
+            sensing_setdragmode: this.setDragMode,
             sensing_mousedown: this.getMouseDown,
             sensing_keypressed: this.getKeyPressed,
             sensing_current: this.current,
             sensing_dayssince2000: this.daysSince2000,
-            sensing_loudness: this.getLoudness
+            sensing_loudness: this.getLoudness,
+            sensing_askandwait: this.askAndWait,
+            sensing_answer: this.getAnswer
         };
+    }
+
+    getMonitored () {
+        return {
+            sensing_answer: {},
+            sensing_loudness: {},
+            sensing_timer: {},
+            sensing_current: {}
+        };
+    }
+
+    _onAnswer (answer) {
+        this._answer = answer;
+        const questionObj = this._questionList.shift();
+        if (questionObj) {
+            const [_question, resolve, target, wasVisible, wasStage] = questionObj;
+            // If the target was visible when asked, hide the say bubble unless the target was the stage.
+            if (wasVisible && !wasStage) {
+                this.runtime.emit('SAY', target, 'say', '');
+            }
+            resolve();
+            this._askNextQuestion();
+        }
+    }
+
+    _resetAnswer () {
+        this._answer = '';
+    }
+
+    _enqueueAsk (question, resolve, target, wasVisible, wasStage) {
+        this._questionList.push([question, resolve, target, wasVisible, wasStage]);
+    }
+
+    _askNextQuestion () {
+        if (this._questionList.length > 0) {
+            const [question, _resolve, target, wasVisible, wasStage] = this._questionList[0];
+            // If the target is visible, emit a blank question and use the
+            // say event to trigger a bubble unless the target was the stage.
+            if (wasVisible && !wasStage) {
+                this.runtime.emit('SAY', target, 'say', question);
+                this.runtime.emit('QUESTION', '');
+            } else {
+                this.runtime.emit('QUESTION', question);
+            }
+        }
+    }
+
+    _clearAllQuestions () {
+        this._questionList = [];
+        this.runtime.emit('QUESTION', null);
+    }
+
+    askAndWait (args, util) {
+        const _target = util.target;
+        return new Promise(resolve => {
+            const isQuestionAsked = this._questionList.length > 0;
+            this._enqueueAsk(String(args.QUESTION), resolve, _target, _target.visible, _target.isStage);
+            if (!isQuestionAsked) {
+                this._askNextQuestion();
+            }
+        });
+    }
+
+    getAnswer () {
+        return this._answer;
     }
 
     touchingObject (args, util) {
         const requestedObject = args.TOUCHINGOBJECTMENU;
         if (requestedObject === '_mouse_') {
-            const mouseX = util.ioQuery('mouse', 'getX');
-            const mouseY = util.ioQuery('mouse', 'getY');
+            const mouseX = util.ioQuery('mouse', 'getClientX');
+            const mouseY = util.ioQuery('mouse', 'getClientY');
             return util.target.isTouchingPoint(mouseX, mouseY);
         } else if (requestedObject === '_edge_') {
             return util.target.isTouchingEdge();
@@ -62,8 +146,8 @@ class Scratch3SensingBlocks {
         let targetX = 0;
         let targetY = 0;
         if (args.DISTANCETOMENU === '_mouse_') {
-            targetX = util.ioQuery('mouse', 'getX');
-            targetY = util.ioQuery('mouse', 'getY');
+            targetX = util.ioQuery('mouse', 'getScratchX');
+            targetY = util.ioQuery('mouse', 'getScratchY');
         } else {
             const distTarget = this.runtime.getSpriteTargetByName(
                 args.DISTANCETOMENU
@@ -78,6 +162,10 @@ class Scratch3SensingBlocks {
         return Math.sqrt((dx * dx) + (dy * dy));
     }
 
+    setDragMode (args, util) {
+        util.target.setDraggable(args.DRAG_MODE === 'draggable');
+    }
+
     getTimer (args, util) {
         return util.ioQuery('clock', 'projectTimer');
     }
@@ -87,11 +175,11 @@ class Scratch3SensingBlocks {
     }
 
     getMouseX (args, util) {
-        return util.ioQuery('mouse', 'getX');
+        return util.ioQuery('mouse', 'getScratchX');
     }
 
     getMouseY (args, util) {
-        return util.ioQuery('mouse', 'getY');
+        return util.ioQuery('mouse', 'getScratchY');
     }
 
     getMouseDown (args, util) {
@@ -167,8 +255,10 @@ class Scratch3SensingBlocks {
 
         // Variables
         const varName = args.PROPERTY;
-        if (attrTarget.variables.hasOwnProperty(varName)) {
-            return attrTarget.variables[varName].value;
+        for (const id in attrTarget.variables) {
+            if (attrTarget.variables[id].name === varName) {
+                return attrTarget.variables[id].value;
+            }
         }
 
         // Otherwise, 0

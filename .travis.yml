@@ -5,13 +5,14 @@ node_js:
 env:
   - NPM_SCRIPT="tap:unit -- --jobs=4"
   - NPM_SCRIPT="tap:integration -- --jobs=4"
+  - NODE_ENV=production
 sudo: false
 cache:
   directories:
   - node_modules
 install:
-- npm install
-- npm update
+- npm --production=false install
+- npm --production=false update
 script: npm run $NPM_SCRIPT
 jobs:
     include:

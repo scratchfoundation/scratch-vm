@@ -293,8 +293,12 @@ test('layers', t => {
     a.renderer = renderer;
     a.goToFront();
     t.equals(a.renderer.order, 5);
-    a.goBackLayers(2);
+    a.goBackwardLayers(2);
     t.equals(a.renderer.order, 3);
+    a.goToBack();
+    t.equals(a.renderer.order, 1);
+    a.goForwardLayers(1);
+    t.equals(a.renderer.order, 2);
     o.drawableID = 999;
     a.goBehindOther(o);
     t.equals(a.renderer.order, 1);

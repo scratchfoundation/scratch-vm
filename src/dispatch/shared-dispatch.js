@@ -92,6 +92,16 @@ class SharedDispatch {
     }
 
     /**
+     * Check if a particular service lives on another worker.
+     * @param {string} service - the service to check.
+     * @returns {boolean} - true if the service is remote (calls must cross a Worker boundary), false otherwise.
+     * @private
+     */
+    _isRemoteService (service) {
+        return this._getServiceProvider(service).isRemote;
+    }
+
+    /**
      * Like {@link call}, but force the call to be posted through a particular communication channel.
      * @param {object} provider - send the call through this object's `postMessage` function.
      * @param {string} service - the name of the service.
@@ -115,6 +125,12 @@ class SharedDispatch {
     _remoteTransferCall (provider, service, method, transfer, ...args) {
         return new Promise((resolve, reject) => {
             const responseId = this._storeCallbacks(resolve, reject);
+
+            /** @TODO: remove this hack! this is just here so we don't try to send `util` to a worker */
+            if ((args.length > 0) && (typeof args[args.length - 1].yield === 'function')) {
+                args.pop();
+            }
+
             if (transfer) {
                 provider.postMessage({service, method, responseId, args}, transfer);
             } else {

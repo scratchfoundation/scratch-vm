@@ -2,6 +2,7 @@
 .DS_Store
 
 # NPM
+package-lock.json
 /node_modules
 npm-*
 
@@ -15,3 +16,7 @@ npm-*
 # Build
 /dist
 /playground
+/benchmark
+
+# Localization
+/translations

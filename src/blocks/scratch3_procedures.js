@@ -13,32 +13,55 @@ class Scratch3ProcedureBlocks {
      */
     getPrimitives () {
         return {
-            procedures_defnoreturn: this.defNoReturn,
-            procedures_callnoreturn: this.callNoReturn,
-            procedures_param: this.param
+            procedures_definition: this.definition,
+            procedures_call: this.call,
+            argument_reporter_string_number: this.argumentReporterStringNumber,
+            argument_reporter_boolean: this.argumentReporterBoolean
         };
     }
 
-    defNoReturn () {
+    definition () {
         // No-op: execute the blocks.
     }
 
-    callNoReturn (args, util) {
+    call (args, util) {
         if (!util.stackFrame.executed) {
             const procedureCode = args.mutation.proccode;
-            const paramNames = util.getProcedureParamNames(procedureCode);
-            for (let i = 0; i < paramNames.length; i++) {
-                if (args.hasOwnProperty(`input${i}`)) {
-                    util.pushParam(paramNames[i], args[`input${i}`]);
+            const paramNamesAndIds = util.getProcedureParamNamesAndIds(procedureCode);
+
+            // If null, procedure could not be found, which can happen if custom
+            // block is dragged between sprites without the definition.
+            // Match Scratch 2.0 behavior and noop.
+            if (paramNamesAndIds === null) {
+                return;
+            }
+
+            const [paramNames, paramIds] = paramNamesAndIds;
+
+            for (let i = 0; i < paramIds.length; i++) {
+                if (args.hasOwnProperty(paramIds[i])) {
+                    util.pushParam(paramNames[i], args[paramIds[i]]);
                 }
             }
+
             util.stackFrame.executed = true;
             util.startProcedure(procedureCode);
         }
     }
 
-    param (args, util) {
-        const value = util.getParam(args.mutation.paramname);
+    argumentReporterStringNumber (args, util) {
+        const value = util.getParam(args.VALUE);
+        if (value === null) {
+            return '';
+        }
+        return value;
+    }
+
+    argumentReporterBoolean (args, util) {
+        const value = util.getParam(args.VALUE);
+        if (value === null) {
+            return false;
+        }
         return value;
     }
 }

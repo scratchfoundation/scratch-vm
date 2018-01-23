@@ -1,5 +1,14 @@
-const color = require('../util/color');
-const log = require('../util/log');
+const ArgumentType = require('../../extension-support/argument-type');
+const BlockType = require('../../extension-support/block-type');
+const color = require('../../util/color');
+const log = require('../../util/log');
+
+/**
+ * Icon svg to be displayed at the left edge of each extension block, encoded as a data URI.
+ * @type {string}
+ */
+// eslint-disable-next-line max-len
+const iconURI = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHZpZXdCb3g9IjAgMCA0MCA0MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48dGl0bGU+d2VkbzItYmxvY2staWNvbjwvdGl0bGU+PGcgZmlsbD0ibm9uZSIgZmlsbC1ydWxlPSJldmVub2RkIj48cGF0aCBkPSJNMzUuMzEzIDEwLjQ2N0gzMi4wOVY4Ljg2NWMwLS4yMjMuMTgtLjQwNC40MDUtLjQwNGgyLjQxMmMuMjI0IDAgLjQwNi4xODIuNDA2LjQwNXYxLjYwMnpNMzAuNDc3IDEwLjQ2N2gtMy4yMjRWOC44NjVjMC0uMjIzLjE4My0uNDA0LjQwNy0uNDA0aDIuNDFjLjIyNiAwIC40MDcuMTgyLjQwNy40MDV2MS42MDJ6TTI1LjY0IDEwLjQ2N0gyMi40MlY4Ljg2NWMwLS4yMjMuMTgyLS40MDQuNDA2LS40MDRoMi40MWMuMjI2IDAgLjQwNy4xODIuNDA3LjQwNXYxLjYwMnpNMjAuODA2IDEwLjQ2N2gtMy4yMjRWOC44NjVjMC0uMjIzLjE4Mi0uNDA0LjQwNi0uNDA0SDIwLjRjLjIyNCAwIC40MDYuMTgyLjQwNi40MDV2MS42MDJ6TTE1Ljk3IDEwLjQ2N2gtMy4yMjRWOC44NjVjMC0uMjIzLjE4Mi0uNDA0LjQwNy0uNDA0aDIuNDFjLjIyNiAwIC40MDcuMTgyLjQwNy40MDV2MS42MDJ6TTExLjEzNSAxMC40NjdINy45MVY4Ljg2NWMwLS4yMjMuMTgzLS40MDQuNDA3LS40MDRoMi40MTJjLjIyMyAwIC40MDUuMTgyLjQwNS40MDV2MS42MDJ6IiBzdHJva2U9IiM2Rjc4OTMiIGZpbGw9IiNGRkYiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCIvPjxwYXRoIGQ9Ik0zNy43MyAxMC40NjdINi4zYy0yLjY3IDAtNC44MzYgMi4xNTMtNC44MzYgNC44MDh2My4yMDVoMzcuMDczdi03LjIxYzAtLjQ0NC0uMzYyLS44MDMtLjgwNy0uODAzeiIgc3Ryb2tlPSIjNkY3ODkzIiBmaWxsPSIjRkZGIiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiLz48cGF0aCBkPSJNMzguMTM0IDMwLjk4SDEuODY3Yy0uMjI0IDAtLjQwMy0uMTgtLjQwMy0uNFYxNi4yMzZoMzIuNzFjLjczIDAgMS40My4yODcgMS45NDUuOC41MTUuNTE0IDEuMjE1LjgwMiAxLjk0NC44MDJoLjQ3M3YxMi43NGMwIC4yMi0uMTguNC0uNDAzLjR6IiBzdHJva2U9IiM2Rjc4OTMiIGZpbGw9IiNFNkU3RTgiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCIvPjxwYXRoIHN0cm9rZT0iIzZGNzg5MyIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIiBkPSJNMzQuODMgMTYuMjM3bC40ODMtMi41NjVoMy4yMjMiLz48cGF0aCBkPSJNMzguNTM2IDExLjI2OFYzMC41OGMwIC4yMi0uMTguNC0uNDAzLjRIMS44NjZjLS4yMiAwLS40MDMtLjE4LS40MDMtLjR2LTEuMjAzaDM0LjI4MmMuNjUgMCAxLjE4LS41MjQgMS4xOC0xLjE3M1YxMC40NjdoLjgwNWMuNDQ2IDAgLjgwNi4zNi44MDYuOHoiIHN0cm9rZT0iIzZGNzg5MyIgZmlsbD0iIzZGNzg5MyIgb3BhY2l0eT0iLjE1IiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiLz48cGF0aCBkPSJNMTEuNTM4IDE2LjI4aDIwLjE0OGMuMjIyIDAgLjQwMy4xOC40MDMuNHY2LjUyN2MwIC4yMjItLjE4Mi40LS40MDQuNEgxMS41MzhjLS4yMjMgMC0uNDA0LS4xNzgtLjQwNC0uNFYxNi42OGMwLS4yMi4xOC0uNC40MDQtLjQiIGZpbGw9IiNFNkU3RTgiLz48cGF0aCBkPSJNMTEuNTM4IDE2LjI4aDIwLjE0OGMuMjIyIDAgLjQwMy4xOC40MDMuNHY2LjUyN2MwIC4yMjItLjE4Mi40LS40MDQuNEgxMS41MzhjLS4yMjMgMC0uNDA0LS4xNzgtLjQwNC0uNFYxNi42OGMwLS4yMi4xOC0uNC40MDQtLjR6IiBzdHJva2U9IiM2Rjc4OTMiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCIvPjxwYXRoIGQ9Ik0zMi4wOSAxNi4yOHY2LjkyN2MwIC4yMjItLjE4LjQtLjQwNC40aC0yMC4xNWMtLjIyIDAtLjQtLjE4LS40LS40di0xLjJoMTguMTZjLjY1MyAwIDEuMTgtLjUyNiAxLjE4LTEuMTc0VjE2LjI4aDEuNjEzeiIgc3Ryb2tlPSIjNkY3ODkzIiBmaWxsPSIjNkU3NzkyIiBvcGFjaXR5PSIuMTUiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCIvPjxwYXRoIGQ9Ik0zMC40NzcgMTYuMjhoLTMuMjI0di0xLjYwNGMwLS4yMjMuMTgzLS40MDQuNDA3LS40MDRoMi40MWMuMjI2IDAgLjQwNy4xOC40MDcuNDA0djEuNjAzek0xNS45NyAxNi4yOGgtMy4yMjR2LTEuNjA0YzAtLjIyMy4xODItLjQwNC40MDctLjQwNGgyLjQxYy4yMjYgMCAuNDA3LjE4LjQwNy40MDR2MS42MDN6TTI1LjY0IDE2LjI4SDIyLjQydi0xLjYwNGMwLS4yMjMuMTgyLS40MDQuNDA2LS40MDRoMi40MWMuMjI2IDAgLjQwNy4xOC40MDcuNDA0djEuNjAzek0yMC44MDYgMTYuMjhoLTMuMjI0di0xLjYwNGMwLS4yMjMuMTgyLS40MDQuNDA2LS40MDRIMjAuNGMuMjI0IDAgLjQwNi4xOC40MDYuNDA0djEuNjAzeiIgc3Ryb2tlPSIjNkY3ODkzIiBmaWxsPSIjRTZFN0U4IiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiLz48cGF0aCBkPSJNMTguNTU3IDE5LjkxYzAgMS4wMjUtLjgzNyAxLjg1Ny0xLjg3IDEuODU3LTEuMDMgMC0xLjg2Ny0uODMyLTEuODY3LTEuODU4IDAtMS4wMjcuODM3LTEuODU4IDEuODY4LTEuODU4IDEuMDMyIDAgMS44Ny44MyAxLjg3IDEuODU3ek0yMy40OCAxOS45MWMwIDEuMDI1LS44MzYgMS44NTctMS44NjggMS44NTdzLTEuODctLjgzMi0xLjg3LTEuODU4YzAtMS4wMjcuODM4LTEuODU4IDEuODctMS44NThzMS44NjguODMgMS44NjggMS44NTd6TTI4LjQwNCAxOS45MWMwIDEuMDI1LS44MzcgMS44NTctMS44NjggMS44NTctMS4wMzIgMC0xLjg3LS44MzItMS44Ny0xLjg1OCAwLTEuMDI3LjgzOC0xLjg1OCAxLjg3LTEuODU4IDEuMDMgMCAxLjg2OC44MyAxLjg2OCAxLjg1N3oiIHN0cm9rZT0iIzZGNzg5MyIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIi8+PHBhdGggZD0iTTE4LjU1NyAxOS45MjJjMCAxLjAyNi0uODM3IDEuODU4LTEuODcgMS44NTgtMS4wMyAwLTEuODY3LS44MzItMS44NjctMS44NTggMC0xLjAyNS44MzctMS44NTcgMS44NjgtMS44NTcgMS4wMzIgMCAxLjg3LjgzMiAxLjg3IDEuODU3TTIzLjQ4IDE5LjkyMmMwIDEuMDI2LS44MzYgMS44NTgtMS44NjggMS44NThzLTEuODctLjgzMi0xLjg3LTEuODU4YzAtMS4wMjUuODM4LTEuODU3IDEuODctMS44NTdzMS44NjguODMyIDEuODY4IDEuODU3TTI4LjQwNCAxOS45MjJjMCAxLjAyNi0uODM3IDEuODU4LTEuODY4IDEuODU4LTEuMDMyIDAtMS44Ny0uODMyLTEuODctMS44NTggMC0xLjAyNS44MzgtMS44NTcgMS44Ny0xLjg1NyAxLjAzIDAgMS44NjguODMyIDEuODY4IDEuODU3IiBmaWxsPSIjNkY3ODkzIiBvcGFjaXR5PSIuNSIvPjwvZz48L3N2Zz4=';
 
 /**
  * Manage power, direction, and timers for one WeDo 2.0 motor.
@@ -243,7 +252,7 @@ class WeDo2 {
      * @return {number} - the latest value received from the distance sensor.
      */
     get distance () {
-        return this._sensors.distance;
+        return this._sensors.distance * 10;
     }
 
     /**
@@ -371,9 +380,9 @@ const TiltDirection = {
 class Scratch3WeDo2Blocks {
 
     /**
-     * @return {string} - the name of this extension.
+     * @return {string} - the ID of this extension.
      */
-    static get EXTENSION_NAME () {
+    static get EXTENSION_ID () {
         return 'wedo2';
     }
 
@@ -395,7 +404,185 @@ class Scratch3WeDo2Blocks {
          */
         this.runtime = runtime;
 
-        this.runtime.HACK_WeDo2Blocks = this;
+        this.connect();
+    }
+
+    /**
+     * @returns {object} metadata for this extension and its blocks.
+     */
+    getInfo () {
+        return {
+            id: Scratch3WeDo2Blocks.EXTENSION_ID,
+            name: 'WeDo 2.0',
+            iconURI: iconURI,
+            blocks: [
+                {
+                    opcode: 'motorOnFor',
+                    text: 'turn [MOTOR_ID] on for [DURATION] seconds',
+                    blockType: BlockType.COMMAND,
+                    arguments: {
+                        MOTOR_ID: {
+                            type: ArgumentType.STRING,
+                            menu: 'motorID',
+                            defaultValue: MotorID.DEFAULT
+                        },
+                        DURATION: {
+                            type: ArgumentType.NUMBER,
+                            defaultValue: 1
+                        }
+                    }
+                },
+                {
+                    opcode: 'motorOn',
+                    text: 'turn [MOTOR_ID] on',
+                    blockType: BlockType.COMMAND,
+                    arguments: {
+                        MOTOR_ID: {
+                            type: ArgumentType.STRING,
+                            menu: 'motorID',
+                            defaultValue: MotorID.DEFAULT
+                        }
+                    }
+                },
+                {
+                    opcode: 'motorOff',
+                    text: 'turn [MOTOR_ID] off',
+                    blockType: BlockType.COMMAND,
+                    arguments: {
+                        MOTOR_ID: {
+                            type: ArgumentType.STRING,
+                            menu: 'motorID',
+                            defaultValue: MotorID.DEFAULT
+                        }
+                    }
+                },
+                {
+                    opcode: 'startMotorPower',
+                    text: 'set [MOTOR_ID] power to [POWER]',
+                    blockType: BlockType.COMMAND,
+                    arguments: {
+                        MOTOR_ID: {
+                            type: ArgumentType.STRING,
+                            menu: 'motorID',
+                            defaultValue: MotorID.DEFAULT
+                        },
+                        POWER: {
+                            type: ArgumentType.NUMBER,
+                            defaultValue: 100
+                        }
+                    }
+                },
+                {
+                    opcode: 'setMotorDirection',
+                    text: 'set [MOTOR_ID] direction to [DIRECTION]',
+                    blockType: BlockType.COMMAND,
+                    arguments: {
+                        MOTOR_ID: {
+                            type: ArgumentType.STRING,
+                            menu: 'motorID',
+                            defaultValue: MotorID.DEFAULT
+                        },
+                        DIRECTION: {
+                            type: ArgumentType.STRING,
+                            menu: 'motorDirection',
+                            defaultValue: MotorDirection.FORWARD
+                        }
+                    }
+                },
+                {
+                    opcode: 'setLightHue',
+                    text: 'set light color to [HUE]',
+                    blockType: BlockType.COMMAND,
+                    arguments: {
+                        HUE: {
+                            type: ArgumentType.NUMBER,
+                            defaultValue: 50
+                        }
+                    }
+                },
+                {
+                    opcode: 'playNoteFor',
+                    text: 'play note [NOTE] for [DURATION] seconds',
+                    blockType: BlockType.COMMAND,
+                    arguments: {
+                        NOTE: {
+                            type: ArgumentType.NUMBER, // TODO: ArgumentType.MIDI_NOTE?
+                            defaultValue: 60
+                        },
+                        DURATION: {
+                            type: ArgumentType.NUMBER,
+                            defaultValue: 0.5
+                        }
+                    }
+                },
+                {
+                    opcode: 'whenDistance',
+                    text: 'when distance [OP] [REFERENCE]',
+                    blockType: BlockType.HAT,
+                    arguments: {
+                        OP: {
+                            type: ArgumentType.STRING,
+                            menu: 'lessMore',
+                            defaultValue: '<'
+                        },
+                        REFERENCE: {
+                            type: ArgumentType.NUMBER,
+                            defaultValue: 50
+                        }
+                    }
+                },
+                {
+                    opcode: 'whenTilted',
+                    text: 'when tilted [DIRECTION]',
+                    func: 'isTilted',
+                    blockType: BlockType.HAT,
+                    arguments: {
+                        DIRECTION: {
+                            type: ArgumentType.STRING,
+                            menu: 'tiltDirectionAny',
+                            defaultValue: TiltDirection.ANY
+                        }
+                    }
+                },
+                {
+                    opcode: 'getDistance',
+                    text: 'distance',
+                    blockType: BlockType.REPORTER
+                },
+                {
+                    opcode: 'isTilted',
+                    text: 'tilted [DIRECTION]?',
+                    blockType: BlockType.BOOLEAN,
+                    arguments: {
+                        DIRECTION: {
+                            type: ArgumentType.STRING,
+                            menu: 'tiltDirectionAny',
+                            defaultValue: TiltDirection.ANY
+                        }
+                    }
+                },
+                {
+                    opcode: 'getTiltAngle',
+                    text: 'tilt angle [DIRECTION]',
+                    blockType: BlockType.REPORTER,
+                    arguments: {
+                        DIRECTION: {
+                            type: ArgumentType.STRING,
+                            menu: 'tiltDirection',
+                            defaultValue: TiltDirection.UP
+                        }
+                    }
+                }
+            ],
+            menus: {
+                motorID: [MotorID.DEFAULT, MotorID.A, MotorID.B, MotorID.ALL],
+                motorDirection: [MotorDirection.FORWARD, MotorDirection.BACKWARD, MotorDirection.REVERSE],
+                tiltDirection: [TiltDirection.UP, TiltDirection.DOWN, TiltDirection.LEFT, TiltDirection.RIGHT],
+                tiltDirectionAny:
+                    [TiltDirection.UP, TiltDirection.DOWN, TiltDirection.LEFT, TiltDirection.RIGHT, TiltDirection.ANY],
+                lessMore: ['<', '>']
+            }
+        };
     }
 
     /**
@@ -407,7 +594,7 @@ class Scratch3WeDo2Blocks {
         }
         const deviceManager = this.runtime.ioDevices.deviceManager;
         const finder = this._finder =
-            deviceManager.searchAndConnect(Scratch3WeDo2Blocks.EXTENSION_NAME, WeDo2.DEVICE_TYPE);
+            deviceManager.searchAndConnect(Scratch3WeDo2Blocks.EXTENSION_ID, WeDo2.DEVICE_TYPE);
         this._finder.promise.then(
             socket => {
                 if (this._finder === finder) {
@@ -425,27 +612,6 @@ class Scratch3WeDo2Blocks {
                     log.warn('Ignoring failure from stale WeDo 2.0 connection attempt');
                 }
             });
-    }
-
-    /**
-     * Retrieve the block primitives implemented by this package.
-     * @return {object.<string, Function>} Mapping of opcode to Function.
-     */
-    getPrimitives () {
-        return {
-            wedo2_motorOnFor: this.motorOnFor,
-            wedo2_motorOn: this.motorOn,
-            wedo2_motorOff: this.motorOff,
-            wedo2_startMotorPower: this.startMotorPower,
-            wedo2_setMotorDirection: this.setMotorDirection,
-            wedo2_setLightHue: this.setLightHue,
-            wedo2_playNoteFor: this.playNoteFor,
-            wedo2_whenDistance: this.whenDistance,
-            wedo2_whenTilted: this.whenTilted,
-            wedo2_getDistance: this.getDistance,
-            wedo2_isTilted: this.isTilted,
-            wedo2_getTiltAngle: this.getTiltAngle
-        };
     }
 
     /**
@@ -574,8 +740,10 @@ class Scratch3WeDo2Blocks {
     whenDistance (args) {
         switch (args.OP) {
         case '<':
+        case '&lt;':
             return this._device.distance < args.REFERENCE;
         case '>':
+        case '&gt;':
             return this._device.distance > args.REFERENCE;
         default:
             log.warn(`Unknown comparison operator in whenDistance: ${args.OP}`);
@@ -597,7 +765,7 @@ class Scratch3WeDo2Blocks {
      * @return {number} - the distance sensor's value, scaled to the [0,100] range.
      */
     getDistance () {
-        return this._device.distance * 10;
+        return this._device.distance;
     }
 
     /**
