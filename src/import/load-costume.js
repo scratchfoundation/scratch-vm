@@ -186,7 +186,7 @@ const loadOldTextCostume = function (baseMD5ext, textMD5ext, costume, runtime) {
             return new Promise((resolve, reject) => {
                 canvas.toBlob(blob => {
                     const reader = new FileReader();
-                    const onError = function() {
+                    const onError = function () {
                         // eslint-disable-next-line no-use-before-define
                         removeEventListeners();
                         reject();
