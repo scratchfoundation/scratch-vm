@@ -131,17 +131,15 @@ class RenderedTarget extends Target {
                 'control_start_as_clone', null, this
             );
         }
+    }
 
-        /**
-        * Audio player
-        */
+    /**
+     * Initialize the audio player for this sprite or clone.
+     */
+    initAudio () {
         this.audioPlayer = null;
         if (this.runtime && this.runtime.audioEngine) {
-            if (this.isOriginal) {
-                this.audioPlayer = this.runtime.audioEngine.createPlayer();
-            } else {
-                this.audioPlayer = this.sprite.clones[0].audioPlayer;
-            }
+            this.audioPlayer = this.runtime.audioEngine.createPlayer();
         }
     }
 
@@ -939,6 +937,10 @@ class RenderedTarget extends Target {
             if (this.visible) {
                 this.runtime.requestRedraw();
             }
+        }
+        if (this.audioPlayer) {
+            this.audioPlayer.stopAllSounds();
+            this.audioPlayer.dispose();
         }
     }
 }
