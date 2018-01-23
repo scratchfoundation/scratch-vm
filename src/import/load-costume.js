@@ -153,7 +153,7 @@ const loadOldTextCostume = function (baseMD5ext, textMD5ext, costume, runtime) {
                         loadedOne = true;
                     }
                 };
-          
+
                 const removeEventListeners = function () {
                     baseImageElement.removeEventListener('error', onError);
                     textImageElement.removeEventListener('error', onError);
@@ -183,9 +183,36 @@ const loadOldTextCostume = function (baseMD5ext, textMD5ext, costume, runtime) {
             ctx.drawImage(baseImageElement, 0, 0);
             ctx.drawImage(textImageElement, 0, 0);
 
-            costume.skinId = runtime.renderer.createBitmapSkin(canvas, costume.bitmapResolution, rotationCenter);
-
-            return costume;
+            return new Promise((resolve, reject) => {
+                canvas.toBlob(blob => {
+                    const reader = new FileReader();
+                    const onError = function() {
+                        // eslint-disable-next-line no-use-before-define
+                        removeEventListeners();
+                        reject();
+                    };
+                    const onLoad = function () {
+                        // eslint-disable-next-line no-use-before-define
+                        removeEventListeners();
+                        costume.assetId = runtime.storage.builtinHelper.cache(
+                            assetType,
+                            runtime.storage.DataFormat.PNG,
+                            new Buffer(reader.result)
+                        );
+                        costume.skinId = runtime.renderer.createBitmapSkin(
+                            canvas, costume.bitmapResolution, rotationCenter
+                        );
+                        resolve(costume);
+                    };
+                    const removeEventListeners = function () {
+                        reader.removeEventListener('error', onError);
+                        reader.removeEventListener('load', onLoad);
+                    };
+                    reader.addEventListener('error', onError);
+                    reader.addEventListener('load', onLoad);
+                    reader.readAsArrayBuffer(blob);
+                }, 'image/png');
+            });
         });
 };
 
