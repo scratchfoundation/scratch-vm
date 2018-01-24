@@ -99,11 +99,19 @@ const handleReport = function (
 };
 
 /**
+ * A convenienve constant to hide that the recursiveCall argument to execute is
+ * a boolean trap.
+ * @const {boolean}
+ */
+const RECURSIVE = true;
+
+/**
  * Execute a block.
  * @param {!Sequencer} sequencer Which sequencer is executing.
  * @param {!Thread} thread Thread which to read and execute.
+ * @param {boolean} recursiveCall is execute called from another execute call?
  */
-const execute = function (sequencer, thread) {
+const execute = function (sequencer, thread, recursiveCall) {
     const runtime = sequencer.runtime;
     const target = thread.target;
 
@@ -202,7 +210,7 @@ const execute = function (sequencer, thread) {
             // Save name of input for `Thread.pushReportedValue`.
             currentStackFrame.waitingReporter = inputName;
             // Actually execute the block.
-            execute(sequencer, thread);
+            execute(sequencer, thread, RECURSIVE);
             if (thread.status === Thread.STATUS_PROMISE_WAIT) {
                 for (const _inputName in inputs) {
                     if (_inputName === inputName) break;
@@ -291,7 +299,7 @@ const execute = function (sequencer, thread) {
         runtime.profiler.records.push(runtime.profiler.STOP, performance.now());
     }
 
-    if (typeof primitiveReportedValue === 'undefined') {
+    if (recursiveCall !== RECURSIVE && typeof primitiveReportedValue === 'undefined') {
         // No value reported - potentially a command block.
         // Edge-activated hats don't request a glow; all commands do.
         thread.requestScriptGlowInFrame = true;
@@ -338,7 +346,11 @@ const execute = function (sequencer, thread) {
             thread.popStack();
         });
     } else if (thread.status === Thread.STATUS_RUNNING) {
-        handleReport(primitiveReportedValue, sequencer, thread, currentBlockId, opcode, isHat);
+        if (recursiveCall === RECURSIVE) {
+            thread.pushReportedValue(primitiveReportedValue);
+        } else {
+            handleReport(primitiveReportedValue, sequencer, thread, currentBlockId, opcode, isHat);
+        }
     }
 };
 
