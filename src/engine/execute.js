@@ -113,14 +113,6 @@ const RECURSIVE = true;
  */
 const execute = function (sequencer, thread, recursiveCall) {
     const runtime = sequencer.runtime;
-    const target = thread.target;
-
-    // Stop if block or target no longer exists.
-    if (target === null) {
-        // No block found: stop the thread; script no longer exists.
-        sequencer.retireThread(thread);
-        return;
-    }
 
     // Current block to execute is the one on the top of the stack.
     const currentBlockId = thread.peekStack();
