@@ -27001,10 +27001,14 @@ module.exports =
 "use strict";
 
 
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
 // Synchronously load TTF fonts.
 // First, have Webpack load their data as Base 64 strings.
 /* eslint-disable global-require */
-const FONTS = {
+var FONTS = {
     Donegal: __webpack_require__(1),
     Gloria: __webpack_require__(2),
     Mystery: __webpack_require__(3),
@@ -27017,11 +27021,11 @@ const FONTS = {
 // 1. Replace each with a usable @font-face tag that points to a Data URI.
 // 2. Inject the font into a style on `document.body`, so measurements
 //    can be accurately taken in SvgRenderer._transformMeasurements.
-const documentStyleTag = document.createElement('style');
+var documentStyleTag = document.createElement('style');
 documentStyleTag.id = 'scratch-font-styles';
-for (const fontName in FONTS) {
-    const fontData = FONTS[fontName];
-    FONTS[fontName] = '@font-face {' + `font-family: "${fontName}";src: url("data:application/x-font-ttf;charset=utf-8;base64,${fontData}");}`;
+for (var fontName in FONTS) {
+    var fontData = FONTS[fontName];
+    FONTS[fontName] = '@font-face {' + ('font-family: "' + fontName + '";src: url("data:application/x-font-ttf;charset=utf-8;base64,' + fontData + '");}');
     documentStyleTag.textContent += FONTS[fontName];
 }
 document.body.insertBefore(documentStyleTag, document.body.firstChild);
@@ -27029,14 +27033,17 @@ document.body.insertBefore(documentStyleTag, document.body.firstChild);
 /**
  * Main quirks-mode SVG rendering code.
  */
-class SvgRenderer {
+
+var SvgRenderer = function () {
     /**
      * Create a quirks-mode SVG renderer for a particular canvas.
      * @param {HTMLCanvasElement} [canvas] An optional canvas element to draw to. If this is not provided, the renderer
      * will create a new canvas.
      * @constructor
      */
-    constructor(canvas) {
+    function SvgRenderer(canvas) {
+        _classCallCheck(this, SvgRenderer);
+
         this._canvas = canvas || document.createElement('canvas');
         this._context = this._canvas.getContext('2d');
         this._measurements = { x: 0, y: 0, width: 0, height: 0 };
@@ -27046,307 +27053,420 @@ class SvgRenderer {
     /**
      * @returns {!HTMLCanvasElement} this renderer's target canvas.
      */
-    get canvas() {
-        return this._canvas;
-    }
 
-    /**
-     * Load an SVG from a string and draw it.
-     * This will be parsed and transformed, and finally drawn.
-     * When drawing is finished, the `onFinish` callback is called.
-     * @param {string} svgString String of SVG data to draw in quirks-mode.
-     * @param {number} [scale] - Optionally, also scale the image by this factor (multiplied by `getDrawRatio()`).
-     * @param {Function} [onFinish] Optional callback for when drawing finished.
-     */
-    fromString(svgString, scale, onFinish) {
-        this._loadString(svgString);
-        this._draw(scale, onFinish);
-    }
 
-    /**
-     * Load an SVG from a string and measure it.
-     * @param {string} svgString String of SVG data to draw in quirks-mode.
-     * @return {object} the natural size, in Scratch units, of this SVG.
-     */
-    measure(svgString) {
-        this._loadString(svgString);
-        return this._measurements;
-    }
+    _createClass(SvgRenderer, [{
+        key: 'fromString',
 
-    /**
-     * @return {Array<number>} the natural size, in Scratch units, of this SVG.
-     */
-    get size() {
-        return [this._measurements.width, this._measurements.height];
-    }
 
-    /**
-     * @return {Array<number>} the offset (upper left corner) of the SVG's view box.
-     */
-    get viewOffset() {
-        return [this._measurements.x, this._measurements.y];
-    }
-
-    /**
-     * Load an SVG string and normalize it. All the steps before drawing/measuring.
-     * @param {string} svgString String of SVG data to draw in quirks-mode.
-     */
-    _loadString(svgString) {
-        // New svg string invalidates the cached image
-        this._cachedImage = null;
-
-        // Parse string into SVG XML.
-        const parser = new DOMParser();
-        this._svgDom = parser.parseFromString(svgString, 'text/xml');
-        if (this._svgDom.childNodes.length < 1 || this._svgDom.documentElement.localName !== 'svg') {
-            throw new Error('Document does not appear to be SVG.');
+        /**
+         * Load an SVG from a string and draw it.
+         * This will be parsed and transformed, and finally drawn.
+         * When drawing is finished, the `onFinish` callback is called.
+         * @param {string} svgString String of SVG data to draw in quirks-mode.
+         * @param {number} [scale] - Optionally, also scale the image by this factor (multiplied by `getDrawRatio()`).
+         * @param {Function} [onFinish] Optional callback for when drawing finished.
+         */
+        value: function fromString(svgString, scale, onFinish) {
+            this._loadString(svgString);
+            this._draw(scale, onFinish);
         }
-        this._svgTag = this._svgDom.documentElement;
-        // Transform all text elements.
-        this._transformText();
-        // Transform measurements.
-        this._transformMeasurements();
-    }
 
-    /**
-     * Transforms an SVG's text elements for Scratch 2.0 quirks.
-     * These quirks include:
-     * 1. `x` and `y` properties are removed/ignored.
-     * 2. Alignment is set to `text-before-edge`.
-     * 3. Line-breaks are converted to explicit <tspan> elements.
-     * 4. Any required fonts are injected.
-     */
-    _transformText() {
-        // Collect all text elements into a list.
-        const textElements = [];
-        const collectText = domElement => {
-            if (domElement.localName === 'text') {
-                textElements.push(domElement);
+        /**
+         * Load an SVG from a string and measure it.
+         * @param {string} svgString String of SVG data to draw in quirks-mode.
+         * @return {object} the natural size, in Scratch units, of this SVG.
+         */
+
+    }, {
+        key: 'measure',
+        value: function measure(svgString) {
+            this._loadString(svgString);
+            return this._measurements;
+        }
+
+        /**
+         * @return {Array<number>} the natural size, in Scratch units, of this SVG.
+         */
+
+    }, {
+        key: '_loadString',
+
+
+        /**
+         * Load an SVG string and normalize it. All the steps before drawing/measuring.
+         * @param {string} svgString String of SVG data to draw in quirks-mode.
+         */
+        value: function _loadString(svgString) {
+            // New svg string invalidates the cached image
+            this._cachedImage = null;
+
+            // Parse string into SVG XML.
+            var parser = new DOMParser();
+            this._svgDom = parser.parseFromString(svgString, 'text/xml');
+            if (this._svgDom.childNodes.length < 1 || this._svgDom.documentElement.localName !== 'svg') {
+                throw new Error('Document does not appear to be SVG.');
             }
-            for (let i = 0; i < domElement.childNodes.length; i++) {
-                collectText(domElement.childNodes[i]);
-            }
-        };
-        collectText(this._svgTag);
-        // For each text element, apply quirks.
-        const fontsNeeded = {};
-        for (const textElement of textElements) {
-            // Remove x and y attributes - they are not used in Scratch.
-            textElement.removeAttribute('x');
-            textElement.removeAttribute('y');
-            // Set text-before-edge alignment:
-            // Scratch renders all text like this.
-            textElement.setAttribute('alignment-baseline', 'text-before-edge');
-            // If there's no font size provided, provide one.
-            if (!textElement.getAttribute('font-size')) {
-                textElement.setAttribute('font-size', '14');
-            }
-            // If there's no font-family provided, provide one.
-            if (!textElement.getAttribute('font-family')) {
-                textElement.setAttribute('font-family', 'Helvetica');
-            }
-            // Collect fonts that need injection.
-            const font = textElement.getAttribute('font-family');
-            fontsNeeded[font] = true;
-            // Fix line breaks in text, which are not natively supported by SVG.
-            let text = textElement.textContent;
-            if (text) {
-                textElement.textContent = '';
-                const lines = text.split('\n');
-                text = '';
-                for (const line of lines) {
-                    const tspanNode = this._createSVGElement('tspan');
-                    tspanNode.setAttribute('x', '0');
-                    tspanNode.setAttribute('dy', '1.2em');
-                    tspanNode.textContent = line;
-                    textElement.appendChild(tspanNode);
+            this._svgTag = this._svgDom.documentElement;
+            // Transform all text elements.
+            this._transformText();
+            // Transform measurements.
+            this._transformMeasurements();
+        }
+
+        /**
+         * Transforms an SVG's text elements for Scratch 2.0 quirks.
+         * These quirks include:
+         * 1. `x` and `y` properties are removed/ignored.
+         * 2. Alignment is set to `text-before-edge`.
+         * 3. Line-breaks are converted to explicit <tspan> elements.
+         * 4. Any required fonts are injected.
+         */
+
+    }, {
+        key: '_transformText',
+        value: function _transformText() {
+            // Collect all text elements into a list.
+            var textElements = [];
+            var collectText = function collectText(domElement) {
+                if (domElement.localName === 'text') {
+                    textElements.push(domElement);
                 }
-            }
-        }
-        // Inject fonts that are needed.
-        // It would be nice if there were another way to get the SVG-in-canvas
-        // to render the correct font family, but I couldn't find any other way.
-        // Other things I tried:
-        // Just injecting the font-family into the document: no effect.
-        // External stylesheet linked to by SVG: no effect.
-        // Using a <link> or <style>@import</style> to link to font-family
-        // injected into the document: no effect.
-        const newDefs = this._createSVGElement('defs');
-        const newStyle = this._createSVGElement('style');
-        const allFonts = Object.keys(fontsNeeded);
-        for (const font of allFonts) {
-            if (FONTS.hasOwnProperty(font)) {
-                newStyle.textContent += FONTS[font];
-            }
-        }
-        newDefs.appendChild(newStyle);
-        this._svgTag.insertBefore(newDefs, this._svgTag.childNodes[0]);
-    }
-
-    /**
-     * Find the largest stroke width in the svg. If a shape has no
-     * `stroke` property, it has a stroke-width of 0. If it has a `stroke`,
-     * it is by default a stroke-width of 1.
-     * This is used to enlarge the computed bounding box, which doesn't take
-     * stroke width into account.
-     * @param {SVGSVGElement} rootNode The root SVG node to traverse.
-     * @return {number} The largest stroke width in the SVG.
-     */
-    _findLargestStrokeWidth(rootNode) {
-        let largestStrokeWidth = 0;
-        const collectStrokeWidths = domElement => {
-            if (domElement.getAttribute) {
-                if (domElement.getAttribute('stroke')) {
-                    largestStrokeWidth = Math.max(largestStrokeWidth, 1);
+                for (var i = 0; i < domElement.childNodes.length; i++) {
+                    collectText(domElement.childNodes[i]);
                 }
-                if (domElement.getAttribute('stroke-width')) {
-                    largestStrokeWidth = Math.max(largestStrokeWidth, Number(domElement.getAttribute('stroke-width')) || 0);
-                }
-            }
-            for (let i = 0; i < domElement.childNodes.length; i++) {
-                collectStrokeWidths(domElement.childNodes[i]);
-            }
-        };
-        collectStrokeWidths(rootNode);
-        return largestStrokeWidth;
-    }
-
-    /**
-     * Transform the measurements of the SVG.
-     * In Scratch 2.0, SVGs are drawn without respect to the width,
-     * height, and viewBox attribute on the tag. The exporter
-     * does output these properties - but they appear to be incorrect often.
-     * To address the incorrect measurements, we append the DOM to the
-     * document, and then use SVG's native `getBBox` to find the real
-     * drawn dimensions. This ensures things drawn in negative dimensions,
-     * outside the given viewBox, etc., are all eventually drawn to the canvas.
-     * I tried to do this several other ways: stripping the width/height/viewBox
-     * attributes and then drawing (Firefox won't draw anything),
-     * or inflating them and then measuring a canvas. But this seems to be
-     * a natural and performant way.
-     */
-    _transformMeasurements() {
-        // Save `svgText` for later re-parsing.
-        const svgText = this._toString();
-
-        // Append the SVG dom to the document.
-        // This allows us to use `getBBox` on the page,
-        // which returns the full bounding-box of all drawn SVG
-        // elements, similar to how Scratch 2.0 did measurement.
-        const svgSpot = document.createElement('span');
-        let bbox;
-        try {
-            document.body.appendChild(svgSpot);
-            svgSpot.appendChild(this._svgTag);
-            // Take the bounding box.
-            bbox = this._svgTag.getBBox();
-        } finally {
-            // Always destroy the element, even if, for example, getBBox throws.
-            document.body.removeChild(svgSpot);
-        }
-
-        // Re-parse the SVG from `svgText`. The above DOM becomes
-        // unusable/undrawable in browsers once it's appended to the page,
-        // perhaps for security reasons?
-        const parser = new DOMParser();
-        this._svgDom = parser.parseFromString(svgText, 'text/xml');
-        this._svgTag = this._svgDom.documentElement;
-
-        // Enlarge the bbox from the largest found stroke width
-        // This may have false-positives, but at least the bbox will always
-        // contain the full graphic including strokes.
-        const halfStrokeWidth = this._findLargestStrokeWidth(this._svgTag) / 2;
-        const width = bbox.width + halfStrokeWidth * 2;
-        const height = bbox.height + halfStrokeWidth * 2;
-        const x = bbox.x - halfStrokeWidth;
-        const y = bbox.y - halfStrokeWidth;
-
-        // Set the correct measurements on the SVG tag, and save them.
-        this._svgTag.setAttribute('width', width);
-        this._svgTag.setAttribute('height', height);
-        this._svgTag.setAttribute('viewBox', `${x} ${y} ${width} ${height}`);
-        this._measurements = {
-            width: width,
-            height: height,
-            x: x,
-            y: y
-        };
-    }
-
-    /**
-     * Serialize the active SVG DOM to a string.
-     * @returns {string} String representing current SVG data.
-     */
-    _toString() {
-        const serializer = new XMLSerializer();
-        return serializer.serializeToString(this._svgDom);
-    }
-
-    /**
-     * Get the drawing ratio, adjusted for HiDPI screens.
-     * @return {number} Scale ratio to draw to canvases with.
-     */
-    getDrawRatio() {
-        const devicePixelRatio = window.devicePixelRatio || 1;
-        const backingStoreRatio = this._context.webkitBackingStorePixelRatio || this._context.mozBackingStorePixelRatio || this._context.msBackingStorePixelRatio || this._context.oBackingStorePixelRatio || this._context.backingStorePixelRatio || 1;
-        return devicePixelRatio / backingStoreRatio;
-    }
-
-    /**
-     * Draw the SVG to a canvas. The canvas will automatically be scaled by the value returned by `getDrawRatio`.
-     * @param {number} [scale] - Optionally, also scale the image by this factor (multiplied by `getDrawRatio()`).
-     * @param {Function} [onFinish] - An optional callback to call when the draw operation is complete.
-     */
-    _draw(scale, onFinish) {
-        // Convert the SVG text to an Image, and then draw it to the canvas.
-        if (this._cachedImage) {
-            this._drawFromImage(scale, onFinish);
-        } else {
-            const img = new Image();
-            img.onload = () => {
-                this._cachedImage = img;
-                this._drawFromImage(scale, onFinish);
             };
-            const svgText = this._toString();
-            img.src = `data:image/svg+xml;utf8,${encodeURIComponent(svgText)}`;
+            collectText(this._svgTag);
+            // For each text element, apply quirks.
+            var fontsNeeded = {};
+            var _iteratorNormalCompletion = true;
+            var _didIteratorError = false;
+            var _iteratorError = undefined;
+
+            try {
+                for (var _iterator = textElements[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
+                    var textElement = _step.value;
+
+                    // Remove x and y attributes - they are not used in Scratch.
+                    textElement.removeAttribute('x');
+                    textElement.removeAttribute('y');
+                    // Set text-before-edge alignment:
+                    // Scratch renders all text like this.
+                    textElement.setAttribute('alignment-baseline', 'text-before-edge');
+                    // If there's no font size provided, provide one.
+                    if (!textElement.getAttribute('font-size')) {
+                        textElement.setAttribute('font-size', '14');
+                    }
+                    // If there's no font-family provided, provide one.
+                    if (!textElement.getAttribute('font-family')) {
+                        textElement.setAttribute('font-family', 'Helvetica');
+                    }
+                    // Collect fonts that need injection.
+                    var font = textElement.getAttribute('font-family');
+                    fontsNeeded[font] = true;
+                    // Fix line breaks in text, which are not natively supported by SVG.
+                    var text = textElement.textContent;
+                    if (text) {
+                        textElement.textContent = '';
+                        var lines = text.split('\n');
+                        text = '';
+                        var _iteratorNormalCompletion3 = true;
+                        var _didIteratorError3 = false;
+                        var _iteratorError3 = undefined;
+
+                        try {
+                            for (var _iterator3 = lines[Symbol.iterator](), _step3; !(_iteratorNormalCompletion3 = (_step3 = _iterator3.next()).done); _iteratorNormalCompletion3 = true) {
+                                var line = _step3.value;
+
+                                var tspanNode = this._createSVGElement('tspan');
+                                tspanNode.setAttribute('x', '0');
+                                tspanNode.setAttribute('dy', '1.2em');
+                                tspanNode.textContent = line;
+                                textElement.appendChild(tspanNode);
+                            }
+                        } catch (err) {
+                            _didIteratorError3 = true;
+                            _iteratorError3 = err;
+                        } finally {
+                            try {
+                                if (!_iteratorNormalCompletion3 && _iterator3.return) {
+                                    _iterator3.return();
+                                }
+                            } finally {
+                                if (_didIteratorError3) {
+                                    throw _iteratorError3;
+                                }
+                            }
+                        }
+                    }
+                }
+                // Inject fonts that are needed.
+                // It would be nice if there were another way to get the SVG-in-canvas
+                // to render the correct font family, but I couldn't find any other way.
+                // Other things I tried:
+                // Just injecting the font-family into the document: no effect.
+                // External stylesheet linked to by SVG: no effect.
+                // Using a <link> or <style>@import</style> to link to font-family
+                // injected into the document: no effect.
+            } catch (err) {
+                _didIteratorError = true;
+                _iteratorError = err;
+            } finally {
+                try {
+                    if (!_iteratorNormalCompletion && _iterator.return) {
+                        _iterator.return();
+                    }
+                } finally {
+                    if (_didIteratorError) {
+                        throw _iteratorError;
+                    }
+                }
+            }
+
+            var newDefs = this._createSVGElement('defs');
+            var newStyle = this._createSVGElement('style');
+            var allFonts = Object.keys(fontsNeeded);
+            var _iteratorNormalCompletion2 = true;
+            var _didIteratorError2 = false;
+            var _iteratorError2 = undefined;
+
+            try {
+                for (var _iterator2 = allFonts[Symbol.iterator](), _step2; !(_iteratorNormalCompletion2 = (_step2 = _iterator2.next()).done); _iteratorNormalCompletion2 = true) {
+                    var font = _step2.value;
+
+                    if (FONTS.hasOwnProperty(font)) {
+                        newStyle.textContent += FONTS[font];
+                    }
+                }
+            } catch (err) {
+                _didIteratorError2 = true;
+                _iteratorError2 = err;
+            } finally {
+                try {
+                    if (!_iteratorNormalCompletion2 && _iterator2.return) {
+                        _iterator2.return();
+                    }
+                } finally {
+                    if (_didIteratorError2) {
+                        throw _iteratorError2;
+                    }
+                }
+            }
+
+            newDefs.appendChild(newStyle);
+            this._svgTag.insertBefore(newDefs, this._svgTag.childNodes[0]);
         }
-    }
 
-    /**
-     * Draw to the canvas from a loaded image element.
-     * @param {number} [scale] - Optionally, also scale the image by this factor (multiplied by `getDrawRatio()`).
-     * @param {Function} [onFinish] - An optional callback to call when the draw operation is complete.
-     **/
-    _drawFromImage(scale, onFinish) {
-        if (!this._cachedImage) return;
+        /**
+         * Find the largest stroke width in the svg. If a shape has no
+         * `stroke` property, it has a stroke-width of 0. If it has a `stroke`,
+         * it is by default a stroke-width of 1.
+         * This is used to enlarge the computed bounding box, which doesn't take
+         * stroke width into account.
+         * @param {SVGSVGElement} rootNode The root SVG node to traverse.
+         * @return {number} The largest stroke width in the SVG.
+         */
 
-        const ratio = this.getDrawRatio() * (Number.isFinite(scale) ? scale : 1);
-        const bbox = this._measurements;
-        this._canvas.width = bbox.width * ratio;
-        this._canvas.height = bbox.height * ratio;
-        this._context.clearRect(0, 0, this._canvas.width, this._canvas.height);
-        this._context.scale(ratio, ratio);
-        this._context.drawImage(this._cachedImage, 0, 0);
-        // Reset the canvas transform after drawing.
-        this._context.setTransform(1, 0, 0, 1, 0, 0);
-        // Set the CSS style of the canvas to the actual measurements.
-        this._canvas.style.width = bbox.width;
-        this._canvas.style.height = bbox.height;
-        // All finished - call the callback if provided.
-        if (onFinish) {
-            onFinish();
+    }, {
+        key: '_findLargestStrokeWidth',
+        value: function _findLargestStrokeWidth(rootNode) {
+            var largestStrokeWidth = 0;
+            var collectStrokeWidths = function collectStrokeWidths(domElement) {
+                if (domElement.getAttribute) {
+                    if (domElement.getAttribute('stroke')) {
+                        largestStrokeWidth = Math.max(largestStrokeWidth, 1);
+                    }
+                    if (domElement.getAttribute('stroke-width')) {
+                        largestStrokeWidth = Math.max(largestStrokeWidth, Number(domElement.getAttribute('stroke-width')) || 0);
+                    }
+                }
+                for (var i = 0; i < domElement.childNodes.length; i++) {
+                    collectStrokeWidths(domElement.childNodes[i]);
+                }
+            };
+            collectStrokeWidths(rootNode);
+            return largestStrokeWidth;
         }
-    }
 
-    /**
-     * Helper to create an SVG element with the correct NS.
-     * @param {string} tagName Tag name for the element.
-     * @return {!DOMElement} Element created.
-     */
-    _createSVGElement(tagName) {
-        return document.createElementNS('http://www.w3.org/2000/svg', tagName);
-    }
-}
+        /**
+         * Transform the measurements of the SVG.
+         * In Scratch 2.0, SVGs are drawn without respect to the width,
+         * height, and viewBox attribute on the tag. The exporter
+         * does output these properties - but they appear to be incorrect often.
+         * To address the incorrect measurements, we append the DOM to the
+         * document, and then use SVG's native `getBBox` to find the real
+         * drawn dimensions. This ensures things drawn in negative dimensions,
+         * outside the given viewBox, etc., are all eventually drawn to the canvas.
+         * I tried to do this several other ways: stripping the width/height/viewBox
+         * attributes and then drawing (Firefox won't draw anything),
+         * or inflating them and then measuring a canvas. But this seems to be
+         * a natural and performant way.
+         */
+
+    }, {
+        key: '_transformMeasurements',
+        value: function _transformMeasurements() {
+            // Save `svgText` for later re-parsing.
+            var svgText = this._toString();
+
+            // Append the SVG dom to the document.
+            // This allows us to use `getBBox` on the page,
+            // which returns the full bounding-box of all drawn SVG
+            // elements, similar to how Scratch 2.0 did measurement.
+            var svgSpot = document.createElement('span');
+            var bbox = void 0;
+            try {
+                document.body.appendChild(svgSpot);
+                svgSpot.appendChild(this._svgTag);
+                // Take the bounding box.
+                bbox = this._svgTag.getBBox();
+            } finally {
+                // Always destroy the element, even if, for example, getBBox throws.
+                document.body.removeChild(svgSpot);
+            }
+
+            // Re-parse the SVG from `svgText`. The above DOM becomes
+            // unusable/undrawable in browsers once it's appended to the page,
+            // perhaps for security reasons?
+            var parser = new DOMParser();
+            this._svgDom = parser.parseFromString(svgText, 'text/xml');
+            this._svgTag = this._svgDom.documentElement;
+
+            // Enlarge the bbox from the largest found stroke width
+            // This may have false-positives, but at least the bbox will always
+            // contain the full graphic including strokes.
+            var halfStrokeWidth = this._findLargestStrokeWidth(this._svgTag) / 2;
+            var width = bbox.width + halfStrokeWidth * 2;
+            var height = bbox.height + halfStrokeWidth * 2;
+            var x = bbox.x - halfStrokeWidth;
+            var y = bbox.y - halfStrokeWidth;
+
+            // Set the correct measurements on the SVG tag, and save them.
+            this._svgTag.setAttribute('width', width);
+            this._svgTag.setAttribute('height', height);
+            this._svgTag.setAttribute('viewBox', x + ' ' + y + ' ' + width + ' ' + height);
+            this._measurements = {
+                width: width,
+                height: height,
+                x: x,
+                y: y
+            };
+        }
+
+        /**
+         * Serialize the active SVG DOM to a string.
+         * @returns {string} String representing current SVG data.
+         */
+
+    }, {
+        key: '_toString',
+        value: function _toString() {
+            var serializer = new XMLSerializer();
+            return serializer.serializeToString(this._svgDom);
+        }
+
+        /**
+         * Get the drawing ratio, adjusted for HiDPI screens.
+         * @return {number} Scale ratio to draw to canvases with.
+         */
+
+    }, {
+        key: 'getDrawRatio',
+        value: function getDrawRatio() {
+            var devicePixelRatio = window.devicePixelRatio || 1;
+            var backingStoreRatio = this._context.webkitBackingStorePixelRatio || this._context.mozBackingStorePixelRatio || this._context.msBackingStorePixelRatio || this._context.oBackingStorePixelRatio || this._context.backingStorePixelRatio || 1;
+            return devicePixelRatio / backingStoreRatio;
+        }
+
+        /**
+         * Draw the SVG to a canvas. The canvas will automatically be scaled by the value returned by `getDrawRatio`.
+         * @param {number} [scale] - Optionally, also scale the image by this factor (multiplied by `getDrawRatio()`).
+         * @param {Function} [onFinish] - An optional callback to call when the draw operation is complete.
+         */
+
+    }, {
+        key: '_draw',
+        value: function _draw(scale, onFinish) {
+            var _this = this;
+
+            // Convert the SVG text to an Image, and then draw it to the canvas.
+            if (this._cachedImage) {
+                this._drawFromImage(scale, onFinish);
+            } else {
+                var img = new Image();
+                img.onload = function () {
+                    _this._cachedImage = img;
+                    _this._drawFromImage(scale, onFinish);
+                };
+                var svgText = this._toString();
+                img.src = 'data:image/svg+xml;utf8,' + encodeURIComponent(svgText);
+            }
+        }
+
+        /**
+         * Draw to the canvas from a loaded image element.
+         * @param {number} [scale] - Optionally, also scale the image by this factor (multiplied by `getDrawRatio()`).
+         * @param {Function} [onFinish] - An optional callback to call when the draw operation is complete.
+         **/
+
+    }, {
+        key: '_drawFromImage',
+        value: function _drawFromImage(scale, onFinish) {
+            if (!this._cachedImage) return;
+
+            var ratio = this.getDrawRatio() * (Number.isFinite(scale) ? scale : 1);
+            var bbox = this._measurements;
+            this._canvas.width = bbox.width * ratio;
+            this._canvas.height = bbox.height * ratio;
+            this._context.clearRect(0, 0, this._canvas.width, this._canvas.height);
+            this._context.scale(ratio, ratio);
+            this._context.drawImage(this._cachedImage, 0, 0);
+            // Reset the canvas transform after drawing.
+            this._context.setTransform(1, 0, 0, 1, 0, 0);
+            // Set the CSS style of the canvas to the actual measurements.
+            this._canvas.style.width = bbox.width;
+            this._canvas.style.height = bbox.height;
+            // All finished - call the callback if provided.
+            if (onFinish) {
+                onFinish();
+            }
+        }
+
+        /**
+         * Helper to create an SVG element with the correct NS.
+         * @param {string} tagName Tag name for the element.
+         * @return {!DOMElement} Element created.
+         */
+
+    }, {
+        key: '_createSVGElement',
+        value: function _createSVGElement(tagName) {
+            return document.createElementNS('http://www.w3.org/2000/svg', tagName);
+        }
+    }, {
+        key: 'canvas',
+        get: function get() {
+            return this._canvas;
+        }
+    }, {
+        key: 'size',
+        get: function get() {
+            return [this._measurements.width, this._measurements.height];
+        }
+
+        /**
+         * @return {Array<number>} the offset (upper left corner) of the SVG's view box.
+         */
+
+    }, {
+        key: 'viewOffset',
+        get: function get() {
+            return [this._measurements.x, this._measurements.y];
+        }
+    }]);
+
+    return SvgRenderer;
+}();
 
 module.exports = SvgRenderer;
 
