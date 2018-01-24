@@ -1,4 +1,5 @@
 const BlockUtility = require('./block-utility');
+const BlocksExecuteCache = require('./blocks-execute-cache');
 const log = require('../util/log');
 const Thread = require('./thread');
 const {Map} = require('immutable');
@@ -131,17 +132,63 @@ const execute = function (sequencer, thread, recursiveCall) {
         }
     }
 
-    const opcode = blockContainer.getOpcode(block);
-    const fields = blockContainer.getFields(block);
-    const inputs = blockContainer.getInputs(block);
-    const blockFunction = runtime.getOpcodeFunction(opcode);
-    const isHat = runtime.getIsHat(opcode);
+    const blockCached = BlocksExecuteCache.getCached(blockContainer, currentBlockId);
+    if (blockCached._initialized !== true) {
+        const {opcode, fields, inputs} = blockCached;
 
+        // Assign opcode isHat and blockFunction data to avoid dynamic lookups.
+        blockCached._isHat = runtime.getIsHat(opcode);
+        blockCached._blockFunction = runtime.getOpcodeFunction(opcode);
+        blockCached._definedBlockFunction = typeof blockCached._blockFunction !== 'undefined';
 
-    if (!opcode) {
-        log.warn(`Could not get opcode for block: ${currentBlockId}`);
-        return;
+        const fieldKeys = Object.keys(fields);
+
+        // Store the current shadow value if there is a shadow value.
+        blockCached._isShadowBlock = fieldKeys.length === 1 && Object.keys(inputs).length === 0;
+        blockCached._shadowValue = fieldKeys.length === 1 && fields[fieldKeys[0]].value;
+
+        // Store a fields copy. If fields is a VARIABLE, LIST, or
+        // BROADCAST_OPTION, store the created values so fields assignment to
+        // argValues does not iterate over fields.
+        blockCached._fields = Object.assign({}, blockCached.fields);
+        blockCached._isFieldVariable = fieldKeys.length === 1 && fieldKeys.includes('VARIABLE');
+        blockCached._fieldVariable = blockCached._isFieldVariable ?
+            {
+                id: fields.VARIABLE.id,
+                name: fields.VARIABLE.value
+            } :
+            null;
+        blockCached._isFieldList = fieldKeys.length === 1 && fieldKeys.includes('LIST');
+        blockCached._fieldList = blockCached._isFieldList ?
+            {
+                id: fields.LIST.id,
+                name: fields.LIST.value
+            } :
+            null;
+        blockCached._isFieldBroadcastOption = fieldKeys.length === 1 && fieldKeys.includes('BROADCAST_OPTION');
+        blockCached._fieldBroadcastOption = blockCached._isFieldBroadcastOption ?
+            {
+                id: fields.BROADCAST_OPTION.id,
+                name: fields.BROADCAST_OPTION.value
+            } :
+            null;
+        blockCached._isFieldKnown = blockCached._isFieldVariable ||
+            blockCached._isFieldList || blockCached._isFieldBroadcastOption;
+
+        // Store a modified inputs. This assures the keys are its own properties
+        // and that custom_block will not be evaluated.
+        blockCached._inputs = Object.assign({}, blockCached.inputs);
+        delete blockCached._inputs.custom_block;
+
+        blockCached._initialized = true;
     }
+
+    const opcode = blockCached.opcode;
+    const fields = blockCached._fields;
+    const inputs = blockCached._inputs;
+    const mutation = blockCached.mutation;
+    const blockFunction = blockCached._blockFunction;
+    const isHat = blockCached._isHat;
 
     // Hats and single-field shadows are implemented slightly differently
     // from regular blocks.
@@ -149,15 +196,19 @@ const execute = function (sequencer, thread, recursiveCall) {
     // it's treated as a predicate; if not, execution will proceed as a no-op.
     // For single-field shadows: If the block has a single field, and no inputs,
     // immediately return the value of the field.
-    if (typeof blockFunction === 'undefined') {
-        if (isHat) {
-            // Skip through the block (hat with no predicate).
+    if (!blockCached._definedBlockFunction) {
+        if (!opcode) {
+            log.warn(`Could not get opcode for block: ${currentBlockId}`);
             return;
         }
-        const keys = Object.keys(fields);
-        if (keys.length === 1 && Object.keys(inputs).length === 0) {
+
+        if (recursiveCall === RECURSIVE && blockCached._isShadowBlock) {
             // One field and no inputs - treat as arg.
-            handleReport(fields[keys[0]].value, sequencer, thread, currentBlockId, opcode, isHat);
+            thread.pushReportedValue(blockCached._shadowValue);
+            thread.status = Thread.STATUS_RUNNING;
+        } else if (isHat) {
+            // Skip through the block (hat with no predicate).
+            return;
         } else {
             log.warn(`Could not get implementation for opcode: ${opcode}`);
         }
@@ -169,24 +220,22 @@ const execute = function (sequencer, thread, recursiveCall) {
     const argValues = {};
 
     // Add all fields on this block to the argValues.
-    for (const fieldName in fields) {
-        if (!fields.hasOwnProperty(fieldName)) continue;
-        if (fieldName === 'VARIABLE' || fieldName === 'LIST' ||
-            fieldName === 'BROADCAST_OPTION') {
-            argValues[fieldName] = {
-                id: fields[fieldName].id,
-                name: fields[fieldName].value
-            };
-        } else {
+    if (blockCached._isFieldKnown) {
+        if (blockCached._isFieldVariable) {
+            argValues.VARIABLE = blockCached._fieldVariable;
+        } else if (blockCached._isFieldList) {
+            argValues.LIST = blockCached._fieldList;
+        } else if (blockCached._isFieldBroadcastOption) {
+            argValues.BROADCAST_OPTION = blockCached._fieldBroadcastOption;
+        }
+    } else {
+        for (const fieldName in fields) {
             argValues[fieldName] = fields[fieldName].value;
         }
     }
 
     // Recursively evaluate input blocks.
     for (const inputName in inputs) {
-        if (!inputs.hasOwnProperty(inputName)) continue;
-        // Do not evaluate the internal custom command block within definition
-        if (inputName === 'custom_block') continue;
         const input = inputs[inputName];
         const inputBlockId = input.block;
         // Is there no value for this input waiting in the stack frame?
@@ -201,8 +250,6 @@ const execute = function (sequencer, thread, recursiveCall) {
             if (thread.status === Thread.STATUS_PROMISE_WAIT) {
                 for (const _inputName in inputs) {
                     if (_inputName === inputName) break;
-                    if (!inputs.hasOwnProperty(_inputName)) continue;
-                    if (_inputName === 'custom_block') continue;
                     if (_inputName === 'BROADCAST_INPUT') {
                         currentStackFrame.reported[_inputName] = argValues[_inputName].name;
                     } else {
@@ -260,10 +307,7 @@ const execute = function (sequencer, thread, recursiveCall) {
     }
 
     // Add any mutation to args (e.g., for procedures).
-    const mutation = blockContainer.getMutation(block);
-    if (mutation !== null) {
-        argValues.mutation = mutation;
-    }
+    argValues.mutation = mutation;
 
     let primitiveReportedValue = null;
     blockUtility.sequencer = sequencer;
