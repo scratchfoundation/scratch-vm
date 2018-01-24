@@ -58,7 +58,7 @@
     "script-loader": "0.7.2",
     "socket.io-client": "2.0.4",
     "stats.js": "^0.17.0",
-    "tap": "^10.2.0",
+    "tap": "^11.0.1",
     "text-encoding": "0.6.4",
     "tiny-worker": "^2.1.1",
     "webpack": "^3.10.0",
