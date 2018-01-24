@@ -204,6 +204,16 @@ const execute = function (sequencer, thread) {
             // Actually execute the block.
             execute(sequencer, thread);
             if (thread.status === Thread.STATUS_PROMISE_WAIT) {
+                for (const _inputName in inputs) {
+                    if (_inputName === inputName) break;
+                    if (!inputs.hasOwnProperty(_inputName)) continue;
+                    if (_inputName === 'custom_block') continue;
+                    if (_inputName === 'BROADCAST_INPUT') {
+                        currentStackFrame.reported[_inputName] = argValues[_inputName].name;
+                    } else {
+                        currentStackFrame.reported[_inputName] = argValues[_inputName];
+                    }
+                }
                 return;
             }
 
@@ -212,7 +222,23 @@ const execute = function (sequencer, thread) {
             currentStackFrame.waitingReporter = null;
             thread.popStack();
         }
-        const inputValue = currentStackFrame.reported[inputName];
+        let inputValue;
+        if (
+            currentStackFrame.waitingReporter === null
+        ) {
+            inputValue = currentStackFrame.justReported;
+        } else if (currentStackFrame.waitingReporter === inputName) {
+            inputValue = currentStackFrame.justReported;
+            currentStackFrame.waitingReporter = null;
+            // If we've gotten this far, all of the input blocks are evaluated,
+            // and `argValues` is fully populated. So, execute the block
+            // primitive. First, clear `currentStackFrame.reported`, so any
+            // subsequent execution (e.g., on return from a branch) gets fresh
+            // inputs.
+            currentStackFrame.reported = {};
+        } else if (typeof currentStackFrame.reported[inputName] !== 'undefined') {
+            inputValue = currentStackFrame.reported[inputName];
+        }
         if (inputName === 'BROADCAST_INPUT') {
             const broadcastInput = inputs[inputName];
             // Check if something is plugged into the broadcast block, or
@@ -243,12 +269,6 @@ const execute = function (sequencer, thread) {
     if (mutation !== null) {
         argValues.mutation = mutation;
     }
-
-    // If we've gotten this far, all of the input blocks are evaluated,
-    // and `argValues` is fully populated. So, execute the block primitive.
-    // First, clear `currentStackFrame.reported`, so any subsequent execution
-    // (e.g., on return from a branch) gets fresh inputs.
-    currentStackFrame.reported = {};
 
     let primitiveReportedValue = null;
     blockUtility.sequencer = sequencer;
