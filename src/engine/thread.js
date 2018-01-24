@@ -43,6 +43,12 @@ class Thread {
         this.target = null;
 
         /**
+         * The Blocks this thread will execute.
+         * @type {Blocks}
+         */
+        this.blockContainer = null;
+
+        /**
          * Whether the thread requests its script to glow during this frame.
          * @type {boolean}
          */
