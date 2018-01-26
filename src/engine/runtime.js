@@ -14,6 +14,7 @@ const Clock = require('../io/clock');
 const DeviceManager = require('../io/deviceManager');
 const Keyboard = require('../io/keyboard');
 const Mouse = require('../io/mouse');
+const MouseWheel = require('../io/mouseWheel');
 
 const defaultBlockPackages = {
     scratch3_control: require('../blocks/scratch3_control'),
@@ -258,7 +259,8 @@ class Runtime extends EventEmitter {
             clock: new Clock(),
             deviceManager: new DeviceManager(),
             keyboard: new Keyboard(this),
-            mouse: new Mouse(this)
+            mouse: new Mouse(this),
+            mouseWheel: new MouseWheel(this)
         };
 
         /**
