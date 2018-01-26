@@ -66,34 +66,6 @@ var VirtualMachine =
 /************************************************************************/
 /******/ ({
 
-/***/ 0:
-/***/ (function(module, exports) {
-
-var g;
-
-// This works in non-strict mode
-g = (function() {
-	return this;
-})();
-
-try {
-	// This works if eval is allowed (see CSP)
-	g = g || Function("return this")() || (1,eval)("this");
-} catch(e) {
-	// This works if the window reference is available
-	if(typeof window === "object")
-		g = window;
-}
-
-// g can still be undefined, but nothing to do about it...
-// We return undefined, instead of nothing here, so it's
-// easier to handle this case. if(!global) { ...}
-
-module.exports = g;
-
-
-/***/ }),
-
 /***/ 152:
 /***/ (function(module, exports, __webpack_require__) {
 
@@ -110,7 +82,7 @@ module.exports = __webpack_require__(162);
 /***/ 153:
 /***/ (function(module, exports, __webpack_require__) {
 
-__webpack_require__(56)(__webpack_require__(154))
+__webpack_require__(54)(__webpack_require__(154))
 
 /***/ }),
 
@@ -124,7 +96,7 @@ module.exports = "// stats.js - http://github.com/mrdoob/stats.js\n(function(f,e
 /***/ 155:
 /***/ (function(module, exports, __webpack_require__) {
 
-__webpack_require__(56)(__webpack_require__(156))
+__webpack_require__(54)(__webpack_require__(156))
 
 /***/ }),
 
@@ -139,7 +111,7 @@ module.exports = "/*! highlight.js v9.10.0 | BSD3 License | git.io/hljslicense *
 /***/ (function(module, exports, __webpack_require__) {
 
 /* WEBPACK VAR INJECTION */(function(global) {module.exports = global["Blockly"] = __webpack_require__(158);
-/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(0)))
+/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(2)))
 
 /***/ }),
 
@@ -2741,14 +2713,15 @@ module.exports =
 	Blockly.Touch.getTouchIdentifierFromEvent=function(a){return a.changedTouches&&a.changedTouches[0]&&void 0!=a.changedTouches[0].identifier&&null!=a.changedTouches[0].identifier?a.changedTouches[0].identifier:"mouse"};
 	Blockly.Touch.checkTouchIdentifier=function(a){var b=Blockly.Touch.getTouchIdentifierFromEvent(a);return void 0!=Blockly.Touch.touchIdentifier_&&null!=Blockly.Touch.touchIdentifier_?Blockly.Touch.touchIdentifier_==b:"mousedown"==a.type||"touchstart"==a.type?(Blockly.Touch.touchIdentifier_=b,!0):!1};Blockly.Touch.setClientFromTouch=function(a){if(goog.string.startsWith(a.type,"touch")){var b=a.changedTouches[0];a.clientX=b.clientX;a.clientY=b.clientY}};
 	Blockly.Touch.isMouseOrTouchEvent=function(a){return goog.string.startsWith(a.type,"touch")||goog.string.startsWith(a.type,"mouse")};Blockly.Touch.splitEventByTouches=function(a){var b=[];if(a.changedTouches)for(var c=0;c<a.changedTouches.length;c++)b[c]={type:a.type,changedTouches:[a.changedTouches[c]],target:a.target,stopPropagation:function(){a.stopPropagation()},preventDefault:function(){a.preventDefault()}};else b.push(a);return b};
-	Blockly.VariableModel=function(a,b,c,d){this.workspace=a;this.name=b;this.type=c||"";this.id_=d||Blockly.utils.genUid();Blockly.Events.fire(new Blockly.Events.VarCreate(this))};Blockly.VariableModel.prototype.getId=function(){return this.id_};Blockly.VariableModel.compareByName=function(a,b){return goog.string.caseInsensitiveCompare(a.name,b.name)};Blockly.VariableMap=function(a){this.variableMap_={};this.workspace=a};Blockly.VariableMap.prototype.clear=function(){this.variableMap_=Object(null)};Blockly.VariableMap.prototype.renameVariable=function(a,b){var c=this.getVariable(b,a.type),d=this.workspace.getAllBlocks();Blockly.Events.setGroup(!0);try{c&&c.getId()!=a.getId()?this.renameVariableWithConflict_(a,b,c,d):this.renameVariableAndUses_(a,b,d)}finally{Blockly.Events.setGroup(!1)}};
+	Blockly.VariableModel=function(a,b,c,d){this.workspace=a;this.name=b;this.type=c||"";this.id_=d||Blockly.utils.genUid();Blockly.Events.fire(new Blockly.Events.VarCreate(this))};Blockly.VariableModel.prototype.getId=function(){return this.id_};Blockly.VariableModel.compareByName=function(a,b){return goog.string.caseInsensitiveCompare(a.name,b.name)};Blockly.VariableMap=function(a){this.variableMap_={};this.workspace=a};Blockly.VariableMap.prototype.clear=function(){this.variableMap_=Object(null)};
+	Blockly.VariableMap.prototype.renameVariable=function(a,b){var c=this.getVariable(b,a.type),d=this.workspace.getAllBlocks();Blockly.Events.setGroup(!0);try{c?console.warn("Unexpected conflict when attempting to rename variable with name: "+a.name+" and id: "+a.getId()+" to new name: "+b+". A variable with the new name already exists and has id: "+c.getId()):this.renameVariableAndUses_(a,b,d)}finally{Blockly.Events.setGroup(!1)}};
 	Blockly.VariableMap.prototype.renameVariableById=function(a,b){var c=this.getVariableById(a);if(!c)throw Error("Tried to rename a variable that didn't exist. ID: "+a);this.renameVariable(c,b)};Blockly.VariableMap.prototype.renameVariableAndUses_=function(a,b,c){Blockly.Events.fire(new Blockly.Events.VarRename(a,b));a.name=b;for(b=0;b<c.length;b++)c[b].updateVarName(a)};
 	Blockly.VariableMap.prototype.renameVariableWithConflict_=function(a,b,c,d){var e=a.type;b!=c.name&&this.renameVariableAndUses_(c,b,d);for(b=0;b<d.length;b++)d[b].renameVarById(a.getId(),c.getId());Blockly.Events.fire(new Blockly.Events.VarDelete(a));a=this.getVariablesOfType(e).indexOf(a);this.variableMap_[e].splice(a,1)};
 	Blockly.VariableMap.prototype.createVariable=function(a,b,c){var d=this.getVariable(a,b);if(d){if(c&&d.getId()!=c)throw Error('Variable "'+a+'" is already in use and its id is "'+d.getId()+'" which conflicts with the passed in id, "'+c+'".');return d}if(c&&this.getVariableById(c))throw Error('Variable id, "'+c+'", is already in use.');c=c||Blockly.utils.genUid();b=b||"";d=new Blockly.VariableModel(this.workspace,a,b,c);this.variableMap_[b]?this.variableMap_[b].push(d):this.variableMap_[b]=[d];return d};
 	Blockly.VariableMap.prototype.deleteVariable=function(a){for(var b=this.variableMap_[a.type],c=0,d;d=b[c];c++)if(d.getId()==a.getId()){b.splice(c,1);Blockly.Events.fire(new Blockly.Events.VarDelete(a));break}};
 	Blockly.VariableMap.prototype.deleteVariableById=function(a){var b=this.getVariableById(a);if(b){var c=b.name,d=this.getVariableUsesById(a);a=0;for(var e;e=d[a];a++)if(e.type==Blockly.PROCEDURES_DEFINITION_BLOCK_TYPE||"procedures_defreturn"==e.type){a=e.getFieldValue("NAME");c=Blockly.Msg.CANNOT_DELETE_VARIABLE_PROCEDURE.replace("%1",c).replace("%2",a);Blockly.alert(c);return}var f=this;1<d.length?(c=Blockly.Msg.DELETE_VARIABLE_CONFIRMATION.replace("%1",String(d.length)).replace("%2",c),Blockly.confirm(c,
 	function(a){a&&f.deleteVariableInternal_(b,d)})):f.deleteVariableInternal_(b,d)}else console.warn("Can't delete non-existent variable: "+a)};Blockly.VariableMap.prototype.deleteVariableInternal_=function(a,b){var c=Blockly.Events.getGroup();c||Blockly.Events.setGroup(!0);try{for(var d=0;d<b.length;d++)b[d].dispose(!0,!1);this.deleteVariable(a)}finally{c||Blockly.Events.setGroup(!1)}};
-	Blockly.VariableMap.prototype.getVariable=function(a,b){var c=this.variableMap_[b||""];if(c)for(var d=0,e;e=c[d];d++)if(Blockly.Names.equals(e.name,a))return e;return null};Blockly.VariableMap.prototype.getVariableById=function(a){for(var b=Object.keys(this.variableMap_),c=0;c<b.length;c++)for(var d=b[c],e=0,f;f=this.variableMap_[d][e];e++)if(f.getId()==a)return f;return null};Blockly.VariableMap.prototype.getVariablesOfType=function(a){return(a=this.variableMap_[a||""])?a.slice():[]};
+	Blockly.VariableMap.prototype.getVariable=function(a,b){var c=this.variableMap_[b||""];if(c)for(var d=0,e;e=c[d];d++)if(e.name==a)return e;return null};Blockly.VariableMap.prototype.getVariableById=function(a){for(var b=Object.keys(this.variableMap_),c=0;c<b.length;c++)for(var d=b[c],e=0,f;f=this.variableMap_[d][e];e++)if(f.getId()==a)return f;return null};Blockly.VariableMap.prototype.getVariablesOfType=function(a){return(a=this.variableMap_[a||""])?a.slice():[]};
 	Blockly.VariableMap.prototype.getVariableTypes=function(){for(var a=Object.keys(this.variableMap_),b=!1,c=0;c<a.length;c++)""==a[c]&&(b=!0);b||a.push("");return a};Blockly.VariableMap.prototype.getAllVariables=function(){for(var a=[],b=Object.keys(this.variableMap_),c=0;c<b.length;c++)a=a.concat(this.variableMap_[b[c]]);return a};
 	Blockly.VariableMap.prototype.getVariableUsesById=function(a){for(var b=[],c=this.workspace.getAllBlocks(),d=0;d<c.length;d++){var e=c[d].getVarModels();if(e)for(var f=0;f<e.length;f++)e[f].getId()==a&&b.push(c[d])}return b};
 	Blockly.Workspace=function(a){this.id=Blockly.utils.genUid();Blockly.Workspace.WorkspaceDB_[this.id]=this;this.options=a||{};this.RTL=!!this.options.RTL;this.horizontalLayout=!!this.options.horizontalLayout;this.toolboxPosition=this.options.toolboxPosition;this.topBlocks_=[];this.listeners_=[];this.tapListeners_=[];this.undoStack_=[];this.redoStack_=[];this.blockDB_=Object.create(null);this.variableMap_=new Blockly.VariableMap(this);this.potentialVariableMap_=null};
@@ -2830,8 +2803,8 @@ module.exports =
 	Blockly.Variables.noVariableText=function(){return"No variable selected"};Blockly.Variables.generateUniqueName=function(a){a=a.getAllVariables();var b="";if(a.length)for(var c=1,d=0,e="ijkmnopqrstuvwxyzabcdefgh".charAt(d);!b;){for(var f=!1,g=0;g<a.length;g++)if(a[g].name.toLowerCase()==e){f=!0;break}f?(d++,25==d&&(d=0,c++),e="ijkmnopqrstuvwxyzabcdefgh".charAt(d),1<c&&(e+=c)):b=e}else b="i";return b};
 	Blockly.Variables.realizePotentialVar=function(a,b,c,d){var e=c.getPotentialVariableMap();c=c.targetWorkspace;if(e){var f;d&&(f=Blockly.Variables.getVariable(c,null,a,b));d=e.getVariable(a,b);if(!d)return null;var g=d.getId();e.deleteVariable(d);return f?f:c.createVariable(a,b,g)}console.warn("Called Blockly.Variables.realizePotentialVar with incorrect workspace. The provided workspace does not have a potential variable map.")};
 	Blockly.Variables.createVariable=function(a,b,c){var d="",e="";c===Blockly.LIST_VARIABLE_TYPE?(d=Blockly.Msg.NEW_LIST_TITLE,e=Blockly.Msg.LIST_MODAL_TITLE):c===Blockly.BROADCAST_MESSAGE_VARIABLE_TYPE?(d=Blockly.Msg.NEW_BROADCAST_MESSAGE_TITLE,e=Blockly.Msg.BROADCAST_MODAL_TITLE):(d=Blockly.Msg.NEW_VARIABLE_TITLE,e=Blockly.Msg.VARIABLE_MODAL_TITLE);var f=function(g){Blockly.Variables.promptName(d,g,function(d){if(d)if(a.getVariable(d,c))Blockly.alert(Blockly.Msg.VARIABLE_ALREADY_EXISTS.replace("%1",
-	d.toLowerCase()),function(){f(d)});else if(Blockly.Procedures.isNameUsed(d,a)){var e;a.getPotentialVariableMap()&&c&&(e=Blockly.Variables.realizePotentialVar(d,c,a,!1));e||(e=a.createVariable(d,c));var g=a.isFlyout?a:a.getFlyout();e=e.getId();g.setCheckboxState&&g.setCheckboxState(e,!0);b&&b(e)}else Blockly.alert(Blockly.Msg.PROCEDURE_ALREADY_EXISTS.replace("%1",d.toLowerCase()),function(){f(d)});else b&&b(null)},c,e)};f("")};
-	Blockly.Variables.renameVariable=function(a,b,c){(function(d){var e=Blockly.Msg.RENAME_VARIABLE_TITLE.replace("%1",b.name);Blockly.Variables.promptName(e,d,function(d){d?(a.renameVariableById(b.getId(),d),c&&c(d)):c&&c(null)},null)})("")};Blockly.Variables.promptName=function(a,b,c,d,e){Blockly.prompt(a,b,function(a){a&&(a=Blockly.Variables.validateName_(a,d));c(a)},e?e:Blockly.Msg.VARIABLE_MODAL_TITLE)};
+	d),function(){f(d)});else{var e;a.getPotentialVariableMap()&&c&&(e=Blockly.Variables.realizePotentialVar(d,c,a,!1));e||(e=a.createVariable(d,c));var g=a.isFlyout?a:a.getFlyout();e=e.getId();g.setCheckboxState&&g.setCheckboxState(e,!0);b&&b(e)}else b&&b(null)},c,e)};f("")};
+	Blockly.Variables.renameVariable=function(a,b,c){var d=function(e){var f=Blockly.Msg.RENAME_VARIABLE_TITLE.replace("%1",b.name);Blockly.Variables.promptName(f,e,function(e){e?(a.getVariable(e,b.type)?Blockly.alert(Blockly.Msg.VARIABLE_ALREADY_EXISTS.replace("%1",e),function(){d(e)}):a.renameVariableById(b.getId(),e),c&&c(e)):c&&c(null)},null)};d("")};Blockly.Variables.promptName=function(a,b,c,d,e){Blockly.prompt(a,b,function(a){a&&(a=Blockly.Variables.validateName_(a,d));c(a)},e?e:Blockly.Msg.VARIABLE_MODAL_TITLE)};
 	Blockly.Variables.validateName_=function(a,b){if(!b||b!=Blockly.BROADCAST_MESSAGE_VARIABLE_TYPE)if(a=a.replace(/[\s\xa0]+/g," ").replace(/^ | $/g,""),a==Blockly.Msg.RENAME_VARIABLE||a==Blockly.Msg.NEW_VARIABLE)a=null;return a};Blockly.Variables.generateVariableFieldXml_=function(a,b){var c=a.type;""==c&&(c="''");return'<field name="'+(b||"VARIABLE")+'" id="'+a.getId()+'" variabletype="'+goog.string.htmlEscape(c)+'">'+goog.string.htmlEscape(a.name)+"</field>"};
 	Blockly.Variables.getOrCreateVariablePackage=function(a,b,c,d){var e=Blockly.Variables.getVariable(a,b,c,d);e||(e=Blockly.Variables.createVariable_(a,b,c,d));return e};Blockly.Variables.getVariable=function(a,b,c,d){var e=a.getPotentialVariableMap();if(b){var f=a.getVariableById(b);!f&&e&&(f=e.getVariableById(b))}else if(c){if(void 0==d)throw Error("Tried to look up a variable by name without a type");f=a.getVariable(c,d);!f&&e&&(f=e.getVariable(c,d))}return f};
 	Blockly.Variables.createVariable_=function(a,b,c,d){var e=a.getPotentialVariableMap();c||(c=Blockly.Variables.generateUniqueName(a.isFlyout?a.targetWorkspace:a));return e?e.createVariable(c,d,b):a.createVariable(c,d,b)};Blockly.Variables.getAddedVariables=function(a,b){var c=a.getAllVariables(),d=[];if(b.length!=c.length)for(var e=0;e<c.length;e++){var f=c[e];b.includes(f)||d.push(f)}return d};Blockly.DataCategory=function(a){var b=a.getVariablesOfType("");b.sort(Blockly.VariableModel.compareByName);var c=[];Blockly.DataCategory.addCreateButton(c,a,"VARIABLE");for(var d=0;d<b.length;d++)Blockly.DataCategory.addDataVariable(c,b[d]);0<b.length&&(c[c.length-1].setAttribute("gap",24),b=b[0],Blockly.DataCategory.addSetVariableTo(c,b),Blockly.DataCategory.addChangeVariableBy(c,b));Blockly.DataCategory.addCreateButton(c,a,"LIST");b=a.getVariablesOfType(Blockly.LIST_VARIABLE_TYPE);b.sort(Blockly.VariableModel.compareByName);
@@ -3713,7 +3686,7 @@ module.exports =
 /***/ (function(module, exports, __webpack_require__) {
 
 /* WEBPACK VAR INJECTION */(function(global) {module.exports = global["AudioEngine"] = __webpack_require__(160);
-/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(0)))
+/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(2)))
 
 /***/ }),
 
@@ -15758,16 +15731,17 @@ module.exports = ScratchStorage;
 /***/ 162:
 /***/ (function(module, exports, __webpack_require__) {
 
-/* WEBPACK VAR INJECTION */(function(global) {module.exports = global["RenderWebGL"] = __webpack_require__(163);
-/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(0)))
-
-/***/ }),
-
-/***/ 163:
-/***/ (function(module, exports, __webpack_require__) {
-
-/* WEBPACK VAR INJECTION */(function(Buffer) {module.exports =
-/******/ (function(modules) { // webpackBootstrap
+(function webpackUniversalModuleDefinition(root, factory) {
+	if(true)
+		module.exports = factory();
+	else if(typeof define === 'function' && define.amd)
+		define([], factory);
+	else if(typeof exports === 'object')
+		exports["ScratchRender"] = factory();
+	else
+		root["ScratchRender"] = factory();
+})(typeof self !== 'undefined' ? self : this, function() {
+return /******/ (function(modules) { // webpackBootstrap
 /******/ 	// The module cache
 /******/ 	var installedModules = {};
 /******/
@@ -26632,7 +26606,309 @@ module.exports = ShaderManager;
 /* 5 */
 /***/ (function(module, exports) {
 
-module.exports = __webpack_require__(4);
+// Copyright Joyent, Inc. and other Node contributors.
+//
+// Permission is hereby granted, free of charge, to any person obtaining a
+// copy of this software and associated documentation files (the
+// "Software"), to deal in the Software without restriction, including
+// without limitation the rights to use, copy, modify, merge, publish,
+// distribute, sublicense, and/or sell copies of the Software, and to permit
+// persons to whom the Software is furnished to do so, subject to the
+// following conditions:
+//
+// The above copyright notice and this permission notice shall be included
+// in all copies or substantial portions of the Software.
+//
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+// OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+// MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN
+// NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,
+// DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
+// OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
+// USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+function EventEmitter() {
+  this._events = this._events || {};
+  this._maxListeners = this._maxListeners || undefined;
+}
+module.exports = EventEmitter;
+
+// Backwards-compat with node 0.10.x
+EventEmitter.EventEmitter = EventEmitter;
+
+EventEmitter.prototype._events = undefined;
+EventEmitter.prototype._maxListeners = undefined;
+
+// By default EventEmitters will print a warning if more than 10 listeners are
+// added to it. This is a useful default which helps finding memory leaks.
+EventEmitter.defaultMaxListeners = 10;
+
+// Obviously not all Emitters should be limited to 10. This function allows
+// that to be increased. Set to zero for unlimited.
+EventEmitter.prototype.setMaxListeners = function(n) {
+  if (!isNumber(n) || n < 0 || isNaN(n))
+    throw TypeError('n must be a positive number');
+  this._maxListeners = n;
+  return this;
+};
+
+EventEmitter.prototype.emit = function(type) {
+  var er, handler, len, args, i, listeners;
+
+  if (!this._events)
+    this._events = {};
+
+  // If there is no 'error' event listener then throw.
+  if (type === 'error') {
+    if (!this._events.error ||
+        (isObject(this._events.error) && !this._events.error.length)) {
+      er = arguments[1];
+      if (er instanceof Error) {
+        throw er; // Unhandled 'error' event
+      } else {
+        // At least give some kind of context to the user
+        var err = new Error('Uncaught, unspecified "error" event. (' + er + ')');
+        err.context = er;
+        throw err;
+      }
+    }
+  }
+
+  handler = this._events[type];
+
+  if (isUndefined(handler))
+    return false;
+
+  if (isFunction(handler)) {
+    switch (arguments.length) {
+      // fast cases
+      case 1:
+        handler.call(this);
+        break;
+      case 2:
+        handler.call(this, arguments[1]);
+        break;
+      case 3:
+        handler.call(this, arguments[1], arguments[2]);
+        break;
+      // slower
+      default:
+        args = Array.prototype.slice.call(arguments, 1);
+        handler.apply(this, args);
+    }
+  } else if (isObject(handler)) {
+    args = Array.prototype.slice.call(arguments, 1);
+    listeners = handler.slice();
+    len = listeners.length;
+    for (i = 0; i < len; i++)
+      listeners[i].apply(this, args);
+  }
+
+  return true;
+};
+
+EventEmitter.prototype.addListener = function(type, listener) {
+  var m;
+
+  if (!isFunction(listener))
+    throw TypeError('listener must be a function');
+
+  if (!this._events)
+    this._events = {};
+
+  // To avoid recursion in the case that type === "newListener"! Before
+  // adding it to the listeners, first emit "newListener".
+  if (this._events.newListener)
+    this.emit('newListener', type,
+              isFunction(listener.listener) ?
+              listener.listener : listener);
+
+  if (!this._events[type])
+    // Optimize the case of one listener. Don't need the extra array object.
+    this._events[type] = listener;
+  else if (isObject(this._events[type]))
+    // If we've already got an array, just append.
+    this._events[type].push(listener);
+  else
+    // Adding the second element, need to change to array.
+    this._events[type] = [this._events[type], listener];
+
+  // Check for listener leak
+  if (isObject(this._events[type]) && !this._events[type].warned) {
+    if (!isUndefined(this._maxListeners)) {
+      m = this._maxListeners;
+    } else {
+      m = EventEmitter.defaultMaxListeners;
+    }
+
+    if (m && m > 0 && this._events[type].length > m) {
+      this._events[type].warned = true;
+      console.error('(node) warning: possible EventEmitter memory ' +
+                    'leak detected. %d listeners added. ' +
+                    'Use emitter.setMaxListeners() to increase limit.',
+                    this._events[type].length);
+      if (typeof console.trace === 'function') {
+        // not supported in IE 10
+        console.trace();
+      }
+    }
+  }
+
+  return this;
+};
+
+EventEmitter.prototype.on = EventEmitter.prototype.addListener;
+
+EventEmitter.prototype.once = function(type, listener) {
+  if (!isFunction(listener))
+    throw TypeError('listener must be a function');
+
+  var fired = false;
+
+  function g() {
+    this.removeListener(type, g);
+
+    if (!fired) {
+      fired = true;
+      listener.apply(this, arguments);
+    }
+  }
+
+  g.listener = listener;
+  this.on(type, g);
+
+  return this;
+};
+
+// emits a 'removeListener' event iff the listener was removed
+EventEmitter.prototype.removeListener = function(type, listener) {
+  var list, position, length, i;
+
+  if (!isFunction(listener))
+    throw TypeError('listener must be a function');
+
+  if (!this._events || !this._events[type])
+    return this;
+
+  list = this._events[type];
+  length = list.length;
+  position = -1;
+
+  if (list === listener ||
+      (isFunction(list.listener) && list.listener === listener)) {
+    delete this._events[type];
+    if (this._events.removeListener)
+      this.emit('removeListener', type, listener);
+
+  } else if (isObject(list)) {
+    for (i = length; i-- > 0;) {
+      if (list[i] === listener ||
+          (list[i].listener && list[i].listener === listener)) {
+        position = i;
+        break;
+      }
+    }
+
+    if (position < 0)
+      return this;
+
+    if (list.length === 1) {
+      list.length = 0;
+      delete this._events[type];
+    } else {
+      list.splice(position, 1);
+    }
+
+    if (this._events.removeListener)
+      this.emit('removeListener', type, listener);
+  }
+
+  return this;
+};
+
+EventEmitter.prototype.removeAllListeners = function(type) {
+  var key, listeners;
+
+  if (!this._events)
+    return this;
+
+  // not listening for removeListener, no need to emit
+  if (!this._events.removeListener) {
+    if (arguments.length === 0)
+      this._events = {};
+    else if (this._events[type])
+      delete this._events[type];
+    return this;
+  }
+
+  // emit removeListener for all listeners on all events
+  if (arguments.length === 0) {
+    for (key in this._events) {
+      if (key === 'removeListener') continue;
+      this.removeAllListeners(key);
+    }
+    this.removeAllListeners('removeListener');
+    this._events = {};
+    return this;
+  }
+
+  listeners = this._events[type];
+
+  if (isFunction(listeners)) {
+    this.removeListener(type, listeners);
+  } else if (listeners) {
+    // LIFO order
+    while (listeners.length)
+      this.removeListener(type, listeners[listeners.length - 1]);
+  }
+  delete this._events[type];
+
+  return this;
+};
+
+EventEmitter.prototype.listeners = function(type) {
+  var ret;
+  if (!this._events || !this._events[type])
+    ret = [];
+  else if (isFunction(this._events[type]))
+    ret = [this._events[type]];
+  else
+    ret = this._events[type].slice();
+  return ret;
+};
+
+EventEmitter.prototype.listenerCount = function(type) {
+  if (this._events) {
+    var evlistener = this._events[type];
+
+    if (isFunction(evlistener))
+      return 1;
+    else if (evlistener)
+      return evlistener.length;
+  }
+  return 0;
+};
+
+EventEmitter.listenerCount = function(emitter, type) {
+  return emitter.listenerCount(type);
+};
+
+function isFunction(arg) {
+  return typeof arg === 'function';
+}
+
+function isNumber(arg) {
+  return typeof arg === 'number';
+}
+
+function isObject(arg) {
+  return typeof arg === 'object' && arg !== null;
+}
+
+function isUndefined(arg) {
+  return arg === void 0;
+}
+
 
 /***/ }),
 /* 6 */
@@ -26926,10 +27202,19 @@ module.exports = EffectTransform;
 
 /***/ }),
 /* 8 */
-/***/ (function(module, exports) {
+/***/ (function(module, exports, __webpack_require__) {
 
-module.exports =
-/******/ (function(modules) { // webpackBootstrap
+(function webpackUniversalModuleDefinition(root, factory) {
+	if(true)
+		module.exports = factory();
+	else if(typeof define === 'function' && define.amd)
+		define([], factory);
+	else if(typeof exports === 'object')
+		exports["ScratchSVGRenderer"] = factory();
+	else
+		root["ScratchSVGRenderer"] = factory();
+})(typeof self !== 'undefined' ? self : this, function() {
+return /******/ (function(modules) { // webpackBootstrap
 /******/ 	// The module cache
 /******/ 	var installedModules = {};
 /******/
@@ -27502,6 +27787,7 @@ module.exports = "AAEAAAAPADAAAwDAT1MvMlDtWZgAAIrUAAAAVlBDTFR2RKmvAACLLAAAADZjbW
 
 /***/ })
 /******/ ]);
+});
 //# sourceMappingURL=scratch-svg-renderer.js.map
 
 /***/ }),
@@ -27894,8 +28180,8 @@ var RenderWebGL = function (_EventEmitter) {
          * Create a new bitmap skin from a snapshot of the provided bitmap data.
          * @param {ImageData|HTMLImageElement|HTMLCanvasElement|HTMLVideoElement} bitmapData - new contents for this skin.
          * @param {!int} [costumeResolution=1] - The resolution to use for this bitmap.
-         * @param {?Array<number>} rotationCenter Optional: rotation center of the skin. If not supplied, the center of the
-         * skin will be used
+         * @param {?Array<number>} [rotationCenter] Optional: rotation center of the skin. If not supplied, the center of
+         * the skin will be used.
          * @returns {!int} the ID for the new skin.
          */
 
@@ -28345,9 +28631,9 @@ var RenderWebGL = function (_EventEmitter) {
          * pick drawables that are not visible or have ghost set all the way up.
          * @param {int} centerX The client x coordinate of the picking location.
          * @param {int} centerY The client y coordinate of the picking location.
-         * @param {int} touchWidth The client width of the touch event (optional).
-         * @param {int} touchHeight The client height of the touch event (optional).
-         * @param {Array<int>} candidateIDs The Drawable IDs to pick from, otherwise all.
+         * @param {int} [touchWidth] The client width of the touch event (optional).
+         * @param {int} [touchHeight] The client height of the touch event (optional).
+         * @param {Array<int>} [candidateIDs] The Drawable IDs to pick from, otherwise all.
          * @returns {int} The ID of the topmost Drawable under the picking location, or
          * RenderConstants.ID_NONE if there is no Drawable at that location.
          */
@@ -29716,6 +30002,12 @@ var Drawable = function () {
         this._scale = twgl.v3.create(100, 100);
         this._direction = 90;
         this._transformDirty = true;
+        this._rotationMatrix = twgl.m4.identity();
+        this._rotationTransformDirty = true;
+        this._rotationAdjusted = twgl.v3.create();
+        this._rotationCenterDirty = true;
+        this._skinScale = twgl.v3.create(0, 0, 0);
+        this._skinScaleDirty = true;
         this._inverseMatrix = twgl.m4.identity();
         this._inverseTransformDirty = true;
         this._visible = true;
@@ -29806,11 +30098,14 @@ var Drawable = function () {
             }
             if ('direction' in properties && this._direction !== properties.direction) {
                 this._direction = properties.direction;
+                this._rotationTransformDirty = true;
                 dirty = true;
             }
             if ('scale' in properties && (this._scale[0] !== properties.scale[0] || this._scale[1] !== properties.scale[1])) {
                 this._scale[0] = properties.scale[0];
                 this._scale[1] = properties.scale[1];
+                this._rotationCenterDirty = true;
+                this._skinScaleDirty = true;
                 dirty = true;
             }
             if ('visible' in properties) {
@@ -29848,26 +30143,141 @@ var Drawable = function () {
     }, {
         key: '_calculateTransform',
         value: function _calculateTransform() {
-            var modelMatrix = this._uniforms.u_modelMatrix;
+            if (this._rotationTransformDirty) {
+                var rotation = (270 - this._direction) * Math.PI / 180;
 
-            twgl.m4.identity(modelMatrix);
-            twgl.m4.translate(modelMatrix, this._position, modelMatrix);
+                // Calling rotationZ sets the destination matrix to a rotation
+                // around the Z axis setting matrix components 0, 1, 4 and 5 with
+                // cosine and sine values of the rotation.
+                // twgl.m4.rotationZ(rotation, this._rotationMatrix);
 
-            var rotation = (270 - this._direction) * Math.PI / 180;
-            twgl.m4.rotateZ(modelMatrix, rotation, modelMatrix);
+                // twgl assumes the last value set to the matrix was anything.
+                // Drawable knows, it was another rotationZ matrix, so we can skip
+                // assigning the values that will never change.
+                var c = Math.cos(rotation);
+                var s = Math.sin(rotation);
+                this._rotationMatrix[0] = c;
+                this._rotationMatrix[1] = s;
+                // this._rotationMatrix[2] = 0;
+                // this._rotationMatrix[3] = 0;
+                this._rotationMatrix[4] = -s;
+                this._rotationMatrix[5] = c;
+                // this._rotationMatrix[6] = 0;
+                // this._rotationMatrix[7] = 0;
+                // this._rotationMatrix[8] = 0;
+                // this._rotationMatrix[9] = 0;
+                // this._rotationMatrix[10] = 1;
+                // this._rotationMatrix[11] = 0;
+                // this._rotationMatrix[12] = 0;
+                // this._rotationMatrix[13] = 0;
+                // this._rotationMatrix[14] = 0;
+                // this._rotationMatrix[15] = 1;
+
+                this._rotationTransformDirty = false;
+            }
 
             // Adjust rotation center relative to the skin.
-            var rotationAdjusted = twgl.v3.subtract(this.skin.rotationCenter, twgl.v3.divScalar(this.skin.size, 2));
-            rotationAdjusted = twgl.v3.multiply(rotationAdjusted, this.scale);
-            rotationAdjusted = twgl.v3.divScalar(rotationAdjusted, 100);
-            rotationAdjusted[1] *= -1; // Y flipped to Scratch coordinate.
-            rotationAdjusted[2] = 0; // Z coordinate is 0.
+            if (this._rotationCenterDirty && this.skin !== null) {
+                // twgl version of the following in function work.
+                // let rotationAdjusted = twgl.v3.subtract(
+                //     this.skin.rotationCenter,
+                //     twgl.v3.divScalar(this.skin.size, 2, this._rotationAdjusted),
+                //     this._rotationAdjusted
+                // );
+                // rotationAdjusted = twgl.v3.multiply(
+                //     rotationAdjusted, this._scale, rotationAdjusted
+                // );
+                // rotationAdjusted = twgl.v3.divScalar(
+                //     rotationAdjusted, 100, rotationAdjusted
+                // );
+                // rotationAdjusted[1] *= -1; // Y flipped to Scratch coordinate.
+                // rotationAdjusted[2] = 0; // Z coordinate is 0.
 
-            twgl.m4.translate(modelMatrix, rotationAdjusted, modelMatrix);
+                // Locally assign rotationCenter and skinSize to keep from having
+                // the Skin getter properties called twice while locally assigning
+                // their components for readability.
+                var rotationCenter = this.skin.rotationCenter;
+                var skinSize = this.skin.size;
+                var center0 = rotationCenter[0];
+                var center1 = rotationCenter[1];
+                var skinSize0 = skinSize[0];
+                var skinSize1 = skinSize[1];
+                var _scale = this._scale[0];
+                var _scale2 = this._scale[1];
 
-            var scaledSize = twgl.v3.divScalar(twgl.v3.multiply(this.skin.size, this._scale), 100);
-            scaledSize[2] = 0; // was NaN because the vectors have only 2 components.
-            twgl.m4.scale(modelMatrix, scaledSize, modelMatrix);
+                var rotationAdjusted = this._rotationAdjusted;
+                rotationAdjusted[0] = (center0 - skinSize0 / 2) * _scale / 100;
+                rotationAdjusted[1] = (center1 - skinSize1 / 2) * _scale2 / 100 * -1;
+                // rotationAdjusted[2] = 0;
+
+                this._rotationCenterDirty = false;
+            }
+
+            if (this._skinScaleDirty && this.skin !== null) {
+                // twgl version of the following in function work.
+                // const scaledSize = twgl.v3.divScalar(
+                //     twgl.v3.multiply(this.skin.size, this._scale),
+                //     100
+                // );
+                // // was NaN because the vectors have only 2 components.
+                // scaledSize[2] = 0;
+
+                // Locally assign skinSize to keep from having the Skin getter
+                // properties called twice.
+                var _skinSize = this.skin.size;
+                var scaledSize = this._skinScale;
+                scaledSize[0] = _skinSize[0] * this._scale[0] / 100;
+                scaledSize[1] = _skinSize[1] * this._scale[1] / 100;
+                // scaledSize[2] = 0;
+
+                this._skinScaleDirty = false;
+            }
+
+            var modelMatrix = this._uniforms.u_modelMatrix;
+
+            // twgl version of the following in function work.
+            // twgl.m4.identity(modelMatrix);
+            // twgl.m4.translate(modelMatrix, this._position, modelMatrix);
+            // twgl.m4.multiply(modelMatrix, this._rotationMatrix, modelMatrix);
+            // twgl.m4.translate(modelMatrix, this._rotationAdjusted, modelMatrix);
+            // twgl.m4.scale(modelMatrix, scaledSize, modelMatrix);
+
+            // Drawable configures a 3D matrix for drawing in WebGL, but most values
+            // will never be set because the inputs are on the X and Y position axis
+            // and the Z rotation axis. Drawable can bring the work inside
+            // _calculateTransform and greatly reduce the ammount of math and array
+            // assignments needed.
+
+            var scale0 = this._skinScale[0];
+            var scale1 = this._skinScale[1];
+            var rotation00 = this._rotationMatrix[0];
+            var rotation01 = this._rotationMatrix[1];
+            var rotation10 = this._rotationMatrix[4];
+            var rotation11 = this._rotationMatrix[5];
+            var adjusted0 = this._rotationAdjusted[0];
+            var adjusted1 = this._rotationAdjusted[1];
+            var position0 = this._position[0];
+            var position1 = this._position[1];
+
+            // Commented assignments show what the values are when the matrix was
+            // instantiated. Those values will never change so they do not need to
+            // be reassigned.
+            modelMatrix[0] = scale0 * rotation00;
+            modelMatrix[1] = scale0 * rotation01;
+            // modelMatrix[2] = 0;
+            // modelMatrix[3] = 0;
+            modelMatrix[4] = scale1 * rotation10;
+            modelMatrix[5] = scale1 * rotation11;
+            // modelMatrix[6] = 0;
+            // modelMatrix[7] = 0;
+            // modelMatrix[8] = 0;
+            // modelMatrix[9] = 0;
+            // modelMatrix[10] = 1;
+            // modelMatrix[11] = 0;
+            modelMatrix[12] = rotation00 * adjusted0 + rotation10 * adjusted1 + position0;
+            modelMatrix[13] = rotation01 * adjusted0 + rotation11 * adjusted1 + position1;
+            // modelMatrix[14] = 0;
+            // modelMatrix[15] = 1;
 
             this._transformDirty = false;
         }
@@ -30035,6 +30445,8 @@ var Drawable = function () {
     }, {
         key: '_skinWasAltered',
         value: function _skinWasAltered() {
+            this._rotationCenterDirty = true;
+            this._skinScaleDirty = true;
             this.setConvexHullDirty();
             this.setTransformDirty();
         }
@@ -30635,7 +31047,7 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
 
 var SVGTextWrapper = __webpack_require__(24);
 var SvgRenderer = __webpack_require__(8);
-var xmlescape = __webpack_require__(33);
+var xmlescape = __webpack_require__(38);
 
 var MAX_LINE_LENGTH = 170;
 var MIN_WIDTH = 50;
@@ -31835,11 +32247,11 @@ var lookup = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
 /* 31 */
 /***/ (function(module, exports, __webpack_require__) {
 
-// Generated by CoffeeScript 1.8.0
+/* WEBPACK VAR INJECTION */(function(Buffer) {// Generated by CoffeeScript 1.8.0
 (function() {
   var CR, Control, Extend, L, LF, LV, LVT, Regional_Indicator, SpacingMark, T, UnicodeTrie, V, classTrie, codePointAt, fs, shouldBreak, _ref;
 
-  _ref = __webpack_require__(32), CR = _ref.CR, LF = _ref.LF, Control = _ref.Control, Extend = _ref.Extend, Regional_Indicator = _ref.Regional_Indicator, SpacingMark = _ref.SpacingMark, L = _ref.L, V = _ref.V, T = _ref.T, LV = _ref.LV, LVT = _ref.LVT;
+  _ref = __webpack_require__(37), CR = _ref.CR, LF = _ref.LF, Control = _ref.Control, Extend = _ref.Extend, Regional_Indicator = _ref.Regional_Indicator, SpacingMark = _ref.SpacingMark, L = _ref.L, V = _ref.V, T = _ref.T, LV = _ref.LV, LVT = _ref.LVT;
 
   UnicodeTrie = __webpack_require__(9);
 
@@ -31974,616 +32386,10 @@ var lookup = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
 
 }).call(this);
 
+/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(32).Buffer))
 
 /***/ }),
 /* 32 */
-/***/ (function(module, exports) {
-
-module.exports = {"Other":0,"CR":1,"LF":2,"Control":3,"Extend":4,"Regional_Indicator":5,"SpacingMark":6,"L":7,"V":8,"T":9,"LV":10,"LVT":11}
-
-/***/ }),
-/* 33 */
-/***/ (function(module, exports) {
-
-
-
-var escape = module.exports = function escape(string, ignore) {
-  var pattern;
-
-  if (string === null || string === undefined) return;
-
-  ignore = (ignore || '').replace(/[^&"<>\']/g, '');
-  pattern = '([&"<>\'])'.replace(new RegExp('[' + ignore + ']', 'g'), '');
-
-  return string.replace(new RegExp(pattern, 'g'), function(str, item) {
-            return escape.map[item];
-          })
-}
-
-var map = escape.map = {
-    '>': '&gt;'
-  , '<': '&lt;'
-  , "'": '&apos;'
-  , '"': '&quot;'
-  , '&': '&amp;'
-}
-
-/***/ })
-/******/ ]);
-//# sourceMappingURL=scratch-render.js.map
-/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(9).Buffer))
-
-/***/ }),
-
-/***/ 23:
-/***/ (function(module, exports) {
-
-var toString = {}.toString;
-
-module.exports = Array.isArray || function (arr) {
-  return toString.call(arr) == '[object Array]';
-};
-
-
-/***/ }),
-
-/***/ 32:
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-
-exports.byteLength = byteLength
-exports.toByteArray = toByteArray
-exports.fromByteArray = fromByteArray
-
-var lookup = []
-var revLookup = []
-var Arr = typeof Uint8Array !== 'undefined' ? Uint8Array : Array
-
-var code = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/'
-for (var i = 0, len = code.length; i < len; ++i) {
-  lookup[i] = code[i]
-  revLookup[code.charCodeAt(i)] = i
-}
-
-revLookup['-'.charCodeAt(0)] = 62
-revLookup['_'.charCodeAt(0)] = 63
-
-function placeHoldersCount (b64) {
-  var len = b64.length
-  if (len % 4 > 0) {
-    throw new Error('Invalid string. Length must be a multiple of 4')
-  }
-
-  // the number of equal signs (place holders)
-  // if there are two placeholders, than the two characters before it
-  // represent one byte
-  // if there is only one, then the three characters before it represent 2 bytes
-  // this is just a cheap hack to not do indexOf twice
-  return b64[len - 2] === '=' ? 2 : b64[len - 1] === '=' ? 1 : 0
-}
-
-function byteLength (b64) {
-  // base64 is 4/3 + up to two characters of the original data
-  return (b64.length * 3 / 4) - placeHoldersCount(b64)
-}
-
-function toByteArray (b64) {
-  var i, l, tmp, placeHolders, arr
-  var len = b64.length
-  placeHolders = placeHoldersCount(b64)
-
-  arr = new Arr((len * 3 / 4) - placeHolders)
-
-  // if there are placeholders, only get up to the last complete 4 chars
-  l = placeHolders > 0 ? len - 4 : len
-
-  var L = 0
-
-  for (i = 0; i < l; i += 4) {
-    tmp = (revLookup[b64.charCodeAt(i)] << 18) | (revLookup[b64.charCodeAt(i + 1)] << 12) | (revLookup[b64.charCodeAt(i + 2)] << 6) | revLookup[b64.charCodeAt(i + 3)]
-    arr[L++] = (tmp >> 16) & 0xFF
-    arr[L++] = (tmp >> 8) & 0xFF
-    arr[L++] = tmp & 0xFF
-  }
-
-  if (placeHolders === 2) {
-    tmp = (revLookup[b64.charCodeAt(i)] << 2) | (revLookup[b64.charCodeAt(i + 1)] >> 4)
-    arr[L++] = tmp & 0xFF
-  } else if (placeHolders === 1) {
-    tmp = (revLookup[b64.charCodeAt(i)] << 10) | (revLookup[b64.charCodeAt(i + 1)] << 4) | (revLookup[b64.charCodeAt(i + 2)] >> 2)
-    arr[L++] = (tmp >> 8) & 0xFF
-    arr[L++] = tmp & 0xFF
-  }
-
-  return arr
-}
-
-function tripletToBase64 (num) {
-  return lookup[num >> 18 & 0x3F] + lookup[num >> 12 & 0x3F] + lookup[num >> 6 & 0x3F] + lookup[num & 0x3F]
-}
-
-function encodeChunk (uint8, start, end) {
-  var tmp
-  var output = []
-  for (var i = start; i < end; i += 3) {
-    tmp = (uint8[i] << 16) + (uint8[i + 1] << 8) + (uint8[i + 2])
-    output.push(tripletToBase64(tmp))
-  }
-  return output.join('')
-}
-
-function fromByteArray (uint8) {
-  var tmp
-  var len = uint8.length
-  var extraBytes = len % 3 // if we have 1 byte left, pad 2 bytes
-  var output = ''
-  var parts = []
-  var maxChunkLength = 16383 // must be multiple of 3
-
-  // go through the array every three bytes, we'll deal with trailing stuff later
-  for (var i = 0, len2 = len - extraBytes; i < len2; i += maxChunkLength) {
-    parts.push(encodeChunk(uint8, i, (i + maxChunkLength) > len2 ? len2 : (i + maxChunkLength)))
-  }
-
-  // pad the end with zeros, but make sure to not forget the extra bytes
-  if (extraBytes === 1) {
-    tmp = uint8[len - 1]
-    output += lookup[tmp >> 2]
-    output += lookup[(tmp << 4) & 0x3F]
-    output += '=='
-  } else if (extraBytes === 2) {
-    tmp = (uint8[len - 2] << 8) + (uint8[len - 1])
-    output += lookup[tmp >> 10]
-    output += lookup[(tmp >> 4) & 0x3F]
-    output += lookup[(tmp << 2) & 0x3F]
-    output += '='
-  }
-
-  parts.push(output)
-
-  return parts.join('')
-}
-
-
-/***/ }),
-
-/***/ 33:
-/***/ (function(module, exports) {
-
-exports.read = function (buffer, offset, isLE, mLen, nBytes) {
-  var e, m
-  var eLen = nBytes * 8 - mLen - 1
-  var eMax = (1 << eLen) - 1
-  var eBias = eMax >> 1
-  var nBits = -7
-  var i = isLE ? (nBytes - 1) : 0
-  var d = isLE ? -1 : 1
-  var s = buffer[offset + i]
-
-  i += d
-
-  e = s & ((1 << (-nBits)) - 1)
-  s >>= (-nBits)
-  nBits += eLen
-  for (; nBits > 0; e = e * 256 + buffer[offset + i], i += d, nBits -= 8) {}
-
-  m = e & ((1 << (-nBits)) - 1)
-  e >>= (-nBits)
-  nBits += mLen
-  for (; nBits > 0; m = m * 256 + buffer[offset + i], i += d, nBits -= 8) {}
-
-  if (e === 0) {
-    e = 1 - eBias
-  } else if (e === eMax) {
-    return m ? NaN : ((s ? -1 : 1) * Infinity)
-  } else {
-    m = m + Math.pow(2, mLen)
-    e = e - eBias
-  }
-  return (s ? -1 : 1) * m * Math.pow(2, e - mLen)
-}
-
-exports.write = function (buffer, value, offset, isLE, mLen, nBytes) {
-  var e, m, c
-  var eLen = nBytes * 8 - mLen - 1
-  var eMax = (1 << eLen) - 1
-  var eBias = eMax >> 1
-  var rt = (mLen === 23 ? Math.pow(2, -24) - Math.pow(2, -77) : 0)
-  var i = isLE ? 0 : (nBytes - 1)
-  var d = isLE ? 1 : -1
-  var s = value < 0 || (value === 0 && 1 / value < 0) ? 1 : 0
-
-  value = Math.abs(value)
-
-  if (isNaN(value) || value === Infinity) {
-    m = isNaN(value) ? 1 : 0
-    e = eMax
-  } else {
-    e = Math.floor(Math.log(value) / Math.LN2)
-    if (value * (c = Math.pow(2, -e)) < 1) {
-      e--
-      c *= 2
-    }
-    if (e + eBias >= 1) {
-      value += rt / c
-    } else {
-      value += rt * Math.pow(2, 1 - eBias)
-    }
-    if (value * c >= 2) {
-      e++
-      c /= 2
-    }
-
-    if (e + eBias >= eMax) {
-      m = 0
-      e = eMax
-    } else if (e + eBias >= 1) {
-      m = (value * c - 1) * Math.pow(2, mLen)
-      e = e + eBias
-    } else {
-      m = value * Math.pow(2, eBias - 1) * Math.pow(2, mLen)
-      e = 0
-    }
-  }
-
-  for (; mLen >= 8; buffer[offset + i] = m & 0xff, i += d, m /= 256, mLen -= 8) {}
-
-  e = (e << mLen) | m
-  eLen += mLen
-  for (; eLen > 0; buffer[offset + i] = e & 0xff, i += d, e /= 256, eLen -= 8) {}
-
-  buffer[offset + i - d] |= s * 128
-}
-
-
-/***/ }),
-
-/***/ 4:
-/***/ (function(module, exports) {
-
-// Copyright Joyent, Inc. and other Node contributors.
-//
-// Permission is hereby granted, free of charge, to any person obtaining a
-// copy of this software and associated documentation files (the
-// "Software"), to deal in the Software without restriction, including
-// without limitation the rights to use, copy, modify, merge, publish,
-// distribute, sublicense, and/or sell copies of the Software, and to permit
-// persons to whom the Software is furnished to do so, subject to the
-// following conditions:
-//
-// The above copyright notice and this permission notice shall be included
-// in all copies or substantial portions of the Software.
-//
-// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
-// OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
-// MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN
-// NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,
-// DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
-// OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
-// USE OR OTHER DEALINGS IN THE SOFTWARE.
-
-function EventEmitter() {
-  this._events = this._events || {};
-  this._maxListeners = this._maxListeners || undefined;
-}
-module.exports = EventEmitter;
-
-// Backwards-compat with node 0.10.x
-EventEmitter.EventEmitter = EventEmitter;
-
-EventEmitter.prototype._events = undefined;
-EventEmitter.prototype._maxListeners = undefined;
-
-// By default EventEmitters will print a warning if more than 10 listeners are
-// added to it. This is a useful default which helps finding memory leaks.
-EventEmitter.defaultMaxListeners = 10;
-
-// Obviously not all Emitters should be limited to 10. This function allows
-// that to be increased. Set to zero for unlimited.
-EventEmitter.prototype.setMaxListeners = function(n) {
-  if (!isNumber(n) || n < 0 || isNaN(n))
-    throw TypeError('n must be a positive number');
-  this._maxListeners = n;
-  return this;
-};
-
-EventEmitter.prototype.emit = function(type) {
-  var er, handler, len, args, i, listeners;
-
-  if (!this._events)
-    this._events = {};
-
-  // If there is no 'error' event listener then throw.
-  if (type === 'error') {
-    if (!this._events.error ||
-        (isObject(this._events.error) && !this._events.error.length)) {
-      er = arguments[1];
-      if (er instanceof Error) {
-        throw er; // Unhandled 'error' event
-      } else {
-        // At least give some kind of context to the user
-        var err = new Error('Uncaught, unspecified "error" event. (' + er + ')');
-        err.context = er;
-        throw err;
-      }
-    }
-  }
-
-  handler = this._events[type];
-
-  if (isUndefined(handler))
-    return false;
-
-  if (isFunction(handler)) {
-    switch (arguments.length) {
-      // fast cases
-      case 1:
-        handler.call(this);
-        break;
-      case 2:
-        handler.call(this, arguments[1]);
-        break;
-      case 3:
-        handler.call(this, arguments[1], arguments[2]);
-        break;
-      // slower
-      default:
-        args = Array.prototype.slice.call(arguments, 1);
-        handler.apply(this, args);
-    }
-  } else if (isObject(handler)) {
-    args = Array.prototype.slice.call(arguments, 1);
-    listeners = handler.slice();
-    len = listeners.length;
-    for (i = 0; i < len; i++)
-      listeners[i].apply(this, args);
-  }
-
-  return true;
-};
-
-EventEmitter.prototype.addListener = function(type, listener) {
-  var m;
-
-  if (!isFunction(listener))
-    throw TypeError('listener must be a function');
-
-  if (!this._events)
-    this._events = {};
-
-  // To avoid recursion in the case that type === "newListener"! Before
-  // adding it to the listeners, first emit "newListener".
-  if (this._events.newListener)
-    this.emit('newListener', type,
-              isFunction(listener.listener) ?
-              listener.listener : listener);
-
-  if (!this._events[type])
-    // Optimize the case of one listener. Don't need the extra array object.
-    this._events[type] = listener;
-  else if (isObject(this._events[type]))
-    // If we've already got an array, just append.
-    this._events[type].push(listener);
-  else
-    // Adding the second element, need to change to array.
-    this._events[type] = [this._events[type], listener];
-
-  // Check for listener leak
-  if (isObject(this._events[type]) && !this._events[type].warned) {
-    if (!isUndefined(this._maxListeners)) {
-      m = this._maxListeners;
-    } else {
-      m = EventEmitter.defaultMaxListeners;
-    }
-
-    if (m && m > 0 && this._events[type].length > m) {
-      this._events[type].warned = true;
-      console.error('(node) warning: possible EventEmitter memory ' +
-                    'leak detected. %d listeners added. ' +
-                    'Use emitter.setMaxListeners() to increase limit.',
-                    this._events[type].length);
-      if (typeof console.trace === 'function') {
-        // not supported in IE 10
-        console.trace();
-      }
-    }
-  }
-
-  return this;
-};
-
-EventEmitter.prototype.on = EventEmitter.prototype.addListener;
-
-EventEmitter.prototype.once = function(type, listener) {
-  if (!isFunction(listener))
-    throw TypeError('listener must be a function');
-
-  var fired = false;
-
-  function g() {
-    this.removeListener(type, g);
-
-    if (!fired) {
-      fired = true;
-      listener.apply(this, arguments);
-    }
-  }
-
-  g.listener = listener;
-  this.on(type, g);
-
-  return this;
-};
-
-// emits a 'removeListener' event iff the listener was removed
-EventEmitter.prototype.removeListener = function(type, listener) {
-  var list, position, length, i;
-
-  if (!isFunction(listener))
-    throw TypeError('listener must be a function');
-
-  if (!this._events || !this._events[type])
-    return this;
-
-  list = this._events[type];
-  length = list.length;
-  position = -1;
-
-  if (list === listener ||
-      (isFunction(list.listener) && list.listener === listener)) {
-    delete this._events[type];
-    if (this._events.removeListener)
-      this.emit('removeListener', type, listener);
-
-  } else if (isObject(list)) {
-    for (i = length; i-- > 0;) {
-      if (list[i] === listener ||
-          (list[i].listener && list[i].listener === listener)) {
-        position = i;
-        break;
-      }
-    }
-
-    if (position < 0)
-      return this;
-
-    if (list.length === 1) {
-      list.length = 0;
-      delete this._events[type];
-    } else {
-      list.splice(position, 1);
-    }
-
-    if (this._events.removeListener)
-      this.emit('removeListener', type, listener);
-  }
-
-  return this;
-};
-
-EventEmitter.prototype.removeAllListeners = function(type) {
-  var key, listeners;
-
-  if (!this._events)
-    return this;
-
-  // not listening for removeListener, no need to emit
-  if (!this._events.removeListener) {
-    if (arguments.length === 0)
-      this._events = {};
-    else if (this._events[type])
-      delete this._events[type];
-    return this;
-  }
-
-  // emit removeListener for all listeners on all events
-  if (arguments.length === 0) {
-    for (key in this._events) {
-      if (key === 'removeListener') continue;
-      this.removeAllListeners(key);
-    }
-    this.removeAllListeners('removeListener');
-    this._events = {};
-    return this;
-  }
-
-  listeners = this._events[type];
-
-  if (isFunction(listeners)) {
-    this.removeListener(type, listeners);
-  } else if (listeners) {
-    // LIFO order
-    while (listeners.length)
-      this.removeListener(type, listeners[listeners.length - 1]);
-  }
-  delete this._events[type];
-
-  return this;
-};
-
-EventEmitter.prototype.listeners = function(type) {
-  var ret;
-  if (!this._events || !this._events[type])
-    ret = [];
-  else if (isFunction(this._events[type]))
-    ret = [this._events[type]];
-  else
-    ret = this._events[type].slice();
-  return ret;
-};
-
-EventEmitter.prototype.listenerCount = function(type) {
-  if (this._events) {
-    var evlistener = this._events[type];
-
-    if (isFunction(evlistener))
-      return 1;
-    else if (evlistener)
-      return evlistener.length;
-  }
-  return 0;
-};
-
-EventEmitter.listenerCount = function(emitter, type) {
-  return emitter.listenerCount(type);
-};
-
-function isFunction(arg) {
-  return typeof arg === 'function';
-}
-
-function isNumber(arg) {
-  return typeof arg === 'number';
-}
-
-function isObject(arg) {
-  return typeof arg === 'object' && arg !== null;
-}
-
-function isUndefined(arg) {
-  return arg === void 0;
-}
-
-
-/***/ }),
-
-/***/ 56:
-/***/ (function(module, exports) {
-
-/*
-	MIT License http://www.opensource.org/licenses/mit-license.php
-	Author Tobias Koppers @sokra
-*/
-module.exports = function(src) {
-	function log(error) {
-		(typeof console !== "undefined")
-		&& (console.error || console.log)("[Script Loader]", error);
-	}
-
-	// Check for IE =< 8
-	function isIE() {
-		return typeof attachEvent !== "undefined" && typeof addEventListener === "undefined";
-	}
-
-	try {
-		if (typeof execScript !== "undefined" && isIE()) {
-			execScript(src);
-		} else if (typeof eval !== "undefined") {
-			eval.call(null, src);
-		} else {
-			log("EvalError: No eval function available");
-		}
-	} catch (error) {
-		log(error);
-	}
-}
-
-
-/***/ }),
-
-/***/ 9:
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -32597,9 +32403,9 @@ module.exports = function(src) {
 
 
 
-var base64 = __webpack_require__(32)
-var ieee754 = __webpack_require__(33)
-var isArray = __webpack_require__(23)
+var base64 = __webpack_require__(34)
+var ieee754 = __webpack_require__(35)
+var isArray = __webpack_require__(36)
 
 exports.Buffer = Buffer
 exports.SlowBuffer = SlowBuffer
@@ -34377,7 +34183,356 @@ function isnan (val) {
   return val !== val // eslint-disable-line no-self-compare
 }
 
-/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(0)))
+/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(33)))
+
+/***/ }),
+/* 33 */
+/***/ (function(module, exports) {
+
+var g;
+
+// This works in non-strict mode
+g = (function() {
+	return this;
+})();
+
+try {
+	// This works if eval is allowed (see CSP)
+	g = g || Function("return this")() || (1,eval)("this");
+} catch(e) {
+	// This works if the window reference is available
+	if(typeof window === "object")
+		g = window;
+}
+
+// g can still be undefined, but nothing to do about it...
+// We return undefined, instead of nothing here, so it's
+// easier to handle this case. if(!global) { ...}
+
+module.exports = g;
+
+
+/***/ }),
+/* 34 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+exports.byteLength = byteLength
+exports.toByteArray = toByteArray
+exports.fromByteArray = fromByteArray
+
+var lookup = []
+var revLookup = []
+var Arr = typeof Uint8Array !== 'undefined' ? Uint8Array : Array
+
+var code = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/'
+for (var i = 0, len = code.length; i < len; ++i) {
+  lookup[i] = code[i]
+  revLookup[code.charCodeAt(i)] = i
+}
+
+revLookup['-'.charCodeAt(0)] = 62
+revLookup['_'.charCodeAt(0)] = 63
+
+function placeHoldersCount (b64) {
+  var len = b64.length
+  if (len % 4 > 0) {
+    throw new Error('Invalid string. Length must be a multiple of 4')
+  }
+
+  // the number of equal signs (place holders)
+  // if there are two placeholders, than the two characters before it
+  // represent one byte
+  // if there is only one, then the three characters before it represent 2 bytes
+  // this is just a cheap hack to not do indexOf twice
+  return b64[len - 2] === '=' ? 2 : b64[len - 1] === '=' ? 1 : 0
+}
+
+function byteLength (b64) {
+  // base64 is 4/3 + up to two characters of the original data
+  return (b64.length * 3 / 4) - placeHoldersCount(b64)
+}
+
+function toByteArray (b64) {
+  var i, l, tmp, placeHolders, arr
+  var len = b64.length
+  placeHolders = placeHoldersCount(b64)
+
+  arr = new Arr((len * 3 / 4) - placeHolders)
+
+  // if there are placeholders, only get up to the last complete 4 chars
+  l = placeHolders > 0 ? len - 4 : len
+
+  var L = 0
+
+  for (i = 0; i < l; i += 4) {
+    tmp = (revLookup[b64.charCodeAt(i)] << 18) | (revLookup[b64.charCodeAt(i + 1)] << 12) | (revLookup[b64.charCodeAt(i + 2)] << 6) | revLookup[b64.charCodeAt(i + 3)]
+    arr[L++] = (tmp >> 16) & 0xFF
+    arr[L++] = (tmp >> 8) & 0xFF
+    arr[L++] = tmp & 0xFF
+  }
+
+  if (placeHolders === 2) {
+    tmp = (revLookup[b64.charCodeAt(i)] << 2) | (revLookup[b64.charCodeAt(i + 1)] >> 4)
+    arr[L++] = tmp & 0xFF
+  } else if (placeHolders === 1) {
+    tmp = (revLookup[b64.charCodeAt(i)] << 10) | (revLookup[b64.charCodeAt(i + 1)] << 4) | (revLookup[b64.charCodeAt(i + 2)] >> 2)
+    arr[L++] = (tmp >> 8) & 0xFF
+    arr[L++] = tmp & 0xFF
+  }
+
+  return arr
+}
+
+function tripletToBase64 (num) {
+  return lookup[num >> 18 & 0x3F] + lookup[num >> 12 & 0x3F] + lookup[num >> 6 & 0x3F] + lookup[num & 0x3F]
+}
+
+function encodeChunk (uint8, start, end) {
+  var tmp
+  var output = []
+  for (var i = start; i < end; i += 3) {
+    tmp = (uint8[i] << 16) + (uint8[i + 1] << 8) + (uint8[i + 2])
+    output.push(tripletToBase64(tmp))
+  }
+  return output.join('')
+}
+
+function fromByteArray (uint8) {
+  var tmp
+  var len = uint8.length
+  var extraBytes = len % 3 // if we have 1 byte left, pad 2 bytes
+  var output = ''
+  var parts = []
+  var maxChunkLength = 16383 // must be multiple of 3
+
+  // go through the array every three bytes, we'll deal with trailing stuff later
+  for (var i = 0, len2 = len - extraBytes; i < len2; i += maxChunkLength) {
+    parts.push(encodeChunk(uint8, i, (i + maxChunkLength) > len2 ? len2 : (i + maxChunkLength)))
+  }
+
+  // pad the end with zeros, but make sure to not forget the extra bytes
+  if (extraBytes === 1) {
+    tmp = uint8[len - 1]
+    output += lookup[tmp >> 2]
+    output += lookup[(tmp << 4) & 0x3F]
+    output += '=='
+  } else if (extraBytes === 2) {
+    tmp = (uint8[len - 2] << 8) + (uint8[len - 1])
+    output += lookup[tmp >> 10]
+    output += lookup[(tmp >> 4) & 0x3F]
+    output += lookup[(tmp << 2) & 0x3F]
+    output += '='
+  }
+
+  parts.push(output)
+
+  return parts.join('')
+}
+
+
+/***/ }),
+/* 35 */
+/***/ (function(module, exports) {
+
+exports.read = function (buffer, offset, isLE, mLen, nBytes) {
+  var e, m
+  var eLen = nBytes * 8 - mLen - 1
+  var eMax = (1 << eLen) - 1
+  var eBias = eMax >> 1
+  var nBits = -7
+  var i = isLE ? (nBytes - 1) : 0
+  var d = isLE ? -1 : 1
+  var s = buffer[offset + i]
+
+  i += d
+
+  e = s & ((1 << (-nBits)) - 1)
+  s >>= (-nBits)
+  nBits += eLen
+  for (; nBits > 0; e = e * 256 + buffer[offset + i], i += d, nBits -= 8) {}
+
+  m = e & ((1 << (-nBits)) - 1)
+  e >>= (-nBits)
+  nBits += mLen
+  for (; nBits > 0; m = m * 256 + buffer[offset + i], i += d, nBits -= 8) {}
+
+  if (e === 0) {
+    e = 1 - eBias
+  } else if (e === eMax) {
+    return m ? NaN : ((s ? -1 : 1) * Infinity)
+  } else {
+    m = m + Math.pow(2, mLen)
+    e = e - eBias
+  }
+  return (s ? -1 : 1) * m * Math.pow(2, e - mLen)
+}
+
+exports.write = function (buffer, value, offset, isLE, mLen, nBytes) {
+  var e, m, c
+  var eLen = nBytes * 8 - mLen - 1
+  var eMax = (1 << eLen) - 1
+  var eBias = eMax >> 1
+  var rt = (mLen === 23 ? Math.pow(2, -24) - Math.pow(2, -77) : 0)
+  var i = isLE ? 0 : (nBytes - 1)
+  var d = isLE ? 1 : -1
+  var s = value < 0 || (value === 0 && 1 / value < 0) ? 1 : 0
+
+  value = Math.abs(value)
+
+  if (isNaN(value) || value === Infinity) {
+    m = isNaN(value) ? 1 : 0
+    e = eMax
+  } else {
+    e = Math.floor(Math.log(value) / Math.LN2)
+    if (value * (c = Math.pow(2, -e)) < 1) {
+      e--
+      c *= 2
+    }
+    if (e + eBias >= 1) {
+      value += rt / c
+    } else {
+      value += rt * Math.pow(2, 1 - eBias)
+    }
+    if (value * c >= 2) {
+      e++
+      c /= 2
+    }
+
+    if (e + eBias >= eMax) {
+      m = 0
+      e = eMax
+    } else if (e + eBias >= 1) {
+      m = (value * c - 1) * Math.pow(2, mLen)
+      e = e + eBias
+    } else {
+      m = value * Math.pow(2, eBias - 1) * Math.pow(2, mLen)
+      e = 0
+    }
+  }
+
+  for (; mLen >= 8; buffer[offset + i] = m & 0xff, i += d, m /= 256, mLen -= 8) {}
+
+  e = (e << mLen) | m
+  eLen += mLen
+  for (; eLen > 0; buffer[offset + i] = e & 0xff, i += d, e /= 256, eLen -= 8) {}
+
+  buffer[offset + i - d] |= s * 128
+}
+
+
+/***/ }),
+/* 36 */
+/***/ (function(module, exports) {
+
+var toString = {}.toString;
+
+module.exports = Array.isArray || function (arr) {
+  return toString.call(arr) == '[object Array]';
+};
+
+
+/***/ }),
+/* 37 */
+/***/ (function(module, exports) {
+
+module.exports = {"Other":0,"CR":1,"LF":2,"Control":3,"Extend":4,"Regional_Indicator":5,"SpacingMark":6,"L":7,"V":8,"T":9,"LV":10,"LVT":11}
+
+/***/ }),
+/* 38 */
+/***/ (function(module, exports) {
+
+
+
+var escape = module.exports = function escape(string, ignore) {
+  var pattern;
+
+  if (string === null || string === undefined) return;
+
+  ignore = (ignore || '').replace(/[^&"<>\']/g, '');
+  pattern = '([&"<>\'])'.replace(new RegExp('[' + ignore + ']', 'g'), '');
+
+  return string.replace(new RegExp(pattern, 'g'), function(str, item) {
+            return escape.map[item];
+          })
+}
+
+var map = escape.map = {
+    '>': '&gt;'
+  , '<': '&lt;'
+  , "'": '&apos;'
+  , '"': '&quot;'
+  , '&': '&amp;'
+}
+
+/***/ })
+/******/ ]);
+});
+//# sourceMappingURL=scratch-render.js.map
+
+/***/ }),
+
+/***/ 2:
+/***/ (function(module, exports) {
+
+var g;
+
+// This works in non-strict mode
+g = (function() {
+	return this;
+})();
+
+try {
+	// This works if eval is allowed (see CSP)
+	g = g || Function("return this")() || (1,eval)("this");
+} catch(e) {
+	// This works if the window reference is available
+	if(typeof window === "object")
+		g = window;
+}
+
+// g can still be undefined, but nothing to do about it...
+// We return undefined, instead of nothing here, so it's
+// easier to handle this case. if(!global) { ...}
+
+module.exports = g;
+
+
+/***/ }),
+
+/***/ 54:
+/***/ (function(module, exports) {
+
+/*
+	MIT License http://www.opensource.org/licenses/mit-license.php
+	Author Tobias Koppers @sokra
+*/
+module.exports = function(src) {
+	function log(error) {
+		(typeof console !== "undefined")
+		&& (console.error || console.log)("[Script Loader]", error);
+	}
+
+	// Check for IE =< 8
+	function isIE() {
+		return typeof attachEvent !== "undefined" && typeof addEventListener === "undefined";
+	}
+
+	try {
+		if (typeof execScript !== "undefined" && isIE()) {
+			execScript(src);
+		} else if (typeof eval !== "undefined") {
+			eval.call(null, src);
+		} else {
+			log("EvalError: No eval function available");
+		}
+	} catch (error) {
+		log(error);
+	}
+}
+
 
 /***/ })
 
