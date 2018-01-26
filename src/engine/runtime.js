@@ -551,22 +551,23 @@ class Runtime extends EventEmitter {
      */
     _buildMenuForScratchBlocks (menuName, menuItems, categoryInfo) {
         const menuId = this._makeExtensionMenuId(menuName, categoryInfo.id);
-
-        /** @TODO: support dynamic menus when 'menuItems' is a method name string (see extension spec) */
-        if (typeof menuItems === 'string') {
-            throw new Error(`Dynamic extension menus are not yet supported. Menu name: ${menuName}`);
-        }
-        const options = menuItems.map(item => {
-            switch (typeof item) {
-            case 'string':
-                return [item, item];
-            case 'object':
-                return [item.text, item.value];
-            default:
-                throw new Error(`Can't interpret menu item: ${item}`);
+        var options = null;
+        if (typeof menuItems === 'function') {
+             options = function () {
+                return menuItems();
             }
-        });
-
+        } else {
+            options = menuItems.map(item => {
+                switch (typeof item) {
+                case 'string':
+                    return [item, item];
+                case 'object':
+                    return [item.text, item.value];
+                default:
+                    throw new Error(`Can't interpret menu item: ${item}`);
+                }
+            });
+        }
         return {
             json: {
                 message0: '%1',

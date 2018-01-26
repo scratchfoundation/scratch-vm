@@ -242,7 +242,33 @@ class ExtensionManager {
             }
             return result;
         }, []);
+        extensionInfo.menus = extensionInfo.menus || [];
+        extensionInfo.menus = this._prepareMenuInfo(serviceName, extensionInfo.menus);
         return extensionInfo;
+    }
+    
+    /**
+     * Prepare extension menus. e.g. setup binding for dynamic menu functions.
+     * @param {string} serviceName - the name of the service hosting this extension block
+     * @param {Array.<MenuInfo>} menuInfo - the menu defined by the extension.
+     * @returns {Array.<MenuInfo>} - a menuInfo object with all preprocessing done.
+     * @private
+     */
+    _prepareMenuInfo (serviceName, menus) {
+        var menuNames = Object.getOwnPropertyNames(menus);
+        for (let i = 0; i < menuNames.length; i++) {
+            var item = menuNames[i];
+            // If the value is a string, it should be the name of a function in the
+            // extension object to call to populate the menu whenever it is opened.
+            // Set up the binding for the function object here so
+            // we can use it later when converting the menu for Scratch Blocks.
+            if (typeof menus[item] === 'string') {
+              const serviceObject = dispatch.services[serviceName];
+              const menuFunc = serviceObject[menus[item]].bind(serviceObject);
+              menus[item] = menuFunc;
+            }
+        }
+        return menus;
     }
 
     /**
