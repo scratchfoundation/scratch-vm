@@ -321,7 +321,11 @@ class Blocks {
             stage.renameVariable(e.varId, e.newName);
             // Update all the blocks that use the renamed variable.
             if (optRuntime) {
-                optRuntime.updateBlocksAfterVarRename(e.varId, e.newName);
+                const targets = optRuntime.targets;
+                for (let i = 0; i < targets.length; i++) {
+                    const currTarget = targets[i];
+                    currTarget.blocks.updateBlocksAfterVarRename(e.varId, e.newName);
+                }
             }
             break;
         case 'var_delete':
@@ -415,7 +419,7 @@ class Blocks {
             const isSpriteSpecific = optRuntime.monitorBlockInfo.hasOwnProperty(block.opcode) &&
                 optRuntime.monitorBlockInfo[block.opcode].isSpriteSpecific;
             block.targetId = isSpriteSpecific ? optRuntime.getEditingTarget().id : null;
-            
+
             if (wasMonitored && !block.isMonitored) {
                 optRuntime.requestRemoveMonitor(block.id);
             } else if (!wasMonitored && block.isMonitored) {
@@ -548,6 +552,29 @@ class Blocks {
         delete this._blocks[blockId];
 
         this.resetCache();
+    }
+
+    /**
+     * Keep blocks up to date after a variable gets renamed.
+     * @param {string} varId The id of the variable that was renamed
+     * @param {string} newName The new name of the variable that was renamed
+     */
+    updateBlocksAfterVarRename (varId, newName) {
+        const blocks = this._blocks;
+        for (const blockId in blocks) {
+            let varOrListField = null;
+            if (blocks[blockId].fields.VARIABLE) {
+                varOrListField = blocks[blockId].fields.VARIABLE;
+            } else if (blocks[blockId].fields.LIST) {
+                varOrListField = blocks[blockId].fields.LIST;
+            }
+            if (varOrListField) {
+                const currFieldId = varOrListField.id;
+                if (varId === currFieldId) {
+                    varOrListField.value = newName;
+                }
+            }
+        }
     }
 
     // ---------------------------------------------------------------------
