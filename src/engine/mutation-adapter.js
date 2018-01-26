@@ -1,13 +1,35 @@
-var html = require('htmlparser2');
+const html = require('htmlparser2');
+const decodeHtml = require('decode-html');
+
+/**
+ * Convert a part of a mutation DOM to a mutation VM object, recursively.
+ * @param {object} dom DOM object for mutation tag.
+ * @return {object} Object representing useful parts of this mutation.
+ */
+const mutatorTagToObject = function (dom) {
+    const obj = Object.create(null);
+    obj.tagName = dom.name;
+    obj.children = [];
+    for (const prop in dom.attribs) {
+        if (prop === 'xmlns') continue;
+        obj[prop] = decodeHtml(dom.attribs[prop]);
+    }
+    for (let i = 0; i < dom.children.length; i++) {
+        obj.children.push(
+            mutatorTagToObject(dom.children[i])
+        );
+    }
+    return obj;
+};
 
 /**
  * Adapter between mutator XML or DOM and block representation which can be
  * used by the Scratch runtime.
- * @param {(Object|string)} mutation Mutation XML string or DOM.
- * @return {Object} Object representing the mutation.
+ * @param {(object|string)} mutation Mutation XML string or DOM.
+ * @return {object} Object representing the mutation.
  */
-module.exports = function (mutation) {
-    var mutationParsed;
+const mutationAdpater = function (mutation) {
+    let mutationParsed;
     // Check if the mutation is already parsed; if not, parse it.
     if (typeof mutation === 'object') {
         mutationParsed = mutation;
@@ -17,23 +39,4 @@ module.exports = function (mutation) {
     return mutatorTagToObject(mutationParsed);
 };
 
-/**
- * Convert a part of a mutation DOM to a mutation VM object, recursively.
- * @param {Object} dom DOM object for mutation tag.
- * @return {Object} Object representing useful parts of this mutation.
- */
-function mutatorTagToObject (dom) {
-    var obj = Object.create(null);
-    obj.tagName = dom.name;
-    obj.children = [];
-    for (var prop in dom.attribs) {
-        if (prop == 'xmlns') continue;
-        obj[prop] = dom.attribs[prop];
-    }
-    for (var i = 0; i < dom.children.length; i++) {
-        obj.children.push(
-            mutatorTagToObject(dom.children[i])
-        );
-    }
-    return obj;
-}
+module.exports = mutationAdpater;

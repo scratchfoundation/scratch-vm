@@ -1,7 +1,7 @@
-var test = require('tap').test;
-var cast = require('../../src/util/cast');
+const test = require('tap').test;
+const cast = require('../../src/util/cast');
 
-test('toNumber', function (t) {
+test('toNumber', t => {
     // Numeric
     t.strictEqual(cast.toNumber(0), 0);
     t.strictEqual(cast.toNumber(1), 1);
@@ -27,7 +27,7 @@ test('toNumber', function (t) {
     t.end();
 });
 
-test('toBoolean', function (t) {
+test('toBoolean', t => {
     // Numeric
     t.strictEqual(cast.toBoolean(0), false);
     t.strictEqual(cast.toBoolean(1), true);
@@ -50,7 +50,7 @@ test('toBoolean', function (t) {
     t.end();
 });
 
-test('toString', function (t) {
+test('toString', t => {
     // Numeric
     t.strictEqual(cast.toString(0), '0');
     t.strictEqual(cast.toString(1), '1');
@@ -73,25 +73,44 @@ test('toString', function (t) {
     t.end();
 });
 
-test('toRbgColorList', function (t) {
+test('toRbgColorList', t => {
     // Hex (minimal, see "color" util tests)
-    t.deepEqual(cast.toRgbColorList('#000'), [0,0,0]);
-    t.deepEqual(cast.toRgbColorList('#000000'), [0,0,0]);
-    t.deepEqual(cast.toRgbColorList('#fff'), [255,255,255]);
-    t.deepEqual(cast.toRgbColorList('#ffffff'), [255,255,255]);
+    t.deepEqual(cast.toRgbColorList('#000'), [0, 0, 0]);
+    t.deepEqual(cast.toRgbColorList('#000000'), [0, 0, 0]);
+    t.deepEqual(cast.toRgbColorList('#fff'), [255, 255, 255]);
+    t.deepEqual(cast.toRgbColorList('#ffffff'), [255, 255, 255]);
 
     // Decimal (minimal, see "color" util tests)
-    t.deepEqual(cast.toRgbColorList(0), [0,0,0]);
-    t.deepEqual(cast.toRgbColorList(1), [0,0,1]);
-    t.deepEqual(cast.toRgbColorList(16777215), [255,255,255]);
+    t.deepEqual(cast.toRgbColorList(0), [0, 0, 0]);
+    t.deepEqual(cast.toRgbColorList(1), [0, 0, 1]);
+    t.deepEqual(cast.toRgbColorList(16777215), [255, 255, 255]);
 
     // Malformed
-    t.deepEqual(cast.toRgbColorList('ffffff'), [0,0,0]);
-    t.deepEqual(cast.toRgbColorList('foobar'), [0,0,0]);
+    t.deepEqual(cast.toRgbColorList('ffffff'), [0, 0, 0]);
+    t.deepEqual(cast.toRgbColorList('foobar'), [0, 0, 0]);
     t.end();
 });
 
-test('compare', function (t) {
+test('toRbgColorObject', t => {
+    // Hex (minimal, see "color" util tests)
+    t.deepEqual(cast.toRgbColorObject('#000'), {r: 0, g: 0, b: 0});
+    t.deepEqual(cast.toRgbColorObject('#000000'), {r: 0, g: 0, b: 0});
+    t.deepEqual(cast.toRgbColorObject('#fff'), {r: 255, g: 255, b: 255});
+    t.deepEqual(cast.toRgbColorObject('#ffffff'), {r: 255, g: 255, b: 255});
+
+    // Decimal (minimal, see "color" util tests)
+    t.deepEqual(cast.toRgbColorObject(0), {a: 255, r: 0, g: 0, b: 0});
+    t.deepEqual(cast.toRgbColorObject(1), {a: 255, r: 0, g: 0, b: 1});
+    t.deepEqual(cast.toRgbColorObject(16777215), {a: 255, r: 255, g: 255, b: 255});
+    t.deepEqual(cast.toRgbColorObject('0x80010203'), {a: 128, r: 1, g: 2, b: 3});
+
+    // Malformed
+    t.deepEqual(cast.toRgbColorObject('ffffff'), {a: 255, r: 0, g: 0, b: 0});
+    t.deepEqual(cast.toRgbColorObject('foobar'), {a: 255, r: 0, g: 0, b: 0});
+    t.end();
+});
+
+test('compare', t => {
     // Numeric
     t.strictEqual(cast.compare(0, 0), 0);
     t.strictEqual(cast.compare(1, 0), 1);
@@ -118,7 +137,7 @@ test('compare', function (t) {
     t.end();
 });
 
-test('isInt', function (t) {
+test('isInt', t => {
     // Numeric
     t.strictEqual(cast.isInt(0), true);
     t.strictEqual(cast.isInt(1), true);
@@ -143,9 +162,9 @@ test('isInt', function (t) {
     t.end();
 });
 
-test('toListIndex', function (t) {
-    var list = [0,1,2,3,4,5];
-    var empty = [];
+test('toListIndex', t => {
+    const list = [0, 1, 2, 3, 4, 5];
+    const empty = [];
 
     // Valid
     t.strictEqual(cast.toListIndex(1, list.length), 1);
@@ -165,13 +184,13 @@ test('toListIndex', function (t) {
     t.strictEqual(cast.toListIndex('last', empty.length), cast.LIST_INVALID);
 
     // "random"
-    var random = cast.toListIndex('random', list.length);
+    const random = cast.toListIndex('random', list.length);
     t.ok(random <= list.length);
     t.ok(random > 0);
     t.strictEqual(cast.toListIndex('random', empty.length), cast.LIST_INVALID);
 
     // "any" (alias for "random")
-    var any = cast.toListIndex('any', list.length);
+    const any = cast.toListIndex('any', list.length);
     t.ok(any <= list.length);
     t.ok(any > 0);
     t.strictEqual(cast.toListIndex('any', empty.length), cast.LIST_INVALID);

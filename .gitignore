@@ -2,17 +2,21 @@
 .DS_Store
 
 # NPM
+package-lock.json
 /node_modules
 npm-*
 
 # Testing
 /.nyc_output
 /coverage
-/dist.js
-/vm.js
-/vm.min.js
-/playground/assets
-/playground/media
-/playground/vendor.js
-/playground/vm.js
-/playground/zenburn.css
+
+# IDEA
+/.idea
+
+# Build
+/dist
+/playground
+/benchmark
+
+# Localization
+/translations

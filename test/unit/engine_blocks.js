@@ -1,8 +1,8 @@
-var test = require('tap').test;
-var Blocks = require('../../src/engine/blocks');
+const test = require('tap').test;
+const Blocks = require('../../src/engine/blocks');
 
-test('spec', function (t) {
-    var b = new Blocks();
+test('spec', t => {
+    const b = new Blocks();
 
     t.type(Blocks, 'function');
     t.type(b, 'object');
@@ -27,8 +27,8 @@ test('spec', function (t) {
 });
 
 // Getter tests
-test('getBlock', function (t) {
-    var b = new Blocks();
+test('getBlock', t => {
+    const b = new Blocks();
     b.createBlock({
         id: 'foo',
         opcode: 'TEST_BLOCK',
@@ -37,16 +37,16 @@ test('getBlock', function (t) {
         inputs: {},
         topLevel: true
     });
-    var block = b.getBlock('foo');
+    const block = b.getBlock('foo');
     t.type(block, 'object');
-    var notBlock = b.getBlock('?');
+    const notBlock = b.getBlock('?');
     t.type(notBlock, 'undefined');
     t.end();
 });
 
-test('getScripts', function (t) {
-    var b = new Blocks();
-    var scripts = b.getScripts();
+test('getScripts', t => {
+    const b = new Blocks();
+    let scripts = b.getScripts();
     t.type(scripts, 'object');
     t.equals(scripts.length, 0);
     // Create two top-level blocks and one not.
@@ -85,8 +85,8 @@ test('getScripts', function (t) {
 
 });
 
-test('getNextBlock', function (t) {
-    var b = new Blocks();
+test('getNextBlock', t => {
+    const b = new Blocks();
     b.createBlock({
         id: 'foo',
         opcode: 'TEST_BLOCK',
@@ -96,7 +96,7 @@ test('getNextBlock', function (t) {
         topLevel: true
     });
 
-    var next = b.getNextBlock('foo');
+    let next = b.getNextBlock('foo');
     t.equals(next, null);
 
     // Add a block with "foo" as its next.
@@ -113,14 +113,14 @@ test('getNextBlock', function (t) {
     t.equals(next, 'foo');
 
     // Block that doesn't exist.
-    var noBlock = b.getNextBlock('?');
+    const noBlock = b.getNextBlock('?');
     t.equals(noBlock, null);
 
     t.end();
 });
 
-test('getBranch', function (t) {
-    var b = new Blocks();
+test('getBranch', t => {
+    const b = new Blocks();
     // Single branch
     b.createBlock({
         id: 'foo',
@@ -145,17 +145,17 @@ test('getBranch', function (t) {
         topLevel: false
     });
 
-    var branch = b.getBranch('foo');
+    const branch = b.getBranch('foo');
     t.equals(branch, 'foo2');
 
-    var notBranch = b.getBranch('?');
+    const notBranch = b.getBranch('?');
     t.equals(notBranch, null);
 
     t.end();
 });
 
-test('getBranch2', function (t) {
-    var b = new Blocks();
+test('getBranch2', t => {
+    const b = new Blocks();
     // Second branch
     b.createBlock({
         id: 'foo',
@@ -193,16 +193,16 @@ test('getBranch2', function (t) {
         topLevel: false
     });
 
-    var branch1 = b.getBranch('foo', 1);
-    var branch2 = b.getBranch('foo', 2);
+    const branch1 = b.getBranch('foo', 1);
+    const branch2 = b.getBranch('foo', 2);
     t.equals(branch1, 'foo2');
     t.equals(branch2, 'foo3');
 
     t.end();
 });
 
-test('getBranch with none', function (t) {
-    var b = new Blocks();
+test('getBranch with none', t => {
+    const b = new Blocks();
     b.createBlock({
         id: 'foo',
         opcode: 'TEST_BLOCK',
@@ -211,31 +211,33 @@ test('getBranch with none', function (t) {
         inputs: {},
         topLevel: true
     });
-    var noBranch = b.getBranch('foo');
+    const noBranch = b.getBranch('foo');
     t.equals(noBranch, null);
     t.end();
 });
 
-test('getOpcode', function (t) {
-    var b = new Blocks();
-    b.createBlock({
+test('getOpcode', t => {
+    const b = new Blocks();
+    const block = {
         id: 'foo',
         opcode: 'TEST_BLOCK',
         next: null,
         fields: {},
         inputs: {},
         topLevel: true
-    });
-    var opcode = b.getOpcode('foo');
+    };
+    b.createBlock(block);
+    const opcode = b.getOpcode(block);
     t.equals(opcode, 'TEST_BLOCK');
-    var notOpcode = b.getOpcode('?');
-    t.equals(notOpcode, null);
+    const undefinedBlock = b.getBlock('?');
+    const undefinedOpcode = b.getOpcode(undefinedBlock);
+    t.equals(undefinedOpcode, null);
     t.end();
 });
 
 // Block events tests
-test('create', function (t) {
-    var b = new Blocks();
+test('create', t => {
+    const b = new Blocks();
     b.createBlock({
         id: 'foo',
         opcode: 'TEST_BLOCK',
@@ -245,14 +247,14 @@ test('create', function (t) {
         topLevel: true
     });
 
-    t.type(b._blocks['foo'], 'object');
-    t.equal(b._blocks['foo'].opcode, 'TEST_BLOCK');
+    t.type(b._blocks.foo, 'object');
+    t.equal(b._blocks.foo.opcode, 'TEST_BLOCK');
     t.notEqual(b._scripts.indexOf('foo'), -1);
     t.end();
 });
 
-test('move', function (t) {
-    var b = new Blocks();
+test('move', t => {
+    const b = new Blocks();
     b.createBlock({
         id: 'foo',
         opcode: 'TEST_BLOCK',
@@ -277,7 +279,7 @@ test('move', function (t) {
     });
     t.equal(b._scripts.length, 1);
     t.equal(Object.keys(b._blocks).length, 2);
-    t.equal(b._blocks['foo'].next, 'bar');
+    t.equal(b._blocks.foo.next, 'bar');
 
     // Detach 'bar' from 'foo'
     b.moveBlock({
@@ -286,13 +288,13 @@ test('move', function (t) {
     });
     t.equal(b._scripts.length, 2);
     t.equal(Object.keys(b._blocks).length, 2);
-    t.equal(b._blocks['foo'].next, null);
+    t.equal(b._blocks.foo.next, null);
 
     t.end();
 });
 
-test('move into empty', function (t) {
-    var b = new Blocks();
+test('move into empty', t => {
+    const b = new Blocks();
     b.createBlock({
         id: 'foo',
         opcode: 'TEST_BLOCK',
@@ -314,19 +316,19 @@ test('move into empty', function (t) {
         newInput: 'fooInput',
         newParent: 'foo'
     });
-    t.equal(b._blocks['foo'].inputs['fooInput'].block, 'bar');
+    t.equal(b._blocks.foo.inputs.fooInput.block, 'bar');
     t.end();
 });
 
-test('move no obscure shadow', function (t) {
-    var b = new Blocks();
+test('move no obscure shadow', t => {
+    const b = new Blocks();
     b.createBlock({
         id: 'foo',
         opcode: 'TEST_BLOCK',
         next: null,
         fields: {},
         inputs: {
-            'fooInput': {
+            fooInput: {
                 name: 'fooInput',
                 block: 'x',
                 shadow: 'y'
@@ -347,13 +349,13 @@ test('move no obscure shadow', function (t) {
         newInput: 'fooInput',
         newParent: 'foo'
     });
-    t.equal(b._blocks['foo'].inputs['fooInput'].block, 'bar');
-    t.equal(b._blocks['foo'].inputs['fooInput'].shadow, 'y');
+    t.equal(b._blocks.foo.inputs.fooInput.block, 'bar');
+    t.equal(b._blocks.foo.inputs.fooInput.shadow, 'y');
     t.end();
 });
 
-test('change', function (t) {
-    var b = new Blocks();
+test('change', t => {
+    const b = new Blocks();
     b.createBlock({
         id: 'foo',
         opcode: 'TEST_BLOCK',
@@ -369,7 +371,7 @@ test('change', function (t) {
     });
 
     // Test that the field is updated
-    t.equal(b._blocks['foo'].fields.someField.value, 'initial-value');
+    t.equal(b._blocks.foo.fields.someField.value, 'initial-value');
 
     b.changeBlock({
         element: 'field',
@@ -378,7 +380,7 @@ test('change', function (t) {
         value: 'final-value'
     });
 
-    t.equal(b._blocks['foo'].fields.someField.value, 'final-value');
+    t.equal(b._blocks.foo.fields.someField.value, 'final-value');
 
     // Invalid cases
     // No `element`
@@ -387,7 +389,7 @@ test('change', function (t) {
         name: 'someField',
         value: 'invalid-value'
     });
-    t.equal(b._blocks['foo'].fields.someField.value, 'final-value');
+    t.equal(b._blocks.foo.fields.someField.value, 'final-value');
 
     // No block ID
     b.changeBlock({
@@ -395,7 +397,7 @@ test('change', function (t) {
         name: 'someField',
         value: 'invalid-value'
     });
-    t.equal(b._blocks['foo'].fields.someField.value, 'final-value');
+    t.equal(b._blocks.foo.fields.someField.value, 'final-value');
 
     // No such field
     b.changeBlock({
@@ -404,13 +406,13 @@ test('change', function (t) {
         name: 'someWrongField',
         value: 'final-value'
     });
-    t.equal(b._blocks['foo'].fields.someField.value, 'final-value');
+    t.equal(b._blocks.foo.fields.someField.value, 'final-value');
 
     t.end();
 });
 
-test('delete', function (t) {
-    var b = new Blocks();
+test('delete', t => {
+    const b = new Blocks();
     b.createBlock({
         id: 'foo',
         opcode: 'TEST_BLOCK',
@@ -419,19 +421,17 @@ test('delete', function (t) {
         inputs: {},
         topLevel: true
     });
-    b.deleteBlock({
-        id: 'foo'
-    });
+    b.deleteBlock('foo');
 
-    t.type(b._blocks['foo'], 'undefined');
+    t.type(b._blocks.foo, 'undefined');
     t.equal(b._scripts.indexOf('foo'), -1);
     t.end();
 });
 
-test('delete chain', function (t) {
+test('delete chain', t => {
     // Create a chain of connected blocks and delete the top one.
     // All of them should be deleted.
-    var b = new Blocks();
+    const b = new Blocks();
     b.createBlock({
         id: 'foo',
         opcode: 'TEST_BLOCK',
@@ -456,22 +456,20 @@ test('delete chain', function (t) {
         inputs: {},
         topLevel: false
     });
-    b.deleteBlock({
-        id: 'foo'
-    });
-    t.type(b._blocks['foo'], 'undefined');
-    t.type(b._blocks['foo2'], 'undefined');
-    t.type(b._blocks['foo3'], 'undefined');
+    b.deleteBlock('foo');
+    t.type(b._blocks.foo, 'undefined');
+    t.type(b._blocks.foo2, 'undefined');
+    t.type(b._blocks.foo3, 'undefined');
     t.equal(b._scripts.indexOf('foo'), -1);
     t.equal(Object.keys(b._blocks).length, 0);
     t.equal(b._scripts.length, 0);
     t.end();
 });
 
-test('delete inputs', function (t) {
+test('delete inputs', t => {
     // Create a block with two inputs, one of which has its own input.
     // Delete the block - all of them should be deleted.
-    var b = new Blocks();
+    const b = new Blocks();
     b.createBlock({
         id: 'foo',
         opcode: 'TEST_BLOCK',
@@ -529,14 +527,12 @@ test('delete inputs', function (t) {
         inputs: {},
         topLevel: false
     });
-    b.deleteBlock({
-        id: 'foo'
-    });
-    t.type(b._blocks['foo'], 'undefined');
-    t.type(b._blocks['foo2'], 'undefined');
-    t.type(b._blocks['foo3'], 'undefined');
-    t.type(b._blocks['foo4'], 'undefined');
-    t.type(b._blocks['foo5'], 'undefined');
+    b.deleteBlock('foo');
+    t.type(b._blocks.foo, 'undefined');
+    t.type(b._blocks.foo2, 'undefined');
+    t.type(b._blocks.foo3, 'undefined');
+    t.type(b._blocks.foo4, 'undefined');
+    t.type(b._blocks.foo5, 'undefined');
     t.equal(b._scripts.indexOf('foo'), -1);
     t.equal(Object.keys(b._blocks).length, 0);
     t.equal(b._scripts.length, 0);
