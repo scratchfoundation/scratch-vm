@@ -91,7 +91,8 @@ const generateThread = function (runtime) {
     rt.blocks.createBlock(generateBlock(next));
     th.pushStack(next);
     th.target = rt;
-    
+    th.blockContainer = rt.blocks;
+
     runtime.threads.push(th);
 
     return th;
