@@ -1368,6 +1368,14 @@ var Blocks = function () {
                     break;
                 case 'var_rename':
                     stage.renameVariable(e.varId, e.newName);
+                    // Update all the blocks that use the renamed variable.
+                    if (optRuntime) {
+                        var targets = optRuntime.targets;
+                        for (var _i = 0; _i < targets.length; _i++) {
+                            var currTarget = targets[_i];
+                            currTarget.blocks.updateBlocksAfterVarRename(e.varId, e.newName);
+                        }
+                    }
                     break;
                 case 'var_delete':
                     stage.deleteVariable(e.varId);
@@ -1610,6 +1618,32 @@ var Blocks = function () {
             delete this._blocks[blockId];
 
             this.resetCache();
+        }
+
+        /**
+         * Keep blocks up to date after a variable gets renamed.
+         * @param {string} varId The id of the variable that was renamed
+         * @param {string} newName The new name of the variable that was renamed
+         */
+
+    }, {
+        key: 'updateBlocksAfterVarRename',
+        value: function updateBlocksAfterVarRename(varId, newName) {
+            var blocks = this._blocks;
+            for (var blockId in blocks) {
+                var varOrListField = null;
+                if (blocks[blockId].fields.VARIABLE) {
+                    varOrListField = blocks[blockId].fields.VARIABLE;
+                } else if (blocks[blockId].fields.LIST) {
+                    varOrListField = blocks[blockId].fields.LIST;
+                }
+                if (varOrListField) {
+                    var currFieldId = varOrListField.id;
+                    if (varId === currFieldId) {
+                        varOrListField.value = newName;
+                    }
+                }
+            }
         }
 
         // ---------------------------------------------------------------------
