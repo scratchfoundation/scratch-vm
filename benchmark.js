@@ -476,7 +476,7 @@ const runBenchmark = function () {
 
     // Instantiate the renderer and connect it to the VM.
     const canvas = document.getElementById('scratch-stage');
-    const renderer = new window.RenderWebGL(canvas);
+    const renderer = new window.ScratchRender(canvas);
     Scratch.renderer = renderer;
     vm.attachRenderer(renderer);
     const audioEngine = new window.AudioEngine();
