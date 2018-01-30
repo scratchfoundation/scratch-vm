@@ -122,7 +122,7 @@ module.exports = [
                 },
                 {
                     test: require.resolve('scratch-render'),
-                    loader: 'expose-loader?RenderWebGL'
+                    loader: 'expose-loader?ScratchRender'
                 }
             ])
         },
@@ -134,6 +134,8 @@ module.exports = [
                 from: 'node_modules/highlightjs/styles/zenburn.css'
             }, {
                 from: 'node_modules/scratch-storage/dist/web'
+            }, {
+                from: 'node_modules/scratch-render/dist/web'
             }, {
                 from: 'src/playground'
             }])
