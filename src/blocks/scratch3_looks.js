@@ -251,6 +251,10 @@ class Scratch3LooksBlocks {
 
     say (args, util) {
         // @TODO in 2.0 calling say/think resets the right/left bias of the bubble
+        let message = args.MESSAGE;
+        if (typeof message === 'number') {
+            message = message.toFixed(2);
+        }
         this._updateBubble(util.target, 'say', String(args.MESSAGE));
     }
 

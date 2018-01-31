@@ -50,3 +50,13 @@ test('getBackdropNumberName can return costume name', t => {
     t.strictEqual(number, 'third name');
     t.end();
 });
+
+test('numbers should be rounded to two decimals in say', t => {
+    const args = {MESSAGE: 3.14159};
+    const sayString = blocks.say(args, util);
+    // This breaks becuase it is not returned,
+    // instead this calls this._updateBubble(util.target, 'say', String(args.MESSAGE));
+    // I'm not familiar
+    t.strictEqual(sayString, '3.14');
+    t.end();
+});
