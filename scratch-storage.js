@@ -87,7 +87,8 @@ var _createClass = function () { function defineProperties(target, props) { for 
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
-var TextDecoder = __webpack_require__(24).TextDecoder;
+var TextDecoder = __webpack_require__(7).TextDecoder;
+var TextEncoder = __webpack_require__(7).TextEncoder;
 var base64js = __webpack_require__(5);
 
 var memoizedToString = function () {
@@ -149,6 +150,19 @@ var Asset = function () {
         }
 
         /**
+         * Same as `setData` but encodes text first.
+         * @param {string} data - the text data to encode and store.
+         * @param {DataFormat} dataFormat - the format of the data (DataFormat.SVG for example).
+         */
+
+    }, {
+        key: 'encodeTextData',
+        value: function encodeTextData(data, dataFormat) {
+            var encoder = new TextEncoder();
+            this.setData(encoder.encode(data), dataFormat);
+        }
+
+        /**
          * @param {string} [contentType] - Optionally override the content type to be included in the data URI.
          * @returns {string} - A data URI representing the asset's data.
          */
@@ -207,6 +221,7 @@ module.exports = g;
 var DataFormat = {
     JPG: 'jpg',
     JSON: 'json',
+    MP3: 'mp3',
     PNG: 'png',
     SB2: 'sb2',
     SVG: 'svg',
@@ -456,6 +471,21 @@ function isFunction (fn) {
 
 /***/ }),
 /* 7 */
+/***/ (function(module, exports, __webpack_require__) {
+
+// This is free and unencumbered software released into the public domain.
+// See LICENSE.md for more information.
+
+var encoding = __webpack_require__(26);
+
+module.exports = {
+  TextEncoder: encoding.TextEncoder,
+  TextDecoder: encoding.TextDecoder,
+};
+
+
+/***/ }),
+/* 8 */
 /***/ (function(module, exports) {
 
 // shim for using process in browser
@@ -645,7 +675,7 @@ process.umask = function() { return 0; };
 
 
 /***/ }),
-/* 8 */
+/* 9 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -655,9 +685,9 @@ var _createClass = function () { function defineProperties(target, props) { for 
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
-var BuiltinHelper = __webpack_require__(9);
-var LocalHelper = __webpack_require__(10);
-var WebHelper = __webpack_require__(11);
+var BuiltinHelper = __webpack_require__(10);
+var LocalHelper = __webpack_require__(11);
+var WebHelper = __webpack_require__(12);
 
 var _Asset = __webpack_require__(0);
 var _AssetType = __webpack_require__(4);
@@ -865,7 +895,7 @@ var ScratchStorage = function () {
 module.exports = ScratchStorage;
 
 /***/ }),
-/* 9 */
+/* 10 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -879,7 +909,7 @@ function _possibleConstructorReturn(self, call) { if (!self) { throw new Referen
 
 function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
 
-var md5 = __webpack_require__(15);
+var md5 = __webpack_require__(16);
 
 var Asset = __webpack_require__(0);
 var AssetType = __webpack_require__(4);
@@ -901,17 +931,17 @@ var DefaultAssets = [{
     type: AssetType.ImageBitmap,
     format: DataFormat.PNG,
     id: null,
-    data: __webpack_require__(12) // eslint-disable-line global-require
+    data: __webpack_require__(13) // eslint-disable-line global-require
 }, {
     type: AssetType.Sound,
     format: DataFormat.WAV,
     id: null,
-    data: __webpack_require__(13) // eslint-disable-line global-require
+    data: __webpack_require__(14) // eslint-disable-line global-require
 }, {
     type: AssetType.ImageVector,
     format: DataFormat.SVG,
     id: null,
-    data: __webpack_require__(14) // eslint-disable-line global-require
+    data: __webpack_require__(15) // eslint-disable-line global-require
 }];
 
 /**
@@ -1020,7 +1050,7 @@ var BuiltinHelper = function (_Helper) {
 module.exports = BuiltinHelper;
 
 /***/ }),
-/* 10 */
+/* 11 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -1034,7 +1064,7 @@ function _possibleConstructorReturn(self, call) { if (!self) { throw new Referen
 
 function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
 
-var localforage = __webpack_require__(16);
+var localforage = __webpack_require__(17);
 
 var Asset = __webpack_require__(0);
 var Helper = __webpack_require__(3);
@@ -1091,7 +1121,7 @@ var LocalHelper = function (_Helper) {
 module.exports = LocalHelper;
 
 /***/ }),
-/* 11 */
+/* 12 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -1105,7 +1135,7 @@ function _possibleConstructorReturn(self, call) { if (!self) { throw new Referen
 
 function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
 
-var nets = __webpack_require__(17);
+var nets = __webpack_require__(18);
 
 var Asset = __webpack_require__(0);
 var Helper = __webpack_require__(3);
@@ -1216,25 +1246,25 @@ var WebHelper = function (_Helper) {
 module.exports = WebHelper;
 
 /***/ }),
-/* 12 */
+/* 13 */
 /***/ (function(module, exports) {
 
 module.exports = "PNG\r\n\u001a\n\u0000\u0000\u0000\rIHDR\u0000\u0000\u0000\u0000\u0000\u0000\b\u0000\u0000\u0000\u0000æU>\u0017\u0000\u0000\u0003dIDATxÚíÚïKÛ@\u0018\u0007ðïû¼è¾É\u0015A\u0004YAR\u00146æpî\"PPñ´H\u0007}á«QX\b}±áo\"Ûp£\u0005ÑÝPXcsÔ^$M\u000e,¤½Ë!Ü½lðÉÓç.wO\u000eDp\u0004H\u0004H\u0004H\u0004H\u0004<U@«þ¥ðn(\u0001\u0000©á©âÁµ\u0015' UÍ§ð¨¥òÕVLÖþ\b|ÛÈ®\u0019\u0007àbÒyäÑ\\¡°8 \t¯¾s\u0007e\u0015\u0000^\u001bí\u001f~ÌQÄG/ÀÈ+\u0000R¦_L\u0000\u0000:O±\f\u0000ÃµÇY±©z9\u001fÀ,\u0000@ºúÏ\u0005k\u0012\u0014L^\u0000«¬\u0000Hîù]úì\t\n/@5\r\u0000Szppì6pÁ\u0007Ð\\\u0000\u0000¬ù_m¼¥\u0012Ñä\u00028N\u0002\u0000´ËÛ\u000bPOx\u0000\u001eì»\u0007ýÃ7^\b\u001e8\u0000êöÍA\u001dJ\u001e }Î\u0001 9!¸\rèpúÌ\u0013T8\u0000Ö{'\u0003:Üye= \u0017ã÷ó\u001e 0L,\u00009^ô\u0000+\u0000,4ý{¬{¾\u001aO@P\bvø\u0002¨\u0000çýSLã\u000b ïe#\fÐÆ\u001ep\u000e{¾\nµ<¼f\u000fpÞE\u00000X\u000fKÂiÃËè´§}û\u0019#,KVx¼\ríõ\b\u0000e;t\"â1\u0015\u0013Ò*'\u0000@yoMÅ\\^F\u0010r1¯*£û\u0001; Z¯\u000bmØR`KÄîJÌo\u0011\u0000jø`\u0000:\n\u0000;·$ä·/øoÛu\u0017ÅY]\u0004@rçª\u001aÑa²ý\u0007-\u0011\u0000c¦]\u0011C\u001b×éÜ\u0000DL\u0000fö\u0010P\u000f\u0010@{\bDM@föÆ¸\u0010KÎg!à\u0014©\r\"\u0006àd@V'b\u0000N\u0006D\u001eÌ\u0000v\u0000¢\u000f@Væl\u0003\u0015àDº\u0006a\u000b°KG% \u0013Àyºó\u0004d\u0002(\u0001P5\"\fp;ÑM\u00020\u0000|M\u00027D\u001c \u0018­.Ê\u001cp;\u0001¬<\b\u0004õ£ç'\u0011\bØ´\u0011å\u0000(F)\u0005p\u0000ÜÏcàHÀÍX¢,\u000f@}\u00109\"\u0012PëÅ'¡\u0000-ø\u000bN<J,\u0017ÀzPÍ2.@1BM\u000b ×õ(X$@\u0002$ +¾1®ªã\u001bº(À·\u0001»0òüÈ\u0012\u00028tu¼5ï\npE\u001d\u0018º\u0014\u0000Ø¢Ïâ\u0007Ðßèì]ì\u0000ú¸\u0004ºY\u0015<YÀ]\u0006L\u001bñ'aIp\u0012Ë¡\u000e\u000f1\u000eT±\u0013\u0011±´>ç8&f*&äz5£(Õî\u0016ær= \u0001\u0012 \u0001\u0012 \u0001\u0012 \u0001\u0012 \u001cð\u0017zW+Â\u0010¡ªq\u0000\u0000\u0000\u0000IEND®B`"
 
 /***/ }),
-/* 13 */
+/* 14 */
 /***/ (function(module, exports) {
 
 module.exports = "RIFF&\u0000\u0000\u0000WAVEfmt \u0010\u0000\u0000\u0000\u0001\u0000\u0001\u0000\"V\u0000\u0000D¬\u0000\u0000\u0002\u0000\u0010\u0000data\u0002\u0000\u0000\u0000\u0000\u0000"
 
 /***/ }),
-/* 14 */
+/* 15 */
 /***/ (function(module, exports) {
 
 module.exports = "<?xml version=\"1.0\"?>\n<svg width=\"128\" height=\"128\" xmlns=\"http://www.w3.org/2000/svg\" xmlns:svg=\"http://www.w3.org/2000/svg\">\n <g>\n  <rect fill=\"#CCC\" height=\"128\" width=\"128\"/>\n  <text fill=\"black\" y=\"107\" x=\"35.5\" font-size=\"128\">?</text>\n </g>\n</svg>\n"
 
 /***/ }),
-/* 15 */
+/* 16 */
 /***/ (function(module, exports, __webpack_require__) {
 
 /* WEBPACK VAR INJECTION */(function(process, global) {var __WEBPACK_AMD_DEFINE_RESULT__;/**
@@ -1917,10 +1947,10 @@ module.exports = "<?xml version=\"1.0\"?>\n<svg width=\"128\" height=\"128\" xml
   }
 })();
 
-/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(7), __webpack_require__(1)))
+/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(8), __webpack_require__(1)))
 
 /***/ }),
-/* 16 */
+/* 17 */
 /***/ (function(module, exports, __webpack_require__) {
 
 /* WEBPACK VAR INJECTION */(function(global) {var require;var require;/*!
@@ -4239,10 +4269,10 @@ module.exports = localforage_js;
 /* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(1)))
 
 /***/ }),
-/* 17 */
+/* 18 */
 /***/ (function(module, exports, __webpack_require__) {
 
-/* WEBPACK VAR INJECTION */(function(process, Buffer) {var req = __webpack_require__(18)
+/* WEBPACK VAR INJECTION */(function(process, Buffer) {var req = __webpack_require__(19)
 
 module.exports = Nets
 
@@ -4267,18 +4297,18 @@ function Nets (opts, cb) {
   return req(opts, cb)
 }
 
-/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(7), __webpack_require__(28).Buffer))
+/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(8), __webpack_require__(28).Buffer))
 
 /***/ }),
-/* 18 */
+/* 19 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
-var window = __webpack_require__(19)
+var window = __webpack_require__(20)
 var isFunction = __webpack_require__(6)
-var parseHeaders = __webpack_require__(22)
-var xtend = __webpack_require__(23)
+var parseHeaders = __webpack_require__(23)
+var xtend = __webpack_require__(24)
 
 module.exports = createXHR
 createXHR.XMLHttpRequest = window.XMLHttpRequest || noop
@@ -4503,13 +4533,17 @@ function _createXHR(options) {
 }
 
 function getXml(xhr) {
-    if (xhr.responseType === "document") {
-        return xhr.responseXML
-    }
-    var firefoxBugTakenEffect = xhr.responseXML && xhr.responseXML.documentElement.nodeName === "parsererror"
-    if (xhr.responseType === "" && !firefoxBugTakenEffect) {
-        return xhr.responseXML
-    }
+    // xhr.responseXML will throw Exception "InvalidStateError" or "DOMException"
+    // See https://developer.mozilla.org/en-US/docs/Web/API/XMLHttpRequest/responseXML.
+    try {
+        if (xhr.responseType === "document") {
+            return xhr.responseXML
+        }
+        var firefoxBugTakenEffect = xhr.responseXML && xhr.responseXML.documentElement.nodeName === "parsererror"
+        if (xhr.responseType === "" && !firefoxBugTakenEffect) {
+            return xhr.responseXML
+        }
+    } catch (e) {}
 
     return null
 }
@@ -4518,7 +4552,7 @@ function noop() {}
 
 
 /***/ }),
-/* 19 */
+/* 20 */
 /***/ (function(module, exports, __webpack_require__) {
 
 /* WEBPACK VAR INJECTION */(function(global) {var win;
@@ -4538,7 +4572,7 @@ module.exports = win;
 /* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(1)))
 
 /***/ }),
-/* 20 */
+/* 21 */
 /***/ (function(module, exports, __webpack_require__) {
 
 var isFunction = __webpack_require__(6)
@@ -4590,7 +4624,7 @@ function forEachObject(object, iterator, context) {
 
 
 /***/ }),
-/* 21 */
+/* 22 */
 /***/ (function(module, exports) {
 
 
@@ -4610,11 +4644,11 @@ exports.right = function(str){
 
 
 /***/ }),
-/* 22 */
+/* 23 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var trim = __webpack_require__(21)
-  , forEach = __webpack_require__(20)
+var trim = __webpack_require__(22)
+  , forEach = __webpack_require__(21)
   , isArray = function(arg) {
       return Object.prototype.toString.call(arg) === '[object Array]';
     }
@@ -4646,7 +4680,7 @@ module.exports = function (headers) {
 }
 
 /***/ }),
-/* 23 */
+/* 24 */
 /***/ (function(module, exports) {
 
 module.exports = extend
@@ -4668,21 +4702,6 @@ function extend() {
 
     return target
 }
-
-
-/***/ }),
-/* 24 */
-/***/ (function(module, exports, __webpack_require__) {
-
-// This is free and unencumbered software released into the public domain.
-// See LICENSE.md for more information.
-
-var encoding = __webpack_require__(26);
-
-module.exports = {
-  TextEncoder: encoding.TextEncoder,
-  TextDecoder: encoding.TextDecoder,
-};
 
 
 /***/ }),
@@ -9969,7 +9988,7 @@ module.exports = Array.isArray || function (arr) {
 "use strict";
 
 
-var ScratchStorage = __webpack_require__(8);
+var ScratchStorage = __webpack_require__(9);
 
 /**
  * Export for use with NPM & Node.js.
