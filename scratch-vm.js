@@ -34551,7 +34551,7 @@ var Scratch3SoundBlocks = function () {
         key: 'EFFECT_RANGE',
         get: function get() {
             return {
-                pitch: { min: -600, max: 600 }, // -5 to 5 octaves
+                pitch: { min: -360, max: 360 }, // -3 to 3 octaves
                 pan: { min: -100, max: 100 // 100% left to 100% right
                 } };
         }
