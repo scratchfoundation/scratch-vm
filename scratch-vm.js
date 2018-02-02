@@ -61,7 +61,7 @@ var VirtualMachine =
 /******/ 	__webpack_require__.p = "";
 /******/
 /******/ 	// Load entry module and return exports
-/******/ 	return __webpack_require__(__webpack_require__.s = 56);
+/******/ 	return __webpack_require__(__webpack_require__.s = 55);
 /******/ })
 /************************************************************************/
 /******/ ([
@@ -71,7 +71,7 @@ var VirtualMachine =
 "use strict";
 
 
-var minilog = __webpack_require__(63);
+var minilog = __webpack_require__(62);
 minilog.enable();
 
 module.exports = minilog('vm');
@@ -375,7 +375,7 @@ if (typeof Object.create === 'function') {
 /* 4 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var microee = __webpack_require__(65);
+var microee = __webpack_require__(64);
 
 // Implements a subset of Node's stream.Transform - in a cross-platform manner.
 function Transform() {}
@@ -992,6 +992,203 @@ function forEach(xs, f) {
 /* 8 */
 /***/ (function(module, exports, __webpack_require__) {
 
+var Parser = __webpack_require__(41),
+    DomHandler = __webpack_require__(80);
+
+function defineProp(name, value){
+	delete module.exports[name];
+	module.exports[name] = value;
+	return value;
+}
+
+module.exports = {
+	Parser: Parser,
+	Tokenizer: __webpack_require__(42),
+	ElementType: __webpack_require__(13),
+	DomHandler: DomHandler,
+	get FeedHandler(){
+		return defineProp("FeedHandler", __webpack_require__(82));
+	},
+	get Stream(){
+		return defineProp("Stream", __webpack_require__(83));
+	},
+	get WritableStream(){
+		return defineProp("WritableStream", __webpack_require__(46));
+	},
+	get ProxyHandler(){
+		return defineProp("ProxyHandler", __webpack_require__(98));
+	},
+	get DomUtils(){
+		return defineProp("DomUtils", __webpack_require__(99));
+	},
+	get CollectingHandler(){
+		return defineProp("CollectingHandler", __webpack_require__(111));
+	},
+	// For legacy support
+	DefaultHandler: DomHandler,
+	get RssHandler(){
+		return defineProp("RssHandler", this.FeedHandler);
+	},
+	//helper methods
+	parseDOM: function(data, options){
+		var handler = new DomHandler(options);
+		new Parser(handler, options).end(data);
+		return handler.dom;
+	},
+	parseFeed: function(feed, options){
+		var handler = new module.exports.FeedHandler(options);
+		new Parser(handler, options).end(feed);
+		return handler.dom;
+	},
+	createDomStream: function(cb, options, elementCb){
+		var handler = new DomHandler(cb, options, elementCb);
+		return new Parser(handler, options);
+	},
+	// List of all events that the parser emits
+	EVENTS: { /* Format: eventname: number of arguments */
+		attribute: 2,
+		cdatastart: 0,
+		cdataend: 0,
+		text: 1,
+		processinginstruction: 2,
+		comment: 1,
+		commentend: 0,
+		closetag: 1,
+		opentag: 2,
+		opentagname: 1,
+		error: 1,
+		end: 0
+	}
+};
+
+
+/***/ }),
+/* 9 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+var BlockType = {
+    BOOLEAN: 'Boolean',
+    COMMAND: 'command',
+    CONDITIONAL: 'conditional',
+    HAT: 'hat',
+    REPORTER: 'reporter'
+};
+
+module.exports = BlockType;
+
+/***/ }),
+/* 10 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+/**
+ * Methods for cloning JavaScript objects.
+ * @type {object}
+ */
+var Clone = function () {
+  function Clone() {
+    _classCallCheck(this, Clone);
+  }
+
+  _createClass(Clone, null, [{
+    key: "simple",
+
+    /**
+     * Deep-clone a "simple" object: one which can be fully expressed with JSON.
+     * Non-JSON values, such as functions, will be stripped from the clone.
+     * @param {object} original - the object to be cloned.
+     * @returns {object} a deep clone of the original object.
+     */
+    value: function simple(original) {
+      return JSON.parse(JSON.stringify(original));
+    }
+  }]);
+
+  return Clone;
+}();
+
+module.exports = Clone;
+
+/***/ }),
+/* 11 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+var StringUtil = function () {
+    function StringUtil() {
+        _classCallCheck(this, StringUtil);
+    }
+
+    _createClass(StringUtil, null, [{
+        key: 'withoutTrailingDigits',
+        value: function withoutTrailingDigits(s) {
+            var i = s.length - 1;
+            while (i >= 0 && '0123456789'.indexOf(s.charAt(i)) > -1) {
+                i--;
+            }return s.slice(0, i + 1);
+        }
+    }, {
+        key: 'unusedName',
+        value: function unusedName(name, existingNames) {
+            if (existingNames.indexOf(name) < 0) return name;
+            name = StringUtil.withoutTrailingDigits(name);
+            var i = 2;
+            while (existingNames.indexOf(name + i) >= 0) {
+                i++;
+            }return name + i;
+        }
+
+        /**
+         * Split a string on the first occurrence of a split character.
+         * @param {string} text - the string to split.
+         * @param {string} separator - split the text on this character.
+         * @returns {[string, string]} - the two parts of the split string, or [text, null] if no split character found.
+         * @example
+         * // returns ['foo', 'tar.gz']
+         * splitFirst('foo.tar.gz', '.');
+         * @example
+         * // returns ['foo', null]
+         * splitFirst('foo', '.');
+         * @example
+         * // returns ['foo', '']
+         * splitFirst('foo.', '.');
+         */
+
+    }, {
+        key: 'splitFirst',
+        value: function splitFirst(text, separator) {
+            var index = text.indexOf(separator);
+            if (index >= 0) {
+                return [text.substring(0, index), text.substring(index + 1)];
+            }
+            return [text, null];
+        }
+    }]);
+
+    return StringUtil;
+}();
+
+module.exports = StringUtil;
+
+/***/ }),
+/* 12 */
+/***/ (function(module, exports, __webpack_require__) {
+
 "use strict";
 
 
@@ -1001,16 +1198,14 @@ var _createClass = function () { function defineProperties(target, props) { for 
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
-var adapter = __webpack_require__(79);
+var adapter = __webpack_require__(78);
 var mutationAdapter = __webpack_require__(40);
-var xmlEscape = __webpack_require__(114);
-var MonitorRecord = __webpack_require__(115);
-var Clone = __webpack_require__(11);
+var xmlEscape = __webpack_require__(113);
+var MonitorRecord = __webpack_require__(114);
+var Clone = __webpack_require__(10);
 
 var _require = __webpack_require__(16),
     Map = _require.Map;
-
-var BlocksExecuteCache = __webpack_require__(52);
 
 /**
  * @fileoverview
@@ -1056,14 +1251,7 @@ var Blocks = function () {
              * Cache procedure definitions by block id
              * @type {object.<string, ?string>}
              */
-            procedureDefinitions: {},
-
-            /**
-             * A cache for execute to use and store on. Only available to
-             * execute.
-             * @type {object.<string, object>}
-             */
-            _executeCached: {}
+            procedureDefinitions: {}
         };
     }
 
@@ -1395,7 +1583,6 @@ var Blocks = function () {
             this._cache.inputs = {};
             this._cache.procedureParamNames = {};
             this._cache.procedureDefinitions = {};
-            this._cache._executeCached = {};
         }
 
         /**
@@ -1824,233 +2011,7 @@ var Blocks = function () {
     return Blocks;
 }();
 
-/**
- * A private method shared with execute to build an object containing the block
- * information execute needs and that is reset when other cached Blocks info is
- * reset.
- * @param {Blocks} blocks Blocks containing the expected blockId
- * @param {string} blockId blockId for the desired execute cache
- * @return {object} execute cache object
- */
-
-
-BlocksExecuteCache.getCached = function (blocks, blockId) {
-    var block = blocks.getBlock(blockId);
-    if (typeof block === 'undefined') return null;
-    var cached = blocks._cache._executeCached[blockId];
-    if (typeof cached !== 'undefined') {
-        return cached;
-    }
-
-    cached = {
-        _initialized: false,
-        opcode: blocks.getOpcode(block),
-        fields: blocks.getFields(block),
-        inputs: blocks.getInputs(block),
-        mutation: blocks.getMutation(block)
-    };
-    blocks._cache._executeCached[blockId] = cached;
-    return cached;
-};
-
 module.exports = Blocks;
-
-/***/ }),
-/* 9 */
-/***/ (function(module, exports, __webpack_require__) {
-
-var Parser = __webpack_require__(41),
-    DomHandler = __webpack_require__(81);
-
-function defineProp(name, value){
-	delete module.exports[name];
-	module.exports[name] = value;
-	return value;
-}
-
-module.exports = {
-	Parser: Parser,
-	Tokenizer: __webpack_require__(42),
-	ElementType: __webpack_require__(13),
-	DomHandler: DomHandler,
-	get FeedHandler(){
-		return defineProp("FeedHandler", __webpack_require__(83));
-	},
-	get Stream(){
-		return defineProp("Stream", __webpack_require__(84));
-	},
-	get WritableStream(){
-		return defineProp("WritableStream", __webpack_require__(46));
-	},
-	get ProxyHandler(){
-		return defineProp("ProxyHandler", __webpack_require__(99));
-	},
-	get DomUtils(){
-		return defineProp("DomUtils", __webpack_require__(100));
-	},
-	get CollectingHandler(){
-		return defineProp("CollectingHandler", __webpack_require__(112));
-	},
-	// For legacy support
-	DefaultHandler: DomHandler,
-	get RssHandler(){
-		return defineProp("RssHandler", this.FeedHandler);
-	},
-	//helper methods
-	parseDOM: function(data, options){
-		var handler = new DomHandler(options);
-		new Parser(handler, options).end(data);
-		return handler.dom;
-	},
-	parseFeed: function(feed, options){
-		var handler = new module.exports.FeedHandler(options);
-		new Parser(handler, options).end(feed);
-		return handler.dom;
-	},
-	createDomStream: function(cb, options, elementCb){
-		var handler = new DomHandler(cb, options, elementCb);
-		return new Parser(handler, options);
-	},
-	// List of all events that the parser emits
-	EVENTS: { /* Format: eventname: number of arguments */
-		attribute: 2,
-		cdatastart: 0,
-		cdataend: 0,
-		text: 1,
-		processinginstruction: 2,
-		comment: 1,
-		commentend: 0,
-		closetag: 1,
-		opentag: 2,
-		opentagname: 1,
-		error: 1,
-		end: 0
-	}
-};
-
-
-/***/ }),
-/* 10 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-
-var BlockType = {
-    BOOLEAN: 'Boolean',
-    COMMAND: 'command',
-    CONDITIONAL: 'conditional',
-    HAT: 'hat',
-    REPORTER: 'reporter'
-};
-
-module.exports = BlockType;
-
-/***/ }),
-/* 11 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-
-var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
-
-function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
-
-/**
- * Methods for cloning JavaScript objects.
- * @type {object}
- */
-var Clone = function () {
-  function Clone() {
-    _classCallCheck(this, Clone);
-  }
-
-  _createClass(Clone, null, [{
-    key: "simple",
-
-    /**
-     * Deep-clone a "simple" object: one which can be fully expressed with JSON.
-     * Non-JSON values, such as functions, will be stripped from the clone.
-     * @param {object} original - the object to be cloned.
-     * @returns {object} a deep clone of the original object.
-     */
-    value: function simple(original) {
-      return JSON.parse(JSON.stringify(original));
-    }
-  }]);
-
-  return Clone;
-}();
-
-module.exports = Clone;
-
-/***/ }),
-/* 12 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-
-var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
-
-function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
-
-var StringUtil = function () {
-    function StringUtil() {
-        _classCallCheck(this, StringUtil);
-    }
-
-    _createClass(StringUtil, null, [{
-        key: 'withoutTrailingDigits',
-        value: function withoutTrailingDigits(s) {
-            var i = s.length - 1;
-            while (i >= 0 && '0123456789'.indexOf(s.charAt(i)) > -1) {
-                i--;
-            }return s.slice(0, i + 1);
-        }
-    }, {
-        key: 'unusedName',
-        value: function unusedName(name, existingNames) {
-            if (existingNames.indexOf(name) < 0) return name;
-            name = StringUtil.withoutTrailingDigits(name);
-            var i = 2;
-            while (existingNames.indexOf(name + i) >= 0) {
-                i++;
-            }return name + i;
-        }
-
-        /**
-         * Split a string on the first occurrence of a split character.
-         * @param {string} text - the string to split.
-         * @param {string} separator - split the text on this character.
-         * @returns {[string, string]} - the two parts of the split string, or [text, null] if no split character found.
-         * @example
-         * // returns ['foo', 'tar.gz']
-         * splitFirst('foo.tar.gz', '.');
-         * @example
-         * // returns ['foo', null]
-         * splitFirst('foo', '.');
-         * @example
-         * // returns ['foo', '']
-         * splitFirst('foo.', '.');
-         */
-
-    }, {
-        key: 'splitFirst',
-        value: function splitFirst(text, separator) {
-            var index = text.indexOf(separator);
-            if (index >= 0) {
-                return [text.substring(0, index), text.substring(index + 1)];
-            }
-            return [text, null];
-        }
-    }]);
-
-    return StringUtil;
-}();
-
-module.exports = StringUtil;
 
 /***/ }),
 /* 13 */
@@ -7748,8 +7709,8 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
 
 var log = __webpack_require__(0);
 var MathUtil = __webpack_require__(6);
-var StringUtil = __webpack_require__(12);
-var Target = __webpack_require__(78);
+var StringUtil = __webpack_require__(11);
+var Target = __webpack_require__(77);
 
 /**
  * Rendered target: instance of a sprite (clone), or the stage.
@@ -8970,8 +8931,8 @@ SafeBuffer.allocUnsafeSlow = function (size) {
 
 
 
-var base64 = __webpack_require__(86)
-var ieee754 = __webpack_require__(87)
+var base64 = __webpack_require__(85)
+var ieee754 = __webpack_require__(86)
 var isArray = __webpack_require__(48)
 
 exports.Buffer = Buffer
@@ -10936,12 +10897,6 @@ var Thread = function () {
         this.target = null;
 
         /**
-         * The Blocks this thread will execute.
-         * @type {Blocks}
-         */
-        this.blockContainer = null;
-
-        /**
          * Whether the thread requests its script to glow during this frame.
          * @type {boolean}
          */
@@ -10990,8 +10945,7 @@ var Thread = function () {
                 this.stackFrames.push({
                     isLoop: false, // Whether this level of the stack is a loop.
                     warpMode: warpMode, // Whether this level is in warp mode.
-                    justReported: null, // Reported value from just executed block.
-                    reported: {}, // Persists reported inputs during async block.
+                    reported: {}, // Collects reported input values.
                     waitingReporter: null, // Name of waiting reporter.
                     params: {}, // Procedure parameters.
                     executionContext: {} // A context passed to block implementations.
@@ -11096,8 +11050,9 @@ var Thread = function () {
         key: 'pushReportedValue',
         value: function pushReportedValue(value) {
             var parentStackFrame = this.peekParentStackFrame();
-            if (parentStackFrame !== null) {
-                parentStackFrame.justReported = value;
+            if (parentStackFrame) {
+                var waitingReporter = parentStackFrame.waitingReporter;
+                parentStackFrame.reported[waitingReporter] = value;
             }
         }
 
@@ -11244,7 +11199,7 @@ module.exports = Thread;
 "use strict";
 
 
-var StringUtil = __webpack_require__(12);
+var StringUtil = __webpack_require__(11);
 var log = __webpack_require__(0);
 
 /**
@@ -11302,7 +11257,7 @@ module.exports = {
 "use strict";
 
 
-var StringUtil = __webpack_require__(12);
+var StringUtil = __webpack_require__(11);
 var log = __webpack_require__(0);
 
 /**
@@ -11412,7 +11367,7 @@ exports.Readable = exports;
 exports.Writable = __webpack_require__(31);
 exports.Duplex = __webpack_require__(7);
 exports.Transform = __webpack_require__(51);
-exports.PassThrough = __webpack_require__(93);
+exports.PassThrough = __webpack_require__(92);
 
 
 /***/ }),
@@ -11492,7 +11447,7 @@ util.inherits = __webpack_require__(3);
 
 /*<replacement>*/
 var internalUtil = {
-  deprecate: __webpack_require__(92)
+  deprecate: __webpack_require__(91)
 };
 /*</replacement>*/
 
@@ -12084,7 +12039,7 @@ Writable.prototype._destroy = function (err, cb) {
   this.end();
   cb(err);
 };
-/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(14), __webpack_require__(90).setImmediate, __webpack_require__(2)))
+/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(14), __webpack_require__(89).setImmediate, __webpack_require__(2)))
 
 /***/ }),
 /* 32 */
@@ -12415,7 +12370,7 @@ function _possibleConstructorReturn(self, call) { if (!self) { throw new Referen
 
 function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
 
-var SharedDispatch = __webpack_require__(62);
+var SharedDispatch = __webpack_require__(61);
 
 var log = __webpack_require__(0);
 
@@ -12583,9 +12538,9 @@ module.exports = color;
 /* globals Intl */
 
 
-var assign = __webpack_require__(75)
-var parse = __webpack_require__(76)
-var interpret = __webpack_require__(77)
+var assign = __webpack_require__(74)
+var parse = __webpack_require__(75)
+var interpret = __webpack_require__(76)
 var plurals = __webpack_require__(39)
 var lookupClosestLocale = __webpack_require__(38)
 var formats = __webpack_require__(37)
@@ -13378,8 +13333,8 @@ module.exports = {
 
 var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
 
-var html = __webpack_require__(9);
-var decodeHtml = __webpack_require__(113);
+var html = __webpack_require__(8);
+var decodeHtml = __webpack_require__(112);
 
 /**
  * Convert a part of a mutation DOM to a mutation VM object, recursively.
@@ -14694,7 +14649,7 @@ Tokenizer.prototype._emitPartial = function(value){
 /* 43 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var decodeMap = __webpack_require__(80);
+var decodeMap = __webpack_require__(79);
 
 module.exports = decodeCodePoint;
 
@@ -14785,7 +14740,7 @@ Object.keys(domLvl1).forEach(function(key) {
 module.exports = Stream;
 
 var Parser = __webpack_require__(41),
-    WritableStream = __webpack_require__(85).Writable || __webpack_require__(98).Writable,
+    WritableStream = __webpack_require__(84).Writable || __webpack_require__(97).Writable,
     StringDecoder = __webpack_require__(32).StringDecoder,
     Buffer = __webpack_require__(23).Buffer;
 
@@ -14884,7 +14839,7 @@ util.inherits = __webpack_require__(3);
 /*</replacement>*/
 
 /*<replacement>*/
-var debugUtil = __webpack_require__(88);
+var debugUtil = __webpack_require__(87);
 var debug = void 0;
 if (debugUtil && debugUtil.debuglog) {
   debug = debugUtil.debuglog('stream');
@@ -14893,7 +14848,7 @@ if (debugUtil && debugUtil.debuglog) {
 }
 /*</replacement>*/
 
-var BufferList = __webpack_require__(89);
+var BufferList = __webpack_require__(88);
 var destroyImpl = __webpack_require__(50);
 var StringDecoder;
 
@@ -16140,33 +16095,6 @@ function done(stream, er, data) {
 
 /***/ }),
 /* 52 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-
-/**
- * @fileoverview
- * Access point for private method shared between blocks.js and execute.js for
- * caching execute information.
- */
-
-/**
- * A private method shared with execute to build an object containing the block
- * information execute needs and that is reset when other cached Blocks info is
- * reset.
- * @param {Blocks} blocks Blocks containing the expected blockId
- * @param {string} blockId blockId for the desired execute cache
- */
-exports.getCached = function () {
-  throw new Error('blocks.js has not initialized BlocksExecuteCache');
-};
-
-// Call after the default throwing getCached is assigned for Blocks to replace.
-__webpack_require__(8);
-
-/***/ }),
-/* 53 */
 /***/ (function(module, exports) {
 
 module.exports = isFunction
@@ -16187,7 +16115,7 @@ function isFunction (fn) {
 
 
 /***/ }),
-/* 54 */
+/* 53 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -16198,7 +16126,7 @@ var _createClass = function () { function defineProperties(target, props) { for 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
 var RenderedTarget = __webpack_require__(20);
-var Blocks = __webpack_require__(8);
+var Blocks = __webpack_require__(12);
 
 var _require = __webpack_require__(26),
     loadSoundFromAsset = _require.loadSoundFromAsset;
@@ -16206,7 +16134,7 @@ var _require = __webpack_require__(26),
 var _require2 = __webpack_require__(27),
     loadCostumeFromAsset = _require2.loadCostumeFromAsset;
 
-var StringUtil = __webpack_require__(12);
+var StringUtil = __webpack_require__(11);
 
 var Sprite = function () {
     /**
@@ -16333,27 +16261,27 @@ var Sprite = function () {
 module.exports = Sprite;
 
 /***/ }),
-/* 55 */,
-/* 56 */
+/* 54 */,
+/* 55 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 /* WEBPACK VAR INJECTION */(function(global) {
 
-module.exports = global["VirtualMachine"] = __webpack_require__(57);
+module.exports = global["VirtualMachine"] = __webpack_require__(56);
 /* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(2)))
 
 /***/ }),
-/* 57 */
+/* 56 */
 /***/ (function(module, exports, __webpack_require__) {
 
-const VirtualMachine = __webpack_require__(58);
+const VirtualMachine = __webpack_require__(57);
 
 module.exports = VirtualMachine;
 
 
 /***/ }),
-/* 58 */
+/* 57 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -16371,16 +16299,16 @@ function _possibleConstructorReturn(self, call) { if (!self) { throw new Referen
 
 function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
 
-var TextEncoder = __webpack_require__(59).TextEncoder;
+var TextEncoder = __webpack_require__(58).TextEncoder;
 var EventEmitter = __webpack_require__(5);
 
 var centralDispatch = __webpack_require__(34);
-var ExtensionManager = __webpack_require__(73);
+var ExtensionManager = __webpack_require__(72);
 var log = __webpack_require__(0);
-var Runtime = __webpack_require__(119);
-var sb2 = __webpack_require__(149);
-var sb3 = __webpack_require__(151);
-var StringUtil = __webpack_require__(12);
+var Runtime = __webpack_require__(118);
+var sb2 = __webpack_require__(148);
+var sb3 = __webpack_require__(150);
+var StringUtil = __webpack_require__(11);
 var formatMessage = __webpack_require__(36);
 var Variable = __webpack_require__(17);
 
@@ -17316,13 +17244,13 @@ var VirtualMachine = function (_EventEmitter) {
 module.exports = VirtualMachine;
 
 /***/ }),
-/* 59 */
+/* 58 */
 /***/ (function(module, exports, __webpack_require__) {
 
 // This is free and unencumbered software released into the public domain.
 // See LICENSE.md for more information.
 
-var encoding = __webpack_require__(60);
+var encoding = __webpack_require__(59);
 
 module.exports = {
   TextEncoder: encoding.TextEncoder,
@@ -17331,7 +17259,7 @@ module.exports = {
 
 
 /***/ }),
-/* 60 */
+/* 59 */
 /***/ (function(module, exports, __webpack_require__) {
 
 // This is free and unencumbered software released into the public domain.
@@ -17348,7 +17276,7 @@ module.exports = {
   if (typeof module !== "undefined" && module.exports &&
     !global["encoding-indexes"]) {
     global["encoding-indexes"] =
-      __webpack_require__(61)["encoding-indexes"];
+      __webpack_require__(60)["encoding-indexes"];
   }
 
   //
@@ -20649,7 +20577,7 @@ module.exports = {
 }(this || {}));
 
 /***/ }),
-/* 61 */
+/* 60 */
 /***/ (function(module, exports) {
 
 (function(global) {
@@ -20701,7 +20629,7 @@ module.exports = {
 }(this || {}));
 
 /***/ }),
-/* 62 */
+/* 61 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -21012,15 +20940,15 @@ var SharedDispatch = function () {
 module.exports = SharedDispatch;
 
 /***/ }),
-/* 63 */
+/* 62 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var Minilog = __webpack_require__(64);
+var Minilog = __webpack_require__(63);
 
 var oldEnable = Minilog.enable,
     oldDisable = Minilog.disable,
     isChrome = (typeof navigator != 'undefined' && /chrome/i.test(navigator.userAgent)),
-    console = __webpack_require__(67);
+    console = __webpack_require__(66);
 
 // Use a more capable logging backend if on Chrome
 Minilog.defaultBackend = (isChrome ? console.minilog : console);
@@ -21052,19 +20980,19 @@ Minilog.disable = function() {
 exports = module.exports = Minilog;
 
 exports.backends = {
-  array: __webpack_require__(70),
+  array: __webpack_require__(69),
   browser: Minilog.defaultBackend,
-  localStorage: __webpack_require__(71),
-  jQuery: __webpack_require__(72)
+  localStorage: __webpack_require__(70),
+  jQuery: __webpack_require__(71)
 };
 
 
 /***/ }),
-/* 64 */
+/* 63 */
 /***/ (function(module, exports, __webpack_require__) {
 
 var Transform = __webpack_require__(4),
-    Filter = __webpack_require__(66);
+    Filter = __webpack_require__(65);
 
 var log = new Transform(),
     slice = Array.prototype.slice;
@@ -21111,7 +21039,7 @@ exports.enable = function() {
 
 
 /***/ }),
-/* 65 */
+/* 64 */
 /***/ (function(module, exports) {
 
 function M() { this._events = {}; }
@@ -21167,7 +21095,7 @@ module.exports = M;
 
 
 /***/ }),
-/* 66 */
+/* 65 */
 /***/ (function(module, exports, __webpack_require__) {
 
 // default filter
@@ -21229,7 +21157,7 @@ module.exports = Filter;
 
 
 /***/ }),
-/* 67 */
+/* 66 */
 /***/ (function(module, exports, __webpack_require__) {
 
 var Transform = __webpack_require__(4);
@@ -21260,14 +21188,14 @@ logger.write = function(name, level, args) {
 };
 
 logger.formatters = ['color', 'minilog'];
-logger.color = __webpack_require__(68);
-logger.minilog = __webpack_require__(69);
+logger.color = __webpack_require__(67);
+logger.minilog = __webpack_require__(68);
 
 module.exports = logger;
 
 
 /***/ }),
-/* 68 */
+/* 67 */
 /***/ (function(module, exports, __webpack_require__) {
 
 var Transform = __webpack_require__(4),
@@ -21291,7 +21219,7 @@ module.exports = logger;
 
 
 /***/ }),
-/* 69 */
+/* 68 */
 /***/ (function(module, exports, __webpack_require__) {
 
 var Transform = __webpack_require__(4),
@@ -21323,7 +21251,7 @@ module.exports = logger;
 
 
 /***/ }),
-/* 70 */
+/* 69 */
 /***/ (function(module, exports, __webpack_require__) {
 
 var Transform = __webpack_require__(4),
@@ -21343,7 +21271,7 @@ module.exports = logger;
 
 
 /***/ }),
-/* 71 */
+/* 70 */
 /***/ (function(module, exports, __webpack_require__) {
 
 var Transform = __webpack_require__(4),
@@ -21363,7 +21291,7 @@ logger.write = function(name, level, args) {
 module.exports = logger;
 
 /***/ }),
-/* 72 */
+/* 71 */
 /***/ (function(module, exports, __webpack_require__) {
 
 var Transform = __webpack_require__(4);
@@ -21443,7 +21371,7 @@ module.exports = AjaxLogger;
 
 
 /***/ }),
-/* 73 */
+/* 72 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -21456,14 +21384,14 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
 var dispatch = __webpack_require__(34);
 var log = __webpack_require__(0);
 
-var BlockType = __webpack_require__(10);
+var BlockType = __webpack_require__(9);
 
 // These extensions are currently built into the VM repository but should not be loaded at startup.
 // TODO: move these out into a separate repository?
 // TODO: change extension spec so that library info, including extension ID, can be collected through static methods
-var Scratch3PenBlocks = __webpack_require__(74);
-var Scratch3WeDo2Blocks = __webpack_require__(116);
-var Scratch3MusicBlocks = __webpack_require__(117);
+var Scratch3PenBlocks = __webpack_require__(73);
+var Scratch3WeDo2Blocks = __webpack_require__(115);
+var Scratch3MusicBlocks = __webpack_require__(116);
 var builtinExtensions = {
     pen: Scratch3PenBlocks,
     wedo2: Scratch3WeDo2Blocks,
@@ -21592,7 +21520,7 @@ var ExtensionManager = function () {
 
             return new Promise(function (resolve, reject) {
                 // If we `require` this at the global level it breaks non-webpack targets, including tests
-                var ExtensionWorker = __webpack_require__(118);
+                var ExtensionWorker = __webpack_require__(117);
 
                 _this.pendingExtensions.push({ extensionURL: extensionURL, resolve: resolve, reject: reject });
                 dispatch.addWorker(new ExtensionWorker());
@@ -21775,7 +21703,7 @@ var ExtensionManager = function () {
 module.exports = ExtensionManager;
 
 /***/ }),
-/* 74 */
+/* 73 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -21786,9 +21714,9 @@ var _createClass = function () { function defineProperties(target, props) { for 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
 var ArgumentType = __webpack_require__(18);
-var BlockType = __webpack_require__(10);
+var BlockType = __webpack_require__(9);
 var Cast = __webpack_require__(1);
-var Clone = __webpack_require__(11);
+var Clone = __webpack_require__(10);
 var Color = __webpack_require__(19);
 var formatMessage = __webpack_require__(36);
 var MathUtil = __webpack_require__(6);
@@ -22625,7 +22553,7 @@ var Scratch3PenBlocks = function () {
 module.exports = Scratch3PenBlocks;
 
 /***/ }),
-/* 75 */
+/* 74 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -22722,7 +22650,7 @@ module.exports = shouldUseNative() ? Object.assign : function (target, source) {
 
 
 /***/ }),
-/* 76 */
+/* 75 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -23118,7 +23046,7 @@ module.exports.SyntaxError = SyntaxError
 
 
 /***/ }),
-/* 77 */
+/* 76 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -23278,7 +23206,7 @@ function getArg (id, args) {
 
 
 /***/ }),
-/* 78 */
+/* 77 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -23294,7 +23222,7 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
 
 var EventEmitter = __webpack_require__(5);
 
-var Blocks = __webpack_require__(8);
+var Blocks = __webpack_require__(12);
 var Variable = __webpack_require__(17);
 var uid = __webpack_require__(33);
 
@@ -23613,7 +23541,7 @@ var Target = function (_EventEmitter) {
 module.exports = Target;
 
 /***/ }),
-/* 79 */
+/* 78 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -23622,7 +23550,7 @@ module.exports = Target;
 var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
 
 var mutationAdapter = __webpack_require__(40);
-var html = __webpack_require__(9);
+var html = __webpack_require__(8);
 
 /**
  * Convert and an individual block DOM to the representation tree.
@@ -23789,20 +23717,20 @@ var adapter = function adapter(e) {
 module.exports = adapter;
 
 /***/ }),
-/* 80 */
+/* 79 */
 /***/ (function(module, exports) {
 
 module.exports = {"0":65533,"128":8364,"130":8218,"131":402,"132":8222,"133":8230,"134":8224,"135":8225,"136":710,"137":8240,"138":352,"139":8249,"140":338,"142":381,"145":8216,"146":8217,"147":8220,"148":8221,"149":8226,"150":8211,"151":8212,"152":732,"153":8482,"154":353,"155":8250,"156":339,"158":382,"159":376}
 
 /***/ }),
-/* 81 */
+/* 80 */
 /***/ (function(module, exports, __webpack_require__) {
 
 var ElementType = __webpack_require__(13);
 
 var re_whitespace = /\s+/g;
 var NodePrototype = __webpack_require__(45);
-var ElementPrototype = __webpack_require__(82);
+var ElementPrototype = __webpack_require__(81);
 
 function DomHandler(callback, options, elementCB){
 	if(typeof callback === "object"){
@@ -24018,7 +23946,7 @@ module.exports = DomHandler;
 
 
 /***/ }),
-/* 82 */
+/* 81 */
 /***/ (function(module, exports, __webpack_require__) {
 
 // DOM-Level-1-compliant structure
@@ -24044,10 +23972,10 @@ Object.keys(domLvl1).forEach(function(key) {
 
 
 /***/ }),
-/* 83 */
+/* 82 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var index = __webpack_require__(9),
+var index = __webpack_require__(8),
     DomHandler = index.DomHandler,
     DomUtils = index.DomUtils;
 
@@ -24145,7 +24073,7 @@ module.exports = FeedHandler;
 
 
 /***/ }),
-/* 84 */
+/* 83 */
 /***/ (function(module, exports, __webpack_require__) {
 
 module.exports = Stream;
@@ -24164,7 +24092,7 @@ function Cbs(scope){
 	this.scope = scope;
 }
 
-var EVENTS = __webpack_require__(9).EVENTS;
+var EVENTS = __webpack_require__(8).EVENTS;
 
 Object.keys(EVENTS).forEach(function(name){
 	if(EVENTS[name] === 0){
@@ -24185,7 +24113,7 @@ Object.keys(EVENTS).forEach(function(name){
 });
 
 /***/ }),
-/* 85 */
+/* 84 */
 /***/ (function(module, exports, __webpack_require__) {
 
 // Copyright Joyent, Inc. and other Node contributors.
@@ -24216,10 +24144,10 @@ var inherits = __webpack_require__(3);
 
 inherits(Stream, EE);
 Stream.Readable = __webpack_require__(30);
-Stream.Writable = __webpack_require__(94);
-Stream.Duplex = __webpack_require__(95);
-Stream.Transform = __webpack_require__(96);
-Stream.PassThrough = __webpack_require__(97);
+Stream.Writable = __webpack_require__(93);
+Stream.Duplex = __webpack_require__(94);
+Stream.Transform = __webpack_require__(95);
+Stream.PassThrough = __webpack_require__(96);
 
 // Backwards-compat with node 0.4.x
 Stream.Stream = Stream;
@@ -24318,7 +24246,7 @@ Stream.prototype.pipe = function(dest, options) {
 
 
 /***/ }),
-/* 86 */
+/* 85 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -24439,7 +24367,7 @@ function fromByteArray (uint8) {
 
 
 /***/ }),
-/* 87 */
+/* 86 */
 /***/ (function(module, exports) {
 
 exports.read = function (buffer, offset, isLE, mLen, nBytes) {
@@ -24529,13 +24457,13 @@ exports.write = function (buffer, value, offset, isLE, mLen, nBytes) {
 
 
 /***/ }),
-/* 88 */
+/* 87 */
 /***/ (function(module, exports) {
 
 /* (ignored) */
 
 /***/ }),
-/* 89 */
+/* 88 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -24615,7 +24543,7 @@ module.exports = function () {
 }();
 
 /***/ }),
-/* 90 */
+/* 89 */
 /***/ (function(module, exports, __webpack_require__) {
 
 var apply = Function.prototype.apply;
@@ -24668,13 +24596,13 @@ exports._unrefActive = exports.active = function(item) {
 };
 
 // setimmediate attaches itself to the global object
-__webpack_require__(91);
+__webpack_require__(90);
 exports.setImmediate = setImmediate;
 exports.clearImmediate = clearImmediate;
 
 
 /***/ }),
-/* 91 */
+/* 90 */
 /***/ (function(module, exports, __webpack_require__) {
 
 /* WEBPACK VAR INJECTION */(function(global, process) {(function (global, undefined) {
@@ -24867,7 +24795,7 @@ exports.clearImmediate = clearImmediate;
 /* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(2), __webpack_require__(14)))
 
 /***/ }),
-/* 92 */
+/* 91 */
 /***/ (function(module, exports, __webpack_require__) {
 
 /* WEBPACK VAR INJECTION */(function(global) {
@@ -24941,7 +24869,7 @@ function config (name) {
 /* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(2)))
 
 /***/ }),
-/* 93 */
+/* 92 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -24994,41 +24922,41 @@ PassThrough.prototype._transform = function (chunk, encoding, cb) {
 };
 
 /***/ }),
-/* 94 */
+/* 93 */
 /***/ (function(module, exports, __webpack_require__) {
 
 module.exports = __webpack_require__(31);
 
 
 /***/ }),
-/* 95 */
+/* 94 */
 /***/ (function(module, exports, __webpack_require__) {
 
 module.exports = __webpack_require__(7);
 
 
 /***/ }),
-/* 96 */
+/* 95 */
 /***/ (function(module, exports, __webpack_require__) {
 
 module.exports = __webpack_require__(30).Transform
 
 
 /***/ }),
-/* 97 */
+/* 96 */
 /***/ (function(module, exports, __webpack_require__) {
 
 module.exports = __webpack_require__(30).PassThrough
 
 
 /***/ }),
-/* 98 */
+/* 97 */
 /***/ (function(module, exports) {
 
 /* (ignored) */
 
 /***/ }),
-/* 99 */
+/* 98 */
 /***/ (function(module, exports, __webpack_require__) {
 
 module.exports = ProxyHandler;
@@ -25037,7 +24965,7 @@ function ProxyHandler(cbs){
 	this._cbs = cbs || {};
 }
 
-var EVENTS = __webpack_require__(9).EVENTS;
+var EVENTS = __webpack_require__(8).EVENTS;
 Object.keys(EVENTS).forEach(function(name){
 	if(EVENTS[name] === 0){
 		name = "on" + name;
@@ -25060,18 +24988,18 @@ Object.keys(EVENTS).forEach(function(name){
 });
 
 /***/ }),
-/* 100 */
+/* 99 */
 /***/ (function(module, exports, __webpack_require__) {
 
 var DomUtils = module.exports;
 
 [
-	__webpack_require__(101),
+	__webpack_require__(100),
+	__webpack_require__(106),
 	__webpack_require__(107),
 	__webpack_require__(108),
 	__webpack_require__(109),
-	__webpack_require__(110),
-	__webpack_require__(111)
+	__webpack_require__(110)
 ].forEach(function(ext){
 	Object.keys(ext).forEach(function(key){
 		DomUtils[key] = ext[key].bind(DomUtils);
@@ -25080,11 +25008,11 @@ var DomUtils = module.exports;
 
 
 /***/ }),
-/* 101 */
+/* 100 */
 /***/ (function(module, exports, __webpack_require__) {
 
 var ElementType = __webpack_require__(13),
-    getOuterHTML = __webpack_require__(102),
+    getOuterHTML = __webpack_require__(101),
     isTag = ElementType.isTag;
 
 module.exports = {
@@ -25109,14 +25037,14 @@ function getText(elem){
 
 
 /***/ }),
-/* 102 */
+/* 101 */
 /***/ (function(module, exports, __webpack_require__) {
 
 /*
   Module dependencies
 */
-var ElementType = __webpack_require__(103);
-var entities = __webpack_require__(104);
+var ElementType = __webpack_require__(102);
+var entities = __webpack_require__(103);
 
 /*
   Boolean Attributes
@@ -25293,7 +25221,7 @@ function renderComment(elem) {
 
 
 /***/ }),
-/* 103 */
+/* 102 */
 /***/ (function(module, exports) {
 
 //Types of elements found in the DOM
@@ -25312,11 +25240,11 @@ module.exports = {
 };
 
 /***/ }),
-/* 104 */
+/* 103 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var encode = __webpack_require__(105),
-    decode = __webpack_require__(106);
+var encode = __webpack_require__(104),
+    decode = __webpack_require__(105);
 
 exports.decode = function(data, level){
 	return (!level || level <= 0 ? decode.XML : decode.HTML)(data);
@@ -25351,7 +25279,7 @@ exports.escape = encode.escape;
 
 
 /***/ }),
-/* 105 */
+/* 104 */
 /***/ (function(module, exports, __webpack_require__) {
 
 var inverseXML = getInverseObj(__webpack_require__(29)),
@@ -25430,7 +25358,7 @@ exports.escape = escapeXML;
 
 
 /***/ }),
-/* 106 */
+/* 105 */
 /***/ (function(module, exports, __webpack_require__) {
 
 var entityMap = __webpack_require__(28),
@@ -25507,7 +25435,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 107 */
+/* 106 */
 /***/ (function(module, exports) {
 
 var getChildren = exports.getChildren = function(elem){
@@ -25537,7 +25465,7 @@ exports.getName = function(elem){
 
 
 /***/ }),
-/* 108 */
+/* 107 */
 /***/ (function(module, exports) {
 
 exports.removeElement = function(elem){
@@ -25620,7 +25548,7 @@ exports.prepend = function(elem, prev){
 
 
 /***/ }),
-/* 109 */
+/* 108 */
 /***/ (function(module, exports, __webpack_require__) {
 
 var isTag = __webpack_require__(13).isTag;
@@ -25725,7 +25653,7 @@ function findAll(test, rootElems){
 
 
 /***/ }),
-/* 110 */
+/* 109 */
 /***/ (function(module, exports, __webpack_require__) {
 
 var ElementType = __webpack_require__(13);
@@ -25818,7 +25746,7 @@ exports.getElementsByTagType = function(type, element, recurse, limit){
 
 
 /***/ }),
-/* 111 */
+/* 110 */
 /***/ (function(module, exports) {
 
 // removeSubsets
@@ -25965,7 +25893,7 @@ exports.uniqueSort = function(nodes) {
 
 
 /***/ }),
-/* 112 */
+/* 111 */
 /***/ (function(module, exports, __webpack_require__) {
 
 module.exports = CollectingHandler;
@@ -25975,7 +25903,7 @@ function CollectingHandler(cbs){
 	this.events = [];
 }
 
-var EVENTS = __webpack_require__(9).EVENTS;
+var EVENTS = __webpack_require__(8).EVENTS;
 Object.keys(EVENTS).forEach(function(name){
 	if(EVENTS[name] === 0){
 		name = "on" + name;
@@ -26026,7 +25954,7 @@ CollectingHandler.prototype.restart = function(){
 
 
 /***/ }),
-/* 113 */
+/* 112 */
 /***/ (function(module, exports) {
 
 // Store markers outside of the function scope,
@@ -26055,7 +25983,7 @@ module.exports = function decodeHTMLEntities(text) {
 
 
 /***/ }),
-/* 114 */
+/* 113 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -26089,7 +26017,7 @@ var xmlEscape = function xmlEscape(unsafe) {
 module.exports = xmlEscape;
 
 /***/ }),
-/* 115 */
+/* 114 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -26112,7 +26040,7 @@ var MonitorRecord = Record({
 module.exports = MonitorRecord;
 
 /***/ }),
-/* 116 */
+/* 115 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -26123,7 +26051,7 @@ var _createClass = function () { function defineProperties(target, props) { for 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
 var ArgumentType = __webpack_require__(18);
-var BlockType = __webpack_require__(10);
+var BlockType = __webpack_require__(9);
 var color = __webpack_require__(19);
 var log = __webpack_require__(0);
 
@@ -27175,7 +27103,7 @@ var Scratch3WeDo2Blocks = function () {
 module.exports = Scratch3WeDo2Blocks;
 
 /***/ }),
-/* 117 */
+/* 116 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -27186,8 +27114,8 @@ var _createClass = function () { function defineProperties(target, props) { for 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
 var ArgumentType = __webpack_require__(18);
-var BlockType = __webpack_require__(10);
-var Clone = __webpack_require__(11);
+var BlockType = __webpack_require__(9);
+var Clone = __webpack_require__(10);
 var Cast = __webpack_require__(1);
 var MathUtil = __webpack_require__(6);
 var Timer = __webpack_require__(24);
@@ -28074,7 +28002,7 @@ var Scratch3MusicBlocks = function () {
 module.exports = Scratch3MusicBlocks;
 
 /***/ }),
-/* 118 */
+/* 117 */
 /***/ (function(module, exports, __webpack_require__) {
 
 module.exports = function() {
@@ -28082,7 +28010,7 @@ module.exports = function() {
 };
 
 /***/ }),
-/* 119 */
+/* 118 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -28105,31 +28033,31 @@ var EventEmitter = __webpack_require__(5);
 var _require = __webpack_require__(16),
     OrderedMap = _require.OrderedMap;
 
-var escapeHtml = __webpack_require__(120);
+var escapeHtml = __webpack_require__(119);
 
 var ArgumentType = __webpack_require__(18);
-var Blocks = __webpack_require__(8);
-var BlockType = __webpack_require__(10);
-var Sequencer = __webpack_require__(121);
+var Blocks = __webpack_require__(12);
+var BlockType = __webpack_require__(9);
+var Sequencer = __webpack_require__(120);
 var Thread = __webpack_require__(25);
-var Profiler = __webpack_require__(124);
+var Profiler = __webpack_require__(123);
 
 // Virtual I/O devices.
-var Clock = __webpack_require__(125);
-var DeviceManager = __webpack_require__(126);
-var Keyboard = __webpack_require__(138);
-var Mouse = __webpack_require__(139);
+var Clock = __webpack_require__(124);
+var DeviceManager = __webpack_require__(125);
+var Keyboard = __webpack_require__(137);
+var Mouse = __webpack_require__(138);
 
 var defaultBlockPackages = {
-    scratch3_control: __webpack_require__(140),
-    scratch3_event: __webpack_require__(141),
-    scratch3_looks: __webpack_require__(142),
-    scratch3_motion: __webpack_require__(143),
-    scratch3_operators: __webpack_require__(144),
-    scratch3_sound: __webpack_require__(145),
-    scratch3_sensing: __webpack_require__(146),
-    scratch3_data: __webpack_require__(147),
-    scratch3_procedures: __webpack_require__(148)
+    scratch3_control: __webpack_require__(139),
+    scratch3_event: __webpack_require__(140),
+    scratch3_looks: __webpack_require__(141),
+    scratch3_motion: __webpack_require__(142),
+    scratch3_operators: __webpack_require__(143),
+    scratch3_sound: __webpack_require__(144),
+    scratch3_sensing: __webpack_require__(145),
+    scratch3_data: __webpack_require__(146),
+    scratch3_procedures: __webpack_require__(147)
 };
 
 /**
@@ -28972,7 +28900,6 @@ var Runtime = function (_EventEmitter) {
             thread.target = target;
             thread.stackClick = opts.stackClick;
             thread.updateMonitor = opts.updateMonitor;
-            thread.blockContainer = opts.updateMonitor ? this.monitorBlocks : target.blocks;
 
             thread.pushStack(id);
             this.threads.push(thread);
@@ -29008,7 +28935,6 @@ var Runtime = function (_EventEmitter) {
             newThread.target = thread.target;
             newThread.stackClick = thread.stackClick;
             newThread.updateMonitor = thread.updateMonitor;
-            newThread.blockContainer = thread.blockContainer;
             newThread.pushStack(thread.topBlock);
             var i = this.threads.indexOf(thread);
             if (i > -1) {
@@ -30021,7 +29947,7 @@ var Runtime = function (_EventEmitter) {
 module.exports = Runtime;
 
 /***/ }),
-/* 120 */
+/* 119 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -30106,7 +30032,7 @@ function escapeHtml(string) {
 
 
 /***/ }),
-/* 121 */
+/* 120 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -30118,7 +30044,7 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
 
 var Timer = __webpack_require__(24);
 var Thread = __webpack_require__(25);
-var execute = __webpack_require__(122);
+var execute = __webpack_require__(121);
 
 /**
  * Profiler frame name for stepping a single thread.
@@ -30317,11 +30243,7 @@ var Sequencer = function () {
                     // this.runtime.profiler.start(executeProfilerId, null);
                     this.runtime.profiler.records.push(this.runtime.profiler.START, executeProfilerId, null, performance.now());
                 }
-                if (thread.target === null) {
-                    this.retireThread(thread);
-                } else {
-                    execute(this, thread);
-                }
+                execute(this, thread);
                 if (this.runtime.profiler !== null) {
                     // this.runtime.profiler.stop();
                     this.runtime.profiler.records.push(this.runtime.profiler.STOP, performance.now());
@@ -30482,7 +30404,7 @@ var Sequencer = function () {
 module.exports = Sequencer;
 
 /***/ }),
-/* 122 */
+/* 121 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -30490,8 +30412,7 @@ module.exports = Sequencer;
 
 var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
 
-var BlockUtility = __webpack_require__(123);
-var BlocksExecuteCache = __webpack_require__(52);
+var BlockUtility = __webpack_require__(122);
 var log = __webpack_require__(0);
 var Thread = __webpack_require__(25);
 
@@ -30587,26 +30508,31 @@ var handleReport = function handleReport(resolvedValue, sequencer, thread, curre
 };
 
 /**
- * A convenienve constant to hide that the recursiveCall argument to execute is
- * a boolean trap.
- * @const {boolean}
- */
-var RECURSIVE = true;
-
-/**
  * Execute a block.
  * @param {!Sequencer} sequencer Which sequencer is executing.
  * @param {!Thread} thread Thread which to read and execute.
- * @param {boolean} recursiveCall is execute called from another execute call?
  */
-var execute = function execute(sequencer, thread, recursiveCall) {
+var execute = function execute(sequencer, thread) {
     var runtime = sequencer.runtime;
+    var target = thread.target;
+
+    // Stop if block or target no longer exists.
+    if (target === null) {
+        // No block found: stop the thread; script no longer exists.
+        sequencer.retireThread(thread);
+        return;
+    }
 
     // Current block to execute is the one on the top of the stack.
     var currentBlockId = thread.peekStack();
     var currentStackFrame = thread.peekStackFrame();
 
-    var blockContainer = thread.blockContainer;
+    var blockContainer = void 0;
+    if (thread.updateMonitor) {
+        blockContainer = runtime.monitorBlocks;
+    } else {
+        blockContainer = target.blocks;
+    }
     var block = blockContainer.getBlock(currentBlockId);
     if (typeof block === 'undefined') {
         blockContainer = runtime.flyoutBlocks;
@@ -30619,59 +30545,16 @@ var execute = function execute(sequencer, thread, recursiveCall) {
         }
     }
 
-    var blockCached = BlocksExecuteCache.getCached(blockContainer, currentBlockId);
-    if (blockCached._initialized !== true) {
-        var _opcode = blockCached.opcode,
-            _fields = blockCached.fields,
-            _inputs = blockCached.inputs;
+    var opcode = blockContainer.getOpcode(block);
+    var fields = blockContainer.getFields(block);
+    var inputs = blockContainer.getInputs(block);
+    var blockFunction = runtime.getOpcodeFunction(opcode);
+    var isHat = runtime.getIsHat(opcode);
 
-        // Assign opcode isHat and blockFunction data to avoid dynamic lookups.
-
-        blockCached._isHat = runtime.getIsHat(_opcode);
-        blockCached._blockFunction = runtime.getOpcodeFunction(_opcode);
-        blockCached._definedBlockFunction = typeof blockCached._blockFunction !== 'undefined';
-
-        var fieldKeys = Object.keys(_fields);
-
-        // Store the current shadow value if there is a shadow value.
-        blockCached._isShadowBlock = fieldKeys.length === 1 && Object.keys(_inputs).length === 0;
-        blockCached._shadowValue = fieldKeys.length === 1 && _fields[fieldKeys[0]].value;
-
-        // Store a fields copy. If fields is a VARIABLE, LIST, or
-        // BROADCAST_OPTION, store the created values so fields assignment to
-        // argValues does not iterate over fields.
-        blockCached._fields = Object.assign({}, blockCached.fields);
-        blockCached._isFieldVariable = fieldKeys.length === 1 && fieldKeys.includes('VARIABLE');
-        blockCached._fieldVariable = blockCached._isFieldVariable ? {
-            id: _fields.VARIABLE.id,
-            name: _fields.VARIABLE.value
-        } : null;
-        blockCached._isFieldList = fieldKeys.length === 1 && fieldKeys.includes('LIST');
-        blockCached._fieldList = blockCached._isFieldList ? {
-            id: _fields.LIST.id,
-            name: _fields.LIST.value
-        } : null;
-        blockCached._isFieldBroadcastOption = fieldKeys.length === 1 && fieldKeys.includes('BROADCAST_OPTION');
-        blockCached._fieldBroadcastOption = blockCached._isFieldBroadcastOption ? {
-            id: _fields.BROADCAST_OPTION.id,
-            name: _fields.BROADCAST_OPTION.value
-        } : null;
-        blockCached._isFieldKnown = blockCached._isFieldVariable || blockCached._isFieldList || blockCached._isFieldBroadcastOption;
-
-        // Store a modified inputs. This assures the keys are its own properties
-        // and that custom_block will not be evaluated.
-        blockCached._inputs = Object.assign({}, blockCached.inputs);
-        delete blockCached._inputs.custom_block;
-
-        blockCached._initialized = true;
+    if (!opcode) {
+        log.warn('Could not get opcode for block: ' + currentBlockId);
+        return;
     }
-
-    var opcode = blockCached.opcode;
-    var fields = blockCached._fields;
-    var inputs = blockCached._inputs;
-    var mutation = blockCached.mutation;
-    var blockFunction = blockCached._blockFunction;
-    var isHat = blockCached._isHat;
 
     // Hats and single-field shadows are implemented slightly differently
     // from regular blocks.
@@ -30679,19 +30562,15 @@ var execute = function execute(sequencer, thread, recursiveCall) {
     // it's treated as a predicate; if not, execution will proceed as a no-op.
     // For single-field shadows: If the block has a single field, and no inputs,
     // immediately return the value of the field.
-    if (!blockCached._definedBlockFunction) {
-        if (!opcode) {
-            log.warn('Could not get opcode for block: ' + currentBlockId);
-            return;
-        }
-
-        if (recursiveCall === RECURSIVE && blockCached._isShadowBlock) {
-            // One field and no inputs - treat as arg.
-            thread.pushReportedValue(blockCached._shadowValue);
-            thread.status = Thread.STATUS_RUNNING;
-        } else if (isHat) {
+    if (typeof blockFunction === 'undefined') {
+        if (isHat) {
             // Skip through the block (hat with no predicate).
             return;
+        }
+        var keys = Object.keys(fields);
+        if (keys.length === 1 && Object.keys(inputs).length === 0) {
+            // One field and no inputs - treat as arg.
+            handleReport(fields[keys[0]].value, sequencer, thread, currentBlockId, opcode, isHat);
         } else {
             log.warn('Could not get implementation for opcode: ' + opcode);
         }
@@ -30703,22 +30582,23 @@ var execute = function execute(sequencer, thread, recursiveCall) {
     var argValues = {};
 
     // Add all fields on this block to the argValues.
-    if (blockCached._isFieldKnown) {
-        if (blockCached._isFieldVariable) {
-            argValues.VARIABLE = blockCached._fieldVariable;
-        } else if (blockCached._isFieldList) {
-            argValues.LIST = blockCached._fieldList;
-        } else if (blockCached._isFieldBroadcastOption) {
-            argValues.BROADCAST_OPTION = blockCached._fieldBroadcastOption;
-        }
-    } else {
-        for (var fieldName in fields) {
+    for (var fieldName in fields) {
+        if (!fields.hasOwnProperty(fieldName)) continue;
+        if (fieldName === 'VARIABLE' || fieldName === 'LIST' || fieldName === 'BROADCAST_OPTION') {
+            argValues[fieldName] = {
+                id: fields[fieldName].id,
+                name: fields[fieldName].value
+            };
+        } else {
             argValues[fieldName] = fields[fieldName].value;
         }
     }
 
     // Recursively evaluate input blocks.
     for (var inputName in inputs) {
+        if (!inputs.hasOwnProperty(inputName)) continue;
+        // Do not evaluate the internal custom command block within definition
+        if (inputName === 'custom_block') continue;
         var input = inputs[inputName];
         var inputBlockId = input.block;
         // Is there no value for this input waiting in the stack frame?
@@ -30729,16 +30609,8 @@ var execute = function execute(sequencer, thread, recursiveCall) {
             // Save name of input for `Thread.pushReportedValue`.
             currentStackFrame.waitingReporter = inputName;
             // Actually execute the block.
-            execute(sequencer, thread, RECURSIVE);
+            execute(sequencer, thread);
             if (thread.status === Thread.STATUS_PROMISE_WAIT) {
-                for (var _inputName in inputs) {
-                    if (_inputName === inputName) break;
-                    if (_inputName === 'BROADCAST_INPUT') {
-                        currentStackFrame.reported[_inputName] = argValues[_inputName].name;
-                    } else {
-                        currentStackFrame.reported[_inputName] = argValues[_inputName];
-                    }
-                }
                 return;
             }
 
@@ -30747,21 +30619,7 @@ var execute = function execute(sequencer, thread, recursiveCall) {
             currentStackFrame.waitingReporter = null;
             thread.popStack();
         }
-        var inputValue = void 0;
-        if (currentStackFrame.waitingReporter === null) {
-            inputValue = currentStackFrame.justReported;
-        } else if (currentStackFrame.waitingReporter === inputName) {
-            inputValue = currentStackFrame.justReported;
-            currentStackFrame.waitingReporter = null;
-            // If we've gotten this far, all of the input blocks are evaluated,
-            // and `argValues` is fully populated. So, execute the block
-            // primitive. First, clear `currentStackFrame.reported`, so any
-            // subsequent execution (e.g., on return from a branch) gets fresh
-            // inputs.
-            currentStackFrame.reported = {};
-        } else if (typeof currentStackFrame.reported[inputName] !== 'undefined') {
-            inputValue = currentStackFrame.reported[inputName];
-        }
+        var inputValue = currentStackFrame.reported[inputName];
         if (inputName === 'BROADCAST_INPUT') {
             var broadcastInput = inputs[inputName];
             // Check if something is plugged into the broadcast block, or
@@ -30788,7 +30646,16 @@ var execute = function execute(sequencer, thread, recursiveCall) {
     }
 
     // Add any mutation to args (e.g., for procedures).
-    argValues.mutation = mutation;
+    var mutation = blockContainer.getMutation(block);
+    if (mutation !== null) {
+        argValues.mutation = mutation;
+    }
+
+    // If we've gotten this far, all of the input blocks are evaluated,
+    // and `argValues` is fully populated. So, execute the block primitive.
+    // First, clear `currentStackFrame.reported`, so any subsequent execution
+    // (e.g., on return from a branch) gets fresh inputs.
+    currentStackFrame.reported = {};
 
     var primitiveReportedValue = null;
     blockUtility.sequencer = sequencer;
@@ -30810,7 +30677,7 @@ var execute = function execute(sequencer, thread, recursiveCall) {
         runtime.profiler.records.push(runtime.profiler.STOP, performance.now());
     }
 
-    if (recursiveCall !== RECURSIVE && typeof primitiveReportedValue === 'undefined') {
+    if (typeof primitiveReportedValue === 'undefined') {
         // No value reported - potentially a command block.
         // Edge-activated hats don't request a glow; all commands do.
         thread.requestScriptGlowInFrame = true;
@@ -30857,18 +30724,14 @@ var execute = function execute(sequencer, thread, recursiveCall) {
             thread.popStack();
         });
     } else if (thread.status === Thread.STATUS_RUNNING) {
-        if (recursiveCall === RECURSIVE) {
-            thread.pushReportedValue(primitiveReportedValue);
-        } else {
-            handleReport(primitiveReportedValue, sequencer, thread, currentBlockId, opcode, isHat);
-        }
+        handleReport(primitiveReportedValue, sequencer, thread, currentBlockId, opcode, isHat);
     }
 };
 
 module.exports = execute;
 
 /***/ }),
-/* 123 */
+/* 122 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -31080,7 +30943,7 @@ var BlockUtility = function () {
 module.exports = BlockUtility;
 
 /***/ }),
-/* 124 */
+/* 123 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -31437,7 +31300,7 @@ Profiler.STOP = STOP;
 module.exports = Profiler;
 
 /***/ }),
-/* 125 */
+/* 124 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -31498,7 +31361,7 @@ var Clock = function () {
 module.exports = Clock;
 
 /***/ }),
-/* 126 */
+/* 125 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -31508,9 +31371,9 @@ var _createClass = function () { function defineProperties(target, props) { for 
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
-var nets = __webpack_require__(127);
-var io = __webpack_require__(134);
-var querystring = __webpack_require__(135);
+var nets = __webpack_require__(126);
+var io = __webpack_require__(133);
+var querystring = __webpack_require__(134);
 
 /**
  * Internal class used by the Device Manager client to manage making a connection to a particular device.
@@ -31972,10 +31835,10 @@ var DeviceManager = function () {
 module.exports = DeviceManager;
 
 /***/ }),
-/* 127 */
+/* 126 */
 /***/ (function(module, exports, __webpack_require__) {
 
-/* WEBPACK VAR INJECTION */(function(process, Buffer) {var req = __webpack_require__(128)
+/* WEBPACK VAR INJECTION */(function(process, Buffer) {var req = __webpack_require__(127)
 
 module.exports = Nets
 
@@ -32003,15 +31866,15 @@ function Nets (opts, cb) {
 /* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(14), __webpack_require__(23).Buffer))
 
 /***/ }),
-/* 128 */
+/* 127 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
-var window = __webpack_require__(129)
-var isFunction = __webpack_require__(53)
-var parseHeaders = __webpack_require__(130)
-var xtend = __webpack_require__(133)
+var window = __webpack_require__(128)
+var isFunction = __webpack_require__(52)
+var parseHeaders = __webpack_require__(129)
+var xtend = __webpack_require__(132)
 
 module.exports = createXHR
 createXHR.XMLHttpRequest = window.XMLHttpRequest || noop
@@ -32251,7 +32114,7 @@ function noop() {}
 
 
 /***/ }),
-/* 129 */
+/* 128 */
 /***/ (function(module, exports, __webpack_require__) {
 
 /* WEBPACK VAR INJECTION */(function(global) {var win;
@@ -32271,11 +32134,11 @@ module.exports = win;
 /* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(2)))
 
 /***/ }),
-/* 130 */
+/* 129 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var trim = __webpack_require__(131)
-  , forEach = __webpack_require__(132)
+var trim = __webpack_require__(130)
+  , forEach = __webpack_require__(131)
   , isArray = function(arg) {
       return Object.prototype.toString.call(arg) === '[object Array]';
     }
@@ -32307,7 +32170,7 @@ module.exports = function (headers) {
 }
 
 /***/ }),
-/* 131 */
+/* 130 */
 /***/ (function(module, exports) {
 
 
@@ -32327,10 +32190,10 @@ exports.right = function(str){
 
 
 /***/ }),
-/* 132 */
+/* 131 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var isFunction = __webpack_require__(53)
+var isFunction = __webpack_require__(52)
 
 module.exports = forEach
 
@@ -32379,7 +32242,7 @@ function forEachObject(object, iterator, context) {
 
 
 /***/ }),
-/* 133 */
+/* 132 */
 /***/ (function(module, exports) {
 
 module.exports = extend
@@ -32404,7 +32267,7 @@ function extend() {
 
 
 /***/ }),
-/* 134 */
+/* 133 */
 /***/ (function(module, exports, __webpack_require__) {
 
 !function(t,e){ true?module.exports=e():"function"==typeof define&&define.amd?define([],e):"object"==typeof exports?exports.io=e():t.io=e()}(this,function(){return function(t){function e(r){if(n[r])return n[r].exports;var o=n[r]={exports:{},id:r,loaded:!1};return t[r].call(o.exports,o,o.exports,e),o.loaded=!0,o.exports}var n={};return e.m=t,e.c=n,e.p="",e(0)}([function(t,e,n){"use strict";function r(t,e){"object"===("undefined"==typeof t?"undefined":o(t))&&(e=t,t=void 0),e=e||{};var n,r=i(t),s=r.source,u=r.id,h=r.path,f=p[u]&&h in p[u].nsps,l=e.forceNew||e["force new connection"]||!1===e.multiplex||f;return l?(c("ignoring socket cache for %s",s),n=a(s,e)):(p[u]||(c("new io instance for %s",s),p[u]=a(s,e)),n=p[u]),r.query&&!e.query&&(e.query=r.query),n.socket(r.path,e)}var o="function"==typeof Symbol&&"symbol"==typeof Symbol.iterator?function(t){return typeof t}:function(t){return t&&"function"==typeof Symbol&&t.constructor===Symbol&&t!==Symbol.prototype?"symbol":typeof t},i=n(1),s=n(7),a=n(13),c=n(3)("socket.io-client");t.exports=e=r;var p=e.managers={};e.protocol=s.protocol,e.connect=r,e.Manager=n(13),e.Socket=n(37)},function(t,e,n){(function(e){"use strict";function r(t,n){var r=t;n=n||e.location,null==t&&(t=n.protocol+"//"+n.host),"string"==typeof t&&("/"===t.charAt(0)&&(t="/"===t.charAt(1)?n.protocol+t:n.host+t),/^(https?|wss?):\/\//.test(t)||(i("protocol-less url %s",t),t="undefined"!=typeof n?n.protocol+"//"+t:"https://"+t),i("parse %s",t),r=o(t)),r.port||(/^(http|ws)$/.test(r.protocol)?r.port="80":/^(http|ws)s$/.test(r.protocol)&&(r.port="443")),r.path=r.path||"/";var s=r.host.indexOf(":")!==-1,a=s?"["+r.host+"]":r.host;return r.id=r.protocol+"://"+a+":"+r.port,r.href=r.protocol+"://"+a+(n&&n.port===r.port?"":":"+r.port),r}var o=n(2),i=n(3)("socket.io-client:url");t.exports=r}).call(e,function(){return this}())},function(t,e){var n=/^(?:(?![^:@]+:[^:@\/]*@)(http|https|ws|wss):\/\/)?((?:(([^:@]*)(?::([^:@]*))?)?@)?((?:[a-f0-9]{0,4}:){2,7}[a-f0-9]{0,4}|[^:\/?#]*)(?::(\d*))?)(((\/(?:[^?#](?![^?#\/]*\.[^?#\/.]+(?:[?#]|$)))*\/?)?([^?#\/]*))(?:\?([^#]*))?(?:#(.*))?)/,r=["source","protocol","authority","userInfo","user","password","host","port","relative","path","directory","file","query","anchor"];t.exports=function(t){var e=t,o=t.indexOf("["),i=t.indexOf("]");o!=-1&&i!=-1&&(t=t.substring(0,o)+t.substring(o,i).replace(/:/g,";")+t.substring(i,t.length));for(var s=n.exec(t||""),a={},c=14;c--;)a[r[c]]=s[c]||"";return o!=-1&&i!=-1&&(a.source=e,a.host=a.host.substring(1,a.host.length-1).replace(/;/g,":"),a.authority=a.authority.replace("[","").replace("]","").replace(/;/g,":"),a.ipv6uri=!0),a}},function(t,e,n){(function(r){function o(){return!("undefined"==typeof window||!window.process||"renderer"!==window.process.type)||("undefined"!=typeof document&&document.documentElement&&document.documentElement.style&&document.documentElement.style.WebkitAppearance||"undefined"!=typeof window&&window.console&&(window.console.firebug||window.console.exception&&window.console.table)||"undefined"!=typeof navigator&&navigator.userAgent&&navigator.userAgent.toLowerCase().match(/firefox\/(\d+)/)&&parseInt(RegExp.$1,10)>=31||"undefined"!=typeof navigator&&navigator.userAgent&&navigator.userAgent.toLowerCase().match(/applewebkit\/(\d+)/))}function i(t){var n=this.useColors;if(t[0]=(n?"%c":"")+this.namespace+(n?" %c":" ")+t[0]+(n?"%c ":" ")+"+"+e.humanize(this.diff),n){var r="color: "+this.color;t.splice(1,0,r,"color: inherit");var o=0,i=0;t[0].replace(/%[a-zA-Z%]/g,function(t){"%%"!==t&&(o++,"%c"===t&&(i=o))}),t.splice(i,0,r)}}function s(){return"object"==typeof console&&console.log&&Function.prototype.apply.call(console.log,console,arguments)}function a(t){try{null==t?e.storage.removeItem("debug"):e.storage.debug=t}catch(n){}}function c(){var t;try{t=e.storage.debug}catch(n){}return!t&&"undefined"!=typeof r&&"env"in r&&(t=r.env.DEBUG),t}function p(){try{return window.localStorage}catch(t){}}e=t.exports=n(5),e.log=s,e.formatArgs=i,e.save=a,e.load=c,e.useColors=o,e.storage="undefined"!=typeof chrome&&"undefined"!=typeof chrome.storage?chrome.storage.local:p(),e.colors=["lightseagreen","forestgreen","goldenrod","dodgerblue","darkorchid","crimson"],e.formatters.j=function(t){try{return JSON.stringify(t)}catch(e){return"[UnexpectedJSONParseError]: "+e.message}},e.enable(c())}).call(e,n(4))},function(t,e){function n(){throw new Error("setTimeout has not been defined")}function r(){throw new Error("clearTimeout has not been defined")}function o(t){if(u===setTimeout)return setTimeout(t,0);if((u===n||!u)&&setTimeout)return u=setTimeout,setTimeout(t,0);try{return u(t,0)}catch(e){try{return u.call(null,t,0)}catch(e){return u.call(this,t,0)}}}function i(t){if(h===clearTimeout)return clearTimeout(t);if((h===r||!h)&&clearTimeout)return h=clearTimeout,clearTimeout(t);try{return h(t)}catch(e){try{return h.call(null,t)}catch(e){return h.call(this,t)}}}function s(){y&&l&&(y=!1,l.length?d=l.concat(d):m=-1,d.length&&a())}function a(){if(!y){var t=o(s);y=!0;for(var e=d.length;e;){for(l=d,d=[];++m<e;)l&&l[m].run();m=-1,e=d.length}l=null,y=!1,i(t)}}function c(t,e){this.fun=t,this.array=e}function p(){}var u,h,f=t.exports={};!function(){try{u="function"==typeof setTimeout?setTimeout:n}catch(t){u=n}try{h="function"==typeof clearTimeout?clearTimeout:r}catch(t){h=r}}();var l,d=[],y=!1,m=-1;f.nextTick=function(t){var e=new Array(arguments.length-1);if(arguments.length>1)for(var n=1;n<arguments.length;n++)e[n-1]=arguments[n];d.push(new c(t,e)),1!==d.length||y||o(a)},c.prototype.run=function(){this.fun.apply(null,this.array)},f.title="browser",f.browser=!0,f.env={},f.argv=[],f.version="",f.versions={},f.on=p,f.addListener=p,f.once=p,f.off=p,f.removeListener=p,f.removeAllListeners=p,f.emit=p,f.prependListener=p,f.prependOnceListener=p,f.listeners=function(t){return[]},f.binding=function(t){throw new Error("process.binding is not supported")},f.cwd=function(){return"/"},f.chdir=function(t){throw new Error("process.chdir is not supported")},f.umask=function(){return 0}},function(t,e,n){function r(t){var n,r=0;for(n in t)r=(r<<5)-r+t.charCodeAt(n),r|=0;return e.colors[Math.abs(r)%e.colors.length]}function o(t){function n(){if(n.enabled){var t=n,r=+new Date,o=r-(p||r);t.diff=o,t.prev=p,t.curr=r,p=r;for(var i=new Array(arguments.length),s=0;s<i.length;s++)i[s]=arguments[s];i[0]=e.coerce(i[0]),"string"!=typeof i[0]&&i.unshift("%O");var a=0;i[0]=i[0].replace(/%([a-zA-Z%])/g,function(n,r){if("%%"===n)return n;a++;var o=e.formatters[r];if("function"==typeof o){var s=i[a];n=o.call(t,s),i.splice(a,1),a--}return n}),e.formatArgs.call(t,i);var c=n.log||e.log||console.log.bind(console);c.apply(t,i)}}return n.namespace=t,n.enabled=e.enabled(t),n.useColors=e.useColors(),n.color=r(t),"function"==typeof e.init&&e.init(n),n}function i(t){e.save(t),e.names=[],e.skips=[];for(var n=("string"==typeof t?t:"").split(/[\s,]+/),r=n.length,o=0;o<r;o++)n[o]&&(t=n[o].replace(/\*/g,".*?"),"-"===t[0]?e.skips.push(new RegExp("^"+t.substr(1)+"$")):e.names.push(new RegExp("^"+t+"$")))}function s(){e.enable("")}function a(t){var n,r;for(n=0,r=e.skips.length;n<r;n++)if(e.skips[n].test(t))return!1;for(n=0,r=e.names.length;n<r;n++)if(e.names[n].test(t))return!0;return!1}function c(t){return t instanceof Error?t.stack||t.message:t}e=t.exports=o.debug=o["default"]=o,e.coerce=c,e.disable=s,e.enable=i,e.enabled=a,e.humanize=n(6),e.names=[],e.skips=[],e.formatters={};var p},function(t,e){function n(t){if(t=String(t),!(t.length>100)){var e=/^((?:\d+)?\.?\d+) *(milliseconds?|msecs?|ms|seconds?|secs?|s|minutes?|mins?|m|hours?|hrs?|h|days?|d|years?|yrs?|y)?$/i.exec(t);if(e){var n=parseFloat(e[1]),r=(e[2]||"ms").toLowerCase();switch(r){case"years":case"year":case"yrs":case"yr":case"y":return n*u;case"days":case"day":case"d":return n*p;case"hours":case"hour":case"hrs":case"hr":case"h":return n*c;case"minutes":case"minute":case"mins":case"min":case"m":return n*a;case"seconds":case"second":case"secs":case"sec":case"s":return n*s;case"milliseconds":case"millisecond":case"msecs":case"msec":case"ms":return n;default:return}}}}function r(t){return t>=p?Math.round(t/p)+"d":t>=c?Math.round(t/c)+"h":t>=a?Math.round(t/a)+"m":t>=s?Math.round(t/s)+"s":t+"ms"}function o(t){return i(t,p,"day")||i(t,c,"hour")||i(t,a,"minute")||i(t,s,"second")||t+" ms"}function i(t,e,n){if(!(t<e))return t<1.5*e?Math.floor(t/e)+" "+n:Math.ceil(t/e)+" "+n+"s"}var s=1e3,a=60*s,c=60*a,p=24*c,u=365.25*p;t.exports=function(t,e){e=e||{};var i=typeof t;if("string"===i&&t.length>0)return n(t);if("number"===i&&isNaN(t)===!1)return e["long"]?o(t):r(t);throw new Error("val is not a non-empty string or a valid number. val="+JSON.stringify(t))}},function(t,e,n){function r(){}function o(t){var n=""+t.type;return e.BINARY_EVENT!==t.type&&e.BINARY_ACK!==t.type||(n+=t.attachments+"-"),t.nsp&&"/"!==t.nsp&&(n+=t.nsp+","),null!=t.id&&(n+=t.id),null!=t.data&&(n+=JSON.stringify(t.data)),h("encoded %j as %s",t,n),n}function i(t,e){function n(t){var n=d.deconstructPacket(t),r=o(n.packet),i=n.buffers;i.unshift(r),e(i)}d.removeBlobs(t,n)}function s(){this.reconstructor=null}function a(t){var n=0,r={type:Number(t.charAt(0))};if(null==e.types[r.type])return u();if(e.BINARY_EVENT===r.type||e.BINARY_ACK===r.type){for(var o="";"-"!==t.charAt(++n)&&(o+=t.charAt(n),n!=t.length););if(o!=Number(o)||"-"!==t.charAt(n))throw new Error("Illegal attachments");r.attachments=Number(o)}if("/"===t.charAt(n+1))for(r.nsp="";++n;){var i=t.charAt(n);if(","===i)break;if(r.nsp+=i,n===t.length)break}else r.nsp="/";var s=t.charAt(n+1);if(""!==s&&Number(s)==s){for(r.id="";++n;){var i=t.charAt(n);if(null==i||Number(i)!=i){--n;break}if(r.id+=t.charAt(n),n===t.length)break}r.id=Number(r.id)}return t.charAt(++n)&&(r=c(r,t.substr(n))),h("decoded %s as %j",t,r),r}function c(t,e){try{t.data=JSON.parse(e)}catch(n){return u()}return t}function p(t){this.reconPack=t,this.buffers=[]}function u(){return{type:e.ERROR,data:"parser error"}}var h=n(3)("socket.io-parser"),f=n(8),l=n(9),d=n(11),y=n(12);e.protocol=4,e.types=["CONNECT","DISCONNECT","EVENT","ACK","ERROR","BINARY_EVENT","BINARY_ACK"],e.CONNECT=0,e.DISCONNECT=1,e.EVENT=2,e.ACK=3,e.ERROR=4,e.BINARY_EVENT=5,e.BINARY_ACK=6,e.Encoder=r,e.Decoder=s,r.prototype.encode=function(t,n){if(t.type!==e.EVENT&&t.type!==e.ACK||!l(t.data)||(t.type=t.type===e.EVENT?e.BINARY_EVENT:e.BINARY_ACK),h("encoding packet %j",t),e.BINARY_EVENT===t.type||e.BINARY_ACK===t.type)i(t,n);else{var r=o(t);n([r])}},f(s.prototype),s.prototype.add=function(t){var n;if("string"==typeof t)n=a(t),e.BINARY_EVENT===n.type||e.BINARY_ACK===n.type?(this.reconstructor=new p(n),0===this.reconstructor.reconPack.attachments&&this.emit("decoded",n)):this.emit("decoded",n);else{if(!y(t)&&!t.base64)throw new Error("Unknown type: "+t);if(!this.reconstructor)throw new Error("got binary data when not reconstructing a packet");n=this.reconstructor.takeBinaryData(t),n&&(this.reconstructor=null,this.emit("decoded",n))}},s.prototype.destroy=function(){this.reconstructor&&this.reconstructor.finishedReconstruction()},p.prototype.takeBinaryData=function(t){if(this.buffers.push(t),this.buffers.length===this.reconPack.attachments){var e=d.reconstructPacket(this.reconPack,this.buffers);return this.finishedReconstruction(),e}return null},p.prototype.finishedReconstruction=function(){this.reconPack=null,this.buffers=[]}},function(t,e,n){function r(t){if(t)return o(t)}function o(t){for(var e in r.prototype)t[e]=r.prototype[e];return t}t.exports=r,r.prototype.on=r.prototype.addEventListener=function(t,e){return this._callbacks=this._callbacks||{},(this._callbacks["$"+t]=this._callbacks["$"+t]||[]).push(e),this},r.prototype.once=function(t,e){function n(){this.off(t,n),e.apply(this,arguments)}return n.fn=e,this.on(t,n),this},r.prototype.off=r.prototype.removeListener=r.prototype.removeAllListeners=r.prototype.removeEventListener=function(t,e){if(this._callbacks=this._callbacks||{},0==arguments.length)return this._callbacks={},this;var n=this._callbacks["$"+t];if(!n)return this;if(1==arguments.length)return delete this._callbacks["$"+t],this;for(var r,o=0;o<n.length;o++)if(r=n[o],r===e||r.fn===e){n.splice(o,1);break}return this},r.prototype.emit=function(t){this._callbacks=this._callbacks||{};var e=[].slice.call(arguments,1),n=this._callbacks["$"+t];if(n){n=n.slice(0);for(var r=0,o=n.length;r<o;++r)n[r].apply(this,e)}return this},r.prototype.listeners=function(t){return this._callbacks=this._callbacks||{},this._callbacks["$"+t]||[]},r.prototype.hasListeners=function(t){return!!this.listeners(t).length}},function(t,e,n){(function(e){function r(t){if(!t||"object"!=typeof t)return!1;if(o(t)){for(var n=0,i=t.length;n<i;n++)if(r(t[n]))return!0;return!1}if("function"==typeof e.Buffer&&e.Buffer.isBuffer&&e.Buffer.isBuffer(t)||"function"==typeof e.ArrayBuffer&&t instanceof ArrayBuffer||s&&t instanceof Blob||a&&t instanceof File)return!0;if(t.toJSON&&"function"==typeof t.toJSON&&1===arguments.length)return r(t.toJSON(),!0);for(var c in t)if(Object.prototype.hasOwnProperty.call(t,c)&&r(t[c]))return!0;return!1}var o=n(10),i=Object.prototype.toString,s="function"==typeof e.Blob||"[object BlobConstructor]"===i.call(e.Blob),a="function"==typeof e.File||"[object FileConstructor]"===i.call(e.File);t.exports=r}).call(e,function(){return this}())},function(t,e){var n={}.toString;t.exports=Array.isArray||function(t){return"[object Array]"==n.call(t)}},function(t,e,n){(function(t){function r(t,e){if(!t)return t;if(s(t)){var n={_placeholder:!0,num:e.length};return e.push(t),n}if(i(t)){for(var o=new Array(t.length),a=0;a<t.length;a++)o[a]=r(t[a],e);return o}if("object"==typeof t&&!(t instanceof Date)){var o={};for(var c in t)o[c]=r(t[c],e);return o}return t}function o(t,e){if(!t)return t;if(t&&t._placeholder)return e[t.num];if(i(t))for(var n=0;n<t.length;n++)t[n]=o(t[n],e);else if("object"==typeof t)for(var r in t)t[r]=o(t[r],e);return t}var i=n(10),s=n(12),a=Object.prototype.toString,c="function"==typeof t.Blob||"[object BlobConstructor]"===a.call(t.Blob),p="function"==typeof t.File||"[object FileConstructor]"===a.call(t.File);e.deconstructPacket=function(t){var e=[],n=t.data,o=t;return o.data=r(n,e),o.attachments=e.length,{packet:o,buffers:e}},e.reconstructPacket=function(t,e){return t.data=o(t.data,e),t.attachments=void 0,t},e.removeBlobs=function(t,e){function n(t,a,u){if(!t)return t;if(c&&t instanceof Blob||p&&t instanceof File){r++;var h=new FileReader;h.onload=function(){u?u[a]=this.result:o=this.result,--r||e(o)},h.readAsArrayBuffer(t)}else if(i(t))for(var f=0;f<t.length;f++)n(t[f],f,t);else if("object"==typeof t&&!s(t))for(var l in t)n(t[l],l,t)}var r=0,o=t;n(o),r||e(o)}}).call(e,function(){return this}())},function(t,e){(function(e){function n(t){return e.Buffer&&e.Buffer.isBuffer(t)||e.ArrayBuffer&&t instanceof ArrayBuffer}t.exports=n}).call(e,function(){return this}())},function(t,e,n){"use strict";function r(t,e){if(!(this instanceof r))return new r(t,e);t&&"object"===("undefined"==typeof t?"undefined":o(t))&&(e=t,t=void 0),e=e||{},e.path=e.path||"/socket.io",this.nsps={},this.subs=[],this.opts=e,this.reconnection(e.reconnection!==!1),this.reconnectionAttempts(e.reconnectionAttempts||1/0),this.reconnectionDelay(e.reconnectionDelay||1e3),this.reconnectionDelayMax(e.reconnectionDelayMax||5e3),this.randomizationFactor(e.randomizationFactor||.5),this.backoff=new l({min:this.reconnectionDelay(),max:this.reconnectionDelayMax(),jitter:this.randomizationFactor()}),this.timeout(null==e.timeout?2e4:e.timeout),this.readyState="closed",this.uri=t,this.connecting=[],this.lastPing=null,this.encoding=!1,this.packetBuffer=[];var n=e.parser||c;this.encoder=new n.Encoder,this.decoder=new n.Decoder,this.autoConnect=e.autoConnect!==!1,this.autoConnect&&this.open()}var o="function"==typeof Symbol&&"symbol"==typeof Symbol.iterator?function(t){return typeof t}:function(t){return t&&"function"==typeof Symbol&&t.constructor===Symbol&&t!==Symbol.prototype?"symbol":typeof t},i=n(14),s=n(37),a=n(8),c=n(7),p=n(39),u=n(40),h=n(3)("socket.io-client:manager"),f=n(36),l=n(41),d=Object.prototype.hasOwnProperty;t.exports=r,r.prototype.emitAll=function(){this.emit.apply(this,arguments);for(var t in this.nsps)d.call(this.nsps,t)&&this.nsps[t].emit.apply(this.nsps[t],arguments)},r.prototype.updateSocketIds=function(){for(var t in this.nsps)d.call(this.nsps,t)&&(this.nsps[t].id=this.generateId(t))},r.prototype.generateId=function(t){return("/"===t?"":t+"#")+this.engine.id},a(r.prototype),r.prototype.reconnection=function(t){return arguments.length?(this._reconnection=!!t,this):this._reconnection},r.prototype.reconnectionAttempts=function(t){return arguments.length?(this._reconnectionAttempts=t,this):this._reconnectionAttempts},r.prototype.reconnectionDelay=function(t){return arguments.length?(this._reconnectionDelay=t,this.backoff&&this.backoff.setMin(t),this):this._reconnectionDelay},r.prototype.randomizationFactor=function(t){return arguments.length?(this._randomizationFactor=t,this.backoff&&this.backoff.setJitter(t),this):this._randomizationFactor},r.prototype.reconnectionDelayMax=function(t){return arguments.length?(this._reconnectionDelayMax=t,this.backoff&&this.backoff.setMax(t),this):this._reconnectionDelayMax},r.prototype.timeout=function(t){return arguments.length?(this._timeout=t,this):this._timeout},r.prototype.maybeReconnectOnOpen=function(){!this.reconnecting&&this._reconnection&&0===this.backoff.attempts&&this.reconnect()},r.prototype.open=r.prototype.connect=function(t,e){if(h("readyState %s",this.readyState),~this.readyState.indexOf("open"))return this;h("opening %s",this.uri),this.engine=i(this.uri,this.opts);var n=this.engine,r=this;this.readyState="opening",this.skipReconnect=!1;var o=p(n,"open",function(){r.onopen(),t&&t()}),s=p(n,"error",function(e){if(h("connect_error"),r.cleanup(),r.readyState="closed",r.emitAll("connect_error",e),t){var n=new Error("Connection error");n.data=e,t(n)}else r.maybeReconnectOnOpen()});if(!1!==this._timeout){var a=this._timeout;h("connect attempt will timeout after %d",a);var c=setTimeout(function(){h("connect attempt timed out after %d",a),o.destroy(),n.close(),n.emit("error","timeout"),r.emitAll("connect_timeout",a)},a);this.subs.push({destroy:function(){clearTimeout(c)}})}return this.subs.push(o),this.subs.push(s),this},r.prototype.onopen=function(){h("open"),this.cleanup(),this.readyState="open",this.emit("open");var t=this.engine;this.subs.push(p(t,"data",u(this,"ondata"))),this.subs.push(p(t,"ping",u(this,"onping"))),this.subs.push(p(t,"pong",u(this,"onpong"))),this.subs.push(p(t,"error",u(this,"onerror"))),this.subs.push(p(t,"close",u(this,"onclose"))),this.subs.push(p(this.decoder,"decoded",u(this,"ondecoded")))},r.prototype.onping=function(){this.lastPing=new Date,this.emitAll("ping")},r.prototype.onpong=function(){this.emitAll("pong",new Date-this.lastPing)},r.prototype.ondata=function(t){this.decoder.add(t)},r.prototype.ondecoded=function(t){this.emit("packet",t)},r.prototype.onerror=function(t){h("error",t),this.emitAll("error",t)},r.prototype.socket=function(t,e){function n(){~f(o.connecting,r)||o.connecting.push(r)}var r=this.nsps[t];if(!r){r=new s(this,t,e),this.nsps[t]=r;var o=this;r.on("connecting",n),r.on("connect",function(){r.id=o.generateId(t)}),this.autoConnect&&n()}return r},r.prototype.destroy=function(t){var e=f(this.connecting,t);~e&&this.connecting.splice(e,1),this.connecting.length||this.close()},r.prototype.packet=function(t){h("writing packet %j",t);var e=this;t.query&&0===t.type&&(t.nsp+="?"+t.query),e.encoding?e.packetBuffer.push(t):(e.encoding=!0,this.encoder.encode(t,function(n){for(var r=0;r<n.length;r++)e.engine.write(n[r],t.options);e.encoding=!1,e.processPacketQueue()}))},r.prototype.processPacketQueue=function(){if(this.packetBuffer.length>0&&!this.encoding){var t=this.packetBuffer.shift();this.packet(t)}},r.prototype.cleanup=function(){h("cleanup");for(var t=this.subs.length,e=0;e<t;e++){var n=this.subs.shift();n.destroy()}this.packetBuffer=[],this.encoding=!1,this.lastPing=null,this.decoder.destroy()},r.prototype.close=r.prototype.disconnect=function(){h("disconnect"),this.skipReconnect=!0,this.reconnecting=!1,"opening"===this.readyState&&this.cleanup(),this.backoff.reset(),this.readyState="closed",this.engine&&this.engine.close()},r.prototype.onclose=function(t){h("onclose"),this.cleanup(),this.backoff.reset(),this.readyState="closed",this.emit("close",t),this._reconnection&&!this.skipReconnect&&this.reconnect()},r.prototype.reconnect=function(){if(this.reconnecting||this.skipReconnect)return this;var t=this;if(this.backoff.attempts>=this._reconnectionAttempts)h("reconnect failed"),this.backoff.reset(),this.emitAll("reconnect_failed"),this.reconnecting=!1;else{var e=this.backoff.duration();h("will wait %dms before reconnect attempt",e),this.reconnecting=!0;var n=setTimeout(function(){t.skipReconnect||(h("attempting reconnect"),t.emitAll("reconnect_attempt",t.backoff.attempts),t.emitAll("reconnecting",t.backoff.attempts),t.skipReconnect||t.open(function(e){e?(h("reconnect attempt error"),t.reconnecting=!1,t.reconnect(),t.emitAll("reconnect_error",e.data)):(h("reconnect success"),t.onreconnect())}))},e);this.subs.push({destroy:function(){clearTimeout(n)}})}},r.prototype.onreconnect=function(){var t=this.backoff.attempts;this.reconnecting=!1,this.backoff.reset(),this.updateSocketIds(),this.emitAll("reconnect",t)}},function(t,e,n){t.exports=n(15),t.exports.parser=n(22)},function(t,e,n){(function(e){function r(t,n){if(!(this instanceof r))return new r(t,n);n=n||{},t&&"object"==typeof t&&(n=t,t=null),t?(t=u(t),n.hostname=t.host,n.secure="https"===t.protocol||"wss"===t.protocol,n.port=t.port,t.query&&(n.query=t.query)):n.host&&(n.hostname=u(n.host).host),this.secure=null!=n.secure?n.secure:e.location&&"https:"===location.protocol,n.hostname&&!n.port&&(n.port=this.secure?"443":"80"),this.agent=n.agent||!1,this.hostname=n.hostname||(e.location?location.hostname:"localhost"),this.port=n.port||(e.location&&location.port?location.port:this.secure?443:80),this.query=n.query||{},"string"==typeof this.query&&(this.query=h.decode(this.query)),this.upgrade=!1!==n.upgrade,this.path=(n.path||"/engine.io").replace(/\/$/,"")+"/",this.forceJSONP=!!n.forceJSONP,this.jsonp=!1!==n.jsonp,this.forceBase64=!!n.forceBase64,this.enablesXDR=!!n.enablesXDR,this.timestampParam=n.timestampParam||"t",this.timestampRequests=n.timestampRequests,this.transports=n.transports||["polling","websocket"],this.transportOptions=n.transportOptions||{},this.readyState="",this.writeBuffer=[],this.prevBufferLen=0,this.policyPort=n.policyPort||843,this.rememberUpgrade=n.rememberUpgrade||!1,this.binaryType=null,this.onlyBinaryUpgrades=n.onlyBinaryUpgrades,this.perMessageDeflate=!1!==n.perMessageDeflate&&(n.perMessageDeflate||{}),!0===this.perMessageDeflate&&(this.perMessageDeflate={}),this.perMessageDeflate&&null==this.perMessageDeflate.threshold&&(this.perMessageDeflate.threshold=1024),this.pfx=n.pfx||null,this.key=n.key||null,this.passphrase=n.passphrase||null,this.cert=n.cert||null,this.ca=n.ca||null,this.ciphers=n.ciphers||null,this.rejectUnauthorized=void 0===n.rejectUnauthorized||n.rejectUnauthorized,this.forceNode=!!n.forceNode;var o="object"==typeof e&&e;o.global===o&&(n.extraHeaders&&Object.keys(n.extraHeaders).length>0&&(this.extraHeaders=n.extraHeaders),n.localAddress&&(this.localAddress=n.localAddress)),this.id=null,this.upgrades=null,this.pingInterval=null,this.pingTimeout=null,this.pingIntervalTimer=null,this.pingTimeoutTimer=null,this.open()}function o(t){var e={};for(var n in t)t.hasOwnProperty(n)&&(e[n]=t[n]);return e}var i=n(16),s=n(8),a=n(3)("engine.io-client:socket"),c=n(36),p=n(22),u=n(2),h=n(30);t.exports=r,r.priorWebsocketSuccess=!1,s(r.prototype),r.protocol=p.protocol,r.Socket=r,r.Transport=n(21),r.transports=n(16),r.parser=n(22),r.prototype.createTransport=function(t){a('creating transport "%s"',t);var e=o(this.query);e.EIO=p.protocol,e.transport=t;var n=this.transportOptions[t]||{};this.id&&(e.sid=this.id);var r=new i[t]({query:e,socket:this,agent:n.agent||this.agent,hostname:n.hostname||this.hostname,port:n.port||this.port,secure:n.secure||this.secure,path:n.path||this.path,forceJSONP:n.forceJSONP||this.forceJSONP,jsonp:n.jsonp||this.jsonp,forceBase64:n.forceBase64||this.forceBase64,enablesXDR:n.enablesXDR||this.enablesXDR,timestampRequests:n.timestampRequests||this.timestampRequests,timestampParam:n.timestampParam||this.timestampParam,policyPort:n.policyPort||this.policyPort,pfx:n.pfx||this.pfx,key:n.key||this.key,passphrase:n.passphrase||this.passphrase,cert:n.cert||this.cert,ca:n.ca||this.ca,ciphers:n.ciphers||this.ciphers,rejectUnauthorized:n.rejectUnauthorized||this.rejectUnauthorized,perMessageDeflate:n.perMessageDeflate||this.perMessageDeflate,extraHeaders:n.extraHeaders||this.extraHeaders,forceNode:n.forceNode||this.forceNode,localAddress:n.localAddress||this.localAddress,requestTimeout:n.requestTimeout||this.requestTimeout,protocols:n.protocols||void 0});return r},r.prototype.open=function(){var t;if(this.rememberUpgrade&&r.priorWebsocketSuccess&&this.transports.indexOf("websocket")!==-1)t="websocket";else{if(0===this.transports.length){var e=this;return void setTimeout(function(){e.emit("error","No transports available")},0)}t=this.transports[0]}this.readyState="opening";try{t=this.createTransport(t)}catch(n){return this.transports.shift(),void this.open()}t.open(),this.setTransport(t)},r.prototype.setTransport=function(t){a("setting transport %s",t.name);var e=this;this.transport&&(a("clearing existing transport %s",this.transport.name),this.transport.removeAllListeners()),this.transport=t,t.on("drain",function(){e.onDrain()}).on("packet",function(t){e.onPacket(t)}).on("error",function(t){e.onError(t)}).on("close",function(){e.onClose("transport close")})},r.prototype.probe=function(t){function e(){if(f.onlyBinaryUpgrades){var e=!this.supportsBinary&&f.transport.supportsBinary;h=h||e}h||(a('probe transport "%s" opened',t),u.send([{type:"ping",data:"probe"}]),u.once("packet",function(e){if(!h)if("pong"===e.type&&"probe"===e.data){if(a('probe transport "%s" pong',t),f.upgrading=!0,f.emit("upgrading",u),!u)return;r.priorWebsocketSuccess="websocket"===u.name,a('pausing current transport "%s"',f.transport.name),f.transport.pause(function(){h||"closed"!==f.readyState&&(a("changing transport and sending upgrade packet"),p(),f.setTransport(u),u.send([{type:"upgrade"}]),f.emit("upgrade",u),u=null,f.upgrading=!1,f.flush())})}else{a('probe transport "%s" failed',t);var n=new Error("probe error");n.transport=u.name,f.emit("upgradeError",n)}}))}function n(){h||(h=!0,p(),u.close(),u=null)}function o(e){var r=new Error("probe error: "+e);r.transport=u.name,n(),a('probe transport "%s" failed because of error: %s',t,e),f.emit("upgradeError",r)}function i(){o("transport closed")}function s(){o("socket closed")}function c(t){u&&t.name!==u.name&&(a('"%s" works - aborting "%s"',t.name,u.name),n())}function p(){u.removeListener("open",e),u.removeListener("error",o),u.removeListener("close",i),f.removeListener("close",s),f.removeListener("upgrading",c)}a('probing transport "%s"',t);var u=this.createTransport(t,{probe:1}),h=!1,f=this;r.priorWebsocketSuccess=!1,u.once("open",e),u.once("error",o),u.once("close",i),this.once("close",s),this.once("upgrading",c),u.open()},r.prototype.onOpen=function(){if(a("socket open"),this.readyState="open",r.priorWebsocketSuccess="websocket"===this.transport.name,this.emit("open"),this.flush(),"open"===this.readyState&&this.upgrade&&this.transport.pause){a("starting upgrade probes");for(var t=0,e=this.upgrades.length;t<e;t++)this.probe(this.upgrades[t])}},r.prototype.onPacket=function(t){if("opening"===this.readyState||"open"===this.readyState||"closing"===this.readyState)switch(a('socket receive: type "%s", data "%s"',t.type,t.data),this.emit("packet",t),this.emit("heartbeat"),t.type){case"open":this.onHandshake(JSON.parse(t.data));break;case"pong":this.setPing(),this.emit("pong");break;case"error":var e=new Error("server error");e.code=t.data,this.onError(e);break;case"message":this.emit("data",t.data),this.emit("message",t.data)}else a('packet received with socket readyState "%s"',this.readyState)},r.prototype.onHandshake=function(t){this.emit("handshake",t),this.id=t.sid,this.transport.query.sid=t.sid,this.upgrades=this.filterUpgrades(t.upgrades),this.pingInterval=t.pingInterval,this.pingTimeout=t.pingTimeout,this.onOpen(),"closed"!==this.readyState&&(this.setPing(),this.removeListener("heartbeat",this.onHeartbeat),this.on("heartbeat",this.onHeartbeat))},r.prototype.onHeartbeat=function(t){clearTimeout(this.pingTimeoutTimer);var e=this;e.pingTimeoutTimer=setTimeout(function(){"closed"!==e.readyState&&e.onClose("ping timeout")},t||e.pingInterval+e.pingTimeout)},r.prototype.setPing=function(){var t=this;clearTimeout(t.pingIntervalTimer),t.pingIntervalTimer=setTimeout(function(){a("writing ping packet - expecting pong within %sms",t.pingTimeout),t.ping(),t.onHeartbeat(t.pingTimeout)},t.pingInterval)},r.prototype.ping=function(){var t=this;this.sendPacket("ping",function(){t.emit("ping")})},r.prototype.onDrain=function(){this.writeBuffer.splice(0,this.prevBufferLen),this.prevBufferLen=0,0===this.writeBuffer.length?this.emit("drain"):this.flush()},r.prototype.flush=function(){"closed"!==this.readyState&&this.transport.writable&&!this.upgrading&&this.writeBuffer.length&&(a("flushing %d packets in socket",this.writeBuffer.length),this.transport.send(this.writeBuffer),this.prevBufferLen=this.writeBuffer.length,this.emit("flush"))},r.prototype.write=r.prototype.send=function(t,e,n){return this.sendPacket("message",t,e,n),this},r.prototype.sendPacket=function(t,e,n,r){if("function"==typeof e&&(r=e,e=void 0),"function"==typeof n&&(r=n,n=null),"closing"!==this.readyState&&"closed"!==this.readyState){n=n||{},n.compress=!1!==n.compress;var o={type:t,data:e,options:n};this.emit("packetCreate",o),this.writeBuffer.push(o),r&&this.once("flush",r),this.flush()}},r.prototype.close=function(){function t(){r.onClose("forced close"),a("socket closing - telling transport to close"),r.transport.close()}function e(){r.removeListener("upgrade",e),r.removeListener("upgradeError",e),t()}function n(){r.once("upgrade",e),r.once("upgradeError",e)}if("opening"===this.readyState||"open"===this.readyState){this.readyState="closing";var r=this;this.writeBuffer.length?this.once("drain",function(){this.upgrading?n():t()}):this.upgrading?n():t()}return this},r.prototype.onError=function(t){a("socket error %j",t),r.priorWebsocketSuccess=!1,this.emit("error",t),this.onClose("transport error",t)},r.prototype.onClose=function(t,e){if("opening"===this.readyState||"open"===this.readyState||"closing"===this.readyState){a('socket close with reason: "%s"',t);var n=this;clearTimeout(this.pingIntervalTimer),clearTimeout(this.pingTimeoutTimer),this.transport.removeAllListeners("close"),this.transport.close(),this.transport.removeAllListeners(),this.readyState="closed",this.id=null,this.emit("close",t,e),n.writeBuffer=[],n.prevBufferLen=0}},r.prototype.filterUpgrades=function(t){for(var e=[],n=0,r=t.length;n<r;n++)~c(this.transports,t[n])&&e.push(t[n]);return e}}).call(e,function(){return this}())},function(t,e,n){(function(t){function r(e){var n,r=!1,a=!1,c=!1!==e.jsonp;if(t.location){var p="https:"===location.protocol,u=location.port;u||(u=p?443:80),r=e.hostname!==location.hostname||u!==e.port,a=e.secure!==p}if(e.xdomain=r,e.xscheme=a,n=new o(e),"open"in n&&!e.forceJSONP)return new i(e);if(!c)throw new Error("JSONP disabled");return new s(e)}var o=n(17),i=n(19),s=n(33),a=n(34);e.polling=r,e.websocket=a}).call(e,function(){return this}())},function(t,e,n){(function(e){var r=n(18);t.exports=function(t){var n=t.xdomain,o=t.xscheme,i=t.enablesXDR;try{if("undefined"!=typeof XMLHttpRequest&&(!n||r))return new XMLHttpRequest}catch(s){}try{if("undefined"!=typeof XDomainRequest&&!o&&i)return new XDomainRequest}catch(s){}if(!n)try{return new(e[["Active"].concat("Object").join("X")])("Microsoft.XMLHTTP");
@@ -32412,18 +32275,18 @@ function extend() {
 //# sourceMappingURL=socket.io.js.map
 
 /***/ }),
-/* 135 */
+/* 134 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 
-exports.decode = exports.parse = __webpack_require__(136);
-exports.encode = exports.stringify = __webpack_require__(137);
+exports.decode = exports.parse = __webpack_require__(135);
+exports.encode = exports.stringify = __webpack_require__(136);
 
 
 /***/ }),
-/* 136 */
+/* 135 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -32514,7 +32377,7 @@ var isArray = Array.isArray || function (xs) {
 
 
 /***/ }),
-/* 137 */
+/* 136 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -32606,7 +32469,7 @@ var objectKeys = Object.keys || function (obj) {
 
 
 /***/ }),
-/* 138 */
+/* 137 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -32749,7 +32612,7 @@ var Keyboard = function () {
 module.exports = Keyboard;
 
 /***/ }),
-/* 139 */
+/* 138 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -32885,7 +32748,7 @@ var Mouse = function () {
 module.exports = Mouse;
 
 /***/ }),
-/* 140 */
+/* 139 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -33051,7 +32914,7 @@ var Scratch3ControlBlocks = function () {
 module.exports = Scratch3ControlBlocks;
 
 /***/ }),
-/* 141 */
+/* 140 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -33171,7 +33034,7 @@ var Scratch3EventBlocks = function () {
 module.exports = Scratch3EventBlocks;
 
 /***/ }),
-/* 142 */
+/* 141 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -33184,7 +33047,7 @@ var _createClass = function () { function defineProperties(target, props) { for 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
 var Cast = __webpack_require__(1);
-var Clone = __webpack_require__(11);
+var Clone = __webpack_require__(10);
 var RenderedTarget = __webpack_require__(20);
 
 /**
@@ -33692,7 +33555,7 @@ var Scratch3LooksBlocks = function () {
 module.exports = Scratch3LooksBlocks;
 
 /***/ }),
-/* 143 */
+/* 142 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -33989,7 +33852,7 @@ var Scratch3MotionBlocks = function () {
 module.exports = Scratch3MotionBlocks;
 
 /***/ }),
-/* 144 */
+/* 143 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -34196,7 +34059,7 @@ var Scratch3OperatorsBlocks = function () {
 module.exports = Scratch3OperatorsBlocks;
 
 /***/ }),
-/* 145 */
+/* 144 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -34208,7 +34071,7 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
 
 var MathUtil = __webpack_require__(6);
 var Cast = __webpack_require__(1);
-var Clone = __webpack_require__(11);
+var Clone = __webpack_require__(10);
 
 var Scratch3SoundBlocks = function () {
     function Scratch3SoundBlocks(runtime) {
@@ -34563,7 +34426,7 @@ var Scratch3SoundBlocks = function () {
 module.exports = Scratch3SoundBlocks;
 
 /***/ }),
-/* 146 */
+/* 145 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -34907,7 +34770,7 @@ var Scratch3SensingBlocks = function () {
 module.exports = Scratch3SensingBlocks;
 
 /***/ }),
-/* 147 */
+/* 146 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -35075,7 +34938,7 @@ var Scratch3DataBlocks = function () {
 module.exports = Scratch3DataBlocks;
 
 /***/ }),
-/* 148 */
+/* 147 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -35173,7 +35036,7 @@ var Scratch3ProcedureBlocks = function () {
 module.exports = Scratch3ProcedureBlocks;
 
 /***/ }),
-/* 149 */
+/* 148 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -35188,13 +35051,13 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
  * scratch-vm runtime structures.
  */
 
-var Blocks = __webpack_require__(8);
+var Blocks = __webpack_require__(12);
 var RenderedTarget = __webpack_require__(20);
-var Sprite = __webpack_require__(54);
+var Sprite = __webpack_require__(53);
 var Color = __webpack_require__(19);
 var log = __webpack_require__(0);
 var uid = __webpack_require__(33);
-var specMap = __webpack_require__(150);
+var specMap = __webpack_require__(149);
 var Variable = __webpack_require__(17);
 
 var _require = __webpack_require__(27),
@@ -35871,7 +35734,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 150 */
+/* 149 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -37171,7 +37034,7 @@ addExtensionOp(weDo2, 'getTilt', {
 module.exports = specMap;
 
 /***/ }),
-/* 151 */
+/* 150 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -37183,9 +37046,9 @@ module.exports = specMap;
  * JSON and then generates all needed scratch-vm runtime structures.
  */
 
-var vmPackage = __webpack_require__(152);
-var Blocks = __webpack_require__(8);
-var Sprite = __webpack_require__(54);
+var vmPackage = __webpack_require__(151);
+var Blocks = __webpack_require__(12);
+var Sprite = __webpack_require__(53);
 var Variable = __webpack_require__(17);
 
 var _require = __webpack_require__(27),
@@ -37373,7 +37236,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 152 */
+/* 151 */
 /***/ (function(module, exports) {
 
 module.exports = {"name":"scratch-vm","version":"0.1.0","description":"Virtual Machine for Scratch 3.0","author":"Massachusetts Institute of Technology","license":"BSD-3-Clause","homepage":"https://github.com/LLK/scratch-vm#readme","repository":{"type":"git","url":"git+ssh://git@github.com/LLK/scratch-vm.git"},"main":"./dist/node/scratch-vm.js","browser":"./dist/web/scratch-vm.js","scripts":{"build":"webpack --progress --colors --bail","coverage":"tap ./test/{unit,integration}/*.js --coverage --coverage-report=lcov","deploy":"touch playground/.nojekyll && gh-pages -t -d playground -m \"Build for $(git log --pretty=format:%H -n1)\"","extract:pen":"mkdirp translations/pen && format-message extract --out-file translations/pen/en.json src/extensions/scratch3_pen/index.js","i18n:src":"npm run extract:pen","lint":"eslint . && format-message lint src/**/*.js","prepublish":"in-publish && npm run build || not-in-publish","start":"webpack-dev-server","tap":"tap ./test/{unit,integration}/*.js","tap:unit":"tap ./test/unit/*.js","tap:integration":"tap ./test/integration/*.js","test":"npm run lint && npm run tap","watch":"webpack --progress --colors --watch","version":"json -f package.json -I -e \"this.repository.sha = '$(git log -n1 --pretty=format:%H)'\""},"devDependencies":{"adm-zip":"0.4.7","babel-core":"^6.24.1","babel-eslint":"^7.1.1","babel-loader":"^7.0.0","babel-preset-es2015":"^6.24.1","copy-webpack-plugin":"4.2.1","decode-html":"2.0.0","escape-html":"1.0.3","eslint":"^4.5.0","eslint-config-scratch":"^5.0.0","expose-loader":"0.7.4","format-message":"5.2.1","format-message-cli":"5.2.1","gh-pages":"^1.1.0","highlightjs":"^9.8.0","htmlparser2":"3.9.2","immutable":"3.8.1","in-publish":"^2.0.0","json":"^9.0.4","lodash.defaultsdeep":"4.6.0","minilog":"3.1.0","nets":"3.2.0","promise":"8.0.1","scratch-audio":"latest","scratch-blocks":"latest","scratch-render":"latest","scratch-storage":"^0.4.0","script-loader":"0.7.2","socket.io-client":"2.0.4","stats.js":"^0.17.0","tap":"^11.0.1","text-encoding":"0.6.4","tiny-worker":"^2.1.1","webpack":"^3.10.0","webpack-dev-server":"^2.4.1","worker-loader":"1.1.0"}}
