@@ -1,5 +1,4 @@
 const BlockUtility = require('./block-utility');
-const BlocksExecuteCache = require('./blocks-execute-cache');
 const log = require('../util/log');
 const Thread = require('./thread');
 const {Map} = require('immutable');
@@ -100,26 +99,31 @@ const handleReport = function (
 };
 
 /**
- * A convenienve constant to hide that the recursiveCall argument to execute is
- * a boolean trap.
- * @const {boolean}
- */
-const RECURSIVE = true;
-
-/**
  * Execute a block.
  * @param {!Sequencer} sequencer Which sequencer is executing.
  * @param {!Thread} thread Thread which to read and execute.
- * @param {boolean} recursiveCall is execute called from another execute call?
  */
-const execute = function (sequencer, thread, recursiveCall) {
+const execute = function (sequencer, thread) {
     const runtime = sequencer.runtime;
+    const target = thread.target;
+
+    // Stop if block or target no longer exists.
+    if (target === null) {
+        // No block found: stop the thread; script no longer exists.
+        sequencer.retireThread(thread);
+        return;
+    }
 
     // Current block to execute is the one on the top of the stack.
     const currentBlockId = thread.peekStack();
     const currentStackFrame = thread.peekStackFrame();
 
-    let blockContainer = thread.blockContainer;
+    let blockContainer;
+    if (thread.updateMonitor) {
+        blockContainer = runtime.monitorBlocks;
+    } else {
+        blockContainer = target.blocks;
+    }
     let block = blockContainer.getBlock(currentBlockId);
     if (typeof block === 'undefined') {
         blockContainer = runtime.flyoutBlocks;
@@ -132,63 +136,17 @@ const execute = function (sequencer, thread, recursiveCall) {
         }
     }
 
-    const blockCached = BlocksExecuteCache.getCached(blockContainer, currentBlockId);
-    if (blockCached._initialized !== true) {
-        const {opcode, fields, inputs} = blockCached;
+    const opcode = blockContainer.getOpcode(block);
+    const fields = blockContainer.getFields(block);
+    const inputs = blockContainer.getInputs(block);
+    const blockFunction = runtime.getOpcodeFunction(opcode);
+    const isHat = runtime.getIsHat(opcode);
 
-        // Assign opcode isHat and blockFunction data to avoid dynamic lookups.
-        blockCached._isHat = runtime.getIsHat(opcode);
-        blockCached._blockFunction = runtime.getOpcodeFunction(opcode);
-        blockCached._definedBlockFunction = typeof blockCached._blockFunction !== 'undefined';
 
-        const fieldKeys = Object.keys(fields);
-
-        // Store the current shadow value if there is a shadow value.
-        blockCached._isShadowBlock = fieldKeys.length === 1 && Object.keys(inputs).length === 0;
-        blockCached._shadowValue = fieldKeys.length === 1 && fields[fieldKeys[0]].value;
-
-        // Store a fields copy. If fields is a VARIABLE, LIST, or
-        // BROADCAST_OPTION, store the created values so fields assignment to
-        // argValues does not iterate over fields.
-        blockCached._fields = Object.assign({}, blockCached.fields);
-        blockCached._isFieldVariable = fieldKeys.length === 1 && fieldKeys.includes('VARIABLE');
-        blockCached._fieldVariable = blockCached._isFieldVariable ?
-            {
-                id: fields.VARIABLE.id,
-                name: fields.VARIABLE.value
-            } :
-            null;
-        blockCached._isFieldList = fieldKeys.length === 1 && fieldKeys.includes('LIST');
-        blockCached._fieldList = blockCached._isFieldList ?
-            {
-                id: fields.LIST.id,
-                name: fields.LIST.value
-            } :
-            null;
-        blockCached._isFieldBroadcastOption = fieldKeys.length === 1 && fieldKeys.includes('BROADCAST_OPTION');
-        blockCached._fieldBroadcastOption = blockCached._isFieldBroadcastOption ?
-            {
-                id: fields.BROADCAST_OPTION.id,
-                name: fields.BROADCAST_OPTION.value
-            } :
-            null;
-        blockCached._isFieldKnown = blockCached._isFieldVariable ||
-            blockCached._isFieldList || blockCached._isFieldBroadcastOption;
-
-        // Store a modified inputs. This assures the keys are its own properties
-        // and that custom_block will not be evaluated.
-        blockCached._inputs = Object.assign({}, blockCached.inputs);
-        delete blockCached._inputs.custom_block;
-
-        blockCached._initialized = true;
+    if (!opcode) {
+        log.warn(`Could not get opcode for block: ${currentBlockId}`);
+        return;
     }
-
-    const opcode = blockCached.opcode;
-    const fields = blockCached._fields;
-    const inputs = blockCached._inputs;
-    const mutation = blockCached.mutation;
-    const blockFunction = blockCached._blockFunction;
-    const isHat = blockCached._isHat;
 
     // Hats and single-field shadows are implemented slightly differently
     // from regular blocks.
@@ -196,19 +154,15 @@ const execute = function (sequencer, thread, recursiveCall) {
     // it's treated as a predicate; if not, execution will proceed as a no-op.
     // For single-field shadows: If the block has a single field, and no inputs,
     // immediately return the value of the field.
-    if (!blockCached._definedBlockFunction) {
-        if (!opcode) {
-            log.warn(`Could not get opcode for block: ${currentBlockId}`);
-            return;
-        }
-
-        if (recursiveCall === RECURSIVE && blockCached._isShadowBlock) {
-            // One field and no inputs - treat as arg.
-            thread.pushReportedValue(blockCached._shadowValue);
-            thread.status = Thread.STATUS_RUNNING;
-        } else if (isHat) {
+    if (typeof blockFunction === 'undefined') {
+        if (isHat) {
             // Skip through the block (hat with no predicate).
             return;
+        }
+        const keys = Object.keys(fields);
+        if (keys.length === 1 && Object.keys(inputs).length === 0) {
+            // One field and no inputs - treat as arg.
+            handleReport(fields[keys[0]].value, sequencer, thread, currentBlockId, opcode, isHat);
         } else {
             log.warn(`Could not get implementation for opcode: ${opcode}`);
         }
@@ -220,22 +174,24 @@ const execute = function (sequencer, thread, recursiveCall) {
     const argValues = {};
 
     // Add all fields on this block to the argValues.
-    if (blockCached._isFieldKnown) {
-        if (blockCached._isFieldVariable) {
-            argValues.VARIABLE = blockCached._fieldVariable;
-        } else if (blockCached._isFieldList) {
-            argValues.LIST = blockCached._fieldList;
-        } else if (blockCached._isFieldBroadcastOption) {
-            argValues.BROADCAST_OPTION = blockCached._fieldBroadcastOption;
-        }
-    } else {
-        for (const fieldName in fields) {
+    for (const fieldName in fields) {
+        if (!fields.hasOwnProperty(fieldName)) continue;
+        if (fieldName === 'VARIABLE' || fieldName === 'LIST' ||
+            fieldName === 'BROADCAST_OPTION') {
+            argValues[fieldName] = {
+                id: fields[fieldName].id,
+                name: fields[fieldName].value
+            };
+        } else {
             argValues[fieldName] = fields[fieldName].value;
         }
     }
 
     // Recursively evaluate input blocks.
     for (const inputName in inputs) {
+        if (!inputs.hasOwnProperty(inputName)) continue;
+        // Do not evaluate the internal custom command block within definition
+        if (inputName === 'custom_block') continue;
         const input = inputs[inputName];
         const inputBlockId = input.block;
         // Is there no value for this input waiting in the stack frame?
@@ -246,16 +202,8 @@ const execute = function (sequencer, thread, recursiveCall) {
             // Save name of input for `Thread.pushReportedValue`.
             currentStackFrame.waitingReporter = inputName;
             // Actually execute the block.
-            execute(sequencer, thread, RECURSIVE);
+            execute(sequencer, thread);
             if (thread.status === Thread.STATUS_PROMISE_WAIT) {
-                for (const _inputName in inputs) {
-                    if (_inputName === inputName) break;
-                    if (_inputName === 'BROADCAST_INPUT') {
-                        currentStackFrame.reported[_inputName] = argValues[_inputName].name;
-                    } else {
-                        currentStackFrame.reported[_inputName] = argValues[_inputName];
-                    }
-                }
                 return;
             }
 
@@ -264,23 +212,7 @@ const execute = function (sequencer, thread, recursiveCall) {
             currentStackFrame.waitingReporter = null;
             thread.popStack();
         }
-        let inputValue;
-        if (
-            currentStackFrame.waitingReporter === null
-        ) {
-            inputValue = currentStackFrame.justReported;
-        } else if (currentStackFrame.waitingReporter === inputName) {
-            inputValue = currentStackFrame.justReported;
-            currentStackFrame.waitingReporter = null;
-            // If we've gotten this far, all of the input blocks are evaluated,
-            // and `argValues` is fully populated. So, execute the block
-            // primitive. First, clear `currentStackFrame.reported`, so any
-            // subsequent execution (e.g., on return from a branch) gets fresh
-            // inputs.
-            currentStackFrame.reported = {};
-        } else if (typeof currentStackFrame.reported[inputName] !== 'undefined') {
-            inputValue = currentStackFrame.reported[inputName];
-        }
+        const inputValue = currentStackFrame.reported[inputName];
         if (inputName === 'BROADCAST_INPUT') {
             const broadcastInput = inputs[inputName];
             // Check if something is plugged into the broadcast block, or
@@ -307,7 +239,16 @@ const execute = function (sequencer, thread, recursiveCall) {
     }
 
     // Add any mutation to args (e.g., for procedures).
-    argValues.mutation = mutation;
+    const mutation = blockContainer.getMutation(block);
+    if (mutation !== null) {
+        argValues.mutation = mutation;
+    }
+
+    // If we've gotten this far, all of the input blocks are evaluated,
+    // and `argValues` is fully populated. So, execute the block primitive.
+    // First, clear `currentStackFrame.reported`, so any subsequent execution
+    // (e.g., on return from a branch) gets fresh inputs.
+    currentStackFrame.reported = {};
 
     let primitiveReportedValue = null;
     blockUtility.sequencer = sequencer;
@@ -330,7 +271,7 @@ const execute = function (sequencer, thread, recursiveCall) {
         runtime.profiler.records.push(runtime.profiler.STOP, performance.now());
     }
 
-    if (recursiveCall !== RECURSIVE && typeof primitiveReportedValue === 'undefined') {
+    if (typeof primitiveReportedValue === 'undefined') {
         // No value reported - potentially a command block.
         // Edge-activated hats don't request a glow; all commands do.
         thread.requestScriptGlowInFrame = true;
@@ -377,11 +318,7 @@ const execute = function (sequencer, thread, recursiveCall) {
             thread.popStack();
         });
     } else if (thread.status === Thread.STATUS_RUNNING) {
-        if (recursiveCall === RECURSIVE) {
-            thread.pushReportedValue(primitiveReportedValue);
-        } else {
-            handleReport(primitiveReportedValue, sequencer, thread, currentBlockId, opcode, isHat);
-        }
+        handleReport(primitiveReportedValue, sequencer, thread, currentBlockId, opcode, isHat);
     }
 };
 

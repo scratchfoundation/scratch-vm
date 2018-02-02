@@ -861,9 +861,6 @@ class Runtime extends EventEmitter {
         thread.target = target;
         thread.stackClick = opts.stackClick;
         thread.updateMonitor = opts.updateMonitor;
-        thread.blockContainer = opts.updateMonitor ?
-            this.monitorBlocks :
-            target.blocks;
 
         thread.pushStack(id);
         this.threads.push(thread);
@@ -893,7 +890,6 @@ class Runtime extends EventEmitter {
         newThread.target = thread.target;
         newThread.stackClick = thread.stackClick;
         newThread.updateMonitor = thread.updateMonitor;
-        newThread.blockContainer = thread.blockContainer;
         newThread.pushStack(thread.topBlock);
         const i = this.threads.indexOf(thread);
         if (i > -1) {

@@ -43,12 +43,6 @@ class Thread {
         this.target = null;
 
         /**
-         * The Blocks this thread will execute.
-         * @type {Blocks}
-         */
-        this.blockContainer = null;
-
-        /**
          * Whether the thread requests its script to glow during this frame.
          * @type {boolean}
          */
@@ -130,8 +124,7 @@ class Thread {
             this.stackFrames.push({
                 isLoop: false, // Whether this level of the stack is a loop.
                 warpMode: warpMode, // Whether this level is in warp mode.
-                justReported: null, // Reported value from just executed block.
-                reported: {}, // Persists reported inputs during async block.
+                reported: {}, // Collects reported input values.
                 waitingReporter: null, // Name of waiting reporter.
                 params: {}, // Procedure parameters.
                 executionContext: {} // A context passed to block implementations.
@@ -216,8 +209,9 @@ class Thread {
      */
     pushReportedValue (value) {
         const parentStackFrame = this.peekParentStackFrame();
-        if (parentStackFrame !== null) {
-            parentStackFrame.justReported = value;
+        if (parentStackFrame) {
+            const waitingReporter = parentStackFrame.waitingReporter;
+            parentStackFrame.reported[waitingReporter] = value;
         }
     }
 
