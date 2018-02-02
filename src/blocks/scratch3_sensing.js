@@ -1,4 +1,5 @@
 const Cast = require('../util/cast');
+const Timer = require('../util/timer');
 
 class Scratch3SensingBlocks {
     constructor (runtime) {
@@ -23,6 +24,8 @@ class Scratch3SensingBlocks {
         this.runtime.on('ANSWER', this._onAnswer.bind(this));
         this.runtime.on('PROJECT_START', this._resetAnswer.bind(this));
         this.runtime.on('PROJECT_STOP_ALL', this._clearAllQuestions.bind(this));
+
+        this.timer = new Timer();
     }
 
     /**
@@ -217,7 +220,19 @@ class Scratch3SensingBlocks {
 
     getLoudness () {
         if (typeof this.runtime.audioEngine === 'undefined') return -1;
-        return this.runtime.audioEngine.getLoudness();
+        if (typeof this.runtime.currentStepTime === 'undefined') return -1;
+
+        // Only measure loudness once per step
+        if (this.loudnessTime) {
+            const timeSinceLoudness = this.timer.time() - this.loudnessTime;
+            if (timeSinceLoudness < this.runtime.currentStepTime) {
+                return this.loudness;
+            }
+        }
+
+        this.loudnessTime = this.timer.time();
+        this.loudness = this.runtime.audioEngine.getLoudness();
+        return this.loudness;
     }
 
     getAttributeOf (args) {
