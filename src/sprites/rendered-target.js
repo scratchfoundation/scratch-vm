@@ -422,15 +422,11 @@ class RenderedTarget extends Target {
         this.sprite.costumes[costumeIndex].name = newUnusedName;
 
         if (this.isStage) {
-            this.blocks.updateAssetName(oldName, newUnusedName, 'backdrop');
-            // Since this is a backdrop, run through the blocks of the other targets
-            // and update the backdrop name there as well
+            // Since this is a backdrop, go through all targets and
+            // update any blocks referencing the old backdrop name
             const targets = this.runtime.targets;
             for (let i = 0; i < targets.length; i++) {
                 const currTarget = targets[i];
-                if (currTarget.id === this.id) {
-                    continue;
-                }
                 currTarget.blocks.updateAssetName(oldName, newUnusedName, 'backdrop');
             }
         } else {

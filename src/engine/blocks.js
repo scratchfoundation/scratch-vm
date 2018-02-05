@@ -584,7 +584,8 @@ class Blocks {
      * @param {string} oldName The old name of the asset that was renamed.
      * @param {string} newName The new name of the asset that was renamed.
      * @param {string} assetType String representation of the kind of asset
-     * that was renamed. This can be one of 'costume', 'sound', or 'backdrop'.
+     * that was renamed. This can be one of 'sprite','costume', 'sound', or
+     * 'backdrop'.
      */
     updateAssetName (oldName, newName, assetType) {
         let getAssetField;
@@ -594,6 +595,8 @@ class Blocks {
             getAssetField = this._getSoundField.bind(this);
         } else if (assetType === 'backdrop') {
             getAssetField = this._getBackdropField.bind(this);
+        } else if (assetType === 'sprite') {
+            getAssetField = this._getSpriteField.bind(this);
         } else {
             return;
         }
@@ -647,6 +650,29 @@ class Blocks {
         const block = this.getBlock(blockId);
         if (block && block.fields.hasOwnProperty('BACKDROP')) {
             return block.fields.BACKDROP;
+        }
+        return null;
+    }
+
+    /**
+     * Helper function to retrieve a sprite menu field from a block given its id.
+     * @param {string} blockId A unique identifier for a block
+     * @return {?object} The sprite menu field of the block with the given block id.
+     * Null, if either a block with the given id doesn't exist or if a sprite menu field
+     * does not exist on the block with the given id.
+     */
+    _getSpriteField (blockId) {
+        const block = this.getBlock(blockId);
+        if (!block) {
+            return null;
+        }
+        const spriteMenuNames = ['TOWARDS', 'TO', 'OBJECT', 'VIDEOONMENU2',
+            'DISTANCETOMENU', 'TOUCHINGOBJECTMENU', 'CLONE_OPTION'];
+        for (let i = 0; i < spriteMenuNames.length; i++) {
+            const menuName = spriteMenuNames[i];
+            if (block.fields.hasOwnProperty(menuName)) {
+                return block.fields[menuName];
+            }
         }
         return null;
     }
