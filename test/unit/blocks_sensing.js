@@ -83,3 +83,43 @@ test('set drag mode', t => {
 
     t.end();
 });
+
+test('get loudness with caching', t => {
+    const rt = new Runtime();
+    const sensing = new Sensing(rt);
+
+    // It should report -1 when audio engine is not available.
+    t.strictEqual(sensing.getLoudness(), -1);
+
+    // Stub the audio engine with its getLoudness function, and set up different
+    // values to simulate it changing over time.
+    const firstLoudness = 1;
+    const secondLoudness = 2;
+    let simulatedLoudness = firstLoudness;
+    rt.audioEngine = {getLoudness: () => simulatedLoudness};
+
+    // It should report -1 when current step time is null.
+    t.strictEqual(sensing.getLoudness(), -1);
+
+    // Stub the current step time.
+    rt.currentStepTime = 1000 / 30;
+
+    // The first time it works, it should report the result from the stubbed audio engine.
+    t.strictEqual(sensing.getLoudness(), firstLoudness);
+
+    // Update the simulated loudness to a new value.
+    simulatedLoudness = secondLoudness;
+
+    // Simulate time passing by advancing the timer forward a little bit.
+    // After less than a step, it should still report cached loudness.
+    let simulatedTime = Date.now() + (rt.currentStepTime / 2);
+    sensing._timer = {time: () => simulatedTime};
+    t.strictEqual(sensing.getLoudness(), firstLoudness);
+
+    // Simulate more than a step passing. It should now request the value
+    // from the audio engine again.
+    simulatedTime += rt.currentStepTime;
+    t.strictEqual(sensing.getLoudness(), secondLoudness);
+
+    t.end();
+});
