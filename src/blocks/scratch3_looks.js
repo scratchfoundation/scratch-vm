@@ -255,7 +255,8 @@ class Scratch3LooksBlocks {
         if (typeof message === 'number') {
             message = message.toFixed(2);
         }
-        this._updateBubble(util.target, 'say', String(args.MESSAGE));
+        message = String(message);
+        this.runtime.emit('SAY', util.target, 'say', message);
     }
 
     sayforsecs (args, util) {
