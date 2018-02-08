@@ -1,5 +1,6 @@
 const test = require('tap').test;
 const Looks = require('../../src/blocks/scratch3_looks');
+const Runtime = require('../../src/engine/runtime');
 const util = {
     target: {
         currentCostume: 0, // Internally, current costume is 0 indexed
@@ -49,4 +50,21 @@ test('getBackdropNumberName can return costume name', t => {
     const number = blocks.getBackdropNumberName(args, util);
     t.strictEqual(number, 'third name');
     t.end();
+});
+
+test('numbers should be rounded to two decimals in say', t => {
+    const rt = new Runtime();
+    const looks = new Looks(rt);
+
+    const args = {MESSAGE: 3.14159};
+    const expectedSayString = '3.14';
+
+    rt.removeAllListeners('SAY'); // Prevent say blocks from executing
+
+    rt.addListener('SAY', (target, type, sayString) => {
+        t.strictEqual(sayString, expectedSayString);
+        t.end();
+    });
+
+    looks.say(args, util);
 });
