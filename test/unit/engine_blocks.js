@@ -538,3 +538,211 @@ test('delete inputs', t => {
     t.equal(b._scripts.length, 0);
     t.end();
 });
+
+test('updateAssetName function updates name in sound field', t => {
+    const b = new Blocks();
+    b.createBlock({
+        id: 'foo',
+        fields: {
+            SOUND_MENU: {
+                name: 'SOUND_MENU',
+                value: 'name1'
+            }
+        }
+    });
+    t.equals(b.getBlock('foo').fields.SOUND_MENU.value, 'name1');
+    b.updateAssetName('name1', 'name2', 'sound');
+    t.equals(b.getBlock('foo').fields.SOUND_MENU.value, 'name2');
+    t.end();
+});
+
+test('updateAssetName function updates name in costume field', t => {
+    const b = new Blocks();
+    b.createBlock({
+        id: 'foo',
+        fields: {
+            COSTUME: {
+                name: 'COSTUME',
+                value: 'name1'
+            }
+        }
+    });
+    t.equals(b.getBlock('foo').fields.COSTUME.value, 'name1');
+    b.updateAssetName('name1', 'name2', 'costume');
+    t.equals(b.getBlock('foo').fields.COSTUME.value, 'name2');
+    t.end();
+});
+
+test('updateAssetName function updates name in backdrop field', t => {
+    const b = new Blocks();
+    b.createBlock({
+        id: 'foo',
+        fields: {
+            BACKDROP: {
+                name: 'BACKDROP',
+                value: 'name1'
+            }
+        }
+    });
+    t.equals(b.getBlock('foo').fields.BACKDROP.value, 'name1');
+    b.updateAssetName('name1', 'name2', 'backdrop');
+    t.equals(b.getBlock('foo').fields.BACKDROP.value, 'name2');
+    t.end();
+});
+
+test('updateAssetName function updates name in all sprite fields', t => {
+    const b = new Blocks();
+    b.createBlock({
+        id: 'id1',
+        fields: {
+            TOWARDS: {
+                name: 'TOWARDS',
+                value: 'name1'
+            }
+        }
+    });
+    b.createBlock({
+        id: 'id2',
+        fields: {
+            TO: {
+                name: 'TO',
+                value: 'name1'
+            }
+        }
+    });
+    b.createBlock({
+        id: 'id3',
+        fields: {
+            OBJECT: {
+                name: 'OBJECT',
+                value: 'name1'
+            }
+        }
+    });
+    b.createBlock({
+        id: 'id4',
+        fields: {
+            VIDEOONMENU2: {
+                name: 'VIDEOONMENU2',
+                value: 'name1'
+            }
+        }
+    });
+    b.createBlock({
+        id: 'id5',
+        fields: {
+            DISTANCETOMENU: {
+                name: 'DISTANCETOMENU',
+                value: 'name1'
+            }
+        }
+    });
+    b.createBlock({
+        id: 'id6',
+        fields: {
+            TOUCHINGOBJECTMENU: {
+                name: 'TOUCHINGOBJECTMENU',
+                value: 'name1'
+            }
+        }
+    });
+    b.createBlock({
+        id: 'id7',
+        fields: {
+            CLONE_OPTION: {
+                name: 'CLONE_OPTION',
+                value: 'name1'
+            }
+        }
+    });
+    t.equals(b.getBlock('id1').fields.TOWARDS.value, 'name1');
+    t.equals(b.getBlock('id2').fields.TO.value, 'name1');
+    t.equals(b.getBlock('id3').fields.OBJECT.value, 'name1');
+    t.equals(b.getBlock('id4').fields.VIDEOONMENU2.value, 'name1');
+    t.equals(b.getBlock('id5').fields.DISTANCETOMENU.value, 'name1');
+    t.equals(b.getBlock('id6').fields.TOUCHINGOBJECTMENU.value, 'name1');
+    t.equals(b.getBlock('id7').fields.CLONE_OPTION.value, 'name1');
+    b.updateAssetName('name1', 'name2', 'sprite');
+    t.equals(b.getBlock('id1').fields.TOWARDS.value, 'name2');
+    t.equals(b.getBlock('id2').fields.TO.value, 'name2');
+    t.equals(b.getBlock('id3').fields.OBJECT.value, 'name2');
+    t.equals(b.getBlock('id4').fields.VIDEOONMENU2.value, 'name2');
+    t.equals(b.getBlock('id5').fields.DISTANCETOMENU.value, 'name2');
+    t.equals(b.getBlock('id6').fields.TOUCHINGOBJECTMENU.value, 'name2');
+    t.equals(b.getBlock('id7').fields.CLONE_OPTION.value, 'name2');
+    t.end();
+});
+
+test('updateAssetName function updates name according to asset type', t => {
+    const b = new Blocks();
+    b.createBlock({
+        id: 'id1',
+        fields: {
+            SOUND_MENU: {
+                name: 'SOUND_MENU',
+                value: 'name1'
+            }
+        }
+    });
+    b.createBlock({
+        id: 'id2',
+        fields: {
+            COSTUME: {
+                name: 'COSTUME',
+                value: 'name1'
+            }
+        }
+    });
+    t.equals(b.getBlock('id1').fields.SOUND_MENU.value, 'name1');
+    t.equals(b.getBlock('id2').fields.COSTUME.value, 'name1');
+    b.updateAssetName('name1', 'name2', 'sound');
+    // only sound should get renamed
+    t.equals(b.getBlock('id1').fields.SOUND_MENU.value, 'name2');
+    t.equals(b.getBlock('id2').fields.COSTUME.value, 'name1');
+    t.end();
+});
+
+test('updateAssetName only updates given name', t => {
+    const b = new Blocks();
+    b.createBlock({
+        id: 'id1',
+        fields: {
+            COSTUME: {
+                name: 'COSTUME',
+                value: 'name1'
+            }
+        }
+    });
+    b.createBlock({
+        id: 'id2',
+        fields: {
+            COSTUME: {
+                name: 'COSTUME',
+                value: 'foo'
+            }
+        }
+    });
+    t.equals(b.getBlock('id1').fields.COSTUME.value, 'name1');
+    t.equals(b.getBlock('id2').fields.COSTUME.value, 'foo');
+    b.updateAssetName('name1', 'name2', 'costume');
+    t.equals(b.getBlock('id1').fields.COSTUME.value, 'name2');
+    t.equals(b.getBlock('id2').fields.COSTUME.value, 'foo');
+    t.end();
+});
+
+test('updateAssetName doesn\'t update name if name isn\'t being used', t => {
+    const b = new Blocks();
+    b.createBlock({
+        id: 'id1',
+        fields: {
+            BACKDROP: {
+                name: 'BACKDROP',
+                value: 'foo'
+            }
+        }
+    });
+    t.equals(b.getBlock('id1').fields.BACKDROP.value, 'foo');
+    b.updateAssetName('name1', 'name2', 'backdrop');
+    t.equals(b.getBlock('id1').fields.BACKDROP.value, 'foo');
+    t.end();
+});

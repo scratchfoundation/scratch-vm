@@ -577,6 +577,106 @@ class Blocks {
         }
     }
 
+    /**
+     * Update blocks after a sound, costume, or backdrop gets renamed.
+     * Any block referring to the old name of the asset should get updated
+     * to refer to the new name.
+     * @param {string} oldName The old name of the asset that was renamed.
+     * @param {string} newName The new name of the asset that was renamed.
+     * @param {string} assetType String representation of the kind of asset
+     * that was renamed. This can be one of 'sprite','costume', 'sound', or
+     * 'backdrop'.
+     */
+    updateAssetName (oldName, newName, assetType) {
+        let getAssetField;
+        if (assetType === 'costume') {
+            getAssetField = this._getCostumeField.bind(this);
+        } else if (assetType === 'sound') {
+            getAssetField = this._getSoundField.bind(this);
+        } else if (assetType === 'backdrop') {
+            getAssetField = this._getBackdropField.bind(this);
+        } else if (assetType === 'sprite') {
+            getAssetField = this._getSpriteField.bind(this);
+        } else {
+            return;
+        }
+        const blocks = this._blocks;
+        for (const blockId in blocks) {
+            const assetField = getAssetField(blockId);
+            if (assetField && assetField.value === oldName) {
+                assetField.value = newName;
+            }
+        }
+    }
+
+    /**
+     * Helper function to retrieve a costume menu field from a block given its id.
+     * @param {string} blockId A unique identifier for a block
+     * @return {?object} The costume menu field of the block with the given block id.
+     * Null if either a block with the given id doesn't exist or if a costume menu field
+     * does not exist on the block with the given id.
+     */
+    _getCostumeField (blockId) {
+        const block = this.getBlock(blockId);
+        if (block && block.fields.hasOwnProperty('COSTUME')) {
+            return block.fields.COSTUME;
+        }
+        return null;
+    }
+
+    /**
+     * Helper function to retrieve a sound menu field from a block given its id.
+     * @param {string} blockId A unique identifier for a block
+     * @return {?object} The sound menu field of the block with the given block id.
+     * Null, if either a block with the given id doesn't exist or if a sound menu field
+     * does not exist on the block with the given id.
+     */
+    _getSoundField (blockId) {
+        const block = this.getBlock(blockId);
+        if (block && block.fields.hasOwnProperty('SOUND_MENU')) {
+            return block.fields.SOUND_MENU;
+        }
+        return null;
+    }
+
+    /**
+     * Helper function to retrieve a backdrop menu field from a block given its id.
+     * @param {string} blockId A unique identifier for a block
+     * @return {?object} The backdrop menu field of the block with the given block id.
+     * Null, if either a block with the given id doesn't exist or if a backdrop menu field
+     * does not exist on the block with the given id.
+     */
+    _getBackdropField (blockId) {
+        const block = this.getBlock(blockId);
+        if (block && block.fields.hasOwnProperty('BACKDROP')) {
+            return block.fields.BACKDROP;
+        }
+        return null;
+    }
+
+    /**
+     * Helper function to retrieve a sprite menu field from a block given its id.
+     * @param {string} blockId A unique identifier for a block
+     * @return {?object} The sprite menu field of the block with the given block id.
+     * Null, if either a block with the given id doesn't exist or if a sprite menu field
+     * does not exist on the block with the given id.
+     */
+    _getSpriteField (blockId) {
+        const block = this.getBlock(blockId);
+        if (!block) {
+            return null;
+        }
+        const spriteMenuNames = ['TOWARDS', 'TO', 'OBJECT', 'VIDEOONMENU2',
+            'DISTANCETOMENU', 'TOUCHINGOBJECTMENU', 'CLONE_OPTION'];
+        for (let i = 0; i < spriteMenuNames.length; i++) {
+            const menuName = spriteMenuNames[i];
+            if (block.fields.hasOwnProperty(menuName)) {
+                return block.fields[menuName];
+            }
+        }
+        return null;
+    }
+
     // ---------------------------------------------------------------------
 
     /**
