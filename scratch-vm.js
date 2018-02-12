@@ -1833,6 +1833,120 @@ var Blocks = function () {
             }
         }
 
+        /**
+         * Update blocks after a sound, costume, or backdrop gets renamed.
+         * Any block referring to the old name of the asset should get updated
+         * to refer to the new name.
+         * @param {string} oldName The old name of the asset that was renamed.
+         * @param {string} newName The new name of the asset that was renamed.
+         * @param {string} assetType String representation of the kind of asset
+         * that was renamed. This can be one of 'sprite','costume', 'sound', or
+         * 'backdrop'.
+         */
+
+    }, {
+        key: 'updateAssetName',
+        value: function updateAssetName(oldName, newName, assetType) {
+            var getAssetField = void 0;
+            if (assetType === 'costume') {
+                getAssetField = this._getCostumeField.bind(this);
+            } else if (assetType === 'sound') {
+                getAssetField = this._getSoundField.bind(this);
+            } else if (assetType === 'backdrop') {
+                getAssetField = this._getBackdropField.bind(this);
+            } else if (assetType === 'sprite') {
+                getAssetField = this._getSpriteField.bind(this);
+            } else {
+                return;
+            }
+            var blocks = this._blocks;
+            for (var blockId in blocks) {
+                var assetField = getAssetField(blockId);
+                if (assetField && assetField.value === oldName) {
+                    assetField.value = newName;
+                }
+            }
+        }
+
+        /**
+         * Helper function to retrieve a costume menu field from a block given its id.
+         * @param {string} blockId A unique identifier for a block
+         * @return {?object} The costume menu field of the block with the given block id.
+         * Null if either a block with the given id doesn't exist or if a costume menu field
+         * does not exist on the block with the given id.
+         */
+
+    }, {
+        key: '_getCostumeField',
+        value: function _getCostumeField(blockId) {
+            var block = this.getBlock(blockId);
+            if (block && block.fields.hasOwnProperty('COSTUME')) {
+                return block.fields.COSTUME;
+            }
+            return null;
+        }
+
+        /**
+         * Helper function to retrieve a sound menu field from a block given its id.
+         * @param {string} blockId A unique identifier for a block
+         * @return {?object} The sound menu field of the block with the given block id.
+         * Null, if either a block with the given id doesn't exist or if a sound menu field
+         * does not exist on the block with the given id.
+         */
+
+    }, {
+        key: '_getSoundField',
+        value: function _getSoundField(blockId) {
+            var block = this.getBlock(blockId);
+            if (block && block.fields.hasOwnProperty('SOUND_MENU')) {
+                return block.fields.SOUND_MENU;
+            }
+            return null;
+        }
+
+        /**
+         * Helper function to retrieve a backdrop menu field from a block given its id.
+         * @param {string} blockId A unique identifier for a block
+         * @return {?object} The backdrop menu field of the block with the given block id.
+         * Null, if either a block with the given id doesn't exist or if a backdrop menu field
+         * does not exist on the block with the given id.
+         */
+
+    }, {
+        key: '_getBackdropField',
+        value: function _getBackdropField(blockId) {
+            var block = this.getBlock(blockId);
+            if (block && block.fields.hasOwnProperty('BACKDROP')) {
+                return block.fields.BACKDROP;
+            }
+            return null;
+        }
+
+        /**
+         * Helper function to retrieve a sprite menu field from a block given its id.
+         * @param {string} blockId A unique identifier for a block
+         * @return {?object} The sprite menu field of the block with the given block id.
+         * Null, if either a block with the given id doesn't exist or if a sprite menu field
+         * does not exist on the block with the given id.
+         */
+
+    }, {
+        key: '_getSpriteField',
+        value: function _getSpriteField(blockId) {
+            var block = this.getBlock(blockId);
+            if (!block) {
+                return null;
+            }
+            var spriteMenuNames = ['TOWARDS', 'TO', 'OBJECT', 'VIDEOONMENU2', 'DISTANCETOMENU', 'TOUCHINGOBJECTMENU', 'CLONE_OPTION'];
+            for (var i = 0; i < spriteMenuNames.length; i++) {
+                var menuName = spriteMenuNames[i];
+                if (block.fields.hasOwnProperty(menuName)) {
+                    return block.fields[menuName];
+                }
+            }
+            return null;
+        }
+
         // ---------------------------------------------------------------------
 
         /**
@@ -8140,7 +8254,21 @@ var RenderedTarget = function (_Target) {
             }).map(function (costume) {
                 return costume.name;
             });
-            this.sprite.costumes[costumeIndex].name = StringUtil.unusedName(newName, usedNames);
+            var oldName = this.sprite.costumes[costumeIndex].name;
+            var newUnusedName = StringUtil.unusedName(newName, usedNames);
+            this.sprite.costumes[costumeIndex].name = newUnusedName;
+
+            if (this.isStage) {
+                // Since this is a backdrop, go through all targets and
+                // update any blocks referencing the old backdrop name
+                var targets = this.runtime.targets;
+                for (var i = 0; i < targets.length; i++) {
+                    var currTarget = targets[i];
+                    currTarget.blocks.updateAssetName(oldName, newUnusedName, 'backdrop');
+                }
+            } else {
+                this.blocks.updateAssetName(oldName, newUnusedName, 'costume');
+            }
         }
 
         /**
@@ -8196,7 +8324,10 @@ var RenderedTarget = function (_Target) {
             }).map(function (sound) {
                 return sound.name;
             });
-            this.sprite.sounds[soundIndex].name = StringUtil.unusedName(newName, usedNames);
+            var oldName = this.sprite.sounds[soundIndex].name;
+            var newUnusedName = StringUtil.unusedName(newName, usedNames);
+            this.sprite.sounds[soundIndex].name = newUnusedName;
+            this.blocks.updateAssetName(oldName, newUnusedName, 'sound');
         }
 
         /**
@@ -16882,7 +17013,14 @@ var VirtualMachine = function (_EventEmitter) {
                     }).map(function (runtimeTarget) {
                         return runtimeTarget.sprite.name;
                     });
-                    sprite.name = StringUtil.unusedName(newName, names);
+                    var oldName = sprite.name;
+                    var newUnusedName = StringUtil.unusedName(newName, names);
+                    sprite.name = newUnusedName;
+                    var allTargets = this.runtime.targets;
+                    for (var i = 0; i < allTargets.length; i++) {
+                        var currTarget = allTargets[i];
+                        currTarget.blocks.updateAssetName(oldName, newName, 'sprite');
+                    }
                 }
                 this.emitTargetsUpdate();
             } else {
@@ -24546,7 +24684,7 @@ module.exports = function () {
 /* 89 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var apply = Function.prototype.apply;
+/* WEBPACK VAR INJECTION */(function(global) {var apply = Function.prototype.apply;
 
 // DOM APIs, for completeness
 
@@ -24597,9 +24735,17 @@ exports._unrefActive = exports.active = function(item) {
 
 // setimmediate attaches itself to the global object
 __webpack_require__(90);
-exports.setImmediate = setImmediate;
-exports.clearImmediate = clearImmediate;
+// On some exotic environments, it's not clear which object `setimmeidate` was
+// able to install onto.  Search each possibility in the same order as the
+// `setimmediate` library.
+exports.setImmediate = (typeof self !== "undefined" && self.setImmediate) ||
+                       (typeof global !== "undefined" && global.setImmediate) ||
+                       (this && this.setImmediate);
+exports.clearImmediate = (typeof self !== "undefined" && self.clearImmediate) ||
+                         (typeof global !== "undefined" && global.clearImmediate) ||
+                         (this && this.clearImmediate);
 
+/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(2)))
 
 /***/ }),
 /* 90 */
