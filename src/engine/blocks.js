@@ -288,6 +288,16 @@ class Blocks {
                 newCoordinate: e.newCoordinate
             });
             break;
+        case 'drag':
+            if (optRuntime) {
+                optRuntime.emitBlockDragUpdate(e.isOutside);
+            }
+            break;
+        case 'endDrag':
+            if (optRuntime) {
+                optRuntime.emitBlockDragUpdate(false /* areBlocksOverGui */);
+            }
+            break;
         case 'delete':
             // Don't accept delete events for missing blocks,
             // or shadow blocks being obscured.

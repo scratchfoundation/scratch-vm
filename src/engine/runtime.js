@@ -380,6 +380,15 @@ class Runtime extends EventEmitter {
     }
 
     /**
+     * Event name for block drag update.
+     * @const {string}
+     */
+    static get BLOCK_DRAG_UPDATE () {
+        return 'BLOCK_DRAG_UPDATE';
+    }
+
+
+    /**
      * Event name for reporting that an extension was added.
      * @const {string}
      */
@@ -1385,6 +1394,14 @@ class Runtime extends EventEmitter {
         } else {
             this.emit(Runtime.SCRIPT_GLOW_OFF, {id: topBlockId});
         }
+    }
+
+    /**
+     * Emit whether blocks are being dragged over gui
+     * @param {boolean} areBlocksOverGui True if blocks are dragged out of blocks workspace, false otherwise
+     */
+    emitBlockDragUpdate (areBlocksOverGui) {
+        this.emit(Runtime.BLOCK_DRAG_UPDATE, areBlocksOverGui);
     }
 
     /**
