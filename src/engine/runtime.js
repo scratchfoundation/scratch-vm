@@ -1458,6 +1458,9 @@ class Runtime extends EventEmitter {
     getSpriteTargetByName (spriteName) {
         for (let i = 0; i < this.targets.length; i++) {
             const target = this.targets[i];
+            if (target.isStage) {
+                continue;
+            }
             if (target.sprite && target.sprite.name === spriteName) {
                 return target;
             }
