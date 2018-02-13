@@ -17,11 +17,11 @@ const serializeAssets = function (runtime, assetType) {
             const currAsset = currAssets[j];
             const assetId = currAsset.assetId;
             const storage = runtime.storage;
-            const asset = storage.get(assetId);
+            const storedAsset = storage.get(assetId);
             assetDescs.push({
                 fileName: assetType === 'sound' ?
-                    currAsset.md5 : `${assetId}.${currAsset.dataFormat}`,
-                fileContent: asset.data});
+                    currAsset.md5 : `${assetId}.${storedAsset.dataFormat}`,
+                fileContent: storedAsset.data});
         }
     }
     return assetDescs;
