@@ -288,7 +288,7 @@ class Blocks {
                 newCoordinate: e.newCoordinate
             });
             break;
-        case 'drag':
+        case 'dragOutside':
             if (optRuntime) {
                 optRuntime.emitBlockDragUpdate(e.isOutside);
             }

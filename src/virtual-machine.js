@@ -626,6 +626,7 @@ class VirtualMachine extends EventEmitter {
                     this._hoveredSpriteId !== this.editingTarget.id) {
                 const dragTarget = this.runtime.getTargetById(this._hoveredSpriteId);
                 if (dragTarget) {
+                    // TODO tell gui to tell blocks to undo, to cause the blocks to move back into place.
                     const newBlocks = adapter(e);
                     for (let i = 0; i < newBlocks.length; i++) {
                         dragTarget.blocks.createBlock(newBlocks[i]);

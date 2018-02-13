@@ -2,6 +2,33 @@ const mutationAdapter = require('./mutation-adapter');
 const html = require('htmlparser2');
 
 /**
+ * (Copied from Blockly.utils)
+ * Legal characters for the unique ID.  Should be all on a US keyboard.
+ * No characters that conflict with XML or JSON.  Requests to remove additional
+ * 'problematic' characters from this soup will be denied.  That's your failure
+ * to properly escape in your own environment.  Issues #251, #625, #682, #1304.
+ * @private
+ */
+const genUidSoup_ = '!#$%()*+,-./:;=?@[]^_`{|}~' +
+    'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+
+/**
+ * (Copied from Blockly.utils)
+ * Generate a unique ID.  This should be globally unique.
+ * 87 characters ^ 20 length > 128 bits (better than a UUID).
+ * @return {string} A globally unique ID string.
+ */
+const genUid_ = function () {
+    const length = 20;
+    const soupLength = genUidSoup_.length;
+    const id = [];
+    for (let i = 0; i < length; i++) {
+        id[i] = genUidSoup_.charAt(Math.random() * soupLength);
+    }
+    return id.join('');
+};
+
+/**
  * Convert and an individual block DOM to the representation tree.
  * Based on Blockly's `domToBlockHeadless_`.
  * @param {Element} blockDOM DOM tree for an individual block.
@@ -11,6 +38,10 @@ const html = require('htmlparser2');
  * @return {undefined}
  */
 const domToBlock = function (blockDOM, blocks, isTopBlock, parent) {
+    if (!blockDOM.attribs.id) {
+        blockDOM.attribs.id = genUid_();
+    }
+
     // Block skeleton.
     const block = {
         id: blockDOM.attribs.id, // Block ID
