@@ -15,6 +15,7 @@ const Variable = require('./engine/variable');
 
 const {loadCostume} = require('./import/load-costume.js');
 const {loadSound} = require('./import/load-sound.js');
+const {serializeSounds, serializeCostumes} = require('./serialization/serialize-assets');
 
 const RESERVED_NAMES = ['_mouse_', '_stage_', '_edge_', '_myself_', '_random_'];
 
@@ -206,7 +207,14 @@ class VirtualMachine extends EventEmitter {
      */
     saveProjectSb3 () {
         // @todo: Handle other formats, e.g., Scratch 1.4, Scratch 2.0.
-        return this.toJSON();
+        const soundDescs = serializeSounds(this.runtime);
+        const costumeDescs = serializeCostumes(this.runtime);
+
+        return {
+            projectJson: this.toJSON(),
+            sounds: soundDescs,
+            costumes: costumeDescs
+        };
     }
 
     /**
