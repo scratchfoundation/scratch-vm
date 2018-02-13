@@ -14,6 +14,7 @@ const Variable = require('./engine/variable');
 
 const {loadCostume} = require('./import/load-costume.js');
 const {loadSound} = require('./import/load-sound.js');
+const {serializeSounds, serializeCostumes} = require('./serialization/serialize-assets');
 
 const RESERVED_NAMES = ['_mouse_', '_stage_', '_edge_', '_myself_', '_random_'];
 
@@ -199,7 +200,14 @@ class VirtualMachine extends EventEmitter {
      */
     saveProjectSb3 () {
         // @todo: Handle other formats, e.g., Scratch 1.4, Scratch 2.0.
-        return this.toJSON();
+        const soundDescs = serializeSounds(this.runtime);
+        const costumeDescs = serializeCostumes(this.runtime);
+
+        return {
+            projectJson: this.toJSON(),
+            sounds: soundDescs,
+            costumes: costumeDescs
+        };
     }
 
     /**
@@ -235,7 +243,7 @@ class VirtualMachine extends EventEmitter {
         //       methodology that should be adapted for use here
         let deserializer;
         let validatedProject;
-        const possibleSb3 = JSON.parse(json);
+        const possibleSb3 = typeof json === 'string' ? JSON.parse(json) : json;
         if ((typeof possibleSb3.meta !== 'undefined') && (typeof possibleSb3.meta.semver !== 'undefined')) {
             deserializer = sb3;
             validatedProject = possibleSb3;
@@ -243,7 +251,8 @@ class VirtualMachine extends EventEmitter {
         //    deserializer = sb2;
             validate(json, (err, project) => {
                 if (err) {
-                    console.log(
+                    // @todo Making this a warning for now. Should be updated with error handling
+                    log.warn(
                         `There was an error in validating the project: ${JSON.stringify(err)}`);
                     deserializer = sb2;
                     validatedProject = possibleSb3;
