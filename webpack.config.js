@@ -66,13 +66,7 @@ module.exports = [
         output: {
             libraryTarget: 'commonjs2',
             path: path.resolve('dist', 'node')
-        },
-        plugins: base.plugins.concat([
-            new CopyWebpackPlugin([{
-                from: './src/extensions/scratch3_music/assets',
-                to: 'assets/scratch3_music'
-            }])
-        ])
+        }
     }),
     // Playground
     defaultsDeep({}, base, {
