@@ -22,6 +22,10 @@ const base = {
             query: {
                 presets: ['es2015']
             }
+        },
+        {
+            test: /\.mp3$/,
+            loader: 'file-loader'
         }]
     },
     plugins: process.env.NODE_ENV === 'production' ? [
