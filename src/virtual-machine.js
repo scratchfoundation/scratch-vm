@@ -513,6 +513,9 @@ class VirtualMachine extends EventEmitter {
             storage.DataFormat.SVG,
             (new TextEncoder()).encode(svg)
         );
+        // If we're in here, we've edited an svg in the vector editor,
+        // so the dataFormat should be 'svg'
+        costume.dataFormat = storage.DataFormat.SVG;
         this.emitTargetsUpdate();
     }
 
