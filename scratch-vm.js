@@ -29722,6 +29722,9 @@ var Runtime = function (_EventEmitter) {
         value: function getSpriteTargetByName(spriteName) {
             for (var i = 0; i < this.targets.length; i++) {
                 var target = this.targets[i];
+                if (target.isStage) {
+                    continue;
+                }
                 if (target.sprite && target.sprite.name === spriteName) {
                     return target;
                 }
