@@ -410,12 +410,29 @@ class VirtualMachine extends EventEmitter {
      * Update a sound buffer.
      * @param {int} soundIndex - the index of the sound to be updated.
      * @param {AudioBuffer} newBuffer - new audio buffer for the audio engine.
+     * @param {ArrayBuffer} soundEncoding - the new (wav) encoded sound to be stored
      */
-    updateSoundBuffer (soundIndex, newBuffer) {
-        const id = this.editingTarget.sprite.sounds[soundIndex].soundId;
+    updateSoundBuffer (soundIndex, newBuffer, soundEncoding) {
+        const sound = this.editingTarget.sprite.sounds[soundIndex];
+        const id = sound ? sound.soundId : null;
         if (id && this.runtime && this.runtime.audioEngine) {
             this.runtime.audioEngine.updateSoundBuffer(id, newBuffer);
         }
+        // Update sound in runtime
+        if (soundEncoding) {
+            const storage = this.runtime.storage;
+            debugger;
+            sound.assetId = storage.builtinHelper.cache(
+                storage.AssetType.Sound,
+                storage.DataFormat.WAV,
+                soundEncoding
+            );
+            sound.md5 = `${sound.assetId}.${sound.dataFormat}`;
+        }
+        // If soundEncoding is null, it's because gui had a problem
+        // encoding the updated sound. We don't want to store anything in this
+        // case, and gui should have logged an error.
+
         this.emitTargetsUpdate();
     }
 
@@ -461,6 +478,9 @@ class VirtualMachine extends EventEmitter {
             storage.DataFormat.SVG,
             (new TextEncoder()).encode(svg)
         );
+        // If we're in here, we've edited an svg in the vector editor,
+        // so the dataFormat should be 'svg'
+        costume.dataFormat = storage.DataFormat.SVG;
         this.emitTargetsUpdate();
     }
 
