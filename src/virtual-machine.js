@@ -186,6 +186,27 @@ class VirtualMachine extends EventEmitter {
     }
 
     /**
+     * Load a project from a Scratch 3.0 sb3 file containing a project json
+     * and all of the sound and costume files.
+     * @param {JSZip} sb3File The sb3 file representing the project to load.
+     * @return {!Promise} Promise that resolves after targets are installed.
+     */
+    loadProjectLocal (sb3File) {
+        // TODO need to handle sb2 files as well, and will possibly merge w/
+        // above function
+        return sb3File.file('project.json').async('string')
+            .then(json => {
+                // TODO look at promise documentation to do this on success,
+                // but something else on error
+
+                json = JSON.parse(json); // TODO catch errors here (validation)
+                return sb3.deserialize(json, this.runtime, sb3File)
+                    .then(({targets, extensions}) =>
+                        this.installTargets(targets, extensions, true));
+            });
+    }
+
+    /**
      * Load a project from the Scratch web site, by ID.
      * @param {string} id - the ID of the project to download, as a string.
      */

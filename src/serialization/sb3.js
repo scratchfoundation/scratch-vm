@@ -11,6 +11,7 @@ const Variable = require('../engine/variable');
 
 const {loadCostume} = require('../import/load-costume.js');
 const {loadSound} = require('../import/load-sound.js');
+const {deserializeCostume, deserializeSound} = require('./deserialize-assets.js');
 
 /**
  * @typedef {object} ImportedProject
@@ -53,9 +54,10 @@ const serialize = function (runtime) {
  * @param {!object} object From-JSON "Scratch object:" sprite, stage, watcher.
  * @param {!Runtime} runtime Runtime object to load all structures into.
  * @param {ImportedExtensionsInfo} extensions - (in/out) parsed extension information will be stored here.
+ * @param {JSZip} zip Sb3 file describing this project (to load assets from)
  * @return {!Promise.<Target>} Promise for the target created (stage or sprite), or null for unsupported objects.
  */
-const parseScratchObject = function (object, runtime, extensions) {
+const parseScratchObject = function (object, runtime, extensions, zip) {
     if (!object.hasOwnProperty('name')) {
         // Watcher/monitor - skip this object until those are implemented in VM.
         // @todo
@@ -99,13 +101,17 @@ const parseScratchObject = function (object, runtime, extensions) {
             (costumeSource.assetType && costumeSource.assetType.runtimeFormat) || // older format
             'png'; // if all else fails, guess that it might be a PNG
         const costumeMd5 = `${costumeSource.assetId}.${dataFormat}`;
-        return loadCostume(costumeMd5, costume, runtime);
+        costume.md5 = costumeMd5;
+        return deserializeCostume(costumeSource, runtime, zip)
+            .then(() => loadCostume(costumeMd5, costume, runtime));
+        // Only attempt to load the costume after the deserialization
+        // process has been completed
     });
     // Sounds from JSON
     const soundPromises = (object.sounds || []).map(soundSource => {
         const sound = {
             format: soundSource.format,
-            fileUrl: soundSource.fileUrl,
+            // fileUrl: soundSource.fileUrl,
             rate: soundSource.rate,
             sampleCount: soundSource.sampleCount,
             soundID: soundSource.soundID,
@@ -113,7 +119,10 @@ const parseScratchObject = function (object, runtime, extensions) {
             md5: soundSource.md5,
             data: null
         };
-        return loadSound(sound, runtime);
+        return deserializeSound(soundSource, runtime, zip)
+            .then(() => loadSound(sound, runtime));
+        // Only attempt to load the sound after the deserialization
+        // process has been completed.
     });
     // Create the first clone, and load its run-state from JSON.
     const target = sprite.createClone();
@@ -169,15 +178,16 @@ const parseScratchObject = function (object, runtime, extensions) {
  * TODO: parse extension info (also, design extension info storage...)
  * @param  {object} json - JSON representation of a VM runtime.
  * @param  {Runtime} runtime - Runtime instance
+ * @param {JSZip} zip - Sb3 file describing this project (to load assets from)
  * @returns {Promise.<ImportedProject>} Promise that resolves to the list of targets after the project is deserialized
  */
-const deserialize = function (json, runtime) {
+const deserialize = function (json, runtime, zip) {
     const extensions = {
         extensionIDs: new Set(),
         extensionURLs: new Map()
     };
     return Promise.all(
-        (json.targets || []).map(target => parseScratchObject(target, runtime, extensions))
+        (json.targets || []).map(target => parseScratchObject(target, runtime, extensions, zip))
     ).then(targets => ({
         targets,
         extensions
