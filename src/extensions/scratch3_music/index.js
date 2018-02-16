@@ -4,7 +4,17 @@ const Clone = require('../../util/clone');
 const Cast = require('../../util/cast');
 const MathUtil = require('../../util/math-util');
 const Timer = require('../../util/timer');
-const assetData = require('./manifest');
+
+/**
+ * The instrument and drum sounds, loaded as static assets.
+ * @type {object}
+ */
+let assetData = {};
+try {
+    assetData = require('./manifest');
+} catch (e) {
+    // Non-webpack environment, don't worry about assets.
+}
 
 /**
  * Icon svg to be displayed at the left edge of each extension block, encoded as a data URI.
