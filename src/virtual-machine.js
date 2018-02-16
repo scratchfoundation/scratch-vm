@@ -561,9 +561,7 @@ class VirtualMachine extends EventEmitter {
 
     /**
      * Sets the hovered sprite
-     * @param {string} targetId ID of a target whose sprite to duplicate.
-     * @returns {Promise} Promise that resolves when duplicated target has
-     *     been added to the runtime.
+     * @param {string} targetId ID of a target whose sprite is hovered.
      */
     setHoveredSprite (targetId) {
         this._hoveredSpriteId = targetId;
