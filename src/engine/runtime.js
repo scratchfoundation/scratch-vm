@@ -551,11 +551,11 @@ class Runtime extends EventEmitter {
      */
     _buildMenuForScratchBlocks (menuName, menuItems, categoryInfo) {
         const menuId = this._makeExtensionMenuId(menuName, categoryInfo.id);
-        var options = null;
+        let options = null;
         if (typeof menuItems === 'function') {
-             options = function () {
+            options = function () {
                 return menuItems();
-            }
+            };
         } else {
             options = menuItems.map(item => {
                 switch (typeof item) {

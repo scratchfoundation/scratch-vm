@@ -25,7 +25,7 @@ class TestInternalExtension {
             ],
             menus: {
                 simpleMenu: this._buildAMenu(),
-                dynamicMenu: '_buildDynamicMenu',
+                dynamicMenu: '_buildDynamicMenu'
             }
         };
     }
@@ -34,12 +34,12 @@ class TestInternalExtension {
         this.status.goCalled = true;
     }
 
-    _buildAMenu() {
+    _buildAMenu () {
         this.status.buildMenuCalled = true;
         return ['abcd', 'efgh', 'ijkl'];
     }
 
-    _buildDynamicMenu() {
+    _buildDynamicMenu () {
         this.status.buildDynamicMenuCalled = true;
         return [1, 2, 3, 4, 6];
     }
