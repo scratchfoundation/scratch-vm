@@ -32,11 +32,12 @@ class Sprite {
          *      name: "Costume Name",
          *      bitmapResolution: 2,
          *      rotationCenterX: 0,
-         *      rotationCenterY: 0
+         *      rotationCenterY: 0,
+         *      costumeId: 0
          * }
          * @type {Array.<!Object>}
          */
-        this.costumes = [];
+        this.costumes_ = [];
         /**
          * List of sounds for this sprite.
         */
@@ -46,6 +47,68 @@ class Sprite {
          * @type {Array.<!RenderedTarget>}
          */
         this.clones = [];
+        /**
+         * A costume ID generator. Costumes within a sprite should each have a unique ID.
+         */
+        this.nextCostumeId = 0;
+    }
+
+    /**
+     * Get full costume list
+     * @return {object[]} list of costumes
+     */
+    getCostumes () {
+        return this.costumes_;
+    }
+
+    /**
+     * Get costume at index
+     * @param {int} index Index
+     * @return {object} costumes
+     */
+    getCostumeByIndex (index) {
+        return this.costumes_[index];
+    }
+    
+    /**
+     * Add a costume, taking care to avoid duplicate names.
+     * @param {!object} costumeObject Object representing the costume.
+     */
+    addCostume (costumeObject) {
+        this.addCostumeAt(costumeObject, this.costumes_.length);
+    }
+
+    /**
+     * Add an array of costumes, taking care to avoid duplicate names.
+     * @param {!Array<object>} costumes Array of objects representing costumes.
+     */
+    addCostumes (costumes) {
+        for (const costume of costumes) {
+            this.addCostumeAt(costume, this.costumes_.length);
+        }
+    }
+
+    /**
+     * Add a costume at the given index, taking care to avoid duplicate names.
+     * @param {!object} costumeObject Object representing the costume.
+     * @param {!int} index Index at which to add costume
+     */
+    addCostumeAt (costumeObject, index) {
+        const usedNames = this.costumes_.map(costume => costume.name);
+        costumeObject.name = StringUtil.unusedName(costumeObject.name, usedNames);
+        costumeObject.costumeId = this.nextCostumeId;
+        this.nextCostumeId++;
+        this.costumes_.splice(index, 0, costumeObject);
+    }
+
+    /**
+     * Delete a costume by index.
+     * @param {number} index Costume index to be deleted
+     */
+    deleteCostumeByIndex (index) {
+        this.costumes_ = this.costumes_
+            .slice(0, index)
+            .concat(this.costumes_.slice(index + 1));
     }
 
     /**
@@ -89,12 +152,12 @@ class Sprite {
 
         const assetPromises = [];
 
-        newSprite.costumes = this.costumes.map(costume => {
+        newSprite.addCostumes(this.costumes_.map(costume => {
             const newCostume = Object.assign({}, costume);
             const costumeAsset = this.runtime.storage.get(costume.assetId);
             assetPromises.push(loadCostumeFromAsset(newCostume, costumeAsset, this.runtime));
             return newCostume;
-        });
+        }));
 
         newSprite.sounds = this.sounds.map(sound => {
             const newSound = Object.assign({}, sound);

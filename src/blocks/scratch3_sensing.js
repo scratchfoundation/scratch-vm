@@ -237,7 +237,7 @@ class Scratch3SensingBlocks {
 
             case 'backdrop #': return attrTarget.currentCostume + 1;
             case 'backdrop name':
-                return attrTarget.sprite.costumes[attrTarget.currentCostume].name;
+                return attrTarget.getCostumes()[attrTarget.currentCostume].name;
             case 'volume': return; // @todo: Keep this in mind for sound blocks!
             }
         } else {
@@ -247,7 +247,7 @@ class Scratch3SensingBlocks {
             case 'direction': return attrTarget.direction;
             case 'costume #': return attrTarget.currentCostume + 1;
             case 'costume name':
-                return attrTarget.sprite.costumes[attrTarget.currentCostume].name;
+                return attrTarget.getCostumes()[attrTarget.currentCostume].name;
             case 'size': return attrTarget.size;
             case 'volume': return; // @todo: above, keep in mind for sound blocks..
             }

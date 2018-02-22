@@ -372,10 +372,10 @@ class RenderedTarget extends Target {
         // Keep the costume index within possible values.
         index = Math.round(index);
         this.currentCostume = MathUtil.wrapClamp(
-            index, 0, this.sprite.costumes.length - 1
+            index, 0, this.getCostumes().length - 1
         );
         if (this.renderer) {
-            const costume = this.sprite.costumes[this.currentCostume];
+            const costume = this.sprite.getCostumeByIndex(this.currentCostume);
             const drawableProperties = {
                 skinId: costume.skinId,
                 costumeResolution: costume.bitmapResolution
@@ -403,9 +403,16 @@ class RenderedTarget extends Target {
      * @param {!object} costumeObject Object representing the costume.
      */
     addCostume (costumeObject) {
-        const usedNames = this.sprite.costumes.map(costume => costume.name);
-        costumeObject.name = StringUtil.unusedName(costumeObject.name, usedNames);
-        this.sprite.costumes.push(costumeObject);
+        this.sprite.addCostumeAt(costumeObject, this.getCostumes().length);
+    }
+
+    /**
+     * Add a costume at the given index, taking care to avoid duplicate names.
+     * @param {!object} costumeObject Object representing the costume.
+     * @param {!int} index Index at which to add costume
+     */
+    addCostumeAt (costumeObject, index) {
+        this.sprite.addCostumeAt(costumeObject, index);
     }
 
     /**
@@ -414,12 +421,12 @@ class RenderedTarget extends Target {
      * @param {string} newName - the desired new name of the costume (will be modified if already in use).
      */
     renameCostume (costumeIndex, newName) {
-        const usedNames = this.sprite.costumes
+        const usedNames = this.getCostumes()
             .filter((costume, index) => costumeIndex !== index)
             .map(costume => costume.name);
-        const oldName = this.sprite.costumes[costumeIndex].name;
+        const oldName = this.sprite.getCostumeByIndex(costumeIndex).name;
         const newUnusedName = StringUtil.unusedName(newName, usedNames);
-        this.sprite.costumes[costumeIndex].name = newUnusedName;
+        this.sprite.getCostumeByIndex(costumeIndex).name = newUnusedName;
 
         if (this.isStage) {
             // Since this is a backdrop, go through all targets and
@@ -440,12 +447,10 @@ class RenderedTarget extends Target {
      * @param {number} index Costume index to be deleted
      */
     deleteCostume (index) {
-        const originalCostumeCount = this.sprite.costumes.length;
+        const originalCostumeCount = this.getCostumes().length;
         if (originalCostumeCount === 1) return;
 
-        this.sprite.costumes = this.sprite.costumes
-            .slice(0, index)
-            .concat(this.sprite.costumes.slice(index + 1));
+        this.sprite.deleteCostumeByIndex(index);
 
         if (index === this.currentCostume && index === originalCostumeCount - 1) {
             this.setCostume(index - 1);
@@ -525,8 +530,8 @@ class RenderedTarget extends Target {
      * @return {number} Index of the named costume, or -1 if not present.
      */
     getCostumeIndexByName (costumeName) {
-        for (let i = 0; i < this.sprite.costumes.length; i++) {
-            if (this.sprite.costumes[i].name === costumeName) {
+        for (let i = 0; i < this.getCostumes().length; i++) {
+            if (this.sprite.getCostumeByIndex(i).name === costumeName) {
                 return i;
             }
         }
@@ -538,7 +543,7 @@ class RenderedTarget extends Target {
      * @return {object} current costume
      */
     getCurrentCostume () {
-        return this.sprite.costumes[this.currentCostume];
+        return this.sprite.getCostumeByIndex(this.currentCostume);
     }
 
     /**
@@ -546,7 +551,7 @@ class RenderedTarget extends Target {
      * @return {object[]} list of costumes
      */
     getCostumes () {
-        return this.sprite.costumes;
+        return this.sprite.getCostumes();
     }
 
     /**
@@ -564,7 +569,7 @@ class RenderedTarget extends Target {
     updateAllDrawableProperties () {
         if (this.renderer) {
             const renderedDirectionScale = this._getRenderedDirectionAndScale();
-            const costume = this.sprite.costumes[this.currentCostume];
+            const costume = this.sprite.getCostumeByIndex(this.currentCostume);
             const bitmapResolution = costume.bitmapResolution || 1;
             const props = {
                 position: [this.x, this.y],
