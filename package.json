@@ -27,6 +27,9 @@
     "watch": "webpack --progress --colors --watch",
     "version": "json -f package.json -I -e \"this.repository.sha = '$(git log -n1 --pretty=format:%H)'\""
   },
+  "dependencies": {
+    "scratch-parser": "LLK/scratch-parser#save-load"
+  },
   "devDependencies": {
     "adm-zip": "0.4.7",
     "babel-core": "^6.24.1",
@@ -59,7 +62,6 @@
     "scratch-parser": "latest",
     "scratch-render": "latest",
     "scratch-storage": "^0.4.0",
-    "scratch-parser": "latest",
     "script-loader": "0.7.2",
     "socket.io-client": "2.0.4",
     "stats.js": "^0.17.0",

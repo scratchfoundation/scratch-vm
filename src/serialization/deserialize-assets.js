@@ -27,7 +27,13 @@ const deserializeSound = function (sound, runtime, zip) {
         // This sound has already been cached.
         return Promise.resolve(null);
     }
-
+    if (!zip) {
+        // TODO adding this case to make integration tests pass, need to rethink
+        // the entire structure of saving/loading here (w.r.t. differences between
+        // loading from local zip file or from server)
+        log.error('Zipped assets were not provided.');
+        return Promise.resolve(null);
+    }
     const soundFile = zip.file(fileName);
     if (!soundFile) {
         log.error(`Could not find sound file associated with the ${sound.name} sound.`);
@@ -79,6 +85,14 @@ const deserializeCostume = function (costume, runtime, zip) {
     // has already been initialized?
     if (storage.get(assetId)) {
         // This costume has already been cached.
+        return Promise.resolve(null);
+    }
+
+    if (!zip) {
+        // TODO adding this case to make integration tests pass, need to rethink
+        // the entire structure of saving/loading here (w.r.t. differences between
+        // loading from local zip file or from server)
+        log.error('Zipped assets were not provided.');
         return Promise.resolve(null);
     }
 
