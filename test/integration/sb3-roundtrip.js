@@ -52,8 +52,8 @@ test('sb3-roundtrip', t => {
         t.strictEqual(sprite.clones.length, 1);
         t.strictEqual(sprite.clones[0], spriteClone);
 
-        t.strictEqual(sprite.getCostumes().length, 2);
-        const [cat, squirrel] = sprite.getCostumes();
+        t.strictEqual(sprite.costumes.length, 2);
+        const [cat, squirrel] = sprite.costumes;
         t.strictEqual(cat.assetId, 'f88bf1935daea28f8ca098462a31dbb0');
         t.strictEqual(cat.dataFormat, 'svg');
         t.strictEqual(squirrel.assetId, '7e24c99c1b853e52f8e7f9004416fa34');
@@ -77,7 +77,7 @@ test('sb3-roundtrip', t => {
         const stageBlocks = new Blocks();
         const stage = new Sprite(stageBlocks, runtime1);
         stage.name = 'Stage';
-        stage.addCostume(building);
+        stage.costumes = [building];
         stage.sounds = [];
         const stageClone = stage.createClone();
         stageClone.isStage = true;
@@ -85,7 +85,7 @@ test('sb3-roundtrip', t => {
         const spriteBlocks = new Blocks();
         const sprite = new Sprite(spriteBlocks, runtime1);
         sprite.name = 'Sprite';
-        sprite.addCostumes([cat, squirrel]);
+        sprite.costumes = [cat, squirrel];
         sprite.sounds = [meow];
         const spriteClone = sprite.createClone();
 

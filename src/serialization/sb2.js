@@ -324,7 +324,7 @@ const parseScratchObject = function (object, runtime, extensions, topLevel) {
     target.isStage = topLevel;
 
     Promise.all(costumePromises).then(costumes => {
-        sprite.addCostumes(costumes);
+        sprite.costumes = costumes;
     });
 
     Promise.all(soundPromises).then(sounds => {
