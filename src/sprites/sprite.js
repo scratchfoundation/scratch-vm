@@ -32,8 +32,7 @@ class Sprite {
          *      name: "Costume Name",
          *      bitmapResolution: 2,
          *      rotationCenterX: 0,
-         *      rotationCenterY: 0,
-         *      costumeId: 0
+         *      rotationCenterY: 0
          * }
          * @type {Array.<!Object>}
          */
@@ -47,10 +46,6 @@ class Sprite {
          * @type {Array.<!RenderedTarget>}
          */
         this.clones = [];
-        /**
-         * A costume ID generator. Costumes within a sprite should each have a unique ID.
-         */
-        this.nextCostumeId = 0;
     }
     
     /**
@@ -85,8 +80,6 @@ class Sprite {
         }
         const usedNames = this.costumes_.map(costume => costume.name);
         costumeObject.name = StringUtil.unusedName(costumeObject.name, usedNames);
-        costumeObject.costumeId = this.nextCostumeId;
-        this.nextCostumeId++;
         this.costumes_.splice(index, 0, costumeObject);
     }
 

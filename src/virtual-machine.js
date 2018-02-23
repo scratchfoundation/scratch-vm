@@ -327,14 +327,6 @@ class VirtualMachine extends EventEmitter {
         });
     }
 
-    duplicateCostume (costumeIndex) {
-        const currentCostume = this.editingTarget.getCostumes()[costumeIndex];
-        const clone = Object.assign({}, currentCostume);
-        this.editingTarget.addCostumeAt(clone, costumeIndex + 1);
-        this.editingTarget.setCostume(costumeIndex + 1);
-        this.emitTargetsUpdate();
-    }
-
     /**
      * Rename a costume on the current editing target.
      * @param {int} costumeIndex - the index of the costume to be renamed.
