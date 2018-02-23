@@ -322,8 +322,36 @@ class VirtualMachine extends EventEmitter {
         return loadCostume(md5ext, costumeObject, this.runtime).then(() => {
             this.editingTarget.addCostume(costumeObject);
             this.editingTarget.setCostume(
-                this.editingTarget.sprite.costumes.length - 1
+                this.editingTarget.getCostumes().length - 1
             );
+        });
+    }
+
+    /**
+     * Duplicate the costume at the given index. Add it at that index + 1.
+     * @param {!int} costumeIndex Index of costume to duplicate
+     */
+    duplicateCostume (costumeIndex) {
+        const originalCostume = this.editingTarget.getCostumes()[costumeIndex];
+        const clone = Object.assign({}, originalCostume);
+        const md5ext = `${clone.assetId}.${clone.dataFormat}`;
+        loadCostume(md5ext, clone, this.runtime).then(() => {
+            this.editingTarget.addCostumeAt(clone, costumeIndex + 1);
+            this.editingTarget.setCostume(costumeIndex + 1);
+            this.emitTargetsUpdate();
+        });
+    }
+
+    /**
+     * Duplicate the sound at the given index. Add it at that index + 1.
+     * @param {!int} soundIndex Index of sound to duplicate
+     */
+    duplicateSound (soundIndex) {
+        const originalSound = this.editingTarget.getSounds()[soundIndex];
+        const clone = Object.assign({}, originalSound);
+        loadSound(clone, this.runtime).then(() => {
+            this.editingTarget.addSoundAt(clone, soundIndex + 1);
+            this.emitTargetsUpdate();
         });
     }
 

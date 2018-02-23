@@ -409,6 +409,17 @@ class RenderedTarget extends Target {
     }
 
     /**
+     * Add a costume at the given index, taking care to avoid duplicate names.
+     * @param {!object} costumeObject Object representing the costume.
+     * @param {!int} index Index at which to add costume
+     */
+    addCostumeAt (costumeObject, index) {
+        const usedNames = this.sprite.costumes.map(costume => costume.name);
+        costumeObject.name = StringUtil.unusedName(costumeObject.name, usedNames);
+        this.sprite.costumes.splice(index, 0, costumeObject);
+    }
+
+    /**
      * Rename a costume, taking care to avoid duplicate names.
      * @param {int} costumeIndex - the index of the costume to be renamed.
      * @param {string} newName - the desired new name of the costume (will be modified if already in use).
@@ -456,6 +467,17 @@ class RenderedTarget extends Target {
         }
 
         this.runtime.requestTargetsUpdate(this);
+    }
+
+    /**
+     * Add a sound, taking care to avoid duplicate names.
+     * @param {!object} soundObject Object representing the sound.
+     * @param {!int} index Index at which to add costume
+     */
+    addSoundAt (soundObject, index) {
+        const usedNames = this.sprite.sounds.map(sound => sound.name);
+        soundObject.name = StringUtil.unusedName(soundObject.name, usedNames);
+        this.sprite.sounds.splice(index, 0, soundObject);
     }
 
     /**
