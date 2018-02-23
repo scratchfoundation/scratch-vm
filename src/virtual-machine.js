@@ -661,8 +661,8 @@ class VirtualMachine extends EventEmitter {
     /**
      * Called when blocks are dragged from one sprite to another. Adds the blocks to the
      * workspace of the given target.
-     * @param {!Array<object>} blocks Blocks to add
-     # @param {!string} targetId Id of target to add blocks to.
+     * @param {!Array<object>} blocks Blocks to add.
+     * @param {!string} targetId Id of target to add blocks to.
      */
     shareBlocksToTarget (blocks, targetId) {
         const target = this.runtime.getTargetById(targetId);
