@@ -330,12 +330,13 @@ class VirtualMachine extends EventEmitter {
     /**
      * Duplicate the costume at the given index. Add it at that index + 1.
      * @param {!int} costumeIndex Index of costume to duplicate
+     * @returns {?Promise} - a promise that resolves when the costume has been decoded and added
      */
     duplicateCostume (costumeIndex) {
         const originalCostume = this.editingTarget.getCostumes()[costumeIndex];
         const clone = Object.assign({}, originalCostume);
         const md5ext = `${clone.assetId}.${clone.dataFormat}`;
-        loadCostume(md5ext, clone, this.runtime).then(() => {
+        return loadCostume(md5ext, clone, this.runtime).then(() => {
             this.editingTarget.addCostumeAt(clone, costumeIndex + 1);
             this.editingTarget.setCostume(costumeIndex + 1);
             this.emitTargetsUpdate();
@@ -345,11 +346,12 @@ class VirtualMachine extends EventEmitter {
     /**
      * Duplicate the sound at the given index. Add it at that index + 1.
      * @param {!int} soundIndex Index of sound to duplicate
+     * @returns {?Promise} - a promise that resolves when the sound has been decoded and added
      */
     duplicateSound (soundIndex) {
         const originalSound = this.editingTarget.getSounds()[soundIndex];
         const clone = Object.assign({}, originalSound);
-        loadSound(clone, this.runtime).then(() => {
+        return loadSound(clone, this.runtime).then(() => {
             this.editingTarget.addSoundAt(clone, soundIndex + 1);
             this.emitTargetsUpdate();
         });
