@@ -10,7 +10,6 @@ const sb3 = require('./serialization/sb3');
 const StringUtil = require('./util/string-util');
 const formatMessage = require('format-message');
 const Variable = require('./engine/variable');
-const adapter = require('./engine/adapter');
 
 const {loadCostume} = require('./import/load-costume.js');
 const {loadSound} = require('./import/load-sound.js');
@@ -40,11 +39,6 @@ class VirtualMachine extends EventEmitter {
          * @type {Target}
          */
         this.editingTarget = null;
-
-        /**
-         * ID of sprite that mouse is hovered over in sprite selector, if any
-         */
-        this._hoveredSpriteId = null;
 
         /**
          * The currently dragging target, for redirecting IO data.
@@ -82,6 +76,9 @@ class VirtualMachine extends EventEmitter {
         });
         this.runtime.on(Runtime.BLOCK_DRAG_UPDATE, areBlocksOverGui => {
             this.emit(Runtime.BLOCK_DRAG_UPDATE, areBlocksOverGui);
+        });
+        this.runtime.on(Runtime.BLOCK_DRAG_END, blocks => {
+            this.emit(Runtime.BLOCK_DRAG_END, blocks);
         });
         this.runtime.on(Runtime.EXTENSION_ADDED, blocksInfo => {
             this.emit(Runtime.EXTENSION_ADDED, blocksInfo);
@@ -560,14 +557,6 @@ class VirtualMachine extends EventEmitter {
     }
 
     /**
-     * Sets the hovered sprite
-     * @param {string} targetId ID of a target whose sprite is hovered.
-     */
-    setHoveredSprite (targetId) {
-        this._hoveredSpriteId = targetId;
-    }
-
-    /**
      * Set the audio engine for the VM/runtime
      * @param {!AudioEngine} audioEngine The audio engine to attach
      */
@@ -610,27 +599,6 @@ class VirtualMachine extends EventEmitter {
     blockListener (e) {
         if (this.editingTarget) {
             this.editingTarget.blocks.blocklyListen(e, this.runtime);
-
-            // Validate event
-            if (typeof e !== 'object') return;
-            if (typeof e.blockId !== 'string' && typeof e.varId !== 'string') {
-                return;
-            }
-
-            // Drag blocks onto another sprite
-            if (e.type === 'endDrag' &&
-                    e.isOutside &&
-                    this._hoveredSpriteId &&
-                    this._hoveredSpriteId !== this.editingTarget.id) {
-                const dragTarget = this.runtime.getTargetById(this._hoveredSpriteId);
-                if (dragTarget) {
-                    // TODO tell gui to tell blocks to undo, to cause the blocks to move back into place.
-                    const newBlocks = adapter(e);
-                    for (let i = 0; i < newBlocks.length; i++) {
-                        dragTarget.blocks.createBlock(newBlocks[i]);
-                    }
-                }
-            }
         }
     }
 
@@ -687,6 +655,19 @@ class VirtualMachine extends EventEmitter {
             this.emitTargetsUpdate();
             this.emitWorkspaceUpdate();
             this.runtime.setEditingTarget(target);
+        }
+    }
+
+    /**
+     * Called when blocks are dragged from one sprite to another. Adds the blocks to the
+     * workspace of the given target.
+     * @param {!Array<object>} blocks Blocks to add
+     # @param {!string} targetId Id of target to add blocks to.
+     */
+    shareBlocksToTarget (blocks, targetId) {
+        const target = this.runtime.getTargetById(targetId);
+        for (let i = 0; i < blocks.length; i++) {
+            target.blocks.createBlock(blocks[i]);
         }
     }
 

@@ -387,6 +387,13 @@ class Runtime extends EventEmitter {
         return 'BLOCK_DRAG_UPDATE';
     }
 
+    /**
+     * Event name for block drag end.
+     * @const {string}
+     */
+    static get BLOCK_DRAG_END () {
+        return 'BLOCK_DRAG_END';
+    }
 
     /**
      * Event name for reporting that an extension was added.
@@ -1402,6 +1409,14 @@ class Runtime extends EventEmitter {
      */
     emitBlockDragUpdate (areBlocksOverGui) {
         this.emit(Runtime.BLOCK_DRAG_UPDATE, areBlocksOverGui);
+    }
+
+    /**
+     * Emit event to indicate that the block drag has ended with the blocks outside the blocks workspace
+     * @param {Array.<object>} blocks The set of blocks dragged to the GUI
+     */
+    emitBlockEndDrag (blocks) {
+        this.emit(Runtime.BLOCK_DRAG_END, blocks);
     }
 
     /**

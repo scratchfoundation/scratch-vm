@@ -296,6 +296,12 @@ class Blocks {
         case 'endDrag':
             if (optRuntime) {
                 optRuntime.emitBlockDragUpdate(false /* areBlocksOverGui */);
+
+                // Drag blocks onto another sprite
+                if (e.isOutside) {
+                    const newBlocks = adapter(e);
+                    optRuntime.emitBlockEndDrag(newBlocks);
+                }
             }
             break;
         case 'delete':
