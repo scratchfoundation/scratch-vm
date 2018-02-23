@@ -337,7 +337,7 @@ class VirtualMachine extends EventEmitter {
         const clone = Object.assign({}, originalCostume);
         const md5ext = `${clone.assetId}.${clone.dataFormat}`;
         return loadCostume(md5ext, clone, this.runtime).then(() => {
-            this.editingTarget.addCostumeAt(clone, costumeIndex + 1);
+            this.editingTarget.addCostume(clone, costumeIndex + 1);
             this.editingTarget.setCostume(costumeIndex + 1);
             this.emitTargetsUpdate();
         });
@@ -352,7 +352,7 @@ class VirtualMachine extends EventEmitter {
         const originalSound = this.editingTarget.getSounds()[soundIndex];
         const clone = Object.assign({}, originalSound);
         return loadSound(clone, this.runtime).then(() => {
-            this.editingTarget.addSoundAt(clone, soundIndex + 1);
+            this.editingTarget.addSound(clone, soundIndex + 1);
             this.emitTargetsUpdate();
         });
     }
