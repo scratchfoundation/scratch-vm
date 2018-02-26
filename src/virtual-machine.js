@@ -74,6 +74,12 @@ class VirtualMachine extends EventEmitter {
         this.runtime.on(Runtime.MONITORS_UPDATE, monitorList => {
             this.emit(Runtime.MONITORS_UPDATE, monitorList);
         });
+        this.runtime.on(Runtime.BLOCK_DRAG_UPDATE, areBlocksOverGui => {
+            this.emit(Runtime.BLOCK_DRAG_UPDATE, areBlocksOverGui);
+        });
+        this.runtime.on(Runtime.BLOCK_DRAG_END, blocks => {
+            this.emit(Runtime.BLOCK_DRAG_END, blocks);
+        });
         this.runtime.on(Runtime.EXTENSION_ADDED, blocksInfo => {
             this.emit(Runtime.EXTENSION_ADDED, blocksInfo);
         });
@@ -701,6 +707,19 @@ class VirtualMachine extends EventEmitter {
             this.emitTargetsUpdate();
             this.emitWorkspaceUpdate();
             this.runtime.setEditingTarget(target);
+        }
+    }
+
+    /**
+     * Called when blocks are dragged from one sprite to another. Adds the blocks to the
+     * workspace of the given target.
+     * @param {!Array<object>} blocks Blocks to add.
+     * @param {!string} targetId Id of target to add blocks to.
+     */
+    shareBlocksToTarget (blocks, targetId) {
+        const target = this.runtime.getTargetById(targetId);
+        for (let i = 0; i < blocks.length; i++) {
+            target.blocks.createBlock(blocks[i]);
         }
     }
 
