@@ -63,7 +63,7 @@ class VisionBlocks {
     }
 
     static get HOST () {
-        return 'ws://localhost:8080';
+        return 'ws://scratch-vision-prod.us-east-1.elasticbeanstalk.com';
     }
 
     static get INTERVAL () {
