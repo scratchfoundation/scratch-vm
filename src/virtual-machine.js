@@ -322,8 +322,38 @@ class VirtualMachine extends EventEmitter {
         return loadCostume(md5ext, costumeObject, this.runtime).then(() => {
             this.editingTarget.addCostume(costumeObject);
             this.editingTarget.setCostume(
-                this.editingTarget.sprite.costumes.length - 1
+                this.editingTarget.getCostumes().length - 1
             );
+        });
+    }
+
+    /**
+     * Duplicate the costume at the given index. Add it at that index + 1.
+     * @param {!int} costumeIndex Index of costume to duplicate
+     * @returns {?Promise} - a promise that resolves when the costume has been decoded and added
+     */
+    duplicateCostume (costumeIndex) {
+        const originalCostume = this.editingTarget.getCostumes()[costumeIndex];
+        const clone = Object.assign({}, originalCostume);
+        const md5ext = `${clone.assetId}.${clone.dataFormat}`;
+        return loadCostume(md5ext, clone, this.runtime).then(() => {
+            this.editingTarget.addCostume(clone, costumeIndex + 1);
+            this.editingTarget.setCostume(costumeIndex + 1);
+            this.emitTargetsUpdate();
+        });
+    }
+
+    /**
+     * Duplicate the sound at the given index. Add it at that index + 1.
+     * @param {!int} soundIndex Index of sound to duplicate
+     * @returns {?Promise} - a promise that resolves when the sound has been decoded and added
+     */
+    duplicateSound (soundIndex) {
+        const originalSound = this.editingTarget.getSounds()[soundIndex];
+        const clone = Object.assign({}, originalSound);
+        return loadSound(clone, this.runtime).then(() => {
+            this.editingTarget.addSound(clone, soundIndex + 1);
+            this.emitTargetsUpdate();
         });
     }
 
@@ -384,12 +414,34 @@ class VirtualMachine extends EventEmitter {
      * Update a sound buffer.
      * @param {int} soundIndex - the index of the sound to be updated.
      * @param {AudioBuffer} newBuffer - new audio buffer for the audio engine.
+     * @param {ArrayBuffer} soundEncoding - the new (wav) encoded sound to be stored
      */
-    updateSoundBuffer (soundIndex, newBuffer) {
-        const id = this.editingTarget.sprite.sounds[soundIndex].soundId;
+    updateSoundBuffer (soundIndex, newBuffer, soundEncoding) {
+        const sound = this.editingTarget.sprite.sounds[soundIndex];
+        const id = sound ? sound.soundId : null;
         if (id && this.runtime && this.runtime.audioEngine) {
             this.runtime.audioEngine.updateSoundBuffer(id, newBuffer);
         }
+        // Update sound in runtime
+        if (soundEncoding) {
+            // Now that we updated the sound, the format should also be updated
+            // so that the sound can eventually be decoded the right way.
+            // Sounds that were formerly 'adpcm', but were updated in sound editor
+            // will not get decoded by the audio engine correctly unless the format
+            // is updated as below.
+            sound.format = '';
+            const storage = this.runtime.storage;
+            sound.assetId = storage.builtinHelper.cache(
+                storage.AssetType.Sound,
+                storage.DataFormat.WAV,
+                soundEncoding
+            );
+            sound.md5 = `${sound.assetId}.${sound.dataFormat}`;
+        }
+        // If soundEncoding is null, it's because gui had a problem
+        // encoding the updated sound. We don't want to store anything in this
+        // case, and gui should have logged an error.
+
         this.emitTargetsUpdate();
     }
 

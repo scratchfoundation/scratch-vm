@@ -401,11 +401,16 @@ class RenderedTarget extends Target {
     /**
      * Add a costume, taking care to avoid duplicate names.
      * @param {!object} costumeObject Object representing the costume.
+     * @param {?int} index Index at which to add costume
      */
-    addCostume (costumeObject) {
+    addCostume (costumeObject, index) {
         const usedNames = this.sprite.costumes.map(costume => costume.name);
         costumeObject.name = StringUtil.unusedName(costumeObject.name, usedNames);
-        this.sprite.costumes.push(costumeObject);
+        if (index) {
+            this.sprite.costumes.splice(index, 0, costumeObject);
+        } else {
+            this.sprite.costumes.push(costumeObject);
+        }
     }
 
     /**
@@ -461,11 +466,16 @@ class RenderedTarget extends Target {
     /**
      * Add a sound, taking care to avoid duplicate names.
      * @param {!object} soundObject Object representing the sound.
+     * @param {?int} index Index at which to add costume
      */
-    addSound (soundObject) {
+    addSound (soundObject, index) {
         const usedNames = this.sprite.sounds.map(sound => sound.name);
         soundObject.name = StringUtil.unusedName(soundObject.name, usedNames);
-        this.sprite.sounds.push(soundObject);
+        if (index) {
+            this.sprite.sounds.splice(index, 0, soundObject);
+        } else {
+            this.sprite.sounds.push(soundObject);
+        }
     }
 
     /**
