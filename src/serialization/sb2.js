@@ -320,6 +320,9 @@ const parseScratchObject = function (object, runtime, extensions, topLevel) {
             target.rotationStyle = RenderedTarget.ROTATION_STYLE_ALL_AROUND;
         }
     }
+    if (object.hasOwnProperty('tempoBPM')) {
+        target.tempo = object.tempoBPM;
+    }
 
     target.isStage = topLevel;
 
