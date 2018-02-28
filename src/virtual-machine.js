@@ -228,8 +228,9 @@ class VirtualMachine extends EventEmitter {
 
         // Validate & parse
         if (typeof json !== 'string' && typeof json !== 'object') {
-            log.error('Failed to parse project. Invalid type supplied to fromJSON.');
-            return;
+            const invalidTypeError = 'Failed to parse project. Invalid type supplied to fromJSON.';
+            log.error(invalidTypeError);
+            throw new Error(invalidTypeError);
         }
 
         // Establish version, deserialize, and load into runtime
@@ -244,19 +245,17 @@ class VirtualMachine extends EventEmitter {
             deserializer = sb3;
             validatedProject = possibleSb3;
         } else {
-            // @todo need to handle default project
             validate(json, (err, project) => {
                 if (err) {
-                    // @todo Making this a warning for now. Should be updated with error handling
-                    log.warn(
-                        `There was an error in validating the project: ${JSON.stringify(err)}`);
-                    deserializer = sb2;
-                    validatedProject = possibleSb3;
+                    const errorMessage =
+                        `The given project could not be validated, parsing failed with error: ${JSON.stringify(err)}`;
+                    log.error(errorMessage);
+                    throw new Error(errorMessage);
+
                 } else {
                     deserializer = sb2;
                     validatedProject = project;
                 }
-                // handle the error
             });
         }
 
@@ -264,42 +263,6 @@ class VirtualMachine extends EventEmitter {
             .then(({targets, extensions}) =>
                 this.installTargets(targets, extensions, true));
     }
-
-
-    // /**
-    //  * Load a project from a Scratch JSON representation.
-    //  * @param {string} json JSON string representing a project.
-    //  * @returns {Promise} Promise that resolves after the project has loaded
-    //  */
-    // fromJSON (json) {
-    //     // Clear the current runtime
-    //     this.clear();
-    //
-    //     // Validate & parse
-    //     if (typeof json !== 'string' && typeof json !== 'object') {
-    //         log.error('Failed to parse project. Invalid type supplied to fromJSON.');
-    //         return;
-    //     }
-    //
-    //     // Attempt to parse JSON if string is supplied
-    //     if (typeof json === 'string') json = JSON.parse(json);
-    //
-    //     // Establish version, deserialize, and load into runtime
-    //     // @todo Support Scratch 1.4
-    //     // @todo This is an extremely naïve / dangerous way of determining version.
-    //     //       See `scratch-parser` for a more sophisticated validation
-    //     //       methodology that should be adapted for use here
-    //     let deserializer;
-    //     if ((typeof json.meta !== 'undefined') && (typeof json.meta.semver !== 'undefined')) {
-    //         deserializer = sb3;
-    //     } else {
-    //         deserializer = sb2;
-    //     }
-    //
-    //     return deserializer.deserialize(json, this.runtime)
-    //         .then(({targets, extensions}) =>
-    //             this.installTargets(targets, extensions, true));
-    // }
 
     /**
      * Install `deserialize` results: zero or more targets after the extensions (if any) used by those targets.
