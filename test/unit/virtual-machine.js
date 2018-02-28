@@ -105,7 +105,7 @@ test('renameSprite does not increment when renaming to the same name', t => {
     t.equal(vm.runtime.targets[0].sprite.name, 'foo');
     vm.renameSprite(target.id, 'foo');
     t.equal(vm.runtime.targets[0].sprite.name, 'foo');
-    
+
     t.end();
 });
 
@@ -271,6 +271,26 @@ test('duplicateSprite duplicates a sprite when given id is associated with known
     t.equal(vm.runtime.targets.length, 1);
     vm.duplicateSprite(currTarget.id).then(() => {
         t.equal(vm.runtime.targets.length, 2);
+        t.end();
+    });
+
+});
+
+test('duplicateSprite assigns duplicated sprite a fresh name', t => {
+    const vm = new VirtualMachine();
+    const spr = new Sprite(null, vm.runtime);
+    spr.name = 'sprite1';
+    const currTarget = spr.createClone();
+    vm.editingTarget = currTarget;
+
+    vm.emitWorkspaceUpdate = () => null;
+
+    vm.runtime.targets = [currTarget];
+    t.equal(vm.runtime.targets.length, 1);
+    vm.duplicateSprite(currTarget.id).then(() => {
+        t.equal(vm.runtime.targets.length, 2);
+        t.equal(vm.runtime.targets[0].sprite.name, 'sprite1');
+        t.equal(vm.runtime.targets[1].sprite.name, 'sprite2');
         t.end();
     });
 
