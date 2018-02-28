@@ -464,7 +464,7 @@ class Scratch3MusicBlocks {
                     arguments: {
                         DRUM: {
                             type: ArgumentType.NUMBER,
-                            menu: 'drums',
+                            menu: 'DRUM',
                             defaultValue: 1
                         },
                         BEATS: {
@@ -506,7 +506,7 @@ class Scratch3MusicBlocks {
                     arguments: {
                         INSTRUMENT: {
                             type: ArgumentType.NUMBER,
-                            menu: 'instruments',
+                            menu: 'INSTRUMENT',
                             defaultValue: 1
                         }
                     }
@@ -540,8 +540,8 @@ class Scratch3MusicBlocks {
                 }
             ],
             menus: {
-                drums: this._buildMenu(this.DRUM_INFO),
-                instruments: this._buildMenu(this.INSTRUMENT_INFO)
+                DRUM: this._buildMenu(this.DRUM_INFO),
+                INSTRUMENT: this._buildMenu(this.INSTRUMENT_INFO)
             }
         };
     }

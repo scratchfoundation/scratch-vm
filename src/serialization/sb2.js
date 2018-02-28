@@ -533,6 +533,14 @@ const parseBlock = function (sb2block, addBroadcastMsg, getVariableId, extension
                 if (shadowObscured) {
                     fieldValue = '';
                 }
+            } else if (expectedArg.inputOp === 'music.menu.DRUM') {
+                if (shadowObscured) {
+                    fieldValue = 1;
+                }
+            } else if (expectedArg.inputOp === 'music.menu.INSTRUMENT') {
+                if (shadowObscured) {
+                    fieldValue = 1;
+                }
             } else if (shadowObscured) {
                 // Filled drop-down menu.
                 fieldValue = '';
