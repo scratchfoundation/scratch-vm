@@ -228,9 +228,7 @@ class VirtualMachine extends EventEmitter {
 
         // Validate & parse
         if (typeof json !== 'string' && typeof json !== 'object') {
-            const invalidTypeError = 'Failed to parse project. Invalid type supplied to fromJSON.';
-            log.error(invalidTypeError);
-            throw new Error(invalidTypeError);
+            throw new Error('Failed to parse project. Invalid type supplied to fromJSON.');
         }
 
         // Establish version, deserialize, and load into runtime
@@ -249,10 +247,8 @@ class VirtualMachine extends EventEmitter {
             const possibleSb2 = typeof json === 'object' ? JSON.stringify(json) : json;
             validate(possibleSb2, (err, project) => {
                 if (err) {
-                    const errorMessage =
-                        `The given project could not be validated, parsing failed with error: ${JSON.stringify(err)}`;
-                    log.error(errorMessage);
-                    throw new Error(errorMessage);
+                    throw new Error(
+                        `The given project could not be validated, parsing failed with error: ${JSON.stringify(err)}`);
 
                 } else {
                     deserializer = sb2;
