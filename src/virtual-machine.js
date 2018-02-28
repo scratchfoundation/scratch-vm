@@ -245,7 +245,9 @@ class VirtualMachine extends EventEmitter {
             deserializer = sb3;
             validatedProject = possibleSb3;
         } else {
-            validate(json, (err, project) => {
+            // scratch-parser expects a json string or a buffer
+            const possibleSb2 = typeof json === 'object' ? JSON.stringify(json) : json;
+            validate(possibleSb2, (err, project) => {
                 if (err) {
                     const errorMessage =
                         `The given project could not be validated, parsing failed with error: ${JSON.stringify(err)}`;
