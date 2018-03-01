@@ -116,6 +116,12 @@ class RenderedTarget extends Target {
          * @type {!string}
          */
         this.rotationStyle = RenderedTarget.ROTATION_STYLE_ALL_AROUND;
+
+        /**
+         * Current tempo (used by the music extension)
+         * @type {number}
+         */
+        this.tempo = 60;
     }
 
     /**
