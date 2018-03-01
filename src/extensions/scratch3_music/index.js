@@ -44,13 +44,6 @@ class Scratch3MusicBlocks {
         this.runtime = runtime;
 
         /**
-         * The current tempo in beats per minute. The tempo is a global property of the project,
-         * not a property of each sprite, so it is not stored in the MusicState object.
-         * @type {number}
-         */
-        this.tempo = 60;
-
-        /**
          * The number of drum and instrument sounds currently being played simultaneously.
          * @type {number}
          * @private
@@ -464,7 +457,7 @@ class Scratch3MusicBlocks {
                     arguments: {
                         DRUM: {
                             type: ArgumentType.NUMBER,
-                            menu: 'drums',
+                            menu: 'DRUM',
                             defaultValue: 1
                         },
                         BEATS: {
@@ -506,7 +499,7 @@ class Scratch3MusicBlocks {
                     arguments: {
                         INSTRUMENT: {
                             type: ArgumentType.NUMBER,
-                            menu: 'instruments',
+                            menu: 'INSTRUMENT',
                             defaultValue: 1
                         }
                     }
@@ -540,8 +533,8 @@ class Scratch3MusicBlocks {
                 }
             ],
             menus: {
-                drums: this._buildMenu(this.DRUM_INFO),
-                instruments: this._buildMenu(this.INSTRUMENT_INFO)
+                DRUM: this._buildMenu(this.DRUM_INFO),
+                INSTRUMENT: this._buildMenu(this.INSTRUMENT_INFO)
             }
         };
     }
@@ -759,7 +752,7 @@ class Scratch3MusicBlocks {
      * @private
      */
     _beatsToSec (beats) {
-        return (60 / this.tempo) * beats;
+        return (60 / this.getTempo()) * beats;
     }
 
     /**
@@ -829,7 +822,7 @@ class Scratch3MusicBlocks {
      */
     changeTempo (args) {
         const change = Cast.toNumber(args.TEMPO);
-        const tempo = change + this.tempo;
+        const tempo = change + this.getTempo();
         this._updateTempo(tempo);
     }
 
@@ -840,7 +833,10 @@ class Scratch3MusicBlocks {
      */
     _updateTempo (tempo) {
         tempo = MathUtil.clamp(tempo, Scratch3MusicBlocks.TEMPO_RANGE.min, Scratch3MusicBlocks.TEMPO_RANGE.max);
-        this.tempo = tempo;
+        const stage = this.runtime.getTargetForStage();
+        if (stage) {
+            stage.tempo = tempo;
+        }
     }
 
     /**
@@ -848,7 +844,11 @@ class Scratch3MusicBlocks {
      * @return {number} - the current tempo, in beats per minute.
      */
     getTempo () {
-        return this.tempo;
+        const stage = this.runtime.getTargetForStage();
+        if (stage) {
+            return stage.tempo;
+        }
+        return 60;
     }
 }
 

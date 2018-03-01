@@ -174,7 +174,8 @@ class Sequencer {
             // A "null block" - empty branch.
             thread.popStack();
         }
-        while (thread.peekStack()) {
+        // Save the current block ID to notice if we did control flow.
+        while ((currentBlockId = thread.peekStack()) !== 0) {
             let isWarpMode = thread.peekStackFrame().warpMode;
             if (isWarpMode && !thread.warpTimer) {
                 // Initialize warp-mode timer if it hasn't been already.
@@ -183,8 +184,6 @@ class Sequencer {
                 thread.warpTimer.start();
             }
             // Execute the current block.
-            // Save the current block ID to notice if we did control flow.
-            currentBlockId = thread.peekStack();
             if (this.runtime.profiler !== null) {
                 if (executeProfilerId === -1) {
                     executeProfilerId = this.runtime.profiler.idByName(executeProfilerFrame);

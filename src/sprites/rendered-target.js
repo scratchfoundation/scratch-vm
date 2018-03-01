@@ -116,6 +116,12 @@ class RenderedTarget extends Target {
          * @type {!string}
          */
         this.rotationStyle = RenderedTarget.ROTATION_STYLE_ALL_AROUND;
+
+        /**
+         * Current tempo (used by the music extension)
+         * @type {number}
+         */
+        this.tempo = 60;
     }
 
     /**
@@ -401,18 +407,14 @@ class RenderedTarget extends Target {
     /**
      * Add a costume, taking care to avoid duplicate names.
      * @param {!object} costumeObject Object representing the costume.
+     * @param {?int} index Index at which to add costume
      */
-    addCostume (costumeObject) {
-        this.sprite.addCostumeAt(costumeObject, this.sprite.costumes.length);
-    }
-
-    /**
-     * Add a costume at the given index, taking care to avoid duplicate names.
-     * @param {!object} costumeObject Object representing the costume.
-     * @param {!int} index Index at which to add costume
-     */
-    addCostumeAt (costumeObject, index) {
-        this.sprite.addCostumeAt(costumeObject, index);
+    addCostume (costumeObject, index) {
+        if (index) {
+            this.sprite.addCostumeAt(costumeObject, index);
+        } else {
+            this.sprite.addCostumeAt(costumeObject, this.sprite.costumes.length);
+        }
     }
 
     /**
@@ -466,11 +468,16 @@ class RenderedTarget extends Target {
     /**
      * Add a sound, taking care to avoid duplicate names.
      * @param {!object} soundObject Object representing the sound.
+     * @param {?int} index Index at which to add costume
      */
-    addSound (soundObject) {
+    addSound (soundObject, index) {
         const usedNames = this.sprite.sounds.map(sound => sound.name);
         soundObject.name = StringUtil.unusedName(soundObject.name, usedNames);
-        this.sprite.sounds.push(soundObject);
+        if (index) {
+            this.sprite.sounds.splice(index, 0, soundObject);
+        } else {
+            this.sprite.sounds.push(soundObject);
+        }
     }
 
     /**

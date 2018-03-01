@@ -424,7 +424,7 @@ const specMap = {
         argMap: [
             {
                 type: 'input',
-                inputOp: 'math_number',
+                inputOp: 'music.menu.DRUM',
                 inputName: 'DRUM'
             },
             {
@@ -464,7 +464,7 @@ const specMap = {
         argMap: [
             {
                 type: 'input',
-                inputOp: 'math_number',
+                inputOp: 'music.menu.INSTRUMENT',
                 inputName: 'INSTRUMENT'
             }
         ]

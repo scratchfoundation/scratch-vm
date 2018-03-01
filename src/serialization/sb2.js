@@ -320,6 +320,9 @@ const parseScratchObject = function (object, runtime, extensions, topLevel) {
             target.rotationStyle = RenderedTarget.ROTATION_STYLE_ALL_AROUND;
         }
     }
+    if (object.hasOwnProperty('tempoBPM')) {
+        target.tempo = object.tempoBPM;
+    }
 
     target.isStage = topLevel;
 
@@ -532,6 +535,14 @@ const parseBlock = function (sb2block, addBroadcastMsg, getVariableId, extension
                 fieldName = 'BROADCAST_OPTION';
                 if (shadowObscured) {
                     fieldValue = '';
+                }
+            } else if (expectedArg.inputOp === 'music.menu.DRUM') {
+                if (shadowObscured) {
+                    fieldValue = 1;
+                }
+            } else if (expectedArg.inputOp === 'music.menu.INSTRUMENT') {
+                if (shadowObscured) {
+                    fieldValue = 1;
                 }
             } else if (shadowObscured) {
                 // Filled drop-down menu.
