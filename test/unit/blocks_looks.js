@@ -4,6 +4,9 @@ const Runtime = require('../../src/engine/runtime');
 const util = {
     target: {
         currentCostume: 0, // Internally, current costume is 0 indexed
+        getCostumes: function () {
+            return this.sprite.costumes;
+        },
         sprite: {
             costumes: [
                 {name: 'first name'},

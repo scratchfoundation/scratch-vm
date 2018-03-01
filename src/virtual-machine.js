@@ -465,7 +465,7 @@ class VirtualMachine extends EventEmitter {
      * @return {string} the costume's SVG string, or null if it's not an SVG costume.
      */
     getCostumeSvg (costumeIndex) {
-        const id = this.editingTarget.sprite.costumes[costumeIndex].assetId;
+        const id = this.editingTarget.getCostumes()[costumeIndex].assetId;
         if (id && this.runtime && this.runtime.storage &&
                 this.runtime.storage.get(id).dataFormat === 'svg') {
             return this.runtime.storage.get(id).decodeText();
@@ -481,7 +481,7 @@ class VirtualMachine extends EventEmitter {
      * @param {number} rotationCenterY y of point about which the costume rotates, relative to its upper left corner
      */
     updateSvg (costumeIndex, svg, rotationCenterX, rotationCenterY) {
-        const costume = this.editingTarget.sprite.costumes[costumeIndex];
+        const costume = this.editingTarget.getCostumes()[costumeIndex];
         if (costume && this.runtime && this.runtime.renderer) {
             costume.rotationCenterX = rotationCenterX;
             costume.rotationCenterY = rotationCenterY;
@@ -510,7 +510,7 @@ class VirtualMachine extends EventEmitter {
         return loadCostume(md5ext, backdropObject, this.runtime).then(() => {
             const stage = this.runtime.getTargetForStage();
             stage.addCostume(backdropObject);
-            stage.setCostume(stage.sprite.costumes.length - 1);
+            stage.setCostume(stage.getCostumes().length - 1);
         });
     }
 

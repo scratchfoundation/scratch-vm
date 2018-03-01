@@ -332,7 +332,7 @@ class Scratch3LooksBlocks {
         }
         if (target === this.runtime.getTargetForStage()) {
             // Target is the stage - start hats.
-            const newName = target.sprite.costumes[target.currentCostume].name;
+            const newName = target.getCostumes()[target.currentCostume].name;
             return this.runtime.startHats('event_whenbackdropswitchesto', {
                 BACKDROP: newName
             });
@@ -442,7 +442,7 @@ class Scratch3LooksBlocks {
             return stage.currentCostume + 1;
         }
         // Else return name
-        return stage.sprite.costumes[stage.currentCostume].name;
+        return stage.getCostumes()[stage.currentCostume].name;
     }
 
     getCostumeNumberName (args, util) {
@@ -450,7 +450,7 @@ class Scratch3LooksBlocks {
             return util.target.currentCostume + 1;
         }
         // Else return name
-        return util.target.sprite.costumes[util.target.currentCostume].name;
+        return util.target.getCostumes()[util.target.currentCostume].name;
     }
 }
 
