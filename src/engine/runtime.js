@@ -553,9 +553,7 @@ class Runtime extends EventEmitter {
         const menuId = this._makeExtensionMenuId(menuName, categoryInfo.id);
         let options = null;
         if (typeof menuItems === 'function') {
-            options = function () {
-                return menuItems();
-            };
+            options = menuItems;
         } else {
             options = menuItems.map(item => {
                 switch (typeof item) {
