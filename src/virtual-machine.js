@@ -9,6 +9,8 @@ const sb2 = require('./serialization/sb2');
 const sb3 = require('./serialization/sb3');
 const StringUtil = require('./util/string-util');
 const formatMessage = require('format-message');
+const validate = require('scratch-parser');
+
 const Variable = require('./engine/variable');
 
 const {loadCostume} = require('./import/load-costume.js');
@@ -226,12 +228,8 @@ class VirtualMachine extends EventEmitter {
 
         // Validate & parse
         if (typeof json !== 'string' && typeof json !== 'object') {
-            log.error('Failed to parse project. Invalid type supplied to fromJSON.');
-            return;
+            throw new Error('Failed to parse project. Invalid type supplied to fromJSON.');
         }
-
-        // Attempt to parse JSON if string is supplied
-        if (typeof json === 'string') json = JSON.parse(json);
 
         // Establish version, deserialize, and load into runtime
         // @todo Support Scratch 1.4
@@ -239,13 +237,27 @@ class VirtualMachine extends EventEmitter {
         //       See `scratch-parser` for a more sophisticated validation
         //       methodology that should be adapted for use here
         let deserializer;
-        if ((typeof json.meta !== 'undefined') && (typeof json.meta.semver !== 'undefined')) {
+        let validatedProject;
+        const possibleSb3 = typeof json === 'string' ? JSON.parse(json) : json;
+        if ((typeof possibleSb3.meta !== 'undefined') && (typeof possibleSb3.meta.semver !== 'undefined')) {
             deserializer = sb3;
+            validatedProject = possibleSb3;
         } else {
-            deserializer = sb2;
+            // scratch-parser expects a json string or a buffer
+            const possibleSb2 = typeof json === 'object' ? JSON.stringify(json) : json;
+            validate(possibleSb2, (err, project) => {
+                if (err) {
+                    throw new Error(
+                        `The given project could not be validated, parsing failed with error: ${JSON.stringify(err)}`);
+
+                } else {
+                    deserializer = sb2;
+                    validatedProject = project;
+                }
+            });
         }
 
-        return deserializer.deserialize(json, this.runtime)
+        return deserializer.deserialize(validatedProject, this.runtime)
             .then(({targets, extensions}) =>
                 this.installTargets(targets, extensions, true));
     }
