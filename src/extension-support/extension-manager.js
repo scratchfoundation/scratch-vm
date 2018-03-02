@@ -264,8 +264,8 @@ class ExtensionManager {
             // we can use it later when converting the menu for Scratch Blocks.
             if (typeof menus[item] === 'string') {
                 const serviceObject = dispatch.services[serviceName];
-                const menuFunc = serviceObject[menus[item]].bind(serviceObject);
-                menus[item] = menuFunc;
+                // TODO: Fix this to use dispatch.call when extensions are running in workers.
+                menus[item] = serviceObject[menus[item]].bind(serviceObject);
             }
         }
         return menus;
