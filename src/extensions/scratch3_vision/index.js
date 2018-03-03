@@ -63,7 +63,7 @@ class VisionBlocks {
     }
 
     static get HOST () {
-        return 'ws://scratch-vision-prod.us-east-1.elasticbeanstalk.com';
+        return 'wss://vision.scratch.mit.edu';
     }
 
     static get INTERVAL () {
