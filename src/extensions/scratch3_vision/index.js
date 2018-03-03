@@ -42,7 +42,13 @@ const ACCEPTED_LABELS = [
  * @constructor
  */
 class VisionBlocks {
-    constructor () {
+    constructor (runtime) {
+        // Renderer
+        this.runtime = runtime;
+        this._skinId = -1;
+        this._skin = null;
+        this._drawable = -1;
+
         // Video
         this._video = null;
         this._track = null;
@@ -57,6 +63,7 @@ class VisionBlocks {
         this._currentLabels = [];
 
         // Setup system and start streaming video to analysis server
+        this._setupPreview();
         this._setupVideo();
         this._setupServer();
         this._loop();
@@ -71,7 +78,24 @@ class VisionBlocks {
     }
 
     static get WIDTH () {
-        return 240;
+        return 480;
+    }
+
+    static get ORDER () {
+        return 1;
+    }
+
+    _setupPreview () {
+        if (this._skinId !== -1) return;
+        if (this._skin !== null) return;
+        if (this._drawable !== -1) return;
+        if (!this.runtime.renderer) return;
+
+        this._skinId = this.runtime.renderer.createPenSkin();
+        this._skin = this.runtime.renderer._allSkins[this._skinId];
+        this._drawable = this.runtime.renderer.createDrawable();
+        this.runtime.renderer.setDrawableOrder(this._drawable, VisionBlocks.ORDER);
+        this.runtime.renderer.updateDrawableProperties(this._drawable, {skinId: this._skinId});
     }
 
     _setupVideo () {
@@ -155,9 +179,15 @@ class VisionBlocks {
                 0,
                 0,
                 VisionBlocks.WIDTH,
-                nativeHeight * (VisionBlocks.WIDTH / nativeWidth)
+                (nativeHeight * (VisionBlocks.WIDTH / nativeWidth))
             );
             const data = canvas.toDataURL();
+
+            // Render to preview layer
+            if (this._skin !== null) {
+                this._skin.drawStamp(canvas, -240, 180);
+                this.runtime.requestRedraw();
+            }
 
             // Forward to websocket server
             if (this._socket.readyState === 1) {
