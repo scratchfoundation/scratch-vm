@@ -66,7 +66,7 @@ class Sprite {
      *     addCostumeAt, deleteCostumeAt, or setting costumes.
      */
     get costumes () {
-        return this.costumes_.slice(0);
+        return this.costumes_;
     }
 
     /**
