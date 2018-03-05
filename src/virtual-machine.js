@@ -1,5 +1,6 @@
 const TextEncoder = require('text-encoding').TextEncoder;
 const EventEmitter = require('events');
+const JSZip = require('jszip');
 
 const centralDispatch = require('./dispatch/central-dispatch');
 const ExtensionManager = require('./extension-support/extension-manager');
@@ -227,15 +228,25 @@ class VirtualMachine extends EventEmitter {
      * @returns {string} Project in a Scratch 3.0 JSON representation.
      */
     saveProjectSb3 () {
-        // @todo: Handle other formats, e.g., Scratch 1.4, Scratch 2.0.
         const soundDescs = serializeSounds(this.runtime);
         const costumeDescs = serializeCostumes(this.runtime);
+        const projectJson = this.toJSON();
 
-        return {
-            projectJson: this.toJSON(),
-            sounds: soundDescs,
-            costumes: costumeDescs
-        };
+        const zip = new JSZip();
+
+        // Put everything in a zip file
+        // TODO compression?
+        zip.file('project.json', projectJson);
+        for (let i = 0; i < soundDescs.length; i++) {
+            const currSound = soundDescs[i];
+            zip.file(currSound.fileName, currSound.fileContent);
+        }
+        for (let i = 0; i < costumeDescs.length; i++) {
+            const currCostume = costumeDescs[i];
+            zip.file(currCostume.fileName, currCostume.fileContent);
+        }
+
+        return zip.generateAsync({type: 'blob'});
     }
 
     /**
