@@ -768,6 +768,24 @@ const specMap = {
             }
         ]
     },
+    'doForLoop': {
+        opcode: 'control_for_each',
+        argMap: [
+            {
+                type: 'field',
+                fieldName: 'VARIABLE'
+            },
+            {
+                type: 'input',
+                inputOp: 'text',
+                inputName: 'VALUE'
+            },
+            {
+                type: 'input',
+                inputName: 'SUBSTACK'
+            }
+        ]
+    },
     'stopScripts': {
         opcode: 'control_stop',
         argMap: [
