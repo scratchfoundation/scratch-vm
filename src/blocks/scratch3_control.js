@@ -121,7 +121,8 @@ class Scratch3ControlBlocks {
         // is being iterated does not change the mode.
 
         if (typeof util.stackFrame.iterationMode === 'undefined') {
-            let value = args.VALUE, mode;
+            const value = args.VALUE;
+            let mode;
             if (typeof value === 'string' && !isNaN(Number(value))) {
                 mode = 'number';
             } else if (typeof value === 'number') {
