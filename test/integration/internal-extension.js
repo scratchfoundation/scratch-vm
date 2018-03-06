@@ -22,12 +22,26 @@ class TestInternalExtension {
                 {
                     opcode: 'go'
                 }
-            ]
+            ],
+            menus: {
+                simpleMenu: this._buildAMenu(),
+                dynamicMenu: '_buildDynamicMenu'
+            }
         };
     }
 
     go () {
         this.status.goCalled = true;
+    }
+
+    _buildAMenu () {
+        this.status.buildMenuCalled = true;
+        return ['abcd', 'efgh', 'ijkl'];
+    }
+
+    _buildDynamicMenu () {
+        this.status.buildDynamicMenuCalled = true;
+        return [1, 2, 3, 4, 6];
     }
 }
 
@@ -47,5 +61,14 @@ test('internal extension', t => {
         t.notOk(extension.status.goCalled);
         func();
         t.ok(extension.status.goCalled);
+
+        // There should be 2 menus - one is an array, one is the function to call.
+        t.equal(vm.runtime._blockInfo[0].menus.length, 2);
+        // First menu has 3 items.
+        t.equal(
+            vm.runtime._blockInfo[0].menus[0].json.args0[0].options.length, 3);
+        // Second menu is a dynamic menu and therefore should be a function.
+        t.type(
+            vm.runtime._blockInfo[0].menus[1].json.args0[0].options, 'function');
     });
 });
