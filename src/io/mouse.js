@@ -17,17 +17,23 @@ class Mouse {
      * Activate "event_whenthisspriteclicked" hats if needed.
      * @param  {number} x X position to be sent to the renderer.
      * @param  {number} y Y position to be sent to the renderer.
+     * @param  {?bool} wasDragged Whether the click event was the result of
+     * a drag end.
      * @private
      */
-    _activateClickHats (x, y) {
+    _activateClickHats (x, y, wasDragged) {
         if (this.runtime.renderer) {
             const drawableID = this.runtime.renderer.pick(x, y);
             for (let i = 0; i < this.runtime.targets.length; i++) {
                 const target = this.runtime.targets[i];
                 if (target.hasOwnProperty('drawableID') &&
                     target.drawableID === drawableID) {
-                    this.runtime.startHats('event_whenthisspriteclicked',
-                        null, target);
+                    // only activate click hat if the mouse up event wasn't
+                    // the result of a drag ending
+                    if (!wasDragged) {
+                        this.runtime.startHats('event_whenthisspriteclicked',
+                            null, target);
+                    }
                     return;
                 }
             }
@@ -58,7 +64,7 @@ class Mouse {
         if (typeof data.isDown !== 'undefined') {
             this._isDown = data.isDown;
             if (!this._isDown) {
-                this._activateClickHats(data.x, data.y);
+                this._activateClickHats(data.x, data.y, data.wasDragged);
             }
         }
     }
