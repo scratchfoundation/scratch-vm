@@ -85,9 +85,9 @@ const serializeSound = function (sound) {
     return obj;
 };
 
-const serializeTarget = function (target/* , runtime*/) {
+const serializeTarget = function (target) {
     const obj = Object.create(null);
-    obj.isStage = target.isStage; // target.id === runtime.getTargetForStage().id;
+    obj.isStage = target.isStage;
     obj.name = target.name;
     obj.variables = target.variables; // This means that uids for variables will persist across saves/loads
     obj.blocks = serializeBlocks(target.blocks);
