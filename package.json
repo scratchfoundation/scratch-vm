@@ -49,6 +49,7 @@
     "immutable": "3.8.1",
     "in-publish": "^2.0.0",
     "json": "^9.0.4",
+    "jszip": "^3.1.5",
     "lodash.defaultsdeep": "4.6.0",
     "minilog": "3.1.0",
     "nets": "3.2.0",

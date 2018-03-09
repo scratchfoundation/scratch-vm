@@ -1,5 +1,6 @@
 const TextEncoder = require('text-encoding').TextEncoder;
 const EventEmitter = require('events');
+const JSZip = require('jszip');
 
 const centralDispatch = require('./dispatch/central-dispatch');
 const ExtensionManager = require('./extension-support/extension-manager');
@@ -15,6 +16,7 @@ const Variable = require('./engine/variable');
 
 const {loadCostume} = require('./import/load-costume.js');
 const {loadSound} = require('./import/load-sound.js');
+const {serializeSounds, serializeCostumes} = require('./serialization/serialize-assets');
 
 const RESERVED_NAMES = ['_mouse_', '_stage_', '_edge_', '_myself_', '_random_'];
 
@@ -185,6 +187,28 @@ class VirtualMachine extends EventEmitter {
     }
 
     /**
+     * Load a project from a Scratch 3.0 sb3 file containing a project json
+     * and all of the sound and costume files.
+     * @param {Buffer} inputBuffer A buffer representing the project to load.
+     * @return {!Promise} Promise that resolves after targets are installed.
+     */
+    loadProjectLocal (inputBuffer) {
+        // TODO need to handle sb2 files as well, and will possibly merge w/
+        // above function
+        return JSZip.loadAsync(inputBuffer)
+            .then(sb3File => {
+                sb3File.file('project.json').async('string')
+                    .then(json => {
+                        // TODO error handling for unpacking zip/not finding project.json
+                        json = JSON.parse(json); // TODO catch errors here (validation)
+                        return sb3.deserialize(json, this.runtime, sb3File)
+                            .then(({targets, extensions}) =>
+                                this.installTargets(targets, extensions, true));
+                    });
+            });
+    }
+
+    /**
      * Load a project from the Scratch web site, by ID.
      * @param {string} id - the ID of the project to download, as a string.
      */
@@ -205,8 +229,25 @@ class VirtualMachine extends EventEmitter {
      * @returns {string} Project in a Scratch 3.0 JSON representation.
      */
     saveProjectSb3 () {
-        // @todo: Handle other formats, e.g., Scratch 1.4, Scratch 2.0.
-        return this.toJSON();
+        const soundDescs = serializeSounds(this.runtime);
+        const costumeDescs = serializeCostumes(this.runtime);
+        const projectJson = this.toJSON();
+
+        const zip = new JSZip();
+
+        // Put everything in a zip file
+        // TODO compression?
+        zip.file('project.json', projectJson);
+        for (let i = 0; i < soundDescs.length; i++) {
+            const currSound = soundDescs[i];
+            zip.file(currSound.fileName, currSound.fileContent);
+        }
+        for (let i = 0; i < costumeDescs.length; i++) {
+            const currCostume = costumeDescs[i];
+            zip.file(currCostume.fileName, currCostume.fileContent);
+        }
+
+        return zip.generateAsync({type: 'blob'});
     }
 
     /**
@@ -505,6 +546,10 @@ class VirtualMachine extends EventEmitter {
             storage.DataFormat.SVG,
             (new TextEncoder()).encode(svg)
         );
+        // If we're in here, we've edited an svg in the vector editor,
+        // so the dataFormat should be 'svg'
+        costume.dataFormat = storage.DataFormat.SVG;
+        costume.md5 = `${costume.assetId}.${costume.dataFormat}`;
         this.emitTargetsUpdate();
     }
 
