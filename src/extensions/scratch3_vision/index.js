@@ -57,6 +57,7 @@ class VisionBlocks {
 
         // Server
         this._socket = null;
+        this._lastUpdate = null;
 
         // Labels
         this._lastLabels = [];
@@ -77,8 +78,8 @@ class VisionBlocks {
         return 500;
     }
 
-    static get WIDTH () {
-        return 480;
+    static get DIMENSIONS () {
+        return [480, 360];
     }
 
     static get ORDER () {
@@ -94,15 +95,23 @@ class VisionBlocks {
         this._skinId = this.runtime.renderer.createPenSkin();
         this._skin = this.runtime.renderer._allSkins[this._skinId];
         this._drawable = this.runtime.renderer.createDrawable();
-        this.runtime.renderer.setDrawableOrder(this._drawable, VisionBlocks.ORDER);
-        this.runtime.renderer.updateDrawableProperties(this._drawable, {skinId: this._skinId});
+        this.runtime.renderer.setDrawableOrder(
+            this._drawable,
+            VisionBlocks.ORDER
+        );
+        this.runtime.renderer.updateDrawableProperties(this._drawable, {
+            skinId: this._skinId
+        });
     }
 
     _setupVideo () {
         this._video = document.createElement('video');
         navigator.getUserMedia({
-            video: true,
-            audio: false
+            audio: false,
+            video: {
+                width: { min: 480, ideal: 640 },
+                height: { min: 360, ideal: 480 }
+            }
         }, (stream) => {
             this._video.src = window.URL.createObjectURL(stream);
             this._track = stream.getTracks()[0]; // @todo Is this needed?
@@ -163,11 +172,20 @@ class VisionBlocks {
             // Ensure server connection is established
             if (!this._socket) return;
 
-            // Create low-resolution PNG for analysis
+            // Create low-resolution image for preview
             const canvas = document.createElement('canvas');
+            canvas.width = VisionBlocks.DIMENSIONS[0];
+            canvas.height = VisionBlocks.DIMENSIONS[1];
             const ctx = canvas.getContext('2d');
             const nativeWidth = this._video.videoWidth;
             const nativeHeight = this._video.videoHeight;
+
+            // Bail if the camera is *still* not ready
+            if (nativeWidth === 0) return;
+            if (nativeHeight === 0) return;
+
+            // Mirror
+            ctx.scale(-1, 1);
 
             // Generate video thumbnail for analysis
             ctx.drawImage(
@@ -176,24 +194,31 @@ class VisionBlocks {
                 0,
                 nativeWidth,
                 nativeHeight,
+                VisionBlocks.DIMENSIONS[0] * -1,
                 0,
-                0,
-                VisionBlocks.WIDTH,
-                (nativeHeight * (VisionBlocks.WIDTH / nativeWidth))
+                VisionBlocks.DIMENSIONS[0],
+                VisionBlocks.DIMENSIONS[1]
             );
-            const data = canvas.toDataURL();
 
             // Render to preview layer
             if (this._skin !== null) {
-                this._skin.drawStamp(canvas, -240, 180);
+                const xOffset = VisionBlocks.DIMENSIONS[0] / 2 * -1;
+                const yOffset = VisionBlocks.DIMENSIONS[1] / 2;
+                this._skin.drawStamp(canvas, xOffset, yOffset);
                 this.runtime.requestRedraw();
             }
 
             // Forward to websocket server
-            if (this._socket.readyState === 1) {
+            if (this._socket.readyState !== 1) return;
+            const time = new Date() / 1000;
+            if (this._lastUpdate === null) this._lastUpdate = time;
+            const offset = (time - this._lastUpdate) * 1000;
+            if (offset > VisionBlocks.INTERVAL) {
+                const data = canvas.toDataURL();
                 this._socket.send(data);
+                this._lastUpdate = time;
             };
-        }, VisionBlocks.INTERVAL);
+        }, this.runtime.THREAD_STEP_INTERVAL_COMPATIBILITY);
     }
 
     getInfo () {
