@@ -25,6 +25,92 @@ const {deserializeCostume, deserializeSound} = require('./deserialize-assets.js'
  * @property {Map.<string, string>} extensionURLs - map of ID => URL from project metadata. May not match extensionIDs.
  */
 
+const serializeBlock = function (block) {
+    const obj = Object.create(null);
+    obj.id = block.id;
+    obj.opcode = block.opcode;
+    if (block.next) {
+        obj.next = block.next;
+    }
+    if (block.parent) {
+        obj.parent = block.parent;
+    }
+    obj.inputs = block.inputs;
+    obj.fields = block.fields;
+    obj.topLevel = block.topLevel;
+    obj.shadow = block.shadow;
+    if (block.topLevel) {
+        if (block.x) {
+            obj.x = Math.round(block.x);
+        }
+        if (block.y) {
+            obj.y = Math.round(block.y);
+        }
+    }
+    if (block.mutation) {
+        obj.mutation = block.mutation;
+    }
+    return obj;
+};
+
+const serializeBlocks = function (blocks) {
+    // TODO Array or object?
+    const obj = Object.create(null);
+    for (const blockID in blocks) {
+        obj[blockID] = serializeBlock(blocks[blockID]);
+    }
+    return obj;
+};
+
+const serializeCostume = function (costume) {
+    const obj = Object.create(null);
+    obj.assetId = costume.assetId;
+    obj.name = costume.name;
+    obj.bitmapResolution = costume.bitmapResolution;
+    obj.dataFormat = costume.dataFormat;
+    obj.rotationCenterX = costume.rotationCenterX;
+    obj.rotationCenterY = costume.rotationCenterY;
+    return obj;
+};
+
+const serializeSound = function (sound) {
+    const obj = Object.create(null);
+    obj.assetId = sound.assetId;
+    obj.name = sound.name;
+    obj.dataFormat = sound.dataFormat;
+    obj.format = sound.format;
+    obj.rate = sound.rate;
+    obj.sampleCount = sound.sampleCount;
+    // TODO eventually want to get rid of this
+    obj.md5 = sound.md5;
+    // TODO do we need this soundID
+    // (not to be confused with soundId which is a uid for sounds)
+    // obj.soundID = sound.soundID;
+    return obj;
+};
+
+const serializeTarget = function (target/* , runtime*/) {
+    const obj = Object.create(null);
+    obj.isStage = target.isStage; // target.id === runtime.getTargetForStage().id;
+    obj.name = target.name;
+    obj.variables = target.variables; // This means that uids for variables will persist across saves/loads
+    obj.blocks = serializeBlocks(target.blocks);
+    obj.currentCostume = target.currentCostume;
+    obj.costumes = target.costumes.map(serializeCostume);
+    obj.sounds = target.sounds.map(serializeSound);
+    if (!obj.isStage) {
+        // Stage does not need the following properties
+        obj.visible = target.visible;
+        obj.x = target.x;
+        obj.y = target.y;
+        obj.size = target.size;
+        obj.direction = target.direction;
+        obj.draggable = target.draggable;
+        obj.rotationStyle = target.rotationStyle;
+    }
+    return obj;
+};
+
 /**
  * Serializes the specified VM runtime.
  * @param  {!Runtime} runtime VM runtime instance to be serialized.
@@ -33,7 +119,12 @@ const {deserializeCostume, deserializeSound} = require('./deserialize-assets.js'
 const serialize = function (runtime) {
     // Fetch targets
     const obj = Object.create(null);
-    obj.targets = runtime.targets.filter(target => target.isOriginal);
+    const flattenedOriginalTargets = JSON.parse(JSON.stringify(
+        runtime.targets.filter(target => target.isOriginal)));
+    obj.targets = flattenedOriginalTargets.map(t => serializeTarget(t, runtime));
+    // runtime.targets.filter(target => target.isOriginal);
+
+    // TODO Serialize monitors
 
     // Assemble metadata
     const meta = Object.create(null);
@@ -114,7 +205,7 @@ const parseScratchObject = function (object, runtime, extensions, zip) {
             // fileUrl: soundSource.fileUrl,
             rate: soundSource.rate,
             sampleCount: soundSource.sampleCount,
-            soundID: soundSource.soundID,
+            // soundID: soundSource.soundID,
             name: soundSource.name,
             md5: soundSource.md5,
             data: null
