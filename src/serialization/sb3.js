@@ -29,12 +29,8 @@ const serializeBlock = function (block) {
     const obj = Object.create(null);
     obj.id = block.id;
     obj.opcode = block.opcode;
-    if (block.next) {
-        obj.next = block.next;
-    }
-    if (block.parent) {
-        obj.parent = block.parent;
-    }
+    obj.next = block.next;
+    obj.parent = block.parent;
     obj.inputs = block.inputs;
     obj.fields = block.fields;
     obj.topLevel = block.topLevel;
