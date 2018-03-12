@@ -125,10 +125,11 @@ class Scratch3MusicBlocks {
      * @return {Promise} - a promise which will resolve once the sound has decoded.
      */
     _decodeSound (soundBuffer) {
-        if (!this.runtime.audioEngine) return;
-        if (!this.runtime.audioEngine.audioContext) return;
+        const context = this.runtime.audioEngine && this.runtime.audioEngine.audioContext;
 
-        const context = this.runtime.audioEngine.audioContext;
+        if (!context) {
+            return Promise.reject(new Error('No Audio Context Detected'));
+        }
 
         // Check for newer promise-based API
         if (context.decodeAudioData.length === 1) {
