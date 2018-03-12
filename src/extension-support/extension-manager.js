@@ -246,7 +246,7 @@ class ExtensionManager {
         extensionInfo.menus = this._prepareMenuInfo(serviceName, extensionInfo.menus);
         return extensionInfo;
     }
-    
+
     /**
      * Prepare extension menus. e.g. setup binding for dynamic menu functions.
      * @param {string} serviceName - the name of the service hosting this extension block
@@ -297,7 +297,12 @@ class ExtensionManager {
             blockInfo.func = dispatch.call.bind(dispatch, serviceName, blockInfo.func);
         } else {
             const serviceObject = dispatch.services[serviceName];
-            blockInfo.func = serviceObject[blockInfo.func].bind(serviceObject);
+            const func = serviceObject[blockInfo.func];
+            if (func) {
+                blockInfo.func = func.bind(serviceObject);
+            } else {
+                throw new Error(`Could not find extension block function called ${blockInfo.func}`);
+            }
         }
         return blockInfo;
     }
