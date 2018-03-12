@@ -83,7 +83,7 @@ class CentralDispatch extends SharedDispatch {
         const provider = this.services[service];
         return provider && {
             provider,
-            isRemote: provider instanceof this.workerClass
+            isRemote: Boolean(this.workerClass && provider instanceof this.workerClass)
         };
     }
 
