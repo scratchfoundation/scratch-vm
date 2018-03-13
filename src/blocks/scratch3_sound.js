@@ -37,7 +37,6 @@ class Scratch3SoundBlocks {
      */
     static get DEFAULT_SOUND_STATE () {
         return {
-            volume: 100,
             effects: {
                 pitch: 0,
                 pan: 0
@@ -267,22 +266,19 @@ class Scratch3SoundBlocks {
     }
 
     changeVolume (args, util) {
-        const soundState = this._getSoundState(util.target);
-        const volume = Cast.toNumber(args.VOLUME) + soundState.volume;
+        const volume = Cast.toNumber(args.VOLUME) + util.target.volume;
         this._updateVolume(volume, util);
     }
 
     _updateVolume (volume, util) {
-        const soundState = this._getSoundState(util.target);
         volume = MathUtil.clamp(volume, 0, 100);
-        soundState.volume = volume;
+        util.target.volume = volume;
         if (util.target.audioPlayer === null) return;
-        util.target.audioPlayer.setVolume(soundState.volume);
+        util.target.audioPlayer.setVolume(util.target.volume);
     }
 
     getVolume (args, util) {
-        const soundState = this._getSoundState(util.target);
-        return soundState.volume;
+        return util.target.volume;
     }
 
     soundsMenu (args) {
