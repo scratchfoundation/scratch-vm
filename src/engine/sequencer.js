@@ -175,7 +175,7 @@ class Sequencer {
             thread.popStack();
         }
         // Save the current block ID to notice if we did control flow.
-        while ((currentBlockId = thread.peekStack()) !== 0) {
+        while ((currentBlockId = thread.peekStack())) {
             let isWarpMode = thread.peekStackFrame().warpMode;
             if (isWarpMode && !thread.warpTimer) {
                 // Initialize warp-mode timer if it hasn't been already.
