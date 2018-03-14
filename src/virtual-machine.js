@@ -178,10 +178,15 @@ class VirtualMachine extends EventEmitter {
 
     /**
      * Load a Scratch project from a .sb, .sb2, .sb3 or json string.
-     * @param {Buffer} input A buffe or json string representing the project to load.
+     * @param {string | object} input A json string, object, or ArrayBuffer representing the project to load.
      * @return {!Promise} Promise that resolves after targets are installed.
      */
     loadProject (input) {
+        if (typeof input === 'object' && !(input instanceof ArrayBuffer)) {
+            // validate expects a string or buffer as input
+            input = JSON.stringify(input);
+        }
+
         // Clear the current runtime
         this.clear();
 
@@ -246,6 +251,17 @@ class VirtualMachine extends EventEmitter {
      */
     toJSON () {
         return JSON.stringify(sb3.serialize(this.runtime));
+    }
+
+    // TODO do we still need this function? Keeping it here so as not to introduce
+    // a breaking change.
+    /**
+     * Load a project from a Scratch JSON representation.
+     * @param {string} json JSON string representing a project.
+     * @returns {Promise} Promise that resolves after the project has loaded
+     */
+    fromJSON (json) {
+        return this.loadProject(json);
     }
 
     /**
