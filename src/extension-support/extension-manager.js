@@ -9,11 +9,13 @@ const BlockType = require('./block-type');
 const Scratch3PenBlocks = require('../extensions/scratch3_pen');
 const Scratch3WeDo2Blocks = require('../extensions/scratch3_wedo2');
 const Scratch3MusicBlocks = require('../extensions/scratch3_music');
+const Scratch3TranslateBlocks = require('../extensions/scratch3_translate');
 const Scratch3VisionBlocks = require('../extensions/scratch3_vision');
 const builtinExtensions = {
     pen: Scratch3PenBlocks,
     wedo2: Scratch3WeDo2Blocks,
     music: Scratch3MusicBlocks,
+    translate: Scratch3TranslateBlocks,
     vision: Scratch3VisionBlocks
 };
 
@@ -248,7 +250,7 @@ class ExtensionManager {
         extensionInfo.menus = this._prepareMenuInfo(serviceName, extensionInfo.menus);
         return extensionInfo;
     }
-    
+
     /**
      * Prepare extension menus. e.g. setup binding for dynamic menu functions.
      * @param {string} serviceName - the name of the service hosting this extension block
