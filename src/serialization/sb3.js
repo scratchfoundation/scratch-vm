@@ -50,7 +50,6 @@ const serializeBlock = function (block) {
 };
 
 const serializeBlocks = function (blocks) {
-    // TODO Array or object?
     const obj = Object.create(null);
     for (const blockID in blocks) {
         obj[blockID] = serializeBlock(blocks[blockID]);
