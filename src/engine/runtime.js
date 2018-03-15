@@ -380,6 +380,22 @@ class Runtime extends EventEmitter {
     }
 
     /**
+     * Event name for block drag update.
+     * @const {string}
+     */
+    static get BLOCK_DRAG_UPDATE () {
+        return 'BLOCK_DRAG_UPDATE';
+    }
+
+    /**
+     * Event name for block drag end.
+     * @const {string}
+     */
+    static get BLOCK_DRAG_END () {
+        return 'BLOCK_DRAG_END';
+    }
+
+    /**
      * Event name for reporting that an extension was added.
      * @const {string}
      */
@@ -553,22 +569,21 @@ class Runtime extends EventEmitter {
      */
     _buildMenuForScratchBlocks (menuName, menuItems, categoryInfo) {
         const menuId = this._makeExtensionMenuId(menuName, categoryInfo.id);
-
-        /** @TODO: support dynamic menus when 'menuItems' is a method name string (see extension spec) */
-        if (typeof menuItems === 'string') {
-            throw new Error(`Dynamic extension menus are not yet supported. Menu name: ${menuName}`);
+        let options = null;
+        if (typeof menuItems === 'function') {
+            options = menuItems;
+        } else {
+            options = menuItems.map(item => {
+                switch (typeof item) {
+                case 'string':
+                    return [item, item];
+                case 'object':
+                    return [item.text, item.value];
+                default:
+                    throw new Error(`Can't interpret menu item: ${item}`);
+                }
+            });
         }
-        const options = menuItems.map(item => {
-            switch (typeof item) {
-            case 'string':
-                return [item, item];
-            case 'object':
-                return [item.text, item.value];
-            default:
-                throw new Error(`Can't interpret menu item: ${item}`);
-            }
-        });
-
         return {
             json: {
                 message0: '%1',
@@ -1385,6 +1400,22 @@ class Runtime extends EventEmitter {
         } else {
             this.emit(Runtime.SCRIPT_GLOW_OFF, {id: topBlockId});
         }
+    }
+
+    /**
+     * Emit whether blocks are being dragged over gui
+     * @param {boolean} areBlocksOverGui True if blocks are dragged out of blocks workspace, false otherwise
+     */
+    emitBlockDragUpdate (areBlocksOverGui) {
+        this.emit(Runtime.BLOCK_DRAG_UPDATE, areBlocksOverGui);
+    }
+
+    /**
+     * Emit event to indicate that the block drag has ended with the blocks outside the blocks workspace
+     * @param {Array.<object>} blocks The set of blocks dragged to the GUI
+     */
+    emitBlockEndDrag (blocks) {
+        this.emit(Runtime.BLOCK_DRAG_END, blocks);
     }
 
     /**

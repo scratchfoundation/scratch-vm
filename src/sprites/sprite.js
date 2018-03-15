@@ -36,7 +36,7 @@ class Sprite {
          * }
          * @type {Array.<!Object>}
          */
-        this.costumes = [];
+        this.costumes_ = [];
         /**
          * List of sounds for this sprite.
         */
@@ -46,6 +46,51 @@ class Sprite {
          * @type {Array.<!RenderedTarget>}
          */
         this.clones = [];
+    }
+    
+    /**
+     * Add an array of costumes, taking care to avoid duplicate names.
+     * @param {!Array<object>} costumes Array of objects representing costumes.
+     */
+    set costumes (costumes) {
+        this.costumes_ = [];
+        for (const costume of costumes) {
+            this.addCostumeAt(costume, this.costumes_.length);
+        }
+    }
+
+    /**
+     * Get full costume list
+     * @return {object[]} list of costumes. Note that mutating the returned list will not
+     *     mutate the list on the sprite. The sprite list should be mutated by calling
+     *     addCostumeAt, deleteCostumeAt, or setting costumes.
+     */
+    get costumes () {
+        return this.costumes_;
+    }
+
+    /**
+     * Add a costume at the given index, taking care to avoid duplicate names.
+     * @param {!object} costumeObject Object representing the costume.
+     * @param {!int} index Index at which to add costume
+     */
+    addCostumeAt (costumeObject, index) {
+        if (!costumeObject.name) {
+            costumeObject.name = '';
+        }
+        const usedNames = this.costumes_.map(costume => costume.name);
+        costumeObject.name = StringUtil.unusedName(costumeObject.name, usedNames);
+        this.costumes_.splice(index, 0, costumeObject);
+    }
+
+    /**
+     * Delete a costume by index.
+     * @param {number} index Costume index to be deleted
+     */
+    deleteCostumeAt (index) {
+        this.costumes_ = this.costumes_
+            .slice(0, index)
+            .concat(this.costumes_.slice(index + 1));
     }
 
     /**
@@ -84,12 +129,12 @@ class Sprite {
 
         newSprite.blocks = this.blocks.duplicate();
 
-        const allNames = this.runtime.targets.map(t => t.name);
+        const allNames = this.runtime.targets.map(t => t.sprite.name);
         newSprite.name = StringUtil.unusedName(this.name, allNames);
 
         const assetPromises = [];
 
-        newSprite.costumes = this.costumes.map(costume => {
+        newSprite.costumes = this.costumes_.map(costume => {
             const newCostume = Object.assign({}, costume);
             const costumeAsset = this.runtime.storage.get(costume.assetId);
             assetPromises.push(loadCostumeFromAsset(newCostume, costumeAsset, this.runtime));

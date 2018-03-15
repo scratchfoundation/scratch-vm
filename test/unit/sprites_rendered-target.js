@@ -117,7 +117,9 @@ test('deleteCostume', t => {
     //    Costume 3
     a.setCostume(0);
     a.deleteCostume(0);
-    t.deepEqual(a.sprite.costumes, [o2, o3]);
+    t.equals(a.sprite.costumes.length, 2);
+    t.equals(a.sprite.costumes[0].id, 2);
+    t.equals(a.sprite.costumes[1].id, 3);
     t.equals(a.currentCostume, 0);
 
     //    Costume 1          Costume 1
@@ -126,7 +128,9 @@ test('deleteCostume', t => {
     a.sprite.costumes = [o1, o2, o3];
     a.setCostume(1);
     a.deleteCostume(1);
-    t.deepEqual(a.sprite.costumes, [o1, o3]);
+    t.equals(a.sprite.costumes.length, 2);
+    t.equals(a.sprite.costumes[0].id, 1);
+    t.equals(a.sprite.costumes[1].id, 3);
     t.equals(a.currentCostume, 1);
 
     //    Costume 1          Costume 1
@@ -135,14 +139,17 @@ test('deleteCostume', t => {
     a.sprite.costumes = [o1, o2, o3];
     a.setCostume(2);
     a.deleteCostume(2);
-    t.deepEqual(a.sprite.costumes, [o1, o2]);
+    t.equals(a.sprite.costumes.length, 2);
+    t.equals(a.sprite.costumes[0].id, 1);
+    t.equals(a.sprite.costumes[1].id, 2);
     t.equals(a.currentCostume, 1);
 
     // Refuses to delete only costume
     a.sprite.costumes = [o1];
     a.setCostume(0);
     a.deleteCostume(0);
-    t.deepEqual(a.sprite.costumes, [o1]);
+    t.equals(a.sprite.costumes.length, 1);
+    t.equals(a.sprite.costumes[0].id, 1);
     t.equals(a.currentCostume, 0);
 
     //   Costume 1          Costume 1
@@ -153,7 +160,11 @@ test('deleteCostume', t => {
     a.sprite.costumes = [o1, o2, o3, o4, o5];
     a.setCostume(3);
     a.deleteCostume(1);
-    t.deepEqual(a.sprite.costumes, [o1, o3, o4, o5]);
+    t.equals(a.sprite.costumes.length, 4);
+    t.equals(a.sprite.costumes[0].id, 1);
+    t.equals(a.sprite.costumes[1].id, 3);
+    t.equals(a.sprite.costumes[2].id, 4);
+    t.equals(a.sprite.costumes[3].id, 5);
     t.equals(a.currentCostume, 2);
 
     //   Costume 1          Costume 1
@@ -164,7 +175,11 @@ test('deleteCostume', t => {
     a.sprite.costumes = [o1, o2, o3, o4, o5];
     a.setCostume(1);
     a.deleteCostume(3);
-    t.deepEqual(a.sprite.costumes, [o1, o2, o3, o5]);
+    t.equals(a.sprite.costumes.length, 4);
+    t.equals(a.sprite.costumes[0].id, 1);
+    t.equals(a.sprite.costumes[1].id, 2);
+    t.equals(a.sprite.costumes[2].id, 3);
+    t.equals(a.sprite.costumes[3].id, 5);
     t.equals(a.currentCostume, 1);
 
     //   Costume 1          Costume 1
@@ -175,7 +190,11 @@ test('deleteCostume', t => {
     a.sprite.costumes = [o1, o2, o3, o4, o5];
     a.setCostume(1);
     a.deleteCostume(4);
-    t.deepEqual(a.sprite.costumes, [o1, o2, o3, o4]);
+    t.equals(a.sprite.costumes.length, 4);
+    t.equals(a.sprite.costumes[0].id, 1);
+    t.equals(a.sprite.costumes[1].id, 2);
+    t.equals(a.sprite.costumes[2].id, 3);
+    t.equals(a.sprite.costumes[3].id, 4);
     t.equals(a.currentCostume, 1);
     t.end();
 });
@@ -333,9 +352,11 @@ test('#stopAll clears graphics effects', t => {
 test('#getCostumes returns the costumes', t => {
     const spr = new Sprite();
     const a = new RenderedTarget(spr, null);
-    const costumes = [1, 2, 3];
-    a.sprite.costumes = costumes;
-    t.equals(a.getCostumes(), costumes);
+    a.sprite.costumes = [{id: 1}, {id: 2}, {id: 3}];
+    t.equals(a.getCostumes().length, 3);
+    t.equals(a.getCostumes()[0].id, 1);
+    t.equals(a.getCostumes()[1].id, 2);
+    t.equals(a.getCostumes()[2].id, 3);
     t.end();
 });
 
@@ -352,11 +373,10 @@ test('#toJSON returns the sounds and costumes', t => {
     const spr = new Sprite();
     const a = new RenderedTarget(spr, null);
     const sounds = [1, 2, 3];
-    const costumes = ['a', 'b', 'c'];
     a.sprite.sounds = sounds;
-    a.sprite.costumes = costumes;
+    a.sprite.costumes = [{id: 1}, {id: 2}, {id: 3}];
     t.same(a.toJSON().sounds, sounds);
-    t.same(a.toJSON().costumes, costumes);
+    t.same(a.toJSON().costumes, a.sprite.costumes);
     t.end();
 });
 
@@ -372,9 +392,11 @@ test('#addSound does not duplicate names', t => {
 test('#addCostume does not duplicate names', t => {
     const spr = new Sprite();
     const a = new RenderedTarget(spr, null);
-    a.sprite.costumes = [{name: 'first'}];
     a.addCostume({name: 'first'});
-    t.deepEqual(a.sprite.costumes, [{name: 'first'}, {name: 'first2'}]);
+    a.addCostume({name: 'first'});
+    t.equal(a.sprite.costumes.length, 2);
+    t.equal(a.sprite.costumes[0].name, 'first');
+    t.equal(a.sprite.costumes[1].name, 'first2');
     t.end();
 });
 
@@ -394,8 +416,12 @@ test('#renameCostume does not duplicate names', t => {
     const a = new RenderedTarget(spr, null);
     a.sprite.costumes = [{name: 'first'}, {name: 'second'}];
     a.renameCostume(0, 'first'); // Shouldn't increment the name, noop
-    t.deepEqual(a.sprite.costumes, [{name: 'first'}, {name: 'second'}]);
+    t.equal(a.sprite.costumes.length, 2);
+    t.equal(a.sprite.costumes[0].name, 'first');
+    t.equal(a.sprite.costumes[1].name, 'second');
     a.renameCostume(1, 'first');
-    t.deepEqual(a.sprite.costumes, [{name: 'first'}, {name: 'first2'}]);
+    t.equal(a.sprite.costumes.length, 2);
+    t.equal(a.sprite.costumes[0].name, 'first');
+    t.equal(a.sprite.costumes[1].name, 'first2');
     t.end();
 });

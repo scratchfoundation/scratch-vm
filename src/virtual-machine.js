@@ -1,5 +1,6 @@
 const TextEncoder = require('text-encoding').TextEncoder;
 const EventEmitter = require('events');
+const JSZip = require('jszip');
 
 const centralDispatch = require('./dispatch/central-dispatch');
 const ExtensionManager = require('./extension-support/extension-manager');
@@ -9,10 +10,13 @@ const sb2 = require('./serialization/sb2');
 const sb3 = require('./serialization/sb3');
 const StringUtil = require('./util/string-util');
 const formatMessage = require('format-message');
+const validate = require('scratch-parser');
+
 const Variable = require('./engine/variable');
 
 const {loadCostume} = require('./import/load-costume.js');
 const {loadSound} = require('./import/load-sound.js');
+const {serializeSounds, serializeCostumes} = require('./serialization/serialize-assets');
 
 const RESERVED_NAMES = ['_mouse_', '_stage_', '_edge_', '_myself_', '_random_'];
 
@@ -73,6 +77,12 @@ class VirtualMachine extends EventEmitter {
         });
         this.runtime.on(Runtime.MONITORS_UPDATE, monitorList => {
             this.emit(Runtime.MONITORS_UPDATE, monitorList);
+        });
+        this.runtime.on(Runtime.BLOCK_DRAG_UPDATE, areBlocksOverGui => {
+            this.emit(Runtime.BLOCK_DRAG_UPDATE, areBlocksOverGui);
+        });
+        this.runtime.on(Runtime.BLOCK_DRAG_END, blocks => {
+            this.emit(Runtime.BLOCK_DRAG_END, blocks);
         });
         this.runtime.on(Runtime.EXTENSION_ADDED, blocksInfo => {
             this.emit(Runtime.EXTENSION_ADDED, blocksInfo);
@@ -177,6 +187,28 @@ class VirtualMachine extends EventEmitter {
     }
 
     /**
+     * Load a project from a Scratch 3.0 sb3 file containing a project json
+     * and all of the sound and costume files.
+     * @param {Buffer} inputBuffer A buffer representing the project to load.
+     * @return {!Promise} Promise that resolves after targets are installed.
+     */
+    loadProjectLocal (inputBuffer) {
+        // TODO need to handle sb2 files as well, and will possibly merge w/
+        // above function
+        return JSZip.loadAsync(inputBuffer)
+            .then(sb3File => {
+                sb3File.file('project.json').async('string')
+                    .then(json => {
+                        // TODO error handling for unpacking zip/not finding project.json
+                        json = JSON.parse(json); // TODO catch errors here (validation)
+                        return sb3.deserialize(json, this.runtime, sb3File)
+                            .then(({targets, extensions}) =>
+                                this.installTargets(targets, extensions, true));
+                    });
+            });
+    }
+
+    /**
      * Load a project from the Scratch web site, by ID.
      * @param {string} id - the ID of the project to download, as a string.
      */
@@ -197,8 +229,25 @@ class VirtualMachine extends EventEmitter {
      * @returns {string} Project in a Scratch 3.0 JSON representation.
      */
     saveProjectSb3 () {
-        // @todo: Handle other formats, e.g., Scratch 1.4, Scratch 2.0.
-        return this.toJSON();
+        const soundDescs = serializeSounds(this.runtime);
+        const costumeDescs = serializeCostumes(this.runtime);
+        const projectJson = this.toJSON();
+
+        const zip = new JSZip();
+
+        // Put everything in a zip file
+        // TODO compression?
+        zip.file('project.json', projectJson);
+        for (let i = 0; i < soundDescs.length; i++) {
+            const currSound = soundDescs[i];
+            zip.file(currSound.fileName, currSound.fileContent);
+        }
+        for (let i = 0; i < costumeDescs.length; i++) {
+            const currCostume = costumeDescs[i];
+            zip.file(currCostume.fileName, currCostume.fileContent);
+        }
+
+        return zip.generateAsync({type: 'blob'});
     }
 
     /**
@@ -220,12 +269,8 @@ class VirtualMachine extends EventEmitter {
 
         // Validate & parse
         if (typeof json !== 'string' && typeof json !== 'object') {
-            log.error('Failed to parse project. Invalid type supplied to fromJSON.');
-            return;
+            throw new Error('Failed to parse project. Invalid type supplied to fromJSON.');
         }
-
-        // Attempt to parse JSON if string is supplied
-        if (typeof json === 'string') json = JSON.parse(json);
 
         // Establish version, deserialize, and load into runtime
         // @todo Support Scratch 1.4
@@ -233,13 +278,27 @@ class VirtualMachine extends EventEmitter {
         //       See `scratch-parser` for a more sophisticated validation
         //       methodology that should be adapted for use here
         let deserializer;
-        if ((typeof json.meta !== 'undefined') && (typeof json.meta.semver !== 'undefined')) {
+        let validatedProject;
+        const possibleSb3 = typeof json === 'string' ? JSON.parse(json) : json;
+        if ((typeof possibleSb3.meta !== 'undefined') && (typeof possibleSb3.meta.semver !== 'undefined')) {
             deserializer = sb3;
+            validatedProject = possibleSb3;
         } else {
-            deserializer = sb2;
+            // scratch-parser expects a json string or a buffer
+            const possibleSb2 = typeof json === 'object' ? JSON.stringify(json) : json;
+            validate(possibleSb2, (err, project) => {
+                if (err) {
+                    throw new Error(
+                        `The given project could not be validated, parsing failed with error: ${JSON.stringify(err)}`);
+
+                } else {
+                    deserializer = sb2;
+                    validatedProject = project;
+                }
+            });
         }
 
-        return deserializer.deserialize(json, this.runtime)
+        return deserializer.deserialize(validatedProject, this.runtime)
             .then(({targets, extensions}) =>
                 this.installTargets(targets, extensions, true));
     }
@@ -322,8 +381,38 @@ class VirtualMachine extends EventEmitter {
         return loadCostume(md5ext, costumeObject, this.runtime).then(() => {
             this.editingTarget.addCostume(costumeObject);
             this.editingTarget.setCostume(
-                this.editingTarget.sprite.costumes.length - 1
+                this.editingTarget.getCostumes().length - 1
             );
+        });
+    }
+
+    /**
+     * Duplicate the costume at the given index. Add it at that index + 1.
+     * @param {!int} costumeIndex Index of costume to duplicate
+     * @returns {?Promise} - a promise that resolves when the costume has been decoded and added
+     */
+    duplicateCostume (costumeIndex) {
+        const originalCostume = this.editingTarget.getCostumes()[costumeIndex];
+        const clone = Object.assign({}, originalCostume);
+        const md5ext = `${clone.assetId}.${clone.dataFormat}`;
+        return loadCostume(md5ext, clone, this.runtime).then(() => {
+            this.editingTarget.addCostume(clone, costumeIndex + 1);
+            this.editingTarget.setCostume(costumeIndex + 1);
+            this.emitTargetsUpdate();
+        });
+    }
+
+    /**
+     * Duplicate the sound at the given index. Add it at that index + 1.
+     * @param {!int} soundIndex Index of sound to duplicate
+     * @returns {?Promise} - a promise that resolves when the sound has been decoded and added
+     */
+    duplicateSound (soundIndex) {
+        const originalSound = this.editingTarget.getSounds()[soundIndex];
+        const clone = Object.assign({}, originalSound);
+        return loadSound(clone, this.runtime).then(() => {
+            this.editingTarget.addSound(clone, soundIndex + 1);
+            this.emitTargetsUpdate();
         });
     }
 
@@ -384,12 +473,34 @@ class VirtualMachine extends EventEmitter {
      * Update a sound buffer.
      * @param {int} soundIndex - the index of the sound to be updated.
      * @param {AudioBuffer} newBuffer - new audio buffer for the audio engine.
+     * @param {ArrayBuffer} soundEncoding - the new (wav) encoded sound to be stored
      */
-    updateSoundBuffer (soundIndex, newBuffer) {
-        const id = this.editingTarget.sprite.sounds[soundIndex].soundId;
+    updateSoundBuffer (soundIndex, newBuffer, soundEncoding) {
+        const sound = this.editingTarget.sprite.sounds[soundIndex];
+        const id = sound ? sound.soundId : null;
         if (id && this.runtime && this.runtime.audioEngine) {
             this.runtime.audioEngine.updateSoundBuffer(id, newBuffer);
         }
+        // Update sound in runtime
+        if (soundEncoding) {
+            // Now that we updated the sound, the format should also be updated
+            // so that the sound can eventually be decoded the right way.
+            // Sounds that were formerly 'adpcm', but were updated in sound editor
+            // will not get decoded by the audio engine correctly unless the format
+            // is updated as below.
+            sound.format = '';
+            const storage = this.runtime.storage;
+            sound.assetId = storage.builtinHelper.cache(
+                storage.AssetType.Sound,
+                storage.DataFormat.WAV,
+                soundEncoding
+            );
+            sound.md5 = `${sound.assetId}.${sound.dataFormat}`;
+        }
+        // If soundEncoding is null, it's because gui had a problem
+        // encoding the updated sound. We don't want to store anything in this
+        // case, and gui should have logged an error.
+
         this.emitTargetsUpdate();
     }
 
@@ -407,7 +518,7 @@ class VirtualMachine extends EventEmitter {
      * @return {string} the costume's SVG string, or null if it's not an SVG costume.
      */
     getCostumeSvg (costumeIndex) {
-        const id = this.editingTarget.sprite.costumes[costumeIndex].assetId;
+        const id = this.editingTarget.getCostumes()[costumeIndex].assetId;
         if (id && this.runtime && this.runtime.storage &&
                 this.runtime.storage.get(id).dataFormat === 'svg') {
             return this.runtime.storage.get(id).decodeText();
@@ -423,7 +534,7 @@ class VirtualMachine extends EventEmitter {
      * @param {number} rotationCenterY y of point about which the costume rotates, relative to its upper left corner
      */
     updateSvg (costumeIndex, svg, rotationCenterX, rotationCenterY) {
-        const costume = this.editingTarget.sprite.costumes[costumeIndex];
+        const costume = this.editingTarget.getCostumes()[costumeIndex];
         if (costume && this.runtime && this.runtime.renderer) {
             costume.rotationCenterX = rotationCenterX;
             costume.rotationCenterY = rotationCenterY;
@@ -435,6 +546,10 @@ class VirtualMachine extends EventEmitter {
             storage.DataFormat.SVG,
             (new TextEncoder()).encode(svg)
         );
+        // If we're in here, we've edited an svg in the vector editor,
+        // so the dataFormat should be 'svg'
+        costume.dataFormat = storage.DataFormat.SVG;
+        costume.md5 = `${costume.assetId}.${costume.dataFormat}`;
         this.emitTargetsUpdate();
     }
 
@@ -452,7 +567,7 @@ class VirtualMachine extends EventEmitter {
         return loadCostume(md5ext, backdropObject, this.runtime).then(() => {
             const stage = this.runtime.getTargetForStage();
             stage.addCostume(backdropObject);
-            stage.setCostume(stage.sprite.costumes.length - 1);
+            stage.setCostume(stage.getCostumes().length - 1);
         });
     }
 
@@ -649,6 +764,19 @@ class VirtualMachine extends EventEmitter {
             this.emitTargetsUpdate();
             this.emitWorkspaceUpdate();
             this.runtime.setEditingTarget(target);
+        }
+    }
+
+    /**
+     * Called when blocks are dragged from one sprite to another. Adds the blocks to the
+     * workspace of the given target.
+     * @param {!Array<object>} blocks Blocks to add.
+     * @param {!string} targetId Id of target to add blocks to.
+     */
+    shareBlocksToTarget (blocks, targetId) {
+        const target = this.runtime.getTargetById(targetId);
+        for (let i = 0; i < blocks.length; i++) {
+            target.blocks.createBlock(blocks[i]);
         }
     }
 
