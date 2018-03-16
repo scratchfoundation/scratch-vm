@@ -33,7 +33,7 @@ const serializeBlock = function (block) {
     obj.parent = block.parent;
     obj.inputs = block.inputs;
     obj.fields = block.fields;
-    obj.topLevel = block.topLevel;
+    obj.topLevel = block.topLevel ? block.topLevel : false;
     obj.shadow = block.shadow;
     if (block.topLevel) {
         if (block.x) {
