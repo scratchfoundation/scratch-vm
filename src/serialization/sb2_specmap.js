@@ -861,8 +861,9 @@ const specMap = {
         opcode: 'sensing_keypressed',
         argMap: [
             {
-                type: 'field',
-                fieldName: 'KEY_OPTION'
+                type: 'input',
+                inputOp: 'sensing_keyoptions',
+                inputName: 'KEY_OPTION'
             }
         ]
     },
