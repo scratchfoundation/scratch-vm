@@ -190,7 +190,18 @@ class VirtualMachine extends EventEmitter {
         // Clear the current runtime
         this.clear();
 
-        return validate(input)
+        const validationPromise = new Promise((resolve, reject) => {
+            validate(input, (error, res) => {
+                if (error) {
+                    reject(error);
+                }
+                if (res) {
+                    resolve(res);
+                }
+            });
+        });
+
+        return validationPromise
             .then(validatedInput => this.deserializeProject(validatedInput[0], validatedInput[1]))
             .catch(error => {
                 // Intentionally rejecting here (want errors to be handled by caller)
