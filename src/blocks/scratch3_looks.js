@@ -153,13 +153,16 @@ class Scratch3LooksBlocks {
      * @private
      */
     _renderBubble (target) {
+        if (!this.runtime.renderer) return;
+
         const bubbleState = this._getBubbleState(target);
         const {drawableVisible, type, text, onSpriteRight} = bubbleState;
 
         // Remove the bubble if target is not visible, or text is being set to blank
         // without being initialized. See comment below about blank text optimization.
         if (!target.visible || (text === '' && !bubbleState.skinId)) {
-            return this._onTargetWillExit(target);
+            this._onTargetWillExit(target);
+            return;
         }
 
         if (bubbleState.skinId) {
