@@ -122,6 +122,12 @@ class RenderedTarget extends Target {
          * @type {number}
          */
         this.tempo = 60;
+
+        /**
+         * Loudness for sound playback for this target, as a percentage.
+         * @type {number}
+         */
+        this.volume = 100;
     }
 
     /**
