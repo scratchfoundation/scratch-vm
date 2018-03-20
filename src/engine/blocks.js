@@ -594,6 +594,21 @@ class Blocks {
     }
 
     /**
+     * Keep blocks up to date after they are shared between targets.
+     * @param {boolean} isStage If the new target is a stage.
+     */
+    updateTargetSpecificBlocks (isStage) {
+        const blocks = this._blocks;
+        for (const blockId in blocks) {
+            if (isStage && blocks[blockId].opcode === 'event_whenthisspriteclicked') {
+                blocks[blockId].opcode = 'event_whenstageclicked';
+            } else if (!isStage && blocks[blockId].opcode === 'event_whenstageclicked') {
+                blocks[blockId].opcode = 'event_whenthisspriteclicked';
+            }
+        }
+    }
+
+    /**
      * Update blocks after a sound, costume, or backdrop gets renamed.
      * Any block referring to the old name of the asset should get updated
      * to refer to the new name.

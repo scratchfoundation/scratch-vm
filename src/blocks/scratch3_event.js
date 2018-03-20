@@ -32,6 +32,9 @@ class Scratch3EventBlocks {
             event_whenthisspriteclicked: {
                 restartExistingThreads: true
             },
+            event_whenstageclicked: {
+                restartExistingThreads: true
+            },
             event_whenbackdropswitchesto: {
                 restartExistingThreads: true
             },

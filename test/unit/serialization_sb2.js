@@ -68,3 +68,26 @@ test('data scoping', t => {
         t.end();
     });
 });
+
+test('whenclicked blocks imported separately', t => {
+    // This sb2 fixture has a single "whenClicked" block on both sprite and stage
+    const uri = path.resolve(__dirname, '../fixtures/when-clicked.sb2');
+    const file = extract(uri);
+    const json = JSON.parse(file);
+
+    // Create runtime instance & load SB2 into it
+    const rt = new Runtime();
+    sb2.deserialize(json, rt).then(({targets}) => {
+        const stage = targets[0];
+        t.equal(stage.isStage, true); // Make sure we have the correct target
+        const stageOpcode = stage.blocks.getBlock(stage.blocks.getScripts()[0]).opcode;
+        t.equal(stageOpcode, 'event_whenstageclicked');
+
+        const sprite = targets[1];
+        t.equal(sprite.isStage, false); // Make sure we have the correct target
+        const spriteOpcode = sprite.blocks.getBlock(sprite.blocks.getScripts()[0]).opcode;
+        t.equal(spriteOpcode, 'event_whenthisspriteclicked');
+
+        t.end();
+    });
+});
