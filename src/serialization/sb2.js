@@ -14,7 +14,7 @@ const uid = require('../util/uid');
 const specMap = require('./sb2_specmap');
 const Variable = require('../engine/variable');
 
-const {loadCostume} = require('../import/load-costume.js');
+const {loadCostume, loadOldTextCostume} = require('../import/load-costume.js');
 const {loadSound} = require('../import/load-sound.js');
 
 /**
@@ -226,7 +226,14 @@ const parseScratchObject = function (object, runtime, extensions, topLevel) {
                 rotationCenterY: costumeSource.rotationCenterY,
                 skinId: null
             };
-            costumePromises.push(loadCostume(costumeSource.baseLayerMD5, costume, runtime));
+
+            if ('textLayerMD5' in costumeSource) {
+                costumePromises.push(
+                    loadOldTextCostume(costumeSource.baseLayerMD5, costumeSource.textLayerMD5, costume, runtime)
+                );
+            } else {
+                costumePromises.push(loadCostume(costumeSource.baseLayerMD5, costume, runtime));
+            }
         }
     }
     // Sounds from JSON
