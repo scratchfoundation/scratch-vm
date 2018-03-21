@@ -62,6 +62,12 @@ const serializeCostume = function (costume) {
     obj.assetId = costume.assetId;
     obj.name = costume.name;
     obj.bitmapResolution = costume.bitmapResolution;
+    // serialize this property with the name 'md5ext' because that's
+    // what it's actually referring to. TODO runtime objects need to be
+    // updated to actually refer to this as 'md5ext' instead of 'md5'
+    // but that change should be made carefully since it is very
+    // pervasive
+    obj.md5ext = costume.md5;
     obj.dataFormat = costume.dataFormat;
     obj.rotationCenterX = costume.rotationCenterX;
     obj.rotationCenterY = costume.rotationCenterY;
@@ -76,8 +82,12 @@ const serializeSound = function (sound) {
     obj.format = sound.format;
     obj.rate = sound.rate;
     obj.sampleCount = sound.sampleCount;
-    // TODO eventually want to get rid of this
-    obj.md5 = sound.md5;
+    // serialize this property with the name 'md5ext' because that's
+    // what it's actually referring to. TODO runtime objects need to be
+    // updated to actually refer to this as 'md5ext' instead of 'md5'
+    // but that change should be made carefully since it is very
+    // pervasive
+    obj.md5ext = sound.md5;
     // TODO do we need this soundID
     // (not to be confused with soundId which is a uid for sounds)
     // obj.soundID = sound.soundID;
@@ -176,6 +186,7 @@ const parseScratchObject = function (object, runtime, extensions, zip) {
     const costumePromises = (object.costumes || []).map(costumeSource => {
         // @todo: Make sure all the relevant metadata is being pulled out.
         const costume = {
+            assetId: costumeSource.assetId,
             skinId: null,
             name: costumeSource.name,
             bitmapResolution: costumeSource.bitmapResolution,
@@ -186,24 +197,41 @@ const parseScratchObject = function (object, runtime, extensions, zip) {
             costumeSource.dataFormat ||
             (costumeSource.assetType && costumeSource.assetType.runtimeFormat) || // older format
             'png'; // if all else fails, guess that it might be a PNG
-        const costumeMd5 = `${costumeSource.assetId}.${dataFormat}`;
-        costume.md5 = costumeMd5;
-        return deserializeCostume(costumeSource, runtime, zip)
-            .then(() => loadCostume(costumeMd5, costume, runtime));
+        const costumeMd5Ext = costumeSource.hasOwnProperty('md5ext') ?
+            costumeSource.md5ext : `${costumeSource.assetId}.${dataFormat}`;
+        costume.md5 = costumeMd5Ext;
+        costume.dataFormat = dataFormat;
+        // deserializeCostume should be called on the costume object we're
+        // creating above instead of the source costume object, because this way
+        // we're always loading the 'sb3' representation of the costume
+        // any translation that needs to happen will happen in the process
+        // of building up the costume object into an sb3 format
+        return deserializeCostume(costume, runtime, zip)
+            .then(() => loadCostume(costumeMd5Ext, costume, runtime));
         // Only attempt to load the costume after the deserialization
         // process has been completed
     });
     // Sounds from JSON
     const soundPromises = (object.sounds || []).map(soundSource => {
         const sound = {
+            assetId: soundSource.assetId,
             format: soundSource.format,
             rate: soundSource.rate,
             sampleCount: soundSource.sampleCount,
             name: soundSource.name,
-            md5: soundSource.md5,
+            // TODO we eventually want this property to be called md5ext,
+            // but there are many things relying on this particular name at the
+            // moment, so this translation is very important
+            md5: soundSource.md5ext,
+            dataFormat: soundSource.dataFormat,
             data: null
         };
-        return deserializeSound(soundSource, runtime, zip)
+        // deserializeSound should be called on the sound object we're
+        // creating above instead of the source sound object, because this way
+        // we're always loading the 'sb3' representation of the costume
+        // any translation that needs to happen will happen in the process
+        // of building up the costume object into an sb3 format
+        return deserializeSound(sound, runtime, zip)
             .then(() => loadSound(sound, runtime));
         // Only attempt to load the sound after the deserialization
         // process has been completed.
