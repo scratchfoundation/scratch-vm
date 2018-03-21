@@ -187,9 +187,6 @@ class VirtualMachine extends EventEmitter {
             input = JSON.stringify(input);
         }
 
-        // Clear the current runtime
-        this.clear();
-
         const validationPromise = new Promise((resolve, reject) => {
             validate(input, (error, res) => {
                 if (error) {
@@ -282,6 +279,9 @@ class VirtualMachine extends EventEmitter {
      * @returns {Promise} Promise that resolves after the project has loaded
      */
     deserializeProject (projectJSON, zip) {
+        // Clear the current runtime
+        this.clear();
+
         const runtime = this.runtime;
         const deserializePromise = function () {
             const projectVersion = projectJSON.projectVersion;
