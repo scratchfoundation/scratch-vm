@@ -52,6 +52,7 @@ const serializeBlock = function (block) {
 const serializeBlocks = function (blocks) {
     const obj = Object.create(null);
     for (const blockID in blocks) {
+        if (!blocks.hasOwnProperty(blockID)) continue;
         obj[blockID] = serializeBlock(blocks[blockID]);
     }
     return obj;
@@ -88,9 +89,6 @@ const serializeSound = function (sound) {
     // but that change should be made carefully since it is very
     // pervasive
     obj.md5ext = sound.md5;
-    // TODO do we need this soundID
-    // (not to be confused with soundId which is a uid for sounds)
-    // obj.soundID = sound.soundID;
     return obj;
 };
 
@@ -127,7 +125,6 @@ const serialize = function (runtime) {
     const flattenedOriginalTargets = JSON.parse(JSON.stringify(
         runtime.targets.filter(target => target.isOriginal)));
     obj.targets = flattenedOriginalTargets.map(t => serializeTarget(t, runtime));
-    // runtime.targets.filter(target => target.isOriginal);
 
     // TODO Serialize monitors
 
@@ -171,6 +168,7 @@ const parseScratchObject = function (object, runtime, extensions, zip) {
     }
     if (object.hasOwnProperty('blocks')) {
         for (const blockId in object.blocks) {
+            if (!object.blocks.hasOwnProperty(blockId)) continue;
             const blockJSON = object.blocks[blockId];
             blocks.createBlock(blockJSON);
 
