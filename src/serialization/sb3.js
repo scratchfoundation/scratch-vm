@@ -197,10 +197,8 @@ const parseScratchObject = function (object, runtime, extensions, zip) {
     const soundPromises = (object.sounds || []).map(soundSource => {
         const sound = {
             format: soundSource.format,
-            // fileUrl: soundSource.fileUrl,
             rate: soundSource.rate,
             sampleCount: soundSource.sampleCount,
-            // soundID: soundSource.soundID,
             name: soundSource.name,
             md5: soundSource.md5,
             data: null
