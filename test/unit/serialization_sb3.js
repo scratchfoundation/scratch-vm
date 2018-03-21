@@ -5,7 +5,7 @@ const demoSb3 = require('../fixtures/demo.json');
 
 test('serialize', t => {
     const vm = new VirtualMachine();
-    vm.fromJSON(JSON.stringify(demoSb3))
+    vm.loadProject(JSON.stringify(demoSb3))
         .then(() => {
             const result = sb3.serialize(vm.runtime);
             // @todo Analyze
