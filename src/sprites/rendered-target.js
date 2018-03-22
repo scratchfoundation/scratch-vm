@@ -152,6 +152,13 @@ class RenderedTarget extends Target {
         this.audioPlayer = null;
         if (this.runtime && this.runtime.audioEngine) {
             this.audioPlayer = this.runtime.audioEngine.createPlayer();
+            // If this is a clone, it gets a reference to its parent's activeSoundPlayers object.
+            if (!this.isOriginal) {
+                const parent = this.sprite.clones[0];
+                if (parent && parent.audioPlayer) {
+                    this.audioPlayer.activeSoundPlayers = parent.audioPlayer.activeSoundPlayers;
+                }
+            }
         }
     }
 
