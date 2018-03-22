@@ -246,7 +246,7 @@ class ExtensionManager {
         extensionInfo.menus = this._prepareMenuInfo(serviceName, extensionInfo.menus);
         return extensionInfo;
     }
-    
+
     /**
      * Prepare extension menus. e.g. setup binding for dynamic menu functions.
      * @param {string} serviceName - the name of the service hosting this extension block
@@ -264,11 +264,34 @@ class ExtensionManager {
             // we can use it later when converting the menu for Scratch Blocks.
             if (typeof menus[item] === 'string') {
                 const serviceObject = dispatch.services[serviceName];
-                // TODO: Fix this to use dispatch.call when extensions are running in workers.
-                menus[item] = serviceObject[menus[item]].bind(serviceObject);
+                const menuName = menus[item];
+                menus[item] = this._getExtensionMenuItems.bind(this, serviceObject, menuName);
             }
         }
         return menus;
+    }
+
+    /**
+     * Fetch the items for a particular extension menu, providing the target ID for context.
+     * @param {object} extensionObject - the extension object providing the menu.
+     * @param {string} menuName - the name of the menu function to call.
+     * @returns {Array} menu items ready for scratch-blocks.
+     * @private
+     */
+    _getExtensionMenuItems (extensionObject, menuName) {
+        // Fetch the items appropriate for the target currently being edited. This assumes that menus only
+        // collect items when opened by the user while editing a particular target.
+        const editingTarget = this.runtime.getEditingTarget();
+        const editingTargetID = editingTarget ? editingTarget.id : null;
+
+        // TODO: Fix this to use dispatch.call when extensions are running in workers.
+        const menuFunc = extensionObject[menuName];
+        const menuItems = menuFunc.call(extensionObject, editingTargetID);
+
+        if (!menuItems || menuItems.length < 1) {
+            throw new Error(`Extension menu returned no items: ${menuName}`);
+        }
+        return menuItems;
     }
 
     /**
@@ -297,7 +320,12 @@ class ExtensionManager {
             blockInfo.func = dispatch.call.bind(dispatch, serviceName, blockInfo.func);
         } else {
             const serviceObject = dispatch.services[serviceName];
-            blockInfo.func = serviceObject[blockInfo.func].bind(serviceObject);
+            const func = serviceObject[blockInfo.func];
+            if (func) {
+                blockInfo.func = func.bind(serviceObject);
+            } else {
+                throw new Error(`Could not find extension block function called ${blockInfo.func}`);
+            }
         }
         return blockInfo;
     }
