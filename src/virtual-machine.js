@@ -182,8 +182,13 @@ class VirtualMachine extends EventEmitter {
      * @return {!Promise} Promise that resolves after targets are installed.
      */
     loadProject (input) {
-        if (typeof input === 'object' && !(input instanceof ArrayBuffer)) {
+        if (typeof input === 'object' && !ArrayBuffer.isView(input)) {
+            // If the input is an object and not any ArrayBuffer view
+            // (this includes all typed arrays and DataViews)
+            // turn the object into a JSON string, because we suspect
+            // this is a project.json as an object
             // validate expects a string or buffer as input
+            // TODO not sure if we need to check that it also isn't a data view
             input = JSON.stringify(input);
         }
 
