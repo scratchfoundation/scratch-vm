@@ -66,92 +66,14 @@ class Scratch3ControlBlocks {
         const variable = util.target.lookupOrCreateVariable(
             args.VARIABLE.id, args.VARIABLE.name);
 
-        // The for-each block has two different but similar modes of operation,
-        // based on the value to be iterated:
-        //
-        // 1. If the value is a string, keep INTERNAL track of the index.
-        //    The value assigned to the Scratch variable will be the letter at
-        //    the current index, which will increase by 1 each tick. For example:
-        //
-        //    for each (x) in [abcdef]:
-        //      say (x)
-        //
-        //    ..is equivalent to:
-        //
-        //    set (i_) to 0
-        //    repeat until (i_) > length of [abcdef]:
-        //      change (i_) by 1
-        //      set (x) to letter (i_) of [abcdef]
-        //      say (x)
-        //
-        //    In this example, i_ is effectively invisible to the Scratch code:
-        //    There is no way to view or change it. Also, changing (x) has no
-        //    effect on the next iteration.
-        //
-        // 2. If the value is a number, DO NOT keep internal track of the index.
-        //    When for-each is passed a number, it iterates over all the numbers
-        //    from 1 to that number (inclusive). For example:
-        //
-        //    for each (x) in [10]:
-        //      say (x)
-        //
-        //    ..is equivalent to:
-        //
-        //    set (x) to 0
-        //    repeat until (x) > 10:
-        //      change (x) by 1
-        //      say (x)
-        //
-        //    The critical difference is that (x) is just a normal Scratch
-        //    variable. Changing it DOES have an effect on the next iteration.
-        //    This makes it possible to "skip" items, or to go back, et cetera.
-        //    For example:
-        //
-        //    for each (x) in [10]:
-        //      if (x) mod 4 = 0:
-        //        say [Mod 4 - Skip the next.]
-        //        change (x) by 1
-        //      else:
-        //        say x
-        //
-        //    ..would say 1, 2, 3, "Mod 4", 6, 7, "Mod 4", 10.
-        //
-        // The mode of operation above is decided at the beginning of the for-
-        // each loop, and changing the value that is being iterated *while* it
-        // is being iterated does not change the mode.
-
-        if (typeof util.stackFrame.iterationMode === 'undefined') {
-            const value = args.VALUE;
-            let mode;
-            if (typeof value === 'string' && !isNaN(Number(value))) {
-                mode = 'number';
-            } else if (typeof value === 'number') {
-                mode = 'number';
-            } else {
-                mode = 'string';
-            }
-
-            if (mode === 'number') {
-                variable.value = 0;
-            } else {
-                util.stackFrame.stringIndex = 0;
-            }
-
-            util.stackFrame.iterationMode = mode;
+        if (typeof util.stackFrame.index === 'undefined') {
+            util.stackFrame.index = 0;
         }
 
-        if (util.stackFrame.iterationMode === 'string') {
-            if (util.stackFrame.stringIndex < args.VALUE.length) {
-                variable.value = args.VALUE[util.stackFrame.stringIndex++];
-                util.startBranch(1, true);
-            }
-        }
-
-        if (util.stackFrame.iterationMode === 'number') {
-            if (variable.value < Number(args.VALUE)) {
-                variable.value++;
-                util.startBranch(1, true);
-            }
+        if (util.stackFrame.index < Number(args.VALUE)) {
+            util.stackFrame.index++;
+            variable.value = util.stackFrame.index;
+            util.startBranch(1, true);
         }
     }
 
