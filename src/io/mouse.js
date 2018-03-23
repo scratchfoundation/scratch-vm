@@ -31,7 +31,14 @@ class Mouse {
                     // only activate click hat if the mouse up event wasn't
                     // the result of a drag ending
                     if (!wasDragged) {
+                        // Activate both "this sprite clicked" and "stage clicked"
+                        // They were separated into two opcodes for labeling,
+                        // but should act the same way.
+                        // Intentionally not checking isStage to make it work when sharing blocks.
+                        // @todo the blocks should be converted from one to another when shared
                         this.runtime.startHats('event_whenthisspriteclicked',
+                            null, target);
+                        this.runtime.startHats('event_whenstageclicked',
                             null, target);
                     }
                     return;

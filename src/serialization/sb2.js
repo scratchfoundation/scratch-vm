@@ -275,6 +275,9 @@ const parseScratchObject = function (object, runtime, extensions, topLevel) {
         parseScripts(object.scripts, blocks, addBroadcastMsg, getVariableId, extensions);
     }
 
+    // Update stage specific blocks (e.g. sprite clicked <=> stage clicked)
+    blocks.updateTargetSpecificBlocks(topLevel); // topLevel = isStage
+
     if (object.hasOwnProperty('lists')) {
         for (let k = 0; k < object.lists.length; k++) {
             const list = object.lists[k];

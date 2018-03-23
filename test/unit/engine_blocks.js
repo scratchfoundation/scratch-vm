@@ -746,3 +746,33 @@ test('updateAssetName doesn\'t update name if name isn\'t being used', t => {
     t.equals(b.getBlock('id1').fields.BACKDROP.value, 'foo');
     t.end();
 });
+
+test('updateTargetSpecificBlocks changes sprite clicked hat to stage clicked for stage', t => {
+    const b = new Blocks();
+    b.createBlock({
+        id: 'originallySpriteClicked',
+        opcode: 'event_whenthisspriteclicked'
+    });
+    b.createBlock({
+        id: 'originallyStageClicked',
+        opcode: 'event_whenstageclicked'
+    });
+
+    // originallySpriteClicked does not update when on a non-stage target
+    b.updateTargetSpecificBlocks(false /* isStage */);
+    t.equals(b.getBlock('originallySpriteClicked').opcode, 'event_whenthisspriteclicked');
+
+    // originallySpriteClicked does update when on a stage target
+    b.updateTargetSpecificBlocks(true /* isStage */);
+    t.equals(b.getBlock('originallySpriteClicked').opcode, 'event_whenstageclicked');
+
+    // originallyStageClicked does not update when on a stage target
+    b.updateTargetSpecificBlocks(true /* isStage */);
+    t.equals(b.getBlock('originallyStageClicked').opcode, 'event_whenstageclicked');
+
+    // originallyStageClicked does update when on a non-stage target
+    b.updateTargetSpecificBlocks(false/* isStage */);
+    t.equals(b.getBlock('originallyStageClicked').opcode, 'event_whenthisspriteclicked');
+
+    t.end();
+});
