@@ -25,6 +25,95 @@ const {deserializeCostume, deserializeSound} = require('./deserialize-assets.js'
  * @property {Map.<string, string>} extensionURLs - map of ID => URL from project metadata. May not match extensionIDs.
  */
 
+const serializeBlock = function (block) {
+    const obj = Object.create(null);
+    obj.id = block.id;
+    obj.opcode = block.opcode;
+    obj.next = block.next;
+    obj.parent = block.parent;
+    obj.inputs = block.inputs;
+    obj.fields = block.fields;
+    obj.topLevel = block.topLevel ? block.topLevel : false;
+    obj.shadow = block.shadow;
+    if (block.topLevel) {
+        if (block.x) {
+            obj.x = Math.round(block.x);
+        }
+        if (block.y) {
+            obj.y = Math.round(block.y);
+        }
+    }
+    if (block.mutation) {
+        obj.mutation = block.mutation;
+    }
+    return obj;
+};
+
+const serializeBlocks = function (blocks) {
+    const obj = Object.create(null);
+    for (const blockID in blocks) {
+        if (!blocks.hasOwnProperty(blockID)) continue;
+        obj[blockID] = serializeBlock(blocks[blockID]);
+    }
+    return obj;
+};
+
+const serializeCostume = function (costume) {
+    const obj = Object.create(null);
+    obj.assetId = costume.assetId;
+    obj.name = costume.name;
+    obj.bitmapResolution = costume.bitmapResolution;
+    // serialize this property with the name 'md5ext' because that's
+    // what it's actually referring to. TODO runtime objects need to be
+    // updated to actually refer to this as 'md5ext' instead of 'md5'
+    // but that change should be made carefully since it is very
+    // pervasive
+    obj.md5ext = costume.md5;
+    obj.dataFormat = costume.dataFormat;
+    obj.rotationCenterX = costume.rotationCenterX;
+    obj.rotationCenterY = costume.rotationCenterY;
+    return obj;
+};
+
+const serializeSound = function (sound) {
+    const obj = Object.create(null);
+    obj.assetId = sound.assetId;
+    obj.name = sound.name;
+    obj.dataFormat = sound.dataFormat;
+    obj.format = sound.format;
+    obj.rate = sound.rate;
+    obj.sampleCount = sound.sampleCount;
+    // serialize this property with the name 'md5ext' because that's
+    // what it's actually referring to. TODO runtime objects need to be
+    // updated to actually refer to this as 'md5ext' instead of 'md5'
+    // but that change should be made carefully since it is very
+    // pervasive
+    obj.md5ext = sound.md5;
+    return obj;
+};
+
+const serializeTarget = function (target) {
+    const obj = Object.create(null);
+    obj.isStage = target.isStage;
+    obj.name = target.name;
+    obj.variables = target.variables; // This means that uids for variables will persist across saves/loads
+    obj.blocks = serializeBlocks(target.blocks);
+    obj.currentCostume = target.currentCostume;
+    obj.costumes = target.costumes.map(serializeCostume);
+    obj.sounds = target.sounds.map(serializeSound);
+    if (!obj.isStage) {
+        // Stage does not need the following properties
+        obj.visible = target.visible;
+        obj.x = target.x;
+        obj.y = target.y;
+        obj.size = target.size;
+        obj.direction = target.direction;
+        obj.draggable = target.draggable;
+        obj.rotationStyle = target.rotationStyle;
+    }
+    return obj;
+};
+
 /**
  * Serializes the specified VM runtime.
  * @param  {!Runtime} runtime VM runtime instance to be serialized.
@@ -33,7 +122,11 @@ const {deserializeCostume, deserializeSound} = require('./deserialize-assets.js'
 const serialize = function (runtime) {
     // Fetch targets
     const obj = Object.create(null);
-    obj.targets = runtime.targets.filter(target => target.isOriginal);
+    const flattenedOriginalTargets = JSON.parse(JSON.stringify(
+        runtime.targets.filter(target => target.isOriginal)));
+    obj.targets = flattenedOriginalTargets.map(t => serializeTarget(t, runtime));
+
+    // TODO Serialize monitors
 
     // Assemble metadata
     const meta = Object.create(null);
@@ -75,6 +168,7 @@ const parseScratchObject = function (object, runtime, extensions, zip) {
     }
     if (object.hasOwnProperty('blocks')) {
         for (const blockId in object.blocks) {
+            if (!object.blocks.hasOwnProperty(blockId)) continue;
             const blockJSON = object.blocks[blockId];
             blocks.createBlock(blockJSON);
 
@@ -90,6 +184,7 @@ const parseScratchObject = function (object, runtime, extensions, zip) {
     const costumePromises = (object.costumes || []).map(costumeSource => {
         // @todo: Make sure all the relevant metadata is being pulled out.
         const costume = {
+            assetId: costumeSource.assetId,
             skinId: null,
             name: costumeSource.name,
             bitmapResolution: costumeSource.bitmapResolution,
@@ -100,26 +195,41 @@ const parseScratchObject = function (object, runtime, extensions, zip) {
             costumeSource.dataFormat ||
             (costumeSource.assetType && costumeSource.assetType.runtimeFormat) || // older format
             'png'; // if all else fails, guess that it might be a PNG
-        const costumeMd5 = `${costumeSource.assetId}.${dataFormat}`;
-        costume.md5 = costumeMd5;
-        return deserializeCostume(costumeSource, runtime, zip)
-            .then(() => loadCostume(costumeMd5, costume, runtime));
+        const costumeMd5Ext = costumeSource.hasOwnProperty('md5ext') ?
+            costumeSource.md5ext : `${costumeSource.assetId}.${dataFormat}`;
+        costume.md5 = costumeMd5Ext;
+        costume.dataFormat = dataFormat;
+        // deserializeCostume should be called on the costume object we're
+        // creating above instead of the source costume object, because this way
+        // we're always loading the 'sb3' representation of the costume
+        // any translation that needs to happen will happen in the process
+        // of building up the costume object into an sb3 format
+        return deserializeCostume(costume, runtime, zip)
+            .then(() => loadCostume(costumeMd5Ext, costume, runtime));
         // Only attempt to load the costume after the deserialization
         // process has been completed
     });
     // Sounds from JSON
     const soundPromises = (object.sounds || []).map(soundSource => {
         const sound = {
+            assetId: soundSource.assetId,
             format: soundSource.format,
-            // fileUrl: soundSource.fileUrl,
             rate: soundSource.rate,
             sampleCount: soundSource.sampleCount,
-            soundID: soundSource.soundID,
             name: soundSource.name,
-            md5: soundSource.md5,
+            // TODO we eventually want this property to be called md5ext,
+            // but there are many things relying on this particular name at the
+            // moment, so this translation is very important
+            md5: soundSource.md5ext,
+            dataFormat: soundSource.dataFormat,
             data: null
         };
-        return deserializeSound(soundSource, runtime, zip)
+        // deserializeSound should be called on the sound object we're
+        // creating above instead of the source sound object, because this way
+        // we're always loading the 'sb3' representation of the costume
+        // any translation that needs to happen will happen in the process
+        // of building up the costume object into an sb3 format
+        return deserializeSound(sound, runtime, zip)
             .then(() => loadSound(sound, runtime));
         // Only attempt to load the sound after the deserialization
         // process has been completed.

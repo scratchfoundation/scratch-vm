@@ -224,9 +224,16 @@ const parseScratchObject = function (object, runtime, extensions, topLevel) {
                 bitmapResolution: costumeSource.bitmapResolution || 1,
                 rotationCenterX: costumeSource.rotationCenterX,
                 rotationCenterY: costumeSource.rotationCenterY,
+                // TODO we eventually want this next property to be called
+                // md5ext to reflect what it actually contains, however this
+                // will be a very extensive change across many repositories
+                // and should be done carefully and altogether
+                md5: costumeSource.baseLayerMD5,
                 skinId: null
             };
-            costumePromises.push(loadCostume(costumeSource.baseLayerMD5, costume, runtime));
+            // TODO need to add deserializeCostume here so that assets from
+            // actual .sb2s get loaded in
+            costumePromises.push(loadCostume(costume.md5, costume, runtime));
         }
     }
     // Sounds from JSON
@@ -240,9 +247,17 @@ const parseScratchObject = function (object, runtime, extensions, topLevel) {
                 rate: soundSource.rate,
                 sampleCount: soundSource.sampleCount,
                 soundID: soundSource.soundID,
+                // TODO we eventually want this next property to be called
+                // md5ext to reflect what it actually contains, however this
+                // will be a very extensive change across many repositories
+                // and should be done carefully and altogether
+                // (for example, the audio engine currently relies on this
+                // property to be named 'md5')
                 md5: soundSource.md5,
                 data: null
             };
+            // TODO need to add deserializeSound here so that assets from
+            // actual .sb2s get loaded in
             soundPromises.push(loadSound(sound, runtime));
         }
     }

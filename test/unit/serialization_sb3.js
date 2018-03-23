@@ -5,11 +5,13 @@ const demoSb3 = require('../fixtures/demo.json');
 
 test('serialize', t => {
     const vm = new VirtualMachine();
-    vm.fromJSON(JSON.stringify(demoSb3));
-    const result = sb3.serialize(vm.runtime);
-    // @todo Analyze
-    t.type(JSON.stringify(result), 'string');
-    t.end();
+    vm.loadProject(JSON.stringify(demoSb3))
+        .then(() => {
+            const result = sb3.serialize(vm.runtime);
+            // @todo Analyze
+            t.type(JSON.stringify(result), 'string');
+            t.end();
+        });
 });
 
 test('deserialize', t => {
