@@ -119,7 +119,7 @@ class Scratch3LooksBlocks {
     _positionBubble (target) {
         const bubbleState = this._getBubbleState(target);
         const [bubbleWidth, bubbleHeight] = this.runtime.renderer.getSkinSize(bubbleState.drawableId);
-        const targetBounds = target.getBounds();
+        const targetBounds = target.getBoundsForBubble();
         const stageBounds = this.runtime.getTargetForStage().getBounds();
         if (bubbleState.onSpriteRight && bubbleWidth + targetBounds.right > stageBounds.right &&
             (targetBounds.left - bubbleWidth > stageBounds.left)) { // Only flip if it would fit
@@ -137,7 +137,7 @@ class Scratch3LooksBlocks {
                     ) : (
                         Math.max(stageBounds.left, targetBounds.left - bubbleWidth)
                     ),
-                    Math.min(stageBounds.top, targetBounds.top + bubbleHeight)
+                    Math.min(stageBounds.top, targetBounds.bottom + bubbleHeight)
                 ]
             });
             this.runtime.requestRedraw();

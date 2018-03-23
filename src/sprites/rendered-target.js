@@ -646,6 +646,18 @@ class RenderedTarget extends Target {
     }
 
     /**
+     * Return the bounding box around a slice of the top 8px of the rendered target.
+     * Includes top, left, bottom, right attributes in Scratch coordinates.
+     * @return {?object} Tight bounding box, or null.
+     */
+    getBoundsForBubble () {
+        if (this.renderer) {
+            return this.runtime.renderer.getBoundsForBubble(this.drawableID);
+        }
+        return null;
+    }
+
+    /**
      * Return whether touching a point.
      * @param {number} x X coordinate of test point.
      * @param {number} y Y coordinate of test point.
