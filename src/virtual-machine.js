@@ -293,7 +293,7 @@ class VirtualMachine extends EventEmitter {
         const deserializePromise = function () {
             const projectVersion = projectJSON.projectVersion;
             if (projectVersion === 2) {
-                return sb2.deserialize(projectJSON, runtime);
+                return sb2.deserialize(projectJSON, runtime, false, zip);
             }
             if (projectVersion === 3) {
                 return sb3.deserialize(projectJSON, runtime, zip);

@@ -11,11 +11,13 @@ const Sprite = require('../sprites/sprite');
 const Color = require('../util/color');
 const log = require('../util/log');
 const uid = require('../util/uid');
+const StringUtil = require('../util/string-util');
 const specMap = require('./sb2_specmap');
 const Variable = require('../engine/variable');
 
 const {loadCostume} = require('../import/load-costume.js');
 const {loadSound} = require('../import/load-sound.js');
+const {deserializeCostume, deserializeSound} = require('./deserialize-assets.js');
 
 /**
  * Convert a Scratch 2.0 procedure string (e.g., "my_procedure %s %b %n")
@@ -198,9 +200,10 @@ const globalBroadcastMsgStateGenerator = (function () {
  * @param {!Runtime} runtime - Runtime object to load all structures into.
  * @param {ImportedExtensionsInfo} extensions - (in/out) parsed extension information will be stored here.
  * @param {boolean} topLevel - Whether this is the top-level object (stage).
+ * @param {?object} zip - Optional zipped assets for local file import
  * @return {!Promise.<Array.<Target>>} Promise for the loaded targets when ready, or null for unsupported objects.
  */
-const parseScratchObject = function (object, runtime, extensions, topLevel) {
+const parseScratchObject = function (object, runtime, extensions, topLevel, zip) {
     if (!object.hasOwnProperty('objName')) {
         // Watcher/monitor - skip this object until those are implemented in VM.
         // @todo
@@ -231,9 +234,18 @@ const parseScratchObject = function (object, runtime, extensions, topLevel) {
                 md5: costumeSource.baseLayerMD5,
                 skinId: null
             };
-            // TODO need to add deserializeCostume here so that assets from
-            // actual .sb2s get loaded in
-            costumePromises.push(loadCostume(costume.md5, costume, runtime));
+            const md5ext = costumeSource.baseLayerMD5;
+            const idParts = StringUtil.splitFirst(md5ext, '.');
+            const md5 = idParts[0];
+            const ext = idParts[1].toLowerCase();
+            costume.dataFormat = ext;
+            costume.assetId = md5;
+            // If there is no internet connection, or if the asset is not in storage
+            // for some reason, and we are doing a local .sb2 import, (e.g. zip is provided)
+            // the file name of the costume should be the baseLayerID followed by the file ext
+            const assetFileName = `${costumeSource.baseLayerID}.${ext}`;
+            costumePromises.push(deserializeCostume(costume, runtime, zip, assetFileName)
+                .then(() => loadCostume(costume.md5, costume, runtime)));
         }
     }
     // Sounds from JSON
@@ -246,7 +258,6 @@ const parseScratchObject = function (object, runtime, extensions, topLevel) {
                 format: soundSource.format,
                 rate: soundSource.rate,
                 sampleCount: soundSource.sampleCount,
-                soundID: soundSource.soundID,
                 // TODO we eventually want this next property to be called
                 // md5ext to reflect what it actually contains, however this
                 // will be a very extensive change across many repositories
@@ -256,9 +267,19 @@ const parseScratchObject = function (object, runtime, extensions, topLevel) {
                 md5: soundSource.md5,
                 data: null
             };
-            // TODO need to add deserializeSound here so that assets from
-            // actual .sb2s get loaded in
-            soundPromises.push(loadSound(sound, runtime));
+            const md5ext = soundSource.md5;
+            const idParts = StringUtil.splitFirst(md5ext, '.');
+            const md5 = idParts[0];
+            const ext = idParts[1].toLowerCase();
+            sound.dataFormat = ext;
+            sound.assetId = md5;
+            // If there is no internet connection, or if the asset is not in storage
+            // for some reason, and we are doing a local .sb2 import, (e.g. zip is provided)
+            // the file name of the sound should be the soundID (provided from the project.json)
+            // followed by the file ext
+            const assetFileName = `${soundSource.soundID}.${ext}`;
+            soundPromises.push(deserializeSound(sound, runtime, zip, assetFileName)
+                .then(() => loadSound(sound, runtime)));
         }
     }
 
@@ -356,7 +377,7 @@ const parseScratchObject = function (object, runtime, extensions, topLevel) {
     const childrenPromises = [];
     if (object.children) {
         for (let m = 0; m < object.children.length; m++) {
-            childrenPromises.push(parseScratchObject(object.children[m], runtime, extensions, false));
+            childrenPromises.push(parseScratchObject(object.children[m], runtime, extensions, false, zip));
         }
     }
 
@@ -421,14 +442,15 @@ const parseScratchObject = function (object, runtime, extensions, topLevel) {
  * @param {!object} json SB2-format JSON to load.
  * @param {!Runtime} runtime Runtime object to load all structures into.
  * @param {boolean=} optForceSprite If set, treat as sprite (Sprite2).
+ * @param {?object} zip Optional zipped assets for local file import
  * @return {Promise.<ImportedProject>} Promise that resolves to the loaded targets when ready.
  */
-const sb2import = function (json, runtime, optForceSprite) {
+const sb2import = function (json, runtime, optForceSprite, zip) {
     const extensions = {
         extensionIDs: new Set(),
         extensionURLs: new Map()
     };
-    return parseScratchObject(json, runtime, extensions, !optForceSprite)
+    return parseScratchObject(json, runtime, extensions, !optForceSprite, zip)
         .then(targets => ({
             targets,
             extensions

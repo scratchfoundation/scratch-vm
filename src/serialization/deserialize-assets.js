@@ -7,12 +7,15 @@ const log = require('../util/log');
  * @param {object} sound Descriptor for sound from sb3 file
  * @param {Runtime} runtime The runtime containing the storage to cache the sounds in
  * @param {JSZip} zip The zip containing the sound file being described by `sound`
+ * @param {string} assetFileName Optional file name for the given asset
+ * (sb2 files have filenames of the form [int].[ext],
+ * sb3 files have filenames of the form [md5].[ext])
  * @return {Promise} Promise that resolves after the described sound has been stored
  * into the runtime storage cache, the sound was already stored, or an error has
  * occurred.
  */
-const deserializeSound = function (sound, runtime, zip) {
-    const fileName = sound.md5; // The md5 property has the full file name
+const deserializeSound = function (sound, runtime, zip, assetFileName) {
+    const fileName = assetFileName ? assetFileName : sound.md5;
     const storage = runtime.storage;
     if (!storage) {
         log.error('No storage module present; cannot load sound asset: ', fileName);
@@ -64,16 +67,18 @@ const deserializeSound = function (sound, runtime, zip) {
  * @param {object} costume Descriptor for costume from sb3 file
  * @param {Runtime} runtime The runtime containing the storage to cache the costumes in
  * @param {JSZip} zip The zip containing the costume file being described by `costume`
+ * @param {string} assetFileName Optional file name for the given asset
+ * (sb2 files have filenames of the form [int].[ext],
+ * sb3 files have filenames of the form [md5].[ext])
  * @return {Promise} Promise that resolves after the described costume has been stored
  * into the runtime storage cache, the costume was already stored, or an error has
  * occurred.
  */
-const deserializeCostume = function (costume, runtime, zip) {
+const deserializeCostume = function (costume, runtime, zip, assetFileName) {
     const storage = runtime.storage;
     const assetId = costume.assetId;
-    const fileName = costume.md5 ?
-        costume.md5 :
-        `${assetId}.${costume.dataFormat}`; // The md5 property has the full file name
+    const fileName = assetFileName ? assetFileName :
+        `${assetId}.${costume.dataFormat}`;
 
     if (!storage) {
         log.error('No storage module present; cannot load costume asset: ', fileName);
