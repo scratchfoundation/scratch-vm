@@ -1,11 +1,11 @@
 const path = require('path');
 const test = require('tap').test;
 const makeTestStorage = require('../fixtures/make-test-storage');
-const extract = require('../fixtures/extract');
+const readAsBuffer = require('../fixtures/readProjectFile').readAsBuffer;
 const VirtualMachine = require('../../src/index');
 
 const projectUri = path.resolve(__dirname, '../fixtures/stack-click.sb2');
-const project = extract(projectUri);
+const project = readAsBuffer(projectUri);
 
 /**
  * stack-click.sb2 contains a sprite at (0, 0) with a single stack

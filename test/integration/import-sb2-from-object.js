@@ -1,11 +1,11 @@
 const path = require('path');
 const test = require('tap').test;
 const makeTestStorage = require('../fixtures/make-test-storage');
-const extract = require('../fixtures/extract');
+const readAsString = require('../fixtures/readProjectFile').readAsString;
 const VirtualMachine = require('../../src/index');
 
 const uri = path.resolve(__dirname, '../fixtures/default.sb2');
-const project = JSON.parse(extract(uri));
+const project = JSON.parse(readAsString(uri));
 
 test('default', t => {
     const vm = new VirtualMachine();

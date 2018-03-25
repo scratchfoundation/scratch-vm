@@ -1,11 +1,11 @@
 const path = require('path');
 const test = require('tap').test;
 const makeTestStorage = require('../fixtures/make-test-storage');
-const extract = require('../fixtures/extract');
+const readAsBuffer = require('../fixtures/readProjectFile').readAsBuffer;
 const VirtualMachine = require('../../src/index');
 
 const uri = path.resolve(__dirname, '../fixtures/motion.sb2');
-const project = extract(uri);
+const project = readAsBuffer(uri);
 
 test('motion', t => {
     const vm = new VirtualMachine();
