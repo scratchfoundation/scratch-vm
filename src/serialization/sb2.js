@@ -562,6 +562,22 @@ const parseBlock = function (sb2block, addBroadcastMsg, getVariableId, extension
                 if (shadowObscured) {
                     fieldValue = 1;
                 }
+            } else if (expectedArg.inputOp === 'videoSensing.menu.MOTION_DIRECTION') {
+                if (shadowObscured) {
+                    fieldValue = 1;
+                } else if (fieldValue === 'motion') {
+                    fieldValue = 1;
+                } else if (fieldValue === 'direction') {
+                    fieldValue = 2;
+                }
+            } else if (expectedArg.inputOp === 'videoSensing.menu.STAGE_SPRITE') {
+                if (shadowObscured) {
+                    fieldValue = 2;
+                } else if (fieldValue === 'Stage') {
+                    fieldValue = 1;
+                } else if (fieldValue === 'this sprite') {
+                    fieldValue = 2;
+                }
             } else if (shadowObscured) {
                 // Filled drop-down menu.
                 fieldValue = '';

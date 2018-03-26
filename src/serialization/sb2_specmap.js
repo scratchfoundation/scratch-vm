@@ -609,6 +609,21 @@ const specMap = {
             }
         ]
     },
+    'senseVideoMotion': {
+        opcode: 'videoSensing.videoOn',
+        argMap: [
+            {
+                type: 'input',
+                inputOp: 'videoSensing.menu.MOTION_DIRECTION',
+                inputName: 'MOTION_DIRECTION'
+            },
+            {
+                type: 'input',
+                inputOp: 'videoSensing.menu.STAGE_SPRITE',
+                inputName: 'STAGE_SPRITE'
+            }
+        ]
+    },
     'whenGreenFlag': {
         opcode: 'event_whenflagclicked',
         argMap: [
@@ -905,21 +920,21 @@ const specMap = {
         argMap: [
         ]
     },
-    'senseVideoMotion': {
-        opcode: 'sensing_videoon',
-        argMap: [
-            {
-                type: 'input',
-                inputOp: 'sensing_videoonmenuone',
-                inputName: 'VIDEOONMENU1'
-            },
-            {
-                type: 'input',
-                inputOp: 'sensing_videoonmenutwo',
-                inputName: 'VIDEOONMENU2'
-            }
-        ]
-    },
+    // 'senseVideoMotion': {
+    //     opcode: 'sensing_videoon',
+    //     argMap: [
+    //         {
+    //             type: 'input',
+    //             inputOp: 'sensing_videoonmenuone',
+    //             inputName: 'VIDEOONMENU1'
+    //         },
+    //         {
+    //             type: 'input',
+    //             inputOp: 'sensing_videoonmenutwo',
+    //             inputName: 'VIDEOONMENU2'
+    //         }
+    //     ]
+    // },
     'setVideoState': {
         opcode: 'sensing_videotoggle',
         argMap: [
