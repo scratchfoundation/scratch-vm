@@ -12711,6 +12711,37 @@ var RenderWebGL = function (_EventEmitter) {
         }
 
         /**
+         * Get the precise bounds for a Drawable around the top slice.
+         * Used for positioning speech bubbles more closely to the sprite.
+         * @param {int} drawableID ID of Drawable to get bubble bounds for.
+         * @return {object} Bounds for a tight box around the Drawable top slice.
+         */
+
+    }, {
+        key: 'getBoundsForBubble',
+        value: function getBoundsForBubble(drawableID) {
+            var drawable = this._allDrawables[drawableID];
+            // Tell the Drawable about its updated convex hull, if necessary.
+            if (drawable.needsConvexHullPoints()) {
+                var points = this._getConvexHullPointsForDrawable(drawableID);
+                drawable.setConvexHullPoints(points);
+            }
+            var bounds = drawable.getBoundsForBubble();
+            // In debug mode, draw the bounds.
+            if (this._debugCanvas) {
+                var gl = this._gl;
+                this._debugCanvas.width = gl.canvas.width;
+                this._debugCanvas.height = gl.canvas.height;
+                var context = this._debugCanvas.getContext('2d');
+                context.drawImage(gl.canvas, 0, 0);
+                context.strokeStyle = '#FF0000';
+                var pr = window.devicePixelRatio;
+                context.strokeRect(pr * (bounds.left + this._nativeSize[0] / 2), pr * (-bounds.top + this._nativeSize[1] / 2), pr * (bounds.right - bounds.left), pr * (-bounds.bottom + bounds.top));
+            }
+            return bounds;
+        }
+
+        /**
          * Get the current skin (costume) size of a Drawable.
          * @param {int} drawableID The ID of the Drawable to measure.
          * @return {Array<number>} Skin size, width and height.
@@ -14647,22 +14678,39 @@ var Drawable = function () {
             if (this._transformDirty) {
                 this._calculateTransform();
             }
-            // First, transform all the convex hull points by the current Drawable's
-            // transform. This allows us to skip recalculating the convex hull
-            // for many Drawable updates, including translation, rotation, scaling.
-            var projection = twgl.m4.ortho(-1, 1, -1, 1, -1, 1);
-            var skinSize = this.skin.size;
-            var tm = twgl.m4.multiply(this._uniforms.u_modelMatrix, projection);
-            var transformedHullPoints = [];
-            for (var i = 0; i < this._convexHullPoints.length; i++) {
-                var point = this._convexHullPoints[i];
-                var glPoint = twgl.v3.create(0.5 + -point[0] / skinSize[0], 0.5 + -point[1] / skinSize[1], 0);
-                twgl.m4.transformPoint(tm, glPoint, glPoint);
-                transformedHullPoints.push(glPoint);
-            }
+            var transformedHullPoints = this._getTransformedHullPoints();
             // Search through transformed points to generate box on axes.
             var bounds = new Rectangle();
             bounds.initFromPointsAABB(transformedHullPoints);
+            return bounds;
+        }
+        /**
+         * Get the precise bounds for the upper 8px slice of the Drawable.
+         * Used for calculating where to position a text bubble.
+         * Before calling this, ensure the renderer has updated convex hull points.
+         * @return {!Rectangle} Bounds for a tight box around a slice of the Drawable.
+         */
+
+    }, {
+        key: 'getBoundsForBubble',
+        value: function getBoundsForBubble() {
+            if (this.needsConvexHullPoints()) {
+                throw new Error('Needs updated convex hull points before bubble bounds calculation.');
+            }
+            if (this._transformDirty) {
+                this._calculateTransform();
+            }
+            var slice = 8; // px, how tall the top slice to measure should be.
+            var transformedHullPoints = this._getTransformedHullPoints();
+            var maxY = Math.max.apply(null, transformedHullPoints.map(function (p) {
+                return p[1];
+            }));
+            var filteredHullPoints = transformedHullPoints.filter(function (p) {
+                return p[1] > maxY - slice;
+            });
+            // Search through filtered points to generate box on axes.
+            var bounds = new Rectangle();
+            bounds.initFromPointsAABB(filteredHullPoints);
             return bounds;
         }
 
@@ -14702,6 +14750,30 @@ var Drawable = function () {
                 return this.getBounds();
             }
             return this.getAABB();
+        }
+
+        /**
+         * Transform all the convex hull points by the current Drawable's
+         * transform. This allows us to skip recalculating the convex hull
+         * for many Drawable updates, including translation, rotation, scaling.
+         * @return {!Array.<!Array.number>} Array of glPoints which are Array<x, y>
+         * @private
+         */
+
+    }, {
+        key: '_getTransformedHullPoints',
+        value: function _getTransformedHullPoints() {
+            var projection = twgl.m4.ortho(-1, 1, -1, 1, -1, 1);
+            var skinSize = this.skin.size;
+            var tm = twgl.m4.multiply(this._uniforms.u_modelMatrix, projection);
+            var transformedHullPoints = [];
+            for (var i = 0; i < this._convexHullPoints.length; i++) {
+                var point = this._convexHullPoints[i];
+                var glPoint = twgl.v3.create(0.5 + -point[0] / skinSize[0], point[1] / skinSize[1] - 0.5, 0);
+                twgl.m4.transformPoint(tm, glPoint, glPoint);
+                transformedHullPoints.push(glPoint);
+            }
+            return transformedHullPoints;
         }
 
         /**
@@ -18500,6 +18572,8 @@ for (var i = 0, len = code.length; i < len; ++i) {
   revLookup[code.charCodeAt(i)] = i
 }
 
+// Support decoding URL-safe base64 strings, as Node.js does.
+// See: https://en.wikipedia.org/wiki/Base64#URL_applications
 revLookup['-'.charCodeAt(0)] = 62
 revLookup['_'.charCodeAt(0)] = 63
 
@@ -18561,7 +18635,7 @@ function encodeChunk (uint8, start, end) {
   var tmp
   var output = []
   for (var i = start; i < end; i += 3) {
-    tmp = (uint8[i] << 16) + (uint8[i + 1] << 8) + (uint8[i + 2])
+    tmp = ((uint8[i] << 16) & 0xFF0000) + ((uint8[i + 1] << 8) & 0xFF00) + (uint8[i + 2] & 0xFF)
     output.push(tripletToBase64(tmp))
   }
   return output.join('')
@@ -18606,7 +18680,7 @@ function fromByteArray (uint8) {
 
 exports.read = function (buffer, offset, isLE, mLen, nBytes) {
   var e, m
-  var eLen = nBytes * 8 - mLen - 1
+  var eLen = (nBytes * 8) - mLen - 1
   var eMax = (1 << eLen) - 1
   var eBias = eMax >> 1
   var nBits = -7
@@ -18619,12 +18693,12 @@ exports.read = function (buffer, offset, isLE, mLen, nBytes) {
   e = s & ((1 << (-nBits)) - 1)
   s >>= (-nBits)
   nBits += eLen
-  for (; nBits > 0; e = e * 256 + buffer[offset + i], i += d, nBits -= 8) {}
+  for (; nBits > 0; e = (e * 256) + buffer[offset + i], i += d, nBits -= 8) {}
 
   m = e & ((1 << (-nBits)) - 1)
   e >>= (-nBits)
   nBits += mLen
-  for (; nBits > 0; m = m * 256 + buffer[offset + i], i += d, nBits -= 8) {}
+  for (; nBits > 0; m = (m * 256) + buffer[offset + i], i += d, nBits -= 8) {}
 
   if (e === 0) {
     e = 1 - eBias
@@ -18639,7 +18713,7 @@ exports.read = function (buffer, offset, isLE, mLen, nBytes) {
 
 exports.write = function (buffer, value, offset, isLE, mLen, nBytes) {
   var e, m, c
-  var eLen = nBytes * 8 - mLen - 1
+  var eLen = (nBytes * 8) - mLen - 1
   var eMax = (1 << eLen) - 1
   var eBias = eMax >> 1
   var rt = (mLen === 23 ? Math.pow(2, -24) - Math.pow(2, -77) : 0)
@@ -18672,7 +18746,7 @@ exports.write = function (buffer, value, offset, isLE, mLen, nBytes) {
       m = 0
       e = eMax
     } else if (e + eBias >= 1) {
-      m = (value * c - 1) * Math.pow(2, mLen)
+      m = ((value * c) - 1) * Math.pow(2, mLen)
       e = e + eBias
     } else {
       m = value * Math.pow(2, eBias - 1) * Math.pow(2, mLen)
