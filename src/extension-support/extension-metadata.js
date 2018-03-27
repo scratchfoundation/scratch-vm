@@ -14,13 +14,16 @@
  * @typedef {object} ExtensionBlockMetadata
  * All the metadata needed to register an extension block.
  * @property {string} opcode - a unique alphanumeric identifier for this block. No special characters allowed.
+ * @property {string} [func] - the name of the function implementing this block. Can be shared by other blocks/opcodes.
  * @property {BlockType} blockType - the type of block (command, reporter, etc.) being described.
- * @property {string} func - the name of the function implementing this block. Can be shared with other blocks/opcodes.
- * @property {Boolean} hideFromPalette - true if this block should not appear in the block palette.
- * @property {ReporterScope} reporterScope - if this block is a reporter, this is the scope/context for its value.
- * @property {Boolean} terminal - true if the block ends a stack - no blocks can be connected after it.
  * @property {string} text - the text on the block, with [PLACEHOLDERS] for arguments.
- * @property {Object.<ExtensionArgumentMetadata>} arguments - map of argument placeholder to metadata about each arg.
+ * @property {Boolean} [hideFromPalette] - true if this block should not appear in the block palette.
+ * @property {Boolean} [isTerminal] - true if the block ends a stack - no blocks can be connected after it.
+ * @property {ReporterScope} [reporterScope] - if this block is a reporter, this is the scope/context for its value.
+ * @property {Boolean} [isEdgeActivated] - sets whether a hat block is edge-activated.
+ * @property {Boolean} [shouldRestartExistingThreads] - sets whether a hat/event block should restart existing threads.
+ * @property {int} [branchCount] - for flow control blocks, the number of branches/substacks for this block.
+ * @property {Object.<ExtensionArgumentMetadata>} [arguments] - map of argument placeholder to metadata about each arg.
  */
 
 /**

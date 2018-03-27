@@ -22,22 +22,8 @@ const builtinExtensions = {
  */
 
 /**
- * @typedef {object} BlockInfo - Information about an extension block
- * @property {string} opcode - the block opcode
- * @property {string|object} text - the human-readable text on this block
- * @property {BlockType|undefined} blockType - the type of block (default: BlockType.COMMAND)
- * @property {int|undefined} branchCount - the number of branches this block controls, if conditional (default: 0)
- * @property {Boolean|undefined} isTerminal - true if this block ends a stack (default: false)
- * @property {Boolean|undefined} blockAllThreads - true if all threads must wait for this block to run (default: false)
- * @property {object.<string,ArgumentInfo>|undefined} arguments - information about this block's arguments, if any
- * @property {string|Function|undefined} func - the method for this block on the extension service (default: opcode)
- * @property {Array.<string>|undefined} filter - the list of targets for which this block should appear (default: all)
- * @property {Boolean|undefined} hideFromPalette - true if should not be appear in the palette. (default false)
- */
-
-/**
  * @typedef {object} ConvertedBlockInfo - Raw extension block data paired with processed data ready for scratch-blocks
- * @property {BlockInfo} info - the raw block info
+ * @property {ExtensionBlockMetadata} info - the raw block info
  * @property {object} json - the scratch-blocks JSON definition for this block
  * @property {string} xml - the scratch-blocks XML definition for this block
  */
@@ -250,7 +236,7 @@ class ExtensionManager {
                 case '---': // separator
                     result = '---';
                     break;
-                default: // a BlockInfo object
+                default: // an ExtensionBlockMetadata object
                     result = this._prepareBlockInfo(serviceName, blockInfo);
                     break;
                 }
@@ -316,8 +302,8 @@ class ExtensionManager {
     /**
      * Apply defaults for optional block fields.
      * @param {string} serviceName - the name of the service hosting this extension block
-     * @param {BlockInfo} blockInfo - the block info from the extension
-     * @returns {BlockInfo} - a new block info object which has values for all relevant optional fields.
+     * @param {ExtensionBlockMetadata} blockInfo - the block info from the extension
+     * @returns {ExtensionBlockMetadata} - a new block info object which has values for all relevant optional fields.
      * @private
      */
     _prepareBlockInfo (serviceName, blockInfo) {

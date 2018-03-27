@@ -20,6 +20,12 @@ const BlockType = {
     CONDITIONAL: 'conditional',
 
     /**
+     * Specialized hat block with no implementation function
+     * This stack only runs if the corresponding event is emitted by other code.
+     */
+    EVENT: 'event',
+
+    /**
      * Hat block which conditionally starts a block stack
      */
     HAT: 'hat',

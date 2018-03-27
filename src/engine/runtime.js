@@ -562,10 +562,14 @@ class Runtime extends EventEmitter {
                 const convertedBlock = this._convertForScratchBlocks(blockInfo, categoryInfo);
                 const opcode = convertedBlock.json.type;
                 categoryInfo.blocks.push(convertedBlock);
-                this._primitives[opcode] = convertedBlock.info.func;
-                if (blockInfo.blockType === BlockType.HAT) {
-                    this._hats[opcode] = {edgeActivated: true};
-                    /** @TODO let extension specify this */
+                if (blockInfo.blockType !== BlockType.EVENT) {
+                    this._primitives[opcode] = convertedBlock.info.func;
+                }
+                if (blockInfo.blockType === BlockType.EVENT || blockInfo.blockType === BlockType.HAT) {
+                    this._hats[opcode] = {
+                        edgeActivated: blockInfo.isEdgeActivated,
+                        restartExistingThreads: blockInfo.shouldRestartExistingThreads
+                    };
                 }
             } catch (e) {
                 log.error('Error parsing block: ', {block: blockInfo, error: e});
@@ -620,8 +624,8 @@ class Runtime extends EventEmitter {
     }
 
     /**
-     * Convert BlockInfo into scratch-blocks JSON & XML, and generate a proxy function.
-     * @param {BlockInfo} blockInfo - the block to convert
+     * Convert ExtensionBlockMetadata into scratch-blocks JSON & XML, and generate a proxy function.
+     * @param {ExtensionBlockMetadata} blockInfo - the block to convert
      * @param {CategoryInfo} categoryInfo - the category for this block
      * @returns {ConvertedBlockInfo} - the converted & original block information
      * @private
@@ -685,6 +689,11 @@ class Runtime extends EventEmitter {
             blockJSON.outputShape = ScratchBlocksConstants.OUTPUT_SHAPE_HEXAGONAL;
             break;
         case BlockType.HAT:
+        case BlockType.EVENT:
+            if (!blockInfo.hasOwnProperty('isEdgeActivated')) {
+                // if absent, this property defaults to true
+                blockInfo.isEdgeActivated = true;
+            }
             blockJSON.outputShape = ScratchBlocksConstants.OUTPUT_SHAPE_SQUARE;
             blockJSON.nextStatement = null; // null = available connection; undefined = terminal
             break;
