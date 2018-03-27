@@ -8,6 +8,7 @@ const BlockType = require('../extension-support/block-type');
 const Sequencer = require('./sequencer');
 const Thread = require('./thread');
 const Profiler = require('./profiler');
+const log = require('../util/log');
 
 // Virtual I/O devices.
 const Clock = require('../io/clock');
@@ -54,6 +55,16 @@ const ArgumentTypeMap = (() => {
     };
     return map;
 })();
+
+/**
+ * Predefined "Converted block info" for a separator between blocks in a block category
+ * @type {ConvertedBlockInfo}
+ */
+const ConvertedSeparator = {
+    info: {},
+    json: null,
+    xml: '<sep gap="36"/>'
+};
 
 /**
  * These constants are copied from scratch-blocks/core/constants.js
@@ -486,7 +497,7 @@ class Runtime extends EventEmitter {
 
     /**
      * Register the primitives provided by an extension.
-     * @param {ExtensionInfo} extensionInfo - information about the extension (id, blocks, etc.)
+     * @param {ExtensionMetadata} extensionInfo - information about the extension (id, blocks, etc.)
      * @private
      */
     _registerExtensionPrimitives (extensionInfo) {
@@ -504,30 +515,14 @@ class Runtime extends EventEmitter {
 
         this._blockInfo.push(categoryInfo);
 
-        for (const menuName in extensionInfo.menus) {
-            if (extensionInfo.menus.hasOwnProperty(menuName)) {
-                const menuItems = extensionInfo.menus[menuName];
-                const convertedMenu = this._buildMenuForScratchBlocks(menuName, menuItems, categoryInfo);
-                categoryInfo.menus.push(convertedMenu);
-            }
-        }
-        for (const blockInfo of extensionInfo.blocks) {
-            const convertedBlock = this._convertForScratchBlocks(blockInfo, categoryInfo);
-            const opcode = convertedBlock.json.type;
-            categoryInfo.blocks.push(convertedBlock);
-            this._primitives[opcode] = convertedBlock.info.func;
-            if (blockInfo.blockType === BlockType.HAT) {
-                this._hats[opcode] = {edgeActivated: true}; /** @TODO let extension specify this */
-            }
-        }
+        this._fillExtensionCategory(categoryInfo, extensionInfo);
 
         this.emit(Runtime.EXTENSION_ADDED, categoryInfo.blocks.concat(categoryInfo.menus));
     }
 
     /**
      * Reregister the primitives for an extension
-     * @param  {ExtensionInfo} extensionInfo - new info (results of running getInfo)
-     *                                         for an extension
+     * @param  {ExtensionMetadata} extensionInfo - new info (results of running getInfo) for an extension
      * @private
      */
     _refreshExtensionPrimitives (extensionInfo) {
@@ -536,27 +531,46 @@ class Runtime extends EventEmitter {
             if (extensionInfo.id === categoryInfo.id) {
                 categoryInfo.blocks = [];
                 categoryInfo.menus = [];
-                for (const menuName in extensionInfo.menus) {
-                    if (extensionInfo.menus.hasOwnProperty(menuName)) {
-                        const menuItems = extensionInfo.menus[menuName];
-                        const convertedMenu = this._buildMenuForScratchBlocks(menuName, menuItems, categoryInfo);
-                        categoryInfo.menus.push(convertedMenu);
-                    }
-                }
-                for (const blockInfo of extensionInfo.blocks) {
-                    const convertedBlock = this._convertForScratchBlocks(blockInfo, categoryInfo);
-                    const opcode = convertedBlock.json.type;
-                    categoryInfo.blocks.push(convertedBlock);
-                    this._primitives[opcode] = convertedBlock.info.func;
-                    if (blockInfo.blockType === BlockType.HAT) {
-                        this._hats[opcode] = {edgeActivated: true}; /** @TODO let extension specify this */
-                    }
-                }
+                this._fillExtensionCategory(categoryInfo, extensionInfo);
                 extensionBlocks = extensionBlocks.concat(categoryInfo.blocks, categoryInfo.menus);
             }
         }
 
         this.emit(Runtime.BLOCKSINFO_UPDATE, extensionBlocks);
+    }
+
+    /**
+     * Read extension information, convert menus and blocks, and store the results in the provided category object.
+     * @param {CategoryInfo} categoryInfo - the category to be filled
+     * @param {ExtensionMetadata} extensionInfo - the extension metadata to read
+     * @private
+     */
+    _fillExtensionCategory (categoryInfo, extensionInfo) {
+        for (const menuName in extensionInfo.menus) {
+            if (extensionInfo.menus.hasOwnProperty(menuName)) {
+                const menuItems = extensionInfo.menus[menuName];
+                const convertedMenu = this._buildMenuForScratchBlocks(menuName, menuItems, categoryInfo);
+                categoryInfo.menus.push(convertedMenu);
+            }
+        }
+        for (const blockInfo of extensionInfo.blocks) {
+            if (blockInfo === '---') {
+                categoryInfo.blocks.push(ConvertedSeparator);
+                continue;
+            }
+            try {
+                const convertedBlock = this._convertForScratchBlocks(blockInfo, categoryInfo);
+                const opcode = convertedBlock.json.type;
+                categoryInfo.blocks.push(convertedBlock);
+                this._primitives[opcode] = convertedBlock.info.func;
+                if (blockInfo.blockType === BlockType.HAT) {
+                    this._hats[opcode] = {edgeActivated: true};
+                    /** @TODO let extension specify this */
+                }
+            } catch (e) {
+                log.error('Error parsing block: ', {block: blockInfo, error: e});
+            }
+        }
     }
 
     /**
@@ -609,11 +623,12 @@ class Runtime extends EventEmitter {
      * Convert BlockInfo into scratch-blocks JSON & XML, and generate a proxy function.
      * @param {BlockInfo} blockInfo - the block to convert
      * @param {CategoryInfo} categoryInfo - the category for this block
-     * @returns {{info: BlockInfo, json: object, xml: string}} - the converted & original block information
+     * @returns {ConvertedBlockInfo} - the converted & original block information
      * @private
      */
     _convertForScratchBlocks (blockInfo, categoryInfo) {
         const extendedOpcode = `${categoryInfo.id}.${blockInfo.opcode}`;
+
         const blockJSON = {
             type: extendedOpcode,
             inputsInline: true,
@@ -621,19 +636,19 @@ class Runtime extends EventEmitter {
             colour: categoryInfo.color1,
             colourSecondary: categoryInfo.color2,
             colourTertiary: categoryInfo.color3,
-            args0: [],
             extensions: ['scratch_extension']
         };
-
-        const inputList = [];
-
-        // TODO: store this somewhere so that we can map args appropriately after translation.
-        // This maps an arg name to its relative position in the original (usually English) block text.
-        // When displaying a block in another language we'll need to run a `replace` action similar to the one below,
-        // but each `[ARG]` will need to be replaced with the number in this map instead of `args0.length`.
-        const argsMap = {};
-
-        blockJSON.message0 = '';
+        const context = {
+            // TODO: store this somewhere so that we can map args appropriately after translation.
+            // This maps an arg name to its relative position in the original (usually English) block text.
+            // When displaying a block in another language we'll need to run a `replace` action similar to the one
+            // below, but each `[ARG]` will need to be replaced with the number in this map.
+            argsMap: {},
+            blockJSON,
+            categoryInfo,
+            blockInfo,
+            inputList: []
+        };
 
         // If an icon for the extension exists, prepend it to each block, with a vertical separator.
         if (categoryInfo.blockIconURI) {
@@ -647,59 +662,11 @@ class Runtime extends EventEmitter {
             const separatorJSON = {
                 type: 'field_vertical_separator'
             };
-            blockJSON.args0.push(iconJSON);
-            blockJSON.args0.push(separatorJSON);
+            blockJSON.args0 = [
+                iconJSON,
+                separatorJSON
+            ];
         }
-
-        blockJSON.message0 += blockInfo.text.replace(/\[(.+?)]/g, (match, placeholder) => {
-            // Sanitize the placeholder to ensure valid XML
-            placeholder = placeholder.replace(/[<"&]/, '_');
-
-            const argJSON = {
-                type: 'input_value',
-                name: placeholder
-            };
-
-            const argInfo = blockInfo.arguments[placeholder] || {};
-            const argTypeInfo = ArgumentTypeMap[argInfo.type] || {};
-            const defaultValue = (typeof argInfo.defaultValue === 'undefined' ?
-                '' :
-                escapeHtml(argInfo.defaultValue.toString()));
-
-            if (argTypeInfo.check) {
-                argJSON.check = argTypeInfo.check;
-            }
-
-            const shadowType = (argInfo.menu ?
-                this._makeExtensionMenuId(argInfo.menu, categoryInfo.id) :
-                argTypeInfo.shadowType);
-            const fieldType = argInfo.menu || argTypeInfo.fieldType;
-
-            // <value> is the ScratchBlocks name for a block input.
-            inputList.push(`<value name="${placeholder}">`);
-
-            // The <shadow> is a placeholder for a reporter and is visible when there's no reporter in this input.
-            // Boolean inputs don't need to specify a shadow in the XML.
-            if (shadowType) {
-                inputList.push(`<shadow type="${shadowType}">`);
-
-                // <field> is a text field that the user can type into. Some shadows, like the color picker, don't allow
-                // text input and therefore don't need a field element.
-                if (fieldType) {
-                    inputList.push(`<field name="${fieldType}">${defaultValue}</field>`);
-                }
-
-                inputList.push('</shadow>');
-            }
-
-            inputList.push('</value>');
-
-            // scratch-blocks uses 1-based argument indexing
-            blockJSON.args0.push(argJSON);
-            const argNum = blockJSON.args0.length;
-            argsMap[placeholder] = argNum;
-            return `%${argNum}`;
-        });
 
         switch (blockInfo.blockType) {
         case BlockType.COMMAND:
@@ -722,31 +689,128 @@ class Runtime extends EventEmitter {
             blockJSON.nextStatement = null; // null = available connection; undefined = terminal
             break;
         case BlockType.CONDITIONAL:
-            // Statement inputs get names like 'SUBSTACK', 'SUBSTACK2', 'SUBSTACK3', ...
-            for (let branchNum = 1; branchNum <= blockInfo.branchCount; ++branchNum) {
-                blockJSON[`message${branchNum}`] = '%1';
-                blockJSON[`args${branchNum}`] = [{
-                    type: 'input_statement',
-                    name: `SUBSTACK${branchNum > 1 ? branchNum : ''}`
-                }];
-            }
+        case BlockType.LOOP:
+            blockInfo.branchCount = blockInfo.branchCount || 1;
             blockJSON.outputShape = ScratchBlocksConstants.OUTPUT_SHAPE_SQUARE;
             blockJSON.previousStatement = null; // null = available connection; undefined = hat
-            blockJSON.nextStatement = null; // null = available connection; undefined = terminal
+            if (!blockInfo.isTerminal) {
+                blockJSON.nextStatement = null; // null = available connection; undefined = terminal
+            }
             break;
         }
 
-        if (blockInfo.isTerminal) {
-            delete blockJSON.nextStatement;
+        const blockText = Array.isArray(blockInfo.text) ? blockInfo.text : [blockInfo.text];
+        let inTextNum = 0; // text for the next block "arm" is blockText[inTextNum]
+        let inBranchNum = 0; // how many branches have we placed into the JSON so far?
+        let outLineNum = 0; // used for scratch-blocks `message${outLineNum}` and `args${outLineNum}`
+        const convertPlaceholders = this._convertPlaceholders.bind(this, context);
+
+        // alternate between a block "arm" with text on it and an open slot for a substack
+        while (inTextNum < blockText.length || inBranchNum < blockInfo.branchCount) {
+            if (inTextNum < blockText.length) {
+                context.outLineNum = outLineNum;
+                const convertedText = blockText[inTextNum].replace(/\[(.+?)]/g, convertPlaceholders);
+                if (blockJSON[`message${outLineNum}`]) {
+                    blockJSON[`message${outLineNum}`] += convertedText;
+                } else {
+                    blockJSON[`message${outLineNum}`] = convertedText;
+                }
+                ++inTextNum;
+                ++outLineNum;
+            }
+            if (inBranchNum < blockInfo.branchCount) {
+                blockJSON[`message${outLineNum}`] = '%1';
+                blockJSON[`args${outLineNum}`] = [{
+                    type: 'input_statement',
+                    name: `SUBSTACK${inBranchNum > 0 ? inBranchNum + 1 : ''}`
+                }];
+                ++inBranchNum;
+                ++outLineNum;
+            }
         }
 
-        const blockXML = `<block type="${extendedOpcode}">${inputList.join('')}</block>`;
+        // Add icon to the bottom right of a loop block
+        if (blockInfo.blockType === BlockType.LOOP) {
+            blockJSON[`lastDummyAlign${outLineNum}`] = 'RIGHT';
+            blockJSON[`message${outLineNum}`] = '%1';
+            blockJSON[`args${outLineNum}`] = [{
+                type: 'field_image',
+                src: './static/blocks-media/repeat.svg', // TODO: use a constant or make this configurable?
+                width: 24,
+                height: 24,
+                alt: '*',
+                flip_rtl: true
+            }];
+            ++outLineNum;
+        }
+
+        const blockXML = `<block type="${extendedOpcode}">${context.inputList.join('')}</block>`;
 
         return {
-            info: blockInfo,
-            json: blockJSON,
+            info: context.blockInfo,
+            json: context.blockJSON,
             xml: blockXML
         };
+    }
+
+    /**
+     * Helper for _convertForScratchBlocks which handles linearization of argument placeholders. Called as a callback
+     * from string#replace. In addition to the return value the JSON and XML items in the context will be filled.
+     * @param {object} context - information shared with _convertForScratchBlocks about the block, etc.
+     * @param {string} match - the overall string matched by the placeholder regex, including brackets: '[FOO]'.
+     * @param {string} placeholder - the name of the placeholder being matched: 'FOO'.
+     * @return {string} scratch-blocks placeholder for the argument: '%1'.
+     * @private
+     */
+    _convertPlaceholders (context, match, placeholder) {
+        // Sanitize the placeholder to ensure valid XML
+        placeholder = placeholder.replace(/[<"&]/, '_');
+
+        const argJSON = {
+            type: 'input_value',
+            name: placeholder
+        };
+
+        const argInfo = context.blockInfo.arguments[placeholder] || {};
+        const argTypeInfo = ArgumentTypeMap[argInfo.type] || {};
+        const defaultValue = (typeof argInfo.defaultValue === 'undefined' ?
+            '' :
+            escapeHtml(argInfo.defaultValue.toString()));
+
+        if (argTypeInfo.check) {
+            argJSON.check = argTypeInfo.check;
+        }
+
+        const shadowType = (argInfo.menu ?
+            this._makeExtensionMenuId(argInfo.menu, context.categoryInfo.id) :
+            argTypeInfo.shadowType);
+        const fieldType = argInfo.menu || argTypeInfo.fieldType;
+
+        // <value> is the ScratchBlocks name for a block input.
+        context.inputList.push(`<value name="${placeholder}">`);
+
+        // The <shadow> is a placeholder for a reporter and is visible when there's no reporter in this input.
+        // Boolean inputs don't need to specify a shadow in the XML.
+        if (shadowType) {
+            context.inputList.push(`<shadow type="${shadowType}">`);
+
+            // <field> is a text field that the user can type into. Some shadows, like the color picker, don't allow
+            // text input and therefore don't need a field element.
+            if (fieldType) {
+                context.inputList.push(`<field name="${fieldType}">${defaultValue}</field>`);
+            }
+
+            context.inputList.push('</shadow>');
+        }
+
+        context.inputList.push('</value>');
+
+        const argsName = `args${context.outLineNum}`;
+        const blockArgs = (context.blockJSON[argsName] = context.blockJSON[argsName] || []);
+        blockArgs.push(argJSON);
+        const argNum = blockArgs.length;
+        context.argsMap[placeholder] = argNum;
+        return `%${argNum}`;
     }
 
     /**

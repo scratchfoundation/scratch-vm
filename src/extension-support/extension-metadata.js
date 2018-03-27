@@ -6,8 +6,8 @@
  * @property {string} blockIconURI - URI for an image to be placed on each block in this extension. Data URI ok.
  * @property {string} menuIconURI - URI for an image to be placed on this extension's category menu entry. Data URI ok.
  * @property {string} docsURI - link to documentation content for this extension.
- * @property {Array.<ExtensionBlockMetadata|string>} - the blocks provided by this extension, with optional separators.
- * @property {Object.<ExtensionMenuMetadata>} - map of menu name to metadata about each of this extension's menus.
+ * @property {Array.<ExtensionBlockMetadata|string>} blocks - the blocks provided by this extension, plus separators.
+ * @property {Object.<ExtensionMenuMetadata>} menus - map of menu name to metadata about each of this extension's menus.
  */
 
 /**

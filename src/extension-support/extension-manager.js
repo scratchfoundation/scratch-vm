@@ -36,12 +36,22 @@ const builtinExtensions = {
  */
 
 /**
+ * @typedef {object} ConvertedBlockInfo - Raw extension block data paired with processed data ready for scratch-blocks
+ * @property {BlockInfo} info - the raw block info
+ * @property {object} json - the scratch-blocks JSON definition for this block
+ * @property {string} xml - the scratch-blocks XML definition for this block
+ */
+
+/**
  * @typedef {object} CategoryInfo - Information about a block category
  * @property {string} id - the unique ID of this category
+ * @property {string} name - the human-readable name of this category
+ * @property {string|undefined} blockIconURI - optional URI for the block icon image
  * @property {string} color1 - the primary color for this category, in '#rrggbb' format
  * @property {string} color2 - the secondary color for this category, in '#rrggbb' format
  * @property {string} color3 - the tertiary color for this category, in '#rrggbb' format
- * @property {Array.<BlockInfo>} block - the blocks in this category
+ * @property {Array.<ConvertedBlockInfo>} blocks - the blocks, separators, etc. in this category
+ * @property {Array.<object>} menus - the menus provided by this category
  */
 
 /**
@@ -205,7 +215,7 @@ class ExtensionManager {
     _registerExtensionInfo (serviceName, extensionInfo) {
         extensionInfo = this._prepareExtensionInfo(serviceName, extensionInfo);
         dispatch.call('runtime', '_registerExtensionPrimitives', extensionInfo).catch(e => {
-            log.error(`Failed to register primitives for extension on service ${serviceName}: ${JSON.stringify(e)}`);
+            log.error(`Failed to register primitives for extension on service ${serviceName}:`, e);
         });
     }
 
@@ -233,14 +243,23 @@ class ExtensionManager {
         extensionInfo.name = extensionInfo.name || extensionInfo.id;
         extensionInfo.blocks = extensionInfo.blocks || [];
         extensionInfo.targetTypes = extensionInfo.targetTypes || [];
-        extensionInfo.blocks = extensionInfo.blocks.reduce((result, blockInfo) => {
+        extensionInfo.blocks = extensionInfo.blocks.reduce((results, blockInfo) => {
             try {
-                result.push(this._prepareBlockInfo(serviceName, blockInfo));
+                let result;
+                switch (blockInfo) {
+                case '---': // separator
+                    result = '---';
+                    break;
+                default: // a BlockInfo object
+                    result = this._prepareBlockInfo(serviceName, blockInfo);
+                    break;
+                }
+                results.push(result);
             } catch (e) {
                 // TODO: more meaningful error reporting
                 log.error(`Error processing block: ${e.message}, Block:\n${JSON.stringify(blockInfo)}`);
             }
-            return result;
+            return results;
         }, []);
         extensionInfo.menus = extensionInfo.menus || [];
         extensionInfo.menus = this._prepareMenuInfo(serviceName, extensionInfo.menus);
@@ -309,24 +328,30 @@ class ExtensionManager {
             arguments: {}
         }, blockInfo);
         blockInfo.opcode = this._sanitizeID(blockInfo.opcode);
-        blockInfo.func = blockInfo.func ? this._sanitizeID(blockInfo.func) : blockInfo.opcode;
         blockInfo.text = blockInfo.text || blockInfo.opcode;
 
-        /**
-         * This is only here because the VM performs poorly when blocks return promises.
-         * @TODO make it possible for the VM to resolve a promise and continue during the same frame.
-         */
-        if (dispatch._isRemoteService(serviceName)) {
-            blockInfo.func = dispatch.call.bind(dispatch, serviceName, blockInfo.func);
-        } else {
-            const serviceObject = dispatch.services[serviceName];
-            const func = serviceObject[blockInfo.func];
-            if (func) {
-                blockInfo.func = func.bind(serviceObject);
+        if (blockInfo.blockType !== BlockType.EVENT) {
+            blockInfo.func = blockInfo.func ? this._sanitizeID(blockInfo.func) : blockInfo.opcode;
+
+            /**
+             * This is only here because the VM performs poorly when blocks return promises.
+             * @TODO make it possible for the VM to resolve a promise and continue during the same Scratch "tick"
+             */
+            if (dispatch._isRemoteService(serviceName)) {
+                blockInfo.func = dispatch.call.bind(dispatch, serviceName, blockInfo.func);
             } else {
-                throw new Error(`Could not find extension block function called ${blockInfo.func}`);
+                const serviceObject = dispatch.services[serviceName];
+                const func = serviceObject[blockInfo.func];
+                if (func) {
+                    blockInfo.func = func.bind(serviceObject);
+                } else if (blockInfo.blockType !== BlockType.EVENT) {
+                    throw new Error(`Could not find extension block function called ${blockInfo.func}`);
+                }
             }
+        } else if (blockInfo.func) {
+            log.warn(`Ignoring function "${blockInfo.func}" for event block ${blockInfo.opcode}`);
         }
+
         return blockInfo;
     }
 }

@@ -15,6 +15,7 @@ const BlockType = {
 
     /**
      * Specialized command block which may or may not run a child branch
+     * The thread continues with the next block whether or not a child branch ran.
      */
     CONDITIONAL: 'conditional',
 
@@ -22,6 +23,12 @@ const BlockType = {
      * Hat block which conditionally starts a block stack
      */
     HAT: 'hat',
+
+    /**
+     * Specialized command block which may or may not run a child branch
+     * If a child branch runs, the thread evaluates the loop block again.
+     */
+    LOOP: 'loop',
 
     /**
      * General reporter with numeric or string value
