@@ -8,6 +8,7 @@ const vmPackage = require('../../package.json');
 const Blocks = require('../engine/blocks');
 const Sprite = require('../sprites/sprite');
 const Variable = require('../engine/variable');
+const log = require('../util/log');
 
 const {loadCostume} = require('../import/load-costume.js');
 const {loadSound} = require('../import/load-sound.js');
@@ -25,16 +26,63 @@ const {deserializeCostume, deserializeSound} = require('./deserialize-assets.js'
  * @property {Map.<string, string>} extensionURLs - map of ID => URL from project metadata. May not match extensionIDs.
  */
 
+const INPUT_SAME_BLOCK_SHADOW = 1;
+const INPUT_BLOCK_NO_SHADOW = 2;
+const INPUT_DIFF_BLOCK_SHADOW = 3;
+// haven't found a case where block = null, but shadow is present...
+
+const serializeInputs = function (inputs) {
+    const obj = Object.create(null);
+    for (const inputName in inputs) {
+        if (!inputs.hasOwnProperty(inputName)) continue;
+        // if block and shadow refer to the same block, only serialize one
+        if (inputs[inputName].block === inputs[inputName].shadow) {
+            // has block and shadow, and they are the same
+            obj[inputName] = [
+                INPUT_SAME_BLOCK_SHADOW,
+                inputs[inputName].block
+            ];
+        } else if (inputs[inputName].shadow === null) {
+            // does not have shadow
+            obj[inputName] = [
+                INPUT_BLOCK_NO_SHADOW,
+                inputs[inputName].block
+            ];
+        } else {
+            // block and shadow are both present and are different
+            obj[inputName] = [
+                INPUT_DIFF_BLOCK_SHADOW,
+                inputs[inputName].block,
+                inputs[inputName].shadow
+            ];
+        }
+    }
+    return obj;
+};
+
+const serializeFields = function (fields) {
+    const obj = Object.create(null);
+    for (const fieldName in fields) {
+        if (!fields.hasOwnProperty(fieldName)) continue;
+        obj[fieldName] = [fields[fieldName].value];
+        if (fields[fieldName].hasOwnProperty('id')) {
+            obj[fieldName].push(fields[fieldName].id);
+        }
+    }
+    return obj;
+};
+
 const serializeBlock = function (block) {
     const obj = Object.create(null);
-    obj.id = block.id;
+    // obj.id = block.id; // don't need this, it's the index of this block in its containing object
     obj.opcode = block.opcode;
-    obj.next = block.next;
+    if (block.next) obj.next = block.next; // don't serialize next if null
+    // obj.next = if (block.next;
     obj.parent = block.parent;
-    obj.inputs = block.inputs;
-    obj.fields = block.fields;
+    obj.inputs = serializeInputs(block.inputs);
+    obj.fields = serializeFields(block.fields);
     obj.topLevel = block.topLevel ? block.topLevel : false;
-    obj.shadow = block.shadow;
+    obj.shadow = block.shadow; // I think we don't need this either..
     if (block.topLevel) {
         if (block.x) {
             obj.x = Math.round(block.x);
@@ -92,11 +140,48 @@ const serializeSound = function (sound) {
     return obj;
 };
 
+const serializeVariables = function (variables) {
+    const obj = Object.create(null);
+    // separate out variables into types at the top level so we don't have
+    // keep track of a type for each
+    obj.variables = Object.create(null);
+    obj.lists = Object.create(null);
+    obj.broadcasts = Object.create(null);
+    for (const varId in variables) {
+        const v = variables[varId];
+        if (v.type === Variable.BROADCAST_MESSAGE_TYPE) {
+            obj.broadcasts[varId] = [v.name, v.value];
+            continue;
+        }
+        if (v.type === Variable.LIST_TYPE) {
+            obj.lists[varId] = [v.name, v.value];
+            continue;
+        }
+
+        // should be a scalar type
+        obj.variables[varId] = [v.name]
+        let val = v.value;
+        if ((typeof val !== 'string') && (typeof val !== 'number')) {
+            log.info(`Variable: ${v.name} had value ${val} of type: ${typeof val} converting to string`);
+            val = JSON.stringify(val);
+        }
+        obj.variables[varId].push(val);
+        // Some hacked blocks have booleans as variable values
+        // (typeof v.value === 'string') || (typeof v.value === 'number') ?
+        //    v.value : JSON.stringify(v.value)];
+        if (v.isPersistent) obj.variables[varId].push(true);
+    }
+    return obj;
+};
+
 const serializeTarget = function (target) {
     const obj = Object.create(null);
     obj.isStage = target.isStage;
     obj.name = target.name;
-    obj.variables = target.variables; // This means that uids for variables will persist across saves/loads
+    const vars = serializeVariables(target.variables);
+    obj.variables = vars.variables;
+    obj.lists = vars.lists;
+    obj.broadcasts = vars.broadcasts;
     obj.blocks = serializeBlocks(target.blocks);
     obj.currentCostume = target.currentCostume;
     obj.costumes = target.costumes.map(serializeCostume);
@@ -142,6 +227,59 @@ const serialize = function (runtime) {
     return obj;
 };
 
+const deserializeInputs = function (inputs) {
+    // Explicitly not using Object.create(null) here
+    // because we call prototype functions later in the vm
+    const obj = {};
+    for (const inputName in inputs) {
+        if (!inputs.hasOwnProperty(inputName)) continue;
+        const inputDescArr = inputs[inputName];
+        let block = null;
+        let shadow = null;
+        const blockShadowInfo = inputDescArr[0];
+        if (blockShadowInfo === INPUT_SAME_BLOCK_SHADOW) {
+            // block and shadow are the same id, and only one is provided
+            block = shadow = inputDescArr[1];
+        } else if (blockShadowInfo === INPUT_BLOCK_NO_SHADOW) {
+            block = inputDescArr[1];
+        } else { // assume INPUT_DIFF_BLOCK_SHADOW
+            block = inputDescArr[1];
+            shadow = inputDescArr[2];
+        }
+        obj[inputName] = {
+            name: inputName,
+            block: block,
+            shadow: shadow
+        };
+    }
+    return obj;
+};
+
+const deserializeFields = function (fields) {
+    // Explicitly not using Object.create(null) here
+    // because we call prototype functions later in the vm
+    const obj = {};
+    for (const fieldName in fields) {
+        if (!fields.hasOwnProperty(fieldName)) continue;
+        const fieldDescArr = fields[fieldName];
+        obj[fieldName] = {
+            name: fieldName,
+            value: fieldDescArr[0]
+        };
+        if (fieldDescArr.length > 1) {
+            obj[fieldName].id = fieldDescArr[1];
+        }
+        if (fieldName === 'BROADCAST_OPTION') {
+            obj[fieldName].variableType = Variable.BROADCAST_MESSAGE_TYPE;
+        } else if (fieldName === 'VARIABLE') {
+            obj[fieldName].variableType = Variable.SCALAR_TYPE;
+        } else if (fieldName === 'LIST') {
+            obj[fieldName].variableType = Variable.LIST_TYPE;
+        }
+    }
+    return obj;
+};
+
 /**
  * Parse a single "Scratch object" and create all its in-memory VM objects.
  * @param {!object} object From-JSON "Scratch object:" sprite, stage, watcher.
@@ -170,6 +308,13 @@ const parseScratchObject = function (object, runtime, extensions, zip) {
         for (const blockId in object.blocks) {
             if (!object.blocks.hasOwnProperty(blockId)) continue;
             const blockJSON = object.blocks[blockId];
+            blockJSON.id = blockId; // add id back to block since it wasn't serialized
+            const serializedInputs = blockJSON.inputs;
+            const deserializedInputs = deserializeInputs(serializedInputs);
+            blockJSON.inputs = deserializedInputs;
+            const serializedFields = blockJSON.fields;
+            const deserializedFields = deserializeFields(serializedFields);
+            blockJSON.fields = deserializedFields;
             blocks.createBlock(blockJSON);
 
             const dotIndex = blockJSON.opcode.indexOf('.');
@@ -238,16 +383,53 @@ const parseScratchObject = function (object, runtime, extensions, zip) {
     const target = sprite.createClone();
     // Load target properties from JSON.
     if (object.hasOwnProperty('variables')) {
-        for (const j in object.variables) {
-            const variable = object.variables[j];
-            const newVariable = new Variable(
-                variable.id,
-                variable.name,
-                variable.type,
-                variable.isPersistent
-            );
-            newVariable.value = variable.value;
+        for (const varId in object.variables) {
+            const variable = object.variables[varId];
+            let newVariable;
+            if (Array.isArray(variable)) {
+                newVariable = new Variable(
+                    varId, // var id is the index of the variable desc array in the variables obj
+                    variable[0], // name of the variable
+                    Variable.SCALAR_TYPE, // type of the variable
+                    (variable.length === 3) ? variable[2] : false // isPersistent/isCloud
+                );
+                newVariable.value = variable[1];
+            } else {
+                newVariable = new Variable(
+                    variable.id,
+                    variable.name,
+                    variable.type,
+                    variable.isPersistent
+                );
+                newVariable.value = variable.value;
+            }
             target.variables[newVariable.id] = newVariable;
+        }
+    }
+    if (object.hasOwnProperty('lists')) {
+        for (const listId in object.lists) {
+            const list = object.lists[listId];
+            const newList = new Variable(
+                listId,
+                list[0],
+                Variable.LIST_TYPE,
+                false
+            );
+            newList.value = list[1];
+            target.variables[newList.id] = newList;
+        }
+    }
+    if (object.hasOwnProperty('broadcasts')) {
+        for (const broadcastId in object.broadcasts) {
+            const broadcast = object.broadcasts[broadcastId];
+            const newBroadcast = new Variable(
+                broadcastId,
+                broadcast[0],
+                Variable.BROADCAST_MESSAGE_TYPE,
+                false
+            );
+            newBroadcast.value = broadcast[1];
+            target.variables[newBroadcast.id] = newBroadcast;
         }
     }
     if (object.hasOwnProperty('x')) {

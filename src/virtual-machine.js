@@ -256,7 +256,13 @@ class VirtualMachine extends EventEmitter {
             zip.file(currCostume.fileName, currCostume.fileContent);
         }
 
-        return zip.generateAsync({type: 'blob'});
+        return zip.generateAsync({
+            type: 'blob',
+            compression: 'DEFLATE',
+            compressionOptions: {
+                level: 9 // best compression (level 1 would be best speed)
+            }
+        });
     }
 
     /**
