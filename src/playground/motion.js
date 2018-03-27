@@ -36,7 +36,7 @@
         .map(output => new VideoMotionView(motion, output));
     const view = views[0];
 
-    const defaultViews = [OUTPUT.INPUT, OUTPUT.XY_CELL, OUTPUT.T_CELL, OUTPUT.UV];
+    const defaultViews = [OUTPUT.INPUT, OUTPUT.XY_CELL, OUTPUT.T_CELL, OUTPUT.UV_CELL];
 
     const activators = document.createElement('div');
     activators.style.userSelect = 'none';
