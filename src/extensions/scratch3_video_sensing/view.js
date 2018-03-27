@@ -6,15 +6,17 @@ const THRESHOLD = 10;
 
 const OUTPUT = {
     INPUT: -1,
-    XYT: 0,
-    XYT_CELL: 1,
-    XY: 2,
-    XY_CELL: 3,
+    XY: 0,
+    XY_CELL: 1,
+    AB: 2,
+    AB_CELL: 3,
     T: 4,
     T_CELL: 5,
-    C: 6,
-    AB: 7,
-    UV: 8
+    XYT: 6,
+    XYT_CELL: 7,
+    C: 8,
+    C_CELL: 9,
+    UV_CELL: 10
 };
 
 class VideoMotionView {
@@ -186,19 +188,79 @@ class VideoMotionView {
                 const {gradX, gradY, gradT} = this._grads(address);
                 buffer[address] =
                     (0xff << 24) +
-                    ((gradY * gradT) << 8) +
-                    (gradX * gradT);
+                    (((Math.sqrt(gradY * gradT) * 0x0f) & 0xff) << 8) +
+                    ((Math.sqrt(gradX * gradT) * 0x0f) & 0xff);
+            });
+        }
+        if (this.output === OUTPUT.C_CELL) {
+            const winStep = (WINSIZE * 2) + 1;
+            const wmax = WIDTH - WINSIZE - 1;
+            const hmax = HEIGHT - WINSIZE - 1;
+
+            this._eachCell(WINSIZE + 1, WINSIZE + 1, wmax, hmax, winStep, winStep, eachAddress => {
+                let C2 = 0;
+                let C1 = 0;
+                let n = 0;
+
+                eachAddress(address => {
+                    const {gradX, gradY, gradT} = this._grads(address);
+                    C2 += gradX * gradT;
+                    C1 += gradY * gradT;
+                    n += 1;
+                });
+
+                C2 = Math.sqrt(C2);
+                C1 = Math.sqrt(C1);
+
+                eachAddress(address => {
+                    buffer[address] =
+                        (0xff << 24) +
+                        ((C1 & 0xff) << 8) +
+                        ((C2 & 0xff) << 0);
+                });
             });
         } else if (this.output === OUTPUT.AB) {
             this._eachAddress(1, 1, WIDTH - 1, HEIGHT - 1, address => {
                 const {gradX, gradY} = this._grads(address);
                 buffer[address] =
                     (0xff << 24) +
-                    ((gradX * gradY) << 16) +
-                    ((gradY * gradY) << 8) +
-                    (gradX * gradX);
+                    (((gradX * gradY) & 0xff) << 16) +
+                    (((gradY * gradY) & 0xff) << 8) +
+                    ((gradX * gradX) & 0xff);
             });
-        } else if (this.output === OUTPUT.UV) {
+        }
+        if (this.output === OUTPUT.AB_CELL) {
+            const winStep = (WINSIZE * 2) + 1;
+            const wmax = WIDTH - WINSIZE - 1;
+            const hmax = HEIGHT - WINSIZE - 1;
+
+            this._eachCell(WINSIZE + 1, WINSIZE + 1, wmax, hmax, winStep, winStep, eachAddress => {
+                let A2 = 0;
+                let A1B2 = 0;
+                let B1 = 0;
+                let n = 0;
+
+                eachAddress(address => {
+                    const {gradX, gradY} = this._grads(address);
+                    A2 += gradX * gradX;
+                    A1B2 += gradX * gradY;
+                    B1 += gradY * gradY;
+                    n += 1;
+                });
+
+                A2 = Math.sqrt(A2);
+                A1B2 = Math.sqrt(A1B2);
+                B1 = Math.sqrt(B1);
+
+                eachAddress(address => {
+                    buffer[address] =
+                        (0xff << 24) +
+                        ((A1B2 & 0xff) << 16) +
+                        ((B1 & 0xff) << 8) +
+                        (A2 & 0xff);
+                });
+            });
+        } else if (this.output === OUTPUT.UV_CELL) {
             const winStep = (WINSIZE * 2) + 1;
             const wmax = WIDTH - WINSIZE - 1;
             const hmax = HEIGHT - WINSIZE - 1;
