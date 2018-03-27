@@ -1,5 +1,6 @@
 const dispatch = require('../dispatch/central-dispatch');
 const log = require('../util/log');
+const maybeFormatMessage = require('../util/maybe-format-message');
 
 const BlockType = require('./block-type');
 
@@ -286,12 +287,23 @@ class ExtensionManager {
     _getExtensionMenuItems (extensionObject, menuName) {
         // Fetch the items appropriate for the target currently being edited. This assumes that menus only
         // collect items when opened by the user while editing a particular target.
-        const editingTarget = this.runtime.getEditingTarget();
+        const editingTarget = this.runtime.getEditingTarget() || this.runtime.getTargetForStage();
         const editingTargetID = editingTarget ? editingTarget.id : null;
+        const extensionMessageContext = this.runtime.makeMessageContextForTarget(editingTarget);
 
         // TODO: Fix this to use dispatch.call when extensions are running in workers.
         const menuFunc = extensionObject[menuName];
-        const menuItems = menuFunc.call(extensionObject, editingTargetID);
+        const menuItems = menuFunc.call(extensionObject, editingTargetID).map(
+            item => {
+                item = maybeFormatMessage(item, extensionMessageContext);
+                if (typeof item === 'object') {
+                    return [
+                        maybeFormatMessage(item.text, extensionMessageContext),
+                        item.value
+                    ];
+                }
+                return item;
+            });
 
         if (!menuItems || menuItems.length < 1) {
             throw new Error(`Extension menu returned no items: ${menuName}`);

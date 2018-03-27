@@ -6,9 +6,11 @@ const ArgumentType = require('../extension-support/argument-type');
 const Blocks = require('./blocks');
 const BlockType = require('../extension-support/block-type');
 const Sequencer = require('./sequencer');
+const TargetType = require('../extension-support/target-type');
 const Thread = require('./thread');
 const Profiler = require('./profiler');
 const log = require('../util/log');
+const maybeFormatMessage = require('../util/maybe-format-message');
 
 // Virtual I/O devices.
 const Clock = require('../io/clock');
@@ -496,6 +498,19 @@ class Runtime extends EventEmitter {
     }
 
     /**
+     * Create a context ("args") object for use with `formatMessage` on messages which might be target-specific.
+     * @param {Target} [target] - the target to use as context. If a target is not provided, default to the current
+     * editing target or the stage.
+     */
+    makeMessageContextForTarget (target) {
+        const context = {};
+        target = target || this.getEditingTarget() || this.getTargetForStage();
+        if (target) {
+            context.targetType = (target.isStage ? TargetType.STAGE : TargetType.SPRITE);
+        }
+    }
+
+    /**
      * Register the primitives provided by an extension.
      * @param {ExtensionMetadata} extensionInfo - information about the extension (id, blocks, etc.)
      * @private
@@ -503,7 +518,7 @@ class Runtime extends EventEmitter {
     _registerExtensionPrimitives (extensionInfo) {
         const categoryInfo = {
             id: extensionInfo.id,
-            name: extensionInfo.name,
+            name: maybeFormatMessage(extensionInfo.name),
             blockIconURI: extensionInfo.blockIconURI,
             menuIconURI: extensionInfo.menuIconURI,
             color1: '#FF6680',
@@ -591,14 +606,16 @@ class Runtime extends EventEmitter {
         if (typeof menuItems === 'function') {
             options = menuItems;
         } else {
+            const extensionMessageContext = this.makeMessageContextForTarget();
             options = menuItems.map(item => {
-                switch (typeof item) {
+                const formattedItem = maybeFormatMessage(item, extensionMessageContext);
+                switch (typeof formattedItem) {
                 case 'string':
-                    return [item, item];
+                    return [formattedItem, formattedItem];
                 case 'object':
-                    return [item.text, item.value];
+                    return [maybeFormatMessage(item.text, extensionMessageContext), item.value];
                 default:
-                    throw new Error(`Can't interpret menu item: ${item}`);
+                    throw new Error(`Can't interpret menu item: ${JSON.stringify(item)}`);
                 }
             });
         }
@@ -713,12 +730,14 @@ class Runtime extends EventEmitter {
         let inBranchNum = 0; // how many branches have we placed into the JSON so far?
         let outLineNum = 0; // used for scratch-blocks `message${outLineNum}` and `args${outLineNum}`
         const convertPlaceholders = this._convertPlaceholders.bind(this, context);
+        const extensionMessageContext = this.makeMessageContextForTarget();
 
         // alternate between a block "arm" with text on it and an open slot for a substack
         while (inTextNum < blockText.length || inBranchNum < blockInfo.branchCount) {
             if (inTextNum < blockText.length) {
                 context.outLineNum = outLineNum;
-                const convertedText = blockText[inTextNum].replace(/\[(.+?)]/g, convertPlaceholders);
+                const lineText = maybeFormatMessage(blockText[inTextNum], extensionMessageContext);
+                const convertedText = lineText.replace(/\[(.+?)]/g, convertPlaceholders);
                 if (blockJSON[`message${outLineNum}`]) {
                     blockJSON[`message${outLineNum}`] += convertedText;
                 } else {
@@ -784,7 +803,7 @@ class Runtime extends EventEmitter {
         const argTypeInfo = ArgumentTypeMap[argInfo.type] || {};
         const defaultValue = (typeof argInfo.defaultValue === 'undefined' ?
             '' :
-            escapeHtml(argInfo.defaultValue.toString()));
+            escapeHtml(maybeFormatMessage(argInfo.defaultValue, this.makeMessageContextForTarget()).toString()));
 
         if (argTypeInfo.check) {
             argJSON.check = argTypeInfo.check;
