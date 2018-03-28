@@ -31,6 +31,53 @@ const INPUT_BLOCK_NO_SHADOW = 2;
 const INPUT_DIFF_BLOCK_SHADOW = 3;
 // haven't found a case where block = null, but shadow is present...
 
+// Constants referring to 'primitive' types, e.g.
+// math_number
+// text
+// event_broadcast_menu
+// data_variable
+// data_listcontents
+const MATH_PRIMITIVE = 4; // there's no reason these constants can't collide
+const TEXT_PRIMITIVE = 5; // with the above, but removing duplication for clarity
+const BROADCAST_PRIMITIVE = 6;
+const VAR_PRIMITIVE = 7;
+const LIST_PRIMITIVE = 8;
+
+const serializePrimitiveBlock = function (block) {
+    // Returns an array represeting a primitive block or null if not one of
+    // the primitive types above
+    if (block.opcode === 'math_number') {
+        const numField = block.fields.NUM;
+        // If the primitive block has already been serialized, e.g. serializeFields has run on it
+        // then the value of its NUM field will be an array with the value we want
+        // if (Array.isArray(numField)) return [MATH_PRIMITIVE, numField[0]];
+        // otherwise get the num out of the unserialized field
+        return [MATH_PRIMITIVE, numField.value];
+    }
+    if (block.opcode === 'text') {
+        const textField = block.fields.TEXT;
+        // if (Array.isArray(textField)) return [TEXT_PRIMITIVE, textField[0]];
+        return [TEXT_PRIMITIVE, textField.value];
+    }
+    if (block.opcode === 'event_broadcast_menu') {
+        const broadcastField = block.fields.BROADCAST_OPTION;
+        // if (Array.isArray(broadcastField)) return [BROADCAST_PRIMITIVE, broadcastField[0], broadcastField[1]];
+        return [BROADCAST_PRIMITIVE, broadcastField.value, broadcastField.id];
+    }
+    if (block.opcode === 'data_variable') {
+        const variableField = block.fields.VARIABLE;
+        // if (Array.isArray(variableField)) return [VAR_PRIMITIVE, variableField[0], variableField[1]];
+        return [VAR_PRIMITIVE, variableField.value, variableField.id];
+    }
+    if (block.opcode === 'data_listcontents') {
+        const listField = block.fields.LIST;
+        // if (Array.isArray(listField)) return [LIST_PRIMITIVE, listField[0], listField[1]];
+        return [LIST_PRIMITIVE, listField.value, listField.id];
+    }
+    // If none of the above, return null
+    return null;
+};
+
 const serializeInputs = function (inputs) {
     const obj = Object.create(null);
     for (const inputName in inputs) {
@@ -73,6 +120,9 @@ const serializeFields = function (fields) {
 };
 
 const serializeBlock = function (block) {
+    const serializedPrimitive = serializePrimitiveBlock(block);
+    if (serializedPrimitive) return serializedPrimitive;
+    // If serializedPrimitive is null, proceed with serializing a non-primitive block
     const obj = Object.create(null);
     // obj.id = block.id; // don't need this, it's the index of this block in its containing object
     obj.opcode = block.opcode;
@@ -97,11 +147,50 @@ const serializeBlock = function (block) {
     return obj;
 };
 
+// caution this function modifies its inputs directly...........
+const compressInputTree = function (block, blocks) {
+    // const newInputs = Object.create(null);
+    // second pass on the block
+    // so the inputs field should be an object of key - array pairs
+    const serializedInputs = block.inputs;
+    for (const inputName in serializedInputs) {
+        // don't need to check for hasOwnProperty because of how we constructed
+        // inputs
+        const currInput = serializedInputs[inputName];
+        // traverse currInput skipping the first element, which describes whether the block
+        // and shadow are the same
+        for (let i = 1; i < currInput.length; i++) {
+            if (!currInput[i]) continue; // need this check b/c block/shadow can be null
+            const blockOrShadowID = currInput[i];
+            // newInputs[inputName][i] = blocks[blockOrShadowID];
+            // replace element of currInput directly
+            // (modifying input block directly)
+            const blockOrShadow = blocks[blockOrShadowID];
+            if (Array.isArray(blockOrShadow)) {
+                currInput[i] = blockOrShadow;
+                delete blocks[blockOrShadowID];
+            }
+        }
+    }
+    // block.inputs = newInputs;
+    return block;
+};
+
 const serializeBlocks = function (blocks) {
     const obj = Object.create(null);
     for (const blockID in blocks) {
         if (!blocks.hasOwnProperty(blockID)) continue;
-        obj[blockID] = serializeBlock(blocks[blockID]);
+        obj[blockID] = serializeBlock(blocks[blockID], blocks);
+    }
+    // once we have completed a first pass, do a second pass on block inputs
+    for (const serializedBlockId in obj) {
+        // don't need to do the hasOwnProperty check here since we
+        // created an object that doesn't get extra properties/functions
+        const serializedBlock = obj[serializedBlockId];
+        // caution, this function deletes parts of this object in place as
+        // it's traversing it (we could do a third pass...)
+        obj[serializedBlockId] = compressInputTree(serializedBlock, obj);
+        // second pass on connecting primitives to serialized inputs directly
     }
     return obj;
 };
@@ -150,7 +239,7 @@ const serializeVariables = function (variables) {
     for (const varId in variables) {
         const v = variables[varId];
         if (v.type === Variable.BROADCAST_MESSAGE_TYPE) {
-            obj.broadcasts[varId] = [v.name, v.value];
+            obj.broadcasts[varId] = v.value; // name and value is the same for broadcast msgs
             continue;
         }
         if (v.type === Variable.LIST_TYPE) {
@@ -159,7 +248,7 @@ const serializeVariables = function (variables) {
         }
 
         // should be a scalar type
-        obj.variables[varId] = [v.name]
+        obj.variables[varId] = [v.name];
         let val = v.value;
         if ((typeof val !== 'string') && (typeof val !== 'number')) {
             log.info(`Variable: ${v.name} had value ${val} of type: ${typeof val} converting to string`);
@@ -424,11 +513,12 @@ const parseScratchObject = function (object, runtime, extensions, zip) {
             const broadcast = object.broadcasts[broadcastId];
             const newBroadcast = new Variable(
                 broadcastId,
-                broadcast[0],
+                broadcast,
                 Variable.BROADCAST_MESSAGE_TYPE,
                 false
             );
-            newBroadcast.value = broadcast[1];
+            // no need to explicitly set the value, variable constructor
+            // sets the value to the same as the name for broadcast msgs
             target.variables[newBroadcast.id] = newBroadcast;
         }
     }
