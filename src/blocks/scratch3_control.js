@@ -17,6 +17,7 @@ class Scratch3ControlBlocks {
         return {
             control_repeat: this.repeat,
             control_repeat_until: this.repeatUntil,
+            control_for_each: this.forEach,
             control_forever: this.forever,
             control_wait: this.wait,
             control_wait_until: this.waitUntil,
@@ -57,6 +58,21 @@ class Scratch3ControlBlocks {
         const condition = Cast.toBoolean(args.CONDITION);
         // If the condition is true, start the branch.
         if (!condition) {
+            util.startBranch(1, true);
+        }
+    }
+
+    forEach (args, util) {
+        const variable = util.target.lookupOrCreateVariable(
+            args.VARIABLE.id, args.VARIABLE.name);
+
+        if (typeof util.stackFrame.index === 'undefined') {
+            util.stackFrame.index = 0;
+        }
+
+        if (util.stackFrame.index < Number(args.VALUE)) {
+            util.stackFrame.index++;
+            variable.value = util.stackFrame.index;
             util.startBranch(1, true);
         }
     }
