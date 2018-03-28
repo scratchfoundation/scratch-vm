@@ -56,12 +56,9 @@ test('forEach', t => {
     const rt = new Runtime();
     const c = new Control(rt);
 
-    // for each (variable) in "abcd"
-    // ..should yield variable values "a", "b", "c", "d"
     const variableValues = [];
     const variable = {value: 0};
-    let value = 'abcd';
-
+    let value;
     const util = {
         stackFrame: Object.create(null),
         target: {
@@ -74,9 +71,6 @@ test('forEach', t => {
             c.forEach({VARIABLE: {}, VALUE: value}, util);
         }
     };
-
-    c.forEach({VARIABLE: {}, VALUE: value}, util);
-    t.deepEqual(variableValues, ['a', 'b', 'c', 'd']);
 
     // for each (variable) in "5"
     // ..should yield variable values 1, 2, 3, 4, 5
@@ -95,25 +89,6 @@ test('forEach', t => {
     value = 4;
     c.forEach({VARIABLE: {}, VALUE: value}, util);
     t.deepEqual(variableValues, [1, 2, 3, 4]);
-
-    // for each (variable) in 10:
-    //   if variable % 4 === 3:
-    //     variable++
-    // ..should yield variable values 1, 2, 3,  5, 6, 7,  9, 10
-    // (this script skips multiples of 4)
-    util.stackFrame = Object.create(null);
-    variableValues.splice(0);
-    variable.value = 0;
-    value = 10;
-    util.startBranch = function () {
-        variableValues.push(variable.value);
-        if (variable.value % 4 === 3) {
-            variable.value++;
-        }
-        c.forEach({VARIABLE: {}, VALUE: value}, util);
-    };
-    c.forEach({VARIABLE: {}, VALUE: value}, util);
-    t.deepEquals(variableValues, [1, 2, 3, 5, 6, 7, 9, 10]);
 
     t.end();
 });
