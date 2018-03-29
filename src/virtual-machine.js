@@ -20,6 +20,18 @@ const {serializeSounds, serializeCostumes} = require('./serialization/serialize-
 
 const RESERVED_NAMES = ['_mouse_', '_stage_', '_edge_', '_myself_', '_random_'];
 
+const CORE_EXTENSIONS = [
+    // 'motion',
+    // 'looks',
+    // 'sound',
+    // 'events',
+    // 'control',
+    // 'sensing',
+    // 'operators',
+    // 'variables',
+    // 'myBlocks'
+];
+
 /**
  * Handles connections between blocks, stage, and extensions.
  * @constructor
@@ -314,6 +326,17 @@ class VirtualMachine extends EventEmitter {
      */
     installTargets (targets, extensions, wholeProject) {
         const extensionPromises = [];
+
+        if (wholeProject) {
+            this.clear();
+
+            CORE_EXTENSIONS.forEach(extensionID => {
+                if (!this.extensionManager.isExtensionLoaded(extensionID)) {
+                    extensionPromises.push(this.extensionManager.loadExtensionURL(extensionID));
+                }
+            });
+        }
+
         extensions.extensionIDs.forEach(extensionID => {
             if (!this.extensionManager.isExtensionLoaded(extensionID)) {
                 const extensionURL = extensions.extensionURLs.get(extensionID) || extensionID;
@@ -324,9 +347,6 @@ class VirtualMachine extends EventEmitter {
         targets = targets.filter(target => !!target);
 
         return Promise.all(extensionPromises).then(() => {
-            if (wholeProject) {
-                this.clear();
-            }
             targets.forEach(target => {
                 this.runtime.targets.push(target);
                 (/** @type RenderedTarget */ target).updateAllDrawableProperties();
