@@ -60,7 +60,7 @@
     "scratch-render": "latest",
     "scratch-storage": "^0.4.0",
     "script-loader": "0.7.2",
-    "socket.io-client": "2.0.4",
+    "socket.io-client": "2.1.0",
     "stats.js": "^0.17.0",
     "tap": "^11.0.1",
     "text-encoding": "0.6.4",
