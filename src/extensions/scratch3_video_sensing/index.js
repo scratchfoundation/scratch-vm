@@ -272,6 +272,19 @@ class Scratch3VideoSensingBlocks {
                             defaultValue: 1
                         }
                     }
+                },
+                {
+                    // @todo this hat needs to be set itself to restart existing
+                    // threads like Scratch 2's behaviour.
+                    opcode: 'whenMotionGreaterThan',
+                    text: 'when video motion > [REFERENCE]',
+                    blockType: BlockType.HAT,
+                    arguments: {
+                        REFERENCE: {
+                            type: ArgumentType.NUMBER,
+                            defaultValue: 10
+                        }
+                    }
                 }
             ],
             menus: {
@@ -281,14 +294,32 @@ class Scratch3VideoSensingBlocks {
         };
     }
 
+    /**
+     * Analyze a part of the frame that a target overlaps.
+     * @param {Target} target - a target to determine where to analyze
+     * @returns {MotionState} the motion state for the given target
+     */
+    _analyzeLocalMotion (target) {
+        const drawable = this.runtime.renderer._allDrawables[target.drawableID];
+        const state = this._getMotionState(target);
+        this.detect.getLocalMotion(drawable, state);
+        return state;
+    }
+
+    /**
+     * A scratch reporter block handle that analyzes the last two frames and
+     * depending on the arguments, returns the motion or direction for the
+     * whole stage or just the target sprite.
+     * @param {object} args - the block arguments
+     * @param {BlockUtility} util - the block utility
+     * @returns {number} the motion amount or direction of the stage or sprite
+     */
     videoOn (args, util) {
         this.detect.analyzeFrame();
 
         let state = this.detect;
         if (Number(args.STAGE_SPRITE) === 2) {
-            const drawable = this.runtime.renderer._allDrawables[util.target.drawableID];
-            state = this._getMotionState(util.target);
-            this.detect.getLocalMotion(drawable, state);
+            state = this._analyzeLocalMotion(util.target);
         }
 
         if (Number(args.MOTION_DIRECTION) === 1) {
@@ -298,38 +329,18 @@ class Scratch3VideoSensingBlocks {
     }
 
     /**
-     * Check if the stack timer needs initialization.
-     * @param {object} util - utility object provided by the runtime.
-     * @return {boolean} - true if the stack timer needs to be initialized.
-     * @private
+     * A scratch hat block edge handle that analyzes the last two frames where
+     * the target sprite overlaps and if it has more motion than the given
+     * reference value.
+     * @param {object} args - the block arguments
+     * @param {BlockUtility} util - the block utility
+     * @returns {boolean} true if the sprite overlaps more motion than the
+     *   reference
      */
-    _stackTimerNeedsInit (util) {
-        return !util.stackFrame.timer;
-    }
-
-    /**
-     * Start the stack timer and the yield the thread if necessary.
-     * @param {object} util - utility object provided by the runtime.
-     * @param {number} duration - a duration in seconds to set the timer for.
-     * @private
-     */
-    _startStackTimer (util, duration) {
-        util.stackFrame.timer = new Timer();
-        util.stackFrame.timer.start();
-        util.stackFrame.duration = duration;
-        util.yield();
-    }
-
-    /**
-     * Check the stack timer, and if its time is not up yet, yield the thread.
-     * @param {object} util - utility object provided by the runtime.
-     * @private
-     */
-    _checkStackTimer (util) {
-        const timeElapsed = util.stackFrame.timer.timeElapsed();
-        if (timeElapsed < util.stackFrame.duration * 1000) {
-            util.yield();
-        }
+    whenMotionGreaterThan (args, util) {
+        this.detect.analyzeFrame();
+        const state = this._analyzeLocalMotion(util.target);
+        return state.motionAmount > Number(args.REFERENCE);
     }
 }
 
