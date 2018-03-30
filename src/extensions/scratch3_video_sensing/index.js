@@ -2,7 +2,6 @@ const ArgumentType = require('../../extension-support/argument-type');
 const BlockType = require('../../extension-support/block-type');
 const Clone = require('../../util/clone');
 const log = require('../../util/log');
-const Timer = require('../../util/timer');
 
 const VideoMotion = require('./lib');
 
