@@ -5,7 +5,7 @@ const BlockType = require('../../extension-support/block-type');
 const Clone = require('../../util/clone');
 const log = require('../../util/log');
 
-const VideoMotion = require('./lib');
+const VideoMotion = require('./library');
 
 /**
  * Icon svg to be displayed at the left edge of each extension block, encoded as a data URI.
