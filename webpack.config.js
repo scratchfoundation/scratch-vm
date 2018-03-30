@@ -87,7 +87,7 @@ module.exports = [
                 // Renderer
                 'scratch-render'
             ],
-            'motion-extension': './src/extensions/scratch3_video_sensing/debug'
+            'video-sensing-extension-debug': './src/extensions/scratch3_video_sensing/debug'
         },
         output: {
             path: path.resolve(__dirname, 'playground'),
@@ -101,7 +101,7 @@ module.exports = [
                 },
                 {
                     test: require.resolve('./src/extensions/scratch3_video_sensing/debug.js'),
-                    loader: 'expose-loader?Scratch3MotionDetect'
+                    loader: 'expose-loader?Scratch3VideoSensingDebug'
                 },
                 {
                     test: require.resolve('stats.js/build/stats.min.js'),
