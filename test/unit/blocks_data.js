@@ -6,7 +6,7 @@ const blocks = new Data();
 const lists = {};
 const util = {
     target: {
-        lookupOrCreateList(id, name) {
+        lookupOrCreateList (id, name) {
             if (!(name in lists)) {
                 lists[name] = {value: []};
             }
