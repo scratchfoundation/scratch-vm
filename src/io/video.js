@@ -133,6 +133,9 @@ class Video {
         this._singleSetup = null;
         // by clearing refs to video and track, we should lose our hold over the camera
         this._video = null;
+        if (this._track) {
+            this._track.stop();
+        }
         this._track = null;
     }
 
