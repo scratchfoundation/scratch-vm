@@ -341,6 +341,18 @@ const parseScratchObject = function (object, runtime, extensions, topLevel) {
     if (object.hasOwnProperty('tempoBPM')) {
         target.tempo = object.tempoBPM;
     }
+    if (object.hasOwnProperty('videoAlpha')) {
+        // SB2 stores alpha as opacity, where 1.0 is opaque.
+        // We convert to a percentage, and invert it so 100% is full transparency.
+        target.videoTransparency = 100 - (100 * object.videoAlpha);
+    }
+    if (object.hasOwnProperty('info')) {
+        if (object.info.hasOwnProperty('videoOn')) {
+            if (object.info.videoOn) {
+                target.videoState = RenderedTarget.VIDEO_STATE.ON;
+            }
+        }
+    }
 
     target.isStage = topLevel;
 
