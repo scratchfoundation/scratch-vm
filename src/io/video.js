@@ -167,8 +167,9 @@ class Video {
     }
 
     _disablePreview () {
-        if (this._skin) {
+        if (this._skin && this._drawable) {
             this._skin.clear();
+            this._drawable.updateProperties({visible: false});
         }
         this._renderPreviewFrame = null;
     }
@@ -213,7 +214,16 @@ class Video {
 
             this._renderPreviewFrame();
         }
+    }
 
+    /**
+     * Set the preview ghost effect
+     * @param {number} ghost from 0 (visible) to 100 (invisible) - ghost effect
+     */
+    setPreviewGhost (ghost) {
+        if (this._drawable) {
+            this._drawable.updateProperties({ghost});
+        }
     }
 
     get videoReady () {
