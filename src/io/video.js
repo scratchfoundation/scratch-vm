@@ -120,157 +120,14 @@ class Video {
     }
 
     /**
-     * Create a video stream.
-     * Should probably be moved to -render or somewhere similar later
-     * @private
-     * @return {Promise} When video has been received, rejected if video is not received
+     * Disable video stream (turn video off)
      */
-    _setupVideo () {
-        if (this._singleSetup) {
-            return this._singleSetup;
-        }
-
-        this._video = document.createElement('video');
-        const video = new Promise((resolve, reject) => {
-            navigator.getUserMedia({
-                audio: false,
-                video: {
-                    width: {min: 480, ideal: 640},
-                    height: {min: 360, ideal: 480}
-                }
-            }, stream => {
-                this._video.src = window.URL.createObjectURL(stream);
-                // Hint to the stream that it should load. A standard way to do this
-                // is add the video tag to the DOM. Since this extension wants to
-                // hide the video tag and instead render a sample of the stream into
-                // the webgl rendered Scratch canvas, another hint like this one is
-                // needed.
-                this._track = stream.getTracks()[0];
-                resolve(this._video);
-            }, err => {
-                // There are probably some error types we could handle gracefully here.
-                this._singleSetup = null;
-                reject(err);
-            });
-        });
-
-        this._singleSetup = video.then(() => this._setupPreview());
-        return this._singleSetup;
-    }
-
     disableVideo () {
         this._disablePreview();
         this._singleSetup = null;
         // by clearing refs to video and track, we should lose our hold over the camera
         this._video = null;
         this._track = null;
-    }
-
-    _disablePreview () {
-        if (this._skin && this._drawable) {
-            this._skin.clear();
-            this._drawable.updateProperties({visible: false});
-        }
-        this._renderPreviewFrame = null;
-    }
-
-    _setupPreview () {
-        const {renderer} = this.runtime;
-        if (!renderer) return;
-
-        if (this._skinId === -1 && this._skin === null && this._drawable === -1) {
-            this._skinId = renderer.createPenSkin();
-            this._skin = renderer._allSkins[this._skinId];
-            this._drawable = renderer.createDrawable();
-            renderer.setDrawableOrder(
-                this._drawable,
-                Video.ORDER
-            );
-            renderer.updateDrawableProperties(this._drawable, {
-                skinId: this._skinId
-            });
-        }
-
-        // if we haven't already created and started a preview frame render loop, do so
-        if (!this._renderPreviewFrame) {
-            this._drawable.updateProperties({visible: true});
-
-            this._renderPreviewFrame = () => {
-                if (!this._renderPreviewFrame) {
-                    return;
-                }
-
-                setTimeout(this._renderPreviewFrame, this.runtime.currentStepTime);
-
-                const canvas = this.getFrame({format: Video.FORMAT_CANVAS});
-
-                if (!canvas) {
-                    return;
-                }
-
-                const xOffset = Video.DIMENSIONS[0] / -2;
-                const yOffset = Video.DIMENSIONS[1] / 2;
-                this._skin.drawStamp(canvas, xOffset, yOffset);
-                this.runtime.requestRedraw();
-            };
-
-            this._renderPreviewFrame();
-        }
-    }
-
-    /**
-     * Set the preview ghost effect
-     * @param {number} ghost from 0 (visible) to 100 (invisible) - ghost effect
-     */
-    setPreviewGhost (ghost) {
-        if (this._drawable) {
-            this._drawable.updateProperties({ghost});
-        }
-    }
-
-    get videoReady () {
-        if (!this._video) {
-            return false;
-        }
-        if (!this._track) {
-            return false;
-        }
-        const {videoWidth, videoHeight} = this._video;
-        if (typeof videoWidth !== 'number' || typeof videoHeight !== 'number') {
-            return false;
-        }
-        if (videoWidth === 0 || videoHeight === 0) {
-            return false;
-        }
-        return true;
-    }
-
-    /**
-     * get an internal workspace for canvas/context/caches
-     * this uses some document stuff to create a canvas and what not, probably needs abstraction
-     * into the renderer layer?
-     * @private
-     * @return {object} A workspace for canvas/data storage.  Internal format not documented intentionally
-     */
-    _getWorkspace ({dimensions, mirror}) {
-        let workspace = this._workspace.find(space => (
-            space.dimensions.join('-') === dimensions.join('-') &&
-            space.mirror === mirror
-        ));
-        if (!workspace) {
-            workspace = {
-                dimensions,
-                mirror,
-                canvas: document.createElement('canvas'),
-                lastUpdate: 0,
-                cacheData: {}
-            };
-            workspace.canvas.width = dimensions[0];
-            workspace.canvas.height = dimensions[1];
-            workspace.context = workspace.canvas.getContext('2d');
-            this._workspace.push(workspace);
-        }
-        return workspace;
     }
 
     /**
@@ -337,6 +194,154 @@ class Video {
 
         return formatCache.lastData;
     }
+
+    /**
+     * Set the preview ghost effect
+     * @param {number} ghost from 0 (visible) to 100 (invisible) - ghost effect
+     */
+    setPreviewGhost (ghost) {
+        if (this._drawable) {
+            this._drawable.updateProperties({ghost});
+        }
+    }
+
+
+    /**
+     * Create a video stream.
+     * Should probably be moved to -render or somewhere similar later
+     * @private
+     * @return {Promise} When video has been received, rejected if video is not received
+     */
+    _setupVideo () {
+        if (this._singleSetup) {
+            return this._singleSetup;
+        }
+
+        this._video = document.createElement('video');
+        const video = new Promise((resolve, reject) => {
+            navigator.getUserMedia({
+                audio: false,
+                video: {
+                    width: {min: 480, ideal: 640},
+                    height: {min: 360, ideal: 480}
+                }
+            }, stream => {
+                this._video.src = window.URL.createObjectURL(stream);
+                // Hint to the stream that it should load. A standard way to do this
+                // is add the video tag to the DOM. Since this extension wants to
+                // hide the video tag and instead render a sample of the stream into
+                // the webgl rendered Scratch canvas, another hint like this one is
+                // needed.
+                this._track = stream.getTracks()[0];
+                resolve(this._video);
+            }, err => {
+                // There are probably some error types we could handle gracefully here.
+                this._singleSetup = null;
+                reject(err);
+            });
+        });
+
+        this._singleSetup = video.then(() => this._setupPreview());
+        return this._singleSetup;
+    }
+
+    _disablePreview () {
+        if (this._skin && this._drawable) {
+            this._skin.clear();
+            this._drawable.updateProperties({visible: false});
+        }
+        this._renderPreviewFrame = null;
+    }
+
+    _setupPreview () {
+        const {renderer} = this.runtime;
+        if (!renderer) return;
+
+        if (this._skinId === -1 && this._skin === null && this._drawable === -1) {
+            this._skinId = renderer.createPenSkin();
+            this._skin = renderer._allSkins[this._skinId];
+            this._drawable = renderer.createDrawable();
+            renderer.setDrawableOrder(
+                this._drawable,
+                Video.ORDER
+            );
+            renderer.updateDrawableProperties(this._drawable, {
+                skinId: this._skinId
+            });
+        }
+
+        // if we haven't already created and started a preview frame render loop, do so
+        if (!this._renderPreviewFrame) {
+            this._drawable.updateProperties({visible: true});
+
+            this._renderPreviewFrame = () => {
+                if (!this._renderPreviewFrame) {
+                    return;
+                }
+
+                setTimeout(this._renderPreviewFrame, this.runtime.currentStepTime);
+
+                const canvas = this.getFrame({format: Video.FORMAT_CANVAS});
+
+                if (!canvas) {
+                    return;
+                }
+
+                const xOffset = Video.DIMENSIONS[0] / -2;
+                const yOffset = Video.DIMENSIONS[1] / 2;
+                this._skin.drawStamp(canvas, xOffset, yOffset);
+                this.runtime.requestRedraw();
+            };
+
+            this._renderPreviewFrame();
+        }
+    }
+
+    get videoReady () {
+        if (!this._video) {
+            return false;
+        }
+        if (!this._track) {
+            return false;
+        }
+        const {videoWidth, videoHeight} = this._video;
+        if (typeof videoWidth !== 'number' || typeof videoHeight !== 'number') {
+            return false;
+        }
+        if (videoWidth === 0 || videoHeight === 0) {
+            return false;
+        }
+        return true;
+    }
+
+    /**
+     * get an internal workspace for canvas/context/caches
+     * this uses some document stuff to create a canvas and what not, probably needs abstraction
+     * into the renderer layer?
+     * @private
+     * @return {object} A workspace for canvas/data storage.  Internal format not documented intentionally
+     */
+    _getWorkspace ({dimensions, mirror}) {
+        let workspace = this._workspace.find(space => (
+            space.dimensions.join('-') === dimensions.join('-') &&
+            space.mirror === mirror
+        ));
+        if (!workspace) {
+            workspace = {
+                dimensions,
+                mirror,
+                canvas: document.createElement('canvas'),
+                lastUpdate: 0,
+                cacheData: {}
+            };
+            workspace.canvas.width = dimensions[0];
+            workspace.canvas.height = dimensions[1];
+            workspace.context = workspace.canvas.getContext('2d');
+            this._workspace.push(workspace);
+        }
+        return workspace;
+    }
+
 }
 
 
