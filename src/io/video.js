@@ -103,10 +103,7 @@ class Video {
                     io._requests.splice(index, 1);
                 }
                 if (io._requests.length === 0) {
-                    io._disablePreview();
-                    // by clearing refs to video and track, we should lose our hold over the camera
-                    io._video = null;
-                    io._track = null;
+                    io._disableVideo();
                 }
             }
         };
@@ -116,24 +113,10 @@ class Video {
             return Promise.resolve(request);
         }
 
-        if (this._lastSetup) {
-            return this._lastSetup.then(() => {
-                this._requests.push(request);
-                return request;
-            });
-        }
-
-        this._lastSetup = this._setupVideo()
-            .then(() => {
-                this._setupPreview();
-                this._requests.push(request);
-                this._lastSetup = null;
-                return request;
-            }, err => {
-                this._lastSetup = null;
-                throw err;
-            });
-        return this._lastSetup;
+        return this._setupVideo().then(() => {
+            this._requests.push(request);
+            return request;
+        });
     }
 
     /**
@@ -143,8 +126,12 @@ class Video {
      * @return {Promise} When video has been received, rejected if video is not received
      */
     _setupVideo () {
+        if (this._lastSetup) {
+            return this._lastSetup;
+        }
+
         this._video = document.createElement('video');
-        return new Promise((resolve, reject) => {
+        const video = new Promise((resolve, reject) => {
             navigator.getUserMedia({
                 audio: false,
                 video: {
@@ -162,9 +149,20 @@ class Video {
                 resolve(this._video);
             }, err => {
                 // There are probably some error types we could handle gracefully here.
+                this._lastSetup = null;
                 reject(err);
             });
         });
+
+        return video.then(() => this._setupPreview());
+    }
+
+    _disableVideo () {
+        this._disablePreview();
+        this._lastSetup = null;
+        // by clearing refs to video and track, we should lose our hold over the camera
+        this._video = null;
+        this._track = null;
     }
 
     _disablePreview () {
