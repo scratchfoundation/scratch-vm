@@ -86,7 +86,8 @@ module.exports = [
                 'scratch-storage',
                 // Renderer
                 'scratch-render'
-            ]
+            ],
+            'motion-extension': './src/extensions/scratch3_video_sensing/debug'
         },
         output: {
             path: path.resolve(__dirname, 'playground'),
@@ -97,6 +98,10 @@ module.exports = [
                 {
                     test: require.resolve('./src/index.js'),
                     loader: 'expose-loader?VirtualMachine'
+                },
+                {
+                    test: require.resolve('./src/extensions/scratch3_video_sensing/debug.js'),
+                    loader: 'expose-loader?Scratch3MotionDetect'
                 },
                 {
                     test: require.resolve('stats.js/build/stats.min.js'),
