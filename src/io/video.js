@@ -126,8 +126,8 @@ class Video {
      * @return {Promise} When video has been received, rejected if video is not received
      */
     _setupVideo () {
-        if (this._lastSetup) {
-            return this._lastSetup;
+        if (this._singleSetup) {
+            return this._singleSetup;
         }
 
         this._video = document.createElement('video');
@@ -149,17 +149,18 @@ class Video {
                 resolve(this._video);
             }, err => {
                 // There are probably some error types we could handle gracefully here.
-                this._lastSetup = null;
+                this._singleSetup = null;
                 reject(err);
             });
         });
 
-        return video.then(() => this._setupPreview());
+        this._singleSetup = video.then(() => this._setupPreview());
+        return this._singleSetup;
     }
 
     _disableVideo () {
         this._disablePreview();
-        this._lastSetup = null;
+        this._singleSetup = null;
         // by clearing refs to video and track, we should lose our hold over the camera
         this._video = null;
         this._track = null;
