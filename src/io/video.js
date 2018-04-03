@@ -201,7 +201,7 @@ class Video {
      */
     setPreviewGhost (ghost) {
         if (this._drawable) {
-            this._drawable.updateProperties({ghost});
+            this.runtime.renderer.updateDrawableProperties(this._drawable, {ghost});
         }
     }
 
@@ -248,7 +248,7 @@ class Video {
     _disablePreview () {
         if (this._skin && this._drawable) {
             this._skin.clear();
-            this._drawable.updateProperties({visible: false});
+            this.runtime.renderer.updateDrawableProperties(this._drawable, {visible: false});
         }
         this._renderPreviewFrame = null;
     }
@@ -272,7 +272,9 @@ class Video {
 
         // if we haven't already created and started a preview frame render loop, do so
         if (!this._renderPreviewFrame) {
-            this._drawable.updateProperties({visible: true});
+            renderer.updateDrawableProperties(this._drawable, {
+                visible: true
+            });
 
             this._renderPreviewFrame = () => {
                 if (!this._renderPreviewFrame) {
