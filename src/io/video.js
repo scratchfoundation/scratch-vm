@@ -9,6 +9,12 @@ class Video {
         this.runtime = runtime;
 
         /**
+         * Default value for mirrored frames.
+         * @type boolean
+         */
+        this.mirror = true;
+
+        /**
          * Cache frames for this many ms.
          * @type number
          */
@@ -136,7 +142,7 @@ class Video {
      */
     getFrame ({
         dimensions = Video.DIMENSIONS,
-        mirror = true,
+        mirror = this.mirror,
         format = Video.FORMAT_IMAGE_DATA,
         cacheTimeout = this._frameCacheTimeout
     }) {

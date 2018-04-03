@@ -117,7 +117,6 @@ class Scratch3VideoSensingBlocks {
         const offset = time - this._lastUpdate;
         if (offset > Scratch3VideoSensingBlocks.INTERVAL) {
             const frame = this.runtime.ioDevices.video.getFrame({
-                mirror: true,
                 format: Video.FORMAT_IMAGE_DATA,
                 dimensions: Scratch3VideoSensingBlocks.DIMENSIONS
             });
@@ -340,12 +339,14 @@ class Scratch3VideoSensingBlocks {
     }
 
     videoToggle (args) {
+        // imported blocks have VIDEO_STATE "off", "on", "on-flipped" as opposed to the numerics?
         const state = Number(args.VIDEO_STATE);
         // 1 == off, 2 & 3 are on (3 is flipped)
-        if (state > 1) {
-            this.runtime.ioDevices.video.requestVideo();
-        } else {
+        if (args.VIDEO_STATE === 'off' || state === 1) {
             this.runtime.ioDevices.video.disableVideo();
+        } else {
+            this.runtime.ioDevices.video.requestVideo();
+            this.runtime.ioDevices.video.mirror = args.VIDEO_STATE === 'on' || state === 2;
         }
     }
 
