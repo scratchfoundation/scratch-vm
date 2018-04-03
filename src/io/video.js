@@ -158,7 +158,7 @@ class Video {
         return this._singleSetup;
     }
 
-    _disableVideo () {
+    disableVideo () {
         this._disablePreview();
         this._singleSetup = null;
         // by clearing refs to video and track, we should lose our hold over the camera
@@ -193,6 +193,8 @@ class Video {
 
         // if we haven't already created and started a preview frame render loop, do so
         if (!this._renderPreviewFrame) {
+            this._drawable.updateProperties({visible: true});
+
             this._renderPreviewFrame = () => {
                 if (!this._renderPreviewFrame) {
                     return;
