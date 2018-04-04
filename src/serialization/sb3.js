@@ -9,6 +9,8 @@ const Blocks = require('../engine/blocks');
 const Sprite = require('../sprites/sprite');
 const Variable = require('../engine/variable');
 const log = require('../util/log');
+const uid = require('../util/uid');
+// const Cast = require('../util/Cast');
 
 const {loadCostume} = require('../import/load-costume.js');
 const {loadSound} = require('../import/load-sound.js');
@@ -26,56 +28,133 @@ const {deserializeCostume, deserializeSound} = require('./deserialize-assets.js'
  * @property {Map.<string, string>} extensionURLs - map of ID => URL from project metadata. May not match extensionIDs.
  */
 
-const INPUT_SAME_BLOCK_SHADOW = 1;
-const INPUT_BLOCK_NO_SHADOW = 2;
-const INPUT_DIFF_BLOCK_SHADOW = 3;
+const INPUT_SAME_BLOCK_SHADOW = 1; // unobscured shadow
+const INPUT_BLOCK_NO_SHADOW = 2; // no shadow
+const INPUT_DIFF_BLOCK_SHADOW = 3; // obscured shadow
 // haven't found a case where block = null, but shadow is present...
 
-// Constants referring to 'primitive' types, e.g.
+// Constants referring to 'primitive' blocks that are usually shadows,
+// or in the case of variables and lists, appear quite often in projects
 // math_number
+const MATH_NUM_PRIMITIVE = 4; // there's no reason these constants can't collide
+// math_positive_number
+const POSITIVE_NUM_PRIMITIVE = 5; // with the above, but removing duplication for clarity
+// math_whole_number
+const WHOLE_NUM_PRIMITIVE = 6;
+// math_integer
+const INTEGER_NUM_PRIMITIVE = 7;
+// math_angle
+const ANGLE_NUM_PRIMITIVE = 8;
+// colour_picker
+const COLOR_PICKER_PRIMITIVE = 9;
 // text
+const TEXT_PRIMITIVE = 10;
 // event_broadcast_menu
+const BROADCAST_PRIMITIVE = 11;
 // data_variable
+const VAR_PRIMITIVE = 12;
 // data_listcontents
-const MATH_PRIMITIVE = 4; // there's no reason these constants can't collide
-const TEXT_PRIMITIVE = 5; // with the above, but removing duplication for clarity
-const BROADCAST_PRIMITIVE = 6;
-const VAR_PRIMITIVE = 7;
-const LIST_PRIMITIVE = 8;
+const LIST_PRIMITIVE = 13;
+
+const primitiveOpcodeInfoMap = {
+    math_number: [MATH_NUM_PRIMITIVE, 'NUM'],
+    math_positive_number: [POSITIVE_NUM_PRIMITIVE, 'NUM'],
+    math_whole_number: [WHOLE_NUM_PRIMITIVE, 'NUM'],
+    math_integer: [INTEGER_NUM_PRIMITIVE, 'NUM'],
+    math_angle: [ANGLE_NUM_PRIMITIVE, 'NUM'],
+    colour_picker: [COLOR_PICKER_PRIMITIVE, 'COLOUR'],
+    text: [TEXT_PRIMITIVE, 'TEXT'],
+    event_broadcast_menu: [BROADCAST_PRIMITIVE, 'BROADCAST_OPTION'],
+    data_variable: [VAR_PRIMITIVE, 'VARIABLE'],
+    data_listcontents: [LIST_PRIMITIVE, 'LIST']
+};
 
 const serializePrimitiveBlock = function (block) {
     // Returns an array represeting a primitive block or null if not one of
     // the primitive types above
-    if (block.opcode === 'math_number') {
-        const numField = block.fields.NUM;
-        // If the primitive block has already been serialized, e.g. serializeFields has run on it
-        // then the value of its NUM field will be an array with the value we want
-        // if (Array.isArray(numField)) return [MATH_PRIMITIVE, numField[0]];
-        // otherwise get the num out of the unserialized field
-        return [MATH_PRIMITIVE, numField.value];
+    if (primitiveOpcodeInfoMap.hasOwnProperty(block.opcode)) {
+        const primitiveInfo = primitiveOpcodeInfoMap[block.opcode];
+        const primitiveConstant = primitiveInfo[0];
+        const fieldName = primitiveInfo[1];
+        const field = block.fields[fieldName];
+        const primitiveDesc = [primitiveConstant, field.value];
+        if (block.opcode === 'event_broadcast_menu') {
+            primitiveDesc.push(field.id);
+        } else if (block.opcode === 'data_variable' || block.opcode === 'data_listcontents') {
+            primitiveDesc.push(field.id);
+            if (block.topLevel) {
+                primitiveDesc.push(block.x ? Math.round(block.x) : 0);
+                primitiveDesc.push(block.y ? Math.round(block.y) : 0);
+            }
+        }
+        return primitiveDesc;
     }
-    if (block.opcode === 'text') {
-        const textField = block.fields.TEXT;
-        // if (Array.isArray(textField)) return [TEXT_PRIMITIVE, textField[0]];
-        return [TEXT_PRIMITIVE, textField.value];
-    }
-    if (block.opcode === 'event_broadcast_menu') {
-        const broadcastField = block.fields.BROADCAST_OPTION;
-        // if (Array.isArray(broadcastField)) return [BROADCAST_PRIMITIVE, broadcastField[0], broadcastField[1]];
-        return [BROADCAST_PRIMITIVE, broadcastField.value, broadcastField.id];
-    }
-    if (block.opcode === 'data_variable') {
-        const variableField = block.fields.VARIABLE;
-        // if (Array.isArray(variableField)) return [VAR_PRIMITIVE, variableField[0], variableField[1]];
-        return [VAR_PRIMITIVE, variableField.value, variableField.id];
-    }
-    if (block.opcode === 'data_listcontents') {
-        const listField = block.fields.LIST;
-        // if (Array.isArray(listField)) return [LIST_PRIMITIVE, listField[0], listField[1]];
-        return [LIST_PRIMITIVE, listField.value, listField.id];
-    }
-    // If none of the above, return null
     return null;
+    // if (block.opcode === 'math_number') {
+    //     const numField = block.fields.NUM;
+    //     // const numValue = (typeof numField.value === 'number') ?
+    //     //     numField.value : Cast.toNumber(numField.value);
+    //     return [MATH_NUM_PRIMITIVE, numField.value];
+    // }
+    // if (block.opcode === 'math_positive_number') {
+    //     const positiveNumField = block.fields.NUM;
+    //     // TODO should I actually be providing more validation here and ensure that the number is positive?
+    //     // const numValue = (typeof positiveNumField.value === 'number') ?
+    //     //     positiveNumField.value : Cast.toNumber(positiveNumField.value);
+    //     return [POSITIVE_NUM_PRIMITIVE, positiveNumField.Value];
+    // }
+    // if (block.opcode === 'math_whole_number') {
+    //     const wholeNumField = block.fields.NUM;
+    //     const numValue = (typeof wholeNumField.value === 'number') ?
+    //         wholeNumField.value : JSON.parse(wholeNumField.value);
+    //     return [WHOLE_NUM_PRIMITIVE, numValue];
+    // }
+    // if (block.opcode === 'math_integer') {
+    //     const integerNumField = block.fields.NUM;
+    //     const numValue = (typeof integerNumField.value === 'number') ?
+    //         integerNumField.value : JSON.parse(integerNumField.value);
+    //     return [INTEGER_NUM_PRIMITIVE, numValue];
+    // }
+    // if (block.opcode === 'math_angle') {
+    //     const angleNumField = block.fields.NUM;
+    //     const numValue = (typeof angleNumField.value === 'number') ?
+    //         angleNumField.value : JSON.parse(angleNumField.value);
+    //     return [ANGLE_NUM_PRIMITIVE, numValue];
+    // }
+    // if (block.opcode === 'colour_picker') {
+    //     const colorField = block.fields.COLOUR; // field uses this spelling
+    //     return [COLOR_PICKER_PRIMITIVE, colorField.value];
+    // }
+    // if (block.opcode === 'text') {
+    //     const textField = block.fields.TEXT;
+    //     return [TEXT_PRIMITIVE, textField.value];
+    // }
+    // if (block.opcode === 'event_broadcast_menu') {
+    //     const broadcastField = block.fields.BROADCAST_OPTION;
+    //     return [BROADCAST_PRIMITIVE, broadcastField.value, broadcastField.id];
+    // }
+    // if (block.opcode === 'data_variable') {
+    //     const variableField = block.fields.VARIABLE;
+    //     const varArray = [VAR_PRIMITIVE, variableField.value, variableField.id];
+    //     if (block.topLevel) {
+    //         varArray.push(block.x ? Math.round(block.x) : 0);
+    //         varArray.push(block.y ? Math.round(block.y) : 0);
+    //
+    //     }
+    //     return varArray;
+    // }
+    // if (block.opcode === 'data_listcontents') {
+    //     const listField = block.fields.LIST;
+    //     const listArray = [LIST_PRIMITIVE, listField.value, listField.id];
+    //     if (block.topLevel) {
+    //         listArray.push(block.x ? Math.round(block.x) : 0);
+    //         listArray.push(block.y ? Math.round(block.y) : 0);
+    //
+    //     }
+    //     return listArray;
+    // }
+    // // If none of the above, return null
+    // return null;
 };
 
 const serializeInputs = function (inputs) {
@@ -124,10 +203,10 @@ const serializeBlock = function (block) {
     if (serializedPrimitive) return serializedPrimitive;
     // If serializedPrimitive is null, proceed with serializing a non-primitive block
     const obj = Object.create(null);
-    // obj.id = block.id; // don't need this, it's the index of this block in its containing object
     obj.opcode = block.opcode;
-    if (block.next) obj.next = block.next; // don't serialize next if null
-    // obj.next = if (block.next;
+    // NOTE: this is extremely important to serialize even if null;
+    // not serializing `next: null` results in strange behavior
+    obj.next = block.next;
     obj.parent = block.parent;
     obj.inputs = serializeInputs(block.inputs);
     obj.fields = serializeFields(block.fields);
@@ -172,7 +251,6 @@ const compressInputTree = function (block, blocks) {
             }
         }
     }
-    // block.inputs = newInputs;
     return block;
 };
 
@@ -247,17 +325,9 @@ const serializeVariables = function (variables) {
             continue;
         }
 
-        // should be a scalar type
-        obj.variables[varId] = [v.name];
-        let val = v.value;
-        if ((typeof val !== 'string') && (typeof val !== 'number')) {
-            log.info(`Variable: ${v.name} had value ${val} of type: ${typeof val} converting to string`);
-            val = JSON.stringify(val);
-        }
-        obj.variables[varId].push(val);
-        // Some hacked blocks have booleans as variable values
-        // (typeof v.value === 'string') || (typeof v.value === 'number') ?
-        //    v.value : JSON.stringify(v.value)];
+        // otherwise should be a scalar type
+        obj.variables[varId] = [v.name, v.value];
+        // only scalar vars have the potential to be cloud vars
         if (v.isPersistent) obj.variables[varId].push(true);
     }
     return obj;
@@ -316,7 +386,154 @@ const serialize = function (runtime) {
     return obj;
 };
 
-const deserializeInputs = function (inputs) {
+// Deserializes input descriptors, which is either a block id or a serialized primitive
+// (see serializePrimitiveBlock function).
+const deserializeInputDesc = function (inputDescOrId, parentId, isShadow, blocks) {
+    if (!Array.isArray(inputDescOrId)) return inputDescOrId;
+    const primitiveObj = Object.create(null);
+    const newId = uid();
+    primitiveObj.id = newId;
+    primitiveObj.next = null;
+    primitiveObj.parent = parentId;
+    primitiveObj.shadow = isShadow;
+    primitiveObj.inputs = Object.create(null);
+    // need a reference to parent id
+    switch (inputDescOrId[0]) {
+    case MATH_NUM_PRIMITIVE: {
+        primitiveObj.opcode = 'math_number';
+        primitiveObj.fields = {
+            NUM: {
+                name: 'NUM',
+                value: inputDescOrId[1]
+            }
+        };
+        primitiveObj.topLevel = false;
+        // what should we do about shadows
+        break;
+    }
+    case POSITIVE_NUM_PRIMITIVE: {
+        primitiveObj.opcode = 'math_positive_number';
+        primitiveObj.fields = {
+            NUM: {
+                name: 'NUM',
+                value: inputDescOrId[1]
+            }
+        };
+        primitiveObj.topLevel = false;
+        break;
+    }
+    case WHOLE_NUM_PRIMITIVE: {
+        primitiveObj.opcode = 'math_whole_number';
+        primitiveObj.fields = {
+            NUM: {
+                name: 'NUM',
+                value: inputDescOrId[1]
+            }
+        };
+        primitiveObj.topLevel = false;
+        break;
+    }
+    case INTEGER_NUM_PRIMITIVE: {
+        primitiveObj.opcode = 'math_integer';
+        primitiveObj.fields = {
+            NUM: {
+                name: 'NUM',
+                value: inputDescOrId[1]
+            }
+        };
+        primitiveObj.topLevel = false;
+        break;
+    }
+    case ANGLE_NUM_PRIMITIVE: {
+        primitiveObj.opcode = 'math_angle';
+        primitiveObj.fields = {
+            NUM: {
+                name: 'NUM',
+                value: inputDescOrId[1]
+            }
+        };
+        primitiveObj.topLevel = false;
+        break;
+    }
+    case COLOR_PICKER_PRIMITIVE: {
+        primitiveObj.opcode = 'colour_picker';
+        primitiveObj.fields = {
+            COLOUR: {
+                name: 'COLOUR',
+                value: inputDescOrId[1]
+            }
+        };
+        primitiveObj.topLevel = false;
+        break;
+    }
+    case TEXT_PRIMITIVE: {
+        primitiveObj.opcode = 'text';
+        primitiveObj.fields = {
+            TEXT: {
+                name: 'TEXT',
+                value: inputDescOrId[1]
+            }
+        };
+        primitiveObj.topLevel = false;
+        break;
+    }
+    case BROADCAST_PRIMITIVE: {
+        primitiveObj.opcode = 'event_broadcast_menu';
+        primitiveObj.fields = {
+            BROADCAST_OPTION: {
+                name: 'BROADCAST_OPTION',
+                value: inputDescOrId[1],
+                id: inputDescOrId[2],
+                variableType: Variable.BROADCAST_MESSAGE_TYPE
+            }
+        };
+        primitiveObj.topLevel = false;
+        break;
+    }
+    case VAR_PRIMITIVE: {
+        primitiveObj.opcode = 'data_variable';
+        primitiveObj.fields = {
+            VARIABLE: {
+                name: 'VARIABLE',
+                value: inputDescOrId[1],
+                id: inputDescOrId[2],
+                variableType: Variable.SCALAR_TYPE
+            }
+        };
+        if (inputDescOrId.length > 3) {
+            primitiveObj.topLevel = true;
+            primitiveObj.x = inputDescOrId[3];
+            primitiveObj.y = inputDescOrId[4];
+        }
+        break;
+    }
+    case LIST_PRIMITIVE: {
+        primitiveObj.opcode = 'data_listcontents';
+        primitiveObj.fields = {
+            LIST: {
+                name: 'LIST',
+                value: inputDescOrId[1],
+                id: inputDescOrId[2],
+                variableType: Variable.LIST_TYPE
+            }
+        };
+        if (inputDescOrId.length > 3) {
+            primitiveObj.topLevel = true;
+            primitiveObj.x = inputDescOrId[3];
+            primitiveObj.y = inputDescOrId[4];
+        }
+        break;
+    }
+    default: {
+        log.error(`Found unknown primitive type during deserialization: ${JSON.stringify(inputDescOrId)}`);
+        return null;
+    }
+    }
+    blocks[newId] = primitiveObj;
+    return newId;
+};
+
+const deserializeInputs = function (inputs, parentId, blocks) {
     // Explicitly not using Object.create(null) here
     // because we call prototype functions later in the vm
     const obj = {};
@@ -328,12 +545,12 @@ const deserializeInputs = function (inputs) {
         const blockShadowInfo = inputDescArr[0];
         if (blockShadowInfo === INPUT_SAME_BLOCK_SHADOW) {
             // block and shadow are the same id, and only one is provided
-            block = shadow = inputDescArr[1];
+            block = shadow = deserializeInputDesc(inputDescArr[1], parentId, true, blocks);
         } else if (blockShadowInfo === INPUT_BLOCK_NO_SHADOW) {
-            block = inputDescArr[1];
+            block = deserializeInputDesc(inputDescArr[1], parentId, false, blocks);
         } else { // assume INPUT_DIFF_BLOCK_SHADOW
-            block = inputDescArr[1];
-            shadow = inputDescArr[2];
+            block = deserializeInputDesc(inputDescArr[1], parentId, false, blocks);
+            shadow = deserializeInputDesc(inputDescArr[2], parentId, true, blocks);
         }
         obj[inputName] = {
             name: inputName,
@@ -397,13 +614,26 @@ const parseScratchObject = function (object, runtime, extensions, zip) {
         for (const blockId in object.blocks) {
             if (!object.blocks.hasOwnProperty(blockId)) continue;
             const blockJSON = object.blocks[blockId];
+            if (Array.isArray(blockJSON)) {
+                // this is one of the primitives
+                // delete the old entry in object.blocks and replace it w/the
+                // deserialized object
+                delete object.blocks[blockId];
+                deserializeInputDesc(blockJSON, null, false, object.blocks);
+                continue;
+            }
             blockJSON.id = blockId; // add id back to block since it wasn't serialized
             const serializedInputs = blockJSON.inputs;
-            const deserializedInputs = deserializeInputs(serializedInputs);
+            const deserializedInputs = deserializeInputs(serializedInputs, blockId, object.blocks);
             blockJSON.inputs = deserializedInputs;
             const serializedFields = blockJSON.fields;
             const deserializedFields = deserializeFields(serializedFields);
             blockJSON.fields = deserializedFields;
+        }
+        // Take a second pass to create objects and add extensions
+        for (const blockId in object.blocks) {
+            if (!object.blocks.hasOwnProperty(blockId)) continue;
+            const blockJSON = object.blocks[blockId];
             blocks.createBlock(blockJSON);
 
             const dotIndex = blockJSON.opcode.indexOf('.');
@@ -412,7 +642,6 @@ const parseScratchObject = function (object, runtime, extensions, zip) {
                 extensions.extensionIDs.add(extensionId);
             }
         }
-        // console.log(blocks);
     }
     // Costumes from JSON.
     const costumePromises = (object.costumes || []).map(costumeSource => {
