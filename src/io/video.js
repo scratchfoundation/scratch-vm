@@ -21,12 +21,6 @@ class Video {
         this._frameCacheTimeout = 16;
 
         /**
-         * Store each request for video, so when all are released we can disable preview/video feed.
-         * @type Array.<object>
-         */
-        this._requests = [];
-
-        /**
          * DOM Video element
          * @private
          */
@@ -93,36 +87,15 @@ class Video {
      * Request video be enabled.  Sets up video, creates video skin and enables preview.
      *
      * ioDevices.video.requestVideo()
-     *   .then(({ release }) => {
-     *     this.releaseVideo = release;
-     *   })
      *
-     * @return {Promise.<VideoRequest>} A request object with a "release" property that
-     *      should be called when you are done with the video.
+     * @return {Promise.<Video>} resolves a promise to this IO device when video is ready.
      */
-    requestVideo () {
-        const io = this;
-        const request = {
-            release () {
-                const index = io._requests.indexOf(request);
-                if (index > -1) {
-                    io._requests.splice(index, 1);
-                }
-                if (io._requests.length === 0) {
-                    io._disableVideo();
-                }
-            }
-        };
-
+    enableVideo () {
         if (this.videoReady) {
-            this._requests.push(request);
-            return Promise.resolve(request);
+            return Promise.resolve(this);
         }
 
-        return this._setupVideo().then(() => {
-            this._requests.push(request);
-            return request;
-        });
+        return this._setupVideo().then(() => this);
     }
 
     /**

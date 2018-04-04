@@ -345,7 +345,7 @@ class Scratch3VideoSensingBlocks {
         if (args.VIDEO_STATE === 'off' || state === 1) {
             this.runtime.ioDevices.video.disableVideo();
         } else {
-            this.runtime.ioDevices.video.requestVideo();
+            this.runtime.ioDevices.video.enableVideo();
             this.runtime.ioDevices.video.mirror = args.VIDEO_STATE === 'on' || state === 2;
         }
     }
