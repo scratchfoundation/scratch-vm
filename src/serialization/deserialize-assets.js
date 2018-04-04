@@ -106,14 +106,11 @@ const deserializeCostume = function (costume, runtime, zip, assetFileName) {
         log.error(`Could not find costume file associated with the ${costume.name} costume.`);
         return Promise.resolve(null);
     }
-    let dataFormat = null;
     let assetType = null;
     const costumeFormat = costume.dataFormat.toLowerCase();
     if (costumeFormat === 'svg') {
-        dataFormat = storage.DataFormat.SVG;
         assetType = storage.AssetType.ImageVector;
-    } else if (costumeFormat === 'png') {
-        dataFormat = storage.DataFormat.PNG;
+    } else if (['png', 'bmp', 'jpeg', 'jpg', 'gif'].indexOf(costumeFormat) >= 0) {
         assetType = storage.AssetType.ImageBitmap;
     } else {
         log.error(`Unexpected file format for costume: ${costumeFormat}`);
@@ -126,7 +123,7 @@ const deserializeCostume = function (costume, runtime, zip, assetFileName) {
     return costumeFile.async('uint8array').then(data => {
         storage.builtinHelper.cache(
             assetType,
-            dataFormat,
+            costumeFormat,
             data,
             assetId
         );
