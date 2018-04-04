@@ -123,6 +123,7 @@ const deserializeCostume = function (costume, runtime, zip, assetFileName) {
     return costumeFile.async('uint8array').then(data => {
         storage.builtinHelper.cache(
             assetType,
+            // TODO eventually we want to map non-png's to their actual file types?
             costumeFormat,
             data,
             assetId
