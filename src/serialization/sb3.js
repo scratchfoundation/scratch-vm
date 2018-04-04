@@ -345,8 +345,12 @@ const serializeTarget = function (target) {
     obj.currentCostume = target.currentCostume;
     obj.costumes = target.costumes.map(serializeCostume);
     obj.sounds = target.sounds.map(serializeSound);
-    if (!obj.isStage) {
-        // Stage does not need the following properties
+    if (target.hasOwnProperty('volume')) obj.volume = target.volume;
+    if (obj.isStage) { // Only the stage should have these properties
+        if (target.hasOwnProperty('tempo')) obj.tempo = target.tempo;
+        if (target.hasOwnProperty('videoTransparency')) obj.videoTransparency = target.videoTransparency;
+        if (target.hasOwnProperty('videoState')) obj.videoState = target.videoState;
+    } else { // The stage does not need the following properties, but sprites should
         obj.visible = target.visible;
         obj.x = target.x;
         obj.y = target.y;
@@ -700,6 +704,18 @@ const parseScratchObject = function (object, runtime, extensions, zip) {
     // Create the first clone, and load its run-state from JSON.
     const target = sprite.createClone();
     // Load target properties from JSON.
+    if (object.hasOwnProperty('tempo')) {
+        target.tempo = object.tempo;
+    }
+    if (object.hasOwnProperty('volume')) {
+        target.volume = object.volume;
+    }
+    if (object.hasOwnProperty('videoTransparency')) {
+        target.videoTransparency = object.videoTransparency;
+    }
+    if (object.hasOwnProperty('videoState')) {
+        target.videoState = object.videoState;
+    }
     if (object.hasOwnProperty('variables')) {
         for (const varId in object.variables) {
             const variable = object.variables[varId];
