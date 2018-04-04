@@ -118,16 +118,31 @@ class RenderedTarget extends Target {
         this.rotationStyle = RenderedTarget.ROTATION_STYLE_ALL_AROUND;
 
         /**
-         * Current tempo (used by the music extension)
+         * Loudness for sound playback for this target, as a percentage.
+         * @type {number}
+         */
+        this.volume = 100;
+
+        /**
+         * Current tempo (used by the music extension).
+         * This property is global to the project and stored in the stage.
          * @type {number}
          */
         this.tempo = 60;
 
         /**
-         * Loudness for sound playback for this target, as a percentage.
+         * The transparency of the video (used by extensions with camera input).
+         * This property is global to the project and stored in the stage.
          * @type {number}
          */
-        this.volume = 100;
+        this.videoTransparency = 50;
+
+        /**
+         * The state of the video input (used by extensions with camera input).
+         * This property is global to the project and stored in the stage.
+         * @type {string}
+         */
+        this.videoState = RenderedTarget.VIDEO_STATE.OFF;
     }
 
     /**
@@ -192,6 +207,18 @@ class RenderedTarget extends Target {
      */
     static get ROTATION_STYLE_NONE () {
         return "don't rotate";
+    }
+
+    /**
+     * Available states for video input.
+     * @type {object}
+     */
+    static get VIDEO_STATE () {
+        return {
+            'OFF': 'off',
+            'ON': 'on',
+            'ON-FLIPPED': 'on-flipped'
+        };
     }
 
     /**
