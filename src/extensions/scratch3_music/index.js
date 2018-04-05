@@ -76,7 +76,7 @@ class Scratch3MusicBlocks {
         this._loadAllSounds();
 
         this._onTargetCreated = this._onTargetCreated.bind(this);
-        runtime.on('targetWasCreated', this._onTargetCreated);
+        this.runtime.on('targetWasCreated', this._onTargetCreated);
     }
 
     /**
