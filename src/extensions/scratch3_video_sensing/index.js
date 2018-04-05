@@ -93,6 +93,15 @@ class Scratch3VideoSensingBlocks {
     }
 
     /**
+     * After analyzing a frame the amount of milliseconds until another frame
+     * is analyzed.
+     * @type {number}
+     */
+    static get INTERVAL () {
+        return 33;
+    }
+
+    /**
      * Dimensions the video stream is analyzed at after its rendered to the
      * sample canvas.
      * @type {Array.<number>}
