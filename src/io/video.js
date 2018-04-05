@@ -98,7 +98,7 @@ class Video {
      */
     enableVideo () {
         this.enabled = true;
-        return this._setupVideo().then(() => this);
+        return this._setupVideo();
     }
 
     /**
@@ -222,15 +222,17 @@ class Video {
             return this._singleSetup;
         }
 
-        this._video = document.createElement('video');
-        const video = new Promise((resolve, reject) => {
+        this._singleSetup = new Promise((resolve, reject) => {
             navigator.getUserMedia({
                 audio: false,
                 video: {
                     width: {min: 480, ideal: 640},
                     height: {min: 360, ideal: 480}
                 }
-            }, stream => {
+            }, resolve, reject);
+        })
+            .then(stream => {
+                this._video = document.createElement('video');
                 this._video.src = window.URL.createObjectURL(stream);
                 // Hint to the stream that it should load. A standard way to do this
                 // is add the video tag to the DOM. Since this extension wants to
@@ -238,20 +240,23 @@ class Video {
                 // the webgl rendered Scratch canvas, another hint like this one is
                 // needed.
                 this._track = stream.getTracks()[0];
-                resolve(this._video);
-            }, err => {
-                // There are probably some error types we could handle gracefully here.
+                this._setupPreview();
+                return this;
+            })
+            .catch(err => {
                 this._singleSetup = null;
-                reject(err);
+                if (this.onError) {
+                    this.onError(err);
+                } else {
+                    log.error(`Unhandled io device error`, err);
+                }
             });
-        });
 
-        this._singleSetup = video.then(() => this._setupPreview());
         return this._singleSetup;
     }
 
     _disablePreview () {
-        if (this._skin && this._drawable) {
+        if (this._skin) {
             this._skin.clear();
             this.runtime.renderer.updateDrawableProperties(this._drawable, {visible: false});
         }
