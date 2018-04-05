@@ -110,7 +110,7 @@ class Video {
         if (this._singleSetup) {
             this._singleSetup
                 .then(this._teardown.bind(this))
-                .catch(() => {});
+                .catch(err => this.onError(err));
         }
     }
 
@@ -208,6 +208,15 @@ class Video {
         }
     }
 
+    /**
+     * Method called when an error happens.  Default implementation is just to log error.
+     *
+     * @abstract
+     * @param {Error} error An error object from getUserMedia or other source of error.
+     */
+    onError (error) {
+        log.error('Unhandled video io device error', error);
+    }
 
     /**
      * Create a video stream.
@@ -243,13 +252,9 @@ class Video {
                 this._setupPreview();
                 return this;
             })
-            .catch(err => {
+            .catch(error => {
                 this._singleSetup = null;
-                if (this.onError) {
-                    this.onError(err);
-                } else {
-                    log.error(`Unhandled io device error`, err);
-                }
+                this.onError(error);
             });
 
         return this._singleSetup;
