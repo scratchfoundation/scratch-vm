@@ -196,6 +196,7 @@ class Video {
      * @param {number} ghost from 0 (visible) to 100 (invisible) - ghost effect
      */
     setPreviewGhost (ghost) {
+        this._ghost = ghost;
         if (this._drawable) {
             this.runtime.renderer.updateDrawableProperties(this._drawable, {ghost});
         }
@@ -271,6 +272,7 @@ class Video {
         // if we haven't already created and started a preview frame render loop, do so
         if (!this._renderPreviewFrame) {
             renderer.updateDrawableProperties(this._drawable, {
+                ghost: this._ghost,
                 visible: true
             });
 
