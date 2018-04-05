@@ -15,15 +15,13 @@ test('spec', t => {
 test('default', t => {
     // Get SB2 JSON (string)
     const uri = path.resolve(__dirname, '../fixtures/default.sb2');
-    const file = extractProjectJson(uri);
-    const json = JSON.parse(file);
+    const json = extractProjectJson(uri);
 
     // Create runtime instance & load SB2 into it
     const rt = new runtime();
     rt.attachStorage(makeTestStorage());
     sb2.deserialize(json, rt).then(({targets}) => {
         // Test
-        t.type(file, 'string');
         t.type(json, 'object');
         t.type(rt, 'object');
         t.type(targets, 'object');

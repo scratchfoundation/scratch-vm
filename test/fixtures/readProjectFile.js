@@ -7,6 +7,6 @@ module.exports = {
     },
     extractProjectJson: function (path) {
         const zip = new AdmZip(path);
-        return zip.readAsText('project.json', 'utf8');
+        return JSON.parse(zip.readAsText('project.json', 'utf8'));
     }
 };
