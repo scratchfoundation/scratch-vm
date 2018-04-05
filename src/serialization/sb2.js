@@ -448,6 +448,24 @@ const sb2import = function (json, runtime, optForceSprite) {
 };
 
 /**
+ * Given the sb2 block, inspect the specmap for a translation method or object.
+ * @param {!object} block a sb2 formatted block
+ * @return {object} specmap block to parse this opcode
+ */
+const specMapBlock = function (block) {
+    const opcode = block[0];
+    const mapped = opcode && specMap[opcode];
+    if (!mapped) {
+        log.warn(`Couldn't find SB2 block: ${opcode}`);
+        return null;
+    }
+    if (typeof mapped === 'function') {
+        return mapped(block);
+    }
+    return mapped;
+};
+
+/**
  * Parse a single SB2 JSON-formatted block and its children.
  * @param {!object} sb2block SB2 JSON-formatted block.
  * @param {Function} addBroadcastMsg function to update broadcast message name map
@@ -456,14 +474,11 @@ const sb2import = function (json, runtime, optForceSprite) {
  * @return {object} Scratch VM format block, or null if unsupported object.
  */
 const parseBlock = function (sb2block, addBroadcastMsg, getVariableId, extensions) {
-    // First item in block object is the old opcode (e.g., 'forward:').
-    const oldOpcode = sb2block[0];
-    // Convert the block using the specMap. See sb2specmap.js.
-    if (!oldOpcode || !specMap[oldOpcode]) {
-        log.warn('Couldn\'t find SB2 block: ', oldOpcode);
-        return null;
+    const blockMetadata = specMapBlock(sb2block);
+    if (!blockMetadata) {
+        return;
     }
-    const blockMetadata = specMap[oldOpcode];
+    const oldOpcode = sb2block[0];
     // If the block is from an extension, record it.
     const dotIndex = blockMetadata.opcode.indexOf('.');
     if (dotIndex >= 0) {
