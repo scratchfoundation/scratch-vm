@@ -91,10 +91,7 @@ class Video {
      * @return {Promise.<Video>} resolves a promise to this IO device when video is ready.
      */
     enableVideo () {
-        if (this.videoReady) {
-            return Promise.resolve(this);
-        }
-
+        this.enabled = true;
         return this._setupVideo().then(() => this);
     }
 
@@ -102,14 +99,25 @@ class Video {
      * Disable video stream (turn video off)
      */
     disableVideo () {
-        this._disablePreview();
-        this._singleSetup = null;
-        // by clearing refs to video and track, we should lose our hold over the camera
-        this._video = null;
-        if (this._track) {
-            this._track.stop();
+        this.enabled = false;
+        // If we have begun a setup process, wait for it to complete
+        if (this._singleSetup) {
+            this._singleSetup
+                .then(() => {
+                    // we might be asked to re-enable before setup completes
+                    if (!this.enabled) {
+                        this._disablePreview();
+                        this._singleSetup = null;
+                        // by clearing refs to video and track, we should lose our hold over the camera
+                        this._video = null;
+                        if (this._track) {
+                            this._track.stop();
+                        }
+                        this._track = null;
+                    }
+                })
+                .catch(() => {});
         }
-        this._track = null;
     }
 
     /**
@@ -195,23 +203,14 @@ class Video {
      * @return {Promise} When video has been received, rejected if video is not received
      */
     _setupVideo () {
+        // We cache the result of this setup so that we can only ever have a single
+        // video/getUserMedia request happen at a time.
         if (this._singleSetup) {
             return this._singleSetup;
         }
 
         this._video = document.createElement('video');
         const video = new Promise((resolve, reject) => {
-            // if we disabledVideo in the same frame, just make sure singleSetup is cleared, never resolve
-            if (!this._video) {
-                this._singleSetup = null;
-                return;
-            }
-
-            // in the event there was some second setup
-            if (this._track) {
-                return resolve(this._video);
-            }
-
             navigator.getUserMedia({
                 audio: false,
                 video: {
@@ -219,17 +218,6 @@ class Video {
                     height: {min: 360, ideal: 480}
                 }
             }, stream => {
-                // if we disabled video in the meantime...
-                if (!this._video) {
-                    stream.getTracks()[0].stop();
-                    this._singleSetup = null;
-                    return;
-                }
-                // if we somehow got here with two user medias, stop the old stream
-                if (this._track) {
-                    this._track.stop();
-                }
-
                 this._video.src = window.URL.createObjectURL(stream);
                 // Hint to the stream that it should load. A standard way to do this
                 // is add the video tag to the DOM. Since this extension wants to
@@ -291,6 +279,7 @@ class Video {
                 const canvas = this.getFrame({format: Video.FORMAT_CANVAS});
 
                 if (!canvas) {
+                    this._skin.clear();
                     return;
                 }
 
@@ -305,6 +294,9 @@ class Video {
     }
 
     get videoReady () {
+        if (!this.enabled) {
+            return false;
+        }
         if (!this._video) {
             return false;
         }
