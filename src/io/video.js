@@ -221,6 +221,7 @@ class Video {
             }, stream => {
                 // if we disabled video in the meantime...
                 if (!this._video) {
+                    stream.getTracks()[0].stop();
                     this._singleSetup = null;
                     return;
                 }
