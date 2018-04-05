@@ -81,15 +81,18 @@ class Scratch3VideoSensingBlocks {
          */
         this._sampleContext = null;
 
-        // Clear target motion state values when the project starts.
-        this.runtime.on(Runtime.PROJECT_RUN_START, this.reset.bind(this));
+        if (this.runtime.ioDevices) {
+            // Clear target motion state values when the project starts.
+            this.runtime.on(Runtime.PROJECT_RUN_START, this.reset.bind(this));
 
-        // Boot up the video, canvas to down/up sample the video stream, the
-        // preview skin and drawable, and kick off looping the analysis logic.
-        this._setupVideo();
-        this._setupSampleCanvas();
-        this._setupPreview();
-        this._loop();
+            // Boot up the video, canvas to down/up sample the video stream, the
+            // preview skin and drawable, and kick off looping the analysis
+            // logic.
+            this._setupVideo();
+            this._setupSampleCanvas();
+            this._setupPreview();
+            this._loop();
+        }
     }
 
     /**
@@ -322,6 +325,14 @@ class Scratch3VideoSensingBlocks {
         ];
     }
 
+    static get MOTION () {
+        return 1;
+    }
+
+    static get DIRECTION () {
+        return 2;
+    }
+
     /**
      * An array of info about each drum.
      * @type {object[]} an array of objects.
@@ -339,6 +350,14 @@ class Scratch3VideoSensingBlocks {
                 name: 'sprite'
             }
         ];
+    }
+
+    static get STAGE () {
+        return 1;
+    }
+
+    static get SPRITE () {
+        return 2;
     }
 
     /**
@@ -359,12 +378,12 @@ class Scratch3VideoSensingBlocks {
                         MOTION_DIRECTION: {
                             type: ArgumentType.NUMBER,
                             menu: 'MOTION_DIRECTION',
-                            defaultValue: 1
+                            defaultValue: Scratch3VideoSensingBlocks.MOTION
                         },
                         STAGE_SPRITE: {
                             type: ArgumentType.NUMBER,
                             menu: 'STAGE_SPRITE',
-                            defaultValue: 1
+                            defaultValue: Scratch3VideoSensingBlocks.STAGE
                         }
                     }
                 },
@@ -413,11 +432,11 @@ class Scratch3VideoSensingBlocks {
         this.detect.analyzeFrame();
 
         let state = this.detect;
-        if (Number(args.STAGE_SPRITE) === 2) {
+        if (Number(args.STAGE_SPRITE) === Scratch3VideoSensingBlocks.SPRITE) {
             state = this._analyzeLocalMotion(util.target);
         }
 
-        if (Number(args.MOTION_DIRECTION) === 1) {
+        if (Number(args.MOTION_DIRECTION) === Scratch3VideoSensingBlocks.MOTION) {
             return state.motionAmount;
         }
         return state.motionDirection;
