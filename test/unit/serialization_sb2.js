@@ -1,6 +1,6 @@
 const path = require('path');
 const test = require('tap').test;
-const readAsString = require('../fixtures/readProjectFile').readAsString;
+const extractProjectJson = require('../fixtures/readProjectFile').extractProjectJson;
 
 const RenderedTarget = require('../../src/sprites/rendered-target');
 const Runtime = require('../../src/engine/runtime');
@@ -15,7 +15,7 @@ test('spec', t => {
 test('default', t => {
     // Get SB2 JSON (string)
     const uri = path.resolve(__dirname, '../fixtures/default.sb2');
-    const file = readAsString(uri);
+    const file = extractProjectJson(uri);
     const json = JSON.parse(file);
 
     // Create runtime instance & load SB2 into it
@@ -55,7 +55,7 @@ test('default', t => {
 test('data scoping', t => {
     // Get SB2 JSON (string)
     const uri = path.resolve(__dirname, '../fixtures/data.sb2');
-    const file = readAsString(uri);
+    const file = extractProjectJson(uri);
     const json = JSON.parse(file);
 
     // Create runtime instance & load SB2 into it
@@ -72,7 +72,7 @@ test('data scoping', t => {
 test('whenclicked blocks imported separately', t => {
     // This sb2 fixture has a single "whenClicked" block on both sprite and stage
     const uri = path.resolve(__dirname, '../fixtures/when-clicked.sb2');
-    const file = readAsString(uri);
+    const file = extractProjectJson(uri);
     const json = JSON.parse(file);
 
     // Create runtime instance & load SB2 into it

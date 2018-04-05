@@ -1,7 +1,7 @@
 const path = require('path');
 const test = require('tap').test;
 const makeTestStorage = require('../fixtures/make-test-storage');
-const readAsString = require('../fixtures/readProjectFile').readAsString;
+const extractProjectJson = require('../fixtures/readProjectFile').extractProjectJson;
 
 const renderedTarget = require('../../src/sprites/rendered-target');
 const runtime = require('../../src/engine/runtime');
@@ -15,7 +15,7 @@ test('spec', t => {
 test('default', t => {
     // Get SB2 JSON (string)
     const uri = path.resolve(__dirname, '../fixtures/default.sb2');
-    const file = readAsString(uri);
+    const file = extractProjectJson(uri);
     const json = JSON.parse(file);
 
     // Create runtime instance & load SB2 into it
