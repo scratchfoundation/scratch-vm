@@ -1,4 +1,7 @@
 (function () {
+    const BENCHMARK_THROTTLE = 250;
+    const INTERVAL = 33;
+
     const video = document.createElement('video');
     navigator.getUserMedia({
         audio: false,
@@ -17,18 +20,18 @@
             video.height = video.videoHeight;
         });
     }, err => {
-        /* eslint no-console:0 */
+        // eslint-disable-next-line no-console
         console.log(err);
     });
 
-    const VideoMotion = window.Scratch3MotionDetect.VideoMotion;
-    const VideoMotionView = window.Scratch3MotionDetect.VideoMotionView;
+    const VideoMotion = window.Scratch3VideoSensingDebug.VideoMotion;
+    const VideoMotionView = window.Scratch3VideoSensingDebug.VideoMotionView;
 
     // Create motion detector
     const motion = new VideoMotion();
 
     // Create debug views that will render different slices of how the detector
-    // uses the a frame of input.
+    // uses a frame of input.
     const OUTPUT = VideoMotionView.OUTPUT;
     const outputKeys = Object.keys(OUTPUT);
     const outputValues = Object.values(OUTPUT);
@@ -36,8 +39,9 @@
         .map(output => new VideoMotionView(motion, output));
     const view = views[0];
 
-    const defaultViews = [OUTPUT.INPUT, OUTPUT.XY_CELL, OUTPUT.T_CELL, OUTPUT.UV];
+    const defaultViews = [OUTPUT.INPUT, OUTPUT.XY_CELL, OUTPUT.T_CELL, OUTPUT.UV_CELL];
 
+    // Add activation toggles for each debug view.
     const activators = document.createElement('div');
     activators.style.userSelect = 'none';
     outputValues.forEach((output, index) => {
@@ -66,8 +70,14 @@
 
     // Add a text line to display milliseconds per frame, motion value, and
     // motion direction
+    const textContainer = document.createElement('div');
+    const textHeader = document.createElement('div');
+    textHeader.innerText = 'duration (us) :: motion amount :: motion direction';
+    textContainer.appendChild(textHeader);
     const textEl = document.createElement('div');
-    document.body.appendChild(textEl);
+    textEl.innerText = `0 :: 0 :: 0`;
+    textContainer.appendChild(textEl);
+    document.body.appendChild(textContainer);
     let textTimer = Date.now();
 
     // Add the motion debug views to the dom after the text line, so the text
@@ -82,7 +92,7 @@
     const ctx = tempCanvas.getContext('2d');
 
     const loop = function () {
-        const timeoutId = setTimeout(loop, 33);
+        const timeoutId = setTimeout(loop, INTERVAL);
 
         try {
             // Get the bitmap data for the video frame
@@ -90,15 +100,20 @@
             ctx.drawImage(
                 video,
                 0, 0, video.width || video.clientWidth, video.height || video.clientHeight,
-                -480, 0, tempCanvas.width, tempCanvas.height
+                -tempCanvas.width, 0, tempCanvas.width, tempCanvas.height
             );
             ctx.resetTransform();
             const data = ctx.getImageData(0, 0, tempCanvas.width, tempCanvas.height);
 
+            // Analyze the latest frame.
             const b = performance.now();
             motion.addFrame(data.data);
             motion.analyzeFrame();
-            if (Date.now() - textTimer > 250) {
+
+            // Every so often update the visible debug numbers with duration in
+            // microseconds, the amount of motion and the direction of the
+            // motion.
+            if (Date.now() - textTimer > BENCHMARK_THROTTLE) {
                 const e = performance.now();
                 const analyzeDuration = ((e - b) * 1000).toFixed(0);
                 const motionAmount = motion.motionAmount.toFixed(1);
@@ -108,7 +123,7 @@
             }
             views.forEach(_view => _view.active && _view.draw());
         } catch (error) {
-            /* eslint no-console:0 */
+            // eslint-disable-next-line no-console
             console.error(error.stack || error);
             clearTimeout(timeoutId);
         }
