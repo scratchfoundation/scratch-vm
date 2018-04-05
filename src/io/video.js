@@ -56,6 +56,12 @@ class Video {
          * @type {Drawable}
          */
         this._drawable = -1;
+
+        /**
+         * Store the last state of the video transparency ghost effect
+         * @type {number}
+         */
+        this._ghost = 0;
     }
 
     static get FORMAT_IMAGE_DATA () {
