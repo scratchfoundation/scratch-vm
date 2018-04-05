@@ -201,6 +201,17 @@ class Video {
 
         this._video = document.createElement('video');
         const video = new Promise((resolve, reject) => {
+            // if we disabledVideo in the same frame, just make sure singleSetup is cleared, never resolve
+            if (!this._video) {
+                this._singleSetup = null;
+                return;
+            }
+
+            // in the event there was some second setup
+            if (this._track) {
+                return resolve(this._video);
+            }
+
             navigator.getUserMedia({
                 audio: false,
                 video: {
@@ -208,6 +219,16 @@ class Video {
                     height: {min: 360, ideal: 480}
                 }
             }, stream => {
+                // if we disabled video in the meantime...
+                if (!this._video) {
+                    this._singleSetup = null;
+                    return;
+                }
+                // if we somehow got here with two user medias, stop the old stream
+                if (this._track) {
+                    this._track.stop();
+                }
+
                 this._video.src = window.URL.createObjectURL(stream);
                 // Hint to the stream that it should load. A standard way to do this
                 // is add the video tag to the DOM. Since this extension wants to
@@ -259,11 +280,12 @@ class Video {
             });
 
             this._renderPreviewFrame = () => {
+                clearTimeout(this._renderPreviewTimeout);
                 if (!this._renderPreviewFrame) {
                     return;
                 }
 
-                setTimeout(this._renderPreviewFrame, this.runtime.currentStepTime);
+                this._renderPreviewTimeout = setTimeout(this._renderPreviewFrame, this.runtime.currentStepTime);
 
                 const canvas = this.getFrame({format: Video.FORMAT_CANVAS});
 
