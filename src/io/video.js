@@ -100,23 +100,29 @@ class Video {
      */
     disableVideo () {
         this.enabled = false;
-        // If we have begun a setup process, wait for it to complete
+        // If we have begun a setup process, call _teardown after it completes
         if (this._singleSetup) {
             this._singleSetup
-                .then(() => {
-                    // we might be asked to re-enable before setup completes
-                    if (!this.enabled) {
-                        this._disablePreview();
-                        this._singleSetup = null;
-                        // by clearing refs to video and track, we should lose our hold over the camera
-                        this._video = null;
-                        if (this._track) {
-                            this._track.stop();
-                        }
-                        this._track = null;
-                    }
-                })
+                .then(this._teardown.bind(this))
                 .catch(() => {});
+        }
+    }
+
+    /**
+     * async part of disableVideo
+     * @private
+     */
+    _teardown () {
+        // we might be asked to re-enable before _teardown is called, just ignore it.
+        if (this.enabled === false) {
+            this._disablePreview();
+            this._singleSetup = null;
+            // by clearing refs to video and track, we should lose our hold over the camera
+            this._video = null;
+            if (this._track) {
+                this._track.stop();
+            }
+            this._track = null;
         }
     }
 
