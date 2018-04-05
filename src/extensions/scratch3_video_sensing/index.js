@@ -339,14 +339,13 @@ class Scratch3VideoSensingBlocks {
     }
 
     videoToggle (args) {
-        // imported blocks have VIDEO_STATE "off", "on", "on-flipped" as opposed to the numerics?
         const state = Number(args.VIDEO_STATE);
         // 1 == off, 2 & 3 are on (3 is flipped)
-        if (args.VIDEO_STATE === 'off' || state === 1) {
+        if (state === 1) {
             this.runtime.ioDevices.video.disableVideo();
         } else {
             this.runtime.ioDevices.video.enableVideo();
-            this.runtime.ioDevices.video.mirror = args.VIDEO_STATE === 'on' || state === 2;
+            this.runtime.ioDevices.video.mirror = state === 2;
         }
     }
 
