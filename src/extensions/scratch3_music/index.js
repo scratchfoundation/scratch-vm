@@ -74,6 +74,9 @@ class Scratch3MusicBlocks {
         this._bufferSources = [];
 
         this._loadAllSounds();
+
+        this._onTargetCreated = this._onTargetCreated.bind(this);
+        this.runtime.on('targetWasCreated', this._onTargetCreated);
     }
 
     /**
@@ -439,6 +442,22 @@ class Scratch3MusicBlocks {
             target.setCustomState(Scratch3MusicBlocks.STATE_KEY, musicState);
         }
         return musicState;
+    }
+
+    /**
+     * When a music-playing Target is cloned, clone the music state.
+     * @param {Target} newTarget - the newly created target.
+     * @param {Target} [sourceTarget] - the target used as a source for the new clone, if any.
+     * @listens Runtime#event:targetWasCreated
+     * @private
+     */
+    _onTargetCreated (newTarget, sourceTarget) {
+        if (sourceTarget) {
+            const musicState = sourceTarget.getCustomState(Scratch3MusicBlocks.STATE_KEY);
+            if (musicState) {
+                newTarget.setCustomState(Scratch3MusicBlocks.STATE_KEY, Clone.simple(musicState));
+            }
+        }
     }
 
     /**

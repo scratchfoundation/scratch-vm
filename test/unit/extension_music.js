@@ -2,7 +2,8 @@ const test = require('tap').test;
 const Music = require('../../src/extensions/scratch3_music/index.js');
 
 const fakeRuntime = {
-    getTargetForStage: () => ({tempo: 60})
+    getTargetForStage: () => ({tempo: 60}),
+    on: () => {} // Stub out listener methods used in constructor.
 };
 
 const blocks = new Music(fakeRuntime);
