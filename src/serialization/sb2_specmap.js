@@ -652,19 +652,35 @@ const specMap = {
             }
         ]
     },
-    'whenSensorGreaterThan': {
-        opcode: 'event_whengreaterthan',
-        argMap: [
-            {
-                type: 'field',
-                fieldName: 'WHENGREATERTHANMENU'
-            },
-            {
-                type: 'input',
-                inputOp: 'math_number',
-                inputName: 'VALUE'
-            }
-        ]
+    'whenSensorGreaterThan': ([, sensor]) => {
+        if (sensor === 'video motion') {
+            return {
+                opcode: 'videoSensing.whenMotionGreaterThan',
+                argMap: [
+                    // skip the first arg, since we converted to a video specific sensing block
+                    {},
+                    {
+                        type: 'input',
+                        inputOp: 'math_number',
+                        inputName: 'REFERENCE'
+                    }
+                ]
+            };
+        }
+        return {
+            opcode: 'event_whengreaterthan',
+            argMap: [
+                {
+                    type: 'field',
+                    fieldName: 'WHENGREATERTHANMENU'
+                },
+                {
+                    type: 'input',
+                    inputOp: 'math_number',
+                    inputName: 'VALUE'
+                }
+            ]
+        };
     },
     'whenIReceive': {
         opcode: 'event_whenbroadcastreceived',
