@@ -337,8 +337,8 @@ test('videoOn returns value dependent on arguments', t => {
             sensing.detect.addFrame(frames.left);
 
             const motionAmount = sensing.videoOn({
-                MOTION_DIRECTION: VideoSensing.MOTION,
-                STAGE_SPRITE: VideoSensing.STAGE
+                ATTRIBUTE: VideoSensing.SensingAttribute.MOTION,
+                SUBJECT: VideoSensing.SensingSubject.STAGE
             }, fakeBlockUtility);
             t.ok(
                 motionAmount > 10,
@@ -346,8 +346,8 @@ test('videoOn returns value dependent on arguments', t => {
             );
 
             const localMotionAmount = sensing.videoOn({
-                MOTION_DIRECTION: VideoSensing.MOTION,
-                STAGE_SPRITE: VideoSensing.SPRITE
+                ATTRIBUTE: VideoSensing.SensingAttribute.MOTION,
+                SUBJECT: VideoSensing.SensingSubject.SPRITE
             }, fakeBlockUtility);
             t.ok(
                 localMotionAmount > 10,
@@ -355,8 +355,8 @@ test('videoOn returns value dependent on arguments', t => {
             );
 
             const motionDirection = sensing.videoOn({
-                MOTION_DIRECTION: VideoSensing.DIRECTION,
-                STAGE_SPRITE: VideoSensing.STAGE
+                ATTRIBUTE: VideoSensing.SensingAttribute.DIRECTION,
+                SUBJECT: VideoSensing.SensingSubject.STAGE
             }, fakeBlockUtility);
             t.ok(
                 isNearAngle(motionDirection, -90),
@@ -364,8 +364,8 @@ test('videoOn returns value dependent on arguments', t => {
             );
 
             const localMotionDirection = sensing.videoOn({
-                MOTION_DIRECTION: VideoSensing.DIRECTION,
-                STAGE_SPRITE: VideoSensing.SPRITE
+                ATTRIBUTE: VideoSensing.SensingAttribute.DIRECTION,
+                SUBJECT: VideoSensing.SensingSubject.SPRITE
             }, fakeBlockUtility);
             t.ok(
                 isNearAngle(localMotionDirection, -90),
