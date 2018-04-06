@@ -245,7 +245,6 @@ class VirtualMachine extends EventEmitter {
         const zip = new JSZip();
 
         // Put everything in a zip file
-        // TODO compression?
         zip.file('project.json', projectJson);
         for (let i = 0; i < soundDescs.length; i++) {
             const currSound = soundDescs[i];
@@ -260,7 +259,7 @@ class VirtualMachine extends EventEmitter {
             type: 'blob',
             compression: 'DEFLATE',
             compressionOptions: {
-                level: 9 // best compression (level 1 would be best speed)
+                level: 6 // Tradeoff between best speed (1) and best compression (9)
             }
         });
     }
