@@ -74,7 +74,7 @@ class Scratch3DataBlocks {
     addToList (args, util) {
         const list = util.target.lookupOrCreateList(
             args.LIST.id, args.LIST.name);
-        list.value.push(args.ITEM);
+        if (list.value.length < Scratch3DataBlocks.LIST_ITEM_LIMIT) list.value.push(args.ITEM);
     }
 
     deleteOfList (args, util) {
@@ -143,6 +143,14 @@ class Scratch3DataBlocks {
             }
         }
         return false;
+    }
+
+    /**
+     * Type representation for list variables.
+     * @const {string}
+     */
+    static get LIST_ITEM_LIMIT () {
+        return 200000;
     }
 }
 
