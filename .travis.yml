@@ -26,12 +26,6 @@ jobs:
       - git config --global user.email $(git log --pretty=format:"%ae" -n1)
       - git config --global user.name $(git log --pretty=format:"%an" -n1)
       deploy:
-      - provider: script
-        "on":
-          all_branches: true
-          condition: $RELEASE_BRANCHES =~ $TRAVIS_BRANCH
-        skip_cleanup: true
-        script: npm run --silent deploy -- -x -r $GH_PAGES_REPO
       - provider: npm
         "on":
           all_branches: true
@@ -39,3 +33,9 @@ jobs:
         skip_cleanup: true
         email: $NPM_EMAIL
         api_key: $NPM_TOKEN
+      - provider: script
+        "on":
+          all_branches: true
+          condition: $RELEASE_BRANCHES =~ $TRAVIS_BRANCH
+        skip_cleanup: true
+        script: npm run --silent deploy -- -x -r $GH_PAGES_REPO
