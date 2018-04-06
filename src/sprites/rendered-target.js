@@ -1003,7 +1003,12 @@ class RenderedTarget extends Target {
             variables: this.variables,
             lists: this.lists,
             costumes: costumes,
-            sounds: this.getSounds()
+            sounds: this.getSounds(),
+            tempo: this.tempo,
+            volume: this.volume,
+            videoTransparency: this.videoTransparency,
+            videoState: this.videoState
+
         };
     }
 
