@@ -1,6 +1,6 @@
 /**
  * @fileoverview
- * Partial implementation of a SB3 serializer and deserializer. Parses provided
+ * An SB3 serializer and deserializer. Parses provided
  * JSON and then generates all needed scratch-vm runtime structures.
  */
 
@@ -10,7 +10,6 @@ const Sprite = require('../sprites/sprite');
 const Variable = require('../engine/variable');
 const log = require('../util/log');
 const uid = require('../util/uid');
-// const Cast = require('../util/Cast');
 
 const {loadCostume} = require('../import/load-costume.js');
 const {loadSound} = require('../import/load-sound.js');
@@ -28,10 +27,11 @@ const {deserializeCostume, deserializeSound} = require('./deserialize-assets.js'
  * @property {Map.<string, string>} extensionURLs - map of ID => URL from project metadata. May not match extensionIDs.
  */
 
+// Constants used during serialization and deserialization
 const INPUT_SAME_BLOCK_SHADOW = 1; // unobscured shadow
 const INPUT_BLOCK_NO_SHADOW = 2; // no shadow
 const INPUT_DIFF_BLOCK_SHADOW = 3; // obscured shadow
-// haven't found a case where block = null, but shadow is present...
+// There shouldn't be a case where block is null, but shadow is present...
 
 // Constants referring to 'primitive' blocks that are usually shadows,
 // or in the case of variables and lists, appear quite often in projects
@@ -56,6 +56,8 @@ const VAR_PRIMITIVE = 12;
 // data_listcontents
 const LIST_PRIMITIVE = 13;
 
+// Map block opcodes to the above primitives and the name of the field we can use
+// to find the value of the field
 const primitiveOpcodeInfoMap = {
     math_number: [MATH_NUM_PRIMITIVE, 'NUM'],
     math_positive_number: [POSITIVE_NUM_PRIMITIVE, 'NUM'],
@@ -69,6 +71,12 @@ const primitiveOpcodeInfoMap = {
     data_listcontents: [LIST_PRIMITIVE, 'LIST']
 };
 
+/**
+ * Serializes primitives described above into a more compact format
+ * @param {object} block the block to serialize
+ * @return {array} An array representing the information in the block,
+ * or null if the given block is not one of the primitives described above.
+ */
 const serializePrimitiveBlock = function (block) {
     // Returns an array represeting a primitive block or null if not one of
     // the primitive types above
@@ -90,73 +98,18 @@ const serializePrimitiveBlock = function (block) {
         return primitiveDesc;
     }
     return null;
-    // if (block.opcode === 'math_number') {
-    //     const numField = block.fields.NUM;
-    //     // const numValue = (typeof numField.value === 'number') ?
-    //     //     numField.value : Cast.toNumber(numField.value);
-    //     return [MATH_NUM_PRIMITIVE, numField.value];
-    // }
-    // if (block.opcode === 'math_positive_number') {
-    //     const positiveNumField = block.fields.NUM;
-    //     // TODO should I actually be providing more validation here and ensure that the number is positive?
-    //     // const numValue = (typeof positiveNumField.value === 'number') ?
-    //     //     positiveNumField.value : Cast.toNumber(positiveNumField.value);
-    //     return [POSITIVE_NUM_PRIMITIVE, positiveNumField.Value];
-    // }
-    // if (block.opcode === 'math_whole_number') {
-    //     const wholeNumField = block.fields.NUM;
-    //     const numValue = (typeof wholeNumField.value === 'number') ?
-    //         wholeNumField.value : JSON.parse(wholeNumField.value);
-    //     return [WHOLE_NUM_PRIMITIVE, numValue];
-    // }
-    // if (block.opcode === 'math_integer') {
-    //     const integerNumField = block.fields.NUM;
-    //     const numValue = (typeof integerNumField.value === 'number') ?
-    //         integerNumField.value : JSON.parse(integerNumField.value);
-    //     return [INTEGER_NUM_PRIMITIVE, numValue];
-    // }
-    // if (block.opcode === 'math_angle') {
-    //     const angleNumField = block.fields.NUM;
-    //     const numValue = (typeof angleNumField.value === 'number') ?
-    //         angleNumField.value : JSON.parse(angleNumField.value);
-    //     return [ANGLE_NUM_PRIMITIVE, numValue];
-    // }
-    // if (block.opcode === 'colour_picker') {
-    //     const colorField = block.fields.COLOUR; // field uses this spelling
-    //     return [COLOR_PICKER_PRIMITIVE, colorField.value];
-    // }
-    // if (block.opcode === 'text') {
-    //     const textField = block.fields.TEXT;
-    //     return [TEXT_PRIMITIVE, textField.value];
-    // }
-    // if (block.opcode === 'event_broadcast_menu') {
-    //     const broadcastField = block.fields.BROADCAST_OPTION;
-    //     return [BROADCAST_PRIMITIVE, broadcastField.value, broadcastField.id];
-    // }
-    // if (block.opcode === 'data_variable') {
-    //     const variableField = block.fields.VARIABLE;
-    //     const varArray = [VAR_PRIMITIVE, variableField.value, variableField.id];
-    //     if (block.topLevel) {
-    //         varArray.push(block.x ? Math.round(block.x) : 0);
-    //         varArray.push(block.y ? Math.round(block.y) : 0);
-    //
-    //     }
-    //     return varArray;
-    // }
-    // if (block.opcode === 'data_listcontents') {
-    //     const listField = block.fields.LIST;
-    //     const listArray = [LIST_PRIMITIVE, listField.value, listField.id];
-    //     if (block.topLevel) {
-    //         listArray.push(block.x ? Math.round(block.x) : 0);
-    //         listArray.push(block.y ? Math.round(block.y) : 0);
-    //
-    //     }
-    //     return listArray;
-    // }
-    // // If none of the above, return null
-    // return null;
 };
 
+/**
+ * Serializes the inputs field of a block in a compact form using
+ * constants described above to represent the relationship between the
+ * inputs of this block (e.g. if there is an unobscured shadow, an obscured shadow
+ * -- a block plugged into a droppable input -- or, if there is just a block).
+ * Based on this relationship, serializes the ids of the block and shadow (if present)
+ *
+ * @param {object} inputs The inputs to serialize
+ * @return {object} An object representing the serialized inputs
+ */
 const serializeInputs = function (inputs) {
     const obj = Object.create(null);
     for (const inputName in inputs) {
@@ -186,6 +139,11 @@ const serializeInputs = function (inputs) {
     return obj;
 };
 
+/**
+ * Serialize the fields of a block in a more compact form.
+ * @param {object} fields The fields object to serialize
+ * @return {object} An object representing the serialized fields
+ */
 const serializeFields = function (fields) {
     const obj = Object.create(null);
     for (const fieldName in fields) {
@@ -198,6 +156,14 @@ const serializeFields = function (fields) {
     return obj;
 };
 
+/**
+ * Serialize the given block in the SB3 format with some compression of inputs,
+ * fields, and primitives.
+ * @param {object} block The block to serialize
+ * @return {object | array} A serialized representation of the block. This is an
+ * array if the block is one of the primitive types described above or an object,
+ * if not.
+ */
 const serializeBlock = function (block) {
     const serializedPrimitive = serializePrimitiveBlock(block);
     if (serializedPrimitive) return serializedPrimitive;
@@ -226,10 +192,36 @@ const serializeBlock = function (block) {
     return obj;
 };
 
-// caution this function modifies its inputs directly...........
+/**
+ * Compresses the serialized inputs replacing block/shadow ids that refer to
+ * one of the primitives with the primitive itself. E.g.
+ *
+ * blocks: {
+ *      aUidForMyBlock: {
+ *          inputs: {
+ *               MYINPUT: [1, 'aUidForAnUnobscuredShadowPrimitive']
+ *          }
+ *      },
+ *      aUidForAnUnobscuredShadowPrimitive: [4, 10]
+ *      // the above is a primitive representing a 'math_number' with value 10
+ * }
+ *
+ * becomes:
+ *
+ * blocks: {
+ *      aUidForMyBlock: {
+ *          inputs: {
+ *               MYINPUT: [1, [4, 10]]
+ *          }
+ *      }
+ * }
+ * Note: this function modifies the given blocks object in place
+ * @param {object} block The block with inputs to compress
+ * @param {objec} blocks The object containing all the blocks currently getting serialized
+ * @return {object} The serialized block with compressed inputs
+ */
 const compressInputTree = function (block, blocks) {
-    // const newInputs = Object.create(null);
-    // second pass on the block
+    // This is the second pass on the block
     // so the inputs field should be an object of key - array pairs
     const serializedInputs = block.inputs;
     for (const inputName in serializedInputs) {
@@ -241,12 +233,12 @@ const compressInputTree = function (block, blocks) {
         for (let i = 1; i < currInput.length; i++) {
             if (!currInput[i]) continue; // need this check b/c block/shadow can be null
             const blockOrShadowID = currInput[i];
-            // newInputs[inputName][i] = blocks[blockOrShadowID];
             // replace element of currInput directly
             // (modifying input block directly)
             const blockOrShadow = blocks[blockOrShadowID];
             if (Array.isArray(blockOrShadow)) {
                 currInput[i] = blockOrShadow;
+                // Modifying blocks in place!
                 delete blocks[blockOrShadowID];
             }
         }
@@ -254,6 +246,13 @@ const compressInputTree = function (block, blocks) {
     return block;
 };
 
+/**
+ * Serialize the given blocks object (representing all the blocks for the target
+ * currently being serialized.)
+ * @param {object} blocks The blocks to be serialized
+ * @return {object} The serialized blocks with compressed inputs and compressed
+ * primitives.
+ */
 const serializeBlocks = function (blocks) {
     const obj = Object.create(null);
     for (const blockID in blocks) {
@@ -273,6 +272,11 @@ const serializeBlocks = function (blocks) {
     return obj;
 };
 
+/**
+ * Serialize the given costume.
+ * @param {object} costume The costume to be serialized.
+ * @return {object} A serialized representation of the costume.
+ */
 const serializeCostume = function (costume) {
     const obj = Object.create(null);
     obj.assetId = costume.assetId;
@@ -290,6 +294,11 @@ const serializeCostume = function (costume) {
     return obj;
 };
 
+/**
+ * Serialize the given sound.
+ * @param {object} sound The sound to be serialized.
+ * @return {object} A serialized representation of the sound.
+ */
 const serializeSound = function (sound) {
     const obj = Object.create(null);
     obj.assetId = sound.assetId;
@@ -307,6 +316,13 @@ const serializeSound = function (sound) {
     return obj;
 };
 
+/**
+ * Serialize the given variables object.
+ * @param {object} variables The variables to be serialized.
+ * @return {object} A serialized representation of the variables. They get
+ * separated by type to compress the representation of each given variable and
+ * reduce duplicate information.
+ */
 const serializeVariables = function (variables) {
     const obj = Object.create(null);
     // separate out variables into types at the top level so we don't have
@@ -333,10 +349,16 @@ const serializeVariables = function (variables) {
     return obj;
 };
 
+/**
+ * Serialize the given target. Only serialize properties that are necessary
+ * for saving and loading this target.
+ * @param {object} target The target to be serialized.
+ * @return {object} A serialized representation of the given target.
+ */
 const serializeTarget = function (target) {
     const obj = Object.create(null);
     obj.isStage = target.isStage;
-    obj.name = target.name;
+    obj.name = obj.isStage ? 'Stage' : target.name;
     const vars = serializeVariables(target.variables);
     obj.variables = vars.variables;
     obj.lists = vars.lists;
@@ -365,7 +387,7 @@ const serializeTarget = function (target) {
 /**
  * Serializes the specified VM runtime.
  * @param  {!Runtime} runtime VM runtime instance to be serialized.
- * @return {object}    Serialized runtime instance.
+ * @return {object} Serialized runtime instance.
  */
 const serialize = function (runtime) {
     // Fetch targets
@@ -390,8 +412,16 @@ const serialize = function (runtime) {
     return obj;
 };
 
-// Deserializes input descriptors, which is either a block id or a serialized primitive
-// (see serializePrimitiveBlock function).
+/**
+ * Deserialize a block input descriptors. This is either a
+ * block id or a serialized primitive, e.g. an array
+ * (see serializePrimitiveBlock function).
+ * @param {string | array} inputDescOrId The block input descriptor to be serialized.
+ * @param {string} parentId The id of the parent block for this input block.
+ * @param {boolean} isShadow Whether or not this input block is a shadow.
+ * @param {object} blocks The entire blocks object currently in the process of getting serialized.
+ * @return {object} The deserialized input descriptor.
+ */
 const deserializeInputDesc = function (inputDescOrId, parentId, isShadow, blocks) {
     if (!Array.isArray(inputDescOrId)) return inputDescOrId;
     const primitiveObj = Object.create(null);
@@ -537,6 +567,14 @@ const deserializeInputDesc = function (inputDescOrId, parentId, isShadow, blocks
     return newId;
 };
 
+/**
+ * Deserialize the given block inputs.
+ * @param {object} inputs The inputs to deserialize.
+ * @param {string} parentId The block id of the parent block
+ * @param {object} blocks The object representing the entire set of blocks currently
+ * in the process of getting deserialized.
+ * @return {object} The deserialized and uncompressed inputs.
+ */
 const deserializeInputs = function (inputs, parentId, blocks) {
     // Explicitly not using Object.create(null) here
     // because we call prototype functions later in the vm
@@ -565,6 +603,11 @@ const deserializeInputs = function (inputs, parentId, blocks) {
     return obj;
 };
 
+/**
+ * Deserialize the given block fields.
+ * @param {object} fields The fields to be deserialized
+ * @return {object} The deserialized and uncompressed block fields.
+ */
 const deserializeFields = function (fields) {
     // Explicitly not using Object.create(null) here
     // because we call prototype functions later in the vm
@@ -802,7 +845,6 @@ const parseScratchObject = function (object, runtime, extensions, zip) {
 
 /**
  * Deserialize the specified representation of a VM runtime and loads it into the provided runtime instance.
- * TODO: parse extension info (also, design extension info storage...)
  * @param  {object} json - JSON representation of a VM runtime.
  * @param  {Runtime} runtime - Runtime instance
  * @param {JSZip} zip - Sb3 file describing this project (to load assets from)
