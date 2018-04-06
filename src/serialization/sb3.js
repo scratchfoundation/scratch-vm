@@ -762,24 +762,13 @@ const parseScratchObject = function (object, runtime, extensions, zip) {
     if (object.hasOwnProperty('variables')) {
         for (const varId in object.variables) {
             const variable = object.variables[varId];
-            let newVariable;
-            if (Array.isArray(variable)) {
-                newVariable = new Variable(
-                    varId, // var id is the index of the variable desc array in the variables obj
-                    variable[0], // name of the variable
-                    Variable.SCALAR_TYPE, // type of the variable
-                    (variable.length === 3) ? variable[2] : false // isPersistent/isCloud
-                );
-                newVariable.value = variable[1];
-            } else {
-                newVariable = new Variable(
-                    variable.id,
-                    variable.name,
-                    variable.type,
-                    variable.isPersistent
-                );
-                newVariable.value = variable.value;
-            }
+            const newVariable = new Variable(
+                varId, // var id is the index of the variable desc array in the variables obj
+                variable[0], // name of the variable
+                Variable.SCALAR_TYPE, // type of the variable
+                (variable.length === 3) ? variable[2] : false // isPersistent/isCloud
+            );
+            newVariable.value = variable[1];
             target.variables[newVariable.id] = newVariable;
         }
     }
