@@ -8,6 +8,22 @@ const Video = require('../../io/video');
 const VideoMotion = require('./library');
 
 /**
+ * States the video sensing activity can be set to.
+ * @readonly
+ * @enum {string}
+ */
+const VideoState = {
+    /** Video turned off. */
+    OFF: 'off',
+
+    /** Video turned on with default y axis mirroring. */
+    ON: 'on',
+
+    /** Video turned on without default y axis mirroring. */
+    ON_FLIPPED: 'on-flipped'
+};
+
+/**
  * Class for the motion-related blocks in Scratch 3.0
  * @param {Runtime} runtime - the runtime instantiating this block package.
  * @constructor
@@ -140,7 +156,7 @@ class Scratch3VideoSensingBlocks {
         return info.map((entry, index) => {
             const obj = {};
             obj.text = entry.name;
-            obj.value = String(index + 1);
+            obj.value = entry.value || String(index + 1);
             return obj;
         });
     }
@@ -213,11 +229,35 @@ class Scratch3VideoSensingBlocks {
         return 2;
     }
 
+    /**
+     * States the video sensing activity can be set to.
+     * @readonly
+     * @enum {string}
+     */
+    static get VideoState () {
+        return VideoState;
+    }
+
+    /**
+     * An array of info on video state options for the "turn video [STATE]" block.
+     * @type {object[]} an array of objects
+     * @param {string} name - the translatable name to display in the video state menu
+     * @param {string} value - the serializable value stored in the block
+     */
     get VIDEO_STATE_INFO () {
         return [
-            {name: 'off'},
-            {name: 'on'},
-            {name: 'on-flipped'}
+            {
+                name: 'off',
+                value: VideoState.OFF
+            },
+            {
+                name: 'on',
+                value: VideoState.ON
+            },
+            {
+                name: 'on flipped',
+                value: VideoState.ON_FLIPPED
+            }
         ];
     }
 
@@ -266,7 +306,7 @@ class Scratch3VideoSensingBlocks {
                         VIDEO_STATE: {
                             type: ArgumentType.NUMBER,
                             menu: 'VIDEO_STATE',
-                            defaultValue: 1
+                            defaultValue: VideoState.ON
                         }
                     }
                 },
@@ -339,13 +379,13 @@ class Scratch3VideoSensingBlocks {
     }
 
     videoToggle (args) {
-        const state = Number(args.VIDEO_STATE);
-        // 1 == off, 2 & 3 are on (3 is flipped)
-        if (state === 1) {
+        const state = args.VIDEO_STATE;
+        if (state === VideoState.OFF) {
             this.runtime.ioDevices.video.disableVideo();
         } else {
             this.runtime.ioDevices.video.enableVideo();
-            this.runtime.ioDevices.video.mirror = state === 2;
+            // Mirror if state is ON. Do not mirror if state is ON_FLIPPED.
+            this.runtime.ioDevices.video.mirror = state === VideoState.ON;
         }
     }
 
