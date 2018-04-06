@@ -215,7 +215,7 @@ const parseScratchObject = function (object, runtime, extensions, topLevel, zip)
     const sprite = new Sprite(blocks, runtime);
     // Sprite/stage name from JSON.
     if (object.hasOwnProperty('objName')) {
-        sprite.name = object.objName;
+        sprite.name = topLevel ? 'Stage' : object.objName;
     }
     // Costumes from JSON.
     const costumePromises = [];
