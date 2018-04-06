@@ -217,7 +217,7 @@ class RenderedTarget extends Target {
         return {
             'OFF': 'off',
             'ON': 'on',
-            'ON-FLIPPED': 'on-flipped'
+            'ON_FLIPPED': 'on_flipped'
         };
     }
 
