@@ -1,8 +1,14 @@
+/**
+ * @fileoverview
+ * This integration test ensures that a local upload of a sb2 project pulls
+ * in assets correctly (from the provided .sb2 file) even if the assets
+ * are not present on our servers.
+ */
 const path = require('path');
 const fs = require('fs');
 const test = require('tap').test;
 const AdmZip = require('adm-zip');
-const makeTestStorage = require('../fixtures/make-test-storage');
+const ScratchStorage = require('scratch-storage');
 const VirtualMachine = require('../../src/index');
 const StringUtil = require('../../src/util/string-util');
 
@@ -20,7 +26,9 @@ const soundData = new Uint8Array(sound);
 
 test('offline-custom-assets', t => {
     const vm = new VirtualMachine();
-    vm.attachStorage(makeTestStorage());
+    // Use a test storage here that does not have any web sources added to it.
+    const testStorage = new ScratchStorage();
+    vm.attachStorage(testStorage);
 
     // Evaluate playground data and exit
     vm.on('playgroundData', e => {
