@@ -215,9 +215,9 @@ class RenderedTarget extends Target {
      */
     static get VIDEO_STATE () {
         return {
-            'OFF': 'off',
-            'ON': 'on',
-            'ON_FLIPPED': 'on_flipped'
+            OFF: 'off',
+            ON: 'on',
+            ON_FLIPPED: 'on_flipped'
         };
     }
 
