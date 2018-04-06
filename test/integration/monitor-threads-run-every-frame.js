@@ -1,13 +1,13 @@
 const path = require('path');
 const test = require('tap').test;
 const makeTestStorage = require('../fixtures/make-test-storage');
-const extract = require('../fixtures/extract');
+const readFileToBuffer = require('../fixtures/readProjectFile').readFileToBuffer;
 const VirtualMachine = require('../../src/index');
 const Thread = require('../../src/engine/thread');
 const Runtime = require('../../src/engine/runtime');
 
 const projectUri = path.resolve(__dirname, '../fixtures/default.sb2');
-const project = extract(projectUri);
+const project = readFileToBuffer(projectUri);
 
 const checkMonitorThreadPresent = (t, threads) => {
     t.equal(threads.length, 1);
