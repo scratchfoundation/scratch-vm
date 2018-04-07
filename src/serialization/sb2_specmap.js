@@ -768,6 +768,19 @@ const specMap = {
             }
         ]
     },
+    'doWhile': {
+        opcode: 'control_while',
+        argMap: [
+            {
+                type: 'input',
+                inputName: 'CONDITION'
+            },
+            {
+                type: 'input',
+                inputName: 'SUBSTACK'
+            }
+        ]
+    },
     'doForLoop': {
         opcode: 'control_for_each',
         argMap: [
