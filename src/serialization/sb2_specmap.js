@@ -815,6 +815,21 @@ const specMap = {
         argMap: [
         ]
     },
+    'COUNT': {
+        opcode: 'control_get_counter',
+        argMap: [
+        ]
+    },
+    'INCR_COUNT': {
+        opcode: 'control_incr_counter',
+        argMap: [
+        ]
+    },
+    'CLR_COUNT': {
+        opcode: 'control_clear_counter',
+        argMap: [
+        ]
+    },
     'touching:': {
         opcode: 'sensing_touchingobject',
         argMap: [
