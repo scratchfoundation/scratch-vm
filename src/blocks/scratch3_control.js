@@ -17,6 +17,7 @@ class Scratch3ControlBlocks {
         return {
             control_repeat: this.repeat,
             control_repeat_until: this.repeatUntil,
+            control_while: this.repeatWhile,
             control_for_each: this.forEach,
             control_forever: this.forever,
             control_wait: this.wait,
@@ -56,8 +57,16 @@ class Scratch3ControlBlocks {
 
     repeatUntil (args, util) {
         const condition = Cast.toBoolean(args.CONDITION);
-        // If the condition is true, start the branch.
+        // If the condition is false (repeat UNTIL), start the branch.
         if (!condition) {
+            util.startBranch(1, true);
+        }
+    }
+
+    repeatWhile (args, util) {
+        const condition = Cast.toBoolean(args.CONDITION);
+        // If the condition is true (repeat WHILE), start the branch.
+        if (condition) {
             util.startBranch(1, true);
         }
     }
