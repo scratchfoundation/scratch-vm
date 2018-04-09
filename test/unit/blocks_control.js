@@ -52,6 +52,28 @@ test('repeatUntil', t => {
     t.end();
 });
 
+test('repeatWhile', t => {
+    const rt = new Runtime();
+    const c = new Control(rt);
+
+    // Test harness (mocks `util`)
+    let i = 0;
+    const repeat = 10;
+    const util = {
+        stackFrame: Object.create(null),
+        startBranch: function () {
+            i++;
+            // Note !== instead of ===
+            c.repeatWhile({CONDITION: (i !== repeat)}, util);
+        }
+    };
+
+    // Execute test
+    c.repeatWhile({CONDITION: (i !== repeat)}, util);
+    t.strictEqual(i, repeat);
+    t.end();
+});
+
 test('forEach', t => {
     const rt = new Runtime();
     const c = new Control(rt);
