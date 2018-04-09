@@ -2,12 +2,12 @@
  * @typedef {object} ExtensionMetadata
  * All the metadata needed to register an extension.
  * @property {string} id - a unique alphanumeric identifier for this extension. No special characters allowed.
- * @property {string} name - the human-readable name of this extension.
- * @property {string} blockIconURI - URI for an image to be placed on each block in this extension. Data URI ok.
- * @property {string} menuIconURI - URI for an image to be placed on this extension's category menu entry. Data URI ok.
- * @property {string} docsURI - link to documentation content for this extension.
+ * @property {string} [name] - the human-readable name of this extension.
+ * @property {string} [blockIconURI] - URI for an image to be placed on each block in this extension. Data URI ok.
+ * @property {string} [menuIconURI] - URI for an image to be placed on this extension's category menu item. Data URI ok.
+ * @property {string} [docsURI] - link to documentation content for this extension.
  * @property {Array.<ExtensionBlockMetadata|string>} blocks - the blocks provided by this extension, plus separators.
- * @property {Object.<ExtensionMenuMetadata>} menus - map of menu name to metadata about each of this extension's menus.
+ * @property {Object.<ExtensionMenuMetadata>} [menus] - map of menu name to metadata for each of this extension's menus.
  */
 
 /**
@@ -30,8 +30,8 @@
  * @typedef {object} ExtensionArgumentMetadata
  * All the metadata needed to register an argument for an extension block.
  * @property {ArgumentType} type - the type of the argument (number, string, etc.)
- * @property {*} defaultValue - the default value of this argument.
- * @property {string} menu - the name of the menu to use for this argument, if any.
+ * @property {*} [defaultValue] - the default value of this argument.
+ * @property {string} [menu] - the name of the menu to use for this argument, if any.
  */
 
 /**

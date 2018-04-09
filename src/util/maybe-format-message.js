@@ -9,7 +9,7 @@ const formatMessage = require('format-message');
  * @return {string|*} - the formatted message OR the original `maybeMessage` input.
  */
 const maybeFormatMessage = function (maybeMessage, args, locale) {
-    if (maybeMessage.id && maybeMessage.default) {
+    if (maybeMessage && maybeMessage.id && maybeMessage.default) {
         return formatMessage(maybeMessage, args, locale);
     }
     return maybeMessage;
