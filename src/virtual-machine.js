@@ -541,6 +541,7 @@ class VirtualMachine extends EventEmitter {
             costume.rotationCenterX = rotationCenterX;
             costume.rotationCenterY = rotationCenterY;
             this.runtime.renderer.updateSVGSkin(costume.skinId, svg, [rotationCenterX, rotationCenterY]);
+            costume.size = this.runtime.renderer.getSkinSize(costume.skinId);
         }
         const storage = this.runtime.storage;
         costume.assetId = storage.builtinHelper.cache(
