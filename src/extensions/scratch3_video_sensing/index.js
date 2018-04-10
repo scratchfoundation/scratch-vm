@@ -378,6 +378,12 @@ class Scratch3VideoSensingBlocks {
         return state.motionAmount > Number(args.REFERENCE);
     }
 
+    /**
+     * A scratch command block handle that configures the video state from
+     * passed arguments.
+     * @param {object} args - the block arguments
+     * @param {VideoState} args.VIDEO_STATE - the video state to set the device to
+     */
     videoToggle (args) {
         const state = args.VIDEO_STATE;
         if (state === VideoState.OFF) {
@@ -389,6 +395,13 @@ class Scratch3VideoSensingBlocks {
         }
     }
 
+    /**
+     * A scratch command block handle that configures the video preview's
+     * transparency from passed arguments.
+     * @param {object} args - the block arguments
+     * @param {number} args.TRANSPARENCY - the transparency to set the video
+     *   preview to
+     */
     setVideoTransparency (args) {
         this.runtime.ioDevices.video.setPreviewGhost(Number(args.TRANSPARENCY));
     }
