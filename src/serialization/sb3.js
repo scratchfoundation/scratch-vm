@@ -261,14 +261,31 @@ const serializeBlocks = function (blocks) {
         obj[blockID] = serializeBlock(blocks[blockID], blocks);
     }
     // once we have completed a first pass, do a second pass on block inputs
-    for (const serializedBlockId in obj) {
+    for (const blockID in obj) {
         // don't need to do the hasOwnProperty check here since we
         // created an object that doesn't get extra properties/functions
-        const serializedBlock = obj[serializedBlockId];
+        const serializedBlock = obj[blockID];
         // caution, this function deletes parts of this object in place as
-        // it's traversing it (we could do a third pass...)
-        obj[serializedBlockId] = compressInputTree(serializedBlock, obj);
+        // it's traversing it
+        obj[blockID] = compressInputTree(serializedBlock, obj);
         // second pass on connecting primitives to serialized inputs directly
+    }
+    // Do one last pass and remove any top level shadows (these are caused by
+    // a bug: LLK/scratch-vm#1011, and this pass should be removed once that is
+    // completely fixed)
+    for (const blockID in obj) {
+        const serializedBlock = obj[blockID];
+        // If the current block is serialized as a primitive (e.g. it's an array
+        // instead of an object), AND it is not one of the top level primitives
+        // e.g. variable getter or list getter, then it should be deleted as it's
+        // a shadow block, and there are no blocks that reference it, otherwise
+        // they would have been compressed in the last pass)
+        if (Array.isArray(serializedBlock) &&
+            [VAR_PRIMITIVE, LIST_PRIMITIVE].indexOf(serializedBlock) < 0) {
+            log.warn(`Found an unexpected top level primitive with block ID: ${
+                blockID}; deleting it from serialized blocks.`);
+            delete obj[blockID];
+        }
     }
     return obj;
 };
