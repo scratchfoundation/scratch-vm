@@ -13211,6 +13211,7 @@ var RenderWebGL = function (_EventEmitter) {
             // and readback by returning early.
             candidateIDs = candidateIDs.filter(function (testID) {
                 if (testID === drawableID) return false;
+		    if (dragginglist[testID]=true) return false;
                 // Only draw items which could possibly overlap target Drawable.
                 var candidate = _this3._allDrawables[testID];
                 var candidateBounds = candidate.getFastBounds();
