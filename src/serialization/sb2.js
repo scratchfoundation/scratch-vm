@@ -639,18 +639,16 @@ const parseBlock = function (sb2block, addBroadcastMsg, getVariableId, extension
             // event_broadcast_menus have some extra properties to add to the
             // field and a different value than the rest
             if (expectedArg.inputOp === 'event_broadcast_menu') {
-                if (!shadowObscured) {
-                    // Need to update the broadcast message name map with
-                    // the value of this field.
-                    // Also need to provide the fields[fieldName] object,
-                    // so that we can later update its value property, e.g.
-                    // if sb2 message name is empty string, we will later
-                    // replace this field's value with messageN
-                    // once we can traverse through all the existing message names
-                    // and come up with a fresh messageN.
-                    const broadcastId = addBroadcastMsg(fieldValue, fields[fieldName]);
-                    fields[fieldName].id = broadcastId;
-                }
+                // Need to update the broadcast message name map with
+                // the value of this field.
+                // Also need to provide the fields[fieldName] object,
+                // so that we can later update its value property, e.g.
+                // if sb2 message name is empty string, we will later
+                // replace this field's value with messageN
+                // once we can traverse through all the existing message names
+                // and come up with a fresh messageN.
+                const broadcastId = addBroadcastMsg(fieldValue, fields[fieldName]);
+                fields[fieldName].id = broadcastId;
                 fields[fieldName].variableType = expectedArg.variableType;
             }
             activeBlock.children.push({
