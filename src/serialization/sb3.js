@@ -171,7 +171,8 @@ const serializeBlock = function (block) {
     const obj = Object.create(null);
     obj.opcode = block.opcode;
     // NOTE: this is extremely important to serialize even if null;
-    // not serializing `next: null` results in strange behavior
+    // not serializing `next: null` results in strange behavior with block
+    // execution
     obj.next = block.next;
     obj.parent = block.parent;
     obj.inputs = serializeInputs(block.inputs);
