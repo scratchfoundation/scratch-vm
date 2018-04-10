@@ -22,7 +22,7 @@ FakeRenderer.prototype.updateDrawableProperties = function (d, p) { // eslint-di
     return true;
 };
 
-FakeRenderer.prototype.getSkinSize = function (d) { // eslint-disable-line no-unused-vars
+FakeRenderer.prototype.getCurrentSkinSize = function (d) { // eslint-disable-line no-unused-vars
     return [0, 0];
 };
 
