@@ -177,7 +177,7 @@ const serializeBlock = function (block) {
     obj.inputs = serializeInputs(block.inputs);
     obj.fields = serializeFields(block.fields);
     obj.topLevel = block.topLevel ? block.topLevel : false;
-    obj.shadow = block.shadow; // I think we don't need this either..
+    obj.shadow = block.shadow;
     if (block.topLevel) {
         if (block.x) {
             obj.x = Math.round(block.x);
@@ -442,7 +442,6 @@ const deserializeInputDesc = function (inputDescOrId, parentId, isShadow, blocks
             }
         };
         primitiveObj.topLevel = false;
-        // what should we do about shadows
         break;
     }
     case POSITIVE_NUM_PRIMITIVE: {
