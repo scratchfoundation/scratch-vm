@@ -306,7 +306,7 @@ const serializeCostume = function (costume) {
     // but that change should be made carefully since it is very
     // pervasive
     obj.md5ext = costume.md5;
-    obj.dataFormat = costume.dataFormat;
+    obj.dataFormat = costume.dataFormat.toLowerCase();
     obj.rotationCenterX = costume.rotationCenterX;
     obj.rotationCenterY = costume.rotationCenterY;
     return obj;
@@ -321,7 +321,7 @@ const serializeSound = function (sound) {
     const obj = Object.create(null);
     obj.assetId = sound.assetId;
     obj.name = sound.name;
-    obj.dataFormat = sound.dataFormat;
+    obj.dataFormat = sound.dataFormat.toLowerCase();
     obj.format = sound.format;
     obj.rate = sound.rate;
     obj.sampleCount = sound.sampleCount;
