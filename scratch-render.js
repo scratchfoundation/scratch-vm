@@ -12749,10 +12749,23 @@ var RenderWebGL = function (_EventEmitter) {
          */
 
     }, {
-        key: 'getSkinSize',
-        value: function getSkinSize(drawableID) {
+        key: 'getCurrentSkinSize',
+        value: function getCurrentSkinSize(drawableID) {
             var drawable = this._allDrawables[drawableID];
-            return drawable.skin.size;
+            return this.getSkinSize(drawable.skin.id);
+        }
+
+        /**
+         * Get the size of a skin by ID.
+         * @param {int} skinID The ID of the Skin to measure.
+         * @return {Array<number>} Skin size, width and height.
+         */
+
+    }, {
+        key: 'getSkinSize',
+        value: function getSkinSize(skinID) {
+            var skin = this._allSkins[skinID];
+            return skin.size;
         }
 
         /**
