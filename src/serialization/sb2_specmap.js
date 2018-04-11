@@ -980,17 +980,17 @@ const specMap = {
     //     ]
     // },
     'setVideoState': {
-        opcode: 'sensing_videotoggle',
+        opcode: 'videoSensing.videoToggle',
         argMap: [
             {
                 type: 'input',
-                inputOp: 'sensing_videotogglemenu',
-                inputName: 'VIDEOTOGGLEMENU'
+                inputOp: 'videoSensing.menu.VIDEO_STATE',
+                inputName: 'VIDEO_STATE'
             }
         ]
     },
     'setVideoTransparency': {
-        opcode: 'sensing_setvideotransparency',
+        opcode: 'videoSensing.setVideoTransparency',
         argMap: [
             {
                 type: 'input',

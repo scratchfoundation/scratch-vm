@@ -627,6 +627,10 @@ const parseBlock = function (sb2block, addBroadcastMsg, getVariableId, extension
                 } else if (fieldValue === 'this sprite') {
                     fieldValue = 2;
                 }
+            } else if (expectedArg.inputOp === 'videoSensing.menu.VIDEO_STATE') {
+                if (shadowObscured) {
+                    fieldValue = 'on';
+                }
             } else if (shadowObscured) {
                 // Filled drop-down menu.
                 fieldValue = '';
