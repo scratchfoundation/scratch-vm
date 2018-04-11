@@ -113,7 +113,8 @@ class Scratch3ControlBlocks {
             setInterval(() => {
                 a+=10;
                 if (a=duration) {
-                resolve();
+                    resolve();
+                    clearInterval(this);
                 }
             }, 10);
         });
