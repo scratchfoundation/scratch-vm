@@ -26,6 +26,7 @@ const loadCostumeFromAsset = function (costume, costumeAsset, runtime) {
     ];
     if (costumeAsset.assetType === AssetType.ImageVector) {
         costume.skinId = runtime.renderer.createSVGSkin(costumeAsset.decodeText(), rotationCenter);
+        costume.size = runtime.renderer.getSkinSize(costume.skinId);
         return costume;
     }
 
@@ -50,6 +51,7 @@ const loadCostumeFromAsset = function (costume, costumeAsset, runtime) {
         imageElement.src = costumeAsset.encodeDataURI();
     }).then(imageElement => {
         costume.skinId = runtime.renderer.createBitmapSkin(imageElement, costume.bitmapResolution, rotationCenter);
+        costume.size = runtime.renderer.getSkinSize(costume.skinId);
         return costume;
     });
 };

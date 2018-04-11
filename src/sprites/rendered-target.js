@@ -355,7 +355,7 @@ class RenderedTarget extends Target {
         if (this.renderer) {
             // Clamp to scales relative to costume and stage size.
             // See original ScratchSprite.as:setSize.
-            const costumeSize = this.renderer.getSkinSize(this.drawableID);
+            const costumeSize = this.renderer.getCurrentSkinSize(this.drawableID);
             const origW = costumeSize[0];
             const origH = costumeSize[1];
             const minScale = Math.min(1, Math.max(5 / origW, 5 / origH));
@@ -734,7 +734,11 @@ class RenderedTarget extends Target {
         if (!firstClone || !this.renderer) {
             return false;
         }
-        const drawableCandidates = firstClone.sprite.clones.map(clone => clone.drawableID);
+        // Filter out dragging targets. This means a sprite that is being dragged
+        // can detect other sprites using touching <sprite>, but cannot be detected
+        // by other sprites while it is being dragged. This matches Scratch 2.0 behavior.
+        const drawableCandidates = firstClone.sprite.clones.filter(clone => !clone.dragging)
+            .map(clone => clone.drawableID);
         return this.renderer.isTouchingDrawables(
             this.drawableID, drawableCandidates);
     }

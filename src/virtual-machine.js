@@ -561,6 +561,7 @@ class VirtualMachine extends EventEmitter {
             costume.rotationCenterX = rotationCenterX;
             costume.rotationCenterY = rotationCenterY;
             this.runtime.renderer.updateSVGSkin(costume.skinId, svg, [rotationCenterX, rotationCenterY]);
+            costume.size = this.runtime.renderer.getSkinSize(costume.skinId);
         }
         const storage = this.runtime.storage;
         costume.assetId = storage.builtinHelper.cache(
@@ -920,7 +921,8 @@ class VirtualMachine extends EventEmitter {
         if (target) {
             this._dragTarget = null;
             target.stopDrag();
-            this.setEditingTarget(target.id);
+            this.setEditingTarget(target.sprite && target.sprite.clones[0] ?
+                target.sprite.clones[0].id : target.id);
         }
     }
 
