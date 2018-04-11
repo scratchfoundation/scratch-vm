@@ -1,5 +1,5 @@
 const MathUtil = require('../util/math-util');
-var dragginglist = [];
+
 class Mouse {
     constructor (runtime) {
         this._x = 0;
@@ -40,9 +40,6 @@ class Mouse {
                             null, target);
                         this.runtime.startHats('event_whenstageclicked',
                             null, target);
-                        dragginglist[drawableID] = false;
-                    } else {
-                    dragginglist[drawableID] = true;
                     }
                     return;
                 }
