@@ -111,8 +111,8 @@ class Scratch3ControlBlocks {
         return new Promise(resolve => {
             let _counter = 0;
             setInterval(() => {
-                _counter+=10;
-                if (_counter===duration) {
+                _counter += 10;
+                if (_counter === duration) {
                     resolve();
                     clearInterval(this);
                 }
