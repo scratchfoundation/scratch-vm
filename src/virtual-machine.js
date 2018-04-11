@@ -921,7 +921,8 @@ class VirtualMachine extends EventEmitter {
         if (target) {
             this._dragTarget = null;
             target.stopDrag();
-            this.setEditingTarget(target.id);
+            this.setEditingTarget(target.sprite && target.sprite.clones[0] ?
+                target.sprite.clones[0].id : target.id);
         }
     }
 
