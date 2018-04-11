@@ -112,7 +112,7 @@ class Scratch3ControlBlocks {
             let _counter = 0;
             setInterval(() => {
                 _counter += 10;
-                if (_counter === duration) {
+                if (_counter > duration-10) {
                     resolve();
                     clearInterval(this);
                 }
