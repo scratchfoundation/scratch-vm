@@ -118,7 +118,7 @@ class Scratch3LooksBlocks {
      */
     _positionBubble (target) {
         const bubbleState = this._getBubbleState(target);
-        const [bubbleWidth, bubbleHeight] = this.runtime.renderer.getSkinSize(bubbleState.drawableId);
+        const [bubbleWidth, bubbleHeight] = this.runtime.renderer.getCurrentSkinSize(bubbleState.drawableId);
         const targetBounds = target.getBoundsForBubble();
         const stageBounds = this.runtime.getTargetForStage().getBounds();
         if (bubbleState.onSpriteRight && bubbleWidth + targetBounds.right > stageBounds.right &&
