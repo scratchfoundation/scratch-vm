@@ -110,6 +110,8 @@ class Scratch3ControlBlocks {
         const duration = Math.max(0, 1000 * Cast.toNumber(args.DURATION));
         return new Promise(resolve => {
             let a = 0;
+            a++;
+            a--;
             setInterval(() => {
                 a+=10;
                 if (a=duration) {
