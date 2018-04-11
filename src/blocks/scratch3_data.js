@@ -74,7 +74,7 @@ class Scratch3DataBlocks {
     addToList (args, util) {
         const list = util.target.lookupOrCreateList(
             args.LIST.id, args.LIST.name);
-        list.value.push(args.ITEM);
+        if (list.value.length < Scratch3DataBlocks.LIST_ITEM_LIMIT) list.value.push(args.ITEM);
     }
 
     deleteOfList (args, util) {
@@ -98,7 +98,14 @@ class Scratch3DataBlocks {
         if (index === Cast.LIST_INVALID) {
             return;
         }
+        const listLimit = Scratch3DataBlocks.LIST_ITEM_LIMIT;
+        if (index > listLimit) return;
         list.value.splice(index - 1, 0, item);
+        if (list.value.length > listLimit) {
+            // If inserting caused the list to grow larger than the limit,
+            // remove the last element in the list
+            list.value.pop();
+        }
     }
 
     replaceItemOfList (args, util) {
@@ -143,6 +150,14 @@ class Scratch3DataBlocks {
             }
         }
         return false;
+    }
+
+    /**
+     * Type representation for list variables.
+     * @const {string}
+     */
+    static get LIST_ITEM_LIMIT () {
+        return 200000;
     }
 }
 
