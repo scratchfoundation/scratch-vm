@@ -109,9 +109,14 @@ class Scratch3ControlBlocks {
     wait (args) {
         const duration = Math.max(0, 1000 * Cast.toNumber(args.DURATION));
         return new Promise(resolve => {
-            setTimeout(() => {
-                resolve();
-            }, duration);
+            let _counter = 0;
+            setInterval(() => {
+                _counter += 10;
+                if (_counter > duration - 10) {
+                    resolve();
+                    clearInterval(this);
+                }
+            }, 10);
         });
     }
 
