@@ -140,9 +140,17 @@ class RenderedTarget extends Target {
         /**
          * The state of the video input (used by extensions with camera input).
          * This property is global to the project and stored in the stage.
+         *
+         * Defaults to ON. This setting does not turn the video by itself. A
+         * video extension once loaded will set the video device to this
+         * setting. Set to ON when a video extension is added in the editor the
+         * video will start ON. If the extension is loaded as part of loading a
+         * saved project the extension will see the value set when the stage
+         * was loaded from the saved values including the video state.
+         *
          * @type {string}
          */
-        this.videoState = RenderedTarget.VIDEO_STATE.OFF;
+        this.videoState = RenderedTarget.VIDEO_STATE.ON;
     }
 
     /**
@@ -211,7 +219,7 @@ class RenderedTarget extends Target {
 
     /**
      * Available states for video input.
-     * @type {object}
+     * @enum {string}
      */
     static get VIDEO_STATE () {
         return {

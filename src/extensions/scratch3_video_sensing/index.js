@@ -80,10 +80,17 @@ class Scratch3VideoSensingBlocks {
             // Clear target motion state values when the project starts.
             this.runtime.on(Runtime.PROJECT_RUN_START, this.reset.bind(this));
 
-            // Boot up the video, canvas to down/up sample the video stream, the
-            // preview skin and drawable, and kick off looping the analysis
-            // logic.
+            // Kick off looping the analysis logic.
             this._loop();
+
+            // Configure the video device with values from a globally stored
+            // location.
+            this.setVideoTransparency({
+                TRANSPARENCY: this.globalVideoTransparency
+            });
+            this.videoToggle({
+                VIDEO_STATE: this.globalVideoState
+            });
         }
     }
 
@@ -123,6 +130,48 @@ class Scratch3VideoSensingBlocks {
             motionAmount: 0,
             motionDirection: 0
         };
+    }
+
+    /**
+     * The transparency setting of the video preview stored in a value
+     * accessible by any object connected to the virtual machine.
+     * @type {number}
+     */
+    get globalVideoTransparency () {
+        const stage = this.runtime.getTargetForStage();
+        if (stage) {
+            return stage.videoTransparency;
+        }
+        return 50;
+    }
+
+    set globalVideoTransparency (transparency) {
+        const stage = this.runtime.getTargetForStage();
+        if (stage) {
+            stage.videoTransparency = transparency;
+        }
+        return transparency;
+    }
+
+    /**
+     * The video state of the video preview stored in a value accessible by any
+     * object connected to the virtual machine.
+     * @type {number}
+     */
+    get globalVideoState () {
+        const stage = this.runtime.getTargetForStage();
+        if (stage) {
+            return stage.videoState;
+        }
+        return VideoState.ON;
+    }
+
+    set globalVideoState (state) {
+        const stage = this.runtime.getTargetForStage();
+        if (stage) {
+            stage.videoState = state;
+        }
+        return state;
     }
 
     /**
@@ -337,7 +386,7 @@ class Scratch3VideoSensingBlocks {
                     arguments: {
                         TRANSPARENCY: {
                             type: ArgumentType.NUMBER,
-                            defaultValue: 0
+                            defaultValue: 50
                         }
                     }
                 }
@@ -407,6 +456,7 @@ class Scratch3VideoSensingBlocks {
      */
     videoToggle (args) {
         const state = args.VIDEO_STATE;
+        this.globalVideoState = state;
         if (state === VideoState.OFF) {
             this.runtime.ioDevices.video.disableVideo();
         } else {
@@ -424,6 +474,7 @@ class Scratch3VideoSensingBlocks {
      *   preview to
      */
     setVideoTransparency (args) {
+        this.globalVideoTransparency = args.TRANSPARENCY;
         this.runtime.ioDevices.video.setPreviewGhost(Number(args.TRANSPARENCY));
     }
 }
