@@ -162,7 +162,7 @@ class VideoMotion {
         this.prev = this.curr;
         // Create a clone of the array so any modifications made to the source
         // array do not affect the work done in here.
-        this.curr = new Uint32Array(source.buffer.slice());
+        this.curr = new Uint32Array(source.buffer.slice(0));
 
         // Swap _prev and _curr. Copy one of the color components of the new
         // array into _curr overwriting what was the old _prev data.

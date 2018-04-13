@@ -240,23 +240,27 @@ class Video {
             return this._singleSetup;
         }
 
-        this._singleSetup = new Promise((resolve, reject) => {
-            navigator.getUserMedia({
-                audio: false,
-                video: {
-                    width: {min: 480, ideal: 640},
-                    height: {min: 360, ideal: 480}
-                }
-            }, resolve, reject);
+        this._singleSetup = navigator.mediaDevices.getUserMedia({
+            audio: false,
+            video: {
+                width: {min: 480, ideal: 640},
+                height: {min: 360, ideal: 480}
+            }
         })
             .then(stream => {
                 this._video = document.createElement('video');
-                this._video.src = window.URL.createObjectURL(stream);
+                // Use the new srcObject API, falling back to createObjectURL
+                try {
+                    this._video.srcObject = stream;
+                } catch (error) {
+                    this._video.src = window.URL.createObjectURL(stream);
+                }
                 // Hint to the stream that it should load. A standard way to do this
                 // is add the video tag to the DOM. Since this extension wants to
                 // hide the video tag and instead render a sample of the stream into
                 // the webgl rendered Scratch canvas, another hint like this one is
                 // needed.
+                this._video.play(); // Needed for Safari/Firefox, Chrome auto-plays.
                 this._track = stream.getTracks()[0];
                 this._setupPreview();
                 return this;
