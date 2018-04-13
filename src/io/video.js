@@ -255,7 +255,6 @@ class Video {
                 } catch (error) {
                     this._video.src = window.URL.createObjectURL(stream);
                 }
-                this._video.play();
                 // Hint to the stream that it should load. A standard way to do this
                 // is add the video tag to the DOM. Since this extension wants to
                 // hide the video tag and instead render a sample of the stream into
