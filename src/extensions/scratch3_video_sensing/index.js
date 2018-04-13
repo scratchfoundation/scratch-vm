@@ -337,7 +337,7 @@ class Scratch3VideoSensingBlocks {
     getInfo () {
         return {
             id: 'videoSensing',
-            name: 'Video Sensing',
+            name: 'Video Motion',
             blocks: [
                 {
                     opcode: 'videoOn',
