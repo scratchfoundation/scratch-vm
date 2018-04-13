@@ -8,6 +8,32 @@ const Video = require('../../io/video');
 const VideoMotion = require('./library');
 
 /**
+ * Sensor attribute video sensor block should report.
+ * @readonly
+ * @enum {string}
+ */
+const SensingAttribute = {
+    /** The amount of motion. */
+    MOTION: 'motion',
+
+    /** The direction of the motion. */
+    DIRECTION: 'direction'
+};
+
+/**
+ * Subject video sensor block should report for.
+ * @readonly
+ * @enum {string}
+ */
+const SensingSubject = {
+    /** The sensor traits of the whole stage. */
+    STAGE: 'Stage',
+
+    /** The senosr traits of the area overlapped by this sprite. */
+    SPRITE: 'this sprite'
+};
+
+/**
  * States the video sensing activity can be set to.
  * @readonly
  * @enum {string}
@@ -176,57 +202,52 @@ class Scratch3VideoSensingBlocks {
         return motionState;
     }
 
+    static get SensingAttribute () {
+        return SensingAttribute;
+    }
+
     /**
      * An array of choices of whether a reporter should return the frame's
      * motion amount or direction.
-     * @type {object[]} an array of objects.
-     * @param {string} name - the translatable name to display in the drums menu.
-     * @param {string} fileName - the name of the audio file containing the drum sound.
+     * @type {object[]} an array of objects
+     * @param {string} name - the translatable name to display in sensor
+     *   attribute menu
+     * @param {string} value - the serializable value of the attribute
      */
-    get MOTION_DIRECTION_INFO () {
+    get ATTRIBUTE_INFO () {
         return [
             {
-                name: 'motion'
+                name: 'motion',
+                value: SensingAttribute.MOTION
             },
             {
-                name: 'direction'
+                name: 'direction',
+                value: SensingAttribute.DIRECTION
             }
         ];
     }
 
-    static get MOTION () {
-        return 1;
-    }
-
-    static get DIRECTION () {
-        return 2;
+    static get SensingSubject () {
+        return SensingSubject;
     }
 
     /**
-     * An array of info about each drum.
-     * @type {object[]} an array of objects.
-     * @param {string} name - the translatable name to display in the drums
-     *   menu.
-     * @param {string} fileName - the name of the audio file containing the
-     *   drum sound.
+     * An array of info about the subject choices.
+     * @type {object[]} an array of objects
+     * @param {string} name - the translatable name to display in the subject menu
+     * @param {string} value - the serializable value of the subject
      */
-    get STAGE_SPRITE_INFO () {
+    get SUBJECT_INFO () {
         return [
             {
-                name: 'stage'
+                name: 'stage',
+                value: SensingSubject.STAGE
             },
             {
-                name: 'sprite'
+                name: 'sprite',
+                value: SensingSubject.SPRITE
             }
         ];
-    }
-
-    static get STAGE () {
-        return 1;
-    }
-
-    static get SPRITE () {
-        return 2;
     }
 
     /**
@@ -272,17 +293,17 @@ class Scratch3VideoSensingBlocks {
                 {
                     opcode: 'videoOn',
                     blockType: BlockType.REPORTER,
-                    text: 'video [MOTION_DIRECTION] on [STAGE_SPRITE]',
+                    text: 'video [ATTRIBUTE] on [SUBJECT]',
                     arguments: {
-                        MOTION_DIRECTION: {
+                        ATTRIBUTE: {
                             type: ArgumentType.NUMBER,
-                            menu: 'MOTION_DIRECTION',
-                            defaultValue: Scratch3VideoSensingBlocks.MOTION
+                            menu: 'ATTRIBUTE',
+                            defaultValue: SensingAttribute.MOTION
                         },
-                        STAGE_SPRITE: {
+                        SUBJECT: {
                             type: ArgumentType.NUMBER,
-                            menu: 'STAGE_SPRITE',
-                            defaultValue: Scratch3VideoSensingBlocks.STAGE
+                            menu: 'SUBJECT',
+                            defaultValue: SensingSubject.STAGE
                         }
                     }
                 },
@@ -322,8 +343,8 @@ class Scratch3VideoSensingBlocks {
                 }
             ],
             menus: {
-                MOTION_DIRECTION: this._buildMenu(this.MOTION_DIRECTION_INFO),
-                STAGE_SPRITE: this._buildMenu(this.STAGE_SPRITE_INFO),
+                ATTRIBUTE: this._buildMenu(this.ATTRIBUTE_INFO),
+                SUBJECT: this._buildMenu(this.SUBJECT_INFO),
                 VIDEO_STATE: this._buildMenu(this.VIDEO_STATE_INFO)
             }
         };
@@ -353,11 +374,11 @@ class Scratch3VideoSensingBlocks {
         this.detect.analyzeFrame();
 
         let state = this.detect;
-        if (Number(args.STAGE_SPRITE) === Scratch3VideoSensingBlocks.SPRITE) {
+        if (args.SUBJECT === SensingSubject.SPRITE) {
             state = this._analyzeLocalMotion(util.target);
         }
 
-        if (Number(args.MOTION_DIRECTION) === Scratch3VideoSensingBlocks.MOTION) {
+        if (args.ATTRIBUTE === SensingAttribute.MOTION) {
             return state.motionAmount;
         }
         return state.motionDirection;

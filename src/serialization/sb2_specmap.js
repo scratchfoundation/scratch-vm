@@ -614,13 +614,13 @@ const specMap = {
         argMap: [
             {
                 type: 'input',
-                inputOp: 'videoSensing.menu.MOTION_DIRECTION',
-                inputName: 'MOTION_DIRECTION'
+                inputOp: 'videoSensing.menu.ATTRIBUTE',
+                inputName: 'ATTRIBUTE'
             },
             {
                 type: 'input',
-                inputOp: 'videoSensing.menu.STAGE_SPRITE',
-                inputName: 'STAGE_SPRITE'
+                inputOp: 'videoSensing.menu.SUBJECT',
+                inputName: 'SUBJECT'
             }
         ]
     },

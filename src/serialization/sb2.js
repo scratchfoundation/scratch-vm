@@ -611,21 +611,13 @@ const parseBlock = function (sb2block, addBroadcastMsg, getVariableId, extension
                 if (shadowObscured) {
                     fieldValue = 1;
                 }
-            } else if (expectedArg.inputOp === 'videoSensing.menu.MOTION_DIRECTION') {
+            } else if (expectedArg.inputOp === 'videoSensing.menu.ATTRIBUTE') {
                 if (shadowObscured) {
-                    fieldValue = 1;
-                } else if (fieldValue === 'motion') {
-                    fieldValue = 1;
-                } else if (fieldValue === 'direction') {
-                    fieldValue = 2;
+                    fieldValue = 'motion';
                 }
-            } else if (expectedArg.inputOp === 'videoSensing.menu.STAGE_SPRITE') {
+            } else if (expectedArg.inputOp === 'videoSensing.menu.SUBJECT') {
                 if (shadowObscured) {
-                    fieldValue = 2;
-                } else if (fieldValue === 'Stage') {
-                    fieldValue = 1;
-                } else if (fieldValue === 'this sprite') {
-                    fieldValue = 2;
+                    fieldValue = 'this sprite';
                 }
             } else if (expectedArg.inputOp === 'videoSensing.menu.VIDEO_STATE') {
                 if (shadowObscured) {
