@@ -25,7 +25,7 @@ const loadSoundFromAsset = function (sound, soundAsset, runtime) {
         // Set the sound sample rate and sample count based on the
         // the audio buffer from the audio engine since the sound
         // gets resampled by the audio engine
-        const soundBuffer = runtime.udioEngine.getSoundBuffer(soundId);
+        const soundBuffer = runtime.audioEngine.getSoundBuffer(soundId);
         sound.rate = soundBuffer.sampleRate;
         sound.sampleCount = soundBuffer.length;
 
