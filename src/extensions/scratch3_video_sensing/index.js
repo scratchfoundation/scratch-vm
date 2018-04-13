@@ -3,6 +3,7 @@ const Runtime = require('../../engine/runtime');
 const ArgumentType = require('../../extension-support/argument-type');
 const BlockType = require('../../extension-support/block-type');
 const Clone = require('../../util/clone');
+const Cast = require('../../util/cast');
 const Video = require('../../io/video');
 
 const VideoMotion = require('./library');
@@ -474,8 +475,9 @@ class Scratch3VideoSensingBlocks {
      *   preview to
      */
     setVideoTransparency (args) {
-        this.globalVideoTransparency = args.TRANSPARENCY;
-        this.runtime.ioDevices.video.setPreviewGhost(Number(args.TRANSPARENCY));
+        const transparency = Cast.toNumber(args.TRANSPARENCY);
+        this.globalVideoTransparency = transparency;
+        this.runtime.ioDevices.video.setPreviewGhost(transparency);
     }
 }
 
