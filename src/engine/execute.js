@@ -100,11 +100,23 @@ const handleReport = function (
 };
 
 /**
- * A convenienve constant to hide that the recursiveCall argument to execute is
- * a boolean trap.
+ * A convenience constant to help make use of the recursiveCall argument easier
+ * to read.
  * @const {boolean}
  */
 const RECURSIVE = true;
+
+/**
+ * A simple description of the kind of information held in the fields of a block.
+ * @enum {string}
+ */
+const FieldKind = {
+    NONE: 'NONE',
+    VARIABLE: 'VARIABLE',
+    LIST: 'LIST',
+    BROADCAST_OPTION: 'BROADCAST_OPTION',
+    DYNAMIC: 'DYNAMIC'
+};
 
 /**
  * Execute a block.
@@ -145,35 +157,32 @@ const execute = function (sequencer, thread, recursiveCall) {
 
         // Store the current shadow value if there is a shadow value.
         blockCached._isShadowBlock = fieldKeys.length === 1 && Object.keys(inputs).length === 0;
-        blockCached._shadowValue = fieldKeys.length === 1 && fields[fieldKeys[0]].value;
+        blockCached._shadowValue = blockCached._isShadowBlock && fields[fieldKeys[0]].value;
 
         // Store a fields copy. If fields is a VARIABLE, LIST, or
         // BROADCAST_OPTION, store the created values so fields assignment to
         // argValues does not iterate over fields.
         blockCached._fields = Object.assign({}, blockCached.fields);
-        blockCached._isFieldVariable = fieldKeys.length === 1 && fieldKeys.includes('VARIABLE');
-        blockCached._fieldVariable = blockCached._isFieldVariable ?
-            {
+        blockCached._fieldKind = fieldKeys.length > 0 ? FieldKind.DYNAMIC : FieldKind.NONE;
+        if (fieldKeys.length === 1 && fieldKeys.includes('VARIABLE')) {
+            blockCached._fieldKind = FieldKind.VARIABLE;
+            blockCached._fieldVariable = {
                 id: fields.VARIABLE.id,
                 name: fields.VARIABLE.value
-            } :
-            null;
-        blockCached._isFieldList = fieldKeys.length === 1 && fieldKeys.includes('LIST');
-        blockCached._fieldList = blockCached._isFieldList ?
-            {
+            };
+        } else if (fieldKeys.length === 1 && fieldKeys.includes('LIST')) {
+            blockCached._fieldKind = FieldKind.LIST;
+            blockCached._fieldList = {
                 id: fields.LIST.id,
                 name: fields.LIST.value
-            } :
-            null;
-        blockCached._isFieldBroadcastOption = fieldKeys.length === 1 && fieldKeys.includes('BROADCAST_OPTION');
-        blockCached._fieldBroadcastOption = blockCached._isFieldBroadcastOption ?
-            {
+            };
+        } else if (fieldKeys.length === 1 && fieldKeys.includes('BROADCAST_OPTION')) {
+            blockCached._fieldKind = FieldKind.BROADCAST_OPTION;
+            blockCached._fieldBroadcastOption = {
                 id: fields.BROADCAST_OPTION.id,
                 name: fields.BROADCAST_OPTION.value
-            } :
-            null;
-        blockCached._isFieldKnown = blockCached._isFieldVariable ||
-            blockCached._isFieldList || blockCached._isFieldBroadcastOption;
+            };
+        }
 
         // Store a modified inputs. This assures the keys are its own properties
         // and that custom_block will not be evaluated.
@@ -220,17 +229,21 @@ const execute = function (sequencer, thread, recursiveCall) {
     const argValues = {};
 
     // Add all fields on this block to the argValues.
-    if (blockCached._isFieldKnown) {
-        if (blockCached._isFieldVariable) {
+    if (blockCached._fieldKind !== FieldKind.NONE) {
+        switch (blockCached._fieldKind) {
+        case FieldKind.VARIABLE:
             argValues.VARIABLE = blockCached._fieldVariable;
-        } else if (blockCached._isFieldList) {
+            break;
+        case FieldKind.LIST:
             argValues.LIST = blockCached._fieldList;
-        } else if (blockCached._isFieldBroadcastOption) {
+            break;
+        case FieldKind.BROADCAST_OPTION:
             argValues.BROADCAST_OPTION = blockCached._fieldBroadcastOption;
-        }
-    } else {
-        for (const fieldName in fields) {
-            argValues[fieldName] = fields[fieldName].value;
+            break;
+        default:
+            for (const fieldName in fields) {
+                argValues[fieldName] = fields[fieldName].value;
+            }
         }
     }
 
@@ -239,7 +252,7 @@ const execute = function (sequencer, thread, recursiveCall) {
         const input = inputs[inputName];
         const inputBlockId = input.block;
         // Is there no value for this input waiting in the stack frame?
-        if (inputBlockId !== null && typeof currentStackFrame.reported[inputName] === 'undefined') {
+        if (inputBlockId !== null && currentStackFrame.waitingReporter === null) {
             // If there's not, we need to evaluate the block.
             // Push to the stack to evaluate the reporter block.
             thread.pushStack(inputBlockId);
@@ -251,7 +264,7 @@ const execute = function (sequencer, thread, recursiveCall) {
                 for (const _inputName in inputs) {
                     if (_inputName === inputName) break;
                     if (_inputName === 'BROADCAST_INPUT') {
-                        currentStackFrame.reported[_inputName] = argValues[_inputName].name;
+                        currentStackFrame.reported[_inputName] = argValues.BROADCAST_OPTION.name;
                     } else {
                         currentStackFrame.reported[_inputName] = argValues[_inputName];
                     }
@@ -265,13 +278,13 @@ const execute = function (sequencer, thread, recursiveCall) {
             thread.popStack();
         }
         let inputValue;
-        if (
-            currentStackFrame.waitingReporter === null
-        ) {
+        if (currentStackFrame.waitingReporter === null) {
             inputValue = currentStackFrame.justReported;
+            currentStackFrame.justReported = null;
         } else if (currentStackFrame.waitingReporter === inputName) {
             inputValue = currentStackFrame.justReported;
             currentStackFrame.waitingReporter = null;
+            currentStackFrame.justReported = null;
             // If we've gotten this far, all of the input blocks are evaluated,
             // and `argValues` is fully populated. So, execute the block
             // primitive. First, clear `currentStackFrame.reported`, so any
