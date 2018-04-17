@@ -3,9 +3,52 @@ const Runtime = require('../../engine/runtime');
 const ArgumentType = require('../../extension-support/argument-type');
 const BlockType = require('../../extension-support/block-type');
 const Clone = require('../../util/clone');
-const log = require('../../util/log');
+const Cast = require('../../util/cast');
+const Video = require('../../io/video');
 
 const VideoMotion = require('./library');
+
+/**
+ * Sensor attribute video sensor block should report.
+ * @readonly
+ * @enum {string}
+ */
+const SensingAttribute = {
+    /** The amount of motion. */
+    MOTION: 'motion',
+
+    /** The direction of the motion. */
+    DIRECTION: 'direction'
+};
+
+/**
+ * Subject video sensor block should report for.
+ * @readonly
+ * @enum {string}
+ */
+const SensingSubject = {
+    /** The sensor traits of the whole stage. */
+    STAGE: 'Stage',
+
+    /** The senosr traits of the area overlapped by this sprite. */
+    SPRITE: 'this sprite'
+};
+
+/**
+ * States the video sensing activity can be set to.
+ * @readonly
+ * @enum {string}
+ */
+const VideoState = {
+    /** Video turned off. */
+    OFF: 'off',
+
+    /** Video turned on with default y axis mirroring. */
+    ON: 'on',
+
+    /** Video turned on without default y axis mirroring. */
+    ON_FLIPPED: 'on-flipped'
+};
 
 /**
  * Class for the motion-related blocks in Scratch 3.0
@@ -34,50 +77,21 @@ class Scratch3VideoSensingBlocks {
          */
         this._lastUpdate = null;
 
-        /**
-         * Id representing a Scratch Renderer skin the video is rendered to for
-         * previewing.
-         * @type {number}
-         */
-        this._skinId = -1;
-
-        /**
-         * The Scratch Renderer Skin object.
-         * @type {Skin}
-         */
-        this._skin = null;
-
-        /**
-         * Id for a drawable using the video's skin that will render as a video
-         * preview.
-         * @type {Drawable}
-         */
-        this._drawable = -1;
-
-        /**
-         * Canvas DOM element video is rendered to down or up sample to the
-         * expected resolution.
-         * @type {HTMLCanvasElement}
-         */
-        this._sampleCanvas = null;
-
-        /**
-         * Canvas 2D Context to render to the _sampleCanvas member.
-         * @type {CanvasRenderingContext2D}
-         */
-        this._sampleContext = null;
-
         if (this.runtime.ioDevices) {
             // Clear target motion state values when the project starts.
             this.runtime.on(Runtime.PROJECT_RUN_START, this.reset.bind(this));
 
-            // Boot up the video, canvas to down/up sample the video stream, the
-            // preview skin and drawable, and kick off looping the analysis
-            // logic.
-            this._setupVideo();
-            this._setupSampleCanvas();
-            this._setupPreview();
+            // Kick off looping the analysis logic.
             this._loop();
+
+            // Configure the video device with values from a globally stored
+            // location.
+            this.setVideoTransparency({
+                TRANSPARENCY: this.globalVideoTransparency
+            });
+            this.videoToggle({
+                VIDEO_STATE: this.globalVideoState
+            });
         }
     }
 
@@ -97,14 +111,6 @@ class Scratch3VideoSensingBlocks {
      */
     static get DIMENSIONS () {
         return [480, 360];
-    }
-
-    /**
-     * Order preview drawable is inserted at in the renderer.
-     * @type {number}
-     */
-    static get ORDER () {
-        return 1;
     }
 
     /**
@@ -128,6 +134,48 @@ class Scratch3VideoSensingBlocks {
     }
 
     /**
+     * The transparency setting of the video preview stored in a value
+     * accessible by any object connected to the virtual machine.
+     * @type {number}
+     */
+    get globalVideoTransparency () {
+        const stage = this.runtime.getTargetForStage();
+        if (stage) {
+            return stage.videoTransparency;
+        }
+        return 50;
+    }
+
+    set globalVideoTransparency (transparency) {
+        const stage = this.runtime.getTargetForStage();
+        if (stage) {
+            stage.videoTransparency = transparency;
+        }
+        return transparency;
+    }
+
+    /**
+     * The video state of the video preview stored in a value accessible by any
+     * object connected to the virtual machine.
+     * @type {number}
+     */
+    get globalVideoState () {
+        const stage = this.runtime.getTargetForStage();
+        if (stage) {
+            return stage.videoState;
+        }
+        return VideoState.ON;
+    }
+
+    set globalVideoState (state) {
+        const stage = this.runtime.getTargetForStage();
+        if (stage) {
+            stage.videoState = state;
+        }
+        return state;
+    }
+
+    /**
      * Reset the extension's data motion detection data. This will clear out
      * for example old frames, so the first analyzed frame will not be compared
      * against a frame from before reset was called.
@@ -146,126 +194,28 @@ class Scratch3VideoSensingBlocks {
     }
 
     /**
-     * Setup a video element connected to a user media stream.
-     * @private
-     */
-    _setupVideo () {
-        this._video = document.createElement('video');
-        navigator.getUserMedia({
-            audio: false,
-            video: {
-                width: {min: 480, ideal: 640},
-                height: {min: 360, ideal: 480}
-            }
-        }, stream => {
-            this._video.src = window.URL.createObjectURL(stream);
-            // Hint to the stream that it should load. A standard way to do this
-            // is add the video tag to the DOM. Since this extension wants to
-            // hide the video tag and instead render a sample of the stream into
-            // the webgl rendered Scratch canvas, another hint like this one is
-            // needed.
-            this._track = stream.getTracks()[0];
-        }, err => {
-            // @todo Properly handle errors
-            log(err);
-        });
-    }
-
-    /**
-     * Create a campus to render the user media video to down/up sample to the
-     * needed resolution.
-     * @private
-     */
-    _setupSampleCanvas () {
-        // Create low-resolution image to sample video for analysis and preview
-        const canvas = this._sampleCanvas = document.createElement('canvas');
-        canvas.width = Scratch3VideoSensingBlocks.DIMENSIONS[0];
-        canvas.height = Scratch3VideoSensingBlocks.DIMENSIONS[1];
-        this._sampleContext = canvas.getContext('2d');
-    }
-
-    /**
-     * Create a Scratch Renderer Skin and Drawable to preview the user media
-     * video stream.
-     * @private
-     */
-    _setupPreview () {
-        if (this._skinId !== -1) return;
-        if (this._skin !== null) return;
-        if (this._drawable !== -1) return;
-        if (!this.runtime.renderer) return;
-
-        this._skinId = this.runtime.renderer.createPenSkin();
-        this._skin = this.runtime.renderer._allSkins[this._skinId];
-        this._drawable = this.runtime.renderer.createDrawable();
-        this.runtime.renderer.setDrawableOrder(
-            this._drawable,
-            Scratch3VideoSensingBlocks.ORDER
-        );
-        this.runtime.renderer.updateDrawableProperties(this._drawable, {
-            skinId: this._skinId
-        });
-    }
-
-    /**
      * Occasionally step a loop to sample the video, stamp it to the preview
      * skin, and add a TypedArray copy of the canvas's pixel data.
      * @private
      */
     _loop () {
-        setTimeout(this._loop.bind(this), this.runtime.currentStepTime);
-
-        // Ensure video stream is established
-        if (!this._video) return;
-        if (!this._track) return;
-        if (typeof this._video.videoWidth !== 'number') return;
-        if (typeof this._video.videoHeight !== 'number') return;
-
-        // Bail if the camera is *still* not ready
-        const nativeWidth = this._video.videoWidth;
-        const nativeHeight = this._video.videoHeight;
-        if (nativeWidth === 0) return;
-        if (nativeHeight === 0) return;
-
-        const ctx = this._sampleContext;
-
-        // Mirror
-        ctx.scale(-1, 1);
-
-        // Generate video thumbnail for analysis
-        ctx.drawImage(
-            this._video,
-            0,
-            0,
-            nativeWidth,
-            nativeHeight,
-            Scratch3VideoSensingBlocks.DIMENSIONS[0] * -1,
-            0,
-            Scratch3VideoSensingBlocks.DIMENSIONS[0],
-            Scratch3VideoSensingBlocks.DIMENSIONS[1]
-        );
-
-        // Restore the canvas transform
-        ctx.resetTransform();
-
-        // Render to preview layer
-        if (this._skin !== null) {
-            const xOffset = Scratch3VideoSensingBlocks.DIMENSIONS[0] / 2 * -1;
-            const yOffset = Scratch3VideoSensingBlocks.DIMENSIONS[1] / 2;
-            this._skin.drawStamp(this._sampleCanvas, xOffset, yOffset);
-            this.runtime.requestRedraw();
-        }
+        setTimeout(this._loop.bind(this), Math.max(this.runtime.currentStepTime, Scratch3VideoSensingBlocks.INTERVAL));
 
         // Add frame to detector
         const time = Date.now();
-        if (this._lastUpdate === null) this._lastUpdate = time;
+        if (this._lastUpdate === null) {
+            this._lastUpdate = time;
+        }
         const offset = time - this._lastUpdate;
         if (offset > Scratch3VideoSensingBlocks.INTERVAL) {
-            this._lastUpdate = time;
-            const data = ctx.getImageData(
-                0, 0, Scratch3VideoSensingBlocks.DIMENSIONS[0], Scratch3VideoSensingBlocks.DIMENSIONS[1]
-            );
-            this.detect.addFrame(data.data);
+            const frame = this.runtime.ioDevices.video.getFrame({
+                format: Video.FORMAT_IMAGE_DATA,
+                dimensions: Scratch3VideoSensingBlocks.DIMENSIONS
+            });
+            if (frame) {
+                this._lastUpdate = time;
+                this.detect.addFrame(frame.data);
+            }
         }
     }
 
@@ -282,7 +232,7 @@ class Scratch3VideoSensingBlocks {
         return info.map((entry, index) => {
             const obj = {};
             obj.text = entry.name;
-            obj.value = String(index + 1);
+            obj.value = entry.value || String(index + 1);
             return obj;
         });
     }
@@ -302,57 +252,84 @@ class Scratch3VideoSensingBlocks {
         return motionState;
     }
 
+    static get SensingAttribute () {
+        return SensingAttribute;
+    }
+
     /**
      * An array of choices of whether a reporter should return the frame's
      * motion amount or direction.
-     * @type {object[]} an array of objects.
-     * @param {string} name - the translatable name to display in the drums menu.
-     * @param {string} fileName - the name of the audio file containing the drum sound.
+     * @type {object[]} an array of objects
+     * @param {string} name - the translatable name to display in sensor
+     *   attribute menu
+     * @param {string} value - the serializable value of the attribute
      */
-    get MOTION_DIRECTION_INFO () {
+    get ATTRIBUTE_INFO () {
         return [
             {
-                name: 'motion'
+                name: 'motion',
+                value: SensingAttribute.MOTION
             },
             {
-                name: 'direction'
+                name: 'direction',
+                value: SensingAttribute.DIRECTION
             }
         ];
     }
 
-    static get MOTION () {
-        return 1;
-    }
-
-    static get DIRECTION () {
-        return 2;
+    static get SensingSubject () {
+        return SensingSubject;
     }
 
     /**
-     * An array of info about each drum.
-     * @type {object[]} an array of objects.
-     * @param {string} name - the translatable name to display in the drums
-     *   menu.
-     * @param {string} fileName - the name of the audio file containing the
-     *   drum sound.
+     * An array of info about the subject choices.
+     * @type {object[]} an array of objects
+     * @param {string} name - the translatable name to display in the subject menu
+     * @param {string} value - the serializable value of the subject
      */
-    get STAGE_SPRITE_INFO () {
+    get SUBJECT_INFO () {
         return [
             {
-                name: 'stage'
+                name: 'stage',
+                value: SensingSubject.STAGE
             },
             {
-                name: 'sprite'
+                name: 'sprite',
+                value: SensingSubject.SPRITE
             }
         ];
     }
 
-    static get STAGE () {
-        return 1;
+    /**
+     * States the video sensing activity can be set to.
+     * @readonly
+     * @enum {string}
+     */
+    static get VideoState () {
+        return VideoState;
     }
 
-    static get SPRITE () {
-        return 2;
+    /**
+     * An array of info on video state options for the "turn video [STATE]" block.
+     * @type {object[]} an array of objects
+     * @param {string} name - the translatable name to display in the video state menu
+     * @param {string} value - the serializable value stored in the block
+     */
+    get VIDEO_STATE_INFO () {
+        return [
+            {
+                name: 'off',
+                value: VideoState.OFF
+            },
+            {
+                name: 'on',
+                value: VideoState.ON
+            },
+            {
+                name: 'on flipped',
+                value: VideoState.ON_FLIPPED
+            }
+        ];
     }
 
     /**
@@ -361,22 +338,22 @@ class Scratch3VideoSensingBlocks {
     getInfo () {
         return {
             id: 'videoSensing',
-            name: 'Video Sensing',
+            name: 'Video Motion',
             blocks: [
                 {
                     opcode: 'videoOn',
                     blockType: BlockType.REPORTER,
-                    text: 'video [MOTION_DIRECTION] on [STAGE_SPRITE]',
+                    text: 'video [ATTRIBUTE] on [SUBJECT]',
                     arguments: {
-                        MOTION_DIRECTION: {
+                        ATTRIBUTE: {
                             type: ArgumentType.NUMBER,
-                            menu: 'MOTION_DIRECTION',
-                            defaultValue: Scratch3VideoSensingBlocks.MOTION
+                            menu: 'ATTRIBUTE',
+                            defaultValue: SensingAttribute.MOTION
                         },
-                        STAGE_SPRITE: {
+                        SUBJECT: {
                             type: ArgumentType.NUMBER,
-                            menu: 'STAGE_SPRITE',
-                            defaultValue: Scratch3VideoSensingBlocks.STAGE
+                            menu: 'SUBJECT',
+                            defaultValue: SensingSubject.STAGE
                         }
                     }
                 },
@@ -392,11 +369,33 @@ class Scratch3VideoSensingBlocks {
                             defaultValue: 10
                         }
                     }
+                },
+                {
+                    opcode: 'videoToggle',
+                    text: 'turn video [VIDEO_STATE]',
+                    arguments: {
+                        VIDEO_STATE: {
+                            type: ArgumentType.NUMBER,
+                            menu: 'VIDEO_STATE',
+                            defaultValue: VideoState.ON
+                        }
+                    }
+                },
+                {
+                    opcode: 'setVideoTransparency',
+                    text: 'set video transparency to [TRANSPARENCY]',
+                    arguments: {
+                        TRANSPARENCY: {
+                            type: ArgumentType.NUMBER,
+                            defaultValue: 50
+                        }
+                    }
                 }
             ],
             menus: {
-                MOTION_DIRECTION: this._buildMenu(this.MOTION_DIRECTION_INFO),
-                STAGE_SPRITE: this._buildMenu(this.STAGE_SPRITE_INFO)
+                ATTRIBUTE: this._buildMenu(this.ATTRIBUTE_INFO),
+                SUBJECT: this._buildMenu(this.SUBJECT_INFO),
+                VIDEO_STATE: this._buildMenu(this.VIDEO_STATE_INFO)
             }
         };
     }
@@ -425,11 +424,11 @@ class Scratch3VideoSensingBlocks {
         this.detect.analyzeFrame();
 
         let state = this.detect;
-        if (Number(args.STAGE_SPRITE) === Scratch3VideoSensingBlocks.SPRITE) {
+        if (args.SUBJECT === SensingSubject.SPRITE) {
             state = this._analyzeLocalMotion(util.target);
         }
 
-        if (Number(args.MOTION_DIRECTION) === Scratch3VideoSensingBlocks.MOTION) {
+        if (args.ATTRIBUTE === SensingAttribute.MOTION) {
             return state.motionAmount;
         }
         return state.motionDirection;
@@ -448,6 +447,37 @@ class Scratch3VideoSensingBlocks {
         this.detect.analyzeFrame();
         const state = this._analyzeLocalMotion(util.target);
         return state.motionAmount > Number(args.REFERENCE);
+    }
+
+    /**
+     * A scratch command block handle that configures the video state from
+     * passed arguments.
+     * @param {object} args - the block arguments
+     * @param {VideoState} args.VIDEO_STATE - the video state to set the device to
+     */
+    videoToggle (args) {
+        const state = args.VIDEO_STATE;
+        this.globalVideoState = state;
+        if (state === VideoState.OFF) {
+            this.runtime.ioDevices.video.disableVideo();
+        } else {
+            this.runtime.ioDevices.video.enableVideo();
+            // Mirror if state is ON. Do not mirror if state is ON_FLIPPED.
+            this.runtime.ioDevices.video.mirror = state === VideoState.ON;
+        }
+    }
+
+    /**
+     * A scratch command block handle that configures the video preview's
+     * transparency from passed arguments.
+     * @param {object} args - the block arguments
+     * @param {number} args.TRANSPARENCY - the transparency to set the video
+     *   preview to
+     */
+    setVideoTransparency (args) {
+        const transparency = Cast.toNumber(args.TRANSPARENCY);
+        this.globalVideoTransparency = transparency;
+        this.runtime.ioDevices.video.setPreviewGhost(transparency);
     }
 }
 

@@ -215,7 +215,7 @@ const parseScratchObject = function (object, runtime, extensions, topLevel, zip)
     const sprite = new Sprite(blocks, runtime);
     // Sprite/stage name from JSON.
     if (object.hasOwnProperty('objName')) {
-        sprite.name = object.objName;
+        sprite.name = topLevel ? 'Stage' : object.objName;
     }
     // Costumes from JSON.
     const costumePromises = [];
@@ -611,21 +611,17 @@ const parseBlock = function (sb2block, addBroadcastMsg, getVariableId, extension
                 if (shadowObscured) {
                     fieldValue = 1;
                 }
-            } else if (expectedArg.inputOp === 'videoSensing.menu.MOTION_DIRECTION') {
+            } else if (expectedArg.inputOp === 'videoSensing.menu.ATTRIBUTE') {
                 if (shadowObscured) {
-                    fieldValue = 1;
-                } else if (fieldValue === 'motion') {
-                    fieldValue = 1;
-                } else if (fieldValue === 'direction') {
-                    fieldValue = 2;
+                    fieldValue = 'motion';
                 }
-            } else if (expectedArg.inputOp === 'videoSensing.menu.STAGE_SPRITE') {
+            } else if (expectedArg.inputOp === 'videoSensing.menu.SUBJECT') {
                 if (shadowObscured) {
-                    fieldValue = 2;
-                } else if (fieldValue === 'Stage') {
-                    fieldValue = 1;
-                } else if (fieldValue === 'this sprite') {
-                    fieldValue = 2;
+                    fieldValue = 'this sprite';
+                }
+            } else if (expectedArg.inputOp === 'videoSensing.menu.VIDEO_STATE') {
+                if (shadowObscured) {
+                    fieldValue = 'on';
                 }
             } else if (shadowObscured) {
                 // Filled drop-down menu.
@@ -639,18 +635,16 @@ const parseBlock = function (sb2block, addBroadcastMsg, getVariableId, extension
             // event_broadcast_menus have some extra properties to add to the
             // field and a different value than the rest
             if (expectedArg.inputOp === 'event_broadcast_menu') {
-                if (!shadowObscured) {
-                    // Need to update the broadcast message name map with
-                    // the value of this field.
-                    // Also need to provide the fields[fieldName] object,
-                    // so that we can later update its value property, e.g.
-                    // if sb2 message name is empty string, we will later
-                    // replace this field's value with messageN
-                    // once we can traverse through all the existing message names
-                    // and come up with a fresh messageN.
-                    const broadcastId = addBroadcastMsg(fieldValue, fields[fieldName]);
-                    fields[fieldName].id = broadcastId;
-                }
+                // Need to update the broadcast message name map with
+                // the value of this field.
+                // Also need to provide the fields[fieldName] object,
+                // so that we can later update its value property, e.g.
+                // if sb2 message name is empty string, we will later
+                // replace this field's value with messageN
+                // once we can traverse through all the existing message names
+                // and come up with a fresh messageN.
+                const broadcastId = addBroadcastMsg(fieldValue, fields[fieldName]);
+                fields[fieldName].id = broadcastId;
                 fields[fieldName].variableType = expectedArg.variableType;
             }
             activeBlock.children.push({

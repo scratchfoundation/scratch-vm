@@ -614,13 +614,13 @@ const specMap = {
         argMap: [
             {
                 type: 'input',
-                inputOp: 'videoSensing.menu.MOTION_DIRECTION',
-                inputName: 'MOTION_DIRECTION'
+                inputOp: 'videoSensing.menu.ATTRIBUTE',
+                inputName: 'ATTRIBUTE'
             },
             {
                 type: 'input',
-                inputOp: 'videoSensing.menu.STAGE_SPRITE',
-                inputName: 'STAGE_SPRITE'
+                inputOp: 'videoSensing.menu.SUBJECT',
+                inputName: 'SUBJECT'
             }
         ]
     },
@@ -980,17 +980,17 @@ const specMap = {
     //     ]
     // },
     'setVideoState': {
-        opcode: 'sensing_videotoggle',
+        opcode: 'videoSensing.videoToggle',
         argMap: [
             {
                 type: 'input',
-                inputOp: 'sensing_videotogglemenu',
-                inputName: 'VIDEOTOGGLEMENU'
+                inputOp: 'videoSensing.menu.VIDEO_STATE',
+                inputName: 'VIDEO_STATE'
             }
         ]
     },
     'setVideoTransparency': {
-        opcode: 'sensing_setvideotransparency',
+        opcode: 'videoSensing.setVideoTransparency',
         argMap: [
             {
                 type: 'input',

@@ -297,7 +297,7 @@ class Scratch3PenBlocks {
                     blockType: BlockType.COMMAND,
                     text: formatMessage({
                         id: 'pen.clear',
-                        default: 'clear',
+                        default: 'erase all',
                         description: 'erase all pen trails and stamps'
                     })
                 },
