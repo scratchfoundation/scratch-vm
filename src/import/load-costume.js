@@ -20,11 +20,16 @@ const loadCostumeFromAsset = function (costume, costumeAsset, runtime) {
         return costume;
     }
     const AssetType = runtime.storage.AssetType;
-    const rotationCenter = [
-        costume.rotationCenterX / costume.bitmapResolution,
-        costume.rotationCenterY / costume.bitmapResolution
-    ];
+    let rotationCenter;
+    if (costume.rotationCenterX && costume.rotationCenterY && costume.bitmapResolution) {
+        rotationCenter = [
+            costume.rotationCenterX / costume.bitmapResolution,
+            costume.rotationCenterY / costume.bitmapResolution
+        ];
+    }
     if (costumeAsset.assetType === AssetType.ImageVector) {
+        // createSVGSkin does the right thing if rotationCenter isn't provided, so it's okay if it's
+        // undefined here
         costume.skinId = runtime.renderer.createSVGSkin(costumeAsset.decodeText(), rotationCenter);
         costume.size = runtime.renderer.getSkinSize(costume.skinId);
         return costume;
@@ -50,6 +55,7 @@ const loadCostumeFromAsset = function (costume, costumeAsset, runtime) {
         imageElement.addEventListener('load', onLoad);
         imageElement.src = costumeAsset.encodeDataURI();
     }).then(imageElement => {
+        // createBitmapSkin does the right thing if costume.bitmapResolution or rotationCenter are undefined...
         costume.skinId = runtime.renderer.createBitmapSkin(imageElement, costume.bitmapResolution, rotationCenter);
         costume.size = runtime.renderer.getSkinSize(costume.skinId);
         return costume;
