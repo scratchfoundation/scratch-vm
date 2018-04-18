@@ -144,6 +144,20 @@ const execute = function (sequencer, thread, recursiveCall) {
         }
     }
 
+    // With the help of the Blocks class create a cached copy of values from
+    // Blocks and the derived values execute needs. These values can be produced
+    // one time during the first execution of a block so that later executions
+    // are faster by using these cached values. This helps turn most costly
+    // javascript operations like testing if the fields for a block has a
+    // certain key like VARIABLE into a test that done once is saved on the
+    // cache object to _isFieldVariable. This reduces the cost later in execute
+    // when that will determine how execute creates the argValues for the
+    // blockFunction.
+    //
+    // With Blocks providing this private function for execute to use, any time
+    // Blocks is modified in the editor these cached objects will be cleaned up
+    // and new cached copies can be created. This lets us optimize this critical
+    // path while keeping up to date with editor changes to a project.
     const blockCached = BlocksExecuteCache.getCached(blockContainer, currentBlockId);
     if (blockCached._initialized !== true) {
         const {opcode, fields, inputs} = blockCached;
@@ -201,10 +215,10 @@ const execute = function (sequencer, thread, recursiveCall) {
 
     // Hats and single-field shadows are implemented slightly differently
     // from regular blocks.
-    // For hats: if they have an associated block function,
-    // it's treated as a predicate; if not, execution will proceed as a no-op.
-    // For single-field shadows: If the block has a single field, and no inputs,
-    // immediately return the value of the field.
+    // For hats: if they have an associated block function, it's treated as a
+    // predicate; if not, execution will proceed as a no-op. For single-field
+    // shadows: If the block has a single field, and no inputs, immediately
+    // return the value of the field.
     if (!blockCached._definedBlockFunction) {
         if (!opcode) {
             log.warn(`Could not get opcode for block: ${currentBlockId}`);
@@ -228,7 +242,9 @@ const execute = function (sequencer, thread, recursiveCall) {
     // Generate values for arguments (inputs).
     const argValues = {};
 
-    // Add all fields on this block to the argValues.
+    // Add all fields on this block to the argValues. Some known fields may
+    // appear by themselves and can be set to argValues quicker by setting them
+    // explicitly.
     if (blockCached._fieldKind !== FieldKind.NONE) {
         switch (blockCached._fieldKind) {
         case FieldKind.VARIABLE:
@@ -261,7 +277,13 @@ const execute = function (sequencer, thread, recursiveCall) {
             // Actually execute the block.
             execute(sequencer, thread, RECURSIVE);
             if (thread.status === Thread.STATUS_PROMISE_WAIT) {
+                // Waiting for the block to resolve, store the current argValues
+                // onto a member of the currentStackFrame that can be used once
+                // the nested block resolves to rebuild argValues up to this
+                // point.
                 for (const _inputName in inputs) {
+                    // We are waiting on the nested block at inputName so we
+                    // don't need to store any more inputs.
                     if (_inputName === inputName) break;
                     if (_inputName === 'BROADCAST_INPUT') {
                         currentStackFrame.reported[_inputName] = argValues.BROADCAST_OPTION.name;
@@ -277,6 +299,7 @@ const execute = function (sequencer, thread, recursiveCall) {
             currentStackFrame.waitingReporter = null;
             thread.popStack();
         }
+
         let inputValue;
         if (currentStackFrame.waitingReporter === null) {
             inputValue = currentStackFrame.justReported;
@@ -285,11 +308,11 @@ const execute = function (sequencer, thread, recursiveCall) {
             inputValue = currentStackFrame.justReported;
             currentStackFrame.waitingReporter = null;
             currentStackFrame.justReported = null;
-            // If we've gotten this far, all of the input blocks are evaluated,
-            // and `argValues` is fully populated. So, execute the block
-            // primitive. First, clear `currentStackFrame.reported`, so any
-            // subsequent execution (e.g., on return from a branch) gets fresh
-            // inputs.
+            // We have rebuilt argValues with all the stored values in the
+            // currentStackFrame from the nested block's promise resolving.
+            // Using the reported value from the block we waited on, reset the
+            // storage member of currentStackFrame so the next execute call at
+            // this level can use it in a clean state.
             currentStackFrame.reported = {};
         } else if (typeof currentStackFrame.reported[inputName] !== 'undefined') {
             inputValue = currentStackFrame.reported[inputName];
@@ -391,6 +414,8 @@ const execute = function (sequencer, thread, recursiveCall) {
         });
     } else if (thread.status === Thread.STATUS_RUNNING) {
         if (recursiveCall === RECURSIVE) {
+            // In recursive calls (where execute calls execute) handleReport
+            // simplifies to just calling thread.pushReportedValue.
             thread.pushReportedValue(primitiveReportedValue);
         } else {
             handleReport(primitiveReportedValue, sequencer, thread, currentBlockId, opcode, isHat);
