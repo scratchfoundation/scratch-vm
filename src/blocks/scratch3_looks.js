@@ -20,7 +20,7 @@ class Scratch3LooksBlocks {
          */
         this.runtime = runtime;
 
-        this._onTargetMoved = this._onTargetMoved.bind(this);
+        this._onTargetChanged = this._onTargetChanged.bind(this);
         this._onResetBubbles = this._onResetBubbles.bind(this);
         this._onTargetWillExit = this._onTargetWillExit.bind(this);
         this._updateBubble = this._updateBubble.bind(this);
@@ -75,7 +75,7 @@ class Scratch3LooksBlocks {
      * @param {RenderedTarget} target - the target which has moved.
      * @private
      */
-    _onTargetMoved (target) {
+    _onTargetChanged (target) {
         const bubbleState = this._getBubbleState(target);
         if (bubbleState.drawableId) {
             this._positionBubble(target);
@@ -97,7 +97,7 @@ class Scratch3LooksBlocks {
             bubbleState.drawableVisible = true; // Reset back to default value
             this.runtime.requestRedraw();
         }
-        target.removeListener(RenderedTarget.EVENT_TARGET_MOVED, this._onTargetMoved);
+        target.removeListener(RenderedTarget.EVENT_TARGET_VISUAL_CHANGE, this._onTargetChanged);
     }
 
     /**
@@ -178,7 +178,7 @@ class Scratch3LooksBlocks {
                 this.runtime.renderer.updateTextSkin(bubbleState.skinId, type, text, onSpriteRight, [0, 0]);
             }
         } else {
-            target.addListener(RenderedTarget.EVENT_TARGET_MOVED, this._onTargetMoved);
+            target.addListener(RenderedTarget.EVENT_TARGET_VISUAL_CHANGE, this._onTargetChanged);
 
             // TODO is there a way to figure out before rendering whether to default left or right?
             const targetBounds = target.getBounds();
