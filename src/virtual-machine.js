@@ -405,8 +405,8 @@ class VirtualMachine extends EventEmitter {
      * @returns {?Promise} - a promise that resolves when the costume has been added
      */
     addCostume (md5ext, costumeObject) {
-        return loadCostume(md5ext, costumeObject, this.runtime).then(loadedCostume => {
-            this.editingTarget.addCostume(loadedCostume);
+        return loadCostume(md5ext, costumeObject, this.runtime).then(() => {
+            this.editingTarget.addCostume(costumeObject);
             this.editingTarget.setCostume(
                 this.editingTarget.getCostumes().length - 1
             );
