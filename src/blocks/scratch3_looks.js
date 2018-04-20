@@ -120,7 +120,19 @@ class Scratch3LooksBlocks {
         if (!target.visible) return;
         const bubbleState = this._getBubbleState(target);
         const [bubbleWidth, bubbleHeight] = this.runtime.renderer.getCurrentSkinSize(bubbleState.drawableId);
-        const targetBounds = target.getBoundsForBubble();
+        let targetBounds;
+        try {
+            targetBounds = target.getBoundsForBubble();
+        } catch (error_) {
+            // Bounds calculation could fail (e.g. on empty costumes), in that case
+            // use the x/y position of the target.
+            targetBounds = {
+                left: target.x,
+                right: target.x,
+                top: target.y,
+                bottom: target.y
+            };
+        }
         const stageBounds = this.runtime.getTargetForStage().getBounds();
         if (bubbleState.onSpriteRight && bubbleWidth + targetBounds.right > stageBounds.right &&
             (targetBounds.left - bubbleWidth > stageBounds.left)) { // Only flip if it would fit
