@@ -471,7 +471,7 @@ class Runtime extends EventEmitter {
      * @private
      */
     _makeExtensionMenuId (menuName, extensionId) {
-        return `${extensionId}.menu.${escapeHtml(menuName)}`;
+        return `${extensionId}_menu_${escapeHtml(menuName)}`;
     }
 
     /**
@@ -625,7 +625,7 @@ class Runtime extends EventEmitter {
      * @private
      */
     _convertForScratchBlocks (blockInfo, categoryInfo) {
-        const extendedOpcode = `${categoryInfo.id}.${blockInfo.opcode}`;
+        const extendedOpcode = `${categoryInfo.id}_${blockInfo.opcode}`;
 
         const blockJSON = {
             type: extendedOpcode,

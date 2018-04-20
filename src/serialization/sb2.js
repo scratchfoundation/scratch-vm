@@ -19,6 +19,21 @@ const {loadCostume} = require('../import/load-costume.js');
 const {loadSound} = require('../import/load-sound.js');
 const {deserializeCostume, deserializeSound} = require('./deserialize-assets.js');
 
+// Constants used during deserialization of an SB2 file
+const CORE_EXTENSIONS = [
+    'argument',
+    'control',
+    'data',
+    'event',
+    'looks',
+    'math',
+    'motion',
+    'operator',
+    'procedures',
+    'sensing',
+    'sound'
+];
+
 /**
  * Convert a Scratch 2.0 procedure string (e.g., "my_procedure %s %b %n")
  * into an argument map. This allows us to provide the expected inputs
@@ -501,12 +516,14 @@ const parseBlock = function (sb2block, addBroadcastMsg, getVariableId, extension
         return;
     }
     const oldOpcode = sb2block[0];
+
     // If the block is from an extension, record it.
-    const dotIndex = blockMetadata.opcode.indexOf('.');
-    if (dotIndex >= 0) {
-        const extension = blockMetadata.opcode.substring(0, dotIndex);
-        extensions.extensionIDs.add(extension);
+    const index = blockMetadata.opcode.indexOf('_');
+    const prefix = blockMetadata.opcode.substring(0, index);
+    if (CORE_EXTENSIONS.indexOf(prefix) === -1) {
+        if (prefix !== '') extensions.extensionIDs.add(prefix);
     }
+
     // Block skeleton.
     const activeBlock = {
         id: uid(), // Generate a new block unique ID.

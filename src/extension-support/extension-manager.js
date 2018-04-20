@@ -188,7 +188,7 @@ class ExtensionManager {
     _registerInternalExtension (extensionObject) {
         const extensionInfo = extensionObject.getInfo();
         const fakeWorkerId = this.nextExtensionWorker++;
-        const serviceName = `extension.${fakeWorkerId}.${extensionInfo.id}`;
+        const serviceName = `extension_${fakeWorkerId}_${extensionInfo.id}`;
         return dispatch.setService(serviceName, extensionObject)
             .then(() => {
                 dispatch.call('extensions', 'registerExtensionService', serviceName);
@@ -229,7 +229,9 @@ class ExtensionManager {
      */
     _prepareExtensionInfo (serviceName, extensionInfo) {
         extensionInfo = Object.assign({}, extensionInfo);
-        extensionInfo.id = this._sanitizeID(extensionInfo.id);
+        if (!/^[a-z0-9]+$/i.test(extensionInfo.id)) {
+            throw new Error('Invalid extension id');
+        }
         extensionInfo.name = extensionInfo.name || extensionInfo.id;
         extensionInfo.blocks = extensionInfo.blocks || [];
         extensionInfo.targetTypes = extensionInfo.targetTypes || [];

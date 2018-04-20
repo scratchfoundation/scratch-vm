@@ -420,11 +420,11 @@ const specMap = {
         ]
     },
     'playDrum': {
-        opcode: 'music.playDrumForBeats',
+        opcode: 'music_playDrumForBeats',
         argMap: [
             {
                 type: 'input',
-                inputOp: 'music.menu.DRUM',
+                inputOp: 'music_menu_DRUM',
                 inputName: 'DRUM'
             },
             {
@@ -435,7 +435,7 @@ const specMap = {
         ]
     },
     'rest:elapsed:from:': {
-        opcode: 'music.restForBeats',
+        opcode: 'music_restForBeats',
         argMap: [
             {
                 type: 'input',
@@ -445,7 +445,7 @@ const specMap = {
         ]
     },
     'noteOn:duration:elapsed:from:': {
-        opcode: 'music.playNoteForBeats',
+        opcode: 'music_playNoteForBeats',
         argMap: [
             {
                 type: 'input',
@@ -460,11 +460,11 @@ const specMap = {
         ]
     },
     'instrument:': {
-        opcode: 'music.setInstrument',
+        opcode: 'music_setInstrument',
         argMap: [
             {
                 type: 'input',
-                inputOp: 'music.menu.INSTRUMENT',
+                inputOp: 'music_menu_INSTRUMENT',
                 inputName: 'INSTRUMENT'
             }
         ]
@@ -495,7 +495,7 @@ const specMap = {
         ]
     },
     'changeTempoBy:': {
-        opcode: 'music.changeTempo',
+        opcode: 'music_changeTempo',
         argMap: [
             {
                 type: 'input',
@@ -505,7 +505,7 @@ const specMap = {
         ]
     },
     'setTempoTo:': {
-        opcode: 'music.setTempo',
+        opcode: 'music_setTempo',
         argMap: [
             {
                 type: 'input',
@@ -515,32 +515,32 @@ const specMap = {
         ]
     },
     'tempo': {
-        opcode: 'music.getTempo',
+        opcode: 'music_getTempo',
         argMap: [
         ]
     },
     'clearPenTrails': {
-        opcode: 'pen.clear',
+        opcode: 'pen_clear',
         argMap: [
         ]
     },
     'stampCostume': {
-        opcode: 'pen.stamp',
+        opcode: 'pen_stamp',
         argMap: [
         ]
     },
     'putPenDown': {
-        opcode: 'pen.penDown',
+        opcode: 'pen_penDown',
         argMap: [
         ]
     },
     'putPenUp': {
-        opcode: 'pen.penUp',
+        opcode: 'pen_penUp',
         argMap: [
         ]
     },
     'penColor:': {
-        opcode: 'pen.setPenColorToColor',
+        opcode: 'pen_setPenColorToColor',
         argMap: [
             {
                 type: 'input',
@@ -550,7 +550,7 @@ const specMap = {
         ]
     },
     'changePenHueBy:': {
-        opcode: 'pen.changePenHueBy',
+        opcode: 'pen_changePenHueBy',
         argMap: [
             {
                 type: 'input',
@@ -560,7 +560,7 @@ const specMap = {
         ]
     },
     'setPenHueTo:': {
-        opcode: 'pen.setPenHueToNumber',
+        opcode: 'pen_setPenHueToNumber',
         argMap: [
             {
                 type: 'input',
@@ -570,7 +570,7 @@ const specMap = {
         ]
     },
     'changePenShadeBy:': {
-        opcode: 'pen.changePenShadeBy',
+        opcode: 'pen_changePenShadeBy',
         argMap: [
             {
                 type: 'input',
@@ -580,7 +580,7 @@ const specMap = {
         ]
     },
     'setPenShadeTo:': {
-        opcode: 'pen.setPenShadeToNumber',
+        opcode: 'pen_setPenShadeToNumber',
         argMap: [
             {
                 type: 'input',
@@ -590,7 +590,7 @@ const specMap = {
         ]
     },
     'changePenSizeBy:': {
-        opcode: 'pen.changePenSizeBy',
+        opcode: 'pen_changePenSizeBy',
         argMap: [
             {
                 type: 'input',
@@ -600,7 +600,7 @@ const specMap = {
         ]
     },
     'penSize:': {
-        opcode: 'pen.setPenSizeTo',
+        opcode: 'pen_setPenSizeTo',
         argMap: [
             {
                 type: 'input',
@@ -610,16 +610,16 @@ const specMap = {
         ]
     },
     'senseVideoMotion': {
-        opcode: 'videoSensing.videoOn',
+        opcode: 'videoSensing_videoOn',
         argMap: [
             {
                 type: 'input',
-                inputOp: 'videoSensing.menu.ATTRIBUTE',
+                inputOp: 'videoSensing_menu_ATTRIBUTE',
                 inputName: 'ATTRIBUTE'
             },
             {
                 type: 'input',
-                inputOp: 'videoSensing.menu.SUBJECT',
+                inputOp: 'videoSensing_menu_SUBJECT',
                 inputName: 'SUBJECT'
             }
         ]
@@ -655,7 +655,7 @@ const specMap = {
     'whenSensorGreaterThan': ([, sensor]) => {
         if (sensor === 'video motion') {
             return {
-                opcode: 'videoSensing.whenMotionGreaterThan',
+                opcode: 'videoSensing_whenMotionGreaterThan',
                 argMap: [
                     // skip the first arg, since we converted to a video specific sensing block
                     {},
@@ -980,17 +980,17 @@ const specMap = {
     //     ]
     // },
     'setVideoState': {
-        opcode: 'videoSensing.videoToggle',
+        opcode: 'videoSensing_videoToggle',
         argMap: [
             {
                 type: 'input',
-                inputOp: 'videoSensing.menu.VIDEO_STATE',
+                inputOp: 'videoSensing_menu_VIDEO_STATE',
                 inputName: 'VIDEO_STATE'
             }
         ]
     },
     'setVideoTransparency': {
-        opcode: 'videoSensing.setVideoTransparency',
+        opcode: 'videoSensing_setVideoTransparency',
         argMap: [
             {
                 type: 'input',

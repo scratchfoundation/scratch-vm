@@ -33,6 +33,22 @@ const INPUT_BLOCK_NO_SHADOW = 2; // no shadow
 const INPUT_DIFF_BLOCK_SHADOW = 3; // obscured shadow
 // There shouldn't be a case where block is null, but shadow is present...
 
+// Constants used during deserialization of an SB3 file
+const CORE_EXTENSIONS = [
+    'argument',
+    'colour',
+    'control',
+    'data',
+    'event',
+    'looks',
+    'math',
+    'motion',
+    'operator',
+    'procedures',
+    'sensing',
+    'sound'
+];
+
 // Constants referring to 'primitive' blocks that are usually shadows,
 // or in the case of variables and lists, appear quite often in projects
 // math_number
@@ -700,10 +716,11 @@ const parseScratchObject = function (object, runtime, extensions, zip) {
             const blockJSON = object.blocks[blockId];
             blocks.createBlock(blockJSON);
 
-            const dotIndex = blockJSON.opcode.indexOf('.');
-            if (dotIndex >= 0) {
-                const extensionId = blockJSON.opcode.substring(0, dotIndex);
-                extensions.extensionIDs.add(extensionId);
+            // If the block is from an extension, record it.
+            const index = blockJSON.opcode.indexOf('_');
+            const prefix = blockJSON.opcode.substring(0, index);
+            if (CORE_EXTENSIONS.indexOf(prefix) === -1) {
+                if (prefix !== '') extensions.extensionIDs.add(prefix);
             }
         }
     }
