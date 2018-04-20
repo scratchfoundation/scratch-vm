@@ -984,7 +984,7 @@ const specMap = {
         argMap: [
             {
                 type: 'input',
-                inputOp: 'videoSensing_menu.VIDEO_STATE',
+                inputOp: 'videoSensing_menu_VIDEO_STATE',
                 inputName: 'VIDEO_STATE'
             }
         ]
