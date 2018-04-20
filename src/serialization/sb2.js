@@ -19,14 +19,12 @@ const {loadCostume} = require('../import/load-costume.js');
 const {loadSound} = require('../import/load-sound.js');
 const {deserializeCostume, deserializeSound} = require('./deserialize-assets.js');
 
-// Constants used during deserialization of an SB3 file
+// Constants used during deserialization of an SB2 file
 const CORE_EXTENSIONS = [
-    'argument',
     'control',
     'data',
     'event',
     'looks',
-    'math',
     'motion',
     'operator',
     'procedures',
