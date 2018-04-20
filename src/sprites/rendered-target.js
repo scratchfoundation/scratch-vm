@@ -194,6 +194,14 @@ class RenderedTarget extends Target {
     }
 
     /**
+     * Event which fires when a target changes visually, for updating say bubbles.
+     * @type {string}
+     */
+    static get EVENT_TARGET_VISUAL_CHANGE () {
+        return 'EVENT_TARGET_VISUAL_CHANGE';
+    }
+
+    /**
      * Rotation style for "all around"/spinning.
      * @type {string}
      */
@@ -249,6 +257,7 @@ class RenderedTarget extends Target {
                 position: position
             });
             if (this.visible) {
+                this.emit(RenderedTarget.EVENT_TARGET_VISUAL_CHANGE, this);
                 this.runtime.requestRedraw();
             }
         } else {
@@ -299,6 +308,7 @@ class RenderedTarget extends Target {
                 scale: renderedDirectionScale.scale
             });
             if (this.visible) {
+                this.emit(RenderedTarget.EVENT_TARGET_VISUAL_CHANGE, this);
                 this.runtime.requestRedraw();
             }
         }
@@ -346,6 +356,7 @@ class RenderedTarget extends Target {
                 visible: this.visible
             });
             if (this.visible) {
+                this.emit(RenderedTarget.EVENT_TARGET_VISUAL_CHANGE, this);
                 this.runtime.requestRedraw();
             }
         }
@@ -378,6 +389,7 @@ class RenderedTarget extends Target {
                 scale: renderedDirectionScale.scale
             });
             if (this.visible) {
+                this.emit(RenderedTarget.EVENT_TARGET_VISUAL_CHANGE, this);
                 this.runtime.requestRedraw();
             }
         }
@@ -397,6 +409,7 @@ class RenderedTarget extends Target {
             props[effectName] = this.effects[effectName];
             this.renderer.updateDrawableProperties(this.drawableID, props);
             if (this.visible) {
+                this.emit(RenderedTarget.EVENT_TARGET_VISUAL_CHANGE, this);
                 this.runtime.requestRedraw();
             }
         }
@@ -413,6 +426,7 @@ class RenderedTarget extends Target {
         if (this.renderer) {
             this.renderer.updateDrawableProperties(this.drawableID, this.effects);
             if (this.visible) {
+                this.emit(RenderedTarget.EVENT_TARGET_VISUAL_CHANGE, this);
                 this.runtime.requestRedraw();
             }
         }
@@ -446,6 +460,7 @@ class RenderedTarget extends Target {
             }
             this.renderer.updateDrawableProperties(this.drawableID, drawableProperties);
             if (this.visible) {
+                this.emit(RenderedTarget.EVENT_TARGET_VISUAL_CHANGE, this);
                 this.runtime.requestRedraw();
             }
         }
@@ -573,6 +588,7 @@ class RenderedTarget extends Target {
                 scale: renderedDirectionScale.scale
             });
             if (this.visible) {
+                this.emit(RenderedTarget.EVENT_TARGET_VISUAL_CHANGE, this);
                 this.runtime.requestRedraw();
             }
         }
@@ -645,6 +661,7 @@ class RenderedTarget extends Target {
             }
             this.renderer.updateDrawableProperties(this.drawableID, props);
             if (this.visible) {
+                this.emit(RenderedTarget.EVENT_TARGET_VISUAL_CHANGE, this);
                 this.runtime.requestRedraw();
             }
         }
@@ -1034,6 +1051,7 @@ class RenderedTarget extends Target {
         if (this.renderer && this.drawableID !== null) {
             this.renderer.destroyDrawable(this.drawableID);
             if (this.visible) {
+                this.emit(RenderedTarget.EVENT_TARGET_VISUAL_CHANGE, this);
                 this.runtime.requestRedraw();
             }
         }
