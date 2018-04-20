@@ -720,7 +720,7 @@ const parseScratchObject = function (object, runtime, extensions, zip) {
             const index = blockJSON.opcode.indexOf('_');
             const prefix = blockJSON.opcode.substring(0, index);
             if (CORE_EXTENSIONS.indexOf(prefix) === -1) {
-                extensions.extensionIDs.add(prefix);
+                if (prefix !== '') extensions.extensionIDs.add(prefix);
             }
         }
     }

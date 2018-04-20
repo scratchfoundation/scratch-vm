@@ -521,7 +521,7 @@ const parseBlock = function (sb2block, addBroadcastMsg, getVariableId, extension
     const index = blockMetadata.opcode.indexOf('_');
     const prefix = blockMetadata.opcode.substring(0, index);
     if (CORE_EXTENSIONS.indexOf(prefix) === -1) {
-        extensions.extensionIDs.add(prefix);
+        if (prefix !== '') extensions.extensionIDs.add(prefix);
     }
 
     // Block skeleton.
