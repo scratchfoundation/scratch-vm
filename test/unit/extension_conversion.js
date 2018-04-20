@@ -59,7 +59,7 @@ const testExtensionInfo = {
 };
 
 const testReporter = function (t, reporter) {
-    t.equal(reporter.json.type, 'test.reporter');
+    t.equal(reporter.json.type, 'test_reporter');
     t.equal(reporter.json.outputShape, ScratchBlocksConstants.OUTPUT_SHAPE_ROUND);
     t.equal(reporter.json.output, 'String');
     t.notOk(reporter.json.hasOwnProperty('previousStatement'));
@@ -68,7 +68,7 @@ const testReporter = function (t, reporter) {
     t.notOk(reporter.json.hasOwnProperty('message1'));
     t.notOk(reporter.json.hasOwnProperty('args0'));
     t.notOk(reporter.json.hasOwnProperty('args1'));
-    t.equal(reporter.xml, '<block type="test.reporter"></block>');
+    t.equal(reporter.xml, '<block type="test_reporter"></block>');
 };
 
 const testSeparator = function (t, separator) {
@@ -77,7 +77,7 @@ const testSeparator = function (t, separator) {
 };
 
 const testCommand = function (t, command) {
-    t.equal(command.json.type, 'test.command');
+    t.equal(command.json.type, 'test_command');
     t.equal(command.json.outputShape, ScratchBlocksConstants.OUTPUT_SHAPE_SQUARE);
     t.assert(command.json.hasOwnProperty('previousStatement'));
     t.assert(command.json.hasOwnProperty('nextStatement'));
@@ -89,12 +89,12 @@ const testCommand = function (t, command) {
     });
     t.notOk(command.json.hasOwnProperty('args1'));
     t.equal(command.xml,
-        '<block type="test.command"><value name="ARG"><shadow type="text"><field name="TEXT">' +
+        '<block type="test_command"><value name="ARG"><shadow type="text"><field name="TEXT">' +
         '</field></shadow></value></block>');
 };
 
 const testConditional = function (t, conditional) {
-    t.equal(conditional.json.type, 'test.ifElse');
+    t.equal(conditional.json.type, 'test_ifElse');
     t.equal(conditional.json.outputShape, ScratchBlocksConstants.OUTPUT_SHAPE_SQUARE);
     t.ok(conditional.json.hasOwnProperty('previousStatement'));
     t.ok(conditional.json.hasOwnProperty('nextStatement'));
@@ -118,11 +118,11 @@ const testConditional = function (t, conditional) {
         name: 'SUBSTACK2'
     });
     t.notOk(conditional.json.hasOwnProperty('args4'));
-    t.equal(conditional.xml, '<block type="test.ifElse"><value name="THING"></value></block>');
+    t.equal(conditional.xml, '<block type="test_ifElse"><value name="THING"></value></block>');
 };
 
 const testLoop = function (t, loop) {
-    t.equal(loop.json.type, 'test.loop');
+    t.equal(loop.json.type, 'test_loop');
     t.equal(loop.json.outputShape, ScratchBlocksConstants.OUTPUT_SHAPE_SQUARE);
     t.ok(loop.json.hasOwnProperty('previousStatement'));
     t.notOk(loop.json.hasOwnProperty('nextStatement')); // isTerminal is set on this block
@@ -143,7 +143,7 @@ const testLoop = function (t, loop) {
     t.equal(loop.json.args2[0].flip_rtl, true);
     t.notOk(loop.json.hasOwnProperty('args3'));
     t.equal(loop.xml,
-        '<block type="test.loop"><value name="MANY"><shadow type="math_number"><field name="NUM">' +
+        '<block type="test_loop"><value name="MANY"><shadow type="math_number"><field name="NUM">' +
         '</field></shadow></value></block>');
 };
 
