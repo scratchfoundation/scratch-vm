@@ -21,10 +21,12 @@ const {deserializeCostume, deserializeSound} = require('./deserialize-assets.js'
 
 // Constants used during deserialization of an SB2 file
 const CORE_EXTENSIONS = [
+    'argument',
     'control',
     'data',
     'event',
     'looks',
+    'math',
     'motion',
     'operator',
     'procedures',
@@ -519,6 +521,7 @@ const parseBlock = function (sb2block, addBroadcastMsg, getVariableId, extension
     const index = blockMetadata.opcode.indexOf('_');
     const prefix = blockMetadata.opcode.substring(0, index);
     if (CORE_EXTENSIONS.indexOf(prefix) === -1) {
+        console.log(prefix);
         extensions.extensionIDs.add(prefix);
     }
 
