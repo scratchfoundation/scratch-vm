@@ -22,21 +22,15 @@ class Keyboard {
      * @private
      */
     _scratchKeyToKeyCode (keyName) {
-        if (typeof keyName === 'number') {
-            // Key codes placed in with number blocks.
-            return keyName;
-        }
         const keyString = Cast.toString(keyName);
         switch (keyString) {
-        case 'space': return 32;
-        case 'left arrow': return 37;
-        case 'up arrow': return 38;
-        case 'right arrow': return 39;
-        case 'down arrow': return 40;
-        // @todo: Consider adding other special keys here.
+        case ' ': return 'space';
+        case 'ArrowLeft': return 'left arrow';
+        case 'ArrowRight': return 'right arrow';
+        case 'ArrowUp': return 'up arrow';
+        case 'ArrowDown': return 'down arrow';
         }
-        // Keys reported by DOM keyCode are upper case.
-        return keyString.toUpperCase().charCodeAt(0);
+        return keyName;
     }
 
     /**
@@ -46,18 +40,7 @@ class Keyboard {
      * @private
      */
     _keyCodeToScratchKey (keyCode) {
-        if (keyCode >= 48 && keyCode <= 90) {
-            // Standard letter.
-            return String.fromCharCode(keyCode).toLowerCase();
-        }
-        switch (keyCode) {
-        case 32: return 'space';
-        case 37: return 'left arrow';
-        case 38: return 'up arrow';
-        case 39: return 'right arrow';
-        case 40: return 'down arrow';
-        }
-        return '';
+        return keyCode;
     }
 
     /**
@@ -65,16 +48,17 @@ class Keyboard {
      * @param  {object} data Data from DOM event.
      */
     postData (data) {
-        if (data.keyCode) {
-            const index = this._keysPressed.indexOf(data.keyCode);
+        const keyCode = this._scratchKeyToKeyCode(data.key);
+        if (keyCode) {
+            const index = this._keysPressed.indexOf(keyCode);
             if (data.isDown) {
                 // If not already present, add to the list.
                 if (index < 0) {
-                    this._keysPressed.push(data.keyCode);
+                    this._keysPressed.push(keyCode);
                 }
                 // Always trigger hats, even if it was already pressed.
                 this.runtime.startHats('event_whenkeypressed', {
-                    KEY_OPTION: this._keyCodeToScratchKey(data.keyCode)
+                    KEY_OPTION: this._keyCodeToScratchKey(keyCode)
                 });
                 this.runtime.startHats('event_whenkeypressed', {
                     KEY_OPTION: 'any'
