@@ -290,12 +290,12 @@ class Scratch3VideoSensingBlocks {
     get SUBJECT_INFO () {
         return [
             {
-                name: 'stage',
-                value: SensingSubject.STAGE
-            },
-            {
                 name: 'sprite',
                 value: SensingSubject.SPRITE
+            },
+            {
+                name: 'stage',
+                value: SensingSubject.STAGE
             }
         ];
     }
@@ -366,7 +366,7 @@ class Scratch3VideoSensingBlocks {
                         SUBJECT: {
                             type: ArgumentType.NUMBER,
                             menu: 'SUBJECT',
-                            defaultValue: SensingSubject.STAGE
+                            defaultValue: SensingSubject.SPRITE
                         }
                     }
                 },
