@@ -69,8 +69,8 @@ const loadCostumeFromAsset = function (costume, costumeAsset, runtime) {
 
         if (!rotationCenter) {
             rotationCenter = renderer.getSkinRotationCenter(costume.skinId);
-            costume.rotationCenterX = rotationCenter[0];
-            costume.rotationCenterY = rotationCenter[1];
+            costume.rotationCenterX = rotationCenter[0] * 2;
+            costume.rotationCenterY = rotationCenter[1] * 2;
         }
         return costume;
     });
