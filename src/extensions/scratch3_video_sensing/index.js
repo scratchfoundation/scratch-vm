@@ -336,6 +336,10 @@ class Scratch3VideoSensingBlocks {
      * @returns {object} metadata for this extension and its blocks.
      */
     getInfo () {
+        // Enable the video layer
+        this.runtime.ioDevices.video.enableVideo();
+
+        // Return extension definition
         return {
             id: 'videoSensing',
             name: 'Video Motion',
