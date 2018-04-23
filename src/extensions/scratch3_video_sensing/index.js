@@ -290,12 +290,12 @@ class Scratch3VideoSensingBlocks {
     get SUBJECT_INFO () {
         return [
             {
-                name: 'stage',
-                value: SensingSubject.STAGE
-            },
-            {
                 name: 'sprite',
                 value: SensingSubject.SPRITE
+            },
+            {
+                name: 'stage',
+                value: SensingSubject.STAGE
             }
         ];
     }
@@ -336,10 +336,27 @@ class Scratch3VideoSensingBlocks {
      * @returns {object} metadata for this extension and its blocks.
      */
     getInfo () {
+        // Enable the video layer
+        this.runtime.ioDevices.video.enableVideo();
+
+        // Return extension definition
         return {
             id: 'videoSensing',
             name: 'Video Motion',
             blocks: [
+                {
+                    // @todo this hat needs to be set itself to restart existing
+                    // threads like Scratch 2's behaviour.
+                    opcode: 'whenMotionGreaterThan',
+                    text: 'when video motion > [REFERENCE]',
+                    blockType: BlockType.HAT,
+                    arguments: {
+                        REFERENCE: {
+                            type: ArgumentType.NUMBER,
+                            defaultValue: 10
+                        }
+                    }
+                },
                 {
                     opcode: 'videoOn',
                     blockType: BlockType.REPORTER,
@@ -353,20 +370,7 @@ class Scratch3VideoSensingBlocks {
                         SUBJECT: {
                             type: ArgumentType.NUMBER,
                             menu: 'SUBJECT',
-                            defaultValue: SensingSubject.STAGE
-                        }
-                    }
-                },
-                {
-                    // @todo this hat needs to be set itself to restart existing
-                    // threads like Scratch 2's behaviour.
-                    opcode: 'whenMotionGreaterThan',
-                    text: 'when video motion > [REFERENCE]',
-                    blockType: BlockType.HAT,
-                    arguments: {
-                        REFERENCE: {
-                            type: ArgumentType.NUMBER,
-                            defaultValue: 10
+                            defaultValue: SensingSubject.SPRITE
                         }
                     }
                 },
