@@ -341,6 +341,19 @@ class Scratch3VideoSensingBlocks {
             name: 'Video Motion',
             blocks: [
                 {
+                    // @todo this hat needs to be set itself to restart existing
+                    // threads like Scratch 2's behaviour.
+                    opcode: 'whenMotionGreaterThan',
+                    text: 'when video motion > [REFERENCE]',
+                    blockType: BlockType.HAT,
+                    arguments: {
+                        REFERENCE: {
+                            type: ArgumentType.NUMBER,
+                            defaultValue: 10
+                        }
+                    }
+                },
+                {
                     opcode: 'videoOn',
                     blockType: BlockType.REPORTER,
                     text: 'video [ATTRIBUTE] on [SUBJECT]',
@@ -354,19 +367,6 @@ class Scratch3VideoSensingBlocks {
                             type: ArgumentType.NUMBER,
                             menu: 'SUBJECT',
                             defaultValue: SensingSubject.STAGE
-                        }
-                    }
-                },
-                {
-                    // @todo this hat needs to be set itself to restart existing
-                    // threads like Scratch 2's behaviour.
-                    opcode: 'whenMotionGreaterThan',
-                    text: 'when video motion > [REFERENCE]',
-                    blockType: BlockType.HAT,
-                    arguments: {
-                        REFERENCE: {
-                            type: ArgumentType.NUMBER,
-                            defaultValue: 10
                         }
                     }
                 },
