@@ -15,18 +15,31 @@ const log = require('../util/log');
  */
 const loadCostumeFromAsset = function (costume, costumeAsset, runtime) {
     costume.assetId = costumeAsset.assetId;
-    if (!runtime.renderer) {
+    const renderer = runtime.renderer;
+    if (!renderer) {
         log.error('No rendering module present; cannot load costume: ', costume.name);
         return costume;
     }
     const AssetType = runtime.storage.AssetType;
-    const rotationCenter = [
-        costume.rotationCenterX / costume.bitmapResolution,
-        costume.rotationCenterY / costume.bitmapResolution
-    ];
+    let rotationCenter;
+    if (costume.rotationCenterX && costume.rotationCenterY && costume.bitmapResolution) {
+        rotationCenter = [
+            costume.rotationCenterX / costume.bitmapResolution,
+            costume.rotationCenterY / costume.bitmapResolution
+        ];
+    }
     if (costumeAsset.assetType === AssetType.ImageVector) {
-        costume.skinId = runtime.renderer.createSVGSkin(costumeAsset.decodeText(), rotationCenter);
-        costume.size = runtime.renderer.getSkinSize(costume.skinId);
+        // createSVGSkin does the right thing if rotationCenter isn't provided, so it's okay if it's
+        // undefined here
+        costume.skinId = renderer.createSVGSkin(costumeAsset.decodeText(), rotationCenter);
+        costume.size = renderer.getSkinSize(costume.skinId);
+        // Now we should have a rotationCenter even if we didn't before
+        if (!rotationCenter) {
+            rotationCenter = renderer.getSkinRotationCenter(costume.skinId);
+            costume.rotationCenterX = rotationCenter[0];
+            costume.rotationCenterY = rotationCenter[1];
+        }
+
         return costume;
     }
 
@@ -50,8 +63,15 @@ const loadCostumeFromAsset = function (costume, costumeAsset, runtime) {
         imageElement.addEventListener('load', onLoad);
         imageElement.src = costumeAsset.encodeDataURI();
     }).then(imageElement => {
-        costume.skinId = runtime.renderer.createBitmapSkin(imageElement, costume.bitmapResolution, rotationCenter);
-        costume.size = runtime.renderer.getSkinSize(costume.skinId);
+        // createBitmapSkin does the right thing if costume.bitmapResolution or rotationCenter are undefined...
+        costume.skinId = renderer.createBitmapSkin(imageElement, costume.bitmapResolution, rotationCenter);
+        costume.size = renderer.getSkinSize(costume.skinId);
+
+        if (!rotationCenter) {
+            rotationCenter = renderer.getSkinRotationCenter(costume.skinId);
+            costume.rotationCenterX = rotationCenter[0] * 2;
+            costume.rotationCenterY = rotationCenter[1] * 2;
+        }
         return costume;
     });
 };
