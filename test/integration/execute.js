@@ -9,7 +9,7 @@ const readFileToBuffer = require('../fixtures/readProjectFile').readFileToBuffer
 const VirtualMachine = require('../../src/index');
 
 /**
- * @fileoverview Transform each sb2 in this directory into a test.
+ * @fileoverview Transform each sb2 in fixtures/execute into a test.
  *
  * Test execution of a group of scratch blocks by SAYing if a test did "pass",
  * or did "fail". Four keywords can be set at the beginning of a SAY messaage
@@ -49,7 +49,9 @@ const whenThreadsComplete = (t, vm, timeLimit = 2000) => (
     })
 );
 
-fs.readdirSync(__dirname)
+const executeDir = path.resolve(__dirname, '../fixtures/execute');
+
+fs.readdirSync(executeDir)
     .filter(uri => uri.endsWith('.sb2'))
     .forEach(uri => {
         test(uri, t => {
@@ -110,7 +112,7 @@ fs.readdirSync(__dirname)
             // Report the text of SAY events as testing instructions.
             vm.runtime.on('SAY', (target, type, text) => reportVmResult(text));
 
-            const project = readFileToBuffer(path.resolve(__dirname, uri));
+            const project = readFileToBuffer(path.resolve(executeDir, uri));
 
             // Load the project and once all threads are complete ensure that
             // the scratch project sent us a "end" message.

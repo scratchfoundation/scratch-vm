@@ -20,10 +20,9 @@
     "lint": "eslint . && format-message lint src/**/*.js",
     "prepublish": "in-publish && npm run build || not-in-publish",
     "start": "webpack-dev-server",
-    "tap": "tap ./test/{unit,integration,execute}/*.js",
+    "tap": "tap ./test/{unit,integration}/*.js",
     "tap:unit": "tap ./test/unit/*.js",
-    "tap:execute": "tap ./test/execute/*.js",
-    "tap:integration": "tap ./test/{integration,execute}/*.js",
+    "tap:integration": "tap ./test/integration/*.js",
     "test": "npm run lint && npm run tap",
     "watch": "webpack --progress --colors --watch",
     "version": "json -f package.json -I -e \"this.repository.sha = '$(git log -n1 --pretty=format:%H)'\""
