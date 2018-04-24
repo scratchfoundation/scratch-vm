@@ -2,6 +2,7 @@ const TextEncoder = require('text-encoding').TextEncoder;
 const EventEmitter = require('events');
 const JSZip = require('jszip');
 
+const Buffer = require('buffer').Buffer;
 const centralDispatch = require('./dispatch/central-dispatch');
 const ExtensionManager = require('./extension-support/extension-manager');
 const log = require('./util/log');
@@ -543,15 +544,57 @@ class VirtualMachine extends EventEmitter {
     /**
      * Get an SVG string from storage.
      * @param {int} costumeIndex - the index of the costume to be got.
-     * @return {string} the costume's SVG string, or null if it's not an SVG costume.
+     * @return {string|HTMLImageElement} the costume's SVG string if it's SVG,
+     *     an HTMLImageElement if it's a PNG, or null if it couldn't be found or decoded.
      */
     getCostume (costumeIndex) {
         const id = this.editingTarget.getCostumes()[costumeIndex].assetId;
-        if (id && this.runtime && this.runtime.storage &&
-                this.runtime.storage.get(id).dataFormat === 'svg') {
+        if (!id || !this.runtime || !this.runtime.storage) return null;
+        const format = this.runtime.storage.get(id).dataFormat;
+        if (format === this.runtime.storage.DataFormat.SVG) {
             return this.runtime.storage.get(id).decodeText();
+        } else if (format === this.runtime.storage.DataFormat.PNG) {
+            const data = this.runtime.storage.get(id).encodeDataURI('image/png');
+            const image = new Image();
+            image.src = data;
+            return image;
         }
+        log.error(`Unhandled format: ${this.runtime.storage.get(id).dataFormat}`);
         return null;
+    }
+
+    /**
+     * Update a costume with the given bitmap
+     * @param {int} costumeIndex - the index of the costume to be updated.
+     * @param {HTMLCanvasElement} bitmap - new bitmap for the renderer.
+     * @param {number} rotationCenterX x of point about which the costume rotates, relative to its upper left corner
+     * @param {number} rotationCenterY y of point about which the costume rotates, relative to its upper left corner
+     */
+    updateBitmap (costumeIndex, bitmap, rotationCenterX, rotationCenterY) {
+        const costume = this.editingTarget.getCostumes()[costumeIndex];
+        if (costume && this.runtime && this.runtime.renderer) {
+            costume.rotationCenterX = rotationCenterX;
+            costume.rotationCenterY = rotationCenterY;
+            this.runtime.renderer.updateBitmapSkin(costume.skinId, bitmap, [rotationCenterX, rotationCenterY]);
+        }
+
+        bitmap.toBlob(blob => {
+            const reader = new FileReader();
+            reader.addEventListener('loadend', () => {
+                const storage = this.runtime.storage;
+                costume.assetId = storage.builtinHelper.cache(
+                    storage.AssetType.ImageBitmap,
+                    storage.DataFormat.PNG,
+                    Buffer.from(reader.result)
+                );
+                // @todo is there a better way to make sure all info is up to date on the costume?
+                costume.dataFormat = storage.DataFormat.PNG;
+                costume.bitmapResolution = 2;
+                this.emitTargetsUpdate();
+            });
+            reader.readAsArrayBuffer(blob);
+        });
+
     }
 
     /**
