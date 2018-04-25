@@ -3,8 +3,13 @@ const Cast = require('../util/cast');
 class Keyboard {
     constructor (runtime) {
         /**
-         * List of currently pressed keys.
-         * @type{Array.<number>}
+         * List of currently pressed scratch keys.
+         * A scratch key is:
+         * A key you can press on a keyboard, excluding modifier keys.
+         * An uppercase string of length one;
+         *     except for special key names for arrow keys and space (e.g. 'left arrow').
+         * Can be a non-english unicode letter like: æ ø ש נ 手 廿.
+         * @type{Array.<string>}
          */
         this._keysPressed = [];
         /**
@@ -16,31 +21,76 @@ class Keyboard {
     }
 
     /**
-     * Convert a Scratch key name to a DOM keyCode.
-     * @param {Any} keyName Scratch key argument.
-     * @return {number} Key code corresponding to a DOM event.
-     * @private
+     * Names used for a set of special keys in Scratch.
+     * @type {Array.<string>}
      */
-    _scratchKeyToKeyCode (keyName) {
-        const keyString = Cast.toString(keyName);
-        switch (keyString) {
-        case ' ': return 'space';
-        case 'ArrowLeft': return 'left arrow';
-        case 'ArrowRight': return 'right arrow';
-        case 'ArrowUp': return 'up arrow';
-        case 'ArrowDown': return 'down arrow';
-        }
-        return keyName;
+    static get SPECIAL_KEY_NAMES () {
+        return [
+            'space',
+            'left arrow',
+            'up arrow',
+            'right arrow',
+            'down arrow'
+        ];
     }
 
     /**
-     * Convert a DOM keyCode into a Scratch key name.
-     * @param  {number} keyCode Key code from DOM event.
-     * @return {Any} Scratch key argument.
-     * @private
+     * Convert from a keyboard event key name to a Scratch key name.
+     * @param  {string} keyString the input key string.
+     * @return {string} the corresponding Scratch key, or an empty string.
      */
-    _keyCodeToScratchKey (keyCode) {
-        return keyCode;
+    _keyStringToScratchKey (keyString) {
+        keyString = Cast.toString(keyString);
+        // Convert space and arrow keys to their Scratch key names.
+        switch (keyString) {
+        case ' ': return 'space';
+        case 'ArrowLeft': return 'left arrow';
+        case 'ArrowUp': return 'up arrow';
+        case 'ArrowRight': return 'right arrow';
+        case 'ArrowDown': return 'down arrow';
+        }
+        // Ignore modifier keys
+        if (keyString.length > 1) {
+            return '';
+        }
+        return keyString.toUpperCase();
+    }
+
+    /**
+     * Convert from a block argument to a Scratch key name.
+     * @param  {string} keyArg the input arg.
+     * @return {string} the corresponding Scratch key.
+     */
+    _keyArgToScratchKey (keyArg) {
+        // If a number was dropped in, try to convert from ASCII to Scratch key.
+        if (typeof keyArg === 'number') {
+            // Check for the ASCII range containing numbers, some punctuation,
+            // and uppercase letters.
+            if (keyArg >= 48 && keyArg <= 90) {
+                return String.fromCharCode(keyArg);
+            }
+            switch (keyArg) {
+            case 32: return 'space';
+            case 37: return 'left arrow';
+            case 38: return 'up arrow';
+            case 39: return 'right arrow';
+            case 40: return 'down arrow';
+            }
+        }
+
+        keyArg = Cast.toString(keyArg);
+
+        // If the arg matches a special key name, return it.
+        if (Keyboard.SPECIAL_KEY_NAMES.includes(keyArg)) {
+            return keyArg;
+        }
+
+        // Use only the first character.
+        if (keyArg.length > 1) {
+            keyArg = keyArg[0];
+        }
+
+        return keyArg.toUpperCase();
     }
 
     /**
@@ -48,39 +98,39 @@ class Keyboard {
      * @param  {object} data Data from DOM event.
      */
     postData (data) {
-        const keyCode = this._scratchKeyToKeyCode(data.key);
-        if (keyCode) {
-            const index = this._keysPressed.indexOf(keyCode);
-            if (data.isDown) {
-                // If not already present, add to the list.
-                if (index < 0) {
-                    this._keysPressed.push(keyCode);
-                }
-                // Always trigger hats, even if it was already pressed.
-                this.runtime.startHats('event_whenkeypressed', {
-                    KEY_OPTION: this._keyCodeToScratchKey(keyCode)
-                });
-                this.runtime.startHats('event_whenkeypressed', {
-                    KEY_OPTION: 'any'
-                });
-            } else if (index > -1) {
-                // If already present, remove from the list.
-                this._keysPressed.splice(index, 1);
+        if (!data.key) return;
+        const scratchKey = this._keyStringToScratchKey(data.key);
+        if (scratchKey === '') return;
+        const index = this._keysPressed.indexOf(scratchKey);
+        if (data.isDown) {
+            // If not already present, add to the list.
+            if (index < 0) {
+                this._keysPressed.push(scratchKey);
             }
+            // Always trigger hats, even if it was already pressed.
+            this.runtime.startHats('event_whenkeypressed', {
+                KEY_OPTION: scratchKey
+            });
+            this.runtime.startHats('event_whenkeypressed', {
+                KEY_OPTION: 'any'
+            });
+        } else if (index > -1) {
+            // If already present, remove from the list.
+            this._keysPressed.splice(index, 1);
         }
     }
 
     /**
-     * Get key down state for a specified Scratch key name.
-     * @param  {Any} key Scratch key argument.
+     * Get key down state for a specified key.
+     * @param  {Any} keyArg key argument.
      * @return {boolean} Is the specified key down?
      */
-    getKeyIsDown (key) {
-        if (key === 'any') {
+    getKeyIsDown (keyArg) {
+        if (keyArg === 'any') {
             return this._keysPressed.length > 0;
         }
-        const keyCode = this._scratchKeyToKeyCode(key);
-        return this._keysPressed.indexOf(keyCode) > -1;
+        const scratchKey = this._keyArgToScratchKey(keyArg);
+        return this._keysPressed.indexOf(scratchKey) > -1;
     }
 }
 
