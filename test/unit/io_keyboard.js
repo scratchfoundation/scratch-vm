@@ -12,45 +12,75 @@ test('spec', t => {
     t.end();
 });
 
-test('space', t => {
+test('space key', t => {
     const rt = new Runtime();
     const k = new Keyboard(rt);
 
     k.postData({
-        keyCode: 32,
+        key: ' ',
         isDown: true
     });
-    t.strictDeepEquals(k._keysPressed, [32]);
+    t.strictDeepEquals(k._keysPressed, ['space']);
     t.strictEquals(k.getKeyIsDown('space'), true);
     t.strictEquals(k.getKeyIsDown('any'), true);
     t.end();
 });
 
-test('letter', t => {
+test('letter key', t => {
     const rt = new Runtime();
     const k = new Keyboard(rt);
 
     k.postData({
-        keyCode: 65,
+        key: 'a',
         isDown: true
     });
-    t.strictDeepEquals(k._keysPressed, [65]);
+    t.strictDeepEquals(k._keysPressed, ['A']);
+    t.strictEquals(k.getKeyIsDown(65), true);
     t.strictEquals(k.getKeyIsDown('a'), true);
+    t.strictEquals(k.getKeyIsDown('A'), true);
     t.strictEquals(k.getKeyIsDown('any'), true);
     t.end();
 });
 
-test('number', t => {
+test('number key', t => {
     const rt = new Runtime();
     const k = new Keyboard(rt);
 
     k.postData({
-        keyCode: 49,
+        key: '1',
         isDown: true
     });
-    t.strictDeepEquals(k._keysPressed, [49]);
+    t.strictDeepEquals(k._keysPressed, ['1']);
     t.strictEquals(k.getKeyIsDown(49), true);
+    t.strictEquals(k.getKeyIsDown('1'), true);
     t.strictEquals(k.getKeyIsDown('any'), true);
+    t.end();
+});
+
+test('non-english key', t => {
+    const rt = new Runtime();
+    const k = new Keyboard(rt);
+
+    k.postData({
+        key: '日',
+        isDown: true
+    });
+    t.strictDeepEquals(k._keysPressed, ['日']);
+    t.strictEquals(k.getKeyIsDown('日'), true);
+    t.strictEquals(k.getKeyIsDown('any'), true);
+    t.end();
+});
+
+test('ignore modifier key', t => {
+    const rt = new Runtime();
+    const k = new Keyboard(rt);
+
+    k.postData({
+        key: 'Shift',
+        isDown: true
+    });
+    t.strictDeepEquals(k._keysPressed, []);
+    t.strictEquals(k.getKeyIsDown('any'), false);
     t.end();
 });
 
@@ -59,15 +89,15 @@ test('keyup', t => {
     const k = new Keyboard(rt);
 
     k.postData({
-        keyCode: 37,
+        key: 'ArrowLeft',
         isDown: true
     });
     k.postData({
-        keyCode: 37,
+        key: 'ArrowLeft',
         isDown: false
     });
     t.strictDeepEquals(k._keysPressed, []);
-    t.strictEquals(k.getKeyIsDown(37), false);
+    t.strictEquals(k.getKeyIsDown('left arrow'), false);
     t.strictEquals(k.getKeyIsDown('any'), false);
     t.end();
 });
