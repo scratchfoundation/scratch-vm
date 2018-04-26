@@ -1,6 +1,7 @@
 const Cast = require('../util/cast');
 const Clone = require('../util/clone');
 const RenderedTarget = require('../sprites/rendered-target');
+const uid = require('../util/uid');
 
 /**
  * @typedef {object} BubbleState - the bubble state associated with a particular target.
@@ -44,7 +45,8 @@ class Scratch3LooksBlocks {
             onSpriteRight: true,
             skinId: null,
             text: '',
-            type: 'say'
+            type: 'say',
+            usageId: null // ID for hiding a timed say/think block.
         };
     }
 
@@ -224,6 +226,7 @@ class Scratch3LooksBlocks {
         const bubbleState = this._getBubbleState(target);
         bubbleState.type = type;
         bubbleState.text = text;
+        bubbleState.usageId = uid();
         this._renderBubble(target);
     }
 
@@ -277,12 +280,15 @@ class Scratch3LooksBlocks {
 
     sayforsecs (args, util) {
         this.say(args, util);
-        const _target = util.target;
+        const target = util.target;
+        const usageId = this._getBubbleState(target).usageId;
         return new Promise(resolve => {
             this._bubbleTimeout = setTimeout(() => {
                 this._bubbleTimeout = null;
-                // Clear say bubble and proceed.
-                this._updateBubble(_target, 'say', '');
+                // Clear say bubble if it hasn't been changed and proceed.
+                if (this._getBubbleState(target).usageId === usageId) {
+                    this._updateBubble(target, 'say', '');
+                }
                 resolve();
             }, 1000 * args.SECS);
         });
@@ -294,12 +300,15 @@ class Scratch3LooksBlocks {
 
     thinkforsecs (args, util) {
         this.think(args, util);
-        const _target = util.target;
+        const target = util.target;
+        const usageId = this._getBubbleState(target).usageId;
         return new Promise(resolve => {
             this._bubbleTimeout = setTimeout(() => {
                 this._bubbleTimeout = null;
-                // Clear say bubble and proceed.
-                this._updateBubble(_target, 'think', '');
+                // Clear think bubble if it hasn't been changed and proceed.
+                if (this._getBubbleState(target).usageId === usageId) {
+                    this._updateBubble(target, 'think', '');
+                }
                 resolve();
             }, 1000 * args.SECS);
         });
