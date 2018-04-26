@@ -569,7 +569,8 @@ class VirtualMachine extends EventEmitter {
      * @param {HTMLCanvasElement} bitmap - new bitmap for the renderer.
      * @param {number} rotationCenterX x of point about which the costume rotates, relative to its upper left corner
      * @param {number} rotationCenterY y of point about which the costume rotates, relative to its upper left corner
-     * @param {number} bitmapResolution 1 for bitmaps that have 1 pixel per unit of stage, 2 for double-resolution bitmaps
+     * @param {number} bitmapResolution 1 for bitmaps that have 1 pixel per unit of stage,
+     *     2 for double-resolution bitmaps
      */
     updateBitmap (costumeIndex, bitmap, rotationCenterX, rotationCenterY, bitmapResolution) {
         const costume = this.editingTarget.getCostumes()[costumeIndex];
