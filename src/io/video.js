@@ -1,7 +1,42 @@
 class Video {
     constructor (runtime) {
         this.runtime = runtime;
+
+        /**
+         * @typedef VideoProvider
+         * @property {Function} enableVideo - Requests camera access from the user, and upon success,
+         * enables the video feed
+         * @property {Function} disableVideo - Turns off the video feed
+         * @property {Function} getFrame - Return frame data from the video feed in
+         * specified dimensions, format, and mirroring.
+         */
         this.provider = null;
+
+        /**
+         * Id representing a Scratch Renderer skin the video is rendered to for
+         * previewing.
+         * @type {number}
+         */
+        this._skinId = -1;
+
+        /**
+         * The Scratch Renderer Skin object.
+         * @type {Skin}
+         */
+        this._skin = null;
+
+        /**
+         * Id for a drawable using the video's skin that will render as a video
+         * preview.
+         * @type {Drawable}
+         */
+        this._drawable = -1;
+
+        /**
+         * Store the last state of the video transparency ghost effect
+         * @type {number}
+         */
+        this._ghost = 0;
     }
 
     static get FORMAT_IMAGE_DATA () {
@@ -30,6 +65,14 @@ class Video {
     }
 
     /**
+     * Set a video provider for this device.
+     * @param {VideoProvider} provider - Video provider to use
+     */
+    setProvider (provider) {
+        this.provider = provider;
+    }
+
+    /**
      * Request video be enabled.  Sets up video, creates video skin and enables preview.
      *
      * ioDevices.video.requestVideo()
@@ -37,8 +80,8 @@ class Video {
      * @return {Promise.<Video>} resolves a promise to this IO device when video is ready.
      */
     enableVideo () {
-        if (this.provider) return this.provider.enableVideo();
-        return null;
+        if (!this.provider) return null;
+        return this.provider.enableVideo().then(() => this._setupPreview());
     }
 
     /**
@@ -46,8 +89,9 @@ class Video {
      * @return {void}
      */
     disableVideo () {
-        if (this.provider) return this.provider.disableVideo();
-        return null;
+        if (!this.provider) return null;
+        this._disablePreview();
+        this.provider.disableVideo();
     }
 
     /**
@@ -79,35 +123,74 @@ class Video {
     /**
      * Set the preview ghost effect
      * @param {number} ghost from 0 (visible) to 100 (invisible) - ghost effect
-     * @return {void}
      */
     setPreviewGhost (ghost) {
-        if (this.provider) return this.provider.setPreviewGhost(ghost);
-        return null;
+        this._ghost = ghost;
+        if (this._drawable) {
+            this.runtime.renderer.updateDrawableProperties(this._drawable, {ghost});
+        }
+    }
+
+    _disablePreview () {
+        if (this._skin) {
+            this._skin.clear();
+            this.runtime.renderer.updateDrawableProperties(this._drawable, {visible: false});
+        }
+        this._renderPreviewFrame = null;
+    }
+
+    _setupPreview () {
+        const {renderer} = this.runtime;
+        if (!renderer) return;
+
+        if (this._skinId === -1 && this._skin === null && this._drawable === -1) {
+            this._skinId = renderer.createPenSkin();
+            this._skin = renderer._allSkins[this._skinId];
+            this._drawable = renderer.createDrawable();
+            renderer.setDrawableOrder(
+                this._drawable,
+                Video.ORDER
+            );
+            renderer.updateDrawableProperties(this._drawable, {
+                skinId: this._skinId
+            });
+        }
+
+        // if we haven't already created and started a preview frame render loop, do so
+        if (!this._renderPreviewFrame) {
+            renderer.updateDrawableProperties(this._drawable, {
+                ghost: this._ghost,
+                visible: true
+            });
+
+            this._renderPreviewFrame = () => {
+                clearTimeout(this._renderPreviewTimeout);
+                if (!this._renderPreviewFrame) {
+                    return;
+                }
+
+                this._renderPreviewTimeout = setTimeout(this._renderPreviewFrame, this.runtime.currentStepTime);
+
+                const canvas = this.getFrame({format: Video.FORMAT_CANVAS});
+
+                if (!canvas) {
+                    this._skin.clear();
+                    return;
+                }
+
+                const xOffset = Video.DIMENSIONS[0] / -2;
+                const yOffset = Video.DIMENSIONS[1] / 2;
+                this._skin.drawStamp(canvas, xOffset, yOffset);
+                this.runtime.requestRedraw();
+            };
+
+            this._renderPreviewFrame();
+        }
     }
 
     get videoReady () {
-        if (this.provider) return this.provider.videoReady();
+        if (this.provider) return this.provider.videoReady;
         return false;
-    }
-
-    /**
-     * @typedef VideoProvider
-     * @property {Function} enableVideo - Requests camera access from the user, and upon success,
-     * enables the video feed
-     * @property {Function} disableVideo - Turns off the video feed
-     * @property {Function} setGhostPreview - Controls the transparency of a visual layer
-     * over the video feed
-     * @property {Function} getFrame - Return frame data from the video feed in
-     * specified dimensions, format, and mirroring.
-     */
-
-    /**
-     * Set a video provider for this device.
-     * @param {VideoProvider} provider - Video provider to use
-     */
-    setProvider (provider) {
-        this.provider = provider;
     }
 }
 
