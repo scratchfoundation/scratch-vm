@@ -59,6 +59,14 @@ class Scratch3LooksBlocks {
     }
 
     /**
+     * Max block time we use the "soft clear" optimization to prevent flickering in "typewriter" projects.
+     * @type {string}
+     */
+    static get MAX_SOFT_CLEAR_TIME () {
+        return 0.02; // seconds
+    }
+
+    /**
      * @param {Target} target - collect bubble state for this target. Probably, but not necessarily, a RenderedTarget.
      * @returns {BubbleState} the mutable bubble state associated with that target. This will be created if necessary.
      * @private
@@ -282,12 +290,17 @@ class Scratch3LooksBlocks {
         this.say(args, util);
         const target = util.target;
         const usageId = this._getBubbleState(target).usageId;
+        const secs = args.SECS;
         return new Promise(resolve => {
             this._bubbleTimeout = setTimeout(() => {
                 this._bubbleTimeout = null;
                 // Clear say bubble if it hasn't been changed and proceed.
                 if (this._getBubbleState(target).usageId === usageId) {
-                    this._updateBubble(target, 'say', '');
+                    if (secs < this.MAX_SOFT_CLEAR_TIME) {
+                        this._updateBubble(target, 'say', '');
+                    } else {
+                        this._onTargetWillExit(target);
+                    }
                 }
                 resolve();
             }, 1000 * args.SECS);
@@ -302,12 +315,17 @@ class Scratch3LooksBlocks {
         this.think(args, util);
         const target = util.target;
         const usageId = this._getBubbleState(target).usageId;
+        const secs = args.SECS;
         return new Promise(resolve => {
             this._bubbleTimeout = setTimeout(() => {
                 this._bubbleTimeout = null;
                 // Clear think bubble if it hasn't been changed and proceed.
                 if (this._getBubbleState(target).usageId === usageId) {
-                    this._updateBubble(target, 'think', '');
+                    if (secs < this.MAX_SOFT_CLEAR_TIME) {
+                        this._updateBubble(target, 'think', '');
+                    } else {
+                        this._onTargetWillExit(target);
+                    }
                 }
                 resolve();
             }, 1000 * args.SECS);
