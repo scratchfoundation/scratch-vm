@@ -2,7 +2,6 @@ const TextEncoder = require('text-encoding').TextEncoder;
 const EventEmitter = require('events');
 const JSZip = require('jszip');
 
-const Buffer = require('buffer').Buffer;
 const centralDispatch = require('./dispatch/central-dispatch');
 const ExtensionManager = require('./extension-support/extension-manager');
 const log = require('./util/log');
@@ -18,7 +17,6 @@ const Variable = require('./engine/variable');
 const {loadCostume} = require('./import/load-costume.js');
 const {loadSound} = require('./import/load-sound.js');
 const {serializeSounds, serializeCostumes} = require('./serialization/serialize-assets');
-require('canvas-toBlob');
 
 const RESERVED_NAMES = ['_mouse_', '_stage_', '_edge_', '_myself_', '_random_'];
 
@@ -554,8 +552,9 @@ class VirtualMachine extends EventEmitter {
         const format = this.runtime.storage.get(id).dataFormat;
         if (format === this.runtime.storage.DataFormat.SVG) {
             return this.runtime.storage.get(id).decodeText();
-        } else if (format === this.runtime.storage.DataFormat.PNG) {
-            const data = this.runtime.storage.get(id).encodeDataURI('image/png');
+        } else if (format === this.runtime.storage.DataFormat.PNG ||
+                format === this.runtime.storage.DataFormat.JPG) {
+            const data = this.runtime.storage.get(id).encodeDataURI();
             const image = new Image();
             image.src = data;
             return image;
@@ -570,32 +569,28 @@ class VirtualMachine extends EventEmitter {
      * @param {HTMLCanvasElement} bitmap - new bitmap for the renderer.
      * @param {number} rotationCenterX x of point about which the costume rotates, relative to its upper left corner
      * @param {number} rotationCenterY y of point about which the costume rotates, relative to its upper left corner
+     * @param {number} bitmapResolution 1 for bitmaps that have 1 pixel per unit of stage, 2 for double-resolution bitmaps
      */
-    updateBitmap (costumeIndex, bitmap, rotationCenterX, rotationCenterY) {
+    updateBitmap (costumeIndex, bitmap, rotationCenterX, rotationCenterY, bitmapResolution) {
         const costume = this.editingTarget.getCostumes()[costumeIndex];
         if (costume && this.runtime && this.runtime.renderer) {
             costume.rotationCenterX = rotationCenterX;
             costume.rotationCenterY = rotationCenterY;
-            this.runtime.renderer.updateBitmapSkin(costume.skinId, bitmap, [rotationCenterX, rotationCenterY]);
+            this.runtime.renderer.updateBitmapSkin(
+                costume.skinId, bitmap, bitmapResolution, [rotationCenterX, rotationCenterY]);
         }
 
-        bitmap.toBlob(blob => {
-            const reader = new FileReader();
-            reader.addEventListener('loadend', () => {
-                const storage = this.runtime.storage;
-                costume.assetId = storage.builtinHelper.cache(
-                    storage.AssetType.ImageBitmap,
-                    storage.DataFormat.PNG,
-                    Buffer.from(reader.result)
-                );
-                // @todo is there a better way to make sure all info is up to date on the costume?
-                costume.dataFormat = storage.DataFormat.PNG;
-                costume.bitmapResolution = 2;
-                this.emitTargetsUpdate();
-            });
-            reader.readAsArrayBuffer(blob);
-        });
-
+        const storage = this.runtime.storage;
+        costume.assetId = storage.builtinHelper.cache(
+            storage.AssetType.ImageBitmap,
+            storage.DataFormat.PNG,
+            bitmap.getContext('2d').getImageData(0, 0, bitmap.width, bitmap.height).data
+        );
+        costume.dataFormat = storage.DataFormat.PNG;
+        costume.bitmapResolution = bitmapResolution;
+        costume.size = [bitmap.width, bitmap.height];
+        costume.md5 = `${costume.assetId}.${costume.dataFormat}`;
+        this.emitTargetsUpdate();
     }
 
     /**
