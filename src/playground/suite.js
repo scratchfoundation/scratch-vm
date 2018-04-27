@@ -589,6 +589,18 @@ window.onload = function () {
         recordingTime: 5000
     }));
 
+    suite.add(new BenchFixture({
+        projectId: 219313833,
+        warmUpTime: 0,
+        recordingTime: 5000
+    }));
+
+    suite.add(new BenchFixture({
+        projectId: 219313833,
+        warmUpTime: 5000,
+        recordingTime: 5000
+    }));
+
     const frame = document.getElementsByTagName('iframe')[0];
     const runner = new BenchRunner({frame, suite});
     const resultsView = suiteView = new BenchSuiteResultView({runner}).render();
