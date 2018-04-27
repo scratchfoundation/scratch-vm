@@ -541,10 +541,10 @@ class VirtualMachine extends EventEmitter {
     }
 
     /**
-     * Get an SVG string from storage.
+     * Get a string representation of the image from storage.
      * @param {int} costumeIndex - the index of the costume to be got.
-     * @return {string|HTMLImageElement} the costume's SVG string if it's SVG,
-     *     an HTMLImageElement if it's a PNG, or null if it couldn't be found or decoded.
+     * @return {string} the costume's SVG string if it's SVG,
+     *     a dataURI if it's a PNG or JPG, or null if it couldn't be found or decoded.
      */
     getCostume (costumeIndex) {
         const id = this.editingTarget.getCostumes()[costumeIndex].assetId;
@@ -554,10 +554,7 @@ class VirtualMachine extends EventEmitter {
             return this.runtime.storage.get(id).decodeText();
         } else if (format === this.runtime.storage.DataFormat.PNG ||
                 format === this.runtime.storage.DataFormat.JPG) {
-            const data = this.runtime.storage.get(id).encodeDataURI();
-            const image = new Image();
-            image.src = data;
-            return image;
+            return this.runtime.storage.get(id).encodeDataURI('image/png');
         }
         log.error(`Unhandled format: ${this.runtime.storage.get(id).dataFormat}`);
         return null;
@@ -566,7 +563,7 @@ class VirtualMachine extends EventEmitter {
     /**
      * Update a costume with the given bitmap
      * @param {int} costumeIndex - the index of the costume to be updated.
-     * @param {HTMLCanvasElement} bitmap - new bitmap for the renderer.
+     * @param {ImageData} bitmap - new bitmap for the renderer.
      * @param {number} rotationCenterX x of point about which the costume rotates, relative to its upper left corner
      * @param {number} rotationCenterY y of point about which the costume rotates, relative to its upper left corner
      * @param {number} bitmapResolution 1 for bitmaps that have 1 pixel per unit of stage,
@@ -577,20 +574,28 @@ class VirtualMachine extends EventEmitter {
         if (costume && this.runtime && this.runtime.renderer) {
             costume.rotationCenterX = rotationCenterX;
             costume.rotationCenterY = rotationCenterY;
+
+            // @todo: updateBitmapSkin does not take ImageData
+            const canvas = document.createElement('canvas');
+            canvas.width = bitmap.width;
+            canvas.height = bitmap.height;
+            const context = canvas.getContext('2d');
+            context.putImageData(bitmap, 0, 0);
+            
             this.runtime.renderer.updateBitmapSkin(
-                costume.skinId, bitmap, bitmapResolution, [rotationCenterX, rotationCenterY]);
+                costume.skinId, canvas, bitmapResolution, [rotationCenterX, rotationCenterY]);
         }
 
         const storage = this.runtime.storage;
         costume.assetId = storage.builtinHelper.cache(
             storage.AssetType.ImageBitmap,
             storage.DataFormat.PNG,
-            bitmap.getContext('2d').getImageData(0, 0, bitmap.width, bitmap.height).data
+            bitmap.data
         );
         costume.dataFormat = storage.DataFormat.PNG;
         costume.bitmapResolution = bitmapResolution;
-        costume.size = [bitmap.width, bitmap.height];
-        costume.md5 = `${costume.assetId}.${costume.dataFormat}`;
+        // costume.size = [bitmap.width, bitmap.height];
+        // costume.md5 = `${costume.assetId}.${costume.dataFormat}`;
         this.emitTargetsUpdate();
     }
 
