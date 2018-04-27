@@ -545,7 +545,7 @@ class VirtualMachine extends EventEmitter {
      * @param {int} costumeIndex - the index of the costume to be got.
      * @return {string} the costume's SVG string, or null if it's not an SVG costume.
      */
-    getCostumeSvg (costumeIndex) {
+    getCostume (costumeIndex) {
         const id = this.editingTarget.getCostumes()[costumeIndex].assetId;
         if (id && this.runtime && this.runtime.storage &&
                 this.runtime.storage.get(id).dataFormat === 'svg') {
