@@ -7,38 +7,75 @@ const color = require('../../util/color');
 const log = require('../../util/log');
 const math = require('../../util/math-util');
 
+/**
+ * Host for discovery of Philips Hue bridge devices on the LAN.
+ * @type {String}
+ */
+const DISCOVERY_HOST = 'https://www.meethue.com/api/nupnp';
+
+/**
+ * Number of seconds to transition between states of a light.
+ * @type {Number}
+ */
+const TRANSITION_TIME = 1;
+
+/**
+ * Accepted color parameters.
+ * @type {Array}
+ */
+const COLOR_PARMETERS = ['color', 'saturation', 'brightness'];
+
+/**
+ * Philips Hue extension.
+ * @class
+ */
 class PhilipsHue {
     constructor () {
         // Connection information
         this._host = null;
-        this._index = 0;
+        this._index = null;
         this._identifier = 'scratch';
         this._username = null;
 
         // Light state
         this._on = true;
-        this._color = 0;
+        this._lastOn = false;
+        this._color = 10; // orange
         this._saturation = 100;
         this._brightness = 100;
+        this._dirty = true;
 
-        // Get information from user for extension setup
-        // @todo Can I use "https://www.meethue.com/api/nupnp" to attempt discovery?
-        const host = window.prompt('IP address for Philips Hue hub:');
-        // @todo Can I default to "group/0" but provide this in some hidden way?
+        // Get light index for extension
+        // @todo This should be presented to the user visually, but for now it
+        //       accepts a numeric input between 1 and 4.
         const index = window.prompt('Light index:');
-        this._host = host;
         this._index = index;
 
-        // Authenticate client
-        // @todo Delay N seconds to wait for hitting the button on the bridge?
-        // @todo This should probably not create a new user every time if not
-        //       needed. Can we keep something in local storage?
-        this._authenticate((err, username) => {
-            // @todo Retry on failure?
+        // Use NUPNP to automatically discover a Philips Hue bridge on network
+        nets({
+            method: 'GET',
+            uri: DISCOVERY_HOST,
+            json: {}
+        }, (err, res, body) => {
             if (err) return log.error(err);
-            this._username = username;
-            this._pushState(err => {
+            if (res.statusCode !== 200) return log.error(body);
+
+            // Set host IP for bridge
+            this._host = body[0].internalipaddress;
+
+            // Authenticate client
+            // @todo Present the user with a UI to prompt pressing the pair
+            //       button on the bridge.
+            // @todo This should probably not create a new user every time if
+            //       possible. Can we keep something in local storage?
+            this._authenticate((err, username) => {
                 if (err) return log.error(err);
+
+                // Set username for future requests
+                this._username = username;
+
+                // Start update loop
+                this._loop();
             });
         });
     }
@@ -78,7 +115,7 @@ class PhilipsHue {
                         PROPERTY: {
                             type: ArgumentType.STRING,
                             menu: 'COLOR_PARAM',
-                            defaultValue: 'color'
+                            defaultValue: COLOR_PARMETERS[0]
                         },
                         VALUE: {
                             type: ArgumentType.NUMBER,
@@ -94,7 +131,7 @@ class PhilipsHue {
                         PROPERTY: {
                             type: ArgumentType.STRING,
                             menu: 'COLOR_PARAM',
-                            defaultValue: 'color'
+                            defaultValue: COLOR_PARMETERS[0]
                         },
                         VALUE: {
                             type: ArgumentType.NUMBER,
@@ -105,16 +142,15 @@ class PhilipsHue {
             ],
             menus: {
                 LIGHT_STATE: ['on', 'off'],
-                COLOR_PARAM: ['color', 'saturation', 'brightness']
+                COLOR_PARAM: COLOR_PARMETERS
             }
         };
     }
 
     _xhr (body, callback) {
-        // @todo Handle throttling / single queue?
-        body.uri = `https://${this._host}${body.uri}`;
-        // @todo Set this in a constant somewhere
-        body.timeout = 5000;
+        // Set HTTP request defaults
+        body.uri = `http://${this._host}${body.uri}`;
+        body.timeout = 1000;
 
         // Make XHR request
         nets(body, function (err, res, body) {
@@ -126,22 +162,23 @@ class PhilipsHue {
 
     _authenticate (callback) {
         // @todo Delay by 5 seconds (give time to hit the button)
-        this._xhr({
-            method: 'POST',
-            uri: `/api`,
-            json: {
-                devicetype: this._identifier
-            }
-        }, (err, body) => {
-            if (err) return callback(err);
-            if (typeof body[0] === 'undefined') return callback(403);
-            if (typeof body[0].success === 'undefined') return callback(403);
-            callback(null, body[0].success.username);
-        });
+        // this._xhr({
+        //     method: 'POST',
+        //     uri: `/api`,
+        //     json: {
+        //         devicetype: this._identifier
+        //     }
+        // }, (err, body) => {
+        //     if (err) return callback(err);
+        //     if (typeof body[0] === 'undefined') return callback(403);
+        //     if (typeof body[0].success === 'undefined') return callback(403);
+        //     callback(null, body[0].success.username);
+        // });
+        callback(null, '9boOFwbceEAKbI6fNw9cGeSKAk-Hd-JEqgNagNOw');
     }
 
     // @note For some reason Philips Hue only accepts numbers between 0 and 254
-    // rather than 255 – thus the odd 8-bit scaling.
+    //       rather than 255 – thus the odd 8-bit scaling.
     _rangeToEight (input) {
         return Math.floor(input / 100 * 254);
     }
@@ -150,31 +187,36 @@ class PhilipsHue {
         return Math.floor(input / 100 * 65535);
     }
 
-    _pushState (callback) {
+    _loop () {
+        if (!this._dirty) return setTimeout(this._loop.bind(this), 50);
+
         // Create payload
-        // @todo Philips advises to not always send the "on" state if the light
-        //       is already on. I suppose I could store the "last" on state and
-        //       then determine inclusion of this property.
-        // @todo Set transition time (ms) in a constant somewhere
         const payload = {
-            on: this._on,
             hue: this._rangeToSixteen(this._color),
             sat: this._rangeToEight(this._saturation),
             bri: this._rangeToEight(this._brightness),
-            transitiontime: 100
+            transitiontime: TRANSITION_TIME
         };
 
-        // @todo Push current light state to hue system via HTTP request
-        // @todo Replace '/groups/0/action' with '/lights/:id/state'
+        // Add "on" state if needed
+        // @note This is done as a performance optimization. The Hue system
+        //       is much less responsive if the "on" state is sent as part of
+        //       each request.
+        if (this._lastOn !== this._on) {
+            payload.on = this._on;
+            this._lastOn = this._on;
+        }
+
+        // Push current light state to hue system via HTTP request
         this._xhr({
             method: 'PUT',
-            uri: `/api/${this._username}/groups/0/action`,
+            uri: `/api/${this._username}/lights/${this._index}/state`,
             json: payload
-        }, callback);
-        // @todo Should this block the thread while waiting?
-        //       Philips recommends no more than 10 req/sec for individual
-        //       lights and no more than 1 req/sec for the whole group
-        // @todo If so, what's the timeout?
+        }, (err) => {
+            if (err) log.error(err);
+            this._dirty = false;
+            setTimeout(this._loop.bind(this), 100);
+        });
     }
 
     turnLightOnOff (args) {
@@ -187,10 +229,8 @@ class PhilipsHue {
             )
         );
 
-        // Push state
-        return new Promise(resolve => {
-            this._pushState(resolve);
-        });
+        // Set state to "dirty"
+        this._dirty = true;
     }
 
     setLightColor (args) {
@@ -201,43 +241,40 @@ class PhilipsHue {
         this._saturation = Math.floor(hsv.s * 100);
         this._brightness = Math.floor(hsv.v * 100);
 
-        // Push state
-        return new Promise(resolve => {
-            this._pushState(resolve);
-        });
+        // Set state to "dirty"
+        this._dirty = true;
     }
 
     changeLightProperty (args) {
         // Parse arguments and update state
-        // @todo Make this list a constant somewhere and update getInfo
-        const valid = ['color', 'saturation', 'brightness'];
         const prop = args.PROPERTY;
         const value = cast.toNumber(args.VALUE);
-        if (valid.indexOf(prop) === -1) return;
+        if (COLOR_PARMETERS.indexOf(prop) === -1) return;
         this[`_${prop}`] += value;
-        // @todo Color should probably wrapClamp rather than clamp
-        this[`_${prop}`] = math.clamp(this[`_${prop}`], 0, 100);
+        if (prop === 'color') {
+            this[`_${prop}`] = math.wrapClamp(this[`_${prop}`], 0, 100);
+        } else {
+            this[`_${prop}`] = math.clamp(this[`_${prop}`], 0, 100);
+        }
 
-        // Push state
-        return new Promise(resolve => {
-            this._pushState(resolve);
-        });
+        // Set state to "dirty"
+        this._dirty = true;
     }
 
     setLightProperty (args) {
         // Parse arguments and update state
-        // @todo Make this list a constant somewhere and update getInfo
-        const valid = ['color', 'saturation', 'brightness'];
         const prop = args.PROPERTY;
         const value = cast.toNumber(args.VALUE);
-        if (valid.indexOf(prop) === -1) return;
-        // @todo Color should probably wrapClamp rather than clamp
-        this[`_${prop}`] = math.clamp(value, 0, 100);
+        if (COLOR_PARMETERS.indexOf(prop) === -1) return;
+        if (prop === 'color') {
+            this[`_${prop}`] = math.wrapClamp(value, 0, 100);
+        } else {
+            this[`_${prop}`] = math.clamp(value, 0, 100);
+        }
 
-        // Push state
-        return new Promise(resolve => {
-            this._pushState(resolve);
-        });
+
+        // Set state to "dirty"
+        this._dirty = true;
     }
 }
 
