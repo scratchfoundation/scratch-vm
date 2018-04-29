@@ -14,10 +14,25 @@ const math = require('../../util/math-util');
 const DISCOVERY_HOST = 'https://www.meethue.com/api/nupnp';
 
 /**
- * Number of seconds to transition between states of a light.
+ * Delay time (milliseconds) between updates sent to a light.
+ * @note This should not exceed 10 Hz for a single light or 4 Hz for a group.
+ * @type {Number}
+ */
+const RENDER_TIME = 100;
+
+/**
+ * Transition time (seconds) between states of a light.
+ * @note The Philips Hue bridge unfortunately does not accept floats for
+ *       transition time. This must be an integer.
  * @type {Number}
  */
 const TRANSITION_TIME = 1;
+
+/**
+ * Maximum amount of time (milliseconds) to wait on a single HTTP request.
+ * @type {Array}
+ */
+const HTTP_TIMEOUT = 1000;
 
 /**
  * Accepted color parameters.
@@ -26,10 +41,20 @@ const TRANSITION_TIME = 1;
 const COLOR_PARMETERS = ['color', 'saturation', 'brightness'];
 
 /**
+ * Key used for local storage settings.
+ * @type {String}
+ */
+const STORAGE_KEY = 'scratch:extension:hue';
+
+/**
  * Philips Hue extension.
  * @class
  */
 class PhilipsHue {
+    /**
+     * Creates an instance of the Philips Hue extension.
+     * @constructor
+     */
     constructor () {
         // Connection information
         this._host = null;
@@ -66,8 +91,6 @@ class PhilipsHue {
             // Authenticate client
             // @todo Present the user with a UI to prompt pressing the pair
             //       button on the bridge.
-            // @todo This should probably not create a new user every time if
-            //       possible. Can we keep something in local storage?
             this._authenticate((err, username) => {
                 if (err) return log.error(err);
 
@@ -80,23 +103,15 @@ class PhilipsHue {
         });
     }
 
+    /**
+     * Returns metadata and block information for the extension.
+     * @return {object} Extension definition
+     */
     getInfo () {
         return {
             id: 'philipsHue',
             name: 'Philips Hue',
             blocks: [
-                {
-                    opcode: 'turnLightOnOff',
-                    text: 'turn light [VALUE]',
-                    blockType: BlockType.COMMAND,
-                    arguments: {
-                        VALUE: {
-                            type: ArgumentType.NUMBER,
-                            menu: 'LIGHT_STATE',
-                            defaultValue: 'on'
-                        }
-                    }
-                },
                 {
                     opcode: 'setLightColor',
                     text: 'set light color to [VALUE]',
@@ -138,59 +153,133 @@ class PhilipsHue {
                             defaultValue: 50
                         }
                     }
+                },
+                {
+                    opcode: 'turnLightOnOff',
+                    text: 'turn light [VALUE]',
+                    blockType: BlockType.COMMAND,
+                    arguments: {
+                        VALUE: {
+                            type: ArgumentType.NUMBER,
+                            menu: 'LIGHT_STATE',
+                            defaultValue: 'on'
+                        }
+                    }
                 }
             ],
             menus: {
-                LIGHT_STATE: ['on', 'off'],
-                COLOR_PARAM: COLOR_PARMETERS
+                COLOR_PARAM: COLOR_PARMETERS,
+                LIGHT_STATE: ['on', 'off']
             }
         };
     }
 
-    _xhr (body, callback) {
+    /**
+     * Performs an XHR request against the currently connected Philips Hue
+     * bridge.
+     * @param  {Object}   req      HTTP request object
+     * @param  {Function} callback Error and HTTP response body
+     * @return {void}
+     */
+    _xhr (req, callback) {
         // Set HTTP request defaults
-        body.uri = `http://${this._host}${body.uri}`;
-        body.timeout = 1000;
+        req.uri = `http://${this._host}${req.uri}`;
+        req.timeout = HTTP_TIMEOUT;
+
+        // Log request
+        // @todo Remove this once extension is stable
+        log.info(req.uri);
 
         // Make XHR request
-        nets(body, function (err, res, body) {
+        nets(req, function (err, res, body) {
             if (err) return callback('Could not connect to bridge');
             if (res.statusCode !== 200) return callback(res.statusCode);
             callback(null, body);
         });
     }
 
+    /**
+     * Returns a valid username for the Philips Hue bridge.
+     * @param  {Function} callback Error or username
+     * @return {void}
+     */
     _authenticate (callback) {
-        // @todo Delay by 5 seconds (give time to hit the button)
-        // this._xhr({
-        //     method: 'POST',
-        //     uri: `/api`,
-        //     json: {
-        //         devicetype: this._identifier
-        //     }
-        // }, (err, body) => {
-        //     if (err) return callback(err);
-        //     if (typeof body[0] === 'undefined') return callback(403);
-        //     if (typeof body[0].success === 'undefined') return callback(403);
-        //     callback(null, body[0].success.username);
-        // });
-        callback(null, '9boOFwbceEAKbI6fNw9cGeSKAk-Hd-JEqgNagNOw');
+        // Check for user in local storage
+        // @todo This has an unfortunate error condition where the specified
+        //       user may *not* exist on the bridge, but still have the same
+        //       IP address. In this case, the authentication service should
+        //       attempt to create a new user.
+        let settings = window.localStorage.getItem(STORAGE_KEY);
+        if (settings !== null) {
+            settings = JSON.parse(settings);
+            if (settings.host === this._host) {
+                return callback(null, settings.username);
+            } else {
+                window.localStorage.removeItem(STORAGE_KEY);
+            }
+        }
+
+        // Create new user
+        this._xhr({
+            method: 'POST',
+            uri: `/api`,
+            json: {
+                devicetype: this._identifier
+            }
+        }, (err, body) => {
+            if (err) return callback(err);
+            if (typeof body[0] === 'undefined') return callback(403);
+            if (typeof body[0].success === 'undefined') return callback(403);
+            const username = body[0].success.username;
+
+            // Save credentials
+            window.localStorage.setItem(STORAGE_KEY, JSON.stringify({
+                host: this._host,
+                username: username
+            }));
+
+            // Return username
+            callback(null, username);
+        });
     }
 
-    // @note For some reason Philips Hue only accepts numbers between 0 and 254
-    //       rather than 255 – thus the odd 8-bit scaling.
+    /**
+     * Convert 0 - 100 range as tracked by the extension to an 8-bit integer
+     * as needed by the Philips Hue API.
+     * @note   For some reason Philips Hue only accepts numbers between 0 and
+     *         *254* thus the odd 8-bit scaling.
+     * @param  {number} input Input value between 0 and 100
+     * @return {number}       Output value between 0 and 254 (née 255)
+     */
     _rangeToEight (input) {
         return Math.floor(input / 100 * 254);
     }
 
+    /**
+     * Convert 0 - 100 range as tracked by the extension to a 16-bit integer
+     * as needed by the Philips Hue API.
+     * @param  {number} input Input value between 0 and 100
+     * @return {number}       Output value between 0 and 65535
+     */
     _rangeToSixteen (input) {
         return Math.floor(input / 100 * 65535);
     }
 
+    /**
+     * Main rendering loop.
+     * @return {void}
+     */
     _loop () {
-        if (!this._dirty) return setTimeout(this._loop.bind(this), 50);
+        // If pushing state to the light is not needed, delay and check again
+        if (!this._dirty) {
+            return setTimeout(
+                this._loop.bind(this),
+                Math.floor(RENDER_TIME / 2)
+            );
+        }
 
         // Create payload
+        // @todo Gamut correction
         const payload = {
             hue: this._rangeToSixteen(this._color),
             sat: this._rangeToEight(this._saturation),
@@ -215,7 +304,7 @@ class PhilipsHue {
         }, (err) => {
             if (err) log.error(err);
             this._dirty = false;
-            setTimeout(this._loop.bind(this), 100);
+            setTimeout(this._loop.bind(this), RENDER_TIME);
         });
     }
 
