@@ -65,7 +65,8 @@ class Video {
     }
 
     /**
-     * Set a video provider for this device.
+     * Set a video provider for this device. A default implementation of
+     * a video provider can be found in scratch-gui/src/lib/video/video-provider
      * @param {VideoProvider} provider - Video provider to use
      */
     setProvider (provider) {
@@ -89,8 +90,8 @@ class Video {
      * @return {void}
      */
     disableVideo () {
-        if (!this.provider) return null;
         this._disablePreview();
+        if (!this.provider) return null;
         this.provider.disableVideo();
     }
 
@@ -114,9 +115,6 @@ class Video {
         cacheTimeout = this._frameCacheTimeout
     }) {
         if (this.provider) return this.provider.getFrame({dimensions, mirror, format, cacheTimeout});
-        if (!this.videoReady) {
-            return null;
-        }
         return null;
     }
 
