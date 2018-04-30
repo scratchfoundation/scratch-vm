@@ -7,8 +7,6 @@ const uid = require('../util/uid');
  * @typedef {object} BubbleState - the bubble state associated with a particular target.
  * @property {Boolean} onSpriteRight - tracks whether the bubble is right or left of the sprite.
  * @property {?int} drawableId - the ID of the associated bubble Drawable, null if none.
- * @property {Boolean} drawableVisible - false if drawable has been hidden by blank text.
- *      See _renderBubble for explanation of this optimization.
  * @property {string} text - the text of the bubble.
  * @property {string} type - the type of the bubble, "say" or "think"
  * @property {?string} usageId - ID indicating the most recent usage of the say/think bubble.
@@ -43,7 +41,6 @@ class Scratch3LooksBlocks {
     static get DEFAULT_BUBBLE_STATE () {
         return {
             drawableId: null,
-            drawableVisible: true,
             onSpriteRight: true,
             skinId: null,
             text: '',
@@ -98,7 +95,6 @@ class Scratch3LooksBlocks {
             this.runtime.renderer.destroySkin(bubbleState.skinId);
             bubbleState.drawableId = null;
             bubbleState.skinId = null;
-            bubbleState.drawableVisible = true; // Reset back to default value
             this.runtime.requestRedraw();
         }
         target.removeListener(RenderedTarget.EVENT_TARGET_VISUAL_CHANGE, this._onTargetChanged);
@@ -173,27 +169,16 @@ class Scratch3LooksBlocks {
         if (!this.runtime.renderer) return;
 
         const bubbleState = this._getBubbleState(target);
-        const {drawableVisible, type, text, onSpriteRight} = bubbleState;
+        const {type, text, onSpriteRight} = bubbleState;
 
-        // Remove the bubble if target is not visible, or text is being set to blank
-        // without being initialized. See comment below about blank text optimization.
-        if (!target.visible || (text === '' && !bubbleState.skinId)) {
+        // Remove the bubble if target is not visible, or text is being set to blank.
+        if (!target.visible || text === '') {
             this._onTargetWillExit(target);
             return;
         }
 
         if (bubbleState.skinId) {
-            // Optimization: if text is set to blank, hide the drawable instead of
-            // getting rid of it. This prevents flickering in "typewriter" projects
-            if ((text === '' && drawableVisible) || (text !== '' && !drawableVisible)) {
-                bubbleState.drawableVisible = text !== '';
-                this.runtime.renderer.updateDrawableProperties(bubbleState.drawableId, {
-                    visible: bubbleState.drawableVisible
-                });
-            }
-            if (bubbleState.drawableVisible) {
-                this.runtime.renderer.updateTextSkin(bubbleState.skinId, type, text, onSpriteRight, [0, 0]);
-            }
+            this.runtime.renderer.updateTextSkin(bubbleState.skinId, type, text, onSpriteRight, [0, 0]);
         } else {
             target.addListener(RenderedTarget.EVENT_TARGET_VISUAL_CHANGE, this._onTargetChanged);
 
@@ -289,7 +274,7 @@ class Scratch3LooksBlocks {
                 this._bubbleTimeout = null;
                 // Clear say bubble if it hasn't been changed and proceed.
                 if (this._getBubbleState(target).usageId === usageId) {
-                    this._updateBubble(target, 'say', '');
+                    this._onTargetWillExit(target);
                 }
                 resolve();
             }, 1000 * args.SECS);
@@ -309,7 +294,7 @@ class Scratch3LooksBlocks {
                 this._bubbleTimeout = null;
                 // Clear think bubble if it hasn't been changed and proceed.
                 if (this._getBubbleState(target).usageId === usageId) {
-                    this._updateBubble(target, 'think', '');
+                    this._onTargetWillExit(target);
                 }
                 resolve();
             }, 1000 * args.SECS);
