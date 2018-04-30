@@ -84,6 +84,7 @@ class PhilipsHue {
         }, (err, res, body) => {
             if (err) return log.error(err);
             if (res.statusCode !== 200) return log.error(body);
+            if (body.length === 0) return log.error('Not found');
 
             // Set host IP for bridge
             this._host = body[0].internalipaddress;
@@ -320,6 +321,13 @@ class PhilipsHue {
 
         // Set state to "dirty"
         this._dirty = true;
+
+        // Yield one frame
+        return new Promise(resolve => {
+            setTimeout(() => {
+                resolve();
+            }, 100);
+        });
     }
 
     setLightColor (args) {
@@ -332,6 +340,13 @@ class PhilipsHue {
 
         // Set state to "dirty"
         this._dirty = true;
+
+        // Yield one frame
+        return new Promise(resolve => {
+            setTimeout(() => {
+                resolve();
+            }, 100);
+        });
     }
 
     changeLightProperty (args) {
@@ -348,6 +363,13 @@ class PhilipsHue {
 
         // Set state to "dirty"
         this._dirty = true;
+
+        // Yield one frame
+        return new Promise(resolve => {
+            setTimeout(() => {
+                resolve();
+            }, 100);
+        });
     }
 
     setLightProperty (args) {
@@ -361,9 +383,15 @@ class PhilipsHue {
             this[`_${prop}`] = math.clamp(value, 0, 100);
         }
 
-
         // Set state to "dirty"
         this._dirty = true;
+
+        // Yield one frame
+        return new Promise(resolve => {
+            setTimeout(() => {
+                resolve();
+            }, 100);
+        });
     }
 }
 
