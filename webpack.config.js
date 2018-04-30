@@ -69,6 +69,19 @@ module.exports = [
         output: {
             libraryTarget: 'commonjs2',
             path: path.resolve('dist', 'node')
+        },
+        externals: {
+            'decode-html': true,
+            'escape-html': true,
+            'format-message': true,
+            'htmlparser2': true,
+            'immutable': true,
+            'jszip': true,
+            'minilog': true,
+            'nets': true,
+            'scratch-parser': true,
+            'socket.io-client': true,
+            'text-encoding': true
         }
     }),
     // Playground
@@ -79,8 +92,6 @@ module.exports = [
             'vendor': [
                 // FPS counter
                 'stats.js/build/stats.min.js',
-                // Syntax highlighter
-                'highlightjs/highlight.pack.min.js',
                 // Scratch Blocks
                 'scratch-blocks/dist/vertical.js',
                 // Audio
@@ -139,8 +150,6 @@ module.exports = [
             new CopyWebpackPlugin([{
                 from: 'node_modules/scratch-blocks/media',
                 to: 'media'
-            }, {
-                from: 'node_modules/highlightjs/styles/zenburn.css'
             }, {
                 from: 'node_modules/scratch-storage/dist/web'
             }, {
