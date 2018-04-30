@@ -44,9 +44,13 @@ class Keyboard {
         // Convert space and arrow keys to their Scratch key names.
         switch (keyString) {
         case ' ': return 'space';
-        case 'ArrowLeft': return 'left arrow';
-        case 'ArrowUp': return 'up arrow';
+        case 'ArrowLeft':
+        case 'Left': return 'left arrow';
+        case 'ArrowUp':
+        case 'Up': return 'up arrow';
+        case 'Right':
         case 'ArrowRight': return 'right arrow';
+        case 'Down':
         case 'ArrowDown': return 'down arrow';
         }
         // Ignore modifier keys
