@@ -35,7 +35,8 @@ class Scratch3ControlBlocks {
             control_delete_this_clone: this.deleteClone,
             control_get_counter: this.getCounter,
             control_incr_counter: this.incrCounter,
-            control_clear_counter: this.clearCounter
+            control_clear_counter: this.clearCounter,
+            control_all_at_once: this.allAtOnce
         };
     }
 
@@ -181,6 +182,10 @@ class Scratch3ControlBlocks {
 
     incrCounter () {
         this._counter++;
+    }
+
+    allAtOnce (args, util) {
+        util.startBranch(1, false);
     }
 }
 

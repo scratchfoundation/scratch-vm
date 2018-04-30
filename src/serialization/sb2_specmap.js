@@ -874,6 +874,15 @@ const specMap = {
         argMap: [
         ]
     },
+    'warpSpeed': {
+        opcode: 'control_all_at_once',
+        argMap: [
+            {
+                type: 'input',
+                inputName: 'SUBSTACK'
+            }
+        ]
+    },
     'touching:': {
         opcode: 'sensing_touchingobject',
         argMap: [
