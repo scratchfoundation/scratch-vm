@@ -90,6 +90,11 @@ class Keyboard {
             keyArg = keyArg[0];
         }
 
+        // Check for the space character.
+        if (keyArg === ' ') {
+            return 'space';
+        }
+
         return keyArg.toUpperCase();
     }
 
