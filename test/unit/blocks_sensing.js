@@ -142,4 +142,4 @@ test('loud? boolean', t => {
     t.true(sensing.isLoud());
 
     t.end();
-})
+});
