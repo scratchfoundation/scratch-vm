@@ -639,6 +639,7 @@ class VirtualMachine extends EventEmitter {
         // so the dataFormat should be 'svg'
         costume.dataFormat = storage.DataFormat.SVG;
         costume.md5 = `${costume.assetId}.${costume.dataFormat}`;
+        delete costume.bitmapResolution;
         this.emitTargetsUpdate();
     }
 
