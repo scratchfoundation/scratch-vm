@@ -2,6 +2,7 @@ const TextEncoder = require('text-encoding').TextEncoder;
 const EventEmitter = require('events');
 const JSZip = require('jszip');
 
+const Buffer = require('buffer').Buffer;
 const centralDispatch = require('./dispatch/central-dispatch');
 const ExtensionManager = require('./extension-support/extension-manager');
 const log = require('./util/log');
@@ -17,6 +18,7 @@ const Variable = require('./engine/variable');
 const {loadCostume} = require('./import/load-costume.js');
 const {loadSound} = require('./import/load-sound.js');
 const {serializeSounds, serializeCostumes} = require('./serialization/serialize-assets');
+require('canvas-toBlob');
 
 const RESERVED_NAMES = ['_mouse_', '_stage_', '_edge_', '_myself_', '_random_'];
 
@@ -554,7 +556,7 @@ class VirtualMachine extends EventEmitter {
             return this.runtime.storage.get(id).decodeText();
         } else if (format === this.runtime.storage.DataFormat.PNG ||
                 format === this.runtime.storage.DataFormat.JPG) {
-            return this.runtime.storage.get(id).encodeDataURI('image/png');
+            return this.runtime.storage.get(id).encodeDataURI();
         }
         log.error(`Unhandled format: ${this.runtime.storage.get(id).dataFormat}`);
         return null;
@@ -562,41 +564,54 @@ class VirtualMachine extends EventEmitter {
 
     /**
      * Update a costume with the given bitmap
-     * @param {int} costumeIndex - the index of the costume to be updated.
-     * @param {ImageData} bitmap - new bitmap for the renderer.
-     * @param {number} rotationCenterX x of point about which the costume rotates, relative to its upper left corner
-     * @param {number} rotationCenterY y of point about which the costume rotates, relative to its upper left corner
-     * @param {number} bitmapResolution 1 for bitmaps that have 1 pixel per unit of stage,
+     * @param {!int} costumeIndex - the index of the costume to be updated.
+     * @param {!ImageData} bitmap - new bitmap for the renderer.
+     * @param {!number} rotationCenterX x of point about which the costume rotates, relative to its upper left corner
+     * @param {!number} rotationCenterY y of point about which the costume rotates, relative to its upper left corner
+     * @param {!number} bitmapResolution 1 for bitmaps that have 1 pixel per unit of stage,
      *     2 for double-resolution bitmaps
      */
     updateBitmap (costumeIndex, bitmap, rotationCenterX, rotationCenterY, bitmapResolution) {
         const costume = this.editingTarget.getCostumes()[costumeIndex];
-        if (costume && this.runtime && this.runtime.renderer) {
-            costume.rotationCenterX = rotationCenterX;
-            costume.rotationCenterY = rotationCenterY;
+        if (!(costume && this.runtime && this.runtime.renderer)) return;
 
-            // @todo: updateBitmapSkin does not take ImageData
-            const canvas = document.createElement('canvas');
-            canvas.width = bitmap.width;
-            canvas.height = bitmap.height;
-            const context = canvas.getContext('2d');
-            context.putImageData(bitmap, 0, 0);
-            
-            this.runtime.renderer.updateBitmapSkin(
-                costume.skinId, canvas, bitmapResolution, [rotationCenterX, rotationCenterY]);
-        }
+        costume.rotationCenterX = rotationCenterX;
+        costume.rotationCenterY = rotationCenterY;
 
-        const storage = this.runtime.storage;
-        costume.assetId = storage.builtinHelper.cache(
-            storage.AssetType.ImageBitmap,
-            storage.DataFormat.PNG,
-            bitmap.data
+        // @todo: updateBitmapSkin does not take ImageData
+        const canvas = document.createElement('canvas');
+        canvas.width = bitmap.width;
+        canvas.height = bitmap.height;
+        const context = canvas.getContext('2d');
+        context.putImageData(bitmap, 0, 0);
+        
+        // Divide by resolution because the renderer's definition of the rotation center
+        // is the rotation center divided by the bitmap resolution
+        this.runtime.renderer.updateBitmapSkin(
+            costume.skinId,
+            canvas,
+            bitmapResolution,
+            [rotationCenterX / bitmapResolution, rotationCenterY / bitmapResolution]
         );
-        costume.dataFormat = storage.DataFormat.PNG;
-        costume.bitmapResolution = bitmapResolution;
-        // costume.size = [bitmap.width, bitmap.height];
-        // costume.md5 = `${costume.assetId}.${costume.dataFormat}`;
-        this.emitTargetsUpdate();
+
+        // @todo there should be a better way to get from ImageData to a decodable storage format
+        canvas.toBlob(blob => {
+            const reader = new FileReader();
+            reader.addEventListener('loadend', () => {
+                const storage = this.runtime.storage;
+                costume.assetId = storage.builtinHelper.cache(
+                    storage.AssetType.ImageBitmap,
+                    storage.DataFormat.PNG,
+                    Buffer.from(reader.result)
+                );
+                costume.dataFormat = storage.DataFormat.PNG;
+                costume.bitmapResolution = bitmapResolution;
+                costume.size = [bitmap.width, bitmap.height];
+                costume.md5 = `${costume.assetId}.${costume.dataFormat}`;
+                this.emitTargetsUpdate();
+            });
+            reader.readAsArrayBuffer(blob);
+        });
     }
 
     /**
