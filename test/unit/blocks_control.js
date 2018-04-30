@@ -208,3 +208,21 @@ test('counter, incrCounter, clearCounter', t => {
 
     t.end();
 });
+
+test('allAtOnce', t => {
+    const rt = new Runtime();
+    const c = new Control(rt);
+
+    // Test harness (mocks `util`)
+    let ran = false;
+    const util = {
+        startBranch: function () {
+            ran = true;
+        }
+    };
+
+    // Execute test
+    c.allAtOnce({}, util);
+    t.true(ran);
+    t.end();
+});
