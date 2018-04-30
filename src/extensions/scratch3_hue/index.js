@@ -48,7 +48,6 @@ const STORAGE_KEY = 'scratch:extension:hue';
 
 /**
  * Philips Hue extension.
- * @class
  */
 class PhilipsHue {
     /**
@@ -73,6 +72,7 @@ class PhilipsHue {
         // Get light index for extension
         // @todo This should be presented to the user visually, but for now it
         //       accepts a numeric input between 1 and 4.
+        // eslint-disable-next-line no-alert
         const index = window.prompt('Light index:');
         this._index = index;
 
@@ -92,8 +92,8 @@ class PhilipsHue {
             // Authenticate client
             // @todo Present the user with a UI to prompt pressing the pair
             //       button on the bridge.
-            this._authenticate((err, username) => {
-                if (err) return log.error(err);
+            this._authenticate((e, username) => {
+                if (e) return log.error(e);
 
                 // Set username for future requests
                 this._username = username;
@@ -178,7 +178,7 @@ class PhilipsHue {
     /**
      * Performs an XHR request against the currently connected Philips Hue
      * bridge.
-     * @param  {Object}   req      HTTP request object
+     * @param  {object}   req      HTTP request object
      * @param  {Function} callback Error and HTTP response body
      * @return {void}
      */
@@ -192,7 +192,7 @@ class PhilipsHue {
         log.info(req.uri);
 
         // Make XHR request
-        nets(req, function (err, res, body) {
+        nets(req, (err, res, body) => {
             if (err) return callback('Could not connect to bridge');
             if (res.statusCode !== 200) return callback(res.statusCode);
             callback(null, body);
@@ -215,9 +215,8 @@ class PhilipsHue {
             settings = JSON.parse(settings);
             if (settings.host === this._host) {
                 return callback(null, settings.username);
-            } else {
-                window.localStorage.removeItem(STORAGE_KEY);
             }
+            window.localStorage.removeItem(STORAGE_KEY);
         }
 
         // Create new user
@@ -302,7 +301,7 @@ class PhilipsHue {
             method: 'PUT',
             uri: `/api/${this._username}/lights/${this._index}/state`,
             json: payload
-        }, (err) => {
+        }, err => {
             if (err) log.error(err);
             this._dirty = false;
             setTimeout(this._loop.bind(this), RENDER_TIME);
