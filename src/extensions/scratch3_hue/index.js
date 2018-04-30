@@ -321,7 +321,7 @@ class PhilipsHue {
         // Set state to "dirty"
         this._dirty = true;
 
-        // Yield one frame
+        // Yield
         return new Promise(resolve => {
             setTimeout(() => {
                 resolve();
@@ -340,7 +340,7 @@ class PhilipsHue {
         // Set state to "dirty"
         this._dirty = true;
 
-        // Yield one frame
+        // Yield
         return new Promise(resolve => {
             setTimeout(() => {
                 resolve();
@@ -363,7 +363,7 @@ class PhilipsHue {
         // Set state to "dirty"
         this._dirty = true;
 
-        // Yield one frame
+        // Yield
         return new Promise(resolve => {
             setTimeout(() => {
                 resolve();
@@ -385,7 +385,7 @@ class PhilipsHue {
         // Set state to "dirty"
         this._dirty = true;
 
-        // Yield one frame
+        // Yield
         return new Promise(resolve => {
             setTimeout(() => {
                 resolve();
