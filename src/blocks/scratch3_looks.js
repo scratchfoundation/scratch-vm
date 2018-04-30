@@ -133,7 +133,13 @@ class Scratch3LooksBlocks {
                 bottom: target.y
             };
         }
-        const stageBounds = this.runtime.getTargetForStage().getBounds();
+        const stageSize = this.runtime.renderer.getNativeSize();
+        const stageBounds = {
+            left: -stageSize[0] / 2,
+            right: stageSize[0] / 2,
+            top: stageSize[1] / 2,
+            bottom: -stageSize[1] / 2
+        };
         if (bubbleState.onSpriteRight && bubbleWidth + targetBounds.right > stageBounds.right &&
             (targetBounds.left - bubbleWidth > stageBounds.left)) { // Only flip if it would fit
             bubbleState.onSpriteRight = false;
