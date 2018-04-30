@@ -11,6 +11,8 @@ const uid = require('../util/uid');
  *      See _renderBubble for explanation of this optimization.
  * @property {string} text - the text of the bubble.
  * @property {string} type - the type of the bubble, "say" or "think"
+ * @property {?string} usageId - ID indicating the most recent usage of the say/think bubble.
+ *      Used for comparison when determining whether to clear a say/think bubble.
  */
 
 class Scratch3LooksBlocks {
@@ -46,7 +48,7 @@ class Scratch3LooksBlocks {
             skinId: null,
             text: '',
             type: 'say',
-            usageId: null // ID for hiding a timed say/think block.
+            usageId: null
         };
     }
 

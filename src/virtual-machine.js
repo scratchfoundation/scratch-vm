@@ -188,6 +188,10 @@ class VirtualMachine extends EventEmitter {
         }
     }
 
+    setVideoProvider (videoProvider) {
+        this.runtime.ioDevices.video.setProvider(videoProvider);
+    }
+
     /**
      * Load a Scratch project from a .sb, .sb2, .sb3 or json string.
      * @param {string | object} input A json string, object, or ArrayBuffer representing the project to load.
@@ -545,7 +549,7 @@ class VirtualMachine extends EventEmitter {
      * @param {int} costumeIndex - the index of the costume to be got.
      * @return {string} the costume's SVG string, or null if it's not an SVG costume.
      */
-    getCostumeSvg (costumeIndex) {
+    getCostume (costumeIndex) {
         const id = this.editingTarget.getCostumes()[costumeIndex].assetId;
         if (id && this.runtime && this.runtime.storage &&
                 this.runtime.storage.get(id).dataFormat === 'svg') {

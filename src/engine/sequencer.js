@@ -196,7 +196,11 @@ class Sequencer {
                 this.runtime.profiler.records.push(
                     this.runtime.profiler.START, executeProfilerId, null, performance.now());
             }
-            execute(this, thread);
+            if (thread.target === null) {
+                this.retireThread(thread);
+            } else {
+                execute(this, thread);
+            }
             if (this.runtime.profiler !== null) {
                 // this.runtime.profiler.stop();
                 this.runtime.profiler.records.push(this.runtime.profiler.STOP, performance.now());
