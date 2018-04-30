@@ -206,6 +206,45 @@ const specMap = {
         argMap: [
         ]
     },
+    'scrollRight': {
+        opcode: 'motion_scroll_right',
+        argMap: [
+            {
+                type: 'input',
+                inputOp: 'math_number',
+                inputName: 'DISTANCE'
+            }
+        ]
+    },
+    'scrollUp': {
+        opcode: 'motion_scroll_up',
+        argMap: [
+            {
+                type: 'input',
+                inputOp: 'math_number',
+                inputName: 'DISTANCE'
+            }
+        ]
+    },
+    'scrollAlign': {
+        opcode: 'motion_align_scene',
+        argMap: [
+            {
+                type: 'field',
+                fieldName: 'ALIGNMENT'
+            }
+        ]
+    },
+    'xScroll': {
+        opcode: 'motion_xscroll',
+        argMap: [
+        ]
+    },
+    'yScroll': {
+        opcode: 'motion_yscroll',
+        argMap: [
+        ]
+    },
     'say:duration:elapsed:from:': {
         opcode: 'looks_sayforsecs',
         argMap: [
