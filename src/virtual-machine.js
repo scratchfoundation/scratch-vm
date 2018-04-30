@@ -240,7 +240,7 @@ class VirtualMachine extends EventEmitter {
         const vm = this;
         const promise = storage.load(storage.AssetType.Project, id);
         promise.then(projectAsset => {
-            vm.loadProject(projectAsset.data.buffer);
+            vm.loadProject(projectAsset.data);
         });
     }
 
