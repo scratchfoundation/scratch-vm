@@ -67,7 +67,7 @@ class Scratch3SensingBlocks {
             sensing_loudness: this.getLoudness,
             sensing_askandwait: this.askAndWait,
             sensing_answer: this.getAnswer,
-            sensing_userid: this.doNothing
+            sensing_userid: () => {} // legacy no-op block
         };
     }
 
@@ -294,8 +294,6 @@ class Scratch3SensingBlocks {
         // Otherwise, 0
         return 0;
     }
-
-    doNothing () {}
 }
 
 module.exports = Scratch3SensingBlocks;

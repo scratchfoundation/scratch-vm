@@ -244,7 +244,7 @@ class Scratch3LooksBlocks {
             looks_thinkforsecs: this.thinkforsecs,
             looks_show: this.show,
             looks_hide: this.hide,
-            looks_hideallsprites: this.doNothing,
+            looks_hideallsprites: () => {}, // legacy no-op block
             looks_switchcostumeto: this.switchCostume,
             looks_switchbackdropto: this.switchBackdrop,
             looks_switchbackdroptoandwait: this.switchBackdropAndWait,
@@ -255,8 +255,8 @@ class Scratch3LooksBlocks {
             looks_cleargraphiceffects: this.clearEffects,
             looks_changesizeby: this.changeSize,
             looks_setsizeto: this.setSize,
-            looks_changestretchby: this.doNothing,
-            looks_setstretchto: this.doNothing,
+            looks_changestretchby: () => {}, // legacy no-op blocks
+            looks_setstretchto: () => {},
             looks_gotofrontback: this.goToFrontBack,
             looks_goforwardbackwardlayers: this.goForwardBackwardLayers,
             looks_size: this.getSize,
@@ -482,8 +482,6 @@ class Scratch3LooksBlocks {
         // Else return name
         return util.target.getCostumes()[util.target.currentCostume].name;
     }
-
-    doNothing () {}
 }
 
 module.exports = Scratch3LooksBlocks;
