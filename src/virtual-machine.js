@@ -399,6 +399,32 @@ class VirtualMachine extends EventEmitter {
     }
 
     /**
+     * Add a single sb3 sprite.
+     * @param {string} target JSON string representing the sprite/target.
+     * @returns {Promise} Promise that resolves after the sprite is added
+     */
+    addSprite3 (target) {
+        // Validate & parse
+        if (typeof target !== 'string') {
+            log.error('Failed to parse sprite. Non-string supplied to addSprite3.');
+            return;
+        }
+        target = JSON.parse(target);
+        if (typeof target !== 'object') {
+            log.error('Failed to parse sprite. JSON supplied to addSprite3 is not an object.');
+            return;
+        }
+
+        const jsonFormatted = {
+            targets: [target]
+        };
+
+        return sb3
+            .deserialize(jsonFormatted, this.runtime, null)
+            .then(({targets, extensions}) => this.installTargets(targets, extensions, false));
+    }
+
+    /**
      * Add a costume to the current editing target.
      * @param {string} md5ext - the MD5 and extension of the costume to be loaded.
      * @param {!object} costumeObject Object representing the costume.
