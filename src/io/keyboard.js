@@ -22,16 +22,16 @@ class Keyboard {
 
     /**
      * Names used for a set of special keys in Scratch.
-     * @type {Array.<string>}
+     * @type {ScratchKey}
      */
-    static get SPECIAL_KEY_NAMES () {
-        return [
-            'space',
-            'left arrow',
-            'up arrow',
-            'right arrow',
-            'down arrow'
-        ];
+    static get KEY_NAMES () {
+        return {
+            SPACE: 'space',
+            LEFT: 'left arrow',
+            UP: 'up arrow',
+            RIGHT: 'right arrow',
+            DOWN: 'down arrow'
+        };
     }
 
     /**
@@ -43,15 +43,15 @@ class Keyboard {
         keyString = Cast.toString(keyString);
         // Convert space and arrow keys to their Scratch key names.
         switch (keyString) {
-        case ' ': return 'space';
+        case ' ': return Keyboard.KEY_NAMES.SPACE;
         case 'ArrowLeft':
-        case 'Left': return 'left arrow';
+        case 'Left': return Keyboard.KEY_NAMES.LEFT;
         case 'ArrowUp':
-        case 'Up': return 'up arrow';
+        case 'Up': return Keyboard.KEY_NAMES.UP;
         case 'Right':
-        case 'ArrowRight': return 'right arrow';
+        case 'ArrowRight': return Keyboard.KEY_NAMES.RIGHT;
         case 'Down':
-        case 'ArrowDown': return 'down arrow';
+        case 'ArrowDown': return Keyboard.KEY_NAMES.DOWN;
         }
         // Ignore modifier keys
         if (keyString.length > 1) {
@@ -74,18 +74,19 @@ class Keyboard {
                 return String.fromCharCode(keyArg);
             }
             switch (keyArg) {
-            case 32: return 'space';
-            case 37: return 'left arrow';
-            case 38: return 'up arrow';
-            case 39: return 'right arrow';
-            case 40: return 'down arrow';
+            case 32: return Keyboard.KEY_NAMES.SPACE;
+            case 37: return Keyboard.KEY_NAMES.LEFT;
+            case 38: return Keyboard.KEY_NAMES.UP;
+            case 39: return Keyboard.KEY_NAMES.RIGHT;
+            case 40: return Keyboard.KEY_NAMES.DOWN;
             }
         }
 
         keyArg = Cast.toString(keyArg);
 
         // If the arg matches a special key name, return it.
-        if (Keyboard.SPECIAL_KEY_NAMES.includes(keyArg)) {
+        const keyNameList = Object.values(Keyboard.KEY_NAMES);
+        if (keyNameList.includes(keyArg)) {
             return keyArg;
         }
 
@@ -96,7 +97,7 @@ class Keyboard {
 
         // Check for the space character.
         if (keyArg === ' ') {
-            return 'space';
+            return Keyboard.KEY_NAMES.SPACE;
         }
 
         return keyArg.toUpperCase();
