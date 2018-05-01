@@ -396,10 +396,10 @@ class VirtualMachine extends EventEmitter {
 
     /**
      * Add a single sb3 sprite.
-     * @param {string} json JSON string representing the sprite/target.
+     * @param {string} target JSON string representing the sprite/target.
      * @returns {Promise} Promise that resolves after the sprite is added
      */
-    addSprite3(target) {
+    addSprite3 (target) {
         // Validate & parse
         if (typeof target !== 'string') {
             log.error('Failed to parse sprite. Non-string supplied to addSprite3.');
@@ -412,12 +412,12 @@ class VirtualMachine extends EventEmitter {
         }
 
         const jsonFormatted = {
-            targets: [target],
+            targets: [target]
         };
 
         return sb3
             .deserialize(jsonFormatted, this.runtime, null)
-            .then(({ targets, extensions }) => this.installTargets(targets, extensions, false));
+            .then(({targets, extensions}) => this.installTargets(targets, extensions, false));
     }
 
     /**
