@@ -35,11 +35,12 @@ class Scratch3MotionBlocks {
             motion_xposition: this.getX,
             motion_yposition: this.getY,
             motion_direction: this.getDirection,
-            motion_scroll_right: this.doNothing,
-            motion_scroll_up: this.doNothing,
-            motion_align_scene: this.doNothing,
-            motion_xscroll: this.doNothing,
-            motion_yscroll: this.doNothing
+            // Legacy no-op blocks:
+            motion_scroll_right: () => {},
+            motion_scroll_up: () => {},
+            motion_align_scene: () => {},
+            motion_xscroll: () => {},
+            motion_yscroll: () => {}
         };
     }
 
@@ -259,8 +260,6 @@ class Scratch3MotionBlocks {
     getDirection (args, util) {
         return util.target.direction;
     }
-
-    doNothing () {}
 }
 
 module.exports = Scratch3MotionBlocks;
