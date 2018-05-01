@@ -349,6 +349,26 @@ const specMap = {
             }
         ]
     },
+    'changeStretchBy:': {
+        opcode: 'looks_changestretchby',
+        argMap: [
+            {
+                type: 'input',
+                inputOp: 'math_number',
+                inputName: 'CHANGE'
+            }
+        ]
+    },
+    'setStretchTo:': {
+        opcode: 'looks_setstretchto',
+        argMap: [
+            {
+                type: 'input',
+                inputOp: 'math_number',
+                inputName: 'STRETCH'
+            }
+        ]
+    },
     'comeToFront': {
         opcode: 'looks_gotofrontback',
         argMap: [
