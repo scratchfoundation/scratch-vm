@@ -123,3 +123,23 @@ test('get loudness with caching', t => {
 
     t.end();
 });
+
+test('loud? boolean', t => {
+    const rt = new Runtime();
+    const sensing = new Sensing(rt);
+
+    // The simplest way to test this is to actually override the getLoudness
+    // method, which isLoud uses.
+    let simulatedLoudness = 0;
+    sensing.getLoudness = () => simulatedLoudness;
+    t.false(sensing.isLoud());
+
+    // Check for GREATER than 10, not equal.
+    simulatedLoudness = 10;
+    t.false(sensing.isLoud());
+
+    simulatedLoudness = 11;
+    t.true(sensing.isLoud());
+
+    t.end();
+});

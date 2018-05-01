@@ -964,6 +964,11 @@ const specMap = {
         argMap: [
         ]
     },
+    'isLoud': {
+        opcode: 'sensing_loud',
+        argMap: [
+        ]
+    },
     // 'senseVideoMotion': {
     //     opcode: 'sensing_videoon',
     //     argMap: [
