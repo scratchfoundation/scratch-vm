@@ -244,6 +244,7 @@ class Scratch3LooksBlocks {
             looks_thinkforsecs: this.thinkforsecs,
             looks_show: this.show,
             looks_hide: this.hide,
+            looks_hideallsprites: this.doNothing,
             looks_switchcostumeto: this.switchCostume,
             looks_switchbackdropto: this.switchBackdrop,
             looks_switchbackdroptoandwait: this.switchBackdropAndWait,
@@ -479,6 +480,8 @@ class Scratch3LooksBlocks {
         // Else return name
         return util.target.getCostumes()[util.target.currentCostume].name;
     }
+
+    doNothing() {}
 }
 
 module.exports = Scratch3LooksBlocks;

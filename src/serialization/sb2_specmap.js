@@ -266,6 +266,11 @@ const specMap = {
         argMap: [
         ]
     },
+    'hideAll': {
+        opcode: 'looks_hideallsprites',
+        argMap: [
+        ]
+    },
     'lookLike:': {
         opcode: 'looks_switchcostumeto',
         argMap: [
@@ -1040,6 +1045,11 @@ const specMap = {
     },
     'getUserName': {
         opcode: 'sensing_username',
+        argMap: [
+        ]
+    },
+    'getUserId': {
+        opcode: 'sensing_userid',
         argMap: [
         ]
     },
