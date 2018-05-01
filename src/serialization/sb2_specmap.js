@@ -266,6 +266,11 @@ const specMap = {
         argMap: [
         ]
     },
+    'hideAll': {
+        opcode: 'looks_hideallsprites',
+        argMap: [
+        ]
+    },
     'lookLike:': {
         opcode: 'looks_switchcostumeto',
         argMap: [
@@ -341,6 +346,26 @@ const specMap = {
                 type: 'input',
                 inputOp: 'math_number',
                 inputName: 'SIZE'
+            }
+        ]
+    },
+    'changeStretchBy:': {
+        opcode: 'looks_changestretchby',
+        argMap: [
+            {
+                type: 'input',
+                inputOp: 'math_number',
+                inputName: 'CHANGE'
+            }
+        ]
+    },
+    'setStretchTo:': {
+        opcode: 'looks_setstretchto',
+        argMap: [
+            {
+                type: 'input',
+                inputOp: 'math_number',
+                inputName: 'STRETCH'
             }
         ]
     },
@@ -1045,6 +1070,11 @@ const specMap = {
     },
     'getUserName': {
         opcode: 'sensing_username',
+        argMap: [
+        ]
+    },
+    'getUserId': {
+        opcode: 'sensing_userid',
         argMap: [
         ]
     },
