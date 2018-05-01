@@ -295,7 +295,7 @@ class Scratch3SensingBlocks {
         return 0;
     }
 
-    doNothing() {}
+    doNothing () {}
 }
 
 module.exports = Scratch3SensingBlocks;

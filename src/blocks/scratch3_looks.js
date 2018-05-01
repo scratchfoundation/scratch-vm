@@ -481,7 +481,7 @@ class Scratch3LooksBlocks {
         return util.target.getCostumes()[util.target.currentCostume].name;
     }
 
-    doNothing() {}
+    doNothing () {}
 }
 
 module.exports = Scratch3LooksBlocks;
