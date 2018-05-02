@@ -85,7 +85,7 @@ class Keyboard {
         keyArg = Cast.toString(keyArg);
 
         // If the arg matches a special key name, return it.
-        const keyNameList = Object.values(Keyboard.KEY_NAMES);
+        const keyNameList = Object.keys(Keyboard.KEY_NAMES).map(name => Keyboard.KEY_NAMES[name]);
         if (keyNameList.includes(keyArg)) {
             return keyArg;
         }
