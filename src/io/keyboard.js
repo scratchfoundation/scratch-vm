@@ -1,5 +1,23 @@
 const Cast = require('../util/cast');
 
+/**
+ * Names used internally for keys used in scratch, also known as "scratch keys".
+ * @enum {string}
+ */
+const KEY_NAME = {
+    SPACE: 'space',
+    LEFT: 'left arrow',
+    UP: 'up arrow',
+    RIGHT: 'right arrow',
+    DOWN: 'down arrow'
+};
+
+/**
+ * An array of the names of scratch keys.
+ * @type {Array<string>}
+ */
+const KEY_NAME_LIST = Object.keys(KEY_NAME).map(name => KEY_NAME[name]);
+
 class Keyboard {
     constructor (runtime) {
         /**
@@ -21,20 +39,6 @@ class Keyboard {
     }
 
     /**
-     * Names used for a set of special keys in Scratch.
-     * @type {ScratchKey}
-     */
-    static get KEY_NAMES () {
-        return {
-            SPACE: 'space',
-            LEFT: 'left arrow',
-            UP: 'up arrow',
-            RIGHT: 'right arrow',
-            DOWN: 'down arrow'
-        };
-    }
-
-    /**
      * Convert from a keyboard event key name to a Scratch key name.
      * @param  {string} keyString the input key string.
      * @return {string} the corresponding Scratch key, or an empty string.
@@ -43,15 +47,15 @@ class Keyboard {
         keyString = Cast.toString(keyString);
         // Convert space and arrow keys to their Scratch key names.
         switch (keyString) {
-        case ' ': return Keyboard.KEY_NAMES.SPACE;
+        case ' ': return KEY_NAME.SPACE;
         case 'ArrowLeft':
-        case 'Left': return Keyboard.KEY_NAMES.LEFT;
+        case 'Left': return KEY_NAME.LEFT;
         case 'ArrowUp':
-        case 'Up': return Keyboard.KEY_NAMES.UP;
+        case 'Up': return KEY_NAME.UP;
         case 'Right':
-        case 'ArrowRight': return Keyboard.KEY_NAMES.RIGHT;
+        case 'ArrowRight': return KEY_NAME.RIGHT;
         case 'Down':
-        case 'ArrowDown': return Keyboard.KEY_NAMES.DOWN;
+        case 'ArrowDown': return KEY_NAME.DOWN;
         }
         // Ignore modifier keys
         if (keyString.length > 1) {
@@ -74,19 +78,18 @@ class Keyboard {
                 return String.fromCharCode(keyArg);
             }
             switch (keyArg) {
-            case 32: return Keyboard.KEY_NAMES.SPACE;
-            case 37: return Keyboard.KEY_NAMES.LEFT;
-            case 38: return Keyboard.KEY_NAMES.UP;
-            case 39: return Keyboard.KEY_NAMES.RIGHT;
-            case 40: return Keyboard.KEY_NAMES.DOWN;
+            case 32: return KEY_NAME.SPACE;
+            case 37: return KEY_NAME.LEFT;
+            case 38: return KEY_NAME.UP;
+            case 39: return KEY_NAME.RIGHT;
+            case 40: return KEY_NAME.DOWN;
             }
         }
 
         keyArg = Cast.toString(keyArg);
 
         // If the arg matches a special key name, return it.
-        const keyNameList = Object.keys(Keyboard.KEY_NAMES).map(name => Keyboard.KEY_NAMES[name]);
-        if (keyNameList.includes(keyArg)) {
+        if (KEY_NAME_LIST.includes(keyArg)) {
             return keyArg;
         }
 
@@ -97,7 +100,7 @@ class Keyboard {
 
         // Check for the space character.
         if (keyArg === ' ') {
-            return Keyboard.KEY_NAMES.SPACE;
+            return KEY_NAME.SPACE;
         }
 
         return keyArg.toUpperCase();
