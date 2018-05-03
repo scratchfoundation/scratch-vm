@@ -15,7 +15,7 @@ test('interface', t => {
     t.type(vm.postIOData, 'function');
 
     t.type(vm.loadProject, 'function');
-    t.type(vm.addSprite2, 'function');
+    t.type(vm.addSprite, 'function');
     t.type(vm.addCostume, 'function');
     t.type(vm.addBackdrop, 'function');
     t.type(vm.addSound, 'function');

@@ -385,6 +385,7 @@ class VirtualMachine extends EventEmitter {
      * @return {!Promise} Promise that resolves after targets are installed.
      */
     addSprite (input) {
+        const errorPrefix = 'Sprite Upload Error:';
         if (typeof input === 'object' && !(input instanceof ArrayBuffer) &&
           !ArrayBuffer.isView(input)) {
             // If the input is an object and not any ArrayBuffer
@@ -411,47 +412,47 @@ class VirtualMachine extends EventEmitter {
             .then(validatedInput => {
                 const projectVersion = validatedInput[0].projectVersion;
                 if (projectVersion === 2) {
-                    return this.addSprite2(validatedInput[0], validatedInput[1]);
+                    return this._addSprite2(validatedInput[0], validatedInput[1]);
                 }
                 if (projectVersion === 3) {
-                    return this.addSprite3(validatedInput[0], validatedInput[1]);
+                    return this._addSprite3(validatedInput[0], validatedInput[1]);
                 }
-                return Promise.reject('Unable to verify sprite version.');
+                return Promise.reject(`${errorPrefix} Unable to verify sprite version.`);
             })
             .catch(error => {
                 // Intentionally rejecting here (want errors to be handled by caller)
                 if (error.hasOwnProperty('validationError')) {
                     return Promise.reject(JSON.stringify(error));
                 }
-                return Promise.reject(error);
+                return Promise.reject(`${errorPrefix} ${error}`);
             });
     }
 
     /**
      * Add a single sprite from the "Sprite2" (i.e., SB2 sprite) format.
-     * @param {string} json JSON string representing the sprite.
+     * @param {object} sprite Object representing 2.0 sprite to be added.
      * @param {?ArrayBuffer} zip Optional zip of assets being referenced by json
      * @returns {Promise} Promise that resolves after the sprite is added
      */
-    addSprite2 (json, zip) {
+    _addSprite2 (sprite, zip) {
         // Validate & parse
 
-        return sb2.deserialize(json, this.runtime, true, zip)
+        return sb2.deserialize(sprite, this.runtime, true, zip)
             .then(({targets, extensions}) =>
                 this.installTargets(targets, extensions, false));
     }
 
     /**
      * Add a single sb3 sprite.
-     * @param {string} target JSON string representing the sprite/target.
+     * @param {object} sprite Object rperesenting 3.0 sprite to be added.
      * @param {?ArrayBuffer} zip Optional zip of assets being referenced by target json
      * @returns {Promise} Promise that resolves after the sprite is added
      */
-    addSprite3 (target, zip) {
+    _addSprite3 (sprite, zip) {
         // Validate & parse
 
         return sb3
-            .deserialize(target, this.runtime, zip)
+            .deserialize(sprite, this.runtime, zip, true)
             .then(({targets, extensions}) => this.installTargets(targets, extensions, false));
     }
 
