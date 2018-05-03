@@ -29,11 +29,11 @@
   },
   "devDependencies": {
     "adm-zip": "0.4.7",
+    "arraybuffer-loader": "^1.0.3",
     "babel-core": "^6.24.1",
     "babel-eslint": "^7.1.1",
     "babel-loader": "^7.0.0",
     "babel-preset-es2015": "^6.24.1",
-    "buffer-loader": "0.0.1",
     "canvas-toBlob": "1.0.0",
     "copy-webpack-plugin": "4.2.1",
     "decode-html": "2.0.0",
