@@ -19636,7 +19636,7 @@ var RenderWebGL = function (_EventEmitter) {
         /**
          * Update an existing bitmap skin, or create a bitmap skin if the previous skin was not bitmap.
          * @param {!int} skinId the ID for the skin to change.
-         * @param {!string} imgData - new bitmap to use.
+         * @param {!ImageData|HTMLImageElement|HTMLCanvasElement|HTMLVideoElement} imgData - new contents for this skin.
          * @param {!number} bitmapResolution - the resolution scale for a bitmap costume.
          * @param {?Array<number>} rotationCenter Optional: rotation center of the skin. If not supplied, the center of the
          * skin will be used
