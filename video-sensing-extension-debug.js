@@ -61,7 +61,7 @@ var VirtualMachine =
 /******/ 	__webpack_require__.p = "";
 /******/
 /******/ 	// Load entry module and return exports
-/******/ 	return __webpack_require__(__webpack_require__.s = 373);
+/******/ 	return __webpack_require__(__webpack_require__.s = 374);
 /******/ })
 /************************************************************************/
 /******/ ({
@@ -94,7 +94,7 @@ module.exports = g;
 
 /***/ }),
 
-/***/ 36:
+/***/ 37:
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -181,18 +181,18 @@ module.exports = {
 
 /***/ }),
 
-/***/ 373:
+/***/ 374:
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 /* WEBPACK VAR INJECTION */(function(global) {
 
-module.exports = global["Scratch3VideoSensingDebug"] = __webpack_require__(374);
+module.exports = global["Scratch3VideoSensingDebug"] = __webpack_require__(375);
 /* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(2)))
 
 /***/ }),
 
-/***/ 374:
+/***/ 375:
 /***/ (function(module, exports, __webpack_require__) {
 
 /**
@@ -201,8 +201,8 @@ module.exports = global["Scratch3VideoSensingDebug"] = __webpack_require__(374);
  * @file debug.js
  */
 
-const VideoMotion = __webpack_require__(51);
-const VideoMotionView = __webpack_require__(375);
+const VideoMotion = __webpack_require__(52);
+const VideoMotionView = __webpack_require__(376);
 
 module.exports = {
     VideoMotion,
@@ -212,7 +212,7 @@ module.exports = {
 
 /***/ }),
 
-/***/ 375:
+/***/ 376:
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -222,7 +222,7 @@ var _createClass = function () { function defineProperties(target, props) { for 
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
-var _require = __webpack_require__(36),
+var _require = __webpack_require__(37),
     motionVector = _require.motionVector;
 
 var WIDTH = 480;
@@ -796,7 +796,7 @@ module.exports = VideoMotionView;
 
 /***/ }),
 
-/***/ 51:
+/***/ 52:
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -815,7 +815,7 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
  * Video motion sensing primitives.
  */
 
-var _require = __webpack_require__(36),
+var _require = __webpack_require__(37),
     motionVector = _require.motionVector,
     scratchAtan2 = _require.scratchAtan2;
 
