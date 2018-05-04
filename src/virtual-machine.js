@@ -614,7 +614,7 @@ class VirtualMachine extends EventEmitter {
         canvas.height = bitmap.height;
         const context = canvas.getContext('2d');
         context.putImageData(bitmap, 0, 0);
-        
+
         // Divide by resolution because the renderer's definition of the rotation center
         // is the rotation center divided by the bitmap resolution
         this.runtime.renderer.updateBitmapSkin(
@@ -669,7 +669,6 @@ class VirtualMachine extends EventEmitter {
         // so the dataFormat should be 'svg'
         costume.dataFormat = storage.DataFormat.SVG;
         costume.md5 = `${costume.assetId}.${costume.dataFormat}`;
-        delete costume.bitmapResolution;
         this.emitTargetsUpdate();
     }
 
