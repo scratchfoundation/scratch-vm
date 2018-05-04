@@ -1,4 +1,117 @@
 /**
+ * Recycle bin for empty stackFrame objects
+ * @type Array<_StackFrame>
+ */
+const _stackFrameFreeList = [];
+
+/**
+ * A frame used for each level of the stack. A general purpose
+ * place to store a bunch of execution context and parameters
+ * @param {boolean} warpMode Whether this level of the stack is warping
+ * @constructor
+ * @private
+ */
+class _StackFrame {
+    constructor (warpMode) {
+        /**
+         * Whether this level of the stack is a loop.
+         * @type {boolean}
+         */
+        this.isLoop = false;
+
+        /**
+         * Whether this level is in warp mode.  Is set by some legacy blocks and
+         * "turbo mode"
+         * @type {boolean}
+         */
+        this.warpMode = warpMode;
+
+        /**
+         * Reported value from just executed block.
+         * @type {Any}
+         */
+        this.justReported = null;
+
+        /**
+         * Persists reported inputs during async block.
+         * @type {Object}
+         */
+        this.reported = null;
+
+        /**
+         * Name of waiting reporter.
+         * @type {string}
+         */
+        this.waitingReporter = null;
+
+        /**
+         * Procedure parameters.
+         * @type {Object}
+         */
+        this.params = null;
+
+        /**
+         * A context passed to block implementations.
+         * @type {Object}
+         */
+        this.executionContext = null;
+    }
+
+    /**
+     * Reset all properties of the frame to pristine null and false states.
+     * Used to recycle.
+     * @return {_StackFrame} this
+     */
+    reset () {
+
+        this.isLoop = false;
+        this.warpMode = false;
+        this.justReported = null;
+        this.reported = null;
+        this.waitingReporter = null;
+        this.params = null;
+        this.executionContext = null;
+
+        return this;
+    }
+
+    /**
+     * Reuse an active stack frame in the stack.
+     * @param {?boolean} warpMode defaults to current warpMode
+     * @returns {_StackFrame} this
+     */
+    reuse (warpMode = this.warpMode) {
+        this.reset();
+        this.warpMode = Boolean(warpMode);
+        return this;
+    }
+
+    /**
+     * Create or recycle a stack frame object.
+     * @param {boolean} warpMode Enable warpMode on this frame.
+     * @returns {_StackFrame} The clean stack frame with correct warpMode setting.
+     */
+    static create (warpMode) {
+        const stackFrame = _stackFrameFreeList.pop();
+        if (typeof stackFrame !== 'undefined') {
+            stackFrame.warpMode = Boolean(warpMode);
+            return stackFrame;
+        }
+        return new _StackFrame(warpMode);
+    }
+
+    /**
+     * Put a stack frame object into the recycle bin for reuse.
+     * @param {_StackFrame} stackFrame The frame to reset and recycle.
+     */
+    static release (stackFrame) {
+        if (typeof stackFrame !== 'undefined') {
+            _stackFrameFreeList.push(stackFrame.reset());
+        }
+    }
+}
+
+/**
  * A thread is a running stack context and all the metadata needed.
  * @param {?string} firstBlock First block to execute in the thread.
  * @constructor
@@ -20,7 +133,7 @@ class Thread {
 
         /**
          * Stack frames for the thread. Store metadata for the executing blocks.
-         * @type {Array.<Object>}
+         * @type {Array.<_StackFrame>}
          */
         this.stackFrames = [];
 
@@ -122,20 +235,8 @@ class Thread {
         // Push an empty stack frame, if we need one.
         // Might not, if we just popped the stack.
         if (this.stack.length > this.stackFrames.length) {
-            // Copy warp mode from any higher level.
-            let warpMode = false;
-            if (this.stackFrames.length > 0 && this.stackFrames[this.stackFrames.length - 1]) {
-                warpMode = this.stackFrames[this.stackFrames.length - 1].warpMode;
-            }
-            this.stackFrames.push({
-                isLoop: false, // Whether this level of the stack is a loop.
-                warpMode: warpMode, // Whether this level is in warp mode.
-                justReported: null, // Reported value from just executed block.
-                reported: {}, // Persists reported inputs during async block.
-                waitingReporter: null, // Name of waiting reporter.
-                params: {}, // Procedure parameters.
-                executionContext: {} // A context passed to block implementations.
-            });
+            const parent = this.stackFrames[this.stackFrames.length - 1];
+            this.stackFrames.push(_StackFrame.create(typeof parent !== 'undefined' && parent.warpMode));
         }
     }
 
@@ -146,13 +247,7 @@ class Thread {
      */
     reuseStackForNextBlock (blockId) {
         this.stack[this.stack.length - 1] = blockId;
-        const frame = this.stackFrames[this.stackFrames.length - 1];
-        frame.isLoop = false;
-        // frame.warpMode = warpMode;   // warp mode stays the same when reusing the stack frame.
-        frame.reported = {};
-        frame.waitingReporter = null;
-        frame.params = {};
-        frame.executionContext = {};
+        this.stackFrames[this.stackFrames.length - 1].reuse();
     }
 
     /**
@@ -160,7 +255,7 @@ class Thread {
      * @return {string} Block ID popped from the stack.
      */
     popStack () {
-        this.stackFrames.pop();
+        _StackFrame.release(this.stackFrames.pop());
         return this.stack.pop();
     }
 
@@ -229,6 +324,9 @@ class Thread {
      */
     pushParam (paramName, value) {
         const stackFrame = this.peekStackFrame();
+        if (stackFrame.params === null) {
+            stackFrame.params = {};
+        }
         stackFrame.params[paramName] = value;
     }
 
@@ -240,6 +338,9 @@ class Thread {
     getParam (paramName) {
         for (let i = this.stackFrames.length - 1; i >= 0; i--) {
             const frame = this.stackFrames[i];
+            if (frame.params === null) {
+                continue;
+            }
             if (frame.params.hasOwnProperty(paramName)) {
                 return frame.params[paramName];
             }

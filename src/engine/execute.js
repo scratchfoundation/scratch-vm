@@ -277,6 +277,9 @@ const execute = function (sequencer, thread, recursiveCall) {
             // Actually execute the block.
             execute(sequencer, thread, RECURSIVE);
             if (thread.status === Thread.STATUS_PROMISE_WAIT) {
+                // Create a reported value on the stack frame to store the
+                // already built values.
+                currentStackFrame.reported = {};
                 // Waiting for the block to resolve, store the current argValues
                 // onto a member of the currentStackFrame that can be used once
                 // the nested block resolves to rebuild argValues up to this
@@ -310,10 +313,10 @@ const execute = function (sequencer, thread, recursiveCall) {
             currentStackFrame.justReported = null;
             // We have rebuilt argValues with all the stored values in the
             // currentStackFrame from the nested block's promise resolving.
-            // Using the reported value from the block we waited on, reset the
-            // storage member of currentStackFrame so the next execute call at
-            // this level can use it in a clean state.
-            currentStackFrame.reported = {};
+            // Using the reported value from the block we waited on, unset the
+            // value. The next execute needing to store reported values will
+            // creates its own temporary storage.
+            currentStackFrame.reported = null;
         } else if (typeof currentStackFrame.reported[inputName] !== 'undefined') {
             inputValue = currentStackFrame.reported[inputName];
         }
