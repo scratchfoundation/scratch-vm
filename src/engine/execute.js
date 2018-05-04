@@ -118,6 +118,28 @@ const FieldKind = {
     DYNAMIC: 'DYNAMIC'
 };
 
+const BlockCached = function (cached) {
+    this._initialized = false;
+
+    this.opcode = cached.opcode;
+    this.fields = cached.fields;
+    this.inputs = cached.inputs;
+    this.mutation = cached.mutation;
+
+    this._isHat = false;
+    this._blockFunction = null;
+    this._definedBlockFunction = false;
+    this._isShadowBlock = false;
+    this._shadowValue = null;
+    this._fields = null;
+    this._fieldKind = FieldKind.NONE;
+    this._fieldVariable = null;
+    this._fieldList = null;
+    this._fieldBroadcastOption = null;
+    this._argValues = null;
+    this._inputs = null;
+};
+
 /**
  * Execute a block.
  * @param {!Sequencer} sequencer Which sequencer is executing.
@@ -132,12 +154,12 @@ const execute = function (sequencer, thread, recursiveCall) {
     const currentStackFrame = thread.peekStackFrame();
 
     let blockContainer = thread.blockContainer;
-    let block = blockContainer.getBlock(currentBlockId);
-    if (typeof block === 'undefined') {
+    let blockCached = BlocksExecuteCache.getCached(blockContainer, currentBlockId, BlockCached);;
+    if (blockCached === null) {
         blockContainer = runtime.flyoutBlocks;
-        block = blockContainer.getBlock(currentBlockId);
+        blockCached = BlocksExecuteCache.getCached(blockContainer, currentBlockId, BlockCached);
         // Stop if block or target no longer exists.
-        if (typeof block === 'undefined') {
+        if (blockCached === null) {
             // No block found: stop the thread; script no longer exists.
             sequencer.retireThread(thread);
             return;
@@ -158,7 +180,6 @@ const execute = function (sequencer, thread, recursiveCall) {
     // Blocks is modified in the editor these cached objects will be cleaned up
     // and new cached copies can be created. This lets us optimize this critical
     // path while keeping up to date with editor changes to a project.
-    const blockCached = BlocksExecuteCache.getCached(blockContainer, currentBlockId);
     if (blockCached._initialized !== true) {
         const {opcode, fields, inputs} = blockCached;
 
