@@ -264,6 +264,11 @@ class Scratch3SensingBlocks {
             attrTarget = this.runtime.getSpriteTargetByName(args.OBJECT);
         }
 
+        // attrTarget can be undefined if the target does not exist
+        // (e.g. single sprite uploaded from larger project referencing
+        // another sprite that wasn't uploaded)
+        if (!attrTarget) return 0;
+
         // Generic attributes
         if (attrTarget.isStage) {
             switch (args.PROPERTY) {

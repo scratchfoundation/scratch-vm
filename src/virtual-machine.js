@@ -212,13 +212,11 @@ class VirtualMachine extends EventEmitter {
         }
 
         const validationPromise = new Promise((resolve, reject) => {
-            validate(input, (error, res) => {
-                if (error) {
-                    reject(error);
-                }
-                if (res) {
-                    resolve(res);
-                }
+            // The second argument of false below indicates to the validator that the
+            // input should be parsed/validated as an entire project (and not a single sprite)
+            validate(input, false, (error, res) => {
+                if (error) return reject(error);
+                resolve(res);
             });
         });
 
@@ -379,50 +377,79 @@ class VirtualMachine extends EventEmitter {
     }
 
     /**
-     * Add a single sprite from the "Sprite2" (i.e., SB2 sprite) format.
-     * @param {string} json JSON string representing the sprite.
-     * @returns {Promise} Promise that resolves after the sprite is added
+     * Add a sprite, this could be .sprite2 or .sprite3. Unpack and validate
+     * such a file first.
+     * @param {string | object} input A json string, object, or ArrayBuffer representing the project to load.
+     * @return {!Promise} Promise that resolves after targets are installed.
      */
-    addSprite2 (json) {
-        // Validate & parse
-        if (typeof json !== 'string') {
-            log.error('Failed to parse sprite. Non-string supplied to addSprite2.');
-            return;
-        }
-        json = JSON.parse(json);
-        if (typeof json !== 'object') {
-            log.error('Failed to parse sprite. JSON supplied to addSprite2 is not an object.');
-            return;
+    addSprite (input) {
+        const errorPrefix = 'Sprite Upload Error:';
+        if (typeof input === 'object' && !(input instanceof ArrayBuffer) &&
+          !ArrayBuffer.isView(input)) {
+            // If the input is an object and not any ArrayBuffer
+            // or an ArrayBuffer view (this includes all typed arrays and DataViews)
+            // turn the object into a JSON string, because we suspect
+            // this is a project.json as an object
+            // validate expects a string or buffer as input
+            // TODO not sure if we need to check that it also isn't a data view
+            input = JSON.stringify(input);
         }
 
-        return sb2.deserialize(json, this.runtime, true)
+        const validationPromise = new Promise((resolve, reject) => {
+            // The second argument of true below indicates to the parser/validator
+            // that the given input should be treated as a single sprite and not
+            // an entire project
+            validate(input, true, (error, res) => {
+                if (error) return reject(error);
+                resolve(res);
+            });
+        });
+
+        return validationPromise
+            .then(validatedInput => {
+                const projectVersion = validatedInput[0].projectVersion;
+                if (projectVersion === 2) {
+                    return this._addSprite2(validatedInput[0], validatedInput[1]);
+                }
+                if (projectVersion === 3) {
+                    return this._addSprite3(validatedInput[0], validatedInput[1]);
+                }
+                return Promise.reject(`${errorPrefix} Unable to verify sprite version.`);
+            })
+            .catch(error => {
+                // Intentionally rejecting here (want errors to be handled by caller)
+                if (error.hasOwnProperty('validationError')) {
+                    return Promise.reject(JSON.stringify(error));
+                }
+                return Promise.reject(`${errorPrefix} ${error}`);
+            });
+    }
+
+    /**
+     * Add a single sprite from the "Sprite2" (i.e., SB2 sprite) format.
+     * @param {object} sprite Object representing 2.0 sprite to be added.
+     * @param {?ArrayBuffer} zip Optional zip of assets being referenced by json
+     * @returns {Promise} Promise that resolves after the sprite is added
+     */
+    _addSprite2 (sprite, zip) {
+        // Validate & parse
+
+        return sb2.deserialize(sprite, this.runtime, true, zip)
             .then(({targets, extensions}) =>
                 this.installTargets(targets, extensions, false));
     }
 
     /**
      * Add a single sb3 sprite.
-     * @param {string} target JSON string representing the sprite/target.
+     * @param {object} sprite Object rperesenting 3.0 sprite to be added.
+     * @param {?ArrayBuffer} zip Optional zip of assets being referenced by target json
      * @returns {Promise} Promise that resolves after the sprite is added
      */
-    addSprite3 (target) {
+    _addSprite3 (sprite, zip) {
         // Validate & parse
-        if (typeof target !== 'string') {
-            log.error('Failed to parse sprite. Non-string supplied to addSprite3.');
-            return;
-        }
-        target = JSON.parse(target);
-        if (typeof target !== 'object') {
-            log.error('Failed to parse sprite. JSON supplied to addSprite3 is not an object.');
-            return;
-        }
-
-        const jsonFormatted = {
-            targets: [target]
-        };
 
         return sb3
-            .deserialize(jsonFormatted, this.runtime, null)
+            .deserialize(sprite, this.runtime, zip, true)
             .then(({targets, extensions}) => this.installTargets(targets, extensions, false));
     }
 

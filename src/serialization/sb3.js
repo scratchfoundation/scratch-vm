@@ -871,15 +871,17 @@ const parseScratchObject = function (object, runtime, extensions, zip) {
  * @param  {object} json - JSON representation of a VM runtime.
  * @param  {Runtime} runtime - Runtime instance
  * @param {JSZip} zip - Sb3 file describing this project (to load assets from)
+ * @param {boolean} isSingleSprite - If true treat as single sprite, else treat as whole project
  * @returns {Promise.<ImportedProject>} Promise that resolves to the list of targets after the project is deserialized
  */
-const deserialize = function (json, runtime, zip) {
+const deserialize = function (json, runtime, zip, isSingleSprite) {
     const extensions = {
         extensionIDs: new Set(),
         extensionURLs: new Map()
     };
     return Promise.all(
-        (json.targets || []).map(target => parseScratchObject(target, runtime, extensions, zip))
+        ((isSingleSprite ? [json] : json.targets) || []).map(target =>
+            parseScratchObject(target, runtime, extensions, zip))
     ).then(targets => ({
         targets,
         extensions

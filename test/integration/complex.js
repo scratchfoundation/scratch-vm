@@ -73,7 +73,7 @@ test('complex', t => {
             });
 
             // Add sprite
-            vm.addSprite2(sprite);
+            vm.addSprite(sprite);
 
             // Add backdrop
             vm.addBackdrop(
