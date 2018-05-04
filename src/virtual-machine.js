@@ -212,7 +212,9 @@ class VirtualMachine extends EventEmitter {
         }
 
         const validationPromise = new Promise((resolve, reject) => {
-            validate(input, false /* this is not a single sprite */, (error, res) => {
+            // The second argument of false below indicates to the validator that the
+            // input should be parsed/validated as an entire project (and not a single sprite)
+            validate(input, false, (error, res) => {
                 if (error) {
                     reject(error);
                 }
@@ -398,7 +400,10 @@ class VirtualMachine extends EventEmitter {
         }
 
         const validationPromise = new Promise((resolve, reject) => {
-            validate(input, true /* single sprite */, (error, res) => {
+            // The second argument of true below indicates to the parser/validator
+            // that the given input should be treated as a single sprite and not
+            // an entire project
+            validate(input, true, (error, res) => {
                 if (error) {
                     reject(error);
                 }
