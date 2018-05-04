@@ -215,12 +215,8 @@ class VirtualMachine extends EventEmitter {
             // The second argument of false below indicates to the validator that the
             // input should be parsed/validated as an entire project (and not a single sprite)
             validate(input, false, (error, res) => {
-                if (error) {
-                    reject(error);
-                }
-                if (res) {
-                    resolve(res);
-                }
+                if (error) return reject(error);
+                resolve(res);
             });
         });
 
@@ -404,12 +400,8 @@ class VirtualMachine extends EventEmitter {
             // that the given input should be treated as a single sprite and not
             // an entire project
             validate(input, true, (error, res) => {
-                if (error) {
-                    reject(error);
-                }
-                if (res) {
-                    resolve(res);
-                }
+                if (error) return reject(error);
+                resolve(res);
             });
         });
 
