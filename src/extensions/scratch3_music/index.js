@@ -115,7 +115,7 @@ class Scratch3MusicBlocks {
         if (!assetData[fullPath]) return;
 
         // The sound buffer has already been downloaded via the manifest file required above.
-        const soundBuffer = assetData[fullPath].buffer;
+        const soundBuffer = assetData[fullPath];
 
         return this._decodeSound(soundBuffer).then(buffer => {
             bufferArray[index] = buffer;
