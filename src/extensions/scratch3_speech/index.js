@@ -196,12 +196,12 @@ class Scratch3SpeechBlocks {
      * @private
      */
     _loadUISounds () {
-        const startSoundBuffer = assetData['speech-rec-start.mp3'].buffer;
+        const startSoundBuffer = assetData['speech-rec-start.mp3'];
         this._decodeSound(startSoundBuffer).then(buffer => {
             this._startSoundBuffer = buffer;
         });
 
-        const endSoundBuffer = assetData['speech-rec-end.mp3'].buffer;
+        const endSoundBuffer = assetData['speech-rec-end.mp3'];
         this._decodeSound(endSoundBuffer).then(buffer => {
             this._endSoundBuffer = buffer;
         });
