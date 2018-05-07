@@ -106,104 +106,161 @@ const handleReport = function (
  */
 const RECURSIVE = true;
 
-// With the help of the Blocks class create a cached copy of values from
-// Blocks and the derived values execute needs. These values can be produced
-// one time during the first execution of a block so that later executions
-// are faster by using these cached values. This helps turn most costly
-// javascript operations like testing if the fields for a block has a
-// certain key like VARIABLE into a test that done once is saved on the
-// cache object to _isFieldVariable. This reduces the cost later in execute
-// when that will determine how execute creates the argValues for the
-// blockFunction.
-//
-// With Blocks providing this private function for execute to use, any time
-// Blocks is modified in the editor these cached objects will be cleaned up
-// and new cached copies can be created. This lets us optimize this critical
-// path while keeping up to date with editor changes to a project.
+/**
+ * A execute.js internal representation of a block to reduce the time spent in
+ * execute as the same blocks are called the most.
+ *
+ * With the help of the Blocks class create a mutable copy of block
+ * information. The members of BlockCached derived values of block information
+ * that does not need to be reevaluated until a change in Blocks. Since Blocks
+ * handles where the cache instance is stored, it drops all cache versions of a
+ * block when any change happens to it. This way we can quickly execute blocks
+ * and keep perform the right action according to the current block information
+ * in the editor.
+ *
+ * @param {Blocks} blockContainer the related Blocks instance
+ * @param {object} cached default set of cached values
+ */
+class BlockCached {
+    constructor (blockContainer, cached) {
+        /**
+         * Block operation code for this block.
+         * @type {string}
+         */
+        this.opcode = cached.opcode;
 
-const BlockCached = function (blockContainer, cached) {
-    this.opcode = cached.opcode;
-    this.fields = cached.fields;
-    this.inputs = cached.inputs;
-    this.mutation = cached.mutation;
+        /**
+         * Original block object containing argument values for static fields.
+         * @type {object}
+         */
+        this.fields = cached.fields;
 
-    this._isHat = false;
-    this._blockFunction = null;
-    this._definedBlockFunction = false;
-    this._isShadowBlock = false;
-    this._shadowValue = null;
-    this._fields = null;
-    this._argValues = null;
-    this._inputs = null;
+        /**
+         * Original block object containing argument values for executable inputs.
+         * @type {object}
+         */
+        this.inputs = cached.inputs;
 
-    const {runtime} = blockUtility.sequencer;
+        /**
+         * Procedure mutation.
+         * @type {?object}
+         */
+        this.mutation = cached.mutation;
 
-    const {opcode, fields, inputs} = this;
+        /**
+         * Is the opcode a hat (event responder) block.
+         * @type {boolean}
+         */
+        this._isHat = false;
 
-    // Assign opcode isHat and blockFunction data to avoid dynamic lookups.
-    this._isHat = runtime.getIsHat(opcode);
-    this._blockFunction = runtime.getOpcodeFunction(opcode);
-    this._definedBlockFunction = typeof this._blockFunction !== 'undefined';
+        /**
+         * The block opcode's implementation function.
+         * @type {?function}
+         */
+        this._blockFunction = null;
 
-    const fieldKeys = Object.keys(fields);
+        /**
+         * Is the block function defined for this opcode?
+         * @type {boolean}
+         */
+        this._definedBlockFunction = false;
 
-    // Store the current shadow value if there is a shadow value.
-    this._isShadowBlock = fieldKeys.length === 1 && Object.keys(inputs).length === 0;
-    this._shadowValue = this._isShadowBlock && fields[fieldKeys[0]].value;
+        /**
+         * Is this block a block with no function but a static value to return.
+         * @type {boolean}
+         */
+        this._isShadowBlock = false;
 
-    // Store a fields copy.
-    this._fields = Object.assign({}, this.fields);
+        /**
+         * The static value of this block if it is a shadow block.
+         * @type {?any}
+         */
+        this._shadowValue = null;
 
-    // Create a argValues instance for all executions of this block. Fields are
-    // static, store them on args.
-    this._argValues = {
-        mutation: this.mutation
-    };
-    for (const fieldName in fields) {
-        if (fieldName === 'VARIABLE') {
-            this._argValues.VARIABLE = {
-                id: fields.VARIABLE.id,
-                name: fields.VARIABLE.value
-            };
-        } else if (fieldName === 'LIST') {
-            this._argValues.LIST = {
-                id: fields.LIST.id,
-                name: fields.LIST.value
-            };
-        } else if (fieldName === 'BROADCAST_OPTION') {
-            this._argValues.BROADCAST_OPTION = {
-                id: fields.BROADCAST_OPTION.id,
-                name: fields.BROADCAST_OPTION.value
-            };
-        } else {
-            this._argValues[fieldName] = fields[fieldName].value;
-        }
-    }
+        /**
+         * A copy of the block's fields that may be modified.
+         * @type {object}
+         */
+        this._fields = Object.assign({}, this.fields);
 
-    // Store a modified inputs. This assures the keys are its own properties
-    // and that custom_block will not be evaluated.
-    this._inputs = Object.assign({}, this.inputs);
-    delete this._inputs.custom_block;
+        /**
+         * A copy of the block's inputs that may be modified.
+         * @type {object}
+         */
+        this._inputs = Object.assign({}, this.inputs);
 
-    if ('BROADCAST_INPUT' in this._inputs) {
-        this._argValues.BROADCAST_OPTION = {
-            id: null,
-            name: null
+        /**
+         * An arguments object for block implementations. All executions of this
+         * specific block will use this objecct.
+         * @type {object}
+         */
+        this._argValues = {
+            mutation: this.mutation
         };
 
-        const broadcastInput = this._inputs.BROADCAST_INPUT;
-        if (broadcastInput.block === broadcastInput.shadow) {
-            // Shadow dropdown menu is being used.
-            // Get the appropriate information out of it.
-            const shadow = blockContainer.getBlock(broadcastInput.shadow);
-            const broadcastField = shadow.fields.BROADCAST_OPTION;
-            this._argValues.BROADCAST_OPTION.id = broadcastField.id;
-            this._argValues.BROADCAST_OPTION.name = broadcastField.name;
+        const {runtime} = blockUtility.sequencer;
 
-            delete this._inputs.BROADCAST_INPUT;
+        const {opcode, fields, inputs} = this;
+
+        // Assign opcode isHat and blockFunction data to avoid dynamic lookups.
+        this._isHat = runtime.getIsHat(opcode);
+        this._blockFunction = runtime.getOpcodeFunction(opcode);
+        this._definedBlockFunction = typeof this._blockFunction !== 'undefined';
+
+        // Store the current shadow value if there is a shadow value.
+        const fieldKeys = Object.keys(fields);
+        this._isShadowBlock = (
+            !this._definedBlockFunction &&
+            fieldKeys.length === 1 &&
+            Object.keys(inputs).length === 0
+        );
+        this._shadowValue = this._isShadowBlock && fields[fieldKeys[0]].value;
+
+        // Store the static fields onto _argValues.
+        for (const fieldName in fields) {
+            if (
+                fieldName === 'VARIABLE' ||
+                fieldName === 'LIST' ||
+                fieldName === 'BROADCAST_OPTION'
+            ) {
+                this._argValues[fieldName] = {
+                    id: fields[fieldName].id,
+                    name: fields[fieldName].value
+                };
+            } else {
+                this._argValues[fieldName] = fields[fieldName].value;
+            }
+        }
+
+        // Remove custom_block. It is not part of block execution.
+        delete this._inputs.custom_block;
+
+        if ('BROADCAST_INPUT' in this._inputs) {
+            // BROADCAST_INPUT is called BROADCAST_OPTION in the args and is an
+            // object with an unchanging shape.
+            this._argValues.BROADCAST_OPTION = {
+                id: null,
+                name: null
+            };
+
+            // We can go ahead and compute BROADCAST_INPUT if it is a shadow
+            // value.
+            const broadcastInput = this._inputs.BROADCAST_INPUT;
+            if (broadcastInput.block === broadcastInput.shadow) {
+                // Shadow dropdown menu is being used.
+                // Get the appropriate information out of it.
+                const shadow = blockContainer.getBlock(broadcastInput.shadow);
+                const broadcastField = shadow.fields.BROADCAST_OPTION;
+                this._argValues.BROADCAST_OPTION.id = broadcastField.id;
+                this._argValues.BROADCAST_OPTION.name = broadcastField.value;
+
+                // Evaluating BROADCAST_INPUT here we do not need to do so
+                // later.
+                delete this._inputs.BROADCAST_INPUT;
+            }
         }
     }
-};
+}
 
 /**
  * Execute a block.
