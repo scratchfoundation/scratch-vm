@@ -175,7 +175,6 @@ class Scratch3SpeechBlocks {
         // Threshold for diff match patch to use: (0.0 = perfection, 1.0 = very loose).
         this._dmp.Match_Threshold = 0.3;
 
-        // Come back and figure out which of these I really need.
         this._newSocketCallback = this._newSocketCallback.bind(this);
         this._setupSocketCallback = this._setupSocketCallback.bind(this);
         this._socketMessageCallback = this._socketMessageCallback.bind(this);
@@ -268,7 +267,7 @@ class Scratch3SpeechBlocks {
         this.runtime.targets.forEach(target => {
             target.blocks._scripts.forEach(id => {
                 const b = target.blocks.getBlock(id);
-                if (b.opcode === 'speech.whenIHearHat') {
+                if (b.opcode === 'speech_whenIHearHat') {
                     // Grab the text from the hat block's shadow.
                     const inputId = b.inputs.PHRASE.block;
                     const inputBlock = target.blocks.getBlock(inputId);
