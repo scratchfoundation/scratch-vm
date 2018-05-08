@@ -31,11 +31,10 @@ const loadCostumeFromAsset = function (costume, costumeAsset, runtime) {
         ];
     }
     if (costumeAsset.assetType === AssetType.ImageVector) {
-        // createSVGSkin does the right thing if rotationCenter isn't provided, so it's okay if it's
-        // undefined here
         let svgString = costumeAsset.decodeText();
+        // SVG Renderer load fixes "quirks" associated with Scratch 2 projects
+        // Currently costume.version only exists for scratch 2 costumes
         if (costume.version && costume.version === 2) {
-            // SVG Renderer load fixes "quirks" associated with Scratch 2 projects
             const svgRenderer = new SvgRenderer();
             svgRenderer.loadString(svgString);
             svgString = svgRenderer.toString();
@@ -49,7 +48,11 @@ const loadCostumeFromAsset = function (costume, costumeAsset, runtime) {
                 (new TextEncoder()).encode(svgString)
             );
             costume.md5 = `${costume.assetId}.${costume.dataFormat}`;
+        } else {
+            delete costume.version;
         }
+        // createSVGSkin does the right thing if rotationCenter isn't provided, so it's okay if it's
+        // undefined here
         costume.skinId = renderer.createSVGSkin(svgString, rotationCenter);
         costume.size = renderer.getSkinSize(costume.skinId);
         // Now we should have a rotationCenter even if we didn't before
@@ -61,6 +64,8 @@ const loadCostumeFromAsset = function (costume, costumeAsset, runtime) {
 
         return costume;
     }
+    // Other image types do not need a compatibility step
+    delete costume.version;
 
     return new Promise((resolve, reject) => {
         const imageElement = new Image();
