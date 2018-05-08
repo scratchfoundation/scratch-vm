@@ -344,7 +344,8 @@ class Scratch3LooksBlocks {
                        requestedCostume === 'next backdrop') {
                 target.setCostume(target.currentCostume + 1);
             } else if (requestedCostume === 'random backdrop') {
-                if ((numCostumes = target.getCostumes().length) > 1) {
+                const numCostumes = target.getCostumes().length;
+                if (numCostumes > 1) {
                     let index;
                     do {
                         index = Math.floor(Math.random() * numCostumes);
