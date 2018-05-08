@@ -344,7 +344,13 @@ class Scratch3LooksBlocks {
                        requestedCostume === 'next backdrop') {
                 target.setCostume(target.currentCostume + 1);
             } else if (requestedCostume === 'random backdrop') {
-                target.setCostume(Math.floor(Math.random() * target.getCostumes().length));
+                if ((numCostumes = target.getCostumes().length) > 1) {
+                    let index;
+                    do {
+                        index = Math.floor(Math.random() * numCostumes);
+                    } while (index === target.currentCostume);
+                    target.setCostume(index);
+                }
             } else {
                 const forcedNumber = Number(requestedCostume);
                 if (!isNaN(forcedNumber)) {
