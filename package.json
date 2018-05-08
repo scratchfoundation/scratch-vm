@@ -31,7 +31,7 @@
     "adm-zip": "0.4.7",
     "arraybuffer-loader": "^1.0.3",
     "babel-core": "^6.24.1",
-    "babel-eslint": "^7.1.1",
+    "babel-eslint": "^8.0.1",
     "babel-loader": "^7.0.0",
     "babel-preset-env": "^1.6.1",
     "canvas-toBlob": "1.0.0",
