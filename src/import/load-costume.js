@@ -1,3 +1,4 @@
+const TextEncoder = require('text-encoding').TextEncoder;
 const StringUtil = require('../util/string-util');
 const log = require('../util/log');
 const SvgRenderer = require('scratch-svg-renderer').SVGRenderer;
