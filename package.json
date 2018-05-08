@@ -40,7 +40,7 @@
     "escape-html": "1.0.3",
     "eslint": "^4.5.0",
     "eslint-config-scratch": "^5.0.0",
-    "expose-loader": "0.7.4",
+    "expose-loader": "0.7.5",
     "file-loader": "^1.1.6",
     "format-message": "5.2.1",
     "format-message-cli": "5.2.1",
