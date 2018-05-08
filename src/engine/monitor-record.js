@@ -9,7 +9,7 @@ const MonitorRecord = Record({
     opcode: null,
     value: null,
     params: null,
-    mode: 1, // 1=default, 2=big, 3=slider
+    mode: 'default',
     sliderMin: 0,
     sliderMax: 100,
     x: 0,
