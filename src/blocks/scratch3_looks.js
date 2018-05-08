@@ -258,9 +258,17 @@ class Scratch3LooksBlocks {
 
     getMonitored () {
         return {
-            looks_size: {isSpriteSpecific: true},
-            looks_costumenumbername: {isSpriteSpecific: true},
-            looks_backdropnumbername: {}
+            looks_size: {
+                isSpriteSpecific: true,
+                getId: targetId => `${targetId}_size`
+            },
+            looks_costumenumbername: {
+                isSpriteSpecific: true,
+                getId: targetId => `${targetId}_costumenumbername`
+            },
+            looks_backdropnumbername: {
+                getId: () => 'backdropnumbername'
+            }
         };
     }
 
