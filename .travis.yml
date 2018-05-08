@@ -19,9 +19,9 @@ script: npm run $NPM_SCRIPT
 jobs:
     include:
     - env: NPM_SCRIPT=lint
-      node_js: 6
+      node_js: 8
     - stage: release
-      node_js: 6
+      node_js: 8
       env: NPM_SCRIPT=build
       before_deploy:
       - npm --no-git-tag-version version $($(npm bin)/json -f package.json version)-prerelease.$(date +%s)
