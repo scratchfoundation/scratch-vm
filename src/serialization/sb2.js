@@ -251,7 +251,7 @@ const parseMonitorObject = (object, runtime, targets, extensions) => {
     let isSpriteLocalVariable;
     if (object.cmd === 'getVar:' || object.cmd === 'contentsOfList:') {
         // These monitors are sprite-specific if they are not targetting the stage.
-        isSpriteLocalVariable = object.target.isStage;
+        isSpriteLocalVariable = !target.isStage;
         // Variable getters have special block IDs for the toolbox that match the variable ID.
         block.id = getVariableId(object.param);
     }
