@@ -247,6 +247,7 @@ const parseScratchObject = function (object, runtime, extensions, topLevel, zip)
                 // will be a very extensive change across many repositories
                 // and should be done carefully and altogether
                 md5: costumeSource.baseLayerMD5,
+                version: 2, // Indicates loaded from sb2
                 skinId: null
             };
             const md5ext = costumeSource.baseLayerMD5;

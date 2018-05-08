@@ -1,5 +1,6 @@
 const StringUtil = require('../util/string-util');
 const log = require('../util/log');
+const SvgRenderer = require('scratch-svg-renderer').SVGRenderer;
 
 /**
  * Initialize a costume from an asset asynchronously.
@@ -31,7 +32,24 @@ const loadCostumeFromAsset = function (costume, costumeAsset, runtime) {
     if (costumeAsset.assetType === AssetType.ImageVector) {
         // createSVGSkin does the right thing if rotationCenter isn't provided, so it's okay if it's
         // undefined here
-        costume.skinId = renderer.createSVGSkin(costumeAsset.decodeText(), rotationCenter);
+        let svgString = costumeAsset.decodeText();
+        if (costume.version && costume.version === 2) {
+            // SVG Renderer load fixes "quirks" associated with Scratch 2 projects
+            const svgRenderer = new SvgRenderer();
+            svgRenderer.loadString(svgString);
+            svgString = svgRenderer.toString();
+            delete costume.version;
+
+            // Put back into storage
+            const storage = runtime.storage;
+            costume.assetId = storage.builtinHelper.cache(
+                storage.AssetType.ImageVector,
+                storage.DataFormat.SVG,
+                (new TextEncoder()).encode(svgString)
+            );
+            costume.md5 = `${costume.assetId}.${costume.dataFormat}`;
+        }
+        costume.skinId = renderer.createSVGSkin(svgString, rotationCenter);
         costume.size = renderer.getSkinSize(costume.skinId);
         // Now we should have a rotationCenter even if we didn't before
         if (!rotationCenter) {
