@@ -38,4 +38,4 @@ jobs:
 stages:
 - test
 - name: release
-  if: branch in (master, develop)
+  if: branch in (master, develop) and type != pull_request
