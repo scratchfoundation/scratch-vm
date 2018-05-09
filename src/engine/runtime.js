@@ -1176,6 +1176,8 @@ class Runtime extends EventEmitter {
     dispose () {
         this.stopAll();
         this.targets.map(this.disposeTarget, this);
+        this._monitorState = OrderedMap({});
+        // @todo clear out extensions? turboMode? etc.
     }
 
     /**
