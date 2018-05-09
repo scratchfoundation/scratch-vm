@@ -90,7 +90,7 @@ const handleReport = function (
                 sequencer.runtime.requestUpdateMonitor(Map({
                     id: currentBlockId,
                     spriteName: targetId ? sequencer.runtime.getTargetById(targetId).getName() : null,
-                    value: String(resolvedValue)
+                    value: resolvedValue
                 }));
             }
         }
