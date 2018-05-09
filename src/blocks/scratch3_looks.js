@@ -343,6 +343,13 @@ class Scratch3LooksBlocks {
             } else if (requestedCostume === 'next costume' ||
                        requestedCostume === 'next backdrop') {
                 target.setCostume(target.currentCostume + 1);
+            } else if (requestedCostume === 'random backdrop') {
+                const numCostumes = target.getCostumes().length;
+                if (numCostumes > 1) {
+                    let selectedIndex = Math.floor(Math.random() * (numCostumes - 1));
+                    if (selectedIndex === target.currentCostume) selectedIndex += 1;
+                    target.setCostume(selectedIndex);
+                }
             } else {
                 const forcedNumber = Number(requestedCostume);
                 if (!isNaN(forcedNumber)) {
