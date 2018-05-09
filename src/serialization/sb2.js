@@ -211,7 +211,7 @@ const globalBroadcastMsgStateGenerator = (function () {
 
 /**
  * Parse a single monitor object and create all its in-memory VM objects.
- * @param {!object} object - From-JSON "Scratch object"
+ * @param {!object} object - From-JSON "Monitor object"
  * @param {!Runtime} runtime - (in/out) Runtime object to load monitor info into.
  * @param {!Array.<Target>} targets - Targets have already been parsed.
  * @param {ImportedExtensionsInfo} extensions - (in/out) parsed extension information will be stored here.
@@ -234,7 +234,7 @@ const parseMonitorObject = (object, runtime, targets, extensions) => {
         }
     }
 
-    // Create a block for the monitor blocks container
+    // Get the target for this monitor, if not gotten above.
     target = target || targets.filter(t => t.getName() === object.target)[0];
     if (!target) throw new Error('Cannot create monitor for target that cannot be found by name');
 
@@ -248,23 +248,17 @@ const parseMonitorObject = (object, runtime, targets, extensions) => {
         extensions
     );
 
-    let isSpriteLocalVariable;
+    // Monitor blocks have special IDs to match the toolbox obtained from the getId
+    // function in the runtime.monitorBlocksInfo. Variable monitors, however,
+    // get their IDs from the variable id they reference.
     if (object.cmd === 'getVar:' || object.cmd === 'contentsOfList:') {
-        // These monitors are sprite-specific if they are not targetting the stage.
-        isSpriteLocalVariable = !target.isStage;
-        // Variable getters have special block IDs for the toolbox that match the variable ID.
         block.id = getVariableId(object.param);
+    } else if (runtime.monitorBlockInfo.hasOwnProperty(block.opcode)) {
+        block.id = runtime.monitorBlockInfo[block.opcode].getId(target.id, object.param);
     }
 
-    block.id = runtime.monitorBlockInfo.hasOwnProperty(block.opcode) ?
-        runtime.monitorBlockInfo[block.opcode].getId(target.id, object.param) : block.id;
-
-    // Block needs a targetId if it is sprite specific or a local variable.
-    // Consult the monitorBlockInfo in the runtime for sprite-specificity.
-    const isSpriteSpecific = isSpriteLocalVariable ||
-        (runtime.monitorBlockInfo.hasOwnProperty(block.opcode) &&
-        runtime.monitorBlockInfo[block.opcode].isSpriteSpecific);
-    block.targetId = isSpriteSpecific ? target.id : null;
+    // Block needs a targetId if it is targetting something other than the stage
+    block.targetId = target.isStage ? null : target.id;
 
     // Property required for running monitored blocks.
     block.isMonitored = object.visible;

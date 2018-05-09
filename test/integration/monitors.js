@@ -7,7 +7,7 @@ const VirtualMachine = require('../../src/index');
 const projectUri = path.resolve(__dirname, '../fixtures/monitors.sb2');
 const project = readFileToBuffer(projectUri);
 
-test('complex', t => {
+test('importing sb2 project with monitors', t => {
     const vm = new VirtualMachine();
     vm.attachStorage(makeTestStorage());
 
