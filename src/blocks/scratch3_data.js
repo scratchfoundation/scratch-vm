@@ -54,9 +54,14 @@ class Scratch3DataBlocks {
         const list = util.target.lookupOrCreateList(
             args.LIST.id, args.LIST.name);
 
-        // If block is running for monitors, return list as an array.
+        // If block is running for monitors, return copy of list as an array if changed.
         if (util.thread.updateMonitor) {
-            return list.value;
+            // Return original list value if up-to-date, which doesn't trigger monitor update.
+            if (list._monitorUpToDate) return list.value;
+            // If value changed, reset the flag and return a copy to trigger monitor update.
+            // Because monitors use Immutable data structures, only new objects trigger updates.
+            list._monitorUpToDate = true;
+            return list.value.slice();
         }
 
         // Determine if the list is all single letters.
@@ -81,7 +86,10 @@ class Scratch3DataBlocks {
     addToList (args, util) {
         const list = util.target.lookupOrCreateList(
             args.LIST.id, args.LIST.name);
-        if (list.value.length < Scratch3DataBlocks.LIST_ITEM_LIMIT) list.value.push(args.ITEM);
+        if (list.value.length < Scratch3DataBlocks.LIST_ITEM_LIMIT) {
+            list.value.push(args.ITEM);
+            list._monitorUpToDate = false;
+        }
     }
 
     deleteOfList (args, util) {
@@ -95,6 +103,7 @@ class Scratch3DataBlocks {
             return;
         }
         list.value.splice(index - 1, 1);
+        list._monitorUpToDate = false;
     }
 
     insertAtList (args, util) {
@@ -113,6 +122,7 @@ class Scratch3DataBlocks {
             // remove the last element in the list
             list.value.pop();
         }
+        list._monitorUpToDate = false;
     }
 
     replaceItemOfList (args, util) {
@@ -124,6 +134,7 @@ class Scratch3DataBlocks {
             return;
         }
         list.value.splice(index - 1, 1, item);
+        list._monitorUpToDate = false;
     }
 
     getItemOfList (args, util) {
