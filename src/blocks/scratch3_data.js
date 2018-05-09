@@ -18,6 +18,8 @@ class Scratch3DataBlocks {
             data_variable: this.getVariable,
             data_setvariableto: this.setVariableTo,
             data_changevariableby: this.changeVariableBy,
+            data_hidevariable: this.hideVariable,
+            data_showvariable: this.showVariable,
             data_listcontents: this.getListContents,
             data_addtolist: this.addToList,
             data_deleteoflist: this.deleteOfList,
@@ -26,7 +28,9 @@ class Scratch3DataBlocks {
             data_itemoflist: this.getItemOfList,
             data_itemnumoflist: this.getItemNumOfList,
             data_lengthoflist: this.lengthOfList,
-            data_listcontainsitem: this.listContainsItem
+            data_listcontainsitem: this.listContainsItem,
+            data_hidelist: this.hideList,
+            data_showlist: this.showList
         };
     }
 
@@ -48,6 +52,32 @@ class Scratch3DataBlocks {
         const castedValue = Cast.toNumber(variable.value);
         const dValue = Cast.toNumber(args.VALUE);
         variable.value = castedValue + dValue;
+    }
+
+    changeMonitorVisibility (id, visible) {
+        // Send the monitor blocks an event like the flyout checkbox event.
+        // This both updates the monitor state and changes the isMonitored block flag.
+        this.runtime.monitorBlocks.changeBlock({
+            id: id, // Monitor blocks for variables are the variable ID.
+            element: 'checkbox', // Mimic checkbox event from flyout.
+            value: visible
+        }, this.runtime);
+    }
+
+    showVariable (args) {
+        this.changeMonitorVisibility(args.VARIABLE.id, true);
+    }
+
+    hideVariable (args) {
+        this.changeMonitorVisibility(args.VARIABLE.id, false);
+    }
+
+    showList (args) {
+        this.changeMonitorVisibility(args.LIST.id, true);
+    }
+
+    hideList (args) {
+        this.changeMonitorVisibility(args.LIST.id, false);
     }
 
     getListContents (args, util) {
