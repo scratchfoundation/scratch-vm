@@ -1,11 +1,13 @@
 language: node_js
 node_js:
-- 6
+- 8
 - node
 env:
+  global:
+  - NODE_ENV=production
+  matrix:
   - NPM_SCRIPT="tap:unit -- --jobs=4"
   - NPM_SCRIPT="tap:integration -- --jobs=4"
-  - NODE_ENV=production
 sudo: false
 cache:
   directories:
@@ -17,9 +19,9 @@ script: npm run $NPM_SCRIPT
 jobs:
     include:
     - env: NPM_SCRIPT=lint
-      node_js: 6
+      node_js: 8
     - stage: release
-      node_js: 6
+      node_js: 8
       env: NPM_SCRIPT=build
       before_deploy:
       - npm --no-git-tag-version version $($(npm bin)/json -f package.json version)-prerelease.$(date +%s)
