@@ -53,6 +53,12 @@ class Scratch3DataBlocks {
     getListContents (args, util) {
         const list = util.target.lookupOrCreateList(
             args.LIST.id, args.LIST.name);
+
+        // If block is running for monitors, return list as an array.
+        if (util.thread.updateMonitor) {
+            return list.value;
+        }
+
         // Determine if the list is all single letters.
         // If it is, report contents joined together with no separator.
         // If it's not, report contents joined together with a space.
