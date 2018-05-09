@@ -3,7 +3,6 @@ const test = require('tap').test;
 const makeTestStorage = require('../fixtures/make-test-storage');
 const readFileToBuffer = require('../fixtures/readProjectFile').readFileToBuffer;
 const VirtualMachine = require('../../src/index');
-const Variable = require('../../src/engine/variable');
 
 const projectUri = path.resolve(__dirname, '../fixtures/monitors.sb2');
 const project = readFileToBuffer(projectUri);
