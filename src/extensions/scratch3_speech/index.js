@@ -523,7 +523,6 @@ class Scratch3SpeechBlocks {
      */
     _resumeListening () {
         this._context.resume.bind(this._context);
-        this._scriptNode.addEventListener('audioprocess', this._processAudioCallback);
         this._newWebsocket();
     }
 
@@ -573,8 +572,6 @@ class Scratch3SpeechBlocks {
     _initScriptNode () {
         // Create a node that sends raw bytes across the websocket
         this._scriptNode = this._context.createScriptProcessor(4096, 1, 1);
-        // Need the maximum value for 16-bit signed samples, to convert from float.
-        this._scriptNode.addEventListener('audioprocess', this._processAudioCallback);
     }
 
     /**
@@ -646,6 +643,7 @@ class Scratch3SpeechBlocks {
         // Hook up the scriptNode to the mic
         this._sourceNode = this._context.createMediaStreamSource(this._micStream);
         this._sourceNode.connect(this._scriptNode);
+        this._scriptNode.addEventListener('audioprocess', this._processAudioCallback);
         this._scriptNode.connect(this._context.destination);
     }
 
