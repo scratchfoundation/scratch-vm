@@ -29,10 +29,14 @@ jobs:
       - git config --global user.name $(git log --pretty=format:"%an" -n1)
       deploy:
       - provider: npm
+        on:
+          all_branches: true
         skip_cleanup: true
         email: $NPM_EMAIL
         api_key: $NPM_TOKEN
       - provider: script
+        on:
+          all_branches: true
         skip_cleanup: true
         script: npm run --silent deploy -- -x -r $GH_PAGES_REPO
 stages:
