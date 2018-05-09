@@ -188,7 +188,7 @@ var VirtualMachine =
 
 
 var support = __webpack_require__(9);
-var base64 = __webpack_require__(104);
+var base64 = __webpack_require__(105);
 var nodejsUtils = __webpack_require__(36);
 var setImmediate = __webpack_require__(298);
 var external = __webpack_require__(27);
@@ -1227,7 +1227,7 @@ module.exports = GenericWorker;
 
 var base64 = __webpack_require__(310)
 var ieee754 = __webpack_require__(309)
-var isArray = __webpack_require__(112)
+var isArray = __webpack_require__(113)
 
 exports.Buffer = Buffer
 exports.SlowBuffer = SlowBuffer
@@ -3265,7 +3265,7 @@ else {
 }
 
 try {
-    exports.nodestream = !!__webpack_require__(111).Readable;
+    exports.nodestream = !!__webpack_require__(112).Readable;
 } catch(e) {
     exports.nodestream = false;
 }
@@ -3427,7 +3427,7 @@ var util = __webpack_require__(28);
 util.inherits = __webpack_require__(6);
 /*</replacement>*/
 
-var Readable = __webpack_require__(109);
+var Readable = __webpack_require__(110);
 var Writable = __webpack_require__(52);
 
 util.inherits(Duplex, Readable);
@@ -3835,7 +3835,7 @@ module.exports = {
   getProperty: getProperty,
   escapeQuotes: escapeQuotes,
   equal: __webpack_require__(40),
-  ucs2length: __webpack_require__(165),
+  ucs2length: __webpack_require__(166),
   varOccurences: varOccurences,
   varReplace: varReplace,
   cleanUpCode: cleanUpCode,
@@ -4132,7 +4132,7 @@ module.exports = uid;
 /* 15 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var Parser = __webpack_require__(76),
+var Parser = __webpack_require__(77),
     DomHandler = __webpack_require__(242);
 
 function defineProp(name, value){
@@ -4143,7 +4143,7 @@ function defineProp(name, value){
 
 module.exports = {
 	Parser: Parser,
-	Tokenizer: __webpack_require__(75),
+	Tokenizer: __webpack_require__(76),
 	ElementType: __webpack_require__(25),
 	DomHandler: DomHandler,
 	get FeedHandler(){
@@ -4153,7 +4153,7 @@ module.exports = {
 		return defineProp("Stream", __webpack_require__(239));
 	},
 	get WritableStream(){
-		return defineProp("WritableStream", __webpack_require__(71));
+		return defineProp("WritableStream", __webpack_require__(72));
 	},
 	get ProxyHandler(){
 		return defineProp("ProxyHandler", __webpack_require__(237));
@@ -4216,9 +4216,9 @@ var _createClass = function () { function defineProperties(target, props) { for 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
 var adapter = __webpack_require__(244);
-var mutationAdapter = __webpack_require__(77);
+var mutationAdapter = __webpack_require__(78);
 var xmlEscape = __webpack_require__(222);
-var MonitorRecord = __webpack_require__(221);
+var MonitorRecord = __webpack_require__(71);
 var Clone = __webpack_require__(18);
 
 var _require = __webpack_require__(24),
@@ -4705,21 +4705,29 @@ var Blocks = function () {
                             break;
                         }
 
-                        var isSpriteSpecific = optRuntime.monitorBlockInfo.hasOwnProperty(block.opcode) && optRuntime.monitorBlockInfo[block.opcode].isSpriteSpecific;
+                        // Variable blocks may be sprite specific depending on the owner of the variable
+                        var isSpriteLocalVariable = false;
+                        if (block.opcode === 'data_variable') {
+                            isSpriteLocalVariable = !optRuntime.getEditingTarget().isStage && optRuntime.getEditingTarget().variables[block.fields.VARIABLE.id];
+                        } else if (block.opcode === 'data_listcontents') {
+                            isSpriteLocalVariable = !optRuntime.getEditingTarget().isStage && optRuntime.getEditingTarget().variables[block.fields.LIST.id];
+                        }
+
+                        var isSpriteSpecific = isSpriteLocalVariable || optRuntime.monitorBlockInfo.hasOwnProperty(block.opcode) && optRuntime.monitorBlockInfo[block.opcode].isSpriteSpecific;
                         block.targetId = isSpriteSpecific ? optRuntime.getEditingTarget().id : null;
 
                         if (wasMonitored && !block.isMonitored) {
                             optRuntime.requestRemoveMonitor(block.id);
                         } else if (!wasMonitored && block.isMonitored) {
                             optRuntime.requestAddMonitor(MonitorRecord({
-                                // @todo(vm#564) this will collide if multiple sprites use same block
                                 id: block.id,
                                 targetId: block.targetId,
                                 spriteName: block.targetId ? optRuntime.getTargetById(block.targetId).getName() : null,
                                 opcode: block.opcode,
                                 params: this._getBlockParams(block),
                                 // @todo(vm#565) for numerical values with decimals, some countries use comma
-                                value: ''
+                                value: '',
+                                mode: block.opcode === 'data_listcontents' ? 'list' : 'default'
                             }));
                         }
                         break;
@@ -13803,11 +13811,11 @@ module.exports = function equal(a, b) {
 "use strict";
 
 
-var url = __webpack_require__(168)
+var url = __webpack_require__(169)
   , equal = __webpack_require__(40)
   , util = __webpack_require__(13)
   , SchemaObject = __webpack_require__(62)
-  , traverse = __webpack_require__(164);
+  , traverse = __webpack_require__(165);
 
 module.exports = resolve;
 
@@ -14518,9 +14526,9 @@ module.exports = {"Aacute":"Á","aacute":"á","Abreve":"Ă","abreve":"ă","ac":"
 var assign = __webpack_require__(249)
 var parse = __webpack_require__(248)
 var interpret = __webpack_require__(247)
-var plurals = __webpack_require__(78)
-var lookupClosestLocale = __webpack_require__(79)
-var formats = __webpack_require__(80)
+var plurals = __webpack_require__(79)
+var lookupClosestLocale = __webpack_require__(80)
+var formats = __webpack_require__(81)
 
 function namespace () {
   var cache = {}
@@ -14773,10 +14781,10 @@ module.exports = function crc32wrapper(input, crc) {
 
 
 var external = __webpack_require__(27);
-var DataWorker = __webpack_require__(97);
-var DataLengthProbe = __webpack_require__(96);
-var Crc32Probe = __webpack_require__(95);
-var DataLengthProbe = __webpack_require__(96);
+var DataWorker = __webpack_require__(98);
+var DataLengthProbe = __webpack_require__(97);
+var Crc32Probe = __webpack_require__(96);
+var DataLengthProbe = __webpack_require__(97);
 
 /**
  * Represent a compressed object, with everything needed to decompress it.
@@ -14852,7 +14860,7 @@ module.exports = CompressedObject;
 /***/ (function(module, exports, __webpack_require__) {
 
 // Thank's IE8 for his funny defineProperty
-module.exports = !__webpack_require__(101)(function(){
+module.exports = !__webpack_require__(102)(function(){
   return Object.defineProperty({}, 'a', {get: function(){ return 7; }}).a != 7;
 });
 
@@ -15248,7 +15256,7 @@ var internalUtil = {
 /*</replacement>*/
 
 /*<replacement>*/
-var Stream = __webpack_require__(108);
+var Stream = __webpack_require__(109);
 /*</replacement>*/
 
 /*<replacement>*/
@@ -15264,7 +15272,7 @@ function _isUint8Array(obj) {
 
 /*</replacement>*/
 
-var destroyImpl = __webpack_require__(107);
+var destroyImpl = __webpack_require__(108);
 
 util.inherits(Writable, Stream);
 
@@ -15858,18 +15866,18 @@ Writable.prototype._destroy = function (err, cb) {
   this.end();
   cb(err);
 };
-/* WEBPACK VAR INJECTION */}.call(this, __webpack_require__(20), __webpack_require__(106).setImmediate, __webpack_require__(1)))
+/* WEBPACK VAR INJECTION */}.call(this, __webpack_require__(20), __webpack_require__(107).setImmediate, __webpack_require__(1)))
 
 /***/ }),
 /* 53 */
 /***/ (function(module, exports, __webpack_require__) {
 
-exports = module.exports = __webpack_require__(109);
+exports = module.exports = __webpack_require__(110);
 exports.Stream = exports;
 exports.Readable = exports;
 exports.Writable = __webpack_require__(52);
 exports.Duplex = __webpack_require__(11);
-exports.Transform = __webpack_require__(105);
+exports.Transform = __webpack_require__(106);
 exports.PassThrough = __webpack_require__(303);
 
 
@@ -15918,7 +15926,7 @@ function JSZip() {
 JSZip.prototype = __webpack_require__(311);
 JSZip.prototype.loadAsync = __webpack_require__(266);
 JSZip.support = __webpack_require__(9);
-JSZip.defaults = __webpack_require__(98);
+JSZip.defaults = __webpack_require__(99);
 
 // TODO find a better way to handle this version,
 // a require('package.json').version doesn't work with webpack, see #327
@@ -17512,8 +17520,8 @@ module.exports = Video;
 "use strict";
 
 
-exports.decode = exports.parse = __webpack_require__(200);
-exports.encode = exports.stringify = __webpack_require__(199);
+exports.decode = exports.parse = __webpack_require__(201);
+exports.encode = exports.stringify = __webpack_require__(200);
 
 
 /***/ }),
@@ -17561,37 +17569,37 @@ var EventEmitter = __webpack_require__(12);
 var _require = __webpack_require__(24),
     OrderedMap = _require.OrderedMap;
 
-var escapeHtml = __webpack_require__(217);
+var escapeHtml = __webpack_require__(218);
 
 var ArgumentType = __webpack_require__(26);
 var Blocks = __webpack_require__(16);
 var BlockType = __webpack_require__(19);
-var Profiler = __webpack_require__(216);
-var Sequencer = __webpack_require__(215);
-var ScratchBlocksConstants = __webpack_require__(212);
-var TargetType = __webpack_require__(211);
+var Profiler = __webpack_require__(217);
+var Sequencer = __webpack_require__(216);
+var ScratchBlocksConstants = __webpack_require__(213);
+var TargetType = __webpack_require__(212);
 var Thread = __webpack_require__(32);
 var log = __webpack_require__(2);
-var maybeFormatMessage = __webpack_require__(81);
+var maybeFormatMessage = __webpack_require__(82);
 
 // Virtual I/O devices.
-var Clock = __webpack_require__(210);
-var DeviceManager = __webpack_require__(209);
-var Keyboard = __webpack_require__(198);
-var Mouse = __webpack_require__(197);
-var MouseWheel = __webpack_require__(196);
+var Clock = __webpack_require__(211);
+var DeviceManager = __webpack_require__(210);
+var Keyboard = __webpack_require__(199);
+var Mouse = __webpack_require__(198);
+var MouseWheel = __webpack_require__(197);
 var Video = __webpack_require__(66);
 
 var defaultBlockPackages = {
-    scratch3_control: __webpack_require__(195),
-    scratch3_event: __webpack_require__(194),
-    scratch3_looks: __webpack_require__(193),
-    scratch3_motion: __webpack_require__(192),
-    scratch3_operators: __webpack_require__(191),
-    scratch3_sound: __webpack_require__(190),
-    scratch3_sensing: __webpack_require__(189),
-    scratch3_data: __webpack_require__(188),
-    scratch3_procedures: __webpack_require__(187)
+    scratch3_control: __webpack_require__(196),
+    scratch3_event: __webpack_require__(195),
+    scratch3_looks: __webpack_require__(194),
+    scratch3_motion: __webpack_require__(193),
+    scratch3_operators: __webpack_require__(192),
+    scratch3_sound: __webpack_require__(191),
+    scratch3_sensing: __webpack_require__(190),
+    scratch3_data: __webpack_require__(189),
+    scratch3_procedures: __webpack_require__(188)
 };
 
 /**
@@ -18721,6 +18729,8 @@ var Runtime = function (_EventEmitter) {
         value: function dispose() {
             this.stopAll();
             this.targets.map(this.disposeTarget, this);
+            this._monitorState = OrderedMap({});
+            // @todo clear out extensions? turboMode? etc.
         }
 
         /**
@@ -19606,10 +19616,41 @@ __webpack_require__(16);
 /* 71 */
 /***/ (function(module, exports, __webpack_require__) {
 
+"use strict";
+
+
+var _require = __webpack_require__(24),
+    Record = _require.Record;
+
+var MonitorRecord = Record({
+    id: null, // Block Id
+    /** Present only if the monitor is sprite-specific, such as x position */
+    spriteName: null,
+    /** Present only if the monitor is sprite-specific, such as x position */
+    targetId: null,
+    opcode: null,
+    value: null,
+    params: null,
+    mode: 'default',
+    sliderMin: 0,
+    sliderMax: 100,
+    x: 0,
+    y: 0,
+    width: 0,
+    height: 0,
+    visible: true
+});
+
+module.exports = MonitorRecord;
+
+/***/ }),
+/* 72 */
+/***/ (function(module, exports, __webpack_require__) {
+
 module.exports = Stream;
 
-var Parser = __webpack_require__(76),
-    WritableStream = __webpack_require__(110).Writable || __webpack_require__(238).Writable,
+var Parser = __webpack_require__(77),
+    WritableStream = __webpack_require__(111).Writable || __webpack_require__(238).Writable,
     StringDecoder = __webpack_require__(51).StringDecoder,
     Buffer = __webpack_require__(5).Buffer;
 
@@ -19633,7 +19674,7 @@ WritableStream.prototype._write = function(chunk, encoding, cb){
 };
 
 /***/ }),
-/* 72 */
+/* 73 */
 /***/ (function(module, exports) {
 
 // This object will be used as the prototype for Nodes when creating a
@@ -19683,13 +19724,13 @@ Object.keys(domLvl1).forEach(function(key) {
 
 
 /***/ }),
-/* 73 */
+/* 74 */
 /***/ (function(module) {
 
 module.exports = {"Aacute":"Á","aacute":"á","Acirc":"Â","acirc":"â","acute":"´","AElig":"Æ","aelig":"æ","Agrave":"À","agrave":"à","amp":"&","AMP":"&","Aring":"Å","aring":"å","Atilde":"Ã","atilde":"ã","Auml":"Ä","auml":"ä","brvbar":"¦","Ccedil":"Ç","ccedil":"ç","cedil":"¸","cent":"¢","copy":"©","COPY":"©","curren":"¤","deg":"°","divide":"÷","Eacute":"É","eacute":"é","Ecirc":"Ê","ecirc":"ê","Egrave":"È","egrave":"è","ETH":"Ð","eth":"ð","Euml":"Ë","euml":"ë","frac12":"½","frac14":"¼","frac34":"¾","gt":">","GT":">","Iacute":"Í","iacute":"í","Icirc":"Î","icirc":"î","iexcl":"¡","Igrave":"Ì","igrave":"ì","iquest":"¿","Iuml":"Ï","iuml":"ï","laquo":"«","lt":"<","LT":"<","macr":"¯","micro":"µ","middot":"·","nbsp":" ","not":"¬","Ntilde":"Ñ","ntilde":"ñ","Oacute":"Ó","oacute":"ó","Ocirc":"Ô","ocirc":"ô","Ograve":"Ò","ograve":"ò","ordf":"ª","ordm":"º","Oslash":"Ø","oslash":"ø","Otilde":"Õ","otilde":"õ","Ouml":"Ö","ouml":"ö","para":"¶","plusmn":"±","pound":"£","quot":"\"","QUOT":"\"","raquo":"»","reg":"®","REG":"®","sect":"§","shy":"­","sup1":"¹","sup2":"²","sup3":"³","szlig":"ß","THORN":"Þ","thorn":"þ","times":"×","Uacute":"Ú","uacute":"ú","Ucirc":"Û","ucirc":"û","Ugrave":"Ù","ugrave":"ù","uml":"¨","Uuml":"Ü","uuml":"ü","Yacute":"Ý","yacute":"ý","yen":"¥","yuml":"ÿ"};
 
 /***/ }),
-/* 74 */
+/* 75 */
 /***/ (function(module, exports, __webpack_require__) {
 
 var decodeMap = __webpack_require__(243);
@@ -19721,14 +19762,14 @@ function decodeCodePoint(codePoint){
 
 
 /***/ }),
-/* 75 */
+/* 76 */
 /***/ (function(module, exports, __webpack_require__) {
 
 module.exports = Tokenizer;
 
-var decodeCodePoint = __webpack_require__(74),
+var decodeCodePoint = __webpack_require__(75),
     entityMap = __webpack_require__(44),
-    legacyMap = __webpack_require__(73),
+    legacyMap = __webpack_require__(74),
     xmlMap    = __webpack_require__(43),
 
     i = 0,
@@ -20633,10 +20674,10 @@ Tokenizer.prototype._emitPartial = function(value){
 
 
 /***/ }),
-/* 76 */
+/* 77 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var Tokenizer = __webpack_require__(75);
+var Tokenizer = __webpack_require__(76);
 
 /*
 	Options:
@@ -20992,7 +21033,7 @@ module.exports = Parser;
 
 
 /***/ }),
-/* 77 */
+/* 78 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -21042,7 +21083,7 @@ var mutationAdpater = function mutationAdpater(mutation) {
 module.exports = mutationAdpater;
 
 /***/ }),
-/* 78 */
+/* 79 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -21594,7 +21635,7 @@ module.exports = {
 
 
 /***/ }),
-/* 79 */
+/* 80 */
 /***/ (function(module, exports) {
 
 // "lookup" algorithm http://tools.ietf.org/html/rfc4647#section-3.4
@@ -21615,7 +21656,7 @@ module.exports = function lookupClosestLocale (locale, available) {
 
 
 /***/ }),
-/* 80 */
+/* 81 */
 /***/ (function(module, exports) {
 
 /**
@@ -21701,7 +21742,7 @@ module.exports = {
 
 
 /***/ }),
-/* 81 */
+/* 82 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -21727,7 +21768,7 @@ var maybeFormatMessage = function maybeFormatMessage(maybeMessage, args, locale)
 module.exports = maybeFormatMessage;
 
 /***/ }),
-/* 82 */
+/* 83 */
 /***/ (function(module, exports) {
 
 var hex = {
@@ -21753,7 +21794,7 @@ module.exports = color;
 
 
 /***/ }),
-/* 83 */
+/* 84 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -21902,12 +21943,12 @@ var CentralDispatch = function (_SharedDispatch) {
 module.exports = new CentralDispatch();
 
 /***/ }),
-/* 84 */
+/* 85 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
-var ArrayReader = __webpack_require__(86);
+var ArrayReader = __webpack_require__(87);
 var utils = __webpack_require__(0);
 
 function Uint8ArrayReader(data) {
@@ -21931,7 +21972,7 @@ module.exports = Uint8ArrayReader;
 
 
 /***/ }),
-/* 85 */
+/* 86 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -22054,12 +22095,12 @@ module.exports = DataReader;
 
 
 /***/ }),
-/* 86 */
+/* 87 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
-var DataReader = __webpack_require__(85);
+var DataReader = __webpack_require__(86);
 var utils = __webpack_require__(0);
 
 function ArrayReader(data) {
@@ -22118,7 +22159,7 @@ module.exports = ArrayReader;
 
 
 /***/ }),
-/* 87 */
+/* 88 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -22126,10 +22167,10 @@ module.exports = ArrayReader;
 
 var utils = __webpack_require__(0);
 var support = __webpack_require__(9);
-var ArrayReader = __webpack_require__(86);
+var ArrayReader = __webpack_require__(87);
 var StringReader = __webpack_require__(264);
 var NodeBufferReader = __webpack_require__(263);
-var Uint8ArrayReader = __webpack_require__(84);
+var Uint8ArrayReader = __webpack_require__(85);
 
 /**
  * Create a reader adapted to the data.
@@ -22153,7 +22194,7 @@ module.exports = function (data) {
 
 
 /***/ }),
-/* 88 */
+/* 89 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -22167,7 +22208,7 @@ exports.DATA_DESCRIPTOR = "PK\x07\x08";
 
 
 /***/ }),
-/* 89 */
+/* 90 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -22242,7 +22283,7 @@ module.exports = {
 
 
 /***/ }),
-/* 90 */
+/* 91 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -22296,7 +22337,7 @@ module.exports = ZStream;
 
 
 /***/ }),
-/* 91 */
+/* 92 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -22488,7 +22529,7 @@ exports.utf8border = function (buf, max) {
 
 
 /***/ }),
-/* 92 */
+/* 93 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -22554,7 +22595,7 @@ module.exports = crc32;
 
 
 /***/ }),
-/* 93 */
+/* 94 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -22612,7 +22653,7 @@ module.exports = adler32;
 
 
 /***/ }),
-/* 94 */
+/* 95 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -22633,7 +22674,7 @@ exports.DEFLATE = __webpack_require__(278);
 
 
 /***/ }),
-/* 95 */
+/* 96 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -22664,7 +22705,7 @@ module.exports = Crc32Probe;
 
 
 /***/ }),
-/* 96 */
+/* 97 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -22700,7 +22741,7 @@ module.exports = DataLengthProbe;
 
 
 /***/ }),
-/* 97 */
+/* 98 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -22823,7 +22864,7 @@ module.exports = DataWorker;
 
 
 /***/ }),
-/* 98 */
+/* 99 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -22841,7 +22882,7 @@ exports.dosPermissions = null;
 
 
 /***/ }),
-/* 99 */
+/* 100 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -22850,7 +22891,7 @@ exports.dosPermissions = null;
 var utils = __webpack_require__(0);
 var ConvertWorker = __webpack_require__(282);
 var GenericWorker = __webpack_require__(4);
-var base64 = __webpack_require__(104);
+var base64 = __webpack_require__(105);
 var support = __webpack_require__(9);
 var external = __webpack_require__(27);
 
@@ -23061,7 +23102,7 @@ module.exports = StreamHelper;
 /* WEBPACK VAR INJECTION */}.call(this, __webpack_require__(5).Buffer))
 
 /***/ }),
-/* 100 */
+/* 101 */
 /***/ (function(module, exports, __webpack_require__) {
 
 var isObject = __webpack_require__(50)
@@ -23073,7 +23114,7 @@ module.exports = function(it){
 };
 
 /***/ }),
-/* 101 */
+/* 102 */
 /***/ (function(module, exports) {
 
 module.exports = function(exec){
@@ -23085,7 +23126,7 @@ module.exports = function(exec){
 };
 
 /***/ }),
-/* 102 */
+/* 103 */
 /***/ (function(module, exports, __webpack_require__) {
 
 // optional / simple context binding
@@ -23110,14 +23151,14 @@ module.exports = function(fn, that, length){
 };
 
 /***/ }),
-/* 103 */
+/* 104 */
 /***/ (function(module, exports) {
 
 var core = module.exports = {version: '2.3.0'};
 if(typeof __e == 'number')__e = core; // eslint-disable-line no-undef
 
 /***/ }),
-/* 104 */
+/* 105 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -23230,7 +23271,7 @@ exports.decode = function(input) {
 
 
 /***/ }),
-/* 105 */
+/* 106 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -23450,7 +23491,7 @@ function done(stream, er, data) {
 }
 
 /***/ }),
-/* 106 */
+/* 107 */
 /***/ (function(module, exports, __webpack_require__) {
 
 /* WEBPACK VAR INJECTION */(function(global) {var scope = (typeof global !== "undefined" && global) ||
@@ -23520,7 +23561,7 @@ exports.clearImmediate = (typeof self !== "undefined" && self.clearImmediate) ||
 /* WEBPACK VAR INJECTION */}.call(this, __webpack_require__(1)))
 
 /***/ }),
-/* 107 */
+/* 108 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -23600,14 +23641,14 @@ module.exports = {
 };
 
 /***/ }),
-/* 108 */
+/* 109 */
 /***/ (function(module, exports, __webpack_require__) {
 
 module.exports = __webpack_require__(12).EventEmitter;
 
 
 /***/ }),
-/* 109 */
+/* 110 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -23642,7 +23683,7 @@ var pna = __webpack_require__(38);
 module.exports = Readable;
 
 /*<replacement>*/
-var isArray = __webpack_require__(112);
+var isArray = __webpack_require__(113);
 /*</replacement>*/
 
 /*<replacement>*/
@@ -23660,7 +23701,7 @@ var EElistenerCount = function (emitter, type) {
 /*</replacement>*/
 
 /*<replacement>*/
-var Stream = __webpack_require__(108);
+var Stream = __webpack_require__(109);
 /*</replacement>*/
 
 /*<replacement>*/
@@ -23692,7 +23733,7 @@ if (debugUtil && debugUtil.debuglog) {
 /*</replacement>*/
 
 var BufferList = __webpack_require__(307);
-var destroyImpl = __webpack_require__(107);
+var destroyImpl = __webpack_require__(108);
 var StringDecoder;
 
 util.inherits(Readable, Stream);
@@ -24633,7 +24674,7 @@ function indexOf(xs, x) {
 /* WEBPACK VAR INJECTION */}.call(this, __webpack_require__(1), __webpack_require__(20)))
 
 /***/ }),
-/* 110 */
+/* 111 */
 /***/ (function(module, exports, __webpack_require__) {
 
 // Copyright Joyent, Inc. and other Node contributors.
@@ -24766,7 +24807,7 @@ Stream.prototype.pipe = function(dest, options) {
 
 
 /***/ }),
-/* 111 */
+/* 112 */
 /***/ (function(module, exports, __webpack_require__) {
 
 /*
@@ -24777,11 +24818,11 @@ Stream.prototype.pipe = function(dest, options) {
  * reduce the final size of the bundle (only one stream implementation, not
  * two).
  */
-module.exports = __webpack_require__(110);
+module.exports = __webpack_require__(111);
 
 
 /***/ }),
-/* 112 */
+/* 113 */
 /***/ (function(module, exports) {
 
 var toString = {}.toString;
@@ -24792,7 +24833,6 @@ module.exports = Array.isArray || function (arr) {
 
 
 /***/ }),
-/* 113 */,
 /* 114 */,
 /* 115 */,
 /* 116 */,
@@ -24806,7 +24846,8 @@ module.exports = Array.isArray || function (arr) {
 /* 124 */,
 /* 125 */,
 /* 126 */,
-/* 127 */
+/* 127 */,
+/* 128 */
 /***/ (function(module, exports) {
 
 /* canvas-toBlob.js
@@ -24937,7 +24978,7 @@ if (HTMLCanvasElement && (!canvas_proto.toBlob || !canvas_proto.toBlobHD)) {
 
 
 /***/ }),
-/* 128 */
+/* 129 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -24999,55 +25040,55 @@ module.exports = {
 };
 
 /***/ }),
-/* 129 */
+/* 130 */
 /***/ (function(module) {
 
 module.exports = {"$id":"https://scratch.mit.edu/sprite3_schema.json","$schema":"http://json-schema.org/schema#","description":"Scratch 3.0 Sprite Schema","type":"object","allOf":[{"$ref":"sb3_definitions.json#/definitions/sprite"},{"$ref":"sb3_definitions.json#/definitions/target"}]};
 
 /***/ }),
-/* 130 */
+/* 131 */
 /***/ (function(module) {
 
 module.exports = {"$id":"https://scratch.mit.edu/sprite2_schema.json","description":"Scratch 2.0 project schema","type":"object","allOf":[{"$ref":"sb2_definitions.json#/definitions/sprite_object"},{"type":"object","properties":{"scratchX":{"type":"number"},"scratchY":{"type":"number"},"scale":{"type":"number"},"direction":{"type":"number"},"rotationStyle":{"type":"string"},"isDraggable":{"type":"boolean"},"indexInLibrary":{"type":"number"},"visible":{"type":"boolean"},"spriteInfo":{"type":"object"}}}]};
 
 /***/ }),
-/* 131 */
+/* 132 */
 /***/ (function(module) {
 
 module.exports = {"$id":"https://scratch.mit.edu/sb3_schema.json","$schema":"http://json-schema.org/schema#","description":"Scratch 3.0 Project Schema","type":"object","properties":{"meta":{"type":"object","properties":{"semver":{"type":"string","pattern":"^(3\\.[0-9]+\\.[0-9]+)$"},"vm":{"type":"string","pattern":"^([0-9]+\\.[0-9]+\\.[0-9]+)($|-)"},"agent":{"type":"string"}},"required":["semver"]},"targets":{"type":"array","items":[{"allOf":[{"$ref":"sb3_definitions.json#/definitions/stage"},{"$ref":"sb3_definitions.json#/definitions/target"}]}],"additionalItems":{"allOf":[{"$ref":"sb3_definitions.json#/definitions/sprite"},{"$ref":"sb3_definitions.json#/definitions/target"}]}}},"required":["meta","targets"]};
 
 /***/ }),
-/* 132 */
+/* 133 */
 /***/ (function(module) {
 
 module.exports = {"$id":"https://scratch.mit.edu/sb2_schema.json","$schema":"http://json-schema.org/schema#","description":"Scratch 2.0 project schema","type":"object","allOf":[{"$ref":"sb2_definitions.json#/definitions/stage_object"},{"type":"object","properties":{"info":{"type":"object","properties":{"flashVersion":{"type":"string"},"swfVersion":{"type":"string"},"userAgent":{"type":"string"},"videoOn":{"type":"boolean"},"savedExtensions":{"type":"array","properties":{"extensionName":{"type":"string"},"blockSpecs":{"type":"array"},"menus":{"type":"object"},"javascriptURL":{"type":"string"}},"required":["extensionName","blockSpecs","menus","javascriptURL"]}}}}}]};
 
 /***/ }),
-/* 133 */
+/* 134 */
 /***/ (function(module) {
 
 module.exports = {"$id":"https://scratch.mit.edu/sb3_definitions.json","$schema":"http://json-schema.org/schema#","description":"Scratch 3.0 Project and Sprite Schema Definitions","definitions":{"optionalString":{"oneOf":[{"type":"string"},{"type":"null"}]},"boolOrBoolString":{"oneOf":[{"type":"string","enum":["true","false"]},{"type":"boolean"}]},"stringOrNumber":{"oneOf":[{"type":"string"},{"type":"number"}]},"scalarVal":{"oneOf":[{"$ref":"#/definitions/stringOrNumber"},{"type":"boolean"}]},"assetId":{"type":"string","pattern":"^[a-fA-F0-9]{32}$"},"costume":{"type":"object","properties":{"assetId":{"$ref":"#/definitions/assetId"},"bitmapResolution":{"type":"integer"},"dataFormat":{"type":"string","enum":["png","svg","jpeg","jpg","bmp","gif"]},"md5ext":{"type":"string","pattern":"^[a-fA-F0-9]{32}\\.[a-zA-Z]+$"},"name":{"type":"string"},"rotationCenterX":{"type":"number","description":"This property is not required, but is highly recommended."},"rotationCenterY":{"type":"number","description":"This property is not required, but is highly recommended."}},"required":["assetId","dataFormat","name"]},"sound":{"type":"object","properties":{"assetId":{"$ref":"#/definitions/assetId"},"dataFormat":{"type":"string","enum":["wav","wave","mp3"]},"md5ext":{"type":"string","pattern":"^[a-fA-F0-9]{32}\\.[a-zA-Z0-9]+$"},"name":{"type":"string"},"rate":{"type":"integer"},"sampleCount":{"type":"integer"}},"required":["assetId","dataFormat","name"]},"scalar_variable":{"type":"array","items":[{"type":"string","description":"name of the variable"},{"$ref":"#/definitions/scalarVal","description":"value of the variable"}],"additionalItems":{"type":"boolean","enum":[true],"description":"Whether this is a cloud variable"},"maxItems":3},"list":{"type":"array","items":[{"type":"string","description":"name of the list"},{"type":"array","description":"contents of the list","items":{"$ref":"#/definitions/scalarVal"}}],"additionalItems":false},"broadcast_message":{"type":"string","description":"the message being broadcasted"},"num_primitive":{"type":"array","items":[{"type":"number","enum":[4,5,6,7,8]},{"$ref":"#/definitions/stringOrNumber"}],"additionalItems":false},"color_primitive":{"type":"array","items":[{"type":"number","enum":[9]},{"type":"string","pattern":"^#[a-fA-F0-9]{6}$"}],"additionalItems":false},"text_primitive":{"type":"array","items":[{"type":"number","enum":[10]},{"$ref":"#/definitions/stringOrNumber"}],"additionalItems":false},"broadcast_primitive":{"type":"array","items":[{"type":"number","enum":[11]},{"type":"string","description":"broadcast message"},{"type":"string","description":"broadcast message id"}],"additionalItems":false},"variable_primitive":{"type":"array","items":[{"type":"number","enum":[12]},{"type":"string","description":"variable name"},{"type":"string","description":"variable id"}],"additionalItems":{"type":"number"},"minItems":3,"maxItems":5},"list_primitive":{"type":"array","items":[{"type":"number","enum":[13]},{"type":"string","description":"list name"},{"type":"string","description":"list id"}],"additionalItems":{"type":"number"},"minItems":3,"maxItems":5},"topLevelPrimitive":{"oneOf":[{"$ref":"#/definitions/variable_primitive"},{"$ref":"#/definitions/list_primitive"}]},"inputPrimitive":{"oneOf":[{"$ref":"#/definitions/num_primitive"},{"$ref":"#/definitions/color_primitive"},{"$ref":"#/definitions/text_primitive"},{"$ref":"#/definitions/broadcast_primitive"},{"$ref":"#/definitions/variable_primitive"},{"$ref":"#/definitions/list_primitive"}]},"block":{"type":"object","properties":{"opcode":{"type":"string"},"inputs":{"type":"object","additionalProperties":{"type":"array","items":[{"type":"number","enum":[1,2,3],"description":"1 = unobscured shadow, 2 = no shadow, 3 = obscured shadow"}],"additionalItems":{"oneOf":[{"$ref":"#/definitions/optionalString"},{"$ref":"#/definitions/inputPrimitive"}]}}},"fields":{"type":"object"},"next":{"$ref":"#/definitions/optionalString"},"topLevel":{"type":"boolean"},"parent":{"$ref":"#/definitions/optionalString"},"shadow":{"type":"boolean"},"x":{"type":"number"},"y":{"type":"number"},"mutation":{"type":"object","properties":{"tagName":{"type":"string","enum":["mutation"]},"children":{"type":"array"},"proccode":{"type":"string"},"argumentids":{"type":"string"},"warp":{"$ref":"#/definitions/boolOrBoolString"},"hasnext":{"$ref":"#/definitions/boolOrBoolString"}}}},"required":["opcode"]},"stage":{"type":"object","description":"Description of property (and/or property/value pairs) that are unique to the stage.","properties":{"name":{"type":"string","enum":["Stage"]},"isStage":{"type":"boolean","enum":[true]},"tempo":{"type":"number"},"videoTransparency":{"type":"number"},"videoState":{"type":"string","enum":["on","off","on-flipped"]}},"required":["name","isStage"]},"sprite":{"type":"object","description":"Description of property (and/or property/value pairs) for sprites.","properties":{"name":{"type":"string","not":{"enum":["Stage","stage"]}},"isStage":{"type":"boolean","enum":[false]},"visible":{"type":"boolean"},"x":{"type":"number"},"y":{"type":"number"},"size":{"type":"number"},"direction":{"type":"number"},"draggable":{"type":"boolean"},"rotationStyle":{"type":"string","enum":["all around","don't rotate","left-right"]}},"required":["name","isStage"]},"target":{"type":"object","description":"Properties common to both Scratch 3.0 Stage and Sprite","properties":{"currentCostume":{"type":"integer","minimum":0},"blocks":{"type":"object","additionalProperties":{"oneOf":[{"$ref":"#/definitions/block"},{"$ref":"#/definitions/topLevelPrimitive"}]}},"variables":{"type":"object","additionalProperties":{"$ref":"#/definitions/scalar_variable"}},"lists":{"type":"object","additionalProperties":{"$ref":"#/definitions/list"}},"broadcasts":{"type":"object","additionalProperties":{"$ref":"#/definitions/broadcast_message"}},"costumes":{"type":"array","items":{"$ref":"#/definitions/costume"},"minItems":1,"uniqueItems":true},"sounds":{"type":"array","items":{"$ref":"#/definitions/sound"},"uniqueItems":true},"volume":{"type":"number"}},"required":["variables","costumes","sounds","blocks"]}}};
 
 /***/ }),
-/* 134 */
+/* 135 */
 /***/ (function(module) {
 
 module.exports = {"$id":"https://scratch.mit.edu/sb2_definitions.json","$schema":"http://json-schema.org/schema#","description":"Scratch 2.0 Project and Sprite Definitions","definitions":{"scripts":{"type":"array"},"sounds":{"type":"array","properties":{"soundName":{"type":"string"},"soundID":{"type":"number"},"md5":{"type":"string"},"sampleCount":{"type":"number"},"rate":{"type":"number"},"format":{"type":"string"}},"required":["soundName","soundID","md5","sampleCount","rate","format"]},"costumes":{"type":"array","properties":{"costumeName":{"type":"string"},"baseLayerID":{"type":"number"},"baseLayerMD5":{"type":"string"},"bitmapResolution":{"type":"number"},"rotationCenterX":{"type":"number"},"rotationCenterY":{"type":"number"}},"required":["costumeName","baseLayerID","baseLayerMD5","bitmapResolution","rotationCenterX","rotationCenterY"]},"variables":{"type":"array","properties":{"name":{"type":"string"},"value":{"type":"string"},"isPersistent":{"type":"boolean"}},"required":["name","value"]},"sprite_object":{"type":"object","properties":{"objName":{"type":"string"},"variables":{"$ref":"#/definitions/variables"},"sounds":{"$ref":"#/definitions/sounds"},"costumes":{"$ref":"#/definitions/costumes"},"currentCostumeIndex":{"type":"number","minimum":0}},"additionalProperties":true,"required":["objName","costumes","currentCostumeIndex"]},"stage_child":{"type":"object","description":"A child of the stage, can be a sprite or a monitor"},"stage_object":{"type":"object","properties":{"objName":{"type":"string"},"variables":{"$ref":"#/definitions/variables"},"lists":{"type":"array","properties":{"listName":{"type":"string"},"contents":{"type":"array"},"isPersistent":{"type":"boolean"},"x":{"type":"number"},"y":{"type":"number"},"width":{"type":"number"},"height":{"type":"number"},"visible":{"type":"boolean"}},"required":["listName","contents"]},"scripts":{"$ref":"#/definitions/scripts"},"sounds":{"$ref":"#/definitions/sounds"},"costumes":{"$ref":"#/definitions/costumes"},"currentCostumeIndex":{"type":"number","minimum":0},"penLayerMD5":{"oneOf":[{"type":"string"},{"type":"null"}]},"penLayerID":{"type":"number","minimum":-1},"tempoBPM":{"type":"number"},"videoAlpha":{"type":"number","minimum":0,"maximum":1},"children":{"type":"array","items":{"$ref":"#/definitions/stage_child"}}},"required":["objName","costumes","currentCostumeIndex","penLayerMD5","tempoBPM","children"]}}};
 
 /***/ }),
-/* 135 */
+/* 136 */
 /***/ (function(module) {
 
 module.exports = {"$schema":"http://json-schema.org/draft-07/schema#","$id":"http://json-schema.org/draft-07/schema#","title":"Core schema meta-schema","definitions":{"schemaArray":{"type":"array","minItems":1,"items":{"$ref":"#"}},"nonNegativeInteger":{"type":"integer","minimum":0},"nonNegativeIntegerDefault0":{"allOf":[{"$ref":"#/definitions/nonNegativeInteger"},{"default":0}]},"simpleTypes":{"enum":["array","boolean","integer","null","number","object","string"]},"stringArray":{"type":"array","items":{"type":"string"},"uniqueItems":true,"default":[]}},"type":["object","boolean"],"properties":{"$id":{"type":"string","format":"uri-reference"},"$schema":{"type":"string","format":"uri"},"$ref":{"type":"string","format":"uri-reference"},"$comment":{"type":"string"},"title":{"type":"string"},"description":{"type":"string"},"default":true,"readOnly":{"type":"boolean","default":false},"examples":{"type":"array","items":true},"multipleOf":{"type":"number","exclusiveMinimum":0},"maximum":{"type":"number"},"exclusiveMaximum":{"type":"number"},"minimum":{"type":"number"},"exclusiveMinimum":{"type":"number"},"maxLength":{"$ref":"#/definitions/nonNegativeInteger"},"minLength":{"$ref":"#/definitions/nonNegativeIntegerDefault0"},"pattern":{"type":"string","format":"regex"},"additionalItems":{"$ref":"#"},"items":{"anyOf":[{"$ref":"#"},{"$ref":"#/definitions/schemaArray"}],"default":true},"maxItems":{"$ref":"#/definitions/nonNegativeInteger"},"minItems":{"$ref":"#/definitions/nonNegativeIntegerDefault0"},"uniqueItems":{"type":"boolean","default":false},"contains":{"$ref":"#"},"maxProperties":{"$ref":"#/definitions/nonNegativeInteger"},"minProperties":{"$ref":"#/definitions/nonNegativeIntegerDefault0"},"required":{"$ref":"#/definitions/stringArray"},"additionalProperties":{"$ref":"#"},"definitions":{"type":"object","additionalProperties":{"$ref":"#"},"default":{}},"properties":{"type":"object","additionalProperties":{"$ref":"#"},"default":{}},"patternProperties":{"type":"object","additionalProperties":{"$ref":"#"},"propertyNames":{"format":"regex"},"default":{}},"dependencies":{"type":"object","additionalProperties":{"anyOf":[{"$ref":"#"},{"$ref":"#/definitions/stringArray"}]}},"propertyNames":{"$ref":"#"},"const":true,"enum":{"type":"array","items":true,"minItems":1,"uniqueItems":true},"type":{"anyOf":[{"$ref":"#/definitions/simpleTypes"},{"type":"array","items":{"$ref":"#/definitions/simpleTypes"},"minItems":1,"uniqueItems":true}]},"format":{"type":"string"},"contentMediaType":{"type":"string"},"contentEncoding":{"type":"string"},"if":{"$ref":"#"},"then":{"$ref":"#"},"else":{"$ref":"#"},"allOf":{"$ref":"#/definitions/schemaArray"},"anyOf":{"$ref":"#/definitions/schemaArray"},"oneOf":{"$ref":"#/definitions/schemaArray"},"not":{"$ref":"#"}},"default":true};
 
 /***/ }),
-/* 136 */
+/* 137 */
 /***/ (function(module) {
 
 module.exports = {"$schema":"http://json-schema.org/draft-07/schema#","$id":"https://raw.githubusercontent.com/epoberezkin/ajv/master/lib/refs/data.json#","description":"Meta-schema for $data reference (JSON Schema extension proposal)","type":"object","required":["$data"],"properties":{"$data":{"type":"string","anyOf":[{"format":"relative-json-pointer"},{"format":"json-pointer"}]}},"additionalProperties":false};
 
 /***/ }),
-/* 137 */
+/* 138 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -25280,14 +25321,14 @@ module.exports = function generate_custom(it, $keyword, $ruleType) {
 
 
 /***/ }),
-/* 138 */
+/* 139 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 
 var IDENTIFIER = /^[a-z_$][a-z0-9_$-]*$/i;
-var customRuleCode = __webpack_require__(137);
+var customRuleCode = __webpack_require__(138);
 
 module.exports = {
   add: addKeyword,
@@ -25422,7 +25463,7 @@ function removeKeyword(keyword) {
 
 
 /***/ }),
-/* 139 */
+/* 140 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -25519,7 +25560,7 @@ function compileAsync(schema, meta, callback) {
 
 
 /***/ }),
-/* 140 */
+/* 141 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -25575,7 +25616,7 @@ module.exports = function (metaSchema, keywordsJsonPointers) {
 
 
 /***/ }),
-/* 141 */
+/* 142 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -25667,7 +25708,7 @@ module.exports = function generate_uniqueItems(it, $keyword, $ruleType) {
 
 
 /***/ }),
-/* 142 */
+/* 143 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -25942,7 +25983,7 @@ module.exports = function generate_required(it, $keyword, $ruleType) {
 
 
 /***/ }),
-/* 143 */
+/* 144 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -26030,7 +26071,7 @@ module.exports = function generate_propertyNames(it, $keyword, $ruleType) {
 
 
 /***/ }),
-/* 144 */
+/* 145 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -26365,7 +26406,7 @@ module.exports = function generate_properties(it, $keyword, $ruleType) {
 
 
 /***/ }),
-/* 145 */
+/* 146 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -26446,7 +26487,7 @@ module.exports = function generate_pattern(it, $keyword, $ruleType) {
 
 
 /***/ }),
-/* 146 */
+/* 147 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -26525,7 +26566,7 @@ module.exports = function generate_oneOf(it, $keyword, $ruleType) {
 
 
 /***/ }),
-/* 147 */
+/* 148 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -26615,7 +26656,7 @@ module.exports = function generate_not(it, $keyword, $ruleType) {
 
 
 /***/ }),
-/* 148 */
+/* 149 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -26698,7 +26739,7 @@ module.exports = function generate_multipleOf(it, $keyword, $ruleType) {
 
 
 /***/ }),
-/* 149 */
+/* 150 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -26845,7 +26886,7 @@ module.exports = function generate_items(it, $keyword, $ruleType) {
 
 
 /***/ }),
-/* 150 */
+/* 151 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -26955,7 +26996,7 @@ module.exports = function generate_if(it, $keyword, $ruleType) {
 
 
 /***/ }),
-/* 151 */
+/* 152 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -27111,7 +27152,7 @@ module.exports = function generate_format(it, $keyword, $ruleType) {
 
 
 /***/ }),
-/* 152 */
+/* 153 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -27183,7 +27224,7 @@ module.exports = function generate_enum(it, $keyword, $ruleType) {
 
 
 /***/ }),
-/* 153 */
+/* 154 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -27357,7 +27398,7 @@ module.exports = function generate_dependencies(it, $keyword, $ruleType) {
 
 
 /***/ }),
-/* 154 */
+/* 155 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -27445,7 +27486,7 @@ module.exports = function generate_contains(it, $keyword, $ruleType) {
 
 
 /***/ }),
-/* 155 */
+/* 156 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -27507,7 +27548,7 @@ module.exports = function generate_const(it, $keyword, $ruleType) {
 
 
 /***/ }),
-/* 156 */
+/* 157 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -27528,7 +27569,7 @@ module.exports = function generate_comment(it, $keyword, $ruleType) {
 
 
 /***/ }),
-/* 157 */
+/* 158 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -27608,7 +27649,7 @@ module.exports = function generate_anyOf(it, $keyword, $ruleType) {
 
 
 /***/ }),
-/* 158 */
+/* 159 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -27658,7 +27699,7 @@ module.exports = function generate_allOf(it, $keyword, $ruleType) {
 
 
 /***/ }),
-/* 159 */
+/* 160 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -27788,7 +27829,7 @@ module.exports = function generate_ref(it, $keyword, $ruleType) {
 
 
 /***/ }),
-/* 160 */
+/* 161 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -27796,17 +27837,17 @@ module.exports = function generate_ref(it, $keyword, $ruleType) {
 
 //all requires must be explicit because browserify won't work with dynamic requires
 module.exports = {
-  '$ref': __webpack_require__(159),
-  allOf: __webpack_require__(158),
-  anyOf: __webpack_require__(157),
-  '$comment': __webpack_require__(156),
-  const: __webpack_require__(155),
-  contains: __webpack_require__(154),
-  dependencies: __webpack_require__(153),
-  'enum': __webpack_require__(152),
-  format: __webpack_require__(151),
-  'if': __webpack_require__(150),
-  items: __webpack_require__(149),
+  '$ref': __webpack_require__(160),
+  allOf: __webpack_require__(159),
+  anyOf: __webpack_require__(158),
+  '$comment': __webpack_require__(157),
+  const: __webpack_require__(156),
+  contains: __webpack_require__(155),
+  dependencies: __webpack_require__(154),
+  'enum': __webpack_require__(153),
+  format: __webpack_require__(152),
+  'if': __webpack_require__(151),
+  items: __webpack_require__(150),
   maximum: __webpack_require__(59),
   minimum: __webpack_require__(59),
   maxItems: __webpack_require__(58),
@@ -27815,26 +27856,26 @@ module.exports = {
   minLength: __webpack_require__(57),
   maxProperties: __webpack_require__(56),
   minProperties: __webpack_require__(56),
-  multipleOf: __webpack_require__(148),
-  not: __webpack_require__(147),
-  oneOf: __webpack_require__(146),
-  pattern: __webpack_require__(145),
-  properties: __webpack_require__(144),
-  propertyNames: __webpack_require__(143),
-  required: __webpack_require__(142),
-  uniqueItems: __webpack_require__(141),
+  multipleOf: __webpack_require__(149),
+  not: __webpack_require__(148),
+  oneOf: __webpack_require__(147),
+  pattern: __webpack_require__(146),
+  properties: __webpack_require__(145),
+  propertyNames: __webpack_require__(144),
+  required: __webpack_require__(143),
+  uniqueItems: __webpack_require__(142),
   validate: __webpack_require__(60)
 };
 
 
 /***/ }),
-/* 161 */
+/* 162 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 
-var ruleModules = __webpack_require__(160)
+var ruleModules = __webpack_require__(161)
   , toHash = __webpack_require__(13).toHash;
 
 module.exports = function rules() {
@@ -27901,7 +27942,7 @@ module.exports = function rules() {
 
 
 /***/ }),
-/* 162 */
+/* 163 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -28057,7 +28098,7 @@ function regex(str) {
 
 
 /***/ }),
-/* 163 */
+/* 164 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -28090,7 +28131,7 @@ Cache.prototype.clear = function Cache_clear() {
 
 
 /***/ }),
-/* 164 */
+/* 165 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -28178,7 +28219,7 @@ function escapeJsonPtr(str) {
 
 
 /***/ }),
-/* 165 */
+/* 166 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -28205,7 +28246,7 @@ module.exports = function ucs2length(str) {
 
 
 /***/ }),
-/* 166 */
+/* 167 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -28228,7 +28269,7 @@ module.exports = {
 
 
 /***/ }),
-/* 167 */
+/* 168 */
 /***/ (function(module, exports, __webpack_require__) {
 
 /* WEBPACK VAR INJECTION */(function(module, global) {var __WEBPACK_AMD_DEFINE_RESULT__;/*! https://mths.be/punycode v1.4.1 by @mathias */
@@ -28754,7 +28795,7 @@ module.exports = {
 /* WEBPACK VAR INJECTION */}.call(this, __webpack_require__(63)(module), __webpack_require__(1)))
 
 /***/ }),
-/* 168 */
+/* 169 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -28781,8 +28822,8 @@ module.exports = {
 
 
 
-var punycode = __webpack_require__(167);
-var util = __webpack_require__(166);
+var punycode = __webpack_require__(168);
+var util = __webpack_require__(167);
 
 exports.parse = urlParse;
 exports.resolve = urlResolve;
@@ -29493,7 +29534,7 @@ Url.prototype.parseHost = function() {
 
 
 /***/ }),
-/* 169 */
+/* 170 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -29877,20 +29918,20 @@ function vars(arr, statement) {
 
 
 /***/ }),
-/* 170 */
+/* 171 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 
-var compileSchema = __webpack_require__(169)
+var compileSchema = __webpack_require__(170)
   , resolve = __webpack_require__(41)
-  , Cache = __webpack_require__(163)
+  , Cache = __webpack_require__(164)
   , SchemaObject = __webpack_require__(62)
   , stableStringify = __webpack_require__(61)
-  , formats = __webpack_require__(162)
-  , rules = __webpack_require__(161)
-  , $dataMetaSchema = __webpack_require__(140)
+  , formats = __webpack_require__(163)
+  , rules = __webpack_require__(162)
+  , $dataMetaSchema = __webpack_require__(141)
   , util = __webpack_require__(13);
 
 module.exports = Ajv;
@@ -29908,8 +29949,8 @@ Ajv.prototype.errorsText = errorsText;
 Ajv.prototype._addSchema = _addSchema;
 Ajv.prototype._compile = _compile;
 
-Ajv.prototype.compileAsync = __webpack_require__(139);
-var customKeyword = __webpack_require__(138);
+Ajv.prototype.compileAsync = __webpack_require__(140);
+var customKeyword = __webpack_require__(139);
 Ajv.prototype.addKeyword = customKeyword.add;
 Ajv.prototype.getKeyword = customKeyword.get;
 Ajv.prototype.removeKeyword = customKeyword.remove;
@@ -30323,11 +30364,11 @@ function addFormat(name, format) {
 function addDraft6MetaSchema(self) {
   var $dataSchema;
   if (self._opts.$data) {
-    $dataSchema = __webpack_require__(136);
+    $dataSchema = __webpack_require__(137);
     self.addMetaSchema($dataSchema, $dataSchema.$id, true);
   }
   if (self._opts.meta === false) return;
-  var metaSchema = __webpack_require__(135);
+  var metaSchema = __webpack_require__(136);
   if (self._opts.$data) metaSchema = $dataMetaSchema(metaSchema, META_SUPPORT_DATA);
   self.addMetaSchema(metaSchema, META_SCHEMA_ID, true);
   self._refs['http://json-schema.org/schema'] = META_SCHEMA_ID;
@@ -30381,16 +30422,16 @@ function noop() {}
 
 
 /***/ }),
-/* 171 */
+/* 172 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var ajv = __webpack_require__(170)();
-var sb2Defs = __webpack_require__(134);
-var sb3Defs = __webpack_require__(133);
-var sb2Schema = __webpack_require__(132);
-var sb3Schema = __webpack_require__(131);
-var sprite2Schema = __webpack_require__(130);
-var sprite3Schema = __webpack_require__(129);
+var ajv = __webpack_require__(171)();
+var sb2Defs = __webpack_require__(135);
+var sb3Defs = __webpack_require__(134);
+var sb2Schema = __webpack_require__(133);
+var sb3Schema = __webpack_require__(132);
+var sprite2Schema = __webpack_require__(131);
+var sprite3Schema = __webpack_require__(130);
 ajv.addSchema(sb2Defs).addSchema(sb3Defs);
 
 module.exports = function (isSprite, input, callback) {
@@ -30421,7 +30462,7 @@ module.exports = function (isSprite, input, callback) {
 
 
 /***/ }),
-/* 172 */
+/* 173 */
 /***/ (function(module, exports) {
 
 /**
@@ -30445,7 +30486,7 @@ module.exports = function (input, callback) {
 
 
 /***/ }),
-/* 173 */
+/* 174 */
 /***/ (function(module, exports) {
 
 /*
@@ -32147,7 +32188,7 @@ module.exports = function (input, callback) {
 
 
 /***/ }),
-/* 174 */
+/* 175 */
 /***/ (function(module, exports) {
 
 /*
@@ -32965,21 +33006,21 @@ module.exports = function (input, callback) {
 
 
 /***/ }),
-/* 175 */
+/* 176 */
 /***/ (function(module, exports, __webpack_require__) {
 
 (function () {
 	'use strict';
 
 	module.exports = {
-		'inflate': __webpack_require__(174),
-		'deflate': __webpack_require__(173)
+		'inflate': __webpack_require__(175),
+		'deflate': __webpack_require__(174)
 	};
 }());
 
 
 /***/ }),
-/* 176 */
+/* 177 */
 /***/ (function(module, exports) {
 
 (function () {
@@ -33086,14 +33127,14 @@ module.exports = function (input, callback) {
 
 
 /***/ }),
-/* 177 */
+/* 178 */
 /***/ (function(module, exports, __webpack_require__) {
 
 (function () {
 	'use strict';
 
-	var crc32 = __webpack_require__(176),
-		deflate = __webpack_require__(175),
+	var crc32 = __webpack_require__(177),
+		deflate = __webpack_require__(176),
 		// magic numbers marking this file as GZIP
 		ID1 = 0x1F,
 		ID2 = 0x8B,
@@ -33372,11 +33413,11 @@ module.exports = function (input, callback) {
 
 
 /***/ }),
-/* 178 */
+/* 179 */
 /***/ (function(module, exports, __webpack_require__) {
 
 /* WEBPACK VAR INJECTION */(function(Buffer) {var JSZip = __webpack_require__(54);
-var GZip = __webpack_require__(177);
+var GZip = __webpack_require__(178);
 
 /**
  * Unpacks a zip or gzip file.
@@ -33414,10 +33455,10 @@ module.exports = function (input, isGZip, isSprite, callback) {
 /* WEBPACK VAR INJECTION */}.call(this, __webpack_require__(5).Buffer))
 
 /***/ }),
-/* 179 */
+/* 180 */
 /***/ (function(module, exports, __webpack_require__) {
 
-/* WEBPACK VAR INJECTION */(function(Buffer) {var unzip = __webpack_require__(178);
+/* WEBPACK VAR INJECTION */(function(Buffer) {var unzip = __webpack_require__(179);
 
 /**
  * If input a buffer, transforms buffer into a UTF-8 string.
@@ -33473,7 +33514,7 @@ module.exports = function (input, isSprite, callback) {
 /* WEBPACK VAR INJECTION */}.call(this, __webpack_require__(5).Buffer))
 
 /***/ }),
-/* 180 */
+/* 181 */
 /***/ (function(module, exports, __webpack_require__) {
 
 /* WEBPACK VAR INJECTION */(function(setImmediate, process, global, module) {(function (global, factory) {
@@ -39071,17 +39112,17 @@ Object.defineProperty(exports, '__esModule', { value: true });
 
 })));
 
-/* WEBPACK VAR INJECTION */}.call(this, __webpack_require__(106).setImmediate, __webpack_require__(20), __webpack_require__(1), __webpack_require__(63)(module)))
+/* WEBPACK VAR INJECTION */}.call(this, __webpack_require__(107).setImmediate, __webpack_require__(20), __webpack_require__(1), __webpack_require__(63)(module)))
 
 /***/ }),
-/* 181 */
+/* 182 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var async = __webpack_require__(180);
+var async = __webpack_require__(181);
 
-var unpack = __webpack_require__(179);
-var parse = __webpack_require__(172);
-var validate = __webpack_require__(171);
+var unpack = __webpack_require__(180);
+var parse = __webpack_require__(173);
+var validate = __webpack_require__(172);
 
 /**
   * Unpacks, parses, validates, and analyzes Scratch projects. If successful,
@@ -39114,13 +39155,13 @@ module.exports = function (input, isSprite, callback) {
 
 
 /***/ }),
-/* 182 */
+/* 183 */
 /***/ (function(module) {
 
-module.exports = {"name":"scratch-vm","version":"0.1.0-prerelease.1525837283","description":"Virtual Machine for Scratch 3.0","author":"Massachusetts Institute of Technology","license":"BSD-3-Clause","homepage":"https://github.com/LLK/scratch-vm#readme","repository":{"type":"git","url":"git+ssh://git@github.com/LLK/scratch-vm.git","sha":"ac6e73c9478fe6df44336003624797c4a5e11fca"},"main":"./dist/node/scratch-vm.js","browser":"./dist/web/scratch-vm.js","scripts":{"build":"webpack --progress --colors --bail","coverage":"tap ./test/{unit,integration}/*.js --coverage --coverage-report=lcov","deploy":"touch playground/.nojekyll && gh-pages -t -d playground -m \"Build for $(git log --pretty=format:%H -n1)\"","extract:pen":"mkdirp translations/pen && format-message extract --out-file translations/pen/en.json src/extensions/scratch3_pen/index.js","i18n:src":"npm run extract:pen","lint":"eslint . && format-message lint src/**/*.js","prepublish":"in-publish && npm run build || not-in-publish","start":"webpack-dev-server","tap":"tap ./test/{unit,integration}/*.js","tap:unit":"tap ./test/unit/*.js","tap:integration":"tap ./test/integration/*.js","test":"npm run lint && npm run tap","watch":"webpack --progress --colors --watch","version":"json -f package.json -I -e \"this.repository.sha = '$(git log -n1 --pretty=format:%H)'\""},"devDependencies":{"adm-zip":"0.4.7","arraybuffer-loader":"^1.0.3","babel-core":"^6.24.1","babel-eslint":"^8.0.1","babel-loader":"^7.0.0","babel-preset-env":"^1.6.1","canvas-toBlob":"1.0.0","copy-webpack-plugin":"^4.5.1","decode-html":"2.0.0","escape-html":"1.0.3","eslint":"^4.5.0","eslint-config-scratch":"^5.0.0","expose-loader":"0.7.5","file-loader":"^1.1.6","format-message":"5.2.1","format-message-cli":"5.2.1","gh-pages":"^1.1.0","highlightjs":"^9.8.0","htmlparser2":"3.9.2","immutable":"3.8.1","in-publish":"^2.0.0","json":"^9.0.4","jszip":"^3.1.5","lodash.defaultsdeep":"4.6.0","minilog":"3.1.0","nets":"3.2.0","pngjs":"^3.3.2","promise":"8.0.1","scratch-audio":"latest","scratch-blocks":"latest","scratch-parser":"^4.1.0","scratch-render":"latest","scratch-storage":"^0.4.0","script-loader":"0.7.2","socket.io-client":"2.0.4","stats.js":"^0.17.0","tap":"^11.0.1","text-encoding":"0.6.4","tiny-worker":"^2.1.1","webpack":"^4.8.0","webpack-cli":"^2.0.15","webpack-dev-server":"^3.1.3","worker-loader":"^1.1.1"}};
+module.exports = {"name":"scratch-vm","version":"0.1.0-prerelease.1525901935","description":"Virtual Machine for Scratch 3.0","author":"Massachusetts Institute of Technology","license":"BSD-3-Clause","homepage":"https://github.com/LLK/scratch-vm#readme","repository":{"type":"git","url":"git+ssh://git@github.com/LLK/scratch-vm.git","sha":"6ffc206d10dea516ba468d1378ce3a8e23fd2318"},"main":"./dist/node/scratch-vm.js","browser":"./dist/web/scratch-vm.js","scripts":{"build":"webpack --progress --colors --bail","coverage":"tap ./test/{unit,integration}/*.js --coverage --coverage-report=lcov","deploy":"touch playground/.nojekyll && gh-pages -t -d playground -m \"Build for $(git log --pretty=format:%H -n1)\"","extract:pen":"mkdirp translations/pen && format-message extract --out-file translations/pen/en.json src/extensions/scratch3_pen/index.js","i18n:src":"npm run extract:pen","lint":"eslint . && format-message lint src/**/*.js","prepublish":"in-publish && npm run build || not-in-publish","start":"webpack-dev-server","tap":"tap ./test/{unit,integration}/*.js","tap:unit":"tap ./test/unit/*.js","tap:integration":"tap ./test/integration/*.js","test":"npm run lint && npm run tap","watch":"webpack --progress --colors --watch","version":"json -f package.json -I -e \"this.repository.sha = '$(git log -n1 --pretty=format:%H)'\""},"devDependencies":{"adm-zip":"0.4.7","arraybuffer-loader":"^1.0.3","babel-core":"^6.24.1","babel-eslint":"^8.0.1","babel-loader":"^7.0.0","babel-preset-env":"^1.6.1","canvas-toBlob":"1.0.0","copy-webpack-plugin":"^4.5.1","decode-html":"2.0.0","escape-html":"1.0.3","eslint":"^4.5.0","eslint-config-scratch":"^5.0.0","expose-loader":"0.7.5","file-loader":"^1.1.6","format-message":"5.2.1","format-message-cli":"5.2.1","gh-pages":"^1.1.0","highlightjs":"^9.8.0","htmlparser2":"3.9.2","immutable":"3.8.1","in-publish":"^2.0.0","json":"^9.0.4","jszip":"^3.1.5","lodash.defaultsdeep":"4.6.0","minilog":"3.1.0","nets":"3.2.0","pngjs":"^3.3.2","promise":"8.0.1","scratch-audio":"latest","scratch-blocks":"latest","scratch-parser":"4.1.1","scratch-render":"latest","scratch-storage":"^0.4.0","script-loader":"0.7.2","socket.io-client":"2.0.4","stats.js":"^0.17.0","tap":"^11.0.1","text-encoding":"0.6.4","tiny-worker":"^2.1.1","webpack":"^4.8.0","webpack-cli":"^2.0.15","webpack-dev-server":"^3.1.3","worker-loader":"^1.1.1"}};
 
 /***/ }),
-/* 183 */
+/* 184 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -39132,7 +39173,7 @@ module.exports = {"name":"scratch-vm","version":"0.1.0-prerelease.1525837283","d
  * JSON and then generates all needed scratch-vm runtime structures.
  */
 
-var vmPackage = __webpack_require__(182);
+var vmPackage = __webpack_require__(183);
 var Blocks = __webpack_require__(16);
 var Sprite = __webpack_require__(65);
 var Variable = __webpack_require__(23);
@@ -40013,7 +40054,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 184 */
+/* 185 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -41129,6 +41170,16 @@ var specMap = {
             variableType: Variable.SCALAR_TYPE
         }]
     },
+    // Scratch 2 uses this alternative variable getter opcode only in monitors,
+    // blocks use the `readVariable` opcode above.
+    'getVar:': {
+        opcode: 'data_variable',
+        argMap: [{
+            type: 'field',
+            fieldName: 'VARIABLE',
+            variableType: Variable.SCALAR_TYPE
+        }]
+    },
     'setVar:to:': {
         opcode: 'data_setvariableto',
         argMap: [{
@@ -41450,7 +41501,7 @@ addExtensionOp(weDo2, 'getTilt', {
 module.exports = specMap;
 
 /***/ }),
-/* 185 */
+/* 186 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -41472,8 +41523,9 @@ var Color = __webpack_require__(34);
 var log = __webpack_require__(2);
 var uid = __webpack_require__(14);
 var StringUtil = __webpack_require__(17);
-var specMap = __webpack_require__(184);
+var specMap = __webpack_require__(185);
 var Variable = __webpack_require__(23);
+var MonitorRecord = __webpack_require__(71);
 
 var _require = __webpack_require__(29),
     loadCostume = _require.loadCostume;
@@ -41669,6 +41721,101 @@ var globalBroadcastMsgStateGenerator = function () {
 }();
 
 /**
+ * Parse a single monitor object and create all its in-memory VM objects.
+ * @param {!object} object - From-JSON "Monitor object"
+ * @param {!Runtime} runtime - (in/out) Runtime object to load monitor info into.
+ * @param {!Array.<Target>} targets - Targets have already been parsed.
+ * @param {ImportedExtensionsInfo} extensions - (in/out) parsed extension information will be stored here.
+ */
+var parseMonitorObject = function parseMonitorObject(object, runtime, targets, extensions) {
+    var target = null;
+    // List blocks don't come in with their target name set.
+    // Find the target by searching for a target with matching variable name/type.
+    if (!object.hasOwnProperty('target')) {
+        var _loop = function _loop(i) {
+            var currTarget = targets[i];
+            var listVariables = Object.keys(currTarget.variables).filter(function (key) {
+                var variable = currTarget.variables[key];
+                return variable.type === Variable.LIST_TYPE && variable.name === object.listName;
+            });
+            if (listVariables.length > 0) {
+                target = currTarget; // Keep this target for later use
+                object.target = currTarget.getName(); // Set target name to normalize with other monitors
+            }
+        };
+
+        for (var i = 0; i < targets.length; i++) {
+            _loop(i);
+        }
+    }
+
+    // Get the target for this monitor, if not gotten above.
+    target = target || targets.filter(function (t) {
+        return t.getName() === object.target;
+    })[0];
+    if (!target) throw new Error('Cannot create monitor for target that cannot be found by name');
+
+    // Create var id getter to make block naming/parsing easier, variables already created.
+    var getVariableId = generateVariableIdGetter(target.id, false);
+    // eslint-disable-next-line no-use-before-define
+    var block = parseBlock([object.cmd, object.param], // Scratch 2 monitor blocks only have one param.
+    null, // `addBroadcastMsg`, not needed for monitor blocks.
+    getVariableId, extensions);
+
+    // Monitor blocks have special IDs to match the toolbox obtained from the getId
+    // function in the runtime.monitorBlocksInfo. Variable monitors, however,
+    // get their IDs from the variable id they reference.
+    if (object.cmd === 'getVar:' || object.cmd === 'contentsOfList:') {
+        block.id = getVariableId(object.param);
+    } else if (runtime.monitorBlockInfo.hasOwnProperty(block.opcode)) {
+        block.id = runtime.monitorBlockInfo[block.opcode].getId(target.id, object.param);
+    }
+
+    // Block needs a targetId if it is targetting something other than the stage
+    block.targetId = target.isStage ? null : target.id;
+
+    // Property required for running monitored blocks.
+    block.isMonitored = object.visible;
+
+    // Blocks can be created with children, flatten and add to monitorBlocks.
+    var newBlocks = flatten([block]);
+    for (var i = 0; i < newBlocks.length; i++) {
+        runtime.monitorBlocks.createBlock(newBlocks[i]);
+    }
+
+    // Convert numbered mode into strings for better understandability.
+    switch (object.mode) {
+        case 1:
+            object.mode = 'default';
+            break;
+        case 2:
+            object.mode = 'large';
+            break;
+        case 3:
+            object.mode = 'slider';
+            break;
+    }
+
+    // Create a monitor record for the runtime's monitorState
+    runtime.requestAddMonitor(MonitorRecord({
+        id: block.id,
+        targetId: block.targetId,
+        spriteName: block.targetId ? object.target : null,
+        opcode: block.opcode,
+        params: runtime.monitorBlocks._getBlockParams(block),
+        value: '',
+        mode: object.mode,
+        sliderMin: object.sliderMin,
+        sliderMax: object.sliderMax,
+        x: object.x,
+        y: object.y,
+        width: object.width,
+        height: object.height,
+        visible: object.visible
+    }));
+};
+
+/**
  * Parse a single "Scratch object" and create all its in-memory VM objects.
  * TODO: parse the "info" section, especially "savedExtensions"
  * @param {!object} object - From-JSON "Scratch object:" sprite, stage, watcher.
@@ -41680,10 +41827,17 @@ var globalBroadcastMsgStateGenerator = function () {
  */
 var parseScratchObject = function parseScratchObject(object, runtime, extensions, topLevel, zip) {
     if (!object.hasOwnProperty('objName')) {
-        // Watcher/monitor - skip this object until those are implemented in VM.
-        // @todo
-        return Promise.resolve(null);
+        if (object.hasOwnProperty('listName')) {
+            // Shim these objects so they can be processed as monitors
+            object.cmd = 'contentsOfList:';
+            object.param = object.listName;
+            object.mode = 'list';
+        }
+        // Defer parsing monitors until targets are all parsed
+        object.deferredMonitor = true;
+        return Promise.resolve(object);
     }
+
     // Blocks container for this object.
     var blocks = new Blocks();
     // @todo: For now, load all Scratch objects (stage/sprites) as a Sprite.
@@ -41695,7 +41849,7 @@ var parseScratchObject = function parseScratchObject(object, runtime, extensions
     // Costumes from JSON.
     var costumePromises = [];
     if (object.hasOwnProperty('costumes')) {
-        var _loop = function _loop(i) {
+        var _loop2 = function _loop2(i) {
             var costumeSource = object.costumes[i];
             var costume = {
                 name: costumeSource.costumeName,
@@ -41725,13 +41879,13 @@ var parseScratchObject = function parseScratchObject(object, runtime, extensions
         };
 
         for (var i = 0; i < object.costumes.length; i++) {
-            _loop(i);
+            _loop2(i);
         }
     }
     // Sounds from JSON
     var soundPromises = [];
     if (object.hasOwnProperty('sounds')) {
-        var _loop2 = function _loop2(s) {
+        var _loop3 = function _loop3(s) {
             var soundSource = object.sounds[s];
             var sound = {
                 name: soundSource.soundName,
@@ -41764,7 +41918,7 @@ var parseScratchObject = function parseScratchObject(object, runtime, extensions
         };
 
         for (var s = 0; s < object.sounds.length; s++) {
-            _loop2(s);
+            _loop3(s);
         }
     }
 
@@ -41797,7 +41951,6 @@ var parseScratchObject = function parseScratchObject(object, runtime, extensions
     if (object.hasOwnProperty('lists')) {
         for (var k = 0; k < object.lists.length; k++) {
             var list = object.lists[k];
-            // @todo: monitor properties.
             var _newVariable = new Variable(getVariableId(list.listName), list.listName, Variable.LIST_TYPE, false);
             _newVariable.value = list.contents;
             target.variables[_newVariable.id] = _newVariable;
@@ -41906,8 +42059,18 @@ var parseScratchObject = function parseScratchObject(object, runtime, extensions
                 }
             }
             var targets = [target];
+            var deferredMonitors = [];
             for (var n = 0; n < children.length; n++) {
-                targets = targets.concat(children[n]);
+                if (children[n]) {
+                    if (children[n].deferredMonitor) {
+                        deferredMonitors.push(children[n]);
+                    } else {
+                        targets = targets.concat(children[n]);
+                    }
+                }
+            }
+            for (var _n = 0; _n < deferredMonitors.length; _n++) {
+                parseMonitorObject(deferredMonitors[_n], runtime, targets, extensions);
             }
             return targets;
         });
@@ -42254,7 +42417,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 186 */
+/* 187 */
 /***/ (function(module, exports, __webpack_require__) {
 
 module.exports = function() {
@@ -42262,7 +42425,7 @@ module.exports = function() {
 };
 
 /***/ }),
-/* 187 */
+/* 188 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -42360,7 +42523,7 @@ var Scratch3ProcedureBlocks = function () {
 module.exports = Scratch3ProcedureBlocks;
 
 /***/ }),
-/* 188 */
+/* 189 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -42431,6 +42594,17 @@ var Scratch3DataBlocks = function () {
         key: 'getListContents',
         value: function getListContents(args, util) {
             var list = util.target.lookupOrCreateList(args.LIST.id, args.LIST.name);
+
+            // If block is running for monitors, return copy of list as an array if changed.
+            if (util.thread.updateMonitor) {
+                // Return original list value if up-to-date, which doesn't trigger monitor update.
+                if (list._monitorUpToDate) return list.value;
+                // If value changed, reset the flag and return a copy to trigger monitor update.
+                // Because monitors use Immutable data structures, only new objects trigger updates.
+                list._monitorUpToDate = true;
+                return list.value.slice();
+            }
+
             // Determine if the list is all single letters.
             // If it is, report contents joined together with no separator.
             // If it's not, report contents joined together with a space.
@@ -42451,7 +42625,10 @@ var Scratch3DataBlocks = function () {
         key: 'addToList',
         value: function addToList(args, util) {
             var list = util.target.lookupOrCreateList(args.LIST.id, args.LIST.name);
-            if (list.value.length < Scratch3DataBlocks.LIST_ITEM_LIMIT) list.value.push(args.ITEM);
+            if (list.value.length < Scratch3DataBlocks.LIST_ITEM_LIMIT) {
+                list.value.push(args.ITEM);
+                list._monitorUpToDate = false;
+            }
         }
     }, {
         key: 'deleteOfList',
@@ -42465,6 +42642,7 @@ var Scratch3DataBlocks = function () {
                 return;
             }
             list.value.splice(index - 1, 1);
+            list._monitorUpToDate = false;
         }
     }, {
         key: 'insertAtList',
@@ -42483,6 +42661,7 @@ var Scratch3DataBlocks = function () {
                 // remove the last element in the list
                 list.value.pop();
             }
+            list._monitorUpToDate = false;
         }
     }, {
         key: 'replaceItemOfList',
@@ -42494,6 +42673,7 @@ var Scratch3DataBlocks = function () {
                 return;
             }
             list.value.splice(index - 1, 1, item);
+            list._monitorUpToDate = false;
         }
     }, {
         key: 'getItemOfList',
@@ -42575,7 +42755,7 @@ var Scratch3DataBlocks = function () {
 module.exports = Scratch3DataBlocks;
 
 /***/ }),
-/* 189 */
+/* 190 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -42670,10 +42850,29 @@ var Scratch3SensingBlocks = function () {
         key: 'getMonitored',
         value: function getMonitored() {
             return {
-                sensing_answer: {},
-                sensing_loudness: {},
-                sensing_timer: {},
-                sensing_current: {}
+                sensing_answer: {
+                    getId: function getId() {
+                        return 'answer';
+                    }
+                },
+                sensing_loudness: {
+                    getId: function getId() {
+                        return 'loudness';
+                    }
+                },
+                sensing_timer: {
+                    getId: function getId() {
+                        return 'timer';
+                    }
+                },
+                sensing_current: {
+                    // This is different from the default toolbox xml id in order to support
+                    // importing multiple monitors from the same opcode from sb2 files,
+                    // something that is not currently supported in scratch 3.
+                    getId: function getId(_, param) {
+                        return 'current_' + param;
+                    }
+                }
             };
         }
     }, {
@@ -42960,7 +43159,7 @@ var Scratch3SensingBlocks = function () {
 module.exports = Scratch3SensingBlocks;
 
 /***/ }),
-/* 190 */
+/* 191 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -43068,7 +43267,11 @@ var Scratch3SoundBlocks = function () {
         key: 'getMonitored',
         value: function getMonitored() {
             return {
-                sound_volume: {}
+                sound_volume: {
+                    getId: function getId() {
+                        return 'volume';
+                    }
+                }
             };
         }
     }, {
@@ -43323,7 +43526,7 @@ var Scratch3SoundBlocks = function () {
 module.exports = Scratch3SoundBlocks;
 
 /***/ }),
-/* 191 */
+/* 192 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -43530,7 +43733,7 @@ var Scratch3OperatorsBlocks = function () {
 module.exports = Scratch3OperatorsBlocks;
 
 /***/ }),
-/* 192 */
+/* 193 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -43595,9 +43798,24 @@ var Scratch3MotionBlocks = function () {
         key: 'getMonitored',
         value: function getMonitored() {
             return {
-                motion_xposition: { isSpriteSpecific: true },
-                motion_yposition: { isSpriteSpecific: true },
-                motion_direction: { isSpriteSpecific: true }
+                motion_xposition: {
+                    isSpriteSpecific: true,
+                    getId: function getId(targetId) {
+                        return targetId + '_xposition';
+                    }
+                },
+                motion_yposition: {
+                    isSpriteSpecific: true,
+                    getId: function getId(targetId) {
+                        return targetId + '_yposition';
+                    }
+                },
+                motion_direction: {
+                    isSpriteSpecific: true,
+                    getId: function getId(targetId) {
+                        return targetId + '_direction';
+                    }
+                }
             };
         }
     }, {
@@ -43833,7 +44051,7 @@ var Scratch3MotionBlocks = function () {
 module.exports = Scratch3MotionBlocks;
 
 /***/ }),
-/* 193 */
+/* 194 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -44117,9 +44335,23 @@ var Scratch3LooksBlocks = function () {
         key: 'getMonitored',
         value: function getMonitored() {
             return {
-                looks_size: { isSpriteSpecific: true },
-                looks_costumenumbername: { isSpriteSpecific: true },
-                looks_backdropnumbername: {}
+                looks_size: {
+                    isSpriteSpecific: true,
+                    getId: function getId(targetId) {
+                        return targetId + '_size';
+                    }
+                },
+                looks_costumenumbername: {
+                    isSpriteSpecific: true,
+                    getId: function getId(targetId) {
+                        return targetId + '_costumenumbername';
+                    }
+                },
+                looks_backdropnumbername: {
+                    getId: function getId() {
+                        return 'backdropnumbername';
+                    }
+                }
             };
         }
     }, {
@@ -44211,6 +44443,13 @@ var Scratch3LooksBlocks = function () {
                     target.setCostume(target.currentCostume - 1);
                 } else if (requestedCostume === 'next costume' || requestedCostume === 'next backdrop') {
                     target.setCostume(target.currentCostume + 1);
+                } else if (requestedCostume === 'random backdrop') {
+                    var numCostumes = target.getCostumes().length;
+                    if (numCostumes > 1) {
+                        var selectedIndex = Math.floor(Math.random() * (numCostumes - 1));
+                        if (selectedIndex === target.currentCostume) selectedIndex += 1;
+                        target.setCostume(selectedIndex);
+                    }
                 } else {
                     var forcedNumber = Number(requestedCostume);
                     if (!isNaN(forcedNumber)) {
@@ -44379,7 +44618,7 @@ var Scratch3LooksBlocks = function () {
 module.exports = Scratch3LooksBlocks;
 
 /***/ }),
-/* 194 */
+/* 195 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -44502,7 +44741,7 @@ var Scratch3EventBlocks = function () {
 module.exports = Scratch3EventBlocks;
 
 /***/ }),
-/* 195 */
+/* 196 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -44736,7 +44975,7 @@ var Scratch3ControlBlocks = function () {
 module.exports = Scratch3ControlBlocks;
 
 /***/ }),
-/* 196 */
+/* 197 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -44785,7 +45024,7 @@ var MouseWheel = function () {
 module.exports = MouseWheel;
 
 /***/ }),
-/* 197 */
+/* 198 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -44938,7 +45177,7 @@ var Mouse = function () {
 module.exports = Mouse;
 
 /***/ }),
-/* 198 */
+/* 199 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -45130,7 +45369,7 @@ var Keyboard = function () {
 module.exports = Keyboard;
 
 /***/ }),
-/* 199 */
+/* 200 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -45222,7 +45461,7 @@ var objectKeys = Object.keys || function (obj) {
 
 
 /***/ }),
-/* 200 */
+/* 201 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -45313,7 +45552,7 @@ var isArray = Array.isArray || function (xs) {
 
 
 /***/ }),
-/* 201 */
+/* 202 */
 /***/ (function(module, exports, __webpack_require__) {
 
 !function(t,e){ true?module.exports=e():undefined}(this,function(){return function(t){function e(r){if(n[r])return n[r].exports;var o=n[r]={exports:{},id:r,loaded:!1};return t[r].call(o.exports,o,o.exports,e),o.loaded=!0,o.exports}var n={};return e.m=t,e.c=n,e.p="",e(0)}([function(t,e,n){"use strict";function r(t,e){"object"===("undefined"==typeof t?"undefined":o(t))&&(e=t,t=void 0),e=e||{};var n,r=i(t),s=r.source,u=r.id,h=r.path,f=p[u]&&h in p[u].nsps,l=e.forceNew||e["force new connection"]||!1===e.multiplex||f;return l?(c("ignoring socket cache for %s",s),n=a(s,e)):(p[u]||(c("new io instance for %s",s),p[u]=a(s,e)),n=p[u]),r.query&&!e.query&&(e.query=r.query),n.socket(r.path,e)}var o="function"==typeof Symbol&&"symbol"==typeof Symbol.iterator?function(t){return typeof t}:function(t){return t&&"function"==typeof Symbol&&t.constructor===Symbol&&t!==Symbol.prototype?"symbol":typeof t},i=n(1),s=n(7),a=n(13),c=n(3)("socket.io-client");t.exports=e=r;var p=e.managers={};e.protocol=s.protocol,e.connect=r,e.Manager=n(13),e.Socket=n(37)},function(t,e,n){(function(e){"use strict";function r(t,n){var r=t;n=n||e.location,null==t&&(t=n.protocol+"//"+n.host),"string"==typeof t&&("/"===t.charAt(0)&&(t="/"===t.charAt(1)?n.protocol+t:n.host+t),/^(https?|wss?):\/\//.test(t)||(i("protocol-less url %s",t),t="undefined"!=typeof n?n.protocol+"//"+t:"https://"+t),i("parse %s",t),r=o(t)),r.port||(/^(http|ws)$/.test(r.protocol)?r.port="80":/^(http|ws)s$/.test(r.protocol)&&(r.port="443")),r.path=r.path||"/";var s=r.host.indexOf(":")!==-1,a=s?"["+r.host+"]":r.host;return r.id=r.protocol+"://"+a+":"+r.port,r.href=r.protocol+"://"+a+(n&&n.port===r.port?"":":"+r.port),r}var o=n(2),i=n(3)("socket.io-client:url");t.exports=r}).call(e,function(){return this}())},function(t,e){var n=/^(?:(?![^:@]+:[^:@\/]*@)(http|https|ws|wss):\/\/)?((?:(([^:@]*)(?::([^:@]*))?)?@)?((?:[a-f0-9]{0,4}:){2,7}[a-f0-9]{0,4}|[^:\/?#]*)(?::(\d*))?)(((\/(?:[^?#](?![^?#\/]*\.[^?#\/.]+(?:[?#]|$)))*\/?)?([^?#\/]*))(?:\?([^#]*))?(?:#(.*))?)/,r=["source","protocol","authority","userInfo","user","password","host","port","relative","path","directory","file","query","anchor"];t.exports=function(t){var e=t,o=t.indexOf("["),i=t.indexOf("]");o!=-1&&i!=-1&&(t=t.substring(0,o)+t.substring(o,i).replace(/:/g,";")+t.substring(i,t.length));for(var s=n.exec(t||""),a={},c=14;c--;)a[r[c]]=s[c]||"";return o!=-1&&i!=-1&&(a.source=e,a.host=a.host.substring(1,a.host.length-1).replace(/;/g,":"),a.authority=a.authority.replace("[","").replace("]","").replace(/;/g,":"),a.ipv6uri=!0),a}},function(t,e,n){(function(r){function o(){return!("undefined"==typeof window||!window.process||"renderer"!==window.process.type)||("undefined"!=typeof document&&document.documentElement&&document.documentElement.style&&document.documentElement.style.WebkitAppearance||"undefined"!=typeof window&&window.console&&(window.console.firebug||window.console.exception&&window.console.table)||"undefined"!=typeof navigator&&navigator.userAgent&&navigator.userAgent.toLowerCase().match(/firefox\/(\d+)/)&&parseInt(RegExp.$1,10)>=31||"undefined"!=typeof navigator&&navigator.userAgent&&navigator.userAgent.toLowerCase().match(/applewebkit\/(\d+)/))}function i(t){var n=this.useColors;if(t[0]=(n?"%c":"")+this.namespace+(n?" %c":" ")+t[0]+(n?"%c ":" ")+"+"+e.humanize(this.diff),n){var r="color: "+this.color;t.splice(1,0,r,"color: inherit");var o=0,i=0;t[0].replace(/%[a-zA-Z%]/g,function(t){"%%"!==t&&(o++,"%c"===t&&(i=o))}),t.splice(i,0,r)}}function s(){return"object"==typeof console&&console.log&&Function.prototype.apply.call(console.log,console,arguments)}function a(t){try{null==t?e.storage.removeItem("debug"):e.storage.debug=t}catch(n){}}function c(){var t;try{t=e.storage.debug}catch(n){}return!t&&"undefined"!=typeof r&&"env"in r&&(t=r.env.DEBUG),t}function p(){try{return window.localStorage}catch(t){}}e=t.exports=n(5),e.log=s,e.formatArgs=i,e.save=a,e.load=c,e.useColors=o,e.storage="undefined"!=typeof chrome&&"undefined"!=typeof chrome.storage?chrome.storage.local:p(),e.colors=["lightseagreen","forestgreen","goldenrod","dodgerblue","darkorchid","crimson"],e.formatters.j=function(t){try{return JSON.stringify(t)}catch(e){return"[UnexpectedJSONParseError]: "+e.message}},e.enable(c())}).call(e,n(4))},function(t,e){function n(){throw new Error("setTimeout has not been defined")}function r(){throw new Error("clearTimeout has not been defined")}function o(t){if(u===setTimeout)return setTimeout(t,0);if((u===n||!u)&&setTimeout)return u=setTimeout,setTimeout(t,0);try{return u(t,0)}catch(e){try{return u.call(null,t,0)}catch(e){return u.call(this,t,0)}}}function i(t){if(h===clearTimeout)return clearTimeout(t);if((h===r||!h)&&clearTimeout)return h=clearTimeout,clearTimeout(t);try{return h(t)}catch(e){try{return h.call(null,t)}catch(e){return h.call(this,t)}}}function s(){y&&l&&(y=!1,l.length?d=l.concat(d):m=-1,d.length&&a())}function a(){if(!y){var t=o(s);y=!0;for(var e=d.length;e;){for(l=d,d=[];++m<e;)l&&l[m].run();m=-1,e=d.length}l=null,y=!1,i(t)}}function c(t,e){this.fun=t,this.array=e}function p(){}var u,h,f=t.exports={};!function(){try{u="function"==typeof setTimeout?setTimeout:n}catch(t){u=n}try{h="function"==typeof clearTimeout?clearTimeout:r}catch(t){h=r}}();var l,d=[],y=!1,m=-1;f.nextTick=function(t){var e=new Array(arguments.length-1);if(arguments.length>1)for(var n=1;n<arguments.length;n++)e[n-1]=arguments[n];d.push(new c(t,e)),1!==d.length||y||o(a)},c.prototype.run=function(){this.fun.apply(null,this.array)},f.title="browser",f.browser=!0,f.env={},f.argv=[],f.version="",f.versions={},f.on=p,f.addListener=p,f.once=p,f.off=p,f.removeListener=p,f.removeAllListeners=p,f.emit=p,f.prependListener=p,f.prependOnceListener=p,f.listeners=function(t){return[]},f.binding=function(t){throw new Error("process.binding is not supported")},f.cwd=function(){return"/"},f.chdir=function(t){throw new Error("process.chdir is not supported")},f.umask=function(){return 0}},function(t,e,n){function r(t){var n,r=0;for(n in t)r=(r<<5)-r+t.charCodeAt(n),r|=0;return e.colors[Math.abs(r)%e.colors.length]}function o(t){function n(){if(n.enabled){var t=n,r=+new Date,o=r-(p||r);t.diff=o,t.prev=p,t.curr=r,p=r;for(var i=new Array(arguments.length),s=0;s<i.length;s++)i[s]=arguments[s];i[0]=e.coerce(i[0]),"string"!=typeof i[0]&&i.unshift("%O");var a=0;i[0]=i[0].replace(/%([a-zA-Z%])/g,function(n,r){if("%%"===n)return n;a++;var o=e.formatters[r];if("function"==typeof o){var s=i[a];n=o.call(t,s),i.splice(a,1),a--}return n}),e.formatArgs.call(t,i);var c=n.log||e.log||console.log.bind(console);c.apply(t,i)}}return n.namespace=t,n.enabled=e.enabled(t),n.useColors=e.useColors(),n.color=r(t),"function"==typeof e.init&&e.init(n),n}function i(t){e.save(t),e.names=[],e.skips=[];for(var n=("string"==typeof t?t:"").split(/[\s,]+/),r=n.length,o=0;o<r;o++)n[o]&&(t=n[o].replace(/\*/g,".*?"),"-"===t[0]?e.skips.push(new RegExp("^"+t.substr(1)+"$")):e.names.push(new RegExp("^"+t+"$")))}function s(){e.enable("")}function a(t){var n,r;for(n=0,r=e.skips.length;n<r;n++)if(e.skips[n].test(t))return!1;for(n=0,r=e.names.length;n<r;n++)if(e.names[n].test(t))return!0;return!1}function c(t){return t instanceof Error?t.stack||t.message:t}e=t.exports=o.debug=o["default"]=o,e.coerce=c,e.disable=s,e.enable=i,e.enabled=a,e.humanize=n(6),e.names=[],e.skips=[],e.formatters={};var p},function(t,e){function n(t){if(t=String(t),!(t.length>100)){var e=/^((?:\d+)?\.?\d+) *(milliseconds?|msecs?|ms|seconds?|secs?|s|minutes?|mins?|m|hours?|hrs?|h|days?|d|years?|yrs?|y)?$/i.exec(t);if(e){var n=parseFloat(e[1]),r=(e[2]||"ms").toLowerCase();switch(r){case"years":case"year":case"yrs":case"yr":case"y":return n*u;case"days":case"day":case"d":return n*p;case"hours":case"hour":case"hrs":case"hr":case"h":return n*c;case"minutes":case"minute":case"mins":case"min":case"m":return n*a;case"seconds":case"second":case"secs":case"sec":case"s":return n*s;case"milliseconds":case"millisecond":case"msecs":case"msec":case"ms":return n;default:return}}}}function r(t){return t>=p?Math.round(t/p)+"d":t>=c?Math.round(t/c)+"h":t>=a?Math.round(t/a)+"m":t>=s?Math.round(t/s)+"s":t+"ms"}function o(t){return i(t,p,"day")||i(t,c,"hour")||i(t,a,"minute")||i(t,s,"second")||t+" ms"}function i(t,e,n){if(!(t<e))return t<1.5*e?Math.floor(t/e)+" "+n:Math.ceil(t/e)+" "+n+"s"}var s=1e3,a=60*s,c=60*a,p=24*c,u=365.25*p;t.exports=function(t,e){e=e||{};var i=typeof t;if("string"===i&&t.length>0)return n(t);if("number"===i&&isNaN(t)===!1)return e["long"]?o(t):r(t);throw new Error("val is not a non-empty string or a valid number. val="+JSON.stringify(t))}},function(t,e,n){function r(){}function o(t){var n=""+t.type;return e.BINARY_EVENT!==t.type&&e.BINARY_ACK!==t.type||(n+=t.attachments+"-"),t.nsp&&"/"!==t.nsp&&(n+=t.nsp+","),null!=t.id&&(n+=t.id),null!=t.data&&(n+=JSON.stringify(t.data)),h("encoded %j as %s",t,n),n}function i(t,e){function n(t){var n=d.deconstructPacket(t),r=o(n.packet),i=n.buffers;i.unshift(r),e(i)}d.removeBlobs(t,n)}function s(){this.reconstructor=null}function a(t){var n=0,r={type:Number(t.charAt(0))};if(null==e.types[r.type])return u();if(e.BINARY_EVENT===r.type||e.BINARY_ACK===r.type){for(var o="";"-"!==t.charAt(++n)&&(o+=t.charAt(n),n!=t.length););if(o!=Number(o)||"-"!==t.charAt(n))throw new Error("Illegal attachments");r.attachments=Number(o)}if("/"===t.charAt(n+1))for(r.nsp="";++n;){var i=t.charAt(n);if(","===i)break;if(r.nsp+=i,n===t.length)break}else r.nsp="/";var s=t.charAt(n+1);if(""!==s&&Number(s)==s){for(r.id="";++n;){var i=t.charAt(n);if(null==i||Number(i)!=i){--n;break}if(r.id+=t.charAt(n),n===t.length)break}r.id=Number(r.id)}return t.charAt(++n)&&(r=c(r,t.substr(n))),h("decoded %s as %j",t,r),r}function c(t,e){try{t.data=JSON.parse(e)}catch(n){return u()}return t}function p(t){this.reconPack=t,this.buffers=[]}function u(){return{type:e.ERROR,data:"parser error"}}var h=n(3)("socket.io-parser"),f=n(8),l=n(9),d=n(11),y=n(12);e.protocol=4,e.types=["CONNECT","DISCONNECT","EVENT","ACK","ERROR","BINARY_EVENT","BINARY_ACK"],e.CONNECT=0,e.DISCONNECT=1,e.EVENT=2,e.ACK=3,e.ERROR=4,e.BINARY_EVENT=5,e.BINARY_ACK=6,e.Encoder=r,e.Decoder=s,r.prototype.encode=function(t,n){if(t.type!==e.EVENT&&t.type!==e.ACK||!l(t.data)||(t.type=t.type===e.EVENT?e.BINARY_EVENT:e.BINARY_ACK),h("encoding packet %j",t),e.BINARY_EVENT===t.type||e.BINARY_ACK===t.type)i(t,n);else{var r=o(t);n([r])}},f(s.prototype),s.prototype.add=function(t){var n;if("string"==typeof t)n=a(t),e.BINARY_EVENT===n.type||e.BINARY_ACK===n.type?(this.reconstructor=new p(n),0===this.reconstructor.reconPack.attachments&&this.emit("decoded",n)):this.emit("decoded",n);else{if(!y(t)&&!t.base64)throw new Error("Unknown type: "+t);if(!this.reconstructor)throw new Error("got binary data when not reconstructing a packet");n=this.reconstructor.takeBinaryData(t),n&&(this.reconstructor=null,this.emit("decoded",n))}},s.prototype.destroy=function(){this.reconstructor&&this.reconstructor.finishedReconstruction()},p.prototype.takeBinaryData=function(t){if(this.buffers.push(t),this.buffers.length===this.reconPack.attachments){var e=d.reconstructPacket(this.reconPack,this.buffers);return this.finishedReconstruction(),e}return null},p.prototype.finishedReconstruction=function(){this.reconPack=null,this.buffers=[]}},function(t,e,n){function r(t){if(t)return o(t)}function o(t){for(var e in r.prototype)t[e]=r.prototype[e];return t}t.exports=r,r.prototype.on=r.prototype.addEventListener=function(t,e){return this._callbacks=this._callbacks||{},(this._callbacks["$"+t]=this._callbacks["$"+t]||[]).push(e),this},r.prototype.once=function(t,e){function n(){this.off(t,n),e.apply(this,arguments)}return n.fn=e,this.on(t,n),this},r.prototype.off=r.prototype.removeListener=r.prototype.removeAllListeners=r.prototype.removeEventListener=function(t,e){if(this._callbacks=this._callbacks||{},0==arguments.length)return this._callbacks={},this;var n=this._callbacks["$"+t];if(!n)return this;if(1==arguments.length)return delete this._callbacks["$"+t],this;for(var r,o=0;o<n.length;o++)if(r=n[o],r===e||r.fn===e){n.splice(o,1);break}return this},r.prototype.emit=function(t){this._callbacks=this._callbacks||{};var e=[].slice.call(arguments,1),n=this._callbacks["$"+t];if(n){n=n.slice(0);for(var r=0,o=n.length;r<o;++r)n[r].apply(this,e)}return this},r.prototype.listeners=function(t){return this._callbacks=this._callbacks||{},this._callbacks["$"+t]||[]},r.prototype.hasListeners=function(t){return!!this.listeners(t).length}},function(t,e,n){(function(e){function r(t){if(!t||"object"!=typeof t)return!1;if(o(t)){for(var n=0,i=t.length;n<i;n++)if(r(t[n]))return!0;return!1}if("function"==typeof e.Buffer&&e.Buffer.isBuffer&&e.Buffer.isBuffer(t)||"function"==typeof e.ArrayBuffer&&t instanceof ArrayBuffer||s&&t instanceof Blob||a&&t instanceof File)return!0;if(t.toJSON&&"function"==typeof t.toJSON&&1===arguments.length)return r(t.toJSON(),!0);for(var c in t)if(Object.prototype.hasOwnProperty.call(t,c)&&r(t[c]))return!0;return!1}var o=n(10),i=Object.prototype.toString,s="function"==typeof e.Blob||"[object BlobConstructor]"===i.call(e.Blob),a="function"==typeof e.File||"[object FileConstructor]"===i.call(e.File);t.exports=r}).call(e,function(){return this}())},function(t,e){var n={}.toString;t.exports=Array.isArray||function(t){return"[object Array]"==n.call(t)}},function(t,e,n){(function(t){function r(t,e){if(!t)return t;if(s(t)){var n={_placeholder:!0,num:e.length};return e.push(t),n}if(i(t)){for(var o=new Array(t.length),a=0;a<t.length;a++)o[a]=r(t[a],e);return o}if("object"==typeof t&&!(t instanceof Date)){var o={};for(var c in t)o[c]=r(t[c],e);return o}return t}function o(t,e){if(!t)return t;if(t&&t._placeholder)return e[t.num];if(i(t))for(var n=0;n<t.length;n++)t[n]=o(t[n],e);else if("object"==typeof t)for(var r in t)t[r]=o(t[r],e);return t}var i=n(10),s=n(12),a=Object.prototype.toString,c="function"==typeof t.Blob||"[object BlobConstructor]"===a.call(t.Blob),p="function"==typeof t.File||"[object FileConstructor]"===a.call(t.File);e.deconstructPacket=function(t){var e=[],n=t.data,o=t;return o.data=r(n,e),o.attachments=e.length,{packet:o,buffers:e}},e.reconstructPacket=function(t,e){return t.data=o(t.data,e),t.attachments=void 0,t},e.removeBlobs=function(t,e){function n(t,a,u){if(!t)return t;if(c&&t instanceof Blob||p&&t instanceof File){r++;var h=new FileReader;h.onload=function(){u?u[a]=this.result:o=this.result,--r||e(o)},h.readAsArrayBuffer(t)}else if(i(t))for(var f=0;f<t.length;f++)n(t[f],f,t);else if("object"==typeof t&&!s(t))for(var l in t)n(t[l],l,t)}var r=0,o=t;n(o),r||e(o)}}).call(e,function(){return this}())},function(t,e){(function(e){function n(t){return e.Buffer&&e.Buffer.isBuffer(t)||e.ArrayBuffer&&t instanceof ArrayBuffer}t.exports=n}).call(e,function(){return this}())},function(t,e,n){"use strict";function r(t,e){if(!(this instanceof r))return new r(t,e);t&&"object"===("undefined"==typeof t?"undefined":o(t))&&(e=t,t=void 0),e=e||{},e.path=e.path||"/socket.io",this.nsps={},this.subs=[],this.opts=e,this.reconnection(e.reconnection!==!1),this.reconnectionAttempts(e.reconnectionAttempts||1/0),this.reconnectionDelay(e.reconnectionDelay||1e3),this.reconnectionDelayMax(e.reconnectionDelayMax||5e3),this.randomizationFactor(e.randomizationFactor||.5),this.backoff=new l({min:this.reconnectionDelay(),max:this.reconnectionDelayMax(),jitter:this.randomizationFactor()}),this.timeout(null==e.timeout?2e4:e.timeout),this.readyState="closed",this.uri=t,this.connecting=[],this.lastPing=null,this.encoding=!1,this.packetBuffer=[];var n=e.parser||c;this.encoder=new n.Encoder,this.decoder=new n.Decoder,this.autoConnect=e.autoConnect!==!1,this.autoConnect&&this.open()}var o="function"==typeof Symbol&&"symbol"==typeof Symbol.iterator?function(t){return typeof t}:function(t){return t&&"function"==typeof Symbol&&t.constructor===Symbol&&t!==Symbol.prototype?"symbol":typeof t},i=n(14),s=n(37),a=n(8),c=n(7),p=n(39),u=n(40),h=n(3)("socket.io-client:manager"),f=n(36),l=n(41),d=Object.prototype.hasOwnProperty;t.exports=r,r.prototype.emitAll=function(){this.emit.apply(this,arguments);for(var t in this.nsps)d.call(this.nsps,t)&&this.nsps[t].emit.apply(this.nsps[t],arguments)},r.prototype.updateSocketIds=function(){for(var t in this.nsps)d.call(this.nsps,t)&&(this.nsps[t].id=this.generateId(t))},r.prototype.generateId=function(t){return("/"===t?"":t+"#")+this.engine.id},a(r.prototype),r.prototype.reconnection=function(t){return arguments.length?(this._reconnection=!!t,this):this._reconnection},r.prototype.reconnectionAttempts=function(t){return arguments.length?(this._reconnectionAttempts=t,this):this._reconnectionAttempts},r.prototype.reconnectionDelay=function(t){return arguments.length?(this._reconnectionDelay=t,this.backoff&&this.backoff.setMin(t),this):this._reconnectionDelay},r.prototype.randomizationFactor=function(t){return arguments.length?(this._randomizationFactor=t,this.backoff&&this.backoff.setJitter(t),this):this._randomizationFactor},r.prototype.reconnectionDelayMax=function(t){return arguments.length?(this._reconnectionDelayMax=t,this.backoff&&this.backoff.setMax(t),this):this._reconnectionDelayMax},r.prototype.timeout=function(t){return arguments.length?(this._timeout=t,this):this._timeout},r.prototype.maybeReconnectOnOpen=function(){!this.reconnecting&&this._reconnection&&0===this.backoff.attempts&&this.reconnect()},r.prototype.open=r.prototype.connect=function(t,e){if(h("readyState %s",this.readyState),~this.readyState.indexOf("open"))return this;h("opening %s",this.uri),this.engine=i(this.uri,this.opts);var n=this.engine,r=this;this.readyState="opening",this.skipReconnect=!1;var o=p(n,"open",function(){r.onopen(),t&&t()}),s=p(n,"error",function(e){if(h("connect_error"),r.cleanup(),r.readyState="closed",r.emitAll("connect_error",e),t){var n=new Error("Connection error");n.data=e,t(n)}else r.maybeReconnectOnOpen()});if(!1!==this._timeout){var a=this._timeout;h("connect attempt will timeout after %d",a);var c=setTimeout(function(){h("connect attempt timed out after %d",a),o.destroy(),n.close(),n.emit("error","timeout"),r.emitAll("connect_timeout",a)},a);this.subs.push({destroy:function(){clearTimeout(c)}})}return this.subs.push(o),this.subs.push(s),this},r.prototype.onopen=function(){h("open"),this.cleanup(),this.readyState="open",this.emit("open");var t=this.engine;this.subs.push(p(t,"data",u(this,"ondata"))),this.subs.push(p(t,"ping",u(this,"onping"))),this.subs.push(p(t,"pong",u(this,"onpong"))),this.subs.push(p(t,"error",u(this,"onerror"))),this.subs.push(p(t,"close",u(this,"onclose"))),this.subs.push(p(this.decoder,"decoded",u(this,"ondecoded")))},r.prototype.onping=function(){this.lastPing=new Date,this.emitAll("ping")},r.prototype.onpong=function(){this.emitAll("pong",new Date-this.lastPing)},r.prototype.ondata=function(t){this.decoder.add(t)},r.prototype.ondecoded=function(t){this.emit("packet",t)},r.prototype.onerror=function(t){h("error",t),this.emitAll("error",t)},r.prototype.socket=function(t,e){function n(){~f(o.connecting,r)||o.connecting.push(r)}var r=this.nsps[t];if(!r){r=new s(this,t,e),this.nsps[t]=r;var o=this;r.on("connecting",n),r.on("connect",function(){r.id=o.generateId(t)}),this.autoConnect&&n()}return r},r.prototype.destroy=function(t){var e=f(this.connecting,t);~e&&this.connecting.splice(e,1),this.connecting.length||this.close()},r.prototype.packet=function(t){h("writing packet %j",t);var e=this;t.query&&0===t.type&&(t.nsp+="?"+t.query),e.encoding?e.packetBuffer.push(t):(e.encoding=!0,this.encoder.encode(t,function(n){for(var r=0;r<n.length;r++)e.engine.write(n[r],t.options);e.encoding=!1,e.processPacketQueue()}))},r.prototype.processPacketQueue=function(){if(this.packetBuffer.length>0&&!this.encoding){var t=this.packetBuffer.shift();this.packet(t)}},r.prototype.cleanup=function(){h("cleanup");for(var t=this.subs.length,e=0;e<t;e++){var n=this.subs.shift();n.destroy()}this.packetBuffer=[],this.encoding=!1,this.lastPing=null,this.decoder.destroy()},r.prototype.close=r.prototype.disconnect=function(){h("disconnect"),this.skipReconnect=!0,this.reconnecting=!1,"opening"===this.readyState&&this.cleanup(),this.backoff.reset(),this.readyState="closed",this.engine&&this.engine.close()},r.prototype.onclose=function(t){h("onclose"),this.cleanup(),this.backoff.reset(),this.readyState="closed",this.emit("close",t),this._reconnection&&!this.skipReconnect&&this.reconnect()},r.prototype.reconnect=function(){if(this.reconnecting||this.skipReconnect)return this;var t=this;if(this.backoff.attempts>=this._reconnectionAttempts)h("reconnect failed"),this.backoff.reset(),this.emitAll("reconnect_failed"),this.reconnecting=!1;else{var e=this.backoff.duration();h("will wait %dms before reconnect attempt",e),this.reconnecting=!0;var n=setTimeout(function(){t.skipReconnect||(h("attempting reconnect"),t.emitAll("reconnect_attempt",t.backoff.attempts),t.emitAll("reconnecting",t.backoff.attempts),t.skipReconnect||t.open(function(e){e?(h("reconnect attempt error"),t.reconnecting=!1,t.reconnect(),t.emitAll("reconnect_error",e.data)):(h("reconnect success"),t.onreconnect())}))},e);this.subs.push({destroy:function(){clearTimeout(n)}})}},r.prototype.onreconnect=function(){var t=this.backoff.attempts;this.reconnecting=!1,this.backoff.reset(),this.updateSocketIds(),this.emitAll("reconnect",t)}},function(t,e,n){t.exports=n(15),t.exports.parser=n(22)},function(t,e,n){(function(e){function r(t,n){if(!(this instanceof r))return new r(t,n);n=n||{},t&&"object"==typeof t&&(n=t,t=null),t?(t=u(t),n.hostname=t.host,n.secure="https"===t.protocol||"wss"===t.protocol,n.port=t.port,t.query&&(n.query=t.query)):n.host&&(n.hostname=u(n.host).host),this.secure=null!=n.secure?n.secure:e.location&&"https:"===location.protocol,n.hostname&&!n.port&&(n.port=this.secure?"443":"80"),this.agent=n.agent||!1,this.hostname=n.hostname||(e.location?location.hostname:"localhost"),this.port=n.port||(e.location&&location.port?location.port:this.secure?443:80),this.query=n.query||{},"string"==typeof this.query&&(this.query=h.decode(this.query)),this.upgrade=!1!==n.upgrade,this.path=(n.path||"/engine.io").replace(/\/$/,"")+"/",this.forceJSONP=!!n.forceJSONP,this.jsonp=!1!==n.jsonp,this.forceBase64=!!n.forceBase64,this.enablesXDR=!!n.enablesXDR,this.timestampParam=n.timestampParam||"t",this.timestampRequests=n.timestampRequests,this.transports=n.transports||["polling","websocket"],this.transportOptions=n.transportOptions||{},this.readyState="",this.writeBuffer=[],this.prevBufferLen=0,this.policyPort=n.policyPort||843,this.rememberUpgrade=n.rememberUpgrade||!1,this.binaryType=null,this.onlyBinaryUpgrades=n.onlyBinaryUpgrades,this.perMessageDeflate=!1!==n.perMessageDeflate&&(n.perMessageDeflate||{}),!0===this.perMessageDeflate&&(this.perMessageDeflate={}),this.perMessageDeflate&&null==this.perMessageDeflate.threshold&&(this.perMessageDeflate.threshold=1024),this.pfx=n.pfx||null,this.key=n.key||null,this.passphrase=n.passphrase||null,this.cert=n.cert||null,this.ca=n.ca||null,this.ciphers=n.ciphers||null,this.rejectUnauthorized=void 0===n.rejectUnauthorized||n.rejectUnauthorized,this.forceNode=!!n.forceNode;var o="object"==typeof e&&e;o.global===o&&(n.extraHeaders&&Object.keys(n.extraHeaders).length>0&&(this.extraHeaders=n.extraHeaders),n.localAddress&&(this.localAddress=n.localAddress)),this.id=null,this.upgrades=null,this.pingInterval=null,this.pingTimeout=null,this.pingIntervalTimer=null,this.pingTimeoutTimer=null,this.open()}function o(t){var e={};for(var n in t)t.hasOwnProperty(n)&&(e[n]=t[n]);return e}var i=n(16),s=n(8),a=n(3)("engine.io-client:socket"),c=n(36),p=n(22),u=n(2),h=n(30);t.exports=r,r.priorWebsocketSuccess=!1,s(r.prototype),r.protocol=p.protocol,r.Socket=r,r.Transport=n(21),r.transports=n(16),r.parser=n(22),r.prototype.createTransport=function(t){a('creating transport "%s"',t);var e=o(this.query);e.EIO=p.protocol,e.transport=t;var n=this.transportOptions[t]||{};this.id&&(e.sid=this.id);var r=new i[t]({query:e,socket:this,agent:n.agent||this.agent,hostname:n.hostname||this.hostname,port:n.port||this.port,secure:n.secure||this.secure,path:n.path||this.path,forceJSONP:n.forceJSONP||this.forceJSONP,jsonp:n.jsonp||this.jsonp,forceBase64:n.forceBase64||this.forceBase64,enablesXDR:n.enablesXDR||this.enablesXDR,timestampRequests:n.timestampRequests||this.timestampRequests,timestampParam:n.timestampParam||this.timestampParam,policyPort:n.policyPort||this.policyPort,pfx:n.pfx||this.pfx,key:n.key||this.key,passphrase:n.passphrase||this.passphrase,cert:n.cert||this.cert,ca:n.ca||this.ca,ciphers:n.ciphers||this.ciphers,rejectUnauthorized:n.rejectUnauthorized||this.rejectUnauthorized,perMessageDeflate:n.perMessageDeflate||this.perMessageDeflate,extraHeaders:n.extraHeaders||this.extraHeaders,forceNode:n.forceNode||this.forceNode,localAddress:n.localAddress||this.localAddress,requestTimeout:n.requestTimeout||this.requestTimeout,protocols:n.protocols||void 0});return r},r.prototype.open=function(){var t;if(this.rememberUpgrade&&r.priorWebsocketSuccess&&this.transports.indexOf("websocket")!==-1)t="websocket";else{if(0===this.transports.length){var e=this;return void setTimeout(function(){e.emit("error","No transports available")},0)}t=this.transports[0]}this.readyState="opening";try{t=this.createTransport(t)}catch(n){return this.transports.shift(),void this.open()}t.open(),this.setTransport(t)},r.prototype.setTransport=function(t){a("setting transport %s",t.name);var e=this;this.transport&&(a("clearing existing transport %s",this.transport.name),this.transport.removeAllListeners()),this.transport=t,t.on("drain",function(){e.onDrain()}).on("packet",function(t){e.onPacket(t)}).on("error",function(t){e.onError(t)}).on("close",function(){e.onClose("transport close")})},r.prototype.probe=function(t){function e(){if(f.onlyBinaryUpgrades){var e=!this.supportsBinary&&f.transport.supportsBinary;h=h||e}h||(a('probe transport "%s" opened',t),u.send([{type:"ping",data:"probe"}]),u.once("packet",function(e){if(!h)if("pong"===e.type&&"probe"===e.data){if(a('probe transport "%s" pong',t),f.upgrading=!0,f.emit("upgrading",u),!u)return;r.priorWebsocketSuccess="websocket"===u.name,a('pausing current transport "%s"',f.transport.name),f.transport.pause(function(){h||"closed"!==f.readyState&&(a("changing transport and sending upgrade packet"),p(),f.setTransport(u),u.send([{type:"upgrade"}]),f.emit("upgrade",u),u=null,f.upgrading=!1,f.flush())})}else{a('probe transport "%s" failed',t);var n=new Error("probe error");n.transport=u.name,f.emit("upgradeError",n)}}))}function n(){h||(h=!0,p(),u.close(),u=null)}function o(e){var r=new Error("probe error: "+e);r.transport=u.name,n(),a('probe transport "%s" failed because of error: %s',t,e),f.emit("upgradeError",r)}function i(){o("transport closed")}function s(){o("socket closed")}function c(t){u&&t.name!==u.name&&(a('"%s" works - aborting "%s"',t.name,u.name),n())}function p(){u.removeListener("open",e),u.removeListener("error",o),u.removeListener("close",i),f.removeListener("close",s),f.removeListener("upgrading",c)}a('probing transport "%s"',t);var u=this.createTransport(t,{probe:1}),h=!1,f=this;r.priorWebsocketSuccess=!1,u.once("open",e),u.once("error",o),u.once("close",i),this.once("close",s),this.once("upgrading",c),u.open()},r.prototype.onOpen=function(){if(a("socket open"),this.readyState="open",r.priorWebsocketSuccess="websocket"===this.transport.name,this.emit("open"),this.flush(),"open"===this.readyState&&this.upgrade&&this.transport.pause){a("starting upgrade probes");for(var t=0,e=this.upgrades.length;t<e;t++)this.probe(this.upgrades[t])}},r.prototype.onPacket=function(t){if("opening"===this.readyState||"open"===this.readyState||"closing"===this.readyState)switch(a('socket receive: type "%s", data "%s"',t.type,t.data),this.emit("packet",t),this.emit("heartbeat"),t.type){case"open":this.onHandshake(JSON.parse(t.data));break;case"pong":this.setPing(),this.emit("pong");break;case"error":var e=new Error("server error");e.code=t.data,this.onError(e);break;case"message":this.emit("data",t.data),this.emit("message",t.data)}else a('packet received with socket readyState "%s"',this.readyState)},r.prototype.onHandshake=function(t){this.emit("handshake",t),this.id=t.sid,this.transport.query.sid=t.sid,this.upgrades=this.filterUpgrades(t.upgrades),this.pingInterval=t.pingInterval,this.pingTimeout=t.pingTimeout,this.onOpen(),"closed"!==this.readyState&&(this.setPing(),this.removeListener("heartbeat",this.onHeartbeat),this.on("heartbeat",this.onHeartbeat))},r.prototype.onHeartbeat=function(t){clearTimeout(this.pingTimeoutTimer);var e=this;e.pingTimeoutTimer=setTimeout(function(){"closed"!==e.readyState&&e.onClose("ping timeout")},t||e.pingInterval+e.pingTimeout)},r.prototype.setPing=function(){var t=this;clearTimeout(t.pingIntervalTimer),t.pingIntervalTimer=setTimeout(function(){a("writing ping packet - expecting pong within %sms",t.pingTimeout),t.ping(),t.onHeartbeat(t.pingTimeout)},t.pingInterval)},r.prototype.ping=function(){var t=this;this.sendPacket("ping",function(){t.emit("ping")})},r.prototype.onDrain=function(){this.writeBuffer.splice(0,this.prevBufferLen),this.prevBufferLen=0,0===this.writeBuffer.length?this.emit("drain"):this.flush()},r.prototype.flush=function(){"closed"!==this.readyState&&this.transport.writable&&!this.upgrading&&this.writeBuffer.length&&(a("flushing %d packets in socket",this.writeBuffer.length),this.transport.send(this.writeBuffer),this.prevBufferLen=this.writeBuffer.length,this.emit("flush"))},r.prototype.write=r.prototype.send=function(t,e,n){return this.sendPacket("message",t,e,n),this},r.prototype.sendPacket=function(t,e,n,r){if("function"==typeof e&&(r=e,e=void 0),"function"==typeof n&&(r=n,n=null),"closing"!==this.readyState&&"closed"!==this.readyState){n=n||{},n.compress=!1!==n.compress;var o={type:t,data:e,options:n};this.emit("packetCreate",o),this.writeBuffer.push(o),r&&this.once("flush",r),this.flush()}},r.prototype.close=function(){function t(){r.onClose("forced close"),a("socket closing - telling transport to close"),r.transport.close()}function e(){r.removeListener("upgrade",e),r.removeListener("upgradeError",e),t()}function n(){r.once("upgrade",e),r.once("upgradeError",e)}if("opening"===this.readyState||"open"===this.readyState){this.readyState="closing";var r=this;this.writeBuffer.length?this.once("drain",function(){this.upgrading?n():t()}):this.upgrading?n():t()}return this},r.prototype.onError=function(t){a("socket error %j",t),r.priorWebsocketSuccess=!1,this.emit("error",t),this.onClose("transport error",t)},r.prototype.onClose=function(t,e){if("opening"===this.readyState||"open"===this.readyState||"closing"===this.readyState){a('socket close with reason: "%s"',t);var n=this;clearTimeout(this.pingIntervalTimer),clearTimeout(this.pingTimeoutTimer),this.transport.removeAllListeners("close"),this.transport.close(),this.transport.removeAllListeners(),this.readyState="closed",this.id=null,this.emit("close",t,e),n.writeBuffer=[],n.prevBufferLen=0}},r.prototype.filterUpgrades=function(t){for(var e=[],n=0,r=t.length;n<r;n++)~c(this.transports,t[n])&&e.push(t[n]);return e}}).call(e,function(){return this}())},function(t,e,n){(function(t){function r(e){var n,r=!1,a=!1,c=!1!==e.jsonp;if(t.location){var p="https:"===location.protocol,u=location.port;u||(u=p?443:80),r=e.hostname!==location.hostname||u!==e.port,a=e.secure!==p}if(e.xdomain=r,e.xscheme=a,n=new o(e),"open"in n&&!e.forceJSONP)return new i(e);if(!c)throw new Error("JSONP disabled");return new s(e)}var o=n(17),i=n(19),s=n(33),a=n(34);e.polling=r,e.websocket=a}).call(e,function(){return this}())},function(t,e,n){(function(e){var r=n(18);t.exports=function(t){var n=t.xdomain,o=t.xscheme,i=t.enablesXDR;try{if("undefined"!=typeof XMLHttpRequest&&(!n||r))return new XMLHttpRequest}catch(s){}try{if("undefined"!=typeof XDomainRequest&&!o&&i)return new XDomainRequest}catch(s){}if(!n)try{return new(e[["Active"].concat("Object").join("X")])("Microsoft.XMLHTTP");
@@ -45321,7 +45560,7 @@ var isArray = Array.isArray || function (xs) {
 //# sourceMappingURL=socket.io.js.map
 
 /***/ }),
-/* 202 */
+/* 203 */
 /***/ (function(module, exports) {
 
 module.exports = extend
@@ -45346,7 +45585,7 @@ function extend() {
 
 
 /***/ }),
-/* 203 */
+/* 204 */
 /***/ (function(module, exports, __webpack_require__) {
 
 var isFunction = __webpack_require__(68)
@@ -45398,7 +45637,7 @@ function forEachObject(object, iterator, context) {
 
 
 /***/ }),
-/* 204 */
+/* 205 */
 /***/ (function(module, exports) {
 
 
@@ -45418,11 +45657,11 @@ exports.right = function(str){
 
 
 /***/ }),
-/* 205 */
+/* 206 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var trim = __webpack_require__(204)
-  , forEach = __webpack_require__(203)
+var trim = __webpack_require__(205)
+  , forEach = __webpack_require__(204)
   , isArray = function(arg) {
       return Object.prototype.toString.call(arg) === '[object Array]';
     }
@@ -45454,7 +45693,7 @@ module.exports = function (headers) {
 }
 
 /***/ }),
-/* 206 */
+/* 207 */
 /***/ (function(module, exports, __webpack_require__) {
 
 /* WEBPACK VAR INJECTION */(function(global) {var win;
@@ -45474,15 +45713,15 @@ module.exports = win;
 /* WEBPACK VAR INJECTION */}.call(this, __webpack_require__(1)))
 
 /***/ }),
-/* 207 */
+/* 208 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
-var window = __webpack_require__(206)
+var window = __webpack_require__(207)
 var isFunction = __webpack_require__(68)
-var parseHeaders = __webpack_require__(205)
-var xtend = __webpack_require__(202)
+var parseHeaders = __webpack_require__(206)
+var xtend = __webpack_require__(203)
 
 module.exports = createXHR
 createXHR.XMLHttpRequest = window.XMLHttpRequest || noop
@@ -45726,10 +45965,10 @@ function noop() {}
 
 
 /***/ }),
-/* 208 */
+/* 209 */
 /***/ (function(module, exports, __webpack_require__) {
 
-/* WEBPACK VAR INJECTION */(function(process, Buffer) {var req = __webpack_require__(207)
+/* WEBPACK VAR INJECTION */(function(process, Buffer) {var req = __webpack_require__(208)
 
 module.exports = Nets
 
@@ -45757,7 +45996,7 @@ function Nets (opts, cb) {
 /* WEBPACK VAR INJECTION */}.call(this, __webpack_require__(20), __webpack_require__(5).Buffer))
 
 /***/ }),
-/* 209 */
+/* 210 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -45767,8 +46006,8 @@ var _createClass = function () { function defineProperties(target, props) { for 
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
-var nets = __webpack_require__(208);
-var io = __webpack_require__(201);
+var nets = __webpack_require__(209);
+var io = __webpack_require__(202);
 var querystring = __webpack_require__(67);
 
 /**
@@ -46231,7 +46470,7 @@ var DeviceManager = function () {
 module.exports = DeviceManager;
 
 /***/ }),
-/* 210 */
+/* 211 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -46292,7 +46531,7 @@ var Clock = function () {
 module.exports = Clock;
 
 /***/ }),
-/* 211 */
+/* 212 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -46317,7 +46556,7 @@ var TargetType = {
 module.exports = TargetType;
 
 /***/ }),
-/* 212 */
+/* 213 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -46352,7 +46591,7 @@ var ScratchBlocksConstants = {
 module.exports = ScratchBlocksConstants;
 
 /***/ }),
-/* 213 */
+/* 214 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -46568,7 +46807,7 @@ var BlockUtility = function () {
 module.exports = BlockUtility;
 
 /***/ }),
-/* 214 */
+/* 215 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -46578,7 +46817,7 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
-var BlockUtility = __webpack_require__(213);
+var BlockUtility = __webpack_require__(214);
 var BlocksExecuteCache = __webpack_require__(70);
 var log = __webpack_require__(2);
 var Thread = __webpack_require__(32);
@@ -46665,7 +46904,7 @@ var handleReport = function handleReport(resolvedValue, sequencer, thread, curre
                 sequencer.runtime.requestUpdateMonitor(Map({
                     id: currentBlockId,
                     spriteName: targetId ? sequencer.runtime.getTargetById(targetId).getName() : null,
-                    value: String(resolvedValue)
+                    value: resolvedValue
                 }));
             }
         }
@@ -47054,7 +47293,7 @@ var execute = function execute(sequencer, thread, recursiveCall) {
 module.exports = execute;
 
 /***/ }),
-/* 215 */
+/* 216 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -47066,7 +47305,7 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
 
 var Timer = __webpack_require__(22);
 var Thread = __webpack_require__(32);
-var execute = __webpack_require__(214);
+var execute = __webpack_require__(215);
 
 /**
  * Profiler frame name for stepping a single thread.
@@ -47429,7 +47668,7 @@ var Sequencer = function () {
 module.exports = Sequencer;
 
 /***/ }),
-/* 216 */
+/* 217 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -47786,7 +48025,7 @@ Profiler.STOP = STOP;
 module.exports = Profiler;
 
 /***/ }),
-/* 217 */
+/* 218 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -47871,7 +48110,7 @@ function escapeHtml(string) {
 
 
 /***/ }),
-/* 218 */
+/* 219 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -48423,7 +48662,7 @@ var Scratch3VideoSensingBlocks = function () {
 module.exports = Scratch3VideoSensingBlocks;
 
 /***/ }),
-/* 219 */
+/* 220 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -49393,7 +49632,7 @@ var Scratch3MusicBlocks = function () {
 module.exports = Scratch3MusicBlocks;
 
 /***/ }),
-/* 220 */
+/* 221 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -50456,29 +50695,6 @@ var Scratch3WeDo2Blocks = function () {
 module.exports = Scratch3WeDo2Blocks;
 
 /***/ }),
-/* 221 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-
-var _require = __webpack_require__(24),
-    Record = _require.Record;
-
-var MonitorRecord = Record({
-    id: null,
-    /** Present only if the monitor is sprite-specific, such as x position */
-    spriteName: null,
-    /** Present only if the monitor is sprite-specific, such as x position */
-    targetId: null,
-    opcode: null,
-    value: null,
-    params: null
-});
-
-module.exports = MonitorRecord;
-
-/***/ }),
 /* 222 */
 /***/ (function(module, exports, __webpack_require__) {
 
@@ -51061,9 +51277,9 @@ exports.getName = function(elem){
 /***/ (function(module, exports, __webpack_require__) {
 
 var entityMap = __webpack_require__(44),
-    legacyMap = __webpack_require__(73),
+    legacyMap = __webpack_require__(74),
     xmlMap    = __webpack_require__(43),
-    decodeCodePoint = __webpack_require__(74);
+    decodeCodePoint = __webpack_require__(75);
 
 var decodeXMLStrict  = getStrictDecoder(xmlMap),
     decodeHTMLStrict = getStrictDecoder(entityMap);
@@ -51547,7 +51763,7 @@ Object.keys(EVENTS).forEach(function(name){
 
 module.exports = Stream;
 
-var Parser = __webpack_require__(71);
+var Parser = __webpack_require__(72);
 
 function Stream(options){
 	Parser.call(this, new Cbs(this), options);
@@ -51687,7 +51903,7 @@ module.exports = FeedHandler;
 /***/ (function(module, exports, __webpack_require__) {
 
 // DOM-Level-1-compliant structure
-var NodePrototype = __webpack_require__(72);
+var NodePrototype = __webpack_require__(73);
 var ElementPrototype = module.exports = Object.create(NodePrototype);
 
 var domLvl1 = {
@@ -51715,7 +51931,7 @@ Object.keys(domLvl1).forEach(function(key) {
 var ElementType = __webpack_require__(25);
 
 var re_whitespace = /\s+/g;
-var NodePrototype = __webpack_require__(72);
+var NodePrototype = __webpack_require__(73);
 var ElementPrototype = __webpack_require__(241);
 
 function DomHandler(callback, options, elementCB){
@@ -51946,7 +52162,7 @@ module.exports = {"0":65533,"128":8364,"130":8218,"131":402,"132":8222,"133":823
 
 var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
 
-var mutationAdapter = __webpack_require__(77);
+var mutationAdapter = __webpack_require__(78);
 var html = __webpack_require__(15);
 var uid = __webpack_require__(14);
 
@@ -53311,9 +53527,9 @@ module.exports = Scratch3PenBlocks;
 /* globals Intl */
 
 
-var formats = __webpack_require__(80)
-var lookupClosestLocale = __webpack_require__(79)
-var plurals = __webpack_require__(78)
+var formats = __webpack_require__(81)
+var lookupClosestLocale = __webpack_require__(80)
+var plurals = __webpack_require__(79)
 
 module.exports = function interpret (locale, ast) {
   return interpretSubs(locale, ast)
@@ -53969,9 +54185,9 @@ var _createClass = function () { function defineProperties(target, props) { for 
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
-var dispatch = __webpack_require__(83);
+var dispatch = __webpack_require__(84);
 var log = __webpack_require__(2);
-var maybeFormatMessage = __webpack_require__(81);
+var maybeFormatMessage = __webpack_require__(82);
 
 var BlockType = __webpack_require__(19);
 
@@ -53979,9 +54195,9 @@ var BlockType = __webpack_require__(19);
 // TODO: move these out into a separate repository?
 // TODO: change extension spec so that library info, including extension ID, can be collected through static methods
 var Scratch3PenBlocks = __webpack_require__(246);
-var Scratch3WeDo2Blocks = __webpack_require__(220);
-var Scratch3MusicBlocks = __webpack_require__(219);
-var Scratch3VideoSensingBlocks = __webpack_require__(218);
+var Scratch3WeDo2Blocks = __webpack_require__(221);
+var Scratch3MusicBlocks = __webpack_require__(220);
+var Scratch3VideoSensingBlocks = __webpack_require__(219);
 
 var builtinExtensions = {
     pen: Scratch3PenBlocks,
@@ -54108,7 +54324,7 @@ var ExtensionManager = function () {
 
             return new Promise(function (resolve, reject) {
                 // If we `require` this at the global level it breaks non-webpack targets, including tests
-                var ExtensionWorker = __webpack_require__(186);
+                var ExtensionWorker = __webpack_require__(187);
 
                 _this.pendingExtensions.push({ extensionURL: extensionURL, resolve: resolve, reject: reject });
                 dispatch.addWorker(new ExtensionWorker());
@@ -54501,7 +54717,7 @@ module.exports = logger;
 /***/ (function(module, exports, __webpack_require__) {
 
 var Transform = __webpack_require__(7),
-    color = __webpack_require__(82),
+    color = __webpack_require__(83),
     colors = { debug: ['gray'], info: ['purple' ], warn: [ 'yellow', true ], error: [ 'red', true ] },
     logger = new Transform();
 
@@ -54533,7 +54749,7 @@ module.exports = logger;
 /***/ (function(module, exports, __webpack_require__) {
 
 var Transform = __webpack_require__(7),
-    color = __webpack_require__(82);
+    color = __webpack_require__(83);
 
 var colors = { debug: ['cyan'], info: ['purple' ], warn: [ 'yellow', true ], error: [ 'red', true ] },
     logger = new Transform();
@@ -55124,12 +55340,12 @@ module.exports = SharedDispatch;
 
 "use strict";
 
-var readerFor = __webpack_require__(87);
+var readerFor = __webpack_require__(88);
 var utils = __webpack_require__(0);
 var CompressedObject = __webpack_require__(48);
 var crc32fn = __webpack_require__(47);
 var utf8 = __webpack_require__(21);
-var compressions = __webpack_require__(94);
+var compressions = __webpack_require__(95);
 var support = __webpack_require__(9);
 
 var MADE_BY_DOS = 0x00;
@@ -55423,7 +55639,7 @@ module.exports = ZipEntry;
 
 "use strict";
 
-var Uint8ArrayReader = __webpack_require__(84);
+var Uint8ArrayReader = __webpack_require__(85);
 var utils = __webpack_require__(0);
 
 function NodeBufferReader(data) {
@@ -55449,7 +55665,7 @@ module.exports = NodeBufferReader;
 
 "use strict";
 
-var DataReader = __webpack_require__(85);
+var DataReader = __webpack_require__(86);
 var utils = __webpack_require__(0);
 
 function StringReader(data) {
@@ -55494,9 +55710,9 @@ module.exports = StringReader;
 
 "use strict";
 
-var readerFor = __webpack_require__(87);
+var readerFor = __webpack_require__(88);
 var utils = __webpack_require__(0);
-var sig = __webpack_require__(88);
+var sig = __webpack_require__(89);
 var ZipEntry = __webpack_require__(262);
 var utf8 = __webpack_require__(21);
 var support = __webpack_require__(9);
@@ -55768,7 +55984,7 @@ var external = __webpack_require__(27);
 var utf8 = __webpack_require__(21);
 var utils = __webpack_require__(0);
 var ZipEntries = __webpack_require__(265);
-var Crc32Probe = __webpack_require__(95);
+var Crc32Probe = __webpack_require__(96);
 var nodejsUtils = __webpack_require__(36);
 
 /**
@@ -55938,7 +56154,7 @@ var utils = __webpack_require__(0);
 var GenericWorker = __webpack_require__(4);
 var utf8 = __webpack_require__(21);
 var crc32 = __webpack_require__(47);
-var signature = __webpack_require__(88);
+var signature = __webpack_require__(89);
 
 /**
  * Transform an integer into a string in hexadecimal.
@@ -57268,8 +57484,8 @@ module.exports = function inflate_fast(strm, start) {
 // 3. This notice may not be removed or altered from any source distribution.
 
 var utils         = __webpack_require__(8);
-var adler32       = __webpack_require__(93);
-var crc32         = __webpack_require__(92);
+var adler32       = __webpack_require__(94);
+var crc32         = __webpack_require__(93);
 var inflate_fast  = __webpack_require__(271);
 var inflate_table = __webpack_require__(270);
 
@@ -58814,10 +59030,10 @@ exports.inflateUndermine = inflateUndermine;
 
 var zlib_inflate = __webpack_require__(272);
 var utils        = __webpack_require__(8);
-var strings      = __webpack_require__(91);
-var c            = __webpack_require__(89);
+var strings      = __webpack_require__(92);
+var c            = __webpack_require__(90);
 var msg          = __webpack_require__(46);
-var ZStream      = __webpack_require__(90);
+var ZStream      = __webpack_require__(91);
 var GZheader     = __webpack_require__(269);
 
 var toString = Object.prototype.toString;
@@ -60484,8 +60700,8 @@ exports._tr_align = _tr_align;
 
 var utils   = __webpack_require__(8);
 var trees   = __webpack_require__(274);
-var adler32 = __webpack_require__(93);
-var crc32   = __webpack_require__(92);
+var adler32 = __webpack_require__(94);
+var crc32   = __webpack_require__(93);
 var msg     = __webpack_require__(46);
 
 /* Public constants ==========================================================*/
@@ -62347,9 +62563,9 @@ exports.deflateTune = deflateTune;
 
 var zlib_deflate = __webpack_require__(275);
 var utils        = __webpack_require__(8);
-var strings      = __webpack_require__(91);
+var strings      = __webpack_require__(92);
 var msg          = __webpack_require__(46);
-var ZStream      = __webpack_require__(90);
+var ZStream      = __webpack_require__(91);
 
 var toString = Object.prototype.toString;
 
@@ -62756,7 +62972,7 @@ var assign    = __webpack_require__(8).assign;
 
 var deflate   = __webpack_require__(276);
 var inflate   = __webpack_require__(273);
-var constants = __webpack_require__(89);
+var constants = __webpack_require__(90);
 
 var pako = {};
 
@@ -62864,7 +63080,7 @@ exports.uncompressWorker = function () {
 "use strict";
 
 
-var compressions = __webpack_require__(94);
+var compressions = __webpack_require__(95);
 var ZipFileWorker = __webpack_require__(268);
 
 /**
@@ -62928,8 +63144,8 @@ exports.generateWorker = function (zip, options, comment) {
 "use strict";
 
 
-var StreamHelper = __webpack_require__(99);
-var DataWorker = __webpack_require__(97);
+var StreamHelper = __webpack_require__(100);
+var DataWorker = __webpack_require__(98);
 var utf8 = __webpack_require__(21);
 var CompressedObject = __webpack_require__(48);
 var GenericWorker = __webpack_require__(4);
@@ -63068,7 +63284,7 @@ module.exports = ZipObject;
 "use strict";
 
 
-var Readable = __webpack_require__(111).Readable;
+var Readable = __webpack_require__(112).Readable;
 
 var utils = __webpack_require__(0);
 utils.inherits(NodejsStreamOutputAdapter, Readable);
@@ -63521,10 +63737,10 @@ module.exports = function(fn, args, that){
 /* 288 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var ctx                = __webpack_require__(102)
+var ctx                = __webpack_require__(103)
   , invoke             = __webpack_require__(287)
   , html               = __webpack_require__(286)
-  , cel                = __webpack_require__(100)
+  , cel                = __webpack_require__(101)
   , global             = __webpack_require__(35)
   , process            = global.process
   , setTask            = global.setImmediate
@@ -63631,8 +63847,8 @@ module.exports = function(it, S){
 /* 291 */
 /***/ (function(module, exports, __webpack_require__) {
 
-module.exports = !__webpack_require__(49) && !__webpack_require__(101)(function(){
-  return Object.defineProperty(__webpack_require__(100)('div'), 'a', {get: function(){ return 7; }}).a != 7;
+module.exports = !__webpack_require__(49) && !__webpack_require__(102)(function(){
+  return Object.defineProperty(__webpack_require__(101)('div'), 'a', {get: function(){ return 7; }}).a != 7;
 });
 
 /***/ }),
@@ -63693,8 +63909,8 @@ module.exports = function(it){
 /***/ (function(module, exports, __webpack_require__) {
 
 var global    = __webpack_require__(35)
-  , core      = __webpack_require__(103)
-  , ctx       = __webpack_require__(102)
+  , core      = __webpack_require__(104)
+  , ctx       = __webpack_require__(103)
   , hide      = __webpack_require__(294)
   , PROTOTYPE = 'prototype';
 
@@ -63770,7 +63986,7 @@ $export($export.G + $export.B, {
 /***/ (function(module, exports, __webpack_require__) {
 
 __webpack_require__(297);
-module.exports = __webpack_require__(103).setImmediate;
+module.exports = __webpack_require__(104).setImmediate;
 
 /***/ }),
 /* 299 */
@@ -63834,7 +64050,7 @@ module.exports = __webpack_require__(52);
 
 module.exports = PassThrough;
 
-var Transform = __webpack_require__(105);
+var Transform = __webpack_require__(106);
 
 /*<replacement>*/
 var util = __webpack_require__(28);
@@ -64474,8 +64690,8 @@ function fromByteArray (uint8) {
 var utf8 = __webpack_require__(21);
 var utils = __webpack_require__(0);
 var GenericWorker = __webpack_require__(4);
-var StreamHelper = __webpack_require__(99);
-var defaults = __webpack_require__(98);
+var StreamHelper = __webpack_require__(100);
+var defaults = __webpack_require__(99);
 var CompressedObject = __webpack_require__(48);
 var ZipObject = __webpack_require__(280);
 var generate = __webpack_require__(279);
@@ -68270,15 +68486,15 @@ var EventEmitter = __webpack_require__(12);
 var JSZip = __webpack_require__(54);
 
 var Buffer = __webpack_require__(5).Buffer;
-var centralDispatch = __webpack_require__(83);
+var centralDispatch = __webpack_require__(84);
 var ExtensionManager = __webpack_require__(250);
 var log = __webpack_require__(2);
 var Runtime = __webpack_require__(69);
-var sb2 = __webpack_require__(185);
-var sb3 = __webpack_require__(183);
+var sb2 = __webpack_require__(186);
+var sb3 = __webpack_require__(184);
 var StringUtil = __webpack_require__(17);
 var formatMessage = __webpack_require__(45);
-var validate = __webpack_require__(181);
+var validate = __webpack_require__(182);
 
 var Variable = __webpack_require__(23);
 
@@ -68288,11 +68504,11 @@ var _require = __webpack_require__(29),
 var _require2 = __webpack_require__(30),
     loadSound = _require2.loadSound;
 
-var _require3 = __webpack_require__(128),
+var _require3 = __webpack_require__(129),
     serializeSounds = _require3.serializeSounds,
     serializeCostumes = _require3.serializeCostumes;
 
-__webpack_require__(127);
+__webpack_require__(128);
 
 var RESERVED_NAMES = ['_mouse_', '_stage_', '_edge_', '_myself_', '_random_'];
 
@@ -68673,8 +68889,6 @@ var VirtualMachine = function (_EventEmitter) {
             var extensionPromises = [];
 
             if (wholeProject) {
-                this.clear();
-
                 CORE_EXTENSIONS.forEach(function (extensionID) {
                     if (!_this4.extensionManager.isExtensionLoaded(extensionID)) {
                         extensionPromises.push(_this4.extensionManager.loadExtensionURL(extensionID));
