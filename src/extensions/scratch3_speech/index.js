@@ -33,8 +33,8 @@ const serverURL = 'wss://speech.scratch.mit.edu';
 const finalResponseTimeoutDurationMs = 3000;
 
 /**
- * The amount of time to wait between when we stop sending speech data to the server and when
- * we expect the transcription result marked with isFinal: true to come back from the server.
+ * The max amount of time the Listen And Wait block will listen for.  It may listen for less time
+ * if we get back results that are good and think the user is done talking.
  * Currently set to 10sec. This should not exceed the speech api limit (60sec) without redoing how
  * we stream the microphone data data.
  * @type {int}
@@ -76,7 +76,7 @@ class Scratch3SpeechBlocks {
          * @type {String}
          * @private
          */
-        this._currentUtterance = null;
+        this._currentUtterance = '';
 
         /**
          *  Similar to _currentUtterance, but set back to '' at the beginning of listening block.
