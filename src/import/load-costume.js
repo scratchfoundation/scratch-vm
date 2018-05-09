@@ -1,4 +1,3 @@
-const TextEncoder = require('text-encoding').TextEncoder;
 const StringUtil = require('../util/string-util');
 const log = require('../util/log');
 const SvgRenderer = require('scratch-svg-renderer').SVGRenderer;
@@ -13,9 +12,11 @@ const SvgRenderer = require('scratch-svg-renderer').SVGRenderer;
  * @property {number} [bitmapResolution] - the resolution scale for a bitmap costume.
  * @param {!Asset} costumeAsset - the asset of the costume loaded from storage.
  * @param {!Runtime} runtime - Scratch runtime, used to access the storage module.
+ * @param {?int} optVersion - Version of Scratch that the costume comes from. If this is set
+ *     to 2, scratch 3 will perform an upgrade step to handle quirks in SVGs from Scratch 2.0.
  * @returns {?Promise} - a promise which will resolve after skinId is set, or null on error.
  */
-const loadCostumeFromAsset = function (costume, costumeAsset, runtime) {
+const loadCostumeFromAsset = function (costume, costumeAsset, runtime, optVersion) {
     costume.assetId = costumeAsset.assetId;
     const renderer = runtime.renderer;
     if (!renderer) {
@@ -33,23 +34,19 @@ const loadCostumeFromAsset = function (costume, costumeAsset, runtime) {
     if (costumeAsset.assetType === AssetType.ImageVector) {
         let svgString = costumeAsset.decodeText();
         // SVG Renderer load fixes "quirks" associated with Scratch 2 projects
-        // Currently costume.version only exists for scratch 2 costumes
-        if (costume.version && costume.version === 2) {
+        if (optVersion && optVersion === 2) {
             const svgRenderer = new SvgRenderer();
             svgRenderer.loadString(svgString);
             svgString = svgRenderer.toString();
-            delete costume.version;
-
             // Put back into storage
             const storage = runtime.storage;
+            costumeAsset.encodeTextData(svgString, storage.DataFormat.SVG);
             costume.assetId = storage.builtinHelper.cache(
                 storage.AssetType.ImageVector,
                 storage.DataFormat.SVG,
-                (new TextEncoder()).encode(svgString)
+                costumeAsset.data
             );
             costume.md5 = `${costume.assetId}.${costume.dataFormat}`;
-        } else {
-            delete costume.version;
         }
         // createSVGSkin does the right thing if rotationCenter isn't provided, so it's okay if it's
         // undefined here
@@ -64,8 +61,6 @@ const loadCostumeFromAsset = function (costume, costumeAsset, runtime) {
 
         return costume;
     }
-    // Other image types do not need a compatibility step
-    delete costume.version;
 
     return new Promise((resolve, reject) => {
         const imageElement = new Image();
@@ -110,9 +105,11 @@ const loadCostumeFromAsset = function (costume, costumeAsset, runtime) {
  * @property {number} rotationCenterY - the Y component of the costume's origin.
  * @property {number} [bitmapResolution] - the resolution scale for a bitmap costume.
  * @param {!Runtime} runtime - Scratch runtime, used to access the storage module.
+ * @param {?int} optVersion - Version of Scratch that the costume comes from. If this is set
+ *     to 2, scratch 3 will perform an upgrade step to handle quirks in SVGs from Scratch 2.0.
  * @returns {?Promise} - a promise which will resolve after skinId is set, or null on error.
  */
-const loadCostume = function (md5ext, costume, runtime) {
+const loadCostume = function (md5ext, costume, runtime, optVersion) {
     if (!runtime.storage) {
         log.error('No storage module present; cannot load costume asset: ', md5ext);
         return Promise.resolve(costume);
@@ -126,7 +123,7 @@ const loadCostume = function (md5ext, costume, runtime) {
 
     return runtime.storage.load(assetType, md5, ext).then(costumeAsset => {
         costume.dataFormat = ext;
-        return loadCostumeFromAsset(costume, costumeAsset, runtime);
+        return loadCostumeFromAsset(costume, costumeAsset, runtime, optVersion);
     });
 };
 
