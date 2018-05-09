@@ -319,6 +319,7 @@ class Scratch3SpeechBlocks {
         // This is called on green flag to reset things that may never have existed
         // in the first place. Do a bunch of checks.
         if (this._scriptNode) {
+            this._scriptNode.removeEventListener('audioprocess', this._processAudioCallback);
             this._scriptNode.disconnect();
         }
         if (this._sourceNode) {
@@ -522,6 +523,7 @@ class Scratch3SpeechBlocks {
      */
     _resumeListening () {
         this._context.resume.bind(this._context);
+        this._scriptNode.addEventListener('audioprocess', this._processAudioCallback);
         this._newWebsocket();
     }
 
