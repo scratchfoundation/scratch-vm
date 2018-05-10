@@ -39184,7 +39184,7 @@ module.exports = function (input, isSprite, callback) {
 /* 183 */
 /***/ (function(module) {
 
-module.exports = {"name":"scratch-vm","version":"0.1.0-prerelease.1525980730","description":"Virtual Machine for Scratch 3.0","author":"Massachusetts Institute of Technology","license":"BSD-3-Clause","homepage":"https://github.com/LLK/scratch-vm#readme","repository":{"type":"git","url":"git+ssh://git@github.com/LLK/scratch-vm.git","sha":"0b7aa6ddf67576b8d2a740fbd654af551ba4c336"},"main":"./dist/node/scratch-vm.js","browser":"./dist/web/scratch-vm.js","scripts":{"build":"webpack --progress --colors --bail","coverage":"tap ./test/{unit,integration}/*.js --coverage --coverage-report=lcov","deploy":"touch playground/.nojekyll && gh-pages -t -d playground -m \"Build for $(git log --pretty=format:%H -n1)\"","extract:core":"mkdirp translations/core && format-message extract --out-file translations/core/en.json src/extensions/**/index.js","i18n:src":"npm run extract:core","lint":"eslint . && format-message lint src/**/*.js","prepublish":"in-publish && npm run build || not-in-publish","start":"webpack-dev-server","tap":"tap ./test/{unit,integration}/*.js","tap:unit":"tap ./test/unit/*.js","tap:integration":"tap ./test/integration/*.js","test":"npm run lint && npm run tap","watch":"webpack --progress --colors --watch","version":"json -f package.json -I -e \"this.repository.sha = '$(git log -n1 --pretty=format:%H)'\""},"devDependencies":{"adm-zip":"0.4.7","arraybuffer-loader":"^1.0.3","babel-core":"^6.24.1","babel-eslint":"^8.0.1","babel-loader":"^7.0.0","babel-preset-env":"^1.6.1","canvas-toBlob":"1.0.0","copy-webpack-plugin":"^4.5.1","decode-html":"2.0.0","escape-html":"1.0.3","eslint":"^4.5.0","eslint-config-scratch":"^5.0.0","expose-loader":"0.7.5","file-loader":"^1.1.6","format-message":"5.2.1","format-message-cli":"5.2.1","gh-pages":"^1.1.0","highlightjs":"^9.8.0","htmlparser2":"3.9.2","immutable":"3.8.1","in-publish":"^2.0.0","json":"^9.0.4","jszip":"^3.1.5","lodash.defaultsdeep":"4.6.0","minilog":"3.1.0","nets":"3.2.0","pngjs":"^3.3.2","promise":"8.0.1","scratch-audio":"latest","scratch-blocks":"latest","scratch-parser":"4.1.1","scratch-render":"0.1.0-prerelease.20180510190222","scratch-storage":"^0.4.0","script-loader":"0.7.2","socket.io-client":"2.0.4","stats.js":"^0.17.0","tap":"^11.0.1","text-encoding":"0.6.4","tiny-worker":"^2.1.1","webpack":"^4.8.0","webpack-cli":"^2.0.15","webpack-dev-server":"^3.1.3","worker-loader":"^1.1.1"}};
+module.exports = {"name":"scratch-vm","version":"0.1.0-prerelease.1525981075","description":"Virtual Machine for Scratch 3.0","author":"Massachusetts Institute of Technology","license":"BSD-3-Clause","homepage":"https://github.com/LLK/scratch-vm#readme","repository":{"type":"git","url":"git+ssh://git@github.com/LLK/scratch-vm.git","sha":"b7f3a06fa0cad5534fc0b9be4bb9b4fec6a40ee5"},"main":"./dist/node/scratch-vm.js","browser":"./dist/web/scratch-vm.js","scripts":{"build":"webpack --progress --colors --bail","coverage":"tap ./test/{unit,integration}/*.js --coverage --coverage-report=lcov","deploy":"touch playground/.nojekyll && gh-pages -t -d playground -m \"Build for $(git log --pretty=format:%H -n1)\"","extract:core":"mkdirp translations/core && format-message extract --out-file translations/core/en.json src/extensions/**/index.js","i18n:src":"npm run extract:core","lint":"eslint . && format-message lint src/**/*.js","prepublish":"in-publish && npm run build || not-in-publish","start":"webpack-dev-server","tap":"tap ./test/{unit,integration}/*.js","tap:unit":"tap ./test/unit/*.js","tap:integration":"tap ./test/integration/*.js","test":"npm run lint && npm run tap","watch":"webpack --progress --colors --watch","version":"json -f package.json -I -e \"this.repository.sha = '$(git log -n1 --pretty=format:%H)'\""},"devDependencies":{"adm-zip":"0.4.7","arraybuffer-loader":"^1.0.3","babel-core":"^6.24.1","babel-eslint":"^8.0.1","babel-loader":"^7.0.0","babel-preset-env":"^1.6.1","canvas-toBlob":"1.0.0","copy-webpack-plugin":"^4.5.1","decode-html":"2.0.0","escape-html":"1.0.3","eslint":"^4.5.0","eslint-config-scratch":"^5.0.0","expose-loader":"0.7.5","file-loader":"^1.1.6","format-message":"5.2.1","format-message-cli":"5.2.1","gh-pages":"^1.1.0","highlightjs":"^9.8.0","htmlparser2":"3.9.2","immutable":"3.8.1","in-publish":"^2.0.0","json":"^9.0.4","jszip":"^3.1.5","lodash.defaultsdeep":"4.6.0","minilog":"3.1.0","nets":"3.2.0","pngjs":"^3.3.2","promise":"8.0.1","scratch-audio":"latest","scratch-blocks":"latest","scratch-parser":"4.1.1","scratch-render":"latest","scratch-storage":"^0.4.0","script-loader":"0.7.2","socket.io-client":"2.0.4","stats.js":"^0.17.0","tap":"^11.0.1","text-encoding":"0.6.4","tiny-worker":"^2.1.1","webpack":"^4.8.0","webpack-cli":"^2.0.15","webpack-dev-server":"^3.1.3","worker-loader":"^1.1.1"}};
 
 /***/ }),
 /* 184 */
@@ -42585,6 +42585,8 @@ var Scratch3DataBlocks = function () {
                 data_variable: this.getVariable,
                 data_setvariableto: this.setVariableTo,
                 data_changevariableby: this.changeVariableBy,
+                data_hidevariable: this.hideVariable,
+                data_showvariable: this.showVariable,
                 data_listcontents: this.getListContents,
                 data_addtolist: this.addToList,
                 data_deleteoflist: this.deleteOfList,
@@ -42593,7 +42595,9 @@ var Scratch3DataBlocks = function () {
                 data_itemoflist: this.getItemOfList,
                 data_itemnumoflist: this.getItemNumOfList,
                 data_lengthoflist: this.lengthOfList,
-                data_listcontainsitem: this.listContainsItem
+                data_listcontainsitem: this.listContainsItem,
+                data_hidelist: this.hideList,
+                data_showlist: this.showList
             };
         }
     }, {
@@ -42615,6 +42619,37 @@ var Scratch3DataBlocks = function () {
             var castedValue = Cast.toNumber(variable.value);
             var dValue = Cast.toNumber(args.VALUE);
             variable.value = castedValue + dValue;
+        }
+    }, {
+        key: 'changeMonitorVisibility',
+        value: function changeMonitorVisibility(id, visible) {
+            // Send the monitor blocks an event like the flyout checkbox event.
+            // This both updates the monitor state and changes the isMonitored block flag.
+            this.runtime.monitorBlocks.changeBlock({
+                id: id, // Monitor blocks for variables are the variable ID.
+                element: 'checkbox', // Mimic checkbox event from flyout.
+                value: visible
+            }, this.runtime);
+        }
+    }, {
+        key: 'showVariable',
+        value: function showVariable(args) {
+            this.changeMonitorVisibility(args.VARIABLE.id, true);
+        }
+    }, {
+        key: 'hideVariable',
+        value: function hideVariable(args) {
+            this.changeMonitorVisibility(args.VARIABLE.id, false);
+        }
+    }, {
+        key: 'showList',
+        value: function showList(args) {
+            this.changeMonitorVisibility(args.LIST.id, true);
+        }
+    }, {
+        key: 'hideList',
+        value: function hideList(args) {
+            this.changeMonitorVisibility(args.LIST.id, false);
         }
     }, {
         key: 'getListContents',
