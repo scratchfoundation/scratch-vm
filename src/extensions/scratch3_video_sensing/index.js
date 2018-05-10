@@ -354,7 +354,8 @@ class Scratch3VideoSensingBlocks {
                 name: formatMessage({
                     id: 'videoSensing.onFlipped',
                     default: 'on flipped',
-                    description: 'Option for the "turn video [STATE]" block'
+                    description: 'Option for the "turn video [STATE]" block that causes the video to be flipped' +
+                        ' horizontally (reversed as in a mirror)'
                 }),
                 value: VideoState.ON_FLIPPED
             }
@@ -416,7 +417,7 @@ class Scratch3VideoSensingBlocks {
                     text: formatMessage({
                         id: 'videoSensing.videoToggle',
                         default: 'turn video [VIDEO_STATE]',
-                        description: 'Controls dispay of the video preview layer'
+                        description: 'Controls display of the video preview layer'
                     }),
                     arguments: {
                         VIDEO_STATE: {
