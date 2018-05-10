@@ -918,6 +918,14 @@ class Runtime extends EventEmitter {
     }
 
     /**
+     * Set the svg adapter, which converts scratch 2 svgs to scratch 3 svgs
+     * @param {!SvgRenderer} svgAdapter The adapter to attach
+     */
+    attachV2SVGAdapter (svgAdapter) {
+        this.v2SvgAdapter = svgAdapter;
+    }
+
+    /**
      * Attach the storage module
      * @param {!ScratchStorage} storage The storage module to attach
      */

@@ -1,6 +1,5 @@
 const StringUtil = require('../util/string-util');
 const log = require('../util/log');
-const SvgRenderer = require('scratch-svg-renderer').SVGRenderer;
 
 /**
  * Initialize a costume from an asset asynchronously.
@@ -34,10 +33,9 @@ const loadCostumeFromAsset = function (costume, costumeAsset, runtime, optVersio
     if (costumeAsset.assetType === AssetType.ImageVector) {
         let svgString = costumeAsset.decodeText();
         // SVG Renderer load fixes "quirks" associated with Scratch 2 projects
-        if (optVersion && optVersion === 2) {
-            const svgRenderer = new SvgRenderer();
-            svgRenderer.loadString(svgString);
-            svgString = svgRenderer.toString();
+        if (optVersion && optVersion === 2 && runtime.v2SvgAdapter) {
+            runtime.v2SvgAdapter.loadString(svgString);
+            svgString = runtime.v2SvgAdapter.toString();
             // Put back into storage
             const storage = runtime.storage;
             costumeAsset.encodeTextData(svgString, storage.DataFormat.SVG);
