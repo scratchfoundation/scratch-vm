@@ -260,7 +260,7 @@ class Scratch3MusicBlocks {
                 name: formatMessage({
                     id: 'music.drumClaves',
                     default: '(9) Claves',
-                    description: 'Sound of a claves being struck together'
+                    description: 'Sound of claves being struck together'
                 }),
                 fileName: '9-claves'
             },
