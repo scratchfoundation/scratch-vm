@@ -434,11 +434,6 @@ class Scratch3SpeechBlocks {
         const phrases = this._phraseList.join(' ');
         const fuzzyMatchIndex = this._computeFuzzyMatch(phrases, transcriptionResult);
 
-        let fuzzyMatchResult = null;
-        if (fuzzyMatchIndex !== -1) {
-            fuzzyMatchResult = transcriptionResult.substring(fuzzyMatchIndex, fuzzyMatchIndex + phrases.length);
-        }
-
         // If the result isn't good enough yet, return without saving and resolving the promises.
         if (!this._shouldKeepResult(fuzzyMatchIndex, result, transcriptionResult)) {
             return;
