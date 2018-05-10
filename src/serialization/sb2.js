@@ -360,7 +360,7 @@ const parseScratchObject = function (object, runtime, extensions, topLevel, zip)
             // the file name of the costume should be the baseLayerID followed by the file ext
             const assetFileName = `${costumeSource.baseLayerID}.${ext}`;
             costumePromises.push(deserializeCostume(costume, runtime, zip, assetFileName)
-                .then(() => loadCostume(costume.md5, costume, runtime)));
+                .then(() => loadCostume(costume.md5, costume, runtime, 2 /* optVersion */)));
         }
     }
     // Sounds from JSON
