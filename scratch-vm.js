@@ -11292,9 +11292,11 @@ var log = __webpack_require__(2);
  * @property {number} [bitmapResolution] - the resolution scale for a bitmap costume.
  * @param {!Asset} costumeAsset - the asset of the costume loaded from storage.
  * @param {!Runtime} runtime - Scratch runtime, used to access the storage module.
+ * @param {?int} optVersion - Version of Scratch that the costume comes from. If this is set
+ *     to 2, scratch 3 will perform an upgrade step to handle quirks in SVGs from Scratch 2.0.
  * @returns {?Promise} - a promise which will resolve after skinId is set, or null on error.
  */
-var loadCostumeFromAsset = function loadCostumeFromAsset(costume, costumeAsset, runtime) {
+var loadCostumeFromAsset = function loadCostumeFromAsset(costume, costumeAsset, runtime, optVersion) {
     costume.assetId = costumeAsset.assetId;
     var renderer = runtime.renderer;
     if (!renderer) {
@@ -11307,9 +11309,20 @@ var loadCostumeFromAsset = function loadCostumeFromAsset(costume, costumeAsset, 
         rotationCenter = [costume.rotationCenterX / costume.bitmapResolution, costume.rotationCenterY / costume.bitmapResolution];
     }
     if (costumeAsset.assetType === AssetType.ImageVector) {
+        var svgString = costumeAsset.decodeText();
+        // SVG Renderer load fixes "quirks" associated with Scratch 2 projects
+        if (optVersion && optVersion === 2 && runtime.v2SvgAdapter) {
+            runtime.v2SvgAdapter.loadString(svgString);
+            svgString = runtime.v2SvgAdapter.toString();
+            // Put back into storage
+            var storage = runtime.storage;
+            costumeAsset.encodeTextData(svgString, storage.DataFormat.SVG);
+            costume.assetId = storage.builtinHelper.cache(storage.AssetType.ImageVector, storage.DataFormat.SVG, costumeAsset.data);
+            costume.md5 = costume.assetId + '.' + costume.dataFormat;
+        }
         // createSVGSkin does the right thing if rotationCenter isn't provided, so it's okay if it's
         // undefined here
-        costume.skinId = renderer.createSVGSkin(costumeAsset.decodeText(), rotationCenter);
+        costume.skinId = renderer.createSVGSkin(svgString, rotationCenter);
         costume.size = renderer.getSkinSize(costume.skinId);
         // Now we should have a rotationCenter even if we didn't before
         if (!rotationCenter) {
@@ -11364,9 +11377,11 @@ var loadCostumeFromAsset = function loadCostumeFromAsset(costume, costumeAsset, 
  * @property {number} rotationCenterY - the Y component of the costume's origin.
  * @property {number} [bitmapResolution] - the resolution scale for a bitmap costume.
  * @param {!Runtime} runtime - Scratch runtime, used to access the storage module.
+ * @param {?int} optVersion - Version of Scratch that the costume comes from. If this is set
+ *     to 2, scratch 3 will perform an upgrade step to handle quirks in SVGs from Scratch 2.0.
  * @returns {?Promise} - a promise which will resolve after skinId is set, or null on error.
  */
-var loadCostume = function loadCostume(md5ext, costume, runtime) {
+var loadCostume = function loadCostume(md5ext, costume, runtime, optVersion) {
     if (!runtime.storage) {
         log.error('No storage module present; cannot load costume asset: ', md5ext);
         return Promise.resolve(costume);
@@ -11380,7 +11395,7 @@ var loadCostume = function loadCostume(md5ext, costume, runtime) {
 
     return runtime.storage.load(assetType, md5, ext).then(function (costumeAsset) {
         costume.dataFormat = ext;
-        return loadCostumeFromAsset(costume, costumeAsset, runtime);
+        return loadCostumeFromAsset(costume, costumeAsset, runtime, optVersion);
     });
 };
 
@@ -18450,6 +18465,17 @@ var Runtime = function (_EventEmitter) {
         key: 'attachRenderer',
         value: function attachRenderer(renderer) {
             this.renderer = renderer;
+        }
+
+        /**
+         * Set the svg adapter, which converts scratch 2 svgs to scratch 3 svgs
+         * @param {!SvgRenderer} svgAdapter The adapter to attach
+         */
+
+    }, {
+        key: 'attachV2SVGAdapter',
+        value: function attachV2SVGAdapter(svgAdapter) {
+            this.v2SvgAdapter = svgAdapter;
         }
 
         /**
@@ -39158,7 +39184,7 @@ module.exports = function (input, isSprite, callback) {
 /* 183 */
 /***/ (function(module) {
 
-module.exports = {"name":"scratch-vm","version":"0.1.0-prerelease.1525901935","description":"Virtual Machine for Scratch 3.0","author":"Massachusetts Institute of Technology","license":"BSD-3-Clause","homepage":"https://github.com/LLK/scratch-vm#readme","repository":{"type":"git","url":"git+ssh://git@github.com/LLK/scratch-vm.git","sha":"6ffc206d10dea516ba468d1378ce3a8e23fd2318"},"main":"./dist/node/scratch-vm.js","browser":"./dist/web/scratch-vm.js","scripts":{"build":"webpack --progress --colors --bail","coverage":"tap ./test/{unit,integration}/*.js --coverage --coverage-report=lcov","deploy":"touch playground/.nojekyll && gh-pages -t -d playground -m \"Build for $(git log --pretty=format:%H -n1)\"","extract:pen":"mkdirp translations/pen && format-message extract --out-file translations/pen/en.json src/extensions/scratch3_pen/index.js","i18n:src":"npm run extract:pen","lint":"eslint . && format-message lint src/**/*.js","prepublish":"in-publish && npm run build || not-in-publish","start":"webpack-dev-server","tap":"tap ./test/{unit,integration}/*.js","tap:unit":"tap ./test/unit/*.js","tap:integration":"tap ./test/integration/*.js","test":"npm run lint && npm run tap","watch":"webpack --progress --colors --watch","version":"json -f package.json -I -e \"this.repository.sha = '$(git log -n1 --pretty=format:%H)'\""},"devDependencies":{"adm-zip":"0.4.7","arraybuffer-loader":"^1.0.3","babel-core":"^6.24.1","babel-eslint":"^8.0.1","babel-loader":"^7.0.0","babel-preset-env":"^1.6.1","canvas-toBlob":"1.0.0","copy-webpack-plugin":"^4.5.1","decode-html":"2.0.0","escape-html":"1.0.3","eslint":"^4.5.0","eslint-config-scratch":"^5.0.0","expose-loader":"0.7.5","file-loader":"^1.1.6","format-message":"5.2.1","format-message-cli":"5.2.1","gh-pages":"^1.1.0","highlightjs":"^9.8.0","htmlparser2":"3.9.2","immutable":"3.8.1","in-publish":"^2.0.0","json":"^9.0.4","jszip":"^3.1.5","lodash.defaultsdeep":"4.6.0","minilog":"3.1.0","nets":"3.2.0","pngjs":"^3.3.2","promise":"8.0.1","scratch-audio":"latest","scratch-blocks":"latest","scratch-parser":"4.1.1","scratch-render":"latest","scratch-storage":"^0.4.0","script-loader":"0.7.2","socket.io-client":"2.0.4","stats.js":"^0.17.0","tap":"^11.0.1","text-encoding":"0.6.4","tiny-worker":"^2.1.1","webpack":"^4.8.0","webpack-cli":"^2.0.15","webpack-dev-server":"^3.1.3","worker-loader":"^1.1.1"}};
+module.exports = {"name":"scratch-vm","version":"0.1.0-prerelease.1525975472","description":"Virtual Machine for Scratch 3.0","author":"Massachusetts Institute of Technology","license":"BSD-3-Clause","homepage":"https://github.com/LLK/scratch-vm#readme","repository":{"type":"git","url":"git+ssh://git@github.com/LLK/scratch-vm.git","sha":"5c003641f96c13f4b758d455cea332f999f26936"},"main":"./dist/node/scratch-vm.js","browser":"./dist/web/scratch-vm.js","scripts":{"build":"webpack --progress --colors --bail","coverage":"tap ./test/{unit,integration}/*.js --coverage --coverage-report=lcov","deploy":"touch playground/.nojekyll && gh-pages -t -d playground -m \"Build for $(git log --pretty=format:%H -n1)\"","extract:pen":"mkdirp translations/pen && format-message extract --out-file translations/pen/en.json src/extensions/scratch3_pen/index.js","i18n:src":"npm run extract:pen","lint":"eslint . && format-message lint src/**/*.js","prepublish":"in-publish && npm run build || not-in-publish","start":"webpack-dev-server","tap":"tap ./test/{unit,integration}/*.js","tap:unit":"tap ./test/unit/*.js","tap:integration":"tap ./test/integration/*.js","test":"npm run lint && npm run tap","watch":"webpack --progress --colors --watch","version":"json -f package.json -I -e \"this.repository.sha = '$(git log -n1 --pretty=format:%H)'\""},"devDependencies":{"adm-zip":"0.4.7","arraybuffer-loader":"^1.0.3","babel-core":"^6.24.1","babel-eslint":"^8.0.1","babel-loader":"^7.0.0","babel-preset-env":"^1.7.0","canvas-toBlob":"1.0.0","copy-webpack-plugin":"^4.5.1","decode-html":"2.0.0","escape-html":"1.0.3","eslint":"^4.5.0","eslint-config-scratch":"^5.0.0","expose-loader":"0.7.5","file-loader":"^1.1.6","format-message":"5.2.1","format-message-cli":"5.2.1","gh-pages":"^1.1.0","highlightjs":"^9.8.0","htmlparser2":"3.9.2","immutable":"3.8.1","in-publish":"^2.0.0","json":"^9.0.4","jszip":"^3.1.5","lodash.defaultsdeep":"4.6.0","minilog":"3.1.0","nets":"3.2.0","pngjs":"^3.3.2","promise":"8.0.1","scratch-audio":"latest","scratch-blocks":"latest","scratch-parser":"4.1.1","scratch-render":"latest","scratch-storage":"^0.4.0","script-loader":"0.7.2","socket.io-client":"2.0.4","stats.js":"^0.17.0","tap":"^11.0.1","text-encoding":"0.6.4","tiny-worker":"^2.1.1","webpack":"^4.8.0","webpack-cli":"^2.0.15","webpack-dev-server":"^3.1.3","worker-loader":"^1.1.1"}};
 
 /***/ }),
 /* 184 */
@@ -41874,7 +41900,7 @@ var parseScratchObject = function parseScratchObject(object, runtime, extensions
             // the file name of the costume should be the baseLayerID followed by the file ext
             var assetFileName = costumeSource.baseLayerID + '.' + ext;
             costumePromises.push(deserializeCostume(costume, runtime, zip, assetFileName).then(function () {
-                return loadCostume(costume.md5, costume, runtime);
+                return loadCostume(costume.md5, costume, runtime, 2 /* optVersion */);
             }));
         };
 
@@ -69449,6 +69475,17 @@ var VirtualMachine = function (_EventEmitter) {
         key: 'attachRenderer',
         value: function attachRenderer(renderer) {
             this.runtime.attachRenderer(renderer);
+        }
+
+        /**
+         * Set the svg adapter for the VM/runtime, which converts scratch 2 svgs to scratch 3 svgs
+         * @param {!SvgRenderer} svgAdapter The adapter to attach
+         */
+
+    }, {
+        key: 'attachV2SVGAdapter',
+        value: function attachV2SVGAdapter(svgAdapter) {
+            this.runtime.attachV2SVGAdapter(svgAdapter);
         }
 
         /**
