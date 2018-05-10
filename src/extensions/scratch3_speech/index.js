@@ -444,15 +444,7 @@ class Scratch3SpeechBlocks {
             return;
         }
 
-        // TODO: Decide whether this is the right thing.
-        // This sets the currentUtterance (which is returned by the reporter) to the fuzzy match if we had one.
-        // That means it'll often get set to a phrase from one of the 'when I hear' blocks instead of the
-        // full phrase that the user said.
-        if (fuzzyMatchResult) {
-            this._currentUtterance = fuzzyMatchResult;
-        } else {
-            this._currentUtterance = transcriptionResult;
-        }
+        this._currentUtterance = transcriptionResult;
         log.info(`Keeing result: ${this._currentUtterance}`);
         this._utteranceForEdgeTrigger = transcriptionResult;
 
