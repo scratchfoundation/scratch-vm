@@ -109,7 +109,7 @@ var _createClass = function () { function defineProperties(target, props) { for 
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
-var _require = __webpack_require__(31),
+var _require = __webpack_require__(32),
     motionVector = _require.motionVector;
 
 var WIDTH = 480;
@@ -692,7 +692,7 @@ module.exports = VideoMotionView;
  * @file debug.js
  */
 
-const VideoMotion = __webpack_require__(42);
+const VideoMotion = __webpack_require__(43);
 const VideoMotionView = __webpack_require__(114);
 
 module.exports = {
@@ -714,7 +714,7 @@ module.exports = global["Scratch3VideoSensingDebug"] = __webpack_require__(115);
 
 /***/ }),
 
-/***/ 31:
+/***/ 32:
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -801,7 +801,7 @@ module.exports = {
 
 /***/ }),
 
-/***/ 42:
+/***/ 43:
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -820,7 +820,7 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
  * Video motion sensing primitives.
  */
 
-var _require = __webpack_require__(31),
+var _require = __webpack_require__(32),
     motionVector = _require.motionVector,
     scratchAtan2 = _require.scratchAtan2;
 

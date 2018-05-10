@@ -189,9 +189,9 @@ var VirtualMachine =
 
 var support = __webpack_require__(9);
 var base64 = __webpack_require__(105);
-var nodejsUtils = __webpack_require__(36);
+var nodejsUtils = __webpack_require__(37);
 var setImmediate = __webpack_require__(298);
-var external = __webpack_require__(27);
+var external = __webpack_require__(28);
 
 
 /**
@@ -712,7 +712,7 @@ var _createClass = function () { function defineProperties(target, props) { for 
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
-var Color = __webpack_require__(34);
+var Color = __webpack_require__(35);
 
 /**
  * @fileoverview
@@ -3408,7 +3408,7 @@ module.exports = MathUtil;
 
 /*<replacement>*/
 
-var pna = __webpack_require__(38);
+var pna = __webpack_require__(39);
 /*</replacement>*/
 
 /*<replacement>*/
@@ -3423,7 +3423,7 @@ var objectKeys = Object.keys || function (obj) {
 module.exports = Duplex;
 
 /*<replacement>*/
-var util = __webpack_require__(28);
+var util = __webpack_require__(29);
 util.inherits = __webpack_require__(6);
 /*</replacement>*/
 
@@ -3834,7 +3834,7 @@ module.exports = {
   toHash: toHash,
   getProperty: getProperty,
   escapeQuotes: escapeQuotes,
-  equal: __webpack_require__(40),
+  equal: __webpack_require__(41),
   ucs2length: __webpack_require__(166),
   varOccurences: varOccurences,
   varReplace: varReplace,
@@ -5594,7 +5594,7 @@ process.umask = function() { return 0; };
 
 var utils = __webpack_require__(0);
 var support = __webpack_require__(9);
-var nodejsUtils = __webpack_require__(36);
+var nodejsUtils = __webpack_require__(37);
 var GenericWorker = __webpack_require__(4);
 
 /**
@@ -11137,6 +11137,141 @@ module.exports = ArgumentType;
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
+/* globals Intl */
+
+
+var assign = __webpack_require__(249)
+var parse = __webpack_require__(248)
+var interpret = __webpack_require__(247)
+var plurals = __webpack_require__(79)
+var lookupClosestLocale = __webpack_require__(80)
+var formats = __webpack_require__(81)
+
+function namespace () {
+  var cache = {}
+
+  var nsFormats = assign({}, formats)
+  var currentLocale = 'en'
+  var translations = null
+  var generateId = function (pattern) { return pattern }
+  var missingReplacement = null
+  var missingTranslation = 'warning'
+
+  function formatMessage (msg, args, locale) {
+    locale = locale || currentLocale
+    var pattern = typeof msg === 'string' ? msg : msg.default
+    var id = (typeof msg === 'object' && msg.id) || generateId(pattern)
+    var key = locale + ':' + id
+    var format = cache[key] ||
+      (cache[key] = generateFormat(pattern, id, locale))
+    if (typeof format === 'string') return format
+    return format(args)
+  }
+
+  function generateFormat (pattern, id, locale) {
+    pattern = translate(pattern, id, locale)
+    return interpret(locale, parse(pattern))
+  }
+
+  function translate (pattern, id, locale) {
+    if (!translations) return pattern
+
+    locale = lookupClosestLocale(locale, translations)
+    var translated = translations[locale] && translations[locale][id]
+    if (translated && translated.message) translated = translated.message
+    if (translated != null) return translated
+
+    var replacement = missingReplacement || pattern
+    if (typeof replacement === 'function') {
+      replacement = replacement(pattern, id, locale) || pattern
+    }
+    var message = 'Translation for "' + id + '" in "' + locale + '" is missing'
+
+    if (missingTranslation === 'ignore') {
+      // do nothing
+    } else if (missingTranslation === 'warning') {
+      if (typeof console !== 'undefined') console.warn(message)
+    } else { // 'error'
+      throw new Error(message)
+    }
+
+    return replacement
+  }
+
+  formatMessage.setup = function setup (opt) {
+    opt = opt || {}
+    if (opt.locale) currentLocale = opt.locale
+    if ('translations' in opt) translations = opt.translations
+    if (opt.generateId) generateId = opt.generateId
+    if ('missingReplacement' in opt) missingReplacement = opt.missingReplacement
+    if (opt.missingTranslation) missingTranslation = opt.missingTranslation
+    if (opt.formats) {
+      if (opt.formats.number) assign(nsFormats.number, opt.formats.number)
+      if (opt.formats.date) assign(nsFormats.date, opt.formats.date)
+      if (opt.formats.time) assign(nsFormats.time, opt.formats.time)
+    }
+    return {
+      locale: currentLocale,
+      translations: translations,
+      generateId: generateId,
+      missingReplacement: missingReplacement,
+      missingTranslation: missingTranslation,
+      formats: nsFormats
+    }
+  }
+
+  function helper (type, value, style, locale) {
+    locale = locale || currentLocale
+    var options = nsFormats[type][style] || nsFormats[type].default
+    var cache = options.cache || (options.cache = {})
+    var format = cache[locale] || (cache[locale] = type === 'number'
+      ? Intl.NumberFormat(locale, options).format
+      : Intl.DateTimeFormat(locale, options).format
+    )
+    return format(value)
+  }
+
+  formatMessage.number = helper.bind(null, 'number')
+  formatMessage.date = helper.bind(null, 'date')
+  formatMessage.time = helper.bind(null, 'time')
+
+  formatMessage.select = function (value, options) {
+    return options[value] || options.other
+  }
+
+  function selectPlural (pluralType, value, offset, options, locale) {
+    if (typeof offset === 'object') { // offset is optional
+      locale = options
+      options = offset
+      offset = 0
+    }
+
+    var closest = lookupClosestLocale(locale || currentLocale, plurals)
+    var plural = plurals[closest][pluralType]
+    if (!plural) return options.other
+
+    return (
+      options['=' + +value] ||
+      options[plural(value - offset)] ||
+      options.other
+    )
+  }
+
+  formatMessage.plural = selectPlural.bind(null, 'cardinal')
+  formatMessage.selectordinal = selectPlural.bind(null, 'ordinal')
+
+  return formatMessage
+}
+
+module.exports = exports = namespace()
+exports.namespace = namespace
+
+
+/***/ }),
+/* 28 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
 /* global Promise */
 
 
@@ -11159,7 +11294,7 @@ module.exports = {
 
 
 /***/ }),
-/* 28 */
+/* 29 */
 /***/ (function(module, exports, __webpack_require__) {
 
 /* WEBPACK VAR INJECTION */(function(Buffer) {// Copyright Joyent, Inc. and other Node contributors.
@@ -11273,7 +11408,7 @@ function objectToString(o) {
 /* WEBPACK VAR INJECTION */}.call(this, __webpack_require__(5).Buffer))
 
 /***/ }),
-/* 29 */
+/* 30 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -11405,7 +11540,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 30 */
+/* 31 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -11470,7 +11605,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 31 */
+/* 32 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -11556,7 +11691,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 32 */
+/* 33 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -12039,7 +12174,7 @@ var Thread = function () {
 module.exports = Thread;
 
 /***/ }),
-/* 33 */
+/* 34 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -13270,7 +13405,7 @@ var RenderedTarget = function (_Target) {
 module.exports = RenderedTarget;
 
 /***/ }),
-/* 34 */
+/* 35 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -13528,7 +13663,7 @@ var Color = function () {
 module.exports = Color;
 
 /***/ }),
-/* 35 */
+/* 36 */
 /***/ (function(module, exports) {
 
 // https://github.com/zloirock/core-js/issues/86#issuecomment-115759028
@@ -13537,7 +13672,7 @@ var global = module.exports = typeof window != 'undefined' && window.Math == Mat
 if(typeof __g == 'number')__g = global; // eslint-disable-line no-undef
 
 /***/ }),
-/* 36 */
+/* 37 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -13597,7 +13732,7 @@ module.exports = {
 /* WEBPACK VAR INJECTION */}.call(this, __webpack_require__(5).Buffer))
 
 /***/ }),
-/* 37 */
+/* 38 */
 /***/ (function(module, exports, __webpack_require__) {
 
 /* eslint-disable node/no-deprecated-api */
@@ -13665,7 +13800,7 @@ SafeBuffer.allocUnsafeSlow = function (size) {
 
 
 /***/ }),
-/* 38 */
+/* 39 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -13717,13 +13852,13 @@ function nextTick(fn, arg1, arg2, arg3) {
 /* WEBPACK VAR INJECTION */}.call(this, __webpack_require__(20)))
 
 /***/ }),
-/* 39 */
+/* 40 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 
-var resolve = __webpack_require__(41);
+var resolve = __webpack_require__(42);
 
 module.exports = {
   Validation: errorSubclass(ValidationError),
@@ -13758,7 +13893,7 @@ function errorSubclass(Subclass) {
 
 
 /***/ }),
-/* 40 */
+/* 41 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -13820,14 +13955,14 @@ module.exports = function equal(a, b) {
 
 
 /***/ }),
-/* 41 */
+/* 42 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 
 var url = __webpack_require__(169)
-  , equal = __webpack_require__(40)
+  , equal = __webpack_require__(41)
   , util = __webpack_require__(13)
   , SchemaObject = __webpack_require__(62)
   , traverse = __webpack_require__(165);
@@ -14098,7 +14233,7 @@ function resolveIds(schema) {
 
 
 /***/ }),
-/* 42 */
+/* 43 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -14117,7 +14252,7 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
  * Video motion sensing primitives.
  */
 
-var _require = __webpack_require__(31),
+var _require = __webpack_require__(32),
     motionVector = _require.motionVector,
     scratchAtan2 = _require.scratchAtan2;
 
@@ -14519,151 +14654,16 @@ var VideoMotion = function () {
 module.exports = VideoMotion;
 
 /***/ }),
-/* 43 */
+/* 44 */
 /***/ (function(module) {
 
 module.exports = {"amp":"&","apos":"'","gt":">","lt":"<","quot":"\""};
 
 /***/ }),
-/* 44 */
+/* 45 */
 /***/ (function(module) {
 
 module.exports = {"Aacute":"Á","aacute":"á","Abreve":"Ă","abreve":"ă","ac":"∾","acd":"∿","acE":"∾̳","Acirc":"Â","acirc":"â","acute":"´","Acy":"А","acy":"а","AElig":"Æ","aelig":"æ","af":"⁡","Afr":"𝔄","afr":"𝔞","Agrave":"À","agrave":"à","alefsym":"ℵ","aleph":"ℵ","Alpha":"Α","alpha":"α","Amacr":"Ā","amacr":"ā","amalg":"⨿","amp":"&","AMP":"&","andand":"⩕","And":"⩓","and":"∧","andd":"⩜","andslope":"⩘","andv":"⩚","ang":"∠","ange":"⦤","angle":"∠","angmsdaa":"⦨","angmsdab":"⦩","angmsdac":"⦪","angmsdad":"⦫","angmsdae":"⦬","angmsdaf":"⦭","angmsdag":"⦮","angmsdah":"⦯","angmsd":"∡","angrt":"∟","angrtvb":"⊾","angrtvbd":"⦝","angsph":"∢","angst":"Å","angzarr":"⍼","Aogon":"Ą","aogon":"ą","Aopf":"𝔸","aopf":"𝕒","apacir":"⩯","ap":"≈","apE":"⩰","ape":"≊","apid":"≋","apos":"'","ApplyFunction":"⁡","approx":"≈","approxeq":"≊","Aring":"Å","aring":"å","Ascr":"𝒜","ascr":"𝒶","Assign":"≔","ast":"*","asymp":"≈","asympeq":"≍","Atilde":"Ã","atilde":"ã","Auml":"Ä","auml":"ä","awconint":"∳","awint":"⨑","backcong":"≌","backepsilon":"϶","backprime":"‵","backsim":"∽","backsimeq":"⋍","Backslash":"∖","Barv":"⫧","barvee":"⊽","barwed":"⌅","Barwed":"⌆","barwedge":"⌅","bbrk":"⎵","bbrktbrk":"⎶","bcong":"≌","Bcy":"Б","bcy":"б","bdquo":"„","becaus":"∵","because":"∵","Because":"∵","bemptyv":"⦰","bepsi":"϶","bernou":"ℬ","Bernoullis":"ℬ","Beta":"Β","beta":"β","beth":"ℶ","between":"≬","Bfr":"𝔅","bfr":"𝔟","bigcap":"⋂","bigcirc":"◯","bigcup":"⋃","bigodot":"⨀","bigoplus":"⨁","bigotimes":"⨂","bigsqcup":"⨆","bigstar":"★","bigtriangledown":"▽","bigtriangleup":"△","biguplus":"⨄","bigvee":"⋁","bigwedge":"⋀","bkarow":"⤍","blacklozenge":"⧫","blacksquare":"▪","blacktriangle":"▴","blacktriangledown":"▾","blacktriangleleft":"◂","blacktriangleright":"▸","blank":"␣","blk12":"▒","blk14":"░","blk34":"▓","block":"█","bne":"=⃥","bnequiv":"≡⃥","bNot":"⫭","bnot":"⌐","Bopf":"𝔹","bopf":"𝕓","bot":"⊥","bottom":"⊥","bowtie":"⋈","boxbox":"⧉","boxdl":"┐","boxdL":"╕","boxDl":"╖","boxDL":"╗","boxdr":"┌","boxdR":"╒","boxDr":"╓","boxDR":"╔","boxh":"─","boxH":"═","boxhd":"┬","boxHd":"╤","boxhD":"╥","boxHD":"╦","boxhu":"┴","boxHu":"╧","boxhU":"╨","boxHU":"╩","boxminus":"⊟","boxplus":"⊞","boxtimes":"⊠","boxul":"┘","boxuL":"╛","boxUl":"╜","boxUL":"╝","boxur":"└","boxuR":"╘","boxUr":"╙","boxUR":"╚","boxv":"│","boxV":"║","boxvh":"┼","boxvH":"╪","boxVh":"╫","boxVH":"╬","boxvl":"┤","boxvL":"╡","boxVl":"╢","boxVL":"╣","boxvr":"├","boxvR":"╞","boxVr":"╟","boxVR":"╠","bprime":"‵","breve":"˘","Breve":"˘","brvbar":"¦","bscr":"𝒷","Bscr":"ℬ","bsemi":"⁏","bsim":"∽","bsime":"⋍","bsolb":"⧅","bsol":"\\","bsolhsub":"⟈","bull":"•","bullet":"•","bump":"≎","bumpE":"⪮","bumpe":"≏","Bumpeq":"≎","bumpeq":"≏","Cacute":"Ć","cacute":"ć","capand":"⩄","capbrcup":"⩉","capcap":"⩋","cap":"∩","Cap":"⋒","capcup":"⩇","capdot":"⩀","CapitalDifferentialD":"ⅅ","caps":"∩︀","caret":"⁁","caron":"ˇ","Cayleys":"ℭ","ccaps":"⩍","Ccaron":"Č","ccaron":"č","Ccedil":"Ç","ccedil":"ç","Ccirc":"Ĉ","ccirc":"ĉ","Cconint":"∰","ccups":"⩌","ccupssm":"⩐","Cdot":"Ċ","cdot":"ċ","cedil":"¸","Cedilla":"¸","cemptyv":"⦲","cent":"¢","centerdot":"·","CenterDot":"·","cfr":"𝔠","Cfr":"ℭ","CHcy":"Ч","chcy":"ч","check":"✓","checkmark":"✓","Chi":"Χ","chi":"χ","circ":"ˆ","circeq":"≗","circlearrowleft":"↺","circlearrowright":"↻","circledast":"⊛","circledcirc":"⊚","circleddash":"⊝","CircleDot":"⊙","circledR":"®","circledS":"Ⓢ","CircleMinus":"⊖","CirclePlus":"⊕","CircleTimes":"⊗","cir":"○","cirE":"⧃","cire":"≗","cirfnint":"⨐","cirmid":"⫯","cirscir":"⧂","ClockwiseContourIntegral":"∲","CloseCurlyDoubleQuote":"”","CloseCurlyQuote":"’","clubs":"♣","clubsuit":"♣","colon":":","Colon":"∷","Colone":"⩴","colone":"≔","coloneq":"≔","comma":",","commat":"@","comp":"∁","compfn":"∘","complement":"∁","complexes":"ℂ","cong":"≅","congdot":"⩭","Congruent":"≡","conint":"∮","Conint":"∯","ContourIntegral":"∮","copf":"𝕔","Copf":"ℂ","coprod":"∐","Coproduct":"∐","copy":"©","COPY":"©","copysr":"℗","CounterClockwiseContourIntegral":"∳","crarr":"↵","cross":"✗","Cross":"⨯","Cscr":"𝒞","cscr":"𝒸","csub":"⫏","csube":"⫑","csup":"⫐","csupe":"⫒","ctdot":"⋯","cudarrl":"⤸","cudarrr":"⤵","cuepr":"⋞","cuesc":"⋟","cularr":"↶","cularrp":"⤽","cupbrcap":"⩈","cupcap":"⩆","CupCap":"≍","cup":"∪","Cup":"⋓","cupcup":"⩊","cupdot":"⊍","cupor":"⩅","cups":"∪︀","curarr":"↷","curarrm":"⤼","curlyeqprec":"⋞","curlyeqsucc":"⋟","curlyvee":"⋎","curlywedge":"⋏","curren":"¤","curvearrowleft":"↶","curvearrowright":"↷","cuvee":"⋎","cuwed":"⋏","cwconint":"∲","cwint":"∱","cylcty":"⌭","dagger":"†","Dagger":"‡","daleth":"ℸ","darr":"↓","Darr":"↡","dArr":"⇓","dash":"‐","Dashv":"⫤","dashv":"⊣","dbkarow":"⤏","dblac":"˝","Dcaron":"Ď","dcaron":"ď","Dcy":"Д","dcy":"д","ddagger":"‡","ddarr":"⇊","DD":"ⅅ","dd":"ⅆ","DDotrahd":"⤑","ddotseq":"⩷","deg":"°","Del":"∇","Delta":"Δ","delta":"δ","demptyv":"⦱","dfisht":"⥿","Dfr":"𝔇","dfr":"𝔡","dHar":"⥥","dharl":"⇃","dharr":"⇂","DiacriticalAcute":"´","DiacriticalDot":"˙","DiacriticalDoubleAcute":"˝","DiacriticalGrave":"`","DiacriticalTilde":"˜","diam":"⋄","diamond":"⋄","Diamond":"⋄","diamondsuit":"♦","diams":"♦","die":"¨","DifferentialD":"ⅆ","digamma":"ϝ","disin":"⋲","div":"÷","divide":"÷","divideontimes":"⋇","divonx":"⋇","DJcy":"Ђ","djcy":"ђ","dlcorn":"⌞","dlcrop":"⌍","dollar":"$","Dopf":"𝔻","dopf":"𝕕","Dot":"¨","dot":"˙","DotDot":"⃜","doteq":"≐","doteqdot":"≑","DotEqual":"≐","dotminus":"∸","dotplus":"∔","dotsquare":"⊡","doublebarwedge":"⌆","DoubleContourIntegral":"∯","DoubleDot":"¨","DoubleDownArrow":"⇓","DoubleLeftArrow":"⇐","DoubleLeftRightArrow":"⇔","DoubleLeftTee":"⫤","DoubleLongLeftArrow":"⟸","DoubleLongLeftRightArrow":"⟺","DoubleLongRightArrow":"⟹","DoubleRightArrow":"⇒","DoubleRightTee":"⊨","DoubleUpArrow":"⇑","DoubleUpDownArrow":"⇕","DoubleVerticalBar":"∥","DownArrowBar":"⤓","downarrow":"↓","DownArrow":"↓","Downarrow":"⇓","DownArrowUpArrow":"⇵","DownBreve":"̑","downdownarrows":"⇊","downharpoonleft":"⇃","downharpoonright":"⇂","DownLeftRightVector":"⥐","DownLeftTeeVector":"⥞","DownLeftVectorBar":"⥖","DownLeftVector":"↽","DownRightTeeVector":"⥟","DownRightVectorBar":"⥗","DownRightVector":"⇁","DownTeeArrow":"↧","DownTee":"⊤","drbkarow":"⤐","drcorn":"⌟","drcrop":"⌌","Dscr":"𝒟","dscr":"𝒹","DScy":"Ѕ","dscy":"ѕ","dsol":"⧶","Dstrok":"Đ","dstrok":"đ","dtdot":"⋱","dtri":"▿","dtrif":"▾","duarr":"⇵","duhar":"⥯","dwangle":"⦦","DZcy":"Џ","dzcy":"џ","dzigrarr":"⟿","Eacute":"É","eacute":"é","easter":"⩮","Ecaron":"Ě","ecaron":"ě","Ecirc":"Ê","ecirc":"ê","ecir":"≖","ecolon":"≕","Ecy":"Э","ecy":"э","eDDot":"⩷","Edot":"Ė","edot":"ė","eDot":"≑","ee":"ⅇ","efDot":"≒","Efr":"𝔈","efr":"𝔢","eg":"⪚","Egrave":"È","egrave":"è","egs":"⪖","egsdot":"⪘","el":"⪙","Element":"∈","elinters":"⏧","ell":"ℓ","els":"⪕","elsdot":"⪗","Emacr":"Ē","emacr":"ē","empty":"∅","emptyset":"∅","EmptySmallSquare":"◻","emptyv":"∅","EmptyVerySmallSquare":"▫","emsp13":" ","emsp14":" ","emsp":" ","ENG":"Ŋ","eng":"ŋ","ensp":" ","Eogon":"Ę","eogon":"ę","Eopf":"𝔼","eopf":"𝕖","epar":"⋕","eparsl":"⧣","eplus":"⩱","epsi":"ε","Epsilon":"Ε","epsilon":"ε","epsiv":"ϵ","eqcirc":"≖","eqcolon":"≕","eqsim":"≂","eqslantgtr":"⪖","eqslantless":"⪕","Equal":"⩵","equals":"=","EqualTilde":"≂","equest":"≟","Equilibrium":"⇌","equiv":"≡","equivDD":"⩸","eqvparsl":"⧥","erarr":"⥱","erDot":"≓","escr":"ℯ","Escr":"ℰ","esdot":"≐","Esim":"⩳","esim":"≂","Eta":"Η","eta":"η","ETH":"Ð","eth":"ð","Euml":"Ë","euml":"ë","euro":"€","excl":"!","exist":"∃","Exists":"∃","expectation":"ℰ","exponentiale":"ⅇ","ExponentialE":"ⅇ","fallingdotseq":"≒","Fcy":"Ф","fcy":"ф","female":"♀","ffilig":"ﬃ","fflig":"ﬀ","ffllig":"ﬄ","Ffr":"𝔉","ffr":"𝔣","filig":"ﬁ","FilledSmallSquare":"◼","FilledVerySmallSquare":"▪","fjlig":"fj","flat":"♭","fllig":"ﬂ","fltns":"▱","fnof":"ƒ","Fopf":"𝔽","fopf":"𝕗","forall":"∀","ForAll":"∀","fork":"⋔","forkv":"⫙","Fouriertrf":"ℱ","fpartint":"⨍","frac12":"½","frac13":"⅓","frac14":"¼","frac15":"⅕","frac16":"⅙","frac18":"⅛","frac23":"⅔","frac25":"⅖","frac34":"¾","frac35":"⅗","frac38":"⅜","frac45":"⅘","frac56":"⅚","frac58":"⅝","frac78":"⅞","frasl":"⁄","frown":"⌢","fscr":"𝒻","Fscr":"ℱ","gacute":"ǵ","Gamma":"Γ","gamma":"γ","Gammad":"Ϝ","gammad":"ϝ","gap":"⪆","Gbreve":"Ğ","gbreve":"ğ","Gcedil":"Ģ","Gcirc":"Ĝ","gcirc":"ĝ","Gcy":"Г","gcy":"г","Gdot":"Ġ","gdot":"ġ","ge":"≥","gE":"≧","gEl":"⪌","gel":"⋛","geq":"≥","geqq":"≧","geqslant":"⩾","gescc":"⪩","ges":"⩾","gesdot":"⪀","gesdoto":"⪂","gesdotol":"⪄","gesl":"⋛︀","gesles":"⪔","Gfr":"𝔊","gfr":"𝔤","gg":"≫","Gg":"⋙","ggg":"⋙","gimel":"ℷ","GJcy":"Ѓ","gjcy":"ѓ","gla":"⪥","gl":"≷","glE":"⪒","glj":"⪤","gnap":"⪊","gnapprox":"⪊","gne":"⪈","gnE":"≩","gneq":"⪈","gneqq":"≩","gnsim":"⋧","Gopf":"𝔾","gopf":"𝕘","grave":"`","GreaterEqual":"≥","GreaterEqualLess":"⋛","GreaterFullEqual":"≧","GreaterGreater":"⪢","GreaterLess":"≷","GreaterSlantEqual":"⩾","GreaterTilde":"≳","Gscr":"𝒢","gscr":"ℊ","gsim":"≳","gsime":"⪎","gsiml":"⪐","gtcc":"⪧","gtcir":"⩺","gt":">","GT":">","Gt":"≫","gtdot":"⋗","gtlPar":"⦕","gtquest":"⩼","gtrapprox":"⪆","gtrarr":"⥸","gtrdot":"⋗","gtreqless":"⋛","gtreqqless":"⪌","gtrless":"≷","gtrsim":"≳","gvertneqq":"≩︀","gvnE":"≩︀","Hacek":"ˇ","hairsp":" ","half":"½","hamilt":"ℋ","HARDcy":"Ъ","hardcy":"ъ","harrcir":"⥈","harr":"↔","hArr":"⇔","harrw":"↭","Hat":"^","hbar":"ℏ","Hcirc":"Ĥ","hcirc":"ĥ","hearts":"♥","heartsuit":"♥","hellip":"…","hercon":"⊹","hfr":"𝔥","Hfr":"ℌ","HilbertSpace":"ℋ","hksearow":"⤥","hkswarow":"⤦","hoarr":"⇿","homtht":"∻","hookleftarrow":"↩","hookrightarrow":"↪","hopf":"𝕙","Hopf":"ℍ","horbar":"―","HorizontalLine":"─","hscr":"𝒽","Hscr":"ℋ","hslash":"ℏ","Hstrok":"Ħ","hstrok":"ħ","HumpDownHump":"≎","HumpEqual":"≏","hybull":"⁃","hyphen":"‐","Iacute":"Í","iacute":"í","ic":"⁣","Icirc":"Î","icirc":"î","Icy":"И","icy":"и","Idot":"İ","IEcy":"Е","iecy":"е","iexcl":"¡","iff":"⇔","ifr":"𝔦","Ifr":"ℑ","Igrave":"Ì","igrave":"ì","ii":"ⅈ","iiiint":"⨌","iiint":"∭","iinfin":"⧜","iiota":"℩","IJlig":"Ĳ","ijlig":"ĳ","Imacr":"Ī","imacr":"ī","image":"ℑ","ImaginaryI":"ⅈ","imagline":"ℐ","imagpart":"ℑ","imath":"ı","Im":"ℑ","imof":"⊷","imped":"Ƶ","Implies":"⇒","incare":"℅","in":"∈","infin":"∞","infintie":"⧝","inodot":"ı","intcal":"⊺","int":"∫","Int":"∬","integers":"ℤ","Integral":"∫","intercal":"⊺","Intersection":"⋂","intlarhk":"⨗","intprod":"⨼","InvisibleComma":"⁣","InvisibleTimes":"⁢","IOcy":"Ё","iocy":"ё","Iogon":"Į","iogon":"į","Iopf":"𝕀","iopf":"𝕚","Iota":"Ι","iota":"ι","iprod":"⨼","iquest":"¿","iscr":"𝒾","Iscr":"ℐ","isin":"∈","isindot":"⋵","isinE":"⋹","isins":"⋴","isinsv":"⋳","isinv":"∈","it":"⁢","Itilde":"Ĩ","itilde":"ĩ","Iukcy":"І","iukcy":"і","Iuml":"Ï","iuml":"ï","Jcirc":"Ĵ","jcirc":"ĵ","Jcy":"Й","jcy":"й","Jfr":"𝔍","jfr":"𝔧","jmath":"ȷ","Jopf":"𝕁","jopf":"𝕛","Jscr":"𝒥","jscr":"𝒿","Jsercy":"Ј","jsercy":"ј","Jukcy":"Є","jukcy":"є","Kappa":"Κ","kappa":"κ","kappav":"ϰ","Kcedil":"Ķ","kcedil":"ķ","Kcy":"К","kcy":"к","Kfr":"𝔎","kfr":"𝔨","kgreen":"ĸ","KHcy":"Х","khcy":"х","KJcy":"Ќ","kjcy":"ќ","Kopf":"𝕂","kopf":"𝕜","Kscr":"𝒦","kscr":"𝓀","lAarr":"⇚","Lacute":"Ĺ","lacute":"ĺ","laemptyv":"⦴","lagran":"ℒ","Lambda":"Λ","lambda":"λ","lang":"⟨","Lang":"⟪","langd":"⦑","langle":"⟨","lap":"⪅","Laplacetrf":"ℒ","laquo":"«","larrb":"⇤","larrbfs":"⤟","larr":"←","Larr":"↞","lArr":"⇐","larrfs":"⤝","larrhk":"↩","larrlp":"↫","larrpl":"⤹","larrsim":"⥳","larrtl":"↢","latail":"⤙","lAtail":"⤛","lat":"⪫","late":"⪭","lates":"⪭︀","lbarr":"⤌","lBarr":"⤎","lbbrk":"❲","lbrace":"{","lbrack":"[","lbrke":"⦋","lbrksld":"⦏","lbrkslu":"⦍","Lcaron":"Ľ","lcaron":"ľ","Lcedil":"Ļ","lcedil":"ļ","lceil":"⌈","lcub":"{","Lcy":"Л","lcy":"л","ldca":"⤶","ldquo":"“","ldquor":"„","ldrdhar":"⥧","ldrushar":"⥋","ldsh":"↲","le":"≤","lE":"≦","LeftAngleBracket":"⟨","LeftArrowBar":"⇤","leftarrow":"←","LeftArrow":"←","Leftarrow":"⇐","LeftArrowRightArrow":"⇆","leftarrowtail":"↢","LeftCeiling":"⌈","LeftDoubleBracket":"⟦","LeftDownTeeVector":"⥡","LeftDownVectorBar":"⥙","LeftDownVector":"⇃","LeftFloor":"⌊","leftharpoondown":"↽","leftharpoonup":"↼","leftleftarrows":"⇇","leftrightarrow":"↔","LeftRightArrow":"↔","Leftrightarrow":"⇔","leftrightarrows":"⇆","leftrightharpoons":"⇋","leftrightsquigarrow":"↭","LeftRightVector":"⥎","LeftTeeArrow":"↤","LeftTee":"⊣","LeftTeeVector":"⥚","leftthreetimes":"⋋","LeftTriangleBar":"⧏","LeftTriangle":"⊲","LeftTriangleEqual":"⊴","LeftUpDownVector":"⥑","LeftUpTeeVector":"⥠","LeftUpVectorBar":"⥘","LeftUpVector":"↿","LeftVectorBar":"⥒","LeftVector":"↼","lEg":"⪋","leg":"⋚","leq":"≤","leqq":"≦","leqslant":"⩽","lescc":"⪨","les":"⩽","lesdot":"⩿","lesdoto":"⪁","lesdotor":"⪃","lesg":"⋚︀","lesges":"⪓","lessapprox":"⪅","lessdot":"⋖","lesseqgtr":"⋚","lesseqqgtr":"⪋","LessEqualGreater":"⋚","LessFullEqual":"≦","LessGreater":"≶","lessgtr":"≶","LessLess":"⪡","lesssim":"≲","LessSlantEqual":"⩽","LessTilde":"≲","lfisht":"⥼","lfloor":"⌊","Lfr":"𝔏","lfr":"𝔩","lg":"≶","lgE":"⪑","lHar":"⥢","lhard":"↽","lharu":"↼","lharul":"⥪","lhblk":"▄","LJcy":"Љ","ljcy":"љ","llarr":"⇇","ll":"≪","Ll":"⋘","llcorner":"⌞","Lleftarrow":"⇚","llhard":"⥫","lltri":"◺","Lmidot":"Ŀ","lmidot":"ŀ","lmoustache":"⎰","lmoust":"⎰","lnap":"⪉","lnapprox":"⪉","lne":"⪇","lnE":"≨","lneq":"⪇","lneqq":"≨","lnsim":"⋦","loang":"⟬","loarr":"⇽","lobrk":"⟦","longleftarrow":"⟵","LongLeftArrow":"⟵","Longleftarrow":"⟸","longleftrightarrow":"⟷","LongLeftRightArrow":"⟷","Longleftrightarrow":"⟺","longmapsto":"⟼","longrightarrow":"⟶","LongRightArrow":"⟶","Longrightarrow":"⟹","looparrowleft":"↫","looparrowright":"↬","lopar":"⦅","Lopf":"𝕃","lopf":"𝕝","loplus":"⨭","lotimes":"⨴","lowast":"∗","lowbar":"_","LowerLeftArrow":"↙","LowerRightArrow":"↘","loz":"◊","lozenge":"◊","lozf":"⧫","lpar":"(","lparlt":"⦓","lrarr":"⇆","lrcorner":"⌟","lrhar":"⇋","lrhard":"⥭","lrm":"‎","lrtri":"⊿","lsaquo":"‹","lscr":"𝓁","Lscr":"ℒ","lsh":"↰","Lsh":"↰","lsim":"≲","lsime":"⪍","lsimg":"⪏","lsqb":"[","lsquo":"‘","lsquor":"‚","Lstrok":"Ł","lstrok":"ł","ltcc":"⪦","ltcir":"⩹","lt":"<","LT":"<","Lt":"≪","ltdot":"⋖","lthree":"⋋","ltimes":"⋉","ltlarr":"⥶","ltquest":"⩻","ltri":"◃","ltrie":"⊴","ltrif":"◂","ltrPar":"⦖","lurdshar":"⥊","luruhar":"⥦","lvertneqq":"≨︀","lvnE":"≨︀","macr":"¯","male":"♂","malt":"✠","maltese":"✠","Map":"⤅","map":"↦","mapsto":"↦","mapstodown":"↧","mapstoleft":"↤","mapstoup":"↥","marker":"▮","mcomma":"⨩","Mcy":"М","mcy":"м","mdash":"—","mDDot":"∺","measuredangle":"∡","MediumSpace":" ","Mellintrf":"ℳ","Mfr":"𝔐","mfr":"𝔪","mho":"℧","micro":"µ","midast":"*","midcir":"⫰","mid":"∣","middot":"·","minusb":"⊟","minus":"−","minusd":"∸","minusdu":"⨪","MinusPlus":"∓","mlcp":"⫛","mldr":"…","mnplus":"∓","models":"⊧","Mopf":"𝕄","mopf":"𝕞","mp":"∓","mscr":"𝓂","Mscr":"ℳ","mstpos":"∾","Mu":"Μ","mu":"μ","multimap":"⊸","mumap":"⊸","nabla":"∇","Nacute":"Ń","nacute":"ń","nang":"∠⃒","nap":"≉","napE":"⩰̸","napid":"≋̸","napos":"ŉ","napprox":"≉","natural":"♮","naturals":"ℕ","natur":"♮","nbsp":" ","nbump":"≎̸","nbumpe":"≏̸","ncap":"⩃","Ncaron":"Ň","ncaron":"ň","Ncedil":"Ņ","ncedil":"ņ","ncong":"≇","ncongdot":"⩭̸","ncup":"⩂","Ncy":"Н","ncy":"н","ndash":"–","nearhk":"⤤","nearr":"↗","neArr":"⇗","nearrow":"↗","ne":"≠","nedot":"≐̸","NegativeMediumSpace":"​","NegativeThickSpace":"​","NegativeThinSpace":"​","NegativeVeryThinSpace":"​","nequiv":"≢","nesear":"⤨","nesim":"≂̸","NestedGreaterGreater":"≫","NestedLessLess":"≪","NewLine":"\n","nexist":"∄","nexists":"∄","Nfr":"𝔑","nfr":"𝔫","ngE":"≧̸","nge":"≱","ngeq":"≱","ngeqq":"≧̸","ngeqslant":"⩾̸","nges":"⩾̸","nGg":"⋙̸","ngsim":"≵","nGt":"≫⃒","ngt":"≯","ngtr":"≯","nGtv":"≫̸","nharr":"↮","nhArr":"⇎","nhpar":"⫲","ni":"∋","nis":"⋼","nisd":"⋺","niv":"∋","NJcy":"Њ","njcy":"њ","nlarr":"↚","nlArr":"⇍","nldr":"‥","nlE":"≦̸","nle":"≰","nleftarrow":"↚","nLeftarrow":"⇍","nleftrightarrow":"↮","nLeftrightarrow":"⇎","nleq":"≰","nleqq":"≦̸","nleqslant":"⩽̸","nles":"⩽̸","nless":"≮","nLl":"⋘̸","nlsim":"≴","nLt":"≪⃒","nlt":"≮","nltri":"⋪","nltrie":"⋬","nLtv":"≪̸","nmid":"∤","NoBreak":"⁠","NonBreakingSpace":" ","nopf":"𝕟","Nopf":"ℕ","Not":"⫬","not":"¬","NotCongruent":"≢","NotCupCap":"≭","NotDoubleVerticalBar":"∦","NotElement":"∉","NotEqual":"≠","NotEqualTilde":"≂̸","NotExists":"∄","NotGreater":"≯","NotGreaterEqual":"≱","NotGreaterFullEqual":"≧̸","NotGreaterGreater":"≫̸","NotGreaterLess":"≹","NotGreaterSlantEqual":"⩾̸","NotGreaterTilde":"≵","NotHumpDownHump":"≎̸","NotHumpEqual":"≏̸","notin":"∉","notindot":"⋵̸","notinE":"⋹̸","notinva":"∉","notinvb":"⋷","notinvc":"⋶","NotLeftTriangleBar":"⧏̸","NotLeftTriangle":"⋪","NotLeftTriangleEqual":"⋬","NotLess":"≮","NotLessEqual":"≰","NotLessGreater":"≸","NotLessLess":"≪̸","NotLessSlantEqual":"⩽̸","NotLessTilde":"≴","NotNestedGreaterGreater":"⪢̸","NotNestedLessLess":"⪡̸","notni":"∌","notniva":"∌","notnivb":"⋾","notnivc":"⋽","NotPrecedes":"⊀","NotPrecedesEqual":"⪯̸","NotPrecedesSlantEqual":"⋠","NotReverseElement":"∌","NotRightTriangleBar":"⧐̸","NotRightTriangle":"⋫","NotRightTriangleEqual":"⋭","NotSquareSubset":"⊏̸","NotSquareSubsetEqual":"⋢","NotSquareSuperset":"⊐̸","NotSquareSupersetEqual":"⋣","NotSubset":"⊂⃒","NotSubsetEqual":"⊈","NotSucceeds":"⊁","NotSucceedsEqual":"⪰̸","NotSucceedsSlantEqual":"⋡","NotSucceedsTilde":"≿̸","NotSuperset":"⊃⃒","NotSupersetEqual":"⊉","NotTilde":"≁","NotTildeEqual":"≄","NotTildeFullEqual":"≇","NotTildeTilde":"≉","NotVerticalBar":"∤","nparallel":"∦","npar":"∦","nparsl":"⫽⃥","npart":"∂̸","npolint":"⨔","npr":"⊀","nprcue":"⋠","nprec":"⊀","npreceq":"⪯̸","npre":"⪯̸","nrarrc":"⤳̸","nrarr":"↛","nrArr":"⇏","nrarrw":"↝̸","nrightarrow":"↛","nRightarrow":"⇏","nrtri":"⋫","nrtrie":"⋭","nsc":"⊁","nsccue":"⋡","nsce":"⪰̸","Nscr":"𝒩","nscr":"𝓃","nshortmid":"∤","nshortparallel":"∦","nsim":"≁","nsime":"≄","nsimeq":"≄","nsmid":"∤","nspar":"∦","nsqsube":"⋢","nsqsupe":"⋣","nsub":"⊄","nsubE":"⫅̸","nsube":"⊈","nsubset":"⊂⃒","nsubseteq":"⊈","nsubseteqq":"⫅̸","nsucc":"⊁","nsucceq":"⪰̸","nsup":"⊅","nsupE":"⫆̸","nsupe":"⊉","nsupset":"⊃⃒","nsupseteq":"⊉","nsupseteqq":"⫆̸","ntgl":"≹","Ntilde":"Ñ","ntilde":"ñ","ntlg":"≸","ntriangleleft":"⋪","ntrianglelefteq":"⋬","ntriangleright":"⋫","ntrianglerighteq":"⋭","Nu":"Ν","nu":"ν","num":"#","numero":"№","numsp":" ","nvap":"≍⃒","nvdash":"⊬","nvDash":"⊭","nVdash":"⊮","nVDash":"⊯","nvge":"≥⃒","nvgt":">⃒","nvHarr":"⤄","nvinfin":"⧞","nvlArr":"⤂","nvle":"≤⃒","nvlt":"<⃒","nvltrie":"⊴⃒","nvrArr":"⤃","nvrtrie":"⊵⃒","nvsim":"∼⃒","nwarhk":"⤣","nwarr":"↖","nwArr":"⇖","nwarrow":"↖","nwnear":"⤧","Oacute":"Ó","oacute":"ó","oast":"⊛","Ocirc":"Ô","ocirc":"ô","ocir":"⊚","Ocy":"О","ocy":"о","odash":"⊝","Odblac":"Ő","odblac":"ő","odiv":"⨸","odot":"⊙","odsold":"⦼","OElig":"Œ","oelig":"œ","ofcir":"⦿","Ofr":"𝔒","ofr":"𝔬","ogon":"˛","Ograve":"Ò","ograve":"ò","ogt":"⧁","ohbar":"⦵","ohm":"Ω","oint":"∮","olarr":"↺","olcir":"⦾","olcross":"⦻","oline":"‾","olt":"⧀","Omacr":"Ō","omacr":"ō","Omega":"Ω","omega":"ω","Omicron":"Ο","omicron":"ο","omid":"⦶","ominus":"⊖","Oopf":"𝕆","oopf":"𝕠","opar":"⦷","OpenCurlyDoubleQuote":"“","OpenCurlyQuote":"‘","operp":"⦹","oplus":"⊕","orarr":"↻","Or":"⩔","or":"∨","ord":"⩝","order":"ℴ","orderof":"ℴ","ordf":"ª","ordm":"º","origof":"⊶","oror":"⩖","orslope":"⩗","orv":"⩛","oS":"Ⓢ","Oscr":"𝒪","oscr":"ℴ","Oslash":"Ø","oslash":"ø","osol":"⊘","Otilde":"Õ","otilde":"õ","otimesas":"⨶","Otimes":"⨷","otimes":"⊗","Ouml":"Ö","ouml":"ö","ovbar":"⌽","OverBar":"‾","OverBrace":"⏞","OverBracket":"⎴","OverParenthesis":"⏜","para":"¶","parallel":"∥","par":"∥","parsim":"⫳","parsl":"⫽","part":"∂","PartialD":"∂","Pcy":"П","pcy":"п","percnt":"%","period":".","permil":"‰","perp":"⊥","pertenk":"‱","Pfr":"𝔓","pfr":"𝔭","Phi":"Φ","phi":"φ","phiv":"ϕ","phmmat":"ℳ","phone":"☎","Pi":"Π","pi":"π","pitchfork":"⋔","piv":"ϖ","planck":"ℏ","planckh":"ℎ","plankv":"ℏ","plusacir":"⨣","plusb":"⊞","pluscir":"⨢","plus":"+","plusdo":"∔","plusdu":"⨥","pluse":"⩲","PlusMinus":"±","plusmn":"±","plussim":"⨦","plustwo":"⨧","pm":"±","Poincareplane":"ℌ","pointint":"⨕","popf":"𝕡","Popf":"ℙ","pound":"£","prap":"⪷","Pr":"⪻","pr":"≺","prcue":"≼","precapprox":"⪷","prec":"≺","preccurlyeq":"≼","Precedes":"≺","PrecedesEqual":"⪯","PrecedesSlantEqual":"≼","PrecedesTilde":"≾","preceq":"⪯","precnapprox":"⪹","precneqq":"⪵","precnsim":"⋨","pre":"⪯","prE":"⪳","precsim":"≾","prime":"′","Prime":"″","primes":"ℙ","prnap":"⪹","prnE":"⪵","prnsim":"⋨","prod":"∏","Product":"∏","profalar":"⌮","profline":"⌒","profsurf":"⌓","prop":"∝","Proportional":"∝","Proportion":"∷","propto":"∝","prsim":"≾","prurel":"⊰","Pscr":"𝒫","pscr":"𝓅","Psi":"Ψ","psi":"ψ","puncsp":" ","Qfr":"𝔔","qfr":"𝔮","qint":"⨌","qopf":"𝕢","Qopf":"ℚ","qprime":"⁗","Qscr":"𝒬","qscr":"𝓆","quaternions":"ℍ","quatint":"⨖","quest":"?","questeq":"≟","quot":"\"","QUOT":"\"","rAarr":"⇛","race":"∽̱","Racute":"Ŕ","racute":"ŕ","radic":"√","raemptyv":"⦳","rang":"⟩","Rang":"⟫","rangd":"⦒","range":"⦥","rangle":"⟩","raquo":"»","rarrap":"⥵","rarrb":"⇥","rarrbfs":"⤠","rarrc":"⤳","rarr":"→","Rarr":"↠","rArr":"⇒","rarrfs":"⤞","rarrhk":"↪","rarrlp":"↬","rarrpl":"⥅","rarrsim":"⥴","Rarrtl":"⤖","rarrtl":"↣","rarrw":"↝","ratail":"⤚","rAtail":"⤜","ratio":"∶","rationals":"ℚ","rbarr":"⤍","rBarr":"⤏","RBarr":"⤐","rbbrk":"❳","rbrace":"}","rbrack":"]","rbrke":"⦌","rbrksld":"⦎","rbrkslu":"⦐","Rcaron":"Ř","rcaron":"ř","Rcedil":"Ŗ","rcedil":"ŗ","rceil":"⌉","rcub":"}","Rcy":"Р","rcy":"р","rdca":"⤷","rdldhar":"⥩","rdquo":"”","rdquor":"”","rdsh":"↳","real":"ℜ","realine":"ℛ","realpart":"ℜ","reals":"ℝ","Re":"ℜ","rect":"▭","reg":"®","REG":"®","ReverseElement":"∋","ReverseEquilibrium":"⇋","ReverseUpEquilibrium":"⥯","rfisht":"⥽","rfloor":"⌋","rfr":"𝔯","Rfr":"ℜ","rHar":"⥤","rhard":"⇁","rharu":"⇀","rharul":"⥬","Rho":"Ρ","rho":"ρ","rhov":"ϱ","RightAngleBracket":"⟩","RightArrowBar":"⇥","rightarrow":"→","RightArrow":"→","Rightarrow":"⇒","RightArrowLeftArrow":"⇄","rightarrowtail":"↣","RightCeiling":"⌉","RightDoubleBracket":"⟧","RightDownTeeVector":"⥝","RightDownVectorBar":"⥕","RightDownVector":"⇂","RightFloor":"⌋","rightharpoondown":"⇁","rightharpoonup":"⇀","rightleftarrows":"⇄","rightleftharpoons":"⇌","rightrightarrows":"⇉","rightsquigarrow":"↝","RightTeeArrow":"↦","RightTee":"⊢","RightTeeVector":"⥛","rightthreetimes":"⋌","RightTriangleBar":"⧐","RightTriangle":"⊳","RightTriangleEqual":"⊵","RightUpDownVector":"⥏","RightUpTeeVector":"⥜","RightUpVectorBar":"⥔","RightUpVector":"↾","RightVectorBar":"⥓","RightVector":"⇀","ring":"˚","risingdotseq":"≓","rlarr":"⇄","rlhar":"⇌","rlm":"‏","rmoustache":"⎱","rmoust":"⎱","rnmid":"⫮","roang":"⟭","roarr":"⇾","robrk":"⟧","ropar":"⦆","ropf":"𝕣","Ropf":"ℝ","roplus":"⨮","rotimes":"⨵","RoundImplies":"⥰","rpar":")","rpargt":"⦔","rppolint":"⨒","rrarr":"⇉","Rrightarrow":"⇛","rsaquo":"›","rscr":"𝓇","Rscr":"ℛ","rsh":"↱","Rsh":"↱","rsqb":"]","rsquo":"’","rsquor":"’","rthree":"⋌","rtimes":"⋊","rtri":"▹","rtrie":"⊵","rtrif":"▸","rtriltri":"⧎","RuleDelayed":"⧴","ruluhar":"⥨","rx":"℞","Sacute":"Ś","sacute":"ś","sbquo":"‚","scap":"⪸","Scaron":"Š","scaron":"š","Sc":"⪼","sc":"≻","sccue":"≽","sce":"⪰","scE":"⪴","Scedil":"Ş","scedil":"ş","Scirc":"Ŝ","scirc":"ŝ","scnap":"⪺","scnE":"⪶","scnsim":"⋩","scpolint":"⨓","scsim":"≿","Scy":"С","scy":"с","sdotb":"⊡","sdot":"⋅","sdote":"⩦","searhk":"⤥","searr":"↘","seArr":"⇘","searrow":"↘","sect":"§","semi":";","seswar":"⤩","setminus":"∖","setmn":"∖","sext":"✶","Sfr":"𝔖","sfr":"𝔰","sfrown":"⌢","sharp":"♯","SHCHcy":"Щ","shchcy":"щ","SHcy":"Ш","shcy":"ш","ShortDownArrow":"↓","ShortLeftArrow":"←","shortmid":"∣","shortparallel":"∥","ShortRightArrow":"→","ShortUpArrow":"↑","shy":"­","Sigma":"Σ","sigma":"σ","sigmaf":"ς","sigmav":"ς","sim":"∼","simdot":"⩪","sime":"≃","simeq":"≃","simg":"⪞","simgE":"⪠","siml":"⪝","simlE":"⪟","simne":"≆","simplus":"⨤","simrarr":"⥲","slarr":"←","SmallCircle":"∘","smallsetminus":"∖","smashp":"⨳","smeparsl":"⧤","smid":"∣","smile":"⌣","smt":"⪪","smte":"⪬","smtes":"⪬︀","SOFTcy":"Ь","softcy":"ь","solbar":"⌿","solb":"⧄","sol":"/","Sopf":"𝕊","sopf":"𝕤","spades":"♠","spadesuit":"♠","spar":"∥","sqcap":"⊓","sqcaps":"⊓︀","sqcup":"⊔","sqcups":"⊔︀","Sqrt":"√","sqsub":"⊏","sqsube":"⊑","sqsubset":"⊏","sqsubseteq":"⊑","sqsup":"⊐","sqsupe":"⊒","sqsupset":"⊐","sqsupseteq":"⊒","square":"□","Square":"□","SquareIntersection":"⊓","SquareSubset":"⊏","SquareSubsetEqual":"⊑","SquareSuperset":"⊐","SquareSupersetEqual":"⊒","SquareUnion":"⊔","squarf":"▪","squ":"□","squf":"▪","srarr":"→","Sscr":"𝒮","sscr":"𝓈","ssetmn":"∖","ssmile":"⌣","sstarf":"⋆","Star":"⋆","star":"☆","starf":"★","straightepsilon":"ϵ","straightphi":"ϕ","strns":"¯","sub":"⊂","Sub":"⋐","subdot":"⪽","subE":"⫅","sube":"⊆","subedot":"⫃","submult":"⫁","subnE":"⫋","subne":"⊊","subplus":"⪿","subrarr":"⥹","subset":"⊂","Subset":"⋐","subseteq":"⊆","subseteqq":"⫅","SubsetEqual":"⊆","subsetneq":"⊊","subsetneqq":"⫋","subsim":"⫇","subsub":"⫕","subsup":"⫓","succapprox":"⪸","succ":"≻","succcurlyeq":"≽","Succeeds":"≻","SucceedsEqual":"⪰","SucceedsSlantEqual":"≽","SucceedsTilde":"≿","succeq":"⪰","succnapprox":"⪺","succneqq":"⪶","succnsim":"⋩","succsim":"≿","SuchThat":"∋","sum":"∑","Sum":"∑","sung":"♪","sup1":"¹","sup2":"²","sup3":"³","sup":"⊃","Sup":"⋑","supdot":"⪾","supdsub":"⫘","supE":"⫆","supe":"⊇","supedot":"⫄","Superset":"⊃","SupersetEqual":"⊇","suphsol":"⟉","suphsub":"⫗","suplarr":"⥻","supmult":"⫂","supnE":"⫌","supne":"⊋","supplus":"⫀","supset":"⊃","Supset":"⋑","supseteq":"⊇","supseteqq":"⫆","supsetneq":"⊋","supsetneqq":"⫌","supsim":"⫈","supsub":"⫔","supsup":"⫖","swarhk":"⤦","swarr":"↙","swArr":"⇙","swarrow":"↙","swnwar":"⤪","szlig":"ß","Tab":"\t","target":"⌖","Tau":"Τ","tau":"τ","tbrk":"⎴","Tcaron":"Ť","tcaron":"ť","Tcedil":"Ţ","tcedil":"ţ","Tcy":"Т","tcy":"т","tdot":"⃛","telrec":"⌕","Tfr":"𝔗","tfr":"𝔱","there4":"∴","therefore":"∴","Therefore":"∴","Theta":"Θ","theta":"θ","thetasym":"ϑ","thetav":"ϑ","thickapprox":"≈","thicksim":"∼","ThickSpace":"  ","ThinSpace":" ","thinsp":" ","thkap":"≈","thksim":"∼","THORN":"Þ","thorn":"þ","tilde":"˜","Tilde":"∼","TildeEqual":"≃","TildeFullEqual":"≅","TildeTilde":"≈","timesbar":"⨱","timesb":"⊠","times":"×","timesd":"⨰","tint":"∭","toea":"⤨","topbot":"⌶","topcir":"⫱","top":"⊤","Topf":"𝕋","topf":"𝕥","topfork":"⫚","tosa":"⤩","tprime":"‴","trade":"™","TRADE":"™","triangle":"▵","triangledown":"▿","triangleleft":"◃","trianglelefteq":"⊴","triangleq":"≜","triangleright":"▹","trianglerighteq":"⊵","tridot":"◬","trie":"≜","triminus":"⨺","TripleDot":"⃛","triplus":"⨹","trisb":"⧍","tritime":"⨻","trpezium":"⏢","Tscr":"𝒯","tscr":"𝓉","TScy":"Ц","tscy":"ц","TSHcy":"Ћ","tshcy":"ћ","Tstrok":"Ŧ","tstrok":"ŧ","twixt":"≬","twoheadleftarrow":"↞","twoheadrightarrow":"↠","Uacute":"Ú","uacute":"ú","uarr":"↑","Uarr":"↟","uArr":"⇑","Uarrocir":"⥉","Ubrcy":"Ў","ubrcy":"ў","Ubreve":"Ŭ","ubreve":"ŭ","Ucirc":"Û","ucirc":"û","Ucy":"У","ucy":"у","udarr":"⇅","Udblac":"Ű","udblac":"ű","udhar":"⥮","ufisht":"⥾","Ufr":"𝔘","ufr":"𝔲","Ugrave":"Ù","ugrave":"ù","uHar":"⥣","uharl":"↿","uharr":"↾","uhblk":"▀","ulcorn":"⌜","ulcorner":"⌜","ulcrop":"⌏","ultri":"◸","Umacr":"Ū","umacr":"ū","uml":"¨","UnderBar":"_","UnderBrace":"⏟","UnderBracket":"⎵","UnderParenthesis":"⏝","Union":"⋃","UnionPlus":"⊎","Uogon":"Ų","uogon":"ų","Uopf":"𝕌","uopf":"𝕦","UpArrowBar":"⤒","uparrow":"↑","UpArrow":"↑","Uparrow":"⇑","UpArrowDownArrow":"⇅","updownarrow":"↕","UpDownArrow":"↕","Updownarrow":"⇕","UpEquilibrium":"⥮","upharpoonleft":"↿","upharpoonright":"↾","uplus":"⊎","UpperLeftArrow":"↖","UpperRightArrow":"↗","upsi":"υ","Upsi":"ϒ","upsih":"ϒ","Upsilon":"Υ","upsilon":"υ","UpTeeArrow":"↥","UpTee":"⊥","upuparrows":"⇈","urcorn":"⌝","urcorner":"⌝","urcrop":"⌎","Uring":"Ů","uring":"ů","urtri":"◹","Uscr":"𝒰","uscr":"𝓊","utdot":"⋰","Utilde":"Ũ","utilde":"ũ","utri":"▵","utrif":"▴","uuarr":"⇈","Uuml":"Ü","uuml":"ü","uwangle":"⦧","vangrt":"⦜","varepsilon":"ϵ","varkappa":"ϰ","varnothing":"∅","varphi":"ϕ","varpi":"ϖ","varpropto":"∝","varr":"↕","vArr":"⇕","varrho":"ϱ","varsigma":"ς","varsubsetneq":"⊊︀","varsubsetneqq":"⫋︀","varsupsetneq":"⊋︀","varsupsetneqq":"⫌︀","vartheta":"ϑ","vartriangleleft":"⊲","vartriangleright":"⊳","vBar":"⫨","Vbar":"⫫","vBarv":"⫩","Vcy":"В","vcy":"в","vdash":"⊢","vDash":"⊨","Vdash":"⊩","VDash":"⊫","Vdashl":"⫦","veebar":"⊻","vee":"∨","Vee":"⋁","veeeq":"≚","vellip":"⋮","verbar":"|","Verbar":"‖","vert":"|","Vert":"‖","VerticalBar":"∣","VerticalLine":"|","VerticalSeparator":"❘","VerticalTilde":"≀","VeryThinSpace":" ","Vfr":"𝔙","vfr":"𝔳","vltri":"⊲","vnsub":"⊂⃒","vnsup":"⊃⃒","Vopf":"𝕍","vopf":"𝕧","vprop":"∝","vrtri":"⊳","Vscr":"𝒱","vscr":"𝓋","vsubnE":"⫋︀","vsubne":"⊊︀","vsupnE":"⫌︀","vsupne":"⊋︀","Vvdash":"⊪","vzigzag":"⦚","Wcirc":"Ŵ","wcirc":"ŵ","wedbar":"⩟","wedge":"∧","Wedge":"⋀","wedgeq":"≙","weierp":"℘","Wfr":"𝔚","wfr":"𝔴","Wopf":"𝕎","wopf":"𝕨","wp":"℘","wr":"≀","wreath":"≀","Wscr":"𝒲","wscr":"𝓌","xcap":"⋂","xcirc":"◯","xcup":"⋃","xdtri":"▽","Xfr":"𝔛","xfr":"𝔵","xharr":"⟷","xhArr":"⟺","Xi":"Ξ","xi":"ξ","xlarr":"⟵","xlArr":"⟸","xmap":"⟼","xnis":"⋻","xodot":"⨀","Xopf":"𝕏","xopf":"𝕩","xoplus":"⨁","xotime":"⨂","xrarr":"⟶","xrArr":"⟹","Xscr":"𝒳","xscr":"𝓍","xsqcup":"⨆","xuplus":"⨄","xutri":"△","xvee":"⋁","xwedge":"⋀","Yacute":"Ý","yacute":"ý","YAcy":"Я","yacy":"я","Ycirc":"Ŷ","ycirc":"ŷ","Ycy":"Ы","ycy":"ы","yen":"¥","Yfr":"𝔜","yfr":"𝔶","YIcy":"Ї","yicy":"ї","Yopf":"𝕐","yopf":"𝕪","Yscr":"𝒴","yscr":"𝓎","YUcy":"Ю","yucy":"ю","yuml":"ÿ","Yuml":"Ÿ","Zacute":"Ź","zacute":"ź","Zcaron":"Ž","zcaron":"ž","Zcy":"З","zcy":"з","Zdot":"Ż","zdot":"ż","zeetrf":"ℨ","ZeroWidthSpace":"​","Zeta":"Ζ","zeta":"ζ","zfr":"𝔷","Zfr":"ℨ","ZHcy":"Ж","zhcy":"ж","zigrarr":"⇝","zopf":"𝕫","Zopf":"ℤ","Zscr":"𝒵","zscr":"𝓏","zwj":"‍","zwnj":"‌"};
-
-/***/ }),
-/* 45 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-/* globals Intl */
-
-
-var assign = __webpack_require__(249)
-var parse = __webpack_require__(248)
-var interpret = __webpack_require__(247)
-var plurals = __webpack_require__(79)
-var lookupClosestLocale = __webpack_require__(80)
-var formats = __webpack_require__(81)
-
-function namespace () {
-  var cache = {}
-
-  var nsFormats = assign({}, formats)
-  var currentLocale = 'en'
-  var translations = null
-  var generateId = function (pattern) { return pattern }
-  var missingReplacement = null
-  var missingTranslation = 'warning'
-
-  function formatMessage (msg, args, locale) {
-    locale = locale || currentLocale
-    var pattern = typeof msg === 'string' ? msg : msg.default
-    var id = (typeof msg === 'object' && msg.id) || generateId(pattern)
-    var key = locale + ':' + id
-    var format = cache[key] ||
-      (cache[key] = generateFormat(pattern, id, locale))
-    if (typeof format === 'string') return format
-    return format(args)
-  }
-
-  function generateFormat (pattern, id, locale) {
-    pattern = translate(pattern, id, locale)
-    return interpret(locale, parse(pattern))
-  }
-
-  function translate (pattern, id, locale) {
-    if (!translations) return pattern
-
-    locale = lookupClosestLocale(locale, translations)
-    var translated = translations[locale] && translations[locale][id]
-    if (translated && translated.message) translated = translated.message
-    if (translated != null) return translated
-
-    var replacement = missingReplacement || pattern
-    if (typeof replacement === 'function') {
-      replacement = replacement(pattern, id, locale) || pattern
-    }
-    var message = 'Translation for "' + id + '" in "' + locale + '" is missing'
-
-    if (missingTranslation === 'ignore') {
-      // do nothing
-    } else if (missingTranslation === 'warning') {
-      if (typeof console !== 'undefined') console.warn(message)
-    } else { // 'error'
-      throw new Error(message)
-    }
-
-    return replacement
-  }
-
-  formatMessage.setup = function setup (opt) {
-    opt = opt || {}
-    if (opt.locale) currentLocale = opt.locale
-    if ('translations' in opt) translations = opt.translations
-    if (opt.generateId) generateId = opt.generateId
-    if ('missingReplacement' in opt) missingReplacement = opt.missingReplacement
-    if (opt.missingTranslation) missingTranslation = opt.missingTranslation
-    if (opt.formats) {
-      if (opt.formats.number) assign(nsFormats.number, opt.formats.number)
-      if (opt.formats.date) assign(nsFormats.date, opt.formats.date)
-      if (opt.formats.time) assign(nsFormats.time, opt.formats.time)
-    }
-    return {
-      locale: currentLocale,
-      translations: translations,
-      generateId: generateId,
-      missingReplacement: missingReplacement,
-      missingTranslation: missingTranslation,
-      formats: nsFormats
-    }
-  }
-
-  function helper (type, value, style, locale) {
-    locale = locale || currentLocale
-    var options = nsFormats[type][style] || nsFormats[type].default
-    var cache = options.cache || (options.cache = {})
-    var format = cache[locale] || (cache[locale] = type === 'number'
-      ? Intl.NumberFormat(locale, options).format
-      : Intl.DateTimeFormat(locale, options).format
-    )
-    return format(value)
-  }
-
-  formatMessage.number = helper.bind(null, 'number')
-  formatMessage.date = helper.bind(null, 'date')
-  formatMessage.time = helper.bind(null, 'time')
-
-  formatMessage.select = function (value, options) {
-    return options[value] || options.other
-  }
-
-  function selectPlural (pluralType, value, offset, options, locale) {
-    if (typeof offset === 'object') { // offset is optional
-      locale = options
-      options = offset
-      offset = 0
-    }
-
-    var closest = lookupClosestLocale(locale || currentLocale, plurals)
-    var plural = plurals[closest][pluralType]
-    if (!plural) return options.other
-
-    return (
-      options['=' + +value] ||
-      options[plural(value - offset)] ||
-      options.other
-    )
-  }
-
-  formatMessage.plural = selectPlural.bind(null, 'cardinal')
-  formatMessage.selectordinal = selectPlural.bind(null, 'ordinal')
-
-  return formatMessage
-}
-
-module.exports = exports = namespace()
-exports.namespace = namespace
-
 
 /***/ }),
 /* 46 */
@@ -14795,7 +14795,7 @@ module.exports = function crc32wrapper(input, crc) {
 "use strict";
 
 
-var external = __webpack_require__(27);
+var external = __webpack_require__(28);
 var DataWorker = __webpack_require__(98);
 var DataLengthProbe = __webpack_require__(97);
 var Crc32Probe = __webpack_require__(96);
@@ -14917,7 +14917,7 @@ module.exports = function(it){
 
 /*<replacement>*/
 
-var Buffer = __webpack_require__(37).Buffer;
+var Buffer = __webpack_require__(38).Buffer;
 /*</replacement>*/
 
 var isEncoding = Buffer.isEncoding || function (encoding) {
@@ -15223,7 +15223,7 @@ function simpleEnd(buf) {
 
 /*<replacement>*/
 
-var pna = __webpack_require__(38);
+var pna = __webpack_require__(39);
 /*</replacement>*/
 
 module.exports = Writable;
@@ -15260,7 +15260,7 @@ var Duplex;
 Writable.WritableState = WritableState;
 
 /*<replacement>*/
-var util = __webpack_require__(28);
+var util = __webpack_require__(29);
 util.inherits = __webpack_require__(6);
 /*</replacement>*/
 
@@ -15276,7 +15276,7 @@ var Stream = __webpack_require__(109);
 
 /*<replacement>*/
 
-var Buffer = __webpack_require__(37).Buffer;
+var Buffer = __webpack_require__(38).Buffer;
 var OurUint8Array = global.Uint8Array || function () {};
 function _uint8ArrayToBuffer(chunk) {
   return Buffer.from(chunk);
@@ -15951,7 +15951,7 @@ JSZip.loadAsync = function (content, options) {
     return new JSZip().loadAsync(content, options);
 };
 
-JSZip.external = __webpack_require__(27);
+JSZip.external = __webpack_require__(28);
 module.exports = JSZip;
 
 
@@ -17070,13 +17070,13 @@ var _createClass = function () { function defineProperties(target, props) { for 
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
-var RenderedTarget = __webpack_require__(33);
+var RenderedTarget = __webpack_require__(34);
 var Blocks = __webpack_require__(16);
 
-var _require = __webpack_require__(30),
+var _require = __webpack_require__(31),
     loadSoundFromAsset = _require.loadSoundFromAsset;
 
-var _require2 = __webpack_require__(29),
+var _require2 = __webpack_require__(30),
     loadCostumeFromAsset = _require2.loadCostumeFromAsset;
 
 var StringUtil = __webpack_require__(17);
@@ -17593,7 +17593,7 @@ var Profiler = __webpack_require__(217);
 var Sequencer = __webpack_require__(216);
 var ScratchBlocksConstants = __webpack_require__(213);
 var TargetType = __webpack_require__(212);
-var Thread = __webpack_require__(32);
+var Thread = __webpack_require__(33);
 var log = __webpack_require__(2);
 var maybeFormatMessage = __webpack_require__(82);
 
@@ -19794,9 +19794,9 @@ function decodeCodePoint(codePoint){
 module.exports = Tokenizer;
 
 var decodeCodePoint = __webpack_require__(75),
-    entityMap = __webpack_require__(44),
+    entityMap = __webpack_require__(45),
     legacyMap = __webpack_require__(74),
-    xmlMap    = __webpack_require__(43),
+    xmlMap    = __webpack_require__(44),
 
     i = 0,
 
@@ -21774,7 +21774,7 @@ module.exports = {
 "use strict";
 
 
-var formatMessage = __webpack_require__(45);
+var formatMessage = __webpack_require__(27);
 
 /**
  * Check if `maybeMessage` looks like a message object, and if so pass it to `formatMessage`.
@@ -22919,7 +22919,7 @@ var ConvertWorker = __webpack_require__(282);
 var GenericWorker = __webpack_require__(4);
 var base64 = __webpack_require__(105);
 var support = __webpack_require__(9);
-var external = __webpack_require__(27);
+var external = __webpack_require__(28);
 
 var NodejsStreamOutputAdapter = null;
 if (support.nodestream) {
@@ -23132,7 +23132,7 @@ module.exports = StreamHelper;
 /***/ (function(module, exports, __webpack_require__) {
 
 var isObject = __webpack_require__(50)
-  , document = __webpack_require__(35).document
+  , document = __webpack_require__(36).document
   // in old IE typeof document.createElement is 'object'
   , is = isObject(document) && isObject(document.createElement);
 module.exports = function(it){
@@ -23371,7 +23371,7 @@ module.exports = Transform;
 var Duplex = __webpack_require__(11);
 
 /*<replacement>*/
-var util = __webpack_require__(28);
+var util = __webpack_require__(29);
 util.inherits = __webpack_require__(6);
 /*</replacement>*/
 
@@ -23595,7 +23595,7 @@ exports.clearImmediate = (typeof self !== "undefined" && self.clearImmediate) ||
 
 /*<replacement>*/
 
-var pna = __webpack_require__(38);
+var pna = __webpack_require__(39);
 /*</replacement>*/
 
 // undocumented cb() API, needed for core, not for public API
@@ -23703,7 +23703,7 @@ module.exports = __webpack_require__(12).EventEmitter;
 
 /*<replacement>*/
 
-var pna = __webpack_require__(38);
+var pna = __webpack_require__(39);
 /*</replacement>*/
 
 module.exports = Readable;
@@ -23732,7 +23732,7 @@ var Stream = __webpack_require__(109);
 
 /*<replacement>*/
 
-var Buffer = __webpack_require__(37).Buffer;
+var Buffer = __webpack_require__(38).Buffer;
 var OurUint8Array = global.Uint8Array || function () {};
 function _uint8ArrayToBuffer(chunk) {
   return Buffer.from(chunk);
@@ -23744,7 +23744,7 @@ function _isUint8Array(obj) {
 /*</replacement>*/
 
 /*<replacement>*/
-var util = __webpack_require__(28);
+var util = __webpack_require__(29);
 util.inherits = __webpack_require__(6);
 /*</replacement>*/
 
@@ -25495,7 +25495,7 @@ function removeKeyword(keyword) {
 "use strict";
 
 
-var MissingRefError = __webpack_require__(39).MissingRef;
+var MissingRefError = __webpack_require__(40).MissingRef;
 
 module.exports = compileAsync;
 
@@ -29566,9 +29566,9 @@ Url.prototype.parseHost = function() {
 "use strict";
 
 
-var resolve = __webpack_require__(41)
+var resolve = __webpack_require__(42)
   , util = __webpack_require__(13)
-  , errorClasses = __webpack_require__(39)
+  , errorClasses = __webpack_require__(40)
   , stableStringify = __webpack_require__(61);
 
 var validateGenerator = __webpack_require__(60);
@@ -29578,7 +29578,7 @@ var validateGenerator = __webpack_require__(60);
  */
 
 var ucs2length = util.ucs2length;
-var equal = __webpack_require__(40);
+var equal = __webpack_require__(41);
 
 // this error is thrown by async schemas to return validation errors via exception
 var ValidationError = errorClasses.Validation;
@@ -29951,7 +29951,7 @@ function vars(arr, statement) {
 
 
 var compileSchema = __webpack_require__(170)
-  , resolve = __webpack_require__(41)
+  , resolve = __webpack_require__(42)
   , Cache = __webpack_require__(164)
   , SchemaObject = __webpack_require__(62)
   , stableStringify = __webpack_require__(61)
@@ -29981,7 +29981,7 @@ Ajv.prototype.addKeyword = customKeyword.add;
 Ajv.prototype.getKeyword = customKeyword.get;
 Ajv.prototype.removeKeyword = customKeyword.remove;
 
-var errorClasses = __webpack_require__(39);
+var errorClasses = __webpack_require__(40);
 Ajv.ValidationError = errorClasses.Validation;
 Ajv.MissingRefError = errorClasses.MissingRef;
 Ajv.$dataMetaSchema = $dataMetaSchema;
@@ -39184,7 +39184,7 @@ module.exports = function (input, isSprite, callback) {
 /* 183 */
 /***/ (function(module) {
 
-module.exports = {"name":"scratch-vm","version":"0.1.0-prerelease.1525975472","description":"Virtual Machine for Scratch 3.0","author":"Massachusetts Institute of Technology","license":"BSD-3-Clause","homepage":"https://github.com/LLK/scratch-vm#readme","repository":{"type":"git","url":"git+ssh://git@github.com/LLK/scratch-vm.git","sha":"5c003641f96c13f4b758d455cea332f999f26936"},"main":"./dist/node/scratch-vm.js","browser":"./dist/web/scratch-vm.js","scripts":{"build":"webpack --progress --colors --bail","coverage":"tap ./test/{unit,integration}/*.js --coverage --coverage-report=lcov","deploy":"touch playground/.nojekyll && gh-pages -t -d playground -m \"Build for $(git log --pretty=format:%H -n1)\"","extract:pen":"mkdirp translations/pen && format-message extract --out-file translations/pen/en.json src/extensions/scratch3_pen/index.js","i18n:src":"npm run extract:pen","lint":"eslint . && format-message lint src/**/*.js","prepublish":"in-publish && npm run build || not-in-publish","start":"webpack-dev-server","tap":"tap ./test/{unit,integration}/*.js","tap:unit":"tap ./test/unit/*.js","tap:integration":"tap ./test/integration/*.js","test":"npm run lint && npm run tap","watch":"webpack --progress --colors --watch","version":"json -f package.json -I -e \"this.repository.sha = '$(git log -n1 --pretty=format:%H)'\""},"devDependencies":{"adm-zip":"0.4.7","arraybuffer-loader":"^1.0.3","babel-core":"^6.24.1","babel-eslint":"^8.0.1","babel-loader":"^7.0.0","babel-preset-env":"^1.7.0","canvas-toBlob":"1.0.0","copy-webpack-plugin":"^4.5.1","decode-html":"2.0.0","escape-html":"1.0.3","eslint":"^4.5.0","eslint-config-scratch":"^5.0.0","expose-loader":"0.7.5","file-loader":"^1.1.6","format-message":"5.2.1","format-message-cli":"5.2.1","gh-pages":"^1.1.0","highlightjs":"^9.8.0","htmlparser2":"3.9.2","immutable":"3.8.1","in-publish":"^2.0.0","json":"^9.0.4","jszip":"^3.1.5","lodash.defaultsdeep":"4.6.0","minilog":"3.1.0","nets":"3.2.0","pngjs":"^3.3.2","promise":"8.0.1","scratch-audio":"latest","scratch-blocks":"latest","scratch-parser":"4.1.1","scratch-render":"latest","scratch-storage":"^0.4.0","script-loader":"0.7.2","socket.io-client":"2.0.4","stats.js":"^0.17.0","tap":"^11.0.1","text-encoding":"0.6.4","tiny-worker":"^2.1.1","webpack":"^4.8.0","webpack-cli":"^2.0.15","webpack-dev-server":"^3.1.3","worker-loader":"^1.1.1"}};
+module.exports = {"name":"scratch-vm","version":"0.1.0-prerelease.1525980730","description":"Virtual Machine for Scratch 3.0","author":"Massachusetts Institute of Technology","license":"BSD-3-Clause","homepage":"https://github.com/LLK/scratch-vm#readme","repository":{"type":"git","url":"git+ssh://git@github.com/LLK/scratch-vm.git","sha":"0b7aa6ddf67576b8d2a740fbd654af551ba4c336"},"main":"./dist/node/scratch-vm.js","browser":"./dist/web/scratch-vm.js","scripts":{"build":"webpack --progress --colors --bail","coverage":"tap ./test/{unit,integration}/*.js --coverage --coverage-report=lcov","deploy":"touch playground/.nojekyll && gh-pages -t -d playground -m \"Build for $(git log --pretty=format:%H -n1)\"","extract:core":"mkdirp translations/core && format-message extract --out-file translations/core/en.json src/extensions/**/index.js","i18n:src":"npm run extract:core","lint":"eslint . && format-message lint src/**/*.js","prepublish":"in-publish && npm run build || not-in-publish","start":"webpack-dev-server","tap":"tap ./test/{unit,integration}/*.js","tap:unit":"tap ./test/unit/*.js","tap:integration":"tap ./test/integration/*.js","test":"npm run lint && npm run tap","watch":"webpack --progress --colors --watch","version":"json -f package.json -I -e \"this.repository.sha = '$(git log -n1 --pretty=format:%H)'\""},"devDependencies":{"adm-zip":"0.4.7","arraybuffer-loader":"^1.0.3","babel-core":"^6.24.1","babel-eslint":"^8.0.1","babel-loader":"^7.0.0","babel-preset-env":"^1.6.1","canvas-toBlob":"1.0.0","copy-webpack-plugin":"^4.5.1","decode-html":"2.0.0","escape-html":"1.0.3","eslint":"^4.5.0","eslint-config-scratch":"^5.0.0","expose-loader":"0.7.5","file-loader":"^1.1.6","format-message":"5.2.1","format-message-cli":"5.2.1","gh-pages":"^1.1.0","highlightjs":"^9.8.0","htmlparser2":"3.9.2","immutable":"3.8.1","in-publish":"^2.0.0","json":"^9.0.4","jszip":"^3.1.5","lodash.defaultsdeep":"4.6.0","minilog":"3.1.0","nets":"3.2.0","pngjs":"^3.3.2","promise":"8.0.1","scratch-audio":"latest","scratch-blocks":"latest","scratch-parser":"4.1.1","scratch-render":"0.1.0-prerelease.20180510190222","scratch-storage":"^0.4.0","script-loader":"0.7.2","socket.io-client":"2.0.4","stats.js":"^0.17.0","tap":"^11.0.1","text-encoding":"0.6.4","tiny-worker":"^2.1.1","webpack":"^4.8.0","webpack-cli":"^2.0.15","webpack-dev-server":"^3.1.3","worker-loader":"^1.1.1"}};
 
 /***/ }),
 /* 184 */
@@ -39206,10 +39206,10 @@ var Variable = __webpack_require__(23);
 var log = __webpack_require__(2);
 var uid = __webpack_require__(14);
 
-var _require = __webpack_require__(29),
+var _require = __webpack_require__(30),
     loadCostume = _require.loadCostume;
 
-var _require2 = __webpack_require__(30),
+var _require2 = __webpack_require__(31),
     loadSound = _require2.loadSound;
 
 var _require3 = __webpack_require__(64),
@@ -41543,9 +41543,9 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
  */
 
 var Blocks = __webpack_require__(16);
-var RenderedTarget = __webpack_require__(33);
+var RenderedTarget = __webpack_require__(34);
 var Sprite = __webpack_require__(65);
-var Color = __webpack_require__(34);
+var Color = __webpack_require__(35);
 var log = __webpack_require__(2);
 var uid = __webpack_require__(14);
 var StringUtil = __webpack_require__(17);
@@ -41553,10 +41553,10 @@ var specMap = __webpack_require__(185);
 var Variable = __webpack_require__(23);
 var MonitorRecord = __webpack_require__(71);
 
-var _require = __webpack_require__(29),
+var _require = __webpack_require__(30),
     loadCostume = _require.loadCostume;
 
-var _require2 = __webpack_require__(30),
+var _require2 = __webpack_require__(31),
     loadSound = _require2.loadSound;
 
 var _require3 = __webpack_require__(64),
@@ -44091,7 +44091,7 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
 
 var Cast = __webpack_require__(3);
 var Clone = __webpack_require__(18);
-var RenderedTarget = __webpack_require__(33);
+var RenderedTarget = __webpack_require__(34);
 var uid = __webpack_require__(14);
 
 /**
@@ -46627,7 +46627,7 @@ var _createClass = function () { function defineProperties(target, props) { for 
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
-var Thread = __webpack_require__(32);
+var Thread = __webpack_require__(33);
 
 /**
  * @fileoverview
@@ -46846,7 +46846,7 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
 var BlockUtility = __webpack_require__(214);
 var BlocksExecuteCache = __webpack_require__(70);
 var log = __webpack_require__(2);
-var Thread = __webpack_require__(32);
+var Thread = __webpack_require__(33);
 
 var _require = __webpack_require__(24),
     Map = _require.Map;
@@ -47330,7 +47330,7 @@ var _createClass = function () { function defineProperties(target, props) { for 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
 var Timer = __webpack_require__(22);
-var Thread = __webpack_require__(32);
+var Thread = __webpack_require__(33);
 var execute = __webpack_require__(215);
 
 /**
@@ -48152,9 +48152,10 @@ var ArgumentType = __webpack_require__(26);
 var BlockType = __webpack_require__(19);
 var Clone = __webpack_require__(18);
 var Cast = __webpack_require__(3);
+var formatMessage = __webpack_require__(27);
 var Video = __webpack_require__(66);
 
-var VideoMotion = __webpack_require__(42);
+var VideoMotion = __webpack_require__(43);
 
 /**
  * Sensor attribute video sensor block should report.
@@ -48361,7 +48362,11 @@ var Scratch3VideoSensingBlocks = function () {
                     // @todo this hat needs to be set itself to restart existing
                     // threads like Scratch 2's behaviour.
                     opcode: 'whenMotionGreaterThan',
-                    text: 'when video motion > [REFERENCE]',
+                    text: formatMessage({
+                        id: 'videoSensing.whenMotionGreaterThan',
+                        default: 'when video motion > [REFERENCE]',
+                        description: 'Event that triggers when the amount of motion is greater than [REFERENCE]'
+                    }),
                     blockType: BlockType.HAT,
                     arguments: {
                         REFERENCE: {
@@ -48372,7 +48377,11 @@ var Scratch3VideoSensingBlocks = function () {
                 }, {
                     opcode: 'videoOn',
                     blockType: BlockType.REPORTER,
-                    text: 'video [ATTRIBUTE] on [SUBJECT]',
+                    text: formatMessage({
+                        id: 'videoSensing.videoOn',
+                        default: 'video [ATTRIBUTE] on [SUBJECT]',
+                        description: 'Reporter that returns the amount of [ATTRIBUTE] for the selected [SUBJECT]'
+                    }),
                     arguments: {
                         ATTRIBUTE: {
                             type: ArgumentType.NUMBER,
@@ -48387,7 +48396,11 @@ var Scratch3VideoSensingBlocks = function () {
                     }
                 }, {
                     opcode: 'videoToggle',
-                    text: 'turn video [VIDEO_STATE]',
+                    text: formatMessage({
+                        id: 'videoSensing.videoToggle',
+                        default: 'turn video [VIDEO_STATE]',
+                        description: 'Controls display of the video preview layer'
+                    }),
                     arguments: {
                         VIDEO_STATE: {
                             type: ArgumentType.NUMBER,
@@ -48397,7 +48410,11 @@ var Scratch3VideoSensingBlocks = function () {
                     }
                 }, {
                     opcode: 'setVideoTransparency',
-                    text: 'set video transparency to [TRANSPARENCY]',
+                    text: formatMessage({
+                        id: 'videoSensing.setVideoTransparency',
+                        default: 'set video transparency to [TRANSPARENCY]',
+                        description: 'Controls transparency of the video preview layer'
+                    }),
                     arguments: {
                         TRANSPARENCY: {
                             type: ArgumentType.NUMBER,
@@ -48567,10 +48584,18 @@ var Scratch3VideoSensingBlocks = function () {
          */
         get: function get() {
             return [{
-                name: 'motion',
+                name: formatMessage({
+                    id: 'videoSensing.motion',
+                    default: 'motion',
+                    description: 'Attribute for the "video [ATTRIBUTE] on [SUBJECT]" block'
+                }),
                 value: SensingAttribute.MOTION
             }, {
-                name: 'direction',
+                name: formatMessage({
+                    id: 'videoSensing.direction',
+                    default: 'direction',
+                    description: 'Attribute for the "video [ATTRIBUTE] on [SUBJECT]" block'
+                }),
                 value: SensingAttribute.DIRECTION
             }];
         }
@@ -48586,10 +48611,18 @@ var Scratch3VideoSensingBlocks = function () {
          */
         get: function get() {
             return [{
-                name: 'sprite',
+                name: formatMessage({
+                    id: 'videoSensing.sprite',
+                    default: 'sprite',
+                    description: 'Subject for the "video [ATTRIBUTE] on [SUBJECT]" block'
+                }),
                 value: SensingSubject.SPRITE
             }, {
-                name: 'stage',
+                name: formatMessage({
+                    id: 'videoSensing.stage',
+                    default: 'stage',
+                    description: 'Subject for the "video [ATTRIBUTE] on [SUBJECT]" block'
+                }),
                 value: SensingSubject.STAGE
             }];
         }
@@ -48612,13 +48645,25 @@ var Scratch3VideoSensingBlocks = function () {
          */
         get: function get() {
             return [{
-                name: 'off',
+                name: formatMessage({
+                    id: 'videoSensing.off',
+                    default: 'off',
+                    description: 'Option for the "turn video [STATE]" block'
+                }),
                 value: VideoState.OFF
             }, {
-                name: 'on',
+                name: formatMessage({
+                    id: 'videoSensing.on',
+                    default: 'on',
+                    description: 'Option for the "turn video [STATE]" block'
+                }),
                 value: VideoState.ON
             }, {
-                name: 'on flipped',
+                name: formatMessage({
+                    id: 'videoSensing.onFlipped',
+                    default: 'on flipped',
+                    description: 'Option for the "turn video [STATE]" block that causes the video to be flipped' + ' horizontally (reversed as in a mirror)'
+                }),
                 value: VideoState.ON_FLIPPED
             }];
         }
@@ -48702,6 +48747,7 @@ var ArgumentType = __webpack_require__(26);
 var BlockType = __webpack_require__(19);
 var Clone = __webpack_require__(18);
 var Cast = __webpack_require__(3);
+var formatMessage = __webpack_require__(27);
 var MathUtil = __webpack_require__(10);
 var Timer = __webpack_require__(22);
 
@@ -48965,7 +49011,11 @@ var Scratch3MusicBlocks = function () {
                 blocks: [{
                     opcode: 'playDrumForBeats',
                     blockType: BlockType.COMMAND,
-                    text: 'play drum [DRUM] for [BEATS] beats',
+                    text: formatMessage({
+                        id: 'music.playDrumForBeats',
+                        default: 'play drum [DRUM] for [BEATS] beats',
+                        description: 'play drum sample for a number of beats'
+                    }),
                     arguments: {
                         DRUM: {
                             type: ArgumentType.NUMBER,
@@ -48980,7 +49030,11 @@ var Scratch3MusicBlocks = function () {
                 }, {
                     opcode: 'restForBeats',
                     blockType: BlockType.COMMAND,
-                    text: 'rest for [BEATS] beats',
+                    text: formatMessage({
+                        id: 'music.restForBeats',
+                        default: 'rest for [BEATS] beats',
+                        description: 'rest (play no sound) for a number of beats'
+                    }),
                     arguments: {
                         BEATS: {
                             type: ArgumentType.NUMBER,
@@ -48990,7 +49044,11 @@ var Scratch3MusicBlocks = function () {
                 }, {
                     opcode: 'playNoteForBeats',
                     blockType: BlockType.COMMAND,
-                    text: 'play note [NOTE] for [BEATS] beats',
+                    text: formatMessage({
+                        id: 'music.playNoteForBeats',
+                        default: 'play note [NOTE] for [BEATS] beats',
+                        description: 'play a note for a number of beats'
+                    }),
                     arguments: {
                         NOTE: {
                             type: ArgumentType.NUMBER,
@@ -49004,7 +49062,11 @@ var Scratch3MusicBlocks = function () {
                 }, {
                     opcode: 'setInstrument',
                     blockType: BlockType.COMMAND,
-                    text: 'set instrument to [INSTRUMENT]',
+                    text: formatMessage({
+                        id: 'music.setInstrument',
+                        default: 'set instrument to [INSTRUMENT]',
+                        description: 'set the instrument (e.g. piano, guitar, trombone) for notes played'
+                    }),
                     arguments: {
                         INSTRUMENT: {
                             type: ArgumentType.NUMBER,
@@ -49015,7 +49077,11 @@ var Scratch3MusicBlocks = function () {
                 }, {
                     opcode: 'setTempo',
                     blockType: BlockType.COMMAND,
-                    text: 'set tempo to [TEMPO]',
+                    text: formatMessage({
+                        id: 'music.setTempo',
+                        default: 'set tempo to [TEMPO]',
+                        description: 'set tempo (speed) for notes, drums, and rests played'
+                    }),
                     arguments: {
                         TEMPO: {
                             type: ArgumentType.NUMBER,
@@ -49025,7 +49091,11 @@ var Scratch3MusicBlocks = function () {
                 }, {
                     opcode: 'changeTempo',
                     blockType: BlockType.COMMAND,
-                    text: 'change tempo by [TEMPO]',
+                    text: formatMessage({
+                        id: 'music.changeTempo',
+                        default: 'change tempo by [TEMPO]',
+                        description: 'change tempo (speed) for notes, drums, and rests played'
+                    }),
                     arguments: {
                         TEMPO: {
                             type: ArgumentType.NUMBER,
@@ -49034,7 +49104,11 @@ var Scratch3MusicBlocks = function () {
                     }
                 }, {
                     opcode: 'getTempo',
-                    text: 'tempo',
+                    text: formatMessage({
+                        id: 'music.getTempo',
+                        default: 'tempo',
+                        description: 'get the current tempo (speed) for notes, drums, and rests played'
+                    }),
                     blockType: BlockType.REPORTER
                 }],
                 menus: {
@@ -49413,58 +49487,130 @@ var Scratch3MusicBlocks = function () {
         key: 'DRUM_INFO',
         get: function get() {
             return [{
-                name: '(1) Snare Drum',
+                name: formatMessage({
+                    id: 'music.drumSnare',
+                    default: '(1) Snare Drum',
+                    description: 'Sound of snare drum as used in a standard drum kit'
+                }),
                 fileName: '1-snare'
             }, {
-                name: '(2) Bass Drum',
+                name: formatMessage({
+                    id: 'music.drumBass',
+                    default: '(2) Bass Drum',
+                    description: 'Sound of bass drum as used in a standard drum kit'
+                }),
                 fileName: '2-bass-drum'
             }, {
-                name: '(3) Side Stick',
+                name: formatMessage({
+                    id: 'music.drumSideStick',
+                    default: '(3) Side Stick',
+                    description: 'Sound of a drum stick hitting the side of a drum (usually the snare)'
+                }),
                 fileName: '3-side-stick'
             }, {
-                name: '(4) Crash Cymbal',
+                name: formatMessage({
+                    id: 'music.drumCrashCymbal',
+                    default: '(4) Crash Cymbal',
+                    description: 'Sound of a drum stick hitting a crash cymbal'
+                }),
                 fileName: '4-crash-cymbal'
             }, {
-                name: '(5) Open Hi-Hat',
+                name: formatMessage({
+                    id: 'music.drumOpenHiHat',
+                    default: '(5) Open Hi-Hat',
+                    description: 'Sound of a drum stick hitting a hi-hat while open'
+                }),
                 fileName: '5-open-hi-hat'
             }, {
-                name: '(6) Closed Hi-Hat',
+                name: formatMessage({
+                    id: 'music.drumClosedHiHat',
+                    default: '(6) Closed Hi-Hat',
+                    description: 'Sound of a drum stick hitting a hi-hat while closed'
+                }),
                 fileName: '6-closed-hi-hat'
             }, {
-                name: '(7) Tambourine',
+                name: formatMessage({
+                    id: 'music.drumTambourine',
+                    default: '(7) Tambourine',
+                    description: 'Sound of a tambourine being struck'
+                }),
                 fileName: '7-tambourine'
             }, {
-                name: '(8) Hand Clap',
+                name: formatMessage({
+                    id: 'music.drumHandClap',
+                    default: '(8) Hand Clap',
+                    description: 'Sound of two hands clapping together'
+                }),
                 fileName: '8-hand-clap'
             }, {
-                name: '(9) Claves',
+                name: formatMessage({
+                    id: 'music.drumClaves',
+                    default: '(9) Claves',
+                    description: 'Sound of claves being struck together'
+                }),
                 fileName: '9-claves'
             }, {
-                name: '(10) Wood Block',
+                name: formatMessage({
+                    id: 'music.drumWoodBlock',
+                    default: '(10) Wood Block',
+                    description: 'Sound of a wood block being struck'
+                }),
                 fileName: '10-wood-block'
             }, {
-                name: '(11) Cowbell',
+                name: formatMessage({
+                    id: 'music.drumCowbell',
+                    default: '(11) Cowbell',
+                    description: 'Sound of a cowbell being struck'
+                }),
                 fileName: '11-cowbell'
             }, {
-                name: '(12) Triangle',
+                name: formatMessage({
+                    id: 'music.drumTriangle',
+                    default: '(12) Triangle',
+                    description: 'Sound of a triangle (instrument) being struck'
+                }),
                 fileName: '12-triangle'
             }, {
-                name: '(13) Bongo',
+                name: formatMessage({
+                    id: 'music.drumBongo',
+                    default: '(13) Bongo',
+                    description: 'Sound of a bongo being struck'
+                }),
                 fileName: '13-bongo'
             }, {
-                name: '(14) Conga',
+                name: formatMessage({
+                    id: 'music.drumConga',
+                    default: '(14) Conga',
+                    description: 'Sound of a conga being struck'
+                }),
                 fileName: '14-conga'
             }, {
-                name: '(15) Cabasa',
+                name: formatMessage({
+                    id: 'music.drumCabasa',
+                    default: '(15) Cabasa',
+                    description: 'Sound of a cabasa being shaken'
+                }),
                 fileName: '15-cabasa'
             }, {
-                name: '(16) Guiro',
+                name: formatMessage({
+                    id: 'music.drumGuiro',
+                    default: '(16) Guiro',
+                    description: 'Sound of a guiro being played'
+                }),
                 fileName: '16-guiro'
             }, {
-                name: '(17) Vibraslap',
+                name: formatMessage({
+                    id: 'music.drumVibraslap',
+                    default: '(17) Vibraslap',
+                    description: 'Sound of a Vibraslap being played'
+                }),
                 fileName: '17-vibraslap'
             }, {
-                name: '(18) Cuica',
+                name: formatMessage({
+                    id: 'music.drumCuica',
+                    default: '(18) Cuica',
+                    description: 'Sound of a cuica being played'
+                }),
                 fileName: '18-cuica'
             }];
         }
@@ -49483,100 +49629,184 @@ var Scratch3MusicBlocks = function () {
         key: 'INSTRUMENT_INFO',
         get: function get() {
             return [{
-                name: '(1) Piano',
+                name: formatMessage({
+                    id: 'music.instrumentPiano',
+                    default: '(1) Piano',
+                    description: 'Sound of a piano'
+                }),
                 dirName: '1-piano',
                 releaseTime: 0.5,
                 samples: [24, 36, 48, 60, 72, 84, 96, 108]
             }, {
-                name: '(2) Electric Piano',
+                name: formatMessage({
+                    id: 'music.instrumentElectricPiano',
+                    default: '(2) Electric Piano',
+                    description: 'Sound of an electric piano'
+                }),
                 dirName: '2-electric-piano',
                 releaseTime: 0.5,
                 samples: [60]
             }, {
-                name: '(3) Organ',
+                name: formatMessage({
+                    id: 'music.instrumentOrgan',
+                    default: '(3) Organ',
+                    description: 'Sound of an organ'
+                }),
                 dirName: '3-organ',
                 releaseTime: 0.5,
                 samples: [60]
             }, {
-                name: '(4) Guitar',
+                name: formatMessage({
+                    id: 'music.instrumentGuitar',
+                    default: '(4) Guitar',
+                    description: 'Sound of an accoustic guitar'
+                }),
                 dirName: '4-guitar',
                 releaseTime: 0.5,
                 samples: [60]
             }, {
-                name: '(5) Electric Guitar',
+                name: formatMessage({
+                    id: 'music.instrumentElectricGuitar',
+                    default: '(5) Electric Guitar',
+                    description: 'Sound of an electric guitar'
+                }),
                 dirName: '5-electric-guitar',
                 releaseTime: 0.5,
                 samples: [60]
             }, {
-                name: '(6) Bass',
+                name: formatMessage({
+                    id: 'music.instrumentBass',
+                    default: '(6) Bass',
+                    description: 'Sound of an accoustic upright bass'
+                }),
                 dirName: '6-bass',
                 releaseTime: 0.25,
                 samples: [36, 48]
             }, {
-                name: '(7) Pizzicato',
+                name: formatMessage({
+                    id: 'music.instrumentPizzicato',
+                    default: '(7) Pizzicato',
+                    description: 'Sound of a string instrument (e.g. violin) being plucked'
+                }),
                 dirName: '7-pizzicato',
                 releaseTime: 0.25,
                 samples: [60]
             }, {
-                name: '(8) Cello',
+                name: formatMessage({
+                    id: 'music.instrumentCello',
+                    default: '(8) Cello',
+                    description: 'Sound of a cello being played with a bow'
+                }),
                 dirName: '8-cello',
                 releaseTime: 0.1,
                 samples: [36, 48, 60]
             }, {
-                name: '(9) Trombone',
+                name: formatMessage({
+                    id: 'music.instrumentTrombone',
+                    default: '(9) Trombone',
+                    description: 'Sound of a trombone being played'
+                }),
                 dirName: '9-trombone',
                 samples: [36, 48, 60]
             }, {
-                name: '(10) Clarinet',
+                name: formatMessage({
+                    id: 'music.instrumentClarinet',
+                    default: '(10) Clarinet',
+                    description: 'Sound of a clarinet being played'
+                }),
                 dirName: '10-clarinet',
                 samples: [48, 60]
             }, {
-                name: '(11) Saxophone',
+                name: formatMessage({
+                    id: 'music.instrumentSaxophone',
+                    default: '(11) Saxophone',
+                    description: 'Sound of a saxophone being played'
+                }),
                 dirName: '11-saxophone',
                 samples: [36, 60, 84]
             }, {
-                name: '(12) Flute',
+                name: formatMessage({
+                    id: 'music.instrumentFlute',
+                    default: '(12) Flute',
+                    description: 'Sound of a flute being played'
+                }),
                 dirName: '12-flute',
                 samples: [60, 72]
             }, {
-                name: '(13) Wooden Flute',
+                name: formatMessage({
+                    id: 'music.instrumentWoodenFlute',
+                    default: '(13) Wooden Flute',
+                    description: 'Sound of a wooden flute being played'
+                }),
                 dirName: '13-wooden-flute',
                 samples: [60, 72]
             }, {
-                name: '(14) Bassoon',
+                name: formatMessage({
+                    id: 'music.instrumentBassoon',
+                    default: '(14) Bassoon',
+                    description: 'Sound of a bassoon being played'
+                }),
                 dirName: '14-bassoon',
                 samples: [36, 48, 60]
             }, {
-                name: '(15) Choir',
+                name: formatMessage({
+                    id: 'music.instrumentChoir',
+                    default: '(15) Choir',
+                    description: 'Sound of a choir singing'
+                }),
                 dirName: '15-choir',
                 releaseTime: 0.25,
                 samples: [48, 60, 72]
             }, {
-                name: '(16) Vibraphone',
+                name: formatMessage({
+                    id: 'music.instrumentVibraphone',
+                    default: '(16) Vibraphone',
+                    description: 'Sound of a vibraphone being struck'
+                }),
                 dirName: '16-vibraphone',
                 releaseTime: 0.5,
                 samples: [60, 72]
             }, {
-                name: '(17) Music Box',
+                name: formatMessage({
+                    id: 'music.instrumentMusicBox',
+                    default: '(17) Music Box',
+                    description: 'Sound of a music box playing'
+                }),
                 dirName: '17-music-box',
                 releaseTime: 0.25,
                 samples: [60]
             }, {
-                name: '(18) Steel Drum',
+                name: formatMessage({
+                    id: 'music.instrumentSteelDrum',
+                    default: '(18) Steel Drum',
+                    description: 'Sound of a steel drum being struck'
+                }),
                 dirName: '18-steel-drum',
                 releaseTime: 0.5,
                 samples: [60]
             }, {
-                name: '(19) Marimba',
+                name: formatMessage({
+                    id: 'music.instrumentMarimba',
+                    default: '(19) Marimba',
+                    description: 'Sound of a marimba being struck'
+                }),
                 dirName: '19-marimba',
                 samples: [60]
             }, {
-                name: '(20) Synth Lead',
+                name: formatMessage({
+                    id: 'music.instrumentSynthLead',
+                    default: '(20) Synth Lead',
+                    description: 'Sound of a "lead" synthesizer being played'
+                }),
                 dirName: '20-synth-lead',
                 releaseTime: 0.1,
                 samples: [60]
             }, {
-                name: '(21) Synth Pad',
+                name: formatMessage({
+                    id: 'music.instrumentSynthPad',
+                    default: '(21) Synth Pad',
+                    description: 'Sound of a "pad" synthesizer being played'
+                }),
                 dirName: '21-synth-pad',
                 releaseTime: 0.25,
                 samples: [60]
@@ -49670,7 +49900,7 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
 
 var ArgumentType = __webpack_require__(26);
 var BlockType = __webpack_require__(19);
-var color = __webpack_require__(34);
+var color = __webpack_require__(35);
 var log = __webpack_require__(2);
 
 /**
@@ -51302,9 +51532,9 @@ exports.getName = function(elem){
 /* 230 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var entityMap = __webpack_require__(44),
+var entityMap = __webpack_require__(45),
     legacyMap = __webpack_require__(74),
-    xmlMap    = __webpack_require__(43),
+    xmlMap    = __webpack_require__(44),
     decodeCodePoint = __webpack_require__(75);
 
 var decodeXMLStrict  = getStrictDecoder(xmlMap),
@@ -51379,12 +51609,12 @@ module.exports = {
 /* 231 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var inverseXML = getInverseObj(__webpack_require__(43)),
+var inverseXML = getInverseObj(__webpack_require__(44)),
     xmlReplacer = getInverseReplacer(inverseXML);
 
 exports.XML = getInverse(inverseXML, xmlReplacer);
 
-var inverseHTML = getInverseObj(__webpack_require__(44)),
+var inverseHTML = getInverseObj(__webpack_require__(45)),
     htmlReplacer = getInverseReplacer(inverseHTML);
 
 exports.HTML = getInverse(inverseHTML, htmlReplacer);
@@ -52710,10 +52940,10 @@ var ArgumentType = __webpack_require__(26);
 var BlockType = __webpack_require__(19);
 var Cast = __webpack_require__(3);
 var Clone = __webpack_require__(18);
-var Color = __webpack_require__(34);
-var formatMessage = __webpack_require__(45);
+var Color = __webpack_require__(35);
+var formatMessage = __webpack_require__(27);
 var MathUtil = __webpack_require__(10);
-var RenderedTarget = __webpack_require__(33);
+var RenderedTarget = __webpack_require__(34);
 var log = __webpack_require__(2);
 
 /**
@@ -56006,12 +56236,12 @@ module.exports = ZipEntries;
 "use strict";
 
 var utils = __webpack_require__(0);
-var external = __webpack_require__(27);
+var external = __webpack_require__(28);
 var utf8 = __webpack_require__(21);
 var utils = __webpack_require__(0);
 var ZipEntries = __webpack_require__(265);
 var Crc32Probe = __webpack_require__(96);
-var nodejsUtils = __webpack_require__(36);
+var nodejsUtils = __webpack_require__(37);
 
 /**
  * Check the CRC32 of an entry.
@@ -63736,7 +63966,7 @@ module.exports = function(it){
 /* 286 */
 /***/ (function(module, exports, __webpack_require__) {
 
-module.exports = __webpack_require__(35).document && document.documentElement;
+module.exports = __webpack_require__(36).document && document.documentElement;
 
 /***/ }),
 /* 287 */
@@ -63767,7 +63997,7 @@ var ctx                = __webpack_require__(103)
   , invoke             = __webpack_require__(287)
   , html               = __webpack_require__(286)
   , cel                = __webpack_require__(101)
-  , global             = __webpack_require__(35)
+  , global             = __webpack_require__(36)
   , process            = global.process
   , setTask            = global.setImmediate
   , clearTask          = global.clearImmediate
@@ -63934,7 +64164,7 @@ module.exports = function(it){
 /* 296 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var global    = __webpack_require__(35)
+var global    = __webpack_require__(36)
   , core      = __webpack_require__(104)
   , ctx       = __webpack_require__(103)
   , hide      = __webpack_require__(294)
@@ -64079,7 +64309,7 @@ module.exports = PassThrough;
 var Transform = __webpack_require__(106);
 
 /*<replacement>*/
-var util = __webpack_require__(28);
+var util = __webpack_require__(29);
 util.inherits = __webpack_require__(6);
 /*</replacement>*/
 
@@ -64377,7 +64607,7 @@ function config (name) {
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
-var Buffer = __webpack_require__(37).Buffer;
+var Buffer = __webpack_require__(38).Buffer;
 var util = __webpack_require__(306);
 
 function copyBuffer(src, target, offset) {
@@ -64721,7 +64951,7 @@ var defaults = __webpack_require__(99);
 var CompressedObject = __webpack_require__(48);
 var ZipObject = __webpack_require__(280);
 var generate = __webpack_require__(279);
-var nodejsUtils = __webpack_require__(36);
+var nodejsUtils = __webpack_require__(37);
 var NodejsStreamInputAdapter = __webpack_require__(267);
 
 
@@ -68519,15 +68749,15 @@ var Runtime = __webpack_require__(69);
 var sb2 = __webpack_require__(186);
 var sb3 = __webpack_require__(184);
 var StringUtil = __webpack_require__(17);
-var formatMessage = __webpack_require__(45);
+var formatMessage = __webpack_require__(27);
 var validate = __webpack_require__(182);
 
 var Variable = __webpack_require__(23);
 
-var _require = __webpack_require__(29),
+var _require = __webpack_require__(30),
     loadCostume = _require.loadCostume;
 
-var _require2 = __webpack_require__(30),
+var _require2 = __webpack_require__(31),
     loadSound = _require2.loadSound;
 
 var _require3 = __webpack_require__(129),
