@@ -14862,7 +14862,10 @@ var SVGMeasurementProvider = function () {
             // @TODO This code should be shared with the svg-renderer.
             svgText.setAttribute('alignment-baseline', 'text-before-edge');
             svgText.setAttribute('font-size', '14');
-            svgText.setAttribute('font-family', 'Helvetica');
+
+            // TODO Do we want to use the new default sans font instead of Helvetica?
+            // This change intentionally subverts the svg-renderer auto font conversion.
+            svgText.setAttribute('font-family', 'Helvetica, Arial, sans-serif');
 
             // hide from the user, including screen readers
             svgRoot.setAttribute('style', 'position:absolute;visibility:hidden');
@@ -15005,7 +15008,8 @@ var SVGTextBubble = function () {
     }, {
         key: '_textFragment',
         value: function _textFragment() {
-            return '<text fill="#575E75">' + xmlescape(this.lines.join('\n')) + '</text>';
+            var attrs = 'font-family="Helvetica, Arial, sans-serif" font-size="14px" fill="#575E75"';
+            return '<text ' + attrs + '>' + xmlescape(this.lines.join('\n')) + '</text>';
         }
     }, {
         key: 'buildString',
@@ -16292,6 +16296,7 @@ var Silhouette = function () {
     }, {
         key: 'isTouchingNearest',
         value: function isTouchingNearest(vec) {
+            if (!this._data) return;
             return getPoint(this, Math.round(vec[0] * (this._width - 1)), Math.round(vec[1] * (this._height - 1))) > 0;
         }
 
@@ -16305,6 +16310,7 @@ var Silhouette = function () {
     }, {
         key: 'isTouchingLinear',
         value: function isTouchingLinear(vec) {
+            if (!this._data) return;
             var x = Math.floor(vec[0] * (this._width - 1));
             var y = Math.floor(vec[1] * (this._height - 1));
             return getPoint(this, x, y) > 0 || getPoint(this, x + 1, y) > 0 || getPoint(this, x, y + 1) > 0 || getPoint(this, x + 1, y + 1) > 0;
