@@ -7,6 +7,17 @@ const MathUtil = require('../../util/math-util');
 const Timer = require('../../util/timer');
 
 /**
+ * The instrument and drum sounds, loaded as static assets.
+ * @type {object}
+ */
+let assetData = {};
+try {
+    assetData = require('./manifest');
+} catch (e) {
+    // Non-webpack environment, don't worry about assets.
+}
+
+/**
  * Icon svg to be displayed at the left edge of each extension block, encoded as a data URI.
  * @type {string}
  */
@@ -92,27 +103,6 @@ class Scratch3MusicBlocks {
         });
     }
 
-    _fetchSounds () {
-        if (!this._assetData) {
-            this._assetData = new Promise((resolve, reject) => {
-                // Use webpack supported require.ensure to dynamically load the
-                // manifest as an another javascript file. Once the file
-                // executes the callback will be called and we can require the
-                // manifest.
-                //
-                // You can either make require calls in the callback function or
-                // specify dependencies in the array to load. The third argument
-                // is an error callback. The forth argument is a name for the
-                // javascript that can be used depending on the webpack
-                // configuration.
-                require.ensure([], () => {
-                    resolve(require('./manifest'));
-                }, reject, 'vm-music-manifest');
-            });
-        }
-        return this._assetData;
-    }
-
     /**
      * Decode a sound and store the buffer in an array.
      * @param {string} filePath - the audio file name.
@@ -123,23 +113,14 @@ class Scratch3MusicBlocks {
     _storeSound (filePath, index, bufferArray) {
         const fullPath = `${filePath}.mp3`;
 
-        return this._fetchSounds()
-            // In case require.ensure is not available (such as running this
-            // file directly in node instead of through the webpack built script
-            // for node) or that require.ensure fails, turn the error into an
-            // empty object. The music extension will ignore the sound files.
-            .catch(() => ({}))
-            .then(assetData => {
-                if (!assetData[fullPath]) return;
+        if (!assetData[fullPath]) return;
 
-                // The sound buffer has already been downloaded via the manifest file required above.
-                const soundBuffer = assetData[fullPath];
+        // The sound buffer has already been downloaded via the manifest file required above.
+        const soundBuffer = assetData[fullPath];
 
-                return this._decodeSound(soundBuffer);
-            })
-            .then(buffer => {
-                bufferArray[index] = buffer;
-            });
+        return this._decodeSound(soundBuffer).then(buffer => {
+            bufferArray[index] = buffer;
+        });
     }
 
     /**
