@@ -438,7 +438,7 @@ class Scratch3MicroBitBlocks {
                 buttons: ['A', 'B', 'any'],
                 rowcol: ['1', '2', '3', '4', '5'],
                 pinState: ['on', 'off'],
-                symbols: ['❤', '♫', '☓', '✓', '↑', '↓', '←', '→', '◯', '☀', '☺', '!', '?'],
+                symbols: Object.keys(symbols2hex),
                 tiltDirection: [TiltDirection.FRONT, TiltDirection.BACK, TiltDirection.LEFT, TiltDirection.RIGHT],
                 tiltDirectionAny: [
                     TiltDirection.FRONT, TiltDirection.BACK, TiltDirection.LEFT,
