@@ -129,7 +129,7 @@ class MicroBit {
     }
 
     /**
-     * @return {number} - the current state of the 5x5 LED matrix.
+     * @return {Uint8Array} - the current state of the 5x5 LED matrix.
      */
     get ledMatrixState () {
         return this._sensors.ledMatrixState;
