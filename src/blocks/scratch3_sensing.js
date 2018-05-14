@@ -74,10 +74,21 @@ class Scratch3SensingBlocks {
 
     getMonitored () {
         return {
-            sensing_answer: {},
-            sensing_loudness: {},
-            sensing_timer: {},
-            sensing_current: {}
+            sensing_answer: {
+                getId: () => 'answer'
+            },
+            sensing_loudness: {
+                getId: () => 'loudness'
+            },
+            sensing_timer: {
+                getId: () => 'timer'
+            },
+            sensing_current: {
+                // This is different from the default toolbox xml id in order to support
+                // importing multiple monitors from the same opcode from sb2 files,
+                // something that is not currently supported in scratch 3.
+                getId: (_, param) => `current_${param}`
+            }
         };
     }
 
@@ -263,6 +274,11 @@ class Scratch3SensingBlocks {
         } else {
             attrTarget = this.runtime.getSpriteTargetByName(args.OBJECT);
         }
+
+        // attrTarget can be undefined if the target does not exist
+        // (e.g. single sprite uploaded from larger project referencing
+        // another sprite that wasn't uploaded)
+        if (!attrTarget) return 0;
 
         // Generic attributes
         if (attrTarget.isStage) {

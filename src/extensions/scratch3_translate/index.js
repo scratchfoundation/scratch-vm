@@ -102,7 +102,7 @@ class Scratch3TranslateBlocks {
             if (langs) {
                 this._supportedLanguages =
                       langs.map(entry => {
-                          const obj = [entry.name, entry.code];
+                          const obj = {text: entry.name, value: entry.code};
                           return obj;
                       });
             }

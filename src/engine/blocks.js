@@ -441,22 +441,34 @@ class Blocks {
                 break;
             }
 
-            const isSpriteSpecific = optRuntime.monitorBlockInfo.hasOwnProperty(block.opcode) &&
-                optRuntime.monitorBlockInfo[block.opcode].isSpriteSpecific;
+            // Variable blocks may be sprite specific depending on the owner of the variable
+            let isSpriteLocalVariable = false;
+            if (block.opcode === 'data_variable') {
+                isSpriteLocalVariable = !optRuntime.getEditingTarget().isStage &&
+                    optRuntime.getEditingTarget().variables[block.fields.VARIABLE.id];
+            } else if (block.opcode === 'data_listcontents') {
+                isSpriteLocalVariable = !optRuntime.getEditingTarget().isStage &&
+                    optRuntime.getEditingTarget().variables[block.fields.LIST.id];
+            }
+
+
+            const isSpriteSpecific = isSpriteLocalVariable ||
+                (optRuntime.monitorBlockInfo.hasOwnProperty(block.opcode) &&
+                optRuntime.monitorBlockInfo[block.opcode].isSpriteSpecific);
             block.targetId = isSpriteSpecific ? optRuntime.getEditingTarget().id : null;
 
             if (wasMonitored && !block.isMonitored) {
                 optRuntime.requestRemoveMonitor(block.id);
             } else if (!wasMonitored && block.isMonitored) {
                 optRuntime.requestAddMonitor(MonitorRecord({
-                    // @todo(vm#564) this will collide if multiple sprites use same block
                     id: block.id,
                     targetId: block.targetId,
                     spriteName: block.targetId ? optRuntime.getTargetById(block.targetId).getName() : null,
                     opcode: block.opcode,
                     params: this._getBlockParams(block),
                     // @todo(vm#565) for numerical values with decimals, some countries use comma
-                    value: ''
+                    value: '',
+                    mode: block.opcode === 'data_listcontents' ? 'list' : 'default'
                 }));
             }
             break;
@@ -874,23 +886,34 @@ class Blocks {
  * reset.
  * @param {Blocks} blocks Blocks containing the expected blockId
  * @param {string} blockId blockId for the desired execute cache
+ * @param {function} CacheType constructor for cached block information
  * @return {object} execute cache object
  */
-BlocksExecuteCache.getCached = function (blocks, blockId) {
-    const block = blocks.getBlock(blockId);
-    if (typeof block === 'undefined') return null;
+BlocksExecuteCache.getCached = function (blocks, blockId, CacheType) {
     let cached = blocks._cache._executeCached[blockId];
     if (typeof cached !== 'undefined') {
         return cached;
     }
 
-    cached = {
-        _initialized: false,
-        opcode: blocks.getOpcode(block),
-        fields: blocks.getFields(block),
-        inputs: blocks.getInputs(block),
-        mutation: blocks.getMutation(block)
-    };
+    const block = blocks.getBlock(blockId);
+    if (typeof block === 'undefined') return null;
+
+    if (typeof CacheType === 'undefined') {
+        cached = {
+            opcode: blocks.getOpcode(block),
+            fields: blocks.getFields(block),
+            inputs: blocks.getInputs(block),
+            mutation: blocks.getMutation(block)
+        };
+    } else {
+        cached = new CacheType(blocks, {
+            opcode: blocks.getOpcode(block),
+            fields: blocks.getFields(block),
+            inputs: blocks.getInputs(block),
+            mutation: blocks.getMutation(block)
+        });
+    }
+
     blocks._cache._executeCached[blockId] = cached;
     return cached;
 };

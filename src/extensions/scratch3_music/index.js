@@ -2,6 +2,7 @@ const ArgumentType = require('../../extension-support/argument-type');
 const BlockType = require('../../extension-support/block-type');
 const Clone = require('../../util/clone');
 const Cast = require('../../util/cast');
+const formatMessage = require('format-message');
 const MathUtil = require('../../util/math-util');
 const Timer = require('../../util/timer');
 
@@ -173,75 +174,147 @@ class Scratch3MusicBlocks {
     get DRUM_INFO () {
         return [
             {
-                name: '(1) Snare Drum',
+                name: formatMessage({
+                    id: 'music.drumSnare',
+                    default: '(1) Snare Drum',
+                    description: 'Sound of snare drum as used in a standard drum kit'
+                }),
                 fileName: '1-snare'
             },
             {
-                name: '(2) Bass Drum',
+                name: formatMessage({
+                    id: 'music.drumBass',
+                    default: '(2) Bass Drum',
+                    description: 'Sound of bass drum as used in a standard drum kit'
+                }),
                 fileName: '2-bass-drum'
             },
             {
-                name: '(3) Side Stick',
+                name: formatMessage({
+                    id: 'music.drumSideStick',
+                    default: '(3) Side Stick',
+                    description: 'Sound of a drum stick hitting the side of a drum (usually the snare)'
+                }),
                 fileName: '3-side-stick'
             },
             {
-                name: '(4) Crash Cymbal',
+                name: formatMessage({
+                    id: 'music.drumCrashCymbal',
+                    default: '(4) Crash Cymbal',
+                    description: 'Sound of a drum stick hitting a crash cymbal'
+                }),
                 fileName: '4-crash-cymbal'
             },
             {
-                name: '(5) Open Hi-Hat',
+                name: formatMessage({
+                    id: 'music.drumOpenHiHat',
+                    default: '(5) Open Hi-Hat',
+                    description: 'Sound of a drum stick hitting a hi-hat while open'
+                }),
                 fileName: '5-open-hi-hat'
             },
             {
-                name: '(6) Closed Hi-Hat',
+                name: formatMessage({
+                    id: 'music.drumClosedHiHat',
+                    default: '(6) Closed Hi-Hat',
+                    description: 'Sound of a drum stick hitting a hi-hat while closed'
+                }),
                 fileName: '6-closed-hi-hat'
             },
             {
-                name: '(7) Tambourine',
+                name: formatMessage({
+                    id: 'music.drumTambourine',
+                    default: '(7) Tambourine',
+                    description: 'Sound of a tambourine being struck'
+                }),
                 fileName: '7-tambourine'
             },
             {
-                name: '(8) Hand Clap',
+                name: formatMessage({
+                    id: 'music.drumHandClap',
+                    default: '(8) Hand Clap',
+                    description: 'Sound of two hands clapping together'
+                }),
                 fileName: '8-hand-clap'
             },
             {
-                name: '(9) Claves',
+                name: formatMessage({
+                    id: 'music.drumClaves',
+                    default: '(9) Claves',
+                    description: 'Sound of claves being struck together'
+                }),
                 fileName: '9-claves'
             },
             {
-                name: '(10) Wood Block',
+                name: formatMessage({
+                    id: 'music.drumWoodBlock',
+                    default: '(10) Wood Block',
+                    description: 'Sound of a wood block being struck'
+                }),
                 fileName: '10-wood-block'
             },
             {
-                name: '(11) Cowbell',
+                name: formatMessage({
+                    id: 'music.drumCowbell',
+                    default: '(11) Cowbell',
+                    description: 'Sound of a cowbell being struck'
+                }),
                 fileName: '11-cowbell'
             },
             {
-                name: '(12) Triangle',
+                name: formatMessage({
+                    id: 'music.drumTriangle',
+                    default: '(12) Triangle',
+                    description: 'Sound of a triangle (instrument) being struck'
+                }),
                 fileName: '12-triangle'
             },
             {
-                name: '(13) Bongo',
+                name: formatMessage({
+                    id: 'music.drumBongo',
+                    default: '(13) Bongo',
+                    description: 'Sound of a bongo being struck'
+                }),
                 fileName: '13-bongo'
             },
             {
-                name: '(14) Conga',
+                name: formatMessage({
+                    id: 'music.drumConga',
+                    default: '(14) Conga',
+                    description: 'Sound of a conga being struck'
+                }),
                 fileName: '14-conga'
             },
             {
-                name: '(15) Cabasa',
+                name: formatMessage({
+                    id: 'music.drumCabasa',
+                    default: '(15) Cabasa',
+                    description: 'Sound of a cabasa being shaken'
+                }),
                 fileName: '15-cabasa'
             },
             {
-                name: '(16) Guiro',
+                name: formatMessage({
+                    id: 'music.drumGuiro',
+                    default: '(16) Guiro',
+                    description: 'Sound of a guiro being played'
+                }),
                 fileName: '16-guiro'
             },
             {
-                name: '(17) Vibraslap',
+                name: formatMessage({
+                    id: 'music.drumVibraslap',
+                    default: '(17) Vibraslap',
+                    description: 'Sound of a Vibraslap being played'
+                }),
                 fileName: '17-vibraslap'
             },
             {
-                name: '(18) Cuica',
+                name: formatMessage({
+                    id: 'music.drumCuica',
+                    default: '(18) Cuica',
+                    description: 'Sound of a cuica being played'
+                }),
                 fileName: '18-cuica'
             }
         ];
@@ -259,120 +332,204 @@ class Scratch3MusicBlocks {
     get INSTRUMENT_INFO () {
         return [
             {
-                name: '(1) Piano',
+                name: formatMessage({
+                    id: 'music.instrumentPiano',
+                    default: '(1) Piano',
+                    description: 'Sound of a piano'
+                }),
                 dirName: '1-piano',
                 releaseTime: 0.5,
                 samples: [24, 36, 48, 60, 72, 84, 96, 108]
             },
             {
-                name: '(2) Electric Piano',
+                name: formatMessage({
+                    id: 'music.instrumentElectricPiano',
+                    default: '(2) Electric Piano',
+                    description: 'Sound of an electric piano'
+                }),
                 dirName: '2-electric-piano',
                 releaseTime: 0.5,
                 samples: [60]
             },
             {
-                name: '(3) Organ',
+                name: formatMessage({
+                    id: 'music.instrumentOrgan',
+                    default: '(3) Organ',
+                    description: 'Sound of an organ'
+                }),
                 dirName: '3-organ',
                 releaseTime: 0.5,
                 samples: [60]
             },
             {
-                name: '(4) Guitar',
+                name: formatMessage({
+                    id: 'music.instrumentGuitar',
+                    default: '(4) Guitar',
+                    description: 'Sound of an accoustic guitar'
+                }),
                 dirName: '4-guitar',
                 releaseTime: 0.5,
                 samples: [60]
             },
             {
-                name: '(5) Electric Guitar',
+                name: formatMessage({
+                    id: 'music.instrumentElectricGuitar',
+                    default: '(5) Electric Guitar',
+                    description: 'Sound of an electric guitar'
+                }),
                 dirName: '5-electric-guitar',
                 releaseTime: 0.5,
                 samples: [60]
             },
             {
-                name: '(6) Bass',
+                name: formatMessage({
+                    id: 'music.instrumentBass',
+                    default: '(6) Bass',
+                    description: 'Sound of an accoustic upright bass'
+                }),
                 dirName: '6-bass',
                 releaseTime: 0.25,
                 samples: [36, 48]
             },
             {
-                name: '(7) Pizzicato',
+                name: formatMessage({
+                    id: 'music.instrumentPizzicato',
+                    default: '(7) Pizzicato',
+                    description: 'Sound of a string instrument (e.g. violin) being plucked'
+                }),
                 dirName: '7-pizzicato',
                 releaseTime: 0.25,
                 samples: [60]
             },
             {
-                name: '(8) Cello',
+                name: formatMessage({
+                    id: 'music.instrumentCello',
+                    default: '(8) Cello',
+                    description: 'Sound of a cello being played with a bow'
+                }),
                 dirName: '8-cello',
                 releaseTime: 0.1,
                 samples: [36, 48, 60]
             },
             {
-                name: '(9) Trombone',
+                name: formatMessage({
+                    id: 'music.instrumentTrombone',
+                    default: '(9) Trombone',
+                    description: 'Sound of a trombone being played'
+                }),
                 dirName: '9-trombone',
                 samples: [36, 48, 60]
             },
             {
-                name: '(10) Clarinet',
+                name: formatMessage({
+                    id: 'music.instrumentClarinet',
+                    default: '(10) Clarinet',
+                    description: 'Sound of a clarinet being played'
+                }),
                 dirName: '10-clarinet',
                 samples: [48, 60]
             },
             {
-                name: '(11) Saxophone',
+                name: formatMessage({
+                    id: 'music.instrumentSaxophone',
+                    default: '(11) Saxophone',
+                    description: 'Sound of a saxophone being played'
+                }),
                 dirName: '11-saxophone',
                 samples: [36, 60, 84]
             },
             {
-                name: '(12) Flute',
+                name: formatMessage({
+                    id: 'music.instrumentFlute',
+                    default: '(12) Flute',
+                    description: 'Sound of a flute being played'
+                }),
                 dirName: '12-flute',
                 samples: [60, 72]
             },
             {
-                name: '(13) Wooden Flute',
+                name: formatMessage({
+                    id: 'music.instrumentWoodenFlute',
+                    default: '(13) Wooden Flute',
+                    description: 'Sound of a wooden flute being played'
+                }),
                 dirName: '13-wooden-flute',
                 samples: [60, 72]
             },
             {
-                name: '(14) Bassoon',
+                name: formatMessage({
+                    id: 'music.instrumentBassoon',
+                    default: '(14) Bassoon',
+                    description: 'Sound of a bassoon being played'
+                }),
                 dirName: '14-bassoon',
                 samples: [36, 48, 60]
             },
             {
-                name: '(15) Choir',
+                name: formatMessage({
+                    id: 'music.instrumentChoir',
+                    default: '(15) Choir',
+                    description: 'Sound of a choir singing'
+                }),
                 dirName: '15-choir',
                 releaseTime: 0.25,
                 samples: [48, 60, 72]
             },
             {
-                name: '(16) Vibraphone',
+                name: formatMessage({
+                    id: 'music.instrumentVibraphone',
+                    default: '(16) Vibraphone',
+                    description: 'Sound of a vibraphone being struck'
+                }),
                 dirName: '16-vibraphone',
                 releaseTime: 0.5,
                 samples: [60, 72]
             },
             {
-                name: '(17) Music Box',
+                name: formatMessage({
+                    id: 'music.instrumentMusicBox',
+                    default: '(17) Music Box',
+                    description: 'Sound of a music box playing'
+                }),
                 dirName: '17-music-box',
                 releaseTime: 0.25,
                 samples: [60]
             },
             {
-                name: '(18) Steel Drum',
+                name: formatMessage({
+                    id: 'music.instrumentSteelDrum',
+                    default: '(18) Steel Drum',
+                    description: 'Sound of a steel drum being struck'
+                }),
                 dirName: '18-steel-drum',
                 releaseTime: 0.5,
                 samples: [60]
             },
             {
-                name: '(19) Marimba',
+                name: formatMessage({
+                    id: 'music.instrumentMarimba',
+                    default: '(19) Marimba',
+                    description: 'Sound of a marimba being struck'
+                }),
                 dirName: '19-marimba',
                 samples: [60]
             },
             {
-                name: '(20) Synth Lead',
+                name: formatMessage({
+                    id: 'music.instrumentSynthLead',
+                    default: '(20) Synth Lead',
+                    description: 'Sound of a "lead" synthesizer being played'
+                }),
                 dirName: '20-synth-lead',
                 releaseTime: 0.1,
                 samples: [60]
             },
             {
-                name: '(21) Synth Pad',
+                name: formatMessage({
+                    id: 'music.instrumentSynthPad',
+                    default: '(21) Synth Pad',
+                    description: 'Sound of a "pad" synthesizer being played'
+                }),
                 dirName: '21-synth-pad',
                 releaseTime: 0.25,
                 samples: [60]
@@ -473,7 +630,11 @@ class Scratch3MusicBlocks {
                 {
                     opcode: 'playDrumForBeats',
                     blockType: BlockType.COMMAND,
-                    text: 'play drum [DRUM] for [BEATS] beats',
+                    text: formatMessage({
+                        id: 'music.playDrumForBeats',
+                        default: 'play drum [DRUM] for [BEATS] beats',
+                        description: 'play drum sample for a number of beats'
+                    }),
                     arguments: {
                         DRUM: {
                             type: ArgumentType.NUMBER,
@@ -489,7 +650,11 @@ class Scratch3MusicBlocks {
                 {
                     opcode: 'restForBeats',
                     blockType: BlockType.COMMAND,
-                    text: 'rest for [BEATS] beats',
+                    text: formatMessage({
+                        id: 'music.restForBeats',
+                        default: 'rest for [BEATS] beats',
+                        description: 'rest (play no sound) for a number of beats'
+                    }),
                     arguments: {
                         BEATS: {
                             type: ArgumentType.NUMBER,
@@ -500,7 +665,11 @@ class Scratch3MusicBlocks {
                 {
                     opcode: 'playNoteForBeats',
                     blockType: BlockType.COMMAND,
-                    text: 'play note [NOTE] for [BEATS] beats',
+                    text: formatMessage({
+                        id: 'music.playNoteForBeats',
+                        default: 'play note [NOTE] for [BEATS] beats',
+                        description: 'play a note for a number of beats'
+                    }),
                     arguments: {
                         NOTE: {
                             type: ArgumentType.NUMBER,
@@ -515,7 +684,11 @@ class Scratch3MusicBlocks {
                 {
                     opcode: 'setInstrument',
                     blockType: BlockType.COMMAND,
-                    text: 'set instrument to [INSTRUMENT]',
+                    text: formatMessage({
+                        id: 'music.setInstrument',
+                        default: 'set instrument to [INSTRUMENT]',
+                        description: 'set the instrument (e.g. piano, guitar, trombone) for notes played'
+                    }),
                     arguments: {
                         INSTRUMENT: {
                             type: ArgumentType.NUMBER,
@@ -527,7 +700,11 @@ class Scratch3MusicBlocks {
                 {
                     opcode: 'setTempo',
                     blockType: BlockType.COMMAND,
-                    text: 'set tempo to [TEMPO]',
+                    text: formatMessage({
+                        id: 'music.setTempo',
+                        default: 'set tempo to [TEMPO]',
+                        description: 'set tempo (speed) for notes, drums, and rests played'
+                    }),
                     arguments: {
                         TEMPO: {
                             type: ArgumentType.NUMBER,
@@ -538,7 +715,11 @@ class Scratch3MusicBlocks {
                 {
                     opcode: 'changeTempo',
                     blockType: BlockType.COMMAND,
-                    text: 'change tempo by [TEMPO]',
+                    text: formatMessage({
+                        id: 'music.changeTempo',
+                        default: 'change tempo by [TEMPO]',
+                        description: 'change tempo (speed) for notes, drums, and rests played'
+                    }),
                     arguments: {
                         TEMPO: {
                             type: ArgumentType.NUMBER,
@@ -548,7 +729,11 @@ class Scratch3MusicBlocks {
                 },
                 {
                     opcode: 'getTempo',
-                    text: 'tempo',
+                    text: formatMessage({
+                        id: 'music.getTempo',
+                        default: 'tempo',
+                        description: 'get the current tempo (speed) for notes, drums, and rests played'
+                    }),
                     blockType: BlockType.REPORTER
                 }
             ],

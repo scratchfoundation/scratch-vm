@@ -2,6 +2,15 @@ const test = require('tap').test;
 const VirtualMachine = require('../../src/virtual-machine.js');
 const Sprite = require('../../src/sprites/sprite.js');
 
+test('addSprite throws on invalid string', t => {
+    const vm = new VirtualMachine();
+    vm.addSprite('this is not a sprite')
+        .catch(e => {
+            t.equal(e.startsWith('Sprite Upload Error:'), true);
+            t.end();
+        });
+});
+
 test('renameSprite throws when there is no sprite with that id', t => {
     const vm = new VirtualMachine();
     vm.runtime.getTargetById = () => null;

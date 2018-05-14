@@ -1370,6 +1370,18 @@ const specMap = {
             }
         ]
     },
+    // Scratch 2 uses this alternative variable getter opcode only in monitors,
+    // blocks use the `readVariable` opcode above.
+    'getVar:': {
+        opcode: 'data_variable',
+        argMap: [
+            {
+                type: 'field',
+                fieldName: 'VARIABLE',
+                variableType: Variable.SCALAR_TYPE
+            }
+        ]
+    },
     'setVar:to:': {
         opcode: 'data_setvariableto',
         argMap: [

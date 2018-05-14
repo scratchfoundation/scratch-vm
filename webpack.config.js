@@ -1,9 +1,10 @@
 const CopyWebpackPlugin = require('copy-webpack-plugin');
 const defaultsDeep = require('lodash.defaultsdeep');
 const path = require('path');
-const webpack = require('webpack');
+const UglifyJsPlugin = require('uglifyjs-webpack-plugin');
 
 const base = {
+    mode: process.env.NODE_ENV === 'production' ? 'production' : 'development',
     devServer: {
         contentBase: false,
         host: '0.0.0.0',
@@ -20,7 +21,7 @@ const base = {
             loader: 'babel-loader',
             include: path.resolve(__dirname, 'src'),
             query: {
-                presets: ['es2015']
+                presets: [['env', {targets: {browsers: ['last 3 versions', 'Safari >= 8', 'iOS >= 8']}}]]
             }
         },
         {
@@ -28,12 +29,14 @@ const base = {
             loader: 'file-loader'
         }]
     },
-    plugins: process.env.NODE_ENV === 'production' ? [
-        new webpack.optimize.UglifyJsPlugin({
-            include: /\.min\.js$/,
-            minimize: true
-        })
-    ] : []
+    optimization: {
+        minimizer: [
+            new UglifyJsPlugin({
+                include: /\.min\.js$/
+            })
+        ]
+    },
+    plugins: []
 };
 
 module.exports = [
@@ -128,6 +131,9 @@ module.exports = [
                     loader: 'expose-loader?ScratchRender'
                 }
             ])
+        },
+        performance: {
+            hints: false
         },
         plugins: base.plugins.concat([
             new CopyWebpackPlugin([{

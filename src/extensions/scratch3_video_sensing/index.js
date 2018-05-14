@@ -4,6 +4,7 @@ const ArgumentType = require('../../extension-support/argument-type');
 const BlockType = require('../../extension-support/block-type');
 const Clone = require('../../util/clone');
 const Cast = require('../../util/cast');
+const formatMessage = require('format-message');
 const Video = require('../../io/video');
 
 const VideoMotion = require('./library');
@@ -267,11 +268,19 @@ class Scratch3VideoSensingBlocks {
     get ATTRIBUTE_INFO () {
         return [
             {
-                name: 'motion',
+                name: formatMessage({
+                    id: 'videoSensing.motion',
+                    default: 'motion',
+                    description: 'Attribute for the "video [ATTRIBUTE] on [SUBJECT]" block'
+                }),
                 value: SensingAttribute.MOTION
             },
             {
-                name: 'direction',
+                name: formatMessage({
+                    id: 'videoSensing.direction',
+                    default: 'direction',
+                    description: 'Attribute for the "video [ATTRIBUTE] on [SUBJECT]" block'
+                }),
                 value: SensingAttribute.DIRECTION
             }
         ];
@@ -290,11 +299,19 @@ class Scratch3VideoSensingBlocks {
     get SUBJECT_INFO () {
         return [
             {
-                name: 'sprite',
+                name: formatMessage({
+                    id: 'videoSensing.sprite',
+                    default: 'sprite',
+                    description: 'Subject for the "video [ATTRIBUTE] on [SUBJECT]" block'
+                }),
                 value: SensingSubject.SPRITE
             },
             {
-                name: 'stage',
+                name: formatMessage({
+                    id: 'videoSensing.stage',
+                    default: 'stage',
+                    description: 'Subject for the "video [ATTRIBUTE] on [SUBJECT]" block'
+                }),
                 value: SensingSubject.STAGE
             }
         ];
@@ -318,15 +335,28 @@ class Scratch3VideoSensingBlocks {
     get VIDEO_STATE_INFO () {
         return [
             {
-                name: 'off',
+                name: formatMessage({
+                    id: 'videoSensing.off',
+                    default: 'off',
+                    description: 'Option for the "turn video [STATE]" block'
+                }),
                 value: VideoState.OFF
             },
             {
-                name: 'on',
+                name: formatMessage({
+                    id: 'videoSensing.on',
+                    default: 'on',
+                    description: 'Option for the "turn video [STATE]" block'
+                }),
                 value: VideoState.ON
             },
             {
-                name: 'on flipped',
+                name: formatMessage({
+                    id: 'videoSensing.onFlipped',
+                    default: 'on flipped',
+                    description: 'Option for the "turn video [STATE]" block that causes the video to be flipped' +
+                        ' horizontally (reversed as in a mirror)'
+                }),
                 value: VideoState.ON_FLIPPED
             }
         ];
@@ -348,7 +378,11 @@ class Scratch3VideoSensingBlocks {
                     // @todo this hat needs to be set itself to restart existing
                     // threads like Scratch 2's behaviour.
                     opcode: 'whenMotionGreaterThan',
-                    text: 'when video motion > [REFERENCE]',
+                    text: formatMessage({
+                        id: 'videoSensing.whenMotionGreaterThan',
+                        default: 'when video motion > [REFERENCE]',
+                        description: 'Event that triggers when the amount of motion is greater than [REFERENCE]'
+                    }),
                     blockType: BlockType.HAT,
                     arguments: {
                         REFERENCE: {
@@ -360,7 +394,11 @@ class Scratch3VideoSensingBlocks {
                 {
                     opcode: 'videoOn',
                     blockType: BlockType.REPORTER,
-                    text: 'video [ATTRIBUTE] on [SUBJECT]',
+                    text: formatMessage({
+                        id: 'videoSensing.videoOn',
+                        default: 'video [ATTRIBUTE] on [SUBJECT]',
+                        description: 'Reporter that returns the amount of [ATTRIBUTE] for the selected [SUBJECT]'
+                    }),
                     arguments: {
                         ATTRIBUTE: {
                             type: ArgumentType.NUMBER,
@@ -376,7 +414,11 @@ class Scratch3VideoSensingBlocks {
                 },
                 {
                     opcode: 'videoToggle',
-                    text: 'turn video [VIDEO_STATE]',
+                    text: formatMessage({
+                        id: 'videoSensing.videoToggle',
+                        default: 'turn video [VIDEO_STATE]',
+                        description: 'Controls display of the video preview layer'
+                    }),
                     arguments: {
                         VIDEO_STATE: {
                             type: ArgumentType.NUMBER,
@@ -387,7 +429,11 @@ class Scratch3VideoSensingBlocks {
                 },
                 {
                     opcode: 'setVideoTransparency',
-                    text: 'set video transparency to [TRANSPARENCY]',
+                    text: formatMessage({
+                        id: 'videoSensing.setVideoTransparency',
+                        default: 'set video transparency to [TRANSPARENCY]',
+                        description: 'Controls transparency of the video preview layer'
+                    }),
                     arguments: {
                         TRANSPARENCY: {
                             type: ArgumentType.NUMBER,

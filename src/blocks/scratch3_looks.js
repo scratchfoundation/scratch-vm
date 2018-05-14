@@ -258,9 +258,17 @@ class Scratch3LooksBlocks {
 
     getMonitored () {
         return {
-            looks_size: {isSpriteSpecific: true},
-            looks_costumenumbername: {isSpriteSpecific: true},
-            looks_backdropnumbername: {}
+            looks_size: {
+                isSpriteSpecific: true,
+                getId: targetId => `${targetId}_size`
+            },
+            looks_costumenumbername: {
+                isSpriteSpecific: true,
+                getId: targetId => `${targetId}_costumenumbername`
+            },
+            looks_backdropnumbername: {
+                getId: () => 'backdropnumbername'
+            }
         };
     }
 
@@ -343,6 +351,13 @@ class Scratch3LooksBlocks {
             } else if (requestedCostume === 'next costume' ||
                        requestedCostume === 'next backdrop') {
                 target.setCostume(target.currentCostume + 1);
+            } else if (requestedCostume === 'random backdrop') {
+                const numCostumes = target.getCostumes().length;
+                if (numCostumes > 1) {
+                    let selectedIndex = Math.floor(Math.random() * (numCostumes - 1));
+                    if (selectedIndex === target.currentCostume) selectedIndex += 1;
+                    target.setCostume(selectedIndex);
+                }
             } else {
                 const forcedNumber = Number(requestedCostume);
                 if (!isNaN(forcedNumber)) {

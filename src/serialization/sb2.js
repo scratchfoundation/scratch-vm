@@ -14,6 +14,7 @@ const uid = require('../util/uid');
 const StringUtil = require('../util/string-util');
 const specMap = require('./sb2_specmap');
 const Variable = require('../engine/variable');
+const MonitorRecord = require('../engine/monitor-record');
 
 const {loadCostume} = require('../import/load-costume.js');
 const {loadSound} = require('../import/load-sound.js');
@@ -209,6 +210,98 @@ const globalBroadcastMsgStateGenerator = (function () {
 }());
 
 /**
+ * Parse a single monitor object and create all its in-memory VM objects.
+ * @param {!object} object - From-JSON "Monitor object"
+ * @param {!Runtime} runtime - (in/out) Runtime object to load monitor info into.
+ * @param {!Array.<Target>} targets - Targets have already been parsed.
+ * @param {ImportedExtensionsInfo} extensions - (in/out) parsed extension information will be stored here.
+ */
+const parseMonitorObject = (object, runtime, targets, extensions) => {
+    let target = null;
+    // List blocks don't come in with their target name set.
+    // Find the target by searching for a target with matching variable name/type.
+    if (!object.hasOwnProperty('target')) {
+        for (let i = 0; i < targets.length; i++) {
+            const currTarget = targets[i];
+            const listVariables = Object.keys(currTarget.variables).filter(key => {
+                const variable = currTarget.variables[key];
+                return variable.type === Variable.LIST_TYPE && variable.name === object.listName;
+            });
+            if (listVariables.length > 0) {
+                target = currTarget; // Keep this target for later use
+                object.target = currTarget.getName(); // Set target name to normalize with other monitors
+            }
+        }
+    }
+
+    // Get the target for this monitor, if not gotten above.
+    target = target || targets.filter(t => t.getName() === object.target)[0];
+    if (!target) throw new Error('Cannot create monitor for target that cannot be found by name');
+
+    // Create var id getter to make block naming/parsing easier, variables already created.
+    const getVariableId = generateVariableIdGetter(target.id, false);
+    // eslint-disable-next-line no-use-before-define
+    const block = parseBlock(
+        [object.cmd, object.param], // Scratch 2 monitor blocks only have one param.
+        null, // `addBroadcastMsg`, not needed for monitor blocks.
+        getVariableId,
+        extensions
+    );
+
+    // Monitor blocks have special IDs to match the toolbox obtained from the getId
+    // function in the runtime.monitorBlocksInfo. Variable monitors, however,
+    // get their IDs from the variable id they reference.
+    if (object.cmd === 'getVar:' || object.cmd === 'contentsOfList:') {
+        block.id = getVariableId(object.param);
+    } else if (runtime.monitorBlockInfo.hasOwnProperty(block.opcode)) {
+        block.id = runtime.monitorBlockInfo[block.opcode].getId(target.id, object.param);
+    }
+
+    // Block needs a targetId if it is targetting something other than the stage
+    block.targetId = target.isStage ? null : target.id;
+
+    // Property required for running monitored blocks.
+    block.isMonitored = object.visible;
+
+    // Blocks can be created with children, flatten and add to monitorBlocks.
+    const newBlocks = flatten([block]);
+    for (let i = 0; i < newBlocks.length; i++) {
+        runtime.monitorBlocks.createBlock(newBlocks[i]);
+    }
+
+    // Convert numbered mode into strings for better understandability.
+    switch (object.mode) {
+    case 1:
+        object.mode = 'default';
+        break;
+    case 2:
+        object.mode = 'large';
+        break;
+    case 3:
+        object.mode = 'slider';
+        break;
+    }
+
+    // Create a monitor record for the runtime's monitorState
+    runtime.requestAddMonitor(MonitorRecord({
+        id: block.id,
+        targetId: block.targetId,
+        spriteName: block.targetId ? object.target : null,
+        opcode: block.opcode,
+        params: runtime.monitorBlocks._getBlockParams(block),
+        value: '',
+        mode: object.mode,
+        sliderMin: object.sliderMin,
+        sliderMax: object.sliderMax,
+        x: object.x,
+        y: object.y,
+        width: object.width,
+        height: object.height,
+        visible: object.visible
+    }));
+};
+
+/**
  * Parse a single "Scratch object" and create all its in-memory VM objects.
  * TODO: parse the "info" section, especially "savedExtensions"
  * @param {!object} object - From-JSON "Scratch object:" sprite, stage, watcher.
@@ -220,10 +313,17 @@ const globalBroadcastMsgStateGenerator = (function () {
  */
 const parseScratchObject = function (object, runtime, extensions, topLevel, zip) {
     if (!object.hasOwnProperty('objName')) {
-        // Watcher/monitor - skip this object until those are implemented in VM.
-        // @todo
-        return Promise.resolve(null);
+        if (object.hasOwnProperty('listName')) {
+            // Shim these objects so they can be processed as monitors
+            object.cmd = 'contentsOfList:';
+            object.param = object.listName;
+            object.mode = 'list';
+        }
+        // Defer parsing monitors until targets are all parsed
+        object.deferredMonitor = true;
+        return Promise.resolve(object);
     }
+
     // Blocks container for this object.
     const blocks = new Blocks();
     // @todo: For now, load all Scratch objects (stage/sprites) as a Sprite.
@@ -260,7 +360,7 @@ const parseScratchObject = function (object, runtime, extensions, topLevel, zip)
             // the file name of the costume should be the baseLayerID followed by the file ext
             const assetFileName = `${costumeSource.baseLayerID}.${ext}`;
             costumePromises.push(deserializeCostume(costume, runtime, zip, assetFileName)
-                .then(() => loadCostume(costume.md5, costume, runtime)));
+                .then(() => loadCostume(costume.md5, costume, runtime, 2 /* optVersion */)));
         }
     }
     // Sounds from JSON
@@ -332,7 +432,6 @@ const parseScratchObject = function (object, runtime, extensions, topLevel, zip)
     if (object.hasOwnProperty('lists')) {
         for (let k = 0; k < object.lists.length; k++) {
             const list = object.lists[k];
-            // @todo: monitor properties.
             const newVariable = new Variable(
                 getVariableId(list.listName),
                 list.listName,
@@ -455,8 +554,18 @@ const parseScratchObject = function (object, runtime, extensions, topLevel, zip)
                 }
             }
             let targets = [target];
+            const deferredMonitors = [];
             for (let n = 0; n < children.length; n++) {
-                targets = targets.concat(children[n]);
+                if (children[n]) {
+                    if (children[n].deferredMonitor) {
+                        deferredMonitors.push(children[n]);
+                    } else {
+                        targets = targets.concat(children[n]);
+                    }
+                }
+            }
+            for (let n = 0; n < deferredMonitors.length; n++) {
+                parseMonitorObject(deferredMonitors[n], runtime, targets, extensions);
             }
             return targets;
         })
