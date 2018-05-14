@@ -669,6 +669,7 @@ class Scratch3MicroBitBlocks {
     whenPinConnected (args) {
         const pin = parseInt(args.PIN, 10);
         if (isNaN(pin)) return;
+        if (pin < 0 || pin > 2) return false;
         return this._device._checkPinState(pin);
     }
 }
