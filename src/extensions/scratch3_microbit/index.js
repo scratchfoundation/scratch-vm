@@ -387,7 +387,7 @@ class Scratch3MicroBitBlocks {
                 },
                 {
                     opcode: 'whenTilted',
-                    text: 'when tilted [DIRECTION]?',
+                    text: 'when tilted [DIRECTION]',
                     blockType: BlockType.HAT,
                     arguments: {
                         DIRECTION: {
