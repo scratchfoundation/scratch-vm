@@ -202,22 +202,6 @@ class MicroBit {
     _send (message, details) {
         this._socket.emit(message, details);
     }
-
-    /**
-     * Map integer values between two ranges
-     * @param {number} val - the value to map.
-     * @param {number} iMin - the minimum value for the input range.
-     * @param {number} iMax - the maximum value for the input range.
-     * @param {number} oMin - the minimum value for the output range.
-     * @param {number} oMax - the maximum value for the ouput range.
-     * @return {number} - the scaled value
-     * @private
-     */
-    _mapSensorVal (val, iMin, iMax, oMin, oMax) {
-        if (val > iMax) val = iMax;
-        else if (val < iMin) val = iMin;
-        return (((oMax - oMin) * (val - iMin)) / (iMax - iMin)) + oMin;
-    }
 }
 
 /*
