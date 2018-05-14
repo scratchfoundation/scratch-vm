@@ -533,7 +533,8 @@ class Scratch3MicroBitBlocks {
      * Note the limit is 20 characters
      */
     displayText (args) {
-        window.postMessage({type: 'command', uuid: 'text', buffer: String(args.TEXT)}, '*');
+        const text = String(args.TEXT).substring(0, 20);
+        window.postMessage({type: 'command', uuid: 'text', buffer: text}, '*');
         return;
     }
 
