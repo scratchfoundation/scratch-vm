@@ -291,7 +291,7 @@ class Scratch3LooksBlocks {
                 this._bubbleTimeout = null;
                 // Clear say bubble if it hasn't been changed and proceed.
                 if (this._getBubbleState(target).usageId === usageId) {
-                    this._onTargetWillExit(target);
+                    this._updateBubble(target, 'say', '');
                 }
                 resolve();
             }, 1000 * args.SECS);
@@ -311,7 +311,7 @@ class Scratch3LooksBlocks {
                 this._bubbleTimeout = null;
                 // Clear think bubble if it hasn't been changed and proceed.
                 if (this._getBubbleState(target).usageId === usageId) {
-                    this._onTargetWillExit(target);
+                    this._updateBubble(target, 'think', '');
                 }
                 resolve();
             }, 1000 * args.SECS);
