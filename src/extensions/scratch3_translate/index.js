@@ -2,6 +2,7 @@ const ArgumentType = require('../../extension-support/argument-type');
 const BlockType = require('../../extension-support/block-type');
 const log = require('../../util/log');
 const nets = require('nets');
+const languageNames = require('scratch-translate-extension-languages');
 
 // TODO: Change these to the correct icons.
 const blockIconURI = 'https://www.gstatic.com/images/icons/material/system/1x/translate_white_24dp.png';
@@ -25,6 +26,8 @@ const serverTimeoutMs = 10000; // 10 seconds (chosen arbitrarily).
  */
 class Scratch3TranslateBlocks {
     constructor () {
+
+        console.log(languageNames);
         /**
          * List of supported language name and language code pairs.
          * @type {Array.<object.<string, string>>}
@@ -153,7 +156,7 @@ class Scratch3TranslateBlocks {
             }
         };
     }
-     
+
     /**
      * Translates the text in the translate block to the language specified in the menu.
      * @param {object} args - the block arguments.
