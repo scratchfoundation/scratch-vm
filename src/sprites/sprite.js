@@ -10,9 +10,10 @@ class Sprite {
      * All clones of a sprite have shared blocks, shared costumes, shared variables.
      * @param {?Blocks} blocks Shared blocks object for all clones of sprite.
      * @param {Runtime} runtime Reference to the runtime.
+     * @param {boolean=} isStage Whether or not this sprite is a stage
      * @constructor
      */
-    constructor (blocks, runtime) {
+    constructor (blocks, runtime, isStage) {
         this.runtime = runtime;
         if (!blocks) {
             // Shared set of blocks for all clones.
@@ -46,8 +47,12 @@ class Sprite {
          * @type {Array.<!RenderedTarget>}
          */
         this.clones = [];
+
+        // Needed for figuring out whether the associated drawable should
+        // go in the background layer or sprite layer
+        this.isStage = isStage || false;
     }
-    
+
     /**
      * Add an array of costumes, taking care to avoid duplicate names.
      * @param {!Array<object>} costumes Array of objects representing costumes.
@@ -103,7 +108,7 @@ class Sprite {
         this.clones.push(newClone);
         newClone.initAudio();
         if (newClone.isOriginal) {
-            newClone.initDrawable();
+            newClone.initDrawable(this.isStage);
             this.runtime.fireTargetWasCreated(newClone);
         } else {
             this.runtime.fireTargetWasCreated(newClone, this.clones[0]);

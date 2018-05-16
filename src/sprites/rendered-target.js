@@ -2,6 +2,7 @@ const log = require('../util/log');
 const MathUtil = require('../util/math-util');
 const StringUtil = require('../util/string-util');
 const Target = require('../engine/target');
+const StageLayering = require('../engine/stage-layering');
 
 /**
  * Rendered target: instance of a sprite (clone), or the stage.
@@ -156,9 +157,10 @@ class RenderedTarget extends Target {
     /**
      * Create a drawable with the this.renderer.
      */
-    initDrawable () {
+    initDrawable (isStage) {
         if (this.renderer) {
-            this.drawableID = this.renderer.createDrawable();
+            this.drawableID = this.renderer.createDrawable(isStage ?
+                StageLayering.BACKGROUND_LAYER : StageLayering.SPRITE_LAYER);
         }
         // If we're a clone, start the hats.
         if (!this.isOriginal) {
@@ -800,18 +802,22 @@ class RenderedTarget extends Target {
     /**
      * Move to the front layer.
      */
-    goToFront () {
+    goToFront () { // This should only ever be used for sprites
         if (this.renderer) {
-            this.renderer.setDrawableOrder(this.drawableID, Infinity);
+            // Let the renderer re-order the sprite based on its knowledge
+            // of what layers are present
+            this.renderer.setDrawableOrder(this.drawableID, Infinity, StageLayering.SPRITE_LAYER);
         }
     }
 
     /**
      * Move to the back layer.
      */
-    goToBack () {
+    goToBack () { // This should only ever be used for sprites
         if (this.renderer) {
-            this.renderer.setDrawableOrder(this.drawableID, -Infinity, false, 1);
+            // Let the renderer re-order the sprite based on its knowledge
+            // of what layers are present
+            this.renderer.setDrawableOrder(this.drawableID, -Infinity, StageLayering.SPRITE_LAYER, false);
         }
     }
 
@@ -821,7 +827,7 @@ class RenderedTarget extends Target {
      */
     goForwardLayers (nLayers) {
         if (this.renderer) {
-            this.renderer.setDrawableOrder(this.drawableID, nLayers, true, 1);
+            this.renderer.setDrawableOrder(this.drawableID, nLayers, StageLayering.SPRITE_LAYER, true);
         }
     }
 
@@ -831,7 +837,7 @@ class RenderedTarget extends Target {
      */
     goBackwardLayers (nLayers) {
         if (this.renderer) {
-            this.renderer.setDrawableOrder(this.drawableID, -nLayers, true, 1);
+            this.renderer.setDrawableOrder(this.drawableID, -nLayers, StageLayering.SPRITE_LAYER, true);
         }
     }
 
@@ -842,8 +848,8 @@ class RenderedTarget extends Target {
     goBehindOther (other) {
         if (this.renderer) {
             const otherLayer = this.renderer.setDrawableOrder(
-                other.drawableID, 0, true);
-            this.renderer.setDrawableOrder(this.drawableID, otherLayer);
+                other.drawableID, 0, StageLayering.SPRITE_LAYER, true);
+            this.renderer.setDrawableOrder(this.drawableID, otherLayer, StageLayering.SPRITE_LAYER);
         }
     }
 
@@ -912,7 +918,7 @@ class RenderedTarget extends Target {
         newClone.effects = JSON.parse(JSON.stringify(this.effects));
         newClone.variables = JSON.parse(JSON.stringify(this.variables));
         newClone.lists = JSON.parse(JSON.stringify(this.lists));
-        newClone.initDrawable();
+        newClone.initDrawable(false); // this,sprite is not a stage if we're calling makeClone on it
         newClone.updateAllDrawableProperties();
         // Place behind the current target.
         newClone.goBehindOther(this);
@@ -1049,7 +1055,7 @@ class RenderedTarget extends Target {
         this.runtime.stopForTarget(this);
         this.sprite.removeClone(this);
         if (this.renderer && this.drawableID !== null) {
-            this.renderer.destroyDrawable(this.drawableID);
+            this.renderer.destroyDrawable(this.drawableID, StageLayering.SPRITE_LAYER);
             if (this.visible) {
                 this.emit(RenderedTarget.EVENT_TARGET_VISUAL_CHANGE, this);
                 this.runtime.requestRedraw();

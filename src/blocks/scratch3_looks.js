@@ -2,6 +2,7 @@ const Cast = require('../util/cast');
 const Clone = require('../util/clone');
 const RenderedTarget = require('../sprites/rendered-target');
 const uid = require('../util/uid');
+const StageLayering = require('../engine/stage-layering');
 
 /**
  * @typedef {object} BubbleState - the bubble state associated with a particular target.
@@ -91,7 +92,7 @@ class Scratch3LooksBlocks {
     _onTargetWillExit (target) {
         const bubbleState = this._getBubbleState(target);
         if (bubbleState.drawableId && bubbleState.skinId) {
-            this.runtime.renderer.destroyDrawable(bubbleState.drawableId);
+            this.runtime.renderer.destroyDrawable(bubbleState.drawableId, StageLayering.BUBBLE_LAYER);
             this.runtime.renderer.destroySkin(bubbleState.skinId);
             bubbleState.drawableId = null;
             bubbleState.skinId = null;
@@ -195,10 +196,9 @@ class Scratch3LooksBlocks {
                 bubbleState.onSpriteRight = false;
             }
 
-            bubbleState.drawableId = this.runtime.renderer.createDrawable();
+            bubbleState.drawableId = this.runtime.renderer.createDrawable(StageLayering.BUBBLE_LAYER);
             bubbleState.skinId = this.runtime.renderer.createTextSkin(type, text, bubbleState.onSpriteRight, [0, 0]);
 
-            this.runtime.renderer.setDrawableOrder(bubbleState.drawableId, Infinity);
             this.runtime.renderer.updateDrawableProperties(bubbleState.drawableId, {
                 skinId: bubbleState.skinId
             });

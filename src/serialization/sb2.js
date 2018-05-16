@@ -327,7 +327,7 @@ const parseScratchObject = function (object, runtime, extensions, topLevel, zip)
     // Blocks container for this object.
     const blocks = new Blocks();
     // @todo: For now, load all Scratch objects (stage/sprites) as a Sprite.
-    const sprite = new Sprite(blocks, runtime);
+    const sprite = new Sprite(blocks, runtime, topLevel /* whether this sprite is a stge or not */);
     // Sprite/stage name from JSON.
     if (object.hasOwnProperty('objName')) {
         sprite.name = topLevel ? 'Stage' : object.objName;

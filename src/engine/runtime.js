@@ -12,6 +12,7 @@ const TargetType = require('../extension-support/target-type');
 const Thread = require('./thread');
 const log = require('../util/log');
 const maybeFormatMessage = require('../util/maybe-format-message');
+const StageLayering = require('./stage-layering');
 
 // Virtual I/O devices.
 const Clock = require('../io/clock');
@@ -915,6 +916,7 @@ class Runtime extends EventEmitter {
      */
     attachRenderer (renderer) {
         this.renderer = renderer;
+        this.renderer.setLayerGroupOrdering(StageLayering.LAYER_GROUPS);
     }
 
     /**
