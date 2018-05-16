@@ -302,7 +302,7 @@ test('colorIsTouchingColor', t => {
     t.end();
 });
 
-test('layers', t => {
+test('layers', t => { // TODO this tests fake functionality. Move layering tests into Render.
     const s = new Sprite();
     const r = new Runtime();
     const renderer = new FakeRenderer();
@@ -315,9 +315,11 @@ test('layers', t => {
     a.goBackwardLayers(2);
     t.equals(a.renderer.order, 3);
     a.goToBack();
-    t.equals(a.renderer.order, 1);
+    // Note, there are only sprites in this test, no stage, and the addition
+    // of layer groups, goToBack no longer specifies a minimum order number
+    t.equals(a.renderer.order, 0);
     a.goForwardLayers(1);
-    t.equals(a.renderer.order, 2);
+    t.equals(a.renderer.order, 1);
     o.drawableID = 999;
     a.goBehindOther(o);
     t.equals(a.renderer.order, 1);

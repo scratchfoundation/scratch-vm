@@ -156,6 +156,8 @@ class RenderedTarget extends Target {
 
     /**
      * Create a drawable with the this.renderer.
+     * @param {boolean} isStage Whether the drawable should be initialized as
+     * the stage or a sprite
      */
     initDrawable (isStage) {
         if (this.renderer) {

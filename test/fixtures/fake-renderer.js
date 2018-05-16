@@ -42,7 +42,7 @@ FakeRenderer.prototype.getBounds = function (d) { // eslint-disable-line no-unus
     return {left: this.x, right: this.x, top: this.y, bottom: this.y};
 };
 
-FakeRenderer.prototype.setDrawableOrder = function (d, a, optA, optB) { // eslint-disable-line no-unused-vars
+FakeRenderer.prototype.setDrawableOrder = function (d, a, optG, optA, optB) { // eslint-disable-line no-unused-vars
     if (d === 999) return 1; // fake for test case
     if (optA) {
         a += this.order;
@@ -62,5 +62,7 @@ FakeRenderer.prototype.pick = function (x, y, a, b, c) { // eslint-disable-line 
 FakeRenderer.prototype.isTouchingColor = function (a, b) { // eslint-disable-line no-unused-vars
     return false;
 };
+
+FakeRenderer.prototype.setLayerGroupOrdering = function (a) {}; // eslint-disable-line no-unused-vars
 
 module.exports = FakeRenderer;
