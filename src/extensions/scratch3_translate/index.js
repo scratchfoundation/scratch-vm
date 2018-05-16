@@ -1,5 +1,6 @@
 const ArgumentType = require('../../extension-support/argument-type');
 const BlockType = require('../../extension-support/block-type');
+const Cast = require('../../util/cast');
 const log = require('../../util/log');
 const nets = require('nets');
 const languageNames = require('scratch-translate-extension-languages');
@@ -26,14 +27,15 @@ const serverTimeoutMs = 10000; // 10 seconds (chosen arbitrarily).
  */
 class Scratch3TranslateBlocks {
     constructor () {
-
-        console.log(languageNames);
         /**
          * List of supported language name and language code pairs.
          * @type {Array.<object.<string, string>>}
          * @private
          */
-        this._supportedLanguages = null;
+        this._supportedLanguages = languageNames.menuMap.en.map(entry => {
+            const obj = {text: entry.name, value: entry.code};
+            return obj;
+        });
 
         /**
          * The result from the most recent translation.
@@ -55,10 +57,6 @@ class Scratch3TranslateBlocks {
          * @private
          */
         this._lastTextTranslated = '';
-
-
-        // Kick off the request to get supported languages from the server.
-        this._getSupportedLanguagesFromServer();
     }
 
     /**
@@ -67,61 +65,6 @@ class Scratch3TranslateBlocks {
      */
     static get STATE_KEY () {
         return 'Scratch.translate';
-    }
-
-    /**
-     * Makes a request to the translate server to fetch a list of langauges
-     * to fill in the block's language menu.
-     * @private
-     */
-    _getSupportedLanguagesFromServer () {
-        // TODO: Pass through project language instead of English.
-        const url = `${serverURL}supported?language=en`;
-        const langPromise = new Promise(resolve => {
-            nets({
-                method: 'GET',
-                url: url,
-                timeout: serverTimeoutMs,
-                json: {}
-            }, (err, res, body) => {
-                // If we fail to fetch languages, just return an empty list.
-                // TODO: Figure out a reasonable time to retry. Otherwise,
-                // the list stays empty until the extension is reloaded.
-                if (err) {
-                    log.warn(`error fetching language list: ${err}`);
-                    resolve(null);
-                    return;
-                }
-                const langs = body.result;
-                if (!langs) {
-                    log.warn('No result in langauge response.');
-                    resolve(null);
-                    return;
-                }
-                resolve(langs);
-            });
-        });
-        langPromise.then(langs => {
-            if (langs) {
-                this._supportedLanguages =
-                      langs.map(entry => {
-                          const obj = {text: entry.name, value: entry.code};
-                          return obj;
-                      });
-            }
-        });
-    }
-
-    /**
-     * List of supported language name and language code pairs.
-     * @return {Array.<object.<string, string>>} The list of language name/code pairs.
-     * @private
-     */
-    _buildLanguageMenu () {
-        if (!this._supportedLanguages) {
-            return [{}];
-        }
-        return this._supportedLanguages;
     }
 
     /**
@@ -145,16 +88,29 @@ class Scratch3TranslateBlocks {
                         },
                         LANGUAGE: {
                             type: ArgumentType.STRING,
-                            menu: 'languages'
-
+                            menu: 'languages',
+                            defaultValue: this._supportedLanguages[0].value
                         }
                     }
                 }
             ],
             menus: {
-                languages: '_buildLanguageMenu'
+                languages: this._supportedLanguages
             }
         };
+    }
+
+    getLanguageFromArg (arg) {
+        const languageArg = Cast.toString(arg).toLowerCase();
+        if (languageNames.menuMap.hasOwnProperty(languageArg)) {
+            return languageArg;
+        }
+        // Check for a dropped-in language name, and convert to a language code.
+        if (languageNames.nameMap.hasOwnProperty(languageArg)) {
+            return languageNames.nameMap[languageArg];
+        }
+        // Default to english
+        return 'en';
     }
 
     /**
@@ -169,13 +125,9 @@ class Scratch3TranslateBlocks {
             return this._translateResult;
         }
 
-        // TODO: Set default to project language instead of english?
-        let urlBase = `${serverURL}translate?language=`;
-        let lang = 'en';
-        if (args.LANGUAGE) {
-            lang = args.LANGUAGE;
-        }
+        const lang = this.getLanguageFromArg(args.LANGUAGE);
 
+        let urlBase = `${serverURL}translate?language=`;
         urlBase += lang;
         urlBase += '&text=';
         urlBase += encodeURIComponent(args.WORDS);
