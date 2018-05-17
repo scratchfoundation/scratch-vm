@@ -649,11 +649,15 @@ class Runtime extends EventEmitter {
         };
 
         // If an icon for the extension exists, prepend it to each block, with a vertical separator.
-        if (categoryInfo.blockIconURI) {
+        // We can overspecify an icon for each block, but if no icon exists on a block, fall back to
+        // the category block icon.
+        const iconURI = blockInfo.blockIconURI || categoryInfo.blockIconURI;
+
+        if (iconURI) {
             blockJSON.message0 = '%1 %2';
             const iconJSON = {
                 type: 'field_image',
-                src: categoryInfo.blockIconURI,
+                src: iconURI,
                 width: 40,
                 height: 40
             };
