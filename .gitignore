@@ -10,8 +10,9 @@ npm-*
 /.nyc_output
 /coverage
 
-# IDEA
+# Editor
 /.idea
+/.vscode
 
 # Build
 /dist
