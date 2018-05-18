@@ -15,6 +15,7 @@ const StringUtil = require('../util/string-util');
 const specMap = require('./sb2_specmap');
 const Variable = require('../engine/variable');
 const MonitorRecord = require('../engine/monitor-record');
+const StageLayering = require('../engine/stage-layering');
 
 const {loadCostume} = require('../import/load-costume.js');
 const {loadSound} = require('../import/load-sound.js');
@@ -327,7 +328,7 @@ const parseScratchObject = function (object, runtime, extensions, topLevel, zip)
     // Blocks container for this object.
     const blocks = new Blocks();
     // @todo: For now, load all Scratch objects (stage/sprites) as a Sprite.
-    const sprite = new Sprite(blocks, runtime, topLevel /* whether this sprite is a stge or not */);
+    const sprite = new Sprite(blocks, runtime);
     // Sprite/stage name from JSON.
     if (object.hasOwnProperty('objName')) {
         sprite.name = topLevel ? 'Stage' : object.objName;
@@ -399,7 +400,7 @@ const parseScratchObject = function (object, runtime, extensions, topLevel, zip)
     }
 
     // Create the first clone, and load its run-state from JSON.
-    const target = sprite.createClone();
+    const target = sprite.createClone(topLevel ? StageLayering.BACKGROUND_LAYER : StageLayering.SPRITE_LAYER);
 
     const getVariableId = generateVariableIdGetter(target.id, topLevel);
 

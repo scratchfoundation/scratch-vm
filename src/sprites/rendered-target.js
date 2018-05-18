@@ -156,13 +156,11 @@ class RenderedTarget extends Target {
 
     /**
      * Create a drawable with the this.renderer.
-     * @param {boolean} isStage Whether the drawable should be initialized as
-     * the stage or a sprite
+     * @param {boolean} layerGroup The layer group this drawable should be added to
      */
-    initDrawable (isStage) {
+    initDrawable (layerGroup) {
         if (this.renderer) {
-            this.drawableID = this.renderer.createDrawable(isStage ?
-                StageLayering.BACKGROUND_LAYER : StageLayering.SPRITE_LAYER);
+            this.drawableID = this.renderer.createDrawable(layerGroup);
         }
         // If we're a clone, start the hats.
         if (!this.isOriginal) {
@@ -920,7 +918,7 @@ class RenderedTarget extends Target {
         newClone.effects = JSON.parse(JSON.stringify(this.effects));
         newClone.variables = JSON.parse(JSON.stringify(this.variables));
         newClone.lists = JSON.parse(JSON.stringify(this.lists));
-        newClone.initDrawable(false); // this,sprite is not a stage if we're calling makeClone on it
+        newClone.initDrawable(StageLayering.SPRITE_LAYER); // TODO should sprite clones be in their own layer group?
         newClone.updateAllDrawableProperties();
         // Place behind the current target.
         newClone.goBehindOther(this);

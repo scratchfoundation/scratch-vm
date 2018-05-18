@@ -8,6 +8,7 @@ const vmPackage = require('../../package.json');
 const Blocks = require('../engine/blocks');
 const Sprite = require('../sprites/sprite');
 const Variable = require('../engine/variable');
+const StageLayering = require('../engine/stage-layering');
 const log = require('../util/log');
 const uid = require('../util/uid');
 
@@ -684,7 +685,7 @@ const parseScratchObject = function (object, runtime, extensions, zip) {
     const blocks = new Blocks();
 
     // @todo: For now, load all Scratch objects (stage/sprites) as a Sprite.
-    const sprite = new Sprite(blocks, runtime, object.isStage);
+    const sprite = new Sprite(blocks, runtime);
 
     // Sprite/stage name from JSON.
     if (object.hasOwnProperty('name')) {
@@ -779,7 +780,7 @@ const parseScratchObject = function (object, runtime, extensions, zip) {
         // process has been completed.
     });
     // Create the first clone, and load its run-state from JSON.
-    const target = sprite.createClone();
+    const target = sprite.createClone(object.isStage ? StageLayering.BACKGROUND_LAYER : StageLayering.SPRITE_LAYER);
     // Load target properties from JSON.
     if (object.hasOwnProperty('tempo')) {
         target.tempo = object.tempo;

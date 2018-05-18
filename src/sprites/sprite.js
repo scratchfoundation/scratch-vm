@@ -3,6 +3,7 @@ const Blocks = require('../engine/blocks');
 const {loadSoundFromAsset} = require('../import/load-sound');
 const {loadCostumeFromAsset} = require('../import/load-costume');
 const StringUtil = require('../util/string-util');
+const StageLayering = require('../engine/stage-layering');
 
 class Sprite {
     /**
@@ -10,10 +11,9 @@ class Sprite {
      * All clones of a sprite have shared blocks, shared costumes, shared variables.
      * @param {?Blocks} blocks Shared blocks object for all clones of sprite.
      * @param {Runtime} runtime Reference to the runtime.
-     * @param {boolean=} isStage Whether or not this sprite is a stage
      * @constructor
      */
-    constructor (blocks, runtime, isStage) {
+    constructor (blocks, runtime) {
         this.runtime = runtime;
         if (!blocks) {
             // Shared set of blocks for all clones.
@@ -47,10 +47,6 @@ class Sprite {
          * @type {Array.<!RenderedTarget>}
          */
         this.clones = [];
-
-        // Needed for figuring out whether the associated drawable should
-        // go in the background layer or sprite layer
-        this.isStage = isStage || false;
     }
 
     /**
@@ -100,15 +96,19 @@ class Sprite {
 
     /**
      * Create a clone of this sprite.
+     * @param {string=} optLayerGroup Optional layer group the clone's drawable should be added to
+     * Defaults to the sprite layer group
      * @returns {!RenderedTarget} Newly created clone.
      */
-    createClone () {
+    createClone (optLayerGroup) {
         const newClone = new RenderedTarget(this, this.runtime);
         newClone.isOriginal = this.clones.length === 0;
         this.clones.push(newClone);
         newClone.initAudio();
         if (newClone.isOriginal) {
-            newClone.initDrawable(this.isStage);
+            // Default to the sprite layer group if optLayerGroup is not provided
+            const layerGroup = typeof optLayerGroup === 'string' ? optLayerGroup : StageLayering.SPRITE_LAYER;
+            newClone.initDrawable(layerGroup);
             this.runtime.fireTargetWasCreated(newClone);
         } else {
             this.runtime.fireTargetWasCreated(newClone, this.clones[0]);
