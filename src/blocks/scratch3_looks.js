@@ -92,7 +92,7 @@ class Scratch3LooksBlocks {
     _onTargetWillExit (target) {
         const bubbleState = this._getBubbleState(target);
         if (bubbleState.drawableId && bubbleState.skinId) {
-            this.runtime.renderer.destroyDrawable(bubbleState.drawableId, StageLayering.BUBBLE_LAYER);
+            this.runtime.renderer.destroyDrawable(bubbleState.drawableId, StageLayering.SPRITE_LAYER);
             this.runtime.renderer.destroySkin(bubbleState.skinId);
             bubbleState.drawableId = null;
             bubbleState.skinId = null;
@@ -196,7 +196,7 @@ class Scratch3LooksBlocks {
                 bubbleState.onSpriteRight = false;
             }
 
-            bubbleState.drawableId = this.runtime.renderer.createDrawable(StageLayering.BUBBLE_LAYER);
+            bubbleState.drawableId = this.runtime.renderer.createDrawable(StageLayering.SPRITE_LAYER);
             bubbleState.skinId = this.runtime.renderer.createTextSkin(type, text, bubbleState.onSpriteRight, [0, 0]);
 
             this.runtime.renderer.updateDrawableProperties(bubbleState.drawableId, {

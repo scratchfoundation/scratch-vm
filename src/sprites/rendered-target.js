@@ -847,9 +847,11 @@ class RenderedTarget extends Target {
      */
     goBehindOther (other) {
         if (this.renderer) {
-            const otherLayer = this.renderer.setDrawableOrder(
-                other.drawableID, 0, StageLayering.SPRITE_LAYER, true);
-            this.renderer.setDrawableOrder(this.drawableID, otherLayer, StageLayering.SPRITE_LAYER);
+            this.renderer.positionDrawableRelativeToOther(
+                this.drawableID, other.drawableID, -1, StageLayering.SPRITE_LAYER);
+            // const otherLayer = this.renderer.setDrawableOrder(
+            //     other.drawableID, 0, StageLayering.SPRITE_LAYER, true);
+            // this.renderer.setDrawableOrder(this.drawableID, otherLayer, StageLayering.SPRITE_LAYER);
         }
     }
 
@@ -918,7 +920,7 @@ class RenderedTarget extends Target {
         newClone.effects = JSON.parse(JSON.stringify(this.effects));
         newClone.variables = JSON.parse(JSON.stringify(this.variables));
         newClone.lists = JSON.parse(JSON.stringify(this.lists));
-        newClone.initDrawable(StageLayering.SPRITE_LAYER); // TODO should sprite clones be in their own layer group?
+        newClone.initDrawable(StageLayering.SPRITE_LAYER);
         newClone.updateAllDrawableProperties();
         // Place behind the current target.
         newClone.goBehindOther(this);
@@ -1055,7 +1057,9 @@ class RenderedTarget extends Target {
         this.runtime.stopForTarget(this);
         this.sprite.removeClone(this);
         if (this.renderer && this.drawableID !== null) {
-            this.renderer.destroyDrawable(this.drawableID, StageLayering.SPRITE_LAYER);
+            this.renderer.destroyDrawable(this.drawableID, this.isStage ?
+                StageLayering.BACKGROUND_LAYER :
+                StageLayering.SPRITE_LAYER);
             if (this.visible) {
                 this.emit(RenderedTarget.EVENT_TARGET_VISUAL_CHANGE, this);
                 this.runtime.requestRedraw();

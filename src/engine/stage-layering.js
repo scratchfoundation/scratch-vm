@@ -50,12 +50,7 @@ class StageLayering {
             {
                 group: StageLayering.SPRITE_LAYER,
                 explicitOrdering: false
-            },
-            {
-                group: StageLayering.BUBBLE_LAYER,
-                explicitOrdering: false
             }
-
         ];
     }
 }
