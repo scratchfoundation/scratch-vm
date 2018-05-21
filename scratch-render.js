@@ -14766,6 +14766,8 @@ module.exports = TextWrapper;
 "use strict";
 
 
+var _get = function get(object, property, receiver) { if (object === null) object = Function.prototype; var desc = Object.getOwnPropertyDescriptor(object, property); if (desc === undefined) { var parent = Object.getPrototypeOf(object); if (parent === null) { return undefined; } else { return get(parent, property, receiver); } } else if ("value" in desc) { return desc.value; } else { var getter = desc.get; if (getter === undefined) { return undefined; } return getter.call(receiver); } };
+
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
 function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
@@ -14775,6 +14777,7 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
 var TextWrapper = __webpack_require__(22);
+var xmlescape = __webpack_require__(9);
 
 /**
  * Measure text by using a hidden SVG attached to the DOM.
@@ -14782,11 +14785,16 @@ var TextWrapper = __webpack_require__(22);
  */
 
 var SVGMeasurementProvider = function () {
-    function SVGMeasurementProvider() {
+    /**
+     * @param {function} makeTextElement - provides a text node of an SVGElement
+     *     with the style of the text to be wrapped.
+     */
+    function SVGMeasurementProvider(makeTextElement) {
         _classCallCheck(this, SVGMeasurementProvider);
 
         this._svgRoot = null;
         this._cache = {};
+        this.makeTextElement = makeTextElement;
     }
 
     /**
@@ -14856,16 +14864,7 @@ var SVGMeasurementProvider = function () {
 
             var svgRoot = document.createElementNS(svgNamespace, 'svg');
             var svgGroup = document.createElementNS(svgNamespace, 'g');
-            var svgText = document.createElementNS(svgNamespace, 'text');
-
-            // Normalize text attributes to match what the svg-renderer does.
-            // @TODO This code should be shared with the svg-renderer.
-            svgText.setAttribute('alignment-baseline', 'text-before-edge');
-            svgText.setAttribute('font-size', '14');
-
-            // TODO Do we want to use the new default sans font instead of Helvetica?
-            // This change intentionally subverts the svg-renderer auto font conversion.
-            svgText.setAttribute('font-family', 'Helvetica, Arial, sans-serif');
+            var svgText = this.makeTextElement();
 
             // hide from the user, including screen readers
             svgRoot.setAttribute('style', 'position:absolute;visibility:hidden');
@@ -14901,11 +14900,64 @@ var SVGMeasurementProvider = function () {
 var SVGTextWrapper = function (_TextWrapper) {
     _inherits(SVGTextWrapper, _TextWrapper);
 
-    function SVGTextWrapper() {
+    /**
+     * @param {function} makeTextElement - provides a text node of an SVGElement
+     *     with the style of the text to be wrapped.
+     */
+    function SVGTextWrapper(makeTextElement) {
         _classCallCheck(this, SVGTextWrapper);
 
-        return _possibleConstructorReturn(this, (SVGTextWrapper.__proto__ || Object.getPrototypeOf(SVGTextWrapper)).call(this, new SVGMeasurementProvider()));
+        var _this = _possibleConstructorReturn(this, (SVGTextWrapper.__proto__ || Object.getPrototypeOf(SVGTextWrapper)).call(this, new SVGMeasurementProvider(makeTextElement)));
+
+        _this.makeTextElement = makeTextElement;
+        return _this;
     }
+
+    /**
+     * Wrap the provided text into lines restricted to a maximum width. See Unicode Standard Annex (UAX) #14.
+     * @param {number} maxWidth - the maximum allowed width of a line.
+     * @param {string} text - the text to be wrapped. Will be split on whitespace.
+     * @returns {SVGElement} wrapped text node
+     */
+
+
+    _createClass(SVGTextWrapper, [{
+        key: 'wrapText',
+        value: function wrapText(maxWidth, text) {
+            var lines = _get(SVGTextWrapper.prototype.__proto__ || Object.getPrototypeOf(SVGTextWrapper.prototype), 'wrapText', this).call(this, maxWidth, text);
+            var textElement = this.makeTextElement();
+            var _iteratorNormalCompletion = true;
+            var _didIteratorError = false;
+            var _iteratorError = undefined;
+
+            try {
+                for (var _iterator = lines[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
+                    var line = _step.value;
+
+                    var tspanNode = document.createElementNS('http://www.w3.org/2000/svg', 'tspan');
+                    tspanNode.setAttribute('x', '0');
+                    tspanNode.setAttribute('dy', '1.2em');
+                    tspanNode.textContent = xmlescape(line);
+                    textElement.appendChild(tspanNode);
+                }
+            } catch (err) {
+                _didIteratorError = true;
+                _iteratorError = err;
+            } finally {
+                try {
+                    if (!_iteratorNormalCompletion && _iterator.return) {
+                        _iterator.return();
+                    }
+                } finally {
+                    if (_didIteratorError) {
+                        throw _iteratorError;
+                    }
+                }
+            }
+
+            return textElement;
+        }
+    }]);
 
     return SVGTextWrapper;
 }(TextWrapper);
@@ -14925,21 +14977,37 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
 
 var SVGTextWrapper = __webpack_require__(23);
 var SvgRenderer = __webpack_require__(5).SVGRenderer;
-var xmlescape = __webpack_require__(9);
 
 var MAX_LINE_LENGTH = 170;
 var MIN_WIDTH = 50;
+var STROKE_WIDTH = 4;
 
 var SVGTextBubble = function () {
     function SVGTextBubble() {
         _classCallCheck(this, SVGTextBubble);
 
         this.svgRenderer = new SvgRenderer();
-        this.svgTextWrapper = new SVGTextWrapper();
+        this.svgTextWrapper = new SVGTextWrapper(this.makeSvgTextElement);
         this._textSizeCache = {};
     }
 
+    /**
+     * @return {SVGElement} an SVG text node with the properties that we want for speech bubbles.
+     */
+
+
     _createClass(SVGTextBubble, [{
+        key: 'makeSvgTextElement',
+        value: function makeSvgTextElement() {
+            var svgText = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+            svgText.setAttribute('alignment-baseline', 'text-before-edge');
+            svgText.setAttribute('font-size', '14');
+            svgText.setAttribute('fill', '#575E75');
+            // TODO Do we want to use the new default sans font instead of Helvetica?
+            svgText.setAttribute('font-family', 'Helvetica');
+            return svgText;
+        }
+    }, {
         key: '_speechBubble',
         value: function _speechBubble(w, h, radius, pointsLeft) {
             var pathString = '\n            M 0 ' + radius + '\n            A ' + radius + ' ' + radius + ' 0 0 1 ' + radius + ' 0\n            L ' + (w - radius) + ' 0\n            A ' + radius + ' ' + radius + ' 0 0 1 ' + w + ' ' + radius + '\n            L ' + w + ' ' + (h - radius) + '\n            A ' + radius + ' ' + radius + ' 0 0 1 ' + (w - radius) + ' ' + h;
@@ -14952,7 +15020,7 @@ var SVGTextBubble = function () {
 
             pathString += '\n            L ' + radius + ' ' + h + '\n            A ' + radius + ' ' + radius + ' 0 0 1 0 ' + (h - radius) + '\n            Z';
 
-            return '\n            <g>\n                <path\n                  d="' + pathString + '"\n                  stroke="rgba(0, 0, 0, 0.15)"\n                  stroke-width="4"\n                  fill="rgba(0, 0, 0, 0.15)"\n                  stroke-line-join="round"\n              />\n              <path\n                d="' + pathString + '"\n                stroke="none"\n                fill="white" />\n            </g>';
+            return '\n            <g>\n                <path\n                  d="' + pathString + '"\n                  stroke="rgba(0, 0, 0, 0.15)"\n                  stroke-width="' + STROKE_WIDTH + '"\n                  fill="rgba(0, 0, 0, 0.15)"\n                  stroke-line-join="round"\n              />\n              <path\n                d="' + pathString + '"\n                stroke="none"\n                fill="white" />\n            </g>';
         }
     }, {
         key: '_thinkBubble',
@@ -14980,7 +15048,7 @@ var SVGTextBubble = function () {
             pathString += '\n            L ' + radius + ' ' + h + '\n            A ' + radius + ' ' + radius + ' 0 0 1 0 ' + (h - radius) + '\n            Z';
 
             var ellipseSvg = function ellipseSvg(cx, cy, rx, ry) {
-                return '\n            <g>\n                <ellipse\n                    cx="' + cx + '" cy="' + cy + '"\n                    rx="' + rx + '" ry="' + ry + '"\n                    fill="rgba(0, 0, 0, 0.15)"\n                    stroke="rgba(0, 0, 0, 0.15)"\n                    stroke-width="4"\n                />\n                <ellipse\n                    cx="' + cx + '" cy="' + cy + '"\n                    rx="' + rx + '" ry="' + ry + '"\n                    fill="white"\n                    stroke="none"\n                />\n            </g>';
+                return '\n            <g>\n                <ellipse\n                    cx="' + cx + '" cy="' + cy + '"\n                    rx="' + rx + '" ry="' + ry + '"\n                    fill="rgba(0, 0, 0, 0.15)"\n                    stroke="rgba(0, 0, 0, 0.15)"\n                    stroke-width="' + STROKE_WIDTH + '"\n                />\n                <ellipse\n                    cx="' + cx + '" cy="' + cy + '"\n                    rx="' + rx + '" ry="' + ry + '"\n                    fill="white"\n                    stroke="none"\n                />\n            </g>';
             };
             var ellipses = [];
             if (pointsLeft) {
@@ -14989,12 +15057,12 @@ var SVGTextBubble = function () {
                 ellipses = [ellipseSvg(w - e1x, e1y, e1rx, e1ry), ellipseSvg(w - e2x, e2y, e2rx, e2ry)];
             }
 
-            return '\n             <g>\n                <path d="' + pathString + '" stroke="rgba(0, 0, 0, 0.15)" stroke-width="4" fill="rgba(0, 0, 0, 0.15)" />\n                <path d="' + pathString + '" stroke="none" fill="white" />\n                ' + ellipses.join('\n') + '\n            </g>';
+            return '\n             <g>\n                <path d="' + pathString + '" stroke="rgba(0, 0, 0, 0.15)" stroke-width="' + STROKE_WIDTH + '"\n                    fill="rgba(0, 0, 0, 0.15)" />\n                <path d="' + pathString + '" stroke="none" fill="white" />\n                ' + ellipses.join('\n') + '\n            </g>';
         }
     }, {
         key: '_getTextSize',
         value: function _getTextSize() {
-            var svgString = this._wrapSvgFragment(this._textFragment());
+            var svgString = this._wrapSvgFragment(this._textFragment);
             if (!this._textSizeCache[svgString]) {
                 this._textSizeCache[svgString] = this.svgRenderer.measure(svgString);
             }
@@ -15002,21 +15070,24 @@ var SVGTextBubble = function () {
         }
     }, {
         key: '_wrapSvgFragment',
-        value: function _wrapSvgFragment(fragment) {
-            return '\n          <svg xmlns="http://www.w3.org/2000/svg" version="1.1">\n              ' + fragment + '\n          </svg>\n        ';
-        }
-    }, {
-        key: '_textFragment',
-        value: function _textFragment() {
-            var attrs = 'font-family="Helvetica, Arial, sans-serif" font-size="14px" fill="#575E75"';
-            return '<text ' + attrs + '>' + xmlescape(this.lines.join('\n')) + '</text>';
+        value: function _wrapSvgFragment(fragment, width, height) {
+            var svgString = '<svg xmlns="http://www.w3.org/2000/svg" version="1.1"';
+            if (width && height) {
+                svgString = svgString + ' viewBox="\n                ' + -STROKE_WIDTH / 2 + ' ' + -STROKE_WIDTH / 2 + ' ' + (width + STROKE_WIDTH) + ' ' + (height + STROKE_WIDTH + 12) + '">';
+            } else {
+                svgString = svgString + '>';
+            }
+            svgString = svgString + ' ' + fragment + ' </svg>';
+            return svgString;
         }
     }, {
         key: 'buildString',
         value: function buildString(type, text, pointsLeft) {
             this.type = type;
             this.pointsLeft = pointsLeft;
-            this.lines = this.svgTextWrapper.wrapText(MAX_LINE_LENGTH, text);
+            var textNode = this.svgTextWrapper.wrapText(MAX_LINE_LENGTH, text);
+            var serializer = new XMLSerializer();
+            this._textFragment = serializer.serializeToString(textNode);
 
             var fragment = '';
 
@@ -15036,8 +15107,8 @@ var SVGTextBubble = function () {
             } else {
                 fragment += this._thinkBubble(fullWidth, fullHeight, radius, this.pointsLeft);
             }
-            fragment += '<g transform="translate(' + (padding - x) + ', ' + (padding - y) + ')">' + this._textFragment() + '</g>';
-            return this._wrapSvgFragment(fragment);
+            fragment += '<g transform="translate(' + (padding - x) + ', ' + (padding - y) + ')">' + this._textFragment + '</g>';
+            return this._wrapSvgFragment(fragment, fullWidth, fullHeight);
         }
     }]);
 
@@ -16273,11 +16344,11 @@ var Silhouette = function () {
             var height = this._height = canvas.height = bitmapData.height;
             var ctx = canvas.getContext('2d');
 
-            ctx.clearRect(0, 0, width, height);
-            ctx.drawImage(bitmapData, 0, 0, width, height);
             if (!(width && height)) {
                 return;
             }
+            ctx.clearRect(0, 0, width, height);
+            ctx.drawImage(bitmapData, 0, 0, width, height);
             var imageData = ctx.getImageData(0, 0, width, height);
 
             this._data = new Uint8ClampedArray(imageData.data.length / 4);
