@@ -307,6 +307,17 @@ test('duplicateSprite assigns duplicated sprite a fresh name', t => {
 
 test('emitWorkspaceUpdate', t => {
     const vm = new VirtualMachine();
+    const blocksToXML = comments => {
+        let blockString = 'blocks\n';
+        if (comments) {
+            for (const commentId in comments) {
+                const comment = comments[commentId];
+                blockString += `A Block Comment: ${comment.toXML()}`;
+            }
+
+        }
+        return blockString;
+    };
     vm.runtime.targets = [
         {
             isStage: true,
@@ -316,7 +327,13 @@ test('emitWorkspaceUpdate', t => {
                 }
             },
             blocks: {
-                toXML: () => 'blocks'
+                toXML: blocksToXML
+            },
+            comments: {
+                aStageComment: {
+                    toXML: () => 'aStageComment',
+                    blockId: null
+                }
             }
         }, {
             variables: {
@@ -325,7 +342,13 @@ test('emitWorkspaceUpdate', t => {
                 }
             },
             blocks: {
-                toXML: () => 'blocks'
+                toXML: blocksToXML
+            },
+            comments: {
+                someBlockComment: {
+                    toXML: () => 'someBlockComment',
+                    blockId: 'someBlockId'
+                }
             }
         }, {
             variables: {
@@ -334,7 +357,17 @@ test('emitWorkspaceUpdate', t => {
                 }
             },
             blocks: {
-                toXML: () => 'blocks'
+                toXML: blocksToXML
+            },
+            comments: {
+                someOtherComment: {
+                    toXML: () => 'someOtherComment',
+                    blockId: null
+                },
+                aBlockComment: {
+                    toXML: () => 'aBlockComment',
+                    blockId: 'a block'
+                }
             }
         }
     ];
@@ -347,6 +380,10 @@ test('emitWorkspaceUpdate', t => {
     t.notEqual(xml.indexOf('local'), -1);
     t.equal(xml.indexOf('unused'), -1);
     t.notEqual(xml.indexOf('blocks'), -1);
+    t.equal(xml.indexOf('aStageComment'), -1);
+    t.equal(xml.indexOf('someBlockComment'), -1);
+    t.notEqual(xml.indexOf('someOtherComment'), -1);
+    t.notEqual(xml.indexOf('A Block Comment: aBlockComment'), -1);
     t.end();
 });
 

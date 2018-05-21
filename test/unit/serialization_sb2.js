@@ -29,7 +29,6 @@ test('default', t => {
         t.type(targets[0].id, 'string');
         t.type(targets[0].blocks, 'object');
         t.type(targets[0].variables, 'object');
-        t.type(targets[0].lists, 'object');
 
         t.equal(targets[0].isOriginal, true);
         t.equal(targets[0].currentCostume, 0);
@@ -40,7 +39,6 @@ test('default', t => {
         t.type(targets[1].id, 'string');
         t.type(targets[1].blocks, 'object');
         t.type(targets[1].variables, 'object');
-        t.type(targets[1].lists, 'object');
 
         t.equal(targets[1].isOriginal, true);
         t.equal(targets[1].currentCostume, 0);

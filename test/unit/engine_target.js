@@ -12,7 +12,6 @@ test('spec', t => {
     t.type(target.id, 'string');
     t.type(target.blocks, 'object');
     t.type(target.variables, 'object');
-    t.type(target.lists, 'object');
     t.type(target._customState, 'object');
 
     t.type(target.createVariable, 'function');

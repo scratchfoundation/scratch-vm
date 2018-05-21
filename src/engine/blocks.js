@@ -735,6 +735,7 @@ class Blocks {
     /**
      * Encode all of `this._blocks` as an XML string usable
      * by a Blockly/scratch-blocks workspace.
+     * @param {object<string, Comment>} comments Map of comments referenced by id
      * @return {string} String of XML representing this object's blocks.
      */
     toXML (comments) {
@@ -745,6 +746,7 @@ class Blocks {
      * Recursively encode an individual block and its children
      * into a Blockly/scratch-blocks XML string.
      * @param {!string} blockId ID of block to encode.
+     * @param {object<string, Comment>} comments Map of comments referenced by id
      * @return {string} String of XML representing this block and any children.
      */
     blockToXML (blockId, comments) {
