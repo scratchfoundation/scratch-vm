@@ -847,11 +847,9 @@ class RenderedTarget extends Target {
      */
     goBehindOther (other) {
         if (this.renderer) {
-            this.renderer.positionDrawableRelativeToOther(
-                this.drawableID, other.drawableID, -1, StageLayering.SPRITE_LAYER);
-            // const otherLayer = this.renderer.setDrawableOrder(
-            //     other.drawableID, 0, StageLayering.SPRITE_LAYER, true);
-            // this.renderer.setDrawableOrder(this.drawableID, otherLayer, StageLayering.SPRITE_LAYER);
+            const otherLayer = this.renderer.setDrawableOrder(
+                other.drawableID, 0, StageLayering.SPRITE_LAYER, true);
+            this.renderer.setDrawableOrder(this.drawableID, otherLayer, StageLayering.SPRITE_LAYER);
         }
     }
 

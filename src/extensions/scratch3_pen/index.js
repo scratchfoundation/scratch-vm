@@ -128,8 +128,7 @@ class Scratch3PenBlocks {
     _getPenLayerID () {
         if (this._penSkinId < 0 && this.runtime.renderer) {
             this._penSkinId = this.runtime.renderer.createPenSkin();
-            this._penDrawableId = this.runtime.renderer.createDrawable(
-                StageLayering.EXTENSION_LAYER, StageLayering.PEN_ORDER);
+            this._penDrawableId = this.runtime.renderer.createDrawable(StageLayering.PEN_LAYER);
             this.runtime.renderer.updateDrawableProperties(this._penDrawableId, {skinId: this._penSkinId});
         }
         return this._penSkinId;

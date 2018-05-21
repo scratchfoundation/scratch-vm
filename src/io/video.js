@@ -146,7 +146,7 @@ class Video {
         if (this._skinId === -1 && this._skin === null && this._drawable === -1) {
             this._skinId = renderer.createPenSkin();
             this._skin = renderer._allSkins[this._skinId];
-            this._drawable = renderer.createDrawable(StageLayering.EXTENSION_LAYER, StageLayering.VIDEO_ORDER);
+            this._drawable = renderer.createDrawable(StageLayering.VIDEO_LAYER);
             renderer.updateDrawableProperties(this._drawable, {
                 skinId: this._skinId
             });
