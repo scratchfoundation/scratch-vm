@@ -4,6 +4,7 @@ const Cast = require('../../util/cast');
 const log = require('../../util/log');
 const nets = require('nets');
 const languageNames = require('scratch-translate-extension-languages');
+const formatMessage = require('format-message');
 
 // TODO: Change these to the correct icons.
 const blockIconURI = 'https://www.gstatic.com/images/icons/material/system/1x/translate_white_24dp.png';
@@ -22,17 +23,24 @@ const serverURL = 'https://translate-service.scratch.mit.edu/';
 const serverTimeoutMs = 10000; // 10 seconds (chosen arbitrarily).
 
 /**
- * Class for the translate-related block in Scratch 3.0
+ * Class for the translate block in Scratch 3.0.
  * @constructor
  */
 class Scratch3TranslateBlocks {
     constructor () {
         /**
-         * List of supported language name and language code pairs.
+         * Language code of the viewer, based on their locale.
+         * @type {string}
+         * @private
+         */
+        this._viewerLanguageCode = this.getViewerLanguageCode();
+
+        /**
+         * List of supported language name and language code pairs, for use in the block menu.
          * @type {Array.<object.<string, string>>}
          * @private
          */
-        this._supportedLanguages = languageNames.menuMap.en.map(entry => {
+        this._supportedLanguages = languageNames.menuMap[this._viewerLanguageCode].map(entry => {
             const obj = {text: entry.name, value: entry.code};
             return obj;
         });
@@ -89,7 +97,7 @@ class Scratch3TranslateBlocks {
                         LANGUAGE: {
                             type: ArgumentType.STRING,
                             menu: 'languages',
-                            defaultValue: this._supportedLanguages[0].value
+                            defaultValue: this._viewerLanguageCode
                         }
                     }
                 }
@@ -100,8 +108,38 @@ class Scratch3TranslateBlocks {
         };
     }
 
-    getLanguageFromArg (arg) {
+
+    /**
+     * Get the viewer's language code.
+     * @return {string} the language code.
+     */
+    getViewerLanguageCode () {
+        const locale = formatMessage.setup().locale;
+        const viewerLanguages = [locale].concat(navigator.languages);
+        const languageKeys = Object.keys(languageNames.menuMap);
+        // Return the first entry in viewerLanguages that matches
+        // one of the available language keys.
+        const languageCode = viewerLanguages.reduce((acc, lang) => {
+            if (acc) {
+                return acc;
+            }
+            if (languageKeys.indexOf(lang) > -1) {
+                return lang;
+            }
+            return acc;
+        }, '') || 'en';
+        return languageCode;
+    }
+
+    /**
+     * Get a language code from a block argument. The arg can be a language code
+     * or a language name, written in any language.
+     * @param  {object} arg A block argument.
+     * @return {string} A language code.
+     */
+    getLanguageCodeFromArg (arg) {
         const languageArg = Cast.toString(arg).toLowerCase();
+        // Check if the arg matches a language code in the menu.
         if (languageNames.menuMap.hasOwnProperty(languageArg)) {
             return languageArg;
         }
@@ -109,7 +147,7 @@ class Scratch3TranslateBlocks {
         if (languageNames.nameMap.hasOwnProperty(languageArg)) {
             return languageNames.nameMap[languageArg];
         }
-        // Default to english
+        // Default to English.
         return 'en';
     }
 
@@ -125,7 +163,7 @@ class Scratch3TranslateBlocks {
             return this._translateResult;
         }
 
-        const lang = this.getLanguageFromArg(args.LANGUAGE);
+        const lang = this.getLanguageCodeFromArg(args.LANGUAGE);
 
         let urlBase = `${serverURL}translate?language=`;
         urlBase += lang;
