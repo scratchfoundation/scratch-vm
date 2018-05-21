@@ -13,6 +13,7 @@ const log = require('../util/log');
 const uid = require('../util/uid');
 const StringUtil = require('../util/string-util');
 const specMap = require('./sb2_specmap');
+const Comment = require('../engine/comment');
 const Variable = require('../engine/variable');
 const MonitorRecord = require('../engine/monitor-record');
 const StageLayering = require('../engine/stage-layering');
@@ -110,15 +111,26 @@ const flatten = function (blocks) {
  * @param {Function} addBroadcastMsg function to update broadcast message name map
  * @param {Function} getVariableId function to retreive a variable's ID based on name
  * @param {ImportedExtensionsInfo} extensions - (in/out) parsed extension information will be stored here.
- * @return {Array.<object>} Scratch VM-format block list.
+ * @param {object<int, Comment>} comments - Comments from sb2 project that need to be attached to blocks.
+ * They are indexed in this object by the sb2 flattened block list index indicating
+ * which block they should attach to.
+ * @param {int} commentIndex The current index of the top block in this list if it were in a flattened
+ * list of all blocks for the target
+ * @return {[Array.<object>, int]} Tuple where first item is the Scratch VM-format block list, and
+ * second item is the updated comment index
  */
-const parseBlockList = function (blockList, addBroadcastMsg, getVariableId, extensions) {
+const parseBlockList = function (blockList, addBroadcastMsg, getVariableId, extensions, comments, commentIndex) {
     const resultingList = [];
     let previousBlock = null; // For setting next.
     for (let i = 0; i < blockList.length; i++) {
         const block = blockList[i];
         // eslint-disable-next-line no-use-before-define
-        const parsedBlock = parseBlock(block, addBroadcastMsg, getVariableId, extensions);
+        const parsedBlockAndComments = parseBlock(block, addBroadcastMsg, getVariableId,
+            extensions, comments, commentIndex);
+        const parsedBlock = parsedBlockAndComments[0];
+        // Update commentIndex
+        commentIndex = parsedBlockAndComments[1];
+
         if (typeof parsedBlock === 'undefined') continue;
         if (previousBlock) {
             parsedBlock.parent = previousBlock.id;
@@ -127,7 +139,7 @@ const parseBlockList = function (blockList, addBroadcastMsg, getVariableId, exte
         previousBlock = parsedBlock;
         resultingList.push(parsedBlock);
     }
-    return resultingList;
+    return [resultingList, commentIndex];
 };
 
 /**
@@ -138,14 +150,21 @@ const parseBlockList = function (blockList, addBroadcastMsg, getVariableId, exte
  * @param {Function} addBroadcastMsg function to update broadcast message name map
  * @param {Function} getVariableId function to retreive a variable's ID based on name
  * @param {ImportedExtensionsInfo} extensions - (in/out) parsed extension information will be stored here.
+ * @param {object} comments Comments that need to be attached to the blocks that need to be parsed
  */
-const parseScripts = function (scripts, blocks, addBroadcastMsg, getVariableId, extensions) {
+const parseScripts = function (scripts, blocks, addBroadcastMsg, getVariableId, extensions, comments) {
+    // Keep track of the index of the current script being
+    // parsed in order to attach block comments correctly
+    let scriptIndexForComment = 0;
+
     for (let i = 0; i < scripts.length; i++) {
         const script = scripts[i];
         const scriptX = script[0];
         const scriptY = script[1];
         const blockList = script[2];
-        const parsedBlockList = parseBlockList(blockList, addBroadcastMsg, getVariableId, extensions);
+        const [parsedBlockList, newCommentIndex] = parseBlockList(blockList, addBroadcastMsg, getVariableId, extensions,
+            comments, scriptIndexForComment);
+        scriptIndexForComment = newCommentIndex;
         if (parsedBlockList[0]) {
             // Adjust script coordinates to account for
             // larger block size in scratch-blocks.
@@ -242,11 +261,13 @@ const parseMonitorObject = (object, runtime, targets, extensions) => {
     // Create var id getter to make block naming/parsing easier, variables already created.
     const getVariableId = generateVariableIdGetter(target.id, false);
     // eslint-disable-next-line no-use-before-define
-    const block = parseBlock(
+    const [block, _] = parseBlock(
         [object.cmd, object.param], // Scratch 2 monitor blocks only have one param.
         null, // `addBroadcastMsg`, not needed for monitor blocks.
         getVariableId,
-        extensions
+        extensions,
+        null, // `comments`, not needed for monitor blocks
+        null // `commentIndex`, not needed for monitor blocks
     );
 
     // Monitor blocks have special IDs to match the toolbox obtained from the getId
@@ -423,9 +444,51 @@ const parseScratchObject = function (object, runtime, extensions, topLevel, zip)
         }
     }
 
+    // If included, parse any and all comments on the object (this includes top-level
+    // workspace comments as well as comments attached to specific blocks)
+    const blockComments = {};
+    if (object.hasOwnProperty('scriptComments')) {
+        const comments = object.scriptComments.map(commentDesc => {
+            const newComment = new Comment(
+                null, // generate a new id for this comment
+                commentDesc[6], // text content of sb2 comment
+                commentDesc[0] * 1.5, // x position of comment
+                commentDesc[1] * 2.2, // y position of comment
+                commentDesc[2] * 1.5, // width of comment
+                commentDesc[3] * 2.2, // height of comment
+                !commentDesc[4] // commentDesc[4] -- false means minimized, true means full screen
+            );
+            if (commentDesc[5] >= 0) {
+                // commentDesc[5] refers to the index of the block that this
+                // comment is attached to --  in a flattened version of the
+                // scripts array.
+                // If commentDesc[5] is -1, this is a workspace comment (we don't need to do anything
+                // extra at this point), otherwise temporarily save the flattened script array
+                // index as the blockId property of the new comment. We will
+                // change this to refer to the actual block id of the corresponding
+                // block when that block gets created
+                newComment.blockId = commentDesc[5];
+                // Add this comment to the block comments object with its script index
+                // as the key
+                if (blockComments.hasOwnProperty(commentDesc[5])) {
+                    blockComments[commentDesc[5]].push(newComment);
+                } else {
+                    blockComments[commentDesc[5]] = [newComment];
+                }
+            }
+            return newComment;
+        });
+
+        // Add all the comments that were just created to the target.comments,
+        // referenced by id
+        comments.forEach(comment => {
+            target.comments[comment.id] = comment;
+        });
+    }
+
     // If included, parse any and all scripts/blocks on the object.
     if (object.hasOwnProperty('scripts')) {
-        parseScripts(object.scripts, blocks, addBroadcastMsg, getVariableId, extensions);
+        parseScripts(object.scripts, blocks, addBroadcastMsg, getVariableId, extensions, blockComments);
     }
 
     // Update stage specific blocks (e.g. sprite clicked <=> stage clicked)
@@ -619,9 +682,15 @@ const specMapBlock = function (block) {
  * @param {Function} addBroadcastMsg function to update broadcast message name map
  * @param {Function} getVariableId function to retrieve a variable's ID based on name
  * @param {ImportedExtensionsInfo} extensions - (in/out) parsed extension information will be stored here.
- * @return {object} Scratch VM format block, or null if unsupported object.
+ * @param {object<int, Comment>} comments - Comments from sb2 project that need to be attached to blocks.
+ * They are indexed in this object by the sb2 flattened block list index indicating
+ * which block they should attach to.
+ * @param {int} commentIndex The comment index for the block to be parsed if it were in a flattened
+ * list of all blocks for the target
+ * @return {[object, int]} Tuple where first item is the Scratch VM-format block (or null if unsupported object),
+ * and second item is the updated comment index (after this block and its children are parsed)
  */
-const parseBlock = function (sb2block, addBroadcastMsg, getVariableId, extensions) {
+const parseBlock = function (sb2block, addBroadcastMsg, getVariableId, extensions, comments, commentIndex) {
     const blockMetadata = specMapBlock(sb2block);
     if (!blockMetadata) {
         return;
@@ -645,6 +714,21 @@ const parseBlock = function (sb2block, addBroadcastMsg, getVariableId, extension
         shadow: false, // No shadow blocks in an SB2 by default.
         children: [] // Store any generated children, flattened in `flatten`.
     };
+
+    // Attach any comments to this block..
+    const commentsForParsedBlock = (comments && typeof commentIndex === 'number' && !isNaN(commentIndex)) ?
+        comments[commentIndex] : null;
+    if (commentsForParsedBlock) {
+        // TODO currently only attaching the last comment to the block if there are multiple...
+        // not sure what to do here.. concatenate all the messages in all the comments and only
+        // keep one around?
+        activeBlock.comment = commentsForParsedBlock[commentsForParsedBlock.length - 1].id;
+        commentsForParsedBlock.forEach(comment => {
+            comment.blockId = activeBlock.id;
+        });
+    }
+    commentIndex++;
+
     // For a procedure call, generate argument map from proc string.
     if (oldOpcode === 'call') {
         blockMetadata.argMap = parseProcedureArgMap(sb2block[1]);
@@ -671,10 +755,15 @@ const parseBlock = function (sb2block, addBroadcastMsg, getVariableId, extension
                 let innerBlocks;
                 if (typeof providedArg[0] === 'object' && providedArg[0]) {
                     // Block list occupies the input.
-                    innerBlocks = parseBlockList(providedArg, addBroadcastMsg, getVariableId, extensions);
+                    [innerBlocks, commentIndex] = parseBlockList(providedArg, addBroadcastMsg, getVariableId,
+                        extensions, comments, commentIndex);
                 } else {
                     // Single block occupies the input.
-                    innerBlocks = [parseBlock(providedArg, addBroadcastMsg, getVariableId, extensions)];
+                    const parsedBlockDesc = parseBlock(providedArg, addBroadcastMsg, getVariableId, extensions,
+                        comments, commentIndex);
+                    innerBlocks = [parsedBlockDesc[0]];
+                    // Update commentIndex
+                    commentIndex = parsedBlockDesc[1];
                 }
                 let previousBlock = null;
                 for (let j = 0; j < innerBlocks.length; j++) {
@@ -914,7 +1003,7 @@ const parseBlock = function (sb2block, addBroadcastMsg, getVariableId, extension
             break;
         }
     }
-    return activeBlock;
+    return [activeBlock, commentIndex];
 };
 
 module.exports = {

@@ -5,6 +5,7 @@ const MonitorRecord = require('./monitor-record');
 const Clone = require('../util/clone');
 const {Map} = require('immutable');
 const BlocksExecuteCache = require('./blocks-execute-cache');
+const log = require('../util/log');
 
 /**
  * @fileoverview
@@ -736,8 +737,8 @@ class Blocks {
      * by a Blockly/scratch-blocks workspace.
      * @return {string} String of XML representing this object's blocks.
      */
-    toXML () {
-        return this._scripts.map(script => this.blockToXML(script)).join();
+    toXML (comments) {
+        return this._scripts.map(script => this.blockToXML(script, comments)).join();
     }
 
     /**
@@ -746,7 +747,7 @@ class Blocks {
      * @param {!string} blockId ID of block to encode.
      * @return {string} String of XML representing this block and any children.
      */
-    blockToXML (blockId) {
+    blockToXML (blockId, comments) {
         const block = this._blocks[blockId];
         // Encode properties of this block.
         const tagName = (block.shadow) ? 'shadow' : 'block';
@@ -756,6 +757,18 @@ class Blocks {
                 type="${block.opcode}"
                 ${block.topLevel ? `x="${block.x}" y="${block.y}"` : ''}
             >`;
+        const commentId = block.comment;
+        if (commentId) {
+            if (comments) {
+                if (comments.hasOwnProperty(commentId)) {
+                    xmlString += comments[commentId].toXML();
+                } else {
+                    log.warn(`Could not find comment with id: ${commentId} in provided comment descriptions.`);
+                }
+            } else {
+                log.warn(`Cannot serialize comment with id: ${commentId}; no comment descriptions provided.`);
+            }
+        }
         // Add any mutation. Must come before inputs.
         if (block.mutation) {
             xmlString += this.mutationToXML(block.mutation);
@@ -768,11 +781,11 @@ class Blocks {
             if (blockInput.block || blockInput.shadow) {
                 xmlString += `<value name="${blockInput.name}">`;
                 if (blockInput.block) {
-                    xmlString += this.blockToXML(blockInput.block);
+                    xmlString += this.blockToXML(blockInput.block, comments);
                 }
                 if (blockInput.shadow && blockInput.shadow !== blockInput.block) {
                     // Obscured shadow.
-                    xmlString += this.blockToXML(blockInput.shadow);
+                    xmlString += this.blockToXML(blockInput.shadow, comments);
                 }
                 xmlString += '</value>';
             }
@@ -798,7 +811,7 @@ class Blocks {
         }
         // Add blocks connected to the next connection.
         if (block.next) {
-            xmlString += `<next>${this.blockToXML(block.next)}</next>`;
+            xmlString += `<next>${this.blockToXML(block.next, comments)}</next>`;
         }
         xmlString += `</${tagName}>`;
         return xmlString;

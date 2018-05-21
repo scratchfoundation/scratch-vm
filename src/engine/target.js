@@ -43,16 +43,16 @@ class Target extends EventEmitter {
         this.blocks = blocks;
         /**
          * Dictionary of variables and their values for this target.
-         * Key is the variable name.
+         * Key is the variable id.
          * @type {Object.<string,*>}
          */
         this.variables = {};
         /**
-         * Dictionary of lists and their contents for this target.
-         * Key is the list name.
+         * Dictionary of comments for this target.
+         * Key is the comment id.
          * @type {Object.<string,*>}
          */
-        this.lists = {};
+        this.comments = {};
         /**
          * Dictionary of custom state for this target.
          * This can be used to store target-specific custom state for blocks which need it.
