@@ -34,7 +34,7 @@ const loadCostumeFromAsset = function (costume, costumeAsset, runtime, optVersio
         let svgString = costumeAsset.decodeText();
         // SVG Renderer load fixes "quirks" associated with Scratch 2 projects
         if (optVersion && optVersion === 2 && runtime.v2SvgAdapter) {
-            runtime.v2SvgAdapter.loadString(svgString);
+            runtime.v2SvgAdapter.loadString(svgString, true /* fromVersion2 */);
             svgString = runtime.v2SvgAdapter.toString();
             // Put back into storage
             const storage = runtime.storage;
