@@ -337,11 +337,12 @@ const parseScratchObject = function (object, runtime, extensions, topLevel, zip)
     if (object.hasOwnProperty('costumes')) {
         for (let i = 0; i < object.costumes.length; i++) {
             const costumeSource = object.costumes[i];
+            const bitmapResolution = costumeSource.bitmapResolution || 1;
             const costume = {
                 name: costumeSource.costumeName,
-                bitmapResolution: costumeSource.bitmapResolution || 1,
-                rotationCenterX: topLevel ? 240 : costumeSource.rotationCenterX,
-                rotationCenterY: topLevel ? 180 : costumeSource.rotationCenterY,
+                bitmapResolution: bitmapResolution,
+                rotationCenterX: topLevel ? 240 * bitmapResolution : costumeSource.rotationCenterX,
+                rotationCenterY: topLevel ? 180 * bitmapResolution : costumeSource.rotationCenterY,
                 // TODO we eventually want this next property to be called
                 // md5ext to reflect what it actually contains, however this
                 // will be a very extensive change across many repositories
