@@ -143,3 +143,11 @@ test('loud? boolean', t => {
 
     t.end();
 });
+
+test('username block', t => {
+    const rt = new Runtime();
+    const sensing = new Sensing(rt);
+
+    t.equal(sensing.getUsername(), '');
+    t.end();
+});
