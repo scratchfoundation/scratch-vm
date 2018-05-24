@@ -31,7 +31,7 @@ jobs:
           npm --no-git-tag-version version $($(npm bin)/json -f package.json version)-prerelease.$(date +%s);
           git config --global user.email $(git log --pretty=format:"%ae" -n1);
           git config --global user.name $(git log --pretty=format:"%an" -n1);
-        fi;
+        fi
       deploy:
       - provider: npm
         on:
