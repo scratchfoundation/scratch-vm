@@ -46,14 +46,24 @@ const loadSound = function (sound, runtime) {
         log.error('No storage module present; cannot load sound asset: ', sound.md5);
         return Promise.resolve(sound);
     }
+    const assetType = runtime.storage.AssetType.Sound;
     const idParts = StringUtil.splitFirst(sound.md5, '.');
     const md5 = idParts[0];
     const ext = idParts[1].toLowerCase();
-    return runtime.storage.load(runtime.storage.AssetType.Sound, md5, ext)
-        .then(soundAsset => {
-            sound.dataFormat = ext;
-            return loadSoundFromAsset(sound, soundAsset, runtime);
-        });
+
+    const onLoad = asset => {
+        sound.dataFormat = asset.dataFormat;
+        return loadSoundFromAsset(sound, asset, runtime);
+    };
+
+    return runtime.storage.load(assetType, md5, ext).then(soundAsset => {
+        if (soundAsset) {
+            return onLoad(soundAsset);
+        }
+        const defaultAssetId = runtime.storage.getDefaultAssetId(assetType);
+        return runtime.storage.load(assetType, defaultAssetId).then(onLoad);
+
+    });
 };
 
 module.exports = {
