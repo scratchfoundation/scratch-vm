@@ -68,6 +68,7 @@ class Scratch3SensingBlocks {
             sensing_loud: this.isLoud,
             sensing_askandwait: this.askAndWait,
             sensing_answer: this.getAnswer,
+            sensing_username: this.getUsername,
             sensing_userid: () => {} // legacy no-op block
         };
     }
@@ -314,6 +315,11 @@ class Scratch3SensingBlocks {
 
         // Otherwise, 0
         return 0;
+    }
+
+    getUsername () {
+        // Logged out users get empty string. Return that for now.
+        return '';
     }
 }
 
