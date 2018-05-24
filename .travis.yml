@@ -24,9 +24,14 @@ jobs:
       node_js: 8
       env: NPM_SCRIPT=build
       before_deploy:
-      - npm --no-git-tag-version version $($(npm bin)/json -f package.json version)-prerelease.$(date +%s)
-      - git config --global user.email $(git log --pretty=format:"%ae" -n1)
-      - git config --global user.name $(git log --pretty=format:"%an" -n1)
+      - >
+        # Only run this once for both deploys (avoids weird double version number)
+        if ![ "$BEFORE_DEPLOY_RAN" ]; then
+          export BEFORE_DEPLOY_RAN=1;
+          npm --no-git-tag-version version $($(npm bin)/json -f package.json version)-prerelease.$(date +%s);
+          git config --global user.email $(git log --pretty=format:"%ae" -n1);
+          git config --global user.name $(git log --pretty=format:"%an" -n1);
+        fi
       deploy:
       - provider: npm
         on:
