@@ -498,9 +498,9 @@ class Runtime extends EventEmitter {
             name: maybeFormatMessage(extensionInfo.name),
             blockIconURI: extensionInfo.blockIconURI,
             menuIconURI: extensionInfo.menuIconURI,
-            color1: '#FF6680',
-            color2: '#FF4D6A',
-            color3: '#FF3355',
+            color1: extensionInfo.colour || '#FF6680',
+            color2: extensionInfo.colourSecondary || '#FF4D6A',
+            color3: extensionInfo.colourTertiary || '#FF3355',
             blocks: [],
             menus: []
         };
