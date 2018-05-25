@@ -3,6 +3,7 @@ const Blocks = require('../engine/blocks');
 const {loadSoundFromAsset} = require('../import/load-sound');
 const {loadCostumeFromAsset} = require('../import/load-costume');
 const StringUtil = require('../util/string-util');
+const StageLayering = require('../engine/stage-layering');
 
 class Sprite {
     /**
@@ -47,7 +48,7 @@ class Sprite {
          */
         this.clones = [];
     }
-    
+
     /**
      * Add an array of costumes, taking care to avoid duplicate names.
      * @param {!Array<object>} costumes Array of objects representing costumes.
@@ -95,15 +96,19 @@ class Sprite {
 
     /**
      * Create a clone of this sprite.
+     * @param {string=} optLayerGroup Optional layer group the clone's drawable should be added to
+     * Defaults to the sprite layer group
      * @returns {!RenderedTarget} Newly created clone.
      */
-    createClone () {
+    createClone (optLayerGroup) {
         const newClone = new RenderedTarget(this, this.runtime);
         newClone.isOriginal = this.clones.length === 0;
         this.clones.push(newClone);
         newClone.initAudio();
         if (newClone.isOriginal) {
-            newClone.initDrawable();
+            // Default to the sprite layer group if optLayerGroup is not provided
+            const layerGroup = typeof optLayerGroup === 'string' ? optLayerGroup : StageLayering.SPRITE_LAYER;
+            newClone.initDrawable(layerGroup);
             this.runtime.fireTargetWasCreated(newClone);
         } else {
             this.runtime.fireTargetWasCreated(newClone, this.clones[0]);

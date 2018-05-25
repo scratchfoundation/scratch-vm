@@ -1,3 +1,5 @@
+const StageLayering = require('../engine/stage-layering');
+
 class Video {
     constructor (runtime) {
         this.runtime = runtime;
@@ -144,11 +146,7 @@ class Video {
         if (this._skinId === -1 && this._skin === null && this._drawable === -1) {
             this._skinId = renderer.createPenSkin();
             this._skin = renderer._allSkins[this._skinId];
-            this._drawable = renderer.createDrawable();
-            renderer.setDrawableOrder(
-                this._drawable,
-                Video.ORDER
-            );
+            this._drawable = renderer.createDrawable(StageLayering.VIDEO_LAYER);
             renderer.updateDrawableProperties(this._drawable, {
                 skinId: this._skinId
             });
