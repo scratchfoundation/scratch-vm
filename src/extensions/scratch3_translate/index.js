@@ -100,6 +100,12 @@ class Scratch3TranslateBlocks {
                             defaultValue: this._viewerLanguageCode
                         }
                     }
+                },
+                {
+                    opcode: 'getViewerLanguage',
+                    text: 'viewer language',
+                    blockType: BlockType.REPORTER,
+                    arguments: {}
                 }
             ],
             menus: {
@@ -108,6 +114,13 @@ class Scratch3TranslateBlocks {
         };
     }
 
+    /**
+     * Get the viewer language for the reporter block.
+     * @return {string} the language code of the project viewer.
+     */
+    getViewerLanguage () {
+        return this._viewerLanguageCode;
+    }
 
     /**
      * Get the viewer's language code.
