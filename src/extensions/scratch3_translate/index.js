@@ -79,7 +79,7 @@ class Scratch3TranslateBlocks {
         return {
             id: 'translate',
             name: 'Translate',
-            menuIconURI: '',  // TODO: Add the final icons.
+            menuIconURI: '', // TODO: Add the final icons.
             blockIconURI: '',
             blocks: [
                 {
