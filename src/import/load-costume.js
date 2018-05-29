@@ -24,7 +24,11 @@ const loadCostumeFromAsset = function (costume, costumeAsset, runtime, optVersio
     }
     const AssetType = runtime.storage.AssetType;
     let rotationCenter;
-    if (costume.rotationCenterX && costume.rotationCenterY && costume.bitmapResolution) {
+    // Use provided rotation center and resolution if they are defined. Bitmap resolution
+    // should only ever be 1 or 2.
+    if (typeof costume.rotationCenterX === 'number' && !isNaN(costume.rotationCenterX) &&
+            typeof costume.rotationCenterY === 'number' && !isNaN(costume.rotationCenterY) &&
+            costume.bitmapResolution) {
         rotationCenter = [
             costume.rotationCenterX / costume.bitmapResolution,
             costume.rotationCenterY / costume.bitmapResolution
