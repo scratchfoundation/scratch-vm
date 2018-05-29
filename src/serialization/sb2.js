@@ -449,16 +449,19 @@ const parseScratchObject = function (object, runtime, extensions, topLevel, zip)
     const blockComments = {};
     if (object.hasOwnProperty('scriptComments')) {
         const comments = object.scriptComments.map(commentDesc => {
+            const isBlockComment = commentDesc[5] >= 0;
             const newComment = new Comment(
                 null, // generate a new id for this comment
                 commentDesc[6], // text content of sb2 comment
-                commentDesc[0] * 1.5, // x position of comment
-                commentDesc[1] * 2.2, // y position of comment
+                // Only serialize x & y position of comment if it's a workspace comment
+                // If it's a block comment, we'll let scratch-blocks handle positioning
+                isBlockComment ? null : commentDesc[0] * 1.5, // x position of comment
+                isBlockComment ? null : commentDesc[1] * 2.2, // y position of comment
                 commentDesc[2] * 1.5, // width of comment
                 commentDesc[3] * 2.2, // height of comment
                 !commentDesc[4] // commentDesc[4] -- false means minimized, true means full screen
             );
-            if (commentDesc[5] >= 0) {
+            if (isBlockComment) {
                 // commentDesc[5] refers to the index of the block that this
                 // comment is attached to --  in a flattened version of the
                 // scripts array.

@@ -17,8 +17,8 @@ class Comment {
     constructor (id, text, x, y, width, height, minimized) {
         this.id = id || uid();
         this.text = text;
-        this.x = cast.toNumber(x);
-        this.y = cast.toNumber(y);
+        this.x = x;
+        this.y = y;
         this.width = Math.max(cast.toNumber(width), Comment.MIN_WIDTH);
         this.height = Math.max(cast.toNumber(height), Comment.MIN_HEIGHT);
         this.minimized = minimized || false;
