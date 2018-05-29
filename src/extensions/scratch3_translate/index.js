@@ -6,9 +6,6 @@ const nets = require('nets');
 const languageNames = require('scratch-translate-extension-languages');
 const formatMessage = require('format-message');
 
-// TODO: Change these to the correct icons.
-const blockIconURI = 'https://www.gstatic.com/images/icons/material/system/1x/translate_white_24dp.png';
-const menuIconURI = 'https://www.gstatic.com/images/icons/material/system/1x/translate_grey600_24dp.png';
 
 /**
  * The url of the translate server.
@@ -82,17 +79,25 @@ class Scratch3TranslateBlocks {
         return {
             id: 'translate',
             name: 'Translate',
-            menuIconURI: menuIconURI,
-            blockIconURI: blockIconURI,
+            menuIconURI: '',  // TODO: Add the final icons.
+            blockIconURI: '',
             blocks: [
                 {
                     opcode: 'getTranslate',
-                    text: 'translate [WORDS] to [LANGUAGE]',
+                    text: formatMessage({
+                        id: 'translate.translateBlock',
+                        default: 'translate [WORDS] to [LANGUAGE]',
+                        description: 'translate some text to a different language'
+                    }),
                     blockType: BlockType.REPORTER,
                     arguments: {
                         WORDS: {
                             type: ArgumentType.STRING,
-                            defaultValue: 'hello'
+                            defaultValue: formatMessage({
+                                id: 'translate.defaultTextToTranslate',
+                                default: 'hello',
+                                description: 'hello: the default text to translate'
+                            })
                         },
                         LANGUAGE: {
                             type: ArgumentType.STRING,
@@ -103,7 +108,11 @@ class Scratch3TranslateBlocks {
                 },
                 {
                     opcode: 'getViewerLanguage',
-                    text: 'viewer language',
+                    text: formatMessage({
+                        id: 'translate.viewerLanguage',
+                        default: 'viewer language',
+                        description: 'the languge of the project viewer'
+                    }),
                     blockType: BlockType.REPORTER,
                     arguments: {}
                 }
@@ -115,11 +124,18 @@ class Scratch3TranslateBlocks {
     }
 
     /**
-     * Get the viewer language for the reporter block.
-     * @return {string} the language code of the project viewer.
+     * Get the human readable language value for the reporter block.
+     * @return {string} the language name of the project viewer.
      */
     getViewerLanguage () {
-        return this._viewerLanguageCode;
+        this._viewerLanguageCode = this.getViewerLanguageCode();
+        const names = languageNames.menuMap[this._viewerLanguageCode];
+        const langNameObj = names.find(obj => obj.code === this._viewerLanguageCode);
+        let langName = this._viewerLanguageCode;
+        if (langNameObj) {
+            langName = langNameObj.name;
+        }
+        return langName;
     }
 
     /**
