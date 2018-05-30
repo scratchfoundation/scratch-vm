@@ -1,10 +1,7 @@
 const ArgumentType = require('../../extension-support/argument-type');
 const BlockType = require('../../extension-support/block-type');
 const log = require('../../util/log');
-const JSONRPC = require('../../util/jsonrpc');
-const JSONRPCWebSocket = require('../../util/jsonrpc-web-socket');
 const ScratchBLE = require('../../io/scratchBLE');
-const ScratchBT = require('../../io/scratchBT');
 
 /**
  * Icon svg to be displayed at the left edge of each extension block, encoded as a data URI.
@@ -119,11 +116,6 @@ class MicroBit {
         //closeButton.onclick = () => {
         //    self.Scratch.BT.dispose();
         //}
-
-        function addLine(text) {
-            console.log('*** MICROBIT ***');
-            console.log(text);
-        }
 
         // Chain test commands
         initBLE();

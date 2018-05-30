@@ -47,7 +47,7 @@ function stringify(o) {
 }
 
 function log(text) {
-    console.log('*** MICROBIT ***');
+    console.log('ScratchBLE:');
     console.log(text);
 }
 

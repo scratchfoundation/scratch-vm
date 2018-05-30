@@ -46,7 +46,7 @@ function stringify(o) {
 }
 
 function log(text) {
-    console.log('*** MICROBIT ***');
+    console.log('JSONRPCWebSocket:');
     console.log(text);
 }
 
