@@ -1,4 +1,4 @@
-const JSONRPCWebSocket = require('../util/jsonrpc');
+const JSONRPCWebSocket = require('../util/jsonrpc-web-socket');
 
 class ScratchBLE extends JSONRPCWebSocket {
     constructor() {
@@ -14,7 +14,7 @@ class ScratchBLE extends JSONRPCWebSocket {
     didReceiveCall(method, params) {
         switch (method) {
         case 'didDiscoverPeripheral':
-            addLine(`Peripheral discovered: ${stringify(params)}`);
+            log(`Peripheral discovered: ${stringify(params)}`);
             this.discoveredPeripheralId = params['peripheralId'];
             break;
         case 'ping':
@@ -46,7 +46,7 @@ function stringify(o) {
     return JSON.stringify(o, o && Object.getOwnPropertyNames(o));
 }
 
-function addLine(text) {
+function log(text) {
     console.log('*** MICROBIT ***');
     console.log(text);
 }

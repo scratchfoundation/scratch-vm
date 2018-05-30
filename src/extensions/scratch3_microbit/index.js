@@ -2,8 +2,9 @@ const ArgumentType = require('../../extension-support/argument-type');
 const BlockType = require('../../extension-support/block-type');
 const log = require('../../util/log');
 const JSONRPC = require('../../util/jsonrpc');
-const ScratchBLE = require('../../io/bluetoothLowEnergy');
-const ScratchBT = require('../../io/bluetooth');
+const JSONRPCWebSocket = require('../../util/jsonrpc-web-socket');
+const ScratchBLE = require('../../io/scratchBLE');
+const ScratchBT = require('../../io/scratchBT');
 
 /**
  * Icon svg to be displayed at the left edge of each extension block, encoded as a data URI.
@@ -39,10 +40,7 @@ class MicroBit {
     constructor (socket, runtime) {
 
         ////////////////////////////////////////////////////////////////////////
-        // EV TEST MAY 29: playground.html copy from cwf ///////////////////////
-
-        console.log('microbit constructed');
-        console.log('what is self: ' + self);
+        // EV TEST MAY 30: playground.html copy from cwf ///////////////////////
 
         self.Scratch = self.Scratch || {}; // put Scratch on the Window
 
@@ -117,97 +115,10 @@ class MicroBit {
             );
         }
 
-        /*
-        attachFunctionToButton('initBLE', initBLE);
-        attachFunctionToButton('pingBLE', pingBLE);
-        attachFunctionToButton('discoverBLE', discoverBLE);
-        attachFunctionToButton('connectBLE', connectBLE);
-        attachFunctionToButton('readBLE', readBLE);
-        attachFunctionToButton('writeBLE', writeBLE);
-        */
-
-        function initBT() {
-            addLine('Connecting...');
-            self.Scratch.BT = new ScratchBT();
-            addLine('Connected.');
-        }
-
-        function discoverBT() {
-            Scratch.BT.requestDevice({
-                majorDeviceClass: 8,
-                minorDeviceClass: 1
-            }).then(
-                x => {
-                    addLine(`requestDevice resolved to: ${stringify(x)}`);
-                },
-                e => {
-                    addLine(`requestDevice rejected with: ${stringify(e)}`);
-                }
-            );
-        }
-
-        function connectBT() {
-            Scratch.BT.connectDevice({
-                peripheralId: document.getElementById('peripheralId').value,
-                pin: "1234"
-            }).then(
-                x => {
-                    addLine(`connectDevice resolved to: ${stringify(x)}`);
-                },
-                e => {
-                    addLine(`connectDevice rejected with: ${stringify(e)}`);
-                }
-            );
-        }
-
-        function sendMessage(message) {
-            Scratch.BT.sendMessage({
-                message: document.getElementById('messageBody').value,
-                encoding: 'base64'
-            }).then(
-                x => {
-                    addLine(`sendMessage resolved to: ${stringify(x)}`);
-                },
-                e => {
-                    addLine(`sendMessage rejected with: ${stringify(e)}`);
-                }
-            );
-        }
-
-        function beep() {
-            Scratch.BT.sendMessage({
-                message: 'DwAAAIAAAJQBgQKC6AOC6AM=',
-                encoding: 'base64'
-            }).then(
-                x => {
-                    addLine(`sendMessage resolved to: ${stringify(x)}`);
-                },
-                e => {
-                    addLine(`sendMessage rejected with: ${stringify(e)}`);
-                }
-            );
-        }
-
-        function stringify(o) {
-            return JSON.stringify(o, o && Object.getOwnPropertyNames(o));
-        }
-
-        //const follow = document.getElementById('follow');
-        //const log = document.getElementById('log');
-
         //const closeButton = document.getElementById('closeBT');
         //closeButton.onclick = () => {
         //    self.Scratch.BT.dispose();
         //}
-
-        /*
-        attachFunctionToButton('initBT', initBT);
-        attachFunctionToButton('discoverBT', discoverBT);
-        attachFunctionToButton('connectBT', connectBT);
-        attachFunctionToButton('send', sendMessage);
-        attachFunctionToButton('beep', beep);
-        */
-
 
         function addLine(text) {
             console.log('*** MICROBIT ***');

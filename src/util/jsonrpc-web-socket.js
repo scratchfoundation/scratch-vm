@@ -1,3 +1,5 @@
+const JSONRPC = require('./jsonrpc');
+
 class JSONRPCWebSocket extends JSONRPC {
     constructor(webSocket) {
         super();
@@ -15,28 +17,37 @@ class JSONRPCWebSocket extends JSONRPC {
     }
 
     _onSocketOpen(e) {
-        addLine(`WS opened: ${stringify(e)}`);
+        log(`WS opened: ${stringify(e)}`);
     }
 
     _onSocketClose(e) {
-        addLine(`WS closed: ${stringify(e)}`);
+        log(`WS closed: ${stringify(e)}`);
     }
 
     _onSocketError(e) {
-        addLine(`WS error: ${stringify(e)}`);
+        log(`WS error: ${stringify(e)}`);
     }
 
     _onSocketMessage(e) {
-        addLine(`Received message: ${e.data}`);
+        log(`Received message: ${e.data}`);
         const json = JSON.parse(e.data);
         this._handleMessage(json);
     }
 
     _sendMessage(message) {
         const messageText = JSON.stringify(message);
-        addLine(`Sending message: ${messageText}`);
+        log(`Sending message: ${messageText}`);
         this._ws.send(messageText);
     }
+}
+
+function stringify(o) {
+    return JSON.stringify(o, o && Object.getOwnPropertyNames(o));
+}
+
+function log(text) {
+    console.log('*** MICROBIT ***');
+    console.log(text);
 }
 
 module.exports = JSONRPCWebSocket;

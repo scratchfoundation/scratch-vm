@@ -20,10 +20,10 @@ class ScratchBT extends JSONRPCWebSocket {
     didReceiveCall(method, params) {
         switch (method) {
             case 'didDiscoverPeripheral':
-                addLine(`Peripheral discovered: ${stringify(params)}`);
+                log(`Peripheral discovered: ${stringify(params)}`);
                 break;
             case 'didReceiveMessage':
-                addLine(`Message received from peripheral: ${stringify(params)}`);
+                log(`Message received from peripheral: ${stringify(params)}`);
                 break;
             default:
                 return 'nah';
@@ -35,7 +35,7 @@ function stringify(o) {
     return JSON.stringify(o, o && Object.getOwnPropertyNames(o));
 }
 
-function addLine(text) {
+function log(text) {
     console.log('*** MICROBIT ***');
     console.log(text);
 }
