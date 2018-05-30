@@ -1,6 +1,9 @@
 const ArgumentType = require('../../extension-support/argument-type');
 const BlockType = require('../../extension-support/block-type');
 const log = require('../../util/log');
+const JSONRPC = require('../../util/jsonrpc');
+const ScratchBLE = require('../../io/bluetoothLowEnergy');
+const ScratchBT = require('../../io/bluetooth');
 
 /**
  * Icon svg to be displayed at the left edge of each extension block, encoded as a data URI.
@@ -34,6 +37,195 @@ class MicroBit {
      * @param {Runtime} runtime - the Scratch 3.0 runtime
      */
     constructor (socket, runtime) {
+
+        ////////////////////////////////////////////////////////////////////////
+        // EV TEST MAY 29: playground.html copy from cwf ///////////////////////
+
+        console.log('microbit constructed');
+        console.log('what is self: ' + self);
+
+        self.Scratch = self.Scratch || {}; // put Scratch on the Window
+
+        // To move up into VM later for VM to manage all BLE devices
+        // Synchronous?
+        function initBLE() {
+            console.log('Connecting...');
+            self.Scratch.BLE = new ScratchBLE();
+            console.log('Connected.');
+        }
+
+        function pingBLE() {
+            Scratch.BLE.sendRemoteRequest('pingMe').then(
+                x => {
+                    console.log(`Ping request resolved with: ` + x);
+                },
+                e => {
+                    console.log(`Ping request rejected with: ` + e);
+                }
+            );
+        }
+
+        function discoverBLE() {
+            return Scratch.BLE.requestDevice({
+                filters: [
+                    { services: [0xf005] } // micro:bit
+                ]
+            }).then(
+                x => {
+                    console.log(`requestDevice resolved to: ` + x);
+                },
+                e => {
+                    console.log(`requestDevice rejected with: ` + e);
+                }
+            );
+        }
+
+        function connectBLE() {
+            // this should really be implicit in `requestDevice` but splitting it out helps with debugging
+            return Scratch.BLE.sendRemoteRequest(
+                'connect',
+                { peripheralId: Scratch.BLE.discoveredPeripheralId }
+            ).then(
+                x => {
+                    console.log(`connect resolved to: ` + x);
+                },
+                e => {
+                    console.log(`connect rejected with: ` + e);
+                }
+            );
+        }
+
+        function readBLE() {
+            Scratch.BLE.read(0xf005, '5261da01-fa7e-42ab-850b-7c80220097cc', true).then(
+                x => {
+                    console.log(`read resolved to: ` + x);
+                },
+                e => {
+                    console.log(`read rejected with: ` + e);
+                }
+            );
+        }
+
+        function writeBLE() {
+            return Scratch.BLE.write(0xf005, '5261da03-fa7e-42ab-850b-7c80220097cc', 'LINK').then(
+                x => {
+                    console.log(`write resolved to: ` + x);
+                },
+                e => {
+                    console.log(`write rejected with: ` + e);
+                }
+            );
+        }
+
+        /*
+        attachFunctionToButton('initBLE', initBLE);
+        attachFunctionToButton('pingBLE', pingBLE);
+        attachFunctionToButton('discoverBLE', discoverBLE);
+        attachFunctionToButton('connectBLE', connectBLE);
+        attachFunctionToButton('readBLE', readBLE);
+        attachFunctionToButton('writeBLE', writeBLE);
+        */
+
+        function initBT() {
+            addLine('Connecting...');
+            self.Scratch.BT = new ScratchBT();
+            addLine('Connected.');
+        }
+
+        function discoverBT() {
+            Scratch.BT.requestDevice({
+                majorDeviceClass: 8,
+                minorDeviceClass: 1
+            }).then(
+                x => {
+                    addLine(`requestDevice resolved to: ${stringify(x)}`);
+                },
+                e => {
+                    addLine(`requestDevice rejected with: ${stringify(e)}`);
+                }
+            );
+        }
+
+        function connectBT() {
+            Scratch.BT.connectDevice({
+                peripheralId: document.getElementById('peripheralId').value,
+                pin: "1234"
+            }).then(
+                x => {
+                    addLine(`connectDevice resolved to: ${stringify(x)}`);
+                },
+                e => {
+                    addLine(`connectDevice rejected with: ${stringify(e)}`);
+                }
+            );
+        }
+
+        function sendMessage(message) {
+            Scratch.BT.sendMessage({
+                message: document.getElementById('messageBody').value,
+                encoding: 'base64'
+            }).then(
+                x => {
+                    addLine(`sendMessage resolved to: ${stringify(x)}`);
+                },
+                e => {
+                    addLine(`sendMessage rejected with: ${stringify(e)}`);
+                }
+            );
+        }
+
+        function beep() {
+            Scratch.BT.sendMessage({
+                message: 'DwAAAIAAAJQBgQKC6AOC6AM=',
+                encoding: 'base64'
+            }).then(
+                x => {
+                    addLine(`sendMessage resolved to: ${stringify(x)}`);
+                },
+                e => {
+                    addLine(`sendMessage rejected with: ${stringify(e)}`);
+                }
+            );
+        }
+
+        function stringify(o) {
+            return JSON.stringify(o, o && Object.getOwnPropertyNames(o));
+        }
+
+        //const follow = document.getElementById('follow');
+        //const log = document.getElementById('log');
+
+        //const closeButton = document.getElementById('closeBT');
+        //closeButton.onclick = () => {
+        //    self.Scratch.BT.dispose();
+        //}
+
+        /*
+        attachFunctionToButton('initBT', initBT);
+        attachFunctionToButton('discoverBT', discoverBT);
+        attachFunctionToButton('connectBT', connectBT);
+        attachFunctionToButton('send', sendMessage);
+        attachFunctionToButton('beep', beep);
+        */
+
+
+        function addLine(text) {
+            console.log('*** MICROBIT ***');
+            console.log(text);
+        }
+
+        // Chain test commands
+        initBLE();
+
+        // Doesn't work because ws isn't open yet
+        /*discoverBLE().then(
+          connectBLE().then(
+            writeBLE()
+          )
+        );*/
+
+        ////////////////////////////////////////////////////////////////////////
+
         /**
          * The socket-IO socket used to communicate with the Device Manager about this device.
          * @type {Socket}
