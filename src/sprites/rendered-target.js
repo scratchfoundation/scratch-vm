@@ -930,7 +930,6 @@ class RenderedTarget extends Target {
         newClone.rotationStyle = this.rotationStyle;
         newClone.effects = JSON.parse(JSON.stringify(this.effects));
         newClone.variables = JSON.parse(JSON.stringify(this.variables));
-        newClone.lists = JSON.parse(JSON.stringify(this.lists));
         newClone.initDrawable(StageLayering.SPRITE_LAYER);
         newClone.updateAllDrawableProperties();
         // Place behind the current target.
@@ -957,7 +956,6 @@ class RenderedTarget extends Target {
             newTarget.rotationStyle = this.rotationStyle;
             newTarget.effects = JSON.parse(JSON.stringify(this.effects));
             newTarget.variables = JSON.parse(JSON.stringify(this.variables));
-            newTarget.lists = JSON.parse(JSON.stringify(this.lists));
             newTarget.updateAllDrawableProperties();
             newTarget.goBehindOther(this);
             return newTarget;
@@ -1049,7 +1047,6 @@ class RenderedTarget extends Target {
             rotationStyle: this.rotationStyle,
             blocks: this.blocks._blocks,
             variables: this.variables,
-            lists: this.lists,
             costumes: costumes,
             sounds: this.getSounds(),
             tempo: this.tempo,

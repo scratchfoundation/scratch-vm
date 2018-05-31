@@ -1005,12 +1005,16 @@ class VirtualMachine extends EventEmitter {
         );
 
         const variables = Object.keys(variableMap).map(k => variableMap[k]);
+        const workspaceComments = Object.keys(this.editingTarget.comments)
+            .map(k => this.editingTarget.comments[k])
+            .filter(c => c.blockId === null);
 
         const xmlString = `<xml xmlns="http://www.w3.org/1999/xhtml">
                             <variables>
                                 ${variables.map(v => v.toXML()).join()}
                             </variables>
-                            ${this.editingTarget.blocks.toXML()}
+                            ${workspaceComments.map(c => c.toXML()).join()}
+                            ${this.editingTarget.blocks.toXML(this.editingTarget.comments)}
                         </xml>`;
 
         this.emit('workspaceUpdate', {xml: xmlString});
