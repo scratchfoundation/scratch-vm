@@ -40,13 +40,13 @@
     "minilog": "3.1.0",
     "nets": "3.2.0",
     "scratch-parser": "4.1.1",
+    "scratch-translate-extension-languages": "0.0.20180521154850",
     "socket.io-client": "2.0.4",
     "text-encoding": "0.6.4",
     "worker-loader": "^1.1.1"
   },
   "devDependencies": {
     "adm-zip": "0.4.7",
-    "arraybuffer-loader": "^1.0.3",
     "babel-core": "^6.24.1",
     "babel-eslint": "^8.0.1",
     "babel-loader": "^7.0.0",
@@ -66,7 +66,6 @@
     "scratch-blocks": "latest",
     "scratch-render": "latest",
     "scratch-storage": "^0.4.0",
-    "scratch-translate-extension-languages": "0.0.20180521154850",
     "script-loader": "0.7.2",
     "stats.js": "^0.17.0",
     "tap": "^11.0.1",
