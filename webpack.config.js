@@ -122,10 +122,6 @@ module.exports = [
                     loader: 'script-loader'
                 },
                 {
-                    test: require.resolve('highlightjs/highlight.pack.min.js'),
-                    loader: 'script-loader'
-                },
-                {
                     test: require.resolve('scratch-blocks/dist/vertical.js'),
                     loader: 'expose-loader?Blockly'
                 },
