@@ -1,8 +1,8 @@
 const JSONRPCWebSocket = require('../util/jsonrpc-web-socket');
 
 class ScratchBLE extends JSONRPCWebSocket {
-    constructor() {
-        super(new WebSocket('ws://localhost:20110/scratch/ble'));
+    constructor(webSocket) {
+        super(webSocket); // TODO: Put Scratch-Link BLE URL back in here
 
         this.discoveredPeripheralId = null;
     }

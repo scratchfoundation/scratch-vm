@@ -36,99 +36,6 @@ class MicroBit {
      */
     constructor (socket, runtime) {
 
-        ////////////////////////////////////////////////////////////////////////
-        // EV TEST MAY 30: playground.html copy from cwf ///////////////////////
-
-        self.Scratch = self.Scratch || {}; // put Scratch on the Window
-
-        // To move up into VM later for VM to manage all BLE devices
-        // Synchronous?
-        function initBLE() {
-            console.log('Connecting...');
-            self.Scratch.BLE = new ScratchBLE();
-            console.log('Connected.');
-        }
-
-        function pingBLE() {
-            Scratch.BLE.sendRemoteRequest('pingMe').then(
-                x => {
-                    console.log(`Ping request resolved with: ` + x);
-                },
-                e => {
-                    console.log(`Ping request rejected with: ` + e);
-                }
-            );
-        }
-
-        function discoverBLE() {
-            return Scratch.BLE.requestDevice({
-                filters: [
-                    { services: [0xf005] } // micro:bit
-                ]
-            }).then(
-                x => {
-                    console.log(`requestDevice resolved to: ` + x);
-                },
-                e => {
-                    console.log(`requestDevice rejected with: ` + e);
-                }
-            );
-        }
-
-        function connectBLE() {
-            // this should really be implicit in `requestDevice` but splitting it out helps with debugging
-            return Scratch.BLE.sendRemoteRequest(
-                'connect',
-                { peripheralId: Scratch.BLE.discoveredPeripheralId }
-            ).then(
-                x => {
-                    console.log(`connect resolved to: ` + x);
-                },
-                e => {
-                    console.log(`connect rejected with: ` + e);
-                }
-            );
-        }
-
-        function readBLE() {
-            Scratch.BLE.read(0xf005, '5261da01-fa7e-42ab-850b-7c80220097cc', true).then(
-                x => {
-                    console.log(`read resolved to: ` + x);
-                },
-                e => {
-                    console.log(`read rejected with: ` + e);
-                }
-            );
-        }
-
-        function writeBLE() {
-            return Scratch.BLE.write(0xf005, '5261da03-fa7e-42ab-850b-7c80220097cc', 'LINK').then(
-                x => {
-                    console.log(`write resolved to: ` + x);
-                },
-                e => {
-                    console.log(`write rejected with: ` + e);
-                }
-            );
-        }
-
-        //const closeButton = document.getElementById('closeBT');
-        //closeButton.onclick = () => {
-        //    self.Scratch.BT.dispose();
-        //}
-
-        // Chain test commands
-        initBLE();
-
-        // Doesn't work because ws isn't open yet
-        /*discoverBLE().then(
-          connectBLE().then(
-            writeBLE()
-          )
-        );*/
-
-        ////////////////////////////////////////////////////////////////////////
-
         /**
          * The socket-IO socket used to communicate with the Device Manager about this device.
          * @type {Socket}
@@ -556,15 +463,86 @@ class Scratch3MicroBitBlocks {
     }
 
     /**
-     * Use the Device Manager client to attempt to connect to a MicroBit device.
+     * Use the Scratch Link client to attempt to connect to a MicroBit device.
      */
     connect () {
+
+        ////////////////////////////////////////////////////////////////////////
+        // TODO: Move up to elsewhere in VM or GUI?
+        console.log('Connecting BLE...');
+        var ScratchBLEWebSocket = new WebSocket('ws://localhost:20110/scratch/ble');
+        var ScratchBLEConnection = new ScratchBLE(ScratchBLEWebSocket);
+        console.log('Connected.');
+        ScratchBLEWebSocket.onopen = e => pingBLE();
+        function pingBLE() {
+            ScratchBLEConnection.sendRemoteRequest('pingMe').then(
+                x => {
+                    console.log(`Ping request resolved with:`);
+                    console.log(x);
+                    discoverBLE();
+                },
+                e => {
+                    console.log(`Ping request rejected with:`);
+                    console.log(e);
+                }
+            );
+        }
+        function discoverBLE() {
+            ScratchBLEConnection.requestDevice({
+                filters: [
+                    { services: [0xf005] } // micro:bit
+                ]
+            }).then(
+                x => {
+                    console.log(`requestDevice resolved to:`);
+                    console.log(x);
+                    setTimeout(function() { connectBLE(); }, 5000);
+                },
+                e => {
+                    console.log(`requestDevice rejected with:`);
+                    console.log(e);
+                }
+            );
+        }
+        function connectBLE() {
+            // this should really be implicit in `requestDevice` but splitting it out helps with debugging
+            ScratchBLEConnection.sendRemoteRequest(
+                'connect',
+                { peripheralId: ScratchBLEConnection.discoveredPeripheralId }
+            ).then(
+                x => {
+                    console.log(`connect resolved to:`);
+                    console.log(x);
+                },
+                e => {
+                    console.log(`connect rejected with:`);
+                    console.log(e);
+                }
+            );
+        }
+
         this._device = new MicroBit(null, this.runtime);
         window.addEventListener('message', event => {
-            if (event.data.type === 'data') {
-                this._device._processData(new Uint8Array(event.data.buffer));
+            //if (event.data.type === 'data') {
+            //    this._device._processData(new Uint8Array(event.data.buffer));
+            //}
+            // displayText BLE HACK
+            if(event.data.uuid === 'text') {
+              ScratchBLEConnection.write(0xf005, '5261da03-fa7e-42ab-850b-7c80220097cc', event.data.buffer).then(
+                  x => {
+                      console.log(`write resolved to:`);
+                      console.log(x);
+                  },
+                  e => {
+                      console.log(`write rejected with:`);
+                      console.log(e);
+                  }
+              );
             }
         }, false);
+
+        ////////////////////////////////////////////////////////////////////////
+
         /*
          * if (this._device || this._finder) {
          *     return;
