@@ -37,6 +37,12 @@ const CORE_EXTENSIONS = [
     'sound'
 ];
 
+// Adjust script coordinates to account for
+// larger block size in scratch-blocks.
+// @todo: Determine more precisely the right formulas here.
+const WORKSPACE_X_SCALE = 1.5;
+const WORKSPACE_Y_SCALE = 2.2;
+
 /**
  * Convert a Scratch 2.0 procedure string (e.g., "my_procedure %s %b %n")
  * into an argument map. This allows us to provide the expected inputs
@@ -166,11 +172,8 @@ const parseScripts = function (scripts, blocks, addBroadcastMsg, getVariableId, 
             comments, scriptIndexForComment);
         scriptIndexForComment = newCommentIndex;
         if (parsedBlockList[0]) {
-            // Adjust script coordinates to account for
-            // larger block size in scratch-blocks.
-            // @todo: Determine more precisely the right formulas here.
-            parsedBlockList[0].x = scriptX * 1.5;
-            parsedBlockList[0].y = scriptY * 2.2;
+            parsedBlockList[0].x = scriptX * WORKSPACE_X_SCALE;
+            parsedBlockList[0].y = scriptY * WORKSPACE_Y_SCALE;
             parsedBlockList[0].topLevel = true;
             parsedBlockList[0].parent = null;
         }
@@ -449,17 +452,26 @@ const parseScratchObject = function (object, runtime, extensions, topLevel, zip)
     const blockComments = {};
     if (object.hasOwnProperty('scriptComments')) {
         const comments = object.scriptComments.map(commentDesc => {
+            const [
+                commentX,
+                commentY,
+                commentWidth,
+                commentHeight,
+                commentFullSize,
+                flattenedBlockIndex,
+                commentText
+            ] = commentDesc;
             const isBlockComment = commentDesc[5] >= 0;
             const newComment = new Comment(
                 null, // generate a new id for this comment
-                commentDesc[6], // text content of sb2 comment
+                commentText, // text content of sb2 comment
                 // Only serialize x & y position of comment if it's a workspace comment
                 // If it's a block comment, we'll let scratch-blocks handle positioning
-                isBlockComment ? null : commentDesc[0] * 1.5, // x position of comment
-                isBlockComment ? null : commentDesc[1] * 2.2, // y position of comment
-                commentDesc[2] * 1.5, // width of comment
-                commentDesc[3] * 2.2, // height of comment
-                !commentDesc[4] // commentDesc[4] -- false means minimized, true means full screen
+                isBlockComment ? null : commentX * WORKSPACE_X_SCALE,
+                isBlockComment ? null : commentY * WORKSPACE_Y_SCALE,
+                commentWidth * WORKSPACE_X_SCALE,
+                commentHeight * WORKSPACE_Y_SCALE,
+                !commentFullSize
             );
             if (isBlockComment) {
                 // commentDesc[5] refers to the index of the block that this
@@ -470,13 +482,13 @@ const parseScratchObject = function (object, runtime, extensions, topLevel, zip)
                 // index as the blockId property of the new comment. We will
                 // change this to refer to the actual block id of the corresponding
                 // block when that block gets created
-                newComment.blockId = commentDesc[5];
+                newComment.blockId = flattenedBlockIndex;
                 // Add this comment to the block comments object with its script index
                 // as the key
-                if (blockComments.hasOwnProperty(commentDesc[5])) {
-                    blockComments[commentDesc[5]].push(newComment);
+                if (blockComments.hasOwnProperty(flattenedBlockIndex)) {
+                    blockComments[flattenedBlockIndex].push(newComment);
                 } else {
-                    blockComments[commentDesc[5]] = [newComment];
+                    blockComments[flattenedBlockIndex] = [newComment];
                 }
             }
             return newComment;

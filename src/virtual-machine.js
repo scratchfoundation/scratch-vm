@@ -1005,7 +1005,7 @@ class VirtualMachine extends EventEmitter {
         );
 
         const variables = Object.keys(variableMap).map(k => variableMap[k]);
-        const wkspcComments = Object.keys(this.editingTarget.comments)
+        const workspaceComments = Object.keys(this.editingTarget.comments)
             .map(k => this.editingTarget.comments[k])
             .filter(c => c.blockId === null);
 
@@ -1013,7 +1013,7 @@ class VirtualMachine extends EventEmitter {
                             <variables>
                                 ${variables.map(v => v.toXML()).join()}
                             </variables>
-                            ${wkspcComments.map(c => c.toXML()).join()}
+                            ${workspaceComments.map(c => c.toXML()).join()}
                             ${this.editingTarget.blocks.toXML(this.editingTarget.comments)}
                         </xml>`;
 

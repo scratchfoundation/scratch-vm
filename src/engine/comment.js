@@ -4,23 +4,26 @@
  */
 
 const uid = require('../util/uid');
-const cast = require('../util/cast');
+const Cast = require('../util/cast');
 
 class Comment {
     /**
-     * @param {string} id Id of the variable.
-     * @param {string} name Name of the variable.
-     * @param {string} type Type of the variable, one of '' or 'list'
-     * @param {boolean} isCloud Whether the variable is stored in the cloud.
+     * @param {string} id Id of the comment.
+     * @param {string} text Text content of the comment.
+     * @param {number} x X position of the comment on the workspace.
+     * @param {number} y Y position of the comment on the workspace.
+     * @param {number} width The width of the comment when it is full size.
+     * @param {number} height The height of the comment when it is full size.
+     * @param {boolean} minimized Whether the comment is minimized.
      * @constructor
-     */ /* TODO should the comment constructor take in an id? will we need this for sb3? */
+     */
     constructor (id, text, x, y, width, height, minimized) {
         this.id = id || uid();
         this.text = text;
         this.x = x;
         this.y = y;
-        this.width = Math.max(cast.toNumber(width), Comment.MIN_WIDTH);
-        this.height = Math.max(cast.toNumber(height), Comment.MIN_HEIGHT);
+        this.width = Math.max(Cast.toNumber(width), Comment.MIN_WIDTH);
+        this.height = Math.max(Cast.toNumber(height), Comment.MIN_HEIGHT);
         this.minimized = minimized || false;
         this.blockId = null;
     }
