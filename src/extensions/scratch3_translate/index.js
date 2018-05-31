@@ -43,6 +43,14 @@ class Scratch3TranslateBlocks {
         });
 
         /**
+         * A randomly selected language code, for use as the default value in the language menu.
+         * @type {string}
+         * @private
+         */
+        this._randomLanguageCode = this._supportedLanguages[
+            Math.floor(Math.random() * this._supportedLanguages.length)].value;
+
+        /**
          * The result from the most recent translation.
          * @type {string}
          * @private
@@ -102,7 +110,7 @@ class Scratch3TranslateBlocks {
                         LANGUAGE: {
                             type: ArgumentType.STRING,
                             menu: 'languages',
-                            defaultValue: this._viewerLanguageCode
+                            defaultValue: this._randomLanguageCode
                         }
                     }
                 },
