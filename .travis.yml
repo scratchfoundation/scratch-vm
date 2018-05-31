@@ -20,6 +20,9 @@ jobs:
     include:
     - env: NPM_SCRIPT=lint
       node_js: 8
+    - env: NPM_SCRIPT=build
+      node_js: 8
+      if: not (branch in (master, develop) and type != pull_request)
     - stage: release
       node_js: 8
       env: NPM_SCRIPT=build
