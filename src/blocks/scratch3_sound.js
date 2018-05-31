@@ -229,6 +229,7 @@ class Scratch3SoundBlocks {
 
         if (util.target.audioPlayer === null) return;
         util.target.audioPlayer.setEffect(effect, soundState.effects[effect]);
+        this.runtime.requestRedraw();
     }
 
     _syncEffectsForTarget (target) {
@@ -277,6 +278,7 @@ class Scratch3SoundBlocks {
         util.target.volume = volume;
         if (util.target.audioPlayer === null) return;
         util.target.audioPlayer.setVolume(util.target.volume);
+        this.runtime.requestRedraw();
     }
 
     getVolume (args, util) {
