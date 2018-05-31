@@ -21,7 +21,7 @@ const builtinExtensions = {
     music: Scratch3MusicBlocks,
     microbit: Scratch3MicroBitBlocks,
     translate: Scratch3TranslateBlocks,
-    videoSensing: Scratch3VideoSensingBlocks
+    videoSensing: Scratch3VideoSensingBlocks,
     speech: Scratch3SpeechBlocks
 };
 
