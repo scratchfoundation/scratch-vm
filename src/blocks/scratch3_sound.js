@@ -204,11 +204,11 @@ class Scratch3SoundBlocks {
     }
 
     setEffect (args, util) {
-        this._updateEffect(args, util, false);
+        return this._updateEffect(args, util, false);
     }
 
     changeEffect (args, util) {
-        this._updateEffect(args, util, true);
+        return this._updateEffect(args, util, true);
     }
 
     _updateEffect (args, util, change) {
@@ -229,6 +229,11 @@ class Scratch3SoundBlocks {
 
         if (util.target.audioPlayer === null) return;
         util.target.audioPlayer.setEffect(effect, soundState.effects[effect]);
+
+        // Yield until the next tick.
+        return new Promise(resolve => {
+            resolve();
+        });
     }
 
     _syncEffectsForTarget (target) {
@@ -264,12 +269,12 @@ class Scratch3SoundBlocks {
 
     setVolume (args, util) {
         const volume = Cast.toNumber(args.VOLUME);
-        this._updateVolume(volume, util);
+        return this._updateVolume(volume, util);
     }
 
     changeVolume (args, util) {
         const volume = Cast.toNumber(args.VOLUME) + util.target.volume;
-        this._updateVolume(volume, util);
+        return this._updateVolume(volume, util);
     }
 
     _updateVolume (volume, util) {
@@ -277,6 +282,11 @@ class Scratch3SoundBlocks {
         util.target.volume = volume;
         if (util.target.audioPlayer === null) return;
         util.target.audioPlayer.setVolume(util.target.volume);
+
+        // Yield until the next tick.
+        return new Promise(resolve => {
+            resolve();
+        });
     }
 
     getVolume (args, util) {
