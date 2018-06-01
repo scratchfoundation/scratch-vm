@@ -126,15 +126,15 @@ module.exports = [
                     loader: 'expose-loader?Blockly'
                 },
                 {
-                    test: require.resolve('scratch-audio'),
+                    test: require.resolve('scratch-audio/src/index.js'),
                     loader: 'expose-loader?AudioEngine'
                 },
                 {
-                    test: require.resolve('scratch-storage'),
+                    test: require.resolve('scratch-storage/src/index.js'),
                     loader: 'expose-loader?ScratchStorage'
                 },
                 {
-                    test: require.resolve('scratch-render'),
+                    test: require.resolve('scratch-render/src/index.js'),
                     loader: 'expose-loader?ScratchRender'
                 }
             ])
