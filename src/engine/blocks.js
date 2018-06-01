@@ -247,7 +247,7 @@ class Blocks {
     // ---------------------------------------------------------------------
 
     /**
-     * Create event listener for blocks and variables. Handles validation and
+     * Create event listener for blocks, variables, and comments. Handles validation and
      * serves as a generic adapter between the blocks, variables, and the
      * runtime interface.
      * @param {object} e Blockly "block" or "variable" event
@@ -256,7 +256,8 @@ class Blocks {
     blocklyListen (e, optRuntime) {
         // Validate event
         if (typeof e !== 'object') return;
-        if (typeof e.blockId !== 'string' && typeof e.varId !== 'string') {
+        if (typeof e.blockId !== 'string' && typeof e.varId !== 'string' &&
+            typeof e.commentId !== 'string') {
             return;
         }
         const stage = optRuntime.getTargetForStage();
@@ -355,6 +356,74 @@ class Blocks {
             break;
         case 'var_delete':
             stage.deleteVariable(e.varId);
+            break;
+        case 'comment_create':
+            if (optRuntime.getEditingTarget()) {
+                const currTarget = optRuntime.getEditingTarget();
+                currTarget.createComment(e.commentId, e.blockId, e.text,
+                    e.xy.x, e.xy.y, e.width, e.height, e.minimized);
+            }
+            break;
+        case 'comment_change':
+            if (optRuntime) {
+                const currTarget = optRuntime.getEditingTarget();
+                if (!currTarget.comments.hasOwnProperty(e.commentId)) {
+                    log.warn(`Cannot change comment with id ${e.commentId} because it does not exist.`);
+                    return;
+                }
+                const comment = currTarget.comments[e.commentId];
+                const change = e.newContents_;
+                if (typeof change === 'object') {
+                    if (change.hasOwnProperty('minimized')) {
+                        comment.minimized = change.minimized;
+                        break;
+                    } else if (change.hasOwnProperty('width') && change.hasOwnProperty('height')){
+                        comment.width = change.width;
+                        comment.height = change.height;
+                        break;
+                    }
+                } else if (typeof change === 'string') {
+                    comment.text = change;
+                    break;
+                }
+                log.warn(`Unrecognized comment change: ${
+                    JSON.stringify(change)} for comment with id: ${e.commentId}.`);
+                return;
+            }
+            break;
+        case 'comment_move':
+            if (optRuntime) {
+                const currTarget = optRuntime.getEditingTarget();
+                if (!currTarget.comments.hasOwnProperty(e.commentId)) {
+                    log.warn(`Cannot change comment with id ${e.commentId} because it does not exist.`);
+                    return;
+                }
+                const comment = currTarget.comments[e.commentId];
+                const newCoord = e.newCoordinate_;
+                comment.x = Math.floor(newCoord.x);
+                comment.y = Math.floor(newCoord.y);
+            }
+            break;
+        case 'comment_delete':
+            if (optRuntime) {
+                const currTarget = optRuntime.getEditingTarget();
+                if (!currTarget.comments.hasOwnProperty(e.commentId)) {
+                    // If we're in this state, we have probably received
+                    // a delete event from a workspace that we switched from
+                    // (e.g. a delete event for a comment on sprite a's workspace
+                    // when switching from sprite a to sprite b)
+                    return;
+                }
+                delete currTarget.comments[e.commentId];
+                if (e.blockId) {
+                    const block = currTarget.blocks.getBlock(e.blockId);
+                    if (!block) {
+                        log.warn(`Could not find block referenced by comment with id: ${e.commentId}`);
+                        return;
+                    }
+                    delete block.comment;
+                }
+            }
             break;
         }
     }
