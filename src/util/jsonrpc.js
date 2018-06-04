@@ -69,8 +69,10 @@ class JSONRPC {
             throw new Error(`Bad or missing JSON-RPC version in message: ${stringify(json)}`);
         }
         if (json.hasOwnProperty('method')) {
+            console.log("jsonrpc handlemessage / handlerequest");
             this._handleRequest(json);
         } else {
+            console.log("jsonrpc handlemessage / handleresponse");
             this._handleResponse(json);
         }
     }

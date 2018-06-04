@@ -308,6 +308,7 @@ class Scratch3MicroBitBlocks {
          */
         this.runtime = runtime;
 
+        // TODO: Connect this up to the GUI?
         this.connect();
     }
 
@@ -521,54 +522,51 @@ class Scratch3MicroBitBlocks {
             );
         }
 
+        //ScratchBLEWebSocket.onmessage = e => console.log(e);
+
         this._device = new MicroBit(null, this.runtime);
         window.addEventListener('message', event => {
-            //if (event.data.type === 'data') {
-            //    this._device._processData(new Uint8Array(event.data.buffer));
-            //}
-            // displayText BLE HACK
-            if(event.data.uuid === 'text') {
-              ScratchBLEConnection.write(0xf005, '5261da03-fa7e-42ab-850b-7c80220097cc', event.data.buffer).then(
-                  x => {
-                      console.log(`write resolved to:`);
-                      console.log(x);
-                  },
-                  e => {
-                      console.log(`write rejected with:`);
-                      console.log(e);
-                  }
-              );
+            if (event.data.type === 'data') {
+              console.log('micro:bit incoming data');
+                this._device._processData(new Uint8Array(event.data.buffer));
+            }
+
+            // micro:bit firmware IDs
+            // var SERVICE_UUID = 'f005',
+            // OUTPUT_CHAR = '5261da01fa7e42ab850b7c80220097cc',
+            // LED_TEXT_CHAR = '5261da03fa7e42ab850b7c80220097cc',
+            // LED_MATRIX_CHAR = '5261da04fa7e42ab850b7c80220097cc';
+
+            if (event.data.uuid === 'text') {
+                var b64encoded = btoa(String.fromCharCode.apply(null, event.data.buffer)); // TODO: more failsafe way to encode?
+                ScratchBLEConnection.write(0xf005, '5261da02-fa7e-42ab-850b-7c80220097cc', b64encoded, 'base64').then(
+                    x => {
+                        console.log(`write resolved to:`);
+                        console.log(x);
+                    },
+                    e => {
+                        console.log(`write rejected with:`);
+                        console.log(e);
+                    }
+                );
+            }
+
+            if (event.data.uuid === 'matrix') {
+                var b64encoded = btoa(String.fromCharCode.apply(null, event.data.buffer)); // TODO: more failsafe way to encode?
+                ScratchBLEConnection.write(0xf005, '5261da02-fa7e-42ab-850b-7c80220097cc', b64encoded, 'base64').then(
+                    x => {
+                        console.log(`write resolved to:`);
+                        console.log(x);
+                    },
+                    e => {
+                        console.log(`write rejected with:`);
+                        console.log(e);
+                    }
+                );
             }
         }, false);
 
         ////////////////////////////////////////////////////////////////////////
-
-        /*
-         * if (this._device || this._finder) {
-         *     return;
-         * }
-         * const deviceManager = this.runtime.ioDevices.deviceManager;
-         * const finder = this._finder =
-         *     deviceManager.searchAndConnect(Scratch3MicroBitBlocks.EXTENSION_NAME, MicroBit.DEVICE_TYPE, DEV_SPEC);
-         *
-         * this._finder.promise.then(
-         *     socket => {
-         *         if (this._finder === finder) {
-         *             this._finder = null;
-         *             this._device = new MicroBit(socket, this.runtime);
-         *         } else {
-         *             log.warn('Ignoring success from stale MicroBit connection attempt');
-         *         }
-         *     },
-         *     reason => {
-         *         if (this._finder === finder) {
-         *             this._finder = null;
-         *             log.warn(`MicroBit connection failed: ${reason}`);
-         *         } else {
-         *             log.warn('Ignoring failure from stale MicroBit connection attempt');
-         *         }
-         *     });
-         */
     }
 
     /**
