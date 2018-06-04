@@ -560,6 +560,7 @@ class Scratch3MicroBitBlocks {
      */
     displaySymbol (args) {
         const hex = symbols2hex[args.SYMBOL];
+        if (!hex) return;
         const output = new Uint8Array(6);
         output[0] = BLECommand.CMD_DISPLAY_LED;
         output[1] = (hex >> 20) & 0x1F;
