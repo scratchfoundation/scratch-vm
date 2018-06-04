@@ -259,6 +259,17 @@ const symbols2hex = {
 };
 
 /**
+ * Enum for micro:bit BLE command protocol.
+ * @readonly
+ * @enum {number}
+ */
+const BLECommand = {
+    CMD_PIN_CONFIG: 0x80,
+    CMD_DISPLAY_TEXT: 0x81,
+    CMD_DISPLAY_LED: 0x82
+};
+
+/**
  * Scratch 3.0 blocks to interact with a MicroBit device.
  */
 class Scratch3MicroBitBlocks {
@@ -530,11 +541,16 @@ class Scratch3MicroBitBlocks {
     /**
      * Display text on the 5x5 LED matrix.
      * @param {object} args - the block's arguments.
-     * Note the limit is 20 characters
+     * Note the limit is 19 characters
      */
     displayText (args) {
-        const text = String(args.TEXT).substring(0, 20);
-        window.postMessage({type: 'command', uuid: 'text', buffer: text}, '*');
+        const text = String(args.TEXT).substring(0, 19);
+        const output = new Uint8Array(text.length + 1);
+        output[0] = BLECommand.CMD_DISPLAY_TEXT;
+        for (let i = 0; i < text.length; i++) {
+            output[i + 1] = text.charCodeAt(i);
+        }
+        window.postMessage({type: 'command', buffer: output}, '*');
         return;
     }
 
@@ -544,13 +560,14 @@ class Scratch3MicroBitBlocks {
      */
     displaySymbol (args) {
         const hex = symbols2hex[args.SYMBOL];
-        const output = new Uint8Array(5);
-        output[0] = (hex >> 20) & 0x1F;
-        output[1] = (hex >> 15) & 0x1F;
-        output[2] = (hex >> 10) & 0x1F;
-        output[3] = (hex >> 5) & 0x1F;
-        output[4] = hex & 0x1F;
-        window.postMessage({type: 'command', uuid: 'matrix', buffer: output}, '*');
+        const output = new Uint8Array(6);
+        output[0] = BLECommand.CMD_DISPLAY_LED;
+        output[1] = (hex >> 20) & 0x1F;
+        output[2] = (hex >> 15) & 0x1F;
+        output[3] = (hex >> 10) & 0x1F;
+        output[4] = (hex >> 5) & 0x1F;
+        output[5] = hex & 0x1F;
+        window.postMessage({type: 'command', buffer: output}, '*');
         return;
     }
 
@@ -564,7 +581,7 @@ class Scratch3MicroBitBlocks {
         } else if (args.STATE === 'off') {
             this._device.ledMatrixState[args.Y - 1] &= ~(1 << 5 - args.X);
         } else return;
-        window.postMessage({type: 'command', uuid: 'matrix', buffer: this._device.ledMatrixState}, '*');
+        this._displayLEDs(this._device.ledMatrixState);
         return;
     }
 
@@ -575,8 +592,21 @@ class Scratch3MicroBitBlocks {
         for (let i = 0; i < 5; i++) {
             this._device.ledMatrixState[i] = 0;
         }
-        window.postMessage({type: 'command', uuid: 'matrix', buffer: this._device.ledMatrixState}, '*');
+        this._displayLEDs(this._device.ledMatrixState);
         return;
+    }
+
+    /**
+     * Send value to the micro:bit LED matrix
+     * @param {Uin8array} matrix - the value to send to the matrix.
+     */
+    _displayLEDs (matrix) {
+        const output = new Uint8Array(matrix.length + 1);
+        output[0] = BLECommand.CMD_DISPLAY_LED;
+        for (let i = 0; i < matrix.length; i++) {
+            output[i + 1] = matrix[i];
+        }
+        window.postMessage({type: 'command', buffer: output}, '*');
     }
 
     /**
