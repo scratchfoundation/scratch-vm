@@ -81,7 +81,7 @@ class Scratch3SpeechBlocks {
         /**
          *  Similar to _currentUtterance, but set back to '' at the beginning of listening block.
          *  Used to get the hat blocks to edge trigger.  In order to detect someone saying
-         *  the same thing twice in two subsequent liten and wait blocks
+         *  the same thing twice in two subsequent listen and wait blocks
          *  and still trigger the hat, we need this to go from
          *  '' at the beginning of the listen block to '<transcription value>' at the end.
          * @type {string}
@@ -373,9 +373,26 @@ class Scratch3SpeechBlocks {
         // If the result from the speech api isn't very stable and we only had a fuzzy match, we don't want to use it.
         const shouldKeepFuzzyMatch = fuzzyMatchIndex !== -1 && result.stability > stabilityThreshold;
 
+        // TODO: This is for debugging. Remove when this function is finalized.
+        if (shouldKeepFuzzyMatch) {
+            log.info(`Fuzzy match with high stability.`);
+            log.info(`match index is  ${fuzzyMatchIndex}`);
+            const phrases = this._phraseList.join(' ');
+            const matchPhrase = phrases.substring(fuzzyMatchIndex, fuzzyMatchIndex + normalizedTranscript.length);
+            log.info(`fuzzy match: ${matchPhrase} in ${normalizedTranscript}`);
+        }
+
         // If the result is in the phraseList (i.e. it matches one of the 'When I Hear' blocks), we keep it.
         // This might be aggressive... but so far seems to be a good thing.
         const shouldKeepPhraseListMatch = this._phraseList.includes(normalizedTranscript);
+        // TODO: This is just for debugging. Remove when this function is finalized.
+        if (shouldKeepPhraseListMatch) {
+            log.info(`phrase list ${this._phraseList} includes ${normalizedTranscript}`);
+        }
+        // TODO: This is for debugging. Remove when this function is finalized.
+        if (result.isFinal) {
+            log.info(`result is final`);
+        }
 
         if (!result.isFinal && !shouldKeepPhraseListMatch && !shouldKeepFuzzyMatch) {
             return false;
