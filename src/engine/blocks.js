@@ -358,14 +358,14 @@ class Blocks {
             stage.deleteVariable(e.varId);
             break;
         case 'comment_create':
-            if (optRuntime.getEditingTarget()) {
+            if (optRuntime && optRuntime.getEditingTarget()) {
                 const currTarget = optRuntime.getEditingTarget();
                 currTarget.createComment(e.commentId, e.blockId, e.text,
                     e.xy.x, e.xy.y, e.width, e.height, e.minimized);
             }
             break;
         case 'comment_change':
-            if (optRuntime) {
+            if (optRuntime && optRuntime.getEditingTarget()) {
                 const currTarget = optRuntime.getEditingTarget();
                 if (!currTarget.comments.hasOwnProperty(e.commentId)) {
                     log.warn(`Cannot change comment with id ${e.commentId} because it does not exist.`);
@@ -392,9 +392,9 @@ class Blocks {
             }
             break;
         case 'comment_move':
-            if (optRuntime) {
+            if (optRuntime && optRuntime.getEditingTarget()) {
                 const currTarget = optRuntime.getEditingTarget();
-                if (!currTarget.comments.hasOwnProperty(e.commentId)) {
+                if (currTarget && !currTarget.comments.hasOwnProperty(e.commentId)) {
                     log.warn(`Cannot change comment with id ${e.commentId} because it does not exist.`);
                     return;
                 }
@@ -405,7 +405,7 @@ class Blocks {
             }
             break;
         case 'comment_delete':
-            if (optRuntime) {
+            if (optRuntime && optRuntime.getEditingTarget()) {
                 const currTarget = optRuntime.getEditingTarget();
                 if (!currTarget.comments.hasOwnProperty(e.commentId)) {
                     // If we're in this state, we have probably received
