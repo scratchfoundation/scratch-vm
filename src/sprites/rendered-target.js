@@ -644,6 +644,7 @@ class RenderedTarget extends Target {
      * Reorder costume list by moving costume at costumeIndex to newIndex.
      * @param {!number} costumeIndex Index of the costume to move.
      * @param {!number} newIndex New index for that costume.
+     * @returns {boolean} If a change occurred (i.e. if the indices do not match)
      */
     reorderCostume (costumeIndex, newIndex) {
         const clampedNewIndex =
@@ -651,7 +652,8 @@ class RenderedTarget extends Target {
         const clampedCostumeIndex =
             Math.max(0, Math.min(this.sprite.costumes.length - 1, costumeIndex));
 
-        if (clampedNewIndex === clampedCostumeIndex) return;
+        if (clampedNewIndex === clampedCostumeIndex) return false;
+
         const currentCostume = this.getCurrentCostume();
         const costume = this.sprite.costumes[clampedCostumeIndex];
 
@@ -660,12 +662,14 @@ class RenderedTarget extends Target {
 
         this.addCostume(costume, clampedNewIndex);
         this.setCostume(this.getCostumeIndexByName(currentCostume.name));
+        return true;
     }
 
     /**
      * Reorder sound list by moving sound at soundIndex to newIndex.
      * @param {!number} soundIndex Index of the sound to move.
      * @param {!number} newIndex New index for that sound.
+     * @returns {boolean} If a change occurred (i.e. if the indices do not match)
      */
     reorderSound (soundIndex, newIndex) {
         const clampedNewIndex =
@@ -673,11 +677,12 @@ class RenderedTarget extends Target {
         const clampedSoundIndex =
             Math.max(0, Math.min(this.sprite.sounds.length - 1, soundIndex));
 
-        if (clampedNewIndex === clampedSoundIndex) return;
+        if (clampedNewIndex === clampedSoundIndex) return false;
 
         const sound = this.sprite.sounds[clampedSoundIndex];
         this.deleteSound(clampedSoundIndex);
         this.addSound(sound, clampedNewIndex);
+        return true;
     }
 
     /**
