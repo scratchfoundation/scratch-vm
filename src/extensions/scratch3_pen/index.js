@@ -91,10 +91,12 @@ class Scratch3PenBlocks {
 
     /**
      * The minimum and maximum allowed pen size.
+     * The maximum is twice the diagonal of the stage, so that even an
+     * off-stage sprite can fill it.
      * @type {{min: number, max: number}}
      */
     static get PEN_SIZE_RANGE () {
-        return {min: 1, max: 255};
+        return {min: 1, max: 1200};
     }
 
     /**
