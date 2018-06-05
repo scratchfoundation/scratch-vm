@@ -153,10 +153,17 @@ class Scratch3LooksBlocks {
             this.runtime.renderer.updateDrawableProperties(bubbleState.drawableId, {
                 position: [
                     bubbleState.onSpriteRight ? (
-                        Math.min(stageBounds.right - bubbleWidth, targetBounds.right)
+                        Math.max(
+                            stageBounds.left, // Bubble should not extend past left edge of stage
+                            Math.min(stageBounds.right - bubbleWidth, targetBounds.right)
+                        )
                     ) : (
-                        Math.max(stageBounds.left, targetBounds.left - bubbleWidth)
+                        Math.min(
+                            stageBounds.right - bubbleWidth, // Bubble should not extend past right edge of stage
+                            Math.max(stageBounds.left, targetBounds.left - bubbleWidth)
+                        )
                     ),
+                    // Bubble should not extend past the top of the stage
                     Math.min(stageBounds.top, targetBounds.bottom + bubbleHeight)
                 ]
             });
