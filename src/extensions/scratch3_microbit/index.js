@@ -492,11 +492,11 @@ class Scratch3MicroBitBlocks {
                 x => {
                     console.log(`connect resolved to: ${x}`);
                     ScratchBLESession.read(0xf005, BLECharacteristic.RX, true).then(
-                        x => {
-                            console.log(`read resolved to: ${x}`);
+                        x1 => {
+                            console.log(`read resolved to: ${x1}`);
                         },
-                        e => {
-                            console.log(`read rejected with: ${e}`);
+                        e1 => {
+                            console.log(`read rejected with: ${e1}`);
                         }
                     );
                 },
@@ -513,7 +513,9 @@ class Scratch3MicroBitBlocks {
             }).then(
                 x => {
                     console.log(`requestDevice resolved to: ${x}`);
-                    setTimeout(function() { connectBLE(); }, 5000);
+                    setTimeout(() => {
+                        connectBLE();
+                    }, 5000);
                 },
                 e => {
                     console.log(`requestDevice rejected with: ${e}`);
