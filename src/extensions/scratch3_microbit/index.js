@@ -130,12 +130,11 @@ class MicroBit {
      * @param {string} text - the text to display.
      */
     displayText (text) {
-        const output = new Uint8Array(text.length + 1);
-        output[0] = BLECommand.CMD_DISPLAY_TEXT;
+        const output = new Uint8Array(text.length);
         for (let i = 0; i < text.length; i++) {
-            output[i + 1] = text.charCodeAt(i);
+            output[i] = text.charCodeAt(i);
         }
-        this._write(output);
+        this._send(BLECommand.CMD_DISPLAY_TEXT, output);
     }
 
     /**
@@ -143,12 +142,7 @@ class MicroBit {
      * @param {Uint8Array} matrix - the matrix to display.
      */
     displayMatrix (matrix) {
-        const output = new Uint8Array(matrix.length + 1);
-        output[0] = BLECommand.CMD_DISPLAY_LED;
-        for (let i = 0; i < matrix.length; i++) {
-            output[i + 1] = matrix[i];
-        }
-        this._write(output);
+        this._send(BLECommand.CMD_DISPLAY_LED, matrix);
     }
 
     /**
@@ -293,12 +287,18 @@ class MicroBit {
     }
 
     /**
-     * Send a message to the BLE session.
-     * @param {string} message - the name of the message, such as 'playTone'.
+     * Send a message to the device BLE session.
+     * @param {number} command - the BLE command hex.
+     * @param {Uint8Array} message - the message to send.
      * @private
      */
-    _write (message) {
-        const b64enc = btoa(String.fromCharCode.apply(null, message));
+    _send (command, message) {
+        const output = new Uint8Array(message.length + 1);
+        output[0] = command; // attach command to beginning of message
+        for (let i = 0; i < message.length; i++) {
+            output[i + 1] = message[i];
+        }
+        const b64enc = btoa(String.fromCharCode.apply(null, output));
         this._ble.write(BLEUUID.service, BLEUUID.txChar, b64enc, 'base64').then(
             x => {
                 log.info(`write resolved to: ${x}`);
