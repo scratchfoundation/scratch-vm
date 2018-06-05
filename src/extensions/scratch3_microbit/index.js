@@ -29,13 +29,14 @@ const BLECommand = {
 };
 
 /**
- * Enum for micro:bit characteristic protocol.
+ * Enum for micro:bit protocol.
  * @readonly
  * @enum {string}
  */
-const BLECharacteristic = {
-    RX: '5261da01-fa7e-42ab-850b-7c80220097cc',
-    TX: '5261da02-fa7e-42ab-850b-7c80220097cc'
+const BLEUUID = {
+    service: 0xf005,
+    rxChar: '5261da01-fa7e-42ab-850b-7c80220097cc',
+    txChar: '5261da02-fa7e-42ab-850b-7c80220097cc'
 };
 
 /**
@@ -115,20 +116,13 @@ class MicroBit {
             }
         };
 
-        // TODO: move up Scratch Link connecting to VM/GUI
+        // TODO: move up Scratch Link connecting to VM/GUI?
         this._ble = this._tempConnect();
 
-        // Connect the read/write events
-        // this._onRxChar = this._onRxChar.bind(this);
-        // this._onDisconnect = this._onDisconnect.bind(this);
-        this._connectEvents();
-    }
+        // TODO: add Scratch Link 'read' handling
 
-    /**
-     * Manually dispose of this object.
-     */
-    dispose () {
-        this._disconnectEvents();
+        // TODO: add Scratch Link 'disconnect' handling
+
     }
 
     /**
@@ -213,7 +207,6 @@ class MicroBit {
      * @private
      */
     _tempConnect () {
-        // TODO: Move up to elsewhere in VM or GUI?
 
         let ScratchBLESession = null;
 
@@ -225,7 +218,7 @@ class MicroBit {
                 x => {
                     log.info(`connect resolved to: ${x}`);
                     // TODO: figure out why 'true' doesn't launch notifications
-                    /* ScratchBLESession.read(0xf005, BLECharacteristic.RX, true).then(
+                    /* ScratchBLESession.read(BLEUUID.service, BLEUUID.rxChar, true).then(
                         x1 => {
                             log.info(`read resolved to: ${x1}`);
                         },
@@ -242,7 +235,7 @@ class MicroBit {
         const discoverBLE = function () {
             ScratchBLESession.requestDevice({
                 filters: [
-                    {services: [0xf005]} // micro:bit
+                    {services: [BLEUUID.service]}
                 ]
             }).then(
                 x => {
@@ -278,26 +271,6 @@ class MicroBit {
     }
 
     /**
-     * Attach event handlers to the device socket.
-     * @private
-     */
-    _connectEvents () {
-        // this._socket.on(BLE_UUIDs.rx, this._onRxChar);
-        // this._socket.on('deviceWasClosed', this._onDisconnect);
-        // this._socket.on('disconnect', this._onDisconnect);
-    }
-
-    /**
-     * Detach event handlers from the device socket.
-     * @private
-     */
-    _disconnectEvents () {
-        // this._socket.off(BLE_UUIDs.rx, this._onRxChar);
-        // this._socket.off('deviceWasClosed', this._onDisconnect);
-        // this._socket.off('disconnect', this._onDisconnect);
-    }
-
-    /**
      * Process the sensor data from the incoming BLE characteristic.
      * @param {object} data - the incoming BLE data.
      * @private
@@ -320,21 +293,13 @@ class MicroBit {
     }
 
     /**
-     * React to device disconnection. May be called more than once.
-     * @private
-     */
-    _onDisconnect () {
-        this._disconnectEvents();
-    }
-
-    /**
      * Send a message to the BLE session.
      * @param {string} message - the name of the message, such as 'playTone'.
      * @private
      */
     _write (message) {
         const b64enc = btoa(String.fromCharCode.apply(null, message));
-        this._ble.write(0xf005, BLECharacteristic.TX, b64enc, 'base64').then(
+        this._ble.write(BLEUUID.service, BLEUUID.txChar, b64enc, 'base64').then(
             x => {
                 log.info(`write resolved to: ${x}`);
             },
