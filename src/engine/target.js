@@ -209,7 +209,13 @@ class Target extends EventEmitter {
                 width, height, minimized);
             if (blockId) {
                 newComment.blockId = blockId;
-                this.blocks.getBlock(blockId).comment = id;
+                const blockWithComment = this.blocks.getBlock(blockId);
+                if (blockWithComment) {
+                    blockWithComment.comment = id;
+                } else {
+                    log.warn(`Could not find block with id ${blockId
+                    } associated with commentId: ${id}`);
+                }
             }
             this.comments[id] = newComment;
         }
