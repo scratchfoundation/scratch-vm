@@ -134,7 +134,7 @@ class MicroBit {
         for (let i = 0; i < text.length; i++) {
             output[i] = text.charCodeAt(i);
         }
-        this._send(BLECommand.CMD_DISPLAY_TEXT, output);
+        this._write(BLECommand.CMD_DISPLAY_TEXT, output);
     }
 
     /**
@@ -142,7 +142,7 @@ class MicroBit {
      * @param {Uint8Array} matrix - the matrix to display.
      */
     displayMatrix (matrix) {
-        this._send(BLECommand.CMD_DISPLAY_LED, matrix);
+        this._write(BLECommand.CMD_DISPLAY_LED, matrix);
     }
 
     /**
@@ -211,15 +211,6 @@ class MicroBit {
             ).then(
                 x => {
                     log.info(`connect resolved to: ${x}`);
-                    // TODO: figure out why 'true' doesn't launch notifications
-                    /* ScratchBLESession.read(BLEUUID.service, BLEUUID.rxChar, true).then(
-                        x1 => {
-                            log.info(`read resolved to: ${x1}`);
-                        },
-                        e1 => {
-                            log.error(`read rejected with: ${e1}`);
-                        }
-                    );*/
                 },
                 e => {
                     log.error(`connect rejected with: ${e}`);
@@ -235,7 +226,7 @@ class MicroBit {
                 x => {
                     log.info(`requestDevice resolved to: ${x}`);
                     setTimeout(() => {
-                        connectBLE();
+                        connectBLE(); // TODO: resolve why timeout is needed
                     }, 5000);
                 },
                 e => {
@@ -247,7 +238,7 @@ class MicroBit {
             ScratchBLESession.sendRemoteRequest('pingMe').then(
                 x => {
                     log.info(`Ping request resolved with: ${x}`);
-                    discoverBLE();
+                    discoverBLE(); // TODO: resolve why pinging is needed
                 },
                 e => {
                     log.error(`Ping request rejected with: ${e}`);
@@ -265,12 +256,31 @@ class MicroBit {
     }
 
     /**
+     * Read a message from the device BLE session.
+     * @return {string} message - the read message.
+     * @private
+     */
+    _read () {
+        // TODO: figure out why 'true' doesn't launch notifications
+        this._ble.read(BLEUUID.service, BLEUUID.rxChar, true).then(
+            x => {
+                log.info(`read resolved to: ${x}`);
+                // TODO: decode params.message to Uint8Array
+                // TODO: call _processData()
+            },
+            e => {
+                log.error(`read rejected with: ${e}`);
+            }
+        );
+        return 'hello';
+    }
+
+    /**
      * Process the sensor data from the incoming BLE characteristic.
      * @param {object} data - the incoming BLE data.
      * @private
      */
     _processData (data) {
-
         this._sensors.tiltX = data[1] | (data[0] << 8);
         if (this._sensors.tiltX > (1 << 15)) this._sensors.tiltX -= (1 << 16);
         this._sensors.tiltY = data[3] | (data[2] << 8);
@@ -287,12 +297,12 @@ class MicroBit {
     }
 
     /**
-     * Send a message to the device BLE session.
+     * Write a message to the device BLE session.
      * @param {number} command - the BLE command hex.
-     * @param {Uint8Array} message - the message to send.
+     * @param {Uint8Array} message - the message to write.
      * @private
      */
-    _send (command, message) {
+    _write (command, message) {
         const output = new Uint8Array(message.length + 1);
         output[0] = command; // attach command to beginning of message
         for (let i = 0; i < message.length; i++) {
