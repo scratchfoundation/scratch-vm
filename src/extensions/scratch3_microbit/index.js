@@ -471,37 +471,33 @@ class Scratch3MicroBitBlocks {
         ////////////////////////////////////////////////////////////////////////
         // TODO: Move up to elsewhere in VM or GUI?
         console.log('Connecting BLE...');
-        var ScratchBLEWebSocket = new WebSocket('ws://localhost:20110/scratch/ble');
-        var ScratchBLEConnection = new ScratchBLE(ScratchBLEWebSocket);
+        const ScratchBLEWebSocket = new WebSocket('ws://localhost:20110/scratch/ble');
+        const ScratchBLEConnection = new ScratchBLE(ScratchBLEWebSocket);
         console.log('Connected.');
         ScratchBLEWebSocket.onopen = e => pingBLE();
         function pingBLE() {
             ScratchBLEConnection.sendRemoteRequest('pingMe').then(
                 x => {
-                    console.log(`Ping request resolved with:`);
-                    console.log(x);
+                    console.log(`Ping request resolved with: ` + x);
                     discoverBLE();
                 },
                 e => {
-                    console.log(`Ping request rejected with:`);
-                    console.log(e);
+                    console.log(`Ping request rejected with: ` + e);
                 }
             );
         }
         function discoverBLE() {
             ScratchBLEConnection.requestDevice({
                 filters: [
-                    { services: [0xf005] } // micro:bit
+                    {services: [0xf005]} // micro:bit
                 ]
             }).then(
                 x => {
-                    console.log(`requestDevice resolved to:`);
-                    console.log(x);
+                    console.log(`requestDevice resolved to: ` + x);
                     setTimeout(function() { connectBLE(); }, 5000);
                 },
                 e => {
-                    console.log(`requestDevice rejected with:`);
-                    console.log(e);
+                    console.log(`requestDevice rejected with: ` + e);
                 }
             );
         }
@@ -512,12 +508,18 @@ class Scratch3MicroBitBlocks {
                 { peripheralId: ScratchBLEConnection.discoveredPeripheralId }
             ).then(
                 x => {
-                    console.log(`connect resolved to:`);
-                    console.log(x);
+                    console.log(`connect resolved to: ` + x);
+                    ScratchBLEConnection.read(0xf005, '5261da01-fa7e-42ab-850b-7c80220097cc', true).then(
+                        x => {
+                            console.log(`read resolved to: ` + x);
+                        },
+                        e => {
+                            console.log(`read rejected with: ` + e);
+                        }
+                    );
                 },
                 e => {
-                    console.log(`connect rejected with:`);
-                    console.log(e);
+                    console.log(`connect rejected with: ` + e);
                 }
             );
         }
@@ -526,41 +528,14 @@ class Scratch3MicroBitBlocks {
 
         this._device = new MicroBit(null, this.runtime);
         window.addEventListener('message', event => {
-            if (event.data.type === 'data') {
-              console.log('micro:bit incoming data');
-                this._device._processData(new Uint8Array(event.data.buffer));
-            }
-
-            // micro:bit firmware IDs
-            // var SERVICE_UUID = 'f005',
-            // OUTPUT_CHAR = '5261da01fa7e42ab850b7c80220097cc',
-            // LED_TEXT_CHAR = '5261da03fa7e42ab850b7c80220097cc',
-            // LED_MATRIX_CHAR = '5261da04fa7e42ab850b7c80220097cc';
-
-            if (event.data.uuid === 'text') {
-                var b64encoded = btoa(String.fromCharCode.apply(null, event.data.buffer)); // TODO: more failsafe way to encode?
+            if (event.data.type === 'command') {
+                const b64encoded = btoa(String.fromCharCode.apply(null, event.data.buffer)); // TODO: more failsafe way to encode?
                 ScratchBLEConnection.write(0xf005, '5261da02-fa7e-42ab-850b-7c80220097cc', b64encoded, 'base64').then(
                     x => {
-                        console.log(`write resolved to:`);
-                        console.log(x);
+                        console.log(`write resolved to: ` + x);
                     },
                     e => {
-                        console.log(`write rejected with:`);
-                        console.log(e);
-                    }
-                );
-            }
-
-            if (event.data.uuid === 'matrix') {
-                var b64encoded = btoa(String.fromCharCode.apply(null, event.data.buffer)); // TODO: more failsafe way to encode?
-                ScratchBLEConnection.write(0xf005, '5261da02-fa7e-42ab-850b-7c80220097cc', b64encoded, 'base64').then(
-                    x => {
-                        console.log(`write resolved to:`);
-                        console.log(x);
-                    },
-                    e => {
-                        console.log(`write rejected with:`);
-                        console.log(e);
+                        console.log(`write rejected with: ` + e);
                     }
                 );
             }
