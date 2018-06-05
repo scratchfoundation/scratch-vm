@@ -1,6 +1,7 @@
 const test = require('tap').test;
 const VirtualMachine = require('../../src/virtual-machine.js');
 const Sprite = require('../../src/sprites/sprite.js');
+const Variable = require('../../src/engine/variable.js');
 
 test('addSprite throws on invalid string', t => {
     const vm = new VirtualMachine();
@@ -450,5 +451,48 @@ test('select original after dragging clone', t => {
     // Stop drag on target with parent sprite selects the 0th clone of that sprite
     vm.stopDrag('sprite1_clone');
     t.equal(newEditingTargetId, 'sprite1_original');
+    t.end();
+});
+
+test('setVariableValue', t => {
+    const vm = new VirtualMachine();
+    const spr = new Sprite(null, vm.runtime);
+    const target = spr.createClone();
+    target.createVariable('a-variable', 'a-name', Variable.SCALAR_TYPE);
+
+    vm.runtime.targets = [target];
+
+    // Returns false if there is no variable to set
+    t.equal(vm.setVariableValue(target.id, 'not-a-variable', 100), false);
+
+    // Returns false if there is no target with that id
+    t.equal(vm.setVariableValue('not-a-target', 'a-variable', 100), false);
+
+    // Returns true and updates the value if variable is present
+    t.equal(vm.setVariableValue(target.id, 'a-variable', 100), true);
+    t.equal(target.lookupVariableById('a-variable').value, 100);
+
+    t.end();
+});
+
+test('getVariableValue', t => {
+    const vm = new VirtualMachine();
+    const spr = new Sprite(null, vm.runtime);
+    const target = spr.createClone();
+    target.createVariable('a-variable', 'a-name', Variable.SCALAR_TYPE);
+
+    vm.runtime.targets = [target];
+
+    // Returns null if there is no variable with that id
+    t.equal(vm.getVariableValue(target.id, 'not-a-variable'), null);
+
+    // Returns null if there is no variable with that id
+    t.equal(vm.getVariableValue('not-a-target', 'a-variable'), null);
+
+    // Returns true and updates the value if variable is present
+    t.equal(vm.getVariableValue(target.id, 'a-variable'), 0);
+    vm.setVariableValue(target.id, 'a-variable', 'string');
+    t.equal(vm.getVariableValue(target.id, 'a-variable'), 'string');
+
     t.end();
 });

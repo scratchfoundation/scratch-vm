@@ -154,7 +154,7 @@ class Target extends EventEmitter {
         // If the stage has a global copy, return it.
         if (this.runtime && !this.isStage) {
             const stage = this.runtime.getTargetForStage();
-            if (stage.variables.hasOwnProperty(id)) {
+            if (stage && stage.variables.hasOwnProperty(id)) {
                 return stage.variables[id];
             }
         }
