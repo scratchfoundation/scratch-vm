@@ -663,6 +663,24 @@ class RenderedTarget extends Target {
     }
 
     /**
+     * Reorder sound list by moving sound at soundIndex to newIndex.
+     * @param {!number} soundIndex Index of the sound to move.
+     * @param {!number} newIndex New index for that sound.
+     */
+    reorderSound (soundIndex, newIndex) {
+        const clampedNewIndex =
+            Math.max(0, Math.min(this.sprite.sounds.length - 1, newIndex));
+        const clampedSoundIndex =
+            Math.max(0, Math.min(this.sprite.sounds.length - 1, soundIndex));
+
+        if (clampedNewIndex === clampedSoundIndex) return;
+
+        const sound = this.sprite.sounds[clampedSoundIndex];
+        this.deleteSound(clampedSoundIndex);
+        this.addSound(sound, clampedNewIndex);
+    }
+
+    /**
      * Get full sound list
      * @return {object[]} list of sounds
      */

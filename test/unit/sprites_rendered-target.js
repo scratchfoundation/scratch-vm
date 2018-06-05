@@ -476,3 +476,45 @@ test('#reorderCostume', t => {
 
     t.end();
 });
+
+test('#reorderSound', t => {
+    const o1 = {id: 0, name: 'name0'};
+    const o2 = {id: 1, name: 'name1'};
+    const o3 = {id: 2, name: 'name2'};
+    const o4 = {id: 3, name: 'name3'};
+    const o5 = {id: 4, name: 'name4'};
+    const s = new Sprite();
+    const r = new Runtime();
+    s.sounds = [o1, o2, o3, o4, o5];
+    const a = new RenderedTarget(s, r);
+    const renderer = new FakeRenderer();
+    a.renderer = renderer;
+
+    const resetSounds = () => {
+        s.sounds = [o1, o2, o3, o4, o5];
+    };
+    const soundIds = () => a.sprite.sounds.map(c => c.id);
+
+    resetSounds();
+    t.deepEquals(soundIds(), [0, 1, 2, 3, 4]);
+
+    // Make sure reordering up and down works and current sound follows
+    resetSounds();
+    a.reorderSound(0, 3);
+    t.deepEquals(soundIds(), [1, 2, 3, 0, 4]);
+
+    resetSounds();
+    a.reorderSound(3, 1);
+    t.deepEquals(soundIds(), [0, 3, 1, 2, 4]);
+
+    // Out of bounds indices get clamped
+    resetSounds();
+    a.reorderSound(10, 0);
+    t.deepEquals(soundIds(), [4, 0, 1, 2, 3]);
+
+    resetSounds();
+    a.reorderSound(2, -1000);
+    t.deepEquals(soundIds(), [2, 0, 1, 3, 4]);
+
+    t.end();
+});
