@@ -265,8 +265,7 @@ class MicroBit {
         this._ble.read(BLEUUID.service, BLEUUID.rxChar, true).then(
             x => {
                 log.info(`read resolved to: ${x}`);
-                // TODO: decode params.message to Uint8Array
-                // TODO: call _processData()
+                // TODO: decode params.message to Uint8Array, call _processData()
             },
             e => {
                 log.error(`read rejected with: ${e}`);

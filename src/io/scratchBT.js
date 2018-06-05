@@ -1,43 +1,35 @@
 const JSONRPCWebSocket = require('../util/jsonrpc');
+const log = require('../util/log');
 
 class ScratchBT extends JSONRPCWebSocket {
-    constructor() {
+    constructor () {
         super(new WebSocket('ws://localhost:20110/scratch/bt'));
     }
 
-    requestDevice(options) {
+    requestDevice (options) {
         return this.sendRemoteRequest('discover', options);
     }
 
-    connectDevice(options) {
+    connectDevice (options) {
         return this.sendRemoteRequest('connect', options);
     }
 
-    sendMessage(options) {
+    sendMessage (options) {
         return this.sendRemoteRequest('send', options);
     }
 
-    didReceiveCall(method, params) {
+    didReceiveCall (method, params) {
         switch (method) {
-            case 'didDiscoverPeripheral':
-                log(`Peripheral discovered: ${stringify(params)}`);
-                break;
-            case 'didReceiveMessage':
-                log(`Message received from peripheral: ${stringify(params)}`);
-                break;
-            default:
-                return 'nah';
+        case 'didDiscoverPeripheral':
+            log.info(`Peripheral discovered: ${params}`);
+            break;
+        case 'didReceiveMessage':
+            log.info(`Message received from peripheral: ${params}`);
+            break;
+        default:
+            return 'nah';
         }
     }
-}
-
-function stringify(o) {
-    return JSON.stringify(o, o && Object.getOwnPropertyNames(o));
-}
-
-function log(text) {
-    console.log('ScratchBT:');
-    console.log(text);
 }
 
 module.exports = ScratchBT;
