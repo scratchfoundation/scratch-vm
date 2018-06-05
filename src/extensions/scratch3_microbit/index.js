@@ -272,6 +272,16 @@ const BLECommand = {
 };
 
 /**
+ * Enum for micro:bit characteristic protocol.
+ * @readonly
+ * @enum {string}
+ */
+const BLECharacteristic = {
+    RX: '5261da01-fa7e-42ab-850b-7c80220097cc',
+    TX: '5261da02-fa7e-42ab-850b-7c80220097cc'
+};
+
+/**
  * Scratch 3.0 blocks to interact with a MicroBit device.
  */
 class Scratch3MicroBitBlocks {
@@ -309,7 +319,7 @@ class Scratch3MicroBitBlocks {
         this.runtime = runtime;
 
         // TODO: Connect this up to the GUI?
-        this.connect();
+        this.ble = this.connect();
     }
 
     /**
@@ -465,83 +475,92 @@ class Scratch3MicroBitBlocks {
 
     /**
      * Use the Scratch Link client to attempt to connect to a MicroBit device.
+     * @return {ScratchBLE} - a ScratchBLE session
      */
     connect () {
-
-        ////////////////////////////////////////////////////////////////////////
         // TODO: Move up to elsewhere in VM or GUI?
-        console.log('Connecting BLE...');
-        const ScratchBLEWebSocket = new WebSocket('ws://localhost:20110/scratch/ble');
-        const ScratchBLEConnection = new ScratchBLE(ScratchBLEWebSocket);
-        console.log('Connected.');
-        ScratchBLEWebSocket.onopen = e => pingBLE();
-        function pingBLE() {
-            ScratchBLEConnection.sendRemoteRequest('pingMe').then(
+
+        let ScratchBLEWebSocket = null;
+        let ScratchBLESession = null;
+
+        const connectBLE = function () {
+            // this should really be implicit in `requestDevice` but splitting it out helps with debugging
+            ScratchBLESession.sendRemoteRequest(
+                'connect',
+                {peripheralId: ScratchBLESession.discoveredPeripheralId}
+            ).then(
                 x => {
-                    console.log(`Ping request resolved with: ` + x);
-                    discoverBLE();
+                    console.log(`connect resolved to: ${x}`);
+                    ScratchBLESession.read(0xf005, BLECharacteristic.RX, true).then(
+                        x => {
+                            console.log(`read resolved to: ${x}`);
+                        },
+                        e => {
+                            console.log(`read rejected with: ${e}`);
+                        }
+                    );
                 },
                 e => {
-                    console.log(`Ping request rejected with: ` + e);
+                    console.log(`connect rejected with: ${e}`);
                 }
             );
-        }
-        function discoverBLE() {
-            ScratchBLEConnection.requestDevice({
+        };
+        const discoverBLE = function () {
+            ScratchBLESession.requestDevice({
                 filters: [
                     {services: [0xf005]} // micro:bit
                 ]
             }).then(
                 x => {
-                    console.log(`requestDevice resolved to: ` + x);
+                    console.log(`requestDevice resolved to: ${x}`);
                     setTimeout(function() { connectBLE(); }, 5000);
                 },
                 e => {
-                    console.log(`requestDevice rejected with: ` + e);
+                    console.log(`requestDevice rejected with: ${e}`);
                 }
             );
-        }
-        function connectBLE() {
-            // this should really be implicit in `requestDevice` but splitting it out helps with debugging
-            ScratchBLEConnection.sendRemoteRequest(
-                'connect',
-                { peripheralId: ScratchBLEConnection.discoveredPeripheralId }
-            ).then(
+        };
+        const pingBLE = function () {
+            ScratchBLESession.sendRemoteRequest('pingMe').then(
                 x => {
-                    console.log(`connect resolved to: ` + x);
-                    ScratchBLEConnection.read(0xf005, '5261da01-fa7e-42ab-850b-7c80220097cc', true).then(
-                        x => {
-                            console.log(`read resolved to: ` + x);
-                        },
-                        e => {
-                            console.log(`read rejected with: ` + e);
-                        }
-                    );
+                    console.log(`Ping request resolved with: ${x}`);
+                    discoverBLE();
                 },
                 e => {
-                    console.log(`connect rejected with: ` + e);
+                    console.log(`Ping request rejected with: ${e}`);
                 }
             );
-        }
+        };
 
-        //ScratchBLEWebSocket.onmessage = e => console.log(e);
+        // Hold onto websocket so we can detect 'onopen'
+        ScratchBLEWebSocket = new WebSocket('ws://localhost:20110/scratch/ble');
 
+        // Create a new ScratchBLE Session
+        ScratchBLESession = new ScratchBLE(ScratchBLEWebSocket);
+
+        // Detect onopen for web socket
+        ScratchBLEWebSocket.onopen = e => pingBLE(); // sets off chain
+
+        // Create a new MicroBit device instance
         this._device = new MicroBit(null, this.runtime);
+
+        // Temporarily listen for micro:bit block commands on the window
         window.addEventListener('message', event => {
             if (event.data.type === 'command') {
-                const b64encoded = btoa(String.fromCharCode.apply(null, event.data.buffer)); // TODO: more failsafe way to encode?
-                ScratchBLEConnection.write(0xf005, '5261da02-fa7e-42ab-850b-7c80220097cc', b64encoded, 'base64').then(
+                // TODO: more failsafe way to encode?
+                const b64enc = btoa(String.fromCharCode.apply(null, event.data.buffer));
+                ScratchBLESession.write(0xf005, BLECharacteristic.TX, b64enc, 'base64').then(
                     x => {
-                        console.log(`write resolved to: ` + x);
+                        console.log(`write resolved to: ${x}`);
                     },
                     e => {
-                        console.log(`write rejected with: ` + e);
+                        console.log(`write rejected with: ${e}`);
                     }
                 );
             }
         }, false);
 
-        ////////////////////////////////////////////////////////////////////////
+        return ScratchBLESession;
     }
 
     /**
