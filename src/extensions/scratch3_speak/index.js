@@ -7,19 +7,19 @@ const Cast = require('../../util/cast');
 const log = require('../../util/log');
 
 /**
- * The url of the translate server.
+ * The url of the synthesis server.
  * @type {string}
  */
 const SERVER_HOST = 'https://synthesis-service.scratch.mit.edu';
 
 /**
- * How long to wait in ms before timing out requests to translate server.
+ * How long to wait in ms before timing out requests to synthesis server.
  * @type {int}
  */
 const SERVER_TIMEOUT = 10000; // 10 seconds (chosen arbitrarily).
 
 /**
- * Class for the translate block in Scratch 3.0.
+ * Class for the synthesis block in Scratch 3.0.
  * @constructor
  */
 class Scratch3SpeakBlocks {
@@ -33,7 +33,7 @@ class Scratch3SpeakBlocks {
     }
 
     /**
-     * The key to load & store a target's translate state.
+     * The key to load & store a target's synthesis state.
      * @return {string} The key.
      */
     static get STATE_KEY () {
@@ -51,9 +51,9 @@ class Scratch3SpeakBlocks {
             blockIconURI: '',
             blocks: [
                 {
-                    opcode: 'speak',
+                    opcode: 'speakAndWait',
                     text: formatMessage({
-                        id: 'speak.speakBlock',
+                        id: 'speak.speakAndWaitBlock',
                         default: 'speak [WORDS]',
                         description: 'speak some words'
                     }),
@@ -105,7 +105,7 @@ class Scratch3SpeakBlocks {
      * @param  {object} args Block arguments
      * @return {Promise}     A promise that resolves after playing the sound
      */
-    speak (args) {
+    speakAndWait (args) {
         // Cast input to string
         args.WORDS = Cast.toString(args.WORDS);
 
