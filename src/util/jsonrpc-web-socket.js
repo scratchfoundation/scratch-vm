@@ -1,4 +1,5 @@
 const JSONRPC = require('./jsonrpc');
+const log = require('./log');
 
 class JSONRPCWebSocket extends JSONRPC {
     constructor (webSocket) {
@@ -17,36 +18,28 @@ class JSONRPCWebSocket extends JSONRPC {
     }
 
     _onSocketOpen (e) {
-        log(`WS opened: ${stringify(e)}`);
+        log.info(`WS opened: ${e}`);
     }
 
     _onSocketClose (e) {
-        log(`WS closed: ${stringify(e)}`);
+        log.info(`WS closed: ${e}`);
     }
 
     _onSocketError (e) {
-        log(`WS error: ${stringify(e)}`);
+        log.info(`WS error: ${e}`);
     }
 
     _onSocketMessage (e) {
-        log(`Received message: ${e.data}`);
+        log.info(`Received message: ${e.data}`);
         const json = JSON.parse(e.data);
         this._handleMessage(json);
     }
 
     _sendMessage (message) {
         const messageText = JSON.stringify(message);
-        log(`Sending message: ${messageText}`);
+        log.info(`Sending message: ${messageText}`);
         this._ws.send(messageText);
     }
-}
-
-function stringify(o) {
-    return JSON.stringify(o, o && Object.getOwnPropertyNames(o));
-}
-
-function log(text) {
-    console.log(`JSONRPCWebSocket: ` + text);
 }
 
 module.exports = JSONRPCWebSocket;

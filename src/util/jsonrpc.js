@@ -66,7 +66,7 @@ class JSONRPC {
 
     _handleMessage (json) {
         if (json.jsonrpc !== '2.0') {
-            throw new Error(`Bad or missing JSON-RPC version in message: ${stringify(json)}`);
+            throw new Error(`Bad or missing JSON-RPC version in message: ${json}`);
         }
         if (json.hasOwnProperty('method')) {
             this._handleRequest(json);
