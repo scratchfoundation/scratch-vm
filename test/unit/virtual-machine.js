@@ -306,6 +306,66 @@ test('duplicateSprite assigns duplicated sprite a fresh name', t => {
 
 });
 
+test('reorderCostume', t => {
+    const vm = new VirtualMachine();
+    vm.emitTargetsUpdate = () => {};
+
+    const spr = new Sprite(null, vm.runtime);
+    spr.name = 'foo';
+    const target = spr.createClone();
+
+    // Stub out reorder on target, tested in rendered-target tests.
+    // Just want to know if it is called with the right params.
+    let costumeIndex = null;
+    let newIndex = null;
+    target.reorderCostume = (_costumeIndex, _newIndex) => {
+        costumeIndex = _costumeIndex;
+        newIndex = _newIndex;
+    };
+
+    vm.runtime.targets = [target];
+
+    t.equal(vm.reorderCostume('not-a-target', 0, 3), false);
+    t.equal(costumeIndex, null);
+    t.equal(newIndex, null);
+
+    t.equal(vm.reorderCostume(target.id, 0, 3), true);
+    t.equal(costumeIndex, 0);
+    t.equal(newIndex, 3);
+
+    t.end();
+});
+
+test('reorderSound', t => {
+    const vm = new VirtualMachine();
+    vm.emitTargetsUpdate = () => {};
+
+    const spr = new Sprite(null, vm.runtime);
+    spr.name = 'foo';
+    const target = spr.createClone();
+
+    // Stub out reorder on target, tested in rendered-target tests.
+    // Just want to know if it is called with the right params.
+    let soundIndex = null;
+    let newIndex = null;
+    target.reorderSound = (_soundIndex, _newIndex) => {
+        soundIndex = _soundIndex;
+        newIndex = _newIndex;
+    };
+
+    vm.runtime.targets = [target];
+
+    t.equal(vm.reorderSound('not-a-target', 0, 3), false);
+    t.equal(soundIndex, null); // Make sure reorder function was not called somehow
+    t.equal(newIndex, null);
+
+    t.equal(vm.reorderSound(target.id, 0, 3), true);
+    t.equal(soundIndex, 0); // Make sure reorder function was called correctly
+    t.equal(newIndex, 3);
+
+    t.end();
+});
+
 test('emitWorkspaceUpdate', t => {
     const vm = new VirtualMachine();
     const blocksToXML = comments => {

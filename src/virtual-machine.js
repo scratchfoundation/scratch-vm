@@ -1034,6 +1034,38 @@ class VirtualMachine extends EventEmitter {
     }
 
     /**
+     * Reorder the costumes of a target if it exists. Return whether it succeeded.
+     * @param {!string} targetId ID of the target which owns the costumes.
+     * @param {!number} costumeIndex index of the costume to move.
+     * @param {!number} newIndex index that the costume should be moved to.
+     * @returns {boolean} whether the target was found for reordering.
+     */
+    reorderCostume (targetId, costumeIndex, newIndex) {
+        const target = this.runtime.getTargetById(targetId);
+        if (target) {
+            target.reorderCostume(costumeIndex, newIndex);
+            return true;
+        }
+        return false;
+    }
+
+    /**
+     * Reorder the sounds of a target if it exists. Return whether it succeeded.
+     * @param {!string} targetId ID of the target which owns the sounds.
+     * @param {!number} soundIndex index of the sound to move.
+     * @param {!number} newIndex index that the sound should be moved to.
+     * @returns {boolean} whether the target was found for reordering.
+     */
+    reorderSound (targetId, soundIndex, newIndex) {
+        const target = this.runtime.getTargetById(targetId);
+        if (target) {
+            target.reorderSound(soundIndex, newIndex);
+            return true;
+        }
+        return false;
+    }
+
+    /**
      * Put a target into a "drag" state, during which its X/Y positions will be unaffected
      * by blocks.
      * @param {string} targetId The id for the target to put into a drag state
