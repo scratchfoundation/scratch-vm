@@ -400,8 +400,8 @@ class Blocks {
                 }
                 const comment = currTarget.comments[e.commentId];
                 const newCoord = e.newCoordinate_;
-                comment.x = Math.floor(newCoord.x);
-                comment.y = Math.floor(newCoord.y);
+                comment.x = newCoord.x;
+                comment.y = newCoord.y;
             }
             break;
         case 'comment_delete':
