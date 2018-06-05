@@ -641,6 +641,28 @@ class RenderedTarget extends Target {
     }
 
     /**
+     * Reorder costume list by moving costume at costumeIndex to newIndex.
+     * @param {!number} costumeIndex Index of the costume to move.
+     * @param {!number} newIndex New index for that costume.
+     */
+    reorderCostume (costumeIndex, newIndex) {
+        const clampedNewIndex =
+            Math.max(0, Math.min(this.sprite.costumes.length - 1, newIndex));
+        const clampedCostumeIndex =
+            Math.max(0, Math.min(this.sprite.costumes.length - 1, costumeIndex));
+
+        if (clampedNewIndex === clampedCostumeIndex) return;
+        const currentCostume = this.getCurrentCostume();
+        const costume = this.sprite.costumes[clampedCostumeIndex];
+
+        // Use the sprite method for deleting costumes because setCostume is handled manually
+        this.sprite.deleteCostumeAt(clampedCostumeIndex);
+
+        this.addCostume(costume, clampedNewIndex);
+        this.setCostume(this.getCostumeIndexByName(currentCostume.name));
+    }
+
+    /**
      * Get full sound list
      * @return {object[]} list of sounds
      */

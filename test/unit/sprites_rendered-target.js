@@ -427,3 +427,52 @@ test('#renameCostume does not duplicate names', t => {
     t.equal(a.sprite.costumes[1].name, 'first2');
     t.end();
 });
+
+test('#reorderCostume', t => {
+    const o1 = {id: 0};
+    const o2 = {id: 1};
+    const o3 = {id: 2};
+    const o4 = {id: 3};
+    const o5 = {id: 4};
+    const s = new Sprite();
+    const r = new Runtime();
+    s.costumes = [o1, o2, o3, o4, o5];
+    const a = new RenderedTarget(s, r);
+    const renderer = new FakeRenderer();
+    a.renderer = renderer;
+
+    const resetCostumes = () => {
+        a.setCostume(0);
+        s.costumes = [o1, o2, o3, o4, o5];
+    };
+    const costumeIds = () => a.sprite.costumes.map(c => c.id);
+
+    resetCostumes();
+    t.deepEquals(costumeIds(), [0, 1, 2, 3, 4]);
+    t.equals(a.currentCostume, 0);
+
+    // Make sure reordering up and down works and current costume follows
+    resetCostumes();
+    a.reorderCostume(0, 3);
+    t.deepEquals(costumeIds(), [1, 2, 3, 0, 4]);
+    t.equals(a.currentCostume, 3); // Index of id=0
+
+    resetCostumes();
+    a.setCostume(1);
+    a.reorderCostume(3, 1);
+    t.deepEquals(costumeIds(), [0, 3, 1, 2, 4]);
+    t.equals(a.currentCostume, 2); // Index of id=1
+
+    // Out of bounds indices get clamped
+    resetCostumes();
+    a.reorderCostume(10, 0);
+    t.deepEquals(costumeIds(), [4, 0, 1, 2, 3]);
+    t.equals(a.currentCostume, 1); // Index of id=0
+
+    resetCostumes();
+    a.reorderCostume(2, -1000);
+    t.deepEquals(costumeIds(), [2, 0, 1, 3, 4]);
+    t.equals(a.currentCostume, 1); // Index of id=0
+
+    t.end();
+});
