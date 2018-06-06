@@ -488,10 +488,10 @@ class RenderedTarget extends Target {
      * @param {?int} index Index at which to add costume
      */
     addCostume (costumeObject, index) {
-        if (typeof index === 'undefined') {
-            this.sprite.addCostumeAt(costumeObject, this.sprite.costumes.length);
-        } else {
+        if (typeof index === 'number' && !isNaN(index)) {
             this.sprite.addCostumeAt(costumeObject, index);
+        } else {
+            this.sprite.addCostumeAt(costumeObject, this.sprite.costumes.length);
         }
     }
 
@@ -551,10 +551,10 @@ class RenderedTarget extends Target {
     addSound (soundObject, index) {
         const usedNames = this.sprite.sounds.map(sound => sound.name);
         soundObject.name = StringUtil.unusedName(soundObject.name, usedNames);
-        if (typeof index === 'undefined') {
-            this.sprite.sounds.push(soundObject);
-        } else {
+        if (typeof index === 'number' && !isNaN(index)) {
             this.sprite.sounds.splice(index, 0, soundObject);
+        } else {
+            this.sprite.sounds.push(soundObject);
         }
     }
 
