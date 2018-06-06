@@ -451,8 +451,10 @@ test('#reorderCostume', t => {
     t.deepEquals(costumeIds(), [0, 1, 2, 3, 4]);
     t.equals(a.currentCostume, 0);
 
-    // Returns false if the costumes are the same an no change occurred
-    t.equal(a.reorderCostume(0, 0), false);
+    // Returns false if the costumes are the same and no change occurred
+    t.equal(a.reorderCostume(3, 3), false);
+    t.equal(a.reorderCostume(999, 5000), false); // Clamped to the same values.
+    t.equal(a.reorderCostume(-999, -5000), false);
 
     // Make sure reordering up and down works and current costume follows
     resetCostumes();
@@ -502,7 +504,9 @@ test('#reorderSound', t => {
     t.deepEquals(soundIds(), [0, 1, 2, 3, 4]);
 
     // Return false if indices are the same and no change occurred.
-    t.equal(a.reorderSound(100000, 99999), false);
+    t.equal(a.reorderSound(3, 3), false);
+    t.equal(a.reorderSound(100000, 99999), false); // Clamped to the same values
+    t.equal(a.reorderSound(-100000, -99999), false);
 
     // Make sure reordering up and down works and current sound follows
     resetSounds();

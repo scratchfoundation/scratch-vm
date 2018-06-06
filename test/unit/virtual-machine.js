@@ -321,6 +321,7 @@ test('reorderCostume', t => {
     target.reorderCostume = (_costumeIndex, _newIndex) => {
         costumeIndex = _costumeIndex;
         newIndex = _newIndex;
+        return true; // Do not need all the logic about if a reorder occurred.
     };
 
     vm.runtime.targets = [target];
@@ -351,16 +352,17 @@ test('reorderSound', t => {
     target.reorderSound = (_soundIndex, _newIndex) => {
         soundIndex = _soundIndex;
         newIndex = _newIndex;
+        return true; // Do not need all the logic about if a reorder occurred.
     };
 
     vm.runtime.targets = [target];
 
     t.equal(vm.reorderSound('not-a-target', 0, 3), false);
-    t.equal(soundIndex, null); // Make sure reorder function was not called somehow
+    t.equal(soundIndex, null); // Make sure reorder function was not called somehow.
     t.equal(newIndex, null);
 
     t.equal(vm.reorderSound(target.id, 0, 3), true);
-    t.equal(soundIndex, 0); // Make sure reorder function was called correctly
+    t.equal(soundIndex, 0); // Make sure reorder function was called correctly.
     t.equal(newIndex, 3);
 
     t.end();

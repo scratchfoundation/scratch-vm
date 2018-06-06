@@ -1038,29 +1038,27 @@ class VirtualMachine extends EventEmitter {
      * @param {!string} targetId ID of the target which owns the costumes.
      * @param {!number} costumeIndex index of the costume to move.
      * @param {!number} newIndex index that the costume should be moved to.
-     * @returns {boolean} whether the target was found for reordering.
+     * @returns {boolean} Whether a costume was reordered.
      */
     reorderCostume (targetId, costumeIndex, newIndex) {
         const target = this.runtime.getTargetById(targetId);
         if (target) {
-            target.reorderCostume(costumeIndex, newIndex);
-            return true;
+            return target.reorderCostume(costumeIndex, newIndex);
         }
         return false;
     }
 
     /**
-     * Reorder the sounds of a target if it exists. Return whether it succeeded.
+     * Reorder the sounds of a target if it exists. Return whether it occured.
      * @param {!string} targetId ID of the target which owns the sounds.
      * @param {!number} soundIndex index of the sound to move.
      * @param {!number} newIndex index that the sound should be moved to.
-     * @returns {boolean} whether the target was found for reordering.
+     * @returns {boolean} Whether a sound was reordered.
      */
     reorderSound (targetId, soundIndex, newIndex) {
         const target = this.runtime.getTargetById(targetId);
         if (target) {
-            target.reorderSound(soundIndex, newIndex);
-            return true;
+            return target.reorderSound(soundIndex, newIndex);
         }
         return false;
     }
