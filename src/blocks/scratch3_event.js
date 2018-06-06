@@ -24,6 +24,7 @@ class Scratch3EventBlocks {
      */
     getPrimitives () {
         return {
+            event_whentouchingobject: this.touchingObject,
             event_broadcast: this.broadcast,
             event_broadcastandwait: this.broadcastAndWait,
             event_whengreaterthan: this.hatGreaterThanPredicate
@@ -41,6 +42,10 @@ class Scratch3EventBlocks {
             event_whenthisspriteclicked: {
                 restartExistingThreads: true
             },
+            event_whentouchingobject: {
+                restartExistingThreads: false,
+                edgeActivated: true
+            },
             event_whenstageclicked: {
                 restartExistingThreads: true
             },
@@ -55,6 +60,18 @@ class Scratch3EventBlocks {
                 restartExistingThreads: true
             }
         };
+    }
+
+    touchingObject (args, util) {
+        const requestedObject = args.TOUCHINGOBJECTMENU;
+        if (requestedObject === '_mouse_') {
+            const mouseX = util.ioQuery('mouse', 'getClientX');
+            const mouseY = util.ioQuery('mouse', 'getClientY');
+            return util.target.isTouchingPoint(mouseX, mouseY);
+        } else if (requestedObject === '_edge_') {
+            return util.target.isTouchingEdge();
+        }
+        return util.target.isTouchingSprite(requestedObject);
     }
 
     hatGreaterThanPredicate (args, util) {
