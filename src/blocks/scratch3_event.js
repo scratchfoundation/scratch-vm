@@ -63,15 +63,7 @@ class Scratch3EventBlocks {
     }
 
     touchingObject (args, util) {
-        const requestedObject = args.TOUCHINGOBJECTMENU;
-        if (requestedObject === '_mouse_') {
-            const mouseX = util.ioQuery('mouse', 'getClientX');
-            const mouseY = util.ioQuery('mouse', 'getClientY');
-            return util.target.isTouchingPoint(mouseX, mouseY);
-        } else if (requestedObject === '_edge_') {
-            return util.target.isTouchingEdge();
-        }
-        return util.target.isTouchingSprite(requestedObject);
+        return util.target.touchingObject(args.TOUCHINGOBJECTMENU);
     }
 
     hatGreaterThanPredicate (args, util) {
