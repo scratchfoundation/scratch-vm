@@ -179,6 +179,8 @@ class Thread {
          * @type {?Timer}
          */
         this.warpTimer = null;
+
+        this.justReported = null;
     }
 
     /**
@@ -310,10 +312,7 @@ class Thread {
      * @param {*} value Reported value to push.
      */
     pushReportedValue (value) {
-        const parentStackFrame = this.peekParentStackFrame();
-        if (parentStackFrame !== null) {
-            parentStackFrame.justReported = typeof value === 'undefined' ? null : value;
-        }
+        this.justReported = typeof value === 'undefined' ? null : value;
     }
 
     /**
