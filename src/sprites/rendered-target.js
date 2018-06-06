@@ -648,7 +648,7 @@ class RenderedTarget extends Target {
      */
     reorderCostume (costumeIndex, newIndex) {
         newIndex = MathUtil.clamp(newIndex, 0, this.sprite.costumes.length - 1);
-        costumeIndex = MathUtil.clamp(costumeIndex, this.sprite.costumes.length - 1, costumeIndex);
+        costumeIndex = MathUtil.clamp(costumeIndex, 0, this.sprite.costumes.length - 1);
 
         if (newIndex === costumeIndex) return false;
 
@@ -670,8 +670,8 @@ class RenderedTarget extends Target {
      * @returns {boolean} If a change occurred (i.e. if the indices do not match)
      */
     reorderSound (soundIndex, newIndex) {
-        newIndex = MathUtil.clamp(newIndex, 0, this.sprite.costumes.length - 1);
-        soundIndex = MathUtil.clamp(soundIndex, this.sprite.sounds.length - 1, soundIndex);
+        newIndex = MathUtil.clamp(newIndex, 0, this.sprite.sounds.length - 1);
+        soundIndex = MathUtil.clamp(soundIndex, 0, this.sprite.sounds.length - 1);
 
         if (newIndex === soundIndex) return false;
 
