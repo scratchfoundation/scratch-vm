@@ -1522,7 +1522,17 @@ class Runtime extends EventEmitter {
      * @param {!MonitorRecord} monitor Monitor to add.
      */
     requestAddMonitor (monitor) {
-        this._monitorState = this._monitorState.set(monitor.get('id'), monitor);
+        const id = monitor.get('id');
+        if (this._monitorState.has(id)) {
+            this._monitorState = this._monitorState.set(id, this._monitorState.get(id).mergeWith((prev, next) => {
+                if (!next) {
+                    return prev;
+                }
+                return next;
+            }, monitor));
+        } else {
+            this._monitorState = this._monitorState.set(id, monitor);
+        }
     }
 
     /**
@@ -1536,7 +1546,12 @@ class Runtime extends EventEmitter {
         const id = monitor.get('id');
         if (this._monitorState.has(id)) {
             this._monitorState =
-                this._monitorState.set(id, this._monitorState.get(id).merge(monitor));
+                this._monitorState.set(id, this._monitorState.get(id).mergeWith((prev, next) => {
+                    if (!next) {
+                        return prev;
+                    }
+                    return next;
+                }, monitor));
         }
     }
 
