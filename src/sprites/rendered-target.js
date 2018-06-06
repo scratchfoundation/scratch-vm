@@ -647,20 +647,18 @@ class RenderedTarget extends Target {
      * @returns {boolean} If a change occurred (i.e. if the indices do not match)
      */
     reorderCostume (costumeIndex, newIndex) {
-        const clampedNewIndex =
-            Math.max(0, Math.min(this.sprite.costumes.length - 1, newIndex));
-        const clampedCostumeIndex =
-            Math.max(0, Math.min(this.sprite.costumes.length - 1, costumeIndex));
+        newIndex = MathUtil.clamp(newIndex, 0, this.sprite.costumes.length - 1);
+        costumeIndex = MathUtil.clamp(costumeIndex, this.sprite.costumes.length - 1, costumeIndex);
 
-        if (clampedNewIndex === clampedCostumeIndex) return false;
+        if (newIndex === costumeIndex) return false;
 
         const currentCostume = this.getCurrentCostume();
-        const costume = this.sprite.costumes[clampedCostumeIndex];
+        const costume = this.sprite.costumes[costumeIndex];
 
         // Use the sprite method for deleting costumes because setCostume is handled manually
-        this.sprite.deleteCostumeAt(clampedCostumeIndex);
+        this.sprite.deleteCostumeAt(costumeIndex);
 
-        this.addCostume(costume, clampedNewIndex);
+        this.addCostume(costume, newIndex);
         this.setCostume(this.getCostumeIndexByName(currentCostume.name));
         return true;
     }
@@ -672,16 +670,14 @@ class RenderedTarget extends Target {
      * @returns {boolean} If a change occurred (i.e. if the indices do not match)
      */
     reorderSound (soundIndex, newIndex) {
-        const clampedNewIndex =
-            Math.max(0, Math.min(this.sprite.sounds.length - 1, newIndex));
-        const clampedSoundIndex =
-            Math.max(0, Math.min(this.sprite.sounds.length - 1, soundIndex));
+        newIndex = MathUtil.clamp(newIndex, 0, this.sprite.costumes.length - 1);
+        soundIndex = MathUtil.clamp(soundIndex, this.sprite.sounds.length - 1, soundIndex);
 
-        if (clampedNewIndex === clampedSoundIndex) return false;
+        if (newIndex === soundIndex) return false;
 
-        const sound = this.sprite.sounds[clampedSoundIndex];
-        this.deleteSound(clampedSoundIndex);
-        this.addSound(sound, clampedNewIndex);
+        const sound = this.sprite.sounds[soundIndex];
+        this.deleteSound(soundIndex);
+        this.addSound(sound, newIndex);
         return true;
     }
 
