@@ -546,7 +546,8 @@ class Scratch3SpeechBlocks {
      * @private
      */
     _initializeMicrophone () {
-        this._context = new AudioContext();
+        // Safari still needs a webkit prefix for audio context
+        this._context = new (window.AudioContext || window.webkitAudioContext)();
         this._audioPromise = navigator.mediaDevices.getUserMedia({
             audio: {
                 echoCancellation: true,
