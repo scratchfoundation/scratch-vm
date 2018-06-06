@@ -659,7 +659,7 @@ class RenderedTarget extends Target {
         this.sprite.deleteCostumeAt(costumeIndex);
 
         this.addCostume(costume, newIndex);
-        this.setCostume(this.getCostumeIndexByName(currentCostume.name));
+        this.currentCostume = this.getCostumeIndexByName(currentCostume.name);
         return true;
     }
 
