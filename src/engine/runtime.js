@@ -1561,7 +1561,13 @@ class Runtime extends EventEmitter {
      * @param {!string} monitorId ID of the monitor to remove.
      */
     requestRemoveMonitor (monitorId) {
-        this._monitorState = this._monitorState.delete(monitorId);
+        // this._monitorState = this._monitorState.delete(monitorId);
+        // TODO is this performant?
+        if (this._monitorState.has(monitorId)) {
+            this._monitorState = this._monitorState.set(
+                monitorId, this._monitorState.get(monitorId).merge({visible: false})
+            );
+        }
     }
 
     /**
