@@ -1523,25 +1523,19 @@ class Runtime extends EventEmitter {
      */
     requestAddMonitor (monitor) {
         const id = monitor.get('id');
-        if (this._monitorState.has(id)) {
-            // Use mergeWith here to prevent undefined values from overwriting existing ones
-            this._monitorState = this._monitorState.set(id, this._monitorState.get(id).mergeWith((prev, next) => {
-                if (typeof next === 'undefined' || next === null) {
-                    return prev;
-                }
-                return next;
-            }, monitor));
-        } else {
+        if (!this.requestUpdateMonitor(monitor)) { // update monitor if it exists in the state
+            // if the monitor did not exist in the state, add it
             this._monitorState = this._monitorState.set(id, monitor);
         }
     }
 
     /**
-     * Update a monitor in the state. Does nothing if the monitor does not already
+     * Update a monitor in the state. Does nothing and returns false if the monitor does not already
      * exist in the state.
      * @param {!Map} monitor Monitor values to update. Values on the monitor with overwrite
      *     values on the old monitor with the same ID. If a value isn't defined on the new monitor,
      *     the old monitor will keep its old value.
+     * @returns {boolean} true if monitor exists in the state and was updated, false if it did not exist.
      */
     requestUpdateMonitor (monitor) {
         const id = monitor.get('id');
@@ -1554,7 +1548,9 @@ class Runtime extends EventEmitter {
                     }
                     return next;
                 }, monitor));
+            return true;
         }
+        return false;
     }
 
     /**
