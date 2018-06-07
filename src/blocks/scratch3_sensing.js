@@ -150,7 +150,7 @@ class Scratch3SensingBlocks {
     }
 
     touchingObject (args, util) {
-        return util.target.touchingObject(args.TOUCHINGOBJECTMENU);
+        return util.target.isTouchingObject(args.TOUCHINGOBJECTMENU);
     }
 
     touchingColor (args, util) {

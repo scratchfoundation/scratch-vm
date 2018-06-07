@@ -725,11 +725,11 @@ class RenderedTarget extends Target {
     }
 
     /**
-     * Return whether touching the mouse, an edge, or a sprite.
+     * Return whether this target is touching the mouse, an edge, or a sprite.
      * @param {string} requestedObject an id for mouse or edge, or a sprite name.
      * @return {boolean} True if the sprite is touching the object.
      */
-    touchingObject (requestedObject) {
+    isTouchingObject (requestedObject) {
         if (requestedObject === '_mouse_') {
             if (!this.runtime.ioDevices.mouse) return false;
             const mouseX = this.runtime.ioDevices.mouse.getClientX();

@@ -63,7 +63,7 @@ class Scratch3EventBlocks {
     }
 
     touchingObject (args, util) {
-        return util.target.touchingObject(args.TOUCHINGOBJECTMENU);
+        return util.target.isTouchingObject(args.TOUCHINGOBJECTMENU);
     }
 
     hatGreaterThanPredicate (args, util) {
