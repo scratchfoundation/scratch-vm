@@ -45,26 +45,10 @@ const BLEUUID = {
 class MicroBit {
 
     /**
-     * @return {string} - the type of Scratch Link device socket that this class will handle.
-     */
-    static get DEVICE_TYPE () {
-        return 'ble';
-    }
-
-    /**
      * Construct a MicroBit communication object.
-     * @param {Socket} socket - the socket for a MicroBit device, as provided by a Scratch Link client.
      * @param {Runtime} runtime - the Scratch 3.0 runtime
      */
-    constructor (socket, runtime) {
-
-        /**
-         * The socket-IO socket used to communicate with the Scratch Link about this device.
-         * @type {Socket}
-         * @private
-         */
-        // TODO: replace with socket from constructor args
-        this._socket = new WebSocket('ws://localhost:20110/scratch/ble');
+    constructor (runtime) {
 
         /**
          * The Scratch 3.0 runtime used to trigger the green flag button.
@@ -116,13 +100,45 @@ class MicroBit {
             }
         };
 
-        // TODO: move up Scratch Link connecting to VM/GUI?
-        this._ble = this._tempConnect();
+        // TODO: rethink callback in constructor idea?
+        this._ble = new ScratchBLE(this._onBLEReady.bind(this));
 
         // TODO: add Scratch Link 'read' handling
 
         // TODO: add Scratch Link 'disconnect' handling
 
+    }
+
+    _onBLEReady () {
+        // TODO: who should care about 'filters' option? device or ScratchBLE?
+        // TODO: should this handle what to do if no device found or chosen?
+        this._ble.connectDevice({
+            filters: [
+                {services: [BLEUUID.service]} // micro:bit service id
+            ]
+        });
+
+        /* then(
+            x => {
+                log.info(`MicroBit connect device resolved to: ${x}`);
+            },
+            e => {
+                log.error(`MicroBit connect resolved rejected with: ${e}`);
+            }
+        );*/
+
+        /* CWF
+        // here be dragons
+        connectDevice({}, (startDiscoveryCallback, someOtherCallback) => {
+            steps: [
+                {
+                    title: 'Connect to a micro:bit',
+                    image: '..',
+                    callback: startDiscoveryCallback
+                }
+            ]
+        }).then(peripheral => ...);
+        */
     }
 
     /**
@@ -193,66 +209,6 @@ class MicroBit {
      */
     _checkPinState (pin) {
         return this._sensors.touchPins[pin];
-    }
-
-    /**
-     * Use the Scratch Link client to attempt to connect to a MicroBit device.
-     * @return {ScratchBLE} - a ScratchBLE session
-     * @private
-     */
-    _tempConnect () {
-
-        let ScratchBLESession = null;
-
-        const connectBLE = function () {
-            ScratchBLESession.sendRemoteRequest(
-                'connect',
-                {peripheralId: ScratchBLESession.discoveredPeripheralId}
-            ).then(
-                x => {
-                    log.info(`connect resolved to: ${x}`);
-                },
-                e => {
-                    log.error(`connect rejected with: ${e}`);
-                }
-            );
-        };
-        const discoverBLE = function () {
-            ScratchBLESession.requestDevice({
-                filters: [
-                    {services: [BLEUUID.service]}
-                ]
-            }).then(
-                x => {
-                    log.info(`requestDevice resolved to: ${x}`);
-                    setTimeout(() => {
-                        connectBLE(); // TODO: resolve why timeout is needed
-                    }, 5000);
-                },
-                e => {
-                    log.error(`requestDevice rejected with: ${e}`);
-                }
-            );
-        };
-        const pingBLE = function () {
-            ScratchBLESession.sendRemoteRequest('pingMe').then(
-                x => {
-                    log.info(`Ping request resolved with: ${x}`);
-                    discoverBLE(); // TODO: resolve why pinging is needed
-                },
-                e => {
-                    log.error(`Ping request rejected with: ${e}`);
-                }
-            );
-        };
-
-        // Create a new ScratchBLE Session
-        ScratchBLESession = new ScratchBLE(this._socket);
-
-        // Detect onopen for web socket
-        this._socket.onopen = e => pingBLE(); // sets off chain
-
-        return ScratchBLESession;
     }
 
     /**
