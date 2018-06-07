@@ -295,9 +295,8 @@ class Blocks {
                 oldInput: e.oldInputName,
                 newParent: e.newParentId,
                 newInput: e.newInputName,
-                newCoordinate: e.newCoordinate,
-                oldCoordinate: e.oldCoordinate
-            }, optRuntime);
+                newCoordinate: e.newCoordinate
+            });
             break;
         case 'dragOutside':
             if (optRuntime) {
@@ -550,10 +549,8 @@ class Blocks {
     /**
      * Block management: move blocks from parent to parent
      * @param {!object} e Blockly move event to be processed
-     * @param {?Runtime} optRuntime Optional runtime for updating the position
-     * of a comment on the block that moved.
      */
-    moveBlock (e, optRuntime) {
+    moveBlock (e) {
         if (!this._blocks.hasOwnProperty(e.id)) {
             return;
         }
@@ -562,19 +559,6 @@ class Blocks {
         if (e.newCoordinate) {
             this._blocks[e.id].x = e.newCoordinate.x;
             this._blocks[e.id].y = e.newCoordinate.y;
-
-            // If the moved block has a comment, update the position of the comment.
-            if (typeof this._blocks[e.id].comment === 'string' && optRuntime &&
-                e.oldCoordinate) {
-                const commentId = this._blocks[e.id].comment;
-                const currTarget = optRuntime.getEditingTarget();
-                if (currTarget && currTarget.comments.hasOwnProperty(commentId)) {
-                    const deltaX = e.newCoordinate.x - e.oldCoordinate.x;
-                    const deltaY = e.newCoordinate.y - e.oldCoordinate.y;
-                    currTarget.comments[commentId].x += deltaX;
-                    currTarget.comments[commentId].y += deltaY;
-                }
-            }
         }
 
         // Remove from any old parent.
