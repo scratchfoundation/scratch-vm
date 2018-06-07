@@ -540,12 +540,8 @@ class Blocks {
                     // @todo(vm#565) for numerical values with decimals, some countries use comma
                     value: '',
                     mode: block.opcode === 'data_listcontents' ? 'list' : block.mode,
-                    x: block.x,
-                    y: block.y,
                     sliderMin: block.sliderMin,
-                    sliderMax: block.sliderMax,
-                    width: block.width,
-                    height: block.height
+                    sliderMax: block.sliderMax
                 }));
             }
             break;
