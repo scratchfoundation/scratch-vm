@@ -375,18 +375,14 @@ class Blocks {
                 const change = e.newContents_;
                 if (change.hasOwnProperty('minimized')) {
                     comment.minimized = change.minimized;
-                    break;
-                } else if (change.hasOwnProperty('width') && change.hasOwnProperty('height')){
+                }
+                if (change.hasOwnProperty('width') && change.hasOwnProperty('height')){
                     comment.width = change.width;
                     comment.height = change.height;
-                    break;
-                } else if (change.hasOwnProperty('text')) {
-                    comment.text = change.text;
-                    break;
                 }
-                log.warn(`Unrecognized comment change: ${
-                    JSON.stringify(change)} for comment with id: ${e.commentId}.`);
-                return;
+                if (change.hasOwnProperty('text')) {
+                    comment.text = change.text;
+                }
             }
             break;
         case 'comment_move':
