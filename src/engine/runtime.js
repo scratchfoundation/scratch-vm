@@ -1524,8 +1524,9 @@ class Runtime extends EventEmitter {
     requestAddMonitor (monitor) {
         const id = monitor.get('id');
         if (this._monitorState.has(id)) {
+            // Use mergeWith here to prevent undefined values from overwriting existing ones
             this._monitorState = this._monitorState.set(id, this._monitorState.get(id).mergeWith((prev, next) => {
-                if (!next) {
+                if (typeof next === 'undefined' || next === null) {
                     return prev;
                 }
                 return next;
@@ -1546,8 +1547,9 @@ class Runtime extends EventEmitter {
         const id = monitor.get('id');
         if (this._monitorState.has(id)) {
             this._monitorState =
+                // Use mergeWith here to prevent undefined values from overwriting existing ones
                 this._monitorState.set(id, this._monitorState.get(id).mergeWith((prev, next) => {
-                    if (!next) {
+                    if (typeof next === 'undefined' || next === null) {
                         return prev;
                     }
                     return next;
@@ -1561,8 +1563,6 @@ class Runtime extends EventEmitter {
      * @param {!string} monitorId ID of the monitor to remove.
      */
     requestRemoveMonitor (monitorId) {
-        // this._monitorState = this._monitorState.delete(monitorId);
-        // TODO is this performant?
         if (this._monitorState.has(monitorId)) {
             this._monitorState = this._monitorState.set(
                 monitorId, this._monitorState.get(monitorId).merge({visible: false})
