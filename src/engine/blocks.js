@@ -374,17 +374,15 @@ class Blocks {
                 }
                 const comment = currTarget.comments[e.commentId];
                 const change = e.newContents_;
-                if (typeof change === 'object') {
-                    if (change.hasOwnProperty('minimized')) {
-                        comment.minimized = change.minimized;
-                        break;
-                    } else if (change.hasOwnProperty('width') && change.hasOwnProperty('height')){
-                        comment.width = change.width;
-                        comment.height = change.height;
-                        break;
-                    }
-                } else if (typeof change === 'string') {
-                    comment.text = change;
+                if (change.hasOwnProperty('minimized')) {
+                    comment.minimized = change.minimized;
+                    break;
+                } else if (change.hasOwnProperty('width') && change.hasOwnProperty('height')){
+                    comment.width = change.width;
+                    comment.height = change.height;
+                    break;
+                } else if (change.hasOwnProperty('text')) {
+                    comment.text = change.text;
                     break;
                 }
                 log.warn(`Unrecognized comment change: ${
