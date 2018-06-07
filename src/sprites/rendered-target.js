@@ -488,7 +488,7 @@ class RenderedTarget extends Target {
      * @param {?int} index Index at which to add costume
      */
     addCostume (costumeObject, index) {
-        if (index) {
+        if (typeof index === 'number' && !isNaN(index)) {
             this.sprite.addCostumeAt(costumeObject, index);
         } else {
             this.sprite.addCostumeAt(costumeObject, this.sprite.costumes.length);
@@ -551,7 +551,7 @@ class RenderedTarget extends Target {
     addSound (soundObject, index) {
         const usedNames = this.sprite.sounds.map(sound => sound.name);
         soundObject.name = StringUtil.unusedName(soundObject.name, usedNames);
-        if (index) {
+        if (typeof index === 'number' && !isNaN(index)) {
             this.sprite.sounds.splice(index, 0, soundObject);
         } else {
             this.sprite.sounds.push(soundObject);
@@ -638,6 +638,47 @@ class RenderedTarget extends Target {
      */
     getCostumes () {
         return this.sprite.costumes;
+    }
+
+    /**
+     * Reorder costume list by moving costume at costumeIndex to newIndex.
+     * @param {!number} costumeIndex Index of the costume to move.
+     * @param {!number} newIndex New index for that costume.
+     * @returns {boolean} If a change occurred (i.e. if the indices do not match)
+     */
+    reorderCostume (costumeIndex, newIndex) {
+        newIndex = MathUtil.clamp(newIndex, 0, this.sprite.costumes.length - 1);
+        costumeIndex = MathUtil.clamp(costumeIndex, 0, this.sprite.costumes.length - 1);
+
+        if (newIndex === costumeIndex) return false;
+
+        const currentCostume = this.getCurrentCostume();
+        const costume = this.sprite.costumes[costumeIndex];
+
+        // Use the sprite method for deleting costumes because setCostume is handled manually
+        this.sprite.deleteCostumeAt(costumeIndex);
+
+        this.addCostume(costume, newIndex);
+        this.currentCostume = this.getCostumeIndexByName(currentCostume.name);
+        return true;
+    }
+
+    /**
+     * Reorder sound list by moving sound at soundIndex to newIndex.
+     * @param {!number} soundIndex Index of the sound to move.
+     * @param {!number} newIndex New index for that sound.
+     * @returns {boolean} If a change occurred (i.e. if the indices do not match)
+     */
+    reorderSound (soundIndex, newIndex) {
+        newIndex = MathUtil.clamp(newIndex, 0, this.sprite.sounds.length - 1);
+        soundIndex = MathUtil.clamp(soundIndex, 0, this.sprite.sounds.length - 1);
+
+        if (newIndex === soundIndex) return false;
+
+        const sound = this.sprite.sounds[soundIndex];
+        this.deleteSound(soundIndex);
+        this.addSound(sound, newIndex);
+        return true;
     }
 
     /**
