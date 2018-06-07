@@ -1,6 +1,9 @@
+const log = require('../util/log');
+
 class PeripheralChooser {
 
     get choosePeripheral () {
+        // should return a promise
         return this._choosePromise;
     }
 
@@ -10,8 +13,8 @@ class PeripheralChooser {
 
     constructor () {
         this._choosePromise = new Promise((resolve, reject) => {
-            this._choosePeripheral = resolve;
-            this._cancel = reject;
+            this._discoverCallback = resolve; // TODO: what about UI?
+            this._cancel = reject; // TODO: when to use this callback?
         });
 
         this._chosenPeripheralId = null;
@@ -20,12 +23,7 @@ class PeripheralChooser {
     updatePeripheral (peripheralId /* , RSSI */) {
         this._chosenPeripheralId = peripheralId;
 
-        /* cwf
-        // just accept the first peripheral
-        //this._choosePeripheral(peripheralId);
-
-        // in a React/Redux version this sets Redux state instead
-        */
+        this._discoverCallback(this._chosenPeripheralId);
     }
 
 }

@@ -100,45 +100,49 @@ class MicroBit {
             }
         };
 
-        // TODO: rethink callback in constructor idea?
-        this._ble = new ScratchBLE(this._onBLEReady.bind(this));
-
-        // TODO: add Scratch Link 'read' handling
+        this._ble = new ScratchBLE();
+        this._ble.waitForConnect()
+            // TODO: resolve why pinging is needed for readyCallback
+            .then(() => this._ble.sendRemoteRequest('pingMe'))
+            .then(
+                x => {
+                    log.info(`Ping request resolved with: ${x}`);
+                    this._onBLEReady();
+                },
+                e => {
+                    log.error(`Ping request rejected with: ${e}`);
+                }
+            );
 
         // TODO: add Scratch Link 'disconnect' handling
 
     }
 
     _onBLEReady () {
-        // TODO: who should care about 'filters' option? device or ScratchBLE?
-        // TODO: should this handle what to do if no device found or chosen?
-        this._ble.connectDevice({
+        // TODO: expand connectDevice method signature in ScratchBLE
+        this._ble.requestDevice({
             filters: [
                 {services: [BLEUUID.service]} // micro:bit service id
             ]
-        });
+        }, this._onBLEConnect.bind(this), this._onBLEError); // TODO: this binding?
+    }
 
-        /* then(
+    _onBLEConnect (result) {
+        log.info(`BLE device connected: ${result}`);
+        // TODO: move the reading elsewhere?
+        // TODO: this binding?
+        this._ble.read(BLEUUID.service, BLEUUID.rxChar, true, this._processData.bind(this)).then(
             x => {
-                log.info(`MicroBit connect device resolved to: ${x}`);
+                log.info(`read resolved to: ${x}`);
             },
             e => {
-                log.error(`MicroBit connect resolved rejected with: ${e}`);
+                log.error(`read rejected with: ${e}`);
             }
-        );*/
+        );
+    }
 
-        /* CWF
-        // here be dragons
-        connectDevice({}, (startDiscoveryCallback, someOtherCallback) => {
-            steps: [
-                {
-                    title: 'Connect to a micro:bit',
-                    image: '..',
-                    callback: startDiscoveryCallback
-                }
-            ]
-        }).then(peripheral => ...);
-        */
+    _onBLEError (e) {
+        log.info(`BLE error: ${e}`);
     }
 
     /**
@@ -212,30 +216,21 @@ class MicroBit {
     }
 
     /**
-     * Read a message from the device BLE session.
-     * @return {string} message - the read message.
-     * @private
-     */
-    _read () {
-        // TODO: figure out why 'true' doesn't launch notifications
-        this._ble.read(BLEUUID.service, BLEUUID.rxChar, true).then(
-            x => {
-                log.info(`read resolved to: ${x}`);
-                // TODO: decode params.message to Uint8Array, call _processData()
-            },
-            e => {
-                log.error(`read rejected with: ${e}`);
-            }
-        );
-        return 'hello';
-    }
-
-    /**
      * Process the sensor data from the incoming BLE characteristic.
-     * @param {object} data - the incoming BLE data.
+     * @param {object} base64 - the incoming BLE data.
      * @private
      */
-    _processData (data) {
+    _processData (base64) {
+        // log.info(`what is data: ${base64}`);
+        // TODO: move decoding elsewhere? make base64 util?
+        const binaryString = window.atob(base64);
+        const len = binaryString.length;
+        const data = new Uint8Array(len);
+        for (let i = 0; i < len; i++) {
+            data[i] = binaryString.charCodeAt(i);
+        }
+        // const data = bytes.buffer;
+
         this._sensors.tiltX = data[1] | (data[0] << 8);
         if (this._sensors.tiltX > (1 << 15)) this._sensors.tiltX -= (1 << 16);
         this._sensors.tiltY = data[3] | (data[2] << 8);
