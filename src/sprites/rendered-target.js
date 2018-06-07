@@ -766,6 +766,23 @@ class RenderedTarget extends Target {
     }
 
     /**
+     * Return whether this target is touching the mouse, an edge, or a sprite.
+     * @param {string} requestedObject an id for mouse or edge, or a sprite name.
+     * @return {boolean} True if the sprite is touching the object.
+     */
+    isTouchingObject (requestedObject) {
+        if (requestedObject === '_mouse_') {
+            if (!this.runtime.ioDevices.mouse) return false;
+            const mouseX = this.runtime.ioDevices.mouse.getClientX();
+            const mouseY = this.runtime.ioDevices.mouse.getClientY();
+            return this.isTouchingPoint(mouseX, mouseY);
+        } else if (requestedObject === '_edge_') {
+            return this.isTouchingEdge();
+        }
+        return this.isTouchingSprite(requestedObject);
+    }
+
+    /**
      * Return whether touching a point.
      * @param {number} x X coordinate of test point.
      * @param {number} y Y coordinate of test point.
