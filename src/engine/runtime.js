@@ -1535,7 +1535,7 @@ class Runtime extends EventEmitter {
      * @param {!Map} monitor Monitor values to update. Values on the monitor with overwrite
      *     values on the old monitor with the same ID. If a value isn't defined on the new monitor,
      *     the old monitor will keep its old value.
-     * @returns {boolean} true if monitor exists in the state and was updated, false if it did not exist.
+     * @return {boolean} true if monitor exists in the state and was updated, false if it did not exist.
      */
     requestUpdateMonitor (monitor) {
         const id = monitor.get('id');
@@ -1552,18 +1552,40 @@ class Runtime extends EventEmitter {
         }
         return false;
     }
-
+    
     /**
      * Removes a monitor from the state. Does nothing if the monitor already does
      * not exist in the state.
      * @param {!string} monitorId ID of the monitor to remove.
      */
     requestRemoveMonitor (monitorId) {
-        if (this._monitorState.has(monitorId)) {
-            this._monitorState = this._monitorState.set(
-                monitorId, this._monitorState.get(monitorId).merge({visible: false})
-            );
-        }
+        this._monitorState = this._monitorState.delete(monitorId);
+    }
+
+    /**
+     * Hides a monitor. Does nothing if the monitor already does
+     * not exist in the state.
+     * @param {!string} monitorId ID of the monitor to remove.
+     * @return {boolean} true if monitor exists and was updated, false otherwise
+     */
+    requestHideMonitor (monitorId) {
+        return this.requestUpdateMonitor(new Map([
+            ['id', monitorId],
+            ['visible', false]
+        ]));
+    }
+
+    /**
+     * Shows a monitor. Does nothing if the monitor already does
+     * not exist in the state.
+     * @param {!string} monitorId ID of the monitor to remove.
+     * @return {boolean} true if monitor exists and was updated, false otherwise
+     */
+    requestShowMonitor (monitorId) {
+        return this.requestUpdateMonitor(new Map([
+            ['id', monitorId],
+            ['visible', true]
+        ]));
     }
 
     /**
