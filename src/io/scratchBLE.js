@@ -1,6 +1,5 @@
 const JSONRPCWebSocket = require('../util/jsonrpc-web-socket');
 const PeripheralChooser = require('./peripheralChooser');
-const log = require('../util/log');
 
 class ScratchBLE extends JSONRPCWebSocket {
 
@@ -14,16 +13,17 @@ class ScratchBLE extends JSONRPCWebSocket {
 
         super(ws);
 
+        this.peripheralChooser = new PeripheralChooser();
+
         this._socketPromise = new Promise((resolve, reject) => {
             ws.onopen = resolve;
-            ws.onerror = reject; // is this called onerror? I don't remember
+            ws.onerror = reject;
         });
-
-        this.peripheralChooser = new PeripheralChooser();
+        this._characteristicDidChange = null;
 
     }
 
-    waitForConnect () {
+    waitForSocket () {
         return this._socketPromise;
     }
 
@@ -35,14 +35,14 @@ class ScratchBLE extends JSONRPCWebSocket {
                 {
                     title: 'Connect to a micro:bit',
                     image: '..',
-                    callback: startDiscoveryCallback
+                    callback: startDiscoveryCallback // ??
                 }
             ]
         }
         */
 
         this.sendRemoteRequest('discover', deviceOptions)
-            .then(() => this.peripheralChooser.choosePeripheral) // use guiOptions
+            .then(() => this.peripheralChooser.choosePeripheral()) // use guiOptions
             .then(id => this.sendRemoteRequest(
                 'connect',
                 {peripheralId: id}
@@ -56,21 +56,17 @@ class ScratchBLE extends JSONRPCWebSocket {
     didReceiveCall (method, params) {
         switch (method) {
         case 'didDiscoverPeripheral':
-            log.info(`Peripheral discovered: ${params.peripheralId}`);
-            // *****GUI: send discovered devices to GUI
-            this.peripheralChooser.updatePeripheral(params.peripheralId);
+            this.peripheralChooser.addPeripheral(params.peripheralId);
             break;
         case 'characteristicDidChange':
-            if (this._dataCallback) {
-                this._dataCallback(params.message);
-            }
+            this._characteristicDidChange(params.message);
             break;
         case 'ping':
             return 42;
         }
     }
 
-    read (serviceId, characteristicId, optStartNotifications = false, callback) {
+    read (serviceId, characteristicId, optStartNotifications = false, onCharacteristicChanged) {
         const params = {
             serviceId,
             characteristicId
@@ -78,7 +74,7 @@ class ScratchBLE extends JSONRPCWebSocket {
         if (optStartNotifications) {
             params.startNotifications = true;
         }
-        this._dataCallback = callback;
+        this._characteristicDidChange = onCharacteristicChanged; // TODO: is this the best way to do this?
         return this.sendRemoteRequest('read', params);
     }
 

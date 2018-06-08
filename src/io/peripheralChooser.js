@@ -1,29 +1,30 @@
-const log = require('../util/log');
-
 class PeripheralChooser {
-
-    get choosePeripheral () {
-        // should return a promise
-        return this._choosePromise;
-    }
 
     get chosenPeripheralId () {
         return this._chosenPeripheralId;
     }
 
     constructor () {
-        this._choosePromise = new Promise((resolve, reject) => {
-            this._discoverCallback = resolve; // TODO: what about UI?
-            this._cancel = reject; // TODO: when to use this callback?
-        });
-
-        this._chosenPeripheralId = null;
+        this._availablePeripherals = []; // for use in GUI
+        this._chosenPeripheralId = null; // for returning to ScratchBLE/BT/etc.
     }
 
-    updatePeripheral (peripheralId /* , RSSI */) {
-        this._chosenPeripheralId = peripheralId;
+    choosePeripheral () {
+        return new Promise((resolve, reject) => {
+            // TODO: Launch GUI
+            // TODO: Set chosen _chosenPeripheralId ??
+            // TODO: do something with resolve
+            // TODO: do something with reject
+            this._tempPeripheralChosenCallback = resolve; // TODO: Temp Hack to grab this callback
+        });
+    }
 
-        this._discoverCallback(this._chosenPeripheralId);
+    addPeripheral (peripheralId /* , RSSI, etc? */) {
+        this._availablePeripherals.push(peripheralId); // for use in GUI
+
+        // TODO: Temp Hack to call chosen callback on whatever peripherals are added for now
+        this._chosenPeripheralId = this._availablePeripherals[0];
+        this._tempPeripheralChosenCallback(this._chosenPeripheralId);
     }
 
 }

@@ -101,8 +101,8 @@ class MicroBit {
         };
 
         this._ble = new ScratchBLE();
-        this._ble.waitForConnect()
-            // TODO: resolve why pinging is needed for readyCallback
+        this._ble.waitForSocket()
+            // TODO: resolve why pinging is needed
             .then(() => this._ble.sendRemoteRequest('pingMe'))
             .then(
                 x => {
@@ -114,35 +114,8 @@ class MicroBit {
                 }
             );
 
-        // TODO: add Scratch Link 'disconnect' handling
+        // TODO: add ScratchBLE 'disconnect' handling
 
-    }
-
-    _onBLEReady () {
-        // TODO: expand connectDevice method signature in ScratchBLE
-        this._ble.requestDevice({
-            filters: [
-                {services: [BLEUUID.service]} // micro:bit service id
-            ]
-        }, this._onBLEConnect.bind(this), this._onBLEError); // TODO: this binding?
-    }
-
-    _onBLEConnect (result) {
-        log.info(`BLE device connected: ${result}`);
-        // TODO: move the reading elsewhere?
-        // TODO: this binding?
-        this._ble.read(BLEUUID.service, BLEUUID.rxChar, true, this._processData.bind(this)).then(
-            x => {
-                log.info(`read resolved to: ${x}`);
-            },
-            e => {
-                log.error(`read rejected with: ${e}`);
-            }
-        );
-    }
-
-    _onBLEError (e) {
-        log.info(`BLE error: ${e}`);
     }
 
     /**
@@ -216,20 +189,47 @@ class MicroBit {
     }
 
     /**
+     * Requests connection to a device when BLE session is ready.
+     */
+    _onBLEReady () {
+        // TODO: expand connectDevice method signature in ScratchBLE
+        this._ble.requestDevice({
+            filters: [
+                {services: [BLEUUID.service]}
+            ]
+        }, this._onBLEConnect.bind(this), this._onBLEError); // TODO: this binding?
+    }
+
+    /**
+     * Starts reading data from device after BLE has connected to it.
+     */
+    _onBLEConnect () {
+        const processDataCallback = this._processData.bind(this); // TODO: this binding?
+        this._ble.read(BLEUUID.service, BLEUUID.rxChar, true, processDataCallback);
+    }
+
+    /**
+     * Logs error from BLE session.
+     * @param {string} e - Error from BLE session
+     */
+    _onBLEError (e) {
+        log.info(`BLE error:`);
+        log.info(e);
+    }
+
+    /**
      * Process the sensor data from the incoming BLE characteristic.
      * @param {object} base64 - the incoming BLE data.
      * @private
      */
     _processData (base64) {
-        // log.info(`what is data: ${base64}`);
-        // TODO: move decoding elsewhere? make base64 util?
+        // TODO: make base64 decoding util?
         const binaryString = window.atob(base64);
         const len = binaryString.length;
         const data = new Uint8Array(len);
         for (let i = 0; i < len; i++) {
             data[i] = binaryString.charCodeAt(i);
         }
-        // const data = bytes.buffer;
 
         this._sensors.tiltX = data[1] | (data[0] << 8);
         if (this._sensors.tiltX > (1 << 15)) this._sensors.tiltX -= (1 << 16);
