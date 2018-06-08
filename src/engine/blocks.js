@@ -529,22 +529,21 @@ class Blocks {
             block.targetId = isSpriteSpecific ? optRuntime.getEditingTarget().id : null;
 
             if (wasMonitored && !block.isMonitored) {
-                optRuntime.requestRemoveMonitor(block.id);
+                optRuntime.requestHideMonitor(block.id);
             } else if (!wasMonitored && block.isMonitored) {
-                optRuntime.requestAddMonitor(MonitorRecord({
-                    id: block.id,
-                    targetId: block.targetId,
-                    spriteName: block.targetId ? optRuntime.getTargetById(block.targetId).getName() : null,
-                    opcode: block.opcode,
-                    params: this._getBlockParams(block),
-                    // @todo(vm#565) for numerical values with decimals, some countries use comma
-                    value: '',
-                    x: block.x,
-                    y: block.y,
-                    mode: block.opcode === 'data_listcontents' ? 'list' : block.mode,
-                    sliderMin: block.sliderMin,
-                    sliderMax: block.sliderMax
-                }));
+                // Tries to show the monitor for specified block. If it doesn't exist, add the monitor.
+                if (!optRuntime.requestShowMonitor(block.id)) {
+                    optRuntime.requestAddMonitor(MonitorRecord({
+                        id: block.id,
+                        targetId: block.targetId,
+                        spriteName: block.targetId ? optRuntime.getTargetById(block.targetId).getName() : null,
+                        opcode: block.opcode,
+                        params: this._getBlockParams(block),
+                        // @todo(vm#565) for numerical values with decimals, some countries use comma
+                        value: '',
+                        mode: block.opcode === 'data_listcontents' ? 'list' : block.mode
+                    }));
+                }
             }
             break;
         }
