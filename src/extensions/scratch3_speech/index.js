@@ -1,6 +1,7 @@
 const ArgumentType = require('../../extension-support/argument-type');
 const Cast = require('../../util/cast');
 const BlockType = require('../../extension-support/block-type');
+const formatMessage = require('format-message');
 const log = require('../../util/log');
 const DiffMatchPatch = require('diff-match-patch');
 
@@ -691,23 +692,35 @@ class Scratch3SpeechBlocks {
             blocks: [
                 {
                     opcode: 'listenAndWait',
-                    text: 'Listen and Wait',
+                    text: formatMessage({
+                        id: 'speech.ListenAndWait',
+                        default: 'listen and wait',
+                        description: 'Start listening to the microphone and wait for data.'
+                    }),
                     blockType: BlockType.COMMAND
                 },
                 {
                     opcode: 'whenIHearHat',
-                    text: 'When I hear [PHRASE]',
+                    text: formatMessage({
+                        id: 'speech.whenIHear',
+                        default: 'when I hear [PHRASE]',
+                        description: 'Text on hat block that triggers when phrase is heard.'
+                    }),
                     blockType: BlockType.HAT,
                     arguments: {
                         PHRASE: {
                             type: ArgumentType.STRING,
-                            defaultValue: 'cat'
+                            defaultValue: 'cat' // TODO: Choose something.
                         }
                     }
                 },
                 {
                     opcode: 'getSpeech',
-                    text: 'speech',
+                    text: formatMessage({
+                        id: 'speech.speechReporter',
+                        default: 'speech',
+                        description: 'Text on speech reporter block.'
+                    }),
                     blockType: BlockType.REPORTER
                 }
             ]
