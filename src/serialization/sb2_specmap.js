@@ -428,6 +428,11 @@ const specMap = {
         argMap: [
         ]
     },
+    'costumeName': {
+        opcode: 'looks_costumename',
+        argMap: [
+        ]
+    },
     'sceneName': {
         opcode: 'looks_backdropnumbername',
         argMap: [
