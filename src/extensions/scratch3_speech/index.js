@@ -689,7 +689,7 @@ class Scratch3SpeechBlocks {
             name: formatMessage({
                 id: 'speech.extensionName',
                 default: 'Google Speech',
-                description: 'Name of extension that add speech recognition blocks.'
+                description: 'Name of extension that adds speech recognition blocks.'
             }),
             menuIconURI: menuIconURI,
             blockIconURI: iconURI,
