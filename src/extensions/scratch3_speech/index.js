@@ -686,16 +686,21 @@ class Scratch3SpeechBlocks {
     getInfo () {
         return {
             id: 'speech',
-            name: 'Google Speech',
+            name: formatMessage({
+                id: 'speech.extensionName',
+                default: 'Google Speech',
+                description: 'Name of extension that add speech recognition blocks.'
+            }),
             menuIconURI: menuIconURI,
             blockIconURI: iconURI,
             blocks: [
                 {
                     opcode: 'listenAndWait',
                     text: formatMessage({
-                        id: 'speech.ListenAndWait',
+                        id: 'speech.listenAndWait',
                         default: 'listen and wait',
-                        description: 'Start listening to the microphone and wait for data.'
+                        // eslint-disable-next-line max-len
+                        description: 'Start listening to the microphone and wait for a result from the speech recognition system.'
                     }),
                     blockType: BlockType.COMMAND
                 },
@@ -704,13 +709,18 @@ class Scratch3SpeechBlocks {
                     text: formatMessage({
                         id: 'speech.whenIHear',
                         default: 'when I hear [PHRASE]',
-                        description: 'Text on hat block that triggers when phrase is heard.'
+                        // eslint-disable-next-line max-len
+                        description: 'Event that triggers when the text entered on the block is recognized by the speech recognition system.'
                     }),
                     blockType: BlockType.HAT,
                     arguments: {
                         PHRASE: {
                             type: ArgumentType.STRING,
-                            defaultValue: 'cat' // TODO: Choose something.
+                            defaultValue: formatMessage({
+                                id: 'speech.defaultWhenIHearValue',
+                                default: 'cat',
+                                description: 'The default phrase/word that, when heard, triggers the event.'
+                            })
                         }
                     }
                 },
@@ -719,7 +729,7 @@ class Scratch3SpeechBlocks {
                     text: formatMessage({
                         id: 'speech.speechReporter',
                         default: 'speech',
-                        description: 'Text on speech reporter block.'
+                        description: 'Get the text of spoken words transcribed by the speech recognition system.'
                     }),
                     blockType: BlockType.REPORTER
                 }
