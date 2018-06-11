@@ -5,7 +5,7 @@ class PeripheralChooser {
     }
 
     /**
-     * TODO: method signature
+     * Creates a peripheral chooser.
      */
     constructor () {
         this._availablePeripherals = []; // for use in GUI
@@ -13,7 +13,8 @@ class PeripheralChooser {
     }
 
     /**
-     * TODO: method signature
+     * Launches a GUI menu to choose a peripheral.
+     * @return {Promise} - chosen peripheral promise
      */
     choosePeripheral () {
         return new Promise((resolve, reject) => {
@@ -26,7 +27,8 @@ class PeripheralChooser {
     }
 
     /**
-     * TODO: method signature
+     * Adds the peripheral ID to list of available peripherals.
+     * @param {number} peripheralId - the id to add.
      */
     addPeripheral (peripheralId /* , RSSI, etc? */) {
         this._availablePeripherals.push(peripheralId); // for use in GUI
