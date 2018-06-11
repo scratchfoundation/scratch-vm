@@ -127,7 +127,7 @@ class MicroBit {
         for (let i = 0; i < text.length; i++) {
             output[i] = text.charCodeAt(i);
         }
-        this._write(BLECommand.CMD_DISPLAY_TEXT, output);
+        this._writeBLE(BLECommand.CMD_DISPLAY_TEXT, output);
     }
 
     /**
@@ -135,7 +135,7 @@ class MicroBit {
      * @param {Uint8Array} matrix - the matrix to display.
      */
     displayMatrix (matrix) {
-        this._write(BLECommand.CMD_DISPLAY_LED, matrix);
+        this._writeBLE(BLECommand.CMD_DISPLAY_LED, matrix);
     }
 
     /**
@@ -192,7 +192,6 @@ class MicroBit {
      * Requests connection to a device when BLE session is ready.
      */
     _onBLEReady () {
-        // TODO: expand connectDevice method signature in ScratchBLE
         this._ble.requestDevice({
             filters: [
                 {services: [BLEUUID.service]}
@@ -204,8 +203,8 @@ class MicroBit {
      * Starts reading data from device after BLE has connected to it.
      */
     _onBLEConnect () {
-        const processDataCallback = this._processData.bind(this); // TODO: this binding?
-        this._ble.read(BLEUUID.service, BLEUUID.rxChar, true, processDataCallback);
+        const callback = this._processBLEData.bind(this); // TODO: this binding?
+        this._ble.read(BLEUUID.service, BLEUUID.rxChar, true, callback);
     }
 
     /**
@@ -222,8 +221,8 @@ class MicroBit {
      * @param {object} base64 - the incoming BLE data.
      * @private
      */
-    _processData (base64) {
-        // TODO: make base64 decoding util?
+    _processBLEData (base64) {
+        // TODO: move to base64 encoding util?
         const binaryString = window.atob(base64);
         const len = binaryString.length;
         const data = new Uint8Array(len);
@@ -252,12 +251,13 @@ class MicroBit {
      * @param {Uint8Array} message - the message to write.
      * @private
      */
-    _write (command, message) {
+    _writeBLE (command, message) {
         const output = new Uint8Array(message.length + 1);
         output[0] = command; // attach command to beginning of message
         for (let i = 0; i < message.length; i++) {
             output[i + 1] = message[i];
         }
+        // TODO: move to base64 encoding util?
         const b64enc = btoa(String.fromCharCode.apply(null, output));
         this._ble.write(BLEUUID.service, BLEUUID.txChar, b64enc, 'base64').then(
             x => {

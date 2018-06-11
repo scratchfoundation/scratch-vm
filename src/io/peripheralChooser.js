@@ -4,11 +4,17 @@ class PeripheralChooser {
         return this._chosenPeripheralId;
     }
 
+    /**
+     * TODO: method signature
+     */
     constructor () {
         this._availablePeripherals = []; // for use in GUI
         this._chosenPeripheralId = null; // for returning to ScratchBLE/BT/etc.
     }
 
+    /**
+     * TODO: method signature
+     */
     choosePeripheral () {
         return new Promise((resolve, reject) => {
             // TODO: Launch GUI
@@ -19,6 +25,9 @@ class PeripheralChooser {
         });
     }
 
+    /**
+     * TODO: method signature
+     */
     addPeripheral (peripheralId /* , RSSI, etc? */) {
         this._availablePeripherals.push(peripheralId); // for use in GUI
 

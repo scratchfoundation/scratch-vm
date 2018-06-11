@@ -23,10 +23,20 @@ class ScratchBLE extends JSONRPCWebSocket {
 
     }
 
+    /**
+     * TODO: method signature
+     * @return {Promise} - a promise when BLE socket is open
+     */
     waitForSocket () {
         return this._socketPromise;
     }
 
+    /**
+     * TODO: method signature
+     * @param {Object} deviceOptions - list of device guiOptions
+     * @param {} onConnect - on connect callback
+     * @param {} onError - on error callback
+     */
     requestDevice (deviceOptions /* , guiOptions*/, onConnect, onError) {
 
         /* guiOptions
@@ -53,6 +63,9 @@ class ScratchBLE extends JSONRPCWebSocket {
             );
     }
 
+    /**
+     * TODO: method signature
+     */
     didReceiveCall (method, params) {
         switch (method) {
         case 'didDiscoverPeripheral':
@@ -66,6 +79,9 @@ class ScratchBLE extends JSONRPCWebSocket {
         }
     }
 
+    /**
+     * TODO: method signature
+     */
     read (serviceId, characteristicId, optStartNotifications = false, onCharacteristicChanged) {
         const params = {
             serviceId,
@@ -78,6 +94,9 @@ class ScratchBLE extends JSONRPCWebSocket {
         return this.sendRemoteRequest('read', params);
     }
 
+    /**
+     * TODO: method signature
+     */
     write (serviceId, characteristicId, message, encoding = null) {
         const params = {serviceId, characteristicId, message};
         if (encoding) {
