@@ -1518,7 +1518,7 @@ class Runtime extends EventEmitter {
 
     /**
      * Add a monitor to the state. If the monitor already exists in the state,
-     * overwrites it.
+     * updates those properties that are defined in the given monitor record.
      * @param {!MonitorRecord} monitor Monitor to add.
      */
     requestAddMonitor (monitor) {
@@ -1530,8 +1530,7 @@ class Runtime extends EventEmitter {
     }
 
     /**
-     * Update a monitor in the state. Does nothing and returns false if the monitor does not already
-     * exist in the state.
+     * Update a monitor in the state and report success/failure of update.
      * @param {!Map} monitor Monitor values to update. Values on the monitor with overwrite
      *     values on the old monitor with the same ID. If a value isn't defined on the new monitor,
      *     the old monitor will keep its old value.
@@ -1552,7 +1551,7 @@ class Runtime extends EventEmitter {
         }
         return false;
     }
-    
+
     /**
      * Removes a monitor from the state. Does nothing if the monitor already does
      * not exist in the state.
@@ -1563,9 +1562,8 @@ class Runtime extends EventEmitter {
     }
 
     /**
-     * Hides a monitor. Does nothing if the monitor already does
-     * not exist in the state.
-     * @param {!string} monitorId ID of the monitor to remove.
+     * Hides a monitor and returns success/failure of action.
+     * @param {!string} monitorId ID of the monitor to hide.
      * @return {boolean} true if monitor exists and was updated, false otherwise
      */
     requestHideMonitor (monitorId) {
@@ -1576,9 +1574,9 @@ class Runtime extends EventEmitter {
     }
 
     /**
-     * Shows a monitor. Does nothing if the monitor already does
+     * Shows a monitor and returns success/failure of action.
      * not exist in the state.
-     * @param {!string} monitorId ID of the monitor to remove.
+     * @param {!string} monitorId ID of the monitor to show.
      * @return {boolean} true if monitor exists and was updated, false otherwise
      */
     requestShowMonitor (monitorId) {
