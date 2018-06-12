@@ -34,6 +34,7 @@ class Blocks {
          * @type {{inputs: {}, procedureParamNames: {}, procedureDefinitions: {}}}
          * @private
          */
+        Object.defineProperty(this, '_cache', {writable: true, enumerable: false});
         this._cache = {
             /**
              * Cache block inputs by block id
