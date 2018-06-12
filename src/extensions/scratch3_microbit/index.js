@@ -2,6 +2,7 @@ const ArgumentType = require('../../extension-support/argument-type');
 const BlockType = require('../../extension-support/block-type');
 const log = require('../../util/log');
 const ScratchBLE = require('../../io/scratchBLE');
+const Base64Util = require('../../util/base64-util');
 
 /**
  * Icon svg to be displayed at the left edge of each extension block, encoded as a data URI.
@@ -222,13 +223,7 @@ class MicroBit {
      * @private
      */
     _processBLEData (base64) {
-        // TODO: move to base64 encoding util?
-        const binaryString = window.atob(base64);
-        const len = binaryString.length;
-        const data = new Uint8Array(len);
-        for (let i = 0; i < len; i++) {
-            data[i] = binaryString.charCodeAt(i);
-        }
+        const data = Base64Util.base64ToUint8Array(base64);
 
         this._sensors.tiltX = data[1] | (data[0] << 8);
         if (this._sensors.tiltX > (1 << 15)) this._sensors.tiltX -= (1 << 16);
@@ -257,8 +252,7 @@ class MicroBit {
         for (let i = 0; i < message.length; i++) {
             output[i + 1] = message[i];
         }
-        // TODO: move to base64 encoding util?
-        const b64enc = btoa(String.fromCharCode.apply(null, output));
+        const b64enc = Base64Util.uint8ArrayToBase64(output);
         this._ble.write(BLEUUID.service, BLEUUID.txChar, b64enc, 'base64').then(
             x => {
                 log.info(`write resolved to: ${x}`);

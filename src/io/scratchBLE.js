@@ -24,7 +24,7 @@ class ScratchBLE extends JSONRPCWebSocket {
     }
 
     /**
-     * TODO: method signature
+     * Returns a promise for when the web socket opens.
      * @return {Promise} - a promise when BLE socket is open
      */
     waitForSocket () {
@@ -32,10 +32,10 @@ class ScratchBLE extends JSONRPCWebSocket {
     }
 
     /**
-     * TODO: method signature
-     * @param {Object} deviceOptions - list of device guiOptions
-     * @param {} onConnect - on connect callback
-     * @param {} onError - on error callback
+     * Request a device with the device options and optional gui options.
+     * @param {object} deviceOptions - list of device guiOptions
+     * @param {callback} onConnect - on connect callback
+     * @param {callback} onError - on error callback
      */
     requestDevice (deviceOptions /* , guiOptions*/, onConnect, onError) {
 

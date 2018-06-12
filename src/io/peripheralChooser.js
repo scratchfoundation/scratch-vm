@@ -19,6 +19,7 @@ class PeripheralChooser {
     choosePeripheral () {
         return new Promise((resolve, reject) => {
             // TODO: Launch GUI
+            // TODO: recreate list of discovered ids?
             // TODO: Set chosen _chosenPeripheralId ??
             // TODO: do something with resolve
             // TODO: do something with reject
