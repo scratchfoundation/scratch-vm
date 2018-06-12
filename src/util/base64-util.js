@@ -3,7 +3,7 @@ class Base64Util {
     /**
      * Convert a base64 encoded string to a Uint8Array.
      * @param {string} base64 - a base64 encoded string.
-     * @return {uint8Array} - a decoded Uint8Array.
+     * @return {Uint8Array} - a decoded Uint8Array.
      */
     static base64ToUint8Array (base64) {
         const binaryString = window.atob(base64);
@@ -17,7 +17,7 @@ class Base64Util {
 
     /**
      * Convert a Uint8Array to a base64 encoded string.
-     * @param {uint8Array} array - the array to convert.
+     * @param {Uint8Array} array - the array to convert.
      * @return {string} - the base64 encoded string.
      */
     static uint8ArrayToBase64 (array) {

@@ -5,18 +5,19 @@ class PeripheralChooser {
     }
 
     constructor () {
-        this._availablePeripherals = []; // for use in GUI
-        this._chosenPeripheralId = null; // for returning to ScratchBLE/BT/etc.
+        this._availablePeripherals = []; // TODO for use in gui?
+        this._chosenPeripheralId = null;
     }
 
     /**
      * Launches a GUI menu to choose a peripheral.
-     * @return {promise} - chosen peripheral promise.
+     * @return {Promise} - chosen peripheral promise.
      */
     choosePeripheral () {
         return new Promise((resolve, reject) => {
-            // TODO: Temporary. Launch GUI instead.
+            // TODO: Temporary: should launch gui instead.
             this._tempPeripheralChosenCallback = resolve;
+            this._tempPeripheralChosenReject = reject;
         });
     }
 
@@ -27,7 +28,7 @@ class PeripheralChooser {
     addPeripheral (peripheralId) {
         this._availablePeripherals.push(peripheralId);
 
-        // TODO: Temp Hack to call chosen callback on whatever peripherals are added
+        // TODO: Temporary: calls chosen callback on whatever peripherals are added.
         this._chosenPeripheralId = this._availablePeripherals[0];
         this._tempPeripheralChosenCallback(this._chosenPeripheralId);
     }

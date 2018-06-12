@@ -1,3 +1,5 @@
+const log = require('../util/log');
+
 class JSONRPC {
     constructor () {
         this._requestID = 0;
@@ -5,7 +7,7 @@ class JSONRPC {
     }
 
     /**
-     * Make an RPC Request and retrieve the result.
+     * Make an RPC request and retrieve the result.
      * @param {string} method - the remote method to call.
      * @param {object} params - the parameters to pass to the remote method.
      * @returns {Promise} - a promise for the result of the call.
@@ -23,7 +25,7 @@ class JSONRPC {
     }
 
     /**
-     * Make an RPC Notification with no expectation of a result or callback.
+     * Make an RPC notification with no expectation of a result or callback.
      * @param {string} method - the remote method to call.
      * @param {object} params - the parameters to pass to the remote method.
      */
@@ -37,10 +39,12 @@ class JSONRPC {
      * @param {object} params - the parameters sent with the remote caller's request.
      */
     didReceiveCall (method, params) {
+        log.info(`RPC received call: ${method} ${params}`);
         throw new Error('Must override didReceiveCall');
     }
 
     _sendMessage (jsonMessageObject) {
+        log.info(`RPC send message: ${jsonMessageObject}`);
         throw new Error('Must override _sendMessage');
     }
 
@@ -51,7 +55,7 @@ class JSONRPC {
             params
         };
 
-        if (id != null) {
+        if (id !== null) {
             request.id = id;
         }
 
@@ -74,7 +78,7 @@ class JSONRPC {
             jsonrpc: '2.0',
             id
         };
-        if (error != null) {
+        if (error) {
             response.error = error;
         } else {
             response.result = result || null;
@@ -96,7 +100,7 @@ class JSONRPC {
     _handleRequest (json) {
         const {method, params, id} = json;
         const rawResult = this.didReceiveCall(method, params);
-        if (id != null) {
+        if (id) {
             Promise.resolve(rawResult).then(
                 result => {
                     this._sendResponse(id, result);

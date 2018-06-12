@@ -115,7 +115,7 @@ class MicroBit {
                 }
             );
 
-        // TODO: add ScratchBLE 'disconnect' handling
+        // TODO: Add ScratchBLE 'disconnect' handling
 
     }
 
@@ -195,14 +195,14 @@ class MicroBit {
             filters: [
                 {services: [BLEUUID.service]}
             ]
-        }, this._onBLEConnect.bind(this), this._onBLEError); // TODO: this binding?
+        }, this._onBLEConnect.bind(this), this._onBLEError);
     }
 
     /**
      * Starts reading data from device after BLE has connected to it.
      */
     _onBLEConnect () {
-        const callback = this._processBLEData.bind(this); // TODO: this binding?
+        const callback = this._processBLEData.bind(this);
         this._ble.read(BLEUUID.service, BLEUUID.rxChar, true, callback);
     }
 

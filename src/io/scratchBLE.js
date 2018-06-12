@@ -10,7 +10,7 @@ class ScratchBLE extends JSONRPCWebSocket {
         super(ws);
 
         this._ws = ws;
-        this.peripheralChooser = new PeripheralChooser();
+        this.peripheralChooser = new PeripheralChooser(); // TODO: finalize gui connection
         this._characteristicDidChange = null;
     }
 
@@ -33,7 +33,7 @@ class ScratchBLE extends JSONRPCWebSocket {
      */
     requestDevice (deviceOptions, onConnect, onError) {
         this.sendRemoteRequest('discover', deviceOptions)
-            .then(() => this.peripheralChooser.choosePeripheral()) // TODO: gui options?
+            .then(() => this.peripheralChooser.choosePeripheral()) // TODO: use gui options?
             .then(id => this.sendRemoteRequest(
                 'connect',
                 {peripheralId: id}
