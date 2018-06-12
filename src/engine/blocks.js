@@ -362,6 +362,18 @@ class Blocks {
                 const currTarget = optRuntime.getEditingTarget();
                 currTarget.createComment(e.commentId, e.blockId, e.text,
                     e.xy.x, e.xy.y, e.width, e.height, e.minimized);
+
+                if (currTarget.comments[e.commentId].x === null &&
+                    currTarget.comments[e.commentId].y === null) {
+                    // Block comments imported from 2.0 projects are imported with their
+                    // x and y coordinates set to null so that scratch-blocks can
+                    // auto-position them. If we are receiving a create event for these
+                    // comments, then the auto positioning should have taken place.
+                    // Update the x and y position of these comments to match the
+                    // one from the event.
+                    currTarget.comments[e.commentId].x = e.xy.x;
+                    currTarget.comments[e.commentId].y = e.xy.y;
+                }
             }
             break;
         case 'comment_change':
