@@ -19,4 +19,4 @@ class Base64Util {
 
 }
 
-module.exports = Base64Util
+module.exports = Base64Util;
