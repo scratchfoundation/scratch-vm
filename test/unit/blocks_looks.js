@@ -39,13 +39,6 @@ test('getCostumeNumberName can return costume name', t => {
     t.end();
 });
 
-test('getCostumeName returns costume name', t => {
-    util.target.currentCostume = 0; // This is 0-indexed.
-    const name = blocks.getCostumeNumberName({}, util);
-    t.strictEqual(name, 'first name');
-    t.end();
-});
-
 test('getBackdropNumberName returns 1-indexed costume number', t => {
     util.target.currentCostume = 2; // This is 0-indexed.
     const args = {NUMBER_NAME: 'number'};

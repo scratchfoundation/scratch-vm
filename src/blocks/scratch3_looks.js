@@ -252,7 +252,6 @@ class Scratch3LooksBlocks {
             looks_goforwardbackwardlayers: this.goForwardBackwardLayers,
             looks_size: this.getSize,
             looks_costumenumbername: this.getCostumeNumberName,
-            looks_costumename: this.getCostumeName,
             looks_backdropnumbername: this.getBackdropNumberName
         };
     }
@@ -487,11 +486,6 @@ class Scratch3LooksBlocks {
             return util.target.currentCostume + 1;
         }
         // Else return name
-        return util.target.getCostumes()[util.target.currentCostume].name;
-    }
-
-    getCostumeName (args, util) {
-        // Obsolete block from earlier Scratch versions.
         return util.target.getCostumes()[util.target.currentCostume].name;
     }
 }
