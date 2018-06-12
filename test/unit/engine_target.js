@@ -189,3 +189,77 @@ test('lookupBroadcastMsg returns the var with given id if exists', t => {
 
     t.end();
 });
+
+test('createComment adds a comment to the target', t => {
+    const target = new Target();
+    const comments = target.comments;
+
+    t.equal(Object.keys(comments).length, 0);
+    target.createComment('a comment', null, 'some comment text',
+        10, 20, 200, 300, true);
+    t.equal(Object.keys(comments).length, 1);
+
+    const comment = comments['a comment'];
+    t.notEqual(comment, null);
+    t.equal(comment.blockId, null);
+    t.equal(comment.text, 'some comment text');
+    t.equal(comment.x, 10);
+    t.equal(comment.y, 20);
+    t.equal(comment.width, 200);
+    t.equal(comment.height, 300);
+    t.equal(comment.minimized, true);
+
+    t.end();
+});
+
+test('creating comment with id that already exists does not change existing comment', t => {
+    const target = new Target();
+    const comments = target.comments;
+
+    t.equal(Object.keys(comments).length, 0);
+    target.createComment('a comment', null, 'some comment text',
+        10, 20, 200, 300, true);
+    t.equal(Object.keys(comments).length, 1);
+
+    target.createComment('a comment', null,
+        'some new comment text', 40, 50, 300, 400, false);
+
+    const comment = comments['a comment'];
+    t.notEqual(comment, null);
+    // All of the comment properties should remain unchanged from the first
+    // time createComment was called
+    t.equal(comment.blockId, null);
+    t.equal(comment.text, 'some comment text');
+    t.equal(comment.x, 10);
+    t.equal(comment.y, 20);
+    t.equal(comment.width, 200);
+    t.equal(comment.height, 300);
+    t.equal(comment.minimized, true);
+
+    t.end();
+});
+
+test('creating a comment with a blockId also updates the comment property on the block', t => {
+    const target = new Target();
+    const comments = target.comments;
+    // Create a mock block on the target
+    target.blocks = {
+        'a mock block': {
+            id: 'a mock block'
+        }
+    };
+
+    // Mock the getBlock function that's used in commentCreate
+    target.blocks.getBlock = id => target.blocks[id];
+
+    t.equal(Object.keys(comments).length, 0);
+    target.createComment('a comment', 'a mock block', 'some comment text',
+        10, 20, 200, 300, true);
+    t.equal(Object.keys(comments).length, 1);
+
+    const comment = comments['a comment'];
+    t.equal(comment.blockId, 'a mock block');
+    t.equal(target.blocks.getBlock('a mock block').comment, 'a comment');
+
+    t.end();
+});
