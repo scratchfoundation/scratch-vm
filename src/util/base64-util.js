@@ -1,6 +1,10 @@
 class Base64Util {
 
-    // TODO: method signature
+    /**
+     * Convert a base64 encoded string to a Uint8Array.
+     * @param {string} base64 - a base64 encoded string.
+     * @return {uint8Array} - a decoded Uint8Array.
+     */
     static base64ToUint8Array (base64) {
         const binaryString = window.atob(base64);
         const len = binaryString.length;
@@ -11,9 +15,13 @@ class Base64Util {
         return array;
     }
 
-    // TODO: method signature
+    /**
+     * Convert a Uint8Array to a base64 encoded string.
+     * @param {uint8Array} array - the array to convert.
+     * @return {string} - the base64 encoded string.
+     */
     static uint8ArrayToBase64 (array) {
-        const base64 = btoa(String.fromCharCode.apply(null, array));
+        const base64 = window.btoa(String.fromCharCode.apply(null, array));
         return base64;
     }
 

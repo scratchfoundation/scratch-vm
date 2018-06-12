@@ -1,9 +1,11 @@
 const JSONRPCWebSocket = require('../util/jsonrpc');
 const log = require('../util/log');
 
+const ScratchLinkWebSocket = 'ws://localhost:20110/scratch/ble';
+
 class ScratchBT extends JSONRPCWebSocket {
     constructor () {
-        super(new WebSocket('ws://localhost:20110/scratch/bt'));
+        super(new WebSocket(ScratchLinkWebSocket));
     }
 
     requestDevice (options) {

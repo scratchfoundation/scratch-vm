@@ -1,58 +1,39 @@
 const JSONRPCWebSocket = require('../util/jsonrpc-web-socket');
 const PeripheralChooser = require('./peripheralChooser');
 
+const ScratchLinkWebSocket = 'ws://localhost:20110/scratch/ble';
+
 class ScratchBLE extends JSONRPCWebSocket {
-
-    /**
-     * Construct a ScratchBLE session object.
-     * @param {Runtime} onReadyCallback - a callback for when the session is ready
-     */
     constructor () {
-
-        const ws = new WebSocket('ws://localhost:20110/scratch/ble');
+        const ws = new WebSocket(ScratchLinkWebSocket);
 
         super(ws);
 
+        this._ws = ws;
         this.peripheralChooser = new PeripheralChooser();
-
-        this._socketPromise = new Promise((resolve, reject) => {
-            ws.onopen = resolve;
-            ws.onerror = reject;
-        });
         this._characteristicDidChange = null;
-
     }
 
     /**
      * Returns a promise for when the web socket opens.
-     * @return {Promise} - a promise when BLE socket is open
+     * @return {Promise} - a promise when BLE socket is open.
      */
     waitForSocket () {
-        return this._socketPromise;
+        return new Promise((resolve, reject) => {
+            this._ws.onopen = resolve;
+            this._ws.onerror = reject;
+        });
     }
 
     /**
      * Request a device with the device options and optional gui options.
-     * @param {object} deviceOptions - list of device guiOptions
-     * @param {callback} onConnect - on connect callback
-     * @param {callback} onError - on error callback
+     * @param {object} deviceOptions - list of device guiOptions.
+     * @param {object} onConnect - on connect callback.
+     * @param {object} onError - on error callbackk.
      */
-    requestDevice (deviceOptions /* , guiOptions*/, onConnect, onError) {
-
-        /* guiOptions
-        {
-            steps: [
-                {
-                    title: 'Connect to a micro:bit',
-                    image: '..',
-                    callback: startDiscoveryCallback // ??
-                }
-            ]
-        }
-        */
-
+    requestDevice (deviceOptions, onConnect, onError) {
         this.sendRemoteRequest('discover', deviceOptions)
-            .then(() => this.peripheralChooser.choosePeripheral()) // use guiOptions
+            .then(() => this.peripheralChooser.choosePeripheral()) // TODO: gui options?
             .then(id => this.sendRemoteRequest(
                 'connect',
                 {peripheralId: id}
@@ -64,7 +45,10 @@ class ScratchBLE extends JSONRPCWebSocket {
     }
 
     /**
-     * TODO: method signature
+     * Handle a received call from the socket.
+     * @param {string} method - a received method label.
+     * @param {object} params - a received list of parameters.
+     * @return {object} - optional return value.
      */
     didReceiveCall (method, params) {
         switch (method) {
@@ -80,7 +64,12 @@ class ScratchBLE extends JSONRPCWebSocket {
     }
 
     /**
-     * TODO: method signature
+     * Start reading from the specified ble service.
+     * @param {number} serviceId - the ble service to read.
+     * @param {number} characteristicId - the ble characteristic to read.
+     * @param {boolean} optStartNotifications - whether to start receiving characteristic change notifications.
+     * @param {object} onCharacteristicChanged - callback for characteristic change notifications.
+     * @return {Promise} - a promise from the remote read request.
      */
     read (serviceId, characteristicId, optStartNotifications = false, onCharacteristicChanged) {
         const params = {
@@ -90,12 +79,17 @@ class ScratchBLE extends JSONRPCWebSocket {
         if (optStartNotifications) {
             params.startNotifications = true;
         }
-        this._characteristicDidChange = onCharacteristicChanged; // TODO: is this the best way to do this?
+        this._characteristicDidChange = onCharacteristicChanged;
         return this.sendRemoteRequest('read', params);
     }
 
     /**
-     * TODO: method signature
+     * Write data to the specified ble service.
+     * @param {number} serviceId - the ble service to write.
+     * @param {number} characteristicId - the ble characteristic to write.
+     * @param {string} message - the message to send.
+     * @param {string} encoding - the message encoding type.
+     * @return {Promise} - a promise from the remote send request.
      */
     write (serviceId, characteristicId, message, encoding = null) {
         const params = {serviceId, characteristicId, message};

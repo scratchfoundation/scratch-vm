@@ -63,7 +63,7 @@ class MicroBit {
          * @type {ScratchBLE}
          * @private
          */
-        this._ble = null;
+        this._ble = new ScratchBLE();
 
         /**
          * The most recently received value for each sensor.
@@ -101,7 +101,7 @@ class MicroBit {
             }
         };
 
-        this._ble = new ScratchBLE();
+        // TODO: Temporary until the GUI requests a device connection
         this._ble.waitForSocket()
             // TODO: resolve why pinging is needed
             .then(() => this._ble.sendRemoteRequest('pingMe'))
@@ -120,7 +120,6 @@ class MicroBit {
     }
 
     /**
-     * Display text on the device.
      * @param {string} text - the text to display.
      */
     displayText (text) {
@@ -132,7 +131,6 @@ class MicroBit {
     }
 
     /**
-     * Display matrix of LEDs on the device.
      * @param {Uint8Array} matrix - the matrix to display.
      */
     displayMatrix (matrix) {
@@ -209,8 +207,7 @@ class MicroBit {
     }
 
     /**
-     * Logs error from BLE session.
-     * @param {string} e - Error from BLE session
+     * @param {string} e - Error from BLE session.
      */
     _onBLEError (e) {
         log.info(`BLE error:`);
@@ -335,8 +332,7 @@ class Scratch3MicroBitBlocks {
         this.runtime = runtime;
 
         // Create a new MicroBit device instance
-        // TODO: replace 'null' with socket from GUI?
-        this._device = new MicroBit(null, this.runtime);
+        this._device = new MicroBit(this.runtime);
     }
 
     /**

@@ -30,7 +30,7 @@ class JSONRPCWebSocket extends JSONRPC {
     }
 
     _onSocketMessage (e) {
-        // log.info(`Received message: ${e.data}`);
+        log.info(`Received message: ${e.data}`);
         const json = JSON.parse(e.data);
         this._handleMessage(json);
     }
