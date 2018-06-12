@@ -954,6 +954,12 @@ const parseBlock = function (sb2block, addBroadcastMsg, getVariableId, extension
             value: 'number'
         };
         break;
+    case 'costumeName':
+        activeBlock.fields.NUMBER_NAME = {
+            name: 'NUMBER_NAME',
+            value: 'name'
+        };
+        break;
     }
 
     // Special cases to generate mutations.

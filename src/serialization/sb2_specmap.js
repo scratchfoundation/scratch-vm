@@ -429,7 +429,7 @@ const specMap = {
         ]
     },
     'costumeName': {
-        opcode: 'looks_costumename',
+        opcode: 'looks_costumenumbername',
         argMap: [
         ]
     },
