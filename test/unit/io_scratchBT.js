@@ -1,8 +1,7 @@
 const test = require('tap').test;
-const ScratchBT = require('../../src/io/scratchBT');
+// const ScratchBT = require('../../src/io/scratchBT');
 
 test('constructor', t => {
-    ScratchBT();
     t.end();
 });
 

@@ -20,6 +20,7 @@ const menuIconURI = 'data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZ
 
 /**
  * Enum for micro:bit BLE command protocol.
+ * https://github.com/LLK/scratch-microbit-firmware/blob/master/protocol.md
  * @readonly
  * @enum {number}
  */
@@ -31,6 +32,7 @@ const BLECommand = {
 
 /**
  * Enum for micro:bit protocol.
+ * https://github.com/LLK/scratch-microbit-firmware/blob/master/protocol.md
  * @readonly
  * @enum {string}
  */
@@ -101,7 +103,7 @@ class MicroBit {
             }
         };
 
-        // TODO: Temporary until the GUI requests a device connection
+        // TODO: Temporary until the gui requests a device connection
         this._ble.waitForSocket()
             // TODO: resolve why pinging is needed
             .then(() => this._ble.sendRemoteRequest('pingMe'))
@@ -210,8 +212,7 @@ class MicroBit {
      * @param {string} e - Error from BLE session.
      */
     _onBLEError (e) {
-        log.info(`BLE error:`);
-        log.info(e);
+        log.info(`BLE error: ${e}`);
     }
 
     /**

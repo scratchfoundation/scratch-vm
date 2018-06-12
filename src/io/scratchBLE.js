@@ -51,6 +51,7 @@ class ScratchBLE extends JSONRPCWebSocket {
      * @return {object} - optional return value.
      */
     didReceiveCall (method, params) {
+        // TODO: Add peripheral 'undiscover' handling
         switch (method) {
         case 'didDiscoverPeripheral':
             this.peripheralChooser.addPeripheral(params.peripheralId);
