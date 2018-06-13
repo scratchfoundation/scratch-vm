@@ -1,5 +1,3 @@
-const log = require('../util/log');
-
 class JSONRPC {
     constructor () {
         this._requestID = 0;
@@ -38,13 +36,11 @@ class JSONRPC {
      * @param {string} method - the method requested by the remote caller.
      * @param {object} params - the parameters sent with the remote caller's request.
      */
-    didReceiveCall (method, params) {
-        log.info(`RPC received call: ${method} ${params}`);
+    didReceiveCall (/* method , params */) {
         throw new Error('Must override didReceiveCall');
     }
 
-    _sendMessage (jsonMessageObject) {
-        log.info(`RPC send message: ${jsonMessageObject}`);
+    _sendMessage (/* jsonMessageObject */) {
         throw new Error('Must override _sendMessage');
     }
 

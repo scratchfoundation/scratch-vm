@@ -1,7 +1,6 @@
 const JSONRPCWebSocket = require('../util/jsonrpc');
-const log = require('../util/log');
 
-const ScratchLinkWebSocket = 'ws://localhost:20110/scratch/ble';
+const ScratchLinkWebSocket = 'ws://localhost:20110/scratch/bt';
 
 class ScratchBT extends JSONRPCWebSocket {
     constructor () {
@@ -20,13 +19,14 @@ class ScratchBT extends JSONRPCWebSocket {
         return this.sendRemoteRequest('send', options);
     }
 
-    didReceiveCall (method, params) {
+    didReceiveCall (method /* , params */) {
+        // TODO: Add peripheral 'undiscover' handling
         switch (method) {
         case 'didDiscoverPeripheral':
-            log.info(`Peripheral discovered: ${params}`);
+            // TODO: do something on peripheral discovered
             break;
         case 'didReceiveMessage':
-            log.info(`Message received from peripheral: ${params}`);
+            // TODO: do something on received message
             break;
         default:
             return 'nah';

@@ -105,17 +105,9 @@ class MicroBit {
 
         // TODO: Temporary until the gui requests a device connection
         this._ble.waitForSocket()
-            // TODO: resolve why pinging is needed
+            // TODO: remove pinging once no longer needed
             .then(() => this._ble.sendRemoteRequest('pingMe'))
-            .then(
-                x => {
-                    log.info(`Ping request resolved with: ${x}`);
-                    this._onBLEReady();
-                },
-                e => {
-                    log.error(`Ping request rejected with: ${e}`);
-                }
-            );
+            .then(() => this._onBLEReady());
 
         // TODO: Add ScratchBLE 'disconnect' handling
 
@@ -212,7 +204,7 @@ class MicroBit {
      * @param {string} e - Error from BLE session.
      */
     _onBLEError (e) {
-        log.info(`BLE error: ${e}`);
+        log.error(`BLE error: ${e}`);
     }
 
     /**
@@ -251,14 +243,7 @@ class MicroBit {
             output[i + 1] = message[i];
         }
         const b64enc = Base64Util.uint8ArrayToBase64(output);
-        this._ble.write(BLEUUID.service, BLEUUID.txChar, b64enc, 'base64').then(
-            x => {
-                log.info(`write resolved to: ${x}`);
-            },
-            e => {
-                log.error(`write rejected with: ${e}`);
-            }
-        );
+        this._ble.write(BLEUUID.service, BLEUUID.txChar, b64enc, 'base64');
     }
 }
 
