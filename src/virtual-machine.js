@@ -6,6 +6,7 @@ const Buffer = require('buffer').Buffer;
 const centralDispatch = require('./dispatch/central-dispatch');
 const ExtensionManager = require('./extension-support/extension-manager');
 const log = require('./util/log');
+const MathUtil = require('./util/math-util');
 const Runtime = require('./engine/runtime');
 const sb2 = require('./serialization/sb2');
 const sb3 = require('./serialization/sb3');
@@ -1031,6 +1032,25 @@ class VirtualMachine extends EventEmitter {
             return target.id;
         }
         return null;
+    }
+
+    /**
+     * Reorder target by index. Return whether a change was made.
+     * @param {!string} targetIndex Index of the target.
+     * @param {!number} newIndex index that the target should be moved to.
+     * @returns {boolean} Whether a target was reordered.
+     */
+    reorderTarget (targetIndex, newIndex) {
+        let targets = this.runtime.targets;
+        targetIndex = MathUtil.clamp(targetIndex, 0, targets.length - 1);
+        newIndex = MathUtil.clamp(newIndex, 0, targets.length - 1);
+        if (targetIndex === newIndex) return false;
+        const target = targets[targetIndex];
+        targets = targets.slice(0, targetIndex).concat(targets.slice(targetIndex + 1));
+        targets.splice(newIndex, 0, target);
+        this.runtime.targets = targets;
+        this.emitTargetsUpdate();
+        return true;
     }
 
     /**
