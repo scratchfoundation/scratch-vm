@@ -2,6 +2,7 @@ const test = require('tap').test;
 const VirtualMachine = require('../../src/virtual-machine.js');
 const Sprite = require('../../src/sprites/sprite.js');
 const Variable = require('../../src/engine/variable.js');
+const events = require('../fixtures/events.json');
 
 test('addSprite throws on invalid string', t => {
     const vm = new VirtualMachine();
@@ -555,6 +556,30 @@ test('getVariableValue', t => {
     t.equal(vm.getVariableValue(target.id, 'a-variable'), 0);
     vm.setVariableValue(target.id, 'a-variable', 'string');
     t.equal(vm.getVariableValue(target.id, 'a-variable'), 'string');
+
+    t.end();
+});
+
+// Block Listener tests for comment
+test('comment_create event updates comment with null position', t => {
+    const vm = new VirtualMachine();
+    const spr = new Sprite(null, vm.runtime);
+    const target = spr.createClone();
+
+    target.createComment('a comment', null, 'some text',
+        null, null, 200, 300, false);
+    vm.runtime.targets = [target];
+    vm.editingTarget = target;
+    vm.runtime.setEditingTarget(target);
+
+    const comment = target.comments['a comment'];
+    t.equal(comment.x, null);
+    t.equal(comment.y, null);
+
+    vm.blockListener(events.createcommentUpdatePosition);
+
+    t.equal(comment.x, 10);
+    t.equal(comment.y, 20);
 
     t.end();
 });

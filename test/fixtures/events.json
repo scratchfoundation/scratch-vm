@@ -71,5 +71,11 @@
         "xml": {
             "outerHTML": "<block type='operator_add' id='D;MqidqmaN}Dft)y#Bf`' x='80' y='98'><value name='NUM1'><shadow type='math_number' id='F[IFAdLbq8!q25+Nio@i'><field name='NUM'></field></shadow><block type='sensing_answer' id='D~ZQ|BYb1)xw4)8ziI%.'></block</value><value name='NUM2'><shadow type='math_number' id='|Sjv4!*X6;wj?QaCE{-9'><field name='NUM'></field></shadow></value></block>"
         }
+    },
+    "createcommentUpdatePosition": {
+        "name": "comment",
+        "type": "comment_create",
+        "commentId": "a comment",
+        "xy": {"x": 10, "y": 20}
     }
 }
