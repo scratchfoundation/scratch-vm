@@ -368,6 +368,30 @@ test('reorderSound', t => {
     t.end();
 });
 
+test('reorderTarget', t => {
+    const vm = new VirtualMachine();
+    vm.emitTargetsUpdate = () => {};
+
+    vm.runtime.targets = ['a', 'b', 'c', 'd'];
+
+    t.equal(vm.reorderTarget(2, 2), false);
+    t.deepEqual(vm.runtime.targets, ['a', 'b', 'c', 'd']);
+
+    // Make sure clamping works
+    t.equal(vm.reorderTarget(-100, -5), false);
+    t.deepEqual(vm.runtime.targets, ['a', 'b', 'c', 'd']);
+
+    // Reorder upwards
+    t.equal(vm.reorderTarget(0, 2), true);
+    t.deepEqual(vm.runtime.targets, ['b', 'c', 'a', 'd']);
+
+    // Reorder downwards
+    t.equal(vm.reorderTarget(3, 1), true);
+    t.deepEqual(vm.runtime.targets, ['b', 'd', 'c', 'a']);
+
+    t.end();
+});
+
 test('emitWorkspaceUpdate', t => {
     const vm = new VirtualMachine();
     const blocksToXML = comments => {
