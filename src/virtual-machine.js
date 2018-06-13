@@ -1041,11 +1041,11 @@ class VirtualMachine extends EventEmitter {
      * @returns {boolean} Whether a target was reordered.
      */
     reorderTarget (targetIndex, newIndex) {
-        targetIndex = MathUtil.clamp(targetIndex, 0, this.runtime.targets.length - 1);
-        newIndex = MathUtil.clamp(newIndex, 0, this.runtime.targets.length - 1);
-        if (targetIndex === newIndex) return false;
-        const target = this.runtime.targets[targetIndex];
         let targets = this.runtime.targets;
+        targetIndex = MathUtil.clamp(targetIndex, 0, targets.length - 1);
+        newIndex = MathUtil.clamp(newIndex, 0, targets.length - 1);
+        if (targetIndex === newIndex) return false;
+        const target = targets[targetIndex];
         targets = targets.slice(0, targetIndex).concat(targets.slice(targetIndex + 1));
         targets.splice(newIndex, 0, target);
         this.runtime.targets = targets;
