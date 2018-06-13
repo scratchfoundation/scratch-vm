@@ -29,6 +29,8 @@
   },
   "dependencies": {
     "arraybuffer-loader": "^1.0.3",
+    "atob": "2.1.1",
+    "btoa": "1.2.1",
     "canvas-toBlob": "1.0.0",
     "decode-html": "2.0.0",
     "diff-match-patch": "1.0.0",
