@@ -231,9 +231,7 @@ class Scratch3SoundBlocks {
         util.target.audioPlayer.setEffect(effect, soundState.effects[effect]);
 
         // Yield until the next tick.
-        return new Promise(resolve => {
-            resolve();
-        });
+        return Promise.resolve();
     }
 
     _syncEffectsForTarget (target) {
@@ -284,9 +282,7 @@ class Scratch3SoundBlocks {
         util.target.audioPlayer.setVolume(util.target.volume);
 
         // Yield until the next tick.
-        return new Promise(resolve => {
-            resolve();
-        });
+        return Promise.resolve();
     }
 
     getVolume (args, util) {
