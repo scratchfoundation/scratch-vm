@@ -8,6 +8,7 @@ const vmPackage = require('../../package.json');
 const Blocks = require('../engine/blocks');
 const Sprite = require('../sprites/sprite');
 const Variable = require('../engine/variable');
+const Comment = require('../engine/comment');
 const StageLayering = require('../engine/stage-layering');
 const log = require('../util/log');
 const uid = require('../util/uid');
@@ -207,6 +208,9 @@ const serializeBlock = function (block) {
     if (block.mutation) {
         obj.mutation = block.mutation;
     }
+    if (block.comment) {
+        obj.comment = block.comment;
+    }
     return obj;
 };
 
@@ -384,6 +388,27 @@ const serializeVariables = function (variables) {
     return obj;
 };
 
+const serializeComments = function (comments) {
+    const obj = Object.create(null);
+    for (const commentId in comments) {
+        if (!comments.hasOwnProperty(commentId)) continue;
+        const comment = comments[commentId];
+
+        const serializedComment = Object.create(null);
+        serializedComment.id = comment.id;
+        serializedComment.blockId = comment.blockId;
+        serializedComment.x = comment.x;
+        serializedComment.y = comment.y;
+        serializedComment.width = comment.width;
+        serializedComment.height = comment.height;
+        serializedComment.minimized = comment.minimized;
+        serializedComment.text = comment.text;
+
+        obj[commentId] = serializedComment;
+    }
+    return obj;
+};
+
 /**
  * Serialize the given target. Only serialize properties that are necessary
  * for saving and loading this target.
@@ -399,6 +424,7 @@ const serializeTarget = function (target) {
     obj.lists = vars.lists;
     obj.broadcasts = vars.broadcasts;
     obj.blocks = serializeBlocks(target.blocks);
+    obj.comments = serializeComments(target.comments);
     obj.currentCostume = target.currentCostume;
     obj.costumes = target.costumes.map(serializeCostume);
     obj.sounds = target.sounds.map(serializeSound);
@@ -832,6 +858,24 @@ const parseScratchObject = function (object, runtime, extensions, zip) {
             // no need to explicitly set the value, variable constructor
             // sets the value to the same as the name for broadcast msgs
             target.variables[newBroadcast.id] = newBroadcast;
+        }
+    }
+    if (object.hasOwnProperty('comments')) {
+        for (const commentId in object.comments) {
+            const comment = object.comments[commentId];
+            const newComment = new Comment(
+                comment.id,
+                comment.text,
+                comment.x,
+                comment.y,
+                comment.width,
+                comment.height,
+                comment.minimized
+            );
+            if (comment.blockId) {
+                newComment.blockId = comment.blockId;
+            }
+            target.comments[newComment.id] = newComment;
         }
     }
     if (object.hasOwnProperty('x')) {
