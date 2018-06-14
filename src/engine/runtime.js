@@ -546,6 +546,16 @@ class Runtime extends EventEmitter {
                 categoryInfo.menus.push(convertedMenu);
             }
         }
+
+        // Add extension status button
+        if (extensionInfo.showStatusButton) {
+            categoryInfo.blocks.push({
+                info: {},
+                json: null,
+                xml: `<button type="status" extensionId="${categoryInfo.id}"></button>`
+            });
+        }
+
         for (const blockInfo of extensionInfo.blocks) {
             if (blockInfo === '---') {
                 categoryInfo.blocks.push(ConvertedSeparator);

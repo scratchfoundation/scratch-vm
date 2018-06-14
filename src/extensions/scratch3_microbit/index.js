@@ -318,6 +318,7 @@ class Scratch3MicroBitBlocks {
             name: Scratch3MicroBitBlocks.EXTENSION_NAME,
             menuIconURI: menuIconURI,
             blockIconURI: blockIconURI,
+            showStatusButton: true,
             blocks: [
                 {
                     opcode: 'whenButtonPressed',
