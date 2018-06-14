@@ -1103,6 +1103,7 @@ class RenderedTarget extends Target {
             costumeCount: costumes.length,
             visible: this.visible,
             rotationStyle: this.rotationStyle,
+            comments: this.comments,
             blocks: this.blocks._blocks,
             variables: this.variables,
             costumes: costumes,
