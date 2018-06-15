@@ -170,21 +170,30 @@ class RenderedTarget extends Target {
         }
     }
 
+    get audioPlayer () {
+        /* eslint-disable no-console */
+        console.warn('get audioPlayer deprecated, please update to use .sprite.soundBank methods');
+        console.warn(new Error('stack for debug').stack);
+        /* eslint-enable no-console */
+        const bank = this.sprite.soundBank;
+        const audioPlayerProxy = {
+            playSound: soundId => bank.play(this, soundId)
+        };
+
+        Object.defineProperty(this, 'audioPlayer', {
+            configurable: false,
+            enumerable: true,
+            writable: false,
+            value: audioPlayerProxy
+        });
+
+        return audioPlayerProxy;
+    }
+
     /**
      * Initialize the audio player for this sprite or clone.
      */
     initAudio () {
-        this.audioPlayer = null;
-        if (this.runtime && this.runtime.audioEngine) {
-            this.audioPlayer = this.runtime.audioEngine.createPlayer();
-            // If this is a clone, it gets a reference to its parent's activeSoundPlayers object.
-            if (!this.isOriginal) {
-                const parent = this.sprite.clones[0];
-                if (parent && parent.audioPlayer) {
-                    this.audioPlayer.activeSoundPlayers = parent.audioPlayer.activeSoundPlayers;
-                }
-            }
-        }
     }
 
     /**
@@ -1034,9 +1043,8 @@ class RenderedTarget extends Target {
      */
     onStopAll () {
         this.clearEffects();
-        if (this.audioPlayer) {
-            this.audioPlayer.stopAllSounds();
-            this.audioPlayer.clearEffects();
+        if (this.sprite.soundBank) {
+            this.sprite.soundBank.stopAllSounds(this);
         }
     }
 
@@ -1131,10 +1139,6 @@ class RenderedTarget extends Target {
                 this.emit(RenderedTarget.EVENT_TARGET_VISUAL_CHANGE, this);
                 this.runtime.requestRedraw();
             }
-        }
-        if (this.audioPlayer) {
-            this.audioPlayer.stopAllSounds();
-            this.audioPlayer.dispose();
         }
     }
 }

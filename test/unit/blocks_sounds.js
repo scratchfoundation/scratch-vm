@@ -11,10 +11,10 @@ const util = {
                 {name: 'second name', soundId: 'second soundId'},
                 {name: 'third name', soundId: 'third soundId'},
                 {name: '6', soundId: 'fourth soundId'}
-            ]
-        },
-        audioPlayer: {
-            playSound: soundId => (playedSound = soundId)
+            ],
+            soundBank: {
+                playSound: (target, soundId) => (playedSound = soundId)
+            }
         }
     }
 };
