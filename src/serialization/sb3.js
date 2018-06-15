@@ -395,7 +395,6 @@ const serializeComments = function (comments) {
         const comment = comments[commentId];
 
         const serializedComment = Object.create(null);
-        serializedComment.id = comment.id;
         serializedComment.blockId = comment.blockId;
         serializedComment.x = comment.x;
         serializedComment.y = comment.y;
@@ -864,7 +863,7 @@ const parseScratchObject = function (object, runtime, extensions, zip) {
         for (const commentId in object.comments) {
             const comment = object.comments[commentId];
             const newComment = new Comment(
-                comment.id,
+                commentId,
                 comment.text,
                 comment.x,
                 comment.y,
