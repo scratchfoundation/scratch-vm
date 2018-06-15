@@ -11095,8 +11095,8 @@ const inlineSvgFonts = function (svgTag) {
         if (domElement.getAttribute && domElement.getAttribute('font-family')) {
             fontsNeeded.add(domElement.getAttribute('font-family'));
         }
-        for (let i = 0; i < domElement.children.length; i++) {
-            collectFonts(domElement.children[i]);
+        for (let i = 0; i < domElement.childNodes.length; i++) {
+            collectFonts(domElement.childNodes[i]);
         }
     };
     collectFonts(svgTag);
@@ -15388,7 +15388,7 @@ class SvgRenderer {
                 ty = -4 * fontSize / 22;
             }
             // Right multiply matrix by a translation of (tx, ty)
-            const mtx = textElement.transform.baseVal[0].matrix;
+            const mtx = textElement.transform.baseVal.getItem(0).matrix;
             mtx.e += (mtx.a * tx) + (mtx.c * ty);
             mtx.f += (mtx.b * tx) + (mtx.d * ty);
 
