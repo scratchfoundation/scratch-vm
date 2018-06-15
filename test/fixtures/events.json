@@ -12,6 +12,19 @@
             "!6Ahqg4f}Ljl}X5Hws?Z"
         ]
     },
+    "createComment": {
+        "workspaceId": "7Luws3lyb*Z98~Kk+IG|",
+        "group": ";OswyM#@%`%,xOrhOXC=",
+        "recordUndo": true,
+        "name": "block",
+        "xml": {
+            "outerHTML": "<block type=\"wedo_motorclockwise\" id=\"z!+#Nqr,_(V=xz0y7a@d\"><comment id=\"aCommentId\">Some comment text</comment><value name=\"DURATION\"><shadow type=\"math_number\" id=\"!6Ahqg4f}Ljl}X5Hws?Z\"><field name=\"NUM\">10</field></shadow></value></block>"
+        },
+        "ids": [
+            "z!+#Nqr,_(V=xz0y7a@d",
+            "!6Ahqg4f}Ljl}X5Hws?Z"
+        ]
+    },
     "createbranch": {
         "name": "block",
         "xml": {
