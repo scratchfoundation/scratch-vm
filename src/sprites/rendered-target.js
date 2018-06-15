@@ -1130,6 +1130,9 @@ class RenderedTarget extends Target {
     dispose () {
         this.runtime.changeCloneCounter(-1);
         this.runtime.stopForTarget(this);
+        if (this.sprite.soundBank) {
+            this.sprite.soundBank.stopAllSounds(this);
+        }
         this.sprite.removeClone(this);
         if (this.renderer && this.drawableID !== null) {
             this.renderer.destroyDrawable(this.drawableID, this.isStage ?
