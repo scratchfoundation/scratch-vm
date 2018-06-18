@@ -525,7 +525,7 @@ class VirtualMachine extends EventEmitter {
      * @returns {?Promise} - a promise that resolves when the sound has been decoded and added
      */
     addSound (soundObject) {
-        return loadSound(soundObject, this.runtime).then(() => {
+        return loadSound(soundObject, this.runtime, this.editingTarget.sprite).then(() => {
             this.editingTarget.addSound(soundObject);
             this.emitTargetsUpdate();
         });
@@ -549,7 +549,7 @@ class VirtualMachine extends EventEmitter {
     getSoundBuffer (soundIndex) {
         const id = this.editingTarget.sprite.sounds[soundIndex].soundId;
         if (id && this.runtime && this.runtime.audioEngine) {
-            return this.runtime.audioEngine.getSoundBuffer(id);
+            return this.editingTarget.sprite.soundBank.getSoundPlayer(id).buffer;
         }
         return null;
     }
@@ -564,7 +564,7 @@ class VirtualMachine extends EventEmitter {
         const sound = this.editingTarget.sprite.sounds[soundIndex];
         const id = sound ? sound.soundId : null;
         if (id && this.runtime && this.runtime.audioEngine) {
-            this.runtime.audioEngine.updateSoundBuffer(id, newBuffer);
+            this.editingTarget.sprite.soundBank.getSoundPlayer(id).buffer = newBuffer;
         }
         // Update sound in runtime
         if (soundEncoding) {
