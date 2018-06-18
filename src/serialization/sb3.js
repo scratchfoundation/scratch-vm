@@ -272,14 +272,20 @@ const compressInputTree = function (block, blocks) {
  * Serialize the given blocks object (representing all the blocks for the target
  * currently being serialized.)
  * @param {object} blocks The blocks to be serialized
+ * @param {Set} extensionIDs Set of extension ids
  * @return {object} The serialized blocks with compressed inputs and compressed
  * primitives.
  */
-const serializeBlocks = function (blocks) {
+const serializeBlocks = function (blocks, extensionIDs) {
     const obj = Object.create(null);
     for (const blockID in blocks) {
         if (!blocks.hasOwnProperty(blockID)) continue;
         obj[blockID] = serializeBlock(blocks[blockID], blocks);
+        const index = blocks[blockID].opcode.indexOf('_');
+        const prefix = blocks[blockID].opcode.substring(0, index);
+        if (CORE_EXTENSIONS.indexOf(prefix) === -1) {
+            if (prefix !== '') extensionIDs.add(prefix);
+        }
     }
     // once we have completed a first pass, do a second pass on block inputs
     for (const blockID in obj) {
@@ -416,13 +422,15 @@ const serializeComments = function (comments) {
  */
 const serializeTarget = function (target) {
     const obj = Object.create(null);
+    const extensionIDs = new Set();
     obj.isStage = target.isStage;
     obj.name = obj.isStage ? 'Stage' : target.name;
     const vars = serializeVariables(target.variables);
     obj.variables = vars.variables;
     obj.lists = vars.lists;
     obj.broadcasts = vars.broadcasts;
-    obj.blocks = serializeBlocks(target.blocks);
+    obj.blocks = serializeBlocks(target.blocks, extensionIDs);
+    obj.extensions = Array.from(extensionIDs);
     obj.comments = serializeComments(target.comments);
     obj.currentCostume = target.currentCostume;
     obj.costumes = target.costumes.map(serializeCostume);
@@ -900,6 +908,9 @@ const parseScratchObject = function (object, runtime, extensions, zip) {
     }
     if (object.hasOwnProperty('isStage')) {
         target.isStage = object.isStage;
+    }
+    if (object.hasOwnProperty('extensions')) {
+        target.extensions = object.extensions;
     }
     Promise.all(costumePromises).then(costumes => {
         sprite.costumes = costumes;
