@@ -623,7 +623,11 @@ class Scratch3MusicBlocks {
     getInfo () {
         return {
             id: 'music',
-            name: 'Music',
+            name: formatMessage({
+                id: 'music.categoryName',
+                default: 'Music',
+                description: 'Label for the Music extension category'
+            }),
             menuIconURI: menuIconURI,
             blockIconURI: blockIconURI,
             blocks: [

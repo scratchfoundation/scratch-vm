@@ -372,7 +372,11 @@ class Scratch3VideoSensingBlocks {
         // Return extension definition
         return {
             id: 'videoSensing',
-            name: 'Video Motion',
+            name: formatMessage({
+                id: 'videoSensing.categoryName',
+                default: 'Video Motion',
+                description: 'Label for the video motion extension category'
+            }),
             blocks: [
                 {
                     // @todo this hat needs to be set itself to restart existing
