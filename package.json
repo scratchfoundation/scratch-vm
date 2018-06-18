@@ -39,7 +39,7 @@
     "jszip": "^3.1.5",
     "minilog": "3.1.0",
     "nets": "3.2.0",
-    "scratch-parser": "4.1.1",
+    "scratch-parser": "4.2.0",
     "scratch-translate-extension-languages": "0.0.20180521154850",
     "socket.io-client": "2.0.4",
     "text-encoding": "0.6.4",
