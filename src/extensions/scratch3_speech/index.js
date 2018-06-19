@@ -718,7 +718,7 @@ class Scratch3SpeechBlocks {
                             type: ArgumentType.STRING,
                             defaultValue: formatMessage({
                                 id: 'speech.defaultWhenIHearValue',
-                                default: 'cat',
+                                default: 'let\'s go',
                                 description: 'The default phrase/word that, when heard, triggers the event.'
                             })
                         }
