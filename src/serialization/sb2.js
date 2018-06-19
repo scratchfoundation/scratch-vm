@@ -133,17 +133,20 @@ const parseBlockList = function (blockList, addBroadcastMsg, getVariableId, exte
         // eslint-disable-next-line no-use-before-define
         const parsedBlockAndComments = parseBlock(block, addBroadcastMsg, getVariableId,
             extensions, comments, commentIndex);
-        const parsedBlock = parsedBlockAndComments[0];
-        // Update commentIndex
-        commentIndex = parsedBlockAndComments[1];
 
-        if (typeof parsedBlock === 'undefined') continue;
-        if (previousBlock) {
-            parsedBlock.parent = previousBlock.id;
-            previousBlock.next = parsedBlock.id;
+        if (parsedBlockAndComments) { // Could fail due to unrecognized op-codes
+            const parsedBlock = parsedBlockAndComments[0];
+            // Update commentIndex
+            commentIndex = parsedBlockAndComments[1];
+
+            if (typeof parsedBlock === 'undefined') continue;
+            if (previousBlock) {
+                parsedBlock.parent = previousBlock.id;
+                previousBlock.next = parsedBlock.id;
+            }
+            previousBlock = parsedBlock;
+            resultingList.push(parsedBlock);
         }
-        previousBlock = parsedBlock;
-        resultingList.push(parsedBlock);
     }
     return [resultingList, commentIndex];
 };
