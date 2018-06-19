@@ -4,25 +4,44 @@ const PeripheralChooser = require('./peripheralChooser');
 const ScratchLinkWebSocket = 'ws://localhost:20110/scratch/ble';
 
 class ScratchBLE extends JSONRPCWebSocket {
-    constructor () {
+    constructor (runtime, deviceOptions) {
         const ws = new WebSocket(ScratchLinkWebSocket);
-
         super(ws);
 
-        this._ws = ws;
-        this.peripheralChooser = new PeripheralChooser(); // TODO: finalize gui connection
-        this._characteristicDidChange = null;
-    }
-
-    /**
-     * Returns a promise for when the web socket opens.
-     * @return {Promise} - a promise when BLE socket is open.
-     */
-    waitForSocket () {
-        return new Promise((resolve, reject) => {
+        this._socketPromise = new Promise((resolve, reject) => {
             this._ws.onopen = resolve;
             this._ws.onerror = reject;
         });
+
+        this._runtime = runtime;
+
+        this._ws = ws;
+        this.peripheralChooser = new PeripheralChooser(this._runtime); // TODO: finalize gui connection
+        this._characteristicDidChange = null;
+
+        this._deviceOptions = deviceOptions;
+    }
+
+    // @todo handle websocket failed
+    startScan () {
+        console.log('BLE startScan', this._ws.readyState);
+        if (this._ws.readyState === 1) {
+            this.sendRemoteRequest('pingMe')
+                .then(() => this.requestDevice(this._deviceOptions));
+        } else {
+            // Try again to connect to the websocket
+            this._socketPromise(this.sendRemoteRequest('pingMe')
+                .then(() => this.requestDevice(this._deviceOptions)));
+        }
+    }
+
+    connectToPeripheral (id) {
+        this.sendRemoteRequest(
+            'connect',
+            {peripheralId: id}
+        ).then(() =>
+            this._runtime.emit(this._runtime.constructor.PERIPHERAL_CONNECTED)
+        );
     }
 
     /**
@@ -54,7 +73,7 @@ class ScratchBLE extends JSONRPCWebSocket {
         // TODO: Add peripheral 'undiscover' handling
         switch (method) {
         case 'didDiscoverPeripheral':
-            this.peripheralChooser.addPeripheral(params.peripheralId);
+            this.peripheralChooser.addPeripheral(params);
             break;
         case 'characteristicDidChange':
             this._characteristicDidChange(params.message);

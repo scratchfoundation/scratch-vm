@@ -50,8 +50,9 @@ class MicroBit {
     /**
      * Construct a MicroBit communication object.
      * @param {Runtime} runtime - the Scratch 3.0 runtime
+     * @param {string} extensionId - the id of the extension
      */
-    constructor (runtime) {
+    constructor (runtime, extensionId) {
 
         /**
          * The Scratch 3.0 runtime used to trigger the green flag button.
@@ -65,7 +66,13 @@ class MicroBit {
          * @type {ScratchBLE}
          * @private
          */
-        this._ble = new ScratchBLE();
+        this._ble = new ScratchBLE(this._runtime, {
+            filters: [
+                {services: [BLEUUID.service]}
+            ]
+        });
+
+        this._runtime.registerExtensionDevice(extensionId, this._ble);
 
         /**
          * The most recently received value for each sensor.
@@ -102,15 +109,6 @@ class MicroBit {
                 timeout: false
             }
         };
-
-        // TODO: Temporary until the gui requests a device connection
-        this._ble.waitForSocket()
-            // TODO: remove pinging once no longer needed
-            .then(() => this._ble.sendRemoteRequest('pingMe'))
-            .then(() => this._onBLEReady());
-
-        // TODO: Add ScratchBLE 'disconnect' handling
-
     }
 
     /**
@@ -184,13 +182,13 @@ class MicroBit {
     /**
      * Requests connection to a device when BLE session is ready.
      */
-    _onBLEReady () {
-        this._ble.requestDevice({
-            filters: [
-                {services: [BLEUUID.service]}
-            ]
-        }, this._onBLEConnect.bind(this), this._onBLEError);
-    }
+    // _onBLEReady () {
+    //     this._ble.requestDevice({
+    //         filters: [
+    //             {services: [BLEUUID.service]}
+    //         ]
+    //     }, this._onBLEConnect.bind(this), this._onBLEError);
+    // }
 
     /**
      * Starts reading data from device after BLE has connected to it.
@@ -318,7 +316,7 @@ class Scratch3MicroBitBlocks {
         this.runtime = runtime;
 
         // Create a new MicroBit device instance
-        this._device = new MicroBit(this.runtime);
+        this._device = new MicroBit(this.runtime, Scratch3MicroBitBlocks.EXTENSION_ID);
     }
 
     /**

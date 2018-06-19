@@ -254,6 +254,8 @@ class Runtime extends EventEmitter {
             video: new Video(this)
         };
 
+        this.extensionDevices = {};
+
         /**
          * A runtime profiler that records timed events for later playback to
          * diagnose Scratch performance.
@@ -392,6 +394,22 @@ class Runtime extends EventEmitter {
      */
     static get EXTENSION_ADDED () {
         return 'EXTENSION_ADDED';
+    }
+
+    /**
+     * Event name for updating the available set of peripheral devices.
+     * @const {string}
+     */
+    static get PERIPHERAL_LIST_UPDATE () {
+        return 'PERIPHERAL_LIST_UPDATE';
+    }
+
+    /**
+     * Event name for reporting that a peripheral has connected.
+     * @const {string}
+     */
+    static get PERIPHERAL_CONNECTED () {
+        return 'PERIPHERAL_CONNECTED';
     }
 
     /**
@@ -865,6 +883,22 @@ class Runtime extends EventEmitter {
     getBlocksJSON () {
         return this._blockInfo.reduce(
             (result, categoryInfo) => result.concat(categoryInfo.blocks.map(blockInfo => blockInfo.json)), []);
+    }
+
+    registerExtensionDevice (extensionId, device) {
+        this.extensionDevices[extensionId] = device;
+    }
+
+    startDeviceScan (extensionId) {
+        if (this.extensionDevices[extensionId]) {
+            this.extensionDevices[extensionId].startScan();
+        }
+    }
+
+    connectToPeripheral (extensionId, peripheralId) {
+        if (this.extensionDevices[extensionId]) {
+            this.extensionDevices[extensionId].connectToPeripheral(peripheralId);
+        }
     }
 
     /**

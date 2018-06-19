@@ -4,8 +4,9 @@ class PeripheralChooser {
         return this._chosenPeripheralId;
     }
 
-    constructor () {
-        this._availablePeripherals = []; // TODO for use in gui?
+    constructor (runtime) {
+        this._runtime = runtime;
+        this._availablePeripherals = {};
         this._chosenPeripheralId = null;
     }
 
@@ -23,14 +24,23 @@ class PeripheralChooser {
 
     /**
      * Adds the peripheral ID to list of available peripherals.
-     * @param {number} peripheralId - the id to add.
+     * @param {object} info - the peripheral info object.
      */
-    addPeripheral (peripheralId) {
-        this._availablePeripherals.push(peripheralId);
+    addPeripheral (info) {
+        // Add a new peripheral, or if the id is already present, update it
+        this._availablePeripherals[info.peripheralId] = info;
+
+        const peripheralArray = Object.keys(this._availablePeripherals).map(id =>
+            this._availablePeripherals[id]
+        );
+
+        // @todo: sort peripherals by signal strength? or maybe not, so they don't jump around?
+
+        this._runtime.emit(this._runtime.constructor.PERIPHERAL_LIST_UPDATE, peripheralArray);
 
         // TODO: Temporary: calls chosen callback on whatever peripherals are added.
-        this._chosenPeripheralId = this._availablePeripherals[0];
-        this._tempPeripheralChosenCallback(this._chosenPeripheralId);
+        // this._chosenPeripheralId = this._availablePeripherals[0];
+        // this._tempPeripheralChosenCallback(this._chosenPeripheralId);
     }
 
 }
