@@ -189,14 +189,19 @@ const parseScripts = function (scripts, blocks, addBroadcastMsg, getVariableId, 
  * Create a callback for assigning fixed IDs to imported variables
  * Generator stores the global variable mapping in a closure
  * @param {!string} targetId the id of the target to scope the variable to
+ * @param {object=} initialVars Initial vars in scope if parsing a sprite
  * @return {string} variable ID
  */
 const generateVariableIdGetter = (function () {
     let globalVariableNameMap = {};
     const namer = (targetId, name) => `${targetId}-${name}`;
-    return function (targetId, topLevel) {
+    return function (targetId, topLevel, initialVars) {
         // Reset the global variable map if topLevel
-        if (topLevel) globalVariableNameMap = {};
+        if (topLevel) {
+            globalVariableNameMap = {};
+        } else if (initialVars) {
+            globalVariableNameMap = initialVars;
+        }
         return function (name) {
             if (topLevel) { // Store the name/id pair in the globalVariableNameMap
                 globalVariableNameMap[name] = namer(targetId, name);
@@ -334,9 +339,10 @@ const parseMonitorObject = (object, runtime, targets, extensions) => {
  * @param {ImportedExtensionsInfo} extensions - (in/out) parsed extension information will be stored here.
  * @param {boolean} topLevel - Whether this is the top-level object (stage).
  * @param {?object} zip - Optional zipped assets for local file import
+ * @param {object=} initialVarScope - Initial set of variables in scope if parsing a single sprite
  * @return {!Promise.<Array.<Target>>} Promise for the loaded targets when ready, or null for unsupported objects.
  */
-const parseScratchObject = function (object, runtime, extensions, topLevel, zip) {
+const parseScratchObject = function (object, runtime, extensions, topLevel, zip, initialVarScope) {
     if (!object.hasOwnProperty('objName')) {
         if (object.hasOwnProperty('listName')) {
             // Shim these objects so they can be processed as monitors
@@ -427,7 +433,7 @@ const parseScratchObject = function (object, runtime, extensions, topLevel, zip)
     // Create the first clone, and load its run-state from JSON.
     const target = sprite.createClone(topLevel ? StageLayering.BACKGROUND_LAYER : StageLayering.SPRITE_LAYER);
 
-    const getVariableId = generateVariableIdGetter(target.id, topLevel);
+    const getVariableId = generateVariableIdGetter(target.id, topLevel, initialVarScope);
 
     const globalBroadcastMsgObj = globalBroadcastMsgStateGenerator(topLevel);
     const addBroadcastMsg = globalBroadcastMsgObj.broadcastMsgMapUpdater;
@@ -666,7 +672,19 @@ const sb2import = function (json, runtime, optForceSprite, zip) {
         extensionIDs: new Set(),
         extensionURLs: new Map()
     };
-    return parseScratchObject(json, runtime, extensions, !optForceSprite, zip)
+
+    const initialGlobalVars = {};
+    if (optForceSprite && runtime.targets && runtime.getTargetForStage()) {
+        const stageVars = runtime.getTargetForStage().variables;
+        for (const varId in stageVars) {
+            const currVar = stageVars[varId];
+            initialGlobalVars[currVar.name] = varId;
+        }
+    }
+
+    // If parsing a sprite, use the current global vars as parent scope for the sprite
+    return parseScratchObject(json, runtime, extensions, !optForceSprite, zip,
+        (optForceSprite ? initialGlobalVars : null))
         .then(targets => ({
             targets,
             extensions
