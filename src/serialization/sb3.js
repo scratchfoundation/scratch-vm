@@ -936,10 +936,18 @@ const deserialize = function (json, runtime, zip, isSingleSprite) {
     return Promise.all(
         ((isSingleSprite ? [json] : json.targets) || []).map(target =>
             parseScratchObject(target, runtime, extensions, zip))
-    ).then(targets => ({
-        targets,
-        extensions
-    }));
+    )
+        .then(targets => {
+            if (isSingleSprite && targets.length === 1) {
+                const target = targets[0];
+                target.blocks.fixUpVariableReferences(target, runtime);
+            }
+            return targets;
+        })
+        .then(targets => ({
+            targets,
+            extensions
+        }));
 };
 
 module.exports = {

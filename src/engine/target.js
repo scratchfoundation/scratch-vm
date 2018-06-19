@@ -80,14 +80,40 @@ class Target extends EventEmitter {
     }
 
     /**
-     * Look up a variable object, and create it if one doesn't exist.
+     * Get the names of all the variables of the given type that are in scope for this target.
+     * For targets that are not the stage, this includes any target-specific
+     * variables as well as any stage variables.
+     * For the stage, this is all stage variables.
+     * @param {string} type The variable type to search for; defaults to Variable.SCALAR_TYPE
+     * @return {Array<string>} A list of variable names
+     */
+    getAllVariableNamesInScopeByType (type) {
+        if (typeof type !== 'string') type = Variable.SCALAR_TYPE;
+        const targetVariables = Object.values(this.variables)
+            .filter(v => v.type === type)
+            .map(variable => variable.name);
+        if (this.isStage || !this.runtime) {
+            return targetVariables;
+        }
+        const stage = this.runtime.getTargetForStage();
+        const stageVariables = stage.getAllVariableNamesInScopeByType(type);
+        return targetVariables.concat(stageVariables);
+    }
+
+    /**
+     * Look up a variable object, first by id, and then by name if the id is not found.
+     * Create a new variable if both lookups fail.
      * @param {string} id Id of the variable.
      * @param {string} name Name of the variable.
      * @return {!Variable} Variable object.
      */
     lookupOrCreateVariable (id, name) {
-        const variable = this.lookupVariableById(id);
+        let variable = this.lookupVariableById(id);
         if (variable) return variable;
+
+        variable = this.lookupVariableByNameAndType(name, Variable.SCALAR_TYPE);
+        if (variable) return variable;
+
         // No variable with this name exists - create it locally.
         const newVariable = new Variable(id, name, Variable.SCALAR_TYPE, false);
         this.variables[id] = newVariable;
@@ -162,6 +188,40 @@ class Target extends EventEmitter {
     }
 
     /**
+     * Look up a variable object by its name and variable type.
+     * Search begins with local variables; then global variables if a local one
+     * was not found.
+     * @param {string} name Name of the variable.
+     * @param {string} type Type of the variable. Defaults to Variable.SCALAR_TYPE.
+     * @return {?Variable} Variable object if found, or null if not.
+     */
+    lookupVariableByNameAndType (name, type) {
+        if (typeof name !== 'string') return;
+        if (typeof type !== 'string') type = Variable.SCALAR_TYPE;
+
+        for (const varId in this.variables) {
+            const currVar = this.variables[varId];
+            if (currVar.name === name && currVar.type === type) {
+                return currVar;
+            }
+        }
+
+        if (this.runtime && !this.isStage) {
+            const stage = this.runtime.getTargetForStage();
+            if (stage) {
+                for (const varId in stage.variables) {
+                    const currVar = stage.variables[varId];
+                    if (currVar.name === name && currVar.type === type) {
+                        return currVar;
+                    }
+                }
+            }
+        }
+
+        return null;
+    }
+
+    /**
     * Look up a list object for this target, and create it if one doesn't exist.
     * Search begins for local lists; then look for globals.
     * @param {!string} id Id of the list.
@@ -169,8 +229,12 @@ class Target extends EventEmitter {
     * @return {!Varible} Variable object representing the found/created list.
      */
     lookupOrCreateList (id, name) {
-        const list = this.lookupVariableById(id);
+        let list = this.lookupVariableById(id);
         if (list) return list;
+
+        list = this.lookupVariableByNameAndType(name, Variable.LIST_TYPE);
+        if (list) return list;
+
         // No variable with this name exists - create it locally.
         const newList = new Variable(id, name, Variable.LIST_TYPE, false);
         this.variables[id] = newList;
@@ -240,10 +304,13 @@ class Target extends EventEmitter {
                         name: 'VARIABLE',
                         value: id
                     }, this.runtime);
-                    this.runtime.requestUpdateMonitor(Map({
-                        id: id,
-                        params: blocks._getBlockParams(blocks.getBlock(variable.id))
-                    }));
+                    const monitorBlock = blocks.getBlock(variable.id);
+                    if (monitorBlock) {
+                        this.runtime.requestUpdateMonitor(Map({
+                            id: id,
+                            params: blocks._getBlockParams(monitorBlock)
+                        }));
+                    }
                 }
 
             }
