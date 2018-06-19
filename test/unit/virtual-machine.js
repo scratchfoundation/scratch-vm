@@ -369,6 +369,55 @@ test('reorderSound', t => {
     t.end();
 });
 
+test('shareCostumeToTarget', t => {
+    const vm = new VirtualMachine();
+    const spr1 = new Sprite(null, vm.runtime);
+    spr1.name = 'foo';
+    const target1 = spr1.createClone();
+    const costume1 = {name: 'costume1'};
+    target1.addCostume(costume1);
+
+    const spr2 = new Sprite(null, vm.runtime);
+    spr2.name = 'foo';
+    const target2 = spr2.createClone();
+    const costume2 = {name: 'another costume'};
+    target2.addCostume(costume2);
+
+    vm.runtime.targets = [target1, target2];
+    vm.editingTarget = vm.runtime.targets[0];
+    vm.emitWorkspaceUpdate = () => null;
+
+    vm.shareCostumeToTarget(0, target2.id).then(() => {
+        t.equal(target2.currentCostume, 1);
+        t.equal(target2.getCostumes()[1].name, 'costume1');
+        t.end();
+    });
+});
+
+test('shareSoundToTarget', t => {
+    const vm = new VirtualMachine();
+    const spr1 = new Sprite(null, vm.runtime);
+    spr1.name = 'foo';
+    const target1 = spr1.createClone();
+    const sound1 = {name: 'sound1'};
+    target1.addSound(sound1);
+
+    const spr2 = new Sprite(null, vm.runtime);
+    spr2.name = 'foo';
+    const target2 = spr2.createClone();
+    const sound2 = {name: 'another sound'};
+    target2.addSound(sound2);
+
+    vm.runtime.targets = [target1, target2];
+    vm.editingTarget = vm.runtime.targets[0];
+    vm.emitWorkspaceUpdate = () => null;
+
+    vm.shareSoundToTarget(0, target2.id).then(() => {
+        t.equal(target2.getSounds()[1].name, 'sound1');
+        t.end();
+    });
+});
+
 test('reorderTarget', t => {
     const vm = new VirtualMachine();
     vm.emitTargetsUpdate = () => {};

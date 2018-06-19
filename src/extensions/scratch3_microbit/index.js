@@ -1,6 +1,8 @@
 const ArgumentType = require('../../extension-support/argument-type');
 const BlockType = require('../../extension-support/block-type');
 const log = require('../../util/log');
+const ScratchBLE = require('../../io/scratchBLE');
+const Base64Util = require('../../util/base64-util');
 
 /**
  * Icon svg to be displayed at the left edge of each extension block, encoded as a data URI.
@@ -17,37 +19,53 @@ const blockIconURI = 'data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNv
 const menuIconURI = 'data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiIHN0YW5kYWxvbmU9Im5vIj8+CjwhLS0gR2VuZXJhdG9yOiBBZG9iZSBJbGx1c3RyYXRvciAxOS4xLjAsIFNWRyBFeHBvcnQgUGx1Zy1JbiAuIFNWRyBWZXJzaW9uOiA2LjAwIEJ1aWxkIDApICAtLT4KCjxzdmcKICAgeG1sbnM6ZGM9Imh0dHA6Ly9wdXJsLm9yZy9kYy9lbGVtZW50cy8xLjEvIgogICB4bWxuczpjYz0iaHR0cDovL2NyZWF0aXZlY29tbW9ucy5vcmcvbnMjIgogICB4bWxuczpyZGY9Imh0dHA6Ly93d3cudzMub3JnLzE5OTkvMDIvMjItcmRmLXN5bnRheC1ucyMiCiAgIHhtbG5zOnN2Zz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciCiAgIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIKICAgeG1sbnM6c29kaXBvZGk9Imh0dHA6Ly9zb2RpcG9kaS5zb3VyY2Vmb3JnZS5uZXQvRFREL3NvZGlwb2RpLTAuZHRkIgogICB4bWxuczppbmtzY2FwZT0iaHR0cDovL3d3dy5pbmtzY2FwZS5vcmcvbmFtZXNwYWNlcy9pbmtzY2FwZSIKICAgdmVyc2lvbj0iMS4xIgogICBpZD0ibWljcm9iaXQtbG9nbyIKICAgeD0iMHB4IgogICB5PSIwcHgiCiAgIHZpZXdCb3g9IjAgMCA0MC43MDUwMDIgNDAuNzA1MDAxIgogICBlbmFibGUtYmFja2dyb3VuZD0ibmV3IDAgMCAyMTMgNTUiCiAgIHhtbDpzcGFjZT0icHJlc2VydmUiCiAgIGlua3NjYXBlOnZlcnNpb249IjAuOTEgcjEzNzI1IgogICBzb2RpcG9kaTpkb2NuYW1lPSJiYmMtbWljcm9iaXQtYmxhY2sgKDEpLnN2ZyIKICAgd2lkdGg9IjQwLjcwNTAwMiIKICAgaGVpZ2h0PSI0MC43MDUwMDIiPjxtZXRhZGF0YQogICAgIGlkPSJtZXRhZGF0YTQ5Ij48cmRmOlJERj48Y2M6V29yawogICAgICAgICByZGY6YWJvdXQ9IiI+PGRjOmZvcm1hdD5pbWFnZS9zdmcreG1sPC9kYzpmb3JtYXQ+PGRjOnR5cGUKICAgICAgICAgICByZGY6cmVzb3VyY2U9Imh0dHA6Ly9wdXJsLm9yZy9kYy9kY21pdHlwZS9TdGlsbEltYWdlIiAvPjxkYzp0aXRsZT48L2RjOnRpdGxlPjwvY2M6V29yaz48L3JkZjpSREY+PC9tZXRhZGF0YT48ZGVmcwogICAgIGlkPSJkZWZzNDciIC8+PHNvZGlwb2RpOm5hbWVkdmlldwogICAgIHBhZ2Vjb2xvcj0iI2ZmZmZmZiIKICAgICBib3JkZXJjb2xvcj0iIzY2NjY2NiIKICAgICBib3JkZXJvcGFjaXR5PSIxIgogICAgIG9iamVjdHRvbGVyYW5jZT0iMTAiCiAgICAgZ3JpZHRvbGVyYW5jZT0iMTAiCiAgICAgZ3VpZGV0b2xlcmFuY2U9IjEwIgogICAgIGlua3NjYXBlOnBhZ2VvcGFjaXR5PSIwIgogICAgIGlua3NjYXBlOnBhZ2VzaGFkb3c9IjIiCiAgICAgaW5rc2NhcGU6d2luZG93LXdpZHRoPSIxMjUzIgogICAgIGlua3NjYXBlOndpbmRvdy1oZWlnaHQ9IjEwNzYiCiAgICAgaWQ9Im5hbWVkdmlldzQ1IgogICAgIHNob3dncmlkPSJmYWxzZSIKICAgICBmaXQtbWFyZ2luLXRvcD0iMCIKICAgICBmaXQtbWFyZ2luLWxlZnQ9IjAiCiAgICAgZml0LW1hcmdpbi1yaWdodD0iMCIKICAgICBmaXQtbWFyZ2luLWJvdHRvbT0iMCIKICAgICBpbmtzY2FwZTp6b29tPSIxLjU0OTI5NTgiCiAgICAgaW5rc2NhcGU6Y3g9IjQyLjIzNyIKICAgICBpbmtzY2FwZTpjeT0iMTIuNjI4IgogICAgIGlua3NjYXBlOndpbmRvdy14PSIxNDYwIgogICAgIGlua3NjYXBlOndpbmRvdy15PSI0MyIKICAgICBpbmtzY2FwZTp3aW5kb3ctbWF4aW1pemVkPSIwIgogICAgIGlua3NjYXBlOmN1cnJlbnQtbGF5ZXI9Im1pY3JvYml0LWxvZ28iIC8+PHBhdGgKICAgICBzdHlsZT0iZmlsbDojMDAwMDAwIgogICAgIGlua3NjYXBlOmNvbm5lY3Rvci1jdXJ2YXR1cmU9IjAiCiAgICAgaWQ9InBhdGgzOSIKICAgICBkPSJtIDI4Ljg3NCwyMi43MDEwMDEgYyAxLjI5OCwwIDIuMzQ3LC0xLjA1MyAyLjM0NywtMi4zNDkgMCwtMS4yOTYgLTEuMDQ4LC0yLjM0ODAwMSAtMi4zNDcsLTIuMzQ4MDAxIC0xLjI5NywwIC0yLjM0OCwxLjA1MjAwMSAtMi4zNDgsMi4zNDgwMDEgMC4wMDEsMS4yOTYgMS4wNTEsMi4zNDkgMi4zNDgsMi4zNDkiIC8+PHBhdGgKICAgICBzdHlsZT0iZmlsbDojMDAwMDAwIgogICAgIGlua3NjYXBlOmNvbm5lY3Rvci1jdXJ2YXR1cmU9IjAiCiAgICAgaWQ9InBhdGg0MSIKICAgICBkPSJtIDExLjYzLDE4LjAwNCBjIC0xLjI5NywwIC0yLjM0OSwxLjA1MjAwMSAtMi4zNDksMi4zNDgwMDEgMCwxLjI5NiAxLjA1MiwyLjM0OSAyLjM0OSwyLjM0OSAxLjI5NiwwIDIuMzQ3LC0xLjA1MyAyLjM0NywtMi4zNDkgMCwtMS4yOTYgLTEuMDUxLC0yLjM0ODAwMSAtMi4zNDcsLTIuMzQ4MDAxIiAvPjxwYXRoCiAgICAgc3R5bGU9ImZpbGw6IzAwMDAwMCIKICAgICBpbmtzY2FwZTpjb25uZWN0b3ItY3VydmF0dXJlPSIwIgogICAgIGlkPSJwYXRoNDMiCiAgICAgZD0ibSAxMS42MywxMy4zNzQ1IGMgLTMuODQ4LDAgLTYuOTc4LDMuMTI5IC02Ljk3OCw2Ljk3ODAwMSAwLDMuODQ4IDMuMTMsNi45NzggNi45NzgsNi45NzggbCAxNy40NDUsMCBjIDMuODQ4LDAgNi45NzcsLTMuMTMgNi45NzcsLTYuOTc4IDAsLTMuODQ5MDAxIC0zLjEyOSwtNi45NzgwMDEgLTYuOTc3LC02Ljk3ODAwMSBsIC0xNy40NDUsMCBtIDE3LjQ0NSwxOC42MDgwMDEgLTE3LjQ0NSwwIGMgLTYuNDEzLDAgLTExLjYzLC01LjIxNyAtMTEuNjMsLTExLjYzIEMgMCwxMy45Mzk1IDUuMjE3LDguNzIyNTAwNCAxMS42Myw4LjcyMjUwMDQgbCAxNy40NDUsMCBjIDYuNDEzLDAgMTEuNjMsNS4yMTY5OTk2IDExLjYzLDExLjYzMDAwMDYgLTEwZS00LDYuNDEzIC01LjIxNywxMS42MyAtMTEuNjMsMTEuNjMiIC8+PC9zdmc+';
 
 /**
- * Manage communication with a MicroBit device over a Device Manager client socket.
+ * Enum for micro:bit BLE command protocol.
+ * https://github.com/LLK/scratch-microbit-firmware/blob/master/protocol.md
+ * @readonly
+ * @enum {number}
+ */
+const BLECommand = {
+    CMD_PIN_CONFIG: 0x80,
+    CMD_DISPLAY_TEXT: 0x81,
+    CMD_DISPLAY_LED: 0x82
+};
+
+/**
+ * Enum for micro:bit protocol.
+ * https://github.com/LLK/scratch-microbit-firmware/blob/master/protocol.md
+ * @readonly
+ * @enum {string}
+ */
+const BLEUUID = {
+    service: 0xf005,
+    rxChar: '5261da01-fa7e-42ab-850b-7c80220097cc',
+    txChar: '5261da02-fa7e-42ab-850b-7c80220097cc'
+};
+
+/**
+ * Manage communication with a MicroBit device over a Scrath Link client socket.
  */
 class MicroBit {
 
     /**
-     * @return {string} - the type of Device Manager device socket that this class will handle.
-     */
-    static get DEVICE_TYPE () {
-        return 'ble';
-    }
-
-    /**
      * Construct a MicroBit communication object.
-     * @param {Socket} socket - the socket for a MicroBit device, as provided by a Device Manager client.
      * @param {Runtime} runtime - the Scratch 3.0 runtime
      */
-    constructor (socket, runtime) {
-        /**
-         * The socket-IO socket used to communicate with the Device Manager about this device.
-         * @type {Socket}
-         * @private
-         */
-        this._socket = socket;
+    constructor (runtime) {
 
         /**
-         * The Scratch 3.0 runtime used to trigger the green flag button
-         *
+         * The Scratch 3.0 runtime used to trigger the green flag button.
          * @type {Runtime}
          * @private
          */
         this._runtime = runtime;
+
+        /**
+         * The ScratchBLE connection session for reading/writing device data.
+         * @type {ScratchBLE}
+         * @private
+         */
+        this._ble = new ScratchBLE();
 
         /**
          * The most recently received value for each sensor.
@@ -64,6 +82,11 @@ class MicroBit {
             ledMatrixState: new Uint8Array(5)
         };
 
+        /**
+         * The most recently received value for each gesture.
+         * @type {Object.<string, Object>}
+         * @private
+         */
         this._gestures = {
             moving: false,
             move: {
@@ -80,17 +103,32 @@ class MicroBit {
             }
         };
 
-        // this._onRxChar = this._onRxChar.bind(this);
-        // this._onDisconnect = this._onDisconnect.bind(this);
+        // TODO: Temporary until the gui requests a device connection
+        this._ble.waitForSocket()
+            // TODO: remove pinging once no longer needed
+            .then(() => this._ble.sendRemoteRequest('pingMe'))
+            .then(() => this._onBLEReady());
 
-        this._connectEvents();
+        // TODO: Add ScratchBLE 'disconnect' handling
+
     }
 
     /**
-     * Manually dispose of this object.
+     * @param {string} text - the text to display.
      */
-    dispose () {
-        this._disconnectEvents();
+    displayText (text) {
+        const output = new Uint8Array(text.length);
+        for (let i = 0; i < text.length; i++) {
+            output[i] = text.charCodeAt(i);
+        }
+        this._writeBLE(BLECommand.CMD_DISPLAY_TEXT, output);
+    }
+
+    /**
+     * @param {Uint8Array} matrix - the matrix to display.
+     */
+    displayMatrix (matrix) {
+        this._writeBLE(BLECommand.CMD_DISPLAY_LED, matrix);
     }
 
     /**
@@ -144,31 +182,38 @@ class MicroBit {
     }
 
     /**
-     * Attach event handlers to the device socket.
-     * @private
+     * Requests connection to a device when BLE session is ready.
      */
-    _connectEvents () {
-        // this._socket.on(BLE_UUIDs.rx, this._onRxChar);
-        // this._socket.on('deviceWasClosed', this._onDisconnect);
-        // this._socket.on('disconnect', this._onDisconnect);
+    _onBLEReady () {
+        this._ble.requestDevice({
+            filters: [
+                {services: [BLEUUID.service]}
+            ]
+        }, this._onBLEConnect.bind(this), this._onBLEError);
     }
 
     /**
-     * Detach event handlers from the device socket.
-     * @private
+     * Starts reading data from device after BLE has connected to it.
      */
-    _disconnectEvents () {
-        // this._socket.off(BLE_UUIDs.rx, this._onRxChar);
-        // this._socket.off('deviceWasClosed', this._onDisconnect);
-        // this._socket.off('disconnect', this._onDisconnect);
+    _onBLEConnect () {
+        const callback = this._processBLEData.bind(this);
+        this._ble.read(BLEUUID.service, BLEUUID.rxChar, true, callback);
+    }
+
+    /**
+     * @param {string} e - Error from BLE session.
+     */
+    _onBLEError (e) {
+        log.error(`BLE error: ${e}`);
     }
 
     /**
      * Process the sensor data from the incoming BLE characteristic.
-     * @param {object} data - the incoming BLE data.
+     * @param {object} base64 - the incoming BLE data.
      * @private
      */
-    _processData (data) {
+    _processBLEData (base64) {
+        const data = Base64Util.base64ToUint8Array(base64);
 
         this._sensors.tiltX = data[1] | (data[0] << 8);
         if (this._sensors.tiltX > (1 << 15)) this._sensors.tiltX -= (1 << 16);
@@ -186,44 +231,21 @@ class MicroBit {
     }
 
     /**
-     * React to device disconnection. May be called more than once.
+     * Write a message to the device BLE session.
+     * @param {number} command - the BLE command hex.
+     * @param {Uint8Array} message - the message to write.
      * @private
      */
-    _onDisconnect () {
-        this._disconnectEvents();
-    }
-
-    /**
-     * Send a message to the device socket.
-     * @param {string} message - the name of the message, such as 'playTone'.
-     * @param {object} [details] - optional additional details for the message, such as tone duration and pitch.
-     * @private
-     */
-    _send (message, details) {
-        this._socket.emit(message, details);
+    _writeBLE (command, message) {
+        const output = new Uint8Array(message.length + 1);
+        output[0] = command; // attach command to beginning of message
+        for (let i = 0; i < message.length; i++) {
+            output[i + 1] = message[i];
+        }
+        const b64enc = Base64Util.uint8ArrayToBase64(output);
+        this._ble.write(BLEUUID.service, BLEUUID.txChar, b64enc, 'base64');
     }
 }
-
-/*
- * const BLE_UUIDs = {
- *     uuid: '4cdbbd87d6e646c29d0bdf87551e159a',
- *     rx: '4cdb8702d6e646c29d0bdf87551e159a'
- * };
- */
-
-/*
- * const DEV_SPEC = {
- *     info: {
- *         uuid: [BLE_UUIDs.uuid],
- *         read_characteristics: {
- *             '4cdb8702d6e646c29d0bdf87551e159a': {
- *                 notify: true
- *             }
- *         }
- *     },
- *     type: 'ble'
- * };
- */
 
 /**
  * Enum for tilt sensor direction.
@@ -256,17 +278,6 @@ const symbols2hex = {
     '☺': 0x5022E,
     '!': 0x421004,
     '?': 0xC91004
-};
-
-/**
- * Enum for micro:bit BLE command protocol.
- * @readonly
- * @enum {number}
- */
-const BLECommand = {
-    CMD_PIN_CONFIG: 0x80,
-    CMD_DISPLAY_TEXT: 0x81,
-    CMD_DISPLAY_LED: 0x82
 };
 
 /**
@@ -306,7 +317,8 @@ class Scratch3MicroBitBlocks {
          */
         this.runtime = runtime;
 
-        this.connect();
+        // Create a new MicroBit device instance
+        this._device = new MicroBit(this.runtime);
     }
 
     /**
@@ -462,44 +474,6 @@ class Scratch3MicroBitBlocks {
     }
 
     /**
-     * Use the Device Manager client to attempt to connect to a MicroBit device.
-     */
-    connect () {
-        this._device = new MicroBit(null, this.runtime);
-        window.addEventListener('message', event => {
-            if (event.data.type === 'data') {
-                this._device._processData(new Uint8Array(event.data.buffer));
-            }
-        }, false);
-        /*
-         * if (this._device || this._finder) {
-         *     return;
-         * }
-         * const deviceManager = this.runtime.ioDevices.deviceManager;
-         * const finder = this._finder =
-         *     deviceManager.searchAndConnect(Scratch3MicroBitBlocks.EXTENSION_NAME, MicroBit.DEVICE_TYPE, DEV_SPEC);
-         *
-         * this._finder.promise.then(
-         *     socket => {
-         *         if (this._finder === finder) {
-         *             this._finder = null;
-         *             this._device = new MicroBit(socket, this.runtime);
-         *         } else {
-         *             log.warn('Ignoring success from stale MicroBit connection attempt');
-         *         }
-         *     },
-         *     reason => {
-         *         if (this._finder === finder) {
-         *             this._finder = null;
-         *             log.warn(`MicroBit connection failed: ${reason}`);
-         *         } else {
-         *             log.warn('Ignoring failure from stale MicroBit connection attempt');
-         *         }
-         *     });
-         */
-    }
-
-    /**
      * Test whether the A or B button is pressed
      * @param {object} args - the block's arguments.
      * @return {boolean} - true if the button is pressed.
@@ -546,12 +520,7 @@ class Scratch3MicroBitBlocks {
      */
     displayText (args) {
         const text = String(args.TEXT).substring(0, 19);
-        const output = new Uint8Array(text.length + 1);
-        output[0] = BLECommand.CMD_DISPLAY_TEXT;
-        for (let i = 0; i < text.length; i++) {
-            output[i + 1] = text.charCodeAt(i);
-        }
-        window.postMessage({type: 'command', buffer: output}, '*');
+        this._device.displayText(text);
         return;
     }
 
@@ -562,14 +531,12 @@ class Scratch3MicroBitBlocks {
     displaySymbol (args) {
         const hex = symbols2hex[args.SYMBOL];
         if (!hex) return;
-        const output = new Uint8Array(6);
-        output[0] = BLECommand.CMD_DISPLAY_LED;
-        output[1] = (hex >> 20) & 0x1F;
-        output[2] = (hex >> 15) & 0x1F;
-        output[3] = (hex >> 10) & 0x1F;
-        output[4] = (hex >> 5) & 0x1F;
-        output[5] = hex & 0x1F;
-        window.postMessage({type: 'command', buffer: output}, '*');
+        this._device.ledMatrixState[0] = (hex >> 20) & 0x1F;
+        this._device.ledMatrixState[1] = (hex >> 15) & 0x1F;
+        this._device.ledMatrixState[2] = (hex >> 10) & 0x1F;
+        this._device.ledMatrixState[3] = (hex >> 5) & 0x1F;
+        this._device.ledMatrixState[4] = hex & 0x1F;
+        this._device.displayMatrix(this._device.ledMatrixState);
         return;
     }
 
@@ -583,7 +550,7 @@ class Scratch3MicroBitBlocks {
         } else if (args.STATE === 'off') {
             this._device.ledMatrixState[args.Y - 1] &= ~(1 << 5 - args.X);
         } else return;
-        this._displayLEDs(this._device.ledMatrixState);
+        this._device.displayMatrix(this._device.ledMatrixState);
         return;
     }
 
@@ -594,21 +561,8 @@ class Scratch3MicroBitBlocks {
         for (let i = 0; i < 5; i++) {
             this._device.ledMatrixState[i] = 0;
         }
-        this._displayLEDs(this._device.ledMatrixState);
+        this._device.displayMatrix(this._device.ledMatrixState);
         return;
-    }
-
-    /**
-     * Send value to the micro:bit LED matrix
-     * @param {Uin8array} matrix - the value to send to the matrix.
-     */
-    _displayLEDs (matrix) {
-        const output = new Uint8Array(matrix.length + 1);
-        output[0] = BLECommand.CMD_DISPLAY_LED;
-        for (let i = 0; i < matrix.length; i++) {
-            output[i + 1] = matrix[i];
-        }
-        window.postMessage({type: 'command', buffer: output}, '*');
     }
 
     /**
