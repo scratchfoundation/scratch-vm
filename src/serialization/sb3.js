@@ -446,15 +446,25 @@ const serializeTarget = function (target) {
 
 /**
  * Serializes the specified VM runtime.
- * @param  {!Runtime} runtime VM runtime instance to be serialized.
+ * @param {!Runtime} runtime VM runtime instance to be serialized.
+ * @param {string=} targetId Optional target id if serializing only a single target
  * @return {object} Serialized runtime instance.
  */
-const serialize = function (runtime) {
+const serialize = function (runtime, targetId) {
     // Fetch targets
     const obj = Object.create(null);
-    const flattenedOriginalTargets = JSON.parse(JSON.stringify(
+    const flattenedOriginalTargets = JSON.parse(JSON.stringify(targetId ?
+        [runtime.getTargetById(targetId)] :
         runtime.targets.filter(target => target.isOriginal)));
-    obj.targets = flattenedOriginalTargets.map(t => serializeTarget(t, runtime));
+
+    const serializedTargets = flattenedOriginalTargets.map(t => serializeTarget(t, runtime));
+
+    if (targetId) {
+        return serializedTargets[0];
+    }
+
+    obj.targets = serializedTargets;
+
 
     // TODO Serialize monitors
 
