@@ -6,6 +6,7 @@ const Comment = require('../engine/comment');
 const uid = require('../util/uid');
 const {Map} = require('immutable');
 const log = require('../util/log');
+const StringUtil = require('../util/string-util');
 
 /**
  * @fileoverview
@@ -328,6 +329,70 @@ class Target extends EventEmitter {
                 this.runtime.monitorBlocks.deleteBlock(id);
                 this.runtime.requestRemoveMonitor(id);
             }
+        }
+    }
+
+    /**
+     * Fixes up variable references in this target avoiding conflicts with
+     * pre-existing variables in the same scope.
+     * This is used when uploading this target as a new sprite into an existing
+     * project, where the new sprite may contain references
+     * to variable names that already exist as global variables in the project
+     * (and thus are in scope for variable references in the given sprite).
+     *
+     * If the given target has a block that references an existing global variable and that
+     * variable *does not* exist in the target itself (e.g. it was a global variable in the
+     * project the sprite was originally exported from), fix the variable references in this sprite
+     * to reference the id of the pre-existing global variable.
+     * If the given target has a block that references an existing global variable and that
+     * variable does exist in the target itself (e.g. it's a local variable in the sprite being uploaded),
+     * then the variable is renamed to distinguish itself from the pre-existing variable.
+     * All blocks that reference the local variable will be updated to use the new name.
+     // * @param {Target} target The new target being uploaded, with potential variable conflicts
+     // * @param {Runtime} runtime The runtime context with any pre-existing variables
+     */
+    fixUpVariableReferences () {
+        if (!this.runtime) return; // There's no runtime context to conflict with
+        if (this.isStage) return; // Stage can't have variable conflicts with itself (and also can't be uploaded)
+
+        const allReferences = this.blocks.getAllVariableAndListReferences();
+        const conflictIdsToReplace = Object.create(null);
+        for (const varId in allReferences) {
+            // We don't care about which var ref we get, they should all have the same var info
+            const varRef = allReferences[varId][0];
+            const varName = varRef.referencingField.value;
+            const varType = varRef.type;
+            if (this.lookupVariableById(varId)) {
+                // Found a variable with the id in either the target or the stage,
+                // figure out which one.
+                if (this.variables.hasOwnProperty(varId)) {
+                    // If the target has the variable, then check whether the stage
+                    // has one with the same name and type. If it does, then rename
+                    // this target specific variable so that there is a distinction.
+                    const stage = this.runtime.getTargetForStage();
+                    if (stage && stage.variables &&
+                        stage.lookupVariableByNameAndType(varName, varType)) {
+                        // TODO what should the new name be?
+                        const newName = StringUtil.unusedName(
+                            `${this.getName()}_${varName}`,
+                            this.getAllVariableNamesInScopeByType(varType));
+                        this.renameVariable(varId, newName);
+                        this.blocks.updateBlocksAfterVarRename(varId, newName);
+                    }
+                }
+            } else {
+                const existingVar = this.lookupVariableByNameAndType(varName, varType);
+                if (existingVar && !conflictIdsToReplace[varId]) {
+                    conflictIdsToReplace[varId] = existingVar.id;
+                }
+            }
+        }
+        for (const conflictId in conflictIdsToReplace) {
+            const existingId = conflictIdsToReplace[conflictId];
+            allReferences[conflictId].map(varRef => {
+                varRef.referencingField.id = existingId;
+                return varRef;
+            });
         }
     }
 

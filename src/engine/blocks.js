@@ -7,7 +7,6 @@ const {Map} = require('immutable');
 const BlocksExecuteCache = require('./blocks-execute-cache');
 const log = require('../util/log');
 const Variable = require('./variable');
-const StringUtil = require('../util/string-util');
 
 /**
  * @fileoverview
@@ -673,26 +672,15 @@ class Blocks {
     }
 
     /**
-     * Fixes up variable references in this blocks container avoiding conflicts with
-     * pre-existing variables in the same scope.
-     * This is used when uploading a new sprite (the given target)
-     * into an existing project, where the new sprite may contain references
-     * to variable names that already exist as global variables in the project
-     * (and thus are in scope for variable references in the given sprite).
-     *
-     * If the given target has a block that references an existing global variable and that
-     * variable *does not* exist in the target itself (e.g. it was a global variable in the
-     * project the sprite was originally exported from), fix the variable references in this sprite
-     * to reference the id of the pre-existing global variable.
-     * If the given target has a block that references an existing global variable and that
-     * variable does exist in the target itself (e.g. it's a local variable in the sprite being uploaded),
-     * then the variable is renamed to distinguish itself from the pre-existing variable.
-     * All blocks that reference the local variable will be updated to use the new name.
-     * @param {Target} target The new target being uploaded, with potential variable conflicts
-     * @param {Runtime} runtime The runtime context with any pre-existing variables
+     * Returns a map of all references to variables or lists from blocks
+     * in this block container.
+     * @return {object} A map of variable ID to a list of all variable references
+     * for that ID. A variable reference contains the field referencing that variable
+     * and also the type of the variable being referenced.
      */
-    fixUpVariableReferences (target, runtime) {
+    getAllVariableAndListReferences () {
         const blocks = this._blocks;
+        const allReferences = Object.create(null);
         for (const blockId in blocks) {
             let varOrListField = null;
             let varType = null;
@@ -705,33 +693,20 @@ class Blocks {
             }
             if (varOrListField) {
                 const currVarId = varOrListField.id;
-                const currVarName = varOrListField.value;
-                if (target.lookupVariableById(currVarId)) {
-                    // Found a variable with the id in either the target or the stage,
-                    // figure out which one.
-                    if (target.variables.hasOwnProperty(currVarId)) {
-                        // If the target has the variable, then check whether the stage
-                        // has one with the same name and type. If it does, then rename
-                        // this target specific variable so that there is a distinction.
-                        const stage = runtime.getTargetForStage();
-                        if (stage && stage.variables &&
-                            stage.lookupVariableByNameAndType(currVarName, varType)) {
-                            // TODO what should the new name be?
-                            const newName = StringUtil.unusedName(
-                                `${target.getName()}_${currVarName}`,
-                                target.getAllVariableNamesInScopeByType(varType));
-                            target.renameVariable(currVarId, newName);
-                            this.updateBlocksAfterVarRename(currVarId, newName);
-                        }
-                    }
+                if (allReferences[currVarId]) {
+                    allReferences[currVarId].push({
+                        referencingField: varOrListField,
+                        type: varType
+                    });
                 } else {
-                    const existingVar = target.lookupVariableByNameAndType(currVarName, varType);
-                    if (existingVar) {
-                        varOrListField.id = existingVar.id;
-                    }
+                    allReferences[currVarId] = [{
+                        referencingField: varOrListField,
+                        type: varType
+                    }];
                 }
             }
         }
+        return allReferences;
     }
 
     /**

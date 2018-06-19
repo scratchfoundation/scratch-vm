@@ -940,7 +940,7 @@ const deserialize = function (json, runtime, zip, isSingleSprite) {
         .then(targets => {
             if (isSingleSprite && targets.length === 1) {
                 const target = targets[0];
-                target.blocks.fixUpVariableReferences(target, runtime);
+                target.fixUpVariableReferences();
             }
             return targets;
         })

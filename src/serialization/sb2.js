@@ -671,7 +671,7 @@ const sb2import = function (json, runtime, optForceSprite, zip) {
         .then(targets => {
             if (optForceSprite && targets.length === 1) {
                 const target = targets[0];
-                target.blocks.fixUpVariableReferences(target, runtime);
+                target.fixUpVariableReferences();
             }
             return targets;
         })
