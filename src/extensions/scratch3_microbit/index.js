@@ -1,7 +1,7 @@
 const ArgumentType = require('../../extension-support/argument-type');
 const BlockType = require('../../extension-support/block-type');
 const log = require('../../util/log');
-const ScratchBLE = require('../../io/scratchBLE');
+const BLESession = require('../../io/bleSession');
 const Base64Util = require('../../util/base64-util');
 
 /**
@@ -62,17 +62,15 @@ class MicroBit {
         this._runtime = runtime;
 
         /**
-         * The ScratchBLE connection session for reading/writing device data.
-         * @type {ScratchBLE}
+         * The BluetoothLowEnergy connection session for reading/writing device data.
+         * @type {BLESession}
          * @private
          */
-        this._ble = new ScratchBLE(this._runtime, {
+        this._ble = new BLESession(this._runtime, extensionId, {
             filters: [
                 {services: [BLEUUID.service]}
             ]
-        });
-
-        this._runtime.registerExtensionDevice(extensionId, this._ble);
+        }, this._onSessionConnect.bind(this));
 
         /**
          * The most recently received value for each sensor.
@@ -119,14 +117,14 @@ class MicroBit {
         for (let i = 0; i < text.length; i++) {
             output[i] = text.charCodeAt(i);
         }
-        this._writeBLE(BLECommand.CMD_DISPLAY_TEXT, output);
+        this._writeSessionData(BLECommand.CMD_DISPLAY_TEXT, output);
     }
 
     /**
      * @param {Uint8Array} matrix - the matrix to display.
      */
     displayMatrix (matrix) {
-        this._writeBLE(BLECommand.CMD_DISPLAY_LED, matrix);
+        this._writeSessionData(BLECommand.CMD_DISPLAY_LED, matrix);
     }
 
     /**
@@ -180,29 +178,11 @@ class MicroBit {
     }
 
     /**
-     * Requests connection to a device when BLE session is ready.
-     */
-    // _onBLEReady () {
-    //     this._ble.requestDevice({
-    //         filters: [
-    //             {services: [BLEUUID.service]}
-    //         ]
-    //     }, this._onBLEConnect.bind(this), this._onBLEError);
-    // }
-
-    /**
      * Starts reading data from device after BLE has connected to it.
      */
-    _onBLEConnect () {
-        const callback = this._processBLEData.bind(this);
+    _onSessionConnect () {
+        const callback = this._processSessionData.bind(this);
         this._ble.read(BLEUUID.service, BLEUUID.rxChar, true, callback);
-    }
-
-    /**
-     * @param {string} e - Error from BLE session.
-     */
-    _onBLEError (e) {
-        log.error(`BLE error: ${e}`);
     }
 
     /**
@@ -210,7 +190,7 @@ class MicroBit {
      * @param {object} base64 - the incoming BLE data.
      * @private
      */
-    _processBLEData (base64) {
+    _processSessionData (base64) {
         const data = Base64Util.base64ToUint8Array(base64);
 
         this._sensors.tiltX = data[1] | (data[0] << 8);
@@ -234,7 +214,7 @@ class MicroBit {
      * @param {Uint8Array} message - the message to write.
      * @private
      */
-    _writeBLE (command, message) {
+    _writeSessionData (command, message) {
         const output = new Uint8Array(message.length + 1);
         output[0] = command; // attach command to beginning of message
         for (let i = 0; i < message.length; i++) {

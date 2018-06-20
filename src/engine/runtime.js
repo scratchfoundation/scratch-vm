@@ -891,13 +891,13 @@ class Runtime extends EventEmitter {
 
     startDeviceScan (extensionId) {
         if (this.extensionDevices[extensionId]) {
-            this.extensionDevices[extensionId].startScan();
+            this.extensionDevices[extensionId].requestDevice();
         }
     }
 
     connectToPeripheral (extensionId, peripheralId) {
         if (this.extensionDevices[extensionId]) {
-            this.extensionDevices[extensionId].connectToPeripheral(peripheralId);
+            this.extensionDevices[extensionId].connectDevice(peripheralId);
         }
     }
 

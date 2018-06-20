@@ -1,8 +1,7 @@
 const JSONRPCWebSocket = require('../util/jsonrpc');
-
 const ScratchLinkWebSocket = 'ws://localhost:20110/scratch/bt';
 
-class ScratchBT extends JSONRPCWebSocket {
+class BTSession extends JSONRPCWebSocket {
     constructor () {
         super(new WebSocket(ScratchLinkWebSocket));
     }
@@ -34,4 +33,4 @@ class ScratchBT extends JSONRPCWebSocket {
     }
 }
 
-module.exports = ScratchBT;
+module.exports = BTSession;
