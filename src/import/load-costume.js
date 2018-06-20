@@ -16,6 +16,7 @@ const log = require('../util/log');
  * @returns {?Promise} - a promise which will resolve after skinId is set, or null on error.
  */
 const loadCostumeFromAsset = function (costume, costumeAsset, runtime, optVersion) {
+
     costume.assetId = costumeAsset.assetId;
     const renderer = runtime.renderer;
     if (!renderer) {
@@ -123,9 +124,18 @@ const loadCostume = function (md5ext, costume, runtime, optVersion) {
     const ext = idParts[1].toLowerCase();
     const assetType = (ext === 'svg') ? AssetType.ImageVector : AssetType.ImageBitmap;
 
+    const onLoad = asset => {
+        costume.dataFormat = asset.dataFormat;
+        return loadCostumeFromAsset(costume, asset, runtime, optVersion);
+    };
+
     return runtime.storage.load(assetType, md5, ext).then(costumeAsset => {
-        costume.dataFormat = ext;
-        return loadCostumeFromAsset(costume, costumeAsset, runtime, optVersion);
+        if (costumeAsset) {
+            return onLoad(costumeAsset);
+        }
+        const defaultAssetId = runtime.storage.getDefaultAssetId(assetType);
+        return runtime.storage.load(assetType, defaultAssetId).then(onLoad);
+
     });
 };
 
