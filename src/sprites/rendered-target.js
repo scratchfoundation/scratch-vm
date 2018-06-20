@@ -1004,8 +1004,8 @@ class RenderedTarget extends Target {
             const newTarget = newSprite.createClone();
             // Copy all properties.
             // @todo refactor with clone methods
-            newTarget.x = Math.random() * 400 / 2;
-            newTarget.y = Math.random() * 300 / 2;
+            newTarget.x = (Math.random() - 0.5) * 400 / 2;
+            newTarget.y = (Math.random() - 0.5) * 300 / 2;
             newTarget.direction = this.direction;
             newTarget.draggable = this.draggable;
             newTarget.visible = this.visible;
