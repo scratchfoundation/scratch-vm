@@ -86,7 +86,11 @@ class Scratch3TranslateBlocks {
     getInfo () {
         return {
             id: 'translate',
-            name: 'Translate',
+            name: formatMessage({
+                id: 'translate.categoryName',
+                default: 'Translate',
+                description: 'Label for the translate extension category'
+            }),
             menuIconURI: '', // TODO: Add the final icons.
             blockIconURI: '',
             blocks: [
