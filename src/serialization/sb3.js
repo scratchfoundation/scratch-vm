@@ -937,13 +937,6 @@ const deserialize = function (json, runtime, zip, isSingleSprite) {
         ((isSingleSprite ? [json] : json.targets) || []).map(target =>
             parseScratchObject(target, runtime, extensions, zip))
     )
-        .then(targets => {
-            if (isSingleSprite && targets.length === 1) {
-                const target = targets[0];
-                target.fixUpVariableReferences();
-            }
-            return targets;
-        })
         .then(targets => ({
             targets,
             extensions

@@ -386,6 +386,10 @@ class VirtualMachine extends EventEmitter {
                 this.editingTarget = targets[0];
             }
 
+            if (!wholeProject) {
+                this.editingTarget.fixUpVariableReferences();
+            }
+
             // Update the VM user's knowledge of targets and blocks on the workspace.
             this.emitTargetsUpdate();
             this.emitWorkspaceUpdate();

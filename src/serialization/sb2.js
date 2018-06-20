@@ -668,13 +668,6 @@ const sb2import = function (json, runtime, optForceSprite, zip) {
     };
 
     return parseScratchObject(json, runtime, extensions, !optForceSprite, zip)
-        .then(targets => {
-            if (optForceSprite && targets.length === 1) {
-                const target = targets[0];
-                target.fixUpVariableReferences();
-            }
-            return targets;
-        })
         .then(targets => ({
             targets,
             extensions
