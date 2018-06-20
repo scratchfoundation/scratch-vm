@@ -354,8 +354,29 @@ class Target extends EventEmitter {
     fixUpVariableReferences () {
         if (!this.runtime) return; // There's no runtime context to conflict with
         if (this.isStage) return; // Stage can't have variable conflicts with itself (and also can't be uploaded)
+        const stage = this.runtime.getTargetForStage();
+        if (!stage || !stage.variables) return;
+
+        const renameConflictingLocalVar = (id, name, type) => {
+            const conflict = stage.lookupVariableByNameAndType(name, type);
+            if (conflict) {
+                const newName = StringUtil.unusedName(
+                    `${this.getName()}: ${name}`,
+                    this.getAllVariableNamesInScopeByType(type));
+                this.renameVariable(id, newName);
+                return newName;
+            }
+            return null;
+        };
 
         const allReferences = this.blocks.getAllVariableAndListReferences();
+        const unreferencedLocalVarIds = [];
+        if (Object.keys(this.variables).length > 0) {
+            for (const localVarId in this.variables) {
+                if (!this.variables.hasOwnProperty(localVarId)) continue;
+                if (!allReferences[localVarId]) unreferencedLocalVarIds.push(localVarId);
+            }
+        }
         const conflictIdsToReplace = Object.create(null);
         for (const varId in allReferences) {
             // We don't care about which var ref we get, they should all have the same var info
@@ -369,15 +390,16 @@ class Target extends EventEmitter {
                     // If the target has the variable, then check whether the stage
                     // has one with the same name and type. If it does, then rename
                     // this target specific variable so that there is a distinction.
-                    const stage = this.runtime.getTargetForStage();
-                    if (stage && stage.variables &&
-                        stage.lookupVariableByNameAndType(varName, varType)) {
-                        // TODO what should the new name be?
-                        const newName = StringUtil.unusedName(
-                            `${this.getName()}_${varName}`,
-                            this.getAllVariableNamesInScopeByType(varType));
-                        this.renameVariable(varId, newName);
-                        this.blocks.updateBlocksAfterVarRename(varId, newName);
+                    const newVarName = renameConflictingLocalVar(varId, varName, varType);
+
+                    if (newVarName) {
+                        // We are not calling this.blocks.updateBlocksAfterVarRename
+                        // here because it will search through all the blocks. We already
+                        // have access to all the references for this var id.
+                        allReferences[varId].map(ref => {
+                            ref.referencingField.value = newVarName;
+                            return ref;
+                        });
                     }
                 }
             } else {
@@ -387,6 +409,17 @@ class Target extends EventEmitter {
                 }
             }
         }
+        // Rename any local variables that were missed above because they aren't
+        // referenced by any blocks
+        for (const id in unreferencedLocalVarIds) {
+            const varId = unreferencedLocalVarIds[id];
+            const name = this.variables[varId].name;
+            const type = this.variables[varId].type;
+            renameConflictingLocalVar(varId, name, type);
+        }
+        // Finally, handle global var conflicts (e.g. a sprite is uploaded, and has
+        // blocks referencing some variable that the sprite does not own, and this
+        // variable conflicts with a global var)
         for (const conflictId in conflictIdsToReplace) {
             const existingId = conflictIdsToReplace[conflictId];
             allReferences[conflictId].map(varRef => {
