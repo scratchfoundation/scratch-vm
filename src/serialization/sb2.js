@@ -666,7 +666,6 @@ const sb2import = function (json, runtime, optForceSprite, zip) {
         extensionIDs: new Set(),
         extensionURLs: new Map()
     };
-
     return parseScratchObject(json, runtime, extensions, !optForceSprite, zip)
         .then(targets => ({
             targets,
