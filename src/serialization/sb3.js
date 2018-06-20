@@ -909,9 +909,6 @@ const parseScratchObject = function (object, runtime, extensions, zip) {
     if (object.hasOwnProperty('isStage')) {
         target.isStage = object.isStage;
     }
-    if (object.hasOwnProperty('extensions')) {
-        target.extensions = object.extensions;
-    }
     Promise.all(costumePromises).then(costumes => {
         sprite.costumes = costumes;
     });
