@@ -8,7 +8,8 @@ const StageLayering = require('../engine/stage-layering');
 class Sprite {
     /**
      * Sprite to be used on the Scratch stage.
-     * All clones of a sprite have shared blocks, shared costumes, shared variables.
+     * All clones of a sprite have shared blocks, shared costumes, shared variables,
+     * shared sounds, etc.
      * @param {?Blocks} blocks Shared blocks object for all clones of sprite.
      * @param {Runtime} runtime Reference to the runtime.
      * @constructor
@@ -47,6 +48,11 @@ class Sprite {
          * @type {Array.<!RenderedTarget>}
          */
         this.clones = [];
+
+        this.soundBank = null;
+        if (this.runtime && this.runtime.audioEngine) {
+            this.soundBank = this.runtime.audioEngine.createBank();
+        }
     }
 
     /**
@@ -154,6 +160,12 @@ class Sprite {
         });
 
         return Promise.all(assetPromises).then(() => newSprite);
+    }
+
+    dispose () {
+        if (this.soundBank) {
+            this.soundBank.dispose();
+        }
     }
 }
 
