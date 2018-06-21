@@ -18,6 +18,7 @@ class BLESession extends JSONRPCWebSocket {
         this._socketPromise = new Promise((resolve, reject) => {
             this._ws.onopen = resolve;
             this._ws.onerror = this._sendError(); // TODO: socket error?
+            // TODO: generally handle socket disconnects as errors
         });
 
         this._availablePeripherals = {};
@@ -37,18 +38,14 @@ class BLESession extends JSONRPCWebSocket {
     requestDevice () {
         // TODO: add timeout for 'no devices yet found' ?
         if (this._ws.readyState === 1) {
+            // TODO: what if discover doesn't initiate?
             this.sendRemoteRequest('discover', this._deviceOptions)
-                .catch(e => {
-                    // TODO: what if discover doesn't initiate?
-                    this._sendError(e);
-                });
+                .catch(e => this._sendError(e));
         } else {
             // Try again to connect to the websocket
+            // TODO: what if discover doesn't initiate?
             this._socketPromise(this.sendRemoteRequest('discover', this._deviceOptions))
-                .catch(e => {
-                    // TODO: what if discover doesn't initiate?
-                    this._sendError(e);
-                });
+                .catch(e => this._sendError(e));
         }
     }
 
@@ -64,7 +61,7 @@ class BLESession extends JSONRPCWebSocket {
                 this._connectCallback();
             })
             .catch(e => {
-                // TODO: what if the peripheral loses power?
+                // TODO: what if the peripheral loses power? (web socket closes?)
                 // TODO: what if tries to connect to an unknown peripheral id?
                 this._sendError(e);
             });
@@ -77,8 +74,7 @@ class BLESession extends JSONRPCWebSocket {
      * @return {object} - optional return value.
      */
     didReceiveCall (method, params) {
-        // TODO: does didReceiveCall receive any errors?
-        // TODO: Add peripheral 'undiscover' handling
+        // TODO: Add peripheral 'undiscover' handling with timeout?
         switch (method) {
         case 'didDiscoverPeripheral':
             this._availablePeripherals[params.peripheralId] = params;

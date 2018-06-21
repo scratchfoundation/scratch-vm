@@ -27,6 +27,10 @@ class JSONRPCWebSocket extends JSONRPC {
 
     _onSocketMessage (e) {
         const json = JSON.parse(e.data);
+        if (json.method !== 'characteristicDidChange') {
+            console.log('received message: ');
+            console.log(json);
+        }
         this._handleMessage(json);
     }
 

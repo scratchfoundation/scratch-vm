@@ -111,20 +111,22 @@ class MicroBit {
 
     /**
      * @param {string} text - the text to display.
+     * @return {Promise} - a Promise that resolves when writing to device.
      */
     displayText (text) {
         const output = new Uint8Array(text.length);
         for (let i = 0; i < text.length; i++) {
             output[i] = text.charCodeAt(i);
         }
-        this._writeSessionData(BLECommand.CMD_DISPLAY_TEXT, output);
+        return this._writeSessionData(BLECommand.CMD_DISPLAY_TEXT, output);
     }
 
     /**
      * @param {Uint8Array} matrix - the matrix to display.
+     * @return {Promise} - a Promise that resolves when writing to device.
      */
     displayMatrix (matrix) {
-        this._writeSessionData(BLECommand.CMD_DISPLAY_LED, matrix);
+        return this._writeSessionData(BLECommand.CMD_DISPLAY_LED, matrix);
     }
 
     /**
@@ -212,6 +214,7 @@ class MicroBit {
      * Write a message to the device BLE session.
      * @param {number} command - the BLE command hex.
      * @param {Uint8Array} message - the message to write.
+     * @return {Promise} - a Promise that resolves when writing to device.
      * @private
      */
     _writeSessionData (command, message) {
@@ -220,8 +223,8 @@ class MicroBit {
         for (let i = 0; i < message.length; i++) {
             output[i + 1] = message[i];
         }
-        const b64enc = Base64Util.uint8ArrayToBase64(output);
-        this._ble.write(BLEUUID.service, BLEUUID.txChar, b64enc, 'base64');
+        const data = Base64Util.uint8ArrayToBase64(output);
+        return this._ble.write(BLEUUID.service, BLEUUID.txChar, data, 'base64');
     }
 }
 
@@ -494,17 +497,18 @@ class Scratch3MicroBitBlocks {
     /**
      * Display text on the 5x5 LED matrix.
      * @param {object} args - the block's arguments.
+     * @return {Promise} - a Promise that resolves when writing to device.
      * Note the limit is 19 characters
      */
     displayText (args) {
         const text = String(args.TEXT).substring(0, 19);
-        this._device.displayText(text);
-        return;
+        return this._device.displayText(text);
     }
 
     /**
      * Display a predefined symbol on the 5x5 LED matrix.
      * @param {object} args - the block's arguments.
+     * @return {Promise} - a Promise that resolves when writing to device.
      */
     displaySymbol (args) {
         const hex = symbols2hex[args.SYMBOL];
@@ -514,8 +518,7 @@ class Scratch3MicroBitBlocks {
         this._device.ledMatrixState[2] = (hex >> 10) & 0x1F;
         this._device.ledMatrixState[3] = (hex >> 5) & 0x1F;
         this._device.ledMatrixState[4] = hex & 0x1F;
-        this._device.displayMatrix(this._device.ledMatrixState);
-        return;
+        return this._device.displayMatrix(this._device.ledMatrixState);
     }
 
     /**
