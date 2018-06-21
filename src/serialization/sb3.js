@@ -466,11 +466,16 @@ const serializeTarget = function (target, extensions) {
 const serialize = function (runtime) {
     // Fetch targets
     const obj = Object.create(null);
+    // Create extension set to hold extension ids found while serializing targets
+    const extensions = new Set();
     const flattenedOriginalTargets = JSON.parse(JSON.stringify(
         runtime.targets.filter(target => target.isOriginal)));
-    obj.targets = flattenedOriginalTargets.map(t => serializeTarget(t, runtime));
+    obj.targets = flattenedOriginalTargets.map(t => serializeTarget(t, extensions));
 
     // TODO Serialize monitors
+
+    // Assemble extension list
+    obj.extensions = Array.from(extensions);
 
     // Assemble metadata
     const meta = Object.create(null);
