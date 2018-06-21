@@ -37,16 +37,14 @@ class BLESession extends JSONRPCWebSocket {
     requestDevice () {
         // TODO: add timeout for 'no devices yet found' ?
         if (this._ws.readyState === 1) {
-            this.sendRemoteRequest('pingMe') // TODO: remove pingMe when no longer needed
-                .then(() => this.sendRemoteRequest('discover', this._deviceOptions))
+            this.sendRemoteRequest('discover', this._deviceOptions)
                 .catch(e => {
                     // TODO: what if discover doesn't initiate?
                     this._sendError(e);
                 });
         } else {
             // Try again to connect to the websocket
-            this._socketPromise(this.sendRemoteRequest('pingMe')  // TODO: remove pingMe when no longer needed
-                .then(() => this.sendRemoteRequest('discover', this._deviceOptions)))
+            this._socketPromise(this.sendRemoteRequest('discover', this._deviceOptions))
                 .catch(e => {
                     // TODO: what if discover doesn't initiate?
                     this._sendError(e);
@@ -115,6 +113,7 @@ class BLESession extends JSONRPCWebSocket {
         }
         this._characteristicDidChangeCallback = onCharacteristicChanged;
         return this.sendRemoteRequest('read', params);
+        // TODO: handle error here
     }
 
     /**
@@ -131,6 +130,8 @@ class BLESession extends JSONRPCWebSocket {
             params.encoding = encoding;
         }
         return this.sendRemoteRequest('write', params);
+        // TODO: .then() to clear a busy flag cuz it returned
+        // TODO: send error to runtime to stop yielding
     }
 
     _sendError (e) {
