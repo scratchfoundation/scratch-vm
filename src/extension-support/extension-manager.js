@@ -1,20 +1,32 @@
 const dispatch = require('../dispatch/central-dispatch');
 const log = require('../util/log');
+const maybeFormatMessage = require('../util/maybe-format-message');
 
 const BlockType = require('./block-type');
 
 // These extensions are currently built into the VM repository but should not be loaded at startup.
 // TODO: move these out into a separate repository?
 // TODO: change extension spec so that library info, including extension ID, can be collected through static methods
-const Scratch3PenBlocks = require('../blocks/scratch3_pen');
-const Scratch3WeDo2Blocks = require('../blocks/scratch3_wedo2');
-const Scratch3MusicBlocks = require('../blocks/scratch3_music');
+const Scratch3PenBlocks = require('../extensions/scratch3_pen');
+const Scratch3WeDo2Blocks = require('../extensions/scratch3_wedo2');
+const Scratch3MusicBlocks = require('../extensions/scratch3_music');
 const Scratch3KOOVBlocks = require('../blocks/scratch3_koov');
+const Scratch3MicroBitBlocks = require('../extensions/scratch3_microbit');
+const Scratch3SpeakBlocks = require('../extensions/scratch3_speak');
+const Scratch3TranslateBlocks = require('../extensions/scratch3_translate');
+const Scratch3VideoSensingBlocks = require('../extensions/scratch3_video_sensing');
+const Scratch3SpeechBlocks = require('../extensions/scratch3_speech');
+
 const builtinExtensions = {
     pen: Scratch3PenBlocks,
     wedo2: Scratch3WeDo2Blocks,
     music: Scratch3MusicBlocks,
-    koov: Scratch3KOOVBlocks
+    koov: Scratch3KOOVBlocks,
+    microbit: Scratch3MicroBitBlocks,
+    speak: Scratch3SpeakBlocks,
+    translate: Scratch3TranslateBlocks,
+    videoSensing: Scratch3VideoSensingBlocks,
+    speech: Scratch3SpeechBlocks
 };
 
 /**
@@ -24,26 +36,22 @@ const builtinExtensions = {
  */
 
 /**
- * @typedef {object} BlockInfo - Information about an extension block
- * @property {string} opcode - the block opcode
- * @property {string|object} text - the human-readable text on this block
- * @property {BlockType|undefined} blockType - the type of block (default: BlockType.COMMAND)
- * @property {int|undefined} branchCount - the number of branches this block controls, if conditional (default: 0)
- * @property {Boolean|undefined} isTerminal - true if this block ends a stack (default: false)
- * @property {Boolean|undefined} blockAllThreads - true if all threads must wait for this block to run (default: false)
- * @property {object.<string,ArgumentInfo>|undefined} arguments - information about this block's arguments, if any
- * @property {string|Function|undefined} func - the method for this block on the extension service (default: opcode)
- * @property {Array.<string>|undefined} filter - the list of targets for which this block should appear (default: all)
- * @property {Boolean|undefined} hideFromPalette - true if should not be appear in the palette. (default false)
+ * @typedef {object} ConvertedBlockInfo - Raw extension block data paired with processed data ready for scratch-blocks
+ * @property {ExtensionBlockMetadata} info - the raw block info
+ * @property {object} json - the scratch-blocks JSON definition for this block
+ * @property {string} xml - the scratch-blocks XML definition for this block
  */
 
 /**
  * @typedef {object} CategoryInfo - Information about a block category
  * @property {string} id - the unique ID of this category
+ * @property {string} name - the human-readable name of this category
+ * @property {string|undefined} blockIconURI - optional URI for the block icon image
  * @property {string} color1 - the primary color for this category, in '#rrggbb' format
  * @property {string} color2 - the secondary color for this category, in '#rrggbb' format
  * @property {string} color3 - the tertiary color for this category, in '#rrggbb' format
- * @property {Array.<BlockInfo>} block - the blocks in this category
+ * @property {Array.<ConvertedBlockInfo>} blocks - the blocks, separators, etc. in this category
+ * @property {Array.<object>} menus - the menus provided by this category
  */
 
 /**
@@ -80,7 +88,7 @@ class ExtensionManager {
          * @type {Set.<string>}
          * @private
          */
-        this._loadedExtensions = new Set();
+        this._loadedExtensions = new Map();
 
         /**
          * Keep a reference to the runtime so we can construct internal extension objects.
@@ -121,8 +129,8 @@ class ExtensionManager {
 
             const extension = builtinExtensions[extensionURL];
             const extensionInstance = new extension(this.runtime);
-            return this._registerInternalExtension(extensionInstance).then(() => {
-                this._loadedExtensions.add(extensionURL);
+            return this._registerInternalExtension(extensionInstance).then(serviceName => {
+                this._loadedExtensions.set(extensionURL, serviceName);
             });
         }
 
@@ -132,6 +140,21 @@ class ExtensionManager {
 
             this.pendingExtensions.push({extensionURL, resolve, reject});
             dispatch.addWorker(new ExtensionWorker());
+        });
+    }
+
+    /**
+    * regenerate blockinfo for any loaded extensions
+    */
+    refreshBlocks () {
+        this._loadedExtensions.forEach(serviceName => {
+            dispatch.call(serviceName, 'getInfo')
+                .then(info => {
+                    dispatch.call('runtime', '_refreshExtensionPrimitives', info);
+                })
+                .catch(e => {
+                    log.error(`Failed to refresh buildtin extension primitives: ${JSON.stringify(e)}`);
+                });
         });
     }
 
@@ -175,9 +198,12 @@ class ExtensionManager {
     _registerInternalExtension (extensionObject) {
         const extensionInfo = extensionObject.getInfo();
         const fakeWorkerId = this.nextExtensionWorker++;
-        const serviceName = `extension.${fakeWorkerId}.${extensionInfo.id}`;
+        const serviceName = `extension_${fakeWorkerId}_${extensionInfo.id}`;
         return dispatch.setService(serviceName, extensionObject)
-            .then(() => dispatch.call('extensions', 'registerExtensionService', serviceName));
+            .then(() => {
+                dispatch.call('extensions', 'registerExtensionService', serviceName);
+                return serviceName;
+            });
     }
 
     /**
@@ -189,7 +215,7 @@ class ExtensionManager {
     _registerExtensionInfo (serviceName, extensionInfo) {
         extensionInfo = this._prepareExtensionInfo(serviceName, extensionInfo);
         dispatch.call('runtime', '_registerExtensionPrimitives', extensionInfo).catch(e => {
-            log.error(`Failed to register primitives for extension on service ${serviceName}: ${JSON.stringify(e)}`);
+            log.error(`Failed to register primitives for extension on service ${serviceName}:`, e);
         });
     }
 
@@ -213,27 +239,98 @@ class ExtensionManager {
      */
     _prepareExtensionInfo (serviceName, extensionInfo) {
         extensionInfo = Object.assign({}, extensionInfo);
-        extensionInfo.id = this._sanitizeID(extensionInfo.id);
+        if (!/^[a-z0-9]+$/i.test(extensionInfo.id)) {
+            throw new Error('Invalid extension id');
+        }
         extensionInfo.name = extensionInfo.name || extensionInfo.id;
         extensionInfo.blocks = extensionInfo.blocks || [];
         extensionInfo.targetTypes = extensionInfo.targetTypes || [];
-        extensionInfo.blocks = extensionInfo.blocks.reduce((result, blockInfo) => {
+        extensionInfo.blocks = extensionInfo.blocks.reduce((results, blockInfo) => {
             try {
-                result.push(this._prepareBlockInfo(serviceName, blockInfo));
+                let result;
+                switch (blockInfo) {
+                case '---': // separator
+                    result = '---';
+                    break;
+                default: // an ExtensionBlockMetadata object
+                    result = this._prepareBlockInfo(serviceName, blockInfo);
+                    break;
+                }
+                results.push(result);
             } catch (e) {
                 // TODO: more meaningful error reporting
                 log.error(`Error processing block: ${e.message}, Block:\n${JSON.stringify(blockInfo)}`);
             }
-            return result;
+            return results;
         }, []);
+        extensionInfo.menus = extensionInfo.menus || [];
+        extensionInfo.menus = this._prepareMenuInfo(serviceName, extensionInfo.menus);
         return extensionInfo;
+    }
+
+    /**
+     * Prepare extension menus. e.g. setup binding for dynamic menu functions.
+     * @param {string} serviceName - the name of the service hosting this extension block
+     * @param {Array.<MenuInfo>} menus - the menu defined by the extension.
+     * @returns {Array.<MenuInfo>} - a menuInfo object with all preprocessing done.
+     * @private
+     */
+    _prepareMenuInfo (serviceName, menus) {
+        const menuNames = Object.getOwnPropertyNames(menus);
+        for (let i = 0; i < menuNames.length; i++) {
+            const item = menuNames[i];
+            // If the value is a string, it should be the name of a function in the
+            // extension object to call to populate the menu whenever it is opened.
+            // Set up the binding for the function object here so
+            // we can use it later when converting the menu for Scratch Blocks.
+            if (typeof menus[item] === 'string') {
+                const serviceObject = dispatch.services[serviceName];
+                const menuName = menus[item];
+                menus[item] = this._getExtensionMenuItems.bind(this, serviceObject, menuName);
+            }
+        }
+        return menus;
+    }
+
+    /**
+     * Fetch the items for a particular extension menu, providing the target ID for context.
+     * @param {object} extensionObject - the extension object providing the menu.
+     * @param {string} menuName - the name of the menu function to call.
+     * @returns {Array} menu items ready for scratch-blocks.
+     * @private
+     */
+    _getExtensionMenuItems (extensionObject, menuName) {
+        // Fetch the items appropriate for the target currently being edited. This assumes that menus only
+        // collect items when opened by the user while editing a particular target.
+        const editingTarget = this.runtime.getEditingTarget() || this.runtime.getTargetForStage();
+        const editingTargetID = editingTarget ? editingTarget.id : null;
+        const extensionMessageContext = this.runtime.makeMessageContextForTarget(editingTarget);
+
+        // TODO: Fix this to use dispatch.call when extensions are running in workers.
+        const menuFunc = extensionObject[menuName];
+        const menuItems = menuFunc.call(extensionObject, editingTargetID).map(
+            item => {
+                item = maybeFormatMessage(item, extensionMessageContext);
+                if (typeof item === 'object') {
+                    return [
+                        maybeFormatMessage(item.text, extensionMessageContext),
+                        item.value
+                    ];
+                }
+                return item;
+            });
+
+        if (!menuItems || menuItems.length < 1) {
+            throw new Error(`Extension menu returned no items: ${menuName}`);
+        }
+        return menuItems;
     }
 
     /**
      * Apply defaults for optional block fields.
      * @param {string} serviceName - the name of the service hosting this extension block
-     * @param {BlockInfo} blockInfo - the block info from the extension
-     * @returns {BlockInfo} - a new block info object which has values for all relevant optional fields.
+     * @param {ExtensionBlockMetadata} blockInfo - the block info from the extension
+     * @returns {ExtensionBlockMetadata} - a new block info object which has values for all relevant optional fields.
      * @private
      */
     _prepareBlockInfo (serviceName, blockInfo) {
@@ -244,19 +341,30 @@ class ExtensionManager {
             arguments: {}
         }, blockInfo);
         blockInfo.opcode = this._sanitizeID(blockInfo.opcode);
-        blockInfo.func = blockInfo.func ? this._sanitizeID(blockInfo.func) : blockInfo.opcode;
         blockInfo.text = blockInfo.text || blockInfo.opcode;
 
-        /**
-         * This is only here because the VM performs poorly when blocks return promises.
-         * @TODO make it possible for the VM to resolve a promise and continue during the same frame.
-         */
-        if (dispatch._isRemoteService(serviceName)) {
-            blockInfo.func = dispatch.call.bind(dispatch, serviceName, blockInfo.func);
-        } else {
-            const serviceObject = dispatch.services[serviceName];
-            blockInfo.func = serviceObject[blockInfo.func].bind(serviceObject);
+        if (blockInfo.blockType !== BlockType.EVENT) {
+            blockInfo.func = blockInfo.func ? this._sanitizeID(blockInfo.func) : blockInfo.opcode;
+
+            /**
+             * This is only here because the VM performs poorly when blocks return promises.
+             * @TODO make it possible for the VM to resolve a promise and continue during the same Scratch "tick"
+             */
+            if (dispatch._isRemoteService(serviceName)) {
+                blockInfo.func = dispatch.call.bind(dispatch, serviceName, blockInfo.func);
+            } else {
+                const serviceObject = dispatch.services[serviceName];
+                const func = serviceObject[blockInfo.func];
+                if (func) {
+                    blockInfo.func = func.bind(serviceObject);
+                } else if (blockInfo.blockType !== BlockType.EVENT) {
+                    throw new Error(`Could not find extension block function called ${blockInfo.func}`);
+                }
+            }
+        } else if (blockInfo.func) {
+            log.warn(`Ignoring function "${blockInfo.func}" for event block ${blockInfo.opcode}`);
         }
+
         return blockInfo;
     }
 }

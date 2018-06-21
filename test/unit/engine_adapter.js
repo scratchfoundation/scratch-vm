@@ -24,6 +24,7 @@ test('create event', t => {
     // Outer block
     t.type(result[0].id, 'string');
     t.type(result[0].opcode, 'string');
+    t.type(result[0].comment, 'undefined');
     t.type(result[0].fields, 'object');
     t.type(result[0].inputs, 'object');
     t.type(result[0].inputs.DURATION, 'object');
@@ -39,6 +40,20 @@ test('create event', t => {
     t.type(result[1].fields.NUM.value, '10');
     t.type(result[1].topLevel, 'boolean');
     t.equal(result[1].topLevel, false);
+
+    t.end();
+});
+
+test('create with comment', t => {
+    const result = adapter(events.createComment);
+
+    // This test should be the same as above except that it also has a comment.
+
+    t.ok(Array.isArray(result));
+    t.equal(result.length, 2);
+
+    t.type(result[0].comment, 'string');
+    t.equal(result[0].comment, 'aCommentId');
 
     t.end();
 });

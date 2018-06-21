@@ -1,6 +1,8 @@
 const test = require('tap').test;
 const Sensing = require('../../src/blocks/scratch3_sensing');
 const Runtime = require('../../src/engine/runtime');
+const Sprite = require('../../src/sprites/sprite');
+const RenderedTarget = require('../../src/sprites/rendered-target');
 
 test('getPrimitives', t => {
     const rt = new Runtime();
@@ -64,4 +66,88 @@ test('ask and answer with a visible target', t => {
     });
 
     s.askAndWait({QUESTION: expectedQuestion}, util);
+});
+
+test('set drag mode', t => {
+    const runtime = new Runtime();
+    runtime.requestTargetsUpdate = () => {}; // noop for testing
+    const sensing = new Sensing(runtime);
+    const s = new Sprite();
+    const rt = new RenderedTarget(s, runtime);
+
+    sensing.setDragMode({DRAG_MODE: 'not draggable'}, {target: rt});
+    t.strictEqual(rt.draggable, false);
+
+    sensing.setDragMode({DRAG_MODE: 'draggable'}, {target: rt});
+    t.strictEqual(rt.draggable, true);
+
+    t.end();
+});
+
+test('get loudness with caching', t => {
+    const rt = new Runtime();
+    const sensing = new Sensing(rt);
+
+    // It should report -1 when audio engine is not available.
+    t.strictEqual(sensing.getLoudness(), -1);
+
+    // Stub the audio engine with its getLoudness function, and set up different
+    // values to simulate it changing over time.
+    const firstLoudness = 1;
+    const secondLoudness = 2;
+    let simulatedLoudness = firstLoudness;
+    rt.audioEngine = {getLoudness: () => simulatedLoudness};
+
+    // It should report -1 when current step time is null.
+    t.strictEqual(sensing.getLoudness(), -1);
+
+    // Stub the current step time.
+    rt.currentStepTime = 1000 / 30;
+
+    // The first time it works, it should report the result from the stubbed audio engine.
+    t.strictEqual(sensing.getLoudness(), firstLoudness);
+
+    // Update the simulated loudness to a new value.
+    simulatedLoudness = secondLoudness;
+
+    // Simulate time passing by advancing the timer forward a little bit.
+    // After less than a step, it should still report cached loudness.
+    let simulatedTime = Date.now() + (rt.currentStepTime / 2);
+    sensing._timer = {time: () => simulatedTime};
+    t.strictEqual(sensing.getLoudness(), firstLoudness);
+
+    // Simulate more than a step passing. It should now request the value
+    // from the audio engine again.
+    simulatedTime += rt.currentStepTime;
+    t.strictEqual(sensing.getLoudness(), secondLoudness);
+
+    t.end();
+});
+
+test('loud? boolean', t => {
+    const rt = new Runtime();
+    const sensing = new Sensing(rt);
+
+    // The simplest way to test this is to actually override the getLoudness
+    // method, which isLoud uses.
+    let simulatedLoudness = 0;
+    sensing.getLoudness = () => simulatedLoudness;
+    t.false(sensing.isLoud());
+
+    // Check for GREATER than 10, not equal.
+    simulatedLoudness = 10;
+    t.false(sensing.isLoud());
+
+    simulatedLoudness = 11;
+    t.true(sensing.isLoud());
+
+    t.end();
+});
+
+test('username block', t => {
+    const rt = new Runtime();
+    const sensing = new Sensing(rt);
+
+    t.equal(sensing.getUsername(), '');
+    t.end();
 });

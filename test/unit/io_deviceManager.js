@@ -19,3 +19,21 @@ test('default connected', t => {
     t.strictEqual(deviceManager.isConnected, true);
     t.end();
 });
+
+test('list', t => {
+    const deviceManager = new DeviceManager();
+    deviceManager
+        .list('test', 'test', null)
+        .then(
+            body => {
+                // SDM is running
+                t.type(body, 'object');
+                t.end();
+            },
+            err => {
+                // If SDM is not running error is expected, continue
+                t.true(typeof err === 'object' || typeof err === 'undefined');
+                t.end();
+            }
+        );
+});

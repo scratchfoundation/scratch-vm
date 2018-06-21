@@ -36,7 +36,7 @@ const generateBlock = function (id) {
         block: 'fakeBlock',
         name: 'fakeName',
         next: null,
-        opcode: 'procedures_defnoreturn',
+        opcode: 'procedures_definition',
         mutation: {proccode: 'fakeCode'},
         parent: null,
         shadow: false,
@@ -55,7 +55,7 @@ const generateBlockInput = function (id, next, inp) {
         block: 'fakeBlock',
         name: 'fakeName',
         next: next,
-        opcode: 'procedures_defnoreturn',
+        opcode: 'procedures_definition',
         mutation: {proccode: 'fakeCode'},
         parent: null,
         shadow: false,
@@ -91,7 +91,8 @@ const generateThread = function (runtime) {
     rt.blocks.createBlock(generateBlock(next));
     th.pushStack(next);
     th.target = rt;
-    
+    th.blockContainer = rt.blocks;
+
     runtime.threads.push(th);
 
     return th;
@@ -156,7 +157,7 @@ test('stepToProcedure', t => {
 
     th.target.blocks.createBlock({
         id: 'internalId',
-        opcode: 'procedures_callnoreturn_internal',
+        opcode: 'procedures_prototype',
         mutation: {
             proccode: 'othercode'
         }

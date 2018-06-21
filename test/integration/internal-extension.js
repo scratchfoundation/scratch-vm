@@ -16,18 +16,32 @@ class TestInternalExtension {
     getInfo () {
         this.status.getInfoCalled = true;
         return {
-            id: 'test-internal-extension',
+            id: 'testInternalExtension',
             name: 'Test Internal Extension',
             blocks: [
                 {
                     opcode: 'go'
                 }
-            ]
+            ],
+            menus: {
+                simpleMenu: this._buildAMenu(),
+                dynamicMenu: '_buildDynamicMenu'
+            }
         };
     }
 
     go () {
         this.status.goCalled = true;
+    }
+
+    _buildAMenu () {
+        this.status.buildMenuCalled = true;
+        return ['abcd', 'efgh', 'ijkl'];
+    }
+
+    _buildDynamicMenu () {
+        this.status.buildDynamicMenuCalled = true;
+        return [1, 2, 3, 4, 6];
     }
 }
 
@@ -41,11 +55,20 @@ test('internal extension', t => {
     return vm.extensionManager._registerInternalExtension(extension).then(() => {
         t.ok(extension.status.getInfoCalled);
 
-        const func = vm.runtime.getOpcodeFunction('test-internal-extension.go');
+        const func = vm.runtime.getOpcodeFunction('testInternalExtension_go');
         t.type(func, 'function');
 
         t.notOk(extension.status.goCalled);
         func();
         t.ok(extension.status.goCalled);
+
+        // There should be 2 menus - one is an array, one is the function to call.
+        t.equal(vm.runtime._blockInfo[0].menus.length, 2);
+        // First menu has 3 items.
+        t.equal(
+            vm.runtime._blockInfo[0].menus[0].json.args0[0].options.length, 3);
+        // Second menu is a dynamic menu and therefore should be a function.
+        t.type(
+            vm.runtime._blockInfo[0].menus[1].json.args0[0].options, 'function');
     });
 });

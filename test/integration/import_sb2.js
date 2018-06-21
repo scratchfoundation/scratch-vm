@@ -1,7 +1,7 @@
 const path = require('path');
 const test = require('tap').test;
 const makeTestStorage = require('../fixtures/make-test-storage');
-const extract = require('../fixtures/extract');
+const extractProjectJson = require('../fixtures/readProjectFile').extractProjectJson;
 
 const renderedTarget = require('../../src/sprites/rendered-target');
 const runtime = require('../../src/engine/runtime');
@@ -15,15 +15,13 @@ test('spec', t => {
 test('default', t => {
     // Get SB2 JSON (string)
     const uri = path.resolve(__dirname, '../fixtures/default.sb2');
-    const file = extract(uri);
-    const json = JSON.parse(file);
+    const json = extractProjectJson(uri);
 
     // Create runtime instance & load SB2 into it
     const rt = new runtime();
     rt.attachStorage(makeTestStorage());
     sb2.deserialize(json, rt).then(({targets}) => {
         // Test
-        t.type(file, 'string');
         t.type(json, 'object');
         t.type(rt, 'object');
         t.type(targets, 'object');
@@ -32,7 +30,7 @@ test('default', t => {
         t.type(targets[0].id, 'string');
         t.type(targets[0].blocks, 'object');
         t.type(targets[0].variables, 'object');
-        t.type(targets[0].lists, 'object');
+        t.type(targets[0].comments, 'object');
 
         t.equal(targets[0].isOriginal, true);
         t.equal(targets[0].currentCostume, 0);
@@ -43,7 +41,7 @@ test('default', t => {
         t.type(targets[1].id, 'string');
         t.type(targets[1].blocks, 'object');
         t.type(targets[1].variables, 'object');
-        t.type(targets[1].lists, 'object');
+        t.type(targets[1].comments, 'object');
 
         t.equal(targets[1].isOriginal, true);
         t.equal(targets[1].currentCostume, 0);

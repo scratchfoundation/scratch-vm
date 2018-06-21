@@ -16,13 +16,13 @@ test('calling a custom block with no definition does not throw', t => {
         }
     };
     const util = {
-        getProcedureParamNames: () => null,
+        getProcedureParamNamesAndIds: () => null,
         stackFrame: {
             executed: false
         }
     };
     t.doesNotThrow(() => {
-        blocks.callNoReturn(args, util);
+        blocks.call(args, util);
     });
     t.end();
 });
