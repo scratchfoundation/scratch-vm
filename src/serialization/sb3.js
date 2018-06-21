@@ -419,17 +419,19 @@ const serializeComments = function (comments) {
  * Serialize the given target. Only serialize properties that are necessary
  * for saving and loading this target.
  * @param {object} target The target to be serialized.
+ * @param {Set} extensions A set of extensions to add extension IDs to
  * @return {object} A serialized representation of the given target.
  */
-const serializeTarget = function (target) {
+const serializeTarget = function (target, extensions) {
     const obj = Object.create(null);
+    let targetExtensions = [];
     obj.isStage = target.isStage;
     obj.name = obj.isStage ? 'Stage' : target.name;
     const vars = serializeVariables(target.variables);
     obj.variables = vars.variables;
     obj.lists = vars.lists;
     obj.broadcasts = vars.broadcasts;
-    [obj.blocks, obj.extensions] = serializeBlocks(target.blocks);
+    [obj.blocks, targetExtensions] = serializeBlocks(target.blocks);
     obj.comments = serializeComments(target.comments);
     obj.currentCostume = target.currentCostume;
     obj.costumes = target.costumes.map(serializeCostume);
@@ -448,6 +450,11 @@ const serializeTarget = function (target) {
         obj.draggable = target.draggable;
         obj.rotationStyle = target.rotationStyle;
     }
+
+    // Add found extensions to the extensions object
+    targetExtensions.forEach(extensionId => {
+        extensions.add(extensionId);
+    });
     return obj;
 };
 
