@@ -17,7 +17,7 @@ class BLESession extends JSONRPCWebSocket {
 
         this._socketPromise = new Promise((resolve, reject) => {
             this._ws.onopen = resolve;
-            this._ws.onerror = this._sendError(); // TODO: socket error?
+            this._ws.onerror = this._sendError; // TODO: socket error?
             // TODO: generally handle socket disconnects as errors
         });
 
@@ -27,6 +27,7 @@ class BLESession extends JSONRPCWebSocket {
         this._deviceOptions = deviceOptions;
         this._runtime = runtime;
         this._ws = ws;
+        this._ws.onclose = this._sendError();
 
         this._runtime.registerExtensionDevice(extensionId, this);
     }
@@ -126,14 +127,11 @@ class BLESession extends JSONRPCWebSocket {
             params.encoding = encoding;
         }
         return this.sendRemoteRequest('write', params);
-        // TODO: .then() to clear a busy flag cuz it returned
-        // TODO: send error to runtime to stop yielding
     }
 
     _sendError (e) {
         console.log(`BLESession error ${e}`);
-        // are there different error types?
-        // this._runtime.emit(???????????????)
+        this._runtime.emit(this._runtime.constructor.PERIPHERAL_ERROR);
     }
 }
 

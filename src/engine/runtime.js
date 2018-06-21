@@ -413,6 +413,14 @@ class Runtime extends EventEmitter {
     }
 
     /**
+     * Event name for reporting that a peripheral has encountered an error.
+     * @const {string}
+     */
+    static get PERIPHERAL_ERROR () {
+        return 'PERIPHERAL_ERROR';
+    }
+
+    /**
      * Event name for reporting that blocksInfo was updated.
      * @const {string}
      */
