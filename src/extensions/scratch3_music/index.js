@@ -52,25 +52,18 @@ class Scratch3MusicBlocks {
         this._concurrencyCounter = 0;
 
         /**
-         * An array of sound players, one for each drum sound.
+         * An array of audio buffers, one for each drum sound.
          * @type {Array}
          * @private
          */
-        this._drumPlayers = [];
+        this._drumBuffers = [];
 
         /**
-         * An array of arrays of sound players. Each instrument has one or more audio players.
+         * An array of arrays of audio buffers. Each instrument has one or more audio buffers.
          * @type {Array[]}
          * @private
          */
-        this._instrumentPlayerArrays = [];
-
-        /**
-         * An array of arrays of sound players. Each instrument mya have an audio player for each playable note.
-         * @type {Array[]}
-         * @private
-         */
-        this._instrumentPlayerNoteArrays = [];
+        this._instrumentBufferArrays = [];
 
         /**
          * An array of audio bufferSourceNodes. Each time you play an instrument or drum sound,
@@ -94,15 +87,14 @@ class Scratch3MusicBlocks {
         const loadingPromises = [];
         this.DRUM_INFO.forEach((drumInfo, index) => {
             const filePath = `drums/${drumInfo.fileName}`;
-            const promise = this._storeSound(filePath, index, this._drumPlayers);
+            const promise = this._storeSound(filePath, index, this._drumBuffers);
             loadingPromises.push(promise);
         });
         this.INSTRUMENT_INFO.forEach((instrumentInfo, instrumentIndex) => {
-            this._instrumentPlayerArrays[instrumentIndex] = [];
-            this._instrumentPlayerNoteArrays[instrumentIndex] = [];
+            this._instrumentBufferArrays[instrumentIndex] = [];
             instrumentInfo.samples.forEach((sample, noteIndex) => {
                 const filePath = `instruments/${instrumentInfo.dirName}/${sample}`;
-                const promise = this._storeSound(filePath, noteIndex, this._instrumentPlayerArrays[instrumentIndex]);
+                const promise = this._storeSound(filePath, noteIndex, this._instrumentBufferArrays[instrumentIndex]);
                 loadingPromises.push(promise);
             });
         });
@@ -112,22 +104,22 @@ class Scratch3MusicBlocks {
     }
 
     /**
-     * Decode a sound and store the player in an array.
+     * Decode a sound and store the buffer in an array.
      * @param {string} filePath - the audio file name.
-     * @param {number} index - the index at which to store the audio player.
-     * @param {array} playerArray - the array of players in which to store it.
+     * @param {number} index - the index at which to store the audio buffer.
+     * @param {array} bufferArray - the array of buffers in which to store it.
      * @return {Promise} - a promise which will resolve once the sound has been stored.
      */
-    _storeSound (filePath, index, playerArray) {
+    _storeSound (filePath, index, bufferArray) {
         const fullPath = `${filePath}.mp3`;
 
         if (!assetData[fullPath]) return;
 
-        // The sound player has already been downloaded via the manifest file required above.
+        // The sound buffer has already been downloaded via the manifest file required above.
         const soundBuffer = assetData[fullPath];
 
-        return this._decodeSound(soundBuffer).then(player => {
-            playerArray[index] = player;
+        return this._decodeSound(soundBuffer).then(buffer => {
+            bufferArray[index] = buffer;
         });
     }
 
@@ -137,14 +129,24 @@ class Scratch3MusicBlocks {
      * @return {Promise} - a promise which will resolve once the sound has decoded.
      */
     _decodeSound (soundBuffer) {
-        const engine = this.runtime.audioEngine;
+        const context = this.runtime.audioEngine && this.runtime.audioEngine.audioContext;
 
-        if (!engine) {
+        if (!context) {
             return Promise.reject(new Error('No Audio Context Detected'));
         }
 
         // Check for newer promise-based API
-        return engine.decodeSoundPlayer({data: {buffer: soundBuffer}});
+        if (context.decodeAudioData.length === 1) {
+            return context.decodeAudioData(soundBuffer);
+        } else { // eslint-disable-line no-else-return
+            // Fall back to callback API
+            return new Promise((resolve, reject) =>
+                context.decodeAudioData(soundBuffer,
+                    buffer => resolve(buffer),
+                    error => reject(error)
+                )
+            );
+        }
     }
 
     /**
@@ -776,34 +778,26 @@ class Scratch3MusicBlocks {
      */
     _playDrumNum (util, drumNum) {
         if (util.runtime.audioEngine === null) return;
-        if (util.target.sprite.soundBank === null) return;
+        if (util.target.audioPlayer === null) return;
         // If we're playing too many sounds, do not play the drum sound.
         if (this._concurrencyCounter > Scratch3MusicBlocks.CONCURRENCY_LIMIT) {
             return;
         }
+        const outputNode = util.target.audioPlayer.getInputNode();
+        const context = util.runtime.audioEngine.audioContext;
+        const bufferSource = context.createBufferSource();
+        bufferSource.buffer = this._drumBuffers[drumNum];
+        bufferSource.connect(outputNode);
+        bufferSource.start();
 
-        const player = this._drumPlayers[drumNum];
-
-        if (typeof player === 'undefined') return;
-
-        if (player.isPlaying) {
-            // Take the internal player state and create a new player with it.
-            // `.play` does this internally but then instructs the sound to
-            // stop.
-            player.take();
-        }
-
-        const engine = util.runtime.audioEngine;
-        const chain = engine.createEffectChain();
-        chain.setEffectsFromTarget(util.target);
-        player.connect(chain);
+        const bufferSourceIndex = this._bufferSources.length;
+        this._bufferSources.push(bufferSource);
 
         this._concurrencyCounter++;
-        player.once('stop', () => {
+        bufferSource.onended = () => {
             this._concurrencyCounter--;
-        });
-
-        player.play();
+            delete this._bufferSources[bufferSourceIndex];
+        };
     }
 
     /**
@@ -862,7 +856,7 @@ class Scratch3MusicBlocks {
      */
     _playNote (util, note, durationSec) {
         if (util.runtime.audioEngine === null) return;
-        if (util.target.sprite.soundBank === null) return;
+        if (util.target.audioPlayer === null) return;
 
         // If we're playing too many sounds, do not play the note.
         if (this._concurrencyCounter > Scratch3MusicBlocks.CONCURRENCY_LIMIT) {
@@ -877,37 +871,28 @@ class Scratch3MusicBlocks {
         const sampleIndex = this._selectSampleIndexForNote(note, sampleArray);
 
         // If the audio sample has not loaded yet, bail out
-        if (typeof this._instrumentPlayerArrays[inst] === 'undefined') return;
-        if (typeof this._instrumentPlayerArrays[inst][sampleIndex] === 'undefined') return;
+        if (typeof this._instrumentBufferArrays[inst] === 'undefined') return;
+        if (typeof this._instrumentBufferArrays[inst][sampleIndex] === 'undefined') return;
 
-        // Fetch the sound player to play the note.
-        const engine = util.runtime.audioEngine;
+        // Create the audio buffer to play the note, and set its pitch
+        const context = util.runtime.audioEngine.audioContext;
+        const bufferSource = context.createBufferSource();
 
-        if (!this._instrumentPlayerNoteArrays[inst][note]) {
-            this._instrumentPlayerNoteArrays[inst][note] = this._instrumentPlayerArrays[inst][sampleIndex].take();
-        }
+        const bufferSourceIndex = this._bufferSources.length;
+        this._bufferSources.push(bufferSource);
 
-        const player = this._instrumentPlayerNoteArrays[inst][note];
-
-        if (player.isPlaying) {
-            // Take the internal player state and create a new player with it.
-            // `.play` does this internally but then instructs the sound to
-            // stop.
-            player.take();
-        }
-
-        const chain = engine.createEffectChain();
-        chain.setEffectsFromTarget(util.target);
-
-        // Set its pitch.
+        bufferSource.buffer = this._instrumentBufferArrays[inst][sampleIndex];
         const sampleNote = sampleArray[sampleIndex];
-        const notePitchInterval = this._ratioForPitchInterval(note - sampleNote);
+        bufferSource.playbackRate.value = this._ratioForPitchInterval(note - sampleNote);
 
-        // Create a gain node for this note, and connect it to the sprite's
-        // simulated effectChain.
-        const context = engine.audioContext;
-        const releaseGain = context.createGain();
-        releaseGain.connect(chain.getInputNode());
+        // Create a gain node for this note, and connect it to the sprite's audioPlayer.
+        const gainNode = context.createGain();
+        bufferSource.connect(gainNode);
+        const outputNode = util.target.audioPlayer.getInputNode();
+        gainNode.connect(outputNode);
+
+        // Start playing the note
+        bufferSource.start();
 
         // Schedule the release of the note, ramping its gain down to zero,
         // and then stopping the sound.
@@ -917,24 +902,16 @@ class Scratch3MusicBlocks {
         }
         const releaseStart = context.currentTime + durationSec;
         const releaseEnd = releaseStart + releaseDuration;
-        releaseGain.gain.setValueAtTime(1, releaseStart);
-        releaseGain.gain.linearRampToValueAtTime(0.0001, releaseEnd);
+        gainNode.gain.setValueAtTime(1, releaseStart);
+        gainNode.gain.linearRampToValueAtTime(0.0001, releaseEnd);
+        bufferSource.stop(releaseEnd);
 
+        // Update the concurrency counter
         this._concurrencyCounter++;
-        player.once('stop', () => {
+        bufferSource.onended = () => {
             this._concurrencyCounter--;
-        });
-
-        // Start playing the note
-        player.play();
-        // Connect the player to the gain node.
-        player.connect({getInputNode () {
-            return releaseGain;
-        }});
-        // Set playback now after play creates the outputNode.
-        player.outputNode.playbackRate.value = notePitchInterval;
-        // Schedule playback to stop.
-        player.outputNode.stop(releaseEnd);
+            delete this._bufferSources[bufferSourceIndex];
+        };
     }
 
     /**
