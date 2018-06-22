@@ -495,7 +495,7 @@ class VirtualMachine extends EventEmitter {
     duplicateSound (soundIndex) {
         const originalSound = this.editingTarget.getSounds()[soundIndex];
         const clone = Object.assign({}, originalSound);
-        return loadSound(clone, this.runtime).then(() => {
+        return loadSound(clone, this.runtime, this.editingTarget.sprite).then(() => {
             this.editingTarget.addSound(clone, soundIndex + 1);
             this.emitTargetsUpdate();
         });
@@ -966,8 +966,8 @@ class VirtualMachine extends EventEmitter {
     shareSoundToTarget (soundIndex, targetId) {
         const originalSound = this.editingTarget.getSounds()[soundIndex];
         const clone = Object.assign({}, originalSound);
-        return loadSound(clone, this.runtime).then(() => {
-            const target = this.runtime.getTargetById(targetId);
+        const target = this.runtime.getTargetById(targetId);
+        return loadSound(clone, this.runtime, target.sprite).then(() => {
             if (target) {
                 target.addSound(clone);
                 this.emitTargetsUpdate();
