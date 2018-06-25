@@ -56,7 +56,25 @@ const MOTOR_PORTS = [
  *       the EV3 hub.
  * @type {array}
  */
-// const SENSOR_PORTS = ['1', '2', '3', '4'];
+ // TODO: are these names/values correct?
+const SENSOR_PORTS = [
+    {
+        name: '1',
+        value: 1
+    },
+    {
+        name: '2',
+        value: 2
+    },
+    {
+        name: '3',
+        value: 3
+    },
+    {
+        name: '4',
+        value: 4
+    }
+];
 
 class EV3 {
 
@@ -299,7 +317,7 @@ class Scratch3Ev3Blocks {
             blocks: [
                 {
                     opcode: 'motorTurnClockwise',
-                    text: '[PORT] turn clockwise [TIME] seconds',
+                    text: 'motor [PORT] turn clockwise for [TIME] seconds',
                     blockType: BlockType.COMMAND,
                     arguments: {
                         PORT: {
@@ -315,7 +333,7 @@ class Scratch3Ev3Blocks {
                 },
                 {
                     opcode: 'motorTurnCounterClockwise',
-                    text: '[PORT] turn counter [TIME] seconds',
+                    text: 'motor [PORT] turn counter for [TIME] seconds',
                     blockType: BlockType.COMMAND,
                     arguments: {
                         PORT: {
@@ -330,13 +348,130 @@ class Scratch3Ev3Blocks {
                     }
                 },
                 {
+                    opcode: 'motorRotate',
+                    text: 'motor [PORT] rotate [DEGREES] degrees',
+                    blockType: BlockType.COMMAND,
+                    arguments: {
+                        PORT: {
+                            type: ArgumentType.STRING,
+                            menu: 'motorPorts',
+                            defaultValue: MOTOR_PORTS[0].value
+                        },
+                        DEGREES: {
+                            type: ArgumentType.NUMBER,
+                            defaultValue: 90
+                        }
+                    }
+                },
+                {
+                    opcode: 'motorSetPosition',
+                    text: 'motor [PORT] set position [DEGREES] degrees',
+                    blockType: BlockType.COMMAND,
+                    arguments: {
+                        PORT: {
+                            type: ArgumentType.STRING,
+                            menu: 'motorPorts',
+                            defaultValue: MOTOR_PORTS[0].value
+                        },
+                        DEGREES: {
+                            type: ArgumentType.NUMBER,
+                            defaultValue: 90
+                        }
+                    }
+                },
+                {
+                    opcode: 'motorSetPower',
+                    text: 'motor [PORT] set power [POWER] %',
+                    blockType: BlockType.COMMAND,
+                    arguments: {
+                        PORT: {
+                            type: ArgumentType.STRING,
+                            menu: 'motorPorts',
+                            defaultValue: MOTOR_PORTS[0].value
+                        },
+                        POWER: {
+                            type: ArgumentType.NUMBER,
+                            defaultValue: 50
+                        }
+                    }
+                },
+                {
+                    opcode: 'getMotorPosition',
+                    text: 'motor [PORT] position',
+                    blockType: BlockType.REPORTER,
+                    arguments: {
+                        PORT: {
+                            type: ArgumentType.STRING,
+                            menu: 'motorPorts',
+                            defaultValue: MOTOR_PORTS[0].value
+                        }
+                    }
+                },
+                {
+                    opcode: 'whenButtonPressed',
+                    text: 'when button [PORT] pressed',
+                    blockType: BlockType.HAT,
+                    arguments: {
+                        PORT: {
+                            type: ArgumentType.STRING,
+                            menu: 'sensorPorts',
+                            defaultValue: SENSOR_PORTS[0].value
+                        }
+                    }
+                },
+                {
+                    opcode: 'whenDistanceLessThan',
+                    text: 'when distance < [DISTANCE]',
+                    blockType: BlockType.HAT,
+                    arguments: {
+                        DISTANCE: {
+                            type: ArgumentType.NUMBER,
+                            defaultValue: 50
+                        }
+                    }
+                },
+                {
+                    opcode: 'whenBrightnessLessThan',
+                    text: 'when brightness < [DISTANCE]',
+                    blockType: BlockType.HAT,
+                    arguments: {
+                        DISTANCE: {
+                            type: ArgumentType.NUMBER,
+                            defaultValue: 50
+                        }
+                    }
+                },
+                {
+                    opcode: 'buttonPressed',
+                    text: 'button [PORT] pressed?',
+                    blockType: BlockType.BOOLEAN,
+                    arguments: {
+                        PORT: {
+                            type: ArgumentType.STRING,
+                            menu: 'sensorPorts',
+                            defaultValue: SENSOR_PORTS[0].value
+                        }
+                    }
+                },
+                {
+                    opcode: 'getDistance',
+                    text: 'distance',
+                    blockType: BlockType.REPORTER
+                },
+                {
+                    opcode: 'getBrightness',
+                    text: 'brightness',
+                    blockType: BlockType.REPORTER
+                },
+                {
                     opcode: 'beep',
                     text: 'beep',
                     blockType: BlockType.COMMAND
                 }
             ],
             menus: {
-                motorPorts: this._buildMenu(MOTOR_PORTS)
+                motorPorts: this._buildMenu(MOTOR_PORTS),
+                sensorPorts: this._buildMenu(SENSOR_PORTS)
             }
         };
     }
@@ -371,6 +506,46 @@ class Scratch3Ev3Blocks {
         const time = Cast.toNumber(args.TIME) * 1000;
 
         this._device.motorTurnCounterClockwise(port, time);
+    }
+
+    motorRotate (args) {
+        log.info(`motor rotate: ${args}`);
+    }
+
+    motorSetPosition (args) {
+        log.info(`motor set position: ${args}`);
+    }
+
+    motorSetPower (args) {
+        log.info(`motor set power: ${args}`);
+    }
+
+    getMotorPosition (args) {
+        log.info(`get motor position: ${args}`);
+    }
+
+    whenButtonPressed (args) {
+        log.info(`when button pressed: ${args}`);
+    }
+
+    whenDistanceLessThan (args) {
+        log.info(`when distance less than: ${args}`);
+    }
+
+    whenBrightnessLessThan (args) {
+        log.info(`when brightness less than: ${args}`);
+    }
+
+    buttonPressed (args) {
+        log.info(`button pressed: ${args}`);
+    }
+
+    getDistance () {
+        log.info(`distance`);
+    }
+
+    getBrightness () {
+        log.info(`brightness`);
     }
 
     beep () {
