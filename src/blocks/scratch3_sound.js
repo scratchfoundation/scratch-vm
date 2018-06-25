@@ -9,6 +9,18 @@ class Scratch3SoundBlocks {
          * @type {Runtime}
          */
         this.runtime = runtime;
+
+        // Clear sound effects on green flag and stop button events.
+        this._clearEffectsForAllTargets = this._clearEffectsForAllTargets.bind(this);
+        if (this.runtime) {
+            this.runtime.on('PROJECT_STOP_ALL', this._clearEffectsForAllTargets);
+            this.runtime.on('PROJECT_START', this._clearEffectsForAllTargets);
+        }
+
+        this._onTargetCreated = this._onTargetCreated.bind(this);
+        if (this.runtime) {
+            runtime.on('targetWasCreated', this._onTargetCreated);
+        }
     }
 
     /**
@@ -25,8 +37,6 @@ class Scratch3SoundBlocks {
      */
     static get DEFAULT_SOUND_STATE () {
         return {
-            volume: 100,
-            currentInstrument: 0,
             effects: {
                 pitch: 0,
                 pan: 0
@@ -63,7 +73,7 @@ class Scratch3SoundBlocks {
      */
     static get EFFECT_RANGE () {
         return {
-            pitch: {min: -600, max: 600}, // -5 to 5 octaves
+            pitch: {min: -360, max: 360}, // -3 to 3 octaves
             pan: {min: -100, max: 100} // 100% left to 100% right
         };
     }
@@ -78,8 +88,26 @@ class Scratch3SoundBlocks {
         if (!soundState) {
             soundState = Clone.simple(Scratch3SoundBlocks.DEFAULT_SOUND_STATE);
             target.setCustomState(Scratch3SoundBlocks.STATE_KEY, soundState);
+            target.soundEffects = soundState.effects;
         }
         return soundState;
+    }
+
+    /**
+     * When a Target is cloned, clone the sound state.
+     * @param {Target} newTarget - the newly created target.
+     * @param {Target} [sourceTarget] - the target used as a source for the new clone, if any.
+     * @listens Runtime#event:targetWasCreated
+     * @private
+     */
+    _onTargetCreated (newTarget, sourceTarget) {
+        if (sourceTarget) {
+            const soundState = sourceTarget.getCustomState(Scratch3SoundBlocks.STATE_KEY);
+            if (soundState && newTarget) {
+                newTarget.setCustomState(Scratch3SoundBlocks.STATE_KEY, Clone.simple(soundState));
+                this._syncEffectsForTarget(newTarget);
+            }
+        }
     }
 
     /**
@@ -103,21 +131,28 @@ class Scratch3SoundBlocks {
         };
     }
 
+    getMonitored () {
+        return {
+            sound_volume: {
+                getId: () => 'volume'
+            }
+        };
+    }
+
     playSound (args, util) {
-        const index = this._getSoundIndex(args.SOUND_MENU, util);
-        if (index >= 0) {
-            const soundId = util.target.sprite.sounds[index].soundId;
-            if (util.target.audioPlayer === null) return;
-            util.target.audioPlayer.playSound(soundId);
-        }
+        // Don't return the promise, it's the only difference for AndWait
+        this.playSoundAndWait(args, util);
     }
 
     playSoundAndWait (args, util) {
         const index = this._getSoundIndex(args.SOUND_MENU, util);
         if (index >= 0) {
-            const soundId = util.target.sprite.sounds[index].soundId;
-            if (util.target.audioPlayer === null) return;
-            return util.target.audioPlayer.playSound(soundId);
+            const {target} = util;
+            const {sprite} = target;
+            const {soundId} = sprite.sounds[index];
+            if (sprite.soundBank) {
+                return sprite.soundBank.playSound(target, soundId);
+            }
         }
     }
 
@@ -155,17 +190,26 @@ class Scratch3SoundBlocks {
         return -1;
     }
 
-    stopAllSounds (args, util) {
-        if (util.target.audioPlayer === null) return;
-        util.target.audioPlayer.stopAllSounds();
+    stopAllSounds () {
+        if (this.runtime.targets === null) return;
+        const allTargets = this.runtime.targets;
+        for (let i = 0; i < allTargets.length; i++) {
+            this._stopAllSoundsForTarget(allTargets[i]);
+        }
+    }
+
+    _stopAllSoundsForTarget (target) {
+        if (target.sprite.soundBank) {
+            target.sprite.soundBank.stopAllSounds(target);
+        }
     }
 
     setEffect (args, util) {
-        this._updateEffect(args, util, false);
+        return this._updateEffect(args, util, false);
     }
 
     changeEffect (args, util) {
-        this._updateEffect(args, util, true);
+        return this._updateEffect(args, util, true);
     }
 
     _updateEffect (args, util, change) {
@@ -181,45 +225,63 @@ class Scratch3SoundBlocks {
             soundState.effects[effect] = value;
         }
 
-        const effectRange = Scratch3SoundBlocks.EFFECT_RANGE[effect];
-        soundState.effects[effect] = MathUtil.clamp(soundState.effects[effect], effectRange.min, effectRange.max);
+        const {min, max} = Scratch3SoundBlocks.EFFECT_RANGE[effect];
+        soundState.effects[effect] = MathUtil.clamp(soundState.effects[effect], min, max);
 
-        if (util.target.audioPlayer === null) return;
-        util.target.audioPlayer.setEffect(effect, soundState.effects[effect]);
+        this._syncEffectsForTarget(util.target);
+        // Yield until the next tick.
+        return Promise.resolve();
+    }
+
+    _syncEffectsForTarget (target) {
+        if (!target || !target.sprite.soundBank) return;
+        target.soundEffects = this._getSoundState(target).effects;
+
+        target.sprite.soundBank.setEffects(target);
     }
 
     clearEffects (args, util) {
-        const soundState = this._getSoundState(util.target);
+        this._clearEffectsForTarget(util.target);
+    }
+
+    _clearEffectsForTarget (target) {
+        const soundState = this._getSoundState(target);
         for (const effect in soundState.effects) {
             if (!soundState.effects.hasOwnProperty(effect)) continue;
             soundState.effects[effect] = 0;
         }
-        if (util.target.audioPlayer === null) return;
-        util.target.audioPlayer.clearEffects();
+        this._syncEffectsForTarget(target);
+    }
+
+    _clearEffectsForAllTargets () {
+        if (this.runtime.targets === null) return;
+        const allTargets = this.runtime.targets;
+        for (let i = 0; i < allTargets.length; i++) {
+            this._clearEffectsForTarget(allTargets[i]);
+        }
     }
 
     setVolume (args, util) {
         const volume = Cast.toNumber(args.VOLUME);
-        this._updateVolume(volume, util);
+        return this._updateVolume(volume, util);
     }
 
     changeVolume (args, util) {
-        const soundState = this._getSoundState(util.target);
-        const volume = Cast.toNumber(args.VOLUME) + soundState.volume;
-        this._updateVolume(volume, util);
+        const volume = Cast.toNumber(args.VOLUME) + util.target.volume;
+        return this._updateVolume(volume, util);
     }
 
     _updateVolume (volume, util) {
-        const soundState = this._getSoundState(util.target);
         volume = MathUtil.clamp(volume, 0, 100);
-        soundState.volume = volume;
-        if (util.target.audioPlayer === null) return;
-        util.target.audioPlayer.setVolume(soundState.volume);
+        util.target.volume = volume;
+        this._syncEffectsForTarget(util.target);
+
+        // Yield until the next tick.
+        return Promise.resolve();
     }
 
     getVolume (args, util) {
-        const soundState = this._getSoundState(util.target);
-        return soundState.volume;
+        return util.target.volume;
     }
 
     soundsMenu (args) {

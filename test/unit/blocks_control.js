@@ -52,6 +52,69 @@ test('repeatUntil', t => {
     t.end();
 });
 
+test('repeatWhile', t => {
+    const rt = new Runtime();
+    const c = new Control(rt);
+
+    // Test harness (mocks `util`)
+    let i = 0;
+    const repeat = 10;
+    const util = {
+        stackFrame: Object.create(null),
+        startBranch: function () {
+            i++;
+            // Note !== instead of ===
+            c.repeatWhile({CONDITION: (i !== repeat)}, util);
+        }
+    };
+
+    // Execute test
+    c.repeatWhile({CONDITION: (i !== repeat)}, util);
+    t.strictEqual(i, repeat);
+    t.end();
+});
+
+test('forEach', t => {
+    const rt = new Runtime();
+    const c = new Control(rt);
+
+    const variableValues = [];
+    const variable = {value: 0};
+    let value;
+    const util = {
+        stackFrame: Object.create(null),
+        target: {
+            lookupOrCreateVariable: function () {
+                return variable;
+            }
+        },
+        startBranch: function () {
+            variableValues.push(variable.value);
+            c.forEach({VARIABLE: {}, VALUE: value}, util);
+        }
+    };
+
+    // for each (variable) in "5"
+    // ..should yield variable values 1, 2, 3, 4, 5
+    util.stackFrame = Object.create(null);
+    variableValues.splice(0);
+    variable.value = 0;
+    value = '5';
+    c.forEach({VARIABLE: {}, VALUE: value}, util);
+    t.deepEqual(variableValues, [1, 2, 3, 4, 5]);
+
+    // for each (variable) in 4
+    // ..should yield variable values 1, 2, 3, 4
+    util.stackFrame = Object.create(null);
+    variableValues.splice(0);
+    variable.value = 0;
+    value = 4;
+    c.forEach({VARIABLE: {}, VALUE: value}, util);
+    t.deepEqual(variableValues, [1, 2, 3, 4]);
+
+    t.end();
+});
+
 test('forever', t => {
     const rt = new Runtime();
     const c = new Control(rt);
@@ -126,5 +189,40 @@ test('stop', t => {
     t.strictEqual(state.stopAll, 1);
     t.strictEqual(state.stopOtherTargetThreads, 2);
     t.strictEqual(state.stopThisScript, 1);
+    t.end();
+});
+
+test('counter, incrCounter, clearCounter', t => {
+    const rt = new Runtime();
+    const c = new Control(rt);
+
+    // Default value
+    t.strictEqual(c.getCounter(), 0);
+
+    c.incrCounter();
+    c.incrCounter();
+    t.strictEqual(c.getCounter(), 2);
+
+    c.clearCounter();
+    t.strictEqual(c.getCounter(), 0);
+
+    t.end();
+});
+
+test('allAtOnce', t => {
+    const rt = new Runtime();
+    const c = new Control(rt);
+
+    // Test harness (mocks `util`)
+    let ran = false;
+    const util = {
+        startBranch: function () {
+            ran = true;
+        }
+    };
+
+    // Execute test
+    c.allAtOnce({}, util);
+    t.true(ran);
     t.end();
 });

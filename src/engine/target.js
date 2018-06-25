@@ -2,9 +2,10 @@ const EventEmitter = require('events');
 
 const Blocks = require('./blocks');
 const Variable = require('../engine/variable');
-const List = require('../engine/list');
+const Comment = require('../engine/comment');
 const uid = require('../util/uid');
 const {Map} = require('immutable');
+const log = require('../util/log');
 
 /**
  * @fileoverview
@@ -43,16 +44,16 @@ class Target extends EventEmitter {
         this.blocks = blocks;
         /**
          * Dictionary of variables and their values for this target.
-         * Key is the variable name.
+         * Key is the variable id.
          * @type {Object.<string,*>}
          */
         this.variables = {};
         /**
-         * Dictionary of lists and their contents for this target.
-         * Key is the list name.
+         * Dictionary of comments for this target.
+         * Key is the comment id.
          * @type {Object.<string,*>}
          */
-        this.lists = {};
+        this.comments = {};
         /**
          * Dictionary of custom state for this target.
          * This can be used to store target-specific custom state for blocks which need it.
@@ -88,9 +89,55 @@ class Target extends EventEmitter {
         const variable = this.lookupVariableById(id);
         if (variable) return variable;
         // No variable with this name exists - create it locally.
-        const newVariable = new Variable(id, name, 0, false);
+        const newVariable = new Variable(id, name, Variable.SCALAR_TYPE, false);
         this.variables[id] = newVariable;
         return newVariable;
+    }
+
+    /**
+     * Look up a broadcast message object with the given id and return it
+     * if it exists.
+     * @param {string} id Id of the variable.
+     * @param {string} name Name of the variable.
+     * @return {?Variable} Variable object.
+     */
+    lookupBroadcastMsg (id, name) {
+        let broadcastMsg;
+        if (id) {
+            broadcastMsg = this.lookupVariableById(id);
+        } else if (name) {
+            broadcastMsg = this.lookupBroadcastByInputValue(name);
+        } else {
+            log.error('Cannot find broadcast message if neither id nor name are provided.');
+        }
+        if (broadcastMsg) {
+            if (name && (broadcastMsg.name.toLowerCase() !== name.toLowerCase())) {
+                log.error(`Found broadcast message with id: ${id}, but` +
+                    `its name, ${broadcastMsg.name} did not match expected name ${name}.`);
+            }
+            if (broadcastMsg.type !== Variable.BROADCAST_MESSAGE_TYPE) {
+                log.error(`Found variable with id: ${id}, but its type ${broadcastMsg.type}` +
+                    `did not match expected type ${Variable.BROADCAST_MESSAGE_TYPE}`);
+            }
+            return broadcastMsg;
+        }
+    }
+
+    /**
+     * Look up a broadcast message with the given name and return the variable
+     * if it exists. Does not create a new broadcast message variable if
+     * it doesn't exist.
+     * @param {string} name Name of the variable.
+     * @return {?Variable} Variable object.
+     */
+    lookupBroadcastByInputValue (name) {
+        const vars = this.variables;
+        for (const propName in vars) {
+            if ((vars[propName].type === Variable.BROADCAST_MESSAGE_TYPE) &&
+                (vars[propName].name.toLowerCase() === name.toLowerCase())) {
+                return vars[propName];
+            }
+        }
     }
 
     /**
@@ -108,7 +155,7 @@ class Target extends EventEmitter {
         // If the stage has a global copy, return it.
         if (this.runtime && !this.isStage) {
             const stage = this.runtime.getTargetForStage();
-            if (stage.variables.hasOwnProperty(id)) {
+            if (stage && stage.variables.hasOwnProperty(id)) {
                 return stage.variables[id];
             }
         }
@@ -117,24 +164,16 @@ class Target extends EventEmitter {
     /**
     * Look up a list object for this target, and create it if one doesn't exist.
     * Search begins for local lists; then look for globals.
+    * @param {!string} id Id of the list.
     * @param {!string} name Name of the list.
-    * @return {!List} List object.
+    * @return {!Varible} Variable object representing the found/created list.
      */
-    lookupOrCreateList (name) {
-        // If we have a local copy, return it.
-        if (this.lists.hasOwnProperty(name)) {
-            return this.lists[name];
-        }
-        // If the stage has a global copy, return it.
-        if (this.runtime && !this.isStage) {
-            const stage = this.runtime.getTargetForStage();
-            if (stage.lists.hasOwnProperty(name)) {
-                return stage.lists[name];
-            }
-        }
-        // No list with this name exists - create it locally.
-        const newList = new List(name, []);
-        this.lists[name] = newList;
+    lookupOrCreateList (id, name) {
+        const list = this.lookupVariableById(id);
+        if (list) return list;
+        // No variable with this name exists - create it locally.
+        const newList = new Variable(id, name, Variable.LIST_TYPE, false);
+        this.variables[id] = newList;
         return newList;
     }
 
@@ -143,12 +182,42 @@ class Target extends EventEmitter {
      * dictionary of variables.
      * @param {string} id Id of variable
      * @param {string} name Name of variable.
+     * @param {string} type Type of variable, '', 'broadcast_msg', or 'list'
      */
-    createVariable (id, name) {
+    createVariable (id, name, type) {
         if (!this.variables.hasOwnProperty(id)) {
-            const newVariable = new Variable(id, name, 0,
-                false);
+            const newVariable = new Variable(id, name, type, false);
             this.variables[id] = newVariable;
+        }
+    }
+
+    /**
+     * Creates a comment with the given properties.
+     * @param {string} id Id of the comment.
+     * @param {string} blockId Optional id of the block the comment is attached
+     * to if it is a block comment.
+     * @param {string} text The text the comment contains.
+     * @param {number} x The x coordinate of the comment on the workspace.
+     * @param {number} y The y coordinate of the comment on the workspace.
+     * @param {number} width The width of the comment when it is full size
+     * @param {number} height The height of the comment when it is full size
+     * @param {boolean} minimized Whether the comment is minimized.
+     */
+    createComment (id, blockId, text, x, y, width, height, minimized) {
+        if (!this.comments.hasOwnProperty(id)) {
+            const newComment = new Comment(id, text, x, y,
+                width, height, minimized);
+            if (blockId) {
+                newComment.blockId = blockId;
+                const blockWithComment = this.blocks.getBlock(blockId);
+                if (blockWithComment) {
+                    blockWithComment.comment = id;
+                } else {
+                    log.warn(`Could not find block with id ${blockId
+                    } associated with commentId: ${id}`);
+                }
+            }
+            this.comments[id] = newComment;
         }
     }
 
@@ -189,6 +258,7 @@ class Target extends EventEmitter {
         if (this.variables.hasOwnProperty(id)) {
             delete this.variables[id];
             if (this.runtime) {
+                this.runtime.monitorBlocks.deleteBlock(id);
                 this.runtime.requestRemoveMonitor(id);
             }
         }

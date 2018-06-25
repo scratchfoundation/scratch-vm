@@ -7,6 +7,12 @@ class Scratch3ControlBlocks {
          * @type {Runtime}
          */
         this.runtime = runtime;
+
+        /**
+         * The "counter" block value. For compatibility with 2.0.
+         * @type {number}
+         */
+        this._counter = 0;
     }
 
     /**
@@ -17,6 +23,8 @@ class Scratch3ControlBlocks {
         return {
             control_repeat: this.repeat,
             control_repeat_until: this.repeatUntil,
+            control_while: this.repeatWhile,
+            control_for_each: this.forEach,
             control_forever: this.forever,
             control_wait: this.wait,
             control_wait_until: this.waitUntil,
@@ -24,7 +32,11 @@ class Scratch3ControlBlocks {
             control_if_else: this.ifElse,
             control_stop: this.stop,
             control_create_clone_of: this.createClone,
-            control_delete_this_clone: this.deleteClone
+            control_delete_this_clone: this.deleteClone,
+            control_get_counter: this.getCounter,
+            control_incr_counter: this.incrCounter,
+            control_clear_counter: this.clearCounter,
+            control_all_at_once: this.allAtOnce
         };
     }
 
@@ -55,8 +67,31 @@ class Scratch3ControlBlocks {
 
     repeatUntil (args, util) {
         const condition = Cast.toBoolean(args.CONDITION);
-        // If the condition is true, start the branch.
+        // If the condition is false (repeat UNTIL), start the branch.
         if (!condition) {
+            util.startBranch(1, true);
+        }
+    }
+
+    repeatWhile (args, util) {
+        const condition = Cast.toBoolean(args.CONDITION);
+        // If the condition is true (repeat WHILE), start the branch.
+        if (condition) {
+            util.startBranch(1, true);
+        }
+    }
+
+    forEach (args, util) {
+        const variable = util.target.lookupOrCreateVariable(
+            args.VARIABLE.id, args.VARIABLE.name);
+
+        if (typeof util.stackFrame.index === 'undefined') {
+            util.stackFrame.index = 0;
+        }
+
+        if (util.stackFrame.index < Number(args.VALUE)) {
+            util.stackFrame.index++;
+            variable.value = util.stackFrame.index;
             util.startBranch(1, true);
         }
     }
@@ -110,15 +145,21 @@ class Scratch3ControlBlocks {
     }
 
     createClone (args, util) {
+        // Cast argument to string
+        args.CLONE_OPTION = Cast.toString(args.CLONE_OPTION);
+
+        // Set clone target
         let cloneTarget;
         if (args.CLONE_OPTION === '_myself_') {
             cloneTarget = util.target;
         } else {
             cloneTarget = this.runtime.getSpriteTargetByName(args.CLONE_OPTION);
         }
-        if (!cloneTarget) {
-            return;
-        }
+
+        // If clone target is not found, return
+        if (!cloneTarget) return;
+
+        // Create clone
         const newClone = cloneTarget.makeClone();
         if (newClone) {
             this.runtime.targets.push(newClone);
@@ -129,6 +170,28 @@ class Scratch3ControlBlocks {
         if (util.target.isOriginal) return;
         this.runtime.disposeTarget(util.target);
         this.runtime.stopForTarget(util.target);
+    }
+
+    getCounter () {
+        return this._counter;
+    }
+
+    clearCounter () {
+        this._counter = 0;
+    }
+
+    incrCounter () {
+        this._counter++;
+    }
+
+    allAtOnce (args, util) {
+        // Since the "all at once" block is implemented for compatiblity with
+        // Scratch 2.0 projects, it behaves the same way it did in 2.0, which
+        // is to simply run the contained script (like "if 1 = 1").
+        // (In early versions of Scratch 2.0, it would work the same way as
+        // "run without screen refresh" custom blocks do now, but this was
+        // removed before the release of 2.0.)
+        util.startBranch(1, false);
     }
 }
 

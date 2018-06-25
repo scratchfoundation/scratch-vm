@@ -1,11 +1,11 @@
 const path = require('path');
 const test = require('tap').test;
 const makeTestStorage = require('../fixtures/make-test-storage');
-const extract = require('../fixtures/extract');
+const readFileToBuffer = require('../fixtures/readProjectFile').readFileToBuffer;
 const VirtualMachine = require('../../src/index');
 
 const projectUri = path.resolve(__dirname, '../fixtures/hat-execution-order.sb2');
-const project = extract(projectUri);
+const project = readFileToBuffer(projectUri);
 
 test('complex', t => {
     const vm = new VirtualMachine();
@@ -16,7 +16,8 @@ test('complex', t => {
         const threads = JSON.parse(e.threads);
         t.ok(threads.length === 0);
 
-        const results = vm.runtime.targets[0].lists.results.contents;
+        const resultKey = Object.keys(vm.runtime.targets[0].variables)[0];
+        const results = vm.runtime.targets[0].variables[resultKey].value;
         t.deepEqual(results, ['3', '2', '1', 'stage']);
 
         t.end();

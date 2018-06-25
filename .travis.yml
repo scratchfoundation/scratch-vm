@@ -1,8 +1,11 @@
 language: node_js
 node_js:
-- 6
+- 8
 - node
 env:
+  global:
+  - NODE_ENV=production
+  matrix:
   - NPM_SCRIPT="tap:unit -- --jobs=4"
   - NPM_SCRIPT="tap:integration -- --jobs=4"
 sudo: false
@@ -10,31 +13,36 @@ cache:
   directories:
   - node_modules
 install:
-- npm install
-- npm update
+- npm --production=false install
+- npm --production=false update
 script: npm run $NPM_SCRIPT
 jobs:
     include:
     - env: NPM_SCRIPT=lint
-      node_js: 6
+      node_js: 8
+    - env: NPM_SCRIPT=build
+      node_js: 8
+      if: not (branch in (master, develop) and type != pull_request)
     - stage: release
-      node_js: 6
+      node_js: 8
       env: NPM_SCRIPT=build
       before_deploy:
       - npm --no-git-tag-version version $($(npm bin)/json -f package.json version)-prerelease.$(date +%s)
-      - git config --global user.email $(git log --pretty=format:"%ae" -n1)
-      - git config --global user.name $(git log --pretty=format:"%an" -n1)
+      - git config --global user.email "$(git log --pretty=format:"%ae" -n1)"
+      - git config --global user.name "$(git log --pretty=format:"%an" -n1)"
       deploy:
-      - provider: script
-        "on":
-          all_branches: true
-          condition: $RELEASE_BRANCHES =~ $TRAVIS_BRANCH
-        skip_cleanup: true
-        script: npm run --silent deploy -- -x -r $GH_PAGES_REPO
       - provider: npm
-        "on":
+        on:
           all_branches: true
-          condition: $RELEASE_BRANCHES =~ $TRAVIS_BRANCH
         skip_cleanup: true
         email: $NPM_EMAIL
         api_key: $NPM_TOKEN
+      - provider: script
+        on:
+          all_branches: true
+        skip_cleanup: true
+        script: npm run --silent deploy -- -x -r $GH_PAGES_REPO
+stages:
+- test
+- name: release
+  if: branch in (master, develop) and type != pull_request

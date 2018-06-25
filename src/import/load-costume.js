@@ -11,21 +11,56 @@ const log = require('../util/log');
  * @property {number} [bitmapResolution] - the resolution scale for a bitmap costume.
  * @param {!Asset} costumeAsset - the asset of the costume loaded from storage.
  * @param {!Runtime} runtime - Scratch runtime, used to access the storage module.
+ * @param {?int} optVersion - Version of Scratch that the costume comes from. If this is set
+ *     to 2, scratch 3 will perform an upgrade step to handle quirks in SVGs from Scratch 2.0.
  * @returns {?Promise} - a promise which will resolve after skinId is set, or null on error.
  */
-const loadCostumeFromAsset = function (costume, costumeAsset, runtime) {
+const loadCostumeFromAsset = function (costume, costumeAsset, runtime, optVersion) {
     costume.assetId = costumeAsset.assetId;
-    if (!runtime.renderer) {
+    const renderer = runtime.renderer;
+    if (!renderer) {
         log.error('No rendering module present; cannot load costume: ', costume.name);
         return costume;
     }
     const AssetType = runtime.storage.AssetType;
-    const rotationCenter = [
-        costume.rotationCenterX / costume.bitmapResolution,
-        costume.rotationCenterY / costume.bitmapResolution
-    ];
+    let rotationCenter;
+    // Use provided rotation center and resolution if they are defined. Bitmap resolution
+    // should only ever be 1 or 2.
+    if (typeof costume.rotationCenterX === 'number' && !isNaN(costume.rotationCenterX) &&
+            typeof costume.rotationCenterY === 'number' && !isNaN(costume.rotationCenterY) &&
+            costume.bitmapResolution) {
+        rotationCenter = [
+            costume.rotationCenterX / costume.bitmapResolution,
+            costume.rotationCenterY / costume.bitmapResolution
+        ];
+    }
     if (costumeAsset.assetType === AssetType.ImageVector) {
-        costume.skinId = runtime.renderer.createSVGSkin(costumeAsset.decodeText(), rotationCenter);
+        let svgString = costumeAsset.decodeText();
+        // SVG Renderer load fixes "quirks" associated with Scratch 2 projects
+        if (optVersion && optVersion === 2 && runtime.v2SvgAdapter) {
+            runtime.v2SvgAdapter.loadString(svgString, true /* fromVersion2 */);
+            svgString = runtime.v2SvgAdapter.toString();
+            // Put back into storage
+            const storage = runtime.storage;
+            costumeAsset.encodeTextData(svgString, storage.DataFormat.SVG);
+            costume.assetId = storage.builtinHelper.cache(
+                storage.AssetType.ImageVector,
+                storage.DataFormat.SVG,
+                costumeAsset.data
+            );
+            costume.md5 = `${costume.assetId}.${costume.dataFormat}`;
+        }
+        // createSVGSkin does the right thing if rotationCenter isn't provided, so it's okay if it's
+        // undefined here
+        costume.skinId = renderer.createSVGSkin(svgString, rotationCenter);
+        costume.size = renderer.getSkinSize(costume.skinId);
+        // Now we should have a rotationCenter even if we didn't before
+        if (!rotationCenter) {
+            rotationCenter = renderer.getSkinRotationCenter(costume.skinId);
+            costume.rotationCenterX = rotationCenter[0];
+            costume.rotationCenterY = rotationCenter[1];
+        }
+
         return costume;
     }
 
@@ -49,7 +84,15 @@ const loadCostumeFromAsset = function (costume, costumeAsset, runtime) {
         imageElement.addEventListener('load', onLoad);
         imageElement.src = costumeAsset.encodeDataURI();
     }).then(imageElement => {
-        costume.skinId = runtime.renderer.createBitmapSkin(imageElement, costume.bitmapResolution, rotationCenter);
+        // createBitmapSkin does the right thing if costume.bitmapResolution or rotationCenter are undefined...
+        costume.skinId = renderer.createBitmapSkin(imageElement, costume.bitmapResolution, rotationCenter);
+        costume.size = renderer.getSkinSize(costume.skinId);
+
+        if (!rotationCenter) {
+            rotationCenter = renderer.getSkinRotationCenter(costume.skinId);
+            costume.rotationCenterX = rotationCenter[0] * 2;
+            costume.rotationCenterY = rotationCenter[1] * 2;
+        }
         return costume;
     });
 };
@@ -64,9 +107,11 @@ const loadCostumeFromAsset = function (costume, costumeAsset, runtime) {
  * @property {number} rotationCenterY - the Y component of the costume's origin.
  * @property {number} [bitmapResolution] - the resolution scale for a bitmap costume.
  * @param {!Runtime} runtime - Scratch runtime, used to access the storage module.
+ * @param {?int} optVersion - Version of Scratch that the costume comes from. If this is set
+ *     to 2, scratch 3 will perform an upgrade step to handle quirks in SVGs from Scratch 2.0.
  * @returns {?Promise} - a promise which will resolve after skinId is set, or null on error.
  */
-const loadCostume = function (md5ext, costume, runtime) {
+const loadCostume = function (md5ext, costume, runtime, optVersion) {
     if (!runtime.storage) {
         log.error('No storage module present; cannot load costume asset: ', md5ext);
         return Promise.resolve(costume);
@@ -80,7 +125,7 @@ const loadCostume = function (md5ext, costume, runtime) {
 
     return runtime.storage.load(assetType, md5, ext).then(costumeAsset => {
         costume.dataFormat = ext;
-        return loadCostumeFromAsset(costume, costumeAsset, runtime);
+        return loadCostumeFromAsset(costume, costumeAsset, runtime, optVersion);
     });
 };
 

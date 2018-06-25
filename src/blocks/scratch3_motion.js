@@ -34,7 +34,30 @@ class Scratch3MotionBlocks {
             motion_sety: this.setY,
             motion_xposition: this.getX,
             motion_yposition: this.getY,
-            motion_direction: this.getDirection
+            motion_direction: this.getDirection,
+            // Legacy no-op blocks:
+            motion_scroll_right: () => {},
+            motion_scroll_up: () => {},
+            motion_align_scene: () => {},
+            motion_xscroll: () => {},
+            motion_yscroll: () => {}
+        };
+    }
+
+    getMonitored () {
+        return {
+            motion_xposition: {
+                isSpriteSpecific: true,
+                getId: targetId => `${targetId}_xposition`
+            },
+            motion_yposition: {
+                isSpriteSpecific: true,
+                getId: targetId => `${targetId}_yposition`
+            },
+            motion_direction: {
+                isSpriteSpecific: true,
+                getId: targetId => `${targetId}_direction`
+            }
         };
     }
 
@@ -56,8 +79,8 @@ class Scratch3MotionBlocks {
         let targetX = 0;
         let targetY = 0;
         if (targetName === '_mouse_') {
-            targetX = util.ioQuery('mouse', 'getX');
-            targetY = util.ioQuery('mouse', 'getY');
+            targetX = util.ioQuery('mouse', 'getScratchX');
+            targetY = util.ioQuery('mouse', 'getScratchY');
         } else if (targetName === '_random_') {
             const stageWidth = this.runtime.constructor.STAGE_WIDTH;
             const stageHeight = this.runtime.constructor.STAGE_HEIGHT;
@@ -98,8 +121,8 @@ class Scratch3MotionBlocks {
         let targetX = 0;
         let targetY = 0;
         if (args.TOWARDS === '_mouse_') {
-            targetX = util.ioQuery('mouse', 'getX');
-            targetY = util.ioQuery('mouse', 'getY');
+            targetX = util.ioQuery('mouse', 'getScratchX');
+            targetY = util.ioQuery('mouse', 'getScratchY');
         } else {
             const pointTarget = this.runtime.getSpriteTargetByName(args.TOWARDS);
             if (!pointTarget) return;
@@ -147,7 +170,7 @@ class Scratch3MotionBlocks {
             util.yield();
         }
     }
-    
+
     glideTo (args, util) {
         const targetXY = this.getTargetXY(args.TO, util);
         if (targetXY) {
