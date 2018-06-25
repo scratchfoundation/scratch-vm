@@ -1,9 +1,9 @@
 /* -*- indent-tabs-mode: nil; js-indent-level: 4 -*-
  */
 
-const ArgumentType = require('../extension-support/argument-type');
-const BlockType = require('../extension-support/block-type');
-const log = require('../util/log');
+const ArgumentType = require('../../extension-support/argument-type');
+const BlockType = require('../../extension-support/block-type');
+const log = require('../../util/log');
 
 /**
  * Manage communication with a KOOV device over a Device Manager client socket.
