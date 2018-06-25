@@ -263,20 +263,50 @@ class VirtualMachine extends EventEmitter {
 
         // Put everything in a zip file
         zip.file('project.json', projectJson);
-        for (let i = 0; i < soundDescs.length; i++) {
-            const currSound = soundDescs[i];
-            zip.file(currSound.fileName, currSound.fileContent);
-        }
-        for (let i = 0; i < costumeDescs.length; i++) {
-            const currCostume = costumeDescs[i];
-            zip.file(currCostume.fileName, currCostume.fileContent);
-        }
+        this._addFileDescsToZip(soundDescs.concat(costumeDescs), zip);
 
         return zip.generateAsync({
             type: 'blob',
             compression: 'DEFLATE',
             compressionOptions: {
                 level: 6 // Tradeoff between best speed (1) and best compression (9)
+            }
+        });
+    }
+
+    _addFileDescsToZip (fileDescs, zip) {
+        for (let i = 0; i < fileDescs.length; i++) {
+            const currFileDesc = fileDescs[i];
+            zip.file(currFileDesc.fileName, currFileDesc.fileContent);
+        }
+    }
+
+    /**
+     * Exports a sprite in the sprite3 format.
+     * @param {string} targetId ID of the target to export
+     * @param {string=} optZipType Optional type that the resulting
+     * zip should be outputted in. Options are: base64, binarystring,
+     * array, uint8array, arraybuffer, blob, or nodebuffer. Defaults to
+     * blob if argument not provided.
+     * See https://stuk.github.io/jszip/documentation/api_jszip/generate_async.html#type-option
+     * for more information about these options.
+     * @return {object} A generated zip of the sprite and its assets in the format
+     * specified by optZipType or blob by default.
+     */
+    exportSprite (targetId, optZipType) {
+        const soundDescs = serializeSounds(this.runtime, targetId);
+        const costumeDescs = serializeCostumes(this.runtime, targetId);
+        const spriteJson = JSON.stringify(sb3.serialize(this.runtime, targetId));
+
+        const zip = new JSZip();
+        zip.file('sprite.json', spriteJson);
+        this._addFileDescsToZip(soundDescs.concat(costumeDescs), zip);
+
+        return zip.generateAsync({
+            type: typeof optZipType === 'string' ? optZipType : 'blob',
+            compression: 'DEFLATE',
+            compressionOptions: {
+                level: 6
             }
         });
     }
@@ -366,6 +396,10 @@ class VirtualMachine extends EventEmitter {
                 this.editingTarget = targets[1];
             } else {
                 this.editingTarget = targets[0];
+            }
+
+            if (!wholeProject) {
+                this.editingTarget.fixUpVariableReferences();
             }
 
             // Update the VM user's knowledge of targets and blocks on the workspace.

@@ -1,6 +1,9 @@
 const test = require('tap').test;
 const Target = require('../../src/engine/target');
 const Variable = require('../../src/engine/variable');
+const adapter = require('../../src/engine/adapter');
+const Runtime = require('../../src/engine/runtime');
+const events = require('../fixtures/events.json');
 
 test('spec', t => {
     const target = new Target();
@@ -145,7 +148,7 @@ test('deleteVariable2', t => {
     t.end();
 });
 
-test('lookupOrCreateList creates a list if var with given id does not exist', t => {
+test('lookupOrCreateList creates a list if var with given id or var with given name does not exist', t => {
     const target = new Target();
     const variables = target.variables;
 
@@ -167,6 +170,22 @@ test('lookupOrCreateList returns list if one with given id exists', t => {
     t.equal(Object.keys(variables).length, 1);
 
     const listVar = target.lookupOrCreateList('foo', 'bar');
+    t.equal(Object.keys(variables).length, 1);
+    t.equal(listVar.id, 'foo');
+    t.equal(listVar.name, 'bar');
+
+    t.end();
+});
+
+test('lookupOrCreateList succeeds in finding list if id is incorrect but name matches', t => {
+    const target = new Target();
+    const variables = target.variables;
+
+    t.equal(Object.keys(variables).length, 0);
+    target.createVariable('foo', 'bar', Variable.LIST_TYPE);
+    t.equal(Object.keys(variables).length, 1);
+
+    const listVar = target.lookupOrCreateList('not foo', 'bar');
     t.equal(Object.keys(variables).length, 1);
     t.equal(listVar.id, 'foo');
     t.equal(listVar.name, 'bar');
@@ -260,6 +279,150 @@ test('creating a comment with a blockId also updates the comment property on the
     const comment = comments['a comment'];
     t.equal(comment.blockId, 'a mock block');
     t.equal(target.blocks.getBlock('a mock block').comment, 'a comment');
+
+    t.end();
+});
+
+test('fixUpVariableReferences fixes sprite global var conflicting with project global var', t => {
+    const runtime = new Runtime();
+
+    const stage = new Target(runtime);
+    stage.isStage = true;
+
+    const target = new Target(runtime);
+    target.isStage = false;
+
+    runtime.targets = [stage, target];
+
+    // Create a global variable
+    stage.createVariable('pre-existing global var id', 'a mock variable', Variable.SCALAR_TYPE);
+
+    target.blocks.createBlock(adapter(events.mockVariableBlock)[0]);
+
+    t.equal(Object.keys(target.variables).length, 0);
+    t.equal(Object.keys(stage.variables).length, 1);
+    t.type(target.blocks.getBlock('a block'), 'object');
+    t.type(target.blocks.getBlock('a block').fields, 'object');
+    t.type(target.blocks.getBlock('a block').fields.VARIABLE, 'object');
+    t.equal(target.blocks.getBlock('a block').fields.VARIABLE.id, 'mock var id');
+
+    target.fixUpVariableReferences();
+
+    t.equal(Object.keys(target.variables).length, 0);
+    t.equal(Object.keys(stage.variables).length, 1);
+    t.type(target.blocks.getBlock('a block'), 'object');
+    t.type(target.blocks.getBlock('a block').fields, 'object');
+    t.type(target.blocks.getBlock('a block').fields.VARIABLE, 'object');
+    t.equal(target.blocks.getBlock('a block').fields.VARIABLE.id, 'pre-existing global var id');
+
+    t.end();
+});
+
+test('fixUpVariableReferences fixes sprite local var conflicting with project global var', t => {
+    const runtime = new Runtime();
+
+    const stage = new Target(runtime);
+    stage.isStage = true;
+
+    const target = new Target(runtime);
+    target.isStage = false;
+    target.getName = () => 'Target';
+
+    runtime.targets = [stage, target];
+
+    // Create a global variable
+    stage.createVariable('pre-existing global var id', 'a mock variable', Variable.SCALAR_TYPE);
+    target.createVariable('mock var id', 'a mock variable', Variable.SCALAR_TYPE);
+
+    target.blocks.createBlock(adapter(events.mockVariableBlock)[0]);
+
+    t.equal(Object.keys(target.variables).length, 1);
+    t.equal(Object.keys(stage.variables).length, 1);
+    t.type(target.blocks.getBlock('a block'), 'object');
+    t.type(target.blocks.getBlock('a block').fields, 'object');
+    t.type(target.blocks.getBlock('a block').fields.VARIABLE, 'object');
+    t.equal(target.blocks.getBlock('a block').fields.VARIABLE.id, 'mock var id');
+    t.equal(target.variables['mock var id'].name, 'a mock variable');
+
+    target.fixUpVariableReferences();
+
+    t.equal(Object.keys(target.variables).length, 1);
+    t.equal(Object.keys(stage.variables).length, 1);
+    t.type(target.blocks.getBlock('a block'), 'object');
+    t.type(target.blocks.getBlock('a block').fields, 'object');
+    t.type(target.blocks.getBlock('a block').fields.VARIABLE, 'object');
+    t.equal(target.blocks.getBlock('a block').fields.VARIABLE.id, 'mock var id');
+    t.equal(target.variables['mock var id'].name, 'Target: a mock variable');
+
+    t.end();
+});
+
+test('fixUpVariableReferences fixes conflicting sprite local var without blocks referencing var', t => {
+    const runtime = new Runtime();
+
+    const stage = new Target(runtime);
+    stage.isStage = true;
+
+    const target = new Target(runtime);
+    target.isStage = false;
+    target.getName = () => 'Target';
+
+    runtime.targets = [stage, target];
+
+    // Create a global variable
+    stage.createVariable('pre-existing global var id', 'a mock variable', Variable.SCALAR_TYPE);
+    target.createVariable('mock var id', 'a mock variable', Variable.SCALAR_TYPE);
+
+
+    t.equal(Object.keys(target.variables).length, 1);
+    t.equal(Object.keys(stage.variables).length, 1);
+    t.equal(target.variables['mock var id'].name, 'a mock variable');
+
+    target.fixUpVariableReferences();
+
+    t.equal(Object.keys(target.variables).length, 1);
+    t.equal(Object.keys(stage.variables).length, 1);
+    t.equal(target.variables['mock var id'].name, 'Target: a mock variable');
+
+    t.end();
+});
+
+test('fixUpVariableReferences does not change variable name if there is no variable conflict', t => {
+    const runtime = new Runtime();
+
+    const stage = new Target(runtime);
+    stage.isStage = true;
+
+    const target = new Target(runtime);
+    target.isStage = false;
+    target.getName = () => 'Target';
+
+    runtime.targets = [stage, target];
+
+    // Create a global variable
+    stage.createVariable('pre-existing global var id', 'a variable', Variable.SCALAR_TYPE);
+    stage.createVariable('pre-existing global list id', 'a mock variable', Variable.LIST_TYPE);
+    target.createVariable('mock var id', 'a mock variable', Variable.SCALAR_TYPE);
+
+    target.blocks.createBlock(adapter(events.mockVariableBlock)[0]);
+
+    t.equal(Object.keys(target.variables).length, 1);
+    t.equal(Object.keys(stage.variables).length, 2);
+    t.type(target.blocks.getBlock('a block'), 'object');
+    t.type(target.blocks.getBlock('a block').fields, 'object');
+    t.type(target.blocks.getBlock('a block').fields.VARIABLE, 'object');
+    t.equal(target.blocks.getBlock('a block').fields.VARIABLE.id, 'mock var id');
+    t.equal(target.variables['mock var id'].name, 'a mock variable');
+
+    target.fixUpVariableReferences();
+
+    t.equal(Object.keys(target.variables).length, 1);
+    t.equal(Object.keys(stage.variables).length, 2);
+    t.type(target.blocks.getBlock('a block'), 'object');
+    t.type(target.blocks.getBlock('a block').fields, 'object');
+    t.type(target.blocks.getBlock('a block').fields.VARIABLE, 'object');
+    t.equal(target.blocks.getBlock('a block').fields.VARIABLE.id, 'mock var id');
+    t.equal(target.variables['mock var id'].name, 'a mock variable');
 
     t.end();
 });

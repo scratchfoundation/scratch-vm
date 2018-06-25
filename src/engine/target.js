@@ -6,6 +6,7 @@ const Comment = require('../engine/comment');
 const uid = require('../util/uid');
 const {Map} = require('immutable');
 const log = require('../util/log');
+const StringUtil = require('../util/string-util');
 
 /**
  * @fileoverview
@@ -80,14 +81,40 @@ class Target extends EventEmitter {
     }
 
     /**
-     * Look up a variable object, and create it if one doesn't exist.
+     * Get the names of all the variables of the given type that are in scope for this target.
+     * For targets that are not the stage, this includes any target-specific
+     * variables as well as any stage variables.
+     * For the stage, this is all stage variables.
+     * @param {string} type The variable type to search for; defaults to Variable.SCALAR_TYPE
+     * @return {Array<string>} A list of variable names
+     */
+    getAllVariableNamesInScopeByType (type) {
+        if (typeof type !== 'string') type = Variable.SCALAR_TYPE;
+        const targetVariables = Object.values(this.variables)
+            .filter(v => v.type === type)
+            .map(variable => variable.name);
+        if (this.isStage || !this.runtime) {
+            return targetVariables;
+        }
+        const stage = this.runtime.getTargetForStage();
+        const stageVariables = stage.getAllVariableNamesInScopeByType(type);
+        return targetVariables.concat(stageVariables);
+    }
+
+    /**
+     * Look up a variable object, first by id, and then by name if the id is not found.
+     * Create a new variable if both lookups fail.
      * @param {string} id Id of the variable.
      * @param {string} name Name of the variable.
      * @return {!Variable} Variable object.
      */
     lookupOrCreateVariable (id, name) {
-        const variable = this.lookupVariableById(id);
+        let variable = this.lookupVariableById(id);
         if (variable) return variable;
+
+        variable = this.lookupVariableByNameAndType(name, Variable.SCALAR_TYPE);
+        if (variable) return variable;
+
         // No variable with this name exists - create it locally.
         const newVariable = new Variable(id, name, Variable.SCALAR_TYPE, false);
         this.variables[id] = newVariable;
@@ -162,6 +189,40 @@ class Target extends EventEmitter {
     }
 
     /**
+     * Look up a variable object by its name and variable type.
+     * Search begins with local variables; then global variables if a local one
+     * was not found.
+     * @param {string} name Name of the variable.
+     * @param {string} type Type of the variable. Defaults to Variable.SCALAR_TYPE.
+     * @return {?Variable} Variable object if found, or null if not.
+     */
+    lookupVariableByNameAndType (name, type) {
+        if (typeof name !== 'string') return;
+        if (typeof type !== 'string') type = Variable.SCALAR_TYPE;
+
+        for (const varId in this.variables) {
+            const currVar = this.variables[varId];
+            if (currVar.name === name && currVar.type === type) {
+                return currVar;
+            }
+        }
+
+        if (this.runtime && !this.isStage) {
+            const stage = this.runtime.getTargetForStage();
+            if (stage) {
+                for (const varId in stage.variables) {
+                    const currVar = stage.variables[varId];
+                    if (currVar.name === name && currVar.type === type) {
+                        return currVar;
+                    }
+                }
+            }
+        }
+
+        return null;
+    }
+
+    /**
     * Look up a list object for this target, and create it if one doesn't exist.
     * Search begins for local lists; then look for globals.
     * @param {!string} id Id of the list.
@@ -169,8 +230,12 @@ class Target extends EventEmitter {
     * @return {!Varible} Variable object representing the found/created list.
      */
     lookupOrCreateList (id, name) {
-        const list = this.lookupVariableById(id);
+        let list = this.lookupVariableById(id);
         if (list) return list;
+
+        list = this.lookupVariableByNameAndType(name, Variable.LIST_TYPE);
+        if (list) return list;
+
         // No variable with this name exists - create it locally.
         const newList = new Variable(id, name, Variable.LIST_TYPE, false);
         this.variables[id] = newList;
@@ -240,10 +305,13 @@ class Target extends EventEmitter {
                         name: 'VARIABLE',
                         value: id
                     }, this.runtime);
-                    this.runtime.requestUpdateMonitor(Map({
-                        id: id,
-                        params: blocks._getBlockParams(blocks.getBlock(variable.id))
-                    }));
+                    const monitorBlock = blocks.getBlock(variable.id);
+                    if (monitorBlock) {
+                        this.runtime.requestUpdateMonitor(Map({
+                            id: id,
+                            params: blocks._getBlockParams(monitorBlock)
+                        }));
+                    }
                 }
 
             }
@@ -261,6 +329,101 @@ class Target extends EventEmitter {
                 this.runtime.monitorBlocks.deleteBlock(id);
                 this.runtime.requestRemoveMonitor(id);
             }
+        }
+    }
+
+    /**
+     * Fixes up variable references in this target avoiding conflicts with
+     * pre-existing variables in the same scope.
+     * This is used when uploading this target as a new sprite into an existing
+     * project, where the new sprite may contain references
+     * to variable names that already exist as global variables in the project
+     * (and thus are in scope for variable references in the given sprite).
+     *
+     * If the given target has a block that references an existing global variable and that
+     * variable *does not* exist in the target itself (e.g. it was a global variable in the
+     * project the sprite was originally exported from), fix the variable references in this sprite
+     * to reference the id of the pre-existing global variable.
+     * If the given target has a block that references an existing global variable and that
+     * variable does exist in the target itself (e.g. it's a local variable in the sprite being uploaded),
+     * then the variable is renamed to distinguish itself from the pre-existing variable.
+     * All blocks that reference the local variable will be updated to use the new name.
+     */
+    fixUpVariableReferences () {
+        if (!this.runtime) return; // There's no runtime context to conflict with
+        if (this.isStage) return; // Stage can't have variable conflicts with itself (and also can't be uploaded)
+        const stage = this.runtime.getTargetForStage();
+        if (!stage || !stage.variables) return;
+
+        const renameConflictingLocalVar = (id, name, type) => {
+            const conflict = stage.lookupVariableByNameAndType(name, type);
+            if (conflict) {
+                const newName = StringUtil.unusedName(
+                    `${this.getName()}: ${name}`,
+                    this.getAllVariableNamesInScopeByType(type));
+                this.renameVariable(id, newName);
+                return newName;
+            }
+            return null;
+        };
+
+        const allReferences = this.blocks.getAllVariableAndListReferences();
+        const unreferencedLocalVarIds = [];
+        if (Object.keys(this.variables).length > 0) {
+            for (const localVarId in this.variables) {
+                if (!this.variables.hasOwnProperty(localVarId)) continue;
+                if (!allReferences[localVarId]) unreferencedLocalVarIds.push(localVarId);
+            }
+        }
+        const conflictIdsToReplace = Object.create(null);
+        for (const varId in allReferences) {
+            // We don't care about which var ref we get, they should all have the same var info
+            const varRef = allReferences[varId][0];
+            const varName = varRef.referencingField.value;
+            const varType = varRef.type;
+            if (this.lookupVariableById(varId)) {
+                // Found a variable with the id in either the target or the stage,
+                // figure out which one.
+                if (this.variables.hasOwnProperty(varId)) {
+                    // If the target has the variable, then check whether the stage
+                    // has one with the same name and type. If it does, then rename
+                    // this target specific variable so that there is a distinction.
+                    const newVarName = renameConflictingLocalVar(varId, varName, varType);
+
+                    if (newVarName) {
+                        // We are not calling this.blocks.updateBlocksAfterVarRename
+                        // here because it will search through all the blocks. We already
+                        // have access to all the references for this var id.
+                        allReferences[varId].map(ref => {
+                            ref.referencingField.value = newVarName;
+                            return ref;
+                        });
+                    }
+                }
+            } else {
+                const existingVar = this.lookupVariableByNameAndType(varName, varType);
+                if (existingVar && !conflictIdsToReplace[varId]) {
+                    conflictIdsToReplace[varId] = existingVar.id;
+                }
+            }
+        }
+        // Rename any local variables that were missed above because they aren't
+        // referenced by any blocks
+        for (const id in unreferencedLocalVarIds) {
+            const varId = unreferencedLocalVarIds[id];
+            const name = this.variables[varId].name;
+            const type = this.variables[varId].type;
+            renameConflictingLocalVar(varId, name, type);
+        }
+        // Finally, handle global var conflicts (e.g. a sprite is uploaded, and has
+        // blocks referencing some variable that the sprite does not own, and this
+        // variable conflicts with a global var)
+        for (const conflictId in conflictIdsToReplace) {
+            const existingId = conflictIdsToReplace[conflictId];
+            allReferences[conflictId].map(varRef => {
+                varRef.referencingField.id = existingId;
+                return varRef;
+            });
         }
     }
 
