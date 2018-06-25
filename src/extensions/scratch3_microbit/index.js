@@ -66,11 +66,8 @@ class MicroBit {
          * @type {BLESession}
          * @private
          */
-        this._ble = new BLESession(this._runtime, extensionId, {
-            filters: [
-                {services: [BLEUUID.service]}
-            ]
-        }, this._onSessionConnect.bind(this));
+        this._ble = null;
+        this._runtime.registerExtensionDevice(extensionId, this);
 
         /**
          * The most recently received value for each sensor.
@@ -107,6 +104,28 @@ class MicroBit {
                 timeout: false
             }
         };
+    }
+
+    // TODO: keep here?
+    /**
+     * Called by the runtime when user wants to scan for a device.
+     */
+    startDeviceScan () {
+        console.log('making a new BLE session');
+        this._ble = new BLESession(this._runtime, {
+            filters: [
+                {services: [BLEUUID.service]}
+            ]
+        }, this._onSessionConnect.bind(this));
+    }
+
+    // TODO: keep here?
+    /**
+     * Called by the runtime when user wants to connect to a certain device.
+     * @param {number} id - the id of the device to connect to.
+     */
+    connectDevice (id) {
+        this._ble.connectDevice(id);
     }
 
     /**

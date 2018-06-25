@@ -899,7 +899,7 @@ class Runtime extends EventEmitter {
 
     startDeviceScan (extensionId) {
         if (this.extensionDevices[extensionId]) {
-            this.extensionDevices[extensionId].requestDevice();
+            this.extensionDevices[extensionId].startDeviceScan();
         }
     }
 

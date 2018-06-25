@@ -7,29 +7,23 @@ class BLESession extends JSONRPCWebSocket {
      * A BLE device session object.  It handles connecting, over web sockets, to
      * BLE devices, and reading and writing data to them.
      * @param {Runtime} runtime - the Runtime for sending/receiving GUI update events.
-     * @param {string} extensionId - the id of the extension.
      * @param {object} deviceOptions - the list of options for device discovery.
      * @param {object} connectCallback - a callback for connection.
      */
-    constructor (runtime, extensionId, deviceOptions, connectCallback) {
+    constructor (runtime, deviceOptions, connectCallback) {
         const ws = new WebSocket(ScratchLinkWebSocket);
         super(ws);
 
-        this._socketPromise = new Promise((resolve, reject) => {
-            this._ws.onopen = resolve;
-            this._ws.onerror = this._sendError; // TODO: socket error?
-            // TODO: generally handle socket disconnects as errors
-        });
+        this._ws = ws;
+        this._ws.onopen = this.requestDevice.bind(this); // only call request device after socket opens
+        this._ws.onerror = this._sendError.bind(this, 'ws onerror');
+        this._ws.onclose = this._sendError.bind(this, 'ws onclose');
 
         this._availablePeripherals = {};
         this._connectCallback = connectCallback;
         this._characteristicDidChangeCallback = null;
         this._deviceOptions = deviceOptions;
         this._runtime = runtime;
-        this._ws = ws;
-        this._ws.onclose = this._sendError();
-
-        this._runtime.registerExtensionDevice(extensionId, this);
     }
 
     /**
@@ -37,17 +31,12 @@ class BLESession extends JSONRPCWebSocket {
      * If the web socket is not yet open, request when the socket promise resolves.
      */
     requestDevice () {
-        // TODO: add timeout for 'no devices yet found' ?
-        if (this._ws.readyState === 1) {
-            // TODO: what if discover doesn't initiate?
+        if (this._ws.readyState === 1) { // is this needed since it's only called on ws.onopen?
+            // TODO: start a 'discover' timeout
             this.sendRemoteRequest('discover', this._deviceOptions)
-                .catch(e => this._sendError(e));
-        } else {
-            // Try again to connect to the websocket
-            // TODO: what if discover doesn't initiate?
-            this._socketPromise(this.sendRemoteRequest('discover', this._deviceOptions))
-                .catch(e => this._sendError(e));
+                .catch(e => this._sendError('error on discover')); // never reached?
         }
+        // TODO: else?
     }
 
     /**
@@ -58,12 +47,11 @@ class BLESession extends JSONRPCWebSocket {
     connectDevice (id) {
         this.sendRemoteRequest('connect', {peripheralId: id})
             .then(() => {
+                console.log('should have connected');
                 this._runtime.emit(this._runtime.constructor.PERIPHERAL_CONNECTED);
                 this._connectCallback();
             })
             .catch(e => {
-                // TODO: what if the peripheral loses power? (web socket closes?)
-                // TODO: what if tries to connect to an unknown peripheral id?
                 this._sendError(e);
             });
     }
@@ -75,7 +63,6 @@ class BLESession extends JSONRPCWebSocket {
      * @return {object} - optional return value.
      */
     didReceiveCall (method, params) {
-        // TODO: Add peripheral 'undiscover' handling with timeout?
         switch (method) {
         case 'didDiscoverPeripheral':
             this._availablePeripherals[params.peripheralId] = params;
@@ -83,6 +70,7 @@ class BLESession extends JSONRPCWebSocket {
                 this._runtime.constructor.PERIPHERAL_LIST_UPDATE,
                 this._availablePeripherals
             );
+            // TODO: cancel a discover timeout if one is active
             break;
         case 'characteristicDidChange':
             this._characteristicDidChangeCallback(params.message);
@@ -130,7 +118,8 @@ class BLESession extends JSONRPCWebSocket {
     }
 
     _sendError (e) {
-        console.log(`BLESession error ${e}`);
+        console.log(`BLESession error:`);
+        console.log(e);
         this._runtime.emit(this._runtime.constructor.PERIPHERAL_ERROR);
     }
 }
