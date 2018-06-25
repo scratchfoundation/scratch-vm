@@ -1,4 +1,5 @@
 const JSONRPCWebSocket = require('../util/jsonrpc-web-socket');
+const log = require('../util/log');
 const ScratchLinkWebSocket = 'ws://localhost:20110/scratch/ble';
 
 class BLESession extends JSONRPCWebSocket {
@@ -34,7 +35,7 @@ class BLESession extends JSONRPCWebSocket {
         if (this._ws.readyState === 1) { // is this needed since it's only called on ws.onopen?
             // TODO: start a 'discover' timeout
             this.sendRemoteRequest('discover', this._deviceOptions)
-                .catch(e => this._sendError('error on discover')); // never reached?
+                .catch(e => this._sendError(e)); // never reached?
         }
         // TODO: else?
     }
@@ -47,7 +48,7 @@ class BLESession extends JSONRPCWebSocket {
     connectDevice (id) {
         this.sendRemoteRequest('connect', {peripheralId: id})
             .then(() => {
-                console.log('should have connected');
+                log.info('should have connected');
                 this._runtime.emit(this._runtime.constructor.PERIPHERAL_CONNECTED);
                 this._connectCallback();
             })
@@ -118,8 +119,8 @@ class BLESession extends JSONRPCWebSocket {
     }
 
     _sendError (e) {
-        console.log(`BLESession error:`);
-        console.log(e);
+        log.error(`BLESession error:`);
+        log.error(e);
         this._runtime.emit(this._runtime.constructor.PERIPHERAL_ERROR);
     }
 }

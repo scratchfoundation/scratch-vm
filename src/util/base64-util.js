@@ -28,6 +28,21 @@ class Base64Util {
         return base64;
     }
 
+    /**
+    * Convert an array buffer to a base64 encoded string.
+    * @param {array} buffer - an array buffer to convert.
+    * @return {string} - the base64 encoded string.
+    */
+    static arrayBufferToBase64 (buffer) {
+        let binary = '';
+        const bytes = new Uint8Array(buffer);
+        const len = bytes.byteLength;
+        for (let i = 0; i < len; i++) {
+            binary += String.fromCharCode(bytes[ i ]);
+        }
+        return btoa(binary);
+    }
+
 }
 
 module.exports = Base64Util;
