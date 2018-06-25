@@ -71,13 +71,11 @@ class BTSession extends JSONRPCWebSocket {
         // TODO: Add peripheral 'undiscover' handling
         switch (method) {
         case 'didDiscoverPeripheral':
-            /* this._availablePeripherals[params.peripheralId] = params;
+            this._availablePeripherals[params.peripheralId] = params;
             this._runtime.emit(
                 this._runtime.constructor.PERIPHERAL_LIST_UPDATE,
                 this._availablePeripherals
-            ); */
-            // TODO: auto-connect temporary until button is added
-            this.connectDevice(params.peripheralId);
+            );
             // TODO: cancel a discover timeout if one is active
             break;
         case 'didReceiveMessage':

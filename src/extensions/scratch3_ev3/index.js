@@ -56,7 +56,6 @@ const MOTOR_PORTS = [
  *       the EV3 hub.
  * @type {array}
  */
- // TODO: are these names/values correct?
 const SENSOR_PORTS = [
     {
         name: '1',
@@ -97,9 +96,6 @@ class EV3 {
          */
         this._bt = null;
         this._runtime.registerExtensionDevice(extensionId, this);
-
-        // TODO: auto-connect temporary - until button is added
-        this.startDeviceScan();
     }
 
     // TODO: keep here?
@@ -364,7 +360,7 @@ class Scratch3Ev3Blocks {
          */
         this.runtime = runtime;
 
-        // Create a new MicroBit device instance
+        // Create a new EV3 device instance
         this._device = new EV3(this.runtime, Scratch3Ev3Blocks.EXTENSION_ID);
     }
 
@@ -377,6 +373,7 @@ class Scratch3Ev3Blocks {
             id: Scratch3Ev3Blocks.EXTENSION_ID,
             name: 'LEGO MINDSTORMS EV3',
             iconURI: null,
+            showStatusButton: true,
             blocks: [
                 {
                     opcode: 'motorTurnClockwise',
