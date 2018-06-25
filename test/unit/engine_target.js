@@ -306,7 +306,7 @@ test('fixUpVariableReferences fixes sprite global var conflicting with project g
     t.type(target.blocks.getBlock('a block').fields.VARIABLE, 'object');
     t.equal(target.blocks.getBlock('a block').fields.VARIABLE.id, 'mock var id');
 
-    target.fixUpVariableReferences(target, runtime);
+    target.fixUpVariableReferences();
 
     t.equal(Object.keys(target.variables).length, 0);
     t.equal(Object.keys(stage.variables).length, 1);
@@ -344,7 +344,7 @@ test('fixUpVariableReferences fixes sprite local var conflicting with project gl
     t.equal(target.blocks.getBlock('a block').fields.VARIABLE.id, 'mock var id');
     t.equal(target.variables['mock var id'].name, 'a mock variable');
 
-    target.fixUpVariableReferences(target, runtime);
+    target.fixUpVariableReferences();
 
     t.equal(Object.keys(target.variables).length, 1);
     t.equal(Object.keys(stage.variables).length, 1);
@@ -378,7 +378,7 @@ test('fixUpVariableReferences fixes conflicting sprite local var without blocks 
     t.equal(Object.keys(stage.variables).length, 1);
     t.equal(target.variables['mock var id'].name, 'a mock variable');
 
-    target.fixUpVariableReferences(target, runtime);
+    target.fixUpVariableReferences();
 
     t.equal(Object.keys(target.variables).length, 1);
     t.equal(Object.keys(stage.variables).length, 1);
@@ -414,7 +414,7 @@ test('fixUpVariableReferences does not change variable name if there is no varia
     t.equal(target.blocks.getBlock('a block').fields.VARIABLE.id, 'mock var id');
     t.equal(target.variables['mock var id'].name, 'a mock variable');
 
-    target.fixUpVariableReferences(target, runtime);
+    target.fixUpVariableReferences();
 
     t.equal(Object.keys(target.variables).length, 1);
     t.equal(Object.keys(stage.variables).length, 2);

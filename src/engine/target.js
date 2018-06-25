@@ -348,8 +348,6 @@ class Target extends EventEmitter {
      * variable does exist in the target itself (e.g. it's a local variable in the sprite being uploaded),
      * then the variable is renamed to distinguish itself from the pre-existing variable.
      * All blocks that reference the local variable will be updated to use the new name.
-     // * @param {Target} target The new target being uploaded, with potential variable conflicts
-     // * @param {Runtime} runtime The runtime context with any pre-existing variables
      */
     fixUpVariableReferences () {
         if (!this.runtime) return; // There's no runtime context to conflict with
