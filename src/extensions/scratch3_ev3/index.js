@@ -123,6 +123,48 @@ class EV3 {
         this._bt.connectDevice(id);
     }
 
+    get distance () {
+        if (!this.connected) return;
+
+        // TODO: read distance sensor data
+        log.info(`return distance`);
+    }
+
+    get brightness () {
+        if (!this.connected) return;
+
+        // TODO: read brightness sensor data
+        log.info(`return brightness`);
+    }
+
+    getMotorPosition (args) {
+        if (!this.connected) return;
+
+        // TODO: read motor position data
+        log.info(`return motor ${args} position`);
+    }
+
+    isButtonPressed (args) {
+        if (!this.connected) return;
+
+        // TODO: read button pressed data
+        log.info(`return button ${args} pressed`);
+    }
+
+    isDistanceLessThan (args) {
+        if (!this.connected) return;
+
+        // TODO: read distance sensor data
+        log.info(`return distance less than ${args}`);
+    }
+
+    isBrightnessLessThan (args) {
+        if (!this.connected) return;
+
+        // TODO: read brightness sensor data
+        log.info(`return brightness less than ${args}`);
+    }
+
     beep () {
         if (!this.connected) return;
         this._bt.sendMessage({
@@ -181,6 +223,27 @@ class EV3 {
                 resolve();
             }, time);
         });
+    }
+
+    motorRotate (port, degrees) {
+        if (!this.connected) return;
+
+        // TODO: Build up motor command
+        log.info(`motor rotate port: ${port} and degrees: ${degrees}`);
+    }
+
+    motorSetPosition (port, degrees) {
+        if (!this.connected) return;
+
+        // TODO: Build up motor command
+        log.info(`motor set position port: ${port} and degrees: ${degrees}`);
+    }
+
+    motorSetPower (port, power) {
+        if (!this.connected) return;
+
+        // TODO: Build up motor command
+        log.info(`motor set power port: ${port} and degrees: ${power}`);
     }
 
     _applyPrefix (n, cmd) {
@@ -493,59 +556,81 @@ class Scratch3Ev3Blocks {
     }
 
     motorTurnClockwise (args) {
-        // Validate arguments
         const port = Cast.toNumber(args.PORT);
         const time = Cast.toNumber(args.TIME) * 1000;
 
         this._device.motorTurnClockwise(port, time);
+        return;
     }
 
     motorTurnCounterClockwise (args) {
-        // Validate arguments
         const port = Cast.toNumber(args.PORT);
         const time = Cast.toNumber(args.TIME) * 1000;
 
         this._device.motorTurnCounterClockwise(port, time);
+        return;
     }
 
     motorRotate (args) {
-        log.info(`motor rotate: ${args}`);
+        const port = Cast.toNumber(args.PORT);
+        const degrees = Cast.toNumber(args.DEGREES);
+
+        this._device.motorRotate(port, degrees);
+        return;
     }
 
     motorSetPosition (args) {
-        log.info(`motor set position: ${args}`);
+        const port = Cast.toNumber(args.PORT);
+        const degrees = Cast.toNumber(args.DEGREES);
+
+        this._device.motorSetPosition(port, degrees);
+        return;
     }
 
     motorSetPower (args) {
-        log.info(`motor set power: ${args}`);
+        const port = Cast.toNumber(args.PORT);
+        const power = Cast.toNumber(args.POWER);
+
+        this._device.motorSetPower(port, power);
+        return;
     }
 
     getMotorPosition (args) {
-        log.info(`get motor position: ${args}`);
+        const port = Cast.toNumber(args.PORT);
+
+        return this._device.getMotorPosition(port);
     }
 
     whenButtonPressed (args) {
-        log.info(`when button pressed: ${args}`);
+        const port = Cast.toNumber(args.PORT);
+
+        return this._device.isButtonPressed(port);
     }
 
     whenDistanceLessThan (args) {
-        log.info(`when distance less than: ${args}`);
+        const distance = Cast.toNumber(args.DISTANCE);
+
+        return this._device.isDistanceLessThan(distance);
     }
 
     whenBrightnessLessThan (args) {
-        log.info(`when brightness less than: ${args}`);
+        const brightness = Cast.toNumber(args.DISTANCE);
+
+        return this._device.isBrightnessLessThan(brightness);
     }
 
     buttonPressed (args) {
-        log.info(`button pressed: ${args}`);
+        const port = Cast.toNumber(args.PORT);
+
+        return this._device.isButtonPressed(port);
     }
 
     getDistance () {
-        log.info(`distance`);
+        return this._device.distance;
     }
 
     getBrightness () {
-        log.info(`brightness`);
+        return this._device.brightness;
     }
 
     beep () {
