@@ -594,6 +594,7 @@ class Scratch3KOOVBlocks {
 
         const frame = thread.peekStackFrame();
         if (frame.servomotor_synchronized_motion) {
+            frame.servomotor_synchronized_motion = false;
             /*
              * Second call.  Now we have all expected servo motor
              * positions.  Let's move them.
