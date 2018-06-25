@@ -786,7 +786,7 @@ class Scratch3MusicBlocks {
 
         if (typeof player === 'undefined') return;
 
-        if (player.isPlaying) {
+        if (player.isPlaying && !player.isStarting) {
             // Take the internal player state and create a new player with it.
             // `.play` does this internally but then instructs the sound to
             // stop.
@@ -889,7 +889,7 @@ class Scratch3MusicBlocks {
 
         const player = this._instrumentPlayerNoteArrays[inst][note];
 
-        if (player.isPlaying) {
+        if (player.isPlaying && !player.isStarting) {
             // Take the internal player state and create a new player with it.
             // `.play` does this internally but then instructs the sound to
             // stop.
