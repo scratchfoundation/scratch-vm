@@ -281,7 +281,19 @@ class VirtualMachine extends EventEmitter {
         }
     }
 
-    exportSprite (targetId) {
+    /**
+     * Exports a sprite in the sprite3 format.
+     * @param {string} targetId ID of the target to export
+     * @param {string=} optZipType Optional type that the resulting
+     * zip should be outputted in. Options are: base64, binarystring,
+     * array, uint8array, arraybuffer, blob, or nodebuffer. Defaults to
+     * blob if argument not provided.
+     * See https://stuk.github.io/jszip/documentation/api_jszip/generate_async.html#type-option
+     * for more information about these options.
+     * @return {object} A generated zip of the sprite and its assets in the format
+     * specified by optZipType or blob by default.
+     */
+    exportSprite (targetId, optZipType) {
         const soundDescs = serializeSounds(this.runtime, targetId);
         const costumeDescs = serializeCostumes(this.runtime, targetId);
         const spriteJson = JSON.stringify(sb3.serialize(this.runtime, targetId));
@@ -291,7 +303,7 @@ class VirtualMachine extends EventEmitter {
         this._addFileDescsToZip(soundDescs.concat(costumeDescs), zip);
 
         return zip.generateAsync({
-            type: 'blob',
+            type: typeof optZipType === 'string' ? optZipType : 'blob',
             compression: 'DEFLATE',
             compressionOptions: {
                 level: 6
