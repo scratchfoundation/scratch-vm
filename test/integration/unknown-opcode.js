@@ -31,6 +31,24 @@ test('unknown opcode', t => {
         t.equal(blocks.getBlock(topBlockId).opcode, 'sound_play');
         t.equal(blocks.getBlock(secondBlockId).opcode, 'sound_play');
         t.equal(thirdBlockId, null);
+
+        const target = vm.runtime.targets[0];
+        const topCommentId = blocks.getBlock(topBlockId).comment;
+        const secondCommentId = blocks.getBlock(secondBlockId).comment;
+
+        t.equal(target.comments[topCommentId].text, 'pop1 comment');
+        t.equal(target.comments[secondCommentId].text, 'pop2 comment');
+
+        // The comment previously attached to the undefined block should become
+        // a workspace comment, at 0/0, with the same text as it had.
+        const undefinedCommentId = Object.keys(target.comments).filter(id =>
+            id !== topCommentId && id !== secondCommentId)[0];
+        const undefinedComment = target.comments[undefinedCommentId];
+        t.equal(undefinedComment.blockId, null);
+        t.equal(undefinedComment.text, 'undefined comment');
+        t.equal(undefinedComment.x, 0);
+        t.equal(undefinedComment.y, 0);
+
         t.end();
         process.nextTick(process.exit);
     });
