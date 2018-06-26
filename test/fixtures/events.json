@@ -90,5 +90,17 @@
         "type": "comment_create",
         "commentId": "a comment",
         "xy": {"x": 10, "y": 20}
+    },
+    "mockVariableBlock": {
+        "name": "block",
+        "xml": {
+            "outerHTML": "<block type='data_variable' id='a block' x='0' y='0'><field name='VARIABLE' id='mock var id' variabletype=''>a mock variable</field></block>"
+        }
+    },
+    "mockListBlock": {
+        "name": "block",
+        "xml": {
+            "outerHTML": "<block type='data_listcontents' id='another block' x='0' y='0'><field name='LIST' id='mock list id' variabletype=''>a mock list</field></block>"
+        }
     }
 }

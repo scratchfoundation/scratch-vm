@@ -460,17 +460,27 @@ const serializeTarget = function (target, extensions) {
 
 /**
  * Serializes the specified VM runtime.
- * @param  {!Runtime} runtime VM runtime instance to be serialized.
+ * @param {!Runtime} runtime VM runtime instance to be serialized.
+ * @param {string=} targetId Optional target id if serializing only a single target
  * @return {object} Serialized runtime instance.
  */
-const serialize = function (runtime) {
+const serialize = function (runtime, targetId) {
     // Fetch targets
     const obj = Object.create(null);
     // Create extension set to hold extension ids found while serializing targets
     const extensions = new Set();
-    const flattenedOriginalTargets = JSON.parse(JSON.stringify(
+    const flattenedOriginalTargets = JSON.parse(JSON.stringify(targetId ?
+        [runtime.getTargetById(targetId)] :
         runtime.targets.filter(target => target.isOriginal)));
-    obj.targets = flattenedOriginalTargets.map(t => serializeTarget(t, extensions));
+
+    const serializedTargets = flattenedOriginalTargets.map(t => serializeTarget(t, extensions));
+
+    if (targetId) {
+        return serializedTargets[0];
+    }
+
+    obj.targets = serializedTargets;
+
 
     // TODO Serialize monitors
 
@@ -819,7 +829,7 @@ const parseScratchObject = function (object, runtime, extensions, zip) {
         // any translation that needs to happen will happen in the process
         // of building up the costume object into an sb3 format
         return deserializeSound(sound, runtime, zip)
-            .then(() => loadSound(sound, runtime));
+            .then(() => loadSound(sound, runtime, sprite));
         // Only attempt to load the sound after the deserialization
         // process has been completed.
     });
@@ -945,10 +955,11 @@ const deserialize = function (json, runtime, zip, isSingleSprite) {
     return Promise.all(
         ((isSingleSprite ? [json] : json.targets) || []).map(target =>
             parseScratchObject(target, runtime, extensions, zip))
-    ).then(targets => ({
-        targets,
-        extensions
-    }));
+    )
+        .then(targets => ({
+            targets,
+            extensions
+        }));
 };
 
 module.exports = {

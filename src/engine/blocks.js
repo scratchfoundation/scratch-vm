@@ -6,6 +6,7 @@ const Clone = require('../util/clone');
 const {Map} = require('immutable');
 const BlocksExecuteCache = require('./blocks-execute-cache');
 const log = require('../util/log');
+const Variable = require('./variable');
 
 /**
  * @fileoverview
@@ -668,6 +669,44 @@ class Blocks {
         delete this._blocks[blockId];
 
         this.resetCache();
+    }
+
+    /**
+     * Returns a map of all references to variables or lists from blocks
+     * in this block container.
+     * @return {object} A map of variable ID to a list of all variable references
+     * for that ID. A variable reference contains the field referencing that variable
+     * and also the type of the variable being referenced.
+     */
+    getAllVariableAndListReferences () {
+        const blocks = this._blocks;
+        const allReferences = Object.create(null);
+        for (const blockId in blocks) {
+            let varOrListField = null;
+            let varType = null;
+            if (blocks[blockId].fields.VARIABLE) {
+                varOrListField = blocks[blockId].fields.VARIABLE;
+                varType = Variable.SCALAR_TYPE;
+            } else if (blocks[blockId].fields.LIST) {
+                varOrListField = blocks[blockId].fields.LIST;
+                varType = Variable.LIST_TYPE;
+            }
+            if (varOrListField) {
+                const currVarId = varOrListField.id;
+                if (allReferences[currVarId]) {
+                    allReferences[currVarId].push({
+                        referencingField: varOrListField,
+                        type: varType
+                    });
+                } else {
+                    allReferences[currVarId] = [{
+                        referencingField: varOrListField,
+                        type: varType
+                    }];
+                }
+            }
+        }
+        return allReferences;
     }
 
     /**
