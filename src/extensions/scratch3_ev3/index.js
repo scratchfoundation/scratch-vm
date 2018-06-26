@@ -86,8 +86,14 @@ class EV3 {
          */
         this._runtime = runtime;
 
+        /**
+         * State
+         */
         this.connected = false;
         this.speed = 50;
+        this._sensors = {
+            distance: 0
+        };
 
         /**
          * The Bluetooth connection session for reading/writing device data.
@@ -107,7 +113,7 @@ class EV3 {
         this._bt = new BTSession(this._runtime, {
             majorDeviceClass: 8,
             minorDeviceClass: 1
-        }, this._onSessionConnect.bind(this));
+        }, this._onSessionConnect.bind(this), this._onSessionMessage.bind(this));
     }
 
     // TODO: keep here?
@@ -122,8 +128,7 @@ class EV3 {
     get distance () {
         if (!this.connected) return;
 
-        // TODO: read distance sensor data
-        log.info(`return distance`);
+        return this._sensors.distance;
     }
 
     get brightness () {
@@ -145,13 +150,6 @@ class EV3 {
 
         // TODO: read button pressed data
         log.info(`return button ${args} pressed`);
-    }
-
-    isDistanceLessThan (args) {
-        if (!this.connected) return;
-
-        // TODO: read distance sensor data
-        log.info(`return distance less than ${args}`);
     }
 
     isBrightnessLessThan (args) {
@@ -333,7 +331,62 @@ class EV3 {
     _onSessionConnect () {
         log.info('bt device connected!');
         this.connected = true;
-        // start reading data?
+
+        // Start reading data
+        const intervalID = window.setInterval(this._getSessionData.bind(this), 300);
+        // TODO: clear intervalID later on disconnect, etc.
+    }
+
+    _getSessionData () {
+        // GET EV3 DISTANCE PORT 0
+        /*
+        99 [153] input device
+        1D [ 29] ready si
+        00 [  0] layer (this brick)
+        00 [  0] sensor port 0
+        00 [  0] do not change type
+        01 [  1] mode 1 = EV3-Ultrasonic-Inch
+        01 [  1] one data set
+        60 [ 96] global var index
+        */
+        this._bt.sendMessage({
+            message: 'DQAAAAAEAJkdAAAAAQFg', // [13, 0, 0, 0, 0, 4, 0, 153, 29, 0, 0, 0, 1, 1, 96]
+            encoding: 'base64'
+        });
+
+        // GET EV3 BRIGHTNESS PORT 1
+        /*
+        99 [153] input device
+        1D [ 29] ready si
+        00 [  0] layer (this brick)
+        01 [  1] sensor port 1
+        00 [  0] do not change type
+        01 [  1] mode 1 = EV3-Color-Ambient
+        01 [  1] one data set
+        60 [ 96] global var index
+        */
+        /*
+        this._bt.sendMessage({
+            message: 'DQAAAAAEAJkdAAEAAQFg', // [13, 0, 0, 0, 0, 4, 0, 153, 29, 0, 1, 0, 1, 1, 96]
+            encoding: 'base64'
+        });
+        */
+    }
+
+    _onSessionMessage (params) {
+        const message = params.message;
+        const array = Base64Util.base64ToUint8Array(message);
+
+        // TODO: this only gets distance so far
+        const distance = this._array2float([array[5], array[6], array[7], array[8]]);
+        this._sensors.distance = distance;
+    }
+
+    // TODO: put elsewhere, in a util
+    _array2float (list) {
+        const buffer = new Uint8Array(list).buffer;
+        const view = new DataView(buffer);
+        return view.getFloat32(0, true);
     }
 
 }
@@ -486,7 +539,7 @@ class Scratch3Ev3Blocks {
                     arguments: {
                         DISTANCE: {
                             type: ArgumentType.NUMBER,
-                            defaultValue: 50
+                            defaultValue: 5
                         }
                     }
                 },
@@ -607,7 +660,7 @@ class Scratch3Ev3Blocks {
     whenDistanceLessThan (args) {
         const distance = Cast.toNumber(args.DISTANCE);
 
-        return this._device.isDistanceLessThan(distance);
+        return this._device.distance < distance;
     }
 
     whenBrightnessLessThan (args) {

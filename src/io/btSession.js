@@ -11,7 +11,7 @@ class BTSession extends JSONRPCWebSocket {
      * @param {object} deviceOptions - the list of options for device discovery.
      * @param {object} connectCallback - a callback for connection.
      */
-    constructor (runtime, deviceOptions, connectCallback) {
+    constructor (runtime, deviceOptions, connectCallback, messageCallback) {
         const ws = new WebSocket(ScratchLinkWebSocket);
         super(ws);
 
@@ -24,6 +24,7 @@ class BTSession extends JSONRPCWebSocket {
         this._connectCallback = connectCallback;
         this._characteristicDidChangeCallback = null;
         this._deviceOptions = deviceOptions;
+        this._messageCallback = messageCallback;
         this._runtime = runtime;
     }
 
@@ -79,7 +80,7 @@ class BTSession extends JSONRPCWebSocket {
             // TODO: cancel a discover timeout if one is active
             break;
         case 'didReceiveMessage':
-            // TODO: do something on received message
+            this._messageCallback(params); // TODO: refine?
             break;
         default:
             return 'nah';
