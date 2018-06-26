@@ -272,14 +272,21 @@ const compressInputTree = function (block, blocks) {
  * Serialize the given blocks object (representing all the blocks for the target
  * currently being serialized.)
  * @param {object} blocks The blocks to be serialized
- * @return {object} The serialized blocks with compressed inputs and compressed
- * primitives.
+ * @return {Array} An array of the serialized blocks with compressed inputs and
+ * compressed primitives and the list of all extension IDs present
+ * in the serialized blocks.
  */
 const serializeBlocks = function (blocks) {
     const obj = Object.create(null);
+    const extensionIDs = new Set();
     for (const blockID in blocks) {
         if (!blocks.hasOwnProperty(blockID)) continue;
         obj[blockID] = serializeBlock(blocks[blockID], blocks);
+        const index = blocks[blockID].opcode.indexOf('_');
+        const prefix = blocks[blockID].opcode.substring(0, index);
+        if (CORE_EXTENSIONS.indexOf(prefix) === -1) {
+            if (prefix !== '') extensionIDs.add(prefix);
+        }
     }
     // once we have completed a first pass, do a second pass on block inputs
     for (const blockID in obj) {
@@ -308,7 +315,7 @@ const serializeBlocks = function (blocks) {
             delete obj[blockID];
         }
     }
-    return obj;
+    return [obj, Array.from(extensionIDs)];
 };
 
 /**
@@ -412,17 +419,19 @@ const serializeComments = function (comments) {
  * Serialize the given target. Only serialize properties that are necessary
  * for saving and loading this target.
  * @param {object} target The target to be serialized.
+ * @param {Set} extensions A set of extensions to add extension IDs to
  * @return {object} A serialized representation of the given target.
  */
-const serializeTarget = function (target) {
+const serializeTarget = function (target, extensions) {
     const obj = Object.create(null);
+    let targetExtensions = [];
     obj.isStage = target.isStage;
     obj.name = obj.isStage ? 'Stage' : target.name;
     const vars = serializeVariables(target.variables);
     obj.variables = vars.variables;
     obj.lists = vars.lists;
     obj.broadcasts = vars.broadcasts;
-    obj.blocks = serializeBlocks(target.blocks);
+    [obj.blocks, targetExtensions] = serializeBlocks(target.blocks);
     obj.comments = serializeComments(target.comments);
     obj.currentCostume = target.currentCostume;
     obj.costumes = target.costumes.map(serializeCostume);
@@ -441,6 +450,11 @@ const serializeTarget = function (target) {
         obj.draggable = target.draggable;
         obj.rotationStyle = target.rotationStyle;
     }
+
+    // Add found extensions to the extensions object
+    targetExtensions.forEach(extensionId => {
+        extensions.add(extensionId);
+    });
     return obj;
 };
 
@@ -453,11 +467,13 @@ const serializeTarget = function (target) {
 const serialize = function (runtime, targetId) {
     // Fetch targets
     const obj = Object.create(null);
+    // Create extension set to hold extension ids found while serializing targets
+    const extensions = new Set();
     const flattenedOriginalTargets = JSON.parse(JSON.stringify(targetId ?
         [runtime.getTargetById(targetId)] :
         runtime.targets.filter(target => target.isOriginal)));
 
-    const serializedTargets = flattenedOriginalTargets.map(t => serializeTarget(t, runtime));
+    const serializedTargets = flattenedOriginalTargets.map(t => serializeTarget(t, extensions));
 
     if (targetId) {
         return serializedTargets[0];
@@ -467,6 +483,9 @@ const serialize = function (runtime, targetId) {
 
 
     // TODO Serialize monitors
+
+    // Assemble extension list
+    obj.extensions = Array.from(extensions);
 
     // Assemble metadata
     const meta = Object.create(null);
