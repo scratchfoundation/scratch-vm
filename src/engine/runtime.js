@@ -497,6 +497,7 @@ class Runtime extends EventEmitter {
         const categoryInfo = {
             id: extensionInfo.id,
             name: maybeFormatMessage(extensionInfo.name),
+            showStatusButton: extensionInfo.showStatusButton,
             blockIconURI: extensionInfo.blockIconURI,
             menuIconURI: extensionInfo.menuIconURI,
             color1: extensionInfo.colour || '#FF6680',
@@ -545,15 +546,6 @@ class Runtime extends EventEmitter {
                 const convertedMenu = this._buildMenuForScratchBlocks(menuName, menuItems, categoryInfo);
                 categoryInfo.menus.push(convertedMenu);
             }
-        }
-
-        // Add extension status button
-        if (extensionInfo.showStatusButton) {
-            categoryInfo.blocks.push({
-                info: {},
-                json: null,
-                xml: `<button type="status" extensionId="${categoryInfo.id}"></button>`
-            });
         }
 
         for (const blockInfo of extensionInfo.blocks) {
@@ -854,7 +846,13 @@ class Runtime extends EventEmitter {
             const menuIconXML = menuIconURI ?
                 `iconURI="${menuIconURI}"` : '';
 
-            xmlParts.push(`<category name="${name}" id="${categoryInfo.id}" ${colorXML} ${menuIconXML}>`);
+            let statusButtonXML = '';
+            if (categoryInfo.showStatusButton) {
+                statusButtonXML = 'showStatusButton="true"';
+            }
+
+            xmlParts.push(`<category name="${name}" id="${categoryInfo.id}"
+                ${statusButtonXML} ${colorXML} ${menuIconXML}>`);
             xmlParts.push.apply(xmlParts, paletteBlocks.map(block => block.xml));
             xmlParts.push('</category>');
         }
