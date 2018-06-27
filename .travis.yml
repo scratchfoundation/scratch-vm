@@ -13,8 +13,10 @@ cache:
   directories:
   - node_modules
 install:
-- npm --production=false install
-- npm --production=false update
+- ls -la node_modules
+- npm --production=false install --verbose
+- npm --production=false update --verbose
+- ls -la node_modules
 script: npm run $NPM_SCRIPT
 jobs:
     include:
