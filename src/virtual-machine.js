@@ -213,6 +213,14 @@ class VirtualMachine extends EventEmitter {
         this.runtime.connectToPeripheral(extensionId, peripheralId);
     }
 
+    disconnectExtensionSession (extensionId) {
+        this.runtime.disconnectExtensionSession(extensionId);
+    }
+
+    getPeripheralIsConnected (extensionId) {
+        return this.runtime.getPeripheralIsConnected(extensionId);
+    }
+
     /**
      * Load a Scratch project from a .sb, .sb2, .sb3 or json string.
      * @param {string | object} input A json string, object, or ArrayBuffer representing the project to load.

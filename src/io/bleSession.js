@@ -25,6 +25,8 @@ class BLESession extends JSONRPCWebSocket {
         this._characteristicDidChangeCallback = null;
         this._deviceOptions = deviceOptions;
         this._runtime = runtime;
+
+        this._connected = false;
     }
 
     /**
@@ -50,11 +52,27 @@ class BLESession extends JSONRPCWebSocket {
             .then(() => {
                 log.info('should have connected');
                 this._runtime.emit(this._runtime.constructor.PERIPHERAL_CONNECTED);
+                this._connected = true;
                 this._connectCallback();
             })
             .catch(e => {
                 this._sendError(e);
             });
+    }
+
+    /**
+     * Close the websocket.
+     */
+    disconnectSession () {
+        this._ws.close();
+        this._connected = false;
+    }
+
+    /**
+     * @return {bool} whether the peripheral is connected.
+     */
+    getPeripheralIsConnected () {
+        return this._connected;
     }
 
     /**
@@ -119,6 +137,7 @@ class BLESession extends JSONRPCWebSocket {
     }
 
     _sendError (e) {
+        this._connected = false;
         log.error(`BLESession error:`);
         log.error(e);
         this._runtime.emit(this._runtime.constructor.PERIPHERAL_ERROR);

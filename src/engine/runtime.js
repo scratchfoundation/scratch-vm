@@ -909,6 +909,20 @@ class Runtime extends EventEmitter {
         }
     }
 
+    disconnectExtensionSession (extensionId) {
+        if (this.extensionDevices[extensionId]) {
+            this.extensionDevices[extensionId].disconnectSession();
+        }
+    }
+
+    getPeripheralIsConnected (extensionId) {
+        let isConnected = false;
+        if (this.extensionDevices[extensionId]) {
+            isConnected = this.extensionDevices[extensionId].getPeripheralIsConnected();
+        }
+        return isConnected;
+    }
+
     /**
      * Retrieve the function associated with the given opcode.
      * @param {!string} opcode The opcode to look up.

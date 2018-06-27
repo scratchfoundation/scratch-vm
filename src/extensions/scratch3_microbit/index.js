@@ -128,6 +128,18 @@ class MicroBit {
         this._ble.connectDevice(id);
     }
 
+    disconnectSession () {
+        this._ble.disconnectSession();
+    }
+
+    getPeripheralIsConnected () {
+        let connected = false;
+        if (this._ble) {
+            connected = this._ble.getPeripheralIsConnected();
+        }
+        return connected;
+    }
+
     /**
      * @param {string} text - the text to display.
      * @return {Promise} - a Promise that resolves when writing to device.

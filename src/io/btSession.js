@@ -26,6 +26,8 @@ class BTSession extends JSONRPCWebSocket {
         this._deviceOptions = deviceOptions;
         this._messageCallback = messageCallback;
         this._runtime = runtime;
+
+        this._connected = false;
     }
 
     /**
@@ -51,12 +53,29 @@ class BTSession extends JSONRPCWebSocket {
             .then(() => {
                 log.info('should have connected');
                 this._runtime.emit(this._runtime.constructor.PERIPHERAL_CONNECTED);
+                this._connected = true;
                 this._connectCallback();
             })
             .catch(e => {
                 this._sendError(e);
             });
     }
+
+    /**
+     * Close the websocket.
+     */
+    disconnectSession () {
+        this._ws.close();
+        this._connected = false;
+    }
+
+    /**
+     * @return {bool} whether the peripheral is connected.
+     */
+    getPeripheralIsConnected () {
+        return this._connected;
+    }
+
 
     sendMessage (options) {
         return this.sendRemoteRequest('send', options);
