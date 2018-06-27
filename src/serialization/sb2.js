@@ -710,7 +710,7 @@ const parseBlock = function (sb2block, addBroadcastMsg, getVariableId, extension
         comments[commentIndex] : null;
     const blockMetadata = specMapBlock(sb2block);
     if (!blockMetadata) {
-        // No block opcode found, exclude this block, increment the comment id,
+        // No block opcode found, exclude this block, increment the commentIndex,
         // make all block comments into workspace comments and send them to zero/zero
         // to prevent serialization issues.
         if (commentsForParsedBlock) {
