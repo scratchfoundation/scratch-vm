@@ -133,7 +133,6 @@ const parseBlockList = function (blockList, addBroadcastMsg, getVariableId, exte
         // eslint-disable-next-line no-use-before-define
         const parsedBlockAndComments = parseBlock(block, addBroadcastMsg, getVariableId,
             extensions, comments, commentIndex);
-
         const parsedBlock = parsedBlockAndComments[0];
         // Update commentIndex
         commentIndex = parsedBlockAndComments[1];
@@ -711,8 +710,9 @@ const parseBlock = function (sb2block, addBroadcastMsg, getVariableId, extension
         comments[commentIndex] : null;
     const blockMetadata = specMapBlock(sb2block);
     if (!blockMetadata) {
-        // No block opcode found, exclude this block, increment the comment id and
-        // send all linked comments back to zero/zero to prevent serialization issues.
+        // No block opcode found, exclude this block, increment the comment id,
+        // make all block comments into workspace comments and send them to zero/zero
+        // to prevent serialization issues.
         if (commentsForParsedBlock) {
             commentsForParsedBlock.forEach(comment => {
                 comment.blockId = null;
