@@ -11,7 +11,7 @@ env:
 sudo: false
 cache:
   directories:
-  - node_modules
+  - $HOME/.npm
 install:
 - ls -la node_modules
 - npm --production=false install --verbose
