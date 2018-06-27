@@ -125,6 +125,18 @@ class EV3 {
         this._bt.connectDevice(id);
     }
 
+    disconnectSession () {
+        this._bt.disconnectSession();
+    }
+
+    getPeripheralIsConnected () {
+        let connected = false;
+        if (this._bt) {
+            connected = this._bt.getPeripheralIsConnected();
+        }
+        return connected;
+    }
+
     get distance () {
         if (!this.connected) return;
 
