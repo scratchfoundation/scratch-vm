@@ -8,13 +8,10 @@ env:
   matrix:
   - NPM_SCRIPT="tap:unit -- --jobs=4"
   - NPM_SCRIPT="tap:integration -- --jobs=4"
-sudo: false
 cache:
   directories:
-  - node_modules
-install:
-- npm --production=false install
-- npm --production=false update
+  - "$HOME/.npm"
+install: npm ci
 script: npm run $NPM_SCRIPT
 jobs:
     include:
