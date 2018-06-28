@@ -164,6 +164,8 @@ class EV3 {
     disconnectSession () {
         this._bt.disconnectSession();
         window.clearInterval(this._pollingIntervalID); // TODO: window?
+        this._sensorPorts = [];
+        this._motorPorts = [];
     }
 
     /**
@@ -521,7 +523,7 @@ class EV3 {
         compoundCommand[0] = compoundCommand.length - 2;
         // Calculate global var payload length needed
         compoundCommand[5] = (sensorCount + 1) * 4;
-        console.log('compound command to send: ' + compoundCommand);
+        // console.log('compound command to send: ' + compoundCommand);
         this._bt.sendMessage({
             message: Base64Util.uint8ArrayToBase64(compoundCommand),
             encoding: 'base64'
@@ -538,6 +540,7 @@ class EV3 {
             // SENSOR LIST
             // JAABAAIefn5+fn5+fn5+fn5+fn5+Bwd+fn5+fn5+fn5+fn5+fgA=
             // [36, 0, 1, 0, 2, 30, 126, 126, 126, 126, 126, 126, 126, 126, 126, 126, 126, 126, 126, 126, 126, 7, 7, 126, 126, 126, 126, 126, 126, 126, 126, 126, 126, 126, 126, 126, 126, 0]
+            log.info(`device array: ${array}`);
             this._sensorPorts[0] = EV_DEVICE_TYPES[array[5]];
             this._sensorPorts[1] = EV_DEVICE_TYPES[array[6]];
             this._sensorPorts[2] = EV_DEVICE_TYPES[array[7]];
@@ -554,7 +557,7 @@ class EV3 {
             // TODO: window?
             this._pollingIntervalID = window.setInterval(this._getSessionData.bind(this), 100);
         } else {
-            log.info(`received compound command result: ${array}`);
+            //log.info(`received compound command result: ${array}`);
             let offset = 5;
             for (let i = 0; i < this._sensorPorts.length; i++) {
                 if (this._sensorPorts[i] !== 'none') {
@@ -600,7 +603,6 @@ class EV3 {
 
     // TODO: put elsewhere
     _array2float (list) {
-        log.info(`list ${list}`);
         const buffer = new Uint8Array(list).buffer;
         const view = new DataView(buffer);
         return view.getFloat32(0, true);
