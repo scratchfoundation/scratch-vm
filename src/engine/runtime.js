@@ -500,9 +500,9 @@ class Runtime extends EventEmitter {
             showStatusButton: extensionInfo.showStatusButton,
             blockIconURI: extensionInfo.blockIconURI,
             menuIconURI: extensionInfo.menuIconURI,
-            color1: extensionInfo.colour || '#FF6680',
-            color2: extensionInfo.colourSecondary || '#FF4D6A',
-            color3: extensionInfo.colourTertiary || '#FF3355',
+            color1: extensionInfo.colour || '#0FBD8C',
+            color2: extensionInfo.colourSecondary || '#0DA57A',
+            color3: extensionInfo.colourTertiary || '#0B8E69',
             blocks: [],
             menus: []
         };
