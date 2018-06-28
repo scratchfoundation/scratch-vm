@@ -10,6 +10,7 @@ class BTSession extends JSONRPCWebSocket {
      * @param {Runtime} runtime - the Runtime for sending/receiving GUI update events.
      * @param {object} deviceOptions - the list of options for device discovery.
      * @param {object} connectCallback - a callback for connection.
+     * @param {object} messageCallback - a callback for message sending.
      */
     constructor (runtime, deviceOptions, connectCallback, messageCallback) {
         const ws = new WebSocket(ScratchLinkWebSocket);
@@ -107,8 +108,7 @@ class BTSession extends JSONRPCWebSocket {
     }
 
     _sendError (e) {
-        log.error(`BLESession error:`);
-        log.error(e);
+        log.error(`BLESession error: ${e}`);
         this._runtime.emit(this._runtime.constructor.PERIPHERAL_ERROR);
     }
 }

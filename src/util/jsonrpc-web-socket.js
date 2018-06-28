@@ -1,4 +1,5 @@
 const JSONRPC = require('./jsonrpc');
+const log = require('../util/log');
 
 class JSONRPCWebSocket extends JSONRPC {
     constructor (webSocket) {
@@ -28,7 +29,7 @@ class JSONRPCWebSocket extends JSONRPC {
     _onSocketMessage (e) {
         const json = JSON.parse(e.data);
         if (json.method !== 'characteristicDidChange') {
-            console.log('received message: ' + JSON.stringify(json));
+            // log.info(`received message: ${json}`);
         }
         this._handleMessage(json);
     }
