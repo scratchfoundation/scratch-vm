@@ -200,7 +200,13 @@ class Scratch3LooksBlocks {
 
             // TODO is there a way to figure out before rendering whether to default left or right?
             const targetBounds = target.getBounds();
-            const stageBounds = this.runtime.getTargetForStage().getBounds();
+            const stageSize = this.runtime.renderer.getNativeSize();
+            const stageBounds = {
+                left: -stageSize[0] / 2,
+                right: stageSize[0] / 2,
+                top: stageSize[1] / 2,
+                bottom: -stageSize[1] / 2
+            };
             if (targetBounds.right + 170 > stageBounds.right) {
                 bubbleState.onSpriteRight = false;
             }
