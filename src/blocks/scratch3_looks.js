@@ -107,6 +107,8 @@ class Scratch3LooksBlocks {
      */
     _onResetBubbles () {
         for (let n = 0; n < this.runtime.targets.length; n++) {
+            const bubbleState = this._getBubbleState(this.runtime.targets[n]);
+            bubbleState.text = '';
             this._onTargetWillExit(this.runtime.targets[n]);
         }
         clearTimeout(this._bubbleTimeout);
