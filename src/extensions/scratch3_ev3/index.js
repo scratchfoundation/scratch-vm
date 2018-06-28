@@ -5,6 +5,8 @@ const log = require('../../util/log');
 const Base64Util = require('../../util/base64-util');
 const BTSession = require('../../io/BTSession');
 
+// TODO: Refactor/rename all these high level primitives to be clearer/match
+
 /**
  * High-level primitives / constants used by the extension.
  * @type {object}
@@ -75,6 +77,31 @@ const SENSOR_PORTS = [
     }
 ];
 
+// firmware pdf page 100
+const EV_DEVICE_TYPES = {
+    29: 'color',
+    30: 'ultrasonic',
+    32: 'gyro',
+    16: 'touch',
+    8: 'mediumMotor',
+    7: 'largeMotor',
+    126: 'none'
+};
+
+// firmware pdf page 100?
+const EV_DEVICE_MODES = {
+    touch: 0,
+    color: 1,
+    ultrasonic: 1
+};
+
+const EV_DEVICE_LABELS = {
+    touch: 'button',
+    color: 'brightness',
+    ultrasonic: 'distance'
+};
+
+
 class EV3 {
 
     constructor (runtime, extensionId) {
@@ -87,13 +114,19 @@ class EV3 {
         this._runtime = runtime;
 
         /**
-         * State
+         * EV3 State
          */
         this.connected = false;
         this.speed = 50;
         this._sensors = {
-            distance: 0
+            distance: 0,
+            brightness: 0
         };
+        this._sensorPorts = [];
+        this._motorPorts = [];
+        this._sensorPortsWaiting = [false, false, false, false];
+        this._motorPortsWaiting = [false, false, false, false];
+        this._pollingIntervalID = null;
 
         /**
          * The Bluetooth connection session for reading/writing device data.
@@ -109,7 +142,6 @@ class EV3 {
      * Called by the runtime when user wants to scan for a device.
      */
     startDeviceScan () {
-        log.info('making a new BT session');
         this._bt = new BTSession(this._runtime, {
             majorDeviceClass: 8,
             minorDeviceClass: 1
@@ -125,10 +157,19 @@ class EV3 {
         this._bt.connectDevice(id);
     }
 
+    // TODO: keep here?
+    /**
+     * Called by the runtime when user wants to disconnect from the device.
+     */
     disconnectSession () {
         this._bt.disconnectSession();
+        window.clearInterval(this._pollingIntervalID); // TODO: window?
     }
 
+    /**
+     * Called by the runtime to detect whether the device is connected.
+     * @return {boolean} - the connected state.
+     */
     getPeripheralIsConnected () {
         let connected = false;
         if (this._bt) {
@@ -140,14 +181,19 @@ class EV3 {
     get distance () {
         if (!this.connected) return;
 
-        return this._sensors.distance;
+        // https://shop.lego.com/en-US/EV3-Ultrasonic-Sensor-45504
+        // Measures distances between one and 250 cm (one to 100 in.)
+        // Accurate to +/- 1 cm (+/- .394 in.)
+        let value = this._sensors.distance > 100 ? 100 : this._sensors.distance;
+        value = value < 0 ? 0 : value;
+
+        return Math.round(value);
     }
 
     get brightness () {
         if (!this.connected) return;
 
-        // TODO: read brightness sensor data
-        log.info(`return brightness`);
+        return this._sensors.brightness;
     }
 
     getMotorPosition (args) {
@@ -160,19 +206,12 @@ class EV3 {
     isButtonPressed (args) {
         if (!this.connected) return;
 
-        // TODO: read button pressed data
-        log.info(`return button ${args} pressed`);
-    }
-
-    isBrightnessLessThan (args) {
-        if (!this.connected) return;
-
-        // TODO: read brightness sensor data
-        log.info(`return brightness less than ${args}`);
+        return this._sensors.button;
     }
 
     beep () {
         if (!this.connected) return;
+
         this._bt.sendMessage({
             message: 'DwAAAIAAAJQBgQKC6AOC6AM=',
             encoding: 'base64'
@@ -316,7 +355,7 @@ class EV3 {
         // Setup motor run duration and ramping behavior
         let rampup = ramp;
         let rampdown = ramp;
-        let run = n - ramp * 2;
+        let run = n - (ramp * 2);
         if (run < 0) {
             rampup = Math.floor(n / 2);
             run = 0;
@@ -341,15 +380,43 @@ class EV3 {
     }
 
     _onSessionConnect () {
-        log.info('bt device connected!');
         this.connected = true;
 
-        // Start reading data
-        const intervalID = window.setInterval(this._getSessionData.bind(this), 300);
-        // TODO: clear intervalID later on disconnect, etc.
+        // GET EV3 SENSOR LIST
+        /*
+        0B [ 11]
+        00 [  0]
+        01 [  1]
+        00 [  0]
+        00 [  0]
+        21 [ 33]
+        00 [  0]
+        98 [152] opInput_Device_List
+        81 [129] LENGTH
+        21 [ 33] ARRAY
+        60 [ 96] CHANGED
+        E1 [225] size of global var?
+        20 [ 32] global var index
+        */
+        this._bt.sendMessage({
+            message: 'CwABAAAhAJiBIWDhIA==', // [11, 0, 1, 0, 0, 33, 0, 152, 129, 33, 96, 225, 32]
+            encoding: 'base64'
+        }).then(
+            x => {
+                log.info(`get device list resolved: ${x}`);
+            },
+            e => {
+                log.info(`get device list rejected: ${e}`);
+            }
+        );
     }
 
     _getSessionData () {
+        if (!this.connected) {
+            window.clearInterval(this._pollingIntervalID);
+            return;
+        }
+
         // GET EV3 DISTANCE PORT 0
         /*
         99 [153] input device
@@ -361,21 +428,23 @@ class EV3 {
         01 [  1] one data set
         60 [ 96] global var index
         */
+        /*
         this._bt.sendMessage({
             message: 'DQAAAAAEAJkdAAAAAQFg', // [13, 0, 0, 0, 0, 4, 0, 153, 29, 0, 0, 0, 1, 1, 96]
             encoding: 'base64'
         });
+        */
 
         // GET EV3 BRIGHTNESS PORT 1
         /*
-        99 [153] input device
-        1D [ 29] ready si
-        00 [  0] layer (this brick)
-        01 [  1] sensor port 1
-        00 [  0] do not change type
-        01 [  1] mode 1 = EV3-Color-Ambient
-        01 [  1] one data set
-        60 [ 96] global var index
+        0x99 [153] input device
+        0x1D [ 29] ready si
+        0x00 [  0] layer (this brick)
+        0x01 [  1] sensor port 1
+        0x00 [  0] do not change type
+        0x01 [  1] mode 1 = EV3-Color-Ambient
+        0x01 [  1] one data set
+        0x60 [ 96] global var index
         */
         /*
         this._bt.sendMessage({
@@ -383,19 +452,155 @@ class EV3 {
             encoding: 'base64'
         });
         */
+
+
+        // COMPOUND COMMAND FOR READING sensors0x27   command size
+        // 0x??  [    ]   command size
+        // 0x00  [   0]   command size
+        // 0x01  [   1]   message counter
+        // 0x00  [   0]   message counter
+        // 0x00  [   0]   command type
+        // 0x??  [    ]   result payload size of global/local vars
+        // 0x00  [   0]   result payload size of global/local vars
+        const compoundCommand = [];
+        compoundCommand[0] = 0; // calculate length later
+        compoundCommand[1] = 0; // command size
+        compoundCommand[2] = 1; // message counter // TODO: ?????
+        compoundCommand[3] = 0; // message counter
+        compoundCommand[4] = 0; // command type: direct command
+        compoundCommand[5] = 0; // global/local vars
+        compoundCommand[6] = 0; // global/local vars
+        let compoundCommandIndex = 7;
+        let sensorCount = -1;
+
+        // Read from available sensors
+        for (let i = 0; i < this._sensorPorts.length; i++) {
+            if (this._sensorPorts[i] !== 'none') {
+                sensorCount++;
+                // make up sensor command array
+                // 0x9D  [ 157]   op: get sensor value
+                // 0x00  [   0]   layer
+                // 0x02  [    ]   port
+                // 0x00  [   0]   do not change type
+                // 0x00  [    ]   mode
+                // 0xE1  [ 225]
+                // 0x0C  [    ]   global index
+                compoundCommand[compoundCommandIndex + 0] = 157;
+                compoundCommand[compoundCommandIndex + 1] = 0;
+                compoundCommand[compoundCommandIndex + 2] = i;
+                compoundCommand[compoundCommandIndex + 3] = 0;
+                compoundCommand[compoundCommandIndex + 4] = EV_DEVICE_MODES[this._sensorPorts[i]];
+                compoundCommand[compoundCommandIndex + 5] = 225;
+                compoundCommand[compoundCommandIndex + 6] = sensorCount * 4;
+                compoundCommandIndex += 7;
+            }
+        }
+        // Read from available motors
+        // let motorCount = 0;
+        for (let i = 0; i < this._motorPorts.length; i++) {
+            if (this._motorPorts[i] !== 'none') {
+                sensorCount++;
+                // make up sensor command array
+                // 0xB3  [ 179]   op: get motor position value
+                // 0x00  [   0]   layer
+                // 0x02  [    ]   output bit fields ??
+                // 0xE1  [ 225]
+                // 0x??  [   0]   global index
+                compoundCommand[compoundCommandIndex + 0] = 179;
+                compoundCommand[compoundCommandIndex + 1] = 0;
+                compoundCommand[compoundCommandIndex + 2] = i;
+                compoundCommand[compoundCommandIndex + 3] = 225;
+                compoundCommand[compoundCommandIndex + 4] = sensorCount * 4;
+                compoundCommandIndex += 5;
+                // motorCount++;
+            }
+        }
+
+
+        // Calculate compound command length
+        compoundCommand[0] = compoundCommand.length - 2;
+        // Calculate global var payload length needed
+        compoundCommand[5] = (sensorCount + 1) * 4;
+        console.log('compound command to send: ' + compoundCommand);
+        this._bt.sendMessage({
+            message: Base64Util.uint8ArrayToBase64(compoundCommand),
+            encoding: 'base64'
+        });
+
+        // TODO: Read from available motor ports
     }
 
     _onSessionMessage (params) {
         const message = params.message;
         const array = Base64Util.base64ToUint8Array(message);
 
-        // TODO: this only gets distance so far
-        const distance = this._array2float([array[5], array[6], array[7], array[8]]);
-        this._sensors.distance = distance;
+        if (this._sensorPorts.length === 0) {
+            // SENSOR LIST
+            // JAABAAIefn5+fn5+fn5+fn5+fn5+Bwd+fn5+fn5+fn5+fn5+fgA=
+            // [36, 0, 1, 0, 2, 30, 126, 126, 126, 126, 126, 126, 126, 126, 126, 126, 126, 126, 126, 126, 126, 7, 7, 126, 126, 126, 126, 126, 126, 126, 126, 126, 126, 126, 126, 126, 126, 0]
+            this._sensorPorts[0] = EV_DEVICE_TYPES[array[5]];
+            this._sensorPorts[1] = EV_DEVICE_TYPES[array[6]];
+            this._sensorPorts[2] = EV_DEVICE_TYPES[array[7]];
+            this._sensorPorts[3] = EV_DEVICE_TYPES[array[8]];
+            this._motorPorts[0] = EV_DEVICE_TYPES[array[21]];
+            this._motorPorts[1] = EV_DEVICE_TYPES[array[22]];
+            this._motorPorts[2] = EV_DEVICE_TYPES[array[23]];
+            this._motorPorts[3] = EV_DEVICE_TYPES[array[24]];
+            log.info(`sensor ports: ${this._sensorPorts}`);
+            log.info(`motor ports: ${this._motorPorts}`);
+
+            // Now ready to read from assigned _sensors
+            // Start reading sensor data
+            // TODO: window?
+            this._pollingIntervalID = window.setInterval(this._getSessionData.bind(this), 100);
+        } else {
+            log.info(`received compound command result: ${array}`);
+            let offset = 5;
+            for (let i = 0; i < this._sensorPorts.length; i++) {
+                if (this._sensorPorts[i] !== 'none') {
+                    const value = this._array2float([
+                        array[offset],
+                        array[offset + 1],
+                        array[offset + 2],
+                        array[offset + 3]
+                    ]);
+                    log.info(`sensor at port ${i} ${this._sensorPorts[i]} value: ${value}`);
+                    this._sensors[EV_DEVICE_LABELS[this._sensorPorts[i]]] = value;
+                    offset += 4;
+                }
+            }
+            for (let i = 0; i < this._motorPorts.length; i++) {
+                if (this._motorPorts[i] !== 'none') {
+                    let value = this._tachoValue([
+                        array[offset],
+                        array[offset + 1],
+                        array[offset + 2],
+                        array[offset + 3]
+                    ]);
+                    if (value > 0x7fffffff) {
+                        value = value - 0x100000000;
+                    }
+                    log.info(`motor at port ${i} ${this._motorPorts[i]} value: ${value}`);
+                    // this._motors[EV_DEVICE_LABELS[this._motorPorts[i]]] = value;
+                    offset += 4;
+                }
+            }
+            // const sensorValue = this._array2float([array[5], array[6], array[7], array[8]]);
+            // log.info('receiving port array?: ' + array);
+            // log.info('receiving port sensorValue?: ' + sensorValue);
+            // this._sensors.distance = distance;
+        }
+
     }
 
-    // TODO: put elsewhere, in a util
+    _tachoValue (list) {
+        const value = list[0] + (list[1] * 256) + (list[2] * 256 * 256) + (list[3] * 256 * 256 * 256);
+        return value;
+    }
+
+    // TODO: put elsewhere
     _array2float (list) {
+        log.info(`list ${list}`);
         const buffer = new Uint8Array(list).buffer;
         const view = new DataView(buffer);
         return view.getFloat32(0, true);
@@ -678,7 +883,7 @@ class Scratch3Ev3Blocks {
     whenBrightnessLessThan (args) {
         const brightness = Cast.toNumber(args.DISTANCE);
 
-        return this._device.isBrightnessLessThan(brightness);
+        return this._device.brightness < brightness;
     }
 
     buttonPressed (args) {
