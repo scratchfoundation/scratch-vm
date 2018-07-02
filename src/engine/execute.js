@@ -50,8 +50,11 @@ const isPromise = function (value) {
  */
 // @todo move this to callback attached to the thread when we have performance
 // metrics (dd)
-const handleReport = function (
-    resolvedValue, sequencer, thread, currentBlockId, opcode, isHat) {
+const handleReport = function (resolvedValue, sequencer, thread, blockCached) {
+    const currentBlockId = blockCached.id;
+    const opcode = blockCached.opcode;
+    const isHat = blockCached._isHat;
+
     thread.pushReportedValue(resolvedValue);
     if (isHat) {
         // Hat predicate was evaluated.
@@ -99,12 +102,46 @@ const handleReport = function (
     }
 };
 
-/**
- * A convenience constant to help make use of the recursiveCall argument easier
- * to read.
- * @const {boolean}
- */
-const RECURSIVE = true;
+const handlePromise = (primitiveReportedValue, sequencer, thread, blockCached) => {
+    if (thread.status === Thread.STATUS_RUNNING) {
+        // Primitive returned a promise; automatically yield thread.
+        thread.status = Thread.STATUS_PROMISE_WAIT;
+    }
+    // Promise handlers
+    primitiveReportedValue.then(resolvedValue => {
+        handleReport(resolvedValue, sequencer, thread, blockCached);
+        if (typeof resolvedValue === 'undefined') {
+            let stackFrame;
+            let nextBlockId;
+            do {
+                // In the case that the promise is the last block in the current thread stack
+                // We need to pop out repeatedly until we find the next block.
+                const popped = thread.popStack();
+                if (popped === null) {
+                    return;
+                }
+                nextBlockId = thread.target.blocks.getNextBlock(popped);
+                if (nextBlockId !== null) {
+                    // A next block exists so break out this loop
+                    break;
+                }
+                // Investigate the next block and if not in a loop,
+                // then repeat and pop the next item off the stack frame
+                stackFrame = thread.peekStackFrame();
+            } while (stackFrame !== null && !stackFrame.isLoop);
+
+            thread.pushStack(nextBlockId);
+        } else {
+            thread.popStack();
+        }
+    }, rejectionReason => {
+        // Promise rejected: the primitive had some error.
+        // Log it and proceed.
+        log.warn('Primitive rejected promise: ', rejectionReason);
+        thread.status = Thread.STATUS_RUNNING;
+        thread.popStack();
+    });
+};
 
 /**
  * A execute.js internal representation of a block to reduce the time spent in
@@ -123,6 +160,12 @@ const RECURSIVE = true;
  */
 class BlockCached {
     constructor (blockContainer, cached) {
+        /**
+         * Block id in its parent set of blocks.
+         * @type {string}
+         */
+        this.id = cached.id;
+
         /**
          * Block operation code for this block.
          * @type {string}
@@ -198,6 +241,36 @@ class BlockCached {
             mutation: this.mutation
         };
 
+        /**
+         * The inputs key the parent refers to this BlockCached by.
+         * @type {string}
+         */
+        this._parentKey = null;
+
+        /**
+         * The target object where the parent wants the resulting value stored
+         * with _parentKey as the key.
+         * @type {object}
+         */
+        this._parentValues = null;
+
+        /**
+         * A sequence of shadow value operations that can be performed in any
+         * order and are easier to perform given that they are static.
+         * @type {Array<BlockCached>}
+         */
+        this._shadowOps = [];
+
+        /**
+         * A sequence of non-shadow operations that can must be performed. This
+         * list recreates the order this block and its children are executed.
+         * Since the order is always the same we can safely store that order
+         * and iterate over the operations instead of dynamically walking the
+         * tree every time.
+         * @type {Array<BlockCached>}
+         */
+        this._ops = [];
+
         const {runtime} = blockUtility.sequencer;
 
         const {opcode, fields, inputs} = this;
@@ -259,6 +332,40 @@ class BlockCached {
                 delete this._inputs.BROADCAST_INPUT;
             }
         }
+
+        // Cache all input children blocks in the operation lists. The
+        // operations can later be run in the order they appear in correctly
+        // executing the operations quickly in a flat loop instead of needing to
+        // recursivly iterate them.
+        for (const inputName in this._inputs) {
+            const input = this._inputs[inputName];
+            if (input.block) {
+                const inputCached = BlocksExecuteCache.getCached(blockContainer, input.block, BlockCached);
+
+                if (inputCached._isHat) {
+                    continue;
+                }
+
+                this._shadowOps.push(...inputCached._shadowOps);
+                this._ops.push(...inputCached._ops);
+                inputCached._parentKey = inputName;
+                inputCached._parentValues = this._argValues;
+
+                // Shadow values are static and do not change, go ahead and
+                // store their value on args.
+                if (inputCached._isShadowBlock) {
+                    this._argValues[inputName] = inputCached._shadowValue;
+                }
+            }
+        }
+
+        // The final operation is this block itself. At the top most block is a
+        // command block or a block that is being run as a monitor.
+        if (!this._isHat && this._isShadowBlock) {
+            this._shadowOps.push(this);
+        } else if (this._definedBlockFunction) {
+            this._ops.push(this);
+        }
     }
 }
 
@@ -266,17 +373,14 @@ class BlockCached {
  * Execute a block.
  * @param {!Sequencer} sequencer Which sequencer is executing.
  * @param {!Thread} thread Thread which to read and execute.
- * @param {boolean} recursiveCall is execute called from another execute call?
  */
-const execute = function (sequencer, thread, recursiveCall) {
+const execute = function (sequencer, thread) {
     const runtime = sequencer.runtime;
 
-    // sequencer and thread are the same objects during a recursive set of
-    // execute operations.
-    if (recursiveCall !== RECURSIVE) {
-        blockUtility.sequencer = sequencer;
-        blockUtility.thread = thread;
-    }
+    // store sequencer and thread so block functions can access them through
+    // convenience methods.
+    blockUtility.sequencer = sequencer;
+    blockUtility.thread = thread;
 
     // Current block to execute is the one on the top of the stack.
     const currentBlockId = thread.peekStack();
@@ -295,187 +399,120 @@ const execute = function (sequencer, thread, recursiveCall) {
         }
     }
 
-    const opcode = blockCached.opcode;
-    const inputs = blockCached._inputs;
-    const blockFunction = blockCached._blockFunction;
-    const isHat = blockCached._isHat;
+    const ops = blockCached._ops;
+    const length = ops.length;
+    let i = 0;
 
-    // Hats and single-field shadows are implemented slightly differently
-    // from regular blocks.
-    // For hats: if they have an associated block function, it's treated as a
-    // predicate; if not, execution will proceed as a no-op. For single-field
-    // shadows: If the block has a single field, and no inputs, immediately
-    // return the value of the field.
-    if (!blockCached._definedBlockFunction) {
-        if (!opcode) {
-            log.warn(`Could not get opcode for block: ${currentBlockId}`);
-            return;
-        }
+    if (currentStackFrame.reported !== null) {
+        const reported = currentStackFrame.reported;
+        // Reinstate all the previous values.
+        for (; i < reported.length; i++) {
+            const {opCached, inputValue} = reported[i];
 
-        if (recursiveCall === RECURSIVE && blockCached._isShadowBlock) {
-            // One field and no inputs - treat as arg.
-            thread.pushReportedValue(blockCached._shadowValue);
-            thread.status = Thread.STATUS_RUNNING;
-        } else if (isHat) {
-            // Skip through the block (hat with no predicate).
-            return;
-        } else {
-            log.warn(`Could not get implementation for opcode: ${opcode}`);
-        }
-        thread.requestScriptGlowInFrame = true;
-        return;
-    }
+            const inputName = opCached._parentKey;
+            const argValues = opCached._parentValues;
 
-    // Update values for arguments (inputs).
-    const argValues = blockCached._argValues;
-
-    // Fields are set during blockCached initialization.
-
-    // Recursively evaluate input blocks.
-    for (const inputName in inputs) {
-        const input = inputs[inputName];
-        const inputBlockId = input.block;
-        // Is there no value for this input waiting in the stack frame?
-        if (inputBlockId !== null && currentStackFrame.waitingReporter === null) {
-            // If there's not, we need to evaluate the block.
-            // Push to the stack to evaluate the reporter block.
-            thread.pushStack(inputBlockId);
-            // Save name of input for `Thread.pushReportedValue`.
-            currentStackFrame.waitingReporter = inputName;
-            // Actually execute the block.
-            execute(sequencer, thread, RECURSIVE);
-            if (thread.status === Thread.STATUS_PROMISE_WAIT) {
-                // Create a reported value on the stack frame to store the
-                // already built values.
-                currentStackFrame.reported = {};
-                // Waiting for the block to resolve, store the current argValues
-                // onto a member of the currentStackFrame that can be used once
-                // the nested block resolves to rebuild argValues up to this
-                // point.
-                for (const _inputName in inputs) {
-                    // We are waiting on the nested block at inputName so we
-                    // don't need to store any more inputs.
-                    if (_inputName === inputName) break;
-                    if (_inputName === 'BROADCAST_INPUT') {
-                        currentStackFrame.reported[_inputName] = argValues.BROADCAST_OPTION.name;
-                    } else {
-                        currentStackFrame.reported[_inputName] = argValues[_inputName];
-                    }
-                }
-                return;
-            }
-
-            // Execution returned immediately,
-            // and presumably a value was reported, so pop the stack.
-            currentStackFrame.waitingReporter = null;
-            thread.popStack();
-        }
-
-        let inputValue;
-        if (currentStackFrame.waitingReporter === null) {
-            inputValue = currentStackFrame.justReported;
-            currentStackFrame.justReported = null;
-        } else if (currentStackFrame.waitingReporter === inputName) {
-            inputValue = currentStackFrame.justReported;
-            currentStackFrame.waitingReporter = null;
-            currentStackFrame.justReported = null;
-            // We have rebuilt argValues with all the stored values in the
-            // currentStackFrame from the nested block's promise resolving.
-            // Using the reported value from the block we waited on, unset the
-            // value. The next execute needing to store reported values will
-            // creates its own temporary storage.
-            currentStackFrame.reported = null;
-        } else if (typeof currentStackFrame.reported[inputName] !== 'undefined') {
-            inputValue = currentStackFrame.reported[inputName];
-        }
-
-        if (inputName === 'BROADCAST_INPUT') {
-            const broadcastInput = inputs[inputName];
-            // Check if something is plugged into the broadcast block, or
-            // if the shadow dropdown menu is being used.
-            if (broadcastInput.block !== broadcastInput.shadow) {
+            if (inputName === 'BROADCAST_INPUT') {
                 // Something is plugged into the broadcast input.
                 // Cast it to a string. We don't need an id here.
                 argValues.BROADCAST_OPTION.id = null;
                 argValues.BROADCAST_OPTION.name = cast.toString(inputValue);
-            }
-        } else {
-            argValues[inputName] = inputValue;
-        }
-    }
-
-    let primitiveReportedValue = null;
-    if (runtime.profiler !== null) {
-        if (blockFunctionProfilerId === -1) {
-            blockFunctionProfilerId = runtime.profiler.idByName(blockFunctionProfilerFrame);
-        }
-        // The method commented below has its code inlined underneath to reduce
-        // the bias recorded for the profiler's calls in this time sensitive
-        // execute function.
-        //
-        // runtime.profiler.start(blockFunctionProfilerId, opcode);
-        runtime.profiler.records.push(
-            runtime.profiler.START, blockFunctionProfilerId, opcode, performance.now());
-    }
-    primitiveReportedValue = blockFunction(argValues, blockUtility);
-    if (runtime.profiler !== null) {
-        // runtime.profiler.stop(blockFunctionProfilerId);
-        runtime.profiler.records.push(runtime.profiler.STOP, performance.now());
-    }
-
-    if (recursiveCall !== RECURSIVE && typeof primitiveReportedValue === 'undefined') {
-        // No value reported - potentially a command block.
-        // Edge-activated hats don't request a glow; all commands do.
-        thread.requestScriptGlowInFrame = true;
-    }
-
-    // If it's a promise, wait until promise resolves.
-    if (isPromise(primitiveReportedValue)) {
-        if (thread.status === Thread.STATUS_RUNNING) {
-            // Primitive returned a promise; automatically yield thread.
-            thread.status = Thread.STATUS_PROMISE_WAIT;
-        }
-        // Promise handlers
-        primitiveReportedValue.then(resolvedValue => {
-            handleReport(resolvedValue, sequencer, thread, currentBlockId, opcode, isHat);
-            if (typeof resolvedValue === 'undefined') {
-                let stackFrame;
-                let nextBlockId;
-                do {
-                    // In the case that the promise is the last block in the current thread stack
-                    // We need to pop out repeatedly until we find the next block.
-                    const popped = thread.popStack();
-                    if (popped === null) {
-                        return;
-                    }
-                    nextBlockId = thread.target.blocks.getNextBlock(popped);
-                    if (nextBlockId !== null) {
-                        // A next block exists so break out this loop
-                        break;
-                    }
-                    // Investigate the next block and if not in a loop,
-                    // then repeat and pop the next item off the stack frame
-                    stackFrame = thread.peekStackFrame();
-                } while (stackFrame !== null && !stackFrame.isLoop);
-
-                thread.pushStack(nextBlockId);
             } else {
-                thread.popStack();
+                argValues[inputName] = inputValue;
             }
-        }, rejectionReason => {
-            // Promise rejected: the primitive had some error.
-            // Log it and proceed.
-            log.warn('Primitive rejected promise: ', rejectionReason);
-            thread.status = Thread.STATUS_RUNNING;
-            thread.popStack();
-        });
-    } else if (thread.status === Thread.STATUS_RUNNING) {
-        if (recursiveCall === RECURSIVE) {
-            // In recursive calls (where execute calls execute) handleReport
-            // simplifies to just calling thread.pushReportedValue.
-            thread.pushReportedValue(primitiveReportedValue);
+        }
+
+        // Find the last reported block that is still in the set of operations.
+        // This way if the last operation was removed, we'll find the next
+        // candidate. If an earlier block that was performed was removed then
+        // we'll find the index where the last operation is now.
+        if (reported.length > 0) {
+            const lastExisting = reported.reverse().find(report => ops.find(op => op.id === report[0].id));
+            i = ops.findIndex(opCached => opCached.id === lastExisting.id) + 1;
+        }
+
+        currentStackFrame.reported = null;
+    }
+
+    for (; i < length; i++) {
+        const last = i === length - 1;
+        const opCached = ops[i];
+
+        const blockFunction = opCached._blockFunction;
+
+        // Update values for arguments (inputs).
+        const argValues = opCached._argValues;
+
+        // Fields are set during opCached initialization.
+
+        // Inputs are set during previous steps in the loop.
+
+        let primitiveReportedValue = null;
+        if (runtime.profiler === null) {
+            primitiveReportedValue = blockFunction(argValues, blockUtility);
         } else {
-            handleReport(primitiveReportedValue, sequencer, thread, currentBlockId, opcode, isHat);
+            const opcode = opCached.opcode;
+            if (blockFunctionProfilerId === -1) {
+                blockFunctionProfilerId = runtime.profiler.idByName(blockFunctionProfilerFrame);
+            }
+            // The method commented below has its code inlined
+            // underneath to reduce the bias recorded for the profiler's
+            // calls in this time sensitive execute function.
+            //
+            // runtime.profiler.start(blockFunctionProfilerId, opcode);
+            runtime.profiler.records.push(
+                runtime.profiler.START, blockFunctionProfilerId, opcode, 0);
+
+            primitiveReportedValue = blockFunction(argValues, blockUtility);
+
+            // runtime.profiler.stop(blockFunctionProfilerId);
+            runtime.profiler.records.push(runtime.profiler.STOP, 0);
+        }
+
+        // If it's a promise, wait until promise resolves.
+        if (isPromise(primitiveReportedValue)) {
+            handlePromise(primitiveReportedValue, sequencer, thread, opCached);
+
+            currentStackFrame.reported = ops.slice(0, i).map(reportedCached => {
+                const inputName = reportedCached._parentKey;
+                const reportedValues = reportedCached._parentValues;
+
+                if (inputName === 'BROADCAST_INPUT') {
+                    return {
+                        opCached: reportedCached,
+                        inputValue: reportedValues[inputName].BROADCAST_OPTION.name
+                    };
+                }
+                return {
+                    opCached: reportedCached,
+                    inputValue: reportedValues[inputName]
+                };
+            });
+        } else if (thread.status === Thread.STATUS_RUNNING) {
+            if (last) {
+                if (typeof primitiveReportedValue === 'undefined') {
+                    // No value reported - potentially a command block.
+                    // Edge-activated hats don't request a glow; all
+                    // commands do.
+                    thread.requestScriptGlowInFrame = true;
+                }
+
+                handleReport(primitiveReportedValue, sequencer, thread, opCached);
+            } else {
+                // By definition a block that is not last in the list has a
+                // parent.
+                const inputName = opCached._parentKey;
+                const parentValues = opCached._parentValues;
+
+                if (inputName === 'BROADCAST_INPUT') {
+                    // Something is plugged into the broadcast input.
+                    // Cast it to a string. We don't need an id here.
+                    parentValues.BROADCAST_OPTION.id = null;
+                    parentValues.BROADCAST_OPTION.name = cast.toString(primitiveReportedValue);
+                } else {
+                    parentValues[inputName] = primitiveReportedValue;
+                }
+            }
         }
     }
 };
