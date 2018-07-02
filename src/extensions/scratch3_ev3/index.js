@@ -122,6 +122,12 @@ class EV3 {
             distance: 0,
             brightness: 0
         };
+        this._motorPositions = {
+            1: 0,
+            2: 0,
+            4: 0,
+            8: 0
+        };
         this._sensorPorts = [];
         this._motorPorts = [];
         this._sensorPortsWaiting = [false, false, false, false];
@@ -198,9 +204,9 @@ class EV3 {
         return this._sensors.brightness;
     }
 
-    getMotorPosition (args) {
+    getMotorPosition (port) {
         if (!this.connected) return;
-
+        return this._motorPositions[port];
         // TODO: read motor position data
         log.info(`return motor ${args} position`);
     }
@@ -584,7 +590,7 @@ class EV3 {
                         value = value - 0x100000000;
                     }
                     log.info(`motor at port ${i} ${this._motorPorts[i]} value: ${value}`);
-                    // this._motors[EV_DEVICE_LABELS[this._motorPorts[i]]] = value;
+                    this._motorPositions[MOTOR_PORTS[i].value] = value;
                     offset += 4;
                 }
             }
