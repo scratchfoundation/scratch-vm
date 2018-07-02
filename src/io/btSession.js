@@ -108,7 +108,7 @@ class BTSession extends JSONRPCWebSocket {
     }
 
     _sendError (e) {
-        log.error(`BLESession error: ${e}`);
+        log.error(`BTSession error: ${JSON.stringify(e)}`);
         this._runtime.emit(this._runtime.constructor.PERIPHERAL_ERROR);
     }
 }
