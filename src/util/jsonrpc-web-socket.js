@@ -1,5 +1,5 @@
 const JSONRPC = require('./jsonrpc');
-const log = require('../util/log');
+// const log = require('../util/log');
 
 class JSONRPCWebSocket extends JSONRPC {
     constructor (webSocket) {
