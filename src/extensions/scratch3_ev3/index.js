@@ -3,7 +3,7 @@ const BlockType = require('../../extension-support/block-type');
 const Cast = require('../../util/cast');
 const log = require('../../util/log');
 const Base64Util = require('../../util/base64-util');
-const BTSession = require('../../io/BTSession');
+const BTSession = require('../../io/btSession');
 
 // TODO: Refactor/rename all these high level primitives to be clearer/match
 
