@@ -550,14 +550,7 @@ class Scratch3SpeechBlocks {
         // Safari still needs a webkit prefix for audio context
         this._context = new (window.AudioContext || window.webkitAudioContext)();
         this._audioPromise = navigator.mediaDevices.getUserMedia({
-            audio: {
-                echoCancellation: true,
-                channelCount: 1,
-                sampleRate: {
-                    ideal: 16000
-                },
-                sampleSize: 16
-            }
+            audio: true
         });
 
         const tempContext = this._context;
