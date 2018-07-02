@@ -839,16 +839,14 @@ class Scratch3Ev3Blocks {
         const port = Cast.toNumber(args.PORT);
         const time = Cast.toNumber(args.TIME) * 1000;
 
-        this._device.motorTurnClockwise(port, time);
-        return;
+        return this._device.motorTurnClockwise(port, time);
     }
 
     motorTurnCounterClockwise (args) {
         const port = Cast.toNumber(args.PORT);
         const time = Cast.toNumber(args.TIME) * 1000;
 
-        this._device.motorTurnCounterClockwise(port, time);
-        return;
+        return this._device.motorTurnCounterClockwise(port, time);
     }
 
     motorRotate (args) {
