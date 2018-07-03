@@ -631,7 +631,7 @@ class EV3 {
                         array[offset + 2],
                         array[offset + 3]
                     ]);
-                    log.info(`sensor at port ${i} ${this._sensorPorts[i]} value: ${value}`);
+                    // log.info(`sensor at port ${i} ${this._sensorPorts[i]} value: ${value}`);
                     if (EV_DEVICE_LABELS[this._sensorPorts[i]] === 'button') {
                         this._sensors.buttons[i] = value;
                     } else {
@@ -651,7 +651,7 @@ class EV3 {
                     if (value > 0x7fffffff) {
                         value = value - 0x100000000;
                     }
-                    log.info(`motor at port ${i} ${this._motorPorts[i]} value: ${value}`);
+                    // log.info(`motor at port ${i} ${this._motorPorts[i]} value: ${value}`);
                     this._motorPositions[i] = value;
                     offset += 4;
                 }
