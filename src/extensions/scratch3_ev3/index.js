@@ -127,18 +127,12 @@ class EV3 {
         this.speed = 50;
         this._sensors = {
             distance: 0,
-            brightness: 0
+            brightness: 0,
+            buttons: [0, 0, 0, 0]
         };
-        this._motorPositions = {
-            1: 0,
-            2: 0,
-            4: 0,
-            8: 0
-        };
+        this._motorPositions = [0, 0, 0, 0];
         this._sensorPorts = [];
         this._motorPorts = [];
-        this._sensorPortsWaiting = [false, false, false, false];
-        this._motorPortsWaiting = [false, false, false, false];
         this._pollingIntervalID = null;
 
         /**
@@ -201,8 +195,9 @@ class EV3 {
         // Accurate to +/- 1 cm (+/- .394 in.)
         let value = this._sensors.distance > 100 ? 100 : this._sensors.distance;
         value = value < 0 ? 0 : value;
+        value = Math.round(100 * value) / 100;
 
-        return Math.round(value);
+        return value;
     }
 
     get brightness () {
@@ -214,13 +209,17 @@ class EV3 {
     getMotorPosition (port) {
         if (!this.connected) return;
 
-        return this._motorPositions[port];
+        let value = this._motorPositions[port];
+        value = value % 360;
+        value = value < 0 ? value * -1 : value;
+
+        return value;
     }
 
-    isButtonPressed (/* args */) {
+    isButtonPressed (port) {
         if (!this.connected) return;
 
-        return this._sensors.button;
+        return this._sensors.buttons[port];
     }
 
     beep () {
@@ -244,17 +243,23 @@ class EV3 {
             BTCommand.LONGRAMP
         ));
 
-        // Send message
+        // Send turn message
         this._bt.sendMessage({
             message: Base64Util.arrayBufferToBase64(cmd),
             encoding: 'base64'
         });
 
-        // Yield for time
+        // Send coast message
+        const coastTime = 100;
+        setTimeout(() => {
+            this.motorCoast(port);
+        }, time + coastTime);
+
+        // Yield for turn time + brake time
         return new Promise(resolve => {
             setTimeout(() => {
                 resolve();
-            }, time);
+            }, time + coastTime);
         });
     }
 
@@ -270,17 +275,57 @@ class EV3 {
             BTCommand.LONGRAMP
         ));
 
-        // Send message
+        // Send turn message
         this._bt.sendMessage({
             message: Base64Util.arrayBufferToBase64(cmd),
             encoding: 'base64'
         });
 
+        // Send coast message
+        const coastTime = 100;
+        setTimeout(() => {
+            this.motorCoast(port);
+        }, time + coastTime);
+
         // Yield for time
         return new Promise(resolve => {
             setTimeout(() => {
                 resolve();
-            }, time);
+            }, time + coastTime);
+        });
+    }
+
+    motorCoast (port) {
+        const cmd = [];
+        // MOTOR COAST
+        /*
+        0x09 [  9] length
+        0x00 [  0] length
+        0x01 [  1]
+        0x00 [  0]
+        0x00 [  0]
+        0x00 [  0]
+        0x00 [  0]
+        0xA3 [163] Coast motor command
+        0x00 [  0] layer
+        0x03 [   ] port
+        0x00 [  0] float = coast = 0
+        */
+        cmd[0] = 9;
+        cmd[1] = 0;
+        cmd[2] = 1;
+        cmd[3] = 0;
+        cmd[4] = 0;
+        cmd[5] = 0;
+        cmd[6] = 0;
+        cmd[7] = 163;
+        cmd[8] = 0;
+        cmd[9] = port;
+        cmd[10] = 0;
+
+        this._bt.sendMessage({
+            message: Base64Util.uint8ArrayToBase64(cmd),
+            encoding: 'base64'
         });
     }
 
@@ -579,7 +624,11 @@ class EV3 {
                         array[offset + 3]
                     ]);
                     log.info(`sensor at port ${i} ${this._sensorPorts[i]} value: ${value}`);
-                    this._sensors[EV_DEVICE_LABELS[this._sensorPorts[i]]] = value;
+                    if (EV_DEVICE_LABELS[this._sensorPorts[i]] === 'button') {
+                        this._sensors.buttons[i] = value;
+                    } else {
+                        this._sensors[EV_DEVICE_LABELS[this._sensorPorts[i]]] = value;
+                    }
                     offset += 4;
                 }
             }
@@ -595,7 +644,7 @@ class EV3 {
                         value = value - 0x100000000;
                     }
                     log.info(`motor at port ${i} ${this._motorPorts[i]} value: ${value}`);
-                    this._motorPositions[MOTOR_PORTS[i].value] = value;
+                    this._motorPositions[i] = value;
                     offset += 4;
                 }
             }
@@ -874,13 +923,13 @@ class Scratch3Ev3Blocks {
     }
 
     getMotorPosition (args) {
-        const port = Cast.toNumber(args.PORT);
+        const port = Cast.toNumber(args.PORT - 1); // TODO: Fix MOTOR_PORTS
 
         return this._device.getMotorPosition(port);
     }
 
     whenButtonPressed (args) {
-        const port = Cast.toNumber(args.PORT);
+        const port = Cast.toNumber(args.PORT - 1); // TODO: Fix SENSOR PORTS
 
         return this._device.isButtonPressed(port);
     }
@@ -898,7 +947,7 @@ class Scratch3Ev3Blocks {
     }
 
     buttonPressed (args) {
-        const port = Cast.toNumber(args.PORT);
+        const port = Cast.toNumber(args.PORT - 1); // TODO: fix SENSOR_PORTS
 
         return this._device.isButtonPressed(port);
     }
