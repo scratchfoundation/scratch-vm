@@ -171,8 +171,16 @@ class EV3 {
     disconnectSession () {
         this._bt.disconnectSession();
         window.clearInterval(this._pollingIntervalID); // TODO: window?
+        this.speed = 50;
+        this._sensors = {
+            distance: 0,
+            brightness: 0,
+            buttons: [0, 0, 0, 0]
+        };
+        this._motorPositions = [0, 0, 0, 0];
         this._sensorPorts = [];
         this._motorPorts = [];
+        this._pollingIntervalID = null;
     }
 
     /**
@@ -885,17 +893,39 @@ class Scratch3Ev3Blocks {
     }
 
     motorTurnClockwise (args) {
-        const port = Cast.toNumber(args.PORT);
+        const port = Cast.toNumber(args.PORT); // TODO: fix
         const time = Cast.toNumber(args.TIME) * 1000;
 
-        return this._device.motorTurnClockwise(port, time);
+        let p = null;
+        if (port === 1) {
+            p = 1;
+        } else if (port === 2) {
+            p = 2;
+        } else if (port === 3) {
+            p = 4;
+        } else if (port === 4) {
+            p = 8;
+        }
+
+        return this._device.motorTurnClockwise(p, time);
     }
 
     motorTurnCounterClockwise (args) {
-        const port = Cast.toNumber(args.PORT);
+        const port = Cast.toNumber(args.PORT); // TODO: fix
         const time = Cast.toNumber(args.TIME) * 1000;
 
-        return this._device.motorTurnCounterClockwise(port, time);
+        let p = null;
+        if (port === 1) {
+            p = 1;
+        } else if (port === 2) {
+            p = 2;
+        } else if (port === 3) {
+            p = 4;
+        } else if (port === 4) {
+            p = 8;
+        }
+
+        return this._device.motorTurnCounterClockwise(p, time);
     }
 
     motorRotate (args) {
