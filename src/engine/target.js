@@ -83,17 +83,19 @@ class Target extends EventEmitter {
     /**
      * Get the names of all the variables of the given type that are in scope for this target.
      * For targets that are not the stage, this includes any target-specific
-     * variables as well as any stage variables.
+     * variables as well as any stage variables unless the skipStage flag is true.
      * For the stage, this is all stage variables.
      * @param {string} type The variable type to search for; defaults to Variable.SCALAR_TYPE
+     * @param {?bool} skipStage Optional flag to skip the stage.
      * @return {Array<string>} A list of variable names
      */
-    getAllVariableNamesInScopeByType (type) {
+    getAllVariableNamesInScopeByType (type, skipStage) {
         if (typeof type !== 'string') type = Variable.SCALAR_TYPE;
+        skipStage = skipStage || false;
         const targetVariables = Object.values(this.variables)
             .filter(v => v.type === type)
             .map(variable => variable.name);
-        if (this.isStage || !this.runtime) {
+        if (skipStage || this.isStage || !this.runtime) {
             return targetVariables;
         }
         const stage = this.runtime.getTargetForStage();
@@ -194,11 +196,13 @@ class Target extends EventEmitter {
      * was not found.
      * @param {string} name Name of the variable.
      * @param {string} type Type of the variable. Defaults to Variable.SCALAR_TYPE.
+     * @param {?bool} skipStage Optional flag to skip checking the stage
      * @return {?Variable} Variable object if found, or null if not.
      */
-    lookupVariableByNameAndType (name, type) {
+    lookupVariableByNameAndType (name, type, skipStage) {
         if (typeof name !== 'string') return;
         if (typeof type !== 'string') type = Variable.SCALAR_TYPE;
+        skipStage = skipStage || false;
 
         for (const varId in this.variables) {
             const currVar = this.variables[varId];
@@ -207,7 +211,7 @@ class Target extends EventEmitter {
             }
         }
 
-        if (this.runtime && !this.isStage) {
+        if (!skipStage && this.runtime && !this.isStage) {
             const stage = this.runtime.getTargetForStage();
             if (stage) {
                 for (const varId in stage.variables) {

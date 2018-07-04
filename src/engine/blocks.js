@@ -330,19 +330,25 @@ class Blocks {
             this.deleteBlock(e.blockId);
             break;
         case 'var_create':
-            // New variables being created by the user are all global.
-            // Check if this variable exists on the current target or stage.
-            // If not, create it on the appropriate target based on the event's
-            // 'isLocal' flag.
-            if (editingTarget) {
+            // Check if the variable being created is global or local
+            // If local, create a local var on the current editing target, as long
+            // as there are no conflicts, and the current target is actually a sprite
+            // If global or if the editing target is not present or we somehow got
+            // into a state where a local var was requested for the stage,
+            // create a stage (global) var after checking for name conflicts
+            // on all the sprites.
+            if (e.isLocal && editingTarget && !editingTarget.isStage) {
                 if (!editingTarget.lookupVariableById(e.varId)) {
-                    const varTarget = e.isLocal ? editingTarget : stage;
-                    varTarget.createVariable(e.varId, e.varName, e.varType);
+                    editingTarget.createVariable(e.varId, e.varName, e.varType);
                 }
-            } else if (!stage.lookupVariableById(e.varId)) {
-                // Since getEditingTarget returned null, we now need to
-                // explicitly check if the stage has the variable, and
-                // create one if not.
+            } else {
+                // Check for name conflicts in all of the targets
+                const allTargets = optRuntime.targets.filter(t => t.isOriginal);
+                for (const target of allTargets) {
+                    if (target.lookupVariableByNameAndType(e.varName, e.varType, true)) {
+                        return;
+                    }
+                }
                 stage.createVariable(e.varId, e.varName, e.varType);
             }
             break;
