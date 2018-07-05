@@ -69,9 +69,11 @@ class Scratch3EventBlocks {
     hatGreaterThanPredicate (args, util) {
         const option = Cast.toString(args.WHENGREATERTHANMENU).toLowerCase();
         const value = Cast.toNumber(args.VALUE);
-        // @todo: Other cases :)
-        if (option === 'timer') {
+        switch (option) {
+        case 'timer':
             return util.ioQuery('clock', 'projectTimer') > value;
+        case 'loudness':
+            return this.runtime.audioEngine && this.runtime.audioEngine.getLoudness() > value;
         }
         return false;
     }
