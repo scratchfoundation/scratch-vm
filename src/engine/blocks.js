@@ -263,6 +263,7 @@ class Blocks {
             return;
         }
         const stage = optRuntime.getTargetForStage();
+        const editingTarget = optRuntime.getEditingTarget();
 
         // UI event: clicked scripts toggle in the runtime.
         if (e.element === 'stackclick') {
@@ -330,25 +331,39 @@ class Blocks {
             this.deleteBlock(e.blockId);
             break;
         case 'var_create':
-            // New variables being created by the user are all global.
-            // Check if this variable exists on the current target or stage.
-            // If not, create it on the stage.
-            // TODO create global and local variables when UI provides a way.
-            if (optRuntime.getEditingTarget()) {
-                if (!optRuntime.getEditingTarget().lookupVariableById(e.varId)) {
-                    stage.createVariable(e.varId, e.varName, e.varType);
+            // Check if the variable being created is global or local
+            // If local, create a local var on the current editing target, as long
+            // as there are no conflicts, and the current target is actually a sprite
+            // If global or if the editing target is not present or we somehow got
+            // into a state where a local var was requested for the stage,
+            // create a stage (global) var after checking for name conflicts
+            // on all the sprites.
+            if (e.isLocal && editingTarget && !editingTarget.isStage) {
+                if (!editingTarget.lookupVariableById(e.varId)) {
+                    editingTarget.createVariable(e.varId, e.varName, e.varType);
                 }
-            } else if (!stage.lookupVariableById(e.varId)) {
-                // Since getEditingTarget returned null, we now need to
-                // explicitly check if the stage has the variable, and
-                // create one if not.
+            } else {
+                // Check for name conflicts in all of the targets
+                const allTargets = optRuntime.targets.filter(t => t.isOriginal);
+                for (const target of allTargets) {
+                    if (target.lookupVariableByNameAndType(e.varName, e.varType, true)) {
+                        return;
+                    }
+                }
                 stage.createVariable(e.varId, e.varName, e.varType);
             }
             break;
         case 'var_rename':
-            stage.renameVariable(e.varId, e.newName);
-            // Update all the blocks that use the renamed variable.
-            if (optRuntime) {
+            if (editingTarget && editingTarget.hasOwnProperty(e.varId)) {
+                // This is a local variable, rename on the current target
+                editingTarget.renameVariable(e.varId, e.newName);
+                // Update all the blocks on the current target that use
+                // this variable
+                editingTarget.blocks.updateBlocksAfterVarRename(e.varId, e.newName);
+            } else {
+                // This is a global variable
+                stage.renameVariable(e.varId, e.newName);
+                // Update all blocks on all targets that use the renamed variable
                 const targets = optRuntime.targets;
                 for (let i = 0; i < targets.length; i++) {
                     const currTarget = targets[i];
@@ -356,9 +371,12 @@ class Blocks {
                 }
             }
             break;
-        case 'var_delete':
-            stage.deleteVariable(e.varId);
+        case 'var_delete': {
+            const target = (editingTarget && editingTarget.hasOwnProperty(e.varId)) ?
+                editingTarget : stage;
+            target.deleteVariable(e.varId);
             break;
+        }
         case 'comment_create':
             if (optRuntime && optRuntime.getEditingTarget()) {
                 const currTarget = optRuntime.getEditingTarget();
