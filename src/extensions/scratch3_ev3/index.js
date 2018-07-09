@@ -264,6 +264,7 @@ class EV3 {
         }, time + coastTime);
 
         // Yield for turn time + brake time
+        // TODO: does this work?
         return new Promise(resolve => {
             setTimeout(() => {
                 resolve();
@@ -296,6 +297,7 @@ class EV3 {
         }, time + coastTime);
 
         // Yield for time
+        // TODO: does this work?
         return new Promise(resolve => {
             setTimeout(() => {
                 resolve();
@@ -340,8 +342,34 @@ class EV3 {
     motorRotate (port, degrees) {
         if (!this.connected) return;
 
-        // TODO: Build up motor command
-        log.info(`motor rotate port: ${port} and degrees: ${degrees}`);
+        // Build up motor command
+        const cmd = this._applyPrefix(0, this._motorCommand(
+            BTCommand.STEPSPEED,
+            port,
+            degrees,
+            this.speed,
+            BTCommand.LONGRAMP
+        ));
+
+        // Send rotate message
+        this._bt.sendMessage({
+            message: Base64Util.arrayBufferToBase64(cmd),
+            encoding: 'base64'
+        });
+
+        // Send coast message
+        /* const coastTime = 100;
+        setTimeout(() => {
+            this.motorCoast(port);
+        }, 3000 + coastTime); */
+
+        // Yield for time
+        // TODO: does this work?
+        /* return new Promise(resolve => {
+            setTimeout(() => {
+                resolve();
+            }, 3000 + coastTime);
+        }); */
     }
 
     motorSetPosition (port, degrees) {
@@ -519,7 +547,6 @@ class EV3 {
             encoding: 'base64'
         });
         */
-
 
         // COMPOUND COMMAND FOR READING sensors0x27   command size
         // 0x??  [    ]   command size
@@ -893,7 +920,7 @@ class Scratch3Ev3Blocks {
     }
 
     motorTurnClockwise (args) {
-        const port = Cast.toNumber(args.PORT); // TODO: fix
+        const port = Cast.toNumber(args.PORT); // TODO: Fix MOTOR_PORTS
         const time = Cast.toNumber(args.TIME) * 1000;
 
         let p = null;
@@ -911,7 +938,7 @@ class Scratch3Ev3Blocks {
     }
 
     motorTurnCounterClockwise (args) {
-        const port = Cast.toNumber(args.PORT); // TODO: fix
+        const port = Cast.toNumber(args.PORT); // TODO: Fix MOTOR_PORTS
         const time = Cast.toNumber(args.TIME) * 1000;
 
         let p = null;
@@ -929,7 +956,7 @@ class Scratch3Ev3Blocks {
     }
 
     motorRotate (args) {
-        const port = Cast.toNumber(args.PORT);
+        const port = Cast.toNumber(args.PORT); // TODO: Fix MOTOR_PORTS
         const degrees = Cast.toNumber(args.DEGREES);
 
         this._device.motorRotate(port, degrees);
@@ -937,7 +964,7 @@ class Scratch3Ev3Blocks {
     }
 
     motorSetPosition (args) {
-        const port = Cast.toNumber(args.PORT);
+        const port = Cast.toNumber(args.PORT); // TODO: Fix MOTOR_PORTS
         const degrees = Cast.toNumber(args.DEGREES);
 
         this._device.motorSetPosition(port, degrees);
@@ -977,7 +1004,7 @@ class Scratch3Ev3Blocks {
     }
 
     buttonPressed (args) {
-        const port = Cast.toNumber(args.PORT - 1); // TODO: fix SENSOR_PORTS
+        const port = Cast.toNumber(args.PORT - 1); // TODO: Fix SENSOR_PORTS
 
         return this._device.isButtonPressed(port);
     }
