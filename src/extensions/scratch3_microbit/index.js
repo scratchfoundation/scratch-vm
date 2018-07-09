@@ -1,7 +1,7 @@
 const ArgumentType = require('../../extension-support/argument-type');
 const BlockType = require('../../extension-support/block-type');
 const log = require('../../util/log');
-const ScratchBLE = require('../../io/scratchBLE');
+const BLESession = require('../../io/bleSession');
 const Base64Util = require('../../util/base64-util');
 
 /**
@@ -50,8 +50,9 @@ class MicroBit {
     /**
      * Construct a MicroBit communication object.
      * @param {Runtime} runtime - the Scratch 3.0 runtime
+     * @param {string} extensionId - the id of the extension
      */
-    constructor (runtime) {
+    constructor (runtime, extensionId) {
 
         /**
          * The Scratch 3.0 runtime used to trigger the green flag button.
@@ -61,11 +62,12 @@ class MicroBit {
         this._runtime = runtime;
 
         /**
-         * The ScratchBLE connection session for reading/writing device data.
-         * @type {ScratchBLE}
+         * The BluetoothLowEnergy connection session for reading/writing device data.
+         * @type {BLESession}
          * @private
          */
-        this._ble = new ScratchBLE();
+        this._ble = null;
+        this._runtime.registerExtensionDevice(extensionId, this);
 
         /**
          * The most recently received value for each sensor.
@@ -102,33 +104,60 @@ class MicroBit {
                 timeout: false
             }
         };
+    }
 
-        // TODO: Temporary until the gui requests a device connection
-        this._ble.waitForSocket()
-            // TODO: remove pinging once no longer needed
-            .then(() => this._ble.sendRemoteRequest('pingMe'))
-            .then(() => this._onBLEReady());
+    // TODO: keep here?
+    /**
+     * Called by the runtime when user wants to scan for a device.
+     */
+    startDeviceScan () {
+        log.info('making a new BLE session');
+        this._ble = new BLESession(this._runtime, {
+            filters: [
+                {services: [BLEUUID.service]}
+            ]
+        }, this._onSessionConnect.bind(this));
+    }
 
-        // TODO: Add ScratchBLE 'disconnect' handling
+    // TODO: keep here?
+    /**
+     * Called by the runtime when user wants to connect to a certain device.
+     * @param {number} id - the id of the device to connect to.
+     */
+    connectDevice (id) {
+        this._ble.connectDevice(id);
+    }
 
+    disconnectSession () {
+        this._ble.disconnectSession();
+    }
+
+    getPeripheralIsConnected () {
+        let connected = false;
+        if (this._ble) {
+            connected = this._ble.getPeripheralIsConnected();
+        }
+        return connected;
     }
 
     /**
      * @param {string} text - the text to display.
+     * @return {Promise} - a Promise that resolves when writing to device.
      */
     displayText (text) {
         const output = new Uint8Array(text.length);
         for (let i = 0; i < text.length; i++) {
             output[i] = text.charCodeAt(i);
         }
-        this._writeBLE(BLECommand.CMD_DISPLAY_TEXT, output);
+        return this._writeSessionData(BLECommand.CMD_DISPLAY_TEXT, output);
     }
 
     /**
      * @param {Uint8Array} matrix - the matrix to display.
+     * @return {Promise} - a Promise that resolves when writing to device.
      */
     displayMatrix (matrix) {
-        this._writeBLE(BLECommand.CMD_DISPLAY_LED, matrix);
+        return this._writeSessionData(BLECommand.CMD_DISPLAY_LED, matrix);
     }
 
     /**
@@ -182,29 +211,11 @@ class MicroBit {
     }
 
     /**
-     * Requests connection to a device when BLE session is ready.
-     */
-    _onBLEReady () {
-        this._ble.requestDevice({
-            filters: [
-                {services: [BLEUUID.service]}
-            ]
-        }, this._onBLEConnect.bind(this), this._onBLEError);
-    }
-
-    /**
      * Starts reading data from device after BLE has connected to it.
      */
-    _onBLEConnect () {
-        const callback = this._processBLEData.bind(this);
+    _onSessionConnect () {
+        const callback = this._processSessionData.bind(this);
         this._ble.read(BLEUUID.service, BLEUUID.rxChar, true, callback);
-    }
-
-    /**
-     * @param {string} e - Error from BLE session.
-     */
-    _onBLEError (e) {
-        log.error(`BLE error: ${e}`);
     }
 
     /**
@@ -212,7 +223,7 @@ class MicroBit {
      * @param {object} base64 - the incoming BLE data.
      * @private
      */
-    _processBLEData (base64) {
+    _processSessionData (base64) {
         const data = Base64Util.base64ToUint8Array(base64);
 
         this._sensors.tiltX = data[1] | (data[0] << 8);
@@ -234,16 +245,17 @@ class MicroBit {
      * Write a message to the device BLE session.
      * @param {number} command - the BLE command hex.
      * @param {Uint8Array} message - the message to write.
+     * @return {Promise} - a Promise that resolves when writing to device.
      * @private
      */
-    _writeBLE (command, message) {
+    _writeSessionData (command, message) {
         const output = new Uint8Array(message.length + 1);
         output[0] = command; // attach command to beginning of message
         for (let i = 0; i < message.length; i++) {
             output[i + 1] = message[i];
         }
-        const b64enc = Base64Util.uint8ArrayToBase64(output);
-        this._ble.write(BLEUUID.service, BLEUUID.txChar, b64enc, 'base64');
+        const data = Base64Util.uint8ArrayToBase64(output);
+        return this._ble.write(BLEUUID.service, BLEUUID.txChar, data, 'base64');
     }
 }
 
@@ -318,7 +330,7 @@ class Scratch3MicroBitBlocks {
         this.runtime = runtime;
 
         // Create a new MicroBit device instance
-        this._device = new MicroBit(this.runtime);
+        this._device = new MicroBit(this.runtime, Scratch3MicroBitBlocks.EXTENSION_ID);
     }
 
     /**
@@ -516,17 +528,18 @@ class Scratch3MicroBitBlocks {
     /**
      * Display text on the 5x5 LED matrix.
      * @param {object} args - the block's arguments.
+     * @return {Promise} - a Promise that resolves when writing to device.
      * Note the limit is 19 characters
      */
     displayText (args) {
         const text = String(args.TEXT).substring(0, 19);
-        this._device.displayText(text);
-        return;
+        return this._device.displayText(text);
     }
 
     /**
      * Display a predefined symbol on the 5x5 LED matrix.
      * @param {object} args - the block's arguments.
+     * @return {Promise} - a Promise that resolves when writing to device.
      */
     displaySymbol (args) {
         const hex = symbols2hex[args.SYMBOL];
@@ -536,8 +549,7 @@ class Scratch3MicroBitBlocks {
         this._device.ledMatrixState[2] = (hex >> 10) & 0x1F;
         this._device.ledMatrixState[3] = (hex >> 5) & 0x1F;
         this._device.ledMatrixState[4] = hex & 0x1F;
-        this._device.displayMatrix(this._device.ledMatrixState);
-        return;
+        return this._device.displayMatrix(this._device.ledMatrixState);
     }
 
     /**

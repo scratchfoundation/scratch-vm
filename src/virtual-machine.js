@@ -106,6 +106,16 @@ class VirtualMachine extends EventEmitter {
             this.emit(Runtime.BLOCKSINFO_UPDATE, blocksInfo);
         });
 
+        this.runtime.on(Runtime.PERIPHERAL_LIST_UPDATE, info => {
+            this.emit(Runtime.PERIPHERAL_LIST_UPDATE, info);
+        });
+        this.runtime.on(Runtime.PERIPHERAL_CONNECTED, () =>
+            this.emit(Runtime.PERIPHERAL_CONNECTED)
+        );
+        this.runtime.on(Runtime.PERIPHERAL_ERROR, () =>
+            this.emit(Runtime.PERIPHERAL_ERROR)
+        );
+
         this.extensionManager = new ExtensionManager(this.runtime);
 
         this.blockListener = this.blockListener.bind(this);
@@ -193,6 +203,22 @@ class VirtualMachine extends EventEmitter {
 
     setVideoProvider (videoProvider) {
         this.runtime.ioDevices.video.setProvider(videoProvider);
+    }
+
+    startDeviceScan (extensionId) {
+        this.runtime.startDeviceScan(extensionId);
+    }
+
+    connectToPeripheral (extensionId, peripheralId) {
+        this.runtime.connectToPeripheral(extensionId, peripheralId);
+    }
+
+    disconnectExtensionSession (extensionId) {
+        this.runtime.disconnectExtensionSession(extensionId);
+    }
+
+    getPeripheralIsConnected (extensionId) {
+        return this.runtime.getPeripheralIsConnected(extensionId);
     }
 
     /**
