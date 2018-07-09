@@ -1000,7 +1000,66 @@ class VirtualMachine extends EventEmitter {
      * @param {!string} targetId Id of target to add blocks to.
      */
     shareBlocksToTarget (blocks, targetId) {
+        const currTarget = this.runtime.getEditingTarget();
         const target = this.runtime.getTargetById(targetId);
+        // Resolve any potential local variable conflicts if the current sprite (sharing the love)
+        // is a non-stage target.
+        if (!currTarget.isStage) {
+            const allVarListRefs = currTarget.blocks.getAllVariableAndListReferences(blocks);
+            for (const varId in allVarListRefs) {
+                const currVarListRefs = allVarListRefs[varId];
+                const currVar = currTarget.variables[varId];
+                if (!currVar) continue; // If the currVar is global, skip it
+
+                const varName = currVar.name;
+                const varType = currVar.type;
+                let newVarId = '';
+                let existingVar;
+                if (target.isStage) {
+                    // If a local var is being shared with the stage,
+                    // we'll prefix the ID of the current variable,
+                    // and use a fresh, prefixed name for the variable.
+                    // This way, multiple share the loves from the same target, referring
+                    // the same variable will map to the same new variable on the stage.
+                    const varIdForStage = `StageVarFromLocal_${varId}`;
+                    existingVar = target.lookupVariableById(varIdForStage);
+                    if (!existingVar) {
+                        let allVarNames = [];
+                        for (const t of this.runtime.targets) {
+                            // TODO allVarNames will probably contain duplicates, should we filter them out
+                            // or create a set instead?
+                            allVarNames = allVarNames.concat(t.getAllVariableNamesInScopeByType(varType));
+                        }
+                        const newStageVarName = StringUtil.unusedName(`Stage: ${varName}`, allVarNames);
+                        existingVar = new Variable(varIdForStage, newStageVarName, varType);
+                        target.variables[varIdForStage] = existingVar;
+                    }
+                    // Update all variable references to use the new name
+                    currVarListRefs.map(ref => {
+                        const field = ref.referencingField;
+                        field.value = existingVar.name;
+                        field.id = existingVar.id;
+                        return ref;
+                    });
+                } else {
+                    existingVar = target.lookupVariableByNameAndType(
+                        varName, varType);
+                    if (existingVar) {
+                        newVarId = existingVar.id;
+                    } else {
+                        const newVar = new Variable(null, varName, varType);
+                        newVarId = newVar.id;
+                        target.variables[newVarId] = newVar;
+                    }
+                    // Update all the variable references to use the new ID
+                    currVarListRefs.map(ref => {
+                        ref.referencingField.id = newVarId;
+                        return ref;
+                    });
+                }
+            }
+        }
+
         for (let i = 0; i < blocks.length; i++) {
             target.blocks.createBlock(blocks[i]);
         }

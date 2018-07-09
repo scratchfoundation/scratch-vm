@@ -693,12 +693,15 @@ class Blocks {
     /**
      * Returns a map of all references to variables or lists from blocks
      * in this block container.
+     * @param {Array<object>} optBlocks Optional list of blocks to constrain the search to.
+     * This is useful for getting variable/list references for a stack of blocks instead
+     * of all blocks on the workspace
      * @return {object} A map of variable ID to a list of all variable references
      * for that ID. A variable reference contains the field referencing that variable
      * and also the type of the variable being referenced.
      */
-    getAllVariableAndListReferences () {
-        const blocks = this._blocks;
+    getAllVariableAndListReferences (optBlocks) {
+        const blocks = optBlocks ? optBlocks : this._blocks;
         const allReferences = Object.create(null);
         for (const blockId in blocks) {
             let varOrListField = null;
