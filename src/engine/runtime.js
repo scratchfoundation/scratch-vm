@@ -58,6 +58,10 @@ const ArgumentTypeMap = (() => {
     map[ArgumentType.BOOLEAN] = {
         check: 'Boolean'
     };
+    map[ArgumentType.MATRIX] = {
+        shadowType: 'matrix',
+        fieldType: 'MATRIX'
+    };
     return map;
 })();
 
@@ -575,6 +579,7 @@ class Runtime extends EventEmitter {
         }
 
         for (const blockInfo of extensionInfo.blocks) {
+            console.log(blockInfo);
             if (blockInfo === '---') {
                 categoryInfo.blocks.push(ConvertedSeparator);
                 continue;
