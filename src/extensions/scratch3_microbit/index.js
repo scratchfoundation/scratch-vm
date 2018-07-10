@@ -514,7 +514,6 @@ class Scratch3MicroBitBlocks {
         let reducer = (accumulator, value, index) =>
             (value === '0') ? accumulator : accumulator + Math.pow(2, index);
         const hex = symbol.split('').reduce(reducer, 0);
-        console.log(hex);
         if (!hex) return;
         this._device.ledMatrixState[0] = hex & 0x1F;
         this._device.ledMatrixState[1] = (hex >> 5) & 0x1F;

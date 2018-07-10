@@ -579,7 +579,6 @@ class Runtime extends EventEmitter {
         }
 
         for (const blockInfo of extensionInfo.blocks) {
-            console.log(blockInfo);
             if (blockInfo === '---') {
                 categoryInfo.blocks.push(ConvertedSeparator);
                 continue;
