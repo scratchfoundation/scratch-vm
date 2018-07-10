@@ -444,7 +444,6 @@ class Scratch3MicroBitBlocks {
             menus: {
                 buttons: ['A', 'B', 'any'],
                 gestures: ['moved', 'shaken', 'jumped'],
-                rowcol: ['1', '2', '3', '4', '5'],
                 pinState: ['on', 'off'],
                 tiltDirection: [TiltDirection.FRONT, TiltDirection.BACK, TiltDirection.LEFT, TiltDirection.RIGHT],
                 tiltDirectionAny: [
