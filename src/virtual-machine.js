@@ -896,6 +896,14 @@ class VirtualMachine extends EventEmitter {
     }
 
     /**
+     * Set the bitmap adapter for the VM/runtime, which converts scratch 2 svgs to scratch 3 bitmaps
+     * @param {!function} bitmapAdapter The adapter to attach
+     */
+    attachV2BitmapAdapter (bitmapAdapter) {
+        this.runtime.attachV2BitmapAdapter(bitmapAdapter);
+    }
+
+    /**
      * Set the storage module for the VM/runtime
      * @param {!ScratchStorage} storage The storage module to attach
      */
