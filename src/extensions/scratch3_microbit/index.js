@@ -355,11 +355,11 @@ class Scratch3MicroBitBlocks {
                     text: 'when [GESTURE]',
                     blockType: BlockType.HAT,
                     arguments: {
-                      GESTURE: {
-                          type: ArgumentType.STRING,
-                          menu: 'gestures',
-                          defaultValue: 'moved'
-                      }
+                        GESTURE: {
+                            type: ArgumentType.STRING,
+                            menu: 'gestures',
+                            defaultValue: 'moved'
+                        }
                     }
                 },
                 '---',
@@ -489,6 +489,7 @@ class Scratch3MicroBitBlocks {
 
     /**
      * Test whether the micro:bit is moving
+     * @param {object} args - the block's arguments.
      * @return {boolean} - true if the micro:bit is moving.
      */
     whenGesture (args) {
@@ -510,8 +511,10 @@ class Scratch3MicroBitBlocks {
      */
     displaySymbol (args) {
         const symbol = cast.toString(args.MATRIX);
-        let reducer = (accumulator, value, index) =>
-            (value === '0') ? accumulator : accumulator + Math.pow(2, index);
+        const reducer = (accumulator, c, index) => {
+            const value = (c === '0') ? accumulator : accumulator + Math.pow(2, index);
+            return value;
+        };
         const hex = symbol.split('').reduce(reducer, 0);
         if (!hex) return;
         this._device.ledMatrixState[0] = hex & 0x1F;
