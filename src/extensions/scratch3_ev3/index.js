@@ -34,28 +34,22 @@ const BTCommand = {
     TIMESPEEDSYNC: 0xB1
 };
 
-/**
- * Array of accepted motor ports.
- * @note These should not be translated as they correspond to labels on
- *       the EV3 hub.
- * @type {array}
- */
 const MOTOR_PORTS = [
     {
         name: 'A',
-        value: 1
+        value: 0
     },
     {
         name: 'B',
-        value: 2
+        value: 1
     },
     {
         name: 'C',
-        value: 4
+        value: 2
     },
     {
         name: 'D',
-        value: 8
+        value: 3
     }
 ];
 
@@ -68,19 +62,19 @@ const MOTOR_PORTS = [
 const SENSOR_PORTS = [
     {
         name: '1',
-        value: 1
+        value: 0
     },
     {
         name: '2',
-        value: 2
+        value: 1
     },
     {
         name: '3',
-        value: 3
+        value: 2
     },
     {
         name: '4',
-        value: 4
+        value: 3
     }
 ];
 
@@ -293,10 +287,21 @@ class EV3 {
     motorTurnClockwise (port, time) {
         if (!this.connected) return;
 
+        let p = null;
+        if (port === 0) {
+            p = 1;
+        } else if (port === 1) {
+            p = 2;
+        } else if (port === 2) {
+            p = 4;
+        } else if (port === 3) {
+            p = 8;
+        }
+
         // Build up motor command
         const cmd = this._applyPrefix(0, this._motorCommand(
             BTCommand.TIMESPEED,
-            port,
+            p, // output bit field port
             time,
             this._motors.speeds[port],
             BTCommand.LONGRAMP
@@ -326,10 +331,21 @@ class EV3 {
     motorTurnCounterClockwise (port, time) {
         if (!this.connected) return;
 
+        let p = null;
+        if (port === 0) {
+            p = 1;
+        } else if (port === 1) {
+            p = 2;
+        } else if (port === 2) {
+            p = 4;
+        } else if (port === 3) {
+            p = 8;
+        }
+
         // Build up motor command
         const cmd = this._applyPrefix(0, this._motorCommand(
             BTCommand.TIMESPEED,
-            port,
+            p, // output bit field port
             time,
             this._motors.speeds[port] * -1,
             BTCommand.LONGRAMP
@@ -393,10 +409,21 @@ class EV3 {
     motorRotate (port, degrees) {
         if (!this.connected) return;
 
+        let p = null;
+        if (port === 0) {
+            p = 1;
+        } else if (port === 1) {
+            p = 2;
+        } else if (port === 2) {
+            p = 4;
+        } else if (port === 3) {
+            p = 8;
+        }
+
         // Build up motor command
         const cmd = this._applyPrefix(0, this._motorCommand(
             BTCommand.STEPSPEED,
-            port,
+            p, // output bit field port
             degrees,
             this._motors.speeds[port],
             BTCommand.LONGRAMP
@@ -426,6 +453,17 @@ class EV3 {
     motorSetPosition (port, degrees) {
         if (!this.connected) return;
 
+        let p = null;
+        if (port === 0) {
+            p = 1;
+        } else if (port === 1) {
+            p = 2;
+        } else if (port === 2) {
+            p = 4;
+        } else if (port === 3) {
+            p = 8;
+        }
+
         // Calculate degrees to turn
         let previousPos = this._motors.positions[port];
         previousPos = previousPos % 360;
@@ -439,19 +477,13 @@ class EV3 {
             degreesToTurn = previousPos - newPos;
             direction = -1;
         }
-        log.info(`motor positions at port: ${this._motors.positions[port]}`);
-        log.info(`previous position: ${previousPos}`);
-        log.info(`new position: ${newPos}`);
-        log.info(`degrees to turn: ${degreesToTurn}`);
-        log.info(`direction to turn: ${direction}`);
-        log.info(`----------`);
 
         // Build up motor command
         const cmd = this._applyPrefix(0, this._motorCommand(
             BTCommand.STEPSPEED,
-            port + 1,
+            p, // output bit field port
             degreesToTurn,
-            50 * direction,
+            this._motors.speeds[port] * direction,
             BTCommand.LONGRAMP
         ));
 
@@ -731,7 +763,7 @@ class EV3 {
                     }
                     // log.info(`motor at port ${i} ${this._motorPorts[i]} value: ${value}`);
                     this._motors.positions[i] = value;
-                    log.info(`motor positions: ${this._motors.positions}`);
+                    // log.info(`motor positions: ${this._motors.positions}`);
                     offset += 4;
                 }
             }
@@ -798,7 +830,7 @@ class Scratch3Ev3Blocks {
                         PORT: {
                             type: ArgumentType.STRING,
                             menu: 'motorPorts',
-                            defaultValue: MOTOR_PORTS[0].value
+                            defaultValue: 'A'
                         },
                         TIME: {
                             type: ArgumentType.NUMBER,
@@ -814,7 +846,7 @@ class Scratch3Ev3Blocks {
                         PORT: {
                             type: ArgumentType.STRING,
                             menu: 'motorPorts',
-                            defaultValue: MOTOR_PORTS[0].value
+                            defaultValue: 'A'
                         },
                         TIME: {
                             type: ArgumentType.NUMBER,
@@ -830,7 +862,7 @@ class Scratch3Ev3Blocks {
                         PORT: {
                             type: ArgumentType.STRING,
                             menu: 'motorPorts',
-                            defaultValue: MOTOR_PORTS[0].value
+                            defaultValue:'A'
                         },
                         DEGREES: {
                             type: ArgumentType.NUMBER,
@@ -846,7 +878,7 @@ class Scratch3Ev3Blocks {
                         PORT: {
                             type: ArgumentType.STRING,
                             menu: 'motorPorts',
-                            defaultValue: MOTOR_PORTS[0].value
+                            defaultValue: 'A'
                         },
                         DEGREES: {
                             type: ArgumentType.NUMBER,
@@ -862,7 +894,7 @@ class Scratch3Ev3Blocks {
                         PORT: {
                             type: ArgumentType.STRING,
                             menu: 'motorPorts',
-                            defaultValue: MOTOR_PORTS[0].value
+                            defaultValue: 'A'
                         },
                         POWER: {
                             type: ArgumentType.NUMBER,
@@ -878,7 +910,7 @@ class Scratch3Ev3Blocks {
                         PORT: {
                             type: ArgumentType.STRING,
                             menu: 'motorPorts',
-                            defaultValue: MOTOR_PORTS[0].value
+                            defaultValue: 'A'
                         }
                     }
                 },
@@ -972,49 +1004,27 @@ class Scratch3Ev3Blocks {
         return info.map((entry, index) => {
             const obj = {};
             obj.text = entry.name;
-            obj.value = String(index + 1);
+            obj.value = String(index);
             return obj;
         });
     }
 
     motorTurnClockwise (args) {
-        const port = Cast.toNumber(args.PORT); // TODO: Fix MOTOR_PORTS
+        const port = Cast.toNumber(args.PORT);
         const time = Cast.toNumber(args.TIME) * 1000;
 
-        let p = null;
-        if (port === 1) {
-            p = 1;
-        } else if (port === 2) {
-            p = 2;
-        } else if (port === 3) {
-            p = 4;
-        } else if (port === 4) {
-            p = 8;
-        }
-
-        return this._device.motorTurnClockwise(p, time);
+        return this._device.motorTurnClockwise(port, time);
     }
 
     motorTurnCounterClockwise (args) {
-        const port = Cast.toNumber(args.PORT); // TODO: Fix MOTOR_PORTS
+        const port = Cast.toNumber(args.PORT);
         const time = Cast.toNumber(args.TIME) * 1000;
 
-        let p = null;
-        if (port === 1) {
-            p = 1;
-        } else if (port === 2) {
-            p = 2;
-        } else if (port === 3) {
-            p = 4;
-        } else if (port === 4) {
-            p = 8;
-        }
-
-        return this._device.motorTurnCounterClockwise(p, time);
+        return this._device.motorTurnCounterClockwise(port, time);
     }
 
     motorRotate (args) {
-        const port = Cast.toNumber(args.PORT); // TODO: Fix MOTOR_PORTS menu
+        const port = Cast.toNumber(args.PORT);
         const degrees = Cast.toNumber(args.DEGREES);
 
         this._device.motorRotate(port, degrees);
@@ -1022,7 +1032,7 @@ class Scratch3Ev3Blocks {
     }
 
     motorSetPosition (args) {
-        const port = Cast.toNumber(args.PORT - 1); // TODO: Fix MOTOR_PORTS menu
+        const port = Cast.toNumber(args.PORT);
         const degrees = Cast.toNumber(args.DEGREES);
 
         this._device.motorSetPosition(port, degrees);
@@ -1030,7 +1040,7 @@ class Scratch3Ev3Blocks {
     }
 
     motorSetPower (args) {
-        const port = Cast.toNumber(args.PORT); // TODO: Fix MOTOR_PORTS menu
+        const port = Cast.toNumber(args.PORT);
         const power = Cast.toNumber(args.POWER);
 
         const value = Math.max(-100, Math.min(power, 100));
@@ -1040,7 +1050,7 @@ class Scratch3Ev3Blocks {
     }
 
     getMotorPosition (args) {
-        const port = Cast.toNumber(args.PORT - 1); // TODO: Fix MOTOR_PORTS menu
+        const port = Cast.toNumber(args.PORT);
 
         return this._device.getMotorPosition(port);
     }
