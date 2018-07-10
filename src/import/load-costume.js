@@ -87,8 +87,10 @@ const loadBitmap_ = function (costume, costumeAsset, runtime, rotationCenter) {
 
         if (!rotationCenter) {
             rotationCenter = runtime.renderer.getSkinRotationCenter(costume.skinId);
+            // Actual rotation center, since all bitmaps are resolution 2
             costume.rotationCenterX = rotationCenter[0] * 2;
             costume.rotationCenterY = rotationCenter[1] * 2;
+            costume.bitmapResolution = 2;
         }
         return costume;
     });
