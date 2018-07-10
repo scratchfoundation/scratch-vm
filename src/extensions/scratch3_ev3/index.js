@@ -124,15 +124,17 @@ class EV3 {
          * EV3 State
          */
         this.connected = false;
-        this.speed = 50;
+        this._sensorPorts = [];
+        this._motorPorts = [];
         this._sensors = {
             distance: 0,
             brightness: 0,
             buttons: [0, 0, 0, 0]
         };
-        this._motorPositions = [0, 0, 0, 0];
-        this._sensorPorts = [];
-        this._motorPorts = [];
+        this._motors = {
+            speeds: [50, 50, 50, 50],
+            positions: [0, 0, 0, 0]
+        };
         this._pollingIntervalID = null;
 
         /**
@@ -171,15 +173,18 @@ class EV3 {
     disconnectSession () {
         this._bt.disconnectSession();
         window.clearInterval(this._pollingIntervalID); // TODO: window?
-        this.speed = 50;
+        this._sensorPorts = [];
+        this._motorPorts = [];
         this._sensors = {
             distance: 0,
             brightness: 0,
             buttons: [0, 0, 0, 0]
         };
-        this._motorPositions = [0, 0, 0, 0];
-        this._sensorPorts = [];
         this._motorPorts = [];
+        this._motors = {
+            speeds: [50, 50, 50, 50],
+            positions: [0, 0, 0, 0]
+        };
         this._pollingIntervalID = null;
     }
 
@@ -217,7 +222,7 @@ class EV3 {
     getMotorPosition (port) {
         if (!this.connected) return;
 
-        let value = this._motorPositions[port];
+        let value = this._motors.positions[port];
         value = value % 360;
         value = value < 0 ? value * -1 : value;
 
@@ -230,12 +235,58 @@ class EV3 {
         return this._sensors.buttons[port];
     }
 
-    beep () {
+    beep (freq, time) {
         if (!this.connected) return;
 
+        // Make up block command // TODO
+        const cmd = [];
+
+        // 15 15
+        // 00 0
+        // 00 0
+        // 00 0
+        // 80 128
+        // 00 0
+        // 00 0
+        // 94 148 op sound
+        // 01 1   tone
+        // 81 129 Sound-level 2 encoded as one constant byte to follow
+        // 02 2
+        // 82 130 Frequency 1000 Hz. encoded as two constant bytes to follow
+        // E8 232 [232 3] = 1000
+        // 03 3
+        // 82 130 Duration 1000 mS. encoded as two constant bytes to follow
+        // ?? ??
+        // ?? ??
+        cmd[0] = 15;
+        cmd[1] = 0;
+        cmd[2] = 0;
+        cmd[3] = 0;
+        cmd[4] = 128;
+        cmd[5] = 0;
+        cmd[6] = 0;
+        cmd[7] = 148;
+        cmd[8] = 1;
+        cmd[9] = 129; // volume following in 1 byte
+        cmd[10] = 2;
+        cmd[11] = 130; // frequency following in 2 bytes
+        cmd[12] = freq;
+        cmd[13] = freq >> 8;
+        cmd[14] = 130; // time following in 2 bytes
+        cmd[15] = time;
+        cmd[16] = time >> 8;
+
         this._bt.sendMessage({
-            message: 'DwAAAIAAAJQBgQKC6AOC6AM=',
+            message: Base64Util.arrayBufferToBase64(cmd),
             encoding: 'base64'
+        });
+
+        // Yield for turn time + brake time
+        // TODO: does this work?
+        return new Promise(resolve => {
+            setTimeout(() => {
+                resolve();
+            }, time);
         });
     }
 
@@ -247,7 +298,7 @@ class EV3 {
             BTCommand.TIMESPEED,
             port,
             time,
-            this.speed,
+            this._motors.speeds[port],
             BTCommand.LONGRAMP
         ));
 
@@ -280,7 +331,7 @@ class EV3 {
             BTCommand.TIMESPEED,
             port,
             time,
-            this.speed * -1,
+            this._motors.speeds[port] * -1,
             BTCommand.LONGRAMP
         ));
 
@@ -347,7 +398,7 @@ class EV3 {
             BTCommand.STEPSPEED,
             port,
             degrees,
-            this.speed,
+            this._motors.speeds[port],
             BTCommand.LONGRAMP
         ));
 
@@ -375,15 +426,60 @@ class EV3 {
     motorSetPosition (port, degrees) {
         if (!this.connected) return;
 
-        // TODO: Build up motor command
-        log.info(`motor set position port: ${port} and degrees: ${degrees}`);
+        // Calculate degrees to turn
+        let previousPos = this._motors.positions[port];
+        previousPos = previousPos % 360;
+        previousPos = previousPos < 0 ? previousPos * -1 : previousPos;
+        const newPos = degrees % 360;
+        let degreesToTurn = 0;
+        let direction = 1;
+        if (previousPos <= newPos) {
+            degreesToTurn = newPos - previousPos;
+        } else {
+            degreesToTurn = previousPos - newPos;
+            direction = -1;
+        }
+        log.info(`motor positions at port: ${this._motors.positions[port]}`);
+        log.info(`previous position: ${previousPos}`);
+        log.info(`new position: ${newPos}`);
+        log.info(`degrees to turn: ${degreesToTurn}`);
+        log.info(`direction to turn: ${direction}`);
+        log.info(`----------`);
+
+        // Build up motor command
+        const cmd = this._applyPrefix(0, this._motorCommand(
+            BTCommand.STEPSPEED,
+            port + 1,
+            degreesToTurn,
+            50 * direction,
+            BTCommand.LONGRAMP
+        ));
+
+        // Send rotate message
+        this._bt.sendMessage({
+            message: Base64Util.arrayBufferToBase64(cmd),
+            encoding: 'base64'
+        });
+
+        // Send coast message
+        /* const coastTime = 100;
+        setTimeout(() => {
+            this.motorCoast(port);
+        }, 3000 + coastTime); */
+
+        // Yield for time
+        // TODO: does this work?
+        /* return new Promise(resolve => {
+            setTimeout(() => {
+                resolve();
+            }, 3000 + coastTime);
+        }); */
     }
 
     motorSetPower (port, power) {
         if (!this.connected) return;
 
-        // TODO: Build up motor command
-        log.info(`motor set power port: ${port} and degrees: ${power}`);
+        this._motors.speeds[port] = power;
     }
 
     _applyPrefix (n, cmd) {
@@ -496,14 +592,7 @@ class EV3 {
         this._bt.sendMessage({
             message: 'CwABAAAhAJiBIWDhIA==', // [11, 0, 1, 0, 0, 33, 0, 152, 129, 33, 96, 225, 32]
             encoding: 'base64'
-        }).then(
-            x => {
-                log.info(`get device list resolved: ${x}`);
-            },
-            e => {
-                log.info(`get device list rejected: ${e}`);
-            }
-        );
+        });
     }
 
     _getSessionData () {
@@ -511,42 +600,6 @@ class EV3 {
             window.clearInterval(this._pollingIntervalID);
             return;
         }
-
-        // GET EV3 DISTANCE PORT 0
-        /*
-        99 [153] input device
-        1D [ 29] ready si
-        00 [  0] layer (this brick)
-        00 [  0] sensor port 0
-        00 [  0] do not change type
-        01 [  1] mode 1 = EV3-Ultrasonic-Inch
-        01 [  1] one data set
-        60 [ 96] global var index
-        */
-        /*
-        this._bt.sendMessage({
-            message: 'DQAAAAAEAJkdAAAAAQFg', // [13, 0, 0, 0, 0, 4, 0, 153, 29, 0, 0, 0, 1, 1, 96]
-            encoding: 'base64'
-        });
-        */
-
-        // GET EV3 BRIGHTNESS PORT 1
-        /*
-        0x99 [153] input device
-        0x1D [ 29] ready si
-        0x00 [  0] layer (this brick)
-        0x01 [  1] sensor port 1
-        0x00 [  0] do not change type
-        0x01 [  1] mode 1 = EV3-Color-Ambient
-        0x01 [  1] one data set
-        0x60 [ 96] global var index
-        */
-        /*
-        this._bt.sendMessage({
-            message: 'DQAAAAAEAJkdAAEAAQFg', // [13, 0, 0, 0, 0, 4, 0, 153, 29, 0, 1, 0, 1, 1, 96]
-            encoding: 'base64'
-        });
-        */
 
         // COMPOUND COMMAND FOR READING sensors0x27   command size
         // 0x??  [    ]   command size
@@ -629,9 +682,7 @@ class EV3 {
         const array = Base64Util.base64ToUint8Array(message);
 
         if (this._sensorPorts.length === 0) {
-            // SENSOR LIST
-            // JAABAAIefn5+fn5+fn5+fn5+fn5+Bwd+fn5+fn5+fn5+fn5+fgA=
-            log.info(`device array: ${array}`);
+            // log.info(`device array: ${array}`);
             this._sensorPorts[0] = EV_DEVICE_TYPES[array[5]];
             this._sensorPorts[1] = EV_DEVICE_TYPES[array[6]];
             this._sensorPorts[2] = EV_DEVICE_TYPES[array[7]];
@@ -679,18 +730,15 @@ class EV3 {
                         value = value - 0x100000000;
                     }
                     // log.info(`motor at port ${i} ${this._motorPorts[i]} value: ${value}`);
-                    this._motorPositions[i] = value;
+                    this._motors.positions[i] = value;
+                    log.info(`motor positions: ${this._motors.positions}`);
                     offset += 4;
                 }
             }
-            // const sensorValue = this._array2float([array[5], array[6], array[7], array[8]]);
-            // log.info('receiving port array?: ' + array);
-            // log.info('receiving port sensorValue?: ' + sensorValue);
-            // this._sensors.distance = distance;
         }
-
     }
 
+    // TODO: put elsewhere?
     _tachoValue (list) {
         const value = list[0] + (list[1] * 256) + (list[2] * 256 * 256) + (list[3] * 256 * 256 * 256);
         return value;
@@ -744,7 +792,7 @@ class Scratch3Ev3Blocks {
             blocks: [
                 {
                     opcode: 'motorTurnClockwise',
-                    text: 'motor [PORT] turn clockwise for [TIME] seconds',
+                    text: 'motor [PORT] turn this way for [TIME] seconds',
                     blockType: BlockType.COMMAND,
                     arguments: {
                         PORT: {
@@ -760,7 +808,7 @@ class Scratch3Ev3Blocks {
                 },
                 {
                     opcode: 'motorTurnCounterClockwise',
-                    text: 'motor [PORT] turn counter for [TIME] seconds',
+                    text: 'motor [PORT] turn that way for [TIME] seconds',
                     blockType: BlockType.COMMAND,
                     arguments: {
                         PORT: {
@@ -892,8 +940,18 @@ class Scratch3Ev3Blocks {
                 },
                 {
                     opcode: 'beep',
-                    text: 'beep',
-                    blockType: BlockType.COMMAND
+                    text: 'beep note [NOTE] for [TIME] secs',
+                    blockType: BlockType.COMMAND,
+                    arguments: {
+                        NOTE: {
+                            type: ArgumentType.NUMBER,
+                            defaultValue: 60
+                        },
+                        TIME: {
+                            type: ArgumentType.NUMBER,
+                            defaultValue: 0.5
+                        }
+                    }
                 }
             ],
             menus: {
@@ -956,7 +1014,7 @@ class Scratch3Ev3Blocks {
     }
 
     motorRotate (args) {
-        const port = Cast.toNumber(args.PORT); // TODO: Fix MOTOR_PORTS
+        const port = Cast.toNumber(args.PORT); // TODO: Fix MOTOR_PORTS menu
         const degrees = Cast.toNumber(args.DEGREES);
 
         this._device.motorRotate(port, degrees);
@@ -964,7 +1022,7 @@ class Scratch3Ev3Blocks {
     }
 
     motorSetPosition (args) {
-        const port = Cast.toNumber(args.PORT); // TODO: Fix MOTOR_PORTS
+        const port = Cast.toNumber(args.PORT - 1); // TODO: Fix MOTOR_PORTS menu
         const degrees = Cast.toNumber(args.DEGREES);
 
         this._device.motorSetPosition(port, degrees);
@@ -972,21 +1030,23 @@ class Scratch3Ev3Blocks {
     }
 
     motorSetPower (args) {
-        const port = Cast.toNumber(args.PORT);
+        const port = Cast.toNumber(args.PORT); // TODO: Fix MOTOR_PORTS menu
         const power = Cast.toNumber(args.POWER);
 
-        this._device.motorSetPower(port, power);
+        const value = Math.max(-100, Math.min(power, 100));
+
+        this._device.motorSetPower(port, value);
         return;
     }
 
     getMotorPosition (args) {
-        const port = Cast.toNumber(args.PORT - 1); // TODO: Fix MOTOR_PORTS
+        const port = Cast.toNumber(args.PORT - 1); // TODO: Fix MOTOR_PORTS menu
 
         return this._device.getMotorPosition(port);
     }
 
     whenButtonPressed (args) {
-        const port = Cast.toNumber(args.PORT - 1); // TODO: Fix SENSOR PORTS
+        const port = Cast.toNumber(args.PORT - 1); // TODO: Fix SENSOR PORTS menu
 
         return this._device.isButtonPressed(port);
     }
@@ -1004,7 +1064,7 @@ class Scratch3Ev3Blocks {
     }
 
     buttonPressed (args) {
-        const port = Cast.toNumber(args.PORT - 1); // TODO: Fix SENSOR_PORTS
+        const port = Cast.toNumber(args.PORT - 1); // TODO: Fix SENSOR_PORTS menu
 
         return this._device.isButtonPressed(port);
     }
@@ -1017,8 +1077,14 @@ class Scratch3Ev3Blocks {
         return this._device.brightness;
     }
 
-    beep () {
-        return this._device.beep();
+    beep (args) {
+        const note = Cast.toNumber(args.NOTE); // a MIDI number
+        const time = Cast.toNumber(args.TIME * 1000);
+
+        // https://en.wikipedia.org/wiki/MIDI_tuning_standard#Frequency_values
+        const freq = Math.pow(2, ((note - 69) / 12)) * 440;
+
+        return this._device.beep(freq, time);
     }
 }
 
