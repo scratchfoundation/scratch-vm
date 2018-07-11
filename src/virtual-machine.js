@@ -1000,12 +1000,14 @@ class VirtualMachine extends EventEmitter {
      * @param {!string} targetId Id of target to add blocks to.
      */
     shareBlocksToTarget (blocks, targetId) {
+        const copiedBlocks = JSON.parse(JSON.stringify(blocks));
         const currTarget = this.runtime.getEditingTarget();
         const target = this.runtime.getTargetById(targetId);
         // Resolve any potential local variable conflicts if the current sprite (sharing the love)
         // is a non-stage target.
         if (!currTarget.isStage) {
-            const allVarListRefs = currTarget.blocks.getAllVariableAndListReferences(blocks);
+            const allVarListRefs = currTarget.blocks.getAllVariableAndListReferences(
+                copiedBlocks);
             for (const varId in allVarListRefs) {
                 const currVarListRefs = allVarListRefs[varId];
                 const currVar = currTarget.variables[varId];
@@ -1018,8 +1020,8 @@ class VirtualMachine extends EventEmitter {
                 if (target.isStage) {
                     // If a local var is being shared with the stage,
                     // we'll prefix the ID of the current variable,
-                    // and use a fresh, prefixed name for the variable.
-                    // This way, multiple share the loves from the same target, referring
+                    // and use a fresh, prefixed name for the new global variable.
+                    // This way, multiple share the loves from the same target, referring to
                     // the same variable will map to the same new variable on the stage.
                     const varIdForStage = `StageVarFromLocal_${varId}`;
                     existingVar = target.lookupVariableById(varIdForStage);
@@ -1060,8 +1062,8 @@ class VirtualMachine extends EventEmitter {
             }
         }
 
-        for (let i = 0; i < blocks.length; i++) {
-            target.blocks.createBlock(blocks[i]);
+        for (let i = 0; i < copiedBlocks.length; i++) {
+            target.blocks.createBlock(copiedBlocks[i]);
         }
         target.blocks.updateTargetSpecificBlocks(target.isStage);
     }
