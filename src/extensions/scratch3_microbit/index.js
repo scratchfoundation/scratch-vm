@@ -1,6 +1,7 @@
 const ArgumentType = require('../../extension-support/argument-type');
 const BlockType = require('../../extension-support/block-type');
 const log = require('../../util/log');
+const cast = require('../../util/cast');
 const BLESession = require('../../io/bleSession');
 const Base64Util = require('../../util/base64-util');
 
@@ -273,26 +274,6 @@ const TiltDirection = {
 };
 
 /**
- * Converting symbols to hex values
- * @readonly
- */
-const symbols2hex = {
-    '❤': 0xAAC544,
-    '♫': 0xF4AF78,
-    '☓': 0x1151151,
-    '✓': 0x8A88,
-    '↑': 0x477C84,
-    '↓': 0x427DC4,
-    '←': 0x467D84,
-    '→': 0x437CC4,
-    '◯': 0xE8C62E,
-    '☀': 0x1577DD5,
-    '☺': 0x5022E,
-    '!': 0x421004,
-    '?': 0xC91004
-};
-
-/**
  * Scratch 3.0 blocks to interact with a MicroBit device.
  */
 class Scratch3MicroBitBlocks {
@@ -357,19 +338,41 @@ class Scratch3MicroBitBlocks {
                     }
                 },
                 {
-                    opcode: 'whenMoved',
-                    text: 'when moved',
-                    blockType: BlockType.HAT
+                    opcode: 'isButtonPressed',
+                    text: '[BTN] button pressed?',
+                    blockType: BlockType.BOOLEAN,
+                    arguments: {
+                        BTN: {
+                            type: ArgumentType.STRING,
+                            menu: 'buttons',
+                            defaultValue: 'A'
+                        }
+                    }
                 },
+                '---',
                 {
-                    opcode: 'whenShaken',
-                    text: 'when shaken',
-                    blockType: BlockType.HAT
+                    opcode: 'whenGesture',
+                    text: 'when [GESTURE]',
+                    blockType: BlockType.HAT,
+                    arguments: {
+                        GESTURE: {
+                            type: ArgumentType.STRING,
+                            menu: 'gestures',
+                            defaultValue: 'moved'
+                        }
+                    }
                 },
+                '---',
                 {
-                    opcode: 'whenJumped',
-                    text: 'when jumped',
-                    blockType: BlockType.HAT
+                    opcode: 'displaySymbol',
+                    text: 'display [MATRIX]',
+                    blockType: BlockType.COMMAND,
+                    arguments: {
+                        MATRIX: {
+                            type: ArgumentType.MATRIX,
+                            defaultValue: '0101010101100010101000100'
+                        }
+                    }
                 },
                 {
                     opcode: 'displayText',
@@ -383,44 +386,11 @@ class Scratch3MicroBitBlocks {
                     }
                 },
                 {
-                    opcode: 'displaySymbol',
-                    text: 'display [SYMBOL]',
-                    blockType: BlockType.COMMAND,
-                    arguments: {
-                        SYMBOL: {
-                            type: ArgumentType.STRING,
-                            menu: 'symbols',
-                            defaultValue: '❤'
-                        }
-                    }
-                },
-                {
-                    opcode: 'displayMatrix',
-                    text: 'set light x:[X] y:[Y] [STATE]',
-                    blockType: BlockType.COMMAND,
-                    arguments: {
-                        X: {
-                            type: ArgumentType.STRING,
-                            menu: 'rowcol',
-                            defaultValue: '1'
-                        },
-                        Y: {
-                            type: ArgumentType.STRING,
-                            menu: 'rowcol',
-                            defaultValue: '1'
-                        },
-                        STATE: {
-                            type: ArgumentType.STRING,
-                            menu: 'pinState',
-                            defaultValue: 'on'
-                        }
-                    }
-                },
-                {
                     opcode: 'displayClear',
-                    text: 'set all lights off',
+                    text: 'clear display',
                     blockType: BlockType.COMMAND
                 },
+                '---',
                 {
                     opcode: 'whenTilted',
                     text: 'when tilted [DIRECTION]',
@@ -457,6 +427,7 @@ class Scratch3MicroBitBlocks {
                         }
                     }
                 },
+                '---',
                 {
                     opcode: 'whenPinConnected',
                     text: 'when pin [PIN] connected',
@@ -472,9 +443,8 @@ class Scratch3MicroBitBlocks {
             ],
             menus: {
                 buttons: ['A', 'B', 'any'],
-                rowcol: ['1', '2', '3', '4', '5'],
+                gestures: ['moved', 'shaken', 'jumped'],
                 pinState: ['on', 'off'],
-                symbols: Object.keys(symbols2hex),
                 tiltDirection: [TiltDirection.FRONT, TiltDirection.BACK, TiltDirection.LEFT, TiltDirection.RIGHT],
                 tiltDirectionAny: [
                     TiltDirection.FRONT, TiltDirection.BACK, TiltDirection.LEFT,
@@ -502,27 +472,57 @@ class Scratch3MicroBitBlocks {
     }
 
     /**
+     * Test whether the A or B button is pressed
+     * @param {object} args - the block's arguments.
+     * @return {boolean} - true if the button is pressed.
+     */
+    isButtonPressed (args) {
+        if (args.BTN === 'any') {
+            return this._device.buttonA | this._device.buttonB;
+        } else if (args.BTN === 'A') {
+            return this._device.buttonA;
+        } else if (args.BTN === 'B') {
+            return this._device.buttonB;
+        }
+        return false;
+    }
+
+    /**
      * Test whether the micro:bit is moving
+     * @param {object} args - the block's arguments.
      * @return {boolean} - true if the micro:bit is moving.
      */
-    whenMoved () {
-        return (this._device.gestureState >> 2) & 1;
+    whenGesture (args) {
+        const gesture = cast.toString(args.GESTURE);
+        if (gesture === 'moved') {
+            return (this._device.gestureState >> 2) & 1;
+        } else if (gesture === 'shaken') {
+            return this._device.gestureState & 1;
+        } else if (gesture === 'jumped') {
+            return (this._device.gestureState >> 1) & 1;
+        }
+        return false;
     }
 
     /**
-     * Test whether the micro:bit is shaken
-     * @return {boolean} - true if the micro:bit is shaken.
+     * Display a predefined symbol on the 5x5 LED matrix.
+     * @param {object} args - the block's arguments.
+     * @return {Promise} - a Promise that resolves when writing to device.
      */
-    whenShaken () {
-        return this._device.gestureState & 1;
-    }
-
-    /**
-     * Test whether the micro:bit is free falling
-     * @return {boolean} - true if the micro:bit is free falling.
-     */
-    whenJumped () {
-        return (this._device.gestureState >> 1) & 1;
+    displaySymbol (args) {
+        const symbol = cast.toString(args.MATRIX);
+        const reducer = (accumulator, c, index) => {
+            const value = (c === '0') ? accumulator : accumulator + Math.pow(2, index);
+            return value;
+        };
+        const hex = symbol.split('').reduce(reducer, 0);
+        if (!hex) return;
+        this._device.ledMatrixState[0] = hex & 0x1F;
+        this._device.ledMatrixState[1] = (hex >> 5) & 0x1F;
+        this._device.ledMatrixState[2] = (hex >> 10) & 0x1F;
+        this._device.ledMatrixState[3] = (hex >> 15) & 0x1F;
+        this._device.ledMatrixState[4] = (hex >> 20) & 0x1F;
+        return this._device.displayMatrix(this._device.ledMatrixState);
     }
 
     /**
@@ -534,36 +534,6 @@ class Scratch3MicroBitBlocks {
     displayText (args) {
         const text = String(args.TEXT).substring(0, 19);
         return this._device.displayText(text);
-    }
-
-    /**
-     * Display a predefined symbol on the 5x5 LED matrix.
-     * @param {object} args - the block's arguments.
-     * @return {Promise} - a Promise that resolves when writing to device.
-     */
-    displaySymbol (args) {
-        const hex = symbols2hex[args.SYMBOL];
-        if (!hex) return;
-        this._device.ledMatrixState[0] = (hex >> 20) & 0x1F;
-        this._device.ledMatrixState[1] = (hex >> 15) & 0x1F;
-        this._device.ledMatrixState[2] = (hex >> 10) & 0x1F;
-        this._device.ledMatrixState[3] = (hex >> 5) & 0x1F;
-        this._device.ledMatrixState[4] = hex & 0x1F;
-        return this._device.displayMatrix(this._device.ledMatrixState);
-    }
-
-    /**
-     * Control individual LEDs on the 5x5 matrix.
-     * @param {object} args - the block's arguments.
-     */
-    displayMatrix (args) {
-        if (args.STATE === 'on') {
-            this._device.ledMatrixState[args.Y - 1] |= 1 << 5 - args.X;
-        } else if (args.STATE === 'off') {
-            this._device.ledMatrixState[args.Y - 1] &= ~(1 << 5 - args.X);
-        } else return;
-        this._device.displayMatrix(this._device.ledMatrixState);
-        return;
     }
 
     /**
