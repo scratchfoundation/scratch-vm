@@ -507,7 +507,7 @@ class Scratch3MicroBitBlocks {
     /**
      * Display a predefined symbol on the 5x5 LED matrix.
      * @param {object} args - the block's arguments.
-     * @return {Promise} - a Promise that resolves when writing to device.
+     * @return {Promise} - a Promise that resolves after a tick.
      */
     displaySymbol (args) {
         const symbol = cast.toString(args.MATRIX);
@@ -530,7 +530,7 @@ class Scratch3MicroBitBlocks {
     /**
      * Display text on the 5x5 LED matrix.
      * @param {object} args - the block's arguments.
-     * @return {Promise} - a Promise that resolves when writing to device.
+     * @return {Promise} - a Promise that resolves after a tick.
      * Note the limit is 19 characters
      */
     displayText (args) {
@@ -541,6 +541,7 @@ class Scratch3MicroBitBlocks {
 
     /**
      * Turn all 5x5 matrix LEDs off.
+     * @return {Promise} - a Promise that resolves after a tick.
      */
     displayClear () {
         for (let i = 0; i < 5; i++) {
