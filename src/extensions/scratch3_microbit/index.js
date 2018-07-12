@@ -507,7 +507,7 @@ class Scratch3MicroBitBlocks {
     /**
      * Display a predefined symbol on the 5x5 LED matrix.
      * @param {object} args - the block's arguments.
-     * @return {Promise} - a Promise that resolves when writing to device.
+     * @return {Promise} - a Promise that resolves after a tick.
      */
     displaySymbol (args) {
         const symbol = cast.toString(args.MATRIX);
@@ -522,29 +522,33 @@ class Scratch3MicroBitBlocks {
         this._device.ledMatrixState[2] = (hex >> 10) & 0x1F;
         this._device.ledMatrixState[3] = (hex >> 15) & 0x1F;
         this._device.ledMatrixState[4] = (hex >> 20) & 0x1F;
-        return this._device.displayMatrix(this._device.ledMatrixState);
+        this._device.displayMatrix(this._device.ledMatrixState);
+
+        return Promise.resolve();
     }
 
     /**
      * Display text on the 5x5 LED matrix.
      * @param {object} args - the block's arguments.
-     * @return {Promise} - a Promise that resolves when writing to device.
+     * @return {Promise} - a Promise that resolves after a tick.
      * Note the limit is 19 characters
      */
     displayText (args) {
         const text = String(args.TEXT).substring(0, 19);
-        return this._device.displayText(text);
+        this._device.displayText(text);
+        return Promise.resolve();
     }
 
     /**
      * Turn all 5x5 matrix LEDs off.
+     * @return {Promise} - a Promise that resolves after a tick.
      */
     displayClear () {
         for (let i = 0; i < 5; i++) {
             this._device.ledMatrixState[i] = 0;
         }
         this._device.displayMatrix(this._device.ledMatrixState);
-        return;
+        return Promise.resolve();
     }
 
     /**
