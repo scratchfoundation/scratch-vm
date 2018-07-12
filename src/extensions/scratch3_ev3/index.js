@@ -113,9 +113,10 @@ class EV3 {
          * @private
          */
         this._runtime = runtime;
+        this._runtime.on('PROJECT_STOP_ALL', this._stopAllMotors.bind(this));
 
         /**
-         * EV3 State
+         * State
          */
         this.connected = false;
         this._sensorPorts = [];
@@ -127,7 +128,8 @@ class EV3 {
         };
         this._motors = {
             speeds: [50, 50, 50, 50],
-            positions: [0, 0, 0, 0]
+            positions: [0, 0, 0, 0],
+            busy: [0, 0, 0, 0]
         };
         this._pollingIntervalID = null;
 
@@ -140,7 +142,7 @@ class EV3 {
         this._runtime.registerExtensionDevice(extensionId, this);
     }
 
-    // TODO: keep here?
+    // TODO: keep here? / refactor
     /**
      * Called by the runtime when user wants to scan for a device.
      */
@@ -151,7 +153,7 @@ class EV3 {
         }, this._onSessionConnect.bind(this), this._onSessionMessage.bind(this));
     }
 
-    // TODO: keep here?
+    // TODO: keep here? / refactor
     /**
      * Called by the runtime when user wants to connect to a certain device.
      * @param {number} id - the id of the device to connect to.
@@ -160,7 +162,7 @@ class EV3 {
         this._bt.connectDevice(id);
     }
 
-    // TODO: keep here?
+    // TODO: keep here? / refactor
     /**
      * Called by the runtime when user wants to disconnect from the device.
      */
@@ -177,11 +179,13 @@ class EV3 {
         this._motorPorts = [];
         this._motors = {
             speeds: [50, 50, 50, 50],
-            positions: [0, 0, 0, 0]
+            positions: [0, 0, 0, 0],
+            busy: [0, 0, 0, 0]
         };
         this._pollingIntervalID = null;
     }
 
+    // TODO: keep here? / refactor
     /**
      * Called by the runtime to detect whether the device is connected.
      * @return {boolean} - the connected state.
@@ -232,50 +236,31 @@ class EV3 {
     beep (freq, time) {
         if (!this.connected) return;
 
-        // Make up block command // TODO
         const cmd = [];
-
-        // 15 15
-        // 00 0
-        // 00 0
-        // 00 0
-        // 80 128
-        // 00 0
-        // 00 0
-        // 94 148 op sound
-        // 01 1   tone
-        // 81 129 Sound-level 2 encoded as one constant byte to follow
-        // 02 2
-        // 82 130 Frequency 1000 Hz. encoded as two constant bytes to follow
-        // E8 232 [232 3] = 1000
-        // 03 3
-        // 82 130 Duration 1000 mS. encoded as two constant bytes to follow
-        // ?? ??
-        // ?? ??
-        cmd[0] = 15;
-        cmd[1] = 0;
-        cmd[2] = 0;
-        cmd[3] = 0;
-        cmd[4] = 128;
-        cmd[5] = 0;
-        cmd[6] = 0;
-        cmd[7] = 148;
-        cmd[8] = 1;
-        cmd[9] = 129; // volume following in 1 byte
-        cmd[10] = 2;
-        cmd[11] = 130; // frequency following in 2 bytes
-        cmd[12] = freq;
-        cmd[13] = freq >> 8;
-        cmd[14] = 130; // time following in 2 bytes
-        cmd[15] = time;
-        cmd[16] = time >> 8;
+        cmd[0] = 15; // length
+        cmd[1] = 0; // 0x00
+        cmd[2] = 0; // 0x00
+        cmd[3] = 0; // 0x00
+        cmd[4] = 128; // 0x80
+        cmd[5] = 0; // 0x00
+        cmd[6] = 0; // 0x00
+        cmd[7] = 148; // 0x94 op sound
+        cmd[8] = 1; // 0x01 tone
+        cmd[9] = 129; // 0x81 volume following in 1 byte
+        cmd[10] = 2; // volume byte 1
+        cmd[11] = 130; // 0x82 frequency following in 2 bytes
+        cmd[12] = freq; // frequency byte 1
+        cmd[13] = freq >> 8; // frequency byte 2
+        cmd[14] = 130; // 0x82 time following in 2 bytes
+        cmd[15] = time; // time byte 1
+        cmd[16] = time >> 8; // time byte 2
 
         this._bt.sendMessage({
             message: Base64Util.arrayBufferToBase64(cmd),
             encoding: 'base64'
         });
 
-        // Yield for turn time + brake time
+        // Yield for sound duration
         // TODO: does this work?
         return new Promise(resolve => {
             setTimeout(() => {
@@ -287,21 +272,12 @@ class EV3 {
     motorTurnClockwise (port, time) {
         if (!this.connected) return;
 
-        let p = null;
-        if (port === 0) {
-            p = 1;
-        } else if (port === 1) {
-            p = 2;
-        } else if (port === 2) {
-            p = 4;
-        } else if (port === 3) {
-            p = 8;
-        }
+        log.info(`here: ${this._portMask(port)}`);
 
         // Build up motor command
         const cmd = this._applyPrefix(0, this._motorCommand(
             BTCommand.TIMESPEED,
-            p, // output bit field port
+            this._portMask(port),
             time,
             this._motors.speeds[port],
             BTCommand.LONGRAMP
@@ -313,14 +289,17 @@ class EV3 {
             encoding: 'base64'
         });
 
+        // Set motor to busy
+        // this._motors.busy[port] = 1;
+
         // Send coast message
-        const coastTime = 100;
         setTimeout(() => {
             this.motorCoast(port);
-        }, time + coastTime);
+        }, time);
 
         // Yield for turn time + brake time
         // TODO: does this work?
+        const coastTime = 100; // TODO: is this right?
         return new Promise(resolve => {
             setTimeout(() => {
                 resolve();
@@ -331,21 +310,10 @@ class EV3 {
     motorTurnCounterClockwise (port, time) {
         if (!this.connected) return;
 
-        let p = null;
-        if (port === 0) {
-            p = 1;
-        } else if (port === 1) {
-            p = 2;
-        } else if (port === 2) {
-            p = 4;
-        } else if (port === 3) {
-            p = 8;
-        }
-
         // Build up motor command
         const cmd = this._applyPrefix(0, this._motorCommand(
             BTCommand.TIMESPEED,
-            p, // output bit field port
+            this._portMask(port),
             time,
             this._motors.speeds[port] * -1,
             BTCommand.LONGRAMP
@@ -357,14 +325,17 @@ class EV3 {
             encoding: 'base64'
         });
 
+        // Set motor to busy
+        // this._motors.busy[port] = 1;
+
         // Send coast message
-        const coastTime = 100;
         setTimeout(() => {
             this.motorCoast(port);
-        }, time + coastTime);
+        }, time);
 
         // Yield for time
         // TODO: does this work?
+        const coastTime = 100; // TODO: is this right?
         return new Promise(resolve => {
             setTimeout(() => {
                 resolve();
@@ -373,32 +344,19 @@ class EV3 {
     }
 
     motorCoast (port) {
+
         const cmd = [];
-        // MOTOR COAST
-        /*
-        0x09 [  9] length
-        0x00 [  0] length
-        0x01 [  1]
-        0x00 [  0]
-        0x00 [  0]
-        0x00 [  0]
-        0x00 [  0]
-        0xA3 [163] Coast motor command
-        0x00 [  0] layer
-        0x03 [   ] port
-        0x00 [  0] float = coast = 0
-        */
-        cmd[0] = 9;
-        cmd[1] = 0;
-        cmd[2] = 1;
-        cmd[3] = 0;
-        cmd[4] = 0;
-        cmd[5] = 0;
-        cmd[6] = 0;
-        cmd[7] = 163;
-        cmd[8] = 0;
-        cmd[9] = port;
-        cmd[10] = 0;
+        cmd[0] = 9; // length
+        cmd[1] = 0; // length
+        cmd[2] = 1; // 0x01
+        cmd[3] = 0; // 0x00
+        cmd[4] = 0; // 0x00
+        cmd[5] = 0; // 0x00
+        cmd[6] = 0; // 0x00
+        cmd[7] = 163; // 0xA3 Motor brake/coast command
+        cmd[8] = 0; // layer
+        cmd[9] = this._portMask(port); // port output bit field
+        cmd[10] = 0; // float = coast = 0
 
         this._bt.sendMessage({
             message: Base64Util.uint8ArrayToBase64(cmd),
@@ -409,21 +367,10 @@ class EV3 {
     motorRotate (port, degrees) {
         if (!this.connected) return;
 
-        let p = null;
-        if (port === 0) {
-            p = 1;
-        } else if (port === 1) {
-            p = 2;
-        } else if (port === 2) {
-            p = 4;
-        } else if (port === 3) {
-            p = 8;
-        }
-
         // Build up motor command
         const cmd = this._applyPrefix(0, this._motorCommand(
             BTCommand.STEPSPEED,
-            p, // output bit field port
+            this._portMask(port),
             degrees,
             this._motors.speeds[port],
             BTCommand.LONGRAMP
@@ -435,34 +382,22 @@ class EV3 {
             encoding: 'base64'
         });
 
-        // Send coast message
-        /* const coastTime = 100;
-        setTimeout(() => {
-            this.motorCoast(port);
-        }, 3000 + coastTime); */
+        // Set motor to busy
+        // this._motors.busy[port] = 1;
 
+        /*
         // Yield for time
-        // TODO: does this work?
-        /* return new Promise(resolve => {
+        // TODO: calculate time?
+        return new Promise(resolve => {
             setTimeout(() => {
                 resolve();
-            }, 3000 + coastTime);
-        }); */
+            }, time);
+        });
+        */
     }
 
     motorSetPosition (port, degrees) {
         if (!this.connected) return;
-
-        let p = null;
-        if (port === 0) {
-            p = 1;
-        } else if (port === 1) {
-            p = 2;
-        } else if (port === 2) {
-            p = 4;
-        } else if (port === 3) {
-            p = 8;
-        }
 
         // Calculate degrees to turn
         let previousPos = this._motors.positions[port];
@@ -481,7 +416,7 @@ class EV3 {
         // Build up motor command
         const cmd = this._applyPrefix(0, this._motorCommand(
             BTCommand.STEPSPEED,
-            p, // output bit field port
+            this._portMask(port),
             degreesToTurn,
             this._motors.speeds[port] * direction,
             BTCommand.LONGRAMP
@@ -493,19 +428,18 @@ class EV3 {
             encoding: 'base64'
         });
 
-        // Send coast message
-        /* const coastTime = 100;
-        setTimeout(() => {
-            this.motorCoast(port);
-        }, 3000 + coastTime); */
+        // Set motor to busy
+        // this._motors.busy[port] = 1;
 
+        /*
         // Yield for time
-        // TODO: does this work?
-        /* return new Promise(resolve => {
+        // TODO: calculate time?
+        return new Promise(resolve => {
             setTimeout(() => {
                 resolve();
-            }, 3000 + coastTime);
-        }); */
+            }, time);
+        });
+        */
     }
 
     motorSetPower (port, power) {
@@ -514,7 +448,22 @@ class EV3 {
         this._motors.speeds[port] = power;
     }
 
+    // *******
+    // PRIVATE
+    // *******
+
+    _stopAllMotors () {
+        log.info('stop all motors');
+        for (let i = 0; i < this._motorPorts.length; i++) {
+            if (this._motorPorts[i] !== 'none') {
+                this.motorCoast(i);
+            }
+        }
+    }
+
+    // TODO: keep here? / refactor
     _applyPrefix (n, cmd) {
+        // TODO: document
         const len = cmd.length + 5;
         return [].concat(
             len & 0xFF,
@@ -528,6 +477,7 @@ class EV3 {
         );
     }
 
+    // TODO: keep here? / refactor
     /**
      * Generate a motor command in EV3 byte array format (CMD, LAYER, PORT,
      * SPEED, RAMP UP, RUN, RAMP DOWN, BREAKING TYPE)
@@ -539,6 +489,7 @@ class EV3 {
      * @return {array}          Byte array
      */
     _motorCommand (command, port, n, speed, ramp) {
+        // TODO: document
         /**
          * Generate run values for a given input.
          * @param  {number} run Run input
@@ -602,10 +553,10 @@ class EV3 {
         ]));
     }
 
+    // TODO: keep here? / refactor
     _onSessionConnect () {
         this.connected = true;
 
-        // GET EV3 SENSOR LIST
         /*
         0B [ 11]
         00 [  0]
@@ -622,30 +573,24 @@ class EV3 {
         20 [ 32] global var index
         */
         this._bt.sendMessage({
-            message: 'CwABAAAhAJiBIWDhIA==', // [11, 0, 1, 0, 0, 33, 0, 152, 129, 33, 96, 225, 32]
+            message: 'CwABAAAhAJiBIWDhIA==',
             encoding: 'base64'
         });
     }
 
+    // TODO: rename and document better
+    // polling routine
     _getSessionData () {
         if (!this.connected) {
             window.clearInterval(this._pollingIntervalID);
             return;
         }
 
-        // COMPOUND COMMAND FOR READING sensors0x27   command size
-        // 0x??  [    ]   command size
-        // 0x00  [   0]   command size
-        // 0x01  [   1]   message counter
-        // 0x00  [   0]   message counter
-        // 0x00  [   0]   command type
-        // 0x??  [    ]   result payload size of global/local vars
-        // 0x00  [   0]   result payload size of global/local vars
         const compoundCommand = [];
         compoundCommand[0] = 0; // calculate length later
         compoundCommand[1] = 0; // command size
         compoundCommand[2] = 1; // message counter // TODO: ?????
-        compoundCommand[3] = 0; // message counter
+        compoundCommand[3] = 0; // message counter // TODO: ?????
         compoundCommand[4] = 0; // command type: direct command
         compoundCommand[5] = 0; // global/local vars
         compoundCommand[6] = 0; // global/local vars
@@ -656,45 +601,40 @@ class EV3 {
         for (let i = 0; i < this._sensorPorts.length; i++) {
             if (this._sensorPorts[i] !== 'none') {
                 sensorCount++;
-                // make up sensor command array
-                // 0x9D  [ 157]   op: get sensor value
-                // 0x00  [   0]   layer
-                // 0x02  [    ]   port
-                // 0x00  [   0]   do not change type
-                // 0x00  [    ]   mode
-                // 0xE1  [ 225]
-                // 0x0C  [    ]   global index
-                compoundCommand[compoundCommandIndex + 0] = 157;
-                compoundCommand[compoundCommandIndex + 1] = 0;
-                compoundCommand[compoundCommandIndex + 2] = i;
-                compoundCommand[compoundCommandIndex + 3] = 0;
-                compoundCommand[compoundCommandIndex + 4] = EV_DEVICE_MODES[this._sensorPorts[i]];
-                compoundCommand[compoundCommandIndex + 5] = 225;
-                compoundCommand[compoundCommandIndex + 6] = sensorCount * 4;
+                compoundCommand[compoundCommandIndex + 0] = 157; // 0x9D op: get sensor value
+                compoundCommand[compoundCommandIndex + 1] = 0; // layer
+                compoundCommand[compoundCommandIndex + 2] = i; // port
+                compoundCommand[compoundCommandIndex + 3] = 0; // do not change type
+                compoundCommand[compoundCommandIndex + 4] = EV_DEVICE_MODES[this._sensorPorts[i]]; // mode
+                compoundCommand[compoundCommandIndex + 5] = 225; // 0xE1 one byte to follow
+                compoundCommand[compoundCommandIndex + 6] = sensorCount * 4; // global index
                 compoundCommandIndex += 7;
             }
         }
-        // Read from available motors
-        // let motorCount = 0;
+        // Read positions from available motors
         for (let i = 0; i < this._motorPorts.length; i++) {
             if (this._motorPorts[i] !== 'none') {
                 sensorCount++;
-                // make up sensor command array
-                // 0xB3  [ 179]   op: get motor position value
-                // 0x00  [   0]   layer
-                // 0x02  [    ]   output bit fields ??
-                // 0xE1  [ 225]
-                // 0x??  [   0]   global index
-                compoundCommand[compoundCommandIndex + 0] = 179;
-                compoundCommand[compoundCommandIndex + 1] = 0;
-                compoundCommand[compoundCommandIndex + 2] = i;
-                compoundCommand[compoundCommandIndex + 3] = 225;
-                compoundCommand[compoundCommandIndex + 4] = sensorCount * 4;
+                compoundCommand[compoundCommandIndex + 0] = 179; // 0XB3 op: get motor position value
+                compoundCommand[compoundCommandIndex + 1] = 0; // layer
+                compoundCommand[compoundCommandIndex + 2] = i; // output bit field
+                compoundCommand[compoundCommandIndex + 3] = 225; // 0xE1 byte following
+                compoundCommand[compoundCommandIndex + 4] = sensorCount * 4; // global index
                 compoundCommandIndex += 5;
-                // motorCount++;
             }
         }
-
+        // Read ready state from available motors
+        /* for (let i = 0; i < this._motorPorts.length; i++) {
+            if (this._motorPorts[i] !== 'none') {
+                sensorCount++;
+                compoundCommand[compoundCommandIndex + 0] = 169; // 0xA9 op: test if output port is busy
+                compoundCommand[compoundCommandIndex + 1] = 0; // layer
+                compoundCommand[compoundCommandIndex + 2] = this._portMask(i); // output bit field
+                compoundCommand[compoundCommandIndex + 3] = 225; // 0xE1 1 byte following
+                compoundCommand[compoundCommandIndex + 4] = sensorCount * 4; // global index
+                compoundCommandIndex += 5;
+            }
+        } */
 
         // Calculate compound command length
         compoundCommand[0] = compoundCommand.length - 2;
@@ -705,17 +645,16 @@ class EV3 {
             message: Base64Util.uint8ArrayToBase64(compoundCommand),
             encoding: 'base64'
         });
-
-        // TODO: Read from available motor ports
     }
 
+    // TODO: rename and document better
     _onSessionMessage (params) {
         const message = params.message;
         const array = Base64Util.base64ToUint8Array(message);
 
         if (this._sensorPorts.length === 0) {
             // log.info(`device array: ${array}`);
-            this._sensorPorts[0] = EV_DEVICE_TYPES[array[5]];
+            this._sensorPorts[0] = EV_DEVICE_TYPES[array[5]]; // payload begins at byte 5
             this._sensorPorts[1] = EV_DEVICE_TYPES[array[6]];
             this._sensorPorts[2] = EV_DEVICE_TYPES[array[7]];
             this._sensorPorts[3] = EV_DEVICE_TYPES[array[8]];
@@ -732,7 +671,7 @@ class EV3 {
             this._pollingIntervalID = window.setInterval(this._getSessionData.bind(this), 100);
         } else {
             // log.info(`received compound command result: ${array}`);
-            let offset = 5;
+            let offset = 5; // start reading message payload at byte 5
             for (let i = 0; i < this._sensorPorts.length; i++) {
                 if (this._sensorPorts[i] !== 'none') {
                     const value = this._array2float([
@@ -762,21 +701,52 @@ class EV3 {
                         value = value - 0x100000000;
                     }
                     // log.info(`motor at port ${i} ${this._motorPorts[i]} value: ${value}`);
-                    this._motors.positions[i] = value;
+                    if (value) {
+                        this._motors.positions[i] = value;
+                    }
                     // log.info(`motor positions: ${this._motors.positions}`);
                     offset += 4;
                 }
             }
+            /* for (let i = 0; i < this._motorPorts.length; i++) {
+                if (this._motorPorts[i] !== 'none') {
+                    const busy = array[offset];
+                    if (busy === 0 && this._motors.busy[i]) {
+                        this.motorCoast(i); // always set to coast for now, but really should only do for recently moved
+                        this._motors.busy[i] = 0; // reset busy
+                    }
+                    // this._motors.positions[i] = value;
+                    log.info(`motor ${i} busy: ${busy}`);
+                    offset += 1;
+                }
+            } */
         }
     }
 
-    // TODO: put elsewhere?
+    // TODO: keep here? / refactor
+    _portMask (port) {
+        // TODO: convert to enum or lookup
+        let p = null;
+        if (port === 0) {
+            p = 1;
+        } else if (port === 1) {
+            p = 2;
+        } else if (port === 2) {
+            p = 4;
+        } else if (port === 3) {
+            p = 8;
+        }
+
+        return p;
+    }
+
+    // TODO: keep here? / refactor
     _tachoValue (list) {
         const value = list[0] + (list[1] * 256) + (list[2] * 256 * 256) + (list[3] * 256 * 256 * 256);
         return value;
     }
 
-    // TODO: put elsewhere
+    // TODO: keep here? / refactor
     _array2float (list) {
         const buffer = new Uint8Array(list).buffer;
         const view = new DataView(buffer);
@@ -818,7 +788,7 @@ class Scratch3Ev3Blocks {
     getInfo () {
         return {
             id: Scratch3Ev3Blocks.EXTENSION_ID,
-            name: 'LEGO MINDSTORMS EV3',
+            name: 'LEGO EV3',
             blockIconURI: blockIconURI,
             showStatusButton: true,
             blocks: [
@@ -854,7 +824,7 @@ class Scratch3Ev3Blocks {
                         }
                     }
                 },
-                {
+                /* {
                     opcode: 'motorRotate',
                     text: 'motor [PORT] rotate [DEGREES] degrees',
                     blockType: BlockType.COMMAND,
@@ -862,7 +832,7 @@ class Scratch3Ev3Blocks {
                         PORT: {
                             type: ArgumentType.STRING,
                             menu: 'motorPorts',
-                            defaultValue:'A'
+                            defaultValue: 'A'
                         },
                         DEGREES: {
                             type: ArgumentType.NUMBER,
@@ -885,7 +855,7 @@ class Scratch3Ev3Blocks {
                             defaultValue: 90
                         }
                     }
-                },
+                }, */
                 {
                     opcode: 'motorSetPower',
                     text: 'motor [PORT] set power [POWER] %',
@@ -993,6 +963,7 @@ class Scratch3Ev3Blocks {
         };
     }
 
+    // TODO: redo?
     /**
      * Create data for a menu in scratch-blocks format, consisting of an array of objects with text and
      * value properties. The text is a translated string, and the value is one-indexed.
@@ -1056,7 +1027,7 @@ class Scratch3Ev3Blocks {
     }
 
     whenButtonPressed (args) {
-        const port = Cast.toNumber(args.PORT - 1); // TODO: Fix SENSOR PORTS menu
+        const port = Cast.toNumber(args.PORT);
 
         return this._device.isButtonPressed(port);
     }
@@ -1074,7 +1045,7 @@ class Scratch3Ev3Blocks {
     }
 
     buttonPressed (args) {
-        const port = Cast.toNumber(args.PORT - 1); // TODO: Fix SENSOR_PORTS menu
+        const port = Cast.toNumber(args.PORT);
 
         return this._device.isButtonPressed(port);
     }
@@ -1088,11 +1059,11 @@ class Scratch3Ev3Blocks {
     }
 
     beep (args) {
-        const note = Cast.toNumber(args.NOTE); // a MIDI number
+        const note = Cast.toNumber(args.NOTE);
         const time = Cast.toNumber(args.TIME * 1000);
 
         // https://en.wikipedia.org/wiki/MIDI_tuning_standard#Frequency_values
-        const freq = Math.pow(2, ((note - 69) / 12)) * 440;
+        const freq = Math.pow(2, ((note - 69 + 12) / 12)) * 440;
 
         return this._device.beep(freq, time);
     }
