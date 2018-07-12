@@ -250,6 +250,7 @@ class MicroBit {
      * @private
      */
     _writeSessionData (command, message) {
+        if (!this.getPeripheralIsConnected()) return;
         const output = new Uint8Array(message.length + 1);
         output[0] = command; // attach command to beginning of message
         for (let i = 0; i < message.length; i++) {
