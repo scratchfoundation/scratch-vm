@@ -52,12 +52,14 @@ const loadBitmap_ = function (costume, costumeAsset, runtime, rotationCenter) {
         };
         imageElement.addEventListener('error', onError);
         imageElement.addEventListener('load', onLoad);
-        let src = costumeAsset.encodeDataURI();
+        const src = costumeAsset.encodeDataURI();
         if (costume.bitmapResolution === 1 && !runtime.v2BitmapAdapter) {
             log.error('No V2 bitmap adapter present; bitmaps may not render correctly.');
         } else if (costume.bitmapResolution === 1) {
-            src = runtime.v2BitmapAdapter.convertResolution1Bitmap(src, dataURI => {
-                if (dataURI) {
+            runtime.v2BitmapAdapter.convertResolution1Bitmap(src, (error, dataURI) => {
+                if (error) {
+                    log.error(error);
+                } else if (dataURI) {
                     // Put back into storage
                     const storage = runtime.storage;
                     costume.assetId = storage.builtinHelper.cache(
@@ -66,15 +68,19 @@ const loadBitmap_ = function (costume, costumeAsset, runtime, rotationCenter) {
                         runtime.v2BitmapAdapter.convertDataURIToBinary(dataURI)
                     );
                     costume.md5 = `${costume.assetId}.${costume.dataFormat}`;
-                    if (rotationCenter) {
-                        rotationCenter[0] = rotationCenter[0] * 2;
-                        rotationCenter[1] = rotationCenter[1] * 2;
-                        costume.rotationCenterX = rotationCenter[0];
-                        costume.rotationCenterY = rotationCenter[1];
-                    }
-                    costume.bitmapResolution = 2;
                 }
-                imageElement.src = dataURI ? dataURI : src; // Use original src if conversion fails
+                // Regardless of if conversion succeeds, convert it to bitmap resolution 2,
+                // since all code from here on will assume that.
+                if (rotationCenter) {
+                    rotationCenter[0] = rotationCenter[0] * 2;
+                    rotationCenter[1] = rotationCenter[1] * 2;
+                    costume.rotationCenterX = rotationCenter[0];
+                    costume.rotationCenterY = rotationCenter[1];
+                }
+                costume.bitmapResolution = 2;
+                // Use original src if conversion fails.
+                // The image will appear half-sized.
+                imageElement.src = dataURI ? dataURI : src;
             });
         } else {
             imageElement.src = src;

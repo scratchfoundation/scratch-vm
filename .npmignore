@@ -6,6 +6,7 @@
 /.github
 /.travis.yml
 /.tx
+-/test
 
 # Build created files
 /playground
