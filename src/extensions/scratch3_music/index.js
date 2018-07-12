@@ -778,7 +778,7 @@ class Scratch3MusicBlocks {
                     text: formatMessage({
                         id: 'music.midiSetInstrument',
                         default: 'set instrument to [INSTRUMENT]',
-                        description: 'set the instrument for notes played according to a mapping of MIDI codes to Scratch instrument numbers'
+                        description: 'set the instrument for notes played according to a mapping of MIDI codes'
                     }),
                     arguments: {
                         INSTRUMENT: {
