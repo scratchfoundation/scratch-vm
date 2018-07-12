@@ -39,7 +39,7 @@ const loadBitmap_ = function (costume, costumeAsset, runtime, rotationCenter) {
         const onError = function () {
             // eslint-disable-next-line no-use-before-define
             removeEventListeners();
-            reject();
+            reject('Image load failed');
         };
         const onLoad = function () {
             // eslint-disable-next-line no-use-before-define
@@ -166,7 +166,10 @@ const loadCostume = function (md5ext, costume, runtime, optVersion) {
     return runtime.storage.load(assetType, md5, ext).then(costumeAsset => {
         costume.dataFormat = ext;
         return loadCostumeFromAsset(costume, costumeAsset, runtime, optVersion);
-    });
+    })
+        .catch(e => {
+            log.error(e);
+        });
 };
 
 module.exports = {
