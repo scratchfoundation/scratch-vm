@@ -785,7 +785,8 @@ class Scratch3MusicBlocks {
                             type: ArgumentType.NUMBER,
                             defaultValue: 1
                         }
-                    }
+                    },
+                    hideFromPalette: true
                 },
                 {
                     opcode: 'setTempo',
