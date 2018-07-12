@@ -522,7 +522,9 @@ class Scratch3MicroBitBlocks {
         this._device.ledMatrixState[2] = (hex >> 10) & 0x1F;
         this._device.ledMatrixState[3] = (hex >> 15) & 0x1F;
         this._device.ledMatrixState[4] = (hex >> 20) & 0x1F;
-        return this._device.displayMatrix(this._device.ledMatrixState);
+        this._device.displayMatrix(this._device.ledMatrixState);
+
+        return Promise.resolve();
     }
 
     /**
@@ -533,7 +535,8 @@ class Scratch3MicroBitBlocks {
      */
     displayText (args) {
         const text = String(args.TEXT).substring(0, 19);
-        return this._device.displayText(text);
+        this._device.displayText(text);
+        return Promise.resolve();
     }
 
     /**
@@ -544,7 +547,7 @@ class Scratch3MicroBitBlocks {
             this._device.ledMatrixState[i] = 0;
         }
         this._device.displayMatrix(this._device.ledMatrixState);
-        return;
+        return Promise.resolve();
     }
 
     /**
