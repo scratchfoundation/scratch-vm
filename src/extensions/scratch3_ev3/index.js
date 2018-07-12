@@ -276,8 +276,6 @@ class EV3 {
     motorTurnClockwise (port, time) {
         if (!this.connected) return;
 
-        log.info(`here: ${this._portMask(port)}`);
-
         // Build up motor command
         const cmd = this._applyPrefix(0, this._motorCommand(
             BTCommand.TIMESPEED,
@@ -302,8 +300,7 @@ class EV3 {
         }, time);
 
         // Yield for turn time + brake time
-        // TODO: does this work?
-        const coastTime = 100; // TODO: is this right?
+        const coastTime = 100; // TODO: calculate coasting or set flag
         return new Promise(resolve => {
             setTimeout(() => {
                 resolve();
@@ -338,8 +335,7 @@ class EV3 {
         }, time);
 
         // Yield for time
-        // TODO: does this work?
-        const coastTime = 100; // TODO: is this right?
+        const coastTime = 100; // TODO: calculate coasting or set flag
         return new Promise(resolve => {
             setTimeout(() => {
                 resolve();
@@ -562,7 +558,8 @@ class EV3 {
         this.connected = true;
 
         // start polling
-        this._pollingIntervalID = window.setInterval(this._getSessionData.bind(this), 100);
+        // TODO: window?
+        this._pollingIntervalID = window.setInterval(this._getSessionData.bind(this), 150);
     }
 
     // TODO: keep here? / refactor
@@ -603,13 +600,7 @@ class EV3 {
             this._updateDevices = true;
             this._sensorPorts = [];
             this._motorPorts = [];
-            this._sensors = {
-                distance: 0,
-                brightness: 0,
-                buttons: [0, 0, 0, 0]
-            };
-            this._motors.positions = [0, 0, 0, 0];
-            this._motors.busy = [0, 0, 0, 0];
+            // TODO: figure out when/how to clear out sensor data
 
         } else {
 
@@ -677,22 +668,22 @@ class EV3 {
     _onSessionMessage (params) {
         const message = params.message;
         const array = Base64Util.base64ToUint8Array(message);
-        log.info(`received array: ${array}`);
+        // log.info(`received array: ${array}`);
 
         if (this._updateDevices) {
             // READ DEVICE LIST
-            this._sensorPorts[0] = EV_DEVICE_TYPES[array[5]]; // payload for sensors begins at byte 5
-            this._sensorPorts[1] = EV_DEVICE_TYPES[array[6]];
-            this._sensorPorts[2] = EV_DEVICE_TYPES[array[7]];
-            this._sensorPorts[3] = EV_DEVICE_TYPES[array[8]];
-            this._motorPorts[0] = EV_DEVICE_TYPES[array[21]]; // payload for motors begins at byte 21
-            this._motorPorts[1] = EV_DEVICE_TYPES[array[22]];
-            this._motorPorts[2] = EV_DEVICE_TYPES[array[23]];
-            this._motorPorts[3] = EV_DEVICE_TYPES[array[24]];
+            this._sensorPorts[0] = EV_DEVICE_TYPES[array[5]] ? EV_DEVICE_TYPES[array[5]] : 'none'; // payload for sensors begins at byte 5
+            this._sensorPorts[1] = EV_DEVICE_TYPES[array[6]] ? EV_DEVICE_TYPES[array[6]] : 'none';
+            this._sensorPorts[2] = EV_DEVICE_TYPES[array[7]] ? EV_DEVICE_TYPES[array[7]] : 'none'; // TODO figure out this number from EV3
+            this._sensorPorts[3] = EV_DEVICE_TYPES[array[8]] ? EV_DEVICE_TYPES[array[8]] : 'none';
+            this._motorPorts[0] = EV_DEVICE_TYPES[array[21]] ? EV_DEVICE_TYPES[array[21]] : 'none'; // payload for motors begins at byte 21
+            this._motorPorts[1] = EV_DEVICE_TYPES[array[22]] ? EV_DEVICE_TYPES[array[22]] : 'none';
+            this._motorPorts[2] = EV_DEVICE_TYPES[array[23]] ? EV_DEVICE_TYPES[array[23]] : 'none';
+            this._motorPorts[3] = EV_DEVICE_TYPES[array[24]] ? EV_DEVICE_TYPES[array[24]] : 'none';
             log.info(`sensor ports: ${this._sensorPorts}`);
             log.info(`motor ports: ${this._motorPorts}`);
             this._updateDevices = false;
-        } else {
+        } else if (!this._sensorPorts.includes(undefined) && !this._motorPorts.includes(undefined)) {
             // READ SENSOR VALUES
             let offset = 5; // start reading sensor values at byte 5
             for (let i = 0; i < 4; i++) {
@@ -714,13 +705,13 @@ class EV3 {
             }
             // READ MOTOR POSITION VALUES
             for (let i = 0; i < 4; i++) {
-                let value = this._tachoValue([
+                let value = this._tachoValue([ // from Paula
                     array[offset],
                     array[offset + 1],
                     array[offset + 2],
                     array[offset + 3]
                 ]);
-                if (value > 0x7fffffff) {
+                if (value > 0x7fffffff) { // from Paula
                     value = value - 0x100000000;
                 }
                 if (value) {
@@ -729,7 +720,6 @@ class EV3 {
                 log.info(`motor positions: ${this._motors.positions}`);
                 offset += 4;
             }
-
         }
 
         /*
