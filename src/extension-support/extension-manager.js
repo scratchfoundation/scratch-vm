@@ -144,18 +144,21 @@ class ExtensionManager {
     }
 
     /**
-    * regenerate blockinfo for any loaded extensions
-    */
+     * Regenerate blockinfo for any loaded extensions
+     * @returns {Promise} resolved once all the extensions have been reinitialized
+     */
     refreshBlocks () {
-        this._loadedExtensions.forEach(serviceName => {
+        const allPromises = Array.from(this._loadedExtensions.values()).map(serviceName =>
             dispatch.call(serviceName, 'getInfo')
                 .then(info => {
+                    info = this._prepareExtensionInfo(serviceName, info);
                     dispatch.call('runtime', '_refreshExtensionPrimitives', info);
                 })
                 .catch(e => {
                     log.error(`Failed to refresh buildtin extension primitives: ${JSON.stringify(e)}`);
-                });
-        });
+                })
+        );
+        return Promise.all(allPromises);
     }
 
     allocateWorker () {

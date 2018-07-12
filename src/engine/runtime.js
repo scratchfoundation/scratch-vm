@@ -58,6 +58,10 @@ const ArgumentTypeMap = (() => {
     map[ArgumentType.BOOLEAN] = {
         check: 'Boolean'
     };
+    map[ArgumentType.MATRIX] = {
+        shadowType: 'matrix',
+        fieldType: 'MATRIX'
+    };
     return map;
 })();
 
