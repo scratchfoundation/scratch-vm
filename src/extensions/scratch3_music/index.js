@@ -605,7 +605,7 @@ class Scratch3MusicBlocks {
             21, 21, 21, 21,
             // Telephone Ring, Helicopter, Applause, Gunshot
             21, 21, 21, 21
-        ]
+        ];
     }
 
     /**
