@@ -28,6 +28,7 @@ const loadVector_ = function (costume, costumeAsset, runtime, rotationCenter, op
         rotationCenter = runtime.renderer.getSkinRotationCenter(costume.skinId);
         costume.rotationCenterX = rotationCenter[0];
         costume.rotationCenterY = rotationCenter[1];
+        costume.bitmapResolution = 1;
     }
 
     return costume;
