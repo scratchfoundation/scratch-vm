@@ -86,14 +86,16 @@ const EV_DEVICE_TYPES = {
     16: 'touch',
     8: 'mediumMotor',
     7: 'largeMotor',
-    126: 'none'
+    126: 'none',
+    125: 'none'
 };
 
 // firmware pdf page 100?
 const EV_DEVICE_MODES = {
     touch: 0,
     color: 1,
-    ultrasonic: 1
+    ultrasonic: 1,
+    none: 0
 };
 
 const EV_DEVICE_LABELS = {
@@ -132,6 +134,7 @@ class EV3 {
             busy: [0, 0, 0, 0]
         };
         this._pollingIntervalID = null;
+        this._pollingCounter = 0;
 
         /**
          * The Bluetooth connection session for reading/writing device data.
@@ -176,7 +179,6 @@ class EV3 {
             brightness: 0,
             buttons: [0, 0, 0, 0]
         };
-        this._motorPorts = [];
         this._motors = {
             speeds: [50, 50, 50, 50],
             positions: [0, 0, 0, 0],
@@ -235,6 +237,8 @@ class EV3 {
 
     beep (freq, time) {
         if (!this.connected) return;
+
+        log.info('should be beeping');
 
         const cmd = [];
         cmd[0] = 15; // length
@@ -557,74 +561,98 @@ class EV3 {
     _onSessionConnect () {
         this.connected = true;
 
-        /*
-        0B [ 11]
-        00 [  0]
-        01 [  1]
-        00 [  0]
-        00 [  0]
-        21 [ 33]
-        00 [  0]
-        98 [152] opInput_Device_List
-        81 [129] LENGTH
-        21 [ 33] ARRAY
-        60 [ 96] CHANGED
-        E1 [225] size of global var?
-        20 [ 32] global var index
-        */
-        this._bt.sendMessage({
-            message: 'CwABAAAhAJiBIWDhIA==',
-            encoding: 'base64'
-        });
+        // start polling
+        this._pollingIntervalID = window.setInterval(this._getSessionData.bind(this), 100);
     }
 
-    // TODO: rename and document better
-    // polling routine
+    // TODO: keep here? / refactor
     _getSessionData () {
         if (!this.connected) {
             window.clearInterval(this._pollingIntervalID);
             return;
         }
 
-        const compoundCommand = [];
-        compoundCommand[0] = 0; // calculate length later
-        compoundCommand[1] = 0; // command size
-        compoundCommand[2] = 1; // message counter // TODO: ?????
-        compoundCommand[3] = 0; // message counter // TODO: ?????
-        compoundCommand[4] = 0; // command type: direct command
-        compoundCommand[5] = 0; // global/local vars
-        compoundCommand[6] = 0; // global/local vars
-        let compoundCommandIndex = 7;
-        let sensorCount = -1;
+        const cmd = []; // a compound command
 
-        // Read from available sensors
-        for (let i = 0; i < this._sensorPorts.length; i++) {
-            if (this._sensorPorts[i] !== 'none') {
-                sensorCount++;
-                compoundCommand[compoundCommandIndex + 0] = 157; // 0x9D op: get sensor value
-                compoundCommand[compoundCommandIndex + 1] = 0; // layer
-                compoundCommand[compoundCommandIndex + 2] = i; // port
-                compoundCommand[compoundCommandIndex + 3] = 0; // do not change type
-                compoundCommand[compoundCommandIndex + 4] = EV_DEVICE_MODES[this._sensorPorts[i]]; // mode
-                compoundCommand[compoundCommandIndex + 5] = 225; // 0xE1 one byte to follow
-                compoundCommand[compoundCommandIndex + 6] = sensorCount * 4; // global index
-                compoundCommandIndex += 7;
+        // HEADER
+        cmd[0] = null; // calculate length later
+        cmd[1] = 0; // ...
+        cmd[2] = 1; // message counter // TODO: ?????
+        cmd[3] = 0; // message counter // TODO: ?????
+        cmd[4] = 0; // command type: direct command
+        cmd[5] = null; // calculate vars length later
+        cmd[6] = 0; // ...
+
+        let sensorCount = 0;
+        // Either request device list or request sensor data ??
+        if (this._pollingCounter % 20 === 0) {
+            // GET DEVICE LIST
+            cmd[7] = 152; // 0x98 op: get device list
+            cmd[8] = 129; // 0x81 LENGTH // TODO: ?????
+            cmd[9] = 33; // 0x21 ARRAY // TODO: ?????
+            cmd[10] = 96; // 0x60 CHANGED // TODO: ?????
+            cmd[11] = 225; // 0xE1 size of global var - 1 byte to follow
+            cmd[12] = 32; // 0x20 global var index "0" 0b00100000
+
+            // Command and payload lengths
+            cmd[0] = cmd.length - 2;
+            cmd[5] = 33;
+
+            // log.info(`REQUEST DEVICE LIST: ${compoundCommand}`);
+            // Clear sensor data
+            this._updateDevices = true;
+            this._sensorPorts = [];
+            this._motorPorts = [];
+            this._sensors = {
+                distance: 0,
+                brightness: 0,
+                buttons: [0, 0, 0, 0]
+            };
+            this._motors.positions = [0, 0, 0, 0];
+            this._motors.busy = [0, 0, 0, 0];
+
+        } else {
+
+            let index = 7;
+
+            // GET SENSOR VALUES
+            if (!this._sensorPorts.includes(undefined)) {
+                for (let i = 0; i < 4; i++) {
+                    if (this._sensorPorts[i] !== 'none') {
+                        cmd[index + 0] = 157; // 0x9D op: get sensor value
+                        cmd[index + 1] = 0; // layer
+                        cmd[index + 2] = i; // port
+                        cmd[index + 3] = 0; // do not change type
+                        cmd[index + 4] = EV_DEVICE_MODES[this._sensorPorts[i]]; // mode
+                        cmd[index + 5] = 225; // 0xE1 one byte to follow
+                        cmd[index + 6] = sensorCount * 4; // global index
+                        index += 7;
+                    }
+                    sensorCount++;
+                }
             }
+
+            // GET MOTOR POSITION VALUES
+            if (!this._motorPorts.includes(undefined)) {
+                for (let i = 0; i < 4; i++) {
+                    cmd[index + 0] = 179; // 0XB3 op: get motor position value
+                    cmd[index + 1] = 0; // layer
+                    cmd[index + 2] = i; // port
+                    cmd[index + 3] = 225; // 0xE1 byte following
+                    cmd[index + 4] = sensorCount * 4; // global index
+                    index += 5;
+                    sensorCount++;
+                }
+            }
+
+            // Command and payload lengths
+            cmd[0] = cmd.length - 2;
+            cmd[5] = sensorCount * 4;
         }
-        // Read positions from available motors
+
+        // GET MOTOR BUSY STATES
+        /*
         for (let i = 0; i < this._motorPorts.length; i++) {
-            if (this._motorPorts[i] !== 'none') {
-                sensorCount++;
-                compoundCommand[compoundCommandIndex + 0] = 179; // 0XB3 op: get motor position value
-                compoundCommand[compoundCommandIndex + 1] = 0; // layer
-                compoundCommand[compoundCommandIndex + 2] = i; // output bit field
-                compoundCommand[compoundCommandIndex + 3] = 225; // 0xE1 byte following
-                compoundCommand[compoundCommandIndex + 4] = sensorCount * 4; // global index
-                compoundCommandIndex += 5;
-            }
-        }
-        // Read ready state from available motors
-        /* for (let i = 0; i < this._motorPorts.length; i++) {
             if (this._motorPorts[i] !== 'none') {
                 sensorCount++;
                 compoundCommand[compoundCommandIndex + 0] = 169; // 0xA9 op: test if output port is busy
@@ -634,93 +662,92 @@ class EV3 {
                 compoundCommand[compoundCommandIndex + 4] = sensorCount * 4; // global index
                 compoundCommandIndex += 5;
             }
-        } */
+        }
+        */
 
-        // Calculate compound command length
-        compoundCommand[0] = compoundCommand.length - 2;
-        // Calculate global var payload length needed
-        compoundCommand[5] = (sensorCount + 1) * 4;
-        // console.log('compound command to send: ' + compoundCommand);
         this._bt.sendMessage({
-            message: Base64Util.uint8ArrayToBase64(compoundCommand),
+            message: Base64Util.uint8ArrayToBase64(cmd),
             encoding: 'base64'
         });
+
+        this._pollingCounter++;
     }
 
     // TODO: rename and document better
     _onSessionMessage (params) {
         const message = params.message;
         const array = Base64Util.base64ToUint8Array(message);
+        log.info(`received array: ${array}`);
 
-        if (this._sensorPorts.length === 0) {
-            // log.info(`device array: ${array}`);
-            this._sensorPorts[0] = EV_DEVICE_TYPES[array[5]]; // payload begins at byte 5
+        if (this._updateDevices) {
+            // READ DEVICE LIST
+            this._sensorPorts[0] = EV_DEVICE_TYPES[array[5]]; // payload for sensors begins at byte 5
             this._sensorPorts[1] = EV_DEVICE_TYPES[array[6]];
             this._sensorPorts[2] = EV_DEVICE_TYPES[array[7]];
             this._sensorPorts[3] = EV_DEVICE_TYPES[array[8]];
-            this._motorPorts[0] = EV_DEVICE_TYPES[array[21]];
+            this._motorPorts[0] = EV_DEVICE_TYPES[array[21]]; // payload for motors begins at byte 21
             this._motorPorts[1] = EV_DEVICE_TYPES[array[22]];
             this._motorPorts[2] = EV_DEVICE_TYPES[array[23]];
             this._motorPorts[3] = EV_DEVICE_TYPES[array[24]];
             log.info(`sensor ports: ${this._sensorPorts}`);
             log.info(`motor ports: ${this._motorPorts}`);
-
-            // Now ready to read from assigned _sensors
-            // Start reading sensor data
-            // TODO: window?
-            this._pollingIntervalID = window.setInterval(this._getSessionData.bind(this), 100);
+            this._updateDevices = false;
         } else {
-            // log.info(`received compound command result: ${array}`);
-            let offset = 5; // start reading message payload at byte 5
-            for (let i = 0; i < this._sensorPorts.length; i++) {
-                if (this._sensorPorts[i] !== 'none') {
-                    const value = this._array2float([
-                        array[offset],
-                        array[offset + 1],
-                        array[offset + 2],
-                        array[offset + 3]
-                    ]);
-                    // log.info(`sensor at port ${i} ${this._sensorPorts[i]} value: ${value}`);
-                    if (EV_DEVICE_LABELS[this._sensorPorts[i]] === 'button') {
-                        this._sensors.buttons[i] = value;
-                    } else {
-                        this._sensors[EV_DEVICE_LABELS[this._sensorPorts[i]]] = value;
-                    }
-                    offset += 4;
+            // READ SENSOR VALUES
+            let offset = 5; // start reading sensor values at byte 5
+            for (let i = 0; i < 4; i++) {
+                const value = this._array2float([
+                    array[offset],
+                    array[offset + 1],
+                    array[offset + 2],
+                    array[offset + 3]
+                ]);
+                if (EV_DEVICE_LABELS[this._sensorPorts[i]] === 'button') {
+                    // Read a button value per port
+                    this._sensors.buttons[i] = value ? value : 0;
+                } else if (EV_DEVICE_LABELS[this._sensorPorts[i]]) { // if valid
+                    // Read brightness / distance values and set to 0 if null
+                    this._sensors[EV_DEVICE_LABELS[this._sensorPorts[i]]] = value ? value : 0;
                 }
+                log.info(`${JSON.stringify(this._sensors)}`);
+                offset += 4;
             }
-            for (let i = 0; i < this._motorPorts.length; i++) {
-                if (this._motorPorts[i] !== 'none') {
-                    let value = this._tachoValue([
-                        array[offset],
-                        array[offset + 1],
-                        array[offset + 2],
-                        array[offset + 3]
-                    ]);
-                    if (value > 0x7fffffff) {
-                        value = value - 0x100000000;
-                    }
-                    // log.info(`motor at port ${i} ${this._motorPorts[i]} value: ${value}`);
-                    if (value) {
-                        this._motors.positions[i] = value;
-                    }
-                    // log.info(`motor positions: ${this._motors.positions}`);
-                    offset += 4;
+            // READ MOTOR POSITION VALUES
+            for (let i = 0; i < 4; i++) {
+                let value = this._tachoValue([
+                    array[offset],
+                    array[offset + 1],
+                    array[offset + 2],
+                    array[offset + 3]
+                ]);
+                if (value > 0x7fffffff) {
+                    value = value - 0x100000000;
                 }
+                if (value) {
+                    this._motors.positions[i] = value;
+                }
+                log.info(`motor positions: ${this._motors.positions}`);
+                offset += 4;
             }
-            /* for (let i = 0; i < this._motorPorts.length; i++) {
-                if (this._motorPorts[i] !== 'none') {
-                    const busy = array[offset];
-                    if (busy === 0 && this._motors.busy[i]) {
-                        this.motorCoast(i); // always set to coast for now, but really should only do for recently moved
-                        this._motors.busy[i] = 0; // reset busy
-                    }
-                    // this._motors.positions[i] = value;
-                    log.info(`motor ${i} busy: ${busy}`);
-                    offset += 1;
-                }
-            } */
+
         }
+
+        /*
+        // READ MOTOR BUSY STATES
+        /*
+        for (let i = 0; i < this._motorPorts.length; i++) {
+            if (this._motorPorts[i] !== 'none') {
+                const busy = array[offset];
+                if (busy === 0 && this._motors.busy[i]) {
+                    this.motorCoast(i); // always set to coast for now, but really should only do for recently moved
+                    this._motors.busy[i] = 0; // reset busy
+                }
+                // this._motors.positions[i] = value;
+                log.info(`motor ${i} busy: ${busy}`);
+                offset += 1;
+            }
+        }
+        */
     }
 
     // TODO: keep here? / refactor
