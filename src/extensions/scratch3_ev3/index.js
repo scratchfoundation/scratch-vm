@@ -607,6 +607,7 @@ class EV3 {
             let index = 7;
 
             // GET SENSOR VALUES
+            // eslint-disable-next-line no-undefined
             if (!this._sensorPorts.includes(undefined)) {
                 for (let i = 0; i < 4; i++) {
                     if (this._sensorPorts[i] !== 'none') {
@@ -624,6 +625,7 @@ class EV3 {
             }
 
             // GET MOTOR POSITION VALUES
+            // eslint-disable-next-line no-undefined
             if (!this._motorPorts.includes(undefined)) {
                 for (let i = 0; i < 4; i++) {
                     cmd[index + 0] = 179; // 0XB3 op: get motor position value
@@ -672,17 +674,18 @@ class EV3 {
 
         if (this._updateDevices) {
             // READ DEVICE LIST
-            this._sensorPorts[0] = EV_DEVICE_TYPES[array[5]] ? EV_DEVICE_TYPES[array[5]] : 'none'; // payload for sensors begins at byte 5
+            this._sensorPorts[0] = EV_DEVICE_TYPES[array[5]] ? EV_DEVICE_TYPES[array[5]] : 'none';
             this._sensorPorts[1] = EV_DEVICE_TYPES[array[6]] ? EV_DEVICE_TYPES[array[6]] : 'none';
-            this._sensorPorts[2] = EV_DEVICE_TYPES[array[7]] ? EV_DEVICE_TYPES[array[7]] : 'none'; // TODO figure out this number from EV3
+            this._sensorPorts[2] = EV_DEVICE_TYPES[array[7]] ? EV_DEVICE_TYPES[array[7]] : 'none';
             this._sensorPorts[3] = EV_DEVICE_TYPES[array[8]] ? EV_DEVICE_TYPES[array[8]] : 'none';
-            this._motorPorts[0] = EV_DEVICE_TYPES[array[21]] ? EV_DEVICE_TYPES[array[21]] : 'none'; // payload for motors begins at byte 21
+            this._motorPorts[0] = EV_DEVICE_TYPES[array[21]] ? EV_DEVICE_TYPES[array[21]] : 'none';
             this._motorPorts[1] = EV_DEVICE_TYPES[array[22]] ? EV_DEVICE_TYPES[array[22]] : 'none';
             this._motorPorts[2] = EV_DEVICE_TYPES[array[23]] ? EV_DEVICE_TYPES[array[23]] : 'none';
             this._motorPorts[3] = EV_DEVICE_TYPES[array[24]] ? EV_DEVICE_TYPES[array[24]] : 'none';
             log.info(`sensor ports: ${this._sensorPorts}`);
             log.info(`motor ports: ${this._motorPorts}`);
             this._updateDevices = false;
+            // eslint-disable-next-line no-undefined
         } else if (!this._sensorPorts.includes(undefined) && !this._motorPorts.includes(undefined)) {
             // READ SENSOR VALUES
             let offset = 5; // start reading sensor values at byte 5
