@@ -282,7 +282,7 @@ class Scratch3MicroBitBlocks {
      * @return {string} - the name of this extension.
      */
     static get EXTENSION_NAME () {
-        return 'MicroBit';
+        return 'micro:bit';
     }
 
     /**
