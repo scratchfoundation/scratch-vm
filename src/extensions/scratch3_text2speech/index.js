@@ -16,14 +16,27 @@ const SERVER_HOST = 'https://synthesis-service.scratch.mit.edu';
  * How long to wait in ms before timing out requests to synthesis server.
  * @type {int}
  */
-const SERVER_TIMEOUT = 10000; // 10 seconds (chosen arbitrarily).
+const SERVER_TIMEOUT = 10000; // 10 seconds
 
 /**
  * Class for the synthesis block in Scratch 3.0.
  * @constructor
  */
 class Scratch3SpeakBlocks {
-    constructor () {
+    constructor (runtime) {
+        /**
+         * The runtime instantiating this block package.
+         * @type {Runtime}
+         */
+        this.runtime = runtime;
+
+        // Clear sound effects on green flag and stop button events.
+        // this._clearEffectsForAllTargets = this._clearEffectsForAllTargets.bind(this);
+        if (this.runtime) {
+            // @todo
+            // this.runtime.on('PROJECT_STOP_ALL', this._clearEffectsForAllTargets);
+        }
+
         /**
          * Locale code of the viewer
          * @type {string}
@@ -37,7 +50,7 @@ class Scratch3SpeakBlocks {
      * @return {string} The key.
      */
     static get STATE_KEY () {
-        return 'Scratch.speak';
+        return 'Scratch.text2speech';
     }
 
     /**
@@ -45,8 +58,8 @@ class Scratch3SpeakBlocks {
      */
     getInfo () {
         return {
-            id: 'speak',
-            name: 'Amazon Polly',
+            id: 'text2speech',
+            name: 'Text-to-Speech',
             menuIconURI: '', // @todo Add the final icons.
             blockIconURI: '',
             blocks: [
@@ -132,19 +145,19 @@ class Scratch3SpeakBlocks {
                 }
 
                 // Play the sound
-                const ctx = new (window.AudioContext || window.webkitAudioContext)();
-                const source = ctx.createBufferSource();
-                ctx.decodeAudioData(body.buffer, buffer => {
-                    source.buffer = buffer;
-                    source.connect(ctx.destination);
-                    source.loop = false;
-                }, e => {
-                    log.warn(e.err);
+                const sound = {
+                    // md5: 'test',
+                    // name: 'test',
+                    // format: 'audio/mpg',
+                    data: {
+                        buffer: body.buffer
+                    }
+                };
+                this.runtime.audioEngine.decodeSoundPlayer(sound).then(soundPlayer => {
+                    soundPlayer.connect(this.runtime.audioEngine);
+                    soundPlayer.play();
+                    soundPlayer.on('stop', resolve);
                 });
-                source.addEventListener('ended', () => {
-                    resolve();
-                });
-                source.start(0);
             });
         });
     }

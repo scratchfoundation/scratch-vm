@@ -52,8 +52,8 @@ class BTSession extends JSONRPCWebSocket {
     connectDevice (id) {
         this.sendRemoteRequest('connect', {peripheralId: id})
             .then(() => {
-                this._runtime.emit(this._runtime.constructor.PERIPHERAL_CONNECTED);
                 this._connected = true;
+                this._runtime.emit(this._runtime.constructor.PERIPHERAL_CONNECTED);
                 this._connectCallback();
             })
             .catch(e => {
