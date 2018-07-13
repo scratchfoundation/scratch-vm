@@ -998,11 +998,22 @@ class VirtualMachine extends EventEmitter {
      * workspace of the given target.
      * @param {!Array<object>} blocks Blocks to add.
      * @param {!string} targetId Id of target to add blocks to.
+     * @param {?string} optFromTargetId Optional target id indicating that blocks are being
+     * shared from that target. This is needed for resolving any potential variable conflicts.
      */
-    shareBlocksToTarget (blocks, targetId) {
+    shareBlocksToTarget (blocks, targetId, optFromTargetId) {
+        const copiedBlocks = JSON.parse(JSON.stringify(blocks));
         const target = this.runtime.getTargetById(targetId);
-        for (let i = 0; i < blocks.length; i++) {
-            target.blocks.createBlock(blocks[i]);
+
+        if (optFromTargetId) {
+            // If the blocks are being shared from another target,
+            // resolve any possible variable conflicts that may arise.
+            const fromTarget = this.runtime.getTargetById(optFromTargetId);
+            fromTarget.resolveVariableSharingConflictsWithTarget(copiedBlocks, target);
+        }
+
+        for (let i = 0; i < copiedBlocks.length; i++) {
+            target.blocks.createBlock(copiedBlocks[i]);
         }
         target.blocks.updateTargetSpecificBlocks(target.isStage);
     }
