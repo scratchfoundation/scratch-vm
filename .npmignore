@@ -7,7 +7,6 @@
 /.travis.yml
 /.tx
 /test
-/webpack.config.js
 
 # Build created files
 /playground
