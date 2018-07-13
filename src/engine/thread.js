@@ -33,6 +33,12 @@ class _StackFrame {
         this.justReported = null;
 
         /**
+         * The active block that is waiting on a promise.
+         * @type {string}
+         */
+        this.reporting = '';
+
+        /**
          * Persists reported inputs during async block.
          * @type {Object}
          */
