@@ -50,7 +50,6 @@ class BLESession extends JSONRPCWebSocket {
     connectDevice (id) {
         this.sendRemoteRequest('connect', {peripheralId: id})
             .then(() => {
-                log.info('should have connected');
                 this._connected = true;
                 this._runtime.emit(this._runtime.constructor.PERIPHERAL_CONNECTED);
                 this._connectCallback();
