@@ -129,7 +129,7 @@ class Scratch3TranslateBlocks {
                     opcode: 'getViewerLanguage',
                     text: formatMessage({
                         id: 'translate.viewerLanguage',
-                        default: 'viewer language',
+                        default: 'language',
                         description: 'the languge of the project viewer'
                     }),
                     blockType: BlockType.REPORTER,
