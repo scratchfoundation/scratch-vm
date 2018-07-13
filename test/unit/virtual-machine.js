@@ -693,7 +693,7 @@ test('shareBlocksToTarget shares global variables without any name changes', t =
     t.type(stage.blocks.getBlock('a block'), 'undefined');
 
     // Share the block to the stage
-    vm.shareBlocksToTarget([target.blocks.getBlock('a block')], stage.id);
+    vm.shareBlocksToTarget([target.blocks.getBlock('a block')], stage.id, target.id);
 
     // Verify that the block now exists on the target as well as the stage
     t.type(target.blocks.getBlock('a block'), 'object');
@@ -752,7 +752,7 @@ test('shareBlocksToTarget shares a local variable to the stage, creating a globa
     t.type(stage.blocks.getBlock('a block'), 'undefined');
 
     // Share the block to the stage
-    vm.shareBlocksToTarget([target.blocks.getBlock('a block')], stage.id);
+    vm.shareBlocksToTarget([target.blocks.getBlock('a block')], stage.id, target.id);
 
     // Verify that the block still exists on the target and remains unchanged
     t.type(target.blocks.getBlock('a block'), 'object');
@@ -826,7 +826,7 @@ test('shareBlocksToTarget chooses a fresh name for a new global variable checkin
     otherTarget.createVariable('a different var', 'Stage: a mock variable', Variable.SCALAR_TYPE);
 
     // Share the block to the stage
-    vm.shareBlocksToTarget([target.blocks.getBlock('a block')], stage.id);
+    vm.shareBlocksToTarget([target.blocks.getBlock('a block')], stage.id, target.id);
 
     // Verify that the block still exists on the target and remains unchanged
     t.type(target.blocks.getBlock('a block'), 'object');
