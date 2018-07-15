@@ -372,7 +372,7 @@ class Blocks {
             }
             break;
         case 'var_delete': {
-            const target = (editingTarget && editingTarget.hasOwnProperty(e.varId)) ?
+            const target = (editingTarget && editingTarget.variables.hasOwnProperty(e.varId)) ?
                 editingTarget : stage;
             target.deleteVariable(e.varId);
             break;
