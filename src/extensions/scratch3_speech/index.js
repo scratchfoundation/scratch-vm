@@ -333,7 +333,9 @@ class Scratch3SpeechBlocks {
     _resolveSpeechPromises () {
         for (let i = 0; i < this._speechPromises.length; i++) {
             const resFn = this._speechPromises[i];
-            resFn();
+            // Boolean passed tells whether to play the end sound or not. Only play it for the first one, otherwise,
+            // we get the end sound played simultaneously which results in it being quite loud.
+            resFn(i === 0);
         }
         this._speechPromises = [];
     }
@@ -749,6 +751,13 @@ class Scratch3SpeechBlocks {
         return this._playSound(this._startSoundPlayer).then(() => {
             this._phraseList = this._scanBlocksForPhraseList();
             this._utteranceForEdgeTrigger = '';
+            
+            const endSound = (shouldPlayEndSound => {
+                if (shouldPlayEndSound) {
+                    this._playSound(this._endSoundPlayer);
+                }
+            });
+
             const speechPromise = new Promise(resolve => {
                 const listeningInProgress = this._speechPromises.length > 0;
                 this._speechPromises.push(resolve);
@@ -756,7 +765,7 @@ class Scratch3SpeechBlocks {
                     this._startListening();
                 }
             });
-            return speechPromise.then(() => this._playSound(this._endSoundPlayer));
+            return speechPromise.then(endSound);
         });
     }
 
