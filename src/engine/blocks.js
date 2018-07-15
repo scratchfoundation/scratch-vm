@@ -354,7 +354,7 @@ class Blocks {
             }
             break;
         case 'var_rename':
-            if (editingTarget && editingTarget.hasOwnProperty(e.varId)) {
+            if (editingTarget && editingTarget.variables.hasOwnProperty(e.varId)) {
                 // This is a local variable, rename on the current target
                 editingTarget.renameVariable(e.varId, e.newName);
                 // Update all the blocks on the current target that use
