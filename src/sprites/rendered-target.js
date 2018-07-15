@@ -170,21 +170,30 @@ class RenderedTarget extends Target {
         }
     }
 
+    get audioPlayer () {
+        /* eslint-disable no-console */
+        console.warn('get audioPlayer deprecated, please update to use .sprite.soundBank methods');
+        console.warn(new Error('stack for debug').stack);
+        /* eslint-enable no-console */
+        const bank = this.sprite.soundBank;
+        const audioPlayerProxy = {
+            playSound: soundId => bank.play(this, soundId)
+        };
+
+        Object.defineProperty(this, 'audioPlayer', {
+            configurable: false,
+            enumerable: true,
+            writable: false,
+            value: audioPlayerProxy
+        });
+
+        return audioPlayerProxy;
+    }
+
     /**
      * Initialize the audio player for this sprite or clone.
      */
     initAudio () {
-        this.audioPlayer = null;
-        if (this.runtime && this.runtime.audioEngine) {
-            this.audioPlayer = this.runtime.audioEngine.createPlayer();
-            // If this is a clone, it gets a reference to its parent's activeSoundPlayers object.
-            if (!this.isOriginal) {
-                const parent = this.sprite.clones[0];
-                if (parent && parent.audioPlayer) {
-                    this.audioPlayer.activeSoundPlayers = parent.audioPlayer.activeSoundPlayers;
-                }
-            }
-        }
     }
 
     /**
@@ -488,7 +497,7 @@ class RenderedTarget extends Target {
      * @param {?int} index Index at which to add costume
      */
     addCostume (costumeObject, index) {
-        if (index) {
+        if (typeof index === 'number' && !isNaN(index)) {
             this.sprite.addCostumeAt(costumeObject, index);
         } else {
             this.sprite.addCostumeAt(costumeObject, this.sprite.costumes.length);
@@ -551,7 +560,7 @@ class RenderedTarget extends Target {
     addSound (soundObject, index) {
         const usedNames = this.sprite.sounds.map(sound => sound.name);
         soundObject.name = StringUtil.unusedName(soundObject.name, usedNames);
-        if (index) {
+        if (typeof index === 'number' && !isNaN(index)) {
             this.sprite.sounds.splice(index, 0, soundObject);
         } else {
             this.sprite.sounds.push(soundObject);
@@ -641,6 +650,47 @@ class RenderedTarget extends Target {
     }
 
     /**
+     * Reorder costume list by moving costume at costumeIndex to newIndex.
+     * @param {!number} costumeIndex Index of the costume to move.
+     * @param {!number} newIndex New index for that costume.
+     * @returns {boolean} If a change occurred (i.e. if the indices do not match)
+     */
+    reorderCostume (costumeIndex, newIndex) {
+        newIndex = MathUtil.clamp(newIndex, 0, this.sprite.costumes.length - 1);
+        costumeIndex = MathUtil.clamp(costumeIndex, 0, this.sprite.costumes.length - 1);
+
+        if (newIndex === costumeIndex) return false;
+
+        const currentCostume = this.getCurrentCostume();
+        const costume = this.sprite.costumes[costumeIndex];
+
+        // Use the sprite method for deleting costumes because setCostume is handled manually
+        this.sprite.deleteCostumeAt(costumeIndex);
+
+        this.addCostume(costume, newIndex);
+        this.currentCostume = this.getCostumeIndexByName(currentCostume.name);
+        return true;
+    }
+
+    /**
+     * Reorder sound list by moving sound at soundIndex to newIndex.
+     * @param {!number} soundIndex Index of the sound to move.
+     * @param {!number} newIndex New index for that sound.
+     * @returns {boolean} If a change occurred (i.e. if the indices do not match)
+     */
+    reorderSound (soundIndex, newIndex) {
+        newIndex = MathUtil.clamp(newIndex, 0, this.sprite.sounds.length - 1);
+        soundIndex = MathUtil.clamp(soundIndex, 0, this.sprite.sounds.length - 1);
+
+        if (newIndex === soundIndex) return false;
+
+        const sound = this.sprite.sounds[soundIndex];
+        this.deleteSound(soundIndex);
+        this.addSound(sound, newIndex);
+        return true;
+    }
+
+    /**
      * Get full sound list
      * @return {object[]} list of sounds
      */
@@ -722,6 +772,23 @@ class RenderedTarget extends Target {
             return this.runtime.renderer.getBoundsForBubble(this.drawableID);
         }
         return null;
+    }
+
+    /**
+     * Return whether this target is touching the mouse, an edge, or a sprite.
+     * @param {string} requestedObject an id for mouse or edge, or a sprite name.
+     * @return {boolean} True if the sprite is touching the object.
+     */
+    isTouchingObject (requestedObject) {
+        if (requestedObject === '_mouse_') {
+            if (!this.runtime.ioDevices.mouse) return false;
+            const mouseX = this.runtime.ioDevices.mouse.getClientX();
+            const mouseY = this.runtime.ioDevices.mouse.getClientY();
+            return this.isTouchingPoint(mouseX, mouseY);
+        } else if (requestedObject === '_edge_') {
+            return this.isTouchingEdge();
+        }
+        return this.isTouchingSprite(requestedObject);
     }
 
     /**
@@ -946,8 +1013,8 @@ class RenderedTarget extends Target {
             const newTarget = newSprite.createClone();
             // Copy all properties.
             // @todo refactor with clone methods
-            newTarget.x = Math.random() * 400 / 2;
-            newTarget.y = Math.random() * 300 / 2;
+            newTarget.x = (Math.random() - 0.5) * 400 / 2;
+            newTarget.y = (Math.random() - 0.5) * 300 / 2;
             newTarget.direction = this.direction;
             newTarget.draggable = this.draggable;
             newTarget.visible = this.visible;
@@ -976,9 +1043,8 @@ class RenderedTarget extends Target {
      */
     onStopAll () {
         this.clearEffects();
-        if (this.audioPlayer) {
-            this.audioPlayer.stopAllSounds();
-            this.audioPlayer.clearEffects();
+        if (this.sprite.soundBank) {
+            this.sprite.soundBank.stopAllSounds();
         }
     }
 
@@ -1045,6 +1111,7 @@ class RenderedTarget extends Target {
             costumeCount: costumes.length,
             visible: this.visible,
             rotationStyle: this.rotationStyle,
+            comments: this.comments,
             blocks: this.blocks._blocks,
             variables: this.variables,
             costumes: costumes,
@@ -1072,10 +1139,6 @@ class RenderedTarget extends Target {
                 this.emit(RenderedTarget.EVENT_TARGET_VISUAL_CHANGE, this);
                 this.runtime.requestRedraw();
             }
-        }
-        if (this.audioPlayer) {
-            this.audioPlayer.stopAllSounds();
-            this.audioPlayer.dispose();
         }
     }
 }

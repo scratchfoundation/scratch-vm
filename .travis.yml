@@ -8,14 +8,18 @@ env:
   matrix:
   - NPM_SCRIPT="tap:unit -- --jobs=4"
   - NPM_SCRIPT="tap:integration -- --jobs=4"
-sudo: false
 cache:
   directories:
-  - node_modules
+  - "$HOME/.npm"
+before_install:
+# package-lock.json was introduced in npm@5
+- '[[ $(node -v) =~ ^v9.*$ ]] || npm install -g npm@latest' # skipped when using node 9
+- npm install -g greenkeeper-lockfile
 install:
-- npm --production=false install
-- npm --production=false update
+- if [[ ${TRAVIS_BRANCH:0:11} = greenkeeper ]]; then npm install --production=false; else npm ci --production=false; fi
+before_script: greenkeeper-lockfile-update
 script: npm run $NPM_SCRIPT
+after_script: greenkeeper-lockfile-upload
 jobs:
     include:
     - env: NPM_SCRIPT=lint
@@ -28,8 +32,8 @@ jobs:
       env: NPM_SCRIPT=build
       before_deploy:
       - npm --no-git-tag-version version $($(npm bin)/json -f package.json version)-prerelease.$(date +%s)
-      - git config --global user.email $(git log --pretty=format:"%ae" -n1)
-      - git config --global user.name $(git log --pretty=format:"%an" -n1)
+      - git config --global user.email "$(git log --pretty=format:"%ae" -n1)"
+      - git config --global user.name "$(git log --pretty=format:"%an" -n1)"
       deploy:
       - provider: npm
         on:

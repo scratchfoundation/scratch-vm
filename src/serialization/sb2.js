@@ -137,7 +137,7 @@ const parseBlockList = function (blockList, addBroadcastMsg, getVariableId, exte
         // Update commentIndex
         commentIndex = parsedBlockAndComments[1];
 
-        if (typeof parsedBlock === 'undefined') continue;
+        if (!parsedBlock) continue;
         if (previousBlock) {
             parsedBlock.parent = previousBlock.id;
             previousBlock.next = parsedBlock.id;
@@ -420,7 +420,7 @@ const parseScratchObject = function (object, runtime, extensions, topLevel, zip)
             // followed by the file ext
             const assetFileName = `${soundSource.soundID}.${ext}`;
             soundPromises.push(deserializeSound(sound, runtime, zip, assetFileName)
-                .then(() => loadSound(sound, runtime)));
+                .then(() => loadSound(sound, runtime, sprite)));
         }
     }
 
@@ -706,9 +706,20 @@ const specMapBlock = function (block) {
  * and second item is the updated comment index (after this block and its children are parsed)
  */
 const parseBlock = function (sb2block, addBroadcastMsg, getVariableId, extensions, comments, commentIndex) {
+    const commentsForParsedBlock = (comments && typeof commentIndex === 'number' && !isNaN(commentIndex)) ?
+        comments[commentIndex] : null;
     const blockMetadata = specMapBlock(sb2block);
     if (!blockMetadata) {
-        return;
+        // No block opcode found, exclude this block, increment the commentIndex,
+        // make all block comments into workspace comments and send them to zero/zero
+        // to prevent serialization issues.
+        if (commentsForParsedBlock) {
+            commentsForParsedBlock.forEach(comment => {
+                comment.blockId = null;
+                comment.x = comment.y = 0;
+            });
+        }
+        return [null, commentIndex + 1];
     }
     const oldOpcode = sb2block[0];
 
@@ -731,15 +742,18 @@ const parseBlock = function (sb2block, addBroadcastMsg, getVariableId, extension
     };
 
     // Attach any comments to this block..
-    const commentsForParsedBlock = (comments && typeof commentIndex === 'number' && !isNaN(commentIndex)) ?
-        comments[commentIndex] : null;
     if (commentsForParsedBlock) {
-        // TODO currently only attaching the last comment to the block if there are multiple...
-        // not sure what to do here.. concatenate all the messages in all the comments and only
-        // keep one around?
+        // Attach only the last comment to the block, make all others workspace comments
         activeBlock.comment = commentsForParsedBlock[commentsForParsedBlock.length - 1].id;
         commentsForParsedBlock.forEach(comment => {
-            comment.blockId = activeBlock.id;
+            if (comment.id === activeBlock.comment) {
+                comment.blockId = activeBlock.id;
+            } else {
+                // All other comments don't get a block ID and are sent back to zero.
+                // This is important, because if they have `null` x/y, serialization breaks.
+                comment.blockId = null;
+                comment.x = comment.y = 0;
+            }
         });
     }
     commentIndex++;
@@ -952,6 +966,12 @@ const parseBlock = function (sb2block, addBroadcastMsg, getVariableId, extension
         activeBlock.fields.NUMBER_NAME = {
             name: 'NUMBER_NAME',
             value: 'number'
+        };
+        break;
+    case 'costumeName':
+        activeBlock.fields.NUMBER_NAME = {
+            name: 'NUMBER_NAME',
+            value: 'name'
         };
         break;
     }

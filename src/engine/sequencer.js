@@ -194,7 +194,7 @@ class Sequencer {
                 //
                 // this.runtime.profiler.start(executeProfilerId, null);
                 this.runtime.profiler.records.push(
-                    this.runtime.profiler.START, executeProfilerId, null, performance.now());
+                    this.runtime.profiler.START, executeProfilerId, null, 0);
             }
             if (thread.target === null) {
                 this.retireThread(thread);
@@ -203,7 +203,7 @@ class Sequencer {
             }
             if (this.runtime.profiler !== null) {
                 // this.runtime.profiler.stop();
-                this.runtime.profiler.records.push(this.runtime.profiler.STOP, performance.now());
+                this.runtime.profiler.records.push(this.runtime.profiler.STOP, 0);
             }
             thread.blockGlowInFrame = currentBlockId;
             // If the thread has yielded or is waiting, yield to other threads.
@@ -220,6 +220,9 @@ class Sequencer {
                 // A promise was returned by the primitive. Yield the thread
                 // until the promise resolves. Promise resolution should reset
                 // thread.status to Thread.STATUS_RUNNING.
+                return;
+            } else if (thread.status === Thread.STATUS_YIELD_TICK) {
+                // stepThreads will reset the thread to Thread.STATUS_RUNNING
                 return;
             }
             // If no control flow has happened, switch to next block.

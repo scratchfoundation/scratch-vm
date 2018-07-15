@@ -107,6 +107,8 @@ class Scratch3LooksBlocks {
      */
     _onResetBubbles () {
         for (let n = 0; n < this.runtime.targets.length; n++) {
+            const bubbleState = this._getBubbleState(this.runtime.targets[n]);
+            bubbleState.text = '';
             this._onTargetWillExit(this.runtime.targets[n]);
         }
         clearTimeout(this._bubbleTimeout);
@@ -153,10 +155,17 @@ class Scratch3LooksBlocks {
             this.runtime.renderer.updateDrawableProperties(bubbleState.drawableId, {
                 position: [
                     bubbleState.onSpriteRight ? (
-                        Math.min(stageBounds.right - bubbleWidth, targetBounds.right)
+                        Math.max(
+                            stageBounds.left, // Bubble should not extend past left edge of stage
+                            Math.min(stageBounds.right - bubbleWidth, targetBounds.right)
+                        )
                     ) : (
-                        Math.max(stageBounds.left, targetBounds.left - bubbleWidth)
+                        Math.min(
+                            stageBounds.right - bubbleWidth, // Bubble should not extend past right edge of stage
+                            Math.max(stageBounds.left, targetBounds.left - bubbleWidth)
+                        )
                     ),
+                    // Bubble should not extend past the top of the stage
                     Math.min(stageBounds.top, targetBounds.bottom + bubbleHeight)
                 ]
             });
@@ -191,7 +200,13 @@ class Scratch3LooksBlocks {
 
             // TODO is there a way to figure out before rendering whether to default left or right?
             const targetBounds = target.getBounds();
-            const stageBounds = this.runtime.getTargetForStage().getBounds();
+            const stageSize = this.runtime.renderer.getNativeSize();
+            const stageBounds = {
+                left: -stageSize[0] / 2,
+                right: stageSize[0] / 2,
+                top: stageSize[1] / 2,
+                bottom: -stageSize[1] / 2
+            };
             if (targetBounds.right + 170 > stageBounds.right) {
                 bubbleState.onSpriteRight = false;
             }
@@ -409,7 +424,17 @@ class Scratch3LooksBlocks {
         const instance = this;
         const waiting = util.stackFrame.startedThreads.some(thread => instance.runtime.isActiveThread(thread));
         if (waiting) {
-            util.yield();
+            // If all threads are waiting for the next tick or later yield
+            // for a tick as well. Otherwise yield until the next loop of
+            // the threads.
+            if (
+                util.stackFrame.startedThreads
+                    .every(thread => instance.runtime.isWaitingThread(thread))
+            ) {
+                util.yieldTick();
+            } else {
+                util.yield();
+            }
         }
     }
 

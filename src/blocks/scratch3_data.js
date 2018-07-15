@@ -23,6 +23,7 @@ class Scratch3DataBlocks {
             data_listcontents: this.getListContents,
             data_addtolist: this.addToList,
             data_deleteoflist: this.deleteOfList,
+            data_deletealloflist: this.deleteAllOfList,
             data_insertatlist: this.insertAtList,
             data_replaceitemoflist: this.replaceItemOfList,
             data_itemoflist: this.getItemOfList,
@@ -134,6 +135,13 @@ class Scratch3DataBlocks {
         }
         list.value.splice(index - 1, 1);
         list._monitorUpToDate = false;
+    }
+
+    deleteAllOfList (args, util) {
+        const list = util.target.lookupOrCreateList(
+            args.LIST.id, args.LIST.name);
+        list.value = [];
+        return;
     }
 
     insertAtList (args, util) {
