@@ -1,6 +1,7 @@
 const ArgumentType = require('../../extension-support/argument-type');
 const Cast = require('../../util/cast');
 const BlockType = require('../../extension-support/block-type');
+const formatMessage = require('format-message');
 const log = require('../../util/log');
 const DiffMatchPatch = require('diff-match-patch');
 
@@ -684,29 +685,51 @@ class Scratch3SpeechBlocks {
     getInfo () {
         return {
             id: 'speech',
-            name: 'Google Speech',
+            name: formatMessage({
+                id: 'speech.extensionName',
+                default: 'Google Speech',
+                description: 'Name of extension that adds speech recognition blocks. Do Not translate Google.'
+            }),
             menuIconURI: menuIconURI,
             blockIconURI: iconURI,
             blocks: [
                 {
                     opcode: 'listenAndWait',
-                    text: 'Listen and Wait',
+                    text: formatMessage({
+                        id: 'speech.listenAndWait',
+                        default: 'listen and wait',
+                        // eslint-disable-next-line max-len
+                        description: 'Start listening to the microphone and wait for a result from the speech recognition system.'
+                    }),
                     blockType: BlockType.COMMAND
                 },
                 {
                     opcode: 'whenIHearHat',
-                    text: 'When I hear [PHRASE]',
+                    text: formatMessage({
+                        id: 'speech.whenIHear',
+                        default: 'when I hear [PHRASE]',
+                        // eslint-disable-next-line max-len
+                        description: 'Event that triggers when the text entered on the block is recognized by the speech recognition system.'
+                    }),
                     blockType: BlockType.HAT,
                     arguments: {
                         PHRASE: {
                             type: ArgumentType.STRING,
-                            defaultValue: 'cat'
+                            defaultValue: formatMessage({
+                                id: 'speech.defaultWhenIHearValue',
+                                default: 'let\'s go',
+                                description: 'The default phrase/word that, when heard, triggers the event.'
+                            })
                         }
                     }
                 },
                 {
                     opcode: 'getSpeech',
-                    text: 'speech',
+                    text: formatMessage({
+                        id: 'speech.speechReporter',
+                        default: 'speech',
+                        description: 'Get the text of spoken words transcribed by the speech recognition system.'
+                    }),
                     blockType: BlockType.REPORTER
                 }
             ]
