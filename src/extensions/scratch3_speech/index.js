@@ -754,7 +754,7 @@ class Scratch3SpeechBlocks {
             
             const endSound = (shouldPlayEndSound => {
                 if (shouldPlayEndSound) {
-                    this._playSound(this._endSoundBuffer);
+                    this._playSound(this._endSoundPlayer);
                 }
             });
 
