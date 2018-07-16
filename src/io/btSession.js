@@ -23,12 +23,12 @@ class BTSession extends JSONRPCWebSocket {
 
         this._availablePeripherals = {};
         this._connectCallback = connectCallback;
+        this._connected = false;
         this._characteristicDidChangeCallback = null;
         this._deviceOptions = deviceOptions;
+        this._discoverTimeoutID = null;
         this._messageCallback = messageCallback;
         this._runtime = runtime;
-
-        this._connected = false;
     }
 
     /**
@@ -37,7 +37,8 @@ class BTSession extends JSONRPCWebSocket {
      */
     requestDevice () {
         if (this._ws.readyState === 1) { // is this needed since it's only called on ws.onopen?
-            // TODO: start a 'discover' timeout
+            // TODO: window?
+            this.discoverTimeoutID = window.setTimeout(this._sendDiscoverTimeout.bind(this), 15000);
             this.sendRemoteRequest('discover', this._deviceOptions)
                 .catch(e => this._sendError(e)); // never reached?
         }
@@ -96,7 +97,9 @@ class BTSession extends JSONRPCWebSocket {
                 this._runtime.constructor.PERIPHERAL_LIST_UPDATE,
                 this._availablePeripherals
             );
-            // TODO: cancel a discover timeout if one is active
+            if (this._discoverTimeoutID) { // cancel discover timeout
+                window.clearTimeout(this._discoverTimeoutID);
+            }
             break;
         case 'didReceiveMessage':
             this._messageCallback(params); // TODO: refine?
@@ -109,6 +112,10 @@ class BTSession extends JSONRPCWebSocket {
     _sendError (e) {
         log.error(`BTSession error: ${JSON.stringify(e)}`);
         this._runtime.emit(this._runtime.constructor.PERIPHERAL_ERROR);
+    }
+
+    _sendDiscoverTimeout () {
+        this._runtime.emit(this._runtime.constructor.PERIPHERAL_SCAN_TIMEOUT);
     }
 }
 

@@ -429,6 +429,14 @@ class Runtime extends EventEmitter {
     }
 
     /**
+     * Event name for reporting that a peripheral has not been discovered.
+     * @const {string}
+     */
+    static get PERIPHERAL_SCAN_TIMEOUT () {
+        return 'PERIPHERAL_SCAN_TIMEOUT';
+    }
+
+    /**
      * Event name for reporting that blocksInfo was updated.
      * @const {string}
      */
