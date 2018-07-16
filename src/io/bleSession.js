@@ -35,8 +35,8 @@ class BLESession extends JSONRPCWebSocket {
      */
     requestDevice () {
         if (this._ws.readyState === 1) { // is this needed since it's only called on ws.onopen?
-            // TODO: window?
-            this.discoverTimeoutID = window.setTimeout(this._sendDiscoverTimeout.bind(this), 15000);
+            this._availablePeripherals = {};
+            this._discoverTimeoutID = window.setTimeout(this._sendDiscoverTimeout.bind(this), 15000);
             this.sendRemoteRequest('discover', this._deviceOptions)
                 .catch(e => this._sendError(e)); // never reached?
         }
@@ -89,7 +89,8 @@ class BLESession extends JSONRPCWebSocket {
                 this._runtime.constructor.PERIPHERAL_LIST_UPDATE,
                 this._availablePeripherals
             );
-            if (this._discoverTimeoutID) { // cancel discover timeout
+            if (this._discoverTimeoutID) {
+                // TODO: window?
                 window.clearTimeout(this._discoverTimeoutID);
             }
             break;
