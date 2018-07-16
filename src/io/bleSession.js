@@ -118,8 +118,10 @@ class BLESession extends JSONRPCWebSocket {
             params.startNotifications = true;
         }
         this._characteristicDidChangeCallback = onCharacteristicChanged;
-        return this.sendRemoteRequest('read', params);
-        // TODO: handle error here
+        return this.sendRemoteRequest('read', params)
+            .catch(e => {
+                this._sendError(e);
+            });
     }
 
     /**
@@ -135,7 +137,10 @@ class BLESession extends JSONRPCWebSocket {
         if (encoding) {
             params.encoding = encoding;
         }
-        return this.sendRemoteRequest('write', params);
+        return this.sendRemoteRequest('write', params)
+            .catch(e => {
+                this._sendError(e);
+            });
     }
 
     _sendError (e) {
