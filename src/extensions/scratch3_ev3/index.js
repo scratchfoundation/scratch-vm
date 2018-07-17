@@ -125,7 +125,6 @@ class EV3 {
         /**
          * State
          */
-        this.connected = false;
         this._sensorPorts = [];
         this._motorPorts = [];
         this._sensors = {
@@ -206,7 +205,7 @@ class EV3 {
     }
 
     get distance () {
-        if (!this.connected) return 0;
+        if (!this.getPeripheralIsConnected()) return 0;
 
         // https://shop.lego.com/en-US/EV3-Ultrasonic-Sensor-45504
         // Measures distances between one and 250 cm (one to 100 in.)
@@ -219,13 +218,13 @@ class EV3 {
     }
 
     get brightness () {
-        if (!this.connected) return 0;
+        if (!this.getPeripheralIsConnected()) return 0;
 
         return this._sensors.brightness;
     }
 
     getMotorPosition (port) {
-        if (!this.connected) return;
+        if (!this.getPeripheralIsConnected()) return;
 
         let value = this._motors.positions[port];
         value = value % 360;
@@ -235,13 +234,13 @@ class EV3 {
     }
 
     isButtonPressed (port) {
-        if (!this.connected) return;
+        if (!this.getPeripheralIsConnected()) return;
 
         return this._sensors.buttons[port];
     }
 
     beep (freq, time) {
-        if (!this.connected) return;
+        if (!this.getPeripheralIsConnected()) return;
 
         const cmd = [];
         cmd[0] = 15; // length
@@ -277,7 +276,7 @@ class EV3 {
     }
 
     motorTurnClockwise (port, time) {
-        if (!this.connected) return;
+        if (!this.getPeripheralIsConnected()) return;
 
         // Build up motor command
         const cmd = this._applyPrefix(0, this._motorCommand(
@@ -312,7 +311,7 @@ class EV3 {
     }
 
     motorTurnCounterClockwise (port, time) {
-        if (!this.connected) return;
+        if (!this.getPeripheralIsConnected()) return;
 
         // Build up motor command
         const cmd = this._applyPrefix(0, this._motorCommand(
@@ -368,7 +367,7 @@ class EV3 {
     }
 
     motorRotate (port, degrees) {
-        if (!this.connected) return;
+        if (!this.getPeripheralIsConnected()) return;
 
         // Build up motor command
         const cmd = this._applyPrefix(0, this._motorCommand(
@@ -400,7 +399,7 @@ class EV3 {
     }
 
     motorSetPosition (port, degrees) {
-        if (!this.connected) return;
+        if (!this.getPeripheralIsConnected()) return;
 
         // Calculate degrees to turn
         let previousPos = this._motors.positions[port];
@@ -446,7 +445,7 @@ class EV3 {
     }
 
     motorSetPower (port, power) {
-        if (!this.connected) return;
+        if (!this.getPeripheralIsConnected()) return;
 
         this._motors.speeds[port] = power;
     }
@@ -557,8 +556,6 @@ class EV3 {
 
     // TODO: keep here? / refactor
     _onSessionConnect () {
-        this.connected = true;
-
         // start polling
         // TODO: window?
         this._pollingIntervalID = window.setInterval(this._getSessionData.bind(this), 150);
@@ -566,7 +563,7 @@ class EV3 {
 
     // TODO: keep here? / refactor
     _getSessionData () {
-        if (!this.connected) {
+        if (!this.getPeripheralIsConnected()) {
             window.clearInterval(this._pollingIntervalID);
             return;
         }
