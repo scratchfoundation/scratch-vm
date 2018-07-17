@@ -536,7 +536,7 @@ class Scratch3MicroBitBlocks {
      */
     displayText (args) {
         const text = String(args.TEXT).substring(0, 19);
-        this._device.displayText(text);
+        if (text.length > 0) this._device.displayText(text);
         return Promise.resolve();
     }
 
