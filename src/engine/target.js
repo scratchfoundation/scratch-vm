@@ -535,6 +535,7 @@ class Target extends EventEmitter {
      * then the local variable is renamed to distinguish itself from the pre-existing variable.
      * All blocks that reference the local variable will be updated to use the new name.
      */
+    // TODO (#1360) This function is too long, add some helpers for the different chunks and cases...
     fixUpVariableReferences () {
         if (!this.runtime) return; // There's no runtime context to conflict with
         if (this.isStage) return; // Stage can't have variable conflicts with itself (and also can't be uploaded)
@@ -562,6 +563,7 @@ class Target extends EventEmitter {
             }
         }
         const conflictIdsToReplace = Object.create(null);
+        const conflictNamesToReplace = Object.create(null);
 
         // Cache the list of all variable names by type so that we don't need to
         // re-calculate this in every iteration of the following loop.
@@ -615,6 +617,9 @@ class Target extends EventEmitter {
                     const allNames = allVarNames(varType);
                     const freshName = StringUtil.unusedName(varName, allNames);
                     stage.createVariable(varId, freshName, varType);
+                    if (!conflictNamesToReplace[varId]) {
+                        conflictNamesToReplace[varId] = freshName;
+                    }
                 }
             }
         }
@@ -626,7 +631,7 @@ class Target extends EventEmitter {
             const type = this.variables[varId].type;
             renameConflictingLocalVar(varId, name, type);
         }
-        // Finally, handle global var conflicts (e.g. a sprite is uploaded, and has
+        // Handle global var conflicts with existing global vars (e.g. a sprite is uploaded, and has
         // blocks referencing some variable that the sprite does not own, and this
         // variable conflicts with a global var)
         // In this case, we want to merge the new variable referenes with the
@@ -635,6 +640,20 @@ class Target extends EventEmitter {
             const existingId = conflictIdsToReplace[conflictId];
             const referencesToUpdate = allReferences[conflictId];
             this.mergeVariables(conflictId, existingId, referencesToUpdate);
+        }
+
+        // Handle global var conflicts existing local vars (e.g a sprite is uploaded,
+        // and has blocks referencing some variable that the sprite does not own, and this
+        // variable conflcits with another sprite's local var).
+        // In this case, we want to go through the variable references and update
+        // the name of the variable in that reference.
+        for (const conflictId in conflictNamesToReplace) {
+            const newName = conflictNamesToReplace[conflictId];
+            const referencesToUpdate = allReferences[conflictId];
+            referencesToUpdate.map(ref => {
+                ref.referencingField.value = newName;
+                return ref;
+            });
         }
     }
 
