@@ -115,6 +115,9 @@ class VirtualMachine extends EventEmitter {
         this.runtime.on(Runtime.PERIPHERAL_ERROR, () =>
             this.emit(Runtime.PERIPHERAL_ERROR)
         );
+        this.runtime.on(Runtime.PERIPHERAL_SCAN_TIMEOUT, () =>
+            this.emit(Runtime.PERIPHERAL_SCAN_TIMEOUT)
+        );
 
         this.extensionManager = new ExtensionManager(this.runtime);
 

@@ -105,7 +105,6 @@ class MicroBit {
      * Called by the runtime when user wants to scan for a device.
      */
     startDeviceScan () {
-        log.info('making a new BLE session');
         this._ble = new BLESession(this._runtime, {
             filters: [
                 {services: [BLEUUID.service]}
