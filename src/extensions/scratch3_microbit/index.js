@@ -508,13 +508,14 @@ class Scratch3MicroBitBlocks {
             return value;
         };
         const hex = symbol.split('').reduce(reducer, 0);
-        if (!hex) return;
-        this._device.ledMatrixState[0] = hex & 0x1F;
-        this._device.ledMatrixState[1] = (hex >> 5) & 0x1F;
-        this._device.ledMatrixState[2] = (hex >> 10) & 0x1F;
-        this._device.ledMatrixState[3] = (hex >> 15) & 0x1F;
-        this._device.ledMatrixState[4] = (hex >> 20) & 0x1F;
-        this._device.displayMatrix(this._device.ledMatrixState);
+        if (hex !== null) {
+            this._device.ledMatrixState[0] = hex & 0x1F;
+            this._device.ledMatrixState[1] = (hex >> 5) & 0x1F;
+            this._device.ledMatrixState[2] = (hex >> 10) & 0x1F;
+            this._device.ledMatrixState[3] = (hex >> 15) & 0x1F;
+            this._device.ledMatrixState[4] = (hex >> 20) & 0x1F;
+            this._device.displayMatrix(this._device.ledMatrixState);
+        }
 
         return Promise.resolve();
     }
