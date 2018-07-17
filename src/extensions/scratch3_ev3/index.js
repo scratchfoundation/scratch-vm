@@ -4,6 +4,7 @@ const Cast = require('../../util/cast');
 const log = require('../../util/log');
 const Base64Util = require('../../util/base64-util');
 const BTSession = require('../../io/btSession');
+const MathUtil = require('../../util/math-util');
 
 // TODO: Refactor/rename all these high level primitives to be clearer/match
 
@@ -53,6 +54,8 @@ const MOTOR_PORTS = [
     }
 ];
 
+const VALID_MOTOR_PORTS = [0, 1, 2, 3];
+
 /**
  * Array of accepted sensor ports.
  * @note These should not be translated as they correspond to labels on
@@ -77,6 +80,8 @@ const SENSOR_PORTS = [
         value: 3
     }
 ];
+
+const VALID_SENSOR_PORTS = [0, 1, 2, 3];
 
 // firmware pdf page 100
 const EV_DEVICE_TYPES = {
@@ -237,8 +242,6 @@ class EV3 {
 
     beep (freq, time) {
         if (!this.connected) return;
-
-        log.info('should be beeping');
 
         const cmd = [];
         cmd[0] = 15; // length
@@ -453,7 +456,6 @@ class EV3 {
     // *******
 
     _stopAllMotors () {
-        log.info('stop all motors');
         for (let i = 0; i < this._motorPorts.length; i++) {
             if (this._motorPorts[i] !== 'none') {
                 this.motorCoast(i);
@@ -595,7 +597,6 @@ class EV3 {
             cmd[0] = cmd.length - 2;
             cmd[5] = 33;
 
-            // log.info(`REQUEST DEVICE LIST: ${compoundCommand}`);
             // Clear sensor data
             this._updateDevices = true;
             this._sensorPorts = [];
@@ -682,8 +683,8 @@ class EV3 {
             this._motorPorts[1] = EV_DEVICE_TYPES[array[22]] ? EV_DEVICE_TYPES[array[22]] : 'none';
             this._motorPorts[2] = EV_DEVICE_TYPES[array[23]] ? EV_DEVICE_TYPES[array[23]] : 'none';
             this._motorPorts[3] = EV_DEVICE_TYPES[array[24]] ? EV_DEVICE_TYPES[array[24]] : 'none';
-            log.info(`sensor ports: ${this._sensorPorts}`);
-            log.info(`motor ports: ${this._motorPorts}`);
+            // log.info(`sensor ports: ${this._sensorPorts}`);
+            // log.info(`motor ports: ${this._motorPorts}`);
             this._updateDevices = false;
             // eslint-disable-next-line no-undefined
         } else if (!this._sensorPorts.includes(undefined) && !this._motorPorts.includes(undefined)) {
@@ -703,7 +704,7 @@ class EV3 {
                     // Read brightness / distance values and set to 0 if null
                     this._sensors[EV_DEVICE_LABELS[this._sensorPorts[i]]] = value ? value : 0;
                 }
-                log.info(`${JSON.stringify(this._sensors)}`);
+                // log.info(`${JSON.stringify(this._sensors)}`);
                 offset += 4;
             }
             // READ MOTOR POSITION VALUES
@@ -720,7 +721,7 @@ class EV3 {
                 if (value) {
                     this._motors.positions[i] = value;
                 }
-                log.info(`motor positions: ${this._motors.positions}`);
+                // log.info(`motor positions: ${this._motors.positions}`);
                 offset += 4;
             }
         }
@@ -1002,21 +1003,36 @@ class Scratch3Ev3Blocks {
 
     motorTurnClockwise (args) {
         const port = Cast.toNumber(args.PORT);
-        const time = Cast.toNumber(args.TIME) * 1000;
+        let time = Cast.toNumber(args.TIME) * 1000;
+        time = MathUtil.clamp(time, 0, 15000);
+
+        if (!VALID_MOTOR_PORTS.includes(port)) {
+            return;
+        }
 
         return this._device.motorTurnClockwise(port, time);
     }
 
     motorTurnCounterClockwise (args) {
         const port = Cast.toNumber(args.PORT);
-        const time = Cast.toNumber(args.TIME) * 1000;
+        let time = Cast.toNumber(args.TIME) * 1000;
+        time = MathUtil.clamp(time, 0, 15000);
+
+        if (!VALID_MOTOR_PORTS.includes(port)) {
+            return;
+        }
 
         return this._device.motorTurnCounterClockwise(port, time);
     }
 
+    /*
     motorRotate (args) {
         const port = Cast.toNumber(args.PORT);
         const degrees = Cast.toNumber(args.DEGREES);
+
+        if (!VALID_MOTOR_PORTS.includes(port)) {
+            return;
+        }
 
         this._device.motorRotate(port, degrees);
         return;
@@ -1026,22 +1042,33 @@ class Scratch3Ev3Blocks {
         const port = Cast.toNumber(args.PORT);
         const degrees = Cast.toNumber(args.DEGREES);
 
+        if (!VALID_MOTOR_PORTS.includes(port)) {
+            return;
+        }
+
         this._device.motorSetPosition(port, degrees);
         return;
     }
+    */
 
     motorSetPower (args) {
         const port = Cast.toNumber(args.PORT);
-        const power = Cast.toNumber(args.POWER);
+        const power = MathUtil.clamp(Cast.toNumber(args.POWER), 0, 100);
 
-        const value = Math.max(-100, Math.min(power, 100));
+        if (!VALID_MOTOR_PORTS.includes(port)) {
+            return;
+        }
 
-        this._device.motorSetPower(port, value);
+        this._device.motorSetPower(port, power);
         return;
     }
 
     getMotorPosition (args) {
         const port = Cast.toNumber(args.PORT);
+
+        if (!VALID_MOTOR_PORTS.includes(port)) {
+            return;
+        }
 
         return this._device.getMotorPosition(port);
     }
@@ -1049,23 +1076,31 @@ class Scratch3Ev3Blocks {
     whenButtonPressed (args) {
         const port = Cast.toNumber(args.PORT);
 
+        if (!VALID_SENSOR_PORTS.includes(port)) {
+            return;
+        }
+
         return this._device.isButtonPressed(port);
     }
 
     whenDistanceLessThan (args) {
-        const distance = Cast.toNumber(args.DISTANCE);
+        const distance = MathUtil.clamp(Cast.toNumber(args.DISTANCE), 0, 100);
 
         return this._device.distance < distance;
     }
 
     whenBrightnessLessThan (args) {
-        const brightness = Cast.toNumber(args.DISTANCE);
+        const brightness = MathUtil.clamp(Cast.toNumber(args.DISTANCE), 0, 100);
 
         return this._device.brightness < brightness;
     }
 
     buttonPressed (args) {
         const port = Cast.toNumber(args.PORT);
+
+        if (!VALID_SENSOR_PORTS.includes(port)) {
+            return;
+        }
 
         return this._device.isButtonPressed(port);
     }
@@ -1079,8 +1114,13 @@ class Scratch3Ev3Blocks {
     }
 
     beep (args) {
-        const note = Cast.toNumber(args.NOTE);
-        const time = Cast.toNumber(args.TIME * 1000);
+        const note = MathUtil.clamp(Cast.toNumber(args.NOTE), 47, 99); // valid EV3 sounds
+        let time = Cast.toNumber(args.TIME) * 1000;
+        time = MathUtil.clamp(time, 0, 3000);
+
+        if (time === 0) {
+            return; // don't send a beep time of 0
+        }
 
         // https://en.wikipedia.org/wiki/MIDI_tuning_standard#Frequency_values
         const freq = Math.pow(2, ((note - 69 + 12) / 12)) * 440;
