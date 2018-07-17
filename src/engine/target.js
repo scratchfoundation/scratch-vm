@@ -562,6 +562,17 @@ class Target extends EventEmitter {
             }
         }
         const conflictIdsToReplace = Object.create(null);
+
+        // Cache the list of all variable names by type so that we don't need to
+        // re-calculate this in every iteration of the following loop.
+        const varNamesByType = {};
+        const allVarNames = type => {
+            const namesOfType = varNamesByType[type];
+            if (namesOfType) return namesOfType;
+            varNamesByType[type] = this.runtime.getAllVarNamesOfType(type);
+            return varNamesByType[type];
+        };
+
         for (const varId in allReferences) {
             // We don't care about which var ref we get, they should all have the same var info
             const varRef = allReferences[varId][0];
@@ -588,10 +599,22 @@ class Target extends EventEmitter {
                 }
             } else {
                 // We didn't find the referenced variable id anywhere,
-                // look it up by name and type to make sure there's no conflict
-                const existingVar = this.lookupVariableByNameAndType(varName, varType);
-                if (existingVar && !conflictIdsToReplace[varId]) {
-                    conflictIdsToReplace[varId] = existingVar.id;
+                // Treat it as a reference to a global variable (from the original
+                // project this sprite was exported from).
+                // Check for whether a global variable of the same name and type exists,
+                // and if so, track it to merge with the existing global in a second pass of the blocks.
+                const existingVar = stage.lookupVariableByNameAndType(varName, varType);
+                if (existingVar) {
+                    if (!conflictIdsToReplace[varId]) {
+                        conflictIdsToReplace[varId] = existingVar.id;
+                    }
+                } else {
+                    // A global variable with the same name did not already exist,
+                    // create a new one such that it does not conflict with any
+                    // names of local variables of the same type.
+                    const allNames = allVarNames(varType);
+                    const freshName = StringUtil.unusedName(varName, allNames);
+                    stage.createVariable(varId, freshName, varType);
                 }
             }
         }

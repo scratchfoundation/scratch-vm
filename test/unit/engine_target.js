@@ -387,6 +387,51 @@ test('fixUpVariableReferences fixes conflicting sprite local var without blocks 
     t.end();
 });
 
+test('fixUpVariableReferences fixes sprite global var conflicting with other sprite\'s local var', t => {
+    const runtime = new Runtime();
+
+    const stage = new Target(runtime);
+    stage.isStage = true;
+
+    const target = new Target(runtime);
+    target.isStage = false;
+
+    const existingTarget = new Target(runtime);
+    existingTarget.isStage = false;
+
+    runtime.targets = [stage, target, existingTarget];
+
+    // Create a local variable on the pre-existing target
+    existingTarget.createVariable('pre-existing local var id', 'a mock variable', Variable.SCALAR_TYPE);
+
+    target.blocks.createBlock(adapter(events.mockVariableBlock)[0]);
+
+    t.equal(Object.keys(existingTarget.variables).length, 1);
+    const existingVariable = Object.values(existingTarget.variables)[0];
+    t.equal(existingVariable.name, 'a mock variable');
+    t.equal(Object.keys(target.variables).length, 0);
+    t.equal(Object.keys(stage.variables).length, 0);
+    t.type(target.blocks.getBlock('a block'), 'object');
+    t.type(target.blocks.getBlock('a block').fields, 'object');
+    t.type(target.blocks.getBlock('a block').fields.VARIABLE, 'object');
+    t.equal(target.blocks.getBlock('a block').fields.VARIABLE.id, 'mock var id');
+
+    target.fixUpVariableReferences();
+
+    t.equal(Object.keys(existingTarget.variables).length, 1);
+    t.equal(existingVariable.name, 'a mock variable');
+    t.equal(Object.keys(target.variables).length, 0);
+    t.equal(Object.keys(stage.variables).length, 1);
+    t.type(target.blocks.getBlock('a block'), 'object');
+    t.type(target.blocks.getBlock('a block').fields, 'object');
+    t.type(target.blocks.getBlock('a block').fields.VARIABLE, 'object');
+    t.equal(target.blocks.getBlock('a block').fields.VARIABLE.id, 'mock var id');
+    const newGlobal = stage.variables[Object.keys(stage.variables)[0]];
+    t.equal(newGlobal.name, 'a mock variable2');
+
+    t.end();
+});
+
 test('fixUpVariableReferences does not change variable name if there is no variable conflict', t => {
     const runtime = new Runtime();
 
