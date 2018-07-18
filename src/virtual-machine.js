@@ -928,6 +928,14 @@ class VirtualMachine extends EventEmitter {
     }
 
     /**
+     * get the current locale for the VM
+     * @returns {string} the current locale in the VM
+     */
+    getLocale () {
+        return formatMessage.setup().locale;
+    }
+
+    /**
      * Handle a Blockly event for the current editing target.
      * @param {!Blockly.Event} e Any Blockly event.
      */
