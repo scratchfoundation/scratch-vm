@@ -374,8 +374,8 @@ class Scratch3VideoSensingBlocks {
             id: 'videoSensing',
             name: formatMessage({
                 id: 'videoSensing.categoryName',
-                default: 'Video Motion',
-                description: 'Label for the video motion extension category'
+                default: 'Video Sensing',
+                description: 'Label for the video sensing extension category'
             }),
             blocks: [
                 {
