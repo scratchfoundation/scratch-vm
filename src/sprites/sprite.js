@@ -155,7 +155,7 @@ class Sprite {
         newSprite.sounds = this.sounds.map(sound => {
             const newSound = Object.assign({}, sound);
             const soundAsset = this.runtime.storage.get(sound.assetId);
-            assetPromises.push(loadSoundFromAsset(newSound, soundAsset, this.runtime, this));
+            assetPromises.push(loadSoundFromAsset(newSound, soundAsset, this.runtime, newSprite));
             return newSound;
         });
 
