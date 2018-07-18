@@ -565,6 +565,7 @@ class Runtime extends EventEmitter {
         let extensionBlocks = [];
         for (const categoryInfo of this._blockInfo) {
             if (extensionInfo.id === categoryInfo.id) {
+                categoryInfo.name = maybeFormatMessage(extensionInfo.name);
                 categoryInfo.blocks = [];
                 categoryInfo.menus = [];
                 this._fillExtensionCategory(categoryInfo, extensionInfo);
