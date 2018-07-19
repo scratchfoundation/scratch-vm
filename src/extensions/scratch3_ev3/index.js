@@ -1,6 +1,7 @@
 const ArgumentType = require('../../extension-support/argument-type');
 const BlockType = require('../../extension-support/block-type');
 const Cast = require('../../util/cast');
+const uid = require('../../util/uid');
 // const log = require('../../util/log');
 const Base64Util = require('../../util/base64-util');
 const BTSession = require('../../io/btSession');
@@ -135,7 +136,8 @@ class EV3 {
         this._motors = {
             speeds: [50, 50, 50, 50],
             positions: [0, 0, 0, 0],
-            busy: [0, 0, 0, 0]
+            busy: [0, 0, 0, 0],
+            commandId: [null, null, null, null]
         };
         this._pollingIntervalID = null;
         this._pollingCounter = 0;
@@ -186,7 +188,8 @@ class EV3 {
         this._motors = {
             speeds: [50, 50, 50, 50],
             positions: [0, 0, 0, 0],
-            busy: [0, 0, 0, 0]
+            busy: [0, 0, 0, 0],
+            commandId: [null, null, null, null]
         };
         this._pollingIntervalID = null;
     }
@@ -296,10 +299,7 @@ class EV3 {
         // Set motor to busy
         // this._motors.busy[port] = 1;
 
-        // Send coast message
-        setTimeout(() => {
-            this.motorCoast(port);
-        }, time);
+        this.coastAfter(port, time);
 
         // Yield for turn time + brake time
         const coastTime = 100; // TODO: calculate coasting or set flag
@@ -331,10 +331,7 @@ class EV3 {
         // Set motor to busy
         // this._motors.busy[port] = 1;
 
-        // Send coast message
-        setTimeout(() => {
-            this.motorCoast(port);
-        }, time);
+        this.coastAfter(port, time);
 
         // Yield for time
         const coastTime = 100; // TODO: calculate coasting or set flag
@@ -343,6 +340,21 @@ class EV3 {
                 resolve();
             }, time + coastTime);
         });
+    }
+
+    coastAfter (port, time) {
+        // Set the motor command id to check before starting coast
+        const commandId = uid();
+        this._motors.commandId[port] = commandId;
+
+        // Send coast message
+        setTimeout(() => {
+            // Do not send coast if another motor command changed the command id.
+            if (this._motors.commandId[port] === commandId) {
+                this.motorCoast(port);
+                this._motors.commandId[port] = null;
+            }
+        }, time);
     }
 
     motorCoast (port) {
