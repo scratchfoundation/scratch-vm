@@ -342,7 +342,7 @@ class EV3 {
         });
     }
 
-    coastAfter(port, time) {
+    coastAfter (port, time) {
         // Set the motor command id to check before starting coast
         const commandId = uid();
         this._motors.commandId[port] = commandId;
