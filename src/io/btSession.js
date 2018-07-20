@@ -114,7 +114,7 @@ class BTSession extends JSONRPCWebSocket {
 
     _sendError (e) {
         this._connected = false;
-        log.error(`BTSession error: ${JSON.stringify(e)}`);
+        // log.error(`BTSession error: ${JSON.stringify(e)}`);
         this._runtime.emit(this._runtime.constructor.PERIPHERAL_ERROR);
     }
 
