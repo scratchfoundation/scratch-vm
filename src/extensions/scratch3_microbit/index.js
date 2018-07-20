@@ -24,7 +24,7 @@ const BLECommand = {
     CMD_DISPLAY_LED: 0x82
 };
 
-const BLETimeout = 2000;
+const BLETimeout = 4500; // TODO: might need tweaking based on how long the device takes to start sending data
 
 /**
  * Enum for micro:bit protocol.
