@@ -106,7 +106,7 @@ class MicroBit {
          * @type {number}
          * @private
          */
-         this._timeoutID;
+        this._timeoutID = null;
     }
 
     // TODO: keep here?
