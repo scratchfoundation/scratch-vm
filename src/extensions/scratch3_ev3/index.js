@@ -2,7 +2,7 @@ const ArgumentType = require('../../extension-support/argument-type');
 const BlockType = require('../../extension-support/block-type');
 const Cast = require('../../util/cast');
 const uid = require('../../util/uid');
-// const log = require('../../util/log');
+const log = require('../../util/log');
 const Base64Util = require('../../util/base64-util');
 const BTSession = require('../../io/btSession');
 const MathUtil = require('../../util/math-util');
@@ -681,6 +681,10 @@ class EV3 {
         const message = params.message;
         const array = Base64Util.base64ToUint8Array(message);
         // log.info(`received array: ${array}`);
+
+        if (array.length < 35) { // TODO: find safer solution
+            return; // don't parse results that aren't sensor data list or device list
+        }
 
         if (this._updateDevices) {
             // READ DEVICE LIST
