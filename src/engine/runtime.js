@@ -21,6 +21,7 @@ const DeviceManager = require('../io/deviceManager');
 const Keyboard = require('../io/keyboard');
 const Mouse = require('../io/mouse');
 const MouseWheel = require('../io/mouseWheel');
+const UserData = require('../io/userData');
 const Video = require('../io/video');
 
 const StringUtil = require('../util/string-util');
@@ -259,6 +260,7 @@ class Runtime extends EventEmitter {
             keyboard: new Keyboard(this),
             mouse: new Mouse(this),
             mouseWheel: new MouseWheel(this),
+            userData: new UserData(),
             video: new Video(this)
         };
 

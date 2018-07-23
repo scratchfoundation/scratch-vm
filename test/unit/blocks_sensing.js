@@ -3,6 +3,7 @@ const Sensing = require('../../src/blocks/scratch3_sensing');
 const Runtime = require('../../src/engine/runtime');
 const Sprite = require('../../src/sprites/sprite');
 const RenderedTarget = require('../../src/sprites/rendered-target');
+const BlockUtility = require('../../src/engine/block-utility');
 
 test('getPrimitives', t => {
     const rt = new Runtime();
@@ -147,7 +148,8 @@ test('loud? boolean', t => {
 test('username block', t => {
     const rt = new Runtime();
     const sensing = new Sensing(rt);
+    const util = new BlockUtility(rt.sequencer);
 
-    t.equal(sensing.getUsername(), '');
+    t.equal(sensing.getUsername({}, util), '');
     t.end();
 });
