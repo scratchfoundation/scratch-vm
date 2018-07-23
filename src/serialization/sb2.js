@@ -582,6 +582,7 @@ const parseScratchObject = function (object, runtime, extensions, topLevel, zip)
     // The stage will have child objects; recursively process them.
     const childrenPromises = [];
     if (object.children) {
+        object.children.sort((a, b) => a.indexInLibrary - b.indexInLibrary);
         for (let m = 0; m < object.children.length; m++) {
             childrenPromises.push(parseScratchObject(object.children[m], runtime, extensions, false, zip));
         }
