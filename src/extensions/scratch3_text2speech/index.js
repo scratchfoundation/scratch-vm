@@ -155,6 +155,9 @@ class Scratch3SpeakBlocks {
                     }
                 };
                 this.runtime.audioEngine.decodeSoundPlayer(sound).then(soundPlayer => {
+                    // @todo this code should not go to production as is because it leaks
+                    // soundplayers. We may not want to use the soundbank for this purpose
+                    // at all.
                     const soundBank = util.target.sprite.soundBank;
                     soundBank.addSoundPlayer(soundPlayer);
                     soundBank.playSound(util.target, soundPlayer.id);
