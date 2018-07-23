@@ -116,9 +116,10 @@ class Scratch3SpeakBlocks {
     /**
      * Convert the provided text into a sound file and then play the file.
      * @param  {object} args Block arguments
+     * @param {object} util - utility object provided by the runtime.
      * @return {Promise}     A promise that resolves after playing the sound
      */
-    speakAndWait (args) {
+    speakAndWait (args, util) {
         // Cast input to string
         args.WORDS = Cast.toString(args.WORDS);
 
@@ -154,8 +155,9 @@ class Scratch3SpeakBlocks {
                     }
                 };
                 this.runtime.audioEngine.decodeSoundPlayer(sound).then(soundPlayer => {
-                    soundPlayer.connect(this.runtime.audioEngine);
-                    soundPlayer.play();
+                    const soundBank = util.target.sprite.soundBank;
+                    soundBank.addSoundPlayer(soundPlayer);
+                    soundBank.playSound(util.target, soundPlayer.id);
                     soundPlayer.on('stop', resolve);
                 });
             });
