@@ -568,6 +568,12 @@ const parseScratchObject = function (object, runtime, extensions, topLevel, zip)
             }
         }
     }
+    if (object.hasOwnProperty('indexInLibrary')) {
+        // Temporarily store the 'indexInLibrary' property from the sb2 file
+        // so that we can correctly order sprites in the target pane.
+        // This will be deleted after we are done parsing and ordering the targets list.
+        target.targetPaneOrder = object.indexInLibrary;
+    }
 
     target.isStage = topLevel;
 
@@ -652,6 +658,21 @@ const parseScratchObject = function (object, runtime, extensions, topLevel, zip)
     );
 };
 
+const reorderParsedTargets = function (targets) {
+    // Reorder parsed targets based on the temporary targetPaneOrder property
+    // and then delete it.
+
+    targets.sort((a, b) => a.targetPaneOrder - b.targetPaneOrder);
+
+    // Delete the temporary target pane ordering since we shouldn't need it anymore.
+    targets.forEach(t => {
+        delete t.targetPaneOrder;
+    });
+
+    return targets;
+};
+
+
 /**
  * Top-level handler. Parse provided JSON,
  * and process the top-level object (the stage object).
@@ -667,6 +688,7 @@ const sb2import = function (json, runtime, optForceSprite, zip) {
         extensionURLs: new Map()
     };
     return parseScratchObject(json, runtime, extensions, !optForceSprite, zip)
+        .then(reorderParsedTargets)
         .then(targets => ({
             targets,
             extensions
