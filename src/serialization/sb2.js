@@ -660,11 +660,7 @@ const parseScratchObject = function (object, runtime, extensions, topLevel, zip)
 
 const reorderParsedTargets = function (targets) {
     // Reorder parsed targets based on the temporary targetPaneOrder property
-    // and also create a layerOrder property to track the sprite's layer ordering.
-
-    targets.forEach((t, index) => {
-        t.layerOrder = index;
-    });
+    // and then delete it.
 
     targets.sort((a, b) => a.targetPaneOrder - b.targetPaneOrder);
 
