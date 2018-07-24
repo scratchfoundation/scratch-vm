@@ -308,9 +308,8 @@ class Scratch3SensingBlocks {
         return 0;
     }
 
-    getUsername () {
-        // Logged out users get empty string. Return that for now.
-        return '';
+    getUsername (args, util) {
+        return util.ioQuery('userData', 'getUsername');
     }
 }
 
