@@ -485,7 +485,9 @@ const serialize = function (runtime, targetId) {
 
     const flattenedOriginalTargets = JSON.parse(JSON.stringify(originalTargetsToSerialize));
 
-    if (runtime.renderer) {
+    // If the renderer is attached, and we're serializing a whole project (not a sprite)
+    // add a temporary layerOrder property to each target.
+    if (runtime.renderer && !targetId) {
         flattenedOriginalTargets.forEach((t, index) => {
             t.layerOrder = layerOrdering[index];
         });
