@@ -63,6 +63,20 @@ class MathUtil {
             return parseFloat(Math.tan((Math.PI * angle) / 180).toFixed(10));
         }
     }
+
+    /**
+     * Given an array of unique numbers,
+     * returns a reduced array such that each element of the reduced array
+     * represents the position of that element in a sorted version of the
+     * original array.
+     * E.g. [5, 19. 13, 1] => [1, 3, 2, 0]
+     * @param {Array<number>} elts The elements to sort and reduce
+     * @return {Array<number>} The array of reduced orderings
+     */
+    static reducedSortOrdering (elts) {
+        const sorted = elts.slice(0).sort((a, b) => a - b);
+        return elts.map(e => sorted.indexOf(e));
+    }
 }
 
 module.exports = MathUtil;

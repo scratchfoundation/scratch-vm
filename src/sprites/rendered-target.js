@@ -879,6 +879,13 @@ class RenderedTarget extends Target {
         return false;
     }
 
+    getLayerOrder () {
+        if (this.renderer) {
+            return this.renderer.getDrawableOrder(this.drawableID);
+        }
+        return null;
+    }
+
     /**
      * Move to the front layer.
      */

@@ -34,10 +34,6 @@ FakeRenderer.prototype.isTouchingColor = function (d, c) { // eslint-disable-lin
     return true;
 };
 
-FakeRenderer.prototype.setDrawableOrder = function (d, l, optA, optB) { // eslint-disable-line no-unused-vars
-    return true;
-};
-
 FakeRenderer.prototype.getBounds = function (d) { // eslint-disable-line no-unused-vars
     return {left: this.x, right: this.x, top: this.y, bottom: this.y};
 };
@@ -53,6 +49,10 @@ FakeRenderer.prototype.setDrawableOrder = function (d, a, optG, optA, optB) { //
     a = Math.max(a, 0);
     this.order = Math.min(a, this.spriteCount);
     return this.order;
+};
+
+FakeRenderer.prototype.getDrawableOrder = function (d) { // eslint-disable-line no-unused-vars
+    return 'stub';
 };
 
 FakeRenderer.prototype.pick = function (x, y, a, b, c) { // eslint-disable-line no-unused-vars
