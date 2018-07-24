@@ -18,6 +18,14 @@ const SERVER_HOST = 'https://synthesis-service.scratch.mit.edu';
  */
 const SERVER_TIMEOUT = 10000; // 10 seconds
 
+const Voices = {
+    QUINN: 'quinn',
+    MAX: 'max',
+    SQUEAK: 'squeak',
+    MONSTER: 'monster',
+    KITTEN: 'kitten'
+};
+
 /**
  * Class for the synthesis block in Scratch 3.0.
  * @constructor
@@ -36,6 +44,8 @@ class Scratch3SpeakBlocks {
             // @todo
             // this.runtime.on('PROJECT_STOP_ALL', this._clearEffectsForAllTargets);
         }
+
+        this.voice = this.getVoiceMenu()[0].value;
 
         /**
          * Locale code of the viewer
@@ -59,7 +69,7 @@ class Scratch3SpeakBlocks {
     getInfo () {
         return {
             id: 'text2speech',
-            name: 'Text-to-Speech',
+            name: 'Speech Synthesis',
             menuIconURI: '', // @todo Add the final icons.
             blockIconURI: '',
             blocks: [
@@ -81,10 +91,26 @@ class Scratch3SpeakBlocks {
                             })
                         }
                     }
+                },
+                {
+                    opcode: 'setVoice',
+                    text: formatMessage({
+                        id: 'speak.setVoiceBlock',
+                        default: 'set voice to [VOICE]',
+                        description: 'set the voice for speech synthesis'
+                    }),
+                    blockType: BlockType.COMMAND,
+                    arguments: {
+                        VOICE: {
+                            type: ArgumentType.STRING,
+                            menu: 'voices',
+                            defaultValue: this.getVoiceMenu()[0].value
+                        }
+                    }
                 }
             ],
             menus: {
-                voices: this.supportedVoices
+                voices: this.getVoiceMenu()
             }
         };
     }
@@ -96,37 +122,78 @@ class Scratch3SpeakBlocks {
     getViewerLanguageCode () {
         // @todo This should be the language code of the project *creator*
         // rather than the project viewer.
-        return navigator.language || navigator.userLanguage || 'en-US';
+        return formatMessage.setup().locale || navigator.language || navigator.userLanguage || 'en-US';
     }
 
-    /**
-     * Return the supported voices for the extension.
-     * @return {Array} Supported voices
-     */
-    supportedVoices () {
+    getVoiceMenu () {
         return [
-            'Quinn',
-            'Max',
-            'Squeak',
-            'Monster',
-            'Puppy'
+            {
+                text: Voices.QUINN,
+                value: Voices.QUINN
+            },
+            {
+                text: Voices.MAX,
+                value: Voices.MAX
+            },
+            {
+                text: Voices.SQUEAK,
+                value: Voices.SQUEAK
+            },
+            {
+                text: Voices.MONSTER,
+                value: Voices.MONSTER
+            },
+            {
+                text: Voices.KITTEN,
+                value: Voices.KITTEN
+            }
         ];
+    }
+
+    setVoice (args) {
+        this.voice = args.VOICE;
     }
 
     /**
      * Convert the provided text into a sound file and then play the file.
      * @param  {object} args Block arguments
-     * @param {object} util - utility object provided by the runtime.
      * @return {Promise}     A promise that resolves after playing the sound
      */
-    speakAndWait (args, util) {
+    speakAndWait (args) {
         // Cast input to string
         args.WORDS = Cast.toString(args.WORDS);
 
+        let gender = 'female';
+        if ((this.voice === Voices.MAX) || (this.voice === Voices.MONSTER)) {
+            gender = 'male';
+        }
+
+        let playbackRate = 1;
+        if (this.voice === Voices.SQUEAK) {
+            playbackRate = 1.4;
+        }
+        if (this.voice === Voices.MONSTER) {
+            playbackRate = 0.7;
+        }
+        if (this.voice === Voices.KITTEN) {
+            playbackRate = 1.4;
+        }
+
+        if (this.voice === Voices.KITTEN) {
+            const wordList = args.WORDS.split(' ');
+            args.WORDS = wordList.reduce((acc, curr) => {
+                let next = '';
+                if (curr.length > 0) {
+                    next = 'meow ';
+                }
+                return acc + next;
+            }, '');
+        }
+
         // Build up URL
         let path = `${SERVER_HOST}/synth`;
-        path += `?locale=${this._language}`;
-        path += `&gender=male`; // @todo
+        path += `?locale=${this.getViewerLanguageCode()}`;
+        path += `&gender=${gender}`;
         path += `&text=${encodeURI(args.WORDS)}`;
 
         // Perform HTTP request to get audio file
@@ -147,20 +214,14 @@ class Scratch3SpeakBlocks {
 
                 // Play the sound
                 const sound = {
-                    // md5: 'test',
-                    // name: 'test',
-                    // format: 'audio/mpg',
                     data: {
                         buffer: body.buffer
                     }
                 };
                 this.runtime.audioEngine.decodeSoundPlayer(sound).then(soundPlayer => {
-                    // @todo this code should not go to production as is because it leaks
-                    // soundplayers. We may not want to use the soundbank for this purpose
-                    // at all.
-                    const soundBank = util.target.sprite.soundBank;
-                    soundBank.addSoundPlayer(soundPlayer);
-                    soundBank.playSound(util.target, soundPlayer.id);
+                    soundPlayer.connect(this.runtime.audioEngine);
+                    soundPlayer.setPlaybackRate(playbackRate);
+                    soundPlayer.play();
                     soundPlayer.on('stop', resolve);
                 });
             });
