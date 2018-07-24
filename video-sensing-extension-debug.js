@@ -683,11 +683,11 @@ module.exports = {
 /* WEBPACK VAR INJECTION */(function(global) {
 
 module.exports = global["Scratch3VideoSensingDebug"] = __webpack_require__(147);
-/* WEBPACK VAR INJECTION */}.call(this, __webpack_require__(3)))
+/* WEBPACK VAR INJECTION */}.call(this, __webpack_require__(2)))
 
 /***/ }),
 
-/***/ 3:
+/***/ 2:
 /***/ (function(module, exports) {
 
 var g;
