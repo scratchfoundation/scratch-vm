@@ -228,15 +228,8 @@ class Scratch3SpeakBlocks {
             playbackRate = 1.4;
         }
 
-        if (this.voice === Voices.KITTEN) {
-            const wordList = args.WORDS.split(' ');
-            args.WORDS = wordList.reduce((acc, curr) => {
-                let next = '';
-                if (curr.length > 0) {
-                    next = 'meow ';
-                }
-                return acc + next;
-            }, '');
+        if (state.voice === Voices.KITTEN) {
+            args.WORDS = args.WORDS.replace(/\w+/g, 'meow');
         }
 
         // Build up URL
