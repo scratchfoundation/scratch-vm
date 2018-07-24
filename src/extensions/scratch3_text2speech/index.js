@@ -4,6 +4,7 @@ const nets = require('nets');
 const ArgumentType = require('../../extension-support/argument-type');
 const BlockType = require('../../extension-support/block-type');
 const Cast = require('../../util/cast');
+const Clone = require('../../util/clone');
 const log = require('../../util/log');
 
 /**
@@ -53,6 +54,9 @@ class Scratch3SpeakBlocks {
          * @private
          */
         this._language = this.getViewerLanguageCode();
+
+        this._onTargetCreated = this._onTargetCreated.bind(this);
+        runtime.on('targetWasCreated', this._onTargetCreated);
     }
 
     /**
@@ -62,6 +66,47 @@ class Scratch3SpeakBlocks {
     static get STATE_KEY () {
         return 'Scratch.text2speech';
     }
+
+    /**
+     * The default state, to be used when a target has no existing  state.
+     * @type {Text2SpeechState}
+     */
+    static get DEFAULT_TEXT2SPEECH_STATE () {
+        return {
+            voice: Voices.QUINN
+        };
+    }
+
+    /**
+     * @param {Target} target - collect  state for this target.
+     * @returns {Text2SpeechState} the mutable state associated with that target. This will be created if necessary.
+     * @private
+     */
+    _getState (target) {
+        let state = target.getCustomState(Scratch3SpeakBlocks.STATE_KEY);
+        if (!state) {
+            state = Clone.simple(Scratch3SpeakBlocks.DEFAULT_TEXT2SPEECH_STATE);
+            target.setCustomState(Scratch3SpeakBlocks.STATE_KEY, state);
+        }
+        return state;
+    }
+
+    /**
+     * When a Target is cloned, clone the state.
+     * @param {Target} newTarget - the newly created target.
+     * @param {Target} [sourceTarget] - the target used as a source for the new clone, if any.
+     * @listens Runtime#event:targetWasCreated
+     * @private
+     */
+    _onTargetCreated (newTarget, sourceTarget) {
+        if (sourceTarget) {
+            const state = sourceTarget.getCustomState(Scratch3SpeakBlocks.STATE_KEY);
+            if (state) {
+                newTarget.setCustomState(Scratch3SpeakBlocks.STATE_KEY, Clone.simple(state));
+            }
+        }
+    }
+
 
     /**
      * @returns {object} metadata for this extension and its blocks.
@@ -104,7 +149,7 @@ class Scratch3SpeakBlocks {
                         VOICE: {
                             type: ArgumentType.STRING,
                             menu: 'voices',
-                            defaultValue: this.getVoiceMenu()[0].value
+                            defaultValue: Voices.QUINN
                         }
                     }
                 }
@@ -150,32 +195,36 @@ class Scratch3SpeakBlocks {
         ];
     }
 
-    setVoice (args) {
-        this.voice = args.VOICE;
+    setVoice (args, util) {
+        const state = this._getState(util.target);
+        state.voice = args.VOICE;
     }
 
     /**
      * Convert the provided text into a sound file and then play the file.
      * @param  {object} args Block arguments
+     * @param {object} util - utility object provided by the runtime.
      * @return {Promise}     A promise that resolves after playing the sound
      */
-    speakAndWait (args) {
+    speakAndWait (args, util) {
         // Cast input to string
         args.WORDS = Cast.toString(args.WORDS);
 
+        const state = this._getState(util.target);
+
         let gender = 'female';
-        if ((this.voice === Voices.MAX) || (this.voice === Voices.MONSTER)) {
+        if ((state.voice === Voices.MAX) || (state.voice === Voices.MONSTER)) {
             gender = 'male';
         }
 
         let playbackRate = 1;
-        if (this.voice === Voices.SQUEAK) {
+        if (state.voice === Voices.SQUEAK) {
             playbackRate = 1.4;
         }
-        if (this.voice === Voices.MONSTER) {
+        if (state.voice === Voices.MONSTER) {
             playbackRate = 0.7;
         }
-        if (this.voice === Voices.KITTEN) {
+        if (state.voice === Voices.KITTEN) {
             playbackRate = 1.4;
         }
 
