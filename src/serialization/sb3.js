@@ -12,6 +12,7 @@ const Comment = require('../engine/comment');
 const StageLayering = require('../engine/stage-layering');
 const log = require('../util/log');
 const uid = require('../util/uid');
+const MathUtil = require('../util/math-util');
 
 const {loadCostume} = require('../import/load-costume.js');
 const {loadSound} = require('../import/load-sound.js');
@@ -437,6 +438,7 @@ const serializeTarget = function (target, extensions) {
     obj.costumes = target.costumes.map(serializeCostume);
     obj.sounds = target.sounds.map(serializeSound);
     if (target.hasOwnProperty('volume')) obj.volume = target.volume;
+    if (target.hasOwnProperty('layerOrder')) obj.layerOrder = target.layerOrder;
     if (obj.isStage) { // Only the stage should have these properties
         if (target.hasOwnProperty('tempo')) obj.tempo = target.tempo;
         if (target.hasOwnProperty('videoTransparency')) obj.videoTransparency = target.videoTransparency;
@@ -458,6 +460,11 @@ const serializeTarget = function (target, extensions) {
     return obj;
 };
 
+const getSimplifiedLayerOrdering = function (targets) {
+    const layerOrders = targets.map(t => t.getLayerOrder());
+    return MathUtil.reducedSortOrdering(layerOrders);
+};
+
 /**
  * Serializes the specified VM runtime.
  * @param {!Runtime} runtime VM runtime instance to be serialized.
@@ -469,9 +476,20 @@ const serialize = function (runtime, targetId) {
     const obj = Object.create(null);
     // Create extension set to hold extension ids found while serializing targets
     const extensions = new Set();
-    const flattenedOriginalTargets = JSON.parse(JSON.stringify(targetId ?
+
+    const originalTargetsToSerialize = targetId ?
         [runtime.getTargetById(targetId)] :
-        runtime.targets.filter(target => target.isOriginal)));
+        runtime.targets.filter(target => target.isOriginal);
+
+    const layerOrdering = getSimplifiedLayerOrdering(originalTargetsToSerialize);
+
+    const flattenedOriginalTargets = JSON.parse(JSON.stringify(originalTargetsToSerialize));
+
+    if (runtime.renderer) {
+        flattenedOriginalTargets.forEach((t, index) => {
+            t.layerOrder = layerOrdering[index];
+        });
+    }
 
     const serializedTargets = flattenedOriginalTargets.map(t => serializeTarget(t, extensions));
 
@@ -930,6 +948,12 @@ const parseScratchObject = function (object, runtime, extensions, zip) {
     if (object.hasOwnProperty('isStage')) {
         target.isStage = object.isStage;
     }
+    if (object.hasOwnProperty('targetPaneOrder')) {
+        // Temporarily store the 'targetPaneOrder' property
+        // so that we can correctly order sprites in the target pane.
+        // This will be deleted after we are done parsing and ordering the targets list.
+        target.targetPaneOrder = object.targetPaneOrder;
+    }
     Promise.all(costumePromises).then(costumes => {
         sprite.costumes = costumes;
     });
@@ -952,10 +976,28 @@ const deserialize = function (json, runtime, zip, isSingleSprite) {
         extensionIDs: new Set(),
         extensionURLs: new Map()
     };
+
+    // First keep track of the current target order in the json,
+    // then sort by the layer order property before parsing the targets
+    // so that their corresponding render drawables can be created in
+    // their layer order (e.g. back to front)
+    const targetObjects = ((isSingleSprite ? [json] : json.targets) || [])
+        .map((t, i) => Object.assign(t, {targetPaneOrder: i}))
+        .sort((a, b) => a.layerOrder - b.layerOrder);
+
     return Promise.all(
-        ((isSingleSprite ? [json] : json.targets) || []).map(target =>
+        targetObjects.map(target =>
             parseScratchObject(target, runtime, extensions, zip))
     )
+        .then(targets => targets // Re-sort targets back into original sprite-pane ordering
+            .sort((a, b) => a.targetPaneOrder - b.targetPaneOrder)
+            .map(t => {
+                // Delete the temporary properties used for
+                // sprite pane ordering and stage layer ordering
+                delete t.targetPaneOrder;
+                delete t.layerOrder;
+                return t;
+            }))
         .then(targets => ({
             targets,
             extensions

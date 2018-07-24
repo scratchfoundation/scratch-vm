@@ -326,6 +326,23 @@ test('layers', t => { // TODO this tests fake functionality. Move layering tests
     t.end();
 });
 
+test('getLayerOrder returns result of renderer getDrawableOrder or null if renderer is not attached', t => {
+    const s = new Sprite();
+    const r = new Runtime();
+    const a = new RenderedTarget(s, r);
+
+    // getLayerOrder should return null if there is no renderer attached to the runtime
+    t.equal(a.getLayerOrder(), null);
+
+    const renderer = new FakeRenderer();
+    r.attachRenderer(renderer);
+    const b = new RenderedTarget(s, r);
+
+    t.equal(b.getLayerOrder(), 'stub');
+
+    t.end();
+});
+
 test('keepInFence', t => {
     const s = new Sprite();
     const r = new Runtime();
