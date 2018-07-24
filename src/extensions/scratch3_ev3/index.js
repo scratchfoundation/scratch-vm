@@ -682,6 +682,10 @@ class EV3 {
         const array = Base64Util.base64ToUint8Array(message);
         // log.info(`received array: ${array}`);
 
+        if (array.length < 35) { // TODO: find safer solution
+            return; // don't parse results that aren't sensor data list or device list
+        }
+
         if (this._updateDevices) {
             // READ DEVICE LIST
             this._sensorPorts[0] = EV_DEVICE_TYPES[array[5]] ? EV_DEVICE_TYPES[array[5]] : 'none';

@@ -24,6 +24,8 @@ const BLECommand = {
     CMD_DISPLAY_LED: 0x82
 };
 
+const BLETimeout = 4500; // TODO: might need tweaking based on how long the device takes to start sending data
+
 /**
  * Enum for micro:bit protocol.
  * https://github.com/LLK/scratch-microbit-firmware/blob/master/protocol.md
@@ -98,6 +100,13 @@ class MicroBit {
                 timeout: false
             }
         };
+
+        /**
+         * Interval ID for data reading timeout.
+         * @type {number}
+         * @private
+         */
+        this._timeoutID = null;
     }
 
     // TODO: keep here?
@@ -122,6 +131,7 @@ class MicroBit {
     }
 
     disconnectSession () {
+        window.clearInterval(this._timeoutID);
         this._ble.disconnectSession();
     }
 
@@ -209,6 +219,7 @@ class MicroBit {
     _onSessionConnect () {
         const callback = this._processSessionData.bind(this);
         this._ble.read(BLEUUID.service, BLEUUID.rxChar, true, callback);
+        this._timeoutID = window.setInterval(this.disconnectSession.bind(this), BLETimeout);
     }
 
     /**
@@ -217,6 +228,7 @@ class MicroBit {
      * @private
      */
     _processSessionData (base64) {
+        // parse data
         const data = Base64Util.base64ToUint8Array(base64);
 
         this._sensors.tiltX = data[1] | (data[0] << 8);
@@ -232,6 +244,10 @@ class MicroBit {
         this._sensors.touchPins[2] = data[8];
 
         this._sensors.gestureState = data[9];
+
+        // cancel disconnect timeout and start a new one
+        window.clearInterval(this._timeoutID);
+        this._timeoutID = window.setInterval(this.disconnectSession.bind(this), BLETimeout);
     }
 
     /**
