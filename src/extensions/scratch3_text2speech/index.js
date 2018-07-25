@@ -209,6 +209,8 @@ class Scratch3SpeakBlocks {
     getViewerLanguageCode () {
         // @todo This should be the language code of the project *creator*
         // rather than the project viewer.
+        // @todo Amazon Polly needs the locale in a two part form (e.g. ja-JP),
+        // so we probably need to create a lookup table.
         return formatMessage.setup().locale || navigator.language || navigator.userLanguage || 'en-US';
     }
 
