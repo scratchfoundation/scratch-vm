@@ -255,7 +255,7 @@ class Scratch3SpeakBlocks {
      */
     speakAndWait (args, util) {
         // Cast input to string
-        args.WORDS = Cast.toString(args.WORDS);
+        let words = Cast.toString(args.WORDS);
 
         const state = this._getState(util.target);
 
@@ -263,14 +263,14 @@ class Scratch3SpeakBlocks {
         const playbackRate = this.VOICE_INFO[state.voiceId].playbackRate;
 
         if (state.voiceId === this.VOICE_INFO.KITTEN.id) {
-            args.WORDS = args.WORDS.replace(/\w+/g, 'meow');
+            words = words.replace(/\w+/g, 'meow');
         }
 
         // Build up URL
         let path = `${SERVER_HOST}/synth`;
         path += `?locale=${this.getViewerLanguageCode()}`;
         path += `&gender=${gender}`;
-        path += `&text=${encodeURI(args.WORDS)}`;
+        path += `&text=${encodeURI(words)}`;
 
         // Perform HTTP request to get audio file
         return new Promise(resolve => {
