@@ -19,14 +19,6 @@ const SERVER_HOST = 'https://synthesis-service.scratch.mit.edu';
  */
 const SERVER_TIMEOUT = 10000; // 10 seconds
 
-const Voices = {
-    QUINN: 'quinn',
-    MAX: 'max',
-    SQUEAK: 'squeak',
-    MONSTER: 'monster',
-    KITTEN: 'kitten'
-};
-
 /**
  * Class for the synthesis block in Scratch 3.0.
  * @constructor
@@ -39,24 +31,74 @@ class Scratch3SpeakBlocks {
          */
         this.runtime = runtime;
 
-        // Clear sound effects on green flag and stop button events.
         // this._clearEffectsForAllTargets = this._clearEffectsForAllTargets.bind(this);
         if (this.runtime) {
-            // @todo
+            // @todo stop all voice sounds currently playing
             // this.runtime.on('PROJECT_STOP_ALL', this._clearEffectsForAllTargets);
         }
 
-        this.voice = this.getVoiceMenu()[0].value;
-
-        /**
-         * Locale code of the viewer
-         * @type {string}
-         * @private
-         */
-        this._language = this.getViewerLanguageCode();
-
         this._onTargetCreated = this._onTargetCreated.bind(this);
-        runtime.on('targetWasCreated', this._onTargetCreated);
+        if (this.runtime) {
+            runtime.on('targetWasCreated', this._onTargetCreated);
+        }
+    }
+
+    /**
+     * An object with info for each voice.
+     */
+    get VOICE_INFO () {
+        return {
+            QUINN: {
+                id: 'QUINN',
+                name: formatMessage({
+                    id: 'text2speech.quinn',
+                    default: 'quinn',
+                    description: 'Name for a voice with ambiguous gender.'
+                }),
+                gender: 'female',
+                playbackRate: 1
+            },
+            MAX: {
+                id: 'MAX',
+                name: formatMessage({
+                    id: 'text2speech.max',
+                    default: 'max',
+                    description: 'Name for a voice with ambiguous gender.'
+                }),
+                gender: 'male',
+                playbackRate: 1
+            },
+            SQUEAK: {
+                id: 'SQUEAK',
+                name: formatMessage({
+                    id: 'text2speech.squeak',
+                    default: 'squeak',
+                    description: 'Name for a funny voice with a high pitch.'
+                }),
+                gender: 'female',
+                playbackRate: 1.4
+            },
+            MONSTER: {
+                id: 'MONSTER',
+                name: formatMessage({
+                    id: 'text2speech.monster',
+                    default: 'monster',
+                    description: 'Name for a funny voice with a low pitch.'
+                }),
+                gender: 'male',
+                playbackRate: 0.7
+            },
+            KITTEN: {
+                id: 'KITTEN',
+                name: formatMessage({
+                    id: 'text2speech.kitten',
+                    default: 'kitten',
+                    description: 'A baby cat.'
+                }),
+                gender: 'female',
+                playbackRate: 1.4
+            }
+        };
     }
 
     /**
@@ -68,12 +110,12 @@ class Scratch3SpeakBlocks {
     }
 
     /**
-     * The default state, to be used when a target has no existing  state.
+     * The default state, to be used when a target has no existing state.
      * @type {Text2SpeechState}
      */
     static get DEFAULT_TEXT2SPEECH_STATE () {
         return {
-            voice: Voices.QUINN
+            voiceId: 'QUINN'
         };
     }
 
@@ -123,7 +165,7 @@ class Scratch3SpeakBlocks {
                     text: formatMessage({
                         id: 'speak.speakAndWaitBlock',
                         default: 'speak [WORDS]',
-                        description: 'speak some words'
+                        description: 'Speak some words.'
                     }),
                     blockType: BlockType.COMMAND,
                     arguments: {
@@ -142,14 +184,14 @@ class Scratch3SpeakBlocks {
                     text: formatMessage({
                         id: 'speak.setVoiceBlock',
                         default: 'set voice to [VOICE]',
-                        description: 'set the voice for speech synthesis'
+                        description: 'Set the voice for speech synthesis.'
                     }),
                     blockType: BlockType.COMMAND,
                     arguments: {
                         VOICE: {
                             type: ArgumentType.STRING,
                             menu: 'voices',
-                            defaultValue: Voices.QUINN
+                            defaultValue: this.VOICE_INFO.QUINN.id
                         }
                     }
                 }
@@ -173,31 +215,36 @@ class Scratch3SpeakBlocks {
     getVoiceMenu () {
         return [
             {
-                text: Voices.QUINN,
-                value: Voices.QUINN
+                text: this.VOICE_INFO.QUINN.name,
+                value: this.VOICE_INFO.QUINN.id
             },
             {
-                text: Voices.MAX,
-                value: Voices.MAX
+                text: this.VOICE_INFO.MAX.name,
+                value: this.VOICE_INFO.MAX.id
             },
             {
-                text: Voices.SQUEAK,
-                value: Voices.SQUEAK
+                text: this.VOICE_INFO.SQUEAK.name,
+                value: this.VOICE_INFO.SQUEAK.id
             },
             {
-                text: Voices.MONSTER,
-                value: Voices.MONSTER
+                text: this.VOICE_INFO.MONSTER.name,
+                value: this.VOICE_INFO.MONSTER.id
             },
             {
-                text: Voices.KITTEN,
-                value: Voices.KITTEN
+                text: this.VOICE_INFO.KITTEN.name,
+                value: this.VOICE_INFO.KITTEN.id
             }
         ];
     }
 
     setVoice (args, util) {
         const state = this._getState(util.target);
-        state.voice = args.VOICE;
+        // Only set the voice if the arg is a valid voice id.
+        Object.values(this.VOICE_INFO).forEach(voice => {
+            if (args.VOICE === voice.id) {
+                state.voiceId = args.VOICE;
+            }
+        });
     }
 
     /**
@@ -212,23 +259,10 @@ class Scratch3SpeakBlocks {
 
         const state = this._getState(util.target);
 
-        let gender = 'female';
-        if ((state.voice === Voices.MAX) || (state.voice === Voices.MONSTER)) {
-            gender = 'male';
-        }
+        const gender = this.VOICE_INFO[state.voiceId].gender;
+        const playbackRate = this.VOICE_INFO[state.voiceId].playbackRate;
 
-        let playbackRate = 1;
-        if (state.voice === Voices.SQUEAK) {
-            playbackRate = 1.4;
-        }
-        if (state.voice === Voices.MONSTER) {
-            playbackRate = 0.7;
-        }
-        if (state.voice === Voices.KITTEN) {
-            playbackRate = 1.4;
-        }
-
-        if (state.voice === Voices.KITTEN) {
+        if (state.voiceId === this.VOICE_INFO.KITTEN.id) {
             args.WORDS = args.WORDS.replace(/\w+/g, 'meow');
         }
 
