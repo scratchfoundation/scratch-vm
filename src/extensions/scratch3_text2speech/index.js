@@ -20,6 +20,36 @@ const SERVER_HOST = 'https://synthesis-service.scratch.mit.edu';
 const SERVER_TIMEOUT = 10000; // 10 seconds
 
 /**
+ * An id for one of the voices.
+ */
+const QUINN_ID = 'QUINN';
+
+/**
+ * An id for one of the voices.
+ */
+const MAX_ID = 'MAX';
+
+/**
+ * An id for one of the voices.
+ */
+const SQUEAK_ID = 'SQUEAK';
+
+/**
+ * An id for one of the voices.
+ */
+const MONSTER_ID = 'MONSTER';
+
+/**
+ * An id for one of the voices.
+ */
+const KITTEN_ID = 'KITTEN';
+
+/**
+ * An id for one of the voices.
+ */
+const PUPPY_ID = 'PUPPY';
+
+/**
  * Class for the synthesis block in Scratch 3.0.
  * @constructor
  */
@@ -48,8 +78,7 @@ class Scratch3SpeakBlocks {
      */
     get VOICE_INFO () {
         return {
-            QUINN: {
-                id: 'QUINN',
+            [QUINN_ID]: {
                 name: formatMessage({
                     id: 'text2speech.quinn',
                     default: 'quinn',
@@ -58,8 +87,7 @@ class Scratch3SpeakBlocks {
                 gender: 'female',
                 playbackRate: 1
             },
-            MAX: {
-                id: 'MAX',
+            [MAX_ID]: {
                 name: formatMessage({
                     id: 'text2speech.max',
                     default: 'max',
@@ -68,8 +96,7 @@ class Scratch3SpeakBlocks {
                 gender: 'male',
                 playbackRate: 1
             },
-            SQUEAK: {
-                id: 'SQUEAK',
+            [SQUEAK_ID]: {
                 name: formatMessage({
                     id: 'text2speech.squeak',
                     default: 'squeak',
@@ -78,8 +105,7 @@ class Scratch3SpeakBlocks {
                 gender: 'female',
                 playbackRate: 1.4
             },
-            MONSTER: {
-                id: 'MONSTER',
+            [MONSTER_ID]: {
                 name: formatMessage({
                     id: 'text2speech.monster',
                     default: 'monster',
@@ -88,14 +114,22 @@ class Scratch3SpeakBlocks {
                 gender: 'male',
                 playbackRate: 0.7
             },
-            KITTEN: {
-                id: 'KITTEN',
+            [KITTEN_ID]: {
                 name: formatMessage({
                     id: 'text2speech.kitten',
                     default: 'kitten',
                     description: 'A baby cat.'
                 }),
                 gender: 'female',
+                playbackRate: 1.4
+            },
+            [PUPPY_ID]: {
+                name: formatMessage({
+                    id: 'text2speech.puppy',
+                    default: 'puppy',
+                    description: 'A baby dog.'
+                }),
+                gender: 'male',
                 playbackRate: 1.4
             }
         };
@@ -115,7 +149,7 @@ class Scratch3SpeakBlocks {
      */
     static get DEFAULT_TEXT2SPEECH_STATE () {
         return {
-            voiceId: 'QUINN'
+            voiceId: QUINN_ID
         };
     }
 
@@ -148,7 +182,6 @@ class Scratch3SpeakBlocks {
             }
         }
     }
-
 
     /**
      * @returns {object} metadata for this extension and its blocks.
@@ -191,7 +224,7 @@ class Scratch3SpeakBlocks {
                         VOICE: {
                             type: ArgumentType.STRING,
                             menu: 'voices',
-                            defaultValue: this.VOICE_INFO.QUINN.id
+                            defaultValue: QUINN_ID
                         }
                     }
                 }
@@ -210,43 +243,27 @@ class Scratch3SpeakBlocks {
         // @todo This should be the language code of the project *creator*
         // rather than the project viewer.
         // @todo Amazon Polly needs the locale in a two part form (e.g. ja-JP),
-        // so we probably need to create a lookup table.
+        // so we probably need to create a lookup table. It will convert from these codes:
+        // https://github.com/LLK/scratch-l10n/blob/master/src/supported-locales.js
+        // to these codes:
+        // https://docs.aws.amazon.com/polly/latest/dg/SupportedLanguage.html
         return formatMessage.setup().locale || navigator.language || navigator.userLanguage || 'en-US';
     }
 
     getVoiceMenu () {
-        return [
-            {
-                text: this.VOICE_INFO.QUINN.name,
-                value: this.VOICE_INFO.QUINN.id
-            },
-            {
-                text: this.VOICE_INFO.MAX.name,
-                value: this.VOICE_INFO.MAX.id
-            },
-            {
-                text: this.VOICE_INFO.SQUEAK.name,
-                value: this.VOICE_INFO.SQUEAK.id
-            },
-            {
-                text: this.VOICE_INFO.MONSTER.name,
-                value: this.VOICE_INFO.MONSTER.id
-            },
-            {
-                text: this.VOICE_INFO.KITTEN.name,
-                value: this.VOICE_INFO.KITTEN.id
-            }
-        ];
+        return Object.keys(this.VOICE_INFO).map(voiceId => ({
+            text: this.VOICE_INFO[voiceId].name,
+            value: voiceId
+        }));
     }
 
     setVoice (args, util) {
         const state = this._getState(util.target);
+
         // Only set the voice if the arg is a valid voice id.
-        Object.values(this.VOICE_INFO).forEach(voice => {
-            if (args.VOICE === voice.id) {
-                state.voiceId = args.VOICE;
-            }
-        });
+        if (Object.keys(this.VOICE_INFO).includes(args.VOICE)) {
+            state.voiceId = args.VOICE;
+        }
     }
 
     /**
@@ -264,13 +281,22 @@ class Scratch3SpeakBlocks {
         const gender = this.VOICE_INFO[state.voiceId].gender;
         const playbackRate = this.VOICE_INFO[state.voiceId].playbackRate;
 
-        if (state.voiceId === this.VOICE_INFO.KITTEN.id) {
+        if (state.voiceId === KITTEN_ID) {
             words = words.replace(/\w+/g, 'meow');
+        }
+
+        let locale = 'en';
+
+        if (state.voiceId === PUPPY_ID) {
+            words = words.replace(/\w+/g, 'bark');
+            words = words.split(' ').map(() => ['bark', 'woof', 'ruff'][Math.floor(Math.random() * 3)])
+                .join(' ');
+            locale = 'en-GB';
         }
 
         // Build up URL
         let path = `${SERVER_HOST}/synth`;
-        path += `?locale=${this.getViewerLanguageCode()}`;
+        path += `?locale=${locale}`;
         path += `&gender=${gender}`;
         path += `&text=${encodeURI(words)}`;
 
