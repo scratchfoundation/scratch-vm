@@ -2,6 +2,7 @@ const ArgumentType = require('../../extension-support/argument-type');
 const BlockType = require('../../extension-support/block-type');
 const color = require('../../util/color');
 const log = require('../../util/log');
+const BLESession = require('../../io/bleSession');
 
 /**
  * Icon svg to be displayed at the left edge of each extension block, encoded as a data URI.
@@ -180,28 +181,19 @@ class WeDo2Motor {
 }
 
 /**
- * Manage communication with a WeDo 2.0 device over a Device Manager client socket.
+ * Manage communication with a WeDo 2.0 device over a Bluetooth Low Energy client socket.
  */
 class WeDo2 {
 
-    /**
-     * @return {string} - the type of Device Manager device socket that this class will handle.
-     */
-    static get DEVICE_TYPE () {
-        return 'wedo2';
-    }
+    constructor (runtime, extensionId) {
 
-    /**
-     * Construct a WeDo2 communication object.
-     * @param {Socket} socket - the socket for a WeDo 2.0 device, as provided by a Device Manager client.
-     */
-    constructor (socket) {
         /**
-         * The socket-IO socket used to communicate with the Device Manager about this device.
-         * @type {Socket}
+         * The Scratch 3.0 runtime used to trigger the green flag button.
+         * @type {Runtime}
          * @private
          */
-        this._socket = socket;
+        this._runtime = runtime;
+        // this._runtime.on('PROJECT_STOP_ALL', this._stopAllMotors.bind(this));
 
         /**
          * The motors which this WeDo 2.0 could possibly have.
@@ -221,10 +213,17 @@ class WeDo2 {
             distance: 0
         };
 
+        /*
         this._onSensorChanged = this._onSensorChanged.bind(this);
-        this._onDisconnect = this._onDisconnect.bind(this);
+        */
 
-        this._connectEvents();
+        /**
+         * The Bluetooth connection session for reading/writing device data.
+         * @type {BLESession}
+         * @private
+         */
+        this._ble = null;
+        this._runtime.registerExtensionDevice(extensionId, this);
     }
 
     /**
@@ -289,26 +288,6 @@ class WeDo2 {
     }
 
     /**
-     * Attach event handlers to the device socket.
-     * @private
-     */
-    _connectEvents () {
-        this._socket.on('sensorChanged', this._onSensorChanged);
-        this._socket.on('deviceWasClosed', this._onDisconnect);
-        this._socket.on('disconnect', this._onDisconnect);
-    }
-
-    /**
-     * Detach event handlers from the device socket.
-     * @private
-     */
-    _disconnectEvents () {
-        this._socket.off('sensorChanged', this._onSensorChanged);
-        this._socket.off('deviceWasClosed', this._onDisconnect);
-        this._socket.off('disconnect', this._onDisconnect);
-    }
-
-    /**
      * Store the sensor value from an incoming 'sensorChanged' event.
      * @param {object} event - the 'sensorChanged' event.
      * @property {string} sensorName - the name of the sensor which changed.
@@ -320,14 +299,6 @@ class WeDo2 {
     }
 
     /**
-     * React to device disconnection. May be called more than once.
-     * @private
-     */
-    _onDisconnect () {
-        this._disconnectEvents();
-    }
-
-    /**
      * Send a message to the device socket.
      * @param {string} message - the name of the message, such as 'playTone'.
      * @param {object} [details] - optional additional details for the message, such as tone duration and pitch.
@@ -335,6 +306,54 @@ class WeDo2 {
      */
     _send (message, details) {
         this._socket.emit(message, details);
+    }
+
+    // New BLE
+    /**
+     * Called by the runtime when user wants to scan for a device.
+     */
+    startDeviceScan () {
+        this._ble = new BLESession(this._runtime, {
+            filters: [
+                {services: ['00001523-1212-efde-1523-785feabcd123']}
+            ]
+        }, this._onSessionConnect.bind(this));
+    }
+
+    // TODO: keep here? / refactor
+    /**
+     * Called by the runtime when user wants to connect to a certain device.
+     * @param {number} id - the id of the device to connect to.
+     */
+    connectDevice (id) {
+        this._ble.connectDevice(id);
+    }
+
+    disconnectSession () {
+        // window.clearInterval(this._timeoutID);
+        this._ble.disconnectSession();
+    }
+
+    /**
+     * Called by the runtime to detect whether the device is connected.
+     * @return {boolean} - the connected state.
+     */
+    getPeripheralIsConnected () {
+        let connected = false;
+        if (this._ble) {
+            connected = this._ble.getPeripheralIsConnected();
+        }
+        return connected;
+    }
+
+    /**
+     * Starts reading data from device after BLE has connected to it.
+     */
+    _onSessionConnect () {
+        console.log('_onSessionConnect');
+        // const callback = this._processSessionData.bind(this);
+        // this._ble.read(BLEUUID.service, BLEUUID.rxChar, true, callback);
+        // this._timeoutID = window.setInterval(this.disconnectSession.bind(this), BLETimeout);
     }
 }
 
@@ -404,7 +423,8 @@ class Scratch3WeDo2Blocks {
          */
         this.runtime = runtime;
 
-        this.connect();
+        // Create a new WeDo2 device instance
+        this._device = new WeDo2(this.runtime, Scratch3WeDo2Blocks.EXTENSION_ID);
     }
 
     /**
@@ -415,6 +435,7 @@ class Scratch3WeDo2Blocks {
             id: Scratch3WeDo2Blocks.EXTENSION_ID,
             name: 'WeDo 2.0',
             iconURI: iconURI,
+            showStatusButton: true,
             blocks: [
                 {
                     opcode: 'motorOnFor',
@@ -583,35 +604,6 @@ class Scratch3WeDo2Blocks {
                 lessMore: ['<', '>']
             }
         };
-    }
-
-    /**
-     * Use the Device Manager client to attempt to connect to a WeDo 2.0 device.
-     */
-    connect () {
-        if (this._device || this._finder) {
-            return;
-        }
-        const deviceManager = this.runtime.ioDevices.deviceManager;
-        const finder = this._finder =
-            deviceManager.searchAndConnect(Scratch3WeDo2Blocks.EXTENSION_ID, WeDo2.DEVICE_TYPE);
-        this._finder.promise.then(
-            socket => {
-                if (this._finder === finder) {
-                    this._finder = null;
-                    this._device = new WeDo2(socket);
-                } else {
-                    log.warn('Ignoring success from stale WeDo 2.0 connection attempt');
-                }
-            },
-            reason => {
-                if (this._finder === finder) {
-                    this._finder = null;
-                    log.warn(`WeDo 2.0 connection failed: ${reason}`);
-                } else {
-                    log.warn('Ignoring failure from stale WeDo 2.0 connection attempt');
-                }
-            });
     }
 
     /**
