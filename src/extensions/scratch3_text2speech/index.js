@@ -189,7 +189,7 @@ class Scratch3SpeakBlocks {
     getInfo () {
         return {
             id: 'text2speech',
-            name: 'Speech Synthesis',
+            name: 'Text-to-Speech',
             menuIconURI: '', // @todo Add the final icons.
             blockIconURI: '',
             blocks: [
