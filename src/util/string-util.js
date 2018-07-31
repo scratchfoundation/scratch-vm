@@ -17,7 +17,7 @@ class StringUtil {
      * Split a string on the first occurrence of a split character.
      * @param {string} text - the string to split.
      * @param {string} separator - split the text on this character.
-     * @returns {[string, string]} - the two parts of the split string, or [text, null] if no split character found.
+     * @returns {string[]} - the two parts of the split string, or [text, null] if no split character found.
      * @example
      * // returns ['foo', 'tar.gz']
      * splitFirst('foo.tar.gz', '.');

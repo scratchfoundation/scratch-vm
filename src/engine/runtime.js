@@ -41,7 +41,7 @@ const defaultBlockPackages = {
 
 /**
  * Information used for converting Scratch argument types into scratch-blocks data.
- * @type {object.<ArgumentType, {shadowType: string, fieldType: string}>}}
+ * @type {object.<ArgumentType, {shadowType: string, fieldType: string}>}
  */
 const ArgumentTypeMap = (() => {
     const map = {};

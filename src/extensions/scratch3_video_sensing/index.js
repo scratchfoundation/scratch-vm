@@ -260,7 +260,7 @@ class Scratch3VideoSensingBlocks {
     /**
      * An array of choices of whether a reporter should return the frame's
      * motion amount or direction.
-     * @type {object[]} an array of objects
+     * @type {object[]}
      * @param {string} name - the translatable name to display in sensor
      *   attribute menu
      * @param {string} value - the serializable value of the attribute
@@ -292,7 +292,7 @@ class Scratch3VideoSensingBlocks {
 
     /**
      * An array of info about the subject choices.
-     * @type {object[]} an array of objects
+     * @type {object[]}
      * @param {string} name - the translatable name to display in the subject menu
      * @param {string} value - the serializable value of the subject
      */
@@ -328,7 +328,7 @@ class Scratch3VideoSensingBlocks {
 
     /**
      * An array of info on video state options for the "turn video [STATE]" block.
-     * @type {object[]} an array of objects
+     * @type {object[]}
      * @param {string} name - the translatable name to display in the video state menu
      * @param {string} value - the serializable value stored in the block
      */
