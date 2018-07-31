@@ -50,7 +50,7 @@ const KITTEN_ID = 'KITTEN';
 const PUPPY_ID = 'PUPPY';
 
 /**
- * Class for the synthesis block in Scratch 3.0.
+ * Class for the text2speech blocks.
  * @constructor
  */
 class Scratch3SpeakBlocks {
@@ -61,11 +61,11 @@ class Scratch3SpeakBlocks {
          */
         this.runtime = runtime;
 
-        // this._clearEffectsForAllTargets = this._clearEffectsForAllTargets.bind(this);
-        if (this.runtime) {
-            // @todo stop all voice sounds currently playing
-            // this.runtime.on('PROJECT_STOP_ALL', this._clearEffectsForAllTargets);
-        }
+        // @todo stop all speech sounds currently playing
+        // this._stopAllSpeech = this._stopAllSpeech.bind(this);
+        // if (this.runtime) {
+        //      this.runtime.on('PROJECT_STOP_ALL', this._stopAllSpeech);
+        // }
 
         this._onTargetCreated = this._onTargetCreated.bind(this);
         if (this.runtime) {
@@ -136,7 +136,7 @@ class Scratch3SpeakBlocks {
     }
 
     /**
-     * The key to load & store a target's synthesis state.
+     * The key to load & store a target's text2speech state.
      * @return {string} The key.
      */
     static get STATE_KEY () {
@@ -196,7 +196,7 @@ class Scratch3SpeakBlocks {
                 {
                     opcode: 'speakAndWait',
                     text: formatMessage({
-                        id: 'speak.speakAndWaitBlock',
+                        id: 'text2speech.speakAndWaitBlock',
                         default: 'speak [WORDS]',
                         description: 'Speak some words.'
                     }),
@@ -205,7 +205,7 @@ class Scratch3SpeakBlocks {
                         WORDS: {
                             type: ArgumentType.STRING,
                             defaultValue: formatMessage({
-                                id: 'speak.defaultTextToSpeak',
+                                id: 'text2speech.defaultTextToSpeak',
                                 default: 'hello',
                                 description: 'hello: the default text to speak'
                             })
@@ -215,7 +215,7 @@ class Scratch3SpeakBlocks {
                 {
                     opcode: 'setVoice',
                     text: formatMessage({
-                        id: 'speak.setVoiceBlock',
+                        id: 'text2speech.setVoiceBlock',
                         default: 'set voice to [VOICE]',
                         description: 'Set the voice for speech synthesis.'
                     }),
@@ -247,9 +247,15 @@ class Scratch3SpeakBlocks {
         // https://github.com/LLK/scratch-l10n/blob/master/src/supported-locales.js
         // to these codes:
         // https://docs.aws.amazon.com/polly/latest/dg/SupportedLanguage.html
+        // but note also that only a subset of these languages have both male and female voices:
+        // https://docs.aws.amazon.com/polly/latest/dg/voicelist.html
         return formatMessage.setup().locale || navigator.language || navigator.userLanguage || 'en-US';
     }
 
+    /**
+     * Get the menu of voices for the "set voice" block.
+     * @return {array} the text and value for each menu item.
+     */
     getVoiceMenu () {
         return Object.keys(this.VOICE_INFO).map(voiceId => ({
             text: this.VOICE_INFO[voiceId].name,
@@ -257,6 +263,11 @@ class Scratch3SpeakBlocks {
         }));
     }
 
+    /**
+     * Set the voice for speech synthesis for this sprite.
+     * @param  {object} args Block arguments
+     * @param {object} util Utility object provided by the runtime.
+     */
     setVoice (args, util) {
         const state = this._getState(util.target);
 
@@ -269,8 +280,8 @@ class Scratch3SpeakBlocks {
     /**
      * Convert the provided text into a sound file and then play the file.
      * @param  {object} args Block arguments
-     * @param {object} util - utility object provided by the runtime.
-     * @return {Promise}     A promise that resolves after playing the sound
+     * @param {object} util Utility object provided by the runtime.
+     * @return {Promise} A promise that resolves after playing the sound
      */
     speakAndWait (args, util) {
         // Cast input to string
@@ -281,12 +292,14 @@ class Scratch3SpeakBlocks {
         const gender = this.VOICE_INFO[state.voiceId].gender;
         const playbackRate = this.VOICE_INFO[state.voiceId].playbackRate;
 
+        let locale = this.getViewerLanguageCode();
+
+        // @todo localize this?
         if (state.voiceId === KITTEN_ID) {
             words = words.replace(/\w+/g, 'meow');
         }
 
-        let locale = 'en';
-
+        // @todo localize this?
         if (state.voiceId === PUPPY_ID) {
             words = words.replace(/\w+/g, 'bark');
             words = words.split(' ').map(() => ['bark', 'woof', 'ruff'][Math.floor(Math.random() * 3)])
