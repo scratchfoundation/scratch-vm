@@ -62,6 +62,7 @@ class Scratch3SpeakBlocks {
         this.runtime = runtime;
 
         // @todo stop all speech sounds currently playing
+        // https://github.com/LLK/scratch-vm/issues/1405
         // this._stopAllSpeech = this._stopAllSpeech.bind(this);
         // if (this.runtime) {
         //      this.runtime.on('PROJECT_STOP_ALL', this._stopAllSpeech);
