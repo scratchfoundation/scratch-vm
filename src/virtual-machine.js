@@ -523,15 +523,22 @@ class VirtualMachine extends EventEmitter {
      * @property {number} rotationCenterX - the X component of the costume's origin.
      * @property {number} rotationCenterY - the Y component of the costume's origin.
      * @property {number} [bitmapResolution] - the resolution scale for a bitmap costume.
+     * @param {string} optTargetId - the id of the target to add to, if not the editing target.
      * @returns {?Promise} - a promise that resolves when the costume has been added
      */
-    addCostume (md5ext, costumeObject) {
-        return loadCostume(md5ext, costumeObject, this.runtime).then(() => {
-            this.editingTarget.addCostume(costumeObject);
-            this.editingTarget.setCostume(
-                this.editingTarget.getCostumes().length - 1
-            );
-        });
+    addCostume (md5ext, costumeObject, optTargetId) {
+        const target = optTargetId ? this.runtime.getTargetById(optTargetId) :
+            this.editingTarget;
+        if (target) {
+            return loadCostume(md5ext, costumeObject, this.runtime).then(() => {
+                target.addCostume(costumeObject);
+                target.setCostume(
+                    target.getCostumes().length - 1
+                );
+            });
+        }
+        // If the target cannot be found by id, return a rejected promise
+        return new Promise.reject();
     }
 
     /**
@@ -585,13 +592,20 @@ class VirtualMachine extends EventEmitter {
     /**
      * Add a sound to the current editing target.
      * @param {!object} soundObject Object representing the costume.
+     * @param {string} optTargetId - the id of the target to add to, if not the editing target.
      * @returns {?Promise} - a promise that resolves when the sound has been decoded and added
      */
-    addSound (soundObject) {
-        return loadSound(soundObject, this.runtime, this.editingTarget.sprite).then(() => {
-            this.editingTarget.addSound(soundObject);
-            this.emitTargetsUpdate();
-        });
+    addSound (soundObject, optTargetId) {
+        const target = optTargetId ? this.runtime.getTargetById(optTargetId) :
+            this.editingTarget;
+        if (target) {
+            return loadSound(soundObject, this.runtime, target.sprite).then(() => {
+                target.addSound(soundObject);
+                this.emitTargetsUpdate();
+            });
+        }
+        // If the target cannot be found by id, return a rejected promise
+        return new Promise.reject();
     }
 
     /**
