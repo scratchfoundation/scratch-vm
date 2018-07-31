@@ -33,9 +33,15 @@ class Variable {
         }
     }
 
-    toXML (isLocal) {
+    /**
+     * Serialize a variable object to XML.
+     * @param {Variable | object} variable The Variable or Variable-like object to serialize.
+     * @param {boolean=} isLocal Whether the variable being serialized is local or not.
+     * @return {!string} The serialized variable in XML format.
+     */
+    static toXML (variable, isLocal) {
         isLocal = (isLocal === true);
-        return `<variable type="${this.type}" id="${this.id}" islocal="${isLocal}">${this.name}</variable>`;
+        return `<variable type="${variable.type}" id="${variable.id}" islocal="${isLocal}">${variable.name}</variable>`;
     }
 
     /**
