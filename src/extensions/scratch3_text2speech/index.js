@@ -4,6 +4,7 @@ const nets = require('nets');
 const ArgumentType = require('../../extension-support/argument-type');
 const BlockType = require('../../extension-support/block-type');
 const Cast = require('../../util/cast');
+const Clone = require('../../util/clone');
 const log = require('../../util/log');
 
 /**
@@ -19,7 +20,37 @@ const SERVER_HOST = 'https://synthesis-service.scratch.mit.edu';
 const SERVER_TIMEOUT = 10000; // 10 seconds
 
 /**
- * Class for the synthesis block in Scratch 3.0.
+ * An id for one of the voices.
+ */
+const QUINN_ID = 'QUINN';
+
+/**
+ * An id for one of the voices.
+ */
+const MAX_ID = 'MAX';
+
+/**
+ * An id for one of the voices.
+ */
+const SQUEAK_ID = 'SQUEAK';
+
+/**
+ * An id for one of the voices.
+ */
+const MONSTER_ID = 'MONSTER';
+
+/**
+ * An id for one of the voices.
+ */
+const KITTEN_ID = 'KITTEN';
+
+/**
+ * An id for one of the voices.
+ */
+const PUPPY_ID = 'PUPPY';
+
+/**
+ * Class for the text2speech blocks.
  * @constructor
  */
 class Scratch3SpeakBlocks {
@@ -30,27 +61,127 @@ class Scratch3SpeakBlocks {
          */
         this.runtime = runtime;
 
-        // Clear sound effects on green flag and stop button events.
-        // this._clearEffectsForAllTargets = this._clearEffectsForAllTargets.bind(this);
-        if (this.runtime) {
-            // @todo
-            // this.runtime.on('PROJECT_STOP_ALL', this._clearEffectsForAllTargets);
-        }
+        // @todo stop all speech sounds currently playing
+        // https://github.com/LLK/scratch-vm/issues/1405
+        // this._stopAllSpeech = this._stopAllSpeech.bind(this);
+        // if (this.runtime) {
+        //      this.runtime.on('PROJECT_STOP_ALL', this._stopAllSpeech);
+        // }
 
-        /**
-         * Locale code of the viewer
-         * @type {string}
-         * @private
-         */
-        this._language = this.getViewerLanguageCode();
+        this._onTargetCreated = this._onTargetCreated.bind(this);
+        if (this.runtime) {
+            runtime.on('targetWasCreated', this._onTargetCreated);
+        }
     }
 
     /**
-     * The key to load & store a target's synthesis state.
+     * An object with info for each voice.
+     */
+    get VOICE_INFO () {
+        return {
+            [QUINN_ID]: {
+                name: formatMessage({
+                    id: 'text2speech.quinn',
+                    default: 'quinn',
+                    description: 'Name for a voice with ambiguous gender.'
+                }),
+                gender: 'female',
+                playbackRate: 1
+            },
+            [MAX_ID]: {
+                name: formatMessage({
+                    id: 'text2speech.max',
+                    default: 'max',
+                    description: 'Name for a voice with ambiguous gender.'
+                }),
+                gender: 'male',
+                playbackRate: 1
+            },
+            [SQUEAK_ID]: {
+                name: formatMessage({
+                    id: 'text2speech.squeak',
+                    default: 'squeak',
+                    description: 'Name for a funny voice with a high pitch.'
+                }),
+                gender: 'female',
+                playbackRate: 1.4
+            },
+            [MONSTER_ID]: {
+                name: formatMessage({
+                    id: 'text2speech.monster',
+                    default: 'monster',
+                    description: 'Name for a funny voice with a low pitch.'
+                }),
+                gender: 'male',
+                playbackRate: 0.7
+            },
+            [KITTEN_ID]: {
+                name: formatMessage({
+                    id: 'text2speech.kitten',
+                    default: 'kitten',
+                    description: 'A baby cat.'
+                }),
+                gender: 'female',
+                playbackRate: 1.4
+            },
+            [PUPPY_ID]: {
+                name: formatMessage({
+                    id: 'text2speech.puppy',
+                    default: 'puppy',
+                    description: 'A baby dog.'
+                }),
+                gender: 'male',
+                playbackRate: 1.4
+            }
+        };
+    }
+
+    /**
+     * The key to load & store a target's text2speech state.
      * @return {string} The key.
      */
     static get STATE_KEY () {
         return 'Scratch.text2speech';
+    }
+
+    /**
+     * The default state, to be used when a target has no existing state.
+     * @type {Text2SpeechState}
+     */
+    static get DEFAULT_TEXT2SPEECH_STATE () {
+        return {
+            voiceId: QUINN_ID
+        };
+    }
+
+    /**
+     * @param {Target} target - collect  state for this target.
+     * @returns {Text2SpeechState} the mutable state associated with that target. This will be created if necessary.
+     * @private
+     */
+    _getState (target) {
+        let state = target.getCustomState(Scratch3SpeakBlocks.STATE_KEY);
+        if (!state) {
+            state = Clone.simple(Scratch3SpeakBlocks.DEFAULT_TEXT2SPEECH_STATE);
+            target.setCustomState(Scratch3SpeakBlocks.STATE_KEY, state);
+        }
+        return state;
+    }
+
+    /**
+     * When a Target is cloned, clone the state.
+     * @param {Target} newTarget - the newly created target.
+     * @param {Target} [sourceTarget] - the target used as a source for the new clone, if any.
+     * @listens Runtime#event:targetWasCreated
+     * @private
+     */
+    _onTargetCreated (newTarget, sourceTarget) {
+        if (sourceTarget) {
+            const state = sourceTarget.getCustomState(Scratch3SpeakBlocks.STATE_KEY);
+            if (state) {
+                newTarget.setCustomState(Scratch3SpeakBlocks.STATE_KEY, Clone.simple(state));
+            }
+        }
     }
 
     /**
@@ -66,25 +197,41 @@ class Scratch3SpeakBlocks {
                 {
                     opcode: 'speakAndWait',
                     text: formatMessage({
-                        id: 'speak.speakAndWaitBlock',
+                        id: 'text2speech.speakAndWaitBlock',
                         default: 'speak [WORDS]',
-                        description: 'speak some words'
+                        description: 'Speak some words.'
                     }),
                     blockType: BlockType.COMMAND,
                     arguments: {
                         WORDS: {
                             type: ArgumentType.STRING,
                             defaultValue: formatMessage({
-                                id: 'speak.defaultTextToSpeak',
+                                id: 'text2speech.defaultTextToSpeak',
                                 default: 'hello',
                                 description: 'hello: the default text to speak'
                             })
                         }
                     }
+                },
+                {
+                    opcode: 'setVoice',
+                    text: formatMessage({
+                        id: 'text2speech.setVoiceBlock',
+                        default: 'set voice to [VOICE]',
+                        description: 'Set the voice for speech synthesis.'
+                    }),
+                    blockType: BlockType.COMMAND,
+                    arguments: {
+                        VOICE: {
+                            type: ArgumentType.STRING,
+                            menu: 'voices',
+                            defaultValue: QUINN_ID
+                        }
+                    }
                 }
             ],
             menus: {
-                voices: this.supportedVoices
+                voices: this.getVoiceMenu()
             }
         };
     }
@@ -96,38 +243,76 @@ class Scratch3SpeakBlocks {
     getViewerLanguageCode () {
         // @todo This should be the language code of the project *creator*
         // rather than the project viewer.
-        return navigator.language || navigator.userLanguage || 'en-US';
+        // @todo Amazon Polly needs the locale in a two part form (e.g. ja-JP),
+        // so we probably need to create a lookup table. It will convert from these codes:
+        // https://github.com/LLK/scratch-l10n/blob/master/src/supported-locales.js
+        // to these codes:
+        // https://docs.aws.amazon.com/polly/latest/dg/SupportedLanguage.html
+        // but note also that only a subset of these languages have both male and female voices:
+        // https://docs.aws.amazon.com/polly/latest/dg/voicelist.html
+        return formatMessage.setup().locale || navigator.language || navigator.userLanguage || 'en-US';
     }
 
     /**
-     * Return the supported voices for the extension.
-     * @return {Array} Supported voices
+     * Get the menu of voices for the "set voice" block.
+     * @return {array} the text and value for each menu item.
      */
-    supportedVoices () {
-        return [
-            'Quinn',
-            'Max',
-            'Squeak',
-            'Monster',
-            'Puppy'
-        ];
+    getVoiceMenu () {
+        return Object.keys(this.VOICE_INFO).map(voiceId => ({
+            text: this.VOICE_INFO[voiceId].name,
+            value: voiceId
+        }));
+    }
+
+    /**
+     * Set the voice for speech synthesis for this sprite.
+     * @param  {object} args Block arguments
+     * @param {object} util Utility object provided by the runtime.
+     */
+    setVoice (args, util) {
+        const state = this._getState(util.target);
+
+        // Only set the voice if the arg is a valid voice id.
+        if (Object.keys(this.VOICE_INFO).includes(args.VOICE)) {
+            state.voiceId = args.VOICE;
+        }
     }
 
     /**
      * Convert the provided text into a sound file and then play the file.
      * @param  {object} args Block arguments
-     * @param {object} util - utility object provided by the runtime.
-     * @return {Promise}     A promise that resolves after playing the sound
+     * @param {object} util Utility object provided by the runtime.
+     * @return {Promise} A promise that resolves after playing the sound
      */
     speakAndWait (args, util) {
         // Cast input to string
-        args.WORDS = Cast.toString(args.WORDS);
+        let words = Cast.toString(args.WORDS);
+
+        const state = this._getState(util.target);
+
+        const gender = this.VOICE_INFO[state.voiceId].gender;
+        const playbackRate = this.VOICE_INFO[state.voiceId].playbackRate;
+
+        let locale = this.getViewerLanguageCode();
+
+        // @todo localize this?
+        if (state.voiceId === KITTEN_ID) {
+            words = words.replace(/\w+/g, 'meow');
+        }
+
+        // @todo localize this?
+        if (state.voiceId === PUPPY_ID) {
+            words = words.replace(/\w+/g, 'bark');
+            words = words.split(' ').map(() => ['bark', 'woof', 'ruff'][Math.floor(Math.random() * 3)])
+                .join(' ');
+            locale = 'en-GB';
+        }
 
         // Build up URL
         let path = `${SERVER_HOST}/synth`;
-        path += `?locale=${this._language}`;
-        path += `&gender=male`; // @todo
-        path += `&text=${encodeURI(args.WORDS)}`;
+        path += `?locale=${locale}`;
+        path += `&gender=${gender}`;
+        path += `&text=${encodeURI(words)}`;
 
         // Perform HTTP request to get audio file
         return new Promise(resolve => {
@@ -147,20 +332,14 @@ class Scratch3SpeakBlocks {
 
                 // Play the sound
                 const sound = {
-                    // md5: 'test',
-                    // name: 'test',
-                    // format: 'audio/mpg',
                     data: {
                         buffer: body.buffer
                     }
                 };
                 this.runtime.audioEngine.decodeSoundPlayer(sound).then(soundPlayer => {
-                    // @todo this code should not go to production as is because it leaks
-                    // soundplayers. We may not want to use the soundbank for this purpose
-                    // at all.
-                    const soundBank = util.target.sprite.soundBank;
-                    soundBank.addSoundPlayer(soundPlayer);
-                    soundBank.playSound(util.target, soundPlayer.id);
+                    soundPlayer.connect(this.runtime.audioEngine);
+                    soundPlayer.setPlaybackRate(playbackRate);
+                    soundPlayer.play();
                     soundPlayer.on('stop', resolve);
                 });
             });
