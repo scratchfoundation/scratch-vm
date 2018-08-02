@@ -70,3 +70,57 @@ test('at zoomed scale', t => {
     t.strictEquals(m.getScratchY(), -90);
     t.end();
 });
+
+test('mousedown activating click hats', t => {
+    const rt = new Runtime();
+    const m = new Mouse(rt);
+
+    const mouseMoveEvent = {
+        x: 10,
+        y: 100,
+        canvasWidth: 480,
+        canvasHeight: 360
+    };
+
+    const mouseDownEvent = Object.assign({}, mouseMoveEvent, {
+        isDown: true
+    });
+
+    const mouseUpEvent = Object.assign({}, mouseMoveEvent, {
+        isDown: false
+    });
+
+    // Stub activateClickHats function for testing
+    let ranClickHats = false;
+    m._activateClickHats = () => {
+        ranClickHats = true;
+    };
+
+    // Mouse move without mousedown
+    m.postData(mouseMoveEvent);
+    t.strictEquals(ranClickHats, false);
+
+    // Mouse down event triggers the hats
+    m.postData(mouseDownEvent);
+    t.strictEquals(ranClickHats, true);
+
+    // But another mouse move while down doesn't trigger
+    ranClickHats = false;
+    m.postData(mouseDownEvent);
+    t.strictEquals(ranClickHats, false);
+
+    // And it doesn't trigger on mouse up
+    ranClickHats = false;
+    m.postData(mouseUpEvent);
+    t.strictEquals(ranClickHats, false);
+
+    // And hats don't trigger if mouse down is outside canvas
+    ranClickHats = false;
+    m.postData(Object.assign({}, mouseDownEvent, {
+        x: 50000,
+        y: 50
+    }));
+    t.strictEquals(ranClickHats, false);
+
+    t.end();
+});
