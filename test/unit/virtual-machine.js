@@ -857,3 +857,24 @@ test('shareBlocksToTarget chooses a fresh name for a new global variable checkin
 
     t.end();
 });
+
+test('Setting turbo mode emits events', t => {
+    let turboMode = null;
+
+    const vm = new VirtualMachine();
+
+    vm.addListener('TURBO_MODE_ON', () => {
+        turboMode = true;
+    });
+    vm.addListener('TURBO_MODE_OFF', () => {
+        turboMode = false;
+    });
+
+    vm.setTurboMode(true);
+    t.equal(turboMode, true);
+
+    vm.setTurboMode(false);
+    t.equal(turboMode, false);
+
+    t.end();
+});

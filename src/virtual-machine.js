@@ -148,6 +148,11 @@ class VirtualMachine extends EventEmitter {
      */
     setTurboMode (turboModeOn) {
         this.runtime.turboMode = !!turboModeOn;
+        if (this.runtime.turboMode) {
+            this.emit(Runtime.TURBO_MODE_ON);
+        } else {
+            this.emit(Runtime.TURBO_MODE_OFF);
+        }
     }
 
     /**
