@@ -1110,9 +1110,8 @@ const specMap = {
         opcode: 'sensing_current',
         argMap: [
             {
-                type: 'input',
-                inputOp: 'sensing_currentmenu',
-                inputName: 'CURRENTMENU'
+                type: 'field',
+                fieldName: 'CURRENTMENU'
             }
         ]
     },
