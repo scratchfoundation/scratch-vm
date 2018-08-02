@@ -27,6 +27,8 @@ const BLECommand = {
 
 const BLETimeout = 4500; // TODO: might need tweaking based on how long the device takes to start sending data
 
+const BLESendInterval = 50;
+
 /**
  * Enum for micro:bit protocol.
  * https://github.com/LLK/scratch-microbit-firmware/blob/master/protocol.md
@@ -750,7 +752,11 @@ class Scratch3MicroBitBlocks {
             this._device.displayMatrix(this._device.ledMatrixState);
         }
 
-        return Promise.resolve();
+        return new Promise(resolve => {
+            setTimeout(() => {
+                resolve();
+            }, BLESendInterval);
+        });
     }
 
     /**
@@ -762,7 +768,12 @@ class Scratch3MicroBitBlocks {
     displayText (args) {
         const text = String(args.TEXT).substring(0, 19);
         if (text.length > 0) this._device.displayText(text);
-        return Promise.resolve();
+
+        return new Promise(resolve => {
+            setTimeout(() => {
+                resolve();
+            }, BLESendInterval);
+        });
     }
 
     /**
@@ -774,7 +785,12 @@ class Scratch3MicroBitBlocks {
             this._device.ledMatrixState[i] = 0;
         }
         this._device.displayMatrix(this._device.ledMatrixState);
-        return Promise.resolve();
+
+        return new Promise(resolve => {
+            setTimeout(() => {
+                resolve();
+            }, BLESendInterval);
+        });
     }
 
     /**
