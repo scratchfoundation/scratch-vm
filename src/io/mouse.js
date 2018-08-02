@@ -21,7 +21,7 @@ class Mouse {
      * a drag end.
      * @private
      */
-    _activateClickHats (x, y, wasDragged) {
+    _activateClickHats (x, y) {
         if (this.runtime.renderer) {
             const drawableID = this.runtime.renderer.pick(x, y);
             for (let i = 0; i < this.runtime.targets.length; i++) {
@@ -29,18 +29,15 @@ class Mouse {
                 if (target.hasOwnProperty('drawableID') &&
                     target.drawableID === drawableID) {
                     // only activate click hat if the mouse up event wasn't
-                    // the result of a drag ending
-                    if (!wasDragged) {
-                        // Activate both "this sprite clicked" and "stage clicked"
-                        // They were separated into two opcodes for labeling,
-                        // but should act the same way.
-                        // Intentionally not checking isStage to make it work when sharing blocks.
-                        // @todo the blocks should be converted from one to another when shared
-                        this.runtime.startHats('event_whenthisspriteclicked',
-                            null, target);
-                        this.runtime.startHats('event_whenstageclicked',
-                            null, target);
-                    }
+                    // Activate both "this sprite clicked" and "stage clicked"
+                    // They were separated into two opcodes for labeling,
+                    // but should act the same way.
+                    // Intentionally not checking isStage to make it work when sharing blocks.
+                    // @todo the blocks should be converted from one to another when shared
+                    this.runtime.startHats('event_whenthisspriteclicked',
+                        null, target);
+                    this.runtime.startHats('event_whenstageclicked',
+                        null, target);
                     return;
                 }
             }
@@ -75,12 +72,14 @@ class Mouse {
             );
         }
         if (typeof data.isDown !== 'undefined') {
+            const previousDownState = this._isDown;
             this._isDown = data.isDown;
+            const isNewMouseDown = !previousDownState && this._isDown;
             // Make sure click is within the canvas bounds to activate click hats
-            if (!this._isDown &&
+            if (isNewMouseDown &&
                 data.x > 0 && data.x < data.canvasWidth &&
                 data.y > 0 && data.y < data.canvasHeight) {
-                this._activateClickHats(data.x, data.y, data.wasDragged);
+                this._activateClickHats(data.x, data.y);
             }
         }
     }
