@@ -27,7 +27,7 @@ const BLECommand = {
 
 const BLETimeout = 4500; // TODO: might need tweaking based on how long the device takes to start sending data
 
-const BLESendInterval = 50;
+const BLESendInterval = 1000;
 
 /**
  * Enum for micro:bit protocol.
@@ -110,6 +110,10 @@ class MicroBit {
          * @private
          */
         this._timeoutID = null;
+
+        this._busy = false;
+        this._cachedDataToSend = null;
+        // window.setInterval(this._sendSessionData.bind(this), BLESendInterval);
     }
 
     // TODO: keep here?
@@ -257,18 +261,45 @@ class MicroBit {
      * Write a message to the device BLE session.
      * @param {number} command - the BLE command hex.
      * @param {Uint8Array} message - the message to write.
-     * @return {Promise} - a Promise that resolves when writing to device.
      * @private
      */
     _writeSessionData (command, message) {
+        this._cachedDataToSend = {
+            command: command,
+            message: message
+        };
+        if (!this._busy) {
+            this._sendSessionData();
+        }
+    }
+
+    /**
+     * Write a message to the device BLE session.
+     * @private
+     */
+    _sendSessionData () {
         if (!this.getPeripheralIsConnected()) return;
+        if (this._cachedDataToSend === null) return;
+        const command = this._cachedDataToSend.command;
+        const message = this._cachedDataToSend.message;
         const output = new Uint8Array(message.length + 1);
         output[0] = command; // attach command to beginning of message
         for (let i = 0; i < message.length; i++) {
             output[i + 1] = message[i];
         }
         const data = Base64Util.uint8ArrayToBase64(output);
-        return this._ble.write(BLEUUID.service, BLEUUID.txChar, data, 'base64');
+
+        this._cachedDataToSend = null;
+        this._busy = true;
+        this._ble.write(BLEUUID.service, BLEUUID.txChar, data, 'base64').then(
+            () => {
+                if (this._cachedDataToSend) {
+                    this._sendSessionData();
+                } else {
+                    this._busy = false;
+                }
+            }
+        );
     }
 }
 
@@ -752,11 +783,12 @@ class Scratch3MicroBitBlocks {
             this._device.displayMatrix(this._device.ledMatrixState);
         }
 
-        return new Promise(resolve => {
-            setTimeout(() => {
-                resolve();
-            }, BLESendInterval);
-        });
+        // return new Promise(resolve => {
+        //     setTimeout(() => {
+        //         resolve();
+        //     }, BLESendInterval);
+        // });
+        return Promise.resolve();
     }
 
     /**
@@ -769,11 +801,12 @@ class Scratch3MicroBitBlocks {
         const text = String(args.TEXT).substring(0, 19);
         if (text.length > 0) this._device.displayText(text);
 
-        return new Promise(resolve => {
-            setTimeout(() => {
-                resolve();
-            }, BLESendInterval);
-        });
+        // return new Promise(resolve => {
+        //     setTimeout(() => {
+        //         resolve();
+        //     }, BLESendInterval);
+        // });
+        return Promise.resolve();
     }
 
     /**
@@ -786,11 +819,12 @@ class Scratch3MicroBitBlocks {
         }
         this._device.displayMatrix(this._device.ledMatrixState);
 
-        return new Promise(resolve => {
-            setTimeout(() => {
-                resolve();
-            }, BLESendInterval);
-        });
+        // return new Promise(resolve => {
+        //     setTimeout(() => {
+        //         resolve();
+        //     }, BLESendInterval);
+        // });
+        return Promise.resolve();
     }
 
     /**
