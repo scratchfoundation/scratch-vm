@@ -197,23 +197,8 @@ class Scratch3LooksBlocks {
             this.runtime.renderer.updateTextSkin(bubbleState.skinId, type, text, onSpriteRight, [0, 0]);
         } else {
             target.addListener(RenderedTarget.EVENT_TARGET_VISUAL_CHANGE, this._onTargetChanged);
-
-            // TODO is there a way to figure out before rendering whether to default left or right?
-            const targetBounds = target.getBounds();
-            const stageSize = this.runtime.renderer.getNativeSize();
-            const stageBounds = {
-                left: -stageSize[0] / 2,
-                right: stageSize[0] / 2,
-                top: stageSize[1] / 2,
-                bottom: -stageSize[1] / 2
-            };
-            if (targetBounds.right + 170 > stageBounds.right) {
-                bubbleState.onSpriteRight = false;
-            }
-
             bubbleState.drawableId = this.runtime.renderer.createDrawable(StageLayering.SPRITE_LAYER);
             bubbleState.skinId = this.runtime.renderer.createTextSkin(type, text, bubbleState.onSpriteRight, [0, 0]);
-
             this.runtime.renderer.updateDrawableProperties(bubbleState.drawableId, {
                 skinId: bubbleState.skinId
             });
