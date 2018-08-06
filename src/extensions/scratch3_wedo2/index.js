@@ -3,6 +3,7 @@ const BlockType = require('../../extension-support/block-type');
 const color = require('../../util/color');
 const log = require('../../util/log');
 const BLESession = require('../../io/bleSession');
+const Base64Util = require('../../util/base64-util');
 
 /**
  * Icon svg to be displayed at the left edge of each extension block, encoded as a data URI.
@@ -119,7 +120,14 @@ class WeDo2Motor {
      * Turn this motor on indefinitely.
      */
     setMotorOn () {
-        this._parent._send('motorOn', {motorIndex: this._index, power: this._direction * this._power});
+        const cmd = new Uint8Array(4);
+        cmd[0] = 2; // channel = motor // TODO: Index
+        cmd[1] = 1; // command: set power
+        cmd[2] = 1; // 1 bytes to follow
+        cmd[3] = this._power; // power in range 0-100
+
+        this._parent._writeSessionData('00001565-1212-efde-1523-785feabcd123', Base64Util.uint8ArrayToBase64(cmd));
+
         this._isOn = true;
         this._clearTimeout();
     }
@@ -138,7 +146,14 @@ class WeDo2Motor {
      * Start active braking on this motor. After a short time, the motor will turn off.
      */
     startBraking () {
-        this._parent._send('motorBrake', {motorIndex: this._index});
+        const cmd = new Uint8Array(4);
+        cmd[0] = 2; // channel = motor // TODO: Index
+        cmd[1] = 1; // command: set power
+        cmd[2] = 1; // 1 bytes to follow
+        cmd[3] = 127; // power in range 0-100
+
+        this._parent._writeSessionData('00001565-1212-efde-1523-785feabcd123', Base64Util.uint8ArrayToBase64(cmd));
+
         this._isOn = false;
         this._setNewTimeout(this.setMotorOff, WeDo2Motor.BRAKE_TIME_MS);
     }
@@ -147,7 +162,14 @@ class WeDo2Motor {
      * Turn this motor off.
      */
     setMotorOff () {
-        this._parent._send('motorOff', {motorIndex: this._index});
+        const cmd = new Uint8Array(4);
+        cmd[0] = 2; // channel = motor // TODO: Index
+        cmd[1] = 1; // command: set power
+        cmd[2] = 1; // 1 bytes to follow
+        cmd[3] = 0; // power in range 0-100
+
+        this._parent._writeSessionData('00001565-1212-efde-1523-785feabcd123', Base64Util.uint8ArrayToBase64(cmd));
+
         this._isOn = false;
     }
 
@@ -268,7 +290,30 @@ class WeDo2 {
      * @param {int} rgb - a 24-bit RGB color in 0xRRGGBB format.
      */
     setLED (rgb) {
-        this._send('setLED', {rgb});
+        const cmd = new Uint8Array(6);
+        cmd[0] = 6; // channel
+        cmd[1] = 4; // command: write RGB
+        cmd[2] = 3; // 3 bytes to follow
+        cmd[3] = (rgb >> 16) & 0x000000FF;
+        cmd[4] = (rgb >> 8) & 0x000000FF;
+        cmd[5] = (rgb) & 0x000000FF;
+
+        this._writeSessionData('00001565-1212-efde-1523-785feabcd123', Base64Util.uint8ArrayToBase64(cmd));
+    }
+
+    _setLEDMode () {
+        // [0x01, 0x02, port, type, mode, 0x01, 0x00, 0x00, 0x00, format, 0x01]
+        const cmd = new Uint8Array(8);
+        cmd[0] = 1;
+        cmd[1] = 2;
+        cmd[2] = 6; // port
+        cmd[3] = 23; // type
+        cmd[4] = 1; // mode
+        cmd[5] = 1;
+        cmd[6] = 0;
+        cmd[7] = 0;
+
+        this._writeSessionData('00001563-1212-efde-1523-785feabcd123', Base64Util.uint8ArrayToBase64(cmd));
     }
 
     /**
@@ -277,14 +322,34 @@ class WeDo2 {
      * @param {int} milliseconds - the duration of the note, in milliseconds.
      */
     playTone (tone, milliseconds) {
-        this._send('playTone', {tone, ms: milliseconds});
+        const cmd = new Uint8Array(7);
+        cmd[0] = 5; // channel
+        cmd[1] = 2; // command: play tone
+        cmd[2] = 4; // 4 bytes to follow
+        cmd[3] = tone; // frequency byte 1
+        cmd[4] = tone >> 8; // frequency byte 2
+        cmd[5] = milliseconds; // time byte 1
+        cmd[6] = milliseconds >> 8; // time byte 2
+
+        this._writeSessionData('00001565-1212-efde-1523-785feabcd123', Base64Util.uint8ArrayToBase64(cmd));
+    }
+
+    _setVolume () {
+        const cmd = new Uint8Array(4);
+        cmd[0] = 5; // channel
+        cmd[1] = 255; // command: set volume
+        cmd[2] = 1; // 1 bytes to follow
+        cmd[3] = 100; // volume in range 0-100
+
+        this._writeSessionData('00001565-1212-efde-1523-785feabcd123', Base64Util.uint8ArrayToBase64(cmd));
+
     }
 
     /**
      * Stop the tone playing from the WeDo 2.0 hub, if any.
      */
     stopTone () {
-        this._send('stopTone');
+        this._send('stopTone'); // TODO
     }
 
     /**
@@ -315,7 +380,11 @@ class WeDo2 {
     startDeviceScan () {
         this._ble = new BLESession(this._runtime, {
             filters: [
-                {services: ['00001523-1212-efde-1523-785feabcd123']}
+                {services: ['00001523-1212-efde-1523-785feabcd123']} // LEGO Device Service
+                // {services: ['00001523-1212-efde-1523-785feabcd123', '00004f0e-1212-efde-1523-785feabcd123']}
+            ],
+            optionalServices: [
+                '00004f0e-1212-efde-1523-785feabcd123' // LEGO IO Service
             ]
         }, this._onSessionConnect.bind(this));
     }
@@ -352,8 +421,57 @@ class WeDo2 {
     _onSessionConnect () {
         console.log('_onSessionConnect');
         // const callback = this._processSessionData.bind(this);
-        // this._ble.read(BLEUUID.service, BLEUUID.rxChar, true, callback);
+
+        // set LED to absolute
+        this._setLEDMode();
+
+        // set initial volume
+        this._setVolume();
+
+        // this._ble.read('00001523-1212-efde-1523-785feabcd123', '00001527-1212-efde-1523-785feabcd123', true, callback);
         // this._timeoutID = window.setInterval(this.disconnectSession.bind(this), BLETimeout);
+    }
+
+    /**
+     * Process the sensor data from the incoming BLE characteristic.
+     * @param {object} base64 - the incoming BLE data.
+     * @private
+     */
+    _processSessionData (base64) {
+        // parse data
+        const data = Base64Util.base64ToUint8Array(base64);
+
+        console.log(data);
+
+        /* this._sensors.tiltX = data[1] | (data[0] << 8);
+        if (this._sensors.tiltX > (1 << 15)) this._sensors.tiltX -= (1 << 16);
+        this._sensors.tiltY = data[3] | (data[2] << 8);
+        if (this._sensors.tiltY > (1 << 15)) this._sensors.tiltY -= (1 << 16);
+
+        this._sensors.buttonA = data[4];
+        this._sensors.buttonB = data[5];
+
+        this._sensors.touchPins[0] = data[6];
+        this._sensors.touchPins[1] = data[7];
+        this._sensors.touchPins[2] = data[8];
+
+        this._sensors.gestureState = data[9];
+
+        // cancel disconnect timeout and start a new one
+        window.clearInterval(this._timeoutID);
+        this._timeoutID = window.setInterval(this.disconnectSession.bind(this), BLETimeout);*/
+    }
+
+    /**
+     * Write a message to the device BLE session.
+     * @param {number} uuid - the UUID of the characteristic to write to
+     * @param {Uint8Array} message - the message to write.
+     * @return {Promise} - a Promise that resolves when writing to device.
+     * @private
+     */
+    _writeSessionData (uuid, message) {
+        if (!this.getPeripheralIsConnected()) return;
+        this._ble.write('00004f0e-1212-efde-1523-785feabcd123', uuid, message, 'base64');
     }
 }
 
