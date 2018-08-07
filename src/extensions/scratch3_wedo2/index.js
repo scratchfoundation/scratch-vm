@@ -6,11 +6,13 @@ const BLESession = require('../../io/bleSession');
 const Base64Util = require('../../util/base64-util');
 
 // TODO:
-// 1. keep track of who is connected to channels 1 and 2, set motor indices appropriately
-// 2. zero out sensor values when disconnected
 // 3. check that all blocks do something and are ready for Eric's spec confirmations
 // 4. refactor where you can before renaming things like 'Peripheral' throughout
-// 5. ???
+
+// TODO: DONE
+// 1. keep track of who is connected to channels 1 and 2, set motor indices appropriately
+// 2. zero out sensor values when disconnected
+// 1. send compound commands for motors
 
 /**
  * Icon svg to be displayed at the left edge of each extension block, encoded as a data URI.
@@ -27,15 +29,16 @@ const UUID = {
     INPUT_VALUES: '00001560-1212-efde-1523-785feabcd123',
     INPUT_COMMAND: '00001563-1212-efde-1523-785feabcd123',
     OUTPUT_COMMAND: '00001565-1212-efde-1523-785feabcd123'
-}
+};
 
-const WEDO2_IO_TYPES = {
+const WeDo2Types = {
     motor: 1,
     piezo: 22,
     led: 23,
     tilt: 34,
-    distance: 35
-}
+    distance: 35,
+    none: 0
+};
 
 /**
  * Manage power, direction, and timers for one WeDo 2.0 motor.
@@ -146,10 +149,10 @@ class WeDo2Motor {
      */
     setMotorOn () {
         const cmd = new Uint8Array(4);
-        cmd[0] = 2; // channel = motor // TODO: Index
+        cmd[0] = this._index + 1; // channel
         cmd[1] = 1; // command: set power
         cmd[2] = 1; // 1 bytes to follow
-        cmd[3] = this._power; // power in range 0-100
+        cmd[3] = this._power * this._direction; // power in range 0-100
 
         this._parent._send(UUID.OUTPUT_COMMAND, Base64Util.uint8ArrayToBase64(cmd));
 
@@ -172,7 +175,7 @@ class WeDo2Motor {
      */
     startBraking () {
         const cmd = new Uint8Array(4);
-        cmd[0] = 2; // channel = motor // TODO: Index
+        cmd[0] = this._index + 1; // channel
         cmd[1] = 1; // command: set power
         cmd[2] = 1; // 1 bytes to follow
         cmd[3] = 127; // power in range 0-100
@@ -188,7 +191,7 @@ class WeDo2Motor {
      */
     setMotorOff () {
         const cmd = new Uint8Array(4);
-        cmd[0] = 2; // channel = motor // TODO: Index
+        cmd[0] = this._index + 1; // channel
         cmd[1] = 1; // command: set power
         cmd[2] = 1; // 1 bytes to follow
         cmd[3] = 0; // power in range 0-100
@@ -243,11 +246,18 @@ class WeDo2 {
         // this._runtime.on('PROJECT_STOP_ALL', this._stopAllMotors.bind(this));
 
         /**
+         * The device ports that connect to motors and sensors.
+         * @type {[string]}
+         * @private
+         */
+        this._ports = ['none', 'none'];
+
+        /**
          * The motors which this WeDo 2.0 could possibly have.
          * @type {WeDo2Motor[]}
          * @private
          */
-        this._motors = [new WeDo2Motor(this, 0), new WeDo2Motor(this, 1)];
+        this._motors = [null, null];
 
         /**
          * The most recently received value for each sensor.
@@ -323,7 +333,7 @@ class WeDo2 {
         cmd[2] = 6; // port
         cmd[3] = 23; // type
         cmd[4] = 1; // mode
-        cmd[5] = 0; // delta interval
+        cmd[5] = 0; // delta interval // TODO: Uint32?
         cmd[6] = 0; // unit = raw
         cmd[7] = 0; // notifications enabled: false
 
@@ -429,31 +439,56 @@ class WeDo2 {
     _onMessage (base64) {
         const data = Base64Util.base64ToUint8Array(base64);
 
-        log.info(data);
+        if (data.length === 2) { // disconnect sensor
+            const connectID = data[0];
+            // zero out tilt
+            if (this._ports[connectID - 1] === WeDo2Types.tilt) {
+                this._sensors.tiltX = this._sensors.tiltY = 0;
+            }
+            // zero out distance
+            if (this._ports[connectID - 1] === WeDo2Types.distance) {
+                this._sensors.distance = 0;
+            }
+            // remove reference to ports and motors
+            if (connectID === 1 || connectID === 2) {
+                this._ports[connectID - 1] = 'none';
+                this._motors[connectID - 1] = null;
+                // log.info(`this._ports = ${this._ports}`);
+                // log.info(`this._motors = ${this._mtors}`);
+            }
+        }
 
-        if (data.length === 3) { // distance sensor?
+        if (data.length === 3) { // distance sensor value?
             this._sensors.distance = data[2];
         }
 
-        if (data.length === 4) { // tilt sensor?
+        if (data.length === 4) { // tilt sensor value?
             this._sensors.tiltX = data[2];
             this._sensors.tiltY = data[3];
         }
 
         if (data.length === 12) { // attached io
 
-            log.info(`sensor or motor # ${data[3]} connected at channel ${data[0]}`);
-            const channel = data[0];
+            const connectID = data[0];
             const type = data[3];
 
-            // Register for tilt sensor notifications
-            // TODO: register disconnect
-            if (type === WEDO2_IO_TYPES.tilt) {
+            // Record which port is connected to what type of device
+            if (connectID === 1 || connectID === 2) {
+                this._ports[connectID - 1] = type;
+            }
+
+            // MOTOR
+            if (type === WeDo2Types.motor) {
+                this._motors[connectID - 1] = new WeDo2Motor(this, connectID - 1);
+            }
+
+            // TILT SENSOR
+            if (type === WeDo2Types.tilt) {
                 const cmd = new Uint8Array(11);
                 cmd[0] = 1; // sensor format
                 cmd[1] = 2; // command type: write
-                cmd[2] = channel; // connect id / channel
-                cmd[3] = WEDO2_IO_TYPES.tilt; // type id: tilt
+                cmd[2] = connectID; // connect id / channel
+                cmd[3] = WeDo2Types.tilt; // type id: tilt
                 cmd[4] = 0; // mode: angle
                 cmd[5] = 1; // delta interval
                 cmd[6] = 0;
@@ -468,15 +503,13 @@ class WeDo2 {
                     });
             }
 
-            // Register for distance sensor notifications
-            // TODO: register disconnect
-            if (type === WEDO2_IO_TYPES.distance) {
-                log.info('should register for distance');
+            // DISTANCE SENSOR
+            if (type === WeDo2Types.distance) {
                 const cmd = new Uint8Array(11);
                 cmd[0] = 1; // sensor format
                 cmd[1] = 2; // command type: write
-                cmd[2] = channel; // connect id / channel
-                cmd[3] = WEDO2_IO_TYPES.distance; // type id: distance
+                cmd[2] = connectID; // connect id / channel
+                cmd[3] = WeDo2Types.distance; // type id: distance
                 cmd[4] = 0; // mode: detect
                 cmd[5] = 1; // delta interval
                 cmd[6] = 0;
@@ -487,29 +520,16 @@ class WeDo2 {
 
                 this._send(UUID.INPUT_COMMAND, Base64Util.uint8ArrayToBase64(cmd))
                     .then(() => {
-                        log.info('should start reading');
                         this._ble.read(UUID.IO_SERVICE, UUID.INPUT_VALUES, true, this._onMessage.bind(this));
                     });
             }
         }
 
-        /* this._sensors.tiltX = data[1] | (data[0] << 8);
-        if (this._sensors.tiltX > (1 << 15)) this._sensors.tiltX -= (1 << 16);
-        this._sensors.tiltY = data[3] | (data[2] << 8);
-        if (this._sensors.tiltY > (1 << 15)) this._sensors.tiltY -= (1 << 16);
-
-        this._sensors.buttonA = data[4];
-        this._sensors.buttonB = data[5];
-
-        this._sensors.touchPins[0] = data[6];
-        this._sensors.touchPins[1] = data[7];
-        this._sensors.touchPins[2] = data[8];
-
-        this._sensors.gestureState = data[9];
-
+        /*
         // cancel disconnect timeout and start a new one
         window.clearInterval(this._timeoutID);
-        this._timeoutID = window.setInterval(this.disconnectSession.bind(this), BLETimeout);*/
+        this._timeoutID = window.setInterval(this.disconnectSession.bind(this), BLETimeout);
+        */
     }
 
     /**
@@ -785,7 +805,10 @@ class Scratch3WeDo2Blocks {
         const durationMS = args.DURATION * 1000;
         return new Promise(resolve => {
             this._forEachMotor(args.MOTOR_ID, motorIndex => {
-                this._device.motor(motorIndex).setMotorOnFor(durationMS);
+                const motor = this._device.motor(motorIndex);
+                if (motor) {
+                    motor.setMotorOnFor(durationMS);
+                }
             });
 
             // Ensure this block runs for a fixed amount of time even when no device is connected.
@@ -800,7 +823,10 @@ class Scratch3WeDo2Blocks {
      */
     motorOn (args) {
         this._forEachMotor(args.MOTOR_ID, motorIndex => {
-            this._device.motor(motorIndex).setMotorOn();
+            const motor = this._device.motor(motorIndex);
+            if (motor) {
+                motor.setMotorOn();
+            }
         });
     }
 
@@ -811,7 +837,10 @@ class Scratch3WeDo2Blocks {
      */
     motorOff (args) {
         this._forEachMotor(args.MOTOR_ID, motorIndex => {
-            this._device.motor(motorIndex).setMotorOff();
+            const motor = this._device.motor(motorIndex);
+            if (motor) {
+                motor.setMotorOff();
+            }
         });
     }
 
@@ -824,8 +853,10 @@ class Scratch3WeDo2Blocks {
     startMotorPower (args) {
         this._forEachMotor(args.MOTOR_ID, motorIndex => {
             const motor = this._device.motor(motorIndex);
-            motor.power = args.POWER;
-            motor.setMotorOn();
+            if (motor) {
+                motor.power = args.POWER;
+                motor.setMotorOn();
+            }
         });
     }
 
@@ -839,19 +870,21 @@ class Scratch3WeDo2Blocks {
     setMotorDirection (args) {
         this._forEachMotor(args.MOTOR_ID, motorIndex => {
             const motor = this._device.motor(motorIndex);
-            switch (args.DIRECTION) {
-            case MotorDirection.FORWARD:
-                motor.direction = 1;
-                break;
-            case MotorDirection.BACKWARD:
-                motor.direction = -1;
-                break;
-            case MotorDirection.REVERSE:
-                motor.direction = -motor.direction;
-                break;
-            default:
-                log.warn(`Unknown motor direction in setMotorDirection: ${args.DIRECTION}`);
-                break;
+            if (motor) {
+                switch (args.DIRECTION) {
+                case MotorDirection.FORWARD:
+                    motor.direction = 1;
+                    break;
+                case MotorDirection.BACKWARD:
+                    motor.direction = -1;
+                    break;
+                case MotorDirection.REVERSE:
+                    motor.direction = -motor.direction;
+                    break;
+                default:
+                    log.warn(`Unknown motor direction in setMotorDirection: ${args.DIRECTION}`);
+                    break;
+                }
             }
         });
     }
