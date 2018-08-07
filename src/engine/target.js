@@ -317,14 +317,16 @@ class Target extends EventEmitter {
      * Create a clone of the variable with the given id from the dictionary of
      * this target's variables.
      * @param {string} id Id of variable to duplicate.
+     * @param {boolean=} optKeepOriginalId Optional flag to keep the original variable ID
+     * for the duplicate variable. This is necessary when cloning a sprite, for example.
      * @return {?Variable} The duplicated variable, or null if
      * the original variable was not found.
      */
-    duplicateVariable (id) {
+    duplicateVariable (id, optKeepOriginalId) {
         if (this.variables.hasOwnProperty(id)) {
             const originalVariable = this.variables[id];
             const newVariable = new Variable(
-                null, // generate a new uid
+                optKeepOriginalId ? id : null, // conditionally keep original id or generate a new one
                 originalVariable.name,
                 originalVariable.type,
                 originalVariable.isCloud
@@ -338,19 +340,25 @@ class Target extends EventEmitter {
     /**
      * Duplicate the dictionary of this target's variables as part of duplicating.
      * this target or making a clone.
-     * @param {object} blocks Block container for the target being duplicated
+     * @param {object=} optBlocks Optional block container for the target being duplicated.
+     * If provided, new variables will be generated with new UIDs and any variable references
+     * in this blocks container will be updated to refer to the corresponding new IDs.
      * @return {object} The duplicated dictionary of variables
      */
-    duplicateVariables (blocks) {
-        const allVarRefs = blocks.getAllVariableAndListReferences();
+    duplicateVariables (optBlocks) {
+        let allVarRefs;
+        if (optBlocks) {
+            allVarRefs = optBlocks.getAllVariableAndListReferences();
+        }
         return Object.keys(this.variables).reduce((accum, varId) => {
-            const newVariable = this.duplicateVariable(varId);
+            const newVariable = this.duplicateVariable(varId, !optBlocks);
             accum[newVariable.id] = newVariable;
-            const currVarRefs = allVarRefs[varId];
-            if (currVarRefs) {
-                this.mergeVariables(varId, newVariable.id, currVarRefs);
+            if (optBlocks && allVarRefs) {
+                const currVarRefs = allVarRefs[varId];
+                if (currVarRefs) {
+                    this.mergeVariables(varId, newVariable.id, currVarRefs);
+                }
             }
-
             return accum;
         }, {});
     }
