@@ -79,8 +79,8 @@ class Scratch3MotionBlocks {
         let targetX = 0;
         let targetY = 0;
         if (targetName === '_mouse_') {
-            targetX = util.ioQuery('mouse', 'getScratchX');
-            targetY = util.ioQuery('mouse', 'getScratchY');
+            targetX = Math.round(util.ioQuery('mouse', 'getScratchX'));
+            targetY = Math.round(util.ioQuery('mouse', 'getScratchY'));
         } else if (targetName === '_random_') {
             const stageWidth = this.runtime.constructor.STAGE_WIDTH;
             const stageHeight = this.runtime.constructor.STAGE_HEIGHT;
