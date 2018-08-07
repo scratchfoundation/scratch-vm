@@ -269,7 +269,7 @@ class Target extends EventEmitter {
 
     /**
      * Renames the variable with the given id to newName.
-     * @param {string} id Id of renamed variable.
+     * @param {string} id Id of variable to rename.
      * @param {string} newName New name for the variable.
      */
     renameVariable (id, newName) {
@@ -301,7 +301,7 @@ class Target extends EventEmitter {
 
     /**
      * Removes the variable with the given id from the dictionary of variables.
-     * @param {string} id Id of renamed variable.
+     * @param {string} id Id of variable to delete.
      */
     deleteVariable (id) {
         if (this.variables.hasOwnProperty(id)) {
@@ -311,6 +311,48 @@ class Target extends EventEmitter {
                 this.runtime.requestRemoveMonitor(id);
             }
         }
+    }
+
+    /**
+     * Create a clone of the variable with the given id from the dictionary of
+     * this target's variables.
+     * @param {string} id Id of variable to duplicate.
+     * @return {?Variable} The duplicated variable, or null if
+     * the original variable was not found.
+     */
+    duplicateVariable (id) {
+        if (this.variables.hasOwnProperty(id)) {
+            const originalVariable = this.variables[id];
+            const newVariable = new Variable(
+                null, // generate a new uid
+                originalVariable.name,
+                originalVariable.type,
+                originalVariable.isCloud
+            );
+            newVariable.value = originalVariable.value;
+            return newVariable;
+        }
+        return null;
+    }
+
+    /**
+     * Duplicate the dictionary of this target's variables as part of duplicating.
+     * this target or making a clone.
+     * @param {object} blocks Block container for the target being duplicated
+     * @return {object} The duplicated dictionary of variables
+     */
+    duplicateVariables (blocks) {
+        const allVarRefs = blocks.getAllVariableAndListReferences();
+        return Object.keys(this.variables).reduce((accum, varId) => {
+            const newVariable = this.duplicateVariable(varId);
+            accum[newVariable.id] = newVariable;
+            const currVarRefs = allVarRefs[varId];
+            if (currVarRefs) {
+                this.mergeVariables(varId, newVariable.id, currVarRefs);
+            }
+
+            return accum;
+        }, {});
     }
 
     /**
