@@ -1166,8 +1166,8 @@ class VirtualMachine extends EventEmitter {
 
         const xmlString = `<xml xmlns="http://www.w3.org/1999/xhtml">
                             <variables>
-                                ${globalVariables.map(v => v.toXML()).join()}
-                                ${localVariables.map(v => v.toXML(true)).join()}
+                                ${globalVariables.map(v => Variable.toXML(v)).join()}
+                                ${localVariables.map(v => Variable.toXML(v, true)).join()}
                             </variables>
                             ${workspaceComments.map(c => c.toXML()).join()}
                             ${this.editingTarget.blocks.toXML(this.editingTarget.comments)}

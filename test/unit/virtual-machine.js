@@ -456,12 +456,13 @@ test('emitWorkspaceUpdate', t => {
         }
         return blockString;
     };
+    Variable.toXML = variable => variable.name;
     vm.runtime.targets = [
         {
             isStage: true,
             variables: {
                 global: {
-                    toXML: () => 'global'
+                    name: 'global'
                 }
             },
             blocks: {
@@ -476,7 +477,7 @@ test('emitWorkspaceUpdate', t => {
         }, {
             variables: {
                 unused: {
-                    toXML: () => 'unused'
+                    name: 'unused'
                 }
             },
             blocks: {
@@ -491,7 +492,7 @@ test('emitWorkspaceUpdate', t => {
         }, {
             variables: {
                 local: {
-                    toXML: () => 'local'
+                    name: 'local'
                 }
             },
             blocks: {
