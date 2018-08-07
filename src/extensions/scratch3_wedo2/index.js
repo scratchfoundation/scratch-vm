@@ -5,12 +5,37 @@ const log = require('../../util/log');
 const BLESession = require('../../io/bleSession');
 const Base64Util = require('../../util/base64-util');
 
+// TODO:
+// 1. keep track of who is connected to channels 1 and 2, set motor indices appropriately
+// 2. zero out sensor values when disconnected
+// 3. check that all blocks do something and are ready for Eric's spec confirmations
+// 4. refactor where you can before renaming things like 'Peripheral' throughout
+// 5. ???
+
 /**
  * Icon svg to be displayed at the left edge of each extension block, encoded as a data URI.
  * @type {string}
  */
 // eslint-disable-next-line max-len
 const iconURI = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHZpZXdCb3g9IjAgMCA0MCA0MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48dGl0bGU+d2VkbzItYmxvY2staWNvbjwvdGl0bGU+PGcgZmlsbD0ibm9uZSIgZmlsbC1ydWxlPSJldmVub2RkIj48cGF0aCBkPSJNMzUuMzEzIDEwLjQ2N0gzMi4wOVY4Ljg2NWMwLS4yMjMuMTgtLjQwNC40MDUtLjQwNGgyLjQxMmMuMjI0IDAgLjQwNi4xODIuNDA2LjQwNXYxLjYwMnpNMzAuNDc3IDEwLjQ2N2gtMy4yMjRWOC44NjVjMC0uMjIzLjE4My0uNDA0LjQwNy0uNDA0aDIuNDFjLjIyNiAwIC40MDcuMTgyLjQwNy40MDV2MS42MDJ6TTI1LjY0IDEwLjQ2N0gyMi40MlY4Ljg2NWMwLS4yMjMuMTgyLS40MDQuNDA2LS40MDRoMi40MWMuMjI2IDAgLjQwNy4xODIuNDA3LjQwNXYxLjYwMnpNMjAuODA2IDEwLjQ2N2gtMy4yMjRWOC44NjVjMC0uMjIzLjE4Mi0uNDA0LjQwNi0uNDA0SDIwLjRjLjIyNCAwIC40MDYuMTgyLjQwNi40MDV2MS42MDJ6TTE1Ljk3IDEwLjQ2N2gtMy4yMjRWOC44NjVjMC0uMjIzLjE4Mi0uNDA0LjQwNy0uNDA0aDIuNDFjLjIyNiAwIC40MDcuMTgyLjQwNy40MDV2MS42MDJ6TTExLjEzNSAxMC40NjdINy45MVY4Ljg2NWMwLS4yMjMuMTgzLS40MDQuNDA3LS40MDRoMi40MTJjLjIyMyAwIC40MDUuMTgyLjQwNS40MDV2MS42MDJ6IiBzdHJva2U9IiM2Rjc4OTMiIGZpbGw9IiNGRkYiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCIvPjxwYXRoIGQ9Ik0zNy43MyAxMC40NjdINi4zYy0yLjY3IDAtNC44MzYgMi4xNTMtNC44MzYgNC44MDh2My4yMDVoMzcuMDczdi03LjIxYzAtLjQ0NC0uMzYyLS44MDMtLjgwNy0uODAzeiIgc3Ryb2tlPSIjNkY3ODkzIiBmaWxsPSIjRkZGIiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiLz48cGF0aCBkPSJNMzguMTM0IDMwLjk4SDEuODY3Yy0uMjI0IDAtLjQwMy0uMTgtLjQwMy0uNFYxNi4yMzZoMzIuNzFjLjczIDAgMS40My4yODcgMS45NDUuOC41MTUuNTE0IDEuMjE1LjgwMiAxLjk0NC44MDJoLjQ3M3YxMi43NGMwIC4yMi0uMTguNC0uNDAzLjR6IiBzdHJva2U9IiM2Rjc4OTMiIGZpbGw9IiNFNkU3RTgiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCIvPjxwYXRoIHN0cm9rZT0iIzZGNzg5MyIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIiBkPSJNMzQuODMgMTYuMjM3bC40ODMtMi41NjVoMy4yMjMiLz48cGF0aCBkPSJNMzguNTM2IDExLjI2OFYzMC41OGMwIC4yMi0uMTguNC0uNDAzLjRIMS44NjZjLS4yMiAwLS40MDMtLjE4LS40MDMtLjR2LTEuMjAzaDM0LjI4MmMuNjUgMCAxLjE4LS41MjQgMS4xOC0xLjE3M1YxMC40NjdoLjgwNWMuNDQ2IDAgLjgwNi4zNi44MDYuOHoiIHN0cm9rZT0iIzZGNzg5MyIgZmlsbD0iIzZGNzg5MyIgb3BhY2l0eT0iLjE1IiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiLz48cGF0aCBkPSJNMTEuNTM4IDE2LjI4aDIwLjE0OGMuMjIyIDAgLjQwMy4xOC40MDMuNHY2LjUyN2MwIC4yMjItLjE4Mi40LS40MDQuNEgxMS41MzhjLS4yMjMgMC0uNDA0LS4xNzgtLjQwNC0uNFYxNi42OGMwLS4yMi4xOC0uNC40MDQtLjQiIGZpbGw9IiNFNkU3RTgiLz48cGF0aCBkPSJNMTEuNTM4IDE2LjI4aDIwLjE0OGMuMjIyIDAgLjQwMy4xOC40MDMuNHY2LjUyN2MwIC4yMjItLjE4Mi40LS40MDQuNEgxMS41MzhjLS4yMjMgMC0uNDA0LS4xNzgtLjQwNC0uNFYxNi42OGMwLS4yMi4xOC0uNC40MDQtLjR6IiBzdHJva2U9IiM2Rjc4OTMiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCIvPjxwYXRoIGQ9Ik0zMi4wOSAxNi4yOHY2LjkyN2MwIC4yMjItLjE4LjQtLjQwNC40aC0yMC4xNWMtLjIyIDAtLjQtLjE4LS40LS40di0xLjJoMTguMTZjLjY1MyAwIDEuMTgtLjUyNiAxLjE4LTEuMTc0VjE2LjI4aDEuNjEzeiIgc3Ryb2tlPSIjNkY3ODkzIiBmaWxsPSIjNkU3NzkyIiBvcGFjaXR5PSIuMTUiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCIvPjxwYXRoIGQ9Ik0zMC40NzcgMTYuMjhoLTMuMjI0di0xLjYwNGMwLS4yMjMuMTgzLS40MDQuNDA3LS40MDRoMi40MWMuMjI2IDAgLjQwNy4xOC40MDcuNDA0djEuNjAzek0xNS45NyAxNi4yOGgtMy4yMjR2LTEuNjA0YzAtLjIyMy4xODItLjQwNC40MDctLjQwNGgyLjQxYy4yMjYgMCAuNDA3LjE4LjQwNy40MDR2MS42MDN6TTI1LjY0IDE2LjI4SDIyLjQydi0xLjYwNGMwLS4yMjMuMTgyLS40MDQuNDA2LS40MDRoMi40MWMuMjI2IDAgLjQwNy4xOC40MDcuNDA0djEuNjAzek0yMC44MDYgMTYuMjhoLTMuMjI0di0xLjYwNGMwLS4yMjMuMTgyLS40MDQuNDA2LS40MDRIMjAuNGMuMjI0IDAgLjQwNi4xOC40MDYuNDA0djEuNjAzeiIgc3Ryb2tlPSIjNkY3ODkzIiBmaWxsPSIjRTZFN0U4IiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiLz48cGF0aCBkPSJNMTguNTU3IDE5LjkxYzAgMS4wMjUtLjgzNyAxLjg1Ny0xLjg3IDEuODU3LTEuMDMgMC0xLjg2Ny0uODMyLTEuODY3LTEuODU4IDAtMS4wMjcuODM3LTEuODU4IDEuODY4LTEuODU4IDEuMDMyIDAgMS44Ny44MyAxLjg3IDEuODU3ek0yMy40OCAxOS45MWMwIDEuMDI1LS44MzYgMS44NTctMS44NjggMS44NTdzLTEuODctLjgzMi0xLjg3LTEuODU4YzAtMS4wMjcuODM4LTEuODU4IDEuODctMS44NThzMS44NjguODMgMS44NjggMS44NTd6TTI4LjQwNCAxOS45MWMwIDEuMDI1LS44MzcgMS44NTctMS44NjggMS44NTctMS4wMzIgMC0xLjg3LS44MzItMS44Ny0xLjg1OCAwLTEuMDI3LjgzOC0xLjg1OCAxLjg3LTEuODU4IDEuMDMgMCAxLjg2OC44MyAxLjg2OCAxLjg1N3oiIHN0cm9rZT0iIzZGNzg5MyIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIi8+PHBhdGggZD0iTTE4LjU1NyAxOS45MjJjMCAxLjAyNi0uODM3IDEuODU4LTEuODcgMS44NTgtMS4wMyAwLTEuODY3LS44MzItMS44NjctMS44NTggMC0xLjAyNS44MzctMS44NTcgMS44NjgtMS44NTcgMS4wMzIgMCAxLjg3LjgzMiAxLjg3IDEuODU3TTIzLjQ4IDE5LjkyMmMwIDEuMDI2LS44MzYgMS44NTgtMS44NjggMS44NThzLTEuODctLjgzMi0xLjg3LTEuODU4YzAtMS4wMjUuODM4LTEuODU3IDEuODctMS44NTdzMS44NjguODMyIDEuODY4IDEuODU3TTI4LjQwNCAxOS45MjJjMCAxLjAyNi0uODM3IDEuODU4LTEuODY4IDEuODU4LTEuMDMyIDAtMS44Ny0uODMyLTEuODctMS44NTggMC0xLjAyNS44MzgtMS44NTcgMS44Ny0xLjg1NyAxLjAzIDAgMS44NjguODMyIDEuODY4IDEuODU3IiBmaWxsPSIjNkY3ODkzIiBvcGFjaXR5PSIuNSIvPjwvZz48L3N2Zz4=';
+
+
+const UUID = {
+    DEVICE_SERVICE: '00001523-1212-efde-1523-785feabcd123',
+    IO_SERVICE: '00004f0e-1212-efde-1523-785feabcd123',
+    ATTACHED_IO: '00001527-1212-efde-1523-785feabcd123',
+    INPUT_VALUES: '00001560-1212-efde-1523-785feabcd123',
+    INPUT_COMMAND: '00001563-1212-efde-1523-785feabcd123',
+    OUTPUT_COMMAND: '00001565-1212-efde-1523-785feabcd123'
+}
+
+const WEDO2_IO_TYPES = {
+    motor: 1,
+    piezo: 22,
+    led: 23,
+    tilt: 34,
+    distance: 35
+}
 
 /**
  * Manage power, direction, and timers for one WeDo 2.0 motor.
@@ -126,7 +151,7 @@ class WeDo2Motor {
         cmd[2] = 1; // 1 bytes to follow
         cmd[3] = this._power; // power in range 0-100
 
-        this._parent._writeSessionData('00001565-1212-efde-1523-785feabcd123', Base64Util.uint8ArrayToBase64(cmd));
+        this._parent._send(UUID.OUTPUT_COMMAND, Base64Util.uint8ArrayToBase64(cmd));
 
         this._isOn = true;
         this._clearTimeout();
@@ -152,7 +177,7 @@ class WeDo2Motor {
         cmd[2] = 1; // 1 bytes to follow
         cmd[3] = 127; // power in range 0-100
 
-        this._parent._writeSessionData('00001565-1212-efde-1523-785feabcd123', Base64Util.uint8ArrayToBase64(cmd));
+        this._parent._send(UUID.OUTPUT_COMMAND, Base64Util.uint8ArrayToBase64(cmd));
 
         this._isOn = false;
         this._setNewTimeout(this.setMotorOff, WeDo2Motor.BRAKE_TIME_MS);
@@ -168,7 +193,7 @@ class WeDo2Motor {
         cmd[2] = 1; // 1 bytes to follow
         cmd[3] = 0; // power in range 0-100
 
-        this._parent._writeSessionData('00001565-1212-efde-1523-785feabcd123', Base64Util.uint8ArrayToBase64(cmd));
+        this._parent._send(UUID.OUTPUT_COMMAND, Base64Util.uint8ArrayToBase64(cmd));
 
         this._isOn = false;
     }
@@ -235,10 +260,6 @@ class WeDo2 {
             distance: 0
         };
 
-        /*
-        this._onSensorChanged = this._onSensorChanged.bind(this);
-        */
-
         /**
          * The Bluetooth connection session for reading/writing device data.
          * @type {BLESession}
@@ -246,13 +267,6 @@ class WeDo2 {
          */
         this._ble = null;
         this._runtime.registerExtensionDevice(extensionId, this);
-    }
-
-    /**
-     * Manually dispose of this object.
-     */
-    dispose () {
-        this._disconnectEvents();
     }
 
     /**
@@ -273,7 +287,7 @@ class WeDo2 {
      * @return {number} - the latest value received from the distance sensor.
      */
     get distance () {
-        return this._sensors.distance * 10;
+        return this._sensors.distance;
     }
 
     /**
@@ -298,22 +312,22 @@ class WeDo2 {
         cmd[4] = (rgb >> 8) & 0x000000FF;
         cmd[5] = (rgb) & 0x000000FF;
 
-        this._writeSessionData('00001565-1212-efde-1523-785feabcd123', Base64Util.uint8ArrayToBase64(cmd));
+        this._send(UUID.OUTPUT_COMMAND, Base64Util.uint8ArrayToBase64(cmd));
     }
 
     _setLEDMode () {
         // [0x01, 0x02, port, type, mode, 0x01, 0x00, 0x00, 0x00, format, 0x01]
         const cmd = new Uint8Array(8);
-        cmd[0] = 1;
-        cmd[1] = 2;
+        cmd[0] = 1; // command id: Sensor Format
+        cmd[1] = 2; // command type: 2 = write
         cmd[2] = 6; // port
         cmd[3] = 23; // type
         cmd[4] = 1; // mode
-        cmd[5] = 1;
-        cmd[6] = 0;
-        cmd[7] = 0;
+        cmd[5] = 0; // delta interval
+        cmd[6] = 0; // unit = raw
+        cmd[7] = 0; // notifications enabled: false
 
-        this._writeSessionData('00001563-1212-efde-1523-785feabcd123', Base64Util.uint8ArrayToBase64(cmd));
+        return this._send(UUID.INPUT_COMMAND, Base64Util.uint8ArrayToBase64(cmd));
     }
 
     /**
@@ -331,7 +345,7 @@ class WeDo2 {
         cmd[5] = milliseconds; // time byte 1
         cmd[6] = milliseconds >> 8; // time byte 2
 
-        this._writeSessionData('00001565-1212-efde-1523-785feabcd123', Base64Util.uint8ArrayToBase64(cmd));
+        this._send(UUID.OUTPUT_COMMAND, Base64Util.uint8ArrayToBase64(cmd));
     }
 
     _setVolume () {
@@ -341,55 +355,30 @@ class WeDo2 {
         cmd[2] = 1; // 1 bytes to follow
         cmd[3] = 100; // volume in range 0-100
 
-        this._writeSessionData('00001565-1212-efde-1523-785feabcd123', Base64Util.uint8ArrayToBase64(cmd));
-
+        this._send(UUID.OUTPUT_COMMAND, Base64Util.uint8ArrayToBase64(cmd));
     }
 
     /**
      * Stop the tone playing from the WeDo 2.0 hub, if any.
      */
     stopTone () {
-        this._send('stopTone'); // TODO
+        // this._send('stopTone'); // TODO stop via BLE
     }
 
-    /**
-     * Store the sensor value from an incoming 'sensorChanged' event.
-     * @param {object} event - the 'sensorChanged' event.
-     * @property {string} sensorName - the name of the sensor which changed.
-     * @property {number} sensorValue - the new value of the sensor.
-     * @private
-     */
-    _onSensorChanged (event) {
-        this._sensors[event.sensorName] = event.sensorValue;
-    }
-
-    /**
-     * Send a message to the device socket.
-     * @param {string} message - the name of the message, such as 'playTone'.
-     * @param {object} [details] - optional additional details for the message, such as tone duration and pitch.
-     * @private
-     */
-    _send (message, details) {
-        this._socket.emit(message, details);
-    }
-
-    // New BLE
     /**
      * Called by the runtime when user wants to scan for a device.
      */
     startDeviceScan () {
         this._ble = new BLESession(this._runtime, {
             filters: [
-                {services: ['00001523-1212-efde-1523-785feabcd123']} // LEGO Device Service
-                // {services: ['00001523-1212-efde-1523-785feabcd123', '00004f0e-1212-efde-1523-785feabcd123']}
+                {services: [UUID.DEVICE_SERVICE]}
             ],
             optionalServices: [
-                '00004f0e-1212-efde-1523-785feabcd123' // LEGO IO Service
+                UUID.IO_SERVICE
             ]
-        }, this._onSessionConnect.bind(this));
+        }, this._onConnect.bind(this));
     }
 
-    // TODO: keep here? / refactor
     /**
      * Called by the runtime when user wants to connect to a certain device.
      * @param {number} id - the id of the device to connect to.
@@ -418,17 +407,17 @@ class WeDo2 {
     /**
      * Starts reading data from device after BLE has connected to it.
      */
-    _onSessionConnect () {
-        console.log('_onSessionConnect');
-        // const callback = this._processSessionData.bind(this);
+    _onConnect () {
+        const callback = this._onMessage.bind(this);
 
         // set LED to absolute
-        this._setLEDMode();
+        this._setLEDMode()
+            .then(() => {
+                // get attached io notifications
+                this._ble.read(UUID.DEVICE_SERVICE, UUID.ATTACHED_IO, true, callback);
+            });
 
-        // set initial volume
-        this._setVolume();
-
-        // this._ble.read('00001523-1212-efde-1523-785feabcd123', '00001527-1212-efde-1523-785feabcd123', true, callback);
+        // this._setVolume();
         // this._timeoutID = window.setInterval(this.disconnectSession.bind(this), BLETimeout);
     }
 
@@ -437,11 +426,72 @@ class WeDo2 {
      * @param {object} base64 - the incoming BLE data.
      * @private
      */
-    _processSessionData (base64) {
-        // parse data
+    _onMessage (base64) {
         const data = Base64Util.base64ToUint8Array(base64);
 
-        console.log(data);
+        log.info(data);
+
+        if (data.length === 3) { // distance sensor?
+            this._sensors.distance = data[2];
+        }
+
+        if (data.length === 4) { // tilt sensor?
+            this._sensors.tiltX = data[2];
+            this._sensors.tiltY = data[3];
+        }
+
+        if (data.length === 12) { // attached io
+
+            log.info(`sensor or motor # ${data[3]} connected at channel ${data[0]}`);
+            const channel = data[0];
+            const type = data[3];
+
+            // Register for tilt sensor notifications
+            // TODO: register disconnect
+            if (type === WEDO2_IO_TYPES.tilt) {
+                const cmd = new Uint8Array(11);
+                cmd[0] = 1; // sensor format
+                cmd[1] = 2; // command type: write
+                cmd[2] = channel; // connect id / channel
+                cmd[3] = WEDO2_IO_TYPES.tilt; // type id: tilt
+                cmd[4] = 0; // mode: angle
+                cmd[5] = 1; // delta interval
+                cmd[6] = 0;
+                cmd[7] = 0;
+                cmd[8] = 0;
+                cmd[9] = 1; // unit: pct?
+                cmd[10] = 1; // notifications enabled: true
+
+                this._send(UUID.INPUT_COMMAND, Base64Util.uint8ArrayToBase64(cmd))
+                    .then(() => {
+                        this._ble.read(UUID.IO_SERVICE, UUID.INPUT_VALUES, true, this._onMessage.bind(this));
+                    });
+            }
+
+            // Register for distance sensor notifications
+            // TODO: register disconnect
+            if (type === WEDO2_IO_TYPES.distance) {
+                log.info('should register for distance');
+                const cmd = new Uint8Array(11);
+                cmd[0] = 1; // sensor format
+                cmd[1] = 2; // command type: write
+                cmd[2] = channel; // connect id / channel
+                cmd[3] = WEDO2_IO_TYPES.distance; // type id: distance
+                cmd[4] = 0; // mode: detect
+                cmd[5] = 1; // delta interval
+                cmd[6] = 0;
+                cmd[7] = 0;
+                cmd[8] = 0;
+                cmd[9] = 1; // unit: ?
+                cmd[10] = 1; // notifications enabled: true
+
+                this._send(UUID.INPUT_COMMAND, Base64Util.uint8ArrayToBase64(cmd))
+                    .then(() => {
+                        log.info('should start reading');
+                        this._ble.read(UUID.IO_SERVICE, UUID.INPUT_VALUES, true, this._onMessage.bind(this));
+                    });
+            }
+        }
 
         /* this._sensors.tiltX = data[1] | (data[0] << 8);
         if (this._sensors.tiltX > (1 << 15)) this._sensors.tiltX -= (1 << 16);
@@ -466,12 +516,12 @@ class WeDo2 {
      * Write a message to the device BLE session.
      * @param {number} uuid - the UUID of the characteristic to write to
      * @param {Uint8Array} message - the message to write.
-     * @return {Promise} - a Promise that resolves when writing to device.
+     * @return {Promise} - a promise result of the write operation
      * @private
      */
-    _writeSessionData (uuid, message) {
+    _send (uuid, message) {
         if (!this.getPeripheralIsConnected()) return;
-        this._ble.write('00004f0e-1212-efde-1523-785feabcd123', uuid, message, 'base64');
+        return this._ble.write(UUID.IO_SERVICE, uuid, message, 'base64');
     }
 }
 
