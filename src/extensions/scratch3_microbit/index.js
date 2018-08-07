@@ -2,6 +2,7 @@ const ArgumentType = require('../../extension-support/argument-type');
 const BlockType = require('../../extension-support/block-type');
 const log = require('../../util/log');
 const cast = require('../../util/cast');
+const formatMessage = require('format-message');
 const BLESession = require('../../io/bleSession');
 const Base64Util = require('../../util/base64-util');
 
@@ -335,7 +336,11 @@ class Scratch3MicroBitBlocks {
             blocks: [
                 {
                     opcode: 'whenButtonPressed',
-                    text: 'when [BTN] button pressed',
+                    text: formatMessage({
+                        id: 'music.whenButtonPressed',
+                        default: 'when [BTN] button pressed',
+                        description: 'when the selected button on the micro:bit is pressed'
+                    }),
                     blockType: BlockType.HAT,
                     arguments: {
                         BTN: {
@@ -347,7 +352,11 @@ class Scratch3MicroBitBlocks {
                 },
                 {
                     opcode: 'isButtonPressed',
-                    text: '[BTN] button pressed?',
+                    text: formatMessage({
+                        id: 'music.isButtonPressed',
+                        default: '[BTN] button pressed?',
+                        description: 'is the selected button on the micro:bit pressed?'
+                    }),
                     blockType: BlockType.BOOLEAN,
                     arguments: {
                         BTN: {
@@ -360,7 +369,11 @@ class Scratch3MicroBitBlocks {
                 '---',
                 {
                     opcode: 'whenGesture',
-                    text: 'when [GESTURE]',
+                    text: formatMessage({
+                        id: 'music.whenGesture',
+                        default: 'when [GESTURE]',
+                        description: 'when the selected gesture is detected by the micro:bit'
+                    }),
                     blockType: BlockType.HAT,
                     arguments: {
                         GESTURE: {
@@ -373,7 +386,11 @@ class Scratch3MicroBitBlocks {
                 '---',
                 {
                     opcode: 'displaySymbol',
-                    text: 'display [MATRIX]',
+                    text: formatMessage({
+                        id: 'music.displaySymbol',
+                        default: 'display [MATRIX]',
+                        description: 'display a pattern on the micro:bit display'
+                    }),
                     blockType: BlockType.COMMAND,
                     arguments: {
                         MATRIX: {
@@ -384,7 +401,11 @@ class Scratch3MicroBitBlocks {
                 },
                 {
                     opcode: 'displayText',
-                    text: 'display [TEXT]',
+                    text: formatMessage({
+                        id: 'music.displayText',
+                        default: 'display [TEXT]',
+                        description: 'display text on the micro:bit display'
+                    }),
                     blockType: BlockType.COMMAND,
                     arguments: {
                         TEXT: {
@@ -395,13 +416,21 @@ class Scratch3MicroBitBlocks {
                 },
                 {
                     opcode: 'displayClear',
-                    text: 'clear display',
+                    text: formatMessage({
+                        id: 'music.clearDisplay',
+                        default: 'clear display',
+                        description: 'display nothing on the micro:bit display'
+                    }),
                     blockType: BlockType.COMMAND
                 },
                 '---',
                 {
                     opcode: 'whenTilted',
-                    text: 'when tilted [DIRECTION]',
+                    text: formatMessage({
+                        id: 'music.whenTilted',
+                        default: 'when tilted [DIRECTION]',
+                        description: 'when the micro:bit is tilted in a direction'
+                    }),
                     blockType: BlockType.HAT,
                     arguments: {
                         DIRECTION: {
@@ -413,7 +442,11 @@ class Scratch3MicroBitBlocks {
                 },
                 {
                     opcode: 'isTilted',
-                    text: 'tilted [DIRECTION]?',
+                    text: formatMessage({
+                        id: 'music.isTilted',
+                        default: 'tilted [DIRECTION]?',
+                        description: 'is the micro:bit is tilted in a direction?'
+                    }),
                     blockType: BlockType.BOOLEAN,
                     arguments: {
                         DIRECTION: {
@@ -425,7 +458,11 @@ class Scratch3MicroBitBlocks {
                 },
                 {
                     opcode: 'getTiltAngle',
-                    text: 'tilt angle [DIRECTION]',
+                    text: formatMessage({
+                        id: 'music.tiltAngle',
+                        default: 'tilt angle [DIRECTION]',
+                        description: 'how much the micro:bit is tilted in a direction'
+                    }),
                     blockType: BlockType.REPORTER,
                     arguments: {
                         DIRECTION: {
@@ -438,7 +475,11 @@ class Scratch3MicroBitBlocks {
                 '---',
                 {
                     opcode: 'whenPinConnected',
-                    text: 'when pin [PIN] connected',
+                    text: formatMessage({
+                        id: 'music.whenPinConnected',
+                        default: 'when pin [PIN] connected',
+                        description: 'when a pin is connected to the micro:bit'
+                    }),
                     blockType: BlockType.HAT,
                     arguments: {
                         PIN: {
