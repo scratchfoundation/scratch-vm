@@ -284,6 +284,38 @@ const TiltDirection = {
 };
 
 /**
+ * Enum for micro:bit gestures.
+ * @readonly
+ * @enum {string}
+ */
+const Gestures = {
+    MOVED: 'moved',
+    SHAKEN: 'shaken',
+    JUMPED: 'jumped'
+};
+
+/**
+ * Enum for micro:bit buttons.
+ * @readonly
+ * @enum {string}
+ */
+const Buttons = {
+    A: 'A',
+    B: 'B',
+    ANY: 'any'
+};
+
+/**
+ * Enum for micro:bit pin states.
+ * @readonly
+ * @enum {string}
+ */
+const PinState = {
+    ON: 'on',
+    OFF: 'off'
+};
+
+/**
  * Scratch 3.0 blocks to interact with a MicroBit device.
  */
 class Scratch3MicroBitBlocks {
@@ -307,6 +339,151 @@ class Scratch3MicroBitBlocks {
      */
     static get TILT_THRESHOLD () {
         return 15;
+    }
+
+    /**
+     * @return {array} - text and values for each buttons menu element
+     */
+    get BUTTONS_MENU () {
+        return [
+            {
+                text: formatMessage({
+                    id: 'microbit.buttonsMenu.A',
+                    default: 'A',
+                    description: 'label for button A element in button picker for micro:bit extension'
+                }),
+                value: Buttons.A
+            },
+            {
+                text: formatMessage({
+                    id: 'microbit.buttonsMenu.B',
+                    default: 'B',
+                    description: 'label for button B element in button picker for micro:bit extension'
+                }),
+                value: Buttons.B
+            },
+            {
+                text: formatMessage({
+                    id: 'microbit.buttonsMenu.any',
+                    default: 'any',
+                    description: 'label for "any" element in button picker for micro:bit extension'
+                }),
+                value: Buttons.ANY
+            }
+        ];
+    }
+
+    /**
+     * @return {array} - text and values for each gestures menu element
+     */
+    get GESTURES_MENU () {
+        return [
+            {
+                text: formatMessage({
+                    id: 'microbit.gesturesMenu.moved',
+                    default: 'moved',
+                    description: 'label for moved gesture in gesture picker for micro:bit extension'
+                }),
+                value: Gestures.MOVED
+            },
+            {
+                text: formatMessage({
+                    id: 'microbit.gesturesMenu.shaken',
+                    default: 'shaken',
+                    description: 'label for shaken gesture in gesture picker for micro:bit extension'
+                }),
+                value: Gestures.SHAKEN
+            },
+            {
+                text: formatMessage({
+                    id: 'microbit.gesturesMenu.jumped',
+                    default: 'jumped',
+                    description: 'label for jumped gesture in gesture picker for micro:bit extension'
+                }),
+                value: Gestures.JUMPED
+            }
+        ];
+    }
+
+    /**
+     * @return {array} - text and values for each pin state menu element
+     */
+    get PIN_STATE_MENU () {
+        return [
+            {
+                text: formatMessage({
+                    id: 'microbit.pinStateMenu.on',
+                    default: 'on',
+                    description: 'label for on element in pin state picker for micro:bit extension'
+                }),
+                value: PinState.ON
+            },
+            {
+                text: formatMessage({
+                    id: 'microbit.pinStateMenu.off',
+                    default: 'off',
+                    description: 'label for off element in pin state picker for micro:bit extension'
+                }),
+                value: PinState.OFF
+            }
+        ];
+    }
+
+    /**
+     * @return {array} - text and values for each tilt direction menu element
+     */
+    get TILT_DIRECTION_MENU () {
+        return [
+            {
+                text: formatMessage({
+                    id: 'microbit.tiltDirectionMenu.front',
+                    default: 'front',
+                    description: 'label for front element in tilt direction picker for micro:bit extension'
+                }),
+                value: TiltDirection.FRONT
+            },
+            {
+                text: formatMessage({
+                    id: 'microbit.tiltDirectionMenu.back',
+                    default: 'back',
+                    description: 'label for back element in tilt direction picker for micro:bit extension'
+                }),
+                value: TiltDirection.BACK
+            },
+            {
+                text: formatMessage({
+                    id: 'microbit.tiltDirectionMenu.left',
+                    default: 'left',
+                    description: 'label for left element in tilt direction picker for micro:bit extension'
+                }),
+                value: TiltDirection.LEFT
+            },
+            {
+                text: formatMessage({
+                    id: 'microbit.tiltDirectionMenu.right',
+                    default: 'right',
+                    description: 'label for right element in tilt direction picker for micro:bit extension'
+                }),
+                value: TiltDirection.RIGHT
+            }
+        ];
+    }
+
+    /**
+     * @return {array} - text and values for each tilt direction (plus "any") menu element
+     */
+    get TILT_DIRECTION_ANY_MENU () {
+        return [
+            ...this.TILT_DIRECTION_MENU,
+            {
+                text: formatMessage({
+                    id: 'microbit.tiltDirectionMenu.any',
+                    default: 'any',
+                    description: 'label for any direction element in tilt direction picker for micro:bit extension'
+                }),
+                value: TiltDirection.ANY
+            }
+        ];
     }
 
     /**
@@ -337,7 +514,7 @@ class Scratch3MicroBitBlocks {
                 {
                     opcode: 'whenButtonPressed',
                     text: formatMessage({
-                        id: 'music.whenButtonPressed',
+                        id: 'microbit.whenButtonPressed',
                         default: 'when [BTN] button pressed',
                         description: 'when the selected button on the micro:bit is pressed'
                     }),
@@ -346,14 +523,14 @@ class Scratch3MicroBitBlocks {
                         BTN: {
                             type: ArgumentType.STRING,
                             menu: 'buttons',
-                            defaultValue: 'A'
+                            defaultValue: Buttons.A
                         }
                     }
                 },
                 {
                     opcode: 'isButtonPressed',
                     text: formatMessage({
-                        id: 'music.isButtonPressed',
+                        id: 'microbit.isButtonPressed',
                         default: '[BTN] button pressed?',
                         description: 'is the selected button on the micro:bit pressed?'
                     }),
@@ -362,7 +539,7 @@ class Scratch3MicroBitBlocks {
                         BTN: {
                             type: ArgumentType.STRING,
                             menu: 'buttons',
-                            defaultValue: 'A'
+                            defaultValue: Buttons.A
                         }
                     }
                 },
@@ -370,7 +547,7 @@ class Scratch3MicroBitBlocks {
                 {
                     opcode: 'whenGesture',
                     text: formatMessage({
-                        id: 'music.whenGesture',
+                        id: 'microbit.whenGesture',
                         default: 'when [GESTURE]',
                         description: 'when the selected gesture is detected by the micro:bit'
                     }),
@@ -379,7 +556,7 @@ class Scratch3MicroBitBlocks {
                         GESTURE: {
                             type: ArgumentType.STRING,
                             menu: 'gestures',
-                            defaultValue: 'moved'
+                            defaultValue: Gestures.MOVED
                         }
                     }
                 },
@@ -387,7 +564,7 @@ class Scratch3MicroBitBlocks {
                 {
                     opcode: 'displaySymbol',
                     text: formatMessage({
-                        id: 'music.displaySymbol',
+                        id: 'microbit.displaySymbol',
                         default: 'display [MATRIX]',
                         description: 'display a pattern on the micro:bit display'
                     }),
@@ -402,7 +579,7 @@ class Scratch3MicroBitBlocks {
                 {
                     opcode: 'displayText',
                     text: formatMessage({
-                        id: 'music.displayText',
+                        id: 'microbit.displayText',
                         default: 'display [TEXT]',
                         description: 'display text on the micro:bit display'
                     }),
@@ -410,14 +587,18 @@ class Scratch3MicroBitBlocks {
                     arguments: {
                         TEXT: {
                             type: ArgumentType.STRING,
-                            defaultValue: 'Hello!'
+                            defaultValue: formatMessage({
+                                id: 'microbit.defaultTextToDisplay',
+                                default: 'Hello!',
+                                description: 'Hello!: the default text to display on the micro:bit'
+                            })
                         }
                     }
                 },
                 {
                     opcode: 'displayClear',
                     text: formatMessage({
-                        id: 'music.clearDisplay',
+                        id: 'microbit.clearDisplay',
                         default: 'clear display',
                         description: 'display nothing on the micro:bit display'
                     }),
@@ -427,7 +608,7 @@ class Scratch3MicroBitBlocks {
                 {
                     opcode: 'whenTilted',
                     text: formatMessage({
-                        id: 'music.whenTilted',
+                        id: 'microbit.whenTilted',
                         default: 'when tilted [DIRECTION]',
                         description: 'when the micro:bit is tilted in a direction'
                     }),
@@ -443,7 +624,7 @@ class Scratch3MicroBitBlocks {
                 {
                     opcode: 'isTilted',
                     text: formatMessage({
-                        id: 'music.isTilted',
+                        id: 'microbit.isTilted',
                         default: 'tilted [DIRECTION]?',
                         description: 'is the micro:bit is tilted in a direction?'
                     }),
@@ -459,7 +640,7 @@ class Scratch3MicroBitBlocks {
                 {
                     opcode: 'getTiltAngle',
                     text: formatMessage({
-                        id: 'music.tiltAngle',
+                        id: 'microbit.tiltAngle',
                         default: 'tilt angle [DIRECTION]',
                         description: 'how much the micro:bit is tilted in a direction'
                     }),
@@ -476,7 +657,7 @@ class Scratch3MicroBitBlocks {
                 {
                     opcode: 'whenPinConnected',
                     text: formatMessage({
-                        id: 'music.whenPinConnected',
+                        id: 'microbit.whenPinConnected',
                         default: 'when pin [PIN] connected',
                         description: 'when a pin is connected to the micro:bit'
                     }),
@@ -491,14 +672,11 @@ class Scratch3MicroBitBlocks {
                 }
             ],
             menus: {
-                buttons: ['A', 'B', 'any'],
-                gestures: ['moved', 'shaken', 'jumped'],
-                pinState: ['on', 'off'],
-                tiltDirection: [TiltDirection.FRONT, TiltDirection.BACK, TiltDirection.LEFT, TiltDirection.RIGHT],
-                tiltDirectionAny: [
-                    TiltDirection.FRONT, TiltDirection.BACK, TiltDirection.LEFT,
-                    TiltDirection.RIGHT, TiltDirection.ANY
-                ],
+                buttons: this.BUTTONS_MENU,
+                gestures: this.GESTURES_MENU,
+                pinState: this.PIN_STATE_MENU,
+                tiltDirection: this.TILT_DIRECTION_MENU,
+                tiltDirectionAny: this.TILT_DIRECTION_ANY_MENU,
                 touchPins: ['0', '1', '2']
             }
         };
