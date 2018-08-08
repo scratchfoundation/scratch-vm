@@ -44,30 +44,6 @@ class Scratch3SoundBlocks {
         };
     }
 
-    /**
-     * The minimum and maximum MIDI note numbers, for clamping the input to play note.
-     * @type {{min: number, max: number}}
-     */
-    static get MIDI_NOTE_RANGE () {
-        return {min: 36, max: 96}; // C2 to C7
-    }
-
-    /**
-     * The minimum and maximum beat values, for clamping the duration of play note, play drum and rest.
-     * 100 beats at the default tempo of 60bpm is 100 seconds.
-     * @type {{min: number, max: number}}
-     */
-    static get BEAT_RANGE () {
-        return {min: 0, max: 100};
-    }
-
-    /** The minimum and maximum tempo values, in bpm.
-     * @type {{min: number, max: number}}
-     */
-    static get TEMPO_RANGE () {
-        return {min: 20, max: 500};
-    }
-
     /** The minimum and maximum values for each sound effect.
      * @type {{effect:{min: number, max: number}}}
      */
