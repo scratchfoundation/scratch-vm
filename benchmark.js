@@ -481,6 +481,9 @@ const runBenchmark = function () {
     vm.attachRenderer(renderer);
     const audioEngine = new window.AudioEngine();
     vm.attachAudioEngine(audioEngine);
+    /* global ScratchSVGRenderer */
+    vm.attachV2SVGAdapter(new ScratchSVGRenderer.SVGRenderer());
+    vm.attachV2BitmapAdapter(new ScratchSVGRenderer.BitmapAdapter());
 
     // Feed mouse events as VM I/O events.
     document.addEventListener('mousemove', e => {
