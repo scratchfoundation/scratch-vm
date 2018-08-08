@@ -347,19 +347,11 @@ class Scratch3MicroBitBlocks {
     get BUTTONS_MENU () {
         return [
             {
-                text: formatMessage({
-                    id: 'microbit.buttonsMenu.A',
-                    default: 'A',
-                    description: 'label for button A element in button picker for micro:bit extension'
-                }),
+                text: 'A',
                 value: Buttons.A
             },
             {
-                text: formatMessage({
-                    id: 'microbit.buttonsMenu.B',
-                    default: 'B',
-                    description: 'label for button B element in button picker for micro:bit extension'
-                }),
+                text: 'B',
                 value: Buttons.B
             },
             {
@@ -581,7 +573,12 @@ class Scratch3MicroBitBlocks {
                     text: formatMessage({
                         id: 'microbit.displayText',
                         default: 'display [TEXT]',
-                        description: 'display text on the micro:bit display'
+                        description: `default text to display.
+                        IMPORTANT - the micro:bit only supports letters a-z, A-Z.
+                        Please substitute a default word in your language
+                        that can be written with those characters,
+                        substitute non-accented characters or leave it as "Hello!".
+                        Check the micro:bit site documentation for details`
                     }),
                     blockType: BlockType.COMMAND,
                     arguments: {
@@ -658,8 +655,9 @@ class Scratch3MicroBitBlocks {
                     opcode: 'whenPinConnected',
                     text: formatMessage({
                         id: 'microbit.whenPinConnected',
-                        default: 'when pin [PIN] connected',
-                        description: 'when a pin is connected to the micro:bit'
+                        default: 'when pin [PIN] connected test',
+                        description: 'when the pin detects a connection to Earth/Ground'
+
                     }),
                     blockType: BlockType.HAT,
                     arguments: {
