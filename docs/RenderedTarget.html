@@ -1,0 +1,8503 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>RenderedTarget - Documentation</title>
+
+    <script src="scripts/prettify/prettify.js"></script>
+    <script src="scripts/prettify/lang-css.js"></script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link type="text/css" rel="stylesheet" href="styles/prettify.css">
+    <link type="text/css" rel="stylesheet" href="styles/jsdoc.css">
+</head>
+<body>
+
+<input type="checkbox" id="nav-trigger" class="nav-trigger" />
+<label for="nav-trigger" class="navicon-button x">
+  <div class="navicon"></div>
+</label>
+
+<label for="nav-trigger" class="overlay"></label>
+
+<nav>
+    <h2><a href="index.html">Home</a></h2><h3>Classes</h3><ul><li><a href="-_StackFrame.html">_StackFrame</a><ul class='methods'><li data-type='method'><a href="-_StackFrame.html#.create">create</a></li><li data-type='method'><a href="-_StackFrame.html#.release">release</a></li><li data-type='method'><a href="-_StackFrame.html#reset">reset</a></li><li data-type='method'><a href="-_StackFrame.html#reuse">reuse</a></li></ul></li><li><a href="BLESession.html">BLESession</a><ul class='methods'><li data-type='method'><a href="BLESession.html#connectDevice">connectDevice</a></li><li data-type='method'><a href="BLESession.html#didReceiveCall">didReceiveCall</a></li><li data-type='method'><a href="BLESession.html#disconnectSession">disconnectSession</a></li><li data-type='method'><a href="BLESession.html#getPeripheralIsConnected">getPeripheralIsConnected</a></li><li data-type='method'><a href="BLESession.html#read">read</a></li><li data-type='method'><a href="BLESession.html#requestDevice">requestDevice</a></li><li data-type='method'><a href="BLESession.html#write">write</a></li></ul></li><li><a href="BlockCached.html">BlockCached</a></li><li><a href="BTSession.html">BTSession</a><ul class='methods'><li data-type='method'><a href="BTSession.html#connectDevice">connectDevice</a></li><li data-type='method'><a href="BTSession.html#didReceiveCall">didReceiveCall</a></li><li data-type='method'><a href="BTSession.html#disconnectSession">disconnectSession</a></li><li data-type='method'><a href="BTSession.html#getPeripheralIsConnected">getPeripheralIsConnected</a></li><li data-type='method'><a href="BTSession.html#requestDevice">requestDevice</a></li></ul></li><li><a href="CentralDispatch.html">CentralDispatch</a><ul class='methods'><li data-type='method'><a href="CentralDispatch.html#_getServiceProvider">_getServiceProvider</a></li><li data-type='method'><a href="CentralDispatch.html#_onDispatchMessage">_onDispatchMessage</a></li><li data-type='method'><a href="CentralDispatch.html#addWorker">addWorker</a></li><li data-type='method'><a href="CentralDispatch.html#setService">setService</a></li></ul></li><li><a href="Clone.html">Clone</a><ul class='methods'><li data-type='method'><a href="Clone.html#.simple">simple</a></li></ul></li><li><a href="Comment.html">Comment</a></li><li><a href="DeviceFinder.html">DeviceFinder</a><ul class='methods'><li data-type='method'><a href="DeviceFinder.html#_getList">_getList</a></li><li data-type='method'><a href="DeviceFinder.html#_listResultHandler">_listResultHandler</a></li><li data-type='method'><a href="DeviceFinder.html#cancel">cancel</a></li><li data-type='method'><a href="DeviceFinder.html#start">start</a></li></ul></li><li><a href="DeviceManager.html">DeviceManager</a><ul class='methods'><li data-type='method'><a href="DeviceManager.html#list">list</a></li><li data-type='method'><a href="DeviceManager.html#open">open</a></li><li data-type='method'><a href="DeviceManager.html#searchAndConnect">searchAndConnect</a></li></ul></li><li><a href="DeviceOpener.html">DeviceOpener</a><ul class='methods'><li data-type='method'><a href="DeviceOpener.html#clearConnectionTimeout">clearConnectionTimeout</a></li><li data-type='method'><a href="DeviceOpener.html#onDeviceWasOpened">onDeviceWasOpened</a></li><li data-type='method'><a href="DeviceOpener.html#onDisconnect">onDisconnect</a></li><li data-type='method'><a href="DeviceOpener.html#onTimeout">onTimeout</a></li><li data-type='method'><a href="DeviceOpener.html#open">open</a></li></ul></li><li><a href="MicroBit.html">MicroBit</a><ul class='methods'><li data-type='method'><a href="MicroBit.html#_checkPinState">_checkPinState</a></li><li data-type='method'><a href="MicroBit.html#_onSessionConnect">_onSessionConnect</a></li><li data-type='method'><a href="MicroBit.html#_processSessionData">_processSessionData</a></li><li data-type='method'><a href="MicroBit.html#_writeSessionData">_writeSessionData</a></li><li data-type='method'><a href="MicroBit.html#connectDevice">connectDevice</a></li><li data-type='method'><a href="MicroBit.html#displayMatrix">displayMatrix</a></li><li data-type='method'><a href="MicroBit.html#displayText">displayText</a></li><li data-type='method'><a href="MicroBit.html#startDeviceScan">startDeviceScan</a></li></ul></li><li><a href="Profiler.html">Profiler</a><ul class='methods'><li data-type='method'><a href="Profiler.html#.available">available</a></li><li data-type='method'><a href="Profiler.html#.idByName">idByName</a></li><li data-type='method'><a href="Profiler.html#.nameById">nameById</a></li><li data-type='method'><a href="Profiler.html#idByName">idByName</a></li><li data-type='method'><a href="Profiler.html#nameById">nameById</a></li><li data-type='method'><a href="Profiler.html#reportFrames">reportFrames</a></li><li data-type='method'><a href="Profiler.html#start">start</a></li><li data-type='method'><a href="Profiler.html#stop">stop</a></li></ul></li><li><a href="ProfilerFrame.html">ProfilerFrame</a></li><li><a href="RenderedTarget.html">RenderedTarget</a><ul class='methods'><li data-type='method'><a href="RenderedTarget.html#_getRenderedDirectionAndScale">_getRenderedDirectionAndScale</a></li><li data-type='method'><a href="RenderedTarget.html#_roundCoord">_roundCoord</a></li><li data-type='method'><a href="RenderedTarget.html#addCostume">addCostume</a></li><li data-type='method'><a href="RenderedTarget.html#addSound">addSound</a></li><li data-type='method'><a href="RenderedTarget.html#clearEffects">clearEffects</a></li><li data-type='method'><a href="RenderedTarget.html#colorIsTouchingColor">colorIsTouchingColor</a></li><li data-type='method'><a href="RenderedTarget.html#deleteCostume">deleteCostume</a></li><li data-type='method'><a href="RenderedTarget.html#deleteSound">deleteSound</a></li><li data-type='method'><a href="RenderedTarget.html#dispose">dispose</a></li><li data-type='method'><a href="RenderedTarget.html#duplicate">duplicate</a></li><li data-type='method'><a href="RenderedTarget.html#getBounds">getBounds</a></li><li data-type='method'><a href="RenderedTarget.html#getBoundsForBubble">getBoundsForBubble</a></li><li data-type='method'><a href="RenderedTarget.html#getCostumeIndexByName">getCostumeIndexByName</a></li><li data-type='method'><a href="RenderedTarget.html#getCostumes">getCostumes</a></li><li data-type='method'><a href="RenderedTarget.html#getCurrentCostume">getCurrentCostume</a></li><li data-type='method'><a href="RenderedTarget.html#getName">getName</a></li><li data-type='method'><a href="RenderedTarget.html#getSounds">getSounds</a></li><li data-type='method'><a href="RenderedTarget.html#goBackwardLayers">goBackwardLayers</a></li><li data-type='method'><a href="RenderedTarget.html#goBehindOther">goBehindOther</a></li><li data-type='method'><a href="RenderedTarget.html#goForwardLayers">goForwardLayers</a></li><li data-type='method'><a href="RenderedTarget.html#goToBack">goToBack</a></li><li data-type='method'><a href="RenderedTarget.html#goToFront">goToFront</a></li><li data-type='method'><a href="RenderedTarget.html#initAudio">initAudio</a></li><li data-type='method'><a href="RenderedTarget.html#initDrawable">initDrawable</a></li><li data-type='method'><a href="RenderedTarget.html#isSprite">isSprite</a></li><li data-type='method'><a href="RenderedTarget.html#isTouchingColor">isTouchingColor</a></li><li data-type='method'><a href="RenderedTarget.html#isTouchingEdge">isTouchingEdge</a></li><li data-type='method'><a href="RenderedTarget.html#isTouchingObject">isTouchingObject</a></li><li data-type='method'><a href="RenderedTarget.html#isTouchingPoint">isTouchingPoint</a></li><li data-type='method'><a href="RenderedTarget.html#isTouchingSprite">isTouchingSprite</a></li><li data-type='method'><a href="RenderedTarget.html#keepInFence">keepInFence</a></li><li data-type='method'><a href="RenderedTarget.html#makeClone">makeClone</a></li><li data-type='method'><a href="RenderedTarget.html#onGreenFlag">onGreenFlag</a></li><li data-type='method'><a href="RenderedTarget.html#onStopAll">onStopAll</a></li><li data-type='method'><a href="RenderedTarget.html#postSpriteInfo">postSpriteInfo</a></li><li data-type='method'><a href="RenderedTarget.html#renameCostume">renameCostume</a></li><li data-type='method'><a href="RenderedTarget.html#renameSound">renameSound</a></li><li data-type='method'><a href="RenderedTarget.html#reorderCostume">reorderCostume</a></li><li data-type='method'><a href="RenderedTarget.html#reorderSound">reorderSound</a></li><li data-type='method'><a href="RenderedTarget.html#setCostume">setCostume</a></li><li data-type='method'><a href="RenderedTarget.html#setDirection">setDirection</a></li><li data-type='method'><a href="RenderedTarget.html#setDraggable">setDraggable</a></li><li data-type='method'><a href="RenderedTarget.html#setEffect">setEffect</a></li><li data-type='method'><a href="RenderedTarget.html#setRotationStyle">setRotationStyle</a></li><li data-type='method'><a href="RenderedTarget.html#setSay">setSay</a></li><li data-type='method'><a href="RenderedTarget.html#setSize">setSize</a></li><li data-type='method'><a href="RenderedTarget.html#setVisible">setVisible</a></li><li data-type='method'><a href="RenderedTarget.html#setXY">setXY</a></li><li data-type='method'><a href="RenderedTarget.html#startDrag">startDrag</a></li><li data-type='method'><a href="RenderedTarget.html#stopDrag">stopDrag</a></li><li data-type='method'><a href="RenderedTarget.html#toJSON">toJSON</a></li><li data-type='method'><a href="RenderedTarget.html#updateAllDrawableProperties">updateAllDrawableProperties</a></li></ul></li><li><a href="Runtime.html">Runtime</a><ul class='methods'><li data-type='method'><a href="Runtime.html#_buildMenuForScratchBlocks">_buildMenuForScratchBlocks</a></li><li data-type='method'><a href="Runtime.html#_convertForScratchBlocks">_convertForScratchBlocks</a></li><li data-type='method'><a href="Runtime.html#_convertPlaceholders">_convertPlaceholders</a></li><li data-type='method'><a href="Runtime.html#_emitProjectRunStatus">_emitProjectRunStatus</a></li><li data-type='method'><a href="Runtime.html#_fillExtensionCategory">_fillExtensionCategory</a></li><li data-type='method'><a href="Runtime.html#_getMonitorThreadCount">_getMonitorThreadCount</a></li><li data-type='method'><a href="Runtime.html#_makeExtensionMenuId">_makeExtensionMenuId</a></li><li data-type='method'><a href="Runtime.html#_pushMonitors">_pushMonitors</a></li><li data-type='method'><a href="Runtime.html#_pushThread">_pushThread</a></li><li data-type='method'><a href="Runtime.html#_refreshExtensionPrimitives">_refreshExtensionPrimitives</a></li><li data-type='method'><a href="Runtime.html#_registerBlockPackages">_registerBlockPackages</a></li><li data-type='method'><a href="Runtime.html#_registerExtensionPrimitives">_registerExtensionPrimitives</a></li><li data-type='method'><a href="Runtime.html#_restartThread">_restartThread</a></li><li data-type='method'><a href="Runtime.html#_step">_step</a></li><li data-type='method'><a href="Runtime.html#_stopThread">_stopThread</a></li><li data-type='method'><a href="Runtime.html#_updateGlows">_updateGlows</a></li><li data-type='method'><a href="Runtime.html#addMonitorScript">addMonitorScript</a></li><li data-type='method'><a href="Runtime.html#allScriptsDo">allScriptsDo</a></li><li data-type='method'><a href="Runtime.html#attachAudioEngine">attachAudioEngine</a></li><li data-type='method'><a href="Runtime.html#attachRenderer">attachRenderer</a></li><li data-type='method'><a href="Runtime.html#attachStorage">attachStorage</a></li><li data-type='method'><a href="Runtime.html#attachV2BitmapAdapter">attachV2BitmapAdapter</a></li><li data-type='method'><a href="Runtime.html#attachV2SVGAdapter">attachV2SVGAdapter</a></li><li data-type='method'><a href="Runtime.html#changeCloneCounter">changeCloneCounter</a></li><li data-type='method'><a href="Runtime.html#clearEdgeActivatedValues">clearEdgeActivatedValues</a></li><li data-type='method'><a href="Runtime.html#clonesAvailable">clonesAvailable</a></li><li data-type='method'><a href="Runtime.html#createNewGlobalVariable">createNewGlobalVariable</a></li><li data-type='method'><a href="Runtime.html#disableProfiling">disableProfiling</a></li><li data-type='method'><a href="Runtime.html#dispose">dispose</a></li><li data-type='method'><a href="Runtime.html#disposeTarget">disposeTarget</a></li><li data-type='method'><a href="Runtime.html#emitBlockDragUpdate">emitBlockDragUpdate</a></li><li data-type='method'><a href="Runtime.html#emitBlockEndDrag">emitBlockEndDrag</a></li><li data-type='method'><a href="Runtime.html#enableProfiling">enableProfiling</a></li><li data-type='method'><a href="Runtime.html#fireTargetWasCreated">fireTargetWasCreated</a></li><li data-type='method'><a href="Runtime.html#fireTargetWasRemoved">fireTargetWasRemoved</a></li><li data-type='method'><a href="Runtime.html#getBlocksJSON">getBlocksJSON</a></li><li data-type='method'><a href="Runtime.html#getBlocksXML">getBlocksXML</a></li><li data-type='method'><a href="Runtime.html#getEditingTarget">getEditingTarget</a></li><li data-type='method'><a href="Runtime.html#getIsEdgeActivatedHat">getIsEdgeActivatedHat</a></li><li data-type='method'><a href="Runtime.html#getIsHat">getIsHat</a></li><li data-type='method'><a href="Runtime.html#getOpcodeFunction">getOpcodeFunction</a></li><li data-type='method'><a href="Runtime.html#getSpriteTargetByName">getSpriteTargetByName</a></li><li data-type='method'><a href="Runtime.html#getTargetByDrawableId">getTargetByDrawableId</a></li><li data-type='method'><a href="Runtime.html#getTargetById">getTargetById</a></li><li data-type='method'><a href="Runtime.html#getTargetForStage">getTargetForStage</a></li><li data-type='method'><a href="Runtime.html#glowBlock">glowBlock</a></li><li data-type='method'><a href="Runtime.html#glowScript">glowScript</a></li><li data-type='method'><a href="Runtime.html#greenFlag">greenFlag</a></li><li data-type='method'><a href="Runtime.html#isActiveThread">isActiveThread</a></li><li data-type='method'><a href="Runtime.html#isWaitingThread">isWaitingThread</a></li><li data-type='method'><a href="Runtime.html#makeMessageContextForTarget">makeMessageContextForTarget</a></li><li data-type='method'><a href="Runtime.html#quietGlow">quietGlow</a></li><li data-type='method'><a href="Runtime.html#requestAddMonitor">requestAddMonitor</a></li><li data-type='method'><a href="Runtime.html#requestHideMonitor">requestHideMonitor</a></li><li data-type='method'><a href="Runtime.html#requestRedraw">requestRedraw</a></li><li data-type='method'><a href="Runtime.html#requestRemoveMonitor">requestRemoveMonitor</a></li><li data-type='method'><a href="Runtime.html#requestRemoveMonitorByTargetId">requestRemoveMonitorByTargetId</a></li><li data-type='method'><a href="Runtime.html#requestShowMonitor">requestShowMonitor</a></li><li data-type='method'><a href="Runtime.html#requestTargetsUpdate">requestTargetsUpdate</a></li><li data-type='method'><a href="Runtime.html#requestUpdateMonitor">requestUpdateMonitor</a></li><li data-type='method'><a href="Runtime.html#setCompatibilityMode">setCompatibilityMode</a></li><li data-type='method'><a href="Runtime.html#setEditingTarget">setEditingTarget</a></li><li data-type='method'><a href="Runtime.html#start">start</a></li><li data-type='method'><a href="Runtime.html#startHats">startHats</a></li><li data-type='method'><a href="Runtime.html#stopAll">stopAll</a></li><li data-type='method'><a href="Runtime.html#stopForTarget">stopForTarget</a></li><li data-type='method'><a href="Runtime.html#toggleScript">toggleScript</a></li><li data-type='method'><a href="Runtime.html#updateEdgeActivatedValue">updateEdgeActivatedValue</a></li><li data-type='method'><a href="Runtime.html#visualReport">visualReport</a></li></ul></li><li><a href="Scratch3Ev3Blocks.html">Scratch3Ev3Blocks</a><ul class='methods'><li data-type='method'><a href="Scratch3Ev3Blocks.html#_buildMenu">_buildMenu</a></li><li data-type='method'><a href="Scratch3Ev3Blocks.html#getInfo">getInfo</a></li></ul></li><li><a href="Scratch3MicroBitBlocks.html">Scratch3MicroBitBlocks</a><ul class='methods'><li data-type='method'><a href="Scratch3MicroBitBlocks.html#_getTiltAngle">_getTiltAngle</a></li><li data-type='method'><a href="Scratch3MicroBitBlocks.html#_isTilted">_isTilted</a></li><li data-type='method'><a href="Scratch3MicroBitBlocks.html#displayClear">displayClear</a></li><li data-type='method'><a href="Scratch3MicroBitBlocks.html#displaySymbol">displaySymbol</a></li><li data-type='method'><a href="Scratch3MicroBitBlocks.html#displayText">displayText</a></li><li data-type='method'><a href="Scratch3MicroBitBlocks.html#getInfo">getInfo</a></li><li data-type='method'><a href="Scratch3MicroBitBlocks.html#getTiltAngle">getTiltAngle</a></li><li data-type='method'><a href="Scratch3MicroBitBlocks.html#isButtonPressed">isButtonPressed</a></li><li data-type='method'><a href="Scratch3MicroBitBlocks.html#isTilted">isTilted</a></li><li data-type='method'><a href="Scratch3MicroBitBlocks.html#whenButtonPressed">whenButtonPressed</a></li><li data-type='method'><a href="Scratch3MicroBitBlocks.html#whenGesture">whenGesture</a></li><li data-type='method'><a href="Scratch3MicroBitBlocks.html#whenPinConnected">whenPinConnected</a></li><li data-type='method'><a href="Scratch3MicroBitBlocks.html#whenTilted">whenTilted</a></li></ul></li><li><a href="Scratch3MusicBlocks.html">Scratch3MusicBlocks</a><ul class='methods'><li data-type='method'><a href="Scratch3MusicBlocks.html#_beatsToSec">_beatsToSec</a></li><li data-type='method'><a href="Scratch3MusicBlocks.html#_buildMenu">_buildMenu</a></li><li data-type='method'><a href="Scratch3MusicBlocks.html#_checkStackTimer">_checkStackTimer</a></li><li data-type='method'><a href="Scratch3MusicBlocks.html#_clampBeats">_clampBeats</a></li><li data-type='method'><a href="Scratch3MusicBlocks.html#_decodeSound">_decodeSound</a></li><li data-type='method'><a href="Scratch3MusicBlocks.html#_getMusicState">_getMusicState</a></li><li data-type='method'><a href="Scratch3MusicBlocks.html#_loadAllSounds">_loadAllSounds</a></li><li data-type='method'><a href="Scratch3MusicBlocks.html#_onTargetCreated">_onTargetCreated</a></li><li data-type='method'><a href="Scratch3MusicBlocks.html#_playDrumNum">_playDrumNum</a></li><li data-type='method'><a href="Scratch3MusicBlocks.html#_playNote">_playNote</a></li><li data-type='method'><a href="Scratch3MusicBlocks.html#_ratioForPitchInterval">_ratioForPitchInterval</a></li><li data-type='method'><a href="Scratch3MusicBlocks.html#_selectSampleIndexForNote">_selectSampleIndexForNote</a></li><li data-type='method'><a href="Scratch3MusicBlocks.html#_stackTimerNeedsInit">_stackTimerNeedsInit</a></li><li data-type='method'><a href="Scratch3MusicBlocks.html#_startStackTimer">_startStackTimer</a></li><li data-type='method'><a href="Scratch3MusicBlocks.html#_storeSound">_storeSound</a></li><li data-type='method'><a href="Scratch3MusicBlocks.html#_updateTempo">_updateTempo</a></li><li data-type='method'><a href="Scratch3MusicBlocks.html#changeTempo">changeTempo</a></li><li data-type='method'><a href="Scratch3MusicBlocks.html#getInfo">getInfo</a></li><li data-type='method'><a href="Scratch3MusicBlocks.html#getTempo">getTempo</a></li><li data-type='method'><a href="Scratch3MusicBlocks.html#playDrumForBeats">playDrumForBeats</a></li><li data-type='method'><a href="Scratch3MusicBlocks.html#playNoteForBeats">playNoteForBeats</a></li><li data-type='method'><a href="Scratch3MusicBlocks.html#restForBeats">restForBeats</a></li><li data-type='method'><a href="Scratch3MusicBlocks.html#setInstrument">setInstrument</a></li><li data-type='method'><a href="Scratch3MusicBlocks.html#setTempo">setTempo</a></li></ul></li><li><a href="Scratch3PenBlocks.html">Scratch3PenBlocks</a><ul class='methods'><li data-type='method'><a href="Scratch3PenBlocks.html#_alphaToTransparency">_alphaToTransparency</a></li><li data-type='method'><a href="Scratch3PenBlocks.html#_clampColorParam">_clampColorParam</a></li><li data-type='method'><a href="Scratch3PenBlocks.html#_clampPenSize">_clampPenSize</a></li><li data-type='method'><a href="Scratch3PenBlocks.html#_getPenLayerID">_getPenLayerID</a></li><li data-type='method'><a href="Scratch3PenBlocks.html#_getPenState">_getPenState</a></li><li data-type='method'><a href="Scratch3PenBlocks.html#_initColorParam">_initColorParam</a></li><li data-type='method'><a href="Scratch3PenBlocks.html#_legacyUpdatePenColor">_legacyUpdatePenColor</a></li><li data-type='method'><a href="Scratch3PenBlocks.html#_onTargetCreated">_onTargetCreated</a></li><li data-type='method'><a href="Scratch3PenBlocks.html#_onTargetMoved">_onTargetMoved</a></li><li data-type='method'><a href="Scratch3PenBlocks.html#_setOrChangeColorParam">_setOrChangeColorParam</a></li><li data-type='method'><a href="Scratch3PenBlocks.html#_transparencyToAlpha">_transparencyToAlpha</a></li><li data-type='method'><a href="Scratch3PenBlocks.html#_updatePenColor">_updatePenColor</a></li><li data-type='method'><a href="Scratch3PenBlocks.html#_wrapColor">_wrapColor</a></li><li data-type='method'><a href="Scratch3PenBlocks.html#changePenColorParamBy">changePenColorParamBy</a></li><li data-type='method'><a href="Scratch3PenBlocks.html#changePenHueBy">changePenHueBy</a></li><li data-type='method'><a href="Scratch3PenBlocks.html#changePenShadeBy">changePenShadeBy</a></li><li data-type='method'><a href="Scratch3PenBlocks.html#changePenSizeBy">changePenSizeBy</a></li><li data-type='method'><a href="Scratch3PenBlocks.html#clear">clear</a></li><li data-type='method'><a href="Scratch3PenBlocks.html#getInfo">getInfo</a></li><li data-type='method'><a href="Scratch3PenBlocks.html#penDown">penDown</a></li><li data-type='method'><a href="Scratch3PenBlocks.html#penUp">penUp</a></li><li data-type='method'><a href="Scratch3PenBlocks.html#setPenColorParamTo">setPenColorParamTo</a></li><li data-type='method'><a href="Scratch3PenBlocks.html#setPenColorToColor">setPenColorToColor</a></li><li data-type='method'><a href="Scratch3PenBlocks.html#setPenHueToNumber">setPenHueToNumber</a></li><li data-type='method'><a href="Scratch3PenBlocks.html#setPenShadeToNumber">setPenShadeToNumber</a></li><li data-type='method'><a href="Scratch3PenBlocks.html#setPenSizeTo">setPenSizeTo</a></li><li data-type='method'><a href="Scratch3PenBlocks.html#stamp">stamp</a></li></ul></li><li><a href="Scratch3SpeakBlocks.html">Scratch3SpeakBlocks</a><ul class='methods'><li data-type='method'><a href="Scratch3SpeakBlocks.html#_getState">_getState</a></li><li data-type='method'><a href="Scratch3SpeakBlocks.html#_onTargetCreated">_onTargetCreated</a></li><li data-type='method'><a href="Scratch3SpeakBlocks.html#getInfo">getInfo</a></li><li data-type='method'><a href="Scratch3SpeakBlocks.html#getViewerLanguageCode">getViewerLanguageCode</a></li><li data-type='method'><a href="Scratch3SpeakBlocks.html#getVoiceMenu">getVoiceMenu</a></li><li data-type='method'><a href="Scratch3SpeakBlocks.html#setVoice">setVoice</a></li><li data-type='method'><a href="Scratch3SpeakBlocks.html#speakAndWait">speakAndWait</a></li></ul></li><li><a href="Scratch3TranslateBlocks.html">Scratch3TranslateBlocks</a><ul class='methods'><li data-type='method'><a href="Scratch3TranslateBlocks.html#getInfo">getInfo</a></li><li data-type='method'><a href="Scratch3TranslateBlocks.html#getLanguageCodeFromArg">getLanguageCodeFromArg</a></li><li data-type='method'><a href="Scratch3TranslateBlocks.html#getTranslate">getTranslate</a></li><li data-type='method'><a href="Scratch3TranslateBlocks.html#getViewerLanguage">getViewerLanguage</a></li><li data-type='method'><a href="Scratch3TranslateBlocks.html#getViewerLanguageCode">getViewerLanguageCode</a></li></ul></li><li><a href="Scratch3VideoSensingBlocks.html">Scratch3VideoSensingBlocks</a><ul class='methods'><li data-type='method'><a href="Scratch3VideoSensingBlocks.html#_analyzeLocalMotion">_analyzeLocalMotion</a></li><li data-type='method'><a href="Scratch3VideoSensingBlocks.html#_buildMenu">_buildMenu</a></li><li data-type='method'><a href="Scratch3VideoSensingBlocks.html#_getMotionState">_getMotionState</a></li><li data-type='method'><a href="Scratch3VideoSensingBlocks.html#_loop">_loop</a></li><li data-type='method'><a href="Scratch3VideoSensingBlocks.html#getInfo">getInfo</a></li><li data-type='method'><a href="Scratch3VideoSensingBlocks.html#reset">reset</a></li><li data-type='method'><a href="Scratch3VideoSensingBlocks.html#setVideoTransparency">setVideoTransparency</a></li><li data-type='method'><a href="Scratch3VideoSensingBlocks.html#videoOn">videoOn</a></li><li data-type='method'><a href="Scratch3VideoSensingBlocks.html#videoToggle">videoToggle</a></li><li data-type='method'><a href="Scratch3VideoSensingBlocks.html#whenMotionGreaterThan">whenMotionGreaterThan</a></li></ul></li><li><a href="Scratch3WeDo2Blocks.html">Scratch3WeDo2Blocks</a><ul class='methods'><li data-type='method'><a href="Scratch3WeDo2Blocks.html#_forEachMotor">_forEachMotor</a></li><li data-type='method'><a href="Scratch3WeDo2Blocks.html#_getTiltAngle">_getTiltAngle</a></li><li data-type='method'><a href="Scratch3WeDo2Blocks.html#_isTilted">_isTilted</a></li><li data-type='method'><a href="Scratch3WeDo2Blocks.html#_noteToTone">_noteToTone</a></li><li data-type='method'><a href="Scratch3WeDo2Blocks.html#connect">connect</a></li><li data-type='method'><a href="Scratch3WeDo2Blocks.html#getDistance">getDistance</a></li><li data-type='method'><a href="Scratch3WeDo2Blocks.html#getInfo">getInfo</a></li><li data-type='method'><a href="Scratch3WeDo2Blocks.html#getTiltAngle">getTiltAngle</a></li><li data-type='method'><a href="Scratch3WeDo2Blocks.html#isTilted">isTilted</a></li><li data-type='method'><a href="Scratch3WeDo2Blocks.html#motorOff">motorOff</a></li><li data-type='method'><a href="Scratch3WeDo2Blocks.html#motorOn">motorOn</a></li><li data-type='method'><a href="Scratch3WeDo2Blocks.html#motorOnFor">motorOnFor</a></li><li data-type='method'><a href="Scratch3WeDo2Blocks.html#playNoteFor">playNoteFor</a></li><li data-type='method'><a href="Scratch3WeDo2Blocks.html#setLightHue">setLightHue</a></li><li data-type='method'><a href="Scratch3WeDo2Blocks.html#setMotorDirection">setMotorDirection</a></li><li data-type='method'><a href="Scratch3WeDo2Blocks.html#startMotorPower">startMotorPower</a></li><li data-type='method'><a href="Scratch3WeDo2Blocks.html#whenDistance">whenDistance</a></li><li data-type='method'><a href="Scratch3WeDo2Blocks.html#whenTilted">whenTilted</a></li></ul></li><li><a href="SharedDispatch.html">SharedDispatch</a><ul class='methods'><li data-type='method'><a href="SharedDispatch.html#_deliverResponse">_deliverResponse</a></li><li data-type='method'><a href="SharedDispatch.html#_getServiceProvider">_getServiceProvider</a></li><li data-type='method'><a href="SharedDispatch.html#_isRemoteService">_isRemoteService</a></li><li data-type='method'><a href="SharedDispatch.html#_onDispatchMessage">_onDispatchMessage</a></li><li data-type='method'><a href="SharedDispatch.html#_onMessage">_onMessage</a></li><li data-type='method'><a href="SharedDispatch.html#_remoteCall">_remoteCall</a></li><li data-type='method'><a href="SharedDispatch.html#_remoteTransferCall">_remoteTransferCall</a></li><li data-type='method'><a href="SharedDispatch.html#_storeCallbacks">_storeCallbacks</a></li><li data-type='method'><a href="SharedDispatch.html#call">call</a></li><li data-type='method'><a href="SharedDispatch.html#transferCall">transferCall</a></li></ul></li><li><a href="Sprite.html">Sprite</a><ul class='methods'><li data-type='method'><a href="Sprite.html#addCostumeAt">addCostumeAt</a></li><li data-type='method'><a href="Sprite.html#createClone">createClone</a></li><li data-type='method'><a href="Sprite.html#deleteCostumeAt">deleteCostumeAt</a></li><li data-type='method'><a href="Sprite.html#removeClone">removeClone</a></li></ul></li><li><a href="Target.html">Target</a><ul class='methods'><li data-type='method'><a href="Target.html#createComment">createComment</a></li><li data-type='method'><a href="Target.html#createVariable">createVariable</a></li><li data-type='method'><a href="Target.html#deleteVariable">deleteVariable</a></li><li data-type='method'><a href="Target.html#dispose">dispose</a></li><li data-type='method'><a href="Target.html#duplicateVariable">duplicateVariable</a></li><li data-type='method'><a href="Target.html#duplicateVariables">duplicateVariables</a></li><li data-type='method'><a href="Target.html#fixUpVariableReferences">fixUpVariableReferences</a></li><li data-type='method'><a href="Target.html#getAllVariableNamesInScopeByType">getAllVariableNamesInScopeByType</a></li><li data-type='method'><a href="Target.html#getCustomState">getCustomState</a></li><li data-type='method'><a href="Target.html#getName">getName</a></li><li data-type='method'><a href="Target.html#lookupBroadcastByInputValue">lookupBroadcastByInputValue</a></li><li data-type='method'><a href="Target.html#lookupBroadcastMsg">lookupBroadcastMsg</a></li><li data-type='method'><a href="Target.html#lookupOrCreateList">lookupOrCreateList</a></li><li data-type='method'><a href="Target.html#lookupOrCreateVariable">lookupOrCreateVariable</a></li><li data-type='method'><a href="Target.html#lookupVariableById">lookupVariableById</a></li><li data-type='method'><a href="Target.html#lookupVariableByNameAndType">lookupVariableByNameAndType</a></li><li data-type='method'><a href="Target.html#mergeVariables">mergeVariables</a></li><li data-type='method'><a href="Target.html#onGreenFlag">onGreenFlag</a></li><li data-type='method'><a href="Target.html#postSpriteInfo">postSpriteInfo</a></li><li data-type='method'><a href="Target.html#renameVariable">renameVariable</a></li><li data-type='method'><a href="Target.html#resolveVariableSharingConflictsWithTarget">resolveVariableSharingConflictsWithTarget</a></li><li data-type='method'><a href="Target.html#setCustomState">setCustomState</a></li><li data-type='method'><a href="Target.html#shareLocalVariableToSprite">shareLocalVariableToSprite</a></li><li data-type='method'><a href="Target.html#shareLocalVariableToStage">shareLocalVariableToStage</a></li></ul></li><li><a href="Thread.html">Thread</a><ul class='methods'><li data-type='method'><a href="Thread.html#atStackTop">atStackTop</a></li><li data-type='method'><a href="Thread.html#getParam">getParam</a></li><li data-type='method'><a href="Thread.html#goToNextBlock">goToNextBlock</a></li><li data-type='method'><a href="Thread.html#isRecursiveCall">isRecursiveCall</a></li><li data-type='method'><a href="Thread.html#peekParentStackFrame">peekParentStackFrame</a></li><li data-type='method'><a href="Thread.html#peekStack">peekStack</a></li><li data-type='method'><a href="Thread.html#peekStackFrame">peekStackFrame</a></li><li data-type='method'><a href="Thread.html#popStack">popStack</a></li><li data-type='method'><a href="Thread.html#pushParam">pushParam</a></li><li data-type='method'><a href="Thread.html#pushReportedValue">pushReportedValue</a></li><li data-type='method'><a href="Thread.html#pushStack">pushStack</a></li><li data-type='method'><a href="Thread.html#reuseStackForNextBlock">reuseStackForNextBlock</a></li><li data-type='method'><a href="Thread.html#stopThisScript">stopThisScript</a></li></ul></li><li><a href="Variable.html">Variable</a></li><li><a href="VideoMotion.html">VideoMotion</a><ul class='methods'><li data-type='method'><a href="VideoMotion.html#addFrame">addFrame</a></li><li data-type='method'><a href="VideoMotion.html#analyzeFrame">analyzeFrame</a></li><li data-type='method'><a href="VideoMotion.html#getLocalMotion">getLocalMotion</a></li><li data-type='method'><a href="VideoMotion.html#reset">reset</a></li></ul></li><li><a href="VideoMotionView.html">VideoMotionView</a><ul class='methods'><li data-type='method'><a href="VideoMotionView.html#_components">_components</a></li><li data-type='method'><a href="VideoMotionView.html#_eachAddress">_eachAddress</a></li><li data-type='method'><a href="VideoMotionView.html#_eachCell">_eachCell</a></li><li data-type='method'><a href="VideoMotionView.html#_grads">_grads</a></li><li data-type='method'><a href="VideoMotionView.html#draw">draw</a></li></ul></li><li><a href="VirtualMachine.html">VirtualMachine</a><ul class='methods'><li data-type='method'><a href="VirtualMachine.html#_addSprite2">_addSprite2</a></li><li data-type='method'><a href="VirtualMachine.html#_addSprite3">_addSprite3</a></li><li data-type='method'><a href="VirtualMachine.html#addBackdrop">addBackdrop</a></li><li data-type='method'><a href="VirtualMachine.html#addCostume">addCostume</a></li><li data-type='method'><a href="VirtualMachine.html#addSound">addSound</a></li><li data-type='method'><a href="VirtualMachine.html#addSprite">addSprite</a></li><li data-type='method'><a href="VirtualMachine.html#attachAudioEngine">attachAudioEngine</a></li><li data-type='method'><a href="VirtualMachine.html#attachRenderer">attachRenderer</a></li><li data-type='method'><a href="VirtualMachine.html#attachStorage">attachStorage</a></li><li data-type='method'><a href="VirtualMachine.html#attachV2BitmapAdapter">attachV2BitmapAdapter</a></li><li data-type='method'><a href="VirtualMachine.html#attachV2SVGAdapter">attachV2SVGAdapter</a></li><li data-type='method'><a href="VirtualMachine.html#blockListener">blockListener</a></li><li data-type='method'><a href="VirtualMachine.html#clear">clear</a></li><li data-type='method'><a href="VirtualMachine.html#deleteCostume">deleteCostume</a></li><li data-type='method'><a href="VirtualMachine.html#deleteSound">deleteSound</a></li><li data-type='method'><a href="VirtualMachine.html#deleteSprite">deleteSprite</a></li><li data-type='method'><a href="VirtualMachine.html#deserializeProject">deserializeProject</a></li><li data-type='method'><a href="VirtualMachine.html#downloadProjectId">downloadProjectId</a></li><li data-type='method'><a href="VirtualMachine.html#duplicateCostume">duplicateCostume</a></li><li data-type='method'><a href="VirtualMachine.html#duplicateSound">duplicateSound</a></li><li data-type='method'><a href="VirtualMachine.html#duplicateSprite">duplicateSprite</a></li><li data-type='method'><a href="VirtualMachine.html#emitTargetsUpdate">emitTargetsUpdate</a></li><li data-type='method'><a href="VirtualMachine.html#emitWorkspaceUpdate">emitWorkspaceUpdate</a></li><li data-type='method'><a href="VirtualMachine.html#exportSprite">exportSprite</a></li><li data-type='method'><a href="VirtualMachine.html#flyoutBlockListener">flyoutBlockListener</a></li><li data-type='method'><a href="VirtualMachine.html#fromJSON">fromJSON</a></li><li data-type='method'><a href="VirtualMachine.html#getCostume">getCostume</a></li><li data-type='method'><a href="VirtualMachine.html#getLocale">getLocale</a></li><li data-type='method'><a href="VirtualMachine.html#getPlaygroundData">getPlaygroundData</a></li><li data-type='method'><a href="VirtualMachine.html#getSoundBuffer">getSoundBuffer</a></li><li data-type='method'><a href="VirtualMachine.html#getTargetIdForDrawableId">getTargetIdForDrawableId</a></li><li data-type='method'><a href="VirtualMachine.html#getVariableValue">getVariableValue</a></li><li data-type='method'><a href="VirtualMachine.html#greenFlag">greenFlag</a></li><li data-type='method'><a href="VirtualMachine.html#installTargets">installTargets</a></li><li data-type='method'><a href="VirtualMachine.html#loadProject">loadProject</a></li><li data-type='method'><a href="VirtualMachine.html#monitorBlockListener">monitorBlockListener</a></li><li data-type='method'><a href="VirtualMachine.html#postIOData">postIOData</a></li><li data-type='method'><a href="VirtualMachine.html#postSpriteInfo">postSpriteInfo</a></li><li data-type='method'><a href="VirtualMachine.html#refreshWorkspace">refreshWorkspace</a></li><li data-type='method'><a href="VirtualMachine.html#renameCostume">renameCostume</a></li><li data-type='method'><a href="VirtualMachine.html#renameSound">renameSound</a></li><li data-type='method'><a href="VirtualMachine.html#renameSprite">renameSprite</a></li><li data-type='method'><a href="VirtualMachine.html#reorderCostume">reorderCostume</a></li><li data-type='method'><a href="VirtualMachine.html#reorderSound">reorderSound</a></li><li data-type='method'><a href="VirtualMachine.html#reorderTarget">reorderTarget</a></li><li data-type='method'><a href="VirtualMachine.html#saveProjectSb3">saveProjectSb3</a></li><li data-type='method'><a href="VirtualMachine.html#setCompatibilityMode">setCompatibilityMode</a></li><li data-type='method'><a href="VirtualMachine.html#setEditingTarget">setEditingTarget</a></li><li data-type='method'><a href="VirtualMachine.html#setLocale">setLocale</a></li><li data-type='method'><a href="VirtualMachine.html#setTurboMode">setTurboMode</a></li><li data-type='method'><a href="VirtualMachine.html#setVariableValue">setVariableValue</a></li><li data-type='method'><a href="VirtualMachine.html#shareBlocksToTarget">shareBlocksToTarget</a></li><li data-type='method'><a href="VirtualMachine.html#shareCostumeToTarget">shareCostumeToTarget</a></li><li data-type='method'><a href="VirtualMachine.html#shareSoundToTarget">shareSoundToTarget</a></li><li data-type='method'><a href="VirtualMachine.html#start">start</a></li><li data-type='method'><a href="VirtualMachine.html#startDrag">startDrag</a></li><li data-type='method'><a href="VirtualMachine.html#stopAll">stopAll</a></li><li data-type='method'><a href="VirtualMachine.html#stopDrag">stopDrag</a></li><li data-type='method'><a href="VirtualMachine.html#toJSON">toJSON</a></li><li data-type='method'><a href="VirtualMachine.html#updateBitmap">updateBitmap</a></li><li data-type='method'><a href="VirtualMachine.html#updateSoundBuffer">updateSoundBuffer</a></li><li data-type='method'><a href="VirtualMachine.html#updateSvg">updateSvg</a></li><li data-type='method'><a href="VirtualMachine.html#variableListener">variableListener</a></li></ul></li><li><a href="WeDo2.html">WeDo2</a><ul class='methods'><li data-type='method'><a href="WeDo2.html#_connectEvents">_connectEvents</a></li><li data-type='method'><a href="WeDo2.html#_disconnectEvents">_disconnectEvents</a></li><li data-type='method'><a href="WeDo2.html#_onDisconnect">_onDisconnect</a></li><li data-type='method'><a href="WeDo2.html#_onSensorChanged">_onSensorChanged</a></li><li data-type='method'><a href="WeDo2.html#_send">_send</a></li><li data-type='method'><a href="WeDo2.html#dispose">dispose</a></li><li data-type='method'><a href="WeDo2.html#motor">motor</a></li><li data-type='method'><a href="WeDo2.html#playTone">playTone</a></li><li data-type='method'><a href="WeDo2.html#setLED">setLED</a></li><li data-type='method'><a href="WeDo2.html#stopTone">stopTone</a></li></ul></li><li><a href="WeDo2Motor.html">WeDo2Motor</a><ul class='methods'><li data-type='method'><a href="WeDo2Motor.html#_clearTimeout">_clearTimeout</a></li><li data-type='method'><a href="WeDo2Motor.html#_setNewTimeout">_setNewTimeout</a></li><li data-type='method'><a href="WeDo2Motor.html#setMotorOff">setMotorOff</a></li><li data-type='method'><a href="WeDo2Motor.html#setMotorOn">setMotorOn</a></li><li data-type='method'><a href="WeDo2Motor.html#setMotorOnFor">setMotorOnFor</a></li><li data-type='method'><a href="WeDo2Motor.html#startBraking">startBraking</a></li></ul></li><li><a href="WeDo2Motor.BRAKE_TIME_MS.html">BRAKE_TIME_MS</a></li><li><a href="WorkerDispatch.html">WorkerDispatch</a><ul class='methods'><li data-type='method'><a href="WorkerDispatch.html#_getServiceProvider">_getServiceProvider</a></li><li data-type='method'><a href="WorkerDispatch.html#_onDispatchMessage">_onDispatchMessage</a></li><li data-type='method'><a href="WorkerDispatch.html#setService">setService</a></li></ul></li></ul><h3>Events</h3><ul><li><a href="Runtime.html#event:targetWasCreated">targetWasCreated</a></li></ul><h3>Global</h3><ul><li><a href="global.html#_motionVectorOut">_motionVectorOut</a></li><li><a href="global.html#_stackFrameFreeList">_stackFrameFreeList</a></li><li><a href="global.html#_videoMotionViewComponentsTmp">_videoMotionViewComponentsTmp</a></li><li><a href="global.html#adapter">adapter</a></li><li><a href="global.html#addExtensionOp">addExtensionOp</a></li><li><a href="global.html#AMOUNT_SCALE">AMOUNT_SCALE</a></li><li><a href="global.html#ArgumentType">ArgumentType</a></li><li><a href="global.html#ArgumentTypeMap">ArgumentTypeMap</a></li><li><a href="global.html#assetData">assetData</a></li><li><a href="global.html#BLECommand">BLECommand</a></li><li><a href="global.html#BLEUUID">BLEUUID</a></li><li><a href="global.html#blockFunctionProfilerFrame">blockFunctionProfilerFrame</a></li><li><a href="global.html#blockFunctionProfilerId">blockFunctionProfilerId</a></li><li><a href="global.html#blockIconURI">blockIconURI</a></li><li><a href="global.html#BlockType">BlockType</a></li><li><a href="global.html#blockUtility">blockUtility</a></li><li><a href="global.html#BTCommand">BTCommand</a></li><li><a href="global.html#ColorParam">ColorParam</a></li><li><a href="global.html#compressInputTree">compressInputTree</a></li><li><a href="global.html#ConvertedSeparator">ConvertedSeparator</a></li><li><a href="global.html#defineMessages">defineMessages</a></li><li><a href="global.html#deserialize">deserialize</a></li><li><a href="global.html#deserializeCostume">deserializeCostume</a></li><li><a href="global.html#deserializeFields">deserializeFields</a></li><li><a href="global.html#deserializeInputDesc">deserializeInputDesc</a></li><li><a href="global.html#deserializeInputs">deserializeInputs</a></li><li><a href="global.html#deserializeSound">deserializeSound</a></li><li><a href="global.html#domToBlock">domToBlock</a></li><li><a href="global.html#domToBlocks">domToBlocks</a></li><li><a href="global.html#execute">execute</a></li><li><a href="global.html#executeProfilerFrame">executeProfilerFrame</a></li><li><a href="global.html#executeProfilerId">executeProfilerId</a></li><li><a href="global.html#extensionWorker">extensionWorker</a></li><li><a href="global.html#finalResponseTimeoutDurationMs">finalResponseTimeoutDurationMs</a></li><li><a href="global.html#flatten">flatten</a></li><li><a href="global.html#generateVariableIdGetter">generateVariableIdGetter</a></li><li><a href="global.html#getAssetUrl">getAssetUrl</a></li><li><a href="global.html#getCached">getCached</a></li><li><a href="global.html#getProjectUrl">getProjectUrl</a></li><li><a href="global.html#handleReport">handleReport</a></li><li><a href="global.html#HEIGHT">HEIGHT</a></li><li><a href="global.html#iconURI">iconURI</a></li><li><a href="global.html#isPromise">isPromise</a></li><li><a href="global.html#KEY_NAME">KEY_NAME</a></li><li><a href="global.html#KEY_NAME_LIST">KEY_NAME_LIST</a></li><li><a href="global.html#KITTEN_ID">KITTEN_ID</a></li><li><a href="global.html#listenAndWaitBlockTimeoutMs">listenAndWaitBlockTimeoutMs</a></li><li><a href="global.html#loadCostume">loadCostume</a></li><li><a href="global.html#loadCostumeFromAsset">loadCostumeFromAsset</a></li><li><a href="global.html#loadSound">loadSound</a></li><li><a href="global.html#loadSoundFromAsset">loadSoundFromAsset</a></li><li><a href="global.html#LOCAL_AMOUNT_SCALE">LOCAL_AMOUNT_SCALE</a></li><li><a href="global.html#LOCAL_MAX_AMOUNT">LOCAL_MAX_AMOUNT</a></li><li><a href="global.html#LOCAL_THRESHOLD">LOCAL_THRESHOLD</a></li><li><a href="global.html#MAX_ID">MAX_ID</a></li><li><a href="global.html#maybeFormatMessage">maybeFormatMessage</a></li><li><a href="global.html#menuIconURI">menuIconURI</a></li><li><a href="global.html#MONSTER_ID">MONSTER_ID</a></li><li><a href="global.html#motionVector">motionVector</a></li><li><a href="global.html#MotorDirection">MotorDirection</a></li><li><a href="global.html#MotorID">MotorID</a></li><li><a href="global.html#mutationAdpater">mutationAdpater</a></li><li><a href="global.html#mutatorTagToObject">mutatorTagToObject</a></li><li><a href="global.html#nextId">nextId</a></li><li><a href="global.html#OUTPUT">OUTPUT</a></li><li><a href="global.html#parseBlock">parseBlock</a></li><li><a href="global.html#parseBlockList">parseBlockList</a></li><li><a href="global.html#parseMonitorObject">parseMonitorObject</a></li><li><a href="global.html#parseProcedureArgIds">parseProcedureArgIds</a></li><li><a href="global.html#parseProcedureArgMap">parseProcedureArgMap</a></li><li><a href="global.html#parseScratchObject">parseScratchObject</a></li><li><a href="global.html#parseScripts">parseScripts</a></li><li><a href="global.html#performance">performance</a></li><li><a href="global.html#profilerNames">profilerNames</a></li><li><a href="global.html#PUPPY_ID">PUPPY_ID</a></li><li><a href="global.html#QUINN_ID">QUINN_ID</a></li><li><a href="global.html#renderBenchmarkData">renderBenchmarkData</a></li><li><a href="global.html#rendererDrawProfilerId">rendererDrawProfilerId</a></li><li><a href="global.html#ReporterScope">ReporterScope</a></li><li><a href="global.html#runBenchmark">runBenchmark</a></li><li><a href="global.html#sb2import">sb2import</a></li><li><a href="global.html#scratchAtan2">scratchAtan2</a></li><li><a href="global.html#ScratchBlocksConstants">ScratchBlocksConstants</a></li><li><a href="global.html#scratchDegrees">scratchDegrees</a></li><li><a href="global.html#SensingAttribute">SensingAttribute</a></li><li><a href="global.html#SensingSubject">SensingSubject</a></li><li><a href="global.html#SENSOR_PORTS">SENSOR_PORTS</a></li><li><a href="global.html#serialize">serialize</a></li><li><a href="global.html#serializeAssets">serializeAssets</a></li><li><a href="global.html#serializeBlock">serializeBlock</a></li><li><a href="global.html#serializeBlocks">serializeBlocks</a></li><li><a href="global.html#serializeCostume">serializeCostume</a></li><li><a href="global.html#serializeCostumes">serializeCostumes</a></li><li><a href="global.html#serializeFields">serializeFields</a></li><li><a href="global.html#serializeInputs">serializeInputs</a></li><li><a href="global.html#serializePrimitiveBlock">serializePrimitiveBlock</a></li><li><a href="global.html#serializeSound">serializeSound</a></li><li><a href="global.html#serializeSounds">serializeSounds</a></li><li><a href="global.html#serializeTarget">serializeTarget</a></li><li><a href="global.html#serializeVariables">serializeVariables</a></li><li><a href="global.html#SERVER_HOST">SERVER_HOST</a></li><li><a href="global.html#SERVER_TIMEOUT">SERVER_TIMEOUT</a></li><li><a href="global.html#serverTimeoutMs">serverTimeoutMs</a></li><li><a href="global.html#serverURL">serverURL</a></li><li><a href="global.html#soup_">soup_</a></li><li><a href="global.html#specMap">specMap</a></li><li><a href="global.html#specMapBlock">specMapBlock</a></li><li><a href="global.html#spriteName">spriteName</a></li><li><a href="global.html#SQUEAK_ID">SQUEAK_ID</a></li><li><a href="global.html#START">START</a></li><li><a href="global.html#START_SIZE">START_SIZE</a></li><li><a href="global.html#stepProfilerId">stepProfilerId</a></li><li><a href="global.html#stepThreadProfilerFrame">stepThreadProfilerFrame</a></li><li><a href="global.html#stepThreadProfilerId">stepThreadProfilerId</a></li><li><a href="global.html#stepThreadsInnerProfilerFrame">stepThreadsInnerProfilerFrame</a></li><li><a href="global.html#stepThreadsInnerProfilerId">stepThreadsInnerProfilerId</a></li><li><a href="global.html#stepThreadsProfilerId">stepThreadsProfilerId</a></li><li><a href="global.html#STOP">STOP</a></li><li><a href="global.html#STOP_SIZE">STOP_SIZE</a></li><li><a href="global.html#targetId">targetId</a></li><li><a href="global.html#TargetType">TargetType</a></li><li><a href="global.html#THRESHOLD">THRESHOLD</a></li><li><a href="global.html#TiltDirection">TiltDirection</a></li><li><a href="global.html#TO_DEGREE">TO_DEGREE</a></li><li><a href="global.html#uid">uid</a></li><li><a href="global.html#VideoState">VideoState</a></li><li><a href="global.html#WIDTH">WIDTH</a></li><li><a href="global.html#WINSIZE">WINSIZE</a></li><li><a href="global.html#xmlEscape">xmlEscape</a></li></ul>
+</nav>
+
+<div id="main">
+    
+    <h1 class="page-title">RenderedTarget</h1>
+    
+
+    
+
+
+
+
+<section>
+
+<header>
+    
+        <h2>
+        RenderedTarget
+        </h2>
+        
+            <div class="class-description"><p>Rendered target: instance of a sprite (clone), or the stage.</p></div>
+        
+    
+</header>
+
+<article>
+    <div class="container-overview">
+    
+        
+
+    
+    <h2>Constructor</h2>
+    
+
+    <h4 class="name" id="RenderedTarget"><span class="type-signature"></span>new RenderedTarget<span class="signature">(sprite<span class="signature-attributes">non-null</span>, runtime)</span><span class="type-signature"></span></h4>
+
+    
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    <h5>Parameters:</h5>
+    
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>sprite</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type"><a href="Sprite.html">Sprite</a></span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"><p>Reference to the parent sprite.</p></td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>runtime</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type"><a href="Runtime.html">Runtime</a></span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"><p>Reference to the runtime.</p></td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    
+    </div>
+
+    
+
+    
+
+    
+
+     
+
+    
+
+    
+        <h3 class="subsection-title">Members</h3>
+
+        
+            
+<h4 class="name" id=".EVENT_TARGET_MOVED"><span class="type-signature">(static) </span>EVENT_TARGET_MOVED<span class="type-signature"> :string</span></h4>
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+<div class="description">
+    <p>Event which fires when a target moves.</p>
+</div>
+
+
+
+    <h5>Type:</h5>
+    <ul>
+        <li>
+            
+<span class="param-type">string</span>
+
+
+        </li>
+    </ul>
+
+
+
+
+
+
+        
+            
+<h4 class="name" id=".EVENT_TARGET_VISUAL_CHANGE"><span class="type-signature">(static) </span>EVENT_TARGET_VISUAL_CHANGE<span class="type-signature"> :string</span></h4>
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+<div class="description">
+    <p>Event which fires when a target changes visually, for updating say bubbles.</p>
+</div>
+
+
+
+    <h5>Type:</h5>
+    <ul>
+        <li>
+            
+<span class="param-type">string</span>
+
+
+        </li>
+    </ul>
+
+
+
+
+
+
+        
+            
+<h4 class="name" id=".ROTATION_STYLE_ALL_AROUND"><span class="type-signature">(static) </span>ROTATION_STYLE_ALL_AROUND<span class="type-signature"> :string</span></h4>
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+<div class="description">
+    <p>Rotation style for &quot;all around&quot;/spinning.</p>
+</div>
+
+
+
+    <h5>Type:</h5>
+    <ul>
+        <li>
+            
+<span class="param-type">string</span>
+
+
+        </li>
+    </ul>
+
+
+
+
+
+
+        
+            
+<h4 class="name" id=".ROTATION_STYLE_LEFT_RIGHT"><span class="type-signature">(static) </span>ROTATION_STYLE_LEFT_RIGHT<span class="type-signature"> :string</span></h4>
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+<div class="description">
+    <p>Rotation style for &quot;left-right&quot;/flipping.</p>
+</div>
+
+
+
+    <h5>Type:</h5>
+    <ul>
+        <li>
+            
+<span class="param-type">string</span>
+
+
+        </li>
+    </ul>
+
+
+
+
+
+
+        
+            
+<h4 class="name" id=".ROTATION_STYLE_NONE"><span class="type-signature">(static) </span>ROTATION_STYLE_NONE<span class="type-signature"> :string</span></h4>
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+<div class="description">
+    <p>Rotation style for &quot;no rotation.&quot;</p>
+</div>
+
+
+
+    <h5>Type:</h5>
+    <ul>
+        <li>
+            
+<span class="param-type">string</span>
+
+
+        </li>
+    </ul>
+
+
+
+
+
+
+        
+            
+<h4 class="name" id=".VIDEO_STATE"><span class="type-signature">(static) </span>VIDEO_STATE<span class="type-signature"> :string</span></h4>
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+<div class="description">
+    <p>Available states for video input.</p>
+</div>
+
+
+
+    <h5>Type:</h5>
+    <ul>
+        <li>
+            
+<span class="param-type">string</span>
+
+
+        </li>
+    </ul>
+
+
+
+
+
+
+        
+            
+<h4 class="name" id="currentCostume"><span class="type-signature"></span>currentCostume<span class="type-signature"> :number</span></h4>
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+<div class="description">
+    <p>Currently selected costume index.</p>
+</div>
+
+
+
+    <h5>Type:</h5>
+    <ul>
+        <li>
+            
+<span class="param-type">number</span>
+
+
+        </li>
+    </ul>
+
+
+
+
+
+
+        
+            
+<h4 class="name" id="direction"><span class="type-signature"></span>direction<span class="type-signature"> :number</span></h4>
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+<div class="description">
+    <p>Scratch direction. Currently should range from -179 to 180.</p>
+</div>
+
+
+
+    <h5>Type:</h5>
+    <ul>
+        <li>
+            
+<span class="param-type">number</span>
+
+
+        </li>
+    </ul>
+
+
+
+
+
+
+        
+            
+<h4 class="name" id="draggable"><span class="type-signature"></span>draggable<span class="type-signature"> :boolean</span></h4>
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+<div class="description">
+    <p>Whether the rendered target is draggable on the stage</p>
+</div>
+
+
+
+    <h5>Type:</h5>
+    <ul>
+        <li>
+            
+<span class="param-type">boolean</span>
+
+
+        </li>
+    </ul>
+
+
+
+
+
+
+        
+            
+<h4 class="name" id="dragging"><span class="type-signature"></span>dragging<span class="type-signature"> :boolean</span></h4>
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+<div class="description">
+    <p>Drag state of this rendered target. If true, x/y position can't be
+changed by blocks.</p>
+</div>
+
+
+
+    <h5>Type:</h5>
+    <ul>
+        <li>
+            
+<span class="param-type">boolean</span>
+
+
+        </li>
+    </ul>
+
+
+
+
+
+
+        
+            
+<h4 class="name" id="drawableID"><span class="type-signature">(nullable) </span>drawableID<span class="type-signature"> :Number</span></h4>
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+<div class="description">
+    <p>ID of the drawable for this rendered target,
+returned by the renderer, if rendered.</p>
+</div>
+
+
+
+    <h5>Type:</h5>
+    <ul>
+        <li>
+            
+<span class="param-type">Number</span>
+
+
+        </li>
+    </ul>
+
+
+
+
+
+
+        
+            
+<h4 class="name" id="effects"><span class="type-signature">(non-null) </span>effects<span class="type-signature"> :Object.&lt;string, number></span></h4>
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+<div class="description">
+    <p>Map of current graphic effect values.</p>
+</div>
+
+
+
+    <h5>Type:</h5>
+    <ul>
+        <li>
+            
+<span class="param-type">Object.&lt;string, number></span>
+
+
+        </li>
+    </ul>
+
+
+
+
+
+
+        
+            
+<h4 class="name" id="isOriginal"><span class="type-signature"></span>isOriginal<span class="type-signature"> :boolean</span></h4>
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+<div class="description">
+    <p>Whether this represents an &quot;original&quot; non-clone rendered-target for a sprite,
+i.e., created by the editor and not clone blocks.</p>
+</div>
+
+
+
+    <h5>Type:</h5>
+    <ul>
+        <li>
+            
+<span class="param-type">boolean</span>
+
+
+        </li>
+    </ul>
+
+
+
+
+
+
+        
+            
+<h4 class="name" id="isStage"><span class="type-signature"></span>isStage<span class="type-signature"> :boolean</span></h4>
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+<div class="description">
+    <p>Whether this rendered target represents the Scratch stage.</p>
+</div>
+
+
+
+    <h5>Type:</h5>
+    <ul>
+        <li>
+            
+<span class="param-type">boolean</span>
+
+
+        </li>
+    </ul>
+
+
+
+
+
+
+        
+            
+<h4 class="name" id="renderer"><span class="type-signature">(nullable) </span>renderer<span class="type-signature"> :RenderWebGL</span></h4>
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+<div class="description">
+    <p>Reference to the global renderer for this VM, if one exists.</p>
+</div>
+
+
+
+    <h5>Type:</h5>
+    <ul>
+        <li>
+            
+<span class="param-type">RenderWebGL</span>
+
+
+        </li>
+    </ul>
+
+
+
+
+
+
+        
+            
+<h4 class="name" id="rotationStyle"><span class="type-signature">(non-null) </span>rotationStyle<span class="type-signature"> :string</span></h4>
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+<div class="description">
+    <p>Current rotation style.</p>
+</div>
+
+
+
+    <h5>Type:</h5>
+    <ul>
+        <li>
+            
+<span class="param-type">string</span>
+
+
+        </li>
+    </ul>
+
+
+
+
+
+
+        
+            
+<h4 class="name" id="size"><span class="type-signature"></span>size<span class="type-signature"> :number</span></h4>
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+<div class="description">
+    <p>Size of rendered target as a percent of costume size.</p>
+</div>
+
+
+
+    <h5>Type:</h5>
+    <ul>
+        <li>
+            
+<span class="param-type">number</span>
+
+
+        </li>
+    </ul>
+
+
+
+
+
+
+        
+            
+<h4 class="name" id="sprite"><span class="type-signature">(non-null) </span>sprite<span class="type-signature"> :<a href="Sprite.html">Sprite</a></span></h4>
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+<div class="description">
+    <p>Reference to the sprite that this is a render of.</p>
+</div>
+
+
+
+    <h5>Type:</h5>
+    <ul>
+        <li>
+            
+<span class="param-type"><a href="Sprite.html">Sprite</a></span>
+
+
+        </li>
+    </ul>
+
+
+
+
+
+
+        
+            
+<h4 class="name" id="tempo"><span class="type-signature"></span>tempo<span class="type-signature"> :number</span></h4>
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+<div class="description">
+    <p>Current tempo (used by the music extension).
+This property is global to the project and stored in the stage.</p>
+</div>
+
+
+
+    <h5>Type:</h5>
+    <ul>
+        <li>
+            
+<span class="param-type">number</span>
+
+
+        </li>
+    </ul>
+
+
+
+
+
+
+        
+            
+<h4 class="name" id="videoState"><span class="type-signature"></span>videoState<span class="type-signature"> :string</span></h4>
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+<div class="description">
+    <p>The state of the video input (used by extensions with camera input).
+This property is global to the project and stored in the stage.</p>
+<p>Defaults to ON. This setting does not turn the video by itself. A
+video extension once loaded will set the video device to this
+setting. Set to ON when a video extension is added in the editor the
+video will start ON. If the extension is loaded as part of loading a
+saved project the extension will see the value set when the stage
+was loaded from the saved values including the video state.</p>
+</div>
+
+
+
+    <h5>Type:</h5>
+    <ul>
+        <li>
+            
+<span class="param-type">string</span>
+
+
+        </li>
+    </ul>
+
+
+
+
+
+
+        
+            
+<h4 class="name" id="videoTransparency"><span class="type-signature"></span>videoTransparency<span class="type-signature"> :number</span></h4>
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+<div class="description">
+    <p>The transparency of the video (used by extensions with camera input).
+This property is global to the project and stored in the stage.</p>
+</div>
+
+
+
+    <h5>Type:</h5>
+    <ul>
+        <li>
+            
+<span class="param-type">number</span>
+
+
+        </li>
+    </ul>
+
+
+
+
+
+
+        
+            
+<h4 class="name" id="visible"><span class="type-signature"></span>visible<span class="type-signature"> :boolean</span></h4>
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+<div class="description">
+    <p>Whether the rendered target is currently visible.</p>
+</div>
+
+
+
+    <h5>Type:</h5>
+    <ul>
+        <li>
+            
+<span class="param-type">boolean</span>
+
+
+        </li>
+    </ul>
+
+
+
+
+
+
+        
+            
+<h4 class="name" id="volume"><span class="type-signature"></span>volume<span class="type-signature"> :number</span></h4>
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+<div class="description">
+    <p>Loudness for sound playback for this target, as a percentage.</p>
+</div>
+
+
+
+    <h5>Type:</h5>
+    <ul>
+        <li>
+            
+<span class="param-type">number</span>
+
+
+        </li>
+    </ul>
+
+
+
+
+
+
+        
+            
+<h4 class="name" id="x"><span class="type-signature"></span>x<span class="type-signature"> :Number</span></h4>
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+<div class="description">
+    <p>Scratch X coordinate. Currently should range from -240 to 240.</p>
+</div>
+
+
+
+    <h5>Type:</h5>
+    <ul>
+        <li>
+            
+<span class="param-type">Number</span>
+
+
+        </li>
+    </ul>
+
+
+
+
+
+
+        
+            
+<h4 class="name" id="y"><span class="type-signature"></span>y<span class="type-signature"> :number</span></h4>
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+<div class="description">
+    <p>Scratch Y coordinate. Currently should range from -180 to 180.</p>
+</div>
+
+
+
+    <h5>Type:</h5>
+    <ul>
+        <li>
+            
+<span class="param-type">number</span>
+
+
+        </li>
+    </ul>
+
+
+
+
+
+
+        
+    
+
+    
+        <h3 class="subsection-title">Methods</h3>
+
+        
+            
+
+    
+
+    <h4 class="name" id="_getRenderedDirectionAndScale"><span class="type-signature"></span>_getRenderedDirectionAndScale<span class="signature">()</span><span class="type-signature"> &rarr; {object.&lt;string, number>}</span></h4>
+
+    
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+<div class="description">
+    <p>Get the rendered direction and scale, after applying rotation style.</p>
+</div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<h5>Returns:</h5>
+
+        
+<div class="param-desc">
+    <p>Direction and scale to render.</p>
+</div>
+
+
+
+<dl class="param-type">
+    <dt>
+        Type
+    </dt>
+    <dd>
+        
+<span class="param-type">object.&lt;string, number></span>
+
+
+    </dd>
+</dl>
+
+    
+
+
+        
+            
+
+    
+
+    <h4 class="name" id="_roundCoord"><span class="type-signature"></span>_roundCoord<span class="signature">(value, places)</span><span class="type-signature"> &rarr; {number}</span></h4>
+
+    
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+<div class="description">
+    <p>Round a number to n digits</p>
+</div>
+
+
+
+
+
+
+
+
+
+
+
+    <h5>Parameters:</h5>
+    
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>value</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">number</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"><p>The number to be rounded</p></td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>places</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">number</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"><p>The number of decimal places to round to</p></td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<h5>Returns:</h5>
+
+        
+<div class="param-desc">
+    <p>The rounded number</p>
+</div>
+
+
+
+<dl class="param-type">
+    <dt>
+        Type
+    </dt>
+    <dd>
+        
+<span class="param-type">number</span>
+
+
+    </dd>
+</dl>
+
+    
+
+
+        
+            
+
+    
+
+    <h4 class="name" id="addCostume"><span class="type-signature"></span>addCostume<span class="signature">(costumeObject<span class="signature-attributes">non-null</span>, index<span class="signature-attributes">nullable</span>)</span><span class="type-signature"></span></h4>
+
+    
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+<div class="description">
+    <p>Add a costume, taking care to avoid duplicate names.</p>
+</div>
+
+
+
+
+
+
+
+
+
+
+
+    <h5>Parameters:</h5>
+    
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+        <th>Attributes</th>
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>costumeObject</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">object</span>
+
+
+            
+            </td>
+
+            
+                <td class="attributes">
+                
+
+                
+
+                
+                </td>
+            
+
+            
+
+            <td class="description last"><p>Object representing the costume.</p></td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>index</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">int</span>
+
+
+            
+            </td>
+
+            
+                <td class="attributes">
+                
+
+                
+                    &lt;nullable><br>
+                
+
+                
+                </td>
+            
+
+            
+
+            <td class="description last"><p>Index at which to add costume</p></td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        
+            
+
+    
+
+    <h4 class="name" id="addSound"><span class="type-signature"></span>addSound<span class="signature">(soundObject<span class="signature-attributes">non-null</span>, index<span class="signature-attributes">nullable</span>)</span><span class="type-signature"></span></h4>
+
+    
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+<div class="description">
+    <p>Add a sound, taking care to avoid duplicate names.</p>
+</div>
+
+
+
+
+
+
+
+
+
+
+
+    <h5>Parameters:</h5>
+    
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+        <th>Attributes</th>
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>soundObject</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">object</span>
+
+
+            
+            </td>
+
+            
+                <td class="attributes">
+                
+
+                
+
+                
+                </td>
+            
+
+            
+
+            <td class="description last"><p>Object representing the sound.</p></td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>index</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">int</span>
+
+
+            
+            </td>
+
+            
+                <td class="attributes">
+                
+
+                
+                    &lt;nullable><br>
+                
+
+                
+                </td>
+            
+
+            
+
+            <td class="description last"><p>Index at which to add costume</p></td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        
+            
+
+    
+
+    <h4 class="name" id="clearEffects"><span class="type-signature"></span>clearEffects<span class="signature">()</span><span class="type-signature"></span></h4>
+
+    
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+<div class="description">
+    <p>Clear all graphic effects on this rendered target.</p>
+</div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        
+            
+
+    
+
+    <h4 class="name" id="colorIsTouchingColor"><span class="type-signature"></span>colorIsTouchingColor<span class="signature">(targetRgb, maskRgb)</span><span class="type-signature"> &rarr; {Promise.&lt;boolean>}</span></h4>
+
+    
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+<div class="description">
+    <p>Return whether rendered target's color is touching a color.</p>
+</div>
+
+
+
+
+
+
+
+
+
+
+
+    <h5>Parameters:</h5>
+    
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>targetRgb</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">object</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"><p>{Array.<number>} [r,g,b], values between 0-255.</p></td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>maskRgb</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">object</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"><p>{Array.<number>} [r,g,b], values between 0-255.</p></td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<h5>Returns:</h5>
+
+        
+<div class="param-desc">
+    <p>True iff the color is touching the color.</p>
+</div>
+
+
+
+<dl class="param-type">
+    <dt>
+        Type
+    </dt>
+    <dd>
+        
+<span class="param-type">Promise.&lt;boolean></span>
+
+
+    </dd>
+</dl>
+
+    
+
+
+        
+            
+
+    
+
+    <h4 class="name" id="deleteCostume"><span class="type-signature"></span>deleteCostume<span class="signature">(index)</span><span class="type-signature"></span></h4>
+
+    
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+<div class="description">
+    <p>Delete a costume by index.</p>
+</div>
+
+
+
+
+
+
+
+
+
+
+
+    <h5>Parameters:</h5>
+    
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>index</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">number</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"><p>Costume index to be deleted</p></td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        
+            
+
+    
+
+    <h4 class="name" id="deleteSound"><span class="type-signature"></span>deleteSound<span class="signature">(index)</span><span class="type-signature"></span></h4>
+
+    
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+<div class="description">
+    <p>Delete a sound by index.</p>
+</div>
+
+
+
+
+
+
+
+
+
+
+
+    <h5>Parameters:</h5>
+    
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>index</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">number</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"><p>Sound index to be deleted</p></td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        
+            
+
+    
+
+    <h4 class="name" id="dispose"><span class="type-signature"></span>dispose<span class="signature">()</span><span class="type-signature"></span></h4>
+
+    
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+<div class="description">
+    <p>Dispose, destroying any run-time properties.</p>
+</div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        
+            
+
+    
+
+    <h4 class="name" id="duplicate"><span class="type-signature"></span>duplicate<span class="signature">()</span><span class="type-signature"> &rarr; {<a href="RenderedTarget.html">RenderedTarget</a>}</span></h4>
+
+    
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+<div class="description">
+    <p>Make a duplicate using a duplicate sprite.</p>
+</div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<h5>Returns:</h5>
+
+        
+<div class="param-desc">
+    <p>New clone.</p>
+</div>
+
+
+
+<dl class="param-type">
+    <dt>
+        Type
+    </dt>
+    <dd>
+        
+<span class="param-type"><a href="RenderedTarget.html">RenderedTarget</a></span>
+
+
+    </dd>
+</dl>
+
+    
+
+
+        
+            
+
+    
+
+    <h4 class="name" id="getBounds"><span class="type-signature"></span>getBounds<span class="signature">()</span><span class="type-signature"> &rarr; (nullable) {object}</span></h4>
+
+    
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+<div class="description">
+    <p>Return the rendered target's tight bounding box.
+Includes top, left, bottom, right attributes in Scratch coordinates.</p>
+</div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<h5>Returns:</h5>
+
+        
+<div class="param-desc">
+    <p>Tight bounding box, or null.</p>
+</div>
+
+
+
+<dl class="param-type">
+    <dt>
+        Type
+    </dt>
+    <dd>
+        
+<span class="param-type">object</span>
+
+
+    </dd>
+</dl>
+
+    
+
+
+        
+            
+
+    
+
+    <h4 class="name" id="getBoundsForBubble"><span class="type-signature"></span>getBoundsForBubble<span class="signature">()</span><span class="type-signature"> &rarr; (nullable) {object}</span></h4>
+
+    
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+<div class="description">
+    <p>Return the bounding box around a slice of the top 8px of the rendered target.
+Includes top, left, bottom, right attributes in Scratch coordinates.</p>
+</div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<h5>Returns:</h5>
+
+        
+<div class="param-desc">
+    <p>Tight bounding box, or null.</p>
+</div>
+
+
+
+<dl class="param-type">
+    <dt>
+        Type
+    </dt>
+    <dd>
+        
+<span class="param-type">object</span>
+
+
+    </dd>
+</dl>
+
+    
+
+
+        
+            
+
+    
+
+    <h4 class="name" id="getCostumeIndexByName"><span class="type-signature"></span>getCostumeIndexByName<span class="signature">(costumeName<span class="signature-attributes">nullable</span>)</span><span class="type-signature"> &rarr; {number}</span></h4>
+
+    
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+<div class="description">
+    <p>Get a costume index of this rendered target, by name of the costume.</p>
+</div>
+
+
+
+
+
+
+
+
+
+
+
+    <h5>Parameters:</h5>
+    
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+        <th>Attributes</th>
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>costumeName</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">string</span>
+
+
+            
+            </td>
+
+            
+                <td class="attributes">
+                
+
+                
+                    &lt;nullable><br>
+                
+
+                
+                </td>
+            
+
+            
+
+            <td class="description last"><p>Name of a costume.</p></td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<h5>Returns:</h5>
+
+        
+<div class="param-desc">
+    <p>Index of the named costume, or -1 if not present.</p>
+</div>
+
+
+
+<dl class="param-type">
+    <dt>
+        Type
+    </dt>
+    <dd>
+        
+<span class="param-type">number</span>
+
+
+    </dd>
+</dl>
+
+    
+
+
+        
+            
+
+    
+
+    <h4 class="name" id="getCostumes"><span class="type-signature"></span>getCostumes<span class="signature">()</span><span class="type-signature"> &rarr; {Array.&lt;object>}</span></h4>
+
+    
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+<div class="description">
+    <p>Get full costume list</p>
+</div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<h5>Returns:</h5>
+
+        
+<div class="param-desc">
+    <p>list of costumes</p>
+</div>
+
+
+
+<dl class="param-type">
+    <dt>
+        Type
+    </dt>
+    <dd>
+        
+<span class="param-type">Array.&lt;object></span>
+
+
+    </dd>
+</dl>
+
+    
+
+
+        
+            
+
+    
+
+    <h4 class="name" id="getCurrentCostume"><span class="type-signature"></span>getCurrentCostume<span class="signature">()</span><span class="type-signature"> &rarr; {object}</span></h4>
+
+    
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+<div class="description">
+    <p>Get a costume of this rendered target by id.</p>
+</div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<h5>Returns:</h5>
+
+        
+<div class="param-desc">
+    <p>current costume</p>
+</div>
+
+
+
+<dl class="param-type">
+    <dt>
+        Type
+    </dt>
+    <dd>
+        
+<span class="param-type">object</span>
+
+
+    </dd>
+</dl>
+
+    
+
+
+        
+            
+
+    
+
+    <h4 class="name" id="getName"><span class="type-signature"></span>getName<span class="signature">()</span><span class="type-signature"> &rarr; {string}</span></h4>
+
+    
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+<div class="description">
+    <p>Return the human-readable name for this rendered target, e.g., the sprite's name.</p>
+</div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<h5>Returns:</h5>
+
+        
+<div class="param-desc">
+    <p>Human-readable name.</p>
+</div>
+
+
+
+<dl class="param-type">
+    <dt>
+        Type
+    </dt>
+    <dd>
+        
+<span class="param-type">string</span>
+
+
+    </dd>
+</dl>
+
+    
+
+
+        
+            
+
+    
+
+    <h4 class="name" id="getSounds"><span class="type-signature"></span>getSounds<span class="signature">()</span><span class="type-signature"> &rarr; {Array.&lt;object>}</span></h4>
+
+    
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+<div class="description">
+    <p>Get full sound list</p>
+</div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<h5>Returns:</h5>
+
+        
+<div class="param-desc">
+    <p>list of sounds</p>
+</div>
+
+
+
+<dl class="param-type">
+    <dt>
+        Type
+    </dt>
+    <dd>
+        
+<span class="param-type">Array.&lt;object></span>
+
+
+    </dd>
+</dl>
+
+    
+
+
+        
+            
+
+    
+
+    <h4 class="name" id="goBackwardLayers"><span class="type-signature"></span>goBackwardLayers<span class="signature">(nLayers)</span><span class="type-signature"></span></h4>
+
+    
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+<div class="description">
+    <p>Move backward a number of layers.</p>
+</div>
+
+
+
+
+
+
+
+
+
+
+
+    <h5>Parameters:</h5>
+    
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>nLayers</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">number</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"><p>How many layers to go backward.</p></td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        
+            
+
+    
+
+    <h4 class="name" id="goBehindOther"><span class="type-signature"></span>goBehindOther<span class="signature">(other<span class="signature-attributes">non-null</span>)</span><span class="type-signature"></span></h4>
+
+    
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+<div class="description">
+    <p>Move behind some other rendered target.</p>
+</div>
+
+
+
+
+
+
+
+
+
+
+
+    <h5>Parameters:</h5>
+    
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>other</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type"><a href="RenderedTarget.html">RenderedTarget</a></span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"><p>Other rendered target to move behind.</p></td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        
+            
+
+    
+
+    <h4 class="name" id="goForwardLayers"><span class="type-signature"></span>goForwardLayers<span class="signature">(nLayers)</span><span class="type-signature"></span></h4>
+
+    
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+<div class="description">
+    <p>Move forward a number of layers.</p>
+</div>
+
+
+
+
+
+
+
+
+
+
+
+    <h5>Parameters:</h5>
+    
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>nLayers</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">number</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"><p>How many layers to go forward.</p></td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        
+            
+
+    
+
+    <h4 class="name" id="goToBack"><span class="type-signature"></span>goToBack<span class="signature">()</span><span class="type-signature"></span></h4>
+
+    
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+<div class="description">
+    <p>Move to the back layer.</p>
+</div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        
+            
+
+    
+
+    <h4 class="name" id="goToFront"><span class="type-signature"></span>goToFront<span class="signature">()</span><span class="type-signature"></span></h4>
+
+    
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+<div class="description">
+    <p>Move to the front layer.</p>
+</div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        
+            
+
+    
+
+    <h4 class="name" id="initAudio"><span class="type-signature"></span>initAudio<span class="signature">()</span><span class="type-signature"></span></h4>
+
+    
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+<div class="description">
+    <p>Initialize the audio player for this sprite or clone.</p>
+</div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        
+            
+
+    
+
+    <h4 class="name" id="initDrawable"><span class="type-signature"></span>initDrawable<span class="signature">(layerGroup)</span><span class="type-signature"></span></h4>
+
+    
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+<div class="description">
+    <p>Create a drawable with the this.renderer.</p>
+</div>
+
+
+
+
+
+
+
+
+
+
+
+    <h5>Parameters:</h5>
+    
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>layerGroup</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">boolean</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"><p>The layer group this drawable should be added to</p></td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        
+            
+
+    
+
+    <h4 class="name" id="isSprite"><span class="type-signature"></span>isSprite<span class="signature">()</span><span class="type-signature"> &rarr; {boolean}</span></h4>
+
+    
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+<div class="description">
+    <p>Return whether this rendered target is a sprite (not a clone, not the stage).</p>
+</div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<h5>Returns:</h5>
+
+        
+<div class="param-desc">
+    <p>True if not a clone and not the stage.</p>
+</div>
+
+
+
+<dl class="param-type">
+    <dt>
+        Type
+    </dt>
+    <dd>
+        
+<span class="param-type">boolean</span>
+
+
+    </dd>
+</dl>
+
+    
+
+
+        
+            
+
+    
+
+    <h4 class="name" id="isTouchingColor"><span class="type-signature"></span>isTouchingColor<span class="signature">(rgb)</span><span class="type-signature"> &rarr; {Promise.&lt;boolean>}</span></h4>
+
+    
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+<div class="description">
+    <p>Return whether touching a color.</p>
+</div>
+
+
+
+
+
+
+
+
+
+
+
+    <h5>Parameters:</h5>
+    
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>rgb</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">Array.&lt;number></span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"><p>[r,g,b], values between 0-255.</p></td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<h5>Returns:</h5>
+
+        
+<div class="param-desc">
+    <p>True iff the rendered target is touching the color.</p>
+</div>
+
+
+
+<dl class="param-type">
+    <dt>
+        Type
+    </dt>
+    <dd>
+        
+<span class="param-type">Promise.&lt;boolean></span>
+
+
+    </dd>
+</dl>
+
+    
+
+
+        
+            
+
+    
+
+    <h4 class="name" id="isTouchingEdge"><span class="type-signature"></span>isTouchingEdge<span class="signature">()</span><span class="type-signature"> &rarr; {boolean}</span></h4>
+
+    
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+<div class="description">
+    <p>Return whether touching a stage edge.</p>
+</div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<h5>Returns:</h5>
+
+        
+<div class="param-desc">
+    <p>True iff the rendered target is touching the stage edge.</p>
+</div>
+
+
+
+<dl class="param-type">
+    <dt>
+        Type
+    </dt>
+    <dd>
+        
+<span class="param-type">boolean</span>
+
+
+    </dd>
+</dl>
+
+    
+
+
+        
+            
+
+    
+
+    <h4 class="name" id="isTouchingObject"><span class="type-signature"></span>isTouchingObject<span class="signature">(requestedObject)</span><span class="type-signature"> &rarr; {boolean}</span></h4>
+
+    
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+<div class="description">
+    <p>Return whether this target is touching the mouse, an edge, or a sprite.</p>
+</div>
+
+
+
+
+
+
+
+
+
+
+
+    <h5>Parameters:</h5>
+    
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>requestedObject</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">string</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"><p>an id for mouse or edge, or a sprite name.</p></td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<h5>Returns:</h5>
+
+        
+<div class="param-desc">
+    <p>True if the sprite is touching the object.</p>
+</div>
+
+
+
+<dl class="param-type">
+    <dt>
+        Type
+    </dt>
+    <dd>
+        
+<span class="param-type">boolean</span>
+
+
+    </dd>
+</dl>
+
+    
+
+
+        
+            
+
+    
+
+    <h4 class="name" id="isTouchingPoint"><span class="type-signature"></span>isTouchingPoint<span class="signature">(x, y)</span><span class="type-signature"> &rarr; {boolean}</span></h4>
+
+    
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+<div class="description">
+    <p>Return whether touching a point.</p>
+</div>
+
+
+
+
+
+
+
+
+
+
+
+    <h5>Parameters:</h5>
+    
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>x</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">number</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"><p>X coordinate of test point.</p></td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>y</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">number</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"><p>Y coordinate of test point.</p></td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<h5>Returns:</h5>
+
+        
+<div class="param-desc">
+    <p>True iff the rendered target is touching the point.</p>
+</div>
+
+
+
+<dl class="param-type">
+    <dt>
+        Type
+    </dt>
+    <dd>
+        
+<span class="param-type">boolean</span>
+
+
+    </dd>
+</dl>
+
+    
+
+
+        
+            
+
+    
+
+    <h4 class="name" id="isTouchingSprite"><span class="type-signature"></span>isTouchingSprite<span class="signature">(spriteName)</span><span class="type-signature"> &rarr; {boolean}</span></h4>
+
+    
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+<div class="description">
+    <p>Return whether touching any of a named sprite's clones.</p>
+</div>
+
+
+
+
+
+
+
+
+
+
+
+    <h5>Parameters:</h5>
+    
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>spriteName</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">string</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"><p>Name of the sprite.</p></td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<h5>Returns:</h5>
+
+        
+<div class="param-desc">
+    <p>True iff touching a clone of the sprite.</p>
+</div>
+
+
+
+<dl class="param-type">
+    <dt>
+        Type
+    </dt>
+    <dd>
+        
+<span class="param-type">boolean</span>
+
+
+    </dd>
+</dl>
+
+    
+
+
+        
+            
+
+    
+
+    <h4 class="name" id="keepInFence"><span class="type-signature"></span>keepInFence<span class="signature">(newX, newY, optFence<span class="signature-attributes">opt</span>)</span><span class="type-signature"> &rarr; {Array.&lt;number>}</span></h4>
+
+    
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+<div class="description">
+    <p>Keep a desired position within a fence.</p>
+</div>
+
+
+
+
+
+
+
+
+
+
+
+    <h5>Parameters:</h5>
+    
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+        <th>Attributes</th>
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>newX</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">number</span>
+
+
+            
+            </td>
+
+            
+                <td class="attributes">
+                
+
+                
+
+                
+                </td>
+            
+
+            
+
+            <td class="description last"><p>New desired X position.</p></td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>newY</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">number</span>
+
+
+            
+            </td>
+
+            
+                <td class="attributes">
+                
+
+                
+
+                
+                </td>
+            
+
+            
+
+            <td class="description last"><p>New desired Y position.</p></td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>optFence</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">object</span>
+
+
+            
+            </td>
+
+            
+                <td class="attributes">
+                
+                    &lt;optional><br>
+                
+
+                
+
+                
+                </td>
+            
+
+            
+
+            <td class="description last"><p>Optional fence with left, right, top bottom.</p></td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<h5>Returns:</h5>
+
+        
+<div class="param-desc">
+    <p>Fenced X and Y coordinates.</p>
+</div>
+
+
+
+<dl class="param-type">
+    <dt>
+        Type
+    </dt>
+    <dd>
+        
+<span class="param-type">Array.&lt;number></span>
+
+
+    </dd>
+</dl>
+
+    
+
+
+        
+            
+
+    
+
+    <h4 class="name" id="makeClone"><span class="type-signature"></span>makeClone<span class="signature">()</span><span class="type-signature"> &rarr; {<a href="RenderedTarget.html">RenderedTarget</a>}</span></h4>
+
+    
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+<div class="description">
+    <p>Make a clone, copying any run-time properties.
+If we've hit the global clone limit, returns null.</p>
+</div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<h5>Returns:</h5>
+
+        
+<div class="param-desc">
+    <p>New clone.</p>
+</div>
+
+
+
+<dl class="param-type">
+    <dt>
+        Type
+    </dt>
+    <dd>
+        
+<span class="param-type"><a href="RenderedTarget.html">RenderedTarget</a></span>
+
+
+    </dd>
+</dl>
+
+    
+
+
+        
+            
+
+    
+
+    <h4 class="name" id="onGreenFlag"><span class="type-signature"></span>onGreenFlag<span class="signature">()</span><span class="type-signature"></span></h4>
+
+    
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+<div class="description">
+    <p>Called when the project receives a &quot;green flag.&quot;
+For a rendered target, this clears graphic effects.</p>
+</div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        
+            
+
+    
+
+    <h4 class="name" id="onStopAll"><span class="type-signature"></span>onStopAll<span class="signature">()</span><span class="type-signature"></span></h4>
+
+    
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+<div class="description">
+    <p>Called when the project receives a &quot;stop all&quot;
+Stop all sounds and clear graphic effects.</p>
+</div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        
+            
+
+    
+
+    <h4 class="name" id="postSpriteInfo"><span class="type-signature"></span>postSpriteInfo<span class="signature">(data)</span><span class="type-signature"></span></h4>
+
+    
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+<div class="description">
+    <p>Post/edit sprite info.</p>
+</div>
+
+
+
+
+
+
+
+
+
+
+
+    <h5>Parameters:</h5>
+    
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>data</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">object</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"><p>An object with sprite info data to set.</p></td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        
+            
+
+    
+
+    <h4 class="name" id="renameCostume"><span class="type-signature"></span>renameCostume<span class="signature">(costumeIndex, newName)</span><span class="type-signature"></span></h4>
+
+    
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+<div class="description">
+    <p>Rename a costume, taking care to avoid duplicate names.</p>
+</div>
+
+
+
+
+
+
+
+
+
+
+
+    <h5>Parameters:</h5>
+    
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>costumeIndex</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">int</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"><p>the index of the costume to be renamed.</p></td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>newName</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">string</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"><p>the desired new name of the costume (will be modified if already in use).</p></td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        
+            
+
+    
+
+    <h4 class="name" id="renameSound"><span class="type-signature"></span>renameSound<span class="signature">(soundIndex, newName)</span><span class="type-signature"></span></h4>
+
+    
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+<div class="description">
+    <p>Rename a sound, taking care to avoid duplicate names.</p>
+</div>
+
+
+
+
+
+
+
+
+
+
+
+    <h5>Parameters:</h5>
+    
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>soundIndex</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">int</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"><p>the index of the sound to be renamed.</p></td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>newName</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">string</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"><p>the desired new name of the sound (will be modified if already in use).</p></td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        
+            
+
+    
+
+    <h4 class="name" id="reorderCostume"><span class="type-signature"></span>reorderCostume<span class="signature">(costumeIndex<span class="signature-attributes">non-null</span>, newIndex<span class="signature-attributes">non-null</span>)</span><span class="type-signature"> &rarr; {boolean}</span></h4>
+
+    
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+<div class="description">
+    <p>Reorder costume list by moving costume at costumeIndex to newIndex.</p>
+</div>
+
+
+
+
+
+
+
+
+
+
+
+    <h5>Parameters:</h5>
+    
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>costumeIndex</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">number</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"><p>Index of the costume to move.</p></td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>newIndex</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">number</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"><p>New index for that costume.</p></td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<h5>Returns:</h5>
+
+        
+<div class="param-desc">
+    <p>If a change occurred (i.e. if the indices do not match)</p>
+</div>
+
+
+
+<dl class="param-type">
+    <dt>
+        Type
+    </dt>
+    <dd>
+        
+<span class="param-type">boolean</span>
+
+
+    </dd>
+</dl>
+
+    
+
+
+        
+            
+
+    
+
+    <h4 class="name" id="reorderSound"><span class="type-signature"></span>reorderSound<span class="signature">(soundIndex<span class="signature-attributes">non-null</span>, newIndex<span class="signature-attributes">non-null</span>)</span><span class="type-signature"> &rarr; {boolean}</span></h4>
+
+    
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+<div class="description">
+    <p>Reorder sound list by moving sound at soundIndex to newIndex.</p>
+</div>
+
+
+
+
+
+
+
+
+
+
+
+    <h5>Parameters:</h5>
+    
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>soundIndex</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">number</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"><p>Index of the sound to move.</p></td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>newIndex</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">number</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"><p>New index for that sound.</p></td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<h5>Returns:</h5>
+
+        
+<div class="param-desc">
+    <p>If a change occurred (i.e. if the indices do not match)</p>
+</div>
+
+
+
+<dl class="param-type">
+    <dt>
+        Type
+    </dt>
+    <dd>
+        
+<span class="param-type">boolean</span>
+
+
+    </dd>
+</dl>
+
+    
+
+
+        
+            
+
+    
+
+    <h4 class="name" id="setCostume"><span class="type-signature"></span>setCostume<span class="signature">(index)</span><span class="type-signature"></span></h4>
+
+    
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+<div class="description">
+    <p>Set the current costume.</p>
+</div>
+
+
+
+
+
+
+
+
+
+
+
+    <h5>Parameters:</h5>
+    
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>index</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">number</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"><p>New index of costume.</p></td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        
+            
+
+    
+
+    <h4 class="name" id="setDirection"><span class="type-signature"></span>setDirection<span class="signature">(direction<span class="signature-attributes">non-null</span>)</span><span class="type-signature"></span></h4>
+
+    
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+<div class="description">
+    <p>Set the direction.</p>
+</div>
+
+
+
+
+
+
+
+
+
+
+
+    <h5>Parameters:</h5>
+    
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>direction</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">number</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"><p>New direction.</p></td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        
+            
+
+    
+
+    <h4 class="name" id="setDraggable"><span class="type-signature"></span>setDraggable<span class="signature">(draggable<span class="signature-attributes">non-null</span>)</span><span class="type-signature"></span></h4>
+
+    
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+<div class="description">
+    <p>Set draggability; i.e., whether it's able to be dragged in the player</p>
+</div>
+
+
+
+
+
+
+
+
+
+
+
+    <h5>Parameters:</h5>
+    
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>draggable</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">boolean</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"><p>True if should be draggable.</p></td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        
+            
+
+    
+
+    <h4 class="name" id="setEffect"><span class="type-signature"></span>setEffect<span class="signature">(effectName<span class="signature-attributes">non-null</span>, value<span class="signature-attributes">non-null</span>)</span><span class="type-signature"></span></h4>
+
+    
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+<div class="description">
+    <p>Set a particular graphic effect value.</p>
+</div>
+
+
+
+
+
+
+
+
+
+
+
+    <h5>Parameters:</h5>
+    
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>effectName</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">string</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"><p>Name of effect (see <code>RenderedTarget.prototype.effects</code>).</p></td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>value</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">number</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"><p>Numerical magnitude of effect.</p></td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        
+            
+
+    
+
+    <h4 class="name" id="setRotationStyle"><span class="type-signature"></span>setRotationStyle<span class="signature">(rotationStyle<span class="signature-attributes">non-null</span>)</span><span class="type-signature"></span></h4>
+
+    
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+<div class="description">
+    <p>Update the rotation style.</p>
+</div>
+
+
+
+
+
+
+
+
+
+
+
+    <h5>Parameters:</h5>
+    
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>rotationStyle</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">string</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"><p>New rotation style.</p></td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        
+            
+
+    
+
+    <h4 class="name" id="setSay"><span class="type-signature"></span>setSay<span class="signature">(type<span class="signature-attributes">nullable</span>, message<span class="signature-attributes">nullable</span>)</span><span class="type-signature"></span></h4>
+
+    
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+<div class="description">
+    <p>Set a say bubble.</p>
+</div>
+
+
+
+
+
+
+
+
+
+
+
+    <h5>Parameters:</h5>
+    
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+        <th>Attributes</th>
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>type</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">string</span>
+
+
+            
+            </td>
+
+            
+                <td class="attributes">
+                
+
+                
+                    &lt;nullable><br>
+                
+
+                
+                </td>
+            
+
+            
+
+            <td class="description last"><p>Type of say bubble: &quot;say&quot;, &quot;think&quot;, or null.</p></td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>message</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">string</span>
+
+
+            
+            </td>
+
+            
+                <td class="attributes">
+                
+
+                
+                    &lt;nullable><br>
+                
+
+                
+                </td>
+            
+
+            
+
+            <td class="description last"><p>Message to put in say bubble.</p></td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        
+            
+
+    
+
+    <h4 class="name" id="setSize"><span class="type-signature"></span>setSize<span class="signature">(size<span class="signature-attributes">non-null</span>)</span><span class="type-signature"></span></h4>
+
+    
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+<div class="description">
+    <p>Set size, as a percentage of the costume size.</p>
+</div>
+
+
+
+
+
+
+
+
+
+
+
+    <h5>Parameters:</h5>
+    
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>size</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">number</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"><p>Size of rendered target, as % of costume size.</p></td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        
+            
+
+    
+
+    <h4 class="name" id="setVisible"><span class="type-signature"></span>setVisible<span class="signature">(visible<span class="signature-attributes">non-null</span>)</span><span class="type-signature"></span></h4>
+
+    
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+<div class="description">
+    <p>Set visibility; i.e., whether it's shown or hidden.</p>
+</div>
+
+
+
+
+
+
+
+
+
+
+
+    <h5>Parameters:</h5>
+    
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>visible</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">boolean</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"><p>True if should be shown.</p></td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        
+            
+
+    
+
+    <h4 class="name" id="setXY"><span class="type-signature"></span>setXY<span class="signature">(x<span class="signature-attributes">non-null</span>, y<span class="signature-attributes">non-null</span>, force<span class="signature-attributes">nullable</span>)</span><span class="type-signature"></span></h4>
+
+    
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+<div class="description">
+    <p>Set the X and Y coordinates.</p>
+</div>
+
+
+
+
+
+
+
+
+
+
+
+    <h5>Parameters:</h5>
+    
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+        <th>Attributes</th>
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>x</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">number</span>
+
+
+            
+            </td>
+
+            
+                <td class="attributes">
+                
+
+                
+
+                
+                </td>
+            
+
+            
+
+            <td class="description last"><p>New X coordinate, in Scratch coordinates.</p></td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>y</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">number</span>
+
+
+            
+            </td>
+
+            
+                <td class="attributes">
+                
+
+                
+
+                
+                </td>
+            
+
+            
+
+            <td class="description last"><p>New Y coordinate, in Scratch coordinates.</p></td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>force</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">boolean</span>
+
+
+            
+            </td>
+
+            
+                <td class="attributes">
+                
+
+                
+                    &lt;nullable><br>
+                
+
+                
+                </td>
+            
+
+            
+
+            <td class="description last"><p>Force setting X/Y, in case of dragging</p></td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        
+            
+
+    
+
+    <h4 class="name" id="startDrag"><span class="type-signature"></span>startDrag<span class="signature">()</span><span class="type-signature"></span></h4>
+
+    
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+<div class="description">
+    <p>Put the sprite into the drag state. While in effect, setXY must be forced</p>
+</div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        
+            
+
+    
+
+    <h4 class="name" id="stopDrag"><span class="type-signature"></span>stopDrag<span class="signature">()</span><span class="type-signature"></span></h4>
+
+    
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+<div class="description">
+    <p>Remove the sprite from the drag state.</p>
+</div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        
+            
+
+    
+
+    <h4 class="name" id="toJSON"><span class="type-signature"></span>toJSON<span class="signature">()</span><span class="type-signature"> &rarr; {object}</span></h4>
+
+    
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+<div class="description">
+    <p>Serialize sprite info, used when emitting events about the sprite</p>
+</div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<h5>Returns:</h5>
+
+        
+<div class="param-desc">
+    <p>Sprite data as a simple object</p>
+</div>
+
+
+
+<dl class="param-type">
+    <dt>
+        Type
+    </dt>
+    <dd>
+        
+<span class="param-type">object</span>
+
+
+    </dd>
+</dl>
+
+    
+
+
+        
+            
+
+    
+
+    <h4 class="name" id="updateAllDrawableProperties"><span class="type-signature"></span>updateAllDrawableProperties<span class="signature">()</span><span class="type-signature"></span></h4>
+
+    
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+<div class="description">
+    <p>Update all drawable properties for this rendered target.
+Use when a batch has changed, e.g., when the drawable is first created.</p>
+</div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        
+    
+
+    
+
+    
+</article>
+
+</section>
+
+
+
+
+</div>
+
+<br class="clear">
+
+<footer>
+    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.5.5</a> using the <a href="https://github.com/clenemt/docdash">docdash</a> theme.
+</footer>
+
+<script>prettyPrint();</script>
+<script src="scripts/linenumber.js"></script>
+</body>
+</html>
