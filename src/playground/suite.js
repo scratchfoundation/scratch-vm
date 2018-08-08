@@ -577,17 +577,19 @@ window.onload = function () {
         recordingTime: 5000
     }));
 
-    suite.add(new BenchFixture({
-        projectId: 187694931,
-        warmUpTime: 0,
-        recordingTime: 5000
-    }));
-
-    suite.add(new BenchFixture({
-        projectId: 187694931,
-        warmUpTime: 5000,
-        recordingTime: 5000
-    }));
+    // TODO: #1322
+    // Error: Cannot create monitor for target that cannot be found by name
+    // suite.add(new BenchFixture({
+    //     projectId: 187694931,
+    //     warmUpTime: 0,
+    //     recordingTime: 5000
+    // }));
+    //
+    // suite.add(new BenchFixture({
+    //     projectId: 187694931,
+    //     warmUpTime: 5000,
+    //     recordingTime: 5000
+    // }));
 
     suite.add(new BenchFixture({
         projectId: 219313833,
