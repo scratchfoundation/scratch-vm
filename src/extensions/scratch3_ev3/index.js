@@ -924,7 +924,7 @@ class Scratch3Ev3Blocks {
                     text: formatMessage({
                         id: 'ev3.getMotorPosition',
                         default: 'motor [PORT] position',
-                        description: 'get the position of a motor'
+                        description: 'get the measured degrees a motor has turned'
                     }),
                     blockType: BlockType.REPORTER,
                     arguments: {
@@ -956,7 +956,7 @@ class Scratch3Ev3Blocks {
                     text: formatMessage({
                         id: 'ev3.whenDistanceLessThan',
                         default: 'when distance < [DISTANCE]',
-                        description: 'when distance is less than some value'
+                        description: 'when the value measured by the distance sensor is less than some value'
                     }),
                     blockType: BlockType.HAT,
                     arguments: {
@@ -971,7 +971,7 @@ class Scratch3Ev3Blocks {
                     text: formatMessage({
                         id: 'ev3.whenBrightnessLessThan',
                         default: 'when brightness < [DISTANCE]',
-                        description: 'when brightness is less than some value'
+                        description: 'when value measured by brightness sensor is less than some value'
                     }),
                     blockType: BlockType.HAT,
                     arguments: {
