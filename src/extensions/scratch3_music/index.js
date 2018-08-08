@@ -337,7 +337,7 @@ class Scratch3MusicBlocks {
                 }),
                 dirName: '1-piano',
                 releaseTime: 0.5,
-                samples: [24, 36, 48, 60, 72, 84, 96, 108]
+                samples: [24, 36, 48, 60, 72, 84, 96, 109]
             },
             {
                 name: formatMessage({
@@ -913,7 +913,7 @@ class Scratch3MusicBlocks {
         // and then stopping the sound.
         let releaseDuration = this.INSTRUMENT_INFO[inst].releaseTime;
         if (typeof releaseDuration === 'undefined') {
-            releaseDuration = 0.01;
+            releaseDuration = 0.001;
         }
         const releaseStart = context.currentTime + durationSec;
         const releaseEnd = releaseStart + releaseDuration;
