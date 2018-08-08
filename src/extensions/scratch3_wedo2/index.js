@@ -205,7 +205,7 @@ class WeDo2 {
 
         /**
          * The motors which this WeDo 2.0 could possibly have.
-         * @type {[WeDo2Motor]}
+         * @type {WeDo2Motor[]}
          * @private
          */
         this._motors = [new WeDo2Motor(this, 0), new WeDo2Motor(this, 1)];

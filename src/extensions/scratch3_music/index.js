@@ -165,7 +165,7 @@ class Scratch3MusicBlocks {
 
     /**
      * An array of info about each drum.
-     * @type {object[]} an array of objects.
+     * @type {object[]}
      * @param {string} name - the translatable name to display in the drums menu.
      * @param {string} fileName - the name of the audio file containing the drum sound.
      */
@@ -320,7 +320,7 @@ class Scratch3MusicBlocks {
 
     /**
      * An array of info about each instrument.
-     * @type {object[]} an array of objects.
+     * @type {object[]}
      * @param {string} name - the translatable name to display in the instruments menu.
      * @param {string} dirName - the name of the directory containing audio samples for this instrument.
      * @param {number} [releaseTime] - an optional duration for the release portion of each note.
