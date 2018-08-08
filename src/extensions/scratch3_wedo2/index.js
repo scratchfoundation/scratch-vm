@@ -5,22 +5,12 @@ const log = require('../../util/log');
 const BLESession = require('../../io/bleSession');
 const Base64Util = require('../../util/base64-util');
 
-// TODO:
-// 4. refactor where you can before renaming things like 'Peripheral' throughout
-
-// TODO: DONE
-// 1. keep track of who is connected to channels 1 and 2, set motor indices appropriately
-// 2. zero out sensor values when disconnected
-// 1. send compound commands for motors
-// 3. check that all blocks do something and are ready for Eric's spec confirmations
-
 /**
  * Icon svg to be displayed at the left edge of each extension block, encoded as a data URI.
  * @type {string}
  */
 // eslint-disable-next-line max-len
 const iconURI = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHZpZXdCb3g9IjAgMCA0MCA0MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48dGl0bGU+d2VkbzItYmxvY2staWNvbjwvdGl0bGU+PGcgZmlsbD0ibm9uZSIgZmlsbC1ydWxlPSJldmVub2RkIj48cGF0aCBkPSJNMzUuMzEzIDEwLjQ2N0gzMi4wOVY4Ljg2NWMwLS4yMjMuMTgtLjQwNC40MDUtLjQwNGgyLjQxMmMuMjI0IDAgLjQwNi4xODIuNDA2LjQwNXYxLjYwMnpNMzAuNDc3IDEwLjQ2N2gtMy4yMjRWOC44NjVjMC0uMjIzLjE4My0uNDA0LjQwNy0uNDA0aDIuNDFjLjIyNiAwIC40MDcuMTgyLjQwNy40MDV2MS42MDJ6TTI1LjY0IDEwLjQ2N0gyMi40MlY4Ljg2NWMwLS4yMjMuMTgyLS40MDQuNDA2LS40MDRoMi40MWMuMjI2IDAgLjQwNy4xODIuNDA3LjQwNXYxLjYwMnpNMjAuODA2IDEwLjQ2N2gtMy4yMjRWOC44NjVjMC0uMjIzLjE4Mi0uNDA0LjQwNi0uNDA0SDIwLjRjLjIyNCAwIC40MDYuMTgyLjQwNi40MDV2MS42MDJ6TTE1Ljk3IDEwLjQ2N2gtMy4yMjRWOC44NjVjMC0uMjIzLjE4Mi0uNDA0LjQwNy0uNDA0aDIuNDFjLjIyNiAwIC40MDcuMTgyLjQwNy40MDV2MS42MDJ6TTExLjEzNSAxMC40NjdINy45MVY4Ljg2NWMwLS4yMjMuMTgzLS40MDQuNDA3LS40MDRoMi40MTJjLjIyMyAwIC40MDUuMTgyLjQwNS40MDV2MS42MDJ6IiBzdHJva2U9IiM2Rjc4OTMiIGZpbGw9IiNGRkYiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCIvPjxwYXRoIGQ9Ik0zNy43MyAxMC40NjdINi4zYy0yLjY3IDAtNC44MzYgMi4xNTMtNC44MzYgNC44MDh2My4yMDVoMzcuMDczdi03LjIxYzAtLjQ0NC0uMzYyLS44MDMtLjgwNy0uODAzeiIgc3Ryb2tlPSIjNkY3ODkzIiBmaWxsPSIjRkZGIiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiLz48cGF0aCBkPSJNMzguMTM0IDMwLjk4SDEuODY3Yy0uMjI0IDAtLjQwMy0uMTgtLjQwMy0uNFYxNi4yMzZoMzIuNzFjLjczIDAgMS40My4yODcgMS45NDUuOC41MTUuNTE0IDEuMjE1LjgwMiAxLjk0NC44MDJoLjQ3M3YxMi43NGMwIC4yMi0uMTguNC0uNDAzLjR6IiBzdHJva2U9IiM2Rjc4OTMiIGZpbGw9IiNFNkU3RTgiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCIvPjxwYXRoIHN0cm9rZT0iIzZGNzg5MyIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIiBkPSJNMzQuODMgMTYuMjM3bC40ODMtMi41NjVoMy4yMjMiLz48cGF0aCBkPSJNMzguNTM2IDExLjI2OFYzMC41OGMwIC4yMi0uMTguNC0uNDAzLjRIMS44NjZjLS4yMiAwLS40MDMtLjE4LS40MDMtLjR2LTEuMjAzaDM0LjI4MmMuNjUgMCAxLjE4LS41MjQgMS4xOC0xLjE3M1YxMC40NjdoLjgwNWMuNDQ2IDAgLjgwNi4zNi44MDYuOHoiIHN0cm9rZT0iIzZGNzg5MyIgZmlsbD0iIzZGNzg5MyIgb3BhY2l0eT0iLjE1IiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiLz48cGF0aCBkPSJNMTEuNTM4IDE2LjI4aDIwLjE0OGMuMjIyIDAgLjQwMy4xOC40MDMuNHY2LjUyN2MwIC4yMjItLjE4Mi40LS40MDQuNEgxMS41MzhjLS4yMjMgMC0uNDA0LS4xNzgtLjQwNC0uNFYxNi42OGMwLS4yMi4xOC0uNC40MDQtLjQiIGZpbGw9IiNFNkU3RTgiLz48cGF0aCBkPSJNMTEuNTM4IDE2LjI4aDIwLjE0OGMuMjIyIDAgLjQwMy4xOC40MDMuNHY2LjUyN2MwIC4yMjItLjE4Mi40LS40MDQuNEgxMS41MzhjLS4yMjMgMC0uNDA0LS4xNzgtLjQwNC0uNFYxNi42OGMwLS4yMi4xOC0uNC40MDQtLjR6IiBzdHJva2U9IiM2Rjc4OTMiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCIvPjxwYXRoIGQ9Ik0zMi4wOSAxNi4yOHY2LjkyN2MwIC4yMjItLjE4LjQtLjQwNC40aC0yMC4xNWMtLjIyIDAtLjQtLjE4LS40LS40di0xLjJoMTguMTZjLjY1MyAwIDEuMTgtLjUyNiAxLjE4LTEuMTc0VjE2LjI4aDEuNjEzeiIgc3Ryb2tlPSIjNkY3ODkzIiBmaWxsPSIjNkU3NzkyIiBvcGFjaXR5PSIuMTUiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCIvPjxwYXRoIGQ9Ik0zMC40NzcgMTYuMjhoLTMuMjI0di0xLjYwNGMwLS4yMjMuMTgzLS40MDQuNDA3LS40MDRoMi40MWMuMjI2IDAgLjQwNy4xOC40MDcuNDA0djEuNjAzek0xNS45NyAxNi4yOGgtMy4yMjR2LTEuNjA0YzAtLjIyMy4xODItLjQwNC40MDctLjQwNGgyLjQxYy4yMjYgMCAuNDA3LjE4LjQwNy40MDR2MS42MDN6TTI1LjY0IDE2LjI4SDIyLjQydi0xLjYwNGMwLS4yMjMuMTgyLS40MDQuNDA2LS40MDRoMi40MWMuMjI2IDAgLjQwNy4xOC40MDcuNDA0djEuNjAzek0yMC44MDYgMTYuMjhoLTMuMjI0di0xLjYwNGMwLS4yMjMuMTgyLS40MDQuNDA2LS40MDRIMjAuNGMuMjI0IDAgLjQwNi4xOC40MDYuNDA0djEuNjAzeiIgc3Ryb2tlPSIjNkY3ODkzIiBmaWxsPSIjRTZFN0U4IiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiLz48cGF0aCBkPSJNMTguNTU3IDE5LjkxYzAgMS4wMjUtLjgzNyAxLjg1Ny0xLjg3IDEuODU3LTEuMDMgMC0xLjg2Ny0uODMyLTEuODY3LTEuODU4IDAtMS4wMjcuODM3LTEuODU4IDEuODY4LTEuODU4IDEuMDMyIDAgMS44Ny44MyAxLjg3IDEuODU3ek0yMy40OCAxOS45MWMwIDEuMDI1LS44MzYgMS44NTctMS44NjggMS44NTdzLTEuODctLjgzMi0xLjg3LTEuODU4YzAtMS4wMjcuODM4LTEuODU4IDEuODctMS44NThzMS44NjguODMgMS44NjggMS44NTd6TTI4LjQwNCAxOS45MWMwIDEuMDI1LS44MzcgMS44NTctMS44NjggMS44NTctMS4wMzIgMC0xLjg3LS44MzItMS44Ny0xLjg1OCAwLTEuMDI3LjgzOC0xLjg1OCAxLjg3LTEuODU4IDEuMDMgMCAxLjg2OC44MyAxLjg2OCAxLjg1N3oiIHN0cm9rZT0iIzZGNzg5MyIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIi8+PHBhdGggZD0iTTE4LjU1NyAxOS45MjJjMCAxLjAyNi0uODM3IDEuODU4LTEuODcgMS44NTgtMS4wMyAwLTEuODY3LS44MzItMS44NjctMS44NTggMC0xLjAyNS44MzctMS44NTcgMS44NjgtMS44NTcgMS4wMzIgMCAxLjg3LjgzMiAxLjg3IDEuODU3TTIzLjQ4IDE5LjkyMmMwIDEuMDI2LS44MzYgMS44NTgtMS44NjggMS44NThzLTEuODctLjgzMi0xLjg3LTEuODU4YzAtMS4wMjUuODM4LTEuODU3IDEuODctMS44NTdzMS44NjguODMyIDEuODY4IDEuODU3TTI4LjQwNCAxOS45MjJjMCAxLjAyNi0uODM3IDEuODU4LTEuODY4IDEuODU4LTEuMDMyIDAtMS44Ny0uODMyLTEuODctMS44NTggMC0xLjAyNS44MzgtMS44NTcgMS44Ny0xLjg1NyAxLjAzIDAgMS44NjguODMyIDEuODY4IDEuODU3IiBmaWxsPSIjNkY3ODkzIiBvcGFjaXR5PSIuNSIvPjwvZz48L3N2Zz4=';
-
 
 const UUID = {
     DEVICE_SERVICE: '00001523-1212-efde-1523-785feabcd123',
@@ -31,13 +21,39 @@ const UUID = {
     OUTPUT_COMMAND: '00001565-1212-efde-1523-785feabcd123'
 };
 
+/**
+ * Enum for WeDo2 sensor and output types.
+ * @readonly
+ * @enum {number}
+ */
 const WeDo2Types = {
-    motor: 1,
-    piezo: 22,
-    led: 23,
-    tilt: 34,
-    distance: 35,
-    none: 0
+    MOTOR: 1,
+    PIEZO: 22,
+    LED: 23,
+    TILT: 34,
+    DISTANCE: 35
+};
+
+/**
+ * Enum for connection/port ids assigned to internal WeDo2 output devices.
+ * @readonly
+ * @enum {number}
+ */
+const WeDo2ConnectIDs = {
+    LED: 6,
+    PIEZO: 5
+};
+
+/**
+ * Enum for ids for various output commands on the WeDo2.
+ * @readonly
+ * @enum {number}
+ */
+const WeDo2Commands = {
+    MOTOR_POWER: 1,
+    PLAY_TONE: 2,
+    WRITE_RGB: 4,
+    SET_VOLUME: 255
 };
 
 /**
@@ -149,9 +165,9 @@ class WeDo2Motor {
      */
     setMotorOn () {
         const cmd = new Uint8Array(4);
-        cmd[0] = this._index + 1; // channel
-        cmd[1] = 1; // command: set power
-        cmd[2] = 1; // 1 bytes to follow
+        cmd[0] = this._index + 1; // connect id
+        cmd[1] = WeDo2Commands.MOTOR_POWER; // command
+        cmd[2] = 1; // 1 byte to follow
         cmd[3] = this._power * this._direction; // power in range 0-100
 
         this._parent._send(UUID.OUTPUT_COMMAND, Base64Util.uint8ArrayToBase64(cmd));
@@ -175,9 +191,9 @@ class WeDo2Motor {
      */
     startBraking () {
         const cmd = new Uint8Array(4);
-        cmd[0] = this._index + 1; // channel
-        cmd[1] = 1; // command: set power
-        cmd[2] = 1; // 1 bytes to follow
+        cmd[0] = this._index + 1; // connect id
+        cmd[1] = WeDo2Commands.MOTOR_POWER; // command
+        cmd[2] = 1; // 1 byte to follow
         cmd[3] = 127; // power in range 0-100
 
         this._parent._send(UUID.OUTPUT_COMMAND, Base64Util.uint8ArrayToBase64(cmd));
@@ -191,9 +207,9 @@ class WeDo2Motor {
      */
     setMotorOff () {
         const cmd = new Uint8Array(4);
-        cmd[0] = this._index + 1; // channel
-        cmd[1] = 1; // command: set power
-        cmd[2] = 1; // 1 bytes to follow
+        cmd[0] = this._index + 1; // connect id
+        cmd[1] = WeDo2Commands.MOTOR_POWER; // command
+        cmd[2] = 1; // 1 byte to follow
         cmd[3] = 0; // power in range 0-100
 
         this._parent._send(UUID.OUTPUT_COMMAND, Base64Util.uint8ArrayToBase64(cmd));
@@ -243,14 +259,14 @@ class WeDo2 {
          * @private
          */
         this._runtime = runtime;
-        // this._runtime.on('PROJECT_STOP_ALL', this._stopAllMotors.bind(this));
+        // this._runtime.on('PROJECT_STOP_ALL', this._stopAllMotors.bind(this)); // TODO
 
         /**
          * The device ports that connect to motors and sensors.
          * @type {[string]}
          * @private
          */
-        this._ports = ['none', 'none'];
+        this._ports = ['none', 'none']; // TODO: rename?
 
         /**
          * The motors which this WeDo 2.0 could possibly have.
@@ -318,8 +334,8 @@ class WeDo2 {
      */
     setLED (rgb) {
         const cmd = new Uint8Array(6);
-        cmd[0] = 6; // channel = 6 (LED)
-        cmd[1] = 4; // command: write RGB
+        cmd[0] = WeDo2ConnectIDs.LED; // connect id
+        cmd[1] = WeDo2Commands.WRITE_RGB; // command
         cmd[2] = 3; // 3 bytes to follow
         cmd[3] = (rgb >> 16) & 0x000000FF;
         cmd[4] = (rgb >> 8) & 0x000000FF;
@@ -335,13 +351,13 @@ class WeDo2 {
      */
     playTone (tone, milliseconds) {
         const cmd = new Uint8Array(7);
-        cmd[0] = 5; // channel
-        cmd[1] = 2; // command: play tone
+        cmd[0] = WeDo2ConnectIDs.PIEZO; // connect id
+        cmd[1] = WeDo2Commands.PLAY_TONE; // command
         cmd[2] = 4; // 4 bytes to follow
-        cmd[3] = tone; // frequency byte 1
-        cmd[4] = tone >> 8; // frequency byte 2
-        cmd[5] = milliseconds; // time byte 1
-        cmd[6] = milliseconds >> 8; // time byte 2
+        cmd[3] = tone; // freq byte 1
+        cmd[4] = tone >> 8; // freq byte 2
+        cmd[5] = milliseconds; // duration byte 1
+        cmd[6] = milliseconds >> 8; // duration byte 2
 
         this._send(UUID.OUTPUT_COMMAND, Base64Util.uint8ArrayToBase64(cmd));
     }
@@ -421,14 +437,14 @@ class WeDo2 {
         if (data.length === 2) { // disconnect sensor
             const connectID = data[0];
             // zero out tilt
-            if (this._ports[connectID - 1] === WeDo2Types.tilt) {
+            if (this._ports[connectID - 1] === WeDo2Types.TILT) {
                 this._sensors.tiltX = this._sensors.tiltY = 0;
             }
             // zero out distance
-            if (this._ports[connectID - 1] === WeDo2Types.distance) {
+            if (this._ports[connectID - 1] === WeDo2Types.DISTANCE) {
                 this._sensors.distance = 0;
             }
-            // remove reference to ports and motors
+            // remove references to ports and motors
             if (connectID === 1 || connectID === 2) {
                 this._ports[connectID - 1] = 'none';
                 this._motors[connectID - 1] = null;
@@ -446,7 +462,7 @@ class WeDo2 {
             this._sensors.tiltY = data[3];
         }
 
-        if (data.length === 12) { // attached io
+        if (data.length === 12) { // attached io?
 
             const connectID = data[0];
             const type = data[3];
@@ -456,20 +472,20 @@ class WeDo2 {
                 this._ports[connectID - 1] = type;
             }
 
-            // MOTOR
-            if (type === WeDo2Types.motor) {
+            // Motor
+            if (type === WeDo2Types.MOTOR) {
                 this._motors[connectID - 1] = new WeDo2Motor(this, connectID - 1);
             }
 
-            // TILT SENSOR
-            if (type === WeDo2Types.tilt) {
+            // Tilt Sensor
+            if (type === WeDo2Types.TILT) {
                 const cmd = new Uint8Array(11);
                 cmd[0] = 1; // sensor format
                 cmd[1] = 2; // command type: write
-                cmd[2] = connectID; // connect id / channel
-                cmd[3] = WeDo2Types.tilt; // type id: tilt
+                cmd[2] = connectID; // connect id
+                cmd[3] = WeDo2Types.TILT; // type
                 cmd[4] = 0; // mode: angle
-                cmd[5] = 1; // delta interval
+                cmd[5] = 1; // delta interval, 4 bytes
                 cmd[6] = 0;
                 cmd[7] = 0;
                 cmd[8] = 0;
@@ -482,15 +498,15 @@ class WeDo2 {
                     });
             }
 
-            // DISTANCE SENSOR
-            if (type === WeDo2Types.distance) {
+            // Distance Sensor
+            if (type === WeDo2Types.DISTANCE) {
                 const cmd = new Uint8Array(11);
                 cmd[0] = 1; // sensor format
                 cmd[1] = 2; // command type: write
-                cmd[2] = connectID; // connect id / channel
-                cmd[3] = WeDo2Types.distance; // type id: distance
+                cmd[2] = connectID; // connect id
+                cmd[3] = WeDo2Types.DISTANCE; // type
                 cmd[4] = 0; // mode: detect
-                cmd[5] = 1; // delta interval
+                cmd[5] = 1; // delta interval, 4 bytes
                 cmd[6] = 0;
                 cmd[7] = 0;
                 cmd[8] = 0;
@@ -523,9 +539,9 @@ class WeDo2 {
      */
     _setVolume () {
         const cmd = new Uint8Array(4);
-        cmd[0] = 5; // channel
-        cmd[1] = 255; // command: set volume
-        cmd[2] = 1; // 1 bytes to follow
+        cmd[0] = WeDo2ConnectIDs.PIEZO; // connect id
+        cmd[1] = WeDo2Commands.SET_VOLUME; // command
+        cmd[2] = 1; // 1 byte to follow
         cmd[3] = 100; // volume in range 0-100
 
         this._send(UUID.OUTPUT_COMMAND, Base64Util.uint8ArrayToBase64(cmd));
@@ -537,16 +553,18 @@ class WeDo2 {
      * @private
      */
     _setLEDMode () {
-        // [0x01, 0x02, port, type, mode, 0x01, 0x00, 0x00, 0x00, format, 0x01]
-        const cmd = new Uint8Array(8);
-        cmd[0] = 1; // command id: Sensor Format
+        const cmd = new Uint8Array(11);
+        cmd[0] = 1; // sensor format
         cmd[1] = 2; // command type: 2 = write
-        cmd[2] = 6; // port
-        cmd[3] = 23; // type
+        cmd[2] = WeDo2ConnectIDs.LED; // port
+        cmd[3] = WeDo2Types.LED; // type
         cmd[4] = 1; // mode
-        cmd[5] = 0; // delta interval // TODO: Uint32?
-        cmd[6] = 0; // unit = raw
-        cmd[7] = 0; // notifications enabled: false
+        cmd[5] = 0; // delta interval, 4 bytes
+        cmd[6] = 0;
+        cmd[7] = 0;
+        cmd[8] = 0;
+        cmd[9] = 0; // unit = raw
+        cmd[10] = 0; // notifications enabled: false
 
         return this._send(UUID.INPUT_COMMAND, Base64Util.uint8ArrayToBase64(cmd));
     }
