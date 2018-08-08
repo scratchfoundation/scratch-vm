@@ -6,13 +6,13 @@ const BLESession = require('../../io/bleSession');
 const Base64Util = require('../../util/base64-util');
 
 // TODO:
-// 3. check that all blocks do something and are ready for Eric's spec confirmations
 // 4. refactor where you can before renaming things like 'Peripheral' throughout
 
 // TODO: DONE
 // 1. keep track of who is connected to channels 1 and 2, set motor indices appropriately
 // 2. zero out sensor values when disconnected
 // 1. send compound commands for motors
+// 3. check that all blocks do something and are ready for Eric's spec confirmations
 
 /**
  * Icon svg to be displayed at the left edge of each extension block, encoded as a data URI.
@@ -277,6 +277,9 @@ class WeDo2 {
          */
         this._ble = null;
         this._runtime.registerExtensionDevice(extensionId, this);
+
+        this._onConnect = this._onConnect.bind(this);
+        this._onMessage = this._onMessage.bind(this);
     }
 
     /**
@@ -315,7 +318,7 @@ class WeDo2 {
      */
     setLED (rgb) {
         const cmd = new Uint8Array(6);
-        cmd[0] = 6; // channel
+        cmd[0] = 6; // channel = 6 (LED)
         cmd[1] = 4; // command: write RGB
         cmd[2] = 3; // 3 bytes to follow
         cmd[3] = (rgb >> 16) & 0x000000FF;
@@ -323,21 +326,6 @@ class WeDo2 {
         cmd[5] = (rgb) & 0x000000FF;
 
         this._send(UUID.OUTPUT_COMMAND, Base64Util.uint8ArrayToBase64(cmd));
-    }
-
-    _setLEDMode () {
-        // [0x01, 0x02, port, type, mode, 0x01, 0x00, 0x00, 0x00, format, 0x01]
-        const cmd = new Uint8Array(8);
-        cmd[0] = 1; // command id: Sensor Format
-        cmd[1] = 2; // command type: 2 = write
-        cmd[2] = 6; // port
-        cmd[3] = 23; // type
-        cmd[4] = 1; // mode
-        cmd[5] = 0; // delta interval // TODO: Uint32?
-        cmd[6] = 0; // unit = raw
-        cmd[7] = 0; // notifications enabled: false
-
-        return this._send(UUID.INPUT_COMMAND, Base64Util.uint8ArrayToBase64(cmd));
     }
 
     /**
@@ -358,16 +346,6 @@ class WeDo2 {
         this._send(UUID.OUTPUT_COMMAND, Base64Util.uint8ArrayToBase64(cmd));
     }
 
-    _setVolume () {
-        const cmd = new Uint8Array(4);
-        cmd[0] = 5; // channel
-        cmd[1] = 255; // command: set volume
-        cmd[2] = 1; // 1 bytes to follow
-        cmd[3] = 100; // volume in range 0-100
-
-        this._send(UUID.OUTPUT_COMMAND, Base64Util.uint8ArrayToBase64(cmd));
-    }
-
     /**
      * Stop the tone playing from the WeDo 2.0 hub, if any.
      */
@@ -378,25 +356,27 @@ class WeDo2 {
     /**
      * Called by the runtime when user wants to scan for a device.
      */
+    // TODO: rename scan?
     startDeviceScan () {
         this._ble = new BLESession(this._runtime, {
-            filters: [
-                {services: [UUID.DEVICE_SERVICE]}
-            ],
-            optionalServices: [
-                UUID.IO_SERVICE
-            ]
-        }, this._onConnect.bind(this));
+            filters: [{services: [UUID.DEVICE_SERVICE]}],
+            optionalServices: [UUID.IO_SERVICE]
+        }, this._onConnect);
     }
 
     /**
      * Called by the runtime when user wants to connect to a certain device.
      * @param {number} id - the id of the device to connect to.
      */
+    // TODO: rename connect?
     connectDevice (id) {
         this._ble.connectDevice(id);
     }
 
+    /**
+     * Disconnects from the current BLE session.
+     */
+    // TODO: rename disconnect?
     disconnectSession () {
         // window.clearInterval(this._timeoutID);
         this._ble.disconnectSession();
@@ -406,6 +386,7 @@ class WeDo2 {
      * Called by the runtime to detect whether the device is connected.
      * @return {boolean} - the connected state.
      */
+    // TODO: rename isConnected
     getPeripheralIsConnected () {
         let connected = false;
         if (this._ble) {
@@ -415,20 +396,18 @@ class WeDo2 {
     }
 
     /**
-     * Starts reading data from device after BLE has connected to it.
+     * Sets LED mode and starts reading data from device after BLE has connected.
+     * @private
      */
     _onConnect () {
-        const callback = this._onMessage.bind(this);
-
-        // set LED to absolute
+        // set LED input mode to RGB
         this._setLEDMode()
             .then(() => {
-                // get attached io notifications
-                this._ble.read(UUID.DEVICE_SERVICE, UUID.ATTACHED_IO, true, callback);
+                // register for attached io notifications
+                this._ble.read(UUID.DEVICE_SERVICE, UUID.ATTACHED_IO, true, this._onMessage);
             });
 
         // this._setVolume();
-        // this._timeoutID = window.setInterval(this.disconnectSession.bind(this), BLETimeout);
     }
 
     /**
@@ -524,12 +503,6 @@ class WeDo2 {
                     });
             }
         }
-
-        /*
-        // cancel disconnect timeout and start a new one
-        window.clearInterval(this._timeoutID);
-        this._timeoutID = window.setInterval(this.disconnectSession.bind(this), BLETimeout);
-        */
     }
 
     /**
@@ -542,6 +515,40 @@ class WeDo2 {
     _send (uuid, message) {
         if (!this.getPeripheralIsConnected()) return;
         return this._ble.write(UUID.IO_SERVICE, uuid, message, 'base64');
+    }
+
+    /**
+     * Sets the volume for the piezo.
+     * @private
+     */
+    _setVolume () {
+        const cmd = new Uint8Array(4);
+        cmd[0] = 5; // channel
+        cmd[1] = 255; // command: set volume
+        cmd[2] = 1; // 1 bytes to follow
+        cmd[3] = 100; // volume in range 0-100
+
+        this._send(UUID.OUTPUT_COMMAND, Base64Util.uint8ArrayToBase64(cmd));
+    }
+
+    /**
+     * Sets the input mode of the LED to RGB.
+     * @return {Promise} - a promise returned by the send operation.
+     * @private
+     */
+    _setLEDMode () {
+        // [0x01, 0x02, port, type, mode, 0x01, 0x00, 0x00, 0x00, format, 0x01]
+        const cmd = new Uint8Array(8);
+        cmd[0] = 1; // command id: Sensor Format
+        cmd[1] = 2; // command type: 2 = write
+        cmd[2] = 6; // port
+        cmd[3] = 23; // type
+        cmd[4] = 1; // mode
+        cmd[5] = 0; // delta interval // TODO: Uint32?
+        cmd[6] = 0; // unit = raw
+        cmd[7] = 0; // notifications enabled: false
+
+        return this._send(UUID.INPUT_COMMAND, Base64Util.uint8ArrayToBase64(cmd));
     }
 }
 
