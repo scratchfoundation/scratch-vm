@@ -799,7 +799,7 @@ class RenderedTarget extends Target {
      */
     isTouchingPoint (x, y) {
         if (this.renderer) {
-            return this.runtime.renderer.drawableTouching(this.drawableID, x, y);
+            return this.renderer.drawableTouching(this.drawableID, x, y);
         }
         return false;
     }
