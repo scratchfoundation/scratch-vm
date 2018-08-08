@@ -148,6 +148,182 @@ test('deleteVariable2', t => {
     t.end();
 });
 
+test('duplicateVariable creates a new variable with a new ID by default', t => {
+    const target = new Target();
+    target.createVariable('a var ID', 'foo', Variable.SCALAR_TYPE);
+    t.equal(Object.keys(target.variables).length, 1);
+    const originalVariable = target.variables['a var ID'];
+    originalVariable.value = 10;
+    const newVariable = target.duplicateVariable('a var ID');
+    // Duplicating a variable should not add the variable to the current target
+    t.equal(Object.keys(target.variables).length, 1);
+    // Duplicate variable should have a different ID from the original unless specified to keep the original ID.
+    t.notEqual(newVariable.id, 'a var ID');
+    t.type(target.variables[newVariable.id], 'undefined');
+
+    // Duplicate variable should start out with the same value as the original variable
+    t.equal(newVariable.value, originalVariable.value);
+
+    // Modifying one variable should not modify the other
+    newVariable.value = 15;
+    t.notEqual(newVariable.value, originalVariable.value);
+    t.equal(originalVariable.value, 10);
+
+    t.end();
+});
+
+test('duplicateVariable creates a new variable with a original ID if specified', t => {
+    const target = new Target();
+    target.createVariable('a var ID', 'foo', Variable.SCALAR_TYPE);
+    t.equal(Object.keys(target.variables).length, 1);
+    const originalVariable = target.variables['a var ID'];
+    originalVariable.value = 10;
+    const newVariable = target.duplicateVariable('a var ID', true);
+    // Duplicating a variable should not add the variable to the current target
+    t.equal(Object.keys(target.variables).length, 1);
+    // Duplicate variable should have the same ID as the original when specified
+    t.equal(newVariable.id, 'a var ID');
+
+    // Duplicate variable should start out with the same value as the original variable
+    t.equal(newVariable.value, originalVariable.value);
+
+    // Modifying one variable should not modify the other
+    newVariable.value = 15;
+    t.notEqual(newVariable.value, originalVariable.value);
+    t.equal(originalVariable.value, 10);
+    // The target should still have the original variable with the original value
+    t.equal(target.variables['a var ID'].value, 10);
+
+    t.end();
+});
+
+test('duplicateVariable returns null if variable with specified ID does not exist', t => {
+    const target = new Target();
+
+    const variable = target.duplicateVariable('a var ID');
+    t.equal(variable, null);
+    t.equal(Object.keys(target.variables).length, 0);
+
+    target.createVariable('var id', 'foo', Variable.SCALAR_TYPE);
+    t.equal(Object.keys(target.variables).length, 1);
+
+    const anotherVariable = target.duplicateVariable('another var ID');
+    t.equal(anotherVariable, null);
+    t.equal(Object.keys(target.variables).length, 1);
+    t.type(target.variables['another var ID'], 'undefined');
+    t.type(target.variables['var id'], 'object');
+    t.notEqual(target.variables['var id'], null);
+
+    t.end();
+});
+
+test('duplicateVariables duplicates all variables', t => {
+    const target = new Target();
+    target.createVariable('var ID 1', 'var1', Variable.SCALAR_TYPE);
+    target.createVariable('var ID 2', 'var2', Variable.SCALAR_TYPE);
+
+    t.equal(Object.keys(target.variables).length, 2);
+
+    const var1 = target.variables['var ID 1'];
+    const var2 = target.variables['var ID 2'];
+
+    var1.value = 3;
+    var2.value = 'foo';
+
+    const duplicateVariables = target.duplicateVariables();
+
+    // Duplicating a target's variables should not change the target's own variables.
+    t.equal(Object.keys(target.variables).length, 2);
+    t.equal(Object.keys(duplicateVariables).length, 2);
+
+    // Should be able to find original var IDs in both this target's variables and
+    // the duplicate variables since a blocks container was not specified.
+    t.equal(target.variables.hasOwnProperty('var ID 1'), true);
+    t.equal(target.variables.hasOwnProperty('var ID 2'), true);
+    t.equal(duplicateVariables.hasOwnProperty('var ID 1'), true);
+    t.equal(duplicateVariables.hasOwnProperty('var ID 1'), true);
+
+    // Values of the duplicate varaiables should match the value of the original values at the time of duplication
+    t.equal(target.variables['var ID 1'].value, duplicateVariables['var ID 1'].value);
+    t.equal(duplicateVariables['var ID 1'].value, 3);
+    t.equal(target.variables['var ID 2'].value, duplicateVariables['var ID 2'].value);
+    t.equal(duplicateVariables['var ID 2'].value, 'foo');
+
+    // The two sets of variables should still be distinct, modifying the target's variables
+    // should not affect the duplicated variables, and vice-versa
+
+    var1.value = 10;
+    t.equal(target.variables['var ID 1'].value, 10);
+    t.equal(duplicateVariables['var ID 1'].value, 3); // should remain unchanged from initial value
+
+    duplicateVariables['var ID 2'].value = 'bar';
+    t.equal(target.variables['var ID 2'].value, 'foo');
+
+    // Deleting a variable on the target should not change the duplicated variables
+    target.deleteVariable('var ID 1');
+    t.equal(Object.keys(target.variables).length, 1);
+    t.equal(Object.keys(duplicateVariables).length, 2);
+    t.type(duplicateVariables['var ID 1'], 'object');
+    t.notEqual(duplicateVariables['var ID 1'], null);
+
+    t.end();
+});
+
+test('duplicateVariables re-IDs variables when a block container is provided', t => {
+    const target = new Target();
+
+    target.createVariable('mock var id', 'a mock variable', Variable.SCALAR_TYPE);
+    target.createVariable('another var id', 'var2', Variable.SCALAR_TYPE);
+
+    // Create a block on the target which references the variable with id 'mock var id'
+    target.blocks.createBlock(adapter(events.mockVariableBlock)[0]);
+
+    t.type(target.blocks.getBlock('a block'), 'object');
+    t.type(target.blocks.getBlock('a block').fields.VARIABLE, 'object');
+    t.equal(target.blocks.getBlock('a block').fields.VARIABLE.id, 'mock var id');
+    t.equal(target.blocks.getBlock('a block').fields.VARIABLE.value, 'a mock variable');
+
+    // Deep clone this target's blocks to pass in to 'duplicateVariables'
+    const copiedBlocks = target.blocks.duplicate();
+
+    // The copied block should still have the same ID, and its VARIABLE field should still refer to
+    // the original variable id
+    t.type(copiedBlocks.getBlock('a block'), 'object');
+    t.type(copiedBlocks.getBlock('a block').fields.VARIABLE, 'object');
+    t.equal(copiedBlocks.getBlock('a block').fields.VARIABLE.id, 'mock var id');
+    t.equal(copiedBlocks.getBlock('a block').fields.VARIABLE.value, 'a mock variable');
+
+    const duplicateVariables = target.duplicateVariables(copiedBlocks);
+
+    // Duplicate variables should have new IDs
+    t.equal(Object.keys(duplicateVariables).length, 2);
+    t.type(duplicateVariables['mock var id'], 'undefined');
+    t.type(duplicateVariables['another var id'], 'undefined');
+
+    // Duplicate variables still have the same names..
+    const dupes = Object.values(duplicateVariables);
+    const dupeVarNames = dupes.map(v => v.name);
+
+    t.notEqual(dupeVarNames.indexOf('a mock variable'), -1);
+    t.notEqual(dupeVarNames.indexOf('var2'), -1);
+
+    // Duplicating variables should not change blocks on current target
+    t.type(target.blocks.getBlock('a block'), 'object');
+    t.equal(target.blocks.getBlock('a block').fields.VARIABLE.id, 'mock var id');
+    t.equal(target.blocks.getBlock('a block').fields.VARIABLE.value, 'a mock variable');
+
+    // The copied blocks passed into duplicateVariables should now reference the new
+    // variable ID
+    const mockVariableDupe = dupes[dupeVarNames.indexOf('a mock variable')];
+    const mockVarDupeID = mockVariableDupe.id;
+
+    t.type(copiedBlocks.getBlock('a block'), 'object');
+    t.equal(copiedBlocks.getBlock('a block').fields.VARIABLE.id, mockVarDupeID);
+    t.equal(copiedBlocks.getBlock('a block').fields.VARIABLE.value, 'a mock variable');
+
+    t.end();
+});
+
 test('lookupOrCreateList creates a list if var with given id or var with given name does not exist', t => {
     const target = new Target();
     const variables = target.variables;
