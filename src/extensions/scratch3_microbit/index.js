@@ -573,12 +573,7 @@ class Scratch3MicroBitBlocks {
                     text: formatMessage({
                         id: 'microbit.displayText',
                         default: 'display [TEXT]',
-                        description: `default text to display.
-                        IMPORTANT - the micro:bit only supports letters a-z, A-Z.
-                        Please substitute a default word in your language
-                        that can be written with those characters,
-                        substitute non-accented characters or leave it as "Hello!".
-                        Check the micro:bit site documentation for details`
+                        description: 'display text on the micro:bit display'
                     }),
                     blockType: BlockType.COMMAND,
                     arguments: {
@@ -587,7 +582,12 @@ class Scratch3MicroBitBlocks {
                             defaultValue: formatMessage({
                                 id: 'microbit.defaultTextToDisplay',
                                 default: 'Hello!',
-                                description: 'Hello!: the default text to display on the micro:bit'
+                                description: `default text to display.
+                                IMPORTANT - the micro:bit only supports letters a-z, A-Z.
+                                Please substitute a default word in your language
+                                that can be written with those characters,
+                                substitute non-accented characters or leave it as "Hello!".
+                                Check the micro:bit site documentation for details`
                             })
                         }
                     }
