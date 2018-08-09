@@ -836,6 +836,7 @@ class VirtualMachine extends EventEmitter {
     /**
      * Delete a sprite and all its clones.
      * @param {string} targetId ID of a target whose sprite to delete.
+     * @return {Function} Returns a function to restore the sprite that was deleted
      */
     deleteSprite (targetId) {
         const target = this.runtime.getTargetById(targetId);
@@ -849,6 +850,8 @@ class VirtualMachine extends EventEmitter {
             if (!sprite) {
                 throw new Error('No sprite associated with this target.');
             }
+            const spritePromise = this.exportSprite(targetId, 'uint8array');
+            const restoreSprite = () => spritePromise.then(spriteBuffer => this.addSprite(spriteBuffer));
             this.runtime.requestRemoveMonitorByTargetId(targetId);
             const currentEditingTarget = this.editingTarget;
             for (let i = 0; i < sprite.clones.length; i++) {
@@ -867,9 +870,10 @@ class VirtualMachine extends EventEmitter {
             }
             // Sprite object should be deleted by GC.
             this.emitTargetsUpdate();
-        } else {
-            throw new Error('No target with the provided id.');
+            return restoreSprite;
         }
+
+        throw new Error('No target with the provided id.');
     }
 
     /**
