@@ -799,15 +799,7 @@ class RenderedTarget extends Target {
      */
     isTouchingPoint (x, y) {
         if (this.renderer) {
-            // @todo: Update once pick is in Scratch coordinates.
-            // Limits test to this Drawable, so this will return true
-            // even if the clone is obscured by another Drawable.
-            const pickResult = this.runtime.renderer.pick(
-                x, y,
-                null, null,
-                [this.drawableID]
-            );
-            return pickResult === this.drawableID;
+            return this.renderer.drawableTouching(this.drawableID, x, y);
         }
         return false;
     }

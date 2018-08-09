@@ -30,6 +30,10 @@ FakeRenderer.prototype.pick = function (x, y, a, b, d) { // eslint-disable-line 
     return true;
 };
 
+FakeRenderer.prototype.drawableTouching = function (d, x, y, w, h) { // eslint-disable-line no-unused-vars
+    return true;
+};
+
 FakeRenderer.prototype.isTouchingColor = function (d, c) { // eslint-disable-line no-unused-vars
     return true;
 };
