@@ -354,10 +354,10 @@ class WeDo2 {
         cmd[0] = WeDo2ConnectIDs.PIEZO; // connect id
         cmd[1] = WeDo2Commands.PLAY_TONE; // command
         cmd[2] = 4; // 4 bytes to follow
-        cmd[3] = tone; // freq byte 1
-        cmd[4] = tone >> 8; // freq byte 2
-        cmd[5] = milliseconds; // duration byte 1
-        cmd[6] = milliseconds >> 8; // duration byte 2
+        cmd[3] = tone;
+        cmd[4] = tone >> 8;
+        cmd[5] = milliseconds;
+        cmd[6] = milliseconds >> 8;
 
         this._send(UUID.OUTPUT_COMMAND, Base64Util.uint8ArrayToBase64(cmd));
     }
