@@ -851,9 +851,7 @@ class VirtualMachine extends EventEmitter {
                 throw new Error('No sprite associated with this target.');
             }
             const spritePromise = this.exportSprite(targetId, 'uint8array');
-            const restoreSprite = () => {
-                spritePromise.then(spriteBuffer => this.addSprite(spriteBuffer));
-            };
+            const restoreSprite = () => spritePromise.then(spriteBuffer => this.addSprite(spriteBuffer));
             this.runtime.requestRemoveMonitorByTargetId(targetId);
             const currentEditingTarget = this.editingTarget;
             for (let i = 0; i < sprite.clones.length; i++) {
