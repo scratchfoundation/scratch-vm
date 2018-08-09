@@ -263,7 +263,7 @@ class WeDo2 {
 
         /**
          * The device ports that connect to motors and sensors.
-         * @type {[string]}
+         * @type {string[]}
          * @private
          */
         this._ports = ['none', 'none']; // TODO: rename?
