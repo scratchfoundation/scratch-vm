@@ -113,7 +113,7 @@ class Scratch3ControlBlocks {
         return new Promise(resolve => {
             setTimeout(() => {
                 resolve();
-            }, MathUtil.clamp(duration, 0, 2**31 - 1)); // setTimeout only supports up to 2**31 - 1
+            }, MathUtil.clamp(duration, 0, (2 ** 31) - 1)); // setTimeout only supports up to 2**31 - 1
         });
     }
 

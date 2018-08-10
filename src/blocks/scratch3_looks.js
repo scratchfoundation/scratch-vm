@@ -310,7 +310,7 @@ class Scratch3LooksBlocks {
                     this._updateBubble(target, 'say', '');
                 }
                 resolve();
-            }, MathUtil.clamp(1000 * args.SECS, 0, 2**31 - 1)); // setTimeout only supports up to 2**31 - 1
+            }, MathUtil.clamp(1000 * args.SECS, 0, (2 ** 31) - 1)); // setTimeout only supports up to 2**31 - 1
         });
     }
 
@@ -330,10 +330,10 @@ class Scratch3LooksBlocks {
                     this._updateBubble(target, 'think', '');
                 }
                 resolve();
-            }, MathUtil.clamp(1000 * args.SECS, 0, 2**31 - 1)); // setTimeout only supports up to 2**31 - 1
+            }, MathUtil.clamp(1000 * args.SECS, 0, (2 ** 31) - 1)); // setTimeout only supports up to 2**31 - 1
         });
     }
-	
+
     show (args, util) {
         util.target.setVisible(true);
         this._renderBubble(util.target);
