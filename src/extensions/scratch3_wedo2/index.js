@@ -52,6 +52,7 @@ const WeDo2ConnectIDs = {
 const WeDo2Commands = {
     MOTOR_POWER: 1,
     PLAY_TONE: 2,
+    STOP_TONE: 3,
     WRITE_RGB: 4,
     SET_VOLUME: 255
 };
@@ -259,7 +260,7 @@ class WeDo2 {
          * @private
          */
         this._runtime = runtime;
-        // this._runtime.on('PROJECT_STOP_ALL', this._stopAllMotors.bind(this)); // TODO
+        this._runtime.on('PROJECT_STOP_ALL', this._stopAll.bind(this));
 
         /**
          * The device ports that connect to motors and sensors.
@@ -329,6 +330,17 @@ class WeDo2 {
     }
 
     /**
+     * Stop all the motors that are currently running.
+     */
+    stopAllMotors () {
+        this._motors.forEach(motor => {
+            if (motor && motor.isOn) {
+                motor.setMotorOff();
+            }
+        });
+    }
+
+    /**
      * Set the WeDo 2.0 hub's LED to a specific color.
      * @param {int} rgb - a 24-bit RGB color in 0xRRGGBB format.
      */
@@ -340,6 +352,21 @@ class WeDo2 {
         cmd[3] = (rgb >> 16) & 0x000000FF;
         cmd[4] = (rgb >> 8) & 0x000000FF;
         cmd[5] = (rgb) & 0x000000FF;
+
+        this._send(UUID.OUTPUT_COMMAND, Base64Util.uint8ArrayToBase64(cmd));
+    }
+
+    /**
+     * Switch off the LED on the WeDo2.
+     */
+    stopLED () {
+        const cmd = new Uint8Array(6);
+        cmd[0] = WeDo2ConnectIDs.LED; // connect id
+        cmd[1] = WeDo2Commands.WRITE_RGB; // command
+        cmd[2] = 3; // 3 bytes to follow
+        cmd[3] = 0x000000; // off
+        cmd[4] = 0x000000;
+        cmd[5] = 0x000000;
 
         this._send(UUID.OUTPUT_COMMAND, Base64Util.uint8ArrayToBase64(cmd));
     }
@@ -366,7 +393,11 @@ class WeDo2 {
      * Stop the tone playing from the WeDo 2.0 hub, if any.
      */
     stopTone () {
-        // this._send('stopTone'); // TODO stop via BLE
+        const cmd = new Uint8Array(2);
+        cmd[0] = WeDo2ConnectIDs.PIEZO; // connect id
+        cmd[1] = WeDo2Commands.STOP_TONE; // command
+
+        this._send(UUID.OUTPUT_COMMAND, Base64Util.uint8ArrayToBase64(cmd));
     }
 
     /**
@@ -433,6 +464,7 @@ class WeDo2 {
      */
     _onMessage (base64) {
         const data = Base64Util.base64ToUint8Array(base64);
+        // log.info(data);
 
         if (data.length === 2) { // disconnect sensor
             const connectID = data[0];
@@ -489,7 +521,7 @@ class WeDo2 {
                 cmd[6] = 0;
                 cmd[7] = 0;
                 cmd[8] = 0;
-                cmd[9] = 1; // unit: pct?
+                cmd[9] = 0; // unit?
                 cmd[10] = 1; // notifications enabled: true
 
                 this._send(UUID.INPUT_COMMAND, Base64Util.uint8ArrayToBase64(cmd))
@@ -510,7 +542,7 @@ class WeDo2 {
                 cmd[6] = 0;
                 cmd[7] = 0;
                 cmd[8] = 0;
-                cmd[9] = 1; // unit: ?
+                cmd[9] = 0; // unit: ?
                 cmd[10] = 1; // notifications enabled: true
 
                 this._send(UUID.INPUT_COMMAND, Base64Util.uint8ArrayToBase64(cmd))
@@ -567,6 +599,15 @@ class WeDo2 {
         cmd[10] = 0; // notifications enabled: false
 
         return this._send(UUID.INPUT_COMMAND, Base64Util.uint8ArrayToBase64(cmd));
+    }
+
+    /**
+     * Stop the tone playing, LED output and motors on the WeDo 2.0 hub.
+     */
+    _stopAll () {
+        this.stopTone();
+        this.stopAllMotors();
+        this.stopLED();
     }
 }
 
@@ -1031,13 +1072,13 @@ class Scratch3WeDo2Blocks {
     _getTiltAngle (direction) {
         switch (direction) {
         case TiltDirection.UP:
-            return -this._device.tiltY;
+            return this._device.tiltY > 45 ? 256 - this._device.tiltY : -this._device.tiltY;
         case TiltDirection.DOWN:
-            return this._device.tiltY;
+            return this._device.tiltY > 45 ? this._device.tiltY - 256 : this._device.tiltY;
         case TiltDirection.LEFT:
-            return -this._device.tiltX;
+            return this._device.tiltX > 45 ? 256 - this._device.tiltX : -this._device.tiltX;
         case TiltDirection.RIGHT:
-            return this._device.tiltX;
+            return this._device.tiltX > 45 ? this._device.tiltX - 256 : this._device.tiltX;
         default:
             log.warn(`Unknown tilt direction in _getTiltAngle: ${direction}`);
         }
