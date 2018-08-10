@@ -1,4 +1,5 @@
 const Cast = require('../util/cast');
+const MathUtil = require('../util/math-util.js');
 
 class Scratch3ControlBlocks {
     constructor (runtime) {
@@ -108,11 +109,11 @@ class Scratch3ControlBlocks {
     }
 
     wait (args) {
-        const duration = Math.max(0, 1000 * Cast.toNumber(args.DURATION));
+        const duration = 1000 * Cast.toNumber(args.DURATION);
         return new Promise(resolve => {
             setTimeout(() => {
                 resolve();
-            }, duration);
+            }, MathUtil.clamp(duration, 0, 2**31 - 1)); // setTimeout only supports up to 2**31 - 1
         });
     }
 
