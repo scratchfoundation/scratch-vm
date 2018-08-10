@@ -27,7 +27,7 @@ const BLECommand = {
 
 const BLETimeout = 4500; // TODO: might need tweaking based on how long the device takes to start sending data
 
-const BLESendInterval = 1000;
+const BLESendInterval = 100;
 
 /**
  * Enum for micro:bit protocol.
@@ -113,7 +113,6 @@ class MicroBit {
 
         this._busy = false;
         this._cachedDataToSend = null;
-        // window.setInterval(this._sendSessionData.bind(this), BLESendInterval);
     }
 
     // TODO: keep here?
@@ -280,8 +279,11 @@ class MicroBit {
     _sendSessionData () {
         if (!this.getPeripheralIsConnected()) return;
         if (this._cachedDataToSend === null) return;
+
+        this._busy = true;
         const command = this._cachedDataToSend.command;
         const message = this._cachedDataToSend.message;
+
         const output = new Uint8Array(message.length + 1);
         output[0] = command; // attach command to beginning of message
         for (let i = 0; i < message.length; i++) {
@@ -290,7 +292,6 @@ class MicroBit {
         const data = Base64Util.uint8ArrayToBase64(output);
 
         this._cachedDataToSend = null;
-        this._busy = true;
         this._ble.write(BLEUUID.service, BLEUUID.txChar, data, 'base64').then(
             () => {
                 if (this._cachedDataToSend) {
@@ -783,12 +784,11 @@ class Scratch3MicroBitBlocks {
             this._device.displayMatrix(this._device.ledMatrixState);
         }
 
-        // return new Promise(resolve => {
-        //     setTimeout(() => {
-        //         resolve();
-        //     }, BLESendInterval);
-        // });
-        return Promise.resolve();
+        return new Promise(resolve => {
+            setTimeout(() => {
+                resolve();
+            }, BLESendInterval);
+        });
     }
 
     /**
@@ -801,12 +801,11 @@ class Scratch3MicroBitBlocks {
         const text = String(args.TEXT).substring(0, 19);
         if (text.length > 0) this._device.displayText(text);
 
-        // return new Promise(resolve => {
-        //     setTimeout(() => {
-        //         resolve();
-        //     }, BLESendInterval);
-        // });
-        return Promise.resolve();
+        return new Promise(resolve => {
+            setTimeout(() => {
+                resolve();
+            }, BLESendInterval);
+        });
     }
 
     /**
@@ -819,12 +818,11 @@ class Scratch3MicroBitBlocks {
         }
         this._device.displayMatrix(this._device.ledMatrixState);
 
-        // return new Promise(resolve => {
-        //     setTimeout(() => {
-        //         resolve();
-        //     }, BLESendInterval);
-        // });
-        return Promise.resolve();
+        return new Promise(resolve => {
+            setTimeout(() => {
+                resolve();
+            }, BLESendInterval);
+        });
     }
 
     /**
