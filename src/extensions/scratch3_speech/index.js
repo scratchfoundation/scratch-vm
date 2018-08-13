@@ -512,12 +512,7 @@ class Scratch3SpeechBlocks {
      * @private
      */
     _startListening () {
-        // If we've already setup the context, we can resume instead of doing all the setup again.
-        if (this._context) {
-            this._resumeListening();
-        } else {
-            this._initListening();
-        }
+        this._initListening();
         // Force the block to timeout if we don't get any results back/the user didn't say anything.
         this._speechTimeoutId = setTimeout(this._stopTranscription, listenAndWaitBlockTimeoutMs);
     }
@@ -547,18 +542,18 @@ class Scratch3SpeechBlocks {
      * @private
      */
     _initializeMicrophone () {
-        // Safari still needs a webkit prefix for audio context
-        this._context = new (window.AudioContext || window.webkitAudioContext)();
+        // Don't make a new context if we already made one.
+        if (!this._context) {
+            // Safari still needs a webkit prefix for audio context
+            this._context = new (window.AudioContext || window.webkitAudioContext)();
+        }
+        // In safari we have to call getUserMedia every time we want to listen. Other browsers allow
+        // you to reuse the mediaStream.  See #1202 for more context.
         this._audioPromise = navigator.mediaDevices.getUserMedia({
             audio: true
         });
 
-        const tempContext = this._context;
-        this._audioPromise.then(micStream => {
-            const microphone = tempContext.createMediaStreamSource(micStream);
-            const analyser = tempContext.createAnalyser();
-            microphone.connect(analyser);
-        }).catch(e => {
+        this._audioPromise.then().catch(e => {
             log.error(`Problem connecting to microphone:  ${e}`);
         });
     }
