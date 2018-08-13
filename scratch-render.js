@@ -15662,11 +15662,7 @@ var PenSkin = function (_Skin) {
     }, {
         key: 'drawLine',
         value: function drawLine(penAttributes, x0, y0, x1, y1) {
-            // Width 1 and 3 lines need to be offset by 0.5.
-            var diameter = penAttributes.diameter || DefaultPenAttributes.diameter;
-            var offset = Math.max(4 - diameter, 0) % 2 / 2;
-
-            this._drawLineOnBuffer(penAttributes, this._rotationCenter[0] + x0 + offset, this._rotationCenter[1] - y0 + offset, this._rotationCenter[0] + x1 + offset, this._rotationCenter[1] - y1 + offset);
+            this._drawLineOnBuffer(penAttributes, this._rotationCenter[0] + x0, this._rotationCenter[1] - y0, this._rotationCenter[0] + x1, this._rotationCenter[1] - y1);
 
             this._silhouetteDirty = true;
         }
@@ -15688,7 +15684,7 @@ var PenSkin = function (_Skin) {
             // Texture coordinates are based on a "generated" texture whose general
             // shape is a circle. The line caps set their texture values to define
             // there roundedness with the texture. The body has all of its texture
-            // valeus set to the center of the texture so its a solid block.
+            // values set to the center of the texture so it's a solid block.
             var quads = {
                 a_position: {
                     numComponents: 2,
@@ -15774,7 +15770,7 @@ var PenSkin = function (_Skin) {
             var avgX = (x0 + x1) / 2;
             var avgY = (y0 + y1) / 2;
             var theta = Math.atan2(y0 - y1, x0 - x1);
-            var alias = x0 === x1 || y0 === y1 ? 0 : 1;
+            var alias = 1;
 
             // The line needs a bit of aliasing to look smooth. Add a small offset
             // and a small size boost to scaling to give a section to alias.
