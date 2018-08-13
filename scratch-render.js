@@ -10409,7 +10409,7 @@ function _possibleConstructorReturn(self, call) { if (!self) { throw new Referen
 
 function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
 
-var EventEmitter = __webpack_require__(5);
+var EventEmitter = __webpack_require__(6);
 
 var twgl = __webpack_require__(0);
 
@@ -10573,7 +10573,6 @@ var Skin = function (_EventEmitter) {
   }, {
     key: 'isTouchingNearest',
     value: function isTouchingNearest(vec) {
-      this.updateSilhouette();
       return this._silhouette.isTouchingNearest(vec);
     }
 
@@ -10587,7 +10586,6 @@ var Skin = function (_EventEmitter) {
   }, {
     key: 'isTouchingLinear',
     value: function isTouchingLinear(vec) {
-      this.updateSilhouette();
       return this._silhouette.isTouchingLinear(vec);
     }
   }, {
@@ -10801,6 +10799,7 @@ var ShaderManager = function () {
 ShaderManager.EFFECT_INFO = {
     /** Color effect */
     color: {
+        uniformName: 'u_color',
         mask: 1 << 0,
         converter: function converter(x) {
             return x / 200 % 1;
@@ -10809,6 +10808,7 @@ ShaderManager.EFFECT_INFO = {
     },
     /** Fisheye effect */
     fisheye: {
+        uniformName: 'u_fisheye',
         mask: 1 << 1,
         converter: function converter(x) {
             return Math.max(0, (x + 100) / 100);
@@ -10817,6 +10817,7 @@ ShaderManager.EFFECT_INFO = {
     },
     /** Whirl effect */
     whirl: {
+        uniformName: 'u_whirl',
         mask: 1 << 2,
         converter: function converter(x) {
             return -x * Math.PI / 180;
@@ -10825,6 +10826,7 @@ ShaderManager.EFFECT_INFO = {
     },
     /** Pixelate effect */
     pixelate: {
+        uniformName: 'u_pixelate',
         mask: 1 << 3,
         converter: function converter(x) {
             return Math.abs(x) / 10;
@@ -10833,6 +10835,7 @@ ShaderManager.EFFECT_INFO = {
     },
     /** Mosaic effect */
     mosaic: {
+        uniformName: 'u_mosaic',
         mask: 1 << 4,
         converter: function converter(x) {
             x = Math.round((Math.abs(x) + 10) / 10);
@@ -10843,6 +10846,7 @@ ShaderManager.EFFECT_INFO = {
     },
     /** Brightness effect */
     brightness: {
+        uniformName: 'u_brightness',
         mask: 1 << 5,
         converter: function converter(x) {
             return Math.max(-100, Math.min(x, 100)) / 100;
@@ -10851,6 +10855,7 @@ ShaderManager.EFFECT_INFO = {
     },
     /** Ghost effect */
     ghost: {
+        uniformName: 'u_ghost',
         mask: 1 << 6,
         converter: function converter(x) {
             return 1 - Math.max(0, Math.min(x, 100)) / 100;
@@ -10884,13 +10889,235 @@ ShaderManager.DRAW_MODE = {
     /**
      * Draw only the parts of the drawable which match a particular color.
      */
-    colorMask: 'colorMask'
+    colorMask: 'colorMask',
+
+    /**
+     * Sample a "texture" to draw a line with caps.
+     */
+    lineSample: 'lineSample',
+
+    /**
+     * Draw normally except for pre-multiplied alpha
+     */
+    stamp: 'stamp'
 };
 
 module.exports = ShaderManager;
 
 /***/ }),
 /* 5 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+var Rectangle = function () {
+    /**
+     * A utility for creating and comparing axis-aligned rectangles.
+     * Rectangles are always initialized to the "largest possible rectangle";
+     * use one of the init* methods below to set up a particular rectangle.
+     * @constructor
+     */
+    function Rectangle() {
+        _classCallCheck(this, Rectangle);
+
+        this.left = -Infinity;
+        this.right = Infinity;
+        this.bottom = -Infinity;
+        this.top = Infinity;
+    }
+
+    /**
+     * Initialize a Rectangle from given Scratch-coordinate bounds.
+     * @param {number} left Left bound of the rectangle.
+     * @param {number} right Right bound of the rectangle.
+     * @param {number} bottom Bottom bound of the rectangle.
+     * @param {number} top Top bound of the rectangle.
+     */
+
+
+    _createClass(Rectangle, [{
+        key: "initFromBounds",
+        value: function initFromBounds(left, right, bottom, top) {
+            this.left = left;
+            this.right = right;
+            this.bottom = bottom;
+            this.top = top;
+        }
+
+        /**
+         * Initialize a Rectangle to the minimum AABB around a set of points.
+         * @param {Array<Array<number>>} points Array of [x, y] points.
+         */
+
+    }, {
+        key: "initFromPointsAABB",
+        value: function initFromPointsAABB(points) {
+            this.left = Infinity;
+            this.right = -Infinity;
+            this.top = -Infinity;
+            this.bottom = Infinity;
+
+            for (var i = 0; i < points.length; i++) {
+                var x = points[i][0];
+                var y = points[i][1];
+                if (x < this.left) {
+                    this.left = x;
+                }
+                if (x > this.right) {
+                    this.right = x;
+                }
+                if (y > this.top) {
+                    this.top = y;
+                }
+                if (y < this.bottom) {
+                    this.bottom = y;
+                }
+            }
+        }
+
+        /**
+         * Determine if this Rectangle intersects some other.
+         * Note that this is a comparison assuming the Rectangle was
+         * initialized with Scratch-space bounds or points.
+         * @param {!Rectangle} other Rectangle to check if intersecting.
+         * @return {boolean} True if this Rectangle intersects other.
+         */
+
+    }, {
+        key: "intersects",
+        value: function intersects(other) {
+            return this.left <= other.right && other.left <= this.right && this.top >= other.bottom && other.top >= this.bottom;
+        }
+
+        /**
+         * Determine if this Rectangle fully contains some other.
+         * Note that this is a comparison assuming the Rectangle was
+         * initialized with Scratch-space bounds or points.
+         * @param {!Rectangle} other Rectangle to check if fully contained.
+         * @return {boolean} True if this Rectangle fully contains other.
+         */
+
+    }, {
+        key: "contains",
+        value: function contains(other) {
+            return other.left > this.left && other.right < this.right && other.top < this.top && other.bottom > this.bottom;
+        }
+
+        /**
+         * Clamp a Rectangle to bounds.
+         * @param {number} left Left clamp.
+         * @param {number} right Right clamp.
+         * @param {number} bottom Bottom clamp.
+         * @param {number} top Top clamp.
+         */
+
+    }, {
+        key: "clamp",
+        value: function clamp(left, right, bottom, top) {
+            this.left = Math.max(this.left, left);
+            this.right = Math.min(this.right, right);
+            this.bottom = Math.max(this.bottom, bottom);
+            this.top = Math.min(this.top, top);
+            // Ensure rectangle coordinates in order.
+            this.left = Math.min(this.left, this.right);
+            this.right = Math.max(this.right, this.left);
+            this.bottom = Math.min(this.bottom, this.top);
+            this.top = Math.max(this.top, this.bottom);
+        }
+
+        /**
+         * Push out the Rectangle to integer bounds.
+         */
+
+    }, {
+        key: "snapToInt",
+        value: function snapToInt() {
+            this.left = Math.floor(this.left);
+            this.right = Math.ceil(this.right);
+            this.bottom = Math.floor(this.bottom);
+            this.top = Math.ceil(this.top);
+        }
+
+        /**
+         * Compute the intersection of two bounding Rectangles.
+         * Could be an impossible box if they don't intersect.
+         * @param {Rectangle} a One rectangle
+         * @param {Rectangle} b Other rectangle
+         * @param {?Rectangle} result A resulting storage rectangle  (safe to pass
+         *                            a or b if you want to overwrite one)
+         * @returns {Rectangle} resulting rectangle
+         */
+
+    }, {
+        key: "width",
+
+
+        /**
+         * Width of the Rectangle.
+         * @return {number} Width of rectangle.
+         */
+        get: function get() {
+            return Math.abs(this.left - this.right);
+        }
+
+        /**
+         * Height of the Rectangle.
+         * @return {number} Height of rectangle.
+         */
+
+    }, {
+        key: "height",
+        get: function get() {
+            return Math.abs(this.top - this.bottom);
+        }
+    }], [{
+        key: "intersect",
+        value: function intersect(a, b) {
+            var result = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : new Rectangle();
+
+            result.left = Math.max(a.left, b.left);
+            result.right = Math.min(a.right, b.right);
+            result.top = Math.min(a.top, b.top);
+            result.bottom = Math.max(a.bottom, b.bottom);
+
+            return result;
+        }
+
+        /**
+         * Compute the union of two bounding Rectangles.
+         * @param {Rectangle} a One rectangle
+         * @param {Rectangle} b Other rectangle
+         * @param {?Rectangle} result A resulting storage rectangle  (safe to pass
+         *                            a or b if you want to overwrite one)
+         * @returns {Rectangle} resulting rectangle
+         */
+
+    }, {
+        key: "union",
+        value: function union(a, b) {
+            var result = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : new Rectangle();
+
+            result.left = Math.min(a.left, b.left);
+            result.right = Math.max(a.right, b.right);
+            // Scratch Space - +y is up
+            result.top = Math.max(a.top, b.top);
+            result.bottom = Math.min(a.bottom, b.bottom);
+            return result;
+        }
+    }]);
+
+    return Rectangle;
+}();
+
+module.exports = Rectangle;
+
+/***/ }),
+/* 6 */
 /***/ (function(module, exports) {
 
 // Copyright Joyent, Inc. and other Node contributors.
@@ -11198,218 +11425,6 @@ function isUndefined(arg) {
 
 
 /***/ }),
-/* 6 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-
-var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
-
-function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
-
-var Rectangle = function () {
-    /**
-     * A utility for creating and comparing axis-aligned rectangles.
-     * Rectangles are always initialized to the "largest possible rectangle";
-     * use one of the init* methods below to set up a particular rectangle.
-     * @constructor
-     */
-    function Rectangle() {
-        _classCallCheck(this, Rectangle);
-
-        this.left = -Infinity;
-        this.right = Infinity;
-        this.bottom = -Infinity;
-        this.top = Infinity;
-    }
-
-    /**
-     * Initialize a Rectangle from given Scratch-coordinate bounds.
-     * @param {number} left Left bound of the rectangle.
-     * @param {number} right Right bound of the rectangle.
-     * @param {number} bottom Bottom bound of the rectangle.
-     * @param {number} top Top bound of the rectangle.
-     */
-
-
-    _createClass(Rectangle, [{
-        key: "initFromBounds",
-        value: function initFromBounds(left, right, bottom, top) {
-            this.left = left;
-            this.right = right;
-            this.bottom = bottom;
-            this.top = top;
-        }
-
-        /**
-         * Initialize a Rectangle to the minimum AABB around a set of points.
-         * @param {Array<Array<number>>} points Array of [x, y] points.
-         */
-
-    }, {
-        key: "initFromPointsAABB",
-        value: function initFromPointsAABB(points) {
-            this.left = Infinity;
-            this.right = -Infinity;
-            this.top = -Infinity;
-            this.bottom = Infinity;
-
-            for (var i = 0; i < points.length; i++) {
-                var x = points[i][0];
-                var y = points[i][1];
-                if (x < this.left) {
-                    this.left = x;
-                }
-                if (x > this.right) {
-                    this.right = x;
-                }
-                if (y > this.top) {
-                    this.top = y;
-                }
-                if (y < this.bottom) {
-                    this.bottom = y;
-                }
-            }
-        }
-
-        /**
-         * Determine if this Rectangle intersects some other.
-         * Note that this is a comparison assuming the Rectangle was
-         * initialized with Scratch-space bounds or points.
-         * @param {!Rectangle} other Rectangle to check if intersecting.
-         * @return {boolean} True if this Rectangle intersects other.
-         */
-
-    }, {
-        key: "intersects",
-        value: function intersects(other) {
-            return this.left <= other.right && other.left <= this.right && this.top >= other.bottom && other.top >= this.bottom;
-        }
-
-        /**
-         * Determine if this Rectangle fully contains some other.
-         * Note that this is a comparison assuming the Rectangle was
-         * initialized with Scratch-space bounds or points.
-         * @param {!Rectangle} other Rectangle to check if fully contained.
-         * @return {boolean} True if this Rectangle fully contains other.
-         */
-
-    }, {
-        key: "contains",
-        value: function contains(other) {
-            return other.left > this.left && other.right < this.right && other.top < this.top && other.bottom > this.bottom;
-        }
-
-        /**
-         * Clamp a Rectangle to bounds.
-         * @param {number} left Left clamp.
-         * @param {number} right Right clamp.
-         * @param {number} bottom Bottom clamp.
-         * @param {number} top Top clamp.
-         */
-
-    }, {
-        key: "clamp",
-        value: function clamp(left, right, bottom, top) {
-            this.left = Math.max(this.left, left);
-            this.right = Math.min(this.right, right);
-            this.bottom = Math.max(this.bottom, bottom);
-            this.top = Math.min(this.top, top);
-            // Ensure rectangle coordinates in order.
-            this.left = Math.min(this.left, this.right);
-            this.right = Math.max(this.right, this.left);
-            this.bottom = Math.min(this.bottom, this.top);
-            this.top = Math.max(this.top, this.bottom);
-        }
-
-        /**
-         * Push out the Rectangle to integer bounds.
-         */
-
-    }, {
-        key: "snapToInt",
-        value: function snapToInt() {
-            this.left = Math.floor(this.left);
-            this.right = Math.ceil(this.right);
-            this.bottom = Math.floor(this.bottom);
-            this.top = Math.ceil(this.top);
-        }
-
-        /**
-         * Compute the intersection of two bounding Rectangles.
-         * Could be an impossible box if they don't intersect.
-         * @param {Rectangle} a One rectangle
-         * @param {Rectangle} b Other rectangle
-         * @param {?Rectangle} result A resulting storage rectangle  (safe to pass
-         *                            a or b if you want to overwrite one)
-         * @returns {Rectangle} resulting rectangle
-         */
-
-    }, {
-        key: "width",
-
-
-        /**
-         * Width of the Rectangle.
-         * @return {number} Width of rectangle.
-         */
-        get: function get() {
-            return Math.abs(this.left - this.right);
-        }
-
-        /**
-         * Height of the Rectangle.
-         * @return {number} Height of rectangle.
-         */
-
-    }, {
-        key: "height",
-        get: function get() {
-            return Math.abs(this.top - this.bottom);
-        }
-    }], [{
-        key: "intersect",
-        value: function intersect(a, b) {
-            var result = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : new Rectangle();
-
-            result.left = Math.max(a.left, b.left);
-            result.right = Math.min(a.right, b.right);
-            result.top = Math.min(a.top, b.top);
-            result.bottom = Math.max(a.bottom, b.bottom);
-
-            return result;
-        }
-
-        /**
-         * Compute the union of two bounding Rectangles.
-         * @param {Rectangle} a One rectangle
-         * @param {Rectangle} b Other rectangle
-         * @param {?Rectangle} result A resulting storage rectangle  (safe to pass
-         *                            a or b if you want to overwrite one)
-         * @returns {Rectangle} resulting rectangle
-         */
-
-    }, {
-        key: "union",
-        value: function union(a, b) {
-            var result = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : new Rectangle();
-
-            result.left = Math.min(a.left, b.left);
-            result.right = Math.max(a.right, b.right);
-            // Scratch Space - +y is up
-            result.top = Math.max(a.top, b.top);
-            result.bottom = Math.min(a.bottom, b.bottom);
-            return result;
-        }
-    }]);
-
-    return Rectangle;
-}();
-
-module.exports = Rectangle;
-
-/***/ }),
 /* 7 */
 /***/ (function(module, exports, __webpack_require__) {
 
@@ -11417,6 +11432,8 @@ module.exports = Rectangle;
 
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+var _slicedToArray = function () { function sliceIterator(arr, i) { var _arr = []; var _n = true; var _d = false; var _e = undefined; try { for (var _i = arr[Symbol.iterator](), _s; !(_n = (_s = _i.next()).done); _n = true) { _arr.push(_s.value); if (i && _arr.length === i) break; } } catch (err) { _d = true; _e = err; } finally { try { if (!_n && _i["return"]) _i["return"](); } finally { if (_d) throw _e; } } return _arr; } return function (arr, i) { if (Array.isArray(arr)) { return arr; } else if (Symbol.iterator in Object(arr)) { return sliceIterator(arr, i); } else { throw new TypeError("Invalid attempt to destructure non-iterable instance"); } }; }();
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
@@ -11442,13 +11459,183 @@ var CENTER_X = 0.5;
  */
 var CENTER_Y = 0.5;
 
+// color conversions grabbed from https://gist.github.com/mjackson/5311256
+
+/**
+ * Converts an RGB color value to HSL. Conversion formula
+ * adapted from http://en.wikipedia.org/wiki/HSL_color_space.
+ * Assumes r, g, and b are contained in the set [0, 255] and
+ * returns h, s, and l in the set [0, 1].
+ *
+ * @param   {number}  r       The red color value
+ * @param   {number}  g       The green color value
+ * @param   {number}  b       The blue color value
+ * @return  {Array}           The HSL representation
+ */
+var rgbToHsl = function rgbToHsl(_ref) {
+    var _ref2 = _slicedToArray(_ref, 3),
+        r = _ref2[0],
+        g = _ref2[1],
+        b = _ref2[2];
+
+    r /= 255;
+    g /= 255;
+    b /= 255;
+
+    var max = Math.max(r, g, b);
+    var min = Math.min(r, g, b);
+    var h = void 0;
+    var s = void 0;
+    var l = (max + min) / 2;
+
+    if (max === min) {
+        h = s = 0; // achromatic
+    } else {
+        var d = max - min;
+        s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+
+        switch (max) {
+            case r:
+                h = (g - b) / d + (g < b ? 6 : 0);break;
+            case g:
+                h = (b - r) / d + 2;break;
+            case b:
+                h = (r - g) / d + 4;break;
+        }
+
+        h /= 6;
+    }
+
+    return [h, s, l];
+};
+
+/**
+ * Helper function for hslToRgb is called with varying 't' values to get
+ * red green and blue values from the p/q/t color space calculations
+ * @param {number} p vector coordinates
+ * @param {number} q vector coordinates
+ * @param {number} t vector coordinates
+ * @return {number} amount of r/g/b byte
+ */
+var hue2rgb = function hue2rgb(p, q, t) {
+    if (t < 0) t += 1;
+    if (t > 1) t -= 1;
+    if (t < 1 / 6) return p + (q - p) * 6 * t;
+    if (t < 1 / 2) return q;
+    if (t < 2 / 3) return p + (q - p) * (2 / 3 - t) * 6;
+    return p;
+};
+
+/**
+ * Converts an HSL color value to RGB. Conversion formula
+ * adapted from http://en.wikipedia.org/wiki/HSL_color_space.
+ * Assumes h, s, and l are contained in the set [0, 1] and
+ * returns r, g, and b in the set [0, 255].
+ *
+ * @param   {number}  h       The hue
+ * @param   {number}  s       The saturation
+ * @param   {number}  l       The lightness
+ * @return  {Array}           The RGB representation
+ */
+var hslToRgb = function hslToRgb(_ref3) {
+    var _ref4 = _slicedToArray(_ref3, 3),
+        h = _ref4[0],
+        s = _ref4[1],
+        l = _ref4[2];
+
+    var r = void 0;
+    var g = void 0;
+    var b = void 0;
+
+    if (s === 0) {
+        r = g = b = l; // achromatic
+    } else {
+
+        var q = l < 0.5 ? l * (1 + s) : l + s - l * s;
+        var p = 2 * l - q;
+
+        r = hue2rgb(p, q, h + 1 / 3);
+        g = hue2rgb(p, q, h);
+        b = hue2rgb(p, q, h - 1 / 3);
+    }
+
+    return [r * 255, g * 255, b * 255];
+};
+
 var EffectTransform = function () {
     function EffectTransform() {
         _classCallCheck(this, EffectTransform);
     }
 
     _createClass(EffectTransform, null, [{
-        key: 'transformPoint',
+        key: 'transformColor',
+
+
+        /**
+         * Transform a color given the drawables effect uniforms.  Will apply
+         * Ghost and Color and Brightness effects.
+         * @param {Drawable} drawable The drawable to get uniforms from.
+         * @param {Uint8ClampedArray} color4b The initial color.
+         * @param {Uint8ClampedArary} [dst] Working space to save the color in (is returned)
+         * @param {number} [effectMask] A bitmask for which effects to use. Optional.
+         * @returns {Uint8ClampedArray} dst filled with the transformed color
+         */
+        value: function transformColor(drawable, color4b, dst, effectMask) {
+            dst = dst || new Uint8ClampedArray(4);
+            effectMask = effectMask || 0xffffffff;
+            dst.set(color4b);
+            if (dst[3] === 0) {
+                return dst;
+            }
+
+            var uniforms = drawable.getUniforms();
+            var effects = drawable.getEnabledEffects() & effectMask;
+
+            if ((effects & ShaderManager.EFFECT_INFO.ghost.mask) !== 0) {
+                // gl_FragColor.a *= u_ghost
+                dst[3] *= uniforms.u_ghost;
+            }
+
+            var enableColor = (effects & ShaderManager.EFFECT_INFO.color.mask) !== 0;
+            var enableBrightness = (effects & ShaderManager.EFFECT_INFO.brightness.mask) !== 0;
+
+            if (enableColor || enableBrightness) {
+                // vec3 hsl = convertRGB2HSL(gl_FragColor.xyz);
+                var hsl = rgbToHsl(dst);
+
+                if (enableColor) {
+                    // this code forces grayscale values to be slightly saturated
+                    // so that some slight change of hue will be visible
+                    // const float minLightness = 0.11 / 2.0;
+                    var minL = 0.11 / 2.0;
+                    // const float minSaturation = 0.09;
+                    var minS = 0.09;
+                    // if (hsl.z < minLightness) hsl = vec3(0.0, 1.0, minLightness);
+                    if (hsl[2] < minL) {
+                        hsl[0] = 0;
+                        hsl[1] = 1;
+                        hsl[2] = minL;
+                        // else if (hsl.y < minSaturation) hsl = vec3(0.0, minSaturation, hsl.z);
+                    } else if (hsl[1] < minS) {
+                        hsl[0] = 0;
+                        hsl[1] = minS;
+                    }
+
+                    // hsl.x = mod(hsl.x + u_color, 1.0);
+                    // if (hsl.x < 0.0) hsl.x += 1.0;
+                    hsl[0] = (uniforms.u_color + hsl[0] + 1) % 1;
+                }
+
+                if (enableBrightness) {
+                    // hsl.z = clamp(hsl.z + u_brightness, 0.0, 1.0);
+                    hsl[2] = Math.min(1, hsl[2] + uniforms.u_brightness);
+                }
+                // gl_FragColor.rgb = convertHSL2RGB(hsl);
+                dst.set(hslToRgb(hsl));
+            }
+
+            return dst;
+        }
 
         /**
          * Transform a texture coordinate to one that would be select after applying shader effects.
@@ -11457,6 +11644,9 @@ var EffectTransform = function () {
          * @param {?twgl.v3} dst A place to store the output coordinate.
          * @return {twgl.v3} dst - The coordinate after being transform by effects.
          */
+
+    }, {
+        key: 'transformPoint',
         value: function transformPoint(drawable, vec) {
             var dst = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : twgl.v3.create();
 
@@ -11487,7 +11677,7 @@ var EffectTransform = function () {
                 var offsetX = dst[0] - CENTER_X;
                 var offsetY = dst[1] - CENTER_Y;
                 // float offsetMagnitude = length(offset);
-                var offsetMagnitude = twgl.v3.length(dst);
+                var offsetMagnitude = Math.sqrt(Math.pow(offsetX, 2) + Math.pow(offsetY, 2));
                 // float whirlFactor = max(1.0 - (offsetMagnitude / kRadius), 0.0);
                 var whirlFactor = Math.max(1.0 - offsetMagnitude / RADIUS, 0.0);
                 // float whirlActual = u_whirl * whirlFactor * whirlFactor;
@@ -11500,14 +11690,14 @@ var EffectTransform = function () {
                 //     cosWhirl, -sinWhirl,
                 //     sinWhirl, cosWhirl
                 // );
-                var rot00 = cosWhirl;
-                var rot10 = -sinWhirl;
-                var rot01 = sinWhirl;
-                var rot11 = cosWhirl;
+                var rot1 = cosWhirl;
+                var rot2 = -sinWhirl;
+                var rot3 = sinWhirl;
+                var rot4 = cosWhirl;
 
                 // texcoord0 = rotationMatrix * offset + kCenter;
-                dst[0] = rot00 * offsetX + rot10 * offsetY + CENTER_X;
-                dst[1] = rot01 * offsetX + rot11 * offsetY + CENTER_Y;
+                dst[0] = rot1 * offsetX + rot3 * offsetY + CENTER_X;
+                dst[1] = rot2 * offsetX + rot4 * offsetY + CENTER_Y;
             }
             if ((effects & ShaderManager.EFFECT_INFO.fisheye.mask) !== 0) {
                 // vec2 vec = (texcoord0 - kCenter) / kCenter;
@@ -11814,14 +12004,14 @@ function _possibleConstructorReturn(self, call) { if (!self) { throw new Referen
 
 function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
 
-var EventEmitter = __webpack_require__(5);
+var EventEmitter = __webpack_require__(6);
 
 var hull = __webpack_require__(15);
 var twgl = __webpack_require__(0);
 
 var BitmapSkin = __webpack_require__(20);
 var Drawable = __webpack_require__(22);
-var Rectangle = __webpack_require__(6);
+var Rectangle = __webpack_require__(5);
 var PenSkin = __webpack_require__(25);
 var RenderConstants = __webpack_require__(3);
 var ShaderManager = __webpack_require__(4);
@@ -11832,6 +12022,12 @@ var log = __webpack_require__(56);
 
 var __isTouchingDrawablesPoint = twgl.v3.create();
 var __candidatesBounds = new Rectangle();
+var __touchingColor = new Uint8ClampedArray(4);
+var __blendColor = new Uint8ClampedArray(4);
+
+// More pixels than this and we give up to the GPU and take the cost of readPixels
+// Width * Height * Number of drawables at location
+var __cpuTouchingColorPixelCount = 4e4;
 
 /**
  * @callback RenderWebGL#idFilterFunc
@@ -11848,26 +12044,37 @@ var __candidatesBounds = new Rectangle();
 var MAX_TOUCH_SIZE = [3, 3];
 
 /**
- * "touching {color}?" or "{color} touching {color}?" tests will be true if the
- * target is touching a color whose components are each within this tolerance of
- * the corresponding component of the query color.
- * between 0 (exact matches only) and 255 (match anything).
- * @type {object.<string,int>}
- * @memberof RenderWebGL
+ * Passed to the uniforms for mask in touching color
  */
-var TOLERANCE_TOUCHING_COLOR = {
-    R: 7,
-    G: 7,
-    B: 15,
-    Mask: 2
+var MASK_TOUCHING_COLOR_TOLERANCE = 2;
+
+/**
+ * Determines if the mask color is "close enough" (only test the 6 top bits for
+ * each color).  These bit masks are what scratch 2 used to use, so we do the same.
+ * @param {Uint8Array} a A color3b or color4b value.
+ * @param {Uint8Array} b A color3b or color4b value.
+ * @returns {boolean} If the colors match within the parameters.
+ */
+var maskMatches = function maskMatches(a, b) {
+    return (
+        // has some non-alpha component to test against
+        a[3] > 0 && (a[0] & 252) === (b[0] & 252) && (a[1] & 252) === (b[1] & 252) && (a[2] & 252) === (b[2] & 252)
+    );
 };
 
 /**
- * Constant used for masking when detecting the color white
- * @type {Array<int>}
- * @memberof RenderWebGL
+ * Determines if the given color is "close enough" (only test the 5 top bits for
+ * red and green, 4 bits for blue).  These bit masks are what scratch 2 used to use,
+ * so we do the same.
+ * @param {Uint8Array} a A color3b or color4b value.
+ * @param {Uint8Array} b A color3b or color4b value / or a larger array when used with offsets
+ * @param {number} offset An offset into the `b` array, which lets you use a larger array to test
+ *                  multiple values at the same time.
+ * @returns {boolean} If the colors match within the parameters.
  */
-var COLOR_BLACK = [0, 0, 0, 1];
+var colorMatches = function colorMatches(a, b, offset) {
+    return (a[0] & 248) === (b[offset + 0] & 248) && (a[1] & 248) === (b[offset + 1] & 248) && (a[2] & 240) === (b[offset + 2] & 240);
+};
 
 /**
  * Sprite Fencing - The number of pixels a sprite is required to leave remaining
@@ -11979,6 +12186,12 @@ var RenderWebGL = function (_EventEmitter) {
 
         /** @type {HTMLCanvasElement} */
         _this._tempCanvas = document.createElement('canvas');
+
+        /** @type {any} */
+        _this._regionId = null;
+
+        /** @type {function} */
+        _this._exitRegion = null;
 
         _this._svgTextBubble = new SVGTextBubble();
 
@@ -12330,12 +12543,12 @@ var RenderWebGL = function (_EventEmitter) {
                 }
             }
         }
+    }, {
+        key: '_endIndexForKnownLayerGroup',
+
 
         // Given a layer group, return the index where it ends (non-inclusive),
         // e.g. the returned index does not have a drawable from this layer group in it)
-
-    }, {
-        key: '_endIndexForKnownLayerGroup',
         value: function _endIndexForKnownLayerGroup(layerGroup) {
             var groupIndex = layerGroup.groupIndex;
             if (groupIndex === this._groupOrdering.length - 1) {
@@ -12464,6 +12677,8 @@ var RenderWebGL = function (_EventEmitter) {
     }, {
         key: 'draw',
         value: function draw() {
+            this._doExitDrawRegion();
+
             var gl = this._gl;
 
             twgl.bindFramebufferInfo(gl, null);
@@ -12576,7 +12791,7 @@ var RenderWebGL = function (_EventEmitter) {
 
         /**
          * Check if a particular Drawable is touching a particular color.
-         * Unlike touching drawable, touching color tests invisible sprites.
+         * Unlike touching drawable, if the "tester" is invisble, we will still test.
          * @param {int} drawableID The ID of the Drawable to check.
          * @param {Array<int>} color3b Test if the Drawable is touching this color.
          * @param {Array<int>} [mask3b] Optionally mask the check to this part of Drawable.
@@ -12586,20 +12801,53 @@ var RenderWebGL = function (_EventEmitter) {
     }, {
         key: 'isTouchingColor',
         value: function isTouchingColor(drawableID, color3b, mask3b) {
-            var gl = this._gl;
-            twgl.bindFramebufferInfo(gl, this._queryBufferInfo);
-
-            var candidates = this._candidatesTouching(drawableID, this._drawList);
+            var candidates = this._candidatesTouching(drawableID, this._visibleDrawList);
             if (candidates.length === 0) {
                 return false;
             }
 
             var bounds = this._candidatesBounds(candidates);
 
-            var candidateIDs = candidates.map(function (_ref) {
-                var id = _ref.id;
-                return id;
-            });
+            // if there are just too many pixels to CPU render efficently, we
+            // need to let readPixels happen
+            if (bounds.width * bounds.height * (candidates.length + 1) >= __cpuTouchingColorPixelCount) {
+                this._isTouchingColorGpuStart(drawableID, candidates.map(function (_ref) {
+                    var id = _ref.id;
+                    return id;
+                }).reverse(), bounds, color3b, mask3b);
+            }
+
+            var drawable = this._allDrawables[drawableID];
+            var point = __isTouchingDrawablesPoint;
+            var color = __touchingColor;
+            var hasMask = Boolean(mask3b);
+
+            for (var y = bounds.bottom; y <= bounds.top; y++) {
+                if (bounds.width * (y - bounds.bottom) * (candidates.length + 1) >= __cpuTouchingColorPixelCount) {
+                    return this._isTouchingColorGpuFin(bounds, color3b, y - bounds.bottom);
+                }
+                // Scratch Space - +y is top
+                for (var x = bounds.left; x <= bounds.right; x++) {
+                    point[1] = y;
+                    point[0] = x;
+                    if (
+                    // if we use a mask, check our sample color
+                    (hasMask ? maskMatches(Drawable.sampleColor4b(point, drawable, color), mask3b) : drawable.isTouching(point)) &&
+                    // and the target color is drawn at this pixel
+                    colorMatches(RenderWebGL.sampleColor3b(point, candidates, color), color3b, 0)) {
+                        return true;
+                    }
+                }
+            }
+            return false;
+        }
+    }, {
+        key: '_isTouchingColorGpuStart',
+        value: function _isTouchingColorGpuStart(drawableID, candidateIDs, bounds, color3b, mask3b) {
+            this._doExitDrawRegion();
+
+            var gl = this._gl;
+            twgl.bindFramebufferInfo(gl, this._queryBufferInfo);
 
             // Limit size of viewport to the bounds around the target Drawable,
             // and create the projection matrix for the draw.
@@ -12611,7 +12859,7 @@ var RenderWebGL = function (_EventEmitter) {
             // When using masking such that the background fill color will showing through, ensure we don't
             // fill using the same color that we are trying to detect!
             if (color3b[0] > 196 && color3b[1] > 196 && color3b[2] > 196) {
-                fillBackgroundColor = COLOR_BLACK;
+                fillBackgroundColor = [0, 0, 0, 255];
             }
 
             gl.clearColor.apply(gl, fillBackgroundColor);
@@ -12621,7 +12869,7 @@ var RenderWebGL = function (_EventEmitter) {
             if (mask3b) {
                 extraUniforms = {
                     u_colorMask: [mask3b[0] / 255, mask3b[1] / 255, mask3b[2] / 255],
-                    u_colorMaskTolerance: TOLERANCE_TOUCHING_COLOR.Mask / 255
+                    u_colorMaskTolerance: MASK_TOUCHING_COLOR_TOLERANCE / 255
                 };
             }
 
@@ -12646,25 +12894,25 @@ var RenderWebGL = function (_EventEmitter) {
                 gl.colorMask(true, true, true, true);
                 gl.disable(gl.STENCIL_TEST);
             }
-
-            var pixels = new Uint8Array(Math.floor(bounds.width * bounds.height * 4));
-            gl.readPixels(0, 0, bounds.width, bounds.height, gl.RGBA, gl.UNSIGNED_BYTE, pixels);
+        }
+    }, {
+        key: '_isTouchingColorGpuFin',
+        value: function _isTouchingColorGpuFin(bounds, color3b, stop) {
+            var gl = this._gl;
+            var pixels = new Uint8Array(Math.floor(bounds.width * (bounds.height - stop) * 4));
+            gl.readPixels(0, 0, bounds.width, bounds.height - stop, gl.RGBA, gl.UNSIGNED_BYTE, pixels);
 
             if (this._debugCanvas) {
                 this._debugCanvas.width = bounds.width;
                 this._debugCanvas.height = bounds.height;
                 var context = this._debugCanvas.getContext('2d');
-                var imageData = context.getImageData(0, 0, bounds.width, bounds.height);
+                var imageData = context.getImageData(0, 0, bounds.width, bounds.height - stop);
                 imageData.data.set(pixels);
                 context.putImageData(imageData, 0, 0);
             }
 
             for (var pixelBase = 0; pixelBase < pixels.length; pixelBase += 4) {
-                var pixelDistanceR = Math.abs(pixels[pixelBase] - color3b[0]);
-                var pixelDistanceG = Math.abs(pixels[pixelBase + 1] - color3b[1]);
-                var pixelDistanceB = Math.abs(pixels[pixelBase + 2] - color3b[2]);
-
-                if (pixelDistanceR <= TOLERANCE_TOUCHING_COLOR.R && pixelDistanceG <= TOLERANCE_TOUCHING_COLOR.G && pixelDistanceB <= TOLERANCE_TOUCHING_COLOR.B) {
+                if (colorMatches(color3b, pixels, pixelBase)) {
                     return true;
                 }
             }
@@ -12675,18 +12923,24 @@ var RenderWebGL = function (_EventEmitter) {
         /**
          * Check if a particular Drawable is touching any in a set of Drawables.
          * @param {int} drawableID The ID of the Drawable to check.
-         * @param {?Array<int>} candidateIDs The Drawable IDs to check, otherwise all drawables in the renderer
+         * @param {?Array<int>} candidateIDs The Drawable IDs to check, otherwise all visible drawables in the renderer
          * @returns {boolean} True if the Drawable is touching one of candidateIDs.
          */
 
     }, {
         key: 'isTouchingDrawables',
         value: function isTouchingDrawables(drawableID) {
+            var _this2 = this;
+
             var candidateIDs = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : this._drawList;
 
-
-            var candidates = this._candidatesTouching(drawableID, candidateIDs);
-            if (candidates.length === 0) {
+            var candidates = this._candidatesTouching(drawableID,
+            // even if passed an invisible drawable, we will NEVER touch it!
+            candidateIDs.filter(function (id) {
+                return _this2._allDrawables[id]._visible;
+            }));
+            // if we are invisble we don't touch anything.
+            if (candidates.length === 0 || !this._allDrawables[drawableID]._visible) {
                 return false;
             }
 
@@ -12717,13 +12971,90 @@ var RenderWebGL = function (_EventEmitter) {
         }
 
         /**
-         * Detect which sprite, if any, is at the given location. This function will not
-         * pick drawables that are not visible or have ghost set all the way up.
+         * Convert a client based x/y position on the canvas to a Scratch 3 world space
+         * Rectangle.  This creates recangles with a radius to cover selecting multiple
+         * scratch pixels with touch / small render areas.
+         *
+         * @param {int} centerX The client x coordinate of the picking location.
+         * @param {int} centerY The client y coordinate of the picking location.
+         * @param {int} [width] The client width of the touch event (optional).
+         * @param {int} [height] The client width of the touch event (optional).
+         * @returns {Rectangle} Scratch world space rectangle, iterate bottom <= top,
+         *                      left <= right.
+         */
+
+    }, {
+        key: 'clientSpaceToScratchBounds',
+        value: function clientSpaceToScratchBounds(centerX, centerY) {
+            var width = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : 1;
+            var height = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : 1;
+
+            var gl = this._gl;
+
+            var clientToScratchX = this._nativeSize[0] / gl.canvas.clientWidth;
+            var clientToScratchY = this._nativeSize[1] / gl.canvas.clientHeight;
+
+            width *= clientToScratchX;
+            height *= clientToScratchY;
+
+            width = Math.max(1, Math.min(Math.round(width), MAX_TOUCH_SIZE[0]));
+            height = Math.max(1, Math.min(Math.round(height), MAX_TOUCH_SIZE[1]));
+            var x = centerX * clientToScratchX - (width - 1) / 2;
+            // + because scratch y is inverted
+            var y = centerY * clientToScratchY + (height - 1) / 2;
+
+            var xOfs = width % 2 ? 0 : -0.5;
+            // y is offset +0.5
+            var yOfs = height % 2 ? 0 : -0.5;
+
+            var bounds = new Rectangle();
+            bounds.initFromBounds(Math.floor(this._xLeft + x + xOfs), Math.floor(this._xLeft + x + xOfs + width - 1), Math.ceil(this._yTop - y + yOfs), Math.ceil(this._yTop - y + yOfs + height - 1));
+            return bounds;
+        }
+
+        /**
+         * Determine if the drawable is touching a client based x/y.  Helper method for sensing
+         * touching mouse-pointer.  Ignores visibility.
+         *
+         * @param {int} drawableID The ID of the drawable to check.
          * @param {int} centerX The client x coordinate of the picking location.
          * @param {int} centerY The client y coordinate of the picking location.
          * @param {int} [touchWidth] The client width of the touch event (optional).
          * @param {int} [touchHeight] The client height of the touch event (optional).
-         * @param {Array<int>} [candidateIDs] The Drawable IDs to pick from, otherwise all.
+         * @returns {boolean} If the drawable has any pixels that would draw in the touch area
+         */
+
+    }, {
+        key: 'drawableTouching',
+        value: function drawableTouching(drawableID, centerX, centerY, touchWidth, touchHeight) {
+            var drawable = this._allDrawables[drawableID];
+            if (!drawable) {
+                return false;
+            }
+            var bounds = this.clientSpaceToScratchBounds(centerX, centerY, touchWidth, touchHeight);
+            var worldPos = twgl.v3.create();
+
+            for (worldPos[1] = bounds.bottom; worldPos[1] <= bounds.top; worldPos[1]++) {
+                for (worldPos[0] = bounds.left; worldPos[0] <= bounds.right; worldPos[0]++) {
+                    if (drawable.isTouching(worldPos)) {
+                        return true;
+                    }
+                }
+            }
+            return false;
+        }
+
+        /**
+         * Detect which sprite, if any, is at the given location.
+         * This function will pick all drawables that are visible, unless specific
+         * candidate drawable IDs are provided.  Used for determining what is clicked
+         * or dragged.  Will not select hidden / ghosted sprites.
+         *
+         * @param {int} centerX The client x coordinate of the picking location.
+         * @param {int} centerY The client y coordinate of the picking location.
+         * @param {int} [touchWidth] The client width of the touch event (optional).
+         * @param {int} [touchHeight] The client height of the touch event (optional).
+         * @param {Array<int>} [candidateIDs] The Drawable IDs to pick from, otherwise all visible drawables.
          * @returns {int} The ID of the topmost Drawable under the picking location, or
          * RenderConstants.ID_NONE if there is no Drawable at that location.
          */
@@ -12731,48 +13062,29 @@ var RenderWebGL = function (_EventEmitter) {
     }, {
         key: 'pick',
         value: function pick(centerX, centerY, touchWidth, touchHeight, candidateIDs) {
-            var _this2 = this;
+            var _this3 = this;
 
-            var gl = this._gl;
-
-            touchWidth = touchWidth || 1;
-            touchHeight = touchHeight || 1;
             candidateIDs = (candidateIDs || this._drawList).filter(function (id) {
-                var drawable = _this2._allDrawables[id];
-                var uniforms = drawable.getUniforms();
-                return drawable.getVisible() && uniforms.u_ghost !== 0;
+                var drawable = _this3._allDrawables[id];
+                // default pick list ignores visible and ghosted sprites.
+                if (drawable.getVisible() && drawable.getUniforms().u_ghost !== 0) {
+                    drawable.updateMatrix();
+                    drawable.skin.updateSilhouette();
+                    return true;
+                }
+                return false;
             });
-
-            var clientToGLX = gl.canvas.width / gl.canvas.clientWidth;
-            var clientToGLY = gl.canvas.height / gl.canvas.clientHeight;
-
-            centerX *= clientToGLX;
-            centerY *= clientToGLY;
-            touchWidth *= clientToGLX;
-            touchHeight *= clientToGLY;
-
-            touchWidth = Math.max(1, Math.min(touchWidth, MAX_TOUCH_SIZE[0]));
-            touchHeight = Math.max(1, Math.min(touchHeight, MAX_TOUCH_SIZE[1]));
-
-            var pixelLeft = Math.floor(centerX - Math.floor(touchWidth / 2) + 0.5);
-            var pixelTop = Math.floor(centerY - Math.floor(touchHeight / 2) + 0.5);
-
-            var widthPerPixel = (this._xRight - this._xLeft) / this._gl.canvas.width;
-            var heightPerPixel = (this._yBottom - this._yTop) / this._gl.canvas.height;
-
-            var pickLeft = this._xLeft + pixelLeft * widthPerPixel;
-            var pickTop = this._yTop + pixelTop * heightPerPixel;
-
+            if (candidateIDs.length === 0) {
+                return false;
+            }
+            var bounds = this.clientSpaceToScratchBounds(centerX, centerY, touchWidth, touchHeight);
             var hits = [];
             var worldPos = twgl.v3.create(0, 0, 0);
-            worldPos[2] = 0;
-
-            // Iterate over the canvas pixels and check if any candidate can be
+            // Iterate over the scratch pixels and check if any candidate can be
             // touched at that point.
-            for (var x = 0; x < touchWidth; x++) {
-                worldPos[0] = x + pickLeft;
-                for (var y = 0; y < touchHeight; y++) {
-                    worldPos[1] = y + pickTop;
+            for (worldPos[1] = bounds.bottom; worldPos[1] <= bounds.top; worldPos[1]++) {
+                for (worldPos[0] = bounds.left; worldPos[0] <= bounds.right; worldPos[0]++) {
+
                     // Check candidates in the reverse order they would have been
                     // drawn. This will determine what candiate's silhouette pixel
                     // would have been drawn at the point.
@@ -12797,7 +13109,7 @@ var RenderWebGL = function (_EventEmitter) {
                 }
             }
 
-            return hit | 0;
+            return Number(hit);
         }
 
         /**
@@ -12822,6 +13134,8 @@ var RenderWebGL = function (_EventEmitter) {
     }, {
         key: 'extractDrawable',
         value: function extractDrawable(drawableID, x, y) {
+            this._doExitDrawRegion();
+
             var drawable = this._allDrawables[drawableID];
             if (!drawable) return null;
 
@@ -12901,6 +13215,8 @@ var RenderWebGL = function (_EventEmitter) {
     }, {
         key: 'extractColor',
         value: function extractColor(x, y, radius) {
+            this._doExitDrawRegion();
+
             var scratchX = Math.round(this._nativeSize[0] * (x / this._gl.canvas.clientWidth - 0.5));
             var scratchY = Math.round(-this._nativeSize[1] * (y / this._gl.canvas.clientHeight - 0.5));
 
@@ -12967,6 +13283,8 @@ var RenderWebGL = function (_EventEmitter) {
             /** @todo remove this once URL-based skin setting is removed. */
             if (!drawable.skin || !drawable.skin.getTexture([100, 100])) return null;
 
+            drawable.updateMatrix();
+            drawable.skin.updateSilhouette();
             var bounds = drawable.getFastBounds();
 
             // Limit queries to the stage size.
@@ -12994,27 +13312,32 @@ var RenderWebGL = function (_EventEmitter) {
     }, {
         key: '_candidatesTouching',
         value: function _candidatesTouching(drawableID, candidateIDs) {
-            var _this3 = this;
-
             var bounds = this._touchingBounds(drawableID);
-            if (!bounds) {
-                return [];
+            var result = [];
+            if (bounds === null) {
+                return result;
             }
-            return candidateIDs.reduce(function (result, id) {
+            // iterate through the drawables list BACKWARDS - we want the top most item to be the first we check
+            for (var index = candidateIDs.length - 1; index >= 0; index--) {
+                var id = candidateIDs[index];
                 if (id !== drawableID) {
-                    var drawable = _this3._allDrawables[id];
-                    var candidateBounds = drawable.getFastBounds();
-
-                    if (bounds.intersects(candidateBounds)) {
-                        result.push({
-                            id: id,
-                            drawable: drawable,
-                            intersection: Rectangle.intersect(bounds, candidateBounds)
-                        });
+                    var drawable = this._allDrawables[id];
+                    if (drawable.skin && drawable._visible) {
+                        // Update the CPU position data
+                        drawable.updateMatrix();
+                        drawable.skin.updateSilhouette();
+                        var candidateBounds = drawable.getFastBounds();
+                        if (bounds.intersects(candidateBounds)) {
+                            result.push({
+                                id: id,
+                                drawable: drawable,
+                                intersection: Rectangle.intersect(bounds, candidateBounds)
+                            });
+                        }
                     }
                 }
-                return result;
-            }, []);
+            }
+            return result;
         }
 
         /**
@@ -13158,6 +13481,8 @@ var RenderWebGL = function (_EventEmitter) {
     }, {
         key: 'penStamp',
         value: function penStamp(penSkinID, stampID) {
+            this._doExitDrawRegion();
+
             var stampDrawable = this._allDrawables[stampID];
             if (!stampDrawable) {
                 return;
@@ -13182,24 +13507,12 @@ var RenderWebGL = function (_EventEmitter) {
 
             try {
                 gl.disable(gl.BLEND);
-                this._drawThese([stampID], ShaderManager.DRAW_MODE.default, projection, { ignoreVisibility: true });
+                this._drawThese([stampID], ShaderManager.DRAW_MODE.stamp, projection, { ignoreVisibility: true });
             } finally {
                 gl.enable(gl.BLEND);
             }
 
-            var stampPixels = new Uint8Array(Math.floor(bounds.width * bounds.height * 4));
-            gl.readPixels(0, 0, bounds.width, bounds.height, gl.RGBA, gl.UNSIGNED_BYTE, stampPixels);
-
-            var stampCanvas = this._tempCanvas;
-            stampCanvas.width = bounds.width;
-            stampCanvas.height = bounds.height;
-
-            var stampContext = stampCanvas.getContext('2d');
-            var stampImageData = stampContext.createImageData(bounds.width, bounds.height);
-            stampImageData.data.set(stampPixels);
-            stampContext.putImageData(stampImageData, 0, 0);
-
-            skin.drawStamp(stampCanvas, bounds.left, bounds.top);
+            skin._drawToBuffer(this._queryBufferInfo.attachments[0], bounds.left, bounds.top);
         }
 
         /* ******
@@ -13259,6 +13572,50 @@ var RenderWebGL = function (_EventEmitter) {
         }
 
         /**
+         * Enter a draw region.
+         *
+         * A draw region is where multiple draw operations are performed with the
+         * same GL state. WebGL performs poorly when it changes state like blend
+         * mode. Marking a collection of state values as a "region" the renderer
+         * can skip superfluous extra state calls when it is already in that
+         * region. Since one region may be entered from within another a exit
+         * handle can also be registered that is called when a new region is about
+         * to be entered to restore a common inbetween state.
+         *
+         * @param {any} regionId - id of the region to enter
+         * @param {function} enter - handle to call when first entering a region
+         * @param {function} exit - handle to call when leaving a region
+         */
+
+    }, {
+        key: 'enterDrawRegion',
+        value: function enterDrawRegion(regionId) {
+            var enter = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : regionId.enter;
+            var exit = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : regionId.exit;
+
+            if (this._regionId !== regionId) {
+                this._doExitDrawRegion();
+                this._regionId = regionId;
+                enter();
+                this._exitRegion = exit;
+            }
+        }
+
+        /**
+         * Forcefully exit the current region returning to a common inbetween GL
+         * state.
+         */
+
+    }, {
+        key: '_doExitDrawRegion',
+        value: function _doExitDrawRegion() {
+            if (this._exitRegion !== null) {
+                this._exitRegion();
+            }
+            this._exitRegion = null;
+        }
+
+        /**
          * Draw a set of Drawables, by drawable ID
          * @param {Array<int>} drawables The Drawable IDs to draw, possibly this._drawList.
          * @param {ShaderManager.DRAW_MODE} drawMode Draw normally, silhouette, etc.
@@ -13305,7 +13662,13 @@ var RenderWebGL = function (_EventEmitter) {
                 var effectBits = drawable.getEnabledEffects();
                 effectBits &= opts.hasOwnProperty('effectMask') ? opts.effectMask : effectBits;
                 var newShader = this._shaderManager.getShader(drawMode, effectBits);
-                if (currentShader !== newShader) {
+
+                // Manually perform region check. Do not create functions inside a
+                // loop.
+                if (this._regionId !== newShader) {
+                    this._doExitDrawRegion();
+                    this._regionId = newShader;
+
                     currentShader = newShader;
                     gl.useProgram(currentShader.program);
                     twgl.setBuffersAndAttributes(gl, currentShader, this._bufferInfo);
@@ -13330,6 +13693,8 @@ var RenderWebGL = function (_EventEmitter) {
 
                 twgl.drawBufferInfo(gl, this._bufferInfo, gl.TRIANGLES);
             }
+
+            this._regionId = null;
         }
 
         /**
@@ -13462,10 +13827,59 @@ var RenderWebGL = function (_EventEmitter) {
             // Simplify boundary points using convex hull.
             return hull(boundaryPoints, Infinity);
         }
+
+        /**
+         * Sample a "final" color from an array of drawables at a given scratch space.
+         * Will blend any alpha values with the drawables "below" it.
+         * @param {twgl.v3} vec Scratch Vector Space to sample
+         * @param {Array<Drawables>} drawables A list of drawables with the "top most"
+         *              drawable at index 0
+         * @param {Uint8ClampedArray} dst The color3b space to store the answer in.
+         * @return {Uint8ClampedArray} The dst vector with everything blended down.
+         */
+
     }, {
         key: 'gl',
         get: function get() {
             return this._gl;
+        }
+    }, {
+        key: '_visibleDrawList',
+        get: function get() {
+            var _this4 = this;
+
+            return this._drawList.filter(function (id) {
+                return _this4._allDrawables[id]._visible;
+            });
+        }
+    }], [{
+        key: 'sampleColor3b',
+        value: function sampleColor3b(vec, drawables, dst) {
+            dst = dst || new Uint8ClampedArray(3);
+            dst.fill(0);
+            var blendAlpha = 1;
+            for (var index = 0; blendAlpha !== 0 && index < drawables.length; index++) {
+                /*
+                if (left > vec[0] || right < vec[0] ||
+                    bottom > vec[1] || top < vec[0]) {
+                    continue;
+                }
+                */
+                Drawable.sampleColor4b(vec, drawables[index].drawable, __blendColor);
+                // if we are fully transparent, go to the next one "down"
+                var sampleAlpha = __blendColor[3] / 255;
+                // premultiply alpha
+                dst[0] += __blendColor[0] * blendAlpha * sampleAlpha;
+                dst[1] += __blendColor[1] * blendAlpha * sampleAlpha;
+                dst[2] += __blendColor[2] * blendAlpha * sampleAlpha;
+                blendAlpha *= 1 - sampleAlpha;
+            }
+            // Backdrop could be transparent, so we need to go to the "clear color" of the
+            // draw scene (white) as a fallback if everything was alpha
+            dst[0] += blendAlpha * 255;
+            dst[1] += blendAlpha * 255;
+            dst[2] += blendAlpha * 255;
+            return dst;
         }
     }]);
 
@@ -14071,6 +14485,36 @@ var getPoint = function getPoint(_ref, x, y) {
     return data[y * width + x];
 };
 
+/**
+ * Memory buffers for doing 4 corner sampling for linear interpolation
+ */
+var __cornerWork = [new Uint8ClampedArray(4), new Uint8ClampedArray(4), new Uint8ClampedArray(4), new Uint8ClampedArray(4)];
+
+/**
+ * Get the color from a given silhouette at an x/y local texture position.
+ * @param {Silhouette} The silhouette to sample.
+ * @param {number} x X position of texture (0-1).
+ * @param {number} y Y position of texture (0-1).
+ * @param {Uint8ClampedArray} dst A color 4b space.
+ * @return {Uint8ClampedArray} The dst vector.
+ */
+var getColor4b = function getColor4b(_ref2, x, y, dst) {
+    var width = _ref2._width,
+        height = _ref2._height,
+        data = _ref2._colorData;
+
+    // 0 if outside bouds, otherwise read from data.
+    if (x >= width || y >= height || x < 0 || y < 0) {
+        return dst.fill(0);
+    }
+    var offset = (y * width + x) * 4;
+    dst[0] = data[offset];
+    dst[1] = data[offset + 1];
+    dst[2] = data[offset + 2];
+    dst[3] = data[offset + 3];
+    return dst;
+};
+
 var Silhouette = function () {
     function Silhouette() {
         _classCallCheck(this, Silhouette);
@@ -14092,6 +14536,11 @@ var Silhouette = function () {
          * @type {Uint8ClampedArray}
          */
         this._data = null;
+        this._colorData = null;
+
+        this.colorAtNearest = this.colorAtLinear = function (_, dst) {
+            return dst.fill(0);
+        };
     }
 
     /**
@@ -14117,10 +14566,64 @@ var Silhouette = function () {
             var imageData = ctx.getImageData(0, 0, width, height);
 
             this._data = new Uint8ClampedArray(imageData.data.length / 4);
+            this._colorData = imageData.data;
+            // delete our custom overriden "uninitalized" color functions
+            // let the prototype work for itself
+            delete this.colorAtNearest;
+            delete this.colorAtLinear;
 
             for (var i = 0; i < imageData.data.length; i += 4) {
                 this._data[i / 4] = imageData.data[i + 3];
             }
+        }
+
+        /**
+         * Sample a color from the silhouette at a given local position using
+         * "nearest neighbor"
+         * @param {twgl.v3} vec [x,y] texture space (0-1)
+         * @param {Uint8ClampedArray} dst The memory buffer to store the value in. (4 bytes)
+         * @returns {Uint8ClampedArray} dst
+         */
+
+    }, {
+        key: 'colorAtNearest',
+        value: function colorAtNearest(vec, dst) {
+            return getColor4b(this, Math.floor(vec[0] * (this._width - 1)), Math.floor(vec[1] * (this._height - 1)), dst);
+        }
+
+        /**
+         * Sample a color from the silhouette at a given local position using
+         * "linear interpolation"
+         * @param {twgl.v3} vec [x,y] texture space (0-1)
+         * @param {Uint8ClampedArray} dst The memory buffer to store the value in. (4 bytes)
+         * @returns {Uint8ClampedArray} dst
+         */
+
+    }, {
+        key: 'colorAtLinear',
+        value: function colorAtLinear(vec, dst) {
+            var x = vec[0] * (this._width - 1);
+            var y = vec[1] * (this._height - 1);
+
+            var x1D = x % 1;
+            var y1D = y % 1;
+            var x0D = 1 - x1D;
+            var y0D = 1 - y1D;
+
+            var xFloor = Math.floor(x);
+            var yFloor = Math.floor(y);
+
+            var x0y0 = getColor4b(this, xFloor, yFloor, __cornerWork[0]);
+            var x1y0 = getColor4b(this, xFloor + 1, yFloor, __cornerWork[1]);
+            var x0y1 = getColor4b(this, xFloor, yFloor + 1, __cornerWork[2]);
+            var x1y1 = getColor4b(this, xFloor + 1, yFloor + 1, __cornerWork[3]);
+
+            dst[0] = x0y0[0] * x0D * y0D + x0y1[0] * x0D * y1D + x1y0[0] * x1D * y0D + x1y1[0] * x1D * y1D;
+            dst[1] = x0y0[1] * x0D * y0D + x0y1[1] * x0D * y1D + x1y0[1] * x1D * y0D + x1y1[1] * x1D * y1D;
+            dst[2] = x0y0[2] * x0D * y0D + x0y1[2] * x0D * y1D + x1y0[2] * x1D * y0D + x1y1[2] * x1D * y1D;
+            dst[3] = x0y0[3] * x0D * y0D + x0y1[3] * x0D * y1D + x1y0[3] * x1D * y0D + x1y1[3] * x1D * y1D;
+
+            return dst;
         }
 
         /**
@@ -14133,7 +14636,7 @@ var Silhouette = function () {
         key: 'isTouchingNearest',
         value: function isTouchingNearest(vec) {
             if (!this._data) return;
-            return getPoint(this, Math.round(vec[0] * (this._width - 1)), Math.round(vec[1] * (this._height - 1))) > 0;
+            return getPoint(this, Math.floor(vec[0] * (this._width - 1)), Math.floor(vec[1] * (this._height - 1))) > 0;
         }
 
         /**
@@ -14186,13 +14689,46 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
 
 var twgl = __webpack_require__(0);
 
-var Rectangle = __webpack_require__(6);
+var Rectangle = __webpack_require__(5);
 var RenderConstants = __webpack_require__(3);
 var ShaderManager = __webpack_require__(4);
 var Skin = __webpack_require__(2);
 var EffectTransform = __webpack_require__(7);
 
+/**
+ * An internal workspace for calculating texture locations from world vectors
+ * this is REUSED for memory conservation reasons
+ * @type {twgl.v3}
+ */
 var __isTouchingPosition = twgl.v3.create();
+
+/**
+ * Convert a scratch space location into a texture space float.  Uses the
+ * internal __isTouchingPosition as a return value, so this should be copied
+ * if you ever need to get two local positions and store both.  Requires that
+ * the drawable inverseMatrix is up to date.
+ *
+ * @param {Drawable} drawable The drawable to get the inverse matrix and uniforms from
+ * @param {twgl.v3} vec [x,y] scratch space vector
+ * @return {twgl.v3} [x,y] texture space float vector - transformed by effects and matrix
+ */
+var getLocalPosition = function getLocalPosition(drawable, vec) {
+    // Transfrom from world coordinates to Drawable coordinates.
+    var localPosition = __isTouchingPosition;
+    var v0 = vec[0];
+    var v1 = vec[1];
+    var m = drawable._inverseMatrix;
+    // var v2 = v[2];
+    var d = v0 * m[3] + v1 * m[7] + m[15];
+    // The RenderWebGL quad flips the texture's X axis. So rendered bottom
+    // left is 1, 0 and the top right is 0, 1. Flip the X axis so
+    // localPosition matches that transformation.
+    localPosition[0] = 0.5 - (v0 * m[0] + v1 * m[4] + m[12]) / d;
+    localPosition[1] = (v0 * m[1] + v1 * m[5] + m[13]) / d + 0.5;
+    // Apply texture effect transform.
+    EffectTransform.transformPoint(drawable, localPosition, localPosition);
+    return localPosition;
+};
 
 var Drawable = function () {
     /**
@@ -14231,8 +14767,9 @@ var Drawable = function () {
         var numEffects = ShaderManager.EFFECTS.length;
         for (var index = 0; index < numEffects; ++index) {
             var effectName = ShaderManager.EFFECTS[index];
-            var converter = ShaderManager.EFFECT_INFO[effectName].converter;
-            this._uniforms['u_' + effectName] = converter(0);
+            var effectInfo = ShaderManager.EFFECT_INFO[effectName];
+            var converter = effectInfo.converter;
+            this._uniforms[effectInfo.uniformName] = converter(0);
         }
 
         this._position = twgl.v3.create(0, 0);
@@ -14364,7 +14901,7 @@ var Drawable = function () {
                         this._effectBits &= ~effectInfo.mask;
                     }
                     var converter = effectInfo.converter;
-                    this._uniforms['u_' + effectName] = converter(rawValue);
+                    this._uniforms[effectInfo.uniformName] = converter(rawValue);
                     if (effectInfo.shapeChanges) {
                         this.setConvexHullDirty();
                     }
@@ -14562,40 +15099,11 @@ var Drawable = function () {
     }, {
         key: 'isTouching',
         value: function isTouching(vec) {
-            if (!(this.skin && this._visible)) {
+            if (!this.skin) {
                 return false;
             }
 
-            if (this._transformDirty) {
-                this._calculateTransform();
-            }
-
-            // Get the inverse of the model matrix or update it.
-            var inverse = this._inverseMatrix;
-            if (this._inverseTransformDirty) {
-                var model = twgl.m4.copy(this._uniforms.u_modelMatrix, inverse);
-                // The normal matrix uses a z scaling of 0 causing model[10] to be
-                // 0. Getting a 4x4 inverse is impossible without a scaling in x, y,
-                // and z.
-                model[10] = 1;
-                twgl.m4.inverse(model, model);
-                this._inverseTransformDirty = false;
-            }
-
-            // Transfrom from world coordinates to Drawable coordinates.
-            var localPosition = twgl.m4.transformPoint(inverse, vec, __isTouchingPosition);
-
-            // Transform into texture coordinates. 0, 0 is the bottom left. 1, 1 is
-            // the top right.
-            localPosition[0] += 0.5;
-            localPosition[1] += 0.5;
-            // The RenderWebGL quad flips the texture's X axis. So rendered bottom
-            // left is 1, 0 and the top right is 0, 1. Flip the X axis so
-            // localPosition matches that transformation.
-            localPosition[0] = 1 - localPosition[0];
-
-            // Apply texture effect transform.
-            EffectTransform.transformPoint(this, localPosition, localPosition);
+            var localPosition = getLocalPosition(this, vec);
 
             if (this.useNearest) {
                 return this.skin.isTouchingNearest(localPosition);
@@ -14631,6 +15139,7 @@ var Drawable = function () {
             bounds.initFromPointsAABB(transformedHullPoints);
             return bounds;
         }
+
         /**
          * Get the precise bounds for the upper 8px slice of the Drawable.
          * Used for calculating where to position a text bubble.
@@ -14693,6 +15202,7 @@ var Drawable = function () {
     }, {
         key: 'getFastBounds',
         value: function getFastBounds() {
+            this.updateMatrix();
             if (!this.needsConvexHullPoints()) {
                 return this.getBounds();
             }
@@ -14721,6 +15231,30 @@ var Drawable = function () {
                 transformedHullPoints.push(glPoint);
             }
             return transformedHullPoints;
+        }
+
+        /**
+         * Update the transform matrix and calculate it's inverse for collision
+         * and local texture position purposes.
+         */
+
+    }, {
+        key: 'updateMatrix',
+        value: function updateMatrix() {
+            if (this._transformDirty) {
+                this._calculateTransform();
+            }
+            // Get the inverse of the model matrix or update it.
+            if (this._inverseTransformDirty) {
+                var inverse = this._inverseMatrix;
+                twgl.m4.copy(this._uniforms.u_modelMatrix, inverse);
+                // The normal matrix uses a z scaling of 0 causing model[10] to be
+                // 0. Getting a 4x4 inverse is impossible without a scaling in x, y,
+                // and z.
+                inverse[10] = 1;
+                twgl.m4.inverse(inverse, inverse);
+                this._inverseTransformDirty = false;
+            }
         }
 
         /**
@@ -14834,6 +15368,30 @@ var Drawable = function () {
             id |= (b & 255) << 16;
             return id + RenderConstants.ID_NONE;
         }
+
+        /**
+         * Sample a color from a drawable's texture.
+         * @param {twgl.v3} vec The scratch space [x,y] vector
+         * @param {Drawable} drawable The drawable to sample the texture from
+         * @param {Uint8ClampedArray} dst The "color4b" representation of the texture at point.
+         * @returns {Uint8ClampedArray} The dst object filled with the color4b
+         */
+
+    }, {
+        key: 'sampleColor4b',
+        value: function sampleColor4b(vec, drawable, dst) {
+            var localPosition = getLocalPosition(drawable, vec);
+            if (localPosition[0] < 0 || localPosition[1] < 0 || localPosition[0] > 1 || localPosition[1] > 1) {
+                dst[3] = 0;
+                return dst;
+            }
+            var textColor =
+            // commenting out to only use nearest for now
+            // drawable.useNearest ?
+            drawable.skin._silhouette.colorAtNearest(localPosition, dst);
+            // : drawable.skin._silhouette.colorAtLinear(localPosition, dst);
+            return EffectTransform.transformColor(drawable, textColor, textColor);
+        }
     }]);
 
     return Drawable;
@@ -14845,13 +15403,13 @@ module.exports = Drawable;
 /* 23 */
 /***/ (function(module, exports) {
 
-module.exports = "uniform mat4 u_projectionMatrix;\nuniform mat4 u_modelMatrix;\n\nattribute vec2 a_position;\nattribute vec2 a_texCoord;\n\nvarying vec2 v_texCoord;\n\nvoid main() {\n    gl_Position = u_projectionMatrix * u_modelMatrix * vec4(a_position, 0, 1);\n    v_texCoord = a_texCoord;\n}\n"
+module.exports = "uniform mat4 u_projectionMatrix;\nuniform mat4 u_modelMatrix;\n\nattribute vec2 a_position;\nattribute vec2 a_texCoord;\n\nvarying vec2 v_texCoord;\n\n#ifdef DRAW_MODE_lineSample\nuniform float u_positionScalar;\n#endif\n\nvoid main() {\n    #ifdef DRAW_MODE_lineSample\n    vec2 position = a_position;\n    position.y = clamp(position.y * u_positionScalar, -0.5, 0.5);\n    gl_Position = u_projectionMatrix * u_modelMatrix * vec4(position, 0, 1);\n    #else\n    gl_Position = u_projectionMatrix * u_modelMatrix * vec4(a_position, 0, 1);\n    #endif\n    v_texCoord = a_texCoord;\n}\n"
 
 /***/ }),
 /* 24 */
 /***/ (function(module, exports) {
 
-module.exports = "precision mediump float;\n\nuniform float u_fudge;\n\n#ifdef DRAW_MODE_silhouette\nuniform vec4 u_silhouetteColor;\n#else // DRAW_MODE_silhouette\n# ifdef ENABLE_color\nuniform float u_color;\n# endif // ENABLE_color\n# ifdef ENABLE_brightness\nuniform float u_brightness;\n# endif // ENABLE_brightness\n#endif // DRAW_MODE_silhouette\n\n#ifdef DRAW_MODE_colorMask\nuniform vec3 u_colorMask;\nuniform float u_colorMaskTolerance;\n#endif // DRAW_MODE_colorMask\n\n#ifdef ENABLE_fisheye\nuniform float u_fisheye;\n#endif // ENABLE_fisheye\n#ifdef ENABLE_whirl\nuniform float u_whirl;\n#endif // ENABLE_whirl\n#ifdef ENABLE_pixelate\nuniform float u_pixelate;\nuniform vec2 u_skinSize;\n#endif // ENABLE_pixelate\n#ifdef ENABLE_mosaic\nuniform float u_mosaic;\n#endif // ENABLE_mosaic\n#ifdef ENABLE_ghost\nuniform float u_ghost;\n#endif // ENABLE_ghost\n\nuniform sampler2D u_skin;\n\nvarying vec2 v_texCoord;\n\n#if !defined(DRAW_MODE_silhouette) && (defined(ENABLE_color) || defined(ENABLE_brightness))\n// Branchless color conversions based on code from:\n// http://www.chilliant.com/rgb2hsv.html by Ian Taylor\n// Based in part on work by Sam Hocevar and Emil Persson\n// See also: https://en.wikipedia.org/wiki/HSL_and_HSV#Formal_derivation\n\n// Smaller values can cause problems with \"color\" and \"brightness\" effects on some mobile devices\nconst float epsilon = 1e-3;\n\n// Convert an RGB color to Hue, Saturation, and Lightness.\n// All components of input and output are expected to be in the [0,1] range.\nvec3 convertRGB2HSL(vec3 rgb)\n{\n\t// Hue calculation has 3 cases, depending on which RGB component is largest, and one of those cases involves a \"mod\"\n\t// operation. In order to avoid that \"mod\" we split the M==R case in two: one for G<B and one for B>G. The B>G case\n\t// will be calculated in the negative and fed through abs() in the hue calculation at the end.\n\t// See also: https://en.wikipedia.org/wiki/HSL_and_HSV#Hue_and_chroma\n\tconst vec4 hueOffsets = vec4(0.0, -1.0 / 3.0, 2.0 / 3.0, -1.0);\n\n\t// temp1.xy = sort B & G (largest first)\n\t// temp1.z = the hue offset we'll use if it turns out that R is the largest component (M==R)\n\t// temp1.w = the hue offset we'll use if it turns out that R is not the largest component (M==G or M==B)\n\tvec4 temp1 = rgb.b > rgb.g ? vec4(rgb.bg, hueOffsets.wz) : vec4(rgb.gb, hueOffsets.xy);\n\n\t// temp2.x = the largest component of RGB (\"M\" / \"Max\")\n\t// temp2.yw = the smaller components of RGB, ordered for the hue calculation (not necessarily sorted by magnitude!)\n\t// temp2.z = the hue offset we'll use in the hue calculation\n\tvec4 temp2 = rgb.r > temp1.x ? vec4(rgb.r, temp1.yzx) : vec4(temp1.xyw, rgb.r);\n\n\t// m = the smallest component of RGB (\"min\")\n\tfloat m = min(temp2.y, temp2.w);\n\n\t// Chroma = M - m\n\tfloat C = temp2.x - m;\n\n\t// Lightness = 1/2 * (M + m)\n\tfloat L = 0.5 * (temp2.x + m);\n\n\treturn vec3(\n\t\tabs(temp2.z + (temp2.w - temp2.y) / (6.0 * C + epsilon)), // Hue\n\t\tC / (1.0 - abs(2.0 * L - 1.0) + epsilon), // Saturation\n\t\tL); // Lightness\n}\n\nvec3 convertHue2RGB(float hue)\n{\n\tfloat r = abs(hue * 6.0 - 3.0) - 1.0;\n\tfloat g = 2.0 - abs(hue * 6.0 - 2.0);\n\tfloat b = 2.0 - abs(hue * 6.0 - 4.0);\n\treturn clamp(vec3(r, g, b), 0.0, 1.0);\n}\n\nvec3 convertHSL2RGB(vec3 hsl)\n{\n\tvec3 rgb = convertHue2RGB(hsl.x);\n\tfloat c = (1.0 - abs(2.0 * hsl.z - 1.0)) * hsl.y;\n\treturn (rgb - 0.5) * c + hsl.z;\n}\n#endif // !defined(DRAW_MODE_silhouette) && (defined(ENABLE_color) || defined(ENABLE_brightness))\n\nconst vec2 kCenter = vec2(0.5, 0.5);\n\nvoid main()\n{\n\tvec2 texcoord0 = v_texCoord;\n\n\t#ifdef ENABLE_mosaic\n\ttexcoord0 = fract(u_mosaic * texcoord0);\n\t#endif // ENABLE_mosaic\n\n\t#ifdef ENABLE_pixelate\n\t{\n\t\t// TODO: clean up \"pixel\" edges\n\t\tvec2 pixelTexelSize = u_skinSize / u_pixelate;\n\t\ttexcoord0 = (floor(texcoord0 * pixelTexelSize) + kCenter) / pixelTexelSize;\n\t}\n\t#endif // ENABLE_pixelate\n\n\t#ifdef ENABLE_whirl\n\t{\n\t\tconst float kRadius = 0.5;\n\t\tvec2 offset = texcoord0 - kCenter;\n\t\tfloat offsetMagnitude = length(offset);\n\t\tfloat whirlFactor = max(1.0 - (offsetMagnitude / kRadius), 0.0);\n\t\tfloat whirlActual = u_whirl * whirlFactor * whirlFactor;\n\t\tfloat sinWhirl = sin(whirlActual);\n\t\tfloat cosWhirl = cos(whirlActual);\n\t\tmat2 rotationMatrix = mat2(\n\t\t\tcosWhirl, -sinWhirl,\n\t\t\tsinWhirl, cosWhirl\n\t\t);\n\n\t\ttexcoord0 = rotationMatrix * offset + kCenter;\n\t}\n\t#endif // ENABLE_whirl\n\n\t#ifdef ENABLE_fisheye\n\t{\n\t\tvec2 vec = (texcoord0 - kCenter) / kCenter;\n\t\tfloat vecLength = length(vec);\n\t\tfloat r = pow(min(vecLength, 1.0), u_fisheye) * max(1.0, vecLength);\n\t\tvec2 unit = vec / vecLength;\n\n\t\ttexcoord0 = kCenter + r * unit * kCenter;\n\t}\n\t#endif // ENABLE_fisheye\n\n\tgl_FragColor = texture2D(u_skin, texcoord0);\n\n\n\tif (gl_FragColor.a == 0.0)\n\t{\n\t\tdiscard;\n\t}\n\n    #ifdef ENABLE_ghost\n    gl_FragColor.a *= u_ghost;\n    #endif // ENABLE_ghost\n\n\t#ifdef DRAW_MODE_silhouette\n\t// switch to u_silhouetteColor only AFTER the alpha test\n\tgl_FragColor = u_silhouetteColor;\n\t#else // DRAW_MODE_silhouette\n\n\t#if defined(ENABLE_color) || defined(ENABLE_brightness)\n\t{\n\t\tvec3 hsl = convertRGB2HSL(gl_FragColor.xyz);\n\n\t\t#ifdef ENABLE_color\n\t\t{\n\t\t\t// this code forces grayscale values to be slightly saturated\n\t\t\t// so that some slight change of hue will be visible\n\t\t\tconst float minLightness = 0.11 / 2.0;\n\t\t\tconst float minSaturation = 0.09;\n\t\t\tif (hsl.z < minLightness) hsl = vec3(0.0, 1.0, minLightness);\n\t\t\telse if (hsl.y < minSaturation) hsl = vec3(0.0, minSaturation, hsl.z);\n\n\t\t\thsl.x = mod(hsl.x + u_color, 1.0);\n\t\t\tif (hsl.x < 0.0) hsl.x += 1.0;\n\t\t}\n\t\t#endif // ENABLE_color\n\n\t\t#ifdef ENABLE_brightness\n\t\thsl.z = clamp(hsl.z + u_brightness, 0.0, 1.0);\n\t\t#endif // ENABLE_brightness\n\n\t\tgl_FragColor.rgb = convertHSL2RGB(hsl);\n\t}\n\t#endif // defined(ENABLE_color) || defined(ENABLE_brightness)\n\n\t#ifdef DRAW_MODE_colorMask\n\tvec3 maskDistance = abs(gl_FragColor.rgb - u_colorMask);\n\tvec3 colorMaskTolerance = vec3(u_colorMaskTolerance, u_colorMaskTolerance, u_colorMaskTolerance);\n\tif (any(greaterThan(maskDistance, colorMaskTolerance)))\n\t{\n\t\tdiscard;\n\t}\n\t#endif // DRAW_MODE_colorMask\n\n\t// WebGL defaults to premultiplied alpha\n\tgl_FragColor.rgb *= gl_FragColor.a;\n\n\t#endif // DRAW_MODE_silhouette\n}\n"
+module.exports = "precision mediump float;\n\nuniform float u_fudge;\n\n#ifdef DRAW_MODE_silhouette\nuniform vec4 u_silhouetteColor;\n#else // DRAW_MODE_silhouette\n# ifdef ENABLE_color\nuniform float u_color;\n# endif // ENABLE_color\n# ifdef ENABLE_brightness\nuniform float u_brightness;\n# endif // ENABLE_brightness\n#endif // DRAW_MODE_silhouette\n\n#ifdef DRAW_MODE_colorMask\nuniform vec3 u_colorMask;\nuniform float u_colorMaskTolerance;\n#endif // DRAW_MODE_colorMask\n\n#ifdef ENABLE_fisheye\nuniform float u_fisheye;\n#endif // ENABLE_fisheye\n#ifdef ENABLE_whirl\nuniform float u_whirl;\n#endif // ENABLE_whirl\n#ifdef ENABLE_pixelate\nuniform float u_pixelate;\nuniform vec2 u_skinSize;\n#endif // ENABLE_pixelate\n#ifdef ENABLE_mosaic\nuniform float u_mosaic;\n#endif // ENABLE_mosaic\n#ifdef ENABLE_ghost\nuniform float u_ghost;\n#endif // ENABLE_ghost\n\n#ifdef DRAW_MODE_lineSample\nuniform vec4 u_lineColor;\nuniform float u_capScale;\nuniform float u_aliasAmount;\n#endif // DRAW_MODE_lineSample\n\nuniform sampler2D u_skin;\n\nvarying vec2 v_texCoord;\n\n#if !defined(DRAW_MODE_silhouette) && (defined(ENABLE_color) || defined(ENABLE_brightness))\n// Branchless color conversions based on code from:\n// http://www.chilliant.com/rgb2hsv.html by Ian Taylor\n// Based in part on work by Sam Hocevar and Emil Persson\n// See also: https://en.wikipedia.org/wiki/HSL_and_HSV#Formal_derivation\n\n// Smaller values can cause problems with \"color\" and \"brightness\" effects on some mobile devices\nconst float epsilon = 1e-3;\n\n// Convert an RGB color to Hue, Saturation, and Lightness.\n// All components of input and output are expected to be in the [0,1] range.\nvec3 convertRGB2HSL(vec3 rgb)\n{\n\t// Hue calculation has 3 cases, depending on which RGB component is largest, and one of those cases involves a \"mod\"\n\t// operation. In order to avoid that \"mod\" we split the M==R case in two: one for G<B and one for B>G. The B>G case\n\t// will be calculated in the negative and fed through abs() in the hue calculation at the end.\n\t// See also: https://en.wikipedia.org/wiki/HSL_and_HSV#Hue_and_chroma\n\tconst vec4 hueOffsets = vec4(0.0, -1.0 / 3.0, 2.0 / 3.0, -1.0);\n\n\t// temp1.xy = sort B & G (largest first)\n\t// temp1.z = the hue offset we'll use if it turns out that R is the largest component (M==R)\n\t// temp1.w = the hue offset we'll use if it turns out that R is not the largest component (M==G or M==B)\n\tvec4 temp1 = rgb.b > rgb.g ? vec4(rgb.bg, hueOffsets.wz) : vec4(rgb.gb, hueOffsets.xy);\n\n\t// temp2.x = the largest component of RGB (\"M\" / \"Max\")\n\t// temp2.yw = the smaller components of RGB, ordered for the hue calculation (not necessarily sorted by magnitude!)\n\t// temp2.z = the hue offset we'll use in the hue calculation\n\tvec4 temp2 = rgb.r > temp1.x ? vec4(rgb.r, temp1.yzx) : vec4(temp1.xyw, rgb.r);\n\n\t// m = the smallest component of RGB (\"min\")\n\tfloat m = min(temp2.y, temp2.w);\n\n\t// Chroma = M - m\n\tfloat C = temp2.x - m;\n\n\t// Lightness = 1/2 * (M + m)\n\tfloat L = 0.5 * (temp2.x + m);\n\n\treturn vec3(\n\t\tabs(temp2.z + (temp2.w - temp2.y) / (6.0 * C + epsilon)), // Hue\n\t\tC / (1.0 - abs(2.0 * L - 1.0) + epsilon), // Saturation\n\t\tL); // Lightness\n}\n\nvec3 convertHue2RGB(float hue)\n{\n\tfloat r = abs(hue * 6.0 - 3.0) - 1.0;\n\tfloat g = 2.0 - abs(hue * 6.0 - 2.0);\n\tfloat b = 2.0 - abs(hue * 6.0 - 4.0);\n\treturn clamp(vec3(r, g, b), 0.0, 1.0);\n}\n\nvec3 convertHSL2RGB(vec3 hsl)\n{\n\tvec3 rgb = convertHue2RGB(hsl.x);\n\tfloat c = (1.0 - abs(2.0 * hsl.z - 1.0)) * hsl.y;\n\treturn (rgb - 0.5) * c + hsl.z;\n}\n#endif // !defined(DRAW_MODE_silhouette) && (defined(ENABLE_color) || defined(ENABLE_brightness))\n\nconst vec2 kCenter = vec2(0.5, 0.5);\n\nvoid main()\n{\n\t#ifndef DRAW_MODE_lineSample\n\tvec2 texcoord0 = v_texCoord;\n\n\t#ifdef ENABLE_mosaic\n\ttexcoord0 = fract(u_mosaic * texcoord0);\n\t#endif // ENABLE_mosaic\n\n\t#ifdef ENABLE_pixelate\n\t{\n\t\t// TODO: clean up \"pixel\" edges\n\t\tvec2 pixelTexelSize = u_skinSize / u_pixelate;\n\t\ttexcoord0 = (floor(texcoord0 * pixelTexelSize) + kCenter) / pixelTexelSize;\n\t}\n\t#endif // ENABLE_pixelate\n\n\t#ifdef ENABLE_whirl\n\t{\n\t\tconst float kRadius = 0.5;\n\t\tvec2 offset = texcoord0 - kCenter;\n\t\tfloat offsetMagnitude = length(offset);\n\t\tfloat whirlFactor = max(1.0 - (offsetMagnitude / kRadius), 0.0);\n\t\tfloat whirlActual = u_whirl * whirlFactor * whirlFactor;\n\t\tfloat sinWhirl = sin(whirlActual);\n\t\tfloat cosWhirl = cos(whirlActual);\n\t\tmat2 rotationMatrix = mat2(\n\t\t\tcosWhirl, -sinWhirl,\n\t\t\tsinWhirl, cosWhirl\n\t\t);\n\n\t\ttexcoord0 = rotationMatrix * offset + kCenter;\n\t}\n\t#endif // ENABLE_whirl\n\n\t#ifdef ENABLE_fisheye\n\t{\n\t\tvec2 vec = (texcoord0 - kCenter) / kCenter;\n\t\tfloat vecLength = length(vec);\n\t\tfloat r = pow(min(vecLength, 1.0), u_fisheye) * max(1.0, vecLength);\n\t\tvec2 unit = vec / vecLength;\n\n\t\ttexcoord0 = kCenter + r * unit * kCenter;\n\t}\n\t#endif // ENABLE_fisheye\n\n\tgl_FragColor = texture2D(u_skin, texcoord0);\n\n    #ifdef ENABLE_ghost\n    gl_FragColor.a *= u_ghost;\n    #endif // ENABLE_ghost\n\n\t#ifdef DRAW_MODE_silhouette\n\t// switch to u_silhouetteColor only AFTER the alpha test\n\tgl_FragColor = u_silhouetteColor;\n\t#else // DRAW_MODE_silhouette\n\n\t#if defined(ENABLE_color) || defined(ENABLE_brightness)\n\t{\n\t\tvec3 hsl = convertRGB2HSL(gl_FragColor.xyz);\n\n\t\t#ifdef ENABLE_color\n\t\t{\n\t\t\t// this code forces grayscale values to be slightly saturated\n\t\t\t// so that some slight change of hue will be visible\n\t\t\tconst float minLightness = 0.11 / 2.0;\n\t\t\tconst float minSaturation = 0.09;\n\t\t\tif (hsl.z < minLightness) hsl = vec3(0.0, 1.0, minLightness);\n\t\t\telse if (hsl.y < minSaturation) hsl = vec3(0.0, minSaturation, hsl.z);\n\n\t\t\thsl.x = mod(hsl.x + u_color, 1.0);\n\t\t\tif (hsl.x < 0.0) hsl.x += 1.0;\n\t\t}\n\t\t#endif // ENABLE_color\n\n\t\t#ifdef ENABLE_brightness\n\t\thsl.z = clamp(hsl.z + u_brightness, 0.0, 1.0);\n\t\t#endif // ENABLE_brightness\n\n\t\tgl_FragColor.rgb = convertHSL2RGB(hsl);\n\t}\n\t#endif // defined(ENABLE_color) || defined(ENABLE_brightness)\n\n\t#ifdef DRAW_MODE_colorMask\n\tvec3 maskDistance = abs(gl_FragColor.rgb - u_colorMask);\n\tvec3 colorMaskTolerance = vec3(u_colorMaskTolerance, u_colorMaskTolerance, u_colorMaskTolerance);\n\tif (any(greaterThan(maskDistance, colorMaskTolerance)))\n\t{\n\t\tdiscard;\n\t}\n\t#endif // DRAW_MODE_colorMask\n\n\t// WebGL defaults to premultiplied alpha\n\t#ifndef DRAW_MODE_stamp\n\tgl_FragColor.rgb *= gl_FragColor.a;\n\t#endif // DRAW_MODE_stamp\n\n\t#endif // DRAW_MODE_silhouette\n\n\t#else // DRAW_MODE_lineSample\n\tgl_FragColor = u_lineColor;\n\tgl_FragColor.a *= clamp(\n\t\t// Scale the capScale a little to have an aliased region.\n\t\t(u_capScale + u_aliasAmount -\n\t\t\tu_capScale * 2.0 * distance(v_texCoord, vec2(0.5, 0.5))\n\t\t) / (u_aliasAmount + 1.0),\n\t\t0.0,\n\t\t1.0\n\t);\n\t#endif // DRAW_MODE_lineSample\n}\n"
 
 /***/ }),
 /* 25 */
@@ -14877,6 +15435,9 @@ var twgl = __webpack_require__(0);
 var RenderConstants = __webpack_require__(3);
 var Skin = __webpack_require__(2);
 
+var Rectangle = __webpack_require__(5);
+var ShaderManager = __webpack_require__(4);
+
 /**
  * Attributes to use when drawing with the pen
  * @typedef {object} PenSkin#PenAttributes
@@ -14895,6 +15456,48 @@ var DefaultPenAttributes = {
     color4f: [0, 0, 1, 1],
     diameter: 1
 };
+
+/**
+ * Reused memory location for projection matrices.
+ * @type {FloatArray}
+ */
+var __projectionMatrix = twgl.m4.identity();
+
+/**
+ * Reused memory location for translation matrix for building a model matrix.
+ * @type {FloatArray}
+ */
+var __modelTranslationMatrix = twgl.m4.identity();
+
+/**
+ * Reused memory location for rotation matrix for building a model matrix.
+ * @type {FloatArray}
+ */
+var __modelRotationMatrix = twgl.m4.identity();
+
+/**
+ * Reused memory location for scaling matrix for building a model matrix.
+ * @type {FloatArray}
+ */
+var __modelScalingMatrix = twgl.m4.identity();
+
+/**
+ * Reused memory location for a model matrix.
+ * @type {FloatArray}
+ */
+var __modelMatrix = twgl.m4.identity();
+
+/**
+ * Reused memory location for a vector to create a translation matrix from.
+ * @type {FloatArray}
+ */
+var __modelTranslationVector = twgl.v3.create();
+
+/**
+ * Reused memory location for a vector to create a scaling matrix from.
+ * @type {FloatArray}
+ */
+var __modelScalingVector = twgl.v3.create();
 
 var PenSkin = function (_Skin) {
     _inherits(PenSkin, _Skin);
@@ -14920,14 +15523,55 @@ var PenSkin = function (_Skin) {
         /** @type {HTMLCanvasElement} */
         _this._canvas = document.createElement('canvas');
 
-        /** @type {boolean} */
-        _this._canvasDirty = false;
-
         /** @type {WebGLTexture} */
         _this._texture = null;
 
+        /** @type {WebGLTexture} */
+        _this._exportTexture = null;
+
+        /** @type {WebGLFramebuffer} */
+        _this._framebuffer = null;
+
+        /** @type {WebGLFramebuffer} */
+        _this._silhouetteBuffer = null;
+
+        /** @type {boolean} */
+        _this._canvasDirty = false;
+
         /** @type {boolean} */
         _this._silhouetteDirty = false;
+
+        /** @type {object} */
+        _this._lineOnBufferDrawRegionId = {
+            enter: function enter() {
+                return _this._enterDrawLineOnBuffer();
+            },
+            exit: function exit() {
+                return _this._exitDrawLineOnBuffer();
+            }
+        };
+
+        /** @type {object} */
+        _this._toBufferDrawRegionId = {
+            enter: function enter() {
+                return _this._enterDrawToBuffer();
+            },
+            exit: function exit() {
+                return _this._exitDrawToBuffer();
+            }
+        };
+
+        /** @type {twgl.BufferInfo} */
+        _this._lineBufferInfo = null;
+
+        var NO_EFFECTS = 0;
+        /** @type {twgl.ProgramInfo} */
+        _this._stampShader = _this._renderer._shaderManager.getShader(ShaderManager.DRAW_MODE.stamp, NO_EFFECTS);
+
+        /** @type {twgl.ProgramInfo} */
+        _this._lineShader = _this._renderer._shaderManager.getShader(ShaderManager.DRAW_MODE.lineSample, NO_EFFECTS);
+
+        _this._createLineGeometry();
 
         _this.onNativeSizeChanged = _this.onNativeSizeChanged.bind(_this);
         _this._renderer.on(RenderConstants.Events.NativeSizeChanged, _this.onNativeSizeChanged);
@@ -14946,6 +15590,7 @@ var PenSkin = function (_Skin) {
         value: function dispose() {
             this._renderer.removeListener(RenderConstants.Events.NativeSizeChanged, this.onNativeSizeChanged);
             this._renderer.gl.deleteTexture(this._texture);
+            this._renderer.gl.deleteTexture(this._exportTexture);
             this._texture = null;
             _get(PenSkin.prototype.__proto__ || Object.getPrototypeOf(PenSkin.prototype), 'dispose', this).call(this);
         }
@@ -14966,14 +15611,10 @@ var PenSkin = function (_Skin) {
         // eslint-disable-next-line no-unused-vars
         value: function getTexture(pixelsWide, pixelsTall) {
             if (this._canvasDirty) {
-                this._canvasDirty = false;
-
-                var gl = this._renderer.gl;
-                gl.bindTexture(gl.TEXTURE_2D, this._texture);
-                gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, this._canvas);
+                this._drawToBuffer();
             }
 
-            return this._texture;
+            return this._exportTexture;
         }
 
         /**
@@ -14983,9 +15624,15 @@ var PenSkin = function (_Skin) {
     }, {
         key: 'clear',
         value: function clear() {
+            var gl = this._renderer.gl;
+            twgl.bindFramebufferInfo(gl, this._framebuffer);
+
+            gl.clearColor(1, 1, 1, 0);
+            gl.clear(gl.COLOR_BUFFER_BIT);
+
             var ctx = this._canvas.getContext('2d');
             ctx.clearRect(0, 0, this._canvas.width, this._canvas.height);
-            this._canvasDirty = true;
+
             this._silhouetteDirty = true;
         }
 
@@ -15015,13 +15662,145 @@ var PenSkin = function (_Skin) {
     }, {
         key: 'drawLine',
         value: function drawLine(penAttributes, x0, y0, x1, y1) {
-            var ctx = this._canvas.getContext('2d');
-            this._setAttributes(ctx, penAttributes);
-            ctx.beginPath();
-            ctx.moveTo(this._rotationCenter[0] + x0, this._rotationCenter[1] - y0);
-            ctx.lineTo(this._rotationCenter[0] + x1, this._rotationCenter[1] - y1);
-            ctx.stroke();
-            this._canvasDirty = true;
+            // Width 1 and 3 lines need to be offset by 0.5.
+            var diameter = penAttributes.diameter || DefaultPenAttributes.diameter;
+            var offset = Math.max(4 - diameter, 0) % 2 / 2;
+
+            this._drawLineOnBuffer(penAttributes, this._rotationCenter[0] + x0 + offset, this._rotationCenter[1] - y0 + offset, this._rotationCenter[0] + x1 + offset, this._rotationCenter[1] - y1 + offset);
+
+            this._silhouetteDirty = true;
+        }
+
+        /**
+         * Create 2D geometry for drawing lines to a framebuffer.
+         */
+
+    }, {
+        key: '_createLineGeometry',
+        value: function _createLineGeometry() {
+            // Create a set of triangulated quads that break up a line into 3 parts:
+            // 2 caps and a body. The y component of these position vertices are
+            // divided to bring a value of 1 down to 0.5 to 0. The large y values
+            // are set so they will still be at least 0.5 after division. The
+            // divisor is scaled based on the length of the line and the lines
+            // width.
+            //
+            // Texture coordinates are based on a "generated" texture whose general
+            // shape is a circle. The line caps set their texture values to define
+            // there roundedness with the texture. The body has all of its texture
+            // valeus set to the center of the texture so its a solid block.
+            var quads = {
+                a_position: {
+                    numComponents: 2,
+                    data: [-0.5, 1, 0.5, 1, -0.5, 100000, -0.5, 100000, 0.5, 1, 0.5, 100000, -0.5, 1, 0.5, 1, -0.5, -1, -0.5, -1, 0.5, 1, 0.5, -1, -0.5, -100000, 0.5, -100000, -0.5, -1, -0.5, -1, 0.5, -100000, 0.5, -1]
+                },
+                a_texCoord: {
+                    numComponents: 2,
+                    data: [1, 0.5, 0, 0.5, 1, 0, 1, 0, 0, 0.5, 0, 0, 0.5, 0, 0.5, 1, 0.5, 0, 0.5, 0, 0.5, 1, 0.5, 1, 1, 0, 0, 0, 1, 0.5, 1, 0.5, 0, 0, 0, 0.5]
+                }
+            };
+
+            this._lineBufferInfo = twgl.createBufferInfoFromArrays(this._renderer.gl, quads);
+        }
+
+        /**
+         * Prepare to draw lines in the _lineOnBufferDrawRegionId region.
+         */
+
+    }, {
+        key: '_enterDrawLineOnBuffer',
+        value: function _enterDrawLineOnBuffer() {
+            var gl = this._renderer.gl;
+
+            var bounds = this._bounds;
+            var currentShader = this._lineShader;
+            var projection = twgl.m4.ortho(0, bounds.width, 0, bounds.height, -1, 1, __projectionMatrix);
+
+            twgl.bindFramebufferInfo(gl, this._framebuffer);
+
+            // Needs a blend function that blends a destination that starts with
+            // no alpha.
+            gl.blendFuncSeparate(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA, gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
+
+            gl.viewport(0, 0, bounds.width, bounds.height);
+
+            gl.useProgram(currentShader.program);
+
+            twgl.setBuffersAndAttributes(gl, currentShader, this._lineBufferInfo);
+
+            var uniforms = {
+                u_skin: this._texture,
+                u_projectionMatrix: projection,
+                u_fudge: 0
+            };
+
+            twgl.setUniforms(currentShader, uniforms);
+        }
+
+        /**
+         * Return to a base state from _lineOnBufferDrawRegionId.
+         */
+
+    }, {
+        key: '_exitDrawLineOnBuffer',
+        value: function _exitDrawLineOnBuffer() {
+            var gl = this._renderer.gl;
+
+            gl.blendFuncSeparate(gl.ONE, gl.ONE_MINUS_SRC_ALPHA, gl.ZERO, gl.ONE);
+
+            twgl.bindFramebufferInfo(gl, null);
+        }
+
+        /**
+         * Draw a line on the framebuffer.
+         * @param {PenAttributes} penAttributes - how the line should be drawn.
+         * @param {number} x0 - the X coordinate of the beginning of the line.
+         * @param {number} y0 - the Y coordinate of the beginning of the line.
+         * @param {number} x1 - the X coordinate of the end of the line.
+         * @param {number} y1 - the Y coordinate of the end of the line.
+         */
+
+    }, {
+        key: '_drawLineOnBuffer',
+        value: function _drawLineOnBuffer(penAttributes, x0, y0, x1, y1) {
+            var gl = this._renderer.gl;
+
+            var currentShader = this._lineShader;
+
+            this._renderer.enterDrawRegion(this._lineOnBufferDrawRegionId);
+
+            var diameter = penAttributes.diameter || DefaultPenAttributes.diameter;
+            var length = Math.hypot(Math.abs(x1 - x0) - 0.001, Math.abs(y1 - y0) - 0.001);
+            var avgX = (x0 + x1) / 2;
+            var avgY = (y0 + y1) / 2;
+            var theta = Math.atan2(y0 - y1, x0 - x1);
+            var alias = x0 === x1 || y0 === y1 ? 0 : 1;
+
+            // The line needs a bit of aliasing to look smooth. Add a small offset
+            // and a small size boost to scaling to give a section to alias.
+            var translationVector = __modelTranslationVector;
+            translationVector[0] = avgX - alias / 2;
+            translationVector[1] = avgY + alias / 4;
+
+            var scalingVector = __modelScalingVector;
+            scalingVector[0] = diameter + alias;
+            scalingVector[1] = length + diameter - alias / 2;
+
+            var radius = diameter / 2;
+            var yScalar = 0.50001 - radius / (length + diameter);
+
+            var uniforms = {
+                u_positionScalar: yScalar,
+                u_capScale: diameter,
+                u_aliasAmount: alias,
+                u_modelMatrix: twgl.m4.multiply(twgl.m4.multiply(twgl.m4.translation(translationVector, __modelTranslationMatrix), twgl.m4.rotationZ(theta - Math.PI / 2, __modelRotationMatrix), __modelMatrix), twgl.m4.scaling(scalingVector, __modelScalingMatrix), __modelMatrix),
+                u_lineColor: penAttributes.color4f || DefaultPenAttributes.color4f
+            };
+
+            twgl.setUniforms(currentShader, uniforms);
+
+            twgl.drawBufferInfo(gl, this._lineBufferInfo, gl.TRIANGLES);
+
             this._silhouetteDirty = true;
         }
 
@@ -15036,8 +15815,137 @@ var PenSkin = function (_Skin) {
         key: 'drawStamp',
         value: function drawStamp(stampElement, x, y) {
             var ctx = this._canvas.getContext('2d');
+
             ctx.drawImage(stampElement, this._rotationCenter[0] + x, this._rotationCenter[1] - y);
+
             this._canvasDirty = true;
+            this._silhouetteDirty = true;
+        }
+
+        /**
+         * Enter a draw region to draw a rectangle.
+         *
+         * Multiple calls with the same regionId skip the callback reducing the
+         * amount of GL state changes.
+         * @param {twgl.ProgramInfo} currentShader - program info to draw rectangle
+         *   with
+         * @param {Rectangle} bounds - viewport bounds to draw in
+         *   region
+         */
+
+    }, {
+        key: '_drawRectangleRegionEnter',
+        value: function _drawRectangleRegionEnter(currentShader, bounds) {
+            var gl = this._renderer.gl;
+
+            gl.viewport(0, 0, bounds.width, bounds.height);
+
+            gl.useProgram(currentShader.program);
+            twgl.setBuffersAndAttributes(gl, currentShader, this._renderer._bufferInfo);
+        }
+
+        /**
+         * Draw a rectangle.
+         * @param {twgl.ProgramInfo} currentShader - program info to draw rectangle
+         *   with
+         * @param {WebGLTexture} texture - texture to draw
+         * @param {Rectangle} bounds - bounded area to draw in
+         * @param {number} x - centered at x
+         * @param {number} y - centered at y
+         */
+
+    }, {
+        key: '_drawRectangle',
+        value: function _drawRectangle(currentShader, texture, bounds) {
+            var x = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : -this._canvas.width / 2;
+            var y = arguments.length > 4 && arguments[4] !== undefined ? arguments[4] : this._canvas.height / 2;
+
+            var gl = this._renderer.gl;
+
+            var projection = twgl.m4.ortho(bounds.left, bounds.right, bounds.top, bounds.bottom, -1, 1, __projectionMatrix);
+
+            var uniforms = {
+                u_skin: texture,
+                u_projectionMatrix: projection,
+                u_modelMatrix: twgl.m4.multiply(twgl.m4.translation(twgl.v3.create(-x - bounds.width / 2, -y + bounds.height / 2, 0), __modelTranslationMatrix), twgl.m4.scaling(twgl.v3.create(bounds.width, bounds.height, 0), __modelScalingMatrix), __modelMatrix),
+                u_fudge: 0
+            };
+
+            twgl.setTextureParameters(gl, texture, { minMag: gl.NEAREST });
+            twgl.setUniforms(currentShader, uniforms);
+
+            twgl.drawBufferInfo(gl, this._renderer._bufferInfo, gl.TRIANGLES);
+        }
+
+        /**
+         * Prepare to draw a rectangle in the _toBufferDrawRegionId region.
+         */
+
+    }, {
+        key: '_enterDrawToBuffer',
+        value: function _enterDrawToBuffer() {
+            var gl = this._renderer.gl;
+
+            twgl.bindFramebufferInfo(gl, this._framebuffer);
+
+            gl.blendFuncSeparate(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA, gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
+
+            this._drawRectangleRegionEnter(this._stampShader, this._bounds);
+        }
+
+        /**
+         * Return to a base state from _toBufferDrawRegionId.
+         */
+
+    }, {
+        key: '_exitDrawToBuffer',
+        value: function _exitDrawToBuffer() {
+            var gl = this._renderer.gl;
+
+            gl.blendFuncSeparate(gl.ONE, gl.ONE_MINUS_SRC_ALPHA, gl.ZERO, gl.ONE);
+
+            twgl.bindFramebufferInfo(gl, null);
+        }
+
+        /**
+         * Draw the input texture to the framebuffer.
+         * @param {WebGLTexture} texture - input texture to draw
+         * @param {number} x - texture centered at x
+         * @param {number} y - texture centered at y
+         */
+
+    }, {
+        key: '_drawToBuffer',
+        value: function _drawToBuffer() {
+            var texture = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : this._texture;
+            var x = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : -this._canvas.width / 2;
+            var y = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : this._canvas.height / 2;
+
+            if (texture !== this._texture && this._canvasDirty) {
+                this._drawToBuffer();
+            }
+
+            var gl = this._renderer.gl;
+
+            // If the input texture is the one that represents the pen's canvas
+            // layer, update the texture with the canvas data.
+            if (texture === this._texture) {
+                gl.bindTexture(gl.TEXTURE_2D, texture);
+                gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, this._canvas);
+
+                var ctx = this._canvas.getContext('2d');
+                ctx.clearRect(0, 0, this._canvas.width, this._canvas.height);
+
+                this._canvasDirty = false;
+            }
+
+            var currentShader = this._stampShader;
+            var bounds = this._bounds;
+
+            this._renderer.enterDrawRegion(this._toBufferDrawRegionId);
+
+            this._drawRectangle(currentShader, texture, bounds, x, y);
+
             this._silhouetteDirty = true;
         }
 
@@ -15066,10 +15974,15 @@ var PenSkin = function (_Skin) {
                 height = _canvasSize[1];
 
             var gl = this._renderer.gl;
+
+            this._bounds = new Rectangle();
+            this._bounds.initFromBounds(width / 2, width / -2, height / 2, height / -2);
+
             this._canvas.width = width;
             this._canvas.height = height;
             this._rotationCenter[0] = width / 2;
             this._rotationCenter[1] = height / 2;
+
             this._texture = twgl.createTexture(gl, {
                 auto: true,
                 mag: gl.NEAREST,
@@ -15077,7 +15990,31 @@ var PenSkin = function (_Skin) {
                 wrap: gl.CLAMP_TO_EDGE,
                 src: this._canvas
             });
-            this._canvasDirty = true;
+
+            this._exportTexture = twgl.createTexture(gl, {
+                auto: true,
+                mag: gl.NEAREST,
+                min: gl.NEAREST,
+                wrap: gl.CLAMP_TO_EDGE,
+                width: width,
+                height: height
+            });
+
+            var attachments = [{
+                format: gl.RGBA,
+                attachment: this._exportTexture
+            }];
+            if (this._framebuffer) {
+                twgl.resizeFramebufferInfo(gl, this._framebuffer, attachments, width, height);
+                twgl.resizeFramebufferInfo(gl, this._silhouetteBuffer, [{ format: gl.RGBA }], width, height);
+            } else {
+                this._framebuffer = twgl.createFramebufferInfo(gl, attachments, width, height);
+                this._silhouetteBuffer = twgl.createFramebufferInfo(gl, [{ format: gl.RGBA }], width, height);
+            }
+
+            gl.clearColor(1, 1, 1, 0);
+            gl.clear(gl.COLOR_BUFFER_BIT);
+
             this._silhouetteDirty = true;
         }
 
@@ -15115,9 +16052,32 @@ var PenSkin = function (_Skin) {
         value: function updateSilhouette() {
             if (this._silhouetteDirty) {
                 if (this._canvasDirty) {
-                    this.getTexture();
+                    this._drawToBuffer();
                 }
+
+                // Render export texture to another framebuffer
+                var gl = this._renderer.gl;
+
+                var bounds = this._bounds;
+
+                this._renderer.enterDrawRegion(this._toBufferDrawRegionId);
+
+                // Sample the framebuffer's pixels into the silhouette instance
+                var skinPixels = new Uint8Array(Math.floor(this._canvas.width * this._canvas.height * 4));
+                gl.readPixels(0, 0, this._canvas.width, this._canvas.height, gl.RGBA, gl.UNSIGNED_BYTE, skinPixels);
+
+                var skinCanvas = this._canvas;
+                skinCanvas.width = bounds.width;
+                skinCanvas.height = bounds.height;
+
+                var skinContext = skinCanvas.getContext('2d');
+                var skinImageData = skinContext.createImageData(bounds.width, bounds.height);
+                skinImageData.data.set(skinPixels);
+                skinContext.putImageData(skinImageData, 0, 0);
+
                 this._silhouette.update(this._canvas);
+
+                this._silhouetteDirty = false;
             }
         }
     }, {
