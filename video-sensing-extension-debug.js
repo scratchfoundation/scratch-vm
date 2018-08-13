@@ -194,7 +194,7 @@ module.exports = global["Scratch3VideoSensingDebug"] = __webpack_require__(460);
  * @file debug.js
  */
 
-const VideoMotion = __webpack_require__(76);
+const VideoMotion = __webpack_require__(77);
 const VideoMotionView = __webpack_require__(461);
 
 module.exports = {
@@ -816,7 +816,7 @@ module.exports = g;
 
 /***/ }),
 
-/***/ 76:
+/***/ 77:
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
