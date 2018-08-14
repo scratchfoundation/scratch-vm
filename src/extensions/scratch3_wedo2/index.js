@@ -1,9 +1,11 @@
 const ArgumentType = require('../../extension-support/argument-type');
 const BlockType = require('../../extension-support/block-type');
+const Cast = require('../../util/cast');
 const color = require('../../util/color');
 const log = require('../../util/log');
 const BLESession = require('../../io/bleSession');
 const Base64Util = require('../../util/base64-util');
+const MathUtil = require('../../util/math-util');
 
 /**
  * Icon svg to be displayed at the left edge of each extension block, encoded as a data URI.
@@ -868,7 +870,8 @@ class Scratch3WeDo2Blocks {
      * @return {Promise} - a promise which will resolve at the end of the duration.
      */
     motorOnFor (args) {
-        const durationMS = args.DURATION * 1000;
+        let durationMS = Cast.toNumber(args.DURATION) * 1000;
+        durationMS = MathUtil.clamp(durationMS, 0, 15000);
         return new Promise(resolve => {
             this._forEachMotor(args.MOTOR_ID, motorIndex => {
                 const motor = this._device.motor(motorIndex);
@@ -920,7 +923,7 @@ class Scratch3WeDo2Blocks {
         this._forEachMotor(args.MOTOR_ID, motorIndex => {
             const motor = this._device.motor(motorIndex);
             if (motor) {
-                motor.power = args.POWER;
+                motor.power = MathUtil.clamp(Cast.toNumber(args.POWER), 0, 100);
                 motor.setMotorOn();
             }
         });
@@ -962,7 +965,8 @@ class Scratch3WeDo2Blocks {
      */
     setLightHue (args) {
         // Convert from [0,100] to [0,360]
-        const hue = args.HUE * 360 / 100;
+        const inputHue = Cast.toNumber(args.HUE);
+        const hue = MathUtil.clamp(inputHue, 0, 100) * 360 / 100;
 
         const rgbObject = color.hsvToRgb({h: hue, s: 1, v: 1});
 
@@ -979,9 +983,12 @@ class Scratch3WeDo2Blocks {
      * @return {Promise} - a promise which will resolve at the end of the duration.
      */
     playNoteFor (args) {
+        let durationMS = Cast.toNumber(args.DURATION) * 1000;
+        durationMS = MathUtil.clamp(durationMS, 0, 3000);
+        const note = MathUtil.clamp(Cast.toNumber(args.NOTE), 25, 125); // valid WeDo2 sounds
+        if (durationMS === 0) return; // WeDo2 plays duration '0' forever
         return new Promise(resolve => {
-            const durationMS = args.DURATION * 1000;
-            const tone = this._noteToTone(args.NOTE);
+            const tone = this._noteToTone(note);
             this._device.playTone(tone, durationMS);
 
             // Ensure this block runs for a fixed amount of time even when no device is connected.
@@ -1000,10 +1007,10 @@ class Scratch3WeDo2Blocks {
         switch (args.OP) {
         case '<':
         case '&lt;':
-            return this._device.distance < args.REFERENCE;
+            return this._device.distance < Cast.toNumber(args.REFERENCE);
         case '>':
         case '&gt;':
-            return this._device.distance > args.REFERENCE;
+            return this._device.distance > Cast.toNumber(args.REFERENCE);
         default:
             log.warn(`Unknown comparison operator in whenDistance: ${args.OP}`);
             return false;
