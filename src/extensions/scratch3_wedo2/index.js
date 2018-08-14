@@ -521,7 +521,7 @@ class WeDo2 {
                 cmd[6] = 0;
                 cmd[7] = 0;
                 cmd[8] = 0;
-                cmd[9] = 0; // unit?
+                cmd[9] = 0; // unit: raw
                 cmd[10] = 1; // notifications enabled: true
 
                 this._send(UUID.INPUT_COMMAND, Base64Util.uint8ArrayToBase64(cmd))
@@ -542,7 +542,7 @@ class WeDo2 {
                 cmd[6] = 0;
                 cmd[7] = 0;
                 cmd[8] = 0;
-                cmd[9] = 0; // unit: ?
+                cmd[9] = 1; // unit: percent
                 cmd[10] = 1; // notifications enabled: true
 
                 this._send(UUID.INPUT_COMMAND, Base64Util.uint8ArrayToBase64(cmd))
