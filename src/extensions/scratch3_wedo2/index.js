@@ -112,6 +112,20 @@ class WeDo2Motor {
          */
         this._pendingTimeoutId = null;
 
+        /**
+         * The starting time for the pending timeout.
+         * @type {Object}
+         * @private
+         */
+        this._pendingTimeoutStartTime = null;
+
+        /**
+         * The delay/duration of the pending timeout.
+         * @type {Object}
+         * @private
+         */
+        this._pendingTimeoutDelay = null;
+
         this.startBraking = this.startBraking.bind(this);
         this.setMotorOff = this.setMotorOff.bind(this);
     }
@@ -161,6 +175,20 @@ class WeDo2Motor {
      */
     get isOn () {
         return this._isOn;
+    }
+
+    /**
+     * @return {boolean} - time, in milliseconds, of when the pending timeout began.
+     */
+    get pendingTimeoutStartTime () {
+        return this._pendingTimeoutStartTime;
+    }
+
+    /**
+     * @return {boolean} - delay, in milliseconds, of the pending timeout.
+     */
+    get pendingTimeoutDelay () {
+        return this._pendingTimeoutDelay;
     }
 
     /**
@@ -228,6 +256,8 @@ class WeDo2Motor {
         if (this._pendingTimeoutId !== null) {
             clearTimeout(this._pendingTimeoutId);
             this._pendingTimeoutId = null;
+            this._pendingTimeoutStartTime = null;
+            this._pendingTimeoutDelay = null;
         }
     }
 
@@ -246,6 +276,8 @@ class WeDo2Motor {
             callback();
         }, delay);
         this._pendingTimeoutId = timeoutID;
+        this._pendingTimeoutStartTime = Date.now();
+        this._pendingTimeoutDelay = delay;
     }
 }
 
@@ -956,6 +988,10 @@ class Scratch3WeDo2Blocks {
                 default:
                     log.warn(`Unknown motor direction in setMotorDirection: ${args.DIRECTION}`);
                     break;
+                }
+                // keep the motor on if it's running, and update the pending timeout
+                if (motor.isOn && motor.pendingTimeoutDelay) {
+                    motor.setMotorOnFor(motor.pendingTimeoutStartTime + motor.pendingTimeoutDelay - Date.now());
                 }
             }
         });
