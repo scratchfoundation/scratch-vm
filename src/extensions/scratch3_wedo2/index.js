@@ -513,6 +513,18 @@ class WeDo2 {
     }
 
     /**
+     * Write a message to the device BLE session.
+     * @param {number} uuid - the UUID of the characteristic to write to
+     * @param {Uint8Array} message - the message to write.
+     * @return {Promise} - a promise result of the write operation
+     * @private
+     */
+    _send (uuid, message) {
+        if (!this.getPeripheralIsConnected()) return;
+        return this._ble.write(UUID.IO_SERVICE, uuid, message, 'base64');
+    }
+
+    /**
      * Process the sensor data from the incoming BLE characteristic.
      * @param {object} base64 - the incoming BLE data.
      * @private
@@ -554,18 +566,6 @@ class WeDo2 {
             break;
         }
         }
-    }
-
-    /**
-     * Write a message to the device BLE session.
-     * @param {number} uuid - the UUID of the characteristic to write to
-     * @param {Uint8Array} message - the message to write.
-     * @return {Promise} - a promise result of the write operation
-     * @private
-     */
-    _send (uuid, message) {
-        if (!this.getPeripheralIsConnected()) return;
-        return this._ble.write(UUID.IO_SERVICE, uuid, message, 'base64');
     }
 
     /**
