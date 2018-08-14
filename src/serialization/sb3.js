@@ -742,6 +742,34 @@ const deserializeFields = function (fields) {
 };
 
 /**
+ * Covnert serialized INPUT and FIELD primitives back to hydrated block templates.
+ *
+ * @param {object} blocks Serialized SB3 "blocks" property of a target. Will be mutated.
+ * @return {object} input is modified and returned
+ */
+const deserializeBlocks = function (blocks) {
+    for (const blockId in blocks) {
+        if (!blocks.hasOwnProperty(blockId)) {
+            continue;
+        }
+        const block = blocks[blockId];
+        if (Array.isArray(block)) {
+            // this is one of the primitives
+            // delete the old entry in object.blocks and replace it w/the
+            // deserialized object
+            delete block[blockId];
+            deserializeInputDesc(block, null, false, blocks);
+            continue;
+        }
+        block.id = blockId; // add id back to block since it wasn't serialized
+        block.inputs = deserializeInputs(block.inputs, blockId, blocks);
+        block.fields = deserializeFields(block.fields);
+    }
+    return blocks;
+};
+
+
+/**
  * Parse a single "Scratch object" and create all its in-memory VM objects.
  * @param {!object} object From-JSON "Scratch object:" sprite, stage, watcher.
  * @param {!Runtime} runtime Runtime object to load all structures into.
@@ -766,25 +794,7 @@ const parseScratchObject = function (object, runtime, extensions, zip) {
         sprite.name = object.name;
     }
     if (object.hasOwnProperty('blocks')) {
-        for (const blockId in object.blocks) {
-            if (!object.blocks.hasOwnProperty(blockId)) continue;
-            const blockJSON = object.blocks[blockId];
-            if (Array.isArray(blockJSON)) {
-                // this is one of the primitives
-                // delete the old entry in object.blocks and replace it w/the
-                // deserialized object
-                delete object.blocks[blockId];
-                deserializeInputDesc(blockJSON, null, false, object.blocks);
-                continue;
-            }
-            blockJSON.id = blockId; // add id back to block since it wasn't serialized
-            const serializedInputs = blockJSON.inputs;
-            const deserializedInputs = deserializeInputs(serializedInputs, blockId, object.blocks);
-            blockJSON.inputs = deserializedInputs;
-            const serializedFields = blockJSON.fields;
-            const deserializedFields = deserializeFields(serializedFields);
-            blockJSON.fields = deserializedFields;
-        }
+        deserializeBlocks(object.blocks);
         // Take a second pass to create objects and add extensions
         for (const blockId in object.blocks) {
             if (!object.blocks.hasOwnProperty(blockId)) continue;
@@ -1008,5 +1018,6 @@ const deserialize = function (json, runtime, zip, isSingleSprite) {
 
 module.exports = {
     serialize: serialize,
-    deserialize: deserialize
+    deserialize: deserialize,
+    deserializeBlocks: deserializeBlocks
 };
