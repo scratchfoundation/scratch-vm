@@ -60,6 +60,24 @@ const WeDo2Commands = {
 };
 
 /**
+ * Enum for modes for input sensors on the WeDo2.
+ * @enum {number}
+ */
+const WeDo2Modes = {
+    TILT: 0, // angle
+    DISTANCE: 0 // detect
+};
+
+/**
+ * Enum for units for input sensors on the WeDo2.
+ * @enum {number}
+ */
+const WeDo2Units = {
+    TILT: 0, // raw
+    DISTANCE: 1 // percent
+};
+
+/**
  * Manage power, direction, and timers for one WeDo 2.0 motor.
  */
 class WeDo2Motor {
@@ -503,90 +521,38 @@ class WeDo2 {
         const data = Base64Util.base64ToUint8Array(base64);
         // log.info(data);
 
-        if (data.length === 2) { // disconnect sensor
+        /**
+         * If first byte of data is '1' or '2', then either clear the
+         * sensor present in ports 1 or 2 or set their format.
+         *
+         * If first byte of data is anything else, read incoming sensor value.
+         */
+        switch (data[0]) {
+        case 1:
+        case 2: {
             const connectID = data[0];
-            // zero out tilt
-            if (this._ports[connectID - 1] === WeDo2Types.TILT) {
-                this._sensors.tiltX = this._sensors.tiltY = 0;
+            if (data[1] === 0) {
+                // clear sensor or motor
+                this._clearPort(connectID);
+            } else {
+                // register sensor or motor
+                this._registerSensorOrMotor(connectID, data[3]);
             }
-            // zero out distance
-            if (this._ports[connectID - 1] === WeDo2Types.DISTANCE) {
-                this._sensors.distance = 0;
-            }
-            // remove references to ports and motors
-            if (connectID === 1 || connectID === 2) {
-                this._ports[connectID - 1] = 'none';
-                this._motors[connectID - 1] = null;
-                // log.info(`this._ports = ${this._ports}`);
-                // log.info(`this._motors = ${this._mtors}`);
-            }
+            break;
         }
-
-        if (data.length === 3) { // distance sensor value?
-            this._sensors.distance = data[2];
-        }
-
-        if (data.length === 4) { // tilt sensor value?
-            this._sensors.tiltX = data[2];
-            this._sensors.tiltY = data[3];
-        }
-
-        if (data.length === 12) { // attached io?
-
-            const connectID = data[0];
-            const type = data[3];
-
-            // Record which port is connected to what type of device
-            if (connectID === 1 || connectID === 2) {
-                this._ports[connectID - 1] = type;
-            }
-
-            // Motor
-            if (type === WeDo2Types.MOTOR) {
-                this._motors[connectID - 1] = new WeDo2Motor(this, connectID - 1);
-            }
-
-            // Tilt Sensor
-            if (type === WeDo2Types.TILT) {
-                const cmd = new Uint8Array(11);
-                cmd[0] = 1; // sensor format
-                cmd[1] = 2; // command type: write
-                cmd[2] = connectID; // connect id
-                cmd[3] = WeDo2Types.TILT; // type
-                cmd[4] = 0; // mode: angle
-                cmd[5] = 1; // delta interval, 4 bytes
-                cmd[6] = 0;
-                cmd[7] = 0;
-                cmd[8] = 0;
-                cmd[9] = 0; // unit: raw
-                cmd[10] = 1; // notifications enabled: true
-
-                this._send(UUID.INPUT_COMMAND, Base64Util.uint8ArrayToBase64(cmd))
-                    .then(() => {
-                        this._ble.read(UUID.IO_SERVICE, UUID.INPUT_VALUES, true, this._onMessage.bind(this));
-                    });
-            }
-
-            // Distance Sensor
+        default: {
+            // read incoming sensor value
+            const connectID = data[1];
+            const type = this._ports[connectID - 1];
             if (type === WeDo2Types.DISTANCE) {
-                const cmd = new Uint8Array(11);
-                cmd[0] = 1; // sensor format
-                cmd[1] = 2; // command type: write
-                cmd[2] = connectID; // connect id
-                cmd[3] = WeDo2Types.DISTANCE; // type
-                cmd[4] = 0; // mode: detect
-                cmd[5] = 1; // delta interval, 4 bytes
-                cmd[6] = 0;
-                cmd[7] = 0;
-                cmd[8] = 0;
-                cmd[9] = 1; // unit: percent
-                cmd[10] = 1; // notifications enabled: true
-
-                this._send(UUID.INPUT_COMMAND, Base64Util.uint8ArrayToBase64(cmd))
-                    .then(() => {
-                        this._ble.read(UUID.IO_SERVICE, UUID.INPUT_VALUES, true, this._onMessage.bind(this));
-                    });
+                this._sensors.distance = data[2];
             }
+            if (type === WeDo2Types.TILT) {
+                this._sensors.tiltX = data[2];
+                this._sensors.tiltY = data[3];
+            }
+            break;
+        }
         }
     }
 
@@ -603,17 +569,57 @@ class WeDo2 {
     }
 
     /**
-     * Sets the volume for the piezo.
+     * Clear the sensor or motor present at port 1 or 2.
+     * @param {number} connectID - the port to clear.
      * @private
      */
-    _setVolume () {
-        const cmd = new Uint8Array(4);
-        cmd[0] = WeDo2ConnectIDs.PIEZO; // connect id
-        cmd[1] = WeDo2Commands.SET_VOLUME; // command
-        cmd[2] = 1; // 1 byte to follow
-        cmd[3] = 100; // volume in range 0-100
+    _clearPort (connectID) {
+        const type = this._ports[connectID - 1];
+        if (type === WeDo2Types.TILT) {
+            this._sensors.tiltX = this._sensors.tiltY = 0;
+        }
+        if (type === WeDo2Types.DISTANCE) {
+            this._sensors.distance = 0;
+        }
+        this._ports[connectID - 1] = 'none';
+        this._motors[connectID - 1] = null;
+    }
 
-        this._send(UUID.OUTPUT_COMMAND, Base64Util.uint8ArrayToBase64(cmd));
+    /**
+     * Register a new sensor or motor connected at a port.  Store the type of
+     * sensor or motor internally, and then register for notifications on input
+     * values if it is a sensor.
+     * @param {number} connectID - the port to register a sensor or motor on.
+     * @param {number} type - the type ID of the sensor or motor
+     */
+    _registerSensorOrMotor (connectID, type) {
+        // Record which port is connected to what type of device
+        this._ports[connectID - 1] = type;
+
+        // Register motor
+        if (type === WeDo2Types.MOTOR) {
+            this._motors[connectID - 1] = new WeDo2Motor(this, connectID - 1);
+        } else {
+            // Register tilt or distance sensor
+            const typeString = type === WeDo2Types.DISTANCE ? 'DISTANCE' : 'TILT';
+            const cmd = new Uint8Array(11);
+            cmd[0] = 1; // sensor format
+            cmd[1] = 2; // command type: write
+            cmd[2] = connectID; // connect id
+            cmd[3] = type; // type
+            cmd[4] = WeDo2Modes[typeString]; // mode
+            cmd[5] = 1; // delta interval, 4 bytes, 1 = continuous updates
+            cmd[6] = 0;
+            cmd[7] = 0;
+            cmd[8] = 0;
+            cmd[9] = WeDo2Units[typeString]; // unit
+            cmd[10] = 1; // notifications enabled: true
+
+            this._send(UUID.INPUT_COMMAND, Base64Util.uint8ArrayToBase64(cmd))
+                .then(() => {
+                    this._ble.read(UUID.IO_SERVICE, UUID.INPUT_VALUES, true, this._onMessage.bind(this));
+                });
+        }
     }
 
     /**
