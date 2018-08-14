@@ -345,6 +345,7 @@ class WeDo2 {
     /**
      * Set the WeDo 2.0 hub's LED to a specific color.
      * @param {int} rgb - a 24-bit RGB color in 0xRRGGBB format.
+     * @return {Promise} - a promise of the set led send operation.
      */
     setLED (rgb) {
         const cmd = new Uint8Array(6);
@@ -355,7 +356,7 @@ class WeDo2 {
         cmd[4] = (rgb >> 8) & 0x000000FF;
         cmd[5] = (rgb) & 0x000000FF;
 
-        this._send(UUID.OUTPUT_COMMAND, Base64Util.uint8ArrayToBase64(cmd));
+        return this._send(UUID.OUTPUT_COMMAND, Base64Util.uint8ArrayToBase64(cmd));
     }
 
     /**
@@ -445,18 +446,20 @@ class WeDo2 {
     }
 
     /**
-     * Sets LED mode and starts reading data from device after BLE has connected.
+     * Sets LED mode and initial color and starts reading data from device after BLE has connected.
      * @private
      */
     _onConnect () {
         // set LED input mode to RGB
         this._setLEDMode()
             .then(() => {
+                // set LED to blue
+                this.setLED(0x0000FF);
+            })
+            .then(() => {
                 // register for attached io notifications
                 this._ble.read(UUID.DEVICE_SERVICE, UUID.ATTACHED_IO, true, this._onMessage);
             });
-
-        // this._setVolume();
     }
 
     /**
