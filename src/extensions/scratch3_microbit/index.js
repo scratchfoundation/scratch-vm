@@ -27,6 +27,10 @@ const BLECommand = {
 
 const BLETimeout = 4500; // TODO: might need tweaking based on how long the device takes to start sending data
 
+/**
+ * A time interval to wait (in milliseconds) while a block that sends a BLE message is running.
+ * @type {number}
+ */
 const BLESendInterval = 100;
 
 /**
@@ -111,7 +115,18 @@ class MicroBit {
          */
         this._timeoutID = null;
 
+        /**
+         * A flag that is true while we are busy sending data to the BLE session.
+         * @type {boolean}
+         * @private
+         */
         this._busy = false;
+
+        /**
+         * Cached data to send to the BLE session in the future.
+         * @type {Object}
+         * @private
+         */
         this._cachedDataToSend = null;
     }
 
@@ -257,7 +272,8 @@ class MicroBit {
     }
 
     /**
-     * Write a message to the device BLE session.
+     * Write a message to the cache, over-writing anything previously cached.
+     * If we are not currently busy sending, send data to the device BLE session.
      * @param {number} command - the BLE command hex.
      * @param {Uint8Array} message - the message to write.
      * @private
@@ -273,7 +289,7 @@ class MicroBit {
     }
 
     /**
-     * Write a message to the device BLE session.
+     * Send a message to the device BLE session.
      * @private
      */
     _sendSessionData () {
@@ -283,6 +299,7 @@ class MicroBit {
         this._busy = true;
         const command = this._cachedDataToSend.command;
         const message = this._cachedDataToSend.message;
+        this._cachedDataToSend = null;
 
         const output = new Uint8Array(message.length + 1);
         output[0] = command; // attach command to beginning of message
@@ -291,10 +308,11 @@ class MicroBit {
         }
         const data = Base64Util.uint8ArrayToBase64(output);
 
-        this._cachedDataToSend = null;
         this._ble.write(BLEUUID.service, BLEUUID.txChar, data, 'base64').then(
             () => {
                 if (this._cachedDataToSend) {
+                    // If the cache was updated while we were busy sending,
+                    // send the new data immediately.
                     this._sendSessionData();
                 } else {
                     this._busy = false;
