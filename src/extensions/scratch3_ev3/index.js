@@ -1,6 +1,7 @@
 const ArgumentType = require('../../extension-support/argument-type');
 const BlockType = require('../../extension-support/block-type');
 const Cast = require('../../util/cast');
+const formatMessage = require('format-message');
 const uid = require('../../util/uid');
 // const log = require('../../util/log');
 const Base64Util = require('../../util/base64-util');
@@ -828,7 +829,11 @@ class Scratch3Ev3Blocks {
             blocks: [
                 {
                     opcode: 'motorTurnClockwise',
-                    text: 'motor [PORT] turn this way for [TIME] seconds',
+                    text: formatMessage({
+                        id: 'ev3.motorTurnClockwise',
+                        default: 'motor [PORT] turn this way for [TIME] seconds',
+                        description: 'turn a motor clockwise for some time'
+                    }),
                     blockType: BlockType.COMMAND,
                     arguments: {
                         PORT: {
@@ -844,7 +849,11 @@ class Scratch3Ev3Blocks {
                 },
                 {
                     opcode: 'motorTurnCounterClockwise',
-                    text: 'motor [PORT] turn that way for [TIME] seconds',
+                    text: formatMessage({
+                        id: 'ev3.motorTurnCounterClockwise',
+                        default: 'motor [PORT] turn that way for [TIME] seconds',
+                        description: 'turn a motor counter-clockwise for some time'
+                    }),
                     blockType: BlockType.COMMAND,
                     arguments: {
                         PORT: {
@@ -892,7 +901,11 @@ class Scratch3Ev3Blocks {
                 }, */
                 {
                     opcode: 'motorSetPower',
-                    text: 'motor [PORT] set power [POWER] %',
+                    text: formatMessage({
+                        id: 'ev3.motorSetPower',
+                        default: 'motor [PORT] set power [POWER] %',
+                        description: 'set a motor\'s power to some value'
+                    }),
                     blockType: BlockType.COMMAND,
                     arguments: {
                         PORT: {
@@ -908,7 +921,11 @@ class Scratch3Ev3Blocks {
                 },
                 {
                     opcode: 'getMotorPosition',
-                    text: 'motor [PORT] position',
+                    text: formatMessage({
+                        id: 'ev3.getMotorPosition',
+                        default: 'motor [PORT] position',
+                        description: 'get the measured degrees a motor has turned'
+                    }),
                     blockType: BlockType.REPORTER,
                     arguments: {
                         PORT: {
@@ -920,7 +937,11 @@ class Scratch3Ev3Blocks {
                 },
                 {
                     opcode: 'whenButtonPressed',
-                    text: 'when button [PORT] pressed',
+                    text: formatMessage({
+                        id: 'ev3.whenButtonPressed',
+                        default: 'when button [PORT] pressed',
+                        description: 'when a button connected to a port is pressed'
+                    }),
                     blockType: BlockType.HAT,
                     arguments: {
                         PORT: {
@@ -932,7 +953,11 @@ class Scratch3Ev3Blocks {
                 },
                 {
                     opcode: 'whenDistanceLessThan',
-                    text: 'when distance < [DISTANCE]',
+                    text: formatMessage({
+                        id: 'ev3.whenDistanceLessThan',
+                        default: 'when distance < [DISTANCE]',
+                        description: 'when the value measured by the distance sensor is less than some value'
+                    }),
                     blockType: BlockType.HAT,
                     arguments: {
                         DISTANCE: {
@@ -943,7 +968,11 @@ class Scratch3Ev3Blocks {
                 },
                 {
                     opcode: 'whenBrightnessLessThan',
-                    text: 'when brightness < [DISTANCE]',
+                    text: formatMessage({
+                        id: 'ev3.whenBrightnessLessThan',
+                        default: 'when brightness < [DISTANCE]',
+                        description: 'when value measured by brightness sensor is less than some value'
+                    }),
                     blockType: BlockType.HAT,
                     arguments: {
                         DISTANCE: {
@@ -954,7 +983,11 @@ class Scratch3Ev3Blocks {
                 },
                 {
                     opcode: 'buttonPressed',
-                    text: 'button [PORT] pressed?',
+                    text: formatMessage({
+                        id: 'ev3.buttonPressed',
+                        default: 'button [PORT] pressed?',
+                        description: 'is a button on some port pressed?'
+                    }),
                     blockType: BlockType.BOOLEAN,
                     arguments: {
                         PORT: {
@@ -966,17 +999,29 @@ class Scratch3Ev3Blocks {
                 },
                 {
                     opcode: 'getDistance',
-                    text: 'distance',
+                    text: formatMessage({
+                        id: 'ev3.getDistance',
+                        default: 'distance',
+                        description: 'gets measured distance'
+                    }),
                     blockType: BlockType.REPORTER
                 },
                 {
                     opcode: 'getBrightness',
-                    text: 'brightness',
+                    text: formatMessage({
+                        id: 'ev3.getBrightness',
+                        default: 'brightness',
+                        description: 'gets measured brightness'
+                    }),
                     blockType: BlockType.REPORTER
                 },
                 {
                     opcode: 'beep',
-                    text: 'beep note [NOTE] for [TIME] secs',
+                    text: formatMessage({
+                        id: 'ev3.beepNote',
+                        default: 'beep note [NOTE] for [TIME] secs',
+                        description: 'play some note on EV3 for some time'
+                    }),
                     blockType: BlockType.COMMAND,
                     arguments: {
                         NOTE: {
