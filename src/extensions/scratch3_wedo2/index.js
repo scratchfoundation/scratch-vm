@@ -995,9 +995,13 @@ class Scratch3WeDo2Blocks {
                     log.warn(`Unknown motor direction in setMotorDirection: ${args.DIRECTION}`);
                     break;
                 }
-                // keep the motor on if it's running, and update the pending timeout
-                if (motor.isOn && motor.pendingTimeoutDelay) {
-                    motor.setMotorOnFor(motor.pendingTimeoutStartTime + motor.pendingTimeoutDelay - Date.now());
+                // keep the motor on if it's running, and update the pending timeout if needed
+                if (motor.isOn) {
+                    if (motor.pendingTimeoutDelay) {
+                        motor.setMotorOnFor(motor.pendingTimeoutStartTime + motor.pendingTimeoutDelay - Date.now());
+                    } else {
+                        motor.setMotorOn();
+                    }
                 }
             }
         });
