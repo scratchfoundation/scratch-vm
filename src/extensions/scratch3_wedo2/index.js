@@ -1,6 +1,7 @@
 const ArgumentType = require('../../extension-support/argument-type');
 const BlockType = require('../../extension-support/block-type');
 const Cast = require('../../util/cast');
+const formatMessage = require('format-message');
 const color = require('../../util/color');
 const log = require('../../util/log');
 const BLESession = require('../../io/bleSession');
@@ -736,7 +737,11 @@ class Scratch3WeDo2Blocks {
             blocks: [
                 {
                     opcode: 'motorOnFor',
-                    text: 'turn [MOTOR_ID] on for [DURATION] seconds',
+                    text: formatMessage({
+                        id: 'wedo2.motorOnFor',
+                        default: 'turn [MOTOR_ID] on for [DURATION] seconds',
+                        description: 'turn a motor on for some time'
+                    }),
                     blockType: BlockType.COMMAND,
                     arguments: {
                         MOTOR_ID: {
@@ -752,7 +757,11 @@ class Scratch3WeDo2Blocks {
                 },
                 {
                     opcode: 'motorOn',
-                    text: 'turn [MOTOR_ID] on',
+                    text: formatMessage({
+                        id: 'wedo2.motorOn',
+                        default: 'turn [MOTOR_ID] on',
+                        description: 'turn a motor on indefinitely'
+                    }),
                     blockType: BlockType.COMMAND,
                     arguments: {
                         MOTOR_ID: {
@@ -764,7 +773,11 @@ class Scratch3WeDo2Blocks {
                 },
                 {
                     opcode: 'motorOff',
-                    text: 'turn [MOTOR_ID] off',
+                    text: formatMessage({
+                        id: 'wedo2.motorOff',
+                        default: 'turn [MOTOR_ID] off',
+                        description: 'turn a motor off'
+                    }),
                     blockType: BlockType.COMMAND,
                     arguments: {
                         MOTOR_ID: {
@@ -776,7 +789,11 @@ class Scratch3WeDo2Blocks {
                 },
                 {
                     opcode: 'startMotorPower',
-                    text: 'set [MOTOR_ID] power to [POWER]',
+                    text: formatMessage({
+                        id: 'wedo2.startMotorPower',
+                        default: 'set [MOTOR_ID] power to [POWER]',
+                        description: 'set the motor\'s power and turn it on'
+                    }),
                     blockType: BlockType.COMMAND,
                     arguments: {
                         MOTOR_ID: {
@@ -792,7 +809,11 @@ class Scratch3WeDo2Blocks {
                 },
                 {
                     opcode: 'setMotorDirection',
-                    text: 'set [MOTOR_ID] direction to [DIRECTION]',
+                    text: formatMessage({
+                        id: 'wedo2.setMotorDirection',
+                        default: 'set [MOTOR_ID] direction to [DIRECTION]',
+                        description: 'set the motor\'s turn direction'
+                    }),
                     blockType: BlockType.COMMAND,
                     arguments: {
                         MOTOR_ID: {
@@ -809,7 +830,11 @@ class Scratch3WeDo2Blocks {
                 },
                 {
                     opcode: 'setLightHue',
-                    text: 'set light color to [HUE]',
+                    text: formatMessage({
+                        id: 'wedo2.setLightHue',
+                        default: 'set light color to [HUE]',
+                        description: 'set the LED color'
+                    }),
                     blockType: BlockType.COMMAND,
                     arguments: {
                         HUE: {
@@ -820,7 +845,11 @@ class Scratch3WeDo2Blocks {
                 },
                 {
                     opcode: 'playNoteFor',
-                    text: 'play note [NOTE] for [DURATION] seconds',
+                    text: formatMessage({
+                        id: 'wedo2.playNoteFor',
+                        default: 'play note [NOTE] for [DURATION] seconds',
+                        description: 'play a certain note for some time'
+                    }),
                     blockType: BlockType.COMMAND,
                     arguments: {
                         NOTE: {
@@ -835,7 +864,11 @@ class Scratch3WeDo2Blocks {
                 },
                 {
                     opcode: 'whenDistance',
-                    text: 'when distance [OP] [REFERENCE]',
+                    text: formatMessage({
+                        id: 'wedo2.whenDistance',
+                        default: 'when distance [OP] [REFERENCE]',
+                        description: 'check for when distance is < or > than reference'
+                    }),
                     blockType: BlockType.HAT,
                     arguments: {
                         OP: {
@@ -851,7 +884,11 @@ class Scratch3WeDo2Blocks {
                 },
                 {
                     opcode: 'whenTilted',
-                    text: 'when tilted [DIRECTION]',
+                    text: formatMessage({
+                        id: 'wedo2.whenTilted',
+                        default: 'when tilted [DIRECTION]',
+                        description: 'check when tilted in a certain direction'
+                    }),
                     func: 'isTilted',
                     blockType: BlockType.HAT,
                     arguments: {
@@ -864,12 +901,20 @@ class Scratch3WeDo2Blocks {
                 },
                 {
                     opcode: 'getDistance',
-                    text: 'distance',
+                    text: formatMessage({
+                        id: 'wedo2.getDistance',
+                        default: 'distance',
+                        description: 'the value returned by the distance sensor'
+                    }),
                     blockType: BlockType.REPORTER
                 },
                 {
                     opcode: 'isTilted',
-                    text: 'tilted [DIRECTION]?',
+                    text: formatMessage({
+                        id: 'wedo2.isTilted',
+                        default: 'tilted [DIRECTION]?',
+                        description: 'whether the tilt sensor is tilted'
+                    }),
                     blockType: BlockType.BOOLEAN,
                     arguments: {
                         DIRECTION: {
@@ -881,7 +926,11 @@ class Scratch3WeDo2Blocks {
                 },
                 {
                     opcode: 'getTiltAngle',
-                    text: 'tilt angle [DIRECTION]',
+                    text: formatMessage({
+                        id: 'wedo2.getTiltAngle',
+                        default: 'tilt angle [DIRECTION]',
+                        description: 'the angle returned by the tilt sensor'
+                    }),
                     blockType: BlockType.REPORTER,
                     arguments: {
                         DIRECTION: {
