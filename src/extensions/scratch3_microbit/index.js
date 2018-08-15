@@ -123,11 +123,10 @@ class MicroBit {
         this._busy = false;
 
         /**
-         * Cached data to send to the BLE session in the future.
-         * @type {Object}
-         * @private
+         * ID for a timeout which is used to clear the busy flag if it has been
+         * true for a long time.
          */
-        this._cachedDataToSend = null;
+        this._busyTimeoutID = null;
     }
 
     // TODO: keep here?
@@ -272,34 +271,26 @@ class MicroBit {
     }
 
     /**
-     * Write a message to the cache, over-writing anything previously cached.
-     * If we are not currently busy sending, send data to the device BLE session.
+     * Send a message to the device BLE session.
      * @param {number} command - the BLE command hex.
-     * @param {Uint8Array} message - the message to write.
+     * @param {Uint8Array} message - the message to write
      * @private
      */
     _writeSessionData (command, message) {
-        this._cachedDataToSend = {
-            command: command,
-            message: message
-        };
-        if (!this._busy) {
-            this._sendSessionData();
-        }
-    }
-
-    /**
-     * Send a message to the device BLE session.
-     * @private
-     */
-    _sendSessionData () {
         if (!this.getPeripheralIsConnected()) return;
-        if (this._cachedDataToSend === null) return;
+        if (this._busy) return;
 
+        // Set a busy flag so that while we are sending a message and waiting for
+        // the response, additional messages are ignored.
         this._busy = true;
-        const command = this._cachedDataToSend.command;
-        const message = this._cachedDataToSend.message;
-        this._cachedDataToSend = null;
+
+        // Set a timeout after which to reset the busy flag. This is used in case
+        // a BLE message was sent for which we never received a response, because
+        // e.g. the device was turned off after the message was sent. We reset
+        // the busy flag after a while so that it is possible to try again later.
+        this._busyTimeoutID = window.setTimeout(() => {
+            this._busy = false;
+        }, 5000);
 
         const output = new Uint8Array(message.length + 1);
         output[0] = command; // attach command to beginning of message
@@ -310,13 +301,8 @@ class MicroBit {
 
         this._ble.write(BLEUUID.service, BLEUUID.txChar, data, 'base64', true).then(
             () => {
-                if (this._cachedDataToSend) {
-                    // If the cache was updated while we were busy sending,
-                    // send the new data immediately.
-                    this._sendSessionData();
-                } else {
-                    this._busy = false;
-                }
+                this._busy = false;
+                window.clearTimeout(this._busyTimeoutID);
             }
         );
     }
