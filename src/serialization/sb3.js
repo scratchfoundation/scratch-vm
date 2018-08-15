@@ -1021,5 +1021,6 @@ const deserialize = function (json, runtime, zip, isSingleSprite) {
 module.exports = {
     serialize: serialize,
     deserialize: deserialize,
-    deserializeBlocks: deserializeBlocks
+    deserializeBlocks: deserializeBlocks,
+    serializeBlocks: serializeBlocks
 };
