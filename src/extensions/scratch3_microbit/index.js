@@ -308,7 +308,7 @@ class MicroBit {
         }
         const data = Base64Util.uint8ArrayToBase64(output);
 
-        this._ble.write(BLEUUID.service, BLEUUID.txChar, data, 'base64').then(
+        this._ble.write(BLEUUID.service, BLEUUID.txChar, data, 'base64', true).then(
             () => {
                 if (this._cachedDataToSend) {
                     // If the cache was updated while we were busy sending,

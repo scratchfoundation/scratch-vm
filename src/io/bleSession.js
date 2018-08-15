@@ -133,12 +133,16 @@ class BLESession extends JSONRPCWebSocket {
      * @param {number} characteristicId - the ble characteristic to write.
      * @param {string} message - the message to send.
      * @param {string} encoding - the message encoding type.
+     * @param {boolean} withResponse - if true, resolve after peripheral's response.
      * @return {Promise} - a promise from the remote send request.
      */
-    write (serviceId, characteristicId, message, encoding = null) {
+    write (serviceId, characteristicId, message, encoding = null, withResponse = null) {
         const params = {serviceId, characteristicId, message};
         if (encoding) {
             params.encoding = encoding;
+        }
+        if (withResponse) {
+            params.withResponse = withResponse;
         }
         return this.sendRemoteRequest('write', params)
             .catch(e => {
