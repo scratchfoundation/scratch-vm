@@ -1,9 +1,11 @@
 const ArgumentType = require('../../extension-support/argument-type');
 const BlockType = require('../../extension-support/block-type');
+const Cast = require('../../util/cast');
 const color = require('../../util/color');
 const log = require('../../util/log');
 const BLESession = require('../../io/bleSession');
 const Base64Util = require('../../util/base64-util');
+const MathUtil = require('../../util/math-util');
 
 /**
  * Icon svg to be displayed at the left edge of each extension block, encoded as a data URI.
@@ -55,6 +57,24 @@ const WeDo2Commands = {
     STOP_TONE: 3,
     WRITE_RGB: 4,
     SET_VOLUME: 255
+};
+
+/**
+ * Enum for modes for input sensors on the WeDo2.
+ * @enum {number}
+ */
+const WeDo2Modes = {
+    TILT: 0, // angle
+    DISTANCE: 0 // detect
+};
+
+/**
+ * Enum for units for input sensors on the WeDo2.
+ * @enum {number}
+ */
+const WeDo2Units = {
+    TILT: 0, // raw
+    DISTANCE: 1 // percent
 };
 
 /**
@@ -110,6 +130,20 @@ class WeDo2Motor {
          */
         this._pendingTimeoutId = null;
 
+        /**
+         * The starting time for the pending timeout.
+         * @type {Object}
+         * @private
+         */
+        this._pendingTimeoutStartTime = null;
+
+        /**
+         * The delay/duration of the pending timeout.
+         * @type {Object}
+         * @private
+         */
+        this._pendingTimeoutDelay = null;
+
         this.startBraking = this.startBraking.bind(this);
         this.setMotorOff = this.setMotorOff.bind(this);
     }
@@ -159,6 +193,20 @@ class WeDo2Motor {
      */
     get isOn () {
         return this._isOn;
+    }
+
+    /**
+     * @return {boolean} - time, in milliseconds, of when the pending timeout began.
+     */
+    get pendingTimeoutStartTime () {
+        return this._pendingTimeoutStartTime;
+    }
+
+    /**
+     * @return {boolean} - delay, in milliseconds, of the pending timeout.
+     */
+    get pendingTimeoutDelay () {
+        return this._pendingTimeoutDelay;
     }
 
     /**
@@ -226,6 +274,8 @@ class WeDo2Motor {
         if (this._pendingTimeoutId !== null) {
             clearTimeout(this._pendingTimeoutId);
             this._pendingTimeoutId = null;
+            this._pendingTimeoutStartTime = null;
+            this._pendingTimeoutDelay = null;
         }
     }
 
@@ -244,6 +294,8 @@ class WeDo2Motor {
             callback();
         }, delay);
         this._pendingTimeoutId = timeoutID;
+        this._pendingTimeoutStartTime = Date.now();
+        this._pendingTimeoutDelay = delay;
     }
 }
 
@@ -343,6 +395,7 @@ class WeDo2 {
     /**
      * Set the WeDo 2.0 hub's LED to a specific color.
      * @param {int} rgb - a 24-bit RGB color in 0xRRGGBB format.
+     * @return {Promise} - a promise of the set led send operation.
      */
     setLED (rgb) {
         const cmd = new Uint8Array(6);
@@ -353,7 +406,7 @@ class WeDo2 {
         cmd[4] = (rgb >> 8) & 0x000000FF;
         cmd[5] = (rgb) & 0x000000FF;
 
-        this._send(UUID.OUTPUT_COMMAND, Base64Util.uint8ArrayToBase64(cmd));
+        return this._send(UUID.OUTPUT_COMMAND, Base64Util.uint8ArrayToBase64(cmd));
     }
 
     /**
@@ -443,114 +496,20 @@ class WeDo2 {
     }
 
     /**
-     * Sets LED mode and starts reading data from device after BLE has connected.
+     * Sets LED mode and initial color and starts reading data from device after BLE has connected.
      * @private
      */
     _onConnect () {
         // set LED input mode to RGB
         this._setLEDMode()
             .then(() => {
+                // set LED to blue
+                this.setLED(0x0000FF);
+            })
+            .then(() => {
                 // register for attached io notifications
                 this._ble.read(UUID.DEVICE_SERVICE, UUID.ATTACHED_IO, true, this._onMessage);
             });
-
-        // this._setVolume();
-    }
-
-    /**
-     * Process the sensor data from the incoming BLE characteristic.
-     * @param {object} base64 - the incoming BLE data.
-     * @private
-     */
-    _onMessage (base64) {
-        const data = Base64Util.base64ToUint8Array(base64);
-        // log.info(data);
-
-        if (data.length === 2) { // disconnect sensor
-            const connectID = data[0];
-            // zero out tilt
-            if (this._ports[connectID - 1] === WeDo2Types.TILT) {
-                this._sensors.tiltX = this._sensors.tiltY = 0;
-            }
-            // zero out distance
-            if (this._ports[connectID - 1] === WeDo2Types.DISTANCE) {
-                this._sensors.distance = 0;
-            }
-            // remove references to ports and motors
-            if (connectID === 1 || connectID === 2) {
-                this._ports[connectID - 1] = 'none';
-                this._motors[connectID - 1] = null;
-                // log.info(`this._ports = ${this._ports}`);
-                // log.info(`this._motors = ${this._mtors}`);
-            }
-        }
-
-        if (data.length === 3) { // distance sensor value?
-            this._sensors.distance = data[2];
-        }
-
-        if (data.length === 4) { // tilt sensor value?
-            this._sensors.tiltX = data[2];
-            this._sensors.tiltY = data[3];
-        }
-
-        if (data.length === 12) { // attached io?
-
-            const connectID = data[0];
-            const type = data[3];
-
-            // Record which port is connected to what type of device
-            if (connectID === 1 || connectID === 2) {
-                this._ports[connectID - 1] = type;
-            }
-
-            // Motor
-            if (type === WeDo2Types.MOTOR) {
-                this._motors[connectID - 1] = new WeDo2Motor(this, connectID - 1);
-            }
-
-            // Tilt Sensor
-            if (type === WeDo2Types.TILT) {
-                const cmd = new Uint8Array(11);
-                cmd[0] = 1; // sensor format
-                cmd[1] = 2; // command type: write
-                cmd[2] = connectID; // connect id
-                cmd[3] = WeDo2Types.TILT; // type
-                cmd[4] = 0; // mode: angle
-                cmd[5] = 1; // delta interval, 4 bytes
-                cmd[6] = 0;
-                cmd[7] = 0;
-                cmd[8] = 0;
-                cmd[9] = 0; // unit?
-                cmd[10] = 1; // notifications enabled: true
-
-                this._send(UUID.INPUT_COMMAND, Base64Util.uint8ArrayToBase64(cmd))
-                    .then(() => {
-                        this._ble.read(UUID.IO_SERVICE, UUID.INPUT_VALUES, true, this._onMessage.bind(this));
-                    });
-            }
-
-            // Distance Sensor
-            if (type === WeDo2Types.DISTANCE) {
-                const cmd = new Uint8Array(11);
-                cmd[0] = 1; // sensor format
-                cmd[1] = 2; // command type: write
-                cmd[2] = connectID; // connect id
-                cmd[3] = WeDo2Types.DISTANCE; // type
-                cmd[4] = 0; // mode: detect
-                cmd[5] = 1; // delta interval, 4 bytes
-                cmd[6] = 0;
-                cmd[7] = 0;
-                cmd[8] = 0;
-                cmd[9] = 0; // unit: ?
-                cmd[10] = 1; // notifications enabled: true
-
-                this._send(UUID.INPUT_COMMAND, Base64Util.uint8ArrayToBase64(cmd))
-                    .then(() => {
-                        this._ble.read(UUID.IO_SERVICE, UUID.INPUT_VALUES, true, this._onMessage.bind(this));
-                    });
-            }
-        }
     }
 
     /**
@@ -566,17 +525,101 @@ class WeDo2 {
     }
 
     /**
-     * Sets the volume for the piezo.
+     * Process the sensor data from the incoming BLE characteristic.
+     * @param {object} base64 - the incoming BLE data.
      * @private
      */
-    _setVolume () {
-        const cmd = new Uint8Array(4);
-        cmd[0] = WeDo2ConnectIDs.PIEZO; // connect id
-        cmd[1] = WeDo2Commands.SET_VOLUME; // command
-        cmd[2] = 1; // 1 byte to follow
-        cmd[3] = 100; // volume in range 0-100
+    _onMessage (base64) {
+        const data = Base64Util.base64ToUint8Array(base64);
+        // log.info(data);
 
-        this._send(UUID.OUTPUT_COMMAND, Base64Util.uint8ArrayToBase64(cmd));
+        /**
+         * If first byte of data is '1' or '2', then either clear the
+         * sensor present in ports 1 or 2 or set their format.
+         *
+         * If first byte of data is anything else, read incoming sensor value.
+         */
+        switch (data[0]) {
+        case 1:
+        case 2: {
+            const connectID = data[0];
+            if (data[1] === 0) {
+                // clear sensor or motor
+                this._clearPort(connectID);
+            } else {
+                // register sensor or motor
+                this._registerSensorOrMotor(connectID, data[3]);
+            }
+            break;
+        }
+        default: {
+            // read incoming sensor value
+            const connectID = data[1];
+            const type = this._ports[connectID - 1];
+            if (type === WeDo2Types.DISTANCE) {
+                this._sensors.distance = data[2];
+            }
+            if (type === WeDo2Types.TILT) {
+                this._sensors.tiltX = data[2];
+                this._sensors.tiltY = data[3];
+            }
+            break;
+        }
+        }
+    }
+
+    /**
+     * Clear the sensor or motor present at port 1 or 2.
+     * @param {number} connectID - the port to clear.
+     * @private
+     */
+    _clearPort (connectID) {
+        const type = this._ports[connectID - 1];
+        if (type === WeDo2Types.TILT) {
+            this._sensors.tiltX = this._sensors.tiltY = 0;
+        }
+        if (type === WeDo2Types.DISTANCE) {
+            this._sensors.distance = 0;
+        }
+        this._ports[connectID - 1] = 'none';
+        this._motors[connectID - 1] = null;
+    }
+
+    /**
+     * Register a new sensor or motor connected at a port.  Store the type of
+     * sensor or motor internally, and then register for notifications on input
+     * values if it is a sensor.
+     * @param {number} connectID - the port to register a sensor or motor on.
+     * @param {number} type - the type ID of the sensor or motor
+     */
+    _registerSensorOrMotor (connectID, type) {
+        // Record which port is connected to what type of device
+        this._ports[connectID - 1] = type;
+
+        // Register motor
+        if (type === WeDo2Types.MOTOR) {
+            this._motors[connectID - 1] = new WeDo2Motor(this, connectID - 1);
+        } else {
+            // Register tilt or distance sensor
+            const typeString = type === WeDo2Types.DISTANCE ? 'DISTANCE' : 'TILT';
+            const cmd = new Uint8Array(11);
+            cmd[0] = 1; // sensor format
+            cmd[1] = 2; // command type: write
+            cmd[2] = connectID; // connect id
+            cmd[3] = type; // type
+            cmd[4] = WeDo2Modes[typeString]; // mode
+            cmd[5] = 1; // delta interval, 4 bytes, 1 = continuous updates
+            cmd[6] = 0;
+            cmd[7] = 0;
+            cmd[8] = 0;
+            cmd[9] = WeDo2Units[typeString]; // unit
+            cmd[10] = 1; // notifications enabled: true
+
+            this._send(UUID.INPUT_COMMAND, Base64Util.uint8ArrayToBase64(cmd))
+                .then(() => {
+                    this._ble.read(UUID.IO_SERVICE, UUID.INPUT_VALUES, true, this._onMessage.bind(this));
+                });
+        }
     }
 
     /**
@@ -868,7 +911,8 @@ class Scratch3WeDo2Blocks {
      * @return {Promise} - a promise which will resolve at the end of the duration.
      */
     motorOnFor (args) {
-        const durationMS = args.DURATION * 1000;
+        let durationMS = Cast.toNumber(args.DURATION) * 1000;
+        durationMS = MathUtil.clamp(durationMS, 0, 15000);
         return new Promise(resolve => {
             this._forEachMotor(args.MOTOR_ID, motorIndex => {
                 const motor = this._device.motor(motorIndex);
@@ -920,7 +964,7 @@ class Scratch3WeDo2Blocks {
         this._forEachMotor(args.MOTOR_ID, motorIndex => {
             const motor = this._device.motor(motorIndex);
             if (motor) {
-                motor.power = args.POWER;
+                motor.power = MathUtil.clamp(Cast.toNumber(args.POWER), 0, 100);
                 motor.setMotorOn();
             }
         });
@@ -951,6 +995,14 @@ class Scratch3WeDo2Blocks {
                     log.warn(`Unknown motor direction in setMotorDirection: ${args.DIRECTION}`);
                     break;
                 }
+                // keep the motor on if it's running, and update the pending timeout if needed
+                if (motor.isOn) {
+                    if (motor.pendingTimeoutDelay) {
+                        motor.setMotorOnFor(motor.pendingTimeoutStartTime + motor.pendingTimeoutDelay - Date.now());
+                    } else {
+                        motor.setMotorOn();
+                    }
+                }
             }
         });
     }
@@ -962,7 +1014,8 @@ class Scratch3WeDo2Blocks {
      */
     setLightHue (args) {
         // Convert from [0,100] to [0,360]
-        const hue = args.HUE * 360 / 100;
+        const inputHue = Cast.toNumber(args.HUE);
+        const hue = MathUtil.clamp(inputHue, 0, 100) * 360 / 100;
 
         const rgbObject = color.hsvToRgb({h: hue, s: 1, v: 1});
 
@@ -979,9 +1032,12 @@ class Scratch3WeDo2Blocks {
      * @return {Promise} - a promise which will resolve at the end of the duration.
      */
     playNoteFor (args) {
+        let durationMS = Cast.toNumber(args.DURATION) * 1000;
+        durationMS = MathUtil.clamp(durationMS, 0, 3000);
+        const note = MathUtil.clamp(Cast.toNumber(args.NOTE), 25, 125); // valid WeDo2 sounds
+        if (durationMS === 0) return; // WeDo2 plays duration '0' forever
         return new Promise(resolve => {
-            const durationMS = args.DURATION * 1000;
-            const tone = this._noteToTone(args.NOTE);
+            const tone = this._noteToTone(note);
             this._device.playTone(tone, durationMS);
 
             // Ensure this block runs for a fixed amount of time even when no device is connected.
@@ -1000,10 +1056,10 @@ class Scratch3WeDo2Blocks {
         switch (args.OP) {
         case '<':
         case '&lt;':
-            return this._device.distance < args.REFERENCE;
+            return this._device.distance < Cast.toNumber(args.REFERENCE);
         case '>':
         case '&gt;':
-            return this._device.distance > args.REFERENCE;
+            return this._device.distance > Cast.toNumber(args.REFERENCE);
         default:
             log.warn(`Unknown comparison operator in whenDistance: ${args.OP}`);
             return false;
