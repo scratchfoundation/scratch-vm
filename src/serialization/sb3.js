@@ -690,6 +690,7 @@ const deserializeInputs = function (inputs, parentId, blocks) {
     for (const inputName in inputs) {
         if (!inputs.hasOwnProperty(inputName)) continue;
         const inputDescArr = inputs[inputName];
+        if (!Array.isArray(inputDescArr)) continue;
         let block = null;
         let shadow = null;
         const blockShadowInfo = inputDescArr[0];
@@ -723,6 +724,7 @@ const deserializeFields = function (fields) {
     for (const fieldName in fields) {
         if (!fields.hasOwnProperty(fieldName)) continue;
         const fieldDescArr = fields[fieldName];
+        if (!Array.isArray(fieldDescArr)) continue;
         obj[fieldName] = {
             name: fieldName,
             value: fieldDescArr[0]
