@@ -860,7 +860,8 @@ class Scratch3WeDo2Blocks {
                             type: ArgumentType.NUMBER,
                             defaultValue: 0.5
                         }
-                    }
+                    },
+                    hideFromPalette: true
                 },
                 {
                     opcode: 'whenDistance',
