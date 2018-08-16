@@ -852,7 +852,14 @@ class VirtualMachine extends EventEmitter {
             }
             const spritePromise = this.exportSprite(targetId, 'uint8array');
             const restoreSprite = () => spritePromise.then(spriteBuffer => this.addSprite(spriteBuffer));
+            // Remove monitors from the runtime state and remove the
+            // target-specific monitored blocks (e.g. local variables)
             this.runtime.requestRemoveMonitorByTargetId(targetId);
+            const targetSpecificMonitorBlockIds = Object.keys(this.runtime.monitorBlocks._blocks)
+                .filter(key => this.runtime.monitorBlocks._blocks[key].targetId === targetId);
+            for (const blockId of targetSpecificMonitorBlockIds) {
+                this.runtime.monitorBlocks.deleteBlock(blockId);
+            }
             const currentEditingTarget = this.editingTarget;
             for (let i = 0; i < sprite.clones.length; i++) {
                 const clone = sprite.clones[i];
