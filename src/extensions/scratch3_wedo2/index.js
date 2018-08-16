@@ -654,12 +654,12 @@ class WeDo2 {
     }
 
     /**
-     * Stop the tone playing, LED output and motors on the WeDo 2.0 hub.
+     * Stop the tone playing and motors on the WeDo 2.0 hub.
      */
     _stopAll () {
         this.stopTone();
         this.stopAllMotors();
-        this.stopLED();
+        // this.stopLED();
     }
 }
 
