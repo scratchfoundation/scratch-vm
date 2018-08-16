@@ -746,7 +746,7 @@ class Scratch3WeDo2Blocks {
                     arguments: {
                         MOTOR_ID: {
                             type: ArgumentType.STRING,
-                            menu: 'motorID',
+                            menu: 'MOTOR_ID',
                             defaultValue: MotorID.DEFAULT
                         },
                         DURATION: {
@@ -766,7 +766,7 @@ class Scratch3WeDo2Blocks {
                     arguments: {
                         MOTOR_ID: {
                             type: ArgumentType.STRING,
-                            menu: 'motorID',
+                            menu: 'MOTOR_ID',
                             defaultValue: MotorID.DEFAULT
                         }
                     }
@@ -782,7 +782,7 @@ class Scratch3WeDo2Blocks {
                     arguments: {
                         MOTOR_ID: {
                             type: ArgumentType.STRING,
-                            menu: 'motorID',
+                            menu: 'MOTOR_ID',
                             defaultValue: MotorID.DEFAULT
                         }
                     }
@@ -798,7 +798,7 @@ class Scratch3WeDo2Blocks {
                     arguments: {
                         MOTOR_ID: {
                             type: ArgumentType.STRING,
-                            menu: 'motorID',
+                            menu: 'MOTOR_ID',
                             defaultValue: MotorID.DEFAULT
                         },
                         POWER: {
@@ -811,19 +811,19 @@ class Scratch3WeDo2Blocks {
                     opcode: 'setMotorDirection',
                     text: formatMessage({
                         id: 'wedo2.setMotorDirection',
-                        default: 'set [MOTOR_ID] direction to [DIRECTION]',
+                        default: 'set [MOTOR_ID] direction to [MOTOR_DIRECTION]',
                         description: 'set the motor\'s turn direction'
                     }),
                     blockType: BlockType.COMMAND,
                     arguments: {
                         MOTOR_ID: {
                             type: ArgumentType.STRING,
-                            menu: 'motorID',
+                            menu: 'MOTOR_ID',
                             defaultValue: MotorID.DEFAULT
                         },
-                        DIRECTION: {
+                        MOTOR_DIRECTION: {
                             type: ArgumentType.STRING,
-                            menu: 'motorDirection',
+                            menu: 'MOTOR_DIRECTION',
                             defaultValue: MotorDirection.FORWARD
                         }
                     }
@@ -860,7 +860,8 @@ class Scratch3WeDo2Blocks {
                             type: ArgumentType.NUMBER,
                             defaultValue: 0.5
                         }
-                    }
+                    },
+                    hideFromPalette: true
                 },
                 {
                     opcode: 'whenDistance',
@@ -873,7 +874,7 @@ class Scratch3WeDo2Blocks {
                     arguments: {
                         OP: {
                             type: ArgumentType.STRING,
-                            menu: 'lessMore',
+                            menu: 'OP',
                             defaultValue: '<'
                         },
                         REFERENCE: {
@@ -886,15 +887,15 @@ class Scratch3WeDo2Blocks {
                     opcode: 'whenTilted',
                     text: formatMessage({
                         id: 'wedo2.whenTilted',
-                        default: 'when tilted [DIRECTION]',
+                        default: 'when tilted [TILT_DIRECTION_ANY]',
                         description: 'check when tilted in a certain direction'
                     }),
                     func: 'isTilted',
                     blockType: BlockType.HAT,
                     arguments: {
-                        DIRECTION: {
+                        TILT_DIRECTION_ANY: {
                             type: ArgumentType.STRING,
-                            menu: 'tiltDirectionAny',
+                            menu: 'TILT_DIRECTION_ANY',
                             defaultValue: TiltDirection.ANY
                         }
                     }
@@ -912,14 +913,14 @@ class Scratch3WeDo2Blocks {
                     opcode: 'isTilted',
                     text: formatMessage({
                         id: 'wedo2.isTilted',
-                        default: 'tilted [DIRECTION]?',
+                        default: 'tilted [TILT_DIRECTION_ANY]?',
                         description: 'whether the tilt sensor is tilted'
                     }),
                     blockType: BlockType.BOOLEAN,
                     arguments: {
-                        DIRECTION: {
+                        TILT_DIRECTION_ANY: {
                             type: ArgumentType.STRING,
-                            menu: 'tiltDirectionAny',
+                            menu: 'TILT_DIRECTION_ANY',
                             defaultValue: TiltDirection.ANY
                         }
                     }
@@ -928,26 +929,26 @@ class Scratch3WeDo2Blocks {
                     opcode: 'getTiltAngle',
                     text: formatMessage({
                         id: 'wedo2.getTiltAngle',
-                        default: 'tilt angle [DIRECTION]',
+                        default: 'tilt angle [TILT_DIRECTION]',
                         description: 'the angle returned by the tilt sensor'
                     }),
                     blockType: BlockType.REPORTER,
                     arguments: {
-                        DIRECTION: {
+                        TILT_DIRECTION: {
                             type: ArgumentType.STRING,
-                            menu: 'tiltDirection',
+                            menu: 'TILT_DIRECTION',
                             defaultValue: TiltDirection.UP
                         }
                     }
                 }
             ],
             menus: {
-                motorID: [MotorID.DEFAULT, MotorID.A, MotorID.B, MotorID.ALL],
-                motorDirection: [MotorDirection.FORWARD, MotorDirection.BACKWARD, MotorDirection.REVERSE],
-                tiltDirection: [TiltDirection.UP, TiltDirection.DOWN, TiltDirection.LEFT, TiltDirection.RIGHT],
-                tiltDirectionAny:
+                MOTOR_ID: [MotorID.DEFAULT, MotorID.A, MotorID.B, MotorID.ALL],
+                MOTOR_DIRECTION: [MotorDirection.FORWARD, MotorDirection.BACKWARD, MotorDirection.REVERSE],
+                TILT_DIRECTION: [TiltDirection.UP, TiltDirection.DOWN, TiltDirection.LEFT, TiltDirection.RIGHT],
+                TILT_DIRECTION_ANY:
                     [TiltDirection.UP, TiltDirection.DOWN, TiltDirection.LEFT, TiltDirection.RIGHT, TiltDirection.ANY],
-                lessMore: ['<', '>']
+                OP: ['<', '>']
             }
         };
     }
@@ -1024,13 +1025,13 @@ class Scratch3WeDo2Blocks {
      * If the direction is 'reverse' the motor(s) will be reversed individually.
      * @param {object} args - the block's arguments.
      * @property {MotorID} MOTOR_ID - the motor(s) to be affected.
-     * @property {MotorDirection} DIRECTION - the new direction for the motor(s).
+     * @property {MotorDirection} MOTOR_DIRECTION - the new direction for the motor(s).
      */
     setMotorDirection (args) {
         this._forEachMotor(args.MOTOR_ID, motorIndex => {
             const motor = this._device.motor(motorIndex);
             if (motor) {
-                switch (args.DIRECTION) {
+                switch (args.MOTOR_DIRECTION) {
                 case MotorDirection.FORWARD:
                     motor.direction = 1;
                     break;
@@ -1118,11 +1119,11 @@ class Scratch3WeDo2Blocks {
     /**
      * Test whether the tilt sensor is currently tilted.
      * @param {object} args - the block's arguments.
-     * @property {TiltDirection} DIRECTION - the tilt direction to test (up, down, left, right, or any).
+     * @property {TiltDirection} TILT_DIRECTION_ANY - the tilt direction to test (up, down, left, right, or any).
      * @return {boolean} - true if the tilt sensor is tilted past a threshold in the specified direction.
      */
     whenTilted (args) {
-        return this._isTilted(args.DIRECTION);
+        return this._isTilted(args.TILT_DIRECTION_ANY);
     }
 
     /**
@@ -1135,21 +1136,21 @@ class Scratch3WeDo2Blocks {
     /**
      * Test whether the tilt sensor is currently tilted.
      * @param {object} args - the block's arguments.
-     * @property {TiltDirection} DIRECTION - the tilt direction to test (up, down, left, right, or any).
+     * @property {TiltDirection} TILT_DIRECTION_ANY - the tilt direction to test (up, down, left, right, or any).
      * @return {boolean} - true if the tilt sensor is tilted past a threshold in the specified direction.
      */
     isTilted (args) {
-        return this._isTilted(args.DIRECTION);
+        return this._isTilted(args.TILT_DIRECTION_ANY);
     }
 
     /**
      * @param {object} args - the block's arguments.
-     * @property {TiltDirection} DIRECTION - the direction (up, down, left, right) to check.
+     * @property {TiltDirection} TILT_DIRECTION - the direction (up, down, left, right) to check.
      * @return {number} - the tilt sensor's angle in the specified direction.
      * Note that getTiltAngle(up) = -getTiltAngle(down) and getTiltAngle(left) = -getTiltAngle(right).
      */
     getTiltAngle (args) {
-        return this._getTiltAngle(args.DIRECTION);
+        return this._getTiltAngle(args.TILT_DIRECTION);
     }
 
     /**
