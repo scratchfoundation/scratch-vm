@@ -509,7 +509,11 @@ class WeDo2 {
             })
             .then(() => {
                 // register for attached io notifications
-                this._ble.read(UUID.DEVICE_SERVICE, UUID.ATTACHED_IO, true, this._onMessage);
+                // TODO: make backwards compatible with 'read':
+                // - try 'startNotifications'
+                // - then try 'read' with 'startNotifications' flag
+                // - then catch OSX and Windows errors
+                this._ble.startNotifications(UUID.DEVICE_SERVICE, UUID.ATTACHED_IO, this._onMessage);
             });
     }
 
@@ -618,7 +622,11 @@ class WeDo2 {
 
             this._send(UUID.INPUT_COMMAND, Base64Util.uint8ArrayToBase64(cmd))
                 .then(() => {
-                    this._ble.read(UUID.IO_SERVICE, UUID.INPUT_VALUES, true, this._onMessage.bind(this));
+                    // TODO: make backwards compatible with 'read':
+                    // - try 'startNotifications'
+                    // - then try 'read' with 'startNotifications' flag
+                    // - then catch OSX and Windows errors
+                    this._ble.startNotifications(UUID.IO_SERVICE, UUID.INPUT_VALUES, this._onMessage.bind(this));
                 });
         }
     }
