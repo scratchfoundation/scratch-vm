@@ -28,6 +28,12 @@ const BLECommand = {
 const BLETimeout = 4500; // TODO: might need tweaking based on how long the device takes to start sending data
 
 /**
+ * A time interval to wait (in milliseconds) while a block that sends a BLE message is running.
+ * @type {number}
+ */
+const BLESendInterval = 100;
+
+/**
  * Enum for micro:bit protocol.
  * https://github.com/LLK/scratch-microbit-firmware/blob/master/protocol.md
  * @readonly
@@ -108,6 +114,19 @@ class MicroBit {
          * @private
          */
         this._timeoutID = null;
+
+        /**
+         * A flag that is true while we are busy sending data to the BLE session.
+         * @type {boolean}
+         * @private
+         */
+        this._busy = false;
+
+        /**
+         * ID for a timeout which is used to clear the busy flag if it has been
+         * true for a long time.
+         */
+        this._busyTimeoutID = null;
     }
 
     // TODO: keep here?
@@ -252,21 +271,40 @@ class MicroBit {
     }
 
     /**
-     * Write a message to the device BLE session.
+     * Send a message to the device BLE session.
      * @param {number} command - the BLE command hex.
-     * @param {Uint8Array} message - the message to write.
-     * @return {Promise} - a Promise that resolves when writing to device.
+     * @param {Uint8Array} message - the message to write
      * @private
      */
     _writeSessionData (command, message) {
         if (!this.getPeripheralIsConnected()) return;
+        if (this._busy) return;
+
+        // Set a busy flag so that while we are sending a message and waiting for
+        // the response, additional messages are ignored.
+        this._busy = true;
+
+        // Set a timeout after which to reset the busy flag. This is used in case
+        // a BLE message was sent for which we never received a response, because
+        // e.g. the device was turned off after the message was sent. We reset
+        // the busy flag after a while so that it is possible to try again later.
+        this._busyTimeoutID = window.setTimeout(() => {
+            this._busy = false;
+        }, 5000);
+
         const output = new Uint8Array(message.length + 1);
         output[0] = command; // attach command to beginning of message
         for (let i = 0; i < message.length; i++) {
             output[i + 1] = message[i];
         }
         const data = Base64Util.uint8ArrayToBase64(output);
-        return this._ble.write(BLEUUID.service, BLEUUID.txChar, data, 'base64');
+
+        this._ble.write(BLEUUID.service, BLEUUID.txChar, data, 'base64', true).then(
+            () => {
+                this._busy = false;
+                window.clearTimeout(this._busyTimeoutID);
+            }
+        );
     }
 }
 
@@ -750,7 +788,11 @@ class Scratch3MicroBitBlocks {
             this._device.displayMatrix(this._device.ledMatrixState);
         }
 
-        return Promise.resolve();
+        return new Promise(resolve => {
+            setTimeout(() => {
+                resolve();
+            }, BLESendInterval);
+        });
     }
 
     /**
@@ -762,7 +804,12 @@ class Scratch3MicroBitBlocks {
     displayText (args) {
         const text = String(args.TEXT).substring(0, 19);
         if (text.length > 0) this._device.displayText(text);
-        return Promise.resolve();
+
+        return new Promise(resolve => {
+            setTimeout(() => {
+                resolve();
+            }, BLESendInterval);
+        });
     }
 
     /**
@@ -774,7 +821,12 @@ class Scratch3MicroBitBlocks {
             this._device.ledMatrixState[i] = 0;
         }
         this._device.displayMatrix(this._device.ledMatrixState);
-        return Promise.resolve();
+
+        return new Promise(resolve => {
+            setTimeout(() => {
+                resolve();
+            }, BLESendInterval);
+        });
     }
 
     /**
