@@ -359,6 +359,7 @@ class EV3 {
     }
 
     motorCoast (port) {
+        if (!this.getPeripheralIsConnected()) return;
 
         const cmd = [];
         cmd[0] = 9; // length
