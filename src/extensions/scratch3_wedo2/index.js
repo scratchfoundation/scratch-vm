@@ -626,7 +626,7 @@ class WeDo2 {
                     // - try 'startNotifications'
                     // - then try 'read' with 'startNotifications' flag
                     // - then catch OSX and Windows errors
-                    this._ble.startNotifications(UUID.IO_SERVICE, UUID.INPUT_VALUES, this._onMessage.bind(this));
+                    this._ble.startNotifications(UUID.IO_SERVICE, UUID.INPUT_VALUES, this._onMessage);
                 });
         }
     }
