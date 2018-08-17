@@ -1073,8 +1073,9 @@ class Scratch3WeDo2Blocks {
     setLightHue (args) {
         // Convert from [0,100] to [0,360]
         let inputHue = Cast.toNumber(args.HUE);
-        inputHue = inputHue % 100;
-        const hue = MathUtil.clamp(inputHue, 0, 100) * 360 / 100;
+        inputHue %= 100;
+        if (inputHue < 0) inputHue += 100;
+        const hue = inputHue * 360 / 100;
 
         const rgbObject = color.hsvToRgb({h: hue, s: 1, v: 1});
 
