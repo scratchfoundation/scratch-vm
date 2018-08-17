@@ -585,12 +585,17 @@ class RenderedTarget extends Target {
     /**
      * Delete a sound by index.
      * @param {number} index Sound index to be deleted
+     * @return {object} The deleted sound object, or null if no sound was deleted.
      */
     deleteSound (index) {
-        this.sprite.sounds = this.sprite.sounds
-            .slice(0, index)
-            .concat(this.sprite.sounds.slice(index + 1));
+        // Make sure the sound index is not out of bounds
+        if (index < 0 || index >= this.sounds.length) {
+            return null;
+        }
+        // Delete the sound at the given index
+        const deletedSound = this.sprite.sounds.splice(index, 1)[0];
         this.runtime.requestTargetsUpdate(this);
+        return deletedSound;
     }
 
     /**

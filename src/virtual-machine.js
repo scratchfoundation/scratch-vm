@@ -675,9 +675,20 @@ class VirtualMachine extends EventEmitter {
     /**
      * Delete a sound from the current editing target.
      * @param {int} soundIndex - the index of the sound to be removed.
+     * @return {?Function} A function to restore the sound that was deleted,
+     * or null, if no sound was deleted.
      */
     deleteSound (soundIndex) {
-        this.editingTarget.deleteSound(soundIndex);
+        const target = this.editingTarget;
+        const deletedSound = this.editingTarget.deleteSound(soundIndex);
+        if (deletedSound) {
+            const restoreFun = () => {
+                target.addSound(deletedSound);
+                this.emitTargetsUpdate();
+            };
+            return restoreFun;
+        }
+        return null;
     }
 
     /**
