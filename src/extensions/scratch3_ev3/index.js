@@ -297,9 +297,6 @@ class EV3 {
             encoding: 'base64'
         });
 
-        // Set motor to busy
-        // this._motors.busy[port] = 1;
-
         this.coastAfter(port, time);
 
         // Yield for turn time + brake time
@@ -355,7 +352,7 @@ class EV3 {
                 this.motorCoast(port);
                 this._motors.commandId[port] = null;
             }
-        }, time);
+        }, time + 1000); // add a 1 second delay so the brake takes effect
     }
 
     motorCoast (port) {
