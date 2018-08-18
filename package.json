@@ -30,7 +30,7 @@
   },
   "dependencies": {
     "arraybuffer-loader": "^1.0.6",
-    "atob": "2.1.1",
+    "atob": "2.1.2",
     "btoa": "1.2.1",
     "canvas-toBlob": "1.0.0",
     "decode-html": "2.0.0",
