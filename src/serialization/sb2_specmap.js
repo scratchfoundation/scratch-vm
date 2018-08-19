@@ -503,21 +503,6 @@ const specMap = {
             }
         ]
     },
-    'drum:duration:elapsed:from:': {
-        opcode: 'music_playDrumForBeats',
-        argMap: [
-            {
-                type: 'input',
-                inputOp: 'music_menu_DRUM',
-                inputName: 'DRUM'
-            },
-            {
-                type: 'input',
-                inputOp: 'math_number',
-                inputName: 'BEATS'
-            }
-        ]
-    },
     'rest:elapsed:from:': {
         opcode: 'music_restForBeats',
         argMap: [
@@ -544,16 +529,6 @@ const specMap = {
         ]
     },
     'instrument:': {
-        opcode: 'music_setInstrument',
-        argMap: [
-            {
-                type: 'input',
-                inputOp: 'music_menu_INSTRUMENT',
-                inputName: 'INSTRUMENT'
-            }
-        ]
-    },
-    'midiInstrument:': {
         opcode: 'music_setInstrument',
         argMap: [
             {
