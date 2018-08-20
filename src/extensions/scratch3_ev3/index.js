@@ -122,7 +122,7 @@ class EV3 {
          * @private
          */
         this._runtime = runtime;
-        this._runtime.on('PROJECT_STOP_ALL', this._stopAllMotors.bind(this));
+        this._runtime.on('PROJECT_STOP_ALL', this._stopAll.bind(this));
 
         /**
          * State
@@ -251,11 +251,11 @@ class EV3 {
         cmd[1] = 0; // 0x00
         cmd[2] = 0; // 0x00
         cmd[3] = 0; // 0x00
-        cmd[4] = 128; // 0x80
+        cmd[4] = 128; // 0x80 // Direct command, reply not require
         cmd[5] = 0; // 0x00
         cmd[6] = 0; // 0x00
-        cmd[7] = 148; // 0x94 op sound
-        cmd[8] = 1; // 0x01 tone
+        cmd[7] = 148; // 0x94 op: sound
+        cmd[8] = 1; // 0x01 cmd: tone
         cmd[9] = 129; // 0x81 volume following in 1 byte
         cmd[10] = 2; // volume byte 1
         cmd[11] = 130; // 0x82 frequency following in 2 bytes
@@ -296,9 +296,6 @@ class EV3 {
             message: Base64Util.arrayBufferToBase64(cmd),
             encoding: 'base64'
         });
-
-        // Set motor to busy
-        // this._motors.busy[port] = 1;
 
         this.coastAfter(port, time);
 
@@ -355,10 +352,11 @@ class EV3 {
                 this.motorCoast(port);
                 this._motors.commandId[port] = null;
             }
-        }, time);
+        }, time + 1000); // add a 1 second delay so the brake takes effect
     }
 
     motorCoast (port) {
+        if (!this.getPeripheralIsConnected()) return;
 
         const cmd = [];
         cmd[0] = 9; // length
@@ -466,6 +464,31 @@ class EV3 {
     // *******
     // PRIVATE
     // *******
+
+    _stopAll () {
+        this._stopAllMotors();
+        this._stopSound();
+    }
+
+    _stopSound () {
+        if (!this.getPeripheralIsConnected()) return;
+
+        const cmd = [];
+        cmd[0] = 7; // Command size, Little Endian. Command size not including these 2 bytes
+        cmd[1] = 0; // Command size, Little Endian. Command size not including these 2 bytes
+        cmd[2] = 0; // Message counter, Little Endian. Forth running counter
+        cmd[3] = 0; // Message counter, Little Endian. Forth running counter
+        cmd[4] = 128; // 0x80 // Command type. See defines above : Direct command, reply not require
+        cmd[5] = 0; // Reservation (allocation) of global and local variables
+        cmd[6] = 0; // Reservation (allocation) of global and local variables
+        cmd[7] = 148; // 0x94 op: sound
+        cmd[8] = 0; // 0x00 cmd: break 0x00 (Stop current sound playback)
+
+        this._bt.sendMessage({
+            message: Base64Util.arrayBufferToBase64(cmd),
+            encoding: 'base64'
+        });
+    }
 
     _stopAllMotors () {
         for (let i = 0; i < this._motorPorts.length; i++) {
