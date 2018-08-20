@@ -272,8 +272,8 @@ class RenderedTarget extends Target {
         const oldY = this.y;
         if (this.renderer) {
             const position = this.renderer.getFencedPositionOfDrawable(this.drawableID, [x, y]);
-            position[0] = Math.round(position[0]);
-            position[1] = Math.round(position[1]);
+            position[0] = this._roundCoord(position[0], 8);
+            position[1] = this._roundCoord(position[1], 8);
             this.x = position[0];
             this.y = position[1];
 
@@ -285,8 +285,8 @@ class RenderedTarget extends Target {
                 this.runtime.requestRedraw();
             }
         } else {
-            this.x = Math.round(x);
-            this.y = Math.round(y);
+            this.x = this._roundCoord(x, 8);
+            this.y = this._roundCoord(y, 8);
         }
         this.emit(RenderedTarget.EVENT_TARGET_MOVED, this, oldX, oldY, force);
         this.runtime.requestTargetsUpdate(this);
