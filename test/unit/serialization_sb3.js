@@ -182,3 +182,42 @@ test('serialize sb3 preserves sprite layer order', t => {
             t.end();
         });
 });
+
+test('serializeBlocks', t => {
+    const vm = new VirtualMachine();
+    vm.loadProject(readFileToBuffer(commentsSB3ProjectPath))
+        .then(() => {
+            const blocks = vm.runtime.targets[1].blocks._blocks;
+            const result = sb3.serializeBlocks(blocks);
+            // @todo Analyze
+            t.type(result[0], 'object');
+            t.ok(Object.keys(result[0]).length < Object.keys(blocks).length, 'less blocks in serialized format');
+            t.ok(Array.isArray(result[1]));
+            t.end();
+        });
+});
+
+test('deserializeBlocks', t => {
+    const vm = new VirtualMachine();
+    vm.loadProject(readFileToBuffer(commentsSB3ProjectPath))
+        .then(() => {
+            const blocks = vm.runtime.targets[1].blocks._blocks;
+            const serialized = sb3.serializeBlocks(blocks)[0];
+            const deserialized = sb3.deserializeBlocks(serialized);
+            t.equal(Object.keys(deserialized).length, Object.keys(blocks).length, 'same number of blocks');
+            t.end();
+        });
+});
+
+test('deserializeBlocks on already deserialized input', t => {
+    const vm = new VirtualMachine();
+    vm.loadProject(readFileToBuffer(commentsSB3ProjectPath))
+        .then(() => {
+            const blocks = vm.runtime.targets[1].blocks._blocks;
+            const serialized = sb3.serializeBlocks(blocks)[0];
+            const deserialized = sb3.deserializeBlocks(serialized);
+            const deserializedAgain = sb3.deserializeBlocks(deserialized);
+            t.deepEqual(deserialized, deserializedAgain, 'no change from second pass of deserialize');
+            t.end();
+        });
+});
