@@ -509,7 +509,11 @@ class WeDo2 {
             })
             .then(() => {
                 // register for attached io notifications
-                this._ble.read(UUID.DEVICE_SERVICE, UUID.ATTACHED_IO, true, this._onMessage);
+                // TODO: make backwards compatible with 'read':
+                // - try 'startNotifications'
+                // - then try 'read' with 'startNotifications' flag
+                // - then catch OSX and Windows errors
+                this._ble.startNotifications(UUID.DEVICE_SERVICE, UUID.ATTACHED_IO, this._onMessage);
             });
     }
 
@@ -618,7 +622,11 @@ class WeDo2 {
 
             this._send(UUID.INPUT_COMMAND, Base64Util.uint8ArrayToBase64(cmd))
                 .then(() => {
-                    this._ble.read(UUID.IO_SERVICE, UUID.INPUT_VALUES, true, this._onMessage.bind(this));
+                    // TODO: make backwards compatible with 'read':
+                    // - try 'startNotifications'
+                    // - then try 'read' with 'startNotifications' flag
+                    // - then catch OSX and Windows errors
+                    this._ble.startNotifications(UUID.IO_SERVICE, UUID.INPUT_VALUES, this._onMessage);
                 });
         }
     }
@@ -646,12 +654,12 @@ class WeDo2 {
     }
 
     /**
-     * Stop the tone playing, LED output and motors on the WeDo 2.0 hub.
+     * Stop the tone playing and motors on the WeDo 2.0 hub.
      */
     _stopAll () {
         this.stopTone();
         this.stopAllMotors();
-        this.stopLED();
+        // this.stopLED();
     }
 }
 
@@ -1064,8 +1072,9 @@ class Scratch3WeDo2Blocks {
      */
     setLightHue (args) {
         // Convert from [0,100] to [0,360]
-        const inputHue = Cast.toNumber(args.HUE);
-        const hue = MathUtil.clamp(inputHue, 0, 100) * 360 / 100;
+        let inputHue = Cast.toNumber(args.HUE);
+        inputHue = MathUtil.wrapClamp(inputHue, 0, 100);
+        const hue = inputHue * 360 / 100;
 
         const rgbObject = color.hsvToRgb({h: hue, s: 1, v: 1});
 

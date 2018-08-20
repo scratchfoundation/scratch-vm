@@ -103,14 +103,30 @@ class BLESession extends JSONRPCWebSocket {
     }
 
     /**
-     * Start reading from the specified ble service.
+     * Start receiving notifications from the specified ble service.
+     * @param {number} serviceId - the ble service to read.
+     * @param {number} characteristicId - the ble characteristic to get notifications from.
+     * @param {object} onCharacteristicChanged - callback for characteristic change notifications.
+     * @return {Promise} - a promise from the remote startNotifications request.
+     */
+    startNotifications (serviceId, characteristicId, onCharacteristicChanged = null) {
+        const params = {
+            serviceId,
+            characteristicId
+        };
+        this._characteristicDidChangeCallback = onCharacteristicChanged;
+        return this.sendRemoteRequest('startNotifications', params);
+    }
+
+    /**
+     * Read from the specified ble service.
      * @param {number} serviceId - the ble service to read.
      * @param {number} characteristicId - the ble characteristic to read.
      * @param {boolean} optStartNotifications - whether to start receiving characteristic change notifications.
      * @param {object} onCharacteristicChanged - callback for characteristic change notifications.
      * @return {Promise} - a promise from the remote read request.
      */
-    read (serviceId, characteristicId, optStartNotifications = false, onCharacteristicChanged) {
+    read (serviceId, characteristicId, optStartNotifications = false, onCharacteristicChanged = null) {
         const params = {
             serviceId,
             characteristicId
@@ -121,7 +137,7 @@ class BLESession extends JSONRPCWebSocket {
         this._characteristicDidChangeCallback = onCharacteristicChanged;
         return this.sendRemoteRequest('read', params)
             .catch(e => {
-                if (e.data !== 'Reading is not permitted.') { // TODO: workaround til notify-only supported
+                if (e.data !== 'Reading is not permitted.') { // TODO: move this error check to extension
                     this._sendError(e);
                 }
             });
