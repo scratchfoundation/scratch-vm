@@ -589,7 +589,7 @@ class RenderedTarget extends Target {
      */
     deleteSound (index) {
         // Make sure the sound index is not out of bounds
-        if (index < 0 || index >= this.sounds.length) {
+        if (index < 0 || index >= this.sprite.sounds.length) {
             return null;
         }
         // Delete the sound at the given index

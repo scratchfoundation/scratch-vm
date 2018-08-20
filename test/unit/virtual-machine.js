@@ -1,9 +1,35 @@
 const test = require('tap').test;
-const VirtualMachine = require('../../src/virtual-machine.js');
-const Sprite = require('../../src/sprites/sprite.js');
-const Variable = require('../../src/engine/variable.js');
+const VirtualMachine = require('../../src/virtual-machine');
+const Sprite = require('../../src/sprites/sprite');
+const Variable = require('../../src/engine/variable');
 const adapter = require('../../src/engine/adapter');
 const events = require('../fixtures/events.json');
+const Runtime = require('../../src/engine/runtime');
+const RenderedTarget = require('../../src/sprites/rendered-target');
+
+test('deleteSound returns function after deleting or null if nothing was deleted', t => {
+    const vm = new VirtualMachine();
+    const sprite = new Sprite();
+    sprite.sounds = [{id: 1}, {id: 2}, {id: 3}];
+    const rt = new Runtime();
+    const target = new RenderedTarget(sprite, rt);
+    vm.editingTarget = target;
+
+    const addFun = vm.deleteSound(1);
+    t.equal(sprite.sounds.length, 2);
+    t.equal(sprite.sounds[0].id, 1);
+    t.equal(sprite.sounds[1].id, 3);
+    t.type(addFun, 'function');
+
+    const noAddFun = vm.deleteSound(2);
+    t.equal(sprite.sounds.length, 2);
+    t.equal(sprite.sounds[0].id, 1);
+    t.equal(sprite.sounds[1].id, 3);
+    t.equal(noAddFun, null);
+
+    t.end();
+});
+
 
 test('addSprite throws on invalid string', t => {
     const vm = new VirtualMachine();
