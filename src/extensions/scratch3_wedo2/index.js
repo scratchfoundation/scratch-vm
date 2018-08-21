@@ -1064,6 +1064,7 @@ class Scratch3WeDo2Blocks {
      * @param {object} args - the block's arguments.
      * @property {MotorID} MOTOR_ID - the motor(s) to be affected.
      * @property {int} POWER - the new power level for the motor(s).
+     * @return {Promise} - a Promise that resolves after some delay.
      */
     startMotorPower (args) {
         this._forEachMotor(args.MOTOR_ID, motorIndex => {
@@ -1073,6 +1074,12 @@ class Scratch3WeDo2Blocks {
                 motor.setMotorOn();
             }
         });
+
+        return new Promise(resolve => {
+            window.setTimeout(() => {
+                resolve();
+            }, BLESendInterval);
+        });
     }
 
     /**
@@ -1081,6 +1088,7 @@ class Scratch3WeDo2Blocks {
      * @param {object} args - the block's arguments.
      * @property {MotorID} MOTOR_ID - the motor(s) to be affected.
      * @property {MotorDirection} MOTOR_DIRECTION - the new direction for the motor(s).
+     * @return {Promise} - a Promise that resolves after some delay.
      */
     setMotorDirection (args) {
         this._forEachMotor(args.MOTOR_ID, motorIndex => {
@@ -1109,6 +1117,12 @@ class Scratch3WeDo2Blocks {
                     }
                 }
             }
+        });
+
+        return new Promise(resolve => {
+            window.setTimeout(() => {
+                resolve();
+            }, BLESendInterval);
         });
     }
 
