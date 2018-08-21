@@ -479,7 +479,14 @@ class WeDo2 {
      */
     // TODO: rename disconnect?
     disconnectSession () {
-        // window.clearInterval(this._timeoutID);
+        this._ports = ['none', 'none'];
+        this._motors = [null, null];
+        this._sensors = {
+            tiltX: 0,
+            tiltY: 0,
+            distance: 0
+        };
+
         this._ble.disconnectSession();
     }
 
