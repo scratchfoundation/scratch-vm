@@ -30,6 +30,30 @@ test('deleteSound returns function after deleting or null if nothing was deleted
     t.end();
 });
 
+test('deleteCostume returns function after deleting or null if nothing was deleted', t => {
+    const vm = new VirtualMachine();
+    const sprite = new Sprite();
+    sprite.costumes = [{id: 1}, {id: 2}, {id: 3}];
+    sprite.currentCostume = 0;
+    const rt = new Runtime();
+    const target = new RenderedTarget(sprite, rt);
+    vm.editingTarget = target;
+
+    const addFun = vm.deleteCostume(1);
+    t.equal(sprite.costumes.length, 2);
+    t.equal(sprite.costumes[0].id, 1);
+    t.equal(sprite.costumes[1].id, 3);
+    t.type(addFun, 'function');
+
+    const noAddFun = vm.deleteCostume(2);
+    t.equal(sprite.costumes.length, 2);
+    t.equal(sprite.costumes[0].id, 1);
+    t.equal(sprite.costumes[1].id, 3);
+    t.equal(noAddFun, null);
+
+    t.end();
+});
+
 
 test('addSprite throws on invalid string', t => {
     const vm = new VirtualMachine();

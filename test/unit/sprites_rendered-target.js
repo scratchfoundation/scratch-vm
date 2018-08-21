@@ -116,41 +116,45 @@ test('deleteCostume', t => {
     //    Costume 2   =>     Costume 3
     //    Costume 3
     a.setCostume(0);
-    a.deleteCostume(0);
+    const deletedCostume = a.deleteCostume(0);
     t.equals(a.sprite.costumes.length, 2);
     t.equals(a.sprite.costumes[0].id, 2);
     t.equals(a.sprite.costumes[1].id, 3);
     t.equals(a.currentCostume, 0);
+    t.deepEqual(deletedCostume, o1);
 
     //    Costume 1          Costume 1
     // x* Costume 2   =>   * Costume 3
     //    Costume 3
     a.sprite.costumes = [o1, o2, o3];
     a.setCostume(1);
-    a.deleteCostume(1);
+    const deletedCostume2 = a.deleteCostume(1);
     t.equals(a.sprite.costumes.length, 2);
     t.equals(a.sprite.costumes[0].id, 1);
     t.equals(a.sprite.costumes[1].id, 3);
     t.equals(a.currentCostume, 1);
+    t.deepEqual(deletedCostume2, o2);
 
     //    Costume 1          Costume 1
     //    Costume 2   =>   * Costume 2
     // x* Costume 3
     a.sprite.costumes = [o1, o2, o3];
     a.setCostume(2);
-    a.deleteCostume(2);
+    const deletedCostume3 = a.deleteCostume(2);
     t.equals(a.sprite.costumes.length, 2);
     t.equals(a.sprite.costumes[0].id, 1);
     t.equals(a.sprite.costumes[1].id, 2);
     t.equals(a.currentCostume, 1);
+    t.deepEqual(deletedCostume3, o3);
 
     // Refuses to delete only costume
     a.sprite.costumes = [o1];
     a.setCostume(0);
-    a.deleteCostume(0);
+    const noDeletedCostume = a.deleteCostume(0);
     t.equals(a.sprite.costumes.length, 1);
     t.equals(a.sprite.costumes[0].id, 1);
     t.equals(a.currentCostume, 0);
+    t.equal(noDeletedCostume, null);
 
     //   Costume 1          Costume 1
     // x Costume 2          Costume 3
