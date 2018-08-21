@@ -28,7 +28,7 @@ const UUID = {
  * A time interval to wait (in milliseconds) while a block that sends a BLE message is running.
  * @type {number}
  */
- const BLESendInterval = 100;
+const BLESendInterval = 100;
 
 /**
  * Enum for WeDo2 sensor and output types.
