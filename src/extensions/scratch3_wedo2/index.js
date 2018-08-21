@@ -657,6 +657,7 @@ class WeDo2 {
      * Stop the tone playing and motors on the WeDo 2.0 hub.
      */
     _stopAll () {
+        if (!this.getPeripheralIsConnected()) return;
         this.stopTone();
         this.stopAllMotors();
         // this.stopLED();
