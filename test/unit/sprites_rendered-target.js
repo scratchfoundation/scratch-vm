@@ -211,8 +211,9 @@ test('deleteSound', t => {
     const renderer = new FakeRenderer();
     a.renderer = renderer;
 
-    a.deleteSound(0);
+    const firstDeleted = a.deleteSound(0);
     t.deepEqual(a.sprite.sounds, [o2, o3]);
+    t.deepEqual(firstDeleted, o1);
 
     // Allows deleting the only sound
     a.sprite.sounds = [o1];
