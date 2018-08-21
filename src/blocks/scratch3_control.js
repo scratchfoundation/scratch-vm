@@ -49,7 +49,7 @@ class Scratch3ControlBlocks {
     }
 
     repeat (args, util) {
-        const times = Math.floor(Cast.toNumber(args.TIMES));
+        const times = Math.round(Cast.toNumber(args.TIMES));
         // Initialize loop
         if (typeof util.stackFrame.loopCounter === 'undefined') {
             util.stackFrame.loopCounter = times;

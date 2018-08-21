@@ -31,6 +31,33 @@ test('repeat', t => {
     t.end();
 });
 
+test('repeat rounds with round()', t => {
+    const rt = new Runtime();
+    const c = new Control(rt);
+
+    const roundingTest = (inputForRepeat, expectedTimes) => {
+        // Test harness (mocks `util`)
+        let i = 0;
+        const util = {
+            stackFrame: Object.create(null),
+            startBranch: function () {
+                i++;
+                c.repeat({TIMES: inputForRepeat}, util);
+            }
+        };
+
+        // Execute test
+        c.repeat({TIMES: inputForRepeat}, util);
+        t.strictEqual(i, expectedTimes);
+    };
+
+    // Execute tests
+    roundingTest(3.2, 3);
+    roundingTest(3.7, 4);
+    roundingTest(3.5, 4);
+    t.end();
+});
+
 test('repeatUntil', t => {
     const rt = new Runtime();
     const c = new Control(rt);
