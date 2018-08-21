@@ -1,5 +1,5 @@
 const JSONRPCWebSocket = require('../util/jsonrpc-web-socket');
-// const log = require('../util/log');
+const log = require('../util/log');
 const ScratchLinkWebSocket = 'wss://device-manager.scratch.mit.edu:20110/scratch/ble';
 
 class BLESession extends JSONRPCWebSocket {
@@ -115,7 +115,17 @@ class BLESession extends JSONRPCWebSocket {
             characteristicId
         };
         this._characteristicDidChangeCallback = onCharacteristicChanged;
-        return this.sendRemoteRequest('startNotifications', params);
+        return this.sendRemoteRequest('startNotifications', params)
+            .catch(() => {
+                // backwards compatibility: try read
+                this.read(serviceId, characteristicId, true, onCharacteristicChanged)
+                    .catch(e => {
+                        // if read not allowed, send error
+                        if (e.data !== 'Reading is not permitted.') { // OSX error TODO: Windows error?
+                            this._sendError(e);
+                        }
+                    });
+            });
     }
 
     /**
@@ -135,12 +145,7 @@ class BLESession extends JSONRPCWebSocket {
             params.startNotifications = true;
         }
         this._characteristicDidChangeCallback = onCharacteristicChanged;
-        return this.sendRemoteRequest('read', params)
-            .catch(e => {
-                if (e.data !== 'Reading is not permitted.') { // TODO: move this error check to extension
-                    this._sendError(e);
-                }
-            });
+        return this.sendRemoteRequest('read', params);
     }
 
     /**
@@ -166,9 +171,9 @@ class BLESession extends JSONRPCWebSocket {
             });
     }
 
-    _sendError (/* e */) {
+    _sendError (e) {
         this._connected = false;
-        // log.error(`BLESession error: ${JSON.stringify(e)}`);
+        log.error(`BLESession error: ${JSON.stringify(e)}`);
         this._runtime.emit(this._runtime.constructor.PERIPHERAL_ERROR);
     }
 
