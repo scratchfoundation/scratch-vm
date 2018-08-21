@@ -589,9 +589,19 @@ class VirtualMachine extends EventEmitter {
     /**
      * Delete a costume from the current editing target.
      * @param {int} costumeIndex - the index of the costume to be removed.
+     * @return {?function} A function to restore the deleted costume, or null,
+     * if no costume was deleted.
      */
     deleteCostume (costumeIndex) {
-        this.editingTarget.deleteCostume(costumeIndex);
+        const deletedCostume = this.editingTarget.deleteCostume(costumeIndex);
+        if (deletedCostume) {
+            const target = this.editingTarget;
+            return () => {
+                target.addCostume(deletedCostume);
+                this.emitTargetsUpdate();
+            };
+        }
+        return null;
     }
 
     /**

@@ -534,12 +534,19 @@ class RenderedTarget extends Target {
     /**
      * Delete a costume by index.
      * @param {number} index Costume index to be deleted
+     * @return {?object} The costume that was deleted or null
+     * if the index was out of bounds of the costumes list or
+     * this target only has one costume.
      */
     deleteCostume (index) {
         const originalCostumeCount = this.sprite.costumes.length;
-        if (originalCostumeCount === 1) return;
+        if (originalCostumeCount === 1) return null;
 
-        this.sprite.deleteCostumeAt(index);
+        if (index < 0 || index >= originalCostumeCount) {
+            return null;
+        }
+
+        const deletedCostume = this.sprite.deleteCostumeAt(index);
 
         if (index === this.currentCostume && index === originalCostumeCount - 1) {
             this.setCostume(index - 1);
@@ -550,6 +557,7 @@ class RenderedTarget extends Target {
         }
 
         this.runtime.requestTargetsUpdate(this);
+        return deletedCostume;
     }
 
     /**

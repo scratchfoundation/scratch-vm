@@ -93,11 +93,10 @@ class Sprite {
     /**
      * Delete a costume by index.
      * @param {number} index Costume index to be deleted
+     * @return {?object} The deleted costume
      */
     deleteCostumeAt (index) {
-        this.costumes_ = this.costumes_
-            .slice(0, index)
-            .concat(this.costumes_.slice(index + 1));
+        return this.costumes.splice(index, 1)[0];
     }
 
     /**
