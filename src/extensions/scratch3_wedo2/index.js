@@ -415,7 +415,7 @@ class WeDo2 {
     /**
      * Set the WeDo 2.0 hub's LED to a specific color.
      * @param {int} rgb - a 24-bit RGB color in 0xRRGGBB format.
-     * @return {Promise} - a promise of the set led send operation.
+     * @return {Promise} - a promise of the completion of the set led send operation.
      */
     setLED (rgb) {
         const cmd = new Uint8Array(6);
@@ -431,6 +431,7 @@ class WeDo2 {
 
     /**
      * Switch off the LED on the WeDo2.
+     * @return {Promise} - a promise of the completion of the stop led send operation.
      */
     stopLED () {
         const cmd = new Uint8Array(6);
@@ -441,13 +442,14 @@ class WeDo2 {
         cmd[4] = 0x000000;
         cmd[5] = 0x000000;
 
-        this._send(UUID.OUTPUT_COMMAND, Base64Util.uint8ArrayToBase64(cmd));
+        return this._send(UUID.OUTPUT_COMMAND, Base64Util.uint8ArrayToBase64(cmd));
     }
 
     /**
      * Play a tone from the WeDo 2.0 hub for a specific amount of time.
      * @param {int} tone - the pitch of the tone, in Hz.
      * @param {int} milliseconds - the duration of the note, in milliseconds.
+     * @return {Promise} - a promise of the completion of the play tone send operation.
      */
     playTone (tone, milliseconds) {
         const cmd = new Uint8Array(7);
@@ -459,7 +461,7 @@ class WeDo2 {
         cmd[5] = milliseconds;
         cmd[6] = milliseconds >> 8;
 
-        this._send(UUID.OUTPUT_COMMAND, Base64Util.uint8ArrayToBase64(cmd));
+        return this._send(UUID.OUTPUT_COMMAND, Base64Util.uint8ArrayToBase64(cmd));
     }
 
     /**
