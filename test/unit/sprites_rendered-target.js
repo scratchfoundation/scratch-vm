@@ -213,8 +213,7 @@ test('deleteSound', t => {
 
     const firstDeleted = a.deleteSound(0);
     t.deepEqual(a.sprite.sounds, [o2, o3]);
-    t.type(firstDeleted, 'object');
-    t.equals(firstDeleted.id, 1);
+    t.deepEqual(firstDeleted, o1);
 
     // Allows deleting the only sound
     a.sprite.sounds = [o1];
