@@ -501,7 +501,14 @@ class WeDo2 {
      */
     // TODO: rename disconnect?
     disconnectSession () {
-        // window.clearInterval(this._timeoutID);
+        this._ports = ['none', 'none'];
+        this._motors = [null, null];
+        this._sensors = {
+            tiltX: 0,
+            tiltY: 0,
+            distance: 0
+        };
+
         this._ble.disconnectSession();
     }
 
@@ -691,6 +698,7 @@ class WeDo2 {
      * Stop the tone playing and motors on the WeDo 2.0 hub.
      */
     _stopAll () {
+        if (!this.getPeripheralIsConnected()) return;
         this.stopTone()
             .then(() => {
                 this.stopAllMotors();
