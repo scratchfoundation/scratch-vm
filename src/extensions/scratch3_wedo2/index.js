@@ -25,6 +25,12 @@ const UUID = {
 };
 
 /**
+ * A time interval to wait (in milliseconds) while a block that sends a BLE message is running.
+ * @type {number}
+ */
+const BLESendInterval = 100;
+
+/**
  * Enum for WeDo2 sensor and output types.
  * @readonly
  * @enum {number}
@@ -341,6 +347,19 @@ class WeDo2 {
         };
 
         /**
+         * A flag that is true while we are busy sendng data to the BLE session.
+         * @type {boolean}
+         * @private
+         */
+        this._sending = false;
+
+        /**
+         * ID for a timeout which is used to clear the sending flag if it has been
+         * true for a long time.
+         */
+        this._sendingTimeoutID = null;
+
+        /**
          * The Bluetooth connection session for reading/writing device data.
          * @type {BLESession}
          * @private
@@ -396,7 +415,7 @@ class WeDo2 {
     /**
      * Set the WeDo 2.0 hub's LED to a specific color.
      * @param {int} rgb - a 24-bit RGB color in 0xRRGGBB format.
-     * @return {Promise} - a promise of the set led send operation.
+     * @return {Promise} - a promise of the completion of the set led send operation.
      */
     setLED (rgb) {
         const cmd = new Uint8Array(6);
@@ -412,6 +431,7 @@ class WeDo2 {
 
     /**
      * Switch off the LED on the WeDo2.
+     * @return {Promise} - a promise of the completion of the stop led send operation.
      */
     stopLED () {
         const cmd = new Uint8Array(6);
@@ -422,13 +442,14 @@ class WeDo2 {
         cmd[4] = 0x000000;
         cmd[5] = 0x000000;
 
-        this._send(UUID.OUTPUT_COMMAND, Base64Util.uint8ArrayToBase64(cmd));
+        return this._send(UUID.OUTPUT_COMMAND, Base64Util.uint8ArrayToBase64(cmd));
     }
 
     /**
      * Play a tone from the WeDo 2.0 hub for a specific amount of time.
      * @param {int} tone - the pitch of the tone, in Hz.
      * @param {int} milliseconds - the duration of the note, in milliseconds.
+     * @return {Promise} - a promise of the completion of the play tone send operation.
      */
     playTone (tone, milliseconds) {
         const cmd = new Uint8Array(7);
@@ -440,18 +461,19 @@ class WeDo2 {
         cmd[5] = milliseconds;
         cmd[6] = milliseconds >> 8;
 
-        this._send(UUID.OUTPUT_COMMAND, Base64Util.uint8ArrayToBase64(cmd));
+        return this._send(UUID.OUTPUT_COMMAND, Base64Util.uint8ArrayToBase64(cmd));
     }
 
     /**
      * Stop the tone playing from the WeDo 2.0 hub, if any.
+     * @return {Promise} - a promise that the command sent.
      */
     stopTone () {
         const cmd = new Uint8Array(2);
         cmd[0] = WeDo2ConnectIDs.PIEZO; // connect id
         cmd[1] = WeDo2Commands.STOP_TONE; // command
 
-        this._send(UUID.OUTPUT_COMMAND, Base64Util.uint8ArrayToBase64(cmd));
+        return this._send(UUID.OUTPUT_COMMAND, Base64Util.uint8ArrayToBase64(cmd));
     }
 
     /**
@@ -526,7 +548,19 @@ class WeDo2 {
      */
     _send (uuid, message) {
         if (!this.getPeripheralIsConnected()) return;
-        return this._ble.write(UUID.IO_SERVICE, uuid, message, 'base64');
+        if (this._sending) return;
+
+        this._sending = true;
+
+        this._sendingTimeoutID = window.setTimeout(() => {
+            this._sending = false;
+        }, 5000);
+
+        return this._ble.write(UUID.IO_SERVICE, uuid, message, 'base64')
+            .then(() => {
+                this._sending = false;
+                window.clearTimeout(this._sendingTimeoutID);
+            });
     }
 
     /**
@@ -657,9 +691,10 @@ class WeDo2 {
      * Stop the tone playing and motors on the WeDo 2.0 hub.
      */
     _stopAll () {
-        this.stopTone();
-        this.stopAllMotors();
-        // this.stopLED();
+        this.stopTone()
+            .then(() => {
+                this.stopAllMotors();
+            });
     }
 }
 
@@ -988,6 +1023,7 @@ class Scratch3WeDo2Blocks {
      * Turn specified motor(s) on indefinitely.
      * @param {object} args - the block's arguments.
      * @property {MotorID} MOTOR_ID - the motor(s) to activate.
+     * @return {Promise} - a Promise that resolves after some delay.
      */
     motorOn (args) {
         this._forEachMotor(args.MOTOR_ID, motorIndex => {
@@ -996,12 +1032,19 @@ class Scratch3WeDo2Blocks {
                 motor.setMotorOn();
             }
         });
+
+        return new Promise(resolve => {
+            window.setTimeout(() => {
+                resolve();
+            }, BLESendInterval);
+        });
     }
 
     /**
      * Turn specified motor(s) off.
      * @param {object} args - the block's arguments.
      * @property {MotorID} MOTOR_ID - the motor(s) to deactivate.
+     * @return {Promise} - a Promise that resolves after some delay.
      */
     motorOff (args) {
         this._forEachMotor(args.MOTOR_ID, motorIndex => {
@@ -1010,6 +1053,12 @@ class Scratch3WeDo2Blocks {
                 motor.setMotorOff();
             }
         });
+
+        return new Promise(resolve => {
+            window.setTimeout(() => {
+                resolve();
+            }, BLESendInterval);
+        });
     }
 
     /**
@@ -1017,6 +1066,7 @@ class Scratch3WeDo2Blocks {
      * @param {object} args - the block's arguments.
      * @property {MotorID} MOTOR_ID - the motor(s) to be affected.
      * @property {int} POWER - the new power level for the motor(s).
+     * @return {Promise} - a Promise that resolves after some delay.
      */
     startMotorPower (args) {
         this._forEachMotor(args.MOTOR_ID, motorIndex => {
@@ -1026,6 +1076,12 @@ class Scratch3WeDo2Blocks {
                 motor.setMotorOn();
             }
         });
+
+        return new Promise(resolve => {
+            window.setTimeout(() => {
+                resolve();
+            }, BLESendInterval);
+        });
     }
 
     /**
@@ -1034,6 +1090,7 @@ class Scratch3WeDo2Blocks {
      * @param {object} args - the block's arguments.
      * @property {MotorID} MOTOR_ID - the motor(s) to be affected.
      * @property {MotorDirection} MOTOR_DIRECTION - the new direction for the motor(s).
+     * @return {Promise} - a Promise that resolves after some delay.
      */
     setMotorDirection (args) {
         this._forEachMotor(args.MOTOR_ID, motorIndex => {
@@ -1063,12 +1120,19 @@ class Scratch3WeDo2Blocks {
                 }
             }
         });
+
+        return new Promise(resolve => {
+            window.setTimeout(() => {
+                resolve();
+            }, BLESendInterval);
+        });
     }
 
     /**
      * Set the LED's hue.
      * @param {object} args - the block's arguments.
      * @property {number} HUE - the hue to set, in the range [0,100].
+     * @return {Promise} - a Promise that resolves after some delay.
      */
     setLightHue (args) {
         // Convert from [0,100] to [0,360]
@@ -1081,6 +1145,12 @@ class Scratch3WeDo2Blocks {
         const rgbDecimal = color.rgbToDecimal(rgbObject);
 
         this._device.setLED(rgbDecimal);
+
+        return new Promise(resolve => {
+            window.setTimeout(() => {
+                resolve();
+            }, BLESendInterval);
+        });
     }
 
     /**
