@@ -475,6 +475,14 @@ const execute = function (sequencer, thread) {
 
         // Fields are set during opCached initialization.
 
+        // Blocks should glow when a script is starting,
+        // not after it has finished (see #1404).
+        // Only blocks in blockContainers that don't forceNoGlow
+        // should request a glow.
+        if (!blockContainer.forceNoGlow) {
+            thread.requestScriptGlowInFrame = true;
+        }
+
         // Inputs are set during previous steps in the loop.
 
         let primitiveReportedValue = null;
@@ -530,13 +538,6 @@ const execute = function (sequencer, thread) {
             break;
         } else if (thread.status === Thread.STATUS_RUNNING) {
             if (lastOperation) {
-                if (typeof primitiveReportedValue === 'undefined') {
-                    // No value reported - potentially a command block.
-                    // Edge-activated hats don't request a glow; all
-                    // commands do.
-                    thread.requestScriptGlowInFrame = true;
-                }
-
                 handleReport(primitiveReportedValue, sequencer, thread, opCached, lastOperation);
             } else {
                 // By definition a block that is not last in the list has a

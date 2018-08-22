@@ -14,8 +14,13 @@ const Variable = require('./variable');
  * and handle updates from Scratch Blocks events.
  */
 
+/**
+ * Create a block container.
+ * @param {boolean} optNoGlow Optional flag to indicate that blocks in this container
+ * should not request glows. This does not affect glows when clicking on a block to execute it.
+ */
 class Blocks {
-    constructor () {
+    constructor (optNoGlow) {
         /**
          * All blocks in the workspace.
          * Keys are block IDs, values are metadata about the block.
@@ -60,6 +65,17 @@ class Blocks {
              */
             _executeCached: {}
         };
+
+        /**
+         * Flag which indicates that blocks in this container should not glow.
+         * Blocks will still glow when clicked on, but this flag is used to control
+         * whether the blocks in this container can request a glow as part of
+         * a running stack. E.g. the flyout block container and the monitor block container
+         * should not be able to request a glow, but blocks containers belonging to
+         * sprites should.
+         * @type {boolean}
+         */
+        this.forceNoGlow = optNoGlow || false;
 
     }
 
@@ -241,7 +257,7 @@ class Blocks {
     }
 
     duplicate () {
-        const newBlocks = new Blocks();
+        const newBlocks = new Blocks(this.forceNoGlow);
         newBlocks._blocks = Clone.simple(this._blocks);
         newBlocks._scripts = Clone.simple(this._scripts);
         return newBlocks;
