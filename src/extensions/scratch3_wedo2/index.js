@@ -460,9 +460,8 @@ class WeDo2 {
     // TODO: rename scan?
     startDeviceScan () {
         this._ble = new BLESession(this._runtime, {
-            filters: [
-                {services: [UUID.DEVICE_SERVICE, UUID.IO_SERVICE]}
-            ]
+            filters: [{services: [UUID.DEVICE_SERVICE]}],
+            optionalServices: [UUID.IO_SERVICE]
         }, this._onConnect);
     }
 
@@ -517,6 +516,10 @@ class WeDo2 {
             })
             .then(() => {
                 // register for attached io notifications
+                // TODO: make backwards compatible with 'read':
+                // - try 'startNotifications'
+                // - then try 'read' with 'startNotifications' flag
+                // - then catch OSX and Windows errors
                 this._ble.startNotifications(UUID.DEVICE_SERVICE, UUID.ATTACHED_IO, this._onMessage);
             });
     }
@@ -626,6 +629,10 @@ class WeDo2 {
 
             this._send(UUID.INPUT_COMMAND, Base64Util.uint8ArrayToBase64(cmd))
                 .then(() => {
+                    // TODO: make backwards compatible with 'read':
+                    // - try 'startNotifications'
+                    // - then try 'read' with 'startNotifications' flag
+                    // - then catch OSX and Windows errors
                     this._ble.startNotifications(UUID.IO_SERVICE, UUID.INPUT_VALUES, this._onMessage);
                 });
         }
