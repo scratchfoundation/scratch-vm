@@ -508,11 +508,6 @@ class WeDo2 {
                 this.setLED(0x0000FF);
             })
             .then(() => {
-                // register for attached io notifications
-                // TODO: make backwards compatible with 'read':
-                // - try 'startNotifications'
-                // - then try 'read' with 'startNotifications' flag
-                // - then catch OSX and Windows errors
                 this._ble.startNotifications(UUID.DEVICE_SERVICE, UUID.ATTACHED_IO, this._onMessage);
             });
     }
@@ -622,10 +617,6 @@ class WeDo2 {
 
             this._send(UUID.INPUT_COMMAND, Base64Util.uint8ArrayToBase64(cmd))
                 .then(() => {
-                    // TODO: make backwards compatible with 'read':
-                    // - try 'startNotifications'
-                    // - then try 'read' with 'startNotifications' flag
-                    // - then catch OSX and Windows errors
                     this._ble.startNotifications(UUID.IO_SERVICE, UUID.INPUT_VALUES, this._onMessage);
                 });
         }

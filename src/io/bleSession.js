@@ -135,12 +135,7 @@ class BLESession extends JSONRPCWebSocket {
             params.startNotifications = true;
         }
         this._characteristicDidChangeCallback = onCharacteristicChanged;
-        return this.sendRemoteRequest('read', params)
-            .catch(e => {
-                if (e.data !== 'Reading is not permitted.') { // TODO: move this error check to extension
-                    this._sendError(e);
-                }
-            });
+        return this.sendRemoteRequest('read', params);
     }
 
     /**
