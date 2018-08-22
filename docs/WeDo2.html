@@ -417,6 +417,133 @@
 
         
             
+<h4 class="name" id="_sending"><span class="type-signature">(private) </span>_sending<span class="type-signature"> :boolean</span></h4>
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+<div class="description">
+    <p>A flag that is true while we are busy sendng data to the BLE session.</p>
+</div>
+
+
+
+    <h5>Type:</h5>
+    <ul>
+        <li>
+            
+<span class="param-type">boolean</span>
+
+
+        </li>
+    </ul>
+
+
+
+
+
+
+        
+            
+<h4 class="name" id="_sendingTimeoutID"><span class="type-signature"></span>_sendingTimeoutID<span class="type-signature"></span></h4>
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+<div class="description">
+    <p>ID for a timeout which is used to clear the sending flag if it has been
+true for a long time.</p>
+</div>
+
+
+
+
+
+
+
+
+        
+            
 <h4 class="name" id="_sensors"><span class="type-signature">(private) </span>_sensors<span class="type-signature"> :Object.&lt;string, number></span></h4>
 
 
@@ -1963,7 +2090,7 @@ values if it is a sensor.</p>
 
     
 
-    <h4 class="name" id="playTone"><span class="type-signature"></span>playTone<span class="signature">(tone, milliseconds)</span><span class="type-signature"></span></h4>
+    <h4 class="name" id="playTone"><span class="type-signature"></span>playTone<span class="signature">(tone, milliseconds)</span><span class="type-signature"> &rarr; {Promise}</span></h4>
 
     
 
@@ -2107,6 +2234,30 @@ values if it is a sensor.</p>
 
 
 
+<h5>Returns:</h5>
+
+        
+<div class="param-desc">
+    <ul>
+<li>a promise of the completion of the play tone send operation.</li>
+</ul>
+</div>
+
+
+
+<dl class="param-type">
+    <dt>
+        Type
+    </dt>
+    <dd>
+        
+<span class="param-type">Promise</span>
+
+
+    </dd>
+</dl>
+
+    
 
 
         
@@ -2240,7 +2391,7 @@ values if it is a sensor.</p>
         
 <div class="param-desc">
     <ul>
-<li>a promise of the set led send operation.</li>
+<li>a promise of the completion of the set led send operation.</li>
 </ul>
 </div>
 
@@ -2424,7 +2575,7 @@ values if it is a sensor.</p>
 
     
 
-    <h4 class="name" id="stopLED"><span class="type-signature"></span>stopLED<span class="signature">()</span><span class="type-signature"></span></h4>
+    <h4 class="name" id="stopLED"><span class="type-signature"></span>stopLED<span class="signature">()</span><span class="type-signature"> &rarr; {Promise}</span></h4>
 
     
 
@@ -2496,6 +2647,30 @@ values if it is a sensor.</p>
 
 
 
+<h5>Returns:</h5>
+
+        
+<div class="param-desc">
+    <ul>
+<li>a promise of the completion of the stop led send operation.</li>
+</ul>
+</div>
+
+
+
+<dl class="param-type">
+    <dt>
+        Type
+    </dt>
+    <dd>
+        
+<span class="param-type">Promise</span>
+
+
+    </dd>
+</dl>
+
+    
 
 
         
@@ -2503,7 +2678,7 @@ values if it is a sensor.</p>
 
     
 
-    <h4 class="name" id="stopTone"><span class="type-signature"></span>stopTone<span class="signature">()</span><span class="type-signature"></span></h4>
+    <h4 class="name" id="stopTone"><span class="type-signature"></span>stopTone<span class="signature">()</span><span class="type-signature"> &rarr; {Promise}</span></h4>
 
     
 
@@ -2575,6 +2750,30 @@ values if it is a sensor.</p>
 
 
 
+<h5>Returns:</h5>
+
+        
+<div class="param-desc">
+    <ul>
+<li>a promise that the command sent.</li>
+</ul>
+</div>
+
+
+
+<dl class="param-type">
+    <dt>
+        Type
+    </dt>
+    <dd>
+        
+<span class="param-type">Promise</span>
+
+
+    </dd>
+</dl>
+
+    
 
 
         
