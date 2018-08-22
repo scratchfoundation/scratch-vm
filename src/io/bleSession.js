@@ -115,7 +115,10 @@ class BLESession extends JSONRPCWebSocket {
             characteristicId
         };
         this._characteristicDidChangeCallback = onCharacteristicChanged;
-        return this.sendRemoteRequest('startNotifications', params);
+        return this.sendRemoteRequest('startNotifications', params)
+            .catch(e => {
+                this._sendError(e);
+            });
     }
 
     /**
@@ -137,9 +140,7 @@ class BLESession extends JSONRPCWebSocket {
         this._characteristicDidChangeCallback = onCharacteristicChanged;
         return this.sendRemoteRequest('read', params)
             .catch(e => {
-                if (e.data !== 'Reading is not permitted.') { // TODO: move this error check to extension
-                    this._sendError(e);
-                }
+                this._sendError(e);
             });
     }
 
@@ -167,7 +168,7 @@ class BLESession extends JSONRPCWebSocket {
     }
 
     _sendError (/* e */) {
-        this._connected = false;
+        this.disconnectSession();
         // log.error(`BLESession error: ${JSON.stringify(e)}`);
         this._runtime.emit(this._runtime.constructor.PERIPHERAL_ERROR);
     }
