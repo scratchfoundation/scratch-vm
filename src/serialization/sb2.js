@@ -183,6 +183,23 @@ const parseScripts = function (scripts, blocks, addBroadcastMsg, getVariableId, 
             blocks.createBlock(convertedBlocks[j]);
         }
     }
+
+    // scriptIndexForComment is now greater than the index of the 'last' block in the flattened block array.
+    // If there are any comments referring to this index or any indices after it, they are comments that
+    // were originally created as block comments, detached from the block, and then had the associated block deleted.
+    // These comments should be imported as workspace comments
+    // by making their blockIDs (which currently refer to non-existing blocks)
+    // null (See #1452).
+    const blockCommentIndicesToFix = Object.keys(comments).filter(k => k >= scriptIndexForComment);
+    for (let i = 0; i < blockCommentIndicesToFix.length; i++) {
+        const currCommentIndex = blockCommentIndicesToFix[i];
+        const currBlockComments = comments[currCommentIndex];
+        currBlockComments.forEach(c => {
+            if (typeof c.blockId === 'number') {
+                c.blockId = null;
+            }
+        });
+    }
 };
 
 /**
