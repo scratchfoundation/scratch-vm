@@ -11834,7 +11834,9 @@ const convertFonts = function (svgTag) {
     collectText(svgTag);
     // If there's an old font-family, switch to the new one.
     for (const textElement of textElements) {
-        if (textElement.getAttribute('font-family') === 'Helvetica') {
+        // If there's no font-family provided, provide one.
+        if (!textElement.getAttribute('font-family') ||
+            textElement.getAttribute('font-family') === 'Helvetica') {
             textElement.setAttribute('font-family', 'Sans Serif');
         } else if (textElement.getAttribute('font-family') === 'Mystery') {
             textElement.setAttribute('font-family', 'Curly');
@@ -16408,11 +16410,7 @@ class SvgRenderer {
             textElement.setAttribute('alignment-baseline', 'text-before-edge');
             // If there's no font size provided, provide one.
             if (!textElement.getAttribute('font-size')) {
-                textElement.setAttribute('font-size', '14');
-            }
-            // If there's no font-family provided, provide one.
-            if (!textElement.getAttribute('font-family')) {
-                textElement.setAttribute('font-family', 'Helvetica');
+                textElement.setAttribute('font-size', '18');
             }
             let text = textElement.textContent;
 

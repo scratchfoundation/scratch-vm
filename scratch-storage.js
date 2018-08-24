@@ -7,7 +7,7 @@
 		exports["ScratchStorage"] = factory();
 	else
 		root["ScratchStorage"] = factory();
-})(this, function() {
+})(window, function() {
 return /******/ (function(modules) { // webpackBootstrap
 /******/ 	// The module cache
 /******/ 	var installedModules = {};
@@ -16,9 +16,9 @@ return /******/ (function(modules) { // webpackBootstrap
 /******/ 	function __webpack_require__(moduleId) {
 /******/
 /******/ 		// Check if module is in cache
-/******/ 		if(installedModules[moduleId])
+/******/ 		if(installedModules[moduleId]) {
 /******/ 			return installedModules[moduleId].exports;
-/******/
+/******/ 		}
 /******/ 		// Create a new module (and put it into the cache)
 /******/ 		var module = installedModules[moduleId] = {
 /******/ 			i: moduleId,
@@ -43,18 +43,35 @@ return /******/ (function(modules) { // webpackBootstrap
 /******/ 	// expose the module cache
 /******/ 	__webpack_require__.c = installedModules;
 /******/
-/******/ 	// identity function for calling harmony imports with the correct context
-/******/ 	__webpack_require__.i = function(value) { return value; };
-/******/
 /******/ 	// define getter function for harmony exports
 /******/ 	__webpack_require__.d = function(exports, name, getter) {
 /******/ 		if(!__webpack_require__.o(exports, name)) {
-/******/ 			Object.defineProperty(exports, name, {
-/******/ 				configurable: false,
-/******/ 				enumerable: true,
-/******/ 				get: getter
-/******/ 			});
+/******/ 			Object.defineProperty(exports, name, { enumerable: true, get: getter });
 /******/ 		}
+/******/ 	};
+/******/
+/******/ 	// define __esModule on exports
+/******/ 	__webpack_require__.r = function(exports) {
+/******/ 		if(typeof Symbol !== 'undefined' && Symbol.toStringTag) {
+/******/ 			Object.defineProperty(exports, Symbol.toStringTag, { value: 'Module' });
+/******/ 		}
+/******/ 		Object.defineProperty(exports, '__esModule', { value: true });
+/******/ 	};
+/******/
+/******/ 	// create a fake namespace object
+/******/ 	// mode & 1: value is a module id, require it
+/******/ 	// mode & 2: merge all properties of value into the ns
+/******/ 	// mode & 4: return value when already ns object
+/******/ 	// mode & 8|1: behave like require
+/******/ 	__webpack_require__.t = function(value, mode) {
+/******/ 		if(mode & 1) value = __webpack_require__(value);
+/******/ 		if(mode & 8) return value;
+/******/ 		if((mode & 4) && typeof value === 'object' && value && value.__esModule) return value;
+/******/ 		var ns = Object.create(null);
+/******/ 		__webpack_require__.r(ns);
+/******/ 		Object.defineProperty(ns, 'default', { enumerable: true, value: value });
+/******/ 		if(mode & 2 && typeof value != 'string') for(var key in value) __webpack_require__.d(ns, key, function(key) { return value[key]; }.bind(null, key));
+/******/ 		return ns;
 /******/ 	};
 /******/
 /******/ 	// getDefaultExport function for compatibility with non-harmony modules
@@ -72,263 +89,77 @@ return /******/ (function(modules) { // webpackBootstrap
 /******/ 	// __webpack_public_path__
 /******/ 	__webpack_require__.p = "";
 /******/
+/******/
 /******/ 	// Load entry module and return exports
-/******/ 	return __webpack_require__(__webpack_require__.s = 31);
+/******/ 	return __webpack_require__(__webpack_require__.s = "./src/index.js");
 /******/ })
 /************************************************************************/
-/******/ ([
-/* 0 */
+/******/ ({
+
+/***/ "./node_modules/arraybuffer-loader/index.js!./src/builtins/defaultBitmap.png":
+/*!**************************************************************************!*\
+  !*** ./node_modules/arraybuffer-loader!./src/builtins/defaultBitmap.png ***!
+  \**************************************************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+module.exports = __webpack_require__(/*! ../../node_modules/arraybuffer-loader/lib/to-array-buffer.js */ "./node_modules/arraybuffer-loader/lib/to-array-buffer.js")("iVBORw0KGgoAAAANSUhEUgAAAIAAAACACAAAAADmVT4XAAADZElEQVR42u3a70vbQBgH8O/7vOibvsmbFUEEWUGGUhQ25nDuhSKIUFDxlYi0SAd94atRmFiHCH2x4W8iiNtwowXRgd1QipJYY3N/1F4kTQ6XLKS9yyHcvWyO8MnT5y53Tw5EcIMESIAESIAESIAESIAEPFVAq/6l8G4oAQCp4aniwbUVJ6BVzafwqKXy1VZMgNb+CHzbyK4ZB+Bi0nnk0VyhsDiSoAmvvnMHmGUVAF6UG+0ffsxRhsRHky/AyCsAUpumX0wAAIs6T4CxDADDtcdZsal6gjmdH8AsAEC6+s8Fa48SFExeAKusAEju+V367AmUCi9ANQ0AU3pwcOw2cMEH0FwAAKz5X228pRLR5AI4TgIAtIDL24oLUE94AB6W7LsH/cONN14Ilh44AOqD9s2LQR1KHiB9zgGgOSGeuA3ocPrME1Q4ANaceyePAzrcjHmAZYs9IBeW4/fzHiAwTCwAgTle9ACZK44ALDT9e6x7gL4aT0BQCHb4AqgA5/1TTOMLoJ7vZSMM0H/GHnCeDnu+CrU8vGYPcN5FADBYD0vCaYPDy+i0p337GSMsS1Z4vA3t9QgAZTt0IuIxFRPSKicAQHlvhk3FXF5GhBByMa8qo/sBO6BarwuYbYrYnFKDYEvE7phKgcxvEQBqnvhgiQCUOgoAO4C3JOS3L/hv23UXxVldBECfcueAqpAa0WGy/QeULREAY6aTXRFDgBuA13+ElOncAERMAGaA9hBQD4gQQHsIRE1AZoD2xrgQS5nOZyHgFKmWDSIG4GRAVidiAE4GRB6AzAB2AKIPQFaA5myHA5AV4ESNugZhC7BLR50lIBPAebrzBGQCKAFQNSIMcDvRTQIwAHxNApM3RBygGK0uyhxwOwGsPAgEnPWj5ycRCNiJtBHlAChGKQVwANzPY+CXSMDNWISiLA9AfRA5IhJQ68UnoQAt+AtOPIBKhJosF8B6UM0yLkAxQk2WCyDX9SiUh1gkQAIkoCuAvjGuquMbuijAtwG7MPL8yBICOHSPk3W8Ne8KcEUdmBi6FADYos+QleIH0N/ogOxd7AD6uAS6WRU8WcBdlgZMG/EnYUlwEpLLoQ4PjzGbiA5UsRMRsbQ+5ziDJmYqJuR6NaMomdXuFuZyPSABEiABEiABEiABEiAc8Bd6VyvCEKGqcQAAAABJRU5ErkJggg==")
+
+/***/ }),
+
+/***/ "./node_modules/arraybuffer-loader/index.js!./src/builtins/defaultSound.wav":
+/*!*************************************************************************!*\
+  !*** ./node_modules/arraybuffer-loader!./src/builtins/defaultSound.wav ***!
+  \*************************************************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+module.exports = __webpack_require__(/*! ../../node_modules/arraybuffer-loader/lib/to-array-buffer.js */ "./node_modules/arraybuffer-loader/lib/to-array-buffer.js")("UklGRiYAAABXQVZFZm10IBAAAAABAAEAIlYAAESsAAACABAAZGF0YQIAAAAAAA==")
+
+/***/ }),
+
+/***/ "./node_modules/arraybuffer-loader/index.js!./src/builtins/defaultVector.svg":
+/*!**************************************************************************!*\
+  !*** ./node_modules/arraybuffer-loader!./src/builtins/defaultVector.svg ***!
+  \**************************************************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+module.exports = __webpack_require__(/*! ../../node_modules/arraybuffer-loader/lib/to-array-buffer.js */ "./node_modules/arraybuffer-loader/lib/to-array-buffer.js")("PD94bWwgdmVyc2lvbj0iMS4wIj8+Cjxzdmcgd2lkdGg9IjEyOCIgaGVpZ2h0PSIxMjgiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIgeG1sbnM6c3ZnPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CiA8Zz4KICA8cmVjdCBmaWxsPSIjQ0NDIiBoZWlnaHQ9IjEyOCIgd2lkdGg9IjEyOCIvPgogIDx0ZXh0IGZpbGw9ImJsYWNrIiB5PSIxMDciIHg9IjM1LjUiIGZvbnQtc2l6ZT0iMTI4Ij4/PC90ZXh0PgogPC9nPgo8L3N2Zz4K")
+
+/***/ }),
+
+/***/ "./node_modules/arraybuffer-loader/lib/to-array-buffer.js":
+/*!****************************************************************!*\
+  !*** ./node_modules/arraybuffer-loader/lib/to-array-buffer.js ***!
+  \****************************************************************/
+/*! no static exports found */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
+/* WEBPACK VAR INJECTION */(function(Buffer) {
 
+module.exports = function (base64Data) {
+  var isBrowser = typeof window !== 'undefined' && typeof window.atob === 'function'
+  var binary = isBrowser ? window.atob(base64Data) : Buffer.from(base64Data, 'base64').toString('binary')
+  var bytes = new Uint8Array(binary.length)
 
-var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+  for (var i = 0; i < binary.length; ++i) {
+    bytes[i] = binary.charCodeAt(i)
+  }
 
-function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
-
-var TextDecoder = __webpack_require__(7).TextDecoder;
-var TextEncoder = __webpack_require__(7).TextEncoder;
-var base64js = __webpack_require__(5);
-
-var memoizedToString = function () {
-    var strings = {};
-    return function (assetId, data) {
-        if (!strings.hasOwnProperty(assetId)) {
-            strings[assetId] = base64js.fromByteArray(data);
-        }
-        return strings[assetId];
-    };
-}();
-
-var Asset = function () {
-    /**
-     * Construct an Asset.
-     * @param {AssetType} assetType - The type of this asset (sound, image, etc.)
-     * @param {string} assetId - The ID of this asset.
-     * @param {DataFormat} [dataFormat] - The format of the data (WAV, PNG, etc.); required iff `data` is present.
-     * @param {Buffer} [data] - The in-memory data for this asset; optional.
-     */
-    function Asset(assetType, assetId, dataFormat, data) {
-        _classCallCheck(this, Asset);
-
-        /** @type {AssetType} */
-        this.assetType = assetType;
-
-        /** @type {string} */
-        this.assetId = assetId;
-
-        this.setData(data, dataFormat || assetType.runtimeFormat);
-
-        /** @type {Asset[]} */
-        this.dependencies = [];
-    }
-
-    _createClass(Asset, [{
-        key: 'setData',
-        value: function setData(data, dataFormat) {
-            if (data && !dataFormat) {
-                throw new Error('Data provided without specifying its format');
-            }
-
-            /** @type {DataFormat} */
-            this.dataFormat = dataFormat;
-
-            /** @type {Buffer} */
-            this.data = data;
-        }
-
-        /**
-         * @returns {string} - This asset's data, decoded as text.
-         */
-
-    }, {
-        key: 'decodeText',
-        value: function decodeText() {
-            var decoder = new TextDecoder();
-            return decoder.decode(this.data);
-        }
-
-        /**
-         * Same as `setData` but encodes text first.
-         * @param {string} data - the text data to encode and store.
-         * @param {DataFormat} dataFormat - the format of the data (DataFormat.SVG for example).
-         */
-
-    }, {
-        key: 'encodeTextData',
-        value: function encodeTextData(data, dataFormat) {
-            var encoder = new TextEncoder();
-            this.setData(encoder.encode(data), dataFormat);
-        }
-
-        /**
-         * @param {string} [contentType] - Optionally override the content type to be included in the data URI.
-         * @returns {string} - A data URI representing the asset's data.
-         */
-
-    }, {
-        key: 'encodeDataURI',
-        value: function encodeDataURI(contentType) {
-            contentType = contentType || this.assetType.contentType;
-            return 'data:' + contentType + ';base64,' + memoizedToString(this.assetId, this.data);
-        }
-    }]);
-
-    return Asset;
-}();
-
-module.exports = Asset;
-
-/***/ }),
-/* 1 */
-/***/ (function(module, exports) {
-
-var g;
-
-// This works in non-strict mode
-g = (function() {
-	return this;
-})();
-
-try {
-	// This works if eval is allowed (see CSP)
-	g = g || Function("return this")() || (1,eval)("this");
-} catch(e) {
-	// This works if the window reference is available
-	if(typeof window === "object")
-		g = window;
+  return bytes.buffer
 }
 
-// g can still be undefined, but nothing to do about it...
-// We return undefined, instead of nothing here, so it's
-// easier to handle this case. if(!global) { ...}
-
-module.exports = g;
-
+/* WEBPACK VAR INJECTION */}.call(this, __webpack_require__(/*! ./../../buffer/index.js */ "./node_modules/buffer/index.js").Buffer))
 
 /***/ }),
-/* 2 */
-/***/ (function(module, exports, __webpack_require__) {
 
-"use strict";
-
-
-/**
- * Enumeration of the supported data formats.
- * @enum {string}
- */
-var DataFormat = {
-    JPG: 'jpg',
-    JSON: 'json',
-    MP3: 'mp3',
-    PNG: 'png',
-    SB2: 'sb2',
-    SVG: 'svg',
-    WAV: 'wav'
-};
-
-module.exports = DataFormat;
-
-/***/ }),
-/* 3 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-
-var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
-
-function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
-
-/**
- * Base class for asset load/save helpers.
- * @abstract
- */
-var Helper = function () {
-    function Helper(parent) {
-        _classCallCheck(this, Helper);
-
-        this.parent = parent;
-    }
-
-    /**
-     * Fetch an asset but don't process dependencies.
-     * @param {AssetType} assetType - The type of asset to fetch.
-     * @param {string} assetId - The ID of the asset to fetch: a project ID, MD5, etc.
-     * @param {DataFormat} dataFormat - The file format / file extension of the asset to fetch: PNG, JPG, etc.
-     * @return {Promise.<Asset>} A promise for the contents of the asset.
-     */
-
-
-    _createClass(Helper, [{
-        key: "load",
-        value: function load(assetType, assetId, dataFormat) {
-            return Promise.reject(new Error("No asset of type " + assetType + " for ID " + assetId + " with format " + dataFormat));
-        }
-    }]);
-
-    return Helper;
-}();
-
-module.exports = Helper;
-
-/***/ }),
-/* 4 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-
-var DataFormat = __webpack_require__(2);
-
-/**
- * Enumeration of the supported asset types.
- * @type {Object.<String,AssetType>}
- * @typedef {Object} AssetType - Information about a supported asset type.
- * @property {string} contentType - the MIME type associated with this kind of data. Useful for data URIs, etc.
- * @property {string} name - The human-readable name of this asset type.
- * @property {DataFormat} runtimeFormat - The default format used for runtime, in-memory storage of this asset. For
- *     example, a project stored in SB2 format on disk will be returned as JSON when loaded into memory.
- * @property {boolean} immutable - Indicates if the asset id is determined by the asset content.
- */
-var AssetType = {
-    ImageBitmap: {
-        contentType: 'image/png',
-        name: 'ImageBitmap',
-        runtimeFormat: DataFormat.PNG,
-        immutable: true
-    },
-    ImageVector: {
-        contentType: 'image/svg+xml',
-        name: 'ImageVector',
-        runtimeFormat: DataFormat.SVG,
-        immutable: true
-    },
-    Project: {
-        contentType: 'application/json',
-        name: 'Project',
-        runtimeFormat: DataFormat.JSON,
-        immutable: false
-    },
-    Sound: {
-        contentType: 'audio/x-wav',
-        name: 'Sound',
-        runtimeFormat: DataFormat.WAV,
-        immutable: true
-    },
-    Sprite: {
-        contentType: 'application/json',
-        name: 'Sprite',
-        runtimeFormat: DataFormat.JSON,
-        immutable: true
-    }
-};
-
-module.exports = AssetType;
-
-/***/ }),
-/* 5 */
+/***/ "./node_modules/base64-js/index.js":
+/*!*****************************************!*\
+  !*** ./node_modules/base64-js/index.js ***!
+  \*****************************************/
+/*! no static exports found */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -449,7 +280,2057 @@ function fromByteArray (uint8) {
 
 
 /***/ }),
-/* 6 */
+
+/***/ "./node_modules/buffer/index.js":
+/*!**************************************!*\
+  !*** ./node_modules/buffer/index.js ***!
+  \**************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+/* WEBPACK VAR INJECTION */(function(global) {/*!
+ * The buffer module from node.js, for the browser.
+ *
+ * @author   Feross Aboukhadijeh <feross@feross.org> <http://feross.org>
+ * @license  MIT
+ */
+/* eslint-disable no-proto */
+
+
+
+var base64 = __webpack_require__(/*! base64-js */ "./node_modules/base64-js/index.js")
+var ieee754 = __webpack_require__(/*! ieee754 */ "./node_modules/ieee754/index.js")
+var isArray = __webpack_require__(/*! isarray */ "./node_modules/isarray/index.js")
+
+exports.Buffer = Buffer
+exports.SlowBuffer = SlowBuffer
+exports.INSPECT_MAX_BYTES = 50
+
+/**
+ * If `Buffer.TYPED_ARRAY_SUPPORT`:
+ *   === true    Use Uint8Array implementation (fastest)
+ *   === false   Use Object implementation (most compatible, even IE6)
+ *
+ * Browsers that support typed arrays are IE 10+, Firefox 4+, Chrome 7+, Safari 5.1+,
+ * Opera 11.6+, iOS 4.2+.
+ *
+ * Due to various browser bugs, sometimes the Object implementation will be used even
+ * when the browser supports typed arrays.
+ *
+ * Note:
+ *
+ *   - Firefox 4-29 lacks support for adding new properties to `Uint8Array` instances,
+ *     See: https://bugzilla.mozilla.org/show_bug.cgi?id=695438.
+ *
+ *   - Chrome 9-10 is missing the `TypedArray.prototype.subarray` function.
+ *
+ *   - IE10 has a broken `TypedArray.prototype.subarray` function which returns arrays of
+ *     incorrect length in some situations.
+
+ * We detect these buggy browsers and set `Buffer.TYPED_ARRAY_SUPPORT` to `false` so they
+ * get the Object implementation, which is slower but behaves correctly.
+ */
+Buffer.TYPED_ARRAY_SUPPORT = global.TYPED_ARRAY_SUPPORT !== undefined
+  ? global.TYPED_ARRAY_SUPPORT
+  : typedArraySupport()
+
+/*
+ * Export kMaxLength after typed array support is determined.
+ */
+exports.kMaxLength = kMaxLength()
+
+function typedArraySupport () {
+  try {
+    var arr = new Uint8Array(1)
+    arr.__proto__ = {__proto__: Uint8Array.prototype, foo: function () { return 42 }}
+    return arr.foo() === 42 && // typed array instances can be augmented
+        typeof arr.subarray === 'function' && // chrome 9-10 lack `subarray`
+        arr.subarray(1, 1).byteLength === 0 // ie10 has broken `subarray`
+  } catch (e) {
+    return false
+  }
+}
+
+function kMaxLength () {
+  return Buffer.TYPED_ARRAY_SUPPORT
+    ? 0x7fffffff
+    : 0x3fffffff
+}
+
+function createBuffer (that, length) {
+  if (kMaxLength() < length) {
+    throw new RangeError('Invalid typed array length')
+  }
+  if (Buffer.TYPED_ARRAY_SUPPORT) {
+    // Return an augmented `Uint8Array` instance, for best performance
+    that = new Uint8Array(length)
+    that.__proto__ = Buffer.prototype
+  } else {
+    // Fallback: Return an object instance of the Buffer class
+    if (that === null) {
+      that = new Buffer(length)
+    }
+    that.length = length
+  }
+
+  return that
+}
+
+/**
+ * The Buffer constructor returns instances of `Uint8Array` that have their
+ * prototype changed to `Buffer.prototype`. Furthermore, `Buffer` is a subclass of
+ * `Uint8Array`, so the returned instances will have all the node `Buffer` methods
+ * and the `Uint8Array` methods. Square bracket notation works as expected -- it
+ * returns a single octet.
+ *
+ * The `Uint8Array` prototype remains unmodified.
+ */
+
+function Buffer (arg, encodingOrOffset, length) {
+  if (!Buffer.TYPED_ARRAY_SUPPORT && !(this instanceof Buffer)) {
+    return new Buffer(arg, encodingOrOffset, length)
+  }
+
+  // Common case.
+  if (typeof arg === 'number') {
+    if (typeof encodingOrOffset === 'string') {
+      throw new Error(
+        'If encoding is specified then the first argument must be a string'
+      )
+    }
+    return allocUnsafe(this, arg)
+  }
+  return from(this, arg, encodingOrOffset, length)
+}
+
+Buffer.poolSize = 8192 // not used by this implementation
+
+// TODO: Legacy, not needed anymore. Remove in next major version.
+Buffer._augment = function (arr) {
+  arr.__proto__ = Buffer.prototype
+  return arr
+}
+
+function from (that, value, encodingOrOffset, length) {
+  if (typeof value === 'number') {
+    throw new TypeError('"value" argument must not be a number')
+  }
+
+  if (typeof ArrayBuffer !== 'undefined' && value instanceof ArrayBuffer) {
+    return fromArrayBuffer(that, value, encodingOrOffset, length)
+  }
+
+  if (typeof value === 'string') {
+    return fromString(that, value, encodingOrOffset)
+  }
+
+  return fromObject(that, value)
+}
+
+/**
+ * Functionally equivalent to Buffer(arg, encoding) but throws a TypeError
+ * if value is a number.
+ * Buffer.from(str[, encoding])
+ * Buffer.from(array)
+ * Buffer.from(buffer)
+ * Buffer.from(arrayBuffer[, byteOffset[, length]])
+ **/
+Buffer.from = function (value, encodingOrOffset, length) {
+  return from(null, value, encodingOrOffset, length)
+}
+
+if (Buffer.TYPED_ARRAY_SUPPORT) {
+  Buffer.prototype.__proto__ = Uint8Array.prototype
+  Buffer.__proto__ = Uint8Array
+  if (typeof Symbol !== 'undefined' && Symbol.species &&
+      Buffer[Symbol.species] === Buffer) {
+    // Fix subarray() in ES2016. See: https://github.com/feross/buffer/pull/97
+    Object.defineProperty(Buffer, Symbol.species, {
+      value: null,
+      configurable: true
+    })
+  }
+}
+
+function assertSize (size) {
+  if (typeof size !== 'number') {
+    throw new TypeError('"size" argument must be a number')
+  } else if (size < 0) {
+    throw new RangeError('"size" argument must not be negative')
+  }
+}
+
+function alloc (that, size, fill, encoding) {
+  assertSize(size)
+  if (size <= 0) {
+    return createBuffer(that, size)
+  }
+  if (fill !== undefined) {
+    // Only pay attention to encoding if it's a string. This
+    // prevents accidentally sending in a number that would
+    // be interpretted as a start offset.
+    return typeof encoding === 'string'
+      ? createBuffer(that, size).fill(fill, encoding)
+      : createBuffer(that, size).fill(fill)
+  }
+  return createBuffer(that, size)
+}
+
+/**
+ * Creates a new filled Buffer instance.
+ * alloc(size[, fill[, encoding]])
+ **/
+Buffer.alloc = function (size, fill, encoding) {
+  return alloc(null, size, fill, encoding)
+}
+
+function allocUnsafe (that, size) {
+  assertSize(size)
+  that = createBuffer(that, size < 0 ? 0 : checked(size) | 0)
+  if (!Buffer.TYPED_ARRAY_SUPPORT) {
+    for (var i = 0; i < size; ++i) {
+      that[i] = 0
+    }
+  }
+  return that
+}
+
+/**
+ * Equivalent to Buffer(num), by default creates a non-zero-filled Buffer instance.
+ * */
+Buffer.allocUnsafe = function (size) {
+  return allocUnsafe(null, size)
+}
+/**
+ * Equivalent to SlowBuffer(num), by default creates a non-zero-filled Buffer instance.
+ */
+Buffer.allocUnsafeSlow = function (size) {
+  return allocUnsafe(null, size)
+}
+
+function fromString (that, string, encoding) {
+  if (typeof encoding !== 'string' || encoding === '') {
+    encoding = 'utf8'
+  }
+
+  if (!Buffer.isEncoding(encoding)) {
+    throw new TypeError('"encoding" must be a valid string encoding')
+  }
+
+  var length = byteLength(string, encoding) | 0
+  that = createBuffer(that, length)
+
+  var actual = that.write(string, encoding)
+
+  if (actual !== length) {
+    // Writing a hex string, for example, that contains invalid characters will
+    // cause everything after the first invalid character to be ignored. (e.g.
+    // 'abxxcd' will be treated as 'ab')
+    that = that.slice(0, actual)
+  }
+
+  return that
+}
+
+function fromArrayLike (that, array) {
+  var length = array.length < 0 ? 0 : checked(array.length) | 0
+  that = createBuffer(that, length)
+  for (var i = 0; i < length; i += 1) {
+    that[i] = array[i] & 255
+  }
+  return that
+}
+
+function fromArrayBuffer (that, array, byteOffset, length) {
+  array.byteLength // this throws if `array` is not a valid ArrayBuffer
+
+  if (byteOffset < 0 || array.byteLength < byteOffset) {
+    throw new RangeError('\'offset\' is out of bounds')
+  }
+
+  if (array.byteLength < byteOffset + (length || 0)) {
+    throw new RangeError('\'length\' is out of bounds')
+  }
+
+  if (byteOffset === undefined && length === undefined) {
+    array = new Uint8Array(array)
+  } else if (length === undefined) {
+    array = new Uint8Array(array, byteOffset)
+  } else {
+    array = new Uint8Array(array, byteOffset, length)
+  }
+
+  if (Buffer.TYPED_ARRAY_SUPPORT) {
+    // Return an augmented `Uint8Array` instance, for best performance
+    that = array
+    that.__proto__ = Buffer.prototype
+  } else {
+    // Fallback: Return an object instance of the Buffer class
+    that = fromArrayLike(that, array)
+  }
+  return that
+}
+
+function fromObject (that, obj) {
+  if (Buffer.isBuffer(obj)) {
+    var len = checked(obj.length) | 0
+    that = createBuffer(that, len)
+
+    if (that.length === 0) {
+      return that
+    }
+
+    obj.copy(that, 0, 0, len)
+    return that
+  }
+
+  if (obj) {
+    if ((typeof ArrayBuffer !== 'undefined' &&
+        obj.buffer instanceof ArrayBuffer) || 'length' in obj) {
+      if (typeof obj.length !== 'number' || isnan(obj.length)) {
+        return createBuffer(that, 0)
+      }
+      return fromArrayLike(that, obj)
+    }
+
+    if (obj.type === 'Buffer' && isArray(obj.data)) {
+      return fromArrayLike(that, obj.data)
+    }
+  }
+
+  throw new TypeError('First argument must be a string, Buffer, ArrayBuffer, Array, or array-like object.')
+}
+
+function checked (length) {
+  // Note: cannot use `length < kMaxLength()` here because that fails when
+  // length is NaN (which is otherwise coerced to zero.)
+  if (length >= kMaxLength()) {
+    throw new RangeError('Attempt to allocate Buffer larger than maximum ' +
+                         'size: 0x' + kMaxLength().toString(16) + ' bytes')
+  }
+  return length | 0
+}
+
+function SlowBuffer (length) {
+  if (+length != length) { // eslint-disable-line eqeqeq
+    length = 0
+  }
+  return Buffer.alloc(+length)
+}
+
+Buffer.isBuffer = function isBuffer (b) {
+  return !!(b != null && b._isBuffer)
+}
+
+Buffer.compare = function compare (a, b) {
+  if (!Buffer.isBuffer(a) || !Buffer.isBuffer(b)) {
+    throw new TypeError('Arguments must be Buffers')
+  }
+
+  if (a === b) return 0
+
+  var x = a.length
+  var y = b.length
+
+  for (var i = 0, len = Math.min(x, y); i < len; ++i) {
+    if (a[i] !== b[i]) {
+      x = a[i]
+      y = b[i]
+      break
+    }
+  }
+
+  if (x < y) return -1
+  if (y < x) return 1
+  return 0
+}
+
+Buffer.isEncoding = function isEncoding (encoding) {
+  switch (String(encoding).toLowerCase()) {
+    case 'hex':
+    case 'utf8':
+    case 'utf-8':
+    case 'ascii':
+    case 'latin1':
+    case 'binary':
+    case 'base64':
+    case 'ucs2':
+    case 'ucs-2':
+    case 'utf16le':
+    case 'utf-16le':
+      return true
+    default:
+      return false
+  }
+}
+
+Buffer.concat = function concat (list, length) {
+  if (!isArray(list)) {
+    throw new TypeError('"list" argument must be an Array of Buffers')
+  }
+
+  if (list.length === 0) {
+    return Buffer.alloc(0)
+  }
+
+  var i
+  if (length === undefined) {
+    length = 0
+    for (i = 0; i < list.length; ++i) {
+      length += list[i].length
+    }
+  }
+
+  var buffer = Buffer.allocUnsafe(length)
+  var pos = 0
+  for (i = 0; i < list.length; ++i) {
+    var buf = list[i]
+    if (!Buffer.isBuffer(buf)) {
+      throw new TypeError('"list" argument must be an Array of Buffers')
+    }
+    buf.copy(buffer, pos)
+    pos += buf.length
+  }
+  return buffer
+}
+
+function byteLength (string, encoding) {
+  if (Buffer.isBuffer(string)) {
+    return string.length
+  }
+  if (typeof ArrayBuffer !== 'undefined' && typeof ArrayBuffer.isView === 'function' &&
+      (ArrayBuffer.isView(string) || string instanceof ArrayBuffer)) {
+    return string.byteLength
+  }
+  if (typeof string !== 'string') {
+    string = '' + string
+  }
+
+  var len = string.length
+  if (len === 0) return 0
+
+  // Use a for loop to avoid recursion
+  var loweredCase = false
+  for (;;) {
+    switch (encoding) {
+      case 'ascii':
+      case 'latin1':
+      case 'binary':
+        return len
+      case 'utf8':
+      case 'utf-8':
+      case undefined:
+        return utf8ToBytes(string).length
+      case 'ucs2':
+      case 'ucs-2':
+      case 'utf16le':
+      case 'utf-16le':
+        return len * 2
+      case 'hex':
+        return len >>> 1
+      case 'base64':
+        return base64ToBytes(string).length
+      default:
+        if (loweredCase) return utf8ToBytes(string).length // assume utf8
+        encoding = ('' + encoding).toLowerCase()
+        loweredCase = true
+    }
+  }
+}
+Buffer.byteLength = byteLength
+
+function slowToString (encoding, start, end) {
+  var loweredCase = false
+
+  // No need to verify that "this.length <= MAX_UINT32" since it's a read-only
+  // property of a typed array.
+
+  // This behaves neither like String nor Uint8Array in that we set start/end
+  // to their upper/lower bounds if the value passed is out of range.
+  // undefined is handled specially as per ECMA-262 6th Edition,
+  // Section 13.3.3.7 Runtime Semantics: KeyedBindingInitialization.
+  if (start === undefined || start < 0) {
+    start = 0
+  }
+  // Return early if start > this.length. Done here to prevent potential uint32
+  // coercion fail below.
+  if (start > this.length) {
+    return ''
+  }
+
+  if (end === undefined || end > this.length) {
+    end = this.length
+  }
+
+  if (end <= 0) {
+    return ''
+  }
+
+  // Force coersion to uint32. This will also coerce falsey/NaN values to 0.
+  end >>>= 0
+  start >>>= 0
+
+  if (end <= start) {
+    return ''
+  }
+
+  if (!encoding) encoding = 'utf8'
+
+  while (true) {
+    switch (encoding) {
+      case 'hex':
+        return hexSlice(this, start, end)
+
+      case 'utf8':
+      case 'utf-8':
+        return utf8Slice(this, start, end)
+
+      case 'ascii':
+        return asciiSlice(this, start, end)
+
+      case 'latin1':
+      case 'binary':
+        return latin1Slice(this, start, end)
+
+      case 'base64':
+        return base64Slice(this, start, end)
+
+      case 'ucs2':
+      case 'ucs-2':
+      case 'utf16le':
+      case 'utf-16le':
+        return utf16leSlice(this, start, end)
+
+      default:
+        if (loweredCase) throw new TypeError('Unknown encoding: ' + encoding)
+        encoding = (encoding + '').toLowerCase()
+        loweredCase = true
+    }
+  }
+}
+
+// The property is used by `Buffer.isBuffer` and `is-buffer` (in Safari 5-7) to detect
+// Buffer instances.
+Buffer.prototype._isBuffer = true
+
+function swap (b, n, m) {
+  var i = b[n]
+  b[n] = b[m]
+  b[m] = i
+}
+
+Buffer.prototype.swap16 = function swap16 () {
+  var len = this.length
+  if (len % 2 !== 0) {
+    throw new RangeError('Buffer size must be a multiple of 16-bits')
+  }
+  for (var i = 0; i < len; i += 2) {
+    swap(this, i, i + 1)
+  }
+  return this
+}
+
+Buffer.prototype.swap32 = function swap32 () {
+  var len = this.length
+  if (len % 4 !== 0) {
+    throw new RangeError('Buffer size must be a multiple of 32-bits')
+  }
+  for (var i = 0; i < len; i += 4) {
+    swap(this, i, i + 3)
+    swap(this, i + 1, i + 2)
+  }
+  return this
+}
+
+Buffer.prototype.swap64 = function swap64 () {
+  var len = this.length
+  if (len % 8 !== 0) {
+    throw new RangeError('Buffer size must be a multiple of 64-bits')
+  }
+  for (var i = 0; i < len; i += 8) {
+    swap(this, i, i + 7)
+    swap(this, i + 1, i + 6)
+    swap(this, i + 2, i + 5)
+    swap(this, i + 3, i + 4)
+  }
+  return this
+}
+
+Buffer.prototype.toString = function toString () {
+  var length = this.length | 0
+  if (length === 0) return ''
+  if (arguments.length === 0) return utf8Slice(this, 0, length)
+  return slowToString.apply(this, arguments)
+}
+
+Buffer.prototype.equals = function equals (b) {
+  if (!Buffer.isBuffer(b)) throw new TypeError('Argument must be a Buffer')
+  if (this === b) return true
+  return Buffer.compare(this, b) === 0
+}
+
+Buffer.prototype.inspect = function inspect () {
+  var str = ''
+  var max = exports.INSPECT_MAX_BYTES
+  if (this.length > 0) {
+    str = this.toString('hex', 0, max).match(/.{2}/g).join(' ')
+    if (this.length > max) str += ' ... '
+  }
+  return '<Buffer ' + str + '>'
+}
+
+Buffer.prototype.compare = function compare (target, start, end, thisStart, thisEnd) {
+  if (!Buffer.isBuffer(target)) {
+    throw new TypeError('Argument must be a Buffer')
+  }
+
+  if (start === undefined) {
+    start = 0
+  }
+  if (end === undefined) {
+    end = target ? target.length : 0
+  }
+  if (thisStart === undefined) {
+    thisStart = 0
+  }
+  if (thisEnd === undefined) {
+    thisEnd = this.length
+  }
+
+  if (start < 0 || end > target.length || thisStart < 0 || thisEnd > this.length) {
+    throw new RangeError('out of range index')
+  }
+
+  if (thisStart >= thisEnd && start >= end) {
+    return 0
+  }
+  if (thisStart >= thisEnd) {
+    return -1
+  }
+  if (start >= end) {
+    return 1
+  }
+
+  start >>>= 0
+  end >>>= 0
+  thisStart >>>= 0
+  thisEnd >>>= 0
+
+  if (this === target) return 0
+
+  var x = thisEnd - thisStart
+  var y = end - start
+  var len = Math.min(x, y)
+
+  var thisCopy = this.slice(thisStart, thisEnd)
+  var targetCopy = target.slice(start, end)
+
+  for (var i = 0; i < len; ++i) {
+    if (thisCopy[i] !== targetCopy[i]) {
+      x = thisCopy[i]
+      y = targetCopy[i]
+      break
+    }
+  }
+
+  if (x < y) return -1
+  if (y < x) return 1
+  return 0
+}
+
+// Finds either the first index of `val` in `buffer` at offset >= `byteOffset`,
+// OR the last index of `val` in `buffer` at offset <= `byteOffset`.
+//
+// Arguments:
+// - buffer - a Buffer to search
+// - val - a string, Buffer, or number
+// - byteOffset - an index into `buffer`; will be clamped to an int32
+// - encoding - an optional encoding, relevant is val is a string
+// - dir - true for indexOf, false for lastIndexOf
+function bidirectionalIndexOf (buffer, val, byteOffset, encoding, dir) {
+  // Empty buffer means no match
+  if (buffer.length === 0) return -1
+
+  // Normalize byteOffset
+  if (typeof byteOffset === 'string') {
+    encoding = byteOffset
+    byteOffset = 0
+  } else if (byteOffset > 0x7fffffff) {
+    byteOffset = 0x7fffffff
+  } else if (byteOffset < -0x80000000) {
+    byteOffset = -0x80000000
+  }
+  byteOffset = +byteOffset  // Coerce to Number.
+  if (isNaN(byteOffset)) {
+    // byteOffset: it it's undefined, null, NaN, "foo", etc, search whole buffer
+    byteOffset = dir ? 0 : (buffer.length - 1)
+  }
+
+  // Normalize byteOffset: negative offsets start from the end of the buffer
+  if (byteOffset < 0) byteOffset = buffer.length + byteOffset
+  if (byteOffset >= buffer.length) {
+    if (dir) return -1
+    else byteOffset = buffer.length - 1
+  } else if (byteOffset < 0) {
+    if (dir) byteOffset = 0
+    else return -1
+  }
+
+  // Normalize val
+  if (typeof val === 'string') {
+    val = Buffer.from(val, encoding)
+  }
+
+  // Finally, search either indexOf (if dir is true) or lastIndexOf
+  if (Buffer.isBuffer(val)) {
+    // Special case: looking for empty string/buffer always fails
+    if (val.length === 0) {
+      return -1
+    }
+    return arrayIndexOf(buffer, val, byteOffset, encoding, dir)
+  } else if (typeof val === 'number') {
+    val = val & 0xFF // Search for a byte value [0-255]
+    if (Buffer.TYPED_ARRAY_SUPPORT &&
+        typeof Uint8Array.prototype.indexOf === 'function') {
+      if (dir) {
+        return Uint8Array.prototype.indexOf.call(buffer, val, byteOffset)
+      } else {
+        return Uint8Array.prototype.lastIndexOf.call(buffer, val, byteOffset)
+      }
+    }
+    return arrayIndexOf(buffer, [ val ], byteOffset, encoding, dir)
+  }
+
+  throw new TypeError('val must be string, number or Buffer')
+}
+
+function arrayIndexOf (arr, val, byteOffset, encoding, dir) {
+  var indexSize = 1
+  var arrLength = arr.length
+  var valLength = val.length
+
+  if (encoding !== undefined) {
+    encoding = String(encoding).toLowerCase()
+    if (encoding === 'ucs2' || encoding === 'ucs-2' ||
+        encoding === 'utf16le' || encoding === 'utf-16le') {
+      if (arr.length < 2 || val.length < 2) {
+        return -1
+      }
+      indexSize = 2
+      arrLength /= 2
+      valLength /= 2
+      byteOffset /= 2
+    }
+  }
+
+  function read (buf, i) {
+    if (indexSize === 1) {
+      return buf[i]
+    } else {
+      return buf.readUInt16BE(i * indexSize)
+    }
+  }
+
+  var i
+  if (dir) {
+    var foundIndex = -1
+    for (i = byteOffset; i < arrLength; i++) {
+      if (read(arr, i) === read(val, foundIndex === -1 ? 0 : i - foundIndex)) {
+        if (foundIndex === -1) foundIndex = i
+        if (i - foundIndex + 1 === valLength) return foundIndex * indexSize
+      } else {
+        if (foundIndex !== -1) i -= i - foundIndex
+        foundIndex = -1
+      }
+    }
+  } else {
+    if (byteOffset + valLength > arrLength) byteOffset = arrLength - valLength
+    for (i = byteOffset; i >= 0; i--) {
+      var found = true
+      for (var j = 0; j < valLength; j++) {
+        if (read(arr, i + j) !== read(val, j)) {
+          found = false
+          break
+        }
+      }
+      if (found) return i
+    }
+  }
+
+  return -1
+}
+
+Buffer.prototype.includes = function includes (val, byteOffset, encoding) {
+  return this.indexOf(val, byteOffset, encoding) !== -1
+}
+
+Buffer.prototype.indexOf = function indexOf (val, byteOffset, encoding) {
+  return bidirectionalIndexOf(this, val, byteOffset, encoding, true)
+}
+
+Buffer.prototype.lastIndexOf = function lastIndexOf (val, byteOffset, encoding) {
+  return bidirectionalIndexOf(this, val, byteOffset, encoding, false)
+}
+
+function hexWrite (buf, string, offset, length) {
+  offset = Number(offset) || 0
+  var remaining = buf.length - offset
+  if (!length) {
+    length = remaining
+  } else {
+    length = Number(length)
+    if (length > remaining) {
+      length = remaining
+    }
+  }
+
+  // must be an even number of digits
+  var strLen = string.length
+  if (strLen % 2 !== 0) throw new TypeError('Invalid hex string')
+
+  if (length > strLen / 2) {
+    length = strLen / 2
+  }
+  for (var i = 0; i < length; ++i) {
+    var parsed = parseInt(string.substr(i * 2, 2), 16)
+    if (isNaN(parsed)) return i
+    buf[offset + i] = parsed
+  }
+  return i
+}
+
+function utf8Write (buf, string, offset, length) {
+  return blitBuffer(utf8ToBytes(string, buf.length - offset), buf, offset, length)
+}
+
+function asciiWrite (buf, string, offset, length) {
+  return blitBuffer(asciiToBytes(string), buf, offset, length)
+}
+
+function latin1Write (buf, string, offset, length) {
+  return asciiWrite(buf, string, offset, length)
+}
+
+function base64Write (buf, string, offset, length) {
+  return blitBuffer(base64ToBytes(string), buf, offset, length)
+}
+
+function ucs2Write (buf, string, offset, length) {
+  return blitBuffer(utf16leToBytes(string, buf.length - offset), buf, offset, length)
+}
+
+Buffer.prototype.write = function write (string, offset, length, encoding) {
+  // Buffer#write(string)
+  if (offset === undefined) {
+    encoding = 'utf8'
+    length = this.length
+    offset = 0
+  // Buffer#write(string, encoding)
+  } else if (length === undefined && typeof offset === 'string') {
+    encoding = offset
+    length = this.length
+    offset = 0
+  // Buffer#write(string, offset[, length][, encoding])
+  } else if (isFinite(offset)) {
+    offset = offset | 0
+    if (isFinite(length)) {
+      length = length | 0
+      if (encoding === undefined) encoding = 'utf8'
+    } else {
+      encoding = length
+      length = undefined
+    }
+  // legacy write(string, encoding, offset, length) - remove in v0.13
+  } else {
+    throw new Error(
+      'Buffer.write(string, encoding, offset[, length]) is no longer supported'
+    )
+  }
+
+  var remaining = this.length - offset
+  if (length === undefined || length > remaining) length = remaining
+
+  if ((string.length > 0 && (length < 0 || offset < 0)) || offset > this.length) {
+    throw new RangeError('Attempt to write outside buffer bounds')
+  }
+
+  if (!encoding) encoding = 'utf8'
+
+  var loweredCase = false
+  for (;;) {
+    switch (encoding) {
+      case 'hex':
+        return hexWrite(this, string, offset, length)
+
+      case 'utf8':
+      case 'utf-8':
+        return utf8Write(this, string, offset, length)
+
+      case 'ascii':
+        return asciiWrite(this, string, offset, length)
+
+      case 'latin1':
+      case 'binary':
+        return latin1Write(this, string, offset, length)
+
+      case 'base64':
+        // Warning: maxLength not taken into account in base64Write
+        return base64Write(this, string, offset, length)
+
+      case 'ucs2':
+      case 'ucs-2':
+      case 'utf16le':
+      case 'utf-16le':
+        return ucs2Write(this, string, offset, length)
+
+      default:
+        if (loweredCase) throw new TypeError('Unknown encoding: ' + encoding)
+        encoding = ('' + encoding).toLowerCase()
+        loweredCase = true
+    }
+  }
+}
+
+Buffer.prototype.toJSON = function toJSON () {
+  return {
+    type: 'Buffer',
+    data: Array.prototype.slice.call(this._arr || this, 0)
+  }
+}
+
+function base64Slice (buf, start, end) {
+  if (start === 0 && end === buf.length) {
+    return base64.fromByteArray(buf)
+  } else {
+    return base64.fromByteArray(buf.slice(start, end))
+  }
+}
+
+function utf8Slice (buf, start, end) {
+  end = Math.min(buf.length, end)
+  var res = []
+
+  var i = start
+  while (i < end) {
+    var firstByte = buf[i]
+    var codePoint = null
+    var bytesPerSequence = (firstByte > 0xEF) ? 4
+      : (firstByte > 0xDF) ? 3
+      : (firstByte > 0xBF) ? 2
+      : 1
+
+    if (i + bytesPerSequence <= end) {
+      var secondByte, thirdByte, fourthByte, tempCodePoint
+
+      switch (bytesPerSequence) {
+        case 1:
+          if (firstByte < 0x80) {
+            codePoint = firstByte
+          }
+          break
+        case 2:
+          secondByte = buf[i + 1]
+          if ((secondByte & 0xC0) === 0x80) {
+            tempCodePoint = (firstByte & 0x1F) << 0x6 | (secondByte & 0x3F)
+            if (tempCodePoint > 0x7F) {
+              codePoint = tempCodePoint
+            }
+          }
+          break
+        case 3:
+          secondByte = buf[i + 1]
+          thirdByte = buf[i + 2]
+          if ((secondByte & 0xC0) === 0x80 && (thirdByte & 0xC0) === 0x80) {
+            tempCodePoint = (firstByte & 0xF) << 0xC | (secondByte & 0x3F) << 0x6 | (thirdByte & 0x3F)
+            if (tempCodePoint > 0x7FF && (tempCodePoint < 0xD800 || tempCodePoint > 0xDFFF)) {
+              codePoint = tempCodePoint
+            }
+          }
+          break
+        case 4:
+          secondByte = buf[i + 1]
+          thirdByte = buf[i + 2]
+          fourthByte = buf[i + 3]
+          if ((secondByte & 0xC0) === 0x80 && (thirdByte & 0xC0) === 0x80 && (fourthByte & 0xC0) === 0x80) {
+            tempCodePoint = (firstByte & 0xF) << 0x12 | (secondByte & 0x3F) << 0xC | (thirdByte & 0x3F) << 0x6 | (fourthByte & 0x3F)
+            if (tempCodePoint > 0xFFFF && tempCodePoint < 0x110000) {
+              codePoint = tempCodePoint
+            }
+          }
+      }
+    }
+
+    if (codePoint === null) {
+      // we did not generate a valid codePoint so insert a
+      // replacement char (U+FFFD) and advance only 1 byte
+      codePoint = 0xFFFD
+      bytesPerSequence = 1
+    } else if (codePoint > 0xFFFF) {
+      // encode to utf16 (surrogate pair dance)
+      codePoint -= 0x10000
+      res.push(codePoint >>> 10 & 0x3FF | 0xD800)
+      codePoint = 0xDC00 | codePoint & 0x3FF
+    }
+
+    res.push(codePoint)
+    i += bytesPerSequence
+  }
+
+  return decodeCodePointsArray(res)
+}
+
+// Based on http://stackoverflow.com/a/22747272/680742, the browser with
+// the lowest limit is Chrome, with 0x10000 args.
+// We go 1 magnitude less, for safety
+var MAX_ARGUMENTS_LENGTH = 0x1000
+
+function decodeCodePointsArray (codePoints) {
+  var len = codePoints.length
+  if (len <= MAX_ARGUMENTS_LENGTH) {
+    return String.fromCharCode.apply(String, codePoints) // avoid extra slice()
+  }
+
+  // Decode in chunks to avoid "call stack size exceeded".
+  var res = ''
+  var i = 0
+  while (i < len) {
+    res += String.fromCharCode.apply(
+      String,
+      codePoints.slice(i, i += MAX_ARGUMENTS_LENGTH)
+    )
+  }
+  return res
+}
+
+function asciiSlice (buf, start, end) {
+  var ret = ''
+  end = Math.min(buf.length, end)
+
+  for (var i = start; i < end; ++i) {
+    ret += String.fromCharCode(buf[i] & 0x7F)
+  }
+  return ret
+}
+
+function latin1Slice (buf, start, end) {
+  var ret = ''
+  end = Math.min(buf.length, end)
+
+  for (var i = start; i < end; ++i) {
+    ret += String.fromCharCode(buf[i])
+  }
+  return ret
+}
+
+function hexSlice (buf, start, end) {
+  var len = buf.length
+
+  if (!start || start < 0) start = 0
+  if (!end || end < 0 || end > len) end = len
+
+  var out = ''
+  for (var i = start; i < end; ++i) {
+    out += toHex(buf[i])
+  }
+  return out
+}
+
+function utf16leSlice (buf, start, end) {
+  var bytes = buf.slice(start, end)
+  var res = ''
+  for (var i = 0; i < bytes.length; i += 2) {
+    res += String.fromCharCode(bytes[i] + bytes[i + 1] * 256)
+  }
+  return res
+}
+
+Buffer.prototype.slice = function slice (start, end) {
+  var len = this.length
+  start = ~~start
+  end = end === undefined ? len : ~~end
+
+  if (start < 0) {
+    start += len
+    if (start < 0) start = 0
+  } else if (start > len) {
+    start = len
+  }
+
+  if (end < 0) {
+    end += len
+    if (end < 0) end = 0
+  } else if (end > len) {
+    end = len
+  }
+
+  if (end < start) end = start
+
+  var newBuf
+  if (Buffer.TYPED_ARRAY_SUPPORT) {
+    newBuf = this.subarray(start, end)
+    newBuf.__proto__ = Buffer.prototype
+  } else {
+    var sliceLen = end - start
+    newBuf = new Buffer(sliceLen, undefined)
+    for (var i = 0; i < sliceLen; ++i) {
+      newBuf[i] = this[i + start]
+    }
+  }
+
+  return newBuf
+}
+
+/*
+ * Need to make sure that buffer isn't trying to write out of bounds.
+ */
+function checkOffset (offset, ext, length) {
+  if ((offset % 1) !== 0 || offset < 0) throw new RangeError('offset is not uint')
+  if (offset + ext > length) throw new RangeError('Trying to access beyond buffer length')
+}
+
+Buffer.prototype.readUIntLE = function readUIntLE (offset, byteLength, noAssert) {
+  offset = offset | 0
+  byteLength = byteLength | 0
+  if (!noAssert) checkOffset(offset, byteLength, this.length)
+
+  var val = this[offset]
+  var mul = 1
+  var i = 0
+  while (++i < byteLength && (mul *= 0x100)) {
+    val += this[offset + i] * mul
+  }
+
+  return val
+}
+
+Buffer.prototype.readUIntBE = function readUIntBE (offset, byteLength, noAssert) {
+  offset = offset | 0
+  byteLength = byteLength | 0
+  if (!noAssert) {
+    checkOffset(offset, byteLength, this.length)
+  }
+
+  var val = this[offset + --byteLength]
+  var mul = 1
+  while (byteLength > 0 && (mul *= 0x100)) {
+    val += this[offset + --byteLength] * mul
+  }
+
+  return val
+}
+
+Buffer.prototype.readUInt8 = function readUInt8 (offset, noAssert) {
+  if (!noAssert) checkOffset(offset, 1, this.length)
+  return this[offset]
+}
+
+Buffer.prototype.readUInt16LE = function readUInt16LE (offset, noAssert) {
+  if (!noAssert) checkOffset(offset, 2, this.length)
+  return this[offset] | (this[offset + 1] << 8)
+}
+
+Buffer.prototype.readUInt16BE = function readUInt16BE (offset, noAssert) {
+  if (!noAssert) checkOffset(offset, 2, this.length)
+  return (this[offset] << 8) | this[offset + 1]
+}
+
+Buffer.prototype.readUInt32LE = function readUInt32LE (offset, noAssert) {
+  if (!noAssert) checkOffset(offset, 4, this.length)
+
+  return ((this[offset]) |
+      (this[offset + 1] << 8) |
+      (this[offset + 2] << 16)) +
+      (this[offset + 3] * 0x1000000)
+}
+
+Buffer.prototype.readUInt32BE = function readUInt32BE (offset, noAssert) {
+  if (!noAssert) checkOffset(offset, 4, this.length)
+
+  return (this[offset] * 0x1000000) +
+    ((this[offset + 1] << 16) |
+    (this[offset + 2] << 8) |
+    this[offset + 3])
+}
+
+Buffer.prototype.readIntLE = function readIntLE (offset, byteLength, noAssert) {
+  offset = offset | 0
+  byteLength = byteLength | 0
+  if (!noAssert) checkOffset(offset, byteLength, this.length)
+
+  var val = this[offset]
+  var mul = 1
+  var i = 0
+  while (++i < byteLength && (mul *= 0x100)) {
+    val += this[offset + i] * mul
+  }
+  mul *= 0x80
+
+  if (val >= mul) val -= Math.pow(2, 8 * byteLength)
+
+  return val
+}
+
+Buffer.prototype.readIntBE = function readIntBE (offset, byteLength, noAssert) {
+  offset = offset | 0
+  byteLength = byteLength | 0
+  if (!noAssert) checkOffset(offset, byteLength, this.length)
+
+  var i = byteLength
+  var mul = 1
+  var val = this[offset + --i]
+  while (i > 0 && (mul *= 0x100)) {
+    val += this[offset + --i] * mul
+  }
+  mul *= 0x80
+
+  if (val >= mul) val -= Math.pow(2, 8 * byteLength)
+
+  return val
+}
+
+Buffer.prototype.readInt8 = function readInt8 (offset, noAssert) {
+  if (!noAssert) checkOffset(offset, 1, this.length)
+  if (!(this[offset] & 0x80)) return (this[offset])
+  return ((0xff - this[offset] + 1) * -1)
+}
+
+Buffer.prototype.readInt16LE = function readInt16LE (offset, noAssert) {
+  if (!noAssert) checkOffset(offset, 2, this.length)
+  var val = this[offset] | (this[offset + 1] << 8)
+  return (val & 0x8000) ? val | 0xFFFF0000 : val
+}
+
+Buffer.prototype.readInt16BE = function readInt16BE (offset, noAssert) {
+  if (!noAssert) checkOffset(offset, 2, this.length)
+  var val = this[offset + 1] | (this[offset] << 8)
+  return (val & 0x8000) ? val | 0xFFFF0000 : val
+}
+
+Buffer.prototype.readInt32LE = function readInt32LE (offset, noAssert) {
+  if (!noAssert) checkOffset(offset, 4, this.length)
+
+  return (this[offset]) |
+    (this[offset + 1] << 8) |
+    (this[offset + 2] << 16) |
+    (this[offset + 3] << 24)
+}
+
+Buffer.prototype.readInt32BE = function readInt32BE (offset, noAssert) {
+  if (!noAssert) checkOffset(offset, 4, this.length)
+
+  return (this[offset] << 24) |
+    (this[offset + 1] << 16) |
+    (this[offset + 2] << 8) |
+    (this[offset + 3])
+}
+
+Buffer.prototype.readFloatLE = function readFloatLE (offset, noAssert) {
+  if (!noAssert) checkOffset(offset, 4, this.length)
+  return ieee754.read(this, offset, true, 23, 4)
+}
+
+Buffer.prototype.readFloatBE = function readFloatBE (offset, noAssert) {
+  if (!noAssert) checkOffset(offset, 4, this.length)
+  return ieee754.read(this, offset, false, 23, 4)
+}
+
+Buffer.prototype.readDoubleLE = function readDoubleLE (offset, noAssert) {
+  if (!noAssert) checkOffset(offset, 8, this.length)
+  return ieee754.read(this, offset, true, 52, 8)
+}
+
+Buffer.prototype.readDoubleBE = function readDoubleBE (offset, noAssert) {
+  if (!noAssert) checkOffset(offset, 8, this.length)
+  return ieee754.read(this, offset, false, 52, 8)
+}
+
+function checkInt (buf, value, offset, ext, max, min) {
+  if (!Buffer.isBuffer(buf)) throw new TypeError('"buffer" argument must be a Buffer instance')
+  if (value > max || value < min) throw new RangeError('"value" argument is out of bounds')
+  if (offset + ext > buf.length) throw new RangeError('Index out of range')
+}
+
+Buffer.prototype.writeUIntLE = function writeUIntLE (value, offset, byteLength, noAssert) {
+  value = +value
+  offset = offset | 0
+  byteLength = byteLength | 0
+  if (!noAssert) {
+    var maxBytes = Math.pow(2, 8 * byteLength) - 1
+    checkInt(this, value, offset, byteLength, maxBytes, 0)
+  }
+
+  var mul = 1
+  var i = 0
+  this[offset] = value & 0xFF
+  while (++i < byteLength && (mul *= 0x100)) {
+    this[offset + i] = (value / mul) & 0xFF
+  }
+
+  return offset + byteLength
+}
+
+Buffer.prototype.writeUIntBE = function writeUIntBE (value, offset, byteLength, noAssert) {
+  value = +value
+  offset = offset | 0
+  byteLength = byteLength | 0
+  if (!noAssert) {
+    var maxBytes = Math.pow(2, 8 * byteLength) - 1
+    checkInt(this, value, offset, byteLength, maxBytes, 0)
+  }
+
+  var i = byteLength - 1
+  var mul = 1
+  this[offset + i] = value & 0xFF
+  while (--i >= 0 && (mul *= 0x100)) {
+    this[offset + i] = (value / mul) & 0xFF
+  }
+
+  return offset + byteLength
+}
+
+Buffer.prototype.writeUInt8 = function writeUInt8 (value, offset, noAssert) {
+  value = +value
+  offset = offset | 0
+  if (!noAssert) checkInt(this, value, offset, 1, 0xff, 0)
+  if (!Buffer.TYPED_ARRAY_SUPPORT) value = Math.floor(value)
+  this[offset] = (value & 0xff)
+  return offset + 1
+}
+
+function objectWriteUInt16 (buf, value, offset, littleEndian) {
+  if (value < 0) value = 0xffff + value + 1
+  for (var i = 0, j = Math.min(buf.length - offset, 2); i < j; ++i) {
+    buf[offset + i] = (value & (0xff << (8 * (littleEndian ? i : 1 - i)))) >>>
+      (littleEndian ? i : 1 - i) * 8
+  }
+}
+
+Buffer.prototype.writeUInt16LE = function writeUInt16LE (value, offset, noAssert) {
+  value = +value
+  offset = offset | 0
+  if (!noAssert) checkInt(this, value, offset, 2, 0xffff, 0)
+  if (Buffer.TYPED_ARRAY_SUPPORT) {
+    this[offset] = (value & 0xff)
+    this[offset + 1] = (value >>> 8)
+  } else {
+    objectWriteUInt16(this, value, offset, true)
+  }
+  return offset + 2
+}
+
+Buffer.prototype.writeUInt16BE = function writeUInt16BE (value, offset, noAssert) {
+  value = +value
+  offset = offset | 0
+  if (!noAssert) checkInt(this, value, offset, 2, 0xffff, 0)
+  if (Buffer.TYPED_ARRAY_SUPPORT) {
+    this[offset] = (value >>> 8)
+    this[offset + 1] = (value & 0xff)
+  } else {
+    objectWriteUInt16(this, value, offset, false)
+  }
+  return offset + 2
+}
+
+function objectWriteUInt32 (buf, value, offset, littleEndian) {
+  if (value < 0) value = 0xffffffff + value + 1
+  for (var i = 0, j = Math.min(buf.length - offset, 4); i < j; ++i) {
+    buf[offset + i] = (value >>> (littleEndian ? i : 3 - i) * 8) & 0xff
+  }
+}
+
+Buffer.prototype.writeUInt32LE = function writeUInt32LE (value, offset, noAssert) {
+  value = +value
+  offset = offset | 0
+  if (!noAssert) checkInt(this, value, offset, 4, 0xffffffff, 0)
+  if (Buffer.TYPED_ARRAY_SUPPORT) {
+    this[offset + 3] = (value >>> 24)
+    this[offset + 2] = (value >>> 16)
+    this[offset + 1] = (value >>> 8)
+    this[offset] = (value & 0xff)
+  } else {
+    objectWriteUInt32(this, value, offset, true)
+  }
+  return offset + 4
+}
+
+Buffer.prototype.writeUInt32BE = function writeUInt32BE (value, offset, noAssert) {
+  value = +value
+  offset = offset | 0
+  if (!noAssert) checkInt(this, value, offset, 4, 0xffffffff, 0)
+  if (Buffer.TYPED_ARRAY_SUPPORT) {
+    this[offset] = (value >>> 24)
+    this[offset + 1] = (value >>> 16)
+    this[offset + 2] = (value >>> 8)
+    this[offset + 3] = (value & 0xff)
+  } else {
+    objectWriteUInt32(this, value, offset, false)
+  }
+  return offset + 4
+}
+
+Buffer.prototype.writeIntLE = function writeIntLE (value, offset, byteLength, noAssert) {
+  value = +value
+  offset = offset | 0
+  if (!noAssert) {
+    var limit = Math.pow(2, 8 * byteLength - 1)
+
+    checkInt(this, value, offset, byteLength, limit - 1, -limit)
+  }
+
+  var i = 0
+  var mul = 1
+  var sub = 0
+  this[offset] = value & 0xFF
+  while (++i < byteLength && (mul *= 0x100)) {
+    if (value < 0 && sub === 0 && this[offset + i - 1] !== 0) {
+      sub = 1
+    }
+    this[offset + i] = ((value / mul) >> 0) - sub & 0xFF
+  }
+
+  return offset + byteLength
+}
+
+Buffer.prototype.writeIntBE = function writeIntBE (value, offset, byteLength, noAssert) {
+  value = +value
+  offset = offset | 0
+  if (!noAssert) {
+    var limit = Math.pow(2, 8 * byteLength - 1)
+
+    checkInt(this, value, offset, byteLength, limit - 1, -limit)
+  }
+
+  var i = byteLength - 1
+  var mul = 1
+  var sub = 0
+  this[offset + i] = value & 0xFF
+  while (--i >= 0 && (mul *= 0x100)) {
+    if (value < 0 && sub === 0 && this[offset + i + 1] !== 0) {
+      sub = 1
+    }
+    this[offset + i] = ((value / mul) >> 0) - sub & 0xFF
+  }
+
+  return offset + byteLength
+}
+
+Buffer.prototype.writeInt8 = function writeInt8 (value, offset, noAssert) {
+  value = +value
+  offset = offset | 0
+  if (!noAssert) checkInt(this, value, offset, 1, 0x7f, -0x80)
+  if (!Buffer.TYPED_ARRAY_SUPPORT) value = Math.floor(value)
+  if (value < 0) value = 0xff + value + 1
+  this[offset] = (value & 0xff)
+  return offset + 1
+}
+
+Buffer.prototype.writeInt16LE = function writeInt16LE (value, offset, noAssert) {
+  value = +value
+  offset = offset | 0
+  if (!noAssert) checkInt(this, value, offset, 2, 0x7fff, -0x8000)
+  if (Buffer.TYPED_ARRAY_SUPPORT) {
+    this[offset] = (value & 0xff)
+    this[offset + 1] = (value >>> 8)
+  } else {
+    objectWriteUInt16(this, value, offset, true)
+  }
+  return offset + 2
+}
+
+Buffer.prototype.writeInt16BE = function writeInt16BE (value, offset, noAssert) {
+  value = +value
+  offset = offset | 0
+  if (!noAssert) checkInt(this, value, offset, 2, 0x7fff, -0x8000)
+  if (Buffer.TYPED_ARRAY_SUPPORT) {
+    this[offset] = (value >>> 8)
+    this[offset + 1] = (value & 0xff)
+  } else {
+    objectWriteUInt16(this, value, offset, false)
+  }
+  return offset + 2
+}
+
+Buffer.prototype.writeInt32LE = function writeInt32LE (value, offset, noAssert) {
+  value = +value
+  offset = offset | 0
+  if (!noAssert) checkInt(this, value, offset, 4, 0x7fffffff, -0x80000000)
+  if (Buffer.TYPED_ARRAY_SUPPORT) {
+    this[offset] = (value & 0xff)
+    this[offset + 1] = (value >>> 8)
+    this[offset + 2] = (value >>> 16)
+    this[offset + 3] = (value >>> 24)
+  } else {
+    objectWriteUInt32(this, value, offset, true)
+  }
+  return offset + 4
+}
+
+Buffer.prototype.writeInt32BE = function writeInt32BE (value, offset, noAssert) {
+  value = +value
+  offset = offset | 0
+  if (!noAssert) checkInt(this, value, offset, 4, 0x7fffffff, -0x80000000)
+  if (value < 0) value = 0xffffffff + value + 1
+  if (Buffer.TYPED_ARRAY_SUPPORT) {
+    this[offset] = (value >>> 24)
+    this[offset + 1] = (value >>> 16)
+    this[offset + 2] = (value >>> 8)
+    this[offset + 3] = (value & 0xff)
+  } else {
+    objectWriteUInt32(this, value, offset, false)
+  }
+  return offset + 4
+}
+
+function checkIEEE754 (buf, value, offset, ext, max, min) {
+  if (offset + ext > buf.length) throw new RangeError('Index out of range')
+  if (offset < 0) throw new RangeError('Index out of range')
+}
+
+function writeFloat (buf, value, offset, littleEndian, noAssert) {
+  if (!noAssert) {
+    checkIEEE754(buf, value, offset, 4, 3.4028234663852886e+38, -3.4028234663852886e+38)
+  }
+  ieee754.write(buf, value, offset, littleEndian, 23, 4)
+  return offset + 4
+}
+
+Buffer.prototype.writeFloatLE = function writeFloatLE (value, offset, noAssert) {
+  return writeFloat(this, value, offset, true, noAssert)
+}
+
+Buffer.prototype.writeFloatBE = function writeFloatBE (value, offset, noAssert) {
+  return writeFloat(this, value, offset, false, noAssert)
+}
+
+function writeDouble (buf, value, offset, littleEndian, noAssert) {
+  if (!noAssert) {
+    checkIEEE754(buf, value, offset, 8, 1.7976931348623157E+308, -1.7976931348623157E+308)
+  }
+  ieee754.write(buf, value, offset, littleEndian, 52, 8)
+  return offset + 8
+}
+
+Buffer.prototype.writeDoubleLE = function writeDoubleLE (value, offset, noAssert) {
+  return writeDouble(this, value, offset, true, noAssert)
+}
+
+Buffer.prototype.writeDoubleBE = function writeDoubleBE (value, offset, noAssert) {
+  return writeDouble(this, value, offset, false, noAssert)
+}
+
+// copy(targetBuffer, targetStart=0, sourceStart=0, sourceEnd=buffer.length)
+Buffer.prototype.copy = function copy (target, targetStart, start, end) {
+  if (!start) start = 0
+  if (!end && end !== 0) end = this.length
+  if (targetStart >= target.length) targetStart = target.length
+  if (!targetStart) targetStart = 0
+  if (end > 0 && end < start) end = start
+
+  // Copy 0 bytes; we're done
+  if (end === start) return 0
+  if (target.length === 0 || this.length === 0) return 0
+
+  // Fatal error conditions
+  if (targetStart < 0) {
+    throw new RangeError('targetStart out of bounds')
+  }
+  if (start < 0 || start >= this.length) throw new RangeError('sourceStart out of bounds')
+  if (end < 0) throw new RangeError('sourceEnd out of bounds')
+
+  // Are we oob?
+  if (end > this.length) end = this.length
+  if (target.length - targetStart < end - start) {
+    end = target.length - targetStart + start
+  }
+
+  var len = end - start
+  var i
+
+  if (this === target && start < targetStart && targetStart < end) {
+    // descending copy from end
+    for (i = len - 1; i >= 0; --i) {
+      target[i + targetStart] = this[i + start]
+    }
+  } else if (len < 1000 || !Buffer.TYPED_ARRAY_SUPPORT) {
+    // ascending copy from start
+    for (i = 0; i < len; ++i) {
+      target[i + targetStart] = this[i + start]
+    }
+  } else {
+    Uint8Array.prototype.set.call(
+      target,
+      this.subarray(start, start + len),
+      targetStart
+    )
+  }
+
+  return len
+}
+
+// Usage:
+//    buffer.fill(number[, offset[, end]])
+//    buffer.fill(buffer[, offset[, end]])
+//    buffer.fill(string[, offset[, end]][, encoding])
+Buffer.prototype.fill = function fill (val, start, end, encoding) {
+  // Handle string cases:
+  if (typeof val === 'string') {
+    if (typeof start === 'string') {
+      encoding = start
+      start = 0
+      end = this.length
+    } else if (typeof end === 'string') {
+      encoding = end
+      end = this.length
+    }
+    if (val.length === 1) {
+      var code = val.charCodeAt(0)
+      if (code < 256) {
+        val = code
+      }
+    }
+    if (encoding !== undefined && typeof encoding !== 'string') {
+      throw new TypeError('encoding must be a string')
+    }
+    if (typeof encoding === 'string' && !Buffer.isEncoding(encoding)) {
+      throw new TypeError('Unknown encoding: ' + encoding)
+    }
+  } else if (typeof val === 'number') {
+    val = val & 255
+  }
+
+  // Invalid ranges are not set to a default, so can range check early.
+  if (start < 0 || this.length < start || this.length < end) {
+    throw new RangeError('Out of range index')
+  }
+
+  if (end <= start) {
+    return this
+  }
+
+  start = start >>> 0
+  end = end === undefined ? this.length : end >>> 0
+
+  if (!val) val = 0
+
+  var i
+  if (typeof val === 'number') {
+    for (i = start; i < end; ++i) {
+      this[i] = val
+    }
+  } else {
+    var bytes = Buffer.isBuffer(val)
+      ? val
+      : utf8ToBytes(new Buffer(val, encoding).toString())
+    var len = bytes.length
+    for (i = 0; i < end - start; ++i) {
+      this[i + start] = bytes[i % len]
+    }
+  }
+
+  return this
+}
+
+// HELPER FUNCTIONS
+// ================
+
+var INVALID_BASE64_RE = /[^+\/0-9A-Za-z-_]/g
+
+function base64clean (str) {
+  // Node strips out invalid characters like \n and \t from the string, base64-js does not
+  str = stringtrim(str).replace(INVALID_BASE64_RE, '')
+  // Node converts strings with length < 2 to ''
+  if (str.length < 2) return ''
+  // Node allows for non-padded base64 strings (missing trailing ===), base64-js does not
+  while (str.length % 4 !== 0) {
+    str = str + '='
+  }
+  return str
+}
+
+function stringtrim (str) {
+  if (str.trim) return str.trim()
+  return str.replace(/^\s+|\s+$/g, '')
+}
+
+function toHex (n) {
+  if (n < 16) return '0' + n.toString(16)
+  return n.toString(16)
+}
+
+function utf8ToBytes (string, units) {
+  units = units || Infinity
+  var codePoint
+  var length = string.length
+  var leadSurrogate = null
+  var bytes = []
+
+  for (var i = 0; i < length; ++i) {
+    codePoint = string.charCodeAt(i)
+
+    // is surrogate component
+    if (codePoint > 0xD7FF && codePoint < 0xE000) {
+      // last char was a lead
+      if (!leadSurrogate) {
+        // no lead yet
+        if (codePoint > 0xDBFF) {
+          // unexpected trail
+          if ((units -= 3) > -1) bytes.push(0xEF, 0xBF, 0xBD)
+          continue
+        } else if (i + 1 === length) {
+          // unpaired lead
+          if ((units -= 3) > -1) bytes.push(0xEF, 0xBF, 0xBD)
+          continue
+        }
+
+        // valid lead
+        leadSurrogate = codePoint
+
+        continue
+      }
+
+      // 2 leads in a row
+      if (codePoint < 0xDC00) {
+        if ((units -= 3) > -1) bytes.push(0xEF, 0xBF, 0xBD)
+        leadSurrogate = codePoint
+        continue
+      }
+
+      // valid surrogate pair
+      codePoint = (leadSurrogate - 0xD800 << 10 | codePoint - 0xDC00) + 0x10000
+    } else if (leadSurrogate) {
+      // valid bmp char, but last char was a lead
+      if ((units -= 3) > -1) bytes.push(0xEF, 0xBF, 0xBD)
+    }
+
+    leadSurrogate = null
+
+    // encode utf8
+    if (codePoint < 0x80) {
+      if ((units -= 1) < 0) break
+      bytes.push(codePoint)
+    } else if (codePoint < 0x800) {
+      if ((units -= 2) < 0) break
+      bytes.push(
+        codePoint >> 0x6 | 0xC0,
+        codePoint & 0x3F | 0x80
+      )
+    } else if (codePoint < 0x10000) {
+      if ((units -= 3) < 0) break
+      bytes.push(
+        codePoint >> 0xC | 0xE0,
+        codePoint >> 0x6 & 0x3F | 0x80,
+        codePoint & 0x3F | 0x80
+      )
+    } else if (codePoint < 0x110000) {
+      if ((units -= 4) < 0) break
+      bytes.push(
+        codePoint >> 0x12 | 0xF0,
+        codePoint >> 0xC & 0x3F | 0x80,
+        codePoint >> 0x6 & 0x3F | 0x80,
+        codePoint & 0x3F | 0x80
+      )
+    } else {
+      throw new Error('Invalid code point')
+    }
+  }
+
+  return bytes
+}
+
+function asciiToBytes (str) {
+  var byteArray = []
+  for (var i = 0; i < str.length; ++i) {
+    // Node's code seems to be doing this and not & 0x7F..
+    byteArray.push(str.charCodeAt(i) & 0xFF)
+  }
+  return byteArray
+}
+
+function utf16leToBytes (str, units) {
+  var c, hi, lo
+  var byteArray = []
+  for (var i = 0; i < str.length; ++i) {
+    if ((units -= 2) < 0) break
+
+    c = str.charCodeAt(i)
+    hi = c >> 8
+    lo = c % 256
+    byteArray.push(lo)
+    byteArray.push(hi)
+  }
+
+  return byteArray
+}
+
+function base64ToBytes (str) {
+  return base64.toByteArray(base64clean(str))
+}
+
+function blitBuffer (src, dst, offset, length) {
+  for (var i = 0; i < length; ++i) {
+    if ((i + offset >= dst.length) || (i >= src.length)) break
+    dst[i + offset] = src[i]
+  }
+  return i
+}
+
+function isnan (val) {
+  return val !== val // eslint-disable-line no-self-compare
+}
+
+/* WEBPACK VAR INJECTION */}.call(this, __webpack_require__(/*! ./../webpack/buildin/global.js */ "./node_modules/webpack/buildin/global.js")))
+
+/***/ }),
+
+/***/ "./node_modules/for-each/index.js":
+/*!****************************************!*\
+  !*** ./node_modules/for-each/index.js ***!
+  \****************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+var isCallable = __webpack_require__(/*! is-callable */ "./node_modules/is-callable/index.js");
+
+var toStr = Object.prototype.toString;
+var hasOwnProperty = Object.prototype.hasOwnProperty;
+
+var forEachArray = function forEachArray(array, iterator, receiver) {
+    for (var i = 0, len = array.length; i < len; i++) {
+        if (hasOwnProperty.call(array, i)) {
+            if (receiver == null) {
+                iterator(array[i], i, array);
+            } else {
+                iterator.call(receiver, array[i], i, array);
+            }
+        }
+    }
+};
+
+var forEachString = function forEachString(string, iterator, receiver) {
+    for (var i = 0, len = string.length; i < len; i++) {
+        // no such thing as a sparse string.
+        if (receiver == null) {
+            iterator(string.charAt(i), i, string);
+        } else {
+            iterator.call(receiver, string.charAt(i), i, string);
+        }
+    }
+};
+
+var forEachObject = function forEachObject(object, iterator, receiver) {
+    for (var k in object) {
+        if (hasOwnProperty.call(object, k)) {
+            if (receiver == null) {
+                iterator(object[k], k, object);
+            } else {
+                iterator.call(receiver, object[k], k, object);
+            }
+        }
+    }
+};
+
+var forEach = function forEach(list, iterator, thisArg) {
+    if (!isCallable(iterator)) {
+        throw new TypeError('iterator must be a function');
+    }
+
+    var receiver;
+    if (arguments.length >= 3) {
+        receiver = thisArg;
+    }
+
+    if (toStr.call(list) === '[object Array]') {
+        forEachArray(list, iterator, receiver);
+    } else if (typeof list === 'string') {
+        forEachString(list, iterator, receiver);
+    } else {
+        forEachObject(list, iterator, receiver);
+    }
+};
+
+module.exports = forEach;
+
+
+/***/ }),
+
+/***/ "./node_modules/global/window.js":
+/*!***************************************!*\
+  !*** ./node_modules/global/window.js ***!
+  \***************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+/* WEBPACK VAR INJECTION */(function(global) {var win;
+
+if (typeof window !== "undefined") {
+    win = window;
+} else if (typeof global !== "undefined") {
+    win = global;
+} else if (typeof self !== "undefined"){
+    win = self;
+} else {
+    win = {};
+}
+
+module.exports = win;
+
+/* WEBPACK VAR INJECTION */}.call(this, __webpack_require__(/*! ./../webpack/buildin/global.js */ "./node_modules/webpack/buildin/global.js")))
+
+/***/ }),
+
+/***/ "./node_modules/ieee754/index.js":
+/*!***************************************!*\
+  !*** ./node_modules/ieee754/index.js ***!
+  \***************************************/
+/*! no static exports found */
+/***/ (function(module, exports) {
+
+exports.read = function (buffer, offset, isLE, mLen, nBytes) {
+  var e, m
+  var eLen = (nBytes * 8) - mLen - 1
+  var eMax = (1 << eLen) - 1
+  var eBias = eMax >> 1
+  var nBits = -7
+  var i = isLE ? (nBytes - 1) : 0
+  var d = isLE ? -1 : 1
+  var s = buffer[offset + i]
+
+  i += d
+
+  e = s & ((1 << (-nBits)) - 1)
+  s >>= (-nBits)
+  nBits += eLen
+  for (; nBits > 0; e = (e * 256) + buffer[offset + i], i += d, nBits -= 8) {}
+
+  m = e & ((1 << (-nBits)) - 1)
+  e >>= (-nBits)
+  nBits += mLen
+  for (; nBits > 0; m = (m * 256) + buffer[offset + i], i += d, nBits -= 8) {}
+
+  if (e === 0) {
+    e = 1 - eBias
+  } else if (e === eMax) {
+    return m ? NaN : ((s ? -1 : 1) * Infinity)
+  } else {
+    m = m + Math.pow(2, mLen)
+    e = e - eBias
+  }
+  return (s ? -1 : 1) * m * Math.pow(2, e - mLen)
+}
+
+exports.write = function (buffer, value, offset, isLE, mLen, nBytes) {
+  var e, m, c
+  var eLen = (nBytes * 8) - mLen - 1
+  var eMax = (1 << eLen) - 1
+  var eBias = eMax >> 1
+  var rt = (mLen === 23 ? Math.pow(2, -24) - Math.pow(2, -77) : 0)
+  var i = isLE ? 0 : (nBytes - 1)
+  var d = isLE ? 1 : -1
+  var s = value < 0 || (value === 0 && 1 / value < 0) ? 1 : 0
+
+  value = Math.abs(value)
+
+  if (isNaN(value) || value === Infinity) {
+    m = isNaN(value) ? 1 : 0
+    e = eMax
+  } else {
+    e = Math.floor(Math.log(value) / Math.LN2)
+    if (value * (c = Math.pow(2, -e)) < 1) {
+      e--
+      c *= 2
+    }
+    if (e + eBias >= 1) {
+      value += rt / c
+    } else {
+      value += rt * Math.pow(2, 1 - eBias)
+    }
+    if (value * c >= 2) {
+      e++
+      c /= 2
+    }
+
+    if (e + eBias >= eMax) {
+      m = 0
+      e = eMax
+    } else if (e + eBias >= 1) {
+      m = ((value * c) - 1) * Math.pow(2, mLen)
+      e = e + eBias
+    } else {
+      m = value * Math.pow(2, eBias - 1) * Math.pow(2, mLen)
+      e = 0
+    }
+  }
+
+  for (; mLen >= 8; buffer[offset + i] = m & 0xff, i += d, m /= 256, mLen -= 8) {}
+
+  e = (e << mLen) | m
+  eLen += mLen
+  for (; eLen > 0; buffer[offset + i] = e & 0xff, i += d, e /= 256, eLen -= 8) {}
+
+  buffer[offset + i - d] |= s * 128
+}
+
+
+/***/ }),
+
+/***/ "./node_modules/is-callable/index.js":
+/*!*******************************************!*\
+  !*** ./node_modules/is-callable/index.js ***!
+  \*******************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+var fnToStr = Function.prototype.toString;
+
+var constructorRegex = /^\s*class\b/;
+var isES6ClassFn = function isES6ClassFunction(value) {
+	try {
+		var fnStr = fnToStr.call(value);
+		return constructorRegex.test(fnStr);
+	} catch (e) {
+		return false; // not a function
+	}
+};
+
+var tryFunctionObject = function tryFunctionToStr(value) {
+	try {
+		if (isES6ClassFn(value)) { return false; }
+		fnToStr.call(value);
+		return true;
+	} catch (e) {
+		return false;
+	}
+};
+var toStr = Object.prototype.toString;
+var fnClass = '[object Function]';
+var genClass = '[object GeneratorFunction]';
+var hasToStringTag = typeof Symbol === 'function' && typeof Symbol.toStringTag === 'symbol';
+
+module.exports = function isCallable(value) {
+	if (!value) { return false; }
+	if (typeof value !== 'function' && typeof value !== 'object') { return false; }
+	if (typeof value === 'function' && !value.prototype) { return true; }
+	if (hasToStringTag) { return tryFunctionObject(value); }
+	if (isES6ClassFn(value)) { return false; }
+	var strClass = toStr.call(value);
+	return strClass === fnClass || strClass === genClass;
+};
+
+
+/***/ }),
+
+/***/ "./node_modules/is-function/index.js":
+/*!*******************************************!*\
+  !*** ./node_modules/is-function/index.js ***!
+  \*******************************************/
+/*! no static exports found */
 /***/ (function(module, exports) {
 
 module.exports = isFunction
@@ -470,801 +2351,28 @@ function isFunction (fn) {
 
 
 /***/ }),
-/* 7 */
-/***/ (function(module, exports, __webpack_require__) {
 
-// This is free and unencumbered software released into the public domain.
-// See LICENSE.md for more information.
-
-var encoding = __webpack_require__(26);
-
-module.exports = {
-  TextEncoder: encoding.TextEncoder,
-  TextDecoder: encoding.TextDecoder,
-};
-
-
-/***/ }),
-/* 8 */
+/***/ "./node_modules/isarray/index.js":
+/*!***************************************!*\
+  !*** ./node_modules/isarray/index.js ***!
+  \***************************************/
+/*! no static exports found */
 /***/ (function(module, exports) {
 
-// shim for using process in browser
-var process = module.exports = {};
+var toString = {}.toString;
 
-// cached from whatever global is present so that test runners that stub it
-// don't break things.  But we need to wrap it in a try catch in case it is
-// wrapped in strict mode code which doesn't define any globals.  It's inside a
-// function because try/catches deoptimize in certain engines.
-
-var cachedSetTimeout;
-var cachedClearTimeout;
-
-function defaultSetTimout() {
-    throw new Error('setTimeout has not been defined');
-}
-function defaultClearTimeout () {
-    throw new Error('clearTimeout has not been defined');
-}
-(function () {
-    try {
-        if (typeof setTimeout === 'function') {
-            cachedSetTimeout = setTimeout;
-        } else {
-            cachedSetTimeout = defaultSetTimout;
-        }
-    } catch (e) {
-        cachedSetTimeout = defaultSetTimout;
-    }
-    try {
-        if (typeof clearTimeout === 'function') {
-            cachedClearTimeout = clearTimeout;
-        } else {
-            cachedClearTimeout = defaultClearTimeout;
-        }
-    } catch (e) {
-        cachedClearTimeout = defaultClearTimeout;
-    }
-} ())
-function runTimeout(fun) {
-    if (cachedSetTimeout === setTimeout) {
-        //normal enviroments in sane situations
-        return setTimeout(fun, 0);
-    }
-    // if setTimeout wasn't available but was latter defined
-    if ((cachedSetTimeout === defaultSetTimout || !cachedSetTimeout) && setTimeout) {
-        cachedSetTimeout = setTimeout;
-        return setTimeout(fun, 0);
-    }
-    try {
-        // when when somebody has screwed with setTimeout but no I.E. maddness
-        return cachedSetTimeout(fun, 0);
-    } catch(e){
-        try {
-            // When we are in I.E. but the script has been evaled so I.E. doesn't trust the global object when called normally
-            return cachedSetTimeout.call(null, fun, 0);
-        } catch(e){
-            // same as above but when it's a version of I.E. that must have the global object for 'this', hopfully our context correct otherwise it will throw a global error
-            return cachedSetTimeout.call(this, fun, 0);
-        }
-    }
-
-
-}
-function runClearTimeout(marker) {
-    if (cachedClearTimeout === clearTimeout) {
-        //normal enviroments in sane situations
-        return clearTimeout(marker);
-    }
-    // if clearTimeout wasn't available but was latter defined
-    if ((cachedClearTimeout === defaultClearTimeout || !cachedClearTimeout) && clearTimeout) {
-        cachedClearTimeout = clearTimeout;
-        return clearTimeout(marker);
-    }
-    try {
-        // when when somebody has screwed with setTimeout but no I.E. maddness
-        return cachedClearTimeout(marker);
-    } catch (e){
-        try {
-            // When we are in I.E. but the script has been evaled so I.E. doesn't  trust the global object when called normally
-            return cachedClearTimeout.call(null, marker);
-        } catch (e){
-            // same as above but when it's a version of I.E. that must have the global object for 'this', hopfully our context correct otherwise it will throw a global error.
-            // Some versions of I.E. have different rules for clearTimeout vs setTimeout
-            return cachedClearTimeout.call(this, marker);
-        }
-    }
-
-
-
-}
-var queue = [];
-var draining = false;
-var currentQueue;
-var queueIndex = -1;
-
-function cleanUpNextTick() {
-    if (!draining || !currentQueue) {
-        return;
-    }
-    draining = false;
-    if (currentQueue.length) {
-        queue = currentQueue.concat(queue);
-    } else {
-        queueIndex = -1;
-    }
-    if (queue.length) {
-        drainQueue();
-    }
-}
-
-function drainQueue() {
-    if (draining) {
-        return;
-    }
-    var timeout = runTimeout(cleanUpNextTick);
-    draining = true;
-
-    var len = queue.length;
-    while(len) {
-        currentQueue = queue;
-        queue = [];
-        while (++queueIndex < len) {
-            if (currentQueue) {
-                currentQueue[queueIndex].run();
-            }
-        }
-        queueIndex = -1;
-        len = queue.length;
-    }
-    currentQueue = null;
-    draining = false;
-    runClearTimeout(timeout);
-}
-
-process.nextTick = function (fun) {
-    var args = new Array(arguments.length - 1);
-    if (arguments.length > 1) {
-        for (var i = 1; i < arguments.length; i++) {
-            args[i - 1] = arguments[i];
-        }
-    }
-    queue.push(new Item(fun, args));
-    if (queue.length === 1 && !draining) {
-        runTimeout(drainQueue);
-    }
+module.exports = Array.isArray || function (arr) {
+  return toString.call(arr) == '[object Array]';
 };
 
-// v8 likes predictible objects
-function Item(fun, array) {
-    this.fun = fun;
-    this.array = array;
-}
-Item.prototype.run = function () {
-    this.fun.apply(null, this.array);
-};
-process.title = 'browser';
-process.browser = true;
-process.env = {};
-process.argv = [];
-process.version = ''; // empty string to avoid regexp issues
-process.versions = {};
-
-function noop() {}
-
-process.on = noop;
-process.addListener = noop;
-process.once = noop;
-process.off = noop;
-process.removeListener = noop;
-process.removeAllListeners = noop;
-process.emit = noop;
-process.prependListener = noop;
-process.prependOnceListener = noop;
-
-process.listeners = function (name) { return [] }
-
-process.binding = function (name) {
-    throw new Error('process.binding is not supported');
-};
-
-process.cwd = function () { return '/' };
-process.chdir = function (dir) {
-    throw new Error('process.chdir is not supported');
-};
-process.umask = function() { return 0; };
-
 
 /***/ }),
-/* 9 */
-/***/ (function(module, exports, __webpack_require__) {
 
-"use strict";
-
-
-var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
-
-function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
-
-var BuiltinHelper = __webpack_require__(10);
-var LocalHelper = __webpack_require__(11);
-var WebHelper = __webpack_require__(12);
-
-var _Asset = __webpack_require__(0);
-var _AssetType = __webpack_require__(4);
-var _DataFormat = __webpack_require__(2);
-
-var ScratchStorage = function () {
-    function ScratchStorage() {
-        _classCallCheck(this, ScratchStorage);
-
-        this.defaultAssetId = {};
-
-        this.builtinHelper = new BuiltinHelper(this);
-        this.webHelper = new WebHelper(this);
-        this.localHelper = new LocalHelper(this);
-
-        this.builtinHelper.registerDefaultAssets(this);
-    }
-
-    /**
-     * @return {Asset} - the `Asset` class constructor.
-     * @constructor
-     */
-
-
-    _createClass(ScratchStorage, [{
-        key: 'get',
-
-
-        /**
-         * Synchronously fetch a cached asset from built-in storage. Assets are cached when they are loaded.
-         * @param {string} assetId - The id of the asset to fetch.
-         * @returns {?Asset} The asset, if it exists.
-         */
-        value: function get(assetId) {
-            return this.builtinHelper.get(assetId);
-        }
-
-        /**
-         * Cache an asset for future lookups by ID.
-         * @param {AssetType} assetType - The type of the asset to cache.
-         * @param {DataFormat} dataFormat - The dataFormat of the data for the cached asset.
-         * @param {Buffer} data - The data for the cached asset.
-         * @param {string} id - The id for the cached asset.
-         * @returns {string} The calculated id of the cached asset, or the supplied id if the asset is mutable.
-         */
-
-    }, {
-        key: 'cache',
-        value: function cache(assetType, dataFormat, data, id) {
-            return this.builtinHelper.cache(assetType, dataFormat, data, id);
-        }
-
-        /**
-         * Register a web-based source for assets. Sources will be checked in order of registration.
-         * @param {Array.<AssetType>} types - The types of asset provided by this source.
-         * @param {UrlFunction} urlFunction - A function which computes a URL from an Asset.
-         */
-
-    }, {
-        key: 'addWebSource',
-        value: function addWebSource(types, urlFunction) {
-            this.webHelper.addSource(types, urlFunction);
-        }
-
-        /**
-         * TODO: Should this be removed in favor of requesting an asset with `null` as the ID?
-         * @param {AssetType} type - Get the default ID for assets of this type.
-         * @return {?string} The ID of the default asset of the given type, if any.
-         */
-
-    }, {
-        key: 'getDefaultAssetId',
-        value: function getDefaultAssetId(type) {
-            if (this.defaultAssetId.hasOwnProperty(type.name)) {
-                return this.defaultAssetId[type.name];
-            }
-        }
-
-        /**
-         * Set the default ID for a particular type of asset. This default asset will be used if a requested asset cannot
-         * be found and automatic fallback is enabled. Ideally this should be an asset that is available locally or even
-         * one built into this module.
-         * TODO: Should this be removed in favor of requesting an asset with `null` as the ID?
-         * @param {AssetType} type - The type of asset for which the default will be set.
-         * @param {string} id - The default ID to use for this type of asset.
-         */
-
-    }, {
-        key: 'setDefaultAssetId',
-        value: function setDefaultAssetId(type, id) {
-            this.defaultAssetId[type.name] = id;
-        }
-
-        /**
-         * Fetch an asset by type & ID.
-         * @param {AssetType} assetType - The type of asset to fetch. This also determines which asset store to use.
-         * @param {string} assetId - The ID of the asset to fetch: a project ID, MD5, etc.
-         * @param {DataFormat} [dataFormat] - Optional: load this format instead of the AssetType's default.
-         * @return {Promise.<Asset>} A promise for the requested Asset.
-         *   If the promise is fulfilled with non-null, the value is the requested asset or a fallback.
-         *   If the promise is fulfilled with null, the desired asset could not be found with the current asset sources.
-         *   If the promise is rejected, there was an error on at least one asset source. HTTP 404 does not count as an
-         *   error here, but (for example) HTTP 403 does.
-         */
-
-    }, {
-        key: 'load',
-        value: function load(assetType, assetId, dataFormat) {
-            var _this = this;
-
-            /** @type {Helper[]} */
-            var helpers = [this.builtinHelper, this.localHelper, this.webHelper];
-            var errors = [];
-            var helperIndex = 0;
-            dataFormat = dataFormat || assetType.runtimeFormat;
-
-            return new Promise(function (fulfill, reject) {
-                var tryNextHelper = function tryNextHelper() {
-                    if (helperIndex < helpers.length) {
-                        var helper = helpers[helperIndex++];
-                        helper.load(assetType, assetId, dataFormat).then(function (asset) {
-                            if (asset === null) {
-                                tryNextHelper();
-                            } else {
-                                // TODO? this.localHelper.cache(assetType, assetId, asset);
-                                if (helper !== _this.builtinHelper && assetType.immutable) {
-                                    asset.assetId = _this.builtinHelper.cache(assetType, asset.dataFormat, asset.data, assetId);
-                                }
-                                // Note that other attempts may have caused errors, effectively suppressed here.
-                                fulfill(asset);
-                            }
-                        }, function (error) {
-                            errors.push(error);
-                            // TODO: maybe some types of error should prevent trying the next helper?
-                            tryNextHelper();
-                        });
-                    } else if (errors.length === 0) {
-                        // Nothing went wrong but we couldn't find the asset.
-                        fulfill(null);
-                    } else {
-                        // At least one thing went wrong and also we couldn't find the asset.
-                        reject(errors);
-                    }
-                };
-
-                tryNextHelper();
-            });
-        }
-    }, {
-        key: 'Asset',
-        get: function get() {
-            return _Asset;
-        }
-
-        /**
-         * @return {AssetType} - the list of supported asset types.
-         * @constructor
-         */
-
-    }, {
-        key: 'AssetType',
-        get: function get() {
-            return _AssetType;
-        }
-
-        /**
-         * @return {DataFormat} - the list of supported data formats.
-         * @constructor
-         */
-
-    }, {
-        key: 'DataFormat',
-        get: function get() {
-            return _DataFormat;
-        }
-
-        /**
-         * @deprecated Please use the `Asset` member of a storage instance instead.
-         * @return {Asset} - the `Asset` class constructor.
-         * @constructor
-         */
-
-    }], [{
-        key: 'Asset',
-        get: function get() {
-            return _Asset;
-        }
-
-        /**
-         * @deprecated Please use the `AssetType` member of a storage instance instead.
-         * @return {AssetType} - the list of supported asset types.
-         * @constructor
-         */
-
-    }, {
-        key: 'AssetType',
-        get: function get() {
-            return _AssetType;
-        }
-    }]);
-
-    return ScratchStorage;
-}();
-
-module.exports = ScratchStorage;
-
-/***/ }),
-/* 10 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-
-var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
-
-function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
-
-function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
-
-function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
-
-var md5 = __webpack_require__(16);
-
-var Asset = __webpack_require__(0);
-var AssetType = __webpack_require__(4);
-var DataFormat = __webpack_require__(2);
-var Helper = __webpack_require__(3);
-
-/**
- * @typedef {object} BuiltinAssetRecord
- * @property {AssetType} type - The type of the asset.
- * @property {DataFormat} format - The format of the asset's data.
- * @property {?string} id - The asset's unique ID.
- * @property {Buffer} data - The asset's data.
- */
-
-/**
- * @type {BuiltinAssetRecord[]}
- */
-var DefaultAssets = [{
-    type: AssetType.ImageBitmap,
-    format: DataFormat.PNG,
-    id: null,
-    data: __webpack_require__(13) // eslint-disable-line global-require
-}, {
-    type: AssetType.Sound,
-    format: DataFormat.WAV,
-    id: null,
-    data: __webpack_require__(14) // eslint-disable-line global-require
-}, {
-    type: AssetType.ImageVector,
-    format: DataFormat.SVG,
-    id: null,
-    data: __webpack_require__(15) // eslint-disable-line global-require
-}];
-
-/**
- * @type {BuiltinAssetRecord[]}
- */
-var BuiltinAssets = DefaultAssets.concat([]);
-
-var BuiltinHelper = function (_Helper) {
-    _inherits(BuiltinHelper, _Helper);
-
-    function BuiltinHelper(parent) {
-        _classCallCheck(this, BuiltinHelper);
-
-        /**
-         * In-memory storage for all built-in assets.
-         * @type {Object.<AssetType, AssetIdMap>} Maps asset type to a map of asset ID to actual assets.
-         * @typedef {Object.<string, BuiltinAssetRecord>} AssetIdMap - Maps asset ID to asset.
-         */
-        var _this = _possibleConstructorReturn(this, (BuiltinHelper.__proto__ || Object.getPrototypeOf(BuiltinHelper)).call(this, parent));
-
-        _this.assets = {};
-
-        BuiltinAssets.forEach(function (assetRecord) {
-            assetRecord.id = _this.cache(assetRecord.type, assetRecord.format, assetRecord.data, assetRecord.id);
-        });
-        return _this;
-    }
-
-    /**
-     * Call `setDefaultAssetId` on the parent `ScratchStorage` instance to register all built-in default assets.
-     */
-
-
-    _createClass(BuiltinHelper, [{
-        key: 'registerDefaultAssets',
-        value: function registerDefaultAssets() {
-            var numAssets = DefaultAssets.length;
-            for (var assetIndex = 0; assetIndex < numAssets; ++assetIndex) {
-                var assetRecord = DefaultAssets[assetIndex];
-                this.parent.setDefaultAssetId(assetRecord.type, assetRecord.id);
-            }
-        }
-
-        /**
-         * Synchronously fetch a cached asset for a given asset id. Returns null if not found.
-         * @param {string} assetId - The id for the asset to fetch.
-         * @returns {?Asset} The asset for assetId, if it exists.
-         */
-
-    }, {
-        key: 'get',
-        value: function get(assetId) {
-            var asset = null;
-            if (this.assets.hasOwnProperty(assetId)) {
-                /** @type{BuiltinAssetRecord} */
-                var assetRecord = this.assets[assetId];
-                asset = new Asset(assetRecord.type, assetRecord.id, assetRecord.format, assetRecord.data);
-            }
-            return asset;
-        }
-
-        /**
-         * Cache an asset for future lookups by ID.
-         * @param {AssetType} assetType - The type of the asset to cache.
-         * @param {DataFormat} dataFormat - The dataFormat of the data for the cached asset.
-         * @param {Buffer} data - The data for the cached asset.
-         * @param {string} id - The id for the cached asset.
-         * @returns {string} The calculated id of the cached asset, or the supplied id if the asset is mutable.
-         */
-
-    }, {
-        key: 'cache',
-        value: function cache(assetType, dataFormat, data, id) {
-            if (!dataFormat) throw new Error('Data cached without specifying its format');
-            if (id) {
-                if (this.assets.hasOwnProperty(id) && assetType.immutable) return id;
-            } else if (assetType.immutable) {
-                id = md5(data);
-            }
-            this.assets[id] = {
-                type: assetType,
-                format: dataFormat,
-                id: id,
-                data: data
-            };
-            return id;
-        }
-
-        /**
-         * Fetch an asset but don't process dependencies.
-         * @param {AssetType} assetType - The type of asset to fetch.
-         * @param {string} assetId - The ID of the asset to fetch: a project ID, MD5, etc.
-         * @return {Promise.<Asset>} A promise for the contents of the asset.
-         */
-
-    }, {
-        key: 'load',
-        value: function load(assetType, assetId) {
-            return Promise.resolve(this.get(assetId));
-        }
-    }]);
-
-    return BuiltinHelper;
-}(Helper);
-
-module.exports = BuiltinHelper;
-
-/***/ }),
-/* 11 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-
-var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
-
-function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
-
-function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
-
-function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
-
-var localforage = __webpack_require__(17);
-
-var Asset = __webpack_require__(0);
-var Helper = __webpack_require__(3);
-
-/**
- * Implements storage on the local device, available even when the device has no network connection.
- */
-
-var LocalHelper = function (_Helper) {
-    _inherits(LocalHelper, _Helper);
-
-    function LocalHelper(parent) {
-        _classCallCheck(this, LocalHelper);
-
-        var _this = _possibleConstructorReturn(this, (LocalHelper.__proto__ || Object.getPrototypeOf(LocalHelper)).call(this, parent));
-
-        localforage.config({
-            name: 'Scratch 3.0',
-            size: 100 * 1024 * 1024
-        });
-        return _this;
-    }
-
-    /**
-     * Fetch an asset but don't process dependencies.
-     * @param {AssetType} assetType - The type of asset to fetch.
-     * @param {string} assetId - The ID of the asset to fetch: a project ID, MD5, etc.
-     * @param {DataFormat} dataFormat - The file format / file extension of the asset to fetch: PNG, JPG, etc.
-     * @return {Promise.<Asset>} A promise for the contents of the asset.
-     */
-
-
-    _createClass(LocalHelper, [{
-        key: 'load',
-        value: function load(assetType, assetId, dataFormat) {
-            return new Promise(function (fulfill, reject) {
-                var fileName = [assetId, dataFormat].join('.');
-                localforage.getItem(fileName).then(function (data) {
-                    if (data === null) {
-                        fulfill(null);
-                    } else {
-                        fulfill(new Asset(assetType, assetId, dataFormat, data));
-                    }
-                }, function (error) {
-                    reject(error);
-                });
-            });
-        }
-    }]);
-
-    return LocalHelper;
-}(Helper);
-
-module.exports = LocalHelper;
-
-/***/ }),
-/* 12 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-
-var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
-
-function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
-
-function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
-
-function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
-
-var nets = __webpack_require__(18);
-
-var Asset = __webpack_require__(0);
-var Helper = __webpack_require__(3);
-
-/**
- * @typedef {function} UrlFunction - A function which computes a URL from asset information.
- * @param {Asset} - The asset for which the URL should be computed.
- * @returns {string} - The URL for the asset.
- */
-
-var WebHelper = function (_Helper) {
-    _inherits(WebHelper, _Helper);
-
-    function WebHelper(parent) {
-        _classCallCheck(this, WebHelper);
-
-        /**
-         * @type {Array.<SourceRecord>}
-         * @typedef {object} SourceRecord
-         * @property {Array.<string>} types - The types of asset provided by this source, from AssetType's name field.
-         * @property {UrlFunction} urlFunction - A function which computes a URL from an Asset.
-         */
-        var _this = _possibleConstructorReturn(this, (WebHelper.__proto__ || Object.getPrototypeOf(WebHelper)).call(this, parent));
-
-        _this.sources = [];
-        return _this;
-    }
-
-    /**
-     * Register a web-based source for assets. Sources will be checked in order of registration.
-     * @param {Array.<AssetType>} types - The types of asset provided by this source.
-     * @param {UrlFunction} urlFunction - A function which computes a URL from an Asset.
-     */
-
-
-    _createClass(WebHelper, [{
-        key: 'addSource',
-        value: function addSource(types, urlFunction) {
-            this.sources.push({
-                types: types.map(function (assetType) {
-                    return assetType.name;
-                }),
-                urlFunction: urlFunction
-            });
-        }
-
-        /**
-         * Fetch an asset but don't process dependencies.
-         * @param {AssetType} assetType - The type of asset to fetch.
-         * @param {string} assetId - The ID of the asset to fetch: a project ID, MD5, etc.
-         * @param {DataFormat} dataFormat - The file format / file extension of the asset to fetch: PNG, JPG, etc.
-         * @return {Promise.<Asset>} A promise for the contents of the asset.
-         */
-
-    }, {
-        key: 'load',
-        value: function load(assetType, assetId, dataFormat) {
-
-            /** @type {Array.<{url:string, result:*}>} List of URLs attempted & errors encountered. */
-            var errors = [];
-            var sources = this.sources.slice();
-            var asset = new Asset(assetType, assetId, dataFormat);
-            var sourceIndex = 0;
-
-            return new Promise(function (fulfill, reject) {
-
-                var tryNextSource = function tryNextSource() {
-
-                    /** @type {UrlFunction} */
-                    var urlFunction = void 0;
-
-                    while (sourceIndex < sources.length) {
-                        var source = sources[sourceIndex];
-                        ++sourceIndex;
-                        if (source.types.indexOf(assetType.name) >= 0) {
-                            urlFunction = source.urlFunction;
-                            break;
-                        }
-                    }
-
-                    if (urlFunction) {
-                        var url = urlFunction(asset);
-
-                        nets({ url: url }, function (err, resp, body) {
-                            // body is a Buffer
-                            if (err || Math.floor(resp.statusCode / 100) !== 2) {
-                                tryNextSource();
-                            } else {
-                                asset.setData(body, dataFormat);
-                                fulfill(asset);
-                            }
-                        });
-                    } else if (errors.length > 0) {
-                        reject(errors);
-                    } else {
-                        fulfill(null); // no sources matching asset
-                    }
-                };
-
-                tryNextSource();
-            });
-        }
-    }]);
-
-    return WebHelper;
-}(Helper);
-
-module.exports = WebHelper;
-
-/***/ }),
-/* 13 */
-/***/ (function(module, exports) {
-
-module.exports = "PNG\r\n\u001a\n\u0000\u0000\u0000\rIHDR\u0000\u0000\u0000\u0000\u0000\u0000\b\u0000\u0000\u0000\u0000æU>\u0017\u0000\u0000\u0003dIDATxÚíÚïKÛ@\u0018\u0007ðïû¼è¾É\u0015A\u0004YAR\u00146æpî\"PPñ´H\u0007}á«QX\b}±áo\"Ûp£\u0005ÑÝPXcsÔ^$M\u000e,¤½Ë!Ü½lðÉÓç.wO\u000eDp\u0004H\u0004H\u0004H\u0004H\u0004<U@«þ¥ðn(\u0001\u0000©á©âÁµ\u0015' UÍ§ð¨¥òÕVLÖþ\b|ÛÈ®\u0019\u0007àbÒyäÑ\\¡°8 \t¯¾s\u0007e\u0015\u0000^\u001bí\u001f~ÌQÄG/ÀÈ+\u0000R¦_L\u0000\u0000:O±\f\u0000ÃµÇY±©z9\u001fÀ,\u0000@ºúÏ\u0005k\u0012\u0014L^\u0000«¬\u0000Hîù]úì\t\n/@5\r\u0000Szppì6pÁ\u0007Ð\\\u0000\u0000¬ù_m¼¥\u0012Ñä\u00028N\u0002\u0000´ËÛ\u000bPOx\u0000\u001eì»\u0007ýÃ7^\b\u001e8\u0000êöÍA\u001dJ\u001e }Î\u0001 9!¸\rèpúÌ\u0013T8\u0000Ö{'\u0003:Üye= \u0017ã÷ó\u001e 0L,\u00009^ô\u0000+\u0000,4ý{¬{¾\u001aO@P\bvø\u0002¨\u0000çýSLã\u000b ïe#\fÐÆ\u001ep\u000e{¾\nµ<¼f\u000fpÞE\u00000X\u000fKÂiÃËè´§}û\u0019#,KVx¼\ríõ\b\u0000e;t\"â1\u0015\u0013Ò*'\u0000@yoMÅ\\^F\u0010r1¯*£û\u0001; Z¯\u000bmØR`KÄîJÌo\u0011\u0000jø`\u0000:\n\u0000;·$ä·/øoÛu\u0017ÅY]\u0004@rçª\u001aÑa²ý\u0007-\u0011\u0000c¦]\u0011C\u001b×éÜ\u0000DL\u0000fö\u0010P\u000f\u0010@{\bDM@föÆ¸\u0010KÎg!à\u0014©\r\"\u0006àd@V'b\u0000N\u0006D\u001eÌ\u0000v\u0000¢\u000f@Væl\u0003\u0015àDº\u0006a\u000b°KG% \u0013Àyºó\u0004d\u0002(\u0001P5\"\fp;ÑM\u00020\u0000|M\u00027D\u001c \u0018­.Ê\u001cp;\u0001¬<\b\u0004õ£ç'\u0011\bØ´\u0011å\u0000(F)\u0005p\u0000ÜÏcàHÀÍX¢,\u000f@}\u00109\"\u0012PëÅ'¡\u0000-ø\u000bN<J,\u0017ÀzPÍ2.@1BM\u000b ×õ(X$@\u0002$ +¾1®ªã\u001bº(À·\u0001»0òüÈ\u0012\u00028tu¼5ï\npE\u001d\u0018º\u0014\u0000Ø¢Ïâ\u0007Ðßèì]ì\u0000ú¸\u0004ºY\u0015<YÀ]\u0006L\u001bñ'aIp\u0012Ë¡\u000e\u000f1\u000eT±\u0013\u0011±´>ç8&f*&äz5£(Õî\u0016ær= \u0001\u0012 \u0001\u0012 \u0001\u0012 \u0001\u0012 \u001cð\u0017zW+Â\u0010¡ªq\u0000\u0000\u0000\u0000IEND®B`"
-
-/***/ }),
-/* 14 */
-/***/ (function(module, exports) {
-
-module.exports = "RIFF&\u0000\u0000\u0000WAVEfmt \u0010\u0000\u0000\u0000\u0001\u0000\u0001\u0000\"V\u0000\u0000D¬\u0000\u0000\u0002\u0000\u0010\u0000data\u0002\u0000\u0000\u0000\u0000\u0000"
-
-/***/ }),
-/* 15 */
-/***/ (function(module, exports) {
-
-module.exports = "<?xml version=\"1.0\"?>\n<svg width=\"128\" height=\"128\" xmlns=\"http://www.w3.org/2000/svg\" xmlns:svg=\"http://www.w3.org/2000/svg\">\n <g>\n  <rect fill=\"#CCC\" height=\"128\" width=\"128\"/>\n  <text fill=\"black\" y=\"107\" x=\"35.5\" font-size=\"128\">?</text>\n </g>\n</svg>\n"
-
-/***/ }),
-/* 16 */
+/***/ "./node_modules/js-md5/src/md5.js":
+/*!****************************************!*\
+  !*** ./node_modules/js-md5/src/md5.js ***!
+  \****************************************/
+/*! no static exports found */
 /***/ (function(module, exports, __webpack_require__) {
 
 /* WEBPACK VAR INJECTION */(function(process, global) {var __WEBPACK_AMD_DEFINE_RESULT__;/**
@@ -1293,7 +2401,7 @@ module.exports = "<?xml version=\"1.0\"?>\n<svg width=\"128\" height=\"128\" xml
     root = self;
   }
   var COMMON_JS = !root.JS_MD5_NO_COMMON_JS && typeof module === 'object' && module.exports;
-  var AMD = "function" === 'function' && __webpack_require__(27);
+  var AMD = "function" === 'function' && __webpack_require__(/*! !webpack amd options */ "./node_modules/webpack/buildin/amd-options.js");
   var ARRAY_BUFFER = !root.JS_MD5_NO_ARRAY_BUFFER && typeof ArrayBuffer !== 'undefined';
   var HEX_CHARS = '0123456789abcdef'.split('');
   var EXTRA = [128, 32768, 8388608, -2147483648];
@@ -1939,2340 +3047,621 @@ module.exports = "<?xml version=\"1.0\"?>\n<svg width=\"128\" height=\"128\" xml
      */
     root.md5 = exports;
     if (AMD) {
-      !(__WEBPACK_AMD_DEFINE_RESULT__ = function () {
+      !(__WEBPACK_AMD_DEFINE_RESULT__ = (function () {
         return exports;
-      }.call(exports, __webpack_require__, exports, module),
+      }).call(exports, __webpack_require__, exports, module),
 				__WEBPACK_AMD_DEFINE_RESULT__ !== undefined && (module.exports = __WEBPACK_AMD_DEFINE_RESULT__));
     }
   }
 })();
 
-/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(8), __webpack_require__(1)))
+/* WEBPACK VAR INJECTION */}.call(this, __webpack_require__(/*! ./../../node-libs-browser/node_modules/process/browser.js */ "./node_modules/node-libs-browser/node_modules/process/browser.js"), __webpack_require__(/*! ./../../webpack/buildin/global.js */ "./node_modules/webpack/buildin/global.js")))
 
 /***/ }),
-/* 17 */
-/***/ (function(module, exports, __webpack_require__) {
 
-/* WEBPACK VAR INJECTION */(function(global) {var require;var require;/*!
-    localForage -- Offline Storage, Improved
-    Version 1.5.0
-    https://localforage.github.io/localForage
-    (c) 2013-2017 Mozilla, Apache License 2.0
-*/
-(function(f){if(true){module.exports=f()}else if(typeof define==="function"&&define.amd){define([],f)}else{var g;if(typeof window!=="undefined"){g=window}else if(typeof global!=="undefined"){g=global}else if(typeof self!=="undefined"){g=self}else{g=this}g.localforage = f()}})(function(){var define,module,exports;return (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return require(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw (f.code="MODULE_NOT_FOUND", f)}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(_dereq_,module,exports){
-(function (global){
-'use strict';
-var Mutation = global.MutationObserver || global.WebKitMutationObserver;
+/***/ "./node_modules/microee/index.js":
+/*!***************************************!*\
+  !*** ./node_modules/microee/index.js ***!
+  \***************************************/
+/*! no static exports found */
+/***/ (function(module, exports) {
 
-var scheduleDrain;
-
-{
-  if (Mutation) {
-    var called = 0;
-    var observer = new Mutation(nextTick);
-    var element = global.document.createTextNode('');
-    observer.observe(element, {
-      characterData: true
-    });
-    scheduleDrain = function () {
-      element.data = (called = ++called % 2);
-    };
-  } else if (!global.setImmediate && typeof global.MessageChannel !== 'undefined') {
-    var channel = new global.MessageChannel();
-    channel.port1.onmessage = nextTick;
-    scheduleDrain = function () {
-      channel.port2.postMessage(0);
-    };
-  } else if ('document' in global && 'onreadystatechange' in global.document.createElement('script')) {
-    scheduleDrain = function () {
-
-      // Create a <script> element; its readystatechange event will be fired asynchronously once it is inserted
-      // into the document. Do so, thus queuing up the task. Remember to clean up once it's been called.
-      var scriptEl = global.document.createElement('script');
-      scriptEl.onreadystatechange = function () {
-        nextTick();
-
-        scriptEl.onreadystatechange = null;
-        scriptEl.parentNode.removeChild(scriptEl);
-        scriptEl = null;
-      };
-      global.document.documentElement.appendChild(scriptEl);
-    };
-  } else {
-    scheduleDrain = function () {
-      setTimeout(nextTick, 0);
-    };
-  }
-}
-
-var draining;
-var queue = [];
-//named nextTick for less confusing stack traces
-function nextTick() {
-  draining = true;
-  var i, oldQueue;
-  var len = queue.length;
-  while (len) {
-    oldQueue = queue;
-    queue = [];
-    i = -1;
-    while (++i < len) {
-      oldQueue[i]();
+function M() { this._events = {}; }
+M.prototype = {
+  on: function(ev, cb) {
+    this._events || (this._events = {});
+    var e = this._events;
+    (e[ev] || (e[ev] = [])).push(cb);
+    return this;
+  },
+  removeListener: function(ev, cb) {
+    var e = this._events[ev] || [], i;
+    for(i = e.length-1; i >= 0 && e[i]; i--){
+      if(e[i] === cb || e[i].cb === cb) { e.splice(i, 1); }
     }
-    len = queue.length;
-  }
-  draining = false;
-}
-
-module.exports = immediate;
-function immediate(task) {
-  if (queue.push(task) === 1 && !draining) {
-    scheduleDrain();
-  }
-}
-
-}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{}],2:[function(_dereq_,module,exports){
-'use strict';
-var immediate = _dereq_(1);
-
-/* istanbul ignore next */
-function INTERNAL() {}
-
-var handlers = {};
-
-var REJECTED = ['REJECTED'];
-var FULFILLED = ['FULFILLED'];
-var PENDING = ['PENDING'];
-
-module.exports = exports = Promise;
-
-function Promise(resolver) {
-  if (typeof resolver !== 'function') {
-    throw new TypeError('resolver must be a function');
-  }
-  this.state = PENDING;
-  this.queue = [];
-  this.outcome = void 0;
-  if (resolver !== INTERNAL) {
-    safelyResolveThenable(this, resolver);
-  }
-}
-
-Promise.prototype["catch"] = function (onRejected) {
-  return this.then(null, onRejected);
-};
-Promise.prototype.then = function (onFulfilled, onRejected) {
-  if (typeof onFulfilled !== 'function' && this.state === FULFILLED ||
-    typeof onRejected !== 'function' && this.state === REJECTED) {
+  },
+  removeAllListeners: function(ev) {
+    if(!ev) { this._events = {}; }
+    else { this._events[ev] && (this._events[ev] = []); }
+  },
+  listeners: function(ev) {
+    return (this._events ? this._events[ev] || [] : []);
+  },
+  emit: function(ev) {
+    this._events || (this._events = {});
+    var args = Array.prototype.slice.call(arguments, 1), i, e = this._events[ev] || [];
+    for(i = e.length-1; i >= 0 && e[i]; i--){
+      e[i].apply(this, args);
+    }
+    return this;
+  },
+  when: function(ev, cb) {
+    return this.once(ev, cb, true);
+  },
+  once: function(ev, cb, when) {
+    if(!cb) return this;
+    function c() {
+      if(!when) this.removeListener(ev, c);
+      if(cb.apply(this, arguments) && when) this.removeListener(ev, c);
+    }
+    c.cb = cb;
+    this.on(ev, c);
     return this;
   }
-  var promise = new this.constructor(INTERNAL);
-  if (this.state !== PENDING) {
-    var resolver = this.state === FULFILLED ? onFulfilled : onRejected;
-    unwrap(promise, resolver, this.outcome);
-  } else {
-    this.queue.push(new QueueItem(promise, onFulfilled, onRejected));
-  }
-
-  return promise;
 };
-function QueueItem(promise, onFulfilled, onRejected) {
-  this.promise = promise;
-  if (typeof onFulfilled === 'function') {
-    this.onFulfilled = onFulfilled;
-    this.callFulfilled = this.otherCallFulfilled;
+M.mixin = function(dest) {
+  var o = M.prototype, k;
+  for (k in o) {
+    o.hasOwnProperty(k) && (dest.prototype[k] = o[k]);
   }
-  if (typeof onRejected === 'function') {
-    this.onRejected = onRejected;
-    this.callRejected = this.otherCallRejected;
-  }
-}
-QueueItem.prototype.callFulfilled = function (value) {
-  handlers.resolve(this.promise, value);
 };
-QueueItem.prototype.otherCallFulfilled = function (value) {
-  unwrap(this.promise, this.onFulfilled, value);
-};
-QueueItem.prototype.callRejected = function (value) {
-  handlers.reject(this.promise, value);
-};
-QueueItem.prototype.otherCallRejected = function (value) {
-  unwrap(this.promise, this.onRejected, value);
-};
+module.exports = M;
 
-function unwrap(promise, func, value) {
-  immediate(function () {
-    var returnValue;
-    try {
-      returnValue = func(value);
-    } catch (e) {
-      return handlers.reject(promise, e);
-    }
-    if (returnValue === promise) {
-      handlers.reject(promise, new TypeError('Cannot resolve promise with itself'));
-    } else {
-      handlers.resolve(promise, returnValue);
-    }
-  });
-}
-
-handlers.resolve = function (self, value) {
-  var result = tryCatch(getThen, value);
-  if (result.status === 'error') {
-    return handlers.reject(self, result.value);
-  }
-  var thenable = result.value;
-
-  if (thenable) {
-    safelyResolveThenable(self, thenable);
-  } else {
-    self.state = FULFILLED;
-    self.outcome = value;
-    var i = -1;
-    var len = self.queue.length;
-    while (++i < len) {
-      self.queue[i].callFulfilled(value);
-    }
-  }
-  return self;
-};
-handlers.reject = function (self, error) {
-  self.state = REJECTED;
-  self.outcome = error;
-  var i = -1;
-  var len = self.queue.length;
-  while (++i < len) {
-    self.queue[i].callRejected(error);
-  }
-  return self;
-};
-
-function getThen(obj) {
-  // Make sure we only access the accessor once as required by the spec
-  var then = obj && obj.then;
-  if (obj && typeof obj === 'object' && typeof then === 'function') {
-    return function appyThen() {
-      then.apply(obj, arguments);
-    };
-  }
-}
-
-function safelyResolveThenable(self, thenable) {
-  // Either fulfill, reject or reject with error
-  var called = false;
-  function onError(value) {
-    if (called) {
-      return;
-    }
-    called = true;
-    handlers.reject(self, value);
-  }
-
-  function onSuccess(value) {
-    if (called) {
-      return;
-    }
-    called = true;
-    handlers.resolve(self, value);
-  }
-
-  function tryToUnwrap() {
-    thenable(onSuccess, onError);
-  }
-
-  var result = tryCatch(tryToUnwrap);
-  if (result.status === 'error') {
-    onError(result.value);
-  }
-}
-
-function tryCatch(func, value) {
-  var out = {};
-  try {
-    out.value = func(value);
-    out.status = 'success';
-  } catch (e) {
-    out.status = 'error';
-    out.value = e;
-  }
-  return out;
-}
-
-exports.resolve = resolve;
-function resolve(value) {
-  if (value instanceof this) {
-    return value;
-  }
-  return handlers.resolve(new this(INTERNAL), value);
-}
-
-exports.reject = reject;
-function reject(reason) {
-  var promise = new this(INTERNAL);
-  return handlers.reject(promise, reason);
-}
-
-exports.all = all;
-function all(iterable) {
-  var self = this;
-  if (Object.prototype.toString.call(iterable) !== '[object Array]') {
-    return this.reject(new TypeError('must be an array'));
-  }
-
-  var len = iterable.length;
-  var called = false;
-  if (!len) {
-    return this.resolve([]);
-  }
-
-  var values = new Array(len);
-  var resolved = 0;
-  var i = -1;
-  var promise = new this(INTERNAL);
-
-  while (++i < len) {
-    allResolver(iterable[i], i);
-  }
-  return promise;
-  function allResolver(value, i) {
-    self.resolve(value).then(resolveFromAll, function (error) {
-      if (!called) {
-        called = true;
-        handlers.reject(promise, error);
-      }
-    });
-    function resolveFromAll(outValue) {
-      values[i] = outValue;
-      if (++resolved === len && !called) {
-        called = true;
-        handlers.resolve(promise, values);
-      }
-    }
-  }
-}
-
-exports.race = race;
-function race(iterable) {
-  var self = this;
-  if (Object.prototype.toString.call(iterable) !== '[object Array]') {
-    return this.reject(new TypeError('must be an array'));
-  }
-
-  var len = iterable.length;
-  var called = false;
-  if (!len) {
-    return this.resolve([]);
-  }
-
-  var i = -1;
-  var promise = new this(INTERNAL);
-
-  while (++i < len) {
-    resolver(iterable[i]);
-  }
-  return promise;
-  function resolver(value) {
-    self.resolve(value).then(function (response) {
-      if (!called) {
-        called = true;
-        handlers.resolve(promise, response);
-      }
-    }, function (error) {
-      if (!called) {
-        called = true;
-        handlers.reject(promise, error);
-      }
-    });
-  }
-}
-
-},{"1":1}],3:[function(_dereq_,module,exports){
-(function (global){
-'use strict';
-if (typeof global.Promise !== 'function') {
-  global.Promise = _dereq_(2);
-}
-
-}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"2":2}],4:[function(_dereq_,module,exports){
-'use strict';
-
-var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
-
-function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
-
-function getIDB() {
-    /* global indexedDB,webkitIndexedDB,mozIndexedDB,OIndexedDB,msIndexedDB */
-    try {
-        if (typeof indexedDB !== 'undefined') {
-            return indexedDB;
-        }
-        if (typeof webkitIndexedDB !== 'undefined') {
-            return webkitIndexedDB;
-        }
-        if (typeof mozIndexedDB !== 'undefined') {
-            return mozIndexedDB;
-        }
-        if (typeof OIndexedDB !== 'undefined') {
-            return OIndexedDB;
-        }
-        if (typeof msIndexedDB !== 'undefined') {
-            return msIndexedDB;
-        }
-    } catch (e) {}
-}
-
-var idb = getIDB();
-
-function isIndexedDBValid() {
-    try {
-        // Initialize IndexedDB; fall back to vendor-prefixed versions
-        // if needed.
-        if (!idb) {
-            return false;
-        }
-        // We mimic PouchDB here;
-        //
-        // We test for openDatabase because IE Mobile identifies itself
-        // as Safari. Oh the lulz...
-        var isSafari = typeof openDatabase !== 'undefined' && /(Safari|iPhone|iPad|iPod)/.test(navigator.userAgent) && !/Chrome/.test(navigator.userAgent) && !/BlackBerry/.test(navigator.platform);
-
-        var hasFetch = typeof fetch === 'function' && fetch.toString().indexOf('[native code') !== -1;
-
-        // Safari <10.1 does not meet our requirements for IDB support (#5572)
-        // since Safari 10.1 shipped with fetch, we can use that to detect it
-        return (!isSafari || hasFetch) && typeof indexedDB !== 'undefined' &&
-        // some outdated implementations of IDB that appear on Samsung
-        // and HTC Android devices <4.4 are missing IDBKeyRange
-        typeof IDBKeyRange !== 'undefined';
-    } catch (e) {
-        return false;
-    }
-}
-
-function isWebSQLValid() {
-    return typeof openDatabase === 'function';
-}
-
-function isLocalStorageValid() {
-    try {
-        return typeof localStorage !== 'undefined' && 'setItem' in localStorage && localStorage.setItem;
-    } catch (e) {
-        return false;
-    }
-}
-
-// Abstracts constructing a Blob object, so it also works in older
-// browsers that don't support the native Blob constructor. (i.e.
-// old QtWebKit versions, at least).
-// Abstracts constructing a Blob object, so it also works in older
-// browsers that don't support the native Blob constructor. (i.e.
-// old QtWebKit versions, at least).
-function createBlob(parts, properties) {
-    /* global BlobBuilder,MSBlobBuilder,MozBlobBuilder,WebKitBlobBuilder */
-    parts = parts || [];
-    properties = properties || {};
-    try {
-        return new Blob(parts, properties);
-    } catch (e) {
-        if (e.name !== 'TypeError') {
-            throw e;
-        }
-        var Builder = typeof BlobBuilder !== 'undefined' ? BlobBuilder : typeof MSBlobBuilder !== 'undefined' ? MSBlobBuilder : typeof MozBlobBuilder !== 'undefined' ? MozBlobBuilder : WebKitBlobBuilder;
-        var builder = new Builder();
-        for (var i = 0; i < parts.length; i += 1) {
-            builder.append(parts[i]);
-        }
-        return builder.getBlob(properties.type);
-    }
-}
-
-// This is CommonJS because lie is an external dependency, so Rollup
-// can just ignore it.
-if (typeof Promise === 'undefined') {
-    // In the "nopromises" build this will just throw if you don't have
-    // a global promise object, but it would throw anyway later.
-    _dereq_(3);
-}
-var Promise$1 = Promise;
-
-function executeCallback(promise, callback) {
-    if (callback) {
-        promise.then(function (result) {
-            callback(null, result);
-        }, function (error) {
-            callback(error);
-        });
-    }
-}
-
-function executeTwoCallbacks(promise, callback, errorCallback) {
-    if (typeof callback === 'function') {
-        promise.then(callback);
-    }
-
-    if (typeof errorCallback === 'function') {
-        promise["catch"](errorCallback);
-    }
-}
-
-// Some code originally from async_storage.js in
-// [Gaia](https://github.com/mozilla-b2g/gaia).
-
-var DETECT_BLOB_SUPPORT_STORE = 'local-forage-detect-blob-support';
-var supportsBlobs;
-var dbContexts;
-var toString = Object.prototype.toString;
-
-// Transform a binary string to an array buffer, because otherwise
-// weird stuff happens when you try to work with the binary string directly.
-// It is known.
-// From http://stackoverflow.com/questions/14967647/ (continues on next line)
-// encode-decode-image-with-base64-breaks-image (2013-04-21)
-function _binStringToArrayBuffer(bin) {
-    var length = bin.length;
-    var buf = new ArrayBuffer(length);
-    var arr = new Uint8Array(buf);
-    for (var i = 0; i < length; i++) {
-        arr[i] = bin.charCodeAt(i);
-    }
-    return buf;
-}
-
-//
-// Blobs are not supported in all versions of IndexedDB, notably
-// Chrome <37 and Android <5. In those versions, storing a blob will throw.
-//
-// Various other blob bugs exist in Chrome v37-42 (inclusive).
-// Detecting them is expensive and confusing to users, and Chrome 37-42
-// is at very low usage worldwide, so we do a hacky userAgent check instead.
-//
-// content-type bug: https://code.google.com/p/chromium/issues/detail?id=408120
-// 404 bug: https://code.google.com/p/chromium/issues/detail?id=447916
-// FileReader bug: https://code.google.com/p/chromium/issues/detail?id=447836
-//
-// Code borrowed from PouchDB. See:
-// https://github.com/pouchdb/pouchdb/blob/master/packages/node_modules/pouchdb-adapter-idb/src/blobSupport.js
-//
-function _checkBlobSupportWithoutCaching(idb) {
-    return new Promise$1(function (resolve) {
-        var txn = idb.transaction(DETECT_BLOB_SUPPORT_STORE, 'readwrite');
-        var blob = createBlob(['']);
-        txn.objectStore(DETECT_BLOB_SUPPORT_STORE).put(blob, 'key');
-
-        txn.onabort = function (e) {
-            // If the transaction aborts now its due to not being able to
-            // write to the database, likely due to the disk being full
-            e.preventDefault();
-            e.stopPropagation();
-            resolve(false);
-        };
-
-        txn.oncomplete = function () {
-            var matchedChrome = navigator.userAgent.match(/Chrome\/(\d+)/);
-            var matchedEdge = navigator.userAgent.match(/Edge\//);
-            // MS Edge pretends to be Chrome 42:
-            // https://msdn.microsoft.com/en-us/library/hh869301%28v=vs.85%29.aspx
-            resolve(matchedEdge || !matchedChrome || parseInt(matchedChrome[1], 10) >= 43);
-        };
-    })["catch"](function () {
-        return false; // error, so assume unsupported
-    });
-}
-
-function _checkBlobSupport(idb) {
-    if (typeof supportsBlobs === 'boolean') {
-        return Promise$1.resolve(supportsBlobs);
-    }
-    return _checkBlobSupportWithoutCaching(idb).then(function (value) {
-        supportsBlobs = value;
-        return supportsBlobs;
-    });
-}
-
-function _deferReadiness(dbInfo) {
-    var dbContext = dbContexts[dbInfo.name];
-
-    // Create a deferred object representing the current database operation.
-    var deferredOperation = {};
-
-    deferredOperation.promise = new Promise$1(function (resolve) {
-        deferredOperation.resolve = resolve;
-    });
-
-    // Enqueue the deferred operation.
-    dbContext.deferredOperations.push(deferredOperation);
-
-    // Chain its promise to the database readiness.
-    if (!dbContext.dbReady) {
-        dbContext.dbReady = deferredOperation.promise;
-    } else {
-        dbContext.dbReady = dbContext.dbReady.then(function () {
-            return deferredOperation.promise;
-        });
-    }
-}
-
-function _advanceReadiness(dbInfo) {
-    var dbContext = dbContexts[dbInfo.name];
-
-    // Dequeue a deferred operation.
-    var deferredOperation = dbContext.deferredOperations.pop();
-
-    // Resolve its promise (which is part of the database readiness
-    // chain of promises).
-    if (deferredOperation) {
-        deferredOperation.resolve();
-    }
-}
-
-function _getConnection(dbInfo, upgradeNeeded) {
-    return new Promise$1(function (resolve, reject) {
-
-        if (dbInfo.db) {
-            if (upgradeNeeded) {
-                _deferReadiness(dbInfo);
-                dbInfo.db.close();
-            } else {
-                return resolve(dbInfo.db);
-            }
-        }
-
-        var dbArgs = [dbInfo.name];
-
-        if (upgradeNeeded) {
-            dbArgs.push(dbInfo.version);
-        }
-
-        var openreq = idb.open.apply(idb, dbArgs);
-
-        if (upgradeNeeded) {
-            openreq.onupgradeneeded = function (e) {
-                var db = openreq.result;
-                try {
-                    db.createObjectStore(dbInfo.storeName);
-                    if (e.oldVersion <= 1) {
-                        // Added when support for blob shims was added
-                        db.createObjectStore(DETECT_BLOB_SUPPORT_STORE);
-                    }
-                } catch (ex) {
-                    if (ex.name === 'ConstraintError') {
-                        console.warn('The database "' + dbInfo.name + '"' + ' has been upgraded from version ' + e.oldVersion + ' to version ' + e.newVersion + ', but the storage "' + dbInfo.storeName + '" already exists.');
-                    } else {
-                        throw ex;
-                    }
-                }
-            };
-        }
-
-        openreq.onerror = function (e) {
-            e.preventDefault();
-            reject(openreq.error);
-        };
-
-        openreq.onsuccess = function () {
-            resolve(openreq.result);
-            _advanceReadiness(dbInfo);
-        };
-    });
-}
-
-function _getOriginalConnection(dbInfo) {
-    return _getConnection(dbInfo, false);
-}
-
-function _getUpgradedConnection(dbInfo) {
-    return _getConnection(dbInfo, true);
-}
-
-function _isUpgradeNeeded(dbInfo, defaultVersion) {
-    if (!dbInfo.db) {
-        return true;
-    }
-
-    var isNewStore = !dbInfo.db.objectStoreNames.contains(dbInfo.storeName);
-    var isDowngrade = dbInfo.version < dbInfo.db.version;
-    var isUpgrade = dbInfo.version > dbInfo.db.version;
-
-    if (isDowngrade) {
-        // If the version is not the default one
-        // then warn for impossible downgrade.
-        if (dbInfo.version !== defaultVersion) {
-            console.warn('The database "' + dbInfo.name + '"' + ' can\'t be downgraded from version ' + dbInfo.db.version + ' to version ' + dbInfo.version + '.');
-        }
-        // Align the versions to prevent errors.
-        dbInfo.version = dbInfo.db.version;
-    }
-
-    if (isUpgrade || isNewStore) {
-        // If the store is new then increment the version (if needed).
-        // This will trigger an "upgradeneeded" event which is required
-        // for creating a store.
-        if (isNewStore) {
-            var incVersion = dbInfo.db.version + 1;
-            if (incVersion > dbInfo.version) {
-                dbInfo.version = incVersion;
-            }
-        }
-
-        return true;
-    }
-
-    return false;
-}
-
-// encode a blob for indexeddb engines that don't support blobs
-function _encodeBlob(blob) {
-    return new Promise$1(function (resolve, reject) {
-        var reader = new FileReader();
-        reader.onerror = reject;
-        reader.onloadend = function (e) {
-            var base64 = btoa(e.target.result || '');
-            resolve({
-                __local_forage_encoded_blob: true,
-                data: base64,
-                type: blob.type
-            });
-        };
-        reader.readAsBinaryString(blob);
-    });
-}
-
-// decode an encoded blob
-function _decodeBlob(encodedBlob) {
-    var arrayBuff = _binStringToArrayBuffer(atob(encodedBlob.data));
-    return createBlob([arrayBuff], { type: encodedBlob.type });
-}
-
-// is this one of our fancy encoded blobs?
-function _isEncodedBlob(value) {
-    return value && value.__local_forage_encoded_blob;
-}
-
-// Specialize the default `ready()` function by making it dependent
-// on the current database operations. Thus, the driver will be actually
-// ready when it's been initialized (default) *and* there are no pending
-// operations on the database (initiated by some other instances).
-function _fullyReady(callback) {
-    var self = this;
-
-    var promise = self._initReady().then(function () {
-        var dbContext = dbContexts[self._dbInfo.name];
-
-        if (dbContext && dbContext.dbReady) {
-            return dbContext.dbReady;
-        }
-    });
-
-    executeTwoCallbacks(promise, callback, callback);
-    return promise;
-}
-
-// Open the IndexedDB database (automatically creates one if one didn't
-// previously exist), using any options set in the config.
-function _initStorage(options) {
-    var self = this;
-    var dbInfo = {
-        db: null
-    };
-
-    if (options) {
-        for (var i in options) {
-            dbInfo[i] = options[i];
-        }
-    }
-
-    // Initialize a singleton container for all running localForages.
-    if (!dbContexts) {
-        dbContexts = {};
-    }
-
-    // Get the current context of the database;
-    var dbContext = dbContexts[dbInfo.name];
-
-    // ...or create a new context.
-    if (!dbContext) {
-        dbContext = {
-            // Running localForages sharing a database.
-            forages: [],
-            // Shared database.
-            db: null,
-            // Database readiness (promise).
-            dbReady: null,
-            // Deferred operations on the database.
-            deferredOperations: []
-        };
-        // Register the new context in the global container.
-        dbContexts[dbInfo.name] = dbContext;
-    }
-
-    // Register itself as a running localForage in the current context.
-    dbContext.forages.push(self);
-
-    // Replace the default `ready()` function with the specialized one.
-    if (!self._initReady) {
-        self._initReady = self.ready;
-        self.ready = _fullyReady;
-    }
-
-    // Create an array of initialization states of the related localForages.
-    var initPromises = [];
-
-    function ignoreErrors() {
-        // Don't handle errors here,
-        // just makes sure related localForages aren't pending.
-        return Promise$1.resolve();
-    }
-
-    for (var j = 0; j < dbContext.forages.length; j++) {
-        var forage = dbContext.forages[j];
-        if (forage !== self) {
-            // Don't wait for itself...
-            initPromises.push(forage._initReady()["catch"](ignoreErrors));
-        }
-    }
-
-    // Take a snapshot of the related localForages.
-    var forages = dbContext.forages.slice(0);
-
-    // Initialize the connection process only when
-    // all the related localForages aren't pending.
-    return Promise$1.all(initPromises).then(function () {
-        dbInfo.db = dbContext.db;
-        // Get the connection or open a new one without upgrade.
-        return _getOriginalConnection(dbInfo);
-    }).then(function (db) {
-        dbInfo.db = db;
-        if (_isUpgradeNeeded(dbInfo, self._defaultConfig.version)) {
-            // Reopen the database for upgrading.
-            return _getUpgradedConnection(dbInfo);
-        }
-        return db;
-    }).then(function (db) {
-        dbInfo.db = dbContext.db = db;
-        self._dbInfo = dbInfo;
-        // Share the final connection amongst related localForages.
-        for (var k = 0; k < forages.length; k++) {
-            var forage = forages[k];
-            if (forage !== self) {
-                // Self is already up-to-date.
-                forage._dbInfo.db = dbInfo.db;
-                forage._dbInfo.version = dbInfo.version;
-            }
-        }
-    });
-}
-
-function getItem(key, callback) {
-    var self = this;
-
-    // Cast the key to a string, as that's all we can set as a key.
-    if (typeof key !== 'string') {
-        console.warn(key + ' used as a key, but it is not a string.');
-        key = String(key);
-    }
-
-    var promise = new Promise$1(function (resolve, reject) {
-        self.ready().then(function () {
-            var dbInfo = self._dbInfo;
-            var store = dbInfo.db.transaction(dbInfo.storeName, 'readonly').objectStore(dbInfo.storeName);
-            var req = store.get(key);
-
-            req.onsuccess = function () {
-                var value = req.result;
-                if (value === undefined) {
-                    value = null;
-                }
-                if (_isEncodedBlob(value)) {
-                    value = _decodeBlob(value);
-                }
-                resolve(value);
-            };
-
-            req.onerror = function () {
-                reject(req.error);
-            };
-        })["catch"](reject);
-    });
-
-    executeCallback(promise, callback);
-    return promise;
-}
-
-// Iterate over all items stored in database.
-function iterate(iterator, callback) {
-    var self = this;
-
-    var promise = new Promise$1(function (resolve, reject) {
-        self.ready().then(function () {
-            var dbInfo = self._dbInfo;
-            var store = dbInfo.db.transaction(dbInfo.storeName, 'readonly').objectStore(dbInfo.storeName);
-
-            var req = store.openCursor();
-            var iterationNumber = 1;
-
-            req.onsuccess = function () {
-                var cursor = req.result;
-
-                if (cursor) {
-                    var value = cursor.value;
-                    if (_isEncodedBlob(value)) {
-                        value = _decodeBlob(value);
-                    }
-                    var result = iterator(value, cursor.key, iterationNumber++);
-
-                    if (result !== void 0) {
-                        resolve(result);
-                    } else {
-                        cursor["continue"]();
-                    }
-                } else {
-                    resolve();
-                }
-            };
-
-            req.onerror = function () {
-                reject(req.error);
-            };
-        })["catch"](reject);
-    });
-
-    executeCallback(promise, callback);
-
-    return promise;
-}
-
-function setItem(key, value, callback) {
-    var self = this;
-
-    // Cast the key to a string, as that's all we can set as a key.
-    if (typeof key !== 'string') {
-        console.warn(key + ' used as a key, but it is not a string.');
-        key = String(key);
-    }
-
-    var promise = new Promise$1(function (resolve, reject) {
-        var dbInfo;
-        self.ready().then(function () {
-            dbInfo = self._dbInfo;
-            if (toString.call(value) === '[object Blob]') {
-                return _checkBlobSupport(dbInfo.db).then(function (blobSupport) {
-                    if (blobSupport) {
-                        return value;
-                    }
-                    return _encodeBlob(value);
-                });
-            }
-            return value;
-        }).then(function (value) {
-            var transaction = dbInfo.db.transaction(dbInfo.storeName, 'readwrite');
-            var store = transaction.objectStore(dbInfo.storeName);
-            var req = store.put(value, key);
-
-            // The reason we don't _save_ null is because IE 10 does
-            // not support saving the `null` type in IndexedDB. How
-            // ironic, given the bug below!
-            // See: https://github.com/mozilla/localForage/issues/161
-            if (value === null) {
-                value = undefined;
-            }
-
-            transaction.oncomplete = function () {
-                // Cast to undefined so the value passed to
-                // callback/promise is the same as what one would get out
-                // of `getItem()` later. This leads to some weirdness
-                // (setItem('foo', undefined) will return `null`), but
-                // it's not my fault localStorage is our baseline and that
-                // it's weird.
-                if (value === undefined) {
-                    value = null;
-                }
-
-                resolve(value);
-            };
-            transaction.onabort = transaction.onerror = function () {
-                var err = req.error ? req.error : req.transaction.error;
-                reject(err);
-            };
-        })["catch"](reject);
-    });
-
-    executeCallback(promise, callback);
-    return promise;
-}
-
-function removeItem(key, callback) {
-    var self = this;
-
-    // Cast the key to a string, as that's all we can set as a key.
-    if (typeof key !== 'string') {
-        console.warn(key + ' used as a key, but it is not a string.');
-        key = String(key);
-    }
-
-    var promise = new Promise$1(function (resolve, reject) {
-        self.ready().then(function () {
-            var dbInfo = self._dbInfo;
-            var transaction = dbInfo.db.transaction(dbInfo.storeName, 'readwrite');
-            var store = transaction.objectStore(dbInfo.storeName);
-
-            // We use a Grunt task to make this safe for IE and some
-            // versions of Android (including those used by Cordova).
-            // Normally IE won't like `.delete()` and will insist on
-            // using `['delete']()`, but we have a build step that
-            // fixes this for us now.
-            var req = store["delete"](key);
-            transaction.oncomplete = function () {
-                resolve();
-            };
-
-            transaction.onerror = function () {
-                reject(req.error);
-            };
-
-            // The request will be also be aborted if we've exceeded our storage
-            // space.
-            transaction.onabort = function () {
-                var err = req.error ? req.error : req.transaction.error;
-                reject(err);
-            };
-        })["catch"](reject);
-    });
-
-    executeCallback(promise, callback);
-    return promise;
-}
-
-function clear(callback) {
-    var self = this;
-
-    var promise = new Promise$1(function (resolve, reject) {
-        self.ready().then(function () {
-            var dbInfo = self._dbInfo;
-            var transaction = dbInfo.db.transaction(dbInfo.storeName, 'readwrite');
-            var store = transaction.objectStore(dbInfo.storeName);
-            var req = store.clear();
-
-            transaction.oncomplete = function () {
-                resolve();
-            };
-
-            transaction.onabort = transaction.onerror = function () {
-                var err = req.error ? req.error : req.transaction.error;
-                reject(err);
-            };
-        })["catch"](reject);
-    });
-
-    executeCallback(promise, callback);
-    return promise;
-}
-
-function length(callback) {
-    var self = this;
-
-    var promise = new Promise$1(function (resolve, reject) {
-        self.ready().then(function () {
-            var dbInfo = self._dbInfo;
-            var store = dbInfo.db.transaction(dbInfo.storeName, 'readonly').objectStore(dbInfo.storeName);
-            var req = store.count();
-
-            req.onsuccess = function () {
-                resolve(req.result);
-            };
-
-            req.onerror = function () {
-                reject(req.error);
-            };
-        })["catch"](reject);
-    });
-
-    executeCallback(promise, callback);
-    return promise;
-}
-
-function key(n, callback) {
-    var self = this;
-
-    var promise = new Promise$1(function (resolve, reject) {
-        if (n < 0) {
-            resolve(null);
-
-            return;
-        }
-
-        self.ready().then(function () {
-            var dbInfo = self._dbInfo;
-            var store = dbInfo.db.transaction(dbInfo.storeName, 'readonly').objectStore(dbInfo.storeName);
-
-            var advanced = false;
-            var req = store.openCursor();
-            req.onsuccess = function () {
-                var cursor = req.result;
-                if (!cursor) {
-                    // this means there weren't enough keys
-                    resolve(null);
-
-                    return;
-                }
-
-                if (n === 0) {
-                    // We have the first key, return it if that's what they
-                    // wanted.
-                    resolve(cursor.key);
-                } else {
-                    if (!advanced) {
-                        // Otherwise, ask the cursor to skip ahead n
-                        // records.
-                        advanced = true;
-                        cursor.advance(n);
-                    } else {
-                        // When we get here, we've got the nth key.
-                        resolve(cursor.key);
-                    }
-                }
-            };
-
-            req.onerror = function () {
-                reject(req.error);
-            };
-        })["catch"](reject);
-    });
-
-    executeCallback(promise, callback);
-    return promise;
-}
-
-function keys(callback) {
-    var self = this;
-
-    var promise = new Promise$1(function (resolve, reject) {
-        self.ready().then(function () {
-            var dbInfo = self._dbInfo;
-            var store = dbInfo.db.transaction(dbInfo.storeName, 'readonly').objectStore(dbInfo.storeName);
-
-            var req = store.openCursor();
-            var keys = [];
-
-            req.onsuccess = function () {
-                var cursor = req.result;
-
-                if (!cursor) {
-                    resolve(keys);
-                    return;
-                }
-
-                keys.push(cursor.key);
-                cursor["continue"]();
-            };
-
-            req.onerror = function () {
-                reject(req.error);
-            };
-        })["catch"](reject);
-    });
-
-    executeCallback(promise, callback);
-    return promise;
-}
-
-var asyncStorage = {
-    _driver: 'asyncStorage',
-    _initStorage: _initStorage,
-    iterate: iterate,
-    getItem: getItem,
-    setItem: setItem,
-    removeItem: removeItem,
-    clear: clear,
-    length: length,
-    key: key,
-    keys: keys
-};
-
-// Sadly, the best way to save binary data in WebSQL/localStorage is serializing
-// it to Base64, so this is how we store it to prevent very strange errors with less
-// verbose ways of binary <-> string data storage.
-var BASE_CHARS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
-
-var BLOB_TYPE_PREFIX = '~~local_forage_type~';
-var BLOB_TYPE_PREFIX_REGEX = /^~~local_forage_type~([^~]+)~/;
-
-var SERIALIZED_MARKER = '__lfsc__:';
-var SERIALIZED_MARKER_LENGTH = SERIALIZED_MARKER.length;
-
-// OMG the serializations!
-var TYPE_ARRAYBUFFER = 'arbf';
-var TYPE_BLOB = 'blob';
-var TYPE_INT8ARRAY = 'si08';
-var TYPE_UINT8ARRAY = 'ui08';
-var TYPE_UINT8CLAMPEDARRAY = 'uic8';
-var TYPE_INT16ARRAY = 'si16';
-var TYPE_INT32ARRAY = 'si32';
-var TYPE_UINT16ARRAY = 'ur16';
-var TYPE_UINT32ARRAY = 'ui32';
-var TYPE_FLOAT32ARRAY = 'fl32';
-var TYPE_FLOAT64ARRAY = 'fl64';
-var TYPE_SERIALIZED_MARKER_LENGTH = SERIALIZED_MARKER_LENGTH + TYPE_ARRAYBUFFER.length;
-
-var toString$1 = Object.prototype.toString;
-
-function stringToBuffer(serializedString) {
-    // Fill the string into a ArrayBuffer.
-    var bufferLength = serializedString.length * 0.75;
-    var len = serializedString.length;
-    var i;
-    var p = 0;
-    var encoded1, encoded2, encoded3, encoded4;
-
-    if (serializedString[serializedString.length - 1] === '=') {
-        bufferLength--;
-        if (serializedString[serializedString.length - 2] === '=') {
-            bufferLength--;
-        }
-    }
-
-    var buffer = new ArrayBuffer(bufferLength);
-    var bytes = new Uint8Array(buffer);
-
-    for (i = 0; i < len; i += 4) {
-        encoded1 = BASE_CHARS.indexOf(serializedString[i]);
-        encoded2 = BASE_CHARS.indexOf(serializedString[i + 1]);
-        encoded3 = BASE_CHARS.indexOf(serializedString[i + 2]);
-        encoded4 = BASE_CHARS.indexOf(serializedString[i + 3]);
-
-        /*jslint bitwise: true */
-        bytes[p++] = encoded1 << 2 | encoded2 >> 4;
-        bytes[p++] = (encoded2 & 15) << 4 | encoded3 >> 2;
-        bytes[p++] = (encoded3 & 3) << 6 | encoded4 & 63;
-    }
-    return buffer;
-}
-
-// Converts a buffer to a string to store, serialized, in the backend
-// storage library.
-function bufferToString(buffer) {
-    // base64-arraybuffer
-    var bytes = new Uint8Array(buffer);
-    var base64String = '';
-    var i;
-
-    for (i = 0; i < bytes.length; i += 3) {
-        /*jslint bitwise: true */
-        base64String += BASE_CHARS[bytes[i] >> 2];
-        base64String += BASE_CHARS[(bytes[i] & 3) << 4 | bytes[i + 1] >> 4];
-        base64String += BASE_CHARS[(bytes[i + 1] & 15) << 2 | bytes[i + 2] >> 6];
-        base64String += BASE_CHARS[bytes[i + 2] & 63];
-    }
-
-    if (bytes.length % 3 === 2) {
-        base64String = base64String.substring(0, base64String.length - 1) + '=';
-    } else if (bytes.length % 3 === 1) {
-        base64String = base64String.substring(0, base64String.length - 2) + '==';
-    }
-
-    return base64String;
-}
-
-// Serialize a value, afterwards executing a callback (which usually
-// instructs the `setItem()` callback/promise to be executed). This is how
-// we store binary data with localStorage.
-function serialize(value, callback) {
-    var valueType = '';
-    if (value) {
-        valueType = toString$1.call(value);
-    }
-
-    // Cannot use `value instanceof ArrayBuffer` or such here, as these
-    // checks fail when running the tests using casper.js...
-    //
-    // TODO: See why those tests fail and use a better solution.
-    if (value && (valueType === '[object ArrayBuffer]' || value.buffer && toString$1.call(value.buffer) === '[object ArrayBuffer]')) {
-        // Convert binary arrays to a string and prefix the string with
-        // a special marker.
-        var buffer;
-        var marker = SERIALIZED_MARKER;
-
-        if (value instanceof ArrayBuffer) {
-            buffer = value;
-            marker += TYPE_ARRAYBUFFER;
-        } else {
-            buffer = value.buffer;
-
-            if (valueType === '[object Int8Array]') {
-                marker += TYPE_INT8ARRAY;
-            } else if (valueType === '[object Uint8Array]') {
-                marker += TYPE_UINT8ARRAY;
-            } else if (valueType === '[object Uint8ClampedArray]') {
-                marker += TYPE_UINT8CLAMPEDARRAY;
-            } else if (valueType === '[object Int16Array]') {
-                marker += TYPE_INT16ARRAY;
-            } else if (valueType === '[object Uint16Array]') {
-                marker += TYPE_UINT16ARRAY;
-            } else if (valueType === '[object Int32Array]') {
-                marker += TYPE_INT32ARRAY;
-            } else if (valueType === '[object Uint32Array]') {
-                marker += TYPE_UINT32ARRAY;
-            } else if (valueType === '[object Float32Array]') {
-                marker += TYPE_FLOAT32ARRAY;
-            } else if (valueType === '[object Float64Array]') {
-                marker += TYPE_FLOAT64ARRAY;
-            } else {
-                callback(new Error('Failed to get type for BinaryArray'));
-            }
-        }
-
-        callback(marker + bufferToString(buffer));
-    } else if (valueType === '[object Blob]') {
-        // Conver the blob to a binaryArray and then to a string.
-        var fileReader = new FileReader();
-
-        fileReader.onload = function () {
-            // Backwards-compatible prefix for the blob type.
-            var str = BLOB_TYPE_PREFIX + value.type + '~' + bufferToString(this.result);
-
-            callback(SERIALIZED_MARKER + TYPE_BLOB + str);
-        };
-
-        fileReader.readAsArrayBuffer(value);
-    } else {
-        try {
-            callback(JSON.stringify(value));
-        } catch (e) {
-            console.error("Couldn't convert value into a JSON string: ", value);
-
-            callback(null, e);
-        }
-    }
-}
-
-// Deserialize data we've inserted into a value column/field. We place
-// special markers into our strings to mark them as encoded; this isn't
-// as nice as a meta field, but it's the only sane thing we can do whilst
-// keeping localStorage support intact.
-//
-// Oftentimes this will just deserialize JSON content, but if we have a
-// special marker (SERIALIZED_MARKER, defined above), we will extract
-// some kind of arraybuffer/binary data/typed array out of the string.
-function deserialize(value) {
-    // If we haven't marked this string as being specially serialized (i.e.
-    // something other than serialized JSON), we can just return it and be
-    // done with it.
-    if (value.substring(0, SERIALIZED_MARKER_LENGTH) !== SERIALIZED_MARKER) {
-        return JSON.parse(value);
-    }
-
-    // The following code deals with deserializing some kind of Blob or
-    // TypedArray. First we separate out the type of data we're dealing
-    // with from the data itself.
-    var serializedString = value.substring(TYPE_SERIALIZED_MARKER_LENGTH);
-    var type = value.substring(SERIALIZED_MARKER_LENGTH, TYPE_SERIALIZED_MARKER_LENGTH);
-
-    var blobType;
-    // Backwards-compatible blob type serialization strategy.
-    // DBs created with older versions of localForage will simply not have the blob type.
-    if (type === TYPE_BLOB && BLOB_TYPE_PREFIX_REGEX.test(serializedString)) {
-        var matcher = serializedString.match(BLOB_TYPE_PREFIX_REGEX);
-        blobType = matcher[1];
-        serializedString = serializedString.substring(matcher[0].length);
-    }
-    var buffer = stringToBuffer(serializedString);
-
-    // Return the right type based on the code/type set during
-    // serialization.
-    switch (type) {
-        case TYPE_ARRAYBUFFER:
-            return buffer;
-        case TYPE_BLOB:
-            return createBlob([buffer], { type: blobType });
-        case TYPE_INT8ARRAY:
-            return new Int8Array(buffer);
-        case TYPE_UINT8ARRAY:
-            return new Uint8Array(buffer);
-        case TYPE_UINT8CLAMPEDARRAY:
-            return new Uint8ClampedArray(buffer);
-        case TYPE_INT16ARRAY:
-            return new Int16Array(buffer);
-        case TYPE_UINT16ARRAY:
-            return new Uint16Array(buffer);
-        case TYPE_INT32ARRAY:
-            return new Int32Array(buffer);
-        case TYPE_UINT32ARRAY:
-            return new Uint32Array(buffer);
-        case TYPE_FLOAT32ARRAY:
-            return new Float32Array(buffer);
-        case TYPE_FLOAT64ARRAY:
-            return new Float64Array(buffer);
-        default:
-            throw new Error('Unkown type: ' + type);
-    }
-}
-
-var localforageSerializer = {
-    serialize: serialize,
-    deserialize: deserialize,
-    stringToBuffer: stringToBuffer,
-    bufferToString: bufferToString
-};
-
-/*
- * Includes code from:
- *
- * base64-arraybuffer
- * https://github.com/niklasvh/base64-arraybuffer
- *
- * Copyright (c) 2012 Niklas von Hertzen
- * Licensed under the MIT license.
- */
-// Open the WebSQL database (automatically creates one if one didn't
-// previously exist), using any options set in the config.
-function _initStorage$1(options) {
-    var self = this;
-    var dbInfo = {
-        db: null
-    };
-
-    if (options) {
-        for (var i in options) {
-            dbInfo[i] = typeof options[i] !== 'string' ? options[i].toString() : options[i];
-        }
-    }
-
-    var dbInfoPromise = new Promise$1(function (resolve, reject) {
-        // Open the database; the openDatabase API will automatically
-        // create it for us if it doesn't exist.
-        try {
-            dbInfo.db = openDatabase(dbInfo.name, String(dbInfo.version), dbInfo.description, dbInfo.size);
-        } catch (e) {
-            return reject(e);
-        }
-
-        // Create our key/value table if it doesn't exist.
-        dbInfo.db.transaction(function (t) {
-            t.executeSql('CREATE TABLE IF NOT EXISTS ' + dbInfo.storeName + ' (id INTEGER PRIMARY KEY, key unique, value)', [], function () {
-                self._dbInfo = dbInfo;
-                resolve();
-            }, function (t, error) {
-                reject(error);
-            });
-        });
-    });
-
-    dbInfo.serializer = localforageSerializer;
-    return dbInfoPromise;
-}
-
-function getItem$1(key, callback) {
-    var self = this;
-
-    // Cast the key to a string, as that's all we can set as a key.
-    if (typeof key !== 'string') {
-        console.warn(key + ' used as a key, but it is not a string.');
-        key = String(key);
-    }
-
-    var promise = new Promise$1(function (resolve, reject) {
-        self.ready().then(function () {
-            var dbInfo = self._dbInfo;
-            dbInfo.db.transaction(function (t) {
-                t.executeSql('SELECT * FROM ' + dbInfo.storeName + ' WHERE key = ? LIMIT 1', [key], function (t, results) {
-                    var result = results.rows.length ? results.rows.item(0).value : null;
-
-                    // Check to see if this is serialized content we need to
-                    // unpack.
-                    if (result) {
-                        result = dbInfo.serializer.deserialize(result);
-                    }
-
-                    resolve(result);
-                }, function (t, error) {
-
-                    reject(error);
-                });
-            });
-        })["catch"](reject);
-    });
-
-    executeCallback(promise, callback);
-    return promise;
-}
-
-function iterate$1(iterator, callback) {
-    var self = this;
-
-    var promise = new Promise$1(function (resolve, reject) {
-        self.ready().then(function () {
-            var dbInfo = self._dbInfo;
-
-            dbInfo.db.transaction(function (t) {
-                t.executeSql('SELECT * FROM ' + dbInfo.storeName, [], function (t, results) {
-                    var rows = results.rows;
-                    var length = rows.length;
-
-                    for (var i = 0; i < length; i++) {
-                        var item = rows.item(i);
-                        var result = item.value;
-
-                        // Check to see if this is serialized content
-                        // we need to unpack.
-                        if (result) {
-                            result = dbInfo.serializer.deserialize(result);
-                        }
-
-                        result = iterator(result, item.key, i + 1);
-
-                        // void(0) prevents problems with redefinition
-                        // of `undefined`.
-                        if (result !== void 0) {
-                            resolve(result);
-                            return;
-                        }
-                    }
-
-                    resolve();
-                }, function (t, error) {
-                    reject(error);
-                });
-            });
-        })["catch"](reject);
-    });
-
-    executeCallback(promise, callback);
-    return promise;
-}
-
-function _setItem(key, value, callback, retriesLeft) {
-    var self = this;
-
-    // Cast the key to a string, as that's all we can set as a key.
-    if (typeof key !== 'string') {
-        console.warn(key + ' used as a key, but it is not a string.');
-        key = String(key);
-    }
-
-    var promise = new Promise$1(function (resolve, reject) {
-        self.ready().then(function () {
-            // The localStorage API doesn't return undefined values in an
-            // "expected" way, so undefined is always cast to null in all
-            // drivers. See: https://github.com/mozilla/localForage/pull/42
-            if (value === undefined) {
-                value = null;
-            }
-
-            // Save the original value to pass to the callback.
-            var originalValue = value;
-
-            var dbInfo = self._dbInfo;
-            dbInfo.serializer.serialize(value, function (value, error) {
-                if (error) {
-                    reject(error);
-                } else {
-                    dbInfo.db.transaction(function (t) {
-                        t.executeSql('INSERT OR REPLACE INTO ' + dbInfo.storeName + ' (key, value) VALUES (?, ?)', [key, value], function () {
-                            resolve(originalValue);
-                        }, function (t, error) {
-                            reject(error);
-                        });
-                    }, function (sqlError) {
-                        // The transaction failed; check
-                        // to see if it's a quota error.
-                        if (sqlError.code === sqlError.QUOTA_ERR) {
-                            // We reject the callback outright for now, but
-                            // it's worth trying to re-run the transaction.
-                            // Even if the user accepts the prompt to use
-                            // more storage on Safari, this error will
-                            // be called.
-                            //
-                            // Try to re-run the transaction.
-                            if (retriesLeft > 0) {
-                                resolve(_setItem.apply(self, [key, originalValue, callback, retriesLeft - 1]));
-                                return;
-                            }
-                            reject(sqlError);
-                        }
-                    });
-                }
-            });
-        })["catch"](reject);
-    });
-
-    executeCallback(promise, callback);
-    return promise;
-}
-
-function setItem$1(key, value, callback) {
-    return _setItem.apply(this, [key, value, callback, 1]);
-}
-
-function removeItem$1(key, callback) {
-    var self = this;
-
-    // Cast the key to a string, as that's all we can set as a key.
-    if (typeof key !== 'string') {
-        console.warn(key + ' used as a key, but it is not a string.');
-        key = String(key);
-    }
-
-    var promise = new Promise$1(function (resolve, reject) {
-        self.ready().then(function () {
-            var dbInfo = self._dbInfo;
-            dbInfo.db.transaction(function (t) {
-                t.executeSql('DELETE FROM ' + dbInfo.storeName + ' WHERE key = ?', [key], function () {
-                    resolve();
-                }, function (t, error) {
-
-                    reject(error);
-                });
-            });
-        })["catch"](reject);
-    });
-
-    executeCallback(promise, callback);
-    return promise;
-}
-
-// Deletes every item in the table.
-// TODO: Find out if this resets the AUTO_INCREMENT number.
-function clear$1(callback) {
-    var self = this;
-
-    var promise = new Promise$1(function (resolve, reject) {
-        self.ready().then(function () {
-            var dbInfo = self._dbInfo;
-            dbInfo.db.transaction(function (t) {
-                t.executeSql('DELETE FROM ' + dbInfo.storeName, [], function () {
-                    resolve();
-                }, function (t, error) {
-                    reject(error);
-                });
-            });
-        })["catch"](reject);
-    });
-
-    executeCallback(promise, callback);
-    return promise;
-}
-
-// Does a simple `COUNT(key)` to get the number of items stored in
-// localForage.
-function length$1(callback) {
-    var self = this;
-
-    var promise = new Promise$1(function (resolve, reject) {
-        self.ready().then(function () {
-            var dbInfo = self._dbInfo;
-            dbInfo.db.transaction(function (t) {
-                // Ahhh, SQL makes this one soooooo easy.
-                t.executeSql('SELECT COUNT(key) as c FROM ' + dbInfo.storeName, [], function (t, results) {
-                    var result = results.rows.item(0).c;
-
-                    resolve(result);
-                }, function (t, error) {
-
-                    reject(error);
-                });
-            });
-        })["catch"](reject);
-    });
-
-    executeCallback(promise, callback);
-    return promise;
-}
-
-// Return the key located at key index X; essentially gets the key from a
-// `WHERE id = ?`. This is the most efficient way I can think to implement
-// this rarely-used (in my experience) part of the API, but it can seem
-// inconsistent, because we do `INSERT OR REPLACE INTO` on `setItem()`, so
-// the ID of each key will change every time it's updated. Perhaps a stored
-// procedure for the `setItem()` SQL would solve this problem?
-// TODO: Don't change ID on `setItem()`.
-function key$1(n, callback) {
-    var self = this;
-
-    var promise = new Promise$1(function (resolve, reject) {
-        self.ready().then(function () {
-            var dbInfo = self._dbInfo;
-            dbInfo.db.transaction(function (t) {
-                t.executeSql('SELECT key FROM ' + dbInfo.storeName + ' WHERE id = ? LIMIT 1', [n + 1], function (t, results) {
-                    var result = results.rows.length ? results.rows.item(0).key : null;
-                    resolve(result);
-                }, function (t, error) {
-                    reject(error);
-                });
-            });
-        })["catch"](reject);
-    });
-
-    executeCallback(promise, callback);
-    return promise;
-}
-
-function keys$1(callback) {
-    var self = this;
-
-    var promise = new Promise$1(function (resolve, reject) {
-        self.ready().then(function () {
-            var dbInfo = self._dbInfo;
-            dbInfo.db.transaction(function (t) {
-                t.executeSql('SELECT key FROM ' + dbInfo.storeName, [], function (t, results) {
-                    var keys = [];
-
-                    for (var i = 0; i < results.rows.length; i++) {
-                        keys.push(results.rows.item(i).key);
-                    }
-
-                    resolve(keys);
-                }, function (t, error) {
-
-                    reject(error);
-                });
-            });
-        })["catch"](reject);
-    });
-
-    executeCallback(promise, callback);
-    return promise;
-}
-
-var webSQLStorage = {
-    _driver: 'webSQLStorage',
-    _initStorage: _initStorage$1,
-    iterate: iterate$1,
-    getItem: getItem$1,
-    setItem: setItem$1,
-    removeItem: removeItem$1,
-    clear: clear$1,
-    length: length$1,
-    key: key$1,
-    keys: keys$1
-};
-
-// Config the localStorage backend, using options set in the config.
-function _initStorage$2(options) {
-    var self = this;
-    var dbInfo = {};
-    if (options) {
-        for (var i in options) {
-            dbInfo[i] = options[i];
-        }
-    }
-
-    dbInfo.keyPrefix = dbInfo.name + '/';
-
-    if (dbInfo.storeName !== self._defaultConfig.storeName) {
-        dbInfo.keyPrefix += dbInfo.storeName + '/';
-    }
-
-    self._dbInfo = dbInfo;
-    dbInfo.serializer = localforageSerializer;
-
-    return Promise$1.resolve();
-}
-
-// Remove all keys from the datastore, effectively destroying all data in
-// the app's key/value store!
-function clear$2(callback) {
-    var self = this;
-    var promise = self.ready().then(function () {
-        var keyPrefix = self._dbInfo.keyPrefix;
-
-        for (var i = localStorage.length - 1; i >= 0; i--) {
-            var key = localStorage.key(i);
-
-            if (key.indexOf(keyPrefix) === 0) {
-                localStorage.removeItem(key);
-            }
-        }
-    });
-
-    executeCallback(promise, callback);
-    return promise;
-}
-
-// Retrieve an item from the store. Unlike the original async_storage
-// library in Gaia, we don't modify return values at all. If a key's value
-// is `undefined`, we pass that value to the callback function.
-function getItem$2(key, callback) {
-    var self = this;
-
-    // Cast the key to a string, as that's all we can set as a key.
-    if (typeof key !== 'string') {
-        console.warn(key + ' used as a key, but it is not a string.');
-        key = String(key);
-    }
-
-    var promise = self.ready().then(function () {
-        var dbInfo = self._dbInfo;
-        var result = localStorage.getItem(dbInfo.keyPrefix + key);
-
-        // If a result was found, parse it from the serialized
-        // string into a JS object. If result isn't truthy, the key
-        // is likely undefined and we'll pass it straight to the
-        // callback.
-        if (result) {
-            result = dbInfo.serializer.deserialize(result);
-        }
-
-        return result;
-    });
-
-    executeCallback(promise, callback);
-    return promise;
-}
-
-// Iterate over all items in the store.
-function iterate$2(iterator, callback) {
-    var self = this;
-
-    var promise = self.ready().then(function () {
-        var dbInfo = self._dbInfo;
-        var keyPrefix = dbInfo.keyPrefix;
-        var keyPrefixLength = keyPrefix.length;
-        var length = localStorage.length;
-
-        // We use a dedicated iterator instead of the `i` variable below
-        // so other keys we fetch in localStorage aren't counted in
-        // the `iterationNumber` argument passed to the `iterate()`
-        // callback.
-        //
-        // See: github.com/mozilla/localForage/pull/435#discussion_r38061530
-        var iterationNumber = 1;
-
-        for (var i = 0; i < length; i++) {
-            var key = localStorage.key(i);
-            if (key.indexOf(keyPrefix) !== 0) {
-                continue;
-            }
-            var value = localStorage.getItem(key);
-
-            // If a result was found, parse it from the serialized
-            // string into a JS object. If result isn't truthy, the
-            // key is likely undefined and we'll pass it straight
-            // to the iterator.
-            if (value) {
-                value = dbInfo.serializer.deserialize(value);
-            }
-
-            value = iterator(value, key.substring(keyPrefixLength), iterationNumber++);
-
-            if (value !== void 0) {
-                return value;
-            }
-        }
-    });
-
-    executeCallback(promise, callback);
-    return promise;
-}
-
-// Same as localStorage's key() method, except takes a callback.
-function key$2(n, callback) {
-    var self = this;
-    var promise = self.ready().then(function () {
-        var dbInfo = self._dbInfo;
-        var result;
-        try {
-            result = localStorage.key(n);
-        } catch (error) {
-            result = null;
-        }
-
-        // Remove the prefix from the key, if a key is found.
-        if (result) {
-            result = result.substring(dbInfo.keyPrefix.length);
-        }
-
-        return result;
-    });
-
-    executeCallback(promise, callback);
-    return promise;
-}
-
-function keys$2(callback) {
-    var self = this;
-    var promise = self.ready().then(function () {
-        var dbInfo = self._dbInfo;
-        var length = localStorage.length;
-        var keys = [];
-
-        for (var i = 0; i < length; i++) {
-            if (localStorage.key(i).indexOf(dbInfo.keyPrefix) === 0) {
-                keys.push(localStorage.key(i).substring(dbInfo.keyPrefix.length));
-            }
-        }
-
-        return keys;
-    });
-
-    executeCallback(promise, callback);
-    return promise;
-}
-
-// Supply the number of keys in the datastore to the callback function.
-function length$2(callback) {
-    var self = this;
-    var promise = self.keys().then(function (keys) {
-        return keys.length;
-    });
-
-    executeCallback(promise, callback);
-    return promise;
-}
-
-// Remove an item from the store, nice and simple.
-function removeItem$2(key, callback) {
-    var self = this;
-
-    // Cast the key to a string, as that's all we can set as a key.
-    if (typeof key !== 'string') {
-        console.warn(key + ' used as a key, but it is not a string.');
-        key = String(key);
-    }
-
-    var promise = self.ready().then(function () {
-        var dbInfo = self._dbInfo;
-        localStorage.removeItem(dbInfo.keyPrefix + key);
-    });
-
-    executeCallback(promise, callback);
-    return promise;
-}
-
-// Set a key's value and run an optional callback once the value is set.
-// Unlike Gaia's implementation, the callback function is passed the value,
-// in case you want to operate on that value only after you're sure it
-// saved, or something like that.
-function setItem$2(key, value, callback) {
-    var self = this;
-
-    // Cast the key to a string, as that's all we can set as a key.
-    if (typeof key !== 'string') {
-        console.warn(key + ' used as a key, but it is not a string.');
-        key = String(key);
-    }
-
-    var promise = self.ready().then(function () {
-        // Convert undefined values to null.
-        // https://github.com/mozilla/localForage/pull/42
-        if (value === undefined) {
-            value = null;
-        }
-
-        // Save the original value to pass to the callback.
-        var originalValue = value;
-
-        return new Promise$1(function (resolve, reject) {
-            var dbInfo = self._dbInfo;
-            dbInfo.serializer.serialize(value, function (value, error) {
-                if (error) {
-                    reject(error);
-                } else {
-                    try {
-                        localStorage.setItem(dbInfo.keyPrefix + key, value);
-                        resolve(originalValue);
-                    } catch (e) {
-                        // localStorage capacity exceeded.
-                        // TODO: Make this a specific error/event.
-                        if (e.name === 'QuotaExceededError' || e.name === 'NS_ERROR_DOM_QUOTA_REACHED') {
-                            reject(e);
-                        }
-                        reject(e);
-                    }
-                }
-            });
-        });
-    });
-
-    executeCallback(promise, callback);
-    return promise;
-}
-
-var localStorageWrapper = {
-    _driver: 'localStorageWrapper',
-    _initStorage: _initStorage$2,
-    // Default API, from Gaia/localStorage.
-    iterate: iterate$2,
-    getItem: getItem$2,
-    setItem: setItem$2,
-    removeItem: removeItem$2,
-    clear: clear$2,
-    length: length$2,
-    key: key$2,
-    keys: keys$2
-};
-
-// Custom drivers are stored here when `defineDriver()` is called.
-// They are shared across all instances of localForage.
-var CustomDrivers = {};
-
-var DriverType = {
-    INDEXEDDB: 'asyncStorage',
-    LOCALSTORAGE: 'localStorageWrapper',
-    WEBSQL: 'webSQLStorage'
-};
-
-var DefaultDriverOrder = [DriverType.INDEXEDDB, DriverType.WEBSQL, DriverType.LOCALSTORAGE];
-
-var LibraryMethods = ['clear', 'getItem', 'iterate', 'key', 'keys', 'length', 'removeItem', 'setItem'];
-
-var DefaultConfig = {
-    description: '',
-    driver: DefaultDriverOrder.slice(),
-    name: 'localforage',
-    // Default DB size is _JUST UNDER_ 5MB, as it's the highest size
-    // we can use without a prompt.
-    size: 4980736,
-    storeName: 'keyvaluepairs',
-    version: 1.0
-};
-
-var driverSupport = {};
-// Check to see if IndexedDB is available and if it is the latest
-// implementation; it's our preferred backend library. We use "_spec_test"
-// as the name of the database because it's not the one we'll operate on,
-// but it's useful to make sure its using the right spec.
-// See: https://github.com/mozilla/localForage/issues/128
-driverSupport[DriverType.INDEXEDDB] = isIndexedDBValid();
-
-driverSupport[DriverType.WEBSQL] = isWebSQLValid();
-
-driverSupport[DriverType.LOCALSTORAGE] = isLocalStorageValid();
-
-var isArray = Array.isArray || function (arg) {
-    return Object.prototype.toString.call(arg) === '[object Array]';
-};
-
-function callWhenReady(localForageInstance, libraryMethod) {
-    localForageInstance[libraryMethod] = function () {
-        var _args = arguments;
-        return localForageInstance.ready().then(function () {
-            return localForageInstance[libraryMethod].apply(localForageInstance, _args);
-        });
-    };
-}
-
-function extend() {
-    for (var i = 1; i < arguments.length; i++) {
-        var arg = arguments[i];
-
-        if (arg) {
-            for (var key in arg) {
-                if (arg.hasOwnProperty(key)) {
-                    if (isArray(arg[key])) {
-                        arguments[0][key] = arg[key].slice();
-                    } else {
-                        arguments[0][key] = arg[key];
-                    }
-                }
-            }
-        }
-    }
-
-    return arguments[0];
-}
-
-function isLibraryDriver(driverName) {
-    for (var driver in DriverType) {
-        if (DriverType.hasOwnProperty(driver) && DriverType[driver] === driverName) {
-            return true;
-        }
-    }
-
-    return false;
-}
-
-var LocalForage = function () {
-    function LocalForage(options) {
-        _classCallCheck(this, LocalForage);
-
-        this.INDEXEDDB = DriverType.INDEXEDDB;
-        this.LOCALSTORAGE = DriverType.LOCALSTORAGE;
-        this.WEBSQL = DriverType.WEBSQL;
-
-        this._defaultConfig = extend({}, DefaultConfig);
-        this._config = extend({}, this._defaultConfig, options);
-        this._driverSet = null;
-        this._initDriver = null;
-        this._ready = false;
-        this._dbInfo = null;
-
-        this._wrapLibraryMethodsWithReady();
-        this.setDriver(this._config.driver)["catch"](function () {});
-    }
-
-    // Set any config values for localForage; can be called anytime before
-    // the first API call (e.g. `getItem`, `setItem`).
-    // We loop through options so we don't overwrite existing config
-    // values.
-
-
-    LocalForage.prototype.config = function config(options) {
-        // If the options argument is an object, we use it to set values.
-        // Otherwise, we return either a specified config value or all
-        // config values.
-        if ((typeof options === 'undefined' ? 'undefined' : _typeof(options)) === 'object') {
-            // If localforage is ready and fully initialized, we can't set
-            // any new configuration values. Instead, we return an error.
-            if (this._ready) {
-                return new Error("Can't call config() after localforage " + 'has been used.');
-            }
-
-            for (var i in options) {
-                if (i === 'storeName') {
-                    options[i] = options[i].replace(/\W/g, '_');
-                }
-
-                if (i === 'version' && typeof options[i] !== 'number') {
-                    return new Error('Database version must be a number.');
-                }
-
-                this._config[i] = options[i];
-            }
-
-            // after all config options are set and
-            // the driver option is used, try setting it
-            if ('driver' in options && options.driver) {
-                return this.setDriver(this._config.driver);
-            }
-
-            return true;
-        } else if (typeof options === 'string') {
-            return this._config[options];
-        } else {
-            return this._config;
-        }
-    };
-
-    // Used to define a custom driver, shared across all instances of
-    // localForage.
-
-
-    LocalForage.prototype.defineDriver = function defineDriver(driverObject, callback, errorCallback) {
-        var promise = new Promise$1(function (resolve, reject) {
-            try {
-                var driverName = driverObject._driver;
-                var complianceError = new Error('Custom driver not compliant; see ' + 'https://mozilla.github.io/localForage/#definedriver');
-                var namingError = new Error('Custom driver name already in use: ' + driverObject._driver);
-
-                // A driver name should be defined and not overlap with the
-                // library-defined, default drivers.
-                if (!driverObject._driver) {
-                    reject(complianceError);
-                    return;
-                }
-                if (isLibraryDriver(driverObject._driver)) {
-                    reject(namingError);
-                    return;
-                }
-
-                var customDriverMethods = LibraryMethods.concat('_initStorage');
-                for (var i = 0; i < customDriverMethods.length; i++) {
-                    var customDriverMethod = customDriverMethods[i];
-                    if (!customDriverMethod || !driverObject[customDriverMethod] || typeof driverObject[customDriverMethod] !== 'function') {
-                        reject(complianceError);
-                        return;
-                    }
-                }
-
-                var supportPromise = Promise$1.resolve(true);
-                if ('_support' in driverObject) {
-                    if (driverObject._support && typeof driverObject._support === 'function') {
-                        supportPromise = driverObject._support();
-                    } else {
-                        supportPromise = Promise$1.resolve(!!driverObject._support);
-                    }
-                }
-
-                supportPromise.then(function (supportResult) {
-                    driverSupport[driverName] = supportResult;
-                    CustomDrivers[driverName] = driverObject;
-                    resolve();
-                }, reject);
-            } catch (e) {
-                reject(e);
-            }
-        });
-
-        executeTwoCallbacks(promise, callback, errorCallback);
-        return promise;
-    };
-
-    LocalForage.prototype.driver = function driver() {
-        return this._driver || null;
-    };
-
-    LocalForage.prototype.getDriver = function getDriver(driverName, callback, errorCallback) {
-        var self = this;
-        var getDriverPromise = Promise$1.resolve().then(function () {
-            if (isLibraryDriver(driverName)) {
-                switch (driverName) {
-                    case self.INDEXEDDB:
-                        return asyncStorage;
-                    case self.LOCALSTORAGE:
-                        return localStorageWrapper;
-                    case self.WEBSQL:
-                        return webSQLStorage;
-                }
-            } else if (CustomDrivers[driverName]) {
-                return CustomDrivers[driverName];
-            } else {
-                throw new Error('Driver not found.');
-            }
-        });
-        executeTwoCallbacks(getDriverPromise, callback, errorCallback);
-        return getDriverPromise;
-    };
-
-    LocalForage.prototype.getSerializer = function getSerializer(callback) {
-        var serializerPromise = Promise$1.resolve(localforageSerializer);
-        executeTwoCallbacks(serializerPromise, callback);
-        return serializerPromise;
-    };
-
-    LocalForage.prototype.ready = function ready(callback) {
-        var self = this;
-
-        var promise = self._driverSet.then(function () {
-            if (self._ready === null) {
-                self._ready = self._initDriver();
-            }
-
-            return self._ready;
-        });
-
-        executeTwoCallbacks(promise, callback, callback);
-        return promise;
-    };
-
-    LocalForage.prototype.setDriver = function setDriver(drivers, callback, errorCallback) {
-        var self = this;
-
-        if (!isArray(drivers)) {
-            drivers = [drivers];
-        }
-
-        var supportedDrivers = this._getSupportedDrivers(drivers);
-
-        function setDriverToConfig() {
-            self._config.driver = self.driver();
-        }
-
-        function extendSelfWithDriver(driver) {
-            self._extend(driver);
-            setDriverToConfig();
-
-            self._ready = self._initStorage(self._config);
-            return self._ready;
-        }
-
-        function initDriver(supportedDrivers) {
-            return function () {
-                var currentDriverIndex = 0;
-
-                function driverPromiseLoop() {
-                    while (currentDriverIndex < supportedDrivers.length) {
-                        var driverName = supportedDrivers[currentDriverIndex];
-                        currentDriverIndex++;
-
-                        self._dbInfo = null;
-                        self._ready = null;
-
-                        return self.getDriver(driverName).then(extendSelfWithDriver)["catch"](driverPromiseLoop);
-                    }
-
-                    setDriverToConfig();
-                    var error = new Error('No available storage method found.');
-                    self._driverSet = Promise$1.reject(error);
-                    return self._driverSet;
-                }
-
-                return driverPromiseLoop();
-            };
-        }
-
-        // There might be a driver initialization in progress
-        // so wait for it to finish in order to avoid a possible
-        // race condition to set _dbInfo
-        var oldDriverSetDone = this._driverSet !== null ? this._driverSet["catch"](function () {
-            return Promise$1.resolve();
-        }) : Promise$1.resolve();
-
-        this._driverSet = oldDriverSetDone.then(function () {
-            var driverName = supportedDrivers[0];
-            self._dbInfo = null;
-            self._ready = null;
-
-            return self.getDriver(driverName).then(function (driver) {
-                self._driver = driver._driver;
-                setDriverToConfig();
-                self._wrapLibraryMethodsWithReady();
-                self._initDriver = initDriver(supportedDrivers);
-            });
-        })["catch"](function () {
-            setDriverToConfig();
-            var error = new Error('No available storage method found.');
-            self._driverSet = Promise$1.reject(error);
-            return self._driverSet;
-        });
-
-        executeTwoCallbacks(this._driverSet, callback, errorCallback);
-        return this._driverSet;
-    };
-
-    LocalForage.prototype.supports = function supports(driverName) {
-        return !!driverSupport[driverName];
-    };
-
-    LocalForage.prototype._extend = function _extend(libraryMethodsAndProperties) {
-        extend(this, libraryMethodsAndProperties);
-    };
-
-    LocalForage.prototype._getSupportedDrivers = function _getSupportedDrivers(drivers) {
-        var supportedDrivers = [];
-        for (var i = 0, len = drivers.length; i < len; i++) {
-            var driverName = drivers[i];
-            if (this.supports(driverName)) {
-                supportedDrivers.push(driverName);
-            }
-        }
-        return supportedDrivers;
-    };
-
-    LocalForage.prototype._wrapLibraryMethodsWithReady = function _wrapLibraryMethodsWithReady() {
-        // Add a stub for each driver API method that delays the call to the
-        // corresponding driver method until localForage is ready. These stubs
-        // will be replaced by the driver methods as soon as the driver is
-        // loaded, so there is no performance impact.
-        for (var i = 0; i < LibraryMethods.length; i++) {
-            callWhenReady(this, LibraryMethods[i]);
-        }
-    };
-
-    LocalForage.prototype.createInstance = function createInstance(options) {
-        return new LocalForage(options);
-    };
-
-    return LocalForage;
-}();
-
-// The actual localForage object that we expose as a module or via a
-// global. It's extended by pulling in one of our other libraries.
-
-
-var localforage_js = new LocalForage();
-
-module.exports = localforage_js;
-
-},{"3":3}]},{},[4])(4)
-});
-/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(1)))
 
 /***/ }),
-/* 18 */
+
+/***/ "./node_modules/minilog/lib/common/filter.js":
+/*!***************************************************!*\
+  !*** ./node_modules/minilog/lib/common/filter.js ***!
+  \***************************************************/
+/*! no static exports found */
 /***/ (function(module, exports, __webpack_require__) {
 
-/* WEBPACK VAR INJECTION */(function(process, Buffer) {var req = __webpack_require__(19)
+// default filter
+var Transform = __webpack_require__(/*! ./transform.js */ "./node_modules/minilog/lib/common/transform.js");
+
+var levelMap = { debug: 1, info: 2, warn: 3, error: 4 };
+
+function Filter() {
+  this.enabled = true;
+  this.defaultResult = true;
+  this.clear();
+}
+
+Transform.mixin(Filter);
+
+// allow all matching, with level >= given level
+Filter.prototype.allow = function(name, level) {
+  this._white.push({ n: name, l: levelMap[level] });
+  return this;
+};
+
+// deny all matching, with level <= given level
+Filter.prototype.deny = function(name, level) {
+  this._black.push({ n: name, l: levelMap[level] });
+  return this;
+};
+
+Filter.prototype.clear = function() {
+  this._white = [];
+  this._black = [];
+  return this;
+};
+
+function test(rule, name) {
+  // use .test for RegExps
+  return (rule.n.test ? rule.n.test(name) : rule.n == name);
+};
+
+Filter.prototype.test = function(name, level) {
+  var i, len = Math.max(this._white.length, this._black.length);
+  for(i = 0; i < len; i++) {
+    if(this._white[i] && test(this._white[i], name) && levelMap[level] >= this._white[i].l) {
+      return true;
+    }
+    if(this._black[i] && test(this._black[i], name) && levelMap[level] <= this._black[i].l) {
+      return false;
+    }
+  }
+  return this.defaultResult;
+};
+
+Filter.prototype.write = function(name, level, args) {
+  if(!this.enabled || this.test(name, level)) {
+    return this.emit('item', name, level, args);
+  }
+};
+
+module.exports = Filter;
+
+
+/***/ }),
+
+/***/ "./node_modules/minilog/lib/common/minilog.js":
+/*!****************************************************!*\
+  !*** ./node_modules/minilog/lib/common/minilog.js ***!
+  \****************************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+var Transform = __webpack_require__(/*! ./transform.js */ "./node_modules/minilog/lib/common/transform.js"),
+    Filter = __webpack_require__(/*! ./filter.js */ "./node_modules/minilog/lib/common/filter.js");
+
+var log = new Transform(),
+    slice = Array.prototype.slice;
+
+exports = module.exports = function create(name) {
+  var o   = function() { log.write(name, undefined, slice.call(arguments)); return o; };
+  o.debug = function() { log.write(name, 'debug', slice.call(arguments)); return o; };
+  o.info  = function() { log.write(name, 'info',  slice.call(arguments)); return o; };
+  o.warn  = function() { log.write(name, 'warn',  slice.call(arguments)); return o; };
+  o.error = function() { log.write(name, 'error', slice.call(arguments)); return o; };
+  o.log   = o.debug; // for interface compliance with Node and browser consoles
+  o.suggest = exports.suggest;
+  o.format = log.format;
+  return o;
+};
+
+// filled in separately
+exports.defaultBackend = exports.defaultFormatter = null;
+
+exports.pipe = function(dest) {
+  return log.pipe(dest);
+};
+
+exports.end = exports.unpipe = exports.disable = function(from) {
+  return log.unpipe(from);
+};
+
+exports.Transform = Transform;
+exports.Filter = Filter;
+// this is the default filter that's applied when .enable() is called normally
+// you can bypass it completely and set up your own pipes
+exports.suggest = new Filter();
+
+exports.enable = function() {
+  if(exports.defaultFormatter) {
+    return log.pipe(exports.suggest) // filter
+              .pipe(exports.defaultFormatter) // formatter
+              .pipe(exports.defaultBackend); // backend
+  }
+  return log.pipe(exports.suggest) // filter
+            .pipe(exports.defaultBackend); // formatter
+};
+
+
+
+/***/ }),
+
+/***/ "./node_modules/minilog/lib/common/transform.js":
+/*!******************************************************!*\
+  !*** ./node_modules/minilog/lib/common/transform.js ***!
+  \******************************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+var microee = __webpack_require__(/*! microee */ "./node_modules/microee/index.js");
+
+// Implements a subset of Node's stream.Transform - in a cross-platform manner.
+function Transform() {}
+
+microee.mixin(Transform);
+
+// The write() signature is different from Node's
+// --> makes it much easier to work with objects in logs.
+// One of the lessons from v1 was that it's better to target
+// a good browser rather than the lowest common denominator
+// internally.
+// If you want to use external streams, pipe() to ./stringify.js first.
+Transform.prototype.write = function(name, level, args) {
+  this.emit('item', name, level, args);
+};
+
+Transform.prototype.end = function() {
+  this.emit('end');
+  this.removeAllListeners();
+};
+
+Transform.prototype.pipe = function(dest) {
+  var s = this;
+  // prevent double piping
+  s.emit('unpipe', dest);
+  // tell the dest that it's being piped to
+  dest.emit('pipe', s);
+
+  function onItem() {
+    dest.write.apply(dest, Array.prototype.slice.call(arguments));
+  }
+  function onEnd() { !dest._isStdio && dest.end(); }
+
+  s.on('item', onItem);
+  s.on('end', onEnd);
+
+  s.when('unpipe', function(from) {
+    var match = (from === dest) || typeof from == 'undefined';
+    if(match) {
+      s.removeListener('item', onItem);
+      s.removeListener('end', onEnd);
+      dest.emit('unpipe');
+    }
+    return match;
+  });
+
+  return dest;
+};
+
+Transform.prototype.unpipe = function(from) {
+  this.emit('unpipe', from);
+  return this;
+};
+
+Transform.prototype.format = function(dest) {
+  throw new Error([
+    'Warning: .format() is deprecated in Minilog v2! Use .pipe() instead. For example:',
+    'var Minilog = require(\'minilog\');',
+    'Minilog',
+    '  .pipe(Minilog.backends.console.formatClean)',
+    '  .pipe(Minilog.backends.console);'].join('\n'));
+};
+
+Transform.mixin = function(dest) {
+  var o = Transform.prototype, k;
+  for (k in o) {
+    o.hasOwnProperty(k) && (dest.prototype[k] = o[k]);
+  }
+};
+
+module.exports = Transform;
+
+
+/***/ }),
+
+/***/ "./node_modules/minilog/lib/web/array.js":
+/*!***********************************************!*\
+  !*** ./node_modules/minilog/lib/web/array.js ***!
+  \***********************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+var Transform = __webpack_require__(/*! ../common/transform.js */ "./node_modules/minilog/lib/common/transform.js"),
+    cache = [ ];
+
+var logger = new Transform();
+
+logger.write = function(name, level, args) {
+  cache.push([ name, level, args ]);
+};
+
+// utility functions
+logger.get = function() { return cache; };
+logger.empty = function() { cache = []; };
+
+module.exports = logger;
+
+
+/***/ }),
+
+/***/ "./node_modules/minilog/lib/web/console.js":
+/*!*************************************************!*\
+  !*** ./node_modules/minilog/lib/web/console.js ***!
+  \*************************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+var Transform = __webpack_require__(/*! ../common/transform.js */ "./node_modules/minilog/lib/common/transform.js");
+
+var newlines = /\n+$/,
+    logger = new Transform();
+
+logger.write = function(name, level, args) {
+  var i = args.length-1;
+  if (typeof console === 'undefined' || !console.log) {
+    return;
+  }
+  if(console.log.apply) {
+    return console.log.apply(console, [name, level].concat(args));
+  } else if(JSON && JSON.stringify) {
+    // console.log.apply is undefined in IE8 and IE9
+    // for IE8/9: make console.log at least a bit less awful
+    if(args[i] && typeof args[i] == 'string') {
+      args[i] = args[i].replace(newlines, '');
+    }
+    try {
+      for(i = 0; i < args.length; i++) {
+        args[i] = JSON.stringify(args[i]);
+      }
+    } catch(e) {}
+    console.log(args.join(' '));
+  }
+};
+
+logger.formatters = ['color', 'minilog'];
+logger.color = __webpack_require__(/*! ./formatters/color.js */ "./node_modules/minilog/lib/web/formatters/color.js");
+logger.minilog = __webpack_require__(/*! ./formatters/minilog.js */ "./node_modules/minilog/lib/web/formatters/minilog.js");
+
+module.exports = logger;
+
+
+/***/ }),
+
+/***/ "./node_modules/minilog/lib/web/formatters/color.js":
+/*!**********************************************************!*\
+  !*** ./node_modules/minilog/lib/web/formatters/color.js ***!
+  \**********************************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+var Transform = __webpack_require__(/*! ../../common/transform.js */ "./node_modules/minilog/lib/common/transform.js"),
+    color = __webpack_require__(/*! ./util.js */ "./node_modules/minilog/lib/web/formatters/util.js");
+
+var colors = { debug: ['cyan'], info: ['purple' ], warn: [ 'yellow', true ], error: [ 'red', true ] },
+    logger = new Transform();
+
+logger.write = function(name, level, args) {
+  var fn = console.log;
+  if(console[level] && console[level].apply) {
+    fn = console[level];
+    fn.apply(console, [ '%c'+name+' %c'+level, color('gray'), color.apply(color, colors[level])].concat(args));
+  }
+};
+
+// NOP, because piping the formatted logs can only cause trouble.
+logger.pipe = function() { };
+
+module.exports = logger;
+
+
+/***/ }),
+
+/***/ "./node_modules/minilog/lib/web/formatters/minilog.js":
+/*!************************************************************!*\
+  !*** ./node_modules/minilog/lib/web/formatters/minilog.js ***!
+  \************************************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+var Transform = __webpack_require__(/*! ../../common/transform.js */ "./node_modules/minilog/lib/common/transform.js"),
+    color = __webpack_require__(/*! ./util.js */ "./node_modules/minilog/lib/web/formatters/util.js"),
+    colors = { debug: ['gray'], info: ['purple' ], warn: [ 'yellow', true ], error: [ 'red', true ] },
+    logger = new Transform();
+
+logger.write = function(name, level, args) {
+  var fn = console.log;
+  if(level != 'debug' && console[level]) {
+    fn = console[level];
+  }
+
+  var subset = [], i = 0;
+  if(level != 'info') {
+    for(; i < args.length; i++) {
+      if(typeof args[i] != 'string') break;
+    }
+    fn.apply(console, [ '%c'+name +' '+ args.slice(0, i).join(' '), color.apply(color, colors[level]) ].concat(args.slice(i)));
+  } else {
+    fn.apply(console, [ '%c'+name, color.apply(color, colors[level]) ].concat(args));
+  }
+};
+
+// NOP, because piping the formatted logs can only cause trouble.
+logger.pipe = function() { };
+
+module.exports = logger;
+
+
+/***/ }),
+
+/***/ "./node_modules/minilog/lib/web/formatters/util.js":
+/*!*********************************************************!*\
+  !*** ./node_modules/minilog/lib/web/formatters/util.js ***!
+  \*********************************************************/
+/*! no static exports found */
+/***/ (function(module, exports) {
+
+var hex = {
+  black: '#000',
+  red: '#c23621',
+  green: '#25bc26',
+  yellow: '#bbbb00',
+  blue:  '#492ee1',
+  magenta: '#d338d3',
+  cyan: '#33bbc8',
+  gray: '#808080',
+  purple: '#708'
+};
+function color(fg, isInverse) {
+  if(isInverse) {
+    return 'color: #fff; background: '+hex[fg]+';';
+  } else {
+    return 'color: '+hex[fg]+';';
+  }
+}
+
+module.exports = color;
+
+
+/***/ }),
+
+/***/ "./node_modules/minilog/lib/web/index.js":
+/*!***********************************************!*\
+  !*** ./node_modules/minilog/lib/web/index.js ***!
+  \***********************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+var Minilog = __webpack_require__(/*! ../common/minilog.js */ "./node_modules/minilog/lib/common/minilog.js");
+
+var oldEnable = Minilog.enable,
+    oldDisable = Minilog.disable,
+    isChrome = (typeof navigator != 'undefined' && /chrome/i.test(navigator.userAgent)),
+    console = __webpack_require__(/*! ./console.js */ "./node_modules/minilog/lib/web/console.js");
+
+// Use a more capable logging backend if on Chrome
+Minilog.defaultBackend = (isChrome ? console.minilog : console);
+
+// apply enable inputs from localStorage and from the URL
+if(typeof window != 'undefined') {
+  try {
+    Minilog.enable(JSON.parse(window.localStorage['minilogSettings']));
+  } catch(e) {}
+  if(window.location && window.location.search) {
+    var match = RegExp('[?&]minilog=([^&]*)').exec(window.location.search);
+    match && Minilog.enable(decodeURIComponent(match[1]));
+  }
+}
+
+// Make enable also add to localStorage
+Minilog.enable = function() {
+  oldEnable.call(Minilog, true);
+  try { window.localStorage['minilogSettings'] = JSON.stringify(true); } catch(e) {}
+  return this;
+};
+
+Minilog.disable = function() {
+  oldDisable.call(Minilog);
+  try { delete window.localStorage.minilogSettings; } catch(e) {}
+  return this;
+};
+
+exports = module.exports = Minilog;
+
+exports.backends = {
+  array: __webpack_require__(/*! ./array.js */ "./node_modules/minilog/lib/web/array.js"),
+  browser: Minilog.defaultBackend,
+  localStorage: __webpack_require__(/*! ./localstorage.js */ "./node_modules/minilog/lib/web/localstorage.js"),
+  jQuery: __webpack_require__(/*! ./jquery_simple.js */ "./node_modules/minilog/lib/web/jquery_simple.js")
+};
+
+
+/***/ }),
+
+/***/ "./node_modules/minilog/lib/web/jquery_simple.js":
+/*!*******************************************************!*\
+  !*** ./node_modules/minilog/lib/web/jquery_simple.js ***!
+  \*******************************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+var Transform = __webpack_require__(/*! ../common/transform.js */ "./node_modules/minilog/lib/common/transform.js");
+
+var cid = new Date().valueOf().toString(36);
+
+function AjaxLogger(options) {
+  this.url = options.url || '';
+  this.cache = [];
+  this.timer = null;
+  this.interval = options.interval || 30*1000;
+  this.enabled = true;
+  this.jQuery = window.jQuery;
+  this.extras = {};
+}
+
+Transform.mixin(AjaxLogger);
+
+AjaxLogger.prototype.write = function(name, level, args) {
+  if(!this.timer) { this.init(); }
+  this.cache.push([name, level].concat(args));
+};
+
+AjaxLogger.prototype.init = function() {
+  if(!this.enabled || !this.jQuery) return;
+  var self = this;
+  this.timer = setTimeout(function() {
+    var i, logs = [], ajaxData, url = self.url;
+    if(self.cache.length == 0) return self.init();
+    // Test each log line and only log the ones that are valid (e.g. don't have circular references).
+    // Slight performance hit but benefit is we log all valid lines.
+    for(i = 0; i < self.cache.length; i++) {
+      try {
+        JSON.stringify(self.cache[i]);
+        logs.push(self.cache[i]);
+      } catch(e) { }
+    }
+    if(self.jQuery.isEmptyObject(self.extras)) {
+        ajaxData = JSON.stringify({ logs: logs });
+        url = self.url + '?client_id=' + cid;
+    } else {
+        ajaxData = JSON.stringify(self.jQuery.extend({logs: logs}, self.extras));
+    }
+
+    self.jQuery.ajax(url, {
+      type: 'POST',
+      cache: false,
+      processData: false,
+      data: ajaxData,
+      contentType: 'application/json',
+      timeout: 10000
+    }).success(function(data, status, jqxhr) {
+      if(data.interval) {
+        self.interval = Math.max(1000, data.interval);
+      }
+    }).error(function() {
+      self.interval = 30000;
+    }).always(function() {
+      self.init();
+    });
+    self.cache = [];
+  }, this.interval);
+};
+
+AjaxLogger.prototype.end = function() {};
+
+// wait until jQuery is defined. Useful if you don't control the load order.
+AjaxLogger.jQueryWait = function(onDone) {
+  if(typeof window !== 'undefined' && (window.jQuery || window.$)) {
+    return onDone(window.jQuery || window.$);
+  } else if (typeof window !== 'undefined') {
+    setTimeout(function() { AjaxLogger.jQueryWait(onDone); }, 200);
+  }
+};
+
+module.exports = AjaxLogger;
+
+
+/***/ }),
+
+/***/ "./node_modules/minilog/lib/web/localstorage.js":
+/*!******************************************************!*\
+  !*** ./node_modules/minilog/lib/web/localstorage.js ***!
+  \******************************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+var Transform = __webpack_require__(/*! ../common/transform.js */ "./node_modules/minilog/lib/common/transform.js"),
+    cache = false;
+
+var logger = new Transform();
+
+logger.write = function(name, level, args) {
+  if(typeof window == 'undefined' || typeof JSON == 'undefined' || !JSON.stringify || !JSON.parse) return;
+  try {
+    if(!cache) { cache = (window.localStorage.minilog ? JSON.parse(window.localStorage.minilog) : []); }
+    cache.push([ new Date().toString(), name, level, args ]);
+    window.localStorage.minilog = JSON.stringify(cache);
+  } catch(e) {}
+};
+
+module.exports = logger;
+
+/***/ }),
+
+/***/ "./node_modules/nets/index.js":
+/*!************************************!*\
+  !*** ./node_modules/nets/index.js ***!
+  \************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+/* WEBPACK VAR INJECTION */(function(process, Buffer) {var req = __webpack_require__(/*! request */ "./node_modules/xhr/index.js")
 
 module.exports = Nets
 
@@ -4297,358 +3686,214 @@ function Nets (opts, cb) {
   return req(opts, cb)
 }
 
-/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(8), __webpack_require__(28).Buffer))
+/* WEBPACK VAR INJECTION */}.call(this, __webpack_require__(/*! ./../node-libs-browser/node_modules/process/browser.js */ "./node_modules/node-libs-browser/node_modules/process/browser.js"), __webpack_require__(/*! ./../buffer/index.js */ "./node_modules/buffer/index.js").Buffer))
 
 /***/ }),
-/* 19 */
-/***/ (function(module, exports, __webpack_require__) {
 
-"use strict";
+/***/ "./node_modules/node-libs-browser/node_modules/process/browser.js":
+/*!************************************************************************!*\
+  !*** ./node_modules/node-libs-browser/node_modules/process/browser.js ***!
+  \************************************************************************/
+/*! no static exports found */
+/***/ (function(module, exports) {
 
-var window = __webpack_require__(20)
-var isFunction = __webpack_require__(6)
-var parseHeaders = __webpack_require__(23)
-var xtend = __webpack_require__(24)
+// shim for using process in browser
+var process = module.exports = {};
 
-module.exports = createXHR
-createXHR.XMLHttpRequest = window.XMLHttpRequest || noop
-createXHR.XDomainRequest = "withCredentials" in (new createXHR.XMLHttpRequest()) ? createXHR.XMLHttpRequest : window.XDomainRequest
+// cached from whatever global is present so that test runners that stub it
+// don't break things.  But we need to wrap it in a try catch in case it is
+// wrapped in strict mode code which doesn't define any globals.  It's inside a
+// function because try/catches deoptimize in certain engines.
 
-forEachArray(["get", "put", "post", "patch", "head", "delete"], function(method) {
-    createXHR[method === "delete" ? "del" : method] = function(uri, options, callback) {
-        options = initParams(uri, options, callback)
-        options.method = method.toUpperCase()
-        return _createXHR(options)
-    }
-})
+var cachedSetTimeout;
+var cachedClearTimeout;
 
-function forEachArray(array, iterator) {
-    for (var i = 0; i < array.length; i++) {
-        iterator(array[i])
-    }
+function defaultSetTimout() {
+    throw new Error('setTimeout has not been defined');
 }
-
-function isEmpty(obj){
-    for(var i in obj){
-        if(obj.hasOwnProperty(i)) return false
-    }
-    return true
+function defaultClearTimeout () {
+    throw new Error('clearTimeout has not been defined');
 }
-
-function initParams(uri, options, callback) {
-    var params = uri
-
-    if (isFunction(options)) {
-        callback = options
-        if (typeof uri === "string") {
-            params = {uri:uri}
-        }
-    } else {
-        params = xtend(options, {uri: uri})
-    }
-
-    params.callback = callback
-    return params
-}
-
-function createXHR(uri, options, callback) {
-    options = initParams(uri, options, callback)
-    return _createXHR(options)
-}
-
-function _createXHR(options) {
-    if(typeof options.callback === "undefined"){
-        throw new Error("callback argument missing")
-    }
-
-    var called = false
-    var callback = function cbOnce(err, response, body){
-        if(!called){
-            called = true
-            options.callback(err, response, body)
-        }
-    }
-
-    function readystatechange() {
-        if (xhr.readyState === 4) {
-            setTimeout(loadFunc, 0)
-        }
-    }
-
-    function getBody() {
-        // Chrome with requestType=blob throws errors arround when even testing access to responseText
-        var body = undefined
-
-        if (xhr.response) {
-            body = xhr.response
-        } else {
-            body = xhr.responseText || getXml(xhr)
-        }
-
-        if (isJson) {
-            try {
-                body = JSON.parse(body)
-            } catch (e) {}
-        }
-
-        return body
-    }
-
-    function errorFunc(evt) {
-        clearTimeout(timeoutTimer)
-        if(!(evt instanceof Error)){
-            evt = new Error("" + (evt || "Unknown XMLHttpRequest Error") )
-        }
-        evt.statusCode = 0
-        return callback(evt, failureResponse)
-    }
-
-    // will load the data & process the response in a special response object
-    function loadFunc() {
-        if (aborted) return
-        var status
-        clearTimeout(timeoutTimer)
-        if(options.useXDR && xhr.status===undefined) {
-            //IE8 CORS GET successful response doesn't have a status field, but body is fine
-            status = 200
-        } else {
-            status = (xhr.status === 1223 ? 204 : xhr.status)
-        }
-        var response = failureResponse
-        var err = null
-
-        if (status !== 0){
-            response = {
-                body: getBody(),
-                statusCode: status,
-                method: method,
-                headers: {},
-                url: uri,
-                rawRequest: xhr
-            }
-            if(xhr.getAllResponseHeaders){ //remember xhr can in fact be XDR for CORS in IE
-                response.headers = parseHeaders(xhr.getAllResponseHeaders())
-            }
-        } else {
-            err = new Error("Internal XMLHttpRequest Error")
-        }
-        return callback(err, response, response.body)
-    }
-
-    var xhr = options.xhr || null
-
-    if (!xhr) {
-        if (options.cors || options.useXDR) {
-            xhr = new createXHR.XDomainRequest()
-        }else{
-            xhr = new createXHR.XMLHttpRequest()
-        }
-    }
-
-    var key
-    var aborted
-    var uri = xhr.url = options.uri || options.url
-    var method = xhr.method = options.method || "GET"
-    var body = options.body || options.data
-    var headers = xhr.headers = options.headers || {}
-    var sync = !!options.sync
-    var isJson = false
-    var timeoutTimer
-    var failureResponse = {
-        body: undefined,
-        headers: {},
-        statusCode: 0,
-        method: method,
-        url: uri,
-        rawRequest: xhr
-    }
-
-    if ("json" in options && options.json !== false) {
-        isJson = true
-        headers["accept"] || headers["Accept"] || (headers["Accept"] = "application/json") //Don't override existing accept header declared by user
-        if (method !== "GET" && method !== "HEAD") {
-            headers["content-type"] || headers["Content-Type"] || (headers["Content-Type"] = "application/json") //Don't override existing accept header declared by user
-            body = JSON.stringify(options.json === true ? body : options.json)
-        }
-    }
-
-    xhr.onreadystatechange = readystatechange
-    xhr.onload = loadFunc
-    xhr.onerror = errorFunc
-    // IE9 must have onprogress be set to a unique function.
-    xhr.onprogress = function () {
-        // IE must die
-    }
-    xhr.onabort = function(){
-        aborted = true;
-    }
-    xhr.ontimeout = errorFunc
-    xhr.open(method, uri, !sync, options.username, options.password)
-    //has to be after open
-    if(!sync) {
-        xhr.withCredentials = !!options.withCredentials
-    }
-    // Cannot set timeout with sync request
-    // not setting timeout on the xhr object, because of old webkits etc. not handling that correctly
-    // both npm's request and jquery 1.x use this kind of timeout, so this is being consistent
-    if (!sync && options.timeout > 0 ) {
-        timeoutTimer = setTimeout(function(){
-            if (aborted) return
-            aborted = true//IE9 may still call readystatechange
-            xhr.abort("timeout")
-            var e = new Error("XMLHttpRequest timeout")
-            e.code = "ETIMEDOUT"
-            errorFunc(e)
-        }, options.timeout )
-    }
-
-    if (xhr.setRequestHeader) {
-        for(key in headers){
-            if(headers.hasOwnProperty(key)){
-                xhr.setRequestHeader(key, headers[key])
-            }
-        }
-    } else if (options.headers && !isEmpty(options.headers)) {
-        throw new Error("Headers cannot be set on an XDomainRequest object")
-    }
-
-    if ("responseType" in options) {
-        xhr.responseType = options.responseType
-    }
-
-    if ("beforeSend" in options &&
-        typeof options.beforeSend === "function"
-    ) {
-        options.beforeSend(xhr)
-    }
-
-    // Microsoft Edge browser sends "undefined" when send is called with undefined value.
-    // XMLHttpRequest spec says to pass null as body to indicate no body
-    // See https://github.com/naugtur/xhr/issues/100.
-    xhr.send(body || null)
-
-    return xhr
-
-
-}
-
-function getXml(xhr) {
-    // xhr.responseXML will throw Exception "InvalidStateError" or "DOMException"
-    // See https://developer.mozilla.org/en-US/docs/Web/API/XMLHttpRequest/responseXML.
+(function () {
     try {
-        if (xhr.responseType === "document") {
-            return xhr.responseXML
+        if (typeof setTimeout === 'function') {
+            cachedSetTimeout = setTimeout;
+        } else {
+            cachedSetTimeout = defaultSetTimout;
         }
-        var firefoxBugTakenEffect = xhr.responseXML && xhr.responseXML.documentElement.nodeName === "parsererror"
-        if (xhr.responseType === "" && !firefoxBugTakenEffect) {
-            return xhr.responseXML
+    } catch (e) {
+        cachedSetTimeout = defaultSetTimout;
+    }
+    try {
+        if (typeof clearTimeout === 'function') {
+            cachedClearTimeout = clearTimeout;
+        } else {
+            cachedClearTimeout = defaultClearTimeout;
         }
-    } catch (e) {}
+    } catch (e) {
+        cachedClearTimeout = defaultClearTimeout;
+    }
+} ())
+function runTimeout(fun) {
+    if (cachedSetTimeout === setTimeout) {
+        //normal enviroments in sane situations
+        return setTimeout(fun, 0);
+    }
+    // if setTimeout wasn't available but was latter defined
+    if ((cachedSetTimeout === defaultSetTimout || !cachedSetTimeout) && setTimeout) {
+        cachedSetTimeout = setTimeout;
+        return setTimeout(fun, 0);
+    }
+    try {
+        // when when somebody has screwed with setTimeout but no I.E. maddness
+        return cachedSetTimeout(fun, 0);
+    } catch(e){
+        try {
+            // When we are in I.E. but the script has been evaled so I.E. doesn't trust the global object when called normally
+            return cachedSetTimeout.call(null, fun, 0);
+        } catch(e){
+            // same as above but when it's a version of I.E. that must have the global object for 'this', hopfully our context correct otherwise it will throw a global error
+            return cachedSetTimeout.call(this, fun, 0);
+        }
+    }
 
-    return null
+
 }
+function runClearTimeout(marker) {
+    if (cachedClearTimeout === clearTimeout) {
+        //normal enviroments in sane situations
+        return clearTimeout(marker);
+    }
+    // if clearTimeout wasn't available but was latter defined
+    if ((cachedClearTimeout === defaultClearTimeout || !cachedClearTimeout) && clearTimeout) {
+        cachedClearTimeout = clearTimeout;
+        return clearTimeout(marker);
+    }
+    try {
+        // when when somebody has screwed with setTimeout but no I.E. maddness
+        return cachedClearTimeout(marker);
+    } catch (e){
+        try {
+            // When we are in I.E. but the script has been evaled so I.E. doesn't  trust the global object when called normally
+            return cachedClearTimeout.call(null, marker);
+        } catch (e){
+            // same as above but when it's a version of I.E. that must have the global object for 'this', hopfully our context correct otherwise it will throw a global error.
+            // Some versions of I.E. have different rules for clearTimeout vs setTimeout
+            return cachedClearTimeout.call(this, marker);
+        }
+    }
+
+
+
+}
+var queue = [];
+var draining = false;
+var currentQueue;
+var queueIndex = -1;
+
+function cleanUpNextTick() {
+    if (!draining || !currentQueue) {
+        return;
+    }
+    draining = false;
+    if (currentQueue.length) {
+        queue = currentQueue.concat(queue);
+    } else {
+        queueIndex = -1;
+    }
+    if (queue.length) {
+        drainQueue();
+    }
+}
+
+function drainQueue() {
+    if (draining) {
+        return;
+    }
+    var timeout = runTimeout(cleanUpNextTick);
+    draining = true;
+
+    var len = queue.length;
+    while(len) {
+        currentQueue = queue;
+        queue = [];
+        while (++queueIndex < len) {
+            if (currentQueue) {
+                currentQueue[queueIndex].run();
+            }
+        }
+        queueIndex = -1;
+        len = queue.length;
+    }
+    currentQueue = null;
+    draining = false;
+    runClearTimeout(timeout);
+}
+
+process.nextTick = function (fun) {
+    var args = new Array(arguments.length - 1);
+    if (arguments.length > 1) {
+        for (var i = 1; i < arguments.length; i++) {
+            args[i - 1] = arguments[i];
+        }
+    }
+    queue.push(new Item(fun, args));
+    if (queue.length === 1 && !draining) {
+        runTimeout(drainQueue);
+    }
+};
+
+// v8 likes predictible objects
+function Item(fun, array) {
+    this.fun = fun;
+    this.array = array;
+}
+Item.prototype.run = function () {
+    this.fun.apply(null, this.array);
+};
+process.title = 'browser';
+process.browser = true;
+process.env = {};
+process.argv = [];
+process.version = ''; // empty string to avoid regexp issues
+process.versions = {};
 
 function noop() {}
 
+process.on = noop;
+process.addListener = noop;
+process.once = noop;
+process.off = noop;
+process.removeListener = noop;
+process.removeAllListeners = noop;
+process.emit = noop;
+process.prependListener = noop;
+process.prependOnceListener = noop;
 
-/***/ }),
-/* 20 */
-/***/ (function(module, exports, __webpack_require__) {
+process.listeners = function (name) { return [] }
 
-/* WEBPACK VAR INJECTION */(function(global) {var win;
-
-if (typeof window !== "undefined") {
-    win = window;
-} else if (typeof global !== "undefined") {
-    win = global;
-} else if (typeof self !== "undefined"){
-    win = self;
-} else {
-    win = {};
-}
-
-module.exports = win;
-
-/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(1)))
-
-/***/ }),
-/* 21 */
-/***/ (function(module, exports, __webpack_require__) {
-
-var isFunction = __webpack_require__(6)
-
-module.exports = forEach
-
-var toString = Object.prototype.toString
-var hasOwnProperty = Object.prototype.hasOwnProperty
-
-function forEach(list, iterator, context) {
-    if (!isFunction(iterator)) {
-        throw new TypeError('iterator must be a function')
-    }
-
-    if (arguments.length < 3) {
-        context = this
-    }
-    
-    if (toString.call(list) === '[object Array]')
-        forEachArray(list, iterator, context)
-    else if (typeof list === 'string')
-        forEachString(list, iterator, context)
-    else
-        forEachObject(list, iterator, context)
-}
-
-function forEachArray(array, iterator, context) {
-    for (var i = 0, len = array.length; i < len; i++) {
-        if (hasOwnProperty.call(array, i)) {
-            iterator.call(context, array[i], i, array)
-        }
-    }
-}
-
-function forEachString(string, iterator, context) {
-    for (var i = 0, len = string.length; i < len; i++) {
-        // no such thing as a sparse string.
-        iterator.call(context, string.charAt(i), i, string)
-    }
-}
-
-function forEachObject(object, iterator, context) {
-    for (var k in object) {
-        if (hasOwnProperty.call(object, k)) {
-            iterator.call(context, object[k], k, object)
-        }
-    }
-}
-
-
-/***/ }),
-/* 22 */
-/***/ (function(module, exports) {
-
-
-exports = module.exports = trim;
-
-function trim(str){
-  return str.replace(/^\s*|\s*$/g, '');
-}
-
-exports.left = function(str){
-  return str.replace(/^\s*/, '');
+process.binding = function (name) {
+    throw new Error('process.binding is not supported');
 };
 
-exports.right = function(str){
-  return str.replace(/\s*$/, '');
+process.cwd = function () { return '/' };
+process.chdir = function (dir) {
+    throw new Error('process.chdir is not supported');
 };
+process.umask = function() { return 0; };
 
 
 /***/ }),
-/* 23 */
+
+/***/ "./node_modules/parse-headers/parse-headers.js":
+/*!*****************************************************!*\
+  !*** ./node_modules/parse-headers/parse-headers.js ***!
+  \*****************************************************/
+/*! no static exports found */
 /***/ (function(module, exports, __webpack_require__) {
 
-var trim = __webpack_require__(22)
-  , forEach = __webpack_require__(21)
+var trim = __webpack_require__(/*! trim */ "./node_modules/trim/index.js")
+  , forEach = __webpack_require__(/*! for-each */ "./node_modules/for-each/index.js")
   , isArray = function(arg) {
       return Object.prototype.toString.call(arg) === '[object Array]';
     }
@@ -4680,32 +3925,32 @@ module.exports = function (headers) {
 }
 
 /***/ }),
-/* 24 */
-/***/ (function(module, exports) {
 
-module.exports = extend
+/***/ "./node_modules/text-encoding/index.js":
+/*!*********************************************!*\
+  !*** ./node_modules/text-encoding/index.js ***!
+  \*********************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
 
-var hasOwnProperty = Object.prototype.hasOwnProperty;
+// This is free and unencumbered software released into the public domain.
+// See LICENSE.md for more information.
 
-function extend() {
-    var target = {}
+var encoding = __webpack_require__(/*! ./lib/encoding.js */ "./node_modules/text-encoding/lib/encoding.js");
 
-    for (var i = 0; i < arguments.length; i++) {
-        var source = arguments[i]
-
-        for (var key in source) {
-            if (hasOwnProperty.call(source, key)) {
-                target[key] = source[key]
-            }
-        }
-    }
-
-    return target
-}
+module.exports = {
+  TextEncoder: encoding.TextEncoder,
+  TextDecoder: encoding.TextDecoder,
+};
 
 
 /***/ }),
-/* 25 */
+
+/***/ "./node_modules/text-encoding/lib/encoding-indexes.js":
+/*!************************************************************!*\
+  !*** ./node_modules/text-encoding/lib/encoding-indexes.js ***!
+  \************************************************************/
+/*! no static exports found */
 /***/ (function(module, exports) {
 
 (function(global) {
@@ -4757,7 +4002,12 @@ function extend() {
 }(this || {}));
 
 /***/ }),
-/* 26 */
+
+/***/ "./node_modules/text-encoding/lib/encoding.js":
+/*!****************************************************!*\
+  !*** ./node_modules/text-encoding/lib/encoding.js ***!
+  \****************************************************/
+/*! no static exports found */
 /***/ (function(module, exports, __webpack_require__) {
 
 // This is free and unencumbered software released into the public domain.
@@ -4774,7 +4024,7 @@ function extend() {
   if (typeof module !== "undefined" && module.exports &&
     !global["encoding-indexes"]) {
     global["encoding-indexes"] =
-      __webpack_require__(25)["encoding-indexes"];
+      __webpack_require__(/*! ./encoding-indexes.js */ "./node_modules/text-encoding/lib/encoding-indexes.js")["encoding-indexes"];
   }
 
   //
@@ -8075,1920 +7325,1288 @@ function extend() {
 }(this || {}));
 
 /***/ }),
-/* 27 */
+
+/***/ "./node_modules/trim/index.js":
+/*!************************************!*\
+  !*** ./node_modules/trim/index.js ***!
+  \************************************/
+/*! no static exports found */
+/***/ (function(module, exports) {
+
+
+exports = module.exports = trim;
+
+function trim(str){
+  return str.replace(/^\s*|\s*$/g, '');
+}
+
+exports.left = function(str){
+  return str.replace(/^\s*/, '');
+};
+
+exports.right = function(str){
+  return str.replace(/\s*$/, '');
+};
+
+
+/***/ }),
+
+/***/ "./node_modules/webpack/buildin/amd-options.js":
+/*!****************************************!*\
+  !*** (webpack)/buildin/amd-options.js ***!
+  \****************************************/
+/*! no static exports found */
 /***/ (function(module, exports) {
 
 /* WEBPACK VAR INJECTION */(function(__webpack_amd_options__) {/* globals __webpack_amd_options__ */
 module.exports = __webpack_amd_options__;
 
-/* WEBPACK VAR INJECTION */}.call(exports, {}))
+/* WEBPACK VAR INJECTION */}.call(this, {}))
 
 /***/ }),
-/* 28 */
+
+/***/ "./node_modules/webpack/buildin/global.js":
+/*!***********************************!*\
+  !*** (webpack)/buildin/global.js ***!
+  \***********************************/
+/*! no static exports found */
+/***/ (function(module, exports) {
+
+var g;
+
+// This works in non-strict mode
+g = (function() {
+	return this;
+})();
+
+try {
+	// This works if eval is allowed (see CSP)
+	g = g || Function("return this")() || (1, eval)("this");
+} catch (e) {
+	// This works if the window reference is available
+	if (typeof window === "object") g = window;
+}
+
+// g can still be undefined, but nothing to do about it...
+// We return undefined, instead of nothing here, so it's
+// easier to handle this case. if(!global) { ...}
+
+module.exports = g;
+
+
+/***/ }),
+
+/***/ "./node_modules/xhr/index.js":
+/*!***********************************!*\
+  !*** ./node_modules/xhr/index.js ***!
+  \***********************************/
+/*! no static exports found */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
-/* WEBPACK VAR INJECTION */(function(global) {/*!
- * The buffer module from node.js, for the browser.
- *
- * @author   Feross Aboukhadijeh <feross@feross.org> <http://feross.org>
- * @license  MIT
- */
-/* eslint-disable no-proto */
 
+var window = __webpack_require__(/*! global/window */ "./node_modules/global/window.js")
+var isFunction = __webpack_require__(/*! is-function */ "./node_modules/is-function/index.js")
+var parseHeaders = __webpack_require__(/*! parse-headers */ "./node_modules/parse-headers/parse-headers.js")
+var xtend = __webpack_require__(/*! xtend */ "./node_modules/xtend/immutable.js")
 
+module.exports = createXHR
+// Allow use of default import syntax in TypeScript
+module.exports.default = createXHR;
+createXHR.XMLHttpRequest = window.XMLHttpRequest || noop
+createXHR.XDomainRequest = "withCredentials" in (new createXHR.XMLHttpRequest()) ? createXHR.XMLHttpRequest : window.XDomainRequest
 
-var base64 = __webpack_require__(5)
-var ieee754 = __webpack_require__(29)
-var isArray = __webpack_require__(30)
-
-exports.Buffer = Buffer
-exports.SlowBuffer = SlowBuffer
-exports.INSPECT_MAX_BYTES = 50
-
-/**
- * If `Buffer.TYPED_ARRAY_SUPPORT`:
- *   === true    Use Uint8Array implementation (fastest)
- *   === false   Use Object implementation (most compatible, even IE6)
- *
- * Browsers that support typed arrays are IE 10+, Firefox 4+, Chrome 7+, Safari 5.1+,
- * Opera 11.6+, iOS 4.2+.
- *
- * Due to various browser bugs, sometimes the Object implementation will be used even
- * when the browser supports typed arrays.
- *
- * Note:
- *
- *   - Firefox 4-29 lacks support for adding new properties to `Uint8Array` instances,
- *     See: https://bugzilla.mozilla.org/show_bug.cgi?id=695438.
- *
- *   - Chrome 9-10 is missing the `TypedArray.prototype.subarray` function.
- *
- *   - IE10 has a broken `TypedArray.prototype.subarray` function which returns arrays of
- *     incorrect length in some situations.
-
- * We detect these buggy browsers and set `Buffer.TYPED_ARRAY_SUPPORT` to `false` so they
- * get the Object implementation, which is slower but behaves correctly.
- */
-Buffer.TYPED_ARRAY_SUPPORT = global.TYPED_ARRAY_SUPPORT !== undefined
-  ? global.TYPED_ARRAY_SUPPORT
-  : typedArraySupport()
-
-/*
- * Export kMaxLength after typed array support is determined.
- */
-exports.kMaxLength = kMaxLength()
-
-function typedArraySupport () {
-  try {
-    var arr = new Uint8Array(1)
-    arr.__proto__ = {__proto__: Uint8Array.prototype, foo: function () { return 42 }}
-    return arr.foo() === 42 && // typed array instances can be augmented
-        typeof arr.subarray === 'function' && // chrome 9-10 lack `subarray`
-        arr.subarray(1, 1).byteLength === 0 // ie10 has broken `subarray`
-  } catch (e) {
-    return false
-  }
-}
-
-function kMaxLength () {
-  return Buffer.TYPED_ARRAY_SUPPORT
-    ? 0x7fffffff
-    : 0x3fffffff
-}
-
-function createBuffer (that, length) {
-  if (kMaxLength() < length) {
-    throw new RangeError('Invalid typed array length')
-  }
-  if (Buffer.TYPED_ARRAY_SUPPORT) {
-    // Return an augmented `Uint8Array` instance, for best performance
-    that = new Uint8Array(length)
-    that.__proto__ = Buffer.prototype
-  } else {
-    // Fallback: Return an object instance of the Buffer class
-    if (that === null) {
-      that = new Buffer(length)
+forEachArray(["get", "put", "post", "patch", "head", "delete"], function(method) {
+    createXHR[method === "delete" ? "del" : method] = function(uri, options, callback) {
+        options = initParams(uri, options, callback)
+        options.method = method.toUpperCase()
+        return _createXHR(options)
     }
-    that.length = length
-  }
+})
 
-  return that
-}
-
-/**
- * The Buffer constructor returns instances of `Uint8Array` that have their
- * prototype changed to `Buffer.prototype`. Furthermore, `Buffer` is a subclass of
- * `Uint8Array`, so the returned instances will have all the node `Buffer` methods
- * and the `Uint8Array` methods. Square bracket notation works as expected -- it
- * returns a single octet.
- *
- * The `Uint8Array` prototype remains unmodified.
- */
-
-function Buffer (arg, encodingOrOffset, length) {
-  if (!Buffer.TYPED_ARRAY_SUPPORT && !(this instanceof Buffer)) {
-    return new Buffer(arg, encodingOrOffset, length)
-  }
-
-  // Common case.
-  if (typeof arg === 'number') {
-    if (typeof encodingOrOffset === 'string') {
-      throw new Error(
-        'If encoding is specified then the first argument must be a string'
-      )
+function forEachArray(array, iterator) {
+    for (var i = 0; i < array.length; i++) {
+        iterator(array[i])
     }
-    return allocUnsafe(this, arg)
-  }
-  return from(this, arg, encodingOrOffset, length)
 }
 
-Buffer.poolSize = 8192 // not used by this implementation
-
-// TODO: Legacy, not needed anymore. Remove in next major version.
-Buffer._augment = function (arr) {
-  arr.__proto__ = Buffer.prototype
-  return arr
-}
-
-function from (that, value, encodingOrOffset, length) {
-  if (typeof value === 'number') {
-    throw new TypeError('"value" argument must not be a number')
-  }
-
-  if (typeof ArrayBuffer !== 'undefined' && value instanceof ArrayBuffer) {
-    return fromArrayBuffer(that, value, encodingOrOffset, length)
-  }
-
-  if (typeof value === 'string') {
-    return fromString(that, value, encodingOrOffset)
-  }
-
-  return fromObject(that, value)
-}
-
-/**
- * Functionally equivalent to Buffer(arg, encoding) but throws a TypeError
- * if value is a number.
- * Buffer.from(str[, encoding])
- * Buffer.from(array)
- * Buffer.from(buffer)
- * Buffer.from(arrayBuffer[, byteOffset[, length]])
- **/
-Buffer.from = function (value, encodingOrOffset, length) {
-  return from(null, value, encodingOrOffset, length)
-}
-
-if (Buffer.TYPED_ARRAY_SUPPORT) {
-  Buffer.prototype.__proto__ = Uint8Array.prototype
-  Buffer.__proto__ = Uint8Array
-  if (typeof Symbol !== 'undefined' && Symbol.species &&
-      Buffer[Symbol.species] === Buffer) {
-    // Fix subarray() in ES2016. See: https://github.com/feross/buffer/pull/97
-    Object.defineProperty(Buffer, Symbol.species, {
-      value: null,
-      configurable: true
-    })
-  }
-}
-
-function assertSize (size) {
-  if (typeof size !== 'number') {
-    throw new TypeError('"size" argument must be a number')
-  } else if (size < 0) {
-    throw new RangeError('"size" argument must not be negative')
-  }
-}
-
-function alloc (that, size, fill, encoding) {
-  assertSize(size)
-  if (size <= 0) {
-    return createBuffer(that, size)
-  }
-  if (fill !== undefined) {
-    // Only pay attention to encoding if it's a string. This
-    // prevents accidentally sending in a number that would
-    // be interpretted as a start offset.
-    return typeof encoding === 'string'
-      ? createBuffer(that, size).fill(fill, encoding)
-      : createBuffer(that, size).fill(fill)
-  }
-  return createBuffer(that, size)
-}
-
-/**
- * Creates a new filled Buffer instance.
- * alloc(size[, fill[, encoding]])
- **/
-Buffer.alloc = function (size, fill, encoding) {
-  return alloc(null, size, fill, encoding)
-}
-
-function allocUnsafe (that, size) {
-  assertSize(size)
-  that = createBuffer(that, size < 0 ? 0 : checked(size) | 0)
-  if (!Buffer.TYPED_ARRAY_SUPPORT) {
-    for (var i = 0; i < size; ++i) {
-      that[i] = 0
+function isEmpty(obj){
+    for(var i in obj){
+        if(obj.hasOwnProperty(i)) return false
     }
-  }
-  return that
+    return true
 }
 
-/**
- * Equivalent to Buffer(num), by default creates a non-zero-filled Buffer instance.
- * */
-Buffer.allocUnsafe = function (size) {
-  return allocUnsafe(null, size)
-}
-/**
- * Equivalent to SlowBuffer(num), by default creates a non-zero-filled Buffer instance.
- */
-Buffer.allocUnsafeSlow = function (size) {
-  return allocUnsafe(null, size)
-}
-
-function fromString (that, string, encoding) {
-  if (typeof encoding !== 'string' || encoding === '') {
-    encoding = 'utf8'
-  }
-
-  if (!Buffer.isEncoding(encoding)) {
-    throw new TypeError('"encoding" must be a valid string encoding')
-  }
-
-  var length = byteLength(string, encoding) | 0
-  that = createBuffer(that, length)
-
-  var actual = that.write(string, encoding)
-
-  if (actual !== length) {
-    // Writing a hex string, for example, that contains invalid characters will
-    // cause everything after the first invalid character to be ignored. (e.g.
-    // 'abxxcd' will be treated as 'ab')
-    that = that.slice(0, actual)
-  }
-
-  return that
-}
-
-function fromArrayLike (that, array) {
-  var length = array.length < 0 ? 0 : checked(array.length) | 0
-  that = createBuffer(that, length)
-  for (var i = 0; i < length; i += 1) {
-    that[i] = array[i] & 255
-  }
-  return that
-}
-
-function fromArrayBuffer (that, array, byteOffset, length) {
-  array.byteLength // this throws if `array` is not a valid ArrayBuffer
-
-  if (byteOffset < 0 || array.byteLength < byteOffset) {
-    throw new RangeError('\'offset\' is out of bounds')
-  }
-
-  if (array.byteLength < byteOffset + (length || 0)) {
-    throw new RangeError('\'length\' is out of bounds')
-  }
-
-  if (byteOffset === undefined && length === undefined) {
-    array = new Uint8Array(array)
-  } else if (length === undefined) {
-    array = new Uint8Array(array, byteOffset)
-  } else {
-    array = new Uint8Array(array, byteOffset, length)
-  }
-
-  if (Buffer.TYPED_ARRAY_SUPPORT) {
-    // Return an augmented `Uint8Array` instance, for best performance
-    that = array
-    that.__proto__ = Buffer.prototype
-  } else {
-    // Fallback: Return an object instance of the Buffer class
-    that = fromArrayLike(that, array)
-  }
-  return that
-}
-
-function fromObject (that, obj) {
-  if (Buffer.isBuffer(obj)) {
-    var len = checked(obj.length) | 0
-    that = createBuffer(that, len)
-
-    if (that.length === 0) {
-      return that
-    }
-
-    obj.copy(that, 0, 0, len)
-    return that
-  }
-
-  if (obj) {
-    if ((typeof ArrayBuffer !== 'undefined' &&
-        obj.buffer instanceof ArrayBuffer) || 'length' in obj) {
-      if (typeof obj.length !== 'number' || isnan(obj.length)) {
-        return createBuffer(that, 0)
-      }
-      return fromArrayLike(that, obj)
-    }
-
-    if (obj.type === 'Buffer' && isArray(obj.data)) {
-      return fromArrayLike(that, obj.data)
-    }
-  }
-
-  throw new TypeError('First argument must be a string, Buffer, ArrayBuffer, Array, or array-like object.')
-}
-
-function checked (length) {
-  // Note: cannot use `length < kMaxLength()` here because that fails when
-  // length is NaN (which is otherwise coerced to zero.)
-  if (length >= kMaxLength()) {
-    throw new RangeError('Attempt to allocate Buffer larger than maximum ' +
-                         'size: 0x' + kMaxLength().toString(16) + ' bytes')
-  }
-  return length | 0
-}
-
-function SlowBuffer (length) {
-  if (+length != length) { // eslint-disable-line eqeqeq
-    length = 0
-  }
-  return Buffer.alloc(+length)
-}
-
-Buffer.isBuffer = function isBuffer (b) {
-  return !!(b != null && b._isBuffer)
-}
-
-Buffer.compare = function compare (a, b) {
-  if (!Buffer.isBuffer(a) || !Buffer.isBuffer(b)) {
-    throw new TypeError('Arguments must be Buffers')
-  }
-
-  if (a === b) return 0
-
-  var x = a.length
-  var y = b.length
-
-  for (var i = 0, len = Math.min(x, y); i < len; ++i) {
-    if (a[i] !== b[i]) {
-      x = a[i]
-      y = b[i]
-      break
-    }
-  }
-
-  if (x < y) return -1
-  if (y < x) return 1
-  return 0
-}
-
-Buffer.isEncoding = function isEncoding (encoding) {
-  switch (String(encoding).toLowerCase()) {
-    case 'hex':
-    case 'utf8':
-    case 'utf-8':
-    case 'ascii':
-    case 'latin1':
-    case 'binary':
-    case 'base64':
-    case 'ucs2':
-    case 'ucs-2':
-    case 'utf16le':
-    case 'utf-16le':
-      return true
-    default:
-      return false
-  }
-}
-
-Buffer.concat = function concat (list, length) {
-  if (!isArray(list)) {
-    throw new TypeError('"list" argument must be an Array of Buffers')
-  }
-
-  if (list.length === 0) {
-    return Buffer.alloc(0)
-  }
-
-  var i
-  if (length === undefined) {
-    length = 0
-    for (i = 0; i < list.length; ++i) {
-      length += list[i].length
-    }
-  }
-
-  var buffer = Buffer.allocUnsafe(length)
-  var pos = 0
-  for (i = 0; i < list.length; ++i) {
-    var buf = list[i]
-    if (!Buffer.isBuffer(buf)) {
-      throw new TypeError('"list" argument must be an Array of Buffers')
-    }
-    buf.copy(buffer, pos)
-    pos += buf.length
-  }
-  return buffer
-}
-
-function byteLength (string, encoding) {
-  if (Buffer.isBuffer(string)) {
-    return string.length
-  }
-  if (typeof ArrayBuffer !== 'undefined' && typeof ArrayBuffer.isView === 'function' &&
-      (ArrayBuffer.isView(string) || string instanceof ArrayBuffer)) {
-    return string.byteLength
-  }
-  if (typeof string !== 'string') {
-    string = '' + string
-  }
-
-  var len = string.length
-  if (len === 0) return 0
-
-  // Use a for loop to avoid recursion
-  var loweredCase = false
-  for (;;) {
-    switch (encoding) {
-      case 'ascii':
-      case 'latin1':
-      case 'binary':
-        return len
-      case 'utf8':
-      case 'utf-8':
-      case undefined:
-        return utf8ToBytes(string).length
-      case 'ucs2':
-      case 'ucs-2':
-      case 'utf16le':
-      case 'utf-16le':
-        return len * 2
-      case 'hex':
-        return len >>> 1
-      case 'base64':
-        return base64ToBytes(string).length
-      default:
-        if (loweredCase) return utf8ToBytes(string).length // assume utf8
-        encoding = ('' + encoding).toLowerCase()
-        loweredCase = true
-    }
-  }
-}
-Buffer.byteLength = byteLength
-
-function slowToString (encoding, start, end) {
-  var loweredCase = false
-
-  // No need to verify that "this.length <= MAX_UINT32" since it's a read-only
-  // property of a typed array.
-
-  // This behaves neither like String nor Uint8Array in that we set start/end
-  // to their upper/lower bounds if the value passed is out of range.
-  // undefined is handled specially as per ECMA-262 6th Edition,
-  // Section 13.3.3.7 Runtime Semantics: KeyedBindingInitialization.
-  if (start === undefined || start < 0) {
-    start = 0
-  }
-  // Return early if start > this.length. Done here to prevent potential uint32
-  // coercion fail below.
-  if (start > this.length) {
-    return ''
-  }
-
-  if (end === undefined || end > this.length) {
-    end = this.length
-  }
-
-  if (end <= 0) {
-    return ''
-  }
-
-  // Force coersion to uint32. This will also coerce falsey/NaN values to 0.
-  end >>>= 0
-  start >>>= 0
-
-  if (end <= start) {
-    return ''
-  }
-
-  if (!encoding) encoding = 'utf8'
-
-  while (true) {
-    switch (encoding) {
-      case 'hex':
-        return hexSlice(this, start, end)
-
-      case 'utf8':
-      case 'utf-8':
-        return utf8Slice(this, start, end)
-
-      case 'ascii':
-        return asciiSlice(this, start, end)
-
-      case 'latin1':
-      case 'binary':
-        return latin1Slice(this, start, end)
-
-      case 'base64':
-        return base64Slice(this, start, end)
-
-      case 'ucs2':
-      case 'ucs-2':
-      case 'utf16le':
-      case 'utf-16le':
-        return utf16leSlice(this, start, end)
-
-      default:
-        if (loweredCase) throw new TypeError('Unknown encoding: ' + encoding)
-        encoding = (encoding + '').toLowerCase()
-        loweredCase = true
-    }
-  }
-}
-
-// The property is used by `Buffer.isBuffer` and `is-buffer` (in Safari 5-7) to detect
-// Buffer instances.
-Buffer.prototype._isBuffer = true
-
-function swap (b, n, m) {
-  var i = b[n]
-  b[n] = b[m]
-  b[m] = i
-}
-
-Buffer.prototype.swap16 = function swap16 () {
-  var len = this.length
-  if (len % 2 !== 0) {
-    throw new RangeError('Buffer size must be a multiple of 16-bits')
-  }
-  for (var i = 0; i < len; i += 2) {
-    swap(this, i, i + 1)
-  }
-  return this
-}
-
-Buffer.prototype.swap32 = function swap32 () {
-  var len = this.length
-  if (len % 4 !== 0) {
-    throw new RangeError('Buffer size must be a multiple of 32-bits')
-  }
-  for (var i = 0; i < len; i += 4) {
-    swap(this, i, i + 3)
-    swap(this, i + 1, i + 2)
-  }
-  return this
-}
-
-Buffer.prototype.swap64 = function swap64 () {
-  var len = this.length
-  if (len % 8 !== 0) {
-    throw new RangeError('Buffer size must be a multiple of 64-bits')
-  }
-  for (var i = 0; i < len; i += 8) {
-    swap(this, i, i + 7)
-    swap(this, i + 1, i + 6)
-    swap(this, i + 2, i + 5)
-    swap(this, i + 3, i + 4)
-  }
-  return this
-}
-
-Buffer.prototype.toString = function toString () {
-  var length = this.length | 0
-  if (length === 0) return ''
-  if (arguments.length === 0) return utf8Slice(this, 0, length)
-  return slowToString.apply(this, arguments)
-}
-
-Buffer.prototype.equals = function equals (b) {
-  if (!Buffer.isBuffer(b)) throw new TypeError('Argument must be a Buffer')
-  if (this === b) return true
-  return Buffer.compare(this, b) === 0
-}
-
-Buffer.prototype.inspect = function inspect () {
-  var str = ''
-  var max = exports.INSPECT_MAX_BYTES
-  if (this.length > 0) {
-    str = this.toString('hex', 0, max).match(/.{2}/g).join(' ')
-    if (this.length > max) str += ' ... '
-  }
-  return '<Buffer ' + str + '>'
-}
-
-Buffer.prototype.compare = function compare (target, start, end, thisStart, thisEnd) {
-  if (!Buffer.isBuffer(target)) {
-    throw new TypeError('Argument must be a Buffer')
-  }
-
-  if (start === undefined) {
-    start = 0
-  }
-  if (end === undefined) {
-    end = target ? target.length : 0
-  }
-  if (thisStart === undefined) {
-    thisStart = 0
-  }
-  if (thisEnd === undefined) {
-    thisEnd = this.length
-  }
-
-  if (start < 0 || end > target.length || thisStart < 0 || thisEnd > this.length) {
-    throw new RangeError('out of range index')
-  }
-
-  if (thisStart >= thisEnd && start >= end) {
-    return 0
-  }
-  if (thisStart >= thisEnd) {
-    return -1
-  }
-  if (start >= end) {
-    return 1
-  }
-
-  start >>>= 0
-  end >>>= 0
-  thisStart >>>= 0
-  thisEnd >>>= 0
-
-  if (this === target) return 0
-
-  var x = thisEnd - thisStart
-  var y = end - start
-  var len = Math.min(x, y)
-
-  var thisCopy = this.slice(thisStart, thisEnd)
-  var targetCopy = target.slice(start, end)
-
-  for (var i = 0; i < len; ++i) {
-    if (thisCopy[i] !== targetCopy[i]) {
-      x = thisCopy[i]
-      y = targetCopy[i]
-      break
-    }
-  }
-
-  if (x < y) return -1
-  if (y < x) return 1
-  return 0
-}
-
-// Finds either the first index of `val` in `buffer` at offset >= `byteOffset`,
-// OR the last index of `val` in `buffer` at offset <= `byteOffset`.
-//
-// Arguments:
-// - buffer - a Buffer to search
-// - val - a string, Buffer, or number
-// - byteOffset - an index into `buffer`; will be clamped to an int32
-// - encoding - an optional encoding, relevant is val is a string
-// - dir - true for indexOf, false for lastIndexOf
-function bidirectionalIndexOf (buffer, val, byteOffset, encoding, dir) {
-  // Empty buffer means no match
-  if (buffer.length === 0) return -1
-
-  // Normalize byteOffset
-  if (typeof byteOffset === 'string') {
-    encoding = byteOffset
-    byteOffset = 0
-  } else if (byteOffset > 0x7fffffff) {
-    byteOffset = 0x7fffffff
-  } else if (byteOffset < -0x80000000) {
-    byteOffset = -0x80000000
-  }
-  byteOffset = +byteOffset  // Coerce to Number.
-  if (isNaN(byteOffset)) {
-    // byteOffset: it it's undefined, null, NaN, "foo", etc, search whole buffer
-    byteOffset = dir ? 0 : (buffer.length - 1)
-  }
-
-  // Normalize byteOffset: negative offsets start from the end of the buffer
-  if (byteOffset < 0) byteOffset = buffer.length + byteOffset
-  if (byteOffset >= buffer.length) {
-    if (dir) return -1
-    else byteOffset = buffer.length - 1
-  } else if (byteOffset < 0) {
-    if (dir) byteOffset = 0
-    else return -1
-  }
-
-  // Normalize val
-  if (typeof val === 'string') {
-    val = Buffer.from(val, encoding)
-  }
-
-  // Finally, search either indexOf (if dir is true) or lastIndexOf
-  if (Buffer.isBuffer(val)) {
-    // Special case: looking for empty string/buffer always fails
-    if (val.length === 0) {
-      return -1
-    }
-    return arrayIndexOf(buffer, val, byteOffset, encoding, dir)
-  } else if (typeof val === 'number') {
-    val = val & 0xFF // Search for a byte value [0-255]
-    if (Buffer.TYPED_ARRAY_SUPPORT &&
-        typeof Uint8Array.prototype.indexOf === 'function') {
-      if (dir) {
-        return Uint8Array.prototype.indexOf.call(buffer, val, byteOffset)
-      } else {
-        return Uint8Array.prototype.lastIndexOf.call(buffer, val, byteOffset)
-      }
-    }
-    return arrayIndexOf(buffer, [ val ], byteOffset, encoding, dir)
-  }
-
-  throw new TypeError('val must be string, number or Buffer')
-}
-
-function arrayIndexOf (arr, val, byteOffset, encoding, dir) {
-  var indexSize = 1
-  var arrLength = arr.length
-  var valLength = val.length
-
-  if (encoding !== undefined) {
-    encoding = String(encoding).toLowerCase()
-    if (encoding === 'ucs2' || encoding === 'ucs-2' ||
-        encoding === 'utf16le' || encoding === 'utf-16le') {
-      if (arr.length < 2 || val.length < 2) {
-        return -1
-      }
-      indexSize = 2
-      arrLength /= 2
-      valLength /= 2
-      byteOffset /= 2
-    }
-  }
-
-  function read (buf, i) {
-    if (indexSize === 1) {
-      return buf[i]
-    } else {
-      return buf.readUInt16BE(i * indexSize)
-    }
-  }
-
-  var i
-  if (dir) {
-    var foundIndex = -1
-    for (i = byteOffset; i < arrLength; i++) {
-      if (read(arr, i) === read(val, foundIndex === -1 ? 0 : i - foundIndex)) {
-        if (foundIndex === -1) foundIndex = i
-        if (i - foundIndex + 1 === valLength) return foundIndex * indexSize
-      } else {
-        if (foundIndex !== -1) i -= i - foundIndex
-        foundIndex = -1
-      }
-    }
-  } else {
-    if (byteOffset + valLength > arrLength) byteOffset = arrLength - valLength
-    for (i = byteOffset; i >= 0; i--) {
-      var found = true
-      for (var j = 0; j < valLength; j++) {
-        if (read(arr, i + j) !== read(val, j)) {
-          found = false
-          break
+function initParams(uri, options, callback) {
+    var params = uri
+
+    if (isFunction(options)) {
+        callback = options
+        if (typeof uri === "string") {
+            params = {uri:uri}
         }
-      }
-      if (found) return i
-    }
-  }
-
-  return -1
-}
-
-Buffer.prototype.includes = function includes (val, byteOffset, encoding) {
-  return this.indexOf(val, byteOffset, encoding) !== -1
-}
-
-Buffer.prototype.indexOf = function indexOf (val, byteOffset, encoding) {
-  return bidirectionalIndexOf(this, val, byteOffset, encoding, true)
-}
-
-Buffer.prototype.lastIndexOf = function lastIndexOf (val, byteOffset, encoding) {
-  return bidirectionalIndexOf(this, val, byteOffset, encoding, false)
-}
-
-function hexWrite (buf, string, offset, length) {
-  offset = Number(offset) || 0
-  var remaining = buf.length - offset
-  if (!length) {
-    length = remaining
-  } else {
-    length = Number(length)
-    if (length > remaining) {
-      length = remaining
-    }
-  }
-
-  // must be an even number of digits
-  var strLen = string.length
-  if (strLen % 2 !== 0) throw new TypeError('Invalid hex string')
-
-  if (length > strLen / 2) {
-    length = strLen / 2
-  }
-  for (var i = 0; i < length; ++i) {
-    var parsed = parseInt(string.substr(i * 2, 2), 16)
-    if (isNaN(parsed)) return i
-    buf[offset + i] = parsed
-  }
-  return i
-}
-
-function utf8Write (buf, string, offset, length) {
-  return blitBuffer(utf8ToBytes(string, buf.length - offset), buf, offset, length)
-}
-
-function asciiWrite (buf, string, offset, length) {
-  return blitBuffer(asciiToBytes(string), buf, offset, length)
-}
-
-function latin1Write (buf, string, offset, length) {
-  return asciiWrite(buf, string, offset, length)
-}
-
-function base64Write (buf, string, offset, length) {
-  return blitBuffer(base64ToBytes(string), buf, offset, length)
-}
-
-function ucs2Write (buf, string, offset, length) {
-  return blitBuffer(utf16leToBytes(string, buf.length - offset), buf, offset, length)
-}
-
-Buffer.prototype.write = function write (string, offset, length, encoding) {
-  // Buffer#write(string)
-  if (offset === undefined) {
-    encoding = 'utf8'
-    length = this.length
-    offset = 0
-  // Buffer#write(string, encoding)
-  } else if (length === undefined && typeof offset === 'string') {
-    encoding = offset
-    length = this.length
-    offset = 0
-  // Buffer#write(string, offset[, length][, encoding])
-  } else if (isFinite(offset)) {
-    offset = offset | 0
-    if (isFinite(length)) {
-      length = length | 0
-      if (encoding === undefined) encoding = 'utf8'
     } else {
-      encoding = length
-      length = undefined
-    }
-  // legacy write(string, encoding, offset, length) - remove in v0.13
-  } else {
-    throw new Error(
-      'Buffer.write(string, encoding, offset[, length]) is no longer supported'
-    )
-  }
-
-  var remaining = this.length - offset
-  if (length === undefined || length > remaining) length = remaining
-
-  if ((string.length > 0 && (length < 0 || offset < 0)) || offset > this.length) {
-    throw new RangeError('Attempt to write outside buffer bounds')
-  }
-
-  if (!encoding) encoding = 'utf8'
-
-  var loweredCase = false
-  for (;;) {
-    switch (encoding) {
-      case 'hex':
-        return hexWrite(this, string, offset, length)
-
-      case 'utf8':
-      case 'utf-8':
-        return utf8Write(this, string, offset, length)
-
-      case 'ascii':
-        return asciiWrite(this, string, offset, length)
-
-      case 'latin1':
-      case 'binary':
-        return latin1Write(this, string, offset, length)
-
-      case 'base64':
-        // Warning: maxLength not taken into account in base64Write
-        return base64Write(this, string, offset, length)
-
-      case 'ucs2':
-      case 'ucs-2':
-      case 'utf16le':
-      case 'utf-16le':
-        return ucs2Write(this, string, offset, length)
-
-      default:
-        if (loweredCase) throw new TypeError('Unknown encoding: ' + encoding)
-        encoding = ('' + encoding).toLowerCase()
-        loweredCase = true
-    }
-  }
-}
-
-Buffer.prototype.toJSON = function toJSON () {
-  return {
-    type: 'Buffer',
-    data: Array.prototype.slice.call(this._arr || this, 0)
-  }
-}
-
-function base64Slice (buf, start, end) {
-  if (start === 0 && end === buf.length) {
-    return base64.fromByteArray(buf)
-  } else {
-    return base64.fromByteArray(buf.slice(start, end))
-  }
-}
-
-function utf8Slice (buf, start, end) {
-  end = Math.min(buf.length, end)
-  var res = []
-
-  var i = start
-  while (i < end) {
-    var firstByte = buf[i]
-    var codePoint = null
-    var bytesPerSequence = (firstByte > 0xEF) ? 4
-      : (firstByte > 0xDF) ? 3
-      : (firstByte > 0xBF) ? 2
-      : 1
-
-    if (i + bytesPerSequence <= end) {
-      var secondByte, thirdByte, fourthByte, tempCodePoint
-
-      switch (bytesPerSequence) {
-        case 1:
-          if (firstByte < 0x80) {
-            codePoint = firstByte
-          }
-          break
-        case 2:
-          secondByte = buf[i + 1]
-          if ((secondByte & 0xC0) === 0x80) {
-            tempCodePoint = (firstByte & 0x1F) << 0x6 | (secondByte & 0x3F)
-            if (tempCodePoint > 0x7F) {
-              codePoint = tempCodePoint
-            }
-          }
-          break
-        case 3:
-          secondByte = buf[i + 1]
-          thirdByte = buf[i + 2]
-          if ((secondByte & 0xC0) === 0x80 && (thirdByte & 0xC0) === 0x80) {
-            tempCodePoint = (firstByte & 0xF) << 0xC | (secondByte & 0x3F) << 0x6 | (thirdByte & 0x3F)
-            if (tempCodePoint > 0x7FF && (tempCodePoint < 0xD800 || tempCodePoint > 0xDFFF)) {
-              codePoint = tempCodePoint
-            }
-          }
-          break
-        case 4:
-          secondByte = buf[i + 1]
-          thirdByte = buf[i + 2]
-          fourthByte = buf[i + 3]
-          if ((secondByte & 0xC0) === 0x80 && (thirdByte & 0xC0) === 0x80 && (fourthByte & 0xC0) === 0x80) {
-            tempCodePoint = (firstByte & 0xF) << 0x12 | (secondByte & 0x3F) << 0xC | (thirdByte & 0x3F) << 0x6 | (fourthByte & 0x3F)
-            if (tempCodePoint > 0xFFFF && tempCodePoint < 0x110000) {
-              codePoint = tempCodePoint
-            }
-          }
-      }
+        params = xtend(options, {uri: uri})
     }
 
-    if (codePoint === null) {
-      // we did not generate a valid codePoint so insert a
-      // replacement char (U+FFFD) and advance only 1 byte
-      codePoint = 0xFFFD
-      bytesPerSequence = 1
-    } else if (codePoint > 0xFFFF) {
-      // encode to utf16 (surrogate pair dance)
-      codePoint -= 0x10000
-      res.push(codePoint >>> 10 & 0x3FF | 0xD800)
-      codePoint = 0xDC00 | codePoint & 0x3FF
+    params.callback = callback
+    return params
+}
+
+function createXHR(uri, options, callback) {
+    options = initParams(uri, options, callback)
+    return _createXHR(options)
+}
+
+function _createXHR(options) {
+    if(typeof options.callback === "undefined"){
+        throw new Error("callback argument missing")
     }
 
-    res.push(codePoint)
-    i += bytesPerSequence
-  }
-
-  return decodeCodePointsArray(res)
-}
-
-// Based on http://stackoverflow.com/a/22747272/680742, the browser with
-// the lowest limit is Chrome, with 0x10000 args.
-// We go 1 magnitude less, for safety
-var MAX_ARGUMENTS_LENGTH = 0x1000
-
-function decodeCodePointsArray (codePoints) {
-  var len = codePoints.length
-  if (len <= MAX_ARGUMENTS_LENGTH) {
-    return String.fromCharCode.apply(String, codePoints) // avoid extra slice()
-  }
-
-  // Decode in chunks to avoid "call stack size exceeded".
-  var res = ''
-  var i = 0
-  while (i < len) {
-    res += String.fromCharCode.apply(
-      String,
-      codePoints.slice(i, i += MAX_ARGUMENTS_LENGTH)
-    )
-  }
-  return res
-}
-
-function asciiSlice (buf, start, end) {
-  var ret = ''
-  end = Math.min(buf.length, end)
-
-  for (var i = start; i < end; ++i) {
-    ret += String.fromCharCode(buf[i] & 0x7F)
-  }
-  return ret
-}
-
-function latin1Slice (buf, start, end) {
-  var ret = ''
-  end = Math.min(buf.length, end)
-
-  for (var i = start; i < end; ++i) {
-    ret += String.fromCharCode(buf[i])
-  }
-  return ret
-}
-
-function hexSlice (buf, start, end) {
-  var len = buf.length
-
-  if (!start || start < 0) start = 0
-  if (!end || end < 0 || end > len) end = len
-
-  var out = ''
-  for (var i = start; i < end; ++i) {
-    out += toHex(buf[i])
-  }
-  return out
-}
-
-function utf16leSlice (buf, start, end) {
-  var bytes = buf.slice(start, end)
-  var res = ''
-  for (var i = 0; i < bytes.length; i += 2) {
-    res += String.fromCharCode(bytes[i] + bytes[i + 1] * 256)
-  }
-  return res
-}
-
-Buffer.prototype.slice = function slice (start, end) {
-  var len = this.length
-  start = ~~start
-  end = end === undefined ? len : ~~end
-
-  if (start < 0) {
-    start += len
-    if (start < 0) start = 0
-  } else if (start > len) {
-    start = len
-  }
-
-  if (end < 0) {
-    end += len
-    if (end < 0) end = 0
-  } else if (end > len) {
-    end = len
-  }
-
-  if (end < start) end = start
-
-  var newBuf
-  if (Buffer.TYPED_ARRAY_SUPPORT) {
-    newBuf = this.subarray(start, end)
-    newBuf.__proto__ = Buffer.prototype
-  } else {
-    var sliceLen = end - start
-    newBuf = new Buffer(sliceLen, undefined)
-    for (var i = 0; i < sliceLen; ++i) {
-      newBuf[i] = this[i + start]
+    var called = false
+    var callback = function cbOnce(err, response, body){
+        if(!called){
+            called = true
+            options.callback(err, response, body)
+        }
     }
-  }
 
-  return newBuf
-}
-
-/*
- * Need to make sure that buffer isn't trying to write out of bounds.
- */
-function checkOffset (offset, ext, length) {
-  if ((offset % 1) !== 0 || offset < 0) throw new RangeError('offset is not uint')
-  if (offset + ext > length) throw new RangeError('Trying to access beyond buffer length')
-}
-
-Buffer.prototype.readUIntLE = function readUIntLE (offset, byteLength, noAssert) {
-  offset = offset | 0
-  byteLength = byteLength | 0
-  if (!noAssert) checkOffset(offset, byteLength, this.length)
-
-  var val = this[offset]
-  var mul = 1
-  var i = 0
-  while (++i < byteLength && (mul *= 0x100)) {
-    val += this[offset + i] * mul
-  }
-
-  return val
-}
-
-Buffer.prototype.readUIntBE = function readUIntBE (offset, byteLength, noAssert) {
-  offset = offset | 0
-  byteLength = byteLength | 0
-  if (!noAssert) {
-    checkOffset(offset, byteLength, this.length)
-  }
-
-  var val = this[offset + --byteLength]
-  var mul = 1
-  while (byteLength > 0 && (mul *= 0x100)) {
-    val += this[offset + --byteLength] * mul
-  }
-
-  return val
-}
-
-Buffer.prototype.readUInt8 = function readUInt8 (offset, noAssert) {
-  if (!noAssert) checkOffset(offset, 1, this.length)
-  return this[offset]
-}
-
-Buffer.prototype.readUInt16LE = function readUInt16LE (offset, noAssert) {
-  if (!noAssert) checkOffset(offset, 2, this.length)
-  return this[offset] | (this[offset + 1] << 8)
-}
-
-Buffer.prototype.readUInt16BE = function readUInt16BE (offset, noAssert) {
-  if (!noAssert) checkOffset(offset, 2, this.length)
-  return (this[offset] << 8) | this[offset + 1]
-}
-
-Buffer.prototype.readUInt32LE = function readUInt32LE (offset, noAssert) {
-  if (!noAssert) checkOffset(offset, 4, this.length)
-
-  return ((this[offset]) |
-      (this[offset + 1] << 8) |
-      (this[offset + 2] << 16)) +
-      (this[offset + 3] * 0x1000000)
-}
-
-Buffer.prototype.readUInt32BE = function readUInt32BE (offset, noAssert) {
-  if (!noAssert) checkOffset(offset, 4, this.length)
-
-  return (this[offset] * 0x1000000) +
-    ((this[offset + 1] << 16) |
-    (this[offset + 2] << 8) |
-    this[offset + 3])
-}
-
-Buffer.prototype.readIntLE = function readIntLE (offset, byteLength, noAssert) {
-  offset = offset | 0
-  byteLength = byteLength | 0
-  if (!noAssert) checkOffset(offset, byteLength, this.length)
-
-  var val = this[offset]
-  var mul = 1
-  var i = 0
-  while (++i < byteLength && (mul *= 0x100)) {
-    val += this[offset + i] * mul
-  }
-  mul *= 0x80
-
-  if (val >= mul) val -= Math.pow(2, 8 * byteLength)
-
-  return val
-}
-
-Buffer.prototype.readIntBE = function readIntBE (offset, byteLength, noAssert) {
-  offset = offset | 0
-  byteLength = byteLength | 0
-  if (!noAssert) checkOffset(offset, byteLength, this.length)
-
-  var i = byteLength
-  var mul = 1
-  var val = this[offset + --i]
-  while (i > 0 && (mul *= 0x100)) {
-    val += this[offset + --i] * mul
-  }
-  mul *= 0x80
-
-  if (val >= mul) val -= Math.pow(2, 8 * byteLength)
-
-  return val
-}
-
-Buffer.prototype.readInt8 = function readInt8 (offset, noAssert) {
-  if (!noAssert) checkOffset(offset, 1, this.length)
-  if (!(this[offset] & 0x80)) return (this[offset])
-  return ((0xff - this[offset] + 1) * -1)
-}
-
-Buffer.prototype.readInt16LE = function readInt16LE (offset, noAssert) {
-  if (!noAssert) checkOffset(offset, 2, this.length)
-  var val = this[offset] | (this[offset + 1] << 8)
-  return (val & 0x8000) ? val | 0xFFFF0000 : val
-}
-
-Buffer.prototype.readInt16BE = function readInt16BE (offset, noAssert) {
-  if (!noAssert) checkOffset(offset, 2, this.length)
-  var val = this[offset + 1] | (this[offset] << 8)
-  return (val & 0x8000) ? val | 0xFFFF0000 : val
-}
-
-Buffer.prototype.readInt32LE = function readInt32LE (offset, noAssert) {
-  if (!noAssert) checkOffset(offset, 4, this.length)
-
-  return (this[offset]) |
-    (this[offset + 1] << 8) |
-    (this[offset + 2] << 16) |
-    (this[offset + 3] << 24)
-}
-
-Buffer.prototype.readInt32BE = function readInt32BE (offset, noAssert) {
-  if (!noAssert) checkOffset(offset, 4, this.length)
-
-  return (this[offset] << 24) |
-    (this[offset + 1] << 16) |
-    (this[offset + 2] << 8) |
-    (this[offset + 3])
-}
-
-Buffer.prototype.readFloatLE = function readFloatLE (offset, noAssert) {
-  if (!noAssert) checkOffset(offset, 4, this.length)
-  return ieee754.read(this, offset, true, 23, 4)
-}
-
-Buffer.prototype.readFloatBE = function readFloatBE (offset, noAssert) {
-  if (!noAssert) checkOffset(offset, 4, this.length)
-  return ieee754.read(this, offset, false, 23, 4)
-}
-
-Buffer.prototype.readDoubleLE = function readDoubleLE (offset, noAssert) {
-  if (!noAssert) checkOffset(offset, 8, this.length)
-  return ieee754.read(this, offset, true, 52, 8)
-}
-
-Buffer.prototype.readDoubleBE = function readDoubleBE (offset, noAssert) {
-  if (!noAssert) checkOffset(offset, 8, this.length)
-  return ieee754.read(this, offset, false, 52, 8)
-}
-
-function checkInt (buf, value, offset, ext, max, min) {
-  if (!Buffer.isBuffer(buf)) throw new TypeError('"buffer" argument must be a Buffer instance')
-  if (value > max || value < min) throw new RangeError('"value" argument is out of bounds')
-  if (offset + ext > buf.length) throw new RangeError('Index out of range')
-}
-
-Buffer.prototype.writeUIntLE = function writeUIntLE (value, offset, byteLength, noAssert) {
-  value = +value
-  offset = offset | 0
-  byteLength = byteLength | 0
-  if (!noAssert) {
-    var maxBytes = Math.pow(2, 8 * byteLength) - 1
-    checkInt(this, value, offset, byteLength, maxBytes, 0)
-  }
-
-  var mul = 1
-  var i = 0
-  this[offset] = value & 0xFF
-  while (++i < byteLength && (mul *= 0x100)) {
-    this[offset + i] = (value / mul) & 0xFF
-  }
-
-  return offset + byteLength
-}
-
-Buffer.prototype.writeUIntBE = function writeUIntBE (value, offset, byteLength, noAssert) {
-  value = +value
-  offset = offset | 0
-  byteLength = byteLength | 0
-  if (!noAssert) {
-    var maxBytes = Math.pow(2, 8 * byteLength) - 1
-    checkInt(this, value, offset, byteLength, maxBytes, 0)
-  }
-
-  var i = byteLength - 1
-  var mul = 1
-  this[offset + i] = value & 0xFF
-  while (--i >= 0 && (mul *= 0x100)) {
-    this[offset + i] = (value / mul) & 0xFF
-  }
-
-  return offset + byteLength
-}
-
-Buffer.prototype.writeUInt8 = function writeUInt8 (value, offset, noAssert) {
-  value = +value
-  offset = offset | 0
-  if (!noAssert) checkInt(this, value, offset, 1, 0xff, 0)
-  if (!Buffer.TYPED_ARRAY_SUPPORT) value = Math.floor(value)
-  this[offset] = (value & 0xff)
-  return offset + 1
-}
-
-function objectWriteUInt16 (buf, value, offset, littleEndian) {
-  if (value < 0) value = 0xffff + value + 1
-  for (var i = 0, j = Math.min(buf.length - offset, 2); i < j; ++i) {
-    buf[offset + i] = (value & (0xff << (8 * (littleEndian ? i : 1 - i)))) >>>
-      (littleEndian ? i : 1 - i) * 8
-  }
-}
-
-Buffer.prototype.writeUInt16LE = function writeUInt16LE (value, offset, noAssert) {
-  value = +value
-  offset = offset | 0
-  if (!noAssert) checkInt(this, value, offset, 2, 0xffff, 0)
-  if (Buffer.TYPED_ARRAY_SUPPORT) {
-    this[offset] = (value & 0xff)
-    this[offset + 1] = (value >>> 8)
-  } else {
-    objectWriteUInt16(this, value, offset, true)
-  }
-  return offset + 2
-}
-
-Buffer.prototype.writeUInt16BE = function writeUInt16BE (value, offset, noAssert) {
-  value = +value
-  offset = offset | 0
-  if (!noAssert) checkInt(this, value, offset, 2, 0xffff, 0)
-  if (Buffer.TYPED_ARRAY_SUPPORT) {
-    this[offset] = (value >>> 8)
-    this[offset + 1] = (value & 0xff)
-  } else {
-    objectWriteUInt16(this, value, offset, false)
-  }
-  return offset + 2
-}
-
-function objectWriteUInt32 (buf, value, offset, littleEndian) {
-  if (value < 0) value = 0xffffffff + value + 1
-  for (var i = 0, j = Math.min(buf.length - offset, 4); i < j; ++i) {
-    buf[offset + i] = (value >>> (littleEndian ? i : 3 - i) * 8) & 0xff
-  }
-}
-
-Buffer.prototype.writeUInt32LE = function writeUInt32LE (value, offset, noAssert) {
-  value = +value
-  offset = offset | 0
-  if (!noAssert) checkInt(this, value, offset, 4, 0xffffffff, 0)
-  if (Buffer.TYPED_ARRAY_SUPPORT) {
-    this[offset + 3] = (value >>> 24)
-    this[offset + 2] = (value >>> 16)
-    this[offset + 1] = (value >>> 8)
-    this[offset] = (value & 0xff)
-  } else {
-    objectWriteUInt32(this, value, offset, true)
-  }
-  return offset + 4
-}
-
-Buffer.prototype.writeUInt32BE = function writeUInt32BE (value, offset, noAssert) {
-  value = +value
-  offset = offset | 0
-  if (!noAssert) checkInt(this, value, offset, 4, 0xffffffff, 0)
-  if (Buffer.TYPED_ARRAY_SUPPORT) {
-    this[offset] = (value >>> 24)
-    this[offset + 1] = (value >>> 16)
-    this[offset + 2] = (value >>> 8)
-    this[offset + 3] = (value & 0xff)
-  } else {
-    objectWriteUInt32(this, value, offset, false)
-  }
-  return offset + 4
-}
-
-Buffer.prototype.writeIntLE = function writeIntLE (value, offset, byteLength, noAssert) {
-  value = +value
-  offset = offset | 0
-  if (!noAssert) {
-    var limit = Math.pow(2, 8 * byteLength - 1)
-
-    checkInt(this, value, offset, byteLength, limit - 1, -limit)
-  }
-
-  var i = 0
-  var mul = 1
-  var sub = 0
-  this[offset] = value & 0xFF
-  while (++i < byteLength && (mul *= 0x100)) {
-    if (value < 0 && sub === 0 && this[offset + i - 1] !== 0) {
-      sub = 1
+    function readystatechange() {
+        if (xhr.readyState === 4) {
+            setTimeout(loadFunc, 0)
+        }
     }
-    this[offset + i] = ((value / mul) >> 0) - sub & 0xFF
-  }
 
-  return offset + byteLength
-}
+    function getBody() {
+        // Chrome with requestType=blob throws errors arround when even testing access to responseText
+        var body = undefined
 
-Buffer.prototype.writeIntBE = function writeIntBE (value, offset, byteLength, noAssert) {
-  value = +value
-  offset = offset | 0
-  if (!noAssert) {
-    var limit = Math.pow(2, 8 * byteLength - 1)
-
-    checkInt(this, value, offset, byteLength, limit - 1, -limit)
-  }
-
-  var i = byteLength - 1
-  var mul = 1
-  var sub = 0
-  this[offset + i] = value & 0xFF
-  while (--i >= 0 && (mul *= 0x100)) {
-    if (value < 0 && sub === 0 && this[offset + i + 1] !== 0) {
-      sub = 1
-    }
-    this[offset + i] = ((value / mul) >> 0) - sub & 0xFF
-  }
-
-  return offset + byteLength
-}
-
-Buffer.prototype.writeInt8 = function writeInt8 (value, offset, noAssert) {
-  value = +value
-  offset = offset | 0
-  if (!noAssert) checkInt(this, value, offset, 1, 0x7f, -0x80)
-  if (!Buffer.TYPED_ARRAY_SUPPORT) value = Math.floor(value)
-  if (value < 0) value = 0xff + value + 1
-  this[offset] = (value & 0xff)
-  return offset + 1
-}
-
-Buffer.prototype.writeInt16LE = function writeInt16LE (value, offset, noAssert) {
-  value = +value
-  offset = offset | 0
-  if (!noAssert) checkInt(this, value, offset, 2, 0x7fff, -0x8000)
-  if (Buffer.TYPED_ARRAY_SUPPORT) {
-    this[offset] = (value & 0xff)
-    this[offset + 1] = (value >>> 8)
-  } else {
-    objectWriteUInt16(this, value, offset, true)
-  }
-  return offset + 2
-}
-
-Buffer.prototype.writeInt16BE = function writeInt16BE (value, offset, noAssert) {
-  value = +value
-  offset = offset | 0
-  if (!noAssert) checkInt(this, value, offset, 2, 0x7fff, -0x8000)
-  if (Buffer.TYPED_ARRAY_SUPPORT) {
-    this[offset] = (value >>> 8)
-    this[offset + 1] = (value & 0xff)
-  } else {
-    objectWriteUInt16(this, value, offset, false)
-  }
-  return offset + 2
-}
-
-Buffer.prototype.writeInt32LE = function writeInt32LE (value, offset, noAssert) {
-  value = +value
-  offset = offset | 0
-  if (!noAssert) checkInt(this, value, offset, 4, 0x7fffffff, -0x80000000)
-  if (Buffer.TYPED_ARRAY_SUPPORT) {
-    this[offset] = (value & 0xff)
-    this[offset + 1] = (value >>> 8)
-    this[offset + 2] = (value >>> 16)
-    this[offset + 3] = (value >>> 24)
-  } else {
-    objectWriteUInt32(this, value, offset, true)
-  }
-  return offset + 4
-}
-
-Buffer.prototype.writeInt32BE = function writeInt32BE (value, offset, noAssert) {
-  value = +value
-  offset = offset | 0
-  if (!noAssert) checkInt(this, value, offset, 4, 0x7fffffff, -0x80000000)
-  if (value < 0) value = 0xffffffff + value + 1
-  if (Buffer.TYPED_ARRAY_SUPPORT) {
-    this[offset] = (value >>> 24)
-    this[offset + 1] = (value >>> 16)
-    this[offset + 2] = (value >>> 8)
-    this[offset + 3] = (value & 0xff)
-  } else {
-    objectWriteUInt32(this, value, offset, false)
-  }
-  return offset + 4
-}
-
-function checkIEEE754 (buf, value, offset, ext, max, min) {
-  if (offset + ext > buf.length) throw new RangeError('Index out of range')
-  if (offset < 0) throw new RangeError('Index out of range')
-}
-
-function writeFloat (buf, value, offset, littleEndian, noAssert) {
-  if (!noAssert) {
-    checkIEEE754(buf, value, offset, 4, 3.4028234663852886e+38, -3.4028234663852886e+38)
-  }
-  ieee754.write(buf, value, offset, littleEndian, 23, 4)
-  return offset + 4
-}
-
-Buffer.prototype.writeFloatLE = function writeFloatLE (value, offset, noAssert) {
-  return writeFloat(this, value, offset, true, noAssert)
-}
-
-Buffer.prototype.writeFloatBE = function writeFloatBE (value, offset, noAssert) {
-  return writeFloat(this, value, offset, false, noAssert)
-}
-
-function writeDouble (buf, value, offset, littleEndian, noAssert) {
-  if (!noAssert) {
-    checkIEEE754(buf, value, offset, 8, 1.7976931348623157E+308, -1.7976931348623157E+308)
-  }
-  ieee754.write(buf, value, offset, littleEndian, 52, 8)
-  return offset + 8
-}
-
-Buffer.prototype.writeDoubleLE = function writeDoubleLE (value, offset, noAssert) {
-  return writeDouble(this, value, offset, true, noAssert)
-}
-
-Buffer.prototype.writeDoubleBE = function writeDoubleBE (value, offset, noAssert) {
-  return writeDouble(this, value, offset, false, noAssert)
-}
-
-// copy(targetBuffer, targetStart=0, sourceStart=0, sourceEnd=buffer.length)
-Buffer.prototype.copy = function copy (target, targetStart, start, end) {
-  if (!start) start = 0
-  if (!end && end !== 0) end = this.length
-  if (targetStart >= target.length) targetStart = target.length
-  if (!targetStart) targetStart = 0
-  if (end > 0 && end < start) end = start
-
-  // Copy 0 bytes; we're done
-  if (end === start) return 0
-  if (target.length === 0 || this.length === 0) return 0
-
-  // Fatal error conditions
-  if (targetStart < 0) {
-    throw new RangeError('targetStart out of bounds')
-  }
-  if (start < 0 || start >= this.length) throw new RangeError('sourceStart out of bounds')
-  if (end < 0) throw new RangeError('sourceEnd out of bounds')
-
-  // Are we oob?
-  if (end > this.length) end = this.length
-  if (target.length - targetStart < end - start) {
-    end = target.length - targetStart + start
-  }
-
-  var len = end - start
-  var i
-
-  if (this === target && start < targetStart && targetStart < end) {
-    // descending copy from end
-    for (i = len - 1; i >= 0; --i) {
-      target[i + targetStart] = this[i + start]
-    }
-  } else if (len < 1000 || !Buffer.TYPED_ARRAY_SUPPORT) {
-    // ascending copy from start
-    for (i = 0; i < len; ++i) {
-      target[i + targetStart] = this[i + start]
-    }
-  } else {
-    Uint8Array.prototype.set.call(
-      target,
-      this.subarray(start, start + len),
-      targetStart
-    )
-  }
-
-  return len
-}
-
-// Usage:
-//    buffer.fill(number[, offset[, end]])
-//    buffer.fill(buffer[, offset[, end]])
-//    buffer.fill(string[, offset[, end]][, encoding])
-Buffer.prototype.fill = function fill (val, start, end, encoding) {
-  // Handle string cases:
-  if (typeof val === 'string') {
-    if (typeof start === 'string') {
-      encoding = start
-      start = 0
-      end = this.length
-    } else if (typeof end === 'string') {
-      encoding = end
-      end = this.length
-    }
-    if (val.length === 1) {
-      var code = val.charCodeAt(0)
-      if (code < 256) {
-        val = code
-      }
-    }
-    if (encoding !== undefined && typeof encoding !== 'string') {
-      throw new TypeError('encoding must be a string')
-    }
-    if (typeof encoding === 'string' && !Buffer.isEncoding(encoding)) {
-      throw new TypeError('Unknown encoding: ' + encoding)
-    }
-  } else if (typeof val === 'number') {
-    val = val & 255
-  }
-
-  // Invalid ranges are not set to a default, so can range check early.
-  if (start < 0 || this.length < start || this.length < end) {
-    throw new RangeError('Out of range index')
-  }
-
-  if (end <= start) {
-    return this
-  }
-
-  start = start >>> 0
-  end = end === undefined ? this.length : end >>> 0
-
-  if (!val) val = 0
-
-  var i
-  if (typeof val === 'number') {
-    for (i = start; i < end; ++i) {
-      this[i] = val
-    }
-  } else {
-    var bytes = Buffer.isBuffer(val)
-      ? val
-      : utf8ToBytes(new Buffer(val, encoding).toString())
-    var len = bytes.length
-    for (i = 0; i < end - start; ++i) {
-      this[i + start] = bytes[i % len]
-    }
-  }
-
-  return this
-}
-
-// HELPER FUNCTIONS
-// ================
-
-var INVALID_BASE64_RE = /[^+\/0-9A-Za-z-_]/g
-
-function base64clean (str) {
-  // Node strips out invalid characters like \n and \t from the string, base64-js does not
-  str = stringtrim(str).replace(INVALID_BASE64_RE, '')
-  // Node converts strings with length < 2 to ''
-  if (str.length < 2) return ''
-  // Node allows for non-padded base64 strings (missing trailing ===), base64-js does not
-  while (str.length % 4 !== 0) {
-    str = str + '='
-  }
-  return str
-}
-
-function stringtrim (str) {
-  if (str.trim) return str.trim()
-  return str.replace(/^\s+|\s+$/g, '')
-}
-
-function toHex (n) {
-  if (n < 16) return '0' + n.toString(16)
-  return n.toString(16)
-}
-
-function utf8ToBytes (string, units) {
-  units = units || Infinity
-  var codePoint
-  var length = string.length
-  var leadSurrogate = null
-  var bytes = []
-
-  for (var i = 0; i < length; ++i) {
-    codePoint = string.charCodeAt(i)
-
-    // is surrogate component
-    if (codePoint > 0xD7FF && codePoint < 0xE000) {
-      // last char was a lead
-      if (!leadSurrogate) {
-        // no lead yet
-        if (codePoint > 0xDBFF) {
-          // unexpected trail
-          if ((units -= 3) > -1) bytes.push(0xEF, 0xBF, 0xBD)
-          continue
-        } else if (i + 1 === length) {
-          // unpaired lead
-          if ((units -= 3) > -1) bytes.push(0xEF, 0xBF, 0xBD)
-          continue
+        if (xhr.response) {
+            body = xhr.response
+        } else {
+            body = xhr.responseText || getXml(xhr)
         }
 
-        // valid lead
-        leadSurrogate = codePoint
+        if (isJson) {
+            try {
+                body = JSON.parse(body)
+            } catch (e) {}
+        }
 
-        continue
-      }
-
-      // 2 leads in a row
-      if (codePoint < 0xDC00) {
-        if ((units -= 3) > -1) bytes.push(0xEF, 0xBF, 0xBD)
-        leadSurrogate = codePoint
-        continue
-      }
-
-      // valid surrogate pair
-      codePoint = (leadSurrogate - 0xD800 << 10 | codePoint - 0xDC00) + 0x10000
-    } else if (leadSurrogate) {
-      // valid bmp char, but last char was a lead
-      if ((units -= 3) > -1) bytes.push(0xEF, 0xBF, 0xBD)
+        return body
     }
 
-    leadSurrogate = null
-
-    // encode utf8
-    if (codePoint < 0x80) {
-      if ((units -= 1) < 0) break
-      bytes.push(codePoint)
-    } else if (codePoint < 0x800) {
-      if ((units -= 2) < 0) break
-      bytes.push(
-        codePoint >> 0x6 | 0xC0,
-        codePoint & 0x3F | 0x80
-      )
-    } else if (codePoint < 0x10000) {
-      if ((units -= 3) < 0) break
-      bytes.push(
-        codePoint >> 0xC | 0xE0,
-        codePoint >> 0x6 & 0x3F | 0x80,
-        codePoint & 0x3F | 0x80
-      )
-    } else if (codePoint < 0x110000) {
-      if ((units -= 4) < 0) break
-      bytes.push(
-        codePoint >> 0x12 | 0xF0,
-        codePoint >> 0xC & 0x3F | 0x80,
-        codePoint >> 0x6 & 0x3F | 0x80,
-        codePoint & 0x3F | 0x80
-      )
-    } else {
-      throw new Error('Invalid code point')
+    function errorFunc(evt) {
+        clearTimeout(timeoutTimer)
+        if(!(evt instanceof Error)){
+            evt = new Error("" + (evt || "Unknown XMLHttpRequest Error") )
+        }
+        evt.statusCode = 0
+        return callback(evt, failureResponse)
     }
-  }
 
-  return bytes
+    // will load the data & process the response in a special response object
+    function loadFunc() {
+        if (aborted) return
+        var status
+        clearTimeout(timeoutTimer)
+        if(options.useXDR && xhr.status===undefined) {
+            //IE8 CORS GET successful response doesn't have a status field, but body is fine
+            status = 200
+        } else {
+            status = (xhr.status === 1223 ? 204 : xhr.status)
+        }
+        var response = failureResponse
+        var err = null
+
+        if (status !== 0){
+            response = {
+                body: getBody(),
+                statusCode: status,
+                method: method,
+                headers: {},
+                url: uri,
+                rawRequest: xhr
+            }
+            if(xhr.getAllResponseHeaders){ //remember xhr can in fact be XDR for CORS in IE
+                response.headers = parseHeaders(xhr.getAllResponseHeaders())
+            }
+        } else {
+            err = new Error("Internal XMLHttpRequest Error")
+        }
+        return callback(err, response, response.body)
+    }
+
+    var xhr = options.xhr || null
+
+    if (!xhr) {
+        if (options.cors || options.useXDR) {
+            xhr = new createXHR.XDomainRequest()
+        }else{
+            xhr = new createXHR.XMLHttpRequest()
+        }
+    }
+
+    var key
+    var aborted
+    var uri = xhr.url = options.uri || options.url
+    var method = xhr.method = options.method || "GET"
+    var body = options.body || options.data
+    var headers = xhr.headers = options.headers || {}
+    var sync = !!options.sync
+    var isJson = false
+    var timeoutTimer
+    var failureResponse = {
+        body: undefined,
+        headers: {},
+        statusCode: 0,
+        method: method,
+        url: uri,
+        rawRequest: xhr
+    }
+
+    if ("json" in options && options.json !== false) {
+        isJson = true
+        headers["accept"] || headers["Accept"] || (headers["Accept"] = "application/json") //Don't override existing accept header declared by user
+        if (method !== "GET" && method !== "HEAD") {
+            headers["content-type"] || headers["Content-Type"] || (headers["Content-Type"] = "application/json") //Don't override existing accept header declared by user
+            body = JSON.stringify(options.json === true ? body : options.json)
+        }
+    }
+
+    xhr.onreadystatechange = readystatechange
+    xhr.onload = loadFunc
+    xhr.onerror = errorFunc
+    // IE9 must have onprogress be set to a unique function.
+    xhr.onprogress = function () {
+        // IE must die
+    }
+    xhr.onabort = function(){
+        aborted = true;
+    }
+    xhr.ontimeout = errorFunc
+    xhr.open(method, uri, !sync, options.username, options.password)
+    //has to be after open
+    if(!sync) {
+        xhr.withCredentials = !!options.withCredentials
+    }
+    // Cannot set timeout with sync request
+    // not setting timeout on the xhr object, because of old webkits etc. not handling that correctly
+    // both npm's request and jquery 1.x use this kind of timeout, so this is being consistent
+    if (!sync && options.timeout > 0 ) {
+        timeoutTimer = setTimeout(function(){
+            if (aborted) return
+            aborted = true//IE9 may still call readystatechange
+            xhr.abort("timeout")
+            var e = new Error("XMLHttpRequest timeout")
+            e.code = "ETIMEDOUT"
+            errorFunc(e)
+        }, options.timeout )
+    }
+
+    if (xhr.setRequestHeader) {
+        for(key in headers){
+            if(headers.hasOwnProperty(key)){
+                xhr.setRequestHeader(key, headers[key])
+            }
+        }
+    } else if (options.headers && !isEmpty(options.headers)) {
+        throw new Error("Headers cannot be set on an XDomainRequest object")
+    }
+
+    if ("responseType" in options) {
+        xhr.responseType = options.responseType
+    }
+
+    if ("beforeSend" in options &&
+        typeof options.beforeSend === "function"
+    ) {
+        options.beforeSend(xhr)
+    }
+
+    // Microsoft Edge browser sends "undefined" when send is called with undefined value.
+    // XMLHttpRequest spec says to pass null as body to indicate no body
+    // See https://github.com/naugtur/xhr/issues/100.
+    xhr.send(body || null)
+
+    return xhr
+
+
 }
 
-function asciiToBytes (str) {
-  var byteArray = []
-  for (var i = 0; i < str.length; ++i) {
-    // Node's code seems to be doing this and not & 0x7F..
-    byteArray.push(str.charCodeAt(i) & 0xFF)
-  }
-  return byteArray
+function getXml(xhr) {
+    // xhr.responseXML will throw Exception "InvalidStateError" or "DOMException"
+    // See https://developer.mozilla.org/en-US/docs/Web/API/XMLHttpRequest/responseXML.
+    try {
+        if (xhr.responseType === "document") {
+            return xhr.responseXML
+        }
+        var firefoxBugTakenEffect = xhr.responseXML && xhr.responseXML.documentElement.nodeName === "parsererror"
+        if (xhr.responseType === "" && !firefoxBugTakenEffect) {
+            return xhr.responseXML
+        }
+    } catch (e) {}
+
+    return null
 }
 
-function utf16leToBytes (str, units) {
-  var c, hi, lo
-  var byteArray = []
-  for (var i = 0; i < str.length; ++i) {
-    if ((units -= 2) < 0) break
+function noop() {}
 
-    c = str.charCodeAt(i)
-    hi = c >> 8
-    lo = c % 256
-    byteArray.push(lo)
-    byteArray.push(hi)
-  }
-
-  return byteArray
-}
-
-function base64ToBytes (str) {
-  return base64.toByteArray(base64clean(str))
-}
-
-function blitBuffer (src, dst, offset, length) {
-  for (var i = 0; i < length; ++i) {
-    if ((i + offset >= dst.length) || (i >= src.length)) break
-    dst[i + offset] = src[i]
-  }
-  return i
-}
-
-function isnan (val) {
-  return val !== val // eslint-disable-line no-self-compare
-}
-
-/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(1)))
 
 /***/ }),
-/* 29 */
+
+/***/ "./node_modules/xtend/immutable.js":
+/*!*****************************************!*\
+  !*** ./node_modules/xtend/immutable.js ***!
+  \*****************************************/
+/*! no static exports found */
 /***/ (function(module, exports) {
 
-exports.read = function (buffer, offset, isLE, mLen, nBytes) {
-  var e, m
-  var eLen = (nBytes * 8) - mLen - 1
-  var eMax = (1 << eLen) - 1
-  var eBias = eMax >> 1
-  var nBits = -7
-  var i = isLE ? (nBytes - 1) : 0
-  var d = isLE ? -1 : 1
-  var s = buffer[offset + i]
+module.exports = extend
 
-  i += d
+var hasOwnProperty = Object.prototype.hasOwnProperty;
 
-  e = s & ((1 << (-nBits)) - 1)
-  s >>= (-nBits)
-  nBits += eLen
-  for (; nBits > 0; e = (e * 256) + buffer[offset + i], i += d, nBits -= 8) {}
+function extend() {
+    var target = {}
 
-  m = e & ((1 << (-nBits)) - 1)
-  e >>= (-nBits)
-  nBits += mLen
-  for (; nBits > 0; m = (m * 256) + buffer[offset + i], i += d, nBits -= 8) {}
+    for (var i = 0; i < arguments.length; i++) {
+        var source = arguments[i]
 
-  if (e === 0) {
-    e = 1 - eBias
-  } else if (e === eMax) {
-    return m ? NaN : ((s ? -1 : 1) * Infinity)
-  } else {
-    m = m + Math.pow(2, mLen)
-    e = e - eBias
-  }
-  return (s ? -1 : 1) * m * Math.pow(2, e - mLen)
-}
-
-exports.write = function (buffer, value, offset, isLE, mLen, nBytes) {
-  var e, m, c
-  var eLen = (nBytes * 8) - mLen - 1
-  var eMax = (1 << eLen) - 1
-  var eBias = eMax >> 1
-  var rt = (mLen === 23 ? Math.pow(2, -24) - Math.pow(2, -77) : 0)
-  var i = isLE ? 0 : (nBytes - 1)
-  var d = isLE ? 1 : -1
-  var s = value < 0 || (value === 0 && 1 / value < 0) ? 1 : 0
-
-  value = Math.abs(value)
-
-  if (isNaN(value) || value === Infinity) {
-    m = isNaN(value) ? 1 : 0
-    e = eMax
-  } else {
-    e = Math.floor(Math.log(value) / Math.LN2)
-    if (value * (c = Math.pow(2, -e)) < 1) {
-      e--
-      c *= 2
-    }
-    if (e + eBias >= 1) {
-      value += rt / c
-    } else {
-      value += rt * Math.pow(2, 1 - eBias)
-    }
-    if (value * c >= 2) {
-      e++
-      c /= 2
+        for (var key in source) {
+            if (hasOwnProperty.call(source, key)) {
+                target[key] = source[key]
+            }
+        }
     }
 
-    if (e + eBias >= eMax) {
-      m = 0
-      e = eMax
-    } else if (e + eBias >= 1) {
-      m = ((value * c) - 1) * Math.pow(2, mLen)
-      e = e + eBias
-    } else {
-      m = value * Math.pow(2, eBias - 1) * Math.pow(2, mLen)
-      e = 0
-    }
-  }
-
-  for (; mLen >= 8; buffer[offset + i] = m & 0xff, i += d, m /= 256, mLen -= 8) {}
-
-  e = (e << mLen) | m
-  eLen += mLen
-  for (; eLen > 0; buffer[offset + i] = e & 0xff, i += d, e /= 256, eLen -= 8) {}
-
-  buffer[offset + i - d] |= s * 128
+    return target
 }
 
 
 /***/ }),
-/* 30 */
-/***/ (function(module, exports) {
 
-var toString = {}.toString;
+/***/ "./src/Asset.js":
+/*!**********************!*\
+  !*** ./src/Asset.js ***!
+  \**********************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
 
-module.exports = Array.isArray || function (arr) {
-  return toString.call(arr) == '[object Array]';
+"use strict";
+
+
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+var TextDecoder = __webpack_require__(/*! text-encoding */ "./node_modules/text-encoding/index.js").TextDecoder;
+var TextEncoder = __webpack_require__(/*! text-encoding */ "./node_modules/text-encoding/index.js").TextEncoder;
+var base64js = __webpack_require__(/*! base64-js */ "./node_modules/base64-js/index.js");
+
+var memoizedToString = function () {
+    var strings = {};
+    return function (assetId, data) {
+        if (!strings.hasOwnProperty(assetId)) {
+            strings[assetId] = base64js.fromByteArray(data);
+        }
+        return strings[assetId];
+    };
+}();
+
+var Asset = function () {
+    /**
+     * Construct an Asset.
+     * @param {AssetType} assetType - The type of this asset (sound, image, etc.)
+     * @param {string} assetId - The ID of this asset.
+     * @param {DataFormat} [dataFormat] - The format of the data (WAV, PNG, etc.); required iff `data` is present.
+     * @param {Buffer} [data] - The in-memory data for this asset; optional.
+     */
+    function Asset(assetType, assetId, dataFormat, data) {
+        _classCallCheck(this, Asset);
+
+        /** @type {AssetType} */
+        this.assetType = assetType;
+
+        /** @type {string} */
+        this.assetId = assetId;
+
+        this.setData(data, dataFormat || assetType.runtimeFormat);
+
+        /** @type {Asset[]} */
+        this.dependencies = [];
+    }
+
+    _createClass(Asset, [{
+        key: 'setData',
+        value: function setData(data, dataFormat) {
+            if (data && !dataFormat) {
+                throw new Error('Data provided without specifying its format');
+            }
+
+            /** @type {DataFormat} */
+            this.dataFormat = dataFormat;
+
+            /** @type {Buffer} */
+            this.data = data;
+        }
+
+        /**
+         * @returns {string} - This asset's data, decoded as text.
+         */
+
+    }, {
+        key: 'decodeText',
+        value: function decodeText() {
+            var decoder = new TextDecoder();
+            return decoder.decode(this.data);
+        }
+
+        /**
+         * Same as `setData` but encodes text first.
+         * @param {string} data - the text data to encode and store.
+         * @param {DataFormat} dataFormat - the format of the data (DataFormat.SVG for example).
+         */
+
+    }, {
+        key: 'encodeTextData',
+        value: function encodeTextData(data, dataFormat) {
+            var encoder = new TextEncoder();
+            this.setData(encoder.encode(data), dataFormat);
+        }
+
+        /**
+         * @param {string} [contentType] - Optionally override the content type to be included in the data URI.
+         * @returns {string} - A data URI representing the asset's data.
+         */
+
+    }, {
+        key: 'encodeDataURI',
+        value: function encodeDataURI(contentType) {
+            contentType = contentType || this.assetType.contentType;
+            return 'data:' + contentType + ';base64,' + memoizedToString(this.assetId, this.data);
+        }
+    }]);
+
+    return Asset;
+}();
+
+module.exports = Asset;
+
+/***/ }),
+
+/***/ "./src/AssetType.js":
+/*!**************************!*\
+  !*** ./src/AssetType.js ***!
+  \**************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+var DataFormat = __webpack_require__(/*! ./DataFormat */ "./src/DataFormat.js");
+
+/**
+ * Enumeration of the supported asset types.
+ * @type {Object.<String,AssetType>}
+ * @typedef {Object} AssetType - Information about a supported asset type.
+ * @property {string} contentType - the MIME type associated with this kind of data. Useful for data URIs, etc.
+ * @property {string} name - The human-readable name of this asset type.
+ * @property {DataFormat} runtimeFormat - The default format used for runtime, in-memory storage of this asset. For
+ *     example, a project stored in SB2 format on disk will be returned as JSON when loaded into memory.
+ * @property {boolean} immutable - Indicates if the asset id is determined by the asset content.
+ */
+var AssetType = {
+    ImageBitmap: {
+        contentType: 'image/png',
+        name: 'ImageBitmap',
+        runtimeFormat: DataFormat.PNG,
+        immutable: true
+    },
+    ImageVector: {
+        contentType: 'image/svg+xml',
+        name: 'ImageVector',
+        runtimeFormat: DataFormat.SVG,
+        immutable: true
+    },
+    Project: {
+        contentType: 'application/json',
+        name: 'Project',
+        runtimeFormat: DataFormat.JSON,
+        immutable: false
+    },
+    Sound: {
+        contentType: 'audio/x-wav',
+        name: 'Sound',
+        runtimeFormat: DataFormat.WAV,
+        immutable: true
+    },
+    Sprite: {
+        contentType: 'application/json',
+        name: 'Sprite',
+        runtimeFormat: DataFormat.JSON,
+        immutable: true
+    }
 };
 
+module.exports = AssetType;
 
 /***/ }),
-/* 31 */
+
+/***/ "./src/BuiltinHelper.js":
+/*!******************************!*\
+  !*** ./src/BuiltinHelper.js ***!
+  \******************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+/* WEBPACK VAR INJECTION */(function(Buffer) {
+
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
+
+function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
+
+var md5 = __webpack_require__(/*! js-md5 */ "./node_modules/js-md5/src/md5.js");
+
+var log = __webpack_require__(/*! ./log */ "./src/log.js");
+
+var Asset = __webpack_require__(/*! ./Asset */ "./src/Asset.js");
+var AssetType = __webpack_require__(/*! ./AssetType */ "./src/AssetType.js");
+var DataFormat = __webpack_require__(/*! ./DataFormat */ "./src/DataFormat.js");
+var Helper = __webpack_require__(/*! ./Helper */ "./src/Helper.js");
+
+/**
+ * @typedef {object} BuiltinAssetRecord
+ * @property {AssetType} type - The type of the asset.
+ * @property {DataFormat} format - The format of the asset's data.
+ * @property {?string} id - The asset's unique ID.
+ * @property {Buffer} data - The asset's data.
+ */
+
+/**
+ * @type {BuiltinAssetRecord[]}
+ */
+var DefaultAssets = [{
+    type: AssetType.ImageBitmap,
+    format: DataFormat.PNG,
+    id: null,
+    data: new Buffer(__webpack_require__(/*! arraybuffer-loader!./builtins/defaultBitmap.png */ "./node_modules/arraybuffer-loader/index.js!./src/builtins/defaultBitmap.png") // eslint-disable-line global-require
+    )
+}, {
+    type: AssetType.Sound,
+    format: DataFormat.WAV,
+    id: null,
+    data: new Buffer(__webpack_require__(/*! arraybuffer-loader!./builtins/defaultSound.wav */ "./node_modules/arraybuffer-loader/index.js!./src/builtins/defaultSound.wav") // eslint-disable-line global-require
+    )
+}, {
+    type: AssetType.ImageVector,
+    format: DataFormat.SVG,
+    id: null,
+    data: new Buffer(__webpack_require__(/*! arraybuffer-loader!./builtins/defaultVector.svg */ "./node_modules/arraybuffer-loader/index.js!./src/builtins/defaultVector.svg") // eslint-disable-line global-require
+    )
+}];
+
+/**
+ * @type {BuiltinAssetRecord[]}
+ */
+var BuiltinAssets = DefaultAssets.concat([]);
+
+var BuiltinHelper = function (_Helper) {
+    _inherits(BuiltinHelper, _Helper);
+
+    function BuiltinHelper(parent) {
+        _classCallCheck(this, BuiltinHelper);
+
+        /**
+         * In-memory storage for all built-in assets.
+         * @type {Object.<AssetType, AssetIdMap>} Maps asset type to a map of asset ID to actual assets.
+         * @typedef {Object.<string, BuiltinAssetRecord>} AssetIdMap - Maps asset ID to asset.
+         */
+        var _this = _possibleConstructorReturn(this, (BuiltinHelper.__proto__ || Object.getPrototypeOf(BuiltinHelper)).call(this, parent));
+
+        _this.assets = {};
+
+        BuiltinAssets.forEach(function (assetRecord) {
+            assetRecord.id = _this.cache(assetRecord.type, assetRecord.format, assetRecord.data, assetRecord.id);
+        });
+        return _this;
+    }
+
+    /**
+     * Call `setDefaultAssetId` on the parent `ScratchStorage` instance to register all built-in default assets.
+     */
+
+
+    _createClass(BuiltinHelper, [{
+        key: 'registerDefaultAssets',
+        value: function registerDefaultAssets() {
+            var numAssets = DefaultAssets.length;
+            for (var assetIndex = 0; assetIndex < numAssets; ++assetIndex) {
+                var assetRecord = DefaultAssets[assetIndex];
+                this.parent.setDefaultAssetId(assetRecord.type, assetRecord.id);
+            }
+        }
+
+        /**
+         * Synchronously fetch a cached asset for a given asset id. Returns null if not found.
+         * @param {string} assetId - The id for the asset to fetch.
+         * @returns {?Asset} The asset for assetId, if it exists.
+         */
+
+    }, {
+        key: 'get',
+        value: function get(assetId) {
+            var asset = null;
+            if (this.assets.hasOwnProperty(assetId)) {
+                /** @type{BuiltinAssetRecord} */
+                var assetRecord = this.assets[assetId];
+                asset = new Asset(assetRecord.type, assetRecord.id, assetRecord.format, assetRecord.data);
+            }
+            return asset;
+        }
+
+        /**
+         * Alias for store (old name of store)
+         * @deprecated Use BuiltinHelper.store
+         * @param {AssetType} assetType - The type of the asset to cache.
+         * @param {DataFormat} dataFormat - The dataFormat of the data for the cached asset.
+         * @param {Buffer} data - The data for the cached asset.
+         * @param {string} id - The id for the cached asset.
+         * @returns {string} The calculated id of the cached asset, or the supplied id if the asset is mutable.
+         */
+
+    }, {
+        key: 'cache',
+        value: function cache(assetType, dataFormat, data, id) {
+            log.warn('Deprecation: BuiltinHelper.cache has been replaced with BuiltinHelper.store.');
+            return this.store(assetType, dataFormat, data, id);
+        }
+
+        /**
+         * Cache an asset for future lookups by ID.
+         * @param {AssetType} assetType - The type of the asset to cache.
+         * @param {DataFormat} dataFormat - The dataFormat of the data for the cached asset.
+         * @param {Buffer} data - The data for the cached asset.
+         * @param {(string|number)} id - The id for the cached asset.
+         * @returns {string} The calculated id of the cached asset, or the supplied id if the asset is mutable.
+         */
+
+    }, {
+        key: 'store',
+        value: function store(assetType, dataFormat, data, id) {
+            if (!dataFormat) throw new Error('Data cached without specifying its format');
+            if (id !== '' && id !== null && typeof id !== 'undefined') {
+                if (this.assets.hasOwnProperty(id) && assetType.immutable) return id;
+            } else if (assetType.immutable) {
+                id = md5(data);
+            } else {
+                throw new Error('Tried to cache data without an id');
+            }
+            this.assets[id] = {
+                type: assetType,
+                format: dataFormat,
+                id: id,
+                data: data
+            };
+            return id;
+        }
+
+        /**
+         * Fetch an asset but don't process dependencies.
+         * @param {AssetType} assetType - The type of asset to fetch.
+         * @param {string} assetId - The ID of the asset to fetch: a project ID, MD5, etc.
+         * @return {Promise.<Asset>} A promise for the contents of the asset.
+         */
+
+    }, {
+        key: 'load',
+        value: function load(assetType, assetId) {
+            return Promise.resolve(this.get(assetId));
+        }
+    }]);
+
+    return BuiltinHelper;
+}(Helper);
+
+module.exports = BuiltinHelper;
+/* WEBPACK VAR INJECTION */}.call(this, __webpack_require__(/*! ./../node_modules/buffer/index.js */ "./node_modules/buffer/index.js").Buffer))
+
+/***/ }),
+
+/***/ "./src/DataFormat.js":
+/*!***************************!*\
+  !*** ./src/DataFormat.js ***!
+  \***************************/
+/*! no static exports found */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 
-var ScratchStorage = __webpack_require__(9);
+/**
+ * Enumeration of the supported data formats.
+ * @enum {string}
+ */
+var DataFormat = {
+    JPG: 'jpg',
+    JSON: 'json',
+    MP3: 'mp3',
+    PNG: 'png',
+    SB2: 'sb2',
+    SB3: 'sb3',
+    SVG: 'svg',
+    WAV: 'wav'
+};
+
+module.exports = DataFormat;
+
+/***/ }),
+
+/***/ "./src/Helper.js":
+/*!***********************!*\
+  !*** ./src/Helper.js ***!
+  \***********************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+/**
+ * Base class for asset load/save helpers.
+ * @abstract
+ */
+var Helper = function () {
+    function Helper(parent) {
+        _classCallCheck(this, Helper);
+
+        this.parent = parent;
+    }
+
+    /**
+     * Fetch an asset but don't process dependencies.
+     * @param {AssetType} assetType - The type of asset to fetch.
+     * @param {string} assetId - The ID of the asset to fetch: a project ID, MD5, etc.
+     * @param {DataFormat} dataFormat - The file format / file extension of the asset to fetch: PNG, JPG, etc.
+     * @return {Promise.<Asset>} A promise for the contents of the asset.
+     */
+
+
+    _createClass(Helper, [{
+        key: "load",
+        value: function load(assetType, assetId, dataFormat) {
+            return Promise.reject(new Error("No asset of type " + assetType + " for ID " + assetId + " with format " + dataFormat));
+        }
+    }]);
+
+    return Helper;
+}();
+
+module.exports = Helper;
+
+/***/ }),
+
+/***/ "./src/ScratchStorage.js":
+/*!*******************************!*\
+  !*** ./src/ScratchStorage.js ***!
+  \*******************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+var log = __webpack_require__(/*! ./log */ "./src/log.js");
+
+var BuiltinHelper = __webpack_require__(/*! ./BuiltinHelper */ "./src/BuiltinHelper.js");
+var WebHelper = __webpack_require__(/*! ./WebHelper */ "./src/WebHelper.js");
+
+var _Asset = __webpack_require__(/*! ./Asset */ "./src/Asset.js");
+var _AssetType = __webpack_require__(/*! ./AssetType */ "./src/AssetType.js");
+var _DataFormat = __webpack_require__(/*! ./DataFormat */ "./src/DataFormat.js");
+
+var ScratchStorage = function () {
+    function ScratchStorage() {
+        _classCallCheck(this, ScratchStorage);
+
+        this.defaultAssetId = {};
+
+        this.builtinHelper = new BuiltinHelper(this);
+        this.webHelper = new WebHelper(this);
+        this.builtinHelper.registerDefaultAssets(this);
+    }
+
+    /**
+     * @return {Asset} - the `Asset` class constructor.
+     * @constructor
+     */
+
+
+    _createClass(ScratchStorage, [{
+        key: 'get',
+
+
+        /**
+         * Synchronously fetch a cached asset from built-in storage. Assets are cached when they are loaded.
+         * @param {string} assetId - The id of the asset to fetch.
+         * @returns {?Asset} The asset, if it exists.
+         */
+        value: function get(assetId) {
+            return this.builtinHelper.get(assetId);
+        }
+
+        /**
+         * Cache an asset for future lookups by ID.
+         * @param {AssetType} assetType - The type of the asset to cache.
+         * @param {DataFormat} dataFormat - The dataFormat of the data for the cached asset.
+         * @param {Buffer} data - The data for the cached asset.
+         * @param {string} id - The id for the cached asset.
+         * @returns {string} The calculated id of the cached asset, or the supplied id if the asset is mutable.
+         */
+
+    }, {
+        key: 'cache',
+        value: function cache(assetType, dataFormat, data, id) {
+            return this.builtinHelper.store(assetType, dataFormat, data, id);
+        }
+
+        /**
+         * Register a web-based source for assets. Sources will be checked in order of registration.
+         * @param {Array.<AssetType>} types - The types of asset provided by this source.
+         * @param {UrlFunction} getFunction - A function which computes a GET URL from an Asset.
+         * @param {UrlFunction} createFunction - A function which computes a POST URL for asset data.
+         * @param {UrlFunction} updateFunction - A function which computes a PUT URL for asset data.
+         */
+
+    }, {
+        key: 'addWebStore',
+        value: function addWebStore(types, getFunction, createFunction, updateFunction) {
+            this.webHelper.addStore(types, getFunction, createFunction, updateFunction);
+        }
+
+        /**
+         * Register a web-based source for assets. Sources will be checked in order of registration.
+         * @deprecated Please use addWebStore
+         * @param {Array.<AssetType>} types - The types of asset provided by this source.
+         * @param {UrlFunction} urlFunction - A function which computes a GET URL from an Asset.
+         */
+
+    }, {
+        key: 'addWebSource',
+        value: function addWebSource(types, urlFunction) {
+            log.warn('Deprecation: Storage.addWebSource has been replaced by addWebStore.');
+            this.addWebStore(types, urlFunction);
+        }
+
+        /**
+         * TODO: Should this be removed in favor of requesting an asset with `null` as the ID?
+         * @param {AssetType} type - Get the default ID for assets of this type.
+         * @return {?string} The ID of the default asset of the given type, if any.
+         */
+
+    }, {
+        key: 'getDefaultAssetId',
+        value: function getDefaultAssetId(type) {
+            if (this.defaultAssetId.hasOwnProperty(type.name)) {
+                return this.defaultAssetId[type.name];
+            }
+        }
+
+        /**
+         * Set the default ID for a particular type of asset. This default asset will be used if a requested asset cannot
+         * be found and automatic fallback is enabled. Ideally this should be an asset that is available locally or even
+         * one built into this module.
+         * TODO: Should this be removed in favor of requesting an asset with `null` as the ID?
+         * @param {AssetType} type - The type of asset for which the default will be set.
+         * @param {string} id - The default ID to use for this type of asset.
+         */
+
+    }, {
+        key: 'setDefaultAssetId',
+        value: function setDefaultAssetId(type, id) {
+            this.defaultAssetId[type.name] = id;
+        }
+
+        /**
+         * Fetch an asset by type & ID.
+         * @param {AssetType} assetType - The type of asset to fetch. This also determines which asset store to use.
+         * @param {string} assetId - The ID of the asset to fetch: a project ID, MD5, etc.
+         * @param {DataFormat} [dataFormat] - Optional: load this format instead of the AssetType's default.
+         * @return {Promise.<Asset>} A promise for the requested Asset.
+         *   If the promise is resolved with non-null, the value is the requested asset or a fallback.
+         *   If the promise is resolved with null, the desired asset could not be found with the current asset sources.
+         *   If the promise is rejected, there was an error on at least one asset source. HTTP 404 does not count as an
+         *   error here, but (for example) HTTP 403 does.
+         */
+
+    }, {
+        key: 'load',
+        value: function load(assetType, assetId, dataFormat) {
+            var _this = this;
+
+            /** @type {Helper[]} */
+            var helpers = [this.builtinHelper, this.webHelper];
+            var errors = [];
+            var helperIndex = 0;
+            dataFormat = dataFormat || assetType.runtimeFormat;
+
+            return new Promise(function (resolve, reject) {
+                var tryNextHelper = function tryNextHelper() {
+                    if (helperIndex < helpers.length) {
+                        var helper = helpers[helperIndex++];
+                        helper.load(assetType, assetId, dataFormat).then(function (asset) {
+                            if (asset === null) {
+                                tryNextHelper();
+                            } else {
+                                // TODO? this.localHelper.cache(assetType, assetId, asset);
+                                if (helper !== _this.builtinHelper && assetType.immutable) {
+                                    asset.assetId = _this.builtinHelper.cache(assetType, asset.dataFormat, asset.data, assetId);
+                                }
+                                // Note that other attempts may have caused errors, effectively suppressed here.
+                                resolve(asset);
+                            }
+                        }, function (error) {
+                            errors.push(error);
+                            // TODO: maybe some types of error should prevent trying the next helper?
+                            tryNextHelper();
+                        });
+                    } else if (errors.length === 0) {
+                        // Nothing went wrong but we couldn't find the asset.
+                        resolve(null);
+                    } else {
+                        // At least one thing went wrong and also we couldn't find the asset.
+                        reject(errors);
+                    }
+                };
+
+                tryNextHelper();
+            });
+        }
+
+        /**
+         * Store an asset by type & ID.
+         * @param {AssetType} assetType - The type of asset to fetch. This also determines which asset store to use.
+         * @param {?DataFormat} [dataFormat] - Optional: load this format instead of the AssetType's default.
+         * @param {Buffer} data - Data to store for the asset
+         * @param {?string} [assetId] - The ID of the asset to fetch: a project ID, MD5, etc.
+         * @return {Promise.<object>} A promise for asset metadata
+         */
+
+    }, {
+        key: 'store',
+        value: function store(assetType, dataFormat, data, assetId) {
+            var _this2 = this;
+
+            dataFormat = dataFormat || assetType.runtimeFormat;
+            return new Promise(function (resolve, reject) {
+                return _this2.webHelper.store(assetType, dataFormat, data, assetId).then(function (body) {
+                    _this2.builtinHelper.store(assetType, dataFormat, data, body.id);
+                    return resolve(body);
+                }).catch(function (error) {
+                    return reject(error);
+                });
+            });
+        }
+    }, {
+        key: 'Asset',
+        get: function get() {
+            return _Asset;
+        }
+
+        /**
+         * @return {AssetType} - the list of supported asset types.
+         * @constructor
+         */
+
+    }, {
+        key: 'AssetType',
+        get: function get() {
+            return _AssetType;
+        }
+
+        /**
+         * @return {DataFormat} - the list of supported data formats.
+         * @constructor
+         */
+
+    }, {
+        key: 'DataFormat',
+        get: function get() {
+            return _DataFormat;
+        }
+
+        /**
+         * @deprecated Please use the `Asset` member of a storage instance instead.
+         * @return {Asset} - the `Asset` class constructor.
+         * @constructor
+         */
+
+    }], [{
+        key: 'Asset',
+        get: function get() {
+            return _Asset;
+        }
+
+        /**
+         * @deprecated Please use the `AssetType` member of a storage instance instead.
+         * @return {AssetType} - the list of supported asset types.
+         * @constructor
+         */
+
+    }, {
+        key: 'AssetType',
+        get: function get() {
+            return _AssetType;
+        }
+    }]);
+
+    return ScratchStorage;
+}();
+
+module.exports = ScratchStorage;
+
+/***/ }),
+
+/***/ "./src/WebHelper.js":
+/*!**************************!*\
+  !*** ./src/WebHelper.js ***!
+  \**************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
+
+function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
+
+var nets = __webpack_require__(/*! nets */ "./node_modules/nets/index.js");
+
+var log = __webpack_require__(/*! ./log */ "./src/log.js");
+
+var Asset = __webpack_require__(/*! ./Asset */ "./src/Asset.js");
+var Helper = __webpack_require__(/*! ./Helper */ "./src/Helper.js");
+
+/**
+ * @typedef {function} UrlFunction - A function which computes a URL from asset information.
+ * @param {Asset} - The asset for which the URL should be computed.
+ * @returns {(string|object)} - A string representing the URL for the asset request OR an object with configuration for
+ *                              the underlying `nets` call (necessary for configuring e.g. authentication)
+ */
+
+var WebHelper = function (_Helper) {
+    _inherits(WebHelper, _Helper);
+
+    function WebHelper(parent) {
+        _classCallCheck(this, WebHelper);
+
+        /**
+         * @type {Array.<StoreRecord>}
+         * @typedef {object} StoreRecord
+         * @property {Array.<string>} types - The types of asset provided by this store, from AssetType's name field.
+         * @property {UrlFunction} getFunction - A function which computes a URL from an Asset.
+         * @property {UrlFunction} createFunction - A function which computes a URL from an Asset.
+         * @property {UrlFunction} updateFunction - A function which computes a URL from an Asset.
+         */
+        var _this = _possibleConstructorReturn(this, (WebHelper.__proto__ || Object.getPrototypeOf(WebHelper)).call(this, parent));
+
+        _this.stores = [];
+        return _this;
+    }
+
+    /**
+     * Register a web-based source for assets. Sources will be checked in order of registration.
+     * @deprecated Please use addStore
+     * @param {Array.<AssetType>} types - The types of asset provided by this source.
+     * @param {UrlFunction} urlFunction - A function which computes a URL from an Asset.
+     */
+
+
+    _createClass(WebHelper, [{
+        key: 'addSource',
+        value: function addSource(types, urlFunction) {
+            log.warn('Deprecation: WebHelper.addSource has been replaced with WebHelper.addStore.');
+            this.addStore(types, urlFunction);
+        }
+
+        /**
+         * Register a web-based store for assets. Sources will be checked in order of registration.
+         * @param {Array.<AssetType>} types - The types of asset provided by this store.
+         * @param {UrlFunction} getFunction - A function which computes a GET URL for an Asset
+         * @param {UrlFunction} createFunction - A function which computes a POST URL for an Asset
+         * @param {UrlFunction} updateFunction - A function which computes a PUT URL for an Asset
+         */
+
+    }, {
+        key: 'addStore',
+        value: function addStore(types, getFunction, createFunction, updateFunction) {
+            this.stores.push({
+                types: types.map(function (assetType) {
+                    return assetType.name;
+                }),
+                get: getFunction,
+                create: createFunction,
+                update: updateFunction
+            });
+        }
+
+        /**
+         * Fetch an asset but don't process dependencies.
+         * @param {AssetType} assetType - The type of asset to fetch.
+         * @param {string} assetId - The ID of the asset to fetch: a project ID, MD5, etc.
+         * @param {DataFormat} dataFormat - The file format / file extension of the asset to fetch: PNG, JPG, etc.
+         * @return {Promise.<Asset>} A promise for the contents of the asset.
+         */
+
+    }, {
+        key: 'load',
+        value: function load(assetType, assetId, dataFormat) {
+
+            /** @type {Array.<{url:string, result:*}>} List of URLs attempted & errors encountered. */
+            var errors = [];
+            var stores = this.stores.slice();
+            var asset = new Asset(assetType, assetId, dataFormat);
+            var storeIndex = 0;
+
+            return new Promise(function (resolve, reject) {
+
+                var tryNextSource = function tryNextSource() {
+
+                    /** @type {UrlFunction} */
+                    var reqConfigFunction = void 0;
+
+                    while (storeIndex < stores.length) {
+                        var store = stores[storeIndex];
+                        ++storeIndex;
+                        if (store.types.indexOf(assetType.name) >= 0) {
+                            reqConfigFunction = store.get;
+                            break;
+                        }
+                    }
+
+                    if (reqConfigFunction) {
+                        var reqConfig = reqConfigFunction(asset);
+                        if (reqConfig === false) {
+                            tryNextSource();
+                            return;
+                        }
+                        if (typeof reqConfig === 'string') {
+                            reqConfig = {
+                                url: reqConfig
+                            };
+                        }
+
+                        nets(Object.assign({
+                            method: 'get'
+                        }, reqConfig), function (err, resp, body) {
+                            // body is a Buffer
+                            if (err || Math.floor(resp.statusCode / 100) !== 2) {
+                                tryNextSource();
+                            } else {
+                                asset.setData(body, dataFormat);
+                                resolve(asset);
+                            }
+                        });
+                    } else if (errors.length > 0) {
+                        reject(errors);
+                    } else {
+                        resolve(null); // no stores matching asset
+                    }
+                };
+
+                tryNextSource();
+            });
+        }
+
+        /**
+         * Create or update an asset with provided data. The create function is called if no asset id is provided
+         * @param {AssetType} assetType - The type of asset to create or update.
+         * @param {?DataFormat} dataFormat - DataFormat of the data for the stored asset.
+         * @param {Buffer} data - The data for the cached asset.
+         * @param {?string} assetId - The ID of the asset to fetch: a project ID, MD5, etc.
+         * @return {Promise.<object>} A promise for the response from the create or update request
+         */
+
+    }, {
+        key: 'store',
+        value: function store(assetType, dataFormat, data, assetId) {
+            var asset = new Asset(assetType, assetId, dataFormat);
+            // If we have an asset id, we should update, otherwise create to get an id
+            var create = assetId !== '' || assetId === null || typeof assetId === 'undefined';
+
+            // Use the first store with the appropriate asset type and url function
+            var store = this.stores.filter(function (s) {
+                return (
+                    // Only use stores for the incoming asset type
+                    s.types.indexOf(assetType.name) !== -1 && (
+                    // Only use stores that have a create function if this is a create request
+                    // or an update function if this is an update request
+                    create && s.create || s.update)
+                );
+            })[0];
+
+            var method = create ? 'post' : 'put';
+
+            return new Promise(function (resolve, reject) {
+                if (!store) return reject('No appropriate stores');
+
+                var reqConfig = create ? store.create(asset) : store.update(asset);
+                if (typeof reqConfig === 'string') {
+                    reqConfig = {
+                        url: reqConfig
+                    };
+                }
+                return nets(Object.assign({
+                    body: data,
+                    method: method
+                }, reqConfig), function (err, resp, body) {
+                    if (err || Math.floor(resp.statusCode / 100) !== 2) {
+                        return reject(err || resp.statusCode);
+                    }
+                    return resolve(Object.assign({
+                        id: body['content-name']
+                    }, body));
+                });
+            });
+        }
+    }]);
+
+    return WebHelper;
+}(Helper);
+
+module.exports = WebHelper;
+
+/***/ }),
+
+/***/ "./src/index.js":
+/*!**********************!*\
+  !*** ./src/index.js ***!
+  \**********************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+var ScratchStorage = __webpack_require__(/*! ./ScratchStorage */ "./src/ScratchStorage.js");
 
 /**
  * Export for use with NPM & Node.js.
@@ -9996,7 +8614,25 @@ var ScratchStorage = __webpack_require__(9);
  */
 module.exports = ScratchStorage;
 
+/***/ }),
+
+/***/ "./src/log.js":
+/*!********************!*\
+  !*** ./src/log.js ***!
+  \********************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+var minilog = __webpack_require__(/*! minilog */ "./node_modules/minilog/lib/web/index.js");
+minilog.enable();
+
+module.exports = minilog('storage');
+
 /***/ })
-/******/ ]);
+
+/******/ });
 });
 //# sourceMappingURL=scratch-storage.js.map
