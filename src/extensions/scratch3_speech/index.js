@@ -82,7 +82,8 @@ class Scratch3SpeechBlocks {
         this._currentUtterance = '';
 
         /**
-         *  Similar to _currentUtterance, but set back to '' at the beginning of listening block.
+         *  Similar to _currentUtterance, but set back to '' at the beginning of listening block
+         *  and on green flag.
          *  Used to get the hat blocks to edge trigger.  In order to detect someone saying
          *  the same thing twice in two subsequent listen and wait blocks
          *  and still trigger the hat, we need this to go from
@@ -188,6 +189,7 @@ class Scratch3SpeechBlocks {
 
 
         this.runtime.on('PROJECT_STOP_ALL', this._resetListening.bind(this));
+        this.runtime.on('PROJECT_START', this._resetEdgeTriggerUtterance.bind(this));
 
         // Load in the start and stop listening indicator sounds.
         this._loadUISounds();
@@ -293,6 +295,15 @@ class Scratch3SpeechBlocks {
         this._stopListening();
         this._closeWebsocket();
         this._resolveSpeechPromises();
+    }
+
+    /**
+     * Reset the utterance we look for in the when I hear hat block back to
+     * the empty string.
+     * @private
+     */
+    _resetEdgeTriggerUtterance () {
+        this._utteranceForEdgeTrigger = '';
     }
 
     /**
@@ -738,7 +749,7 @@ class Scratch3SpeechBlocks {
         // TODO: Question - Should we only play the sound if listening isn't already in progress?
         return this._playSound(this._startSoundPlayer).then(() => {
             this._phraseList = this._scanBlocksForPhraseList();
-            this._utteranceForEdgeTrigger = '';
+            this._resetEdgeTriggerUtterance();
             
             const endSound = (shouldPlayEndSound => {
                 if (shouldPlayEndSound) {
