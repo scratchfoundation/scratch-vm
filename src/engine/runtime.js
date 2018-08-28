@@ -264,7 +264,10 @@ class Runtime extends EventEmitter {
             video: new Video(this)
         };
 
-        this.extensionDevices = {};
+        /**
+         * A list of extensions, used to manage hardware connection.
+         */
+        this.extensions = {};
 
         /**
          * A runtime profiler that records timed events for later playback to
@@ -928,32 +931,55 @@ class Runtime extends EventEmitter {
             (result, categoryInfo) => result.concat(categoryInfo.blocks.map(blockInfo => blockInfo.json)), []);
     }
 
-    registerExtensionDevice (extensionId, device) {
-        this.extensionDevices[extensionId] = device;
+    /**
+     * Register an extension by id to have access to it in the future.
+     * @param {string} extensionId - the id of the extension.
+     * @param {object} extension - the extension to register.
+     */
+    registerExtension (extensionId, extension) {
+        this.extensions[extensionId] = extension;
     }
 
-    scan (extensionId) {
-        if (this.extensionDevices[extensionId]) {
-            this.extensionDevices[extensionId].scan();
+    /**
+     * Tell the specified extension to scan for a peripheral.
+     * @param {string} extensionId - the id of the extension.
+     */
+    scanForPeripheral (extensionId) {
+        if (this.extensions[extensionId]) {
+            this.extensions[extensionId].scan();
         }
     }
 
-    connectToPeripheral (extensionId, peripheralId) {
-        if (this.extensionDevices[extensionId]) {
-            this.extensionDevices[extensionId].connectPeripheral(peripheralId);
+    /**
+     * Connect to the extension's specified peripheral.
+     * @param {string} extensionId - the id of the extension.
+     * @param {number} peripheralId - the id of the peripheral.
+     */
+    connectPeripheral (extensionId, peripheralId) {
+        if (this.extensions[extensionId]) {
+            this.extensions[extensionId].connect(peripheralId);
         }
     }
 
-    disconnectExtensionSession (extensionId) {
-        if (this.extensionDevices[extensionId]) {
-            this.extensionDevices[extensionId].disconnect();
+    /**
+     * Disconnect from the extension's connected peripheral.
+     * @param {string} extensionId - the id of the extension.
+     */
+    disconnectPeripheral (extensionId) {
+        if (this.extensions[extensionId]) {
+            this.extensions[extensionId].disconnect();
         }
     }
 
-    isConnected (extensionId) {
+    /**
+     * Returns whether the extension has a currently connected peripheral.
+     * @param {string} extensionId - the id of the extension.
+     * @return {boolean} - whether the extension has a connected peripheral.
+     */
+    getPeripheralIsConnected (extensionId) {
         let isConnected = false;
-        if (this.extensionDevices[extensionId]) {
-            isConnected = this.extensionDevices[extensionId].isConnected();
+        if (this.extensions[extensionId]) {
+            isConnected = this.extensions[extensionId].isConnected();
         }
         return isConnected;
     }

@@ -206,7 +206,7 @@ class EV3 {
          * @private
          */
         this._bt = null;
-        this._runtime.registerExtensionDevice(extensionId, this);
+        this._runtime.registerExtension(extensionId, this);
 
         this._onConnect = this._onConnect.bind(this);
         this._onMessage = this._onMessage.bind(this);

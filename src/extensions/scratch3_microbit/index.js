@@ -70,7 +70,7 @@ class MicroBit {
          * @private
          */
         this._ble = null;
-        this._runtime.registerExtensionDevice(extensionId, this);
+        this._runtime.registerExtension(extensionId, this);
 
         /**
          * The most recently received value for each sensor.
@@ -142,7 +142,7 @@ class MicroBit {
         for (let i = 0; i < text.length; i++) {
             output[i] = text.charCodeAt(i);
         }
-        return this._writeSessionData(BLECommand.CMD_DISPLAY_TEXT, output);
+        return this._send(BLECommand.CMD_DISPLAY_TEXT, output);
     }
 
     /**
@@ -150,7 +150,7 @@ class MicroBit {
      * @return {Promise} - a Promise that resolves when writing to device.
      */
     displayMatrix (matrix) {
-        return this._writeSessionData(BLECommand.CMD_DISPLAY_LED, matrix);
+        return this._send(BLECommand.CMD_DISPLAY_LED, matrix);
     }
 
     /**
@@ -277,7 +277,7 @@ class MicroBit {
      * @param {Uint8Array} message - the message to write
      * @private
      */
-    _writeSessionData (command, message) {
+    _send (command, message) {
         if (!this.isConnected()) return;
         if (this._busy) return;
 
