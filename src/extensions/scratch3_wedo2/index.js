@@ -396,7 +396,7 @@ class WeDo2 {
      */
     stopAllMotors () {
         this._motors.forEach(motor => {
-            if (motor && motor.isOn) {
+            if (motor) {
                 motor.setMotorOff();
             }
         });
