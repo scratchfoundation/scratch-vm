@@ -9,7 +9,7 @@ test('waitForSocket', t => {
     t.end();
 });
 
-test('requestDevice', t => {
+test('requestPeripheral', t => {
     t.end();
 });
 

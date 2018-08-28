@@ -3,11 +3,11 @@ const BlockType = require('../../extension-support/block-type');
 const Cast = require('../../util/cast');
 const formatMessage = require('format-message');
 const color = require('../../util/color');
-const log = require('../../util/log');
-const BLESession = require('../../io/bleSession');
+const BLE = require('../../io/ble');
 const Base64Util = require('../../util/base64-util');
 const MathUtil = require('../../util/math-util');
 const RateLimiter = require('../../util/rateLimiter.js');
+const log = require('../../util/log');
 
 /**
  * Icon svg to be displayed at the left edge of each extension block, encoded as a data URI.
@@ -356,7 +356,7 @@ class WeDo2 {
 
         /**
          * The Bluetooth connection session for reading/writing device data.
-         * @type {BLESession}
+         * @type {BLE}
          * @private
          */
         this._ble = null;
@@ -487,9 +487,8 @@ class WeDo2 {
     /**
      * Called by the runtime when user wants to scan for a device.
      */
-    // TODO: rename scan?
-    startDeviceScan () {
-        this._ble = new BLESession(this._runtime, {
+    scan () {
+        this._ble = new BLE(this._runtime, {
             filters: [{services: [UUID.DEVICE_SERVICE]}],
             optionalServices: [UUID.IO_SERVICE]
         }, this._onConnect);
@@ -499,16 +498,14 @@ class WeDo2 {
      * Called by the runtime when user wants to connect to a certain device.
      * @param {number} id - the id of the device to connect to.
      */
-    // TODO: rename connect?
-    connectDevice (id) {
-        this._ble.connectDevice(id);
+    connect (id) {
+        this._ble.connectPeripheral(id);
     }
 
     /**
      * Disconnects from the current BLE session.
      */
-    // TODO: rename disconnect?
-    disconnectSession () {
+    disconnect () {
         this._ports = ['none', 'none'];
         this._motors = [null, null];
         this._sensors = {
@@ -517,18 +514,17 @@ class WeDo2 {
             distance: 0
         };
 
-        this._ble.disconnectSession();
+        this._ble.disconnect();
     }
 
     /**
      * Called by the runtime to detect whether the device is connected.
      * @return {boolean} - the connected state.
      */
-    // TODO: rename isConnected
-    getPeripheralIsConnected () {
+    isConnected () {
         let connected = false;
         if (this._ble) {
-            connected = this._ble.getPeripheralIsConnected();
+            connected = this._ble.isConnected();
         }
         return connected;
     }
@@ -558,7 +554,7 @@ class WeDo2 {
      * @private
      */
     _send (uuid, message, useLimiter = true) {
-        if (!this.getPeripheralIsConnected()) return Promise.resolve();
+        if (!this.isConnected()) return Promise.resolve();
 
         if (useLimiter) {
             if (!this._rateLimiter.okayToSend()) return Promise.resolve();
@@ -634,6 +630,7 @@ class WeDo2 {
      * values if it is a sensor.
      * @param {number} connectID - the port to register a sensor or motor on.
      * @param {number} type - the type ID of the sensor or motor
+     * @private
      */
     _registerSensorOrMotor (connectID, type) {
         // Record which port is connected to what type of device
@@ -689,9 +686,10 @@ class WeDo2 {
 
     /**
      * Stop the tone playing and motors on the WeDo 2.0 hub.
+     * @private
      */
     _stopAll () {
-        if (!this.getPeripheralIsConnected()) return;
+        if (!this.isConnected()) return;
         this.stopTone()
             .then(() => {
                 this.stopAllMotors();

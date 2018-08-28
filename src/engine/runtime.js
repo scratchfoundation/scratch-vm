@@ -932,28 +932,28 @@ class Runtime extends EventEmitter {
         this.extensionDevices[extensionId] = device;
     }
 
-    startDeviceScan (extensionId) {
+    scan (extensionId) {
         if (this.extensionDevices[extensionId]) {
-            this.extensionDevices[extensionId].startDeviceScan();
+            this.extensionDevices[extensionId].scan();
         }
     }
 
     connectToPeripheral (extensionId, peripheralId) {
         if (this.extensionDevices[extensionId]) {
-            this.extensionDevices[extensionId].connectDevice(peripheralId);
+            this.extensionDevices[extensionId].connectPeripheral(peripheralId);
         }
     }
 
     disconnectExtensionSession (extensionId) {
         if (this.extensionDevices[extensionId]) {
-            this.extensionDevices[extensionId].disconnectSession();
+            this.extensionDevices[extensionId].disconnect();
         }
     }
 
-    getPeripheralIsConnected (extensionId) {
+    isConnected (extensionId) {
         let isConnected = false;
         if (this.extensionDevices[extensionId]) {
-            isConnected = this.extensionDevices[extensionId].getPeripheralIsConnected();
+            isConnected = this.extensionDevices[extensionId].isConnected();
         }
         return isConnected;
     }

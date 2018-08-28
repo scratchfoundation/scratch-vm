@@ -213,8 +213,8 @@ class VirtualMachine extends EventEmitter {
         this.runtime.ioDevices.video.setProvider(videoProvider);
     }
 
-    startDeviceScan (extensionId) {
-        this.runtime.startDeviceScan(extensionId);
+    scan (extensionId) {
+        this.runtime.scan(extensionId);
     }
 
     connectToPeripheral (extensionId, peripheralId) {
@@ -225,8 +225,8 @@ class VirtualMachine extends EventEmitter {
         this.runtime.disconnectExtensionSession(extensionId);
     }
 
-    getPeripheralIsConnected (extensionId) {
-        return this.runtime.getPeripheralIsConnected(extensionId);
+    isConnected (extensionId) {
+        return this.runtime.isConnected(extensionId);
     }
 
     /**
