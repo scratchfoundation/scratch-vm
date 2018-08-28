@@ -833,6 +833,10 @@ const parseBlock = function (sb2block, addBroadcastMsg, getVariableId, extension
                     // Update commentIndex
                     commentIndex = parsedBlockDesc[1];
                 }
+                // Check if innerBlocks is an empty list.
+                // This indicates that all the inner blocks from the sb2 have
+                // unknown opcodes and have been skipped.
+                if (innerBlocks.length === 0) continue;
                 let previousBlock = null;
                 for (let j = 0; j < innerBlocks.length; j++) {
                     if (j === 0) {
