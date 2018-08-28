@@ -7,6 +7,7 @@ const log = require('../../util/log');
 const BLESession = require('../../io/bleSession');
 const Base64Util = require('../../util/base64-util');
 const MathUtil = require('../../util/math-util');
+const RateLimiter = require('../../util/rateLimiter.js');
 
 /**
  * Icon svg to be displayed at the left edge of each extension block, encoded as a data URI.
@@ -29,9 +30,6 @@ const UUID = {
  * @type {number}
  */
 const BLESendInterval = 100;
-
-const TokenMax = 30;
-const TokenInterval = 1000 / 30;
 
 /**
  * Enum for WeDo2 sensor and output types.
@@ -350,24 +348,6 @@ class WeDo2 {
         };
 
         /**
-         * A flag that is true while we are busy sendng data to the BLE session.
-         * @type {boolean}
-         * @private
-         */
-        this._sending = false;
-
-        this._tokenBucket = TokenMax;
-        window.setInterval(() => {
-            this._addToken();
-        }, TokenInterval);
-
-        /**
-         * ID for a timeout which is used to clear the sending flag if it has been
-         * true for a long time.
-         */
-        this._sendingTimeoutID = null;
-
-        /**
          * The Bluetooth connection session for reading/writing device data.
          * @type {BLESession}
          * @private
@@ -377,21 +357,8 @@ class WeDo2 {
 
         this._onConnect = this._onConnect.bind(this);
         this._onMessage = this._onMessage.bind(this);
-    }
 
-    _addToken () {
-        if (this._tokenBucket < TokenMax) {
-            this._tokenBucket++;
-        }
-    }
-
-    _requestAToken () {
-        if (this._tokenBucket > 0) {
-            this._tokenBucket--;
-            return true;
-        }
-        console.log('out of tokens cannot even anymore');
-        return false;
+        this._rateLimiter = new RateLimiter(30);
     }
 
     /**
@@ -574,7 +541,7 @@ class WeDo2 {
     _send (uuid, message) {
         if (!this.getPeripheralIsConnected()) return Promise.resolve();
 
-        if (!this._requestAToken()) return Promise.resolve();
+        if (!this._rateLimiter.okayToSend()) return Promise.resolve();
 
         return this._ble.write(UUID.IO_SERVICE, uuid, message, 'base64');
     }
