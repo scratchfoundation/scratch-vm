@@ -30,6 +30,9 @@ const UUID = {
  */
 const BLESendInterval = 100;
 
+const TokenMax = 30;
+const TokenInterval = 1000 / 30;
+
 /**
  * Enum for WeDo2 sensor and output types.
  * @readonly
@@ -353,6 +356,11 @@ class WeDo2 {
          */
         this._sending = false;
 
+        this._tokenBucket = TokenMax;
+        window.setInterval(() => {
+            this._addToken();
+        }, TokenInterval);
+
         /**
          * ID for a timeout which is used to clear the sending flag if it has been
          * true for a long time.
@@ -369,6 +377,21 @@ class WeDo2 {
 
         this._onConnect = this._onConnect.bind(this);
         this._onMessage = this._onMessage.bind(this);
+    }
+
+    _addToken () {
+        if (this._tokenBucket < TokenMax) {
+            this._tokenBucket++;
+        }
+    }
+
+    _requestAToken () {
+        if (this._tokenBucket > 0) {
+            this._tokenBucket--;
+            return true;
+        }
+        console.log('out of tokens cannot even anymore');
+        return false;
     }
 
     /**
@@ -549,20 +572,11 @@ class WeDo2 {
      * @private
      */
     _send (uuid, message) {
-        if (!this.getPeripheralIsConnected()) return;
-        if (this._sending) return;
+        if (!this.getPeripheralIsConnected()) return Promise.resolve();
 
-        this._sending = true;
+        if (!this._requestAToken()) return Promise.resolve();
 
-        this._sendingTimeoutID = window.setTimeout(() => {
-            this._sending = false;
-        }, 5000);
-
-        return this._ble.write(UUID.IO_SERVICE, uuid, message, 'base64')
-            .then(() => {
-                this._sending = false;
-                window.clearTimeout(this._sendingTimeoutID);
-            });
+        return this._ble.write(UUID.IO_SERVICE, uuid, message, 'base64');
     }
 
     /**
