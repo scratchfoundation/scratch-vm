@@ -7,6 +7,7 @@ const log = require('../../util/log');
 const BLESession = require('../../io/bleSession');
 const Base64Util = require('../../util/base64-util');
 const MathUtil = require('../../util/math-util');
+const RateLimiter = require('../../util/rateLimiter.js');
 
 /**
  * Icon svg to be displayed at the left edge of each extension block, encoded as a data URI.
@@ -29,6 +30,12 @@ const UUID = {
  * @type {number}
  */
 const BLESendInterval = 100;
+
+/**
+ * A maximum number of BLE message sends per second, to be enforced by the rate limiter.
+ * @type {number}
+ */
+const BLESendRateMax = 20;
 
 /**
  * Enum for WeDo2 sensor and output types.
@@ -260,15 +267,16 @@ class WeDo2Motor {
 
     /**
      * Turn this motor off.
+     * @param {boolean} [useLimiter=true] - if true, use the rate limiter
      */
-    setMotorOff () {
+    setMotorOff (useLimiter = true) {
         const cmd = new Uint8Array(4);
         cmd[0] = this._index + 1; // connect id
         cmd[1] = WeDo2Commands.MOTOR_POWER; // command
         cmd[2] = 1; // 1 byte to follow
         cmd[3] = 0; // power in range 0-100
 
-        this._parent._send(UUID.OUTPUT_COMMAND, Base64Util.uint8ArrayToBase64(cmd));
+        this._parent._send(UUID.OUTPUT_COMMAND, Base64Util.uint8ArrayToBase64(cmd), useLimiter);
 
         this._isOn = false;
     }
@@ -347,19 +355,6 @@ class WeDo2 {
         };
 
         /**
-         * A flag that is true while we are busy sendng data to the BLE session.
-         * @type {boolean}
-         * @private
-         */
-        this._sending = false;
-
-        /**
-         * ID for a timeout which is used to clear the sending flag if it has been
-         * true for a long time.
-         */
-        this._sendingTimeoutID = null;
-
-        /**
          * The Bluetooth connection session for reading/writing device data.
          * @type {BLESession}
          * @private
@@ -369,6 +364,14 @@ class WeDo2 {
 
         this._onConnect = this._onConnect.bind(this);
         this._onMessage = this._onMessage.bind(this);
+
+        /**
+         * A rate limiter utility, to help limit the rate at which we send BLE messages
+         * over the socket to Scratch Link to a maximum number of sends per second.
+         * @type {RateLimiter}
+         * @private
+         */
+        this._rateLimiter = new RateLimiter(BLESendRateMax);
     }
 
     /**
@@ -406,8 +409,11 @@ class WeDo2 {
      */
     stopAllMotors () {
         this._motors.forEach(motor => {
-            if (motor && motor.isOn) {
-                motor.setMotorOff();
+            if (motor) {
+                // Send the motor off command without using the rate limiter.
+                // This allows the stop button to stop motors even if we are
+                // otherwise flooded with commands.
+                motor.setMotorOff(false);
             }
         });
     }
@@ -473,7 +479,9 @@ class WeDo2 {
         cmd[0] = WeDo2ConnectIDs.PIEZO; // connect id
         cmd[1] = WeDo2Commands.STOP_TONE; // command
 
-        return this._send(UUID.OUTPUT_COMMAND, Base64Util.uint8ArrayToBase64(cmd));
+        // Send this command without using the rate limiter, because it is only triggered
+        // by the stop button.
+        return this._send(UUID.OUTPUT_COMMAND, Base64Util.uint8ArrayToBase64(cmd), false);
     }
 
     /**
@@ -545,24 +553,18 @@ class WeDo2 {
      * Write a message to the device BLE session.
      * @param {number} uuid - the UUID of the characteristic to write to
      * @param {Uint8Array} message - the message to write.
+     * @param {boolean} [useLimiter=true] - if true, use the rate limiter
      * @return {Promise} - a promise result of the write operation
      * @private
      */
-    _send (uuid, message) {
-        if (!this.getPeripheralIsConnected()) return;
-        if (this._sending) return;
+    _send (uuid, message, useLimiter = true) {
+        if (!this.getPeripheralIsConnected()) return Promise.resolve();
 
-        this._sending = true;
+        if (useLimiter) {
+            if (!this._rateLimiter.okayToSend()) return Promise.resolve();
+        }
 
-        this._sendingTimeoutID = window.setTimeout(() => {
-            this._sending = false;
-        }, 5000);
-
-        return this._ble.write(UUID.IO_SERVICE, uuid, message, 'base64')
-            .then(() => {
-                this._sending = false;
-                window.clearTimeout(this._sendingTimeoutID);
-            });
+        return this._ble.write(UUID.IO_SERVICE, uuid, message, 'base64');
     }
 
     /**
