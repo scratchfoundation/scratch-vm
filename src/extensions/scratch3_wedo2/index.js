@@ -364,7 +364,7 @@ class WeDo2 {
          * @type {RateLimiter}
          * @private
          */
-        this._rateLimiter = new RateLimiter(30);
+        this._rateLimiter = new RateLimiter(20);
     }
 
     /**
