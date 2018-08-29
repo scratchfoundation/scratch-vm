@@ -267,15 +267,16 @@ class WeDo2Motor {
 
     /**
      * Turn this motor off.
+     * @param {boolean} [useLimiter=true] - if true, use the rate limiter
      */
-    setMotorOff () {
+    setMotorOff (useLimiter = true) {
         const cmd = new Uint8Array(4);
         cmd[0] = this._index + 1; // connect id
         cmd[1] = WeDo2Commands.MOTOR_POWER; // command
         cmd[2] = 1; // 1 byte to follow
         cmd[3] = 0; // power in range 0-100
 
-        this._parent._send(UUID.OUTPUT_COMMAND, Base64Util.uint8ArrayToBase64(cmd));
+        this._parent._send(UUID.OUTPUT_COMMAND, Base64Util.uint8ArrayToBase64(cmd), useLimiter);
 
         this._isOn = false;
     }
@@ -409,7 +410,10 @@ class WeDo2 {
     stopAllMotors () {
         this._motors.forEach(motor => {
             if (motor) {
-                motor.setMotorOff();
+                // Send the motor off command without using the rate limiter.
+                // This allows the stop button to stop motors even if we are
+                // otherwise flooded with commands.
+                motor.setMotorOff(false);
             }
         });
     }
@@ -475,7 +479,9 @@ class WeDo2 {
         cmd[0] = WeDo2ConnectIDs.PIEZO; // connect id
         cmd[1] = WeDo2Commands.STOP_TONE; // command
 
-        return this._send(UUID.OUTPUT_COMMAND, Base64Util.uint8ArrayToBase64(cmd));
+        // Send this command without using the rate limiter, because it is only triggered
+        // by the stop button.
+        return this._send(UUID.OUTPUT_COMMAND, Base64Util.uint8ArrayToBase64(cmd), false);
     }
 
     /**
@@ -547,13 +553,16 @@ class WeDo2 {
      * Write a message to the device BLE session.
      * @param {number} uuid - the UUID of the characteristic to write to
      * @param {Uint8Array} message - the message to write.
+     * @param {boolean} [useLimiter=true] - if true, use the rate limiter
      * @return {Promise} - a promise result of the write operation
      * @private
      */
-    _send (uuid, message) {
+    _send (uuid, message, useLimiter = true) {
         if (!this.getPeripheralIsConnected()) return Promise.resolve();
 
-        if (!this._rateLimiter.okayToSend()) return Promise.resolve();
+        if (useLimiter) {
+            if (!this._rateLimiter.okayToSend()) return Promise.resolve();
+        }
 
         return this._ble.write(UUID.IO_SERVICE, uuid, message, 'base64');
     }
