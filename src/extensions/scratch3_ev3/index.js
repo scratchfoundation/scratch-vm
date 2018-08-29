@@ -143,14 +143,14 @@ class EV3 {
         this._runtime.on('PROJECT_STOP_ALL', this._stopAll);
 
         /**
-         * The device ports that connect to sensors.
+         * The ports that connect to sensors.
          * @type {string[]}
          * @private
          */
         this._sensorPorts = [];
 
         /**
-         * The device ports that connect to motors.
+         * The ports that connect to motors.
          * @type {string[]}
          * @private
          */
@@ -201,7 +201,7 @@ class EV3 {
         this._pollingCounter = 0;
 
         /**
-         * The Bluetooth socket connection for reading/writing device data.
+         * The Bluetooth socket connection for reading/writing peripheral data.
          * @type {BT}
          * @private
          */
@@ -468,7 +468,7 @@ class EV3 {
     }
 
     /**
-     * Called by the runtime when user wants to scan for a device.
+     * Called by the runtime when user wants to scan for a peripheral.
      */
     scan () {
         this._bt = new BT(this._runtime, {
@@ -478,15 +478,15 @@ class EV3 {
     }
 
     /**
-     * Called by the runtime when user wants to connect to a certain device.
-     * @param {number} id - the id of the device to connect to.
+     * Called by the runtime when user wants to connect to a certain peripheral.
+     * @param {number} id - the id of the peripheral to connect to.
      */
     connect (id) {
         this._bt.connectPeripheral(id);
     }
 
     /**
-     * Called by the runtime when user wants to disconnect from the device.
+     * Called by the runtime when user wants to disconnect from the peripheral.
      */
     disconnect () {
         this._bt.disconnect();
@@ -910,8 +910,8 @@ class Scratch3Ev3Blocks {
          */
         this.runtime = runtime;
 
-        // Create a new EV3 device instance
-        this._device = new EV3(this.runtime, Scratch3Ev3Blocks.EXTENSION_ID);
+        // Create a new EV3 peripheral instance
+        this._peripheral = new EV3(this.runtime, Scratch3Ev3Blocks.EXTENSION_ID);
     }
 
     /**
@@ -1166,7 +1166,7 @@ class Scratch3Ev3Blocks {
             return;
         }
 
-        return this._device.motorTurnClockwise(port, time);
+        return this._peripheral.motorTurnClockwise(port, time);
     }
 
     motorTurnCounterClockwise (args) {
@@ -1178,7 +1178,7 @@ class Scratch3Ev3Blocks {
             return;
         }
 
-        return this._device.motorTurnCounterClockwise(port, time);
+        return this._peripheral.motorTurnCounterClockwise(port, time);
     }
 
     /*
@@ -1190,7 +1190,7 @@ class Scratch3Ev3Blocks {
             return;
         }
 
-        this._device.motorRotate(port, degrees);
+        this._peripheral.motorRotate(port, degrees);
         return;
     }
 
@@ -1202,7 +1202,7 @@ class Scratch3Ev3Blocks {
             return;
         }
 
-        this._device.motorSetPosition(port, degrees);
+        this._peripheral.motorSetPosition(port, degrees);
         return;
     }
     */
@@ -1215,7 +1215,7 @@ class Scratch3Ev3Blocks {
             return;
         }
 
-        this._device.motorSetPower(port, power);
+        this._peripheral.motorSetPower(port, power);
         return;
     }
 
@@ -1226,7 +1226,7 @@ class Scratch3Ev3Blocks {
             return;
         }
 
-        return this._device.getMotorPosition(port);
+        return this._peripheral.getMotorPosition(port);
     }
 
     whenButtonPressed (args) {
@@ -1236,19 +1236,19 @@ class Scratch3Ev3Blocks {
             return;
         }
 
-        return this._device.isButtonPressed(port);
+        return this._peripheral.isButtonPressed(port);
     }
 
     whenDistanceLessThan (args) {
         const distance = MathUtil.clamp(Cast.toNumber(args.DISTANCE), 0, 100);
 
-        return this._device.distance < distance;
+        return this._peripheral.distance < distance;
     }
 
     whenBrightnessLessThan (args) {
         const brightness = MathUtil.clamp(Cast.toNumber(args.DISTANCE), 0, 100);
 
-        return this._device.brightness < brightness;
+        return this._peripheral.brightness < brightness;
     }
 
     buttonPressed (args) {
@@ -1258,15 +1258,15 @@ class Scratch3Ev3Blocks {
             return;
         }
 
-        return this._device.isButtonPressed(port);
+        return this._peripheral.isButtonPressed(port);
     }
 
     getDistance () {
-        return this._device.distance;
+        return this._peripheral.distance;
     }
 
     getBrightness () {
-        return this._device.brightness;
+        return this._peripheral.brightness;
     }
 
     beep (args) {
@@ -1281,7 +1281,7 @@ class Scratch3Ev3Blocks {
         // https://en.wikipedia.org/wiki/MIDI_tuning_standard#Frequency_values
         const freq = Math.pow(2, ((note - 69 + 12) / 12)) * 440;
 
-        return this._device.beep(freq, time);
+        return this._peripheral.beep(freq, time);
     }
 }
 

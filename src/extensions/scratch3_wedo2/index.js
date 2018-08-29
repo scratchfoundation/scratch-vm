@@ -97,19 +97,19 @@ const WeDo2Units = {
 class WeDo2Motor {
     /**
      * Construct a WeDo2Motor instance.
-     * @param {WeDo2} parent - the WeDo 2.0 device which owns this motor.
-     * @param {int} index - the zero-based index of this motor on its parent device.
+     * @param {WeDo2} parent - the WeDo 2.0 peripheral which owns this motor.
+     * @param {int} index - the zero-based index of this motor on its parent peripheral.
      */
     constructor (parent, index) {
         /**
-         * The WeDo 2.0 device which owns this motor.
+         * The WeDo 2.0 peripheral which owns this motor.
          * @type {WeDo2}
          * @private
          */
         this._parent = parent;
 
         /**
-         * The zero-based index of this motor on its parent device.
+         * The zero-based index of this motor on its parent peripheral.
          * @type {int}
          * @private
          */
@@ -315,7 +315,7 @@ class WeDo2Motor {
 }
 
 /**
- * Manage communication with a WeDo 2.0 device over a Bluetooth Low Energy client socket.
+ * Manage communication with a WeDo 2.0 peripheral over a Bluetooth Low Energy client socket.
  */
 class WeDo2 {
 
@@ -330,7 +330,7 @@ class WeDo2 {
         this._runtime.on('PROJECT_STOP_ALL', this._stopAll.bind(this));
 
         /**
-         * The device ports that connect to motors and sensors.
+         * The ports that connect to motors and sensors.
          * @type {string[]}
          * @private
          */
@@ -355,7 +355,7 @@ class WeDo2 {
         };
 
         /**
-         * The Bluetooth connection session for reading/writing device data.
+         * The Bluetooth connection session for reading/writing peripheral data.
          * @type {BLE}
          * @private
          */
@@ -396,7 +396,7 @@ class WeDo2 {
     }
 
     /**
-     * Access a particular motor on this device.
+     * Access a particular motor on this peripheral.
      * @param {int} index - the zero-based index of the desired motor.
      * @return {WeDo2Motor} - the WeDo2Motor instance, if any, at that index.
      */
@@ -485,7 +485,7 @@ class WeDo2 {
     }
 
     /**
-     * Called by the runtime when user wants to scan for a device.
+     * Called by the runtime when user wants to scan for a peripheral.
      */
     scan () {
         this._ble = new BLE(this._runtime, {
@@ -495,15 +495,15 @@ class WeDo2 {
     }
 
     /**
-     * Called by the runtime when user wants to connect to a certain device.
-     * @param {number} id - the id of the device to connect to.
+     * Called by the runtime when user wants to connect to a certain peripheral.
+     * @param {number} id - the id of the peripheral to connect to.
      */
     connect (id) {
         this._ble.connectPeripheral(id);
     }
 
     /**
-     * Disconnects from the current BLE session.
+     * Disconnects from the current BLE socket.
      */
     disconnect () {
         this._ports = ['none', 'none'];
@@ -518,7 +518,7 @@ class WeDo2 {
     }
 
     /**
-     * Called by the runtime to detect whether the device is connected.
+     * Called by the runtime to detect whether the peripheral is connected.
      * @return {boolean} - the connected state.
      */
     isConnected () {
@@ -530,7 +530,7 @@ class WeDo2 {
     }
 
     /**
-     * Sets LED mode and initial color and starts reading data from device after BLE has connected.
+     * Sets LED mode and initial color and starts reading data from peripheral after BLE has connected.
      * @private
      */
     _onConnect () {
@@ -546,7 +546,7 @@ class WeDo2 {
     }
 
     /**
-     * Write a message to the device BLE session.
+     * Write a message to the peripheral BLE socket.
      * @param {number} uuid - the UUID of the characteristic to write to
      * @param {Uint8Array} message - the message to write.
      * @param {boolean} [useLimiter=true] - if true, use the rate limiter
@@ -734,7 +734,7 @@ const TiltDirection = {
 };
 
 /**
- * Scratch 3.0 blocks to interact with a LEGO WeDo 2.0 device.
+ * Scratch 3.0 blocks to interact with a LEGO WeDo 2.0 peripheral.
  */
 class Scratch3WeDo2Blocks {
 
@@ -763,8 +763,8 @@ class Scratch3WeDo2Blocks {
          */
         this.runtime = runtime;
 
-        // Create a new WeDo2 device instance
-        this._device = new WeDo2(this.runtime, Scratch3WeDo2Blocks.EXTENSION_ID);
+        // Create a new WeDo2 peripheral instance
+        this._peripheral = new WeDo2(this.runtime, Scratch3WeDo2Blocks.EXTENSION_ID);
     }
 
     /**
@@ -1007,13 +1007,13 @@ class Scratch3WeDo2Blocks {
         durationMS = MathUtil.clamp(durationMS, 0, 15000);
         return new Promise(resolve => {
             this._forEachMotor(args.MOTOR_ID, motorIndex => {
-                const motor = this._device.motor(motorIndex);
+                const motor = this._peripheral.motor(motorIndex);
                 if (motor) {
                     motor.setMotorOnFor(durationMS);
                 }
             });
 
-            // Ensure this block runs for a fixed amount of time even when no device is connected.
+            // Ensure this block runs for a fixed amount of time even when no motor is connected.
             setTimeout(resolve, durationMS);
         });
     }
@@ -1026,7 +1026,7 @@ class Scratch3WeDo2Blocks {
      */
     motorOn (args) {
         this._forEachMotor(args.MOTOR_ID, motorIndex => {
-            const motor = this._device.motor(motorIndex);
+            const motor = this._peripheral.motor(motorIndex);
             if (motor) {
                 motor.setMotorOn();
             }
@@ -1047,7 +1047,7 @@ class Scratch3WeDo2Blocks {
      */
     motorOff (args) {
         this._forEachMotor(args.MOTOR_ID, motorIndex => {
-            const motor = this._device.motor(motorIndex);
+            const motor = this._peripheral.motor(motorIndex);
             if (motor) {
                 motor.setMotorOff();
             }
@@ -1069,7 +1069,7 @@ class Scratch3WeDo2Blocks {
      */
     startMotorPower (args) {
         this._forEachMotor(args.MOTOR_ID, motorIndex => {
-            const motor = this._device.motor(motorIndex);
+            const motor = this._peripheral.motor(motorIndex);
             if (motor) {
                 motor.power = MathUtil.clamp(Cast.toNumber(args.POWER), 0, 100);
                 motor.setMotorOn();
@@ -1093,7 +1093,7 @@ class Scratch3WeDo2Blocks {
      */
     setMotorDirection (args) {
         this._forEachMotor(args.MOTOR_ID, motorIndex => {
-            const motor = this._device.motor(motorIndex);
+            const motor = this._peripheral.motor(motorIndex);
             if (motor) {
                 switch (args.MOTOR_DIRECTION) {
                 case MotorDirection.FORWARD:
@@ -1143,7 +1143,7 @@ class Scratch3WeDo2Blocks {
 
         const rgbDecimal = color.rgbToDecimal(rgbObject);
 
-        this._device.setLED(rgbDecimal);
+        this._peripheral.setLED(rgbDecimal);
 
         return new Promise(resolve => {
             window.setTimeout(() => {
@@ -1166,9 +1166,9 @@ class Scratch3WeDo2Blocks {
         if (durationMS === 0) return; // WeDo2 plays duration '0' forever
         return new Promise(resolve => {
             const tone = this._noteToTone(note);
-            this._device.playTone(tone, durationMS);
+            this._peripheral.playTone(tone, durationMS);
 
-            // Ensure this block runs for a fixed amount of time even when no device is connected.
+            // Ensure this block runs for a fixed amount of time even when no piezo is connected.
             setTimeout(resolve, durationMS);
         });
     }
@@ -1184,10 +1184,10 @@ class Scratch3WeDo2Blocks {
         switch (args.OP) {
         case '<':
         case '&lt;':
-            return this._device.distance < Cast.toNumber(args.REFERENCE);
+            return this._peripheral.distance < Cast.toNumber(args.REFERENCE);
         case '>':
         case '&gt;':
-            return this._device.distance > Cast.toNumber(args.REFERENCE);
+            return this._peripheral.distance > Cast.toNumber(args.REFERENCE);
         default:
             log.warn(`Unknown comparison operator in whenDistance: ${args.OP}`);
             return false;
@@ -1208,7 +1208,7 @@ class Scratch3WeDo2Blocks {
      * @return {number} - the distance sensor's value, scaled to the [0,100] range.
      */
     getDistance () {
-        return this._device.distance;
+        return this._peripheral.distance;
     }
 
     /**
@@ -1240,8 +1240,8 @@ class Scratch3WeDo2Blocks {
     _isTilted (direction) {
         switch (direction) {
         case TiltDirection.ANY:
-            return (Math.abs(this._device.tiltX) >= Scratch3WeDo2Blocks.TILT_THRESHOLD) ||
-                (Math.abs(this._device.tiltY) >= Scratch3WeDo2Blocks.TILT_THRESHOLD);
+            return (Math.abs(this._peripheral.tiltX) >= Scratch3WeDo2Blocks.TILT_THRESHOLD) ||
+                (Math.abs(this._peripheral.tiltY) >= Scratch3WeDo2Blocks.TILT_THRESHOLD);
         default:
             return this._getTiltAngle(direction) >= Scratch3WeDo2Blocks.TILT_THRESHOLD;
         }
@@ -1256,13 +1256,13 @@ class Scratch3WeDo2Blocks {
     _getTiltAngle (direction) {
         switch (direction) {
         case TiltDirection.UP:
-            return this._device.tiltY > 45 ? 256 - this._device.tiltY : -this._device.tiltY;
+            return this._peripheral.tiltY > 45 ? 256 - this._peripheral.tiltY : -this._peripheral.tiltY;
         case TiltDirection.DOWN:
-            return this._device.tiltY > 45 ? this._device.tiltY - 256 : this._device.tiltY;
+            return this._peripheral.tiltY > 45 ? this._peripheral.tiltY - 256 : this._peripheral.tiltY;
         case TiltDirection.LEFT:
-            return this._device.tiltX > 45 ? 256 - this._device.tiltX : -this._device.tiltX;
+            return this._peripheral.tiltX > 45 ? 256 - this._peripheral.tiltX : -this._peripheral.tiltX;
         case TiltDirection.RIGHT:
-            return this._device.tiltX > 45 ? this._device.tiltX - 256 : this._device.tiltX;
+            return this._peripheral.tiltX > 45 ? this._peripheral.tiltX - 256 : this._peripheral.tiltX;
         default:
             log.warn(`Unknown tilt direction in _getTiltAngle: ${direction}`);
         }
