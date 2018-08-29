@@ -5,6 +5,7 @@ const cast = require('../../util/cast');
 const formatMessage = require('format-message');
 const BLESession = require('../../io/bleSession');
 const Base64Util = require('../../util/base64-util');
+const RateLimiter = require('../../util/rateLimiter.js');
 
 /**
  * Icon png to be displayed at the left edge of each extension block, encoded as a data URI.
@@ -32,6 +33,12 @@ const BLETimeout = 4500; // TODO: might need tweaking based on how long the devi
  * @type {number}
  */
 const BLESendInterval = 100;
+
+/**
+ * A maximum number of BLE message sends per second, to be enforced by the rate limiter.
+ * @type {number}
+ */
+const BLESendRateMax = 20;
 
 /**
  * Enum for micro:bit protocol.
@@ -116,17 +123,12 @@ class MicroBit {
         this._timeoutID = null;
 
         /**
-         * A flag that is true while we are busy sending data to the BLE session.
-         * @type {boolean}
+         * A rate limiter utility, to help limit the rate at which we send BLE messages
+         * over the socket to Scratch Link to a maximum number of sends per second.
+         * @type {RateLimiter}
          * @private
          */
-        this._busy = false;
-
-        /**
-         * ID for a timeout which is used to clear the busy flag if it has been
-         * true for a long time.
-         */
-        this._busyTimeoutID = null;
+        this._rateLimiter = new RateLimiter(BLESendRateMax);
     }
 
     // TODO: keep here?
@@ -278,19 +280,7 @@ class MicroBit {
      */
     _writeSessionData (command, message) {
         if (!this.getPeripheralIsConnected()) return;
-        if (this._busy) return;
-
-        // Set a busy flag so that while we are sending a message and waiting for
-        // the response, additional messages are ignored.
-        this._busy = true;
-
-        // Set a timeout after which to reset the busy flag. This is used in case
-        // a BLE message was sent for which we never received a response, because
-        // e.g. the device was turned off after the message was sent. We reset
-        // the busy flag after a while so that it is possible to try again later.
-        this._busyTimeoutID = window.setTimeout(() => {
-            this._busy = false;
-        }, 5000);
+        if (!this._rateLimiter.okayToSend()) return;
 
         const output = new Uint8Array(message.length + 1);
         output[0] = command; // attach command to beginning of message
@@ -299,12 +289,7 @@ class MicroBit {
         }
         const data = Base64Util.uint8ArrayToBase64(output);
 
-        this._ble.write(BLEUUID.service, BLEUUID.txChar, data, 'base64', true).then(
-            () => {
-                this._busy = false;
-                window.clearTimeout(this._busyTimeoutID);
-            }
-        );
+        this._ble.write(BLEUUID.service, BLEUUID.txChar, data, 'base64', true);
     }
 }
 
