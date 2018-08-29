@@ -32,6 +32,12 @@ const UUID = {
 const BLESendInterval = 100;
 
 /**
+ * A maximum number of BLE message sends per second, to be enforced by the rate limiter.
+ * @type {number}
+ */
+const BLESendRateMax = 20;
+
+/**
  * Enum for WeDo2 sensor and output types.
  * @readonly
  * @enum {number}
@@ -364,7 +370,7 @@ class WeDo2 {
          * @type {RateLimiter}
          * @private
          */
-        this._rateLimiter = new RateLimiter(20);
+        this._rateLimiter = new RateLimiter(BLESendRateMax);
     }
 
     /**
