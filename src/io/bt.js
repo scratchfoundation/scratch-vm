@@ -5,7 +5,7 @@ const ScratchLinkWebSocket = 'wss://device-manager.scratch.mit.edu:20110/scratch
 class BT extends JSONRPCWebSocket {
 
     /**
-     * A BT peripheral socket object.  It handles connecting, over web sockets, to
+     * A BT peripheral session object.  It handles connecting, over web sockets, to
      * BT peripherals, and reading and writing data to them.
      * @param {Runtime} runtime - the Runtime for sending/receiving GUI update events.
      * @param {object} peripheralOptions - the list of options for peripheral discovery.
