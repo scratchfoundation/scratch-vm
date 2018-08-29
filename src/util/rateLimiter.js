@@ -29,7 +29,6 @@ class RateLimiter {
          */
         this._count = this._maxTokens;
 
-
         this._timer = new Timer();
         this._timer.start();
 
