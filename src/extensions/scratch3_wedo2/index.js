@@ -358,6 +358,12 @@ class WeDo2 {
         this._onConnect = this._onConnect.bind(this);
         this._onMessage = this._onMessage.bind(this);
 
+        /**
+         * A rate limiter utility, to help limit the rate at which we send BLE messages
+         * over the socket to Scratch Link to a maximum number of sends per second.
+         * @type {RateLimiter}
+         * @private
+         */
         this._rateLimiter = new RateLimiter(30);
     }
 
