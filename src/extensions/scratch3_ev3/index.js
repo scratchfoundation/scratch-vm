@@ -19,7 +19,8 @@ const blockIconURI = 'data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNv
 
 /**
  * Enum for Ev3 commands.
- * TODO: PDF page number?
+ * Found in the 'EV3 Firmware Developer Kit', section 4, page 10, at
+ * https://education.lego.com/en-us/support/mindstorms-ev3/developer-kits.
  * @readonly
  * @enum {number}
  */
@@ -41,7 +42,8 @@ const Ev3Command = {
 
 /**
  * Enum for Ev3 device types.
- * TODO: firmware pdf page 100?
+ * Found in the 'EV3 Firmware Developer Kit', section 5, page 100, at
+ * https://education.lego.com/en-us/support/mindstorms-ev3/developer-kits.
  * @readonly
  * @enum {string}
  */
@@ -58,7 +60,8 @@ const Ev3DeviceTypes = {
 
 /**
  * Enum for Ev3 device modes.
- * TODO: firmware pdf page 100?
+ * Found in the 'EV3 Firmware Developer Kit', section 5, page 100, at
+ * https://education.lego.com/en-us/support/mindstorms-ev3/developer-kits.
  * @readonly
  * @enum {number}
  */
@@ -71,7 +74,6 @@ const Ev3DeviceModes = {
 
 /**
  * Enum for Ev3 device labels.
- * TODO: firmware pdf page?
  * @readonly
  * @enum {string}
  */
@@ -222,10 +224,7 @@ class EV3 {
         cmd[15] = time; // time byte 1
         cmd[16] = time >> 8; // time byte 2
 
-        this._bt.sendMessage({
-            message: Base64Util.arrayBufferToBase64(cmd),
-            encoding: 'base64'
-        });
+        this._send(cmd);
 
         // Yield for sound duration
         // TODO: does this work?
@@ -248,11 +247,7 @@ class EV3 {
             Ev3Command.LONGRAMP
         ));
 
-        // Send turn message
-        this._bt.sendMessage({
-            message: Base64Util.arrayBufferToBase64(cmd),
-            encoding: 'base64'
-        });
+        this._send(cmd);
 
         this.coastAfter(port, time);
 
@@ -277,11 +272,7 @@ class EV3 {
             Ev3Command.LONGRAMP
         ));
 
-        // Send turn message
-        this._bt.sendMessage({
-            message: Base64Util.arrayBufferToBase64(cmd),
-            encoding: 'base64'
-        });
+        this._send(cmd);
 
         // Set motor to busy
         // this._motors.busy[port] = 1;
@@ -328,10 +319,7 @@ class EV3 {
         cmd[9] = this._portMask(port); // port output bit field
         cmd[10] = 0; // float = coast = 0
 
-        this._bt.sendMessage({
-            message: Base64Util.uint8ArrayToBase64(cmd),
-            encoding: 'base64'
-        });
+        this._send(cmd);
     }
 
     motorRotate (port, degrees) {
@@ -346,11 +334,7 @@ class EV3 {
             Ev3Command.LONGRAMP
         ));
 
-        // Send rotate message
-        this._bt.sendMessage({
-            message: Base64Util.arrayBufferToBase64(cmd),
-            encoding: 'base64'
-        });
+        this._send(cmd);
 
         // Set motor to busy
         // this._motors.busy[port] = 1;
@@ -392,11 +376,7 @@ class EV3 {
             Ev3Command.LONGRAMP
         ));
 
-        // Send rotate message
-        this._bt.sendMessage({
-            message: Base64Util.arrayBufferToBase64(cmd),
-            encoding: 'base64'
-        });
+        this._send(cmd);
 
         // Set motor to busy
         // this._motors.busy[port] = 1;
@@ -577,12 +557,25 @@ class EV3 {
         }
         */
 
-        this._bt.sendMessage({
+        this._send(cmd);
+
+        this._pollingCounter++;
+    }
+
+    /**
+     * Write a message to the peripheral BT socket.
+     * @param {Uint8Array} cmd - the message to write.
+     * @return {Promise} - a promise result of the write operation
+     * @private
+     */
+    _send (cmd) {
+        // TODO: add rate limiting?
+        if (!this.isConnected()) return Promise.resolve();
+
+        return this._bt.sendMessage({
             message: Base64Util.uint8ArrayToBase64(cmd),
             encoding: 'base64'
         });
-
-        this._pollingCounter++;
     }
 
     /**
@@ -670,7 +663,7 @@ class EV3 {
         */
     }
 
-    // TODO: keep here? / refactor
+    // TODO: MOVE / RENAME
     _applyPrefix (n, cmd) {
         // TODO: document
         const len = cmd.length + 5;
@@ -686,7 +679,7 @@ class EV3 {
         );
     }
 
-    // TODO: keep here? / refactor
+    // TODO: MOVE / RENAME
     /**
      * Generate a motor command in EV3 byte array format (CMD, LAYER, PORT,
      * SPEED, RAMP UP, RUN, RAMP DOWN, BREAKING TYPE)
@@ -819,10 +812,7 @@ class EV3 {
         cmd[7] = 148; // 0x94 op: sound
         cmd[8] = 0; // 0x00 cmd: break 0x00 (Stop current sound playback)
 
-        this._bt.sendMessage({
-            message: Base64Util.arrayBufferToBase64(cmd),
-            encoding: 'base64'
-        });
+        this._send(cmd);
     }
 
     /**
