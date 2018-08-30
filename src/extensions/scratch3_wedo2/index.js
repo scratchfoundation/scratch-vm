@@ -17,7 +17,7 @@ const log = require('../../util/log');
 const iconURI = 'data:image/png;base64,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';
 
 /**
- * A list of BLE service UUIDs.
+ * A list of WeDo 2.0 BLE service UUIDs.
  * @enum
  */
 const BLEService = {
@@ -26,7 +26,7 @@ const BLEService = {
 };
 
 /**
- * A list of BLE characteristic UUIDs.
+ * A list of WeDo 2.0 BLE characteristic UUIDs.
  *
  * Characteristics on DEVICE_SERVICE:
  * - ATTACHED_IO
@@ -58,7 +58,7 @@ const BLESendInterval = 100;
 const BLESendRateMax = 20;
 
 /**
- * Enum for WeDo2 sensor and output types.
+ * Enum for WeDo 2.0 sensor and output types.
  * @readonly
  * @enum {number}
  */
@@ -71,17 +71,18 @@ const WeDo2Type = {
 };
 
 /**
- * Enum for connection/port ids assigned to internal WeDo2 output devices.
+ * Enum for connection/port ids assigned to internal WeDo 2.0 output devices.
  * @readonly
  * @enum {number}
  */
+// TODO: Check for these more accurately at startup?
 const WeDo2ConnectID = {
     LED: 6,
     PIEZO: 5
 };
 
 /**
- * Enum for ids for various output commands on the WeDo2.
+ * Enum for ids for various output commands on the WeDo 2.0.
  * @readonly
  * @enum {number}
  */
@@ -94,7 +95,7 @@ const WeDo2Command = {
 };
 
 /**
- * Enum for modes for input sensors on the WeDo2.
+ * Enum for modes for input sensors on the WeDo 2.0.
  * @enum {number}
  */
 const WeDo2Mode = {
@@ -104,7 +105,7 @@ const WeDo2Mode = {
 };
 
 /**
- * Enum for units for input sensors on the WeDo2.
+ * Enum for units for input sensors on the WeDo 2.0.
  *
  * 0 = raw
  * 1 = percent
@@ -122,7 +123,7 @@ const WeDo2Unit = {
  */
 class WeDo2Motor {
     /**
-     * Construct a WeDo2Motor instance.
+     * Construct a WeDo 2.0 Motor instance.
      * @param {WeDo2} parent - the WeDo 2.0 peripheral which owns this motor.
      * @param {int} index - the zero-based index of this motor on its parent peripheral.
      */
@@ -483,7 +484,7 @@ class WeDo2 {
     }
 
     /**
-     * Switch off the LED on the WeDo2.
+     * Switch off the LED on the WeDo 2.0.
      * @return {Promise} - a promise of the completion of the stop led send operation.
      */
     stopLED () {
@@ -608,10 +609,10 @@ class WeDo2 {
     }
 
     /**
-     * Generate a WeDo2 'Output Command' in the byte array format
+     * Generate a WeDo 2.0 'Output Command' in the byte array format
      * (CONNECT ID, COMMAND ID, NUMBER OF BYTES, VALUES ...).
      *
-     * This sends a command to the WeDo2 to actuate the specified outputs.
+     * This sends a command to the WeDo 2.0 to actuate the specified outputs.
      *
      * @param {number} connectID - the port (Connect ID) to send a command to.
      * @param {number} commandID - the id of the byte command.
@@ -631,11 +632,11 @@ class WeDo2 {
     }
 
     /**
-     * Generate a WeDo2 'Input Command' in the byte array format
+     * Generate a WeDo 2.0 'Input Command' in the byte array format
      * (COMMAND ID, COMMAND TYPE, CONNECT ID, TYPE ID, MODE, DELTA INTERVAL (4 BYTES),
      * UNIT, NOTIFICATIONS ENABLED).
      *
-     * This sends a command to the WeDo2 that sets that input format
+     * This sends a command to the WeDo 2.0 that sets that input format
      * of the specified inputs and sets value change notifications.
      *
      * @param {number} connectID - the port (Connect ID) to send a command to.
@@ -850,7 +851,7 @@ class Scratch3WeDo2Blocks {
          */
         this.runtime = runtime;
 
-        // Create a new WeDo2 peripheral instance
+        // Create a new WeDo 2.0 peripheral instance
         this._peripheral = new WeDo2(this.runtime, Scratch3WeDo2Blocks.EXTENSION_ID);
     }
 
@@ -1268,8 +1269,8 @@ class Scratch3WeDo2Blocks {
     playNoteFor (args) {
         let durationMS = Cast.toNumber(args.DURATION) * 1000;
         durationMS = MathUtil.clamp(durationMS, 0, 3000);
-        const note = MathUtil.clamp(Cast.toNumber(args.NOTE), 25, 125); // valid WeDo2 sounds
-        if (durationMS === 0) return; // WeDo2 plays duration '0' forever
+        const note = MathUtil.clamp(Cast.toNumber(args.NOTE), 25, 125); // valid WeDo 2.0 sounds
+        if (durationMS === 0) return; // WeDo 2.0 plays duration '0' forever
         return new Promise(resolve => {
             const tone = this._noteToTone(note);
             this._peripheral.playTone(tone, durationMS);
