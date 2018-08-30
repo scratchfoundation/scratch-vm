@@ -42,7 +42,7 @@ const BLESendRateMax = 20;
  * @readonly
  * @enum {number}
  */
-const WeDo2Types = {
+const WeDo2Type = {
     MOTOR: 1,
     PIEZO: 22,
     LED: 23,
@@ -55,7 +55,7 @@ const WeDo2Types = {
  * @readonly
  * @enum {number}
  */
-const WeDo2ConnectIDs = {
+const WeDo2ConnectID = {
     LED: 6,
     PIEZO: 5
 };
@@ -65,7 +65,7 @@ const WeDo2ConnectIDs = {
  * @readonly
  * @enum {number}
  */
-const WeDo2Commands = {
+const WeDo2Command = {
     MOTOR_POWER: 1,
     PLAY_TONE: 2,
     STOP_TONE: 3,
@@ -77,18 +77,24 @@ const WeDo2Commands = {
  * Enum for modes for input sensors on the WeDo2.
  * @enum {number}
  */
-const WeDo2Modes = {
+const WeDo2Mode = {
     TILT: 0, // angle
-    DISTANCE: 0 // detect
+    DISTANCE: 0, // detect
+    LED: 1 // RGB
 };
 
 /**
  * Enum for units for input sensors on the WeDo2.
+ *
+ * 0 = raw
+ * 1 = percent
+ *
  * @enum {number}
  */
-const WeDo2Units = {
-    TILT: 0, // raw
-    DISTANCE: 1 // percent
+const WeDo2Unit = {
+    TILT: 0,
+    DISTANCE: 1,
+    LED: 0
 };
 
 /**
@@ -227,13 +233,13 @@ class WeDo2Motor {
      * Turn this motor on indefinitely.
      */
     setMotorOn () {
-        const cmd = new Uint8Array(4);
-        cmd[0] = this._index + 1; // connect id
-        cmd[1] = WeDo2Commands.MOTOR_POWER; // command
-        cmd[2] = 1; // 1 byte to follow
-        cmd[3] = this._power * this._direction; // power in range 0-100
+        const cmd = this._parent._outputCommand(
+            this._index + 1,
+            WeDo2Command.MOTOR_POWER,
+            [this._power * this._direction] // power in range 0-100
+        );
 
-        this._parent._send(UUID.OUTPUT_COMMAND, Base64Util.uint8ArrayToBase64(cmd));
+        this._parent._send(UUID.OUTPUT_COMMAND, cmd);
 
         this._isOn = true;
         this._clearTimeout();
@@ -253,13 +259,13 @@ class WeDo2Motor {
      * Start active braking on this motor. After a short time, the motor will turn off.
      */
     startBraking () {
-        const cmd = new Uint8Array(4);
-        cmd[0] = this._index + 1; // connect id
-        cmd[1] = WeDo2Commands.MOTOR_POWER; // command
-        cmd[2] = 1; // 1 byte to follow
-        cmd[3] = 127; // power in range 0-100
+        const cmd = this._parent._outputCommand(
+            this._index + 1,
+            WeDo2Command.MOTOR_POWER,
+            [127] // power = 127 = break
+        );
 
-        this._parent._send(UUID.OUTPUT_COMMAND, Base64Util.uint8ArrayToBase64(cmd));
+        this._parent._send(UUID.OUTPUT_COMMAND, cmd);
 
         this._isOn = false;
         this._setNewTimeout(this.setMotorOff, WeDo2Motor.BRAKE_TIME_MS);
@@ -270,13 +276,13 @@ class WeDo2Motor {
      * @param {boolean} [useLimiter=true] - if true, use the rate limiter
      */
     setMotorOff (useLimiter = true) {
-        const cmd = new Uint8Array(4);
-        cmd[0] = this._index + 1; // connect id
-        cmd[1] = WeDo2Commands.MOTOR_POWER; // command
-        cmd[2] = 1; // 1 byte to follow
-        cmd[3] = 0; // power in range 0-100
+        const cmd = this._parent._outputCommand(
+            this._index + 1,
+            WeDo2Command.MOTOR_POWER,
+            [0] // power = 0 = stop
+        );
 
-        this._parent._send(UUID.OUTPUT_COMMAND, Base64Util.uint8ArrayToBase64(cmd), useLimiter);
+        this._parent._send(UUID.OUTPUT_COMMAND, cmd, useLimiter);
 
         this._isOn = false;
     }
@@ -327,7 +333,7 @@ class WeDo2 {
          * @private
          */
         this._runtime = runtime;
-        this._runtime.on('PROJECT_STOP_ALL', this._stopAll.bind(this));
+        this._runtime.on('PROJECT_STOP_ALL', this.stopAll.bind(this));
 
         /**
          * The ports that connect to motors and sensors.
@@ -362,9 +368,6 @@ class WeDo2 {
         this._ble = null;
         this._runtime.registerExtension(extensionId, this);
 
-        this._onConnect = this._onConnect.bind(this);
-        this._onMessage = this._onMessage.bind(this);
-
         /**
          * A rate limiter utility, to help limit the rate at which we send BLE messages
          * over the socket to Scratch Link to a maximum number of sends per second.
@@ -372,6 +375,9 @@ class WeDo2 {
          * @private
          */
         this._rateLimiter = new RateLimiter(BLESendRateMax);
+
+        this._onConnect = this._onConnect.bind(this);
+        this._onMessage = this._onMessage.bind(this);
     }
 
     /**
@@ -420,19 +426,41 @@ class WeDo2 {
 
     /**
      * Set the WeDo 2.0 hub's LED to a specific color.
-     * @param {int} rgb - a 24-bit RGB color in 0xRRGGBB format.
+     * @param {int} inputRGB - a 24-bit RGB color in 0xRRGGBB format.
      * @return {Promise} - a promise of the completion of the set led send operation.
      */
-    setLED (rgb) {
-        const cmd = new Uint8Array(6);
-        cmd[0] = WeDo2ConnectIDs.LED; // connect id
-        cmd[1] = WeDo2Commands.WRITE_RGB; // command
-        cmd[2] = 3; // 3 bytes to follow
-        cmd[3] = (rgb >> 16) & 0x000000FF;
-        cmd[4] = (rgb >> 8) & 0x000000FF;
-        cmd[5] = (rgb) & 0x000000FF;
+    setLED (inputRGB) {
+        const rgb = [
+            (inputRGB >> 16) & 0x000000FF,
+            (inputRGB >> 8) & 0x000000FF,
+            (inputRGB) & 0x000000FF
+        ];
 
-        return this._send(UUID.OUTPUT_COMMAND, Base64Util.uint8ArrayToBase64(cmd));
+        const cmd = this._outputCommand(
+            WeDo2ConnectID.LED,
+            WeDo2Command.WRITE_RGB,
+            rgb
+        );
+
+        return this._send(UUID.OUTPUT_COMMAND, cmd);
+    }
+
+    /**
+     * Sets the input mode of the LED to RGB.
+     * @return {Promise} - a promise returned by the send operation.
+     * @private
+     */
+    setLEDMode () {
+        const cmd = this._inputCommand(
+            WeDo2ConnectID.LED,
+            WeDo2Type.LED,
+            WeDo2Mode.LED,
+            0,
+            WeDo2Unit.LED,
+            false
+        );
+
+        return this._send(UUID.INPUT_COMMAND, cmd);
     }
 
     /**
@@ -440,15 +468,13 @@ class WeDo2 {
      * @return {Promise} - a promise of the completion of the stop led send operation.
      */
     stopLED () {
-        const cmd = new Uint8Array(6);
-        cmd[0] = WeDo2ConnectIDs.LED; // connect id
-        cmd[1] = WeDo2Commands.WRITE_RGB; // command
-        cmd[2] = 3; // 3 bytes to follow
-        cmd[3] = 0x000000; // off
-        cmd[4] = 0x000000;
-        cmd[5] = 0x000000;
+        const cmd = this._outputCommand(
+            WeDo2ConnectID.LED,
+            WeDo2Command.WRITE_RGB,
+            [0, 0, 0]
+        );
 
-        return this._send(UUID.OUTPUT_COMMAND, Base64Util.uint8ArrayToBase64(cmd));
+        return this._send(UUID.OUTPUT_COMMAND, cmd);
     }
 
     /**
@@ -458,16 +484,18 @@ class WeDo2 {
      * @return {Promise} - a promise of the completion of the play tone send operation.
      */
     playTone (tone, milliseconds) {
-        const cmd = new Uint8Array(7);
-        cmd[0] = WeDo2ConnectIDs.PIEZO; // connect id
-        cmd[1] = WeDo2Commands.PLAY_TONE; // command
-        cmd[2] = 4; // 4 bytes to follow
-        cmd[3] = tone;
-        cmd[4] = tone >> 8;
-        cmd[5] = milliseconds;
-        cmd[6] = milliseconds >> 8;
+        const cmd = this._outputCommand(
+            WeDo2ConnectID.PIEZO,
+            WeDo2Command.PLAY_TONE,
+            [
+                tone,
+                tone >> 8,
+                milliseconds,
+                milliseconds >> 8
+            ]
+        );
 
-        return this._send(UUID.OUTPUT_COMMAND, Base64Util.uint8ArrayToBase64(cmd));
+        return this._send(UUID.OUTPUT_COMMAND, cmd);
     }
 
     /**
@@ -475,13 +503,26 @@ class WeDo2 {
      * @return {Promise} - a promise that the command sent.
      */
     stopTone () {
-        const cmd = new Uint8Array(2);
-        cmd[0] = WeDo2ConnectIDs.PIEZO; // connect id
-        cmd[1] = WeDo2Commands.STOP_TONE; // command
+        const cmd = this._outputCommand(
+            WeDo2ConnectID.PIEZO,
+            WeDo2Command.STOP_TONE
+        );
 
-        // Send this command without using the rate limiter, because it is only triggered
-        // by the stop button.
-        return this._send(UUID.OUTPUT_COMMAND, Base64Util.uint8ArrayToBase64(cmd), false);
+        // Send this command without using the rate limiter, because it is
+        // only triggered by the stop button.
+        return this._send(UUID.OUTPUT_COMMAND, cmd, false);
+    }
+
+    /**
+     * Stop the tone playing and motors on the WeDo 2.0 hub.
+     * @private
+     */
+    stopAll () {
+        if (!this.isConnected()) return;
+        this.stopTone()
+            .then(() => { // TODO: Promise?
+                this.stopAllMotors();
+            });
     }
 
     /**
@@ -489,7 +530,9 @@ class WeDo2 {
      */
     scan () {
         this._ble = new BLE(this._runtime, {
-            filters: [{services: [UUID.DEVICE_SERVICE]}],
+            filters: [{
+                services: [UUID.DEVICE_SERVICE]
+            }],
             optionalServices: [UUID.IO_SERVICE]
         }, this._onConnect);
     }
@@ -535,12 +578,12 @@ class WeDo2 {
      */
     _onConnect () {
         // set LED input mode to RGB
-        this._setLEDMode()
-            .then(() => {
+        this.setLEDMode()
+            .then(() => { // TODO: Promise?
                 // set LED to blue
                 this.setLED(0x0000FF);
             })
-            .then(() => {
+            .then(() => { // TODO: Promise?
                 this._ble.startNotifications(UUID.DEVICE_SERVICE, UUID.ATTACHED_IO, this._onMessage);
             });
     }
@@ -548,7 +591,7 @@ class WeDo2 {
     /**
      * Write a message to the peripheral BLE socket.
      * @param {number} uuid - the UUID of the characteristic to write to
-     * @param {Uint8Array} message - the message to write.
+     * @param {Array} message - the message to write.
      * @param {boolean} [useLimiter=true] - if true, use the rate limiter
      * @return {Promise} - a promise result of the write operation
      * @private
@@ -560,7 +603,7 @@ class WeDo2 {
             if (!this._rateLimiter.okayToSend()) return Promise.resolve();
         }
 
-        return this._ble.write(UUID.IO_SERVICE, uuid, message, 'base64');
+        return this._ble.write(UUID.IO_SERVICE, uuid, Base64Util.uint8ArrayToBase64(message), 'base64');
     }
 
     /**
@@ -595,10 +638,10 @@ class WeDo2 {
             // read incoming sensor value
             const connectID = data[1];
             const type = this._ports[connectID - 1];
-            if (type === WeDo2Types.DISTANCE) {
+            if (type === WeDo2Type.DISTANCE) {
                 this._sensors.distance = data[2];
             }
-            if (type === WeDo2Types.TILT) {
+            if (type === WeDo2Type.TILT) {
                 this._sensors.tiltX = data[2];
                 this._sensors.tiltY = data[3];
             }
@@ -614,10 +657,10 @@ class WeDo2 {
      */
     _clearPort (connectID) {
         const type = this._ports[connectID - 1];
-        if (type === WeDo2Types.TILT) {
+        if (type === WeDo2Type.TILT) {
             this._sensors.tiltX = this._sensors.tiltY = 0;
         }
-        if (type === WeDo2Types.DISTANCE) {
+        if (type === WeDo2Type.DISTANCE) {
             this._sensors.distance = 0;
         }
         this._ports[connectID - 1] = 'none';
@@ -636,64 +679,83 @@ class WeDo2 {
         // Record which port is connected to what type of device
         this._ports[connectID - 1] = type;
 
-        // Register motor
-        if (type === WeDo2Types.MOTOR) {
+        // Record motor port
+        if (type === WeDo2Type.MOTOR) {
             this._motors[connectID - 1] = new WeDo2Motor(this, connectID - 1);
         } else {
-            // Register tilt or distance sensor
-            const typeString = type === WeDo2Types.DISTANCE ? 'DISTANCE' : 'TILT';
-            const cmd = new Uint8Array(11);
-            cmd[0] = 1; // sensor format
-            cmd[1] = 2; // command type: write
-            cmd[2] = connectID; // connect id
-            cmd[3] = type; // type
-            cmd[4] = WeDo2Modes[typeString]; // mode
-            cmd[5] = 1; // delta interval, 4 bytes, 1 = continuous updates
-            cmd[6] = 0;
-            cmd[7] = 0;
-            cmd[8] = 0;
-            cmd[9] = WeDo2Units[typeString]; // unit
-            cmd[10] = 1; // notifications enabled: true
+            // Set input format for tilt or distance sensor
+            const typeString = type === WeDo2Type.DISTANCE ? 'DISTANCE' : 'TILT'; // TODO: put in enum?
+            const cmd = this._inputCommand(
+                connectID,
+                type,
+                WeDo2Mode[typeString],
+                1,
+                WeDo2Unit[typeString],
+                true
+            );
 
-            this._send(UUID.INPUT_COMMAND, Base64Util.uint8ArrayToBase64(cmd))
-                .then(() => {
+            this._send(UUID.INPUT_COMMAND, cmd)
+                .then(() => { // TODO: Promise?
                     this._ble.startNotifications(UUID.IO_SERVICE, UUID.INPUT_VALUES, this._onMessage);
                 });
         }
     }
 
     /**
-     * Sets the input mode of the LED to RGB.
-     * @return {Promise} - a promise returned by the send operation.
-     * @private
+     * Generate a WeDo2 'Output Command' in the byte array format
+     * (CONNECT ID, COMMAND ID, NUMBER OF BYTES, VALUES ...).
+     *
+     * This sends a command to the WeDo2 to actuate the specified outputs.
+     *
+     * @param {number} connectID - the port (Connect ID) to send a command to.
+     * @param {number} cmd - the id of the byte command.
+     * @param {Array} values - the list of values to write to the command.
+     * @return {Array} - a generated output command.
      */
-    _setLEDMode () {
-        const cmd = new Uint8Array(11);
-        cmd[0] = 1; // sensor format
-        cmd[1] = 2; // command type: 2 = write
-        cmd[2] = WeDo2ConnectIDs.LED; // port
-        cmd[3] = WeDo2Types.LED; // type
-        cmd[4] = 1; // mode
-        cmd[5] = 0; // delta interval, 4 bytes
-        cmd[6] = 0;
-        cmd[7] = 0;
-        cmd[8] = 0;
-        cmd[9] = 0; // unit = raw
-        cmd[10] = 0; // notifications enabled: false
-
-        return this._send(UUID.INPUT_COMMAND, Base64Util.uint8ArrayToBase64(cmd));
+    _outputCommand (connectID, cmd, values = null) {
+        const command = [connectID, cmd];
+        if (values) {
+            command.concat(
+                values.length
+            ).concat(
+                values
+            );
+        }
+        return command;
     }
 
     /**
-     * Stop the tone playing and motors on the WeDo 2.0 hub.
-     * @private
+     * Generate a WeDo2 'Input Command' in the byte array format
+     * (COMMAND ID, COMMAND TYPE, CONNECT ID, TYPE ID, MODE, DELTA INTERVAL (4 BYTES),
+     * UNIT, NOTIFICATIONS ENABLED).
+     *
+     * This sends a command to the WeDo2 that sets that input format
+     * of the specified inputs and sets value change notifications.
+     *
+     * @param {number} connectID - the port (Connect ID) to send a command to.
+     * @param {number} type - the type of input sensor.
+     * @param {number} mode - the mode of the input sensor.
+     * @param {number} delta - the delta change needed to trigger notification.
+     * @param {Array} units - the unit of the input sensor value.
+     * @param {boolean} enableNotifications - whether to enable notifications.
+     * @return {Array} - a generated input command.
      */
-    _stopAll () {
-        if (!this.isConnected()) return;
-        this.stopTone()
-            .then(() => {
-                this.stopAllMotors();
-            });
+    _inputCommand (connectID, type, mode, delta, units, enableNotifications) {
+        const command = [
+            1, // Command ID = 1 = "Sensor Format"
+            2, // Command Type = 2 = "Write"
+            connectID,
+            type,
+            mode,
+            delta,
+            0, // Delta Interval Byte 2
+            0, // Delta Interval Byte 3
+            0, // Delta Interval Byte 4
+            units,
+            enableNotifications ? 1 : 0
+        ];
+
+        return command;
     }
 }
 
@@ -702,7 +764,7 @@ class WeDo2 {
  * @readonly
  * @enum {string}
  */
-const MotorID = {
+const WeDo2MotorID = {
     DEFAULT: 'motor',
     A: 'motor A',
     B: 'motor B',
@@ -714,7 +776,7 @@ const MotorID = {
  * @readonly
  * @enum {string}
  */
-const MotorDirection = {
+const WeDo2MotorDirection = {
     FORWARD: 'this way',
     BACKWARD: 'that way',
     REVERSE: 'reverse'
@@ -725,7 +787,7 @@ const MotorDirection = {
  * @readonly
  * @enum {string}
  */
-const TiltDirection = {
+const WeDo2TiltDirection = {
     UP: 'up',
     DOWN: 'down',
     LEFT: 'left',
@@ -789,7 +851,7 @@ class Scratch3WeDo2Blocks {
                         MOTOR_ID: {
                             type: ArgumentType.STRING,
                             menu: 'MOTOR_ID',
-                            defaultValue: MotorID.DEFAULT
+                            defaultValue: WeDo2MotorID.DEFAULT
                         },
                         DURATION: {
                             type: ArgumentType.NUMBER,
@@ -809,7 +871,7 @@ class Scratch3WeDo2Blocks {
                         MOTOR_ID: {
                             type: ArgumentType.STRING,
                             menu: 'MOTOR_ID',
-                            defaultValue: MotorID.DEFAULT
+                            defaultValue: WeDo2MotorID.DEFAULT
                         }
                     }
                 },
@@ -825,7 +887,7 @@ class Scratch3WeDo2Blocks {
                         MOTOR_ID: {
                             type: ArgumentType.STRING,
                             menu: 'MOTOR_ID',
-                            defaultValue: MotorID.DEFAULT
+                            defaultValue: WeDo2MotorID.DEFAULT
                         }
                     }
                 },
@@ -841,7 +903,7 @@ class Scratch3WeDo2Blocks {
                         MOTOR_ID: {
                             type: ArgumentType.STRING,
                             menu: 'MOTOR_ID',
-                            defaultValue: MotorID.DEFAULT
+                            defaultValue: WeDo2MotorID.DEFAULT
                         },
                         POWER: {
                             type: ArgumentType.NUMBER,
@@ -861,12 +923,12 @@ class Scratch3WeDo2Blocks {
                         MOTOR_ID: {
                             type: ArgumentType.STRING,
                             menu: 'MOTOR_ID',
-                            defaultValue: MotorID.DEFAULT
+                            defaultValue: WeDo2MotorID.DEFAULT
                         },
                         MOTOR_DIRECTION: {
                             type: ArgumentType.STRING,
                             menu: 'MOTOR_DIRECTION',
-                            defaultValue: MotorDirection.FORWARD
+                            defaultValue: WeDo2MotorDirection.FORWARD
                         }
                     }
                 },
@@ -938,7 +1000,7 @@ class Scratch3WeDo2Blocks {
                         TILT_DIRECTION_ANY: {
                             type: ArgumentType.STRING,
                             menu: 'TILT_DIRECTION_ANY',
-                            defaultValue: TiltDirection.ANY
+                            defaultValue: WeDo2TiltDirection.ANY
                         }
                     }
                 },
@@ -963,7 +1025,7 @@ class Scratch3WeDo2Blocks {
                         TILT_DIRECTION_ANY: {
                             type: ArgumentType.STRING,
                             menu: 'TILT_DIRECTION_ANY',
-                            defaultValue: TiltDirection.ANY
+                            defaultValue: WeDo2TiltDirection.ANY
                         }
                     }
                 },
@@ -979,17 +1041,36 @@ class Scratch3WeDo2Blocks {
                         TILT_DIRECTION: {
                             type: ArgumentType.STRING,
                             menu: 'TILT_DIRECTION',
-                            defaultValue: TiltDirection.UP
+                            defaultValue: WeDo2TiltDirection.UP
                         }
                     }
                 }
             ],
             menus: {
-                MOTOR_ID: [MotorID.DEFAULT, MotorID.A, MotorID.B, MotorID.ALL],
-                MOTOR_DIRECTION: [MotorDirection.FORWARD, MotorDirection.BACKWARD, MotorDirection.REVERSE],
-                TILT_DIRECTION: [TiltDirection.UP, TiltDirection.DOWN, TiltDirection.LEFT, TiltDirection.RIGHT],
-                TILT_DIRECTION_ANY:
-                    [TiltDirection.UP, TiltDirection.DOWN, TiltDirection.LEFT, TiltDirection.RIGHT, TiltDirection.ANY],
+                MOTOR_ID: [
+                    WeDo2MotorID.DEFAULT,
+                    WeDo2MotorID.A,
+                    WeDo2MotorID.B,
+                    WeDo2MotorID.ALL
+                ],
+                MOTOR_DIRECTION: [
+                    WeDo2MotorDirection.FORWARD,
+                    WeDo2MotorDirection.BACKWARD,
+                    WeDo2MotorDirection.REVERSE
+                ],
+                TILT_DIRECTION: [
+                    WeDo2TiltDirection.UP,
+                    WeDo2TiltDirection.DOWN,
+                    WeDo2TiltDirection.LEFT,
+                    WeDo2TiltDirection.RIGHT
+                ],
+                TILT_DIRECTION_ANY: [
+                    WeDo2TiltDirection.UP,
+                    WeDo2TiltDirection.DOWN,
+                    WeDo2TiltDirection.LEFT,
+                    WeDo2TiltDirection.RIGHT,
+                    WeDo2TiltDirection.ANY
+                ],
                 OP: ['<', '>']
             }
         };
@@ -1096,13 +1177,13 @@ class Scratch3WeDo2Blocks {
             const motor = this._peripheral.motor(motorIndex);
             if (motor) {
                 switch (args.MOTOR_DIRECTION) {
-                case MotorDirection.FORWARD:
+                case WeDo2MotorDirection.FORWARD:
                     motor.direction = 1;
                     break;
-                case MotorDirection.BACKWARD:
+                case WeDo2MotorDirection.BACKWARD:
                     motor.direction = -1;
                     break;
-                case MotorDirection.REVERSE:
+                case WeDo2MotorDirection.REVERSE:
                     motor.direction = -motor.direction;
                     break;
                 default:
@@ -1239,7 +1320,7 @@ class Scratch3WeDo2Blocks {
      */
     _isTilted (direction) {
         switch (direction) {
-        case TiltDirection.ANY:
+        case WeDo2TiltDirection.ANY:
             return (Math.abs(this._peripheral.tiltX) >= Scratch3WeDo2Blocks.TILT_THRESHOLD) ||
                 (Math.abs(this._peripheral.tiltY) >= Scratch3WeDo2Blocks.TILT_THRESHOLD);
         default:
@@ -1255,13 +1336,13 @@ class Scratch3WeDo2Blocks {
      */
     _getTiltAngle (direction) {
         switch (direction) {
-        case TiltDirection.UP:
+        case WeDo2TiltDirection.UP:
             return this._peripheral.tiltY > 45 ? 256 - this._peripheral.tiltY : -this._peripheral.tiltY;
-        case TiltDirection.DOWN:
+        case WeDo2TiltDirection.DOWN:
             return this._peripheral.tiltY > 45 ? this._peripheral.tiltY - 256 : this._peripheral.tiltY;
-        case TiltDirection.LEFT:
+        case WeDo2TiltDirection.LEFT:
             return this._peripheral.tiltX > 45 ? 256 - this._peripheral.tiltX : -this._peripheral.tiltX;
-        case TiltDirection.RIGHT:
+        case WeDo2TiltDirection.RIGHT:
             return this._peripheral.tiltX > 45 ? this._peripheral.tiltX - 256 : this._peripheral.tiltX;
         default:
             log.warn(`Unknown tilt direction in _getTiltAngle: ${direction}`);
@@ -1277,14 +1358,14 @@ class Scratch3WeDo2Blocks {
     _forEachMotor (motorID, callback) {
         let motors;
         switch (motorID) {
-        case MotorID.A:
+        case WeDo2MotorID.A:
             motors = [0];
             break;
-        case MotorID.B:
+        case WeDo2MotorID.B:
             motors = [1];
             break;
-        case MotorID.ALL:
-        case MotorID.DEFAULT:
+        case WeDo2MotorID.ALL:
+        case WeDo2MotorID.DEFAULT:
             motors = [0, 1];
             break;
         default:
