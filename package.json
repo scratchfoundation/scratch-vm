@@ -36,7 +36,7 @@
     "decode-html": "2.0.0",
     "diff-match-patch": "1.0.0",
     "escape-html": "1.0.3",
-    "format-message": "5.2.1",
+    "format-message": "6.0.4",
     "htmlparser2": "3.9.2",
     "immutable": "3.8.1",
     "jszip": "^3.1.5",
