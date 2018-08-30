@@ -25,20 +25,23 @@ const blockIconURI = 'data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNv
  * @enum {number}
  */
 const Ev3Command = {
+    OPOUTPUT_STEP_SPEED: 0xAE,
+    OPOUTPUT_TIME_SPEED: 0xAF,
+    OPOUTPUT_STOP: 0xA3,
+    OPOUTPUT_RESET: 0xA2,
+    OPOUTPUT_STEP_SYNC: 0xB0,
+    OPOUTPUT_TIME_SYNC: 0xB1
+};
+
+const Ev3CommandValue = {
     LAYER: 0x00,
     NUM8: 0x81,
     NUM16: 0x82,
     NUM32: 0x83,
     COAST: 0x0,
     BRAKE: 0x1,
-    LONGRAMP: 50,
-    STEPSPEED: 0xAE,
-    TIMESPEED: 0xAF,
-    OUTPUTSTOP: 0xA3,
-    OUTPUTRESET: 0xA2,
-    STEPSPEEDSYNC: 0xB0,
-    TIMESPEEDSYNC: 0xB1
-};
+    LONG_RAMP: 50
+}
 
 /**
  * Enum for Ev3 device types.
@@ -83,6 +86,251 @@ const Ev3DeviceLabels = {
     ultrasonic: 'distance'
 };
 
+/**
+ * Manage power, direction, and timers for one EV3 motor.
+ */
+class EV3Motor {
+    // TODO: set/check motors to busy sometimes?
+
+    /**
+     * Construct a EV3 Motor instance.
+     * @param {WeDo2} parent - the EV3 peripheral which owns this motor.
+     * @param {int} index - the zero-based index of this motor on its parent peripheral.
+     */
+    constructor (parent, index) {
+        /**
+         * The EV3 peripheral which owns this motor.
+         * @type {WeDo2}
+         * @private
+         */
+        this._parent = parent;
+
+        /**
+         * The zero-based index of this motor on its parent peripheral.
+         * @type {int}
+         * @private
+         */
+        this._index = index;
+
+        /**
+         * This motor's current direction: 1 for "clockwise" or -1 for "counterclockwise"
+         * @type {number}
+         * @private
+         */
+        this._direction = 1;
+
+        /**
+         * This motor's current power level, in the range [0,100].
+         * @type {number}
+         * @private
+         */
+        this._power = 100;
+
+        /**
+         * TODO
+         */
+        this._commandID = null;
+
+        /**
+         * Is this motor currently moving?
+         * @type {boolean}
+         * @private
+         */
+        this._isOn = false;
+
+        /**
+         * If the motor has been turned on or is actively braking for a specific duration, this is the timeout ID for
+         * the end-of-action handler. Cancel this when changing plans.
+         * @type {Object}
+         * @private
+         */
+        this._pendingTimeoutId = null;
+
+        /**
+         * The starting time for the pending timeout.
+         * @type {Object}
+         * @private
+         */
+        this._pendingTimeoutStartTime = null;
+
+        /**
+         * The delay/duration of the pending timeout.
+         * @type {Object}
+         * @private
+         */
+        this._pendingTimeoutDelay = null;
+
+        this.startBraking = this.startBraking.bind(this);
+        this.setMotorOff = this.setMotorOff.bind(this);
+    }
+
+    /**
+     * @return {number} - the duration of active braking after a call to startBraking(). Afterward, turn the motor off.
+     * @constructor
+     */
+    static get BRAKE_TIME_MS () {
+        return 1000;
+    }
+
+    /**
+     * @return {int} - this motor's current direction: 1 for "clockwise" or -1 for "motorTurnCounterClockwise"
+     */
+    get direction () {
+        return this._direction;
+    }
+
+    /**
+     * @param {int} value - this motor's new direction: 1 for "this way" or -1 for "that way"
+     */
+    set direction (value) {
+        if (value < 0) {
+            this._direction = -1;
+        } else {
+            this._direction = 1;
+        }
+    }
+
+    /**
+     * @return {int} - this motor's current power level, in the range [0,100].
+     */
+    get power () {
+        return this._power;
+    }
+
+    /**
+     * @param {int} value - this motor's new power level, in the range [0,100].
+     */
+    set power (value) {
+        this._power = Math.max(0, Math.min(value, 100));
+    }
+
+    get position () {
+
+    }
+
+    set position (degrees) {
+        // Calculate degrees to turn
+        let previousPos = this._motors.positions[port];
+        previousPos = previousPos % 360;
+        previousPos = previousPos < 0 ? previousPos * -1 : previousPos;
+        const newPos = degrees % 360;
+        let degreesToTurn = 0;
+        let direction = 1;
+        if (previousPos <= newPos) {
+            degreesToTurn = newPos - previousPos;
+        } else {
+            degreesToTurn = previousPos - newPos;
+            direction = -1;
+        }
+
+        const cmd = this._directCommand(
+            Ev3Command.OPOUTPUT_STEP_SPEED,
+            this._portMask(port),
+            degreesToTurn,
+            this._motors.speeds[port] * direction,
+            Ev3CommandValue.LONGRAMP
+        );
+
+        this._send(cmd);
+    }
+
+    /**
+     * @return {boolean} - true if this motor is currently moving, false if this motor is off or braking.
+     */
+    get isOn () {
+        return this._isOn;
+    }
+
+    /**
+     * @return {boolean} - time, in milliseconds, of when the pending timeout began.
+     */
+    get pendingTimeoutStartTime () {
+        return this._pendingTimeoutStartTime;
+    }
+
+    /**
+     * @return {boolean} - delay, in milliseconds, of the pending timeout.
+     */
+    get pendingTimeoutDelay () {
+        return this._pendingTimeoutDelay;
+    }
+
+    /**
+     * Turn this motor on for a specific duration.
+     * @param {number} milliseconds - run the motor for this long.
+     */
+    turnOnFor (milliseconds) {
+        const cmd = this.directCommand(
+            Ev3Command.OPOUTPUT_TIME_SPEED,
+            [
+                this._portMask(port), // port
+                milliseconds, // time
+                this._motors.speeds[port], // speed
+                Ev3CommandValue.LONGRAMP // ramp
+            ]
+        );
+
+        this._send(cmd);
+
+        this.coastAfter(port, milliseconds);
+    }
+
+    /**
+     * TODO
+     * @param {number} time - time
+     */
+    coastAfter (time) {
+        // Set the motor command id to check before starting coast
+        const commandId = uid();
+        this._motors.commandId[port] = commandId;
+
+        // Send coast message
+        setTimeout(() => {
+            // Do not send coast if another motor command changed the command id.
+            if (this._motors.commandId[port] === commandId) {
+                this.motorCoast(port);
+                this._motors.commandId[port] = null;
+            }
+        }, time + 1000); // add a 1 second delay so the brake takes effect
+    }
+
+    /**
+     * TODO
+     */
+    coast () {
+        const cmd = [];
+        cmd[0] = 9; // length
+        cmd[1] = 0; // length
+        cmd[2] = 1; // 0x01
+        cmd[3] = 0; // 0x00
+        cmd[4] = 0; // 0x00
+        cmd[5] = 0; // 0x00
+        cmd[6] = 0; // 0x00
+        cmd[7] = 163; // 0xA3 Motor brake/coast command
+        cmd[8] = 0; // layer
+        cmd[9] = this._portMask(port); // port output bit field
+        cmd[10] = 0; // float = coast = 0
+
+        this._send(cmd);
+    }
+
+    /**
+     * TODO
+     * @param degrees - degrees to turn
+     */
+    rotate (degrees) {
+        const cmd = this._directCommand(
+            Ev3Command.OPOUTPUT_STEP_SPEED,
+            this._portMask(port),
+            degrees,
+            this._motors.speeds[port],
+            Ev3CommandValue.LONGRAMP
+        );
+
+        this._send(cmd);
+    }
+}
+
 class EV3 {
 
     constructor (runtime, extensionId) {
@@ -125,12 +373,7 @@ class EV3 {
          * @type {string[]}
          * @private
          */
-        this._motors = {
-            speeds: [50, 50, 50, 50],
-            positions: [0, 0, 0, 0],
-            busy: [0, 0, 0, 0],
-            commandId: [null, null, null, null]
-        };
+        this._motors = { };
 
         /**
          * The polling interval, in milliseconds.
@@ -168,8 +411,6 @@ class EV3 {
     }
 
     get distance () {
-        if (!this.isConnected()) return 0;
-
         // https://shop.lego.com/en-US/EV3-Ultrasonic-Sensor-45504
         // Measures distances between one and 250 cm (one to 100 in.)
         // Accurate to +/- 1 cm (+/- .394 in.)
@@ -181,14 +422,19 @@ class EV3 {
     }
 
     get brightness () {
-        if (!this.isConnected()) return 0;
-
         return this._sensors.brightness;
     }
 
-    getMotorPosition (port) {
-        if (!this.isConnected()) return;
+    /**
+     * Access a particular motor on this peripheral.
+     * @param {int} index - the zero-based index of the desired motor.
+     * @return {EV3Motor} - the EV3Motor instance, if any, at that index.
+     */
+    motor (index) {
+        return this._motors[index];
+    }
 
+    getMotorPosition (port) {
         let value = this._motors.positions[port];
         value = value % 360;
         value = value < 0 ? value * -1 : value;
@@ -197,14 +443,10 @@ class EV3 {
     }
 
     isButtonPressed (port) {
-        if (!this.isConnected()) return;
-
         return this._sensors.buttons[port];
     }
 
     beep (freq, time) {
-        if (!this.isConnected()) return;
-
         const cmd = [];
         cmd[0] = 15; // length
         cmd[1] = 0; // 0x00
@@ -225,177 +467,43 @@ class EV3 {
         cmd[16] = time >> 8; // time byte 2
 
         this._send(cmd);
-
-        // Yield for sound duration
-        // TODO: does this work?
-        return new Promise(resolve => {
-            setTimeout(() => {
-                resolve();
-            }, time);
-        });
     }
 
-    motorTurnClockwise (port, time) {
-        if (!this.isConnected()) return;
-
-        // Build up motor command
-        const cmd = this._applyPrefix(0, this._motorCommand(
-            Ev3Command.TIMESPEED,
-            this._portMask(port),
-            time,
-            this._motors.speeds[port],
-            Ev3Command.LONGRAMP
-        ));
-
-        this._send(cmd);
-
-        this.coastAfter(port, time);
-
-        // Yield for turn time + brake time
-        const coastTime = 100; // TODO: calculate coasting or set flag
-        return new Promise(resolve => {
-            setTimeout(() => {
-                resolve();
-            }, time + coastTime);
-        });
+    /**
+     * Stop all the motors and the piezo on the EV3.
+     */
+    stopAll () {
+        this._stopAllMotors();
+        this._stopSound();
     }
 
-    motorTurnCounterClockwise (port, time) {
-        if (!this.isConnected()) return;
-
-        // Build up motor command
-        const cmd = this._applyPrefix(0, this._motorCommand(
-            Ev3Command.TIMESPEED,
-            this._portMask(port),
-            time,
-            this._motors.speeds[port] * -1,
-            Ev3Command.LONGRAMP
-        ));
-
-        this._send(cmd);
-
-        // Set motor to busy
-        // this._motors.busy[port] = 1;
-
-        this.coastAfter(port, time);
-
-        // Yield for time
-        const coastTime = 100; // TODO: calculate coasting or set flag
-        return new Promise(resolve => {
-            setTimeout(() => {
-                resolve();
-            }, time + coastTime);
-        });
-    }
-
-    coastAfter (port, time) {
-        // Set the motor command id to check before starting coast
-        const commandId = uid();
-        this._motors.commandId[port] = commandId;
-
-        // Send coast message
-        setTimeout(() => {
-            // Do not send coast if another motor command changed the command id.
-            if (this._motors.commandId[port] === commandId) {
-                this.motorCoast(port);
-                this._motors.commandId[port] = null;
-            }
-        }, time + 1000); // add a 1 second delay so the brake takes effect
-    }
-
-    motorCoast (port) {
-        if (!this.isConnected()) return;
-
+    /**
+     * Stop the piezo on the EV3.
+     */
+    stopSound () {
         const cmd = [];
-        cmd[0] = 9; // length
-        cmd[1] = 0; // length
-        cmd[2] = 1; // 0x01
-        cmd[3] = 0; // 0x00
-        cmd[4] = 0; // 0x00
-        cmd[5] = 0; // 0x00
-        cmd[6] = 0; // 0x00
-        cmd[7] = 163; // 0xA3 Motor brake/coast command
-        cmd[8] = 0; // layer
-        cmd[9] = this._portMask(port); // port output bit field
-        cmd[10] = 0; // float = coast = 0
+        cmd[0] = 7; // Command size, Little Endian. Command size not including these 2 bytes
+        cmd[1] = 0; // Command size, Little Endian. Command size not including these 2 bytes
+        cmd[2] = 0; // Message counter, Little Endian. Forth running counter
+        cmd[3] = 0; // Message counter, Little Endian. Forth running counter
+        cmd[4] = 128; // 0x80 // Command type. See defines above : Direct command, reply not require
+        cmd[5] = 0; // Reservation (allocation) of global and local variables
+        cmd[6] = 0; // Reservation (allocation) of global and local variables
+        cmd[7] = 148; // 0x94 op: sound
+        cmd[8] = 0; // 0x00 cmd: break 0x00 (Stop current sound playback)
 
         this._send(cmd);
     }
 
-    motorRotate (port, degrees) {
-        if (!this.isConnected()) return;
-
-        // Build up motor command
-        const cmd = this._applyPrefix(0, this._motorCommand(
-            Ev3Command.STEPSPEED,
-            this._portMask(port),
-            degrees,
-            this._motors.speeds[port],
-            Ev3Command.LONGRAMP
-        ));
-
-        this._send(cmd);
-
-        // Set motor to busy
-        // this._motors.busy[port] = 1;
-
-        /*
-        // Yield for time
-        // TODO: calculate time?
-        return new Promise(resolve => {
-            setTimeout(() => {
-                resolve();
-            }, time);
-        });
-        */
-    }
-
-    motorSetPosition (port, degrees) {
-        if (!this.isConnected()) return;
-
-        // Calculate degrees to turn
-        let previousPos = this._motors.positions[port];
-        previousPos = previousPos % 360;
-        previousPos = previousPos < 0 ? previousPos * -1 : previousPos;
-        const newPos = degrees % 360;
-        let degreesToTurn = 0;
-        let direction = 1;
-        if (previousPos <= newPos) {
-            degreesToTurn = newPos - previousPos;
-        } else {
-            degreesToTurn = previousPos - newPos;
-            direction = -1;
+    /**
+     * Stop the motors on the EV3.
+     */
+    stopAllMotors () {
+        for (let i = 0; i < this._motorPorts.length; i++) {
+            if (this._motorPorts[i] !== 'none') {
+                this.motorCoast(i);
+            }
         }
-
-        // Build up motor command
-        const cmd = this._applyPrefix(0, this._motorCommand(
-            Ev3Command.STEPSPEED,
-            this._portMask(port),
-            degreesToTurn,
-            this._motors.speeds[port] * direction,
-            Ev3Command.LONGRAMP
-        ));
-
-        this._send(cmd);
-
-        // Set motor to busy
-        // this._motors.busy[port] = 1;
-
-        /*
-        // Yield for time
-        // TODO: calculate time?
-        return new Promise(resolve => {
-            setTimeout(() => {
-                resolve();
-            }, time);
-        });
-        */
-    }
-
-    motorSetPower (port, power) {
-        if (!this.isConnected()) return;
-
-        this._motors.speeds[port] = power;
     }
 
     /**
@@ -542,21 +650,6 @@ class EV3 {
             cmd[5] = sensorCount * 4;
         }
 
-        // GET MOTOR BUSY STATES
-        /*
-        for (let i = 0; i < this._motorPorts.length; i++) {
-            if (this._motorPorts[i] !== 'none') {
-                sensorCount++;
-                compoundCommand[compoundCommandIndex + 0] = 169; // 0xA9 op: test if output port is busy
-                compoundCommand[compoundCommandIndex + 1] = 0; // layer
-                compoundCommand[compoundCommandIndex + 2] = this._portMask(i); // output bit field
-                compoundCommand[compoundCommandIndex + 3] = 225; // 0xE1 1 byte following
-                compoundCommand[compoundCommandIndex + 4] = sensorCount * 4; // global index
-                compoundCommandIndex += 5;
-            }
-        }
-        */
-
         this._send(cmd);
 
         this._pollingCounter++;
@@ -564,16 +657,16 @@ class EV3 {
 
     /**
      * Write a message to the peripheral BT socket.
-     * @param {Uint8Array} cmd - the message to write.
+     * @param {Uint8Array} message - the message to write.
      * @return {Promise} - a promise result of the write operation
      * @private
      */
-    _send (cmd) {
+    _send (message) {
         // TODO: add rate limiting?
         if (!this.isConnected()) return Promise.resolve();
 
         return this._bt.sendMessage({
-            message: Base64Util.uint8ArrayToBase64(cmd),
+            message: Base64Util.uint8ArrayToBase64(message),
             encoding: 'base64'
         });
     }
@@ -610,12 +703,16 @@ class EV3 {
             // READ SENSOR VALUES
             let offset = 5; // start reading sensor values at byte 5
             for (let i = 0; i < 4; i++) {
-                const value = this._array2float([
+                // array 2 float
+                const buffer = new Uint8Array([
                     array[offset],
                     array[offset + 1],
                     array[offset + 2],
                     array[offset + 3]
-                ]);
+                ]).buffer;
+                const view = new DataView(buffer);
+                const value = view.getFloat32(0, true);
+
                 if (Ev3DeviceLabels[this._sensorPorts[i]] === 'button') {
                     // Read a button value per port
                     this._sensors.buttons[i] = value ? value : 0;
@@ -628,13 +725,15 @@ class EV3 {
             }
             // READ MOTOR POSITION VALUES
             for (let i = 0; i < 4; i++) {
-                let value = this._tachoValue([ // from Paula
+                const list = [
                     array[offset],
                     array[offset + 1],
                     array[offset + 2],
                     array[offset + 3]
-                ]);
-                if (value > 0x7fffffff) { // from Paula
+                ];
+                // tachoValue from Paula
+                let value = list[0] + (list[1] * 256) + (list[2] * 256 * 256) + (list[3] * 256 * 256 * 256);
+                if (value > 0x7fffffff) {
                     value = value - 0x100000000;
                 }
                 if (value) {
@@ -644,90 +743,63 @@ class EV3 {
                 offset += 4;
             }
         }
-
-        /*
-        // READ MOTOR BUSY STATES
-        /*
-        for (let i = 0; i < this._motorPorts.length; i++) {
-            if (this._motorPorts[i] !== 'none') {
-                const busy = array[offset];
-                if (busy === 0 && this._motors.busy[i]) {
-                    this.motorCoast(i); // always set to coast for now, but really should only do for recently moved
-                    this._motors.busy[i] = 0; // reset busy
-                }
-                // this._motors.positions[i] = value;
-                log.info(`motor ${i} busy: ${busy}`);
-                offset += 1;
-            }
-        }
-        */
     }
 
-    // TODO: MOVE / RENAME
-    _applyPrefix (n, cmd) {
-        // TODO: document
-        const len = cmd.length + 5;
-        return [].concat(
-            len & 0xFF,
-            (len >> 8) & 0xFF,
-            0x1,
-            0x0,
-            0x0,
-            n,
-            0x0,
-            cmd
-        );
-    }
-
-    // TODO: MOVE / RENAME
+    // TODO: MOVE / DOCUMENT MORE FULLY
+    /**
+     * Byte 0 - 1 Command size, Little Endian. Command size not including these 2 bytes
+     * Byte 2 - 3 Message counter, Little Endian. Forth running counter
+     * Byte 4     Command type. See defines above
+     * Byte 5 - 6 Reservation (allocation) of global and local variables using a compressed format
+     *            (globals reserved in byte 5 and the 2 lsb of byte 6, locals reserved in the upper 6 bits of byte 6)
+     *            – see below:
+     * Byte 7 - n Byte codes as a single command or compound commands (I.e. more commands composed as a small program)
+     * Locals = “l” and Globals = “g”
+     */
     /**
      * Generate a motor command in EV3 byte array format (CMD, LAYER, PORT,
      * SPEED, RAMP UP, RUN, RAMP DOWN, BREAKING TYPE)
-     * @param  {string} command Motor command primitive (i.e. "prefix")
-     * @param  {string} port    Port to address
-     * @param  {number} n       Value to be passed to motor command
-     * @param  {number} speed   Speed value
-     * @param  {number} ramp    Ramp value
-     * @return {array}          Byte array
+     *
+     * @param  {string} commandID - Motor command primitive (i.e. "prefix")
+     * @param  {string} port      - Port to address
+     * @param  {number} n         - Value to be passed to motor command
+     * @param  {number} speed     - Speed value
+     * @param  {number} ramp      - Ramp value
+     * @return {array}            - Byte array
      */
-    _motorCommand (command, port, n, speed, ramp) {
-        // TODO: document
-        /**
-         * Generate run values for a given input.
-         * @param  {number} run Run input
-         * @return {array}      Run values (byte array)
+    _directCommand (commandID, port, values) {
+
+        // Header (Bytes 0 - 6)
+        const command = [];
+        command[0] = null; // command size to be determined
+        command[1] = null; // command size to be determined
+        command[2] = null; // message size to be determined
+        command[3] = null; // message size to be determined
+        command[4] = 0x80; // DIRECT_COMMAND_NO_REPLY
+        command[5] = null; // TBD
+        command[6] = null; // TBD
+        /*
+         len & 0xFF,
+         (len >> 8) & 0xFF,
+         0x1,
+         0x0,
+         0x0,
+         n,
+         0x0
          */
-        const getRunValues = function (run) {
-            // If run duration is less than max 16-bit integer
-            if (run < 0x7fff) {
-                return [
-                    Ev3Command.NUM16,
-                    run & 0xff,
-                    (run >> 8) & 0xff
-                ];
-            }
 
-            // Run forever
-            return [
-                Ev3Command.NUM32,
-                run & 0xff,
-                (run >> 8) & 0xff,
-                (run >> 16) & 0xff,
-                (run >> 24) & 0xff
-            ];
-        };
+        // Byte Code
 
+        // MOTOR SPECIFIC VALUES
         // If speed is less than zero, make it positive and multiply the input
         // value by -1
         if (speed < 0) {
             speed = -1 * speed;
             n = -1 * n;
         }
-
         // If the input value is less than 0
-        const dir = (n < 0) ? 0x100 - speed : speed; // step negative or possitive
+        const dir = (n < 0) ? 0x100 - speed : speed; // step negative or positive
         n = Math.abs(n);
-
         // Setup motor run duration and ramping behavior
         let rampup = ramp;
         let rampdown = ramp;
@@ -737,22 +809,46 @@ class EV3 {
             run = 0;
             rampdown = n - rampup;
         }
-
         // Generate motor command
-        const runcmd = getRunValues(run);
-        return [
-            command,
-            Ev3Command.LAYER,
+        const runcmd = this._getRunValues(run);
+        return command.concat([
+            commandID,
+            Ev3CommandValue.LAYER,
             port,
-            Ev3Command.NUM8,
+            Ev3CommandValue.NUM8,
             dir & 0xff,
-            Ev3Command.NUM8,
+            Ev3CommandValue.NUM8,
             rampup
-        ].concat(runcmd.concat([
-            Ev3Command.NUM8,
+        ]).concat(runcmd.concat([
+            Ev3CommandValue.NUM8,
             rampdown,
-            Ev3Command.BRAKE
+            Ev3CommandValue.BRAKE
         ]));
+    }
+
+    /**
+     * Generate run values for a given input.
+     * @param  {number} run Run input
+     * @return {array}      Run values (byte array)
+     */
+    _getRunValues (run) {
+        // If run duration is less than max 16-bit integer
+        if (run < 0x7fff) {
+            return [
+                Ev3CommandValue.NUM16,
+                run & 0xff,
+                (run >> 8) & 0xff
+            ];
+        }
+
+        // Run forever
+        return [
+            Ev3CommandValue.NUM32,
+            run & 0xff,
+            (run >> 8) & 0xff,
+            (run >> 16) & 0xff,
+            (run >> 24) & 0xff
+        ];
     }
 
     // TODO: keep here? / refactor
@@ -770,61 +866,6 @@ class EV3 {
         }
 
         return p;
-    }
-
-    // TODO: keep here? / refactor
-    _tachoValue (list) {
-        const value = list[0] + (list[1] * 256) + (list[2] * 256 * 256) + (list[3] * 256 * 256 * 256);
-        return value;
-    }
-
-    // TODO: keep here? / refactor
-    _array2float (list) {
-        const buffer = new Uint8Array(list).buffer;
-        const view = new DataView(buffer);
-        return view.getFloat32(0, true);
-    }
-
-    /**
-     * Stop all the motors and the piezo on the EV3.
-     * @private
-     */
-    _stopAll () {
-        this._stopAllMotors();
-        this._stopSound();
-    }
-
-    /**
-     * Stop the piezo on the EV3.
-     * @private
-     */
-    _stopSound () {
-        if (!this.isConnected()) return;
-
-        const cmd = [];
-        cmd[0] = 7; // Command size, Little Endian. Command size not including these 2 bytes
-        cmd[1] = 0; // Command size, Little Endian. Command size not including these 2 bytes
-        cmd[2] = 0; // Message counter, Little Endian. Forth running counter
-        cmd[3] = 0; // Message counter, Little Endian. Forth running counter
-        cmd[4] = 128; // 0x80 // Command type. See defines above : Direct command, reply not require
-        cmd[5] = 0; // Reservation (allocation) of global and local variables
-        cmd[6] = 0; // Reservation (allocation) of global and local variables
-        cmd[7] = 148; // 0x94 op: sound
-        cmd[8] = 0; // 0x00 cmd: break 0x00 (Stop current sound playback)
-
-        this._send(cmd);
-    }
-
-    /**
-     * Stop the motors on the EV3.
-     * @private
-     */
-    _stopAllMotors () {
-        for (let i = 0; i < this._motorPorts.length; i++) {
-            if (this._motorPorts[i] !== 'none') {
-                this.motorCoast(i);
-            }
-        }
     }
 
 }
@@ -1095,6 +1136,12 @@ class Scratch3Ev3Blocks {
 
         port = MOTOR_MENU.indexOf(port); // 0/1/2/3
 
+        // Yield for time
+        // return new Promise(resolve => {
+        //     setTimeout(() => {
+        //         resolve();
+        //     }, time);
+        // });
         return this._peripheral.motorTurnClockwise(port, time);
     }
 
@@ -1109,6 +1156,12 @@ class Scratch3Ev3Blocks {
 
         port = MOTOR_MENU.indexOf(port); // 0/1/2/3
 
+        // Yield for time
+        // return new Promise(resolve => {
+        //     setTimeout(() => {
+        //         resolve();
+        //     }, time);
+        // });
         return this._peripheral.motorTurnCounterClockwise(port, time);
     }
 
@@ -1123,6 +1176,13 @@ class Scratch3Ev3Blocks {
 
         this._peripheral.motorRotate(port, degrees);
         return;
+
+        // Yield for time
+        // return new Promise(resolve => {
+        //     setTimeout(() => {
+        //         resolve();
+        //     }, time);
+        //});
     }
 
     motorSetPosition (args) {
@@ -1135,6 +1195,13 @@ class Scratch3Ev3Blocks {
 
         this._peripheral.motorSetPosition(port, degrees);
         return;
+
+        // Yield for time
+        // return new Promise(resolve => {
+        //     setTimeout(() => {
+        //         resolve();
+        //     }, time);
+        //});
     }
     */
 
@@ -1149,6 +1216,13 @@ class Scratch3Ev3Blocks {
         port = MOTOR_MENU.indexOf(port); // 0/1/2/3
 
         this._peripheral.motorSetPower(port, power);
+
+        // Yield for time
+        // return new Promise(resolve => {
+        //     setTimeout(() => {
+        //         resolve();
+        //     }, time);
+        // });
         return;
     }
 
@@ -1161,6 +1235,12 @@ class Scratch3Ev3Blocks {
 
         port = MOTOR_MENU.indexOf(port); // 0/1/2/3
 
+        // Yield for time
+        // return new Promise(resolve => {
+        //     setTimeout(() => {
+        //         resolve();
+        //     }, time);
+        // });
         return this._peripheral.getMotorPosition(port);
     }
 
@@ -1220,6 +1300,12 @@ class Scratch3Ev3Blocks {
         // https://en.wikipedia.org/wiki/MIDI_tuning_standard#Frequency_values
         const freq = Math.pow(2, ((note - 69 + 12) / 12)) * 440;
 
+        // Yield for time
+        // return new Promise(resolve => {
+        //     setTimeout(() => {
+        //         resolve();
+        //     }, time);
+        // });
         return this._peripheral.beep(freq, time);
     }
 }
