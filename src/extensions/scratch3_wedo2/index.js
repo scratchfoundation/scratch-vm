@@ -16,9 +16,29 @@ const log = require('../../util/log');
 // eslint-disable-next-line max-len
 const iconURI = 'data:image/png;base64,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';
 
-const UUID = {
+/**
+ * A list of BLE service UUIDs.
+ * @enum
+ */
+const BLEService = {
     DEVICE_SERVICE: '00001523-1212-efde-1523-785feabcd123',
-    IO_SERVICE: '00004f0e-1212-efde-1523-785feabcd123',
+    IO_SERVICE: '00004f0e-1212-efde-1523-785feabcd123'
+};
+
+/**
+ * A list of BLE characteristic UUIDs.
+ *
+ * Characteristics on DEVICE_SERVICE:
+ * - ATTACHED_IO
+ *
+ * Characteristics on IO_SERVICE:
+ * - INPUT_VALUES
+ * - INPUT_COMMAND
+ * - OUTPUT_COMMAND
+ *
+ * @enum
+ */
+const BLECharacteristic = {
     ATTACHED_IO: '00001527-1212-efde-1523-785feabcd123',
     INPUT_VALUES: '00001560-1212-efde-1523-785feabcd123',
     INPUT_COMMAND: '00001563-1212-efde-1523-785feabcd123',
@@ -239,7 +259,7 @@ class WeDo2Motor {
             [this._power * this._direction] // power in range 0-100
         );
 
-        this._parent.send(UUID.OUTPUT_COMMAND, cmd);
+        this._parent.send(BLECharacteristic.OUTPUT_COMMAND, cmd);
 
         this._isOn = true;
         this._clearTimeout();
@@ -265,7 +285,7 @@ class WeDo2Motor {
             [127] // 127 = break
         );
 
-        this._parent.send(UUID.OUTPUT_COMMAND, cmd);
+        this._parent.send(BLECharacteristic.OUTPUT_COMMAND, cmd);
 
         this._isOn = false;
         this._setNewTimeout(this.setMotorOff, WeDo2Motor.BRAKE_TIME_MS);
@@ -282,7 +302,7 @@ class WeDo2Motor {
             [0] // 0 = stop
         );
 
-        this._parent.send(UUID.OUTPUT_COMMAND, cmd, useLimiter);
+        this._parent.send(BLECharacteristic.OUTPUT_COMMAND, cmd, useLimiter);
 
         this._isOn = false;
     }
@@ -442,7 +462,7 @@ class WeDo2 {
             rgb
         );
 
-        return this.send(UUID.OUTPUT_COMMAND, cmd);
+        return this.send(BLECharacteristic.OUTPUT_COMMAND, cmd);
     }
 
     /**
@@ -459,7 +479,7 @@ class WeDo2 {
             false
         );
 
-        return this.send(UUID.INPUT_COMMAND, cmd);
+        return this.send(BLECharacteristic.INPUT_COMMAND, cmd);
     }
 
     /**
@@ -473,7 +493,7 @@ class WeDo2 {
             [0, 0, 0]
         );
 
-        return this.send(UUID.OUTPUT_COMMAND, cmd);
+        return this.send(BLECharacteristic.OUTPUT_COMMAND, cmd);
     }
 
     /**
@@ -494,7 +514,7 @@ class WeDo2 {
             ]
         );
 
-        return this.send(UUID.OUTPUT_COMMAND, cmd);
+        return this.send(BLECharacteristic.OUTPUT_COMMAND, cmd);
     }
 
     /**
@@ -509,7 +529,7 @@ class WeDo2 {
 
         // Send this command without using the rate limiter, because it is
         // only triggered by the stop button.
-        return this.send(UUID.OUTPUT_COMMAND, cmd, false);
+        return this.send(BLECharacteristic.OUTPUT_COMMAND, cmd, false);
     }
 
     /**
@@ -529,9 +549,9 @@ class WeDo2 {
     scan () {
         this._ble = new BLE(this._runtime, {
             filters: [{
-                services: [UUID.DEVICE_SERVICE]
+                services: [BLEService.DEVICE_SERVICE]
             }],
-            optionalServices: [UUID.IO_SERVICE]
+            optionalServices: [BLEService.IO_SERVICE]
         }, this._onConnect);
     }
 
@@ -584,7 +604,7 @@ class WeDo2 {
             if (!this._rateLimiter.okayToSend()) return Promise.resolve();
         }
 
-        return this._ble.write(UUID.IO_SERVICE, uuid, Base64Util.uint8ArrayToBase64(message), 'base64');
+        return this._ble.write(BLEService.IO_SERVICE, uuid, Base64Util.uint8ArrayToBase64(message), 'base64');
     }
 
     /**
@@ -656,7 +676,11 @@ class WeDo2 {
                 this.setLED(0x0000FF);
             })
             .then(() => { // TODO: Promise?
-                this._ble.startNotifications(UUID.DEVICE_SERVICE, UUID.ATTACHED_IO, this._onMessage);
+                this._ble.startNotifications(
+                    BLEService.DEVICE_SERVICE,
+                    BLECharacteristic.ATTACHED_IO,
+                    this._onMessage
+                );
             });
     }
 
@@ -748,9 +772,13 @@ class WeDo2 {
                 true
             );
 
-            this.send(UUID.INPUT_COMMAND, cmd)
+            this.send(BLECharacteristic.INPUT_COMMAND, cmd)
                 .then(() => { // TODO: Promise?
-                    this._ble.startNotifications(UUID.IO_SERVICE, UUID.INPUT_VALUES, this._onMessage);
+                    this._ble.startNotifications(
+                        BLEService.IO_SERVICE,
+                        BLECharacteristic.INPUT_VALUES,
+                        this._onMessage
+                    );
                 });
         }
     }
