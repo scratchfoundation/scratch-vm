@@ -25,6 +25,7 @@ const BLECommand = {
     CMD_DISPLAY_LED: 0x82
 };
 
+// TODO: Needs comment
 const BLETimeout = 4500; // TODO: might need tweaking based on how long the peripheral takes to start sending data
 
 /**
