@@ -186,7 +186,7 @@ class WeDo2Motor {
         this._pendingTimeoutDelay = null;
 
         this.startBraking = this.startBraking.bind(this);
-        this.setMotorOff = this.setMotorOff.bind(this);
+        this.turnOff = this.turnOff.bind(this);
     }
 
     /**
@@ -253,7 +253,7 @@ class WeDo2Motor {
     /**
      * Turn this motor on indefinitely.
      */
-    setMotorOn () {
+    turnOn () {
         const cmd = this._parent.outputCommand(
             this._index + 1,
             WeDo2Command.MOTOR_POWER,
@@ -270,9 +270,9 @@ class WeDo2Motor {
      * Turn this motor on for a specific duration.
      * @param {number} milliseconds - run the motor for this long.
      */
-    setMotorOnFor (milliseconds) {
+    turnOnFor (milliseconds) {
         milliseconds = Math.max(0, milliseconds);
-        this.setMotorOn();
+        this.turnOn();
         this._setNewTimeout(this.startBraking, milliseconds);
     }
 
@@ -289,14 +289,14 @@ class WeDo2Motor {
         this._parent.send(BLECharacteristic.OUTPUT_COMMAND, cmd);
 
         this._isOn = false;
-        this._setNewTimeout(this.setMotorOff, WeDo2Motor.BRAKE_TIME_MS);
+        this._setNewTimeout(this.turnOff, WeDo2Motor.BRAKE_TIME_MS);
     }
 
     /**
      * Turn this motor off.
      * @param {boolean} [useLimiter=true] - if true, use the rate limiter
      */
-    setMotorOff (useLimiter = true) {
+    turnOff (useLimiter = true) {
         const cmd = this._parent.outputCommand(
             this._index + 1,
             WeDo2Command.MOTOR_POWER,
@@ -440,7 +440,7 @@ class WeDo2 {
                 // Send the motor off command without using the rate limiter.
                 // This allows the stop button to stop motors even if we are
                 // otherwise flooded with commands.
-                motor.setMotorOff(false);
+                motor.turnOff(false);
             }
         });
     }
@@ -614,10 +614,10 @@ class WeDo2 {
      *
      * This sends a command to the WeDo 2.0 to actuate the specified outputs.
      *
-     * @param {number} connectID - the port (Connect ID) to send a command to.
-     * @param {number} commandID - the id of the byte command.
-     * @param {Array} values - the list of values to write to the command.
-     * @return {Array} - a generated output command.
+     * @param  {number} connectID - the port (Connect ID) to send a command to.
+     * @param  {number} commandID - the id of the byte command.
+     * @param  {array}  values    - the list of values to write to the command.
+     * @return {array}            - a generated output command.
      */
     outputCommand (connectID, commandID, values = null) {
         let command = [connectID, commandID];
@@ -639,13 +639,13 @@ class WeDo2 {
      * This sends a command to the WeDo 2.0 that sets that input format
      * of the specified inputs and sets value change notifications.
      *
-     * @param {number} connectID - the port (Connect ID) to send a command to.
-     * @param {number} type - the type of input sensor.
-     * @param {number} mode - the mode of the input sensor.
-     * @param {number} delta - the delta change needed to trigger notification.
-     * @param {Array} units - the unit of the input sensor value.
-     * @param {boolean} enableNotifications - whether to enable notifications.
-     * @return {Array} - a generated input command.
+     * @param  {number}  connectID           - the port (Connect ID) to send a command to.
+     * @param  {number}  type                - the type of input sensor.
+     * @param  {number}  mode                - the mode of the input sensor.
+     * @param  {number}  delta               - the delta change needed to trigger notification.
+     * @param  {array}   units               - the unit of the input sensor value.
+     * @param  {boolean} enableNotifications - whether to enable notifications.
+     * @return {array}                       - a generated input command.
      */
     inputCommand (connectID, type, mode, delta, units, enableNotifications) {
         const command = [
@@ -1116,7 +1116,7 @@ class Scratch3WeDo2Blocks {
             this._forEachMotor(args.MOTOR_ID, motorIndex => {
                 const motor = this._peripheral.motor(motorIndex);
                 if (motor) {
-                    motor.setMotorOnFor(durationMS);
+                    motor.turnOnFor(durationMS);
                 }
             });
 
@@ -1135,7 +1135,7 @@ class Scratch3WeDo2Blocks {
         this._forEachMotor(args.MOTOR_ID, motorIndex => {
             const motor = this._peripheral.motor(motorIndex);
             if (motor) {
-                motor.setMotorOn();
+                motor.turnOn();
             }
         });
 
@@ -1156,7 +1156,7 @@ class Scratch3WeDo2Blocks {
         this._forEachMotor(args.MOTOR_ID, motorIndex => {
             const motor = this._peripheral.motor(motorIndex);
             if (motor) {
-                motor.setMotorOff();
+                motor.turnOff();
             }
         });
 
@@ -1179,7 +1179,7 @@ class Scratch3WeDo2Blocks {
             const motor = this._peripheral.motor(motorIndex);
             if (motor) {
                 motor.power = MathUtil.clamp(Cast.toNumber(args.POWER), 0, 100);
-                motor.setMotorOn();
+                motor.turnOn();
             }
         });
 
@@ -1219,9 +1219,9 @@ class Scratch3WeDo2Blocks {
                 // keep the motor on if it's running, and update the pending timeout if needed
                 if (motor.isOn) {
                     if (motor.pendingTimeoutDelay) {
-                        motor.setMotorOnFor(motor.pendingTimeoutStartTime + motor.pendingTimeoutDelay - Date.now());
+                        motor.turnOnFor(motor.pendingTimeoutStartTime + motor.pendingTimeoutDelay - Date.now());
                     } else {
-                        motor.setMotorOn();
+                        motor.turnOn();
                     }
                 }
             }
