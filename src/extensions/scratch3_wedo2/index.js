@@ -233,13 +233,13 @@ class WeDo2Motor {
      * Turn this motor on indefinitely.
      */
     setMotorOn () {
-        const cmd = this._parent._outputCommand(
+        const cmd = this._parent.outputCommand(
             this._index + 1,
             WeDo2Command.MOTOR_POWER,
             [this._power * this._direction] // power in range 0-100
         );
 
-        this._parent._send(UUID.OUTPUT_COMMAND, cmd);
+        this._parent.send(UUID.OUTPUT_COMMAND, cmd);
 
         this._isOn = true;
         this._clearTimeout();
@@ -259,13 +259,13 @@ class WeDo2Motor {
      * Start active braking on this motor. After a short time, the motor will turn off.
      */
     startBraking () {
-        const cmd = this._parent._outputCommand(
+        const cmd = this._parent.outputCommand(
             this._index + 1,
             WeDo2Command.MOTOR_POWER,
-            [127] // power = 127 = break
+            [127] // 127 = break
         );
 
-        this._parent._send(UUID.OUTPUT_COMMAND, cmd);
+        this._parent.send(UUID.OUTPUT_COMMAND, cmd);
 
         this._isOn = false;
         this._setNewTimeout(this.setMotorOff, WeDo2Motor.BRAKE_TIME_MS);
@@ -276,13 +276,13 @@ class WeDo2Motor {
      * @param {boolean} [useLimiter=true] - if true, use the rate limiter
      */
     setMotorOff (useLimiter = true) {
-        const cmd = this._parent._outputCommand(
+        const cmd = this._parent.outputCommand(
             this._index + 1,
             WeDo2Command.MOTOR_POWER,
-            [0] // power = 0 = stop
+            [0] // 0 = stop
         );
 
-        this._parent._send(UUID.OUTPUT_COMMAND, cmd, useLimiter);
+        this._parent.send(UUID.OUTPUT_COMMAND, cmd, useLimiter);
 
         this._isOn = false;
     }
@@ -436,13 +436,13 @@ class WeDo2 {
             (inputRGB) & 0x000000FF
         ];
 
-        const cmd = this._outputCommand(
+        const cmd = this.outputCommand(
             WeDo2ConnectID.LED,
             WeDo2Command.WRITE_RGB,
             rgb
         );
 
-        return this._send(UUID.OUTPUT_COMMAND, cmd);
+        return this.send(UUID.OUTPUT_COMMAND, cmd);
     }
 
     /**
@@ -450,7 +450,7 @@ class WeDo2 {
      * @return {Promise} - a promise returned by the send operation.
      */
     setLEDMode () {
-        const cmd = this._inputCommand(
+        const cmd = this.inputCommand(
             WeDo2ConnectID.LED,
             WeDo2Type.LED,
             WeDo2Mode.LED,
@@ -459,7 +459,7 @@ class WeDo2 {
             false
         );
 
-        return this._send(UUID.INPUT_COMMAND, cmd);
+        return this.send(UUID.INPUT_COMMAND, cmd);
     }
 
     /**
@@ -467,13 +467,13 @@ class WeDo2 {
      * @return {Promise} - a promise of the completion of the stop led send operation.
      */
     stopLED () {
-        const cmd = this._outputCommand(
+        const cmd = this.outputCommand(
             WeDo2ConnectID.LED,
             WeDo2Command.WRITE_RGB,
             [0, 0, 0]
         );
 
-        return this._send(UUID.OUTPUT_COMMAND, cmd);
+        return this.send(UUID.OUTPUT_COMMAND, cmd);
     }
 
     /**
@@ -483,7 +483,7 @@ class WeDo2 {
      * @return {Promise} - a promise of the completion of the play tone send operation.
      */
     playTone (tone, milliseconds) {
-        const cmd = this._outputCommand(
+        const cmd = this.outputCommand(
             WeDo2ConnectID.PIEZO,
             WeDo2Command.PLAY_TONE,
             [
@@ -494,7 +494,7 @@ class WeDo2 {
             ]
         );
 
-        return this._send(UUID.OUTPUT_COMMAND, cmd);
+        return this.send(UUID.OUTPUT_COMMAND, cmd);
     }
 
     /**
@@ -502,14 +502,14 @@ class WeDo2 {
      * @return {Promise} - a promise that the command sent.
      */
     stopTone () {
-        const cmd = this._outputCommand(
+        const cmd = this.outputCommand(
             WeDo2ConnectID.PIEZO,
             WeDo2Command.STOP_TONE
         );
 
         // Send this command without using the rate limiter, because it is
         // only triggered by the stop button.
-        return this._send(UUID.OUTPUT_COMMAND, cmd, false);
+        return this.send(UUID.OUTPUT_COMMAND, cmd, false);
     }
 
     /**
@@ -571,6 +571,80 @@ class WeDo2 {
     }
 
     /**
+     * Write a message to the peripheral BLE socket.
+     * @param {number} uuid - the UUID of the characteristic to write to
+     * @param {Array} message - the message to write.
+     * @param {boolean} [useLimiter=true] - if true, use the rate limiter
+     * @return {Promise} - a promise result of the write operation
+     */
+    send (uuid, message, useLimiter = true) {
+        if (!this.isConnected()) return Promise.resolve();
+
+        if (useLimiter) {
+            if (!this._rateLimiter.okayToSend()) return Promise.resolve();
+        }
+
+        return this._ble.write(UUID.IO_SERVICE, uuid, Base64Util.uint8ArrayToBase64(message), 'base64');
+    }
+
+    /**
+     * Generate a WeDo2 'Output Command' in the byte array format
+     * (CONNECT ID, COMMAND ID, NUMBER OF BYTES, VALUES ...).
+     *
+     * This sends a command to the WeDo2 to actuate the specified outputs.
+     *
+     * @param {number} connectID - the port (Connect ID) to send a command to.
+     * @param {number} commandID - the id of the byte command.
+     * @param {Array} values - the list of values to write to the command.
+     * @return {Array} - a generated output command.
+     */
+    outputCommand (connectID, commandID, values = null) {
+        let command = [connectID, commandID];
+        if (values) {
+            command = command.concat(
+                values.length
+            ).concat(
+                values
+            );
+        }
+        return command;
+    }
+
+    /**
+     * Generate a WeDo2 'Input Command' in the byte array format
+     * (COMMAND ID, COMMAND TYPE, CONNECT ID, TYPE ID, MODE, DELTA INTERVAL (4 BYTES),
+     * UNIT, NOTIFICATIONS ENABLED).
+     *
+     * This sends a command to the WeDo2 that sets that input format
+     * of the specified inputs and sets value change notifications.
+     *
+     * @param {number} connectID - the port (Connect ID) to send a command to.
+     * @param {number} type - the type of input sensor.
+     * @param {number} mode - the mode of the input sensor.
+     * @param {number} delta - the delta change needed to trigger notification.
+     * @param {Array} units - the unit of the input sensor value.
+     * @param {boolean} enableNotifications - whether to enable notifications.
+     * @return {Array} - a generated input command.
+     */
+    inputCommand (connectID, type, mode, delta, units, enableNotifications) {
+        const command = [
+            1, // Command ID = 1 = "Sensor Format"
+            2, // Command Type = 2 = "Write"
+            connectID,
+            type,
+            mode,
+            delta,
+            0, // Delta Interval Byte 2
+            0, // Delta Interval Byte 3
+            0, // Delta Interval Byte 4
+            units,
+            enableNotifications ? 1 : 0
+        ];
+
+        return command;
+    }
+
+    /**
      * Sets LED mode and initial color and starts reading data from peripheral after BLE has connected.
      * @private
      */
@@ -584,24 +658,6 @@ class WeDo2 {
             .then(() => { // TODO: Promise?
                 this._ble.startNotifications(UUID.DEVICE_SERVICE, UUID.ATTACHED_IO, this._onMessage);
             });
-    }
-
-    /**
-     * Write a message to the peripheral BLE socket.
-     * @param {number} uuid - the UUID of the characteristic to write to
-     * @param {Array} message - the message to write.
-     * @param {boolean} [useLimiter=true] - if true, use the rate limiter
-     * @return {Promise} - a promise result of the write operation
-     * @private
-     */
-    _send (uuid, message, useLimiter = true) {
-        if (!this.isConnected()) return Promise.resolve();
-
-        if (useLimiter) {
-            if (!this._rateLimiter.okayToSend()) return Promise.resolve();
-        }
-
-        return this._ble.write(UUID.IO_SERVICE, uuid, Base64Util.uint8ArrayToBase64(message), 'base64');
     }
 
     /**
@@ -683,7 +739,7 @@ class WeDo2 {
         } else {
             // Set input format for tilt or distance sensor
             const typeString = type === WeDo2Type.DISTANCE ? 'DISTANCE' : 'TILT'; // TODO: put in enum?
-            const cmd = this._inputCommand(
+            const cmd = this.inputCommand(
                 connectID,
                 type,
                 WeDo2Mode[typeString],
@@ -692,68 +748,11 @@ class WeDo2 {
                 true
             );
 
-            this._send(UUID.INPUT_COMMAND, cmd)
+            this.send(UUID.INPUT_COMMAND, cmd)
                 .then(() => { // TODO: Promise?
                     this._ble.startNotifications(UUID.IO_SERVICE, UUID.INPUT_VALUES, this._onMessage);
                 });
         }
-    }
-
-    /**
-     * Generate a WeDo2 'Output Command' in the byte array format
-     * (CONNECT ID, COMMAND ID, NUMBER OF BYTES, VALUES ...).
-     *
-     * This sends a command to the WeDo2 to actuate the specified outputs.
-     *
-     * @param {number} connectID - the port (Connect ID) to send a command to.
-     * @param {number} cmd - the id of the byte command.
-     * @param {Array} values - the list of values to write to the command.
-     * @return {Array} - a generated output command.
-     */
-    _outputCommand (connectID, cmd, values = null) {
-        let command = [connectID, cmd];
-        if (values) {
-            command = command.concat(
-                values.length
-            ).concat(
-                values
-            );
-        }
-        return command;
-    }
-
-    /**
-     * Generate a WeDo2 'Input Command' in the byte array format
-     * (COMMAND ID, COMMAND TYPE, CONNECT ID, TYPE ID, MODE, DELTA INTERVAL (4 BYTES),
-     * UNIT, NOTIFICATIONS ENABLED).
-     *
-     * This sends a command to the WeDo2 that sets that input format
-     * of the specified inputs and sets value change notifications.
-     *
-     * @param {number} connectID - the port (Connect ID) to send a command to.
-     * @param {number} type - the type of input sensor.
-     * @param {number} mode - the mode of the input sensor.
-     * @param {number} delta - the delta change needed to trigger notification.
-     * @param {Array} units - the unit of the input sensor value.
-     * @param {boolean} enableNotifications - whether to enable notifications.
-     * @return {Array} - a generated input command.
-     */
-    _inputCommand (connectID, type, mode, delta, units, enableNotifications) {
-        const command = [
-            1, // Command ID = 1 = "Sensor Format"
-            2, // Command Type = 2 = "Write"
-            connectID,
-            type,
-            mode,
-            delta,
-            0, // Delta Interval Byte 2
-            0, // Delta Interval Byte 3
-            0, // Delta Interval Byte 4
-            units,
-            enableNotifications ? 1 : 0
-        ];
-
-        return command;
     }
 }
 
