@@ -38,7 +38,9 @@ class BLE extends JSONRPCWebSocket {
             this._availablePeripherals = {};
             this._discoverTimeoutID = window.setTimeout(this._sendDiscoverTimeout.bind(this), 15000);
             this.sendRemoteRequest('discover', this._peripheralOptions)
-                .catch(e => this._sendError(e)); // never reached?
+                .catch(e => {
+                    this._sendError(e);
+                }); // never reached?
         }
         // TODO: else?
     }

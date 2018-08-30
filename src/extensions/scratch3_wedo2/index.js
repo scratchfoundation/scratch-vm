@@ -448,7 +448,6 @@ class WeDo2 {
     /**
      * Sets the input mode of the LED to RGB.
      * @return {Promise} - a promise returned by the send operation.
-     * @private
      */
     setLEDMode () {
         const cmd = this._inputCommand(
@@ -515,7 +514,6 @@ class WeDo2 {
 
     /**
      * Stop the tone playing and motors on the WeDo 2.0 hub.
-     * @private
      */
     stopAll () {
         if (!this.isConnected()) return;
@@ -713,9 +711,9 @@ class WeDo2 {
      * @return {Array} - a generated output command.
      */
     _outputCommand (connectID, cmd, values = null) {
-        const command = [connectID, cmd];
+        let command = [connectID, cmd];
         if (values) {
-            command.concat(
+            command = command.concat(
                 values.length
             ).concat(
                 values
