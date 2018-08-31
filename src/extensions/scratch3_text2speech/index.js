@@ -286,7 +286,7 @@ class Scratch3SpeakBlocks {
      */
     speakAndWait (args, util) {
         // Cast input to string
-        let words = Cast.toString(args.WORDS);
+        let words = Cast.toString(args.WORDS).substring(0, 128);
 
         const state = this._getState(util.target);
 
