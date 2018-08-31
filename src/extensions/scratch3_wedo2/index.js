@@ -795,7 +795,7 @@ class WeDo2 {
  * @readonly
  * @enum {string}
  */
-const WeDo2MotorID = {
+const WeDo2MotorLabel = {
     DEFAULT: 'motor',
     A: 'motor A',
     B: 'motor B',
@@ -882,7 +882,7 @@ class Scratch3WeDo2Blocks {
                         MOTOR_ID: {
                             type: ArgumentType.STRING,
                             menu: 'MOTOR_ID',
-                            defaultValue: WeDo2MotorID.DEFAULT
+                            defaultValue: WeDo2MotorLabel.DEFAULT
                         },
                         DURATION: {
                             type: ArgumentType.NUMBER,
@@ -902,7 +902,7 @@ class Scratch3WeDo2Blocks {
                         MOTOR_ID: {
                             type: ArgumentType.STRING,
                             menu: 'MOTOR_ID',
-                            defaultValue: WeDo2MotorID.DEFAULT
+                            defaultValue: WeDo2MotorLabel.DEFAULT
                         }
                     }
                 },
@@ -918,7 +918,7 @@ class Scratch3WeDo2Blocks {
                         MOTOR_ID: {
                             type: ArgumentType.STRING,
                             menu: 'MOTOR_ID',
-                            defaultValue: WeDo2MotorID.DEFAULT
+                            defaultValue: WeDo2MotorLabel.DEFAULT
                         }
                     }
                 },
@@ -934,7 +934,7 @@ class Scratch3WeDo2Blocks {
                         MOTOR_ID: {
                             type: ArgumentType.STRING,
                             menu: 'MOTOR_ID',
-                            defaultValue: WeDo2MotorID.DEFAULT
+                            defaultValue: WeDo2MotorLabel.DEFAULT
                         },
                         POWER: {
                             type: ArgumentType.NUMBER,
@@ -954,7 +954,7 @@ class Scratch3WeDo2Blocks {
                         MOTOR_ID: {
                             type: ArgumentType.STRING,
                             menu: 'MOTOR_ID',
-                            defaultValue: WeDo2MotorID.DEFAULT
+                            defaultValue: WeDo2MotorLabel.DEFAULT
                         },
                         MOTOR_DIRECTION: {
                             type: ArgumentType.STRING,
@@ -1079,10 +1079,10 @@ class Scratch3WeDo2Blocks {
             ],
             menus: {
                 MOTOR_ID: [
-                    WeDo2MotorID.DEFAULT,
-                    WeDo2MotorID.A,
-                    WeDo2MotorID.B,
-                    WeDo2MotorID.ALL
+                    WeDo2MotorLabel.DEFAULT,
+                    WeDo2MotorLabel.A,
+                    WeDo2MotorLabel.B,
+                    WeDo2MotorLabel.ALL
                 ],
                 MOTOR_DIRECTION: [
                     WeDo2MotorDirection.FORWARD,
@@ -1394,14 +1394,14 @@ class Scratch3WeDo2Blocks {
     _forEachMotor (motorID, callback) {
         let motors;
         switch (motorID) {
-        case WeDo2MotorID.A:
+        case WeDo2MotorLabel.A:
             motors = [0];
             break;
-        case WeDo2MotorID.B:
+        case WeDo2MotorLabel.B:
             motors = [1];
             break;
-        case WeDo2MotorID.ALL:
-        case WeDo2MotorID.DEFAULT:
+        case WeDo2MotorLabel.ALL:
+        case WeDo2MotorLabel.DEFAULT:
             motors = [0, 1];
             break;
         default:
