@@ -232,9 +232,14 @@ class EV3Motor {
     }
 
     /**
-     * @param {int} value - this motor's new position, in the range [0,360].
+     * @param {int} array - this motor's new position, in the range [0,360].
      */
-    set position (value) {
+    set position (array) {
+        // tachoValue from Paula
+        let value = array[0] + (array[1] * 256) + (array[2] * 256 * 256) + (array[3] * 256 * 256 * 256);
+        if (value > 0x7fffffff) {
+            value = value - 0x100000000;
+        }
         this._position = value;
     }
 
@@ -602,206 +607,6 @@ class EV3 {
         return connected;
     }
 
-    /**
-     * When the EV3 peripheral connects, start polling for sensor and motor values.
-     * @private
-     */
-    _onConnect () {
-        this._pollingIntervalID = window.setInterval(this._pollValues, this._pollingInterval);
-    }
-
-    /**
-     * Poll the EV3 for sensor and motor input values, based on the list of
-     * known connected sensors and motors.
-     * // TODO: document with PDF
-     * @private
-     */
-    _pollValues () {
-        if (!this.isConnected()) {
-            window.clearInterval(this._pollingIntervalID);
-            return;
-        }
-
-        const byteCommands = []; // a compound command
-        let payload = 0;
-
-        let sensorCount = 0;
-        // Either request device list or request sensor data ??
-        if (this._pollingCounter % 20 === 0) {
-            // GET DEVICE LIST
-            byteCommands[0] = 152; // 0x98 op: get device list
-            byteCommands[1] = 129; // 0x81 LENGTH // TODO: ?????
-            byteCommands[2] = 33; // 0x21 ARRAY // TODO: ?????
-            byteCommands[3] = 96; // 0x60 CHANGED // TODO: ?????
-            byteCommands[4] = 225; // 0xE1 size of global var - 1 byte to follow
-            byteCommands[5] = 32; // 0x20 global var index "0" 0b00100000
-
-            // Command and payload lengths
-            payload = 33;
-
-            // Clear sensor data
-            this._updateDevices = true;
-            this._sensorPorts = [];
-            this._motorPorts = [];
-            // TODO: figure out when/how to clear out sensor data
-
-        } else {
-
-            let index = 0;
-
-            // GET SENSOR VALUES
-            // eslint-disable-next-line no-undefined
-            if (!this._sensorPorts.includes(undefined)) {
-                for (let i = 0; i < 4; i++) {
-                    if (this._sensorPorts[i] !== 'none') {
-                        byteCommands[index + 0] = 157; // 0x9D op: get sensor value
-                        byteCommands[index + 1] = 0; // layer
-                        byteCommands[index + 2] = i; // port
-                        byteCommands[index + 3] = 0; // do not change type
-                        byteCommands[index + 4] = Ev3DeviceModes[this._sensorPorts[i]]; // mode
-                        byteCommands[index + 5] = 225; // 0xE1 one byte to follow
-                        byteCommands[index + 6] = sensorCount * 4; // global index
-                        index += 7;
-                    }
-                    sensorCount++;
-                }
-            }
-
-            // GET MOTOR POSITION VALUES
-            // eslint-disable-next-line no-undefined
-            if (!this._motorPorts.includes(undefined)) {
-                for (let i = 0; i < 4; i++) {
-                    byteCommands[index + 0] = 179; // 0XB3 op: get motor position value
-                    byteCommands[index + 1] = 0; // layer
-                    byteCommands[index + 2] = i; // port
-                    byteCommands[index + 3] = 225; // 0xE1 byte following
-                    byteCommands[index + 4] = sensorCount * 4; // global index
-                    index += 5;
-                    sensorCount++;
-                }
-            }
-
-            // Command and payload lengths
-            payload = sensorCount * 4;
-        }
-
-        const cmd = this.directCompoundCommand(byteCommands, payload);
-
-        this._send(cmd);
-
-        this._pollingCounter++;
-    }
-
-    /**
-     * Send a message to the peripheral BT socket.
-     * @param {Uint8Array} message - the message to send.
-     * @return {Promise} - a promise result of the send operation.
-     * @private
-     */
-    _send (message) {
-        // TODO: add rate limiting?
-        if (!this.isConnected()) return Promise.resolve();
-
-        return this._bt.sendMessage({
-            message: Base64Util.uint8ArrayToBase64(message),
-            encoding: 'base64'
-        });
-    }
-
-    /**
-     * Message handler for incoming EV3 messages.
-     * @param {object} params - incoming message parameters
-     * @private
-     */
-    // TODO: REFACTOR / DOCUMENT WITH PDF
-    _onMessage (params) {
-        const message = params.message;
-        const array = Base64Util.base64ToUint8Array(message);
-        // log.info(`received array: ${array}`);
-
-        if (array.length < 35) { // TODO: find safer solution
-            return; // don't parse results that aren't sensor data list or device list
-        }
-
-        if (this._updateDevices) {
-            // READ DEVICE LIST
-            this._sensorPorts[0] = Ev3DeviceTypes[array[5]] ? Ev3DeviceTypes[array[5]] : 'none';
-            this._sensorPorts[1] = Ev3DeviceTypes[array[6]] ? Ev3DeviceTypes[array[6]] : 'none';
-            this._sensorPorts[2] = Ev3DeviceTypes[array[7]] ? Ev3DeviceTypes[array[7]] : 'none';
-            this._sensorPorts[3] = Ev3DeviceTypes[array[8]] ? Ev3DeviceTypes[array[8]] : 'none';
-            this._motorPorts[0] = Ev3DeviceTypes[array[21]] ? Ev3DeviceTypes[array[21]] : 'none';
-            this._motorPorts[1] = Ev3DeviceTypes[array[22]] ? Ev3DeviceTypes[array[22]] : 'none';
-            this._motorPorts[2] = Ev3DeviceTypes[array[23]] ? Ev3DeviceTypes[array[23]] : 'none';
-            this._motorPorts[3] = Ev3DeviceTypes[array[24]] ? Ev3DeviceTypes[array[24]] : 'none';
-            log.info(`sensor ports: ${this._sensorPorts}`);
-            // log.info(`motor ports: ${this._motorPorts}`);
-            // log.info(`motors: ${this._motors}`);
-            for (let m = 0; m < 4; m++) {
-                const type = this._motorPorts[m];
-                if (type !== 'none' && !this._motors[m]) {
-                    // add new motor
-                    this._motors[m] = new EV3Motor(this, m, type);
-                }
-                if (type === 'none' && this._motors[m]) {
-                    // clear old motor
-                    this._motors[m] = null;
-                }
-                if (this._motors[m]) {
-                    /* log.info(`motor ${m} type: ${this._motors[m].type}`);
-                    log.info(`motor ${m} direction: ${this._motors[m].direction}`);
-                    log.info(`motor ${m} power: ${this._motors[m].power}`);
-                    log.info(`motor ${m} position: ${this._motors[m].position}`); */
-                }
-            }
-            this._updateDevices = false;
-            // eslint-disable-next-line no-undefined
-        } else if (!this._sensorPorts.includes(undefined) && !this._motorPorts.includes(undefined)) {
-            // READ SENSOR VALUES
-            let offset = 5; // start reading sensor values at byte 5
-            for (let i = 0; i < 4; i++) {
-                // array 2 float
-                const buffer = new Uint8Array([
-                    array[offset],
-                    array[offset + 1],
-                    array[offset + 2],
-                    array[offset + 3]
-                ]).buffer;
-                const view = new DataView(buffer);
-                const value = view.getFloat32(0, true);
-
-                if (Ev3DeviceLabels[this._sensorPorts[i]] === 'button') {
-                    // Read a button value per port
-                    // log.info('reading button info: ' + value);
-                    this._sensors.buttons[i] = value ? value : 0;
-                } else if (Ev3DeviceLabels[this._sensorPorts[i]]) { // if valid
-                    // Read brightness / distance values and set to 0 if null
-                    this._sensors[Ev3DeviceLabels[this._sensorPorts[i]]] = value ? value : 0;
-                }
-                // log.info(`${JSON.stringify(this._sensors)}`);
-                offset += 4;
-            }
-            // READ MOTOR POSITION VALUES // TODO: put in EV3Motor class?
-            for (let i = 0; i < 4; i++) {
-                const list = [
-                    array[offset],
-                    array[offset + 1],
-                    array[offset + 2],
-                    array[offset + 3]
-                ];
-                // tachoValue from Paula
-                let value = list[0] + (list[1] * 256) + (list[2] * 256 * 256) + (list[3] * 256 * 256 * 256);
-                if (value > 0x7fffffff) {
-                    value = value - 0x100000000;
-                }
-                if (value) {
-                    this._motors[i].position = value;
-                }
-                // log.info(`motor positions: ${this._motors.positions}`);
-                offset += 4;
-            }
-        }
-    }
-
     // TODO: MOVE / DOCUMENT MORE FULLY
     /**
      * Byte 0 - 1 Command size, Little Endian. Command size not including these 2 bytes
@@ -877,6 +682,188 @@ class EV3 {
         command[0] = command.length - 2;
 
         return command;
+    }
+
+    /**
+     * When the EV3 peripheral connects, start polling for sensor and motor values.
+     * @private
+     */
+    _onConnect () {
+        this._pollingIntervalID = window.setInterval(this._pollValues, this._pollingInterval);
+    }
+
+    /**
+     * Poll the EV3 for sensor and motor input values, based on the list of
+     * known connected sensors and motors.
+     * // TODO: document with PDF
+     * @private
+     */
+    _pollValues () {
+        if (!this.isConnected()) {
+            window.clearInterval(this._pollingIntervalID);
+            return;
+        }
+
+        const byteCommands = []; // a compound command
+        let payload = 0;
+
+        let sensorCount = 0;
+        // Either request device list or request sensor data ??
+        if (this._pollingCounter % 20 === 0) {
+            // GET DEVICE LIST
+            byteCommands[0] = 152; // 0x98 op: get device list
+            byteCommands[1] = 129; // 0x81 LENGTH // TODO: ?????
+            byteCommands[2] = 33; // 0x21 ARRAY // TODO: ?????
+            byteCommands[3] = 96; // 0x60 CHANGED // TODO: ?????
+            byteCommands[4] = 225; // 0xE1 size of global var - 1 byte to follow
+            byteCommands[5] = 32; // 0x20 global var index "0" 0b00100000
+
+            // Command and payload lengths
+            payload = 33;
+
+            // Clear sensor data
+            this._updateDevices = true;
+            this._sensorPorts = [];
+            this._motorPorts = [];
+            // TODO: figure out when/how to clear out sensor data
+
+        } else {
+            let index = 0;
+            // GET SENSOR VALUES
+            // eslint-disable-next-line no-undefined
+            if (!this._sensorPorts.includes(undefined)) {
+                for (let i = 0; i < 4; i++) {
+                    if (this._sensorPorts[i] !== 'none') {
+                        byteCommands[index + 0] = 157; // 0x9D op: get sensor value
+                        byteCommands[index + 1] = 0; // layer
+                        byteCommands[index + 2] = i; // port
+                        byteCommands[index + 3] = 0; // do not change type
+                        byteCommands[index + 4] = Ev3DeviceModes[this._sensorPorts[i]]; // mode
+                        byteCommands[index + 5] = 225; // 0xE1 one byte to follow
+                        byteCommands[index + 6] = sensorCount * 4; // global index
+                        index += 7;
+                    }
+                    sensorCount++;
+                }
+            }
+
+            // GET MOTOR POSITION VALUES, EVEN IF NO MOTOR PRESENT
+            // eslint-disable-next-line no-undefined
+            if (!this._motorPorts.includes(undefined)) {
+                for (let i = 0; i < 4; i++) {
+                    byteCommands[index + 0] = 179; // 0XB3 op: get motor position value
+                    byteCommands[index + 1] = 0; // layer
+                    byteCommands[index + 2] = i; // port
+                    byteCommands[index + 3] = 225; // 0xE1 byte following
+                    byteCommands[index + 4] = sensorCount * 4; // global index
+                    index += 5;
+                    sensorCount++;
+                }
+            }
+
+            // Command and payload lengths
+            payload = sensorCount * 4;
+        }
+
+        const cmd = this.directCompoundCommand(byteCommands, payload);
+
+        this._send(cmd);
+
+        this._pollingCounter++;
+    }
+
+    /**
+     * Send a message to the peripheral BT socket.
+     * @param {Uint8Array} message - the message to send.
+     * @return {Promise} - a promise result of the send operation.
+     * @private
+     */
+    _send (message) {
+        // TODO: add rate limiting?
+        if (!this.isConnected()) return Promise.resolve();
+
+        return this._bt.sendMessage({
+            message: Base64Util.uint8ArrayToBase64(message),
+            encoding: 'base64'
+        });
+    }
+
+    /**
+     * Message handler for incoming EV3 messages.
+     * @param {object} params - incoming message parameters
+     * @private
+     */
+    // TODO: REFACTOR / DOCUMENT WITH PDF
+    _onMessage (params) {
+        const message = params.message;
+        const array = Base64Util.base64ToUint8Array(message);
+        // log.info(`received array: ${array}`);
+
+        if (array.length < 35) { // TODO: find safer solution
+            return; // don't parse results that aren't sensor data list or device list
+        }
+
+        if (this._updateDevices) {
+            // PARSE DEVICE LIST
+            // TODO: simplify
+            this._sensorPorts[0] = Ev3DeviceTypes[array[5]] ? Ev3DeviceTypes[array[5]] : 'none';
+            this._sensorPorts[1] = Ev3DeviceTypes[array[6]] ? Ev3DeviceTypes[array[6]] : 'none';
+            this._sensorPorts[2] = Ev3DeviceTypes[array[7]] ? Ev3DeviceTypes[array[7]] : 'none';
+            this._sensorPorts[3] = Ev3DeviceTypes[array[8]] ? Ev3DeviceTypes[array[8]] : 'none';
+            this._motorPorts[0] = Ev3DeviceTypes[array[21]] ? Ev3DeviceTypes[array[21]] : 'none';
+            this._motorPorts[1] = Ev3DeviceTypes[array[22]] ? Ev3DeviceTypes[array[22]] : 'none';
+            this._motorPorts[2] = Ev3DeviceTypes[array[23]] ? Ev3DeviceTypes[array[23]] : 'none';
+            this._motorPorts[3] = Ev3DeviceTypes[array[24]] ? Ev3DeviceTypes[array[24]] : 'none';
+            for (let m = 0; m < 4; m++) {
+                const type = this._motorPorts[m];
+                if (type !== 'none' && !this._motors[m]) {
+                    // add new motor
+                    this._motors[m] = new EV3Motor(this, m, type);
+                }
+                if (type === 'none' && this._motors[m]) {
+                    // clear old motor
+                    this._motors[m] = null;
+                }
+            }
+            this._updateDevices = false;
+            // eslint-disable-next-line no-undefined
+        } else if (!this._sensorPorts.includes(undefined) && !this._motorPorts.includes(undefined)) {
+            // PARSE SENSOR VALUES
+            let offset = 5; // start reading sensor values at byte 5
+            for (let i = 0; i < 4; i++) {
+                // array 2 float
+                const buffer = new Uint8Array([ // TODO: document
+                    array[offset],
+                    array[offset + 1],
+                    array[offset + 2],
+                    array[offset + 3]
+                ]).buffer;
+                const view = new DataView(buffer); // TODO: document
+                const value = view.getFloat32(0, true); // TODO: document
+
+                if (Ev3DeviceLabels[this._sensorPorts[i]] === 'button') {
+                    // Read a button value per port
+                    this._sensors.buttons[i] = value ? value : 0;
+                } else if (Ev3DeviceLabels[this._sensorPorts[i]]) { // if valid
+                    // Read brightness / distance values and set to 0 if null
+                    this._sensors[Ev3DeviceLabels[this._sensorPorts[i]]] = value ? value : 0;
+                }
+                offset += 4;
+            }
+            // PARSE MOTOR POSITION VALUES, EVEN IF NO MOTOR PRESENT
+            for (let i = 0; i < 4; i++) {
+                const positionArray = [ // TODO: document
+                    array[offset],
+                    array[offset + 1],
+                    array[offset + 2],
+                    array[offset + 3]
+                ];
+                if (this._motors[i]) {
+                    this._motors[i].position = positionArray;
+                }
+                offset += 4;
+            }
+        }
     }
 
 }
@@ -1164,8 +1151,6 @@ class Scratch3Ev3Blocks {
         if (motor) {
             motor.power = power;
         }
-
-        return;
     }
 
     getMotorPosition (args) {
@@ -1240,7 +1225,7 @@ class Scratch3Ev3Blocks {
             const freq = Math.pow(2, ((note - 69 + 12) / 12)) * 440;
             this._peripheral.beep(freq, time);
 
-            // Ensure this block runs for a fixed amount of time even when no piezo is connected.
+            // Run for some time even when no piezo is connected.
             setTimeout(resolve, time);
         });
     }
