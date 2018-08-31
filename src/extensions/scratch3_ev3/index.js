@@ -48,6 +48,7 @@ const Ev3CommandOpcode = {
     OPSOUND_CMD_STOP: 0
 };
 
+// TODO: document
 const Ev3CommandValue = {
     LAYER: 0x00,
     NUM8: 0x81,
@@ -159,7 +160,7 @@ class EV3Motor {
         this._position = 0;
 
         /**
-         * TODO
+         * TODO: figure out
          */
         this._commandID = null;
 
@@ -312,8 +313,6 @@ class EV3Motor {
         ]));
 
         const cmd = this._parent.directCommand(byteCommand);
-
-        console.log('turnOnFor cmd: ' + cmd);
 
         this._parent._send(cmd);
 
@@ -688,8 +687,6 @@ class EV3 {
 
         const cmd = this.directCompoundCommand(byteCommands, payload);
 
-        console.log('poll cmd: ' + cmd);
-
         this._send(cmd);
 
         this._pollingCounter++;
@@ -737,8 +734,8 @@ class EV3 {
             this._motorPorts[2] = Ev3DeviceTypes[array[23]] ? Ev3DeviceTypes[array[23]] : 'none';
             this._motorPorts[3] = Ev3DeviceTypes[array[24]] ? Ev3DeviceTypes[array[24]] : 'none';
             log.info(`sensor ports: ${this._sensorPorts}`);
-            log.info(`motor ports: ${this._motorPorts}`);
-            log.info(`motors: ${this._motors}`);
+            // log.info(`motor ports: ${this._motorPorts}`);
+            // log.info(`motors: ${this._motors}`);
             for (let m = 0; m < 4; m++) {
                 const type = this._motorPorts[m];
                 if (type !== 'none' && !this._motors[m]) {
@@ -750,10 +747,10 @@ class EV3 {
                     this._motors[m] = null;
                 }
                 if (this._motors[m]) {
-                    log.info(`motor ${m} type: ${this._motors[m].type}`);
+                    /* log.info(`motor ${m} type: ${this._motors[m].type}`);
                     log.info(`motor ${m} direction: ${this._motors[m].direction}`);
                     log.info(`motor ${m} power: ${this._motors[m].power}`);
-                    log.info(`motor ${m} position: ${this._motors[m].position}`);
+                    log.info(`motor ${m} position: ${this._motors[m].position}`); */
                 }
             }
             this._updateDevices = false;
@@ -774,6 +771,7 @@ class EV3 {
 
                 if (Ev3DeviceLabels[this._sensorPorts[i]] === 'button') {
                     // Read a button value per port
+                    // log.info('reading button info: ' + value);
                     this._sensors.buttons[i] = value ? value : 0;
                 } else if (Ev3DeviceLabels[this._sensorPorts[i]]) { // if valid
                     // Read brightness / distance values and set to 0 if null
@@ -782,7 +780,7 @@ class EV3 {
                 // log.info(`${JSON.stringify(this._sensors)}`);
                 offset += 4;
             }
-            // READ MOTOR POSITION VALUES
+            // READ MOTOR POSITION VALUES // TODO: put in EV3Motor class?
             for (let i = 0; i < 4; i++) {
                 const list = [
                     array[offset],
@@ -883,7 +881,7 @@ class EV3 {
 
 }
 
-// TODO: ???
+// TODO: RENAME
 const SENSOR_MENU = ['1', '2', '3', '4'];
 
 /**
@@ -1019,7 +1017,7 @@ class Scratch3Ev3Blocks {
                         PORT: {
                             type: ArgumentType.STRING,
                             menu: 'sensorPorts',
-                            defaultValue: 0
+                            defaultValue: 1
                         }
                     }
                 },
@@ -1065,7 +1063,7 @@ class Scratch3Ev3Blocks {
                         PORT: {
                             type: ArgumentType.STRING,
                             menu: 'sensorPorts',
-                            defaultValue: 0
+                            defaultValue: 1
                         }
                     }
                 },
@@ -1162,14 +1160,11 @@ class Scratch3Ev3Blocks {
 
         port = EV3MotorID.indexOf(port); // 0/1/2/3
 
-        this._peripheral.motorSetPower(port, power);
+        const motor = this._peripheral.motor(port);
+        if (motor) {
+            motor.power = power;
+        }
 
-        // Yield for time
-        // return new Promise(resolve => {
-        //     setTimeout(() => {
-        //         resolve();
-        //     }, time);
-        // });
         return;
     }
 
@@ -1180,25 +1175,21 @@ class Scratch3Ev3Blocks {
             return;
         }
 
-        port = EV3MotorID.indexOf(port); // 0/1/2/3
+        port = EV3MotorID.indexOf(port);
 
-        // Yield for time
-        // return new Promise(resolve => {
-        //     setTimeout(() => {
-        //         resolve();
-        //     }, time);
-        // });
-        return this._peripheral.motor(port).position;
+        const motor = this._peripheral.motor(port);
+
+        return motor ? motor.position : 0;
     }
 
     whenButtonPressed (args) {
-        let port = Cast.toNumber(args.PORT);
+        let port = args.PORT; // TODO: cast or check?
 
         if (!SENSOR_MENU.includes(port)) {
             return;
         }
 
-        port = SENSOR_MENU.indexOf(port); // 0/1/2/3
+        port = SENSOR_MENU.indexOf(port);
 
         return this._peripheral.isButtonPressed(port);
     }
@@ -1216,13 +1207,13 @@ class Scratch3Ev3Blocks {
     }
 
     buttonPressed (args) {
-        let port = Cast.toNumber(args.PORT);
+        let port = args.PORT; // TODO: cast or check?
 
         if (!SENSOR_MENU.includes(port)) {
             return;
         }
 
-        port = SENSOR_MENU.indexOf(port); // 0/1/2/3
+        port = SENSOR_MENU.indexOf(port);
 
         return this._peripheral.isButtonPressed(port);
     }
