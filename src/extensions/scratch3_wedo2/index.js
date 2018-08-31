@@ -605,7 +605,12 @@ class WeDo2 {
             if (!this._rateLimiter.okayToSend()) return Promise.resolve();
         }
 
-        return this._ble.write(BLEService.IO_SERVICE, uuid, Base64Util.uint8ArrayToBase64(message), 'base64');
+        return this._ble.write(
+            BLEService.IO_SERVICE,
+            uuid,
+            Base64Util.uint8ArrayToBase64(message),
+            'base64'
+        );
     }
 
     /**
@@ -1120,7 +1125,7 @@ class Scratch3WeDo2Blocks {
                 }
             });
 
-            // Ensure this block runs for a fixed amount of time even when no motor is connected.
+            // Run for some time even when no motor is connected
             setTimeout(resolve, durationMS);
         });
     }
@@ -1275,7 +1280,7 @@ class Scratch3WeDo2Blocks {
             const tone = this._noteToTone(note);
             this._peripheral.playTone(tone, durationMS);
 
-            // Ensure this block runs for a fixed amount of time even when no piezo is connected.
+            // Run for some time even when no piezo is connected
             setTimeout(resolve, durationMS);
         });
     }
