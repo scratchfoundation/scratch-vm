@@ -33,6 +33,7 @@ const Ev3CommandType = {
  * Enum for Ev3 commands.
  * Found in the 'EV3 Firmware Developer Kit', section 4, page 10, at
  * https://education.lego.com/en-us/support/mindstorms-ev3/developer-kits.
+ * // TODO: document more fully
  * @readonly
  * @enum {number}
  */
@@ -43,14 +44,17 @@ const Ev3CommandOpcode = {
     OPOUTPUT_RESET: 0xA2,
     OPOUTPUT_STEP_SYNC: 0xB0,
     OPOUTPUT_TIME_SYNC: 0xB1,
+    OPOUTPUT_GET_COUNT: 0xB3, // get motor position
     OPSOUND: 0x94,
     OPSOUND_CMD_TONE: 1,
-    OPSOUND_CMD_STOP: 0
+    OPSOUND_CMD_STOP: 0,
+    OPINPUT_DEVICE_LIST: 0x98,
+    OPINPUT_READSI: 0x9D
 };
 
 // TODO: document
 const Ev3CommandValue = {
-    LAYER: 0x00,
+    LAYER: 0x00, // always layer 0, chained EV3s not supported
     NUM8: 0x81,
     NUM16: 0x82,
     NUM32: 0x83,
@@ -106,7 +110,6 @@ const Ev3DeviceLabels = {
  * Manage power, direction, and timers for one EV3 motor.
  */
 class EV3Motor {
-    // TODO: set/check motors to busy sometimes?
 
     /**
      * Construct a EV3 Motor instance, which could be of type 'largeMotor' or
@@ -163,15 +166,6 @@ class EV3Motor {
          * TODO: figure out
          */
         this._commandID = null;
-
-        /**
-         * Is this motor currently moving?
-         * @type {boolean}
-         * @private
-         */
-        this._isOn = false;
-
-        // this.setMotorOff = this.setMotorOff.bind(this);
     }
 
     /**
@@ -241,13 +235,6 @@ class EV3Motor {
             value = value - 0x100000000;
         }
         this._position = value;
-    }
-
-    /**
-     * @return {boolean} - true if this motor is currently moving, false if this motor is off or braking.
-     */
-    get isOn () {
-        return this._isOn;
     }
 
     /**
@@ -350,7 +337,7 @@ class EV3Motor {
         const cmd = this._parent.directCommand(
             [
                 Ev3CommandOpcode.OPOUTPUT_STOP,
-                Ev3CommandValue.LAYER, // layer
+                Ev3CommandValue.LAYER,
                 this._portMask(this._index), // port output bit field
                 Ev3CommandValue.COAST
             ]
@@ -417,7 +404,7 @@ class EV3 {
 
         /**
          * The ports that connect to sensors.
-         * TODO: document more
+         * TODO: document more or rename?
          * @type {string[]}
          * @private
          */
@@ -425,7 +412,7 @@ class EV3 {
 
         /**
          * The ports that connect to motors.
-         * TODO: document more
+         * TODO: document more or rename?
          * @type {string[]}
          * @private
          */
@@ -516,12 +503,12 @@ class EV3 {
             [
                 Ev3CommandOpcode.OPSOUND,
                 Ev3CommandOpcode.OPSOUND_CMD_TONE, // TODO: link to PDF
-                129, // 0x81 volume following in 1 byte
+                Ev3CommandValue.NUM8, // following in 1 byte
                 2,
-                130, // 0x82 frequency following in 2 bytes
+                Ev3CommandValue.NUM16, // following in 2 bytes
                 freq,
                 freq >> 8,
-                130, // 0x82 duration following in 2 bytes
+                Ev3CommandValue.NUM16, // following in 2 bytes
                 time,
                 time >> 8
             ]
@@ -586,12 +573,8 @@ class EV3 {
             brightness: 0,
             buttons: [0, 0, 0, 0]
         };
-        this._motors = {
-            speeds: [50, 50, 50, 50],
-            positions: [0, 0, 0, 0],
-            busy: [0, 0, 0, 0],
-            commandId: [null, null, null, null]
-        };
+        this._motors = [null, null, null, null];
+        this._motorCommandIDs = [null, null, null, null];
         this._pollingIntervalID = null;
     }
 
@@ -661,6 +644,7 @@ class EV3 {
      * TODO: document via PDF
      *
      * @param  {string} byteCommands - A compound array of EV3 Opcode + arguments.
+     * @param  {int}    payload - the size of the payload
      * @return {array}            - Generated complete command byte array, with header and compounded commands.
      */
     directCompoundCommand (byteCommands, payload) {
@@ -711,8 +695,8 @@ class EV3 {
         // Either request device list or request sensor data ??
         if (this._pollingCounter % 20 === 0) {
             // GET DEVICE LIST
-            byteCommands[0] = 152; // 0x98 op: get device list
-            byteCommands[1] = 129; // 0x81 LENGTH // TODO: ?????
+            byteCommands[0] = Ev3CommandOpcode.OPINPUT_DEVICE_LIST;
+            byteCommands[1] = Ev3CommandValue.NUM8; // 1 byte to follow
             byteCommands[2] = 33; // 0x21 ARRAY // TODO: ?????
             byteCommands[3] = 96; // 0x60 CHANGED // TODO: ?????
             byteCommands[4] = 225; // 0xE1 size of global var - 1 byte to follow
@@ -734,8 +718,8 @@ class EV3 {
             if (!this._sensorPorts.includes(undefined)) {
                 for (let i = 0; i < 4; i++) {
                     if (this._sensorPorts[i] !== 'none') {
-                        byteCommands[index + 0] = 157; // 0x9D op: get sensor value
-                        byteCommands[index + 1] = 0; // layer
+                        byteCommands[index + 0] = Ev3CommandOpcode.OPINPUT_READSI;
+                        byteCommands[index + 1] = Ev3CommandValue.LAYER;
                         byteCommands[index + 2] = i; // port
                         byteCommands[index + 3] = 0; // do not change type
                         byteCommands[index + 4] = Ev3DeviceModes[this._sensorPorts[i]]; // mode
@@ -751,8 +735,8 @@ class EV3 {
             // eslint-disable-next-line no-undefined
             if (!this._motorPorts.includes(undefined)) {
                 for (let i = 0; i < 4; i++) {
-                    byteCommands[index + 0] = 179; // 0XB3 op: get motor position value
-                    byteCommands[index + 1] = 0; // layer
+                    byteCommands[index + 0] = Ev3CommandOpcode.OPOUTPUT_GET_COUNT;
+                    byteCommands[index + 1] = Ev3CommandValue.LAYER;
                     byteCommands[index + 2] = i; // port
                     byteCommands[index + 3] = 225; // 0xE1 byte following
                     byteCommands[index + 4] = sensorCount * 4; // global index
@@ -869,7 +853,7 @@ class EV3 {
 }
 
 // TODO: RENAME
-const SENSOR_MENU = ['1', '2', '3', '4'];
+const Ev3SensorLabels = ['1', '2', '3', '4'];
 
 /**
  * Enum for motor name specification.
@@ -877,7 +861,7 @@ const SENSOR_MENU = ['1', '2', '3', '4'];
  * @enum {string}
  */
 // TODO: add 'all motors' ?
-const EV3MotorID = ['A', 'B', 'C', 'D'];
+const Ev3MotorLabels = ['A', 'B', 'C', 'D'];
 
 class Scratch3Ev3Blocks {
 
@@ -1093,8 +1077,8 @@ class Scratch3Ev3Blocks {
                 }
             ],
             menus: {
-                motorPorts: EV3MotorID,
-                sensorPorts: SENSOR_MENU
+                motorPorts: Ev3MotorLabels,
+                sensorPorts: Ev3SensorLabels
             }
         };
     }
@@ -1141,11 +1125,11 @@ class Scratch3Ev3Blocks {
         let port = Cast.toString(args.PORT);
         const power = MathUtil.clamp(Cast.toNumber(args.POWER), 0, 100);
 
-        if (!EV3MotorID.includes(port)) {
+        if (!Ev3MotorLabels.includes(port)) {
             return;
         }
 
-        port = EV3MotorID.indexOf(port); // 0/1/2/3
+        port = Ev3MotorLabels.indexOf(port); // 0/1/2/3
 
         const motor = this._peripheral.motor(port);
         if (motor) {
@@ -1156,11 +1140,11 @@ class Scratch3Ev3Blocks {
     getMotorPosition (args) {
         let port = Cast.toString(args.PORT);
 
-        if (!EV3MotorID.includes(port)) {
+        if (!Ev3MotorLabels.includes(port)) {
             return;
         }
 
-        port = EV3MotorID.indexOf(port);
+        port = Ev3MotorLabels.indexOf(port);
 
         const motor = this._peripheral.motor(port);
 
@@ -1170,11 +1154,11 @@ class Scratch3Ev3Blocks {
     whenButtonPressed (args) {
         let port = args.PORT; // TODO: cast or check?
 
-        if (!SENSOR_MENU.includes(port)) {
+        if (!Ev3SensorLabels.includes(port)) {
             return;
         }
 
-        port = SENSOR_MENU.indexOf(port);
+        port = Ev3SensorLabels.indexOf(port);
 
         return this._peripheral.isButtonPressed(port);
     }
@@ -1194,11 +1178,11 @@ class Scratch3Ev3Blocks {
     buttonPressed (args) {
         let port = args.PORT; // TODO: cast or check?
 
-        if (!SENSOR_MENU.includes(port)) {
+        if (!Ev3SensorLabels.includes(port)) {
             return;
         }
 
-        port = SENSOR_MENU.indexOf(port);
+        port = Ev3SensorLabels.indexOf(port);
 
         return this._peripheral.isButtonPressed(port);
     }
@@ -1240,16 +1224,16 @@ class Scratch3Ev3Blocks {
     _forEachMotor (motorID, callback) {
         let motors;
         switch (motorID) {
-        case EV3MotorID[0]:
+        case Ev3MotorLabels[0]:
             motors = [0];
             break;
-        case EV3MotorID[1]:
+        case Ev3MotorLabels[1]:
             motors = [1];
             break;
-        case EV3MotorID[2]:
+        case Ev3MotorLabels[2]:
             motors = [2];
             break;
-        case EV3MotorID[3]:
+        case Ev3MotorLabels[3]:
             motors = [3];
             break;
         default:
