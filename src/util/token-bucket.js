@@ -117,7 +117,7 @@ class TokenBucket {
         if (cost <= this._tokenCount) {
             return Promise.resolve();
         }
-        if (cost > this._limit) {
+        if (!(cost <= this._limit)) {
             return Promise.reject(new Error('Task cost is greater than bucket limit'));
         }
         return new Promise(resolve => {
