@@ -293,24 +293,66 @@ class EV3Motor {
 
     /**
      * Turn this motor on for a specific duration.
+     * TODO: document via PDF
+     * // port      - Port to address
+     * // n         - Value to be passed to motor command
+     * // speed     - Speed value
+     * // ramp      - Ramp value
+     * Generates and sends a motor command in EV3 byte array format (CMD, LAYER, PORT,
+     * SPEED, RAMP UP, RUN, RAMP DOWN, BREAKING TYPE)
      * @param {number} milliseconds - run the motor for this long.
      */
     turnOnFor (milliseconds) {
+        const port = this._portMask(this._index);
+        let n = milliseconds;
+        let speed = this._power * this._direction;
+        const ramp = Ev3CommandValue.LONG_RAMP;
+
+        let values = [];
+
+        // If speed is less than zero, make it positive and multiply the input
+        // value by -1
+        if (speed < 0) {
+            speed = -1 * speed;
+            n = -1 * n;
+        }
+        // If the input value is less than 0
+        const dir = (n < 0) ? 0x100 - speed : speed; // step negative or positive
+        n = Math.abs(n);
+        // Setup motor run duration and ramping behavior
+        let rampup = ramp;
+        let rampdown = ramp;
+        let run = n - (ramp * 2);
+        if (run < 0) {
+            rampup = Math.floor(n / 2);
+            run = 0;
+            rampdown = n - rampup;
+        }
+        // Generate motor command values
+        const runcmd = this._getRunValues(run);
+        values = values.concat([
+            Ev3CommandValue.LAYER,
+            port,
+            Ev3CommandValue.NUM8,
+            dir & 0xff,
+            Ev3CommandValue.NUM8,
+            rampup
+        ]).concat(runcmd.concat([
+            Ev3CommandValue.NUM8,
+            rampdown,
+            Ev3CommandValue.BRAKE
+        ]));
+
         const cmd = this._parent.directCommand(
             Ev3Command.OPOUTPUT_TIME_SPEED,
-            [
-                this._parent._portMask(this._index), // port
-                milliseconds, // time
-                this._power * this._direction, // speed
-                Ev3CommandValue.LONG_RAMP // ramp
-            ]
+            values
         );
 
         console.log('turnOnFor cmd: ' + cmd);
 
         this._parent._send(cmd);
 
-        // this.coastAfter(this._index, milliseconds);
+        this.coastAfter(milliseconds);
     }
 
     /**
@@ -320,14 +362,14 @@ class EV3Motor {
     coastAfter (time) {
         // Set the motor command id to check before starting coast
         const commandId = uid();
-        this._motors.commandId[port] = commandId;
+        this._parent._motorCommandIDs[this._index] = commandId;
 
         // Send coast message
         setTimeout(() => {
             // Do not send coast if another motor command changed the command id.
-            if (this._motors.commandId[port] === commandId) {
-                this.motorCoast(port);
-                this._motors.commandId[port] = null;
+            if (this._parent._motorCommandIDs[this._index] === commandId) {
+                this.coast();
+                this._parent._motorCommandIDs[this._index] = null;
             }
         }, time + 1000); // add a 1 second delay so the brake takes effect
     }
@@ -336,36 +378,61 @@ class EV3Motor {
      * TODO
      */
     coast () {
-        const cmd = [];
-        cmd[0] = 9; // length 1
-        cmd[1] = 0; // length 2
-        cmd[2] = 1; // 0x01
-        cmd[3] = 0; // 0x00
-        cmd[4] = 0; // 0x00
-        cmd[5] = 0; // 0x00
-        cmd[6] = 0; // 0x00
-        cmd[7] = 163; // 0xA3 Motor brake/coast command
-        cmd[8] = 0; // layer
-        cmd[9] = this._parent._portMask(port); // port output bit field
-        cmd[10] = 0; // float = coast = 0
+        const cmd = this._parent.directCommand(
+            Ev3Command.OPOUTPUT_STOP,
+            [
+                Ev3CommandValue.LAYER, // layer
+                this._portMask(this._index), // port output bit field
+                Ev3CommandValue.COAST
+            ]
+        );
 
-        this._send(cmd);
+        console.log('coast cmd: ' + cmd);
+
+        this._parent._send(cmd);
     }
 
     /**
-     * TODO
-     * @param degrees - degrees to turn
+     * Generate run values for a given input.
+     * @param  {number} run Run input
+     * @return {array}      Run values (byte array)
      */
-    rotate (degrees) {
-        const cmd = this.directCommand(
-            Ev3Command.OPOUTPUT_STEP_SPEED,
-            this._parent._portMask(port),
-            degrees,
-            this._motors.speeds[port],
-            Ev3CommandValue.LONGRAMP
-        );
+    // TODO: RENAME / COMMENT
+    _getRunValues (run) {
+        // If run duration is less than max 16-bit integer
+        if (run < 0x7fff) {
+            return [
+                Ev3CommandValue.NUM16,
+                run & 0xff,
+                (run >> 8) & 0xff
+            ];
+        }
 
-        this._send(cmd);
+        // Run forever
+        return [
+            Ev3CommandValue.NUM32,
+            run & 0xff,
+            (run >> 8) & 0xff,
+            (run >> 16) & 0xff,
+            (run >> 24) & 0xff
+        ];
+    }
+
+    // TODO: RENAME/COMMENT
+    _portMask (port) {
+        // TODO: convert to enum or lookup
+        let p = null;
+        if (port === 0) {
+            p = 1;
+        } else if (port === 1) {
+            p = 2;
+        } else if (port === 2) {
+            p = 4;
+        } else if (port === 3) {
+            p = 8;
+        }
+
+        return p;
     }
 }
 
@@ -412,6 +479,8 @@ class EV3 {
          * @private
          */
         this._motors = [null, null, null, null];
+
+        this._motorCommandIDs = [null, null, null, null];
 
         /**
          * The polling interval, in milliseconds.
@@ -686,6 +755,7 @@ class EV3 {
      * @param {object} params - incoming message parameters
      * @private
      */
+     // TODO: REFACTOR
     _onMessage (params) {
         const message = params.message;
         const array = Base64Util.base64ToUint8Array(message);
@@ -709,8 +779,13 @@ class EV3 {
             log.info(`motor ports: ${this._motorPorts}`);
             for (let m = 0; m < 4; m++) {
                 const type = this._motorPorts[m];
-                if (type !== 'none') {
+                if (type !== 'none' && !this._motors[m]) {
+                    // add new motor
                     this._motors[m] = new EV3Motor(this, m, type);
+                }
+                if (type === 'none' && this._motors[m]) {
+                    // clear old motor
+                    this._motors[m] = null;
                 }
             }
             log.info(`motors: ${this._motors}`);
@@ -778,8 +853,8 @@ class EV3 {
      * Locals = “l” and Globals = “g”
      */
     /**
-     * Generate a motor command in EV3 byte array format (CMD, LAYER, PORT,
-     * SPEED, RAMP UP, RUN, RAMP DOWN, BREAKING TYPE)
+     * Generate an EV3 direct command.
+     * TODO: document via PDF
      *
      * @param  {string} commandID - Command EV3 Opcode.
      * @param  {array}  values    - Array of values to send to Opcode as args.
@@ -789,118 +864,22 @@ class EV3 {
 
         // Header (Bytes 0 - 6)
         let command = [];
-        command[0] = null; // Command size to be determined
-        command[1] = 0; // Command size second byte
+        command[0] = null; // Command size to be determined // TODO: n & 0xFF ???
+        command[1] = 0; // Command size second byte // TODO: n >> 8 && 0xFF ???
         command[2] = 0; // Message size to be determined // TODO: ???
         command[3] = 0; // Message size to be determined // TODO: ???
         command[4] = Ev3CommandValue.DIRECT_COMMAND_NO_REPLY;
-        command[5] = 0; // Reservation (allocation) of global and local variables
-        command[6] = 0; // Reservation (allocation) of global and local variables
-        /*
-         len & 0xFF,
-         (len >> 8) & 0xFF,
-         0x1,
-         0x0,
-         0x0,
-         n,
-         0x0
-         */
+        command[5] = 0; // Reservation (allocation) of global and local variables // TODO: ???
+        command[6] = 0; // Reservation (allocation) of global and local variables // TODO: ???
+
+        // Bytecodes (Bytes 7 - n)
         command[7] = commandID; // Command ID as an Opcode
-
-        // IF MOTOR COMMAND, CALCULATE RUN VALUES
-        if (commandID === Ev3Command.OPOUTPUT_TIME_SPEED) {
-            // port      - Port to address
-            // n         - Value to be passed to motor command
-            // speed     - Speed value
-            // ramp      - Ramp value
-            const port = values[0];
-            let n = values[1];
-            let speed = values[2];
-            const ramp = values[3];
-
-            // If speed is less than zero, make it positive and multiply the input
-            // value by -1
-            if (speed < 0) {
-                speed = -1 * speed;
-                n = -1 * n;
-            }
-            // If the input value is less than 0
-            const dir = (n < 0) ? 0x100 - speed : speed; // step negative or positive
-            n = Math.abs(n);
-            // Setup motor run duration and ramping behavior
-            let rampup = ramp;
-            let rampdown = ramp;
-            let run = n - (ramp * 2);
-            if (run < 0) {
-                rampup = Math.floor(n / 2);
-                run = 0;
-                rampdown = n - rampup;
-            }
-            // Generate motor command
-            const runcmd = this._getRunValues(run);
-            command = command.concat([
-                Ev3CommandValue.LAYER,
-                port,
-                Ev3CommandValue.NUM8,
-                dir & 0xff,
-                Ev3CommandValue.NUM8,
-                rampup
-            ]).concat(runcmd.concat([
-                Ev3CommandValue.NUM8,
-                rampdown,
-                Ev3CommandValue.BRAKE
-            ]));
-        } else {
-            // ANY OTHER KIND OF COMMAND, JUST CONCAT VALUES
-            command = command.concat(values);
-        }
+        command = command.concat(values);
 
         // Finally, calculate length
         command[0] = command.length - 2;
 
         return command;
-    }
-
-    /**
-     * Generate run values for a given input.
-     * @param  {number} run Run input
-     * @return {array}      Run values (byte array)
-     */
-    _getRunValues (run) {
-        // If run duration is less than max 16-bit integer
-        if (run < 0x7fff) {
-            return [
-                Ev3CommandValue.NUM16,
-                run & 0xff,
-                (run >> 8) & 0xff
-            ];
-        }
-
-        // Run forever
-        return [
-            Ev3CommandValue.NUM32,
-            run & 0xff,
-            (run >> 8) & 0xff,
-            (run >> 16) & 0xff,
-            (run >> 24) & 0xff
-        ];
-    }
-
-    // TODO: keep here? / refactor
-    _portMask (port) {
-        // TODO: convert to enum or lookup
-        let p = null;
-        if (port === 0) {
-            p = 1;
-        } else if (port === 1) {
-            p = 2;
-        } else if (port === 2) {
-            p = 4;
-        } else if (port === 3) {
-            p = 8;
-        }
-
-        return p;
     }
 
 }
