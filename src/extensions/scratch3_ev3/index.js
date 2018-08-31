@@ -18,13 +18,25 @@ const log = require('../../util/log');
 const blockIconURI = 'data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiPz4KPHN2ZyB3aWR0aD0iNDBweCIgaGVpZ2h0PSI0MHB4IiB2aWV3Qm94PSIwIDAgNDAgNDAiIHZlcnNpb249IjEuMSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIiB4bWxuczp4bGluaz0iaHR0cDovL3d3dy53My5vcmcvMTk5OS94bGluayI+CiAgICA8IS0tIEdlbmVyYXRvcjogU2tldGNoIDUwLjIgKDU1MDQ3KSAtIGh0dHA6Ly93d3cuYm9oZW1pYW5jb2RpbmcuY29tL3NrZXRjaCAtLT4KICAgIDx0aXRsZT5ldjMtYmxvY2staWNvbjwvdGl0bGU+CiAgICA8ZGVzYz5DcmVhdGVkIHdpdGggU2tldGNoLjwvZGVzYz4KICAgIDxkZWZzPjwvZGVmcz4KICAgIDxnIGlkPSJldjMtYmxvY2staWNvbiIgc3Ryb2tlPSJub25lIiBzdHJva2Utd2lkdGg9IjEiIGZpbGw9Im5vbmUiIGZpbGwtcnVsZT0iZXZlbm9kZCI+CiAgICAgICAgPGcgaWQ9ImV2MyIgdHJhbnNmb3JtPSJ0cmFuc2xhdGUoNS41MDAwMDAsIDMuNTAwMDAwKSIgZmlsbC1ydWxlPSJub256ZXJvIj4KICAgICAgICAgICAgPHJlY3QgaWQ9IlJlY3RhbmdsZS1wYXRoIiBzdHJva2U9IiM3Qzg3QTUiIGZpbGw9IiNGRkZGRkYiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCIgeD0iMC41IiB5PSIzLjU5IiB3aWR0aD0iMjgiIGhlaWdodD0iMjUuODEiIHJ4PSIxIj48L3JlY3Q+CiAgICAgICAgICAgIDxyZWN0IGlkPSJSZWN0YW5nbGUtcGF0aCIgc3Ryb2tlPSIjN0M4N0E1IiBmaWxsPSIjRTZFN0U4IiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiIHg9IjIuNSIgeT0iMC41IiB3aWR0aD0iMjQiIGhlaWdodD0iMzIiIHJ4PSIxIj48L3JlY3Q+CiAgICAgICAgICAgIDxyZWN0IGlkPSJSZWN0YW5nbGUtcGF0aCIgc3Ryb2tlPSIjN0M4N0E1IiBmaWxsPSIjRkZGRkZGIiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiIHg9IjIuNSIgeT0iMTQuNSIgd2lkdGg9IjI0IiBoZWlnaHQ9IjEzIj48L3JlY3Q+CiAgICAgICAgICAgIDxwYXRoIGQ9Ik0xNC41LDEwLjUgTDE0LjUsMTQuNSIgaWQ9IlNoYXBlIiBzdHJva2U9IiM3Qzg3QTUiIGZpbGw9IiNFNkU3RTgiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCI+PC9wYXRoPgogICAgICAgICAgICA8cmVjdCBpZD0iUmVjdGFuZ2xlLXBhdGgiIGZpbGw9IiM0MTQ3NTciIHg9IjQuNSIgeT0iMi41IiB3aWR0aD0iMjAiIGhlaWdodD0iMTAiIHJ4PSIxIj48L3JlY3Q+CiAgICAgICAgICAgIDxyZWN0IGlkPSJSZWN0YW5nbGUtcGF0aCIgZmlsbD0iIzdDODdBNSIgb3BhY2l0eT0iMC41IiB4PSIxMy41IiB5PSIyMC4xMyIgd2lkdGg9IjIiIGhlaWdodD0iMiIgcng9IjAuNSI+PC9yZWN0PgogICAgICAgICAgICA8cGF0aCBkPSJNOS4wNiwyMC4xMyBMMTAuNTYsMjAuMTMgQzEwLjgzNjE0MjQsMjAuMTMgMTEuMDYsMjAuMzUzODU3NiAxMS4wNiwyMC42MyBMMTEuMDYsMjEuNjMgQzExLjA2LDIxLjkwNjE0MjQgMTAuODM2MTQyNCwyMi4xMyAxMC41NiwyMi4xMyBMOS4wNiwyMi4xMyBDOC41MDc3MTUyNSwyMi4xMyA4LjA2LDIxLjY4MjI4NDcgOC4wNiwyMS4xMyBDOC4wNiwyMC41Nzc3MTUzIDguNTA3NzE1MjUsMjAuMTMgOS4wNiwyMC4xMyBaIiBpZD0iU2hhcGUiIGZpbGw9IiM3Qzg3QTUiIG9wYWNpdHk9IjAuNSI+PC9wYXRoPgogICAgICAgICAgICA8cGF0aCBkPSJNMTguOTEsMjAuMTMgTDIwLjQyLDIwLjEzIEMyMC42OTYxNDI0LDIwLjEzIDIwLjkyLDIwLjM1Mzg1NzYgMjAuOTIsMjAuNjMgTDIwLjkyLDIxLjYzIEMyMC45MiwyMS45MDYxNDI0IDIwLjY5NjE0MjQsMjIuMTMgMjAuNDIsMjIuMTMgTDE4LjkyLDIyLjEzIEMxOC4zNjc3MTUzLDIyLjEzIDE3LjkyLDIxLjY4MjI4NDcgMTcuOTIsMjEuMTMgQzE3LjkxOTk3MjYsMjAuNTgxNTk3IDE4LjM2MTYyNDUsMjAuMTM1NDg0IDE4LjkxLDIwLjEzIFoiIGlkPSJTaGFwZSIgZmlsbD0iIzdDODdBNSIgb3BhY2l0eT0iMC41IiB0cmFuc2Zvcm09InRyYW5zbGF0ZSgxOS40MjAwMDAsIDIxLjEzMDAwMCkgcm90YXRlKC0xODAuMDAwMDAwKSB0cmFuc2xhdGUoLTE5LjQyMDAwMCwgLTIxLjEzMDAwMCkgIj48L3BhdGg+CiAgICAgICAgICAgIDxwYXRoIGQ9Ik04LjIzLDE3LjUgTDUsMTcuNSBDNC43MjM4NTc2MywxNy41IDQuNSwxNy4yNzYxNDI0IDQuNSwxNyBMNC41LDE0LjUgTDEwLjUsMTQuNSBMOC42NSwxNy4yOCBDOC41NTQ2Njk2MSwxNy40MTc5MDgyIDguMzk3NjUwMDYsMTcuNTAwMTU2NiA4LjIzLDE3LjUgWiIgaWQ9IlNoYXBlIiBmaWxsPSIjN0M4N0E1IiBvcGFjaXR5PSIwLjUiPjwvcGF0aD4KICAgICAgICAgICAgPHBhdGggZD0iTTE4LjE1LDE4Ljg1IEwxNy42NSwxOS4zNSBDMTcuNTUyMzQxNiwxOS40NDQwNzU2IDE3LjQ5ODAzMzksMTkuNTc0NDE0MiAxNy41LDE5LjcxIEwxNy41LDIwIEMxNy41LDIwLjI3NjE0MjQgMTcuMjc2MTQyNCwyMC41IDE3LDIwLjUgTDE2LjUsMjAuNSBDMTYuMjIzODU3NiwyMC41IDE2LDIwLjI3NjE0MjQgMTYsMjAgQzE2LDE5LjcyMzg1NzYgMTUuNzc2MTQyNCwxOS41IDE1LjUsMTkuNSBMMTMuNSwxOS41IEMxMy4yMjM4NTc2LDE5LjUgMTMsMTkuNzIzODU3NiAxMywyMCBDMTMsMjAuMjc2MTQyNCAxMi43NzYxNDI0LDIwLjUgMTIuNSwyMC41IEwxMiwyMC41IEMxMS43MjM4NTc2LDIwLjUgMTEuNSwyMC4yNzYxNDI0IDExLjUsMjAgTDExLjUsMTkuNzEgQzExLjUwMTk2NjEsMTkuNTc0NDE0MiAxMS40NDc2NTg0LDE5LjQ0NDA3NTYgMTEuMzUsMTkuMzUgTDEwLjg1LDE4Ljg1IEMxMC42NTgyMTY3LDE4LjY1MjE4NjMgMTAuNjU4MjE2NywxOC4zMzc4MTM3IDEwLjg1LDE4LjE0IEwxMi4zNiwxNi42NSBDMTIuNDUwMjgwMywxNi41NTI4NjE3IDEyLjU3NzM5NjEsMTYuNDk4MzgzNSAxMi43MSwxNi41IEwxNi4yOSwxNi41IEMxNi40MjI2MDM5LDE2LjQ5ODM4MzUgMTYuNTQ5NzE5NywxNi41NTI4NjE3IDE2LjY0LDE2LjY1IEwxOC4xNSwxOC4xNCBDMTguMzQxNzgzMywxOC4zMzc4MTM3IDE4LjM0MTc4MzMsMTguNjUyMTg2MyAxOC4xNSwxOC44NSBaIiBpZD0iU2hhcGUiIGZpbGw9IiM3Qzg3QTUiIG9wYWNpdHk9IjAuNSI+PC9wYXRoPgogICAgICAgICAgICA8cGF0aCBkPSJNMTAuODUsMjMuNDUgTDExLjM1LDIyLjk1IEMxMS40NDc2NTg0LDIyLjg1NTkyNDQgMTEuNTAxOTY2MSwyMi43MjU1ODU4IDExLjUsMjIuNTkgTDExLjUsMjIuMyBDMTEuNSwyMi4wMjM4NTc2IDExLjcyMzg1NzYsMjEuOCAxMiwyMS44IEwxMi41LDIxLjggQzEyLjc3NjE0MjQsMjEuOCAxMywyMi4wMjM4NTc2IDEzLDIyLjMgQzEzLDIyLjU3NjE0MjQgMTMuMjIzODU3NiwyMi44IDEzLjUsMjIuOCBMMTUuNSwyMi44IEMxNS43NzYxNDI0LDIyLjggMTYsMjIuNTc2MTQyNCAxNiwyMi4zIEMxNiwyMi4wMjM4NTc2IDE2LjIyMzg1NzYsMjEuOCAxNi41LDIxLjggTDE3LDIxLjggQzE3LjI3NjE0MjQsMjEuOCAxNy41LDIyLjAyMzg1NzYgMTcuNSwyMi4zIEwxNy41LDIyLjU5IEMxNy40OTgwMzM5LDIyLjcyNTU4NTggMTcuNTUyMzQxNiwyMi44NTU5MjQ0IDE3LjY1LDIyLjk1IEwxOC4xNSwyMy40NSBDMTguMzQwNTcxNCwyMy42NDQ0MjE4IDE4LjM0MDU3MTQsMjMuOTU1NTc4MiAxOC4xNSwyNC4xNSBMMTYuNjQsMjUuNjUgQzE2LjU0OTcxOTcsMjUuNzQ3MTM4MyAxNi40MjI2MDM5LDI1LjgwMTYxNjUgMTYuMjksMjUuOCBMMTIuNzEsMjUuOCBDMTIuNTc3Mzk2MSwyNS44MDE2MTY1IDEyLjQ1MDI4MDMsMjUuNzQ3MTM4MyAxMi4zNiwyNS42NSBMMTAuODUsMjQuMTUgQzEwLjY1OTQyODYsMjMuOTU1NTc4MiAxMC42NTk0Mjg2LDIzLjY0NDQyMTggMTAuODUsMjMuNDUgWiIgaWQ9IlNoYXBlIiBmaWxsPSIjN0M4N0E1IiBvcGFjaXR5PSIwLjUiPjwvcGF0aD4KICAgICAgICAgICAgPHBhdGggZD0iTTIxLjUsMjcuNSBMMjYuNSwyNy41IEwyNi41LDMxLjUgQzI2LjUsMzIuMDUyMjg0NyAyNi4wNTIyODQ3LDMyLjUgMjUuNSwzMi41IEwyMS41LDMyLjUgTDIxLjUsMjcuNSBaIiBpZD0iU2hhcGUiIHN0cm9rZT0iI0NDNEMyMyIgZmlsbD0iI0YxNUEyOSIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIj48L3BhdGg+CiAgICAgICAgPC9nPgogICAgPC9nPgo8L3N2Zz4=';
 
 /**
+ * Enum for Ev3 command types.
+ * Found in the 'EV3 Communication Developer Kit', page 24, at
+ * https://education.lego.com/en-us/support/mindstorms-ev3/developer-kits.
+ * @readonly
+ * @enum {number}
+ */
+const Ev3CommandType = {
+    DIRECT_COMMAND_REPLY: 0x00,
+    DIRECT_COMMAND_NO_REPLY: 0x80
+};
+
+/**
  * Enum for Ev3 commands.
  * Found in the 'EV3 Firmware Developer Kit', section 4, page 10, at
  * https://education.lego.com/en-us/support/mindstorms-ev3/developer-kits.
  * @readonly
  * @enum {number}
  */
-const Ev3Command = {
+const Ev3CommandOpcode = {
     OPOUTPUT_STEP_SPEED: 0xAE,
     OPOUTPUT_TIME_SPEED: 0xAF,
     OPOUTPUT_STOP: 0xA3,
@@ -37,7 +49,6 @@ const Ev3Command = {
 };
 
 const Ev3CommandValue = {
-    DIRECT_COMMAND_NO_REPLY: 0x80,
     LAYER: 0x00,
     NUM8: 0x81,
     NUM16: 0x82,
@@ -45,7 +56,7 @@ const Ev3CommandValue = {
     COAST: 0x0,
     BRAKE: 0x1,
     LONG_RAMP: 50
-}
+};
 
 /**
  * Enum for Ev3 device types.
@@ -159,44 +170,19 @@ class EV3Motor {
          */
         this._isOn = false;
 
-        /**
-         * If the motor has been turned on or is actively braking for a specific duration, this is the timeout ID for
-         * the end-of-action handler. Cancel this when changing plans.
-         * @type {Object}
-         * @private
-         */
-        this._pendingTimeoutId = null;
-
-        /**
-         * The starting time for the pending timeout.
-         * @type {Object}
-         * @private
-         */
-        this._pendingTimeoutStartTime = null;
-
-        /**
-         * The delay/duration of the pending timeout.
-         * @type {Object}
-         * @private
-         */
-        this._pendingTimeoutDelay = null;
-
-        // this.startBraking = this.startBraking.bind(this);
         // this.setMotorOff = this.setMotorOff.bind(this);
     }
 
     /**
-     * @return {number} - the duration of active braking after a call to startBraking(). Afterward, turn the motor off.
-     * @constructor
+     * @return {string} - this motor's type: 'largeMotor' or 'mediumMotor'
      */
-    static get BRAKE_TIME_MS () {
-        return 1000;
-    }
-
     get type () {
         return this._type;
     }
 
+    /**
+     * @param {string} value - this motor's new type: 'largeMotor' or 'mediumMotor'
+     */
     set type (value) {
         this._type = value;
     }
@@ -230,9 +216,12 @@ class EV3Motor {
      * @param {int} value - this motor's new power level, in the range [0,100].
      */
     set power (value) {
-        this._power = Math.max(0, Math.min(value, 100));
+        this._power = value;
     }
 
+    /**
+     * @return {int} - this motor's current position, in the range [0,360].
+     */
     get position () {
         let value = this._position;
         value = value % 360;
@@ -241,33 +230,11 @@ class EV3Motor {
         return value;
     }
 
-    set position (degrees) {
-        this._position = degrees;
-        /*
-        // Calculate degrees to turn
-        let previousPos = this._motors.positions[port];
-        previousPos = previousPos % 360;
-        previousPos = previousPos < 0 ? previousPos * -1 : previousPos;
-        const newPos = degrees % 360;
-        let degreesToTurn = 0;
-        let direction = 1;
-        if (previousPos <= newPos) {
-            degreesToTurn = newPos - previousPos;
-        } else {
-            degreesToTurn = previousPos - newPos;
-            direction = -1;
-        }
-
-        const cmd = this.directCommand(
-            Ev3Command.OPOUTPUT_STEP_SPEED,
-            this._portMask(port),
-            degreesToTurn,
-            this._motors.speeds[port] * direction,
-            Ev3CommandValue.LONG_RAMP
-        );
-
-        this._send(cmd);
-        */
+    /**
+     * @param {int} value - this motor's new position, in the range [0,360].
+     */
+    set position (value) {
+        this._position = value;
     }
 
     /**
@@ -308,7 +275,8 @@ class EV3Motor {
         let speed = this._power * this._direction;
         const ramp = Ev3CommandValue.LONG_RAMP;
 
-        let values = [];
+        let byteCommand = [];
+        byteCommand[0] = Ev3CommandOpcode.OPOUTPUT_TIME_SPEED;
 
         // If speed is less than zero, make it positive and multiply the input
         // value by -1
@@ -330,7 +298,7 @@ class EV3Motor {
         }
         // Generate motor command values
         const runcmd = this._getRunValues(run);
-        values = values.concat([
+        byteCommand = byteCommand.concat([
             Ev3CommandValue.LAYER,
             port,
             Ev3CommandValue.NUM8,
@@ -343,10 +311,7 @@ class EV3Motor {
             Ev3CommandValue.BRAKE
         ]));
 
-        const cmd = this._parent.directCommand(
-            Ev3Command.OPOUTPUT_TIME_SPEED,
-            values
-        );
+        const cmd = this._parent.directCommand(byteCommand);
 
         console.log('turnOnFor cmd: ' + cmd);
 
@@ -379,15 +344,13 @@ class EV3Motor {
      */
     coast () {
         const cmd = this._parent.directCommand(
-            Ev3Command.OPOUTPUT_STOP,
             [
+                Ev3CommandOpcode.OPOUTPUT_STOP,
                 Ev3CommandValue.LAYER, // layer
                 this._portMask(this._index), // port output bit field
                 Ev3CommandValue.COAST
             ]
         );
-
-        console.log('coast cmd: ' + cmd);
 
         this._parent._send(cmd);
     }
@@ -450,6 +413,7 @@ class EV3 {
 
         /**
          * The ports that connect to sensors.
+         * TODO: document more
          * @type {string[]}
          * @private
          */
@@ -457,6 +421,7 @@ class EV3 {
 
         /**
          * The ports that connect to motors.
+         * TODO: document more
          * @type {string[]}
          * @private
          */
@@ -480,6 +445,7 @@ class EV3 {
          */
         this._motors = [null, null, null, null];
 
+        // TODO: ???
         this._motorCommandIDs = [null, null, null, null];
 
         /**
@@ -517,9 +483,6 @@ class EV3 {
     }
 
     get distance () {
-        // https://shop.lego.com/en-US/EV3-Ultrasonic-Sensor-45504
-        // Measures distances between one and 250 cm (one to 100 in.)
-        // Accurate to +/- 1 cm (+/- .394 in.)
         let value = this._sensors.distance > 100 ? 100 : this._sensors.distance;
         value = value < 0 ? 0 : value;
         value = Math.round(100 * value) / 100;
@@ -546,9 +509,9 @@ class EV3 {
 
     beep (freq, time) {
         const cmd = this.directCommand(
-            Ev3Command.OPSOUND,
             [
-                Ev3Command.OPSOUND_CMD_TONE, // TODO: link to PDF
+                Ev3CommandOpcode.OPSOUND,
+                Ev3CommandOpcode.OPSOUND_CMD_TONE, // TODO: link to PDF
                 129, // 0x81 volume following in 1 byte
                 2,
                 130, // 0x82 frequency following in 2 bytes
@@ -570,17 +533,20 @@ class EV3 {
 
     stopSound () {
         const cmd = this.directCommand(
-            Ev3Command.OPSOUND,
-            [Ev3Command.OPSOUND_CMD_STOP]
+            [
+                Ev3CommandOpcode.OPSOUND, // TODO: link to PDF
+                Ev3CommandOpcode.OPSOUND_CMD_STOP
+            ]
         );
 
         this._send(cmd);
     }
 
     stopAllMotors () {
-        for (let i = 0; i < this._motorPorts.length; i++) {
-            if (this._motorPorts[i] !== 'none') {
-                this.motorCoast(i);
+        for (let i = 0; i < this._motors.length; i++) {
+            const motor = this._motors(i);
+            if (motor) {
+                motor.coast();
             }
         }
     }
@@ -608,7 +574,7 @@ class EV3 {
      */
     disconnect () {
         this._bt.disconnect();
-        window.clearInterval(this._pollingIntervalID); // TODO: window?
+        window.clearInterval(this._pollingIntervalID);
         this._sensorPorts = [];
         this._motorPorts = [];
         this._sensors = {
@@ -648,6 +614,7 @@ class EV3 {
     /**
      * Poll the EV3 for sensor and motor input values, based on the list of
      * known connected sensors and motors.
+     * // TODO: document with PDF
      * @private
      */
     _pollValues () {
@@ -656,31 +623,22 @@ class EV3 {
             return;
         }
 
-        const cmd = []; // a compound command
-
-        // HEADER
-        cmd[0] = null; // calculate length later
-        cmd[1] = 0; // length pt. 2
-        cmd[2] = 1; // message counter // TODO: ?????
-        cmd[3] = 0; // message counter // TODO: ?????
-        cmd[4] = 0; // command type: direct command
-        cmd[5] = null; // calculate vars length later
-        cmd[6] = 0; // ...
+        const byteCommands = []; // a compound command
+        let payload = 0;
 
         let sensorCount = 0;
         // Either request device list or request sensor data ??
         if (this._pollingCounter % 20 === 0) {
             // GET DEVICE LIST
-            cmd[7] = 152; // 0x98 op: get device list
-            cmd[8] = 129; // 0x81 LENGTH // TODO: ?????
-            cmd[9] = 33; // 0x21 ARRAY // TODO: ?????
-            cmd[10] = 96; // 0x60 CHANGED // TODO: ?????
-            cmd[11] = 225; // 0xE1 size of global var - 1 byte to follow
-            cmd[12] = 32; // 0x20 global var index "0" 0b00100000
+            byteCommands[0] = 152; // 0x98 op: get device list
+            byteCommands[1] = 129; // 0x81 LENGTH // TODO: ?????
+            byteCommands[2] = 33; // 0x21 ARRAY // TODO: ?????
+            byteCommands[3] = 96; // 0x60 CHANGED // TODO: ?????
+            byteCommands[4] = 225; // 0xE1 size of global var - 1 byte to follow
+            byteCommands[5] = 32; // 0x20 global var index "0" 0b00100000
 
             // Command and payload lengths
-            cmd[0] = cmd.length - 2;
-            cmd[5] = 33;
+            payload = 33;
 
             // Clear sensor data
             this._updateDevices = true;
@@ -690,20 +648,20 @@ class EV3 {
 
         } else {
 
-            let index = 7;
+            let index = 0;
 
             // GET SENSOR VALUES
             // eslint-disable-next-line no-undefined
             if (!this._sensorPorts.includes(undefined)) {
                 for (let i = 0; i < 4; i++) {
                     if (this._sensorPorts[i] !== 'none') {
-                        cmd[index + 0] = 157; // 0x9D op: get sensor value
-                        cmd[index + 1] = 0; // layer
-                        cmd[index + 2] = i; // port
-                        cmd[index + 3] = 0; // do not change type
-                        cmd[index + 4] = Ev3DeviceModes[this._sensorPorts[i]]; // mode
-                        cmd[index + 5] = 225; // 0xE1 one byte to follow
-                        cmd[index + 6] = sensorCount * 4; // global index
+                        byteCommands[index + 0] = 157; // 0x9D op: get sensor value
+                        byteCommands[index + 1] = 0; // layer
+                        byteCommands[index + 2] = i; // port
+                        byteCommands[index + 3] = 0; // do not change type
+                        byteCommands[index + 4] = Ev3DeviceModes[this._sensorPorts[i]]; // mode
+                        byteCommands[index + 5] = 225; // 0xE1 one byte to follow
+                        byteCommands[index + 6] = sensorCount * 4; // global index
                         index += 7;
                     }
                     sensorCount++;
@@ -714,20 +672,23 @@ class EV3 {
             // eslint-disable-next-line no-undefined
             if (!this._motorPorts.includes(undefined)) {
                 for (let i = 0; i < 4; i++) {
-                    cmd[index + 0] = 179; // 0XB3 op: get motor position value
-                    cmd[index + 1] = 0; // layer
-                    cmd[index + 2] = i; // port
-                    cmd[index + 3] = 225; // 0xE1 byte following
-                    cmd[index + 4] = sensorCount * 4; // global index
+                    byteCommands[index + 0] = 179; // 0XB3 op: get motor position value
+                    byteCommands[index + 1] = 0; // layer
+                    byteCommands[index + 2] = i; // port
+                    byteCommands[index + 3] = 225; // 0xE1 byte following
+                    byteCommands[index + 4] = sensorCount * 4; // global index
                     index += 5;
                     sensorCount++;
                 }
             }
 
             // Command and payload lengths
-            cmd[0] = cmd.length - 2;
-            cmd[5] = sensorCount * 4;
+            payload = sensorCount * 4;
         }
+
+        const cmd = this.directCompoundCommand(byteCommands, payload);
+
+        console.log('poll cmd: ' + cmd);
 
         this._send(cmd);
 
@@ -755,7 +716,7 @@ class EV3 {
      * @param {object} params - incoming message parameters
      * @private
      */
-     // TODO: REFACTOR
+    // TODO: REFACTOR / DOCUMENT WITH PDF
     _onMessage (params) {
         const message = params.message;
         const array = Base64Util.base64ToUint8Array(message);
@@ -775,8 +736,9 @@ class EV3 {
             this._motorPorts[1] = Ev3DeviceTypes[array[22]] ? Ev3DeviceTypes[array[22]] : 'none';
             this._motorPorts[2] = Ev3DeviceTypes[array[23]] ? Ev3DeviceTypes[array[23]] : 'none';
             this._motorPorts[3] = Ev3DeviceTypes[array[24]] ? Ev3DeviceTypes[array[24]] : 'none';
-            // log.info(`sensor ports: ${this._sensorPorts}`);
+            log.info(`sensor ports: ${this._sensorPorts}`);
             log.info(`motor ports: ${this._motorPorts}`);
+            log.info(`motors: ${this._motors}`);
             for (let m = 0; m < 4; m++) {
                 const type = this._motorPorts[m];
                 if (type !== 'none' && !this._motors[m]) {
@@ -787,12 +749,13 @@ class EV3 {
                     // clear old motor
                     this._motors[m] = null;
                 }
+                if (this._motors[m]) {
+                    log.info(`motor ${m} type: ${this._motors[m].type}`);
+                    log.info(`motor ${m} direction: ${this._motors[m].direction}`);
+                    log.info(`motor ${m} power: ${this._motors[m].power}`);
+                    log.info(`motor ${m} position: ${this._motors[m].position}`);
+                }
             }
-            log.info(`motors: ${this._motors}`);
-            log.info(`motor 0 type: ${this._motors[0].type}`);
-            log.info(`motor 0 direction: ${this._motors[0].direction}`);
-            log.info(`motor 0 power: ${this._motors[0].power}`);
-            log.info(`motor 0 position: ${this._motors[0].position}`);
             this._updateDevices = false;
             // eslint-disable-next-line no-undefined
         } else if (!this._sensorPorts.includes(undefined) && !this._motorPorts.includes(undefined)) {
@@ -856,11 +819,10 @@ class EV3 {
      * Generate an EV3 direct command.
      * TODO: document via PDF
      *
-     * @param  {string} commandID - Command EV3 Opcode.
-     * @param  {array}  values    - Array of values to send to Opcode as args.
-     * @return {array}            - Generated command byte array.
+     * @param  {string} byteCommands - A compound array of EV3 Opcode + arguments.
+     * @return {array}            - Generated complete command byte array, with header and compounded commands.
      */
-    directCommand (commandID, values) {
+    directCommand (byteCommands) {
 
         // Header (Bytes 0 - 6)
         let command = [];
@@ -868,13 +830,50 @@ class EV3 {
         command[1] = 0; // Command size second byte // TODO: n >> 8 && 0xFF ???
         command[2] = 0; // Message size to be determined // TODO: ???
         command[3] = 0; // Message size to be determined // TODO: ???
-        command[4] = Ev3CommandValue.DIRECT_COMMAND_NO_REPLY;
+        command[4] = Ev3CommandType.DIRECT_COMMAND_NO_REPLY;
         command[5] = 0; // Reservation (allocation) of global and local variables // TODO: ???
         command[6] = 0; // Reservation (allocation) of global and local variables // TODO: ???
 
         // Bytecodes (Bytes 7 - n)
-        command[7] = commandID; // Command ID as an Opcode
-        command = command.concat(values);
+        command = command.concat(byteCommands);
+
+        // Finally, calculate length
+        command[0] = command.length - 2;
+
+        return command;
+    }
+
+    /**
+     * Byte 0 - 1 Command size, Little Endian. Command size not including these 2 bytes
+     * Byte 2 - 3 Message counter, Little Endian. Forth running counter
+     * Byte 4     Command type. See defines above
+     * Byte 5 - 6 Reservation (allocation) of global and local variables using a compressed format
+     *            (globals reserved in byte 5 and the 2 lsb of byte 6, locals reserved in the upper 6 bits of byte 6)
+     *            – see below:
+     * Byte 7 - n Byte codes as a single command or compound commands (I.e. more commands composed as a small program)
+     * Locals = “l” and Globals = “g”
+     */
+    /**
+     * Generate an EV3 direct command.
+     * TODO: document via PDF
+     *
+     * @param  {string} byteCommands - A compound array of EV3 Opcode + arguments.
+     * @return {array}            - Generated complete command byte array, with header and compounded commands.
+     */
+    directCompoundCommand (byteCommands, payload) {
+
+        // Header (Bytes 0 - 6)
+        let command = [];
+        command[0] = null; // Command size to be determined // TODO: n & 0xFF ???
+        command[1] = 0; // Command size second byte // TODO: n >> 8 && 0xFF ???
+        command[2] = 1; // Message size to be determined // TODO: ???
+        command[3] = 0; // Message size to be determined // TODO: ???
+        command[4] = Ev3CommandType.DIRECT_COMMAND_REPLY;
+        command[5] = payload; // Reservation (allocation) of global and local variables // TODO: ???
+        command[6] = 0; // Reservation (allocation) of global and local variables // TODO: ???
+
+        // Bytecodes (Bytes 7 - n)
+        command = command.concat(byteCommands);
 
         // Finally, calculate length
         command[0] = command.length - 2;
@@ -892,7 +891,7 @@ const SENSOR_MENU = ['1', '2', '3', '4'];
  * @readonly
  * @enum {string}
  */
- // TODO: add 'all motors' ?
+// TODO: add 'all motors' ?
 const EV3MotorID = ['A', 'B', 'C', 'D'];
 
 class Scratch3Ev3Blocks {
@@ -972,38 +971,6 @@ class Scratch3Ev3Blocks {
                         }
                     }
                 },
-                /* {
-                    opcode: 'motorRotate',
-                    text: 'motor [PORT] rotate [DEGREES] degrees',
-                    blockType: BlockType.COMMAND,
-                    arguments: {
-                        PORT: {
-                            type: ArgumentType.STRING,
-                            menu: 'motorPorts',
-                            defaultValue: 'A'
-                        },
-                        DEGREES: {
-                            type: ArgumentType.NUMBER,
-                            defaultValue: 90
-                        }
-                    }
-                },
-                {
-                    opcode: 'motorSetPosition',
-                    text: 'motor [PORT] set position [DEGREES] degrees',
-                    blockType: BlockType.COMMAND,
-                    arguments: {
-                        PORT: {
-                            type: ArgumentType.STRING,
-                            menu: 'motorPorts',
-                            defaultValue: 'A'
-                        },
-                        DEGREES: {
-                            type: ArgumentType.NUMBER,
-                            defaultValue: 90
-                        }
-                    }
-                }, */
                 {
                     opcode: 'motorSetPower',
                     text: formatMessage({
@@ -1221,7 +1188,7 @@ class Scratch3Ev3Blocks {
         //         resolve();
         //     }, time);
         // });
-        return this._peripheral.getMotorPosition(port);
+        return this._peripheral.motor(port).position;
     }
 
     whenButtonPressed (args) {
