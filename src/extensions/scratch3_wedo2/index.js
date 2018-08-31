@@ -446,7 +446,7 @@ class WeDo2 {
     }
 
     /**
-     * Set the WeDo 2.0 hub's LED to a specific color.
+     * Set the WeDo 2.0 peripheral's LED to a specific color.
      * @param {int} inputRGB - a 24-bit RGB color in 0xRRGGBB format.
      * @return {Promise} - a promise of the completion of the set led send operation.
      */
@@ -498,7 +498,7 @@ class WeDo2 {
     }
 
     /**
-     * Play a tone from the WeDo 2.0 hub for a specific amount of time.
+     * Play a tone from the WeDo 2.0 peripheral for a specific amount of time.
      * @param {int} tone - the pitch of the tone, in Hz.
      * @param {int} milliseconds - the duration of the note, in milliseconds.
      * @return {Promise} - a promise of the completion of the play tone send operation.
@@ -519,7 +519,7 @@ class WeDo2 {
     }
 
     /**
-     * Stop the tone playing from the WeDo 2.0 hub, if any.
+     * Stop the tone playing from the WeDo 2.0 peripheral, if any.
      * @return {Promise} - a promise that the command sent.
      */
     stopTone () {
@@ -534,7 +534,7 @@ class WeDo2 {
     }
 
     /**
-     * Stop the tone playing and motors on the WeDo 2.0 hub.
+     * Stop the tone playing and motors on the WeDo 2.0 peripheral.
      */
     stopAll () {
         if (!this.isConnected()) return;
@@ -545,7 +545,7 @@ class WeDo2 {
     }
 
     /**
-     * Called by the runtime when user wants to scan for a peripheral.
+     * Called by the runtime when user wants to scan for a WeDo 2.0 peripheral.
      */
     scan () {
         this._ble = new BLE(this._runtime, {
@@ -557,7 +557,7 @@ class WeDo2 {
     }
 
     /**
-     * Called by the runtime when user wants to connect to a certain peripheral.
+     * Called by the runtime when user wants to connect to a certain WeDo 2.0 peripheral.
      * @param {number} id - the id of the peripheral to connect to.
      */
     connect (id) {
@@ -580,7 +580,7 @@ class WeDo2 {
     }
 
     /**
-     * Called by the runtime to detect whether the peripheral is connected.
+     * Called by the runtime to detect whether the WeDo 2.0 peripheral is connected.
      * @return {boolean} - the connected state.
      */
     isConnected () {
@@ -592,7 +592,7 @@ class WeDo2 {
     }
 
     /**
-     * Write a message to the peripheral BLE socket.
+     * Write a message to the WeDo 2.0 peripheral BLE socket.
      * @param {number} uuid - the UUID of the characteristic to write to
      * @param {Array} message - the message to write.
      * @param {boolean} [useLimiter=true] - if true, use the rate limiter
@@ -1270,7 +1270,7 @@ class Scratch3WeDo2Blocks {
     }
 
     /**
-     * Make the WeDo 2.0 hub play a MIDI note for the specified duration.
+     * Make the WeDo 2.0 peripheral play a MIDI note for the specified duration.
      * @param {object} args - the block's arguments.
      * @property {number} NOTE - the MIDI note to play.
      * @property {number} DURATION - the duration of the note, in seconds.
