@@ -337,9 +337,18 @@ class Scratch3SpeakBlocks {
                     }
                 };
                 this.runtime.audioEngine.decodeSoundPlayer(sound).then(soundPlayer => {
-                    soundPlayer.connect(this.runtime.audioEngine);
+                    const context = this.runtime.audioEngine.audioContext;
                     soundPlayer.setPlaybackRate(playbackRate);
                     soundPlayer.play();
+
+                    // Increase the loudness of the speech sound
+                    const gainNode = context.createGain();
+                    gainNode.gain.setValueAtTime(2, context.currentTime);
+                    // Note that this connect must be done after play is called,
+                    // which initializes the soundPlayer's output node.
+                    soundPlayer.outputNode.connect(gainNode);
+                    gainNode.connect(this.runtime.audioEngine.inputNode);
+
                     soundPlayer.on('stop', resolve);
                 });
             });
