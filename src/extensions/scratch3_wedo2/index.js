@@ -62,7 +62,7 @@ const BLESendRateMax = 20;
  * @readonly
  * @enum {number}
  */
-const WeDo2Type = {
+const WeDo2Device = {
     MOTOR: 1,
     PIEZO: 22,
     LED: 23,
@@ -357,11 +357,11 @@ class WeDo2 {
         this._runtime.on('PROJECT_STOP_ALL', this.stopAll.bind(this));
 
         /**
-         * The ports that connect to motors and sensors.
+         * A list of the ids of the motors or sensors in ports 1 and 2.
          * @type {string[]}
          * @private
          */
-        this._ports = ['none', 'none']; // TODO: rename?
+        this._ports = ['none', 'none'];
 
         /**
          * The motors which this WeDo 2.0 could possibly have.
@@ -473,7 +473,7 @@ class WeDo2 {
     setLEDMode () {
         const cmd = this.inputCommand(
             WeDo2ConnectID.LED,
-            WeDo2Type.LED,
+            WeDo2Device.LED,
             WeDo2Mode.LED,
             0,
             WeDo2Unit.LED,
@@ -722,33 +722,16 @@ class WeDo2 {
             // read incoming sensor value
             const connectID = data[1];
             const type = this._ports[connectID - 1];
-            if (type === WeDo2Type.DISTANCE) {
+            if (type === WeDo2Device.DISTANCE) {
                 this._sensors.distance = data[2];
             }
-            if (type === WeDo2Type.TILT) {
+            if (type === WeDo2Device.TILT) {
                 this._sensors.tiltX = data[2];
                 this._sensors.tiltY = data[3];
             }
             break;
         }
         }
-    }
-
-    /**
-     * Clear the sensor or motor present at port 1 or 2.
-     * @param {number} connectID - the port to clear.
-     * @private
-     */
-    _clearPort (connectID) {
-        const type = this._ports[connectID - 1];
-        if (type === WeDo2Type.TILT) {
-            this._sensors.tiltX = this._sensors.tiltY = 0;
-        }
-        if (type === WeDo2Type.DISTANCE) {
-            this._sensors.distance = 0;
-        }
-        this._ports[connectID - 1] = 'none';
-        this._motors[connectID - 1] = null;
     }
 
     /**
@@ -764,11 +747,11 @@ class WeDo2 {
         this._ports[connectID - 1] = type;
 
         // Record motor port
-        if (type === WeDo2Type.MOTOR) {
+        if (type === WeDo2Device.MOTOR) {
             this._motors[connectID - 1] = new WeDo2Motor(this, connectID - 1);
         } else {
             // Set input format for tilt or distance sensor
-            const typeString = type === WeDo2Type.DISTANCE ? 'DISTANCE' : 'TILT'; // TODO: put in enum?
+            const typeString = type === WeDo2Device.DISTANCE ? 'DISTANCE' : 'TILT'; // TODO: put in enum?
             const cmd = this.inputCommand(
                 connectID,
                 type,
@@ -787,6 +770,23 @@ class WeDo2 {
                     );
                 });
         }
+    }
+
+    /**
+     * Clear the sensor or motor present at port 1 or 2.
+     * @param {number} connectID - the port to clear.
+     * @private
+     */
+    _clearPort (connectID) {
+        const type = this._ports[connectID - 1];
+        if (type === WeDo2Device.TILT) {
+            this._sensors.tiltX = this._sensors.tiltY = 0;
+        }
+        if (type === WeDo2Device.DISTANCE) {
+            this._sensors.distance = 0;
+        }
+        this._ports[connectID - 1] = 'none';
+        this._motors[connectID - 1] = null;
     }
 }
 

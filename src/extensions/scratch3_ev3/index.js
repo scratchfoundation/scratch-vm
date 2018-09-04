@@ -305,7 +305,7 @@ class EV3Motor {
             byteCommand
         );
 
-        this._parent._send(cmd);
+        this._parent.send(cmd);
 
         this.coastAfter(milliseconds);
     }
@@ -343,7 +343,7 @@ class EV3Motor {
             ]
         );
 
-        this._parent._send(cmd);
+        this._parent.send(cmd);
     }
 
     /**
@@ -507,7 +507,7 @@ class EV3 {
             ]
         );
 
-        this._send(cmd);
+        this.send(cmd);
     }
 
     stopAll () {
@@ -524,7 +524,7 @@ class EV3 {
             ]
         );
 
-        this._send(cmd);
+        this.send(cmd);
     }
 
     stopAllMotors () {
@@ -559,8 +559,9 @@ class EV3 {
      */
     disconnect () {
         this._bt.disconnect();
-        window.clearInterval(this._pollingIntervalID);
         this._clearSensorsAndPorts();
+        window.clearInterval(this._pollingIntervalID);
+        this._pollingIntervalID = null;
     }
 
     /**
@@ -573,6 +574,21 @@ class EV3 {
             connected = this._bt.isConnected();
         }
         return connected;
+    }
+
+    /**
+     * Send a message to the peripheral BT socket.
+     * @param {Uint8Array} message - the message to send.
+     * @return {Promise} - a promise result of the send operation.
+     */
+    send (message) {
+        // TODO: add rate limiting?
+        if (!this.isConnected()) return Promise.resolve();
+
+        return this._bt.sendMessage({
+            message: Base64Util.uint8ArrayToBase64(message),
+            encoding: 'base64'
+        });
     }
 
     /**
@@ -715,25 +731,9 @@ class EV3 {
             allocation
         );
 
-        this._send(cmd);
+        this.send(cmd);
 
         this._pollingCounter++;
-    }
-
-    /**
-     * Send a message to the peripheral BT socket.
-     * @param {Uint8Array} message - the message to send.
-     * @return {Promise} - a promise result of the send operation.
-     * @private
-     */
-    _send (message) {
-        // TODO: add rate limiting?
-        if (!this.isConnected()) return Promise.resolve();
-
-        return this._bt.sendMessage({
-            message: Base64Util.uint8ArrayToBase64(message),
-            encoding: 'base64'
-        });
     }
 
     /**
@@ -850,7 +850,6 @@ class EV3 {
         };
         this._motors = [null, null, null, null];
         this._motorCommandIDs = [null, null, null, null];
-        this._pollingIntervalID = null;
     }
 
 }
