@@ -558,7 +558,7 @@ class EV3 {
      */
     disconnect () {
         this._bt.disconnect();
-        this._clearSensorsAndPorts();
+        this._clearSensorsAndMotors();
         window.clearInterval(this._pollingIntervalID);
         this._pollingIntervalID = null;
     }
@@ -682,9 +682,9 @@ class EV3 {
             // Command and payload lengths
             allocation = 33;
 
-            // Clear sensor data
+            // Clear sensor data //TODO: ???
             this._updateDevices = true;
-            this._clearSensorsAndPorts();
+            // this._clearSensorsAndMotors();
 
         } else {
             // GET SENSOR VALUES FOR CONNECTED SENSORS
@@ -766,6 +766,10 @@ class EV3 {
         if (data[4] !== Ev3Command.DIRECT_REPLY) {
             return;
         }
+        /* if (data.length < 35) { // TODO: find safer solution
+            return; // don't parse results that aren't sensor data list or device list
+        } */
+
 
         if (this._updateDevices) {
             // *****************
@@ -782,7 +786,7 @@ class EV3 {
             for (let m = 0; m < 4; m++) {
                 const type = this._motorPorts[m];
                 if (type !== 'none' && !this._motors[m]) {
-                    // add new motor
+                    // add new motor if don't already have one
                     this._motors[m] = new EV3Motor(this, m, type);
                 }
                 if (type === 'none' && this._motors[m]) {
@@ -839,7 +843,7 @@ class EV3 {
      * Clear all the senor port and motor names, and their values.
      * @private
      */
-    _clearSensorsAndPorts () {
+    _clearSensorsAndMotors () {
         this._sensorPorts = [];
         this._motorPorts = [];
         this._sensors = {
