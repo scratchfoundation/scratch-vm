@@ -751,7 +751,7 @@ class WeDo2 {
             this._motors[connectID - 1] = new WeDo2Motor(this, connectID - 1);
         } else {
             // Set input format for tilt or distance sensor
-            const typeString = type === WeDo2Device.DISTANCE ? 'DISTANCE' : 'TILT'; // TODO: put in enum?
+            const typeString = type === WeDo2Device.DISTANCE ? 'DISTANCE' : 'TILT';
             const cmd = this.inputCommand(
                 connectID,
                 type,
