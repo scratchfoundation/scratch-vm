@@ -69,7 +69,7 @@ const Ev3CommandValue = {
 };
 
 /**
- * Enum for Ev3 device types.
+ * Enum for Ev3 device type numbers.
  * Found in the 'EV3 Firmware Developer Kit', section 5, page 100, at
  * https://education.lego.com/en-us/support/mindstorms-ev3/developer-kits.
  * @readonly
@@ -94,10 +94,10 @@ const Ev3DeviceTypes = {
  * @enum {number}
  */
 const Ev3DeviceModes = {
-    touch: 0,
-    color: 1,
-    ultrasonic: 1,
-    none: 0
+    touch: 0, // TODO: ???
+    color: 1, // TODO: ???
+    ultrasonic: 1, // TODO: ???
+    none: 0 // TODO: ???
 };
 
 /**
@@ -240,20 +240,6 @@ class EV3Motor {
             value = value - 0x100000000;
         }
         this._position = value;
-    }
-
-    /**
-     * @return {boolean} - time, in milliseconds, of when the pending timeout began.
-     */
-    get pendingTimeoutStartTime () {
-        return this._pendingTimeoutStartTime;
-    }
-
-    /**
-     * @return {boolean} - delay, in milliseconds, of the pending timeout.
-     */
-    get pendingTimeoutDelay () {
-        return this._pendingTimeoutDelay;
     }
 
     /**
@@ -856,7 +842,7 @@ class EV3 {
 
 }
 
-// TODO: RENAME
+// TODO: RENAME/JSDOC
 const Ev3SensorLabels = ['1', '2', '3', '4'];
 
 /**
