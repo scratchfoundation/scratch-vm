@@ -8,8 +8,6 @@ const Base64Util = require('../../util/base64-util');
 const MathUtil = require('../../util/math-util');
 const log = require('../../util/log');
 
-// TODO: Refactor/rename all these high level primitives to be clearer/match
-
 /**
  * Icon svg to be displayed at the left edge of each extension block, encoded as a data URI.
  * @type {string}
@@ -64,9 +62,10 @@ const Ev3Value = {
     NUM8: 0x81, // "1 byte to follow"
     NUM16: 0x82, // "2 bytes to follow"
     NUM32: 0x83, // "4 bytes to follow"
-    COAST: 0x0,
-    BRAKE: 0x1,
-    LONG_RAMP: 50
+    COAST: 0x00,
+    BRAKE: 0x01,
+    LONG_RAMP: 50,
+    DO_NOT_CHANGE_TYPE: 0
 };
 
 /**
@@ -608,8 +607,8 @@ class EV3 {
         command[2] = 0; // Message counter, byte 1 // TODO: unused?
         command[3] = 0; // Message counter, byte 2 // TODO: unused?
         command[4] = type;
-        command[5] = allocation & 0xFF; // Allocation of global and local vars, byte 1
-        command[6] = allocation >> 8 && 0xFF; // Allocation of global and local vars, byte 2
+        command[5] = allocation & 0xFF;
+        command[6] = allocation >> 8 && 0xFF;
 
         // Bytecodes (Bytes 7 - n)
         command = command.concat(byteCommands);
@@ -660,10 +659,10 @@ class EV3 {
             // GET DEVICE LIST
             byteCommands[0] = Ev3Opcode.OPINPUT_DEVICE_LIST;
             byteCommands[1] = Ev3Value.NUM8; // 1 byte to follow
-            byteCommands[2] = 33; // 0x21 ARRAY // TODO: ?????
-            byteCommands[3] = 96; // 0x60 CHANGED // TODO: ?????
-            byteCommands[4] = 225; // 0xE1 size of global var - 1 byte to follow
-            byteCommands[5] = 32; // 0x20 global var index "0" 0b00100000
+            byteCommands[2] = 33; // 0x21 ARRAY // TODO: ????
+            byteCommands[3] = 96; // 0x60 CHANGED // TODO: ????
+            byteCommands[4] = 225; // 0xE1 size of global var - 1 byte to follow // TODO: ????
+            byteCommands[5] = 32; // 0x20 global var index "0" 0b00100000 // TODO: ????
 
             // Command and payload lengths
             allocation = 33;
@@ -681,11 +680,11 @@ class EV3 {
                     if (this._sensorPorts[i] !== 'none') {
                         byteCommands[index + 0] = Ev3Opcode.OPINPUT_READSI;
                         byteCommands[index + 1] = Ev3Value.LAYER;
-                        byteCommands[index + 2] = i; // port
-                        byteCommands[index + 3] = 0; // do not change type
-                        byteCommands[index + 4] = Ev3Mode[this._sensorPorts[i]]; // mode
-                        byteCommands[index + 5] = 225; // 0xE1 one byte to follow
-                        byteCommands[index + 6] = sensorCount * 4; // global index
+                        byteCommands[index + 2] = i; // PORT
+                        byteCommands[index + 3] = Ev3Value.DO_NOT_CHANGE_TYPE;
+                        byteCommands[index + 4] = Ev3Mode[this._sensorPorts[i]];
+                        byteCommands[index + 5] = 225; // 0xE1 one byte to follow // TODO: ????
+                        byteCommands[index + 6] = sensorCount * 4; // global index // TODO: ????
                         index += 7;
                     }
                     sensorCount++;
