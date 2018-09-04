@@ -382,7 +382,7 @@ class WeDo2 {
         };
 
         /**
-         * The Bluetooth connection session for reading/writing peripheral data.
+         * The Bluetooth connection socket for reading/writing peripheral data.
          * @type {BLE}
          * @private
          */

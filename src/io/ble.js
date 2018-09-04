@@ -5,7 +5,7 @@ const ScratchLinkWebSocket = 'wss://device-manager.scratch.mit.edu:20110/scratch
 class BLE extends JSONRPCWebSocket {
 
     /**
-     * A BLE peripheral session object.  It handles connecting, over web sockets, to
+     * A BLE peripheral socket object.  It handles connecting, over web sockets, to
      * BLE peripherals, and reading and writing data to them.
      * @param {Runtime} runtime - the Runtime for sending/receiving GUI update events.
      * @param {object} peripheralOptions - the list of options for peripheral discovery.
