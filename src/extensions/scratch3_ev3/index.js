@@ -528,12 +528,11 @@ class EV3 {
     }
 
     stopAllMotors () {
-        for (let i = 0; i < this._motors.length; i++) {
-            const motor = this._motors(i);
+        this._motors.forEach(motor => {
             if (motor) {
                 motor.coast();
             }
-        }
+        });
     }
 
     /**
