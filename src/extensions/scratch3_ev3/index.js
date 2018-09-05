@@ -168,9 +168,20 @@ class EV3Motor {
         this._position = 0;
 
         /**
-         * TODO: figure out
+         * An ID for the current coast command, to help override multiple coast
+         * commands sent in succession.
+         * @type {number}
+         * @private
          */
         this._commandID = null;
+
+        /**
+         * A delay, in milliseconds, to add to coasting, to make sure that a brake
+         * first takes effect if one was sent.
+         * @type {number}
+         * @private
+         */
+        this._coastDelay = 1000;
     }
 
     /**
@@ -300,7 +311,7 @@ class EV3Motor {
             Ev3Value.BRAKE
         ]));
 
-        const cmd = this._parent.directCommand(
+        const cmd = this._parent.generateCommand(
             Ev3Command.DIRECT_COMMAND_NO_REPLY,
             byteCommand
         );
@@ -312,28 +323,29 @@ class EV3Motor {
 
     /**
      * Set the motor to coast after a specified amount of time.
+     * TODO: rename this startBraking?
      * @param {number} time - the time in milliseconds.
      */
     coastAfter (time) {
         // Set the motor command id to check before starting coast
         const commandId = uid();
-        this._parent._motorCommandIDs[this._index] = commandId;
+        this._commandID = commandId;
 
         // Send coast message
         setTimeout(() => {
             // Do not send coast if another motor command changed the command id.
-            if (this._parent._motorCommandIDs[this._index] === commandId) {
+            if (this._commandID === commandId) {
                 this.coast();
-                this._parent._motorCommandIDs[this._index] = null;
+                this._commandID = null;
             }
-        }, time + 1000); // add a 1 second delay so the brake takes effect
+        }, time + this._coastDelay); // add a delay so the brake takes effect
     }
 
     /**
      * Set the motor to coast.
      */
     coast () {
-        const cmd = this._parent.directCommand(
+        const cmd = this._parent.generateCommand(
             Ev3Command.DIRECT_COMMAND_NO_REPLY,
             [
                 Ev3Opcode.OPOUTPUT_STOP,
@@ -428,9 +440,6 @@ class EV3 {
          */
         this._motors = [null, null, null, null];
 
-        // TODO: Figure out
-        this._motorCommandIDs = [null, null, null, null];
-
         /**
          * The polling interval, in milliseconds.
          * @type {number}
@@ -491,7 +500,7 @@ class EV3 {
     }
 
     beep (freq, time) {
-        const cmd = this.directCommand(
+        const cmd = this.generateCommand(
             Ev3Command.DIRECT_COMMAND_NO_REPLY,
             [
                 Ev3Opcode.OPSOUND,
@@ -516,7 +525,7 @@ class EV3 {
     }
 
     stopSound () {
-        const cmd = this.directCommand(
+        const cmd = this.generateCommand(
             Ev3Command.DIRECT_COMMAND_NO_REPLY,
             [
                 Ev3Opcode.OPSOUND,
@@ -591,7 +600,7 @@ class EV3 {
     }
 
     /**
-     * Direct commands are sent to the EV3 as a single or compounded byte arrays.
+     * Genrates direct commands that are sent to the EV3 as a single or compounded byte arrays.
      * See 'EV3 Communication Developer Kit', section 4, page 24 at
      * https://education.lego.com/en-us/support/mindstorms-ev3/developer-kits.
      *
@@ -615,12 +624,12 @@ class EV3 {
      * @param {number} allocation - the allocation of global and local vars needed for replies.
      * @return {array} - generated complete command byte array, with header and compounded commands.
      */
-    directCommand (type, byteCommands, allocation = 0) {
+    generateCommand (type, byteCommands, allocation = 0) {
 
         // Header (Bytes 0 - 6)
         let command = [];
-        command[2] = 0; // Message counter, byte 1 // TODO: unused?
-        command[3] = 0; // Message counter, byte 2 // TODO: unused?
+        command[2] = 0; // Message counter unused for now
+        command[3] = 0; // Message counter unused for now
         command[4] = type;
         command[5] = allocation & 0xFF;
         command[6] = allocation >> 8 && 0xFF;
@@ -682,15 +691,14 @@ class EV3 {
             // Command and payload lengths
             allocation = 33;
 
-            // Clear sensor data //TODO: ???
+            // Clear sensor data // TODO: is this enough?
             this._updateDevices = true;
-            // this._clearSensorsAndMotors();
 
         } else {
             // GET SENSOR VALUES FOR CONNECTED SENSORS
             let index = 0;
             // eslint-disable-next-line no-undefined
-            if (!this._sensorPorts.includes(undefined)) {
+            if (!this._sensorPorts.includes(undefined)) { // TODO: why is this needed?
                 for (let i = 0; i < 4; i++) {
                     if (this._sensorPorts[i] !== 'none') {
                         byteCommands[index + 0] = Ev3Opcode.OPINPUT_READSI;
@@ -724,7 +732,7 @@ class EV3 {
             allocation = sensorCount * 4;
         }
 
-        const cmd = this.directCommand(
+        const cmd = this.generateCommand(
             Ev3Command.DIRECT_COMMAND_REPLY,
             byteCommands,
             allocation
@@ -763,6 +771,7 @@ class EV3 {
         const data = Base64Util.base64ToUint8Array(message);
         // log.info(`received array: ${array}`);
 
+        // TODO: Is this the correct check?
         if (data[4] !== Ev3Command.DIRECT_REPLY) {
             return;
         }
@@ -848,7 +857,6 @@ class EV3 {
             buttons: [0, 0, 0, 0]
         };
         this._motors = [null, null, null, null];
-        this._motorCommandIDs = [null, null, null, null];
     }
 
 }
