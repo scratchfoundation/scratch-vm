@@ -254,7 +254,7 @@ class WeDo2Motor {
      * Turn this motor on indefinitely.
      */
     turnOn () {
-        const cmd = this._parent.outputCommand(
+        const cmd = this._parent.generateOutputCommand(
             this._index + 1,
             WeDo2Command.MOTOR_POWER,
             [this._power * this._direction] // power in range 0-100
@@ -278,9 +278,10 @@ class WeDo2Motor {
 
     /**
      * Start active braking on this motor. After a short time, the motor will turn off.
+     * // TODO: rename this to coastAfter?
      */
     startBraking () {
-        const cmd = this._parent.outputCommand(
+        const cmd = this._parent.generateOutputCommand(
             this._index + 1,
             WeDo2Command.MOTOR_POWER,
             [127] // 127 = break
@@ -297,7 +298,7 @@ class WeDo2Motor {
      * @param {boolean} [useLimiter=true] - if true, use the rate limiter
      */
     turnOff (useLimiter = true) {
-        const cmd = this._parent.outputCommand(
+        const cmd = this._parent.generateOutputCommand(
             this._index + 1,
             WeDo2Command.MOTOR_POWER,
             [0] // 0 = stop
@@ -457,7 +458,7 @@ class WeDo2 {
             (inputRGB) & 0x000000FF
         ];
 
-        const cmd = this.outputCommand(
+        const cmd = this.generateOutputCommand(
             WeDo2ConnectID.LED,
             WeDo2Command.WRITE_RGB,
             rgb
@@ -471,7 +472,7 @@ class WeDo2 {
      * @return {Promise} - a promise returned by the send operation.
      */
     setLEDMode () {
-        const cmd = this.inputCommand(
+        const cmd = this.generateInputCommand(
             WeDo2ConnectID.LED,
             WeDo2Device.LED,
             WeDo2Mode.LED,
@@ -488,7 +489,7 @@ class WeDo2 {
      * @return {Promise} - a promise of the completion of the stop led send operation.
      */
     stopLED () {
-        const cmd = this.outputCommand(
+        const cmd = this.generateOutputCommand(
             WeDo2ConnectID.LED,
             WeDo2Command.WRITE_RGB,
             [0, 0, 0]
@@ -504,7 +505,7 @@ class WeDo2 {
      * @return {Promise} - a promise of the completion of the play tone send operation.
      */
     playTone (tone, milliseconds) {
-        const cmd = this.outputCommand(
+        const cmd = this.generateOutputCommand(
             WeDo2ConnectID.PIEZO,
             WeDo2Command.PLAY_TONE,
             [
@@ -523,7 +524,7 @@ class WeDo2 {
      * @return {Promise} - a promise that the command sent.
      */
     stopTone () {
-        const cmd = this.outputCommand(
+        const cmd = this.generateOutputCommand(
             WeDo2ConnectID.PIEZO,
             WeDo2Command.STOP_TONE
         );
@@ -624,7 +625,7 @@ class WeDo2 {
      * @param  {array}  values    - the list of values to write to the command.
      * @return {array}            - a generated output command.
      */
-    outputCommand (connectID, commandID, values = null) {
+    generateOutputCommand (connectID, commandID, values = null) {
         let command = [connectID, commandID];
         if (values) {
             command = command.concat(
@@ -652,7 +653,7 @@ class WeDo2 {
      * @param  {boolean} enableNotifications - whether to enable notifications.
      * @return {array}                       - a generated input command.
      */
-    inputCommand (connectID, type, mode, delta, units, enableNotifications) {
+    generateInputCommand (connectID, type, mode, delta, units, enableNotifications) {
         const command = [
             1, // Command ID = 1 = "Sensor Format"
             2, // Command Type = 2 = "Write"
@@ -752,7 +753,7 @@ class WeDo2 {
         } else {
             // Set input format for tilt or distance sensor
             const typeString = type === WeDo2Device.DISTANCE ? 'DISTANCE' : 'TILT';
-            const cmd = this.inputCommand(
+            const cmd = this.generateInputCommand(
                 connectID,
                 type,
                 WeDo2Mode[typeString],
@@ -1300,10 +1301,8 @@ class Scratch3WeDo2Blocks {
     whenDistance (args) {
         switch (args.OP) {
         case '<':
-        case '&lt;':
             return this._peripheral.distance < Cast.toNumber(args.REFERENCE);
         case '>':
-        case '&gt;':
             return this._peripheral.distance > Cast.toNumber(args.REFERENCE);
         default:
             log.warn(`Unknown comparison operator in whenDistance: ${args.OP}`);
