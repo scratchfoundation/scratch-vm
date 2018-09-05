@@ -129,9 +129,9 @@ class MicroBit {
          */
         this._busyTimeoutID = null;
 
+        this.disconnect = this.disconnect.bind(this);
         this._onConnect = this._onConnect.bind(this);
         this._onMessage = this._onMessage.bind(this);
-        this._disconnect = this._disconnect.bind(this);
     }
 
     /**
