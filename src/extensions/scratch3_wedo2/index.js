@@ -387,7 +387,7 @@ class WeDo2 {
          * @private
          */
         this._ble = null;
-        this._runtime.registerExtension(extensionId, this);
+        this._runtime.registerPeripheralExtension(extensionId, this);
 
         /**
          * A rate limiter utility, to help limit the rate at which we send BLE messages

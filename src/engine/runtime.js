@@ -267,7 +267,7 @@ class Runtime extends EventEmitter {
         /**
          * A list of extensions, used to manage hardware connection.
          */
-        this.extensions = {};
+        this.peripheralExtensions = {};
 
         /**
          * A runtime profiler that records timed events for later playback to
@@ -932,12 +932,13 @@ class Runtime extends EventEmitter {
     }
 
     /**
-     * Register an extension by id to have access to it in the future.
+     * Register an extension that communications with a hardware peripheral by id,
+     * to have access to it and its peripheral functions in the future.
      * @param {string} extensionId - the id of the extension.
      * @param {object} extension - the extension to register.
      */
-    registerExtension (extensionId, extension) {
-        this.extensions[extensionId] = extension;
+    registerPeripheralExtension (extensionId, extension) {
+        this.peripheralExtensions[extensionId] = extension;
     }
 
     /**
@@ -945,8 +946,8 @@ class Runtime extends EventEmitter {
      * @param {string} extensionId - the id of the extension.
      */
     scanForPeripheral (extensionId) {
-        if (this.extensions[extensionId]) {
-            this.extensions[extensionId].scan();
+        if (this.peripheralExtensions[extensionId]) {
+            this.peripheralExtensions[extensionId].scan();
         }
     }
 
@@ -956,8 +957,8 @@ class Runtime extends EventEmitter {
      * @param {number} peripheralId - the id of the peripheral.
      */
     connectPeripheral (extensionId, peripheralId) {
-        if (this.extensions[extensionId]) {
-            this.extensions[extensionId].connect(peripheralId);
+        if (this.peripheralExtensions[extensionId]) {
+            this.peripheralExtensions[extensionId].connect(peripheralId);
         }
     }
 
@@ -966,8 +967,8 @@ class Runtime extends EventEmitter {
      * @param {string} extensionId - the id of the extension.
      */
     disconnectPeripheral (extensionId) {
-        if (this.extensions[extensionId]) {
-            this.extensions[extensionId].disconnect();
+        if (this.peripheralExtensions[extensionId]) {
+            this.peripheralExtensions[extensionId].disconnect();
         }
     }
 
@@ -978,8 +979,8 @@ class Runtime extends EventEmitter {
      */
     getPeripheralIsConnected (extensionId) {
         let isConnected = false;
-        if (this.extensions[extensionId]) {
-            isConnected = this.extensions[extensionId].isConnected();
+        if (this.peripheralExtensions[extensionId]) {
+            isConnected = this.peripheralExtensions[extensionId].isConnected();
         }
         return isConnected;
     }

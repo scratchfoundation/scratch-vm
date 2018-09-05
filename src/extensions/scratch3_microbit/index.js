@@ -71,7 +71,7 @@ class MicroBit {
          * @private
          */
         this._ble = null;
-        this._runtime.registerExtension(extensionId, this);
+        this._runtime.registerPeripheralExtension(extensionId, this);
 
         /**
          * The most recently received value for each sensor.
@@ -143,7 +143,7 @@ class MicroBit {
         for (let i = 0; i < text.length; i++) {
             output[i] = text.charCodeAt(i);
         }
-        return this._send(BLECommand.CMD_DISPLAY_TEXT, output);
+        return this.send(BLECommand.CMD_DISPLAY_TEXT, output);
     }
 
     /**
@@ -151,7 +151,7 @@ class MicroBit {
      * @return {Promise} - a Promise that resolves when writing to peripheral.
      */
     displayMatrix (matrix) {
-        return this._send(BLECommand.CMD_DISPLAY_LED, matrix);
+        return this.send(BLECommand.CMD_DISPLAY_LED, matrix);
     }
 
     /**
@@ -236,6 +236,42 @@ class MicroBit {
     }
 
     /**
+     * Send a message to the peripheral BLE socket.
+     * @param {number} command - the BLE command hex.
+     * @param {Uint8Array} message - the message to write
+     */
+    send (command, message) {
+        if (!this.isConnected()) return;
+        if (this._busy) return;
+
+        // Set a busy flag so that while we are sending a message and waiting for
+        // the response, additional messages are ignored.
+        this._busy = true;
+
+        // Set a timeout after which to reset the busy flag. This is used in case
+        // a BLE message was sent for which we never received a response, because
+        // e.g. the peripheral was turned off after the message was sent. We reset
+        // the busy flag after a while so that it is possible to try again later.
+        this._busyTimeoutID = window.setTimeout(() => {
+            this._busy = false;
+        }, 5000);
+
+        const output = new Uint8Array(message.length + 1);
+        output[0] = command; // attach command to beginning of message
+        for (let i = 0; i < message.length; i++) {
+            output[i + 1] = message[i];
+        }
+        const data = Base64Util.uint8ArrayToBase64(output);
+
+        this._ble.write(BLEUUID.service, BLEUUID.txChar, data, 'base64', true).then(
+            () => {
+                this._busy = false;
+                window.clearTimeout(this._busyTimeoutID);
+            }
+        );
+    }
+
+    /**
      * Starts reading data from peripheral after BLE has connected to it.
      * @private
      */
@@ -270,43 +306,6 @@ class MicroBit {
         // cancel disconnect timeout and start a new one
         window.clearInterval(this._timeoutID);
         this._timeoutID = window.setInterval(this.disconnect, BLETimeout);
-    }
-
-    /**
-     * Send a message to the peripheral BLE socket.
-     * @param {number} command - the BLE command hex.
-     * @param {Uint8Array} message - the message to write
-     * @private
-     */
-    _send (command, message) {
-        if (!this.isConnected()) return;
-        if (this._busy) return;
-
-        // Set a busy flag so that while we are sending a message and waiting for
-        // the response, additional messages are ignored.
-        this._busy = true;
-
-        // Set a timeout after which to reset the busy flag. This is used in case
-        // a BLE message was sent for which we never received a response, because
-        // e.g. the peripheral was turned off after the message was sent. We reset
-        // the busy flag after a while so that it is possible to try again later.
-        this._busyTimeoutID = window.setTimeout(() => {
-            this._busy = false;
-        }, 5000);
-
-        const output = new Uint8Array(message.length + 1);
-        output[0] = command; // attach command to beginning of message
-        for (let i = 0; i < message.length; i++) {
-            output[i + 1] = message[i];
-        }
-        const data = Base64Util.uint8ArrayToBase64(output);
-
-        this._ble.write(BLEUUID.service, BLEUUID.txChar, data, 'base64', true).then(
-            () => {
-                this._busy = false;
-                window.clearTimeout(this._busyTimeoutID);
-            }
-        );
     }
 
     /**
