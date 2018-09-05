@@ -61,12 +61,16 @@ class Scratch3SpeakBlocks {
          */
         this.runtime = runtime;
 
-        // @todo stop all speech sounds currently playing
-        // https://github.com/LLK/scratch-vm/issues/1405
-        // this._stopAllSpeech = this._stopAllSpeech.bind(this);
-        // if (this.runtime) {
-        //      this.runtime.on('PROJECT_STOP_ALL', this._stopAllSpeech);
-        // }
+        /**
+         * Map of soundPlayers by sound id.
+         * @type {Map<string, SoundPlayer>}
+         */
+        this._soundPlayers = new Map();
+
+        this._stopAllSpeech = this._stopAllSpeech.bind(this);
+        if (this.runtime) {
+            this.runtime.on('PROJECT_STOP_ALL', this._stopAllSpeech);
+        }
 
         this._onTargetCreated = this._onTargetCreated.bind(this);
         if (this.runtime) {
@@ -279,6 +283,15 @@ class Scratch3SpeakBlocks {
     }
 
     /**
+     * Stop all currently playing speech sounds.
+     */
+    _stopAllSpeech () {
+        this._soundPlayers.forEach(player => {
+            player.stop();
+        });
+    }
+
+    /**
      * Convert the provided text into a sound file and then play the file.
      * @param  {object} args Block arguments
      * @param {object} util Utility object provided by the runtime.
@@ -337,6 +350,8 @@ class Scratch3SpeakBlocks {
                     }
                 };
                 this.runtime.audioEngine.decodeSoundPlayer(sound).then(soundPlayer => {
+                    this._soundPlayers.set(soundPlayer.id, soundPlayer);
+
                     soundPlayer.setPlaybackRate(playbackRate);
 
                     // Increase the volume
@@ -345,7 +360,11 @@ class Scratch3SpeakBlocks {
                     chain.set('volume', 250);
                     soundPlayer.connect(chain);
 
-                    soundPlayer.on('stop', resolve);
+                    soundPlayer.play();
+                    soundPlayer.on('stop', () => {
+                        this._soundPlayers.delete(soundPlayer.id);
+                        resolve();
+                    });
                 });
             });
         });
