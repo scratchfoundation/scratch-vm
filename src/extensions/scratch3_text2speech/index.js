@@ -20,6 +20,12 @@ const SERVER_HOST = 'https://synthesis-service.scratch.mit.edu';
 const SERVER_TIMEOUT = 10000; // 10 seconds
 
 /**
+ * Volume for playback of speech sounds, as a percentage.
+ * @type {number}
+ */
+const SPEECH_VOLUME = 250;
+
+/**
  * An id for one of the voices.
  */
 const QUINN_ID = 'QUINN';
@@ -357,7 +363,7 @@ class Scratch3SpeakBlocks {
                     // Increase the volume
                     const engine = this.runtime.audioEngine;
                     const chain = engine.createEffectChain();
-                    chain.set('volume', 250);
+                    chain.set('volume', SPEECH_VOLUME);
                     soundPlayer.connect(chain);
 
                     soundPlayer.play();
