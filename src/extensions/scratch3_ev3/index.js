@@ -120,14 +120,14 @@ class EV3Motor {
      * Construct a EV3 Motor instance, which could be of type 'largeMotor' or
      * 'mediumMotor'.
      *
-     * @param {WeDo2} parent - the EV3 peripheral which owns this motor.
+     * @param {EV3} parent - the EV3 peripheral which owns this motor.
      * @param {int} index - the zero-based index of this motor on its parent peripheral.
      * @param {string} type - the type of motor (i.e. 'largeMotor' or 'mediumMotor').
      */
     constructor (parent, index, type) {
         /**
          * The EV3 peripheral which owns this motor.
-         * @type {WeDo2}
+         * @type {EV3}
          * @private
          */
         this._parent = parent;
