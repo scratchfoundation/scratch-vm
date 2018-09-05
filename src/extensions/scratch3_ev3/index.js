@@ -591,7 +591,7 @@ class EV3 {
     }
 
     /**
-     * Direct commands are sent to the EV as a single or compounded byte arrays.
+     * Direct commands are sent to the EV3 as a single or compounded byte arrays.
      * See 'EV3 Communication Developer Kit', section 4, page 24 at
      * https://education.lego.com/en-us/support/mindstorms-ev3/developer-kits.
      *
@@ -766,10 +766,6 @@ class EV3 {
         if (data[4] !== Ev3Command.DIRECT_REPLY) {
             return;
         }
-        /* if (data.length < 35) { // TODO: find safer solution
-            return; // don't parse results that aren't sensor data list or device list
-        } */
-
 
         if (this._updateDevices) {
             // *****************
