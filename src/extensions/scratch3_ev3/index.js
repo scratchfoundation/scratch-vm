@@ -780,6 +780,7 @@ class EV3 {
             // *****************
             // PARSE DEVICE LIST
             // *****************
+            // TODO: put these in for loop?
             this._sensorPorts[0] = Ev3Device[data[5]] ? Ev3Device[data[5]] : 'none';
             this._sensorPorts[1] = Ev3Device[data[6]] ? Ev3Device[data[6]] : 'none';
             this._sensorPorts[2] = Ev3Device[data[7]] ? Ev3Device[data[7]] : 'none';
