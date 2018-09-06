@@ -20,6 +20,12 @@ const SERVER_HOST = 'https://synthesis-service.scratch.mit.edu';
 const SERVER_TIMEOUT = 10000; // 10 seconds
 
 /**
+ * Volume for playback of speech sounds, as a percentage.
+ * @type {number}
+ */
+const SPEECH_VOLUME = 250;
+
+/**
  * An id for one of the voices.
  */
 const QUINN_ID = 'QUINN';
@@ -61,12 +67,16 @@ class Scratch3SpeakBlocks {
          */
         this.runtime = runtime;
 
-        // @todo stop all speech sounds currently playing
-        // https://github.com/LLK/scratch-vm/issues/1405
-        // this._stopAllSpeech = this._stopAllSpeech.bind(this);
-        // if (this.runtime) {
-        //      this.runtime.on('PROJECT_STOP_ALL', this._stopAllSpeech);
-        // }
+        /**
+         * Map of soundPlayers by sound id.
+         * @type {Map<string, SoundPlayer>}
+         */
+        this._soundPlayers = new Map();
+
+        this._stopAllSpeech = this._stopAllSpeech.bind(this);
+        if (this.runtime) {
+            this.runtime.on('PROJECT_STOP_ALL', this._stopAllSpeech);
+        }
 
         this._onTargetCreated = this._onTargetCreated.bind(this);
         if (this.runtime) {
@@ -279,6 +289,15 @@ class Scratch3SpeakBlocks {
     }
 
     /**
+     * Stop all currently playing speech sounds.
+     */
+    _stopAllSpeech () {
+        this._soundPlayers.forEach(player => {
+            player.stop();
+        });
+    }
+
+    /**
      * Convert the provided text into a sound file and then play the file.
      * @param  {object} args Block arguments
      * @param {object} util Utility object provided by the runtime.
@@ -337,10 +356,21 @@ class Scratch3SpeakBlocks {
                     }
                 };
                 this.runtime.audioEngine.decodeSoundPlayer(sound).then(soundPlayer => {
-                    soundPlayer.connect(this.runtime.audioEngine);
+                    this._soundPlayers.set(soundPlayer.id, soundPlayer);
+
                     soundPlayer.setPlaybackRate(playbackRate);
+
+                    // Increase the volume
+                    const engine = this.runtime.audioEngine;
+                    const chain = engine.createEffectChain();
+                    chain.set('volume', SPEECH_VOLUME);
+                    soundPlayer.connect(chain);
+
                     soundPlayer.play();
-                    soundPlayer.on('stop', resolve);
+                    soundPlayer.on('stop', () => {
+                        this._soundPlayers.delete(soundPlayer.id);
+                        resolve();
+                    });
                 });
             });
         });
