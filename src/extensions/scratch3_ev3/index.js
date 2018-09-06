@@ -863,19 +863,20 @@ class EV3 {
 }
 
 /**
- * Enum for sensor port names.
+ * Enum for motor port names.
+ * Note: if changed, will break compatibility with previously saved projects.
  * @readonly
  * @enum {string}
  */
-const Ev3SensorLabels = ['1', '2', '3', '4'];
+const Ev3MotorMenu = ['A', 'B', 'C', 'D'];
 
 /**
- * Enum for motor port names.
+ * Enum for sensor port names.
+ * Note: if changed, will break compatibility with previously saved projects.
  * @readonly
  * @enum {string}
  */
-// TODO: add 'all motors' ?
-const Ev3MotorLabels = ['A', 'B', 'C', 'D'];
+const Ev3SensorMenu = ['1', '2', '3', '4'];
 
 class Scratch3Ev3Blocks {
 
@@ -1091,14 +1092,13 @@ class Scratch3Ev3Blocks {
                 }
             ],
             menus: {
-                motorPorts: Ev3MotorLabels,
-                sensorPorts: Ev3SensorLabels
+                motorPorts: this._formatMenu(Ev3MotorMenu),
+                sensorPorts: this._formatMenu(Ev3SensorMenu)
             }
         };
     }
 
     motorTurnClockwise (args) {
-        // TODO: cast args.PORT?
         let time = Cast.toNumber(args.TIME) * 1000;
         time = MathUtil.clamp(time, 0, 15000);
 
@@ -1117,7 +1117,6 @@ class Scratch3Ev3Blocks {
     }
 
     motorTurnCounterClockwise (args) {
-        // TODO: cast args.PORT?
         let time = Cast.toNumber(args.TIME) * 1000;
         time = MathUtil.clamp(time, 0, 15000);
 
@@ -1136,43 +1135,36 @@ class Scratch3Ev3Blocks {
     }
 
     motorSetPower (args) {
-        let port = Cast.toString(args.PORT);
         const power = MathUtil.clamp(Cast.toNumber(args.POWER), 0, 100);
 
-        if (!Ev3MotorLabels.includes(port)) {
-            return;
-        }
-
-        port = Ev3MotorLabels.indexOf(port); // 0/1/2/3
-
-        const motor = this._peripheral.motor(port);
-        if (motor) {
-            motor.power = power;
-        }
+        this._forEachMotor(args.PORT, motorIndex => {
+            const motor = this._peripheral.motor(motorIndex);
+            if (motor) {
+                motor.power = power;
+            }
+        });
     }
 
     getMotorPosition (args) {
         let port = Cast.toString(args.PORT);
 
-        if (!Ev3MotorLabels.includes(port)) {
+        if (!Ev3MotorMenu.hasOwnProperty(port)) {
             return;
         }
-
-        port = Ev3MotorLabels.indexOf(port);
-
+        port = Ev3MotorMenu[port]; // 0/1/2/3
         const motor = this._peripheral.motor(port);
 
         return motor ? motor.position : 0;
     }
 
     whenButtonPressed (args) {
-        let port = args.PORT; // TODO: cast or check?
+        let port = Cast.toString(args.PORT);
 
-        if (!Ev3SensorLabels.includes(port)) {
+        if (!Ev3SensorMenu.hasOwnProperty(port)) {
             return;
         }
 
-        port = Ev3SensorLabels.indexOf(port);
+        port = Ev3SensorMenu[port];
 
         return this._peripheral.isButtonPressed(port);
     }
@@ -1190,13 +1182,13 @@ class Scratch3Ev3Blocks {
     }
 
     buttonPressed (args) {
-        let port = args.PORT; // TODO: cast or check?
+        let port = Cast.toString(args.PORT);
 
-        if (!Ev3SensorLabels.includes(port)) {
+        if (!Ev3SensorMenu.hasOwnProperty(port)) {
             return;
         }
 
-        port = Ev3SensorLabels.indexOf(port);
+        port = Ev3SensorMenu[port]; // 0/1/2/3
 
         return this._peripheral.isButtonPressed(port);
     }
@@ -1238,16 +1230,16 @@ class Scratch3Ev3Blocks {
     _forEachMotor (motorID, callback) {
         let motors;
         switch (motorID) {
-        case Ev3MotorLabels[0]:
+        case Ev3MotorMenu[0]:
             motors = [0];
             break;
-        case Ev3MotorLabels[1]:
+        case Ev3MotorMenu[1]:
             motors = [1];
             break;
-        case Ev3MotorLabels[2]:
+        case Ev3MotorMenu[2]:
             motors = [2];
             break;
-        case Ev3MotorLabels[3]:
+        case Ev3MotorMenu[3]:
             motors = [3];
             break;
         default:
@@ -1258,6 +1250,24 @@ class Scratch3Ev3Blocks {
         for (const index of motors) {
             callback(index);
         }
+    }
+
+    /**
+     * Formats menus into a format suitable for block menus, and loading previously
+     * saved projects: [{text/value}, {text/value}, {text/value}, etc..]
+     * @param {array} menu - a menu to format.
+     * @return {object} - a formatted menu as an object.
+     * @private
+     */
+    _formatMenu (menu) {
+        const m = [];
+        for (let i = 0; i < menu.length; i++) {
+            const obj = {};
+            obj.text = menu[i];
+            obj.value = i;
+            m.push(obj);
+        }
+        return m;
     }
 }
 

@@ -78,33 +78,6 @@ class BLE extends JSONRPCWebSocket {
     }
 
     /**
-     * Handle a received call from the socket.
-     * @param {string} method - a received method label.
-     * @param {object} params - a received list of parameters.
-     * @return {object} - optional return value.
-     */
-    didReceiveCall (method, params) {
-        switch (method) {
-        case 'didDiscoverPeripheral':
-            this._availablePeripherals[params.peripheralId] = params;
-            this._runtime.emit(
-                this._runtime.constructor.PERIPHERAL_LIST_UPDATE,
-                this._availablePeripherals
-            );
-            if (this._discoverTimeoutID) {
-                // TODO: window?
-                window.clearTimeout(this._discoverTimeoutID);
-            }
-            break;
-        case 'characteristicDidChange':
-            this._characteristicDidChangeCallback(params.message);
-            break;
-        case 'ping':
-            return 42;
-        }
-    }
-
-    /**
      * Start receiving notifications from the specified ble service.
      * @param {number} serviceId - the ble service to read.
      * @param {number} characteristicId - the ble characteristic to get notifications from.
@@ -167,6 +140,33 @@ class BLE extends JSONRPCWebSocket {
             .catch(e => {
                 this._sendError(e);
             });
+    }
+
+    /**
+     * Handle a received call from the socket.
+     * @param {string} method - a received method label.
+     * @param {object} params - a received list of parameters.
+     * @return {object} - optional return value.
+     */
+    didReceiveCall (method, params) {
+        switch (method) {
+        case 'didDiscoverPeripheral':
+            this._availablePeripherals[params.peripheralId] = params;
+            this._runtime.emit(
+                this._runtime.constructor.PERIPHERAL_LIST_UPDATE,
+                this._availablePeripherals
+            );
+            if (this._discoverTimeoutID) {
+                // TODO: window?
+                window.clearTimeout(this._discoverTimeoutID);
+            }
+            break;
+        case 'characteristicDidChange':
+            this._characteristicDidChangeCallback(params.message);
+            break;
+        case 'ping':
+            return 42;
+        }
     }
 
     _sendError (/* e */) {
