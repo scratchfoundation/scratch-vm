@@ -801,6 +801,8 @@ const parseBlock = function (sb2block, addBroadcastMsg, getVariableId, extension
     }
     commentIndex++;
 
+    const parentExpectedArg = parseState.expectedArg;
+
     // For a procedure call, generate argument map from proc string.
     if (oldOpcode === 'call') {
         blockMetadata.argMap = parseProcedureArgMap(sb2block[1]);
@@ -825,6 +827,7 @@ const parseBlock = function (sb2block, addBroadcastMsg, getVariableId, extension
             if (typeof providedArg === 'object' && providedArg) {
                 // Block or block list occupies the input.
                 let innerBlocks;
+                parseState.expectedArg = expectedArg;
                 if (typeof providedArg[0] === 'object' && providedArg[0]) {
                     // Block list occupies the input.
                     [innerBlocks, commentIndex] = parseBlockList(providedArg, addBroadcastMsg, getVariableId,
@@ -837,6 +840,7 @@ const parseBlock = function (sb2block, addBroadcastMsg, getVariableId, extension
                     // Update commentIndex
                     commentIndex = parsedBlockDesc[1];
                 }
+                parseState.expectedArg = parentExpectedArg;
                 // Check if innerBlocks is an empty list.
                 // This indicates that all the inner blocks from the sb2 have
                 // unknown opcodes and have been skipped.
@@ -1075,8 +1079,22 @@ const parseBlock = function (sb2block, addBroadcastMsg, getVariableId, extension
             argumentids: JSON.stringify(parseProcedureArgIds(sb2block[1]))
         };
     } else if (oldOpcode === 'getParam') {
+        let returnCode = sb2block[2];
+
+        // Ensure the returnCode is "b" if used in a boolean input.
+        if (parentExpectedArg && (
+            // Used as a CONDITION input like for control_if.
+            parentExpectedArg.inputName === 'CONDITION' ||
+            // Used as a procedure call boolean input.
+            (
+                parentExpectedArg.inputName.startsWith('input') && !parentExpectedArg.inputOp
+            )
+        ) && returnCode !== 'b') {
+            returnCode = 'b';
+        }
+
         // Assign correct opcode based on the block shape.
-        switch (sb2block[2]) {
+        switch (returnCode) {
         case 'r':
             activeBlock.opcode = 'argument_reporter_string_number';
             break;
