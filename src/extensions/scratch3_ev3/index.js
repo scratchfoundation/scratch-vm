@@ -496,7 +496,7 @@ class EV3 {
     }
 
     isButtonPressed (port) {
-        return this._sensors.buttons[port];
+        return this._sensors.buttons[port] === 1;
     }
 
     beep (freq, time) {
@@ -927,7 +927,7 @@ class Scratch3Ev3Blocks {
                         PORT: {
                             type: ArgumentType.STRING,
                             menu: 'motorPorts',
-                            defaultValue: 'A'
+                            defaultValue: 0
                         },
                         TIME: {
                             type: ArgumentType.NUMBER,
@@ -947,7 +947,7 @@ class Scratch3Ev3Blocks {
                         PORT: {
                             type: ArgumentType.STRING,
                             menu: 'motorPorts',
-                            defaultValue: 'A'
+                            defaultValue: 0
                         },
                         TIME: {
                             type: ArgumentType.NUMBER,
@@ -967,7 +967,7 @@ class Scratch3Ev3Blocks {
                         PORT: {
                             type: ArgumentType.STRING,
                             menu: 'motorPorts',
-                            defaultValue: 'A'
+                            defaultValue: 0
                         },
                         POWER: {
                             type: ArgumentType.NUMBER,
@@ -987,7 +987,7 @@ class Scratch3Ev3Blocks {
                         PORT: {
                             type: ArgumentType.STRING,
                             menu: 'motorPorts',
-                            defaultValue: 'A'
+                            defaultValue: 0
                         }
                     }
                 },
@@ -1003,7 +1003,7 @@ class Scratch3Ev3Blocks {
                         PORT: {
                             type: ArgumentType.STRING,
                             menu: 'sensorPorts',
-                            defaultValue: 1
+                            defaultValue: 0
                         }
                     }
                 },
@@ -1049,7 +1049,7 @@ class Scratch3Ev3Blocks {
                         PORT: {
                             type: ArgumentType.STRING,
                             menu: 'sensorPorts',
-                            defaultValue: 1
+                            defaultValue: 0
                         }
                     }
                 },
@@ -1099,11 +1099,12 @@ class Scratch3Ev3Blocks {
     }
 
     motorTurnClockwise (args) {
+        const port = Cast.toNumber(args.PORT);
         let time = Cast.toNumber(args.TIME) * 1000;
         time = MathUtil.clamp(time, 0, 15000);
 
         return new Promise(resolve => {
-            this._forEachMotor(args.PORT, motorIndex => {
+            this._forEachMotor(port, motorIndex => {
                 const motor = this._peripheral.motor(motorIndex);
                 if (motor) {
                     motor.direction = 1;
@@ -1117,11 +1118,12 @@ class Scratch3Ev3Blocks {
     }
 
     motorTurnCounterClockwise (args) {
+        const port = Cast.toNumber(args.PORT);
         let time = Cast.toNumber(args.TIME) * 1000;
         time = MathUtil.clamp(time, 0, 15000);
 
         return new Promise(resolve => {
-            this._forEachMotor(args.PORT, motorIndex => {
+            this._forEachMotor(port, motorIndex => {
                 const motor = this._peripheral.motor(motorIndex);
                 if (motor) {
                     motor.direction = -1;
@@ -1135,9 +1137,10 @@ class Scratch3Ev3Blocks {
     }
 
     motorSetPower (args) {
+        const port = Cast.toNumber(args.PORT);
         const power = MathUtil.clamp(Cast.toNumber(args.POWER), 0, 100);
 
-        this._forEachMotor(args.PORT, motorIndex => {
+        this._forEachMotor(port, motorIndex => {
             const motor = this._peripheral.motor(motorIndex);
             if (motor) {
                 motor.power = power;
@@ -1146,25 +1149,23 @@ class Scratch3Ev3Blocks {
     }
 
     getMotorPosition (args) {
-        let port = Cast.toString(args.PORT);
+        const port = Cast.toNumber(args.PORT);
 
-        if (!Ev3MotorMenu.hasOwnProperty(port)) {
+        if (![0, 1, 2, 3].includes(port)) {
             return;
         }
-        port = Ev3MotorMenu[port]; // 0/1/2/3
+
         const motor = this._peripheral.motor(port);
 
         return motor ? motor.position : 0;
     }
 
     whenButtonPressed (args) {
-        let port = Cast.toString(args.PORT);
+        const port = Cast.toNumber(args.PORT);
 
-        if (!Ev3SensorMenu.hasOwnProperty(port)) {
+        if (![0, 1, 2, 3].includes(port)) {
             return;
         }
-
-        port = Ev3SensorMenu[port];
 
         return this._peripheral.isButtonPressed(port);
     }
@@ -1182,13 +1183,11 @@ class Scratch3Ev3Blocks {
     }
 
     buttonPressed (args) {
-        let port = Cast.toString(args.PORT);
+        const port = Cast.toNumber(args.PORT);
 
-        if (!Ev3SensorMenu.hasOwnProperty(port)) {
+        if (![0, 1, 2, 3].includes(port)) {
             return;
         }
-
-        port = Ev3SensorMenu[port]; // 0/1/2/3
 
         return this._peripheral.isButtonPressed(port);
     }
@@ -1230,16 +1229,16 @@ class Scratch3Ev3Blocks {
     _forEachMotor (motorID, callback) {
         let motors;
         switch (motorID) {
-        case Ev3MotorMenu[0]:
+        case 0:
             motors = [0];
             break;
-        case Ev3MotorMenu[1]:
+        case 1:
             motors = [1];
             break;
-        case Ev3MotorMenu[2]:
+        case 2:
             motors = [2];
             break;
-        case Ev3MotorMenu[3]:
+        case 3:
             motors = [3];
             break;
         default:
@@ -1254,7 +1253,19 @@ class Scratch3Ev3Blocks {
 
     /**
      * Formats menus into a format suitable for block menus, and loading previously
-     * saved projects: [{text/value}, {text/value}, {text/value}, etc..]
+     * saved projects:
+     * [
+     *   {
+     *    text: label,
+     *    value: index
+     *   },
+     *   {
+     *    text: label,
+     *    value: index
+     *   },
+     *   etc...
+     * ]
+     *
      * @param {array} menu - a menu to format.
      * @return {object} - a formatted menu as an object.
      * @private
