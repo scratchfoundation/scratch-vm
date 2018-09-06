@@ -1275,7 +1275,7 @@ class Scratch3Ev3Blocks {
         for (let i = 0; i < menu.length; i++) {
             const obj = {};
             obj.text = menu[i];
-            obj.value = i;
+            obj.value = i.toString();
             m.push(obj);
         }
         return m;
