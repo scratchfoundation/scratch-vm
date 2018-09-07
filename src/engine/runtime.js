@@ -1828,6 +1828,31 @@ class Runtime extends EventEmitter {
     }
 
     /**
+     * Get the label or label function for an opcode
+     * @param {string} extendedOpcode - the opcode you want a label for
+     * @return {object} - object with label and category
+     * @property {string} category - the category for this opcode
+     * @property {Function} [labelFn] - function to generate the label for this opcode
+     * @property {string} [label] - the label for this opcode if `labelFn` is absent
+     */
+    getLabelForOpcode (extendedOpcode) {
+        const [category, opcode] = extendedOpcode.split('_');
+        if (!(category && opcode)) return;
+
+        const categoryInfo = this._blockInfo.find(ci => ci.id === category);
+        if (!categoryInfo) return;
+
+        const block = categoryInfo.blocks.find(b => b.info.opcode === opcode);
+        if (!block) return;
+
+        // TODO: should this use some other category? Also, we may want to format the label in a locale-specific way.
+        return {
+            category: 'data',
+            label: `${categoryInfo.name}: ${block.info.text}`
+        };
+    }
+
+    /**
      * Create a new global variable avoiding conflicts with other variable names.
      * @param {string} variableName The desired variable name for the new global variable.
      * This can be turned into a fresh name as necessary.
