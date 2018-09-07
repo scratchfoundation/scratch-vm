@@ -745,6 +745,9 @@ class Runtime extends EventEmitter {
         case BlockType.REPORTER:
             blockJSON.output = 'String'; // TODO: distinguish number & string here?
             blockJSON.outputShape = ScratchBlocksConstants.OUTPUT_SHAPE_ROUND;
+            if (!blockInfo.disableMonitor) {
+                blockJSON.checkboxInFlyout = true;
+            }
             break;
         case BlockType.BOOLEAN:
             blockJSON.output = 'Boolean';
