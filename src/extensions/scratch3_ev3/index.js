@@ -3,12 +3,10 @@ const BlockType = require('../../extension-support/block-type');
 const Cast = require('../../util/cast');
 const formatMessage = require('format-message');
 const uid = require('../../util/uid');
-// const log = require('../../util/log');
+const BT = require('../../io/bt');
 const Base64Util = require('../../util/base64-util');
-const BTSession = require('../../io/btSession');
 const MathUtil = require('../../util/math-util');
-
-// TODO: Refactor/rename all these high level primitives to be clearer/match
+const log = require('../../util/log');
 
 /**
  * Icon svg to be displayed at the left edge of each extension block, encoded as a data URI.
@@ -18,75 +16,66 @@ const MathUtil = require('../../util/math-util');
 const blockIconURI = 'data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiPz4KPHN2ZyB3aWR0aD0iNDBweCIgaGVpZ2h0PSI0MHB4IiB2aWV3Qm94PSIwIDAgNDAgNDAiIHZlcnNpb249IjEuMSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIiB4bWxuczp4bGluaz0iaHR0cDovL3d3dy53My5vcmcvMTk5OS94bGluayI+CiAgICA8IS0tIEdlbmVyYXRvcjogU2tldGNoIDUwLjIgKDU1MDQ3KSAtIGh0dHA6Ly93d3cuYm9oZW1pYW5jb2RpbmcuY29tL3NrZXRjaCAtLT4KICAgIDx0aXRsZT5ldjMtYmxvY2staWNvbjwvdGl0bGU+CiAgICA8ZGVzYz5DcmVhdGVkIHdpdGggU2tldGNoLjwvZGVzYz4KICAgIDxkZWZzPjwvZGVmcz4KICAgIDxnIGlkPSJldjMtYmxvY2staWNvbiIgc3Ryb2tlPSJub25lIiBzdHJva2Utd2lkdGg9IjEiIGZpbGw9Im5vbmUiIGZpbGwtcnVsZT0iZXZlbm9kZCI+CiAgICAgICAgPGcgaWQ9ImV2MyIgdHJhbnNmb3JtPSJ0cmFuc2xhdGUoNS41MDAwMDAsIDMuNTAwMDAwKSIgZmlsbC1ydWxlPSJub256ZXJvIj4KICAgICAgICAgICAgPHJlY3QgaWQ9IlJlY3RhbmdsZS1wYXRoIiBzdHJva2U9IiM3Qzg3QTUiIGZpbGw9IiNGRkZGRkYiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCIgeD0iMC41IiB5PSIzLjU5IiB3aWR0aD0iMjgiIGhlaWdodD0iMjUuODEiIHJ4PSIxIj48L3JlY3Q+CiAgICAgICAgICAgIDxyZWN0IGlkPSJSZWN0YW5nbGUtcGF0aCIgc3Ryb2tlPSIjN0M4N0E1IiBmaWxsPSIjRTZFN0U4IiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiIHg9IjIuNSIgeT0iMC41IiB3aWR0aD0iMjQiIGhlaWdodD0iMzIiIHJ4PSIxIj48L3JlY3Q+CiAgICAgICAgICAgIDxyZWN0IGlkPSJSZWN0YW5nbGUtcGF0aCIgc3Ryb2tlPSIjN0M4N0E1IiBmaWxsPSIjRkZGRkZGIiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiIHg9IjIuNSIgeT0iMTQuNSIgd2lkdGg9IjI0IiBoZWlnaHQ9IjEzIj48L3JlY3Q+CiAgICAgICAgICAgIDxwYXRoIGQ9Ik0xNC41LDEwLjUgTDE0LjUsMTQuNSIgaWQ9IlNoYXBlIiBzdHJva2U9IiM3Qzg3QTUiIGZpbGw9IiNFNkU3RTgiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCI+PC9wYXRoPgogICAgICAgICAgICA8cmVjdCBpZD0iUmVjdGFuZ2xlLXBhdGgiIGZpbGw9IiM0MTQ3NTciIHg9IjQuNSIgeT0iMi41IiB3aWR0aD0iMjAiIGhlaWdodD0iMTAiIHJ4PSIxIj48L3JlY3Q+CiAgICAgICAgICAgIDxyZWN0IGlkPSJSZWN0YW5nbGUtcGF0aCIgZmlsbD0iIzdDODdBNSIgb3BhY2l0eT0iMC41IiB4PSIxMy41IiB5PSIyMC4xMyIgd2lkdGg9IjIiIGhlaWdodD0iMiIgcng9IjAuNSI+PC9yZWN0PgogICAgICAgICAgICA8cGF0aCBkPSJNOS4wNiwyMC4xMyBMMTAuNTYsMjAuMTMgQzEwLjgzNjE0MjQsMjAuMTMgMTEuMDYsMjAuMzUzODU3NiAxMS4wNiwyMC42MyBMMTEuMDYsMjEuNjMgQzExLjA2LDIxLjkwNjE0MjQgMTAuODM2MTQyNCwyMi4xMyAxMC41NiwyMi4xMyBMOS4wNiwyMi4xMyBDOC41MDc3MTUyNSwyMi4xMyA4LjA2LDIxLjY4MjI4NDcgOC4wNiwyMS4xMyBDOC4wNiwyMC41Nzc3MTUzIDguNTA3NzE1MjUsMjAuMTMgOS4wNiwyMC4xMyBaIiBpZD0iU2hhcGUiIGZpbGw9IiM3Qzg3QTUiIG9wYWNpdHk9IjAuNSI+PC9wYXRoPgogICAgICAgICAgICA8cGF0aCBkPSJNMTguOTEsMjAuMTMgTDIwLjQyLDIwLjEzIEMyMC42OTYxNDI0LDIwLjEzIDIwLjkyLDIwLjM1Mzg1NzYgMjAuOTIsMjAuNjMgTDIwLjkyLDIxLjYzIEMyMC45MiwyMS45MDYxNDI0IDIwLjY5NjE0MjQsMjIuMTMgMjAuNDIsMjIuMTMgTDE4LjkyLDIyLjEzIEMxOC4zNjc3MTUzLDIyLjEzIDE3LjkyLDIxLjY4MjI4NDcgMTcuOTIsMjEuMTMgQzE3LjkxOTk3MjYsMjAuNTgxNTk3IDE4LjM2MTYyNDUsMjAuMTM1NDg0IDE4LjkxLDIwLjEzIFoiIGlkPSJTaGFwZSIgZmlsbD0iIzdDODdBNSIgb3BhY2l0eT0iMC41IiB0cmFuc2Zvcm09InRyYW5zbGF0ZSgxOS40MjAwMDAsIDIxLjEzMDAwMCkgcm90YXRlKC0xODAuMDAwMDAwKSB0cmFuc2xhdGUoLTE5LjQyMDAwMCwgLTIxLjEzMDAwMCkgIj48L3BhdGg+CiAgICAgICAgICAgIDxwYXRoIGQ9Ik04LjIzLDE3LjUgTDUsMTcuNSBDNC43MjM4NTc2MywxNy41IDQuNSwxNy4yNzYxNDI0IDQuNSwxNyBMNC41LDE0LjUgTDEwLjUsMTQuNSBMOC42NSwxNy4yOCBDOC41NTQ2Njk2MSwxNy40MTc5MDgyIDguMzk3NjUwMDYsMTcuNTAwMTU2NiA4LjIzLDE3LjUgWiIgaWQ9IlNoYXBlIiBmaWxsPSIjN0M4N0E1IiBvcGFjaXR5PSIwLjUiPjwvcGF0aD4KICAgICAgICAgICAgPHBhdGggZD0iTTE4LjE1LDE4Ljg1IEwxNy42NSwxOS4zNSBDMTcuNTUyMzQxNiwxOS40NDQwNzU2IDE3LjQ5ODAzMzksMTkuNTc0NDE0MiAxNy41LDE5LjcxIEwxNy41LDIwIEMxNy41LDIwLjI3NjE0MjQgMTcuMjc2MTQyNCwyMC41IDE3LDIwLjUgTDE2LjUsMjAuNSBDMTYuMjIzODU3NiwyMC41IDE2LDIwLjI3NjE0MjQgMTYsMjAgQzE2LDE5LjcyMzg1NzYgMTUuNzc2MTQyNCwxOS41IDE1LjUsMTkuNSBMMTMuNSwxOS41IEMxMy4yMjM4NTc2LDE5LjUgMTMsMTkuNzIzODU3NiAxMywyMCBDMTMsMjAuMjc2MTQyNCAxMi43NzYxNDI0LDIwLjUgMTIuNSwyMC41IEwxMiwyMC41IEMxMS43MjM4NTc2LDIwLjUgMTEuNSwyMC4yNzYxNDI0IDExLjUsMjAgTDExLjUsMTkuNzEgQzExLjUwMTk2NjEsMTkuNTc0NDE0MiAxMS40NDc2NTg0LDE5LjQ0NDA3NTYgMTEuMzUsMTkuMzUgTDEwLjg1LDE4Ljg1IEMxMC42NTgyMTY3LDE4LjY1MjE4NjMgMTAuNjU4MjE2NywxOC4zMzc4MTM3IDEwLjg1LDE4LjE0IEwxMi4zNiwxNi42NSBDMTIuNDUwMjgwMywxNi41NTI4NjE3IDEyLjU3NzM5NjEsMTYuNDk4MzgzNSAxMi43MSwxNi41IEwxNi4yOSwxNi41IEMxNi40MjI2MDM5LDE2LjQ5ODM4MzUgMTYuNTQ5NzE5NywxNi41NTI4NjE3IDE2LjY0LDE2LjY1IEwxOC4xNSwxOC4xNCBDMTguMzQxNzgzMywxOC4zMzc4MTM3IDE4LjM0MTc4MzMsMTguNjUyMTg2MyAxOC4xNSwxOC44NSBaIiBpZD0iU2hhcGUiIGZpbGw9IiM3Qzg3QTUiIG9wYWNpdHk9IjAuNSI+PC9wYXRoPgogICAgICAgICAgICA8cGF0aCBkPSJNMTAuODUsMjMuNDUgTDExLjM1LDIyLjk1IEMxMS40NDc2NTg0LDIyLjg1NTkyNDQgMTEuNTAxOTY2MSwyMi43MjU1ODU4IDExLjUsMjIuNTkgTDExLjUsMjIuMyBDMTEuNSwyMi4wMjM4NTc2IDExLjcyMzg1NzYsMjEuOCAxMiwyMS44IEwxMi41LDIxLjggQzEyLjc3NjE0MjQsMjEuOCAxMywyMi4wMjM4NTc2IDEzLDIyLjMgQzEzLDIyLjU3NjE0MjQgMTMuMjIzODU3NiwyMi44IDEzLjUsMjIuOCBMMTUuNSwyMi44IEMxNS43NzYxNDI0LDIyLjggMTYsMjIuNTc2MTQyNCAxNiwyMi4zIEMxNiwyMi4wMjM4NTc2IDE2LjIyMzg1NzYsMjEuOCAxNi41LDIxLjggTDE3LDIxLjggQzE3LjI3NjE0MjQsMjEuOCAxNy41LDIyLjAyMzg1NzYgMTcuNSwyMi4zIEwxNy41LDIyLjU5IEMxNy40OTgwMzM5LDIyLjcyNTU4NTggMTcuNTUyMzQxNiwyMi44NTU5MjQ0IDE3LjY1LDIyLjk1IEwxOC4xNSwyMy40NSBDMTguMzQwNTcxNCwyMy42NDQ0MjE4IDE4LjM0MDU3MTQsMjMuOTU1NTc4MiAxOC4xNSwyNC4xNSBMMTYuNjQsMjUuNjUgQzE2LjU0OTcxOTcsMjUuNzQ3MTM4MyAxNi40MjI2MDM5LDI1LjgwMTYxNjUgMTYuMjksMjUuOCBMMTIuNzEsMjUuOCBDMTIuNTc3Mzk2MSwyNS44MDE2MTY1IDEyLjQ1MDI4MDMsMjUuNzQ3MTM4MyAxMi4zNiwyNS42NSBMMTAuODUsMjQuMTUgQzEwLjY1OTQyODYsMjMuOTU1NTc4MiAxMC42NTk0Mjg2LDIzLjY0NDQyMTggMTAuODUsMjMuNDUgWiIgaWQ9IlNoYXBlIiBmaWxsPSIjN0M4N0E1IiBvcGFjaXR5PSIwLjUiPjwvcGF0aD4KICAgICAgICAgICAgPHBhdGggZD0iTTIxLjUsMjcuNSBMMjYuNSwyNy41IEwyNi41LDMxLjUgQzI2LjUsMzIuMDUyMjg0NyAyNi4wNTIyODQ3LDMyLjUgMjUuNSwzMi41IEwyMS41LDMyLjUgTDIxLjUsMjcuNSBaIiBpZD0iU2hhcGUiIHN0cm9rZT0iI0NDNEMyMyIgZmlsbD0iI0YxNUEyOSIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIj48L3BhdGg+CiAgICAgICAgPC9nPgogICAgPC9nPgo8L3N2Zz4=';
 
 /**
- * High-level primitives / constants used by the extension.
- * @type {object}
+ * Enum for Ev3 direct command types.
+ * Found in the 'EV3 Communication Developer Kit', section 4, page 24, at
+ * https://education.lego.com/en-us/support/mindstorms-ev3/developer-kits.
+ * @readonly
+ * @enum {number}
  */
-const BTCommand = {
-    LAYER: 0x00,
-    NUM8: 0x81,
-    NUM16: 0x82,
-    NUM32: 0x83,
-    COAST: 0x0,
-    BRAKE: 0x1,
-    LONGRAMP: 50,
-    STEPSPEED: 0xAE,
-    TIMESPEED: 0xAF,
-    OUTPUTSTOP: 0xA3,
-    OUTPUTRESET: 0xA2,
-    STEPSPEEDSYNC: 0xB0,
-    TIMESPEEDSYNC: 0xB1
+const Ev3Command = {
+    DIRECT_COMMAND_REPLY: 0x00,
+    DIRECT_COMMAND_NO_REPLY: 0x80,
+    DIRECT_REPLY: 0x02
 };
 
-const MOTOR_PORTS = [
-    {
-        name: 'A',
-        value: 0
-    },
-    {
-        name: 'B',
-        value: 1
-    },
-    {
-        name: 'C',
-        value: 2
-    },
-    {
-        name: 'D',
-        value: 3
-    }
-];
-
-const VALID_MOTOR_PORTS = [0, 1, 2, 3];
+/**
+ * Enum for Ev3 commands opcodes.
+ * Found in the 'EV3 Firmware Developer Kit', section 4, page 10, at
+ * https://education.lego.com/en-us/support/mindstorms-ev3/developer-kits.
+ * @readonly
+ * @enum {number}
+ */
+const Ev3Opcode = {
+    OPOUTPUT_STEP_SPEED: 0xAE,
+    OPOUTPUT_TIME_SPEED: 0xAF,
+    OPOUTPUT_STOP: 0xA3,
+    OPOUTPUT_RESET: 0xA2,
+    OPOUTPUT_STEP_SYNC: 0xB0,
+    OPOUTPUT_TIME_SYNC: 0xB1,
+    OPOUTPUT_GET_COUNT: 0xB3,
+    OPSOUND: 0x94,
+    OPSOUND_CMD_TONE: 1,
+    OPSOUND_CMD_STOP: 0,
+    OPINPUT_DEVICE_LIST: 0x98,
+    OPINPUT_READSI: 0x9D
+};
 
 /**
- * Array of accepted sensor ports.
- * @note These should not be translated as they correspond to labels on
- *       the EV3 hub.
- * @type {array}
+ * Enum for Ev3 values used as arguments to various opcodes.
+ * Found in the 'EV3 Firmware Developer Kit', section4, page 10, at
+ * https://education.lego.com/en-us/support/mindstorms-ev3/developer-kits.
+ * @readonly
+ * @enum {string}
  */
-const SENSOR_PORTS = [
-    {
-        name: '1',
-        value: 0
-    },
-    {
-        name: '2',
-        value: 1
-    },
-    {
-        name: '3',
-        value: 2
-    },
-    {
-        name: '4',
-        value: 3
-    }
-];
+const Ev3Value = {
+    LAYER: 0x00, // always 0, chained EV3s not supported
+    NUM8: 0x81, // "1 byte to follow"
+    NUM16: 0x82, // "2 bytes to follow"
+    NUM32: 0x83, // "4 bytes to follow"
+    COAST: 0x00,
+    BRAKE: 0x01,
+    LONG_RAMP: 50,
+    DO_NOT_CHANGE_TYPE: 0
+};
 
-const VALID_SENSOR_PORTS = [0, 1, 2, 3];
-
-// firmware pdf page 100
-const EV_DEVICE_TYPES = {
+/**
+ * Enum for Ev3 device type numbers.
+ * Found in the 'EV3 Firmware Developer Kit', section 5, page 100, at
+ * https://education.lego.com/en-us/support/mindstorms-ev3/developer-kits.
+ * @readonly
+ * @enum {string}
+ */
+const Ev3Device = {
     29: 'color',
     30: 'ultrasonic',
     32: 'gyro',
@@ -97,20 +86,315 @@ const EV_DEVICE_TYPES = {
     125: 'none'
 };
 
-// firmware pdf page 100?
-const EV_DEVICE_MODES = {
-    touch: 0,
-    color: 1,
-    ultrasonic: 1,
+/**
+ * Enum for Ev3 device modes.
+ * Found in the 'EV3 Firmware Developer Kit', section 5, page 100, at
+ * https://education.lego.com/en-us/support/mindstorms-ev3/developer-kits.
+ * @readonly
+ * @enum {number}
+ */
+const Ev3Mode = {
+    touch: 0, // touch
+    color: 1, // ambient
+    ultrasonic: 1, // inch
     none: 0
 };
 
-const EV_DEVICE_LABELS = {
+/**
+ * Enum for Ev3 device labels used in the Scratch blocks/UI.
+ * @readonly
+ * @enum {string}
+ */
+const Ev3Label = { // TODO: rename?
     touch: 'button',
     color: 'brightness',
     ultrasonic: 'distance'
 };
 
+/**
+ * Manage power, direction, and timers for one EV3 motor.
+ */
+class EV3Motor {
+
+    /**
+     * Construct a EV3 Motor instance, which could be of type 'largeMotor' or
+     * 'mediumMotor'.
+     *
+     * @param {EV3} parent - the EV3 peripheral which owns this motor.
+     * @param {int} index - the zero-based index of this motor on its parent peripheral.
+     * @param {string} type - the type of motor (i.e. 'largeMotor' or 'mediumMotor').
+     */
+    constructor (parent, index, type) {
+        /**
+         * The EV3 peripheral which owns this motor.
+         * @type {EV3}
+         * @private
+         */
+        this._parent = parent;
+
+        /**
+         * The zero-based index of this motor on its parent peripheral.
+         * @type {int}
+         * @private
+         */
+        this._index = index;
+
+        /**
+         * The type of EV3 motor this could be: 'largeMotor' or 'mediumMotor'.
+         * @type {string}
+         * @private
+         */
+        this._type = type;
+
+        /**
+         * This motor's current direction: 1 for "clockwise" or -1 for "counterclockwise"
+         * @type {number}
+         * @private
+         */
+        this._direction = 1;
+
+        /**
+         * This motor's current power level, in the range [0,100].
+         * @type {number}
+         * @private
+         */
+        this._power = 100;
+
+        /**
+         * This motor's current position, in the range [0,360].
+         * @type {number}
+         * @private
+         */
+        this._position = 0;
+
+        /**
+         * An ID for the current coast command, to help override multiple coast
+         * commands sent in succession.
+         * @type {number}
+         * @private
+         */
+        this._commandID = null;
+
+        /**
+         * A delay, in milliseconds, to add to coasting, to make sure that a brake
+         * first takes effect if one was sent.
+         * @type {number}
+         * @private
+         */
+        this._coastDelay = 1000;
+    }
+
+    /**
+     * @return {string} - this motor's type: 'largeMotor' or 'mediumMotor'
+     */
+    get type () {
+        return this._type;
+    }
+
+    /**
+     * @param {string} value - this motor's new type: 'largeMotor' or 'mediumMotor'
+     */
+    set type (value) {
+        this._type = value;
+    }
+
+    /**
+     * @return {int} - this motor's current direction: 1 for "clockwise" or -1 for "counterclockwise"
+     */
+    get direction () {
+        return this._direction;
+    }
+
+    /**
+     * @param {int} value - this motor's new direction: 1 for "clockwise" or -1 for "counterclockwise"
+     */
+    set direction (value) {
+        if (value < 0) {
+            this._direction = -1;
+        } else {
+            this._direction = 1;
+        }
+    }
+
+    /**
+     * @return {int} - this motor's current power level, in the range [0,100].
+     */
+    get power () {
+        return this._power;
+    }
+
+    /**
+     * @param {int} value - this motor's new power level, in the range [0,100].
+     */
+    set power (value) {
+        this._power = value;
+    }
+
+    /**
+     * @return {int} - this motor's current position, in the range [0,360].
+     */
+    get position () {
+        let value = this._position;
+        value = value % 360;
+        value = value < 0 ? value * -1 : value;
+
+        return value;
+    }
+
+    /**
+     * @param {int} array - this motor's new position, in the range [0,360].
+     */
+    set position (array) {
+        // tachoValue from Paula
+        let value = array[0] + (array[1] * 256) + (array[2] * 256 * 256) + (array[3] * 256 * 256 * 256);
+        if (value > 0x7fffffff) {
+            value = value - 0x100000000;
+        }
+        this._position = value;
+    }
+
+    /**
+     * Turn this motor on for a specific duration.
+     * Found in the 'EV3 Firmware Developer Kit', page 56, at
+     * https://education.lego.com/en-us/support/mindstorms-ev3/developer-kits.
+     *
+     * Opcode arguments:
+     * (Data8) LAYER – Specify chain layer number [0 - 3]
+     * (Data8) NOS – Output bit field [0x00 – 0x0F]
+     * (Data8) SPEED – Power level, [-100 – 100]
+     * (Data32) STEP1 – Time in milliseconds for ramp up
+     * (Data32) STEP2 – Time in milliseconds for continues run
+     * (Data32) STEP3 – Time in milliseconds for ramp down
+     * (Data8) BRAKE - Specify break level [0: Float, 1: Break]
+     *
+     * @param {number} milliseconds - run the motor for this long.
+     */
+    turnOnFor (milliseconds) {
+        const port = this._portMask(this._index);
+        let n = milliseconds;
+        let speed = this._power * this._direction;
+        const ramp = Ev3Value.LONG_RAMP;
+
+        let byteCommand = [];
+        byteCommand[0] = Ev3Opcode.OPOUTPUT_TIME_SPEED;
+
+        // If speed is less than zero, make it positive and multiply the input
+        // value by -1
+        if (speed < 0) {
+            speed = -1 * speed;
+            n = -1 * n;
+        }
+        // If the input value is less than 0
+        const dir = (n < 0) ? 0x100 - speed : speed; // step negative or positive
+        n = Math.abs(n);
+        // Setup motor run duration and ramping behavior
+        let rampup = ramp;
+        let rampdown = ramp;
+        let run = n - (ramp * 2);
+        if (run < 0) {
+            rampup = Math.floor(n / 2);
+            run = 0;
+            rampdown = n - rampup;
+        }
+        // Generate motor command values
+        const runcmd = this._runValues(run);
+        byteCommand = byteCommand.concat([
+            Ev3Value.LAYER,
+            port,
+            Ev3Value.NUM8,
+            dir & 0xff,
+            Ev3Value.NUM8,
+            rampup
+        ]).concat(runcmd.concat([
+            Ev3Value.NUM8,
+            rampdown,
+            Ev3Value.BRAKE
+        ]));
+
+        const cmd = this._parent.generateCommand(
+            Ev3Command.DIRECT_COMMAND_NO_REPLY,
+            byteCommand
+        );
+
+        this._parent.send(cmd);
+
+        this.coastAfter(milliseconds);
+    }
+
+    /**
+     * Set the motor to coast after a specified amount of time.
+     * TODO: rename this startBraking?
+     * @param {number} time - the time in milliseconds.
+     */
+    coastAfter (time) {
+        // Set the motor command id to check before starting coast
+        const commandId = uid();
+        this._commandID = commandId;
+
+        // Send coast message
+        setTimeout(() => {
+            // Do not send coast if another motor command changed the command id.
+            if (this._commandID === commandId) {
+                this.coast();
+                this._commandID = null;
+            }
+        }, time + this._coastDelay); // add a delay so the brake takes effect
+    }
+
+    /**
+     * Set the motor to coast.
+     */
+    coast () {
+        const cmd = this._parent.generateCommand(
+            Ev3Command.DIRECT_COMMAND_NO_REPLY,
+            [
+                Ev3Opcode.OPOUTPUT_STOP,
+                Ev3Value.LAYER,
+                this._portMask(this._index), // port output bit field
+                Ev3Value.COAST
+            ]
+        );
+
+        this._parent.send(cmd);
+    }
+
+    /**
+     * Generate motor run values for a given input.
+     * @param  {number} run - run input.
+     * @return {array} - run values as a byte array.
+     */
+    _runValues (run) {
+        // If run duration is less than max 16-bit integer
+        if (run < 0x7fff) {
+            return [
+                Ev3Value.NUM16,
+                run & 0xff,
+                (run >> 8) & 0xff
+            ];
+        }
+
+        // Run forever
+        return [
+            Ev3Value.NUM32,
+            run & 0xff,
+            (run >> 8) & 0xff,
+            (run >> 16) & 0xff,
+            (run >> 24) & 0xff
+        ];
+    }
+
+    /**
+     * Return a port value for the EV3 that is in the format for 'output bit field'
+     * as 1/2/4/8, generally needed for motor ports, instead of the typical 0/1/2/3.
+     * The documentation in the 'EV3 Firmware Developer Kit' for motor port arguments
+     * is sometimes mistaken, but we believe motor ports are mostly addressed this way.
+     * @param {number} port - the port number to convert to an 'output bit field'.
+     * @return {number} - the converted port number.
+     */
+    _portMask (port) {
+        return Math.pow(2, port);
+    }
+}
 
 class EV3 {
 
@@ -122,98 +406,75 @@ class EV3 {
          * @private
          */
         this._runtime = runtime;
-        this._runtime.on('PROJECT_STOP_ALL', this._stopAll.bind(this));
+        this._runtime.on('PROJECT_STOP_ALL', this.stopAll.bind(this));
 
         /**
-         * State
+         * A list of the names of the sensors connected in ports 1,2,3,4.
+         * @type {string[]}
+         * @private
          */
         this._sensorPorts = [];
+
+        /**
+         * A list of the names of the motors connected in ports A,B,C,D.
+         * @type {string[]}
+         * @private
+         */
         this._motorPorts = [];
+
+        /**
+         * The state of all sensor values.
+         * @type {string[]}
+         * @private
+         */
         this._sensors = {
             distance: 0,
             brightness: 0,
             buttons: [0, 0, 0, 0]
         };
-        this._motors = {
-            speeds: [50, 50, 50, 50],
-            positions: [0, 0, 0, 0],
-            busy: [0, 0, 0, 0],
-            commandId: [null, null, null, null]
-        };
+
+        /**
+         * The motors which this EV3 could possibly have connected.
+         * @type {string[]}
+         * @private
+         */
+        this._motors = [null, null, null, null];
+
+        /**
+         * The polling interval, in milliseconds.
+         * @type {number}
+         * @private
+         */
+        this._pollingInterval = 150;
+
+        /**
+         * The polling interval ID.
+         * @type {number}
+         * @private
+         */
         this._pollingIntervalID = null;
+
+        /**
+         * The counter keeping track of polling cycles.
+         * @type {string[]}
+         * @private
+         */
         this._pollingCounter = 0;
 
         /**
-         * The Bluetooth connection session for reading/writing device data.
-         * @type {BTSession}
+         * The Bluetooth socket connection for reading/writing peripheral data.
+         * @type {BT}
          * @private
          */
         this._bt = null;
-        this._runtime.registerExtensionDevice(extensionId, this);
-    }
+        this._runtime.registerPeripheralExtension(extensionId, this);
 
-    // TODO: keep here? / refactor
-    /**
-     * Called by the runtime when user wants to scan for a device.
-     */
-    startDeviceScan () {
-        this._bt = new BTSession(this._runtime, {
-            majorDeviceClass: 8,
-            minorDeviceClass: 1
-        }, this._onSessionConnect.bind(this), this._onSessionMessage.bind(this));
-    }
-
-    // TODO: keep here? / refactor
-    /**
-     * Called by the runtime when user wants to connect to a certain device.
-     * @param {number} id - the id of the device to connect to.
-     */
-    connectDevice (id) {
-        this._bt.connectDevice(id);
-    }
-
-    // TODO: keep here? / refactor
-    /**
-     * Called by the runtime when user wants to disconnect from the device.
-     */
-    disconnectSession () {
-        this._bt.disconnectSession();
-        window.clearInterval(this._pollingIntervalID); // TODO: window?
-        this._sensorPorts = [];
-        this._motorPorts = [];
-        this._sensors = {
-            distance: 0,
-            brightness: 0,
-            buttons: [0, 0, 0, 0]
-        };
-        this._motors = {
-            speeds: [50, 50, 50, 50],
-            positions: [0, 0, 0, 0],
-            busy: [0, 0, 0, 0],
-            commandId: [null, null, null, null]
-        };
-        this._pollingIntervalID = null;
-    }
-
-    // TODO: keep here? / refactor
-    /**
-     * Called by the runtime to detect whether the device is connected.
-     * @return {boolean} - the connected state.
-     */
-    getPeripheralIsConnected () {
-        let connected = false;
-        if (this._bt) {
-            connected = this._bt.getPeripheralIsConnected();
-        }
-        return connected;
+        this._onConnect = this._onConnect.bind(this);
+        this._onMessage = this._onMessage.bind(this);
+        this._pollValues = this._pollValues.bind(this);
     }
 
     get distance () {
-        if (!this.getPeripheralIsConnected()) return 0;
-
-        // https://shop.lego.com/en-US/EV3-Ultrasonic-Sensor-45504
-        // Measures distances between one and 250 cm (one to 100 in.)
-        // Accurate to +/- 1 cm (+/- .394 in.)
         let value = this._sensors.distance > 100 ? 100 : this._sensors.distance;
         value = value < 0 ? 0 : value;
         value = Math.round(100 * value) / 100;
@@ -222,596 +483,400 @@ class EV3 {
     }
 
     get brightness () {
-        if (!this.getPeripheralIsConnected()) return 0;
-
         return this._sensors.brightness;
     }
 
-    getMotorPosition (port) {
-        if (!this.getPeripheralIsConnected()) return;
-
-        let value = this._motors.positions[port];
-        value = value % 360;
-        value = value < 0 ? value * -1 : value;
-
-        return value;
+    /**
+     * Access a particular motor on this peripheral.
+     * @param {int} index - the zero-based index of the desired motor.
+     * @return {EV3Motor} - the EV3Motor instance, if any, at that index.
+     */
+    motor (index) {
+        return this._motors[index];
     }
 
     isButtonPressed (port) {
-        if (!this.getPeripheralIsConnected()) return;
-
-        return this._sensors.buttons[port];
+        return this._sensors.buttons[port] === 1;
     }
 
     beep (freq, time) {
-        if (!this.getPeripheralIsConnected()) return;
-
-        const cmd = [];
-        cmd[0] = 15; // length
-        cmd[1] = 0; // 0x00
-        cmd[2] = 0; // 0x00
-        cmd[3] = 0; // 0x00
-        cmd[4] = 128; // 0x80 // Direct command, reply not require
-        cmd[5] = 0; // 0x00
-        cmd[6] = 0; // 0x00
-        cmd[7] = 148; // 0x94 op: sound
-        cmd[8] = 1; // 0x01 cmd: tone
-        cmd[9] = 129; // 0x81 volume following in 1 byte
-        cmd[10] = 2; // volume byte 1
-        cmd[11] = 130; // 0x82 frequency following in 2 bytes
-        cmd[12] = freq; // frequency byte 1
-        cmd[13] = freq >> 8; // frequency byte 2
-        cmd[14] = 130; // 0x82 time following in 2 bytes
-        cmd[15] = time; // time byte 1
-        cmd[16] = time >> 8; // time byte 2
-
-        this._bt.sendMessage({
-            message: Base64Util.arrayBufferToBase64(cmd),
-            encoding: 'base64'
-        });
-
-        // Yield for sound duration
-        // TODO: does this work?
-        return new Promise(resolve => {
-            setTimeout(() => {
-                resolve();
-            }, time);
-        });
-    }
-
-    motorTurnClockwise (port, time) {
-        if (!this.getPeripheralIsConnected()) return;
-
-        // Build up motor command
-        const cmd = this._applyPrefix(0, this._motorCommand(
-            BTCommand.TIMESPEED,
-            this._portMask(port),
-            time,
-            this._motors.speeds[port],
-            BTCommand.LONGRAMP
-        ));
-
-        // Send turn message
-        this._bt.sendMessage({
-            message: Base64Util.arrayBufferToBase64(cmd),
-            encoding: 'base64'
-        });
-
-        this.coastAfter(port, time);
-
-        // Yield for turn time + brake time
-        const coastTime = 100; // TODO: calculate coasting or set flag
-        return new Promise(resolve => {
-            setTimeout(() => {
-                resolve();
-            }, time + coastTime);
-        });
-    }
-
-    motorTurnCounterClockwise (port, time) {
-        if (!this.getPeripheralIsConnected()) return;
-
-        // Build up motor command
-        const cmd = this._applyPrefix(0, this._motorCommand(
-            BTCommand.TIMESPEED,
-            this._portMask(port),
-            time,
-            this._motors.speeds[port] * -1,
-            BTCommand.LONGRAMP
-        ));
-
-        // Send turn message
-        this._bt.sendMessage({
-            message: Base64Util.arrayBufferToBase64(cmd),
-            encoding: 'base64'
-        });
-
-        // Set motor to busy
-        // this._motors.busy[port] = 1;
-
-        this.coastAfter(port, time);
-
-        // Yield for time
-        const coastTime = 100; // TODO: calculate coasting or set flag
-        return new Promise(resolve => {
-            setTimeout(() => {
-                resolve();
-            }, time + coastTime);
-        });
-    }
-
-    coastAfter (port, time) {
-        // Set the motor command id to check before starting coast
-        const commandId = uid();
-        this._motors.commandId[port] = commandId;
-
-        // Send coast message
-        setTimeout(() => {
-            // Do not send coast if another motor command changed the command id.
-            if (this._motors.commandId[port] === commandId) {
-                this.motorCoast(port);
-                this._motors.commandId[port] = null;
-            }
-        }, time + 1000); // add a 1 second delay so the brake takes effect
-    }
-
-    motorCoast (port) {
-        if (!this.getPeripheralIsConnected()) return;
-
-        const cmd = [];
-        cmd[0] = 9; // length
-        cmd[1] = 0; // length
-        cmd[2] = 1; // 0x01
-        cmd[3] = 0; // 0x00
-        cmd[4] = 0; // 0x00
-        cmd[5] = 0; // 0x00
-        cmd[6] = 0; // 0x00
-        cmd[7] = 163; // 0xA3 Motor brake/coast command
-        cmd[8] = 0; // layer
-        cmd[9] = this._portMask(port); // port output bit field
-        cmd[10] = 0; // float = coast = 0
-
-        this._bt.sendMessage({
-            message: Base64Util.uint8ArrayToBase64(cmd),
-            encoding: 'base64'
-        });
-    }
-
-    motorRotate (port, degrees) {
-        if (!this.getPeripheralIsConnected()) return;
-
-        // Build up motor command
-        const cmd = this._applyPrefix(0, this._motorCommand(
-            BTCommand.STEPSPEED,
-            this._portMask(port),
-            degrees,
-            this._motors.speeds[port],
-            BTCommand.LONGRAMP
-        ));
-
-        // Send rotate message
-        this._bt.sendMessage({
-            message: Base64Util.arrayBufferToBase64(cmd),
-            encoding: 'base64'
-        });
-
-        // Set motor to busy
-        // this._motors.busy[port] = 1;
-
-        /*
-        // Yield for time
-        // TODO: calculate time?
-        return new Promise(resolve => {
-            setTimeout(() => {
-                resolve();
-            }, time);
-        });
-        */
-    }
-
-    motorSetPosition (port, degrees) {
-        if (!this.getPeripheralIsConnected()) return;
-
-        // Calculate degrees to turn
-        let previousPos = this._motors.positions[port];
-        previousPos = previousPos % 360;
-        previousPos = previousPos < 0 ? previousPos * -1 : previousPos;
-        const newPos = degrees % 360;
-        let degreesToTurn = 0;
-        let direction = 1;
-        if (previousPos <= newPos) {
-            degreesToTurn = newPos - previousPos;
-        } else {
-            degreesToTurn = previousPos - newPos;
-            direction = -1;
-        }
-
-        // Build up motor command
-        const cmd = this._applyPrefix(0, this._motorCommand(
-            BTCommand.STEPSPEED,
-            this._portMask(port),
-            degreesToTurn,
-            this._motors.speeds[port] * direction,
-            BTCommand.LONGRAMP
-        ));
-
-        // Send rotate message
-        this._bt.sendMessage({
-            message: Base64Util.arrayBufferToBase64(cmd),
-            encoding: 'base64'
-        });
-
-        // Set motor to busy
-        // this._motors.busy[port] = 1;
-
-        /*
-        // Yield for time
-        // TODO: calculate time?
-        return new Promise(resolve => {
-            setTimeout(() => {
-                resolve();
-            }, time);
-        });
-        */
-    }
-
-    motorSetPower (port, power) {
-        if (!this.getPeripheralIsConnected()) return;
-
-        this._motors.speeds[port] = power;
-    }
-
-    // *******
-    // PRIVATE
-    // *******
-
-    _stopAll () {
-        this._stopAllMotors();
-        this._stopSound();
-    }
-
-    _stopSound () {
-        if (!this.getPeripheralIsConnected()) return;
-
-        const cmd = [];
-        cmd[0] = 7; // Command size, Little Endian. Command size not including these 2 bytes
-        cmd[1] = 0; // Command size, Little Endian. Command size not including these 2 bytes
-        cmd[2] = 0; // Message counter, Little Endian. Forth running counter
-        cmd[3] = 0; // Message counter, Little Endian. Forth running counter
-        cmd[4] = 128; // 0x80 // Command type. See defines above : Direct command, reply not require
-        cmd[5] = 0; // Reservation (allocation) of global and local variables
-        cmd[6] = 0; // Reservation (allocation) of global and local variables
-        cmd[7] = 148; // 0x94 op: sound
-        cmd[8] = 0; // 0x00 cmd: break 0x00 (Stop current sound playback)
-
-        this._bt.sendMessage({
-            message: Base64Util.arrayBufferToBase64(cmd),
-            encoding: 'base64'
-        });
-    }
-
-    _stopAllMotors () {
-        for (let i = 0; i < this._motorPorts.length; i++) {
-            if (this._motorPorts[i] !== 'none') {
-                this.motorCoast(i);
-            }
-        }
-    }
-
-    // TODO: keep here? / refactor
-    _applyPrefix (n, cmd) {
-        // TODO: document
-        const len = cmd.length + 5;
-        return [].concat(
-            len & 0xFF,
-            (len >> 8) & 0xFF,
-            0x1,
-            0x0,
-            0x0,
-            n,
-            0x0,
-            cmd
+        const cmd = this.generateCommand(
+            Ev3Command.DIRECT_COMMAND_NO_REPLY,
+            [
+                Ev3Opcode.OPSOUND,
+                Ev3Opcode.OPSOUND_CMD_TONE,
+                Ev3Value.NUM8,
+                2,
+                Ev3Value.NUM16,
+                freq,
+                freq >> 8,
+                Ev3Value.NUM16,
+                time,
+                time >> 8
+            ]
         );
+
+        this.send(cmd);
     }
 
-    // TODO: keep here? / refactor
-    /**
-     * Generate a motor command in EV3 byte array format (CMD, LAYER, PORT,
-     * SPEED, RAMP UP, RUN, RAMP DOWN, BREAKING TYPE)
-     * @param  {string} command Motor command primitive (i.e. "prefix")
-     * @param  {string} port    Port to address
-     * @param  {number} n       Value to be passed to motor command
-     * @param  {number} speed   Speed value
-     * @param  {number} ramp    Ramp value
-     * @return {array}          Byte array
-     */
-    _motorCommand (command, port, n, speed, ramp) {
-        // TODO: document
-        /**
-         * Generate run values for a given input.
-         * @param  {number} run Run input
-         * @return {array}      Run values (byte array)
-         */
-        const getRunValues = function (run) {
-            // If run duration is less than max 16-bit integer
-            if (run < 0x7fff) {
-                return [
-                    BTCommand.NUM16,
-                    run & 0xff,
-                    (run >> 8) & 0xff
-                ];
+    stopAll () {
+        this.stopAllMotors();
+        this.stopSound();
+    }
+
+    stopSound () {
+        const cmd = this.generateCommand(
+            Ev3Command.DIRECT_COMMAND_NO_REPLY,
+            [
+                Ev3Opcode.OPSOUND,
+                Ev3Opcode.OPSOUND_CMD_STOP
+            ]
+        );
+
+        this.send(cmd);
+    }
+
+    stopAllMotors () {
+        this._motors.forEach(motor => {
+            if (motor) {
+                motor.coast();
             }
-
-            // Run forever
-            return [
-                BTCommand.NUM32,
-                run & 0xff,
-                (run >> 8) & 0xff,
-                (run >> 16) & 0xff,
-                (run >> 24) & 0xff
-            ];
-        };
-
-        // If speed is less than zero, make it positive and multiply the input
-        // value by -1
-        if (speed < 0) {
-            speed = -1 * speed;
-            n = -1 * n;
-        }
-
-        // If the input value is less than 0
-        const dir = (n < 0) ? 0x100 - speed : speed; // step negative or possitive
-        n = Math.abs(n);
-
-        // Setup motor run duration and ramping behavior
-        let rampup = ramp;
-        let rampdown = ramp;
-        let run = n - (ramp * 2);
-        if (run < 0) {
-            rampup = Math.floor(n / 2);
-            run = 0;
-            rampdown = n - rampup;
-        }
-
-        // Generate motor command
-        const runcmd = getRunValues(run);
-        return [
-            command,
-            BTCommand.LAYER,
-            port,
-            BTCommand.NUM8,
-            dir & 0xff,
-            BTCommand.NUM8,
-            rampup
-        ].concat(runcmd.concat([
-            BTCommand.NUM8,
-            rampdown,
-            BTCommand.BRAKE
-        ]));
+        });
     }
 
-    // TODO: keep here? / refactor
-    _onSessionConnect () {
-        // start polling
-        // TODO: window?
-        this._pollingIntervalID = window.setInterval(this._getSessionData.bind(this), 150);
+    /**
+     * Called by the runtime when user wants to scan for an EV3 peripheral.
+     */
+    scan () {
+        this._bt = new BT(this._runtime, {
+            majorDeviceClass: 8,
+            minorDeviceClass: 1
+        }, this._onConnect, this._onMessage);
     }
 
-    // TODO: keep here? / refactor
-    _getSessionData () {
-        if (!this.getPeripheralIsConnected()) {
+    /**
+     * Called by the runtime when user wants to connect to a certain EV3 peripheral.
+     * @param {number} id - the id of the peripheral to connect to.
+     */
+    connect (id) {
+        this._bt.connectPeripheral(id);
+    }
+
+    /**
+     * Called by the runtime when user wants to disconnect from the EV3 peripheral.
+     */
+    disconnect () {
+        this._bt.disconnect();
+        this._clearSensorsAndMotors();
+        window.clearInterval(this._pollingIntervalID);
+        this._pollingIntervalID = null;
+    }
+
+    /**
+     * Called by the runtime to detect whether the EV3 peripheral is connected.
+     * @return {boolean} - the connected state.
+     */
+    isConnected () {
+        let connected = false;
+        if (this._bt) {
+            connected = this._bt.isConnected();
+        }
+        return connected;
+    }
+
+    /**
+     * Send a message to the peripheral BT socket.
+     * @param {Uint8Array} message - the message to send.
+     * @return {Promise} - a promise result of the send operation.
+     */
+    send (message) {
+        // TODO: add rate limiting?
+        if (!this.isConnected()) return Promise.resolve();
+
+        return this._bt.sendMessage({
+            message: Base64Util.uint8ArrayToBase64(message),
+            encoding: 'base64'
+        });
+    }
+
+    /**
+     * Genrates direct commands that are sent to the EV3 as a single or compounded byte arrays.
+     * See 'EV3 Communication Developer Kit', section 4, page 24 at
+     * https://education.lego.com/en-us/support/mindstorms-ev3/developer-kits.
+     *
+     * Direct commands are one of two types:
+     * DIRECT_COMMAND_NO_REPLY = a direct command where no reply is expected
+     * DIRECT_COMMAND_REPLY = a direct command where a reply is expected, and the
+     * number and length of returned values needs to be specified.
+     *
+     * The direct command byte array sent takes the following format:
+     * Byte 0 - 1: Command size, Little Endian. Command size not including these 2 bytes
+     * Byte 2 - 3: Message counter, Little Endian. Forth running counter
+     * Byte 4:     Command type. Either DIRECT_COMMAND_REPLY or DIRECT_COMMAND_NO_REPLY
+     * Byte 5 - 6: Reservation (allocation) of global and local variables using a compressed format
+     *             (globals reserved in byte 5 and the 2 lsb of byte 6, locals reserved in the upper
+     *             6 bits of byte 6) – see documentation for more details.
+     * Byte 7 - n: Byte codes as a single command or compound commands (I.e. more commands composed
+     *             as a small program)
+     *
+     * @param {number} type - the direct command type.
+     * @param {string} byteCommands - a compound array of EV3 Opcode + arguments.
+     * @param {number} allocation - the allocation of global and local vars needed for replies.
+     * @return {array} - generated complete command byte array, with header and compounded commands.
+     */
+    generateCommand (type, byteCommands, allocation = 0) {
+
+        // Header (Bytes 0 - 6)
+        let command = [];
+        command[2] = 0; // Message counter unused for now
+        command[3] = 0; // Message counter unused for now
+        command[4] = type;
+        command[5] = allocation & 0xFF;
+        command[6] = allocation >> 8 && 0xFF;
+
+        // Bytecodes (Bytes 7 - n)
+        command = command.concat(byteCommands);
+
+        // Calculate command length minus first two header bytes
+        const len = command.length - 2;
+        command[0] = len & 0xFF;
+        command[1] = len >> 8 && 0xFF;
+
+        return command;
+    }
+
+    /**
+     * When the EV3 peripheral connects, start polling for sensor and motor values.
+     * @private
+     */
+    _onConnect () {
+        this._pollingIntervalID = window.setInterval(this._pollValues, this._pollingInterval);
+    }
+
+    /**
+     * Poll the EV3 for sensor and motor input values, based on the list of
+     * known connected sensors and motors. This is sent as many compound commands
+     * in a direct command, with a reply expected.
+     *
+     * See 'EV3 Firmware Developer Kit', section 4.8, page 46, at
+     * https://education.lego.com/en-us/support/mindstorms-ev3/developer-kits
+     * for a list of polling/input device commands and their arguments.
+     *
+     * @private
+     */
+    _pollValues () {
+        if (!this.isConnected()) {
             window.clearInterval(this._pollingIntervalID);
             return;
         }
 
-        const cmd = []; // a compound command
-
-        // HEADER
-        cmd[0] = null; // calculate length later
-        cmd[1] = 0; // ...
-        cmd[2] = 1; // message counter // TODO: ?????
-        cmd[3] = 0; // message counter // TODO: ?????
-        cmd[4] = 0; // command type: direct command
-        cmd[5] = null; // calculate vars length later
-        cmd[6] = 0; // ...
+        const byteCommands = []; // a compound command
+        let allocation = 0;
 
         let sensorCount = 0;
-        // Either request device list or request sensor data ??
+
+        // For the command to send, either request device list or request sensor data
+        // based on the polling counter value.  (i.e., reset the list of devices every
+        // 20 counts).
+
         if (this._pollingCounter % 20 === 0) {
             // GET DEVICE LIST
-            cmd[7] = 152; // 0x98 op: get device list
-            cmd[8] = 129; // 0x81 LENGTH // TODO: ?????
-            cmd[9] = 33; // 0x21 ARRAY // TODO: ?????
-            cmd[10] = 96; // 0x60 CHANGED // TODO: ?????
-            cmd[11] = 225; // 0xE1 size of global var - 1 byte to follow
-            cmd[12] = 32; // 0x20 global var index "0" 0b00100000
+            byteCommands[0] = Ev3Opcode.OPINPUT_DEVICE_LIST;
+            byteCommands[1] = Ev3Value.NUM8; // 1 byte to follow
+            byteCommands[2] = 33; // 0x21 ARRAY // TODO: ????
+            byteCommands[3] = 96; // 0x60 CHANGED // TODO: ????
+            byteCommands[4] = 225; // 0xE1 size of global var - 1 byte to follow // TODO: ????
+            byteCommands[5] = 32; // 0x20 global var index "0" 0b00100000 // TODO: ????
 
             // Command and payload lengths
-            cmd[0] = cmd.length - 2;
-            cmd[5] = 33;
+            allocation = 33;
 
-            // Clear sensor data
+            // Clear sensor data // TODO: is this enough?
             this._updateDevices = true;
-            this._sensorPorts = [];
-            this._motorPorts = [];
-            // TODO: figure out when/how to clear out sensor data
 
         } else {
-
-            let index = 7;
-
-            // GET SENSOR VALUES
+            // GET SENSOR VALUES FOR CONNECTED SENSORS
+            let index = 0;
             // eslint-disable-next-line no-undefined
-            if (!this._sensorPorts.includes(undefined)) {
+            if (!this._sensorPorts.includes(undefined)) { // TODO: why is this needed?
                 for (let i = 0; i < 4; i++) {
                     if (this._sensorPorts[i] !== 'none') {
-                        cmd[index + 0] = 157; // 0x9D op: get sensor value
-                        cmd[index + 1] = 0; // layer
-                        cmd[index + 2] = i; // port
-                        cmd[index + 3] = 0; // do not change type
-                        cmd[index + 4] = EV_DEVICE_MODES[this._sensorPorts[i]]; // mode
-                        cmd[index + 5] = 225; // 0xE1 one byte to follow
-                        cmd[index + 6] = sensorCount * 4; // global index
+                        byteCommands[index + 0] = Ev3Opcode.OPINPUT_READSI;
+                        byteCommands[index + 1] = Ev3Value.LAYER;
+                        byteCommands[index + 2] = i; // PORT
+                        byteCommands[index + 3] = Ev3Value.DO_NOT_CHANGE_TYPE;
+                        byteCommands[index + 4] = Ev3Mode[this._sensorPorts[i]];
+                        byteCommands[index + 5] = 225; // 0xE1 one byte to follow // TODO: ????
+                        byteCommands[index + 6] = sensorCount * 4; // global index // TODO: ????
                         index += 7;
                     }
                     sensorCount++;
                 }
             }
 
-            // GET MOTOR POSITION VALUES
+            // GET MOTOR POSITION VALUES, EVEN IF NO MOTOR PRESENT
             // eslint-disable-next-line no-undefined
             if (!this._motorPorts.includes(undefined)) {
                 for (let i = 0; i < 4; i++) {
-                    cmd[index + 0] = 179; // 0XB3 op: get motor position value
-                    cmd[index + 1] = 0; // layer
-                    cmd[index + 2] = i; // port
-                    cmd[index + 3] = 225; // 0xE1 byte following
-                    cmd[index + 4] = sensorCount * 4; // global index
+                    byteCommands[index + 0] = Ev3Opcode.OPOUTPUT_GET_COUNT;
+                    byteCommands[index + 1] = Ev3Value.LAYER;
+                    byteCommands[index + 2] = i; // port
+                    byteCommands[index + 3] = 225; // 0xE1 byte following
+                    byteCommands[index + 4] = sensorCount * 4; // global index
                     index += 5;
                     sensorCount++;
                 }
             }
 
             // Command and payload lengths
-            cmd[0] = cmd.length - 2;
-            cmd[5] = sensorCount * 4;
+            allocation = sensorCount * 4;
         }
 
-        // GET MOTOR BUSY STATES
-        /*
-        for (let i = 0; i < this._motorPorts.length; i++) {
-            if (this._motorPorts[i] !== 'none') {
-                sensorCount++;
-                compoundCommand[compoundCommandIndex + 0] = 169; // 0xA9 op: test if output port is busy
-                compoundCommand[compoundCommandIndex + 1] = 0; // layer
-                compoundCommand[compoundCommandIndex + 2] = this._portMask(i); // output bit field
-                compoundCommand[compoundCommandIndex + 3] = 225; // 0xE1 1 byte following
-                compoundCommand[compoundCommandIndex + 4] = sensorCount * 4; // global index
-                compoundCommandIndex += 5;
-            }
-        }
-        */
+        const cmd = this.generateCommand(
+            Ev3Command.DIRECT_COMMAND_REPLY,
+            byteCommands,
+            allocation
+        );
 
-        this._bt.sendMessage({
-            message: Base64Util.uint8ArrayToBase64(cmd),
-            encoding: 'base64'
-        });
+        this.send(cmd);
 
         this._pollingCounter++;
     }
 
-    // TODO: rename and document better
-    _onSessionMessage (params) {
+    /**
+     * Message handler for incoming EV3 reply messages, either a list of connected
+     * devices (sensors and motors) or the values of the connected sensors and motors.
+     *
+     * See 'EV3 Communication Developer Kit', section 4.1, page 24 at
+     * https://education.lego.com/en-us/support/mindstorms-ev3/developer-kits
+     * for more details on direct reply formats.
+     *
+     * The direct reply byte array sent takes the following format:
+     * Byte 0 – 1: Reply size, Little Endian. Reply size not including these 2 bytes
+     * Byte 2 – 3: Message counter, Little Endian. Equals the Direct Command
+     * Byte 4:     Reply type. Either DIRECT_REPLY or DIRECT_REPLY_ERROR
+     * Byte 5 - n: Resonse buffer. I.e. the content of the by the Command reserved global variables.
+     *             I.e. if the command reserved 64 bytes, these bytes will be placed in the reply
+     *             packet as the bytes 5 to 68.
+     *
+     * See 'EV3 Firmware Developer Kit', section 4.8, page 56 at
+     * https://education.lego.com/en-us/support/mindstorms-ev3/developer-kits
+     * for direct response buffer formats for various commands.
+     *
+     * @param {object} params - incoming message parameters
+     * @private
+     */
+    _onMessage (params) {
         const message = params.message;
-        const array = Base64Util.base64ToUint8Array(message);
+        const data = Base64Util.base64ToUint8Array(message);
         // log.info(`received array: ${array}`);
 
-        if (array.length < 35) { // TODO: find safer solution
-            return; // don't parse results that aren't sensor data list or device list
+        // TODO: Is this the correct check?
+        if (data[4] !== Ev3Command.DIRECT_REPLY) {
+            return;
         }
 
         if (this._updateDevices) {
-            // READ DEVICE LIST
-            this._sensorPorts[0] = EV_DEVICE_TYPES[array[5]] ? EV_DEVICE_TYPES[array[5]] : 'none';
-            this._sensorPorts[1] = EV_DEVICE_TYPES[array[6]] ? EV_DEVICE_TYPES[array[6]] : 'none';
-            this._sensorPorts[2] = EV_DEVICE_TYPES[array[7]] ? EV_DEVICE_TYPES[array[7]] : 'none';
-            this._sensorPorts[3] = EV_DEVICE_TYPES[array[8]] ? EV_DEVICE_TYPES[array[8]] : 'none';
-            this._motorPorts[0] = EV_DEVICE_TYPES[array[21]] ? EV_DEVICE_TYPES[array[21]] : 'none';
-            this._motorPorts[1] = EV_DEVICE_TYPES[array[22]] ? EV_DEVICE_TYPES[array[22]] : 'none';
-            this._motorPorts[2] = EV_DEVICE_TYPES[array[23]] ? EV_DEVICE_TYPES[array[23]] : 'none';
-            this._motorPorts[3] = EV_DEVICE_TYPES[array[24]] ? EV_DEVICE_TYPES[array[24]] : 'none';
-            // log.info(`sensor ports: ${this._sensorPorts}`);
-            // log.info(`motor ports: ${this._motorPorts}`);
+            // *****************
+            // PARSE DEVICE LIST
+            // *****************
+            // TODO: put these in for loop?
+            this._sensorPorts[0] = Ev3Device[data[5]] ? Ev3Device[data[5]] : 'none';
+            this._sensorPorts[1] = Ev3Device[data[6]] ? Ev3Device[data[6]] : 'none';
+            this._sensorPorts[2] = Ev3Device[data[7]] ? Ev3Device[data[7]] : 'none';
+            this._sensorPorts[3] = Ev3Device[data[8]] ? Ev3Device[data[8]] : 'none';
+            this._motorPorts[0] = Ev3Device[data[21]] ? Ev3Device[data[21]] : 'none';
+            this._motorPorts[1] = Ev3Device[data[22]] ? Ev3Device[data[22]] : 'none';
+            this._motorPorts[2] = Ev3Device[data[23]] ? Ev3Device[data[23]] : 'none';
+            this._motorPorts[3] = Ev3Device[data[24]] ? Ev3Device[data[24]] : 'none';
+            for (let m = 0; m < 4; m++) {
+                const type = this._motorPorts[m];
+                if (type !== 'none' && !this._motors[m]) {
+                    // add new motor if don't already have one
+                    this._motors[m] = new EV3Motor(this, m, type);
+                }
+                if (type === 'none' && this._motors[m]) {
+                    // clear old motor
+                    this._motors[m] = null;
+                }
+            }
             this._updateDevices = false;
             // eslint-disable-next-line no-undefined
         } else if (!this._sensorPorts.includes(undefined) && !this._motorPorts.includes(undefined)) {
-            // READ SENSOR VALUES
+            // *******************
+            // PARSE SENSOR VALUES
+            // *******************
             let offset = 5; // start reading sensor values at byte 5
             for (let i = 0; i < 4; i++) {
-                const value = this._array2float([
-                    array[offset],
-                    array[offset + 1],
-                    array[offset + 2],
-                    array[offset + 3]
-                ]);
-                if (EV_DEVICE_LABELS[this._sensorPorts[i]] === 'button') {
+                // array 2 float
+                const buffer = new Uint8Array([
+                    data[offset],
+                    data[offset + 1],
+                    data[offset + 2],
+                    data[offset + 3]
+                ]).buffer;
+                const view = new DataView(buffer);
+                const value = view.getFloat32(0, true);
+
+                if (Ev3Label[this._sensorPorts[i]] === 'button') {
                     // Read a button value per port
                     this._sensors.buttons[i] = value ? value : 0;
-                } else if (EV_DEVICE_LABELS[this._sensorPorts[i]]) { // if valid
+                } else if (Ev3Label[this._sensorPorts[i]]) { // if valid
                     // Read brightness / distance values and set to 0 if null
-                    this._sensors[EV_DEVICE_LABELS[this._sensorPorts[i]]] = value ? value : 0;
+                    this._sensors[Ev3Label[this._sensorPorts[i]]] = value ? value : 0;
                 }
-                // log.info(`${JSON.stringify(this._sensors)}`);
                 offset += 4;
             }
-            // READ MOTOR POSITION VALUES
+            // *****************************************************
+            // PARSE MOTOR POSITION VALUES, EVEN IF NO MOTOR PRESENT
+            // *****************************************************
             for (let i = 0; i < 4; i++) {
-                let value = this._tachoValue([ // from Paula
-                    array[offset],
-                    array[offset + 1],
-                    array[offset + 2],
-                    array[offset + 3]
-                ]);
-                if (value > 0x7fffffff) { // from Paula
-                    value = value - 0x100000000;
+                const positionArray = [
+                    data[offset],
+                    data[offset + 1],
+                    data[offset + 2],
+                    data[offset + 3]
+                ];
+                if (this._motors[i]) {
+                    this._motors[i].position = positionArray;
                 }
-                if (value) {
-                    this._motors.positions[i] = value;
-                }
-                // log.info(`motor positions: ${this._motors.positions}`);
                 offset += 4;
             }
         }
-
-        /*
-        // READ MOTOR BUSY STATES
-        /*
-        for (let i = 0; i < this._motorPorts.length; i++) {
-            if (this._motorPorts[i] !== 'none') {
-                const busy = array[offset];
-                if (busy === 0 && this._motors.busy[i]) {
-                    this.motorCoast(i); // always set to coast for now, but really should only do for recently moved
-                    this._motors.busy[i] = 0; // reset busy
-                }
-                // this._motors.positions[i] = value;
-                log.info(`motor ${i} busy: ${busy}`);
-                offset += 1;
-            }
-        }
-        */
     }
 
-    // TODO: keep here? / refactor
-    _portMask (port) {
-        // TODO: convert to enum or lookup
-        let p = null;
-        if (port === 0) {
-            p = 1;
-        } else if (port === 1) {
-            p = 2;
-        } else if (port === 2) {
-            p = 4;
-        } else if (port === 3) {
-            p = 8;
-        }
-
-        return p;
-    }
-
-    // TODO: keep here? / refactor
-    _tachoValue (list) {
-        const value = list[0] + (list[1] * 256) + (list[2] * 256 * 256) + (list[3] * 256 * 256 * 256);
-        return value;
-    }
-
-    // TODO: keep here? / refactor
-    _array2float (list) {
-        const buffer = new Uint8Array(list).buffer;
-        const view = new DataView(buffer);
-        return view.getFloat32(0, true);
+    /**
+     * Clear all the senor port and motor names, and their values.
+     * @private
+     */
+    _clearSensorsAndMotors () {
+        this._sensorPorts = [];
+        this._motorPorts = [];
+        this._sensors = {
+            distance: 0,
+            brightness: 0,
+            buttons: [0, 0, 0, 0]
+        };
+        this._motors = [null, null, null, null];
     }
 
 }
+
+/**
+ * Enum for motor port names.
+ * Note: if changed, will break compatibility with previously saved projects.
+ * @readonly
+ * @enum {string}
+ */
+const Ev3MotorMenu = ['A', 'B', 'C', 'D'];
+
+/**
+ * Enum for sensor port names.
+ * Note: if changed, will break compatibility with previously saved projects.
+ * @readonly
+ * @enum {string}
+ */
+const Ev3SensorMenu = ['1', '2', '3', '4'];
 
 class Scratch3Ev3Blocks {
 
@@ -835,8 +900,8 @@ class Scratch3Ev3Blocks {
          */
         this.runtime = runtime;
 
-        // Create a new EV3 device instance
-        this._device = new EV3(this.runtime, Scratch3Ev3Blocks.EXTENSION_ID);
+        // Create a new EV3 peripheral instance
+        this._peripheral = new EV3(this.runtime, Scratch3Ev3Blocks.EXTENSION_ID);
     }
 
     /**
@@ -862,7 +927,7 @@ class Scratch3Ev3Blocks {
                         PORT: {
                             type: ArgumentType.STRING,
                             menu: 'motorPorts',
-                            defaultValue: 'A'
+                            defaultValue: 0
                         },
                         TIME: {
                             type: ArgumentType.NUMBER,
@@ -882,7 +947,7 @@ class Scratch3Ev3Blocks {
                         PORT: {
                             type: ArgumentType.STRING,
                             menu: 'motorPorts',
-                            defaultValue: 'A'
+                            defaultValue: 0
                         },
                         TIME: {
                             type: ArgumentType.NUMBER,
@@ -890,38 +955,6 @@ class Scratch3Ev3Blocks {
                         }
                     }
                 },
-                /* {
-                    opcode: 'motorRotate',
-                    text: 'motor [PORT] rotate [DEGREES] degrees',
-                    blockType: BlockType.COMMAND,
-                    arguments: {
-                        PORT: {
-                            type: ArgumentType.STRING,
-                            menu: 'motorPorts',
-                            defaultValue: 'A'
-                        },
-                        DEGREES: {
-                            type: ArgumentType.NUMBER,
-                            defaultValue: 90
-                        }
-                    }
-                },
-                {
-                    opcode: 'motorSetPosition',
-                    text: 'motor [PORT] set position [DEGREES] degrees',
-                    blockType: BlockType.COMMAND,
-                    arguments: {
-                        PORT: {
-                            type: ArgumentType.STRING,
-                            menu: 'motorPorts',
-                            defaultValue: 'A'
-                        },
-                        DEGREES: {
-                            type: ArgumentType.NUMBER,
-                            defaultValue: 90
-                        }
-                    }
-                }, */
                 {
                     opcode: 'motorSetPower',
                     text: formatMessage({
@@ -934,7 +967,7 @@ class Scratch3Ev3Blocks {
                         PORT: {
                             type: ArgumentType.STRING,
                             menu: 'motorPorts',
-                            defaultValue: 'A'
+                            defaultValue: 0
                         },
                         POWER: {
                             type: ArgumentType.NUMBER,
@@ -954,7 +987,7 @@ class Scratch3Ev3Blocks {
                         PORT: {
                             type: ArgumentType.STRING,
                             menu: 'motorPorts',
-                            defaultValue: 'A'
+                            defaultValue: 0
                         }
                     }
                 },
@@ -970,7 +1003,7 @@ class Scratch3Ev3Blocks {
                         PORT: {
                             type: ArgumentType.STRING,
                             menu: 'sensorPorts',
-                            defaultValue: SENSOR_PORTS[0].value
+                            defaultValue: 0
                         }
                     }
                 },
@@ -1016,7 +1049,7 @@ class Scratch3Ev3Blocks {
                         PORT: {
                             type: ArgumentType.STRING,
                             menu: 'sensorPorts',
-                            defaultValue: SENSOR_PORTS[0].value
+                            defaultValue: 0
                         }
                     }
                 },
@@ -1059,27 +1092,10 @@ class Scratch3Ev3Blocks {
                 }
             ],
             menus: {
-                motorPorts: this._buildMenu(MOTOR_PORTS),
-                sensorPorts: this._buildMenu(SENSOR_PORTS)
+                motorPorts: this._formatMenu(Ev3MotorMenu),
+                sensorPorts: this._formatMenu(Ev3SensorMenu)
             }
         };
-    }
-
-    // TODO: redo?
-    /**
-     * Create data for a menu in scratch-blocks format, consisting of an array of objects with text and
-     * value properties. The text is a translated string, and the value is one-indexed.
-     * @param  {object[]} info - An array of info objects each having a name property.
-     * @return {array} - An array of objects with text and value properties.
-     * @private
-     */
-    _buildMenu (info) {
-        return info.map((entry, index) => {
-            const obj = {};
-            obj.text = entry.name;
-            obj.value = String(index);
-            return obj;
-        });
     }
 
     motorTurnClockwise (args) {
@@ -1087,11 +1103,18 @@ class Scratch3Ev3Blocks {
         let time = Cast.toNumber(args.TIME) * 1000;
         time = MathUtil.clamp(time, 0, 15000);
 
-        if (!VALID_MOTOR_PORTS.includes(port)) {
-            return;
-        }
+        return new Promise(resolve => {
+            this._forEachMotor(port, motorIndex => {
+                const motor = this._peripheral.motor(motorIndex);
+                if (motor) {
+                    motor.direction = 1;
+                    motor.turnOnFor(time);
+                }
+            });
 
-        return this._device.motorTurnClockwise(port, time);
+            // Run for some time even when no motor is connected
+            setTimeout(resolve, time);
+        });
     }
 
     motorTurnCounterClockwise (args) {
@@ -1099,99 +1122,82 @@ class Scratch3Ev3Blocks {
         let time = Cast.toNumber(args.TIME) * 1000;
         time = MathUtil.clamp(time, 0, 15000);
 
-        if (!VALID_MOTOR_PORTS.includes(port)) {
-            return;
-        }
+        return new Promise(resolve => {
+            this._forEachMotor(port, motorIndex => {
+                const motor = this._peripheral.motor(motorIndex);
+                if (motor) {
+                    motor.direction = -1;
+                    motor.turnOnFor(time);
+                }
+            });
 
-        return this._device.motorTurnCounterClockwise(port, time);
+            // Run for some time even when no motor is connected
+            setTimeout(resolve, time);
+        });
     }
-
-    /*
-    motorRotate (args) {
-        const port = Cast.toNumber(args.PORT);
-        const degrees = Cast.toNumber(args.DEGREES);
-
-        if (!VALID_MOTOR_PORTS.includes(port)) {
-            return;
-        }
-
-        this._device.motorRotate(port, degrees);
-        return;
-    }
-
-    motorSetPosition (args) {
-        const port = Cast.toNumber(args.PORT);
-        const degrees = Cast.toNumber(args.DEGREES);
-
-        if (!VALID_MOTOR_PORTS.includes(port)) {
-            return;
-        }
-
-        this._device.motorSetPosition(port, degrees);
-        return;
-    }
-    */
 
     motorSetPower (args) {
         const port = Cast.toNumber(args.PORT);
         const power = MathUtil.clamp(Cast.toNumber(args.POWER), 0, 100);
 
-        if (!VALID_MOTOR_PORTS.includes(port)) {
-            return;
-        }
-
-        this._device.motorSetPower(port, power);
-        return;
+        this._forEachMotor(port, motorIndex => {
+            const motor = this._peripheral.motor(motorIndex);
+            if (motor) {
+                motor.power = power;
+            }
+        });
     }
 
     getMotorPosition (args) {
         const port = Cast.toNumber(args.PORT);
 
-        if (!VALID_MOTOR_PORTS.includes(port)) {
+        if (![0, 1, 2, 3].includes(port)) {
             return;
         }
 
-        return this._device.getMotorPosition(port);
+        const motor = this._peripheral.motor(port);
+
+        return motor ? motor.position : 0;
     }
 
     whenButtonPressed (args) {
         const port = Cast.toNumber(args.PORT);
 
-        if (!VALID_SENSOR_PORTS.includes(port)) {
+        if (![0, 1, 2, 3].includes(port)) {
             return;
         }
 
-        return this._device.isButtonPressed(port);
+        return this._peripheral.isButtonPressed(port);
     }
 
     whenDistanceLessThan (args) {
         const distance = MathUtil.clamp(Cast.toNumber(args.DISTANCE), 0, 100);
 
-        return this._device.distance < distance;
+        return this._peripheral.distance < distance;
     }
 
     whenBrightnessLessThan (args) {
         const brightness = MathUtil.clamp(Cast.toNumber(args.DISTANCE), 0, 100);
 
-        return this._device.brightness < brightness;
+        return this._peripheral.brightness < brightness;
     }
 
     buttonPressed (args) {
         const port = Cast.toNumber(args.PORT);
 
-        if (!VALID_SENSOR_PORTS.includes(port)) {
+        if (![0, 1, 2, 3].includes(port)) {
             return;
         }
 
-        return this._device.isButtonPressed(port);
+        return this._peripheral.isButtonPressed(port);
     }
 
     getDistance () {
-        return this._device.distance;
+        return this._peripheral.distance;
     }
 
     getBrightness () {
-        return this._device.brightness;
+        return this._peripheral.brightness;
     }
 
     beep (args) {
@@ -1203,10 +1209,76 @@ class Scratch3Ev3Blocks {
             return; // don't send a beep time of 0
         }
 
-        // https://en.wikipedia.org/wiki/MIDI_tuning_standard#Frequency_values
-        const freq = Math.pow(2, ((note - 69 + 12) / 12)) * 440;
+        return new Promise(resolve => {
+            // https://en.wikipedia.org/wiki/MIDI_tuning_standard#Frequency_values
+            const freq = Math.pow(2, ((note - 69 + 12) / 12)) * 440;
+            this._peripheral.beep(freq, time);
 
-        return this._device.beep(freq, time);
+            // Run for some time even when no piezo is connected.
+            setTimeout(resolve, time);
+        });
+    }
+
+    /**
+     * Call a callback for each motor indexed by the provided motor ID.
+     * @param {MotorID} motorID - the ID specifier.
+     * @param {Function} callback - the function to call with the numeric motor index for each motor.
+     * @private
+     */
+    // TODO: unnecessary, but could be useful if 'all motors' is added (see WeDo2 extension)
+    _forEachMotor (motorID, callback) {
+        let motors;
+        switch (motorID) {
+        case 0:
+            motors = [0];
+            break;
+        case 1:
+            motors = [1];
+            break;
+        case 2:
+            motors = [2];
+            break;
+        case 3:
+            motors = [3];
+            break;
+        default:
+            log.warn(`Invalid motor ID: ${motorID}`);
+            motors = [];
+            break;
+        }
+        for (const index of motors) {
+            callback(index);
+        }
+    }
+
+    /**
+     * Formats menus into a format suitable for block menus, and loading previously
+     * saved projects:
+     * [
+     *   {
+     *    text: label,
+     *    value: index
+     *   },
+     *   {
+     *    text: label,
+     *    value: index
+     *   },
+     *   etc...
+     * ]
+     *
+     * @param {array} menu - a menu to format.
+     * @return {object} - a formatted menu as an object.
+     * @private
+     */
+    _formatMenu (menu) {
+        const m = [];
+        for (let i = 0; i < menu.length; i++) {
+            const obj = {};
+            obj.text = menu[i];
+            obj.value = i.toString();
+            m.push(obj);
+        }
+        return m;
     }
 }
 

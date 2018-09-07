@@ -5,11 +5,11 @@ test('constructor', t => {
     t.end();
 });
 
-test('requestDevice', t => {
+test('requestPeripheral', t => {
     t.end();
 });
 
-test('connectDevice', t => {
+test('connectPeripheral', t => {
     t.end();
 });
 
