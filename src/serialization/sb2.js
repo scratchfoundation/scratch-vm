@@ -193,18 +193,18 @@ const parseScripts = function (scripts, blocks, addBroadcastMsg, getVariableId, 
  */
 const generateVariableIdGetter = (function () {
     let globalVariableNameMap = {};
-    const namer = (targetId, name) => `${targetId}-${name}`;
+    const namer = (targetId, name, type) => `${targetId}-${name}-${type}`;
     return function (targetId, topLevel) {
         // Reset the global variable map if topLevel
         if (topLevel) globalVariableNameMap = {};
-        return function (name) {
+        return function (name, type) {
             if (topLevel) { // Store the name/id pair in the globalVariableNameMap
-                globalVariableNameMap[name] = namer(targetId, name);
-                return globalVariableNameMap[name];
+                globalVariableNameMap[`${name}-${type}`] = namer(targetId, name, type);
+                return globalVariableNameMap[`${name}-${type}`];
             }
             // Not top-level, so first check the global name map
-            if (globalVariableNameMap[name]) return globalVariableNameMap[name];
-            return namer(targetId, name);
+            if (globalVariableNameMap[`${name}-${type}`]) return globalVariableNameMap[`${name}-${type}`];
+            return namer(targetId, name, type);
         };
     };
 }());
@@ -276,8 +276,10 @@ const parseMonitorObject = (object, runtime, targets, extensions) => {
     // Monitor blocks have special IDs to match the toolbox obtained from the getId
     // function in the runtime.monitorBlocksInfo. Variable monitors, however,
     // get their IDs from the variable id they reference.
-    if (object.cmd === 'getVar:' || object.cmd === 'contentsOfList:') {
-        block.id = getVariableId(object.param);
+    if (object.cmd === 'getVar:') {
+        block.id = getVariableId(object.param, Variable.SCALAR_TYPE);
+    } else if (object.cmd === 'contentsOfList:') {
+        block.id = getVariableId(object.param, Variable.LIST_TYPE);
     } else if (runtime.monitorBlockInfo.hasOwnProperty(block.opcode)) {
         block.id = runtime.monitorBlockInfo[block.opcode].getId(target.id, object.param);
     }
@@ -446,7 +448,7 @@ const parseScratchObject = function (object, runtime, extensions, topLevel, zip)
         for (let j = 0; j < object.variables.length; j++) {
             const variable = object.variables[j];
             const newVariable = new Variable(
-                getVariableId(variable.name),
+                getVariableId(variable.name, Variable.SCALAR_TYPE),
                 variable.name,
                 Variable.SCALAR_TYPE,
                 variable.isPersistent
@@ -538,7 +540,7 @@ const parseScratchObject = function (object, runtime, extensions, topLevel, zip)
         for (let k = 0; k < object.lists.length; k++) {
             const list = object.lists[k];
             const newVariable = new Variable(
-                getVariableId(list.listName),
+                getVariableId(list.listName, Variable.LIST_TYPE),
                 list.listName,
                 Variable.LIST_TYPE,
                 false
@@ -966,9 +968,12 @@ const parseBlock = function (sb2block, addBroadcastMsg, getVariableId, extension
                 value: providedArg
             };
 
-            if (expectedArg.fieldName === 'VARIABLE' || expectedArg.fieldName === 'LIST') {
+            if (expectedArg.fieldName === 'VARIABLE') {
                 // Add `id` property to variable fields
-                activeBlock.fields[expectedArg.fieldName].id = getVariableId(providedArg);
+                activeBlock.fields[expectedArg.fieldName].id = getVariableId(providedArg, Variable.SCALAR_TYPE);
+            } else if (expectedArg.fieldName === 'LIST') {
+                // Add `id` property to variable fields
+                activeBlock.fields[expectedArg.fieldName].id = getVariableId(providedArg, Variable.LIST_TYPE);
             } else if (expectedArg.fieldName === 'BROADCAST_OPTION') {
                 // Add the name in this field to the broadcast msg name map.
                 // Also need to provide the fields[fieldName] object,
