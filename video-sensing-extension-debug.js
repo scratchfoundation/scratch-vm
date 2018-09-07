@@ -87,7 +87,7 @@ var VirtualMachine =
 /************************************************************************/
 /******/ ({
 
-/***/ 3:
+/***/ 4:
 /***/ (function(module, exports) {
 
 var g;
@@ -208,7 +208,7 @@ module.exports = {
 /* WEBPACK VAR INJECTION */(function(global) {
 
 module.exports = global["Scratch3VideoSensingDebug"] = __webpack_require__(475);
-/* WEBPACK VAR INJECTION */}.call(this, __webpack_require__(3)))
+/* WEBPACK VAR INJECTION */}.call(this, __webpack_require__(4)))
 
 /***/ }),
 
