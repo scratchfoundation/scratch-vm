@@ -745,9 +745,6 @@ class Runtime extends EventEmitter {
         case BlockType.REPORTER:
             blockJSON.output = 'String'; // TODO: distinguish number & string here?
             blockJSON.outputShape = ScratchBlocksConstants.OUTPUT_SHAPE_ROUND;
-            if (!blockInfo.disableMonitor) {
-                blockJSON.checkboxInFlyout = true;
-            }
             break;
         case BlockType.BOOLEAN:
             blockJSON.output = 'Boolean';
@@ -805,8 +802,12 @@ class Runtime extends EventEmitter {
             }
         }
 
-        // Add icon to the bottom right of a loop block
-        if (blockInfo.blockType === BlockType.LOOP) {
+        if (blockInfo.blockType === BlockType.REPORTER) {
+            if (!blockInfo.disableMonitor && context.inputList.length === 0) {
+                blockJSON.checkboxInFlyout = true;
+            }
+        } else if (blockInfo.blockType === BlockType.LOOP) {
+            // Add icon to the bottom right of a loop block
             blockJSON[`lastDummyAlign${outLineNum}`] = 'RIGHT';
             blockJSON[`message${outLineNum}`] = '%1';
             blockJSON[`args${outLineNum}`] = [{
