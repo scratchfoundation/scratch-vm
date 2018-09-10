@@ -679,16 +679,17 @@ class EV3 {
             // GET DEVICE LIST
             byteCommands[0] = Ev3Opcode.OPINPUT_DEVICE_LIST;
             byteCommands[1] = Ev3Value.NUM8; // 1 byte to follow
-            byteCommands[2] = 33; // 0x21 ARRAY // TODO: ????
-            byteCommands[3] = 96; // 0x60 CHANGED // TODO: ????
-            byteCommands[4] = 225; // 0xE1 size of global var - 1 byte to follow // TODO: ????
-            byteCommands[5] = 32; // 0x20 global var index "0" 0b00100000 // TODO: ????
+            byteCommands[2] = 33; // 0x21 ARRAY // TODO: document
+            byteCommands[3] = 96; // 0x60 CHANGED // TODO: document
+            byteCommands[4] = 225; // 0xE1 size of global var - 1 byte to follow // TODO: document
+            byteCommands[5] = 32; // 0x20 global var index "0" 0b00100000 // TODO: document
 
             // Command and payload lengths
             allocation = 33;
 
-            // Clear sensor data // TODO: is this enough?
             this._updateDevices = true;
+
+            // TODO: need to clar sensor data?
 
         } else {
             // GET SENSOR VALUES FOR CONNECTED SENSORS
@@ -702,8 +703,8 @@ class EV3 {
                         byteCommands[index + 2] = i; // PORT
                         byteCommands[index + 3] = Ev3Value.DO_NOT_CHANGE_TYPE;
                         byteCommands[index + 4] = Ev3Mode[this._sensorPorts[i]];
-                        byteCommands[index + 5] = 225; // 0xE1 one byte to follow // TODO: ????
-                        byteCommands[index + 6] = sensorCount * 4; // global index // TODO: ????
+                        byteCommands[index + 5] = 225; // 0xE1 one byte to follow // TODO: document
+                        byteCommands[index + 6] = sensorCount * 4; // global index // TODO: document
                         index += 7;
                     }
                     sensorCount++;
@@ -716,9 +717,9 @@ class EV3 {
                 for (let i = 0; i < 4; i++) {
                     byteCommands[index + 0] = Ev3Opcode.OPOUTPUT_GET_COUNT;
                     byteCommands[index + 1] = Ev3Value.LAYER;
-                    byteCommands[index + 2] = i; // port
-                    byteCommands[index + 3] = 225; // 0xE1 byte following
-                    byteCommands[index + 4] = sensorCount * 4; // global index
+                    byteCommands[index + 2] = i; // PORT TODO: explain incorrect documentation as 'Output bit field'
+                    byteCommands[index + 3] = 225; // 0xE1 byte following TODO: document
+                    byteCommands[index + 4] = sensorCount * 4; // global index TODO: document
                     index += 5;
                     sensorCount++;
                 }
