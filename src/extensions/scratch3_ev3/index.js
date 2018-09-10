@@ -231,14 +231,10 @@ class EV3Motor {
     }
 
     /**
-     * @return {int} - this motor's current position, in the range [0,360].
+     * @return {int} - this motor's current position, in the range [-inf,inf].
      */
     get position () {
-        let value = this._position;
-        value = value % 360;
-        value = value < 0 ? value * -1 : value;
-
-        return value;
+        return this._position;
     }
 
     /**
@@ -1156,8 +1152,12 @@ class Scratch3Ev3Blocks {
         }
 
         const motor = this._peripheral.motor(port);
+        let position = 0;
+        if (motor) {
+            position = MathUtil.wrapClamp(motor.position, 0, 360);
+        }
 
-        return motor ? motor.position : 0;
+        return position;
     }
 
     whenButtonPressed (args) {
