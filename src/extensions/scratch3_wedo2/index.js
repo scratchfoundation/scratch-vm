@@ -333,6 +333,8 @@ class WeDo2Motor {
         const timeoutID = setTimeout(() => {
             if (this._pendingTimeoutId === timeoutID) {
                 this._pendingTimeoutId = null;
+                this._pendingTimeoutStartTime = null;
+                this._pendingTimeoutDelay = null;
             }
             callback();
         }, delay);
