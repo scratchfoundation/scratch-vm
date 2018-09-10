@@ -939,7 +939,7 @@ class Scratch3WeDo2Blocks {
                         },
                         POWER: {
                             type: ArgumentType.NUMBER,
-                            defaultValue: 100
+                            defaultValue: 50
                         }
                     }
                 },
