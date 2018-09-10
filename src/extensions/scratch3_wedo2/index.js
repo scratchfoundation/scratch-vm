@@ -154,7 +154,7 @@ class WeDo2Motor {
          * @type {number}
          * @private
          */
-        this._power = 100;
+        this._power = 50;
 
         /**
          * Is this motor currently moving?

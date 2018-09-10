@@ -158,7 +158,7 @@ class EV3Motor {
          * @type {number}
          * @private
          */
-        this._power = 100;
+        this._power = 50;
 
         /**
          * This motor's current position, in the range [0,360].
