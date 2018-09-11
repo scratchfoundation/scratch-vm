@@ -14,13 +14,6 @@ const formatMessage = require('format-message');
 const serverURL = 'https://translate-service.scratch.mit.edu/';
 
 /**
- * Icon to be displayed at the left edge of each extension block and in the extension menu.
- * @type {string}
- */
-// eslint-disable-next-line max-len
-const iconURI = '';
-
-/**
  * How long to wait in ms before timing out requests to translate server.
  * @type {int}
  */
@@ -98,8 +91,6 @@ class Scratch3TranslateBlocks {
                 default: 'Translate',
                 description: 'Name of extension that adds translate blocks'
             }),
-            menuIconURI: iconURI,
-            blockIconURI: iconURI,
             blocks: [
                 {
                     opcode: 'getTranslate',
