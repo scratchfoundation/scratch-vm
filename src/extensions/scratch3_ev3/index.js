@@ -968,7 +968,7 @@ class Scratch3Ev3Blocks {
                         },
                         POWER: {
                             type: ArgumentType.NUMBER,
-                            defaultValue: 50
+                            defaultValue: 100
                         }
                     }
                 },

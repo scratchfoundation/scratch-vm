@@ -154,7 +154,7 @@ class WeDo2Motor {
          * @type {number}
          * @private
          */
-        this._power = 50;
+        this._power = 100;
 
         /**
          * Is this motor currently moving?
@@ -941,7 +941,7 @@ class Scratch3WeDo2Blocks {
                         },
                         POWER: {
                             type: ArgumentType.NUMBER,
-                            defaultValue: 50
+                            defaultValue: 100
                         }
                     }
                 },
