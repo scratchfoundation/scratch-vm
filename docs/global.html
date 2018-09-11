@@ -5017,74 +5017,6 @@ Generator stores the global variable mapping in a closure</p>
 
 
 <div class="description">
-    <p>Icon to be displayed at the left edge of each extension block and in the extension menu.</p>
-</div>
-
-
-
-    <h5>Type:</h5>
-    <ul>
-        <li>
-            
-<span class="param-type">string</span>
-
-
-        </li>
-    </ul>
-
-
-
-
-
-
-        
-            
-<h4 class="name" id="iconURI"><span class="type-signature">(constant) </span>iconURI<span class="type-signature"> :string</span></h4>
-
-
-
-
-
-<dl class="details">
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-</dl>
-
-
-
-
-
-<div class="description">
     <p>Url of icon to be displayed at the left edge of each extension block.</p>
 </div>
 
@@ -5898,7 +5830,7 @@ LOCAL_THRESHOLD to calculate a new direction value.</p>
 
 
 <div class="description">
-    <p>Url of icon to be displayed in the toolbox menu for the extension category.</p>
+    <p>Icon svg to be displayed in the category menu, encoded as a data URI.</p>
 </div>
 
 
@@ -5966,7 +5898,7 @@ LOCAL_THRESHOLD to calculate a new direction value.</p>
 
 
 <div class="description">
-    <p>Icon svg to be displayed in the category menu, encoded as a data URI.</p>
+    <p>Url of icon to be displayed in the toolbox menu for the extension category.</p>
 </div>
 
 
@@ -17747,6 +17679,225 @@ to a mutated procedure call.</p>
 
     
 
+    <h4 class="name" id="parseScratchObject"><span class="type-signature"></span>parseScratchObject<span class="signature">(object<span class="signature-attributes">non-null</span>, runtime<span class="signature-attributes">non-null</span>, extensions, zip)</span><span class="type-signature"> &rarr; (non-null) {Promise.&lt;<a href="Target.html">Target</a>>}</span></h4>
+
+    
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+<div class="description">
+    <p>Parse a single &quot;Scratch object&quot; and create all its in-memory VM objects.</p>
+</div>
+
+
+
+
+
+
+
+
+
+
+
+    <h5>Parameters:</h5>
+    
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>object</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">object</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"><p>From-JSON &quot;Scratch object:&quot; sprite, stage, watcher.</p></td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>runtime</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type"><a href="Runtime.html">Runtime</a></span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"><p>Runtime object to load all structures into.</p></td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>extensions</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type"><a href="global.html#ImportedExtensionsInfo">ImportedExtensionsInfo</a></span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"><p>(in/out) parsed extension information will be stored here.</p></td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>zip</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">JSZip</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"><p>Sb3 file describing this project (to load assets from)</p></td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<h5>Returns:</h5>
+
+        
+<div class="param-desc">
+    <p>Promise for the target created (stage or sprite), or null for unsupported objects.</p>
+</div>
+
+
+
+<dl class="param-type">
+    <dt>
+        Type
+    </dt>
+    <dd>
+        
+<span class="param-type">Promise.&lt;<a href="Target.html">Target</a>></span>
+
+
+    </dd>
+</dl>
+
+    
+
+
+        
+            
+
+    
+
     <h4 class="name" id="parseScratchObject"><span class="type-signature"></span>parseScratchObject<span class="signature">(object<span class="signature-attributes">non-null</span>, runtime<span class="signature-attributes">non-null</span>, extensions, topLevel, zip<span class="signature-attributes">nullable</span>)</span><span class="type-signature"> &rarr; (non-null) {Promise.&lt;Array.&lt;<a href="Target.html">Target</a>>>}</span></h4>
 
     
@@ -18021,225 +18172,6 @@ TODO: parse the &quot;info&quot; section, especially &quot;savedExtensions&quot;
     <dd>
         
 <span class="param-type">Promise.&lt;Array.&lt;<a href="Target.html">Target</a>>></span>
-
-
-    </dd>
-</dl>
-
-    
-
-
-        
-            
-
-    
-
-    <h4 class="name" id="parseScratchObject"><span class="type-signature"></span>parseScratchObject<span class="signature">(object<span class="signature-attributes">non-null</span>, runtime<span class="signature-attributes">non-null</span>, extensions, zip)</span><span class="type-signature"> &rarr; (non-null) {Promise.&lt;<a href="Target.html">Target</a>>}</span></h4>
-
-    
-
-
-
-
-<dl class="details">
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-</dl>
-
-
-
-
-
-<div class="description">
-    <p>Parse a single &quot;Scratch object&quot; and create all its in-memory VM objects.</p>
-</div>
-
-
-
-
-
-
-
-
-
-
-
-    <h5>Parameters:</h5>
-    
-
-<table class="params">
-    <thead>
-    <tr>
-        
-        <th>Name</th>
-        
-
-        <th>Type</th>
-
-        
-
-        
-
-        <th class="last">Description</th>
-    </tr>
-    </thead>
-
-    <tbody>
-    
-
-        <tr>
-            
-                <td class="name"><code>object</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">object</span>
-
-
-            
-            </td>
-
-            
-
-            
-
-            <td class="description last"><p>From-JSON &quot;Scratch object:&quot; sprite, stage, watcher.</p></td>
-        </tr>
-
-    
-
-        <tr>
-            
-                <td class="name"><code>runtime</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type"><a href="Runtime.html">Runtime</a></span>
-
-
-            
-            </td>
-
-            
-
-            
-
-            <td class="description last"><p>Runtime object to load all structures into.</p></td>
-        </tr>
-
-    
-
-        <tr>
-            
-                <td class="name"><code>extensions</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type"><a href="global.html#ImportedExtensionsInfo">ImportedExtensionsInfo</a></span>
-
-
-            
-            </td>
-
-            
-
-            
-
-            <td class="description last"><p>(in/out) parsed extension information will be stored here.</p></td>
-        </tr>
-
-    
-
-        <tr>
-            
-                <td class="name"><code>zip</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">JSZip</span>
-
-
-            
-            </td>
-
-            
-
-            
-
-            <td class="description last"><p>Sb3 file describing this project (to load assets from)</p></td>
-        </tr>
-
-    
-    </tbody>
-</table>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-<h5>Returns:</h5>
-
-        
-<div class="param-desc">
-    <p>Promise for the target created (stage or sprite), or null for unsupported objects.</p>
-</div>
-
-
-
-<dl class="param-type">
-    <dt>
-        Type
-    </dt>
-    <dd>
-        
-<span class="param-type">Promise.&lt;<a href="Target.html">Target</a>></span>
 
 
     </dd>
