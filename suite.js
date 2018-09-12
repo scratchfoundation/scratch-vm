@@ -505,107 +505,30 @@ window.download = function (_this) {
 window.onload = function () {
     suite = new BenchSuite();
 
-    suite.add(new BenchFixture({
-        projectId: 130041250,
-        warmUpTime: 0,
-        recordingTime: 2000
-    }));
-
-    suite.add(new BenchFixture({
-        projectId: 130041250,
-        warmUpTime: 4000,
-        recordingTime: 6000
-    }));
-
-    suite.add(new BenchFixture({
-        projectId: 14844969,
-        warmUpTime: 0,
-        recordingTime: 2000
-    }));
-
-    suite.add(new BenchFixture({
-        projectId: 14844969,
-        warmUpTime: 1000,
-        recordingTime: 6000
-    }));
-
-    suite.add(new BenchFixture({
-        projectId: 173918262,
-        warmUpTime: 0,
-        recordingTime: 5000
-    }));
-
-    suite.add(new BenchFixture({
-        projectId: 173918262,
-        warmUpTime: 5000,
-        recordingTime: 5000
-    }));
-
-    suite.add(new BenchFixture({
-        projectId: 155128646,
-        warmUpTime: 0,
-        recordingTime: 5000
-    }));
-
-    suite.add(new BenchFixture({
-        projectId: 155128646,
-        warmUpTime: 5000,
-        recordingTime: 5000
-    }));
-
-    suite.add(new BenchFixture({
-        projectId: 89811578,
-        warmUpTime: 0,
-        recordingTime: 5000
-    }));
-
-    suite.add(new BenchFixture({
-        projectId: 89811578,
-        warmUpTime: 5000,
-        recordingTime: 5000
-    }));
-
-    suite.add(new BenchFixture({
-        projectId: 139193539,
-        warmUpTime: 0,
-        recordingTime: 5000
-    }));
-
-    suite.add(new BenchFixture({
-        projectId: 139193539,
-        warmUpTime: 5000,
-        recordingTime: 5000
-    }));
-
-    // TODO: #1322
-    // Error: Cannot create monitor for target that cannot be found by name
-    // suite.add(new BenchFixture({
-    //     projectId: 187694931,
-    //     warmUpTime: 0,
-    //     recordingTime: 5000
-    // }));
-    //
-    // suite.add(new BenchFixture({
-    //     projectId: 187694931,
-    //     warmUpTime: 5000,
-    //     recordingTime: 5000
-    // }));
-
-    const standard = projectId => {
+    const add = (projectId, warmUp = 0, recording = 5000) => {
         suite.add(new BenchFixture({
             projectId,
-            warmUpTime: 0,
-            recordingTime: 5000
+            warmUpTime: warmUp,
+            recordingTime: recording
         }));
-
-        suite.add(new BenchFixture({
-            projectId,
-            warmUpTime: 5000,
-            recordingTime: 5000
-        }));
-
     };
 
+    const standard = projectId => {
+        add(projectId, 0, 5000);
+        add(projectId, 5000, 5000);
+    };
+
+    add(130041250, 0, 2000); // floating blocks
+    add(130041250, 4000, 6000);
+
+    add(14844969, 0, 2000); // scratch cats
+    add(14844969, 1000, 6000);
+
+    standard(173918262); // bouncy heros
+    standard(155128646); // stacky build
+    standard(89811578); // solar system
+    standard(139193539); // pixel art maker
+    standard(187694931); // spiralgraph
     standard(219313833); // sensing_touching benchmark
     standard(236115215); // touching color benchmark
     standard(238750909); // bob ross painting (heavy pen stamp)
