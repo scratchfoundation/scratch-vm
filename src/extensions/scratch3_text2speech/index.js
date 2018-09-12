@@ -51,11 +51,6 @@ const MONSTER_ID = 'MONSTER';
 const KITTEN_ID = 'KITTEN';
 
 /**
- * An id for one of the voices.
- */
-const PUPPY_ID = 'PUPPY';
-
-/**
  * Class for the text2speech blocks.
  * @constructor
  */
@@ -132,15 +127,6 @@ class Scratch3SpeakBlocks {
                     description: 'A baby cat.'
                 }),
                 gender: 'female',
-                playbackRate: 1.4
-            },
-            [PUPPY_ID]: {
-                name: formatMessage({
-                    id: 'text2speech.puppy',
-                    default: 'puppy',
-                    description: 'A baby dog.'
-                }),
-                gender: 'male',
                 playbackRate: 1.4
             }
         };
@@ -312,24 +298,14 @@ class Scratch3SpeakBlocks {
         const gender = this.VOICE_INFO[state.voiceId].gender;
         const playbackRate = this.VOICE_INFO[state.voiceId].playbackRate;
 
-        let locale = this.getViewerLanguageCode();
-
         // @todo localize this?
         if (state.voiceId === KITTEN_ID) {
             words = words.replace(/\w+/g, 'meow');
         }
 
-        // @todo localize this?
-        if (state.voiceId === PUPPY_ID) {
-            words = words.replace(/\w+/g, 'bark');
-            words = words.split(' ').map(() => ['bark', 'woof', 'ruff'][Math.floor(Math.random() * 3)])
-                .join(' ');
-            locale = 'en-GB';
-        }
-
         // Build up URL
         let path = `${SERVER_HOST}/synth`;
-        path += `?locale=${locale}`;
+        path += `?locale=${this.getViewerLanguageCode()}`;
         path += `&gender=${gender}`;
         path += `&text=${encodeURI(words.substring(0, 128))}`;
 
