@@ -805,8 +805,12 @@ class Runtime extends EventEmitter {
             }
         }
 
-        // Add icon to the bottom right of a loop block
-        if (blockInfo.blockType === BlockType.LOOP) {
+        if (blockInfo.blockType === BlockType.REPORTER) {
+            if (!blockInfo.disableMonitor && context.inputList.length === 0) {
+                blockJSON.checkboxInFlyout = true;
+            }
+        } else if (blockInfo.blockType === BlockType.LOOP) {
+            // Add icon to the bottom right of a loop block
             blockJSON[`lastDummyAlign${outLineNum}`] = 'RIGHT';
             blockJSON[`message${outLineNum}`] = '%1';
             blockJSON[`args${outLineNum}`] = [{
@@ -1849,6 +1853,31 @@ class Runtime extends EventEmitter {
             varNames = varNames.concat(targetVarNames);
         }
         return varNames;
+    }
+
+    /**
+     * Get the label or label function for an opcode
+     * @param {string} extendedOpcode - the opcode you want a label for
+     * @return {object} - object with label and category
+     * @property {string} category - the category for this opcode
+     * @property {Function} [labelFn] - function to generate the label for this opcode
+     * @property {string} [label] - the label for this opcode if `labelFn` is absent
+     */
+    getLabelForOpcode (extendedOpcode) {
+        const [category, opcode] = StringUtil.splitFirst(extendedOpcode, '_');
+        if (!(category && opcode)) return;
+
+        const categoryInfo = this._blockInfo.find(ci => ci.id === category);
+        if (!categoryInfo) return;
+
+        const block = categoryInfo.blocks.find(b => b.info.opcode === opcode);
+        if (!block) return;
+
+        // TODO: should this use some other category? Also, we may want to format the label in a locale-specific way.
+        return {
+            category: 'data',
+            label: `${categoryInfo.name}: ${block.info.text}`
+        };
     }
 
     /**
