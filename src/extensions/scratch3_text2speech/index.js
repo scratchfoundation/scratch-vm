@@ -298,8 +298,6 @@ class Scratch3SpeakBlocks {
         const gender = this.VOICE_INFO[state.voiceId].gender;
         const playbackRate = this.VOICE_INFO[state.voiceId].playbackRate;
 
-        let locale = this.getViewerLanguageCode();
-
         // @todo localize this?
         if (state.voiceId === KITTEN_ID) {
             words = words.replace(/\w+/g, 'meow');
@@ -307,7 +305,7 @@ class Scratch3SpeakBlocks {
 
         // Build up URL
         let path = `${SERVER_HOST}/synth`;
-        path += `?locale=${locale}`;
+        path += `?locale=${this.getViewerLanguageCode()}`;
         path += `&gender=${gender}`;
         path += `&text=${encodeURI(words)}`;
 
