@@ -1837,7 +1837,7 @@ class Runtime extends EventEmitter {
      * @property {string} [label] - the label for this opcode if `labelFn` is absent
      */
     getLabelForOpcode (extendedOpcode) {
-        const [category, opcode] = extendedOpcode.split('_');
+        const [category, opcode] = StringUtil.splitFirst(extendedOpcode, '_');
         if (!(category && opcode)) return;
 
         const categoryInfo = this._blockInfo.find(ci => ci.id === category);
