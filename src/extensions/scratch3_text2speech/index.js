@@ -331,7 +331,7 @@ class Scratch3SpeakBlocks {
         let path = `${SERVER_HOST}/synth`;
         path += `?locale=${locale}`;
         path += `&gender=${gender}`;
-        path += `&text=${encodeURI(words)}`;
+        path += `&text=${encodeURI(words.substring(0, 128))}`;
 
         // Perform HTTP request to get audio file
         return new Promise(resolve => {
