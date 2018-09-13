@@ -43,6 +43,9 @@ const CORE_EXTENSIONS = [
 const WORKSPACE_X_SCALE = 1.5;
 const WORKSPACE_Y_SCALE = 2.2;
 
+// Split on %n, %b, %s creating an array of those members of the original string.
+const PROC_CODE_SPLIT_RE = /(?=[^\\]%[nbs])/;
+
 /**
  * Convert a Scratch 2.0 procedure string (e.g., "my_procedure %s %b %n")
  * into an argument map. This allows us to provide the expected inputs
@@ -57,7 +60,7 @@ const parseProcedureArgMap = function (procCode) {
     const INPUT_PREFIX = 'input';
     let inputCount = 0;
     // Split by %n, %b, %s.
-    const parts = procCode.split(/(?=[^\\]%[nbs])/);
+    const parts = procCode.split(PROC_CODE_SPLIT_RE);
     for (let i = 0; i < parts.length; i++) {
         const part = parts[i].trim();
         if (part.substring(0, 1) === '%') {
@@ -117,6 +120,7 @@ const flatten = function (blocks) {
  * @param {Function} addBroadcastMsg function to update broadcast message name map
  * @param {Function} getVariableId function to retreive a variable's ID based on name
  * @param {ImportedExtensionsInfo} extensions - (in/out) parsed extension information will be stored here.
+ * @param {ParseState} parseState - info on the state of parsing beyond the current block.
  * @param {object<int, Comment>} comments - Comments from sb2 project that need to be attached to blocks.
  * They are indexed in this object by the sb2 flattened block list index indicating
  * which block they should attach to.
@@ -125,14 +129,15 @@ const flatten = function (blocks) {
  * @return {Array<Array.<object>|int>} Tuple where first item is the Scratch VM-format block list, and
  * second item is the updated comment index
  */
-const parseBlockList = function (blockList, addBroadcastMsg, getVariableId, extensions, comments, commentIndex) {
+const parseBlockList = function (blockList, addBroadcastMsg, getVariableId, extensions, parseState, comments,
+    commentIndex) {
     const resultingList = [];
     let previousBlock = null; // For setting next.
     for (let i = 0; i < blockList.length; i++) {
         const block = blockList[i];
         // eslint-disable-next-line no-use-before-define
         const parsedBlockAndComments = parseBlock(block, addBroadcastMsg, getVariableId,
-            extensions, comments, commentIndex);
+            extensions, parseState, comments, commentIndex);
         const parsedBlock = parsedBlockAndComments[0];
         // Update commentIndex
         commentIndex = parsedBlockAndComments[1];
@@ -168,8 +173,9 @@ const parseScripts = function (scripts, blocks, addBroadcastMsg, getVariableId, 
         const scriptX = script[0];
         const scriptY = script[1];
         const blockList = script[2];
+        const parseState = {};
         const [parsedBlockList, newCommentIndex] = parseBlockList(blockList, addBroadcastMsg, getVariableId, extensions,
-            comments, scriptIndexForComment);
+            parseState, comments, scriptIndexForComment);
         scriptIndexForComment = newCommentIndex;
         if (parsedBlockList[0]) {
             parsedBlockList[0].x = scriptX * WORKSPACE_X_SCALE;
@@ -269,6 +275,7 @@ const parseMonitorObject = (object, runtime, targets, extensions) => {
         null, // `addBroadcastMsg`, not needed for monitor blocks.
         getVariableId,
         extensions,
+        {},
         null, // `comments`, not needed for monitor blocks
         null // `commentIndex`, not needed for monitor blocks
     );
@@ -744,6 +751,7 @@ const specMapBlock = function (block) {
  * @param {Function} addBroadcastMsg function to update broadcast message name map
  * @param {Function} getVariableId function to retrieve a variable's ID based on name
  * @param {ImportedExtensionsInfo} extensions - (in/out) parsed extension information will be stored here.
+ * @param {ParseState} parseState - info on the state of parsing beyond the current block.
  * @param {object<int, Comment>} comments - Comments from sb2 project that need to be attached to blocks.
  * They are indexed in this object by the sb2 flattened block list index indicating
  * which block they should attach to.
@@ -752,7 +760,7 @@ const specMapBlock = function (block) {
  * @return {Array.<object|int>} Tuple where first item is the Scratch VM-format block (or null if unsupported object),
  * and second item is the updated comment index (after this block and its children are parsed)
  */
-const parseBlock = function (sb2block, addBroadcastMsg, getVariableId, extensions, comments, commentIndex) {
+const parseBlock = function (sb2block, addBroadcastMsg, getVariableId, extensions, parseState, comments, commentIndex) {
     const commentsForParsedBlock = (comments && typeof commentIndex === 'number' && !isNaN(commentIndex)) ?
         comments[commentIndex] : null;
     const blockMetadata = specMapBlock(sb2block);
@@ -832,11 +840,11 @@ const parseBlock = function (sb2block, addBroadcastMsg, getVariableId, extension
                 if (typeof providedArg[0] === 'object' && providedArg[0]) {
                     // Block list occupies the input.
                     [innerBlocks, commentIndex] = parseBlockList(providedArg, addBroadcastMsg, getVariableId,
-                        extensions, comments, commentIndex);
+                        extensions, parseState, comments, commentIndex);
                 } else {
                     // Single block occupies the input.
                     const parsedBlockDesc = parseBlock(providedArg, addBroadcastMsg, getVariableId, extensions,
-                        comments, commentIndex);
+                        parseState, comments, commentIndex);
                     innerBlocks = [parsedBlockDesc[0]];
                     // Update commentIndex
                     commentIndex = parsedBlockDesc[1];
@@ -1069,6 +1077,13 @@ const parseBlock = function (sb2block, addBroadcastMsg, getVariableId, extension
                 children: []
             }
         }];
+
+        // Store procedure information in case a getParam is recorded as a "r"
+        // reporter when it should be a "b" reporter.
+        parseState.procedure = {
+            proccode: procData[0],
+            argumentnames: JSON.stringify(procData[1])
+        };
     } else if (oldOpcode === 'call') {
         // Mutation for procedure call:
         // string for proc code (e.g., "abc %n %b %s").
@@ -1079,8 +1094,36 @@ const parseBlock = function (sb2block, addBroadcastMsg, getVariableId, extension
             argumentids: JSON.stringify(parseProcedureArgIds(sb2block[1]))
         };
     } else if (oldOpcode === 'getParam') {
+        let returnCode = sb2block[2];
+
+        if (parseState.procedure) {
+            // Parse proccode and argumentnames into a helpful arguments
+            // structure.
+            if (!parseState.procedure.arguments) {
+                parseState.procedure.arguments = {};
+
+                const argumentnames = JSON.parse(parseState.procedure.argumentnames);
+                const argumentcodes = parseState.procedure.proccode
+                    .split(PROC_CODE_SPLIT_RE)
+                    .filter(code => code.trim().startsWith('%'));
+                for (let i = 0; i < argumentnames.length; i++) {
+                    parseState.procedure.arguments[argumentnames[i]] = {
+                        name: argumentnames[i],
+                        code: argumentcodes[i].trim()[1]
+                    };
+                }
+            }
+
+            const value = activeBlock.fields.VALUE.value;
+            const arg = parseState.procedure.arguments[value];
+            // Ensure returnCode is "b" if the argument is a boolean.
+            if (arg && arg.code === 'b' && returnCode !== 'b') {
+                returnCode = 'b';
+            }
+        }
+
         // Assign correct opcode based on the block shape.
-        switch (sb2block[2]) {
+        switch (returnCode) {
         case 'r':
             activeBlock.opcode = 'argument_reporter_string_number';
             break;
