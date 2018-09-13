@@ -44,16 +44,6 @@ const finalResponseTimeoutDurationMs = 3000;
  */
 const listenAndWaitBlockTimeoutMs = 10000;
 
-/**
- * The start and stop sounds, loaded as static assets.
- * @type {object}
- */
-let assetData = {};
-try {
-    assetData = require('./manifest');
-} catch (e) {
-    // Non-webpack environment, don't worry about assets.
-}
 
 class Scratch3SpeechBlocks {
     constructor (runtime) {
@@ -156,20 +146,6 @@ class Scratch3SpeechBlocks {
          */
         this._audioPromise = null;
 
-        /**
-         * Player for sound to indicate that listending has started.
-         * @type {SoundPlayer}
-         * @private
-         */
-        this._startSoundPlayer = null;
-
-        /**
-         * Player for for sound to indicate that listending has ended.
-         * @type {SoundPlayer}
-         * @private
-         */
-        this._endSoundPlayer = null;
-
 
         /**
          * Diff Match Patch is used to do some fuzzy matching of the transcription results
@@ -191,67 +167,6 @@ class Scratch3SpeechBlocks {
         this.runtime.on('PROJECT_STOP_ALL', this._resetListening.bind(this));
         this.runtime.on('PROJECT_START', this._resetEdgeTriggerUtterance.bind(this));
 
-        // Load in the start and stop listening indicator sounds.
-        this._loadUISounds();
-    }
-
-    /**
-     * Load the UI sounds played when listening starts and stops.
-     * @private
-     */
-    _loadUISounds () {
-        const startSoundBuffer = assetData['speech-rec-start.mp3'];
-        this._decodeSound(startSoundBuffer).then(player => {
-            this._startSoundPlayer = player;
-        });
-
-        const endSoundBuffer = assetData['speech-rec-end.mp3'];
-        this._decodeSound(endSoundBuffer).then(player => {
-            this._endSoundPlayer = player;
-        });
-    }
-
-    /**
-     * Decode a sound and return a promise with the audio buffer.
-     * @param  {ArrayBuffer} soundBuffer - a buffer containing the encoded audio.
-     * @return {Promise} - a promise which will resolve once the sound has decoded.
-     * @private
-     */
-    _decodeSound (soundBuffer) {
-        const engine = this.runtime.audioEngine;
-
-        if (!engine) {
-            return Promise.reject(new Error('No Audio Engine Detected'));
-        }
-
-        // Check for newer promise-based API
-        return engine.decodeSoundPlayer({data: {buffer: soundBuffer}});
-    }
-
-    /**
-     * Play the given sound.
-     * @param {SoundPlayer} player The audio buffer to play.
-     * @returns {Promise} A promise that resoloves when the sound is done playing.
-     * @private
-     */
-    _playSound (player) {
-        if (this.runtime.audioEngine === null) return;
-        if (player.isPlaying) {
-            // Take the internal player state and create a new player with it.
-            // `.play` does this internally but then instructs the sound to
-            // stop.
-            player.take();
-        }
-
-        const engine = this.runtime.audioEngine;
-        const chain = engine.createEffectChain();
-        player.connect(chain);
-        player.play();
-        return new Promise(resolve => {
-            player.once('stop', () => {
-                resolve();
-            });
-        });
     }
 
     /**
@@ -344,9 +259,7 @@ class Scratch3SpeechBlocks {
     _resolveSpeechPromises () {
         for (let i = 0; i < this._speechPromises.length; i++) {
             const resFn = this._speechPromises[i];
-            // Boolean passed tells whether to play the end sound or not. Only play it for the first one, otherwise,
-            // we get the end sound played simultaneously which results in it being quite loud.
-            resFn(i === 0);
+            resFn();
         }
         this._speechPromises = [];
     }
@@ -738,34 +651,21 @@ class Scratch3SpeechBlocks {
     }
 
     /**
-     * Start the listening process if it isn't already in progress, playing a sound to indicate
-     * when it starts and stops.
+     * Start the listening process if it isn't already in progress.
      * @return {Promise} A promise that will resolve when listening is complete.
      */
     listenAndWait () {
-        // TODO: Look into the timing of when to start the sound.  There currently seems
-        // to be some lag between when the sound starts and when the socket message
-        // callback is received. Perhaps we should play the sound after the socket is setup.
-        // TODO: Question - Should we only play the sound if listening isn't already in progress?
-        return this._playSound(this._startSoundPlayer).then(() => {
-            this._phraseList = this._scanBlocksForPhraseList();
-            this._resetEdgeTriggerUtterance();
-            
-            const endSound = (shouldPlayEndSound => {
-                if (shouldPlayEndSound) {
-                    this._playSound(this._endSoundPlayer);
-                }
-            });
-
-            const speechPromise = new Promise(resolve => {
-                const listeningInProgress = this._speechPromises.length > 0;
-                this._speechPromises.push(resolve);
-                if (!listeningInProgress) {
-                    this._startListening();
-                }
-            });
-            return speechPromise.then(endSound);
+        this._phraseList = this._scanBlocksForPhraseList();
+        this._resetEdgeTriggerUtterance();
+        
+        const speechPromise = new Promise(resolve => {
+            const listeningInProgress = this._speechPromises.length > 0;
+            this._speechPromises.push(resolve);
+            if (!listeningInProgress) {
+                this._startListening();
+            }
         });
+        return speechPromise;
     }
 
     /**
