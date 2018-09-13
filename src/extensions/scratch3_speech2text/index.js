@@ -45,7 +45,7 @@ const finalResponseTimeoutDurationMs = 3000;
 const listenAndWaitBlockTimeoutMs = 10000;
 
 
-class Scratch3SpeechBlocks {
+class Scratch3Speech2TextBlocks {
     constructor (runtime) {
         /**
          * The runtime instantiating this block package.
@@ -278,7 +278,7 @@ class Scratch3SpeechBlocks {
         // Give it a couple seconds to response before giving up and assuming nothing else will come back.
         this._speechFinalResponseTimeout = setTimeout(this._resetListening, finalResponseTimeoutDurationMs);
     }
-    
+
     /**
      * Decides whether to keep a given transcirption result.
      * @param {number} fuzzyMatchIndex Index of the fuzzy match or -1 if there is no match.
@@ -369,7 +369,7 @@ class Scratch3SpeechBlocks {
     _processTranscriptionResult (result) {
         log.info(`Got result: ${JSON.stringify(result)}`);
         const transcriptionResult = this._normalizeText(result.alternatives[0].transcript);
-  
+
         // Waiting for an exact match is not satisfying.  It makes it hard to catch
         // things like homonyms or things that sound similar "let us" vs "lettuce".  Using the fuzzy matching helps
         // more aggressively match the phrases that are in the "When I hear" hat blocks.
@@ -387,7 +387,7 @@ class Scratch3SpeechBlocks {
 
         // We're done listening so resolove all the promises and reset everying so we're ready for next time.
         this._resetListening();
-        
+
         // We got results so clear out the timeouts.
         if (this._speechTimeoutId) {
             clearTimeout(this._speechTimeoutId);
@@ -416,7 +416,7 @@ class Scratch3SpeechBlocks {
         this._processTranscriptionResult(result);
     }
 
-  
+
     /**
      * Decide whether the pattern given matches the text. Uses fuzzy matching
      * @param {string} pattern The pattern to look for.  Usually this is the transcription result
@@ -598,10 +598,10 @@ class Scratch3SpeechBlocks {
      */
     getInfo () {
         return {
-            id: 'speech',
+            id: 'speech2text',
             name: formatMessage({
                 id: 'speech.extensionName',
-                default: 'Google Speech',
+                default: 'Speech to Text',
                 description: 'Name of extension that adds speech recognition blocks. Do Not translate Google.'
             }),
             menuIconURI: menuIconURI,
@@ -657,7 +657,7 @@ class Scratch3SpeechBlocks {
     listenAndWait () {
         this._phraseList = this._scanBlocksForPhraseList();
         this._resetEdgeTriggerUtterance();
-        
+
         const speechPromise = new Promise(resolve => {
             const listeningInProgress = this._speechPromises.length > 0;
             this._speechPromises.push(resolve);
@@ -685,4 +685,4 @@ class Scratch3SpeechBlocks {
         return this._currentUtterance;
     }
 }
-module.exports = Scratch3SpeechBlocks;
+module.exports = Scratch3Speech2TextBlocks;

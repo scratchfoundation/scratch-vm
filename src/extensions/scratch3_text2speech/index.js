@@ -54,7 +54,7 @@ const KITTEN_ID = 'KITTEN';
  * Class for the text2speech blocks.
  * @constructor
  */
-class Scratch3SpeakBlocks {
+class Scratch3Text2SpeechBlocks {
     constructor (runtime) {
         /**
          * The runtime instantiating this block package.
@@ -156,10 +156,10 @@ class Scratch3SpeakBlocks {
      * @private
      */
     _getState (target) {
-        let state = target.getCustomState(Scratch3SpeakBlocks.STATE_KEY);
+        let state = target.getCustomState(Scratch3Text2SpeechBlocks.STATE_KEY);
         if (!state) {
-            state = Clone.simple(Scratch3SpeakBlocks.DEFAULT_TEXT2SPEECH_STATE);
-            target.setCustomState(Scratch3SpeakBlocks.STATE_KEY, state);
+            state = Clone.simple(Scratch3Text2SpeechBlocks.DEFAULT_TEXT2SPEECH_STATE);
+            target.setCustomState(Scratch3Text2SpeechBlocks.STATE_KEY, state);
         }
         return state;
     }
@@ -173,9 +173,9 @@ class Scratch3SpeakBlocks {
      */
     _onTargetCreated (newTarget, sourceTarget) {
         if (sourceTarget) {
-            const state = sourceTarget.getCustomState(Scratch3SpeakBlocks.STATE_KEY);
+            const state = sourceTarget.getCustomState(Scratch3Text2SpeechBlocks.STATE_KEY);
             if (state) {
-                newTarget.setCustomState(Scratch3SpeakBlocks.STATE_KEY, Clone.simple(state));
+                newTarget.setCustomState(Scratch3Text2SpeechBlocks.STATE_KEY, Clone.simple(state));
             }
         }
     }
@@ -186,7 +186,7 @@ class Scratch3SpeakBlocks {
     getInfo () {
         return {
             id: 'text2speech',
-            name: 'Text-to-Speech',
+            name: 'Text to Speech',
             menuIconURI: '', // @todo Add the final icons.
             blockIconURI: '',
             blocks: [
@@ -352,4 +352,4 @@ class Scratch3SpeakBlocks {
         });
     }
 }
-module.exports = Scratch3SpeakBlocks;
+module.exports = Scratch3Text2SpeechBlocks;
