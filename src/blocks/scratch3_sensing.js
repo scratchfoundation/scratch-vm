@@ -45,6 +45,14 @@ class Scratch3SensingBlocks {
     }
 
     /**
+     * The limit of askAndWait answer.
+     * @const {number}
+     */
+    static get ANSWER_LIMIT () {
+        return 400;
+    }
+
+    /**
      * Retrieve the block primitives implemented by this package.
      * @return {object.<string, Function>} Mapping of opcode to Function.
      */
@@ -94,7 +102,8 @@ class Scratch3SensingBlocks {
     }
 
     _onAnswer (answer) {
-        this._answer = answer;
+        const answerLimit = Scratch3SensingBlocks.ANSWER_LIMIT;
+        this._answer = answer.substr(0, answerLimit);
         const questionObj = this._questionList.shift();
         if (questionObj) {
             const [_question, resolve, target, wasVisible, wasStage] = questionObj;
