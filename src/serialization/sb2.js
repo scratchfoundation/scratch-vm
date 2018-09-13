@@ -70,6 +70,8 @@ const parseProcedureArgMap = function (procCode) {
                 arg.inputOp = 'math_number';
             } else if (argType === 's') {
                 arg.inputOp = 'text';
+            } else if (argType === 'b') {
+                arg.inputOp = 'boolean';
             }
             argMap.push(arg);
         }
@@ -865,6 +867,11 @@ const parseBlock = function (sb2block, addBroadcastMsg, getVariableId, extension
             }
             // Generate a shadow block to occupy the input.
             if (!expectedArg.inputOp) {
+                // Undefined inputOp. inputOp should always be defined for inputs.
+                log.warn(`Unknown input operation for input ${expectedArg.inputName} of opcode ${activeBlock.opcode}.`);
+                continue;
+            }
+            if (expectedArg.inputOp === 'boolean' || expectedArg.inputOp === 'substack') {
                 // No editable shadow input; e.g., for a boolean.
                 continue;
             }
@@ -1082,14 +1089,7 @@ const parseBlock = function (sb2block, addBroadcastMsg, getVariableId, extension
         let returnCode = sb2block[2];
 
         // Ensure the returnCode is "b" if used in a boolean input.
-        if (parentExpectedArg && (
-            // Used as a CONDITION input like for control_if.
-            parentExpectedArg.inputName === 'CONDITION' ||
-            // Used as a procedure call boolean input.
-            (
-                parentExpectedArg.inputName.startsWith('input') && !parentExpectedArg.inputOp
-            )
-        ) && returnCode !== 'b') {
+        if (parentExpectedArg && parentExpectedArg.inputOp === 'boolean' && returnCode !== 'b') {
             returnCode = 'b';
         }
 

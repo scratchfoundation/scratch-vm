@@ -803,6 +803,7 @@ const specMap = {
             },
             {
                 type: 'input',
+                inputOp: 'substack',
                 inputName: 'SUBSTACK'
             }
         ]
@@ -812,6 +813,7 @@ const specMap = {
         argMap: [
             {
                 type: 'input',
+                inputOp: 'substack',
                 inputName: 'SUBSTACK'
             }
         ]
@@ -821,10 +823,12 @@ const specMap = {
         argMap: [
             {
                 type: 'input',
+                inputOp: 'boolean',
                 inputName: 'CONDITION'
             },
             {
                 type: 'input',
+                inputOp: 'substack',
                 inputName: 'SUBSTACK'
             }
         ]
@@ -834,14 +838,17 @@ const specMap = {
         argMap: [
             {
                 type: 'input',
+                inputOp: 'boolean',
                 inputName: 'CONDITION'
             },
             {
                 type: 'input',
+                inputOp: 'substack',
                 inputName: 'SUBSTACK'
             },
             {
                 type: 'input',
+                inputOp: 'substack',
                 inputName: 'SUBSTACK2'
             }
         ]
@@ -851,6 +858,7 @@ const specMap = {
         argMap: [
             {
                 type: 'input',
+                inputOp: 'boolean',
                 inputName: 'CONDITION'
             }
         ]
@@ -860,10 +868,12 @@ const specMap = {
         argMap: [
             {
                 type: 'input',
+                inputOp: 'boolean',
                 inputName: 'CONDITION'
             },
             {
                 type: 'input',
+                inputOp: 'substack',
                 inputName: 'SUBSTACK'
             }
         ]
@@ -873,10 +883,12 @@ const specMap = {
         argMap: [
             {
                 type: 'input',
+                inputOp: 'boolean',
                 inputName: 'CONDITION'
             },
             {
                 type: 'input',
+                inputOp: 'substack',
                 inputName: 'SUBSTACK'
             }
         ]
@@ -895,6 +907,7 @@ const specMap = {
             },
             {
                 type: 'input',
+                inputOp: 'substack',
                 inputName: 'SUBSTACK'
             }
         ]
@@ -948,6 +961,7 @@ const specMap = {
         argMap: [
             {
                 type: 'input',
+                inputOp: 'substack',
                 inputName: 'SUBSTACK'
             }
         ]
@@ -1255,10 +1269,12 @@ const specMap = {
         argMap: [
             {
                 type: 'input',
+                inputOp: 'boolean',
                 inputName: 'OPERAND1'
             },
             {
                 type: 'input',
+                inputOp: 'boolean',
                 inputName: 'OPERAND2'
             }
         ]
@@ -1268,10 +1284,12 @@ const specMap = {
         argMap: [
             {
                 type: 'input',
+                inputOp: 'boolean',
                 inputName: 'OPERAND1'
             },
             {
                 type: 'input',
+                inputOp: 'boolean',
                 inputName: 'OPERAND2'
             }
         ]
@@ -1281,6 +1299,7 @@ const specMap = {
         argMap: [
             {
                 type: 'input',
+                inputOp: 'boolean',
                 inputName: 'OPERAND'
             }
         ]
