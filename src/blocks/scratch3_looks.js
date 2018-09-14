@@ -1,4 +1,5 @@
 const Cast = require('../util/cast');
+const MathUtil = require('../util/math-util.js');
 const Clone = require('../util/clone');
 const RenderedTarget = require('../sprites/rendered-target');
 const uid = require('../util/uid');
@@ -294,7 +295,7 @@ class Scratch3LooksBlocks {
                     this._updateBubble(target, 'say', '');
                 }
                 resolve();
-            }, 1000 * args.SECS);
+            }, MathUtil.clamp(1000 * args.SECS, 0, Math.pow(2, 31) - 1)); // setTimeout only supports up to 2^31 - 1
         });
     }
 
@@ -314,7 +315,7 @@ class Scratch3LooksBlocks {
                     this._updateBubble(target, 'think', '');
                 }
                 resolve();
-            }, 1000 * args.SECS);
+            }, MathUtil.clamp(1000 * args.SECS, 0, Math.pow(2, 31) - 1)); // setTimeout only supports up to 2^31 - 1
         });
     }
 
