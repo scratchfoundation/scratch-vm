@@ -88,6 +88,7 @@ class Scratch3SoundBlocks {
         if (!soundState) {
             soundState = Clone.simple(Scratch3SoundBlocks.DEFAULT_SOUND_STATE);
             target.setCustomState(Scratch3SoundBlocks.STATE_KEY, soundState);
+            target.soundEffects = soundState.effects;
         }
         return soundState;
     }
@@ -132,25 +133,26 @@ class Scratch3SoundBlocks {
 
     getMonitored () {
         return {
-            sound_volume: {}
+            sound_volume: {
+                getId: () => 'volume'
+            }
         };
     }
 
     playSound (args, util) {
-        const index = this._getSoundIndex(args.SOUND_MENU, util);
-        if (index >= 0) {
-            const soundId = util.target.sprite.sounds[index].soundId;
-            if (util.target.audioPlayer === null) return;
-            util.target.audioPlayer.playSound(soundId);
-        }
+        // Don't return the promise, it's the only difference for AndWait
+        this.playSoundAndWait(args, util);
     }
 
     playSoundAndWait (args, util) {
         const index = this._getSoundIndex(args.SOUND_MENU, util);
         if (index >= 0) {
-            const soundId = util.target.sprite.sounds[index].soundId;
-            if (util.target.audioPlayer === null) return;
-            return util.target.audioPlayer.playSound(soundId);
+            const {target} = util;
+            const {sprite} = target;
+            const {soundId} = sprite.sounds[index];
+            if (sprite.soundBank) {
+                return sprite.soundBank.playSound(target, soundId);
+            }
         }
     }
 
@@ -197,16 +199,17 @@ class Scratch3SoundBlocks {
     }
 
     _stopAllSoundsForTarget (target) {
-        if (target.audioPlayer === null) return;
-        target.audioPlayer.stopAllSounds();
+        if (target.sprite.soundBank) {
+            target.sprite.soundBank.stopAllSounds(target);
+        }
     }
 
     setEffect (args, util) {
-        this._updateEffect(args, util, false);
+        return this._updateEffect(args, util, false);
     }
 
     changeEffect (args, util) {
-        this._updateEffect(args, util, true);
+        return this._updateEffect(args, util, true);
     }
 
     _updateEffect (args, util, change) {
@@ -222,20 +225,19 @@ class Scratch3SoundBlocks {
             soundState.effects[effect] = value;
         }
 
-        const effectRange = Scratch3SoundBlocks.EFFECT_RANGE[effect];
-        soundState.effects[effect] = MathUtil.clamp(soundState.effects[effect], effectRange.min, effectRange.max);
+        const {min, max} = Scratch3SoundBlocks.EFFECT_RANGE[effect];
+        soundState.effects[effect] = MathUtil.clamp(soundState.effects[effect], min, max);
 
-        if (util.target.audioPlayer === null) return;
-        util.target.audioPlayer.setEffect(effect, soundState.effects[effect]);
+        this._syncEffectsForTarget(util.target);
+        // Yield until the next tick.
+        return Promise.resolve();
     }
 
     _syncEffectsForTarget (target) {
-        if (!target || !target.audioPlayer) return;
-        const soundState = this._getSoundState(target);
-        for (const effect in soundState.effects) {
-            if (!soundState.effects.hasOwnProperty(effect)) continue;
-            target.audioPlayer.setEffect(effect, soundState.effects[effect]);
-        }
+        if (!target || !target.sprite.soundBank) return;
+        target.soundEffects = this._getSoundState(target).effects;
+
+        target.sprite.soundBank.setEffects(target);
     }
 
     clearEffects (args, util) {
@@ -248,8 +250,7 @@ class Scratch3SoundBlocks {
             if (!soundState.effects.hasOwnProperty(effect)) continue;
             soundState.effects[effect] = 0;
         }
-        if (target.audioPlayer === null) return;
-        target.audioPlayer.clearEffects();
+        this._syncEffectsForTarget(target);
     }
 
     _clearEffectsForAllTargets () {
@@ -262,19 +263,21 @@ class Scratch3SoundBlocks {
 
     setVolume (args, util) {
         const volume = Cast.toNumber(args.VOLUME);
-        this._updateVolume(volume, util);
+        return this._updateVolume(volume, util);
     }
 
     changeVolume (args, util) {
         const volume = Cast.toNumber(args.VOLUME) + util.target.volume;
-        this._updateVolume(volume, util);
+        return this._updateVolume(volume, util);
     }
 
     _updateVolume (volume, util) {
         volume = MathUtil.clamp(volume, 0, 100);
         util.target.volume = volume;
-        if (util.target.audioPlayer === null) return;
-        util.target.audioPlayer.setVolume(util.target.volume);
+        this._syncEffectsForTarget(util.target);
+
+        // Yield until the next tick.
+        return Promise.resolve();
     }
 
     getVolume (args, util) {

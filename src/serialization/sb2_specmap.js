@@ -206,6 +206,45 @@ const specMap = {
         argMap: [
         ]
     },
+    'scrollRight': {
+        opcode: 'motion_scroll_right',
+        argMap: [
+            {
+                type: 'input',
+                inputOp: 'math_number',
+                inputName: 'DISTANCE'
+            }
+        ]
+    },
+    'scrollUp': {
+        opcode: 'motion_scroll_up',
+        argMap: [
+            {
+                type: 'input',
+                inputOp: 'math_number',
+                inputName: 'DISTANCE'
+            }
+        ]
+    },
+    'scrollAlign': {
+        opcode: 'motion_align_scene',
+        argMap: [
+            {
+                type: 'field',
+                fieldName: 'ALIGNMENT'
+            }
+        ]
+    },
+    'xScroll': {
+        opcode: 'motion_xscroll',
+        argMap: [
+        ]
+    },
+    'yScroll': {
+        opcode: 'motion_yscroll',
+        argMap: [
+        ]
+    },
     'say:duration:elapsed:from:': {
         opcode: 'looks_sayforsecs',
         argMap: [
@@ -263,6 +302,11 @@ const specMap = {
     },
     'hide': {
         opcode: 'looks_hide',
+        argMap: [
+        ]
+    },
+    'hideAll': {
+        opcode: 'looks_hideallsprites',
         argMap: [
         ]
     },
@@ -344,6 +388,26 @@ const specMap = {
             }
         ]
     },
+    'changeStretchBy:': {
+        opcode: 'looks_changestretchby',
+        argMap: [
+            {
+                type: 'input',
+                inputOp: 'math_number',
+                inputName: 'CHANGE'
+            }
+        ]
+    },
+    'setStretchTo:': {
+        opcode: 'looks_setstretchto',
+        argMap: [
+            {
+                type: 'input',
+                inputOp: 'math_number',
+                inputName: 'STRETCH'
+            }
+        ]
+    },
     'comeToFront': {
         opcode: 'looks_gotofrontback',
         argMap: [
@@ -360,6 +424,11 @@ const specMap = {
         ]
     },
     'costumeIndex': {
+        opcode: 'looks_costumenumbername',
+        argMap: [
+        ]
+    },
+    'costumeName': {
         opcode: 'looks_costumenumbername',
         argMap: [
         ]
@@ -420,11 +489,11 @@ const specMap = {
         ]
     },
     'playDrum': {
-        opcode: 'music.playDrumForBeats',
+        opcode: 'music_playDrumForBeats',
         argMap: [
             {
                 type: 'input',
-                inputOp: 'music.menu.DRUM',
+                inputOp: 'music_menu_DRUM',
                 inputName: 'DRUM'
             },
             {
@@ -435,7 +504,7 @@ const specMap = {
         ]
     },
     'rest:elapsed:from:': {
-        opcode: 'music.restForBeats',
+        opcode: 'music_restForBeats',
         argMap: [
             {
                 type: 'input',
@@ -445,7 +514,7 @@ const specMap = {
         ]
     },
     'noteOn:duration:elapsed:from:': {
-        opcode: 'music.playNoteForBeats',
+        opcode: 'music_playNoteForBeats',
         argMap: [
             {
                 type: 'input',
@@ -460,11 +529,11 @@ const specMap = {
         ]
     },
     'instrument:': {
-        opcode: 'music.setInstrument',
+        opcode: 'music_setInstrument',
         argMap: [
             {
                 type: 'input',
-                inputOp: 'music.menu.INSTRUMENT',
+                inputOp: 'music_menu_INSTRUMENT',
                 inputName: 'INSTRUMENT'
             }
         ]
@@ -495,7 +564,7 @@ const specMap = {
         ]
     },
     'changeTempoBy:': {
-        opcode: 'music.changeTempo',
+        opcode: 'music_changeTempo',
         argMap: [
             {
                 type: 'input',
@@ -505,7 +574,7 @@ const specMap = {
         ]
     },
     'setTempoTo:': {
-        opcode: 'music.setTempo',
+        opcode: 'music_setTempo',
         argMap: [
             {
                 type: 'input',
@@ -515,32 +584,32 @@ const specMap = {
         ]
     },
     'tempo': {
-        opcode: 'music.getTempo',
+        opcode: 'music_getTempo',
         argMap: [
         ]
     },
     'clearPenTrails': {
-        opcode: 'pen.clear',
+        opcode: 'pen_clear',
         argMap: [
         ]
     },
     'stampCostume': {
-        opcode: 'pen.stamp',
+        opcode: 'pen_stamp',
         argMap: [
         ]
     },
     'putPenDown': {
-        opcode: 'pen.penDown',
+        opcode: 'pen_penDown',
         argMap: [
         ]
     },
     'putPenUp': {
-        opcode: 'pen.penUp',
+        opcode: 'pen_penUp',
         argMap: [
         ]
     },
     'penColor:': {
-        opcode: 'pen.setPenColorToColor',
+        opcode: 'pen_setPenColorToColor',
         argMap: [
             {
                 type: 'input',
@@ -550,7 +619,7 @@ const specMap = {
         ]
     },
     'changePenHueBy:': {
-        opcode: 'pen.changePenHueBy',
+        opcode: 'pen_changePenHueBy',
         argMap: [
             {
                 type: 'input',
@@ -560,7 +629,7 @@ const specMap = {
         ]
     },
     'setPenHueTo:': {
-        opcode: 'pen.setPenHueToNumber',
+        opcode: 'pen_setPenHueToNumber',
         argMap: [
             {
                 type: 'input',
@@ -570,7 +639,7 @@ const specMap = {
         ]
     },
     'changePenShadeBy:': {
-        opcode: 'pen.changePenShadeBy',
+        opcode: 'pen_changePenShadeBy',
         argMap: [
             {
                 type: 'input',
@@ -580,7 +649,7 @@ const specMap = {
         ]
     },
     'setPenShadeTo:': {
-        opcode: 'pen.setPenShadeToNumber',
+        opcode: 'pen_setPenShadeToNumber',
         argMap: [
             {
                 type: 'input',
@@ -590,7 +659,7 @@ const specMap = {
         ]
     },
     'changePenSizeBy:': {
-        opcode: 'pen.changePenSizeBy',
+        opcode: 'pen_changePenSizeBy',
         argMap: [
             {
                 type: 'input',
@@ -600,7 +669,7 @@ const specMap = {
         ]
     },
     'penSize:': {
-        opcode: 'pen.setPenSizeTo',
+        opcode: 'pen_setPenSizeTo',
         argMap: [
             {
                 type: 'input',
@@ -610,16 +679,16 @@ const specMap = {
         ]
     },
     'senseVideoMotion': {
-        opcode: 'videoSensing.videoOn',
+        opcode: 'videoSensing_videoOn',
         argMap: [
             {
                 type: 'input',
-                inputOp: 'videoSensing.menu.ATTRIBUTE',
+                inputOp: 'videoSensing_menu_ATTRIBUTE',
                 inputName: 'ATTRIBUTE'
             },
             {
                 type: 'input',
-                inputOp: 'videoSensing.menu.SUBJECT',
+                inputOp: 'videoSensing_menu_SUBJECT',
                 inputName: 'SUBJECT'
             }
         ]
@@ -655,7 +724,7 @@ const specMap = {
     'whenSensorGreaterThan': ([, sensor]) => {
         if (sensor === 'video motion') {
             return {
-                opcode: 'videoSensing.whenMotionGreaterThan',
+                opcode: 'videoSensing_whenMotionGreaterThan',
                 argMap: [
                     // skip the first arg, since we converted to a video specific sensing block
                     {},
@@ -874,6 +943,15 @@ const specMap = {
         argMap: [
         ]
     },
+    'warpSpeed': {
+        opcode: 'control_all_at_once',
+        argMap: [
+            {
+                type: 'input',
+                inputName: 'SUBSTACK'
+            }
+        ]
+    },
     'touching:': {
         opcode: 'sensing_touchingobject',
         argMap: [
@@ -964,6 +1042,11 @@ const specMap = {
         argMap: [
         ]
     },
+    'isLoud': {
+        opcode: 'sensing_loud',
+        argMap: [
+        ]
+    },
     // 'senseVideoMotion': {
     //     opcode: 'sensing_videoon',
     //     argMap: [
@@ -980,17 +1063,17 @@ const specMap = {
     //     ]
     // },
     'setVideoState': {
-        opcode: 'videoSensing.videoToggle',
+        opcode: 'videoSensing_videoToggle',
         argMap: [
             {
                 type: 'input',
-                inputOp: 'videoSensing.menu.VIDEO_STATE',
+                inputOp: 'videoSensing_menu_VIDEO_STATE',
                 inputName: 'VIDEO_STATE'
             }
         ]
     },
     'setVideoTransparency': {
-        opcode: 'videoSensing.setVideoTransparency',
+        opcode: 'videoSensing_setVideoTransparency',
         argMap: [
             {
                 type: 'input',
@@ -1027,9 +1110,8 @@ const specMap = {
         opcode: 'sensing_current',
         argMap: [
             {
-                type: 'input',
-                inputOp: 'sensing_currentmenu',
-                inputName: 'CURRENTMENU'
+                type: 'field',
+                fieldName: 'CURRENTMENU'
             }
         ]
     },
@@ -1040,6 +1122,11 @@ const specMap = {
     },
     'getUserName': {
         opcode: 'sensing_username',
+        argMap: [
+        ]
+    },
+    'getUserId': {
+        opcode: 'sensing_userid',
         argMap: [
         ]
     },
@@ -1287,6 +1374,18 @@ const specMap = {
             }
         ]
     },
+    // Scratch 2 uses this alternative variable getter opcode only in monitors,
+    // blocks use the `readVariable` opcode above.
+    'getVar:': {
+        opcode: 'data_variable',
+        argMap: [
+            {
+                type: 'field',
+                fieldName: 'VARIABLE',
+                variableType: Variable.SCALAR_TYPE
+            }
+        ]
+    },
     'setVar:to:': {
         opcode: 'data_setvariableto',
         argMap: [
@@ -1522,11 +1621,11 @@ const addExtensionOp = function (sb2Extension, sb2Opcode, blockInfo) {
 const weDo2 = 'LEGO WeDo 2.0';
 
 addExtensionOp(weDo2, 'motorOnFor', {
-    opcode: 'wedo2.motorOnFor',
+    opcode: 'wedo2_motorOnFor',
     argMap: [
         {
             type: 'input',
-            inputOp: 'wedo2.menu.motorID',
+            inputOp: 'wedo2_menu_MOTOR_ID',
             inputName: 'MOTOR_ID'
         },
         {
@@ -1538,33 +1637,33 @@ addExtensionOp(weDo2, 'motorOnFor', {
 });
 
 addExtensionOp(weDo2, 'motorOn', {
-    opcode: 'wedo2.motorOn',
+    opcode: 'wedo2_motorOn',
     argMap: [
         {
             type: 'input',
-            inputOp: 'wedo2.menu.motorID',
+            inputOp: 'wedo2_menu_MOTOR_ID',
             inputName: 'MOTOR_ID'
         }
     ]
 });
 
 addExtensionOp(weDo2, 'motorOff', {
-    opcode: 'wedo2.motorOff',
+    opcode: 'wedo2_motorOff',
     argMap: [
         {
             type: 'input',
-            inputOp: 'wedo2.menu.motorID',
+            inputOp: 'wedo2_menu_MOTOR_ID',
             inputName: 'MOTOR_ID'
         }
     ]
 });
 
 addExtensionOp(weDo2, 'startMotorPower', {
-    opcode: 'wedo2.startMotorPower',
+    opcode: 'wedo2_startMotorPower',
     argMap: [
         {
             type: 'input',
-            inputOp: 'wedo2.menu.motorID',
+            inputOp: 'wedo2_menu_MOTOR_ID',
             inputName: 'MOTOR_ID'
         },
         {
@@ -1576,23 +1675,23 @@ addExtensionOp(weDo2, 'startMotorPower', {
 });
 
 addExtensionOp(weDo2, 'setMotorDirection', {
-    opcode: 'wedo2.setMotorDirection',
+    opcode: 'wedo2_setMotorDirection',
     argMap: [
         {
             type: 'input',
-            inputOp: 'wedo2.menu.motorID',
+            inputOp: 'wedo2_menu_MOTOR_ID',
             inputName: 'MOTOR_ID'
         },
         {
             type: 'input',
-            inputOp: 'wedo2.menu.motorDirection',
-            inputName: 'DIRECTION'
+            inputOp: 'wedo2_menu_MOTOR_DIRECTION',
+            inputName: 'MOTOR_DIRECTION'
         }
     ]
 });
 
 addExtensionOp(weDo2, 'setLED', {
-    opcode: 'wedo2.setLightHue',
+    opcode: 'wedo2_setLightHue',
     argMap: [
         {
             type: 'input',
@@ -1603,7 +1702,7 @@ addExtensionOp(weDo2, 'setLED', {
 });
 
 addExtensionOp(weDo2, 'playNote', {
-    opcode: 'wedo2.playNoteFor',
+    opcode: 'wedo2_playNoteFor',
     argMap: [
         {
             type: 'input',
@@ -1619,11 +1718,11 @@ addExtensionOp(weDo2, 'playNote', {
 });
 
 addExtensionOp(weDo2, 'whenDistance', {
-    opcode: 'wedo2.whenDistance',
+    opcode: 'wedo2_whenDistance',
     argMap: [
         {
             type: 'input',
-            inputOp: 'wedo2.menu.lessMore',
+            inputOp: 'wedo2_menu_OP',
             inputName: 'OP'
         },
         {
@@ -1635,39 +1734,39 @@ addExtensionOp(weDo2, 'whenDistance', {
 });
 
 addExtensionOp(weDo2, 'whenTilted', {
-    opcode: 'wedo2.whenTilted',
+    opcode: 'wedo2_whenTilted',
     argMap: [
         {
             type: 'input',
-            inputOp: 'wedo2.menu.tiltDirectionAny',
-            inputName: 'DIRECTION'
+            inputOp: 'wedo2_menu_TILT_DIRECTION_ANY',
+            inputName: 'TILT_DIRECTION_ANY'
         }
     ]
 });
 
 addExtensionOp(weDo2, 'getDistance', {
-    opcode: 'wedo2.getDistance',
+    opcode: 'wedo2_getDistance',
     argMap: []
 });
 
 addExtensionOp(weDo2, 'isTilted', {
-    opcode: 'wedo2.isTilted',
+    opcode: 'wedo2_isTilted',
     argMap: [
         {
             type: 'input',
-            inputOp: 'wedo2.menu.tiltDirectionAny',
-            inputName: 'DIRECTION'
+            inputOp: 'wedo2_menu_TILT_DIRECTION_ANY',
+            inputName: 'TILT_DIRECTION_ANY'
         }
     ]
 });
 
 addExtensionOp(weDo2, 'getTilt', {
-    opcode: 'wedo2.getTiltAngle',
+    opcode: 'wedo2_getTiltAngle',
     argMap: [
         {
             type: 'input',
-            inputOp: 'wedo2.menu.tiltDirection',
-            inputName: 'DIRECTION'
+            inputOp: 'wedo2_menu_TILT_DIRECTION',
+            inputName: 'TILT_DIRECTION'
         }
     ]
 });

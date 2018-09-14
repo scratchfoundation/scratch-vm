@@ -34,8 +34,8 @@ test('getCostumeNumberName returns 1-indexed costume number', t => {
 test('getCostumeNumberName can return costume name', t => {
     util.target.currentCostume = 0; // This is 0-indexed.
     const args = {NUMBER_NAME: 'name'};
-    const number = blocks.getCostumeNumberName(args, util);
-    t.strictEqual(number, 'first name');
+    const name = blocks.getCostumeNumberName(args, util);
+    t.strictEqual(name, 'first name');
     t.end();
 });
 

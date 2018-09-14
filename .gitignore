@@ -2,7 +2,6 @@
 .DS_Store
 
 # NPM
-package-lock.json
 /node_modules
 npm-*
 
@@ -10,8 +9,9 @@ npm-*
 /.nyc_output
 /coverage
 
-# IDEA
+# Editor
 /.idea
+/.vscode
 
 # Build
 /dist

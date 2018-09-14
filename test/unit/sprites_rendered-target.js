@@ -116,41 +116,45 @@ test('deleteCostume', t => {
     //    Costume 2   =>     Costume 3
     //    Costume 3
     a.setCostume(0);
-    a.deleteCostume(0);
+    const deletedCostume = a.deleteCostume(0);
     t.equals(a.sprite.costumes.length, 2);
     t.equals(a.sprite.costumes[0].id, 2);
     t.equals(a.sprite.costumes[1].id, 3);
     t.equals(a.currentCostume, 0);
+    t.deepEqual(deletedCostume, o1);
 
     //    Costume 1          Costume 1
     // x* Costume 2   =>   * Costume 3
     //    Costume 3
     a.sprite.costumes = [o1, o2, o3];
     a.setCostume(1);
-    a.deleteCostume(1);
+    const deletedCostume2 = a.deleteCostume(1);
     t.equals(a.sprite.costumes.length, 2);
     t.equals(a.sprite.costumes[0].id, 1);
     t.equals(a.sprite.costumes[1].id, 3);
     t.equals(a.currentCostume, 1);
+    t.deepEqual(deletedCostume2, o2);
 
     //    Costume 1          Costume 1
     //    Costume 2   =>   * Costume 2
     // x* Costume 3
     a.sprite.costumes = [o1, o2, o3];
     a.setCostume(2);
-    a.deleteCostume(2);
+    const deletedCostume3 = a.deleteCostume(2);
     t.equals(a.sprite.costumes.length, 2);
     t.equals(a.sprite.costumes[0].id, 1);
     t.equals(a.sprite.costumes[1].id, 2);
     t.equals(a.currentCostume, 1);
+    t.deepEqual(deletedCostume3, o3);
 
     // Refuses to delete only costume
     a.sprite.costumes = [o1];
     a.setCostume(0);
-    a.deleteCostume(0);
+    const noDeletedCostume = a.deleteCostume(0);
     t.equals(a.sprite.costumes.length, 1);
     t.equals(a.sprite.costumes[0].id, 1);
     t.equals(a.currentCostume, 0);
+    t.equal(noDeletedCostume, null);
 
     //   Costume 1          Costume 1
     // x Costume 2          Costume 3
@@ -211,8 +215,9 @@ test('deleteSound', t => {
     const renderer = new FakeRenderer();
     a.renderer = renderer;
 
-    a.deleteSound(0);
+    const firstDeleted = a.deleteSound(0);
     t.deepEqual(a.sprite.sounds, [o2, o3]);
+    t.deepEqual(firstDeleted, o1);
 
     // Allows deleting the only sound
     a.sprite.sounds = [o1];
@@ -302,7 +307,7 @@ test('colorIsTouchingColor', t => {
     t.end();
 });
 
-test('layers', t => {
+test('layers', t => { // TODO this tests fake functionality. Move layering tests into Render.
     const s = new Sprite();
     const r = new Runtime();
     const renderer = new FakeRenderer();
@@ -315,12 +320,31 @@ test('layers', t => {
     a.goBackwardLayers(2);
     t.equals(a.renderer.order, 3);
     a.goToBack();
-    t.equals(a.renderer.order, 1);
+    // Note, there are only sprites in this test, no stage, and the addition
+    // of layer groups, goToBack no longer specifies a minimum order number
+    t.equals(a.renderer.order, 0);
     a.goForwardLayers(1);
-    t.equals(a.renderer.order, 2);
+    t.equals(a.renderer.order, 1);
     o.drawableID = 999;
     a.goBehindOther(o);
     t.equals(a.renderer.order, 1);
+    t.end();
+});
+
+test('getLayerOrder returns result of renderer getDrawableOrder or null if renderer is not attached', t => {
+    const s = new Sprite();
+    const r = new Runtime();
+    const a = new RenderedTarget(s, r);
+
+    // getLayerOrder should return null if there is no renderer attached to the runtime
+    t.equal(a.getLayerOrder(), null);
+
+    const renderer = new FakeRenderer();
+    r.attachRenderer(renderer);
+    const b = new RenderedTarget(s, r);
+
+    t.equal(b.getLayerOrder(), 'stub');
+
     t.end();
 });
 
@@ -423,5 +447,106 @@ test('#renameCostume does not duplicate names', t => {
     t.equal(a.sprite.costumes.length, 2);
     t.equal(a.sprite.costumes[0].name, 'first');
     t.equal(a.sprite.costumes[1].name, 'first2');
+    t.end();
+});
+
+test('#reorderCostume', t => {
+    const o1 = {id: 0};
+    const o2 = {id: 1};
+    const o3 = {id: 2};
+    const o4 = {id: 3};
+    const o5 = {id: 4};
+    const s = new Sprite();
+    const r = new Runtime();
+    s.costumes = [o1, o2, o3, o4, o5];
+    const a = new RenderedTarget(s, r);
+    const renderer = new FakeRenderer();
+    a.renderer = renderer;
+
+    const resetCostumes = () => {
+        a.setCostume(0);
+        s.costumes = [o1, o2, o3, o4, o5];
+    };
+    const costumeIds = () => a.sprite.costumes.map(c => c.id);
+
+    resetCostumes();
+    t.deepEquals(costumeIds(), [0, 1, 2, 3, 4]);
+    t.equals(a.currentCostume, 0);
+
+    // Returns false if the costumes are the same and no change occurred
+    t.equal(a.reorderCostume(3, 3), false);
+    t.equal(a.reorderCostume(999, 5000), false); // Clamped to the same values.
+    t.equal(a.reorderCostume(-999, -5000), false);
+
+    // Make sure reordering up and down works and current costume follows
+    resetCostumes();
+    t.equal(a.reorderCostume(0, 3), true);
+    t.deepEquals(costumeIds(), [1, 2, 3, 0, 4]);
+    t.equals(a.currentCostume, 3); // Index of id=0
+
+    resetCostumes();
+    a.setCostume(1);
+    t.equal(a.reorderCostume(3, 1), true);
+    t.deepEquals(costumeIds(), [0, 3, 1, 2, 4]);
+    t.equals(a.currentCostume, 2); // Index of id=1
+
+    // Out of bounds indices get clamped
+    resetCostumes();
+    t.equal(a.reorderCostume(10, 0), true);
+    t.deepEquals(costumeIds(), [4, 0, 1, 2, 3]);
+    t.equals(a.currentCostume, 1); // Index of id=0
+
+    resetCostumes();
+    t.equal(a.reorderCostume(2, -1000), true);
+    t.deepEquals(costumeIds(), [2, 0, 1, 3, 4]);
+    t.equals(a.currentCostume, 1); // Index of id=0
+
+    t.end();
+});
+
+test('#reorderSound', t => {
+    const o1 = {id: 0, name: 'name0'};
+    const o2 = {id: 1, name: 'name1'};
+    const o3 = {id: 2, name: 'name2'};
+    const o4 = {id: 3, name: 'name3'};
+    const o5 = {id: 4, name: 'name4'};
+    const s = new Sprite();
+    const r = new Runtime();
+    s.sounds = [o1, o2, o3, o4, o5];
+    const a = new RenderedTarget(s, r);
+    const renderer = new FakeRenderer();
+    a.renderer = renderer;
+
+    const resetSounds = () => {
+        s.sounds = [o1, o2, o3, o4, o5];
+    };
+    const soundIds = () => a.sprite.sounds.map(c => c.id);
+
+    resetSounds();
+    t.deepEquals(soundIds(), [0, 1, 2, 3, 4]);
+
+    // Return false if indices are the same and no change occurred.
+    t.equal(a.reorderSound(3, 3), false);
+    t.equal(a.reorderSound(100000, 99999), false); // Clamped to the same values
+    t.equal(a.reorderSound(-100000, -99999), false);
+
+    // Make sure reordering up and down works and current sound follows
+    resetSounds();
+    t.equal(a.reorderSound(0, 3), true);
+    t.deepEquals(soundIds(), [1, 2, 3, 0, 4]);
+
+    resetSounds();
+    t.equal(a.reorderSound(3, 1), true);
+    t.deepEquals(soundIds(), [0, 3, 1, 2, 4]);
+
+    // Out of bounds indices get clamped
+    resetSounds();
+    t.equal(a.reorderSound(10, 0), true);
+    t.deepEquals(soundIds(), [4, 0, 1, 2, 3]);
+
+    resetSounds();
+    t.equal(a.reorderSound(2, -1000), true);
+    t.deepEquals(soundIds(), [2, 0, 1, 3, 4]);
+
     t.end();
 });

@@ -19,6 +19,7 @@
  * @property {string} text - the text on the block, with [PLACEHOLDERS] for arguments.
  * @property {Boolean} [hideFromPalette] - true if this block should not appear in the block palette.
  * @property {Boolean} [isTerminal] - true if the block ends a stack - no blocks can be connected after it.
+ * @property {Boolean} [disableMonitor] - true if this block is a reporter but should not allow a monitor.
  * @property {ReporterScope} [reporterScope] - if this block is a reporter, this is the scope/context for its value.
  * @property {Boolean} [isEdgeActivated] - sets whether a hat block is edge-activated.
  * @property {Boolean} [shouldRestartExistingThreads] - sets whether a hat/event block should restart existing threads.

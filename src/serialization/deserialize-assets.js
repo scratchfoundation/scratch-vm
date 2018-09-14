@@ -38,10 +38,8 @@ const deserializeSound = function (sound, runtime, zip, assetFileName) {
         log.error(`Could not find sound file associated with the ${sound.name} sound.`);
         return Promise.resolve(null);
     }
-    let dataFormat = null;
-    if (sound.dataFormat.toLowerCase() === 'wav') {
-        dataFormat = storage.DataFormat.WAV;
-    }
+    const dataFormat = sound.dataFormat.toLowerCase() === 'mp3' ?
+        storage.DataFormat.MP3 : storage.DataFormat.WAV;
     if (!JSZip.support.uint8array) {
         log.error('JSZip uint8array is not supported in this browser.');
         return Promise.resolve(null);

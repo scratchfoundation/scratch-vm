@@ -43,7 +43,11 @@ class BlockUtility {
      * @type {object}
      */
     get stackFrame () {
-        return this.thread.peekStackFrame().executionContext;
+        const frame = this.thread.peekStackFrame();
+        if (frame.executionContext === null) {
+            frame.executionContext = {};
+        }
+        return frame.executionContext;
     }
 
     /**
@@ -51,6 +55,13 @@ class BlockUtility {
      */
     yield () {
         this.thread.status = Thread.STATUS_YIELD;
+    }
+
+    /**
+     * Set the thread to yield until the next tick of the runtime.
+     */
+    yieldTick () {
+        this.thread.status = Thread.STATUS_YIELD_TICK;
     }
 
     /**

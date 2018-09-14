@@ -35,7 +35,8 @@ class Scratch3ControlBlocks {
             control_delete_this_clone: this.deleteClone,
             control_get_counter: this.getCounter,
             control_incr_counter: this.incrCounter,
-            control_clear_counter: this.clearCounter
+            control_clear_counter: this.clearCounter,
+            control_all_at_once: this.allAtOnce
         };
     }
 
@@ -48,7 +49,7 @@ class Scratch3ControlBlocks {
     }
 
     repeat (args, util) {
-        const times = Math.floor(Cast.toNumber(args.TIMES));
+        const times = Math.round(Cast.toNumber(args.TIMES));
         // Initialize loop
         if (typeof util.stackFrame.loopCounter === 'undefined') {
             util.stackFrame.loopCounter = times;
@@ -144,15 +145,21 @@ class Scratch3ControlBlocks {
     }
 
     createClone (args, util) {
+        // Cast argument to string
+        args.CLONE_OPTION = Cast.toString(args.CLONE_OPTION);
+
+        // Set clone target
         let cloneTarget;
         if (args.CLONE_OPTION === '_myself_') {
             cloneTarget = util.target;
         } else {
             cloneTarget = this.runtime.getSpriteTargetByName(args.CLONE_OPTION);
         }
-        if (!cloneTarget) {
-            return;
-        }
+
+        // If clone target is not found, return
+        if (!cloneTarget) return;
+
+        // Create clone
         const newClone = cloneTarget.makeClone();
         if (newClone) {
             this.runtime.targets.push(newClone);
@@ -175,6 +182,16 @@ class Scratch3ControlBlocks {
 
     incrCounter () {
         this._counter++;
+    }
+
+    allAtOnce (args, util) {
+        // Since the "all at once" block is implemented for compatiblity with
+        // Scratch 2.0 projects, it behaves the same way it did in 2.0, which
+        // is to simply run the contained script (like "if 1 = 1").
+        // (In early versions of Scratch 2.0, it would work the same way as
+        // "run without screen refresh" custom blocks do now, but this was
+        // removed before the release of 2.0.)
+        util.startBranch(1, false);
     }
 }
 

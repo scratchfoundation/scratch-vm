@@ -2,6 +2,7 @@ const ArgumentType = require('../../extension-support/argument-type');
 const BlockType = require('../../extension-support/block-type');
 const Clone = require('../../util/clone');
 const Cast = require('../../util/cast');
+const formatMessage = require('format-message');
 const MathUtil = require('../../util/math-util');
 const Timer = require('../../util/timer');
 
@@ -51,18 +52,25 @@ class Scratch3MusicBlocks {
         this._concurrencyCounter = 0;
 
         /**
-         * An array of audio buffers, one for each drum sound.
+         * An array of sound players, one for each drum sound.
          * @type {Array}
          * @private
          */
-        this._drumBuffers = [];
+        this._drumPlayers = [];
 
         /**
-         * An array of arrays of audio buffers. Each instrument has one or more audio buffers.
+         * An array of arrays of sound players. Each instrument has one or more audio players.
          * @type {Array[]}
          * @private
          */
-        this._instrumentBufferArrays = [];
+        this._instrumentPlayerArrays = [];
+
+        /**
+         * An array of arrays of sound players. Each instrument mya have an audio player for each playable note.
+         * @type {Array[]}
+         * @private
+         */
+        this._instrumentPlayerNoteArrays = [];
 
         /**
          * An array of audio bufferSourceNodes. Each time you play an instrument or drum sound,
@@ -86,14 +94,15 @@ class Scratch3MusicBlocks {
         const loadingPromises = [];
         this.DRUM_INFO.forEach((drumInfo, index) => {
             const filePath = `drums/${drumInfo.fileName}`;
-            const promise = this._storeSound(filePath, index, this._drumBuffers);
+            const promise = this._storeSound(filePath, index, this._drumPlayers);
             loadingPromises.push(promise);
         });
         this.INSTRUMENT_INFO.forEach((instrumentInfo, instrumentIndex) => {
-            this._instrumentBufferArrays[instrumentIndex] = [];
+            this._instrumentPlayerArrays[instrumentIndex] = [];
+            this._instrumentPlayerNoteArrays[instrumentIndex] = [];
             instrumentInfo.samples.forEach((sample, noteIndex) => {
                 const filePath = `instruments/${instrumentInfo.dirName}/${sample}`;
-                const promise = this._storeSound(filePath, noteIndex, this._instrumentBufferArrays[instrumentIndex]);
+                const promise = this._storeSound(filePath, noteIndex, this._instrumentPlayerArrays[instrumentIndex]);
                 loadingPromises.push(promise);
             });
         });
@@ -103,22 +112,22 @@ class Scratch3MusicBlocks {
     }
 
     /**
-     * Decode a sound and store the buffer in an array.
+     * Decode a sound and store the player in an array.
      * @param {string} filePath - the audio file name.
-     * @param {number} index - the index at which to store the audio buffer.
-     * @param {array} bufferArray - the array of buffers in which to store it.
+     * @param {number} index - the index at which to store the audio player.
+     * @param {array} playerArray - the array of players in which to store it.
      * @return {Promise} - a promise which will resolve once the sound has been stored.
      */
-    _storeSound (filePath, index, bufferArray) {
+    _storeSound (filePath, index, playerArray) {
         const fullPath = `${filePath}.mp3`;
 
         if (!assetData[fullPath]) return;
 
-        // The sound buffer has already been downloaded via the manifest file required above.
-        const soundBuffer = assetData[fullPath].buffer;
+        // The sound player has already been downloaded via the manifest file required above.
+        const soundBuffer = assetData[fullPath];
 
-        return this._decodeSound(soundBuffer).then(buffer => {
-            bufferArray[index] = buffer;
+        return this._decodeSound(soundBuffer).then(player => {
+            playerArray[index] = player;
         });
     }
 
@@ -128,24 +137,14 @@ class Scratch3MusicBlocks {
      * @return {Promise} - a promise which will resolve once the sound has decoded.
      */
     _decodeSound (soundBuffer) {
-        const context = this.runtime.audioEngine && this.runtime.audioEngine.audioContext;
+        const engine = this.runtime.audioEngine;
 
-        if (!context) {
+        if (!engine) {
             return Promise.reject(new Error('No Audio Context Detected'));
         }
 
         // Check for newer promise-based API
-        if (context.decodeAudioData.length === 1) {
-            return context.decodeAudioData(soundBuffer);
-        } else { // eslint-disable-line no-else-return
-            // Fall back to callback API
-            return new Promise((resolve, reject) =>
-                context.decodeAudioData(soundBuffer,
-                    buffer => resolve(buffer),
-                    error => reject(error)
-                )
-            );
-        }
+        return engine.decodeSoundPlayer({data: {buffer: soundBuffer}});
     }
 
     /**
@@ -166,82 +165,154 @@ class Scratch3MusicBlocks {
 
     /**
      * An array of info about each drum.
-     * @type {object[]} an array of objects.
+     * @type {object[]}
      * @param {string} name - the translatable name to display in the drums menu.
      * @param {string} fileName - the name of the audio file containing the drum sound.
      */
     get DRUM_INFO () {
         return [
             {
-                name: '(1) Snare Drum',
+                name: formatMessage({
+                    id: 'music.drumSnare',
+                    default: '(1) Snare Drum',
+                    description: 'Sound of snare drum as used in a standard drum kit'
+                }),
                 fileName: '1-snare'
             },
             {
-                name: '(2) Bass Drum',
+                name: formatMessage({
+                    id: 'music.drumBass',
+                    default: '(2) Bass Drum',
+                    description: 'Sound of bass drum as used in a standard drum kit'
+                }),
                 fileName: '2-bass-drum'
             },
             {
-                name: '(3) Side Stick',
+                name: formatMessage({
+                    id: 'music.drumSideStick',
+                    default: '(3) Side Stick',
+                    description: 'Sound of a drum stick hitting the side of a drum (usually the snare)'
+                }),
                 fileName: '3-side-stick'
             },
             {
-                name: '(4) Crash Cymbal',
+                name: formatMessage({
+                    id: 'music.drumCrashCymbal',
+                    default: '(4) Crash Cymbal',
+                    description: 'Sound of a drum stick hitting a crash cymbal'
+                }),
                 fileName: '4-crash-cymbal'
             },
             {
-                name: '(5) Open Hi-Hat',
+                name: formatMessage({
+                    id: 'music.drumOpenHiHat',
+                    default: '(5) Open Hi-Hat',
+                    description: 'Sound of a drum stick hitting a hi-hat while open'
+                }),
                 fileName: '5-open-hi-hat'
             },
             {
-                name: '(6) Closed Hi-Hat',
+                name: formatMessage({
+                    id: 'music.drumClosedHiHat',
+                    default: '(6) Closed Hi-Hat',
+                    description: 'Sound of a drum stick hitting a hi-hat while closed'
+                }),
                 fileName: '6-closed-hi-hat'
             },
             {
-                name: '(7) Tambourine',
+                name: formatMessage({
+                    id: 'music.drumTambourine',
+                    default: '(7) Tambourine',
+                    description: 'Sound of a tambourine being struck'
+                }),
                 fileName: '7-tambourine'
             },
             {
-                name: '(8) Hand Clap',
+                name: formatMessage({
+                    id: 'music.drumHandClap',
+                    default: '(8) Hand Clap',
+                    description: 'Sound of two hands clapping together'
+                }),
                 fileName: '8-hand-clap'
             },
             {
-                name: '(9) Claves',
+                name: formatMessage({
+                    id: 'music.drumClaves',
+                    default: '(9) Claves',
+                    description: 'Sound of claves being struck together'
+                }),
                 fileName: '9-claves'
             },
             {
-                name: '(10) Wood Block',
+                name: formatMessage({
+                    id: 'music.drumWoodBlock',
+                    default: '(10) Wood Block',
+                    description: 'Sound of a wood block being struck'
+                }),
                 fileName: '10-wood-block'
             },
             {
-                name: '(11) Cowbell',
+                name: formatMessage({
+                    id: 'music.drumCowbell',
+                    default: '(11) Cowbell',
+                    description: 'Sound of a cowbell being struck'
+                }),
                 fileName: '11-cowbell'
             },
             {
-                name: '(12) Triangle',
+                name: formatMessage({
+                    id: 'music.drumTriangle',
+                    default: '(12) Triangle',
+                    description: 'Sound of a triangle (instrument) being struck'
+                }),
                 fileName: '12-triangle'
             },
             {
-                name: '(13) Bongo',
+                name: formatMessage({
+                    id: 'music.drumBongo',
+                    default: '(13) Bongo',
+                    description: 'Sound of a bongo being struck'
+                }),
                 fileName: '13-bongo'
             },
             {
-                name: '(14) Conga',
+                name: formatMessage({
+                    id: 'music.drumConga',
+                    default: '(14) Conga',
+                    description: 'Sound of a conga being struck'
+                }),
                 fileName: '14-conga'
             },
             {
-                name: '(15) Cabasa',
+                name: formatMessage({
+                    id: 'music.drumCabasa',
+                    default: '(15) Cabasa',
+                    description: 'Sound of a cabasa being shaken'
+                }),
                 fileName: '15-cabasa'
             },
             {
-                name: '(16) Guiro',
+                name: formatMessage({
+                    id: 'music.drumGuiro',
+                    default: '(16) Guiro',
+                    description: 'Sound of a guiro being played'
+                }),
                 fileName: '16-guiro'
             },
             {
-                name: '(17) Vibraslap',
+                name: formatMessage({
+                    id: 'music.drumVibraslap',
+                    default: '(17) Vibraslap',
+                    description: 'Sound of a Vibraslap being played'
+                }),
                 fileName: '17-vibraslap'
             },
             {
-                name: '(18) Cuica',
+                name: formatMessage({
+                    id: 'music.drumCuica',
+                    default: '(18) Cuica',
+                    description: 'Sound of a cuica being played'
+                }),
                 fileName: '18-cuica'
             }
         ];
@@ -249,7 +320,7 @@ class Scratch3MusicBlocks {
 
     /**
      * An array of info about each instrument.
-     * @type {object[]} an array of objects.
+     * @type {object[]}
      * @param {string} name - the translatable name to display in the instruments menu.
      * @param {string} dirName - the name of the directory containing audio samples for this instrument.
      * @param {number} [releaseTime] - an optional duration for the release portion of each note.
@@ -259,120 +330,204 @@ class Scratch3MusicBlocks {
     get INSTRUMENT_INFO () {
         return [
             {
-                name: '(1) Piano',
+                name: formatMessage({
+                    id: 'music.instrumentPiano',
+                    default: '(1) Piano',
+                    description: 'Sound of a piano'
+                }),
                 dirName: '1-piano',
                 releaseTime: 0.5,
                 samples: [24, 36, 48, 60, 72, 84, 96, 108]
             },
             {
-                name: '(2) Electric Piano',
+                name: formatMessage({
+                    id: 'music.instrumentElectricPiano',
+                    default: '(2) Electric Piano',
+                    description: 'Sound of an electric piano'
+                }),
                 dirName: '2-electric-piano',
                 releaseTime: 0.5,
                 samples: [60]
             },
             {
-                name: '(3) Organ',
+                name: formatMessage({
+                    id: 'music.instrumentOrgan',
+                    default: '(3) Organ',
+                    description: 'Sound of an organ'
+                }),
                 dirName: '3-organ',
                 releaseTime: 0.5,
                 samples: [60]
             },
             {
-                name: '(4) Guitar',
+                name: formatMessage({
+                    id: 'music.instrumentGuitar',
+                    default: '(4) Guitar',
+                    description: 'Sound of an accoustic guitar'
+                }),
                 dirName: '4-guitar',
                 releaseTime: 0.5,
                 samples: [60]
             },
             {
-                name: '(5) Electric Guitar',
+                name: formatMessage({
+                    id: 'music.instrumentElectricGuitar',
+                    default: '(5) Electric Guitar',
+                    description: 'Sound of an electric guitar'
+                }),
                 dirName: '5-electric-guitar',
                 releaseTime: 0.5,
                 samples: [60]
             },
             {
-                name: '(6) Bass',
+                name: formatMessage({
+                    id: 'music.instrumentBass',
+                    default: '(6) Bass',
+                    description: 'Sound of an accoustic upright bass'
+                }),
                 dirName: '6-bass',
                 releaseTime: 0.25,
                 samples: [36, 48]
             },
             {
-                name: '(7) Pizzicato',
+                name: formatMessage({
+                    id: 'music.instrumentPizzicato',
+                    default: '(7) Pizzicato',
+                    description: 'Sound of a string instrument (e.g. violin) being plucked'
+                }),
                 dirName: '7-pizzicato',
                 releaseTime: 0.25,
                 samples: [60]
             },
             {
-                name: '(8) Cello',
+                name: formatMessage({
+                    id: 'music.instrumentCello',
+                    default: '(8) Cello',
+                    description: 'Sound of a cello being played with a bow'
+                }),
                 dirName: '8-cello',
                 releaseTime: 0.1,
                 samples: [36, 48, 60]
             },
             {
-                name: '(9) Trombone',
+                name: formatMessage({
+                    id: 'music.instrumentTrombone',
+                    default: '(9) Trombone',
+                    description: 'Sound of a trombone being played'
+                }),
                 dirName: '9-trombone',
                 samples: [36, 48, 60]
             },
             {
-                name: '(10) Clarinet',
+                name: formatMessage({
+                    id: 'music.instrumentClarinet',
+                    default: '(10) Clarinet',
+                    description: 'Sound of a clarinet being played'
+                }),
                 dirName: '10-clarinet',
                 samples: [48, 60]
             },
             {
-                name: '(11) Saxophone',
+                name: formatMessage({
+                    id: 'music.instrumentSaxophone',
+                    default: '(11) Saxophone',
+                    description: 'Sound of a saxophone being played'
+                }),
                 dirName: '11-saxophone',
                 samples: [36, 60, 84]
             },
             {
-                name: '(12) Flute',
+                name: formatMessage({
+                    id: 'music.instrumentFlute',
+                    default: '(12) Flute',
+                    description: 'Sound of a flute being played'
+                }),
                 dirName: '12-flute',
                 samples: [60, 72]
             },
             {
-                name: '(13) Wooden Flute',
+                name: formatMessage({
+                    id: 'music.instrumentWoodenFlute',
+                    default: '(13) Wooden Flute',
+                    description: 'Sound of a wooden flute being played'
+                }),
                 dirName: '13-wooden-flute',
                 samples: [60, 72]
             },
             {
-                name: '(14) Bassoon',
+                name: formatMessage({
+                    id: 'music.instrumentBassoon',
+                    default: '(14) Bassoon',
+                    description: 'Sound of a bassoon being played'
+                }),
                 dirName: '14-bassoon',
                 samples: [36, 48, 60]
             },
             {
-                name: '(15) Choir',
+                name: formatMessage({
+                    id: 'music.instrumentChoir',
+                    default: '(15) Choir',
+                    description: 'Sound of a choir singing'
+                }),
                 dirName: '15-choir',
                 releaseTime: 0.25,
                 samples: [48, 60, 72]
             },
             {
-                name: '(16) Vibraphone',
+                name: formatMessage({
+                    id: 'music.instrumentVibraphone',
+                    default: '(16) Vibraphone',
+                    description: 'Sound of a vibraphone being struck'
+                }),
                 dirName: '16-vibraphone',
                 releaseTime: 0.5,
                 samples: [60, 72]
             },
             {
-                name: '(17) Music Box',
+                name: formatMessage({
+                    id: 'music.instrumentMusicBox',
+                    default: '(17) Music Box',
+                    description: 'Sound of a music box playing'
+                }),
                 dirName: '17-music-box',
                 releaseTime: 0.25,
                 samples: [60]
             },
             {
-                name: '(18) Steel Drum',
+                name: formatMessage({
+                    id: 'music.instrumentSteelDrum',
+                    default: '(18) Steel Drum',
+                    description: 'Sound of a steel drum being struck'
+                }),
                 dirName: '18-steel-drum',
                 releaseTime: 0.5,
                 samples: [60]
             },
             {
-                name: '(19) Marimba',
+                name: formatMessage({
+                    id: 'music.instrumentMarimba',
+                    default: '(19) Marimba',
+                    description: 'Sound of a marimba being struck'
+                }),
                 dirName: '19-marimba',
                 samples: [60]
             },
             {
-                name: '(20) Synth Lead',
+                name: formatMessage({
+                    id: 'music.instrumentSynthLead',
+                    default: '(20) Synth Lead',
+                    description: 'Sound of a "lead" synthesizer being played'
+                }),
                 dirName: '20-synth-lead',
                 releaseTime: 0.1,
                 samples: [60]
             },
             {
-                name: '(21) Synth Pad',
+                name: formatMessage({
+                    id: 'music.instrumentSynthPad',
+                    default: '(21) Synth Pad',
+                    description: 'Sound of a "pad" synthesizer being played'
+                }),
                 dirName: '21-synth-pad',
                 releaseTime: 0.25,
                 samples: [60]
@@ -466,14 +621,22 @@ class Scratch3MusicBlocks {
     getInfo () {
         return {
             id: 'music',
-            name: 'Music',
+            name: formatMessage({
+                id: 'music.categoryName',
+                default: 'Music',
+                description: 'Label for the Music extension category'
+            }),
             menuIconURI: menuIconURI,
             blockIconURI: blockIconURI,
             blocks: [
                 {
                     opcode: 'playDrumForBeats',
                     blockType: BlockType.COMMAND,
-                    text: 'play drum [DRUM] for [BEATS] beats',
+                    text: formatMessage({
+                        id: 'music.playDrumForBeats',
+                        default: 'play drum [DRUM] for [BEATS] beats',
+                        description: 'play drum sample for a number of beats'
+                    }),
                     arguments: {
                         DRUM: {
                             type: ArgumentType.NUMBER,
@@ -489,7 +652,11 @@ class Scratch3MusicBlocks {
                 {
                     opcode: 'restForBeats',
                     blockType: BlockType.COMMAND,
-                    text: 'rest for [BEATS] beats',
+                    text: formatMessage({
+                        id: 'music.restForBeats',
+                        default: 'rest for [BEATS] beats',
+                        description: 'rest (play no sound) for a number of beats'
+                    }),
                     arguments: {
                         BEATS: {
                             type: ArgumentType.NUMBER,
@@ -500,7 +667,11 @@ class Scratch3MusicBlocks {
                 {
                     opcode: 'playNoteForBeats',
                     blockType: BlockType.COMMAND,
-                    text: 'play note [NOTE] for [BEATS] beats',
+                    text: formatMessage({
+                        id: 'music.playNoteForBeats',
+                        default: 'play note [NOTE] for [BEATS] beats',
+                        description: 'play a note for a number of beats'
+                    }),
                     arguments: {
                         NOTE: {
                             type: ArgumentType.NUMBER,
@@ -515,7 +686,11 @@ class Scratch3MusicBlocks {
                 {
                     opcode: 'setInstrument',
                     blockType: BlockType.COMMAND,
-                    text: 'set instrument to [INSTRUMENT]',
+                    text: formatMessage({
+                        id: 'music.setInstrument',
+                        default: 'set instrument to [INSTRUMENT]',
+                        description: 'set the instrument (e.g. piano, guitar, trombone) for notes played'
+                    }),
                     arguments: {
                         INSTRUMENT: {
                             type: ArgumentType.NUMBER,
@@ -527,7 +702,11 @@ class Scratch3MusicBlocks {
                 {
                     opcode: 'setTempo',
                     blockType: BlockType.COMMAND,
-                    text: 'set tempo to [TEMPO]',
+                    text: formatMessage({
+                        id: 'music.setTempo',
+                        default: 'set tempo to [TEMPO]',
+                        description: 'set tempo (speed) for notes, drums, and rests played'
+                    }),
                     arguments: {
                         TEMPO: {
                             type: ArgumentType.NUMBER,
@@ -538,7 +717,11 @@ class Scratch3MusicBlocks {
                 {
                     opcode: 'changeTempo',
                     blockType: BlockType.COMMAND,
-                    text: 'change tempo by [TEMPO]',
+                    text: formatMessage({
+                        id: 'music.changeTempo',
+                        default: 'change tempo by [TEMPO]',
+                        description: 'change tempo (speed) for notes, drums, and rests played'
+                    }),
                     arguments: {
                         TEMPO: {
                             type: ArgumentType.NUMBER,
@@ -548,7 +731,11 @@ class Scratch3MusicBlocks {
                 },
                 {
                     opcode: 'getTempo',
-                    text: 'tempo',
+                    text: formatMessage({
+                        id: 'music.getTempo',
+                        default: 'tempo',
+                        description: 'get the current tempo (speed) for notes, drums, and rests played'
+                    }),
                     blockType: BlockType.REPORTER
                 }
             ],
@@ -589,26 +776,34 @@ class Scratch3MusicBlocks {
      */
     _playDrumNum (util, drumNum) {
         if (util.runtime.audioEngine === null) return;
-        if (util.target.audioPlayer === null) return;
+        if (util.target.sprite.soundBank === null) return;
         // If we're playing too many sounds, do not play the drum sound.
         if (this._concurrencyCounter > Scratch3MusicBlocks.CONCURRENCY_LIMIT) {
             return;
         }
-        const outputNode = util.target.audioPlayer.getInputNode();
-        const context = util.runtime.audioEngine.audioContext;
-        const bufferSource = context.createBufferSource();
-        bufferSource.buffer = this._drumBuffers[drumNum];
-        bufferSource.connect(outputNode);
-        bufferSource.start();
 
-        const bufferSourceIndex = this._bufferSources.length;
-        this._bufferSources.push(bufferSource);
+        const player = this._drumPlayers[drumNum];
+
+        if (typeof player === 'undefined') return;
+
+        if (player.isPlaying && !player.isStarting) {
+            // Take the internal player state and create a new player with it.
+            // `.play` does this internally but then instructs the sound to
+            // stop.
+            player.take();
+        }
+
+        const engine = util.runtime.audioEngine;
+        const chain = engine.createEffectChain();
+        chain.setEffectsFromTarget(util.target);
+        player.connect(chain);
 
         this._concurrencyCounter++;
-        bufferSource.onended = () => {
+        player.once('stop', () => {
             this._concurrencyCounter--;
-            delete this._bufferSources[bufferSourceIndex];
-        };
+        });
+
+        player.play();
     }
 
     /**
@@ -667,7 +862,7 @@ class Scratch3MusicBlocks {
      */
     _playNote (util, note, durationSec) {
         if (util.runtime.audioEngine === null) return;
-        if (util.target.audioPlayer === null) return;
+        if (util.target.sprite.soundBank === null) return;
 
         // If we're playing too many sounds, do not play the note.
         if (this._concurrencyCounter > Scratch3MusicBlocks.CONCURRENCY_LIMIT) {
@@ -682,28 +877,37 @@ class Scratch3MusicBlocks {
         const sampleIndex = this._selectSampleIndexForNote(note, sampleArray);
 
         // If the audio sample has not loaded yet, bail out
-        if (typeof this._instrumentBufferArrays[inst] === 'undefined') return;
-        if (typeof this._instrumentBufferArrays[inst][sampleIndex] === 'undefined') return;
+        if (typeof this._instrumentPlayerArrays[inst] === 'undefined') return;
+        if (typeof this._instrumentPlayerArrays[inst][sampleIndex] === 'undefined') return;
 
-        // Create the audio buffer to play the note, and set its pitch
-        const context = util.runtime.audioEngine.audioContext;
-        const bufferSource = context.createBufferSource();
+        // Fetch the sound player to play the note.
+        const engine = util.runtime.audioEngine;
 
-        const bufferSourceIndex = this._bufferSources.length;
-        this._bufferSources.push(bufferSource);
+        if (!this._instrumentPlayerNoteArrays[inst][note]) {
+            this._instrumentPlayerNoteArrays[inst][note] = this._instrumentPlayerArrays[inst][sampleIndex].take();
+        }
 
-        bufferSource.buffer = this._instrumentBufferArrays[inst][sampleIndex];
+        const player = this._instrumentPlayerNoteArrays[inst][note];
+
+        if (player.isPlaying && !player.isStarting) {
+            // Take the internal player state and create a new player with it.
+            // `.play` does this internally but then instructs the sound to
+            // stop.
+            player.take();
+        }
+
+        const chain = engine.createEffectChain();
+        chain.setEffectsFromTarget(util.target);
+
+        // Set its pitch.
         const sampleNote = sampleArray[sampleIndex];
-        bufferSource.playbackRate.value = this._ratioForPitchInterval(note - sampleNote);
+        const notePitchInterval = this._ratioForPitchInterval(note - sampleNote);
 
-        // Create a gain node for this note, and connect it to the sprite's audioPlayer.
-        const gainNode = context.createGain();
-        bufferSource.connect(gainNode);
-        const outputNode = util.target.audioPlayer.getInputNode();
-        gainNode.connect(outputNode);
-
-        // Start playing the note
-        bufferSource.start();
+        // Create a gain node for this note, and connect it to the sprite's
+        // simulated effectChain.
+        const context = engine.audioContext;
+        const releaseGain = context.createGain();
+        releaseGain.connect(chain.getInputNode());
 
         // Schedule the release of the note, ramping its gain down to zero,
         // and then stopping the sound.
@@ -713,16 +917,24 @@ class Scratch3MusicBlocks {
         }
         const releaseStart = context.currentTime + durationSec;
         const releaseEnd = releaseStart + releaseDuration;
-        gainNode.gain.setValueAtTime(1, releaseStart);
-        gainNode.gain.linearRampToValueAtTime(0.0001, releaseEnd);
-        bufferSource.stop(releaseEnd);
+        releaseGain.gain.setValueAtTime(1, releaseStart);
+        releaseGain.gain.linearRampToValueAtTime(0.0001, releaseEnd);
 
-        // Update the concurrency counter
         this._concurrencyCounter++;
-        bufferSource.onended = () => {
+        player.once('stop', () => {
             this._concurrencyCounter--;
-            delete this._bufferSources[bufferSourceIndex];
-        };
+        });
+
+        // Start playing the note
+        player.play();
+        // Connect the player to the gain node.
+        player.connect({getInputNode () {
+            return releaseGain;
+        }});
+        // Set playback now after play creates the outputNode.
+        player.outputNode.playbackRate.value = notePitchInterval;
+        // Schedule playback to stop.
+        player.outputNode.stop(releaseEnd);
     }
 
     /**

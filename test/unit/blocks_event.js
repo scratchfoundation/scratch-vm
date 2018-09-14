@@ -96,3 +96,17 @@ test('#760 - broadcastAndWait', t => {
 
     t.end();
 });
+
+test('When > hat - loudness', t => {
+    const rt = new Runtime();
+    rt.audioEngine = {getLoudness: () => 10};
+    const e = new Event(rt);
+    const args = {
+        WHENGREATERTHANMENU: 'LOUDNESS',
+        VALUE: '11'
+    };
+    t.equal(e.hatGreaterThanPredicate(args), false);
+    args.VALUE = '5';
+    t.equal(e.hatGreaterThanPredicate(args), true);
+    t.end();
+});

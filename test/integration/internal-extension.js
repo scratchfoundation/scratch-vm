@@ -16,7 +16,7 @@ class TestInternalExtension {
     getInfo () {
         this.status.getInfoCalled = true;
         return {
-            id: 'test-internal-extension',
+            id: 'testInternalExtension',
             name: 'Test Internal Extension',
             blocks: [
                 {
@@ -55,7 +55,7 @@ test('internal extension', t => {
     return vm.extensionManager._registerInternalExtension(extension).then(() => {
         t.ok(extension.status.getInfoCalled);
 
-        const func = vm.runtime.getOpcodeFunction('test-internal-extension.go');
+        const func = vm.runtime.getOpcodeFunction('testInternalExtension_go');
         t.type(func, 'function');
 
         t.notOk(extension.status.goCalled);

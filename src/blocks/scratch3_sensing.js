@@ -65,17 +65,31 @@ class Scratch3SensingBlocks {
             sensing_current: this.current,
             sensing_dayssince2000: this.daysSince2000,
             sensing_loudness: this.getLoudness,
+            sensing_loud: this.isLoud,
             sensing_askandwait: this.askAndWait,
-            sensing_answer: this.getAnswer
+            sensing_answer: this.getAnswer,
+            sensing_username: this.getUsername,
+            sensing_userid: () => {} // legacy no-op block
         };
     }
 
     getMonitored () {
         return {
-            sensing_answer: {},
-            sensing_loudness: {},
-            sensing_timer: {},
-            sensing_current: {}
+            sensing_answer: {
+                getId: () => 'answer'
+            },
+            sensing_loudness: {
+                getId: () => 'loudness'
+            },
+            sensing_timer: {
+                getId: () => 'timer'
+            },
+            sensing_current: {
+                // This is different from the default toolbox xml id in order to support
+                // importing multiple monitors from the same opcode from sb2 files,
+                // something that is not currently supported in scratch 3.
+                getId: (_, param) => `current_${param}`
+            }
         };
     }
 
@@ -136,16 +150,7 @@ class Scratch3SensingBlocks {
     }
 
     touchingObject (args, util) {
-        const requestedObject = args.TOUCHINGOBJECTMENU;
-        if (requestedObject === '_mouse_') {
-            const mouseX = util.ioQuery('mouse', 'getClientX');
-            const mouseY = util.ioQuery('mouse', 'getClientY');
-            return util.target.isTouchingPoint(mouseX, mouseY);
-        } else if (requestedObject === '_edge_') {
-            return util.target.isTouchingEdge();
-        }
-        return util.target.isTouchingSprite(requestedObject);
-
+        return util.target.isTouchingObject(args.TOUCHINGOBJECTMENU);
     }
 
     touchingColor (args, util) {
@@ -249,6 +254,10 @@ class Scratch3SensingBlocks {
         return this._cachedLoudness;
     }
 
+    isLoud () {
+        return this.getLoudness() > 10;
+    }
+
     getAttributeOf (args) {
         let attrTarget;
 
@@ -257,6 +266,11 @@ class Scratch3SensingBlocks {
         } else {
             attrTarget = this.runtime.getSpriteTargetByName(args.OBJECT);
         }
+
+        // attrTarget can be undefined if the target does not exist
+        // (e.g. single sprite uploaded from larger project referencing
+        // another sprite that wasn't uploaded)
+        if (!attrTarget) return 0;
 
         // Generic attributes
         if (attrTarget.isStage) {
@@ -292,6 +306,10 @@ class Scratch3SensingBlocks {
 
         // Otherwise, 0
         return 0;
+    }
+
+    getUsername (args, util) {
+        return util.ioQuery('userData', 'getUsername');
     }
 }
 

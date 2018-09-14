@@ -3,6 +3,7 @@ const Sensing = require('../../src/blocks/scratch3_sensing');
 const Runtime = require('../../src/engine/runtime');
 const Sprite = require('../../src/sprites/sprite');
 const RenderedTarget = require('../../src/sprites/rendered-target');
+const BlockUtility = require('../../src/engine/block-utility');
 
 test('getPrimitives', t => {
     const rt = new Runtime();
@@ -121,5 +122,34 @@ test('get loudness with caching', t => {
     simulatedTime += rt.currentStepTime;
     t.strictEqual(sensing.getLoudness(), secondLoudness);
 
+    t.end();
+});
+
+test('loud? boolean', t => {
+    const rt = new Runtime();
+    const sensing = new Sensing(rt);
+
+    // The simplest way to test this is to actually override the getLoudness
+    // method, which isLoud uses.
+    let simulatedLoudness = 0;
+    sensing.getLoudness = () => simulatedLoudness;
+    t.false(sensing.isLoud());
+
+    // Check for GREATER than 10, not equal.
+    simulatedLoudness = 10;
+    t.false(sensing.isLoud());
+
+    simulatedLoudness = 11;
+    t.true(sensing.isLoud());
+
+    t.end();
+});
+
+test('username block', t => {
+    const rt = new Runtime();
+    const sensing = new Sensing(rt);
+    const util = new BlockUtility(rt.sequencer);
+
+    t.equal(sensing.getUsername({}, util), '');
     t.end();
 });
