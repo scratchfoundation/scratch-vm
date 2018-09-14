@@ -548,7 +548,7 @@ class EV3 {
      * Called by the runtime when user wants to scan for an EV3 peripheral.
      */
     scan () {
-        this._bt = new BT(this._runtime, {
+        this._bt = new BT(this._runtime, 'EV3', {
             majorDeviceClass: 8,
             minorDeviceClass: 1
         }, this._onConnect, this._onMessage);

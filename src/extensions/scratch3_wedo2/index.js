@@ -549,7 +549,7 @@ class WeDo2 {
      * Called by the runtime when user wants to scan for a WeDo 2.0 peripheral.
      */
     scan () {
-        this._ble = new BLE(this._runtime, {
+        this._ble = new BLE(this._runtime, 'WeDo 2', {
             filters: [{
                 services: [BLEService.DEVICE_SERVICE]
             }],

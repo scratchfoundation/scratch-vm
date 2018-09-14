@@ -8,10 +8,11 @@ class BLE extends JSONRPCWebSocket {
      * A BLE peripheral socket object.  It handles connecting, over web sockets, to
      * BLE peripherals, and reading and writing data to them.
      * @param {Runtime} runtime - the Runtime for sending/receiving GUI update events.
+     * @param {string} peripheralType - the type of peripheral.
      * @param {object} peripheralOptions - the list of options for peripheral discovery.
      * @param {object} connectCallback - a callback for connection.
      */
-    constructor (runtime, peripheralOptions, connectCallback) {
+    constructor (runtime, peripheralType, peripheralOptions, connectCallback) {
         const ws = new WebSocket(ScratchLinkWebSocket);
         super(ws);
 
@@ -25,6 +26,7 @@ class BLE extends JSONRPCWebSocket {
         this._connected = false;
         this._characteristicDidChangeCallback = null;
         this._peripheralOptions = peripheralOptions;
+        this._peripheralType = peripheralType;
         this._discoverTimeoutID = null;
         this._runtime = runtime;
     }
@@ -172,7 +174,9 @@ class BLE extends JSONRPCWebSocket {
     _sendError (/* e */) {
         this.disconnect();
         // log.error(`BLE error: ${JSON.stringify(e)}`);
-        this._runtime.emit(this._runtime.constructor.PERIPHERAL_ERROR);
+        this._runtime.emit(this._runtime.constructor.PERIPHERAL_ERROR, {
+            message: `Scratch lost connection to ${this._peripheralType}.`
+        });
     }
 
     _sendDiscoverTimeout () {

@@ -200,7 +200,7 @@ class MicroBit {
      * Called by the runtime when user wants to scan for a peripheral.
      */
     scan () {
-        this._ble = new BLE(this._runtime, {
+        this._ble = new BLE(this._runtime, 'micro:bit', {
             filters: [
                 {services: [BLEUUID.service]}
             ]
