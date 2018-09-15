@@ -1,13 +1,13 @@
 const test = require('tap').test;
 
 const Timer = require('../../src/util/timer');
-const TokenBucket = require('../../src/util/token-bucket');
+const TaskQueue = require('../../src/util/task-queue');
 
 const testCompare = require('../fixtures/test-compare');
 
 test('constructor', t => {
     // Max tokens = 1000, refill 1000 tokens per second (1 per millisecond), and start with 0 tokens
-    const bukkit = new TokenBucket(1000, 1000, 0);
+    const bukkit = new TaskQueue(1000, 1000, 0);
 
     const timer = new Timer();
     timer.start();
