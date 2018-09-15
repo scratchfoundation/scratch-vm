@@ -14,10 +14,11 @@ class TokenBucket {
     constructor (maxTokens, refillRate, startingTokens = maxTokens) {
         this._maxTokens = maxTokens;
         this._refillRate = refillRate;
-        this._pendingTasks = [];
+        this._pendingTaskRecords = [];
         this._tokenCount = startingTokens;
         this._timer = new Timer();
         this._timer.start();
+        this._timeout = null;
         this._lastUpdateTime = this._timer.timeElapsed();
     }
 
@@ -30,13 +31,13 @@ class TokenBucket {
      * @memberof TokenBucket
      */
     do (task, cost = 1) {
-        let wrappedTask;
+        const newRecord = {};
         const promise = new Promise((resolve, reject) => {
-            wrappedTask = () => {
+            newRecord.wrappedTask = () => {
                 const canRun = this._refillAndSpend(cost);
                 if (canRun) {
                     // Remove this task from the queue and run it
-                    this._pendingTasks.shift();
+                    this._pendingTaskRecords.shift();
                     try {
                         resolve(task());
                     } catch (e) {
@@ -44,23 +45,36 @@ class TokenBucket {
                     }
 
                     // Tell the next wrapper to start trying to run its task
-                    if (this._pendingTasks.length > 0) {
-                        const nextWrappedTask = this._pendingTasks[0];
-                        nextWrappedTask();
+                    if (this._pendingTaskRecords.length > 0) {
+                        const nextRecord = this._pendingTaskRecords[0];
+                        nextRecord.wrappedTask();
                     }
                 } else {
                     // This task can't run yet. Estimate when it will be able to, then try again.
-                    this._waitUntilAffordable(cost).then(() => wrappedTask());
+                    newRecord.reject = reject;
+                    this._waitUntilAffordable(cost).then(() => newRecord.wrappedTask());
                 }
             };
         });
-        this._pendingTasks.push(wrappedTask);
+        this._pendingTaskRecords.push(newRecord);
 
-        if (this._pendingTasks.length === 1) {
-            wrappedTask();
+        if (this._pendingTaskRecords.length === 1) {
+            newRecord.wrappedTask();
         }
 
         return promise;
+    }
+
+    /**
+     * Cancel all pending tasks, rejecting all their promises.
+     */
+    cancelAll () {
+        if (this._timeout !== null) {
+            clearTimeout(this._timeout);
+            this._timeout = null;
+        }
+        this._pendingTaskRecords.forEach(r => r.reject());
+        this._pendingTaskRecords = [];
     }
 
     /**
@@ -121,9 +135,17 @@ class TokenBucket {
             return Promise.reject(new Error(`Task cost ${cost} is greater than bucket limit ${this._maxTokens}`));
         }
         return new Promise(resolve => {
-            const tokensNeeded = this._tokenCount - cost;
+            const tokensNeeded = Math.max(cost - this._tokenCount, 0);
             const estimatedWait = Math.ceil(1000 * tokensNeeded / this._refillRate);
-            setTimeout(resolve, estimatedWait);
+
+            let timeout = null;
+            const onTimeout = () => {
+                if (this._timeout === timeout) {
+                    this._timeout = null;
+                }
+                resolve();
+            };
+            this._timeout = timeout = setTimeout(onTimeout, estimatedWait);
         });
     }
 }

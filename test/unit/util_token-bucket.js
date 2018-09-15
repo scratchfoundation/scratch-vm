@@ -14,18 +14,28 @@ test('constructor', t => {
 
     const taskResults = [];
     const promises = [];
+    const goodCancelMessage = 'Task was canceled correctly';
+    bukkit.do(() => taskResults.push('nope'), 999).then(
+        () => {
+            t.fail('Task should have been canceled');
+        },
+        () => {
+            taskResults.push(goodCancelMessage);
+        }
+    );
+    bukkit.cancelAll();
     promises.push(
-        bukkit.do(() => taskResults.push('a'), 100).then(() =>
-            testCompare(t, timer.timeElapsed(), '>=', 100, 'Costly task must wait')
+        bukkit.do(() => taskResults.push('a'), 50).then(() =>
+            testCompare(t, timer.timeElapsed(), '>=', 50, 'Costly task must wait')
         ),
-        bukkit.do(() => taskResults.push('b'), 0).then(() =>
-            testCompare(t, timer.timeElapsed(), '<', 150, 'Cheap task should run soon')
+        bukkit.do(() => taskResults.push('b'), 10).then(() =>
+            testCompare(t, timer.timeElapsed(), '>=', 60, 'Tasks must run in serial')
         ),
-        bukkit.do(() => taskResults.push('c'), 101).then(() =>
-            testCompare(t, timer.timeElapsed(), '>=', 200, 'Tasks must run in serial')
+        bukkit.do(() => taskResults.push('c'), 1).then(() =>
+            testCompare(t, timer.timeElapsed(), '<', 80, 'Cheap task should run soon')
         )
     );
     return Promise.all(promises).then(() => {
-        t.deepEqual(taskResults, ['a', 'b', 'c'], 'All tasks must run in correct order');
+        t.deepEqual(taskResults, [goodCancelMessage, 'a', 'b', 'c'], 'All tasks must run in correct order');
     });
 });
