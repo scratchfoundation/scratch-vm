@@ -1061,7 +1061,8 @@ const parseBlock = function (sb2block, addBroadcastMsg, getVariableId, extension
             children: [],
             mutation: {
                 tagName: 'mutation',
-                proccode: procData[0].replace(/\\@/g, '@').replace(/\\\\/g, '\\'), // e.g., "abc %n %b %s"
+                proccode: procData[0].replace(/\\@/g, '@').replace(/\\\\/g, '\\')
+                    .replace(/\\%/g, '％'), // e.g., "abc %n %b %s" @todo: It uses fullwidth percent!
                 argumentnames: JSON.stringify(procData[1]), // e.g. ['arg1', 'arg2']
                 argumentids: JSON.stringify(parseProcedureArgIds(procData[0])),
                 argumentdefaults: JSON.stringify(procData[2]), // e.g., [1, 'abc']
