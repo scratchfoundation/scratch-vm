@@ -37,6 +37,8 @@ test('lt', t => {
     t.strictEqual(blocks.lt({OPERAND1: '1', OPERAND2: '2'}), true);
     t.strictEqual(blocks.lt({OPERAND1: '2', OPERAND2: '1'}), false);
     t.strictEqual(blocks.lt({OPERAND1: '1', OPERAND2: '1'}), false);
+    t.strictEqual(blocks.lt({OPERAND1: '10', OPERAND2: '2'}), false);
+    t.strcitEqual(blocks.lt({OPERAND1: 'a', OPERAND2: 'z'}), true);
     t.end();
 });
 
