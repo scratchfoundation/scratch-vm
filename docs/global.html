@@ -16512,7 +16512,7 @@ used by the Scratch runtime.</p>
 
     
 
-    <h4 class="name" id="parseBlock"><span class="type-signature"></span>parseBlock<span class="signature">(sb2block<span class="signature-attributes">non-null</span>, addBroadcastMsg, getVariableId, extensions, comments, commentIndex)</span><span class="type-signature"> &rarr; {Array.&lt;(object|int)>}</span></h4>
+    <h4 class="name" id="parseBlock"><span class="type-signature"></span>parseBlock<span class="signature">(sb2block<span class="signature-attributes">non-null</span>, addBroadcastMsg, getVariableId, extensions, parseState, comments, commentIndex)</span><span class="type-signature"> &rarr; {Array.&lt;(object|int)>}</span></h4>
 
     
 
@@ -16689,6 +16689,29 @@ used by the Scratch runtime.</p>
 
         <tr>
             
+                <td class="name"><code>parseState</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">ParseState</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"><p>info on the state of parsing beyond the current block.</p></td>
+        </tr>
+
+    
+
+        <tr>
+            
                 <td class="name"><code>comments</code></td>
             
 
@@ -16781,7 +16804,7 @@ and second item is the updated comment index (after this block and its children 
 
     
 
-    <h4 class="name" id="parseBlockList"><span class="type-signature"></span>parseBlockList<span class="signature">(blockList, addBroadcastMsg, getVariableId, extensions, comments, commentIndex)</span><span class="type-signature"> &rarr; {Array.&lt;(Array.&lt;object>|int)>}</span></h4>
+    <h4 class="name" id="parseBlockList"><span class="type-signature"></span>parseBlockList<span class="signature">(blockList, addBroadcastMsg, getVariableId, extensions, parseState, comments, commentIndex)</span><span class="type-signature"> &rarr; {Array.&lt;(Array.&lt;object>|int)>}</span></h4>
 
     
 
@@ -16955,6 +16978,29 @@ or a list of blocks in an argument (e.g., move [pick random...]).</p>
             
 
             <td class="description last"><p>(in/out) parsed extension information will be stored here.</p></td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>parseState</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">ParseState</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"><p>info on the state of parsing beyond the current block.</p></td>
         </tr>
 
     
