@@ -4,6 +4,7 @@ const Sprite = require('../../src/sprites/sprite');
 const Variable = require('../../src/engine/variable');
 const adapter = require('../../src/engine/adapter');
 const events = require('../fixtures/events.json');
+const Renderer = require('../fixtures/fake-renderer');
 const Runtime = require('../../src/engine/runtime');
 const RenderedTarget = require('../../src/sprites/rendered-target');
 
@@ -926,5 +927,13 @@ test('Setting turbo mode emits events', t => {
     vm.setTurboMode(false);
     t.equal(turboMode, false);
 
+    t.end();
+});
+
+test('Getting the renderer returns the renderer', t => {
+    const renderer = new Renderer();
+    const vm = new VirtualMachine();
+    vm.attachRenderer(renderer);
+    t.equal(vm.renderer, renderer);
     t.end();
 });
