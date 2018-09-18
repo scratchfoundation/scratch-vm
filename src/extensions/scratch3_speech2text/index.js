@@ -236,6 +236,8 @@ class Scratch3Speech2TextBlocks {
      * @private
      */
     _stopListening () {
+        this.runtime.requestMicIndicatorUpdate(false);
+
         // Note that this can be called before any Listen And Wait block did setup,
         // so check that things exist before disconnecting them.
         if (this._context) {
@@ -436,6 +438,7 @@ class Scratch3Speech2TextBlocks {
      * @private
      */
     _startListening () {
+        this.runtime.requestMicIndicatorUpdate(true);
         this._initListening();
         // Force the block to timeout if we don't get any results back/the user didn't say anything.
         this._speechTimeoutId = setTimeout(this._stopTranscription, listenAndWaitBlockTimeoutMs);

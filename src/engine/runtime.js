@@ -458,6 +458,15 @@ class Runtime extends EventEmitter {
     }
 
     /**
+     * Event name for requesting an update of the indicator that shows that the
+     * microphone is being used to stream audio.
+     * @const {string}
+     */
+    static get UPDATE_MIC_INDICATOR () {
+        return 'UPDATE_MIC_INDICATOR';
+    }
+
+    /**
      * Event name for reporting that blocksInfo was updated.
      * @const {string}
      */
@@ -987,6 +996,10 @@ class Runtime extends EventEmitter {
             isConnected = this.peripheralExtensions[extensionId].isConnected();
         }
         return isConnected;
+    }
+
+    requestMicIndicatorUpdate (visible) {
+        this.emit(Runtime.UPDATE_MIC_INDICATOR, visible);
     }
 
     /**
