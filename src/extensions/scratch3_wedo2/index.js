@@ -541,10 +541,8 @@ class WeDo2 {
      */
     stopAll () {
         if (!this.isConnected()) return;
-        this.stopTone()
-            .then(() => { // TODO: Promise?
-                this.stopAllMotors();
-            });
+        this.stopTone();
+        this.stopAllMotors();
     }
 
     /**
@@ -678,19 +676,13 @@ class WeDo2 {
      * @private
      */
     _onConnect () {
-        // set LED input mode to RGB
-        this.setLEDMode()
-            .then(() => { // TODO: Promise?
-                // set LED to blue
-                this.setLED(0x0000FF);
-            })
-            .then(() => { // TODO: Promise?
-                this._ble.startNotifications(
-                    BLEService.DEVICE_SERVICE,
-                    BLECharacteristic.ATTACHED_IO,
-                    this._onMessage
-                );
-            });
+        this.setLEDMode();
+        this.setLED(0x0000FF);
+        this._ble.startNotifications(
+            BLEService.DEVICE_SERVICE,
+            BLECharacteristic.ATTACHED_IO,
+            this._onMessage
+        );
     }
 
     /**
@@ -764,14 +756,12 @@ class WeDo2 {
                 true
             );
 
-            this.send(BLECharacteristic.INPUT_COMMAND, cmd)
-                .then(() => { // TODO: Promise?
-                    this._ble.startNotifications(
-                        BLEService.IO_SERVICE,
-                        BLECharacteristic.INPUT_VALUES,
-                        this._onMessage
-                    );
-                });
+            this.send(BLECharacteristic.INPUT_COMMAND, cmd);
+            this._ble.startNotifications(
+                BLEService.IO_SERVICE,
+                BLECharacteristic.INPUT_VALUES,
+                this._onMessage
+            );
         }
     }
 
