@@ -959,6 +959,13 @@ class VirtualMachine extends EventEmitter {
     }
 
     /**
+     * @returns {RenderWebGL} The renderer attached to the vm
+     */
+    get renderer () {
+        return this.runtime && this.runtime.renderer;
+    }
+
+    /**
      * Set the svg adapter for the VM/runtime, which converts scratch 2 svgs to scratch 3 svgs
      * @param {!SvgRenderer} svgAdapter The adapter to attach
      */
