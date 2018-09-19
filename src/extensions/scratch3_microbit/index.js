@@ -620,7 +620,7 @@ class Scratch3MicroBitBlocks {
                     opcode: 'displayText',
                     text: formatMessage({
                         id: 'microbit.displayText',
-                        default: 'display [TEXT]',
+                        default: 'display text [TEXT]',
                         description: 'display text on the micro:bit display'
                     }),
                     blockType: BlockType.COMMAND,
