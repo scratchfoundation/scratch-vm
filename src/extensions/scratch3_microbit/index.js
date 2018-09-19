@@ -703,7 +703,7 @@ class Scratch3MicroBitBlocks {
                     opcode: 'whenPinConnected',
                     text: formatMessage({
                         id: 'microbit.whenPinConnected',
-                        default: 'when pin [PIN] connected test',
+                        default: 'when pin [PIN] connected',
                         description: 'when the pin detects a connection to Earth/Ground'
 
                     }),
