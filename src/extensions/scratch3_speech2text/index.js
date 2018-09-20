@@ -207,6 +207,7 @@ class Scratch3Speech2TextBlocks {
      * @private.
      */
     _resetListening () {
+        this.runtime.requestMicIndicatorUpdate(false);
         this._stopListening();
         this._closeWebsocket();
         this._resolveSpeechPromises();
@@ -236,8 +237,6 @@ class Scratch3Speech2TextBlocks {
      * @private
      */
     _stopListening () {
-        this.runtime.requestMicIndicatorUpdate(false);
-
         // Note that this can be called before any Listen And Wait block did setup,
         // so check that things exist before disconnecting them.
         if (this._context) {
