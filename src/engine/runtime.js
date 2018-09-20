@@ -458,12 +458,11 @@ class Runtime extends EventEmitter {
     }
 
     /**
-     * Event name for requesting an update of the indicator that shows that the
-     * microphone is being used to stream audio.
+     * Event name to indicate that the microphone is being used to stream audio.
      * @const {string}
      */
-    static get UPDATE_MIC_INDICATOR () {
-        return 'UPDATE_MIC_INDICATOR';
+    static get MIC_LISTENING () {
+        return 'MIC_LISTENING';
     }
 
     /**
@@ -998,8 +997,12 @@ class Runtime extends EventEmitter {
         return isConnected;
     }
 
-    requestMicIndicatorUpdate (visible) {
-        this.emit(Runtime.UPDATE_MIC_INDICATOR, visible);
+    /**
+     * Emit an event to indicate that the microphone is being used to stream audio.
+     * @param {boolean} listening - true if the microphone is currently listening.
+     */
+    emitMicListening (listening) {
+        this.emit(Runtime.MIC_LISTENING, listening);
     }
 
     /**

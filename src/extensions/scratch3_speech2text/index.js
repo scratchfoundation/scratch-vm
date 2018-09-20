@@ -207,7 +207,7 @@ class Scratch3Speech2TextBlocks {
      * @private.
      */
     _resetListening () {
-        this.runtime.requestMicIndicatorUpdate(false);
+        this.runtime.emitMicListening(false);
         this._stopListening();
         this._closeWebsocket();
         this._resolveSpeechPromises();
@@ -437,7 +437,7 @@ class Scratch3Speech2TextBlocks {
      * @private
      */
     _startListening () {
-        this.runtime.requestMicIndicatorUpdate(true);
+        this.runtime.emitMicListening(true);
         this._initListening();
         // Force the block to timeout if we don't get any results back/the user didn't say anything.
         this._speechTimeoutId = setTimeout(this._stopTranscription, listenAndWaitBlockTimeoutMs);
