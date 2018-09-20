@@ -117,6 +117,9 @@ class VirtualMachine extends EventEmitter {
         this.runtime.on(Runtime.PERIPHERAL_SCAN_TIMEOUT, () =>
             this.emit(Runtime.PERIPHERAL_SCAN_TIMEOUT)
         );
+        this.runtime.on(Runtime.MIC_LISTENING, listening => {
+            this.emit(Runtime.MIC_LISTENING, listening);
+        });
 
         this.extensionManager = new ExtensionManager(this.runtime);
 
