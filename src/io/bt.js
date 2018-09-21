@@ -8,12 +8,12 @@ class BT extends JSONRPCWebSocket {
      * A BT peripheral socket object.  It handles connecting, over web sockets, to
      * BT peripherals, and reading and writing data to them.
      * @param {Runtime} runtime - the Runtime for sending/receiving GUI update events.
-     * @param {string} peripheralType - the type of peripheral.
+     * @param {string} extensionId - the id of the extension using this socket.
      * @param {object} peripheralOptions - the list of options for peripheral discovery.
      * @param {object} connectCallback - a callback for connection.
      * @param {object} messageCallback - a callback for message sending.
      */
-    constructor (runtime, peripheralType, peripheralOptions, connectCallback, messageCallback) {
+    constructor (runtime, extensionId, peripheralOptions, connectCallback, messageCallback) {
         const ws = new WebSocket(ScratchLinkWebSocket);
         super(ws);
 
@@ -26,8 +26,8 @@ class BT extends JSONRPCWebSocket {
         this._connectCallback = connectCallback;
         this._connected = false;
         this._characteristicDidChangeCallback = null;
+        this._extensionId = extensionId;
         this._peripheralOptions = peripheralOptions;
-        this._peripheralType = peripheralType;
         this._discoverTimeoutID = null;
         this._messageCallback = messageCallback;
         this._runtime = runtime;

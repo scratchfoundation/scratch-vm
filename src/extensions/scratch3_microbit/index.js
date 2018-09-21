@@ -73,6 +73,8 @@ class MicroBit {
         this._ble = null;
         this._runtime.registerPeripheralExtension(extensionId, this);
 
+        this._extensionId = extensionId;
+
         /**
          * The most recently received value for each sensor.
          * @type {Object.<string, number>}
@@ -132,6 +134,15 @@ class MicroBit {
         this.disconnect = this.disconnect.bind(this);
         this._onConnect = this._onConnect.bind(this);
         this._onMessage = this._onMessage.bind(this);
+
+        this._runtime.emit(this._runtime.constructor.PERIPHERAL_ERROR, {
+            message: `Scratch lost connection to peripheral.`,
+            extensionId: this._extensionId
+        });
+        this._runtime.emit(this._runtime.constructor.PERIPHERAL_ERROR, {
+            message: `Scratch lost connection to peripheral.`,
+            extensionId: 2
+        });
     }
 
     /**
@@ -200,7 +211,7 @@ class MicroBit {
      * Called by the runtime when user wants to scan for a peripheral.
      */
     scan () {
-        this._ble = new BLE(this._runtime, 'micro:bit', {
+        this._ble = new BLE(this._runtime, this._extensionId, {
             filters: [
                 {services: [BLEUUID.service]}
             ]
