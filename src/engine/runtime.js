@@ -458,6 +458,14 @@ class Runtime extends EventEmitter {
     }
 
     /**
+     * Event name to indicate that the microphone is being used to stream audio.
+     * @const {string}
+     */
+    static get MIC_LISTENING () {
+        return 'MIC_LISTENING';
+    }
+
+    /**
      * Event name for reporting that blocksInfo was updated.
      * @const {string}
      */
@@ -987,6 +995,14 @@ class Runtime extends EventEmitter {
             isConnected = this.peripheralExtensions[extensionId].isConnected();
         }
         return isConnected;
+    }
+
+    /**
+     * Emit an event to indicate that the microphone is being used to stream audio.
+     * @param {boolean} listening - true if the microphone is currently listening.
+     */
+    emitMicListening (listening) {
+        this.emit(Runtime.MIC_LISTENING, listening);
     }
 
     /**
