@@ -409,6 +409,11 @@ class EV3 {
         this._runtime.on('PROJECT_STOP_ALL', this.stopAll.bind(this));
 
         /**
+         * The id of the extension this peripheral belongs to.
+         */
+        this._extensionId = extensionId;
+
+        /**
          * A list of the names of the sensors connected in ports 1,2,3,4.
          * @type {string[]}
          * @private
@@ -548,7 +553,7 @@ class EV3 {
      * Called by the runtime when user wants to scan for an EV3 peripheral.
      */
     scan () {
-        this._bt = new BT(this._runtime, 'EV3', {
+        this._bt = new BT(this._runtime, this._extensionId, {
             majorDeviceClass: 8,
             minorDeviceClass: 1
         }, this._onConnect, this._onMessage);

@@ -73,6 +73,9 @@ class MicroBit {
         this._ble = null;
         this._runtime.registerPeripheralExtension(extensionId, this);
 
+        /**
+         * The id of the extension this peripheral belongs to.
+         */
         this._extensionId = extensionId;
 
         /**
@@ -134,15 +137,6 @@ class MicroBit {
         this.disconnect = this.disconnect.bind(this);
         this._onConnect = this._onConnect.bind(this);
         this._onMessage = this._onMessage.bind(this);
-
-        this._runtime.emit(this._runtime.constructor.PERIPHERAL_ERROR, {
-            message: `Scratch lost connection to peripheral.`,
-            extensionId: this._extensionId
-        });
-        this._runtime.emit(this._runtime.constructor.PERIPHERAL_ERROR, {
-            message: `Scratch lost connection to peripheral.`,
-            extensionId: 2
-        });
     }
 
     /**

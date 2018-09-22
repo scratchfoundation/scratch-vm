@@ -174,8 +174,9 @@ class BLE extends JSONRPCWebSocket {
     _sendError (/* e */) {
         this.disconnect();
         // log.error(`BLE error: ${JSON.stringify(e)}`);
+        console.log('extension id sending: ' + this._extensionId);
         this._runtime.emit(this._runtime.constructor.PERIPHERAL_ERROR, {
-            message: `Scratch lost connection to ${this._peripheralType}.`,
+            message: `Scratch lost connection to`,
             extensionId: this._extensionId
         });
     }
