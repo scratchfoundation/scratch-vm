@@ -63,6 +63,12 @@ class Scratch3Text2SpeechBlocks {
         this.runtime = runtime;
 
         /**
+         * The current language code to use for speech synthesis.
+         * @type {string}
+         */
+        this.currentLanguage = 'en-US';
+
+        /**
          * Map of soundPlayers by sound id.
          * @type {Map<string, SoundPlayer>}
          */
@@ -129,6 +135,28 @@ class Scratch3Text2SpeechBlocks {
                 gender: 'female',
                 playbackRate: 1.4
             }
+        };
+    }
+
+    /**
+     * An object with language names mapped to their language codes.
+     */
+    get LANGUAGE_INFO () {
+        return {
+            'Danish': 'da-DK',
+            'Dutch': 'nl-NL',
+            'English': 'en-US',
+            'French': 'fr-FR',
+            'German': 'de-DE',
+            'Icelandic': 'is-IS',
+            'Italian': 'it-IT',
+            'Japanese': 'ja-JP',
+            'Polish': 'pl-PL',
+            'Portuguese (Brazilian)': 'pt-BR',
+            'Portuguese (European)': 'pt-PT',
+            'Russian': 'ru-RU',
+            'Spanish (European)': 'es-ES',
+            'Spanish (Latin American)': 'es-US'
         };
     }
 
@@ -224,10 +252,27 @@ class Scratch3Text2SpeechBlocks {
                             defaultValue: QUINN_ID
                         }
                     }
+                },
+                {
+                    opcode: 'setLanguage',
+                    text: formatMessage({
+                        id: 'text2speech.setLanguageBlock',
+                        default: 'set language to [LANGUAGE]',
+                        description: 'Set the language for speech synthesis.'
+                    }),
+                    blockType: BlockType.COMMAND,
+                    arguments: {
+                        LANGUAGE: {
+                            type: ArgumentType.STRING,
+                            menu: 'languages',
+                            defaultValue: this.currentLanguage
+                        }
+                    }
                 }
             ],
             menus: {
-                voices: this.getVoiceMenu()
+                voices: this.getVoiceMenu(),
+                languages: this.getLanguageMenu()
             }
         };
     }
@@ -261,6 +306,17 @@ class Scratch3Text2SpeechBlocks {
     }
 
     /**
+     * Get the menu of languages for the "set language" block.
+     * @return {array} the text and value for each menu item.
+     */
+    getLanguageMenu () {
+        return Object.keys(this.LANGUAGE_INFO).map(languageName => ({
+            text: languageName,
+            value: this.LANGUAGE_INFO[languageName]
+        }));
+    }
+
+    /**
      * Set the voice for speech synthesis for this sprite.
      * @param  {object} args Block arguments
      * @param {object} util Utility object provided by the runtime.
@@ -271,6 +327,17 @@ class Scratch3Text2SpeechBlocks {
         // Only set the voice if the arg is a valid voice id.
         if (Object.keys(this.VOICE_INFO).includes(args.VOICE)) {
             state.voiceId = args.VOICE;
+        }
+    }
+
+    /**
+     * Set the language for speech synthesis.
+     * @param  {object} args Block arguments
+     */
+    setLanguage (args) {
+        // Only set the language if the arg is a valid language code.
+        if (Object.values(this.LANGUAGE_INFO).includes(args.LANGUAGE)) {
+            this.currentLanguage = args.LANGUAGE;
         }
     }
 
@@ -305,7 +372,7 @@ class Scratch3Text2SpeechBlocks {
 
         // Build up URL
         let path = `${SERVER_HOST}/synth`;
-        path += `?locale=${this.getViewerLanguageCode()}`;
+        path += `?locale=${this.currentLanguage}`;
         path += `&gender=${gender}`;
         path += `&text=${encodeURI(words.substring(0, 128))}`;
 
