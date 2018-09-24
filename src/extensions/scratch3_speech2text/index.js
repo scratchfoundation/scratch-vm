@@ -200,6 +200,14 @@ class Scratch3Speech2TextBlocks {
     }
 
     /**
+     * Get the viewer's language code.
+     * @return {string} the language code.
+     */
+    _getViewerLanguageCode () {
+        return formatMessage.setup().locale || navigator.language || navigator.userLanguage || 'en-US';
+    }
+
+    /**
      * Resets all things related to listening. Called on Red Stop sign button.
      *   - suspends audio processing
      *   - closes socket with speech socket server
@@ -547,10 +555,12 @@ class Scratch3Speech2TextBlocks {
         // it, start streaming the audio bytes to the server and listening for
         // transcriptions.
         this._socket.addEventListener('message', this._socketMessageCallback, {once: true});
+        const langCode = this._getViewerLanguageCode();
         this._socket.send(JSON.stringify(
             {
                 sampleRate: this._context.sampleRate,
-                phrases: this._phraseList
+                phrases: this._phraseList,
+                locale: langCode
             }
         ));
     }
