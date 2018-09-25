@@ -536,6 +536,79 @@ class Scratch3MusicBlocks {
     }
 
     /**
+     * An array that is a mapping from MIDI instrument numbers to Scratch instrument numbers.
+     * @type {number[]} an array of Scratch instrument numbers.
+     */
+    get MIDI_INSTRUMENTS () {
+        return [
+            // Acoustic Grand, Bright Acoustic, Electric Grand, Honky-Tonk
+            1, 1, 1, 1,
+            // Electric Piano 1, Electric Piano 2, Harpsichord, Clavinet
+            2, 2, 4, 4,
+            // Celesta, Glockenspiel, Music Box, Vibraphone
+            17, 17, 17, 16,
+            // Marimba, Xylophone, Tubular Bells, Dulcimer
+            19, 16, 17, 17,
+            // Drawbar Organ, Percussive Organ, Rock Organ, Church Organ
+            3, 3, 3, 3,
+            // Reed Organ, Accordion, Harmonica, Tango Accordion
+            3, 3, 3, 3,
+            // Nylon String Guitar, Steel String Guitar, Electric Jazz Guitar, Electric Clean Guitar
+            4, 4, 5, 5,
+            // Electric Muted Guitar, Overdriven Guitar,Distortion Guitar, Guitar Harmonics
+            5, 5, 5, 5,
+            // Acoustic Bass, Electric Bass (finger), Electric Bass (pick), Fretless Bass
+            6, 6, 6, 6,
+            // Slap Bass 1, Slap Bass 2, Synth Bass 1, Synth Bass 2
+            6, 6, 6, 6,
+            // Violin, Viola, Cello, Contrabass
+            8, 8, 8, 8,
+            // Tremolo Strings, Pizzicato Strings, Orchestral Strings, Timpani
+            8, 7, 8, 19,
+            // String Ensemble 1, String Ensemble 2, SynthStrings 1, SynthStrings 2
+            8, 8, 8, 8,
+            // Choir Aahs, Voice Oohs, Synth Voice, Orchestra Hit
+            15, 15, 15, 19,
+            // Trumpet, Trombone, Tuba, Muted Trumpet
+            9, 9, 9, 9,
+            // French Horn, Brass Section, SynthBrass 1, SynthBrass 2
+            9, 9, 9, 9,
+            // Soprano Sax, Alto Sax, Tenor Sax, Baritone Sax
+            11, 11, 11, 11,
+            // Oboe, English Horn, Bassoon, Clarinet
+            14, 14, 14, 10,
+            // Piccolo, Flute, Recorder, Pan Flute
+            12, 12, 13, 13,
+            // Blown Bottle, Shakuhachi, Whistle, Ocarina
+            13, 13, 12, 12,
+            // Lead 1 (square), Lead 2 (sawtooth), Lead 3 (calliope), Lead 4 (chiff)
+            20, 20, 20, 20,
+            // Lead 5 (charang), Lead 6 (voice), Lead 7 (fifths), Lead 8 (bass+lead)
+            20, 20, 20, 20,
+            // Pad 1 (new age), Pad 2 (warm), Pad 3 (polysynth), Pad 4 (choir)
+            21, 21, 21, 21,
+            // Pad 5 (bowed), Pad 6 (metallic), Pad 7 (halo), Pad 8 (sweep)
+            21, 21, 21, 21,
+            // FX 1 (rain), FX 2 (soundtrack), FX 3 (crystal), FX 4 (atmosphere)
+            21, 21, 21, 21,
+            // FX 5 (brightness), FX 6 (goblins), FX 7 (echoes), FX 8 (sci-fi)
+            21, 21, 21, 21,
+            // Sitar, Banjo, Shamisen, Koto
+            4, 4, 4, 4,
+            // Kalimba, Bagpipe, Fiddle, Shanai
+            17, 14, 8, 10,
+            // Tinkle Bell, Agogo, Steel Drums, Woodblock
+            17, 17, 18, 19,
+            // Taiko Drum, Melodic Tom, Synth Drum, Reverse Cymbal
+            1, 1, 1, 1,
+            // Guitar Fret Noise, Breath Noise, Seashore, Bird Tweet
+            21, 21, 21, 21,
+            // Telephone Ring, Helicopter, Applause, Gunshot
+            21, 21, 21, 21
+        ];
+    }
+
+    /**
      * The key to load & store a target's music-related state.
      * @type {string}
      */
@@ -698,6 +771,22 @@ class Scratch3MusicBlocks {
                             defaultValue: 1
                         }
                     }
+                },
+                {
+                    opcode: 'midiSetInstrument',
+                    blockType: BlockType.COMMAND,
+                    text: formatMessage({
+                        id: 'music.midiSetInstrument',
+                        default: 'set instrument to [INSTRUMENT]',
+                        description: 'set the instrument for notes played according to a mapping of MIDI codes'
+                    }),
+                    arguments: {
+                        INSTRUMENT: {
+                            type: ArgumentType.NUMBER,
+                            defaultValue: 1
+                        }
+                    },
+                    hideFromPalette: true
                 },
                 {
                     opcode: 'setTempo',
@@ -1029,10 +1118,35 @@ class Scratch3MusicBlocks {
      * @property {int} INSTRUMENT - the number of the instrument to select.
      */
     setInstrument (args, util) {
+        this._setInstrument(args.INSTRUMENT, util, false);
+    }
+
+    /**
+     * Select an instrument for playing notes according to a mapping of MIDI codes to Scratch instrument numbers.
+     * This block is implemented for compatibility with old Scratch projects that use the 'midiInstrument:' block.
+     * @param {object} args - the block arguments.
+     * @param {object} util - utility object provided by the runtime.
+     * @property {int} INSTRUMENT - the MIDI number of the instrument to select.
+     */
+    midiSetInstrument (args, util) {
+        this._setInstrument(args.INSTRUMENT, util, true);
+    }
+
+    /**
+     * Internal code to select an instrument for playing notes. If mapMidi is true, set the instrument according to
+     * the MIDI to Scratch instrument mapping.
+     * @param {number} instNum - the instrument number.
+     * @param {object} util - utility object provided by the runtime.
+     * @param {boolean} mapMidi - whether or not instNum is a MIDI instrument number.
+     */
+    _setInstrument (instNum, util, mapMidi) {
         const musicState = this._getMusicState(util.target);
-        let instNum = Cast.toNumber(args.INSTRUMENT);
+        instNum = Cast.toNumber(instNum);
         instNum = Math.round(instNum);
         instNum -= 1; // instruments are one-indexed
+        if (mapMidi) {
+            instNum = (this.MIDI_INSTRUMENTS[instNum] || 0) - 1;
+        }
         instNum = MathUtil.wrapClamp(instNum, 0, this.INSTRUMENT_INFO.length - 1);
         musicState.currentInstrument = instNum;
     }
