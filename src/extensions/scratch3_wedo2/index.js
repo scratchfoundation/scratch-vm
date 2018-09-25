@@ -358,6 +358,11 @@ class WeDo2 {
         this._runtime.on('PROJECT_STOP_ALL', this.stopAll.bind(this));
 
         /**
+         * The id of the extension this peripheral belongs to.
+         */
+        this._extensionId = extensionId;
+
+        /**
          * A list of the ids of the motors or sensors in ports 1 and 2.
          * @type {string[]}
          * @private
@@ -549,7 +554,7 @@ class WeDo2 {
      * Called by the runtime when user wants to scan for a WeDo 2.0 peripheral.
      */
     scan () {
-        this._ble = new BLE(this._runtime, {
+        this._ble = new BLE(this._runtime, this._extensionId, {
             filters: [{
                 services: [BLEService.DEVICE_SERVICE]
             }],

@@ -74,6 +74,11 @@ class MicroBit {
         this._runtime.registerPeripheralExtension(extensionId, this);
 
         /**
+         * The id of the extension this peripheral belongs to.
+         */
+        this._extensionId = extensionId;
+
+        /**
          * The most recently received value for each sensor.
          * @type {Object.<string, number>}
          * @private
@@ -200,7 +205,7 @@ class MicroBit {
      * Called by the runtime when user wants to scan for a peripheral.
      */
     scan () {
-        this._ble = new BLE(this._runtime, {
+        this._ble = new BLE(this._runtime, this._extensionId, {
             filters: [
                 {services: [BLEUUID.service]}
             ]
