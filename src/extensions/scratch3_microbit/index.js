@@ -813,17 +813,22 @@ class Scratch3MicroBitBlocks {
     /**
      * Display text on the 5x5 LED matrix.
      * @param {object} args - the block's arguments.
-     * @return {Promise} - a Promise that resolves after a tick.
+     * @return {Promise} - a Promise that resolves after the text is done printing.
      * Note the limit is 19 characters
+     * The print time is calculated by multiplying the number of horizontal pixels
+     * by the default scroll delay of 120ms.
+     * The number of horizontal pixels = 6px for each character in the string,
+     * 1px before the string, and 5px after the string.
      */
     displayText (args) {
         const text = String(args.TEXT).substring(0, 19);
         if (text.length > 0) this._peripheral.displayText(text);
+        const yieldDelay = 120 * ((6 * text.length) + 6);
 
         return new Promise(resolve => {
             setTimeout(() => {
                 resolve();
-            }, BLESendInterval);
+            }, yieldDelay);
         });
     }
 
