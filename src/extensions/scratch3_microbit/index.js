@@ -812,16 +812,18 @@ class Scratch3MicroBitBlocks {
      * Note the limit is 19 characters
      * The print time is calculated by multiplying the number of horizontal pixels
      * by the default scroll delay of 120ms.
-     * # of horizontal pixels = 5 + 1 for each char with an additional 1px spacer.
+     * The number of horizontal pixels = 6px for each character in the string,
+     * 1px before the string, and 2px after the string.
      */
     displayText (args) {
         const text = String(args.TEXT).substring(0, 19);
         if (text.length > 0) this._peripheral.displayText(text);
+        const yieldDelay = 120 * ((6 * text.length) + 3);
 
         return new Promise(resolve => {
             setTimeout(() => {
                 resolve();
-            }, 120 * ((6 * text.length) + 1));
+            }, yieldDelay);
         });
     }
 
