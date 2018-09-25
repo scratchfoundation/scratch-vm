@@ -85,7 +85,7 @@ class Scratch3TranslateBlocks {
     getInfo () {
         this._supportedLanguages = this._getSupportedLanguages(this.getViewerLanguageCode());
         this._randomLanguageCode = this._supportedLanguages[
-             Math.floor(Math.random() * this._supportedLanguages.length)].value;
+            Math.floor(Math.random() * this._supportedLanguages.length)].value;
 
         return {
             id: 'translate',
