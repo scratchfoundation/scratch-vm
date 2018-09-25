@@ -538,6 +538,16 @@ const specMap = {
             }
         ]
     },
+    'midiInstrument:': {
+        opcode: 'music.setInstrument',
+        argMap: [
+            {
+                type: 'input',
+                inputOp: 'math_number',
+                inputName: 'INSTRUMENT'
+            }
+        ]
+    },
     'changeVolumeBy:': {
         opcode: 'sound_changevolumeby',
         argMap: [
