@@ -43,7 +43,7 @@ const SQUEAK_ID = 'SQUEAK';
 /**
  * An id for one of the voices.
  */
-const MONSTER_ID = 'MONSTER';
+const GIANT_ID = 'GIANT';
 
 /**
  * An id for one of the voices.
@@ -117,14 +117,14 @@ class Scratch3Text2SpeechBlocks {
                 gender: 'female',
                 playbackRate: 1.4
             },
-            [MONSTER_ID]: {
+            [GIANT_ID]: {
                 name: formatMessage({
-                    id: 'text2speech.monster',
-                    default: 'monster',
+                    id: 'text2speech.giant',
+                    default: 'giant',
                     description: 'Name for a funny voice with a low pitch.'
                 }),
                 gender: 'male',
-                playbackRate: 0.7
+                playbackRate: 0.84
             },
             [KITTEN_ID]: {
                 name: formatMessage({
