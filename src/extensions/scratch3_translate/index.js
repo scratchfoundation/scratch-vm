@@ -31,7 +31,7 @@ class Scratch3TranslateBlocks {
          * @private
          */
         this._viewerLanguageCode = this.getViewerLanguageCode();
-        
+
         /**
          * List of supported language name and language code pairs, for use in the block menu.
          * Filled in by getInfo so it is updated when the interface language changes.
@@ -116,8 +116,6 @@ class Scratch3TranslateBlocks {
                             type: ArgumentType.STRING,
                             menu: 'languages',
                             defaultValue: this._randomLanguageCode
-
-
                         }
                     }
                 },
