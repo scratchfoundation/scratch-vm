@@ -756,11 +756,11 @@ class Scratch3MicroBitBlocks {
      */
     isButtonPressed (args) {
         if (args.BTN === 'any') {
-            return this._peripheral.buttonA | this._peripheral.buttonB;
+            return (this._peripheral.buttonA | this._peripheral.buttonB) !== 0;
         } else if (args.BTN === 'A') {
-            return this._peripheral.buttonA;
+            return this._peripheral.buttonA !== 0;
         } else if (args.BTN === 'B') {
-            return this._peripheral.buttonB;
+            return this._peripheral.buttonB !== 0;
         }
         return false;
     }
