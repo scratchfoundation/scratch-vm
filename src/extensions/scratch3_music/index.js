@@ -610,7 +610,7 @@ class Scratch3MusicBlocks {
 
     /**
      * An array that is a mapping from MIDI drum numbers in range (35..81) to Scratch drum numbers.
-     * @type {Array[Array]} an array of information about the drums, in the format [drumNum, pitch, decay].
+     * @type {Array[]} an array of information about the drums, in the format [drumNum, pitch, decay].
      */
     get MIDI_DRUMS () {
         return [
@@ -938,6 +938,8 @@ class Scratch3MusicBlocks {
      * the MIDI to Scratch drum mapping.
      * @param {number} drumNum - the drum number.
      * @param {beats} beats - the duration in beats to pause after playing the sound.
+     * @param {object} util - utility object provided by the runtime.
+     * @param {boolean} mapMidi - whether or not drumNum is a MIDI drum number.
      */
     _playDrumForBeats (drumNum, beats, util, mapMidi) {
         if (this._stackTimerNeedsInit(util)) {
@@ -1002,7 +1004,7 @@ class Scratch3MusicBlocks {
 
         // Dirty hack to make the pitch effect work - otherwise the effect isn't applied, for some reason.
         // (Other audio effects work fine without this, though.)
-        const pitchEffect = chain._effects.find(effect => effect.name === 'pitch')
+        const pitchEffect = chain._effects.find(effect => effect.name === 'pitch');
         if (pitchEffect) {
             pitchEffect.updatePlayer(player);
         }
