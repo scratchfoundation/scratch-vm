@@ -62,6 +62,10 @@ class Target extends EventEmitter {
          * @type {Object.<string,*>}
          */
         this._customState = {};
+
+        if (this.runtime) {
+            this.runtime.addExecutable(this);
+        }
     }
 
     /**
@@ -394,6 +398,10 @@ class Target extends EventEmitter {
      */
     dispose () {
         this._customState = {};
+
+        if (this.runtime) {
+            this.runtime.removeExecutable(this);
+        }
     }
 
     // Variable Conflict Resolution Helpers

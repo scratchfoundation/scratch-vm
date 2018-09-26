@@ -943,6 +943,9 @@ class RenderedTarget extends Target {
                 other.drawableID, 0, StageLayering.SPRITE_LAYER, true);
             this.renderer.setDrawableOrder(this.drawableID, otherLayer, StageLayering.SPRITE_LAYER);
         }
+
+        const executionPosition = this.runtime.executableTargets.indexOf(other);
+        this.runtime.setExecutablePosition(this, executionPosition);
     }
 
     /**
@@ -1142,6 +1145,7 @@ class RenderedTarget extends Target {
     dispose () {
         this.runtime.changeCloneCounter(-1);
         this.runtime.stopForTarget(this);
+        this.runtime.removeExecutable(this);
         this.sprite.removeClone(this);
         if (this.renderer && this.drawableID !== null) {
             this.renderer.destroyDrawable(this.drawableID, this.isStage ?
