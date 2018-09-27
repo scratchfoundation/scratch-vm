@@ -537,7 +537,7 @@ class Scratch3MusicBlocks {
 
     /**
      * An array that is a mapping from MIDI instrument numbers to Scratch instrument numbers.
-     * @type {number[]} an array of Scratch instrument numbers.
+     * @type {number[]}
      */
     get MIDI_INSTRUMENTS () {
         return [
