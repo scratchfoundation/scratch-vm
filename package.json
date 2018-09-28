@@ -45,7 +45,7 @@
     "scratch-parser": "4.3.2",
     "scratch-translate-extension-languages": "0.0.20180521154850",
     "socket.io-client": "2.0.4",
-    "text-encoding": "0.6.4",
+    "text-encoding": "0.7.0",
     "worker-loader": "^1.1.1"
   },
   "devDependencies": {
