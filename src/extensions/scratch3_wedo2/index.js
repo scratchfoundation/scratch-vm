@@ -226,7 +226,15 @@ class WeDo2Motor {
      * @param {int} value - this motor's new power level, in the range [0,100].
      */
     set power (value) {
-        this._power = Math.max(0, Math.min(value, 100));
+        const p = Math.max(0, Math.min(value, 100));
+        // Lego Wedo 2.0 hub only turns motors at power range [30 - 100], so
+        // map value from [0 - 100] to [30 - 100].
+        if (p === 0) {
+            this._power = 0;
+        } else {
+            const delta = 100 / p;
+            this._power = 30 + (70 / delta);
+        }
     }
 
     /**
@@ -305,7 +313,7 @@ class WeDo2Motor {
      */
     turnOff (useLimiter = true) {
         if (this._power === 0) return;
-        
+
         const cmd = this._parent.generateOutputCommand(
             this._index + 1,
             WeDo2Command.MOTOR_POWER,
