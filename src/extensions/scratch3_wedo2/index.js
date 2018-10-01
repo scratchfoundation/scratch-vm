@@ -254,6 +254,8 @@ class WeDo2Motor {
      * Turn this motor on indefinitely.
      */
     turnOn () {
+        if (this._power === 0) return;
+
         const cmd = this._parent.generateOutputCommand(
             this._index + 1,
             WeDo2Command.MOTOR_POWER,
@@ -271,6 +273,8 @@ class WeDo2Motor {
      * @param {number} milliseconds - run the motor for this long.
      */
     turnOnFor (milliseconds) {
+        if (this._power === 0) return;
+
         milliseconds = Math.max(0, milliseconds);
         this.turnOn();
         this._setNewTimeout(this.startBraking, milliseconds);
@@ -281,6 +285,8 @@ class WeDo2Motor {
      * // TODO: rename this to coastAfter?
      */
     startBraking () {
+        if (this._power === 0) return;
+
         const cmd = this._parent.generateOutputCommand(
             this._index + 1,
             WeDo2Command.MOTOR_POWER,
@@ -298,6 +304,8 @@ class WeDo2Motor {
      * @param {boolean} [useLimiter=true] - if true, use the rate limiter
      */
     turnOff (useLimiter = true) {
+        if (this._power === 0) return;
+        
         const cmd = this._parent.generateOutputCommand(
             this._index + 1,
             WeDo2Command.MOTOR_POWER,

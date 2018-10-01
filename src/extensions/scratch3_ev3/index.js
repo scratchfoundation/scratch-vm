@@ -266,6 +266,8 @@ class EV3Motor {
      * @param {number} milliseconds - run the motor for this long.
      */
     turnOnFor (milliseconds) {
+        if (this._power === 0) return;
+
         const port = this._portMask(this._index);
         let n = milliseconds;
         let speed = this._power * this._direction;
@@ -323,6 +325,8 @@ class EV3Motor {
      * @param {number} time - the time in milliseconds.
      */
     coastAfter (time) {
+        if (this._power === 0) return;
+
         // Set the motor command id to check before starting coast
         const commandId = uid();
         this._commandID = commandId;
@@ -341,6 +345,8 @@ class EV3Motor {
      * Set the motor to coast.
      */
     coast () {
+        if (this._power === 0) return;
+        
         const cmd = this._parent.generateCommand(
             Ev3Command.DIRECT_COMMAND_NO_REPLY,
             [
