@@ -34,21 +34,20 @@ class Scratch3TranslateBlocks {
 
         /**
          * List of supported language name and language code pairs, for use in the block menu.
+         * Filled in by getInfo so it is updated when the interface language changes.
          * @type {Array.<object.<string, string>>}
          * @private
          */
-        this._supportedLanguages = languageNames.menuMap[this._viewerLanguageCode].map(entry => {
-            const obj = {text: entry.name, value: entry.code};
-            return obj;
-        });
+        this._supportedLanguages = [];
 
         /**
          * A randomly selected language code, for use as the default value in the language menu.
+         * Properly filled in getInfo so it is updated when the interface languages changes.
          * @type {string}
          * @private
          */
-        this._randomLanguageCode = this._supportedLanguages[
-            Math.floor(Math.random() * this._supportedLanguages.length)].value;
+        this._randomLanguageCode = 'en';
+
 
         /**
          * The result from the most recent translation.
@@ -84,6 +83,10 @@ class Scratch3TranslateBlocks {
      * @returns {object} metadata for this extension and its blocks.
      */
     getInfo () {
+        this._supportedLanguages = this._getSupportedLanguages(this.getViewerLanguageCode());
+        this._randomLanguageCode = this._supportedLanguages[
+            Math.floor(Math.random() * this._supportedLanguages.length)].value;
+
         return {
             id: 'translate',
             name: formatMessage({
@@ -133,6 +136,19 @@ class Scratch3TranslateBlocks {
         };
     }
 
+    /**
+     * Computes a list of language code and name pairs for the given language.
+     * @param {string} code The language code to get the list of language pairs
+     * @return {Array.<object.<string, string>>} An array of languge name and
+     *   language code pairs.
+     * @private
+     */
+    _getSupportedLanguages (code) {
+        return languageNames.menuMap[code].map(entry => {
+            const obj = {text: entry.name, value: entry.code};
+            return obj;
+        });
+    }
     /**
      * Get the human readable language value for the reporter block.
      * @return {string} the language name of the project viewer.
