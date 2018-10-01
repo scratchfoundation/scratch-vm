@@ -12195,6 +12195,9 @@ var RenderWebGL = function (_EventEmitter) {
         /** @type {function} */
         _this._exitRegion = null;
 
+        /** @type {Array.<snapshotCallback>} */
+        _this._snapshotCallbacks = [];
+
         _this._svgTextBubble = new SVGTextBubble();
 
         _this._createGeometry();
@@ -12689,6 +12692,13 @@ var RenderWebGL = function (_EventEmitter) {
             gl.clear(gl.COLOR_BUFFER_BIT);
 
             this._drawThese(this._drawList, ShaderManager.DRAW_MODE.default, this._projection);
+            if (this._snapshotCallbacks.length > 0) {
+                var snapshot = gl.canvas.toDataURL();
+                this._snapshotCallbacks.forEach(function (cb) {
+                    return cb(snapshot);
+                });
+                this._snapshotCallbacks = [];
+            }
         }
 
         /**
@@ -13841,9 +13851,34 @@ var RenderWebGL = function (_EventEmitter) {
          */
 
     }, {
+        key: 'requestSnapshot',
+
+
+        /**
+         * @callback RenderWebGL#snapshotCallback
+         * @param {string} dataURI Data URI of the snapshot of the renderer
+         */
+
+        /**
+         * @param {snapshotCallback} callback Function called in the next frame with the snapshot data
+         */
+        value: function requestSnapshot(callback) {
+            this._snapshotCallbacks.push(callback);
+        }
+    }, {
         key: 'gl',
         get: function get() {
             return this._gl;
+        }
+
+        /**
+         * @returns {HTMLCanvasElement} the canvas of the WebGL rendering context associated with this renderer.
+         */
+
+    }, {
+        key: 'canvas',
+        get: function get() {
+            return this._gl && this._gl.canvas;
         }
     }, {
         key: '_visibleDrawList',
