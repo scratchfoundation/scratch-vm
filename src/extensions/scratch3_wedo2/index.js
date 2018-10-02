@@ -1093,28 +1093,140 @@ class Scratch3WeDo2Blocks {
             ],
             menus: {
                 MOTOR_ID: [
-                    WeDo2MotorLabel.DEFAULT,
-                    WeDo2MotorLabel.A,
-                    WeDo2MotorLabel.B,
-                    WeDo2MotorLabel.ALL
+                    {
+                        text: formatMessage({
+                            id: 'wedo2.motorId.default',
+                            default: 'motor',
+                            description: 'label for motor element in motor menu for LEGO WeDo 2 extension'
+                        }),
+                        value: WeDo2MotorLabel.DEFAULT
+                    },
+                    {
+                        text: formatMessage({
+                            id: 'wedo2.motorId.a',
+                            default: 'motor A',
+                            description: 'label for motor A element in motor menu for LEGO WeDo 2 extension'
+                        }),
+                        value: WeDo2MotorLabel.A
+                    },
+                    {
+                        text: formatMessage({
+                            id: 'wedo2.motorId.b',
+                            default: 'motor B',
+                            description: 'label for motor B element in motor menu for LEGO WeDo 2 extension'
+                        }),
+                        value: WeDo2MotorLabel.B
+                    },
+                    {
+                        text: formatMessage({
+                            id: 'wedo2.motorId.all',
+                            default: 'all motors',
+                            description: 'label for all motors element in motor menu for LEGO WeDo 2 extension'
+                        }),
+                        value: WeDo2MotorLabel.ALL
+                    }
                 ],
                 MOTOR_DIRECTION: [
-                    WeDo2MotorDirection.FORWARD,
-                    WeDo2MotorDirection.BACKWARD,
-                    WeDo2MotorDirection.REVERSE
+                    {
+                        text: formatMessage({
+                            id: 'wedo2.motorDirection.forward',
+                            default: 'this way',
+                            description: 'label for forward element in motor direction menu for LEGO WeDo 2 extension'
+                        }),
+                        value: WeDo2MotorDirection.FORWARD
+                    },
+                    {
+                        text: formatMessage({
+                            id: 'wedo2.motorDirection.backward',
+                            default: 'that way',
+                            description: 'label for backward element in motor direction menu for LEGO WeDo 2 extension'
+                        }),
+                        value: WeDo2MotorDirection.BACKWARD
+                    },
+                    {
+                        text: formatMessage({
+                            id: 'wedo2.motorDirection.reverse',
+                            default: 'reverse',
+                            description: 'label for reverse element in motor direction menu for LEGO WeDo 2 extension'
+                        }),
+                        value: WeDo2MotorDirection.REVERSE
+                    }
                 ],
                 TILT_DIRECTION: [
-                    WeDo2TiltDirection.UP,
-                    WeDo2TiltDirection.DOWN,
-                    WeDo2TiltDirection.LEFT,
-                    WeDo2TiltDirection.RIGHT
+                    {
+                        text: formatMessage({
+                            id: 'wedo2.tiltDirection.up',
+                            default: 'up',
+                            description: 'label for up element in tilt direction menu for LEGO WeDo 2 extension'
+                        }),
+                        value: WeDo2TiltDirection.UP
+                    },
+                    {
+                        text: formatMessage({
+                            id: 'wedo2.tiltDirection.down',
+                            default: 'down',
+                            description: 'label for down element in tilt direction menu for LEGO WeDo 2 extension'
+                        }),
+                        value: WeDo2TiltDirection.DOWN
+                    },
+                    {
+                        text: formatMessage({
+                            id: 'wedo2.tiltDirection.left',
+                            default: 'left',
+                            description: 'label for left element in tilt direction menu for LEGO WeDo 2 extension'
+                        }),
+                        value: WeDo2TiltDirection.LEFT
+                    },
+                    {
+                        text: formatMessage({
+                            id: 'wedo2.tiltDirection.right',
+                            default: 'right',
+                            description: 'label for right element in tilt direction menu for LEGO WeDo 2 extension'
+                        }),
+                        value: WeDo2TiltDirection.RIGHT
+                    }
                 ],
                 TILT_DIRECTION_ANY: [
-                    WeDo2TiltDirection.UP,
-                    WeDo2TiltDirection.DOWN,
-                    WeDo2TiltDirection.LEFT,
-                    WeDo2TiltDirection.RIGHT,
-                    WeDo2TiltDirection.ANY
+                    {
+                        text: formatMessage({
+                            id: 'wedo2.tiltDirectionAny.up',
+                            default: 'up',
+                            description: 'label for up element in tilt direction any menu for LEGO WeDo 2 extension'
+                        }),
+                        value: WeDo2TiltDirection.UP
+                    },
+                    {
+                        text: formatMessage({
+                            id: 'wedo2.tiltDirectionAny.down',
+                            default: 'down',
+                            description: 'label for down element in tilt direction any menu for LEGO WeDo 2 extension'
+                        }),
+                        value: WeDo2TiltDirection.DOWN
+                    },
+                    {
+                        text: formatMessage({
+                            id: 'wedo2.tiltDirectionAny.left',
+                            default: 'left',
+                            description: 'label for left element in tilt direction any menu for LEGO WeDo 2 extension'
+                        }),
+                        value: WeDo2TiltDirection.LEFT
+                    },
+                    {
+                        text: formatMessage({
+                            id: 'wedo2.tiltDirectionAny.right',
+                            default: 'right',
+                            description: 'label for right element in tilt direction any menu for LEGO WeDo 2 extension'
+                        }),
+                        value: WeDo2TiltDirection.RIGHT
+                    },
+                    {
+                        text: formatMessage({
+                            id: 'wedo2.tiltDirectionAny.any',
+                            default: 'any',
+                            description: 'label for any element in tilt direction any menu for LEGO WeDo 2 extension'
+                        }),
+                        value: WeDo2TiltDirection.ANY
+                    }
                 ],
                 OP: ['<', '>']
             }
