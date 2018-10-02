@@ -1055,9 +1055,6 @@ class RenderedTarget extends Target {
      */
     onStopAll () {
         this.clearEffects();
-        if (this.sprite.soundBank) {
-            this.sprite.soundBank.stopAllSounds();
-        }
     }
 
     /**
