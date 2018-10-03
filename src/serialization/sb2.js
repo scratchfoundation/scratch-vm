@@ -682,7 +682,9 @@ const parseScratchObject = function (object, runtime, extensions, topLevel, zip)
                 }
             }
             for (let n = 0; n < deferredMonitors.length; n++) {
-                parseMonitorObject(deferredMonitors[n], runtime, targets, extensions);
+                if (deferredMonitors[n].visible) {
+                    parseMonitorObject(deferredMonitors[n], runtime, targets, extensions);
+                }
             }
             return targets;
         })
