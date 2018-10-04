@@ -59,6 +59,14 @@ class Scratch3LooksBlocks {
     }
 
     /**
+     * Limit for say bubble string.
+     * @const {string}
+     */
+    static get SAY_BUBBLE_LIMIT () {
+        return 330;
+    }
+
+    /**
      * @param {Target} target - collect bubble state for this target. Probably, but not necessarily, a RenderedTarget.
      * @returns {BubbleState} the mutable bubble state associated with that target. This will be created if necessary.
      * @private
@@ -278,7 +286,7 @@ class Scratch3LooksBlocks {
         if (typeof message === 'number') {
             message = parseFloat(message.toFixed(2));
         }
-        message = String(message);
+        message = String(message).substr(0, Scratch3LooksBlocks.SAY_BUBBLE_LIMIT);
         this.runtime.emit('SAY', util.target, 'say', message);
     }
 
@@ -299,7 +307,7 @@ class Scratch3LooksBlocks {
     }
 
     think (args, util) {
-        this._updateBubble(util.target, 'think', String(args.MESSAGE));
+        this._updateBubble(util.target, 'think', String(args.MESSAGE).substr(0, Scratch3LooksBlocks.SAY_BUBBLE_LIMIT));
     }
 
     thinkforsecs (args, util) {
