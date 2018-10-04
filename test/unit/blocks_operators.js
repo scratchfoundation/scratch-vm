@@ -46,6 +46,7 @@ test('equals', t => {
     t.strictEqual(blocks.equals({OPERAND1: '1', OPERAND2: '2'}), false);
     t.strictEqual(blocks.equals({OPERAND1: '2', OPERAND2: '1'}), false);
     t.strictEqual(blocks.equals({OPERAND1: '1', OPERAND2: '1'}), true);
+    t.strictEqual(blocks.equals({OPERAND1: 'あ', OPERAND2: 'ア'}), false);
     t.end();
 });
 
