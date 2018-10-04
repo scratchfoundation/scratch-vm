@@ -27,20 +27,22 @@ class Scratch3ProcedureBlocks {
     call (args, util) {
         if (!util.stackFrame.executed) {
             const procedureCode = args.mutation.proccode;
-            const paramNamesAndIds = util.getProcedureParamNamesAndIds(procedureCode);
+            const paramNamesIdsAndDefaults = util.getProcedureParamNamesIdsAndDefaults(procedureCode);
 
             // If null, procedure could not be found, which can happen if custom
             // block is dragged between sprites without the definition.
             // Match Scratch 2.0 behavior and noop.
-            if (paramNamesAndIds === null) {
+            if (paramNamesIdsAndDefaults === null) {
                 return;
             }
 
-            const [paramNames, paramIds] = paramNamesAndIds;
+            const [paramNames, paramIds, paramDefaults] = paramNamesIdsAndDefaults;
 
             for (let i = 0; i < paramIds.length; i++) {
                 if (args.hasOwnProperty(paramIds[i])) {
                     util.pushParam(paramNames[i], args[paramIds[i]]);
+                } else {
+                    util.pushParam(paramNames[i], paramDefaults[i]);
                 }
             }
 

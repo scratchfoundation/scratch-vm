@@ -230,11 +230,20 @@ class Blocks {
     }
 
     /**
-     * Get names of parameters for the given procedure.
+     * Get names and ids of parameters for the given procedure.
      * @param {?string} name Name of procedure to query.
      * @return {?Array.<string>} List of param names for a procedure.
      */
     getProcedureParamNamesAndIds (name) {
+        return this.getProcedureParamNamesIdsAndDefaults(name).slice(0, 2);
+    }
+
+    /**
+     * Get names, ids, and defaults of parameters for the given procedure.
+     * @param {?string} name Name of procedure to query.
+     * @return {?Array.<string>} List of param names for a procedure.
+     */
+    getProcedureParamNamesIdsAndDefaults (name) {
         const cachedNames = this._cache.procedureParamNames[name];
         if (typeof cachedNames !== 'undefined') {
             return cachedNames;
@@ -247,7 +256,9 @@ class Blocks {
                 block.mutation.proccode === name) {
                 const names = JSON.parse(block.mutation.argumentnames);
                 const ids = JSON.parse(block.mutation.argumentids);
-                this._cache.procedureParamNames[name] = [names, ids];
+                const defaults = JSON.parse(block.mutation.argumentdefaults);
+
+                this._cache.procedureParamNames[name] = [names, ids, defaults];
                 return this._cache.procedureParamNames[name];
             }
         }
