@@ -542,7 +542,7 @@ class Scratch3VideoSensingBlocks {
     loadStageVideoProperties () {
         const stage = this.runtime.getTargetForStage();
         const currentVideoState = this.runtime.ioDevices.video.provider.enable ? 'on' : 'off';
-        const currentVideoTransparency = this.runtime.ioDevices.video._ghost;
+        const currentVideoTransparency = this.runtime.ioDevices.video.TRANSPARENCY;
 
         if (stage) {
             if (stage.videoState !== currentVideoState) {
