@@ -539,20 +539,20 @@ class Scratch3VideoSensingBlocks {
      * Check for the stage and if we need to load its video properties.
      * This method should only be used once the stage target is loaded.
      */
-    loadStageVideoProperties() {
+    loadStageVideoProperties () {
         const stage = this.runtime.getTargetForStage();
-        const currentVideoState =  this.runtime.ioDevices.video.provider.enable ? 'on' : 'off';
-        const currentVideoTransparency =  this.runtime.ioDevices.video._ghost;
+        const currentVideoState = this.runtime.ioDevices.video.provider.enable ? 'on' : 'off';
+        const currentVideoTransparency = this.runtime.ioDevices.video._ghost;
 
         if (stage) {
-            if (stage.videoState != currentVideoState ) {
+            if (stage.videoState !== currentVideoState) {
                 this.globalVideoState = stage.videoState;
                 this.videoToggle({
                     VIDEO_STATE: this.globalVideoState
                 });
             }
 
-            if (stage.videoTransparency != currentVideoTransparency) {
+            if (stage.videoTransparency !== currentVideoTransparency) {
                 this.setVideoTransparency({
                     TRANSPARENCY: this.globalVideoTransparency
                 });
