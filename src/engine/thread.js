@@ -349,6 +349,7 @@ class Thread {
             if (frame.params.hasOwnProperty(paramName)) {
                 return frame.params[paramName];
             }
+            return null;
         }
         return null;
     }
