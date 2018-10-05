@@ -83,7 +83,7 @@ class Scratch3VideoSensingBlocks {
             this.runtime.on(Runtime.PROJECT_RUN_START, this.reset.bind(this));
 
             // Check if we need to load the stage's video properties
-            this.runtime.on(Runtime.TARGETS_UPDATE, this.setVideoProperties.bind(this));
+            this.runtime.on(Runtime.TARGETS_UPDATE, this.loadStageVideoProperties.bind(this));
 
             // Kick off looping the analysis logic.
             this._loop();
@@ -539,7 +539,7 @@ class Scratch3VideoSensingBlocks {
      * Check for the stage and if we need to load its video properties.
      * This method should only be used once the stage target is loaded.
      */
-    setVideoProperties() {
+    loadStageVideoProperties() {
         const stage = this.runtime.getTargetForStage();
         const currentVideoState =  this.runtime.ioDevices.video.provider.enable ? 'on' : 'off';
         const currentVideoTransparency =  this.runtime.ioDevices.video._ghost;
