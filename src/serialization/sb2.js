@@ -918,6 +918,12 @@ const parseBlock = function (sb2block, addBroadcastMsg, getVariableId, extension
                 if (shadowObscured) {
                     fieldValue = '';
                 }
+            } else if (expectedArg.inputOp === 'sensing_of_object_menu') {
+                if (shadowObscured) {
+                    fieldValue = '_stage_';
+                } else if (fieldValue === 'Stage') {
+                    fieldValue = '_stage_';
+                }
             } else if (expectedArg.inputOp === 'music.menu.DRUM') {
                 if (shadowObscured) {
                     fieldValue = 1;
