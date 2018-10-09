@@ -51,6 +51,8 @@ class Sequencer {
          * @type {!Runtime}
          */
         this.runtime = runtime;
+
+        this.activeThread = null;
     }
 
     /**
@@ -97,8 +99,9 @@ class Sequencer {
             numActiveThreads = 0;
             let stoppedThread = false;
             // Attempt to run each thread one time.
-            for (let i = 0; i < this.runtime.threads.length; i++) {
-                const activeThread = this.runtime.threads[i];
+            const threads = this.runtime.threads;
+            for (let i = 0; i < threads.length; i++) {
+                const activeThread = this.activeThread = threads[i];
                 // Check if the thread is done so it is not executed.
                 if (activeThread.stack.length === 0 ||
                     activeThread.status === Thread.STATUS_DONE) {
@@ -164,6 +167,8 @@ class Sequencer {
                 this.runtime.threads.length = nextActiveThread;
             }
         }
+
+        this.activeThread = null;
 
         return doneThreads;
     }
