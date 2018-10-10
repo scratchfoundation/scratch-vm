@@ -353,6 +353,7 @@ class Scratch3LooksBlocks {
      */
     _setCostume (target, requestedCostume, optZeroIndex) {
         if (typeof requestedCostume === 'number') {
+            // Numbers should be treated as comments, always
             target.setCostume(optZeroIndex ? requestedCostume : requestedCostume - 1);
         } else {
             const costumeIndex = target.getCostumeIndexByName(requestedCostume.toString());
@@ -363,8 +364,10 @@ class Scratch3LooksBlocks {
                 target.setCostume(target.currentCostume + 1);
             } else if (requestedCostume === 'previous costume') {
                 target.setCostume(target.currentCostume - 1);
-            } else if (!isNaN(requestedCostume) &&
-                        (typeof requestedCostume !== 'string' || /\d/g.test(requestedCostume))) {
+            // Try to cast the string to a number (and treat it as a costume index)
+            // Pure whitespace should not be treated as a number (JS casts this to 0)
+            // Note: isNaN will cast the string to a number before checking if it's NaN
+            } else if (!(isNaN(requestedCostume) || Cast.isWhiteSpace(requestedCostume))) {
                 target.setCostume(optZeroIndex ? Number(requestedCostume) : Number(requestedCostume) - 1);
             }
         }
