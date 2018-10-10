@@ -172,7 +172,7 @@ class BLE extends JSONRPCWebSocket {
     }
 
     _sendError (/* e */) {
-        this.disconnect();
+        if (this._connected) this.disconnect();
         // log.error(`BLE error: ${JSON.stringify(e)}`);
         this._runtime.emit(this._runtime.constructor.PERIPHERAL_ERROR, {
             message: `Scratch lost connection to`,
