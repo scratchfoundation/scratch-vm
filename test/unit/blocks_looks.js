@@ -25,32 +25,52 @@ const fakeRuntime = {
 };
 const blocks = new Looks(fakeRuntime);
 
-test('switch costume block runs correctly', t => {
-    /**
-     * Test which costume index the `switch costume`
-     * block will jump to given an argument and array
-     * of costume names.
-     *
-     * @param {string[]} costumes List of costume names as strings
-     * @param {string|number|boolean} arg The argument to provide to the block.
-     * @param {number} [currentCostume=1] The 1-indexed default costume for the sprite to start at.
-     * @return {number} The 1-indexed costume index on which the sprite lands.
-     */
-    const testCostume = (costumes, arg, currentCostume = 1) => {
-        const rt = new Runtime();
-        const looks = new Looks(rt);
+/**
+ * Test which costume index the `switch costume`
+ * block will jump to given an argument and array
+ * of costume names. Works for backdrops if isStage is set.
+ *
+ * @param {string[]} costumes List of costume names as strings
+ * @param {string|number|boolean} arg The argument to provide to the block.
+ * @param {number} [currentCostume=1] The 1-indexed default costume for the sprite to start at.
+ * @param {boolean} [isStage=false] Whether the sprite is the stage
+ * @return {number} The 1-indexed costume index on which the sprite lands.
+ */
+const testCostume = (costumes, arg, currentCostume = 1, isStage = false) => {
+    const rt = new Runtime();
+    const looks = new Looks(rt);
 
-        const sprite = new Sprite(null, rt);
-        const target = new RenderedTarget(sprite, rt);
+    const sprite = new Sprite(null, rt);
+    const target = new RenderedTarget(sprite, rt);
 
-        sprite.costumes = costumes.map(name => ({name: name}));
-        target.currentCostume = currentCostume - 1; // Convert to 0-indexed.
+    sprite.costumes = costumes.map(name => ({name: name}));
+    target.currentCostume = currentCostume - 1; // Convert to 0-indexed.
 
+    if(isStage) {
+        target.isStage = true;
+        rt.targets.push(target);
+        looks.switchBackdrop({BACKDROP: arg}, {target});
+    } else {
         looks.switchCostume({COSTUME: arg}, {target});
+    }
 
-        return target.currentCostume + 1; // Convert to 1-indexed.
-    };
+    return target.currentCostume + 1; // Convert to 1-indexed.
+};
 
+
+/**
+ * Test which backdrop index the `switch backdrop`
+ * block will jump to given an argument and array
+ * of backdrop names.
+ *
+ * @param {string[]} backdrops List of backdrop names as strings
+ * @param {string|number|boolean} arg The argument to provide to the block.
+ * @param {number} [currentCostume=1] The 1-indexed default backdrop for the stage to start at.
+ * @return {number} The 1-indexed backdrop index on which the stage lands.
+ */
+const testBackdrop = (backdrops, arg, currentCostume = 1) => testCostume(backdrops, arg, currentCostume, true)
+
+test('switch costume block runs correctly', t => {
     // Non-existant costumes do nothing
     t.strictEqual(testCostume(['a', 'b', 'c', 'd'], 'e', 3), 3);
 
@@ -98,33 +118,6 @@ test('switch costume block runs correctly', t => {
 });
 
 test('switch backdrop block runs correctly', t => {
-    /**
-     * Test which backdrop index the `switch backdrop`
-     * block will jump to given an argument and array
-     * of backdrop names.
-     *
-     * @param {string[]} backdrops List of backdrop names as strings
-     * @param {string|number|boolean} arg The argument to provide to the block.
-     * @param {number} [currentCostume=1] The 1-indexed default backdrop for the stage to start at.
-     * @return {number} The 1-indexed backdrop index on which the stage lands.
-     */
-    const testBackdrop = (backdrops, arg, currentCostume = 1) => {
-        const rt = new Runtime();
-        const looks = new Looks(rt);
-
-        const stage = new Sprite(null, rt);
-        const target = new RenderedTarget(stage, rt);
-
-        stage.costumes = backdrops.map(name => ({name: name}));
-        target.currentCostume = currentCostume - 1; // Convert to 0-indexed.
-        target.isStage = true;
-        rt.targets.push(target);
-
-        looks.switchBackdrop({BACKDROP: arg}, {target});
-
-        return target.currentCostume + 1; // Convert to 1-indexed.
-    };
-
     // Non-existant backdrops do nothing
     t.strictEqual(testBackdrop(['a', 'b', 'c', 'd'], 'e', 3), 3);
 
