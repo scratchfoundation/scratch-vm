@@ -54,9 +54,12 @@ test('switch costume block runs correctly', t => {
     // Non-existant costumes do nothing
     t.strictEqual(testCostume(['a', 'b', 'c', 'd'], 'e', 3), 3);
 
-    // Difference between string and numeric arguments
+    // Numeric arguments are always the costume index
+    // String arguments are treated as costume names, and coerced to
+    // a costume index as a fallback
     t.strictEqual(testCostume(['a', 'b', 'c', '2'], 2), 2);
     t.strictEqual(testCostume(['a', 'b', 'c', '2'], '2'), 4);
+    t.strictEqual(testCostume(['a', 'b', 'c'], '2'), 2);
 
     // 'previous costume' and 'next costume' increment/decrement
     t.strictEqual(testCostume(['a', 'b', 'c', 'd'], 'previous costume', 3), 2);
