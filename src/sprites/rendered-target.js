@@ -900,6 +900,8 @@ class RenderedTarget extends Target {
             // of what layers are present
             this.renderer.setDrawableOrder(this.drawableID, Infinity, StageLayering.SPRITE_LAYER);
         }
+
+        this.runtime.setExecutablePosition(this, Infinity);
     }
 
     /**
@@ -911,6 +913,8 @@ class RenderedTarget extends Target {
             // of what layers are present
             this.renderer.setDrawableOrder(this.drawableID, -Infinity, StageLayering.SPRITE_LAYER, false);
         }
+
+        this.runtime.setExecutablePosition(this, -Infinity);
     }
 
     /**
@@ -921,6 +925,8 @@ class RenderedTarget extends Target {
         if (this.renderer) {
             this.renderer.setDrawableOrder(this.drawableID, nLayers, StageLayering.SPRITE_LAYER, true);
         }
+
+        this.runtime.moveExecutable(this, nLayers);
     }
 
     /**
@@ -931,6 +937,8 @@ class RenderedTarget extends Target {
         if (this.renderer) {
             this.renderer.setDrawableOrder(this.drawableID, -nLayers, StageLayering.SPRITE_LAYER, true);
         }
+
+        this.runtime.moveExecutable(this, -nLayers);
     }
 
     /**

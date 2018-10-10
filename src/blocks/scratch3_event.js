@@ -109,7 +109,12 @@ class Scratch3EventBlocks {
             }
             // We've run before; check if the wait is still going on.
             const instance = this;
-            const waiting = util.stackFrame.startedThreads.some(thread => instance.runtime.isActiveThread(thread));
+            // Scratch 2 considers threads to be waiting if they are still in
+            // runtime.threads. Threads that have run all their blocks, or are
+            // marked done but still in runtime.threads are still considered to
+            // be waiting.
+            const waiting = util.stackFrame.startedThreads
+                .some(thread => instance.runtime.threads.indexOf(thread) !== -1);
             if (waiting) {
                 // If all threads are waiting for the next tick or later yield
                 // for a tick as well. Otherwise yield until the next loop of

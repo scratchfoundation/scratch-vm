@@ -74,6 +74,7 @@ test('#760 - broadcastAndWait', t => {
     // does not yield once all threads are done
     th.status = Thread.STATUS_RUNNING;
     rt.threads[1].status = Thread.STATUS_DONE;
+    rt.threads.splice(1, 1);
     e.broadcastAndWait({BROADCAST_OPTION: {id: 'testBroadcastID', name: 'message'}}, util);
     t.strictEqual(th.status, Thread.STATUS_RUNNING);
 
@@ -82,7 +83,7 @@ test('#760 - broadcastAndWait', t => {
     util.thread = th;
     e.broadcastAndWait({BROADCAST_OPTION: {id: 'testBroadcastID', name: 'message'}}, util);
     t.strictEqual(rt.threads.length, 3);
-    t.strictEqual(rt.threads[1].status, Thread.STATUS_RUNNING);
+    t.strictEqual(rt.threads[2].status, Thread.STATUS_RUNNING);
     t.strictEqual(th.status, Thread.STATUS_YIELD);
     // yields when some restarted thread is active
     th.status = Thread.STATUS_RUNNING;
@@ -90,7 +91,8 @@ test('#760 - broadcastAndWait', t => {
     t.strictEqual(th.status, Thread.STATUS_YIELD);
     // does not yield once all threads are done
     th.status = Thread.STATUS_RUNNING;
-    rt.threads[1].status = Thread.STATUS_DONE;
+    rt.threads[2].status = Thread.STATUS_DONE;
+    rt.threads.splice(2, 1);
     e.broadcastAndWait({BROADCAST_OPTION: {id: 'testBroadcastID', name: 'message'}}, util);
     t.strictEqual(th.status, Thread.STATUS_RUNNING);
 
