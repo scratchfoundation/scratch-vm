@@ -1,6 +1,6 @@
 const JSONRPCWebSocket = require('../util/jsonrpc-web-socket');
 const ScratchLinkWebSocket = 'wss://device-manager.scratch.mit.edu:20110/scratch/ble';
-// const log = require('../util/log');
+const log = require('../util/log');
 
 class BLE extends JSONRPCWebSocket {
 
@@ -18,8 +18,8 @@ class BLE extends JSONRPCWebSocket {
 
         this._ws = ws;
         this._ws.onopen = this.requestPeripheral.bind(this); // only call request peripheral after socket opens
-        this._ws.onerror = this._sendError.bind(this, 'ws onerror');
-        this._ws.onclose = this._sendError.bind(this, 'ws onclose');
+        this._ws.onerror = this._sendRequestError.bind(this, 'ws onerror');
+        this._ws.onclose = this._sendDisconnectError.bind(this, 'ws onclose');
 
         this._availablePeripherals = {};
         this._connectCallback = connectCallback;
@@ -41,7 +41,7 @@ class BLE extends JSONRPCWebSocket {
             this._discoverTimeoutID = window.setTimeout(this._sendDiscoverTimeout.bind(this), 15000);
             this.sendRemoteRequest('discover', this._peripheralOptions)
                 .catch(e => {
-                    this._sendError(e);
+                    this._sendRequestError(e);
                 }); // never reached?
         }
         // TODO: else?
@@ -60,7 +60,7 @@ class BLE extends JSONRPCWebSocket {
                 this._connectCallback();
             })
             .catch(e => {
-                this._sendError(e);
+                this._sendRequestError(e);
             });
     }
 
@@ -94,7 +94,7 @@ class BLE extends JSONRPCWebSocket {
         this._characteristicDidChangeCallback = onCharacteristicChanged;
         return this.sendRemoteRequest('startNotifications', params)
             .catch(e => {
-                this._sendError(e);
+                this._sendDisconnectError(e);
             });
     }
 
@@ -117,7 +117,7 @@ class BLE extends JSONRPCWebSocket {
         this._characteristicDidChangeCallback = onCharacteristicChanged;
         return this.sendRemoteRequest('read', params)
             .catch(e => {
-                this._sendError(e);
+                this._sendDisconnectError(e);
             });
     }
 
@@ -140,7 +140,7 @@ class BLE extends JSONRPCWebSocket {
         }
         return this.sendRemoteRequest('write', params)
             .catch(e => {
-                this._sendError(e);
+                this._sendDisconnectError(e);
             });
     }
 
@@ -171,10 +171,22 @@ class BLE extends JSONRPCWebSocket {
         }
     }
 
-    _sendError (/* e */) {
-        if (this._connected) this.disconnect();
-        // log.error(`BLE error: ${JSON.stringify(e)}`);
-        this._runtime.emit(this._runtime.constructor.PERIPHERAL_ERROR, {
+    _sendRequestError (e) {
+        console.log('request error');
+        log.error(`BLE error: ${JSON.stringify(e)}`);
+        this._runtime.emit(this._runtime.constructor.PERIPHERAL_REQUEST_ERROR, {
+            message: `Scratch lost connection to`,
+            extensionId: this._extensionId
+        });
+    }
+
+    _sendDisconnectError (e) {
+        console.log('attempting sendDiconnect error, and this_connected is:');
+        console.log(this._connected);
+        if (!this._connected) return;
+        console.log('disconnect error');
+        log.error(`BLE error: ${JSON.stringify(e)}`);
+        this._runtime.emit(this._runtime.constructor.PERIPHERAL_DISCONNECT_ERROR, {
             message: `Scratch lost connection to`,
             extensionId: this._extensionId
         });
