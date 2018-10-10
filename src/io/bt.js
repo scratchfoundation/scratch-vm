@@ -69,7 +69,6 @@ class BT extends JSONRPCWebSocket {
      */
     disconnect () {
         this._ws.close();
-        this._connected = false;
     }
 
     /**
@@ -116,6 +115,7 @@ class BT extends JSONRPCWebSocket {
 
     _sendRequestError (/* e */) {
         // log.error(`BT error: ${JSON.stringify(e)}`);
+
         this._runtime.emit(this._runtime.constructor.PERIPHERAL_REQUEST_ERROR, {
             message: `Scratch lost connection to`,
             extensionId: this._extensionId
@@ -123,8 +123,12 @@ class BT extends JSONRPCWebSocket {
     }
 
     _sendDisconnectError (/* e */) {
-        if (this._connected) this.disconnect();
         // log.error(`BT error: ${JSON.stringify(e)}`);
+
+        if (!this._connected) return;
+
+        this._connected = false;
+
         this._runtime.emit(this._runtime.constructor.PERIPHERAL_DISCONNECT_ERROR, {
             message: `Scratch lost connection to`,
             extensionId: this._extensionId

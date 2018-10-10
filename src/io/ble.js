@@ -1,6 +1,6 @@
 const JSONRPCWebSocket = require('../util/jsonrpc-web-socket');
 const ScratchLinkWebSocket = 'wss://device-manager.scratch.mit.edu:20110/scratch/ble';
-const log = require('../util/log');
+// const log = require('../util/log');
 
 class BLE extends JSONRPCWebSocket {
 
@@ -69,7 +69,6 @@ class BLE extends JSONRPCWebSocket {
      */
     disconnect () {
         this._ws.close();
-        this._connected = false;
     }
 
     /**
@@ -171,21 +170,22 @@ class BLE extends JSONRPCWebSocket {
         }
     }
 
-    _sendRequestError (e) {
-        console.log('request error');
-        log.error(`BLE error: ${JSON.stringify(e)}`);
+    _sendRequestError (/* e */) {
+        // log.error(`BLE error: ${JSON.stringify(e)}`);
+
         this._runtime.emit(this._runtime.constructor.PERIPHERAL_REQUEST_ERROR, {
             message: `Scratch lost connection to`,
             extensionId: this._extensionId
         });
     }
 
-    _sendDisconnectError (e) {
-        console.log('attempting sendDiconnect error, and this_connected is:');
-        console.log(this._connected);
+    _sendDisconnectError (/* e */) {
+        // log.error(`BLE error: ${JSON.stringify(e)}`);
+
         if (!this._connected) return;
-        console.log('disconnect error');
-        log.error(`BLE error: ${JSON.stringify(e)}`);
+
+        this._connected = false;
+
         this._runtime.emit(this._runtime.constructor.PERIPHERAL_DISCONNECT_ERROR, {
             message: `Scratch lost connection to`,
             extensionId: this._extensionId
