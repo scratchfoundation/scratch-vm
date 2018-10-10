@@ -1219,7 +1219,7 @@ class Scratch3WeDo2Blocks {
                         text: formatMessage({
                             id: 'wedo2.tiltDirection.any',
                             default: 'any',
-                            description: 'label for any element in tilt direction any menu for LEGO WeDo 2 extension'
+                            description: 'label for any element in tilt direction menu for LEGO WeDo 2 extension'
                         }),
                         value: WeDo2TiltDirection.ANY
                     }
