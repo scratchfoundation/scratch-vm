@@ -353,7 +353,7 @@ class Scratch3LooksBlocks {
      */
     _setCostume (target, requestedCostume, optZeroIndex) {
         if (typeof requestedCostume === 'number') {
-            // Numbers should be treated as comments, always
+            // Numbers should be treated as costume indices, always
             target.setCostume(optZeroIndex ? requestedCostume : requestedCostume - 1);
         } else {
             const costumeIndex = target.getCostumeIndexByName(requestedCostume.toString());
@@ -386,16 +386,17 @@ class Scratch3LooksBlocks {
      */
     _setBackdrop (stage, requestedBackdrop, optZeroIndex) {
         if (typeof requestedBackdrop === 'number') {
+            // Numbers should be treated as backdrop indices, always
             stage.setCostume(optZeroIndex ? requestedBackdrop : requestedBackdrop - 1);
-        } else if (requestedBackdrop === 'next backdrop') {
-            stage.setCostume(stage.currentCostume + 1);
-        } else if (requestedBackdrop === 'previous backdrop') {
-            stage.setCostume(stage.currentCostume - 1);
         } else {
             const costumeIndex = stage.getCostumeIndexByName(requestedBackdrop.toString());
 
             if (costumeIndex !== -1) {
                 stage.setCostume(costumeIndex);
+            } else if (requestedBackdrop === 'next backdrop') {
+                stage.setCostume(stage.currentCostume + 1);
+            } else if (requestedBackdrop === 'previous backdrop') {
+                stage.setCostume(stage.currentCostume - 1);
             } else if (requestedBackdrop === 'random backdrop') {
                 const numCostumes = stage.getCostumes().length;
                 if (numCostumes > 1) {

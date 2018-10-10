@@ -129,9 +129,11 @@ test('switch backdrop block runs correctly', t => {
     t.strictEqual(testBackdrop(['a', 'b', 'c', 'd'], 'previous backdrop', 3), 2);
     t.strictEqual(testBackdrop(['a', 'b', 'c', 'd'], 'next backdrop', 2), 3);
 
-    // 'previous backdrop' and 'next backdrop' can't be overriden
-    t.strictEqual(testBackdrop(['a', 'previous backdrop', 'c', 'd'], 'previous backdrop', 4), 3);
-    t.strictEqual(testBackdrop(['next backdrop', 'b', 'c', 'd'], 'next backdrop'), 2);
+    // 'previous backdrop', 'previous backdrop', 'random backdrop' can be overriden
+    // Test is deterministic since 'random backdrop' will not pick the same backdrop as currently selected
+    t.strictEqual(testBackdrop(['a', 'previous backdrop', 'c', 'd'], 'previous backdrop', 4), 2);
+    t.strictEqual(testBackdrop(['next backdrop', 'b', 'c', 'd'], 'next backdrop', 3), 1);
+    t.strictEqual(testBackdrop(['random backdrop', 'b', 'c', 'd'], 'random backdrop'), 1);
 
     // NaN, Infinity, and true are the first costume
     t.strictEqual(testBackdrop(['a', 'b', 'c', 'd'], NaN, 2), 1);
