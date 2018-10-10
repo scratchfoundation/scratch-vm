@@ -46,7 +46,7 @@ const testCostume = (costumes, arg, currentCostume = 1, isStage = false) => {
     sprite.costumes = costumes.map(name => ({name: name}));
     target.currentCostume = currentCostume - 1; // Convert to 0-indexed.
 
-    if(isStage) {
+    if (isStage) {
         target.isStage = true;
         rt.targets.push(target);
         looks.switchBackdrop({BACKDROP: arg}, {target});
@@ -68,7 +68,7 @@ const testCostume = (costumes, arg, currentCostume = 1, isStage = false) => {
  * @param {number} [currentCostume=1] The 1-indexed default backdrop for the stage to start at.
  * @return {number} The 1-indexed backdrop index on which the stage lands.
  */
-const testBackdrop = (backdrops, arg, currentCostume = 1) => testCostume(backdrops, arg, currentCostume, true)
+const testBackdrop = (backdrops, arg, currentCostume = 1) => testCostume(backdrops, arg, currentCostume, true);
 
 test('switch costume block runs correctly', t => {
     // Non-existant costumes do nothing
