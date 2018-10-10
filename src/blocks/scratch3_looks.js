@@ -403,8 +403,10 @@ class Scratch3LooksBlocks {
                     if (selectedIndex === stage.currentCostume) selectedIndex += 1;
                     stage.setCostume(selectedIndex);
                 }
-            } else if (!isNaN(requestedBackdrop) &&
-                        (typeof requestedBackdrop !== 'string' || /\d/g.test(requestedBackdrop))) {
+            // Try to cast the string to a number (and treat it as a costume index)
+            // Pure whitespace should not be treated as a number (JS casts this to 0)
+            // Note: isNaN will cast the string to a number before checking if it's NaN
+            } else if (!(isNaN(requestedBackdrop) || Cast.isWhiteSpace(requestedBackdrop))) {
                 stage.setCostume(optZeroIndex ? Number(requestedBackdrop) : Number(requestedBackdrop) - 1);
             }
         }
