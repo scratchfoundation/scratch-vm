@@ -158,21 +158,51 @@ class Scratch3Text2SpeechBlocks {
      */
     get LANGUAGE_INFO () {
         return {
-            'Danish': 'da-DK',
-            'Dutch': 'nl-NL',
-            'English': 'en-US',
-            'French': 'fr-FR',
-            'German': 'de-DE',
-            'Icelandic': 'is-IS',
-            'Italian': 'it-IT',
-            'Japanese': 'ja-JP',
-            'Polish': 'pl-PL',
-            'Portuguese (Brazilian)': 'pt-BR',
-            'Portuguese (European)': 'pt-PT',
-            'Russian': 'ru-RU',
-            'Spanish (European)': 'es-ES',
-            'Spanish (Latin American)': 'es-US'
+            'Danish': 'da',
+            'Dutch': 'nl',
+            'English': 'en',
+            'French': 'fr',
+            'German': 'de',
+            'Icelandic': 'is',
+            'Italian': 'it',
+            'Japanese': 'ja',
+            'Polish': 'pl',
+            'Portuguese (Brazilian)': 'pt-br',
+            'Portuguese (European)': 'pt',
+            'Russian': 'ru',
+            'Spanish (European)': 'es',
+            'Spanish (Latin American)': 'es-419'
         };
+    }
+
+    /**
+     * This is a temporary adapter to convert Scratch locale codes to Amazon polly's locale codes.
+     * @todo remove this once the speech synthesis server can perform this conversion
+     * @param {string} locale the Scratch locale to convert.
+     * @return {string} the Amazon polly locale.
+     */
+    localeToPolly (locale) {
+        const pollyLocales = {
+            'da': 'da-DK', // Danish
+            'nl': 'nl-NL', // Dutch
+            'en': 'en-US', // English
+            'fr': 'fr-FR', // French
+            'de': 'de-DE', // German
+            'is': 'is-IS', // Icelandic
+            'it': 'it-IT', // Italian
+            'ja': 'ja-JP', // Japanese
+            'pl': 'pl-PL', // Polish
+            'pt-br': 'pt-BR', // Portuguese (Brazilian)
+            'pt': 'pt-PT', // Portuguese (European)
+            'ru': 'ru-RU', // Russian
+            'es': 'es-ES', // Spanish (European)
+            'es-419': 'es-US' // Spanish (Latin American)
+        };
+        let converted = 'en-US';
+        if (pollyLocales[locale]) {
+            converted = pollyLocales[locale];
+        }
+        return converted;
     }
 
     /**
@@ -397,7 +427,7 @@ class Scratch3Text2SpeechBlocks {
 
         // Build up URL
         let path = `${SERVER_HOST}/synth`;
-        path += `?locale=${this.currentLanguage}`;
+        path += `?locale=${this.localeToPolly(this.currentLanguage)}`;
         path += `&gender=${gender}`;
         path += `&text=${encodeURI(words.substring(0, 128))}`;
 
