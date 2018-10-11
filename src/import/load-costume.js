@@ -31,7 +31,7 @@ const loadVector_ = function (costume, costumeAsset, runtime, rotationCenter, op
         costume.bitmapResolution = 1;
     }
 
-    return costume;
+    return Promise.resolve(costume);
 };
 
 const loadBitmap_ = function (costume, costumeAsset, runtime, rotationCenter) {
@@ -122,7 +122,7 @@ const loadCostumeFromAsset = function (costume, costumeAsset, runtime, optVersio
     const renderer = runtime.renderer;
     if (!renderer) {
         log.error('No rendering module present; cannot load costume: ', costume.name);
-        return costume;
+        return Promise.resolve(costume);
     }
     const AssetType = runtime.storage.AssetType;
     let rotationCenter;
