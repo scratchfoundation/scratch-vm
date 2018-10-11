@@ -4,6 +4,7 @@ const nets = require('nets');
 const ArgumentType = require('../../extension-support/argument-type');
 const BlockType = require('../../extension-support/block-type');
 const Cast = require('../../util/cast');
+const MathUtil = require('../../util/math-util');
 const Clone = require('../../util/clone');
 const log = require('../../util/log');
 
@@ -338,9 +339,19 @@ class Scratch3Text2SpeechBlocks {
     setVoice (args, util) {
         const state = this._getState(util.target);
 
+        let voice = args.VOICE;
+
+        // If the arg is a dropped number, treat it as a voice index
+        let voiceNum = parseInt(voice, 10);
+        if (!isNaN(voiceNum)) {
+            voiceNum -= 1; // Treat dropped args as one-indexed
+            voiceNum = MathUtil.wrapClamp(voiceNum, 0, Object.keys(this.VOICE_INFO).length - 1);
+            voice = Object.keys(this.VOICE_INFO)[voiceNum];
+        }
+
         // Only set the voice if the arg is a valid voice id.
-        if (Object.keys(this.VOICE_INFO).includes(args.VOICE)) {
-            state.voiceId = args.VOICE;
+        if (Object.keys(this.VOICE_INFO).includes(voice)) {
+            state.voiceId = voice;
         }
     }
 
