@@ -129,7 +129,7 @@ class Scratch3Text2SpeechBlocks {
                     description: 'Name for a funny voice with a high pitch.'
                 }),
                 gender: 'female',
-                playbackRate: 1.4
+                playbackRate: 1.19 // +3 semitones
             },
             [GIANT_ID]: {
                 name: formatMessage({
@@ -138,7 +138,7 @@ class Scratch3Text2SpeechBlocks {
                     description: 'Name for a funny voice with a low pitch.'
                 }),
                 gender: 'male',
-                playbackRate: 0.84
+                playbackRate: 0.84 // -3 semitones
             },
             [KITTEN_ID]: {
                 name: formatMessage({
@@ -147,7 +147,7 @@ class Scratch3Text2SpeechBlocks {
                     description: 'A baby cat.'
                 }),
                 gender: 'female',
-                playbackRate: 1.4
+                playbackRate: 1.41 // +6 semitones
             }
         };
     }
