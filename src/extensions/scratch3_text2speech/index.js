@@ -4,6 +4,7 @@ const nets = require('nets');
 const ArgumentType = require('../../extension-support/argument-type');
 const BlockType = require('../../extension-support/block-type');
 const Cast = require('../../util/cast');
+const MathUtil = require('../../util/math-util');
 const Clone = require('../../util/clone');
 const log = require('../../util/log');
 
@@ -42,12 +43,12 @@ const SPEECH_VOLUME = 250;
 /**
  * An id for one of the voices.
  */
-const QUINN_ID = 'QUINN';
+const ALTO_ID = 'ALTO';
 
 /**
  * An id for one of the voices.
  */
-const MAX_ID = 'MAX';
+const TENOR_ID = 'TENOR';
 
 /**
  * An id for one of the voices.
@@ -104,19 +105,19 @@ class Scratch3Text2SpeechBlocks {
      */
     get VOICE_INFO () {
         return {
-            [QUINN_ID]: {
+            [ALTO_ID]: {
                 name: formatMessage({
-                    id: 'text2speech.quinn',
-                    default: 'quinn',
+                    id: 'text2speech.alto',
+                    default: 'alto',
                     description: 'Name for a voice with ambiguous gender.'
                 }),
                 gender: 'female',
                 playbackRate: 1
             },
-            [MAX_ID]: {
+            [TENOR_ID]: {
                 name: formatMessage({
-                    id: 'text2speech.max',
-                    default: 'max',
+                    id: 'text2speech.tenor',
+                    default: 'tenor',
                     description: 'Name for a voice with ambiguous gender.'
                 }),
                 gender: 'male',
@@ -129,7 +130,7 @@ class Scratch3Text2SpeechBlocks {
                     description: 'Name for a funny voice with a high pitch.'
                 }),
                 gender: 'female',
-                playbackRate: 1.4
+                playbackRate: 1.19 // +3 semitones
             },
             [GIANT_ID]: {
                 name: formatMessage({
@@ -138,7 +139,7 @@ class Scratch3Text2SpeechBlocks {
                     description: 'Name for a funny voice with a low pitch.'
                 }),
                 gender: 'male',
-                playbackRate: 0.84
+                playbackRate: 0.84 // -3 semitones
             },
             [KITTEN_ID]: {
                 name: formatMessage({
@@ -147,7 +148,7 @@ class Scratch3Text2SpeechBlocks {
                     description: 'A baby cat.'
                 }),
                 gender: 'female',
-                playbackRate: 1.4
+                playbackRate: 1.41 // +6 semitones
             }
         };
     }
@@ -188,7 +189,7 @@ class Scratch3Text2SpeechBlocks {
      */
     static get DEFAULT_TEXT2SPEECH_STATE () {
         return {
-            voiceId: QUINN_ID
+            voiceId: ALTO_ID
         };
     }
 
@@ -263,7 +264,7 @@ class Scratch3Text2SpeechBlocks {
                         VOICE: {
                             type: ArgumentType.STRING,
                             menu: 'voices',
-                            defaultValue: QUINN_ID
+                            defaultValue: ALTO_ID
                         }
                     }
                 },
@@ -338,9 +339,19 @@ class Scratch3Text2SpeechBlocks {
     setVoice (args, util) {
         const state = this._getState(util.target);
 
+        let voice = args.VOICE;
+
+        // If the arg is a dropped number, treat it as a voice index
+        let voiceNum = parseInt(voice, 10);
+        if (!isNaN(voiceNum)) {
+            voiceNum -= 1; // Treat dropped args as one-indexed
+            voiceNum = MathUtil.wrapClamp(voiceNum, 0, Object.keys(this.VOICE_INFO).length - 1);
+            voice = Object.keys(this.VOICE_INFO)[voiceNum];
+        }
+
         // Only set the voice if the arg is a valid voice id.
-        if (Object.keys(this.VOICE_INFO).includes(args.VOICE)) {
-            state.voiceId = args.VOICE;
+        if (Object.keys(this.VOICE_INFO).includes(voice)) {
+            state.voiceId = voice;
         }
     }
 
