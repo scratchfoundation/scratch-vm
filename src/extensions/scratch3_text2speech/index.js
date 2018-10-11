@@ -42,12 +42,12 @@ const SPEECH_VOLUME = 250;
 /**
  * An id for one of the voices.
  */
-const QUINN_ID = 'QUINN';
+const ALTO_ID = 'ALTO';
 
 /**
  * An id for one of the voices.
  */
-const MAX_ID = 'MAX';
+const TENOR_ID = 'TENOR';
 
 /**
  * An id for one of the voices.
@@ -104,19 +104,19 @@ class Scratch3Text2SpeechBlocks {
      */
     get VOICE_INFO () {
         return {
-            [QUINN_ID]: {
+            [ALTO_ID]: {
                 name: formatMessage({
-                    id: 'text2speech.quinn',
-                    default: 'quinn',
+                    id: 'text2speech.alto',
+                    default: 'alto',
                     description: 'Name for a voice with ambiguous gender.'
                 }),
                 gender: 'female',
                 playbackRate: 1
             },
-            [MAX_ID]: {
+            [TENOR_ID]: {
                 name: formatMessage({
-                    id: 'text2speech.max',
-                    default: 'max',
+                    id: 'text2speech.tenor',
+                    default: 'tenor',
                     description: 'Name for a voice with ambiguous gender.'
                 }),
                 gender: 'male',
@@ -188,7 +188,7 @@ class Scratch3Text2SpeechBlocks {
      */
     static get DEFAULT_TEXT2SPEECH_STATE () {
         return {
-            voiceId: QUINN_ID
+            voiceId: ALTO_ID
         };
     }
 
@@ -263,7 +263,7 @@ class Scratch3Text2SpeechBlocks {
                         VOICE: {
                             type: ArgumentType.STRING,
                             menu: 'voices',
-                            defaultValue: QUINN_ID
+                            defaultValue: ALTO_ID
                         }
                     }
                 },
