@@ -82,9 +82,6 @@ class Scratch3VideoSensingBlocks {
             // Clear target motion state values when the project starts.
             this.runtime.on(Runtime.PROJECT_RUN_START, this.reset.bind(this));
 
-            // Check if we need to load the stage's video properties
-            this.runtime.on(Runtime.TARGETS_UPDATE, this.loadStageVideoProperties.bind(this));
-
             // Kick off looping the analysis logic.
             this._loop();
 
@@ -370,6 +367,9 @@ class Scratch3VideoSensingBlocks {
      * @returns {object} metadata for this extension and its blocks.
      */
     getInfo () {
+        // Enable the video layer
+        this.runtime.ioDevices.video.enableVideo();
+
         // Return extension definition
         return {
             id: 'videoSensing',
@@ -533,33 +533,6 @@ class Scratch3VideoSensingBlocks {
         const transparency = Cast.toNumber(args.TRANSPARENCY);
         this.globalVideoTransparency = transparency;
         this.runtime.ioDevices.video.setPreviewGhost(transparency);
-    }
-
-    /**
-     * Check for the stage and if we need to load its video properties.
-     * This method should only be used once the stage target is loaded.
-     */
-    loadStageVideoProperties () {
-        const stage = this.runtime.getTargetForStage();
-        const currentVideoState = this.runtime.ioDevices.video.provider.enable ? 'on' : 'off';
-        const currentVideoTransparency = this.runtime.ioDevices.video.TRANSPARENCY;
-
-        if (stage) {
-            if (stage.videoState !== currentVideoState) {
-                this.globalVideoState = stage.videoState;
-                this.videoToggle({
-                    VIDEO_STATE: this.globalVideoState
-                });
-            }
-
-            if (stage.videoTransparency !== currentVideoTransparency) {
-                this.setVideoTransparency({
-                    TRANSPARENCY: this.globalVideoTransparency
-                });
-            }
-        }
-
-        return;
     }
 }
 

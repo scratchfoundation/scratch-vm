@@ -66,10 +66,6 @@ class Video {
         return 1;
     }
 
-    get TRANSPARENCY () {
-        return this._ghost;
-    }
-
     /**
      * Set a video provider for this device. A default implementation of
      * a video provider can be found in scratch-gui/src/lib/video/video-provider

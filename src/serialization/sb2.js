@@ -688,6 +688,9 @@ const parseScratchObject = function (object, runtime, extensions, topLevel, zip)
             for (let n = 0; n < deferredMonitors.length; n++) {
                 parseMonitorObject(deferredMonitors[n], runtime, targets, extensions);
             }
+
+            extensions = confirmTargetExtensions(targets, extensions);
+
             return targets;
         })
     );
@@ -706,6 +709,58 @@ const reorderParsedTargets = function (targets) {
 
     return targets;
 };
+
+const confirmTargetExtensions = function (targets, extensions) {
+    // Ensure only extensions used by blocks or visible monitors are enabled
+    const extensionsInUse = new Set();
+
+    for (let ext of extensions.extensionIDs) {
+        let extensionConfirmed = false;
+
+        for (let target of targets) {
+            if (extensionConfirmed) {
+                break;
+            }
+            const targetBlocks = Object.entries(target.blocks._blocks);
+
+            // Make sure there is a block that uses the currently set extensions
+            extensionConfirmed = targetBlocks.some((block) => {
+                const opcode = block[1].opcode;
+                if ( opcode && (ext === opcode.split('_')[0])) {
+                    return true;
+                }
+
+                return false;
+            });
+            if (extensionConfirmed) {
+                extensionsInUse.add(ext);
+                break;
+            }
+
+            const monitorState = target.runtime.getMonitorState();
+
+            // Check if a visible monitor uses this extension
+            extensionConfirmed = monitorState.some((monitor) => {
+                if (!monitor.visible) {
+                    return false;
+                }
+                if (monitor.opcode && (ext === monitor.opcode.split('_')[0])) {
+                    return true;
+                }
+
+                return false;
+            });
+            if (extensionConfirmed) {
+                extensionsInUse.add(ext);
+                break;
+            }
+        }
+    }
+
+    extensions.extensionIDs = extensionsInUse;
+
+    return extensions;
+}
 
 
 /**
