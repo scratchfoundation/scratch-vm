@@ -42,6 +42,7 @@ class Scratch3SensingBlocks {
         this.runtime.on('ANSWER', this._onAnswer.bind(this));
         this.runtime.on('PROJECT_START', this._resetAnswer.bind(this));
         this.runtime.on('PROJECT_STOP_ALL', this._clearAllQuestions.bind(this));
+        this.runtime.on('STOP_FOR_TARGET', this._clearTargetQuestions.bind(this));
     }
 
     /**
@@ -132,6 +133,21 @@ class Scratch3SensingBlocks {
     _clearAllQuestions () {
         this._questionList = [];
         this.runtime.emit('QUESTION', null);
+    }
+
+    _clearTargetQuestions (stopTarget) {
+        const currentlyAsking = this._questionList.length > 0 && this._questionList[0][2] === stopTarget;
+        this._questionList = this._questionList.filter(question => (
+            question[2] !== stopTarget
+        ));
+
+        if (currentlyAsking) {
+            if (this._questionList.length > 0) {
+                this._askNextQuestion();
+            } else {
+                this.runtime.emit('QUESTION', null);
+            }
+        }
     }
 
     askAndWait (args, util) {

@@ -384,6 +384,15 @@ class Runtime extends EventEmitter {
     }
 
     /**
+     * Event name for target being stopped by a stop for target call.
+     * Used by blocks that need to stop individual targets.
+     * @const {string}
+     */
+    static get STOP_FOR_TARGET () {
+        return 'STOP_FOR_TARGET';
+    }
+
+    /**
      * Event name for visual value report.
      * @const {string}
      */
@@ -1450,6 +1459,9 @@ class Runtime extends EventEmitter {
      * @param {Thread=} optThreadException Optional thread to skip.
      */
     stopForTarget (target, optThreadException) {
+        // Emit stop event to allow blocks to clean up any state.
+        this.emit(Runtime.STOP_FOR_TARGET, target, optThreadException);
+
         // Stop any threads on the target.
         for (let i = 0; i < this.threads.length; i++) {
             if (this.threads[i] === optThreadException) {
