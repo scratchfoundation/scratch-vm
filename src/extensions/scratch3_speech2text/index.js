@@ -614,7 +614,7 @@ class Scratch3Speech2TextBlocks {
             name: formatMessage({
                 id: 'speech.extensionName',
                 default: 'Speech to Text',
-                description: 'Name of extension that adds speech recognition blocks. Do Not translate Google.'
+                description: 'Name of extension that adds speech recognition blocks.'
             }),
             menuIconURI: menuIconURI,
             blockIconURI: iconURI,
