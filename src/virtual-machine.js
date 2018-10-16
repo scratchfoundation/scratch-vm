@@ -460,6 +460,7 @@ class VirtualMachine extends EventEmitter {
             this.emitTargetsUpdate();
             this.emitWorkspaceUpdate();
             this.runtime.setEditingTarget(this.editingTarget);
+            this.runtime.emitTargetsInstalled(targets);
         });
     }
 

@@ -401,6 +401,14 @@ class Runtime extends EventEmitter {
     }
 
     /**
+     * Event name for targets installed report.
+     * @const {string}
+     */
+    static get TARGETS_INSTALLED () {
+        return 'TARGETS_INSTALLED';
+    }
+
+    /**
      * Event name for targets update report.
      * @const {string}
      */
@@ -1900,6 +1908,14 @@ class Runtime extends EventEmitter {
      */
     clonesAvailable () {
         return this._cloneCounter < Runtime.MAX_CLONES;
+    }
+
+    /**
+     * Report that targets have finished being installed in the Virtual Machine.
+     * @param {Target} installedTargets - the newly installedTargets.
+     */
+    emitTargetsInstalled (installedTargets) {
+        this.emit(Runtime.TARGETS_INSTALLED, installedTargets);
     }
 
     /**
