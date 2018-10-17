@@ -152,6 +152,14 @@ class RenderedTarget extends Target {
          * @type {string}
          */
         this.videoState = RenderedTarget.VIDEO_STATE.ON;
+
+        /**
+         * The language to use for speech synthesis, in the text2speech extension.
+         * It is initialized to null so that on extension load, we can check for
+         * this and try setting it using the editor locale.
+         * @type {string}
+         */
+        this.textToSpeechLanguage = null;
     }
 
     /**
@@ -1139,6 +1147,7 @@ class RenderedTarget extends Target {
             variables: this.variables,
             costumes: costumes,
             sounds: this.getSounds(),
+            textToSpeechLanguage: this.textToSpeechLanguage,
             tempo: this.tempo,
             volume: this.volume,
             videoTransparency: this.videoTransparency,
