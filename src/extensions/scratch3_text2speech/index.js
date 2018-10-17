@@ -259,6 +259,17 @@ class Scratch3Text2SpeechBlocks {
      * @returns {object} metadata for this extension and its blocks.
      */
     getInfo () {
+        // Only localize the default input to the "speak" block if we are in a
+        // supported language.
+        let defaultTextToSpeak = 'hello';
+        if (this.isSupportedLanguage(this.getEditorLanguage())) {
+            defaultTextToSpeak = formatMessage({
+                id: 'text2speech.defaultTextToSpeak',
+                default: defaultTextToSpeak,
+                description: 'hello: the default text to speak'
+            });
+        }
+
         return {
             id: 'text2speech',
             name: 'Text to Speech',
@@ -276,11 +287,7 @@ class Scratch3Text2SpeechBlocks {
                     arguments: {
                         WORDS: {
                             type: ArgumentType.STRING,
-                            defaultValue: formatMessage({
-                                id: 'text2speech.defaultTextToSpeak',
-                                default: 'hello',
-                                description: 'hello: the default text to speak'
-                            })
+                            defaultValue: defaultTextToSpeak
                         }
                     }
                 },
@@ -357,7 +364,7 @@ class Scratch3Text2SpeechBlocks {
         const stage = this.runtime.getTargetForStage();
         if (!stage) return;
         // Only set the language if it is in the list.
-        if (Object.values(this.LANGUAGE_INFO).includes(languageCode)) {
+        if (this.isSupportedLanguage(languageCode)) {
             stage.textToSpeechLanguage = languageCode;
         }
         // If the language is null, set it to the default language.
@@ -366,6 +373,16 @@ class Scratch3Text2SpeechBlocks {
         if (!stage.textToSpeechLanguage) {
             stage.textToSpeechLanguage = this.DEFAULT_LANGUAGE;
         }
+    }
+
+    /**
+     * Check if a language code is in the list of supported languages for the
+     * speech synthesis service.
+     * @param {string} languageCode the language code to check.
+     * @returns {boolean} true if the language code is supported.
+     */
+    isSupportedLanguage (languageCode) {
+        return Object.values(this.LANGUAGE_INFO).includes(languageCode);
     }
 
     /**
