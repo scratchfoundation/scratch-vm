@@ -1,4 +1,7 @@
 const test = require('tap').test;
+const path = require('path');
+const readFileToBuffer = require('../fixtures/readProjectFile').readFileToBuffer;
+const VirtualMachine = require('../../src/virtual-machine');
 const Runtime = require('../../src/engine/runtime');
 const MonitorRecord = require('../../src/engine/monitor-record');
 const {Map} = require('immutable');
@@ -107,4 +110,29 @@ test('getLabelForOpcode', t => {
     t.equals(result2.label, 'Fake Extension: Foo 2');
 
     t.end();
+});
+
+test('Installing targets emits runtime event', t => {
+    const vm = new VirtualMachine();
+    const projectUri = path.resolve(__dirname, '../fixtures/default.sb2');
+    const project = readFileToBuffer(projectUri);
+    const spriteUri = path.resolve(__dirname, '../fixtures/example_sprite.sprite2');
+    const sprite = readFileToBuffer(spriteUri);
+    let targetsInstalled = null;
+
+    vm.runtime.addListener('TARGETS_INSTALLED', () => {
+        targetsInstalled = true;
+    });
+
+    vm.loadProject(project).then(() => {
+        // Event emitted on project load
+        t.equal(targetsInstalled, true);
+        targetsInstalled = null;
+
+        // Event emitted when later targets are installed
+        vm.addSprite(sprite).then(() => {
+            t.equal(targetsInstalled, true);
+            t.end();
+        });
+    });
 });
