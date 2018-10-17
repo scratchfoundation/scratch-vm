@@ -356,6 +356,7 @@ class Scratch3LooksBlocks {
             // Numbers should be treated as costume indices, always
             target.setCostume(optZeroIndex ? requestedCostume : requestedCostume - 1);
         } else {
+            // Strings should be treated as costume names, where possible
             const costumeIndex = target.getCostumeIndexByName(requestedCostume.toString());
 
             if (costumeIndex !== -1) {
@@ -365,7 +366,7 @@ class Scratch3LooksBlocks {
             } else if (requestedCostume === 'previous costume') {
                 target.setCostume(target.currentCostume - 1);
             // Try to cast the string to a number (and treat it as a costume index)
-            // Pure whitespace should not be treated as a number (JS casts this to 0)
+            // Pure whitespace should not be treated as a number
             // Note: isNaN will cast the string to a number before checking if it's NaN
             } else if (!(isNaN(requestedCostume) || Cast.isWhiteSpace(requestedCostume))) {
                 target.setCostume(optZeroIndex ? Number(requestedCostume) : Number(requestedCostume) - 1);
@@ -389,6 +390,7 @@ class Scratch3LooksBlocks {
             // Numbers should be treated as backdrop indices, always
             stage.setCostume(optZeroIndex ? requestedBackdrop : requestedBackdrop - 1);
         } else {
+            // Strings should be treated as backdrop names where possible
             const costumeIndex = stage.getCostumeIndexByName(requestedBackdrop.toString());
 
             if (costumeIndex !== -1) {
@@ -398,6 +400,8 @@ class Scratch3LooksBlocks {
             } else if (requestedBackdrop === 'previous backdrop') {
                 stage.setCostume(stage.currentCostume - 1);
             } else if (requestedBackdrop === 'random backdrop') {
+                // Don't pick the current backdrop, so that the block
+                // will always have an observable effect.
                 const numCostumes = stage.getCostumes().length;
                 if (numCostumes > 1) {
                     let selectedIndex = Math.floor(Math.random() * (numCostumes - 1));
@@ -405,7 +409,7 @@ class Scratch3LooksBlocks {
                     stage.setCostume(selectedIndex);
                 }
             // Try to cast the string to a number (and treat it as a costume index)
-            // Pure whitespace should not be treated as a number (JS casts this to 0)
+            // Pure whitespace should not be treated as a number
             // Note: isNaN will cast the string to a number before checking if it's NaN
             } else if (!(isNaN(requestedBackdrop) || Cast.isWhiteSpace(requestedBackdrop))) {
                 stage.setCostume(optZeroIndex ? Number(requestedBackdrop) : Number(requestedBackdrop) - 1);
