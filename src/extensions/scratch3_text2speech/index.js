@@ -78,12 +78,6 @@ class Scratch3Text2SpeechBlocks {
         this.runtime = runtime;
 
         /**
-         * The current language code to use for speech synthesis.
-         * @type {string}
-         */
-        this.currentLanguage = 'en-US';
-
-        /**
          * Map of soundPlayers by sound id.
          * @type {Map<string, SoundPlayer>}
          */
@@ -224,6 +218,14 @@ class Scratch3Text2SpeechBlocks {
     }
 
     /**
+     * A default language to use for speech synthesis.
+     * @type {string}
+     */
+    get DEFAULT_LANGUAGE () {
+        return 'en';
+    }
+
+    /**
      * @param {Target} target - collect  state for this target.
      * @returns {Text2SpeechState} the mutable state associated with that target. This will be created if necessary.
      * @private
@@ -310,7 +312,7 @@ class Scratch3Text2SpeechBlocks {
                         LANGUAGE: {
                             type: ArgumentType.STRING,
                             menu: 'languages',
-                            defaultValue: this.currentLanguage
+                            defaultValue: this.getCurrentLanguage()
                         }
                     }
                 }
@@ -323,20 +325,47 @@ class Scratch3Text2SpeechBlocks {
     }
 
     /**
-     * Get the viewer's language code.
+     * Get the language code currently set in the editor, or fall back to the
+     * browser locale.
      * @return {string} the language code.
      */
-    getViewerLanguageCode () {
-        // @todo This should be the language code of the project *creator*
-        // rather than the project viewer.
-        // @todo Amazon Polly needs the locale in a two part form (e.g. ja-JP),
-        // so we probably need to create a lookup table. It will convert from these codes:
-        // https://github.com/LLK/scratch-l10n/blob/master/src/supported-locales.js
-        // to these codes:
-        // https://docs.aws.amazon.com/polly/latest/dg/SupportedLanguage.html
-        // but note also that only a subset of these languages have both male and female voices:
-        // https://docs.aws.amazon.com/polly/latest/dg/voicelist.html
-        return formatMessage.setup().locale || navigator.language || navigator.userLanguage || 'en-US';
+    getEditorLanguage () {
+        return formatMessage.setup().locale ||
+            navigator.language || navigator.userLanguage || this.DEFAULT_LANGUAGE;
+    }
+
+    /**
+     * Get the language for speech synthesis.
+     * @returns {string} the language code.
+     */
+    getCurrentLanguage () {
+        const stage = this.runtime.getTargetForStage();
+        if (!stage) return this.DEFAULT_LANGUAGE;
+        // If no language has been set, set it to the editor locale (or default).
+        if (!stage.textToSpeechLanguage) {
+            this.setCurrentLanguage(this.getEditorLanguage());
+        }
+        return stage.textToSpeechLanguage;
+    }
+
+    /**
+     * Set the language for speech synthesis.
+     * It is stored in the stage so it can be saved and loaded with the project.
+     * @param {string} languageCode a locale code to set.
+     */
+    setCurrentLanguage (languageCode) {
+        const stage = this.runtime.getTargetForStage();
+        if (!stage) return;
+        // Only set the language if it is in the list.
+        if (Object.values(this.LANGUAGE_INFO).includes(languageCode)) {
+            stage.textToSpeechLanguage = languageCode;
+        }
+        // If the language is null, set it to the default language.
+        // This can occur e.g. if the extension was loaded with the editor
+        // set to a language that is not in the list.
+        if (!stage.textToSpeechLanguage) {
+            stage.textToSpeechLanguage = this.DEFAULT_LANGUAGE;
+        }
     }
 
     /**
@@ -390,10 +419,7 @@ class Scratch3Text2SpeechBlocks {
      * @param  {object} args Block arguments
      */
     setLanguage (args) {
-        // Only set the language if the arg is a valid language code.
-        if (Object.values(this.LANGUAGE_INFO).includes(args.LANGUAGE)) {
-            this.currentLanguage = args.LANGUAGE;
-        }
+        this.setCurrentLanguage(args.LANGUAGE);
     }
 
     /**
@@ -427,7 +453,7 @@ class Scratch3Text2SpeechBlocks {
 
         // Build up URL
         let path = `${SERVER_HOST}/synth`;
-        path += `?locale=${this.localeToPolly(this.currentLanguage)}`;
+        path += `?locale=${this.localeToPolly(this.getCurrentLanguage())}`;
         path += `&gender=${gender}`;
         path += `&text=${encodeURI(words.substring(0, 128))}`;
 
