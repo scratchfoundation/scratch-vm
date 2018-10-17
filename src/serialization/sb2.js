@@ -342,9 +342,6 @@ const confirmTargetExtensions = function (targets, extensions) {
         let extensionConfirmed = false;
 
         for (const target of targets) {
-            if (extensionConfirmed) {
-                break;
-            }
             const targetBlocks = Object.entries(target.blocks._blocks);
 
             // Make sure there is a block that uses the currently set extensions
