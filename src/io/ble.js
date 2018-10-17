@@ -18,8 +18,8 @@ class BLE extends JSONRPCWebSocket {
 
         this._ws = ws;
         this._ws.onopen = this.requestPeripheral.bind(this); // only call request peripheral after socket opens
-        this._ws.onerror = this._sendError.bind(this, 'ws onerror');
-        this._ws.onclose = this._sendError.bind(this, 'ws onclose');
+        this._ws.onerror = this._sendRequestError.bind(this, 'ws onerror');
+        this._ws.onclose = this._sendDisconnectError.bind(this, 'ws onclose');
 
         this._availablePeripherals = {};
         this._connectCallback = connectCallback;
@@ -41,7 +41,7 @@ class BLE extends JSONRPCWebSocket {
             this._discoverTimeoutID = window.setTimeout(this._sendDiscoverTimeout.bind(this), 15000);
             this.sendRemoteRequest('discover', this._peripheralOptions)
                 .catch(e => {
-                    this._sendError(e);
+                    this._sendRequestError(e);
                 }); // never reached?
         }
         // TODO: else?
@@ -60,7 +60,7 @@ class BLE extends JSONRPCWebSocket {
                 this._connectCallback();
             })
             .catch(e => {
-                this._sendError(e);
+                this._sendRequestError(e);
             });
     }
 
@@ -69,7 +69,6 @@ class BLE extends JSONRPCWebSocket {
      */
     disconnect () {
         this._ws.close();
-        this._connected = false;
     }
 
     /**
@@ -94,7 +93,7 @@ class BLE extends JSONRPCWebSocket {
         this._characteristicDidChangeCallback = onCharacteristicChanged;
         return this.sendRemoteRequest('startNotifications', params)
             .catch(e => {
-                this._sendError(e);
+                this._sendDisconnectError(e);
             });
     }
 
@@ -117,7 +116,7 @@ class BLE extends JSONRPCWebSocket {
         this._characteristicDidChangeCallback = onCharacteristicChanged;
         return this.sendRemoteRequest('read', params)
             .catch(e => {
-                this._sendError(e);
+                this._sendDisconnectError(e);
             });
     }
 
@@ -140,7 +139,7 @@ class BLE extends JSONRPCWebSocket {
         }
         return this.sendRemoteRequest('write', params)
             .catch(e => {
-                this._sendError(e);
+                this._sendDisconnectError(e);
             });
     }
 
@@ -171,10 +170,23 @@ class BLE extends JSONRPCWebSocket {
         }
     }
 
-    _sendError (/* e */) {
-        if (this._connected) this.disconnect();
+    _sendRequestError (/* e */) {
         // log.error(`BLE error: ${JSON.stringify(e)}`);
-        this._runtime.emit(this._runtime.constructor.PERIPHERAL_ERROR, {
+
+        this._runtime.emit(this._runtime.constructor.PERIPHERAL_REQUEST_ERROR, {
+            message: `Scratch lost connection to`,
+            extensionId: this._extensionId
+        });
+    }
+
+    _sendDisconnectError (/* e */) {
+        // log.error(`BLE error: ${JSON.stringify(e)}`);
+
+        if (!this._connected) return;
+
+        this._connected = false;
+
+        this._runtime.emit(this._runtime.constructor.PERIPHERAL_DISCONNECT_ERROR, {
             message: `Scratch lost connection to`,
             extensionId: this._extensionId
         });
