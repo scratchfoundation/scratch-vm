@@ -1912,7 +1912,7 @@ class Runtime extends EventEmitter {
 
     /**
      * Report that targets have finished being installed in the Virtual Machine.
-     * @param {Target} installedTargets - the newly installedTargets.
+     * @param {Target} installedTargets - the newly installed targets.
      */
     emitTargetsInstalled (installedTargets) {
         this.emit(Runtime.TARGETS_INSTALLED, installedTargets);

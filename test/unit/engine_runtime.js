@@ -125,7 +125,7 @@ test('Installing targets emits runtime event', t => {
     });
 
     vm.loadProject(project).then(() => {
-        // Event emitted on project load
+        // Event emitted when targets are installed during project load
         t.equal(targetsInstalled, true);
         targetsInstalled = null;
 
