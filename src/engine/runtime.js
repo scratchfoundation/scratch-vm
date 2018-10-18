@@ -1605,14 +1605,6 @@ class Runtime extends EventEmitter {
     }
 
     /**
-     *
-     * @return {OrderedMap} The current state of monitor blocks.
-     */
-    getMonitorState () {
-        return this._monitorState;
-    }
-
-    /**
      * Queue monitor blocks to sequencer to be run.
      */
     _pushMonitors () {
