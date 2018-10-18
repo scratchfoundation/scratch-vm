@@ -690,11 +690,14 @@ class VirtualMachine extends EventEmitter {
             // is updated as below.
             sound.format = '';
             const storage = this.runtime.storage;
-            sound.assetId = storage.builtinHelper.cache(
+            sound.asset = storage.createAsset(
                 storage.AssetType.Sound,
                 storage.DataFormat.WAV,
-                soundEncoding
+                soundEncoding,
+                null,
+                true // generate md5
             );
+            sound.assetId = sound.asset.assetId;
             sound.dataFormat = storage.DataFormat.WAV;
             sound.md5 = `${sound.assetId}.${sound.dataFormat}`;
         }
@@ -731,16 +734,16 @@ class VirtualMachine extends EventEmitter {
      *     a dataURI if it's a PNG or JPG, or null if it couldn't be found or decoded.
      */
     getCostume (costumeIndex) {
-        const id = this.editingTarget.getCostumes()[costumeIndex].assetId;
-        if (!id || !this.runtime || !this.runtime.storage) return null;
-        const format = this.runtime.storage.get(id).dataFormat;
+        const asset = this.editingTarget.getCostumes()[costumeIndex].asset;
+        if (!asset || !this.runtime || !this.runtime.storage) return null;
+        const format = asset.dataFormat;
         if (format === this.runtime.storage.DataFormat.SVG) {
-            return this.runtime.storage.get(id).decodeText();
+            return asset.decodeText();
         } else if (format === this.runtime.storage.DataFormat.PNG ||
                 format === this.runtime.storage.DataFormat.JPG) {
-            return this.runtime.storage.get(id).encodeDataURI();
+            return asset.encodeDataURI();
         }
-        log.error(`Unhandled format: ${this.runtime.storage.get(id).dataFormat}`);
+        log.error(`Unhandled format: ${asset.dataFormat}`);
         return null;
     }
 
@@ -781,14 +784,17 @@ class VirtualMachine extends EventEmitter {
             const reader = new FileReader();
             reader.addEventListener('loadend', () => {
                 const storage = this.runtime.storage;
-                costume.assetId = storage.builtinHelper.cache(
-                    storage.AssetType.ImageBitmap,
-                    storage.DataFormat.PNG,
-                    Buffer.from(reader.result)
-                );
                 costume.dataFormat = storage.DataFormat.PNG;
                 costume.bitmapResolution = bitmapResolution;
                 costume.size = [bitmap.width, bitmap.height];
+                costume.asset = storage.createAsset(
+                    storage.AssetType.ImageBitmap,
+                    costume.dataFormat,
+                    Buffer.from(reader.result),
+                    null, // id
+                    true // generate md5
+                );
+                costume.assetId = costume.asset.assetId;
                 costume.md5 = `${costume.assetId}.${costume.dataFormat}`;
                 this.emitTargetsUpdate();
             });
@@ -812,16 +818,19 @@ class VirtualMachine extends EventEmitter {
             costume.size = this.runtime.renderer.getSkinSize(costume.skinId);
         }
         const storage = this.runtime.storage;
-        costume.assetId = storage.builtinHelper.cache(
-            storage.AssetType.ImageVector,
-            storage.DataFormat.SVG,
-            (new TextEncoder()).encode(svg)
-        );
         // If we're in here, we've edited an svg in the vector editor,
         // so the dataFormat should be 'svg'
         costume.dataFormat = storage.DataFormat.SVG;
-        costume.md5 = `${costume.assetId}.${costume.dataFormat}`;
         costume.bitmapResolution = 1;
+        costume.asset = storage.createAsset(
+            storage.AssetType.ImageVector,
+            costume.dataFormat,
+            (new TextEncoder()).encode(svg),
+            null,
+            true // generate md5
+        );
+        costume.assetId = costume.asset.assetId;
+        costume.md5 = `${costume.assetId}.${costume.dataFormat}`;
         this.emitTargetsUpdate();
     }
 

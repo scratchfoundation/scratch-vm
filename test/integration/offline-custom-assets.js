@@ -10,7 +10,6 @@ const test = require('tap').test;
 const AdmZip = require('adm-zip');
 const ScratchStorage = require('scratch-storage');
 const VirtualMachine = require('../../src/index');
-const StringUtil = require('../../src/util/string-util');
 
 const projectUri = path.resolve(__dirname, '../fixtures/offline-custom-assets.sb2');
 const projectZip = AdmZip(projectUri);
@@ -52,11 +51,8 @@ test('offline-custom-assets', t => {
             t.equals(costumes.length, 1);
             const customCostume = costumes[0];
             t.equals(customCostume.name, 'A_Test_Costume');
-            const costumeMd5Ext = customCostume.md5;
-            const costumeIdParts = StringUtil.splitFirst(costumeMd5Ext, '.');
-            const costumeMd5 = costumeIdParts[0];
 
-            const storedCostume = vm.runtime.storage.get(costumeMd5);
+            const storedCostume = customCostume.asset;
             t.type(storedCostume, 'object');
             t.deepEquals(storedCostume.data, costumeData);
 
@@ -64,10 +60,7 @@ test('offline-custom-assets', t => {
             t.equals(sounds.length, 1);
             const customSound = sounds[0];
             t.equals(customSound.name, 'A_Test_Recording');
-            const soundMd5Ext = customSound.md5;
-            const soundIdParts = StringUtil.splitFirst(soundMd5Ext, '.');
-            const soundMd5 = soundIdParts[0];
-            const storedSound = vm.runtime.storage.get(soundMd5);
+            const storedSound = customSound.asset;
             t.type(storedSound, 'object');
             t.deepEquals(storedSound.data, soundData);
 

@@ -844,7 +844,10 @@ const parseScratchObject = function (object, runtime, extensions, zip) {
         // any translation that needs to happen will happen in the process
         // of building up the costume object into an sb3 format
         return deserializeCostume(costume, runtime, zip)
-            .then(() => loadCostume(costumeMd5Ext, costume, runtime));
+            .then(asset => {
+                costume.asset = asset;
+                return loadCostume(costumeMd5Ext, costume, runtime);
+            });
         // Only attempt to load the costume after the deserialization
         // process has been completed
     });
@@ -869,7 +872,10 @@ const parseScratchObject = function (object, runtime, extensions, zip) {
         // any translation that needs to happen will happen in the process
         // of building up the costume object into an sb3 format
         return deserializeSound(sound, runtime, zip)
-            .then(() => loadSound(sound, runtime, sprite));
+            .then(asset => {
+                sound.asset = asset;
+                return loadSound(sound, runtime, sprite);
+            });
         // Only attempt to load the sound after the deserialization
         // process has been completed.
     });

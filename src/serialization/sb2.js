@@ -452,7 +452,11 @@ const parseScratchObject = function (object, runtime, extensions, topLevel, zip)
             // the file name of the costume should be the baseLayerID followed by the file ext
             const assetFileName = `${costumeSource.baseLayerID}.${ext}`;
             costumePromises.push(deserializeCostume(costume, runtime, zip, assetFileName)
-                .then(() => loadCostume(costume.md5, costume, runtime, 2 /* optVersion */)));
+                .then(asset => {
+                    costume.asset = asset;
+                    return loadCostume(costume.md5, costume, runtime, 2 /* optVersion */);
+                })
+            );
         }
     }
     // Sounds from JSON
@@ -486,7 +490,10 @@ const parseScratchObject = function (object, runtime, extensions, topLevel, zip)
             // followed by the file ext
             const assetFileName = `${soundSource.soundID}.${ext}`;
             soundPromises.push(deserializeSound(sound, runtime, zip, assetFileName)
-                .then(() => loadSound(sound, runtime, sprite)));
+                .then(asset => {
+                    sound.asset = asset;
+                    return loadSound(sound, runtime, sprite);
+                }));
         }
     }
 
