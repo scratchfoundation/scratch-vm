@@ -254,7 +254,7 @@ const parseMonitorObject = (object, runtime, targets, extensions) => {
 
     // Prevent parsing for non-visible extension monitors
     // so unintended extensions aren't loaded
-    if(!object.visible && extensionCmd.includes(object.cmd)) {
+    if (!object.visible && extensionCmd.includes(object.cmd)) {
         return;
     }
 
