@@ -16411,6 +16411,8 @@ class SvgRenderer {
         if (fromVersion2) {
             // Transform all text elements.
             this._transformText();
+            // Fix gradients
+            this._transformGradients();
             // Transform measurements.
             this._transformMeasurements();
         } else if (!this._svgTag.getAttribute('viewBox')) {
@@ -16515,6 +16517,30 @@ class SvgRenderer {
                     tspanNode.textContent = line;
                     textElement.appendChild(tspanNode);
                 }
+            }
+        }
+    }
+
+    /**
+     * Fix SVGs to comply with SVG spec. Scratch 2 defaults to x2 = 0 when x2 is missing, but
+     * SVG defaults to x2 = 1 when missing.
+     */
+    _transformGradients () {
+        // Collect all gradient elements into a list.
+        const linearGradientElements = [];
+        const collectElements = domElement => {
+            if (domElement.localName === 'linearGradient') {
+                linearGradientElements.push(domElement);
+            }
+            for (let i = 0; i < domElement.childNodes.length; i++) {
+                collectElements(domElement.childNodes[i]);
+            }
+        };
+        collectElements(this._svgTag);
+        // For each gradient element, supply x2 if necessary.
+        for (const gradientElement of linearGradientElements) {
+            if (!gradientElement.getAttribute('x2')) {
+                gradientElement.setAttribute('x2', '0');
             }
         }
     }
