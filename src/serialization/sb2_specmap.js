@@ -1622,7 +1622,12 @@ const specMap = {
     'call': {
         opcode: 'procedures_call',
         argMap: []
-    }
+    },
+    'EXTENSION_CMD_CODES': new Set([
+        'senseVideoMotion',
+        'tempo',
+        'LEGO WeDo 2.0getDistance'
+    ])
 };
 
 /**

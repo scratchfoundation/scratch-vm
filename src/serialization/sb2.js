@@ -246,15 +246,10 @@ const globalBroadcastMsgStateGenerator = (function () {
  */
 const parseMonitorObject = (object, runtime, targets, extensions) => {
     let target = null;
-    const extensionCmd = [
-        'senseVideoMotion',
-        'tempo',
-        'LEGO WeDo 2.0getDistance'
-    ];
 
     // Prevent parsing for non-visible extension monitors
     // so unintended extensions aren't loaded
-    if (!object.visible && extensionCmd.includes(object.cmd)) {
+    if (!object.visible && specMap.EXTENSION_CMD_CODES.has(object.cmd)) {
         return;
     }
 
