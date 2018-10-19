@@ -246,6 +246,18 @@ const globalBroadcastMsgStateGenerator = (function () {
  */
 const parseMonitorObject = (object, runtime, targets, extensions) => {
     let target = null;
+    const extensionCmd = [
+        'senseVideoMotion',
+        'tempo',
+        'LEGO WeDo 2.0getDistance'
+    ];
+
+    // Prevent parsing for non-visible extension monitors
+    // so unintended extensions aren't loaded
+    if(!object.visible && extensionCmd.includes(object.cmd)) {
+        return;
+    }
+
     // List blocks don't come in with their target name set.
     // Find the target by searching for a target with matching variable name/type.
     if (!object.hasOwnProperty('target')) {
