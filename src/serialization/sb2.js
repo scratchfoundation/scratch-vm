@@ -287,7 +287,7 @@ const parseMonitorObject = (object, runtime, targets, extensions) => {
         {},
         null, // `comments`, not needed for monitor blocks
         null // `commentIndex`, not needed for monitor blocks
-    );
+    ); // This block is needed for the `getBlockParams` call down below
 
     // Monitor blocks have special IDs to match the toolbox obtained from the getId
     // function in the runtime.monitorBlocksInfo. Variable monitors, however,
@@ -326,6 +326,9 @@ const parseMonitorObject = (object, runtime, targets, extensions) => {
             runtime.monitorBlocks.createBlock(newBlocks[i]);
         }
     }
+    // In the case where a monitor block does not already exist, one will get created
+    // when the target is installed because the toolbox will reload.
+
 
     // Convert numbered mode into strings for better understandability.
     switch (object.mode) {
