@@ -282,8 +282,10 @@ class Blocks {
      * runtime interface.
      * @param {object} e Blockly "block" or "variable" event
      * @param {?Runtime} optRuntime Optional runtime to forward click events to.
+     * @param {boolean=} forMonitors Whether the event being listened to pertains to a
+     * monitor block.
      */
-    blocklyListen (e, optRuntime) {
+    blocklyListen (e, optRuntime, forMonitors) {
         // Validate event
         if (typeof e !== 'object') return;
         if (typeof e.blockId !== 'string' && typeof e.varId !== 'string' &&
@@ -305,6 +307,21 @@ class Blocks {
         switch (e.type) {
         case 'create': {
             const newBlocks = adapter(e);
+
+            if (forMonitors) {
+                // If this is the monitor block container,
+                // add the appropriate info to the monitorBlock looking it up
+                // in the runtime monitorState
+                const topLevelBlock = newBlocks[0];
+                if (optRuntime && optRuntime.getMonitorState().has(topLevelBlock.id)) {
+
+                    const monitorData = optRuntime.getMonitorState().get(topLevelBlock.id);
+
+                    topLevelBlock.isMonitored = monitorData.visible;
+                    topLevelBlock.targetId = monitorData.targetId;
+                }
+            }
+
             // A create event can create many blocks. Add them all.
             for (let i = 0; i < newBlocks.length; i++) {
                 this.createBlock(newBlocks[i]);

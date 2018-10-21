@@ -9,6 +9,7 @@ const Blocks = require('../engine/blocks');
 const Sprite = require('../sprites/sprite');
 const Variable = require('../engine/variable');
 const Comment = require('../engine/comment');
+const MonitorRecord = require('../engine/monitor-record');
 const StageLayering = require('../engine/stage-layering');
 const log = require('../util/log');
 const uid = require('../util/uid');
@@ -480,6 +481,29 @@ const getSimplifiedLayerOrdering = function (targets) {
     return MathUtil.reducedSortOrdering(layerOrders);
 };
 
+const serializeMonitors = function (monitors) {
+    return monitors.valueSeq().map(monitorData => {
+        const serializedMonitor = {
+            id: monitorData.id,
+            mode: monitorData.mode,
+            opcode: monitorData.opcode,
+            params: monitorData.params,
+            spriteName: monitorData.spriteName,
+            value: monitorData.value,
+            width: monitorData.width,
+            height: monitorData.height,
+            x: monitorData.x,
+            y: monitorData.y,
+            visible: monitorData.visible
+        };
+        if (monitorData.mode !== 'list') {
+            serializedMonitor.min = monitorData.sliderMin;
+            serializedMonitor.max = monitorData.sliderMax;
+        }
+        return serializedMonitor;
+    });
+};
+
 /**
  * Serializes the specified VM runtime.
  * @param {!Runtime} runtime VM runtime instance to be serialized.
@@ -516,8 +540,7 @@ const serialize = function (runtime, targetId) {
 
     obj.targets = serializedTargets;
 
-
-    // TODO Serialize monitors
+    obj.monitors = serializeMonitors(runtime.getMonitorState());
 
     // Assemble extension list
     obj.extensions = Array.from(extensions);
@@ -1015,6 +1038,39 @@ const parseScratchObject = function (object, runtime, extensions, zip) {
     return Promise.all(costumePromises.concat(soundPromises)).then(() => target);
 };
 
+const deserializeMonitor = function (monitorData, runtime, targets) {
+    const monitorBlockInfo = runtime.monitorBlockInfo[monitorData.opcode];
+    if (monitorData.spriteName) {
+        const filteredTargets = targets.filter(t => t.sprite.name === monitorData.spriteName);
+        if (!filteredTargets || filteredTargets.length !== 1) {
+            log.error(`Could not deserialize monitor ${monitorData.opcode} for sprite ${
+                monitorData.spriteName} because no such sprite could be found.`);
+        }
+        monitorData.targetId = filteredTargets[0].id;
+    }
+
+    if (monitorData.opcode !== 'data_variable' && monitorData.opcode !== 'data_listcontents') {
+        // Variables and lists already have their ID serialized in the monitorData,
+        // find the correct id for all other monitors. monitorBlockInfo.getId should
+        // ignore the given parameters if the monitor in question is not target specific.
+        monitorData.id = monitorBlockInfo.getId(
+            monitorData.targetId, Object.values(monitorData.params)[0]);
+    }
+
+    const existingMonitorBlock = runtime.monitorBlocks._blocks[monitorData.id];
+    if (existingMonitorBlock) {
+        // A monitor block already exists if the toolbox has been loaded and
+        // the monitor block is not target specific (because the block gets recycled).
+        // Update the existing block with the relevant monitor information.
+        existingMonitorBlock.isMonitored = monitorData.visible;
+        existingMonitorBlock.targetId = monitorData.targetId;
+    }
+    // Otherwise, the monitor block will get created when the toolbox updates
+    // after the target has been installed.
+
+    runtime.requestAddMonitor(MonitorRecord(monitorData));
+};
+
 /**
  * Deserialize the specified representation of a VM runtime and loads it into the provided runtime instance.
  * @param  {object} json - JSON representation of a VM runtime.
@@ -1037,6 +1093,8 @@ const deserialize = function (json, runtime, zip, isSingleSprite) {
         .map((t, i) => Object.assign(t, {targetPaneOrder: i}))
         .sort((a, b) => a.layerOrder - b.layerOrder);
 
+    const monitorObjects = json.monitors || [];
+
     return Promise.all(
         targetObjects.map(target =>
             parseScratchObject(target, runtime, extensions, zip))
@@ -1050,6 +1108,10 @@ const deserialize = function (json, runtime, zip, isSingleSprite) {
                 delete t.layerOrder;
                 return t;
             }))
+        .then(targets => {
+            monitorObjects.map(monitorDesc => deserializeMonitor(monitorDesc, runtime, targets));
+            return targets;
+        })
         .then(targets => ({
             targets,
             extensions

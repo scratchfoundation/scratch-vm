@@ -659,6 +659,10 @@ class Runtime extends EventEmitter {
         }
     }
 
+    getMonitorState () {
+        return this._monitorState;
+    }
+
     /**
      * Generate an extension-specific menu ID.
      * @param {string} menuName - the name of the menu.
