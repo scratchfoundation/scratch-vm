@@ -249,7 +249,7 @@ const parseMonitorObject = (object, runtime, targets, extensions) => {
 
     // Prevent parsing for non-visible extension monitors
     // so unintended extensions aren't loaded
-    if (!object.visible && specMap.EXTENSION_CMD_CODES.has(object.cmd)) {
+    if (!object.visible && specMap.MONITOR_EXTENSION_CMD.has(object.cmd)) {
         return;
     }
 
