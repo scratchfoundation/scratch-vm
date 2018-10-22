@@ -5,6 +5,7 @@ const extractProjectJson = require('../fixtures/readProjectFile').extractProject
 const RenderedTarget = require('../../src/sprites/rendered-target');
 const Runtime = require('../../src/engine/runtime');
 const sb2 = require('../../src/serialization/sb2');
+const specMap = require('../../src/serialization/sb2_specmap.js');
 
 test('spec', t => {
     t.type(sb2, 'object');
@@ -101,4 +102,36 @@ test('Ordering', t => {
         t.equal(targets[3].sprite.name, 'Third');
         t.end();
     });
+});
+
+/**
+*   Each of these test projects have had an extension's reporter block checked and saved,
+*   then unchecked and saved again. This adds a monitor for that extension that is not visible
+*   and is not expected to be loaded for the project.
+*/
+test('Prevent invisible extension monitors', async t => {
+    const rt = new Runtime();
+    const invisibleExtensionProjects = [
+        path.resolve(__dirname, '../fixtures/invisible-video-monitor.sb2'),
+        path.resolve(__dirname, '../fixtures/invisible-tempo-monitor.sb2'),
+        path.resolve(__dirname, '../fixtures/invisible-wedo2-distance-monitor.sb2')
+    ];
+    const projectsJSON = invisibleExtensionProjects.map(project => extractProjectJson(project));
+
+    for (const project of projectsJSON) {
+        await sb2.deserialize(project, rt);
+
+        // These sb2 project monitors are invisible and have extension commands
+        for (const child of project.children) {
+            if (child.cmd) {
+                t.equal(child.visible, false);
+                t.ok(specMap.MONITOR_EXTENSION_CMD.has(child.cmd));
+            }
+        }
+
+        // Invisible extension monitors haven't been added to the runtime
+        t.equal(rt._monitorState.size, 0);
+    }
+
+    t.end();
 });
