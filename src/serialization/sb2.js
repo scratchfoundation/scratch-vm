@@ -246,11 +246,14 @@ const globalBroadcastMsgStateGenerator = (function () {
  */
 const parseMonitorObject = (object, runtime, targets, extensions) => {
     let target = null;
+    const opcode = specMap[object.cmd].opcode;
+    const extIndex = opcode.indexOf('_');
+    const extID = opcode.substring(0, extIndex);
 
-    // Prevent parsing for non-visible extension monitors
-    // so unintended extensions aren't loaded
-    if (!object.visible && specMap.MONITOR_EXTENSION_CMD.has(object.cmd)) {
-        return;
+    // All non-core extensions should be added by blocks at this point
+    // We can assume this is an unintended monitor and skip parsing if it belongs to a non-core extension
+    if (CORE_EXTENSIONS.indexOf(extID) === -1) {
+        if (extID !== '') return;
     }
 
     // List blocks don't come in with their target name set.
