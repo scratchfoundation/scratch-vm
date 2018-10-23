@@ -104,34 +104,25 @@ test('Ordering', t => {
     });
 });
 
-/**
-*   Each of these test projects have had an extension's reporter block checked and saved,
-*   then unchecked and saved again. This adds a monitor for that extension that is not visible
-*   and is not expected to be loaded for the project.
-*/
-test('Prevent invisible extension monitors', async t => {
+test('Prevent monitors from adding non-core extensions', t => {
     const rt = new Runtime();
-    const invisibleExtensionProjects = [
-        path.resolve(__dirname, '../fixtures/invisible-video-monitor.sb2'),
-        path.resolve(__dirname, '../fixtures/invisible-tempo-monitor.sb2'),
-        path.resolve(__dirname, '../fixtures/invisible-wedo2-distance-monitor.sb2')
-    ];
-    const projectsJSON = invisibleExtensionProjects.map(project => extractProjectJson(project));
+    // This test project's video motion reporter block was checked, saved, then unchecked and saved
+    const videoSensingMonitor = path.resolve(__dirname, '../fixtures/invisible-video-monitor.sb2');
+    const projectJSON = extractProjectJson(videoSensingMonitor);
 
-    for (const project of projectsJSON) {
-        await sb2.deserialize(project, rt);
-
-        // These sb2 project monitors are invisible and have extension commands
-        for (const child of project.children) {
+    sb2.deserialize(projectJSON, rt).then(project => {
+        for (const child of projectJSON.children) {
+            // Check that monitor's extension hasn't been added to the serialized project's extensions
             if (child.cmd) {
-                t.equal(child.visible, false);
-                t.ok(specMap.MONITOR_EXTENSION_CMD.has(child.cmd));
+                const opcode = specMap[child.cmd].opcode;
+                const extIndex = opcode.indexOf('_');
+                const extID = opcode.substring(0, extIndex);
+                t.notOk(project.extensions.extensionIDs.has(extID));
             }
         }
 
-        // Invisible extension monitors haven't been added to the runtime
+        // Non-core extension monitors haven't been added to the runtime
         t.equal(rt._monitorState.size, 0);
-    }
-
-    t.end();
+        t.end();
+    });
 });
