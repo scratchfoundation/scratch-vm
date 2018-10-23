@@ -205,11 +205,15 @@ class MicroBit {
      * Called by the runtime when user wants to scan for a peripheral.
      */
     scan () {
-        this._ble = new BLE(this._runtime, this._extensionId, {
-            filters: [
-                {services: [BLEUUID.service]}
-            ]
-        }, this._onConnect);
+        if (this._ble) {
+            this._ble.requestPeripheral();
+        } else {
+            this._ble = new BLE(this._runtime, this._extensionId, {
+                filters: [
+                    {services: [BLEUUID.service]}
+                ]
+            }, this._onConnect);
+        }
     }
 
     /**
@@ -217,7 +221,9 @@ class MicroBit {
      * @param {number} id - the id of the peripheral to connect to.
      */
     connect (id) {
-        this._ble.connectPeripheral(id);
+        if (this._ble) {
+            this._ble.connectPeripheral(id);
+        }
     }
 
     /**
@@ -225,7 +231,9 @@ class MicroBit {
      */
     disconnect () {
         window.clearInterval(this._timeoutID);
-        this._ble.disconnect();
+        if (this._ble) {
+            this._ble.disconnect();
+        }
     }
 
     /**

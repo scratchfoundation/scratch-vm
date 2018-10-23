@@ -42,7 +42,7 @@ class BLE extends JSONRPCWebSocket {
             this.sendRemoteRequest('discover', this._peripheralOptions)
                 .catch(e => {
                     this._sendRequestError(e);
-                }); // never reached?
+                });
         }
         // TODO: else?
     }
@@ -152,6 +152,7 @@ class BLE extends JSONRPCWebSocket {
     didReceiveCall (method, params) {
         switch (method) {
         case 'didDiscoverPeripheral':
+            console.log('did discover peripheral', params);
             this._availablePeripherals[params.peripheralId] = params;
             this._runtime.emit(
                 this._runtime.constructor.PERIPHERAL_LIST_UPDATE,
