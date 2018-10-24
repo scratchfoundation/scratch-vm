@@ -556,13 +556,12 @@ class EV3 {
      */
     scan () {
         if (this._bt) {
-            this._bt.requestPeripheral();
-        } else {
-            this._bt = new BT(this._runtime, this._extensionId, {
-                majorDeviceClass: 8,
-                minorDeviceClass: 1
-            }, this._onConnect, this._onMessage);
+            this._bt.disconnect();
         }
+        this._bt = new BT(this._runtime, this._extensionId, {
+            majorDeviceClass: 8,
+            minorDeviceClass: 1
+        }, this._onConnect, this._onMessage);
     }
 
     /**
@@ -582,7 +581,7 @@ class EV3 {
         this._clearSensorsAndMotors();
         window.clearInterval(this._pollingIntervalID);
         this._pollingIntervalID = null;
-        
+
         if (this._bt) {
             this._bt.disconnect();
         }

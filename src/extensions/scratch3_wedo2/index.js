@@ -571,15 +571,14 @@ class WeDo2 {
      */
     scan () {
         if (this._ble) {
-            this._ble.requestPeripheral();
-        } else {
-            this._ble = new BLE(this._runtime, this._extensionId, {
-                filters: [{
-                    services: [BLEService.DEVICE_SERVICE]
-                }],
-                optionalServices: [BLEService.IO_SERVICE]
-            }, this._onConnect);
+            this._ble.disconnect();
         }
+        this._ble = new BLE(this._runtime, this._extensionId, {
+            filters: [{
+                services: [BLEService.DEVICE_SERVICE]
+            }],
+            optionalServices: [BLEService.IO_SERVICE]
+        }, this._onConnect);
     }
 
     /**

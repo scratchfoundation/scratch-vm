@@ -1,6 +1,6 @@
 const JSONRPCWebSocket = require('../util/jsonrpc-web-socket');
 const ScratchLinkWebSocket = 'wss://device-manager.scratch.mit.edu:20110/scratch/bt';
-const log = require('../util/log');
+// const log = require('../util/log');
 
 class BT extends JSONRPCWebSocket {
 
@@ -39,7 +39,6 @@ class BT extends JSONRPCWebSocket {
      * If the web socket is not yet open, request when the socket promise resolves.
      */
     requestPeripheral () {
-        console.log('bt requestPeripheral');
         if (!this._discovering) {
             if (this._ws.readyState === 1) { // is this needed since it's only called on ws.onopen?
                 this._availablePeripherals = {};
@@ -102,7 +101,6 @@ class BT extends JSONRPCWebSocket {
         // TODO: Add peripheral 'undiscover' handling
         switch (method) {
         case 'didDiscoverPeripheral':
-            console.log('did discover peripheral', params);
             this._discovering = false;
             this._availablePeripherals[params.peripheralId] = params;
             this._runtime.emit(
@@ -122,8 +120,8 @@ class BT extends JSONRPCWebSocket {
         }
     }
 
-    _sendRequestError (e) {
-        log.error(`BT error: ${JSON.stringify(e)}`);
+    _sendRequestError (/* e */) {
+        // log.error(`BT error: ${JSON.stringify(e)}`);
 
         this._runtime.emit(this._runtime.constructor.PERIPHERAL_REQUEST_ERROR, {
             message: `Scratch lost connection to`,

@@ -206,14 +206,13 @@ class MicroBit {
      */
     scan () {
         if (this._ble) {
-            this._ble.requestPeripheral();
-        } else {
-            this._ble = new BLE(this._runtime, this._extensionId, {
-                filters: [
-                    {services: [BLEUUID.service]}
-                ]
-            }, this._onConnect);
+            this._ble.disconnect();
         }
+        this._ble = new BLE(this._runtime, this._extensionId, {
+            filters: [
+                {services: [BLEUUID.service]}
+            ]
+        }, this._onConnect);
     }
 
     /**
