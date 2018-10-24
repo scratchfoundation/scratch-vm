@@ -67,7 +67,7 @@ test('ask and stop all dismisses question', t => {
 test('ask and stop other scripts dismisses if it is the last question', t => {
     const rt = new Runtime();
     const s = new Sensing(rt);
-    const util = {target: {visible: false}, thread: {}};
+    const util = {target: {visible: false, sprite: {}}, thread: {}};
 
     const expectedQuestion = 'a question';
 
@@ -94,8 +94,8 @@ test('ask and stop other scripts dismisses if it is the last question', t => {
 test('ask and stop other scripts asks next question', t => {
     const rt = new Runtime();
     const s = new Sensing(rt);
-    const util = {target: {visible: false}, thread: {}};
-    const util2 = {target: {visible: false}, thread: {}};
+    const util = {target: {visible: false, sprite: {}}, thread: {}};
+    const util2 = {target: {visible: false, sprite: {}}, thread: {}};
 
     const expectedQuestion = 'a question';
     const nextQuestion = 'a followup';
