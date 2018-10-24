@@ -179,8 +179,7 @@ class Scratch3VideoSensingBlocks {
         if (stage) {
             return stage.videoState;
         }
-        // Default to off to prevent a flash of video while the project is loading
-        return VideoState.OFF;
+        return VideoState.ON;
     }
 
     set globalVideoState (state) {
