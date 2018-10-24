@@ -26,7 +26,6 @@ class BT extends JSONRPCWebSocket {
         this._connectCallback = connectCallback;
         this._connected = false;
         this._characteristicDidChangeCallback = null;
-        this._discovering = false;
         this._extensionId = extensionId;
         this._peripheralOptions = peripheralOptions;
         this._discoverTimeoutID = null;
@@ -39,18 +38,15 @@ class BT extends JSONRPCWebSocket {
      * If the web socket is not yet open, request when the socket promise resolves.
      */
     requestPeripheral () {
-        if (!this._discovering) {
-            if (this._ws.readyState === 1) { // is this needed since it's only called on ws.onopen?
-                this._availablePeripherals = {};
-                this._discoverTimeoutID = window.setTimeout(this._sendDiscoverTimeout.bind(this), 15000);
-                this.sendRemoteRequest('discover', this._peripheralOptions)
-                    .catch(
-                        e => this._sendRequestError(e)
-                    );
-                this._discovering = true;
-            }
-            // TODO: else?
+        if (this._ws.readyState === 1) { // is this needed since it's only called on ws.onopen?
+            this._availablePeripherals = {};
+            this._discoverTimeoutID = window.setTimeout(this._sendDiscoverTimeout.bind(this), 15000);
+            this.sendRemoteRequest('discover', this._peripheralOptions)
+                .catch(
+                    e => this._sendRequestError(e)
+                );
         }
+        // TODO: else?
     }
 
     /**
@@ -101,7 +97,6 @@ class BT extends JSONRPCWebSocket {
         // TODO: Add peripheral 'undiscover' handling
         switch (method) {
         case 'didDiscoverPeripheral':
-            this._discovering = false;
             this._availablePeripherals[params.peripheralId] = params;
             this._runtime.emit(
                 this._runtime.constructor.PERIPHERAL_LIST_UPDATE,
