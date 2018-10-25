@@ -179,68 +179,102 @@ for (var i = 0, len = code.length; i < len; ++i) {
   revLookup[code.charCodeAt(i)] = i
 }
 
+// Support decoding URL-safe base64 strings, as Node.js does.
+// See: https://en.wikipedia.org/wiki/Base64#URL_applications
 revLookup['-'.charCodeAt(0)] = 62
 revLookup['_'.charCodeAt(0)] = 63
 
-function placeHoldersCount (b64) {
+function getLens (b64) {
   var len = b64.length
+
   if (len % 4 > 0) {
     throw new Error('Invalid string. Length must be a multiple of 4')
   }
 
-  // the number of equal signs (place holders)
-  // if there are two placeholders, than the two characters before it
-  // represent one byte
-  // if there is only one, then the three characters before it represent 2 bytes
-  // this is just a cheap hack to not do indexOf twice
-  return b64[len - 2] === '=' ? 2 : b64[len - 1] === '=' ? 1 : 0
+  // Trim off extra bytes after placeholder bytes are found
+  // See: https://github.com/beatgammit/base64-js/issues/42
+  var validLen = b64.indexOf('=')
+  if (validLen === -1) validLen = len
+
+  var placeHoldersLen = validLen === len
+    ? 0
+    : 4 - (validLen % 4)
+
+  return [validLen, placeHoldersLen]
 }
 
+// base64 is 4/3 + up to two characters of the original data
 function byteLength (b64) {
-  // base64 is 4/3 + up to two characters of the original data
-  return (b64.length * 3 / 4) - placeHoldersCount(b64)
+  var lens = getLens(b64)
+  var validLen = lens[0]
+  var placeHoldersLen = lens[1]
+  return ((validLen + placeHoldersLen) * 3 / 4) - placeHoldersLen
+}
+
+function _byteLength (b64, validLen, placeHoldersLen) {
+  return ((validLen + placeHoldersLen) * 3 / 4) - placeHoldersLen
 }
 
 function toByteArray (b64) {
-  var i, l, tmp, placeHolders, arr
-  var len = b64.length
-  placeHolders = placeHoldersCount(b64)
+  var tmp
+  var lens = getLens(b64)
+  var validLen = lens[0]
+  var placeHoldersLen = lens[1]
 
-  arr = new Arr((len * 3 / 4) - placeHolders)
+  var arr = new Arr(_byteLength(b64, validLen, placeHoldersLen))
+
+  var curByte = 0
 
   // if there are placeholders, only get up to the last complete 4 chars
-  l = placeHolders > 0 ? len - 4 : len
+  var len = placeHoldersLen > 0
+    ? validLen - 4
+    : validLen
 
-  var L = 0
-
-  for (i = 0; i < l; i += 4) {
-    tmp = (revLookup[b64.charCodeAt(i)] << 18) | (revLookup[b64.charCodeAt(i + 1)] << 12) | (revLookup[b64.charCodeAt(i + 2)] << 6) | revLookup[b64.charCodeAt(i + 3)]
-    arr[L++] = (tmp >> 16) & 0xFF
-    arr[L++] = (tmp >> 8) & 0xFF
-    arr[L++] = tmp & 0xFF
+  for (var i = 0; i < len; i += 4) {
+    tmp =
+      (revLookup[b64.charCodeAt(i)] << 18) |
+      (revLookup[b64.charCodeAt(i + 1)] << 12) |
+      (revLookup[b64.charCodeAt(i + 2)] << 6) |
+      revLookup[b64.charCodeAt(i + 3)]
+    arr[curByte++] = (tmp >> 16) & 0xFF
+    arr[curByte++] = (tmp >> 8) & 0xFF
+    arr[curByte++] = tmp & 0xFF
   }
 
-  if (placeHolders === 2) {
-    tmp = (revLookup[b64.charCodeAt(i)] << 2) | (revLookup[b64.charCodeAt(i + 1)] >> 4)
-    arr[L++] = tmp & 0xFF
-  } else if (placeHolders === 1) {
-    tmp = (revLookup[b64.charCodeAt(i)] << 10) | (revLookup[b64.charCodeAt(i + 1)] << 4) | (revLookup[b64.charCodeAt(i + 2)] >> 2)
-    arr[L++] = (tmp >> 8) & 0xFF
-    arr[L++] = tmp & 0xFF
+  if (placeHoldersLen === 2) {
+    tmp =
+      (revLookup[b64.charCodeAt(i)] << 2) |
+      (revLookup[b64.charCodeAt(i + 1)] >> 4)
+    arr[curByte++] = tmp & 0xFF
+  }
+
+  if (placeHoldersLen === 1) {
+    tmp =
+      (revLookup[b64.charCodeAt(i)] << 10) |
+      (revLookup[b64.charCodeAt(i + 1)] << 4) |
+      (revLookup[b64.charCodeAt(i + 2)] >> 2)
+    arr[curByte++] = (tmp >> 8) & 0xFF
+    arr[curByte++] = tmp & 0xFF
   }
 
   return arr
 }
 
 function tripletToBase64 (num) {
-  return lookup[num >> 18 & 0x3F] + lookup[num >> 12 & 0x3F] + lookup[num >> 6 & 0x3F] + lookup[num & 0x3F]
+  return lookup[num >> 18 & 0x3F] +
+    lookup[num >> 12 & 0x3F] +
+    lookup[num >> 6 & 0x3F] +
+    lookup[num & 0x3F]
 }
 
 function encodeChunk (uint8, start, end) {
   var tmp
   var output = []
   for (var i = start; i < end; i += 3) {
-    tmp = (uint8[i] << 16) + (uint8[i + 1] << 8) + (uint8[i + 2])
+    tmp =
+      ((uint8[i] << 16) & 0xFF0000) +
+      ((uint8[i + 1] << 8) & 0xFF00) +
+      (uint8[i + 2] & 0xFF)
     output.push(tripletToBase64(tmp))
   }
   return output.join('')
@@ -250,30 +284,33 @@ function fromByteArray (uint8) {
   var tmp
   var len = uint8.length
   var extraBytes = len % 3 // if we have 1 byte left, pad 2 bytes
-  var output = ''
   var parts = []
   var maxChunkLength = 16383 // must be multiple of 3
 
   // go through the array every three bytes, we'll deal with trailing stuff later
   for (var i = 0, len2 = len - extraBytes; i < len2; i += maxChunkLength) {
-    parts.push(encodeChunk(uint8, i, (i + maxChunkLength) > len2 ? len2 : (i + maxChunkLength)))
+    parts.push(encodeChunk(
+      uint8, i, (i + maxChunkLength) > len2 ? len2 : (i + maxChunkLength)
+    ))
   }
 
   // pad the end with zeros, but make sure to not forget the extra bytes
   if (extraBytes === 1) {
     tmp = uint8[len - 1]
-    output += lookup[tmp >> 2]
-    output += lookup[(tmp << 4) & 0x3F]
-    output += '=='
+    parts.push(
+      lookup[tmp >> 2] +
+      lookup[(tmp << 4) & 0x3F] +
+      '=='
+    )
   } else if (extraBytes === 2) {
-    tmp = (uint8[len - 2] << 8) + (uint8[len - 1])
-    output += lookup[tmp >> 10]
-    output += lookup[(tmp >> 4) & 0x3F]
-    output += lookup[(tmp << 2) & 0x3F]
-    output += '='
+    tmp = (uint8[len - 2] << 8) + uint8[len - 1]
+    parts.push(
+      lookup[tmp >> 10] +
+      lookup[(tmp >> 4) & 0x3F] +
+      lookup[(tmp << 2) & 0x3F] +
+      '='
+    )
   }
-
-  parts.push(output)
 
   return parts.join('')
 }
@@ -2379,7 +2416,7 @@ module.exports = Array.isArray || function (arr) {
  * [js-md5]{@link https://github.com/emn178/js-md5}
  *
  * @namespace md5
- * @version 0.6.1
+ * @version 0.7.3
  * @author Chen, Yi-Cyuan [emn178@gmail.com]
  * @copyright Chen, Yi-Cyuan 2014-2017
  * @license MIT
@@ -2401,7 +2438,7 @@ module.exports = Array.isArray || function (arr) {
     root = self;
   }
   var COMMON_JS = !root.JS_MD5_NO_COMMON_JS && typeof module === 'object' && module.exports;
-  var AMD = "function" === 'function' && __webpack_require__(/*! !webpack amd options */ "./node_modules/webpack/buildin/amd-options.js");
+  var AMD = true && __webpack_require__(/*! !webpack amd options */ "./node_modules/webpack/buildin/amd-options.js");
   var ARRAY_BUFFER = !root.JS_MD5_NO_ARRAY_BUFFER && typeof ArrayBuffer !== 'undefined';
   var HEX_CHARS = '0123456789abcdef'.split('');
   var EXTRA = [128, 32768, 8388608, -2147483648];
@@ -2575,7 +2612,7 @@ module.exports = Array.isArray || function (arr) {
         this.blocks = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
       }
     }
-    this.h0 = this.h1 = this.h2 = this.h3 = this.start = this.bytes = 0;
+    this.h0 = this.h1 = this.h2 = this.h3 = this.start = this.bytes = this.hBytes = 0;
     this.finalized = this.hashed = false;
     this.first = true;
   }
@@ -2687,6 +2724,10 @@ module.exports = Array.isArray || function (arr) {
         this.start = i;
       }
     }
+    if (this.bytes > 4294967295) {
+      this.hBytes += this.bytes / 4294967296 << 0;
+      this.bytes = this.bytes % 4294967296;
+    }
     return this;
   };
 
@@ -2708,6 +2749,7 @@ module.exports = Array.isArray || function (arr) {
       blocks[12] = blocks[13] = blocks[14] = blocks[15] = 0;
     }
     blocks[14] = this.bytes << 3;
+    blocks[15] = this.hBytes << 3 | this.bytes >>> 29;
     this.hash();
   };
 
@@ -3951,12 +3993,12 @@ module.exports = {
   !*** ./node_modules/text-encoding/lib/encoding-indexes.js ***!
   \************************************************************/
 /*! no static exports found */
-/***/ (function(module, exports) {
+/***/ (function(module, exports, __webpack_require__) {
 
 (function(global) {
   'use strict';
 
-  if (typeof module !== "undefined" && module.exports) {
+  if (true && module.exports) {
     module.exports = global;
   }
 
@@ -4021,7 +4063,7 @@ module.exports = {
   'use strict';
 
   // If we're in node require encoding-indexes and attach it to the global.
-  if (typeof module !== "undefined" && module.exports &&
+  if (true && module.exports &&
     !global["encoding-indexes"]) {
     global["encoding-indexes"] =
       __webpack_require__(/*! ./encoding-indexes.js */ "./node_modules/text-encoding/lib/encoding-indexes.js")["encoding-indexes"];
@@ -7312,7 +7354,7 @@ module.exports = {
   if (!global['TextDecoder'])
     global['TextDecoder'] = TextDecoder;
 
-  if (typeof module !== "undefined" && module.exports) {
+  if (true && module.exports) {
     module.exports = {
       TextEncoder: global['TextEncoder'],
       TextDecoder: global['TextDecoder'],
@@ -7692,102 +7734,121 @@ function extend() {
 /*! no static exports found */
 /***/ (function(module, exports, __webpack_require__) {
 
-"use strict";
-
-
-var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
-
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
-var TextDecoder = __webpack_require__(/*! text-encoding */ "./node_modules/text-encoding/index.js").TextDecoder;
-var TextEncoder = __webpack_require__(/*! text-encoding */ "./node_modules/text-encoding/index.js").TextEncoder;
+function _defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } }
+
+function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _defineProperties(Constructor.prototype, protoProps); if (staticProps) _defineProperties(Constructor, staticProps); return Constructor; }
+
+// Use JS implemented TextDecoder and TextEncoder if it is not provided by the
+// browser.
+var _TextDecoder;
+
+var _TextEncoder;
+
+var encoding = __webpack_require__(/*! text-encoding */ "./node_modules/text-encoding/index.js");
+
+if (typeof TextDecoder === 'undefined' || typeof TextEncoder === 'undefined') {
+  _TextDecoder = encoding.TextDecoder;
+  _TextEncoder = encoding.TextEncoder;
+} else {
+  /* global TextDecoder TextEncoder */
+  _TextDecoder = TextDecoder;
+  _TextEncoder = TextEncoder;
+}
+
 var base64js = __webpack_require__(/*! base64-js */ "./node_modules/base64-js/index.js");
 
+var md5 = __webpack_require__(/*! js-md5 */ "./node_modules/js-md5/src/md5.js");
+
 var memoizedToString = function () {
-    var strings = {};
-    return function (assetId, data) {
-        if (!strings.hasOwnProperty(assetId)) {
-            strings[assetId] = base64js.fromByteArray(data);
-        }
-        return strings[assetId];
-    };
-}();
-
-var Asset = function () {
-    /**
-     * Construct an Asset.
-     * @param {AssetType} assetType - The type of this asset (sound, image, etc.)
-     * @param {string} assetId - The ID of this asset.
-     * @param {DataFormat} [dataFormat] - The format of the data (WAV, PNG, etc.); required iff `data` is present.
-     * @param {Buffer} [data] - The in-memory data for this asset; optional.
-     */
-    function Asset(assetType, assetId, dataFormat, data) {
-        _classCallCheck(this, Asset);
-
-        /** @type {AssetType} */
-        this.assetType = assetType;
-
-        /** @type {string} */
-        this.assetId = assetId;
-
-        this.setData(data, dataFormat || assetType.runtimeFormat);
-
-        /** @type {Asset[]} */
-        this.dependencies = [];
+  var strings = {};
+  return function (assetId, data) {
+    if (!strings.hasOwnProperty(assetId)) {
+      strings[assetId] = base64js.fromByteArray(data);
     }
 
-    _createClass(Asset, [{
-        key: 'setData',
-        value: function setData(data, dataFormat) {
-            if (data && !dataFormat) {
-                throw new Error('Data provided without specifying its format');
-            }
+    return strings[assetId];
+  };
+}();
 
-            /** @type {DataFormat} */
-            this.dataFormat = dataFormat;
+var Asset =
+/*#__PURE__*/
+function () {
+  /**
+   * Construct an Asset.
+   * @param {AssetType} assetType - The type of this asset (sound, image, etc.)
+   * @param {string} assetId - The ID of this asset.
+   * @param {DataFormat} [dataFormat] - The format of the data (WAV, PNG, etc.); required iff `data` is present.
+   * @param {Buffer} [data] - The in-memory data for this asset; optional.
+   * @param {bool} [generateId] - Whether to create id from an md5 hash of data
+   */
+  function Asset(assetType, assetId, dataFormat, data, generateId) {
+    _classCallCheck(this, Asset);
 
-            /** @type {Buffer} */
-            this.data = data;
-        }
+    /** @type {AssetType} */
+    this.assetType = assetType;
+    /** @type {string} */
 
-        /**
-         * @returns {string} - This asset's data, decoded as text.
-         */
+    this.assetId = assetId;
+    this.setData(data, dataFormat || assetType.runtimeFormat, generateId);
+    /** @type {Asset[]} */
 
-    }, {
-        key: 'decodeText',
-        value: function decodeText() {
-            var decoder = new TextDecoder();
-            return decoder.decode(this.data);
-        }
+    this.dependencies = [];
+  }
 
-        /**
-         * Same as `setData` but encodes text first.
-         * @param {string} data - the text data to encode and store.
-         * @param {DataFormat} dataFormat - the format of the data (DataFormat.SVG for example).
-         */
+  _createClass(Asset, [{
+    key: "setData",
+    value: function setData(data, dataFormat, generateId) {
+      if (data && !dataFormat) {
+        throw new Error('Data provided without specifying its format');
+      }
+      /** @type {DataFormat} */
 
-    }, {
-        key: 'encodeTextData',
-        value: function encodeTextData(data, dataFormat) {
-            var encoder = new TextEncoder();
-            this.setData(encoder.encode(data), dataFormat);
-        }
 
-        /**
-         * @param {string} [contentType] - Optionally override the content type to be included in the data URI.
-         * @returns {string} - A data URI representing the asset's data.
-         */
+      this.dataFormat = dataFormat;
+      /** @type {Buffer} */
 
-    }, {
-        key: 'encodeDataURI',
-        value: function encodeDataURI(contentType) {
-            contentType = contentType || this.assetType.contentType;
-            return 'data:' + contentType + ';base64,' + memoizedToString(this.assetId, this.data);
-        }
-    }]);
+      this.data = data;
+      if (generateId) this.assetId = md5(data);
+    }
+    /**
+     * @returns {string} - This asset's data, decoded as text.
+     */
 
-    return Asset;
+  }, {
+    key: "decodeText",
+    value: function decodeText() {
+      var decoder = new _TextDecoder();
+      return decoder.decode(this.data);
+    }
+    /**
+     * Same as `setData` but encodes text first.
+     * @param {string} data - the text data to encode and store.
+     * @param {DataFormat} dataFormat - the format of the data (DataFormat.SVG for example).
+     * @param {bool} generateId - after setting data, set the id to an md5 of the data?
+     */
+
+  }, {
+    key: "encodeTextData",
+    value: function encodeTextData(data, dataFormat, generateId) {
+      var encoder = new _TextEncoder();
+      this.setData(encoder.encode(data), dataFormat, generateId);
+    }
+    /**
+     * @param {string} [contentType] - Optionally override the content type to be included in the data URI.
+     * @returns {string} - A data URI representing the asset's data.
+     */
+
+  }, {
+    key: "encodeDataURI",
+    value: function encodeDataURI(contentType) {
+      contentType = contentType || this.assetType.contentType;
+      return "data:".concat(contentType, ";base64,").concat(memoizedToString(this.assetId, this.data));
+    }
+  }]);
+
+  return Asset;
 }();
 
 module.exports = Asset;
@@ -7801,11 +7862,7 @@ module.exports = Asset;
 /*! no static exports found */
 /***/ (function(module, exports, __webpack_require__) {
 
-"use strict";
-
-
 var DataFormat = __webpack_require__(/*! ./DataFormat */ "./src/DataFormat.js");
-
 /**
  * Enumeration of the supported asset types.
  * @type {Object.<String,AssetType>}
@@ -7816,39 +7873,40 @@ var DataFormat = __webpack_require__(/*! ./DataFormat */ "./src/DataFormat.js");
  *     example, a project stored in SB2 format on disk will be returned as JSON when loaded into memory.
  * @property {boolean} immutable - Indicates if the asset id is determined by the asset content.
  */
-var AssetType = {
-    ImageBitmap: {
-        contentType: 'image/png',
-        name: 'ImageBitmap',
-        runtimeFormat: DataFormat.PNG,
-        immutable: true
-    },
-    ImageVector: {
-        contentType: 'image/svg+xml',
-        name: 'ImageVector',
-        runtimeFormat: DataFormat.SVG,
-        immutable: true
-    },
-    Project: {
-        contentType: 'application/json',
-        name: 'Project',
-        runtimeFormat: DataFormat.JSON,
-        immutable: false
-    },
-    Sound: {
-        contentType: 'audio/x-wav',
-        name: 'Sound',
-        runtimeFormat: DataFormat.WAV,
-        immutable: true
-    },
-    Sprite: {
-        contentType: 'application/json',
-        name: 'Sprite',
-        runtimeFormat: DataFormat.JSON,
-        immutable: true
-    }
-};
 
+
+var AssetType = {
+  ImageBitmap: {
+    contentType: 'image/png',
+    name: 'ImageBitmap',
+    runtimeFormat: DataFormat.PNG,
+    immutable: true
+  },
+  ImageVector: {
+    contentType: 'image/svg+xml',
+    name: 'ImageVector',
+    runtimeFormat: DataFormat.SVG,
+    immutable: true
+  },
+  Project: {
+    contentType: 'application/json',
+    name: 'Project',
+    runtimeFormat: DataFormat.JSON,
+    immutable: false
+  },
+  Sound: {
+    contentType: 'audio/x-wav',
+    name: 'Sound',
+    runtimeFormat: DataFormat.WAV,
+    immutable: true
+  },
+  Sprite: {
+    contentType: 'application/json',
+    name: 'Sprite',
+    runtimeFormat: DataFormat.JSON,
+    immutable: true
+  }
+};
 module.exports = AssetType;
 
 /***/ }),
@@ -7860,26 +7918,35 @@ module.exports = AssetType;
 /*! no static exports found */
 /***/ (function(module, exports, __webpack_require__) {
 
-"use strict";
-/* WEBPACK VAR INJECTION */(function(Buffer) {
-
-var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+/* WEBPACK VAR INJECTION */(function(Buffer) {function _typeof(obj) { if (typeof Symbol === "function" && typeof Symbol.iterator === "symbol") { _typeof = function _typeof(obj) { return typeof obj; }; } else { _typeof = function _typeof(obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; }; } return _typeof(obj); }
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
-function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
+function _defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } }
 
-function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
+function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _defineProperties(Constructor.prototype, protoProps); if (staticProps) _defineProperties(Constructor, staticProps); return Constructor; }
+
+function _possibleConstructorReturn(self, call) { if (call && (_typeof(call) === "object" || typeof call === "function")) { return call; } return _assertThisInitialized(self); }
+
+function _assertThisInitialized(self) { if (self === void 0) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return self; }
+
+function _getPrototypeOf(o) { _getPrototypeOf = Object.setPrototypeOf ? Object.getPrototypeOf : function _getPrototypeOf(o) { return o.__proto__ || Object.getPrototypeOf(o); }; return _getPrototypeOf(o); }
+
+function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function"); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, writable: true, configurable: true } }); if (superClass) _setPrototypeOf(subClass, superClass); }
+
+function _setPrototypeOf(o, p) { _setPrototypeOf = Object.setPrototypeOf || function _setPrototypeOf(o, p) { o.__proto__ = p; return o; }; return _setPrototypeOf(o, p); }
 
 var md5 = __webpack_require__(/*! js-md5 */ "./node_modules/js-md5/src/md5.js");
 
 var log = __webpack_require__(/*! ./log */ "./src/log.js");
 
 var Asset = __webpack_require__(/*! ./Asset */ "./src/Asset.js");
-var AssetType = __webpack_require__(/*! ./AssetType */ "./src/AssetType.js");
-var DataFormat = __webpack_require__(/*! ./DataFormat */ "./src/DataFormat.js");
-var Helper = __webpack_require__(/*! ./Helper */ "./src/Helper.js");
 
+var AssetType = __webpack_require__(/*! ./AssetType */ "./src/AssetType.js");
+
+var DataFormat = __webpack_require__(/*! ./DataFormat */ "./src/DataFormat.js");
+
+var Helper = __webpack_require__(/*! ./Helper */ "./src/Helper.js");
 /**
  * @typedef {object} BuiltinAssetRecord
  * @property {AssetType} type - The type of the asset.
@@ -7891,146 +7958,167 @@ var Helper = __webpack_require__(/*! ./Helper */ "./src/Helper.js");
 /**
  * @type {BuiltinAssetRecord[]}
  */
-var DefaultAssets = [{
-    type: AssetType.ImageBitmap,
-    format: DataFormat.PNG,
-    id: null,
-    data: new Buffer(__webpack_require__(/*! arraybuffer-loader!./builtins/defaultBitmap.png */ "./node_modules/arraybuffer-loader/index.js!./src/builtins/defaultBitmap.png") // eslint-disable-line global-require
-    )
-}, {
-    type: AssetType.Sound,
-    format: DataFormat.WAV,
-    id: null,
-    data: new Buffer(__webpack_require__(/*! arraybuffer-loader!./builtins/defaultSound.wav */ "./node_modules/arraybuffer-loader/index.js!./src/builtins/defaultSound.wav") // eslint-disable-line global-require
-    )
-}, {
-    type: AssetType.ImageVector,
-    format: DataFormat.SVG,
-    id: null,
-    data: new Buffer(__webpack_require__(/*! arraybuffer-loader!./builtins/defaultVector.svg */ "./node_modules/arraybuffer-loader/index.js!./src/builtins/defaultVector.svg") // eslint-disable-line global-require
-    )
-}];
 
+
+var DefaultAssets = [{
+  type: AssetType.ImageBitmap,
+  format: DataFormat.PNG,
+  id: null,
+  data: new Buffer(__webpack_require__(/*! arraybuffer-loader!./builtins/defaultBitmap.png */ "./node_modules/arraybuffer-loader/index.js!./src/builtins/defaultBitmap.png") // eslint-disable-line global-require
+  )
+}, {
+  type: AssetType.Sound,
+  format: DataFormat.WAV,
+  id: null,
+  data: new Buffer(__webpack_require__(/*! arraybuffer-loader!./builtins/defaultSound.wav */ "./node_modules/arraybuffer-loader/index.js!./src/builtins/defaultSound.wav") // eslint-disable-line global-require
+  )
+}, {
+  type: AssetType.ImageVector,
+  format: DataFormat.SVG,
+  id: null,
+  data: new Buffer(__webpack_require__(/*! arraybuffer-loader!./builtins/defaultVector.svg */ "./node_modules/arraybuffer-loader/index.js!./src/builtins/defaultVector.svg") // eslint-disable-line global-require
+  )
+}];
 /**
  * @type {BuiltinAssetRecord[]}
  */
+
 var BuiltinAssets = DefaultAssets.concat([]);
 
-var BuiltinHelper = function (_Helper) {
-    _inherits(BuiltinHelper, _Helper);
+var BuiltinHelper =
+/*#__PURE__*/
+function (_Helper) {
+  _inherits(BuiltinHelper, _Helper);
 
-    function BuiltinHelper(parent) {
-        _classCallCheck(this, BuiltinHelper);
+  function BuiltinHelper(parent) {
+    var _this;
 
-        /**
-         * In-memory storage for all built-in assets.
-         * @type {Object.<AssetType, AssetIdMap>} Maps asset type to a map of asset ID to actual assets.
-         * @typedef {Object.<string, BuiltinAssetRecord>} AssetIdMap - Maps asset ID to asset.
-         */
-        var _this = _possibleConstructorReturn(this, (BuiltinHelper.__proto__ || Object.getPrototypeOf(BuiltinHelper)).call(this, parent));
+    _classCallCheck(this, BuiltinHelper);
 
-        _this.assets = {};
-
-        BuiltinAssets.forEach(function (assetRecord) {
-            assetRecord.id = _this.cache(assetRecord.type, assetRecord.format, assetRecord.data, assetRecord.id);
-        });
-        return _this;
-    }
-
+    _this = _possibleConstructorReturn(this, _getPrototypeOf(BuiltinHelper).call(this, parent));
     /**
-     * Call `setDefaultAssetId` on the parent `ScratchStorage` instance to register all built-in default assets.
+     * In-memory storage for all built-in assets.
+     * @type {Object.<AssetType, AssetIdMap>} Maps asset type to a map of asset ID to actual assets.
+     * @typedef {Object.<string, BuiltinAssetRecord>} AssetIdMap - Maps asset ID to asset.
      */
 
+    _this.assets = {};
+    BuiltinAssets.forEach(function (assetRecord) {
+      assetRecord.id = _this._store(assetRecord.type, assetRecord.format, assetRecord.data, assetRecord.id);
+    });
+    return _this;
+  }
+  /**
+   * Call `setDefaultAssetId` on the parent `ScratchStorage` instance to register all built-in default assets.
+   */
 
-    _createClass(BuiltinHelper, [{
-        key: 'registerDefaultAssets',
-        value: function registerDefaultAssets() {
-            var numAssets = DefaultAssets.length;
-            for (var assetIndex = 0; assetIndex < numAssets; ++assetIndex) {
-                var assetRecord = DefaultAssets[assetIndex];
-                this.parent.setDefaultAssetId(assetRecord.type, assetRecord.id);
-            }
-        }
 
-        /**
-         * Synchronously fetch a cached asset for a given asset id. Returns null if not found.
-         * @param {string} assetId - The id for the asset to fetch.
-         * @returns {?Asset} The asset for assetId, if it exists.
-         */
+  _createClass(BuiltinHelper, [{
+    key: "registerDefaultAssets",
+    value: function registerDefaultAssets() {
+      var numAssets = DefaultAssets.length;
 
-    }, {
-        key: 'get',
-        value: function get(assetId) {
-            var asset = null;
-            if (this.assets.hasOwnProperty(assetId)) {
-                /** @type{BuiltinAssetRecord} */
-                var assetRecord = this.assets[assetId];
-                asset = new Asset(assetRecord.type, assetRecord.id, assetRecord.format, assetRecord.data);
-            }
-            return asset;
-        }
+      for (var assetIndex = 0; assetIndex < numAssets; ++assetIndex) {
+        var assetRecord = DefaultAssets[assetIndex];
+        this.parent.setDefaultAssetId(assetRecord.type, assetRecord.id);
+      }
+    }
+    /**
+     * Synchronously fetch a cached asset for a given asset id. Returns null if not found.
+     * @param {string} assetId - The id for the asset to fetch.
+     * @returns {?Asset} The asset for assetId, if it exists.
+     */
 
-        /**
-         * Alias for store (old name of store)
-         * @deprecated Use BuiltinHelper.store
-         * @param {AssetType} assetType - The type of the asset to cache.
-         * @param {DataFormat} dataFormat - The dataFormat of the data for the cached asset.
-         * @param {Buffer} data - The data for the cached asset.
-         * @param {string} id - The id for the cached asset.
-         * @returns {string} The calculated id of the cached asset, or the supplied id if the asset is mutable.
-         */
+  }, {
+    key: "get",
+    value: function get(assetId) {
+      var asset = null;
 
-    }, {
-        key: 'cache',
-        value: function cache(assetType, dataFormat, data, id) {
-            log.warn('Deprecation: BuiltinHelper.cache has been replaced with BuiltinHelper.store.');
-            return this.store(assetType, dataFormat, data, id);
-        }
+      if (this.assets.hasOwnProperty(assetId)) {
+        /** @type{BuiltinAssetRecord} */
+        var assetRecord = this.assets[assetId];
+        asset = new Asset(assetRecord.type, assetRecord.id, assetRecord.format, assetRecord.data);
+      }
 
-        /**
-         * Cache an asset for future lookups by ID.
-         * @param {AssetType} assetType - The type of the asset to cache.
-         * @param {DataFormat} dataFormat - The dataFormat of the data for the cached asset.
-         * @param {Buffer} data - The data for the cached asset.
-         * @param {(string|number)} id - The id for the cached asset.
-         * @returns {string} The calculated id of the cached asset, or the supplied id if the asset is mutable.
-         */
+      return asset;
+    }
+    /**
+     * Alias for store (old name of store)
+     * @deprecated Use BuiltinHelper.store
+     * @param {AssetType} assetType - The type of the asset to cache.
+     * @param {DataFormat} dataFormat - The dataFormat of the data for the cached asset.
+     * @param {Buffer} data - The data for the cached asset.
+     * @param {string} id - The id for the cached asset.
+     * @returns {string} The calculated id of the cached asset, or the supplied id if the asset is mutable.
+     */
 
-    }, {
-        key: 'store',
-        value: function store(assetType, dataFormat, data, id) {
-            if (!dataFormat) throw new Error('Data cached without specifying its format');
-            if (id !== '' && id !== null && typeof id !== 'undefined') {
-                if (this.assets.hasOwnProperty(id) && assetType.immutable) return id;
-            } else if (assetType.immutable) {
-                id = md5(data);
-            } else {
-                throw new Error('Tried to cache data without an id');
-            }
-            this.assets[id] = {
-                type: assetType,
-                format: dataFormat,
-                id: id,
-                data: data
-            };
-            return id;
-        }
+  }, {
+    key: "cache",
+    value: function cache(assetType, dataFormat, data, id) {
+      log.warn('Deprecation: BuiltinHelper.cache has been replaced with BuiltinHelper.store.');
+      return this.store(assetType, dataFormat, data, id);
+    }
+    /**
+     * Deprecated external API for _store
+     * @deprecated Not for external use. Create assets and keep track of them outside of the storage instance.
+     * @param {AssetType} assetType - The type of the asset to cache.
+     * @param {DataFormat} dataFormat - The dataFormat of the data for the cached asset.
+     * @param {Buffer} data - The data for the cached asset.
+     * @param {(string|number)} id - The id for the cached asset.
+     * @returns {string} The calculated id of the cached asset, or the supplied id if the asset is mutable.
+     */
 
-        /**
-         * Fetch an asset but don't process dependencies.
-         * @param {AssetType} assetType - The type of asset to fetch.
-         * @param {string} assetId - The ID of the asset to fetch: a project ID, MD5, etc.
-         * @return {Promise.<Asset>} A promise for the contents of the asset.
-         */
+  }, {
+    key: "store",
+    value: function store(assetType, dataFormat, data, id) {
+      log.warn('Deprecation: use Storage.createAsset. BuiltinHelper is for internal use only.');
+      return this._store(assetType, dataFormat, data, id);
+    }
+    /**
+     * Cache an asset for future lookups by ID.
+     * @param {AssetType} assetType - The type of the asset to cache.
+     * @param {DataFormat} dataFormat - The dataFormat of the data for the cached asset.
+     * @param {Buffer} data - The data for the cached asset.
+     * @param {(string|number)} id - The id for the cached asset.
+     * @returns {string} The calculated id of the cached asset, or the supplied id if the asset is mutable.
+     */
 
-    }, {
-        key: 'load',
-        value: function load(assetType, assetId) {
-            return Promise.resolve(this.get(assetId));
-        }
-    }]);
+  }, {
+    key: "_store",
+    value: function _store(assetType, dataFormat, data, id) {
+      if (!dataFormat) throw new Error('Data cached without specifying its format');
 
-    return BuiltinHelper;
+      if (id !== '' && id !== null && typeof id !== 'undefined') {
+        if (this.assets.hasOwnProperty(id) && assetType.immutable) return id;
+      } else if (assetType.immutable) {
+        id = md5(data);
+      } else {
+        throw new Error('Tried to cache data without an id');
+      }
+
+      this.assets[id] = {
+        type: assetType,
+        format: dataFormat,
+        id: id,
+        data: data
+      };
+      return id;
+    }
+    /**
+     * Fetch an asset but don't process dependencies.
+     * @param {AssetType} assetType - The type of asset to fetch.
+     * @param {string} assetId - The ID of the asset to fetch: a project ID, MD5, etc.
+     * @return {Promise.<Asset>} A promise for the contents of the asset.
+     */
+
+  }, {
+    key: "load",
+    value: function load(assetType, assetId) {
+      return Promise.resolve(this.get(assetId));
+    }
+  }]);
+
+  return BuiltinHelper;
 }(Helper);
 
 module.exports = BuiltinHelper;
@@ -8043,26 +8131,22 @@ module.exports = BuiltinHelper;
   !*** ./src/DataFormat.js ***!
   \***************************/
 /*! no static exports found */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
+/***/ (function(module, exports) {
 
 /**
  * Enumeration of the supported data formats.
  * @enum {string}
  */
 var DataFormat = {
-    JPG: 'jpg',
-    JSON: 'json',
-    MP3: 'mp3',
-    PNG: 'png',
-    SB2: 'sb2',
-    SB3: 'sb3',
-    SVG: 'svg',
-    WAV: 'wav'
+  JPG: 'jpg',
+  JSON: 'json',
+  MP3: 'mp3',
+  PNG: 'png',
+  SB2: 'sb2',
+  SB3: 'sb3',
+  SVG: 'svg',
+  WAV: 'wav'
 };
-
 module.exports = DataFormat;
 
 /***/ }),
@@ -8072,43 +8156,43 @@ module.exports = DataFormat;
   !*** ./src/Helper.js ***!
   \***********************/
 /*! no static exports found */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-
-var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+/***/ (function(module, exports) {
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+function _defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } }
+
+function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _defineProperties(Constructor.prototype, protoProps); if (staticProps) _defineProperties(Constructor, staticProps); return Constructor; }
 
 /**
  * Base class for asset load/save helpers.
  * @abstract
  */
-var Helper = function () {
-    function Helper(parent) {
-        _classCallCheck(this, Helper);
+var Helper =
+/*#__PURE__*/
+function () {
+  function Helper(parent) {
+    _classCallCheck(this, Helper);
 
-        this.parent = parent;
+    this.parent = parent;
+  }
+  /**
+   * Fetch an asset but don't process dependencies.
+   * @param {AssetType} assetType - The type of asset to fetch.
+   * @param {string} assetId - The ID of the asset to fetch: a project ID, MD5, etc.
+   * @param {DataFormat} dataFormat - The file format / file extension of the asset to fetch: PNG, JPG, etc.
+   * @return {Promise.<Asset>} A promise for the contents of the asset.
+   */
+
+
+  _createClass(Helper, [{
+    key: "load",
+    value: function load(assetType, assetId, dataFormat) {
+      return Promise.reject(new Error("No asset of type ".concat(assetType, " for ID ").concat(assetId, " with format ").concat(dataFormat)));
     }
+  }]);
 
-    /**
-     * Fetch an asset but don't process dependencies.
-     * @param {AssetType} assetType - The type of asset to fetch.
-     * @param {string} assetId - The ID of the asset to fetch: a project ID, MD5, etc.
-     * @param {DataFormat} dataFormat - The file format / file extension of the asset to fetch: PNG, JPG, etc.
-     * @return {Promise.<Asset>} A promise for the contents of the asset.
-     */
-
-
-    _createClass(Helper, [{
-        key: "load",
-        value: function load(assetType, assetId, dataFormat) {
-            return Promise.reject(new Error("No asset of type " + assetType + " for ID " + assetId + " with format " + dataFormat));
-        }
-    }]);
-
-    return Helper;
+  return Helper;
 }();
 
 module.exports = Helper;
@@ -8122,258 +8206,266 @@ module.exports = Helper;
 /*! no static exports found */
 /***/ (function(module, exports, __webpack_require__) {
 
-"use strict";
-
-
-var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
-
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+function _defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } }
+
+function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _defineProperties(Constructor.prototype, protoProps); if (staticProps) _defineProperties(Constructor, staticProps); return Constructor; }
 
 var log = __webpack_require__(/*! ./log */ "./src/log.js");
 
 var BuiltinHelper = __webpack_require__(/*! ./BuiltinHelper */ "./src/BuiltinHelper.js");
+
 var WebHelper = __webpack_require__(/*! ./WebHelper */ "./src/WebHelper.js");
 
 var _Asset = __webpack_require__(/*! ./Asset */ "./src/Asset.js");
+
 var _AssetType = __webpack_require__(/*! ./AssetType */ "./src/AssetType.js");
+
 var _DataFormat = __webpack_require__(/*! ./DataFormat */ "./src/DataFormat.js");
 
-var ScratchStorage = function () {
-    function ScratchStorage() {
-        _classCallCheck(this, ScratchStorage);
+var ScratchStorage =
+/*#__PURE__*/
+function () {
+  function ScratchStorage() {
+    _classCallCheck(this, ScratchStorage);
 
-        this.defaultAssetId = {};
+    this.defaultAssetId = {};
+    this.builtinHelper = new BuiltinHelper(this);
+    this.webHelper = new WebHelper(this);
+    this.builtinHelper.registerDefaultAssets(this);
+  }
+  /**
+   * @return {Asset} - the `Asset` class constructor.
+   * @constructor
+   */
 
-        this.builtinHelper = new BuiltinHelper(this);
-        this.webHelper = new WebHelper(this);
-        this.builtinHelper.registerDefaultAssets(this);
-    }
+
+  _createClass(ScratchStorage, [{
+    key: "get",
 
     /**
+     * Synchronously fetch a cached asset from built-in storage. Assets are cached when they are loaded.
+     * @param {string} assetId - The id of the asset to fetch.
+     * @returns {?Asset} The asset, if it exists.
+     */
+    value: function get(assetId) {
+      return this.builtinHelper.get(assetId);
+    }
+    /**
+     * Deprecated API for caching built-in assets. Use createAsset.
+     * @param {AssetType} assetType - The type of the asset to cache.
+     * @param {DataFormat} dataFormat - The dataFormat of the data for the cached asset.
+     * @param {Buffer} data - The data for the cached asset.
+     * @param {string} id - The id for the cached asset.
+     * @returns {string} The calculated id of the cached asset, or the supplied id if the asset is mutable.
+     */
+
+  }, {
+    key: "cache",
+    value: function cache(assetType, dataFormat, data, id) {
+      log.warn('Deprecation: Storage.cache is deprecated. Use Storage.createAsset, and store assets externally.');
+      return this.builtinHelper._store(assetType, dataFormat, data, id);
+    }
+    /**
+     * Construct an Asset, and optionally generate an md5 hash of its data to create an id
+     * @param {AssetType} assetType - The type of the asset to cache.
+     * @param {DataFormat} dataFormat - The dataFormat of the data for the cached asset.
+     * @param {Buffer} data - The data for the cached asset.
+     * @param {string} [id] - The id for the cached asset.
+     * @param {bool} [generateId] - flag to set id to an md5 hash of data if `id` isn't supplied
+     * @returns {Asset} generated Asset with `id` attribute set if not supplied
+     */
+
+  }, {
+    key: "createAsset",
+    value: function createAsset(assetType, dataFormat, data, id, generateId) {
+      if (!dataFormat) throw new Error('Tried to create asset without a dataFormat');
+      return new _Asset(assetType, id, dataFormat, data, generateId);
+    }
+    /**
+     * Register a web-based source for assets. Sources will be checked in order of registration.
+     * @param {Array.<AssetType>} types - The types of asset provided by this source.
+     * @param {UrlFunction} getFunction - A function which computes a GET URL from an Asset.
+     * @param {UrlFunction} createFunction - A function which computes a POST URL for asset data.
+     * @param {UrlFunction} updateFunction - A function which computes a PUT URL for asset data.
+     */
+
+  }, {
+    key: "addWebStore",
+    value: function addWebStore(types, getFunction, createFunction, updateFunction) {
+      this.webHelper.addStore(types, getFunction, createFunction, updateFunction);
+    }
+    /**
+     * Register a web-based source for assets. Sources will be checked in order of registration.
+     * @deprecated Please use addWebStore
+     * @param {Array.<AssetType>} types - The types of asset provided by this source.
+     * @param {UrlFunction} urlFunction - A function which computes a GET URL from an Asset.
+     */
+
+  }, {
+    key: "addWebSource",
+    value: function addWebSource(types, urlFunction) {
+      log.warn('Deprecation: Storage.addWebSource has been replaced by addWebStore.');
+      this.addWebStore(types, urlFunction);
+    }
+    /**
+     * TODO: Should this be removed in favor of requesting an asset with `null` as the ID?
+     * @param {AssetType} type - Get the default ID for assets of this type.
+     * @return {?string} The ID of the default asset of the given type, if any.
+     */
+
+  }, {
+    key: "getDefaultAssetId",
+    value: function getDefaultAssetId(type) {
+      if (this.defaultAssetId.hasOwnProperty(type.name)) {
+        return this.defaultAssetId[type.name];
+      }
+    }
+    /**
+     * Set the default ID for a particular type of asset. This default asset will be used if a requested asset cannot
+     * be found and automatic fallback is enabled. Ideally this should be an asset that is available locally or even
+     * one built into this module.
+     * TODO: Should this be removed in favor of requesting an asset with `null` as the ID?
+     * @param {AssetType} type - The type of asset for which the default will be set.
+     * @param {string} id - The default ID to use for this type of asset.
+     */
+
+  }, {
+    key: "setDefaultAssetId",
+    value: function setDefaultAssetId(type, id) {
+      this.defaultAssetId[type.name] = id;
+    }
+    /**
+     * Fetch an asset by type & ID.
+     * @param {AssetType} assetType - The type of asset to fetch. This also determines which asset store to use.
+     * @param {string} assetId - The ID of the asset to fetch: a project ID, MD5, etc.
+     * @param {DataFormat} [dataFormat] - Optional: load this format instead of the AssetType's default.
+     * @return {Promise.<Asset>} A promise for the requested Asset.
+     *   If the promise is resolved with non-null, the value is the requested asset or a fallback.
+     *   If the promise is resolved with null, the desired asset could not be found with the current asset sources.
+     *   If the promise is rejected, there was an error on at least one asset source. HTTP 404 does not count as an
+     *   error here, but (for example) HTTP 403 does.
+     */
+
+  }, {
+    key: "load",
+    value: function load(assetType, assetId, dataFormat) {
+      var _this = this;
+
+      /** @type {Helper[]} */
+      var helpers = [this.builtinHelper, this.webHelper];
+      var errors = [];
+      var helperIndex = 0;
+      dataFormat = dataFormat || assetType.runtimeFormat;
+      return new Promise(function (resolve, reject) {
+        var tryNextHelper = function tryNextHelper() {
+          if (helperIndex < helpers.length) {
+            var helper = helpers[helperIndex++];
+            helper.load(assetType, assetId, dataFormat).then(function (asset) {
+              if (asset === null) {
+                tryNextHelper();
+              } else {
+                // TODO? this.localHelper.cache(assetType, assetId, asset);
+                if (helper !== _this.builtinHelper && assetType.immutable) {
+                  asset.assetId = _this.builtinHelper._store(assetType, asset.dataFormat, asset.data, assetId);
+                } // Note that other attempts may have caused errors, effectively suppressed here.
+
+
+                resolve(asset);
+              }
+            }, function (error) {
+              errors.push(error); // TODO: maybe some types of error should prevent trying the next helper?
+
+              tryNextHelper();
+            });
+          } else if (errors.length === 0) {
+            // Nothing went wrong but we couldn't find the asset.
+            resolve(null);
+          } else {
+            // At least one thing went wrong and also we couldn't find the asset.
+            reject(errors);
+          }
+        };
+
+        tryNextHelper();
+      });
+    }
+    /**
+     * Store an asset by type & ID.
+     * @param {AssetType} assetType - The type of asset to fetch. This also determines which asset store to use.
+     * @param {?DataFormat} [dataFormat] - Optional: load this format instead of the AssetType's default.
+     * @param {Buffer} data - Data to store for the asset
+     * @param {?string} [assetId] - The ID of the asset to fetch: a project ID, MD5, etc.
+     * @return {Promise.<object>} A promise for asset metadata
+     */
+
+  }, {
+    key: "store",
+    value: function store(assetType, dataFormat, data, assetId) {
+      var _this2 = this;
+
+      dataFormat = dataFormat || assetType.runtimeFormat;
+      return new Promise(function (resolve, reject) {
+        return _this2.webHelper.store(assetType, dataFormat, data, assetId).then(function (body) {
+          _this2.builtinHelper._store(assetType, dataFormat, data, body.id);
+
+          return resolve(body);
+        }).catch(function (error) {
+          return reject(error);
+        });
+      });
+    }
+  }, {
+    key: "Asset",
+    get: function get() {
+      return _Asset;
+    }
+    /**
+     * @return {AssetType} - the list of supported asset types.
+     * @constructor
+     */
+
+  }, {
+    key: "AssetType",
+    get: function get() {
+      return _AssetType;
+    }
+    /**
+     * @return {DataFormat} - the list of supported data formats.
+     * @constructor
+     */
+
+  }, {
+    key: "DataFormat",
+    get: function get() {
+      return _DataFormat;
+    }
+    /**
+     * @deprecated Please use the `Asset` member of a storage instance instead.
      * @return {Asset} - the `Asset` class constructor.
      * @constructor
      */
 
+  }], [{
+    key: "Asset",
+    get: function get() {
+      return _Asset;
+    }
+    /**
+     * @deprecated Please use the `AssetType` member of a storage instance instead.
+     * @return {AssetType} - the list of supported asset types.
+     * @constructor
+     */
 
-    _createClass(ScratchStorage, [{
-        key: 'get',
+  }, {
+    key: "AssetType",
+    get: function get() {
+      return _AssetType;
+    }
+  }]);
 
-
-        /**
-         * Synchronously fetch a cached asset from built-in storage. Assets are cached when they are loaded.
-         * @param {string} assetId - The id of the asset to fetch.
-         * @returns {?Asset} The asset, if it exists.
-         */
-        value: function get(assetId) {
-            return this.builtinHelper.get(assetId);
-        }
-
-        /**
-         * Cache an asset for future lookups by ID.
-         * @param {AssetType} assetType - The type of the asset to cache.
-         * @param {DataFormat} dataFormat - The dataFormat of the data for the cached asset.
-         * @param {Buffer} data - The data for the cached asset.
-         * @param {string} id - The id for the cached asset.
-         * @returns {string} The calculated id of the cached asset, or the supplied id if the asset is mutable.
-         */
-
-    }, {
-        key: 'cache',
-        value: function cache(assetType, dataFormat, data, id) {
-            return this.builtinHelper.store(assetType, dataFormat, data, id);
-        }
-
-        /**
-         * Register a web-based source for assets. Sources will be checked in order of registration.
-         * @param {Array.<AssetType>} types - The types of asset provided by this source.
-         * @param {UrlFunction} getFunction - A function which computes a GET URL from an Asset.
-         * @param {UrlFunction} createFunction - A function which computes a POST URL for asset data.
-         * @param {UrlFunction} updateFunction - A function which computes a PUT URL for asset data.
-         */
-
-    }, {
-        key: 'addWebStore',
-        value: function addWebStore(types, getFunction, createFunction, updateFunction) {
-            this.webHelper.addStore(types, getFunction, createFunction, updateFunction);
-        }
-
-        /**
-         * Register a web-based source for assets. Sources will be checked in order of registration.
-         * @deprecated Please use addWebStore
-         * @param {Array.<AssetType>} types - The types of asset provided by this source.
-         * @param {UrlFunction} urlFunction - A function which computes a GET URL from an Asset.
-         */
-
-    }, {
-        key: 'addWebSource',
-        value: function addWebSource(types, urlFunction) {
-            log.warn('Deprecation: Storage.addWebSource has been replaced by addWebStore.');
-            this.addWebStore(types, urlFunction);
-        }
-
-        /**
-         * TODO: Should this be removed in favor of requesting an asset with `null` as the ID?
-         * @param {AssetType} type - Get the default ID for assets of this type.
-         * @return {?string} The ID of the default asset of the given type, if any.
-         */
-
-    }, {
-        key: 'getDefaultAssetId',
-        value: function getDefaultAssetId(type) {
-            if (this.defaultAssetId.hasOwnProperty(type.name)) {
-                return this.defaultAssetId[type.name];
-            }
-        }
-
-        /**
-         * Set the default ID for a particular type of asset. This default asset will be used if a requested asset cannot
-         * be found and automatic fallback is enabled. Ideally this should be an asset that is available locally or even
-         * one built into this module.
-         * TODO: Should this be removed in favor of requesting an asset with `null` as the ID?
-         * @param {AssetType} type - The type of asset for which the default will be set.
-         * @param {string} id - The default ID to use for this type of asset.
-         */
-
-    }, {
-        key: 'setDefaultAssetId',
-        value: function setDefaultAssetId(type, id) {
-            this.defaultAssetId[type.name] = id;
-        }
-
-        /**
-         * Fetch an asset by type & ID.
-         * @param {AssetType} assetType - The type of asset to fetch. This also determines which asset store to use.
-         * @param {string} assetId - The ID of the asset to fetch: a project ID, MD5, etc.
-         * @param {DataFormat} [dataFormat] - Optional: load this format instead of the AssetType's default.
-         * @return {Promise.<Asset>} A promise for the requested Asset.
-         *   If the promise is resolved with non-null, the value is the requested asset or a fallback.
-         *   If the promise is resolved with null, the desired asset could not be found with the current asset sources.
-         *   If the promise is rejected, there was an error on at least one asset source. HTTP 404 does not count as an
-         *   error here, but (for example) HTTP 403 does.
-         */
-
-    }, {
-        key: 'load',
-        value: function load(assetType, assetId, dataFormat) {
-            var _this = this;
-
-            /** @type {Helper[]} */
-            var helpers = [this.builtinHelper, this.webHelper];
-            var errors = [];
-            var helperIndex = 0;
-            dataFormat = dataFormat || assetType.runtimeFormat;
-
-            return new Promise(function (resolve, reject) {
-                var tryNextHelper = function tryNextHelper() {
-                    if (helperIndex < helpers.length) {
-                        var helper = helpers[helperIndex++];
-                        helper.load(assetType, assetId, dataFormat).then(function (asset) {
-                            if (asset === null) {
-                                tryNextHelper();
-                            } else {
-                                // TODO? this.localHelper.cache(assetType, assetId, asset);
-                                if (helper !== _this.builtinHelper && assetType.immutable) {
-                                    asset.assetId = _this.builtinHelper.cache(assetType, asset.dataFormat, asset.data, assetId);
-                                }
-                                // Note that other attempts may have caused errors, effectively suppressed here.
-                                resolve(asset);
-                            }
-                        }, function (error) {
-                            errors.push(error);
-                            // TODO: maybe some types of error should prevent trying the next helper?
-                            tryNextHelper();
-                        });
-                    } else if (errors.length === 0) {
-                        // Nothing went wrong but we couldn't find the asset.
-                        resolve(null);
-                    } else {
-                        // At least one thing went wrong and also we couldn't find the asset.
-                        reject(errors);
-                    }
-                };
-
-                tryNextHelper();
-            });
-        }
-
-        /**
-         * Store an asset by type & ID.
-         * @param {AssetType} assetType - The type of asset to fetch. This also determines which asset store to use.
-         * @param {?DataFormat} [dataFormat] - Optional: load this format instead of the AssetType's default.
-         * @param {Buffer} data - Data to store for the asset
-         * @param {?string} [assetId] - The ID of the asset to fetch: a project ID, MD5, etc.
-         * @return {Promise.<object>} A promise for asset metadata
-         */
-
-    }, {
-        key: 'store',
-        value: function store(assetType, dataFormat, data, assetId) {
-            var _this2 = this;
-
-            dataFormat = dataFormat || assetType.runtimeFormat;
-            return new Promise(function (resolve, reject) {
-                return _this2.webHelper.store(assetType, dataFormat, data, assetId).then(function (body) {
-                    _this2.builtinHelper.store(assetType, dataFormat, data, body.id);
-                    return resolve(body);
-                }).catch(function (error) {
-                    return reject(error);
-                });
-            });
-        }
-    }, {
-        key: 'Asset',
-        get: function get() {
-            return _Asset;
-        }
-
-        /**
-         * @return {AssetType} - the list of supported asset types.
-         * @constructor
-         */
-
-    }, {
-        key: 'AssetType',
-        get: function get() {
-            return _AssetType;
-        }
-
-        /**
-         * @return {DataFormat} - the list of supported data formats.
-         * @constructor
-         */
-
-    }, {
-        key: 'DataFormat',
-        get: function get() {
-            return _DataFormat;
-        }
-
-        /**
-         * @deprecated Please use the `Asset` member of a storage instance instead.
-         * @return {Asset} - the `Asset` class constructor.
-         * @constructor
-         */
-
-    }], [{
-        key: 'Asset',
-        get: function get() {
-            return _Asset;
-        }
-
-        /**
-         * @deprecated Please use the `AssetType` member of a storage instance instead.
-         * @return {AssetType} - the list of supported asset types.
-         * @constructor
-         */
-
-    }, {
-        key: 'AssetType',
-        get: function get() {
-            return _AssetType;
-        }
-    }]);
-
-    return ScratchStorage;
+  return ScratchStorage;
 }();
 
 module.exports = ScratchStorage;
@@ -8387,24 +8479,31 @@ module.exports = ScratchStorage;
 /*! no static exports found */
 /***/ (function(module, exports, __webpack_require__) {
 
-"use strict";
-
-
-var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+function _typeof(obj) { if (typeof Symbol === "function" && typeof Symbol.iterator === "symbol") { _typeof = function _typeof(obj) { return typeof obj; }; } else { _typeof = function _typeof(obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; }; } return _typeof(obj); }
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
-function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
+function _defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } }
 
-function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
+function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _defineProperties(Constructor.prototype, protoProps); if (staticProps) _defineProperties(Constructor, staticProps); return Constructor; }
+
+function _possibleConstructorReturn(self, call) { if (call && (_typeof(call) === "object" || typeof call === "function")) { return call; } return _assertThisInitialized(self); }
+
+function _assertThisInitialized(self) { if (self === void 0) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return self; }
+
+function _getPrototypeOf(o) { _getPrototypeOf = Object.setPrototypeOf ? Object.getPrototypeOf : function _getPrototypeOf(o) { return o.__proto__ || Object.getPrototypeOf(o); }; return _getPrototypeOf(o); }
+
+function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function"); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, writable: true, configurable: true } }); if (superClass) _setPrototypeOf(subClass, superClass); }
+
+function _setPrototypeOf(o, p) { _setPrototypeOf = Object.setPrototypeOf || function _setPrototypeOf(o, p) { o.__proto__ = p; return o; }; return _setPrototypeOf(o, p); }
 
 var nets = __webpack_require__(/*! nets */ "./node_modules/nets/index.js");
 
 var log = __webpack_require__(/*! ./log */ "./src/log.js");
 
 var Asset = __webpack_require__(/*! ./Asset */ "./src/Asset.js");
-var Helper = __webpack_require__(/*! ./Helper */ "./src/Helper.js");
 
+var Helper = __webpack_require__(/*! ./Helper */ "./src/Helper.js");
 /**
  * @typedef {function} UrlFunction - A function which computes a URL from asset information.
  * @param {Asset} - The asset for which the URL should be computed.
@@ -8412,184 +8511,195 @@ var Helper = __webpack_require__(/*! ./Helper */ "./src/Helper.js");
  *                              the underlying `nets` call (necessary for configuring e.g. authentication)
  */
 
-var WebHelper = function (_Helper) {
-    _inherits(WebHelper, _Helper);
 
-    function WebHelper(parent) {
-        _classCallCheck(this, WebHelper);
+var WebHelper =
+/*#__PURE__*/
+function (_Helper) {
+  _inherits(WebHelper, _Helper);
 
-        /**
-         * @type {Array.<StoreRecord>}
-         * @typedef {object} StoreRecord
-         * @property {Array.<string>} types - The types of asset provided by this store, from AssetType's name field.
-         * @property {UrlFunction} getFunction - A function which computes a URL from an Asset.
-         * @property {UrlFunction} createFunction - A function which computes a URL from an Asset.
-         * @property {UrlFunction} updateFunction - A function which computes a URL from an Asset.
-         */
-        var _this = _possibleConstructorReturn(this, (WebHelper.__proto__ || Object.getPrototypeOf(WebHelper)).call(this, parent));
+  function WebHelper(parent) {
+    var _this;
 
-        _this.stores = [];
-        return _this;
-    }
+    _classCallCheck(this, WebHelper);
 
+    _this = _possibleConstructorReturn(this, _getPrototypeOf(WebHelper).call(this, parent));
     /**
-     * Register a web-based source for assets. Sources will be checked in order of registration.
-     * @deprecated Please use addStore
-     * @param {Array.<AssetType>} types - The types of asset provided by this source.
-     * @param {UrlFunction} urlFunction - A function which computes a URL from an Asset.
+     * @type {Array.<StoreRecord>}
+     * @typedef {object} StoreRecord
+     * @property {Array.<string>} types - The types of asset provided by this store, from AssetType's name field.
+     * @property {UrlFunction} getFunction - A function which computes a URL from an Asset.
+     * @property {UrlFunction} createFunction - A function which computes a URL from an Asset.
+     * @property {UrlFunction} updateFunction - A function which computes a URL from an Asset.
      */
 
+    _this.stores = [];
+    return _this;
+  }
+  /**
+   * Register a web-based source for assets. Sources will be checked in order of registration.
+   * @deprecated Please use addStore
+   * @param {Array.<AssetType>} types - The types of asset provided by this source.
+   * @param {UrlFunction} urlFunction - A function which computes a URL from an Asset.
+   */
 
-    _createClass(WebHelper, [{
-        key: 'addSource',
-        value: function addSource(types, urlFunction) {
-            log.warn('Deprecation: WebHelper.addSource has been replaced with WebHelper.addStore.');
-            this.addStore(types, urlFunction);
-        }
 
-        /**
-         * Register a web-based store for assets. Sources will be checked in order of registration.
-         * @param {Array.<AssetType>} types - The types of asset provided by this store.
-         * @param {UrlFunction} getFunction - A function which computes a GET URL for an Asset
-         * @param {UrlFunction} createFunction - A function which computes a POST URL for an Asset
-         * @param {UrlFunction} updateFunction - A function which computes a PUT URL for an Asset
-         */
+  _createClass(WebHelper, [{
+    key: "addSource",
+    value: function addSource(types, urlFunction) {
+      log.warn('Deprecation: WebHelper.addSource has been replaced with WebHelper.addStore.');
+      this.addStore(types, urlFunction);
+    }
+    /**
+     * Register a web-based store for assets. Sources will be checked in order of registration.
+     * @param {Array.<AssetType>} types - The types of asset provided by this store.
+     * @param {UrlFunction} getFunction - A function which computes a GET URL for an Asset
+     * @param {UrlFunction} createFunction - A function which computes a POST URL for an Asset
+     * @param {UrlFunction} updateFunction - A function which computes a PUT URL for an Asset
+     */
 
-    }, {
-        key: 'addStore',
-        value: function addStore(types, getFunction, createFunction, updateFunction) {
-            this.stores.push({
-                types: types.map(function (assetType) {
-                    return assetType.name;
-                }),
-                get: getFunction,
-                create: createFunction,
-                update: updateFunction
-            });
-        }
+  }, {
+    key: "addStore",
+    value: function addStore(types, getFunction, createFunction, updateFunction) {
+      this.stores.push({
+        types: types.map(function (assetType) {
+          return assetType.name;
+        }),
+        get: getFunction,
+        create: createFunction,
+        update: updateFunction
+      });
+    }
+    /**
+     * Fetch an asset but don't process dependencies.
+     * @param {AssetType} assetType - The type of asset to fetch.
+     * @param {string} assetId - The ID of the asset to fetch: a project ID, MD5, etc.
+     * @param {DataFormat} dataFormat - The file format / file extension of the asset to fetch: PNG, JPG, etc.
+     * @return {Promise.<Asset>} A promise for the contents of the asset.
+     */
 
-        /**
-         * Fetch an asset but don't process dependencies.
-         * @param {AssetType} assetType - The type of asset to fetch.
-         * @param {string} assetId - The ID of the asset to fetch: a project ID, MD5, etc.
-         * @param {DataFormat} dataFormat - The file format / file extension of the asset to fetch: PNG, JPG, etc.
-         * @return {Promise.<Asset>} A promise for the contents of the asset.
-         */
+  }, {
+    key: "load",
+    value: function load(assetType, assetId, dataFormat) {
+      /** @type {Array.<{url:string, result:*}>} List of URLs attempted & errors encountered. */
+      var errors = [];
+      var stores = this.stores.slice();
+      var asset = new Asset(assetType, assetId, dataFormat);
+      var storeIndex = 0;
+      return new Promise(function (resolve, reject) {
+        var tryNextSource = function tryNextSource() {
+          /** @type {UrlFunction} */
+          var reqConfigFunction;
 
-    }, {
-        key: 'load',
-        value: function load(assetType, assetId, dataFormat) {
+          while (storeIndex < stores.length) {
+            var store = stores[storeIndex];
+            ++storeIndex;
 
-            /** @type {Array.<{url:string, result:*}>} List of URLs attempted & errors encountered. */
-            var errors = [];
-            var stores = this.stores.slice();
-            var asset = new Asset(assetType, assetId, dataFormat);
-            var storeIndex = 0;
+            if (store.types.indexOf(assetType.name) >= 0) {
+              reqConfigFunction = store.get;
+              break;
+            }
+          }
 
-            return new Promise(function (resolve, reject) {
+          if (reqConfigFunction) {
+            var reqConfig = reqConfigFunction(asset);
 
-                var tryNextSource = function tryNextSource() {
+            if (reqConfig === false) {
+              tryNextSource();
+              return;
+            }
 
-                    /** @type {UrlFunction} */
-                    var reqConfigFunction = void 0;
+            if (typeof reqConfig === 'string') {
+              reqConfig = {
+                url: reqConfig
+              };
+            }
 
-                    while (storeIndex < stores.length) {
-                        var store = stores[storeIndex];
-                        ++storeIndex;
-                        if (store.types.indexOf(assetType.name) >= 0) {
-                            reqConfigFunction = store.get;
-                            break;
-                        }
-                    }
-
-                    if (reqConfigFunction) {
-                        var reqConfig = reqConfigFunction(asset);
-                        if (reqConfig === false) {
-                            tryNextSource();
-                            return;
-                        }
-                        if (typeof reqConfig === 'string') {
-                            reqConfig = {
-                                url: reqConfig
-                            };
-                        }
-
-                        nets(Object.assign({
-                            method: 'get'
-                        }, reqConfig), function (err, resp, body) {
-                            // body is a Buffer
-                            if (err || Math.floor(resp.statusCode / 100) !== 2) {
-                                tryNextSource();
-                            } else {
-                                asset.setData(body, dataFormat);
-                                resolve(asset);
-                            }
-                        });
-                    } else if (errors.length > 0) {
-                        reject(errors);
-                    } else {
-                        resolve(null); // no stores matching asset
-                    }
-                };
-
+            nets(Object.assign({
+              method: 'get'
+            }, reqConfig), function (err, resp, body) {
+              // body is a Buffer
+              if (err || Math.floor(resp.statusCode / 100) !== 2) {
                 tryNextSource();
+              } else {
+                asset.setData(body, dataFormat);
+                resolve(asset);
+              }
             });
+          } else if (errors.length > 0) {
+            reject(errors);
+          } else {
+            resolve(null); // no stores matching asset
+          }
+        };
+
+        tryNextSource();
+      });
+    }
+    /**
+     * Create or update an asset with provided data. The create function is called if no asset id is provided
+     * @param {AssetType} assetType - The type of asset to create or update.
+     * @param {?DataFormat} dataFormat - DataFormat of the data for the stored asset.
+     * @param {Buffer} data - The data for the cached asset.
+     * @param {?string} assetId - The ID of the asset to fetch: a project ID, MD5, etc.
+     * @return {Promise.<object>} A promise for the response from the create or update request
+     */
+
+  }, {
+    key: "store",
+    value: function store(assetType, dataFormat, data, assetId) {
+      var asset = new Asset(assetType, assetId, dataFormat); // If we have an asset id, we should update, otherwise create to get an id
+
+      var create = assetId === '' || assetId === null || typeof assetId === 'undefined'; // Use the first store with the appropriate asset type and url function
+
+      var store = this.stores.filter(function (s) {
+        return (// Only use stores for the incoming asset type
+          s.types.indexOf(assetType.name) !== -1 && ( // Only use stores that have a create function if this is a create request
+          // or an update function if this is an update request
+          create && s.create || s.update)
+        );
+      })[0];
+      var method = create ? 'post' : 'put';
+      return new Promise(function (resolve, reject) {
+        if (!store) return reject('No appropriate stores');
+        var reqConfig = create ? store.create(asset) : store.update(asset);
+
+        if (typeof reqConfig === 'string') {
+          reqConfig = {
+            url: reqConfig
+          };
         }
 
-        /**
-         * Create or update an asset with provided data. The create function is called if no asset id is provided
-         * @param {AssetType} assetType - The type of asset to create or update.
-         * @param {?DataFormat} dataFormat - DataFormat of the data for the stored asset.
-         * @param {Buffer} data - The data for the cached asset.
-         * @param {?string} assetId - The ID of the asset to fetch: a project ID, MD5, etc.
-         * @return {Promise.<object>} A promise for the response from the create or update request
-         */
+        return nets(Object.assign({
+          body: data,
+          method: method,
+          encoding: undefined // eslint-disable-line no-undefined
 
-    }, {
-        key: 'store',
-        value: function store(assetType, dataFormat, data, assetId) {
-            var asset = new Asset(assetType, assetId, dataFormat);
-            // If we have an asset id, we should update, otherwise create to get an id
-            var create = assetId !== '' || assetId === null || typeof assetId === 'undefined';
+        }, reqConfig), function (err, resp, body) {
+          if (err || Math.floor(resp.statusCode / 100) !== 2) {
+            return reject(err || resp.statusCode);
+          } // xhr makes it difficult to both send FormData and automatically
+          // parse a JSON response. So try to parse everything as JSON.
 
-            // Use the first store with the appropriate asset type and url function
-            var store = this.stores.filter(function (s) {
-                return (
-                    // Only use stores for the incoming asset type
-                    s.types.indexOf(assetType.name) !== -1 && (
-                    // Only use stores that have a create function if this is a create request
-                    // or an update function if this is an update request
-                    create && s.create || s.update)
-                );
-            })[0];
 
-            var method = create ? 'post' : 'put';
+          if (typeof body === 'string') {
+            try {
+              body = JSON.parse(body);
+            } catch (parseError) {
+              // If it's not parseable, then we can't add the id even
+              // if we want to, so stop here
+              return resolve(body);
+            }
+          }
 
-            return new Promise(function (resolve, reject) {
-                if (!store) return reject('No appropriate stores');
+          return resolve(Object.assign({
+            id: body['content-name'] || assetId
+          }, body));
+        });
+      });
+    }
+  }]);
 
-                var reqConfig = create ? store.create(asset) : store.update(asset);
-                if (typeof reqConfig === 'string') {
-                    reqConfig = {
-                        url: reqConfig
-                    };
-                }
-                return nets(Object.assign({
-                    body: data,
-                    method: method
-                }, reqConfig), function (err, resp, body) {
-                    if (err || Math.floor(resp.statusCode / 100) !== 2) {
-                        return reject(err || resp.statusCode);
-                    }
-                    return resolve(Object.assign({
-                        id: body['content-name']
-                    }, body));
-                });
-            });
-        }
-    }]);
-
-    return WebHelper;
+  return WebHelper;
 }(Helper);
 
 module.exports = WebHelper;
@@ -8603,15 +8713,13 @@ module.exports = WebHelper;
 /*! no static exports found */
 /***/ (function(module, exports, __webpack_require__) {
 
-"use strict";
-
-
 var ScratchStorage = __webpack_require__(/*! ./ScratchStorage */ "./src/ScratchStorage.js");
-
 /**
  * Export for use with NPM & Node.js.
  * @type {ScratchStorage}
  */
+
+
 module.exports = ScratchStorage;
 
 /***/ }),
@@ -8623,12 +8731,9 @@ module.exports = ScratchStorage;
 /*! no static exports found */
 /***/ (function(module, exports, __webpack_require__) {
 
-"use strict";
-
-
 var minilog = __webpack_require__(/*! minilog */ "./node_modules/minilog/lib/web/index.js");
-minilog.enable();
 
+minilog.enable();
 module.exports = minilog('storage');
 
 /***/ })
