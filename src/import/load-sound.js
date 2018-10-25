@@ -55,11 +55,14 @@ const loadSound = function (sound, runtime, sprite) {
     const idParts = StringUtil.splitFirst(sound.md5, '.');
     const md5 = idParts[0];
     const ext = idParts[1].toLowerCase();
-    return runtime.storage.load(runtime.storage.AssetType.Sound, md5, ext)
-        .then(soundAsset => {
-            sound.dataFormat = ext;
-            return loadSoundFromAsset(sound, soundAsset, runtime, sprite);
-        });
+    sound.dataFormat = ext;
+    return (
+        (sound.asset && Promise.resolve(sound.asset)) ||
+        runtime.storage.load(runtime.storage.AssetType.Sound, md5, ext)
+    ).then(soundAsset => {
+        sound.asset = soundAsset;
+        return loadSoundFromAsset(sound, soundAsset, runtime, sprite);
+    });
 };
 
 module.exports = {

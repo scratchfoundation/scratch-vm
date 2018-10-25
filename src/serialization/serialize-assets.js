@@ -16,12 +16,10 @@ const serializeAssets = function (runtime, assetType, optTargetId) {
         const currAssets = currTarget.sprite[assetType];
         for (let j = 0; j < currAssets.length; j++) {
             const currAsset = currAssets[j];
-            const assetId = currAsset.assetId;
-            const storage = runtime.storage;
-            const storedAsset = storage.get(assetId);
+            const asset = currAsset.asset;
             assetDescs.push({
-                fileName: `${assetId}.${storedAsset.dataFormat}`,
-                fileContent: storedAsset.data});
+                fileName: `${asset.assetId}.${asset.dataFormat}`,
+                fileContent: asset.data});
         }
     }
     return assetDescs;

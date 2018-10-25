@@ -146,14 +146,14 @@ class Sprite {
 
         newSprite.costumes = this.costumes_.map(costume => {
             const newCostume = Object.assign({}, costume);
-            const costumeAsset = this.runtime.storage.get(costume.assetId);
+            const costumeAsset = costume.asset;
             assetPromises.push(loadCostumeFromAsset(newCostume, costumeAsset, this.runtime));
             return newCostume;
         });
 
         newSprite.sounds = this.sounds.map(sound => {
             const newSound = Object.assign({}, sound);
-            const soundAsset = this.runtime.storage.get(sound.assetId);
+            const soundAsset = sound.asset;
             assetPromises.push(loadSoundFromAsset(newSound, soundAsset, this.runtime, newSprite));
             return newSound;
         });
