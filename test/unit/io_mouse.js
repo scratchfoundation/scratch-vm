@@ -82,6 +82,10 @@ test('mousedown activating click hats', t => {
         canvasHeight: 360
     };
 
+    const dummyTarget = {
+        draggable: false
+    };
+
     const mouseDownEvent = Object.assign({}, mouseMoveEvent, {
         isDown: true
     });
@@ -90,17 +94,19 @@ test('mousedown activating click hats', t => {
         isDown: false
     });
 
-    // Stub activateClickHats function for testing
+    // Stub activateClickHats and pick function for testing
     let ranClickHats = false;
     m._activateClickHats = () => {
         ranClickHats = true;
     };
+    m._pickTarget = () => dummyTarget;
 
     // Mouse move without mousedown
     m.postData(mouseMoveEvent);
     t.strictEquals(ranClickHats, false);
 
-    // Mouse down event triggers the hats
+    // Mouse down event triggers the hats if target is not draggable
+    dummyTarget.draggable = false;
     m.postData(mouseDownEvent);
     t.strictEquals(ranClickHats, true);
 
@@ -109,10 +115,11 @@ test('mousedown activating click hats', t => {
     m.postData(mouseDownEvent);
     t.strictEquals(ranClickHats, false);
 
-    // And it doesn't trigger on mouse up
+    // And it does trigger on mouse up if target is draggable
     ranClickHats = false;
+    dummyTarget.draggable = true;
     m.postData(mouseUpEvent);
-    t.strictEquals(ranClickHats, false);
+    t.strictEquals(ranClickHats, true);
 
     // And hats don't trigger if mouse down is outside canvas
     ranClickHats = false;
