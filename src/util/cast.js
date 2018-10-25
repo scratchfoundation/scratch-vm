@@ -116,18 +116,15 @@ class Cast {
         if (isNaN(n1) || isNaN(n2)) {
             // At least one argument can't be converted to a number.
             // Scratch compares strings as case insensitive.
-            const s1 = String(v1).toLowerCase();
-            const s2 = String(v2).toLowerCase();
-            if (s1 < s2) {
-                return -1;
-            } else if (s1 > s2) {
-                return 1;
-            }
-            return 0;
+            n1 = String(v1).toLowerCase();
+            n2 = String(v2).toLowerCase();
         }
-        // Compare as numbers.
-        return n1 - n2;
-
+        if (n1 < n2) {
+            return -1;
+        } else if (n1 > n2) {
+            return 1;
+        }
+        return 0;
     }
 
     /**
