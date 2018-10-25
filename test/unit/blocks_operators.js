@@ -47,6 +47,8 @@ test('equals', t => {
     t.strictEqual(blocks.equals({OPERAND1: '2', OPERAND2: '1'}), false);
     t.strictEqual(blocks.equals({OPERAND1: '1', OPERAND2: '1'}), true);
     t.strictEqual(blocks.equals({OPERAND1: 'あ', OPERAND2: 'ア'}), false);
+    t.strictEqual(blocks.equals({OPERAND1: Infinity, 'Infinity'}), true);
+    t.strictEqual(blocks.equals({OPERAND1: NaN, NaN}), true);
     t.end();
 });
 
