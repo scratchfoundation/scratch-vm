@@ -29,15 +29,7 @@ test('Load sb2 external extensions', async t => {
         await t.test('Confirm expected extension is installed in example sb2 projects', t => {
             vm.loadProject(project)
                 .then(() => {
-                    // Extensions aren't currently cleared between project loads
-                    // so we search for the relevant piece of block info
-                    const extInfo = vm.runtime._blockInfo.find((block) => {
-                        return block.id === ext;
-                    });
-
-                    t.ok(ext, vm.extensionManager.isExtensionLoaded(ext));
-                    // t.ok(vm.extensionManager._loadedExtensions.has(ext), 'Extension was added to list of loaded extensions');
-                    // t.equal(extInfo.id, ext, 'Extension primitives were added to runtime');
+                    t.ok(vm.extensionManager.isExtensionLoaded(ext));
                     t.end();
                 });
         })
@@ -56,14 +48,7 @@ test('Load sb3 external extensions', async t => {
         await t.test('Confirm expected extension is installed in example sb3 projects', t => {
             vm.loadProject(project)
                 .then(() => {
-                    // Extensions aren't currently cleared between project loads
-                    // so we search for the relevant piece of block info
-                    const extInfo = vm.runtime._blockInfo.find((block) => {
-                        return block.id === ext;
-                    });
-
-                    t.ok(vm.extensionManager._loadedExtensions.has(ext), 'Extension was added to list of loaded extensions');
-                    t.equal(extInfo.id, ext, 'Extension primitives were added to runtime');
+                    t.ok(vm.extensionManager.isExtensionLoaded(ext));
                     t.end();
                 });
         })
