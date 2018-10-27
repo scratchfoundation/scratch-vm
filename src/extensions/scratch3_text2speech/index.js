@@ -151,21 +151,103 @@ class Scratch3Text2SpeechBlocks {
      * An object with language names mapped to their language codes.
      */
     get LANGUAGE_INFO () {
+        const messages = {
+            danish: formatMessage({
+                id: 'text2speech.lang.danish',
+                default: 'Danish',
+                description: 'Danish language.'
+            }),
+            dutch: formatMessage({
+                id: 'text2speech.lang.dutch',
+                default: 'Dutch',
+                description: 'Dutch language.'
+            }),
+            english: formatMessage({
+                id: 'text2speech.lang.english',
+                default: 'English',
+                description: 'English language.'
+            }),
+            french: formatMessage({
+                id: 'text2speech.lang.french',
+                default: 'French',
+                description: 'French language.'
+            }),
+            german: formatMessage({
+                id: 'text2speech.lang.german',
+                default: 'German',
+                description: 'German language.'
+            }),
+            icelandic: formatMessage({
+                id: 'text2speech.lang.icelandic',
+                default: 'Icelandic',
+                description: 'Icelandic language.'
+            }),
+            italian: formatMessage({
+                id: 'text2speech.lang.italian',
+                default: 'Italian',
+                description: 'Italian language.'
+            }),
+            japanese: formatMessage({
+                id: 'text2speech.lang.japanese',
+                default: 'Japanese',
+                description: 'Japanese language.'
+            }),
+            polish: formatMessage({
+                id: 'text2speech.lang.polish',
+                default: 'Polish',
+                description: 'Polish language.'
+            }),
+            portuguese_brazilian: formatMessage({
+                id: 'text2speech.lang.portuguese_brazilian',
+                default: 'Portuguese (Brazilian)',
+                description: 'Portuguese (Brazilian) language.'
+            }),
+            portuguese: formatMessage({
+                id: 'text2speech.lang.portuguese',
+                default: 'Portuguese (Europian)',
+                description: 'Portuguese (Europian) language.'
+            }),
+            russian: formatMessage({
+                id: 'text2speech.lang.russian',
+                default: 'Russian',
+                description: 'Russian language.'
+            }),
+            spanish: formatMessage({
+                id: 'text2speech.lang.spanish',
+                default: 'Spanish (Europian)',
+                description: 'Spanish (Europian) language.'
+            }),
+            spanish_419: formatMessage({
+                id: 'text2speech.lang.spanish_419',
+                default: 'Spanish (Latin American)',
+                description: 'Spanish (Latin American) language.'
+            })
+        };
         return {
-            'Danish': 'da',
-            'Dutch': 'nl',
-            'English': 'en',
-            'French': 'fr',
-            'German': 'de',
-            'Icelandic': 'is',
-            'Italian': 'it',
-            'Japanese': 'ja',
-            'Polish': 'pl',
-            'Portuguese (Brazilian)': 'pt-br',
-            'Portuguese (European)': 'pt',
-            'Russian': 'ru',
-            'Spanish (European)': 'es',
-            'Spanish (Latin American)': 'es-419'
+            'da': messages.danish,
+            'nl': messages.dutch,
+            'en': messages.english,
+            'fr': messages.french,
+            'de': messages.german,
+            'is': messages.icelandic,
+            'it': messages.italian,
+            'ja': messages.japanese,
+            'pl': messages.polish,
+            'pt-br': messages.portuguese_brazilian,
+            'pt': messages.portuguese,
+            'ru': messages.russian,
+            'es': messages.spanish,
+            'es-419': messages.spanish_419
+        };
+    }
+
+    /**
+     * List of languages which uses different names on Scratch/Translate extension
+     */
+    get SCRATCH_LOCALES () {
+        return {
+            Portuguese: 'pt',
+            Spanish: 'es'
         };
     }
 
@@ -185,6 +267,7 @@ class Scratch3Text2SpeechBlocks {
             'is': 'is-IS', // Icelandic
             'it': 'it-IT', // Italian
             'ja': 'ja-JP', // Japanese
+            'ja-Hira': 'ja-JP', // Japanese (Hiragana)
             'pl': 'pl-PL', // Polish
             'pt-br': 'pt-BR', // Portuguese (Brazilian)
             'pt': 'pt-PT', // Portuguese (European)
@@ -366,6 +449,15 @@ class Scratch3Text2SpeechBlocks {
         // Only set the language if it is in the list.
         if (this.isSupportedLanguage(languageCode)) {
             stage.textToSpeechLanguage = languageCode;
+        } else if (languageCode === 'ja-Hira') {
+            // Japanese (Hiragana) is equal to Japanese here
+            stage.textToSpeechLanguage = 'ja';
+        } else if (Object.values(this.LANGUAGE_INFO).includes(languageCode)) {
+            // Dropped values
+            stage.textToSpeechLanguage = Object.keys(this.LANGUAGE_INFO)
+                .filter(i => (this.LANGUAGE_INFO[i] === languageCode));
+        } else if (Object.keys(this.SCRATCH_LOCALES).includes(languageCode)) {
+            stage.textToSpeechLanguage = this.SCRATCH_LOCALES[languageCode];
         }
         // If the language is null, set it to the default language.
         // This can occur e.g. if the extension was loaded with the editor
@@ -382,7 +474,7 @@ class Scratch3Text2SpeechBlocks {
      * @returns {boolean} true if the language code is supported.
      */
     isSupportedLanguage (languageCode) {
-        return Object.values(this.LANGUAGE_INFO).includes(languageCode);
+        return Object.keys(this.LANGUAGE_INFO).includes(languageCode);
     }
 
     /**
@@ -401,9 +493,9 @@ class Scratch3Text2SpeechBlocks {
      * @return {array} the text and value for each menu item.
      */
     getLanguageMenu () {
-        return Object.keys(this.LANGUAGE_INFO).map(languageName => ({
-            text: languageName,
-            value: this.LANGUAGE_INFO[languageName]
+        return Object.keys(this.LANGUAGE_INFO).map(languageCode => ({
+            text: this.LANGUAGE_INFO[languageCode],
+            value: languageCode
         }));
     }
 
@@ -458,21 +550,29 @@ class Scratch3Text2SpeechBlocks {
         // Cast input to string
         let words = Cast.toString(args.WORDS);
 
+        if (words === '') return;
+
         const state = this._getState(util.target);
 
         const gender = this.VOICE_INFO[state.voiceId].gender;
         const playbackRate = this.VOICE_INFO[state.voiceId].playbackRate;
 
-        // @todo localize this?
         if (state.voiceId === KITTEN_ID) {
-            words = words.replace(/\w+/g, 'meow');
+            const meow = formatMessage({
+                id: 'text2speech.meow',
+                default: 'meow',
+                description: 'Meow call used for kitten voice.'
+            });
+            words = meow.repeat(Math.ceil(
+                words.replace(/[\x20-\x2f\x3a-\x40\x7b-\x7e]/g, '').length / 4
+            ));
         }
 
         // Build up URL
         let path = `${SERVER_HOST}/synth`;
         path += `?locale=${this.localeToPolly(this.getCurrentLanguage())}`;
         path += `&gender=${gender}`;
-        path += `&text=${encodeURI(words.substring(0, 128))}`;
+        path += `&text=${encodeURIComponent(words.substring(0, 128))}`;
 
         // Perform HTTP request to get audio file
         return new Promise(resolve => {
