@@ -1,0 +1,1 @@
+Tests in this folder are run in scratch by integration/load-extensions.js to determine whether an extension can load properly. The test projects in this folder are examples of non-core extensions usage. Read integration/load-extensions.js for more.
