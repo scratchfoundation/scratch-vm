@@ -910,6 +910,9 @@ class Scratch3Ev3Blocks {
 
         // Create a new EV3 peripheral instance
         this._peripheral = new EV3(this.runtime, Scratch3Ev3Blocks.EXTENSION_ID);
+
+        this._playNoteForPicker = this._playNoteForPicker.bind(this);
+        this.runtime.on('PLAY_NOTE', this._playNoteForPicker);
     }
 
     /**
@@ -1089,7 +1092,7 @@ class Scratch3Ev3Blocks {
                     blockType: BlockType.COMMAND,
                     arguments: {
                         NOTE: {
-                            type: ArgumentType.NUMBER,
+                            type: ArgumentType.NOTE,
                             defaultValue: 60
                         },
                         TIME: {
@@ -1210,6 +1213,14 @@ class Scratch3Ev3Blocks {
 
     getBrightness () {
         return this._peripheral.brightness;
+    }
+
+    _playNoteForPicker (note, category) {
+        if (category !== this.getInfo().name) return;
+        this.beep({
+            NOTE: note,
+            TIME: 0.25
+        });
     }
 
     beep (args) {
