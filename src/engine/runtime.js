@@ -17,6 +17,7 @@ const Variable = require('./variable');
 
 // Virtual I/O devices.
 const Clock = require('../io/clock');
+const Cloud = require('../io/cloud');
 const DeviceManager = require('../io/deviceManager');
 const Keyboard = require('../io/keyboard');
 const Mouse = require('../io/mouse');
@@ -262,6 +263,7 @@ class Runtime extends EventEmitter {
         /** @type {Object.<string, Object>} */
         this.ioDevices = {
             clock: new Clock(),
+            cloud: new Cloud(),
             deviceManager: new DeviceManager(),
             keyboard: new Keyboard(this),
             mouse: new Mouse(this),
@@ -1383,6 +1385,7 @@ class Runtime extends EventEmitter {
         this.targets.map(this.disposeTarget, this);
         this._monitorState = OrderedMap({});
         // @todo clear out extensions? turboMode? etc.
+        this.ioDevices.cloud.clear();
     }
 
     /**
