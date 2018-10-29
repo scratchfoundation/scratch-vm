@@ -337,65 +337,96 @@ class Scratch3LooksBlocks {
     }
 
     /**
-     * Utility function to set the costume or backdrop of a target.
+     * Utility function to set the costume of a target.
      * Matches the behavior of Scratch 2.0 for different types of arguments.
-     * @param {!Target} target Target to set costume/backdrop to.
+     * @param {!Target} target Target to set costume to.
      * @param {Any} requestedCostume Costume requested, e.g., 0, 'name', etc.
      * @param {boolean=} optZeroIndex Set to zero-index the requestedCostume.
      * @return {Array.<!Thread>} Any threads started by this switch.
      */
-    _setCostumeOrBackdrop (target,
-        requestedCostume, optZeroIndex) {
+    _setCostume (target, requestedCostume, optZeroIndex) {
         if (typeof requestedCostume === 'number') {
-            target.setCostume(optZeroIndex ?
-                requestedCostume : requestedCostume - 1);
+            // Numbers should be treated as costume indices, always
+            target.setCostume(optZeroIndex ? requestedCostume : requestedCostume - 1);
         } else {
-            const costumeIndex = target.getCostumeIndexByName(requestedCostume);
-            if (costumeIndex > -1) {
+            // Strings should be treated as costume names, where possible
+            const costumeIndex = target.getCostumeIndexByName(requestedCostume.toString());
+
+            if (costumeIndex !== -1) {
                 target.setCostume(costumeIndex);
-            } else if (requestedCostume === 'previous costume' ||
-                       requestedCostume === 'previous backdrop') {
-                target.setCostume(target.currentCostume - 1);
-            } else if (requestedCostume === 'next costume' ||
-                       requestedCostume === 'next backdrop') {
+            } else if (requestedCostume === 'next costume') {
                 target.setCostume(target.currentCostume + 1);
-            } else if (requestedCostume === 'random backdrop') {
-                const numCostumes = target.getCostumes().length;
-                if (numCostumes > 1) {
-                    let selectedIndex = Math.floor(Math.random() * (numCostumes - 1));
-                    if (selectedIndex === target.currentCostume) selectedIndex += 1;
-                    target.setCostume(selectedIndex);
-                }
-            } else {
-                const forcedNumber = Number(requestedCostume);
-                if (!isNaN(forcedNumber)) {
-                    target.setCostume(optZeroIndex ?
-                        forcedNumber : forcedNumber - 1);
-                }
+            } else if (requestedCostume === 'previous costume') {
+                target.setCostume(target.currentCostume - 1);
+            // Try to cast the string to a number (and treat it as a costume index)
+            // Pure whitespace should not be treated as a number
+            // Note: isNaN will cast the string to a number before checking if it's NaN
+            } else if (!(isNaN(requestedCostume) || Cast.isWhiteSpace(requestedCostume))) {
+                target.setCostume(optZeroIndex ? Number(requestedCostume) : Number(requestedCostume) - 1);
             }
         }
-        if (target === this.runtime.getTargetForStage()) {
-            // Target is the stage - start hats.
-            const newName = target.getCostumes()[target.currentCostume].name;
-            return this.runtime.startHats('event_whenbackdropswitchesto', {
-                BACKDROP: newName
-            });
-        }
+
+        // Per 2.0, 'switch costume' can't start threads even in the Stage.
         return [];
     }
 
+    /**
+     * Utility function to set the backdrop of a target.
+     * Matches the behavior of Scratch 2.0 for different types of arguments.
+     * @param {!Target} stage Target to set backdrop to.
+     * @param {Any} requestedBackdrop Backdrop requested, e.g., 0, 'name', etc.
+     * @param {boolean=} optZeroIndex Set to zero-index the requestedBackdrop.
+     * @return {Array.<!Thread>} Any threads started by this switch.
+     */
+    _setBackdrop (stage, requestedBackdrop, optZeroIndex) {
+        if (typeof requestedBackdrop === 'number') {
+            // Numbers should be treated as backdrop indices, always
+            stage.setCostume(optZeroIndex ? requestedBackdrop : requestedBackdrop - 1);
+        } else {
+            // Strings should be treated as backdrop names where possible
+            const costumeIndex = stage.getCostumeIndexByName(requestedBackdrop.toString());
+
+            if (costumeIndex !== -1) {
+                stage.setCostume(costumeIndex);
+            } else if (requestedBackdrop === 'next backdrop') {
+                stage.setCostume(stage.currentCostume + 1);
+            } else if (requestedBackdrop === 'previous backdrop') {
+                stage.setCostume(stage.currentCostume - 1);
+            } else if (requestedBackdrop === 'random backdrop') {
+                // Don't pick the current backdrop, so that the block
+                // will always have an observable effect.
+                const numCostumes = stage.getCostumes().length;
+                if (numCostumes > 1) {
+                    let selectedIndex = Math.floor(Math.random() * (numCostumes - 1));
+                    if (selectedIndex === stage.currentCostume) selectedIndex += 1;
+                    stage.setCostume(selectedIndex);
+                }
+            // Try to cast the string to a number (and treat it as a costume index)
+            // Pure whitespace should not be treated as a number
+            // Note: isNaN will cast the string to a number before checking if it's NaN
+            } else if (!(isNaN(requestedBackdrop) || Cast.isWhiteSpace(requestedBackdrop))) {
+                stage.setCostume(optZeroIndex ? Number(requestedBackdrop) : Number(requestedBackdrop) - 1);
+            }
+        }
+
+        const newName = stage.getCostumes()[stage.currentCostume].name;
+        return this.runtime.startHats('event_whenbackdropswitchesto', {
+            BACKDROP: newName
+        });
+    }
+
     switchCostume (args, util) {
-        this._setCostumeOrBackdrop(util.target, args.COSTUME);
+        this._setCostume(util.target, args.COSTUME);
     }
 
     nextCostume (args, util) {
-        this._setCostumeOrBackdrop(
+        this._setCostume(
             util.target, util.target.currentCostume + 1, true
         );
     }
 
     switchBackdrop (args) {
-        this._setCostumeOrBackdrop(this.runtime.getTargetForStage(), args.BACKDROP);
+        this._setBackdrop(this.runtime.getTargetForStage(), args.BACKDROP);
     }
 
     switchBackdropAndWait (args, util) {
@@ -403,7 +434,7 @@ class Scratch3LooksBlocks {
         if (!util.stackFrame.startedThreads) {
             // No - switch the backdrop.
             util.stackFrame.startedThreads = (
-                this._setCostumeOrBackdrop(
+                this._setBackdrop(
                     this.runtime.getTargetForStage(),
                     args.BACKDROP
                 )
@@ -438,7 +469,7 @@ class Scratch3LooksBlocks {
 
     nextBackdrop () {
         const stage = this.runtime.getTargetForStage();
-        this._setCostumeOrBackdrop(
+        this._setBackdrop(
             stage, stage.currentCostume + 1, true
         );
     }

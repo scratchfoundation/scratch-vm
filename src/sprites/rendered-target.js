@@ -471,6 +471,8 @@ class RenderedTarget extends Target {
     setCostume (index) {
         // Keep the costume index within possible values.
         index = Math.round(index);
+        if ([Infinity, -Infinity, NaN].includes(index)) index = 0;
+
         this.currentCostume = MathUtil.wrapClamp(
             index, 0, this.sprite.costumes.length - 1
         );
