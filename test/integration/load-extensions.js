@@ -7,9 +7,7 @@ const VirtualMachine = require('../../src/index');
 test('Load external extensions', async t => {
     const vm = new VirtualMachine();
     const fileList = fs.readdirSync('./test/fixtures/load-extensions/');
-    const testFiles = fileList.filter((file) => {
-        return path.extname(file) === '.sb2' || path.extname(file) === '.sb3';
-    });
+    const testFiles = fileList.filter(file => path.extname(file) === '.sb2' || path.extname(file) === '.sb3');
 
     // Test each example extension file
     for (const file of testFiles) {
