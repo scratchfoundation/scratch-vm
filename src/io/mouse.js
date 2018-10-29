@@ -14,43 +14,42 @@ class Mouse {
     }
 
     /**
-     * Activate "event_whenthisspriteclicked" hats if needed.
-     * @param  {number} x X position to be sent to the renderer.
-     * @param  {number} y Y position to be sent to the renderer.
-     * @param  {?bool} wasDragged Whether the click event was the result of
-     * a drag end.
+     * Activate "event_whenthisspriteclicked" hats.
+     * @param  {Target} target to trigger hats on.
      * @private
      */
-    _activateClickHats (x, y, wasDragged) {
+    _activateClickHats (target) {
+        // Activate both "this sprite clicked" and "stage clicked"
+        // They were separated into two opcodes for labeling,
+        // but should act the same way.
+        // Intentionally not checking isStage to make it work when sharing blocks.
+        // @todo the blocks should be converted from one to another when shared
+        this.runtime.startHats('event_whenthisspriteclicked',
+            null, target);
+        this.runtime.startHats('event_whenstageclicked',
+            null, target);
+    }
+
+    /**
+     * Find a target by XY location
+     * @param  {number} x X position to be sent to the renderer.
+     * @param  {number} y Y position to be sent to the renderer.
+     * @return {Target} the target at that location
+     * @private
+     */
+    _pickTarget (x, y) {
         if (this.runtime.renderer) {
             const drawableID = this.runtime.renderer.pick(x, y);
             for (let i = 0; i < this.runtime.targets.length; i++) {
                 const target = this.runtime.targets[i];
                 if (target.hasOwnProperty('drawableID') &&
                     target.drawableID === drawableID) {
-                    // only activate click hat if the mouse up event wasn't
-                    // the result of a drag ending
-                    if (!wasDragged) {
-                        // Activate both "this sprite clicked" and "stage clicked"
-                        // They were separated into two opcodes for labeling,
-                        // but should act the same way.
-                        // Intentionally not checking isStage to make it work when sharing blocks.
-                        // @todo the blocks should be converted from one to another when shared
-                        this.runtime.startHats('event_whenthisspriteclicked',
-                            null, target);
-                        this.runtime.startHats('event_whenstageclicked',
-                            null, target);
-                    }
-                    return;
+                    return target;
                 }
             }
-            // If haven't returned, activate click hats for stage.
-            // Still using both blocks for sharing compatibility.
-            this.runtime.startHats('event_whenthisspriteclicked',
-                null, this.runtime.getTargetForStage());
-            this.runtime.startHats('event_whenstageclicked',
-                null, this.runtime.getTargetForStage());
         }
+        // Return the stage if no target was found
+        return this.runtime.getTargetForStage();
     }
 
     /**
@@ -75,12 +74,29 @@ class Mouse {
             );
         }
         if (typeof data.isDown !== 'undefined') {
+            const previousDownState = this._isDown;
             this._isDown = data.isDown;
-            // Make sure click is within the canvas bounds to activate click hats
-            if (!this._isDown &&
-                data.x > 0 && data.x < data.canvasWidth &&
-                data.y > 0 && data.y < data.canvasHeight) {
-                this._activateClickHats(data.x, data.y, data.wasDragged);
+
+            // Do not trigger if down state has not changed
+            if (previousDownState === this._isDown) return;
+
+            // Never trigger click hats at the end of a drag
+            if (data.wasDragged) return;
+
+            // Do not activate click hats for clicks outside canvas bounds
+            if (!(data.x > 0 && data.x < data.canvasWidth &&
+                data.y > 0 && data.y < data.canvasHeight)) return;
+
+            const target = this._pickTarget(data.x, data.y);
+            const isNewMouseDown = !previousDownState && this._isDown;
+            const isNewMouseUp = previousDownState && !this._isDown;
+
+            // Draggable targets start click hats on mouse up.
+            // Non-draggable targets start click hats on mouse down.
+            if (target.draggable && isNewMouseUp) {
+                this._activateClickHats(target);
+            } else if (!target.draggable && isNewMouseDown) {
+                this._activateClickHats(target);
             }
         }
     }
