@@ -747,7 +747,7 @@ class Scratch3MusicBlocks {
                     }),
                     arguments: {
                         NOTE: {
-                            type: ArgumentType.NUMBER,
+                            type: ArgumentType.NOTE,
                             defaultValue: 60
                         },
                         BEATS: {

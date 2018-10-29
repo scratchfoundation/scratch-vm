@@ -67,6 +67,10 @@ const ArgumentTypeMap = (() => {
         shadowType: 'matrix',
         fieldType: 'MATRIX'
     };
+    map[ArgumentType.NOTE] = {
+        shadowType: 'note',
+        fieldType: 'NOTE'
+    };
     return map;
 })();
 
