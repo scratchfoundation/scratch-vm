@@ -401,7 +401,7 @@ class Runtime extends EventEmitter {
     }
 
     /**
-     * Event name for targets installed report.
+     * Event name for project loaded report.
      * @const {string}
      */
     static get PROJECT_LOADED () {
