@@ -3,7 +3,7 @@
 <head>
     
     <meta charset="utf-8">
-    <title>_StackFrame - Documentation</title>
+    <title>Cloud - Documentation</title>
     
     
     <script src="scripts/prettify/prettify.js"></script>
@@ -31,7 +31,7 @@
 
 <div id="main">
     
-    <h1 class="page-title">_StackFrame</h1>
+    <h1 class="page-title">Cloud</h1>
     
 
     
@@ -44,11 +44,8 @@
 <header>
     
         <h2>
-        _StackFrame
+        Cloud
         </h2>
-        
-            <div class="class-description"><p>A frame used for each level of the stack. A general purpose
-place to store a bunch of execution context and parameters</p></div>
         
     
 </header>
@@ -60,10 +57,8 @@ place to store a bunch of execution context and parameters</p></div>
             
 
     
-    <h2>Constructor</h2>
-    
 
-    <h4 class="name" id="_StackFrame"><span class="type-signature">(private) </span>new _StackFrame<span class="signature">(warpMode)</span><span class="type-signature"></span></h4>
+    <h4 class="name" id="Cloud"><span class="type-signature"></span>new Cloud<span class="signature">()</span><span class="type-signature"></span></h4>
 
     
 
@@ -109,6 +104,11 @@ place to store a bunch of execution context and parameters</p></div>
 
 
 
+<div class="description">
+    <p>Cloud IO Device responsible for sending and receiving messages from
+cloud provider (mananging the cloud server connection) and interacting
+with cloud variables in the current project.</p>
+</div>
 
 
 
@@ -118,54 +118,6 @@ place to store a bunch of execution context and parameters</p></div>
 
 
 
-
-    <h5>Parameters:</h5>
-    
-
-<table class="params">
-    <thead>
-    <tr>
-        
-        <th>Name</th>
-        
-
-        <th>Type</th>
-
-        
-
-        
-
-        <th class="last">Description</th>
-    </tr>
-    </thead>
-
-    <tbody>
-    
-
-        <tr>
-            
-                <td class="name"><code>warpMode</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">boolean</span>
-
-
-            
-            </td>
-
-            
-
-            
-
-            <td class="description last"><p>Whether this level of the stack is warping</p></td>
-        </tr>
-
-    
-    </tbody>
-</table>
 
 
 
@@ -201,7 +153,7 @@ place to store a bunch of execution context and parameters</p></div>
 
         
             
-<h4 class="name" id="executionContext"><span class="type-signature"></span>executionContext<span class="type-signature"> :Object</span></h4>
+<h4 class="name" id="provider"><span class="type-signature">(nullable) </span>provider<span class="type-signature"> :<a href="global.html#CloudProvider">CloudProvider</a></span></h4>
 
 
 
@@ -247,7 +199,8 @@ place to store a bunch of execution context and parameters</p></div>
 
 
 <div class="description">
-    <p>A context passed to block implementations.</p>
+    <p>Reference to the cloud data provider, responsible for mananging
+the web socket connection to the cloud data server.</p>
 </div>
 
 
@@ -256,7 +209,7 @@ place to store a bunch of execution context and parameters</p></div>
     <ul>
         <li>
             
-<span class="param-type">Object</span>
+<span class="param-type"><a href="global.html#CloudProvider">CloudProvider</a></span>
 
 
         </li>
@@ -269,7 +222,7 @@ place to store a bunch of execution context and parameters</p></div>
 
         
             
-<h4 class="name" id="isLoop"><span class="type-signature"></span>isLoop<span class="type-signature"> :boolean</span></h4>
+<h4 class="name" id="stage"><span class="type-signature">(nullable) </span>stage<span class="type-signature"> :<a href="Target.html">Target</a></span></h4>
 
 
 
@@ -315,7 +268,8 @@ place to store a bunch of execution context and parameters</p></div>
 
 
 <div class="description">
-    <p>Whether this level of the stack is a loop.</p>
+    <p>Reference to the stage target which owns the cloud variables
+in the project.</p>
 </div>
 
 
@@ -324,416 +278,7 @@ place to store a bunch of execution context and parameters</p></div>
     <ul>
         <li>
             
-<span class="param-type">boolean</span>
-
-
-        </li>
-    </ul>
-
-
-
-
-
-
-        
-            
-<h4 class="name" id="justReported"><span class="type-signature"></span>justReported<span class="type-signature"> :Any</span></h4>
-
-
-
-
-
-<dl class="details">
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-</dl>
-
-
-
-
-
-<div class="description">
-    <p>Reported value from just executed block.</p>
-</div>
-
-
-
-    <h5>Type:</h5>
-    <ul>
-        <li>
-            
-<span class="param-type">Any</span>
-
-
-        </li>
-    </ul>
-
-
-
-
-
-
-        
-            
-<h4 class="name" id="params"><span class="type-signature"></span>params<span class="type-signature"> :Object</span></h4>
-
-
-
-
-
-<dl class="details">
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-</dl>
-
-
-
-
-
-<div class="description">
-    <p>Procedure parameters.</p>
-</div>
-
-
-
-    <h5>Type:</h5>
-    <ul>
-        <li>
-            
-<span class="param-type">Object</span>
-
-
-        </li>
-    </ul>
-
-
-
-
-
-
-        
-            
-<h4 class="name" id="reported"><span class="type-signature"></span>reported<span class="type-signature"> :Object</span></h4>
-
-
-
-
-
-<dl class="details">
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-</dl>
-
-
-
-
-
-<div class="description">
-    <p>Persists reported inputs during async block.</p>
-</div>
-
-
-
-    <h5>Type:</h5>
-    <ul>
-        <li>
-            
-<span class="param-type">Object</span>
-
-
-        </li>
-    </ul>
-
-
-
-
-
-
-        
-            
-<h4 class="name" id="reporting"><span class="type-signature"></span>reporting<span class="type-signature"> :string</span></h4>
-
-
-
-
-
-<dl class="details">
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-</dl>
-
-
-
-
-
-<div class="description">
-    <p>The active block that is waiting on a promise.</p>
-</div>
-
-
-
-    <h5>Type:</h5>
-    <ul>
-        <li>
-            
-<span class="param-type">string</span>
-
-
-        </li>
-    </ul>
-
-
-
-
-
-
-        
-            
-<h4 class="name" id="waitingReporter"><span class="type-signature"></span>waitingReporter<span class="type-signature"> :string</span></h4>
-
-
-
-
-
-<dl class="details">
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-</dl>
-
-
-
-
-
-<div class="description">
-    <p>Name of waiting reporter.</p>
-</div>
-
-
-
-    <h5>Type:</h5>
-    <ul>
-        <li>
-            
-<span class="param-type">string</span>
-
-
-        </li>
-    </ul>
-
-
-
-
-
-
-        
-            
-<h4 class="name" id="warpMode"><span class="type-signature"></span>warpMode<span class="type-signature"> :boolean</span></h4>
-
-
-
-
-
-<dl class="details">
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-</dl>
-
-
-
-
-
-<div class="description">
-    <p>Whether this level is in warp mode.  Is set by some legacy blocks and
-&quot;turbo mode&quot;</p>
-</div>
-
-
-
-    <h5>Type:</h5>
-    <ul>
-        <li>
-            
-<span class="param-type">boolean</span>
+<span class="param-type"><a href="Target.html">Target</a></span>
 
 
         </li>
@@ -755,7 +300,7 @@ place to store a bunch of execution context and parameters</p></div>
 
     
 
-    <h4 class="name" id=".create"><span class="type-signature">(static) </span>create<span class="signature">(warpMode)</span><span class="type-signature"> &rarr; {<a href="-_StackFrame.html">_StackFrame</a>}</span></h4>
+    <h4 class="name" id="clear"><span class="type-signature"></span>clear<span class="signature">()</span><span class="type-signature"></span></h4>
 
     
 
@@ -802,7 +347,88 @@ place to store a bunch of execution context and parameters</p></div>
 
 
 <div class="description">
-    <p>Create or recycle a stack frame object.</p>
+    <p>Request the cloud data provider to close the web socket connection and
+clear this io device of references to the cloud data provider and the
+stage.</p>
+</div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        
+            
+
+    
+
+    <h4 class="name" id="postData"><span class="type-signature"></span>postData<span class="signature">(data)</span><span class="type-signature"></span></h4>
+
+    
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+<div class="description">
+    <p>Handle incoming data to this io device.</p>
 </div>
 
 
@@ -840,13 +466,13 @@ place to store a bunch of execution context and parameters</p></div>
 
         <tr>
             
-                <td class="name"><code>warpMode</code></td>
+                <td class="name"><code>data</code></td>
             
 
             <td class="type">
             
                 
-<span class="param-type">boolean</span>
+<span class="param-type"><a href="global.html#CloudIOData">CloudIOData</a></span>
 
 
             
@@ -856,7 +482,7 @@ place to store a bunch of execution context and parameters</p></div>
 
             
 
-            <td class="description last"><p>Enable warpMode on this frame.</p></td>
+            <td class="description last"><p>The <a href="global.html#CloudIOData">CloudIOData</a> object to process</p></td>
         </tr>
 
     
@@ -876,28 +502,6 @@ place to store a bunch of execution context and parameters</p></div>
 
 
 
-<h5>Returns:</h5>
-
-        
-<div class="param-desc">
-    <p>The clean stack frame with correct warpMode setting.</p>
-</div>
-
-
-
-<dl class="param-type">
-    <dt>
-        Type
-    </dt>
-    <dd>
-        
-<span class="param-type"><a href="-_StackFrame.html">_StackFrame</a></span>
-
-
-    </dd>
-</dl>
-
-    
 
 
         
@@ -905,7 +509,7 @@ place to store a bunch of execution context and parameters</p></div>
 
     
 
-    <h4 class="name" id=".release"><span class="type-signature">(static) </span>release<span class="signature">(stackFrame)</span><span class="type-signature"></span></h4>
+    <h4 class="name" id="requestUpdateVariable"><span class="type-signature"></span>requestUpdateVariable<span class="signature">(name, value)</span><span class="type-signature"></span></h4>
 
     
 
@@ -952,7 +556,8 @@ place to store a bunch of execution context and parameters</p></div>
 
 
 <div class="description">
-    <p>Put a stack frame object into the recycle bin for reuse.</p>
+    <p>Request the cloud data provider to update the given variable with
+the given value. Does nothing if this io device does not have a provider set.</p>
 </div>
 
 
@@ -990,13 +595,13 @@ place to store a bunch of execution context and parameters</p></div>
 
         <tr>
             
-                <td class="name"><code>stackFrame</code></td>
+                <td class="name"><code>name</code></td>
             
 
             <td class="type">
             
                 
-<span class="param-type"><a href="-_StackFrame.html">_StackFrame</a></span>
+<span class="param-type">string</span>
 
 
             
@@ -1006,7 +611,33 @@ place to store a bunch of execution context and parameters</p></div>
 
             
 
-            <td class="description last"><p>The frame to reset and recycle.</p></td>
+            <td class="description last"><p>The name of the variable to update</p></td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>value</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">string</span>
+|
+
+<span class="param-type">number</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"><p>The value to update the variable with</p></td>
         </tr>
 
     
@@ -1033,7 +664,7 @@ place to store a bunch of execution context and parameters</p></div>
 
     
 
-    <h4 class="name" id="reset"><span class="type-signature"></span>reset<span class="signature">()</span><span class="type-signature"> &rarr; {<a href="-_StackFrame.html">_StackFrame</a>}</span></h4>
+    <h4 class="name" id="setProvider"><span class="type-signature"></span>setProvider<span class="signature">(provider)</span><span class="type-signature"></span></h4>
 
     
 
@@ -1080,109 +711,7 @@ place to store a bunch of execution context and parameters</p></div>
 
 
 <div class="description">
-    <p>Reset all properties of the frame to pristine null and false states.
-Used to recycle.</p>
-</div>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-<h5>Returns:</h5>
-
-        
-<div class="param-desc">
-    <p>this</p>
-</div>
-
-
-
-<dl class="param-type">
-    <dt>
-        Type
-    </dt>
-    <dd>
-        
-<span class="param-type"><a href="-_StackFrame.html">_StackFrame</a></span>
-
-
-    </dd>
-</dl>
-
-    
-
-
-        
-            
-
-    
-
-    <h4 class="name" id="reuse"><span class="type-signature"></span>reuse<span class="signature">(warpMode<span class="signature-attributes">nullable</span>)</span><span class="type-signature"> &rarr; {<a href="-_StackFrame.html">_StackFrame</a>}</span></h4>
-
-    
-
-
-
-
-<dl class="details">
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-</dl>
-
-
-
-
-
-<div class="description">
-    <p>Reuse an active stack frame in the stack.</p>
+    <p>Set a reference to the cloud data provider.</p>
 </div>
 
 
@@ -1208,8 +737,6 @@ Used to recycle.</p>
         <th>Type</th>
 
         
-        <th>Attributes</th>
-        
 
         
 
@@ -1222,33 +749,23 @@ Used to recycle.</p>
 
         <tr>
             
-                <td class="name"><code>warpMode</code></td>
+                <td class="name"><code>provider</code></td>
             
 
             <td class="type">
             
                 
-<span class="param-type">boolean</span>
+<span class="param-type"><a href="global.html#CloudProvider">CloudProvider</a></span>
 
 
             
             </td>
 
             
-                <td class="attributes">
-                
-
-                
-                    &lt;nullable><br>
-                
-
-                
-                </td>
-            
 
             
 
-            <td class="description last"><p>defaults to current warpMode</p></td>
+            <td class="description last"><p>The cloud data provider</p></td>
         </tr>
 
     
@@ -1268,28 +785,265 @@ Used to recycle.</p>
 
 
 
-<h5>Returns:</h5>
+
 
         
-<div class="param-desc">
-    <p>this</p>
+            
+
+    
+
+    <h4 class="name" id="setStage"><span class="type-signature"></span>setStage<span class="signature">(stage)</span><span class="type-signature"></span></h4>
+
+    
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+<div class="description">
+    <p>Set a reference to the stage target which owns the
+cloud variables in the project.</p>
 </div>
 
 
 
-<dl class="param-type">
-    <dt>
-        Type
-    </dt>
-    <dd>
+
+
+
+
+
+
+
+
+    <h5>Parameters:</h5>
+    
+
+<table class="params">
+    <thead>
+    <tr>
         
-<span class="param-type"><a href="-_StackFrame.html">_StackFrame</a></span>
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>stage</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type"><a href="Target.html">Target</a></span>
 
 
-    </dd>
-</dl>
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"><p>The stage target</p></td>
+        </tr>
 
     
+    </tbody>
+</table>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        
+            
+
+    
+
+    <h4 class="name" id="updateCloudVariable"><span class="type-signature"></span>updateCloudVariable<span class="signature">(varUpdate)</span><span class="type-signature"></span></h4>
+
+    
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+<div class="description">
+    <p>Update a cloud variable in the runtime based on the message received
+from the cloud provider.</p>
+</div>
+
+
+
+
+
+
+
+
+
+
+
+    <h5>Parameters:</h5>
+    
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>varUpdate</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type"><a href="global.html#VarUpdateData">VarUpdateData</a></span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"><p>A <a href="global.html#VarUpdateData">VarUpdateData</a> object describing
+a cloud variable update received from the cloud data provider.</p></td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
         
