@@ -259,15 +259,23 @@ class Scratch3MotionBlocks {
     }
 
     getX (args, util) {
-        return util.target.x;
+        return this.limitPrecision(util.target.x);
     }
 
     getY (args, util) {
-        return util.target.y;
+        return this.limitPrecision(util.target.y);
     }
 
     getDirection (args, util) {
         return util.target.direction;
+    }
+
+    limitPrecision (coordinate) {
+        const rounded = Math.round(coordinate);
+        const epsilon = coordinate - rounded;
+        const preciseCoord = (Math.abs(epsilon) < 1e-7) ? rounded : coordinate;
+
+        return preciseCoord;
     }
 }
 
