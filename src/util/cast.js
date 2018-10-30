@@ -20,6 +20,17 @@ class Cast {
      * @return {number} The Scratch-casted number value.
      */
     static toNumber (value) {
+        // If value is already a number we don't need to coerce it with
+        // Number().
+        if (typeof value === 'number') {
+            // Scratch treats NaN as 0, when needed as a number.
+            // E.g., 0 + NaN -> 0.
+            if (isNaN(value)) {
+                return 0;
+            }
+            return value;
+        }
+
         const n = Number(value);
         if (isNaN(n)) {
             // Scratch treats NaN as 0, when needed as a number.
