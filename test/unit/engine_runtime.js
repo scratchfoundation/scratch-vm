@@ -112,27 +112,18 @@ test('getLabelForOpcode', t => {
     t.end();
 });
 
-test('Installing targets emits runtime event', t => {
+test('Project loaded emits runtime event', t => {
     const vm = new VirtualMachine();
     const projectUri = path.resolve(__dirname, '../fixtures/default.sb2');
     const project = readFileToBuffer(projectUri);
-    const spriteUri = path.resolve(__dirname, '../fixtures/example_sprite.sprite2');
-    const sprite = readFileToBuffer(spriteUri);
-    let targetsInstalled = null;
+    let projectLoaded = false;
 
-    vm.runtime.addListener('TARGETS_INSTALLED', () => {
-        targetsInstalled = true;
+    vm.runtime.addListener('PROJECT_LOADED', () => {
+        projectLoaded = true;
     });
 
     vm.loadProject(project).then(() => {
-        // Event emitted when targets are installed during project load
-        t.equal(targetsInstalled, true);
-        targetsInstalled = null;
-
-        // Event emitted when later targets are installed
-        vm.addSprite(sprite).then(() => {
-            t.equal(targetsInstalled, true);
-            t.end();
-        });
+        t.equal(projectLoaded, true, 'Project load event emitted');
+        t.end();
     });
 });

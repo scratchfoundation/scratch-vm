@@ -404,8 +404,8 @@ class Runtime extends EventEmitter {
      * Event name for targets installed report.
      * @const {string}
      */
-    static get TARGETS_INSTALLED () {
-        return 'TARGETS_INSTALLED';
+    static get PROJECT_LOADED () {
+        return 'PROJECT_LOADED';
     }
 
     /**
@@ -1911,11 +1911,10 @@ class Runtime extends EventEmitter {
     }
 
     /**
-     * Report that targets have finished being installed in the Virtual Machine.
-     * @param {Target} installedTargets - the newly installed targets.
+     * Report that the project has loaded in the Virtual Machine.
      */
-    emitTargetsInstalled (installedTargets) {
-        this.emit(Runtime.TARGETS_INSTALLED, installedTargets);
+    emitProjectLoaded () {
+        this.emit(Runtime.PROJECT_LOADED);
     }
 
     /**
