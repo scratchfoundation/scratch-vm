@@ -403,6 +403,14 @@ class Runtime extends EventEmitter {
     }
 
     /**
+     * Event name for project loaded report.
+     * @const {string}
+     */
+    static get PROJECT_LOADED () {
+        return 'PROJECT_LOADED';
+    }
+
+    /**
      * Event name for targets update report.
      * @const {string}
      */
@@ -1911,6 +1919,13 @@ class Runtime extends EventEmitter {
      */
     clonesAvailable () {
         return this._cloneCounter < Runtime.MAX_CLONES;
+    }
+
+    /**
+     * Report that the project has loaded in the Virtual Machine.
+     */
+    emitProjectLoaded () {
+        this.emit(Runtime.PROJECT_LOADED);
     }
 
     /**

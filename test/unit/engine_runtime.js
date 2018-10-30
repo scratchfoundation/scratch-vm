@@ -1,4 +1,7 @@
 const test = require('tap').test;
+const path = require('path');
+const readFileToBuffer = require('../fixtures/readProjectFile').readFileToBuffer;
+const VirtualMachine = require('../../src/virtual-machine');
 const Runtime = require('../../src/engine/runtime');
 const MonitorRecord = require('../../src/engine/monitor-record');
 const {Map} = require('immutable');
@@ -107,4 +110,20 @@ test('getLabelForOpcode', t => {
     t.equals(result2.label, 'Fake Extension: Foo 2');
 
     t.end();
+});
+
+test('Project loaded emits runtime event', t => {
+    const vm = new VirtualMachine();
+    const projectUri = path.resolve(__dirname, '../fixtures/default.sb2');
+    const project = readFileToBuffer(projectUri);
+    let projectLoaded = false;
+
+    vm.runtime.addListener('PROJECT_LOADED', () => {
+        projectLoaded = true;
+    });
+
+    vm.loadProject(project).then(() => {
+        t.equal(projectLoaded, true, 'Project load event emitted');
+        t.end();
+    });
 });
