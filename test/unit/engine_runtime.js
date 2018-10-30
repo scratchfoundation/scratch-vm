@@ -127,3 +127,38 @@ test('Project loaded emits runtime event', t => {
         t.end();
     });
 });
+
+test('Cloud variable limit allows only 8 cloud variables', t => {
+    // This is a test of just the cloud variable limit mechanism
+    // The functions being tested below need to be used when
+    // creating and deleting cloud variables in the runtime.
+
+    const rt = new Runtime();
+
+    for (let i = 0; i < 8; i++) {
+        t.equal(rt.canAddNewCloudVariable(), true);
+    }
+
+    // We should be at the cloud variable limit now
+    t.equal(rt.canAddNewCloudVariable(), false);
+
+    // Removing a cloud variable should allow the addition of exactly one more
+    // when we are at the cloud variable limit
+    rt.removeExistingCloudVariable();
+
+    t.equal(rt.canAddNewCloudVariable(), true);
+    t.equal(rt.canAddNewCloudVariable(), false);
+
+    // Disposing of the runtime should reset the cloud variable limitations
+    rt.dispose();
+
+    for (let i = 0; i < 8; i++) {
+        t.equal(rt.canAddNewCloudVariable(), true);
+    }
+
+    // We should be at the cloud variable limit now
+    t.equal(rt.canAddNewCloudVariable(), false);
+
+    t.end();
+
+});
