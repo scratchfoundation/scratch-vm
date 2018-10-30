@@ -393,7 +393,7 @@ const serializeVariables = function (variables) {
         // otherwise should be a scalar type
         obj.variables[varId] = [v.name, v.value];
         // only scalar vars have the potential to be cloud vars
-        if (v.isPersistent) obj.variables[varId].push(true);
+        if (v.isCloud) obj.variables[varId].push(true);
     }
     return obj;
 };
@@ -900,12 +900,21 @@ const parseScratchObject = function (object, runtime, extensions, zip) {
     if (object.hasOwnProperty('variables')) {
         for (const varId in object.variables) {
             const variable = object.variables[varId];
+            // A variable is a cloud variable if:
+            // - the project says it's a cloud variable, and
+            // - it's a stage variable, and
+            // - the runtime can support another cloud variable
+            const isCloud = (variable.length === 3) && variable[2] && object.isStage &&
+                // It's important that this part of the check goes last
+                // because it will update the cloud variable limit counter.
+                runtime.canAddNewCloudVariable();
             const newVariable = new Variable(
                 varId, // var id is the index of the variable desc array in the variables obj
                 variable[0], // name of the variable
                 Variable.SCALAR_TYPE, // type of the variable
-                (variable.length === 3) ? variable[2] : false // isPersistent/isCloud
+                isCloud
             );
+            if (isCloud && !runtime.hasCloudData) runtime.hasCloudData = true;
             newVariable.value = variable[1];
             target.variables[newVariable.id] = newVariable;
         }
