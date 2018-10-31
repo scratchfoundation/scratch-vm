@@ -189,6 +189,13 @@ class Runtime extends EventEmitter {
         this._nonMonitorThreadCount = 0;
 
         /**
+         * All threads that finished running and were removed from this.threads
+         * by behaviour in Sequencer.stepThreads.
+         * @type {Array<Thread>}
+         */
+        this._lastStepDoneThreads = null;
+
+        /**
          * Currently known number of clones, used to enforce clone limit.
          * @type {number}
          */
@@ -1560,6 +1567,9 @@ class Runtime extends EventEmitter {
         this._emitProjectRunStatus(
             this.threads.length + doneThreads.length -
                 this._getMonitorThreadCount([...this.threads, ...doneThreads]));
+        // Store threads that completed this iteration for testing and other
+        // internal purposes.
+        this._lastStepDoneThreads = doneThreads;
         if (this.renderer) {
             // @todo: Only render when this.redrawRequested or clones rendered.
             if (this.profiler !== null) {

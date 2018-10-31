@@ -14,8 +14,10 @@ test('importing sb2 project with monitors', t => {
     // Evaluate playground data and exit
     vm.on('playgroundData', e => {
         const threads = JSON.parse(e.threads);
-        // All monitors should leave threads running
-        t.equal(threads.length, 5);
+        // All monitors should create threads that finish during the step and
+        // are revoved from runtime.threads.
+        t.equal(threads.length, 0);
+        t.equal(vm.runtime._lastStepDoneThreads.length, 5);
         // There should be one additional hidden monitor that is in the monitorState but
         // does not start a thread.
         t.equal(vm.runtime._monitorState.size, 6);
