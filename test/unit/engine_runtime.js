@@ -11,6 +11,13 @@ test('spec', t => {
 
     t.type(Runtime, 'function');
     t.type(r, 'object');
+
+    // Test types of cloud data managing functions
+    t.type(r.hasCloudData, 'function');
+    t.type(r.canAddCloudVariable, 'function');
+    t.type(r.addCloudVariable, 'function');
+    t.type(r.removeCloudVariable, 'function');
+
     t.ok(r instanceof Runtime);
 
     t.end();
@@ -154,6 +161,7 @@ test('Cloud variable limit allows only 8 cloud variables', t => {
     rt.removeCloudVariable();
 
     t.equal(rt.canAddCloudVariable(), true);
+    rt.addCloudVariable();
     t.equal(rt.canAddCloudVariable(), false);
 
     // Disposing of the runtime should reset the cloud variable limitations

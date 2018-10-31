@@ -75,10 +75,14 @@ const ArgumentTypeMap = (() => {
  * A pair of functions used to manage the cloud variable limit,
  * to be used when adding (or attempting to add) or removing a cloud variable.
  * @typedef {object} CloudDataManager
- * @property {function} canAddNewCloudVariable A function to call to check that
+ * @property {function} canAddCloudVariable A function to call to check that
  * a cloud variable can be added.
- * @property {function} removeExistingCloudVariable A function to call when
+ * @property {function} addCloudVariable A function to call to track a new
+ * cloud variable on the runtime.
+ * @property {function} removeCloudVariable A function to call when
  * removing an existing cloud variable.
+ * @property {function} hasCloudVariables A function to call to check that
+ * the runtime has any cloud variables.
  */
 
 /**
@@ -336,7 +340,7 @@ class Runtime extends EventEmitter {
          * @return {boolean} Whether or not the runtime currently has any
          * cloud variables.
          */
-        this.hasCloudData = newCloudDataManager.hasCloudVariables();
+        this.hasCloudData = newCloudDataManager.hasCloudVariables;
 
         /**
          * A function which checks whether a new cloud variable can be added
@@ -358,7 +362,7 @@ class Runtime extends EventEmitter {
          * when removing a cloud variable.
          * @type {function}
          */
-        this.removeCloudVariable = newCloudDataManager.removeCloudVariable();
+        this.removeCloudVariable = newCloudDataManager.removeCloudVariable;
     }
 
     /**
